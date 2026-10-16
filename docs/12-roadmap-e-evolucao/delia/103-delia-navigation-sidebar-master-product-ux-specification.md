@@ -92,3 +92,77 @@ AGENTS_PROJECTS_PLUGINS = OWNER_CONTRACT_DEPENDENT
 TESTS = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 ```
+
+## Rework R1 — contrato consolidado para implementação futura (2026-10-16)
+
+**Origem:** parecer documental [114](./114-navigation-sidebar-103-113-independent-document-review.md), achados R-01 a R-08. Esta seção **prevalece sobre orientações conflitantes anteriores dos documentos 103–113**. **Escopo desta entrega: documentação apenas.** `DESIGN_BASELINE=DOCUMENTED_WITH_GATES` não equivale a `IMPLEMENTATION_AUTHORIZED`.
+
+### 1. Estrutura de composição congelada visualmente (R-01/R-06)
+
+```text
+DeliaConversationPage (owner do estado de seleção e expansão)
+├─ left = área de navegação já existente (EXTEND, nunca segunda sidebar)
+│  ├─ NavigationRail (categorias e controle único quando painel fechado)
+│  └─ NavigationCategoryPanel (quando aberto; controle único em seu header)
+├─ center = ConversationWorkspace EXISTENTE (preservado/montado)
+└─ context = ContextPopover EXISTENTE (independente, sem coluna direita)
+```
+
+- **Único estado controlado** `selectedCategory` e `panelPresentation = expanded | rail_only | overlay | launcher_only`, mantido no consumer DÉLIA; `plugin-ui` render-only e callbacks de intenção. A distinção `expanded/overlay` é apresentação, não mudança de categoria.
+- **Exatamente um botão toggle presente e operável por vez**: painel inline/overlay aberto → botão no header do painel; painel recolhido → botão no topo do rail; `launcher_only` → disparador único no header central/slot aprovado. Não renderizar toggles simultâneos com `display:none` apenas; evitar duplicação no DOM e tab order.
+- Clique na categoria ativa quando recolhida abre painel; clique noutra categoria seleciona e apresenta o painel se categoria estiver autorizada para apresentação; nunca cria sessão, muda conversa, envia draft ou reexecuta turnos.
+- O `ConversationWorkspace` permanece com identidade e instância estáveis ao selecionar categoria ou cruzar breakpoint. A composição não introduz segundo header da DÉLIA.
+
+### 2. Matriz única de disponibilidade (R-02/R-07)
+
+| Status fornecido por consumer/owner | Rail | Painel | Clique |
+|---|---|---|---|
+| `approved_visible` | mostrar ícone | conteúdo autorizado ou estado real | selecionar categoria |
+| `contract_unavailable` | ícone da categoria aprovada em estado **disabled** com label explicativo | orientação curta apenas se painel já selecionado em contexto autorizado | sem ação fake |
+| `loading_real` | ícone ativo sem presumir permissão | loading apenas após consulta real | não abrir recurso ainda |
+| `authorized_empty` | mostrar | vazio confirmado pela API | pode navegar a lista vazia |
+| `forbidden` | **ocultar** categoria e metadados | não mostrar | negar no servidor |
+| `error` | mostrar somente quando categoria já era aprovada para visualização | erro tipado e retry real | ação somente se retry aprovado |
+| `revoked` | remover/neutralizar conforme contrato sem vazar conteúdo | limpar dados anteriores | bloquear link/launch |
+
+**Decisão de produto já expressa:** Conversas, Projetos, Agentes e Plugins constituem as **quatro categorias-alvo de UX**. Sua presença na especificação não comprova contrato nem permissão. Para entrega frontend puramente visual, uma categoria pode ser apresentada com `contract_unavailable` como affordance **se aprovada no escopo da task**, nunca como catálogo funcional. `forbidden` não deve mostrar label/quantidade/tooltip. Evitar estados vazios duplicados. **Fonte de availability de backend = TO_INVENTORY**, nenhum boolean frontend substitui AuthZ live.
+
+### 3. Algoritmo de layout proposto, com gate de QA (R-03)
+
+A fonte de dimensão é o **container disponível do Portal/Companion Dock**, nunca `window.innerWidth`. Ordem de prioridade: (1) preservar `ConversationWorkspace` e largura útil do composer; (2) reservar rail se ainda houver espaço suficiente; (3) abrir painel inline somente quando `containerWidth - railWidth - panelWidth >= minCenterWidth`; (4) caso contrário, painel como overlay; (5) em largura extrema, trocar rail por launcher único.
+
+**Alvos candidatos para primeiro teste**, não constantes congeladas: `railWidth = 56–64px` (52px compacto); `panelWidth = 248–288px`; `minCenterWidth = 600px` em desktop, recalibrado com composer/Dock; `launcher_only` em containers ≤420px se o rail reduzir área útil. **Se QA mostrar quebra, STOP e decisão visual**, não alterar silently. Ao passar para compact, fechar overlay aberto e manter `selectedCategory` em memória da sessão; ao voltar ao amplo, preferir estado do painel definido pelo usuário quando não conflitar com centro. `ContextPopover` continua flutuante, mas em tela estreita deve fechar ao abrir drawer de navegação e vice-versa, sem perturbar confirmação governada.
+
+### 4. Matriz de ações e gates mínimos (R-04)
+
+| Ação da UI | Natureza | Owner da capacidade | Prérequisito para habilitar |
+|---|---|---|---|
+| Expandir/recolher | UI local | DÉLIA + `plugin-ui` | apresentação válida e foco seguro |
+| Selecionar categoria | UI local | DÉLIA | categoria autorizada/visível; nenhum ACT |
+| Nova conversa persistida | write/session | owner de sessões DÉLIA **TO_INVENTORY** | contrato, guardas de draft/stream/decisão, AuthZ, idempotência, postcondition |
+| Selecionar conversa | read/context switch | owner de histórico DÉLIA **TO_INVENTORY** | sessão persistida, ACL live, recuperação de turns, preservação de pending flows |
+| Pesquisar conversas | read | owner de busca backend **TO_INVENTORY** | doc 97, persistência/index, ACL, paginação |
+| Fixar/desafixar | write | owner de metadados **TO_INVENTORY** | AuthZ, idempotência, audit, postcondition |
+| Renomear/arquivar/excluir | write | owner de conversas **TO_INVENTORY** | consentimento/confirm quando aplicável, AuthZ, regras, audit, rollback/revoke |
+| Abrir projeto/agente/plugin | navigation/read ou delegated action | Portal/Core/Domain/owner **TO_INVENTORY** | catálogo/rota autorizados; launch não implica ACT |
+| Opções | UI/menu local | DÉLIA + owner de settings | menu de comandos efetivamente implementados, sem duplicar Portal |
+
+Botão disabled/sem handler não vira “contrato pronto”. Ação técnico-sucedida não significa outcome. Não inferir listagem de conversations pela memória React.
+
+### 5. Limites de decisão e gates
+
+- `EXISTING_EQUIVALENT=YES` para shell, rail atual, `ConversationSidebar`, `ConversationWorkspace`, `ContextPopover`, `IconButton`; `REUSE_DECISION=EXTEND` a composição compartilhada **sem duplicar shell**.
+- `EXISTING_EQUIVALENT=TO_INVENTORY` para registry ou UI nav universal do kit, sessão persistida, projetos, agents e apps; `REUSE_DECISION=PENDING_GATE` para contratos/feeds. Search result vazio **não prova inexistência**.
+- **Plugins/Aplicações:** owner Portal/Core. Uma eventual lista na DÉLIA deve ser **atalhos/deeplinks autorizados do Portal**. Se exigir catálogo paralelo, criar decisão explícita `ARCHITECTURE_DECISION_REQUIRED` antes de código.
+- Projetos e Agentes: categoria visual planejada, **fonte, RBAC e ação não provados**. Nenhum adapter/integration autorizado por esta spec.
+- Este rework documental **não** muda ledger/fase, não executa testes e não dá aceite do runtime. Antes de code task, reancorar fontes canônicas e resolver drift.
+
+```text
+DOCUMENTATION_R1 = REWORK_APPLIED
+VISUAL_COMPOSITION = SPECIFIED
+FULL_CANONICAL_REANCHOR = INCONCLUSIVE
+RUNTIME_IMPLEMENTATION = NOT_AUTHORIZED_BY_DOCS
+CONTRACTS_DATA_CATALOGS = TO_INVENTORY
+TESTS = TEST_NOT_RUN
+INDEPENDENT_RUNTIME_ACCEPTANCE = PENDING
+```
