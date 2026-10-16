@@ -179,13 +179,23 @@ export default function App({
         },
       });
       setTurns((previous) => [
-        // A submitted decision consumes the earlier pending card —
-        // the backend is the authority; this is presentation only.
-        ...previous.map((turn) =>
-          turn.confirmationRequest
+        // Only a response to a typed decision about THIS exact
+        // proposal may close its card. Ordinary MESSAGE turns and
+        // decisions about other proposals must preserve pending UI.
+        ...previous.map((turn) => {
+          const pending = turn.confirmationRequest;
+          const decisionSent =
+            confirmation &&
+            (command?.type === "APPLY_PREPARED" ||
+              command?.type === "REJECT_PREPARED");
+          return decisionSent &&
+            pending &&
+            pending.proposal_digest === confirmation.proposal_digest &&
+            pending.preview_fingerprint === confirmation.preview_fingerprint &&
+            pending.session_id === confirmation.session_id
             ? { ...turn, confirmationAnswered: true }
-            : turn,
-        ),
+            : turn;
+        }),
         { id: result.user_turn_id, role: "user", content: value },
         {
           id: result.result_turn_id,
@@ -287,11 +297,15 @@ export default function App({
       // digests are non-authoritative demo values.
       const seq = demoSeqRef.current++;
       setTurns((previous) => [
-        ...previous.map((turn) =>
-          turn.confirmationRequest
+        ...previous.map((turn) => {
+          const pending = turn.confirmationRequest;
+          return pending &&
+            pending.proposal_digest === request.proposal_digest &&
+            pending.preview_fingerprint === request.preview_fingerprint &&
+            pending.session_id === request.session_id
             ? { ...turn, confirmationAnswered: true }
-            : turn,
-        ),
+            : turn;
+        }),
         { id: `demo-ack-${seq}`, ...demoConfirmationAck(decision) },
       ]);
       return;
