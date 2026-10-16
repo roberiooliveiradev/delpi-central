@@ -13802,3 +13802,20 @@ PRODUCT_PRINCIPLE=APPROVED; D1_SCOPE_CONTRACT=PROPOSED_NOT_APPROVED; D2_CONFIRM_
 STAGE_02_ACCEPTED=NO; B2=REWORK; STAGE_03_AUTHORIZED=NO
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.181 — DELIA-C3-STAGE-02-B2-EXECUTION-SCOPE-ADR-CONTRACT-01 (ADR CANDIDATE SUBMITTED; NOT APPROVED)
+
+**MODE:** ARCHITECTURE_AND_CONTRACT_DESIGN_ONLY / DOCUMENTATION_ONLY. **REPORT:** `corrections/conversational-intelligence-c3/15-stage-02-b2-execution-scope-adr-candidate.md`. **BASE_HEAD:** `7234a3ccf03e43196894932cd11fd392b996fe8a` (origin/main). Zero runtime/API/frontend/prompt/policy/contract changes.
+
+- **REANCHOR:** HEAD synced to reference `7234a3ccf0` via fast-forward (remote had landed docs 12/13/14 + ledger §§6.178–6.180 since prior task). Authorities 16→50→17→49→51→52→21→20→25→02→24→60/69/70→personality→ledger reverified. No EXECUTION_DRIFT.
+- **INVENTORY FACTS (PROVEN, code-read):** wire body allowlist `{input,context,confirmation,workspace,max_execution_stage}` strict; `max_execution_stage` accepts only `"prepare"` (escalation vocabulary rejected at syntactic boundary); `access_context` from `g.platform_access`, never body; `_attempt_confirmation` branches before `_understand_goal` and receives no `input_text`; `plugins/delia App.tsx` sends fixed PT label + structured confirmation (legacy mixed payload exists — scenario C8); `/interaction/turns` consumers = plugins/delia + delia-api eval scripts/tests; no plugin sends `max_execution_stage` today; non-MFE consumers `TO_INVENTORY`.
+- **ADR CANDIDATE CONTENT:** ALT-A recommended — typed `command.type {MESSAGE,CONFIRM_PREPARED,REJECT_PREPARED}` + user-declared `execution_scope {PREPARE_ONLY,ACT_ELIGIBLE}`, absent = `NOT_ASSERTED` which caps write-class selections at PREPARE; model `execution_bound` demoted to reduction-only hypothesis. ALT-B (D3 alone) documented as insufficient; ALT-C (proposal-bound consent only) documented as fallback that contradicts §6.179. Full request/response/state-transition/security/observability/failure-rollback contract candidates + C1–C10 matrix + eval plan recorded in report 15.
+- **BINDING CONSEQUENCE DECLARED:** under ALT-A the §6.140 owner-direct path requires structured `ACT_ELIGIBLE`; free-text write requests alone produce PREPARE + pending scope decision. This is a behavior-eligibility change requiring explicit Product Master approval — not reconciled silently.
+- **DECISIONS REQUESTED (OPEN):** D1 source of ACT eligibility (`execution_scope` typed signal); D2 typed-command precedence + legacy label compat/conflict rule; D3 fail-closed bound as defense-in-depth layer. None approved; no wire field, error code, enum or UI control created.
+- **RESIDUAL HONESTY:** explicit `ACT_ELIGIBLE` + undetectable contradictory text remains a documented residual (only proposal-bound consent ALT-C closes it); real-model outcome `TEST_NOT_RUN`; no new tests executed in this task.
+- **REUSE:** `EXISTING_EQUIVALENT=YES` for confirmation/PendingWrite/ceiling/goal/harness; `REUSE_DECISION=EXTEND` (command envelope + scope field) and `REUSE` (pending-decision surface); `NEW=NOT_AUTHORIZED`. No second LLM gate, regex/parser, universal confirmation, new planner/registry/executor proposed.
+
+ADR_CANDIDATE=SUBMITTED; D1_SCOPE_CONTRACT=DECISION_REQUESTED; D2_CONFIRM_PRECEDENCE=DECISION_REQUESTED; D3_FAIL_CLOSED_LAYER=DECISION_REQUESTED
+PRODUCT_PRINCIPLE=APPROVED; TECHNICAL_CONTRACT=NOT_APPROVED; STAGE_02_ACCEPTED=NO; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_03_AUTHORIZED=NO
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
