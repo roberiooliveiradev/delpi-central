@@ -13636,3 +13636,20 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.171 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-01 (baseline executado; evidência registrada)
+
+**Task:** baseline factual da inteligência conversacional — inventário do runtime, auditoria das 13 instruções ativas + `delia.interaction.base` v3, harness de reprodução provider-neutro e diagnóstico dos casos prioritários (CI-01..CI-18 subset). MODE=BASELINE_AND_EVALUATION_ONLY; nenhuma correção funcional.
+
+- **BASE_HEAD:** `57da7fac0554eb2daff6c7737dca94ef7f94c8a5` (revalidado; fast-forward aplicado — local estava 4 commits documentais atrás). Alterações concorrentes do usuário em `plugins/*`/`requests-api` preservadas.
+- **ARTIFACTS:** relatório `corrections/conversational-intelligence-c3/04-stage-01-baseline-report.md`; harness `delia-api/tests/test_conversational_intelligence_baseline.py` (15 testes, fakes neutros, scripted proposals reproduzindo traces de produção).
+- **TESTS:** suíte `delia-api` 1069/1069 PASS (1054 + 15 novos). Casos: CI-01 (open-vocab string → tópico inventado → SOURCE_UNAVAILABLE) FAIL reproduzido + sibling PASS; goal_class sem classe de orientação FAIL estrutural; hazard guidance→PREPARE FAIL (gate semântico ausente); CI-04/05 (completude inner — `missing=0` no schema externo, `status_processo` exigido pela entidade, PREPARE READY, direct ACT, commit rejeitado) FAIL reproduzido end-to-end; CI-07/08 (suficiência "último" sem prova de ordenação; `items:[]` → dump verbatim) FAIL; CI-09 controle positivo PASS; CI-10 rename invariance PROVEN (mesmos FAILs estruturais em owners renomeados).
+- **ROOT_CAUSES PROVEN:** (1) `_is_open_vocabulary` não cobre string com vocabulário owner → discovery não dispara; (2) `goal_class` sem classe de orientação; (3) hint "crie→PREPARE" não distingue orientação; (4) completude validada só no `input_schema` externo + owner (TÉO) projetou READY e rejeitou só no commit — dupla falha; (6) nenhuma verificação de ordenação/cobertura em síntese + fallback = dump; (8) instrução de personalidade só alcança o fallback NOT_APPLICABLE. Confirmação direct em produção = owner-declared (`explicit_user_confirmation=false`), não bug DÉLIA.
+- **INVENTORY:** 13 instruction IDs (v7) + base v3; todas structured-output/allowed_keys/lineage/HYPOTHESIS; `MODEL_AUTHORED_FACTUAL_PROSE=NONE` mantido; 5 model calls por write-path (produção ~33s). Orçamentos factuais registrados.
+- **EXISTING_EQUIVALENT=YES / REUSE_DECISION=EXTEND** para todos os gaps comprovados — nenhum novo planner/engine/registry. Gaps mapeados para Etapas 02–05 (ver relatório §E).
+- **RESIDUALS:** tokens/custo real TEST_NOT_RUN (provider LLM real); CI-06 e CI-11..18 TEST_NOT_RUN; comportamento do modelo real vs scripted = gap de evidência aceito; `INDEPENDENT_REVIEW=PENDING`.
+- **STATUS:** `STAGE_01_BASELINE_RECORDED`; sem avanço de fase; próximo bounded step = Etapa 02 mediante autorização.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

@@ -1,0 +1,1073 @@
+"""DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-01.
+
+Baseline reproduction harness — CI-01..CI-18 priority cases on
+provider-neutral fake owners whose vocabulary shares nothing with
+TÉO/DAVI/VISTA. Model proposals are SCRIPTED to reproduce the exact
+sequences observed in production traces (2026-10-15, delpi-delia-api);
+deterministic gates and pipeline behavior are the object under test.
+
+Diagnostic labels used in docstrings/comments are report vocabulary
+(INTENT_FAILURE, SELECTION_FAILURE, ARGUMENT_COMPLETENESS_FAILURE,
+EVIDENCE_SUFFICIENCY_FAILURE, RESPONSE_COMPOSITION_FAILURE,
+POLICY_OR_CONTRACT_FAILURE) — not new domain enums.
+
+No PREPARE/ACT is ever executed against a real owner: every provider
+here is a fake port; ACT calls are faked or scripted to fail.
+"""
+
+from __future__ import annotations
+
+from app.application.capability_provision.contracts import (
+    CapabilityGroup,
+    CapabilityProviderError,
+    ProviderCapability,
+    ProviderSurface,
+)
+from app.application.capability_provision.orchestration import (
+    ARGUMENTS_INSTRUCTION_ID,
+    CAPABILITY_SELECTION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
+    GROUP_SELECTION_INSTRUCTION_ID,
+    SYNTHESIS_INSTRUCTION_ID,
+    OperationalCapabilityOrchestrator,
+    _is_open_vocabulary,
+    _requires_owner_vocabulary,
+)
+from app.application.interaction.capability_attempt import (
+    GovernedCapabilityStatus,
+)
+from app.application.model_invocation.contracts import (
+    ProviderInvocationPayload,
+)
+from app.application.model_invocation.invoke_model import InvokeModel
+from app.domain.evidence.model import (
+    EpistemicClass,
+    ModelRef,
+    SourceRef,
+)
+from app.domain.model_invocation.model import ProviderExposureClass
+from app.domain.specialist_interop.model import (
+    InteropProtocol,
+    SpecialistOperationClass,
+    SpecialistOutcome,
+    SpecialistResultProvenance,
+    SpecialistResultStatus,
+)
+
+TEST_MODEL_REF = ModelRef(
+    model_id="baseline-model", version="1", owner_ref="DELPI"
+)
+
+
+class FakeProposalModel:
+    adapter_kind = "TEST_ONLY"
+    exposure_class = ProviderExposureClass.TEST_ONLY
+
+    def __init__(self, proposal):
+        items = (
+            list(proposal) if isinstance(proposal, list) else [proposal]
+        )
+        self._queues: dict[str, list] = {}
+        self.requests = []
+        self._generic: list = []
+        for item in items:
+            if isinstance(item, dict) and set(item) & _PURPOSE_IDS:
+                for purpose, payload in item.items():
+                    self._queues.setdefault(purpose, []).append(payload)
+            else:
+                self._generic.append(item)
+        self._last: dict[str, object] = {}
+
+    def invoke(self, request):
+        self.requests.append(request)
+        purpose = request.task_purpose_id
+        queue = self._queues.get(purpose)
+        if queue:
+            resolved = queue.pop(0)
+        elif self._generic:
+            resolved = self._generic.pop(0)
+        else:
+            resolved = self._last.get(purpose)
+        if resolved is not None:
+            self._last[purpose] = resolved
+        return ProviderInvocationPayload(
+            structured_output=resolved,
+            generated_at="2026-01-01T00:00:00+00:00",
+        )
+
+
+_PURPOSE_IDS = frozenset(
+    {
+        GROUP_SELECTION_INSTRUCTION_ID,
+        CAPABILITY_SELECTION_INSTRUCTION_ID,
+        ARGUMENTS_INSTRUCTION_ID,
+        GOAL_INSTRUCTION_ID,
+        SYNTHESIS_INSTRUCTION_ID,
+    }
+)
+
+
+class FakeProvider:
+    def __init__(self, provider_id, groups, outcomes=None):
+        self.provider_id = provider_id
+        self._groups = list(groups)
+        self.calls = []
+        self._outcomes = dict(outcomes or {})
+
+    def list_groups(self, *, correlation_id, timeout_seconds=None):
+        return ProviderSurface(groups=tuple(self._groups))
+
+    def invoke(
+        self, capability, arguments, *, correlation_id,
+        timeout_seconds=None,
+    ):
+        self.calls.append((capability.remote_name, dict(arguments)))
+        key = (capability.group_id, capability.remote_name)
+        outcome = self._outcomes.get(key)
+        if isinstance(outcome, CapabilityProviderError):
+            raise outcome
+        if outcome is not None:
+            return outcome
+        return SpecialistOutcome(
+            status=SpecialistResultStatus.COMPLETED,
+            provenance=SpecialistResultProvenance(
+                specialist_id=capability.group_id,
+                remote_name=capability.remote_name,
+                protocol=InteropProtocol.MCP,
+                correlation_id=correlation_id,
+                observed_at="2026-01-01T00:00:00+00:00",
+            ),
+            content_text="ok",
+        )
+
+
+def _cap(group_id, provider_id, name, op_class, schema=None, desc=""):
+    return ProviderCapability(
+        capability_id=f"{group_id}.{name}",
+        group_id=group_id,
+        provider_id=provider_id,
+        remote_name=name,
+        owner=group_id,
+        operation_class=op_class,
+        description=desc,
+        input_schema=schema or {"type": "object", "properties": {}},
+        binding={"ref": name},
+    )
+
+
+def _group(provider_id, group_id, capabilities):
+    return CapabilityGroup(
+        provider_id=provider_id,
+        group_id=group_id,
+        owner_ref=group_id,
+        display_name=group_id,
+        capabilities=tuple(capabilities),
+        source=SourceRef(
+            source_id=group_id,
+            source_system=group_id,
+            provider_name=group_id,
+        ),
+    )
+
+
+def _outcome(group_id, remote_name, text, structured=None, limitations=()):
+    return SpecialistOutcome(
+        status=SpecialistResultStatus.COMPLETED,
+        provenance=SpecialistResultProvenance(
+            specialist_id=group_id,
+            remote_name=remote_name,
+            protocol=InteropProtocol.MCP,
+            correlation_id="c",
+            observed_at="2026-01-01T00:00:00+00:00",
+        ),
+        content_text=text,
+        structured=structured,
+        limitations=limitations,
+    )
+
+
+def _select(group_key, remote_name, arguments=None, arg_payload=None,
+            extra=None):
+    proposal = {
+        GROUP_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "capability_group_id": group_key,
+        },
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": remote_name,
+        },
+        ARGUMENTS_INSTRUCTION_ID: (
+            arg_payload
+            if arg_payload is not None
+            else {"arguments": arguments or {}}
+        ),
+    }
+    if extra:
+        proposal.update(extra)
+    return proposal
+
+
+def _orchestrator(providers, proposal):
+    model = FakeProposalModel(proposal)
+    return (
+        OperationalCapabilityOrchestrator(
+            providers,
+            invoke_model=InvokeModel(model),
+            model_ref=TEST_MODEL_REF,
+        ),
+        model,
+    )
+
+
+def _proposal_purpose(model, instruction_id):
+    return [
+        request for request in model.requests
+        if request.task_purpose_id == instruction_id
+    ]
+
+
+# ---------------------------------------------------------------------
+# CASE A (CI-01/CI-02) — guidance question on an open-vocabulary
+# string argument. Production 2026-10-15: "como criar um processo?"
+# selected get_product_guide, arguments stage invented topic='processo',
+# owner rejected with the available-topics error -> SOURCE_UNAVAILABLE.
+# ---------------------------------------------------------------------
+
+_GUIDE_GROUP = ("acme-wiki", "docs")
+_GUIDE_SCHEMA = {
+    "type": "object",
+    "properties": {"topic": {"type": "string"}},
+    "required": ["topic"],
+}
+
+
+def _guide_provider(outcomes):
+    return FakeProvider(
+        _GUIDE_GROUP[0],
+        [
+            _group(
+                _GUIDE_GROUP[0],
+                _GUIDE_GROUP[1],
+                [
+                    _cap(
+                        "docs", "acme-wiki", "read_guide",
+                        SpecialistOperationClass.READ,
+                        schema=_GUIDE_SCHEMA,
+                        desc="read the how-to guide for a topic",
+                    ),
+                ],
+            )
+        ],
+        outcomes=outcomes,
+    )
+
+
+def test_ci01_open_string_field_has_no_owner_vocabulary_trigger():
+    """Structural evidence: a plain string argument whose legal values
+    live only in the owner's vocabulary is NOT detected as an opaque
+    envelope — discovery never runs, the model must guess the value."""
+    descriptor = _cap(
+        "docs", "acme-wiki", "read_guide",
+        SpecialistOperationClass.READ,
+        schema=_GUIDE_SCHEMA,
+    )
+    assert _is_open_vocabulary(_GUIDE_SCHEMA["properties"]["topic"]) is False
+    assert _requires_owner_vocabulary(descriptor) is False
+
+
+def test_ci01_guidance_question_with_invented_topic_fails():
+    """RED repro of the production turn: the model produced
+    topic='processo' (not in the owner's guide vocabulary); the owner
+    error is surfaced truthfully but the turn is a failure —
+    ARGUMENT_COMPLETENESS_FAILURE upstream of any domain rejection."""
+    provider = _guide_provider(
+        {
+            ("docs", "read_guide"): CapabilityProviderError(
+                "mcp_protocol_error",
+                "unknown guide topic 'processo'; "
+                "available: ['process','revision','dashboard']",
+            )
+        }
+    )
+    orch, model = _orchestrator(
+        [provider],
+        _select("docs", "read_guide", arguments={"topic": "processo"}),
+    )
+    attempt = orch.attempt("Como criar um processo?")
+
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "mcp_protocol_error"
+    # The owner really was invoked with the invented value.
+    assert provider.calls == [("read_guide", {"topic": "processo"})]
+    # The arguments stage received NO topic vocabulary — the schema
+    # block carries the raw input_schema only; there is no enum and
+    # no discovery evidence to constrain the value.
+    arg_requests = _proposal_purpose(model, ARGUMENTS_INSTRUCTION_ID)
+    assert len(arg_requests) == 1
+    payload = arg_requests[0].input_text
+    assert "owner_vocabulary" not in payload
+    assert "available" not in payload
+
+
+def test_ci01_sibling_valid_topic_answers_through_same_path():
+    """Positive sibling: a topic inside the owner's vocabulary answers
+    — the selection/invoke path is sound; the gap is the missing
+    vocabulary for the argument VALUE."""
+    provider = _guide_provider(
+        {
+            ("docs", "read_guide"): _outcome(
+                "docs", "read_guide", "guide",
+                structured={
+                    "data": {
+                        "items": [
+                            {
+                                "topic": "process",
+                                "content": "Crie pelo menu Processos.",
+                            }
+                        ]
+                    }
+                },
+            )
+        }
+    )
+    orch, model = _orchestrator(
+        [provider],
+        _select(
+            "docs", "read_guide",
+            arguments={"topic": "process"},
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Como criar um processo?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "Processos" in (attempt.content or "")
+
+
+def test_ci01_goal_class_has_no_orientation_class():
+    """Structural evidence: the goal contract cannot represent
+    'orient the user' — 'como criar' is forced into an action class."""
+    orch, model = _orchestrator(
+        [_guide_provider({})],
+        _select(
+            "docs", "read_guide",
+            arguments={"topic": "process"},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "orient",
+                    "business_subject": "processo",
+                }
+            },
+        ),
+    )
+    provider_outcome = _outcome(
+        "docs", "read_guide", "guide",
+        structured={
+            "data": {"items": [{"content": "texto do guia"}]}
+        },
+    )
+    provider2 = FakeProvider(
+        _GUIDE_GROUP[0],
+        _guide_provider({})._groups,
+        outcomes={("docs", "read_guide"): provider_outcome},
+    )
+    orch, model = _orchestrator(
+        [provider2],
+        _select(
+            "docs", "read_guide",
+            arguments={"topic": "process"},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "orient",
+                    "business_subject": "processo",
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                },
+            },
+        ),
+    )
+    attempt = orch.attempt("Como criar um processo?")
+    # The runtime silently normalizes the unknown class to "read" —
+    # no orientation semantic survives the boundary.
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    from app.application.capability_provision.orchestration import (
+        OperationalCapabilityOrchestrator as _O,
+    )
+
+    assert "orient" not in _O._GOAL_CLASSES
+
+
+def test_ci01_hazard_guidance_question_can_reach_prepare():
+    """RED hazard: nothing semantically prevents a 'how do I create'
+    question from selecting the PREPARE capability — the selection
+    instruction's 'crie -> prefer PREPARE' keyword hint can misroute
+    guidance intent into the governed-write chain
+    (SELECTION_FAILURE). Scripted to observe pipeline behavior only."""
+    provider = FakeProvider(
+        "acme-flow",
+        [
+            _group(
+                "acme-flow",
+                "registry",
+                [
+                    _cap(
+                        "registry", "acme-flow", "read_guide",
+                        SpecialistOperationClass.READ,
+                        schema=_GUIDE_SCHEMA,
+                        desc="read the how-to guide",
+                    ),
+                    _cap(
+                        "registry", "acme-flow", "stage_record",
+                        SpecialistOperationClass.PREPARE,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "entity": {"type": "string"},
+                                "operation": {"type": "string"},
+                                "changes": {"type": "object"},
+                            },
+                            "required": [
+                                "entity", "operation", "changes",
+                            ],
+                        },
+                        desc="stage a record change for review",
+                    ),
+                ],
+            )
+        ],
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {},
+            },
+        ),
+    )
+    attempt = orch.attempt("Como criar um processo?")
+    # Observed: a guidance question reached the owner PREPARE call —
+    # the pipeline honors a write-class selection on a read-class
+    # question; only the fake owner's outcome bounds the blast radius.
+    assert ("stage_record", {
+        "entity": "process", "operation": "create", "changes": {},
+    }) in provider.calls
+
+
+# ---------------------------------------------------------------------
+# CASE B (CI-03..CI-05) — create with inner-entity required field.
+# Production trace: prepare selected, get_catalog ran (entity_schemas
+# required=[nome_processo, status_processo] inside owner_vocabulary),
+# arguments declared complete (missing=0) with changes={'nome_processo'},
+# PREPARE READY, owner declared direct execution, ACT commit rejected
+# with "status_processo Field required".
+# ---------------------------------------------------------------------
+
+_PROCESS_GROUP = ("acme-flow", "registry")
+
+_PROCESS_CAPS = [
+    _cap(
+        "registry", "acme-flow", "get_catalog",
+        SpecialistOperationClass.DISCOVERY,
+        desc="list entities, fields and operation vocabulary",
+    ),
+    _cap(
+        "registry", "acme-flow", "stage_record",
+        SpecialistOperationClass.PREPARE,
+        schema={
+            "type": "object",
+            "properties": {
+                "entity": {"type": "string"},
+                "operation": {"type": "string"},
+                "record_id": {"type": "string"},
+                "changes": {"type": "object"},
+            },
+            "required": ["entity", "operation", "changes"],
+        },
+        desc="prepare a governed record change",
+    ),
+    _cap(
+        "registry", "acme-flow", "commit_record",
+        SpecialistOperationClass.ACT,
+        schema={
+            "type": "object",
+            "properties": {
+                "proposal_handle": {"type": "string"},
+                "confirmation": {"type": "boolean"},
+            },
+            "required": ["proposal_handle", "confirmation"],
+        },
+        desc="commit a staged change",
+    ),
+]
+
+_CATALOG_OUTCOME_STRUCTURED = {
+    "data": {
+        "entity_schemas": {
+            "process": {
+                "required": ["nome_processo", "status_processo"],
+                "enums": {
+                    "status_processo": [
+                        "ativo", "em_implantacao", "descontinuado",
+                    ]
+                },
+                "defaults": {},
+            }
+        },
+        "operations": {"create": {"entity": "process"}},
+    }
+}
+
+
+def _direct_ready_proposal(group_id, remote_name):
+    return _outcome(
+        group_id,
+        remote_name,
+        "Proposta pronta.",
+        structured={
+            "data": {
+                "capability": "stage_record",
+                "proposal_handle": "prop-handle-x",
+                "exact_change": {"entity": "process", "operation": "create"},
+                "ready": True,
+                "validation_result": {"ready": True},
+                "confirmation_requirement": {
+                    "explicit_user_confirmation": False,
+                },
+            }
+        },
+    )
+
+
+def _process_provider(commit_outcome=None, prepare_outcome=None):
+    outcomes = {
+        ("registry", "get_catalog"): _outcome(
+            "registry", "get_catalog", "catalog",
+            structured=_CATALOG_OUTCOME_STRUCTURED,
+        ),
+        ("registry", "stage_record"): (
+            prepare_outcome or _direct_ready_proposal(
+                "registry", "stage_record"
+            )
+        ),
+    }
+    if commit_outcome is not None:
+        outcomes[("registry", "commit_record")] = commit_outcome
+    return FakeProvider("acme-flow", [_group(*_PROCESS_GROUP, _PROCESS_CAPS)],
+                      outcomes=outcomes)
+
+
+def test_ci04_inner_required_field_not_checked_by_outer_schema():
+    """RED repro of the production chain end to end:
+
+    arguments built missing=0 while the owner's entity schema required
+    a field absent from `changes`; PREPARE projected READY; owner-
+    declared direct execution; commit failed validation. Where
+    completeness was declared: the tool inputSchema only — the inner
+    entity contract lived as untrusted text in owner_vocabulary and
+    was never deterministically validated
+    (ARGUMENT_COMPLETENESS_FAILURE).
+    """
+    commit_error = CapabilityProviderError(
+        "mcp_protocol_error",
+        "1 validation error for ProcessoCreateBody\nstatus_processo\n"
+        "  Field required [type=missing]",
+    )
+    provider = _process_provider(commit_outcome=commit_error)
+    orch, model = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {"nome_processo": "processo teste"},
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um processo chamado processo teste")
+
+    # Full production chain reproduced: discovery -> prepare READY ->
+    # direct ACT -> commit validation error -> honest failure.
+    assert [name for name, _ in provider.calls] == [
+        "get_catalog", "stage_record", "commit_record",
+    ]
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "mcp_protocol_error"
+
+    # The entity contract WAS available to the arguments stage — as an
+    # untrusted free-text vocabulary block, not a validated schema.
+    arg_requests = _proposal_purpose(model, ARGUMENTS_INSTRUCTION_ID)
+    stage_arg = [
+        r for r in arg_requests
+        if "stage_record" in r.input_text
+    ]
+    assert stage_arg, "arguments proposal for stage_record missing"
+    assert "status_processo" in stage_arg[0].input_text
+    # Yet no deterministic layer rechecked inner completeness — the
+    # model's own proposal is the only arbiter.
+    assert provider.calls[1] == (
+        "stage_record",
+        {
+            "entity": "process",
+            "operation": "create",
+            "changes": {"nome_processo": "processo teste"},
+        },
+    )
+
+
+def test_ci03_sibling_complete_changes_commit_directly():
+    """Positive sibling: complete inner changes flow through the same
+    direct path — the governed chain itself is sound when the payload
+    is complete."""
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={
+                "data": {
+                    "entity": "process",
+                    "record_id": "PROC-0099",
+                    "nome_processo": "processo teste",
+                }
+            },
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "processo teste",
+                    "status_processo": "ativo",
+                },
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um processo chamado processo teste")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [name for name, _ in provider.calls] == [
+        "get_catalog", "stage_record", "commit_record",
+    ]
+
+
+def test_ci05_negative_prepare_not_ready_never_reaches_act():
+    """Negative sibling: a NOT_READY owner projection renders
+    truthfully and the ACT capability is never invoked."""
+    provider = _process_provider(
+        prepare_outcome=_outcome(
+            "registry", "stage_record", "",
+            structured={
+                "data": {
+                    "capability": "stage_record",
+                    "ready": False,
+                    "missing_fields": ["status_processo"],
+                    "validation_result": {"ready": False},
+                }
+            },
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {"nome_processo": "processo teste"},
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um processo chamado processo teste")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "commit_record" not in [name for name, _ in provider.calls]
+
+
+# ---------------------------------------------------------------------
+# CASE C (CI-07/CI-08) — "qual o último cadastrado?": the synthesis
+# stage selects WHICH record to show but nothing verifies ordering,
+# recency or coverage — EVIDENCE_SUFFICIENCY_FAILURE.
+# ---------------------------------------------------------------------
+
+def _unordered_records(with_dates: bool):
+    items = []
+    for index in range(10):
+        record = {
+            "codigo": f"REC-{index:04d}",
+            "nome": f"Registro {index}",
+        }
+        if with_dates:
+            # 'atualizado_em' is a mutation date, NOT a creation date —
+            # ambiguous for "último cadastrado".
+            record["atualizado_em"] = f"2026-10-{index + 1:02d}"
+        items.append(record)
+    return {"data": {"items": items}}
+
+
+def _list_provider(structured):
+    return FakeProvider(
+        "acme-flow",
+        [
+            _group(
+                "acme-flow",
+                "registry",
+                [
+                    _cap(
+                        "registry", "acme-flow", "list_records",
+                        SpecialistOperationClass.READ,
+                        schema={"type": "object", "properties": {}},
+                        desc="list records",
+                    ),
+                ],
+            )
+        ],
+        outcomes={
+            ("registry", "list_records"): _outcome(
+                "registry", "list_records", "records",
+                structured=structured,
+            )
+        },
+    )
+
+
+def test_ci07_last_record_claim_without_ordering_evidence():
+    """RED: unordered records with no creation field — the synthesis
+    proposal picks an index and the renderer presents it. Nothing
+    verifies 'último cadastrado'; the claim's correctness rests on
+    model selection alone (EVIDENCE_SUFFICIENCY_FAILURE)."""
+    provider = _list_provider(_unordered_records(with_dates=False))
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "list_records",
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {
+                            "record_index": 9,
+                            "fields": ["codigo", "nome"],
+                        }
+                    ],
+                    "presentation": "detail",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Qual o último processo cadastrado?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # The selected record is rendered — no ordering/coverage caveat is
+    # attached; 'Registro 9' is presented as the answer.
+    assert "Registro 9" in (attempt.content or "")
+    assert not attempt.limitations
+
+
+def test_ci08_sibling_with_dates_still_unverified_ordering():
+    """Sibling: even with a date field present, the same pipeline
+    asserts nothing about ordering semantics — a mutation timestamp
+    is silently usable as a creation-order proxy."""
+    provider = _list_provider(_unordered_records(with_dates=True))
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "list_records",
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {
+                            "record_index": 9,
+                            "fields": [
+                                "codigo", "nome", "atualizado_em",
+                            ],
+                        }
+                    ],
+                    "presentation": "detail",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Qual o último processo cadastrado?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "Registro 9" in (attempt.content or "")
+
+
+def test_ci07_sibling_empty_selection_falls_back_to_raw_dump():
+    """Observed behavior: when the proposal declares the records cannot
+    answer ({\"items\": []}), the deterministic fallback renders the
+    FULL record set verbatim — there is no bounded 'insufficient
+    evidence' answer; an unordered 10-record dump is what reaches the
+    user instead of an explicit limitation
+    (RESPONSE_COMPOSITION_FAILURE candidate)."""
+    provider = _list_provider(_unordered_records(with_dates=False))
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "list_records",
+            extra={SYNTHESIS_INSTRUCTION_ID: {"items": []}},
+        ),
+    )
+    attempt = orch.attempt("Qual o último processo cadastrado?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    # Documented fallback: the whole unordered record set is rendered.
+    assert "Registro 9" in (attempt.content or "")
+
+
+# ---------------------------------------------------------------------
+# CASE D (CI-09) — positive control: single-record factual answer is
+# composed deterministically, no synthesis call needed.
+# ---------------------------------------------------------------------
+
+def test_ci09_single_leaf_answer_skips_synthesis_proposal():
+    provider = FakeProvider(
+        "acme-stock",
+        [
+            _group(
+                "acme-stock",
+                "items",
+                [
+                    _cap(
+                        "items", "acme-stock", "read_item",
+                        SpecialistOperationClass.READ,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "code": {"type": "string"}
+                            },
+                            "required": ["code"],
+                        },
+                        desc="read a single item",
+                    ),
+                ],
+            )
+        ],
+        outcomes={
+            ("items", "read_item"): _outcome(
+                "items", "read_item", "item",
+                structured={
+                    "data": {
+                        "items": [
+                            {"descricao": "Parafuso sextavado M8"}
+                        ]
+                    }
+                },
+            )
+        },
+    )
+    orch, model = _orchestrator(
+        [provider],
+        _select("items", "read_item", arguments={"code": "10090034"}),
+    )
+    attempt = orch.attempt("Qual a descrição do produto 10090034?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "Parafuso sextavado M8" in (attempt.content or "")
+    # Deterministic composer path — no synthesis proposal consumed.
+    assert not _proposal_purpose(model, SYNTHESIS_INSTRUCTION_ID)
+
+
+# ---------------------------------------------------------------------
+# CASE E (CI-10) — rename invariance: identical behavior on a fake
+# owner whose names share nothing with the cases above.
+# ---------------------------------------------------------------------
+
+def test_ci10_open_vocab_gap_is_name_invariant():
+    """Same Case-A defect on a differently-named owner — the gap is
+    structural, not coupled to TÉO/DAVI/VISTA vocabulary."""
+    provider = FakeProvider(
+        "x9-manuals",
+        [
+            _group(
+                "x9-manuals",
+                "library",
+                [
+                    _cap(
+                        "library", "x9-manuals", "fetch_chapter",
+                        SpecialistOperationClass.READ,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "section": {"type": "string"}
+                            },
+                            "required": ["section"],
+                        },
+                        desc="fetch a documentation chapter",
+                    ),
+                ],
+            )
+        ],
+        outcomes={
+            ("library", "fetch_chapter"): CapabilityProviderError(
+                "mcp_protocol_error",
+                "unknown chapter 'capitulo-x'",
+            )
+        },
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "library", "fetch_chapter",
+            arguments={"section": "capitulo-x"},
+        ),
+    )
+    attempt = orch.attempt("Como configuro o capítulo X?")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert provider.calls == [
+        ("fetch_chapter", {"section": "capitulo-x"})
+    ]
+
+
+def test_ci10_inner_schema_gap_is_name_invariant():
+    """Same Case-B defect: outer schema satisfied, inner entity field
+    missing, direct commit rejected — on renamed capabilities."""
+    caps = [
+        _cap(
+            "vault", "x7-core", "describe_surface",
+            SpecialistOperationClass.DISCOVERY,
+            desc="describe entities",
+        ),
+        _cap(
+            "vault", "x7-core", "propose_mutation",
+            SpecialistOperationClass.PREPARE,
+            schema={
+                "type": "object",
+                "properties": {
+                    "entity": {"type": "string"},
+                    "operation": {"type": "string"},
+                    "payload": {"type": "object"},
+                },
+                "required": ["entity", "operation", "payload"],
+            },
+            desc="propose a mutation",
+        ),
+        _cap(
+            "vault", "x7-core", "apply_mutation",
+            SpecialistOperationClass.ACT,
+            schema={
+                "type": "object",
+                "properties": {
+                    "proposal_handle": {"type": "string"},
+                    "confirmation": {"type": "boolean"},
+                },
+                "required": ["proposal_handle", "confirmation"],
+            },
+            desc="apply a staged mutation",
+        ),
+    ]
+    provider = FakeProvider(
+        "x7-core",
+        [_group("x7-core", "vault", caps)],
+        outcomes={
+            ("vault", "describe_surface"): _outcome(
+                "vault", "describe_surface", "catalog",
+                structured={
+                    "data": {
+                        "entity_schemas": {
+                            "thing": {
+                                "required": ["label", "state"],
+                                "defaults": {},
+                            }
+                        }
+                    }
+                },
+            ),
+            ("vault", "propose_mutation"): _outcome(
+                "vault", "propose_mutation", "ok",
+                structured={
+                    "data": {
+                        "capability": "propose_mutation",
+                        "proposal_handle": "h-1",
+                        "exact_change": {"entity": "thing", "operation": "create"},
+                        "ready": True,
+                        "validation_result": {"ready": True},
+                        "confirmation_requirement": {
+                            "explicit_user_confirmation": False,
+                        },
+                    }
+                },
+            ),
+            ("vault", "apply_mutation"): CapabilityProviderError(
+                "mcp_protocol_error",
+                "1 validation error: state Field required",
+            ),
+        },
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "vault", "propose_mutation",
+            arguments={
+                "entity": "thing",
+                "operation": "create",
+                "payload": {"label": "item teste"},
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um item chamado item teste")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert [name for name, _ in provider.calls] == [
+        "describe_surface", "propose_mutation", "apply_mutation",
+    ]
+
+
+# ---------------------------------------------------------------------
+# Budget evidence — model calls per governed path (production turn
+# observed 5 model proposals before the write invocation).
+# ---------------------------------------------------------------------
+
+def test_budget_model_calls_per_guided_write_path():
+    # Second group forces select_group + native_assessment —
+    # mirroring the production 3-group topology where 5 model
+    # proposals precede the write invocation.
+    shadow = FakeProvider(
+        "x-shadow",
+        [
+            _group(
+                "x-shadow", "misc",
+                [
+                    _cap(
+                        "misc", "x-shadow", "peek",
+                        SpecialistOperationClass.READ,
+                    ),
+                ],
+            )
+        ],
+    )
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={"data": {"record_id": "R-1"}},
+        )
+    )
+    orch, model = _orchestrator(
+        [provider, shadow],
+        _select(
+            "acme-flow:registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "x",
+                    "status_processo": "ativo",
+                },
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um processo chamado x")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    purposes = [r.task_purpose_id for r in model.requests]
+    # select_group + select_capability + turn_goal +
+    # native_assessment + arguments (target) — discovery args are
+    # resolved without a proposal (empty schema short-circuit).
+    assert len(purposes) == 5
+    assert purposes.count(ARGUMENTS_INSTRUCTION_ID) == 1
