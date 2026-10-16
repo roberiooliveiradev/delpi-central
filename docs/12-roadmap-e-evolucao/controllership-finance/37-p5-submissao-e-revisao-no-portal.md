@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Verificação pós-merge de A12 e contratos Core:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+
 **TARGET / PRODUCT DECISIONS APPROVED (C2, P5-A..J, DEC-01..04) / A12 TECHNICAL_CONTRACT_INVENTORY_PENDING**
 
 ```text
