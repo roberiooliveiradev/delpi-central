@@ -13992,3 +13992,13 @@ B2_REWORK_TESTS=GREEN_EXECUTED; B2_SECURITY_GATES=VERIFIED; B2_INDEPENDENT_REVIE
 B1=PASS_STRUCTURAL_REGRESSION_GREEN; B2=READY_FOR_INDEPENDENT_REVIEW; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.192 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-INDEPENDENT-REVIEW-01 (REWORK)
+
+**DATA:** 2026-10-16. **TRACK:** `CP-333` Markdown conversacional B2 — distinto de `DELIA-C3-STAGE-02-B2` (execução governada; estados independentes). **CANDIDATE:** `d5ed426a08f0fee2aa9179a50d75f828fadd72b2`; doc [84 — G1/G2](../84-presentation-v2-contract-and-markdown-security-g1-g2-proposal.md). **REVIEW:** [85 — G1/G2 Independent Architecture Review](../85-presentation-v2-g1-g2-independent-architecture-review.md), revisão estática de código/docs no GitHub; `TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`.
+
+**VERDICT:** `REWORK` (G1 e G2). `RW-G1-01`: não provada uma estrutura de dados governada que sustente o `NEW GovernedResponseFormatter` (o campo atual `InteractiveTurnResult.content` é string). `RW-G1-02`: `LINK_SOURCE_TYPED=TO_INVENTORY`; proposta de B2 inicialmente sem links navegáveis não substitui decisão vinculante D1/D6/D7 — se necessário diferir links, retornar explicitamente ao Product Master. `RW-G2-01`: `REUSE_DECISION=DO_NOT_REUSE` não é valor normativo; para `NEW ConversationMarkdown` falta prova comparativa documentada de EXTEND vs NEW. `RW-G1-03`: schema JSONC candidato não é OpenAPI/schema final machine-validatable; falta fechar `additionalProperties`, enum/interaction invariants, unknown/malformed vs fallback legacy e conformance.
+
+**PRESERVED:** D1–D12, `presentation.v2` como direção de produto, token→React sem HTML executável como política-alvo, `EvidenceDetails`, Core/AuthZ/Domain ownership; nenhum runtime de B2 alterado ou aprovado. `CP-333=PLANNED_NOT_PASS`, `G0=DOCUMENTED_CONDITIONAL`, `G1=REWORK`, `G2=REWORK`, `G3=BLOCKED`, `G4=TEST_NOT_RUN`; `C_D_E_TRACEABILITY_GAP=OPEN`; `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `PHASE_PROGRESSION=NONE`. No implementation acceptance, no deploy.
+
+**NEXT bounded:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1` — revisão documental bounded dos 4 achados, prova por owners/contratos, comparação REUSE/EXTEND/NEW e nova revisão independente **antes** do G3. Não avançar `NEXT` global da fase ou o outro B2. `ARCHITECTURE_DECISION_REQUIRED` somente se rollout parcial sem links for necessário para cumprir os contratos.
