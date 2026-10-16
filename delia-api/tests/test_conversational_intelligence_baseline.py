@@ -265,24 +265,31 @@ def _guide_provider(outcomes):
     )
 
 
-def test_ci01_open_string_field_has_no_owner_vocabulary_trigger():
-    """Structural evidence: a plain string argument whose legal values
-    live only in the owner's vocabulary is NOT detected as an opaque
-    envelope — discovery never runs, the model must guess the value."""
+def test_ci01_open_string_field_triggers_owner_vocabulary_for_read():
+    """Stage 03: a *required* free string on READ needs owner vocabulary
+    (opaque envelope remains a separate path). Optional free strings do
+    not. Discovery still requires a unique same-group DISCOVERY peer."""
     descriptor = _cap(
         "docs", "acme-wiki", "read_guide",
         SpecialistOperationClass.READ,
         schema=_GUIDE_SCHEMA,
     )
     assert _is_open_vocabulary(_GUIDE_SCHEMA["properties"]["topic"]) is False
-    assert _requires_owner_vocabulary(descriptor) is False
+    assert _requires_owner_vocabulary(descriptor) is True
+    optional_only = _cap(
+        "docs", "acme-wiki", "analyze",
+        SpecialistOperationClass.READ,
+        schema={
+            "type": "object",
+            "properties": {"view": {"type": "string"}},
+        },
+    )
+    assert _requires_owner_vocabulary(optional_only) is False
 
 
 def test_ci01_guidance_question_with_invented_topic_fails():
-    """RED repro of the production turn: the model produced
-    topic='processo' (not in the owner's guide vocabulary); the owner
-    error is surfaced truthfully but the turn is a failure —
-    ARGUMENT_COMPLETENESS_FAILURE upstream of any domain rejection."""
+    """Without a DISCOVERY peer the READ guide still has no vocabulary
+    injection — invented topic reaches the owner and fails closed."""
     provider = _guide_provider(
         {
             ("docs", "read_guide"): CapabilityProviderError(
@@ -300,16 +307,12 @@ def test_ci01_guidance_question_with_invented_topic_fails():
 
     assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     assert attempt.error_code == "mcp_protocol_error"
-    # The owner really was invoked with the invented value.
+    # No DISCOVERY peer → direct READ invoke with invented value.
     assert provider.calls == [("read_guide", {"topic": "processo"})]
-    # The arguments stage received NO topic vocabulary — the schema
-    # block carries the raw input_schema only; there is no enum and
-    # no discovery evidence to constrain the value.
     arg_requests = _proposal_purpose(model, ARGUMENTS_INSTRUCTION_ID)
     assert len(arg_requests) == 1
     payload = arg_requests[0].input_text
     assert "owner_vocabulary" not in payload
-    assert "available" not in payload
 
 
 def test_ci01_sibling_valid_topic_answers_through_same_path():
