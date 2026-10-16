@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from threading import RLock
 
 from app.domain.governed_write.model import WriteProposalPreview
 
@@ -74,35 +75,63 @@ class PendingWriteStore:
     def __init__(self, *, max_entries: int = MAX_PENDING_WRITES) -> None:
         self._max = max_entries
         self._items: dict[str, PendingWrite] = {}
+        # Process-local critical section: a digest can have only one
+        # winner even when two interactive requests run on threads.
+        self._lock = RLock()
 
     def put(self, record: PendingWrite) -> None:
-        self._evict_expired(time.time())
-        if len(self._items) >= self._max:
-            # Bounded: evict oldest first rather than growing unbounded.
-            oldest = min(
-                self._items,
-                key=lambda k: self._items[k].created_at_epoch,
-            )
-            del self._items[oldest]
-        self._items[record.digest] = record
+        with self._lock:
+            self._evict_expired(time.time())
+            if len(self._items) >= self._max:
+                oldest = min(
+                    self._items,
+                    key=lambda k: self._items[k].created_at_epoch,
+                )
+                del self._items[oldest]
+            self._items[record.digest] = record
 
     def get(self, digest: str) -> PendingWrite | None:
-        record = self._items.get(str(digest or "").strip())
-        if record is None:
-            return None
-        if record.expires_at_epoch <= time.time():
-            del self._items[record.digest]
-            return None
-        return record
+        with self._lock:
+            key = str(digest or "").strip()
+            record = self._items.get(key)
+            if record is None:
+                return None
+            if record.expires_at_epoch <= time.time():
+                self._items.pop(key, None)
+                return None
+            return record
 
     def take(self, digest: str) -> PendingWrite | None:
-        """Single-use consume: a confirmed/rejected write is removed."""
-        record = self.get(digest)
-        if record is not None:
-            del self._items[record.digest]
-        return record
+        """Consume one current record atomically (legacy caller API)."""
+        with self._lock:
+            key = str(digest or "").strip()
+            record = self._items.pop(key, None)
+            if record is None or record.expires_at_epoch <= time.time():
+                return None
+            return record
+
+    def take_if_current(
+        self, digest: str, expected: PendingWrite
+    ) -> PendingWrite | None:
+        """Claim the EXACT previously validated record, once.
+
+        A concurrent replacement of the same digest must not be
+        consumed by a stale decision. Only the caller receiving the
+        expected record may reach material ACT. The lock is deliberately
+        released before owner/network execution.
+        """
+        with self._lock:
+            key = str(digest or "").strip()
+            current = self._items.get(key)
+            if current is not expected:
+                return None
+            if current.expires_at_epoch <= time.time():
+                self._items.pop(key, None)
+                return None
+            return self._items.pop(key)
 
     def _evict_expired(self, now_epoch: float) -> None:
+        # Called under _lock from put().
         expired = [
             key
             for key, record in self._items.items()
