@@ -28,6 +28,7 @@ export function ConversationThreeRegionLayout({
   const [rightOpen, setRightOpen] = useState(false);
   const [compact, setCompact] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const compactRef = useRef(false);
   const contextTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contextRef = useRef<HTMLDivElement | null>(null);
   const leftId = useId();
@@ -40,10 +41,9 @@ export function ConversationThreeRegionLayout({
       const width = host.getBoundingClientRect().width;
       if (width <= 0) return;
       const isCompact = width <= 920;
-      setCompact((wasCompact) => {
-        if (isCompact && !wasCompact) setLeftExpanded(false);
-        return isCompact;
-      });
+      if (isCompact && !compactRef.current) setLeftExpanded(false);
+      compactRef.current = isCompact;
+      setCompact(isCompact);
     };
     sync();
     if (typeof ResizeObserver === "undefined") return;
