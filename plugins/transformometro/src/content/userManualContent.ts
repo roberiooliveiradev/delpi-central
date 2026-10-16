@@ -189,18 +189,19 @@ export const USER_MANUAL_CONTENT = {
       id: "teo",
       title: "TÉO no ChatGPT",
       intro:
-        "Dentro do workspace de um processo, a barra superior mostra a ação TÉO. Ela copia o contexto de navegação atual — processo, melhoria, revisão e seção — para você colar no ChatGPT.",
+        "Dentro do workspace de um processo, o Portal compartilha automaticamente o contexto de navegação atual — processo, melhoria, revisão e seção — com o TÉO no ChatGPT. Você não precisa copiar nem colar nada.",
       bullets: [
         "O contexto é só a localização: identificadores e a seção aberta. Não leva token, permissão nem conteúdo do processo.",
-        "No navegador integrado do ChatGPT para desktop, o portal já oferece o contexto como ferramenta do site — o TÉO descobre onde você está sem copiar nada.",
+        "A ação TÉO na barra superior mostra o que está sendo compartilhado e orienta a conversa — o ChatGPT já recebe o contexto pelo canal do Portal.",
         "O TÉO usa os identificadores para consultar os dados canônicos do Transformômetro. O contexto não concede acesso: quem não pode ver o processo continua sem acesso.",
-        "Mudar de processo, melhoria, revisão ou seção atualiza o contexto — copie de novo se mudar de tela.",
+        "Mudar de processo, melhoria, revisão ou seção atualiza o contexto automaticamente — o TÉO sempre vê a tela atual.",
+        "Se o canal automático não alcançar o seu ChatGPT, a ação TÉO ainda oferece 'Copiar contexto' como alternativa explícita.",
       ],
       links: [
         {
           want: "Analisar o contexto atual com TÉO",
           where: "Workspace do processo",
-          how: "Abra o processo, escolha a melhoria/revisão e a seção, e use TÉO na barra superior. Cole o contexto no ChatGPT.",
+          how: "Abra o processo, escolha a melhoria/revisão e a seção, e use TÉO na barra superior para conferir o contexto compartilhado. Depois é só perguntar no ChatGPT — por exemplo, 'analise este processo'.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],

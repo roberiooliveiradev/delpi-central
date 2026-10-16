@@ -132,10 +132,14 @@ Suporte oficial (documentação OpenAI "Site tools", ago/2026):
 - É projeção do mesmo resolver canônico (`resolveTeoPortalContext`) —
   útil nos ambientes WebMCP; não é mais o canal primário.
 
-## Fallback portátil (clipboard)
+## Fallback explícito (clipboard)
 
-Fora do ambiente com Site tools, a ação **TÉO** na barra superior
-(visível dentro do workspace de processo) copia um payload curto:
+A ação **TÉO** na barra superior (visível dentro do workspace de
+processo) não exige mais copiar/colar: o clique mostra um aviso
+explicando que o contexto já é compartilhado pelo canal canônico e
+orienta a conversa ("analise este processo"). Dentro do aviso, a ação
+secundária **"Copiar contexto"** permanece como fallback explícito para
+ambientes onde o canal automático não alcança o TÉO:
 
 ```text
 TÉO, use este contexto do Portal Transforma+:
@@ -163,8 +167,9 @@ injetado — nenhuma URL é inventada.
   `workspace_context_v1` + PUT/DELETE no Core;
 - `src/integrations/teo/useWorkspaceContextPublisher.ts` — hook que
   publica em eventos semânticos e despublica no unmount;
-- `src/integrations/teo/TeoContextAction.tsx` — ação TÉO (fallback
-  clipboard) no `PortalTopBar`.
+- `src/integrations/teo/TeoContextAction.tsx` — ação TÉO no
+  `PortalTopBar`: aviso contextual ("já compartilhado") + fallback
+  explícito "Copiar contexto".
 
 ## Limites conhecidos
 

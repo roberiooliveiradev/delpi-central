@@ -21,11 +21,14 @@ type TeoContextActionProps = {
 
 /**
  * Ação transversal "TÉO" na barra superior. Visível apenas dentro do
- * workspace de processo. Copia o contexto identificador atual para ser
- * usado com o TÉO no ChatGPT — não é autorização nem dado de domínio.
+ * workspace de processo. O contexto de navegação já é compartilhado
+ * automaticamente pelo canal canônico (workspace_context_v1 no Core +
+ * site tool WebMCP) — o clique apenas explica isso e orienta a conversa.
+ * "Copiar contexto" permanece como fallback explícito dentro do aviso
+ * para ambientes onde o canal automático não alcança o TÉO.
  */
 export function TeoContextAction({ context, view }: TeoContextActionProps) {
-  const { notifySuccess, notifyError } = useFloatingNotice();
+  const { notice, notifySuccess, notifyError } = useFloatingNotice();
 
   if (!context.process_id) return null;
 
@@ -33,9 +36,14 @@ export function TeoContextAction({ context, view }: TeoContextActionProps) {
   const actionLabel = areaLabel
     ? `Analisar ${areaLabel.toLowerCase()} com TÉO`
     : "Analisar com TÉO";
-  const title = `${actionLabel} — copia o contexto atual do Portal para o ChatGPT.`;
+  const title = `${actionLabel} — o TÉO já recebe o contexto atual do Portal automaticamente.`;
 
-  async function handleClick() {
+  const sharedParts = ["processo"];
+  if (context.instance_id) sharedParts.push("melhoria");
+  if (context.revision_id) sharedParts.push("revisão");
+  if (areaLabel) sharedParts.push(`seção ${areaLabel.toLowerCase()}`);
+
+  async function copyContextFallback() {
     try {
       await navigator.clipboard.writeText(buildTeoContextClipboardText(context));
       notifySuccess(
@@ -50,11 +58,28 @@ export function TeoContextAction({ context, view }: TeoContextActionProps) {
     }
   }
 
+  function handleClick() {
+    notice({
+      id: NOTICE_ID,
+      variant: "info",
+      title: "O TÉO já sabe onde você está",
+      message:
+        `O contexto atual do Portal (${sharedParts.join(", ")}) é ` +
+        `compartilhado automaticamente. Abra o TÉO no ChatGPT e pergunte ` +
+        `normalmente — por exemplo, "analise este processo".`,
+      autoDismissMs: null,
+      action: {
+        label: "Copiar contexto",
+        onClick: () => void copyContextFallback(),
+      },
+    });
+  }
+
   return (
     <button
       type="button"
       className={PILL.root}
-      onClick={() => void handleClick()}
+      onClick={handleClick}
       aria-label={title}
       title={title}
     >
