@@ -13784,3 +13784,21 @@ PRODUCT_PRINCIPLE = APPROVED; TECHNICAL_CONTRACT = TO_DESIGN; ARCHITECTURE_DECIS
 STAGE_02_ACCEPTED=NO; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_03_AUTHORIZED=NO
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.180 — DELIA-C3-STAGE-02-B2-EXECUTION-SCOPE-CONTRACT-SECURITY-REVIEW-01 (CONTRACT PROPOSAL; NOT APPROVED)
+
+**MODE:** DOCUMENTATION_ONLY / CONTRACT-FIRST / SECURITY REVIEW. **REPORT:** `corrections/conversational-intelligence-c3/14-execution-scope-contract-security-review.md`. **PRODUCT_PRINCIPLE=APPROVED** remains per §6.179, but **TECHNICAL_CONTRACT=NOT_APPROVED**; no implementation authority.
+
+- **REANCHOR:** Remote main HEAD before review was `b607e604c2b5231cd98211c60daaee510e89d027` (concurrent upstream since prior coordination; review uses relevant canonical 16→50→17→49→51→52→21→20→25→02→24→60/69/70→personality→ledger). Local git status not verified via remote GitHub.
+- **PROVEN EXISTING:** `InteractiveTurnRequest.max_execution_stage` is reduction-only; `_validate_execution_ceiling` fail-closed on invalid values; `_attempt` uses it for PREPARE-only. `_TurnGoal.execution_bound` is model HYPOTHESIS and missing/invalid/incorrect `unrestricted` can allow ACT when owner PREPARE seals confirmation=false. `_attempt_confirmation` branches before goal interpretation, and `plugins/delia/src/App.tsx` sends generated label + structured confirmation. Owner policy §6.140 is independent and preserved.
+- **REUSE GATE:** `EXISTING_EQUIVALENT=YES` for orchestration, request ceiling, PendingWrite/digest confirmation, Policy/Decision and existing UI components. `REUSE_DECISION=REUSE` and `EXTEND_CANDIDATE` only if approved contract. No new planner/LLM gate/tool registry/provider-specific branches/regex approved.
+- **PROPOSED D1 (NOT APPROVED):** independently user-sourced, authenticated, scoped positive ACT-eligibility signal distinguished from LLM goal classification; default natural-language material write without positive scoped signal to PREPARE-only. Preserve owner-declared no-additional-confirmation direct path **only** if positive scoped intent exists and all other gates pass. This could change §6.140 path eligibility and UX; requires Product Master ADR and compatibility review.
+- **PROPOSED D2 (NOT APPROVED):** typed `MESSAGE` vs `CONFIRM_PREPARED`/`REJECT_PREPARED` mutual exclusion; refuse arbitrary contradictory free-text combined with structured CONFIRM; preserve current actor/session/digest/fingerprint/TTL and plan migration for legacy UI-generated `input_text` label.
+- **PROPOSED D3 (NOT APPROVED):** absent/invalid `execution_bound` fail-closed as defense-in-depth, not B2 resolution alone; positive wrong `unrestricted` remains a residual until D1 is addressed.
+- **SECURITY TRADE-OFF:** cannot guarantee arbitrarily negative free-text detection under fallible LLM while auto-ACT is allowed solely from inferred text. User-mode positive scope does not substitute Core/Domain authorization and is itself an authenticated request input requiring validation; do not call a client claim a trusted click proof. If user explicitly picks ACT scope but supplies contradictory text, a true no-risk guarantee needs stronger plan-bound consent or an explicit conflict protocol; neither silently authorized.
+- **EVIDENCE/TEST STATE:** reviewer inspected GitHub source and ledger; no independent test executions or production changes. Harness §6.177 10 strict XFAIL + 6 controls executor reported; real model/ACT outcome `TEST_NOT_RUN`. Phase unchanged, no acceptance. D1/D2/D3 decisions still OPEN.
+
+PRODUCT_PRINCIPLE=APPROVED; D1_SCOPE_CONTRACT=PROPOSED_NOT_APPROVED; D2_CONFIRM_PRECEDENCE=PROPOSED_NOT_APPROVED; D3_FAIL_CLOSED=PROPOSED_NOT_APPROVED
+STAGE_02_ACCEPTED=NO; B2=REWORK; STAGE_03_AUTHORIZED=NO
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
