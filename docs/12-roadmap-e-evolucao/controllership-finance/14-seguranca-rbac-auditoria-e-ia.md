@@ -151,7 +151,9 @@ AuthZ:
 ```text
 authenticated
 AND effective_permission(controllership-finance.access)
+AND Core_corporate_group_or_function_eligibility_for_required_area
 AND reviewer_assignment/resource_scope
+AND current_PackageVersion_and_area_snapshot
 AND package_business_rule
 ```
 
