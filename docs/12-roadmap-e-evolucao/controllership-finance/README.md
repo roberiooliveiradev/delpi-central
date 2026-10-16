@@ -298,3 +298,10 @@ C2 permanece: conclusão apenas com todos os pacotes aplicáveis submetidos, tod
 Os estados `PASS` de freezes acima representam **snapshots históricos**, não autorização vigente. C2 e P5-A..J estão decididos no documento 37, sujeitos aos bloqueios derivados explicitados no 33/34/35. A competência pode encerrar como `MONTHLY_CLOSING_COMPLETED` (regra C2) ou como rejeitada após confirmação formal (P5-I), jamais ambos. Não há permission de reviewer: somente `controllership-finance.access` e `controllership-finance.manage`. O binding Core função/grupo permanece a inventariar.
 
 `PORTAL_DESIGN_FREEZE=REVALIDATE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE`; `TEST_STRATEGY_FREEZE=REVALIDATE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Decisoes PO DEC-01..04 aprovadas — baseline 16/10/2026
+
+**TARGET / PO_APPROVED**. DEC-01: coordenador formal da competencia, com ACCESS efetivo, vinculo operacional, scope e business rule, confirma rejeicao terminal; MANAGE sozinho nao autoriza. DEC-02: rejeicao nao confirmada permanece pendente, exige motivo e pode retornar a esclarecimento/correcao auditavel. DEC-03: nenhuma reversao/retificacao de aceite P5 por UI ou endpoint V1; incidentes tratados fora do fluxo do Portal. DEC-04: MANAGE efetivo + escopo administrativo publica configuracoes de areas obrigatorias por tipo de pacote com auditoria e vigencia prospectiva; snapshots existentes preservados. Decisoes anteriores C2, P5-A..J permanecem compatibilizadas no doc 37. Nao criar permission code adicional.
+
+**TO_INVENTORY:** Core T05 e ligacao do coordenador, configuracao P6 e contratos fisicos P5, eventos/projections/testes, regras aplicaveis no HEAD. **GATE:** DOCUMENTATION_CLOSURE_COMPLETE=NO; IMPLEMENTATION_AUTHORIZED=NO; TEST_NOT_RUN. Flags PASS antigas requerem revalidacao apos rebase.
