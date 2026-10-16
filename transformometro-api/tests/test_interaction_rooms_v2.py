@@ -336,6 +336,40 @@ def test_delete_impact_is_metadata_only():
     assert impact["participant_count"] == 2
     assert "title" not in impact
     assert all("entity_key" not in json for json in [impact])
+    # R-5: protected identifiers never surface on the public preview.
+    assert "active_link_ids" not in impact
+    assert "participant_user_ids" not in impact
+
+
+def test_admin_room_state_is_internal_and_scoped():
+    """Internal governed snapshot: owner/manage authority only, opaque
+    structural ids present (fingerprint/read-back), never member-visible."""
+    cases, _, _, _ = _cases()
+    room = cases.open_standalone(_user(), "Sala", participant_ids=[OTHER])
+    state = cases.admin_room_state(_manager(), room.id)
+    assert state["deleted"] is False
+    assert state["participant_count"] == 2
+    assert set(state["participant_user_ids"]) == {USER, OTHER}
+    # plain member without admin authority is denied
+    with pytest.raises(AuthorizationDenied):
+        cases.admin_room_state(_user(user_id=OTHER), room.id)
+    # a manage-only admin (no content access) is allowed
+    admin = _user(user_id=THIRD, permissions=[MANAGE_PERMISSION])
+    assert cases.admin_room_state(admin, room.id)["room_id"] == room.id
+
+
+def test_membership_active_is_own_participation_only():
+    """Own-participation probe: self=True/False; querying another user's
+    participation is denied — self-knowledge only."""
+    cases, _, _, _ = _cases()
+    room = cases.open_standalone(_user(), "Sala", participant_ids=[OTHER])
+    member = _user(user_id=OTHER)
+    assert cases.membership_active(member, room.id, OTHER) is True
+    cases.remove_participant(_user(), room.id, user_id=OTHER)
+    assert cases.membership_active(member, room.id, OTHER) is False
+    # a member cannot probe someone else's participation
+    with pytest.raises(PermissionError):
+        cases.membership_active(member, room.id, USER)
 
 
 # --- T-12/T-13: admin without access + GLPI failure modes ---------------------

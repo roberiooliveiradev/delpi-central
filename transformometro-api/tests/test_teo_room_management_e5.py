@@ -8,6 +8,7 @@ InteractionRoomUseCases re-authorize and verify read-back.
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -34,6 +35,7 @@ from tm_app.application.governed_writes.proposal_store import (
 from tm_app.application.gpt_actions.openapi_builder import (
     build_gpt_actions_openapi,
 )
+from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.domain.services.interaction_room_access_service import (
     StaleRoomAuthorization,
 )
@@ -74,7 +76,9 @@ def _payload(result):
     return result.structured_content
 
 
-_IMPACT = {
+# Internal governed snapshot (admin authority) — feeds fingerprint and
+# verification only; the opaque ids NEVER appear on a public surface.
+_ADMIN_STATE = {
     "room_id": "room-1",
     "deleted": False,
     "access_scope": "members",
@@ -83,6 +87,16 @@ _IMPACT = {
     "link_roles": ["helpdesk_ticket:primary"],
     "active_link_ids": ["link-1"],
     "participant_user_ids": ["u1"],
+}
+
+# Public R-5 impact projection — counts/types/state only, identifier-free.
+_IMPACT = {
+    "room_id": "room-1",
+    "deleted": False,
+    "access_scope": "members",
+    "protected_content_count": 0,
+    "participant_count": 1,
+    "link_roles": ["helpdesk_ticket:primary"],
 }
 
 
@@ -136,19 +150,21 @@ def test_collaboration_read_actions_cover_v2_reads() -> None:
 def test_add_participant_auto_act_chain_with_impact_read_back() -> None:
     tokens = _user_context()
     try:
-        impact_after = dict(_IMPACT, participant_count=2)
-        impact_after["participant_user_ids"] = ["u1", "u2"]
+        state_after = dict(_ADMIN_STATE, participant_count=2)
+        state_after["participant_user_ids"] = ["u1", "u2"]
         with patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
             tool_bridge._dispatch, "room_impact", return_value=_IMPACT
-        ) as impact, patch.object(
+        ), patch.object(
             tool_bridge._dispatch,
             "room_write",
             return_value={"added": True, "room_id": "room-1", "user_id": "u2"},
         ) as write:
             # Fingerprint must be identical at recompute; verify needs the
-            # member visible — return the same sealed impact at prepare and
-            # recompute, then the post-write impact at verify.
-            impact.side_effect = [_IMPACT, _IMPACT, impact_after]
+            # member visible — same sealed snapshot at prepare/recompute,
+            # then the post-write snapshot at verify.
+            state.side_effect = [_ADMIN_STATE, _ADMIN_STATE, state_after]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="add_participant", room_id="room-1", user_id="u2"
             )
@@ -164,6 +180,10 @@ def test_add_participant_auto_act_chain_with_impact_read_back() -> None:
             write.assert_called_once()
             assert result["data"]["persisted"] is True
             assert result["data"]["postcondition"]["verified"] is True
+            # Public read-back reported to TÉO carries NO protected ids.
+            reported = result["data"]["read_back"]["room_impact"]
+            assert "active_link_ids" not in reported
+            assert "participant_user_ids" not in reported
     finally:
         _reset_context(tokens)
 
@@ -172,7 +192,9 @@ def test_remove_room_link_requires_confirmation() -> None:
     tokens = _user_context()
     try:
         with patch.object(
-            tool_bridge._dispatch, "room_impact", return_value=_IMPACT
+            tool_bridge._dispatch,
+            "room_admin_state",
+            return_value=_ADMIN_STATE,
         ):
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="remove_room_link", room_id="room-1", link_id="link-1"
@@ -192,15 +214,17 @@ def test_remove_room_link_requires_confirmation() -> None:
 def test_delete_room_confirm_and_impact_flip_verified() -> None:
     tokens = _user_context()
     try:
-        deleted = dict(_IMPACT, deleted=True)
+        deleted = dict(_ADMIN_STATE, deleted=True)
         with patch.object(
-            tool_bridge._dispatch, "room_impact"
-        ) as impact, patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
+            tool_bridge._dispatch, "room_impact", return_value=_IMPACT
+        ), patch.object(
             tool_bridge._dispatch,
             "room_write",
             return_value={"id": "room-1", "deleted": True},
         ):
-            impact.side_effect = [_IMPACT, _IMPACT, deleted]
+            state.side_effect = [_ADMIN_STATE, _ADMIN_STATE, deleted]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="delete_room", room_id="room-1"
             )
@@ -219,17 +243,19 @@ def test_delete_room_confirm_and_impact_flip_verified() -> None:
 def test_remove_room_link_verify_via_active_link_ids() -> None:
     tokens = _user_context()
     try:
-        after = dict(_IMPACT)
+        after = dict(_ADMIN_STATE)
         after["active_link_ids"] = []
         after["link_roles"] = []
         with patch.object(
-            tool_bridge._dispatch, "room_impact"
-        ) as impact, patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
+            tool_bridge._dispatch, "room_impact", return_value=_IMPACT
+        ), patch.object(
             tool_bridge._dispatch,
             "room_write",
             return_value={"removed": True, "link_id": "link-1"},
         ):
-            impact.side_effect = [_IMPACT, _IMPACT, after]
+            state.side_effect = [_ADMIN_STATE, _ADMIN_STATE, after]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="remove_room_link", room_id="room-1", link_id="link-1"
             )
@@ -242,37 +268,34 @@ def test_remove_room_link_verify_via_active_link_ids() -> None:
         _reset_context(tokens)
 
 
-def test_self_removal_uses_member_projection_and_denial_proof() -> None:
-    """A plain member removing themselves is not admin — fingerprint comes
-    from the member-readable room, and the verify proof is the resulting
-    access denial (the member is now locked out)."""
+def test_self_removal_uses_membership_probe_and_inactive_proof() -> None:
+    """A plain member removing themselves is not admin — fingerprint and
+    verify run on the caller's own participation state (member authority,
+    no content read, no admin snapshot, no content-access requirement)."""
     tokens = _user_context(user_id="u1")
     try:
-        room = {"id": "room-1", "participants": [{"user_id": "u1"}]}
-        calls = {"n": 0}
-
-        def get_room(*_a, **_k):
-            calls["n"] += 1
-            if calls["n"] <= 2:
-                return room
-            raise PermissionError("not_found")
-
         with patch.object(
-            tool_bridge._dispatch, "get_room", side_effect=get_room
-        ), patch.object(
-            tool_bridge._dispatch, "room_impact"
-        ) as impact, patch.object(
+            tool_bridge._dispatch, "room_membership_active"
+        ) as membership, patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as admin_state, patch.object(
+            tool_bridge._dispatch, "get_room"
+        ) as get_room, patch.object(
             tool_bridge._dispatch,
             "room_write",
             return_value={"removed": True, "user_id": "u1"},
         ):
+            # PREPARE + recompute see the member active; post-write the
+            # authoritative probe reports the membership inactive.
+            membership.side_effect = [True, True, False]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="remove_participant", room_id="room-1", user_id="u1"
             )
             data = _payload(prep)["data"]
-            # Admin-safe impact projection must NOT be consulted for a
-            # non-admin actor.
-            impact.assert_not_called()
+            # Neither the admin snapshot nor a content read is consulted
+            # for a self-removing member.
+            admin_state.assert_not_called()
+            get_room.assert_not_called()
             committed = tool_bridge.tool_commit_proposal(
                 data["proposal"]["handle"], confirmation=True
             )
@@ -283,17 +306,99 @@ def test_self_removal_uses_member_projection_and_denial_proof() -> None:
         _reset_context(tokens)
 
 
+def test_self_removal_verify_fails_when_membership_still_active() -> None:
+    """Participation still active after the write → OUTCOME_VERIFICATION_FAILED,
+    never a false success."""
+    tokens = _user_context(user_id="u1")
+    try:
+        with patch.object(
+            tool_bridge._dispatch, "room_membership_active"
+        ) as membership, patch.object(
+            tool_bridge._dispatch,
+            "room_write",
+            return_value={"removed": True, "user_id": "u1"},
+        ):
+            membership.side_effect = [True, True, True]
+            prep = tool_bridge.tool_prepare_collaboration_change(
+                action="remove_participant", room_id="room-1", user_id="u1"
+            )
+            committed = tool_bridge.tool_commit_proposal(
+                _payload(prep)["data"]["proposal"]["handle"],
+                confirmation=True,
+            )
+            result = _payload(committed)
+            assert result["success"] is False
+            assert (
+                result["data"].get("error_code")
+                == "outcome_verification_failed"
+            )
+    finally:
+        _reset_context(tokens)
+
+
+def test_self_removal_verify_error_is_not_success() -> None:
+    """Infrastructure failure at the participation probe (e.g. database
+    unavailable) is INCONCLUSIVE — it can never be read as proof of
+    removal."""
+    tokens = _user_context(user_id="u1")
+    try:
+        with patch.object(
+            tool_bridge._dispatch, "room_membership_active"
+        ) as membership, patch.object(
+            tool_bridge._dispatch,
+            "room_write",
+            return_value={"removed": True, "user_id": "u1"},
+        ):
+            membership.side_effect = [True, True, ConnectionError("db down")]
+            prep = tool_bridge.tool_prepare_collaboration_change(
+                action="remove_participant", room_id="room-1", user_id="u1"
+            )
+            committed = tool_bridge.tool_commit_proposal(
+                _payload(prep)["data"]["proposal"]["handle"],
+                confirmation=True,
+            )
+            result = _payload(committed)
+            assert result["success"] is False
+    finally:
+        _reset_context(tokens)
+
+
+def test_self_removal_fingerprint_drift_blocks_act() -> None:
+    """Membership already removed between PREPARE and ACT → the sealed
+    fingerprint no longer matches → proposal rejected before any write."""
+    tokens = _user_context(user_id="u1")
+    try:
+        with patch.object(
+            tool_bridge._dispatch, "room_membership_active"
+        ) as membership, patch.object(
+            tool_bridge._dispatch, "room_write"
+        ) as write:
+            membership.side_effect = [True, False]
+            prep = tool_bridge.tool_prepare_collaboration_change(
+                action="remove_participant", room_id="room-1", user_id="u1"
+            )
+            committed = tool_bridge.tool_commit_proposal(
+                _payload(prep)["data"]["proposal"]["handle"],
+                confirmation=True,
+            )
+            result = _payload(committed)
+            assert result["success"] is False
+            write.assert_not_called()
+    finally:
+        _reset_context(tokens)
+
+
 def test_fingerprint_drift_blocks_act() -> None:
     """State changed between PREPARE and ACT → proposal rejected."""
     tokens = _user_context()
     try:
-        drifted = dict(_IMPACT, participant_count=3)
+        drifted = dict(_ADMIN_STATE, participant_count=3)
         with patch.object(
-            tool_bridge._dispatch, "room_impact"
-        ) as impact, patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
             tool_bridge._dispatch, "room_write"
         ) as write:
-            impact.side_effect = [_IMPACT, drifted]
+            state.side_effect = [_ADMIN_STATE, drifted]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="add_participant", room_id="room-1", user_id="u2"
             )
@@ -312,11 +417,11 @@ def test_revocation_between_prepare_and_act_blocks() -> None:
     tokens = _user_context()
     try:
         with patch.object(
-            tool_bridge._dispatch, "room_impact"
-        ) as impact, patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
             tool_bridge._dispatch, "room_write"
         ) as write:
-            impact.side_effect = [_IMPACT, PermissionError("denied")]
+            state.side_effect = [_ADMIN_STATE, PermissionError("denied")]
             prep = tool_bridge.tool_prepare_collaboration_change(
                 action="remove_room_link", room_id="room-1", link_id="link-1"
             )
@@ -332,14 +437,116 @@ def test_revocation_between_prepare_and_act_blocks() -> None:
 
 
 def test_unauthorized_user_cannot_prepare_room_write() -> None:
+    """No owner/manage authority → the admin snapshot probe denies at
+    PREPARE itself (real use-case authority, not a transport check)."""
     tokens = _user_context(permissions=[])
     try:
-        result = tool_bridge.tool_prepare_collaboration_change(
-            action="add_participant", room_id="room-1", user_id="u2"
-        )
-        payload = _payload(result)
-        assert payload["success"] is False
-        assert payload["status_code"] in (401, 403)
+        with patch.object(
+            tool_bridge._dispatch,
+            "room_admin_state",
+            side_effect=GptActionsError("denied", 403),
+        ):
+            result = tool_bridge.tool_prepare_collaboration_change(
+                action="add_participant", room_id="room-1", user_id="u2"
+            )
+            payload = _payload(result)
+            assert payload["success"] is False
+            assert payload["status_code"] in (401, 403)
+    finally:
+        _reset_context(tokens)
+
+
+def test_manage_only_admin_can_prepare_and_act_admin_op() -> None:
+    """P0-1: `transformometro.manage` WITHOUT `transformometro.access`
+    must run the full administrative governed flow — PREPARE fingerprints
+    via the admin snapshot, ACT verifies by read-back."""
+    tokens = _user_context(permissions=["transformometro.manage"])
+    try:
+        state_after = dict(_ADMIN_STATE, participant_count=2)
+        state_after["participant_user_ids"] = ["u1", "u2"]
+        with patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
+            tool_bridge._dispatch, "room_impact", return_value=_IMPACT
+        ), patch.object(
+            tool_bridge._dispatch,
+            "room_write",
+            return_value={"added": True, "room_id": "room-1", "user_id": "u2"},
+        ) as write:
+            state.side_effect = [_ADMIN_STATE, _ADMIN_STATE, state_after]
+            prep = tool_bridge.tool_prepare_collaboration_change(
+                action="add_participant", room_id="room-1", user_id="u2"
+            )
+            data = _payload(prep)["data"]
+            assert data["persisted"] is False
+            committed = tool_bridge.tool_commit_proposal(
+                data["proposal"]["handle"], confirmation=False
+            )
+            result = _payload(committed)
+            assert result["success"] is True
+            write.assert_called_once()
+            assert result["data"]["postcondition"]["verified"] is True
+    finally:
+        _reset_context(tokens)
+
+
+def test_manage_only_admin_blocked_from_content_prepare() -> None:
+    """P0-1 sibling: content capabilities still require
+    `transformometro.access` — a manage-only admin cannot post."""
+    tokens = _user_context(permissions=["transformometro.manage"])
+    try:
+        with patch.object(
+            tool_bridge._dispatch, "get_room"
+        ) as get_room, patch.object(
+            tool_bridge._dispatch, "room_write"
+        ) as write:
+            result = tool_bridge.tool_prepare_collaboration_change(
+                action="post_message", room_id="room-1", content="hi"
+            )
+            payload = _payload(result)
+            assert payload["success"] is False
+            assert payload["status_code"] in (401, 403)
+            get_room.assert_not_called()
+            write.assert_not_called()
+    finally:
+        _reset_context(tokens)
+
+
+def test_admin_op_fingerprint_report_never_leaks_protected_ids() -> None:
+    """P0-2: the admin snapshot feeds the fingerprint (hashed) but the
+    ACT read-back reported to TÉO is the public R-5 projection — no
+    participant/link identifiers and no title ever leave the surface."""
+    tokens = _user_context(permissions=["transformometro.manage"])
+    try:
+        deleted = dict(_ADMIN_STATE, deleted=True)
+        with patch.object(
+            tool_bridge._dispatch, "room_admin_state"
+        ) as state, patch.object(
+            tool_bridge._dispatch,
+            "room_impact",
+            return_value=_IMPACT,
+        ), patch.object(
+            tool_bridge._dispatch,
+            "room_write",
+            return_value={"id": "room-1", "deleted": True},
+        ):
+            state.side_effect = [_ADMIN_STATE, _ADMIN_STATE, deleted]
+            prep = tool_bridge.tool_prepare_collaboration_change(
+                action="delete_room", room_id="room-1"
+            )
+            committed = tool_bridge.tool_commit_proposal(
+                _payload(prep)["data"]["proposal"]["handle"],
+                confirmation=True,
+            )
+            result = _payload(committed)
+            assert result["success"] is True
+            # No protected identifier may appear anywhere in the payload.
+            serialized = json.dumps(result["data"])
+            assert "link-1" not in serialized
+            impact = result["data"]["read_back"]["room_impact"]
+            assert "active_link_ids" not in impact
+            assert "participant_user_ids" not in impact
+            assert "title" not in impact
     finally:
         _reset_context(tokens)
 
@@ -361,7 +568,9 @@ def test_prepare_reports_missing_required_fields() -> None:
     tokens = _user_context()
     try:
         with patch.object(
-            tool_bridge._dispatch, "room_impact", return_value=_IMPACT
+            tool_bridge._dispatch,
+            "room_admin_state",
+            return_value=_ADMIN_STATE,
         ):
             result = tool_bridge.tool_prepare_collaboration_change(
                 action="add_room_link", room_id="room-1"

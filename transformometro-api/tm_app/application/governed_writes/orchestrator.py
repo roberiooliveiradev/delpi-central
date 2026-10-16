@@ -151,8 +151,9 @@ INTERACTION_ROOM_CAPABILITIES = frozenset(
 )
 
 # Administrative room capabilities — fingerprinted/verified through the
-# admin-safe impact projection (delete_impact), never through content
-# reads the actor may not be authorized for.
+# internal admin snapshot (admin_room_state; owner/manage authority),
+# never through content reads the actor may not be authorized for. The
+# public R-5 impact projection stays identifier-free.
 _ROOM_ADMIN_CAPS = frozenset(
     {
         "add_room_link",
@@ -542,7 +543,13 @@ class GovernedWriteOrchestrator:
     def _prep_interaction_room(
         self, request: Request, *, capability: str, args: dict[str, Any]
     ) -> dict[str, Any]:
-        self._dispatch._require_access(request)
+        if capability not in _ROOM_ADMIN_CAPS:
+            # Content and creation capabilities carry the same
+            # `transformometro.access` gate their use cases enforce.
+            # Administrative capabilities do NOT: owner/manage authority
+            # is probed by the fingerprint read below (admin snapshot or
+            # the caller's own participation for self-removal).
+            self._dispatch._require_access(request)
         action = str(args.get("action") or "").strip()
         room_id = str(args.get("room_id") or "").strip()
         message_id = str(args.get("message_id") or "").strip()
@@ -585,17 +592,26 @@ class GovernedWriteOrchestrator:
                 if (
                     capability == "remove_room_participant"
                     and str(args.get("user_id") or "").strip() == actor_id
+                    and actor_id
                 ):
-                    # Governed self-removal by a plain member: the caller
-                    # is not an admin, so the admin-safe impact
-                    # projection would deny. The member-readable room
-                    # projection is the correct drift anchor instead.
+                    # Governed self-removal by a plain member: the
+                    # caller's own participation state is the correct
+                    # drift anchor — member authority, no content read,
+                    # no admin authority.
                     current_fp = fingerprint(
-                        self._dispatch.get_room(request, room_id)
+                        {
+                            "room_id": room_id,
+                            "self_membership": self._dispatch.room_membership_active(
+                                request, room_id, actor_id
+                            ),
+                        }
                     )
                 else:
+                    # owner/manage authority probed by the internal admin
+                    # snapshot; opaque ids are hashed into the fingerprint
+                    # and never surface on a public projection.
                     current_fp = fingerprint(
-                        self._dispatch.room_impact(request, room_id)
+                        self._dispatch.room_admin_state(request, room_id)
                     )
             resource_id = room_id or None
             if capability == "add_room_link":
@@ -1288,12 +1304,18 @@ class GovernedWriteOrchestrator:
             if (
                 cap == "remove_room_participant"
                 and str(change.get("user_id") or "").strip() == actor_id
+                and actor_id
             ):
                 return fingerprint(
-                    self._dispatch.get_room(request, str(change["room_id"]))
+                    {
+                        "room_id": str(change["room_id"]),
+                        "self_membership": self._dispatch.room_membership_active(
+                            request, str(change["room_id"]), actor_id
+                        ),
+                    }
                 )
             return fingerprint(
-                self._dispatch.room_impact(request, str(change["room_id"]))
+                self._dispatch.room_admin_state(request, str(change["room_id"]))
             )
         if cap in {"post_interaction_message", "mark_interaction_read"}:
             return fingerprint(
@@ -1627,9 +1649,10 @@ class GovernedWriteOrchestrator:
     ) -> dict[str, Any]:
         """Authoritative read-back for administrative room writes (E5).
 
-        Uses the admin-safe impact projection — a manager without content
-        read must never receive room content back. Self-removal by a
-        plain member is proven by the access denial itself."""
+        Verifies against the internal admin snapshot (owner/manage
+        authority — opaque ids never returned) and reports the public
+        R-5 impact projection. Self-removal is proven by the membership
+        probe returning inactive — errors propagate, never succeed."""
         change = proposal.exact_change
         cap = proposal.capability
         room_id = str(change.get("room_id") or "")
@@ -1643,42 +1666,58 @@ class GovernedWriteOrchestrator:
                 data={"write_result": write_result},
             )
 
-        if cap == "remove_room_participant" and str(
-            change.get("user_id") or ""
-        ) == actor_id:
-            try:
-                self._dispatch.get_room(request, room_id)
-            except Exception:  # noqa: BLE001 — denial is the proof
-                return {"room_id": room_id, "self_removed": True}
-            raise _fail("room still readable after self-removal")
+        if (
+            cap == "remove_room_participant"
+            and str(change.get("user_id") or "") == actor_id
+            and actor_id
+        ):
+            # Self-removal is proven by the authoritative participation
+            # probe — membership must be inactive. Any error (infra,
+            # unavailability, inconclusive response) propagates as a
+            # verification failure; it is NEVER interpreted as success.
+            if self._dispatch.room_membership_active(
+                request, room_id, actor_id
+            ):
+                raise _fail("membership still active after self-removal")
+            return {
+                "room_id": room_id,
+                "self_removed": True,
+                "write_result": write_result,
+            }
 
-        impact = self._dispatch.room_impact(request, room_id)
+        # Verify against the internal admin snapshot (opaque ids stay
+        # off the returned payload) and report back the public R-5
+        # impact projection only.
+        state = self._dispatch.room_admin_state(request, room_id)
         if cap == "add_room_link":
             link_id = str((write_result or {}).get("id") or "")
-            if not link_id or link_id not in impact.get("active_link_ids", []):
+            if not link_id or link_id not in state.get("active_link_ids", []):
                 raise _fail("link absent from active set")
         elif cap == "remove_room_link":
-            if str(change.get("link_id") or "") in impact.get(
+            if str(change.get("link_id") or "") in state.get(
                 "active_link_ids", []
             ):
                 raise _fail("link still active")
         elif cap == "add_room_participant":
-            if str(change.get("user_id") or "") not in impact.get(
+            if str(change.get("user_id") or "") not in state.get(
                 "participant_user_ids", []
             ):
                 raise _fail("participant absent")
         elif cap == "remove_room_participant":
-            if str(change.get("user_id") or "") in impact.get(
+            if str(change.get("user_id") or "") in state.get(
                 "participant_user_ids", []
             ):
                 raise _fail("participant still active")
         elif cap == "delete_interaction_room":
-            if not impact.get("deleted"):
+            if not state.get("deleted"):
                 raise _fail("room not deleted")
         elif cap == "restore_interaction_room":
-            if impact.get("deleted"):
+            if state.get("deleted"):
                 raise _fail("room still deleted")
-        return {"room_impact": impact, "write_result": write_result}
+        return {
+            "room_impact": self._dispatch.room_impact(request, room_id),
+            "write_result": write_result,
+        }
 
     @staticmethod
     def _extract_id(entity: str, row: Any) -> str | None:

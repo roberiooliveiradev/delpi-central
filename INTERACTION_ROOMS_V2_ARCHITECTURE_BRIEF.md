@@ -708,3 +708,36 @@ schema_migrations on target, PG regression on final schema, Keycloak +
 GLPI authenticated integration, mandatory admin audit (outbox),
 end-to-end GPT Actions smoke, published OpenAPI validation, and a
 manual GPT Builder re-import of the updated schema.
+
+### E5 correction — AuthZ, privacy & outcome verification
+
+Three P0 fixes against `6fd50b2657`, same SHA set:
+
+1. **PREPARE authority split** — `_prep_interaction_room` no longer
+   gates every room capability behind `transformometro.access`.
+   Content/creation capabilities keep that gate (matching their use
+   cases); `_ROOM_ADMIN_CAPS` instead probe owner/manage authority via
+   the internal admin snapshot at fingerprint time, and self-removal
+   probes the caller's own participation (`membership_active`).
+   Manage-only admins now PREPARE/ACT administrative ops; members can
+   self-remove without `transformometro.access`.
+2. **Protected identifiers out of `delete_impact`** — the public R-5
+   preview is restored to counts/types/roles/administrative state only
+   (no `active_link_ids`, no `participant_user_ids`, verified in the
+   HTTP contract test). Fingerprints and read-back verification moved
+   to the new internal `admin_room_state` (same owner/manage
+   authority); the ACT read-back reported to TÉO is the public
+   projection — ids stay hashed inside fingerprints, never returned.
+3. **Self-removal false success** — `_verify_room_admin` no longer
+   treats `get_room` exceptions as proof. The authoritative
+   `membership_active` probe must report inactive; a still-active
+   membership raises `outcome_verification_failed`, and infra errors
+   propagate as inconclusive — never success.
+
+Tests: `test_teo_room_management_e5.py` grew to 22 contract tests via
+`tool_bridge` (manage-only PREPARE+ACT, content denied for manage-only,
+self-removal drift/verify/inconclusive, identifier-leak assertions);
+`test_interaction_rooms_v2.py` covers `admin_room_state` /
+`membership_active` authorities and the R-5 field absences; the HTTP
+projection test asserts identifier absence. Full suite: 1782 passed +
+the same 10 pre-existing baseline failures.

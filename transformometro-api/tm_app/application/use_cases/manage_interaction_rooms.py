@@ -530,9 +530,30 @@ class InteractionRoomUseCases:
                     if item.active
                 }
             ),
-            # Opaque structural identifiers (uuids only — no entity_key,
-            # no title) so governed transports can run authoritative
-            # read-back without content access.
+        }
+
+    def admin_room_state(self, user: Any, room_id: str) -> dict[str, Any]:
+        """Internal governed snapshot for orchestrator fingerprint and
+        read-back verification — same owner/manage authority as
+        ``delete_impact``, plus opaque structural identifiers (uuids
+        only). NEVER routed to a public surface: participant ids and
+        link ids stay off the R-5 administrative preview contract."""
+        room = self._admin_room_raw(user, room_id)
+        return {
+            "room_id": room.id,
+            "deleted": room.deleted_at is not None,
+            "access_scope": room.access_scope,
+            "protected_content_count": self._repo.protected_content_count(room.id),
+            "participant_count": len(
+                [p for p in room.participants if p.removed_at is None]
+            ),
+            "link_roles": sorted(
+                {
+                    f"{item.entity_type}:{item.link_role}"
+                    for item in room.links
+                    if item.active
+                }
+            ),
             "active_link_ids": sorted(
                 item.id for item in room.links if item.active
             ),
@@ -542,6 +563,19 @@ class InteractionRoomUseCases:
                 if item.removed_at is None
             ),
         }
+
+    def membership_active(self, user: Any, room_id: str, user_id: str) -> bool:
+        """Own-participation probe — the caller may only ever inspect
+        their own participation state (self-knowledge: no disclosure, no
+        admin authority required). Feeds governed self-removal verify."""
+        self._policy._require_user(user)
+        actor = _actor(user)
+        target = normalize_user_id(str(user_id), field="O participante")
+        if target != actor:
+            raise PermissionError("Só é possível consultar a própria participação.")
+        return self._repo.is_participant(
+            str(normalize_uuid(room_id, label="A sala")), target
+        )
 
     def delete_room(self, user: Any, room_id: str) -> InteractionRoom:
         """Logical delete — history persists; primary claims release so a

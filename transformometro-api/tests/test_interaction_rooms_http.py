@@ -455,7 +455,14 @@ def test_delete_impact_is_metadata_only_for_manage_only_admin(env):
     )
     assert resp.status_code == 200
     data = _data(resp)
-    for leaked in ("title", "processo_nome", "processo_codigo", "participants"):
+    for leaked in (
+        "title",
+        "processo_nome",
+        "processo_codigo",
+        "participants",
+        "active_link_ids",
+        "participant_user_ids",
+    ):
         assert leaked not in data
     assert data["room_id"] == room["id"]
     assert "protected_content_count" in data

@@ -2379,9 +2379,32 @@ class GptActionsDispatchService:
             raise self._map_task_room_exc(exc) from exc
 
     def room_impact(self, request: Request, room_id: str) -> dict[str, Any]:
-        """Admin-safe delete/impact preview — counts and opaque ids only."""
+        """Admin-safe delete/impact preview — R-5 public contract:
+        counts, types/roles and administrative state only (no
+        identifiers, no title, no content)."""
         try:
             return self._rooms.delete_impact(request.state.user, str(room_id))
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    # Internal governed probes — orchestrator fingerprint / authoritative
+    # read-back ONLY. Never reachable through collaboration_read actions.
+
+    def room_admin_state(self, request: Request, room_id: str) -> dict[str, Any]:
+        try:
+            return self._rooms.admin_room_state(request.state.user, str(room_id))
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def room_membership_active(
+        self, request: Request, room_id: str, user_id: str
+    ) -> bool:
+        try:
+            return bool(
+                self._rooms.membership_active(
+                    request.state.user, str(room_id), str(user_id)
+                )
+            )
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 
