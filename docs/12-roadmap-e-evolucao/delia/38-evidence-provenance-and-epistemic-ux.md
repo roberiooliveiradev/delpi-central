@@ -157,3 +157,31 @@ DÉLIA é owner da coordenação/intelligence Evidence que C0 atribuir a ela. A 
 ## 15. Gate
 
 Sem prova no SHA/config avaliado, o status é `PENDING/INCONCLUSIVE`, nunca PASS documental.
+
+
+## 12. Direção visual — EvidenceDetails / ProvenanceDetails
+
+O inventário no HEAD `7ff31715f4b0eb3b5531510bfce7a6f4e794cd36` confirma que a DÉLIA hoje apresenta provenance/evidência de forma local em `plugins/delia/src/ui/DeliaAssistantMessage.tsx`, incluindo linha de fonte, classificação epistêmica, fonte/especialista/protocolo observado e limitações.
+
+A direção visual detalhada e o reuse gate ficam congelados em [80 — EvidenceDetails / Provenance Details](./80-evidence-details-provenance-visual-specification.md).
+
+Decisão de design corrente:
+
+```text
+CURRENT_LOCAL_IMPLEMENTATION = PROVEN
+SHARED_FULL_EQUIVALENT = NO
+DetailFieldGrid = PARTIAL / REUSE_CANDIDATE
+DetailCard = PARTIAL / DO_NOT_REUSE_AS_SURFACE
+InfoStatePanel = PARTIAL / DO_NOT_REUSE_AS_SURFACE
+EvidenceDetails = DESIGN_SPECIFIED / NOT_IMPLEMENTED
+```
+
+Princípios:
+
+- evidência explica por que uma resposta pode ser verificada; não expressa quão "confiante" o modelo se sente;
+- `OBSERVATION`, `FACT`, `CALCULATION`, `HYPOTHESIS`, `CONCLUSION` e `RECOMMENDATION` são classes semânticas, não uma escala ordinal de qualidade;
+- evitar badges verdes/vermelhos que impliquem "bom/ruim", "certo/errado" ou autorização;
+- fonte material deve permanecer legível sem exigir expansão;
+- limitação material não deve ficar escondida apenas dentro de disclosure fechado;
+- detalhes técnicos devem permanecer subordinados e só aparecer quando legítimos para o usuário;
+- autorização, atividade, confirmação, erro e business outcome permanecem em seus componentes/owners próprios.
