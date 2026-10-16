@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Verificação pós-merge (vigor atual):** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+
 **TARGET / DOCUMENTATION_CLOSURE_PHASE ACTIVE**
 
 ```text
