@@ -14106,3 +14106,22 @@ NEXT=INDEPENDENT_REVIEW_R3
 B1=PASS_STRUCTURAL+PARTIAL_LIVE; B2=CODE_ACCEPT_WITH_RESIDUAL+REGRESSION_GREEN; LIVE_MODEL_EVAL=PARTIAL_PASS_SAFE; BROWSER_QA=TEST_NOT_RUN
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_ACCEPTANCE_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.199 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R3-INDEPENDENT-CLOSURE-01 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-16. **MODE:** independent review — code/contract/tests/SSH read-only; no redeploy; no B2 runtime. **REVIEWED_DELIVERY:** `444e03d7d2`. **REANCHOR_HEAD:** `08f0bd1041` (= origin/main; +1 posterior Stage02 docs only — no sanitizer drift). **REPORT:** [89](../89-presentation-v2-g1-g2-r3-independent-closure-review.md). Concurrent `transformometro-api` WIP preserved.
+
+- **R3 SCOPE:** confirmed 10 files; runtime delta = +`"token"` in `_SENSITIVE_KEY_NAMES`; no ConversationMarkdown/presentation.v2/Domain/Portal/ACT.
+- **R3-01 TOKEN:** ACCEPT — owner confirmed; RED→GREEN reexecuted; nested+business preserve PASS; in-container PASS (`SYNTH-*` fixtures).
+- **R3-02 L1:** ACCEPT as TO_INVENTORY — `mural_acessos` contract real; zero delia-api binding; `_TRANSPORT_FORBIDDEN` intact; emission BLOCKED.
+- **R3-03 FALLBACK:** ACCEPT — §2.5/§2.9/§6 consistent; extra props → `neutral_error` (jsonschema+policy probe).
+- **G1/G2:** ACCEPT_WITH_RESIDUAL (textual contract + reuse matrix); renderer security TEST_NOT_RUN; G3 BLOCKED.
+- **TESTS (independent, SHA 08f0bd1041):** targeted 151 PASS; full 1178 PASS; jsonschema 4.26.0 Draft2020-12 4+17; plugin-ui 175/175; delia 191/191; delia tsc CLEAN; plugin-ui tsc 31 pre-existing outside R3 diff; BUILD/FEDERATION=TEST_NOT_RUN.
+- **SSH:** BatchMode PASS; checkout `08f0bd1041`; image `sha256:d149abbdebb…` healthy; gateway health 200; RUNTIME_TOKEN_REDACTION=PASS; DEPLOYED_BUILD_SHA NOT_LABELED → provenance CORRELATED_INCOMPLETE.
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL`. CP-333=PLANNED_NOT_PASS. PHASE_PROGRESSION=NONE.
+- **NEXT bounded (Markdown B2 track only):** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01`. Global phase NEXT unchanged.
+
+R3_SECURITY=ACCEPT; R3_TESTS=ACCEPT; R3_SSH=ACCEPT_WITH_RESIDUAL
+G1=ACCEPT_WITH_RESIDUAL; G2=ACCEPT_WITH_RESIDUAL; G3=BLOCKED; G4=TEST_NOT_RUN
+LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY; NAVIGABLE_LINK_EMISSION=BLOCKED
+RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO; C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO

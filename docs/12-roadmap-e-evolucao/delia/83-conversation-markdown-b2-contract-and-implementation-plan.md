@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_INDEPENDENT_REVIEW=REWORK / RUNTIME_NOT_AUTHORIZED`  
+**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED`
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
@@ -75,6 +75,25 @@ Task `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R3-FINAL-CLOSURE` (relatório [88]
 3. **R3-03:** doc 84 §2.9/§6 reconciliados com §2.5 — v2 estruturalmente inválido (incl. `additionalProperties`) → `neutral_error`, **não** fallback legado. Probe versionado. Runtime `parsePresentation` inalterado.
 
 - Estado pós-R3: `G1=CANDIDATE_REWORKED` / `G2=CANDIDATE_REWORKED` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `TOKEN_REDACTION_STATUS=CLOSED_R3_01` / `FALLBACK_CONTRACT_STATUS=RECONCILED_R3_03` / `LINK_L1_CONTRACT=SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `CP-333=PLANNED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO` / `INDEPENDENT_REVIEW=PENDING`.
+
+### 0.6 Independent closure R3 / G1+G2 (2026-10-16)
+
+Revisão independente [89](./89-presentation-v2-g1-g2-r3-independent-closure-review.md) sobre o delivery R3 `444e03d7d2` no HEAD `08f0bd1041`:
+
+| Dimensão | Veredito |
+|---|---|
+| R3 security fix (`token`) | `ACCEPT` — código + testes + comportamento no container |
+| R3 fallback / schema consistency | `ACCEPT` |
+| R3 SSH deploy provenance | `ACCEPT_WITH_RESIDUAL` — redação provada; image sem label git SHA |
+| G1 contract candidate | `ACCEPT_WITH_RESIDUAL` — envelope textual pronto; emissão de links bloqueada |
+| G2 security/reuse candidate | `ACCEPT_WITH_RESIDUAL` — matriz REUSE/EXTEND/NEW aceita; renderer não implementado |
+| G3 / runtime B2 | **BLOCKED** |
+| CP-333 | `PLANNED_NOT_PASS` |
+
+**Separação:** aceite do fix R3 ≠ autorização de `presentation.v2` runtime ≠ autorização G3.
+
+- Estado pós-review: `G1=ACCEPT_WITH_RESIDUAL` / `G2=ACCEPT_WITH_RESIDUAL` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `NAVIGABLE_LINK_EMISSION=BLOCKED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO` / `PHASE_PROGRESSION=NONE`.
+- **NEXT bounded (trilha Markdown B2):** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01`.
 
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 

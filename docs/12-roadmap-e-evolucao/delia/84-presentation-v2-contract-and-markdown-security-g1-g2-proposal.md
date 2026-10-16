@@ -1,8 +1,8 @@
 # 84 — Proposta `presentation.v2` e Reuse/Security Review de Markdown (G1/G2)
 
-**Status:** `G1_CONTRACT_PROPOSAL=CANDIDATE_REWORKED_R3 / G2_REUSE_SECURITY=CANDIDATE_REWORKED_R3 / RUNTIME_B2_NOT_AUTHORIZED`
+**Status:** `G1=ACCEPT_WITH_RESIDUAL / G2=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED` (review independente doc 89)
 
-**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → R1 (doc 86) → R2 (doc 87) → R3 (doc 88)
+**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → R1 (doc 86) → R2 (doc 87) → R3 (doc 88) → independent closure (doc 89)
 **BASE_HEAD R1:** `c3e090ac70977e81fbf7bdd47a391683ab6199cd`
 **CP:** `CP-333` (matriz 25 — `PLANNED`, não PASS)
 **Tipo:** proposta G1/G2 + fechamento bounded R3-01 (sanitização `token` no owner existente). `presentation.v2` / `ConversationMarkdown` / emissão de links **não** ativados.
