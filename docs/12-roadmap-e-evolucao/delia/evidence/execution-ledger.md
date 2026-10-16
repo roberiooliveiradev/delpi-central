@@ -13838,3 +13838,19 @@ ADR_ARTIFACT_REVIEW=ACCEPT_WITH_RESIDUAL; ADR_TECHNICAL_CONTRACT=NOT_APPROVED; D
 B1=PASS_STRUCTURAL; B2=REWORK; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.183 — DELIA-C3-STAGE-02-B2-TEXT-ONLY-ACT-SCOPE-PRODUCT-DECISION-01 (PRODUCT RULE APPROVED, TECH CONTRACT NOT APPROVED)
+
+**DATA:** 2026-10-16. **MODE:** Product Master approval / DOCUMENTATION_ONLY. **DOC:** `corrections/conversational-intelligence-c3/17-product-decision-text-only-prepare-until-scoped-execution-choice.md`. Based on approved product principle §6.179, ADR candidate §6.181, independent review §6.182.
+
+- **EXPLICIT APPROVAL:** Product Master answered "concordo" to: "para pedidos feitos somente por texto livre, a DÉLIA pode preparar tudo automaticamente, mas deve obter uma escolha explícita de execução vinculada à operação antes de aplicar a mudança?". **APPROVED D1 PRODUCT RULE:** text-only requests with no valid explicit operation-bound execution choice may investigate/READ/ANALYZE/PREPARE subject to gates, but material ACT must not proceed solely on fallible model inference.
+- **DISTINCT BOUNDARIES:** user execution choice is an ACT-eligibility precondition, not Core/Domain permission and not owner-required additional confirmation (§6.140); `PREPARE_ONLY` and `max_execution_stage='prepare'` dominate. Owner `explicit_user_confirmation=false` retains meaning. Governed direct ACT may remain possible with properly scoped positive evidence and all other gates — its future exact contract is pending.
+- **NOT APPROVED:** detailed D1 wire semantics (`ACT_ELIGIBLE`, authenticated client signal validation, operation binding, UX), D2 typed COMMAND/CONFIRM/REJECT, G1 conflicting text versus typed ACT, D3 fail-closed bound, G2/G4/G5 origin/compatibility, any runtime/provider/owner policy changes or universal confirmation. The user approval does not freeze ADR 15/ALT-A as written.
+- **REUSE GATE:** EXISTING_EQUIVALENT=YES (`max_execution_stage`, orchestrator, `PendingWrite` and structured confirmation, existing policy/UI); REUSE_DECISION=REUSE/EXTEND candidate, NEW not authorized without inventory/contract.
+- **EVIDENCE:** Stage02R2 10 strict-xfail safety defects + 6 passing fake controls reported by executor (§6.177). This entry only records product decision, not tests executed or B2 fixed. Independent tests REAL_MODEL=TEST_NOT_RUN.
+- **NEXT:** return to coordination to resolve G1–G5 and D1 technical/D2/D3 with a revised ADR and explicit technical contract approval; no implementation or Stage 03 authorization.
+
+PRODUCT_RULE_TEXT_ONLY_PREPARE_UNTIL_OPERATION_BOUND_EXECUTION_CHOICE=APPROVED; D1_PRODUCT_DIRECTION=APPROVED_NARROW_SCOPE
+D1_TECHNICAL_CONTRACT=NOT_APPROVED; D2_D3=DECISION_REQUIRED; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
