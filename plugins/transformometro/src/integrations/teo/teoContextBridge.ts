@@ -94,8 +94,11 @@ export function resetTeoContextSiteToolRegistration() {
 
 /**
  * Registra a site tool WebMCP quando o ambiente suporta (ChatGPT desktop,
- * built-in browser). Retorna false quando não há `modelContext` — o Portal
- * continua funcional e o fallback manual (copiar contexto) cobre o resto.
+ * built-in browser). A tool é opcional: sem `modelContext` retorna false e
+ * o Portal continua funcional — o canal canônico de Workspace Context
+ * server-side é independente do WebMCP. Não existe fallback automático de
+ * clipboard; quando necessário, o usuário informa o código do processo
+ * explicitamente na conversa com o TÉO.
  */
 export function registerTeoContextSiteTool(options?: {
   signal?: AbortSignal;
