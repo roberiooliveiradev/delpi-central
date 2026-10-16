@@ -27,10 +27,17 @@ def _cache_key(scope: str, params: tuple, extra: tuple = ()) -> str:
     return "|".join(parts)
 
 
+def _period_escape_extra(filters: dict[str, Any]) -> tuple:
+    """O flag muda o SQL (a cláusula OR), não os params — entra no cache key."""
+    return (
+        str(filters.get("include_in_production_outside_period")),
+    )
+
+
 class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
     def get_work_centers(self, **filters: Any) -> list[dict[str, Any]]:
         query, params = build_work_centers_query(**filters)
-        key = _cache_key("work-centers", params)
+        key = _cache_key("work-centers", params, _period_escape_extra(filters))
         cached = build_query_cache().get(key)
         if isinstance(cached, list):
             return cached
@@ -42,7 +49,9 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
 
     def count_operations(self, **filters: Any) -> int:
         query, params = build_operations_count_query(**filters)
-        key = _cache_key("operations-count", params)
+        key = _cache_key(
+            "operations-count", params, _period_escape_extra(filters)
+        )
         cached = build_query_cache().get(key)
         if isinstance(cached, int):
             return cached
@@ -64,7 +73,9 @@ class MachineLoadRepository(BaseRepository, MachineLoadRepositoryPort):
         query, params = build_operations_query(
             sort=sort, offset=offset, page_size=page_size, **filters
         )
-        key = _cache_key("operations", params, (sort,))
+        key = _cache_key(
+            "operations", params, (sort, *_period_escape_extra(filters))
+        )
         cached = build_query_cache().get(key)
         if isinstance(cached, list):
             return cached

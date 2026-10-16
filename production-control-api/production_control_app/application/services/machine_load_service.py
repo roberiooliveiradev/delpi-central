@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from production_control_app.core.security import PC_MACHINE_LOAD_VIEW, can
 from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotFound
@@ -37,7 +37,8 @@ from production_control_app.domain.services.machine_load_priority import (
     prioritize_conjunto as prioritize_conjunto_in_queue,
 )
 from production_control_app.domain.services.machine_load_queue_slots import (
-    is_started_operation,
+    ProtectedOperationKey,
+    protected_operation_key,
 )
 from production_control_app.domain.services.machine_load_transfer import (
     TRANSFERRED_OPERATIONS_KEY,
@@ -262,6 +263,7 @@ class MachineLoadService:
         branch_access: BranchAccessService | None = None,
         change_notifier: Callable[..., None] | None = None,
         list_open_runs: Callable[[str], list[dict[str, Any]]] | None = None,
+        open_run_items: Callable[..., list[dict[str, Any]]] | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
@@ -269,6 +271,7 @@ class MachineLoadService:
         self._branch_access = branch_access or BranchAccessService()
         self._change_notifier = change_notifier
         self._list_open_runs = list_open_runs
+        self._open_run_items = open_run_items
 
     def resolve_delivery_window(
         self,
@@ -869,7 +872,8 @@ class MachineLoadService:
     ) -> dict[str, Any]:
         """Leva todas as OPs do conjunto (C2_NUM) ao topo da fila de cada centro.
 
-        Operações já iniciadas não são ultrapassadas: o conjunto entra logo depois delas.
+        Operações com run aberto no cockpit não são ultrapassadas: o conjunto
+        entra logo depois delas. Status HZA/flags do snapshot não protegem.
         """
         self._assert_can_view(user, branch)
         cfg = _machine_load_settings()
@@ -901,13 +905,11 @@ class MachineLoadService:
         ):
             raise ValueError(template_not_in_queue.format(conjunto=conjunto_key))
 
-        # O status vivo (HZA) decide quem já começou; o snapshot congelado guarda só a ordem.
-        # Chamada externa fora da transação: o lock do WORKING não pode esperar HTTP.
-        started_keys = {
-            _operation_key(item)
-            for item in self._enrich_live_status(branch=branch, operations=operations)
-            if is_started_operation(item)
-        }
+        # Quem trava posição é o run aberto no cockpit (fonte oficial local) —
+        # nunca o status HZA nem flags congeladas no snapshot. A leitura fica
+        # fora da transação e qualquer falha propaga como erro controlado:
+        # sequenciar com proteção vazia seria corromper a fila.
+        protected_keys = self._protected_operation_keys(branch=branch)
 
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
             stored = payload_operations(locked_payload)
@@ -923,7 +925,7 @@ class MachineLoadService:
             result = prioritize_conjunto_in_queue(
                 visible,
                 conjunto_key=conjunto_key,
-                started_keys=started_keys,
+                protected_keys=protected_keys,
             )
             visible_keys = [_operation_key(item) for item in visible]
             if not result.work_centers or [
@@ -999,7 +1001,8 @@ class MachineLoadService:
         """Resequencia a fila de todos os centros pela entrega do PA (+critérios).
 
         O carga máquina do TOTVS às vezes deixa material de entrega distante à
-        frente do que está vencendo. Operações já iniciadas continuam onde estão.
+        frente do que está vencendo. Operações com run aberto no cockpit
+        continuam onde estão.
         """
         self._assert_can_view(user, branch)
         cfg = _machine_load_settings()
@@ -1022,13 +1025,11 @@ class MachineLoadService:
         if not operations:
             raise ValueError(template_empty_queue)
 
-        # O status vivo (HZA) decide quem já começou; o snapshot guarda só a ordem.
-        # Chamada externa fora da transação: o lock do WORKING não pode esperar HTTP.
-        started_keys = {
-            _operation_key(item)
-            for item in self._enrich_live_status(branch=branch, operations=operations)
-            if is_started_operation(item)
-        }
+        # Quem trava posição é o run aberto no cockpit (fonte oficial local) —
+        # nunca o status HZA nem flags congeladas no snapshot. A leitura fica
+        # fora da transação e qualquer falha propaga como erro controlado:
+        # sequenciar com proteção vazia seria corromper a fila.
+        protected_keys = self._protected_operation_keys(branch=branch)
 
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
             stored = payload_operations(locked_payload)
@@ -1039,7 +1040,7 @@ class MachineLoadService:
                     template_empty_queue
                 )
             result = optimize_machine_load_queue(
-                visible, criteria=criteria, started_keys=started_keys
+                visible, criteria=criteria, protected_keys=protected_keys
             )
             visible_keys = [_operation_key(item) for item in visible]
             if not result.work_centers or [
@@ -2012,6 +2013,10 @@ class MachineLoadService:
         page_size = _as_int(cfg.get("operationsPageSize"), 300)
         start_s = start.isoformat() if start else None
         end_s = end.isoformat()
+        # Exceção de período oficial: o escape HZA é desligado e quem sustenta a
+        # inclusão fora da janela são os runs abertos do cockpit — OP antiga com
+        # apontamento abandonado no coletor não volta para a fila nova.
+        outside_period_operations = self._open_run_operation_pairs(branch=branch)
 
         try:
             centers_payload = _unwrap_data(
@@ -2019,6 +2024,8 @@ class MachineLoadService:
                     branch=branch,
                     delivery_start=start_s,
                     delivery_end=end_s,
+                    include_in_production_outside_period=False,
+                    include_operations_outside_period=outside_period_operations,
                 )
             )
         except DelpiGatewayError:
@@ -2034,6 +2041,7 @@ class MachineLoadService:
             delivery_start=start_s,
             delivery_end=end_s,
             page_size=page_size,
+            include_operations_outside_period=outside_period_operations,
         )
         summary = centers_payload.get("summary")
         summary_dict = summary if isinstance(summary, dict) else {}
@@ -2060,6 +2068,7 @@ class MachineLoadService:
         delivery_start: str | None,
         delivery_end: str,
         page_size: int,
+        include_operations_outside_period: Sequence[str] = (),
     ) -> list[dict[str, Any]]:
         page = 1
         collected: list[dict[str, Any]] = []
@@ -2072,6 +2081,15 @@ class MachineLoadService:
                         delivery_start=delivery_start,
                         delivery_end=delivery_end,
                         work_center=None,
+                        # Cronologia pura do SH8: quem está «em produção» é o run
+                        # do cockpit, não o apontamento HZA — a fila nova não pode
+                        # herdar a prioridade por coletor do sort legado nem
+                        # incluir OPs antigas por apontamento abandonado.
+                        sort="schedule_no_status_asc",
+                        include_in_production_outside_period=False,
+                        include_operations_outside_period=(
+                            include_operations_outside_period
+                        ),
                         page=page,
                         page_size=page_size,
                     )
@@ -2314,6 +2332,68 @@ class MachineLoadService:
                     merged["production_started_time"] = started_at.strftime("%H:%M")
             projected.append(merged)
         return projected
+
+    def _protected_operation_keys(self, *, branch: str) -> set[ProtectedOperationKey]:
+        """Operações que nenhuma reordenação pode ultrapassar: runs abertos do cockpit.
+
+        Fonte oficial única — a projeção canônica da Etapa 01
+        (``MachineLoadCockpitStatusService.open_run_items``), lida do PostgreSQL
+        local em consulta única por filial. Todo run aberto protege: producing,
+        stopped, paused e também ``unknown``/``inconsistent`` — inconsistência
+        nunca libera a posição nem é classificada como produção; ela é logada
+        para diagnóstico sem dados pessoais. Falha da consulta propaga como
+        erro controlado — a mutação nunca roda com proteção vazia nem com
+        fallback HZA.
+        """
+        if self._open_run_items is None:
+            raise RuntimeError(
+                "Fonte oficial de execução do cockpit não configurada."
+            )
+        items = self._open_run_items(branch=branch)
+        keys: set[ProtectedOperationKey] = set()
+        for item in items:
+            keys.add(protected_operation_key(item))
+            if item.get("integrity_status") == "inconsistent":
+                logger.warning(
+                    "machine_load_protection_inconsistent_run",
+                    extra={
+                        "branch": branch,
+                        "work_center": item.get("work_center"),
+                        "production_order": item.get("production_order"),
+                        "operation_code": item.get("operation_code"),
+                        "run_status": item.get("run_status"),
+                        "operational_state": item.get("operational_state"),
+                    },
+                )
+        return keys
+
+    def _open_run_operation_pairs(self, *, branch: str) -> list[str]:
+        """Pares ``OP:operação`` com run aberto — exceção de período do refresh.
+
+        Substitui o escape HZA (``include_in_production_outside_period``) que a
+        api-delpi aplicava na montagem da fila: operação executando de verdade
+        no cockpit continua visível mesmo fora da janela de entrega, enquanto
+        apontamento antigo abandonado não traz mais a OP para a programação.
+        Falha da fonte propaga como erro controlado — refresh nunca monta a
+        fila assumindo que nenhum run existe. Sem provider configurado (bug de
+        wiring), falha explícita como no sequenciamento.
+        """
+        if self._open_run_items is None:
+            raise RuntimeError(
+                "Fonte oficial de execução do cockpit não configurada."
+            )
+        pairs: list[str] = []
+        seen: set[str] = set()
+        for item in self._open_run_items(branch=branch):
+            order = str(item.get("production_order") or "").strip()
+            operation = str(item.get("operation_code") or "").strip()
+            if not order or not operation:
+                continue
+            pair = f"{order}:{operation}"
+            if pair not in seen:
+                seen.add(pair)
+                pairs.append(pair)
+        return pairs
 
     def _live_status_map(
         self,

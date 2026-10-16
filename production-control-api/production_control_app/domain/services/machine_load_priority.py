@@ -1,9 +1,9 @@
 """Priorização de conjunto na fila dos centros de trabalho.
 
 Regra de negócio: priorizar um conjunto (C2_NUM) leva **todas** as OPs desse
-conjunto para o topo da fila de cada centro onde elas aparecem. Operações já
-iniciadas (em produção agora ou com apontamento no histórico) não são
-ultrapassadas — mantêm a posição atual e o conjunto entra logo depois delas.
+conjunto para o topo da fila de cada centro onde elas aparecem. Operações com
+run aberto no cockpit do operador não são ultrapassadas — mantêm a posição
+atual e o conjunto entra logo depois delas.
 """
 
 from __future__ import annotations
@@ -12,12 +12,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from production_control_app.domain.services.machine_load_queue_slots import (
-    OperationKey,
+    ProtectedOperationKey,
     free_positions,
     pinned_positions,
+    protected_predicate,
     reorder_free_slots,
     slots_by_work_center,
-    started_predicate,
 )
 from production_control_app.domain.services.production_order_key import (
     order_belongs_to_conjunto,
@@ -36,14 +36,15 @@ def prioritize_conjunto(
     operations: list[dict[str, Any]],
     *,
     conjunto_key: str,
-    started_keys: set[OperationKey] | None = None,
+    protected_keys: set[ProtectedOperationKey] | None = None,
 ) -> ConjuntoPrioritization:
     """Reordena a fila de cada centro que tem OPs do conjunto.
 
-    ``started_keys`` traz o status ao vivo (HZA) por ``(production_order, operation_code)``
-    quando o snapshot congelado não carrega os campos de apontamento.
+    ``protected_keys`` traz as operações com run aberto no cockpit por
+    ``(work_center, production_order, operation_code)`` — a única fonte que
+    trava posição; flags do snapshot congelado não protegem.
     """
-    started_here = started_predicate(started_keys)
+    is_protected = protected_predicate(protected_keys)
 
     next_ops = list(operations)
     centers: list[str] = []
@@ -60,7 +61,7 @@ def prioritize_conjunto(
         if not target_positions:
             continue
 
-        pinned = pinned_positions(center_ops, is_pinned=started_here)
+        pinned = pinned_positions(center_ops, is_pinned=is_protected)
         free = free_positions(center_ops, pinned=pinned)
         movable_targets = [position for position in free if position in target_positions]
         if not movable_targets:
@@ -78,7 +79,7 @@ def prioritize_conjunto(
 
         centers.append(center)
         prioritized_count += len(movable_targets)
-        # O conjunto ocupa a primeira posição livre; tudo antes dela é operação já iniciada.
+        # O conjunto ocupa a primeira posição livre; tudo antes dela é operação com run aberto.
         kept_ahead += free[0]
 
     return ConjuntoPrioritization(

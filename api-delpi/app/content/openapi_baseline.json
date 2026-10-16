@@ -56068,7 +56068,7 @@
           "name": "sort",
           "in": "query",
           "required": false,
-          "description": "Sort: schedule_asc, schedule_desc, due_date_asc, due_date_desc, op_asc, qty_desc.",
+          "description": "Sort: schedule_asc, schedule_desc, schedule_no_status_asc, due_date_asc, due_date_desc, op_asc, qty_desc.",
           "type": "string",
           "default": "schedule_asc"
         },
@@ -56145,6 +56145,20 @@
           "required": false,
           "description": "When true, includes open and closed orders (ignores open_only). Used for conjunto progress across intermediary OPs.",
           "type": "boolean"
+        },
+        {
+          "name": "include_in_production_outside_period",
+          "in": "query",
+          "required": false,
+          "description": "When true (default), operations with an open collector appointment (HZA) are included even outside the period. Consumers with an official execution source should set false and pass explicit operations via include_operations_outside_period.",
+          "type": "boolean"
+        },
+        {
+          "name": "include_operations_outside_period",
+          "in": "query",
+          "required": false,
+          "description": "Operations to include regardless of the period, as CSV of production_order:operation_code pairs (e.g. open cockpit runs).",
+          "type": "string"
         },
         {
           "name": "branch",
@@ -56699,6 +56713,20 @@
           "required": false,
           "description": "When true, includes open and closed orders (ignores open_only). Used for conjunto progress across intermediary OPs.",
           "type": "boolean"
+        },
+        {
+          "name": "include_in_production_outside_period",
+          "in": "query",
+          "required": false,
+          "description": "When true (default), operations with an open collector appointment (HZA) are included even outside the period. Consumers with an official execution source should set false and pass explicit operations via include_operations_outside_period.",
+          "type": "boolean"
+        },
+        {
+          "name": "include_operations_outside_period",
+          "in": "query",
+          "required": false,
+          "description": "Operations to include regardless of the period, as CSV of production_order:operation_code pairs (e.g. open cockpit runs).",
+          "type": "string"
         },
         {
           "name": "branch",

@@ -3711,6 +3711,14 @@
             "label": "Programação ↑"
           }
         },
+        "schedule_no_status_asc": {
+          "en": {
+            "label": "Schedule ↑ (chronological)"
+          },
+          "pt-BR": {
+            "label": "Programação cronológica ↑"
+          }
+        },
         "schedule_desc": {
           "en": {
             "label": "Schedule ↓"
@@ -4890,6 +4898,30 @@
         "pt-BR": {
           "label": "Somente em aberto",
           "description": "Quando verdadeiro, retorna apenas OPs em aberto."
+        }
+      }
+    },
+    "include_in_production_outside_period": {
+      "locale": {
+        "en": {
+          "label": "Include running outside period",
+          "description": "When true (default), operations with an open collector appointment are included even outside the period."
+        },
+        "pt-BR": {
+          "label": "Incluir em produção fora do período",
+          "description": "Quando verdadeiro (padrão), operações com apontamento aberto no coletor entram mesmo fora do período."
+        }
+      }
+    },
+    "include_operations_outside_period": {
+      "locale": {
+        "en": {
+          "label": "Extra operations outside period",
+          "description": "CSV of production_order:operation_code pairs included regardless of the period."
+        },
+        "pt-BR": {
+          "label": "Operações extras fora do período",
+          "description": "Pares OP:operação separados por vírgula incluídos independente do período."
         }
       }
     },

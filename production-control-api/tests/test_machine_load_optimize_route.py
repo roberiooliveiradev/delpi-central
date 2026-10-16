@@ -102,3 +102,25 @@ def test_legacy_optimize_delivery_endpoint_still_works() -> None:
         "delivery_date": True,
         "group_by_tool": False,
     }
+
+
+def test_optimize_returns_503_when_cockpit_source_is_down() -> None:
+    """Fonte oficial de execução indisponível → erro controlado, fila intacta."""
+    from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
+        PluginsDatabaseConnectionError,
+    )
+
+    api, snapshots = _app()
+
+    service = routes.build_machine_load_service()
+    service._open_run_items = lambda **kwargs: (_ for _ in ()).throw(  # noqa: SLF001
+        PluginsDatabaseConnectionError("db down")
+    )
+
+    resp = api.post("/machine-load/optimize?branch=01", json={"criteria": {}})
+
+    assert resp.status_code == 503
+    assert resp.json()["success"] is False
+    # Nada foi reescrito: a fila do snapshot continua a mesma.
+    ops = snapshots.rows["01"]["payload_json"]["operations"]
+    assert [i["production_order"] for i in ops] == ["A", "B", "C"]

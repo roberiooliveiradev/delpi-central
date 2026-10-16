@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Sequence
 
 import pytest
 from fastapi import FastAPI
@@ -27,6 +27,9 @@ from production_control_app.domain.errors import (
 )
 from production_control_app.domain.product_drawing_pdf import DrawingFile
 from production_control_app.domain.services.branch_access_service import BranchAccessService
+from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
+    PluginsDatabaseConnectionError,
+)
 _WORK_CENTERS = [
     {
         "work_center": "CT-01A",
@@ -78,6 +81,8 @@ class FakeGateway:
         branch: str,
         delivery_start: str | None,
         delivery_end: str,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         self.calls.append(
             (
@@ -86,6 +91,12 @@ class FakeGateway:
                     "branch": branch,
                     "delivery_start": delivery_start,
                     "delivery_end": delivery_end,
+                    "include_in_production_outside_period": (
+                        include_in_production_outside_period
+                    ),
+                    "include_operations_outside_period": (
+                        include_operations_outside_period
+                    ),
                 },
             )
         )
@@ -116,6 +127,9 @@ class FakeGateway:
         scheduled_end: str | None = None,
         production_order: str | None = None,
         work_center: str | None = None,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
+        sort: str = "schedule_asc",
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
@@ -130,6 +144,13 @@ class FakeGateway:
                     "scheduled_end": scheduled_end,
                     "production_order": production_order,
                     "work_center": work_center,
+                    "include_in_production_outside_period": (
+                        include_in_production_outside_period
+                    ),
+                    "include_operations_outside_period": (
+                        include_operations_outside_period
+                    ),
+                    "sort": sort,
                     "page": page,
                     "page_size": page_size,
                 },
@@ -323,13 +344,20 @@ FULL_PERMS = (
 )
 
 
-def _service(gateway: FakeGateway, snapshots: FakeSnapshotRepo | None = None) -> MachineLoadService:
+def _service(
+    gateway: FakeGateway,
+    snapshots: FakeSnapshotRepo | None = None,
+    *,
+    open_runs: list[dict[str, Any]] | None = None,
+) -> MachineLoadService:
     snapshots = snapshots or FakeSnapshotRepo()
+    run_items = list(open_runs) if open_runs is not None else []
     return MachineLoadService(
         gateway,
         snapshots=snapshots,
         publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
+        open_run_items=lambda **kwargs: list(run_items),
     )
 
 
@@ -667,6 +695,60 @@ def test_explicit_period_is_forwarded_to_the_gateway_on_refresh() -> None:
     assert call["delivery_end"] == "2026-08-28"
 
 
+def test_refresh_disables_hza_period_escape_and_sends_open_runs() -> None:
+    """Escape de período passa a ser sustentado pelos runs do cockpit, não HZA."""
+    gateway = FakeGateway()
+    service = _service(
+        gateway,
+        open_runs=[
+            _run_item(
+                production_order="24640401002",
+                operation_code="03",
+                work_center="CT-01A",
+            )
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    for name in ("work_centers", "operations"):
+        call = next(params for n, params in gateway.calls if n == name)
+        assert call["include_in_production_outside_period"] is False
+        assert call["include_operations_outside_period"] == [
+            "24640401002:03"
+        ]
+
+
+def test_refresh_without_open_runs_sends_no_period_exception() -> None:
+    """Sem run aberto, nenhuma operação fora do período é requisitada."""
+    gateway = FakeGateway()
+    _service(gateway).refresh(_user(*FULL_PERMS), branch="01")
+
+    for name in ("work_centers", "operations"):
+        call = next(params for n, params in gateway.calls if n == name)
+        assert call["include_in_production_outside_period"] is False
+        assert call["include_operations_outside_period"] == []
+
+
+def test_refresh_fails_closed_when_cockpit_source_is_down() -> None:
+    """Fonte oficial indisponível: o refresh não monta fila assumindo zero runs."""
+    snapshots = FakeSnapshotRepo()
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=lambda **kwargs: (_ for _ in ()).throw(
+            PluginsDatabaseConnectionError("db down")
+        ),
+    )
+
+    with pytest.raises(PluginsDatabaseConnectionError):
+        service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert snapshots.rows == {}
+
+
 def test_inverted_period_is_rejected() -> None:
     with pytest.raises(ValueError):
         _service(FakeGateway()).refresh(
@@ -884,13 +966,17 @@ def _service_with_notifier(
     gateway: FakeGateway,
     snapshots: FakeSnapshotRepo,
     notifier: RecordingNotifier,
+    *,
+    open_runs: list[dict[str, Any]] | None = None,
 ) -> MachineLoadService:
+    run_items = list(open_runs) if open_runs is not None else []
     return MachineLoadService(
         gateway,
         snapshots=snapshots,
         publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
         change_notifier=notifier,
+        open_run_items=lambda **kwargs: list(run_items),
     )
 
 
@@ -977,6 +1063,30 @@ def _open_run(
         "operator_name": operator_name,
         "status": "running",
         "started_at": datetime(2026, 8, 20, 8, 30, tzinfo=timezone.utc),
+    }
+
+
+def _run_item(
+    *,
+    work_center: str = "CT-01A",
+    production_order: str = "99900001001",
+    operation_code: str = "01",
+    run_status: str = "running",
+    operational_state: str | None = "producing",
+    display_status: str = "producing",
+    integrity_status: str = "complete",
+) -> dict[str, Any]:
+    """Item projetado de run aberto — shape de open_run_items/cockpit-status."""
+    return {
+        "run_id": "run-1",
+        "work_center": work_center,
+        "production_order": production_order,
+        "operation_code": operation_code,
+        "run_status": run_status,
+        "operational_state": operational_state,
+        "display_status": display_status,
+        "integrity_status": integrity_status,
+        "started_at": "2026-08-20T08:30:00+00:00",
     }
 
 
@@ -1665,7 +1775,28 @@ def test_prioritize_conjunto_moves_all_orders_to_top_of_each_center() -> None:
     assert "108404" in prioritization["message"]
 
 
-def test_prioritize_conjunto_keeps_started_operation_ahead() -> None:
+def test_prioritize_conjunto_keeps_running_operation_ahead() -> None:
+    """Run aberto no cockpit protege a posição — mesmo sem flags no snapshot."""
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    payload = _service(
+        FakeGateway(), snapshots, open_runs=[_run_item()]
+    ).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="108404",
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "99900001001:01",
+        "10840401003:03",
+        "88800001001:02",
+    ]
+    assert payload["prioritization"]["kept_ahead_count"] == 1
+
+
+def test_prioritize_conjunto_hza_in_progress_without_run_does_not_protect() -> None:
+    """Apontamento HZA antigo aberto não trava posição sem run do cockpit."""
     gateway = FakeGateway()
     gateway.status_by_key[("99900001001", "01")] = {
         "production_status": "in_progress",
@@ -1683,11 +1814,172 @@ def test_prioritize_conjunto_keeps_started_operation_ahead() -> None:
     )
 
     assert _queue(snapshots, start, end, "CT-01A") == [
+        "10840401003:03",
+        "99900001001:01",
+        "88800001001:02",
+    ]
+    assert payload["prioritization"]["kept_ahead_count"] == 0
+
+
+def test_prioritize_conjunto_stopped_and_paused_runs_protect() -> None:
+    """stopped e paused também travam a posição — só run fechado libera."""
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(run_status="running", operational_state="stopped",
+                      display_status="stopped"),
+        ],
+    ).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="108404",
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
         "99900001001:01",
         "10840401003:03",
         "88800001001:02",
     ]
-    assert payload["prioritization"]["kept_ahead_count"] == 1
+
+
+def test_prioritize_conjunto_inconsistent_run_keeps_protection() -> None:
+    """Run aberto inconsistente protege conservadoramente — nunca libera."""
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                run_status="paused",
+                operational_state=None,
+                display_status="unknown",
+                integrity_status="inconsistent",
+            ),
+        ],
+    ).prioritize_conjunto(
+        _user(*FULL_PERMS),
+        branch="01",
+        order_number="108404",
+    )
+
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "99900001001:01",
+        "10840401003:03",
+        "88800001001:02",
+    ]
+
+
+def test_prioritize_conjunto_fails_when_cockpit_source_is_down() -> None:
+    """Falha na fonte oficial: erro controlado, fila intacta, sem HZA/broadcast."""
+    snapshots = FakeSnapshotRepo()
+    _seed_priority_snapshot(snapshots)
+    notifier = RecordingNotifier()
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        change_notifier=notifier,
+        open_run_items=lambda **kwargs: (_ for _ in ()).throw(
+            PluginsDatabaseConnectionError("db down")
+        ),
+    )
+
+    with pytest.raises(PluginsDatabaseConnectionError):
+        service.prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="108404",
+        )
+
+    # A fila permanece exatamente como o snapshot original e nada é notificado.
+    assert [item["production_order"] for item in snapshots.rows["01"]["payload_json"]["operations"]] == [
+        "99900001001",
+        "88800001001",
+        "10840401003",
+        "77700001001",
+        "10840402001",
+    ]
+    assert notifier.events == []
+
+
+def test_prioritize_conjunto_uses_only_runs_of_the_requested_branch() -> None:
+    """Runs da filial 01 não protegem operações da filial 02."""
+    snapshots = FakeSnapshotRepo()
+    start, end = _seed_priority_snapshot(snapshots)
+    snapshots.upsert(
+        branch="02",
+        start_date=start,
+        end_date=end,
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": [
+                {
+                    **_OPERATION,
+                    "work_center": "CT-01A",
+                    "production_order": "99900001001",
+                    "operation_code": "01",
+                },
+                {
+                    **_OPERATION,
+                    "work_center": "CT-01A",
+                    "production_order": "10840401003",
+                    "operation_code": "03",
+                },
+            ],
+            "summary": {"work_center_count": 1, "operation_count": 2},
+        },
+        refreshed_by="seed",
+    )
+
+    def runs_by_branch(*, branch: str, **kwargs: Any) -> list[dict[str, Any]]:
+        return [_run_item()] if branch == "01" else []
+
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=runs_by_branch,
+    )
+    user = _user(*FULL_PERMS)
+
+    service.prioritize_conjunto(user, branch="02", order_number="108404")
+
+    # Filial 02 sem run: o conjunto vai ao topo — a proteção do run da 01 não vaza.
+    assert _queue(snapshots, start, end, "CT-01A") == [
+        "99900001001:01",
+        "88800001001:02",
+        "10840401003:03",
+    ]
+    queue02 = [
+        f"{i['production_order']}:{i['operation_code']}"
+        for i in snapshots.rows["02"]["payload_json"]["operations"]
+    ]
+    assert queue02 == ["10840401003:03", "99900001001:01"]
+
+
+def test_prioritize_conjunto_without_run_source_fails_closed() -> None:
+    """Sem fonte oficial injetada, a mutação não roda com proteção vazia."""
+    snapshots = FakeSnapshotRepo()
+    _seed_priority_snapshot(snapshots)
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+    )
+
+    with pytest.raises(RuntimeError, match="cockpit"):
+        service.prioritize_conjunto(
+            _user(*FULL_PERMS),
+            branch="01",
+            order_number="108404",
+        )
 
 
 def test_prioritize_conjunto_accepts_full_production_order() -> None:

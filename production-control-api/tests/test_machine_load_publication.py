@@ -546,13 +546,16 @@ def _publish_service(
     snapshots: FakeSnapshotRepo,
     notifier: RecordingNotifier | None = None,
     publications: FakePublicationRepo | None = None,
+    open_runs: list[dict[str, Any]] | None = None,
 ) -> MachineLoadService:
+    run_items = list(open_runs) if open_runs is not None else []
     return MachineLoadService(
         FakeGateway(),
         snapshots=snapshots,
         publications=publications or FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
         change_notifier=notifier,
+        open_run_items=lambda **kwargs: list(run_items),
     )
 
 
@@ -1047,8 +1050,8 @@ def test_noop_prioritize_in_live_does_not_write_or_notify() -> None:
     assert notifier.events == []
 
 
-def test_remote_status_call_happens_before_the_working_lock() -> None:
-    """prioritize: HTTP do live status fora da transação; lock só no write."""
+def test_run_status_read_happens_before_the_working_lock() -> None:
+    """prioritize: leitura dos runs do cockpit fora da transação; lock só no write."""
     snapshots = FakeSnapshotRepo()
     _e4_seed(snapshots)
     snapshots.publish("01")
@@ -1063,25 +1066,21 @@ def test_remote_status_call_happens_before_the_working_lock() -> None:
 
     snapshots.get_for_update = spy_get_for_update  # type: ignore[method-assign]
 
-    original_fetch = gateway.fetch_machine_load_appointment_status
-
-    def spy_fetch(*args: Any, **kwargs: Any) -> Any:
-        order_log.append("http")
-        return original_fetch(*args, **kwargs)
-
-    gateway.fetch_machine_load_appointment_status = spy_fetch  # type: ignore[method-assign]
+    def spy_open_runs(**kwargs: Any) -> list[dict[str, Any]]:
+        order_log.append("runs")
+        return []
 
     service = MachineLoadService(
         gateway,
         snapshots=snapshots,
         publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
+        open_run_items=spy_open_runs,
     )
     service.prioritize_conjunto(_user(*FULL_PERMS), branch="01", order_number="108404")
 
-    assert "http" in order_log
-    assert "lock" in order_log
-    assert order_log.index("http") < order_log.index("lock")
+    # Sem HTTP dentro da mutação: a fonte de proteção é leitura local dos runs.
+    assert order_log.index("runs") < order_log.index("lock")
 
 
 def test_published_row_cache_reflects_live_payload_update(
@@ -1220,12 +1219,16 @@ def _o2_service(
     *,
     live: bool,
     notifier: RecordingNotifier | None = None,
+    open_runs: list[dict[str, Any]] | None = None,
 ) -> tuple[MachineLoadService, FakeSnapshotRepo]:
     snapshots = FakeSnapshotRepo()
     _upsert_working(snapshots, operations)
     if live:
         snapshots.publish("01")
-    return _publish_service(snapshots, notifier=notifier), snapshots
+    return (
+        _publish_service(snapshots, notifier=notifier, open_runs=open_runs),
+        snapshots,
+    )
 
 
 def _working_orders(snapshots: FakeSnapshotRepo, center: str = "CT-01A") -> list[str]:
@@ -1274,17 +1277,43 @@ def test_optimize_sequence_data_only_reports_criteria() -> None:
     }
 
 
-def test_optimize_sequence_keeps_started_operations_pinned() -> None:
+def test_optimize_sequence_keeps_running_operations_pinned() -> None:
+    """Run aberto no cockpit trava a posição mesmo com flags HZA ausentes."""
     operations = _o2_queue()
-    operations[1]["production_status"] = "started"  # B (07/10, MA-02) travada
 
-    service, snapshots = _o2_service(operations, live=False)
+    service, snapshots = _o2_service(
+        operations,
+        live=False,
+        open_runs=[
+            {
+                "work_center": "CT-01A",
+                "production_order": "B",
+                "operation_code": "02",
+                "run_status": "running",
+                "operational_state": "producing",
+                "display_status": "producing",
+                "integrity_status": "complete",
+            }
+        ],
+    )
     service.optimize_sequence(_user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL)
 
     orders = _working_orders(snapshots)
     assert orders[1] == "B"
     # B travada não comanda o grupo: primeira ocorrência livre de 07/10 é D(MA-01).
     assert orders[0] == "D" and orders[2] == "F"
+
+
+def test_optimize_sequence_hza_started_without_run_is_free() -> None:
+    """production_status=started congelado no snapshot não trava posição."""
+    operations = _o2_queue()
+    operations[1]["production_status"] = "started"  # B (07/10, MA-02)
+
+    service, snapshots = _o2_service(operations, live=False)
+    service.optimize_sequence(_user(*FULL_PERMS), branch="01", criteria=GROUP_BY_TOOL)
+
+    # Sem run aberto, B é livre — a fila sai idêntica ao caso sem flags HZA.
+    assert _working_orders(snapshots) == ["B", "F", "D", "A", "E", "C", "H", "G"]
 
 
 def test_optimize_sequence_excludes_withdrawn_conjuntos() -> None:
@@ -1334,6 +1363,7 @@ def test_optimize_sequence_draft_writes_only_working() -> None:
         publications=publications,
         branch_access=BranchAccessService(),
         change_notifier=notifier,
+        open_run_items=lambda **kwargs: [],
     )
     published_before = copy.deepcopy(snapshots.published["01"]["payload_json"])
 

@@ -145,6 +145,8 @@ class MachineLoadCommonQuery:
         tool: str | None = None,
         open_only: bool | None = None,
         include_closed: bool | None = None,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: str | None = None,
     ) -> None:
         self.branch = branch
         self.scheduled_start = scheduled_start
@@ -157,6 +159,10 @@ class MachineLoadCommonQuery:
         self.tool = tool
         self.open_only = open_only
         self.include_closed = include_closed
+        self.include_in_production_outside_period = (
+            include_in_production_outside_period
+        )
+        self.include_operations_outside_period = include_operations_outside_period
 
 
 def machine_load_common_query(
@@ -214,6 +220,22 @@ def machine_load_common_query(
             "Used for conjunto progress across intermediary OPs."
         ),
     ),
+    include_in_production_outside_period: Optional[bool] = Query(
+        default=None,
+        description=(
+            "When true (default), operations with an open collector appointment "
+            "(HZA) are included even outside the period. Consumers with an "
+            "official execution source should set false and pass explicit "
+            "operations via include_operations_outside_period."
+        ),
+    ),
+    include_operations_outside_period: Optional[str] = Query(
+        default=None,
+        description=(
+            "Operations to include regardless of the period, as CSV of "
+            "production_order:operation_code pairs (e.g. open cockpit runs)."
+        ),
+    ),
 ) -> MachineLoadCommonQuery:
     return MachineLoadCommonQuery(
         branch=branch,
@@ -227,6 +249,8 @@ def machine_load_common_query(
         tool=tool,
         open_only=open_only,
         include_closed=include_closed,
+        include_in_production_outside_period=include_in_production_outside_period,
+        include_operations_outside_period=include_operations_outside_period,
     )
 
 
@@ -274,6 +298,12 @@ def get_production_machine_load_work_centers(
             tool=common.tool,
             open_only=common.open_only,
             include_closed=common.include_closed,
+            include_in_production_outside_period=(
+                common.include_in_production_outside_period
+            ),
+            include_operations_outside_period=(
+                common.include_operations_outside_period
+            ),
         )
         result = build_get_production_machine_load_work_centers_use_case().execute(
             request
@@ -315,6 +345,12 @@ def get_production_machine_load_operations(
             tool=common.tool,
             open_only=common.open_only,
             include_closed=common.include_closed,
+            include_in_production_outside_period=(
+                common.include_in_production_outside_period
+            ),
+            include_operations_outside_period=(
+                common.include_operations_outside_period
+            ),
             page=page,
             page_size=page_size,
             sort=sort,

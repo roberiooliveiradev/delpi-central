@@ -248,6 +248,7 @@ def build_machine_load_service(
         branch_access=build_branch_access_service(),
         change_notifier=notify_machine_load_changed,
         list_open_runs=PostgresProductionRunRepository().list_open_runs_by_branch,
+        open_run_items=build_machine_load_cockpit_status_service().open_run_items,
     )
 
 

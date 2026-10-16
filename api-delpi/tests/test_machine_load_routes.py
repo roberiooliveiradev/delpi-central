@@ -190,6 +190,60 @@ def test_operations_rejects_page_size_above_tier(
 
 @patch(
     "app.interface.http.routes.production.machine_load_router"
+    ".build_get_production_machine_load_operations_use_case"
+)
+def test_operations_propagates_period_exception_params(
+    mock_builder, machine_load_client: TestClient
+) -> None:
+    """O modo PCP chega ao request: escape HZA desligado + pares explícitos."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "filters": {},
+        "items": [],
+        "pagination": {
+            "page": 1,
+            "page_size": 100,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = machine_load_client.get(
+        "/production/machine-load/operations",
+        params={
+            "branch": "01",
+            "delivery_end": "2026-09-28",
+            "include_in_production_outside_period": "false",
+            "include_operations_outside_period": "24640401002:03, 10840401003:01",
+        },
+    )
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.include_in_production_outside_period is False
+    assert request.include_operations_outside_period == (
+        ("24640401002", "03"),
+        ("10840401003", "01"),
+    )
+
+
+def test_operations_rejects_malformed_period_exception_pairs(
+    machine_load_client: TestClient,
+) -> None:
+    response = machine_load_client.get(
+        "/production/machine-load/operations",
+        params={
+            "branch": "01",
+            "include_operations_outside_period": "sem-separador",
+        },
+    )
+    assert response.status_code == 400
+    assert _body(response)["success"] is False
+
+
+@patch(
+    "app.interface.http.routes.production.machine_load_router"
     ".build_get_production_machine_load_appointment_status_use_case"
 )
 def test_appointment_status_returns_list_envelope(

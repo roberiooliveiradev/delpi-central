@@ -19,6 +19,9 @@ from production_control_app.domain.services.machine_load_delivery_sequencing imp
     DeliverySequencing,
     optimize_by_delivery_date,
 )
+from production_control_app.domain.services.machine_load_queue_slots import (
+    protected_operation_key,
+)
 
 GROUP_BY_TOOL = MachineLoadOptimizationCriteria(group_by_tool=True)
 DATE_ONLY = MachineLoadOptimizationCriteria(group_by_tool=False)
@@ -236,52 +239,78 @@ def test_operations_without_due_date_go_to_the_end_ungrouped() -> None:
 
 
 # ---------------------------------------------------------------------------
-# K/L — operações iniciadas travadas, mesmo com ferramenta ativa
+# K/L — operações com run aberto travadas, mesmo com ferramenta ativa
 # ---------------------------------------------------------------------------
 
 
-def test_started_operations_hold_slots_with_tool_grouping() -> None:
+def test_protected_operations_hold_slots_with_tool_grouping() -> None:
     operations = [
-        _op("X", due="2026-10-08", tool="MA-99", running=True),
+        _op("X", due="2026-10-08", tool="MA-99"),
         _op("A", due="2026-10-08", tool="MA-02"),
-        _op("S", due="2026-10-08", tool="MA-02", status="started"),
+        _op("S", due="2026-10-08", tool="MA-02"),
         _op("B", due="2026-10-08", tool="MA-01"),
         _op("C", due="2026-10-08", tool="MA-02"),
         _op("K", due="2026-10-08", tool="MA-01", operation="07"),
     ]
 
-    result = _optimize(operations, started_keys={("K", "07")})
+    result = _optimize(
+        operations,
+        protected_keys={
+            protected_operation_key(operations[0]),
+            protected_operation_key(operations[2]),
+            protected_operation_key(operations[5]),
+        },
+    )
 
-    # Slots 0, 2 e 5 travados (running, status e started_keys); as livres
-    # reagrupam MA-02 (A, C) antes de MA-01 (B) pela primeira ocorrencia livre.
+    # Slots 0, 2 e 5 travados por run aberto; as livres reagrupam MA-02 (A, C)
+    # antes de MA-01 (B) pela primeira ocorrencia livre.
     assert _seq(result.operations) == ["X", "A", "S", "C", "B", "K"]
     assert result.kept_ahead_count == 1
     assert result.moved_operation_count == 2
 
 
-def test_pinned_tool_does_not_command_free_group_order() -> None:
+def test_snapshot_flags_without_run_do_not_pin() -> None:
+    """is_in_production/production_status congelados (herança HZA) não travam."""
     operations = [
         _op("X", due="2026-10-08", tool="MA-99", running=True),
         _op("A", due="2026-10-08", tool="MA-20"),
-        _op("B", due="2026-10-08", tool="MA-10"),
+        _op("S", due="2026-10-08", tool="MA-10", status="started"),
         _op("C", due="2026-10-08", tool="MA-20"),
     ]
 
     result = _optimize(operations)
 
-    # MA-99 da iniciada não vira grupo: livres seguem primeira ocorrência livre.
+    # Sem protected_keys todas são livres — inclusive X e S com flags HZA.
+    assert _seq(result.operations) == ["X", "A", "C", "S"]
+
+
+def test_pinned_tool_does_not_command_free_group_order() -> None:
+    operations = [
+        _op("X", due="2026-10-08", tool="MA-99"),
+        _op("A", due="2026-10-08", tool="MA-20"),
+        _op("B", due="2026-10-08", tool="MA-10"),
+        _op("C", due="2026-10-08", tool="MA-20"),
+    ]
+
+    result = _optimize(
+        operations, protected_keys={protected_operation_key(operations[0])}
+    )
+
+    # MA-99 da protegida não vira grupo: livres seguem primeira ocorrência livre.
     assert _seq(result.operations) == ["X", "A", "C", "B"]
 
 
-def test_started_operation_in_the_middle_holds_its_slot() -> None:
+def test_protected_operation_in_the_middle_holds_its_slot() -> None:
     operations = [
         _op("A", due="2026-10-08", tool="MA-02"),
-        _op("S", due="2026-10-08", tool="MA-02", status="started"),
+        _op("S", due="2026-10-08", tool="MA-02"),
         _op("B", due="2026-10-08", tool="MA-01"),
         _op("C", due="2026-10-08", tool="MA-02"),
     ]
 
-    result = _optimize(operations)
+    result = _optimize(
+        operations, protected_keys={protected_operation_key(operations[1])}
+    )
 
     assert _seq(result.operations) == ["A", "S", "C", "B"]
 

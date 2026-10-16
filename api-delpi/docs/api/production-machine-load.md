@@ -82,7 +82,13 @@ Comuns às duas rotas: `branch` (`01` \| `02`), `work_center`, `product_code`, `
 
 Quando `delivery_start` ou `delivery_end` chega, a janela de programação é **ignorada** — o PCP planeja por entrega, não por data de apontamento. `delivery_start` pode vir vazio para trazer também o atrasado; nesse caso só o teto é aplicado. Janela de programação: default 7 dias, máximo 90 (`DEFAULT_WINDOW_DAYS` / `MAX_WINDOW_DAYS`).
 
-`operations` ainda aceita `page`, `page_size` (default 100, máximo 500) e `sort`: `schedule_asc` (default), `schedule_desc`, `due_date_asc`, `due_date_desc`, `op_asc`, `qty_desc`.
+`operations` ainda aceita `page`, `page_size` (default 100, máximo 500) e `sort`: `schedule_asc` (default), `schedule_desc`, `due_date_asc`, `due_date_desc`, `op_asc`, `qty_desc`, `schedule_no_status_asc`. Os sorts `schedule_*` legados abrem com «em produção primeiro» (agregado HZA `active_count`); `schedule_no_status_asc` é a **cronologia SH8 pura** (`H8_DTINI`, `H8_HRINI`, `H8_OP`, `H8_OPER` — desempate determinístico, estável para paginação), criada para o Production Control montar o snapshot sem herdar prioridade por apontamento: «em execução» passa a ser decidido pelos runs do cockpit no BFF.
+
+### Exceção de período
+
+Por padrão (legado), uma operação com apontamento HZA aberto **entra na resposta mesmo fora da janela** — a alocação atrasa e a máquina rodando precisa aparecer. Isso vale nas três consultas (`operations`, `count`, `work-centers`), para que total e itens nunca divirjam.
+
+Consumidores com fonte oficial de execução própria desligam esse escape com `include_in_production_outside_period=false` e, se quiserem manter execuções reais visíveis fora da janela, passam a lista explícita `include_operations_outside_period` — CSV de pares `OP:operação` (máx. 200). É o modo usado pelo Production Control: a exceção de período passa a ser sustentada pelos **runs abertos do cockpit**, nunca por apontamento HZA abandonado, que não traz mais OP antiga para a fila nova.
 
 ### Data de entrega efetiva
 

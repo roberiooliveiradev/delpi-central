@@ -127,6 +127,65 @@ def test_running_operations_survive_the_delivery_window() -> None:
     assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" in query
 
 
+def test_strict_period_drops_the_hza_escape_in_all_queries() -> None:
+    """Modo PCP: apontamento HZA não pode expandir a janela da fila nova."""
+    for build in (
+        sql.build_operations_count_query,
+        sql.build_work_centers_query,
+    ):
+        query, _ = build(
+            **_filters(include_in_production_outside_period=False)
+        )
+        assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" not in query
+    query, _ = sql.build_operations_query(
+        **_filters(include_in_production_outside_period=False),
+        offset=0,
+        page_size=10,
+    )
+    assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" not in query
+
+
+def test_strict_period_keeps_the_window_clause() -> None:
+    query, params = sql.build_operations_count_query(
+        **_filters(
+            delivery_start="2026-08-01",
+            delivery_end="2026-09-03",
+            include_in_production_outside_period=False,
+        )
+    )
+    assert f"{sql.DUE_DATE_EXPR} >= ?" in query
+    assert params == (*_JOIN_PARAMS, "2026-08-01", "2026-09-03", "01")
+
+
+def test_explicit_operations_survive_the_period_without_hza() -> None:
+    """A exceção explícita (runs do cockpit) é por par OP+operação, não por coletor."""
+    query, params = sql.build_operations_count_query(
+        **_filters(
+            include_in_production_outside_period=False,
+            include_operations_outside_period=[("24640401002", "03")],
+        )
+    )
+    assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" not in query
+    assert (
+        "OR (LTRIM(RTRIM(OA.H8_OP)) = ? AND LTRIM(RTRIM(OA.H8_OPER)) = ?)" in query
+    )
+    # Params na ordem dos placeholders: período, par explícito, filial.
+    assert params == (
+        *_JOIN_PARAMS,
+        "20260819",
+        "20260826",
+        "24640401002",
+        "03",
+        "01",
+    )
+
+
+def test_legacy_mode_keeps_the_hza_escape() -> None:
+    """Consumidores sem flag seguem com o comportamento anterior."""
+    query, _ = sql.build_work_centers_query(**_filters())
+    assert f"OR {sql._IN_PRODUCTION_EXPR} = 1" in query
+
+
 def test_effective_due_date_falls_back_to_the_order_forecast() -> None:
     """Sem OP mãe na view PCP, a previsão da própria OP evita operação sem entrega."""
     query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
@@ -251,6 +310,28 @@ def test_default_sort_puts_running_operations_first() -> None:
     query, _ = sql.build_operations_query(**_filters(), offset=0, page_size=10)
     assert "ORDER BY CASE WHEN ISNULL(AP.active_count, 0) > 0" in query
     assert "OA.H8_DTINI ASC, OA.H8_HRINI ASC" in query
+
+
+def test_schedule_no_status_asc_ignores_appointments() -> None:
+    """Novo sort cronológico: nenhuma prioridade por apontamento HZA."""
+    query, _ = sql.build_operations_query(
+        **_filters(), sort="schedule_no_status_asc", offset=0, page_size=10
+    )
+    assert "ORDER BY CASE" not in query
+    assert "AP.active_count" not in query.split("ORDER BY")[1]
+    # Cronologia SH8 + desempate determinístico por OP e operação.
+    assert (
+        "ORDER BY OA.H8_DTINI ASC, OA.H8_HRINI ASC, OA.H8_OP ASC, OA.H8_OPER ASC"
+        in query
+    )
+
+
+def test_schedule_asc_still_prioritizes_appointments() -> None:
+    """O sort legado permanece intacto para os demais consumidores."""
+    query, _ = sql.build_operations_query(
+        **_filters(), sort="schedule_asc", offset=0, page_size=10
+    )
+    assert "ORDER BY CASE WHEN ISNULL(AP.active_count, 0) > 0" in query
 
 
 def test_in_production_expression_ignores_finished_orders() -> None:

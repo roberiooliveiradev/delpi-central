@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Sequence
+
 from app.domain.production.machine_load_scope import (
     DEFAULT_SORT,
     MACHINE_LOAD_ALLOCATION_TABLE,
@@ -18,6 +20,7 @@ from app.domain.production.machine_load_scope import (
     SORT_QTY_DESC,
     SORT_SCHEDULE_ASC,
     SORT_SCHEDULE_DESC,
+    SORT_SCHEDULE_NO_STATUS_ASC,
     SORT_VALUES,
     VALID_MACHINE_LOAD_BRANCHES,
 )
@@ -63,6 +66,10 @@ _PRODUCTION_FIRST = f"{_IN_PRODUCTION_EXPR} DESC"
 SORT_SQL = {
     SORT_SCHEDULE_ASC: f"{_PRODUCTION_FIRST}, {_SCHEDULE_KEYS.format('ASC')}",
     SORT_SCHEDULE_DESC: f"{_PRODUCTION_FIRST}, {_SCHEDULE_KEYS.format('DESC')}",
+    # Cronologia determinística sem apontamento: a fila nova do Production
+    # Control não pode herdar prioridade por HZA — «em produção» agora é o
+    # run aberto do cockpit, decidido no BFF.
+    SORT_SCHEDULE_NO_STATUS_ASC: _SCHEDULE_KEYS.format("ASC"),
     SORT_DUE_DATE_ASC: f"{DUE_DATE_EXPR} ASC, {_SCHEDULE_KEYS.format('ASC')}",
     SORT_DUE_DATE_DESC: f"{DUE_DATE_EXPR} DESC, {_SCHEDULE_KEYS.format('ASC')}",
     SORT_ORDER_ASC: "OA.H8_OP ASC, OA.H8_OPER ASC",
@@ -210,6 +217,8 @@ def build_base_where(
     production_order: str | None = None,
     tool: str | None = None,
     open_only: bool | None = True,
+    include_in_production_outside_period: bool | None = True,
+    include_operations_outside_period: Sequence[tuple[str, str]] | None = None,
 ) -> tuple[str, tuple]:
     """Filtro comum. Programação em YYYYMMDD (nativo da H8_DTINI); entrega em ISO.
 
@@ -217,8 +226,12 @@ def build_base_where(
     efetiva** do PA e a janela de programação é ignorada — é assim que o PCP
     enxerga a fila (o que vence primeiro, mesmo alocado para daqui a meses).
 
-    O que está em produção agora entra mesmo fora do período: a programação
-    costuma ficar para trás e a máquina precisa aparecer rodando.
+    ``include_in_production_outside_period`` (default True, legado) preserva a
+    exceção HZA: o que está em produção agora entra mesmo fora do período.
+    Consumidores que já têm fonte oficial de execução (runs do cockpit) desligam
+    o escape e, se precisarem, sustentam a exceção com
+    ``include_operations_outside_period`` — pares explícitos
+    (production_order, operation_code) que entram independente do período.
     """
     branch_sql, branch_params = _branch_filter_sql(branch)
     params: list = []
@@ -234,9 +247,24 @@ def build_base_where(
         period_parts = ["OA.H8_DTINI >= ?", "OA.H8_DTINI <= ?"]
         params.extend([scheduled_start, scheduled_end])
 
+    period_exceptions: list[str] = []
+    if include_in_production_outside_period is not False:
+        period_exceptions.append(f"{_IN_PRODUCTION_EXPR} = 1")
+    for order, operation in include_operations_outside_period or ():
+        period_exceptions.append(
+            "(LTRIM(RTRIM(OA.H8_OP)) = ? AND LTRIM(RTRIM(OA.H8_OPER)) = ?)"
+        )
+        params.extend([order, operation])
+    if period_exceptions:
+        period_clause = (
+            f"(({' AND '.join(period_parts)}) OR {' OR '.join(period_exceptions)})"
+        )
+    else:
+        period_clause = f"({' AND '.join(period_parts)})"
+
     clauses = [
         "OA.D_E_L_E_T_ = ''",
-        f"(({' AND '.join(period_parts)}) OR {_IN_PRODUCTION_EXPR} = 1)",
+        period_clause,
         branch_sql,
     ]
     params.extend(branch_params)

@@ -97,14 +97,13 @@ class MachineLoadCockpitStatusService:
         self._branch_access = branch_access
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
-    def cockpit_status(self, user: object | None, *, branch: str) -> dict[str, Any]:
-        self._branch_access.assert_can_view_branch(user, branch)
-        if not can(user, PC_MACHINE_LOAD_VIEW):
-            raise PermissionError(
-                "Você não tem permissão para ver a carga máquina."
-            )
-        code = self._branch_access.assert_valid_branch(branch)
+    def open_run_items(self, *, branch: str) -> list[dict[str, Any]]:
+        """Runs abertos projetados — uso interno entre serviços da aplicação.
 
+        Sem autorização própria: quem chama já passou pelo RBAC do fluxo que
+        hospeda a consulta (a rota autenticada usa ``cockpit_status``).
+        """
+        code = self._branch_access.assert_valid_branch(branch)
         rows = self._repository.list_live_work_centers(branch=code)
         items: list[dict[str, Any]] = []
         seen_run_ids: set[str] = set()
@@ -117,6 +116,17 @@ class MachineLoadCockpitStatusService:
             item = _item(row)
             if item is not None:
                 items.append(item)
+        return items
+
+    def cockpit_status(self, user: object | None, *, branch: str) -> dict[str, Any]:
+        self._branch_access.assert_can_view_branch(user, branch)
+        if not can(user, PC_MACHINE_LOAD_VIEW):
+            raise PermissionError(
+                "Você não tem permissão para ver a carga máquina."
+            )
+        code = self._branch_access.assert_valid_branch(branch)
+
+        items = self.open_run_items(branch=code)
 
         summary = {
             "active_runs": len(items),

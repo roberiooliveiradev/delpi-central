@@ -46,7 +46,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 |-----------|--------|--------|
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
 | `demand` | ativo | Carteira a entregar: saldo por cliente/produto/data com cobertura por estoque e OP |
-| `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação; `GET /machine-load/cockpit-status` expõe os estados de execução dos runs MES locais — nova fonte oficial em transição, enquanto o `live-status` HZA permanece como legado |
+| `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação; `GET /machine-load/cockpit-status` expõe os estados de execução dos runs MES locais — desde a Etapa 02 é também a **fonte oficial de proteção de posições** em `prioritize`/`optimize` (apontamentos HZA e flags do snapshot não travam mais posição), e o refresh carrega a fila em `schedule_no_status_asc` (cronologia SH8 sem prioridade por coletor) com `include_in_production_outside_period=false` — a exceção de período é sustentada pelos pares `OP:operação` dos runs abertos, nunca por apontamento HZA abandonado; o `live-status` HZA permanece como legado de exibição até a Etapa 03 |
 | `problem-analysis` | ativo | Grade de detectores de exceção (conjuntos, quantidades, demanda, intermediários compartilhados) |
 | `materials` | ativo | Excesso e falta de SC1 de MP vs ESTSEG + consulta de ruptura de MP no conjunto do PA |
 | `line-feeder` | ativo | Material que precisa estar nas bancadas até um corte (data + hora) sobre a fila congelada, com rateio FIFO do saldo e lista de coleta persistida |

@@ -273,16 +273,27 @@ class DelpiProductionGateway:
         branch: str,
         delivery_start: str | None,
         delivery_end: str,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
     ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "branch": branch,
+            "delivery_start": delivery_start,
+            "delivery_end": delivery_end,
+            "open_only": True,
+        }
+        if include_in_production_outside_period is not None:
+            params["include_in_production_outside_period"] = (
+                include_in_production_outside_period
+            )
+        if include_operations_outside_period:
+            params["include_operations_outside_period"] = ",".join(
+                include_operations_outside_period
+            )
         return self._request(
             "GET",
             "/production/machine-load/work-centers",
-            params={
-                "branch": branch,
-                "delivery_start": delivery_start,
-                "delivery_end": delivery_end,
-                "open_only": True,
-            },
+            params=params,
         )
 
     def fetch_machine_load_operations(
@@ -297,6 +308,9 @@ class DelpiProductionGateway:
         work_center: str | None = None,
         open_only: bool | None = True,
         include_closed: bool = False,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
+        sort: str = "schedule_asc",
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
@@ -304,10 +318,18 @@ class DelpiProductionGateway:
             "branch": branch,
             "page": page,
             "page_size": page_size,
-            "sort": "schedule_asc",
+            "sort": sort,
         }
         if include_closed:
             params["include_closed"] = True
+        if include_in_production_outside_period is not None:
+            params["include_in_production_outside_period"] = (
+                include_in_production_outside_period
+            )
+        if include_operations_outside_period:
+            params["include_operations_outside_period"] = ",".join(
+                include_operations_outside_period
+            )
         elif open_only is not None:
             params["open_only"] = open_only
         else:

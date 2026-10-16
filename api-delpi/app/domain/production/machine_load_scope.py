@@ -49,6 +49,10 @@ DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_100_500", None)
 MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_100_500") or 0)
 SORT_SCHEDULE_ASC = "schedule_asc"
 SORT_SCHEDULE_DESC = "schedule_desc"
+# Cronologia SH8 pura, sem prioridade por apontamento HZA — usada pelo
+# Production Control ao montar o snapshot: quem está «em produção» é o run
+# do cockpit, não o coletor.
+SORT_SCHEDULE_NO_STATUS_ASC = "schedule_no_status_asc"
 SORT_DUE_DATE_ASC = "due_date_asc"
 SORT_DUE_DATE_DESC = "due_date_desc"
 SORT_ORDER_ASC = "op_asc"
@@ -57,6 +61,7 @@ SORT_QTY_DESC = "qty_desc"
 SORT_VALUES = (
     SORT_SCHEDULE_ASC,
     SORT_SCHEDULE_DESC,
+    SORT_SCHEDULE_NO_STATUS_ASC,
     SORT_DUE_DATE_ASC,
     SORT_DUE_DATE_DESC,
     SORT_ORDER_ASC,

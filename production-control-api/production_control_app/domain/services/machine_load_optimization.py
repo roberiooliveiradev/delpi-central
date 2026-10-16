@@ -2,7 +2,7 @@
 
 Hierarquia obrigatória da fila de cada centro de trabalho:
 
-1. operação já iniciada → permanece travada no slot atual;
+1. operação com run aberto no cockpit → permanece travada no slot atual;
 2. data de entrega → menor data primeiro (due_date → pa_due_date);
 3. dentro da mesma data, com group_by_tool ativo → grupos pela mesma
    ferramenta, na ordem da **primeira ocorrência livre** da fila — nunca
@@ -29,12 +29,12 @@ from production_control_app.domain.services.machine_load_delivery_window import 
     operation_due_date,
 )
 from production_control_app.domain.services.machine_load_queue_slots import (
-    OperationKey,
+    ProtectedOperationKey,
     free_positions,
     pinned_positions,
+    protected_predicate,
     reorder_free_slots,
     slots_by_work_center,
-    started_predicate,
 )
 
 # «MOD» é mão de obra — operação manual sem ferramental. Espelha o contrato
@@ -79,15 +79,15 @@ def optimize_machine_load_queue(
     operations: list[dict[str, Any]],
     *,
     criteria: MachineLoadOptimizationCriteria,
-    started_keys: set[OperationKey] | None = None,
+    protected_keys: set[ProtectedOperationKey] | None = None,
 ) -> MachineLoadOptimizationResult:
     """Resequencia a fila de cada centro pela hierarquia data → critérios.
 
-    started_keys traz o status ao vivo (HZA) por (production_order,
-    operation_code) quando o snapshot congelado não carrega os campos de
-    apontamento.
+    ``protected_keys`` traz as operações com run aberto no cockpit por
+    (work_center, production_order, operation_code) — a única fonte que
+    trava posição; flags do snapshot congelado não protegem.
     """
-    started_here = started_predicate(started_keys)
+    is_protected = protected_predicate(protected_keys)
 
     next_ops = list(operations)
     centers: list[str] = []
@@ -96,7 +96,7 @@ def optimize_machine_load_queue(
 
     for center, slots in slots_by_work_center(operations).items():
         center_ops = [operations[index] for index in slots]
-        pinned = pinned_positions(center_ops, is_pinned=started_here)
+        pinned = pinned_positions(center_ops, is_pinned=is_protected)
         free = free_positions(center_ops, pinned=pinned)
         if not free:
             continue
@@ -117,7 +117,7 @@ def optimize_machine_load_queue(
         moved_count += sum(
             1 for before, after in zip(free, desired, strict=True) if before != after
         )
-        # Tudo antes da primeira posição livre é operação já iniciada.
+        # Tudo antes da primeira posição livre é operação com run aberto.
         kept_ahead += free[0]
 
     return MachineLoadOptimizationResult(

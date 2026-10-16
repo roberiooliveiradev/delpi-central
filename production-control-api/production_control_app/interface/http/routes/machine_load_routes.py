@@ -151,7 +151,10 @@ def get_machine_load_live_status(
     return ok(data)
 
 
-@router.get("/machine-load/cockpit-status")
+@router.get(
+    "/machine-load/cockpit-status",
+    operation_id="get_machine_load_cockpit_status",
+)
 def get_machine_load_cockpit_status(
     request: Request,
     branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),

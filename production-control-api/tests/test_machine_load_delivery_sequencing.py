@@ -5,6 +5,9 @@ from typing import Any
 from production_control_app.domain.services.machine_load_delivery_sequencing import (
     optimize_by_delivery_date,
 )
+from production_control_app.domain.services.machine_load_queue_slots import (
+    protected_operation_key,
+)
 
 
 def _op(
@@ -62,43 +65,64 @@ def test_same_delivery_date_keeps_the_current_manual_order() -> None:
     assert _orders(result.operations, "CT-01A") == ["A0", "A2", "A1"]
 
 
-def test_started_operation_is_never_overtaken() -> None:
+def test_protected_operation_is_never_overtaken() -> None:
     operations = [
-        _op("A9", due="2026-12-01", running=True),
+        _op("A9", due="2026-12-01"),
         _op("A3", due="2026-09-30"),
         _op("A1", due="2026-08-21"),
     ]
 
-    result = optimize_by_delivery_date(operations)
+    result = optimize_by_delivery_date(
+        operations, protected_keys={protected_operation_key(operations[0])}
+    )
 
     assert _orders(result.operations, "CT-01A") == ["A9", "A1", "A3"]
     assert result.kept_ahead_count == 1
 
 
-def test_appointed_operation_in_the_middle_holds_its_slot() -> None:
+def test_hza_flags_without_run_do_not_protect() -> None:
+    """is_in_production/started congelados no snapshot não travam posição."""
     operations = [
-        _op("A3", due="2026-09-30"),
-        _op("A9", due="2026-12-01", status="started"),
+        _op("A9", due="2026-12-01", running=True),
+        _op("A3", due="2026-09-30", status="started"),
         _op("A1", due="2026-08-21"),
     ]
 
     result = optimize_by_delivery_date(operations)
 
-    # A posição 2 é da operação já apontada; só as livres (1ª e 3ª) trocam entre si.
+    assert _orders(result.operations, "CT-01A") == ["A1", "A3", "A9"]
+    assert result.kept_ahead_count == 0
+
+
+def test_protected_operation_in_the_middle_holds_its_slot() -> None:
+    operations = [
+        _op("A3", due="2026-09-30"),
+        _op("A9", due="2026-12-01"),
+        _op("A1", due="2026-08-21"),
+    ]
+
+    result = optimize_by_delivery_date(
+        operations, protected_keys={protected_operation_key(operations[1])}
+    )
+
+    # A posição 2 é da operação com run aberto; só as livres trocam entre si.
     assert _orders(result.operations, "CT-01A") == ["A1", "A9", "A3"]
 
 
-def test_live_status_keys_pin_operations_without_snapshot_flags() -> None:
+def test_run_in_another_work_center_does_not_protect() -> None:
+    """Mesma OP+operação com run em outro CT não trava a posição deste centro."""
     operations = [
-        _op("A9", due="2026-12-01", operation="07"),
-        _op("A3", due="2026-09-30", operation="03"),
-        _op("A1", due="2026-08-21", operation="02"),
+        _op("A9", due="2026-12-01", operation="07", center="CT-01A"),
+        _op("A3", due="2026-09-30", operation="03", center="CT-01A"),
+        _op("A1", due="2026-08-21", operation="02", center="CT-01A"),
     ]
 
-    result = optimize_by_delivery_date(operations, started_keys={("A9", "07")})
+    result = optimize_by_delivery_date(
+        operations,
+        protected_keys={("CT-09", "A9", "07")},
+    )
 
-    assert _orders(result.operations, "CT-01A") == ["A9", "A1", "A3"]
-    assert result.kept_ahead_count == 1
+    assert _orders(result.operations, "CT-01A") == ["A1", "A3", "A9"]
 
 
 def test_operation_without_delivery_goes_to_the_end() -> None:
@@ -139,13 +163,19 @@ def test_queue_already_sorted_reports_no_change() -> None:
     assert result.operations == operations
 
 
-def test_center_with_only_started_operations_is_untouched() -> None:
+def test_center_with_only_protected_operations_is_untouched() -> None:
     operations = [
-        _op("A9", due="2026-12-01", running=True),
-        _op("A1", due="2026-08-21", status="started"),
+        _op("A9", due="2026-12-01"),
+        _op("A1", due="2026-08-21"),
     ]
 
-    result = optimize_by_delivery_date(operations)
+    result = optimize_by_delivery_date(
+        operations,
+        protected_keys={
+            protected_operation_key(operations[0]),
+            protected_operation_key(operations[1]),
+        },
+    )
 
     assert result.work_centers == []
     assert _orders(result.operations, "CT-01A") == ["A9", "A1"]

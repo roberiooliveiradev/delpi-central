@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, Sequence
 
 from app.domain.production.machine_load_scope import (
     DEFAULT_PAGE_SIZE,
@@ -169,6 +169,40 @@ class MachineLoadWindow:
         }
 
 
+def _parse_operation_pairs(
+    value: str | Sequence[tuple[str, str]] | None,
+) -> tuple[tuple[str, str], ...]:
+    """CSV ``OP:operacao`` → tuplas, para a exceção explícita de período.
+
+    Limite de segurança: pares demais inflariam o WHERE — a lista real são os
+    runs abertos do cockpit, nunca mais que algumas dezenas por filial.
+    """
+    if value is None or value == "":
+        return ()
+    if isinstance(value, str):
+        raw_pairs = value.split(",")
+    else:
+        raw_pairs = [f"{order}:{operation}" for order, operation in value]
+    pairs: list[tuple[str, str]] = []
+    for raw in raw_pairs:
+        text = str(raw).strip()
+        if not text:
+            continue
+        order, sep, operation = text.partition(":")
+        order, operation = order.strip(), operation.strip()
+        if not sep or not order or not operation or len(order) > 30 or len(operation) > 10:
+            raise ValueError(
+                "include_operations_outside_period inválido. "
+                "Use pares OP:operacao separados por vírgula."
+            )
+        pair = (order, operation)
+        if pair not in pairs:
+            pairs.append(pair)
+    if len(pairs) > 200:
+        raise ValueError("include_operations_outside_period aceita no máximo 200 pares.")
+    return tuple(pairs)
+
+
 @dataclass(frozen=True, slots=True)
 class MachineLoadFilterRequest:
     window: MachineLoadWindow
@@ -177,6 +211,8 @@ class MachineLoadFilterRequest:
     production_order: str | None = None
     tool: str | None = None
     open_only: bool | None = True
+    include_in_production_outside_period: bool | None = True
+    include_operations_outside_period: tuple[tuple[str, str], ...] = ()
 
     @classmethod
     def from_params(
@@ -189,9 +225,14 @@ class MachineLoadFilterRequest:
         tool: str | None = None,
         open_only: bool | str | None = None,
         include_closed: bool | str | None = None,
+        include_in_production_outside_period: bool | str | None = None,
+        include_operations_outside_period: str | Sequence[tuple[str, str]] | None = None,
     ) -> MachineLoadFilterRequest:
         resolved_open = _as_bool(open_only)
         resolved_include_closed = _as_bool(include_closed) is True
+        resolved_in_production_escape = _as_bool(
+            include_in_production_outside_period
+        )
         if resolved_include_closed:
             effective_open: bool | None = None
         elif resolved_open is None:
@@ -211,6 +252,14 @@ class MachineLoadFilterRequest:
             else None,
             tool=(str(tool).strip() or None) if tool is not None else None,
             open_only=effective_open,
+            include_in_production_outside_period=(
+                True
+                if resolved_in_production_escape is None
+                else resolved_in_production_escape
+            ),
+            include_operations_outside_period=_parse_operation_pairs(
+                include_operations_outside_period
+            ),
         )
 
     def filter_kwargs(self) -> dict[str, Any]:
@@ -221,6 +270,12 @@ class MachineLoadFilterRequest:
             "production_order": self.production_order,
             "tool": self.tool,
             "open_only": self.open_only,
+            "include_in_production_outside_period": (
+                self.include_in_production_outside_period
+            ),
+            "include_operations_outside_period": (
+                self.include_operations_outside_period
+            ),
         }
 
     def filters_dict(self) -> dict[str, Any]:
@@ -251,6 +306,8 @@ class MachineLoadOperationsRequest(MachineLoadFilterRequest):
         tool: str | None = None,
         open_only: bool | str | None = None,
         include_closed: bool | str | None = None,
+        include_in_production_outside_period: bool | str | None = None,
+        include_operations_outside_period: str | Sequence[tuple[str, str]] | None = None,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
         sort: str | None = None,
@@ -263,6 +320,8 @@ class MachineLoadOperationsRequest(MachineLoadFilterRequest):
             tool=tool,
             open_only=open_only,
             include_closed=include_closed,
+            include_in_production_outside_period=include_in_production_outside_period,
+            include_operations_outside_period=include_operations_outside_period,
         )
         resolved_sort = (sort or DEFAULT_SORT).strip()
         if resolved_sort not in SORT_VALUES:
@@ -274,6 +333,10 @@ class MachineLoadOperationsRequest(MachineLoadFilterRequest):
             production_order=base.production_order,
             tool=base.tool,
             open_only=base.open_only,
+            include_in_production_outside_period=(
+                base.include_in_production_outside_period
+            ),
+            include_operations_outside_period=base.include_operations_outside_period,
             page=max(1, int(page or 1)),
             page_size=min(max(1, int(page_size or DEFAULT_PAGE_SIZE)), MAX_PAGE_SIZE),
             sort=resolved_sort,

@@ -1,9 +1,13 @@
 """Mecânica de slots da fila de um centro de trabalho.
 
 Toda reordenação da carga máquina (priorizar conjunto, otimizar por entrega)
-obedece à mesma regra: operação **já iniciada** — em produção agora ou com
-apontamento no histórico — fica travada onde está; só as posições livres são
-permutadas. Este módulo é a fonte única dessa mecânica.
+obedece à mesma regra: operação com **run aberto no cockpit do operador** fica
+travada onde está; só as posições livres são permutadas. Este módulo é a fonte
+única dessa mecânica.
+
+A proteção depende exclusivamente das chaves oficiais fornecidas pela aplicação
+(runs locais do MES) — nunca de apontamentos HZA nem de flags persistidas no
+snapshot congelado (``production_status``, ``is_in_production``).
 """
 
 from __future__ import annotations
@@ -11,18 +15,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-# Status vindos da HZA010: a operação já foi tocada na fábrica.
-STARTED_PRODUCTION_STATUSES = frozenset({"in_progress", "started"})
-
 OperationKey = tuple[str, str]
 
+# Identidade funcional da operação protegida: centro de trabalho + OP + operação.
+# O centro entra na chave porque a mesma OP/operação pode existir em outro posto
+# sem run aberto — proteger por par OP+operação travaria a posição errada.
+ProtectedOperationKey = tuple[str, str, str]
 
-def is_started_operation(item: dict[str, Any]) -> bool:
-    """True se a operação já foi iniciada (em produção agora ou já apontada)."""
-    if item.get("is_in_production"):
-        return True
-    status = str(item.get("production_status") or "").strip().lower()
-    return status in STARTED_PRODUCTION_STATUSES
+
+def _norm(value: Any) -> str:
+    return str(value or "").strip().upper()
 
 
 def operation_identity(item: dict[str, Any]) -> OperationKey:
@@ -32,20 +34,29 @@ def operation_identity(item: dict[str, Any]) -> OperationKey:
     )
 
 
-def started_predicate(
-    started_keys: set[OperationKey] | None = None,
+def protected_operation_key(item: dict[str, Any]) -> ProtectedOperationKey:
+    """Chave canônica (centro, OP, operação) — vale para item da fila e run."""
+    return (
+        _norm(item.get("work_center")),
+        _norm(item.get("production_order")),
+        str(item.get("operation_code") or "").strip(),
+    )
+
+
+def protected_predicate(
+    protected_keys: set[ProtectedOperationKey] | None = None,
 ) -> Callable[[dict[str, Any]], bool]:
-    """Predicado de «já iniciada» combinando o snapshot com o status vivo (HZA).
+    """Predicado de «protegida» olhando só as chaves oficiais de runs abertos.
 
-    ``started_keys`` cobre o caso em que o payload congelado não carrega os
-    campos de apontamento.
+    Sem run aberto a posição é livre — mesmo que o snapshot congelado carregue
+    ``is_in_production``/``production_status`` herdados de apontamentos HZA.
     """
-    started = started_keys or set()
+    protected = protected_keys or set()
 
-    def started_here(item: dict[str, Any]) -> bool:
-        return is_started_operation(item) or operation_identity(item) in started
+    def is_protected(item: dict[str, Any]) -> bool:
+        return protected_operation_key(item) in protected
 
-    return started_here
+    return is_protected
 
 
 def slots_by_work_center(operations: list[dict[str, Any]]) -> dict[str, list[int]]:

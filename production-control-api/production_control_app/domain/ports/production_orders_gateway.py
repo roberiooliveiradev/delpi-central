@@ -93,6 +93,8 @@ class ProductionOrdersGateway(Protocol):
         branch: str,
         delivery_start: str | None,
         delivery_end: str,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
     ) -> dict[str, Any]:
         ...
 
@@ -108,6 +110,9 @@ class ProductionOrdersGateway(Protocol):
         work_center: str | None = None,
         open_only: bool | None = True,
         include_closed: bool = False,
+        include_in_production_outside_period: bool | None = None,
+        include_operations_outside_period: Sequence[str] | None = None,
+        sort: str = "schedule_asc",
         page: int,
         page_size: int,
     ) -> dict[str, Any]:
