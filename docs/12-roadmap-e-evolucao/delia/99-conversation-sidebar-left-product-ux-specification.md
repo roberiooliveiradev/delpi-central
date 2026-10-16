@@ -201,3 +201,14 @@ Revisar primeiro `IconButton`, botões e menu/navigation existentes em `plugin-u
 ## 11. Direção R2 — rail de ícones persistente (2026-10-16)
 
 Decisão superior do Product Master: `Recolher conversas` transforma a largura expandida em **rail**, não remove a região. Alvo: ~64px desktop e ~52px em containers compactos, adaptado aos tokens reais; botão superior passa para `Expandir conversas`. Permanecem em rail os ícones de **Nova conversa**, **Pesquisar conversas** e **Opções**, com `aria-label` e tooltip. Grupo Recentes/histórico e seus labels somem apenas visualmente quando colapsado; zero perda de estado da conversa. Nenhum botão sem backend recebe handler artificial. Não duplicar controle no header central. `ConversationSidebar.collapsed` é propriedade render-only de layout; persistência de preferência não implementada. Implementação candidata no Plugin UI, testes criados/atualizados `TEST_NOT_RUN`, QA navegador `TEST_NOT_RUN`, fase inalterada.
+
+
+## 12. Refinamento R4 — botão de expandir/recolher (2026-10-16)
+
+**Escopo autorizado pelo Product Master:** apenas a aparência do toggle da sidebar; preservar arquitetura de rail persistente, a única ação por estado e o comportamento dos painéis.
+
+**Decisão visual:** reutilizar `IconButton` e Lucide `PanelLeftOpen/PanelLeftClose`, agora com classe local `delpi-ui-conversation-three-region__rail-toggle` em `ConversationThreeRegionLayout`, tamanho de ícone 19px e stroke 1.8. O controle adota superfície **ghost**, área de 40×40px, radius 12px, borda invisível por padrão, hover tonal suave, press tonal e foco visível com acento semântico. No rail recolhido, fundo tonal quase imperceptível indica affordance. Nenhum estilo novo é aplicado globalmente ao IconButton ou aos outros produtos. Usa os tokens de movimento da R3, com `prefers-reduced-motion` sem transição.
+
+**Estado e acessibilidade:** `Recolher conversas` com `aria-expanded=true` quando expandida; `Expandir conversas` com `aria-expanded=false` no rail. Os ícones continuam apenas decorativos, sem duplicar leitura; keyboard pelo `IconButton` já compartilhado. Não introduzir segundo toggle no header DÉLIA.
+
+**Evidence Gate:** CSS, JSX e asserts nos testes atualizados e commitados em `main`. `EXISTING_EQUIVALENT=YES` (`IconButton`), `REUSE_DECISION=EXTEND` apenas com classe de estilização local. Nenhum backend, fases ou ownership alterado. Tests/build/browser QA permanecem `TEST_NOT_RUN` sem runner/Portal autenticado; review visual independente `PENDING`. O registro não constitui aceite de UI em produção.
