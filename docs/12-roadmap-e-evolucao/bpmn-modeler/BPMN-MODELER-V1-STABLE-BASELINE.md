@@ -2,7 +2,7 @@
 
 > **Release:** V1 stable product baseline (G10 — Final Closure)
 > **Baseline SHA:** `4ad30b5f21aebb85aee7df1122f17ba130cedf3f` (`main`)
-> **Data:** 2026-04-19
+> **Data:** 2026-10-16
 > **Status:** `IMPLEMENTATION: PASS / CLOSED` — `FUNCTIONAL BLOCKERS: 0` — `ACTIVE IMPLEMENTATION GAPS: 0`
 
 ## Propósito do produto
@@ -56,7 +56,7 @@ Nenhuma autoridade paralela (JSON visual, DI separado, proxy XML/FK, bypass de p
 |---|---|
 | `PROPERTIES_PANEL_VENDOR_TRANSLATION_LIMITATION` (strings leaf vendor em EN) | `ACCEPTED_RESIDUAL`, `NON_BLOCKING` |
 | Watermark bpmn.io | `REQUIRED BY LICENSE` — posição bottom-left padronizada |
-| E2E `workers=8` | best-effort, não contrato (release gate = workers=1/2) |
+| E2E `workers=8` | best-effort, não contrato |
 | `delpi-transformometro` sem `build-info.json` | gap de instrumentação de provenance (não de produto) — conteúdo provado por asset hash |
 
 ## Runtime evidence class
@@ -77,7 +77,8 @@ Correções fechadas neste gate (não são test debt — defeitos reais encontra
 - TM BPMN backend: **69/69** (`test_bpmn_migration`, `test_process_bpmn_document`, `test_process_bpmn_reference`, `test_bpmn_migration_composition`, `test_flowchart_validation_and_bpmn`)
 - E2E typecheck: `npm run typecheck:e2e` clean
 - Frontend unit: `@delpi/bpmn-editor` **191/191**; `transformometro` **492/492**; lint clean; build emite worker chunk + `remoteEntry.js` + stylesheet com regra de marca
-- E2E core (`workers=2`, 273 testes): **271 pass / 2 falhas transientes** — ambas `element not found` no mount do MFE (flake de infraestrutura no load do remoteEntry, sem reprodução isolada: rerun dos mesmos specs = **24/24**); todas as falhas determinísticas do gate corrigidas (autosave AUTH-04/04b/AUTHZ/OFF-02, LGEO-01/04/06, G7 XOR, E2E-38b)
+- E2E core (`workers=2`, 273 testes): **271 pass / 2 mount flakes** — ambas `element not found` no mount do MFE (harness/infra do remoteEntry, sem reprodução isolada: rerun dos mesmos specs = **24/24**); todas as falhas determinísticas do gate corrigidas (autosave AUTH-04/04b/AUTHZ/OFF-02, LGEO-01/04/06, G7 XOR, E2E-38b)
+- Workers policy (vigente, G10-CLOSE-1): `workers=1` = release/deterministic baseline; `workers=2` = fast-path suportado (mount flake ocasional do MFE = harness residual); `workers=8` = best-effort, não release gate
 - E2E-38b visual-regression: **2/2** (ownership policy inalterada)
 
 ## Roadmap futuro (não-gap)
