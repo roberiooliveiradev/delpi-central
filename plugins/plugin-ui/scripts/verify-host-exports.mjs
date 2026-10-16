@@ -32,6 +32,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationStatus",
   "GovernedConfirmation",
   "ConversationError",
+  "ActivityViewer",
   "ActionButton",
   "IconButton",
   "createDashboardUserManual",

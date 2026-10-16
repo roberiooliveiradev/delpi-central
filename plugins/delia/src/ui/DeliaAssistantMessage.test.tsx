@@ -340,7 +340,9 @@ describe("DeliaAssistantMessage — copy action", () => {
   it("exposes no invented actions (no feedback/share/source buttons)", () => {
     const { container } = renderMessage(makeTurn());
     const labels = Array.from(
-      container.querySelectorAll("button"),
+      container.querySelectorAll(
+        "button:not(.delpi-ui-activity-viewer__disclosure)",
+      ),
     ).map((b) => b.getAttribute("aria-label") ?? b.textContent);
     for (const label of labels) {
       expect(label).not.toMatch(/avaliar|compartilhar|fonte|detalhe/i);
@@ -350,7 +352,7 @@ describe("DeliaAssistantMessage — copy action", () => {
     expect(
       Array.from(container.querySelectorAll("button")).filter(
         (b) =>
-          !b.classList.contains("delpi-ui-activity-viewer__summary"),
+          !b.classList.contains("delpi-ui-activity-viewer__disclosure"),
       ),
     ).toHaveLength(1);
   });

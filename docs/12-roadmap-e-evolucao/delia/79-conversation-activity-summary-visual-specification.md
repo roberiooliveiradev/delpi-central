@@ -1,6 +1,6 @@
 # 79 — DÉLIA: ActivityViewer / Conversation Activity Summary
 
-**Status:** `IMPLEMENTED_EXISTING / DESIGN_ALIGNED / REUSE` — o componente compartilhado `ActivityViewer` já existe em `plugins/plugin-ui` e já é consumido pela DÉLIA. Esta especificação documenta significado, aparência e limites; não cria nova capability nem autoriza componente paralelo.
+**Status:** `IMPLEMENTED / REFINED / REUSE` — o componente compartilhado `ActivityViewer` foi refinado conforme esta especificação (summary estático com título + detalhe secundário em segunda linha, disclosure rotulado dedicado `Ver detalhes`/`Ocultar detalhes`, tokens existentes) e a projeção DÉLIA deixou de expor `remote_name`/`protocol`/`remote_capability` (identificadores técnicos, nunca labels user-facing). Não cria nova capability nem componente paralelo.
 **Escopo:** resumo visual compacto e expansível da atividade observável da DÉLIA durante e após uma interação, em página completa e dock.
 **Reanchor:** HEAD de elaboração `843ee2423a45275c507b7cdc10bb92f45f1827b4`; qualquer alteração futura deve revalidar HEAD/status e a cadeia canônica de authorities.
 **Referências:** docs 69, 70, 73 e 75.
@@ -128,7 +128,7 @@ Fonte/owner só aparece quando legitimamente conhecido, como DAVI, TÉO, VISTA o
 
 Não expor por padrão tool name técnico, endpoint, URL interna, correlation ID, payload, token ou prompt/model internals.
 
-Observação factual: o adapter atual pode projetar `remote_name` e `protocol` em detalhes. Isso só deve permanecer quando a disclosure for legítima; refinement futuro deve reduzir exposição se necessário, nunca inventar labels.
+Decisão aplicada no refinement (HEAD `DELIA-UX-ACTIVITY-VIEWER-VISUAL-REFINEMENT-01`): `capability_ref.remote_name`, `capability_ref.protocol` e `provenance.remote_capability`/`protocol` foram classificados como `TOO_TECHNICAL` e removidos da projeção user-facing. Como o contrato não oferece `display_name` de capability, nenhum label é inventado — `owner_ref.display_name`, `specialist_id`, `source_system` e `observed_at` permanecem como labels legítimos.
 
 ## 9. Disclosure
 
@@ -263,14 +263,17 @@ Esta documentação não converte automaticamente esses testes em Browser QA par
 
 ```text
 COMPONENT = ActivityViewer
-PLUGIN_UI = PROVEN_EXISTING
-DELIA_LIVE_INTEGRATION = PROVEN_EXISTING
-DELIA_TURN_INTEGRATION = PROVEN_EXISTING
+PLUGIN_UI = REFINED_PROVEN
+DELIA_LIVE_INTEGRATION = REFINED_PROVEN
+DELIA_TURN_INTEGRATION = REFINED_PROVEN
 EXISTING_EQUIVALENT = YES
 REUSE_DECISION = REUSE
 NEW_CONVERSATION_ACTIVITY_COMPONENT = NOT_JUSTIFIED
 VISUAL_DIRECTION = DOCUMENTED
-NEW_IMPLEMENTATION = NOT_PERFORMED_BY_THIS_DOC
+REFINEMENT = PERFORMED (summary 2 linhas + disclosure rotulado; projeção sem remote_name/protocol)
+CATALOG = ADDED (ActivityViewer em collaboration + demos)
+BROWSER_QA = PASS (localhost harness)
+PHASE_ADVANCEMENT_2 = NONE
 PHASE_ADVANCEMENT = NONE
 ```
 

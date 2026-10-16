@@ -20,6 +20,7 @@ import {
   roomInboxListBemClasses,
 } from "../../components/collaboration";
 import { IconButton } from "../../components/actions";
+import { ActivityViewer } from "../../components/activity";
 import {
   ConversationError,
   ConversationHeader,
@@ -559,6 +560,122 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
               density="compact"
               onConfirm={() => {}}
               onCancel={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ActivityViewer",
+    family: "collaboration",
+    exportName: "ActivityViewer",
+    title: "ActivityViewer",
+    description:
+      "Resumo compacto e expansível de atividade observável. Apresentação pura — passos, fontes e outcome chegam prontos do consumidor.",
+    propsSummary: [
+      "title",
+      "state",
+      "steps",
+      "sources",
+      "outcome",
+      "summaryDetail",
+      "durationLabel",
+      "expandable",
+      "defaultExpanded",
+      "expandLabel",
+      "collapseLabel",
+      "className",
+    ],
+    demos: [
+      {
+        id: "running",
+        label: "Running (pendente)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Consultando informações…"
+              state="running"
+              summaryDetail="TÉO"
+              steps={[
+                { id: "s1", label: "Solicitação recebida", state: "completed" },
+                { id: "s2", label: "Consultando especialista", state: "running", sourceLabel: "TÉO" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "completed-multi-source",
+        label: "Concluído + múltiplas fontes",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="3 consultas concluídas"
+              state="completed"
+              summaryDetail="DAVI · TÉO · VISTA"
+              steps={[
+                { id: "s1", label: "Consulta concluída", state: "completed", sourceLabel: "DAVI" },
+                { id: "s2", label: "Consulta concluída", state: "completed", sourceLabel: "TÉO" },
+                { id: "s3", label: "Consulta concluída", state: "completed", sourceLabel: "VISTA" },
+              ]}
+              sources={[
+                { id: "src1", label: "Cadastro DELPI", statusLabel: "dados recebidos" },
+                { id: "src2", label: "Painel VISTA", statusLabel: "dados recebidos" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "partial-warning",
+        label: "Parcial (warning persistente)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Atividade parcialmente concluída"
+              state="partial"
+              steps={[
+                { id: "s1", label: "Consulta finalizada", state: "completed", sourceLabel: "DAVI" },
+                { id: "s2", label: "Consulta não respondeu", state: "failed", sourceLabel: "VISTA" },
+              ]}
+              outcome={{ label: "Parte da consulta não respondeu.", tone: "warning", persistent: true }}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "failed",
+        label: "Falha",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Atividade não concluída"
+              state="failed"
+              outcome={{ label: "Não foi possível concluir a solicitação.", tone: "danger", persistent: true }}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "expanded-long",
+        label: "Expandido + texto longo (320px)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ActivityViewer
+              title="Atividade concluída com título deliberadamente longo para provar quebra segura de linha"
+              state="completed"
+              summaryDetail="Fonte com nome secundário também propositalmente extenso"
+              defaultExpanded
+              steps={[
+                {
+                  id: "s1",
+                  label: "Etapa com descrição longa que deve quebrar sem overflow horizontal em container estreito",
+                  state: "completed",
+                  sourceLabel: "DAVI",
+                  timestampLabel: "10:41:02",
+                },
+              ]}
             />
           </div>
         ),

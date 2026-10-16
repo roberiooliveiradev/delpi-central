@@ -202,7 +202,10 @@ export function buildLiveActivityView(
           id: `ev-${event.sequence}`,
           label,
           state,
-          capabilityLabel: event.capability_ref?.remote_name,
+          // `capability_ref.remote_name`/`protocol` are technical
+          // control-plane identifiers — never surfaced as labels (doc 79
+          // §8). The owner display name is the legitimate user-facing
+          // source label.
           sourceLabel: event.owner_ref?.display_name,
         });
         break;
@@ -213,7 +216,6 @@ export function buildLiveActivityView(
           id: `ev-${event.sequence}`,
           label,
           state: "running",
-          capabilityLabel: event.capability_ref?.remote_name,
           sourceLabel: event.owner_ref?.display_name,
         });
         openQueryIndex = steps.length - 1;
@@ -225,7 +227,6 @@ export function buildLiveActivityView(
           id: `ev-${event.sequence}`,
           label,
           state,
-          capabilityLabel: event.capability_ref?.remote_name,
           sourceLabel:
             event.source_ref?.source_system ??
             event.owner_ref?.display_name,
@@ -242,9 +243,6 @@ export function buildLiveActivityView(
             description: outcomeLabel,
             sourceLabel:
               event.source_ref?.source_system ?? started.sourceLabel,
-            capabilityLabel:
-              event.capability_ref?.remote_name ??
-              started.capabilityLabel,
           };
           openQueryIndex = -1;
         } else {
@@ -263,9 +261,6 @@ export function buildLiveActivityView(
               event.source_ref.source_id ??
               "fonte",
             statusLabel: outcomeLabel,
-            detail: event.capability_ref?.protocol
-              ? `protocolo ${event.capability_ref.protocol}`
-              : undefined,
           });
         }
         break;
@@ -354,14 +349,15 @@ export function buildDeliaActivityView(
 
   const provenance = turn.provenance;
   if (provenance) {
-    const capabilityLabel = provenance.remote_capability;
+    // `remote_capability`/`protocol` are technical identifiers — the
+    // step keeps the honest label plus the legitimately known
+    // specialist name only (doc 79 §8).
     const sourceLabel = provenance.specialist_id;
-    if (capabilityLabel || sourceLabel) {
+    if (sourceLabel) {
       steps.push({
         id: "capability",
         label: "Capacidade acionada",
         state: provenance.is_complete === false ? "partial" : "completed",
-        capabilityLabel,
         sourceLabel,
       });
     }
@@ -381,17 +377,9 @@ export function buildDeliaActivityView(
           turn.groundingStatus === "GROUNDED"
             ? "resultado fundamentado"
             : "consultada",
-        detail:
-          [
-            provenance.protocol
-              ? `protocolo ${provenance.protocol}`
-              : null,
-            formatObservedAt(source.observed_at)
-              ? `observado em ${formatObservedAt(source.observed_at)}`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" · ") || undefined,
+        detail: formatObservedAt(source.observed_at)
+          ? `observado em ${formatObservedAt(source.observed_at)}`
+          : undefined,
       });
     }
   }
