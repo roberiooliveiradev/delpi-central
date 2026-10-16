@@ -204,3 +204,7 @@ PHASE_PROGRESSION = NONE
 `EXISTING_EQUIVALENT=YES` para `ActivityViewer`, `EvidenceDetails`, `ConversationHeader`, `RoomSidePanel` e primitives; `REUSE_DECISION=REUSE` para projeções visuais e `EXTEND` para composição de painel direito. `TO_INVENTORY` para seleção governada de turno/contrato de contexto aprofundado. UI de painel não vira provider, engine, planner nem authority.
 
 **Critérios:** único botão de contexto por estado; exatamente um empty state quando tudo vazio; seções com dados reais não degradam a leitura principal; nenhuma promessa falsa; aparência uniforme nas três regiões; screenshot desktop e Dock; keyboard/ARIA, light/dark, zoom 200%, contrast, overflow e reduced motion; testes/federação/browser QA executados antes de aceite. `UX_REVIEW=REWORK`, `RUNTIME_CHANGE=NONE` nesta atualização.
+
+## 11. Implementação visual R1 — registro
+
+`ConversationContextPanel` exibe sempre o agrupamento visual Detalhes, Evidências e Atividades, mas sem textos vazios repetidos; na falta de **qualquer** projeção, renderiza apenas um empty state: “Selecione uma mensagem para ver mais informações.” O shell oferece `Abrir contexto` somente quando fechado, no slot `ConversationHeader.actions`; quando aberto, mostra somente `Fechar painel de contexto` no header direito. O contexto não consulta APIs, infere FACT, nem dispara ACT. CSS revisado com superfície coesa e divisores suaves; testes alterados, mas `TEST_NOT_RUN` para runner/QA; contrato de seleção e autorização permanece pendente. 
