@@ -16,6 +16,21 @@ Entregar B2 como **renderização opcional e explicitamente contratada de Markdo
 
 **Gate atual:** `TRACEABILITY_GAP=OPEN` (spec 82 seção 11.1); `B2_IMPLEMENTATION_AUTHORIZED=NO`. Este plano **não** resolve esses gates sozinho e não é prompt de implementação para o Devin. O aceite de B1 tipográfico não libera B2, nem o CP-001 é suficiente, isoladamente, para um novo contrato Markdown.
 
+## 0.1 Decisões vinculantes do Product Master (2026-10-16)
+
+As decisões a seguir foram expressamente aprovadas pelo Product Master no contexto de definição de B2. São **decisões de direção do produto**, sujeitas aos gates normativos de traceability, owner, security, contract freeze e implementação. Nenhuma delas equivale à autorização de alterar runtime, `25` ou `presentation.v1` por inferência.
+
+| ID | Decisão do Product Master | Estado | Implicação congelada |
+|---|---|---|---|
+| `B2-PD-01` | Markdown textual **com links clicáveis seguros** | `APPROVED_PRODUCT_DIRECTION` | Link somente quando URL legítima, validada e autorizada por contrato; sem link inventado, tracking ou navegação arbitrária |
+| `B2-PD-02` | **`presentation.v2`** com formato explícito e transição segura de clientes | `APPROVED_PRODUCT_DIRECTION` | **Não** estender informalmente `presentation.v1`; escolher schema/semântica/ciclo de rollout de v2 em G1. Como não há histórico conversacional durável implementado, não há migração de mensagens persistidas a planejar para o runtime atual; ainda testar versões coexistentes, sessões transitórias e fallback |
+| `B2-PD-03` | **DÉLIA controla a produção de Markdown** a partir de conteúdo admitido e governado | `APPROVED_PRODUCT_DIRECTION` | MCP/providers/especialistas não controlam apresentação nem elevam texto a FACT. DÉLIA pode organizar visualmente dados aprovados sem inventar fatos, unidades, IDs ou autoridade |
+| `B2-PD-04` | **Markdown textual completo e controlado** | `APPROVED_PRODUCT_DIRECTION` | Permitir headings subordinados, parágrafos, negrito, itálico, listas, citações, divisores, código inline/fenced e links seguros. Permanecem OFF: tabelas estruturadas/GFM tables, gráficos, métricas, imagens, Mermaid, HTML arbitrário, embeds e widgets |
+
+**Ainda não decidido:** `B2-PD-05` — critério de quando a DÉLIA deve usar formatação automaticamente; demais detalhes como formatos e limites exatos, subset do renderer, safe links, conteúdo do contrato OpenAPI, negociação entre versões e rollout. Responder às decisões futuras no mesmo documento assim que aprovadas.
+
+**Gates que permanecem abertos:** `TRACEABILITY_GAP=OPEN`, `CP_MAPPING=PENDING`, `PRESENTATION_V2_SCHEMA=TO_DESIGN`, `SECURITY_REUSE_GATE=PENDING`, `B2_IMPLEMENTATION_AUTHORIZED=NO`. Produto aprovado **não** é contrato implementado nem aceite de fase. O plano 83 prevalece como detalhamento B2 sob a autoridade superior 82/16/25.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:
@@ -97,19 +112,23 @@ O planner nunca decide renderizadores/URLs por nomes de provider, endpoints ou f
 
 O payload atual de `presentation.v1` é vigente e fechado. Não alterar o parser para interpretar `text` como Markdown sem nova semântica publicada.
 
-### 6.1 Estratégia de formato — decisão aberta
+### 6.1 Estratégia de formato — produto decidiu `presentation.v2`; schema técnico pendente
 
-**Alternativa A (candidata, NÃO congelada):** campo opcional/explicitamente tipado e semanticamente admissível para indicar `plain_text` versus `markdown_safe` em um contrato aditivo, somente se compatível com clientes antigos, owner e limites. Validar se o consumidor antigo não exibirá sintaxe como informação enganosa.
+**Decisão `B2-PD-02`: `presentation.v2` será o contrato alvo**, com discriminação explícita entre texto literal e Markdown seguro. Não executar a antiga opção de campo aditivo direto em `presentation.v1` por conveniência. `presentation.v1` continua como runtime atual até implantação autorizada.
 
-**Alternativa B (candidata):** versão contratual nova com discriminated content variants e fallback compatível, se adição ao v1 romper garantias ou ambiguidades. Provar negotiated compatibility e comportamento de cliente antigo.
+**O que ainda cabe ao Contract Gate G1 (não definido nesta decisão):**
 
-**Alternativa C:** capability/projeção distinta, apenas se boundary/consumers reais justificarem a separação; não criar segundo engine por estilo de implementação.
+- Shape do envelope, discriminators, union de blocos, nomes de campos, `operationId`, semântica de fallback e erros; publicar OpenAPI/JSON Schema no owner.
+- Determinar limites, forma de conteúdo, origem do formato e validação do produtor do backend; nenhuma field/projection inventada por frontend.
+- Matriz de compatibilidade **backend v1/v2 × MFE v1/v2** e coexistência de abas/sessões abertas. Não há migração de histórico durável atualmente, mas isso **não elimina** mixed-version rollout/rollback.
+- Comportamento de versão desconhecida, degradação para texto inerte quando permitida e proteção contra exibição enganosa de markup em clientes antigos.
+- Não ativar emissão v2 até consumidores compatíveis e estratégia de deployment/verificação serem demonstrados.
 
-Nenhuma alternativa acima é decisão arquitetural final. Coordenação deve congelar opção, owner, consumidores, caminho HTTP, tipo/discriminador, máximo de caracteres/segmentos, erros, content lifecycle e exemplo OpenAPI antes do Devin implementar.
+G1 não rediscute v1 vs v2 sem nova evidência que justifique retornar a decisão ao Product Master. Se houver impossibilidade real de v2 sem drift, **STOP → ARCHITECTURE_DECISION_REQUIRED**.
 
 ### 6.2 Origem/declaração de Markdown
 
-A DÉLIA deve usar **formato explicitamente publicado no contrato**, produzido somente em boundary autorizada da própria aplicação a partir de informação admitida. O backend atual projeta conteúdo já governado e **não permite prosa factual livre escrita pelo modelo** como autoridade. O plano NÃO altera esse freeze: markup não autoriza geração livre de novas afirmações, cálculos, URLs ou fatos.
+Por decisão `B2-PD-03`, **a DÉLIA é o único owner da produção e admissão do Markdown**, com **formato explicitamente publicado no futuro contrato `presentation.v2`**, a partir de informação governada. Especialistas e providers podem fornecer dados/textos não confiáveis pela integração legítima, mas não decidem o formato user-facing por metadata ou output. O backend atual projeta conteúdo já governado e **não permite prosa factual livre escrita pelo modelo** como autoridade. O plano NÃO altera esse freeze: markup não autoriza geração livre de novas afirmações, cálculos, URLs ou fatos.
 
 Deve existir prova sobre **quem produz Markdown**, de quais dados e com qual transformação determinística ou política governada; não basta adicionar um flag ao frontend. O formatter não modifica identificadores, unidades, quantidades ou textos fornecidos pelo owner, nem inventa fonte. O owner do conteúdo permanece responsável pela veracidade dos dados; formatação só altera estrutura visual.
 
@@ -155,11 +174,11 @@ A fonte pode fornecer caracteres Markdown literais. Sem formato explicitamente a
 
 ## 8. Política mínima de Markdown B2 (candidata ao Security Review)
 
-**Baseline proposto para o primeiro release:**
+**Escopo textual aprovado pelo Product Master (`B2-PD-01` e `B2-PD-04`); implementação condicionada ao Security/Contract Gate:**
 - Habilitáveis por contrato: parágrafos, ênfase forte/fraca, listas ordenadas/não ordenadas (nested com profundidade limitada), blockquote, código inline e fenced code **text-only**, divisores simples e headings subordinados ao heading da conversa (não usar H1 duplicado).
 - Acessibilidade: listas são `ul/ol/li` reais; headings mapeados para hierarquia válida, sem âncoras globais geradas sem escopo; código não vira execução.
-- Links: OFF por default até política de URL/navegação publicada; quando habilitados, somente schemes/hosts/Portal navigation legitimamente permitidos e `noopener noreferrer` se external new tab. Never auto-open.
-- OFF no B2: HTML inline/bruto, CSS inline, styles, SVG, MathML, iframe, script, media, remote images, attachment/blob/data URLs, embeds, forms, interactive checkboxes, Mermaid, diagrams, GFM tables, tool directives, JSX/MDX, browser/app controls, syntax-highlighter dinâmico, componentes React gerados pelo modelo.
+- Links **incluídos no escopo B2 por decisão de produto** e **bloqueados até existência da política/contrato aprovado**: URLs válidas, origem publicável e autorização do owner; allowlist positiva de schemes/hosts e navegação Portal; `noopener noreferrer` em nova aba externa. Não inferir fonte, criar URL nem auto-open. Se política não estiver aprovada, links específicos degradam para texto sem navegação, sem autorizar links inseguros.
+- OFF no B2: HTML inline/bruto, CSS inline, styles, SVG, MathML, iframe, script, media, remote images, attachment/blob/data URLs, embeds, forms, interactive checkboxes, Mermaid, diagrams, **tabelas GFM e tabelas estruturadas**, gráficos, tool directives, JSX/MDX, browser/app controls, syntax-highlighter dinâmico, componentes React gerados pelo modelo.
 - O renderer não deve carregar recursos remotos apenas por interpretar o Markdown. Sem fetching silencioso de imagens/links. Sem anchor hijack no hash/router do Portal.
 - Visual chat-first: typography tokens do kit; não colocar cada parágrafo/lista em card; tabelas/gráficos em outra fase.
 
@@ -253,7 +272,7 @@ Se for necessária feature flag, inventariar mecanismo legítimo de Core/config 
 
 **G0 (autorização) — BLOCKING:** registro canônico em `25` ou decisão equivalente rastreável que explicite CP específico, fase e owner; autorização task bounded no `16`/ledger conforme processo vigente. Doc 83 não resolve G0 por si.
 
-**G1 (contrato) — BLOCKING:** ADR/contract aprovado; distinguir formato de texto literal; declarar producer, compatibilidade old/new, fallbacks e limites.
+**G1 (contrato) — BLOCKING:** direção `presentation.v2` **já escolhida pelo Product Master**; falta congelar OpenAPI/schema/ADR, distinguir formato literal versus Markdown, DÉLIA como producer, compatibilidade old/new, fallbacks, URLs/links e limites. Não retomar aditivo v1 sem nova decisão explícita.
 
 **G2 (segurança/reuse) — BLOCKING:** avaliação de sanitizer/renderer e escopo permitido; componente real e owner legítimos; no raw HTML, no provider tools as authority.
 
@@ -264,7 +283,7 @@ Se for necessária feature flag, inventariar mecanismo legítimo de Core/config 
 **O que Architecture / Coordination deve devolver:**
 1. `CP_MAPPING_DECISION` e eventual alteração na matriz 25 (com justificativa).
 2. `B2_SCOPE_AUTHORIZED` e owner/fase/eventual restrição de rollout, no HEAD real.
-3. `PRESENTATION_FORMAT_CONTRACT_DECISION` (alternative A/B/C), com OpenAPI.
+3. `PRESENTATION_FORMAT_CONTRACT_DECISION` — implementar **a escolha de produto `presentation.v2`** em OpenAPI, com detalhes ainda sujeitos a G1; não escolher silenciosamente v1.
 4. `REUSE_DECISION` final por componente, incluindo sanitizer/links.
 5. `DELEGATED_IMPLEMENTATION_BRIEF_APPROVED` com gates e review owner.
 
@@ -286,9 +305,13 @@ Restrições: trabalhar em `main` **somente conforme política solicitada pelo P
 TASK = DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01
 ARTIFACT = DOC_83_PLAN_ONLY
 B1_TYPOGRAPHY = IMPLEMENTED_WITH_REVIEW_RESIDUAL
-B2_PRODUCT_DIRECTION = TARGET
-B2_FORMAT_CONTRACT = TO_DECIDE
-B2_PRODUCER = TO_INVENTORY
+B2_PRODUCT_DIRECTION = APPROVED_BY_PRODUCT_MASTER
+B2_MARKDOWN_LINKS = APPROVED_IF_URL_CONTRACT_AND_SECURITY_GATES_PASS
+B2_CONTRACT_VERSION_DIRECTION = PRESENTATION_V2_APPROVED
+B2_FORMAT_CONTRACT_SCHEMA = TO_DESIGN
+B2_PRODUCER_OWNER = DELIA_APPROVED_BY_PRODUCT_MASTER
+B2_FORMAT_SCOPE = FULL_CONTROLLED_TEXT_MARKDOWN
+B2_AUTOMATIC_FORMATTING_POLICY = PENDING_PRODUCT_DECISION_05
 B2_RENDERER_SECURITY_FIT = TO_INVENTORY
 EXISTING_EQUIVALENT = YES (shared markdown/document primitives)
 REUSE_DECISION = PENDING_FOR_MARKDOWN_IN_DELIA
