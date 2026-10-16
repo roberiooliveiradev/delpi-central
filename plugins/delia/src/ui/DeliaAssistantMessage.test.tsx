@@ -486,9 +486,11 @@ describe("DeliaAssistantMessage — copy action", () => {
     );
   });
 
-  it("renders the copy action through the shared MessageActionBar", () => {
+  it("renders actions through ConversationAssistantActions", () => {
     const { container } = renderMessage(makeTurn());
-    const bar = container.querySelector(".delpi-ui-message-action-bar");
+    const bar = container.querySelector(
+      ".delpi-ui-conversation-assistant-actions",
+    );
     expect(bar).toBeTruthy();
     expect(bar!.getAttribute("aria-label")).toBe("Ações da resposta");
     expect(
@@ -517,25 +519,44 @@ describe("DeliaAssistantMessage — copy action", () => {
     ).toBeNull();
   });
 
-  it("exposes no invented actions (no feedback/share/source buttons)", () => {
-    const { container } = renderMessage(makeTurn());
-    const labels = Array.from(
-      container.querySelectorAll(
-        "button:not(.delpi-ui-activity-viewer__disclosure):" +
-          "not(.delpi-ui-evidence-details__disclosure)",
-      ),
-    ).map((b) => b.getAttribute("aria-label") ?? b.textContent);
-    for (const label of labels) {
-      expect(label).not.toMatch(/avaliar|compartilhar|fonte|detalhe/i);
-    }
-    // Exactly one secondary action — copy. The activity disclosure
-    // trigger is a presentation control, not an invented action.
+  it("prepares feedback/regenerate disabled without backend and keeps copy active", () => {
+    renderMessage(makeTurn());
     expect(
-      Array.from(container.querySelectorAll("button")).filter(
-        (b) =>
-          !b.classList.contains("delpi-ui-activity-viewer__disclosure") &&
-          !b.classList.contains("delpi-ui-evidence-details__disclosure"),
-      ),
-    ).toHaveLength(1);
+      (screen.getByRole("button", { name: "Copiar resposta" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
+    expect(
+      (screen.getByRole("button", { name: "Útil" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Não útil" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Refazer resposta" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "Mais opções" })).toBeNull();
+  });
+
+  it("copies markdown_safe readable text when presentation admits Markdown", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText },
+    });
+    renderMessage(
+      makeTurn({
+        content: "Resultado\n\n- OP-10293",
+        contentFormat: "markdown_safe",
+        markdownSource: "## Resultado\n\n- OP-10293",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Copiar resposta" }));
+    expect(writeText).toHaveBeenCalled();
+    const copied = writeText.mock.calls[0]?.[0] as string;
+    expect(copied).toContain("Resultado");
+    expect(copied).toContain("OP-10293");
+    expect(copied).not.toContain("##");
   });
 });

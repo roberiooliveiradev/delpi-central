@@ -70,3 +70,56 @@
     transition: none;
   }
 }
+
+/* ConversationAssistantActions — selected feedback inside the bar */
+.delpi-ui-message-action-bar .delpi-ui-icon-btn--pressed,
+.delpi-ui-message-action-bar .delpi-ui-icon-btn[aria-pressed="true"] {
+  border-color: transparent;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+}
+
+.delpi-ui-conversation-assistant-actions__more {
+  position: relative;
+  display: inline-flex;
+}
+
+.delpi-ui-conversation-assistant-actions__menu {
+  min-width: 10rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.delpi-ui-conversation-assistant-actions__menu-item {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.delpi-ui-conversation-assistant-actions__menu-item:hover:not(:disabled),
+.delpi-ui-conversation-assistant-actions__menu-item:focus-visible {
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f0f2f5));
+  outline: none;
+}
+
+.delpi-ui-conversation-assistant-actions__menu-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

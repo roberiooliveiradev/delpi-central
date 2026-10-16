@@ -1,10 +1,7 @@
-import { useState } from "react";
 import {
   Ban,
-  Check,
   CircleAlert,
   CloudOff,
-  Copy,
   ListChecks,
   Lock,
   ShieldCheck,
@@ -19,13 +16,12 @@ import {
 import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
+  ConversationAssistantActions,
   ConversationStatus,
   ConversationMarkdown,
   conversationMarkdownToPlainText,
   EvidenceDetails,
   GovernedConfirmation,
-  IconButton,
-  MessageActionBar,
   UnifiedAvatar,
 } from "@delpi/plugin-ui/index";
 import type { EvidenceDetailItem } from "@delpi/plugin-ui/index";
@@ -120,8 +116,6 @@ export function DeliaAssistantMessage({
   onResponseMotionComplete,
   onConfirmation,
 }: DeliaAssistantMessageProps) {
-  const [copied, setCopied] = useState(false);
-
   const ownerHint = presentationOwnerHint(turn.presentation ?? null);
   const displayContent = dedupeOwnerHintContent(turn.content, ownerHint);
   const presentationFault = turn.presentationFault ?? null;
@@ -208,21 +202,6 @@ export function DeliaAssistantMessage({
     Boolean(evidenceSummary) ||
     evidenceItems.length > 0 ||
     (turn.limitations?.length ?? 0) > 0;
-
-  function handleCopy() {
-    try {
-      const write = navigator.clipboard?.writeText(copyText);
-      if (!write) return;
-      void write
-        .then(() => {
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
-        })
-        .catch(() => {});
-    } catch {
-      // Clipboard unavailable — the action silently no-ops.
-    }
-  }
 
   return (
     <>
@@ -324,20 +303,14 @@ export function DeliaAssistantMessage({
           />
         ) : null}
 
-        <MessageActionBar
+        <ConversationAssistantActions
           className="delia-turn__message-actions"
-          align="start"
-          aria-label="Ações da resposta"
-        >
-          <IconButton
-            aria-label={
-              copied ? "Resposta copiada" : "Copiar resposta"
-            }
-            onClick={handleCopy}
-          >
-            {copied ? <Check size={13} /> : <Copy size={13} />}
-          </IconButton>
-        </MessageActionBar>
+          copyText={copyText}
+          disabled={loading}
+          // Feedback/regenerate prepared visually; no backend contract yet.
+          feedbackEnabled={false}
+          regenerateEnabled={false}
+        />
       </div>
     </>
   );

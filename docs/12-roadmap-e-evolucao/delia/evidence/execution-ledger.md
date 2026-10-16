@@ -14276,3 +14276,16 @@ INDEPENDENT_REVIEW=PENDING
 
 RW_S03_01=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO
 NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
+
+## §6.210 — DELIA-UX-CONVERSATION-ASSISTANT-ACTIONS-PLUGIN-UI-IMPLEMENTATION-01 (FRONTEND IMPLEMENTED)
+
+**DATA:** 2026-10-16. **MODE:** plugin-ui composition + DÉLIA import — zero backend feedback/regenerate, zero AuthZ/ACT/deploy. **BASE_HEAD:** `17e61331faef05cf99a534e601a0ac2f64bba457`. **SPEC:** [92](../92-conversation-assistant-actions-ux-functional-spec.md).
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES_PARTIAL`; `REUSE_DECISION=REUSE+EXTEND` — `MessageActionBar`, `IconButton` (+pressed), `HintAction`, `AnchoredPanelPortal`; NEW `ConversationAssistantActions`.
+- **PLUGIN-UI:** composition exported + `verify-host-exports`; CSS kit only; clipboard UI on host-supplied `copyText`.
+- **DELIA:** `DeliaAssistantMessage` replaces local MessageActionBar/IconButton/clipboard with shared component; copy active; feedback/regenerate prepared disabled; more options hidden without actions.
+- **TESTS:** ConversationAssistantActions **10 PASS**; DeliaAssistantMessage **33 PASS**; delia suite green; builds/federation PASS.
+- **EXIT:** `COPY_ACTION=ACTIVE`; `FEEDBACK=PREPARED_DISABLED`; `REGENERATE=PREPARED_DISABLED`; `MORE_OPTIONS=HIDDEN_UNTIL_ACTIONS`; `PHASE_PROGRESSION=NONE`.
+- **NEXT:** independent review; backend contracts for feedback/regenerate remain separate.
+
+INDEPENDENT_REVIEW=PENDING

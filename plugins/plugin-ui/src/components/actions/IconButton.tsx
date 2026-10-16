@@ -7,6 +7,9 @@ export type IconButtonProps = {
   "aria-label": string;
   "aria-expanded"?: boolean;
   "aria-haspopup"?: ButtonHTMLAttributes<HTMLButtonElement>["aria-haspopup"];
+  "aria-pressed"?: boolean;
+  /** Visual selected/pressed state (pairs with aria-pressed when boolean). */
+  pressed?: boolean;
   tone?: IconButtonTone;
   type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
   disabled?: boolean;
@@ -24,15 +27,19 @@ export function IconButton({
   "aria-label": ariaLabel,
   "aria-expanded": ariaExpanded,
   "aria-haspopup": ariaHaspopup,
+  "aria-pressed": ariaPressed,
+  pressed,
   tone = "default",
   type = "button",
   disabled = false,
   onClick,
   className,
 }: IconButtonProps) {
+  const isPressed = pressed ?? ariaPressed;
   const rootClass = [
     "delpi-ui-icon-btn",
     tone !== "default" ? `delpi-ui-icon-btn--${tone}` : null,
+    isPressed ? "delpi-ui-icon-btn--pressed" : null,
     className,
   ]
     .filter(Boolean)
@@ -47,6 +54,7 @@ export function IconButton({
       aria-label={ariaLabel}
       aria-expanded={ariaExpanded}
       aria-haspopup={ariaHaspopup}
+      aria-pressed={typeof isPressed === "boolean" ? isPressed : undefined}
     >
       {children}
     </button>

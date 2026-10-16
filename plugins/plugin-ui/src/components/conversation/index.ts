@@ -46,3 +46,10 @@ export {
   type MessageActionBarProps,
   type MessageActionBarVisibility,
 } from "./MessageActionBar";
+export {
+  ConversationAssistantActions,
+  type ConversationAssistantActionsLabels,
+  type ConversationAssistantActionsProps,
+  type ConversationAssistantFeedbackValue,
+  type ConversationAssistantMoreAction,
+} from "./ConversationAssistantActions";

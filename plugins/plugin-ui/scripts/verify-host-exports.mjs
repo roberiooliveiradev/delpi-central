@@ -89,6 +89,7 @@ const REQUIRED_HOST_EXPORTS = [
   "useFloatingNotices",
   "ConversationMarkdown",
   "conversationMarkdownToPlainText",
+  "ConversationAssistantActions",
 ];
 
 function findIndexExpose(dir) {

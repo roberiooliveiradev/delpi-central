@@ -39,6 +39,14 @@ export type {
   ConversationMarkdownProps,
   ConversationAuthorizedLink,
 } from "./components/markdown/ConversationMarkdown";
+/** Host-consumed assistant action strip — protect from MF tree-shake. */
+export { ConversationAssistantActions } from "./components/conversation/ConversationAssistantActions";
+export type {
+  ConversationAssistantActionsLabels,
+  ConversationAssistantActionsProps,
+  ConversationAssistantFeedbackValue,
+  ConversationAssistantMoreAction,
+} from "./components/conversation/ConversationAssistantActions";
 /**
  * Hosts TV (presentation) importam paint de runs via Index.
  * `export *` sozinho pode sumir no tree-shake MF → React #130 (undefined).

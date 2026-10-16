@@ -228,6 +228,21 @@ a.delpi-ui-action-btn--link:visited {
   cursor: not-allowed;
 }
 
+.delpi-ui-icon-btn--pressed,
+.delpi-ui-icon-btn[aria-pressed="true"] {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
 .delpi-ui-icon-btn--primary {
   background: var(--delpi-ui-accent, var(--primary, #089bdb));
   border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
