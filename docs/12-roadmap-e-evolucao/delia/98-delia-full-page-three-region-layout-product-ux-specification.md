@@ -150,3 +150,81 @@ RUNTIME_TESTS = TEST_NOT_RUN
 INDEPENDENT_REVIEW = PENDING
 PHASE_PROGRESSION = NONE
 ```
+
+## 12. Revisão visual R1 — alinhamento ao design system DELPI (2026-10-16)
+
+**Origem da evidência:** duas capturas reais da página `/apps/delia` fornecidas pelo Product Master. Na primeira o shell tinha apenas mensagens neutras nas laterais; na segunda os controles e grupos básicos já estavam renderizados. A estrutura de três colunas está coerente com os docs 98–100, mas a execução visual **não** corresponde ao padrão moderno/clean desejado. **Status:** `UX_REVIEW=REWORK`; esta seção atualiza o **alvo de aparência** e substitui, em conflitos visuais, as propostas anteriores destes três documentos. Os registros de implementação anteriores continuam históricos; **nenhum código foi alterado por esta revisão documental**.
+
+### 12.1 Diagnóstico verificável nas capturas
+
+1. **Duplicação de affordance de colapso:** botão no cabeçalho de cada lateral **e** botão no topo do centro. Isso cria ambiguidade, retrabalho cognitivo e aparência de controle técnico.
+2. **Segunda barra horizontal no topo do centro:** há uma faixa para toggles, separada do `ConversationHeader`, seguida de cabeçalho interno “DÉLIA”. Duas camadas visuais sem necessidade. O centro deve ter **um único header conversacional**, e as ações de painel devem compor seu slot `actions`/posições de extremidade apropriadas.
+3. **Laterais como blocos de cor pesada:** esquerda e direita aparecem densas, com fundos sólidos azulados e separação forte do canvas escuro, quebrando continuidade da experiência clean.
+4. **Sidebar com controle primário excessivamente encaixotado:** Nova conversa e Pesquisar parecem campos/botões de formulário administrativo e não navegação conversacional.
+5. **Painel direito poluído por mensagens repetidas de indisponibilidade:** Detalhes, Evidências e Atividades repetem textos longos, divisórias e vazios, apesar de não existirem projeções válidas.
+6. **Hierarquia espacial ainda sem refinamento:** títulos/paddings, ícones e seções das laterais não acompanham a leveza da recepção central.
+7. **Responsividade não evidenciada nessas imagens:** capturas de desktop não constituem aceite de Dock, zoom ou drawers.
+
+### 12.2 Direção visual aprovada como alvo — uma superfície coesa
+
+- **Três regiões, mas uma página só**: canvas contínuo com sutis diferenças de tom e divisores hairline. Na ausência de tokens exatos de tema, derivar exclusivamente de `--delpi-ui-*` e fallbacks Portal; sem cores hardcoded como identidade nova. Área central continua predominante.
+- **Larguras-alvo para QA, não valores congelados:** esquerda 248–288px, centro flexível com leitura centrada conforme `ConversationWorkspace` (~760px de medida interna existente), direita 296–344px quando aberta. Abaixo de largura útil apropriada, laterais viram drawers e o centro ocupa 100%; não comprimir três colunas simultâneas no Dock.
+- **Ritmo de 8px e tipografia compartilhada:** gap entre ícone e rótulo ~10–12px, padding horizontal de painel ~16–20px, cabeçalho de painel ~52–60px, raio de controles ~10–12px, hit target preferencial ≥40–44px. Ajustar tokens ao kit real, não inventar escala CSS paralela.
+- **Hierarquia:** DÉLIA/recepção/timeline/composer no centro; textos periféricos menos contrastantes e mais compactos; peso e tamanho coerentes com o `ConversationHeader`. Títulos laterais ≠ títulos de página.
+- **Superfícies:** painéis não são cartões autônomos grossos. De preferência, mesma família de surface da conversa, com leve gradação de contraste e bordas de baixa opacidade, como `RoomSidePanel` compartilhado. Sem shadow permanente desktop, exceto drawer overlay.
+- **Microinterações:** hover por fundo sutil, selected por tom/acento discreto e indicador não dependente só de cor, `focus-visible` consistente, transições discretas e `prefers-reduced-motion`.
+- **Central sem chrome extra:** nenhuma barra vazia de 42px para dois toggles. Integrar o botão **Abrir conversas** no início do header central **apenas quando esquerda estiver recolhida**; botão **Abrir contexto** no final do mesmo header **apenas quando painel direito estiver fechado** e a affordance for pertinente. O `ConversationHeader` atual já suporta `leading` e `actions`; **REUSE**, não substituição. Alternativamente, integrar a gestão visual pelo shell com slots do header, se o contrato do consumer exigir; não criar dois headers.
+- **Único owner de cada estado e toggle:** o shell coordena `left/right open`, mas expõe um único controle efetivo por região, na região visível correta. Esquerda aberta: botão de recolher no cabeçalho da sidebar; esquerda fechada: abrir no header central. Direita aberta: fechar no cabeçalho de contexto; direita fechada: abrir no header central. Nenhum par de controles duplicado e simultâneo.
+- **No desktop:** ambas as laterais podem coexistir abertas sem desfocar o centro. No Dock/mobile: uma única drawer por vez, backdrop e gerenciamento de foco, sem barra técnica superior persistente. O host Portal não deve receber uma segunda navegação global.
+
+### 12.3 Wireframe visual corrigido
+
+```text
++--------------------------+----------------------------------+---------------------------+
+| Conversas           [‹] |  DÉLIA                  [› ctx] | Contexto              [×] |
+|                          |  Inteligência operacional        |                           |
+| [+] Nova conversa        |                                  | Detalhes (quando houver)   |
+| [⌕] Pesquisar             |     Recepção ou timeline         | Evidências (quando houver) |
+|                          |                                  | Atividades (quando houver) |
+| Recentes                 |                                  |                           |
+|  estado vazio discreto   |                                  |   texto de orientação      |
+|                          |                                  |   único, se vazio         |
+|                          |   Composer ancorado              |                           |
+| Opções                   |                                  |                           |
++--------------------------+----------------------------------+---------------------------+
+```
+
+**O desenho representa regiões abertas para revisão. Estado inicial da página:** esquerda aberta e direita fechada; sem sobreposição fixa. Se a direita estiver aberta, o botão `[› ctx]` central não aparece; se esquerda aberta, não duplicar “abrir/recolher” no centro. Em telas estreitas, as duas laterais ficam fechadas e seus controles de abertura são colocados no header central.
+
+### 12.4 Contrato visual de composição (antes do próximo código)
+
+- `ConversationThreeRegionLayout`: exclusivamente geometria, abertura, fechamento, drawer/foco, breakpoints de container; **não renderiza uma nova topbar visual independente**. O centro é o `ConversationWorkspace` existente, preservado sem remount.
+- `ConversationHeader`: owner da única barra de identidade DÉLIA; seus `leading/actions` acomodam toggles de painéis **sem duplicar**. Propor uma interface com slots/callbacks controlados se necessário após inventário.
+- `ConversationSidebar` (doc 99): owner visual de Nova conversa, Pesquisar, Recentes, Opções e sua composição de header.
+- `ConversationContextPanel` (doc 100): owner visual de Detalhes, Evidências e Atividades, junto a uma apresentação neutra honesta.
+- `DeliaConversationPage`: wrapper de produto integra shell e widgets; `App.tsx` continua dono da conversa, do transporte, dos turnos e dos gates.
+- `EXISTING_EQUIVALENT=YES` para `ConversationHeader`, `ConversationWorkspace`, `IconButton` e `RoomSidePanel` como referência de superfícies. `REUSE_DECISION=REUSE` para primitives; `EXTEND` para os composites. Nenhum framework de layout novo.
+- Ausência de contrato backend não é motivo para UI com três mensagens idênticas de indisponibilidade. A UI pode reservar espaços, mostrar controles desabilitados *honestamente*, e apresentar **um** empty state conciso por painel.
+
+### 12.5 Critérios objetivos de revisão visual e funcional
+
+1. **EXATAMENTE UM** controle de recolher/abrir por região conforme estado; zero barra técnica adicional no topo central.
+2. Sidebar e painel direito parecem parte da mesma aplicação do centro, com tokens e densidade consistentes; não têm “azul pesado” apartado nem molduras administrativas.
+3. Largura do centro e largura efetiva da coluna de leitura preservadas ao alternar painéis; nenhum shift de recepção/composer além do redimensionamento natural.
+4. Ações não contratadas não disparam buscas, sessões, evidências ou opções fictícias. Um empty state contextual por painel, sem spam em três seções.
+5. Desktop com esquerda aberta/direita fechada por default; desktop suporta direita aberta; Dock/mobile com drawers fechadas por default e apenas uma drawer aberta.
+6. Keyboard/foco/restauração, contraste, light/dark, 320/375/420px, zoom 200%, reduced motion e visual QA em Portal/Dock.
+7. Criar comparação *antes/depois* no mesmo viewport, capturas do navegador reais e review independente. Não inferir PASS de mockup, documentação ou commit.
+8. Testes comportamentais de toggle, remount, estado do composer, drawer, ausência de backend e export federado no HEAD/config efetivo.
+
+```text
+UX_R1 = DOCUMENTED_CORRECTION_TARGET
+VISUAL_REVIEW = REWORK
+SHELL_THREE_REGION_GEOMETRY = PRESERVE
+DUPLICATE_TOGGLES = REMOVE_IN_FUTURE_CODE
+CENTER_EXTRA_TOOLBAR = REMOVE_IN_FUTURE_CODE
+DOCUMENTATION_UPDATE != RUNTIME_CORRECTION
+IMPLEMENTATION = PENDING
+TESTS_AND_BROWSER_QA = TEST_NOT_RUN
+PHASE_PROGRESSION = NONE
+```
