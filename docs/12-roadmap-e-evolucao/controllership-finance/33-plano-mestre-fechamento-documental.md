@@ -584,7 +584,7 @@ A fase documental deve reavaliar os E-items para separar **dado de implantação
 | E01 | seed bancário | tentar fechar owner/semântica; valores seed podem permanecer implantação se não alterarem contract |
 | E02 | correção pós-STOCK_CLOSED | **CLOSED / PRODUCT_DECISION**: STOCK_CLOSED terminal no Portal V1; correção posterior fica no owner canônico; futura expansão exige novo gate |
 | E03 | executor/permissões de sacramentação | provar owner/segregação até o nível necessário para boundary/Help; binding físico pode ficar T03/T05 |
-| E04 | canal real de envio | não inventar; enquanto ausente, envio real permanece slice bloqueado |
+| E04 | canal real de envio | **CLOSED / NOT_REQUIRED_IN_V1**: PO aprovou submissão interna ao Portal; não depender de Graph/anexo externo. T02/Core é responsável pelo aviso |
 | E05 | attachment roles | semântica já fechada; seed pode ficar implantação |
 | E06 | motivos de rejeição | modelo já fechado; seed/cobertura inicial pode ficar implantação |
 
@@ -611,7 +611,7 @@ T01–T05 permanecem inventários técnicos **quando** não alterarem o contrato
 - T01 — bindings DAVI/api-delpi;
 - T02 — capability Core PROVEN; adapter/configuração do produto TO_INVENTORY;
 - T03 — owner/canonical STOCK_CLOSED;
-- T04 — capability corporativa de envio;
+- T04 — envio externo **CLOSED / NOT_REQUIRED_IN_V1**; pacote P5 é submetido à Minha DELPI e Core Notifications apenas avisa;
 - T05 — Core effective permissions/scopes.
 
 Se o inventário provar semântica incompatível com o TARGET:
