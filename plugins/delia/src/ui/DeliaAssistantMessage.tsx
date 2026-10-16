@@ -20,11 +20,13 @@ import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
   ConversationStatus,
+  EvidenceDetails,
   GovernedConfirmation,
   IconButton,
   MessageActionBar,
   UnifiedAvatar,
 } from "@delpi/plugin-ui/index";
+import type { EvidenceDetailItem } from "@delpi/plugin-ui/index";
 import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
 
@@ -129,14 +131,53 @@ export function DeliaAssistantMessage({
       : undefined;
   const StateIcon = semanticState?.icon;
   const activityView = buildDeliaActivityView(turn);
-  const hasMeta =
-    Boolean(turn.epistemicClass) ||
-    (turn.groundingStatus === "GROUNDED" && Boolean(turn.provenance?.source)) ||
-    turn.groundingStatus === "NON_GROUNDED" ||
-    (turn.limitations?.length ?? 0) > 0;
-  const hasEvidenceDetails =
-    Boolean(turn.epistemicClass) ||
-    (turn.groundingStatus === "GROUNDED" && Boolean(turn.provenance?.source)) ||
+
+  // EvidenceDetails projection — user-facing only. `protocol`,
+  // `remote_capability` and other control-plane identifiers are
+  // technical-only and stay off this surface (doc 79/80); specialist_id
+  // is the legitimate owner label. observed_at renders only when valid;
+  // limitations arrive verbatim. No materiality signal exists in the
+  // current contract → materialLimitationLabel is intentionally absent.
+  const groundedSource =
+    turn.groundingStatus === "GROUNDED" ? turn.provenance?.source : null;
+  const observedLabel = formatObservedAt(turn.provenance?.observed_at);
+  const evidenceItems: EvidenceDetailItem[] = [];
+  if (turn.epistemicClass) {
+    evidenceItems.push({
+      label: "Classificação",
+      value: turn.epistemicClass,
+    });
+  }
+  if (groundedSource) {
+    evidenceItems.push({
+      label: "Fonte",
+      value:
+        groundedSource.source_system || groundedSource.source_id,
+    });
+    if (turn.provenance?.specialist_id) {
+      evidenceItems.push({
+        label: "Especialista",
+        value: turn.provenance.specialist_id,
+      });
+    }
+    if (observedLabel) {
+      evidenceItems.push({
+        label: "Observado em",
+        value: observedLabel,
+      });
+    }
+  }
+  const evidenceSummary = groundedSource ? (
+    <>
+      Fonte · {groundedSource.source_system || groundedSource.source_id}
+      {observedLabel ? <> · consultado em {observedLabel}</> : null}
+    </>
+  ) : turn.groundingStatus === "NON_GROUNDED" ? (
+    "Sem fonte vinculada"
+  ) : undefined;
+  const hasEvidence =
+    Boolean(evidenceSummary) ||
+    evidenceItems.length > 0 ||
     (turn.limitations?.length ?? 0) > 0;
 
   function handleCopy() {
@@ -214,51 +255,13 @@ export function DeliaAssistantMessage({
           />
         ) : null}
 
-        {hasMeta ? (
-          <div className="delia-turn__meta" aria-label="Detalhes da resposta">
-            {turn.groundingStatus === "GROUNDED" &&
-            turn.provenance?.source ? (
-              <p className="delia-turn__source">
-                Fonte · {turn.provenance.source.source_system}
-                {formatObservedAt(turn.provenance.observed_at) ? (
-                  <span className="delia-turn__source-when">
-                    {" "}
-                    · Consultado em{" "}
-                    {formatObservedAt(turn.provenance.observed_at)}
-                  </span>
-                ) : null}
-              </p>
-            ) : null}
-            {turn.groundingStatus === "NON_GROUNDED" ? (
-              <span className="delia-turn__meta-item">
-                sem fonte vinculada
-              </span>
-            ) : null}
-            {hasEvidenceDetails ? (
-              <details className="delia-turn__evidence">
-                <summary>Detalhes da evidência</summary>
-                {turn.epistemicClass ? (
-                  <span className="delia-turn__meta-item">
-                    classificação: {turn.epistemicClass}
-                  </span>
-                ) : null}
-                {turn.groundingStatus === "GROUNDED" &&
-                turn.provenance?.source ? (
-                  <span className="delia-turn__meta-item">
-                    fonte: {turn.provenance.source.source_system} ·{" "}
-                    {turn.provenance.specialist_id ?? "especialista"}/
-                    {turn.provenance.protocol ?? "MCP"} ·{" "}
-                    {turn.provenance.observed_at ?? ""}
-                  </span>
-                ) : null}
-                {turn.limitations && turn.limitations.length > 0 ? (
-                  <span className="delia-turn__meta-item">
-                    limitações: {turn.limitations.join(", ")}
-                  </span>
-                ) : null}
-              </details>
-            ) : null}
-          </div>
+        {hasEvidence ? (
+          <EvidenceDetails
+            className="delia-turn__evidence-details"
+            sourceSummary={evidenceSummary}
+            items={evidenceItems}
+            limitations={turn.limitations}
+          />
         ) : null}
 
         <MessageActionBar

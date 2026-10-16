@@ -30,6 +30,8 @@ export type DetailCardProps = {
   children: ReactNode;
   className?: string;
   headerActions?: ReactNode;
+  /** ARIA role override for the card root (ex.: "listitem" dentro de TaskCardList). */
+  role?: string;
   classNames: DetailCardClassNames;
   labels: DetailCardLabels;
 };
@@ -76,6 +78,7 @@ export function DetailCard({
   children,
   className,
   headerActions,
+  role,
   classNames,
   labels,
 }: DetailCardProps) {
@@ -109,7 +112,7 @@ export function DetailCard({
   );
 
   return (
-    <section className={cardClass}>
+    <section className={cardClass} role={role}>
       <header className={classNames.header}>
         {icon && classNames.icon ? <div className={classNames.icon}>{icon}</div> : null}
         {classNames.heading ? (

@@ -251,6 +251,21 @@ def build_machine_load_service(
     )
 
 
+def build_machine_load_cockpit_status_service() -> Any:
+    """Estados do cockpit p/ a Carga Máquina — só leitura MES local, sem gateway."""
+    from production_control_app.application.services.machine_load_cockpit_status_service import (  # noqa: E501
+        MachineLoadCockpitStatusService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_monitoring_read_repository import (  # noqa: E501
+        PostgresMesMonitoringReadRepository,
+    )
+
+    return MachineLoadCockpitStatusService(
+        repository=PostgresMesMonitoringReadRepository(),
+        branch_access=build_branch_access_service(),
+    )
+
+
 def build_line_feeder_pick_plan_repository() -> LineFeederPickPlanRepositoryPort:
     return PostgresLineFeederPickPlanRepository()
 

@@ -29,8 +29,15 @@ import {
 } from "../../bpmn-editor/src/testing/rtCompare";
 
 const BASE = process.env.BPMN_E2E_BASE_URL ?? "http://localhost";
+// Fixtures canônicas compartilhadas (G7A): mesma fonte dos testes de adapter
+// em @delpi/bpmn-editor — não duplicar corpus em e2e/.
 const FIXTURE_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "bpmn-editor",
+  "src",
+  "testing",
   "fixtures",
   "roundtrip",
 );

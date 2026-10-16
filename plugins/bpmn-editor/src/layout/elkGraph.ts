@@ -13,6 +13,7 @@
 
 import {
   LAYOUT_PROFILE_V1,
+  containerMinSize,
   elkPaddingFor,
   nodeSizeFor,
 } from "./layoutProfile";
@@ -189,6 +190,15 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
         node.width != null && node.height != null
           ? { width: node.width, height: node.height }
           : nodeSizeFor(node.type);
+      const min = containerMinSize(node);
+      if (min) {
+        // Piso declarado como INPUT do ELK — reserva o espaço final
+        // antes do posicionamento dos siblings. Sem isso o floor do
+        // container-fit cresceria pós-ELK e invadiria bounds já
+        // atribuídos a irmãos (overlap/click interception).
+        size.width = Math.max(size.width, min.width);
+        size.height = Math.max(size.height, min.height);
+      }
       const children = COLLAPSED(node) ? [] : build(node.id);
       const elkNode: ElkNode = {
         id: node.id,
@@ -204,6 +214,16 @@ export function buildElkGraph(snapshot: LayoutSnapshot): ElkNode {
           ...LAYOUT_PROFILE_V1.elk,
           "elk.padding": containerPadding(node),
         };
+        if (min) {
+          // Compound nodes: o ELK ignora width/height e deriva o
+          // tamanho dos filhos — o piso precisa ser declarado via
+          // nodeSize para entrar no cálculo de espaçamento dos
+          // siblings (org.eclipse.elk.nodeSize.minimum).
+          elkNode.layoutOptions["elk.nodeSize.constraints"] =
+            "[MINIMUM_SIZE]";
+          elkNode.layoutOptions["elk.nodeSize.minimum"] =
+            `(${min.width},${min.height})`;
+        }
         const scoped = edgesByScope.get(node.id);
         if (scoped?.length) {
           elkNode.edges = scoped.map(toElkEdge);

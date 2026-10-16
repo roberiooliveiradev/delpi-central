@@ -141,10 +141,26 @@ describe("TaskDetailCard", () => {
     expect(container.querySelector(".delpi-ui-task-detail-card")).toBeTruthy();
     expect(container.querySelector(".cm-status-badge")).toBeTruthy();
   });
+
+  it("assigneeValue sobrescreve o campo Responsável sem tocar o descriptor", () => {
+    render(
+      <TaskDetailCard
+        item={manual}
+        assigneeValue={<span data-testid="avatar-name">🙂 Maria</span>}
+      />,
+    );
+    expect(screen.getByTestId("avatar-name")).toBeTruthy();
+  });
+
+  it("raiz do card é listitem para hierarquia ARIA válida", () => {
+    const { container } = render(<TaskDetailCard item={manual} />);
+    const card = container.firstElementChild;
+    expect(card?.getAttribute("role")).toBe("listitem");
+  });
 });
 
 describe("TaskCardList", () => {
-  it("renderiza lista semântica acessível", () => {
+  it("renderiza lista semântica com filhos listitem", () => {
     render(
       <TaskCardList>
         <TaskDetailCard item={manual} />
@@ -153,6 +169,8 @@ describe("TaskCardList", () => {
     );
     const list = screen.getByRole("list");
     expect(list).toBeTruthy();
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(2);
     expect(screen.getByText("Validar fluxo")).toBeTruthy();
     expect(screen.getByText("Assinar ata")).toBeTruthy();
   });

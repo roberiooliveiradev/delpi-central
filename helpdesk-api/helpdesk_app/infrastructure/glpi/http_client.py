@@ -19,6 +19,7 @@ from helpdesk_app.domain.models import (
     Attachment,
     CatalogUser,
     Category,
+    CycleWriteOutcome,
     GlpiUserProfile,
     PersonIdentity,
     TicketDetail,
@@ -1265,9 +1266,11 @@ class HttpxGlpiClient:
         finally:
             self._legacy_kill_session(session_token)
 
-    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+    def accept_ticket_solution(
+        self, access_token: str, ticket_id: int, content: str = ""
+    ) -> CycleWriteOutcome:
         """Close solved ticket via legacy ITILFollowup add_close (H10 Branch B)."""
-        self._legacy_cycle_write(
+        return self._legacy_cycle_write(
             access_token,
             ticket_id,
             content=content or "Solução aceita.",
@@ -1275,9 +1278,11 @@ class HttpxGlpiClient:
             add_reopen=False,
         )
 
-    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+    def reject_ticket_solution(
+        self, access_token: str, ticket_id: int, content: str = ""
+    ) -> CycleWriteOutcome:
         """Reopen solved/closed ticket via legacy ITILFollowup add_reopen (H10 Branch B)."""
-        self._legacy_cycle_write(
+        return self._legacy_cycle_write(
             access_token,
             ticket_id,
             content=content or "Solução recusada.",
@@ -1342,6 +1347,23 @@ class HttpxGlpiClient:
                     }
                 },
             )
+            # Authoritative read-back: HTTP 201 alone is not proof of persistence.
+            rows = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/TicketSatisfaction"
+            )
+            persisted = any(
+                isinstance(row, dict) and int(row.get("satisfaction") or 0) == int(satisfaction)
+                for row in (rows if isinstance(rows, list) else [])
+            )
+            if not persisted:
+                logger.warning(
+                    "glpi_satisfaction_unverified ticket_id=%s satisfaction=%s",
+                    ticket_id,
+                    satisfaction,
+                )
+                raise GlpiUnavailable(
+                    "Avaliação não confirmada pelo helpdesk. Tente novamente."
+                )
         finally:
             self._legacy_kill_session(session_token)
 
@@ -1362,22 +1384,110 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         self._legacy_require_ready()
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        body: dict = {
-            "input": {
-                "itemtype": "Ticket",
-                "items_id": ticket_id,
-                "content": content,
-            }
+        # The legacy write runs as a technical account, so ITILFollowup.users_id
+        # is stamped with the uploader. Resolve the actor's GLPI id to restore
+        # end-user attribution right after the followup exists (H12 pattern).
+        # Fail closed: without a resolvable GLPI identity we cannot guarantee
+        # authorship, so no new record is created under the technical identity.
+        owner_user_id = self.session_user_id(access_token)
+        if owner_user_id is None:
+            raise GlpiUnavailable(
+                "Não foi possível confirmar sua identidade no helpdesk. "
+                "Nenhuma ação foi registrada — tente novamente."
+            )
+        input_body: dict = {
+            "itemtype": "Ticket",
+            "items_id": ticket_id,
+            "content": content,
+            "users_id": owner_user_id,
         }
+        body: dict = {"input": input_body}
         if add_close:
             body["input"]["add_close"] = 1
         if add_reopen:
             body["input"]["add_reopen"] = 1
         session_token = self._legacy_init_session()
+        followup_id = 0
+        author_state = "unverified"
         try:
-            self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
+            created = self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
+            followup_id = int(created.get("id") or 0)
+            if followup_id > 0:
+                author_state = self._legacy_restore_followup_author(
+                    session_token=session_token,
+                    followup_id=followup_id,
+                    users_id=owner_user_id,
+                )
         finally:
             self._legacy_kill_session(session_token)
+        return CycleWriteOutcome(
+            followup_id=followup_id or None,
+            users_id=owner_user_id,
+            author_state=author_state,
+        )
+
+    def _legacy_restore_followup_author(
+        self,
+        *,
+        session_token: str,
+        followup_id: int,
+        users_id: int,
+    ) -> str:
+        """Verify/restore end-user authorship on a followup written by the
+        technical session. Returns verified | restored | mismatch | unverified."""
+        try:
+            row = self._legacy_get_json(
+                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_read_failed followup_id=%s", followup_id
+            )
+            row = {}
+        known_author = (
+            int(row["users_id"] or 0)
+            if isinstance(row, dict) and "users_id" in row
+            else None
+        )
+        if known_author == int(users_id):
+            logger.info(
+                "glpi_followup_author verified followup_id=%s users_id=%s",
+                followup_id,
+                users_id,
+            )
+            return "verified"
+        try:
+            self._legacy_put_json(
+                session_token,
+                f"/apirest.php/ITILFollowup/{int(followup_id)}",
+                {"input": {"id": int(followup_id), "users_id": int(users_id)}},
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_restore_failed followup_id=%s", followup_id
+            )
+            # PUT denied: a known wrong author stays wrong; an unknown one is
+            # simply unverifiable.
+            return "mismatch" if known_author is not None else "unverified"
+        try:
+            check = self._legacy_get_json(
+                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_unverified followup_id=%s", followup_id
+            )
+            return "unverified"
+        confirmed = isinstance(check, dict) and "users_id" in check
+        restored = confirmed and int(check.get("users_id") or 0) == int(users_id)
+        state = "restored" if restored else ("mismatch" if confirmed else "unverified")
+        logger.info(
+            "glpi_followup_author %s followup_id=%s users_id=%s",
+            state,
+            followup_id,
+            users_id,
+        )
+        return state
 
     def _legacy_ready(self) -> bool:
         return bool(
@@ -1443,7 +1553,7 @@ class HttpxGlpiClient:
         return {}
 
     def _legacy_put_json(self, session_token: str, path: str, body: dict, *, app_token: str = "") -> dict:
-        """apirest PUT — used by the profile-sync technical writer only."""
+        """apirest PUT — bounded writes: profile sync, document owner and followup author restore."""
         try:
             response = self._http.request(
                 "PUT",

@@ -17,6 +17,7 @@ import type {
 } from "./api/interactionClient";
 import {
   ActivityViewer,
+  ConversationError,
   ConversationHeader,
   ConversationWorkspace,
 } from "@delpi/plugin-ui/index";
@@ -326,9 +327,10 @@ export default function App({
           footer={
             <>
               {error ? (
-                <p className="delia-interaction__error" role="alert">
-                  {error}
-                </p>
+                <ConversationError
+                  title={error}
+                  description="Sua mensagem foi preservada."
+                />
               ) : null}
 
               <DeliaComposer

@@ -3,6 +3,7 @@
  * fetch + `BPMN_MODELER_API_BASE` + buildAuthHeaders.
  * Toda escrita carrega If-Match (`v{expected_version}`); nunca auto-retry.
  */
+import { BpmnDocumentError } from "@delpi/bpmn-editor";
 
 export const BPMN_MODELER_API_BASE = "/apps/bpmn-modeler-api";
 
@@ -89,18 +90,12 @@ export type ApiErrorBody = {
   meta: { request_id: string };
 };
 
-export class BpmnModelerApiError extends Error {
-  readonly status: number;
-  readonly code: string;
-  readonly requestId: string;
-  readonly details: Record<string, unknown>;
-
+// Estende BpmnDocumentError (port do editor compartilhado): o SaveMachine/
+// autosave classifica por `instanceof BpmnDocumentError` + status/code —
+// sem a herança, todo erro de API do Modeler caía no SAVE_FAILED genérico.
+export class BpmnModelerApiError extends BpmnDocumentError {
   constructor(status: number, body: ApiErrorBody | null, fallback: string) {
-    super(body?.error?.message ?? fallback);
-    this.status = status;
-    this.code = body?.error?.code ?? "INFRASTRUCTURE_FAILURE";
-    this.requestId = body?.meta?.request_id ?? "";
-    this.details = body?.error?.details ?? {};
+    super(status, body, fallback);
   }
 }
 

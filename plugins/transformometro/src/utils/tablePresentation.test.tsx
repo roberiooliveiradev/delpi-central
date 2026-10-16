@@ -22,9 +22,9 @@ describe("statusPresentation — STATUS_PROCESSO canônico", () => {
     expect(out.label).toBe("Descontinuado");
   });
 
-  it("valor desconhecido → badge neutro + label humanizado", () => {
+  it("valor desconhecido → badge explicitamente neutro + label humanizado", () => {
     const out = statusPresentation("congelado_total");
-    expect(out.className).toBe("ds-badge");
+    expect(out.className).toBe("ds-badge ds-badge--neutral");
     expect(out.label).toBe("Congelado total");
   });
 });

@@ -20,11 +20,14 @@ import {
   roomInboxListBemClasses,
 } from "../../components/collaboration";
 import { IconButton } from "../../components/actions";
+import { ActivityViewer } from "../../components/activity";
 import {
+  ConversationError,
   ConversationHeader,
   ConversationUserMessage,
   ConversationStatus,
   ConversationWorkspace,
+  EvidenceDetails,
   GovernedConfirmation,
   MessageActionBar,
 } from "../../components/conversation";
@@ -558,6 +561,276 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
               density="compact"
               onConfirm={() => {}}
               onCancel={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ActivityViewer",
+    family: "collaboration",
+    exportName: "ActivityViewer",
+    title: "ActivityViewer",
+    description:
+      "Resumo compacto e expansível de atividade observável. Apresentação pura — passos, fontes e outcome chegam prontos do consumidor.",
+    propsSummary: [
+      "title",
+      "state",
+      "steps",
+      "sources",
+      "outcome",
+      "summaryDetail",
+      "durationLabel",
+      "expandable",
+      "defaultExpanded",
+      "expandLabel",
+      "collapseLabel",
+      "className",
+    ],
+    demos: [
+      {
+        id: "running",
+        label: "Running (pendente)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Consultando informações…"
+              state="running"
+              summaryDetail="TÉO"
+              steps={[
+                { id: "s1", label: "Solicitação recebida", state: "completed" },
+                { id: "s2", label: "Consultando especialista", state: "running", sourceLabel: "TÉO" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "completed-multi-source",
+        label: "Concluído + múltiplas fontes",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="3 consultas concluídas"
+              state="completed"
+              summaryDetail="DAVI · TÉO · VISTA"
+              steps={[
+                { id: "s1", label: "Consulta concluída", state: "completed", sourceLabel: "DAVI" },
+                { id: "s2", label: "Consulta concluída", state: "completed", sourceLabel: "TÉO" },
+                { id: "s3", label: "Consulta concluída", state: "completed", sourceLabel: "VISTA" },
+              ]}
+              sources={[
+                { id: "src1", label: "Cadastro DELPI", statusLabel: "dados recebidos" },
+                { id: "src2", label: "Painel VISTA", statusLabel: "dados recebidos" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "partial-warning",
+        label: "Parcial (warning persistente)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Atividade parcialmente concluída"
+              state="partial"
+              steps={[
+                { id: "s1", label: "Consulta finalizada", state: "completed", sourceLabel: "DAVI" },
+                { id: "s2", label: "Consulta não respondeu", state: "failed", sourceLabel: "VISTA" },
+              ]}
+              outcome={{ label: "Parte da consulta não respondeu.", tone: "warning", persistent: true }}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "failed",
+        label: "Falha",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <ActivityViewer
+              title="Atividade não concluída"
+              state="failed"
+              outcome={{ label: "Não foi possível concluir a solicitação.", tone: "danger", persistent: true }}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "expanded-long",
+        label: "Expandido + texto longo (320px)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ActivityViewer
+              title="Atividade concluída com título deliberadamente longo para provar quebra segura de linha"
+              state="completed"
+              summaryDetail="Fonte com nome secundário também propositalmente extenso"
+              defaultExpanded
+              steps={[
+                {
+                  id: "s1",
+                  label: "Etapa com descrição longa que deve quebrar sem overflow horizontal em container estreito",
+                  state: "completed",
+                  sourceLabel: "DAVI",
+                  timestampLabel: "10:41:02",
+                },
+              ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationError",
+    family: "collaboration",
+    exportName: "ConversationError",
+    title: "ConversationError",
+    description:
+      "Falha de interação no footer: role=alert, ícone + título + descrição opcional + ação opcional (ActionButton). Apresentação pura — sem retry automático.",
+    propsSummary: [
+      "title",
+      "description",
+      "icon",
+      "actionLabel",
+      "onAction",
+      "actionDisabled",
+      "loading",
+      "density",
+      "className",
+    ],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationError
+              title="Não foi possível concluir esta solicitação."
+              description="Sua mensagem foi preservada."
+            />
+          </div>
+        ),
+      },
+      {
+        id: "action",
+        label: "Com ação de recuperação",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationError
+              title="Não foi possível concluir esta solicitação."
+              description="Sua mensagem foi preservada."
+              actionLabel="Tentar novamente"
+              onAction={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compacto (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationError
+              title="Não foi possível concluir."
+              density="compact"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.EvidenceDetails",
+    family: "collaboration",
+    exportName: "EvidenceDetails",
+    title: "EvidenceDetails",
+    description:
+      "Provenance/evidence subordinada da resposta: linha de fonte visível + disclosure com pares label/valor e limitações. Apresentação pura.",
+    propsSummary: [
+      "sourceSummary",
+      "items",
+      "limitations",
+      "limitationsLabel",
+      "materialLimitationLabel",
+      "disclosureLabel",
+      "defaultExpanded",
+      "className",
+    ],
+    demos: [
+      {
+        id: "grounded",
+        label: "Grounded + timestamp",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI · consultado em 16/10/2026 14:32"
+              items={[
+                { label: "Classificação", value: "OBSERVATION" },
+                { label: "Fonte", value: "Cadastro DELPI" },
+                { label: "Especialista", value: "DAVI" },
+                { label: "Observado em", value: "16/10/2026 14:32" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "with-limitations",
+        label: "Expandido + limitações",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI"
+              defaultExpanded
+              items={[
+                { label: "Classificação", value: "FACT" },
+                { label: "Fonte", value: "Cadastro DELPI" },
+              ]}
+              limitations={[
+                "Dados sujeitos ao horário da última atualização.",
+                "Cobertura parcial do período solicitado.",
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "material-limitation",
+        label: "Limitação material (sinal explícito)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI"
+              materialLimitationLabel="Há limitações nesta resposta"
+              items={[{ label: "Fonte", value: "Cadastro DELPI" }]}
+              limitations={["Cobertura parcial do período solicitado."]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "non-grounded",
+        label: "Sem fonte vinculada",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails sourceSummary="Sem fonte vinculada" />
+          </div>
+        ),
+      },
+      {
+        id: "narrow-long",
+        label: "Fonte longa (320px)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI com um nome de fonte propositalmente extenso para provar quebra segura · consultado em 16/10/2026 14:32"
+              items={[
+                { label: "Classificação", value: "RECOMMENDATION" },
+                { label: "Fonte", value: "Cadastro DELPI com nome longo" },
+              ]}
             />
           </div>
         ),

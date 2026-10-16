@@ -31,6 +31,7 @@ from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     CONTINUATION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     RESOLVER_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
@@ -188,7 +189,7 @@ def _outcome(group_id, remote_name, text, structured=None):
 
 def _select(
     group_key, remote_name, arguments=None, extra=None,
-    arg_payload=None,
+    arg_payload=None, goal_class=None,
 ):
     proposal = {
         GROUP_SELECTION_INSTRUCTION_ID: {
@@ -205,6 +206,10 @@ def _select(
             else {"arguments": arguments or {}}
         ),
     }
+    # C3-CI-02R1: write-class targets need a declared action goal —
+    # write-path fixtures pass goal_class="create_or_modify".
+    if goal_class:
+        proposal[GOAL_INSTRUCTION_ID] = {"goal_class": goal_class}
     if extra:
         proposal.update(extra)
     return proposal
@@ -690,7 +695,12 @@ def test_direct_write_executes_act_same_turn():
     )
     orch = _orchestrator(
         [provider],
-        [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
+        [
+            _select(
+                GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     attempt = orch.attempt(
         "corrija o rotulo do ativo FX-1",
@@ -716,7 +726,12 @@ def test_confirm_policy_gates_act_until_confirmation():
     )
     orch = _orchestrator(
         [provider],
-        [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
+        [
+            _select(
+                GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     pending = orch.attempt(
         "corrija o rotulo do ativo FX-1",
@@ -752,7 +767,12 @@ def test_unknown_policy_fails_closed():
     )
     orch = _orchestrator(
         [provider],
-        [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
+        [
+            _select(
+                GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     attempt = orch.attempt(
         "corrija o rotulo do FX-1", actor_user_id="u1", session_id="s1"
@@ -789,7 +809,12 @@ def test_opaque_handle_never_reaches_user_surface():
     )
     orch = _orchestrator(
         [provider],
-        [_select(GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"})],
+        [
+            _select(
+                GROUP_KEY, "draft_adjustment", {"fixture_id": "FX-1"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     attempt = orch.attempt(
         "corrija o rotulo do FX-1", actor_user_id="u1", session_id="s1"
@@ -1122,7 +1147,12 @@ def test_tool_rename_invariance_write_governance():
     )
     orch = _orchestrator(
         [provider],
-        [_select(_ACME_KEY, "delta", {"fixture_id": "AX-9"})],
+        [
+            _select(
+                _ACME_KEY, "delta", {"fixture_id": "AX-9"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     attempt = orch.attempt(
         "corrija o rotulo de AX-9", actor_user_id="u1", session_id="s1"
@@ -1270,7 +1300,12 @@ def test_capability_reclassified_live_honored():
     )
     orch = _orchestrator(
         [provider],
-        [_select(_ACME_KEY, "charlie", {"fixture_id": "AX-9"})],
+        [
+            _select(
+                _ACME_KEY, "charlie", {"fixture_id": "AX-9"},
+                goal_class="create_or_modify",
+            )
+        ],
     )
     attempt = orch.attempt("ajuste AX-9", actor_user_id="u1")
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED

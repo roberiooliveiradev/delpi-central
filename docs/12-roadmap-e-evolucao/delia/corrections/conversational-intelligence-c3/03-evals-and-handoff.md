@@ -56,13 +56,17 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | Etapa | Estado neste registro | Implementação | Evals no SHA de entrega | Aceite |
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
-| 02 intent/instructions | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
+| 02 intent/instructions | IMPLEMENTED, R1 REVIEW=REWORK (§6.176) | Stage02 `4a9f05e5b9` + R1 `9fd3a7bc95` | 8 additional R1 scripted tests, 1085/1085 reported by executor; independent reexecution TEST_NOT_RUN | B1 PASS estrutural; B2 still REWORK (misclassified/unrecognized textual bound) |
 | 03 discovery/guidance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 06 generalization/acceptance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 
 Somente resultado real no ledger/16 e review independente permitem atualizar a linha. Um plano ou commit documental não vira PASS.
+
+**Adendo de revisão da Etapa 02 (§6.174):** teste de objetivo não interpretado deve exigir zero PREPARE/ACT com pedido de capacidade (p.ex., "Você consegue criar?"); teste de "Prepare, mas não aplique" deve usar owner que declara `explicit_user_confirmation=false` e request `max_execution_stage=None`, provando zero ACT, sem inventar confirmação universal ou duplicar regra do owner. [08 — Review](./08-stage-02-independent-review.md). Não iniciar Etapa 03 até REWORK revisado e aceito.
+
+**Etapa 02R1 (§6.176) — obrigatório antes de aceite:** RED com texto 'Prepare, mas não aplique' e `goal_class=create_or_modify, execution_bound=unrestricted`, owner READY/direct, `max_execution_stage=None` e fake ACT; ausência/invalidade do bound; controle explícito `max_execution_stage='prepare'`; teste do payload de confirmação contraditório, se aplicável. Os testes R1 apenas verificam execução condicionada a `execution_bound='prepare_only'` previamente roteirizado. Nenhum ACT real, confirmação universal, regex por owner ou novo planner. Ver [10](./10-stage-02r1-independent-review.md).
 
 ## Gates congelados para próximas avaliações
 

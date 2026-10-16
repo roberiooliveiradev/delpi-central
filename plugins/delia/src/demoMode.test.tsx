@@ -260,8 +260,11 @@ describe("demo mode ON", () => {
     setDemoLocation("activity");
     render(<App />);
     submitTurn("pergunta");
-    const trigger = await screen.findByRole("button", {
-      name: /Atividade concluída \(simulação\)/,
+    expect(
+      await screen.findByText(/Atividade concluída \(simulação\)/),
+    ).toBeTruthy();
+    const trigger = screen.getByRole("button", {
+      name: "Ver detalhes",
     });
     expect(
       screen.getByText(/SIMULAÇÃO — nenhuma ferramenta real executada/),

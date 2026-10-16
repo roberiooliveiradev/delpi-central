@@ -16,6 +16,7 @@ import sys
 from tv_app.application.services.data.design_intelligence_service import (
     DesignIntelligenceService,
 )
+from tests.data_diagnosis_eval import evaluate_all as data_diagnosis_evaluate
 from tests.design_methodology_corpus import CORPUS as P5_CORPUS
 from tests.run_solution_intelligence_eval import evaluate_case as p6_evaluate
 from tests.solution_intelligence_corpus import (
@@ -206,6 +207,17 @@ def run() -> dict:
         ),
     }
 
+    # --- P7-residual data diagnosis corpus ---------------------------------
+    dd_rows = data_diagnosis_evaluate()
+    dd_dim_rows = {
+        "DATA_DIAGNOSIS": {
+            "passed": dd_rows["passed"],
+            "total": dd_rows["total"],
+            "safety": dd_rows["safety"],
+            "failures": dd_rows["failures"],
+        }
+    }
+
     metrics: dict[str, dict] = {}
     for dim_id, meta in VISTA_METRIC_CATALOG.items():
         entry = {"status": meta["status"], "source": meta["measurementSource"]}
@@ -213,6 +225,8 @@ def run() -> dict:
             entry.update(p5_dim_rows[dim_id])
         elif dim_id in p6_dim_rows:
             entry.update(p6_dim_rows[dim_id])
+        elif dim_id in dd_dim_rows:
+            entry.update(dd_dim_rows[dim_id])
         else:
             entry["delegated"] = meta["measurementSource"].startswith("suite:")
             entry["passed"] = None

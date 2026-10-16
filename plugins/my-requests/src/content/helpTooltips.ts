@@ -74,7 +74,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     processIssueReport:
       "O que o operador informou na bancada: o motivo do problema, data/hora, quem registrou e os códigos de ferramenta ou material digitados — mesmo que não existam no cadastro da operação.",
     processIssueContext:
-      "Fotografia da operação no momento do reporte: ordem, operação, posto, produtos e quantidades. Quando houver produto acabado, «Abrir desenho» mostra o desenho técnico atual da biblioteca oficial.",
+      "Fotografia da operação no momento do reporte: ordem de produção, operação, posto, produto da operação e produto acabado. Quando houver produto acabado, «Abrir desenho» mostra o desenho técnico atual da biblioteca oficial.",
     processIssueSnapshot:
       "Como a operação estava cadastrada quando o operador informou o problema. Compare a ferramenta vinculada com a ferramenta que o operador digitou — a divergência pode ser exatamente o ponto a corrigir.",
     processIssueMaterials:

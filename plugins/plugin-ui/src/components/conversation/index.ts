@@ -19,11 +19,21 @@ export {
   type ConversationStatusTone,
 } from "./ConversationStatus";
 export {
+  ConversationError,
+  type ConversationErrorDensity,
+  type ConversationErrorProps,
+} from "./ConversationError";
+export {
   GovernedConfirmation,
   type GovernedConfirmationDensity,
   type GovernedConfirmationProps,
   type GovernedConfirmationTone,
 } from "./GovernedConfirmation";
+export {
+  EvidenceDetails,
+  type EvidenceDetailItem,
+  type EvidenceDetailsProps,
+} from "./EvidenceDetails";
 export {
   MessageActionBar,
   type MessageActionBarAlign,

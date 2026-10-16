@@ -41,14 +41,53 @@ describe("ActivityViewer — summary", () => {
       <ActivityViewer title="Atividade concluída" state="completed" steps={STEPS} />,
     );
     const trigger = screen.getByRole("button", {
-      name: /Atividade concluída/,
+      name: "Ver detalhes",
     });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(trigger.textContent).toContain("Ocultar detalhes");
     expect(screen.getByRole("region")).toBeTruthy();
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.textContent).toContain("Ver detalhes");
+  });
+
+  it("honours custom disclosure labels", () => {
+    render(
+      <ActivityViewer
+        title="Atividade"
+        state="completed"
+        steps={STEPS}
+        expandLabel="Mostrar"
+        collapseLabel="Esconder"
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: /Mostrar/ });
+    fireEvent.click(trigger);
+    expect(
+      screen.getByRole("button", { name: /Esconder/ }),
+    ).toBeTruthy();
+  });
+
+  it("renders secondary detail under the summary title", () => {
+    const { container } = render(
+      <ActivityViewer
+        title="Consultas concluídas"
+        state="completed"
+        summaryDetail="DAVI · VISTA"
+        steps={STEPS}
+      />,
+    );
+    const detail = container.querySelector(
+      ".delpi-ui-activity-viewer__summary-detail",
+    );
+    expect(detail?.textContent).toBe("DAVI · VISTA");
+    // Detail is a sibling of the title inside the text column, not
+    // inline on the title line.
+    expect(detail?.parentElement?.classList.contains(
+      "delpi-ui-activity-viewer__summary-text",
+    )).toBe(true);
   });
 
   it("supports keyboard activation", () => {

@@ -69,6 +69,11 @@ describe("buildDeliaActivityView", () => {
     expect(view?.sources?.[0].label).toBe("TOTVS");
     expect(view?.sources?.[0].statusLabel).toBe("resultado fundamentado");
     expect(view?.outcome?.label).toContain("fundamentado");
+    // remote_capability/protocol are technical identifiers — never
+    // surfaced in the user-facing projection (doc 79 §8).
+    const wire = JSON.stringify(view);
+    expect(wire).not.toContain("consultar_indicador");
+    expect(wire).not.toContain("mcp");
   });
 
   it("marks incomplete provenance as partial, never grounded", () => {

@@ -8,7 +8,10 @@ from pydantic import BaseModel, Field
 from production_control_app.application.services.machine_load_service import (
     strip_all_operations,
 )
-from production_control_app.composition.pc_composer import build_machine_load_service
+from production_control_app.composition.pc_composer import (
+    build_machine_load_cockpit_status_service,
+    build_machine_load_service,
+)
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.services.machine_load_optimization import (
     MachineLoadOptimizationCriteria,
@@ -18,6 +21,10 @@ from production_control_app.domain.errors import (
     DelpiGatewayError,
     InvalidBranch,
     SnapshotNotFound,
+)
+from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
+    PluginsDatabaseConfigError,
+    PluginsDatabaseConnectionError,
 )
 from production_control_app.interface.http.auth_http import resolve_user
 
@@ -88,6 +95,8 @@ def _handle_machine_load_errors(exc: Exception):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):
         return fail(str(exc), 502)
+    if isinstance(exc, (PluginsDatabaseConfigError, PluginsDatabaseConnectionError)):
+        return fail("Estados de execução temporariamente indisponíveis.", 503)
     raise exc
 
 
@@ -137,6 +146,26 @@ def get_machine_load_live_status(
     user = resolve_user(request)
     try:
         data = build_machine_load_service().live_status(user, branch=branch)
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data)
+
+
+@router.get("/machine-load/cockpit-status")
+def get_machine_load_cockpit_status(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """Estados de execução registrados pelo cockpit (runs MES locais).
+
+    Fonte oficial nova da execução — snapshot completo dos runs abertos da
+    filial lido do PostgreSQL local, sem HZA/TOTVS nem Production Pulse.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_cockpit_status_service().cockpit_status(
+            user, branch=branch
+        )
     except Exception as exc:
         return _handle_machine_load_errors(exc)
     return ok(data)

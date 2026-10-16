@@ -182,8 +182,9 @@
       "DIGITAL_SOLUTION_NEED": {
         "examples": ["De onde podemos trazer dados de EBITDA?"],
         "required": ["data_contract"],
-        "optional": ["presentation_truth"],
-        "gap": "solution_ecosystem indisponível → classificar TO_INVENTORY; nunca afirmar ausência global por miss de busca TV",
+        "conditional": ["solution_ecosystem quando a busca de rota TV falhar"],
+        "optional": ["presentation_truth quando o pedido depender do contexto atual de slide/apresentação"],
+        "gap": "miss de rota TV → consumir solution_ecosystem e interpretar solutionIntelligence.gapClassification; nunca afirmar ausência global por miss de busca TV",
         "directives": ["data_discovery", "si_goals"]
       }
     },
@@ -195,7 +196,7 @@
       "VISUAL_EVIDENCE_GATE": "obrigatório antes de statements de pixel; sem canonical_stage entregue, não promover schematic a evidência de pixel",
       "MUTATION_GATE": "obrigatório antes de escrever: READ_CURRENT_STATE → typed candidate → PREPARE → confirmation policy → COMMIT → read-back → VERIFY",
       "PRODUCT_USAGE_GATE": "PROVEN em V1 — rotear para get_product_guide; guidance IS_NOT domain truth",
-      "SOLUTION_ECOSYSTEM_GATE": "DEFERRED (PHASE 6) — se a resposta exigir conhecimento de outras soluções DELPI, classificar gap; não inventar"
+      "SOLUTION_ECOSYSTEM_GATE": "PROVEN — trigger: miss de rota TV ou necessidade explícita de discovery cross-solution; owner: Core API solution registry; knowledge IS_NOT authorization; execução apenas por rotas TV allowlisted"
     },
     "composition_order": [
       "editor_context (grounding)",
@@ -238,7 +239,7 @@
       "Usar schematic preview como prova de pixel.",
       "Usar comportamento de capability lembrado em vez do catálogo vivo.",
       "Rodar mutação antes de ler o estado do alvo.",
-      "Afirmar que não existe solução DELPI só porque a busca TV não achou rota (solution_ecosystem indisponível até PHASE 6)."
+      "Afirmar que não existe solução DELPI só porque a busca TV não achou rota — usar solution_ecosystem no miss path aprovado; visibilidade de solução IS_NOT permissão de execução."
     ]
   },
   "design_intelligence": {

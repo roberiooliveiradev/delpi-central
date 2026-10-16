@@ -420,6 +420,8 @@ vi.fn().mockImplementation((input: unknown) => {
     );
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+
 });
 
 // --- Workspace layout (shared ConversationWorkspace (plugin-ui)) ----
@@ -495,7 +497,7 @@ describe("conversation workspace layout", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
 
     const footer = container.querySelector(".delpi-ui-conversation-workspace__footer")!;
-    expect(footer.querySelector(".delia-interaction__error")).toBeTruthy();
+    expect(footer.querySelector(".delpi-ui-conversation-error")).toBeTruthy();
     expect(
       footer.querySelector(".delpi-ui-message-composer"),
     ).toBeTruthy();

@@ -1327,11 +1327,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         ? acceptTicketSolution(ticketId, cycleNote, cycleKey)
         : rejectTicketSolution(ticketId, cycleNote, cycleKey);
     void runner
-      .then(() => {
+      .then((result) => {
         setCycleNote("");
         setCycleKey(newIdempotencyKey());
         closeActionAfterSuccess();
         load();
+        if (result.outcome !== "verified") {
+          setErrorText(
+            result.outcome === "status_unverified"
+              ? "Ação registrada no helpdesk, mas a situação do chamado não pôde ser confirmada. Verifique o chamado antes de tentar novamente."
+              : "Ação registrada no helpdesk, mas a autoria não pôde ser confirmada. Não repita a ação — o chamado já foi atualizado.",
+          );
+        }
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setCycleSaving(false));
@@ -1353,8 +1360,15 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     if (activeAction === "attach_file") {
       return documentFiles.length > 0 || Boolean(documentTitle.trim());
     }
-    if (activeAction === "accept_solution" || activeAction === "reject_solution") {
+    if (
+      activeAction === "accept_solution" ||
+      activeAction === "reject_solution" ||
+      activeAction === "decide_validation"
+    ) {
       return hasVisibleRichText(cycleNote);
+    }
+    if (activeAction === "submit_satisfaction") {
+      return satisfactionScore !== 5 || satisfactionComment.trim().length > 0;
     }
     return false;
   }
@@ -1407,6 +1421,32 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       .finally(() => setCycleSaving(false));
   }
 
+  const pendingValidations = (ticket?.validations ?? []).filter(
+    (item) => item.mine_to_decide,
+  );
+  const showSatisfactionComment =
+    satisfactionCommentOpen || satisfactionComment.trim().length > 0;
+
+  function runSatisfaction() {
+    setCycleSaving(true);
+    setErrorText(null);
+    void submitTicketSatisfaction(
+      ticketId,
+      { satisfaction: satisfactionScore, comment: satisfactionComment },
+      cycleKey,
+    )
+      .then(() => {
+        setSatisfactionScore(5);
+        setSatisfactionComment("");
+        setSatisfactionCommentOpen(false);
+        setCycleKey(newIdempotencyKey());
+        setActiveAction(null);
+        load();
+      })
+      .catch((error) => setErrorText(messageFor(error).text))
+      .finally(() => setCycleSaving(false));
+  }
+
   function cancelActiveActionForm() {
     if (!confirmDiscardDraft("Há conteúdo em edição. Descartar e fechar esta ação?")) {
       return;
@@ -1428,8 +1468,17 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       setDocumentFiles([]);
       setDocumentTitle("");
     }
-    if (activeAction === "accept_solution" || activeAction === "reject_solution") {
+    if (
+      activeAction === "accept_solution" ||
+      activeAction === "reject_solution" ||
+      activeAction === "decide_validation"
+    ) {
       setCycleNote("");
+    }
+    if (activeAction === "submit_satisfaction") {
+      setSatisfactionScore(5);
+      setSatisfactionComment("");
+      setSatisfactionCommentOpen(false);
     }
     setActiveAction(null);
   }
@@ -1533,29 +1582,6 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                 satisfaction: ticket.satisfaction,
               });
               if (!cue) return null;
-              const pendingValidations = (ticket.validations ?? []).filter((item) => item.mine_to_decide);
-              const runSatisfaction = () => {
-                setCycleSaving(true);
-                setErrorText(null);
-                void submitTicketSatisfaction(
-                  ticketId,
-                  { satisfaction: satisfactionScore, comment: satisfactionComment },
-                  cycleKey,
-                )
-                  .then(() => {
-                    setSatisfactionComment("");
-                    setSatisfactionCommentOpen(false);
-                    setCycleKey(newIdempotencyKey());
-                    load();
-                  })
-                  .catch((error) => setErrorText(messageFor(error).text))
-                  .finally(() => setCycleSaving(false));
-              };
-              const runValidation = (validationId: number, action: "accept" | "reject") => {
-                runValidationDecision(validationId, action);
-              };
-              const showSatisfactionComment =
-                satisfactionCommentOpen || satisfactionComment.trim().length > 0;
               return (
                 <div className="helpdesk-lifecycle-cue">
                   <HelpdeskStateBanner variant={cue.variant}>
@@ -1584,120 +1610,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                       </p>
                     ) : null}
                     {cue.showValidationActions ? (
-                      <div className="helpdesk-lifecycle-actions">
-                        {pendingValidations.map((item) => (
-                          <div key={item.id} className="helpdesk-lifecycle-validation">
-                            {item.submission_comment ? (
-                              <p className="helpdesk-lifecycle-cue__text">{item.submission_comment}</p>
-                            ) : null}
-                            <HelpdeskRichTextField
-                              label="Comentário (opcional)"
-                              value={cycleNote}
-                              onChange={setCycleNote}
-                              disabled={cycleSaving}
-                              minHeight={96}
-                            />
-                            <div className="helpdesk-lifecycle-actions__buttons">
-                              <HintAction
-                                hint={helpTooltips.detailUi.acceptValidation}
-                                ariaLabel="Ajuda: Aceitar aprovação"
-                              >
-                                <ActionButton
-                                  variant="primary"
-                                  type="button"
-                                  disabled={cycleSaving}
-                                  onClick={() => runValidation(item.id, "accept")}
-                                >
-                                  {cycleSaving ? "Salvando…" : "Aceitar aprovação"}
-                                </ActionButton>
-                              </HintAction>
-                              <HintAction
-                                hint={helpTooltips.detailUi.rejectValidation}
-                                ariaLabel="Ajuda: Recusar aprovação"
-                              >
-                                <ActionButton
-                                  variant="default"
-                                  type="button"
-                                  disabled={cycleSaving}
-                                  onClick={() => runValidation(item.id, "reject")}
-                                >
-                                  Recusar aprovação
-                                </ActionButton>
-                              </HintAction>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <p className="helpdesk-lifecycle-cue__hint">
+                        Use o menu de ações abaixo para decidir a aprovação pendente.
+                      </p>
                     ) : null}
                     {cue.showSatisfactionForm ? (
-                      <div className="helpdesk-satisfaction" role="group" aria-label="Avaliação do atendimento">
-                        <div
-                          className="helpdesk-satisfaction__scores"
-                          role="radiogroup"
-                          aria-label="Nota de 1 a 5"
-                        >
-                          {[1, 2, 3, 4, 5].map((score) => {
-                            const selected = satisfactionScore === score;
-                            return (
-                              <label
-                                key={score}
-                                className={[
-                                  "helpdesk-satisfaction__score",
-                                  selected ? "helpdesk-satisfaction__score--selected" : null,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" ")}
-                              >
-                                <input
-                                  type="radio"
-                                  name="helpdesk-satisfaction-score"
-                                  value={score}
-                                  checked={selected}
-                                  disabled={cycleSaving}
-                                  onChange={() => setSatisfactionScore(score)}
-                                />
-                                <span aria-hidden="true">{score}</span>
-                                <span className="helpdesk-sr-only">Nota {score}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                        <div className="helpdesk-satisfaction__aside">
-                          {showSatisfactionComment ? (
-                            <HelpdeskTextArea
-                              className="helpdesk-satisfaction__comment"
-                              label="Comentário (opcional)"
-                              value={satisfactionComment}
-                              onChange={setSatisfactionComment}
-                              disabled={cycleSaving}
-                              maxLength={2000}
-                              rows={2}
-                            />
-                          ) : (
-                            <button
-                              type="button"
-                              className="helpdesk-satisfaction__comment-toggle"
-                              disabled={cycleSaving}
-                              onClick={() => setSatisfactionCommentOpen(true)}
-                            >
-                              Adicionar comentário
-                            </button>
-                          )}
-                          <HintAction
-                            hint={helpTooltips.detailUi.submitSatisfaction}
-                            ariaLabel="Ajuda: Enviar avaliação"
-                          >
-                            <ActionButton
-                              variant="primary"
-                              type="button"
-                              disabled={cycleSaving}
-                              onClick={runSatisfaction}
-                            >
-                              {cycleSaving ? "Enviando…" : "Enviar avaliação"}
-                            </ActionButton>
-                          </HintAction>
-                        </div>
-                      </div>
+                      <p className="helpdesk-lifecycle-cue__hint">
+                        Use o menu de ações abaixo para avaliar o atendimento.
+                      </p>
                     ) : null}
                   </HelpdeskStateBanner>
                 </div>
@@ -2132,6 +2052,171 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                                 disabled={cycleSaving}
                                 minHeight={120}
                               />
+                            </TicketActionCard>
+                          ) : null}
+                          {activeAction === "decide_validation" ? (
+                            <TicketActionCard
+                              actionId="decide_validation"
+                              disabled={cycleSaving}
+                              onCancel={cancelActiveActionForm}
+                            >
+                              {pendingValidations.length === 0 ? (
+                                <p className="helpdesk-action-fields__hint">
+                                  Nenhuma aprovação pendente para você neste chamado.
+                                </p>
+                              ) : (
+                                <div className="helpdesk-lifecycle-actions">
+                                  <HelpdeskRichTextField
+                                    label="Comentário (opcional)"
+                                    value={cycleNote}
+                                    onChange={setCycleNote}
+                                    disabled={cycleSaving}
+                                    minHeight={96}
+                                  />
+                                  {pendingValidations.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      className="helpdesk-lifecycle-validation"
+                                    >
+                                      {item.submission_comment ? (
+                                        <p className="helpdesk-lifecycle-cue__text">
+                                          {item.submission_comment}
+                                        </p>
+                                      ) : null}
+                                      <div className="helpdesk-lifecycle-actions__buttons">
+                                        <HintAction
+                                          hint={helpTooltips.detailUi.acceptValidation}
+                                          ariaLabel="Ajuda: Aceitar aprovação"
+                                        >
+                                          <ActionButton
+                                            variant="primary"
+                                            type="button"
+                                            disabled={cycleSaving}
+                                            onClick={() =>
+                                              runValidationDecision(item.id, "accept")
+                                            }
+                                          >
+                                            {cycleSaving ? "Salvando…" : "Aceitar aprovação"}
+                                          </ActionButton>
+                                        </HintAction>
+                                        <HintAction
+                                          hint={helpTooltips.detailUi.rejectValidation}
+                                          ariaLabel="Ajuda: Recusar aprovação"
+                                        >
+                                          <ActionButton
+                                            variant="default"
+                                            type="button"
+                                            disabled={cycleSaving}
+                                            onClick={() =>
+                                              runValidationDecision(item.id, "reject")
+                                            }
+                                          >
+                                            Recusar aprovação
+                                          </ActionButton>
+                                        </HintAction>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </TicketActionCard>
+                          ) : null}
+                          {activeAction === "submit_satisfaction" ? (
+                            <TicketActionCard
+                              actionId="submit_satisfaction"
+                              disabled={cycleSaving}
+                              onCancel={cancelActiveActionForm}
+                              footer={
+                                <HelpdeskFormActions align="end">
+                                  <ActionButton
+                                    type="button"
+                                    variant="ghost"
+                                    disabled={cycleSaving}
+                                    onClick={cancelActiveActionForm}
+                                  >
+                                    Cancelar
+                                  </ActionButton>
+                                  <HintAction
+                                    hint={helpTooltips.detailUi.submitSatisfaction}
+                                    ariaLabel="Ajuda: Enviar avaliação"
+                                  >
+                                    <ActionButton
+                                      variant="primary"
+                                      type="button"
+                                      disabled={cycleSaving}
+                                      onClick={runSatisfaction}
+                                    >
+                                      {cycleSaving
+                                        ? ticketActionPresentation("submit_satisfaction")
+                                            .submittingLabel
+                                        : ticketActionPresentation("submit_satisfaction")
+                                            .submitLabel}
+                                    </ActionButton>
+                                  </HintAction>
+                                </HelpdeskFormActions>
+                              }
+                            >
+                              <div
+                                className="helpdesk-satisfaction"
+                                role="group"
+                                aria-label="Avaliação do atendimento"
+                              >
+                                <div
+                                  className="helpdesk-satisfaction__scores"
+                                  role="radiogroup"
+                                  aria-label="Nota de 1 a 5"
+                                >
+                                  {[1, 2, 3, 4, 5].map((score) => {
+                                    const selected = satisfactionScore === score;
+                                    return (
+                                      <label
+                                        key={score}
+                                        className={[
+                                          "helpdesk-satisfaction__score",
+                                          selected
+                                            ? "helpdesk-satisfaction__score--selected"
+                                            : null,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" ")}
+                                      >
+                                        <input
+                                          type="radio"
+                                          name="helpdesk-satisfaction-score"
+                                          value={score}
+                                          checked={selected}
+                                          disabled={cycleSaving}
+                                          onChange={() => setSatisfactionScore(score)}
+                                        />
+                                        <span aria-hidden="true">{score}</span>
+                                        <span className="helpdesk-sr-only">Nota {score}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                                <div className="helpdesk-satisfaction__aside">
+                                  {showSatisfactionComment ? (
+                                    <HelpdeskTextArea
+                                      className="helpdesk-satisfaction__comment"
+                                      label="Comentário (opcional)"
+                                      value={satisfactionComment}
+                                      onChange={setSatisfactionComment}
+                                      disabled={cycleSaving}
+                                      maxLength={2000}
+                                      rows={2}
+                                    />
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className="helpdesk-satisfaction__comment-toggle"
+                                      disabled={cycleSaving}
+                                      onClick={() => setSatisfactionCommentOpen(true)}
+                                    >
+                                      Adicionar comentário
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </TicketActionCard>
                           ) : null}
                           {activeAction === "create_solution" ? (

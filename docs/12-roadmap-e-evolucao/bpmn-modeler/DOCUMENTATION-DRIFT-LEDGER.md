@@ -184,6 +184,77 @@
 - **RESIDUAL RISK:** baixo — baseline real do commit registrada no report final
 - **OWNER:** 00 — `CLOSED`
 
+
+### DRIFT-BPMN-015 — CURRENT-STATE stale: TM=FUTURE / Wave F TO_INVENTORY / E2E-38b OPEN (G10)
+
+- **AREA:** documentação vigente (não histórica)
+- **OLD DOCUMENT:** `CURRENT-STATE.md` (header G0, §1 tabela, §12, §13 status, §14 linha palette, §15 tabela de gates, §16 follow-ups)
+- **OLD CLAIMS:**
+  - "Transformômetro: contexto externo; integração profunda = `FUTURE`" (§1)
+  - "ferramentas não-semânticas permanecem `TO_INVENTORY`" + parágrafo "Extras do bundle vendor ... (TO_INVENTORY)" (§14)
+  - "Status de auditoria G0: `TO_INVENTORY`" sem fechamento (§13)
+  - "Watermark bpmn.io = `BLOCKED_BY_ATTRIBUTION_REQUIREMENT`" sem a padronização bottom-left (§12)
+  - E2E-38b `OPEN, NON_BLOCKING` (§16)
+  - tabela de gates parava em G6 (ausência de G7/G8/G9/correction passes)
+  - backend "98 testes" (§11)
+- **CURRENT EVIDENCE:** G5/G7/G8 implementaram e provaram a integração TM (referência explícita + doc nativo + migração governada); Wave F fechou vendor exposure (`UNCLASSIFIED EXPOSED: 0`); G9 fechou preview/layout/loading/branding (watermark bottom-left por licença); E2E-38b corrigido como test debt no G10 (archived-owner read-only + foreign 404 probe, 2/2 PASS); backend atual = 146 testes.
+- **CLASSIFICATION:** `DOCUMENTATION_STALE` — claims de gate antigo persistiram como texto vigente após os gates posteriores fecharem
+- **DECISION:** corrigido inline com marcação `SUPERSEDED` onde o histórico deve ser preservado; seções §13g/§13h/§17 adicionadas; tabela de gates estendida até G10; release baseline em `BPMN-MODELER-V1-STABLE-BASELINE.md`
+- **FILES UPDATED:** `CURRENT-STATE.md` (header, §1, §11, §12, §13, §13d, §13g, §13h, §14, §15, §16, §17)
+- **RESIDUAL RISK:** baixo — freeze docs históricos mantidos com marcações SUPERSEDED; nenhuma história apagada
+- **OWNER:** 00 — `CLOSED (G10)`
+
+### DRIFT-BPMN-016 — E2E-38b stale ownership test (G10)
+
+- **AREA:** test debt — `plugins/bpmn-modeler/e2e/specs/visual-regression.spec.ts`
+- **OLD TEST:** criava/importava modelo como `editor` e abria como `viewer` → `404 MODEL_NOT_FOUND` (contrato correto, teste incorreto; dívida pré-G4)
+- **ROOT CAUSE:** `e2e-viewer` tem apenas `bpmn-modeler.view` — não pode criar/importar modelo próprio (create/import exigem `bpmn-modeler.edit`)
+- **FIX:** surface read-only equivalente compatível com ownership = model **archived** pelo próprio owner (editor cria → PATCH archive → abre read-only): viewport controls presentes, Save ausente; probe estrangeiro explícito (viewer GET no modelo alheio) → `404 MODEL_NOT_FOUND` mantido
+- **POLICY:** inalterada — `_get_owned_or_404`, owner-scoped list, foreign-404, superadmin não-bypass intocados
+- **EVIDENCE:** visual-regression E2E-38b 2/2 PASS no runtime local; `npm run typecheck:e2e` limpo
+- **CLASSIFICATION:** `TEST_DEBT` → `CLOSED`
+- **OWNER:** 03+02 — `CLOSED (G10)`
+
+### DRIFT-BPMN-017 — E2E roundtrip fixture path após refactor G7A (G10)
+
+- **AREA:** test debt — `plugins/bpmn-modeler/e2e/rt-helpers.ts`
+- **OLD:** `FIXTURE_DIR = e2e/fixtures/roundtrip/` — diretório esvaziado pelo refactor G7A (`d8474f40ad`), que moveu o corpus para `plugins/bpmn-editor/src/testing/fixtures/roundtrip/` sem atualizar o helper → todas as specs `roundtrip-*` falhavam em `readFixture` (ENOENT) na coleta.
+- **CLASSIFICATION:** `EXECUTION_DRIFT` (test-only) — mudança funcional pós-G4 sem reexecução das specs afetadas
+- **FIX:** `FIXTURE_DIR` aponta para o corpus canônico compartilhado (`../../bpmn-editor/src/testing/fixtures/roundtrip`) — fonte única para adapter tests e E2E; zero duplicação; 13/13 nomes conferem.
+- **RESIDUAL RISK:** baixo — corpus único impede divergência futura
+- **OWNER:** 06 — `CLOSED (G10)`
+
+### DRIFT-BPMN-018 — BpmnModelerApiError fora do contrato BpmnDocumentError (G10)
+
+- **AREA:** product defect — `plugins/bpmn-modeler/src/data/api/bpmnModelerApi.ts`
+- **SYMPTOM:** E2E autosave exibia "Falha ao salvar" genérico para 401/403/409 — refresh-retry, sessão expirada, read-only e conflito nunca classificavam (AUTH-04, AUTH-04b, AUTHZ, OFF-02 falhavam)
+- **ROOT CAUSE:** o port `BpmnDocumentHost` (plugins/bpmn-editor) exige erros `instanceof BpmnDocumentError`; o host do Transformômetro traduz via `toDocumentError`, mas `ModelerDocumentHost` propagava `BpmnModelerApiError` (classe própria sem herança) — regressão do refactor G7A (`d8474f40ad`), quando o adapter migrou para o shared port
+- **FIX:** `BpmnModelerApiError extends BpmnDocumentError` — `instanceof` válido nos dois lados da fronteira, campos Modeler (`status`, `code`, `requestId`, `details`) preservados; fix canônico no adapter, sem workaround local
+- **EVIDENCE:** AUTH-04/AUTH-04b/AUTHZ/OFF-02 PASS após rebuild do bundle servido (nginx com dist assado — bundle stale mascarava fixes anteriores, mesma lição do G9-BRAND-2)
+- **CLASSIFICATION:** `IMPLEMENTATION_GAP` → `CLOSED`
+- **OWNER:** 03 — `CLOSED (G10)`
+
+### DRIFT-BPMN-019 — containerMin pós-ELK invadindo área de siblings (G10)
+
+- **AREA:** product defect — `plugins/bpmn-editor/src/layout/{layoutProfile,elkGraph,diProposal}.ts`
+- **SYMPTOM:** LGEO-04 timeout — clique em T2 interceptado pelo `djs-hit-click-stroke` do subProcess expandido SUB1; bounds DI mostravam overlap real de ~35px (SUB1 y52-252 × T2 y217-297)
+- **ROOT CAUSE:** ELK dimensiona containers compound pelo bounding box dos filhos; `resolveGeometry` aplicava o piso `containerMin` (subProcess 350×200) **depois** do ELK posicionar os siblings — o crescimento para baixo invadia espaço já atribuído a T2
+- **FIX:** piso declarado como **input** do ELK (`elk.nodeSize.constraints=[MINIMUM_SIZE]` + `elk.nodeSize.minimum=(w,h)` em containers com filhos; floor no tamanho declarado de containers-folha) — ELK reserva o espaço final antes de posicionar siblings; `SUBPROCESS_FAMILY`/`containerMinSize` movidos para `layoutProfile.ts` (fonte única de tamanhos, sem dependência circular)
+- **EVIDENCE:** probe vitest com fixture LGEO real — T2 y217→y297, zero overlap; 44 testes de layout verdes; LGEO-01/04/06 PASS
+- **SIDE EFFECT CLASSIFICADO:** LGEO-01/06 tinham expected stale `width=100` para tasks — contrato vigente é text-fit grow-only (piso 140×68); specs atualizadas codificando `max(DI, textFitMin)` para task-family e exato para não-text-fit
+- **CLASSIFICATION:** `IMPLEMENTATION_GAP` → `CLOSED`
+- **OWNER:** 03 — `CLOSED (G10)`
+
+### DRIFT-BPMN-020 — asserções stale de copy removida no G9 (G10)
+
+- **AREA:** test debt — `plugins/bpmn-modeler/e2e/specs/transformometro-bpmn-document.spec.ts`
+- **OLD:** `toContainText("Documento BPMN nativo")` — heading removido quando a prévia viva assumiu o card (G9)
+- **FIX:** asserções migradas para os marcadores vigentes (card com prévia/botões "Remover documento" etc.); a asserção de produto real (XOR dual-mode, API 409 `dual_mode_forbidden`) mantida intacta
+- **CLASSIFICATION:** `TEST_DEBT` → `CLOSED`
+- **OWNER:** 06 — `CLOSED (G10)`
+
+
+
 ## Residual search record (G0)
 
 Busca executada sobre `docs/12-roadmap-e-evolucao/bpmn-modeler/` + `plugins/bpmn-modeler/README.md` por: `autosave`, `OUT_OF_V1`, `explicit save`, `PER-MODEL ACL`, `context-wide`, `sem body`, `read-only` (id), `FUTURE` (element id), `TEST_NOT_RUN`, `NOT IMPLEMENTED`, `no additional pagination index`, `idx_models_list`, `V004`, `save explícito`. Cada ocorrência foi classificada em contexto (historical / superseded / still-valid / gap). Resultado: nenhuma contradição vigente sem classificação remanescente após as emendas deste gate.

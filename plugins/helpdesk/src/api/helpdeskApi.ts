@@ -406,8 +406,17 @@ export function requestTicketApproval(
   });
 }
 
+export interface CycleWriteResult {
+  id: number;
+  status_id: number | null;
+  followup_id: number | null;
+  author_verified: boolean;
+  status_verified: boolean;
+  outcome: "verified" | "author_mismatch" | "author_unverified" | "status_unverified";
+}
+
 export function acceptTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
-  return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solution/accept`, {
+  return request<CycleWriteResult>(`/tickets/${ticketId}/solution/accept`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -418,7 +427,7 @@ export function acceptTicketSolution(ticketId: string, content: string, idempote
 }
 
 export function rejectTicketSolution(ticketId: string, content: string, idempotencyKey: string) {
-  return request<{ id: number; status_id: number | null }>(`/tickets/${ticketId}/solution/reject`, {
+  return request<CycleWriteResult>(`/tickets/${ticketId}/solution/reject`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

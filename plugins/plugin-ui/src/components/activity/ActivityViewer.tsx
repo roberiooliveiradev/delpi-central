@@ -91,6 +91,9 @@ export type ActivityViewerProps = {
    *  there is something to expand. */
   expandable?: boolean;
   defaultExpanded?: boolean;
+  /** Disclosure labels — pt-BR defaults match the kit convention. */
+  expandLabel?: string;
+  collapseLabel?: string;
   /** Additional legitimate detail content inside the disclosure. */
   children?: ReactNode;
   className?: string;
@@ -143,6 +146,8 @@ export function ActivityViewer({
   summaryDetail,
   expandable,
   defaultExpanded,
+  expandLabel = "Ver detalhes",
+  collapseLabel = "Ocultar detalhes",
   children,
   className,
 }: ActivityViewerProps) {
@@ -168,23 +173,18 @@ export function ActivityViewer({
       >
         <SummaryIcon size={15} />
       </span>
-      <span className="delpi-ui-activity-viewer__title">{title}</span>
-      {summaryDetail ? (
-        <span className="delpi-ui-activity-viewer__summary-detail">
-          {summaryDetail}
-        </span>
-      ) : null}
+      <span className="delpi-ui-activity-viewer__summary-text">
+        <span className="delpi-ui-activity-viewer__title">{title}</span>
+        {summaryDetail ? (
+          <span className="delpi-ui-activity-viewer__summary-detail">
+            {summaryDetail}
+          </span>
+        ) : null}
+      </span>
       {durationLabel ? (
         <span className="delpi-ui-activity-viewer__duration">
           {durationLabel}
         </span>
-      ) : null}
-      {isExpandable ? (
-        <ChevronDown
-          size={14}
-          className="delpi-ui-activity-viewer__chevron"
-          aria-hidden="true"
-        />
       ) : null}
     </>
   );
@@ -200,21 +200,26 @@ export function ActivityViewer({
         state === "running" || state === "pending" ? "status" : undefined
       }
     >
+      <div className="delpi-ui-activity-viewer__summary">{summaryBody}</div>
+
       {isExpandable ? (
         <button
           type="button"
-          className="delpi-ui-activity-viewer__summary"
+          className="delpi-ui-activity-viewer__disclosure"
           aria-expanded={expanded}
           aria-controls={regionId}
           onClick={() => setExpanded((previous) => !previous)}
         >
-          {summaryBody}
+          <span className="delpi-ui-activity-viewer__disclosure-label">
+            {expanded ? collapseLabel : expandLabel}
+          </span>
+          <ChevronDown
+            size={13}
+            className="delpi-ui-activity-viewer__chevron"
+            aria-hidden="true"
+          />
         </button>
-      ) : (
-        <div className="delpi-ui-activity-viewer__summary delpi-ui-activity-viewer__summary--static">
-          {summaryBody}
-        </div>
-      )}
+      ) : null}
 
       {outcome?.persistent ? (
         <p

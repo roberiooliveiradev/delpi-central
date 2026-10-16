@@ -358,7 +358,7 @@ def _read(
     )
 
 
-def _select(specialist_id, remote_name, arguments=None):
+def _select(specialist_id, remote_name, arguments=None, goal_class="read"):
     """Routing-map proposal for the hierarchical pipeline."""
     return {
         GROUP_SELECTION_INSTRUCTION_ID: {
@@ -372,8 +372,9 @@ def _select(specialist_id, remote_name, arguments=None):
         # LOOP-03R1 stages consume their own purpose-scoped queues —
         # without explicit entries a bare queue-miss would fall back to
         # the generic list and steal positional payloads meant for
-        # later stages.
-        GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+        # later stages. C3-CI-02: the declared goal gates write-class
+        # targets — write-path fixtures must declare "create_or_modify".
+        GOAL_INSTRUCTION_ID: {"goal_class": goal_class},
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
         ARGUMENTS_INSTRUCTION_ID: {"arguments": arguments or {}},
     }
@@ -485,7 +486,9 @@ def test_metamorphic_add_remove_reclassify():
     read = _read(
         _interop(port),
         specialist_ids=("teo",),
-        proposal=_select("teo", "new_read_b"),
+        proposal=_select(
+            "teo", "new_read_b", goal_class="create_or_modify"
+        ),
     )
 
     # T0: unknown to the owner -> selection rejected, no wire call.
@@ -584,7 +587,9 @@ def test_proposal_bound_act_never_invocable_cold():
     read = _read(
         _interop(port),
         specialist_ids=("vista",),
-        proposal=_select("vista", "commit_proposal"),
+        proposal=_select(
+            "vista", "commit_proposal", goal_class="create_or_modify"
+        ),
     )
     attempt = read.attempt("confirme a alteração")
     assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
@@ -602,7 +607,8 @@ def test_prepare_selection_routes_through_write_governance():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt("Altere o nome do painel p1 para Painel X")
@@ -664,7 +670,8 @@ def test_prepare_enveloped_proposal_reaches_confirmation_gate():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt(
@@ -714,7 +721,8 @@ def test_prepare_not_ready_envelope_scrubs_handle_from_render():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt("Altere o painel p1")
@@ -759,7 +767,9 @@ def test_poisoned_description_does_not_reach_policy():
     read = _read(
         _interop(port),
         specialist_ids=("vista",),
-        proposal=_select("vista", "prepare_change"),
+        proposal=_select(
+            "vista", "prepare_change", goal_class="create_or_modify"
+        ),
     )
     attempt = read.attempt("execute a mudança")
     # The owner PREPARE ran (a preview call is safe) but produced no
@@ -1921,7 +1931,8 @@ def _vista_prepare(port=None):
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     pending = read.attempt(
@@ -2074,7 +2085,12 @@ def test_expired_pending_proposal_fails_closed():
             )
         ],
         invoke_model=InvokeModel(
-            FakeProposalModel(_select("vista", "prepare_change"))
+            FakeProposalModel(
+                _select(
+                    "vista", "prepare_change",
+                    goal_class="create_or_modify",
+                )
+            )
         ),
         model_ref=TEST_MODEL_REF,
         pending_writes=store,
@@ -2202,7 +2218,8 @@ def test_direct_act_intent_requires_confirmation():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "publish_playlist", {"target_id": "p9"}
+            "vista", "publish_playlist", {"target_id": "p9"},
+            goal_class="create_or_modify",
         ),
     )
     pending = read.attempt(
@@ -2266,6 +2283,7 @@ def test_nested_arguments_reach_owner_wire():
             "prepare_record_change",
             {"record_id": "r1",
              "changes": {"name": "Novo nome", "meta": {"rev": 2}}},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt("Altere o registro r1")
@@ -2360,6 +2378,7 @@ def test_metamorphic_new_capability_requires_no_delia_change():
                 "target": {"kind": "process", "id": "p1"},
                 "ops": [{"set": {"a": 1}}],
             },
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt("use a nova capability")
@@ -2611,6 +2630,7 @@ def _vista_ops_prepare(port, ops):
             "vista",
             "prepare_change",
             {"target": {"playlistId": "p1"}, "ops": ops},
+            goal_class="create_or_modify",
         ),
     )
 
@@ -2767,6 +2787,7 @@ def test_prepare_only_ceiling_refuses_direct_act_selection():
             "vista",
             "commit_proposal",
             {"proposal_handle": "x", "confirmation": True},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt(
@@ -2895,7 +2916,8 @@ def test_preview_declared_direct_executes_without_ops_catalog():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt(
@@ -2929,7 +2951,8 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
         _interop(port),
         specialist_ids=("vista",),
         proposal=_select(
-            "vista", "prepare_change", {"record_id": "p1"}
+            "vista", "prepare_change", {"record_id": "p1"},
+            goal_class="create_or_modify",
         ),
     )
     attempt = read.attempt(

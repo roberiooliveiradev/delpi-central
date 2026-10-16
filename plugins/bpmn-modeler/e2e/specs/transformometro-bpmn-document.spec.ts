@@ -160,11 +160,15 @@ test.describe("G7 — documento BPMN nativo do processo (runtime real)", () => {
   test("E2E-04 XOR dual-mode: nativo ativo bloqueia vínculo externo", async ({
     page,
   }) => {
-    // UI: com doc nativo ativo, o card não oferece o picker externo.
+    // UI: com doc nativo ativo, o card renderiza o preview vigente
+    // (Editar diagrama / Remover documento) e não oferece o picker externo.
     await gotoPage(page, processoUrl(processoId), "manager");
-    await expect(card(page)).toContainText("Documento BPMN nativo", {
-      timeout: 60_000,
-    });
+    await expect(
+      card(page).getByRole("button", { name: /Editar diagrama/ }),
+    ).toBeVisible({ timeout: 60_000 });
+    await expect(
+      card(page).getByRole("button", { name: /Remover documento/ }),
+    ).toBeVisible();
     await expect(
       card(page).getByRole("button", { name: /Vincular modelo BPMN/ }),
     ).toHaveCount(0);
@@ -195,9 +199,10 @@ test.describe("G7 — documento BPMN nativo do processo (runtime real)", () => {
 
   test("E2E-06 remover documento volta ao estado vazio", async ({ page }) => {
     await gotoPage(page, processoUrl(processoId), "manager");
-    await expect(card(page)).toContainText("Documento BPMN nativo", {
-      timeout: 60_000,
-    });
+    // G9: o card renderiza a prévia do documento nativo (sem heading fixo)
+    await expect(
+      card(page).getByRole("button", { name: "Remover documento" }),
+    ).toBeVisible({ timeout: 60_000 });
 
     await card(page).getByRole("button", { name: "Remover documento" }).click();
     const dialog = page.getByRole("dialog", { name: "Remover documento BPMN" });

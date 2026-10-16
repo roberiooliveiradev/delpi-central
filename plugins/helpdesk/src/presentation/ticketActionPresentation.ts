@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeCheck,
   CheckCircle2,
   ClipboardCheck,
   MessageSquare,
   Paperclip,
+  Star,
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
@@ -17,6 +19,8 @@ export type TicketActionVariant =
   | "task"
   | "attachment"
   | "approval"
+  | "validation"
+  | "satisfaction"
   | "accept"
   | "reject";
 
@@ -110,6 +114,28 @@ const PRESENTATION: Record<TicketWorkspaceActionId, TicketActionPresentation> = 
     errorFallback: "Não foi possível recusar a solução.",
     successLabel: "Solução recusada.",
   },
+  decide_validation: {
+    id: "decide_validation",
+    variant: "validation",
+    icon: BadgeCheck,
+    label: "Decidir aprovação",
+    submitLabel: "Registrar decisão",
+    submittingLabel: "Registrando…",
+    helperText: "Aceite ou recuse a aprovação pendente atribuída a você.",
+    errorFallback: "Não foi possível registrar a decisão.",
+    successLabel: "Decisão registrada.",
+  },
+  submit_satisfaction: {
+    id: "submit_satisfaction",
+    variant: "satisfaction",
+    icon: Star,
+    label: "Avaliar atendimento",
+    submitLabel: "Enviar avaliação",
+    submittingLabel: "Enviando…",
+    helperText: "Avalie o atendimento deste chamado de 1 a 5.",
+    errorFallback: "Não foi possível enviar a avaliação.",
+    successLabel: "Avaliação registrada.",
+  },
 };
 
 export function ticketActionPresentation(
@@ -125,6 +151,8 @@ export function ticketActionPresentation(
 export const SELECTOR_ACTION_IDS: readonly TicketWorkspaceActionId[] = [
   "accept_solution",
   "reject_solution",
+  "decide_validation",
+  "submit_satisfaction",
   "reply",
   "create_solution",
   "create_task",
@@ -136,4 +164,5 @@ export const SELECTOR_ACTION_IDS: readonly TicketWorkspaceActionId[] = [
 export const PENDING_DECISION_ACTION_IDS: readonly TicketWorkspaceActionId[] = [
   "accept_solution",
   "reject_solution",
+  "decide_validation",
 ] as const;

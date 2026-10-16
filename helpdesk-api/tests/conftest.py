@@ -96,6 +96,8 @@ class FakeGlpi:
         self.satisfactions: dict[int, tuple[int, str]] = {}
         self.validation_decisions: list[tuple[int, int, bool, str]] = []
         self.legacy_cycle = True
+        # CycleWriteOutcome override for accept/reject (None → verified default).
+        self.cycle_outcome = None
         # document_id → ticket_id for Document_Item membership (may lag Timeline).
         self.document_links: dict[int, int] = {2: 7, 4: 7}
         # Tickets moved to GLPI trash (is_deleted) — get_ticket then fails.
@@ -578,8 +580,10 @@ class FakeGlpi:
     def legacy_cycle_enabled(self) -> bool:
         return bool(self.legacy_cycle)
 
-    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = ""):
         from dataclasses import replace
+
+        from helpdesk_app.domain.models import CycleWriteOutcome
 
         self.calls += 1
         assert access_token
@@ -588,9 +592,14 @@ class FakeGlpi:
         self.accepted_solutions.append((ticket_id, content))
         if self.detail.id == ticket_id:
             self.detail = replace(self.detail, status_id=6, status="Fechado", can_followup=False)
+        return self.cycle_outcome or CycleWriteOutcome(
+            followup_id=501, users_id=68, author_state="verified"
+        )
 
-    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None:
+    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = ""):
         from dataclasses import replace
+
+        from helpdesk_app.domain.models import CycleWriteOutcome
 
         self.calls += 1
         assert access_token
@@ -599,6 +608,9 @@ class FakeGlpi:
         self.rejected_solutions.append((ticket_id, content))
         if self.detail.id == ticket_id:
             self.detail = replace(self.detail, status_id=1, status="Novo", can_followup=True)
+        return self.cycle_outcome or CycleWriteOutcome(
+            followup_id=502, users_id=68, author_state="verified"
+        )
 
     def get_ticket_satisfaction(self, access_token: str, ticket_id: int):
         self.calls += 1

@@ -8,7 +8,12 @@
 
 import type { ElkNode } from "./elkGraph";
 import type { LayoutSnapshot } from "./elkGraph";
-import { LAYOUT_PROFILE_V1, containerPadFor } from "./layoutProfile";
+import {
+  LAYOUT_PROFILE_V1,
+  SUBPROCESS_FAMILY,
+  containerMinSize,
+  containerPadFor,
+} from "./layoutProfile";
 import { fitTextSize, isTextFitNodeType } from "./textFit";
 
 const BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL";
@@ -53,14 +58,6 @@ const RESIZABLE_CONTAINERS = new Set([
   "lane",
 ]);
 
-/** SubProcess-family: filhos semânticos viram children ELK. */
-const SUBPROCESS_FAMILY = new Set([
-  "bpmn:subProcess",
-  "bpmn:transaction",
-  "bpmn:adHocSubProcess",
-  "bpmn:eventSubProcess",
-]);
-
 function mayResize(node: LayoutSnapshot["nodes"][number]): boolean {
   if (node.isParticipant || node.isLane) return true;
   if (!RESIZABLE_CONTAINERS.has(node.type.replace(/^bpmn:/, ""))) return false;
@@ -85,18 +82,6 @@ export function applyTextFitSizing(snapshot: LayoutSnapshot): LayoutSnapshot {
     node.height = Math.max(node.height ?? cfg.minHeight, fit.height);
   }
   return snapshot;
-}
-
-/** Piso de dimensão para containers RESIZABLE — ELK pode devolver menos
- *  que o mínimo legível quando o conteúdo é pequeno (G9 §3 lanes). */
-function containerMinSize(
-  node: LayoutSnapshot["nodes"][number],
-): { width: number; height: number } | undefined {
-  const min = LAYOUT_PROFILE_V1.containerMin;
-  if (node.isParticipant) return min.participant;
-  if (node.isLane) return min.lane;
-  if (SUBPROCESS_FAMILY.has(node.type)) return min.subProcess;
-  return undefined;
 }
 
 /** Extrai o snapshot de layout de um BPMN XML (sem DI necessário).

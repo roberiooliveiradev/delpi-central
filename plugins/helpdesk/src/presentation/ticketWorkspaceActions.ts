@@ -13,7 +13,9 @@ export type TicketWorkspaceActionId =
   | "attach_file"
   | "request_approval"
   | "accept_solution"
-  | "reject_solution";
+  | "reject_solution"
+  | "decide_validation"
+  | "submit_satisfaction";
 
 export type TicketWorkspaceAction = {
   id: TicketWorkspaceActionId;
@@ -51,6 +53,8 @@ export function ticketWorkspaceActions(ticket: Pick<
   | "can_request_approval"
   | "can_accept_solution"
   | "can_reject_solution"
+  | "can_decide_validation"
+  | "can_submit_satisfaction"
 >): TicketWorkspaceAction[] {
   const actions: TicketWorkspaceAction[] = [];
   if (ticket.can_followup !== false) {
@@ -65,6 +69,8 @@ export function ticketWorkspaceActions(ticket: Pick<
   if (ticket.can_request_approval) actions.push(actionFromId("request_approval"));
   if (ticket.can_accept_solution) actions.push(actionFromId("accept_solution"));
   if (ticket.can_reject_solution) actions.push(actionFromId("reject_solution"));
+  if (ticket.can_decide_validation) actions.push(actionFromId("decide_validation"));
+  if (ticket.can_submit_satisfaction) actions.push(actionFromId("submit_satisfaction"));
   return actions;
 }
 

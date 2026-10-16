@@ -1,0 +1,161 @@
+/* EvidenceDetails — subordinate provenance/evidence disclosure.
+   Tokens resolve to --delpi-ui-* kit vars with Portal fallbacks. */
+
+.delpi-ui-evidence-details {
+  --_text: var(--delpi-ui-text, var(--text, #1f2933));
+  --_muted: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  --_border: var(--delpi-ui-border, var(--border, #d4dbe5));
+  --_accent: var(--delpi-ui-accent, var(--primary, #2563eb));
+  --_warning: var(--delpi-ui-warning, var(--warning, #b45309));
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--_muted);
+}
+
+.delpi-ui-evidence-details__source {
+  margin: 0;
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+/* Material limitation notice — rendered only when the consumer supplies
+   an explicit label; the component never infers severity. */
+.delpi-ui-evidence-details__material {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--_warning);
+}
+
+.delpi-ui-evidence-details__material svg {
+  flex-shrink: 0;
+  position: relative;
+  top: 2px;
+}
+
+/* ---------- disclosure ---------- */
+
+.delpi-ui-evidence-details__disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--_muted);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.delpi-ui-evidence-details__disclosure:hover {
+  color: var(--_text);
+  background: color-mix(in srgb, var(--_text) 5%, transparent);
+}
+
+.delpi-ui-evidence-details__disclosure:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 1px;
+}
+
+.delpi-ui-evidence-details__chevron {
+  flex-shrink: 0;
+  color: var(--_muted);
+  transition: transform 140ms ease;
+}
+
+.delpi-ui-evidence-details__disclosure[aria-expanded="true"]
+  .delpi-ui-evidence-details__chevron {
+  transform: rotate(180deg);
+}
+
+/* ---------- detail region ---------- */
+
+.delpi-ui-evidence-details__detail {
+  padding-top: 6px;
+}
+
+.delpi-ui-evidence-details__detail[hidden] {
+  display: none;
+}
+
+/* Two-column label/value grid that collapses to stacked rows when the
+   container is narrow — no separate mobile implementation. */
+.delpi-ui-evidence-details__grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 14px;
+  margin: 0;
+}
+
+.delpi-ui-evidence-details__item {
+  display: contents;
+}
+
+.delpi-ui-evidence-details__item-label {
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-evidence-details__item-value {
+  margin: 0;
+  color: var(--_text);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-evidence-details__item--wide {
+  grid-column: 1 / -1;
+  display: block;
+}
+
+.delpi-ui-evidence-details__item--wide .delpi-ui-evidence-details__item-label {
+  display: block;
+}
+
+@media (max-width: 420px) {
+  .delpi-ui-evidence-details__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .delpi-ui-evidence-details__item {
+    display: block;
+    margin-bottom: 6px;
+  }
+}
+
+/* ---------- limitations ---------- */
+
+.delpi-ui-evidence-details__limitations {
+  margin-top: 8px;
+}
+
+.delpi-ui-evidence-details__limitations-label {
+  display: block;
+  color: var(--_muted);
+  font-size: 11.5px;
+}
+
+.delpi-ui-evidence-details__limitations-list {
+  margin: 2px 0 0;
+  padding-left: 16px;
+  color: var(--_text);
+}
+
+.delpi-ui-evidence-details__limitations-list li {
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-evidence-details__limitations-list li + li {
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-evidence-details__chevron {
+    transition: none;
+  }
+}

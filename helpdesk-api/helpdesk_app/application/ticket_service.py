@@ -20,7 +20,14 @@ from helpdesk_app.domain.errors import (
     LinkRequired,
     MissingIdempotencyKey,
 )
-from helpdesk_app.domain.models import CatalogUser, StoredResponse, TicketDetail, TicketListPage, TicketListQuery
+from helpdesk_app.domain.models import (
+    CatalogUser,
+    CycleWriteOutcome,
+    StoredResponse,
+    TicketDetail,
+    TicketListPage,
+    TicketListQuery,
+)
 from helpdesk_app.infrastructure.glpi.mapping import (
     filter_assignable_catalog_users,
     normalize_assignee_id,
@@ -692,13 +699,12 @@ class TicketService:
         if detail.status_id != 5:
             raise GlpiValidation("Só é possível aceitar solução em chamado solucionado.")
         message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução aceita."
-        self._glpi.accept_ticket_solution(token, ticket_id, message)
+        outcome = self._glpi.accept_ticket_solution(token, ticket_id, message)
         refreshed = self._with_cycle_flags(
             token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         )
-        stored = StoredResponse(
-            status_code=200,
-            body={"id": refreshed.id, "status_id": refreshed.status_id},
+        stored = _cycle_write_stored_response(
+            refreshed, outcome, expected_status_ids={6}
         )
         self._idempotency.save(subject, operation, key, stored)
         return stored
@@ -724,13 +730,12 @@ class TicketService:
         if detail.status_id not in {5, 6}:
             raise GlpiValidation("Só é possível recusar/reabrir em solucionado ou fechado.")
         message = _prepare_cycle_comment_html(content, "content", ticket_id=ticket_id) or "Solução recusada."
-        self._glpi.reject_ticket_solution(token, ticket_id, message)
+        outcome = self._glpi.reject_ticket_solution(token, ticket_id, message)
         refreshed = self._with_cycle_flags(
             token, self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         )
-        stored = StoredResponse(
-            status_code=200,
-            body={"id": refreshed.id, "status_id": refreshed.status_id},
+        stored = _cycle_write_stored_response(
+            refreshed, outcome, expected_status_ids={1, 2, 3, 4}
         )
         self._idempotency.save(subject, operation, key, stored)
         return stored
@@ -1054,6 +1059,57 @@ def _prepare_cycle_comment_html(value: str, field: str, *, ticket_id: int) -> st
     if len(message_html_to_plain_text(cleaned)) > MAX_CYCLE_COMMENT_CHARS:
         raise GlpiValidation(f"{field} excede o limite de {MAX_CYCLE_COMMENT_CHARS} caracteres.")
     return cleaned
+
+
+def _cycle_write_stored_response(
+    refreshed: TicketDetail,
+    outcome: CycleWriteOutcome,
+    *,
+    expected_status_ids: set[int],
+) -> StoredResponse:
+    """Governed result for the legacy accept/reject cycle write.
+
+    The write may have executed while authorship or the status transition
+    could not be fully verified. The body exposes each postcondition so a
+    consumer never reads a bare 2xx as fully-verified success, and the
+    stored idempotent response replays the same governed outcome.
+    """
+    author_verified = outcome.author_state in {"verified", "restored"}
+    status_verified = (
+        refreshed.status_id is not None and refreshed.status_id in expected_status_ids
+    )
+    if author_verified and status_verified:
+        result = "verified"
+    elif not author_verified:
+        result = (
+            "author_mismatch"
+            if outcome.author_state == "mismatch"
+            else "author_unverified"
+        )
+    else:
+        result = "status_unverified"
+    logger.warning(
+        "helpdesk_cycle_write_outcome ticket_id=%s followup_id=%s author_state=%s "
+        "author_verified=%s status_id=%s status_verified=%s outcome=%s",
+        refreshed.id,
+        outcome.followup_id,
+        outcome.author_state,
+        author_verified,
+        refreshed.status_id,
+        status_verified,
+        result,
+    )
+    return StoredResponse(
+        status_code=200,
+        body={
+            "id": refreshed.id,
+            "status_id": refreshed.status_id,
+            "followup_id": outcome.followup_id,
+            "author_verified": author_verified,
+            "status_verified": status_verified,
+            "outcome": result,
+        },
+    )
 
 
 def _prepare_cycle_comment_text(value: str, field: str) -> str:

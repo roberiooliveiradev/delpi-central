@@ -52,8 +52,10 @@ describe("buildLiveActivityView", () => {
       }),
     ])!;
     const step = view.steps!.find((s) => s.label === "Capacidade selecionada")!;
-    expect(step.capabilityLabel).toBe("list_items");
+    // remote_name is a technical identifier — never a display label.
+    expect(step.capabilityLabel).toBeUndefined();
     expect(step.sourceLabel).toContain("DAVI");
+    expect(JSON.stringify(view)).not.toContain("list_items");
     // The contextualizing step auto-resolves — no invented progress.
     expect(
       view.steps!.find((s) => s.label === "Entendendo a solicitação")!
@@ -83,7 +85,10 @@ describe("buildLiveActivityView", () => {
     expect(query.description).toBe("1 registro(s) localizado(s)");
     expect(query.sourceLabel).toBe("Cadastro DELPI");
     expect(view.sources).toHaveLength(1);
-    expect(view.sources![0].detail).toContain("MCP");
+    // protocol is transport mechanics — never surfaced as detail.
+    expect(view.sources![0].detail).toBeUndefined();
+    expect(JSON.stringify(view)).not.toContain("list_items");
+    expect(JSON.stringify(view)).not.toContain("MCP");
   });
 
   it("marks a failed source query honestly — never as success", () => {

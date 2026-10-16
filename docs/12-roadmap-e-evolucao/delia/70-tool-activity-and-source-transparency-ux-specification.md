@@ -544,3 +544,38 @@ Transições são fatos observados — não há obrigação de percorrer todas a
 - **Sob saturação:** observações intermediárias além do limite são omitidas (sem inventar eventos), preservando a capacidade para eventos terminais reais e `turn_result`/`turn_error` obrigatório. O histórico progressivo é uma projeção bounded, não um log completo nem uma fonte de autoridade.
 - **Verificação:** testes adicionados para wildcard, `q=0`, opt-in positivo e 500 emissões com resultado/erro; **execução integral dos testes ainda = `TEST_NOT_RUN` neste ambiente** (sem checkout executável/dependências). Simulação isolada da invariância da fila = `PASS`, insuficiente para aceite de integração. `INDEPENDENT_REVIEW=PENDING`; live no SHA corrigido = `TEST_NOT_RUN`.
 - **Gates preservados:** `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`; `NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`. Nenhum deploy incluído neste hardening.
+
+
+## 17. Alinhamento visual vigente — ActivityViewer compartilhado (2026-10-16)
+
+O inventário no HEAD `843ee2423a45275c507b7cdc10bb92f45f1827b4` prova que o resumo/visualizador de atividade conversacional já possui componente compartilhado legítimo:
+
+```text
+plugins/plugin-ui/src/components/activity/ActivityViewer.tsx
+plugins/plugin-ui/src/styles/activity-viewer.css
+```
+
+E integração real na DÉLIA:
+
+```text
+plugins/delia/src/App.tsx
+→ ActivityViewer para atividade live/pending
+
+plugins/delia/src/ui/DeliaAssistantMessage.tsx
+→ ActivityViewer para atividade associada ao turno concluído
+
+plugins/delia/src/activity/activityView.ts
+→ projeção provider-neutral para ActivityViewerProps
+```
+
+Reuse gate:
+
+```text
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = REUSE
+NEW ConversationActivity = NOT_JUSTIFIED
+```
+
+A direção visual permanece: compacto, inline, expansível, provider-neutral, sem card pesado, sem logs técnicos e sem progresso inventado. Qualquer refinement futuro deve ocorrer sobre o `ActivityViewer` existente ou sua composição/adapter, não por componente paralelo.
+
+Detalhamento: [79 — ActivityViewer / Conversation Activity Summary](./79-conversation-activity-summary-visual-specification.md).

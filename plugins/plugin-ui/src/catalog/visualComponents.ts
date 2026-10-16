@@ -621,6 +621,21 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Superfície inline de decisão governada (Confirmar/Cancelar via ActionButton). OWNS chrome da decisão. DOES NOT OWN request, digests, auth, PREPARE/ACT ou resultado — o consumidor controla render e callbacks.",
   }),
+  vc("collaboration", "ActivityViewer", {
+    addedAt: "2026-10-16",
+    description:
+      "Resumo compacto e expansível de atividade observável (ícone/estado + título + detalhe + disclosure rotulado). OWNS chrome, passos, fontes e outcome. DOES NOT OWN eventos, projeção, provedores, auth ou outcome de negócio — o consumidor projeta.",
+  }),
+  vc("collaboration", "ConversationError", {
+    addedAt: "2026-10-16",
+    description:
+      "Superfície inline de falha de interação no footer (ícone + título + descrição/ação opcional via ActionButton). OWNS chrome e role=alert. DOES NOT OWN erro, draft, retry, auth, PREPARE/ACT ou classificação — o consumidor resolve copy e callbacks.",
+  }),
+  vc("collaboration", "EvidenceDetails", {
+    addedAt: "2026-10-16",
+    description:
+      "Provenance/evidence subordinada: linha de fonte sempre visível + disclosure rotulado com pares label/valor (dl/dt/dd) e limitações. OWNS chrome/disclosure/acessibilidade. DOES NOT OWN epistemic class, materialidade, freshness, auth ou contrato — o consumidor projeta dados user-facing.",
+  }),
   vc("collaboration", "MessageActionBar", {
     addedAt: "2026-10-15",
     description:

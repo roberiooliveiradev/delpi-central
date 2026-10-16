@@ -47,7 +47,7 @@ export function solicitanteLifecycleCue(input: {
     return {
       id: "approval_native",
       variant: "default",
-      message: "Há uma aprovação pendente para você. Aceite ou recuse por aqui.",
+      message: "Há uma aprovação pendente aguardando sua decisão.",
       showValidationActions: true,
     };
   }
@@ -81,7 +81,7 @@ export function solicitanteLifecycleCue(input: {
     return {
       id: "solved_native",
       variant: "success",
-      message: "Há uma solução neste chamado. Você pode aceitar (fecha) ou recusar (reabre) por aqui.",
+      message: "Há uma solução neste chamado aguardando sua decisão (aceitar fecha, recusar reabre).",
       showNativeActions: true,
     };
   }

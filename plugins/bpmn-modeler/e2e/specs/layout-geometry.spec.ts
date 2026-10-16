@@ -9,7 +9,11 @@ import { request } from "@playwright/test";
  * tipo (nodeSizeFor) em vez dos bounds DI vigentes, e o Accept gravava
  * width/height do ELK no di.bounds — elementos custom ou fora do
  * default eram "escalados". Política:
- *   SIZE_PRESERVED     — todo nó não-container (event/task/gateway/data)
+ *   SIZE_PRESERVED     — nó não-container fora do text-fit
+ *                        (event/gateway/data): w/h exatos
+ *   TEXT_FIT_GROW_ONLY — task-family com label interna (G9): piso
+ *                        textFit.minWidth×minHeight (140×68), grow-only,
+ *                        nunca encolhe bounds DI maiores
  *   LAYOUT_MAY_RESIZE  — participant/lane/subProcess expandido/etc
  * Preview é artefato transient; canonical só muda no Accept.
  */
@@ -150,8 +154,11 @@ async function save(page: Page) {
   });
 }
 
-// famílias SIZE_PRESERVED (w/h nunca mudam no layout)
-const PRESERVED = ["S1", "T1", "G1", "T2", "E1", "SS1", "ST1", "SE1", "DS1"];
+// SIZE_PRESERVED exato — tipos sem label interna (w/h nunca mudam)
+const PRESERVED = ["S1", "G1", "E1", "SS1", "SE1", "DS1"];
+// TEXT_FIT grow-only (G9): tasks recebem piso 140×68 — nunca encolhem
+const TEXT_FIT = ["T1", "T2", "ST1"];
+const TEXT_FIT_MIN = { width: 140, height: 68 };
 // dimensões custom do fixture (≠ tabela vendor)
 const CUSTOM: Record<string, { width: number; height: number }> = {
   T1: { width: 140, height: 90 },
@@ -171,7 +178,8 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
     // fonte de verdade das dimensões: BPMN-DI vigente (working-copy)
     const beforeDi = await diBoundsFromXml(modelId);
     const beforeDom = new Map<string, Bounds>();
-    for (const id of PRESERVED) beforeDom.set(id, await domBounds(page, id));
+    for (const id of [...PRESERVED, ...TEXT_FIT])
+      beforeDom.set(id, await domBounds(page, id));
     expect(beforeDi.get("T1")).toMatchObject({ width: 140, height: 90 });
 
     await organize(page, true);
@@ -184,9 +192,23 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
       expect(a.height, `${id}.height`).toBeCloseTo(b.height, 0);
       if (a.x !== b.x || a.y !== b.y) moved.add(id);
     }
+    for (const id of TEXT_FIT) {
+      const b = beforeDom.get(id)!;
+      const a = await domBounds(page, id);
+      // grow-only: max(DI vigente, piso text-fit) — nunca encolhe
+      expect(a.width, `${id}.width`).toBeCloseTo(
+        Math.max(b.width, TEXT_FIT_MIN.width),
+        0,
+      );
+      expect(a.height, `${id}.height`).toBeCloseTo(
+        Math.max(b.height, TEXT_FIT_MIN.height),
+        0,
+      );
+      if (a.x !== b.x || a.y !== b.y) moved.add(id);
+    }
     expect(moved.size).toBeGreaterThan(0); // layout realmente moveu
 
-    // authoritative read-back: DI persistido preserva w/h
+    // authoritative read-back: DI persistido reflete o mesmo contrato
     await save(page);
     const di = await diBoundsFromXml(modelId);
     for (const id of PRESERVED) {
@@ -195,6 +217,19 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
       expect(p, `${id} ausente no DI`).toBeTruthy();
       expect(p!.width, `${id} DI width`).toBeCloseTo(b.width, 0);
       expect(p!.height, `${id} DI height`).toBeCloseTo(b.height, 0);
+    }
+    for (const id of TEXT_FIT) {
+      const b = beforeDi.get(id)!;
+      const p = di.get(id);
+      expect(p, `${id} ausente no DI`).toBeTruthy();
+      expect(p!.width, `${id} DI width`).toBeCloseTo(
+        Math.max(b.width, TEXT_FIT_MIN.width),
+        0,
+      );
+      expect(p!.height, `${id} DI height`).toBeCloseTo(
+        Math.max(b.height, TEXT_FIT_MIN.height),
+        0,
+      );
     }
     // reload: mesmo resultado visual
     await page.reload();
@@ -271,7 +306,9 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
     const t1 = await domBounds(page, "T1");
     expect(t1.width).toBeCloseTo(140, 0);
     const t2 = await domBounds(page, "T2");
-    expect(t2.width).toBeCloseTo(100, 0); // default preservado igual ao novo
+    // T2 pré-existente passou pelo Organizar → piso text-fit (140);
+    // o task novo (criado após o layout) mantém o default vendor (100)
+    expect(t2.width).toBeCloseTo(140, 0);
   });
 
   test("LGEO-05: selection outline segue bounds reais (sem fake)", async ({
@@ -305,10 +342,11 @@ test.describe("E2E-47 — auto-layout size preservation", () => {
     await save(page);
     const di = await diBoundsFromXml(modelId);
 
-    // filhos de lane/pool/subprocess preservam dims (children NOT scaled)
+    // filhos de lane/pool/subprocess preservam dims (children NOT scaled);
+    // tasks recebem o piso text-fit grow-only (G9) — nunca encolhem
     const EXPECTED_W: Record<string, number> = {
-      S1: 36, T1: 140, G1: 50, T2: 100, E1: 36,
-      SS1: 36, ST1: 100, SE1: 36,
+      S1: 36, T1: 140, G1: 50, T2: 140, E1: 36,
+      SS1: 36, ST1: 140, SE1: 36,
     };
     for (const [id, w] of Object.entries(EXPECTED_W)) {
       const p = di.get(id)!;

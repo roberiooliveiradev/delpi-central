@@ -1,7 +1,7 @@
 # BPMN MODELER — CURRENT STATE (pós-implementação)
 
-> **Status:** CURRENT (G0 — Documentation Drift Reconciliation)
-> **Baseline de evidência:** commit `3efdb7e2` (`main`), out/2026 — auditado contra `bpmn-modeler/`, `plugins/bpmn-modeler/`, `migrations/`, testes, CI e acceptance de runtime.
+> **Status:** **STABLE PRODUCT BASELINE (G10 — Final Closure)** — implementação V1 fechada; trabalho futuro = roadmap/evolução/correção de regressão, não pendência de implementação.
+> **Baseline de evidência:** commit `4ad30b5f21` (`main` = `origin/main`), abr/2026 — auditado contra `bpmn-modeler/`, `plugins/bpmn-modeler/`, `plugins/bpmn-editor/`, `shared/bpmn_validation/`, `transformometro-api/`, `plugins/transformometro/`, migrations, testes, CI e runtime de integração local. Baseline de auditoria original do G0: `3efdb7e2` (histórico).
 > **Natureza:** **fonte vigente** de estado implementado. Os `*-SPEC-FREEZE.md` são o registro histórico de decisões de especificação; onde uma decisão foi substituída após implementação, o freeze carrega marcação `SUPERSEDED (G0)` inline e a divergência está registrada em [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 > **Regra de leitura:** este documento **não** autoriza features novas e **não** promove targets de escopo a implementação. `SPECIFICATION STATUS` (o que a V1 promete) e `EXECUTION STATUS` (o que está provado) são sempre separados.
 
@@ -16,7 +16,7 @@
 | Identidade / SSO | Keycloak (`delpi_auth`, `validate_token`) |
 | RBAC / permissões efetivas | Core API (`/me`, `user_permissions`, `rbac.manage`) |
 | Resource authority dos modelos | BPMN Modeler — `Model.created_by` |
-| Transformômetro | contexto externo; `flowchart_v1` = legado; integração profunda = `FUTURE` |
+| Transformômetro | contexto externo **integrado**: referência explícita a revisão Modeler (G5, §13e) + BPMN nativo owned pelo TM (G7, §13g) + migração governada de `flowchart_v1` legado via TÉO (G8, §13f). Autoridade permanece separada — integração é explícita e authority-preserving |
 
 Bounded context: `bpmn-modeler/` (package `bpmn_modeler`) + MFE `plugins/bpmn-modeler/` (Module Federation via portal).
 
@@ -114,7 +114,7 @@ edit (commandStack.changed)
 
 ## 9. API surface (vigente)
 
-- 20 operações congeladas (gate CI compara `operationId`s do `openapi.json`).
+- 20 operações congeladas (gate CI compara `operationId`s do `openapi.json`; `test_api_contract.py` asserta igualdade exata — inalterado no G10).
 - `If-Match`/`ETag` = token de versão do agregado (`"v<n>"`); `X-Artifact-SHA256` = identidade do artefato. `expected_version` nunca no body.
 - Missing `If-Match`→428; stale→412/`CONFLICT`; envelope `{success,message,data,error,meta}`; `message` PT-BR, `error.code` EN.
 - Working-copy GET = XML raw + `X-Artifact-SHA256`; exports com `Content-Disposition` sanitizado.
@@ -131,7 +131,7 @@ edit (commandStack.changed)
 
 | Superfície | Evidência | Status |
 |---|---|---|
-| Backend unit/contract/journeys | `bpmn-modeler/tests/` — 98 testes em 10 arquivos (`test_use_cases`, `test_domain_model`, `test_api_contract`, `test_validation_*`, `test_ownership_isolation` (14), `test_revision_immutability`, `test_e2e_journeys`, `test_repository_integration`, `test_architecture`) | executados em CI |
+| Backend unit/contract/journeys | `bpmn-modeler/tests/` — 146 testes em 10 arquivos (`test_use_cases`, `test_domain_model`, `test_api_contract`, `test_validation_*`, `test_ownership_isolation`, `test_revision_immutability`, `test_e2e_journeys`, `test_repository_integration` (8, plugins_hub real), `test_architecture`) | executados em CI + G10 local: 146/146 |
 | CI backend | pytest, migrations idempotentes, repository integration sobre plugins_hub real, schema isolation, append-only scan, OpenAPI 20 ops, camadas, XSD checksums | gates verdes |
 | Frontend unit | `vitest` — saveMachine, autosave, diProposal, canvas-reg, propertiesPanelModule, i18n, editingProfile, profileGovernance | executados em CI |
 | Frontend build | tsc, eslint, vite build, worker chunk, vendor leakage, notices/watermark | gates verdes |
@@ -145,14 +145,14 @@ Nota de execução E2E: baseline suportado `workers=1/2` determinístico; `worke
 | Residual | Classificação |
 |---|---|
 | Properties panel — chrome leaf não traduzível (vendor) | `ACCEPTED_RESIDUAL`, `NON_BLOCKING` |
-| Watermark bpmn.io (attribution requirement) | `BLOCKED_BY_ATTRIBUTION_REQUIREMENT`, não é bug de produto |
+| Watermark bpmn.io (attribution requirement da licença bpmn-js) | `REQUIRED BY LICENSE`, não é bug de produto — posição padronizada bottom-left (sem overlap com controles bottom-right) em TM e Modeler (G9-BRAND-1/2, §13h) |
 | E2E `workers=8` | best-effort, não contrato |
 
 ## 13. BPMN profile — SCOPE TARGET ≠ IMPLEMENTATION PROVEN
 
 O profile do `V1-SCOPE-FREEZE.md` §6–7 (`CREATE_EDIT`/`RENDER_PRESERVE_ONLY`) é **scope target congelado**, não prova de implementação. Nenhum item do profile deve ser declarado entregue sem evidência create/edit/save/export/reimport. Inventário capability-by-capability = **G1**.
 
-Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1; o G0 não reivindica breadth).
+Status de auditoria G0: `TO_INVENTORY` (a matriz detalhada será produzida no G1; o G0 não reivindica breadth). **SUPERSEDED pelo desfecho:** G1 inventariou, G2B provou CREATE_EDIT (§13a), WAVE E provou properties breadth (§13b), WAVE F fechou vendor exposure (§13c) — matriz final em [`V1-CAPABILITY-EVIDENCE-INVENTORY.md`](V1-CAPABILITY-EVIDENCE-INVENTORY.md).
 
 ### 13a. CREATE_EDIT evidence (G2B — vigente)
 
@@ -180,7 +180,7 @@ O provider genérico `bpmn` (`bpmn-js-properties-panel@5.65.1`) **não emite** e
 
 Governança: os novos entry IDs entraram na allowlist do `editingProfile.ts` — `ProfileGovernedPanelProvider` continua fail-closed (entry desconhecido = removido). Fontes inválidas (ComplexGateway, EventBasedGateway) não expõem o grupo.
 
-Evidência: 14 testes E2E `e2e/specs/properties-{core,flows,events}.spec.ts` (workers=2) — PROP-CORE-01 (calledElement edit→undo/redo→RB→reload), PROP-FLOW-01..06 (condition set/clear, default set/switch/clear, delete sem ref pendurada, contexto inválido), PROP-DOC-01/02 (documentation task+process), PROP-EVT-01..05 (root `bpmn:message`/`signal`/`error`/`escalation` + refs + `linkName`). Preservação de import/round-trip já era coberta por RT-CE-01/02 (fixtures com calledElement/default/cond). EG-14 BPMN-core: **CLOSED**; engine fields = TO_INVENTORY → WAVE F.
+Evidência: 14 testes E2E `e2e/specs/properties-{core,flows,events}.spec.ts` (workers=2) — PROP-CORE-01 (calledElement edit→undo/redo→RB→reload), PROP-FLOW-01..06 (condition set/clear, default set/switch/clear, delete sem ref pendurada, contexto inválido), PROP-DOC-01/02 (documentation task+process), PROP-EVT-01..05 (root `bpmn:message`/`signal`/`error`/`escalation` + refs + `linkName`). Preservação de import/round-trip já era coberta por RT-CE-01/02 (fixtures com calledElement/default/cond). EG-14 BPMN-core: **CLOSED**; engine fields = TO_INVENTORY → WAVE F **(CLOSED, §13c)**.
 
 ### 13c. Vendor exposure decision (WAVE F — vigente)
 
@@ -223,6 +223,13 @@ SOURCE bb447872ee (worktree limpo @ HEAD final)
 Backend em dev usa **bind mount** `../bpmn-modeler:/app` + uvicorn sem `--reload` → processo carrega o checkout no start; mtimes de fonte anteriores ao start + `/health` expõe `BPMN_MODELER_BUILD_SHA` da imagem. Migrations: `bpmn_modeler.schema_migrations` V001–V004 com checksums sha256 byte-idênticos aos arquivos-fonte (`EXPECTED == APPLIED`). Keycloak funcional via gateway (`iss=http://localhost/auth/realms/delpi`, aud `delpi-central`). Ownership runtime: foreign GET → 404 `MODEL_NOT_FOUND`, list isolation ok; create/edit/save com `If-Match` → read-back autoritativo + reload + export; stale If-Match → `CONFLICT`; archive → `MODEL_ARCHIVED` em write; `manage` separado de `edit` (`UNAUTHORIZED_OPERATION`). Fingerprints E2E no runtime deployado: Wave F 8/8, Wave E PROP-CORE-01, paleta semântica, RT-EXT read-only — 32/32.
 
 **Contrato de release (verdade documentada):** BUILD test/lint = AUTOMATED (CI `bpmn-modeler.yml`); IMAGE build/deploy = **MANUAL** local (`docker compose build` com `BPMN_MODELER_BUILD_SHA=$(git rev-parse HEAD)` + `up -d`); `docker cp` **nunca** é release contract — o bundle servido deve bater com a imagem (OCI `revision` + `assets/build-info.json` + `/health`).
+
+**G10 re-check (2026-04-19, baseline `4ad30b5f21`):** mesma classe de ambiente (LOCAL INTEGRATION RUNTIME). Estado provado:
+
+- `delpi-bpmn-modeler` (nginx): `assets/build-info.json` `git_sha=dd1cfd475c` — **rebuild no G10** a partir do working tree (inclui os fixes de produto DRIFT-BPMN-018 `BpmnModelerApiError extends BpmnDocumentError` e DRIFT-BPMN-019 `nodeSize.minimum` no input ELK; ambos provados pelos E2E autosave/LGEO verdes contra este bundle).
+- `delpi-transformometro` (nginx): rebuild no G10 com o mesmo `@delpi/bpmn-editor` corrigido (DRIFT-BPMN-019 afeta o editor compartilhado); conteúdo provado: `assets/style-CG4yR7Tw.css` contém a regra `bjs-powered-by` bottom-left. Sem `build-info.json` (instrumentação de provenance existe só no Modeler — gap conhecido, não-bloqueante).
+- `delpi-bpmn-modeler-api` / `delpi-transformometro-api`: imagens OCI `revision=bb447872ee` (build G6), mas ambas rodam **bind mount** (`bpmn-modeler:/app`, `transformometro-api:/app`, `shared:/shared`) — o processo carrega o checkout no start. Containers startados 2026-10-16T10:15Z; todos os `.py` de `bpmn-modeler/`/`shared/bpmn_validation/`/`transformometro-api/` têm mtime ≤ 2026-10-09 → código em execução ≡ checkout `4ad30b5f21`. `/health` expõe `git_sha` da **imagem** (metadata de build), não do código montado — claim registrado com essa precisão.
+- Business read-back em runtime: E2E-38b (owner archived read-only + foreign 404) executado neste baseline contra os containers acima — PASS 2/2.
 
 ### 13e. Transformômetro ↔ BPMN Modeler — referência explícita (G5 — vigente)
 
@@ -271,6 +278,25 @@ Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-09): PREPARE real PROC-00
 
 **Residual G8:** view-vs-manage por processo compartilham `transformometro.access` (gate vigente do TM, não regressão — separação dedicada é follow-up ADR-005); transação atômica doc+rev+migration é follow-up (compensação fail-closed vigente).
 
+### 13g. Transformômetro-native BPMN (G7 — vigente)
+
+O TM passou a ter **documento BPMN nativo próprio** — artefato canônico BPMN 2.0 XML + BPMN-DI owned pelo bounded context Transformômetro, editado na **mesma superfície compartilhada** (`plugins/bpmn-editor` — editor compartilhado, artefato não).
+
+- **Ownership:** `processo_bpmn_documents` + `processo_bpmn_revisions` (schema TM, V053); o documento pertence ao processo (`processo_id`); **zero rows em `bpmn_modeler.*`**; nunca aparece na library do Modeler; um modelo do Modeler nunca é copiado para o TM como mecanismo de integração.
+- **Working copy + revisões:** mesmo contrato canônico (working copy editável, revisões imutáveis append-only, `If-Match`/ETag, autosave, read-back autoritativo) implementado no backend TM — autoridade e lifecycle separados do Modeler.
+- **Validação:** `shared/bpmn_validation` (extraído em `6c7d718ab8`, G7C) é a fonte única do pipeline intake→lxml→XSD→regras para ambos os contextos — mesma engine, schemas vendored com `MANIFEST.json` checksummed.
+- **Autorização de acesso:** cross-user baseada em autorização do processo TM (não no `Model.created_by` do Modeler — boundary distinto, não confundir).
+- **Frontend:** `TmProcessDocumentHost` (identidade estável com live getters) + rotas TM montam o editor/viewer compartilhados; `transformometroApiBase` (`tmRequest`) com timeout/abort canônico.
+- **Coexistência com legado:** `flowchart_v1` permanece autoridade para processos não migrados; `dual_mode_forbidden` impede doc nativo + referência externa simultâneos.
+- Evidência: `transformometro-api/tests/test_process_bpmn_document.py` + suites BPMN TM (69/69 no G10), `TmProcessDocumentHost.test.ts`, cross-app E2E. **PROVEN.**
+
+### 13h. Preview / layout / loading / branding (G9 — vigente)
+
+- **Live BPMN readonly viewer** (`BpmnReadonlyViewer` do `@delpi/bpmn-editor`): NavigatedViewer real renderizando working copy/revisão/documento TM; pan/zoom/fit + viewport controls com labels acessíveis, tooltips e teclado; text-fit; hierarchical lane/container fit (filho fora de lane = 0, lane fora de participant = 0 — G9-LAYOUT-1).
+- **Preview-first Organizar:** proposta DI calculada em viewer separado — nenhum write antes de Accept (§7 inalterado).
+- **Loading hardening (G9-LOAD-1):** `tmRequest` com timeout/abort; load agregado do editor com timeout; load-generation guard (resposta stale descartada); terminal error UI retryable; preview sempre atinge estado terminal ready/error. E2E `g9-load-1-repro.spec.ts` 4/4; suites `tmRequestTimeout` 5/5, `TmProcessDocumentHost` 2/2.
+- **Branding / watermark (G9-BRAND-1/2):** a marca "Powered by bpmn.io" é **requisito de licença** do `bpmn-js` — nunca removida/escondida/sobreposta. CSS escopado em `plugins/bpmn-editor/src/styles.css` (`.dashboard-bpmn-modeler .bjs-powered-by`) padroniza `left:15px; bottom:15px; right:auto` (override do inline style vendor, que exige `!important` posicional); controles permanecem bottom-right — overlap = 0, marca visível e clicável em card preview, modal, fullscreen e editor, nos dois produtos. Zero hacks de DOM/observer. E2E `g9-brand-1.spec.ts` 4/4 com bounding-box assertions + click-safety; `poweredByPlacement.test.ts` 4/4.
+
 ## 14. Produtividade — classificação por evidência (G0)
 
 | Capacidade | Freeze | Implementação atual | Classificação |
@@ -282,10 +308,10 @@ Evidência runtime (LOCAL INTEGRATION RUNTIME, 2026-10-09): PREPARE real PROC-00
 | palette search semântica | IN_V1 | componente produto `PaletteSearch` (overlay) — fonte única = projeção `listSearchableCreateActions()` do `editingProfile.ts` (mesma autoridade; §14a G3-PAL-1); aliases PT-BR/EN = mesmo QName do resultado; `/` abre, setas navegam, Enter ativa, Escape fecha | `PROVEN` — PROD-PAL-01..05 + PROD-PAL-SEM-01..08: a11y (role combobox/aria-label), teclado completo, CREATE_EDIT-only, semantic routing (label=QName criado), preserve-only nunca lista, clique posiciona + RB |
 | resize funcional | IN_V1 | `ResizeModule` vendor; `BpmnRules.canResize` — SubProcess(expandido)/Lane/Participant/Group/TextAnnotation(e/w)/labels | `PROVEN` — PROD-RSZ-01..05: resize real via `.djs-resizer-*` drag muda DI, undo/redo, save/RB/reload; task/event/gateway/data-object = `BLOCKED_AS_EXPECTED` (fixed-size vendor) |
 | snap/grid | IN_V1 (vendor) | `SnappingModule` + `GridSnappingModule` (grid 10) no bundle; grid configurável pelo usuário = `FUTURE` (inalterado) | `PROVEN` — PROD-SEL-06: drag livre quantiza bounds DI no grid 10 |
-| palette restrita ao profile + vendor features off | IN_V1 (§31/§95 do freeze) | **vigente (G2A)** — `editingProfile.ts` central + `profileGovernanceModule.ts` (palette/context-pad/replace fail-closed) + `ProfileGovernedPanelProvider` (panel); preserve-only e MultiInstance não criáveis nem replace targets | `IMPLEMENTED`+`PROVEN` (unit+integration+E2E `profile-governance.spec.ts`); ferramentas não-semânticas (align/distribute/space/hand/global-connect) permanecem `TO_INVENTORY` |
+| palette restrita ao profile + vendor features off | IN_V1 (§31/§95 do freeze) | **vigente (G2A + WAVE F)** — `editingProfile.ts` central + `profileGovernanceModule.ts` (palette/context-pad/replace fail-closed) + `ProfileGovernedPanelProvider` (panel); preserve-only e MultiInstance não criáveis nem replace targets | `IMPLEMENTED`+`PROVEN` (unit+integration+E2E `profile-governance.spec.ts`); ferramentas não-semânticas **fechadas na WAVE F** (§13c): align/distribute/space-tool/keyboard-move = `DISABLED/FUTURE`, hand/lasso/global-connect = `KEEP` — zero `TO_INVENTORY` restante |
 | thumbnails na library | `FUTURE` no freeze | **entregue** — `BpmnModelThumb` renderiza SVG do working copy (cache `model@version`) | `SUPERSEDED` (DRIFT-BPMN-011) |
 
-Extras do bundle vendor presentes sem UX/evidência de produto dedicada (TO_INVENTORY, não contam como entrega): `AlignElementsModule`, `DistributeElementsModule`, `SpaceTool`, `HandTool`, `AutoPlace`, `GlobalConnect`.
+~~Extras do bundle vendor presentes sem UX/evidência de produto dedicada (TO_INVENTORY, não contam como entrega): `AlignElementsModule`, `DistributeElementsModule`, `SpaceTool`, `HandTool`, `AutoPlace`, `GlobalConnect`.~~ **SUPERSEDED (WAVE F):** todos classificados — align/distribute/space-tool/keyboard-move `DISABLED/FUTURE`; hand/lasso/global-connect `KEEP` (features IN_V1 existentes); AutoPlace não exposto como surface dedicada. `UNCLASSIFIED EXPOSED FEATURES: 0` (§13c).
 
 Drift classificado como `IMPLEMENTATION_GAP` (não documentation drift): documentação congelou capability `IN_V1` que o produto ainda não prova em UX. Owner: `03 — Frontend & UX` → G3. **Resolvido em G3 (§14a).**
 
@@ -319,6 +345,10 @@ WAVE E — Properties Breadth              OWNER 03+06   PASS/CLOSED — 14/14 E
 WAVE F — Vendor Exposure Decision        OWNER 00+03   PASS/CLOSED — §13c + INVENTORY §6a: align/distribute/space-tool/keyboard-move-selection DISABLE (FUTURE/não-frozen — DI value:null + editor actions unregistered); hand/lasso/global-connect KEEP (Pan/multi-select/Connect IN_V1); E/R/Ctrl+D/Ctrl+setas KEEP como aliases governados; engine editable entries = 0; 8/8 E2E VX-* + GOV-14..17 + regressões G2A/G3/Wave E verdes (workers=2)
 G5 — Transformômetro ↔ BPMN Modeler       OWNER 00+06   PASS/CLOSED — §13e + ADR-005: referência explícita (model_id, revision_number) owned pelo TM, granularidade processo_id, user-delegated auth, fail-closed write, read degradado, sem auto-follow-latest, sem XML/FK/proxy/bypass; acceptance G5-ACC-1 fechado: runtime harness 20/20 + cross-app browser E2E 8/8 (LOCAL INTEGRATION RUNTIME); fix path-alias /bpmn-reference + precisão AuthZ (sem separação read/write dedicada — follow-up)
 G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: cadeia source→build→image→container→route→runtime→business read-back provada em **bb447872ee** (LOCAL INTEGRATION RUNTIME — não production acceptance); hardening inicial em 9ff9e9e14b → equivalente rebaseado 511369e2f5 → rebuild/redeploy final em bb447872; provenance gap fechado (OCI revision label + build-info.json + /health git_sha); stale image sanado por rebuild canônico (docker cp aposentado como release mechanism); migrations/checksum, ownership 404, conflict, archive, Wave E/F fingerprints no runtime deployado. Drift de processo: commit de docs G6 incluiu 2 arquivos requests-api pré-staged por workstream paralelo (postgres_repositories.py +3, test_postgres_request_repository.py −85 — sem overlap funcional BPMN, conteúdo preservado no histórico; disciplina: commit isolado/worktree + `git status` do index antes de commitar)
+G7 — Transformômetro-native BPMN          OWNER TM   PASS/CLOSED — §13g: documento BPMN nativo owned pelo TM (`processo_bpmn_documents`/`processo_bpmn_revisions`), mesmo editor compartilhado, working copy + revisões no bounded context TM, zero rows em `bpmn_modeler.*`, não listado na library do Modeler; shared/bpmn_validation extraído (6c7d718ab8) como fonte única de validação para ambos os contextos
+G8 — Migração flowchart_v1 → BPMN nativo   OWNER TM   PASS/CLOSED — §13f: PREPARE read-only → confirm_before_act → ACT via commit_proposal; dedup multi-instância com provenance (G8-COMP-1), fingerprint stale protection, legado preservado, zero escrita em bpmn_modeler.*
+G9 — Preview/layout/loading/branding       OWNER 03   PASS/CLOSED — §13h: live BPMN readonly viewer, pan/zoom/fit, preview-first Organizar, load timeout/retry, stale-load generation guard, watermark bottom-left. Correction passes: G9-LAYOUT-1 (container fit), G9-LOAD-1 (997087ef6f — tmRequest timeout/abort, terminal error UI), G9-BRAND-1 (213bc66fbb — scoped CSS reposition) + G9-BRAND-2 (c15c82cf3e — Modeler bundle rebuild, 4/4 E2E)
+G10 — Final Closure / Stable Baseline      —          este gate — §17
 ```
 
 ## 16. Open follow-ups
@@ -327,6 +357,62 @@ G6 — Runtime Provenance / stale-process   OWNER 09   PASS/CLOSED — §13d: ca
 |---|---|---|
 | RUNTIME_STALE_CODE_PREVENTION — processo uvicorn executava código pré-deploy apesar do bind mount atualizado (foreign read 200 → 404 após `docker restart`); incidente de deploy, não defeito de policy | 09 — DevOps/CI/Runtime | `CLOSED` (G6) — provenance por OCI revision + `/health git_sha` + `assets/build-info.json`; stale detectável comparando SHA servido vs target (§13d) |
 | Diagram search overlay (§34 freeze) | 03 | `CLOSED` (G3) — searchPad vendor provado PROD-SRCH-01..04 (Ctrl+F, nome/id, navegação, sem mutação) |
-| BPMN profile breadth proof | 02+03+06 | `TO_INVENTORY` → G1 → G2B fechou CREATE_EDIT (§13a) → **G4 fechou per-construct round-trip (§6)** |
-| E2E-38b (`visual-regression.spec.ts`) — teste importa modelo como `editor` e abre como `viewer`; falha com HTTP 404 desde a fail-closed ownership (`_get_owned_or_404`). Falha **pré-existente** ao G4 (teste de `7832e1adc6`), incompatível com a política vigente — precisa ser reescrito (modelo criado como `viewer`) ou a política revisada com decisão de produto | 03+02 | `OPEN`, `NON_BLOCKING` |
+| BPMN profile breadth proof | 02+03+06 | `CLOSED` — cadeia: TO_INVENTORY → G1 inventariado → G2B CREATE_EDIT (§13a) → G4 round-trip (§6) → WAVE E properties (§13b) → WAVE F vendor exposure (§13c) |
+| E2E-38b (`visual-regression.spec.ts`) — teste importava modelo como `editor` e abria como `viewer`; falhava com HTTP 404 correto da fail-closed ownership (`_get_owned_or_404`). Falha **pré-existente** ao G4 (teste de `7832e1adc6`), incompatível com a política vigente | 03+02 | `CLOSED` (G10) — reescrito como test debt: viewer não possui `bpmn-modeler.edit` (não pode criar/importar); surface read-only legítima = model **archived** pelo próprio owner (editor cria → arquiva → abre read-only, controls presentes, sem Save) + probe estrangeiro explícito prova 404 `MODEL_NOT_FOUND` inalterado. Política de ownership intocada |
 | G4-EXT-1 — extension serialization: `bpmn:extension/@definition` reparado via referência léxica `{id}` (adapter boundary); attr same-ns em `extensionElements` é irremediável no serializer vendor → gate `UNSUPPORTED_EXTENSION_SERIALIZATION` fail-closed read-only (§6) | 02+06 | `CLOSED` — mitigado em produto; possível contribuição upstream ao `moddle-xml` é follow-up opcional, não-bloqueante |
+
+| DRIFT-BPMN-018 — `BpmnModelerApiError` fora do contrato `BpmnDocumentError` do shared port: autosave não classificava 401/403/409 (regressão do refactor G7A) | 03 | `CLOSED` (G10) — `BpmnModelerApiError extends BpmnDocumentError`; AUTH-04/AUTH-04b/AUTHZ/OFF-02 PASS |
+| DRIFT-BPMN-019 — piso `containerMin` aplicado pós-ELK invadia área de siblings (overlap real SUB1/T2, click interception) | 03 | `CLOSED` (G10) — piso declarado como input ELK (`nodeSize.minimum`); LGEO-01/04/06 PASS |
+| DRIFT-BPMN-020 — asserções stale da copy "Documento BPMN nativo" removida no G9 (2 ocorrências) | 06 | `CLOSED` (G10) — marcadores vigentes do card/preview; XOR dual-mode (409) preservado |
+| DRIFT-BPMN-017 — `FIXTURE_DIR` do E2E apontava para diretório esvaziado pelo refactor G7A (corpus migrou para `bpmn-editor/src/testing/fixtures/roundtrip`) | 06 | `CLOSED` (G10) — helper aponta para o corpus canônico compartilhado; roundtrip-* PASS |
+
+## 17. Product state final (G10 — STABLE PRODUCT BASELINE)
+
+### 17a. Matriz de implementação final
+
+| Domínio | Status |
+|---|---|
+| CORE BPMN | PASS/CLOSED |
+| DOMAIN/BACKEND | PASS/CLOSED |
+| BPMN 2.0 + BPMN-DI (canonical artifact) | PASS/CLOSED |
+| VALIDATION | PASS/CLOSED |
+| IMPORT/EXPORT | PASS/CLOSED |
+| ROUND-TRIP | PASS/CLOSED |
+| EDITOR | PASS/CLOSED |
+| PRODUCTIVITY | PASS/CLOSED |
+| PROPERTIES | PASS/CLOSED |
+| AUTOSAVE | PASS/CLOSED |
+| REVISIONS | PASS/CLOSED |
+| OWNERSHIP | PASS/CLOSED |
+| AUTO-LAYOUT | PASS/CLOSED |
+| LIVE PREVIEW | PASS/CLOSED |
+| RUNTIME PROVENANCE | PASS/CLOSED (LOCAL INTEGRATION RUNTIME) |
+| TM EXTERNAL REFERENCE | PASS/CLOSED (G5) |
+| TM NATIVE BPMN | PASS/CLOSED (G7) |
+| LEGACY MIGRATION VIA TÉO | PASS/CLOSED (G8) |
+
+### 17b. Declaração de estado do produto
+
+**A implementação V1 do Meu Modelador de Processos está encerrada.** Trabalho novo é roadmap/evolução — exceto regressão ou defeito de produção comprovado, que segue correction gate.
+
+- Artefato canônico: **BPMN 2.0 XML + BPMN-DI** no mesmo documento (Modeler e TM-native).
+- Integração Transformômetro: **implementada e authority-preserving** — referência explícita a revisão (G5), documento nativo TM-owned (G7), migração legado governada (G8). `bpmn_modeler.*` nunca recebe escrita do TM; documento TM nunca entra na library do Modeler.
+- Ownership Modeler: pessoal (`Model.created_by`), fail-closed 404, superadmin não atravessa. Sharing/team ACL = evolução futura.
+- Ownership TM-native: autorização do processo.
+- Residuals aceitos vigentes: `PROPERTIES_PANEL_VENDOR_TRANSLATION_LIMITATION` (non-blocking), watermark bpmn.io (licença — bottom-left), `workers=8` E2E best-effort.
+- Roadmap (não-gap): align/distribute/space-tool, mini-map, grid configurável, separação read-vs-write do vínculo TM (ADR-005), transação atômica doc+rev+migration (G8), contribuição upstream moddle-xml (G4-EXT-1), sharing/ACL de modelos, `workers=8` determinístico.
+- Runtime acceptance: **LOCAL INTEGRATION RUNTIME** provado. **PRODUCTION ACCEPTANCE: NOT EXECUTED — SEPARATE OPS GATE** (G11 opcional).
+
+Declaração arquitetural final:
+
+    MEU MODELADOR = AUTONOMOUS GOVERNED BPMN PRODUCT
+      BPMN 2.0 XML + BPMN-DI = canonical artifact
+      Transformômetro integration = explicit and authority-preserving
+
+    Pós-G10:
+      BUG                  → correction gate
+      NEW FEATURE          → roadmap
+      NEW INTEGRATION      → explicit contract
+      NEW BPMN CAPABILITY  → profile/evidence review
+
+

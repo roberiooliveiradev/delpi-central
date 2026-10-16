@@ -1,6 +1,8 @@
+import { request } from "@playwright/test";
 import {
   test,
   expect,
+  apiToken,
   createModelViaApi,
   importModelViaApi,
   modelUrl,
@@ -438,11 +440,40 @@ test.describe("E2E-38 — document bar & viewport controls", () => {
 });
 
 test.describe("E2E-38b — viewport controls em read-only", () => {
-  test.use({ actor: "viewer", viewport: { width: 1440, height: 900 } });
-  test("controles de viewport presentes e Salvar ausente para viewer", async ({
+  // G10: o fluxo anterior era stale — criava o model como `editor` e tentava
+  // abrir como `viewer`, recebendo 404 MODEL_NOT_FOUND (ownership pessoal =
+  // contrato correto). A superfície read-only compatível com o contrato é o
+  // PRÓPRIO owner com o model arquivado: capabilities.edit existe, mas
+  // archived_at força readOnlyReason=ARCHIVED → controles de viewport
+  // mantidos, Salvar ausente.
+  //   creator actor = manager | viewer actor = manager (owner) | expected
+  //   owner = manager. O probe de actor estrangeiro permanece (404).
+  test.use({ actor: "manager", viewport: { width: 1440, height: 900 } });
+
+  test("controles de viewport presentes e Salvar ausente em model arquivado", async ({
     page,
   }) => {
-    const modelId = await importModelViaApi("editor", "E2E-Visual-RO", XML_RICH);
+    const modelId = await importModelViaApi("manager", "E2E-Visual-RO", XML_RICH);
+
+    // arquiva via API real (POST archive + If-Match da versão corrente)
+    const token = await apiToken("manager");
+    const ctx = await request.newContext({
+      baseURL: process.env.BPMN_E2E_BASE_URL ?? "http://localhost",
+    });
+    const meta = await ctx.get(`/apps/bpmn-modeler-api/models/${modelId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(meta.status()).toBe(200);
+    const version = Number(
+      (meta.headers()["etag"] ?? "").replace(/\D/g, ""),
+    );
+    expect(version).toBeGreaterThan(0);
+    const archive = await ctx.post(
+      `/apps/bpmn-modeler-api/models/${modelId}/archive`,
+      { headers: { Authorization: `Bearer ${token}`, "If-Match": `"v${version}"` } },
+    );
+    expect(archive.status(), await archive.text()).toBe(200);
+
     await page.goto(modelUrl(modelId));
     await page.waitForSelector(".bpmnm-canvas .djs-element", {
       timeout: 20_000,
@@ -458,6 +489,21 @@ test.describe("E2E-38b — viewport controls em read-only", () => {
         name: "Salvar",
       }),
     ).toHaveCount(0);
+  });
+
+  test("contrato intacto: principal estrangeiro continua recebendo 404", async () => {
+    // prova negativa — a correção do teste não relaxou ownership:
+    // model do manager segue invisível para o viewer.
+    const modelId = await importModelViaApi("manager", "E2E-Visual-Foreign", XML_RICH);
+    const token = await apiToken("viewer");
+    const ctx = await request.newContext({
+      baseURL: process.env.BPMN_E2E_BASE_URL ?? "http://localhost",
+    });
+    const foreign = await ctx.get(`/apps/bpmn-modeler-api/models/${modelId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(foreign.status()).toBe(404);
+    expect((await foreign.json()).error?.code).toBe("MODEL_NOT_FOUND");
   });
 });
 

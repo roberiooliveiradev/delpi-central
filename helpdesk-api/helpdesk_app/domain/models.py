@@ -162,6 +162,23 @@ class Attachment:
 
 
 @dataclass(frozen=True)
+class CycleWriteOutcome:
+    """Result of the legacy accept/reject cycle write (H10 Branch B).
+
+    The write itself runs on the bounded technical session, so GLPI stamps
+    ITILFollowup.users_id with the uploader. `author_state` reports whether
+    the persisted author was verified against the OAuth-resolved actor:
+    `verified` (POST carried users_id or read-back matched), `restored`
+    (bounded PUT corrected it), `mismatch` (read-back shows another user)
+    or `unverified` (read-back unavailable/ambiguous).
+    """
+
+    followup_id: int | None
+    users_id: int | None
+    author_state: str
+
+
+@dataclass(frozen=True)
 class TicketValidation:
     """GLPI Assistance Timeline Validation (approve / refuse)."""
 

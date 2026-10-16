@@ -522,7 +522,7 @@ Cobrem todas as checks SEC-* habilitadas — sem campos inventados:
 
 ## 29. Integration Constraints
 
-`FROZEN`: `INTEGRATION_CONSTRAINTS` = `NOT_EVALUATED` permanente na V1 standalone — sem regras habilitadas, sem catálogo inventado. Transformômetro não é integração da V1 inicial (Prompt 1 §17).
+`FROZEN`: `INTEGRATION_CONSTRAINTS` = `NOT_EVALUATED` permanente na V1 standalone — sem regras habilitadas, sem catálogo inventado. Transformômetro não é integração da V1 inicial (Prompt 1 §17). **SUPERSEDED (G5/G7/G8):** a integração Transformômetro foi implementada depois deste freeze como contrato explícito authority-preserving (referência externa imutável ADR-005, documento BPMN nativo TM-owned, migração legado via TÉO ADR-007). `INTEGRATION_CONSTRAINTS` do artefato BPMN permanece `NOT_EVALUATED` (nenhuma regra de engine/integration constraint foi adicionada ao canônico). Estado vigente: `CURRENT-STATE.md` §13e/§13f/§13g.
 
 ## 30. Validation Reference Convention
 

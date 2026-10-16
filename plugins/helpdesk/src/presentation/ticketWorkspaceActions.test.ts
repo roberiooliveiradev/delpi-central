@@ -43,6 +43,51 @@ describe("ticketWorkspaceActions", () => {
     ]);
   });
 
+  it("includes lifecycle ops when capabilities are true", () => {
+    const actions = ticketWorkspaceActions({
+      can_followup: false,
+      can_decide_validation: true,
+      can_submit_satisfaction: true,
+    });
+    expect(actions.map((item) => item.id)).toEqual([
+      "decide_validation",
+      "submit_satisfaction",
+    ]);
+  });
+
+  it("closed-ticket requester sees only satisfaction in the selector", () => {
+    const actions = ticketWorkspaceActions({
+      can_followup: false,
+      can_submit_satisfaction: true,
+    });
+    const ids = ticketWorkspaceSelectorActions(actions).map((item) => item.id);
+    expect(ids).toEqual(["submit_satisfaction"]);
+  });
+
+  it("pending approver sees decide_validation pinned above non-decision actions", () => {
+    const actions = ticketWorkspaceActions({
+      can_followup: true,
+      can_decide_validation: true,
+      can_submit_satisfaction: true,
+    });
+    expect(ticketWorkspaceSelectorActions(actions).map((item) => item.id)).toEqual([
+      "decide_validation",
+      "submit_satisfaction",
+      "reply",
+      "attach_file",
+    ]);
+  });
+
+  it("unauthorized user sees no lifecycle actions", () => {
+    const actions = ticketWorkspaceActions({
+      can_followup: false,
+      can_decide_validation: false,
+      can_submit_satisfaction: false,
+    });
+    expect(actions).toEqual([]);
+    expect(ticketWorkspaceSelectorActions(actions)).toEqual([]);
+  });
+
   it("pins pending accept/reject decisions at the top of the selector", () => {
     const actions = ticketWorkspaceActions({
       can_followup: true,
@@ -115,6 +160,10 @@ describe("ticketActionPresentation", () => {
     expect(ticketActionPresentation("create_solution").variant).toBe("solution");
     expect(ticketActionPresentation("attach_file").variant).toBe("attachment");
     expect(ticketActionPresentation("request_approval").variant).toBe("approval");
+    expect(ticketActionPresentation("decide_validation").variant).toBe("validation");
+    expect(ticketActionPresentation("submit_satisfaction").variant).toBe("satisfaction");
+    expect(ticketActionPresentation("submit_satisfaction").label).toBe("Avaliar atendimento");
+    expect(ticketActionPresentation("decide_validation").label).toBe("Decidir aprovação");
     expect(ticketActionPresentation("reply").submitLabel).toBe("Enviar resposta");
     expect(ticketActionPresentation("create_task").submitLabel).toBe("Criar tarefa");
   });

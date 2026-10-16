@@ -321,6 +321,9 @@ def test_required_invocation_order():
     pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
     proposals = _select("pa:gA", "update_board", {"title": "p"})
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     # Argument proposals resolve in call order (LOOP-03R1 D08): the
     # missing-input preflight projects target arguments BEFORE the
     # foreign call; the final projection rebuilds them with the
@@ -472,6 +475,9 @@ def test_enrichment_foreign_evidence_reaches_target_arguments():
         {"title": "painel", "note": "usando métricas atuais"},
     )
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     proposals[ARGUMENTS_INSTRUCTION_ID] = [
         {"arguments": {"title": "painel"}},
         {"arguments": {"title": "painel", "note": "usando métricas atuais"}},
@@ -554,6 +560,9 @@ def test_foreign_candidate_bound_owner_workflow():
     )
     proposals = _select("pa:gA", "update_board")
     proposals.update(_enrichment("gB.read_entity"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     # Argument proposals resolve in call order (LOOP-03R1 D08): the
     # target's preflight projection first, then the foreign
     # capability's business args (inner ``arguments`` object —
@@ -932,6 +941,9 @@ def test_same_provider_different_groups_enrichment():
     )
     proposals = _select("pa:gA", "update_board")
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, _ = _orchestrator([pa], proposals)
     orch.attempt("atualize com métricas")
     names = [name for name, _ in pa.calls]
@@ -954,6 +966,9 @@ def test_rename_invariance():
     pw = FakeProvider("prov-w", [_group("prov-w", "renamed-y", [foreign])])
     proposals = _select("prov-z:renamed-x", "op_alpha")
     proposals.update(_enrichment("renamed-y.op_beta"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, _ = _orchestrator([pz, pw], proposals)
     orch.attempt("atualize o painel")
     assert pw.calls == [("op_beta", {})]
@@ -1024,6 +1039,9 @@ def test_workspace_identifier_with_foreign_business_value():
     pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
     proposals = _select("pa:gA", "update_board")
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     proposals[ARGUMENTS_INSTRUCTION_ID] = [
         {
             "arguments": {
@@ -1075,6 +1093,9 @@ def test_provider_metadata_injection_grants_no_authority():
     pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
     proposals = _select("pa:gA", "update_board")
     proposals.update(_enrichment("gB.current_metrics"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, _ = _orchestrator([pa, pb], proposals)
     attempt = orch.attempt("atualize o painel")
     assert pb.calls == [("current_metrics", {})]
@@ -1098,6 +1119,9 @@ def test_corroborate_never_targets_write():
     pb = FakeProvider("pb", [_group("pb", "gB", [foreign])])
     proposals = _select("pa:gA", "update_board")
     proposals.update(_corroborate("gB.get_metric"))
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, model = _orchestrator([pa, pb], proposals)
     orch.attempt("compare e atualize")
     assert pb.calls == []
@@ -1158,6 +1182,9 @@ def test_dynamic_native_path_no_foreign_snapshot():
         {"title": "painel", "binding": {"ref": "dyn"}},
     )
     proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, model = _orchestrator([pa, pb], proposals)
     attempt = orch.attempt("monte um painel dinâmico com os indicadores")
     assert pb.calls == []
@@ -1194,6 +1221,9 @@ def test_static_target_path_remains_valid():
         "pa:gA", "set_text", {"text": "valor atual: 10"}
     )
     proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, _ = _orchestrator([pa, pb], proposals)
     orch.attempt("coloque o valor atual como texto estático")
     assert pb.calls == []
@@ -1237,6 +1267,9 @@ def test_vista_shaped_native_path_discovery_prepare():
         {"target": {"id": "s1"}, "ops": [{"name": "add_text_block"}]},
     )
     proposals.update(_sufficient())
+    proposals[GOAL_INSTRUCTION_ID] = [
+        {"goal_class": "create_or_modify"}
+    ]
     orch, model = _orchestrator([pa, pb], proposals)
     orch.attempt("crie um bloco de texto dinâmico no slide")
     assert pb.calls == []
