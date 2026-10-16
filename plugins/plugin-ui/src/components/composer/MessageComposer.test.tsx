@@ -170,3 +170,39 @@ describe("MessageComposer — helper e erro", () => {
     ).toBe("rascunho");
   });
 });
+
+describe("MessageComposer — stop response", () => {
+  it("replaces send with stop only with a real callback", () => {
+    const onStop = vi.fn();
+    const onSubmit = vi.fn();
+    renderComposer({ value: "draft", loading: true, requestMode: "responding_cancelable", onStop, onSubmit });
+    const stop = screen.getByRole("button", { name: "Interromper resposta" });
+    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    fireEvent.click(stop);
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByLabelText("Pergunte"), { key: "Enter" });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("does not display stop for non-cancelable work", () => {
+    renderComposer({ value: "draft", loading: true, requestMode: "responding_not_cancelable", onStop: vi.fn() });
+    expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
+    expect((screen.getByRole("button", { name: "Enviando…" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("prevents action while stopping and keeps draft intact", () => {
+    const onStop = vi.fn();
+    renderComposer({ value: "rascunho", loading: true, requestMode: "stopping", onStop });
+    const stop = screen.getByRole("button", { name: "Interrompendo…" }) as HTMLButtonElement;
+    expect(stop.disabled).toBe(true);
+    fireEvent.click(stop);
+    expect(onStop).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Pergunte") as HTMLTextAreaElement).value).toBe("rascunho");
+  });
+
+  it("does not imply a cancelable request from loading alone", () => {
+    renderComposer({ value: "x", loading: true });
+    expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
+  });
+});
