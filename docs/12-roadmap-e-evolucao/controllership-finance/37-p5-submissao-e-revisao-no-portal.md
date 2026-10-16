@@ -485,54 +485,6 @@ IMPLEMENTATION_AUTHORIZED = NO
 ```
 
 
-## Adendo de governança — decisões PO C2 e D-P5-01 a D-P5-05 (15/10/2026)
-
-**TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
-
-- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
-- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
-- **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
-- **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
-- **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
-- **D-P5-05:** solicitação de alterações (CHANGES_REQUESTED) e rejeição terminal (REVIEW_REJECTED) são outcomes distintos; não usar um como alias do outro.
-
-Regra alvo:
-
-```text
-ALL_APPLICABLE_PACKAGES_SUBMITTED
-AND ALL_REQUIRED_REVIEWS = REVIEW_ACCEPTED
-AND NO_OPEN_CLARIFICATION
-=> MONTHLY_CLOSING_COMPLETED
-```
-
-**DECISION_REQUIRED / NO CHANGE TO BEHAVIOR:** definir escopo da terminalidade de REVIEW_REJECTED (submissão vs pacote), regra de substituição/aceite anterior, congelamento ou alteração auditada do conjunto de reviewers obrigatórios, necessidade de novo quorum por versão e tratamento da competência quando houver rejeição terminal. Nenhum endpoint, migration, scaffold ou permission adicional está autorizado.
-
-**Evidência pendente:** rebase do main, .cursor aplicável, ledger RQ/AC, Core effective permissions, test matrix positive/sibling/negative, Help, postcondition. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
-
-
-## Decisões supervenientes do Product Owner — P5-A a P5-E (15/10/2026)
-
-**TARGET / PO_APPROVED / DOCUMENTATION_ONLY — no runtime changes.** Este registro complementa C2 e prevalece sobre a interpretação anterior de D-P5-01 (unanimidade por identidade): o quórum é por **área/especialidade obrigatória**, não por cada usuário elegível. A multiplicidade de pessoas elegíveis na mesma área não cria múltiplos votos obrigatórios.
-
-| Decisão | Regra aprovada | Relação com decisão anterior |
-|---|---|---|
-| P5-A | Um aceite por área obrigatória, executável por qualquer usuário elegível daquela área | D-P5-01 reinterpretada: unanimidade de áreas obrigatórias, não de pessoas |
-| P5-B | Somente autor de um aceite pode alterá-lo; outra pessoa atua somente com reatribuição formal | Complementa D-P5-03; sem reversão livre na UI V1, preservar trilha imutável |
-| P5-C | ACCESS efetivo + grupo/função corporativa + escopo do recurso + regra de negócio | Complementa D-P5-04; Core é owner da identidade/effective permissions; P5 controla workflow e scope |
-| P5-D | Rejeição terminal encerra a competência em estado REJECTED, distinto de MONTHLY_CLOSING_COMPLETED; não exige ressubmissão | Concretiza D-P5-05, mantendo CHANGES_REQUESTED distinto de rejeição terminal |
-| P5-E | Nova PackageVersion exige novo aceite de todas as áreas obrigatórias, sem herdar aceites da versão anterior | Complementa D-P5-02 e preserva versionamento imutável |
-
-**C2 atualizado semanticamente:** conclusão mensal requer todos os pacotes aplicáveis submetidos, aceites válidos da **versão vigente** para cada área obrigatória e nenhuma clarification aberta. Qualquer rejeição terminal impede MONTHLY_CLOSING_COMPLETED e resulta no desfecho de competência rejeitada, com auditoria. Não inferir que uma permission genérica concede approval irrestrito.
-
-**AuthZ invariant:** JWT identifica; Core resolve `controllership-finance.access` efetivo; BFF valida função/grupo corporativo elegível, área obrigatória, resource scope/ownership e business rule, fail-closed. A origem/contrato preciso do grupo/função Core permanece **TO_INVENTORY (T05)**; não criar permission code para reviewer, área, botão, filial ou unidade. `controllership-finance.manage` não substitui ACCESS.
-
-**Auditoria mínima:** ator Core, ação, instante, competência, recipient package, PackageVersion, área/atribuição usada, decisão e justificativa quando aplicável, mudança de responsável e referência ao evento anterior. Registro original não é apagado ou reatribuído retroativamente; mudança é novo evento auditável.
-
-**DECISION_REQUIRED / ainda não inferir:** (1) efeito de reatribuição formal sobre aceite já registrado; (2) procedimento de alteração do próprio aceite compatível com irreversibilidade da UI V1; (3) mapeamento/configuração de áreas obrigatórias e elegibilidade corporativa; (4) momento e autoridade da rejeição terminal da competência quando mais de uma área participa; (5) tratamento das tarefas pendentes dos demais revisores após rejeição terminal. Separar decisões de produto de inventários físicos (DTO, Core eligibility resolver, storage, adapters).
-
-**Gate:** `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_RULES`; `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`. Estes textos registram decisões de produto, não demonstram testes, código, contratos físicos, rebase nem execução de smoke.
-
-
 ## Decisões PO P5-F a P5-J — consolidação contratual vigente (16/10/2026)
 
 **TARGET / PO_APPROVED / DOCUMENTED_NOT_IMPLEMENTED.** Este adendo é superveniente aos registros de perguntas abertas P5-F..J e prevalece quando notas históricas anteriores conflitarem. C2, D-P5-02..05 e P5-A..E permanecem válidas nos termos abaixo. A antiga unanimidade de *pessoas* em D-P5-01 foi substituída pela unanimidade das *áreas obrigatórias* em P5-A.
