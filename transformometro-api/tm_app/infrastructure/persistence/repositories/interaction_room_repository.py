@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import replace
 from datetime import datetime, timezone
+import threading
 from typing import Any
 from uuid import uuid4
 
@@ -17,7 +18,10 @@ from tm_app.domain.entities.interaction_room import (
     InteractionRoomParticipant,
 )
 from tm_app.domain.ports.interaction_room_repository_port import InteractionRoomRepositoryPort
-from tm_app.domain.services.interaction_room_access_service import PrimaryLinkConflict
+from tm_app.domain.services.interaction_room_access_service import (
+    PrimaryLinkConflict,
+    RoomAccessExpansionBlocked,
+)
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -413,6 +417,62 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         )
         return self._link_by_id(str(row["id"])) if row else None
 
+    @staticmethod
+    def _lock_room(connection, room_id: str) -> None:
+        """Serialize history writers against restrictive-link removal
+        (R-1 TOCTOU fix): every protected-artifact write and the guarded
+        tombstone take this single-row lock first — consistent ordering,
+        no second row ever locked → no deadlock."""
+        connection.execute(
+            f"SELECT id FROM {_S}.tm_interaction_rooms WHERE id = %s::uuid FOR UPDATE",
+            (room_id,),
+        )
+
+    def tombstone_link_guarded(
+        self, *, room_id: str, link_id: str, cause: str
+    ) -> InteractionRoomLink | None:
+        """Lock → recount → tombstone in ONE transaction (see port)."""
+        with self.db() as connection:
+            self._lock_room(connection, room_id)
+            row = connection.execute(
+                f"""SELECT (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_messages
+                        WHERE room_id = %s::uuid
+                    ) + (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_attachments
+                        WHERE room_id = %s::uuid
+                    ) + (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_mentions mn
+                        JOIN {_S}.tm_interaction_messages m ON m.id = mn.message_id
+                        WHERE m.room_id = %s::uuid
+                    ) + (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_reactions rc
+                        JOIN {_S}.tm_interaction_messages m ON m.id = rc.message_id
+                        WHERE m.room_id = %s::uuid
+                    ) + (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_pins
+                        WHERE room_id = %s::uuid
+                    ) + (
+                        SELECT COUNT(*) FROM {_S}.tm_interaction_reads
+                        WHERE room_id = %s::uuid
+                    ) AS total""",
+                (room_id,) * 6,
+            ).fetchone()
+            if row is not None and int(dict(row)["total"] or 0) > 0:
+                raise RoomAccessExpansionBlocked(
+                    "A remoção ampliaria o acesso ao histórico protegido."
+                )
+            tomb = connection.execute(
+                f"""UPDATE {_S}.tm_interaction_room_links
+                    SET deleted_at = NOW(), deleted_cause = %s
+                    WHERE id = %s::uuid AND room_id = %s::uuid
+                      AND deleted_at IS NULL
+                    RETURNING id""",
+                (cause, link_id, room_id),
+            ).fetchone()
+            connection.commit()
+        return self._link_by_id(str(dict(tomb)["id"])) if tomb else None
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool:
@@ -653,37 +713,47 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         parent_id: str | None = None,
         mentions: tuple[tuple[str, str], ...] = (),
     ) -> InteractionMessage:
-        if parent_id:
-            row = self.execute_returning_one(
-                f"""INSERT INTO {_S}.tm_interaction_messages
-                        (room_id, author_user_id, content, parent_id)
-                    VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
-                    RETURNING {_MESSAGE_COLUMNS}""",
-                (room_id, author_user_id, content, parent_id),
-            )
-        else:
-            row = self.execute_returning_one(
-                f"""INSERT INTO {_S}.tm_interaction_messages
-                        (room_id, author_user_id, content)
-                    VALUES (%s::uuid, %s::uuid, %s)
-                    RETURNING {_MESSAGE_COLUMNS}""",
-                (room_id, author_user_id, content),
-            )
-        if row is None:
-            raise RuntimeError("Falha ao gravar a mensagem.")
-        message_id = str(row["id"])
-        for user_id, label in mentions:
+        with self.db() as connection:
+            # Room-row lock first: serializes against guarded link
+            # removal — the write either lands before the recount or
+            # waits for the commit (R-1 TOCTOU).
+            self._lock_room(connection, room_id)
+            if parent_id:
+                row = self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_messages
+                            (room_id, author_user_id, content, parent_id)
+                        VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                        RETURNING {_MESSAGE_COLUMNS}""",
+                    (room_id, author_user_id, content, parent_id),
+                    auto_commit=False,
+                )
+            else:
+                row = self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_messages
+                            (room_id, author_user_id, content)
+                        VALUES (%s::uuid, %s::uuid, %s)
+                        RETURNING {_MESSAGE_COLUMNS}""",
+                    (room_id, author_user_id, content),
+                    auto_commit=False,
+                )
+            if row is None:
+                raise RuntimeError("Falha ao gravar a mensagem.")
+            message_id = str(row["id"])
+            for user_id, label in mentions:
+                self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_mentions (message_id, mentioned_user_id, label)
+                        VALUES (%s::uuid, %s::uuid, %s)
+                        ON CONFLICT (message_id, mentioned_user_id) DO UPDATE SET label = EXCLUDED.label
+                        RETURNING message_id""",
+                    (message_id, user_id, label),
+                    auto_commit=False,
+                )
             self.execute_returning_one(
-                f"""INSERT INTO {_S}.tm_interaction_mentions (message_id, mentioned_user_id, label)
-                    VALUES (%s::uuid, %s::uuid, %s)
-                    ON CONFLICT (message_id, mentioned_user_id) DO UPDATE SET label = EXCLUDED.label
-                    RETURNING message_id""",
-                (message_id, user_id, label),
+                f"UPDATE {_S}.tm_interaction_rooms SET updated_at = NOW() WHERE id = %s::uuid RETURNING id",
+                (room_id,),
+                auto_commit=False,
             )
-        self.execute_returning_one(
-            f"UPDATE {_S}.tm_interaction_rooms SET updated_at = NOW() WHERE id = %s::uuid RETURNING id",
-            (room_id,),
-        )
+            connection.commit()
         return self.get_message(message_id) or _message(row)
 
     def get_message(self, message_id: str) -> InteractionMessage | None:
@@ -721,64 +791,89 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return self.get_message(message_id)
 
     def toggle_reaction(self, *, message_id: str, user_id: str, code: str) -> None:
-        removed = self.execute_returning_one(
-            f"""DELETE FROM {_S}.tm_interaction_reactions
-                WHERE message_id = %s::uuid AND user_id = %s::uuid AND code = %s
-                RETURNING code""",
-            (message_id, user_id, code),
-        )
-        if removed is not None:
-            return
-        self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_reactions (message_id, user_id, code)
-                VALUES (%s::uuid, %s::uuid, %s)
-                RETURNING code""",
-            (message_id, user_id, code),
-        )
+        with self.db() as connection:
+            room = connection.execute(
+                f"SELECT room_id FROM {_S}.tm_interaction_messages WHERE id = %s::uuid",
+                (message_id,),
+            ).fetchone()
+            if room is not None:
+                self._lock_room(connection, str(dict(room)["room_id"]))
+            removed = self.execute_returning_one(
+                f"""DELETE FROM {_S}.tm_interaction_reactions
+                    WHERE message_id = %s::uuid AND user_id = %s::uuid AND code = %s
+                    RETURNING code""",
+                (message_id, user_id, code),
+                auto_commit=False,
+            )
+            if removed is None:
+                self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_reactions (message_id, user_id, code)
+                        VALUES (%s::uuid, %s::uuid, %s)
+                        RETURNING code""",
+                    (message_id, user_id, code),
+                    auto_commit=False,
+                )
+            connection.commit()
 
     def pin_message(self, *, room_id: str, message_id: str, user_id: str) -> None:
-        self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_pins (room_id, message_id, pinned_by_user_id)
-                VALUES (%s::uuid, %s::uuid, %s::uuid)
-                ON CONFLICT (room_id, message_id) DO NOTHING
-                RETURNING id""",
-            (room_id, message_id, user_id),
-        )
+        with self.db() as connection:
+            self._lock_room(connection, room_id)
+            self.execute_returning_one(
+                f"""INSERT INTO {_S}.tm_interaction_pins (room_id, message_id, pinned_by_user_id)
+                    VALUES (%s::uuid, %s::uuid, %s::uuid)
+                    ON CONFLICT (room_id, message_id) DO NOTHING
+                    RETURNING id""",
+                (room_id, message_id, user_id),
+                auto_commit=False,
+            )
+            connection.commit()
 
     def unpin_message(self, *, room_id: str, message_id: str) -> None:
-        self.execute(
-            f"""DELETE FROM {_S}.tm_interaction_pins
-                WHERE room_id = %s::uuid AND message_id = %s::uuid""",
-            (room_id, message_id),
-        )
+        with self.db() as connection:
+            self._lock_room(connection, room_id)
+            self.execute(
+                f"""DELETE FROM {_S}.tm_interaction_pins
+                    WHERE room_id = %s::uuid AND message_id = %s::uuid""",
+                (room_id, message_id),
+                auto_commit=False,
+            )
+            connection.commit()
 
     def mark_read(self, *, room_id: str, user_id: str) -> None:
-        self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_reads (room_id, user_id, last_read_at)
-                VALUES (%s::uuid, %s::uuid, NOW())
-                ON CONFLICT (room_id, user_id) DO UPDATE SET last_read_at = NOW()
-                RETURNING room_id""",
-            (room_id, user_id),
-        )
+        with self.db() as connection:
+            self._lock_room(connection, room_id)
+            self.execute_returning_one(
+                f"""INSERT INTO {_S}.tm_interaction_reads (room_id, user_id, last_read_at)
+                    VALUES (%s::uuid, %s::uuid, NOW())
+                    ON CONFLICT (room_id, user_id) DO UPDATE SET last_read_at = NOW()
+                    RETURNING room_id""",
+                (room_id, user_id),
+                auto_commit=False,
+            )
+            connection.commit()
 
     def add_attachment(self, attachment: InteractionAttachment) -> InteractionAttachment:
-        row = self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_attachments
-                    (id, message_id, room_id, file_name, stored_name, content_type, byte_size, uploaded_by_user_id)
-                VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s::uuid)
-                RETURNING id, message_id, room_id, file_name, stored_name, content_type, byte_size,
-                          uploaded_by_user_id, created_at""",
-            (
-                attachment.id,
-                attachment.message_id,
-                attachment.room_id,
-                attachment.file_name,
-                attachment.stored_name,
-                attachment.content_type,
-                attachment.byte_size,
-                attachment.uploaded_by_user_id,
-            ),
-        )
+        with self.db() as connection:
+            self._lock_room(connection, attachment.room_id)
+            row = self.execute_returning_one(
+                f"""INSERT INTO {_S}.tm_interaction_attachments
+                        (id, message_id, room_id, file_name, stored_name, content_type, byte_size, uploaded_by_user_id)
+                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s::uuid)
+                    RETURNING id, message_id, room_id, file_name, stored_name, content_type, byte_size,
+                              uploaded_by_user_id, created_at""",
+                (
+                    attachment.id,
+                    attachment.message_id,
+                    attachment.room_id,
+                    attachment.file_name,
+                    attachment.stored_name,
+                    attachment.content_type,
+                    attachment.byte_size,
+                    attachment.uploaded_by_user_id,
+                ),
+                auto_commit=False,
+            )
+            connection.commit()
         if row is None:
             raise RuntimeError("Falha ao gravar o anexo.")
         return _attachment(row)
@@ -879,6 +974,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         self.attachments: dict[str, InteractionAttachment] = {}
         self.pins: set[tuple[str, str]] = set()
         self.reads: dict[tuple[str, str], datetime] = {}
+        self._locks: dict[str, threading.Lock] = {}
 
     def get_by_process(self, processo_id: str) -> InteractionRoom | None:
         room_id = self.by_process.get(processo_id)
@@ -1116,6 +1212,32 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         self.links[link_id] = tombstoned
         return tombstoned
 
+    def _room_lock(self, room_id: str) -> threading.Lock:
+        """Per-room mutex — InMemory twin of ``SELECT ... FOR UPDATE`` so
+        the same lock ordering is exercised by the double."""
+        return self._locks.setdefault(room_id, threading.Lock())
+
+    def tombstone_link_guarded(
+        self, *, room_id: str, link_id: str, cause: str
+    ) -> InteractionRoomLink | None:
+        with self._room_lock(room_id):
+            if self.protected_content_count(room_id) > 0:
+                raise RoomAccessExpansionBlocked(
+                    "A remoção ampliaria o acesso ao histórico protegido."
+                )
+            link = self.links.get(link_id)
+            if (
+                link is None
+                or link.room_id != room_id
+                or link.deleted_at is not None
+            ):
+                return None
+            tombstoned = replace(
+                link, deleted_at=datetime.now(timezone.utc), deleted_cause=cause
+            )
+            self.links[link_id] = tombstoned
+            return tombstoned
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool:
@@ -1240,9 +1362,10 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             parent_id=parent_id,
             mentions=tuple(InteractionMention(user_id=user_id, label=label) for user_id, label in mentions),
         )
-        self.messages[message.id] = message
-        self._refresh_preview(room_id)
-        return self._view(message)
+        with self._room_lock(room_id):
+            self.messages[message.id] = message
+            self._refresh_preview(room_id)
+            return self._view(message)
 
     def get_message(self, message_id: str) -> InteractionMessage | None:
         message = self.messages.get(message_id)
@@ -1266,21 +1389,25 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
 
     def toggle_reaction(self, *, message_id: str, user_id: str, code: str) -> None:
         message = self.messages[message_id]
-        current = list(message.reactions)
-        kept = [item for item in current if not (item.user_id == user_id and item.code == code)]
-        if len(kept) == len(current):
-            kept.append(InteractionReaction(user_id=user_id, code=code))
-        self.messages[message_id] = replace(message, reactions=tuple(kept))
+        with self._room_lock(message.room_id):
+            current = list(message.reactions)
+            kept = [item for item in current if not (item.user_id == user_id and item.code == code)]
+            if len(kept) == len(current):
+                kept.append(InteractionReaction(user_id=user_id, code=code))
+            self.messages[message_id] = replace(message, reactions=tuple(kept))
 
     def pin_message(self, *, room_id: str, message_id: str, user_id: str) -> None:
         del user_id
-        self.pins.add((room_id, message_id))
+        with self._room_lock(room_id):
+            self.pins.add((room_id, message_id))
 
     def unpin_message(self, *, room_id: str, message_id: str) -> None:
-        self.pins.discard((room_id, message_id))
+        with self._room_lock(room_id):
+            self.pins.discard((room_id, message_id))
 
     def mark_read(self, *, room_id: str, user_id: str) -> None:
-        self.reads[(room_id, user_id)] = datetime.now(timezone.utc)
+        with self._room_lock(room_id):
+            self.reads[(room_id, user_id)] = datetime.now(timezone.utc)
 
     def add_attachment(self, attachment: InteractionAttachment) -> InteractionAttachment:
         stored = replace(
@@ -1288,7 +1415,8 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             id=attachment.id or str(uuid4()),
             created_at=attachment.created_at or datetime.now(timezone.utc),
         )
-        self.attachments[stored.id] = stored
+        with self._room_lock(stored.room_id):
+            self.attachments[stored.id] = stored
         return stored
 
     def get_attachment(self, attachment_id: str) -> InteractionAttachment | None:

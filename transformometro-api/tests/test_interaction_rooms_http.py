@@ -384,6 +384,50 @@ def test_owner_participant_cannot_be_removed(env):
     assert resp.status_code == 403
 
 
+def test_participant_self_removal_over_http(env):
+    """P1: a participant may leave — only themselves; access ends
+    immediately (read-back proves it)."""
+    client, _, _ = env
+    room = _data(
+        client.post(
+            f"{BASE}/standalone",
+            json={"title": "sair", "participant_ids": [OTHER]},
+            headers=_headers(),
+        )
+    )
+    resp = client.delete(
+        f"{BASE}/{room['id']}/participants/{OTHER}", headers=_headers(OTHER)
+    )
+    assert resp.status_code == 200
+    assert client.get(f"{BASE}/{room['id']}", headers=_headers(OTHER)).status_code == 404
+
+
+def test_owner_self_removal_is_denied(env):
+    client, _, _ = env
+    room = _data(
+        client.post(f"{BASE}/standalone", json={"title": "own"}, headers=_headers())
+    )
+    resp = client.delete(
+        f"{BASE}/{room['id']}/participants/{USER}", headers=_headers()
+    )
+    assert resp.status_code == 403
+
+
+def test_non_admin_cannot_remove_other_participant(env):
+    client, _, _ = env
+    room = _data(
+        client.post(
+            f"{BASE}/standalone",
+            json={"title": "x", "participant_ids": [OTHER, THIRD]},
+            headers=_headers(),
+        )
+    )
+    resp = client.delete(
+        f"{BASE}/{room['id']}/participants/{THIRD}", headers=_headers(OTHER)
+    )
+    assert resp.status_code == 403
+
+
 def test_participant_write_requires_admin(env):
     client, _, _ = env
     room = _data(

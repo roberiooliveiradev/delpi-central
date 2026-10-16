@@ -433,3 +433,58 @@ Full suite: **1715 passed, 10 failed** — idênticas ao baseline limpo (pré-ex
 - GLPI/Helpdesk real (double controlado; mapeamento já provado)
 - PostgreSQL real com V056 (migration não aplicada — gate de deploy preservado)
 - Capabilities TÉO para as novas operações (E5 — façade OpenAPI curada não as inclui)
+
+
+## Evidence addendum — E3 CORRECTION (concurrency + contract)
+
+### P0 — R-1 TOCTOU (eliminated, fail-closed)
+
+**Cause:** `remove_link` ran `protected_content_count` and `tombstone_link` as
+two separate statements — a concurrent authorized writer could publish history
+between the check and the removal, expanding that history's audience.
+Sequential proof kept as evidence: `test_unguarded_sequence_demonstrates_toctou`.
+
+**Minimal fix (persistence-localized, no generic lock infra):**
+
+- New port op `tombstone_link_guarded(room_id, link_id, cause)` — **one
+  transaction**: `SELECT ... FOR UPDATE` on the room row → recount all six
+  protected artifact classes → `RoomAccessExpansionBlocked` if any exist →
+  tombstone. No post-commit recheck.
+- Every writer that creates protected history (`add_message`,
+  `add/update/delete_reaction`, `pin/unpin_message`, `mark_read`,
+  `create_attachment`, `update_message`, `soft_delete_message`) acquires the
+  **same room row lock first** → identical lock ordering, no deadlock shape.
+- InMemory mirrors the serialization with a per-room lock so unit tests
+  exercise the same ordering guarantees.
+
+**Real-PostgreSQL proof** (`tests/test_interaction_rooms_concurrency_pg.py`,
+DSN-gated `DELPI_SCRATCH_DSN`, ran against `delpi_e1_scratch`):
+
+- `test_pg_guarded_removal_serializes_concurrent_writer` — two real
+  connections; the writer's INSERT provably blocked while the remover held
+  `FOR UPDATE`; consistent ordering on commit. **PASSED**
+- `test_pg_guarded_removal_blocked_by_existing_history` —
+  `room_access_expansion_blocked` raised, link untouched. **PASSED**
+
+### P1 — Participant self-removal (implemented)
+
+`remove_participant`: admin removes others (`_admin_room` unchanged); a
+participant removes ONLY themselves via a non-admin path that never grants
+content access. Owner self-removal stays denied (continuity requires
+governed transfer). Read-back: `is_participant` false post-commit;
+HTTP-covered (`test_participant_self_removal_over_http`,
+`test_owner_self_removal_is_denied`,
+`test_non_admin_cannot_remove_other_participant`).
+
+### Inbox filters — explicitly NOT complete
+
+`ticket`, `standalone` and effective `process` inbox filtering remain E6
+work — the V2 contract is not declared complete until they ship with tests.
+
+### Tests / V056 / Deploy
+
+Focused suite **87 passed**; PG scratch **2 passed**; full suite 1726
+passed + the same 10 pre-existing baseline failures (dashboard/filiais/
+shared-resource/sign-invite/bootstrap/process-instance — reproduced on
+clean worktree). V056 absent/unapplied; no deploy; E5 stays blocked
+pending independent review.

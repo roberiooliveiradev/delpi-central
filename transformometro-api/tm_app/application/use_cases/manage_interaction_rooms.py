@@ -437,11 +437,15 @@ class InteractionRoomUseCases:
             raise RoomAnchorLinkRemovalLocked(
                 "O vínculo primário do processo âncora não pode ser removido nesta versão."
             )
-        if is_externally_governed(link) and self._repo.protected_content_count(room.id) > 0:
-            raise RoomAccessExpansionBlocked(
-                "A remoção ampliaria o acesso ao histórico protegido."
+        if is_externally_governed(link):
+            # R-1/P0: lock + recount + tombstone in ONE transaction — a
+            # concurrent authorized history write cannot slip between the
+            # check and the removal (TOCTOU fix).
+            tombstoned = self._repo.tombstone_link_guarded(
+                room_id=room.id, link_id=link.id, cause=LINK_DELETED_EXPLICIT
             )
-        tombstoned = self._repo.tombstone_link(link.id, cause=LINK_DELETED_EXPLICIT)
+        else:
+            tombstoned = self._repo.tombstone_link(link.id, cause=LINK_DELETED_EXPLICIT)
         if tombstoned is None or tombstoned.deleted_at is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         self._audit_log(
@@ -472,8 +476,20 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
 
     def remove_participant(self, user: Any, room_id: str, user_id: str) -> None:
-        room = self._admin_room(user, room_id)
+        """Owner/manager may remove others; any participant may remove
+        ONLY themselves (approved contract). The owner can never leave —
+        room continuity requires a governed ownership transfer."""
+        actor = _actor(user)
         member = normalize_user_id(str(user_id), field="O participante")
+        if member == actor:
+            # Self-removal: the caller only needs to be a participant —
+            # never grants content access, never touches others.
+            self._policy._require_user(user)
+            room = self._repo.get(normalize_uuid(room_id, label="A sala"))
+            if room is None:
+                raise LookupError("Sala não encontrada.")
+        else:
+            room = self._admin_room(user, room_id)
         current = next(
             (item for item in room.participants if item.user_id == member), None
         )

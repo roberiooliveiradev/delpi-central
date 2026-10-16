@@ -79,6 +79,18 @@ class InteractionRoomRepositoryPort(Protocol):
 
     def tombstone_link(self, link_id: str, *, cause: str) -> InteractionRoomLink | None: ...
 
+    def tombstone_link_guarded(
+        self, *, room_id: str, link_id: str, cause: str
+    ) -> InteractionRoomLink | None:
+        """Atomic removal for externally governed links (R-1/P0): the
+        room row is locked FOR UPDATE, protected content is re-counted
+        INSIDE the lock, and the tombstone commits in the same
+        transaction. A concurrent authorized history write either lands
+        before the recount (→ ``RoomAccessExpansionBlocked``) or after
+        the commit — never in between. Returns None when the link is not
+        active."""
+        ...
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool: ...

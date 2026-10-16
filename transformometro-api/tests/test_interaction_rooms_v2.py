@@ -9,6 +9,8 @@ coverage proves the domain/application rules.
 from __future__ import annotations
 
 import json
+import threading
+import time
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -525,6 +527,151 @@ def test_read_marker_counts_as_protected_history():
     link = next(l for l in repo.list_links(room.id) if l.entity_type == "helpdesk_ticket")
     with pytest.raises(RoomAccessExpansionBlocked):
         cases.remove_link(_user(), room.id, link.id)
+
+
+# --- P0 concurrency: R-1 TOCTOU -------------------------------------------------
+
+
+def _ticket_link(repo, room_id):
+    return next(
+        l for l in repo.list_links(room_id) if l.entity_type == "helpdesk_ticket"
+    )
+
+
+def test_unguarded_sequence_demonstrates_toctou():
+    """Reproduces the reviewed hazard: count → (concurrent authorized
+    write) → tombstone leaves history accessible to an expanded
+    audience — the exact leak the guarded op prevents."""
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    assert repo.protected_content_count(room.id) == 0
+    # authorized writer lands between the check and the tombstone
+    repo.add_message(room_id=room.id, author_user_id=USER, content="histórico")
+    repo.tombstone_link(link.id, cause="explicit")
+    # torn state: link gone, history exists — the bug, kept as evidence
+    assert repo.links[link.id].deleted_at is not None
+    assert repo.protected_content_count(room.id) == 1
+
+
+def test_guarded_removal_serializes_writer_outside_critical_section():
+    """Writer that arrives while the guard holds the room lock waits for
+    the whole critical section — it can never slip between recount and
+    tombstone."""
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    entered = threading.Event()
+    release = threading.Event()
+    real_count = repo.protected_content_count
+
+    def slow_count(room_id):
+        entered.set()
+        release.wait(5)
+        return real_count(room_id)
+
+    repo.protected_content_count = slow_count
+    outcome: dict = {}
+    t_rem = threading.Thread(
+        target=lambda: outcome.setdefault(
+            "rem",
+            repo.tombstone_link_guarded(
+                room_id=room.id, link_id=link.id, cause="explicit"
+            ),
+        )
+    )
+    t_rem.start()
+    assert entered.wait(5)
+    t_w = threading.Thread(
+        target=lambda: outcome.setdefault(
+            "msg",
+            repo.add_message(room_id=room.id, author_user_id=USER, content="x"),
+        )
+    )
+    t_w.start()
+    time.sleep(0.2)
+    assert t_w.is_alive(), "writer must wait on the room lock"
+    release.set()
+    t_rem.join(5)
+    t_w.join(5)
+    # consistent ordering: tombstone committed, then writer landed
+    assert outcome["rem"].deleted_at is not None
+    assert outcome["msg"].id in repo.messages
+
+
+def test_guarded_removal_blocked_when_writer_lands_first():
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    repo.add_message(room_id=room.id, author_user_id=USER, content="antes")
+    with pytest.raises(RoomAccessExpansionBlocked):
+        repo.tombstone_link_guarded(
+            room_id=room.id, link_id=link.id, cause="explicit"
+        )
+    assert repo.links[link.id].deleted_at is None
+
+
+def test_guarded_removal_failure_leaves_link_active():
+    """An intermediate failure inside the guard mutates nothing."""
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+
+    def boom(room_id):
+        raise RuntimeError("storage down")
+
+    repo.protected_content_count = boom
+    with pytest.raises(RuntimeError):
+        repo.tombstone_link_guarded(
+            room_id=room.id, link_id=link.id, cause="explicit"
+        )
+    assert repo.links[link.id].deleted_at is None
+
+
+def test_after_race_denied_readers_stay_denied():
+    """Even after a guarded removal the room's scope still rules: a
+    non-participant who lacked ticket ACL keeps getting 404."""
+    cases, repo, tickets, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    tickets.states[TICKET] = LINK_STATE_RESTRICTED
+    repo.tombstone_link_guarded(
+        room_id=room.id, link_id=link.id, cause="explicit"
+    )
+    with pytest.raises(RoomAuthorizationDenied) as denied:
+        cases.get_room(_user(user_id=OTHER), room.id, authorization=BEARER)
+    assert denied.value.status_code == 404
+
+
+# --- P1 participant self-removal ---------------------------------------------------
+
+
+def test_participant_can_remove_only_themselves():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "equipe", participant_ids=[OTHER])
+    cases.remove_participant(_user(user_id=OTHER), room.id, OTHER)
+    assert not repo.is_participant(room.id, OTHER)
+    with pytest.raises(RoomAuthorizationDenied):
+        cases.get_room(_user(user_id=OTHER), room.id)
+    # ...but cannot remove others
+    cases.add_participant(_user(), room.id, THIRD)
+    with pytest.raises(AuthorizationDenied):
+        cases.remove_participant(_user(user_id=OTHER), room.id, THIRD)
+
+
+def test_owner_cannot_self_remove():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "minha")
+    with pytest.raises(PermissionError):
+        cases.remove_participant(_user(), room.id, USER)
+    assert repo.is_participant(room.id, USER)
+
+
+def test_self_removal_needs_existing_participation():
+    cases, _, _, _ = _cases()
+    room = cases.open_standalone(_user(), "fechada")
+    with pytest.raises(LookupError):
+        cases.remove_participant(_user(user_id=OTHER), room.id, OTHER)
 
 
 def test_audit_failure_does_not_corrupt_write_result(caplog):
