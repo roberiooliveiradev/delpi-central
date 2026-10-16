@@ -245,3 +245,35 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
   outline-offset: 2px;
   box-shadow: none;
 }
+
+/* R2: align Clear draft with the existing ghost sidebar/context controls.
+   In both light and dark, the idle button is icon-only with zero persistent
+   grey surface; dark action-controls rules are overridden by specificity and
+   stylesheet ordering. */
+.delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear,
+:root[data-theme="dark"] .delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear {
+  appearance: none;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear:active:not(:disabled),
+:root[data-theme="dark"] .delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear:active:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--delpi-ui-composer-text) 12%, transparent);
+}
+.delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear:focus-visible,
+:root[data-theme="dark"] .delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  outline: 2px solid var(--delpi-ui-composer-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-message-composer .delpi-ui-icon-btn.delpi-ui-message-composer__clear {
+    transition: none !important;
+  }
+}
