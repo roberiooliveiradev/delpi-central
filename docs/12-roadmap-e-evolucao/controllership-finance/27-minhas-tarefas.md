@@ -342,7 +342,7 @@ Se a V1 precisar ocultar colunas fixas de `TaskItemsTable` por ausência de sem�
 │                                                                     [Abrir] │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-* Pacote só aparece quando P5 possuir responsabilidade individual comprovada.
+* Pacote P5 aparece para cada usuário elegível da **área obrigatória pendente** na PackageVersion atual, somente enquanto sua ação for autorizada e necessária.
 ```
 
 ## Wireframe — PARTIAL
@@ -514,17 +514,17 @@ Classificação:
 CONDITIONAL_PRODUCER
 ```
 
-Pode produzir task somente quando P5 possuir contract explícito de responsabilidade individual, por exemplo:
+P5 produz TaskProjection self-only de obrigação por área (não uma TaskEntity por indivíduo), quando usuário é elegível, a PackageVersion atual demanda review e Core ACCESS/scope autorizam a ação. Exemplos de trabalho projetado:
 
 ```text
 PACKAGE_CLARIFICATION_REQUIRED
 PACKAGE_CORRECTION_REQUIRED
 ```
 
-O processo comprova esclarecimentos/correções, mas a atribuição user-centric deve ser revalidada.
+A atribuição decorre da elegibilidade Core (grupo/função), área obrigatória congelada, resource scope e regra da ação, não de assignment genérico individual. Binding Core T05 permanece TO_INVENTORY.
 
-Sem assignee individual comprovado:
-- não gerar task;
+Sem área obrigatória pendente ou sem elegibilidade/autorização confirmadas:
+- não gerar TaskProjection acionável;
 - não inferir responsável por role, nome ou comentário.
 
 ### P1 / P3
@@ -1157,7 +1157,7 @@ Aceite: manual acompanha producers reais; não promete team/free task/editor.
 - listar terceiro;
 - blocker sem assignee;
 - mention sem owner responsibility;
-- P5 sem assignee individual;
+- P5 sem área pendente/elegibilidade Core/scope confirmados;
 - criar task livre;
 - editar/concluir/cancelar/adiar/reassign local;
 - source unavailable tratado como empty;
@@ -1214,7 +1214,7 @@ Responsabilidades:
 ```text
 TO_INVENTORY_BEFORE_IMPLEMENTATION
 ```
-Revalidar DTO/state/assignee de P2, P4 e P5 conditional.
+Revalidar DTO/state/assignee dos owners P2/P4; para P5 revalidar eligibility por área (Core T05), PackageVersion/snapshot e projeção self-only por usuário elegível.
 
 ### TSK02 — estratégia física de projection
 ```text
