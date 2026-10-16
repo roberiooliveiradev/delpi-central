@@ -661,6 +661,74 @@ describe("DÉLIA governed-write confirmation surface", () => {
     expect(body.confirmation?.decision).toBe("REJECT");
   });
 
+  it("keeps a pending card visible after an unrelated MESSAGE", async () => {
+    const fetchMock = mockFetchSequence([
+      confirmationPayload(1),
+      successPayload(2),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("prepare a alteração");
+    await waitFor(() =>
+      expect(screen.getByRole("group", { name: "Confirmação necessária" }))
+        .toBeTruthy(),
+    );
+    submitTurn("qual é o andamento?");
+    await waitFor(() =>
+      expect(screen.getByText("Resposta 2 da DÉLIA.")).toBeTruthy(),
+    );
+    // The second turn was MESSAGE, not APPLY/REJECT.
+    expect(
+      screen.getByRole("group", { name: "Confirmação necessária" }),
+    ).toBeTruthy();
+    const secondBody = JSON.parse(
+      deliaApiCalls(fetchMock)[1][1].body as string,
+    );
+    expect(secondBody.command).toEqual({ type: "MESSAGE" });
+  });
+
+  it("resolves only the targeted pending card when two exist", async () => {
+    const anotherPending = {
+      ...confirmationPayload(2),
+      confirmation_request: {
+        ...CONFIRMATION_REQUEST,
+        proposal_digest: "c".repeat(64),
+        preview_fingerprint: "d".repeat(64),
+        session_id: "s-2",
+      },
+    };
+    const fetchMock = mockFetchSequence([
+      confirmationPayload(1),
+      anotherPending,
+      successPayload(3),
+    ]);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App getAccessToken={() => "t"} />);
+
+    submitTurn("prepare operação 1");
+    await waitFor(() => expect(
+      screen.getAllByRole("group", { name: "Confirmação necessária" }),
+    ).toHaveLength(1));
+    submitTurn("prepare operação 2");
+    await waitFor(() => expect(
+      screen.getAllByRole("group", { name: "Confirmação necessária" }),
+    ).toHaveLength(2));
+
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Confirmar e executar" })[0],
+    );
+    await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(3));
+    await waitFor(() => expect(
+      screen.getAllByRole("group", { name: "Confirmação necessária" }),
+    ).toHaveLength(1));
+
+    const applied = JSON.parse(
+      deliaApiCalls(fetchMock)[2][1].body as string,
+    );
+    expect(applied.confirmation.proposal_digest).toBe("a".repeat(64));
+  });
+
   it("an answered confirmation card is consumed (single use)", async () => {
     const fetchMock = mockFetchSequence([
       confirmationPayload(1),
