@@ -53,7 +53,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 | `delivery-map` | ativo | OPs PA com saldo, agrupadas por entrega prevista; MP-OK/CT manuais; snapshot congelado |
 | `capacity` | em breve | Capacidade e ocupação percentual por CT |
 
-Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delpi/docs/api/production-machine-load.md); conjuntos incompletos: [production-order-sets-incomplete.md](../../../api-delpi/docs/api/production-order-sets-incomplete.md); convenção de chave de OP: [ordem-producao-chave.md](../../../api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md); apontamento de operação: [apontamento-operacao-hza.md](../../../api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md).
+Contrato TOTVS da carga máquina: [production-machine-load.md](../../../api-delpi/docs/api/production-machine-load.md); conjuntos incompletos: [production-order-sets-incomplete.md](../../../api-delpi/docs/api/production-order-sets-incomplete.md); convenção de chave de OP: [ordem-producao-chave.md](../../../api-delpi/docs/api/padroes-totvs/ordem-producao-chave.md); apontamento de operação: [apontamento-operacao-hza.md](../../../api-delpi/docs/api/padroes-totvs/apontamento-operacao-hza.md). Inventário e contratos propostos para seleção múltipla de operações (E1): [MACHINE-LOAD-MULTI-SELECTION-E1.md](./MACHINE-LOAD-MULTI-SELECTION-E1.md).
 
 A Análise de problemas é **grade de detectores**: cada card é uma regra registrada no BFF e descrita em `production-control-api/production_control_app/content/problem_analysis.json`. A OP atrasada saiu da área e continua na gestão à vista, com a fila da home abrindo a Carga máquina no rastreio (`?locate=`).
 
