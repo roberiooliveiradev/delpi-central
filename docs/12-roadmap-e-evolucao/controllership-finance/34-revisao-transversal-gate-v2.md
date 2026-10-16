@@ -327,7 +327,7 @@ PACKAGE_FINALIZED
 Regras:
 - package permanece na Minha DELPI;
 - reviewer possui login/app access;
-- reviewer usa `controllership-finance.access` + resource scope/assignment;
+- reviewer usa ACCESS efetivo **AND** grupo/função Core elegível **AND** área obrigatória da PackageVersion **AND** resource scope/assignment **AND** regra do P5; Core T05 S2S de elegibilidade permanece TO_INVENTORY;
 - Core Notifications avisa in-app e pode também enviar e-mail;
 - e-mail não transporta package;
 - package não vai como attachment;
@@ -366,7 +366,7 @@ FRONTEND_PATTERN_CONSISTENCY = PASS
 SECURITY_CONSISTENCY         = PASS
 HELP_CONSISTENCY             = PASS
 STATE_CONSISTENCY            = PASS
-CONTRACT_CONSISTENCY         = PASS_WITH_PENDING_P5_TERMINAL_AUTHORITY
+CONTRACT_CONSISTENCY         = P5_C2_DEC01_TO_04_APPROVED / T05_BINDING_TO_INVENTORY
 IMPLEMENTATION_AUTHORIZED    = NO
 ```
 
