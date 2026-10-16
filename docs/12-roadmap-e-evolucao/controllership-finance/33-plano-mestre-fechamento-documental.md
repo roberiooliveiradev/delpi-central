@@ -180,7 +180,7 @@ Uma pendência **impede** o fechamento documental se ainda puder alterar materia
 | A09 | P2 Checklist e Documentos | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 | A10 | P3 Estoque e Conciliação | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03** |
 | A11 | P4 Classificações e Pendências | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
-| A12 | P5 Pacote, Finalização e Envio | **PARTIAL / PORTAL_SUBMISSION_MODEL_PASS / PENDING_P5_TERMINAL_AUTHORITY** |
+| A12 | P5 Pacote, Finalização e Envio | **TARGET / PO_DECISIONS_APPROVED / TECHNICAL_BINDINGS_TO_INVENTORY** |
 | A13 | P6 Administração / Configuração | **PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY** |
 
 A01 está apenas na fila futura. Runtime permanece inexistente.
@@ -188,7 +188,7 @@ A01 está apenas na fila futura. Runtime permanece inexistente.
 ## Revisão transversal A14 — status
 
 ```text
-A14 = PASS
+A14 = HISTORICAL_PASS / POSTMERGE_REVALIDATION_INCONCLUSIVE
 RUNTIME_CHANGES = NONE
 ```
 
@@ -197,7 +197,7 @@ A14 fechou naming, owners, permissions, rotas, plugin-ui, visual families, theme
 Residual atual:
 - E04/T04 external package delivery = CLOSED / NOT_REQUIRED_IN_V1;
 - P5 usa portal-first submission/review;
-- residual material único: `D-P5-REVIEW-COMPLETION` — decidir se review accepted é requisito de monthly completion.
+- C2 e P5-A..J / DEC-01..04 foram aprovados; residual é o binding Core T05 (atributos de função/grupo), estados físicos e revalidação da matriz de testes.
 
 Authority:
 - [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
@@ -724,8 +724,8 @@ retornar `DECISION_REQUIRED` e não preencher a lacuna por preferência.
 
 ## Rebaseline de fechamento 16/10/2026 — decisão vigente P5
 
-O registro histórico A12 = PENDING_P5_TERMINAL_AUTHORITY foi superado pela aprovação C2 e P5-A..J. Quorum vigente: um aceite por área obrigatória sobre a PackageVersion corrente; área obrigatória é definida em configuração P6 versionada e congelada na submissão P5. Uma troca de responsável não remove aceite existente, e nova versão exige novos aceites. O aceite não pode ser revertido pela UI V1. A rejeição de uma área exige confirmação da autoridade operacional formal para encerrar a competência como rejeitada. Após confirmação, nenhuma TaskProjection de review permanece acionável. Este adendo não aprova a autoridade confirmadora nem cria processo excepcional de alteração de aceite.
+O registro histórico A12 = PENDING_P5_TERMINAL_AUTHORITY foi superado pela aprovação C2 e P5-A..J. Quorum vigente: um aceite por área obrigatória sobre a PackageVersion corrente; área obrigatória é definida em configuração P6 versionada e congelada na submissão P5. Uma troca de responsável não remove aceite existente, e nova versão exige novos aceites. O aceite não pode ser revertido pela UI V1. A rejeição de uma área exige confirmação da autoridade operacional formal para encerrar a competência como rejeitada. Após confirmação, nenhuma TaskProjection de review permanece acionável. DEC-01/02 aprovaram autoridade e recusa de confirmação; DEC-03 mantém retificação excepcional fora da V1.
 
-**Fechamento ainda BLOQUEADO:** (i) DECISION_REQUIRED para designação/critério da autoridade confirmadora e negativa da confirmação; (ii) escopo do processo excepcional de correção — se não aprovado, manter fora da V1; (iii) Core T05 (grupos/funções + effective access), P6 catalogo de áreas e snapshots físicos, binding de producers/consumers, RQ/AC/test matrix e Help; (iv) rebase/integracao com HEAD atual e rules .cursor; (v) revisão A12/A14/A15 reexecutada com evidence. Congelamentos antigos são históricos, não prova de freeze presente.
+**Fechamento ainda BLOQUEADO:** (i) requisitos DEC-01/02 para vínculo da autoridade aprovados, mas binding T05 a inventariar; (ii) correção excepcional fora da V1 por DEC-03; (iii) Core T05 (grupos/funções + effective access), P6 catalogo de áreas e snapshots físicos, binding de producers/consumers, RQ/AC/test matrix e Help; (iv) rebase/integracao com HEAD atual e rules .cursor; (v) revisão A12/A14/A15 reexecutada com evidence. Congelamentos antigos são históricos, não prova de freeze presente.
 
 `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.
