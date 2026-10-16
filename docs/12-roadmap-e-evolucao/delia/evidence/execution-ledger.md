@@ -14293,7 +14293,7 @@ INDEPENDENT_REVIEW=PENDING
 
 ## §6.211 — DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **LIVE_SHA:** `cd88e3f49c` on `srv-api`. **CODE_SHA:** fill after index-budget follow-up publish.
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **LIVE_SHA:** `cd88e3f49c` on `srv-api`. **CODE_SHA:** `42991c5ae3` (includes `MAX_INDEX_OPTION_ENTRIES` fix; live evidence is on `cd88e3f49c`).
 
 - **ROOT_CAUSE:** post-index provenance used substring-in-text; argument projection did not select exact owner-declared identifiers → unnecessary clarification / no guide body.
 - **FIX:** structured `_index_catalog_entities` + `INDEX_SELECT` bind + exact `_post_self_index_argument_gaps`; `MAX_INDEX_OPTION_ENTRIES=48` (follow-up after live showed resolver shortlist truncated catalogs); post-resolver revalidation; no provider hardcode.
