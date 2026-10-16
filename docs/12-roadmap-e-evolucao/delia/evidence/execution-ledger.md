@@ -13946,3 +13946,18 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 B2_REWORK_IMPLEMENTATION=EVIDENCE_RECORDED; B2_SECURITY_TESTS=TEST_NOT_RUN; B2_INDEPENDENT_REVIEW=PENDING; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.189 — DELIA-C3-STAGE-02-B2-PENDING-INVALID-CLAIM-REWORK-01 (SOURCE PATCH COMMITTED, TESTS NOT RUN)
+
+**DATE:** 2026-10-16. **REPORT:** `corrections/conversational-intelligence-c3/22-stage-02-b2-invalid-confirmation-claim-followup.md`. **MODE:** scoped GitHub connector code/test fix, no executable local checkout, no independent review or acceptance.
+
+- **PROVEN CODE FINDING:** in the post-§6.188 source, `_confirm_proposal` called identity-checked `take_if_current` **before** rejecting `bind_confirmation` with `INVALIDATED/EXPIRED`. Thus an incorrect preview fingerprint with a correct digest could consume a valid pending before returning `confirmation_mismatch`. This is an operation-integrity/availability defect, **not an ACT grant**. Duplicate APPLY risk from §6.186 is independently mitigated by previous in-process atomic-claim commits, without distributed exactly-once claim.
+- **PATCH:** `d1028e2bf11b235b8dbbc4b578d162be710d965b` adds negative regressions; `2916804e25899df625660c2938b9e955f4966e7e` rejects invalid binding before attempting atomic claim; `9bc63c2bf799a891366b13d69d5bb0a8a98ce855` aligns the actor-mismatch test with the preexisting `AUTHZ_DENIED/actor_mismatch` gate. Valid CONFIRM/REJECT still must win `take_if_current`; invalid attempts cannot consume pending.
+- **PRIOR RW-01/RW-02/UX-01:** code was already committed before this task (ledger §6.188); not reimplemented here. Their new functional suites remain `TEST_NOT_RUN` as of this execution. Earlier executor's 1121 pytest / 189 vitest PASS are stale for latest SHA.
+- **LIMITATION:** container has no local delpi-central clone or GitHub network access; GitHub connector supports remote source/commit but cannot execute pytest/vitest. RED reproduction, full regressions, typecheck/federation, browser, real-model and real business Outcome are `TEST_NOT_RUN`; local working-tree and deployment topology `TO_INVENTORY`. Do not claim PASS or accept Stage02.
+- **NEXT:** independently execute concurrency + invalid binding + Application discriminant + MFE pending-card tests, full suites/build/typecheck on committed HEAD; verify in-process vs multi-worker topology, live AuthZ/idempotency and Outcome evidence as authorized; review acceptance separately. No Stage03, no new planner/provider-specific layer.
+
+`EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` existing pending/confirmation seam.
+`B1=PASS_STRUCTURAL`; `B2_REWORK_CODE=EVIDENCE_RECORDED`; `B2_TESTS=TEST_NOT_RUN`; `B2_INDEPENDENT_REVIEW=PENDING`; `STAGE_02_ACCEPTED=NO`; `STAGE_03_AUTHORIZED=NO`.
+`PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN`
+`NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`
