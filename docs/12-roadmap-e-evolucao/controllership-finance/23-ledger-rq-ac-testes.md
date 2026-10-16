@@ -279,9 +279,9 @@ Preservar identidade Core do ator, data/hora, ação, contexto competência/reci
 **Gates:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_CONTRACT_AND_OWNER`; `IMPLEMENTATION_AUTHORIZED = NO`. Nenhum teste de runtime foi executado; `TEST_NOT_RUN`. Nenhum merge/rebase autorizado por este registro.
 
 | RQ-P5-F | Reatribuição preserva aceite por área/versão | aceite original continua válido; autoria não muda; novo elegível assume ações futuras | positive + sibling + audit | P5-F / Core T05 | TARGET |
-| RQ-P5-G | Aceite P5 irreversível na UI V1 | nem autor nem substituto conseguem editar/reverter; exceção não implementada | negative + audit | P5-G | TARGET |
+| RQ-P5-G | Aceite P5 irreversível pela UI **e pela API** V1 | nem autor nem substituto conseguem editar/reverter por endpoint ou tela; incidentes fora do Portal V1 | negative endpoint + UI + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
 | RQ-P5-H | P6 versiona áreas obrigatórias por tipo e P5 congela na submissão | mudança P6 posterior não muda revisão aberta | snapshot + sibling + negative | P5-H / ADM / T05 | TARGET / CONTRACT_PENDING |
-| RQ-P5-I | Rejeição do pacote e confirmação terminal da competência separadas | rejeição por área não conclui nem encerra automaticamente; autoridade formal confirma com motivo | transitions + authz negative | P5-I / owner DECISION_REQUIRED | TARGET / CONTRACT_PENDING |
+| RQ-P5-I | Rejeição do pacote e confirmação terminal da competência separadas | rejeição por área não conclui nem encerra automaticamente; coordenador formal com ACCESS/vínculo/scope confirma com motivo; sem confirmação mantém pendência | positive + sibling + transitions + authz negative | P5-I / DEC-01/02 / Core T05 | TARGET / PO_APPROVED / PHYSICAL_BINDING_TO_INVENTORY |
 | RQ-P5-J | Rejeição terminal remove acionabilidade das tasks | projections deixam de ser acionáveis, histórico não é apagado | positive + sibling + negative | P5-J / TSK | TARGET |
 
 
