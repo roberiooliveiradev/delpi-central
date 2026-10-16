@@ -102,9 +102,15 @@ export function ConversationThreeRegionLayout({
           className="delpi-ui-conversation-three-region__left">
           <div className="delpi-ui-conversation-three-region__side-heading">
             {!collapsed ? <strong>{leftTitle}</strong> : null}
-            <IconButton aria-label={collapsed ? "Expandir conversas" : "Recolher conversas"}
-              aria-expanded={!collapsed} onClick={() => setLeftExpanded((value) => !value)}>
-              {collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
+            <IconButton
+              className="delpi-ui-conversation-three-region__rail-toggle"
+              aria-label={collapsed ? "Expandir conversas" : "Recolher conversas"}
+              aria-expanded={!collapsed}
+              onClick={() => setLeftExpanded((value) => !value)}
+            >
+              {collapsed
+                ? <PanelLeftOpen size={19} strokeWidth={1.8} aria-hidden="true" />
+                : <PanelLeftClose size={19} strokeWidth={1.8} aria-hidden="true" />}
             </IconButton>
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">
