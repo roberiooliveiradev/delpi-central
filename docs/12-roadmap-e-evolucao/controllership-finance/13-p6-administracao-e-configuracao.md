@@ -101,7 +101,7 @@ Referência histórica permanece interpretável.
 
 ## Publicação
 
-Um usuário com `controllership-finance.manage` pode publicar sozinho com auditoria/versionamento.
+Um usuário com `controllership-finance.manage` **efetivo e escopo administrativo autorizado** pode publicar sozinho (sem segundo MANAGE obrigatório), com justificativa, versionamento, vigência prospectiva e auditoria conforme DEC-04.
 
 Segundo MANAGE não é obrigatório no target atual.
 
