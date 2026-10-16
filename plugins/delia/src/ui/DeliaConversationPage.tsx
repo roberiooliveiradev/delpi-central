@@ -14,7 +14,7 @@ export type DeliaConversationPageProps = {
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
   return (
     <ConversationThreeRegionLayout
-      left={<ConversationSidebar />}
+      left={({ collapsed }) => <ConversationSidebar collapsed={collapsed} />}
       right={<ConversationContextPanel />}
       center={conversation}
     />
