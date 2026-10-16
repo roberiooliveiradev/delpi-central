@@ -11,6 +11,8 @@ export type ConversationWorkspaceProps = {
   children: ReactNode;
   /** Rodapé ancorado — tipicamente composer + erro + helper. */
   footer?: ReactNode;
+  /** Optional shared control above the anchored composer, outside the scroll viewport. */
+  scrollNavigator?: ReactNode;
   /** Densidade dos paddings do workspace. */
   density?: ConversationWorkspaceDensity;
   /**
@@ -39,6 +41,7 @@ export function ConversationWorkspace({
   banner,
   children,
   footer,
+  scrollNavigator,
   density = "comfortable",
   bodyRef,
   onBodyScroll,
@@ -78,6 +81,11 @@ export function ConversationWorkspace({
           {children}
         </div>
       </div>
+      {scrollNavigator ? (
+        <div className="delpi-ui-conversation-workspace__scroll-navigation">
+          {scrollNavigator}
+        </div>
+      ) : null}
       {footer ? (
         <div className="delpi-ui-conversation-workspace__footer">
           <div className="delpi-ui-conversation-workspace__footer-column">
