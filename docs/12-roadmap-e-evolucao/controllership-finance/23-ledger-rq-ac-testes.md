@@ -84,7 +84,15 @@ Este ledger complementa:
 | RQ-P5-09 | versão submetida/histórico de review são imutáveis | nova versão não apaga review anterior | positive + audit | — | TARGET |
 | RQ-P5-10 | clarification/correction preserva history | request/response/version ficam auditáveis | positive + sibling | — | TARGET |
 | RQ-P5-11 | Help explica finalize/submit/notify/review | conteúdo contextual coerente | UI/help check | feature help | TARGET |
-| RQ-P5-12 | monthly completion usa regra explícita de review | C2 aprovado pelo Product Owner; todos os pacotes aplicáveis submetidos, reviews obrigatórios aceitos e sem esclarecimento aberto | product decision test | C2 / D-P5-01..05; derived lifecycle gaps | TARGET / CONTRACT_PENDING |
+| RQ-P5-12 | conclusão mensal C2 por área obrigatória e versão vigente | todos os pacotes aplicáveis submetidos, uma aceitação válida de cada área obrigatória sobre PackageVersion atual e nenhuma clarification aberta; competência rejeitada nunca é concluída | positive + sibling + negative + version | C2 / P5-A / P5-E / P5-D | TARGET / PO_APPROVED |
+| RQ-P5-AREA-01 | quorum por área e não por pessoa | dois usuários elegíveis da mesma área não exigem dois aceites; área não aceita bloqueia C2 | positive + sibling + concurrency | P5-A/C / Core T05 | TARGET / PHYSICAL_BINDING_TO_INVENTORY |
+| RQ-P5-AREA-02 | nova versão não herda aceites | nova PackageVersion exige novos aceites de todas as áreas e preserva histórico de versão anterior | positive + sibling + negative | P5-E / D-P5-02 | TARGET / PO_APPROVED |
+| RQ-P5-AREA-03 | reatribuição preserva aceite válido e autoria | substituição de usuário não altera/atribui retroativamente aceite já dado; substituto só age depois da atribuição autorizada | positive + sibling + audit | P5-F/B / DEC-03 | TARGET / PO_APPROVED |
+| RQ-P5-AREA-04 | eligibility e AuthZ fail-closed | ACCESS efetivo + grupo/função elegível + scope + regra da ação; ACCESS isolado, MANAGE isolado e Core indisponível não autorizam aceite | positive + sibling + negative | P5-C / Core T05 | TARGET / CORE_ATTRIBUTE_CONTRACT_TO_INVENTORY |
+| RQ-P5-TERM-01 | rejeição de área não rejeita competência automaticamente | resultado da área gera proposta pendente; somente coordenador formal com ACCESS e vínculo/scope confirma com motivo | positive + negative + audit | P5-I / DEC-01/02 | TARGET / PHYSICAL_BINDING_TO_INVENTORY |
+| RQ-P5-TERM-02 | rejeição terminal interrompe ações pendentes | competência rejeitada não conclui C2; TaskProjection deixa de ser acionável, histórico/auditoria preservados | positive + sibling + negative | P5-D/J | TARGET / PO_APPROVED |
+| RQ-P5-TERM-03 | aceite P5 irreversível na V1 | não há API nem botão de reversão/retificação; P2 validação de evidência tem fluxo independente | negative + boundary + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
+
 
 ## P6 — Administração e Configuração
 
