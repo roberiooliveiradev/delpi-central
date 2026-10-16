@@ -212,3 +212,11 @@ Decisão superior do Product Master: `Recolher conversas` transforma a largura e
 **Estado e acessibilidade:** `Recolher conversas` com `aria-expanded=true` quando expandida; `Expandir conversas` com `aria-expanded=false` no rail. Os ícones continuam apenas decorativos, sem duplicar leitura; keyboard pelo `IconButton` já compartilhado. Não introduzir segundo toggle no header DÉLIA.
 
 **Evidence Gate:** CSS, JSX e asserts nos testes atualizados e commitados em `main`. `EXISTING_EQUIVALENT=YES` (`IconButton`), `REUSE_DECISION=EXTEND` apenas com classe de estilização local. Nenhum backend, fases ou ownership alterado. Tests/build/browser QA permanecem `TEST_NOT_RUN` sem runner/Portal autenticado; review visual independente `PENDING`. O registro não constitui aceite de UI em produção.
+
+## 13. R5 — paridade visual dos controles em light/dark
+
+Evidência: capturas do Product Master mostraram fundo cinza permanente em modo escuro no botão de recolher. Causa identificada no código: regra global `:root[data-theme="dark"] .delpi-ui-icon-btn` do `action-controls.css` e ordem de importação posterior aos estilos da conversa. A R4 também deixava tonalidade permanente no estado rail.
+
+Decisão R5: botão de **ícone puro**, com fundo e borda transparentes nos estados normais de ambos os temas, inclusive rail recolhido. O fundo suave aparece em hover/press; foco visível por outline; alvo 40×40px e movimento reduzido preservados. Reutilizar `IconButton`, aplicar classe específica local `__chrome-icon` no `ConversationThreeRegionLayout`, e importar CSS conversacional após `action-controls.css` para corrigir precedência, sem alterar estilos globais de outros produtos.
+
+Código e testes foram commitados na main; execução de testes e QA visual light/dark permanecem `TEST_NOT_RUN`; aceite independente `PENDING`. Nenhuma progressão de fase.
