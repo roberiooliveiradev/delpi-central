@@ -1,6 +1,6 @@
 # 02 — Plano das seis entregas bounded
 
-**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172); 02 IMPLEMENTATION_REWORK (§§6.174/6.176); B1 PASS estrutural e B2 REWORK; diagnóstico R2 ACCEPT_WITH_RESIDUAL como evidência (§6.178), regra de produto APPROVED (§6.183), direção contratual D1/D2/D3 CLOSED_BY_COORDINATION (§6.184), implementação B2 relatada (§6.185), revisão independente REWORK (§6.186) com correção bounded de single-use concorrente e consistency HTTP/Application pendente; 03–06 PLANNED/NOT_AUTHORIZED.  
+**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172); 02 IMPLEMENTATION_REWORK (§§6.174/6.176); B1 PASS estrutural e B2 REWORK; diagnóstico R2 ACCEPT_WITH_RESIDUAL como evidência (§6.178), regra de produto APPROVED (§6.183), direção contratual D1/D2/D3 CLOSED_BY_COORDINATION (§6.184), implementação B2 relatada (§6.185), revisão independente REWORK (§6.186); rework RW-01/RW-02/UX-01 publicado (§6.188), porém testes/aceite independentes PENDING; 03–06 PLANNED/NOT_AUTHORIZED.  
 **Umbrella:** DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01.  
 **Regra:** uma etapa por entrega e review, sem “um prompt corrige tudo”; implementação só após reanchor e autorização; nenhum novo planner/agent/engine por conveniência.
 
