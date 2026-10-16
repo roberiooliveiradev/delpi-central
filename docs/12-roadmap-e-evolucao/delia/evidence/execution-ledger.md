@@ -14092,3 +14092,17 @@ LINK_L1_CONTRACT=SPECIFIED; LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY
 PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_REVIEW_R3
+
+## §6.198 — DELIA-C3-STAGE-02-LIVE-SSH-ACCEPTANCE-VALIDATION-01 (LIVE PARTIAL + DETERMINISTIC REVALIDATION; READY FOR ACCEPTANCE REVIEW)
+
+**DATA:** 2026-10-16. **MODE:** evidence-only; READ-ONLY LIVE + fake/scripted writes. **REPORT:** `corrections/conversational-intelligence-c3/26-stage-02-live-ssh-acceptance-validation-report.md`. **DELIVERY_ANCESTRY:** `c3e090ac…` ⊂ origin/main. **EXECUTION_HEAD:** `444e03d7d2`. **LIVE_WINDOW:** deploy canônico `up-prod-sequential --pull --build delia-api delia plugin-ui` com checkout remoto `772fcc66ef` (Docker layer cache content-match); host key verified; sem secrets no relatório.
+
+- **TOPOLOGY PROVEN:** `delpi-delia-api` `gunicorn --workers 1 --threads 4`; health gateway 200; replicas=1. Claim process-local cobre threat model observado; exactly-once distribuído NOT_PROVEN.
+- **LIVE MESSAGE-ONLY (kimi-k3):** CI-LIVE-01/03/08/09/10 PASS_SAFE (0 confirmation, 0 ACT); CI-LIVE-04 PASS_READ GROUNDED MCP `discover_delpi_information`. CI-LIVE-02/05–07/11–15 + holdouts + typed negatives live + browser ABORT/TEST_NOT_RUN a pedido do operador.
+- **DETERMINISTIC (`444e03d7`):** concurrent 6/6; interaction+diagnosis targeted PASS; full `pytest tests/` **1178 PASS**; vitest **191/191**; tsc 3 erros pré-existentes plugin-ui.
+- **NO CLAIMS:** `STAGE_02_ACCEPTED=NO`; `STAGE_03_AUTHORIZED=NO`; `BUSINESS_OUTCOME=NOT_PROVEN`; `PRODUCTION_READINESS=NOT_PROVEN`.
+- **VERDICT:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — decisão de aceite pertence a Architecture/Coordination.
+
+B1=PASS_STRUCTURAL+PARTIAL_LIVE; B2=CODE_ACCEPT_WITH_RESIDUAL+REGRESSION_GREEN; LIVE_MODEL_EVAL=PARTIAL_PASS_SAFE; BROWSER_QA=TEST_NOT_RUN
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_ACCEPTANCE_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
