@@ -14,6 +14,16 @@ from tests.support.route_smoke_runner import run_route_smoke
 
 EXPECTED_ADDITIONS = (
     ("delete_transformometro_interaction_room", "DELETE", "/transformometro/interaction-rooms/{room_id}"),
+    ("remove_transformometro_interaction_room_link", "DELETE", "/transformometro/interaction-rooms/{room_id}/links/{link_id}"),
+    ("remove_transformometro_interaction_room_participant", "DELETE", "/transformometro/interaction-rooms/{room_id}/participants/{user_id}"),
+    ("get_transformometro_interaction_room_delete_impact", "GET", "/transformometro/interaction-rooms/{room_id}/impact"),
+    ("list_transformometro_interaction_room_links", "GET", "/transformometro/interaction-rooms/{room_id}/links"),
+    ("list_transformometro_interaction_room_participants", "GET", "/transformometro/interaction-rooms/{room_id}/participants"),
+    ("create_transformometro_standalone_interaction_room", "POST", "/transformometro/interaction-rooms/standalone"),
+    ("open_transformometro_interaction_room_for_ticket", "POST", "/transformometro/interaction-rooms/ticket"),
+    ("add_transformometro_interaction_room_link", "POST", "/transformometro/interaction-rooms/{room_id}/links"),
+    ("add_transformometro_interaction_room_participant", "POST", "/transformometro/interaction-rooms/{room_id}/participants"),
+    ("restore_transformometro_interaction_room", "POST", "/transformometro/interaction-rooms/{room_id}/restore"),
     ("remove_process_bpmn_reference", "DELETE", "/transformometro/processos/{processo_id}/bpmn-reference"),
     ("list_process_bpmn_model_revisions", "GET", "/transformometro/processos/{processo_id}/bpmn-reference/candidates/{model_id}/revisions"),
     ("list_process_bpmn_model_candidates", "GET", "/transformometro/processos/{processo_id}/bpmn-reference/candidates"),

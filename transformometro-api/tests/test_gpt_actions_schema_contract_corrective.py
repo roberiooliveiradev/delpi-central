@@ -54,3 +54,17 @@ def test_changed_imported_schemas_match_runtime_builder_and_budget():
         ), schema_name
     assert len(_ARTIFACT.read_bytes()) <= 100 * 1024
     assert count_operations(imported) == count_operations(generated) == len(GPT_ACTIONS_OPERATION_IDS) == 21
+
+def test_bpmn_resolution_map_is_explicitly_domain_validated_in_builder_and_artifact():
+    """Dynamic ambiguity IDs/options are domain-validated, not untyped by omission."""
+    generated = build_gpt_actions_openapi()
+    imported = json.loads(_ARTIFACT.read_text(encoding="utf-8"))
+    generated_field = generated["components"]["schemas"]["GptGovernedOperationBody"]["properties"]["resolutions"]
+    imported_field = imported["components"]["schemas"]["GptGovernedOperationBody"]["properties"]["resolutions"]
+    assert generated_field == imported_field
+    assert generated_field["type"] == "object"
+    assert generated_field["additionalProperties"] is True
+    assert generated_field["x-delpi-gpt-opaque-object"] is True
+    assert "dynamic ambiguity IDs" in generated_field["description"]
+    assert "canonical legacy-to-BPMN domain mapper" in generated_field["description"]
+    assert len(_ARTIFACT.read_bytes()) <= 100 * 1024
