@@ -270,8 +270,8 @@ A primeira execução técnica ainda deve inventariar a fundação do produto; e
 
 **TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
 
-- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
-- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
+- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias com aceite da versão vigente e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
+- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todas as áreas obrigatórias** precisam de um aceite válido da PackageVersion atual (P5-A refinou D-P5-01). Aceite parcial não atende ao quorum.
 - **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
 - **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
 - **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
