@@ -9,6 +9,8 @@ export * from "./components/activity";
 export * from "./components/conversation";
 /** Host-only shared three-region conversational page shell. */
 export { ConversationThreeRegionLayout } from "./components/conversation/ConversationThreeRegionLayout";
+export { ConversationSidebar } from "./components/conversation/ConversationSidebar";
+export { ConversationContextPanel } from "./components/conversation/ConversationContextPanel";
 /** Host-consumed scroll control — retain in federated Index exports. */
 export { ConversationScrollNavigator } from "./components/conversation/ConversationScrollNavigator";
 export * from "./components/composer";
