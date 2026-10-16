@@ -135,3 +135,7 @@ BACKEND_CONTRACTS = TO_INVENTORY
 TESTS = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 ```
+
+## Registro de implementação visual bounded — 2026-10-16
+
+A pedido do Product Master, foram adicionadas ao `plugin-ui` as superfícies reais `ConversationSidebar` e `ConversationSidebarSearch`, importadas pelo wrapper `plugins/delia/src/ui/DeliaConversationPage.tsx`, mantendo o layout único do doc 98. Estão posicionados: botão **Nova conversa**, entrada **Pesquisar conversas**, grupo **Recentes**, botão **Opções** e toggle de recolhimento no shell compartilhado. Sem contratos de sessões e pesquisa, ações `onNewConversation`, `onSearch`, `onOptions` permanecem desabilitadas; nenhuma conversa mock é inserida em Recentes. A busca é somente entrypoint visual, não indexação em estado React. O componente tem props explícitas para ativação **somente** após validação backend. `EXISTING_EQUIVALENT=YES` (primitives do kit); `REUSE_DECISION=EXTEND` (composição). Testes/build/browser ainda `TEST_NOT_RUN`; review independente `PENDING`; fase inalterada.
