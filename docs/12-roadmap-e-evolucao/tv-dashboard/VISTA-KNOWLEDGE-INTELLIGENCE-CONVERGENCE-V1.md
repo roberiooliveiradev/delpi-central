@@ -1,6 +1,6 @@
 # VISTA — Knowledge Intelligence Convergence V1 (roadmap canônico)
 
-> **Status:** PLANNED (arquitetura aprovada; nenhuma fase executada)
+> **Status:** EXECUTION — P0–P7 DONE · P8 BLOCKED (P8_EVIDENCE=INSUFFICIENT) · P9 PLANNED
 > **Data:** 2026-10-08 · **HEAD de referência:** `8686552a1e`
 > **Escopo:** documento de controle de todas as futuras frentes de inteligência VISTA.
 > **Regra de ouro:** organizar antes de expandir; verdade antes de orientação; orientação antes de heurística duplicada; owner antes de integração; reuse antes de nova capability; *smallest sufficient truth set* antes de tool spam; eval antes de alegar melhoria; gate do roadmap antes de implementação.
@@ -368,8 +368,8 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 | 3 | Help Convergence | 2 | DONE (§32·§33 runtime-verified) |
 | 4 | Editor Grounding V2 | 0 | DONE (§34 diagnostic · §36 execution) |
 | 5 | Design Methodology V1 | 1, 4 | DONE (§38) |
-| 6 | Data + Solution Intelligence | 1 | READY_FOR_DIAGNOSTIC |
-| 7 | Eval + Telemetry V2 | 0 | READY_FOR_EXECUTION (§35 diagnostic done — exec requer promoção) |
+| 6 | Data + Solution Intelligence | 1 | DONE (§39 diagnostic · §40 execution) |
+| 7 | Eval + Telemetry V2 | 0 | DONE (§35 diagnostic · §41 execution) |
 | 8 | Semantic Intent Arbitration | 7 (evidência material) + brief dedicado | BLOCKED |
 | 9 | History Intelligence | stories reais + owner inventory | PLANNED |
 
@@ -527,7 +527,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** field→owner map, projeção, eval delta.
 - **DEPENDENCIES:** PHASE 1 (gate de quando consultar ecossistema).
 - **STOP CONDITIONS:** sem owner canônico para metadado → não persistir; exigir autoridade nova.
-- **STATUS:** READY_FOR_DIAGNOSTIC.
+- **STATUS:** DONE (§39 diagnostic · §40 execution — user-parity Core lookup proven live).
 
 ### PHASE 7 — EVAL + TELEMETRY V2
 
@@ -550,7 +550,7 @@ Ordem inicial por hipótese; reorder só com evidência registrada.
 - **EVIDENCE TO RETURN:** baseline congelada + formato de relatório de delta.
 - **DEPENDENCIES:** PHASE 0.
 - **STOP CONDITIONS:** telemetria exigir dados privados ou novo serviço externo.
-- **STATUS:** READY_FOR_EXECUTION — diagnostic DONE (§35, 2026-10-09); measurement architecture proven; execução de corpus/telemetry requer promoção explícita.
+- **STATUS:** DONE (§35 diagnostic · §41 execution — eval corpus + bounded telemetry landed).
 
 ### PHASE 8 — SEMANTIC INTENT ARBITRATION
 
@@ -1952,3 +1952,73 @@ no semantic change to product behavior.
 Residuals: (a) DATA_DIAGNOSIS NEEDS_FIXTURE; (b) USER_CORRECTION
 NEEDS_TELEMETRY (no canonical signal); (c) telemetry PROCESS_LOCAL —
 no cluster aggregation; (d) 2 foreign catalog-sync failures unchanged.
+
+## 42. POST-P7 CURRENT-STATE DRIFT CLOSURE (2026-10-16)
+
+DRIFT_TYPE = CONTRACT_DRIFT + DOCUMENTATION_DRIFT (synchronization only —
+zero runtime code changed; PROVEN runtime is the authority, stale
+declarative/doc text was aligned to it).
+
+ROOT_CAUSE = P6 promoted `solution_ecosystem` to PROVEN and shipped the
+live Core-backed miss path, but the Knowledge Orchestration routing/gate/
+anti-pattern prose and the global docs were not fully updated.
+
+### 42.1 CONTRACT_DRIFT — `vista_agent_intelligence.json`
+
+- `DIGITAL_SOLUTION_NEED`: `gap` said "solution_ecosystem indisponível →
+  TO_INVENTORY" → now `required: data_contract`, `conditional:
+  solution_ecosystem quando a busca de rota TV falhar`, optional
+  `presentation_truth` quando o pedido depender do contexto atual; gap
+  instructs consuming `solutionIntelligence.gapClassification` on miss.
+- `SOLUTION_ECOSYSTEM_GATE`: `DEFERRED (PHASE 6)` → `PROVEN` — trigger
+  TV_ROUTE_MISS / explicit cross-solution discovery; owner Core API
+  solution registry; knowledge IS_NOT authorization; execution only via
+  TV allowlisted routes.
+- Anti-pattern cleanup: "(solution_ecosystem indisponível até PHASE 6)"
+  → "usar solution_ecosystem no miss path aprovado; visibilidade de
+  solução IS_NOT permissão de execução". SEARCH_MISS IS_NOT ABSENCE
+  preserved.
+
+### 42.2 DOCUMENTATION_DRIFT — roadmap + capability matrix
+
+- Roadmap header: `PLANNED (nenhuma fase executada)` → `EXECUTION —
+  P0–P7 DONE · P8 BLOCKED (P8_EVIDENCE=INSUFFICIENT) · P9 PLANNED`.
+- Phase table + phase cards: P6 → DONE (§39·§40), P7 → DONE (§35·§41).
+  P8 stays BLOCKED; P9 stays PLANNED.
+- Capability matrix: 10→11 tools/ops/paths (parity_map is canonical —
+  11 semantic pairs incl. `get_product_guide`↔`gpt_get_product_guide`;
+  Actions-only `gpt_get_slide_preview_png` stays classified
+  `not_exposed_in_mcp`); GUIDANCE row added; margin vs ≤30 = 19.
+- MCP go-live/provisioning stays **PENDING** — connector-works-here is
+  environment-scoped, not rollout proof (§27.13 stance preserved).
+- Display format PARTIAL, proposal-store ACCEPT_WITH_RESIDUAL,
+  P7 telemetry residuals (DATA_DIAGNOSIS NEEDS_FIXTURE /
+  USER_CORRECTION NEEDS_TELEMETRY / PROCESS_LOCAL) — all preserved
+  honestly, none promoted by doc cleanup.
+
+### 42.3 RESIDUAL SEARCH CLASSIFICATION
+
+Remaining "10 tools/10 ops/READY_FOR_*" matches in the roadmap are
+HISTORICAL_VALID — dated phase records (§27 baseline, §28–§40 execution
+entries, phase narrative) reflecting state at their HEAD; not falsified.
+
+### 42.4 TESTS / SMOKE
+
+- `test_vista_knowledge_orchestration.py` +1 regression test
+  (`test_solution_ecosystem_gate_and_routing_post_p6`): gate PROVEN,
+  miss-path routing, zero "indisponível", invariants explicit.
+- 245 focused tests green (KO, intelligence, unified boundary, product
+  guide, Actions budget/facade, builder instructions, solution
+  intelligence, MCP surfaces, P7 telemetry).
+- Actions budget: envelopeAscii 95,712B/102,400B — delta 0 (KO prose is
+  MCP-primary; Actions projection unchanged).
+- Runtime smoke (in-container, real paths): catalog KO PROVEN + zero
+  stale text · route miss → typed CONTRACT_GAP + miss≠absence · CREATE
+  → single `create_block` · ALTER → `upsert_block` same block · P5
+  methodology → MISSING_INFORMATION/READ_MORE_STATE.
+- New GPT Actions / MCP tools / HTTP routes / services: 0.
+
+### 42.5 STATUS
+
+POST-P7 DRIFT CLOSURE = DONE — runtime = intelligence metadata =
+roadmap = capability matrix. P0–P7 DONE · P8 BLOCKED · P9 PLANNED.

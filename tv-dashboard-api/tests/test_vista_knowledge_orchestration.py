@@ -237,3 +237,36 @@ def test_orchestration_does_not_duplicate_directive_bodies():
     Guard: no routing entry may carry a 'rules' list longer than a reference."""
     for intent, route in _orchestration()["routing"].items():
         assert "rules" not in route, f"{intent} duplicates directive rules"
+
+
+def test_solution_ecosystem_gate_and_routing_post_p6():
+    """POST-P7 drift guard — the KO contract must reflect the proven P6
+    miss path, never the pre-P6 deferred state."""
+    import json
+
+    ko = _orchestration()
+
+    # Gate is PROVEN, not DEFERRED.
+    gate = ko["gates"]["SOLUTION_ECOSYSTEM_GATE"]
+    assert "PROVEN" in gate
+    assert "DEFERRED" not in gate
+
+    # DIGITAL_SOLUTION_NEED consumes solution_ecosystem on the miss path.
+    route = ko["routing"]["DIGITAL_SOLUTION_NEED"]
+    conditional = " ".join(route.get("conditional") or [])
+    assert "solution_ecosystem" in conditional
+    assert "indisponível" not in json.dumps(route)
+
+    # No current anti-pattern may claim the source is unavailable.
+    for rule in ko["forbidden"]:
+        assert "indisponível" not in rule
+
+    # Invariants stay explicit.
+    assert "SEARCH_MISS IS_NOT ABSENCE" in set(ko["epistemology"])
+    src = ko["sources"]["solution_ecosystem"]
+    assert src["status"] == "PROVEN"
+    assert src["owner"] == "Core API"
+    import re
+
+    blob = json.dumps(src)
+    assert re.search(r"knowledge\s*!=\s*authorization", blob)
