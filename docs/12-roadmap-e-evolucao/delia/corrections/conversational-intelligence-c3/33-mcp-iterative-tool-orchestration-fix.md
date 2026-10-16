@@ -26,19 +26,29 @@ Após RW-S03-01, `_requires_owner_vocabulary` só abre DISCOVERY para envelopes 
 
 - `INDEX_PROBE_INSTRUCTION` (v10) — modelo propõe `probe_index`.
 - `_eligible_self_index_probe` — READ/ANALYSIS, sem required, string livre opcional, não envelope.
-- Se elegível e `probe_index=true`: invoke `{}` → `owner_vocabulary` → arguments → segundo READ.
+- `_contract_declares_omit_returns_index` — sinal textual omit/omitted + index/available/list na descrição da capability (provider-neutral; sem field-name hardcode).
+- Se elegível e (contrato omit→index **ou** `probe_index=true`): invoke `{}` → `owner_vocabulary` → arguments → segundo READ.
 - Envelope DISCOVERY peer permanece prioritário quando aplicável.
+- Opcional sem sinal de índice **não** autoriza probe (RW-S03-01 preservado).
 
-## 4. Testes
+## 4. Compatibilidade MCP / ausência de acoplamento
 
-- `tests/test_mcp_iterative_index_probe.py` — Orion unseen MCP (index→guide); search required sem probe; `probe_index=false`.
+- Classificação/descrição do provider informam seleção; AuthZ/Policy/Decision permanecem donos.
+- Sem hardcode de `get_product_guide`, `topic`, TÉO/DAVI/VISTA.
+- Sem novo planner, registry ou workflow por provider.
+- PREPARE/ACT inalterados; MESSAGE ≠ ACT.
+
+## 5. Testes
+
+- `tests/test_mcp_iterative_index_probe.py` — Orion unseen MCP (index→guide); contract omit→index mesmo com `probe_index=false`; search required sem probe; descrição sem sinal omit/index + `probe_index=false` não invoca vazio.
 - Stage 03 / envelope / TÉO analyze regression preservados.
+- Suíte `delia-api` pytest completa verde neste HEAD.
 
-## 5. Live SSH
+## 6. Live SSH
 
-Registrado no ledger §6.209 após deploy do SHA desta correção (MESSAGE-only; zero ACT).
+Registrado no ledger §6.209 (atualização pós contract-gate) após deploy do SHA desta correção em `srv-api` (MESSAGE-only; zero ACT). Resultados LIVE-A/B/C e timeouts constam no ledger, não neste doc.
 
-## 6. Outcome
+## 7. Outcome
 
 ```text
 REUSE_DECISION=EXTEND

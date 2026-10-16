@@ -737,6 +737,32 @@ def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
     return any(_is_open_vocabulary(node) for node in properties.values())
 
 
+def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> bool:
+    """True when the untrusted capability description declares that
+    omitting optional identifiers returns an index of options.
+
+    Language-agnostic enough for MCP English contracts (omit/omitted +
+    index/available/list). Never field-name or provider hardcode; never
+    treats optional fields alone as sufficient (RW-S03-01).
+    """
+    text = (descriptor.description or "").lower()
+    if not text:
+        return False
+    omit_signal = (
+        "omit" in text
+        or "omitted" in text
+        or "without the" in text
+        or "when omitted" in text
+    )
+    index_signal = (
+        "index" in text
+        or "available" in text
+        or "list of" in text
+        or "lists the" in text
+    )
+    return omit_signal and index_signal
+
+
 def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
     """True when a non-mutating capability may legally be invoked empty
     to obtain an owner index of optional free-string identifiers.
@@ -744,9 +770,9 @@ def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
     Structural only: READ/ANALYSIS, empty invoke schema-valid (no
     required fields), at least one optional unconstrained string, and
     not an opaque-envelope case (those use same-group DISCOVERY).
-    Eligibility alone never runs a probe — the model must still propose
-    ``probe_index`` after reading the untrusted capability contract.
-    Never field-name or provider hardcode.
+    A probe still requires either an explicit owner-contract omit→index
+    declaration or a model ``probe_index`` proposal. Never field-name
+    or provider hardcode.
     """
     if descriptor.operation_class not in (
         SpecialistOperationClass.READ,
@@ -2959,15 +2985,20 @@ class OperationalCapabilityOrchestrator:
                 self._log_plan(plan, correlation, discovery_ran=True)
             else:
                 self._log_plan(plan, correlation, discovery_ran=False)
-        elif self_index and self._propose_index_probe(
-            input_text,
-            descriptor,
-            workspace_context,
-            prior_turns,
-            correlation,
-            deadline,
+        elif self_index and (
+            _contract_declares_omit_returns_index(descriptor)
+            or self._propose_index_probe(
+                input_text,
+                descriptor,
+                workspace_context,
+                prior_turns,
+                correlation,
+                deadline,
+            )
         ):
             # INDEX READ → later GUIDANCE READ (same capability).
+            # Contract omit→index declaration authorizes the empty
+            # invoke; otherwise the model must propose probe_index.
             # Empty arguments are schema-valid only when eligibility
             # already proved no required fields.
             empty_args = _validate_instance({}, descriptor.input_schema)

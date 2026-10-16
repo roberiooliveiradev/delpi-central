@@ -23,6 +23,7 @@ from app.application.capability_provision.orchestration import (
     INDEX_PROBE_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    _contract_declares_omit_returns_index,
     _eligible_self_index_probe,
     _requires_owner_vocabulary,
 )
@@ -422,12 +423,83 @@ def test_required_search_query_never_index_probes_or_catalog():
     )
 
 
-def test_probe_index_false_skips_empty_invoke():
+def test_contract_omit_index_runs_even_when_model_probe_false():
+    """Owner description omit→index is sufficient; model false must not
+    block the governed empty index invoke."""
     guide = _cap(
         "get_inspection_guide",
         SpecialistOperationClass.READ,
         schema=_GUIDE_SCHEMA,
-        desc="Omit topic for index.",
+        desc=(
+            "Omit topic to return the index of available guides; "
+            "with topic return the guide body."
+        ),
+    )
+    assert _contract_declares_omit_returns_index(guide) is True
+    index = _outcome(
+        "get_inspection_guide",
+        "index",
+        structured={
+            "data": {"items": [{"topic": "equipment_inspection"}]}
+        },
+    )
+    filled = _outcome(
+        "get_inspection_guide",
+        "guide",
+        structured={
+            "data": {
+                "items": [
+                    {
+                        "topic": "equipment_inspection",
+                        "content": GUIDE_BODY,
+                    }
+                ]
+            }
+        },
+    )
+    provider = FakeProvider(
+        PROVIDER_ID,
+        [_group([guide])],
+        outcomes={
+            ("knowledge", "get_inspection_guide"): {
+                "index": index,
+                "filled": filled,
+            }
+        },
+    )
+    model = FakeProposalModel(
+        _select(
+            "get_inspection_guide",
+            arguments={"topic": "equipment_inspection"},
+            probe_index=False,
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                }
+            },
+        )
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Como faço para registrar uma inspeção de equipamentos?"
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls[0] == ("get_inspection_guide", {})
+    assert "checklist" in (attempt.content or "")
+
+
+def test_probe_index_false_skips_empty_invoke_without_contract_signal():
+    guide = _cap(
+        "get_inspection_guide",
+        SpecialistOperationClass.READ,
+        schema=_GUIDE_SCHEMA,
+        desc="Read a guide by topic when you already know the topic.",
     )
     provider = FakeProvider(
         PROVIDER_ID,
