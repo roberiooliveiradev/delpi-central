@@ -467,15 +467,20 @@ class HandleInteractiveConversationTurn:
             raise InteractionError(
                 INVALID_REQUEST, "typed decision requires confirmation"
             )
-        if not isinstance(text, str) or text.strip():
-            raise InteractionError(
-                INVALID_REQUEST, "typed decision cannot carry free text"
-            )
         expected = (
             "CONFIRM"
             if kind == TURN_COMMAND_APPLY_PREPARED
             else "REJECT"
         )
+        # The HTTP mapper resolves legacy fixed labels into the same
+        # typed command. Accept ONLY the published exact label during
+        # migration; free text and contradictory payloads stay invalid.
+        if not isinstance(text, str) or (
+            text.strip() and text != LEGACY_CONFIRMATION_LABELS[expected]
+        ):
+            raise InteractionError(
+                INVALID_REQUEST, "typed decision cannot carry free text"
+            )
         if str(confirmation.get("decision") or "").upper() != expected:
             raise InteractionError(
                 INVALID_REQUEST, "command and decision do not match"
