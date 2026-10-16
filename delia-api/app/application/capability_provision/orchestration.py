@@ -4593,7 +4593,36 @@ class OperationalCapabilityOrchestrator:
             expected_session_id=record.session_id,
             now_epoch=time.time(),
         )
-        # RW-01: confirmation binding alone is NOT a winning claim.
+        # Validate before claiming: an invalid fingerprint, actor or
+        # session may NEVER consume another caller's legitimate pending
+        # proposal. A validated CONFIRM/REJECT still needs to win the
+        # exclusive claim below before any ACT can proceed.
+        if bound.state not in (
+            ConfirmationState.CONFIRMED,
+            ConfirmationState.REJECTED,
+        ):
+            reasons = ",".join(r.value for r in bound.reason_codes)
+            self._audit(
+                stage="CONFIRMATION_INVALID",
+                capability_ref=record.capability_ref,
+                group_id=record.group_key,
+                owner_capability=preview.owner_capability,
+                correlation_id=correlation,
+                actor_user_id=actor_user_id,
+                decision=bound.state.value,
+                proposal_digest=record.digest,
+                preview_fingerprint=fingerprint,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.WRITE_REJECTED,
+                correlation_id=correlation,
+                error_code="confirmation_mismatch",
+                content=(
+                    "A confirmação não corresponde à proposta exata "
+                    f"({reasons}). Nenhuma escrita foi executada."
+                ),
+            )
+        # RW-01: validated binding alone is NOT a winning claim.
         # Two requests can read the same pending record concurrently;
         # only the atomic, identity-checked consumer may proceed to ACT.
         # Do not hold the store lock across owner/network calls.
@@ -4626,17 +4655,6 @@ class OperationalCapabilityOrchestrator:
                 status=GovernedCapabilityStatus.WRITE_REJECTED,
                 correlation_id=correlation,
                 content="Operação cancelada — nenhuma escrita foi executada.",
-            )
-        if bound.state is not ConfirmationState.CONFIRMED:
-            reasons = ",".join(r.value for r in bound.reason_codes)
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.WRITE_REJECTED,
-                correlation_id=correlation,
-                error_code="confirmation_mismatch",
-                content=(
-                    "A confirmação não corresponde à proposta exata "
-                    f"({reasons}). Nenhuma escrita foi executada."
-                ),
             )
         # CONFIRMED still authorizes nothing: fresh live revalidation of
         # the owner surface precedes the ACT call, and live Core/Domain
