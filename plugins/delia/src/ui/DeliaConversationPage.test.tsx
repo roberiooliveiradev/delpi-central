@@ -15,7 +15,7 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("heading", { name: "Detalhes" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Evidências" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Atividades" })).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: "Contexto da conversa" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
     expect(container.contains(message)).toBe(true);
   });
 });
