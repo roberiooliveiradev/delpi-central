@@ -12,3 +12,5 @@ export {
 } from "./ComposerCharacterCounter";
 
 export { ComposerStopButton, type ComposerStopButtonProps } from "./ComposerStopButton";
+
+export { ComposerClearDraftButton, type ComposerClearDraftButtonProps } from "./ComposerClearDraftButton";
