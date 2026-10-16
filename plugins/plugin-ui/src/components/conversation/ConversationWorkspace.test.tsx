@@ -46,6 +46,23 @@ describe("ConversationWorkspace", () => {
     ).toBeNull();
   });
 
+  it("renders scroll navigator outside the scroll viewport above footer", () => {
+    const { container } = render(
+      <ConversationWorkspace
+        scrollNavigator={<button type="button">Ir para o final</button>}
+        footer={<span>Composer</span>}
+      >
+        BODY
+      </ConversationWorkspace>,
+    );
+    const navigator = container.querySelector(".delpi-ui-conversation-workspace__scroll-navigation");
+    const body = container.querySelector(".delpi-ui-conversation-workspace__body");
+    const footer = container.querySelector(".delpi-ui-conversation-workspace__footer");
+    expect(navigator).toBeTruthy();
+    expect(body?.contains(navigator)).toBe(false);
+    expect(navigator?.compareDocumentPosition(footer!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("renders banner between header and scrollable body", () => {
     const { container } = render(
       <ConversationWorkspace
