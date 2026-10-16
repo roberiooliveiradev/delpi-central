@@ -1714,10 +1714,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "resolutions": {
                             "type": "object",
                             "additionalProperties": True,
+                            "x-delpi-gpt-opaque-object": True,
                             "description": (
                                 "Optional ambiguity resolutions for "
                                 "migrate_legacy_diagram_to_native_bpmn "
-                                "re-PREPARE."
+                                "re-PREPARE. Keys are dynamic ambiguity IDs; "
+                                "values contain option and optional values "
+                                "and are validated by the canonical "
+                                "legacy-to-BPMN domain mapper."
                             ),
                         },
                         "candidate_xml_override": {
