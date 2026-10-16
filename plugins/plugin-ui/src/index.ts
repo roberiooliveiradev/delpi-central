@@ -15,6 +15,8 @@ export { ConversationContextPanel } from "./components/conversation/Conversation
 /** Host-consumed scroll control — retain in federated Index exports. */
 export { ConversationScrollNavigator } from "./components/conversation/ConversationScrollNavigator";
 export * from "./components/composer";
+/** Explicit export for host-only composer action in Module Federation. */
+export { ComposerClearDraftButton } from "./components/composer/ComposerClearDraftButton";
 export * from "./components/help";
 export * from "./components/layout";
 /** Host-only export: protected from remote federation tree-shake. */
