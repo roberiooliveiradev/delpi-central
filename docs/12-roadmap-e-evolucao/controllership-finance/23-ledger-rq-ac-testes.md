@@ -106,7 +106,7 @@ Este ledger complementa:
 | RQ-P6-06 | motivos de rejeição = núcleo + extensões | inativação preserva códigos históricos | positive + sibling | E06 | TARGET |
 | RQ-P6-07 | attachment roles são catalogados com genérico quando permitido | role obrigatório/configurado respeitado | positive + negative | E05 | TARGET |
 | RQ-P6-08 | notification targets usam opções governadas | targets inválidos não são free-form | positive + negative | T02 | TARGET |
-| RQ-P6-09 | um MANAGE pode publicar com auditoria no target atual | segundo MANAGE não é requisito implícito | positive | T05 | TARGET |
+| RQ-P6-09 | MANAGE efetivo **AND** escopo administrativo publica configuração versionada | um publicador autorizado, motivo/audit e vigência prospectiva; segundo MANAGE não é requisito; ACCESS isolado e MANAGE sem scope falham | positive + sibling + permission/scope negative | T05 / DEC-04 / P5-H | TARGET / PO_APPROVED |
 | RQ-P6-10 | Help explica draft/publish/effective_from/snapshot/inativação | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 
 ## Superfícies da topbar
