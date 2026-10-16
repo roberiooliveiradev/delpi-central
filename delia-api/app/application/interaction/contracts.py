@@ -39,6 +39,17 @@ LEGACY_CONFIRMATION_LABELS = {
     "REJECT": "Cancelamento da operação solicitada.",
 }
 
+# Application-owned command vocabulary: HTTP and in-process consumers
+# must enforce the same execution-scope boundary (§6.184 / RW-02).
+TURN_COMMAND_MESSAGE = "MESSAGE"
+TURN_COMMAND_APPLY_PREPARED = "APPLY_PREPARED"
+TURN_COMMAND_REJECT_PREPARED = "REJECT_PREPARED"
+TURN_COMMANDS = frozenset({
+    TURN_COMMAND_MESSAGE,
+    TURN_COMMAND_APPLY_PREPARED,
+    TURN_COMMAND_REJECT_PREPARED,
+})
+
 
 @dataclass(frozen=True, slots=True)
 class InteractiveTurnRequest:
@@ -69,6 +80,10 @@ class InteractiveTurnRequest:
     # owner-declared confirmation policy. It can ONLY reduce execution
     # authority; it never grants permission and never weakens a gate.
     max_execution_stage: str | None = None
+    # Typed command survives the HTTP mapper and is validated AGAIN
+    # at the Application boundary. Missing command means MESSAGE only;
+    # existing published legacy confirmation labels are transitional.
+    command_type: str = TURN_COMMAND_MESSAGE
 
 
 @dataclass(frozen=True, slots=True)
