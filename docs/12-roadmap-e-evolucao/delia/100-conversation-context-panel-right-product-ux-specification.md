@@ -155,3 +155,52 @@ PHASE_PROGRESSION = NONE
 ## Registro de implementação visual bounded — 2026-10-16
 
 `ConversationContextPanel` foi criado em `plugin-ui` e importado por `DeliaConversationPage` na região direita, com seções **Detalhes**, **Evidências** e **Atividades** e toggle de abertura/fechamento no shell. Os slots `details`, `evidence` e `activities` aceitam apenas projeções read-only publicadas pela DÉLIA. Na ausência de contrato/dados, renderizam estados neutros, sem inventar evidence nem activity; não há fetch, ACT, planner ou Domain authority na UI. `EXISTING_EQUIVALENT=YES` para primitives e presentations existentes; `REUSE_DECISION=EXTEND` para composição. Testes/build/browser `TEST_NOT_RUN`; aceite independente `PENDING`; fases inalteradas.
+
+## 10. Revisão visual R1 — painel contextual clean e progressivo (2026-10-16)
+
+**Evidência:** screenshot real e `ConversationContextPanel.tsx` no `plugin-ui`, HEAD `18583359972f22ff76041859740307f401628933`. O layout mostra corretamente as três seções, mas a apresentação atual empilha mensagens redundantes de ausência de dados, criando aparência de checklist administrativo. Esta especificação **substitui os alvos visuais conflitantes** acima e preserva os limites canônicos de evidência/atividades. Ver [98 §12](./98-delia-full-page-three-region-layout-product-ux-specification.md).
+
+### 10.1 Estrutura moderna, clara e não redundante
+
+```text
+  Contexto                              [fechar ×]
+
+  [i]  Detalhes               [expansão se aplicável]
+       (conteúdo real quando selecionado)
+
+  [documento] Evidências
+       (projeções autorizadas reais)
+
+  [pulso] Atividades
+       (etapas e estados realmente observados)
+
+  [se não houver NENHUMA projeção em todo o painel]
+       Selecione uma mensagem para ver mais informações.
+       (apenas UMA orientação geral, sem avisos por seção)
+```
+
+- **Cabeçalho:** “Contexto” como heading de painel, **não** repetir “da conversa” por extenso quando o espaço for pequeno; texto acessível da região pode continuar “Contexto da conversa”. À direita, **um** botão de fechar; nenhum segundo `Fechar contexto` no header central quando o painel estiver aberto.
+- **Seções:** Detalhes, Evidências e Atividades são itens de navegação/agrupamento elegantes, com ícones `Info`, `FileText` e `Activity`, texto compacto e alinhado; evitar grandes divisórias obrigatórias entre três caixas vazias. Em expansão com conteúdo, cada seção é painel semântico legível com respiro adequado.
+- **Zero projeções em todo painel:** preferir **um empty state único**, neutro e de baixo peso visual (ex.: “Selecione uma mensagem para ver mais informações.”); não exibir repetidamente “Nenhum detalhe... / Nenhuma evidência... / Nenhuma atividade...” por padrão. Não dar a entender que algo foi consultado ou que ausência é global.
+- **Se algumas seções têm dados:** renderizar apenas as seções disponíveis, ou mostrar rótulos das restantes em estado discreto/indisponível conforme UX acordada. Não duplicar `EvidenceDetails` e `ActivityViewer` completos: apresentar uma projeção resumida e affordance para abrir detalhes somente se vinculados a turno/seleção legítimos.
+- **Profundidade visual:** mesma família de surfaces que o centro com separação hairline e baixa diferença tonal; header compacto alinhado ao da sidebar e do centro. Não utilizar painel azul destacado como quadro independente, bordas pesadas, cards encavalados ou estados de loading ornamentais.
+- **Typography / scale:** headline 13–14px, ícone 16–18px, texto secundário 12–13px, espaçamentos 12–16px entre grupos, padding 16–20px. Valores propostos para serem harmonizados aos tokens realmente existentes em `plugin-ui`.
+- **Conteúdo:** textos podem quebrar linha, snippets/IDs nunca vazam secrets/handles; overflow vertical próprio; sem horizontal scrolling da página; links apenas se publicados/autorizados.
+- **Cores:** semantic tokens do Portal e `plugin-ui`, contraste e foco conforme kit; selected/expanded não dependem só da cor.
+
+### 10.2 Comportamento dos grupos
+
+- **Detalhes:** informação contextual de conversa/turno **somente quando real e admitida**; não apresentar fictícios escopo, IDs de sessão, datas ou persona/profissional.
+- **Evidências:** projection resumida usando a semântica existente de `EvidenceDetails`; explicitar epistemic class/provenance apenas quando o owner fornecer; nunca converter saída de modelo/MCP em FACT.
+- **Atividades:** resumir passos reais do `ActivityViewer`, distinguindo pending/complete/error e o limite de business outcome; não gerar timeline paralela.
+- **Controles expande/colapsa das seções:** opcionais e subordinados; ao usar disclosure, `aria-expanded`/keyboard/tab order corretos; não dar aparência de botão clicável sem conteúdo/ação.
+- **Seleção:** uma mensagem/entidade só se torna contexto ativo quando o consumer tiver contrato/projeção; caso contrário o painel é um container vazio honesto e elegante.
+- **Abertura:** painel fechado por default; botão **Abrir contexto** no header central somente enquanto fechado e quando a superfície estiver disponibilizada; ao abrir, somente botão de fechar no cabeçalho direito.
+- **Fechamento:** apenas oculta UI; **não** aborta interação nem cancela ACT/Automation Hub, não altera `turns`, draft ou posição de scroll.
+- **Dock/mobile:** drawer sobreposto sob demanda com backdrop, foco e Escape controlados, somente uma drawer aberta; contexto não fica como coluna comprimida.
+
+### 10.3 Reuse e aceite
+
+`EXISTING_EQUIVALENT=YES` para `ActivityViewer`, `EvidenceDetails`, `ConversationHeader`, `RoomSidePanel` e primitives; `REUSE_DECISION=REUSE` para projeções visuais e `EXTEND` para composição de painel direito. `TO_INVENTORY` para seleção governada de turno/contrato de contexto aprofundado. UI de painel não vira provider, engine, planner nem authority.
+
+**Critérios:** único botão de contexto por estado; exatamente um empty state quando tudo vazio; seções com dados reais não degradam a leitura principal; nenhuma promessa falsa; aparência uniforme nas três regiões; screenshot desktop e Dock; keyboard/ARIA, light/dark, zoom 200%, contrast, overflow e reduced motion; testes/federação/browser QA executados antes de aceite. `UX_REVIEW=REWORK`, `RUNTIME_CHANGE=NONE` nesta atualização.
