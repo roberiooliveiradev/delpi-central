@@ -2394,3 +2394,34 @@ def test_sql_argument_rejected_on_other_operations():
         validate_arguments(action, {"sql": "SELECT 1"})
     with pytest.raises(ArgumentValidationError):
         validate_arguments(action, {"code": "A", "sql": "SELECT 1"})
+
+
+@pytest.mark.parametrize("query", [
+    "Quero três exemplos de terminal pino cadastrados na DELPI",
+    "me dê exemplos de terminal faston",
+    "quais terminais olhal existem?",
+    "mostre três terminais bandeira",
+])
+def test_product_normative_terminal_queries_discover_search_products(query, monkeypatch):
+    """Normative product terms are governed catalog aliases, not new permissions."""
+    set_actions_for_tests(_load_baseline_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    result = discover_delpi_information(query=query, top_k=5, actor_id="u1")
+    assert result["candidates"], query
+    assert result["candidates"][0]["action_id"] == "search_products", result["candidates"]
+
+
+def test_unrelated_adjustment_pin_does_not_gain_product_alias(monkeypatch):
+    """PINO DE AJUSTE is not a normative TERM. PINO match."""
+    set_actions_for_tests(_load_baseline_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    result = discover_delpi_information(
+        query="me dê três exemplos de pino de ajuste", top_k=5, actor_id="u1"
+    )
+    assert all(c["action_id"] != "search_products" for c in result["candidates"])
