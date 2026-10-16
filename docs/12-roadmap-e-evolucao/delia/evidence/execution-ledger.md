@@ -14181,3 +14181,20 @@ NEXT=STAGE_03_AUTHORIZATION_GATE (implementation blocked until explicit Coordina
 
 STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_AUTHORIZED=NO; C3_EXECUTED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_STAGE_03_AUTHORIZATION
+
+## §6.203 — DELIA-UX-CONVERSATION-MARKDOWN-B2-GATES-AND-IMPLEMENTATION-01 (STOP; IMPLEMENTATION_ALLOWED=NO)
+
+**DATA:** 2026-10-16. **MODE:** REANCHOR → prove L1 path → gate check → STOP before I1/I2/I3. **BASE_HEAD:** `f7121e8b762bb58ce00628d5e3e3ce7979a4994b`. **AUTHORITIES:** 16/83/84/89/90 + OpenAPI declarations + projection adapter. **NO runtime B2 diff.**
+
+- **L1 REVALIDATE (HEAD):** Domain mural contract remains PROVEN in `api-delpi` (prior doc 90). DÉLIA path ABSENT: `openapi_declarations.delpi.json` = only `search_products|get_product_summary|get_product_stock|search_customers`; zero mural ops; `capability_catalog_adapter` rejects undeclared ops (`missing_semantic_declaration`); `rg mural` in `delia-api/app` = 0; no `presentation_v2` module; producer still `presentation` v1.
+- **G1:** `ACCEPT_WITH_RESIDUAL` (doc 89) — residual navigable links / L1 incomplete. Not upgraded to full APPROVED by this task.
+- **G2:** `ACCEPT_WITH_RESIDUAL` (doc 89) — renderer not implemented. Not upgraded.
+- **G3:** `NOT_GRANTED` — no `G3_TASK_BRIEF_APPROVED` / SHA authorization for I1–I3.
+- **PRODUCT:** D1–D12 / L1 / CP-333 preserved; Stage-02-B2 PREPARE/ACT untouched; no Chat runtime reuse.
+- **SSH READ-ONLY** `operador@192.168.1.237`: REMOTE=`f7121e8b76` (= BASE); delia-api healthy; gateway 200; DECLS product/customer only; `PRESENTATION_CONTRACT_VERSION=1`; `NO_V2_RUNTIME_MODULE=1`. `DEPLOY_STATUS=DEPLOY_NOT_AUTHORIZED`.
+- **EXIT:** `IMPLEMENTATION_ALLOWED=NO`; `NAVIGABLE_LINK_EMISSION=BLOCKED`; `CP_333=PLANNED_NOT_PASS`; `RUNTIME_B2_DIFF=NONE`.
+- **BLOCKERS (precise):** (1) `L1_CAPABILITY_BINDING_ABSENT` — competent EXTEND = owner `api-delpi` + OpenAPI declaration + owner-published navigable disclosure for `url` (not invent local capability); (2) `G3_TASK_BRIEF_APPROVED` absent — even text-only Markdown needs PM decision (L3 was rejected).
+- **NEXT bounded:** Architecture/Coordination decide (a) authorize `…-L1-MURAL-CAPABILITY-BINDING-01` or (b) PM authorize text-only B2 slice. No new generic inventory. Global phase NEXT unchanged.
+
+G1_VERDICT=ACCEPT_WITH_RESIDUAL_UNCHANGED; G2_VERDICT=ACCEPT_WITH_RESIDUAL_UNCHANGED; G3_AUTHORIZATION=NOT_GRANTED
+PHASE_PROGRESSION=NONE; INDEPENDENT_REVIEW=N/A_NO_RUNTIME_DIFF

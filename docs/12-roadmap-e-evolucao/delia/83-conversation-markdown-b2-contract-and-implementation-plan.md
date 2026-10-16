@@ -114,6 +114,34 @@ CP-333 = PLANNED_NOT_PASS
 
 - **NEXT bounded:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-MURAL-CAPABILITY-BINDING-01` (menor EXTEND para fechar um binding real) — sujeito a revisão independente; **não** libera G3 automaticamente.
 
+### 0.8 Gate stop — implementação B2 não autorizada (2026-10-16)
+
+Task `DELIA-UX-CONVERSATION-MARKDOWN-B2-GATES-AND-IMPLEMENTATION-01` (HEAD `f7121e8b76`):
+
+**Revalidação L1 (não inventário genérico):** o caminho canônico DÉLIA OpenAPI exige `openapi_declarations.delpi.json`. Declarations vigentes = apenas `search_products`, `get_product_summary`, `get_product_stock`, `search_customers`. **Nenhuma** operação `mural_acessos` / `list_mural_acessos_links`. Projection rejeita ops sem declaration (`missing_semantic_declaration`). `delia-api/app` = 0 refs mural. Contrato Domain mural permanece real no owner `api-delpi`; binding capability→structured→turno = **ABSENT**.
+
+**Gates:**
+
+| Gate | Estado | Impede runtime? |
+|---|---|---|
+| G1 | `ACCEPT_WITH_RESIDUAL` (doc 89) — residual links | Sim (links D1/D6/D7) |
+| G2 | `ACCEPT_WITH_RESIDUAL` (doc 89) — renderer não implementado | Sim (I2) |
+| G3 | **NOT APPROVED** — sem `G3_TASK_BRIEF_APPROVED` | Sim |
+| L1 binding | `PARTIAL` Domain / path DÉLIA ABSENT | Sim (emissão navegável) |
+
+```text
+IMPLEMENTATION_ALLOWED = NO
+RUNTIME_B2_DIFF = NONE
+NAVIGABLE_LINK_EMISSION = BLOCKED
+```
+
+**Bloqueio preciso (único material para Architecture/Coordination):**
+
+1. `L1_CAPABILITY_BINDING_ABSENT` — owner competente `api-delpi`; menor EXTEND legítimo = declaration OpenAPI + disclosure do owner no campo `url` + schema de saída tipado; **não** inventar capability local DÉLIA.
+2. `G3_TASK_BRIEF_APPROVED` ausente — I1/I2/I3 bloqueados mesmo para Markdown sem links; slice sem links exigiria decisão explícita do Product Master (L3 foi rejeitada).
+
+Sem autoaceitação de gates. Sem I1/I2/I3. Sem deploy.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:
