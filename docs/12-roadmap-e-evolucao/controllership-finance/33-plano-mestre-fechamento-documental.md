@@ -720,3 +720,12 @@ Durante o fechamento documental, se surgir escolha real de:
 - escopo V1;
 
 retornar `DECISION_REQUIRED` e não preencher a lacuna por preferência.
+
+
+## Rebaseline de fechamento 16/10/2026 — decisão vigente P5
+
+O registro histórico A12 = REVIEW_COMPLETION_DECISION_REQUIRED foi superado pela aprovação C2 e P5-A..J. Quorum vigente: um aceite por área obrigatória sobre a PackageVersion corrente; área obrigatória é definida em configuração P6 versionada e congelada na submissão P5. Uma troca de responsável não remove aceite existente, e nova versão exige novos aceites. O aceite não pode ser revertido pela UI V1. A rejeição de uma área exige confirmação da autoridade operacional formal para encerrar a competência como rejeitada. Após confirmação, nenhuma TaskProjection de review permanece acionável. Este adendo não aprova a autoridade confirmadora nem cria processo excepcional de alteração de aceite.
+
+**Fechamento ainda BLOQUEADO:** (i) DECISION_REQUIRED para designação/critério da autoridade confirmadora e negativa da confirmação; (ii) escopo do processo excepcional de correção — se não aprovado, manter fora da V1; (iii) Core T05 (grupos/funções + effective access), P6 catalogo de áreas e snapshots físicos, binding de producers/consumers, RQ/AC/test matrix e Help; (iv) rebase/integracao com HEAD atual e rules .cursor; (v) revisão A12/A14/A15 reexecutada com evidence. Congelamentos antigos são históricos, não prova de freeze presente.
+
+`DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.
