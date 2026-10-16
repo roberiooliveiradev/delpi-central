@@ -27,6 +27,7 @@ import {
   ConversationUserMessage,
   ConversationStatus,
   ConversationWorkspace,
+  EvidenceDetails,
   GovernedConfirmation,
   MessageActionBar,
 } from "../../components/conversation";
@@ -735,6 +736,101 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
             <ConversationError
               title="Não foi possível concluir."
               density="compact"
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.EvidenceDetails",
+    family: "collaboration",
+    exportName: "EvidenceDetails",
+    title: "EvidenceDetails",
+    description:
+      "Provenance/evidence subordinada da resposta: linha de fonte visível + disclosure com pares label/valor e limitações. Apresentação pura.",
+    propsSummary: [
+      "sourceSummary",
+      "items",
+      "limitations",
+      "limitationsLabel",
+      "materialLimitationLabel",
+      "disclosureLabel",
+      "defaultExpanded",
+      "className",
+    ],
+    demos: [
+      {
+        id: "grounded",
+        label: "Grounded + timestamp",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI · consultado em 16/10/2026 14:32"
+              items={[
+                { label: "Classificação", value: "OBSERVATION" },
+                { label: "Fonte", value: "Cadastro DELPI" },
+                { label: "Especialista", value: "DAVI" },
+                { label: "Observado em", value: "16/10/2026 14:32" },
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "with-limitations",
+        label: "Expandido + limitações",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI"
+              defaultExpanded
+              items={[
+                { label: "Classificação", value: "FACT" },
+                { label: "Fonte", value: "Cadastro DELPI" },
+              ]}
+              limitations={[
+                "Dados sujeitos ao horário da última atualização.",
+                "Cobertura parcial do período solicitado.",
+              ]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "material-limitation",
+        label: "Limitação material (sinal explícito)",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI"
+              materialLimitationLabel="Há limitações nesta resposta"
+              items={[{ label: "Fonte", value: "Cadastro DELPI" }]}
+              limitations={["Cobertura parcial do período solicitado."]}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "non-grounded",
+        label: "Sem fonte vinculada",
+        render: () => (
+          <div style={{ maxWidth: 420 }}>
+            <EvidenceDetails sourceSummary="Sem fonte vinculada" />
+          </div>
+        ),
+      },
+      {
+        id: "narrow-long",
+        label: "Fonte longa (320px)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <EvidenceDetails
+              sourceSummary="Fonte · Cadastro DELPI com um nome de fonte propositalmente extenso para provar quebra segura · consultado em 16/10/2026 14:32"
+              items={[
+                { label: "Classificação", value: "RECOMMENDATION" },
+                { label: "Fonte", value: "Cadastro DELPI com nome longo" },
+              ]}
             />
           </div>
         ),

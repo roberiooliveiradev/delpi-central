@@ -1,6 +1,7 @@
 # 80 — DÉLIA: EvidenceDetails / Provenance Details
 
-**Status:** `DESIGN_SPECIFIED / NOT_IMPLEMENTED` — aparência, semântica e boundary documentadas; não é evidência de runtime, não avança fase e não congela API antes da execução.  
+**Status:** `IMPLEMENTED / INTEGRATED_IN_DELIA` — componente compartilhado `EvidenceDetails` implementado em `plugin-ui` e integrado em `DeliaAssistantMessage`; não é evidência de produção, não avança fase e não altera contratos.  
+**Implementado em:** HEAD `dd1cfd475c822f1a6d3a0a04da62d743f71e3db4` + task `DELIA-UX-EVIDENCE-DETAILS-FULL-IMPLEMENTATION-01`.  
 **Escopo:** superfície conversacional secundária para apresentar fonte, provenance, classificação epistêmica, freshness/observed_at e limitações da resposta DÉLIA.  
 **Reanchor:** HEAD de elaboração `7ff31715f4b0eb3b5531510bfce7a6f4e794cd36`; implementação futura deve revalidar HEAD/status e a cadeia Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.  
 **Referências:** [38 — Evidence/Provenance/Epistemic UX](./38-evidence-provenance-and-epistemic-ux.md), [73 — identidade/anatomia](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [75 — mensagem DÉLIA](./75-assistant-message-visual-specification.md), [79 — ActivityViewer](./79-conversation-activity-summary-visual-specification.md).
@@ -437,16 +438,47 @@ Regras:
 ## 22. Estado factual
 
 ```text
-CURRENT_LOCAL_EVIDENCE_UI = PROVEN
-SHARED_EVIDENCE_COMPONENT = NOT_IMPLEMENTED
-PRODUCT_MEANING = SPECIFIED
-VISUAL_DIRECTION = SPECIFIED
-EXISTING_FULL_EQUIVALENT = NO
-DETAIL_FIELD_GRID = PARTIAL_REUSE_CANDIDATE
-REUSE_DECISION = NEW_CANDIDATE_AFTER_REVALIDATION
-BROWSER_QA_FOR_NEW_COMPONENT = TEST_NOT_RUN
-BUILD_FOR_NEW_COMPONENT = TEST_NOT_RUN
+CURRENT_LOCAL_EVIDENCE_UI = REPLACED_BY_SHARED_COMPONENT
+SHARED_EVIDENCE_COMPONENT = IMPLEMENTED (plugin-ui EvidenceDetails)
+DELIA_INTEGRATION = DONE (DeliaAssistantMessage consome EvidenceDetails)
+PRODUCT_MEANING = PRESERVED (evidence != confidence/authorization/outcome)
+VISUAL_DIRECTION = IMPLEMENTED (fonte muted + disclosure secundário + dl/dt/dd)
+EXISTING_FULL_EQUIVALENT = NO (confirmado no HEAD real)
+DETAIL_FIELD_GRID = DO_NOT_REUSE — API exige classNames/labels/tooltip de dashboard; <dl> nativo é mais simples e correto para disclosure compacto
+REUSE_DECISION = SHARED_EXTRACTION_JUSTIFIED — chrome conversacional pertence a plugin-ui (mesmo boundary de ConversationError/GovernedConfirmation/ActivityViewer); segundo consumidor real não existe ainda — decisão arquitetural, não falsamente multi-consumer
+SPECIALIST_ID_DISCLOSURE = USER_FACING_LEGITIMATE (rótulo "Especialista", somente quando contractuado)
+PROTOCOL_DISCLOSURE = TECHNICAL_ONLY — removido da superfície compacta (transport mechanics)
+OBSERVED_AT = formato pt-BR via Intl; inválido omitido; nunca raw
+MATERIAL_LIMITATION_SIGNAL = NOT_AVAILABLE no contrato atual — UI não infere severidade; limitações ficam verbatim dentro do disclosure
+PLUGIN_UI_TESTS = 11/11 (EvidenceDetails.test.tsx)
+DELIA_TESTS = 179/179
+PLUGIN_UI_BUILD + HOST_EXPORTS = PASS (EvidenceDetails exportado)
+DELIA_BUILD + FEDERATION = PASS
+BROWSER_QA = 31/31 PASS (harness dev local — fixtures DeliaAssistantMessage reais; grounded/timestamp/expanded/collapsed/OBSERVATION/FACT/HYPOTHESIS/RECOMMENDATION/NON_GROUNDED/limitations/long-source/no-provenance/invalid-ts/320/420/zoom200/light/dark/keyboard/focus-visible/no-overflow)
+LOCAL_CSS_REMOVED = YES (delia-turn__meta/source/evidence/meta-item removidos; residual search limpo)
 PHASE_ADVANCEMENT = NONE
 ```
 
-Esta spec define o próximo bounded design target. Ela não obriga a extração para `plugin-ui` se a revalidação futura provar que a abstração compartilhada não se justifica.
+## 23. API implementada
+
+```ts
+type EvidenceDetailItem = { label: string; value: ReactNode; wide?: boolean };
+type EvidenceDetailsProps = {
+  sourceSummary?: ReactNode;
+  items?: readonly EvidenceDetailItem[];
+  limitations?: readonly ReactNode[];
+  materialLimitationLabel?: ReactNode;   // somente se contrato sinalizar
+  disclosureLabel?: string;
+  defaultExpanded?: boolean;
+  className?: string;
+};
+```
+
+Render-only: recebe dados já projetados; não aceita objetos backend/provenance,
+não interpreta classe epistêmica, não calcula confiança, não infere materialidade.
+
+Arquivos: `plugins/plugin-ui/src/components/conversation/EvidenceDetails.tsx`,
+`styles/evidence-details.css`, teste co-localizado, export em
+`components/conversation/index.ts`, entrada de catálogo + demo em
+`catalog/visualComponents.ts` / `catalog/demos/collaboration.tsx`,
+verificação em `scripts/verify-host-exports.mjs`.

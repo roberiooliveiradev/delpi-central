@@ -631,6 +631,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Superfície inline de falha de interação no footer (ícone + título + descrição/ação opcional via ActionButton). OWNS chrome e role=alert. DOES NOT OWN erro, draft, retry, auth, PREPARE/ACT ou classificação — o consumidor resolve copy e callbacks.",
   }),
+  vc("collaboration", "EvidenceDetails", {
+    addedAt: "2026-10-16",
+    description:
+      "Provenance/evidence subordinada: linha de fonte sempre visível + disclosure rotulado com pares label/valor (dl/dt/dd) e limitações. OWNS chrome/disclosure/acessibilidade. DOES NOT OWN epistemic class, materialidade, freshness, auth ou contrato — o consumidor projeta dados user-facing.",
+  }),
   vc("collaboration", "MessageActionBar", {
     addedAt: "2026-10-15",
     description:

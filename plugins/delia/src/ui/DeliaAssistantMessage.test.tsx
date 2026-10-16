@@ -231,6 +231,7 @@ describe("DeliaAssistantMessage — provenance, epistemic, limitations", () => {
     renderMessage(
       makeTurn({
         groundingStatus: "GROUNDED",
+        epistemicClass: "OBSERVATION",
         provenance: {
           source: { source_id: "s", source_system: "delpi" },
           specialist_id: "delpi",
@@ -239,25 +240,51 @@ describe("DeliaAssistantMessage — provenance, epistemic, limitations", () => {
         },
       }),
     );
-    const meta = screen.getByLabelText("Detalhes da resposta");
-    expect(meta.textContent).toContain("fonte:");
-    expect(meta.textContent).toContain("delpi/HTTP");
-    expect(meta.textContent).toContain("classificação: OBSERVATION");
+    // Visible summary without opening the disclosure.
+    expect(screen.getByText(/Fonte · delpi/)).toBeTruthy();
+    const trigger = screen.getByRole("button", {
+      name: /Detalhes da evidência/,
+    });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(trigger);
+    // dl/dt/dd pairs: class, source, specialist, observed time.
+    expect(screen.getByText("OBSERVATION")).toBeTruthy();
+    expect(screen.getByText("Especialista")).toBeTruthy();
+    expect(screen.getByText("Observado em")).toBeTruthy();
+    // protocol is technical-only — never on the user-facing surface.
+    expect(document.body.textContent).not.toContain("HTTP");
+    expect(document.body.textContent).not.toContain("delpi/");
   });
 
-  it("renders 'sem fonte vinculada' when NON_GROUNDED", () => {
+  it("renders 'Sem fonte vinculada' when NON_GROUNDED", () => {
     renderMessage(makeTurn({ groundingStatus: "NON_GROUNDED" }));
-    expect(screen.getByText("sem fonte vinculada")).toBeTruthy();
+    expect(screen.getByText("Sem fonte vinculada")).toBeTruthy();
   });
 
-  it("renders limitations verbatim in subordinate meta", () => {
+  it("omits the observed time when the value is invalid", () => {
+    renderMessage(
+      makeTurn({
+        groundingStatus: "GROUNDED",
+        provenance: {
+          source: { source_id: "s", source_system: "delpi" },
+          observed_at: "not-a-date",
+        },
+      }),
+    );
+    expect(screen.getByText(/Fonte · delpi/)).toBeTruthy();
+    expect(screen.queryByText(/consultado em/)).toBeNull();
+    expect(screen.queryByText(/not-a-date/)).toBeNull();
+  });
+
+  it("renders limitations verbatim inside the disclosure", () => {
     renderMessage(
       makeTurn({ limitations: ["deterministic_test_adapter", "bounded"] }),
     );
-    const meta = screen.getByLabelText("Detalhes da resposta");
-    expect(meta.textContent).toContain(
-      "limitações: deterministic_test_adapter, bounded",
+    fireEvent.click(
+      screen.getByRole("button", { name: /Detalhes da evidência/ }),
     );
+    expect(screen.getByText("deterministic_test_adapter")).toBeTruthy();
+    expect(screen.getByText("bounded")).toBeTruthy();
   });
 
   it("owner hint renders once and is deduped from content", () => {
@@ -341,7 +368,8 @@ describe("DeliaAssistantMessage — copy action", () => {
     const { container } = renderMessage(makeTurn());
     const labels = Array.from(
       container.querySelectorAll(
-        "button:not(.delpi-ui-activity-viewer__disclosure)",
+        "button:not(.delpi-ui-activity-viewer__disclosure):" +
+          "not(.delpi-ui-evidence-details__disclosure)",
       ),
     ).map((b) => b.getAttribute("aria-label") ?? b.textContent);
     for (const label of labels) {
@@ -352,7 +380,8 @@ describe("DeliaAssistantMessage — copy action", () => {
     expect(
       Array.from(container.querySelectorAll("button")).filter(
         (b) =>
-          !b.classList.contains("delpi-ui-activity-viewer__disclosure"),
+          !b.classList.contains("delpi-ui-activity-viewer__disclosure") &&
+          !b.classList.contains("delpi-ui-evidence-details__disclosure"),
       ),
     ).toHaveLength(1);
   });

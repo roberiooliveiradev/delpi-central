@@ -30,6 +30,11 @@ export {
   type GovernedConfirmationTone,
 } from "./GovernedConfirmation";
 export {
+  EvidenceDetails,
+  type EvidenceDetailItem,
+  type EvidenceDetailsProps,
+} from "./EvidenceDetails";
+export {
   MessageActionBar,
   type MessageActionBarAlign,
   type MessageActionBarDensity,

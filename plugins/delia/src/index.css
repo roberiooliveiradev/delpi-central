@@ -217,53 +217,12 @@
   overflow-wrap: anywhere;
 }
 
-/* Subordinate metadata — source line first (readable), raw technical
-   evidence collapsed inside a disclosure (doc 70: expandable details). */
-.dashboard-delia .delia-turn__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* Evidence provenance — shared EvidenceDetails (plugin-ui) owns the
+   chrome; DÉLIA owns only the subordinate placement below the answer. */
+.dashboard-delia .delia-turn__evidence-details {
   margin-top: 6px;
   padding-top: 8px;
   border-top: 1px dashed color-mix(in srgb, var(--delia-border) 65%, transparent);
-  font-size: 0.75rem;
-  color: var(--delia-text-muted);
-}
-
-.dashboard-delia .delia-turn__source {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--delia-text-muted);
-}
-
-.dashboard-delia .delia-turn__source-when {
-  overflow-wrap: anywhere;
-}
-
-.dashboard-delia .delia-turn__evidence {
-  font-size: 0.75rem;
-}
-
-.dashboard-delia .delia-turn__evidence > summary {
-  cursor: pointer;
-  list-style-position: inside;
-  color: var(--delia-text-muted);
-}
-
-.dashboard-delia .delia-turn__evidence > summary:focus-visible {
-  outline: 2px solid var(--delia-focus-ring);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.dashboard-delia .delia-turn__evidence .delia-turn__meta-item {
-  display: block;
-  margin-top: 4px;
-  padding-left: 14px;
-}
-
-.dashboard-delia .delia-turn__meta-item {
-  overflow-wrap: anywhere;
 }
 
 /* Secondary message actions live after the response/evidence so they remain
