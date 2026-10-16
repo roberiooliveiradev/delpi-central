@@ -13910,3 +13910,24 @@ B2_IMPLEMENTATION=EVIDENCE_RECORDED; B2_INDEPENDENT_REVIEW=REWORK; RW_01=BLOCKIN
 B1=PASS_STRUCTURAL; B2=NOT_ACCEPTED; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.187 — DELIA-UX-CONVERSATION-MARKDOWN-B2-DECISIONS-D7-D12-CP333-01 (CONDITIONAL PRODUCT AUTHORIZATION / DOCUMENTATION ONLY)
+
+**DATE:** 2026-10-16. **BOUNDED TRACK:** Markdown textual da spec 82/83, **não** `DELIA-C3-STAGE-02-B2` (execução governada, §6.179–§6.186, último review `REWORK`). **PRODUCT MASTER DECISION:** D7–D12 aprovadas em conjunto, complementando D1–D6 anteriores, sem autorização de ACT ou progressão da fase. **REANCHOR:** `main=95562516fb24d91dc0d52aca3b0239e9bc771af4` no início da reconciliação; GitHub read-only de autoridades `16→50→17→49→51→52→21→20→25→24→82→83→ledger`; HEAD concorrente deve ser novamente verificado antes de runtime.
+
+**Decisões de produto vinculantes:** D7 navegação Portal legitimamente autorizada para links internos e nova aba segura para externos verificados; D8 copiar texto legível preservando dados/IDs/unidades/ordem/quebras; D9 fallback React text inerte só para conteúdo admitido em falha de formatação, erro neutro para payload inválido/inseguro; D10 `EvidenceDetails` é owner da apresentação de provenance e não é substituído por links em prosa; D11 paridade full-page+dock real e rollout/version compatibility; D12 formalização de CP e autorização **somente de escopo bounded condicionado** aos gates G1/G2/G3.
+
+**Canonização documental do planejamento:**
+- `25-requirements-traceability.md`: `CP-333` formalizado na fase C3 como `PLANNED / PRODUCT_MASTER_BOUNDED_AUTHORIZATION_CONDITIONAL`; não CP PASS. Markdown textual apenas, não tabelas/métricas/gráficos C/D/E.
+- `83-conversation-markdown-b2-contract-and-implementation-plan.md`: D1–D12 registradas; requisitos `B2-RQ21…25`, critérios `B2-AC25…30`, plano G0→G4 e restrições de links/copy/fallback/version.
+- `82-conversation-rich-content-and-structured-presentation-specification.md`: §11.2 reconcilia o gap histórico §11.1: `B2_MARKDOWN_TRACEABILITY=MAPPED_CP_333`; `C_D_E_TRACEABILITY_GAP=OPEN`.
+- `20-testing-and-acceptance-matrix.md`: `C3-MD-B2-G0/G1/G2` e `C3-MD-B2-01…11` como critérios/gates; testes de runtime `TEST_NOT_RUN`.
+- `16-execution-master-plan.md`: slice C3 bounded condicional, sem substituir o `NEXT` global nem abrir C4/C5.
+
+**Owners e constraints:** DÉLIA API/Application = contrato/produtor de formato explícito `presentation.v2`, information admissibility e grounded projection; plugin-ui = owner de renderer reuse/extension se demonstrado; DÉLIA MFE = adapter/composição e mesmo componente na page/dock; Portal/Core/Domain = navegação/identity/authorization factual, Security = allowlist/URL/threat model; reviewers independentes = aceite. `EXISTING_EQUIVALENT=YES` para primitives de Markdown documentais em `plugin-ui`; `REUSE_DECISION=PENDING_REVIEW` para uso em conversa; Shared generic sanitizer aceita schemes usados por outros consumers, portanto `SECURITY_REUSE_GATE=PENDING`. Sem novo renderer/engine/permission por inferência.
+
+**Autorização por condição, sem atalhos:** `G0=DOCUMENTED/CONDITIONAL` (CP-333 e D12); `G1=BLOCKING_PENDING` (OpenAPI/schema `presentation.v2`, format discriminator, producer, limits/errors/allowed URLs, v1-v2 compat/rollback, copy, navigation, Evidence); `G2=BLOCKING_PENDING` (reuse decision e sanitizer policy positiva, threat model, XSS/links/browser security); `G3=BLOCKING_PENDING` (brief de implementação per-owner com CP-333/RQ/AC/current SHA, depois de G1+G2); `G4=TEST_NOT_RUN` (conformance, adversarial, unit/integration, real full-page/dock, a11y, CI/build/federation, authoritatives and independent review). Pode-se **documentar/provar G1+G2 agora**; **NÃO** modificar API/UI runtime de B2 antes de G1+G2+G3. O CP não passa com documentação.
+
+**Evidence state:** `DOCUMENTATION_COMMIT_CHAIN=246357e26fa807b036cd996f9496d92bf2d07b87 (25) → e4a4f0d8550bc69375a84b7e4ba6a47031af1dcd (83) → d3ff36162f24768ffc08ee77285a18d076f5f3af (82) → f27ae36bc9dc5197c6db90466fc1301fa50b441c (20) → 03ed68b3b478b44315c98c240110735a38836b13 (16)`; `RUNTIME_DIFF=NONE`; `TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `DEPLOY=NOT_PERFORMED`; `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `PRODUCTION_READINESS=NOT_PROVEN`; `C_D_E_TRACEABILITY_GAP=OPEN`.
+
+**NEXT bounded:** G1 contract-first architecture + G2 independent plugin-ui/sanitizer reuse/security inventory under CP-333, followed by G3 bounded per-owner brief **only after gate approvals**. Preserve global `RETURN_TO_ARCHITECTURE_COORDINATION`, independent `C3-STAGE-02-B2` rework and phase ledger state. STOP→`EXECUTION_DRIFT` or `ARCHITECTURE_DECISION_REQUIRED` for owner/phase/contract conflicts. This ledger entry records governance/evidence only; does not self-accept runtime.
