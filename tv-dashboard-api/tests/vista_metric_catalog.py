@@ -16,6 +16,7 @@ MEASURABLE_NOW = "MEASURABLE_NOW"
 NEEDS_FIXTURE = "NEEDS_FIXTURE"
 NEEDS_TELEMETRY = "NEEDS_TELEMETRY"
 NEEDS_HUMAN_RUBRIC = "NEEDS_HUMAN_RUBRIC"
+NOT_RELIABLY_MEASURABLE = "NOT_RELIABLY_MEASURABLE"
 
 
 def _m(purpose, source, numerator, denominator, status, exclusions="-", evidence="-"):
@@ -150,11 +151,12 @@ VISTA_METRIC_CATALOG = {
     # --- suite-native dims --------------------------------------------------
     "DATA_DIAGNOSIS": _m(
         "Data-bound diagnosis across slide/data-source state",
-        "suite:tests (data resolution/preview suites)",
-        "diagnosis fixtures passing",
-        "diagnosis fixtures",
-        NEEDS_FIXTURE,
-        evidence="partial — data-bound preview suites exist",
+        "corpus:data-diagnosis-v1 (tests/data_diagnosis_corpus.py)",
+        "cases whose observed diagnosis class matches the expected class",
+        "all deterministic data-diagnosis corpus cases",
+        MEASURABLE_NOW,
+        exclusions="safety counters reported separately, not folded into the numerator",
+        evidence="frozen corpus d01–d12 + safety counters in run_vista_eval",
     ),
     "FILTER_LAYERING": _m(
         "Correct filter layer selected (global/slide/block/model)",
@@ -208,12 +210,15 @@ VISTA_METRIC_CATALOG = {
     ),
     "USER_CORRECTION": _m(
         "User correction signals (re-issue, re-target, undo)",
-        "none canonical",
+        "none canonical — signal inventory §43",
         "corrections identified",
         "n/a",
-        NEEDS_TELEMETRY,
-        exclusions="no deterministic correction signal exists — not fabricated",
-        evidence="no canonical correction/undo event source inventoried",
+        NOT_RELIABLY_MEASURABLE,
+        exclusions="rejection/clarification/undo candidates are temporal, not causal; "
+        "no governed correction event exists",
+        evidence="P7 residual-B inventory: 0 canonical signals; all candidates "
+        "WEAK_HEURISTIC or privacy-gated — a canonical host feedback event "
+        "with proposal correlation would be a product contract decision",
     ),
     "TRANSPORT_PARITY": _m(
         "Semantic parity between GPT Actions and MCP surfaces",

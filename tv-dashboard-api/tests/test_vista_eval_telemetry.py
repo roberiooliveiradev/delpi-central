@@ -20,6 +20,7 @@ from tests.vista_metric_catalog import (
     NEEDS_FIXTURE,
     NEEDS_HUMAN_RUBRIC,
     NEEDS_TELEMETRY,
+    NOT_RELIABLY_MEASURABLE,
     VISTA_METRIC_CATALOG,
 )
 from tv_app.application.gpt_actions.dispatch_service import (
@@ -83,12 +84,17 @@ def test_catalog_entries_have_full_semantics():
             NEEDS_FIXTURE,
             NEEDS_TELEMETRY,
             NEEDS_HUMAN_RUBRIC,
+            NOT_RELIABLY_MEASURABLE,
         }
 
 
 def test_user_correction_not_fabricated():
-    # No deterministic correction signal exists — honest NEEDS_TELEMETRY.
-    assert VISTA_METRIC_CATALOG["USER_CORRECTION"]["status"] == NEEDS_TELEMETRY
+    # Signal inventory (P7 residual B): zero canonical correction signals —
+    # all candidates temporal-only or privacy-gated; honest final status.
+    assert (
+        VISTA_METRIC_CATALOG["USER_CORRECTION"]["status"]
+        == NOT_RELIABLY_MEASURABLE
+    )
 
 
 def test_corpus_coverage_no_silent_dimension():
@@ -97,7 +103,12 @@ def test_corpus_coverage_no_silent_dimension():
         src = meta["measurementSource"]
         if src.startswith(("suite:", "corpus:", "telemetry:")):
             covered.add(src)
-        elif meta["status"] in {NEEDS_FIXTURE, NEEDS_TELEMETRY, NEEDS_HUMAN_RUBRIC}:
+        elif meta["status"] in {
+            NEEDS_FIXTURE,
+            NEEDS_TELEMETRY,
+            NEEDS_HUMAN_RUBRIC,
+            NOT_RELIABLY_MEASURABLE,
+        }:
             covered.add(meta["status"])
     assert len(VISTA_METRIC_CATALOG) > 0
     for meta in VISTA_METRIC_CATALOG.values():

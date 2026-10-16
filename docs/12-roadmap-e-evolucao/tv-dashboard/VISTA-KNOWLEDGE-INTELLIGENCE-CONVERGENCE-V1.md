@@ -2022,3 +2022,99 @@ entries, phase narrative) reflecting state at their HEAD; not falsified.
 
 POST-P7 DRIFT CLOSURE = DONE — runtime = intelligence metadata =
 roadmap = capability matrix. P0–P7 DONE · P8 BLOCKED · P9 PLANNED.
+
+---
+
+## 43. P7 RESIDUAL CLOSURE — DATA_DIAGNOSIS EVAL + USER_CORRECTION SIGNAL DIAGNOSTIC
+
+HEAD: `216d516c2c` (origin/main, production-control foreign commits; zero
+tv-dashboard-api drift since `a6196637ea`). Test/eval-only scope — zero
+production file changes, zero runtime semantic changes.
+
+### 43.1 DATA_DIAGNOSIS — NEEDS_FIXTURE → MEASURABLE_NOW
+
+Canonical taxonomy inventoried (all owner-backed, reused verbatim):
+`PARAM_REQUIRED`/`PARAM_INVALID` (validate_route_params + dispatch mapping)
+· `DATA_BINDING_FIELD_MISSING` (patch consumer-safety gate) ·
+`RESOURCE_NOT_FOUND`+modelId (inspect_data_model) · `DATA_RESOLUTION_FAILED`
+stage=resolution · `m.*` stage=transform (preview_error envelope) ·
+`wrongLayerHints` (FilterDigestService) · typed gap on route miss (P6).
+
+Frozen corpus `tests/data_diagnosis_corpus.py` v`data-diagnosis-v1` —
+12 cases, synthetic payloads only:
+d01 healthy rows · d02 zero rows · d03 required param · d04 invalid enum
+· d05 binding field missing · d06 model not found · d07 transform
+failure (m.merge_source_unavailable) · d08 upstream failure · d09
+filter-to-zero · d10 wrong-layer filter · d11 route miss (delegated to
+P6 `miss_no_evidence`) · d12 shape-vs-visual delegated to P5
+`high_cardinality_rejects_pie` (CROSS_BOUNDARY_DESIGN — a design problem
+is never counted as a data failure).
+
+Baseline: **12/12 correct**, all safety counters zero —
+FALSE_EMPTY_AS_ERROR=0 · FALSE_ERROR_AS_EMPTY=0 · FALSE_ABSENCE=0 ·
+UNTYPED_ERROR=0 · WRONG_NEXT_STEP=0. Numerator = cases whose observed
+diagnosis class matches the frozen expectation; denominator = all 12
+deterministic cases. Integrated into `run_vista_eval.py` — DATA_DIAGNOSIS
+reports passed/total + safety in the same machine-readable result.
+Epistemic distinctions proven empirically: ERROR IS_NOT EMPTY (d08 typed
+error vs d02 clean empty) · EMPTY IS_NOT ERROR (d02/d09 ok, no error
+envelope) · ROUTE MISS IS_NOT ABSENCE (d11 typed NO_SOLUTION_EVIDENCE)
+· PREVIEW FAILURE IS_NOT ZERO ROWS (d07/d08 ok=false, stage typed) ·
+FILTERED-TO-ZERO IS_NOT SOURCE FAILURE (d09 EMPTY_RESULT vs d08 typed
+error) · MISSING FIELD IS_NOT NULL VALUE (d05 typed binding rejection).
+
+No production defect found — no runtime change required or made.
+
+### 43.2 USER_CORRECTION — NEEDS_TELEMETRY → NOT_RELIABLY_MEASURABLE
+
+Candidate-signal inventory (all inspected, none causal):
+proposal abandonment — no reject/cancel event exists (prepare → commit
+or nothing; absence-of-commit is ambiguous: wrong proposal vs changed
+mind vs interruption) · CATALOG_VERSION_STALE — system freshness check,
+not user intent · `confirm` policy — missing confirmation ≠ rejection ·
+OUTCOME_NOT_VERIFIED — post-commit system check, not user signal ·
+editorFocus STALE — grounding state, not correction · clarification —
+read-before-ask is correct behavior, not error evidence · follow-up /
+repeated request — temporal only, requires raw prompt retention ·
+undo/revert — no causal linkage surface; P9 history is
+UNAVAILABLE_IN_CURRENT_SURFACE and state-change ≠ correction-of-VISTA ·
+telemetry correlation — process-local, no cross-request user correlation.
+
+Reliability: every candidate is WEAK_HEURISTIC or privacy-gated. Zero
+CANONICAL signals exist. Rejection is not necessarily correction;
+temporal sequence is not causality; private text must not be stored to
+manufacture a metric. Final: `USER_CORRECTION =
+NOT_RELIABLY_MEASURABLE` — a canonical host feedback event (explicit
+user reject/correct signal correlated to proposal_id, governed privacy
+contract) would be a PRODUCT CONTRACT decision, not a telemetry
+extension; documented as future option, not implemented.
+
+### 43.3 EVIDENCE
+
+- New eval files (test-only): `tests/data_diagnosis_corpus.py`,
+  `tests/data_diagnosis_eval.py`, `tests/test_data_diagnosis_corpus.py`.
+- Updated: `tests/run_vista_eval.py` (DATA_DIAGNOSIS dim + safety),
+  `tests/vista_metric_catalog.py` (statuses + NOT_RELIABLY_MEASURABLE
+  vocabulary), `tests/test_vista_eval_telemetry.py` (status gates).
+- Production files changed: **0**. New GPT Actions / MCP tools / HTTP
+  routes / domain services / telemetry hooks: **0**.
+- Regressions: P4/P5/P6/P7 corpora + eval 117 · preview/route/transform/
+  filter/model 143 · parity/MCP/Actions/mutation/commit/verify 489 — all
+  green; zero expectations weakened.
+- Actions budget: envelopeAscii 95,685B/102,400B (delta −27B vs §42
+  record — no catalog content touched; within drift).
+- P8 gate: corpus surfaced zero arbitration-rooted failures →
+  `P8_EVIDENCE = INSUFFICIENT`, `P8 = BLOCKED` (unchanged).
+- P9 = PLANNED, history UNAVAILABLE_IN_CURRENT_SURFACE — untouched.
+- TELEMETRY_SCOPE = PROCESS_LOCAL, CLUSTER_AGGREGATION =
+  NOT_IMPLEMENTED — preserved.
+
+### 43.4 P7 REMAINING RESIDUALS
+
+- `USER_CORRECTION = NOT_RELIABLY_MEASURABLE` — terminal unless a
+  governed feedback contract is decided (separate brief, not telemetry).
+- `TELEMETRY_SCOPE = PROCESS_LOCAL` / `CLUSTER_AGGREGATION =
+  NOT_IMPLEMENTED` — by design, out of scope.
+
+PHASE 7 = DONE (residuals closed honestly — one measured, one classified
+non-measurable).
