@@ -970,7 +970,8 @@ def test_application_typed_valid_command_and_legacy_are_distinct():
         input_text=_legacy_label("CONFIRM"),
         confirmation=_decision_payload("CONFIRM"),
     )
-    assert handler._validate_turn_command(legacy) is None
+    with pytest.raises(InteractionError):
+        handler._validate_turn_command(legacy)
 
     # HTTP normalizes an exact published legacy label into the typed
     # command. Application must not reject that migration path.
