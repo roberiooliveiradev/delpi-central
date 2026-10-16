@@ -1041,6 +1041,75 @@ def test_infrastructure_maps_http_401_403_to_semantic_outcomes():
     assert out403.outcome == "forbidden"
 
 
+def test_infrastructure_surfaces_semantic_upstream_error_details():
+    """4xx envelopes keep error.code + message instead of a bare status."""
+    action = _action(
+        oid="semantic_read",
+        path="/things/{code}",
+        parameters=(
+            {"name": "code", "in": "path", "required": True, "type": "string"},
+        ),
+        execution_mode="catalog_action",
+        approved_response_fields=("name",),
+    )
+    set_actions_for_tests([action])
+    client = MagicMock()
+    executor = AsgiCatalogActionExecutor(client, authorization="Bearer t")
+
+    resp = MagicMock()
+    resp.status_code = 404
+    resp.json.return_value = {
+        "success": False,
+        "message": "Produto existe, mas não corresponde ao tipo MP.",
+        "data": None,
+        "error": {"code": "PRODUCT_TYPE_MISMATCH", "recoverable": False},
+    }
+    client.get.return_value = resp
+    out = executor.execute(action_id="semantic_read", validated_arguments={"code": "X"})
+    assert out.outcome == "error"
+    assert "status=404" in out.error_message
+    assert "PRODUCT_TYPE_MISMATCH" in out.error_message
+    assert "não corresponde ao tipo" in out.error_message
+    assert out.payload["error"]["code"] == "PRODUCT_TYPE_MISMATCH"
+
+    resp.json.return_value = {
+        "success": False,
+        "message": "Produto não encontrado.",
+        "data": None,
+        "error": {"code": "PRODUCT_NOT_FOUND", "recoverable": False},
+    }
+    out = executor.execute(action_id="semantic_read", validated_arguments={"code": "X"})
+    assert "PRODUCT_NOT_FOUND" in out.error_message
+    assert "não encontrado" in out.error_message
+
+    # FastAPI-style detail body (non-envelope) still surfaces safely.
+    resp.status_code = 422
+    resp.json.return_value = {"detail": "Parâmetro branch inválido."}
+    out = executor.execute(action_id="semantic_read", validated_arguments={"code": "X"})
+    assert "status=422" in out.error_message
+    assert "branch inválido" in out.error_message
+
+    # Technical errors surface only producer-safe envelope fields.
+    resp.status_code = 500
+    resp.json.return_value = {
+        "success": False,
+        "message": "Erro interno ao consultar a fonte de dados.",
+        "data": None,
+        "error": None,
+    }
+    out = executor.execute(action_id="semantic_read", validated_arguments={"code": "X"})
+    assert "status=500" in out.error_message
+    assert "Erro interno" in out.error_message
+    assert out.error_message.startswith("Upstream error")
+
+    # Non-dict bodies never leak raw payloads.
+    resp.json.side_effect = ValueError("no json")
+    resp.text = "<html>internal stack</html>"
+    out = executor.execute(action_id="semantic_read", validated_arguments={"code": "X"})
+    assert out.error_message == "Upstream error status=500"
+    assert "internal stack" not in (out.error_message or "")
+
+
 def test_metamorphic_catalog_action_without_endpoint_specific_code(monkeypatch):
     """Different action_id/path/params execute via the same generic adapter."""
     synthetic = _action(
