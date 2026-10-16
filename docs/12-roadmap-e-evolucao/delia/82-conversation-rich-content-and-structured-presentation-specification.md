@@ -1,6 +1,6 @@
 # 82 — DÉLIA: Conversation Rich Content & Structured Presentation
 
-**Status:** `PRODUCT_UX_SPEC / IMPLEMENTATION_NOT_AUTHORIZED / TRACEABILITY_GAP_OPEN`  
+**Status:** `PRODUCT_UX_SPEC / B2_TEXTUAL_CP-333_MAPPED / B2_BOUNDED_CONDITIONAL_AUTHORIZATION / RUNTIME_GATES_OPEN / C_D_E_TRACEABILITY_GAP_OPEN`  
 **Data:** 2026-10-16  
 **Task:** `DELIA-UX-CONVERSATION-RICH-CONTENT-DOCUMENTATION-01`  
 **Escopo:** especificação documental completa da evolução da apresentação de respostas. Nenhum runtime, schema, API ou componente foi criado por este documento.  
@@ -10,7 +10,7 @@
 
 DÉLIA deve apresentar respostas operacionais legíveis, seguras e verificáveis, evoluindo de texto literal para formatação tipográfica rica e, somente quando contratos e fases permitirem, blocos tipados de tabelas, métricas, gráficos e outras experiências. A direção é **chat-first, não dashboard**: texto explicativo é primário; elementos estruturados aparecem quando agregam valor e possuem evidence.
 
-Este documento é uma **especificação-alvo e um gate de implementação futura**, não autorização para o Devin alterar o backend, `presentation.v1`, o planner ou executar ações. A futura task precisa de novo reanchor, owner/contract freeze, CP/RQ rastreáveis, acceptance e autorização explícita. Não reutilizar Minha DELPI Chat como runtime.
+Este documento originou a **especificação-alvo e o gate de implementação futura**, sem autorização de runtime por si. **Atualização 2026-10-16:** a direção de produto B2 D1–D12 e autorização *bounded condicional* estão registradas na [spec 83](./83-conversation-markdown-b2-contract-and-implementation-plan.md), com `CP-333` na matriz 25. Isso **não** dispensa contract freeze G1, Security/Reuse G2, brief G3 e aceite independente G4; `presentation.v1` segue o runtime atual até implementação comprovada. Não reutilizar Minha DELPI Chat como runtime.
 
 ## 2. Precedência, authorities e relação com outras specs
 
@@ -185,6 +185,25 @@ Estes IDs **locais de planejamento**, não substituem `CP-*` canônicos nem são
 **Owner para resolução:** `Architecture / Coordination` com `Frontend / MFE / UX`, `Backend / Application`, `Security` e owner de métricas/Domain APIs conforme o bounded slice. O owner deve decidir formalmente se existe CP canônico que de fato cubra a evolução, se há `DISCOVERED_REQUIREMENT` que exige novo CP, ou se a capability permanece fora do escopo de uma fase; atualizar a matriz 25 via processo governado. **Não criar CP ou declarar o gap fechado neste commit documental.**
 
 **STOP de implementação:** enquanto o `TRACEABILITY_GAP` material estiver aberto, nenhum prompt Devin de B2/C/D/E pode tratar esses requisitos como aprovados. B1 somente poderá avançar quando tiver escopo de UX/tipografia rastreado e autorização própria no HEAD real. Nenhum `RQ-RICH-*` desta spec equivale a um `CP-*` aceito.
+
+### 11.2 Supersedência bounded do gap Markdown por decisão D12 — 2026-10-16
+
+A §11.1 acima documenta corretamente o **gap no HEAD original da spec 82**. Após aprovação expressa do Product Master em D12, a matriz canônica [25](./25-requirements-traceability.md) recebeu **`CP-333`**, owner DÉLIA API/Application + DÉLIA MFE/Portal + plugin-ui + Security, com requisito específico de **Markdown textual conversacional** via contrato-alvo `presentation.v2`. As doze decisões e os gates estão na [83](./83-conversation-markdown-b2-contract-and-implementation-plan.md).
+
+```text
+B2_MARKDOWN_CP_TRACEABILITY = CP_333_MAPPED
+B2_PRODUCT_DECISIONS = D1_TO_D12_APPROVED
+B2_BOUNDED_SCOPE_AUTHORIZED = CONDITIONAL_YES
+B2_PRESENTATION_CONTRACT = V2_TARGET_G1_PENDING
+B2_SECURITY_REUSE = G2_PENDING
+B2_RUNTIME_IMPLEMENTATION = BLOCKED_UNTIL_G1_G2_G3
+CP_333_STATUS = PLANNED_NOT_PASS
+C_D_E_TABLE_CHART_METRIC_TRACEABILITY_GAP = OPEN
+C3_EXECUTED = NO
+PHASE_PROGRESSION = NONE
+```
+
+**Escopo estrito de CP-333:** conteúdo Markdown textual completo e controlado, links internos/externos autorizados, cópia legível, fallback diferenciado, fonte independente em `EvidenceDetails`, apresentação adaptativa em full-page/dock e compatibilidade de versões. Não cobre tabelas estruturadas/GFM, métricas, charts, HTML arbitrário ou Mermaid; a lacuna dessas capacidades segue sem CP próprio. `C3-STAGE-02-B2` do ledger é outra linha de trabalho e não recebe autorização por esta decisão. A redação original §11.1 e o bloco §13 abaixo permanecem **evidência histórica da publicação**, não estado atual dos gates de B2; nenhuma evidência de implementação/teste foi produzida por esta reconciliação.
 
 ## 12. Gates de aceite para Devin
 
