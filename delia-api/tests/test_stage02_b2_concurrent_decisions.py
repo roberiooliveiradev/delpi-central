@@ -115,3 +115,44 @@ def test_stale_record_cannot_claim_or_delete_replaced_pending():
     assert store.take_if_current(digest, replacement) is replacement
     assert store.take_if_current(digest, replacement) is None
     assert not any(name == "commit_record" for name, _ in provider.calls)
+
+
+def test_invalid_confirmation_does_not_consume_valid_pending():
+    """A wrong preview fingerprint must not cancel someone else's proposal.
+
+    The bound validation is distinct from the exclusive claim: only a
+    valid CONFIRM or REJECT can consume a pending proposal. A malformed
+    attempt leaves the current record available for its rightful actor.
+    """
+    provider, orch, ctx = _prepared_race()
+    digest = ctx["proposal_digest"]
+    initial = orch._pending_writes.get(digest)
+    assert initial is not None
+
+    wrong = dict(ctx, preview_fingerprint="0" * 64)
+    rejected = _apply(orch, wrong)
+    assert rejected.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert rejected.error_code == "confirmation_mismatch"
+    assert orch._pending_writes.get(digest) is initial
+    assert not any(name == "commit_record" for name, _ in provider.calls)
+
+    accepted = _apply(orch, ctx)
+    assert accepted.status is GovernedCapabilityStatus.SUCCESS
+    assert sum(name == "commit_record" for name, _ in provider.calls) == 1
+    assert orch._pending_writes.get(digest) is None
+
+
+def test_invalid_reject_cannot_cancel_legitimate_pending():
+    """A mismatched REJECT never claims another actor's prepared work."""
+    provider, orch, ctx = _prepared_race()
+    original = orch._pending_writes.get(ctx["proposal_digest"])
+    assert original is not None
+    rejected = _apply(orch, ctx, actor="different-user", decision="REJECT")
+    assert rejected.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert rejected.error_code == "confirmation_mismatch"
+    assert orch._pending_writes.get(ctx["proposal_digest"]) is original
+    assert not any(name == "commit_record" for name, _ in provider.calls)
+
+    accepted = _apply(orch, ctx, actor="u1", decision="CONFIRM")
+    assert accepted.status is GovernedCapabilityStatus.SUCCESS
+    assert sum(name == "commit_record" for name, _ in provider.calls) == 1
