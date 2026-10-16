@@ -4,6 +4,10 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.application.services.device_alert_notification_service import (
+    DeviceAlertNotificationService,
+    build_device_alert_notification_service,
+)
 from production_pulse_app.application.services.device_driver_registry_service import (
     DeviceDriverNotImplementedError,
     get_device_driver_registry,
@@ -71,6 +75,7 @@ class DevicePollService:
         rollup_service: DeviceReadingRollupService | None = None,
         firmware_job_service: FirmwareUpdateJobService | None = None,
         hardware_identity_service: DeviceHardwareIdentityService | None = None,
+        alert_notification_service: DeviceAlertNotificationService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
@@ -79,6 +84,7 @@ class DevicePollService:
         self._rollups = rollup_service or DeviceReadingRollupService()
         self._firmware_jobs = firmware_job_service or FirmwareUpdateJobService()
         self._hardware = hardware_identity_service or DeviceHardwareIdentityService()
+        self._alerts = alert_notification_service or build_device_alert_notification_service()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -137,14 +143,38 @@ class DevicePollService:
                     payload[key] = value
         return json_safe(payload)
 
+    def _notify_offline_transition(
+        self,
+        *,
+        device_before: dict[str, Any],
+        device_after: dict[str, Any],
+        has_binding: bool,
+        error_code: str | None,
+    ) -> None:
+        before = resolve_connectivity_status(device_before, has_binding=has_binding)
+        after = resolve_connectivity_status(device_after, has_binding=has_binding)
+        self._alerts.notify_device_went_offline(
+            device=device_after,
+            previous_status=str(before.get("status") or ""),
+            next_status=str(after.get("status") or ""),
+            error_code=error_code,
+        )
+
     def read_live(self, device_id: UUID) -> dict[str, Any]:
         device = self._require_device(device_id)
         has_binding = self._has_binding(device_id)
         try:
             reading = self._read_from_driver(device)
         except DeviceDriverError as exc:
+            device_before = device
             device = self._devices.record_poll_failure(device_id, error_message=exc.code)
             connectivity = resolve_connectivity_status(device, has_binding=has_binding)
+            self._notify_offline_transition(
+                device_before=device_before,
+                device_after=device,
+                has_binding=has_binding,
+                error_code=exc.code,
+            )
             raise DevicePollFailedError(
                 exc.code,
                 technical_detail=exc.technical_detail,
@@ -173,8 +203,15 @@ class DevicePollService:
         try:
             reading = self._read_from_driver(device)
         except DeviceDriverError as exc:
+            device_before = device
             device = self._devices.record_poll_failure(device_id, error_message=exc.code)
             connectivity = resolve_connectivity_status(device, has_binding=has_binding)
+            self._notify_offline_transition(
+                device_before=device_before,
+                device_after=device,
+                has_binding=has_binding,
+                error_code=exc.code,
+            )
             raise DevicePollFailedError(
                 exc.code,
                 technical_detail=exc.technical_detail,

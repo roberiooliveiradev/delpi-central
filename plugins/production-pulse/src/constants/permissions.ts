@@ -6,6 +6,7 @@ export const PP_OPERATOR = "production-pulse.operator";
 export const PP_VIEW_FILIAL_01 = "production-pulse.view.filial-01";
 export const PP_VIEW_FILIAL_02 = "production-pulse.view.filial-02";
 export const PP_ADMIN = "production-pulse.admin";
+export const PP_ALERTS_RECEIVE = "production-pulse.alerts.receive";
 
 export type ProductionPulsePermissionFlags = {
   canAccess: boolean;
@@ -13,6 +14,7 @@ export type ProductionPulsePermissionFlags = {
   canManageDevices: boolean;
   canCommandDevices: boolean;
   canOperator: boolean;
+  canReceiveAlerts: boolean;
   isAdmin: boolean;
   allowedBranches: string[];
 };
@@ -33,6 +35,8 @@ export function resolveProductionPulsePermissions(
       canManageDevices: true,
       canCommandDevices: true,
       canOperator: true,
+      // Alertas Minha DELPI exigem grant explícito — superadmin não herda.
+      canReceiveAlerts: Boolean(permissions?.includes(PP_ALERTS_RECEIVE)),
       isAdmin: true,
       allowedBranches: ["01", "02"],
     };
@@ -44,6 +48,7 @@ export function resolveProductionPulsePermissions(
   const canManageDevices = isAdmin || set.has(PP_DEVICES_MANAGE);
   const canCommandDevices = isAdmin || set.has(PP_DEVICES_COMMAND) || canManageDevices;
   const canOperator = isAdmin || set.has(PP_OPERATOR);
+  const canReceiveAlerts = set.has(PP_ALERTS_RECEIVE);
   const hasFilialView = BRANCH_PERMISSIONS.some(({ permission }) => set.has(permission));
   const canAccess =
     isAdmin ||
@@ -64,6 +69,7 @@ export function resolveProductionPulsePermissions(
     canManageDevices,
     canCommandDevices,
     canOperator,
+    canReceiveAlerts,
     isAdmin,
     allowedBranches,
   };

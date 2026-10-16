@@ -57,6 +57,12 @@
       "name": "Administrar Pulso de Produção",
       "description": "Acesso total em todas as filiais.",
       "module": "production-pulse"
+    },
+    {
+      "code": "production-pulse.alerts.receive",
+      "name": "Receber alertas do Pulso",
+      "description": "Receber notificações Minha DELPI de dispositivo offline e falhas OTA. Não é herdada de access, admin ou superusuário.",
+      "module": "production-pulse"
     }
   ],
   "routes": [

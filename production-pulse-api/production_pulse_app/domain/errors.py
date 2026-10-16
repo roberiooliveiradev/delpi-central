@@ -36,10 +36,33 @@ class DeviceDriverError(RuntimeError):
         super().__init__(technical_detail or code)
 
 
+class NotificationGatewayUnavailable(RuntimeError):
+    """Core API de notificações indisponível (rede, timeout ou 5xx)."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class NotificationGatewayUnauthorized(NotificationGatewayUnavailable):
+    """Credencial S2S recusada pela Core API (401/403)."""
+
+
+class NotificationGatewayContractError(RuntimeError):
+    """Resposta da Core API fora do contrato de dispatch de notificações."""
+
+    def __init__(self, message: str, *, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
 __all__ = [
     "BindingValidationError",
     "CommandNotSupportedError",
     "ContentCodedError",
     "DeviceDriverError",
     "DeviceValidationError",
+    "NotificationGatewayContractError",
+    "NotificationGatewayUnauthorized",
+    "NotificationGatewayUnavailable",
 ]

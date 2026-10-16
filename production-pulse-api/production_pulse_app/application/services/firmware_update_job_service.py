@@ -5,11 +5,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from production_pulse_app.config import settings
-from production_pulse_app.domain.errors import ContentCodedError
-from production_pulse_app.domain.services.device_validation_service import validate_branch
-from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
-    PostgresDeviceRepository,
+from production_pulse_app.application.services.device_alert_notification_service import (
+    DeviceAlertNotificationService,
+    build_device_alert_notification_service,
 )
 from production_pulse_app.application.services.device_ota_wake_service import DeviceOtaWakeService
 from production_pulse_app.application.services.production_pulse_realtime_notify import (
@@ -17,6 +15,12 @@ from production_pulse_app.application.services.production_pulse_realtime_notify 
     notify_ota_job_updated,
     notify_ota_target_updated,
     safe_realtime,
+)
+from production_pulse_app.config import settings
+from production_pulse_app.domain.errors import ContentCodedError
+from production_pulse_app.domain.services.device_validation_service import validate_branch
+from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+    PostgresDeviceRepository,
 )
 from production_pulse_app.infrastructure.persistence.repositories.postgres_firmware_repository import (
     FirmwareJobConflictError,
@@ -38,6 +42,7 @@ class FirmwareUpdateJobService:
         firmware_repository: PostgresFirmwareRepository | None = None,
         device_repository: PostgresDeviceRepository | None = None,
         wake_service: DeviceOtaWakeService | None = None,
+        alert_notification_service: DeviceAlertNotificationService | None = None,
     ) -> None:
         self._jobs = job_repository or PostgresFirmwareUpdateJobRepository()
         self._firmwares = firmware_repository or PostgresFirmwareRepository()
@@ -46,6 +51,7 @@ class FirmwareUpdateJobService:
             job_repository=self._jobs,
             device_repository=self._devices,
         )
+        self._alerts = alert_notification_service or build_device_alert_notification_service()
 
     def list_jobs(self, *, branch: str | None = None) -> list[dict[str, Any]]:
         if branch:
@@ -370,6 +376,13 @@ class FirmwareUpdateJobService:
                     branch=branch,
                     status=finished.get("status"),
                 )
+            device = self._devices.get_by_id(target["device_id"])
+            self._alerts.notify_ota_target_failed(
+                device=device,
+                target=updated,
+                branch=branch,
+                error_code=str(updated.get("error_code") or "ota_target_stale"),
+            )
         return failed_count
 
     def reconcile_matching_installed_versions(self) -> int:

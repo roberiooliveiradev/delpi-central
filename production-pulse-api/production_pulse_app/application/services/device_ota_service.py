@@ -6,14 +6,18 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
-from production_pulse_app.config import settings
-from production_pulse_app.domain.errors import ContentCodedError
+from production_pulse_app.application.services.device_alert_notification_service import (
+    DeviceAlertNotificationService,
+    build_device_alert_notification_service,
+)
 from production_pulse_app.application.services.production_pulse_realtime_notify import (
     notify_device_updated,
     notify_ota_job_updated,
     notify_ota_target_updated,
     safe_realtime,
 )
+from production_pulse_app.config import settings
+from production_pulse_app.domain.errors import ContentCodedError
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     PostgresDeviceRepository,
 )
@@ -71,10 +75,12 @@ class DeviceOtaService:
         device_repository: PostgresDeviceRepository | None = None,
         job_repository: PostgresFirmwareUpdateJobRepository | None = None,
         storage: FirmwareArtifactStorage | None = None,
+        alert_notification_service: DeviceAlertNotificationService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._jobs = job_repository or PostgresFirmwareUpdateJobRepository()
         self._storage = storage or FirmwareArtifactStorage()
+        self._alerts = alert_notification_service or build_device_alert_notification_service()
 
     def authenticate_device(
         self,
@@ -349,6 +355,12 @@ class DeviceOtaService:
             device=device,
             finished=finished,
             force=True,
+        )
+        self._alerts.notify_ota_target_failed(
+            device=device,
+            target=updated,
+            branch=str(device.get("branch") or ""),
+            error_code=str(updated.get("error_code") or "ota_failed"),
         )
         return {
             "targetId": str(updated["id"]),

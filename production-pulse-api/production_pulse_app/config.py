@@ -41,6 +41,20 @@ class Settings:
     CORE_API_SERVICE_TOKEN: str = _get_env(
         "CORE_API_SERVICE_TOKEN", "API_DELPI_INTERNAL_SERVICE_TOKEN", default=""
     )
+    # Notificações Minha DELPI (S2S integrations — mesmo token do PCP).
+    CORE_API_BASE_URL: str = _get_env(
+        "CORE_API_BASE_URL",
+        "DELPI_AUTH_CORE_API_URL",
+        "CORE_API_URL",
+        default="http://core-api:8000",
+    )
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN",
+        default="",
+    )
+    CORE_API_TIMEOUT: float = float(
+        _get_env("CORE_API_TIMEOUT", default="5") or "5"
+    )
 
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")

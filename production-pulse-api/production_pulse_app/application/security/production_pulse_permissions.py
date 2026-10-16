@@ -10,6 +10,7 @@ DEVICES_MANAGE = "production-pulse.devices.manage"
 DEVICES_COMMAND = "production-pulse.devices.command"
 OPERATOR = "production-pulse.operator"
 ADMIN = "production-pulse.admin"
+ALERTS_RECEIVE = "production-pulse.alerts.receive"
 
 BRANCH_CODES = ("01", "02")
 BRANCH_VIEW_PERMISSIONS: dict[str, str] = {

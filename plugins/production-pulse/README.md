@@ -50,6 +50,14 @@ Header recomendado nas chamadas autenticadas: `X-Delpi-Caller-App: production-pu
 | `production-pulse.view.filial-01` | Dados filial SC |
 | `production-pulse.view.filial-02` | Dados filial ES |
 | `production-pulse.admin` | Todas as filiais |
+| `production-pulse.alerts.receive` | Receber alertas Minha DELPI (IoT offline e falhas OTA). **Não** é herdada de access/admin/superusuário — atribuir só a quem deve ser avisado. |
+
+### Alertas Minha DELPI (ops)
+
+1. **Sync manifesto** — após deploy, re-registrar o plugin no Core para persistir `production-pulse.alerts.receive`.
+2. **Assign RBAC** — no Admin, atribuir a permissão às roles/pessoas que devem ser avisadas (não há auto-assign em access/admin).
+3. **Preferências** — categorias `Dispositivo IoT offline` e `Falhas operacionais do Pulso (OTA)` aparecem nas preferências de notificação (catálogo Core).
+4. **Runtime** — `production-pulse-api` precisa de `CORE_API_BASE_URL` + `CORE_API_INTEGRATIONS_SERVICE_TOKEN` (sem token → no-op; poll/OTA seguem).
 
 Matriz MVP: [docs/12-roadmap-e-evolucao/production-pulse/ADR-003-rbac-mvp.md](../../docs/12-roadmap-e-evolucao/production-pulse/ADR-003-rbac-mvp.md).
 

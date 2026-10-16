@@ -290,6 +290,28 @@
         "production-control"
       ],
       "pluginId": "production-control"
+    },
+    "production_pulse_device_offline": {
+      "label": "Pulso de Produção",
+      "notificationLabel": "Dispositivo IoT offline",
+      "icon": "activity",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "production-pulse"
+      ],
+      "pluginId": "production-pulse"
+    },
+    "production_pulse_operational_failure": {
+      "label": "Pulso de Produção",
+      "notificationLabel": "Falhas operacionais do Pulso (OTA)",
+      "icon": "activity",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": [
+        "production-pulse"
+      ],
+      "pluginId": "production-pulse"
     }
   },
   "legacyCategoryAliases": {

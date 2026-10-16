@@ -20,13 +20,18 @@ export const PP_HELP = {
       "Navega entre Painel, Hub OTA e modo operador (quando permitido). Em telas estreitas vira menu ☰.",
   },
 
+  alerts: {
+    receivePermission:
+      "Quem recebe avisos na Minha DELPI quando um dispositivo fica offline ou uma atualização OTA falha. É uma permissão específica — não basta ser administrador ou superusuário.",
+  },
+
   panel: {
     kpiTotal:
       "Quantidade de dispositivos IoT cadastrados na filial, incluindo rascunhos sem amarração.",
     kpiOnline:
       "Dispositivos que responderam à última leitura dentro do intervalo esperado (online).",
     kpiOffline:
-      "Dispositivos sem resposta HTTP no tempo limite — verifique rede, energia ou IP.",
+      "Dispositivos sem resposta HTTP no tempo limite — verifique rede, energia ou IP. Quem tem a permissão de alertas também recebe aviso na Minha DELPI.",
     kpiWithoutBinding:
       "Cadastros incompletos: falta informar posto, máquina, equipamento ou área de instalação.",
     kpiCounterDeltaDay:
