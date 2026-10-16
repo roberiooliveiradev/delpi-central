@@ -330,9 +330,6 @@ export default function App({
                 <ConversationError
                   title={error}
                   description="Sua mensagem foi preservada."
-                  actionLabel="Tentar novamente"
-                  onAction={handleSubmit}
-                  loading={loading}
                 />
               ) : null}
 

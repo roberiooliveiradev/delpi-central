@@ -1,6 +1,6 @@
 # 78 — DÉLIA: ConversationError / Error Recovery Surface
 
-**Status:** `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE` — componente visual implementado em `plugin-ui`, integrado na DÉLIA, com testes, build, federação e browser QA comprovados; não é evidência de runtime de produção nem autorização para ampliar fase.  
+**Status:** `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE` — componente visual implementado em `plugin-ui` e integrado na DÉLIA. A API visual suporta ação opcional, mas a DÉLIA **não habilita retry genérico** sem prova de idempotência/segurança de replay. Testes/build/browser QA históricos permanecem evidência da implementação base; este ajuste específico requer nova verificação.  
 **Escopo:** superfície visual compartilhável para falhas reais da interação conversacional da DÉLIA, posicionada no footer do `ConversationWorkspace`, imediatamente acima do `MessageComposer`, preservando o rascunho e permitindo recuperação honesta.  
 **Reanchor:** HEAD de elaboração `f53d52fab92aa202907b295ca8f7b41f0e6251d0`; implementação deve revalidar HEAD/status e a cadeia Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.  
 **Referências:** [73 — identidade e anatomia](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [74 — Message Composer](./74-message-composer-visual-specification.md), [75 — mensagem DÉLIA](./75-assistant-message-visual-specification.md), [77 — workspace/header](./77-conversation-workspace-and-header-visual-specification.md).
@@ -152,30 +152,40 @@ Um único componente deve atender ambos.
 - não esconder a mensagem essencial;
 - não criar variante funcional separada.
 
-Wireframe compacto:
+Wireframe compacto da integração DÉLIA atual:
 
 ```text
 ⚠ Não foi possível concluir.
   Sua mensagem foi preservada.
-  [Tentar novamente]
 ```
+
+O componente compartilhado continua podendo receber uma ação opcional em outros consumers que provem segurança de replay.
 
 ## 7. Recovery e retry
 
 **Draft preservation é comportamento do consumer, não do componente.** A implementação atual já preserva `input` quando `sendTurn` falha.
 
-A recuperação mínima já disponível é: usuário mantém o draft e pode pressionar `Enviar` novamente.
+A recuperação mínima já disponível é: usuário mantém o draft, pode revisar o conteúdo e decidir explicitamente pressionar `Enviar` novamente.
 
-Por isso, um botão explícito **Tentar novamente é OPTIONAL**, não obrigatório.
+Por isso, um botão explícito **Tentar novamente é OPTIONAL** no componente compartilhado e **NÃO HABILITADO na integração genérica da DÉLIA**.
+
+Motivo arquitetural: repetir o mesmo request body prova apenas replay técnico; não prova idempotência nem ausência de side effect da primeira tentativa. Uma falha observada pelo frontend pode ocorrer depois que o backend já recebeu ou processou a solicitação.
+
+```text
+same request body != safe retry
+HTTP/transport failure != proof of no side effect
+frontend did not receive result != backend did nothing
+```
 
 Só renderizar ação de retry quando:
-- a DÉLIA fornecer callback real;
+- houver contrato explícito de idempotência/replay seguro para aquele fluxo;
+- a DÉLIA fornecer callback real e bounded;
 - repetir a operação for semanticamente seguro naquele contexto;
 - não houver risco de duplicar uma ação material de forma silenciosa;
 - o callback reutilizar o fluxo normal de submit/gates;
 - loading desabilitar a ação para impedir double submit.
 
-Nunca implementar retry automático.
+Nunca implementar retry automático ou inferir segurança de replay no frontend.
 
 Para confirmation/PREPARE/ACT, retry exige preservar os mesmos gates do fluxo governado; o componente visual não pode reconstruir payload, digest, sessão ou autorização.
 
@@ -415,7 +425,7 @@ Proibido:
 - sucesso subsequente limpa erro;
 - abort não cria erro;
 - no duplicate alerts;
-- retry opcional, se implementado, usa fluxo real e respeita loading;
+- retry genérico não é renderizado pela DÉLIA sem prova de idempotência/replay seguro;
 - confirmation/governed write não é convertido em erro genérico.
 
 ### Browser QA
@@ -455,6 +465,7 @@ Proibido:
 [ ] draft preservation PASS
 [ ] no false turn
 [ ] no automatic retry
+[ ] DÉLIA generic retry disabled unless idempotency/replay safety is proven
 [ ] no secret/internal metadata leak
 [ ] tests/build/federation PASS
 [ ] catálogo plugin-ui atualizado
@@ -470,9 +481,13 @@ PRODUCT_MEANING = SPECIFIED
 VISUAL_DIRECTION = APPROVED_FOR_PLANNING
 CURRENT_LOCAL_ERROR_SURFACE = PROVEN
 PLUGIN_UI_COMPONENT = IMPLEMENTED
+PLUGIN_UI_OPTIONAL_ACTION = IMPLEMENTED
 DELIA_INTEGRATION = IMPLEMENTED
-BROWSER_QA = PASS (local harness)
-BUILD/FEDERATION = PASS
+DELIA_GENERIC_RETRY = NOT_ENABLED
+RECOVERY = PRESERVED_DRAFT + EXPLICIT_USER_RESUBMIT
+RETRY_SAFETY = REQUIRES_EXPLICIT_IDEMPOTENCY/REPLAY_PROOF
+BROWSER_QA = PASS (historical base implementation); ADJUSTMENT_RECHECK = TEST_NOT_RUN
+BUILD/FEDERATION = PASS (historical base implementation); ADJUSTMENT_RECHECK = TEST_NOT_RUN
 DEPLOY = NOT_PERFORMED
 PHASE_ADVANCEMENT = NONE
 ```

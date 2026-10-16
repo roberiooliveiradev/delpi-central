@@ -421,56 +421,7 @@ vi.fn().mockImplementation((input: unknown) => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  it("retry action resubmits the preserved draft through the normal flow", async () => {
-    const fetchMock = vi.fn().mockImplementation((input: unknown) => {
-      if (String(input).startsWith("/core-api/")) {
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({ name: null, has_photo: false }),
-            { status: 200, headers: { "Content-Type": "application/json" } },
-          ),
-        );
-      }
-      const isRetry =
-        fetchMock.mock.calls.filter(([u]) =>
-          String(u).startsWith("/apps/delia-api"),
-        ).length > 1;
-      if (!isRetry) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ code: "internal_error" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          }),
-        );
-      }
-      return Promise.resolve(
-        new Response(JSON.stringify(successPayload(2)), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App getAccessToken={() => "t"} />);
 
-    submitTurn("mensagem preservada");
-    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Tentar novamente" }),
-    );
-
-    await waitFor(() =>
-      expect(screen.getByText("Resposta 2 da DÉLIA.")).toBeTruthy(),
-    );
-    const calls = deliaApiCalls(fetchMock);
-    expect(calls).toHaveLength(2);
-    // The retry reused the preserved draft — identical normal submit body.
-    const firstBody = JSON.parse(String(calls[0][1]?.body));
-    const retryBody = JSON.parse(String(calls[1][1]?.body));
-    expect(retryBody).toEqual(firstBody);
-    expect(screen.queryByRole("alert")).toBeNull();
-  });
 });
 
 // --- Workspace layout (shared ConversationWorkspace (plugin-ui)) ----
