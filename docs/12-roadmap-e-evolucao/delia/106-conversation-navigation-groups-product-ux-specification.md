@@ -54,3 +54,9 @@ Linha de item ~40–48px, ícone 16px, texto 13–14px, truncamento seguro + too
 - **Validação:** testes de props/callbacks/estados e negativos de AuthZ, QA page/dock light/dark, check de exports/federação, prova de generalização em cenários de navegação e revisão independente no SHA executado. `TEST_NOT_RUN` não equivale a PASS.
 
 
+
+## Rework R1 — estados e atos backend por grupo
+
+O grupo de Conversas só pode distinguir `unavailable` (persistência ausente), `loading_real` (API em curso), `authorized_empty` (API respondeu vazio autorizado), `forbidden` (omitir) e `stale` (não navegar sem revalidação). Não declarar “zero conversas” baseado em memória React. “Fixadas”, “Recentes” e “Anteriores” serão renderizados com **itens reais** e ordenação/publicação do owner; sem sessão persistida, apenas orientação geral única.
+
+Selecionar = read + alteração de contexto sujeita a ACL live e guardas de draft/turnos em andamento. Nova conversa = criação persistida e exige idempotência/outcome; Fixar, Renomear, Arquivar, Excluir são writes **separados**, com audit, permissão live e postcondition. Pesquisar remete ao doc 97 (backend-first), nunca busca efêmera no array React. Nomes no wireframe são exemplos, não fixture de produção. Matriz vinculante de classificação/owner está no [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md).
