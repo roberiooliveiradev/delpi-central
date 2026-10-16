@@ -722,8 +722,8 @@ Fonte canônica:
 - manual explica finalize vs submit vs notify vs review;
 - nenhuma instrução de attachment delivery por e-mail.
 
-### RQ-P5-11 — monthly completion
-- **DECISION_REQUIRED**: submission suficiente vs review accepted obrigatório vs regra configurável.
+### RQ-P5-11 — monthly completion (C2 aprovada, RQ-P5-12 vigente no ledger)
+- **PO_APPROVED C2/P5-A/P5-E:** competência mensal conclui somente quando TODOS os pacotes aplicáveis estão submetidos, CADA área obrigatória do snapshot aceitou a PackageVersion vigente e NÃO há clarification aberta nem rejeição terminal da competência. Rejeição de pacote/área não fecha competência automaticamente; requer confirmação DEC-01 por coordenador. Nenhuma escolha C1/C2/C3 pendente.
 
 ## Testes futuros mínimos
 
