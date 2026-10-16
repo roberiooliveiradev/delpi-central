@@ -1404,8 +1404,12 @@ def test_legacy_cycle_accept_reject_satisfaction():
         calls.append(f"{request.method} {request.url.path}")
         if request.url.path.endswith("/Assistance/Ticket/7"):
             return httpx.Response(200, json={"id": 7, "name": "t", "status": {"id": 5}})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if request.url.path.endswith("/apirest.php/ITILFollowup/1"):
+            return httpx.Response(200, json={"id": 1, "users_id": 68})
         if request.url.path.endswith("/apirest.php/ITILFollowup"):
             body = json.loads(request.content.decode())
             assert body["input"]["items_id"] == 7
@@ -1524,8 +1528,11 @@ def test_legacy_cycle_write_restores_actor_as_followup_author():
         legacy_user_token="user-token-x",
         transport=httpx.MockTransport(handler),
     )
-    client.accept_ticket_solution("oauth-access", 7, "resolvido")
+    outcome = client.accept_ticket_solution("oauth-access", 7, "resolvido")
     assert author_update == {"id": 77, "users_id": 68}
+    assert outcome.followup_id == 77
+    assert outcome.users_id == 68
+    assert outcome.author_state == "restored"
     assert "GET /api.php/v2.2/session" in calls
     assert "GET /apirest.php/ITILFollowup/77" in calls
 
@@ -1564,14 +1571,19 @@ def test_legacy_cycle_write_skips_restore_when_post_honors_users_id():
         legacy_user_token="user-token-x",
         transport=httpx.MockTransport(handler),
     )
-    client.reject_ticket_solution("oauth-access", 7, "recuso")
+    outcome = client.reject_ticket_solution("oauth-access", 7, "recuso")
+    assert outcome.author_state == "verified"
+    assert outcome.followup_id == 77
     assert put_calls == []
     assert "GET /apirest.php/ITILFollowup/77" in calls
 
 
-def test_legacy_cycle_write_succeeds_without_session_identity():
-    """Identity resolution failure must not break the cycle write itself —
-    the followup is still created (previous behavior, minus attribution)."""
+def test_legacy_cycle_write_blocked_without_session_identity():
+    """Identity resolution failure must block the write — no followup is
+    created under the technical identity when the actor's GLPI user_id
+    cannot be resolved (fail-closed, NOT_EXECUTED)."""
+    from helpdesk_app.domain.errors import GlpiUnavailable
+
     calls: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -1583,11 +1595,7 @@ def test_legacy_cycle_write_succeeds_without_session_identity():
         if request.url.path.endswith("/apirest.php/initSession"):
             return httpx.Response(200, json={"session_token": "sess-cycle"})
         if request.url.path.endswith("/apirest.php/ITILFollowup"):
-            body = json.loads(request.content.decode())
-            assert "users_id" not in body["input"]
             return httpx.Response(201, json={"id": 78})
-        if request.url.path.endswith("/apirest.php/killSession"):
-            return httpx.Response(200, json={})
         return httpx.Response(404, json={"error": "missing"})
 
     client = HttpxGlpiClient(
@@ -1600,8 +1608,83 @@ def test_legacy_cycle_write_succeeds_without_session_identity():
         legacy_user_token="user-token-x",
         transport=httpx.MockTransport(handler),
     )
-    client.accept_ticket_solution("oauth-access", 7, "ok")
-    assert any("ITILFollowup" in item for item in calls)
+    with pytest.raises(GlpiUnavailable):
+        client.accept_ticket_solution("oauth-access", 7, "ok")
+    assert not any(
+        item.startswith("POST /apirest.php/ITILFollowup") for item in calls
+    )
+
+
+def _cycle_client(handler):
+    return HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+
+
+def _base_cycle_handler(followup_get, followup_put=None):
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        if request.url.path.endswith("/apirest.php/ITILFollowup/77"):
+            if request.method == "PUT" and followup_put is not None:
+                return followup_put(request)
+            return followup_get(request)
+        if request.url.path.endswith("/apirest.php/ITILFollowup"):
+            return httpx.Response(201, json={"id": 77})
+        return httpx.Response(404, json={"error": "missing"})
+
+    return handler
+
+
+def test_legacy_cycle_write_author_mismatch_when_put_denied():
+    """GLPI stamps the technical user, the restore PUT is denied → outcome
+    reports author_mismatch (executed, wrong author, cannot confirm fix)."""
+    outcome = _cycle_client(
+        _base_cycle_handler(
+            followup_get=lambda r: httpx.Response(200, json={"id": 77, "users_id": 75}),
+            followup_put=lambda r: httpx.Response(403, json={"error": "denied"}),
+        )
+    ).accept_ticket_solution("oauth-access", 7, "ok")
+    assert outcome.followup_id == 77
+    assert outcome.author_state == "mismatch"
+
+
+def test_legacy_cycle_write_author_mismatch_when_put_has_no_effect():
+    """PUT returns 2xx but the persisted users_id does not change →
+    author_mismatch (technical success != business outcome)."""
+    outcome = _cycle_client(
+        _base_cycle_handler(
+            followup_get=lambda r: httpx.Response(200, json={"id": 77, "users_id": 75}),
+            followup_put=lambda r: httpx.Response(200, json=[{"77": True}]),
+        )
+    ).reject_ticket_solution("oauth-access", 7, "reabrir")
+    assert outcome.author_state == "mismatch"
+
+
+def test_legacy_cycle_write_author_unverified_when_readback_fails():
+    """Author read-back unavailable both before and after PUT →
+    author_unverified (cannot confirm either way)."""
+    outcome = _cycle_client(
+        _base_cycle_handler(
+            followup_get=lambda r: httpx.Response(404, json={"error": "gone"}),
+            followup_put=lambda r: httpx.Response(200, json=[{"77": True}]),
+        )
+    ).accept_ticket_solution("oauth-access", 7, "ok")
+    assert outcome.followup_id == 77
+    assert outcome.author_state == "unverified"
 
 
 def test_list_technician_user_ids_falls_back_to_search_user_when_profile_user_forbidden():

@@ -193,6 +193,11 @@ HLAPI não fecha o ciclo; o BFF usa `apirest` após ACL OAuth (mesmo token técn
 | PUT | `/tickets/{id}/satisfaction` | `{ "satisfaction": 1..5, "comment": "…" }` → 201; duplicata → 422 |
 
 Não solicitante → 403. Status incoerente → 422. Legado desligado → 503.
+Identidade GLPI do ator não resolúvel (`GET /session` sem `user_id`) → 502 **antes** do write: nenhum followup é criado sob a identidade técnica (fail-closed).
+
+**Resultado governado do accept/reject** (`200`, aditivo): `{ "id", "status_id", "followup_id", "author_verified", "status_verified", "outcome" }`.
+`outcome` ∈ `verified` | `author_mismatch` | `author_unverified` | `status_unverified`.
+A escrita legada roda sob sessão técnica (único endpoint com `add_close`/`add_reopen`); o BFF envia `users_id` do ator OAuth no POST, lê o followup de volta e restaura via PUT bounded se o GLPI carimbar a conta técnica. `author_verified=false` ou `status_verified=false` significam **executado sem confirmação integral** — o consumidor não deve tratar como sucesso pleno nem incentivar retry automático (a transição de estado no GLPI já ocorreu; repetir a intenção retorna 422). A resposta governada é a que fica gravada na idempotência: retry com a mesma chave devolve o mesmo `outcome`.
 
 ### Operações de técnico (Solution / Task / pedido de aprovação)
 

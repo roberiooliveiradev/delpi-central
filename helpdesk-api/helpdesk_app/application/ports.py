@@ -3,6 +3,7 @@ from typing import Protocol
 from helpdesk_app.domain.models import (
     Attachment,
     Category,
+    CycleWriteOutcome,
     GlpiUserProfile,
     OAuthSession,
     PendingAuthorization,
@@ -147,9 +148,13 @@ class GlpiGateway(Protocol):
         title: str | None = None,
     ) -> Attachment: ...
 
-    def accept_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None: ...
+    def accept_ticket_solution(
+        self, access_token: str, ticket_id: int, content: str = ""
+    ) -> CycleWriteOutcome: ...
 
-    def reject_ticket_solution(self, access_token: str, ticket_id: int, content: str = "") -> None: ...
+    def reject_ticket_solution(
+        self, access_token: str, ticket_id: int, content: str = ""
+    ) -> CycleWriteOutcome: ...
 
     def get_ticket_satisfaction(
         self, access_token: str, ticket_id: int

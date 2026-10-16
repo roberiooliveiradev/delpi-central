@@ -1327,11 +1327,18 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
         ? acceptTicketSolution(ticketId, cycleNote, cycleKey)
         : rejectTicketSolution(ticketId, cycleNote, cycleKey);
     void runner
-      .then(() => {
+      .then((result) => {
         setCycleNote("");
         setCycleKey(newIdempotencyKey());
         closeActionAfterSuccess();
         load();
+        if (result.outcome !== "verified") {
+          setErrorText(
+            result.outcome === "status_unverified"
+              ? "Ação registrada no helpdesk, mas a situação do chamado não pôde ser confirmada. Verifique o chamado antes de tentar novamente."
+              : "Ação registrada no helpdesk, mas a autoria não pôde ser confirmada. Não repita a ação — o chamado já foi atualizado.",
+          );
+        }
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setCycleSaving(false));

@@ -1325,3 +1325,121 @@ def test_cycle_comments_rich_text_contract():
         headers={**headers, "Idempotency-Key": "cycle-acc-long"},
     )
     assert too_long.status_code == 422
+
+
+def test_cycle_write_governed_outcome_author_mismatch():
+    """POST persists with technical author and the restore PUT is denied →
+    governed result (executed, author NOT verified), never a bare success;
+    the stored idempotent response replays the same governed outcome and a
+    same-key retry never re-executes the write."""
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import CycleWriteOutcome
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail, status_id=5, status="Solucionado", requester_mine=True
+    )
+    glpi.cycle_outcome = CycleWriteOutcome(
+        followup_id=77, users_id=68, author_state="mismatch"
+    )
+
+    headers = {**auth_headers(), "Idempotency-Key": "acc-mismatch"}
+    resp = client.post(
+        "/tickets/7/solution/accept", json={"content": "ok"}, headers=headers
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["outcome"] == "author_mismatch"
+    assert body["author_verified"] is False
+    assert body["status_verified"] is True
+    assert body["followup_id"] == 77
+
+    replay = client.post(
+        "/tickets/7/solution/accept", json={"content": "ok"}, headers=headers
+    )
+    assert replay.json() == body
+    assert len(glpi.accepted_solutions) == 1
+
+
+def test_cycle_write_governed_outcome_author_unverified():
+    """Author read-back unavailable → author_unverified (executed, integrity
+    not confirmed), also stored idempotently."""
+    from dataclasses import replace
+
+    from helpdesk_app.domain.models import CycleWriteOutcome
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail, status_id=5, status="Solucionado", requester_mine=True
+    )
+    glpi.cycle_outcome = CycleWriteOutcome(
+        followup_id=78, users_id=68, author_state="unverified"
+    )
+
+    resp = client.post(
+        "/tickets/7/solution/reject",
+        json={"content": "reabrir"},
+        headers={**auth_headers(), "Idempotency-Key": "rej-unverified"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["outcome"] == "author_unverified"
+    assert body["author_verified"] is False
+    assert body["followup_id"] == 78
+
+
+def test_cycle_write_retry_with_new_key_blocked_by_transition():
+    """After accept closes the ticket, a new Idempotency-Key must not
+    duplicate the write — the state check rejects it (Cenário F)."""
+    from dataclasses import replace
+
+    client, glpi = build_client()
+    link(client)
+    glpi.detail = replace(
+        glpi.detail, status_id=5, status="Solucionado", requester_mine=True
+    )
+    first = client.post(
+        "/tickets/7/solution/accept",
+        json={},
+        headers={**auth_headers(), "Idempotency-Key": "acc-k1"},
+    )
+    assert first.status_code == 200
+    assert first.json()["outcome"] == "verified"
+
+    second = client.post(
+        "/tickets/7/solution/accept",
+        json={},
+        headers={**auth_headers(), "Idempotency-Key": "acc-k2"},
+    )
+    assert second.status_code == 422
+    assert len(glpi.accepted_solutions) == 1
+
+
+def test_cycle_write_stored_response_status_unverified():
+    """Author verified but ticket status outside the expected set →
+    status_unverified, not full success."""
+    from helpdesk_app.application.ticket_service import _cycle_write_stored_response
+    from helpdesk_app.domain.models import CycleWriteOutcome, TicketDetail
+
+    detail = TicketDetail(
+        id=7,
+        title="t",
+        status="Solucionado",
+        category="c",
+        urgency="Media",
+        updated_at="",
+        description="",
+        timeline=(),
+        status_id=5,
+    )
+    stored = _cycle_write_stored_response(
+        detail,
+        CycleWriteOutcome(followup_id=77, users_id=68, author_state="verified"),
+        expected_status_ids={6},
+    )
+    assert stored.body["outcome"] == "status_unverified"
+    assert stored.body["author_verified"] is True
+    assert stored.body["status_verified"] is False
