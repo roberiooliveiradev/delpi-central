@@ -92,6 +92,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationAssistantActions",
   "ConversationScrollNavigator",
   "ConversationThreeRegionLayout",
+  "ComposerClearDraftButton",
   "ConversationSidebar",
   "ConversationSidebarSearch",
   "ConversationContextPanel",
