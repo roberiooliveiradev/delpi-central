@@ -1030,6 +1030,22 @@ C0.S0
 
 Nenhuma capability temática `53–66` precede o Foundation Freeze.
 
+### DELIA-UX-CONVERSATION-MARKDOWN-B2 — autorização bounded condicional D1–D12 / CP-333 (2026-10-16)
+
+**Autoridade deste slice:** Product Master aprovou D1–D12 da [spec 83](./83-conversation-markdown-b2-contract-and-implementation-plan.md), incluindo D12: formalizar CP específico e autorizar **escopo bounded B2 condicionado** aos gates de contrato, segurança, compatibilidade e reutilização. A matriz [25](./25-requirements-traceability.md) registra `CP-333` como `PLANNED` e a [20](./20-testing-and-acceptance-matrix.md) registra testes `C3-MD-B2-*` como `TEST_NOT_RUN`. A [82](./82-conversation-rich-content-and-structured-presentation-specification.md) é a spec temática superior. **B2 aqui = Markdown textual conversacional**, NÃO `C3-STAGE-02-B2` do ledger (execução governada). Nenhuma autorização de ACT deriva disso.
+
+**Escopo congelado de produto:** DÉLIA produz Markdown a partir de dados admitidos (não delega apresentação a MCP/tool/model); `presentation.v2` explícito; títulos/parágrafos/listas/ênfases/citações/divisores/code inerte; links internos legitimamente navegados pelo Portal e externos verificados em nova aba; estrutura contextual proporcional; copy texto legível preservando fatos; fallback inerte só em conteúdo admitido, erro neutro se payload inválido/hostil; EvidenceDetails preservado; full-page e dock com paridade e rollout compatível. **Fora do escopo:** tabelas GFM/estruturadas, métricas, gráficos, HTML arbitrário, Mermaid, mídia e ações.
+
+**Gates em ordem:** 
+1. `G0=RECORDED_CONDITIONAL`: CP-333/owner/C3 bounded + D1–D12 registrados; sem promoção de fase.
+2. `G1=BLOCKING_PENDING`: owner DÉLIA API/Application com Frontend e Security define schema/OpenAPI `presentation.v2`, producer/formatter governado, format discriminator, explicit links/URL/navigation policy, fallbacks/copy/errors/limits, conformance v1/v2 e rollback.
+3. `G2=BLOCKING_PENDING`: plugin-ui/Frontend/Security comprova `EXISTING_EQUIVALENT`/`REUSE_DECISION`, audita sanitizer (incl. `blob:`/`attachment:`/HTML/Mermaid), define allowlist e threat model; sem nova arquitetura/renderer por conveniência.
+4. `G3=BLOCKING_PENDING`: **só após G1 e G2** congelados, Architecture/Coordination confirma HEAD, owners, CP-333/RQ/AC, contract readiness e entrega brief por slice ao executor. **Até lá, apenas documentação/review/provas de inventário, nenhum diff de runtime B2.**
+5. `I1/I2/I3` execução bounded no owner real (DÉLIA API → plugin-ui se necessário → DÉLIA MFE); sem provider mechanics no planner. `G4` testes/QA real/independent review antes de aceite.
+
+**Estado:** `B2_BOUNDED_SCOPE_AUTHORIZED=CONDITIONAL_YES`; `B2_RUNTIME_CHANGE_AUTHORIZED=NO_UNTIL_G1_G2_G3`; `CP_333=PLANNED_NOT_PASS`; `C_D_E_TRACEABILITY_GAP=OPEN`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PHASE_PROGRESSION=NONE`. Isto é **slice UX paralelo documental/contratual** dentro do escopo C3, não novo NEXT global nem mudança do baseline principal `RETURN_TO_ARCHITECTURE_COORDINATION`. Se ocorrer conflito com nova evidência no HEAD: STOP e `EXECUTION_DRIFT/ARCHITECTURE_DECISION_REQUIRED`.
+
+
 ### C3-T5 — OpenAPI Action Catalog + Capability Projection (APPROVED)
 
 ```text
