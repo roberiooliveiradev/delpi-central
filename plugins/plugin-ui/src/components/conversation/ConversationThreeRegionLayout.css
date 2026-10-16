@@ -196,3 +196,78 @@
     transition: none !important;
   }
 }
+
+
+/* R5 — consistent icon-only chrome in BOTH themes.
+   Overrides action-controls.css dark IconButton rule by explicit specificity,
+   without changing other shared consumers. Background exists only on hover/press. */
+.delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon,
+:root[data-theme="dark"] .delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon {
+  appearance: none;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  flex: 0 0 40px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #667085));
+  box-shadow: none;
+  opacity: 1;
+  transition: background-color var(--delpi-ui-conversation-motion-fast) ease,
+    color var(--delpi-ui-conversation-motion-fast) ease;
+}
+.delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:hover:not(:disabled),
+:root[data-theme="dark"] .delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 8%, transparent);
+  border-color: transparent;
+  color: var(--delpi-ui-text, var(--text, #111));
+  box-shadow: none;
+}
+.delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:active:not(:disabled),
+:root[data-theme="dark"] .delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:active:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 13%, transparent);
+}
+.delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:focus-visible,
+:root[data-theme="dark"] .delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+/* Explicitly remove R4's permanent collapsed-rail tint. */
+.delpi-ui-conversation-three-region--left-collapsed .delpi-ui-icon-btn.delpi-ui-conversation-three-region__rail-toggle,
+:root[data-theme="dark"] .delpi-ui-conversation-three-region--left-collapsed .delpi-ui-icon-btn.delpi-ui-conversation-three-region__rail-toggle {
+  background: transparent;
+  border-color: transparent;
+}
+/* The context header reserves the final 40px for its close button.
+   Heading text may never push or pull the button toward the middle. */
+.delpi-ui-conversation-three-region__context-popover .delpi-ui-conversation-three-region__side-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  align-items: center;
+  justify-content: normal;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.delpi-ui-conversation-three-region__context-popover .delpi-ui-conversation-three-region__side-heading strong {
+  grid-column: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.delpi-ui-conversation-three-region__context-popover .delpi-ui-conversation-three-region__context-close {
+  grid-column: 2;
+  justify-self: end;
+  margin-left: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-three-region .delpi-ui-icon-btn.delpi-ui-conversation-three-region__chrome-icon {
+    transition: none !important;
+  }
+}
