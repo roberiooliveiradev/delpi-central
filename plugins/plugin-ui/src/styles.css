@@ -94,6 +94,7 @@
 @import "./styles/conversation-drop.css";
 @import "./styles/conversation-workspace.css";
 @import "./components/conversation/ConversationThreeRegionLayout.css";
+@import "./components/conversation/ConversationSidePanels.css";
 @import "./styles/conversation-user-message.css";
 @import "./styles/message-action-bar.css";
 @import "./styles/conversation-status.css";
