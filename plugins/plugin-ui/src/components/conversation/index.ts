@@ -60,3 +60,6 @@ export {
 } from "./ConversationScrollNavigator";
 
 export { ConversationThreeRegionLayout, type ConversationThreeRegionLayoutProps } from "./ConversationThreeRegionLayout";
+
+export { ConversationSidebar, type ConversationSidebarProps } from "./ConversationSidebar";
+export { ConversationContextPanel, type ConversationContextPanelProps } from "./ConversationContextPanel";
