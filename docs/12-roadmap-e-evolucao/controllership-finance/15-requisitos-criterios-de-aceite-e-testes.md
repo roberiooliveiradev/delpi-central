@@ -27,7 +27,7 @@ Fonte de página: [28-administracao.md](./28-administracao.md).
 
 ### Minhas tarefas
 
-Cobrir `TaskWorkspacePage`, TaskProjection self-only, producers P2/P4 e P5 conditional, ação `Abrir` owner, ausência de task entity livre, ausência de team scope/SLA global, partial coverage, URL/F5, integração com Home/Sala, light/dark/mobile/a11y e Help.
+Cobrir `TaskWorkspacePage`, TaskProjection self-only, producers P2/P4 e P5 quando houver obrigação acionável por área e usuário elegível (self-only), ação `Abrir` owner, ausência de task entity livre, ausência de team scope/SLA global, partial coverage, URL/F5, integração com Home/Sala, light/dark/mobile/a11y e Help.
 
 Fonte detalhada: [27-minhas-tarefas.md](./27-minhas-tarefas.md).
 
