@@ -10,3 +10,5 @@ export {
   ComposerCharacterCounter,
   type ComposerCharacterCounterProps,
 } from "./ComposerCharacterCounter";
+
+export { ComposerStopButton, type ComposerStopButtonProps } from "./ComposerStopButton";
