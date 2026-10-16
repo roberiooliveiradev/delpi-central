@@ -14141,3 +14141,20 @@ RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO; C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AU
 
 B1=PASS_STRUCTURAL_AND_LIVE_BOUNDED; B2=PASS_WITH_KNOWN_RESIDUALS; RW01/RW02=PASS; UX01=PASS_VITEST; LIVE_05/06/07=PASS
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_FINAL_ACCEPTANCE_DECISION
+
+## §6.200 — DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01 (PARTIAL; EMISSION BLOCKED; READY FOR INDEPENDENT REVIEW)
+
+**DATA:** 2026-10-16. **MODE:** architecture/contract/inventory + policy probes — zero presentation.v2 / ConversationMarkdown / Domain write / deploy. **BASE_HEAD:** `c98870a6ca`. **REPORT:** [90](../90-l1-governed-link-binding-inventory-and-contract-closure.md).
+
+- **DOMAIN CONTRACTS PARTIAL:** mural_acessos `url` (normalize_link_url http/https; `_present_*_link`); Core notification `portal_route`/`external_url` https (reuse pattern, wrong surface for B2 body).
+- **DELIA PATH NOT_PROVEN:** `rg mural` delia-api = 0; no capability_id; SpecialistOutcome.structured untyped for navigable destinations; provenance/SourceRef/WorkspaceEntityRef URL-free; `_TRANSPORT_FORBIDDEN` includes url args.
+- **CHAT PARALLEL:** minha-delpi-ai-api indexes mural oids — OUT_OF_SCOPE (standalone).
+- **GAP:** mural write allows http; B2 emit requires https external.
+- **POLICY PROBES:** `test_l1_governed_link_admission_policy.py` **35 PASS** (synthetic allowlist positives + generic/hostile/untrusted negatives + real oid gap inert). Regression presentation_v2+fidelity PASS; api-delpi normalize_link_url **2 PASS**.
+- **SSH READ-ONLY srv-api:** REMOTE_HEAD=`6a7aeed999` (behind inventory HEAD — docs/transformometro commits not pulled); DELIA mural hits 0; TRANSPORT url forbidden present; presentation v1; mural normalize present; delia-api healthy/gateway 200; image `d149abbdebb` (R3-era). No deploy.
+- **EXIT B:** `LINK_L1_CAPABILITY_BINDINGS=PARTIAL`; `NAVIGABLE_LINK_EMISSION=BLOCKED`; G3 BLOCKED; CP-333 PLANNED_NOT_PASS.
+- **NEXT bounded:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-MURAL-CAPABILITY-BINDING-01` after independent review. Global phase NEXT unchanged.
+
+EXISTING_EQUIVALENT=YES_PARTIAL; REUSE_DECISION=EXTEND; NO_NEW_LINKREF
+PHASE_PROGRESSION=NONE; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
+INDEPENDENT_REVIEW=PENDING

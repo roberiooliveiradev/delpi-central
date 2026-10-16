@@ -95,6 +95,25 @@ Revisão independente [89](./89-presentation-v2-g1-g2-r3-independent-closure-rev
 - Estado pós-review: `G1=ACCEPT_WITH_RESIDUAL` / `G2=ACCEPT_WITH_RESIDUAL` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `NAVIGABLE_LINK_EMISSION=BLOCKED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO` / `PHASE_PROGRESSION=NONE`.
 - **NEXT bounded (trilha Markdown B2):** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01`.
 
+### 0.7 L1 binding inventory (2026-10-16)
+
+Task `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01` — inventário [90](./90-l1-governed-link-binding-inventory-and-contract-closure.md):
+
+- Contratos de domínio **PARTIAL**: `api-delpi` mural `link.url` (write/read publicados) + padrão Core notifications (`portal_route`/`external_url` https) como reuse de validação.
+- Caminho **capability → SpecialistOutcome.structured → apresentação DÉLIA** = **NOT_PROVEN** (`rg mural` em `delia-api` = 0; nenhum `capability_id` tipado).
+- Chat indexa oids mural — **não** é autoridade DÉLIA (standalone).
+- Gap: mural write admite `http`; emissão B2 exige `https` externo.
+- Probes de política (não runtime): `delia-api/tests/test_l1_governed_link_admission_policy.py`.
+
+```text
+LINK_L1_CAPABILITY_BINDINGS = PARTIAL
+NAVIGABLE_LINK_EMISSION = BLOCKED
+G3 = BLOCKED
+CP-333 = PLANNED_NOT_PASS
+```
+
+- **NEXT bounded:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-MURAL-CAPABILITY-BINDING-01` (menor EXTEND para fechar um binding real) — sujeito a revisão independente; **não** libera G3 automaticamente.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:

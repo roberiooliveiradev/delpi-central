@@ -101,16 +101,19 @@ O produtor só pode emitir os nós da política §5.1: parágrafos, `**`/`__`, `
 
 **Proibição explícita:** campos genéricos `url`, `href`, `link` ou `*_url` **não** são promovidos a link navegável por nome ou por presença em `structured`. Sem contrato governado do owner publicando o destino, **nenhum link navegável é emitido** — os rótulos degradam a texto. Isso **não** revoga D1/D6/D7: a política e o renderer ficam prontos; a emissão depende de bindings reais.
 
-**Inventário de contratos governados (R2-01 — resultado factual):**
+**Inventário de contratos governados (R2-01 + L1 inventory doc 90 — resultado factual):**
 
 | Candidato | Estado | Detalhe |
 |---|---|---|
-| `api-delpi` `mural_acessos` link `url` | CONTRATO REAL GOVERNADO | Owner: `app/domain/services/mural_acessos/link_url.py` — `normalize_link_url` valida scheme `http/https`+netloc+max len no write; semântica = destino de atalho publicado. **Porém** não foi provada nenhuma capability/specialist binding que carregue esse campo em `SpecialistOutcome.structured` até a conversa — binding `TO_INVENTORY` |
-| `api-delpi` external capabilities `url` arg | PROIBIDO por design | `argument_validator.py` `_TRANSPORT_FORBIDDEN` inclui `url` — transporte nunca é argumento |
-| `GovernedCapabilityProvenance`/`SourceRef`/`WorkspaceEntityRef`/`owner_hint` | NÃO SÃO FONTES | URL-free por construção (R1, doc 86 §3) |
-| Demais Domain APIs/specialists com campos link tipados+semântica publicada | TO_INVENTORY | Nenhum binding concreto demonstrado neste inventário |
+| `api-delpi` `mural_acessos` link `url` | CONTRATO REAL GOVERNADO / binding DÉLIA AUSENTE | Owner: `link_url.py` + `_present_*_link`; write `http/https`. **Zero** referência em `delia-api`. Gap emit: B2 exige `https` externo. Veredito: `PARTIAL_CONTRACT_PROVEN` |
+| `core-api` notification `action.target` | CONTRATO REAL (outra superfície) | `portal_route` `/…` ou `external_url` https — reuse de validação; **não** alimenta SpecialistOutcome |
+| Portal `sameAppAnchorNavigation` | CONSUMER ONLY | Navegação same-origin; não publica destino L1 |
+| `api-delpi` external capabilities `url` arg | PROIBIDO por design | `_TRANSPORT_FORBIDDEN` inclui `url` |
+| `GovernedCapabilityProvenance`/`SourceRef`/`WorkspaceEntityRef`/`owner_hint` | NÃO SÃO FONTES | URL-free por construção |
+| Chat action catalog mural oids | OUT_OF_SCOPE DÉLIA | Índice paralelo Minha DELPI Chat — não authority standalone |
+| Specialists MCP structured tipado navigable | NOT_SUPPORTED | Nenhum campo `published_navigable_destination` no caminho do turno |
 
-**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = TO_INVENTORY` — a política está fechada e armada; zero links navegáveis serão emitidos até que um binding owner→capability→`structured` seja provado com contrato publicado. G3 permanece bloqueado nesse ponto.
+**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = PARTIAL` / `NAVIGABLE_LINK_EMISSION = BLOCKED` — política fechada; emissão zero até binding capability→structured comprovado e allowlist tipada. G3 permanece bloqueado. Probes: `test_l1_governed_link_admission_policy.py`.
 
 ### 2.5 Erros de contrato e versões (R2-02 — decisão executável)
 
@@ -305,7 +308,7 @@ Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos r
 | Item | Estado | Decisão requerida |
 |---|---|---|
 | `PORTAL_MFE_NAVIGATE_PROP` | NOT_PRESENT | Não bloqueante: `<a href>` same-origin já navega (SPA intercept dentro do app/shell; reload fora). Se produto exigir SPA-nav cross-app, abrir bounded slice Portal; **sem** inventar API agora |
-| `LINK_SOURCE_TYPED` | **L1_APPROVED_CONDITIONAL** (Product Master, 2026-10-16) | Condições e inventário em §2.4. `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` — zero links navegáveis até binding owner→capability→`structured` provado. G3 segue bloqueado neste ponto |
+| `LINK_SOURCE_TYPED` | **L1_APPROVED_CONDITIONAL** (Product Master, 2026-10-16) | Condições §2.4 + inventário doc 90. `LINK_L1_CAPABILITY_BINDINGS=PARTIAL` (domínio mural/notif; path DÉLIA NOT_PROVEN) — `NAVIGABLE_LINK_EMISSION=BLOCKED`. G3 segue bloqueado |
 | `TOKEN_KEY_EXPOSURE` | CLOSED_R3_01 | `"token"` em `_SENSITIVE_KEY_NAMES`; RED→GREEN em `test_bare_token_key_is_redacted`. Projeção `structured`→`markdown_safe` segue bloqueada por gates G3/runtime (não por este residual) |
 | `GOVERNED_FORMATTER` | RESOLVIDO — não é componente novo | RW-G1-01: o seam é `render_specialist_outcome` existente; proposta = **EXTEND** a projeção para emitir blocos tipados (§4). Freeze confirma nome/assinatura final |
 | `SCHEMA_ADDITIONAL_PROPERTIES` | DECIDIDO nesta proposta | v2 fechado (`additionalProperties:false`, fail-closed → `neutral_error` por §2.5; **não** fallback legado). Reversível no freeze se preferirem tolerância aditiva |

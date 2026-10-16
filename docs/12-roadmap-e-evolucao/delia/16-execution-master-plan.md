@@ -1045,7 +1045,9 @@ Nenhuma capability temática `53–66` precede o Foundation Freeze.
 
 **Estado:** `B2_BOUNDED_SCOPE_AUTHORIZED=CONDITIONAL_YES`; `B2_RUNTIME_CHANGE_AUTHORIZED=NO_UNTIL_G1_G2_G3`; `CP_333=PLANNED_NOT_PASS`; `C_D_E_TRACEABILITY_GAP=OPEN`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PHASE_PROGRESSION=NONE`. Isto é **slice UX paralelo documental/contratual** dentro do escopo C3, não novo NEXT global nem mudança do baseline principal `RETURN_TO_ARCHITECTURE_COORDINATION`. Se ocorrer conflito com nova evidência no HEAD: STOP e `EXECUTION_DRIFT/ARCHITECTURE_DECISION_REQUIRED`.
 
-**Atualização 2026-10-16 (review independente doc 89):** `G1=ACCEPT_WITH_RESIDUAL` / `G2=ACCEPT_WITH_RESIDUAL` / `R3_TOKEN_FIX=ACCEPT` / `G3=BLOCKED` por `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY`. **NEXT bounded desta trilha:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01`. Não altera o NEXT global da fase (`RETURN_TO_ARCHITECTURE_COORDINATION`). Não autoriza runtime B2 nem Stage-02 ACT.
+**Atualização 2026-10-16 (review independente doc 89):** `G1=ACCEPT_WITH_RESIDUAL` / `G2=ACCEPT_WITH_RESIDUAL` / `R3_TOKEN_FIX=ACCEPT` / `G3=BLOCKED` por bindings L1.
+
+**Atualização 2026-10-16 (L1 inventory doc 90):** `LINK_L1_CAPABILITY_BINDINGS=PARTIAL` (contrato mural Domain + padrão Core notifications; path capability→DÉLIA NOT_PROVEN); `NAVIGABLE_LINK_EMISSION=BLOCKED`. **NEXT bounded desta trilha:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-MURAL-CAPABILITY-BINDING-01` (após review do inventário). Não altera o NEXT global da fase (`RETURN_TO_ARCHITECTURE_COORDINATION`). Não autoriza runtime B2 nem Stage-02 ACT.
 
 
 ### C3-T5 — OpenAPI Action Catalog + Capability Projection (APPROVED)
