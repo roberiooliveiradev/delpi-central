@@ -72,3 +72,11 @@ Testar 1440/1280/1024/768/420/375/320px, Dock, dark/light, zoom 200%; nenhuma la
 - **Validação:** testes de props/callbacks/estados e negativos de AuthZ, QA page/dock light/dark, check de exports/federação, prova de generalização em cenários de navegação e revisão independente no SHA executado. `TEST_NOT_RUN` não equivale a PASS.
 
 
+
+## Rework R1 — controle único, seleção e categoria indisponível
+
+Aplica o [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md). O rail é **parte da área esquerda existente**, não segunda sidebar; seu owner de estado é `DeliaConversationPage`/consumer. **Quando o painel está aberto, o controle de recolher fica apenas no header do painel; quando fechado, apenas no topo do rail.** Não há dois botões presentes simultaneamente no DOM. Em `launcher_only`, o rail não é exibido e existe um único disparador acessível na área central.
+
+A ordem/alvos `Conversas → Projetos → Agentes → Plugins` é direção visual de produto. `forbidden` oculta item/metadata; `contract_unavailable` representa categoria aprovada para preview com botão disabled e descrição honesta; `authorized_empty` só após contrato/consulta real. Os indicadores de categoria selecionada não se confundem com disponibilidade, autorização ou status de carga. Em seleção, não destruir workspace nem alterar sessão; item ativo deve continuar semanticamente identificável quando painel recolhido. Ícone não disponível não recebe callback funcional. Para categorias proibidas, não mostrar tooltip revelador.
+
+**A11y:** `nav` com nome singular, botões para mudança de painel e links apenas com rotas reais, `aria-current` para active quando semanticamente aplicável, `aria-expanded` para toggle com `aria-controls` apontando conteúdo efetivo; renderizar tooltips acessíveis. Em dark/light fundo ghost só em hover/focus/press. `REUSE_DECISION=EXTEND` do rail já existente, não substituição.
