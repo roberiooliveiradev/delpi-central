@@ -610,15 +610,42 @@ def test_ci04_inner_required_field_not_checked_by_outer_schema():
             },
         ),
     )
-    attempt = orch.attempt("Crie um processo chamado processo teste")
+    attempt = orch.attempt(
+        "Crie um processo chamado processo teste",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+
+    # B2 closure (§6.184): a free-text MESSAGE never reaches material
+    # ACT — the READY proposal waits as a backend pending write.
+    assert [name for name, _ in provider.calls] == [
+        "get_catalog", "stage_record",
+    ]
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+
+    applied = orch.attempt(
+        "",
+        actor_user_id="u1",
+        session_id="s1",
+        confirmation={
+            "decision": "CONFIRM",
+            "proposal_digest": (
+                attempt.confirmation_context["proposal_digest"]
+            ),
+            "preview_fingerprint": (
+                attempt.confirmation_context["preview_fingerprint"]
+            ),
+            "session_id": attempt.confirmation_context["session_id"],
+        },
+    )
 
     # Full production chain reproduced: discovery -> prepare READY ->
-    # direct ACT -> commit validation error -> honest failure.
+    # bound APPLY -> commit validation error -> honest failure.
     assert [name for name, _ in provider.calls] == [
         "get_catalog", "stage_record", "commit_record",
     ]
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert attempt.error_code == "mcp_protocol_error"
+    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert applied.error_code == "mcp_protocol_error"
 
     # The entity contract WAS available to the arguments stage — as an
     # untrusted free-text vocabulary block, not a validated schema.
@@ -641,10 +668,26 @@ def test_ci04_inner_required_field_not_checked_by_outer_schema():
     )
 
 
+def _apply_pending(orch, attempt, actor="u1", session="s1"):
+    """Typed APPLY_PREPARED turn bound to the pending proposal."""
+    ctx = attempt.confirmation_context
+    return orch.attempt(
+        "",
+        actor_user_id=actor,
+        session_id=session,
+        confirmation={
+            "decision": "CONFIRM",
+            "proposal_digest": ctx["proposal_digest"],
+            "preview_fingerprint": ctx["preview_fingerprint"],
+            "session_id": ctx["session_id"],
+        },
+    )
+
+
 def test_ci03_sibling_complete_changes_commit_directly():
     """Positive sibling: complete inner changes flow through the same
-    direct path — the governed chain itself is sound when the payload
-    is complete."""
+    governed chain — MESSAGE -> PREPARE+pending -> bound APPLY -> ACT —
+    the chain itself is sound when the payload is complete."""
     provider = _process_provider(
         commit_outcome=_outcome(
             "registry", "commit_record", "created",
@@ -676,8 +719,15 @@ def test_ci03_sibling_complete_changes_commit_directly():
             },
         ),
     )
-    attempt = orch.attempt("Crie um processo chamado processo teste")
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    attempt = orch.attempt(
+        "Crie um processo chamado processo teste",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_record" not in [name for name, _ in provider.calls]
+    applied = _apply_pending(orch, attempt)
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
     assert [name for name, _ in provider.calls] == [
         "get_catalog", "stage_record", "commit_record",
     ]
@@ -1042,8 +1092,14 @@ def test_ci10_inner_schema_gap_is_name_invariant():
             },
         ),
     )
-    attempt = orch.attempt("Crie um item chamado item teste")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    attempt = orch.attempt(
+        "Crie um item chamado item teste",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    applied = _apply_pending(orch, attempt)
+    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     assert [name for name, _ in provider.calls] == [
         "describe_surface", "propose_mutation", "apply_mutation",
     ]
@@ -1097,14 +1153,23 @@ def test_budget_model_calls_per_guided_write_path():
             },
         ),
     )
-    attempt = orch.attempt("Crie um processo chamado x")
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    attempt = orch.attempt(
+        "Crie um processo chamado x",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    # B2 closure (§6.184): the MESSAGE ends at PREPARE + pending scope
+    # choice — the bound APPLY turn runs zero extra model proposals.
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     purposes = [r.task_purpose_id for r in model.requests]
     # select_group + select_capability + turn_goal +
     # native_assessment + arguments (target) — discovery args are
     # resolved without a proposal (empty schema short-circuit).
     assert len(purposes) == 5
     assert purposes.count(ARGUMENTS_INSTRUCTION_ID) == 1
+    applied = _apply_pending(orch, attempt)
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
+    assert len(model.requests) == 5
 
 
 # ---------------------------------------------------------------------
@@ -1314,8 +1379,8 @@ def test_s2_ambiguous_request_clarifies_without_writing():
 
 def test_s2_explicit_create_keeps_governed_write_path():
     """Positive control: goal=create_or_modify with a write selection
-    is compatible — the governed chain (discovery -> prepare ->
-    owner-sealed direct ACT) runs exactly as before."""
+    is compatible — the governed chain (discovery -> prepare -> bound
+    APPLY -> ACT) runs; a MESSAGE alone never commits."""
     provider = _process_provider(
         commit_outcome=_outcome(
             "registry", "commit_record", "created",
@@ -1342,8 +1407,15 @@ def test_s2_explicit_create_keeps_governed_write_path():
             },
         ),
     )
-    attempt = orch.attempt("Quero que você cadastre um processo x")
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    attempt = orch.attempt(
+        "Quero que você cadastre um processo x",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_record" not in [name for name, _ in provider.calls]
+    applied = _apply_pending(orch, attempt)
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
     assert [name for name, _ in provider.calls] == [
         "get_catalog", "stage_record", "commit_record",
     ]
@@ -1775,10 +1847,11 @@ def test_s2r1_execution_bound_semantic_variants():
 
 
 def test_s2r1_unrestricted_create_keeps_direct_continuation():
-    """B2-03 control (§6.174): explicit action request with NO
-    execution bound declared (unrestricted) and owner direct policy
-    — the governed direct continuation still runs. The bound can
-    only reduce the ceiling, never require universal confirmation."""
+    """B2-03 control (§6.174/§6.184): explicit action request with a
+    model-declared `unrestricted` bound and owner direct policy — the
+    bound carries no permissive value, so the MESSAGE caps at PREPARE +
+    pending; the typed bound APPLY still reaches the governed ACT
+    without an extra owner confirmation step."""
     provider = _process_provider(
         commit_outcome=_outcome(
             "registry", "commit_record", "created",
@@ -1805,8 +1878,15 @@ def test_s2r1_unrestricted_create_keeps_direct_continuation():
             },
         ),
     )
-    attempt = orch.attempt("Crie um processo chamado x")
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    attempt = orch.attempt(
+        "Crie um processo chamado x",
+        actor_user_id="u1",
+        session_id="s1",
+    )
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_record" not in [name for name, _ in provider.calls]
+    applied = _apply_pending(orch, attempt)
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
     assert [name for name, _ in provider.calls] == [
         "get_catalog", "stage_record", "commit_record",
     ]

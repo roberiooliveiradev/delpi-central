@@ -235,24 +235,50 @@ export function DeliaAssistantMessage({
         ) : null}
 
         {turn.confirmationRequest && !turn.confirmationAnswered ? (
-          <GovernedConfirmation
-            title="Confirmação necessária"
-            confirmLabel="Confirmar"
-            cancelLabel="Cancelar"
-            loading={loading}
-            onConfirm={() =>
-              onConfirmation(
-                turn.confirmationRequest as DeliaConfirmationRequest,
-                "CONFIRM",
-              )
-            }
-            onCancel={() =>
-              onConfirmation(
-                turn.confirmationRequest as DeliaConfirmationRequest,
-                "REJECT",
-              )
-            }
-          />
+          (() => {
+            // §6.184: the pending purpose distinguishes a scope choice
+            // (owner needs no extra confirmation) from a bound decision
+            // that also satisfies the owner-required confirmation —
+            // one action, truthful copy, no extra click. Absent purpose
+            // (legacy surface) keeps the conservative confirmation copy.
+            const purpose = (
+              turn.confirmationRequest as DeliaConfirmationRequest
+            ).pending_purpose;
+            const ownerConfirmation =
+              purpose !== "execution_scope_choice";
+            return (
+              <GovernedConfirmation
+                title={
+                  ownerConfirmation
+                    ? "Confirmação necessária"
+                    : "Operação pronta para execução"
+                }
+                description={
+                  purpose ===
+                  "execution_scope_plus_owner_confirmation"
+                    ? "Esta operação exige confirmação explícita — executar confirma a proposta preparada."
+                    : undefined
+                }
+                confirmLabel={
+                  ownerConfirmation ? "Confirmar e executar" : "Executar"
+                }
+                cancelLabel="Cancelar"
+                loading={loading}
+                onConfirm={() =>
+                  onConfirmation(
+                    turn.confirmationRequest as DeliaConfirmationRequest,
+                    "CONFIRM",
+                  )
+                }
+                onCancel={() =>
+                  onConfirmation(
+                    turn.confirmationRequest as DeliaConfirmationRequest,
+                    "REJECT",
+                  )
+                }
+              />
+            );
+          })()
         ) : null}
 
         {hasEvidence ? (

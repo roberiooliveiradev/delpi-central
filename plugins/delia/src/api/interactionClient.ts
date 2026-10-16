@@ -171,6 +171,15 @@ export type DeliaConfirmationRequest = {
   proposal_digest: string;
   preview_fingerprint: string;
   expires_at_epoch?: number;
+  /** Why the proposal awaits a bound decision (§6.184):
+   *  `execution_scope_choice` — the owner declared no additional
+   *  confirmation, so Executar is the user's scope choice only;
+   *  `execution_scope_plus_owner_confirmation` — the same Executar
+   *  also satisfies the owner-required confirmation. Presentation
+   *  copy only — never authority. */
+  pending_purpose?:
+    | "execution_scope_choice"
+    | "execution_scope_plus_owner_confirmation";
 };
 
 /** Structured decision echoed back on a confirmation turn. */
@@ -180,6 +189,19 @@ export type DeliaConfirmationDecision = {
   preview_fingerprint: string;
   session_id: string;
 };
+
+/**
+ * Typed turn command (§6.184): MESSAGE carries free text and can
+ * never reach material ACT in the same turn; APPLY_PREPARED /
+ * REJECT_PREPARED are bound decision commands carrying NO free text —
+ * the `confirmation` payload alone binds them to the exact pending
+ * proposal. The client sends commands verbatim; it never invents
+ * scope.
+ */
+export type DeliaTurnCommand =
+  | { type: "MESSAGE" }
+  | { type: "APPLY_PREPARED" }
+  | { type: "REJECT_PREPARED" };
 
 export type DeliaInteractionResult = {
   session_id: string;
@@ -252,6 +274,9 @@ export type SubmitInteractionTurnOptions = {
   workspace?: DeliaWorkspaceContext;
   /** Structured confirmation for a pending write (digests only). */
   confirmation?: DeliaConfirmationDecision;
+  /** Typed turn command (§6.184). Decision commands carry no free
+   *  text — `input` is omitted from the wire for APPLY/REJECT. */
+  command?: DeliaTurnCommand;
   /** Progressive activity observations (ActivityEvent.v1). Called at
    *  most once per accepted event, in sequence order, while the turn
    *  still runs. Presentation only — never authorization. */
@@ -283,7 +308,13 @@ export async function submitInteractionTurn(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        input,
+        // Decision commands are bound decisions, not messages — free
+        // text must never ride on APPLY_PREPARED/REJECT_PREPARED.
+        ...(options.command?.type === "APPLY_PREPARED" ||
+        options.command?.type === "REJECT_PREPARED"
+          ? {}
+          : { input }),
+        ...(options.command ? { command: options.command } : {}),
         ...(options.context && options.context.length > 0
           ? { context: options.context }
           : {}),
@@ -616,6 +647,11 @@ function parseConfirmationRequest(
     expires_at_epoch:
       typeof record.expires_at_epoch === "number"
         ? record.expires_at_epoch
+        : undefined,
+    pending_purpose:
+      record.pending_purpose === "execution_scope_choice" ||
+      record.pending_purpose === "execution_scope_plus_owner_confirmation"
+        ? record.pending_purpose
         : undefined,
   };
 }

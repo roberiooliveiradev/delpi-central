@@ -1011,7 +1011,9 @@ def test_r1_initial_surface_list_real_overrun_bounded_elapsed():
 # B. fresh live re-list (write-path revalidation) bounded
 def test_r1_fresh_relist_overrun_is_source_unavailable():
     """The ACT-path fresh re-list shares the same deadline — an
-    overrun there fails closed before the commit invocation."""
+    overrun there fails closed before the commit invocation. Under the
+    B2 closure (§6.184) the MESSAGE stops at the pending scope choice;
+    the bound APPLY turn is what reaches the re-list."""
     clock = [1000.0]
     port = _DeadlinePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
@@ -1027,13 +1029,22 @@ def test_r1_fresh_relist_overrun_is_source_unavailable():
         list_seconds=(0.0, 0.0, 0.0, 200.0),
     )
     read = _vista_ops_prepare(port, [{"op": "delete_slide"}])
-    attempt = read.attempt(
+    pending = read.attempt(
         "exclua este slide",
         actor_user_id="u1",
+        session_id="s1",
         turn_deadline=_deadline(clock, 80.0),
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert attempt.error_code == "turn_budget_exhausted"
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+    applied = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
+        turn_deadline=_deadline(clock, 80.0),
+    )
+    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert applied.error_code == "turn_budget_exhausted"
     # Discovery + PREPARE ran inside the budget; the exhausted
     # re-list stops the chain before any commit.
     assert [c[1] for c in port.calls] == [

@@ -13875,3 +13875,21 @@ CONTRACT_DIRECTION_CLOSED_BY_ARCHITECTURE_COORDINATION=YES; D1_D2_D3_DESIGN=CLOS
 PRODUCT_RULE=APPROVED; B1=PASS_STRUCTURAL; B2=REWORK; B2_IMPLEMENTATION=NOT_STARTED; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.185 — DELIA-C3-STAGE-02-B2-EXECUTION-SCOPE-FULL-IMPLEMENTATION-01 (IMPLEMENTATION EVIDENCE RECORDED; INDEPENDENT_REVIEW PENDING)
+
+**DATA:** 2026-10-16. **MODE:** IMPLEMENTAÇÃO autorizada do contrato fechado em §6.184 (doc18), subordinado a §6.179/§6.183. **REPORT:** `corrections/conversational-intelligence-c3/19-stage-02-b2-execution-scope-implementation-report.md`. Sem Etapa 03, sem redesign, sem ACT real em dados empresariais.
+
+- **CONTRATO IMPLEMENTADO:** comandos tipados `MESSAGE` / `APPLY_PREPARED` / `REJECT_PREPARED` em `/interaction/turns` com resolução determinística e fail-closed na fronteira (`_resolve_turn_command`); `MESSAGE` exige texto e nunca ACT; decisões tipadas não aceitam texto livre; `confirmation.decision` deve casar com o comando; ceiling `prepare` bloqueia APPLY na fronteira **e** na orquestração; labels legadas PT aceitas apenas por exact-match em janela temporária; texto arbitrário sobre confirmation rejeitado.
+- **ORQUESTRAÇÃO:** `_attempt_prepare` registra toda proposta READY como `PendingWrite` (digest+fingerprint+TTL+single-use) e retorna `CONFIRMATION_REQUIRED` — mesmo-turno ACT removido; `_attempt_direct_act` fail-closed (`precondition_required`/`execution_ceiling`); `_confirm_intent` removido; ACT converge pelo único `_execute_prepared_act` com revalidação viva de surface, Core/Domain AuthZ e outcome; `execution_bound` do modelo é reduction-only.
+- **G3 RESOLVIDO EM CÓDIGO:** `pending_purpose` ∈ {`execution_scope_choice`, `execution_scope_plus_owner_confirmation`} derivado da política real do owner — escopo nunca mascarado como owner-confirmation; um APPLY vinculado satisfaz ambas as necessidades quando o owner exige confirmação.
+- **FRONTEND:** `interactionClient` envia comandos tipados (decisões sem `input`); `App` não usa label PT como autorização; `DeliaAssistantMessage` renderiza copy purpose-aware («Operação pronta para execução»/«Executar» vs «Confirmação necessária»/«Confirmar e executar»); `GovernedConfirmation` (plugin-ui) reutilizado; digests/fingerprints/session/handles nunca renderizados; demo mode network-free preservado.
+- **CONSUMIDORES:** `plugins/delia` e `real_provider_neutral_eval.py` migrados; `real_governed_read_eval.py`/`real_multistep_orchestration_eval.py` compatíveis por forma; evals in-process inalterados; non-MFE externos = `TO_INVENTORY` (nenhum localizado no repo).
+- **RED→GREEN:** os 10 strict-xfail de `test_stage02r2_execution_bound_diagnosis.py` convertidos em assertions do contrato fechado; RED reproduzido (`commit_record` invocado sobre «não aplique» + `unrestricted`); GREEN — `pytest delia-api` **1121/1121 PASS**, `vitest plugins/delia` **189/189 PASS**, `vite build` PASS; `tsc` com 4 erros pré-existentes em arquivos fora do escopo (verificados em HEAD); live evals e browser QA `TEST_NOT_RUN`.
+- **SEGURANÇA §9:** todos os 14 itens verificados no código — sem caminho de ACT a partir de texto livre, sem grant por modelo/owner metadata, binding digest+fingerprint+session+TTL, replay consumido atomicamente, `proposal_ref` backend-only.
+- **NÃO MARCADO:** B2 e Etapa 02 **não aceitos**; evidência registrada aguarda revisão independente do diff e do resultado.
+
+B2_IMPLEMENTATION=EVIDENCE_RECORDED; INDEPENDENT_REVIEW=PENDING
+B1=PASS_STRUCTURAL; B2=REWORK_PENDING_REVIEW; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION

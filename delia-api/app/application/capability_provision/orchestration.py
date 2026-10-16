@@ -82,9 +82,10 @@ from app.application.interaction.contracts import (
 )
 from app.application.interaction.pending_proposals import (
     DEFAULT_PENDING_TTL_SECONDS,
+    PENDING_PURPOSE_SCOPE_CHOICE,
+    PENDING_PURPOSE_SCOPE_PLUS_CONFIRMATION,
     PendingWrite,
     PendingWriteStore,
-    intent_digest,
 )
 from app.application.model_invocation.contracts import (
     ConversationContextTurn,
@@ -124,7 +125,6 @@ from app.domain.governed_write.model import (
     ConfirmationState,
     ProposalReadiness,
     StructuredConfirmation,
-    WriteGateStatus,
     WriteOutcomeStatus,
     WriteProposalPreview,
 )
@@ -4333,60 +4333,21 @@ class OperationalCapabilityOrchestrator:
                     "prosseguir."
                 ),
             )
-        if (
-            confirmation_policy == CONFIRMATION_POLICY_DIRECT
-            and not prepare_only
-        ):
-            # Owner-declared direct, non-destructive execution. The
-            # owner flag answers ONLY "does this operation need another
-            # user confirmation" — it never grants DÉLIA authority.
-            # The canonical DÉLIA write-continuation gate still runs
-            # before the shared ACT path (LOOP-03R1).
-            decision = evaluate_write_continuation(
-                capability_live=act_capability is not None,
-                confirmation_required=False,
-                preview=preview,
-                confirmation=None,
-                now_epoch=time.time(),
-            )
-            self._audit(
-                stage="DECISION_GATE",
-                capability_ref=capability_ref,
-                group_id=group_key,
-                owner_capability=preview.owner_capability,
-                correlation_id=correlation,
-                actor_user_id=actor_user_id,
-                decision=decision.status.value,
-                proposal_digest=digest,
-                preview_fingerprint=fingerprint,
-                execution_mode="direct",
-            )
-            if decision.status is not (
-                WriteGateStatus.READY_FOR_LIVE_REVALIDATION
-            ):
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.WRITE_REJECTED,
-                    correlation_id=correlation,
-                    error_code="write_gate_blocked",
-                    content=(
-                        "A proposta preparada pelo especialista não "
-                        "passou nas validações de execução — a escrita "
-                        "não foi realizada."
-                    ),
-                )
-            return self._execute_prepared_act(
-                group_key=group_key,
-                capability_ref=capability_ref,
-                act_remote_capability=act_capability.remote_name,
-                preview=preview,
-                digest=digest,
-                fingerprint=fingerprint,
-                confirmation=None,
-                execution_mode="direct",
-                actor_user_id=actor_user_id,
-                correlation=correlation,
-                deadline=deadline,
-            )
+        # Post-PREPARE operation-bound scope choice (B2 closure,
+        # §6.184): a free-text MESSAGE is never ACT-eligible — a READY
+        # proposal is ALWAYS held as a backend pending write awaiting a
+        # typed decision (APPLY_PREPARED/REJECT_PREPARED) bound to the
+        # exact proposal on a later turn. The owner confirmation policy
+        # keeps its own meaning: `explicit_user_confirmation=false`
+        # does NOT skip the user's execution-scope choice — it only
+        # declares that the bound APPLY needs no ADDITIONAL owner
+        # confirmation; `true` makes the same bound decision satisfy
+        # the owner confirmation too. Either way, zero ACT this turn.
+        pending_purpose = (
+            PENDING_PURPOSE_SCOPE_PLUS_CONFIRMATION
+            if confirmation_policy == CONFIRMATION_POLICY_CONFIRM
+            else PENDING_PURPOSE_SCOPE_CHOICE
+        )
         decision = evaluate_write_continuation(
             capability_live=act_capability is not None,
             confirmation_required=True,
@@ -4404,7 +4365,7 @@ class OperationalCapabilityOrchestrator:
             decision=decision.status.value,
             proposal_digest=digest,
             preview_fingerprint=fingerprint,
-            execution_mode="explicit_user_confirmation",
+            execution_mode=pending_purpose,
         )
 
         now = time.time()
@@ -4422,6 +4383,7 @@ class OperationalCapabilityOrchestrator:
             preview=preview,
             act_remote_capability=act_capability.remote_name,
             correlation_id=correlation,
+            pending_purpose=pending_purpose,
         )
         self._pending_writes.put(pending)
         return GovernedCapabilityAttempt(
@@ -4438,6 +4400,7 @@ class OperationalCapabilityOrchestrator:
                 "proposal_digest": digest,
                 "preview_fingerprint": fingerprint,
                 "expires_at_epoch": expires,
+                "pending_purpose": pending_purpose,
             },
             limitations=outcome.limitations,
         )
@@ -4454,13 +4417,14 @@ class OperationalCapabilityOrchestrator:
         prepare_only: bool = False,
         deadline: TurnDeadline | None = None,
     ) -> GovernedCapabilityAttempt:
-        """Gate a model-selected ACT capability.
+        """Gate a model-selected ACT capability — always fail closed.
 
-        An ACT whose owner schema requires ``proposal_handle`` can never
-        run cold — the handle comes only from a live PREPARE proposal,
-        so a cold selection is refused truthfully. Other ACT
-        capabilities are held as pending intents until a structured
-        confirmation arrives.
+        A cold ACT selection on a free-text MESSAGE can never execute
+        (B2 closure, §6.184 §5): an ACT whose owner schema requires
+        ``proposal_handle`` lacks the live PREPARE proposal it needs,
+        and an ACT-only capability has no owner-verified preview to
+        which a typed APPLY_PREPARED decision could bind — the runtime
+        must not fabricate one. Both are refused truthfully.
         """
         if prepare_only:
             # Execution ceiling: an ACT capability can never run while
@@ -4486,36 +4450,12 @@ class OperationalCapabilityOrchestrator:
                     "uma prévia confirmável."
                 ),
             )
-        now = time.time()
-        digest = intent_digest(
-            group_key, descriptor.remote_name, arguments
-        )
-        fingerprint = hashlib.sha256(
-            json.dumps(
-                {
-                    "capability_ref": capability_ref,
-                    "arguments": dict(arguments),
-                },
-                sort_keys=True,
-                default=str,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
-        expires = now + DEFAULT_PENDING_TTL_SECONDS
-        self._pending_writes.put(
-            PendingWrite(
-                digest=digest,
-                capability_ref=capability_ref,
-                group_key=group_key,
-                actor_user_id=str(actor_user_id or ""),
-                session_id=str(session_id or ""),
-                expires_at_epoch=expires,
-                created_at_epoch=now,
-                intent_remote_capability=descriptor.remote_name,
-                intent_arguments=dict(arguments),
-                correlation_id=correlation,
-            )
-        )
+        # ACT-only without a verifiable owner PREPARE proposal (B2
+        # closure §5): there is no owner-verified preview/digest to
+        # which a typed APPLY_PREPARED decision could bind — the
+        # runtime cannot fabricate a preview, so the cold ACT
+        # selection is refused truthfully instead of executing or
+        # staging an unverifiable pending intent.
         self._audit(
             stage="DECISION_GATE",
             capability_ref=capability_ref,
@@ -4523,24 +4463,17 @@ class OperationalCapabilityOrchestrator:
             owner_capability=descriptor.remote_name,
             correlation_id=correlation,
             actor_user_id=actor_user_id,
-            decision="REQUIRES_CONFIRMATION",
-            proposal_digest=digest,
-            preview_fingerprint=fingerprint,
+            decision="PRECONDITION_REQUIRED",
         )
         return GovernedCapabilityAttempt(
-            status=GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
+            status=GovernedCapabilityStatus.WRITE_REJECTED,
             correlation_id=correlation,
+            error_code="precondition_required",
             content=(
-                "A operação solicitada é uma escrita e exige "
-                "confirmação explícita antes de ser executada."
+                "Essa operação é uma escrita sem prévia verificável "
+                "do especialista — a execução não pode prosseguir a "
+                "partir de texto livre."
             ),
-            confirmation_context={
-                "session_id": str(session_id or ""),
-                "capability_ref": capability_ref,
-                "proposal_digest": digest,
-                "preview_fingerprint": fingerprint,
-                "expires_at_epoch": expires,
-            },
         )
 
     def _attempt_confirmation(
@@ -4615,12 +4548,20 @@ class OperationalCapabilityOrchestrator:
                 content="Decisão de confirmação inválida.",
             )
 
-        if record.preview is not None:
-            return self._confirm_proposal(
-                record, decision, fingerprint, actor_user_id, session_id,
-                correlation, deadline,
+        if record.preview is None:
+            # Pending intents without an owner-verified preview are no
+            # longer created (§6.184 §5) — a bound decision has no
+            # verified proposal to bind to, so it fails closed.
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.WRITE_REJECTED,
+                correlation_id=correlation,
+                error_code="confirmation_unknown",
+                content=(
+                    "Nenhuma proposta preparada corresponde a esta "
+                    "confirmação."
+                ),
             )
-        return self._confirm_intent(
+        return self._confirm_proposal(
             record, decision, fingerprint, actor_user_id, session_id,
             correlation, deadline,
         )
@@ -4684,6 +4625,18 @@ class OperationalCapabilityOrchestrator:
         # CONFIRMED still authorizes nothing: fresh live revalidation of
         # the owner surface precedes the ACT call, and live Core/Domain
         # AuthZ is enforced by the owner.
+        #
+        # Pending purpose (§6.184): `execution_scope_choice` — the owner
+        # declared explicit_user_confirmation=false, so the bound APPLY
+        # is the user's scope choice ONLY; it is NOT an owner
+        # confirmation and must not reach the owner as one (confirmed=
+        # False argument, reduction-only gate). `execution_scope_plus_
+        # owner_confirmation` (and any legacy/unknown purpose — the
+        # fail-safe direction) — the same bound decision additionally
+        # satisfies the owner-required confirmation.
+        requires_owner_confirmation = (
+            record.pending_purpose != PENDING_PURPOSE_SCOPE_CHOICE
+        )
         return self._execute_prepared_act(
             group_key=record.group_key,
             capability_ref=record.capability_ref,
@@ -4691,8 +4644,12 @@ class OperationalCapabilityOrchestrator:
             preview=preview,
             digest=record.digest,
             fingerprint=fingerprint,
-            confirmation=bound,
-            execution_mode="explicit_user_confirmation",
+            confirmation=bound if requires_owner_confirmation else None,
+            execution_mode=(
+                "explicit_user_confirmation"
+                if requires_owner_confirmation
+                else "execution_scope_choice"
+            ),
             actor_user_id=actor_user_id,
             correlation=correlation,
             deadline=deadline,
@@ -4804,80 +4761,6 @@ class OperationalCapabilityOrchestrator:
                 f"{group_key}.{act_capability.remote_name}"
             ),
             execution_mode=execution_mode,
-        )
-
-    def _confirm_intent(
-        self,
-        record: PendingWrite,
-        decision: ConfirmationDecision,
-        fingerprint: str,
-        actor_user_id: str | None,
-        session_id: str,
-        correlation: str,
-        deadline: TurnDeadline | None = None,
-    ) -> GovernedCapabilityAttempt:
-        expected = hashlib.sha256(
-            json.dumps(
-                {
-                    "capability_ref": record.capability_ref,
-                    "arguments": dict(record.intent_arguments or {}),
-                },
-                sort_keys=True,
-                default=str,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
-        if fingerprint != expected:
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.WRITE_REJECTED,
-                correlation_id=correlation,
-                error_code="preview_changed",
-                content=(
-                    "A confirmação não corresponde à operação exata. "
-                    "Nenhuma escrita foi executada."
-                ),
-            )
-        self._pending_writes.take(record.digest)
-        if decision is ConfirmationDecision.REJECT:
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.WRITE_REJECTED,
-                correlation_id=correlation,
-                content="Operação cancelada — nenhuma escrita foi executada.",
-            )
-        try:
-            group = self._fresh_group(
-                record.group_key, correlation, deadline
-            )
-        except CapabilityProviderError as exc:
-            return _error_attempt(correlation, exc)
-        capability = next(
-            (
-                cap
-                for cap in (group.capabilities if group else ())
-                if cap.remote_name == record.intent_remote_capability
-            ),
-            None,
-        )
-        if capability is None or not invocable_in_interactive_phase(
-            capability.operation_class
-        ):
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.WRITE_REJECTED,
-                correlation_id=correlation,
-                error_code="capability_not_live",
-                content=(
-                    "A capacidade não está mais anunciada pelo "
-                    "especialista. Nenhuma escrita foi executada."
-                ),
-            )
-        return self._invoke_act(
-            group,
-            capability.remote_name,
-            dict(record.intent_arguments or {}),
-            correlation,
-            deadline,
-            actor_user_id=actor_user_id,
-            capability_ref=record.capability_ref,
         )
 
     def _invoke_act(

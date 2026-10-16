@@ -682,9 +682,12 @@ def test_analysis_terminal_when_no_prepare_applies():
 # --- write policy ------------------------------------------------------------
 
 
-def test_direct_write_executes_act_same_turn():
-    """Structural explicit_user_confirmation=False -> governed ACT in
-    the same turn, postcondition-verified."""
+def test_write_message_pending_then_bound_apply_executes_act():
+    """Structural explicit_user_confirmation=False (§6.184): the
+    MESSAGE caps at PREPARE + a pending execution-scope choice; the
+    typed APPLY bound to the exact proposal reaches the governed ACT —
+    postcondition-verified, and the owner receives no fabricated
+    confirmation flag."""
     provider = _quarto_provider(
         {
             ("quarto", "draft_adjustment"): _prepare_outcome(
@@ -707,10 +710,22 @@ def test_direct_write_executes_act_same_turn():
         actor_user_id="u1",
         session_id="s1",
     )
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert dict(attempt.confirmation_context or {}).get(
+        "pending_purpose"
+    ) == "execution_scope_choice"
+    assert "apply_adjustment" not in [c[0] for c in provider.calls]
+
+    applied = orch.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(attempt),
+    )
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
     names = [c[0] for c in provider.calls]
     assert names == ["draft_adjustment", "apply_adjustment"]
     assert provider.calls[-1][1]["proposal_handle"] == _HANDLE
+    assert provider.calls[-1][1]["confirmation"] is False
 
 
 def test_confirm_policy_gates_act_until_confirmation():

@@ -35,6 +35,7 @@ from app.infrastructure.auth.subject_bearer import (
     unbind_subject_bearer,
 )
 from app.application.interaction.contracts import (
+    LEGACY_CONFIRMATION_LABELS,
     InteractiveTurnRequest,
     InteractiveTurnResult,
 )
@@ -62,7 +63,14 @@ from app.domain.interaction.model import TurnKind
 
 
 ALLOWED_BODY_KEYS = frozenset(
-    {"input", "context", "confirmation", "workspace", "max_execution_stage"}
+    {
+        "input",
+        "context",
+        "confirmation",
+        "workspace",
+        "max_execution_stage",
+        "command",
+    }
 )
 # LOOP-03R2A: client-requested REDUCTION of execution authority. Only
 # "prepare" is admissible — escalation vocabulary is rejected at the
@@ -75,6 +83,23 @@ CONFIRMATION_KEYS = frozenset(
         "proposal_digest",
         "preview_fingerprint",
         "session_id",
+    }
+)
+# C3-EXECUTION-SCOPE (§6.184): discriminated turn commands. MESSAGE
+# carries free text and can never reach material ACT in the same turn;
+# APPLY_PREPARED/REJECT_PREPARED are typed decision commands bound to a
+# backend pending write — they carry NO free text and their decision
+# must match the command exactly. ``command`` carries a `type` and
+# nothing else — no scope flags, no authority fields.
+COMMAND_KEYS = frozenset({"type"})
+TURN_COMMAND_MESSAGE = "MESSAGE"
+TURN_COMMAND_APPLY_PREPARED = "APPLY_PREPARED"
+TURN_COMMAND_REJECT_PREPARED = "REJECT_PREPARED"
+_TURN_COMMANDS = frozenset(
+    {
+        TURN_COMMAND_MESSAGE,
+        TURN_COMMAND_APPLY_PREPARED,
+        TURN_COMMAND_REJECT_PREPARED,
     }
 )
 _CONTEXT_KINDS = {
@@ -119,8 +144,8 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
                 f"unsupported request fields: {sorted(extra_keys)}",
             )
 
-        input_text = body.get("input")
-        if not isinstance(input_text, str):
+        input_raw = body.get("input")
+        if input_raw is not None and not isinstance(input_raw, str):
             return _error(INVALID_REQUEST, "'input' must be a string")
 
         prior_turns, parse_error = _parse_context(body.get("context"))
@@ -149,6 +174,27 @@ def register_interaction_routes(app: Flask, logger: logging.Logger) -> None:
                 getattr(g, "request_id", None),
             )
             return _error(INVALID_REQUEST, ceiling_error)
+
+        command_type, command_error = _resolve_turn_command(
+            body.get("command"),
+            input_raw,
+            confirmation,
+            max_execution_stage,
+        )
+        if command_error is not None:
+            logger.info(
+                "interaction_rejected reason=invalid_turn_command "
+                "request_id=%s",
+                getattr(g, "request_id", None),
+            )
+            return _error(INVALID_REQUEST, command_error)
+        input_text = input_raw if isinstance(input_raw, str) else ""
+
+        logger.info(
+            "interaction_turn_command type=%s request_id=%s",
+            command_type,
+            getattr(g, "request_id", None),
+        )
 
         handler = current_app.config.get("INTERACTION_TURN_HANDLER")
         if handler is None:
@@ -425,6 +471,96 @@ def _parse_context(
             )
         )
     return tuple(turns), None
+
+
+def _resolve_turn_command(
+    command: object,
+    input_text: object,
+    confirmation: dict[str, str] | None,
+    max_execution_stage: str | None,
+) -> tuple[str | None, str | None]:
+    """Discriminated turn commands — execution-scope contract (§6.184).
+
+    MESSAGE: free text, no confirmation — can run READ/PREPARE through
+    the governed chain, NEVER material ACT in the same turn.
+    APPLY_PREPARED/REJECT_PREPARED: typed decision commands bound to a
+    backend pending write — no free text; ``confirmation.decision``
+    must match the command exactly; the request ceiling still binds
+    (APPLY under a 'prepare' ceiling is a contradiction).
+
+    Clients without ``command`` keep working only while they send the
+    exact published MFE decision labels (temporary migration window).
+    Any arbitrary free text riding on a confirmation turn is a contract
+    conflict — never a hidden instruction.
+    """
+    has_text = isinstance(input_text, str) and bool(input_text.strip())
+    if isinstance(command, dict):
+        extra = set(command) - COMMAND_KEYS
+        if extra:
+            return None, f"'command' unsupported fields: {sorted(extra)}"
+        command_type = command.get("type")
+        if command_type not in _TURN_COMMANDS:
+            return None, "'command.type' is not a supported command"
+        if command_type == TURN_COMMAND_MESSAGE:
+            if confirmation is not None:
+                return None, (
+                    "a MESSAGE command cannot carry a confirmation"
+                )
+            if not has_text:
+                return None, "a MESSAGE turn requires 'input' text"
+            return TURN_COMMAND_MESSAGE, None
+        if confirmation is None:
+            return None, (
+                f"{command_type} requires a 'confirmation' payload"
+            )
+        expected_decision = (
+            "CONFIRM"
+            if command_type == TURN_COMMAND_APPLY_PREPARED
+            else "REJECT"
+        )
+        decision = str(confirmation.get("decision") or "").upper()
+        if decision != expected_decision:
+            return None, (
+                f"'confirmation.decision' must be {expected_decision} "
+                f"for {command_type}"
+            )
+        if has_text:
+            return None, (
+                "a decision command cannot carry free text"
+            )
+        if (
+            command_type == TURN_COMMAND_APPLY_PREPARED
+            and max_execution_stage == "prepare"
+        ):
+            return None, (
+                "execution ceiling 'prepare' cannot apply a pending "
+                "proposal"
+            )
+        return command_type, None
+    if command is not None:
+        return None, "'command' must be an object"
+    # No typed command — shape-derived compatibility only.
+    if confirmation is None:
+        if not has_text:
+            return None, "'input' is required for a MESSAGE turn"
+        return TURN_COMMAND_MESSAGE, None
+    decision = str(confirmation.get("decision") or "").upper()
+    if input_text == LEGACY_CONFIRMATION_LABELS.get(decision):
+        # Published MFE fixed label — decision turn, exact text only.
+        if decision == "CONFIRM" and max_execution_stage == "prepare":
+            return None, (
+                "execution ceiling 'prepare' cannot apply a pending "
+                "proposal"
+            )
+        return (
+            TURN_COMMAND_APPLY_PREPARED
+            if decision == "CONFIRM"
+            else TURN_COMMAND_REJECT_PREPARED
+        ), None
+    return None, (
+        "a confirmation turn requires a typed 'command' — free text "
+        "cannot ride on a structured decision"
+    )
 
 
 def _parse_confirmation(

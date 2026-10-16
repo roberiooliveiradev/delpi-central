@@ -2,9 +2,9 @@
 
 ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03 (ledger §6.126): when an
 owner PREPARE capability returns a READY proposal (opaque
-``proposal_ref``), or a direct-ACT intent awaits confirmation, DÉLIA
-holds the write context temporarily until a structured confirmation
-arrives on a later turn. This store is orchestration state, NOT a
+``proposal_ref``), DÉLIA holds the write context temporarily until a
+typed bound decision (APPLY_PREPARED/REJECT_PREPARED) arrives on a
+later turn. This store is orchestration state, NOT a
 capability registry: it never records whether a capability exists or is
 enabled — capability availability is always re-read live from the
 owner ``tools/list`` at commit time.
@@ -18,11 +18,8 @@ confirmation consumes the entry (single use).
 
 from __future__ import annotations
 
-import hashlib
-import json
 import time
-from dataclasses import dataclass, field
-from typing import Any, Mapping
+from dataclasses import dataclass
 
 from app.domain.governed_write.model import WriteProposalPreview
 
@@ -32,32 +29,27 @@ MAX_PENDING_WRITES = 128
 # delegated-token hard-cap convention; owner expiry wins when present.
 DEFAULT_PENDING_TTL_SECONDS = 300.0
 
-
-def intent_digest(
-    group_key: str, remote_capability: str, arguments: Mapping[str, Any]
-) -> str:
-    """Non-reversible identity for a direct-ACT pending intent."""
-    canonical = json.dumps(
-        {
-            "group_key": group_key,
-            "remote_capability": remote_capability,
-            "arguments": dict(arguments),
-        },
-        sort_keys=True,
-        default=str,
-        separators=(",", ":"),
-    )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+# C3-EXECUTION-SCOPE (§6.184): why a pending write awaits a bound typed
+# decision. `execution_scope_choice` — the owner PREPARE declared no
+# additional confirmation (explicit_user_confirmation=false), so the
+# APPLY decision is the user's execution-scope choice only; it is NOT
+# an owner confirmation and must not be reported to the owner as one.
+# `execution_scope_plus_owner_confirmation` — the owner declared an
+# explicit confirmation requirement, so the same bound APPLY decision
+# satisfies BOTH the scope choice and the owner confirmation.
+PENDING_PURPOSE_SCOPE_CHOICE = "execution_scope_choice"
+PENDING_PURPOSE_SCOPE_PLUS_CONFIRMATION = (
+    "execution_scope_plus_owner_confirmation"
+)
 
 
 @dataclass(frozen=True, slots=True)
 class PendingWrite:
     """Backend-only pending write state.
 
-    ``preview`` is set for PREPARE-originated proposals (its
-    ``proposal_ref`` is the raw owner handle — never serialized into any
-    response, prompt, or log line). ``intent_arguments`` is set for
-    direct-ACT intents awaiting generic confirmation.
+    ``preview`` is always set: pending writes originate only from an
+    owner PREPARE proposal whose ``proposal_ref`` is the raw owner
+    handle — never serialized into any response, prompt, or log line.
     """
 
     digest: str
@@ -69,9 +61,11 @@ class PendingWrite:
     created_at_epoch: float
     preview: WriteProposalPreview | None = None
     act_remote_capability: str | None = None
-    intent_remote_capability: str | None = None
-    intent_arguments: Mapping[str, Any] | None = None
     correlation_id: str = ""
+    # Auditable pending purpose (§6.184): distinguishes an execution-
+    # scope choice from a scope choice that also satisfies an owner-
+    # declared confirmation. Empty for legacy/intent records.
+    pending_purpose: str = ""
 
 
 class PendingWriteStore:

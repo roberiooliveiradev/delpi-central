@@ -2192,9 +2192,12 @@ def test_raw_proposal_handle_never_leaves_backend():
 # --- direct ACT intents (no owner proposal handle) -------------------
 
 
-def test_direct_act_intent_requires_confirmation():
-    """A model-selected ACT without proposal_handle in its schema is
-    held as a pending intent — CONFIRM runs it, REJECT cancels it."""
+def test_cold_act_selection_rejected_without_prepare():
+    """A model-selected ACT-only capability has no owner-verified
+    PREPARE proposal to bind a typed APPLY decision to (§6.184 §5) —
+    the runtime cannot fabricate a preview, so the cold selection is
+    refused truthfully and no pending intent is staged for a later
+    confirmation."""
     tools = (
         RemoteToolDescriptor("get_catalog", operation_class="DISCOVERY"),
         RemoteToolDescriptor(
@@ -2222,21 +2225,27 @@ def test_direct_act_intent_requires_confirmation():
             goal_class="create_or_modify",
         ),
     )
-    pending = read.attempt(
+    attempt = read.attempt(
         "Publique a playlist p9", actor_user_id="u1", session_id="s1"
     )
-    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert attempt.confirmation_context is None
     assert port.calls == []
 
+    # A later typed decision has nothing legitimate to bind to.
     result = read.attempt(
         "",
         actor_user_id="u1",
-        confirmation=_confirmation(pending),
+        confirmation={
+            "decision": "CONFIRM",
+            "proposal_digest": "0" * 64,
+            "preview_fingerprint": "0" * 64,
+            "session_id": "s1",
+        },
     )
-    assert result.status is GovernedCapabilityStatus.SUCCESS
-    assert port.calls == [
-        ("vista", "publish_playlist", {"target_id": "p9"})
-    ]
+    assert result.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert result.error_code == "confirmation_unknown"
+    assert port.calls == []
 
 
 def test_model_supplied_orchestration_fields_rejected():
@@ -2635,10 +2644,11 @@ def _vista_ops_prepare(port, ops):
     )
 
 
-def test_direct_policy_executes_act_without_user_confirmation():
-    """Structural explicit_user_confirmation=False: the initiating
-    explicit request is the intent record — governed ACT runs in the
-    same turn, no confirmation surface, no fake confirmation flag."""
+def test_scope_choice_policy_executes_act_via_bound_apply():
+    """Structural explicit_user_confirmation=False (§6.184): the
+    MESSAGE caps at PREPARE + an execution-scope choice; the bound
+    APPLY then runs the governed ACT — the scope choice is NOT an owner
+    confirmation, so the owner still receives confirmation=False."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
@@ -2648,8 +2658,20 @@ def test_direct_policy_executes_act_without_user_confirmation():
         },
     )
     read = _vista_ops_prepare(port, [{"op": "add_blank_slide"}])
-    attempt = read.attempt(
+    pending = read.attempt(
         "crie um slide", actor_user_id="u1", session_id="s1"
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert dict(pending.confirmation_context or {}).get(
+        "pending_purpose"
+    ) == "execution_scope_choice"
+    names = [c[1] for c in port.calls]
+    assert names == ["get_catalog", "prepare_change"]
+
+    attempt = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
@@ -2691,10 +2713,10 @@ def test_destructive_policy_requires_user_confirmation():
     assert args["confirmation"] is True
 
 
-def test_compound_direct_plan_executes_all_ops_same_turn():
+def test_compound_direct_plan_executes_once_via_bound_apply():
     """A single owner proposal structurally declared direct executes
-    once — compound plans come from owner vocabulary, not DÉLIA
-    hardcode."""
+    once after the bound APPLY — compound plans come from owner
+    vocabulary, not DÉLIA hardcode."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         outcomes={
@@ -2706,9 +2728,16 @@ def test_compound_direct_plan_executes_all_ops_same_turn():
     read = _vista_ops_prepare(
         port, [{"op": "add_blank_slide"}, {"op": "create_block"}]
     )
-    attempt = read.attempt(
+    pending = read.attempt(
         "crie um slide e escreva um texto", actor_user_id="u1",
         session_id="s1",
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+    attempt = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
@@ -2886,10 +2915,11 @@ def test_mixed_ops_any_confirm_requires_confirmation():
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
 
 
-def test_preview_declared_direct_executes_without_ops_catalog():
-    """Non-envelope owner path: the proposal's structured
-    confirmation_requirement is the policy source — the owner declaring
-    explicit_user_confirmation=False executes directly."""
+def test_preview_declared_scope_choice_executes_via_bound_apply():
+    """Non-envelope owner path (§6.184): the proposal's structured
+    confirmation_requirement is the policy source — explicit_
+    user_confirmation=False yields an execution-scope choice whose
+    bound APPLY reaches the governed ACT."""
     direct_proposal = RemoteToolOutcome(
         content_text="Proposta pronta.",
         structured={
@@ -2920,8 +2950,15 @@ def test_preview_declared_direct_executes_without_ops_catalog():
             goal_class="create_or_modify",
         ),
     )
-    attempt = read.attempt(
+    pending = read.attempt(
         "Altere o nome do painel p1", actor_user_id="u1", session_id="s1"
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert "commit_proposal" not in [c[1] for c in port.calls]
+    attempt = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.confirmation_context is None
@@ -2964,8 +3001,9 @@ def test_undeclared_policy_fails_closed_not_lazy_confirmation():
 
 
 def test_owner_reclassification_flips_confirmation_live():
-    """Metamorphic: the owner reclassifies the same proposal direct ->
-    confirm between turns; fresh PREPARE evidence flips the gate
+    """Metamorphic (§6.184): the owner reclassifies the same proposal
+    scope-choice-only -> scope+confirmation between turns; fresh
+    PREPARE evidence flips the pending purpose and the owner argument
     with zero DÉLIA code/config change."""
     port = FakePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
@@ -2977,7 +3015,16 @@ def test_owner_reclassification_flips_confirmation_live():
     )
     read = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
     first = read.attempt("execute p1", actor_user_id="u1", session_id="s1")
-    assert first.status is GovernedCapabilityStatus.SUCCESS
+    assert first.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert dict(first.confirmation_context or {}).get(
+        "pending_purpose"
+    ) == "execution_scope_choice"
+    applied = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(first),
+    )
+    assert applied.status is GovernedCapabilityStatus.SUCCESS
     assert "commit_proposal" in [c[1] for c in port.calls]
 
     port._outcomes["prepare_change"] = READY_PROPOSAL
@@ -2985,6 +3032,9 @@ def test_owner_reclassification_flips_confirmation_live():
     read2 = _vista_ops_prepare(port, [{"op": "rotate_banner"}])
     second = read2.attempt("execute p1", actor_user_id="u1", session_id="s1")
     assert second.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert dict(second.confirmation_context or {}).get(
+        "pending_purpose"
+    ) == "execution_scope_plus_owner_confirmation"
     assert "commit_proposal" not in [c[1] for c in port.calls]
 
 
@@ -3002,8 +3052,18 @@ def test_enveloped_proposal_resolves_policy():
         },
     )
     read = _vista_ops_prepare(port, [{"op": "add_blank_slide"}])
-    attempt = read.attempt(
+    pending = read.attempt(
         "crie um slide", actor_user_id="u1", session_id="s1"
+    )
+    assert pending.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    assert [c[1] for c in port.calls] == [
+        "get_catalog",
+        "prepare_change",
+    ]
+    attempt = read.attempt(
+        "",
+        actor_user_id="u1",
+        confirmation=_confirmation(pending),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert [c[1] for c in port.calls] == [

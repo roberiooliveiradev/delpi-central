@@ -112,7 +112,7 @@ TURN_TIMEOUT = float(os.getenv("DELIA_EVAL_TURN_TIMEOUT") or 240)
 
 
 def _turn(token: str, text: str, workspace: dict | None = None) -> dict:
-    body: dict = {"input": text}
+    body: dict = {"input": text, "command": {"type": "MESSAGE"}}
     if workspace is not None:
         body["workspace"] = workspace
     try:
@@ -128,11 +128,14 @@ def _turn(token: str, text: str, workspace: dict | None = None) -> dict:
 
 
 def _confirm(token: str, confirmation: dict, decision: str) -> dict:
+    command_type = (
+        "APPLY_PREPARED" if decision == "CONFIRM" else "REJECT_PREPARED"
+    )
     try:
         response = requests.post(
             f"{BASE}/interaction/turns",
             json={
-                "input": "decisão do usuário",
+                "command": {"type": command_type},
                 "confirmation": {
                     "decision": decision,
                     "proposal_digest": confirmation["proposal_digest"],
@@ -233,42 +236,53 @@ def main() -> int:
 
     # D. §6.132 owner-policy writes (VISTA prepare_change/commit_proposal
     # through owner DISCOVERY -> bounded PREPARE -> deterministic policy
-    # gate). Direct ops ACT without a redundant user confirmation;
-    # destructive ops still require the structured confirmation.
+    # gate) under the §6.184 execution-scope contract: a MESSAGE never
+    # performs material ACT — every write returns a confirmation_request
+    # (execution-scope choice), and only a typed APPLY_PREPARED bound to
+    # the pending proposal runs the governed ACT.
     #
-    # D1. add_blank_slide is owner-declared direct: the explicit user
-    # request is the intent record — 200 with NO confirmation surface
-    # and an owner-verified outcome note.
+    # D1. add_blank_slide: MESSAGE -> PREPARE + scope choice (zero ACT),
+    # then APPLY_PREPARED -> governed ACT with owner-verified outcome.
     prepare = _turn(
         token,
         "crie um slide em branco chamado 'teste avaliação' na playlist "
         "que estou vendo",
         workspace=_workspace(),
     )
-    report["write_direct_create_slide"] = prepare
-    direct_ok = (
-        prepare["http_status"] == 200
-        and not prepare.get("has_confirmation")
-    )
-    _check("write_direct_no_confirmation", direct_ok, failures)
+    report["write_prepare_create_slide"] = prepare
+    confirmation = prepare.get("confirmation") or {}
     _check(
-        "write_direct_owner_verified",
-        "verificada" in str(prepare.get("content_prefix") or "").lower(),
+        "write_message_no_direct_act",
+        prepare["http_status"] == 200 and bool(confirmation),
         failures,
     )
+    if confirmation:
+        applied = _confirm(token, confirmation, "CONFIRM")
+        report["write_apply_create_slide"] = applied
+        _check(
+            "write_apply_governed_act",
+            applied["http_status"] == 200,
+            failures,
+        )
+        _check(
+            "write_apply_owner_verified",
+            "verificada"
+            in str(applied.get("content_prefix") or "").lower(),
+            failures,
+        )
 
-    # D2. create_block type=text on the current slide — also direct;
-    # workspace context supplies the slide reference.
+    # D2. create_block type=text on the current slide — same two-turn
+    # contract; workspace context supplies the slide reference.
     write_text = _turn(
         token,
         "escreva um texto 'délia deu certo' no slide atual",
         workspace=_workspace(),
     )
-    report["write_direct_create_text"] = write_text
+    report["write_prepare_create_text"] = write_text
     _check(
-        "write_direct_create_text",
+        "write_prepare_create_text",
         write_text["http_status"] == 200
-        and not write_text.get("has_confirmation"),
+        and bool(write_text.get("has_confirmation")),
         failures,
     )
 
@@ -277,7 +291,11 @@ def main() -> int:
     # (never the user's selected slide). CONFIRM is sent only when the
     # confirmation surface demonstrably binds to the created slide id;
     # otherwise REJECT — the gate itself is the blocking evidence.
-    created_slide_id = _extract_slide_id(prepare.get("content_prefix"))
+    created_slide_id = _extract_slide_id(
+        (report.get("write_apply_create_slide") or {}).get(
+            "content_prefix"
+        )
+    )
     destructive_ws = _workspace(selected_slide_id=created_slide_id)
     delete_probe = _turn(
         token,

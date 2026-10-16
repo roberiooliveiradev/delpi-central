@@ -659,3 +659,246 @@ def test_authz_denied_is_deterministic_terminal_no_model_prose():
     assert model.requests == []
     assert result.epistemic_class is EpistemicClass.HYPOTHESIS
     assert "negado" in result.content.lower()
+
+
+# --- F. Typed turn commands — execution-scope contract (B2, §6.184) -----
+#
+# MESSAGE carries free text and never reaches material ACT; APPLY/REJECT
+# are typed decision commands with NO free text, bound to a backend
+# pending proposal. Legacy confirmation turns keep working only with the
+# exact labels the published MFE emits.
+
+
+class _RecordingHandler:
+    """Minimal handler stub: captures the request, returns a result."""
+
+    def __init__(self):
+        self.requests = []
+
+    def execute(self, request, *, activity_channel=None):
+        self.requests.append(request)
+        return InteractiveTurnResult(
+            session_id="s",
+            user_turn_id="u",
+            result_turn_id="r",
+            content="ok",
+            epistemic_class=None,
+            limitations=(),
+            generated_at="2026-01-01T00:00:00+00:00",
+            model_invocation_id=None,
+        )
+
+
+def _decision_payload(decision="CONFIRM"):
+    return {
+        "decision": decision,
+        "proposal_digest": "d" * 8,
+        "preview_fingerprint": "f" * 8,
+        "session_id": "s1",
+    }
+
+
+def _legacy_label(decision):
+    return (
+        "Confirmação da operação solicitada."
+        if decision == "CONFIRM"
+        else "Cancelamento da operação solicitada."
+    )
+
+
+def test_message_with_confirmation_is_rejected():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "input": "crie um cadastro",
+            "confirmation": _decision_payload(),
+        },
+    )
+    assert response.status_code == 400
+    assert handler.requests == []
+
+
+def test_apply_prepared_without_confirmation_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {"input": "", "command": {"type": "APPLY_PREPARED"}},
+    )
+    assert response.status_code == 400
+
+
+def test_apply_prepared_with_reject_decision_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {
+            "command": {"type": "APPLY_PREPARED"},
+            "confirmation": _decision_payload("REJECT"),
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_reject_prepared_with_confirm_decision_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {
+            "command": {"type": "REJECT_PREPARED"},
+            "confirmation": _decision_payload("CONFIRM"),
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_apply_prepared_with_free_text_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {
+            "input": "mas não aplique",
+            "command": {"type": "APPLY_PREPARED"},
+            "confirmation": _decision_payload(),
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_unknown_command_type_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {"input": "oi", "command": {"type": "EXECUTE_NOW"}},
+    )
+    assert response.status_code == 400
+
+
+def test_command_with_extra_keys_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {
+            "input": "oi",
+            "command": {"type": "MESSAGE", "scope": "ACT_ELIGIBLE"},
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_apply_prepared_with_prepare_ceiling_is_rejected():
+    response = _post(
+        _client(handler=_RecordingHandler()),
+        {
+            "command": {"type": "APPLY_PREPARED"},
+            "confirmation": _decision_payload(),
+            "max_execution_stage": "prepare",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_apply_prepared_without_text_reaches_handler():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "command": {"type": "APPLY_PREPARED"},
+            "confirmation": _decision_payload(),
+        },
+    )
+    assert response.status_code == 200
+    assert len(handler.requests) == 1
+    request = handler.requests[0]
+    assert request.input_text == ""
+    assert request.confirmation["decision"] == "CONFIRM"
+
+
+def test_reject_prepared_without_text_reaches_handler():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "command": {"type": "REJECT_PREPARED"},
+            "confirmation": _decision_payload("REJECT"),
+        },
+    )
+    assert response.status_code == 200
+    assert handler.requests[0].confirmation["decision"] == "REJECT"
+
+
+def test_explicit_message_command_behaves_like_omitted():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {"input": "oi", "command": {"type": "MESSAGE"}},
+    )
+    assert response.status_code == 200
+    assert handler.requests[0].input_text == "oi"
+
+
+def test_legacy_confirm_label_still_accepted():
+    """Migration window: the published MFE sends its fixed PT label
+    alongside the structured confirmation — accepted while clients
+    migrate to typed commands."""
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "input": _legacy_label("CONFIRM"),
+            "confirmation": _decision_payload("CONFIRM"),
+        },
+    )
+    assert response.status_code == 200
+    assert handler.requests[0].confirmation["decision"] == "CONFIRM"
+
+
+def test_legacy_reject_label_still_accepted():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "input": _legacy_label("REJECT"),
+            "confirmation": _decision_payload("REJECT"),
+        },
+    )
+    assert response.status_code == 200
+    assert handler.requests[0].confirmation["decision"] == "REJECT"
+
+
+def test_arbitrary_text_with_confirmation_is_rejected():
+    """Free text riding on a decision turn is a contract conflict —
+    it must never reach the handler (let alone ACT)."""
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {"input": "não aplique", "confirmation": _decision_payload()},
+    )
+    assert response.status_code == 400
+    assert handler.requests == []
+
+
+def test_legacy_label_mismatched_to_decision_is_rejected():
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "input": _legacy_label("CONFIRM"),
+            "confirmation": _decision_payload("REJECT"),
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_message_with_empty_input_is_rejected():
+    response = _post(_client(handler=_RecordingHandler()), {"input": ""})
+    assert response.status_code == 400
+
+
+def test_application_layer_rejects_confirmation_with_arbitrary_text():
+    """Defense in depth: an internally-constructed request carrying a
+    confirmation plus non-legacy free text fails closed even without
+    the HTTP boundary."""
+    handler = _use_case()
+    with pytest.raises(InteractionError):
+        handler.execute(
+            InteractiveTurnRequest(
+                access_context=_context(),
+                input_text="não aplique",
+                confirmation=_decision_payload(),
+            )
+        )

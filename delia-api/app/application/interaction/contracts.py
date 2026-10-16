@@ -29,6 +29,16 @@ LIMITATION_RESULT_TRUNCATED = "result_truncated"
 # surfaced while a write intent awaits a structured confirmation.
 LIMITATION_CONFIRMATION_PENDING = "confirmation_pending"
 
+# C3-EXECUTION-SCOPE (§6.184): the published MFE echoes these exact
+# fixed labels on a structured confirmation turn. During the typed-
+# command migration window they are the ONLY free text a decision turn
+# may carry — arbitrary text riding on a confirmation is a contract
+# conflict, never a hidden instruction.
+LEGACY_CONFIRMATION_LABELS = {
+    "CONFIRM": "Confirmação da operação solicitada.",
+    "REJECT": "Cancelamento da operação solicitada.",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class InteractiveTurnRequest:

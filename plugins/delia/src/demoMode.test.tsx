@@ -281,7 +281,7 @@ describe("demo mode ON", () => {
     render(<App />);
     submitTurn("executar operação");
     const confirm = await screen.findByRole("button", {
-      name: "Confirmar",
+      name: "Confirmar e executar",
     });
     fireEvent.click(confirm);
     await waitFor(() =>
@@ -292,7 +292,7 @@ describe("demo mode ON", () => {
     expect(deliaApiCalls(fetchMock)).toHaveLength(0);
     // The pending card is resolved — buttons are gone.
     expect(
-      screen.queryByRole("button", { name: "Confirmar" }),
+      screen.queryByRole("button", { name: "Confirmar e executar" }),
     ).toBeNull();
   });
 });

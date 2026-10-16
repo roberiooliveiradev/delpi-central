@@ -13,6 +13,7 @@ import {
 } from "./api/interactionClient";
 import type {
   DeliaConfirmationRequest,
+  DeliaTurnCommand,
   DeliaWorkspaceContext,
 } from "./api/interactionClient";
 import {
@@ -141,6 +142,7 @@ export default function App({
       preview_fingerprint: string;
       session_id: string;
     },
+    command?: DeliaTurnCommand,
   ) {
     if (demoScenario) {
       void sendDemoTurn(value);
@@ -170,6 +172,7 @@ export default function App({
         context: buildInteractionContext(turns),
         workspace: getWorkspaceContext?.() ?? undefined,
         confirmation,
+        command,
         onActivityEvent: (event) => {
           observed.push(event);
           setLiveEvents([...observed]);
@@ -263,13 +266,15 @@ export default function App({
   function handleSubmit() {
     const value = input.trim();
     if (!value || loading) return;
-    void sendTurn(value);
+    void sendTurn(value, undefined, { type: "MESSAGE" });
   }
 
   /**
-   * Governed-write confirmation (ledger §6.126): the MFE echoes the
-   * bounded digests back verbatim — it never sees the raw owner
-   * handle and never makes any authorization decision.
+   * Governed-write scope choice (§6.184): Executar/Cancelar send typed
+   * decision commands bound to the exact pending proposal — the MFE
+   * echoes the bounded digests back verbatim, never sees the raw owner
+   * handle, and never makes any authorization decision. The shown text
+   * is a display-only marker; no free text rides on the decision turn.
    */
   function handleConfirmation(
     request: DeliaConfirmationRequest,
@@ -291,16 +296,23 @@ export default function App({
       ]);
       return;
     }
-    const label =
+    const displayMarker =
       decision === "CONFIRM"
-        ? "Confirmação da operação solicitada."
-        : "Cancelamento da operação solicitada.";
-    void sendTurn(label, {
-      decision,
-      proposal_digest: request.proposal_digest,
-      preview_fingerprint: request.preview_fingerprint,
-      session_id: request.session_id,
-    });
+        ? "Decisão: executar a operação preparada."
+        : "Decisão: cancelar a operação preparada.";
+    void sendTurn(
+      displayMarker,
+      {
+        decision,
+        proposal_digest: request.proposal_digest,
+        preview_fingerprint: request.preview_fingerprint,
+        session_id: request.session_id,
+      },
+      {
+        type:
+          decision === "CONFIRM" ? "APPLY_PREPARED" : "REJECT_PREPARED",
+      },
+    );
   }
 
   return (

@@ -28,6 +28,7 @@ from app.application.interaction.activity import (
     activity_sink_or_none,
 )
 from app.application.interaction.contracts import (
+    LEGACY_CONFIRMATION_LABELS,
     LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
     InteractiveTurnResult,
@@ -169,6 +170,19 @@ def _now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _decision_turn_content(confirmation: Mapping[str, Any] | None) -> str:
+    """Deterministic transcript marker for a typed decision turn.
+
+    APPLY_PREPARED/REJECT_PREPARED carry no free text — the recorded
+    user turn is a fixed descriptor, never fabricated prose
+    (§6.184 D2).
+    """
+    decision = str((confirmation or {}).get("decision") or "").upper()
+    if decision == "CONFIRM":
+        return "Decisão estruturada: executar a proposta preparada."
+    return "Decisão estruturada: cancelar a proposta preparada."
+
+
 class HandleInteractiveConversationTurn:
     """One text turn through the canonical interaction + invocation chain."""
 
@@ -210,7 +224,9 @@ class HandleInteractiveConversationTurn:
         activity_channel: Callable[[ActivityEvent], None] | None = None,
     ) -> InteractiveTurnResult:
         self._require_access(request.access_context)
-        input_text = self._validate_input(request.input_text)
+        input_text = self._validate_input(
+            request.input_text, confirmation=request.confirmation
+        )
         prior_turns = self._validate_prior_context(request.prior_turns)
         self._validate_execution_ceiling(request.max_execution_stage)
         turn_deadline = TurnDeadline.start(self._turn_budget_seconds)
@@ -225,7 +241,11 @@ class HandleInteractiveConversationTurn:
             turn_id=str(uuid.uuid4()),
             session_id=session.session_id,
             kind=TurnKind.USER_INPUT,
-            content=input_text,
+            content=(
+                input_text
+                if input_text.strip()
+                else _decision_turn_content(request.confirmation)
+            ),
             occurred_at=_now_utc(),
         )
         session, user_validation = record_interaction_turn(session, user_turn)
@@ -395,7 +415,28 @@ class HandleInteractiveConversationTurn:
                 f"missing required permission '{CORE_PERMISSION}'",
             )
 
-    def _validate_input(self, input_text: str) -> str:
+    def _validate_input(
+        self,
+        input_text: str,
+        confirmation: Mapping[str, Any] | None = None,
+    ) -> str:
+        if confirmation is not None:
+            # Typed decision turn (APPLY_PREPARED/REJECT_PREPARED): the
+            # bound decision IS the turn — free text is never a hidden
+            # instruction here. Empty input is canonical; during the
+            # migration window only the exact published MFE labels are
+            # tolerated — anything else is a contract conflict, fail
+            # closed (§6.184 D2).
+            text = input_text if isinstance(input_text, str) else ""
+            if not text.strip():
+                return ""
+            decision = str(confirmation.get("decision") or "").upper()
+            if text == LEGACY_CONFIRMATION_LABELS.get(decision):
+                return text
+            raise InteractionError(
+                INVALID_REQUEST,
+                "a structured decision turn cannot carry free text",
+            )
         if not isinstance(input_text, str) or not input_text.strip():
             raise InteractionError(INVALID_REQUEST, "input is required")
         if len(input_text) > MAX_INPUT_CHARS:

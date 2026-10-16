@@ -176,7 +176,9 @@ describe("DeliaAssistantMessage — semantic states", () => {
         confirmationRequest: request,
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar e executar" }),
+    );
     expect(onConfirmation).toHaveBeenCalledWith(request, "CONFIRM");
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(onConfirmation).toHaveBeenCalledWith(request, "REJECT");
@@ -205,8 +207,49 @@ describe("DeliaAssistantMessage — semantic states", () => {
       screen.queryByRole("group", { name: "Confirmação necessária" }),
     ).toBeNull();
     expect(
-      screen.queryByRole("button", { name: "Confirmar" }),
+      screen.queryByRole("button", { name: "Confirmar e executar" }),
     ).toBeNull();
+  });
+
+  it("execution-scope choice renders the scope-choice card", () => {
+    // §6.184: pending_purpose=execution_scope_choice — owner declared
+    // no extra confirmation; a single Executar is the scope decision.
+    const request = {
+      session_id: "s-9",
+      proposal_digest: "d".repeat(64),
+      preview_fingerprint: "f".repeat(64),
+      pending_purpose: "execution_scope_choice" as const,
+    };
+    const { onConfirmation } = renderMessage(
+      makeTurn({ confirmationRequest: request }),
+    );
+    expect(
+      screen.getByRole("group", { name: "Operação pronta para execução" }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Executar" }));
+    expect(onConfirmation).toHaveBeenCalledWith(request, "CONFIRM");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(onConfirmation).toHaveBeenCalledWith(request, "REJECT");
+  });
+
+  it("owner confirmation purpose renders the confirmation copy", () => {
+    const request = {
+      session_id: "s-9",
+      proposal_digest: "d".repeat(64),
+      preview_fingerprint: "f".repeat(64),
+      pending_purpose:
+        "execution_scope_plus_owner_confirmation" as const,
+    };
+    renderMessage(makeTurn({ confirmationRequest: request }));
+    expect(
+      screen.getByRole("group", { name: "Confirmação necessária" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Confirmar e executar" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/exige confirmação explícita/),
+    ).toBeTruthy();
   });
 
   it("answered confirmation is consumed", () => {

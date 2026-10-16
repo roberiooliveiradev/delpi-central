@@ -44,7 +44,7 @@ function mockFetchOk() {
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
     String(u).startsWith("/apps/delia-api"),
-  );
+  ) as [string, RequestInit][];
 }
 
 function submitTurn(input: string) {
@@ -93,7 +93,10 @@ describe("DÉLIA interaction surface", () => {
     expect((init.headers as Record<string, string>).Authorization).toBe(
       "Bearer host-token",
     );
-    expect(JSON.parse(init.body as string)).toEqual({ input: "olá" });
+    expect(JSON.parse(init.body as string)).toEqual({
+      input: "olá",
+      command: { type: "MESSAGE" },
+    });
     // Token comes from the host per request; nothing is persisted.
     expect(localStorage.length).toBe(0);
   });
@@ -226,7 +229,7 @@ describe("DÉLIA interaction surface", () => {
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     const init = deliaApiCalls(fetchMock)[0][1] as RequestInit;
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
-    expect(Object.keys(body)).toEqual(["input"]);
+    expect(Object.keys(body)).toEqual(["input", "command"]);
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer t");
     expect(headers["X-Permissions"]).toBeUndefined();
@@ -303,7 +306,10 @@ describe("DÉLIA transient multi-turn continuity", () => {
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(1));
     expect(
       JSON.parse(deliaApiCalls(fetchMock)[0][1].body as string),
-    ).toEqual({ input: "primeira pergunta" });
+    ).toEqual({
+      input: "primeira pergunta",
+      command: { type: "MESSAGE" },
+    });
 
     submitTurn("segunda pergunta");
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
@@ -555,6 +561,7 @@ const CONFIRMATION_REQUEST = {
   proposal_digest: "a".repeat(64),
   preview_fingerprint: "b".repeat(64),
   expires_at_epoch: 9999999999,
+  pending_purpose: "execution_scope_plus_owner_confirmation",
 };
 
 function confirmationPayload(n: number) {
@@ -580,7 +587,7 @@ describe("DÉLIA governed-write confirmation surface", () => {
       ).toBeTruthy(),
     );
     expect(
-      screen.getByRole("button", { name: "Confirmar" }),
+      screen.getByRole("button", { name: "Confirmar e executar" }),
     ).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Cancelar" }),
@@ -589,7 +596,7 @@ describe("DÉLIA governed-write confirmation surface", () => {
     expect(screen.queryByText(/a{64}/)).toBeNull();
   });
 
-  it("Confirmar echoes the bounded digests back verbatim", async () => {
+  it("Executar sends a typed APPLY_PREPARED bound to the digests", async () => {
     const fetchMock = mockFetchSequence([
       confirmationPayload(1),
       successPayload(2),
@@ -600,13 +607,22 @@ describe("DÉLIA governed-write confirmation surface", () => {
     submitTurn("altere o nome");
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Confirmar" }),
+        screen.getByRole("button", { name: "Confirmar e executar" }),
       ).toBeTruthy(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar e executar" }),
+    );
 
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
-    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
+    const applyInit = deliaApiCalls(fetchMock)[1][1] as RequestInit;
+    const body = JSON.parse(applyInit.body as string) as Record<
+      string,
+      unknown
+    >;
+    // §6.184: typed decision command, NO free text on the wire.
+    expect(body.command).toEqual({ type: "APPLY_PREPARED" });
+    expect(body.input).toBeUndefined();
     expect(body.confirmation).toEqual({
       decision: "CONFIRM",
       proposal_digest: "a".repeat(64),
@@ -634,8 +650,15 @@ describe("DÉLIA governed-write confirmation surface", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
-    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
-    expect(body.confirmation.decision).toBe("REJECT");
+    const rejectInit = deliaApiCalls(fetchMock)[1][1] as RequestInit;
+    const body = JSON.parse(rejectInit.body as string) as {
+      command?: unknown;
+      input?: unknown;
+      confirmation?: { decision?: unknown };
+    };
+    expect(body.command).toEqual({ type: "REJECT_PREPARED" });
+    expect(body.input).toBeUndefined();
+    expect(body.confirmation?.decision).toBe("REJECT");
   });
 
   it("an answered confirmation card is consumed (single use)", async () => {
@@ -649,10 +672,12 @@ describe("DÉLIA governed-write confirmation surface", () => {
     submitTurn("altere o nome");
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Confirmar" }),
+        screen.getByRole("button", { name: "Confirmar e executar" }),
       ).toBeTruthy(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar e executar" }),
+    );
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
 
     await waitFor(() =>
@@ -777,10 +802,18 @@ describe("DÉLIA presentation.v1 semantic states", () => {
     await waitFor(() =>
       expect(screen.getByText("Confirmação pendente")).toBeTruthy(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirmar e executar" }),
+    );
 
     await waitFor(() => expect(deliaApiCalls(fetchMock)).toHaveLength(2));
-    const body = JSON.parse(deliaApiCalls(fetchMock)[1][1].body as string);
+    const applyInit = deliaApiCalls(fetchMock)[1][1] as RequestInit;
+    const body = JSON.parse(applyInit.body as string) as Record<
+      string,
+      unknown
+    >;
+    expect(body.command).toEqual({ type: "APPLY_PREPARED" });
+    expect(body.input).toBeUndefined();
     expect(body.confirmation).toEqual({
       decision: "CONFIRM",
       proposal_digest: "a".repeat(64),
