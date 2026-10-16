@@ -1,7 +1,7 @@
 # BPMN MODELER — CURRENT STATE (pós-implementação)
 
 > **Status:** **STABLE PRODUCT BASELINE (G10 — Final Closure)** — implementação V1 fechada; trabalho futuro = roadmap/evolução/correção de regressão, não pendência de implementação.
-> **Baseline de evidência:** commit `4ad30b5f21` (`main` = `origin/main`), abr/2026 — auditado contra `bpmn-modeler/`, `plugins/bpmn-modeler/`, `plugins/bpmn-editor/`, `shared/bpmn_validation/`, `transformometro-api/`, `plugins/transformometro/`, migrations, testes, CI e runtime de integração local. Baseline de auditoria original do G0: `3efdb7e2` (histórico).
+> **Baseline de evidência:** runtime `42bf97b1d7` (`main` = `origin/main`), out/2026 (baseline de auditoria anterior: `4ad30b5f21`) — auditado contra `bpmn-modeler/`, `plugins/bpmn-modeler/`, `plugins/bpmn-editor/`, `shared/bpmn_validation/`, `transformometro-api/`, `plugins/transformometro/`, migrations, testes, CI e runtime de integração local. Baseline de auditoria original do G0: `3efdb7e2` (histórico).
 > **Natureza:** **fonte vigente** de estado implementado. Os `*-SPEC-FREEZE.md` são o registro histórico de decisões de especificação; onde uma decisão foi substituída após implementação, o freeze carrega marcação `SUPERSEDED (G0)` inline e a divergência está registrada em [`DOCUMENTATION-DRIFT-LEDGER.md`](DOCUMENTATION-DRIFT-LEDGER.md).
 > **Regra de leitura:** este documento **não** autoriza features novas e **não** promove targets de escopo a implementação. `SPECIFICATION STATUS` (o que a V1 promete) e `EXECUTION STATUS` (o que está provado) são sempre separados.
 
@@ -224,11 +224,11 @@ Backend em dev usa **bind mount** `../bpmn-modeler:/app` + uvicorn sem `--reload
 
 **Contrato de release (verdade documentada):** BUILD test/lint = AUTOMATED (CI `bpmn-modeler.yml`); IMAGE build/deploy = **MANUAL** local (`docker compose build` com `BPMN_MODELER_BUILD_SHA=$(git rev-parse HEAD)` + `up -d`); `docker cp` **nunca** é release contract — o bundle servido deve bater com a imagem (OCI `revision` + `assets/build-info.json` + `/health`).
 
-**G10 re-check (2026-10-16, baseline `4ad30b5f21`):** mesma classe de ambiente (LOCAL INTEGRATION RUNTIME). Estado provado:
+**G10 re-check (2026-10-16, runtime `42bf97b1d7`):** mesma classe de ambiente (LOCAL INTEGRATION RUNTIME). Estado provado:
 
 - `delpi-bpmn-modeler` (nginx): rebuild intermediário do G10 com `git_sha=dd1cfd475c` (build de worktree anterior ao commit dos fixes DRIFT-BPMN-018/019) foi **superseded pelo rebuild auditável do G10-CLOSE-1** — matriz de provenance final (SOURCE=BUILD=OCI=SERVED) registrada em `BPMN-MODELER-V1-STABLE-BASELINE.md`.
-- `delpi-transformometro` (nginx): rebuild no G10-CLOSE-1 com o mesmo `@delpi/bpmn-editor` corrigido (DRIFT-BPMN-019 afeta o editor compartilhado) e a convergência BPMN nativo (`96e877cea6`). Sem `build-info.json` (instrumentação de provenance existe só no Modeler — gap conhecido, não-bloqueante).
-- `delpi-bpmn-modeler-api` / `delpi-transformometro-api`: rebuild no G10-CLOSE-1 com OCI `revision` do TARGET_SHA; ambas rodam **bind mount** (`bpmn-modeler:/app`, `transformometro-api:/app`, `shared:/shared`) — o processo carrega o checkout no start. Containers startados 2026-10-16T10:15Z; todos os `.py` de `bpmn-modeler/`/`shared/bpmn_validation/`/`transformometro-api/` têm mtime ≤ 2026-10-09 → código em execução ≡ checkout `4ad30b5f21`. `/health` expõe `git_sha` da **imagem** (metadata de build), não do código montado — claim registrado com essa precisão.
+- `delpi-transformometro` (nginx): rebuild no G10-CLOSE-1 do worktree `42bf97b1d7` com o `@delpi/bpmn-editor` corrigido (DRIFT-BPMN-019), a convergência BPMN nativo (`96e877cea6`) e o fix DRIFT-BPMN-021 (`onLegacyChange`, commit `4b3ab26790`). Sem `build-info.json` (instrumentação de provenance existe só no Modeler — gap conhecido, não-bloqueante).
+- `delpi-bpmn-modeler-api`: código **baked na imagem** (`COPY bpmn-modeler /app`, `COPY shared /shared` no Dockerfile) — rebuild no G10-CLOSE-1 no TARGET `42bf97b1d7`; OCI `revision` = TARGET; `/health git_sha` = TARGET (mesmo commit do código copiado → claim exato). `delpi-transformometro-api`: **bind mount** (`transformometro-api:/app`, `shared:/shared`) → processo carrega o checkout vigente `42bf97b1d7` (paths limpos).
 - Business read-back em runtime: E2E-38b (owner archived read-only + foreign 404) executado neste baseline contra os containers acima — PASS 2/2.
 
 ### 13e. Transformômetro ↔ BPMN Modeler — referência explícita (G5 — vigente)

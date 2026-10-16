@@ -255,6 +255,19 @@
 
 
 
+
+### DRIFT-BPMN-021 — `onLegacyChange` referenciado sem desestruturação em `ProcessBpmnCard` (G10-CLOSE-1)
+
+- **AREA:** product defect — `plugins/transformometro/src/components/process/ProcessBpmnCard.tsx`
+- **OLD:** convergência `96e877cea6` declarou `onLegacyChange` em `Props` e o consumiu via `useRef`, mas omitiu o prop da desestruturação — `ReferenceError: onLegacyChange is not defined` no mount derrubava `ProcessDetailPage` inteira (fallback do host; card BPMN nunca renderizava)
+- **DETECTION:** runtime E2E G10-CLOSE-1 — 3 specs (`g9-brand-1`, `transformometro-bpmn-document`, `transformometro-bpmn-reference`) falhando no mount; probe de browser capturou `PAGEERROR: ReferenceError: onLegacyChange is not defined`
+- **FIX:** prop incluído na desestruturação (commit `4b3ab26790`); typecheck `tsconfig.app.json` limpo; 19/19 specs G5/G7/G9-brand + rerun 40/40 no runtime final
+- **CLASSIFICATION:** `PRODUCT_DEFECT` → `CLOSED`
+- **OWNER:** 05 (frontend/MFE) → `CLOSED (G10-CLOSE-1)`
+- **RUNTIME INCIDENT (non-product):** durante o acceptance, um `docker compose up` executado a partir do worktree de build (sem `.env`) recriou `keycloak` com a imagem do compose base (KC24) no lugar do runtime dev canônico (`docker-compose.dev.yml`, KC26). KC24 não verifica credenciais argon2 (default KC26) → grants inválidos; falhas 500 transitórias adicionais vieram de `AdminShutdown` do postgres no restart. Resolvido restaurando `delpi-keycloak` (KC26) do `docker-compose.dev.yml`. Classificado `HARNESS/ENV` — sem alteração de produto.
+
+
+
 ## Residual search record (G0)
 
 Busca executada sobre `docs/12-roadmap-e-evolucao/bpmn-modeler/` + `plugins/bpmn-modeler/README.md` por: `autosave`, `OUT_OF_V1`, `explicit save`, `PER-MODEL ACL`, `context-wide`, `sem body`, `read-only` (id), `FUTURE` (element id), `TEST_NOT_RUN`, `NOT IMPLEMENTED`, `no additional pagination index`, `idx_models_list`, `V004`, `save explícito`. Cada ocorrência foi classificada em contexto (historical / superseded / still-valid / gap). Resultado: nenhuma contradição vigente sem classificação remanescente após as emendas deste gate.

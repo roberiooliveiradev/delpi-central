@@ -1,7 +1,8 @@
 # BPMN MODELER — V1 STABLE PRODUCT BASELINE
 
 > **Release:** V1 stable product baseline (G10 — Final Closure)
-> **Baseline SHA:** `4ad30b5f21aebb85aee7df1122f17ba130cedf3f` (`main`)
+> **Baseline SHA (runtime):** `42bf97b1d7ffd39456442c86d5830b7d155289b4` (`main` = `origin/main`)
+> **HEAD final:** commit docs-only subsequente a `42bf97b1d7` — difere apenas por documentação (§5-B: runtime functional SHA registrado separadamente)
 > **Data:** 2026-10-16
 > **Status:** `IMPLEMENTATION: PASS / CLOSED` — `FUNCTIONAL BLOCKERS: 0` — `ACTIVE IMPLEMENTATION GAPS: 0`
 
@@ -63,7 +64,29 @@ Nenhuma autoridade paralela (JSON visual, DI separado, proxy XML/FK, bypass de p
 
 **LOCAL INTEGRATION RUNTIME** (Docker Compose `infra`, `PUBLIC_BASE_URL=http://localhost`). **PRODUCTION ACCEPTANCE: NOT EXECUTED — SEPARATE OPS GATE** (G11 opcional).
 
-Provenance nesta baseline: bundle Modeler servido com `git_sha=dd1cfd475c` (imagem reconstruída no G10 a partir do working tree — inclui os fixes DRIFT-BPMN-018/019 ainda não commitados; label = rev-parse no momento do build); backends via bind mount executando o checkout vigente; TM MFE conteúdo-provado (`style-BnK8BJMn.css` com regra de marca).
+## Final provenance (G10-CLOSE-1)
+
+Baseline intermediária `dd1cfd475c` (build de worktree com fixes DRIFT-BPMN-018/019 ainda não commitados) foi **SUPERSEDED** pelo rebuild auditável do G10-CLOSE-1.
+
+**FINAL TARGET SHA = `42bf97b1d7ffd39456442c86d5830b7d155289b4`** (HEAD = origin/main no fechamento; inclui DRIFT-018/019/021 e a convergência TM `96e877cea6`).
+
+Build a partir de `git worktree` limpo em detached HEAD no TARGET — zero alterações não commitadas nos paths de build.
+
+| Layer | Expected | Actual | Status |
+|---|---|---|---|
+| Git source | `42bf97b1d7` | `42bf97b1d7` (HEAD = origin/main) | PASS |
+| Frontend OCI revision (`infra-bpmn-modeler`) | `42bf97b1d7` | `42bf97b1d7` | PASS |
+| `assets/build-info.json` git_sha | `42bf97b1d7` | `42bf97b1d7` (built_at 2026-10-16T14:31:05Z) | PASS |
+| `remoteEntry.js` servido == imagem | md5 equal | `5bfcf26c…` equal | PASS |
+| Backend OCI revision (`infra-bpmn-modeler-api`) | `42bf97b1d7` | `42bf97b1d7` | PASS |
+| `/apps/bpmn-modeler-api/health` git_sha | `42bf97b1d7` | `42bf97b1d7` | PASS |
+| Backend code em execução | TARGET | `bpmn-modeler-api`: código **baked na imagem** (COPY no build do TARGET); `transformometro-api`: bind mount `/app`+`/shared` do checkout `42bf97b1d7` (paths limpos) | PASS |
+| `delpi-transformometro` (nginx) | TARGET | rebuild do worktree `42bf97b1d7` (`App-D3Nj4J2I.js`); sem `build-info.json` — conteúdo provado por asset hash | PASS |
+| `keycloak` (dev runtime) | KC26 `docker-compose.dev.yml` | `delpi-keycloak` 26.0.7 (`start-dev`) | PASS |
+
+Runtime incident resolvido (HARNESS/ENV, não produto): um `docker compose up` do worktree (sem `.env`) recriou `keycloak` com a imagem KC24 do compose base no lugar do KC26 dev — credenciais argon2 não verificáveis + `AdminShutdown` transitório do postgres. Restaurado `delpi-keycloak` (KC26) a partir de `docker-compose.dev.yml`; ver DRIFT-BPMN-021 nota no ledger.
+
+- **DRIFT-BPMN-021** — `onLegacyChange` declarado em `Props` sem desestruturação em `ProcessBpmnCard` (`ReferenceError` no mount → página TM caía no fallback do host; 3 specs E2E). Fix: destruturação adicionada (commit `4b3ab26790`).
 
 ## Regression evidence (G10)
 
