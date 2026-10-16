@@ -50,6 +50,7 @@ export function ProcessBpmnCard({
   onNavigate,
   onError,
   onDocumentChange,
+  onLegacyChange,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [document, setDocument] = useState<ProcessBpmnDocument | null>(null);
