@@ -55,6 +55,23 @@ export function ConversationThreeRegionLayout({
     return () => observer.disconnect();
   }, []);
 
+  // Escape dismisses a compact drawer only; it never cancels a conversation
+  // or changes a governed confirmation.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || !compactRef.current) return;
+      if (rightOpen) {
+        setRightOpen(false);
+        setTimeout(() => rightTriggerRef.current?.focus(), 0);
+      } else if (leftOpen) {
+        setLeftOpen(false);
+        setTimeout(() => leftTriggerRef.current?.focus(), 0);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [leftOpen, rightOpen]);
+
   function openLeft() {
     if (compactRef.current) setRightOpen(false);
     setLeftOpen(true);
