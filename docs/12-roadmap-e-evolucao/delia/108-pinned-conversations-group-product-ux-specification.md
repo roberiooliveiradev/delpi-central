@@ -46,3 +46,7 @@ Headings e listas semânticas, status legível por screen reader após postcondi
 - **Validação:** testes de props/callbacks/estados e negativos de AuthZ, QA page/dock light/dark, check de exports/federação, prova de generalização em cenários de navegação e revisão independente no SHA executado. `TEST_NOT_RUN` não equivale a PASS.
 
 
+
+## Rework R1 — fixação não é estado local autoritativo
+
+Renderizar “Fixadas” **somente** com dados publicados e autorizados pelo owner; ausência de contrato não permite lista exemplificativa. A ação fixar/desafixar é write de metadados: identity → Core live AuthZ → Domain owner → Policy/Decision quando aplicável → idempotência → audit → execution → authoritative postcondition. Em falha/revogação, a conversa mantém posição autoritativa. Se pinned vazio foi confirmado pelo backend, grupo pode ser omitido; `empty_confirmed` é diferente de `unavailable`. Nenhum drag-sort ou favoritar local sem contrato.
