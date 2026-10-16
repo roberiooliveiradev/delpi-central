@@ -2,7 +2,7 @@
 
 **Estado:** TARGET / PLANNED / TEST_NOT_RUN. Este arquivo é uma especificação de testes futuros, **não** relata execução. `DOCUMENTATION_CLOSURE_COMPLETE=NO` e `IMPLEMENTATION_AUTHORIZED=NO` permanecem.
 
-Fontes: [.cursor — platform-quality-testing](../../../../.cursor/rules/platform-quality-testing.mdc), [test-and-commit](../../../../.cursor/rules/test-and-commit.mdc), [feature-help-sync](../../../../.cursor/rules/feature-help-sync.mdc), [15 — requisitos](./15-requisitos-criterios-de-aceite-e-testes.md), [23 — ledger](./23-ledger-rq-ac-testes.md), [35 — A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [38 — evidências](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+Fontes: [.cursor — platform-quality-testing](../../../.cursor/rules/platform-quality-testing.mdc), [test-and-commit](../../../.cursor/rules/test-and-commit.mdc), [feature-help-sync](../../../.cursor/rules/feature-help-sync.mdc), [15 — requisitos](./15-requisitos-criterios-de-aceite-e-testes.md), [23 — ledger](./23-ledger-rq-ac-testes.md), [35 — A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [38 — evidências](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 ## 1. Gates de validação obrigatórios
 
