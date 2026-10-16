@@ -9,6 +9,8 @@ export type DeliaComposerProps = {
   /** Explicit user intent only — never invoked programmatically. */
   onSubmit: () => void;
   loading?: boolean;
+  requestMode?: "idle" | "responding_cancelable" | "responding_not_cancelable" | "stopping";
+  onStop?: () => void;
   placeholder?: string;
 };
 
@@ -26,6 +28,8 @@ export function DeliaComposer({
   onChange,
   onSubmit,
   loading = false,
+  requestMode,
+  onStop,
   placeholder = "Pergunte à DÉLIA…",
 }: DeliaComposerProps) {
   return (
@@ -37,6 +41,8 @@ export function DeliaComposer({
       onChange={onChange}
       onSubmit={onSubmit}
       loading={loading}
+      requestMode={requestMode}
+      onStop={onStop}
       placeholder={placeholder}
       characterLimit={INTERACTION_INPUT_CHAR_LIMIT}
       helperText="A DÉLIA pode cometer erros. Confirme informações importantes."
