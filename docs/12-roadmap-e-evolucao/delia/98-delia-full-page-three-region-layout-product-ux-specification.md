@@ -124,3 +124,29 @@ REUSE_DECISION = REUSE_CENTER + FUTURE_GATE_FOR_SHELL
 TESTS = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 ```
+
+## 11. Registro da implementação frontend bounded — 2026-10-16
+
+**Autorização de produto:** shell visual de três regiões em `plugin-ui` e importação como página composta da DÉLIA, preservando componentes conversacionais existentes.
+
+**Arquivos implementados:**
+- `plugins/plugin-ui/src/components/conversation/ConversationThreeRegionLayout.tsx`: layout render-only, left nav, centro sempre montado, aside direito opcional; toggles de abertura/fechamento e affordances acessíveis; regiões de conteúdo via props.
+- `plugins/plugin-ui/src/components/conversation/ConversationThreeRegionLayout.css`: três colunas flexíveis; sob largura do container `delia-page` de 920px, laterais como overlays sobre o centro, com backdrop.
+- `plugins/plugin-ui/src/components/conversation/index.ts` + `src/index.ts`: export público e nomeado Federation; `scripts/verify-host-exports.mjs`: gate requerido.
+- `plugins/delia/src/ui/DeliaConversationPage.tsx`: composição única da página, importando layout do kit; esquerda/direita contêm somente mensagens neutras de indisponibilidade; histórico persistido e detalhes não são simulados.
+- `plugins/delia/src/App.tsx`: mantém as instâncias existentes de `ConversationWorkspace`, `ConversationHeader`, `ConversationTimeline`/`Reception`, `ActivityViewer`, `ConversationScrollNavigator`, `DeliaComposer` e governança, incorporadas no slot central da página única.
+- Testes criados para shell e wrapper; CSS/tokens compartilhados com Portal.
+
+**Limite de escopo:** histórico, busca, criação persistida de conversa, seleção de turnos no painel direito, menus e dados contextuais reais **não foram implementados**; seu slot visual existe, mas não representa capabilities de backend existentes. Layout central continua com runtime/state próprios. Sidebar da DÉLIA não substitui navegação global do Portal.
+
+**Evidência:** commit(s) em `main` via API GitHub; fetch de conteúdo/HEAD confirma persistência. Não há runner de build ou navegador autenticado disponível nesta execução, portanto `TESTS=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `FEDERATION_BUILD=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`. Revisão independente `PENDING`. Não inferir PASS de arquivo criado.
+
+```text
+SHELL_IMPLEMENTATION = CODE_COMMITTED_CANDIDATE
+CENTRAL_WORKSPACE_REUSE = YES
+SIDEBAR_HISTORY = NOT_IMPLEMENTED
+RIGHT_CONTEXT_BACKEND = NOT_IMPLEMENTED
+RUNTIME_TESTS = TEST_NOT_RUN
+INDEPENDENT_REVIEW = PENDING
+PHASE_PROGRESSION = NONE
+```
