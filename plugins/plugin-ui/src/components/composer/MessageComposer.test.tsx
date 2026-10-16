@@ -206,3 +206,35 @@ describe("MessageComposer — stop response", () => {
     expect(screen.queryByRole("button", { name: "Interromper resposta" })).toBeNull();
   });
 });
+
+
+describe("MessageComposer — limpar rascunho", () => {
+  it("omits clear control without host callback or draft", () => {
+    renderComposer({ value: "rascunho" });
+    expect(screen.queryByRole("button", { name: "Limpar rascunho" })).toBeNull();
+  });
+
+  it("requests only local draft clearing when typed content exists", () => {
+    const onClearDraft = vi.fn();
+    const onSubmit = vi.fn();
+    renderComposer({ value: "pergunta não enviada", onClearDraft, onSubmit });
+    fireEvent.click(screen.getByRole("button", { name: "Limpar rascunho" }));
+    expect(onClearDraft).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("hides clear action when empty, loading, stopping or disabled", () => {
+    const onClearDraft = vi.fn();
+    for (const overrides of [
+      { value: "" },
+      { value: "x", loading: true },
+      { value: "x", requestMode: "stopping" as const },
+      { value: "x", disabled: true },
+    ]) {
+      const { unmount } = renderComposer({ onClearDraft, ...overrides });
+      expect(screen.queryByRole("button", { name: "Limpar rascunho" })).toBeNull();
+      unmount();
+    }
+    expect(onClearDraft).not.toHaveBeenCalled();
+  });
+});
