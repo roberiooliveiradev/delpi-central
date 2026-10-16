@@ -1,6 +1,6 @@
 # 40 — Matriz de Dependências e Backlog de Slices V1
 
-**Estado:** TARGET / PLANNED / TEST_NOT_RUN — execução não autorizada. Leia primeiro [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md) e [38 — gate](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+**Estado:** TARGET / PLANNED / TEST_NOT_RUN — execução não autorizada. `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Leia primeiro [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md) e [38 — gate](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 ## 1. Semântica do backlog
 
