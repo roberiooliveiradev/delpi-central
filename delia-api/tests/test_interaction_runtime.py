@@ -902,3 +902,89 @@ def test_application_layer_rejects_confirmation_with_arbitrary_text():
                 confirmation=_decision_payload(),
             )
         )
+
+
+# --- B2 RW-02: typed command survives HTTP and Application -----------------
+
+
+@pytest.mark.parametrize(
+    ("wire_command", "decision"),
+    [
+        ("APPLY_PREPARED", "CONFIRM"),
+        ("REJECT_PREPARED", "REJECT"),
+    ],
+)
+def test_http_command_discriminator_reaches_application_contract(
+    wire_command, decision
+):
+    handler = _RecordingHandler()
+    response = _post(
+        _client(handler=handler),
+        {
+            "command": {"type": wire_command},
+            "confirmation": _decision_payload(decision),
+        },
+    )
+    assert response.status_code == 200
+    assert len(handler.requests) == 1
+    assert handler.requests[0].command_type == wire_command
+
+
+@pytest.mark.parametrize(
+    ("kind", "text", "decision"),
+    [
+        ("MESSAGE", "", "CONFIRM"),
+        ("MESSAGE", "não aplique", "CONFIRM"),
+        ("APPLY_PREPARED", "não aplique", "CONFIRM"),
+        ("APPLY_PREPARED", "", "REJECT"),
+        ("REJECT_PREPARED", "", "CONFIRM"),
+        ("not_a_command", "", "CONFIRM"),
+    ],
+)
+def test_application_direct_consumer_cannot_bypass_command_validation(
+    kind, text, decision
+):
+    request = InteractiveTurnRequest(
+        access_context=_context(),
+        input_text=text,
+        confirmation=_decision_payload(decision),
+        command_type=kind,
+    )
+    with pytest.raises(InteractionError) as err:
+        _use_case().execute(request)
+    assert err.value.code == "invalid_request"
+
+
+def test_application_typed_valid_command_and_legacy_are_distinct():
+    handler = _use_case()
+    typed = InteractiveTurnRequest(
+        access_context=_context(),
+        input_text="",
+        confirmation=_decision_payload("CONFIRM"),
+        command_type="APPLY_PREPARED",
+    )
+    assert handler._validate_turn_command(typed) is None
+
+    legacy = InteractiveTurnRequest(
+        access_context=_context(),
+        input_text=_legacy_label("CONFIRM"),
+        confirmation=_decision_payload("CONFIRM"),
+    )
+    assert handler._validate_turn_command(legacy) is None
+
+    with pytest.raises(InteractionError) as err:
+        handler.execute(typed)
+    assert err.value.code == "invalid_request"  # no orchestration; fail closed
+
+
+def test_application_direct_apply_under_prepare_ceiling_rejected():
+    request = InteractiveTurnRequest(
+        access_context=_context(),
+        input_text="",
+        confirmation=_decision_payload("CONFIRM"),
+        command_type="APPLY_PREPARED",
+        max_execution_stage="prepare",
+    )
+    with pytest.raises(InteractionError) as err:
+        _use_case().execute(request)
+    assert err.value.code == "invalid_request"
