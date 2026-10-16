@@ -7,6 +7,8 @@
 export * from "./components/actions";
 export * from "./components/activity";
 export * from "./components/conversation";
+/** Host-consumed scroll control — retain in federated Index exports. */
+export { ConversationScrollNavigator } from "./components/conversation/ConversationScrollNavigator";
 export * from "./components/composer";
 export * from "./components/help";
 export * from "./components/layout";
