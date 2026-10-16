@@ -193,3 +193,7 @@ Revisar primeiro `IconButton`, botões e menu/navigation existentes em `plugin-u
 - Opções fica ao final sem segunda navegação institucional.
 - Page e Dock preservam a largura, foco, tema dark/light, teclado, zoom e transições reduzidas.
 - Não criar callbacks backend nesta correção de UI. `UX_REVIEW=REWORK`; `RUNTIME_TESTS=TEST_NOT_RUN` até execução.
+
+## 10. Implementação visual R1 — registro
+
+`ConversationSidebar` permanece render-only com Nova conversa, Pesquisar, Recentes e Opções bounded, desabilitados quando faltam callbacks contratuais; não existe história inventada nem pesquisa local. O shell removeu a duplicação: quando aberta, sidebar tem **um** botão de recolher no próprio header e **nenhum** toggle equivalente no centro; quando fechada, botão de abrir aparece no `ConversationHeader.leading`. O CSS recebe refinamento tonal discreto, sem bordas pesadas nas ações. Testes de conduta atualizados; `TEST_NOT_RUN` para runner/QA no ambiente desta task. Aceite visual independente pendente. 
