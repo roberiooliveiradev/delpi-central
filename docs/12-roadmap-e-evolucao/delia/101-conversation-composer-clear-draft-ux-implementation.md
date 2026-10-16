@@ -55,3 +55,14 @@ BROWSER_QA = TEST_NOT_RUN
 INDEPENDENT_REVIEW = PENDING
 PHASE_PROGRESSION = NONE
 ```
+
+
+## 5. Refinamento visual R2 — fundo apenas em hover (2026-10-16)
+
+**Solicitação do Product Master:** alinhar o X de Limpar rascunho ao padrão clean aprovado para colapsar sidebar e fechar o card de contexto, com **paridade real entre tema claro e escuro**.
+
+**Causa técnica identificada no HEAD consultado:** `plugins/plugin-ui/src/styles.css` importava `message-composer.css` na linha anterior a `action-controls.css`, cujo seletor escuro `:root[data-theme="dark"] .delpi-ui-icon-btn` injeta fundo e borda permanentes. O CSS local, embora especificasse `background:transparent`, podia perder por ordem de precedência no tema escuro.
+
+**Correção bounded publicada:** carregar `message-composer.css` **após** `action-controls.css`; manter seletores de maior especificidade para `__clear` em light/dark, reforçar fundo transparente em repouso, hover e press tonal discreto, foco com outline sem fundo, e `prefers-reduced-motion`. Não alterar `IconButton` global nem criar outro botão. Sem mudança de comportamento no callback ou valor controlado. A alteração de ordem foi limitada ao CSS de compositor.
+
+**Validação:** verificação de fonte e ordem dos imports por fetch no GitHub; TypeScript/Vitest/Module Federation/QA autenticado permanecem `TEST_NOT_RUN`. Para aceite, comparar hover, focus, press e estado normal em ambos os temas na página/Dock. O documento 102 formaliza o futuro undo e **não** autoriza sua implementação nesta task.
