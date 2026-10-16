@@ -102,6 +102,31 @@ export type LayoutProfile = typeof LAYOUT_PROFILE_V1;
 
 export type ContainerKind = "participant" | "lane" | "subprocess" | "default";
 
+/** SubProcess-family: filhos semânticos viram children ELK. */
+export const SUBPROCESS_FAMILY = new Set([
+  "bpmn:subProcess",
+  "bpmn:transaction",
+  "bpmn:adHocSubProcess",
+  "bpmn:eventSubProcess",
+]);
+
+/** Piso de dimensão para containers RESIZABLE — ELK pode devolver menos
+ *  que o mínimo legível quando o conteúdo é pequeno (G9 §3 lanes).
+ *  Fonte única usada no input ELK (`nodeSize.minimum`) e no
+ *  container-fit pós-layout — nunca crescer o container depois que o
+ *  ELK já posicionou os siblings (invadiria a área deles). */
+export function containerMinSize(node: {
+  type: string;
+  isParticipant?: boolean;
+  isLane?: boolean;
+}): { width: number; height: number } | undefined {
+  const min = LAYOUT_PROFILE_V1.containerMin;
+  if (node.isParticipant) return min.participant;
+  if (node.isLane) return min.lane;
+  if (SUBPROCESS_FAMILY.has(node.type)) return min.subProcess;
+  return undefined;
+}
+
 /** Padding de conteúdo de um container (coordenadas absolutas DI).
  *  `left` = header para lane/participant (rótulo vertical à esquerda). */
 export function containerPadFor(
