@@ -246,7 +246,7 @@ createComplementOrNewVersion
 list/resolveClarifications
 getPackageHistory
 notifyUserAboutPackageEvent
-deriveMonthlyClosingCompletion [decision pending]
+deriveMonthlyClosingCompletion [C2 approved; physical operationId TO_INVENTORY]
 ```
 
 ```text
@@ -254,13 +254,14 @@ PACKAGE_FINALIZED
 → PACKAGE_SUBMITTED_FOR_REVIEW
 → REVIEW_PENDING
 → REVIEW_IN_PROGRESS
-→ REVIEW_ACCEPTED | CHANGES_REQUESTED
+→ REVIEW_ACCEPTED | CHANGES_REQUESTED | REVIEW_REJECTED
 ```
 
 Package permanece na Minha DELPI. E-mail é notification only.
 
-Residual:
-- `D-P5-REVIEW-COMPLETION`.
+**Semântica aprovada:** C2 exige todos pacotes aplicáveis submetidos, um aceite de cada **área obrigatória** na PackageVersion atual, nenhuma clarification aberta nem rejeição terminal confirmada. `REVIEW_REJECTED` por área abre decisão pendente; só coordenador formal DEC-01 pode confirmar terminalmente. Sem confirmação, DEC-02 conserva pendência e permite devolução motivada. P6 congela snapshot de áreas na submissão; DEC-03 não permite reversão de aceite V1.
+
+**Residual TO_INVENTORY (antes de runtime):** Core S2S grupo/função para elegibilidade, binding de coordenador/ownership, snapshots P6, DTO/operationId/eventos/OCC, armazenamento e contract tests; a lista acima representa capacidades **PLANNED**, não rotas existentes.
 
 ## 4. AuthZ contract
 
@@ -481,7 +482,7 @@ Nenhum script abaixo deve ser criado na FASE A.
 - `validate-p5-versioning`
 - `validate-p5-completion-rule`
 - `validate-p5-notification-boundary`
-- `validate-p5-submission-review-contract` — cobre submissão in-portal, unanimidade, versionamento e falhas de AuthZ
+- `validate-p5-submission-review-contract` — **PLANNED:** submissão in-portal, quórum de um aceite por área obrigatória/PackageVersion atual, DEC-01/02 rejeição confirmada ou pendente, versionamento, reatribuição, fail-closed Core e negativos AuthZ
 - `validate-p5-authz`
 - `validate-p5-help`
 - `validate-p5-plugin-ui`
