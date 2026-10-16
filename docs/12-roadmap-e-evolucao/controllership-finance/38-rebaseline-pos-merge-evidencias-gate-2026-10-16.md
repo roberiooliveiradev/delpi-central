@@ -29,7 +29,7 @@ Authorities: instruções oficiais do Arquiteto; `.cursor` canônico (oito owner
 - **PROVEN:** [PR #78](https://github.com/roberiooliveiradev/delpi-central/pull/78) merged; documentação presente em `main`.
 - **PROVEN:** inventário de diretórios `plugins/` e raiz do HEAD examinado não mostrou `plugins/controllership-finance` nem `controllership-finance-api`. Isto prova somente o estado dos paths verificados, não prova de inexistência de qualquer proposta em branches.
 - **PROVEN:** [instruções oficiais](../../11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md) exigem JWT validado, Core effective permission, Clean Architecture, manifesto `schemaVersion 1.0.0` e testes.
-- **PROVEN:** as regras OpenAI Plugin/MCP e Workspace Agent já declaram `platform-api-contracts-integration.mdc` como owner primário. O mapa e o inventário omitiram ambas, causando falha de `Cursor Rules Governance`; correção mínima de metadata foi preparada nesta branch, sujeito a CI pós-correção.
+- **PROVEN:** as regras OpenAI Plugin/MCP e Workspace Agent já declaram `platform-api-contracts-integration.mdc` como owner primário. O mapa e o inventário omitiram ambas, causando falha de `Cursor Rules Governance`; correção mínima de metadata foi preparada nesta branch e **validada pelo CI Cursor Rules Governance na PR #80** ([job 117036525022](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38919816710/job/117036525022), conclusão success).
 - **PENDING:** não inferir `git status` local, testes de produto ou smoke a partir de merge/HTTP 200.
 
 ## 2. Contratos de plataforma verificados no HEAD
@@ -87,8 +87,8 @@ Requisitos vigentes e AC detalhados em doc 23, incluindo `RQ-P5-AREA-01..04`, `R
 - **Negative:** ACCESS sem elegibilidade; MANAGE sem ACCESS/vínculo; Core indisponível; deep link fora de scope; retificação P5 V1 proibida; conclusão com clarification aberta; rejection pending ≠ terminal; envio externo de anexos proibido.
 - **Experience:** desktop/mobile, light/dark, foco/teclado, 403/404, loading/partial/error, deep link/F5, Help.
 
-**CI observado:** `Cursor Rules Governance` falhou por duas regras órfãs (job [117018432945](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38914517433/job/117018432945), teste unitário do auditor 4/4 passou). Correção declarativa no mapa + inventário desta branch requer validação no CI da PR.
-Outro failure independente: `Architecture Enforcement` no [job 117025481133](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38916581812/job/117025481133) falhou no teste `test_current_repo_artifacts_pass`: `GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT` no schema Transformômetro `POST /transformometro/gpt-actions/v1/governed-operations/prepare.properties.resolutions` sem `x-delpi-gpt-opaque-object`. **Owner = Transformômetro/OpenAPI**, não P5; requer correção do contrato pelo owner, sem enfraquecer assertion nem adicionar marker sem conferir o schema.
+**CI observado:** `Cursor Rules Governance` falhou por duas regras órfãs (job [117018432945](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38914517433/job/117018432945), teste unitário do auditor 4/4 passou). Correção declarativa no mapa + inventário desta branch foi validada pelo **CI PASS da PR #80**: 4/4 testes do auditor e `audit_cursor_rules.py` concluídos com sucesso.
+Outro failure independente: `Architecture Enforcement` no [job 117025481133](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38916581812/job/117025481133) falhou no teste `test_current_repo_artifacts_pass`: `GPT_ACTION_OPAQUE_OBJECT_NOT_EXPLICIT` no schema Transformômetro `POST /transformometro/gpt-actions/v1/governed-operations/prepare.properties.resolutions` sem `x-delpi-gpt-opaque-object`. **Owner = Transformômetro/OpenAPI**, não P5; requer correção do contrato pelo owner, sem enfraquecer assertion nem adicionar marker sem conferir o schema. Rastreio: [issue #81](https://github.com/roberiooliveiradev/delpi-central/issues/81). Reproduzido também no [job PR #80](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38919816701/job/117036523369).
 
 **A15 = INCONCLUSIVE.** Os testes planejados de runtime do Portal não rodaram: `TEST_NOT_RUN`.
 
@@ -101,11 +101,11 @@ Outro failure independente: `Architecture Enforcement` no [job 117025481133](htt
 | A12 (P5) | INCONCLUSIVE | contrato Core função/grupo + scope/coordenador, P6 snapshot, estados/DTOs/eventos/OCC e AC verificáveis |
 | A14 (transversal) | INCONCLUSIVE / STALE_EVIDENCE | rever cruzamento efetivo de páginas/owners, AuthZ, Help e contratos atuais |
 | A15 (contratos/testes) | INCONCLUSIVE | artefatos de contrato/validação correspondentes + evidência positiva/sibling/negative, CI governado |
-| .cursor governance | FAIL observado; correção proposta | CI PASS no HEAD atualizado da PR |
-| Architecture Enforcement externo | FAIL observado | owner Transformômetro repara contrato sem enfraquecer auditor |
+| .cursor governance | **PASS no CI da PR #80** | evidência: [job 117036525022](https://github.com/roberiooliveiradev/delpi-central/actions/runs/38919816710/job/117036525022); revalidar após eventual diff adicional |
+| Architecture Enforcement externo | **FAIL reproduzido na PR #80** | [issue #81](https://github.com/roberiooliveiradev/delpi-central/issues/81), correção pelo owner do contrato e reexecução de CI |
 | Documentation closure | NO | A12/A14/A15 revalidados + residual search e SHA |
 | Runtime autorizada | NO | gate transversal explícito do PO após documentação fechada |
 
 Se surgir materialidade nova de owner, permission, integração, breaking, persistência ou state machine, marcar `DECISION_REQUIRED` com evidência e não implementá-la por preferência.
 
-**Veredito desta revisão: INCONCLUSIVE** para freeze final, com correções documentais e de governança propostas nesta branch. A próxima página candidata continua **Página do usuário**, sem scaffold ou runtime até `IMPLEMENTATION_AUTHORIZED=YES` registrado por gate explícito.
+**Veredito desta revisão: INCONCLUSIVE** para freeze final, com correções documentais propostas nesta branch e **governança Cursor PASS no CI da PR #80**; Architecture Enforcement permanece FAIL por contrato externo. A próxima página candidata continua **Página do usuário**, sem scaffold ou runtime até `IMPLEMENTATION_AUTHORIZED=YES` registrado por gate explícito. A PR #80 permanece sujeita à revisão de CI; CI verde parcial não é aprovação global.
