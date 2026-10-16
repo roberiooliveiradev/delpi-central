@@ -9,9 +9,7 @@ import { RequestFilePreviewModal } from "../../../components/RequestFilePreviewM
 import { DetailFields, MyRequestsSectionCard } from "../../../ui/mrUi";
 import {
   formatProcessIssueQty,
-  formatProcessIssueSchedule,
   parseProcessIssuePayload,
-  type ProcessIssuePayloadView,
 } from "../domain/processIssuePayload";
 
 type ProcessIssuePayloadPanelProps = {
@@ -35,43 +33,6 @@ function productLabel(
 ): string | null {
   if (!code) return null;
   return description ? `${code} · ${description}` : code;
-}
-
-function quantitiesFields(view: ProcessIssuePayloadView) {
-  const fields: Array<{ label: string; value: string }> = [];
-  const planned = formatProcessIssueQty(view.plannedQty);
-  const pending = formatProcessIssueQty(view.pendingQty);
-  const operationPending = formatProcessIssueQty(view.operationPendingQty);
-  if (planned != null) {
-    fields.push({ label: "Quantidade planejada", value: planned });
-  }
-  if (operationPending != null) {
-    fields.push({
-      label: "Pendente da operação",
-      value: operationPending,
-    });
-  }
-  if (pending != null) {
-    fields.push({ label: "Pendente da OP", value: pending });
-  }
-  return fields;
-}
-
-function scheduleFields(view: ProcessIssuePayloadView) {
-  const fields: Array<{ label: string; value: string }> = [];
-  const start = formatProcessIssueSchedule(
-    view.scheduledDate,
-    view.scheduledStartTime,
-  );
-  const end = formatProcessIssueSchedule(
-    view.scheduledEndDate ?? view.scheduledDate,
-    view.scheduledEndTime,
-  );
-  const due = formatProcessIssueSchedule(view.dueDate, null);
-  if (start) fields.push({ label: "Início programado", value: start });
-  if (end) fields.push({ label: "Fim programado", value: end });
-  if (due) fields.push({ label: "Entrega", value: due });
-  return fields;
 }
 
 /**
@@ -185,7 +146,6 @@ export function ProcessIssuePayloadPanel({
               value:
                 productLabel(view.productCode, view.productDescription) ?? "—",
             },
-            { label: "Unidade", value: view.unit ?? "—" },
             {
               label: "Produto acabado",
               value: paCode ? (
@@ -207,8 +167,6 @@ export function ProcessIssuePayloadPanel({
                 "Produto acabado não informado no momento do reporte."
               ),
             },
-            ...quantitiesFields(view),
-            ...scheduleFields(view),
           ]}
         />
       </MyRequestsSectionCard>

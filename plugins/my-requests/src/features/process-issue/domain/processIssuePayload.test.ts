@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatProcessIssueQty,
-  formatProcessIssueSchedule,
   parseProcessIssuePayload,
   processIssueLabel,
   PROCESS_ISSUE_LABELS,
@@ -103,16 +102,18 @@ describe("parseProcessIssuePayload", () => {
     expect(view.workCenterName).toBe("Montagem 03");
     expect(view.productCode).toBe("10045678");
     expect(view.productDescription).toBe("PRODUTO INTERMEDIÁRIO");
-    expect(view.unit).toBe("PC");
     expect(view.paProductCode).toBe("90264238");
     expect(view.paProductDescription).toBe("CONJUNTO FINAL");
     expect(view.toolSnapshot).toBe("F10000");
     expect(view.resource).toBe("BANC-07");
-    expect(view.plannedQty).toBe(100);
-    expect(view.pendingQty).toBe(50);
-    expect(view.operationPendingQty).toBe(25);
-    expect(view.scheduledDate).toBe("2026-03-15");
-    expect(view.dueDate).toBe("2026-03-20");
+    // campos removidos do snapshot (quantidades/unidade/programação) — payloads
+    // legados ainda carregam as chaves, mas o view-model não as expõe mais
+    expect(view).not.toHaveProperty("unit");
+    expect(view).not.toHaveProperty("plannedQty");
+    expect(view).not.toHaveProperty("pendingQty");
+    expect(view).not.toHaveProperty("operationPendingQty");
+    expect(view).not.toHaveProperty("scheduledDate");
+    expect(view).not.toHaveProperty("dueDate");
     expect(view.materialsSnapshotAvailable).toBe(true);
     expect(view.materials).toHaveLength(2);
     expect(view.materials[0]).toMatchObject({
@@ -182,21 +183,6 @@ describe("parseProcessIssuePayload", () => {
     expect(view.materials).toEqual([]);
   });
 
-  it("quantidades zero permanecem zero (não viram ausente)", () => {
-    const view = parseProcessIssuePayload({
-      ...COMPLETE_PAYLOAD,
-      operation: {
-        ...COMPLETE_PAYLOAD.operation,
-        plannedQty: 0,
-        pendingQty: 0,
-        operationPendingQty: 0,
-      },
-    });
-    expect(view.plannedQty).toBe(0);
-    expect(view.pendingQty).toBe(0);
-    expect(view.operationPendingQty).toBe(0);
-  });
-
   it("material sem quantidade não quebra", () => {
     const view = parseProcessIssuePayload(COMPLETE_PAYLOAD);
     const semQty = view.materials[1];
@@ -212,19 +198,5 @@ describe("formatProcessIssueQty", () => {
     expect(formatProcessIssueQty(2.5)).toBe("2,5");
     expect(formatProcessIssueQty(null)).toBeNull();
     expect(formatProcessIssueQty(undefined)).toBeNull();
-  });
-});
-
-describe("formatProcessIssueSchedule", () => {
-  it("combina data ISO e hora sem deslocamento de fuso", () => {
-    expect(formatProcessIssueSchedule("2026-03-15", "07:30:00")).toBe(
-      "15/03/2026 · 07:30",
-    );
-  });
-
-  it("funciona com apenas data ou apenas hora", () => {
-    expect(formatProcessIssueSchedule("2026-03-15", null)).toBe("15/03/2026");
-    expect(formatProcessIssueSchedule(null, "07:30")).toBe("07:30");
-    expect(formatProcessIssueSchedule(null, null)).toBeNull();
   });
 });

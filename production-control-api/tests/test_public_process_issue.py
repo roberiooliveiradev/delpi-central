@@ -92,20 +92,10 @@ def _context(**overrides: Any) -> dict[str, Any]:
         "work_center_name": "Montagem 03",
         "product_code": "10045678",
         "product_description": "Componente semifinished",
-        "unit": "PC",
         "pa_product_code": "90264238",
         "pa_product_description": "Produto acabado X",
         "tool": "F99999",
         "resource": "RES-01",
-        "planned_qty": 100.0,
-        "pending_qty": 50.0,
-        "operation_pending_qty": 50.0,
-        "scheduled_date": "2026-10-09",
-        "scheduled_start_time": "07:30",
-        "scheduled_end_date": "2026-10-09",
-        "scheduled_end_time": "17:30",
-        "due_date": "2026-10-15",
-        "pa_due_date": "2026-10-15",
     }
     base.update(overrides)
     return base
@@ -280,16 +270,22 @@ def test_operation_snapshot_is_frozen_from_published() -> None:
     assert operation["workCenterName"] == "Montagem 03"
     assert operation["productCode"] == "10045678"
     assert operation["productDescription"] == "Componente semifinished"
-    assert operation["unit"] == "PC"
     # PA preservado para o botão "Abrir desenho" da P4
     assert operation["paProductCode"] == "90264238"
     assert operation["paProductDescription"] == "Produto acabado X"
-    assert operation["plannedQty"] == 100.0
-    assert operation["pendingQty"] == 50.0
-    assert operation["operationPendingQty"] == 50.0
-    assert operation["scheduledDate"] == "2026-10-09"
-    assert operation["scheduledStartTime"] == "07:30"
-    assert operation["dueDate"] == "2026-10-15"
+    # quantidades/unidade/programação não entram no chamado — ruído p/ Processos
+    for removed in (
+        "unit",
+        "plannedQty",
+        "pendingQty",
+        "operationPendingQty",
+        "scheduledDate",
+        "scheduledStartTime",
+        "scheduledEndDate",
+        "scheduledEndTime",
+        "dueDate",
+    ):
+        assert removed not in operation
 
 
 def test_tool_snapshot_is_separate_from_reported_tool_code() -> None:

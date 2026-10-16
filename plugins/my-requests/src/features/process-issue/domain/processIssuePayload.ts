@@ -57,22 +57,11 @@ export type ProcessIssuePayloadView = {
 
   productCode: string | null;
   productDescription: string | null;
-  unit: string | null;
   paProductCode: string | null;
   paProductDescription: string | null;
 
   toolSnapshot: string | null;
   resource: string | null;
-
-  plannedQty: number | null;
-  pendingQty: number | null;
-  operationPendingQty: number | null;
-
-  scheduledDate: string | null;
-  scheduledStartTime: string | null;
-  scheduledEndDate: string | null;
-  scheduledEndTime: string | null;
-  dueDate: string | null;
 
   materialsSnapshotAvailable: boolean;
   materials: ProcessIssueMaterial[];
@@ -140,22 +129,11 @@ export function parseProcessIssuePayload(
 
     productCode: text(operation.productCode),
     productDescription: text(operation.productDescription),
-    unit: text(operation.unit),
     paProductCode: text(operation.paProductCode),
     paProductDescription: text(operation.paProductDescription),
 
     toolSnapshot: text(operation.toolSnapshot),
     resource: text(operation.resource),
-
-    plannedQty: num(operation.plannedQty),
-    pendingQty: num(operation.pendingQty),
-    operationPendingQty: num(operation.operationPendingQty),
-
-    scheduledDate: text(operation.scheduledDate),
-    scheduledStartTime: text(operation.scheduledStartTime),
-    scheduledEndDate: text(operation.scheduledEndDate),
-    scheduledEndTime: text(operation.scheduledEndTime),
-    dueDate: text(operation.dueDate),
 
     materialsSnapshotAvailable: root.materialsSnapshotAvailable === true,
     materials: rawMaterials.map(toMaterial),
@@ -170,36 +148,4 @@ export function formatProcessIssueQty(
   value: number | null | undefined,
 ): string | null {
   return value == null ? null : qtyFormatter.format(value);
-}
-
-/** `YYYY-MM-DD` → `dd/mm/aaaa` sem deslocamento de fuso. */
-export function formatProcessIssueDate(
-  value: string | null | undefined,
-): string | null {
-  const raw = (value ?? "").trim();
-  if (!raw) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
-  if (match) return `${match[3]}/${match[2]}/${match[1]}`;
-  return raw;
-}
-
-/** `HH:MM[:SS]` → `HH:MM`. */
-export function formatProcessIssueTime(
-  value: string | null | undefined,
-): string | null {
-  const raw = (value ?? "").trim();
-  if (!raw) return null;
-  const match = /^(\d{2}):(\d{2})/.exec(raw);
-  return match ? `${match[1]}:${match[2]}` : raw;
-}
-
-/** Combina data + hora do snapshot (ex.: `12/03/2026 · 07:30`). */
-export function formatProcessIssueSchedule(
-  date: string | null | undefined,
-  time: string | null | undefined,
-): string | null {
-  const day = formatProcessIssueDate(date);
-  const hour = formatProcessIssueTime(time);
-  if (day && hour) return `${day} · ${hour}`;
-  return day ?? hour;
 }

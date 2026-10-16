@@ -70,7 +70,6 @@ def _payload(**overrides):
             "productCode": "10045678",
             "paProductCode": "90264238",
             "toolSnapshot": "",
-            "plannedQty": 100,
         },
         "materialsSnapshotAvailable": True,
         "materials": [
