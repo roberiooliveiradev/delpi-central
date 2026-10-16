@@ -49,7 +49,7 @@ Este roadmap define a convergência **arquitetural** — reutilizar os *padrões
 | MCP provisioning externo (`mcp-tv-dashboard` + go-live) | **PROVEN** — invocação VISTA/ChatGPT autenticada observada em 2026-10-16; manifest com 12 tools e `get_playlist_history` live |
 | Proposal store single-replica | **ACCEPT_WITH_RESIDUAL** (ADR item 10) |
 | `CHATGPT_APP_IMAGE_DELIVERY` | **FAIL_OBSERVED** — wire `ImageContent` PROVEN; host não entrega bloco de imagem ao modelo |
-| Display-format typed coverage | **PARTIAL** — `DisplayFormatHintsService` PROVEN; cobertura tipada por visual incompleta |
+| Display-format typed coverage | **PARTIAL / DIAGNOSTIC CLOSED (§47)** — formatter/spec/editor semantics PROVEN; `set_display_format` + compact read + NL routing ainda cobrem apenas text bindings end-to-end |
 | `visual_verification` directive | **PARTIAL** — slot de projeção existe; bloco JSON removido intencionalmente (emite `{}`) |
 
 ---
@@ -2373,3 +2373,200 @@ VERDICT = ACCEPT
 ```
 
 Documentation drift from pre-go-live `PENDING` markers is closed in the capability matrix and OpenAI Plugin/MCP runbook by the same documentation change.
+
+## 47. DISPLAY FORMAT COVERAGE V2 — DIAGNOSTIC (2026-10-16)
+
+**MODE:** diagnostic only · zero runtime code · zero new Action/MCP.  
+**BASE HEAD:** `5997604835a030a6873840178a31533d77bcf4b3`.
+
+### 47.1 Symptom / reproduction
+
+Authenticated VISTA runtime reproduced the user-visible routing gap on an existing
+`table_view` (`blk_9ff679cb29`) in playlist
+`f31cf68f-d431-4469-9613-7355d2d88bcd`:
+
+```text
+"Formate esta tabela como moeda em reais"
+→ status=ready
+→ matchedCapabilityKeys=["add_table_view"]
+→ op=upsert_block
+→ NEW table_view id
+```
+
+The selected existing visual was not formatted. A formatting request can therefore
+route into visual creation instead of an ALTER_EXISTING typed format mutation.
+
+### 47.2 Root cause
+
+The display-format engine itself is not missing.
+
+```text
+DisplayFormatService
+→ canonical DisplayFormatSpec + presets
+→ materializes text / KPI / table / chart / canvas display strings
+→ PROVEN
+
+Editor displayFormatSelection
+→ chartValue / chartCategory / kpi / table / tableColumn /
+  canvasCell / textProjection / textDataRef
+→ persists canonical spec + legacy mirror
+→ PROVEN
+```
+
+The asymmetric agent contract is the root cause:
+
+1. `set_display_format.target.owner` currently allows only
+   `contentRunDataRef|textProjection`.
+2. `PresentationPatchService._op_set_display_format` implements only those two
+   owners and rejects every other owner.
+3. `blockIndex.items[].formatBindings` projects only text run/projection bindings;
+   chart/KPI/table/canvas persisted format owners are invisible in compact VISTA READ.
+4. The `set_display_format` capability requires placeholders
+   `formatTargetOwner` + `formatField`, while the current suggestion placeholder
+   projection does not resolve a visual format target from the selected persisted
+   object. Creation capabilities can still consume `formatHintJson`, so a request
+   such as “format this table” can score/create a new visual instead.
+
+**ROOT_CAUSE = PROVEN:** formatter/renderer/editor owners exist; the incomplete
+boundary is **compact READ → semantic target resolution → existing typed
+PresentationMutation op**.
+
+### 47.3 Owner / equivalent / reuse
+
+```text
+CANONICAL_FORMAT_OWNER =
+tv-dashboard-api DisplayFormatService
+
+CANONICAL_WRITE_BOUNDARY =
+PresentationMutation / PresentationPatchService
+
+EDITOR =
+authoring consumer/reference; NOT domain authority
+
+EXISTING_EQUIVALENT:
+  canonical spec/preset/formatter = YES
+  non-text persisted owner semantics in editor = YES
+  backend materialization of non-text formats = YES
+  VISTA typed non-text selector/write = NO
+  VISTA compact non-text format read = NO
+  safe NL target resolution for selected visual = NO
+
+REUSE_DECISION = EXTEND
+NEW FORMATTER = NO
+NEW MUTATION OP = NO
+NEW GPT ACTION = NO
+NEW MCP TOOL = NO
+```
+
+### 47.4 Proven owner matrix
+
+| Semantic target | Persisted canonical slot | Backend materialization | Editor authoring | VISTA typed write/read |
+|---|---|---|---|---|
+| text run | `contentRuns[].dataRef.displayFormat` | PROVEN | PROVEN | PROVEN |
+| text projection | `textProjection.displayFormat` | PROVEN | PROVEN | PROVEN |
+| chart values | `chartOptions.displayValueFormat` | PROVEN | PROVEN | MISSING |
+| chart categories | `chartOptions.displayCategoryFormat` | PROVEN | PROVEN | MISSING |
+| KPI default | `kpiOptions.displayValueFormat` | PROVEN | PROVEN | MISSING |
+| KPI metric | `kpiProjection.metrics[].displayFormat` | PROVEN | PROVEN | MISSING |
+| table default | `tableOptions.displayValueFormat` | PROVEN | PROVEN | MISSING |
+| table column | `tableProjection.columns[].displayFormat` | PROVEN | PROVEN | MISSING |
+| canvas cell/dataRef | `cells[][].displayFormat` / `cells[][].dataRef.displayFormat` | PROVEN | PROVEN | MISSING |
+
+Native-screen formatting remains outside this contract until a canonical
+`DisplayFormatSpec` owner is proven.
+
+### 47.5 Minimal generalized fix
+
+Do not create a parallel formatting path. Extend the existing bridge:
+
+```text
+persisted block
+→ compact formatBindings
+→ selected/explicit semantic format target
+→ set_display_format
+→ PresentationPatchService
+→ DisplayFormatService
+→ canonical enrich display*
+→ authoritative read-back / VERIFY
+```
+
+Required implementation responsibilities:
+
+1. **Typed write extension** — expand `set_display_format` owner-specific selectors
+   for existing canonical slots; validation must be fail-closed and preserve unrelated
+   block state.
+2. **Compact read extension** — project non-text `formatBindings` from persisted
+   config without resolved datasets/full nativeConfig.
+3. **NL routing correction** — formatting intent against an existing selected visual
+   must prefer `set_display_format`; it must never create a sibling visual merely
+   because the message contains “tabela”, “KPI” or “gráfico”.
+4. **VERIFY** — keep the existing persisted-spec + materialized-display postcondition;
+   revision-only verification remains insufficient.
+5. **Parity** — same existing PREPARE/COMMIT envelope; zero new transport surface.
+
+### 47.6 Delivery waves / constraints
+
+**V2A — READY_FOR_EXECUTION:** block-level visual defaults with no subpart-selector
+dependency:
+
+- chart value format;
+- chart category format when category intent is explicit;
+- KPI default value format;
+- table default value format;
+- existing text owners unchanged.
+
+**V2B — TO_INVENTORY before implementation:** subpart targets whose safe
+addressability/budget must be explicit:
+
+- KPI metric by field;
+- table column by key/field;
+- canvas cell/dataRef by row+column / bound field.
+
+The editor already has these local selection semantics, but VISTA must not invent
+subpart coordinates/fields. The compact agent contract must prove selectors and
+Actions response budget before V2B.
+
+### 47.7 Contract / security / parity
+
+```text
+CONTRACT IMPACT =
+ADDITIVE (owner-specific typed selectors + compact read rows)
++
+BEHAVIORAL (NL format requests alter selected existing visual instead of create)
+
+AUTHZ IMPACT = NONE
+MUTATION AUTHORITY = UNCHANGED
+PRESENTATION PARITY = use same backend materialization / canonical stage
+NEW TOOL/ACTION = 0
+P8 = BLOCKED
+P8_EVIDENCE = INSUFFICIENT
+```
+
+### 47.8 Required regression set
+
+Implementation must prove:
+
+- selected table + “format as currency” → one `set_display_format`, same block id;
+- selected KPI + percent/currency → same block id;
+- selected chart value + percent/currency → same block id;
+- explicit chart-category date format → category owner, not value owner;
+- no selection / ambiguous subtarget → clarification, never visual creation;
+- text binding cases remain unchanged;
+- property preservation (binding, geometry, typography, projections);
+- invalid/unsupported owner fails closed;
+- compact-read budget for visual `formatBindings`;
+- PREPARE→COMMIT→READ→enrich exact materialization;
+- editor ≡ preview ≡ TV;
+- CREATE requests still create; FORMAT requests never become CREATE by noun collision.
+
+### 47.9 Decision
+
+```text
+DISPLAY_FORMAT_COVERAGE_V2 = READY_WITH_CONSTRAINTS
+V2A = READY_FOR_EXECUTION
+V2B = TO_INVENTORY
+EXISTING_EQUIVALENT = YES (engine/editor semantics) + NO (agent typed selectors)
+REUSE_DECISION = EXTEND
+VERDICT = ACCEPT
+NEXT_BOUNDED_STEP = V2A implementation on existing set_display_format
+```

@@ -191,7 +191,7 @@ Owner-local services (not new GPT Actions):
 | Playlist clarification / curation | `object_resolution` + `playlist_curation` | **PROVEN** directives |
 | Branch / SI goals | `branch_scope` + `si_goals` | **PROVEN** directives |
 | Media | `assetId` only; `mediaInventory.assets[]` + brand logos via `ensure_brand_logo_on_slide` | **PROVEN** inventory/seed; generic upload **TARGET** |
-| MCP VISTA backend | `/mcp` + `interface/mcp` adapter → shared dispatch | **PROVEN** (incl. PREPARE `prepare_change` + ACT `commit_proposal`); go-live externo **PENDING** |
+| MCP VISTA backend | `/mcp` + `interface/mcp` adapter → shared dispatch | **PROVEN LIVE** (12 tools; authenticated VISTA/ChatGPT runtime verified 2026-10-16, incl. `get_playlist_history`) |
 | DÉLIA TV adapter | `mcp_delia` | **TARGET** (same PresentationMutation; no code in this HEAD) |
 | Eval corpus | `docs/gpt-actions/vista-ready-slide-eval-corpus.md` + `tests/fixtures/vista_ready_slide_corpus.json` | **PROVEN** gate (`test_vista_ready_slide_corpus_gate.py`) |
 
@@ -308,6 +308,4 @@ also stores canonical specs in `kpiOptions.displayValueFormat`,
 `tableProjection.columns[].displayFormat`, and canvas table cells/dataRefs.
 These owner-specific slots are **not yet addressable** through
 `set_display_format`; legacy `valueFormat`/`format` fields stay readable.
-Consequently, generic display-format mutation is **PARTIAL**, and an
-authenticated READ→PREPARE→COMMIT→READ→enrich regression is still required
-before marking the end-to-end capability PROVEN.
+Consequently, generic display-format mutation remains **PARTIAL**. The text-binding bridge is PROVEN; the §47 diagnostic proves that visual owners are already canonical in the formatter/editor but are missing from VISTA compact READ + typed `set_display_format` selectors + NL target routing. `REUSE_DECISION=EXTEND`; V2A is ready for execution without a new Action/MCP tool.
