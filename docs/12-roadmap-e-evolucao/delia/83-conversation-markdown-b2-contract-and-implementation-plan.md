@@ -219,8 +219,8 @@ A fonte pode fornecer caracteres Markdown literais. Sem formato explicitamente a
 | Slice | Owner principal | Entregável de entrada | Ação bounded | Saída/gate |
 |---|---|---|---|---|
 | B2-G0 — Architecture/Traceability | Coordination + Product/Security | D1–D12 + 82/83 + HEAD + 25 | `CP-333` formalizado, bounded C3 autorizado **condicionalmente**; conferir drift em HEAD | `DOCUMENTED / CONDITIONAL`; não libera runtime sem G1/G2 |
-| B2-G1 — Contract Decision | DÉLIA API owner + Frontend + Security | G0 aprovado | Escolher format signal/version, producer, fallbacks, bounds, wire schema e compatibilidade | Contract/ADR congelado |
-| B2-G2 — Reuse/Security Feasibility | plugin-ui + DÉLIA frontend + Security | G1 e código atual | Prova de reuse/extend, auditoria sanitizer e política por tipo | Reuse Decision + threat model + testes RED |
+| B2-G1 — Contract Decision | DÉLIA API owner + Frontend + Security | G0 registrado, D2 escolheu `presentation.v2` | Especificar discriminator/blocks e producer DÉLIA, fallback/copy/links/limites, OpenAPI, old/new compatibility; **não rediscutir v1/v2 sem drift formal** | Contract/ADR reviewed/frozen (PENDING) |
+| B2-G2 — Reuse/Security Feasibility | plugin-ui + DÉLIA frontend + Security | G0 registrado; avançar inventário paralelo a G1, aprovação final depois do contract freeze | Prova de reuse/extend, auditoria sanitizer, links e política positiva por tipo | Reuse Decision + threat model + testes adversariais RED (PENDING) |
 | B2-I1 — Backend projection bounded | DÉLIA API owner | G1/G2 aprovados | Menor diff produtor/serializer de formato; sem prosa factual livre, sem novas capabilities | Testes de contrato, legacy/fallback, OpenAPI, no authority drift |
 | B2-I2 — Shared renderer bounded | plugin-ui owner | G2 aprovado | Reuse/extend só dos primitives necessários, sem Mermaid/imagem/HTML | Testes de sanitizer/nós/links/DoS/a11y |
 | B2-I3 — DÉLIA integration | DÉLIA MFE | I1/I2 aprovados | Adapter parse-only e slot de content no `DeliaAssistantMessage`; manter Evidence/Activity/Copy | Unit/integration/build/federation |
@@ -383,7 +383,7 @@ PHASE_PROGRESSION = NONE
 TESTS = TEST_NOT_RUN
 BROWSER_QA = TEST_NOT_RUN
 DEPLOY = NOT_PERFORMED
-NEXT = ARCHITECTURE_COORDINATION_B2_G0
+NEXT_BOUNDED = B2_G1_PRESENTATION_V2_CONTRACT_AND_G2_SECURITY_REUSE_PROOF
 ```
 
 Este documento é planejamento completo para decisão e execução futura, mas **não** afirma que G0/G1/G2 estejam aprovados. Não fechar gap por inferência. O ledger só deve registrar outcome real após review/aceite, preservando a sequência de autoridade do doc 16.
