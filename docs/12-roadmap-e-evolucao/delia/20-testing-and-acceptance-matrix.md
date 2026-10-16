@@ -1078,6 +1078,30 @@ C2-T3 / C2-PREFINAL-R1 / C2-FINAL: `LOCKED` em `25` para CP-001–CP-012, CP-025
 
 ## 5. Gate C3 — Intelligence + Capability Foundations
 
+### C3-B2-MARKDOWN — CP-333 / presentation.v2 (conditional authorization, no runtime diff)
+
+**Product Master decision:** D1–D12 documented in [83](./83-conversation-markdown-b2-contract-and-implementation-plan.md); formal CP [25](./25-requirements-traceability.md#5-c3--intelligence-core--extended-foundations) = `CP-333` (`PLANNED`, **not PASS**). Scope is Markdown **textual** in DÉLIA responses, distinct from ledger `C3-STAGE-02-B2` (execution/write governance). Documentation and conditional authorization **do not** advance C3 and do not grant permission to implement before G1+G2+G3.
+
+| Gate | Required evidence | Status |
+|---|---|---|
+| `C3-MD-B2-G0` | `CP-333` mapped, owner/fase C3 bounded, D1–D12 Product Master decision, no C/D/E inference | `PLANNED / CP_MAPPED` |
+| `C3-MD-B2-G1` | `presentation.v2` OpenAPI/JSON Schema, wire discriminator plain vs Markdown, request/response/errors, producer DÉLIA, bounds, unknown version, safe fallback and v1↔v2 compatibility; `operationId` stable as applicable | `TEST_NOT_RUN` |
+| `C3-MD-B2-G2` | Reuse Gate `EXISTING_EQUIVALENT` + `REUSE_DECISION` per component, threat model, strict positive allowlist; no unsafe `dangerouslySetInnerHTML`, images, Mermaid, HTML, tables, scripts or providers owning renderer | `TEST_NOT_RUN` |
+| `C3-MD-B2-01` | Plain text v1/v2 and hostile literal `**`/`#`/`<b>` never heuristically parsed; semantic Markdown only when explicit approved v2; no invented facts/codes/units/identifiers | `TEST_NOT_RUN` |
+| `C3-MD-B2-02` | Semantics: headings below conversation hierarchy, paragraph, bold/italic, nested `ul/ol/li`, blockquote, hr, inert inline/fenced code; no tables/charts/HTML/widgets | `TEST_NOT_RUN` |
+| `C3-MD-B2-03` | Links **internal** only via authorized Portal route/entity contracts and live Core/Domain AuthZ, **external** verified URL in new tab with `noopener noreferrer`; rejects `javascript:`, `data:`, `blob:`, `attachment:`, unsafe relatives/hashes, tracking, invented refs | `TEST_NOT_RUN` |
+| `C3-MD-B2-04` | Copy = legible plain text, preserves exact codes, numbers, units, meaningful order/breaks, code as inert text; clipboard denied/unavailable does not claim success | `TEST_NOT_RUN` |
+| `C3-MD-B2-05` | Parse/render failure on already admitted content safely displays inert text; invalid/hostile/schema-untrusted payload yields neutral error, no leak/HTML, no crash | `TEST_NOT_RUN` |
+| `C3-MD-B2-06` | EvidenceDetails, source/provenance/limitations/status/ActivityViewer/confirmation stay intact and separated from inline URLs; links and Markdown do not elevate FACT/AuthZ or enable ACT | `TEST_NOT_RUN` |
+| `C3-MD-B2-07` | Adaptive formatting for greeting/list/long answer/technical text and user brevity/detail preferences; does not add factual prose from model nor alter SourceRef/authoritative content; fail-closed fallback | `TEST_NOT_RUN` |
+| `C3-MD-B2-08` | Malicious Markdown/HTML/XSS, deep nesting, URL entity tricks, payload bounds, CSP and performance; zero remote fetch/auto-open, deterministic degradation and no credentials in logs | `TEST_NOT_RUN` |
+| `C3-MD-B2-09` | Full-page + **actual Portal Companion Dock**, light/dark, 320px/420px, zoom200, keyboard/focus, SR/live region, reduced motion, copy, evidence, URLs, mixed turn types | `TEST_NOT_RUN` |
+| `C3-MD-B2-10` | Mixed backend/client v1/v2 matrix, deployment ordering, rollback and long-open tab behavior; no assumption that absence of persisted messages removes compatibility | `TEST_NOT_RUN` |
+| `C3-MD-B2-11` | Unit, contract, adversarial, integration, real browser QA, `delia-api`/plugin-ui/MFE tests, typecheck, build, federation, CI analysis; exact SHA/config and independent reviewer verdict | `TEST_NOT_RUN` |
+
+**Acceptance rule:** G1/G2 require reviewed evidence **before any runtime diff**; G3 requires approved bounded implementation brief with CP-333/RQ/AC and current HEAD. Only then I1 (DÉLIA producer+API), I2 (plugin-ui reuse/extension **if necessary**) and I3 (MFE render-only adapter), then G4 independent review. `HTTP_200 != BUSINESS_OUTCOME`; an ID/quantity/unit from Domain evidence must remain exact. Tests not run are **not PASS**. Traceability gap for typed tables/charts/metrics persists.
+
+
 ### C3-T1 — Evidence / epistemic static conformance (Architecture Review accepted; expectations only)
 
 ```text
