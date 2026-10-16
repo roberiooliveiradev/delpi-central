@@ -1,12 +1,12 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PLAN_ONLY / COORDINATION_REVIEW_REQUIRED / IMPLEMENTATION_NOT_AUTHORIZED`  
+**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_PENDING / RUNTIME_NOT_AUTHORIZED`  
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
 **Produto:** DÉLIA standalone; não é Minha DELPI Chat, nem compartilha seu runtime/tabelas/agents/services.  
 **Snapshot de descoberta:** branch `main`, HEAD reancorado em `b0b4f8c028f706d2a4bd47e70690ea07badea089`, com rechecagem do HEAD antes da publicação. O HEAD de implementação deve ser revalidado.  
-**Natureza:** planejamento contratual, de segurança, UX, implementação e testes; este documento não altera código, contrato, requisitos CP, ledger de execução, fase ou permissão de execução.
+**Natureza:** planejamento contratual, de segurança, UX, implementação e testes; as decisões D7–D12 vinculam o escopo de produto e D12 autoriza somente a trilha bounded **condicionada** a gates técnicos. `CP-333` passa a constar da matriz 25; nenhum código, schema de runtime, deploy ou fase é alterado por este documento.
 
 ## 0. Resumo executivo e decisão proposta
 
@@ -14,7 +14,7 @@ Entregar B2 como **renderização opcional e explicitamente contratada de Markdo
 
 **Proposta de sequência:** Coordenação resolve rastreabilidade/fase/owner → contrato de origem+formato e compatibilidade → inventário e política de renderização segura → tests RED → menor implementação no owner correto → validação integrada e browser QA → review e aceite independentes.
 
-**Gate atual:** `TRACEABILITY_GAP=OPEN` (spec 82 seção 11.1); `B2_IMPLEMENTATION_AUTHORIZED=NO`. Este plano **não** resolve esses gates sozinho e não é prompt de implementação para o Devin. O aceite de B1 tipográfico não libera B2, nem o CP-001 é suficiente, isoladamente, para um novo contrato Markdown.
+**Gate após D12:** rastreabilidade **Markdown B2** formalizada em `CP-333` (matriz 25) e autorização de **escopo bounded, condicional** registrada pelo Product Master. Contrato `presentation.v2` (G1), reuse e segurança (G2), compatibilidade, testes e aceite permanecem por provar. **Nenhum diff de runtime é autorizado antes de G1+G2 completos e brief G3 formalizado**. `TRACEABILITY_GAP` para tabelas/gráficos C/D/E segue aberto. B1 e `CP-001` não autorizam este contrato.
 
 ## 0.1 Decisões vinculantes do Product Master (2026-10-16)
 
@@ -28,12 +28,19 @@ As decisões a seguir foram expressamente aprovadas pelo Product Master no conte
 | `B2-PD-04` | **Markdown textual completo e controlado** | `APPROVED_PRODUCT_DIRECTION` | Permitir headings subordinados, parágrafos, negrito, itálico, listas, citações, divisores, código inline/fenced e links seguros. Permanecem OFF: tabelas estruturadas/GFM tables, gráficos, métricas, imagens, Mermaid, HTML arbitrário, embeds e widgets |
 | `B2-PD-05` | **Formatação automática, contextual, proporcional e adaptável ao pedido do usuário** | `APPROVED_PRODUCT_DIRECTION` | DÉLIA decide apresentação no seu boundary com base no objetivo e no conteúdo *admitido*: saudação simples → texto natural; itens/etapas → listas quando útil; explicações longas → seções moderadas; código técnico → bloco inerte apenas quando realmente pertinente. Usuário pode solicitar brevidade/detalhamento, sem mudar fatos, autoridade nem contratos |
 | `B2-PD-06` | **Links internos e externos verificados**, ambos no escopo B2 | `APPROVED_PRODUCT_DIRECTION` | Links internos apenas para rotas/entidades legitimamente publicadas pelo ecossistema DELPI; externos apenas para URL comprovada, validada e permitida por contrato/policy. Nenhum endereço inventado pelo modelo; link não autorizado = não clicável. Modo de abertura e regras específicas de navegação ainda precisam ser fechados |
+| `B2-PD-07` | **Navegação: links internos no Portal, externos em nova aba** | `APPROVED_PRODUCT_DIRECTION` | Rota/entidade interna usa contrato legítimo de navegação do Portal e live AuthZ/Domain; link externo verificado usa nova aba segura (`noopener noreferrer`), sem auto-open. Nenhuma URL arbitrária abre router ou concede autorização |
+| `B2-PD-08` | **Copiar texto legível** | `APPROVED_PRODUCT_DIRECTION` | Botão Copiar gera texto plano compreensível sem sintaxe decorativa Markdown; preservar códigos, valores, unidades, ordem significativa, blocos de código como texto e quebras úteis. Evitar perda/corrupção em transformação, sem falso feedback de sucesso |
+| `B2-PD-09` | **Fallback seguro diferenciado** | `APPROVED_PRODUCT_DIRECTION` | Erro apenas de parse/formatação com conteúdo já validado → texto React inerte; payload inválido/inseguro/não admissível → erro neutro, sem exibir ou executar conteúdo adversarial. Não aceitar versão/schema desconhecidos como válidos |
+| `B2-PD-10` | **Provenance permanece em `EvidenceDetails`** | `APPROVED_PRODUCT_DIRECTION` | Links legítimos podem aparecer no corpo da resposta sem duplicar ou substituir Evidence/SourceRef, limitations, grounding e seus owners |
+| `B2-PD-11` | **Paridade página completa e Companion Dock** | `APPROVED_PRODUCT_DIRECTION` | Mesmo comportamento/componente responsivo em full-page e dock real, release versionado com compatibilidade transitória; mixed clients e rollback testados, sem presumir persistência de mensagens |
+| `B2-PD-12` | **Formalizar CP específico e autorizar B2 bounded condicionado** | `APPROVED_PRODUCT_AUTHORIZATION_CONDITIONAL` | Requisito `CP-333` registrado na matriz 25. Pode executar **planejamento final G1 e G2**; implementação I1/I2/I3 somente após contract/security/reuse/compatibility gates provados, brief G3 no HEAD e testes negativos definidos; D12 não é aceite nem liberação de fase |
 
-**Ainda não decidido (rodada consolidada após `B2-PD-06`):** abertura/navegação de links internos e externos; cópia de texto versus Markdown; fallback diante de variante desconhecida/malformada; separação entre links no texto e `EvidenceDetails`; rollout/compatibilidade na experiência; formalização CP e autorização bounded. Detalhes concretos de schema/limites, sanitização, renderer e implementação continuam sujeitos aos gates dos owners. `B2-PD-07+` ainda não foram aprovadas.
+
+**Rodada de decisões do Product Master concluída:** `B2-PD-01…12` aprovadas. **Pendências técnicas, não novas decisões de produto automáticas:** schema/erro/discriminator/limites de `presentation.v2`, conjunto de URLs e mecanismo de navegação autorizada, algoritmo determinístico de transformação para texto legível, política positiva de elementos/atributos, compatibilidade v1↔v2, reuse gate e provas de testes/QA. Se as evidências invalidarem alguma escolha, STOP e nova decisão do Product Master; não redesenhar silenciosamente.
 
 **Separação de homônimos:** `B2` neste documento = **Markdown B2 da spec 82**, não `C3-STAGE-02-B2` registrado no ledger para governança de execução/ACT. Status e autorizações de uma trilha **não** se transferem à outra. Responder às decisões futuras no mesmo documento assim que aprovadas.
 
-**Gates que permanecem abertos:** `TRACEABILITY_GAP=OPEN`, `CP_MAPPING=PENDING`, `PRESENTATION_V2_SCHEMA=TO_DESIGN`, `SECURITY_REUSE_GATE=PENDING`, `B2_IMPLEMENTATION_AUTHORIZED=NO`. Produto aprovado **não** é contrato implementado nem aceite de fase. O plano 83 prevalece como detalhamento B2 sob a autoridade superior 82/16/25.
+**Estado de gates:** `CP_MAPPING=CP-333_RECORDED`; `BOUNDED_SCOPE_AUTHORIZED_CONDITIONAL=YES`; `G1_CONTRACT=PENDING`; `G2_SECURITY_REUSE=PENDING`; `G3_IMPLEMENTATION_BRIEF=PENDING`; `RUNTIME_IMPLEMENTATION=BLOCKED_UNTIL_GATES`; `C_D_E_TRACEABILITY_GAP=OPEN`. Produto aprovado **não** é contrato implementado, runtime PASS ou fase concluída. Este plano é subordinado às authorities 16/25 e à spec 82.
 
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
@@ -96,7 +103,7 @@ O planner nunca decide renderizadores/URLs por nomes de provider, endpoints ou f
 
 ## 5. Rastreabilidade: gap explícito, sem CP inventado
 
-**Estado no HEAD inventariado:** `TRACEABILITY_GAP=OPEN`. A matriz 25 possui CPs transversais relacionados, porém **nenhum CP comprovado que especifique Markdown seguro em turns da DÉLIA, wire format explícito, compatibilidade e renderer**. Os itens a seguir são **dependências**, não autorização substitutiva:
+**Baseline anterior à decisão D12:** `TRACEABILITY_GAP=OPEN`, sem CP próprio. **Decisão factual atual:** Product Master aprovou D12 e a matriz 25 recebeu `CP-333` para Markdown textual em `presentation.v2`. A lacuna de CP para **B2 textual foi mapeada**; o gap separado de tabelas/métricas/gráficos **permanece aberto**. CPs abaixo continuam dependências transversais, não substituem `CP-333`:
 
 | CP | Relação | Limite |
 |---|---|---|
@@ -108,9 +115,9 @@ O planner nunca decide renderizadores/URLs por nomes de provider, endpoints ou f
 | CP-196 | External content untrusted | Security invariant sem contrato B2 |
 | CP-270 | Personalização de conteúdo/formato | Preferência não autoriza conteúdo |
 
-**Decision request para Architecture / Coordination:** (a) provar CP existente suficiente com texto/gate/evidence; ou (b) aprovar novo requisito CP na matriz 25, com owner/fase/AC; ou (c) declarar `OUT_OF_SCOPE_WITH_DECISION` para a fase. Registro de candidato local `B2-CP-CANDIDATE` é **identificador de planejamento, não ID CP válido**. Atualização de `25` precisa de decisão formal, não de inferência deste documento.
+**Decisão concluída:** `CP_MAPPING_DECISION=NEW_CP_333`, por decisão expressa D12 do Product Master, registrado no `25` (owner DÉLIA API/Application + MFE/Portal + plugin-ui + Security). `CP-333` está `PLANNED`, não `PASS` e nem `IN_PROGRESS` por documentação. Os requisitos B2-RQ continuam IDs locais até receberem vínculo explícito e critérios de aceite em task G3. Não atribuir `CP-333` a C/D/E.
 
-**Gate de desbloqueio:** `CP_MAPPING_APPROVED=YES` + `PHASE_BOUNDED_TASK_AUTHORIZED=YES` + `CONTRACT_DECISION_APPROVED=YES` + `SECURITY_REUSE_GATE_APPROVED=YES`; caso contrário, `STOP` antes de qualquer diff de B2. A autorização B1 sob CP-001 foi bounded e não se propaga para B2.
+**Gate de desbloqueio para diff de runtime:** `CP_MAPPING=CP-333_RECORDED` e `BOUNDED_SCOPE_AUTHORIZED_CONDITIONAL=YES` são satisfeitos por D12. **AINDA EXIGIDOS:** `G1_CONTRACT_DECISION=APPROVED` (OpenAPI + compatibilidade + producer + erros + limites + copy + navigation) e `G2_SECURITY_REUSE=APPROVED` (allowlist links/nós, threat model e equivalence decision), seguidos de `G3_TASK_BRIEF_APPROVED` para I1/I2/I3 no HEAD real. Ausência → STOP; não tratar D12 como autorização automática de codificação.
 
 ## 6. Contract-first — pontos de decisão obrigatórios
 
@@ -158,6 +165,15 @@ A fonte pode fornecer caracteres Markdown literais. Sem formato explicitamente a
 - Turnos de usuário, owner hints, códigos e campos técnicos não ganham Markdown sem uma decisão tipada própria.
 - Não criar armazenamento, memory, embeddings, histórico ou estado retido no browser.
 
+### 6.3.1 Aplicação das decisões D7–D11 no contrato (normativo de produto, implementação pendente)
+
+- **D7 — navigation:** links internos aceitos representam route/entity contracts legítimos e são tratados pela navegação governada do Portal (não `window.location` ou URL interna construída pelo modelo); Core/Domain mantêm AuthZ. Links externos só clicáveis após validação/review de origem e URL, abrem em nova aba com `rel="noopener noreferrer"`; sem auto-fetch, auto-open, `javascript:`, `data:`, `blob:`, `attachment:` ou relative/hash que escape do host.
+- **D8 — clipboard:** contrato de cópia de texto plano legível preserva informação factual (IDs, quantidades, unidades, sinais, lista/ordem, newline e conteúdo de blocos de código). Transformação deve ser determinística e testada; se não puder preservar, falha honestamente, sem copiar valor divergente.
+- **D9 — fallback:** somente erro de render/parser com conteúdo previamente admitido permite fallback para texto inerte. Payload inválido, malicioso ou incompatível não deve ser apresentado disfarçado de fallback: erro neutro, sem execução ou log de raw content. Não reclassificar provenance ou status.
+- **D10 — Evidence:** links no Markdown não substituem `EvidenceDetails`; este mantém Source/Evidence/provenance/limitations. Links de fonte exigem permissão de divulgação, não se tornam evidência por aparência.
+- **D11 — surfaces/rollout:** mesma composição conversacional no MFE usada em full-page e dock real, com testes light/dark/320px/420px/zoom 200%/keyboard/SR e compatibilidade transitória `v1↔v2` em deploy misto. Sem persistência de histórico corrente, não há migração de mensagens, mas sessão/aba antiga e fallback continuam relevantes.
+- **G1/G2 obrigatórios:** os detalhes do envelope `v2`, allowlists concretas, URLs, gateway/Portal contracts, budget e comportamento de versões precisam ser provados/revisados, não inventados por este registro.
+
 ### 6.4 Contract checklist de congelamento
 
 | Campo | Evidência exigida antes do código |
@@ -198,11 +214,11 @@ A fonte pode fornecer caracteres Markdown literais. Sem formato explicitamente a
 
 **Risco descoberto na reutilização:** o sanitizador genérico existente aceita `attachment:`, `blob:` e links relativos por razões de outros consumers, e o `MarkdownDocumentView` oferece Mermaid e HTML derivado por `dangerouslySetInnerHTML`. Essas superfícies **não** são automaticamente seguras para resultados de IA na DÉLIA. Exigir policy conversacional por allowlist positiva de elementos/atributos/URL, testes cross-browser, threat model e Security Review. Se o sanitizer entrar em fallback de parsing, não tratar regexp stripping como prova de proteção completa; falhar fechado ou retornar texto inerte. Nunca invocar `dangerouslySetInnerHTML` com HTML direto de modelo/MCP/owner.
 
-## 9. Plano bounded de execução (não autorizado ainda)
+## 9. Plano bounded de execução (D12 aprovou escopo condicional; diffs somente após gates)
 
 | Slice | Owner principal | Entregável de entrada | Ação bounded | Saída/gate |
 |---|---|---|---|---|
-| B2-G0 — Architecture/Traceability | Coordination + Product/Security | 82/83 + HEAD + 25 | Decidir CP, fase, RQ/AC, owner e autorização; resolver drift | Decisão canônica escrita ou STOP |
+| B2-G0 — Architecture/Traceability | Coordination + Product/Security | D1–D12 + 82/83 + HEAD + 25 | `CP-333` formalizado, bounded C3 autorizado **condicionalmente**; conferir drift em HEAD | `DOCUMENTED / CONDITIONAL`; não libera runtime sem G1/G2 |
 | B2-G1 — Contract Decision | DÉLIA API owner + Frontend + Security | G0 aprovado | Escolher format signal/version, producer, fallbacks, bounds, wire schema e compatibilidade | Contract/ADR congelado |
 | B2-G2 — Reuse/Security Feasibility | plugin-ui + DÉLIA frontend + Security | G1 e código atual | Prova de reuse/extend, auditoria sanitizer e política por tipo | Reuse Decision + threat model + testes RED |
 | B2-I1 — Backend projection bounded | DÉLIA API owner | G1/G2 aprovados | Menor diff produtor/serializer de formato; sem prosa factual livre, sem novas capabilities | Testes de contrato, legacy/fallback, OpenAPI, no authority drift |
@@ -237,6 +253,11 @@ Estes itens servem para elaborar o brief de implementação depois de G0 e **nã
 | B2-RQ16 | CRITICAL | SHA/config, security eval, contract tests e outcome para aceite |
 | B2-RQ17 | HIGH | Escopo B2 sem gráficos/tabelas/Mermaid/remote media |
 | B2-RQ18 | HIGH | Rollout/rollback sem mudar legacy turn e sem client crash |
+| B2-RQ21 | CRITICAL | Links internos por contrato de Portal e externos verificados em nova aba; sem URL inventada |
+| B2-RQ22 | HIGH | Clipboard texto legível preserva IDs/unidades/ordem/quebras e dá feedback verdadeiro |
+| B2-RQ23 | CRITICAL | Parse seguro → fallback literal; payload inválido/inseguro → erro neutro sem leak |
+| B2-RQ24 | HIGH | EvidenceDetails preservado e independente de links inline |
+| B2-RQ25 | HIGH | Paridade full-page/dock e mixed-version rollout com safe rollback |
 | B2-RQ19 | HIGH | Escolha automática e proporcional de Markdown a partir de dados admitidos, sem overformatting |
 | B2-RQ20 | CRITICAL | Pedidos de estilo do usuário não alteram facts/IDs/units/limitações/Policy e não geram escrita ou permissão |
 
@@ -268,6 +289,12 @@ Estes itens servem para elaborar o brief de implementação depois de G0 e **nã
 | B2-AC22 | Usuário solicita "responda em uma frase", "organize em tópicos" ou "explique em detalhes" | Formatação se adapta sem perder fatos, valores, códigos, provenance ou limitações |
 | B2-AC23 | Texto contém caracteres Markdown literais mas formato explícito é plain_text | Nenhuma inferência de Markdown nem parse indevido pelo frontend |
 | B2-AC24 | Conteúdo não justifica heading/lista ou traz comandos técnicos não admitidos | Não fabricar estrutura ou instruções operacionais; fallback inerte mantém conteúdo útil |
+| B2-AC25 | Link interno autorizado, não autorizado, rota inventada e entidade sem permissão | Navegação somente via Portal contract + AuthZ; bloqueio de construções e vazamentos |
+| B2-AC26 | Link externo verificado, URL desconhecida e protocols adversariais | Nova aba somente se policy aprovar; rel seguro, sem fetch/auto-open; demais são texto inerte |
+| B2-AC27 | Copy de lista/heading/links/code com caracteres especiais e unidades | Texto legível determinístico; sem perda de valor/identificador/newline e sem falso sucesso |
+| B2-AC28 | Parser falha em conteúdo admitido versus payload malicioso/schema inválido | Fallback inerte no primeiro; erro neutro sem raw HTML no segundo |
+| B2-AC29 | Fonte embutida em link Markdown + `EvidenceDetails` com provenance | EvidenceDetails continua autoritativo/visível; link não eleva epistemic class |
+| B2-AC30 | Full-page e dock real com API v1/v2, clientes antigos, rollback, dark/light, zoom/SR | Comportamento equivalente e seguro, sem reload/migração suposta |
 
 Testes unitários, integration, adversariais, smoke autenticado read-only e browser QA real devem ser executados no SHA/config entregue. **Nenhum teste foi executado nesta task documental.** Testes verdes não provam a fidelidade de fatos operacionais sem um caso grounded comparado ao owner. Em produção, validar apenas leituras autorizadas com fonte; `MATERIAL_ACT_CALLS=0` no escopo.
 
@@ -290,9 +317,9 @@ Se for necessária feature flag, inventariar mecanismo legítimo de Core/config 
 
 ## 13. Gates finais e entregáveis de Coordination
 
-**G0 (autorização) — BLOCKING:** registro canônico em `25` ou decisão equivalente rastreável que explicite CP específico, fase e owner; autorização task bounded no `16`/ledger conforme processo vigente. Doc 83 não resolve G0 por si.
+**G0 (rastreabilidade/autorização) — DOCUMENTED / CONDITIONAL:** D12 autorizou o escopo bounded e `CP-333` foi registrado no 25, com owner e fase C3 (slice de apresentação, **não** conclusão de C3). A liberação de runtime permanece condicionada a G1+G2 e brief G3; se o HEAD futuro mudar contrato/owner/fase, STOP para reancoragem.
 
-**G1 (contrato) — BLOCKING:** direção `presentation.v2` **já escolhida pelo Product Master**; falta congelar OpenAPI/schema/ADR, distinguir formato literal versus Markdown, DÉLIA como producer, compatibilidade old/new, fallbacks, URLs/links e limites. Não retomar aditivo v1 sem nova decisão explícita.
+**G1 (contrato) — BLOCKING:** direção `presentation.v2` **escolhida pelo Product Master**; falta congelar OpenAPI/schema/ADR (kind `plain_text` vs `markdown_safe` em representação explícita sem fixar nomes antecipadamente), DÉLIA como producer, compatibilidade old/new, política de erros/fallback D9, copy D8, navegação D7, Evidence D10 e limites. Não retomar aditivo v1 sem nova decisão explícita.
 
 **G2 (segurança/reuse) — BLOCKING:** avaliação de sanitizer/renderer e escopo permitido; componente real e owner legítimos; no raw HTML, no provider tools as authority.
 
@@ -300,18 +327,18 @@ Se for necessária feature flag, inventariar mecanismo legítimo de Core/config 
 
 **G4 (QA/aceite) — BLOCKING:** testes, security e browser QA reais no SHA/config; reviewer independente emite `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
 
-**O que Architecture / Coordination deve devolver:**
-1. `CP_MAPPING_DECISION` e eventual alteração na matriz 25 (com justificativa).
-2. `B2_SCOPE_AUTHORIZED` e owner/fase/eventual restrição de rollout, no HEAD real.
-3. `PRESENTATION_FORMAT_CONTRACT_DECISION` — implementar **a escolha de produto `presentation.v2`** em OpenAPI, com detalhes ainda sujeitos a G1; não escolher silenciosamente v1.
-4. `REUSE_DECISION` final por componente, incluindo sanitizer/links.
-5. `DELEGATED_IMPLEMENTATION_BRIEF_APPROVED` com gates e review owner.
+**Entregas restantes dos owners após D1–D12:**
+1. `G0=CP-333_MAPPED_AND_CONDITIONAL_SCOPE_AUTHORIZED`: verificar que o HEAD não traz nova decisão incompatível; escopo C3 estritamente de apresentação.
+2. `G1=PENDING`: OpenAPI/schema `presentation.v2` com formato explícito, produtor DÉLIA, matriz old/new, copy D8, erro D9, Portal/external URLs D7, Evidence D10, paridade D11 e limites.
+3. `G2=PENDING`: `EXISTING_EQUIVALENT`/`REUSE_DECISION` final por componente, sanitizer positive allowlist, threat model e links seguros.
+4. `G3=PENDING`: brief bounded por slice para Devin, com CP-333, RQ/AC, SHA de implementação, mocks/contratos/negativos/rollback.
+5. `G4=PENDING`: browser QA completo e review independente, sem se autoaceitar.
 
 Não se exige liberação de C/D (tabelas/gráficos) para um B2 estritamente textual.
 
 ## 14. Handoff futuro ao Devin — somente após G0/G1/G2
 
-**Task futura sugerida:** `DELIA-UX-CONVERSATION-MARKDOWN-SAFE-B2-IMPLEMENTATION-01`. Sem autorização neste documento.
+**Task futura sugerida:** `DELIA-UX-CONVERSATION-MARKDOWN-SAFE-B2-IMPLEMENTATION-01`. Escopo de produto bounded autorizado por D12; **não iniciar modificação de runtime** até G1+G2 completos e brief G3 aprovado. Preparar G1/G2 agora é permitido como documentação/review.
 
 Modo: `REANCHOR → GATES → CONTRACT CONFORMANCE → REUSE → RED TESTS → MINIMAL DIFF → UNIT/SECURITY → BROWSER QA → BUILD/FEDERATION → RESIDUAL SEARCH → DOCS/LEDGER FACTUAL → COMMIT/PUSH → VERIFY → REPORT`.
 
@@ -333,13 +360,23 @@ B2_PRODUCER_OWNER = DELIA_APPROVED_BY_PRODUCT_MASTER
 B2_FORMAT_SCOPE = FULL_CONTROLLED_TEXT_MARKDOWN
 B2_AUTOMATIC_FORMATTING_POLICY = PRODUCT_APPROVED_CONTEXTUAL_PROPORTIONAL_ADAPTIVE
 B2_LINK_DESTINATION_POLICY = INTERNAL_AND_VERIFIED_EXTERNAL_PRODUCT_APPROVED
-B2_LINK_NAVIGATION_BEHAVIOR = PENDING_PRODUCT_DECISION_07
+B2_LINK_NAVIGATION_BEHAVIOR = PORTAL_INTERNAL_EXTERNAL_NEW_TAB_APPROVED_D7
+B2_COPY_BEHAVIOR = READABLE_TEXT_PRESERVE_DATA_APPROVED_D8
+B2_FALLBACK_BEHAVIOR = SAFE_INERT_TEXT_OR_NEUTRAL_ERROR_APPROVED_D9
+B2_EVIDENCE_LAYOUT = EVIDENCE_DETAILS_PRESERVED_APPROVED_D10
+B2_SURFACE_ROLLOUT = FULL_PAGE_AND_DOCK_VERSIONED_COMPATIBLE_APPROVED_D11
+B2_SCOPE_AUTHORIZATION = CONDITIONAL_APPROVED_D12
 B2_RENDERER_SECURITY_FIT = TO_INVENTORY
 EXISTING_EQUIVALENT = YES (shared markdown/document primitives)
 REUSE_DECISION = PENDING_FOR_MARKDOWN_IN_DELIA
-TRACEABILITY_GAP = OPEN
-CP_MAPPING = PENDING
-B2_IMPLEMENTATION_AUTHORIZED = NO
+B2_MARKDOWN_TRACEABILITY = MAPPED_CP_333
+C_D_E_STRUCTURED_TRACEABILITY_GAP = OPEN
+CP_MAPPING = CP_333_PLANNED_NOT_PASS
+B2_BOUNDED_SCOPE_AUTHORIZED = CONDITIONAL_YES
+G1_CONTRACT_SECURITY = PENDING
+G2_REUSE_SECURITY = PENDING
+G3_IMPLEMENTATION_TASK_BRIEF = PENDING
+B2_RUNTIME_IMPLEMENTATION = BLOCKED_UNTIL_G1_G2_G3
 B2_RUNTIME_DIFF = NONE
 C_AND_D_STRUCTURED_UI = OUT_OF_SCOPE_OF_B2
 PHASE_PROGRESSION = NONE
