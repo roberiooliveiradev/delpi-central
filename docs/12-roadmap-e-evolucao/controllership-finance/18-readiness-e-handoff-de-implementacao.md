@@ -266,27 +266,28 @@ A primeira execução técnica ainda deve inventariar a fundação do produto; e
 
 ## Adendo de governança — decisões PO C2 e D-P5-01 a D-P5-05 (15/10/2026)
 
-**TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
+**TARGET / PO_APPROVED / DOCUMENTED_NOT_RUNTIME.** C2 e D-P5-01..05 foram refinadas por P5-A..J e DEC-01..04. Não existe escolha C1/C2/C3 pendente; as integrações/identificadores físicos seguem TO_INVENTORY, e este adendo não prova runtime.
 
 - **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias com aceite da versão vigente e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
 - **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todas as áreas obrigatórias** precisam de um aceite válido da PackageVersion atual (P5-A refinou D-P5-01). Aceite parcial não atende ao quorum.
 - **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
 - **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
 - **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
-- **D-P5-05:** solicitação de alterações (CHANGES_REQUESTED) e rejeição terminal (REVIEW_REJECTED) são outcomes distintos; não usar um como alias do outro.
+- **D-P5-05/P5-I/DEC-01:** CHANGES_REQUESTED e REVIEW_REJECTED do pacote/área são outcomes distintos; rejeição de área **não** equivale à rejeição terminal da competência, que exige decisão formal auditada.
 
 Regra alvo:
 
 ```text
-ALL_APPLICABLE_PACKAGES_SUBMITTED
-AND ALL_REQUIRED_REVIEWS = REVIEW_ACCEPTED
+ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
 AND NO_OPEN_CLARIFICATION
+AND NO_TERMINAL_COMPETENCE_REJECTION
 => MONTHLY_CLOSING_COMPLETED
 ```
 
-**DECISION_REQUIRED / NO CHANGE TO BEHAVIOR:** definir escopo da terminalidade de REVIEW_REJECTED (submissão vs pacote), regra de substituição/aceite anterior, congelamento ou alteração auditada do conjunto de reviewers obrigatórios, necessidade de novo quorum por versão e tratamento da competência quando houver rejeição terminal. Nenhum endpoint, migration, scaffold ou permission adicional está autorizado.
+**PO_APPROVED / semantic closed:** P5-A..J e DEC-01..04 definem aceite por área obrigatória, snapshot P6, reatribuição sem perda de autoria, rejeição pendente/confirmada e impossibilidade de retificação V1. Permanecem TO_INVENTORY Core T05 corp eligibility, designação operacional, DTOs/eventos, version/OCC e tests no slice autorizado; nenhum runtime foi aprovado.
 
-**Evidência pendente:** rebase do main, .cursor aplicável, ledger RQ/AC, Core effective permissions, test matrix positive/sibling/negative, Help, postcondition. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
+**Evidência de implementação futura:** inventário físico Core T05 e contratos P5/P6, testes positivos/sibling/negativos e smoke com autorização. O registro de gate A16 deve citar HEAD, .cursor e ledger atualizados; docs não provam runtime. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
 
 
 ## Decisões supervenientes do Product Owner — P5-A a P5-E (15/10/2026)
