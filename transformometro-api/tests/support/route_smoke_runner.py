@@ -14,6 +14,16 @@ from tests.support.route_smoke_openapi import (
 )
 
 _PLAIN_HEALTH_OIDS = frozenset({"health", "module_health"})
+
+# Legacy flowchart_v1 modeling writes are locked post–Native BPMN
+# Convergence: routes remain for HTTP compatibility but must answer a
+# typed 409 LEGACY_DIAGRAM_READ_ONLY after AuthZ.
+_LOCKED_LEGACY_OIDS = {
+    "put_processo_diagrama",
+    "put_processo_diagrama_bpmn_xml",
+    "put_instancia_diagrama_escopo",
+    "put_revisao_diagrama_overlay",
+}
 _BINARY_OIDS = frozenset(
     {
         "dashboard_export_csv",
@@ -91,6 +101,15 @@ def run_route_smoke(client, meta: dict[str, Any]) -> None:
         response = getattr(client, method.lower())(path, **kwargs)
 
     assert response.status_code < 500, (oid, response.status_code, response.text[:800])
+
+    if oid in _LOCKED_LEGACY_OIDS:
+        assert response.status_code == 409, (oid, response.status_code, response.text[:800])
+        payload = body_json(response)
+        assert payload.get("success") is False, (oid, payload)
+        data = payload.get("data") or {}
+        assert data.get("error_code") == "LEGACY_DIAGRAM_READ_ONLY", (oid, payload)
+        assert data.get("legacy_format") == "flowchart_v1", (oid, payload)
+        return
 
     if oid in _PLAIN_HEALTH_OIDS:
         assert response.status_code == 200, (oid, response.text[:500])

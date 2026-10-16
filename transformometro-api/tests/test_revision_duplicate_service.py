@@ -26,7 +26,6 @@ def test_suggest_duplicate_versao_revisao_fallback_for_non_semver() -> None:
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoEvidenceStorage")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoEvidenceRepository")
 @patch("tm_app.application.services.revision_duplicate_service.RevisaoDecomposicaoOverlayRepository")
-@patch("tm_app.application.services.revision_duplicate_service.RevisaoDiagramOverlayRepository")
 @patch("tm_app.application.services.revision_duplicate_service.VinculoRepository")
 @patch("tm_app.application.services.revision_duplicate_service.InvestimentoRepository")
 @patch("tm_app.application.services.revision_duplicate_service.MedicaoRepository")
@@ -36,7 +35,6 @@ def test_duplicate_revisao_creates_inactive_copy(
     mock_med_cls,
     mock_inv_cls,
     mock_vin_cls,
-    mock_diagram_cls,
     mock_decomp_cls,
     mock_evidence_cls,
     mock_storage_cls,
@@ -50,7 +48,6 @@ def test_duplicate_revisao_creates_inactive_copy(
     med_repo = mock_med_cls.return_value
     inv_repo = mock_inv_cls.return_value
     vin_repo = mock_vin_cls.return_value
-    rev_diagram_repo = mock_diagram_cls.return_value
     rev_decomp_repo = mock_decomp_cls.return_value
     evidence_repo = mock_evidence_cls.return_value
 
@@ -90,7 +87,6 @@ def test_duplicate_revisao_creates_inactive_copy(
     med_repo.get_by_revisao.return_value = None
     inv_repo.list_by_revisao.return_value = []
     vin_repo.list_by_revisao.return_value = []
-    rev_diagram_repo.get.return_value = None
     rev_decomp_repo.get.return_value = None
     evidence_repo.list_by_revisao.return_value = []
 
@@ -99,6 +95,8 @@ def test_duplicate_revisao_creates_inactive_copy(
     assert result["revisao"]["revisao_id"] == "r-new"
     assert result["copiados"]["revisoes"] == 1
     assert result["copiados"]["matriz_impacto_esforco"] == 1
+    # Native BPMN Convergence: zero legacy diagram overlay on duplicate.
+    assert result["copiados"]["overlays_diagrama"] == 0
     create_payload = rev_repo.create.call_args[0][0]
     assert create_payload["versao_revisao"] == "1.1.1"
     assert create_payload["revisao_ativa"] is False

@@ -165,9 +165,9 @@ export const TM_HELP_TOOLTIPS = {
     modeloBpmn:
       "Referência do processo a uma revisão imutável do Meu Modelador de Processos (BPMN). A revisão vinculada é explícita e estável: novas revisões do modelo não alteram o vínculo até você escolher outra revisão. «Visualizar revisão» abre o snapshot no Modelador; «Abrir no Modelador» abre o modelo para edição sem mudar a referência.",
     diagramaMacro:
-      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões. «Editar diagrama» abre o editor em página dedicada (com trava colaborativa).",
+      "Mapeamento legado (flowchart_v1) do fluxo end-to-end — somente leitura, preservado para auditoria e migração. Novos diagramas são BPMN nativos no card «Modelo BPMN».",
     diagramaComposto:
-      "Visão do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
+      "Visão legada do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
     documentacao:
       "Documentação textual do processo em Markdown. Explica e consolida conhecimento; não redefine diagrama, revisão nem dados estruturados.",
     arquivos:
@@ -228,9 +228,9 @@ export const TM_HELP_TOOLTIPS = {
     rotulo:
       "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
-      "Define quais etapas do diagrama-macro desta melhoria entram no fluxo. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo se você marcar o macro completo. «Editar diagrama» abre o editor em página dedicada.",
+      "Escopo legado desta melhoria sobre o diagrama-macro — somente leitura. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo macro completo.",
     diagramaEscopoMacroCompleto:
-      "Marcado: esta melhoria enxerga todo o diagrama-macro (todas as faixas e etapas). Desmarcado: clique nos nós do desenho para escolher só as etapas relevantes; o restante fica fora do escopo e das revisões desta melhoria.",
+      "Marcado: esta melhoria enxerga todo o diagrama-macro legado (todas as faixas e etapas). Desmarcado: só as etapas selecionadas no recorte.",
     diagramaEscopoArestasFronteira:
       "Só vale com escopo parcial. Marcado: mantém setas que ligam uma etapa dentro do escopo a outra fora (fronteira). Desmarcado: só setas entre etapas ambas dentro do escopo — o fluxo fica «fechado» no recorte. Com macro completo a opção não se aplica.",
     modosVisualizacao:
@@ -274,7 +274,7 @@ export const TM_HELP_TOOLTIPS = {
     evidencias:
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
     diagramaRevisao:
-      "Âncora = diagrama da revisão de referência (exceto baseline). Edite o delta a partir desse fluxo em página dedicada; na gravação o overlay fica absoluto no macro para o diagrama composto «agora» refletir as revisões vigentes.",
+      "Overlay legado (flowchart_v1) desta revisão — somente leitura. Âncora = diagrama da revisão de referência (exceto baseline); a visão composta «agora» reflete as revisões vigentes.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:

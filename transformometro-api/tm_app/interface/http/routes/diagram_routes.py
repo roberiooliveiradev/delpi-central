@@ -1,24 +1,17 @@
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from datetime import date
 
 from fastapi import APIRouter, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
 from tm_app.application.services.diagram_composition_service import DiagramaCompositionService
-from tm_app.application.services.diagram_write_service import (
-    DiagramWriteError,
-    DiagramWriteService,
-)
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revision_diagram_merge_service import RevisaoDiagramMergeService
-from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
-from tm_app.core.auth_actor import actor_from_request, client_id_from_request
-from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.domain.diagram.bpmn_mermaid_mapping import build_bpmn_catalog_for_api
 from tm_app.domain.diagram.flowchart_validation_service import FlowchartValidationService
@@ -33,7 +26,6 @@ from tm_app.interface.http.branch_access_http import (
     check_instancia_manage_access,
     check_processo_manage_access,
 )
-from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
     InstanciaDiagramEscopoRepository,
 )
@@ -49,8 +41,6 @@ from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_rep
 )
 from tm_app.infrastructure.persistence.repositories.revision_repository import RevisaoRepository
 
-logger = logging.getLogger(__name__)
-
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro — diagramas"])
 
 _mermaid = DiagramMermaidExportService()
@@ -58,7 +48,6 @@ _merge = RevisaoDiagramMergeService(_mermaid)
 _composition = DiagramaCompositionService()
 _validator = FlowchartValidationService()
 _bpmn_xml = FlowchartBpmnXmlService()
-_writes = DiagramWriteService()
 
 
 class FlowchartBody(BaseModel):
@@ -79,33 +68,25 @@ class BpmnImportBody(BaseModel):
     xml: str = Field(min_length=1)
 
 
-def _audit(request: Request, entity_type: str, entity_id: str, action: str, payload: dict):
-    user_id, user_email, user_name = actor_from_request(request)
-    try:
-        AuditRepository().log(
-            entity_type=entity_type,
-            entity_id=entity_id,
-            action=action,
-            user_id=user_id,
-            user_email=user_email,
-            user_name=user_name or user_email,
-            payload=payload,
-        )
-    except Exception as exc:
-        logger.warning(
-            "audit_log_failed entity=%s id=%s action=%s err=%s",
-            entity_type,
-            entity_id,
-            action,
-            format_api_error(exc),
-        )
-    notify_from_audit(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        action=action,
-        actor_user_id=user_id,
-        actor_client_id=client_id_from_request(request),
-        payload=payload,
+LEGACY_DIAGRAM_READ_ONLY = "LEGACY_DIAGRAM_READ_ONLY"
+
+_LEGACY_READ_ONLY_MESSAGE = (
+    "O mapeamento flowchart_v1 é legado (somente leitura). Novos diagramas "
+    "são BPMN nativos no editor do Portal; o legado pode ser migrado via "
+    "migrate_legacy_diagram_to_native_bpmn."
+)
+
+
+def _legacy_read_only_error() -> JSONResponse:
+    return fail(
+        _LEGACY_READ_ONLY_MESSAGE,
+        409,
+        {
+            "error_code": LEGACY_DIAGRAM_READ_ONLY,
+            "legacy_format": "flowchart_v1",
+            "native_format": "bpmn_2_0_xml_bpmn_di",
+            "migration_operation": "migrate_legacy_diagram_to_native_bpmn",
+        },
     )
 
 
@@ -199,21 +180,7 @@ def get_processo_diagrama_composed(
 def put_processo_diagrama(processo_id: str, body: FlowchartBody, request: Request):
     if err := check_processo_manage_access(request, processo_id):
         return err
-    try:
-        saved = _writes.save_macro(processo_id, body.conteudo)
-    except DiagramWriteError as exc:
-        return fail(exc.message, exc.status_code)
-
-    _audit(
-        request,
-        "processo",
-        processo_id,
-        "diagram.macro.updated",
-        {"nodes": saved["nodes"]},
-    )
-    payload = _macro_response(saved["row"])
-    payload["processo_id"] = processo_id
-    return ok(payload, "Diagrama macro salvo.")
+    return _legacy_read_only_error()
 
 
 @router.post("/processos/{processo_id}/diagrama/validacao",
@@ -252,27 +219,7 @@ def get_processo_diagrama_bpmn_xml(processo_id: str):
 def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, request: Request):
     if err := check_processo_manage_access(request, processo_id):
         return err
-    if not ProcessoRepository().get(processo_id):
-        return fail("Processo não encontrado.", 404)
-    try:
-        conteudo = _bpmn_xml.import_xml(body.xml)
-    except FlowchartValidationError as exc:
-        return fail(str(exc), 400)
-
-    try:
-        saved = _writes.save_macro(processo_id, conteudo)
-    except DiagramWriteError as exc:
-        return fail(exc.message, exc.status_code)
-    _audit(
-        request,
-        "processo",
-        processo_id,
-        "diagram.macro.imported_bpmn",
-        {"nodes": saved["nodes"]},
-    )
-    payload = _macro_response(saved["row"])
-    payload["processo_id"] = processo_id
-    return ok(payload, "Diagrama importado de BPMN 2.0 XML.")
+    return _legacy_read_only_error()
 
 
 @router.get("/instancias/{instancia_id}/diagrama-escopo",
@@ -290,18 +237,7 @@ def get_instancia_diagrama_escopo(instancia_id: str):
 def put_instancia_diagrama_escopo(instancia_id: str, body: EscopoBody, request: Request):
     if err := check_instancia_manage_access(request, instancia_id):
         return err
-    try:
-        saved = _writes.save_instance_scope(instancia_id, body.model_dump())
-    except DiagramWriteError as exc:
-        return fail(exc.message, exc.status_code)
-    _audit(
-        request,
-        "processo_instancia",
-        instancia_id,
-        "diagram.escopo.updated",
-        {"inherit_all": saved["inherit_all"], "nodes": saved["nodes"]},
-    )
-    return ok(_escopo_response(saved["row"], instancia_id), "Escopo de diagrama salvo.")
+    return _legacy_read_only_error()
 
 
 def _load_merge_context(
@@ -398,22 +334,7 @@ def put_revisao_diagrama_overlay(revisao_id: str, body: OverlayBody, request: Re
     else:
         if err := check_processo_manage_access(request, str(revisao["processo_id"])):
             return err
-    try:
-        saved = _writes.save_revision_overlay(revisao_id, body.conteudo)
-    except DiagramWriteError as exc:
-        return fail(exc.message, exc.status_code)
-
-    _audit(
-        request,
-        "revisao",
-        revisao_id,
-        "diagram.overlay.updated",
-        {"overrides": saved["overrides"]},
-    )
-    payload = _overlay_response(saved["row"], revisao_id)
-    payload["mermaid"] = saved["mermaid"]
-    payload["merged_preview"] = saved["merged_preview"]
-    return ok(payload, "Overlay da revisão salvo.")
+    return _legacy_read_only_error()
 
 
 @router.get("/revisoes/{revisao_id}/diagrama/mermaid",

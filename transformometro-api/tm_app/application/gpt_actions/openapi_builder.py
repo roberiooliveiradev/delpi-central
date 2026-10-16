@@ -672,13 +672,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "READ-only Helpdesk/GLPI demand via BFF. "
                     "action=session|capabilities|tickets (filters+paging)|"
-                    "ticket (ticket_id)|attachment (ticket_id + "
-                    "document_id — this transport returns document "
-                    "metadata; binary content is delivered on the MCP "
-                    "surface)|catalog (catalog_kind: "
-                    "categories|urgencies|request_types|users|groups|"
-                    "templates|types|statuses|approval_steps). "
-                    "Knowledge, never AuthZ."
+                    "ticket|attachment (metadata only; binary via MCP)|"
+                    "catalog (catalog_kind: categories|urgencies|"
+                    "request_types|users|groups|templates|types|"
+                    "statuses|approval_steps). Knowledge, never AuthZ."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -1180,7 +1177,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "description": (
                     "Special governed writes — action selects the capability: "
                     "activate_revision | recalculate_dashboard | "
-                    "commit_improvement_package | adjust_shared_resource_cost. "
+                    "commit_improvement_package | adjust_shared_resource_cost | "
+                    "migrate_legacy_diagram_to_native_bpmn. "
                     "PREPARE only; ACT is gpt_commit_proposal."
                 ),
                 "tags": ["Transformômetro GPT"],
@@ -1713,9 +1711,21 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "type": "string",
                             "description": "Required for update_signature_profile.",
                         },
-                        "xml": {
+                        "resolutions": {
+                            "type": "object",
+                            "additionalProperties": True,
+                            "description": (
+                                "Optional ambiguity resolutions for "
+                                "migrate_legacy_diagram_to_native_bpmn "
+                                "re-PREPARE."
+                            ),
+                        },
+                        "candidate_xml_override": {
                             "type": "string",
-                            "description": "BPMN XML text — required for import_diagram_bpmn_xml.",
+                            "description": (
+                                "Optional candidate BPMN XML override for "
+                                "migrate_legacy_diagram_to_native_bpmn."
+                            ),
                         },
                         "commit_now": {"type": "boolean", "default": False},
                         "confirmation": {"type": "boolean", "default": False},

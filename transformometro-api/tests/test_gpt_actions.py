@@ -546,11 +546,20 @@ def test_registration_guide_exposes_entity_schemas():
     assert "title" in minute["required"]
     assert "meeting_date" in minute["required"]
     assert any("UI-only" in n or "ui-only" in n.lower() for n in minute["notes"])
-    diagram_ov = guide["entity_schemas"]["revision_diagram_overlay"]
-    assert any("node_overrides" in n for n in diagram_ov["notes"])
-    diagram_scope = guide["entity_schemas"]["instance_diagram_scope"]
-    assert "include_descendants" not in diagram_scope["optional"]
-    assert "include_boundary_edges" in diagram_scope["optional"]
+    # Legacy flowchart_v1 entities remain listed but are read-only
+    # (LEGACY_DIAGRAM_READ_ONLY); required/optional must be empty.
+    for legacy_entity in (
+        "process_diagram",
+        "instance_diagram_scope",
+        "revision_diagram_overlay",
+    ):
+        schema = guide["entity_schemas"][legacy_entity]
+        assert schema.get("read_only") is True, legacy_entity
+        assert schema["required"] == [], legacy_entity
+        assert schema["optional"] == [], legacy_entity
+        notes = " ".join(schema["notes"])
+        assert "LEGACY_DIAGRAM_READ_ONLY" in notes, legacy_entity
+        assert "migrate_legacy_diagram_to_native_bpmn" in notes or "migration" in notes.lower(), legacy_entity
     overlay = guide["entity_schemas"]["revision_decomposition_overlay"]
     assert "revisao_id" in overlay["required"]
     assert "conteudo" in overlay["required"]

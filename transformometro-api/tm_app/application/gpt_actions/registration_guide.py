@@ -91,9 +91,10 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "not free-text prose."
             ),
             "process_diagram": (
-                "Process macro flowchart (entity=process_diagram, id=processo_id). "
-                "format=flowchart_v1; Mermaid is server-derived. Alias: diagrama / diagrama macro. "
-                "Supported node/edge types: gpt_get_catalog.diagram_catalog (canonical)."
+                "LEGACY process macro flowchart (entity=process_diagram, id=processo_id). "
+                "format=flowchart_v1; Mermaid is server-derived. READ ONLY — new diagrams "
+                "are native BPMN (Portal editor); legacy converts via "
+                "migrate_legacy_diagram_to_native_bpmn. Alias: diagrama / diagrama macro."
             ),
             "branch": (
                 "Operational unit / filial (entity=branch). Catalog admin write; "
@@ -119,9 +120,9 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
             "priority": (
                 "entity_schemas.<entity> is the primary write contract. "
                 "If the generic Action signature diverges, follow the entity schema. "
-                "Document entities (decomposition_*/process_diagram/instance_*_scope/"
-                "revision_*_overlay/impact_effort_matrix) are listed in entity_schemas — "
-                "do not treat catalog.entities presence alone as 'no write contract'."
+                "Document entities (decomposition_*/impact_effort_matrix) are listed "
+                "in entity_schemas — do not treat catalog.entities presence alone as "
+                "'no write contract'. Legacy diagram entities are read-only."
             ),
             "entity_write_flow": (
                 "ENTITY CRUD: gpt_prepare_record_change "
@@ -156,7 +157,7 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "shared_resource with nome_recurso/tipo_custo/recorrencia inside changes.conteudo "
                 "is invalid; those fields belong directly under changes. "
                 "Also invalid: inventing entity names like 'mapeamento'/'diagrama'/'ata'/'filial'/'setor'/'documentacao' — "
-                "use decomposition_tree / revision_decomposition_overlay / process_diagram / "
+                "use decomposition_tree / revision_decomposition_overlay / process_diagram (READ only) / "
                 "meeting_minute / process_document / branch / department. "
                 "Also invalid: calling removed legacy record operations as current surface "
                 "(Actions: gpt_create_record / gpt_update_record)."
@@ -240,9 +241,12 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 "id": "governed_followups",
                 "ask": [],
                 "actions": [
-                    "Diagrams and WBS/decomposition may be persisted via GPT when "
+                    "WBS/decomposition may be persisted via GPT when "
                     "surface_supports allows and manage AuthZ succeeds "
-                    "(entity_schemas.decomposition_* / process_diagram / overlays).",
+                    "(entity_schemas.decomposition_*). Diagrams: legacy "
+                    "flowchart_v1 is read-only — new diagrams are native BPMN "
+                    "in the Portal editor; legacy converts via "
+                    "migrate_legacy_diagram_to_native_bpmn.",
                     "PREPARE → POLICY GATE: auto_act commits direto; "
                     "confirm_before_act → SHOW → uma Confirma? → COMMIT; "
                     "sempre VERIFY + manage AuthZ required.",
@@ -626,45 +630,40 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                 ],
             },
             "process_diagram": {
-                "required": ["processo_id", "conteudo"],
+                "required": [],
                 "optional": [],
                 "enums": {},
                 "defaults": {},
+                "read_only": True,
                 "notes": [
-                    "Upsert; id=processo_id. conteudo.format=flowchart_v1; format_version=1.",
-                    "conteudo: nodes[], edges[] (lanes optional). Mermaid is DERIVED BY SERVER.",
-                    "Macro flowchart of the master process (not revision-specific alone).",
-                    "Node/edge types: use gpt_get_catalog.diagram_catalog (canonical; "
-                    "includes decision, gateways, tasks, events). Do not invent types; "
-                    "do not restrict to start/process/end — catalog is authoritative.",
+                    "LEGACY READ ONLY — writes are blocked (LEGACY_DIAGRAM_READ_ONLY).",
+                    "conteudo.format=flowchart_v1; Mermaid is server-derived.",
+                    "New diagrams are native BPMN (Portal editor); convert legacy via "
+                    "prepare_governed_operation action=migrate_legacy_diagram_to_native_bpmn.",
+                    "Node/edge types: gpt_get_catalog.diagram_catalog (canonical).",
                 ],
             },
             "instance_diagram_scope": {
-                "required": ["instancia_id"],
-                "optional": [
-                    "node_ids",
-                    "inherit_all",
-                    "include_boundary_edges",
-                ],
-                "enums": {},
-                "defaults": {"inherit_all": True, "include_boundary_edges": False},
-                "notes": [
-                    "Upsert; id=instancia_id. Scope of macro diagram nodes for the instance.",
-                    "Fields under changes (not conteudo). Unlike WBS scope, no include_descendants.",
-                    "Write: gpt_prepare_record_change → gpt_commit_proposal.",
-                ],
-            },
-            "revision_diagram_overlay": {
-                "required": ["revisao_id", "conteudo"],
+                "required": [],
                 "optional": [],
                 "enums": {},
                 "defaults": {},
+                "read_only": True,
                 "notes": [
-                    "Upsert; id=revisao_id. conteudo.format=flowchart_overlay_v1; format_version=1.",
-                    "conteudo fields: modo, node_overrides{}, edge_overrides{}, "
-                    "removed_node_ids[], removed_edge_ids[], extra_nodes[], extra_edges[].",
-                    "Per-revision diagram delta on top of the process macro flowchart.",
-                    "Requires manage access on the revision's instance/process.",
+                    "LEGACY READ ONLY — writes are blocked (LEGACY_DIAGRAM_READ_ONLY).",
+                    "Scope of macro diagram nodes for the instance; migration source only.",
+                ],
+            },
+            "revision_diagram_overlay": {
+                "required": [],
+                "optional": [],
+                "enums": {},
+                "defaults": {},
+                "read_only": True,
+                "notes": [
+                    "LEGACY READ ONLY — writes are blocked (LEGACY_DIAGRAM_READ_ONLY).",
+                    "conteudo.format=flowchart_overlay_v1; per-revision delta; "
+                    "migration source only.",
                 ],
             },
             "impact_effort_matrix": {

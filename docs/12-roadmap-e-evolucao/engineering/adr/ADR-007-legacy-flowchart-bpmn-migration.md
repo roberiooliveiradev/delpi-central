@@ -79,9 +79,10 @@ Nunca: MIGRATION → DELETE HISTORY
   "Mapeamento legado" — nunca rotulado "visão vigente".
 - **READ surface:** `record_read(entity=process_bpmn_document, id=processo)`
   retorna doc + revisions + `migration` (metadados da última migração).
-- **`import_diagram_bpmn_xml`:** NÃO reutilizado — continua escrevendo só no
-  legado macro (contrato antigo preservado); a capability nova é a única
-  via TÉO para criar BPMN nativo a partir do legado.
+- **`import_diagram_bpmn_xml`:** ~~NÃO reutilizado — continua escrevendo só
+  no legado macro~~ **SUPERSEDED (Native BPMN Convergence):** a capability
+  foi REMOVIDA — escrevia flowchart_v1 legado; `migrate_*` é a única via TÉO
+  para criar BPMN nativo a partir do legado e legado é READ ONLY.
 
 ## Invariantes
 

@@ -94,9 +94,12 @@ ENTITY_CAPABILITIES: dict[GptEntity, FrozenSet[str]] = {
     GptEntity.DECOMPOSITION_TREE: frozenset({"get", "create", "update"}),
     GptEntity.INSTANCE_DECOMPOSITION_SCOPE: frozenset({"get", "create", "update"}),
     GptEntity.REVISION_DECOMPOSITION_OVERLAY: frozenset({"get", "create", "update"}),
-    GptEntity.PROCESS_DIAGRAM: frozenset({"get", "create", "update"}),
-    GptEntity.INSTANCE_DIAGRAM_SCOPE: frozenset({"get", "create", "update"}),
-    GptEntity.REVISION_DIAGRAM_OVERLAY: frozenset({"get", "create", "update"}),
+    # Legacy flowchart_v1 diagram state — READ/MIGRATE ONLY. New diagrams
+    # are native BPMN (Portal authority); legacy writes stopped producing
+    # new state and are intentionally absent from this catalog.
+    GptEntity.PROCESS_DIAGRAM: frozenset({"get"}),
+    GptEntity.INSTANCE_DIAGRAM_SCOPE: frozenset({"get"}),
+    GptEntity.REVISION_DIAGRAM_OVERLAY: frozenset({"get"}),
     # Native BPMN (G7/G8): READ only — writes are exclusively the governed
     # operation migrate_legacy_diagram_to_native_bpmn / canonical document API.
     GptEntity.PROCESS_BPMN_DOCUMENT: frozenset({"get"}),
@@ -122,9 +125,19 @@ ENTITY_DESCRIPTIONS: dict[GptEntity, str] = {
     GptEntity.DECOMPOSITION_TREE: "Process WBS/decomposition tree (id = processo_id).",
     GptEntity.INSTANCE_DECOMPOSITION_SCOPE: "Instance WBS scope (id = instancia_id).",
     GptEntity.REVISION_DECOMPOSITION_OVERLAY: "Revision WBS overlay (id = revisao_id).",
-    GptEntity.PROCESS_DIAGRAM: "Process macro flowchart (id = processo_id).",
-    GptEntity.INSTANCE_DIAGRAM_SCOPE: "Instance diagram scope (id = instancia_id).",
-    GptEntity.REVISION_DIAGRAM_OVERLAY: "Revision diagram overlay (id = revisao_id).",
+    GptEntity.PROCESS_DIAGRAM: (
+        "Legacy process macro flowchart (id = processo_id). READ ONLY — "
+        "new diagrams are native BPMN; migrate via "
+        "migrate_legacy_diagram_to_native_bpmn."
+    ),
+    GptEntity.INSTANCE_DIAGRAM_SCOPE: (
+        "Legacy instance diagram scope (id = instancia_id). READ ONLY — "
+        "migration source only."
+    ),
+    GptEntity.REVISION_DIAGRAM_OVERLAY: (
+        "Legacy revision diagram overlay (id = revisao_id). READ ONLY — "
+        "migration source only."
+    ),
     GptEntity.PROCESS_BPMN_DOCUMENT: (
         "Native BPMN document — working copy, revisions and migration status "
         "(id = processo_id). Canonical mapping authority after G8 migration."

@@ -105,9 +105,8 @@ WRITE_CAPABILITIES = frozenset(
         "unpin_interaction_message",
         "mark_interaction_read",
         # Portal parity — governed special operations (signature profile
-        # metadata; BPMN XML macro-diagram import — text transport).
+        # metadata).
         "update_signature_profile",
-        "import_diagram_bpmn_xml",
         # G8 — legacy flowchart_v1 → Transformômetro-native BPMN migration.
         _MIG_CAP,
     }
@@ -198,7 +197,6 @@ GOVERNED_OPERATION_ACTION_TO_CAPABILITY = {
     "commit_improvement_package": "commit_improvement_package",
     "adjust_shared_resource_cost": "adjust_shared_resource_cost",
     "update_signature_profile": "update_signature_profile",
-    "import_diagram_bpmn_xml": "import_diagram_bpmn_xml",
     "migrate_legacy_diagram_to_native_bpmn": _MIG_CAP,
 }
 
@@ -363,8 +361,6 @@ class GovernedWriteOrchestrator:
             return self._prep_cost(request, args)
         if capability == "update_signature_profile":
             return self._prep_signature_profile(request, args)
-        if capability == "import_diagram_bpmn_xml":
-            return self._prep_bpmn_import(request, args)
         if capability == _MIG_CAP:
             return _mig_prepare(
                 self._require_migration_stack(), request, args
@@ -948,41 +944,6 @@ class GovernedWriteOrchestrator:
             },
         }
 
-    def _prep_bpmn_import(
-        self, request: Request, args: dict[str, Any]
-    ) -> dict[str, Any]:
-        processo_id = str(
-            args.get("processo_id") or args.get("id") or ""
-        ).strip()
-        xml = str(args.get("xml") or "")
-        # PREPARE: manage-scope AuthZ + existence + dry XML parse.
-        validation = self._dispatch.validate_bpmn_import(
-            request, processo_id=processo_id, xml=xml
-        )
-        return {
-            "resource_type": "process_diagram",
-            "resource_id": processo_id,
-            "current_state_fingerprint": fingerprint(
-                validation["current_diagram"]
-            ),
-            "exact_change": {"processo_id": processo_id, "xml": xml},
-            "validation_result": {
-                "ready": True,
-                "parsed_nodes": validation["parsed_nodes"],
-                "parsed_edges": validation["parsed_edges"],
-            },
-            "consequential_impact": {
-                "persists": True,
-                "operation": "import_diagram_bpmn_xml",
-                "overwrites_macro_diagram": True,
-            },
-            "confirmation_requirement": {},
-            "expected_postcondition": {
-                "type": "diagram_bpmn_imported",
-                "processo_id": processo_id,
-            },
-        }
-
     def _prep_minute_manage(
         self, request: Request, args: dict[str, Any]
     ) -> dict[str, Any]:
@@ -1163,12 +1124,6 @@ class GovernedWriteOrchestrator:
             return fingerprint(
                 self._dispatch.get_my_signature_profile(request)
             )
-        if cap == "import_diagram_bpmn_xml":
-            return fingerprint(
-                self._dispatch.read_process_diagram(
-                    request, str(change["processo_id"])
-                )
-            )
         if cap == _MIG_CAP:
             return _mig_recompute_fingerprint(
                 self._require_migration_stack(), change
@@ -1292,12 +1247,6 @@ class GovernedWriteOrchestrator:
         if cap == "update_signature_profile":
             return self._dispatch.update_signature_profile(
                 request, display_name=str(change["display_name"])
-            )
-        if cap == "import_diagram_bpmn_xml":
-            return self._dispatch.import_diagram_bpmn_xml(
-                request,
-                processo_id=str(change["processo_id"]),
-                xml=str(change["xml"]),
             )
         if cap == _MIG_CAP:
             return _mig_execute(
@@ -1461,21 +1410,6 @@ class GovernedWriteOrchestrator:
                     status_code=409,
                 )
             return {"signature_profile": read, "write_result": write_result}
-
-        if cap == "import_diagram_bpmn_xml":
-            if not isinstance(write_result, dict) or not write_result.get(
-                "verified"
-            ):
-                raise GovernedWriteError(
-                    "BPMN import not verified by authoritative read-back.",
-                    code=OUTCOME_VERIFICATION_FAILED,
-                    status_code=409,
-                    data={"write_result": write_result},
-                )
-            read = self._dispatch.read_process_diagram(
-                request, str(change["processo_id"])
-            )
-            return {"diagram": read, "write_result": write_result}
 
         if cap == _MIG_CAP:
             return _mig_verify(

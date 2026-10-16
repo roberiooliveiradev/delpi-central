@@ -75,18 +75,20 @@ describe("G8 — migração governada flowchart_v1 → BPMN nativo", () => {
     expect(cta).toBeGreaterThan(noDoc);
   });
 
-  it("legado deixa de ser 'visão vigente' após migração (G8H)", () => {
+  it("legado é sempre somente leitura — nunca 'visão vigente', nunca editável (G8H)", () => {
     expect(page).toMatch(/hasNativeBpmn/);
-    expect(page).toMatch(/onDocumentChange/);
-    // Estado migrado: legado colapsado, somente leitura, sem edição.
+    expect(page).toMatch(/hasLegacy/);
+    expect(page).toMatch(/onLegacyChange/);
+    // Legado: seção colapsável, somente leitura, sem botão de edição.
     expect(page).toMatch(/Mapeamento legado/);
     expect(page).toMatch(/<details[\s\S]*legacy-mapping/);
     expect(page).toMatch(/editable=\{false\}/);
-    expect(page).toMatch(/edição desabilitada após a migração/);
-    // "visão vigente" só existe no branch SEM BPMN nativo.
-    const migrated = page.indexOf("{hasNativeBpmn ? (");
-    const legacy = page.indexOf(") : (", migrated);
-    const vigente = page.indexOf("visão vigente", migrated);
-    expect(vigente).toBeGreaterThan(legacy);
+    expect(page).toMatch(/edição desabilitada/);
+    expect(page).toMatch(/somente leitura/);
+    // A seção de diagrama legado nunca mais diz "visão vigente" nem tem
+    // deep-link de edição (WBS "Macro composto" segue dominio próprio).
+    expect(page).not.toMatch(/Diagrama composto \(visão vigente\)/);
+    expect(page).not.toMatch(/Editar diagrama/);
+    expect(page).not.toMatch(/buildProcessoDiagramaEditPath/);
   });
 });

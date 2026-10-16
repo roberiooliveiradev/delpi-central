@@ -270,13 +270,42 @@ def build_bpmn_catalog_for_api() -> dict[str, Any]:
             "swimlane_syntax": 'subgraph lane_id ["Nome da faixa"] ... end',
             "type_class_suffix": ":::bpmn_{node_type}",
             "round_trip": "Use sempre a classe :::bpmn_<tipo> em cada nó para round-trip fiel com o canvas.",
-            "source_of_truth": "flowchart_v1 (JSON) é a fonte de verdade; Mermaid é vista/exportação derivada.",
+            "source_of_truth": (
+                "LEGADO: flowchart_v1 (JSON) descreve apenas o mapeamento "
+                "histórico — leitura e fonte de migração. A autoridade para "
+                "NOVOS diagramas é o BPMN 2.0 nativo (process_bpmn_document); "
+                "Mermaid é vista/exportação derivada."
+            ),
+        },
+        "lifecycle": {
+            "status": "NATIVE_BPMN_WITH_LEGACY_MIGRATION",
+            "native": {
+                "format": "bpmn_2_0_xml_bpmn_di",
+                "authority": "process_bpmn_document",
+                "new_diagram": True,
+                "editable_in_portal": True,
+            },
+            "legacy": {
+                "format": "flowchart_v1",
+                "status": "LEGACY_READ_MIGRATE_ONLY",
+                "writable": False,
+                "create_allowed": False,
+                "update_allowed": False,
+            },
+            "migration": {
+                "operation": "migrate_legacy_diagram_to_native_bpmn",
+                "confirm_before_act": True,
+            },
         },
         "ai_guidance": {
             "summary": (
-                "Para gerar diagramas compatíveis com o Transformômetro, use flowchart TD, "
-                "subgraphs para faixas, classes :::bpmn_<tipo> em todos os nós e arestas "
-                "--> / -.-> / -.- conforme o tipo de conexão."
+                "Este catálogo descreve os tipos do mapeamento LEGADO "
+                "flowchart_v1 — use-o para LER e analisar diagramas "
+                "existentes e para a migração para BPMN nativo. Novos "
+                "diagramas são BPMN 2.0 nativos criados/editados no editor "
+                "BPMN do Portal; o TÉO não cria nem edita flowchart_v1 e não "
+                "persiste Mermaid. Para converter um legado, use "
+                "migrate_legacy_diagram_to_native_bpmn (confirm_before_act)."
             ),
         },
     }

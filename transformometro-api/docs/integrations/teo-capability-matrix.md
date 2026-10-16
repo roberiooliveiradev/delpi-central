@@ -263,7 +263,7 @@ Newly exposed (no new MCP tools — typed actions/views on existing families):
 | Instance `contexto` | `prepare_record_change` + `record_read` | entity=`instance`, `changes.contexto` | validate_instancia_contexto_v1 + ProcessoInstanciaRepository | auto_act |
 | Meeting-minute refuse | `prepare_meeting_minute_change` | `refuse` (reason required) | MeetingMinutesService.refuse | confirm_before_act |
 | Signature profile | `get_my_context` (read, permission-gated, no binary) + `prepare_governed_operation` | `update_signature_profile` | UserSignatureService | auto_act |
-| BPMN XML import | `prepare_governed_operation` | `import_diagram_bpmn_xml` | FlowchartBpmnXmlService + DiagramWriteService | confirm_before_act |
+| Legacy → native BPMN migration | `prepare_governed_operation` | `migrate_legacy_diagram_to_native_bpmn` | BpmnMigrationCapability + ProcessBpmnDocumentRepository | confirm_before_act |
 | Process-file metadata | `evidence_read`/`prepare_evidence_change` | scope=`process` | ProcessoArquivoRepository | per action |
 
 Reclassified: `process_file.metadata_write` (already covered by
@@ -273,7 +273,10 @@ Reclassified: `process_file.metadata_write` (already covered by
 binary attestation; authenticated `sign` never exposed, public token flow
 separate); `json_backup` stays INTENTIONALLY_NOT_APPLICABLE (bulk DB
 portability bundle, not a conversational payload); binary stays
-PLATFORM_BLOCKED.
+PLATFORM_BLOCKED; `import_diagram_bpmn_xml` **REMOVED** (native BPMN
+convergence — BPMN never converts INTO legacy flowchart_v1; native import is
+Portal authority); legacy `process_diagram` / `instance_diagram_scope` /
+`revision_diagram_overlay` writes **REMOVED** (READ ONLY — migration source).
 
 ## DÉLIA readiness
 

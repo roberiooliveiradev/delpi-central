@@ -57,7 +57,10 @@ CONVERSATIONAL_FLOW = (
 
 DIAGRAM_RULE = {
     "source": "get_catalog.diagram_catalog",
-    "flowchart_v1": "Transformômetro source of truth for process diagrams",
+    "flowchart_v1": (
+        "LEGACY format — read/migration source only; new diagrams are "
+        "native BPMN (process_bpmn_document, Portal authority)"
+    ),
     "mermaid": "derived only",
     "rule": "Do not hardcode node or edge types in the methodology guide.",
 }
@@ -78,8 +81,11 @@ _TM = {
     "scenario_revision": "TO-BE proposal as a scenario revision. Not production state until activated by governed ACT.",
     "decomposition_tree": "Hierarchical WBS. Not SIPOC/Ishikawa/SWOT storage.",
     "revision_decomposition_overlay": "AS-IS vs TO-BE structural delta on a revision.",
-    "process_diagram": "Flow. Types only from get_catalog.diagram_catalog (flowchart_v1).",
-    "revision_diagram_overlay": "Visual delta. Same catalog rule.",
+    "process_diagram": (
+        "Flow. READ ONLY legacy flowchart_v1 — types from "
+        "get_catalog.diagram_catalog; new diagrams are native BPMN."
+    ),
+    "revision_diagram_overlay": "Visual delta. Same catalog rule; READ only.",
     "measurement": "Indicators / analyze. API numbers are CALCULATED.",
     "investment_or_shared_resource": "Costs. Do not invent budgets.",
     "evidence": "Evidence metadata only. Binary upload stays UI-only.",
@@ -258,7 +264,8 @@ _METHODS: dict[str, dict[str, Any]] = {
             outputs=("Trigger", "Stage", "Owner if known", "Input", "Output", "Final outcome"),
             common_mistakes=(
                 "Drawing governance activities inside the transactional flow by default.",
-                "Persisting a narrative as flowchart_v1 without the catalog shape.",
+                "Persisting a narrative as diagram state — legacy flowchart "
+                "is read-only and new diagrams start in the Portal BPMN editor.",
             ),
             mapping_focus=("process", "process_diagram", "decomposition_tree", "instance"),
             source_section="teo-method-playbooks.md §6",

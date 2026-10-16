@@ -9,7 +9,9 @@ ROUTES_DIR = Path(__file__).resolve().parents[1] / "tm_app" / "interface" / "htt
 # Arquivos de rota com mutações de negócio que devem notificar WS.
 MUTATING_ROUTE_FILES = (
     "crud_routes.py",
-    "diagram_routes.py",
+    # diagram_routes.py is intentionally absent: all legacy flowchart_v1
+    # writes are locked (LEGACY_DIAGRAM_READ_ONLY), so the module no
+    # longer mutates business state.
     "decomposition_routes.py",
     "dashboard_routes.py",
     "json_backup_routes.py",

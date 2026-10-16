@@ -644,8 +644,10 @@ def create_mcp_server() -> MCPServer:
             "(recurso_compartilhado_id + valor_mensal + vigente_desde + "
             "optional observacoes — auto_act), update_signature_profile "
             "(display_name — auto_act; updates only the display name, "
-            "signature image stays in UI), import_diagram_bpmn_xml "
-            "(processo_id + xml text — replaces the macro diagram — "
+            "signature image stays in UI), "
+            "migrate_legacy_diagram_to_native_bpmn (processo_id + optional "
+            "resolutions/candidate_xml_override — converts the legacy "
+            "flowchart_v1 mapping into the canonical native BPMN document — "
             "confirm_before_act). Then "
             "commit_proposal per proposal.execution_policy; AuthZ is "
             "revalidated at ACT with authoritative read-back."
@@ -673,7 +675,8 @@ def create_mcp_server() -> MCPServer:
         activate_scenario: bool = False,
         recalculate: bool = False,
         display_name: str | None = None,
-        xml: str | None = None,
+        resolutions: dict | None = None,
+        candidate_xml_override: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_governed_operation(
             action=action,
@@ -693,7 +696,8 @@ def create_mcp_server() -> MCPServer:
             activate_scenario=activate_scenario,
             recalculate=recalculate,
             display_name=display_name,
-            xml=xml,
+            resolutions=resolutions,
+            candidate_xml_override=candidate_xml_override,
         )
 
     @mcp.tool(

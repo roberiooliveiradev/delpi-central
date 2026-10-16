@@ -206,13 +206,6 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         "update_signature_profile",
         workflow_id="update_signature_profile",
     ),
-    # Replaces the whole macro diagram with the imported BPMN content.
-    WritePolicyRecord(
-        "diagram.bpmn_import",
-        CONFIRM_BEFORE_ACT,
-        "import_diagram_bpmn_xml",
-        workflow_id="import_diagram_bpmn_xml",
-    ),
     # Creates the canonical native BPMN artifact from the legacy mapping —
     # consequential authority transition; legacy itself is preserved.
     WritePolicyRecord(

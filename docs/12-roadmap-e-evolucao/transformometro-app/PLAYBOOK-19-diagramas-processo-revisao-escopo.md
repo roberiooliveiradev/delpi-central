@@ -1,5 +1,7 @@
 # Playbook 19 — Diagramas de processo (macro), escopo por instância e overlays por revisão
 
+**SUPERSEDED (Native BPMN Convergence):** `flowchart_v1`/scope/overlay são LEGADO READ ONLY — leitura, composição e fonte de migração. Writes bloqueados (`LEGACY_DIAGRAM_READ_ONLY`); novos diagramas são BPMN 2.0 nativos criados/editados no editor BPMN do Portal. Migração governada: `migrate_legacy_diagram_to_native_bpmn`.
+
 **Status:** entregue S0–S7 (jul/2026) — S7 espelha PB23 (âncora + composto) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/archive/playbooks/playbook-19-implementation-status.md)  
 **Decisões fechadas (S0):**  
 - **Diagrama-macro único por processo-mestre** — mapa canônico do fluxo end-to-end; nós com **ID estável**.  

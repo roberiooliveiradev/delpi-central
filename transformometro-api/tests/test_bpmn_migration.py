@@ -852,7 +852,7 @@ class TestCatalog:
         ]
         assert mig, "capability ausente do catálogo vivo"
         # Actions projection prefixa gpt_*; o choke point canônico
-        # continua sendo commit_proposal (mesmo do import_diagram_bpmn_xml).
+        # continua sendo commit_proposal.
         assert mig[0]["commit_via"] in {
             "commit_proposal",
             "gpt_commit_proposal",

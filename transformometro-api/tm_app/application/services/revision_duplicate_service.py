@@ -19,9 +19,6 @@ from tm_app.infrastructure.persistence.repositories.shared_resource_repository i
 from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
     RevisaoDecomposicaoOverlayRepository,
 )
-from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
-    RevisaoDiagramOverlayRepository,
-)
 from tm_app.infrastructure.persistence.repositories.revision_evidence_repository import (
     RevisaoEvidenceRepository,
 )
@@ -49,7 +46,6 @@ class RevisaoDuplicateService:
             med_repo = MedicaoRepository(connection=conn)
             inv_repo = InvestimentoRepository(connection=conn)
             vin_repo = VinculoRepository(connection=conn)
-            rev_diagram_repo = RevisaoDiagramOverlayRepository(connection=conn)
             rev_decomp_repo = RevisaoDecomposicaoOverlayRepository(connection=conn)
             evidence_repo = RevisaoEvidenceRepository(connection=conn)
 
@@ -119,19 +115,9 @@ class RevisaoDuplicateService:
                 stats["investimentos"] = dep_stats["investimentos"]
                 stats["vinculos"] = dep_stats["vinculos"]
 
-                rev_diagram = rev_diagram_repo.get(revisao_id)
-                if rev_diagram:
-                    rev_diagram_repo.upsert_from_backup(
-                        {
-                            "revisao_id": new_rev_id,
-                            "conteudo": rev_diagram.get("conteudo") or {},
-                            "mermaid_cached": rev_diagram.get("mermaid_cached"),
-                            "created_at": rev_diagram.get("created_at"),
-                            "updated_at": rev_diagram.get("updated_at"),
-                        },
-                        auto_commit=False,
-                    )
-                    stats["overlays_diagrama"] = 1
+                # Legacy flowchart_v1 overlay is intentionally NOT copied —
+                # duplication must never produce new legacy diagram state
+                # (LEGACY_READ_MIGRATE_ONLY; backup/restore only).
 
                 rev_decomp = rev_decomp_repo.get(revisao_id)
                 if rev_decomp:

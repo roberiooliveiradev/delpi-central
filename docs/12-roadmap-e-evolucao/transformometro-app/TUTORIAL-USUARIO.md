@@ -360,7 +360,7 @@ flowchart TB
 
 **Abas do editor:**
 
-- **Canvas** — edição visual interativa (fonte de verdade: JSON `flowchart_v1`)
+- **Canvas** — edição visual interativa (fonte de verdade: JSON `flowchart_v1`) **SUPERSEDED:** o editor legado é somente leitura; novos diagramas usam o editor BPMN nativo do Portal
 - **Mermaid** — código derivado **ao vivo** + preview renderizado; edite o texto e use **Aplicar ao canvas** (ou **Atualizar do canvas** para sincronizar). **Modelo inicial** disponível em diagrama vazio.
 
 **Antes de salvar:**

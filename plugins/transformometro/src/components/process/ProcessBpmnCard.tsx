@@ -29,6 +29,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onError?: (message: string | null) => void;
   /** Estado nativo carregado — a página reconcilia a seção legada (G8H). */
   onDocumentChange?: (document: ProcessBpmnDocument | null) => void;
+  /** Presença de mapeamento legado — a página decide se exibe a seção legada. */
+  onLegacyChange?: (hasLegacy: boolean) => void;
 };
 
 function describeError(err: unknown, fallback: string): string {
@@ -66,6 +68,8 @@ export function ProcessBpmnCard({
   onErrorRef.current = onError;
   const onDocumentChangeRef = useRef(onDocumentChange);
   onDocumentChangeRef.current = onDocumentChange;
+  const onLegacyChangeRef = useRef(onLegacyChange);
+  onLegacyChangeRef.current = onLegacyChange;
   const tokenRef = useRef(getAccessToken);
   tokenRef.current = getAccessToken;
 
@@ -87,9 +91,10 @@ export function ProcessBpmnCard({
         onDocumentChangeRef.current?.(docPayload?.document ?? null);
         setHasExternalRef(refPayload?.reference != null);
         setRefLoaded(true);
-        setHasLegacy(
-          (composedPayload?.flowchart?.nodes ?? []).length > 0,
-        );
+        const legacyPresent =
+          (composedPayload?.flowchart?.nodes ?? []).length > 0;
+        setHasLegacy(legacyPresent);
+        onLegacyChangeRef.current?.(legacyPresent);
       } catch (err) {
         if (cancelled) return;
         const message = describeError(

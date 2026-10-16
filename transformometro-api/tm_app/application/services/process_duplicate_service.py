@@ -13,18 +13,12 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
 from tm_app.infrastructure.persistence.repositories.instance_scope_decomposition_repository import (
     InstanciaDecomposicaoEscopoRepository,
 )
-from tm_app.infrastructure.persistence.repositories.instance_scope_diagram_repository import (
-    InstanciaDiagramEscopoRepository,
-)
 from tm_app.infrastructure.persistence.repositories.investment_repository import (
     InvestimentoRepository,
 )
 from tm_app.infrastructure.persistence.repositories.measurement_repository import MedicaoRepository
 from tm_app.infrastructure.persistence.repositories.process_decomposition_repository import (
     ProcessoDecomposicaoRepository,
-)
-from tm_app.infrastructure.persistence.repositories.process_diagram_repository import (
-    ProcessoDiagramRepository,
 )
 from tm_app.infrastructure.persistence.repositories.process_instance_repository import (
     ProcessoInstanciaRepository,
@@ -35,9 +29,6 @@ from tm_app.infrastructure.persistence.repositories.process_scope_repository imp
 from tm_app.infrastructure.persistence.repositories.shared_resource_repository import VinculoRepository
 from tm_app.infrastructure.persistence.repositories.revision_decomposition_overlay_repository import (
     RevisaoDecomposicaoOverlayRepository,
-)
-from tm_app.infrastructure.persistence.repositories.revision_diagram_overlay_repository import (
-    RevisaoDiagramOverlayRepository,
 )
 from tm_app.infrastructure.persistence.repositories.revision_evidence_repository import (
     RevisaoEvidenceRepository,
@@ -99,7 +90,13 @@ def _instancia_create_payload(source: dict[str, Any], new_processo_id: str) -> d
 
 
 class ProcessoDuplicateService:
-    """Duplica processo-mestre completo: melhorias, diagrama, WBS, revisões e evidências."""
+    """Duplica processo-mestre: melhorias, WBS, revisões e evidências.
+
+    Legacy flowchart_v1 diagram state (processo_diagramas,
+    instancia_diagrama_escopo, revisao_diagrama_overlays) is intentionally
+    not copied — new business objects must not carry new legacy diagram
+    rows. Backup/restore remains the sanctioned path for legacy state.
+    """
 
     def duplicate(
         self,
@@ -115,11 +112,8 @@ class ProcessoDuplicateService:
             med_repo = MedicaoRepository(connection=conn)
             inv_repo = InvestimentoRepository(connection=conn)
             vin_repo = VinculoRepository(connection=conn)
-            diagram_repo = ProcessoDiagramRepository(connection=conn)
             decomp_repo = ProcessoDecomposicaoRepository(connection=conn)
-            inst_diagram_repo = InstanciaDiagramEscopoRepository(connection=conn)
             inst_decomp_repo = InstanciaDecomposicaoEscopoRepository(connection=conn)
-            rev_diagram_repo = RevisaoDiagramOverlayRepository(connection=conn)
             rev_decomp_repo = RevisaoDecomposicaoOverlayRepository(connection=conn)
             evidence_repo = RevisaoEvidenceRepository(connection=conn)
 
@@ -157,19 +151,10 @@ class ProcessoDuplicateService:
                         auto_commit=False,
                     )
 
-                source_diagram = diagram_repo.get(processo_id)
-                if source_diagram:
-                    diagram_repo.upsert_from_backup(
-                        {
-                            "processo_id": new_processo_id,
-                            "conteudo": source_diagram.get("conteudo") or {},
-                            "mermaid_cached": source_diagram.get("mermaid_cached"),
-                            "created_at": source_diagram.get("created_at"),
-                            "updated_at": source_diagram.get("updated_at"),
-                        },
-                        auto_commit=False,
-                    )
-                    stats["diagramas_macro"] = 1
+                # Legacy flowchart_v1 diagram state is intentionally NOT
+                # copied — duplication must never produce new legacy rows
+                # (LEGACY_READ_MIGRATE_ONLY; backup/restore is the only
+                # sanctioned restore path for legacy diagram state).
 
                 source_decomp = decomp_repo.get(processo_id)
                 if source_decomp:
@@ -196,23 +181,6 @@ class ProcessoDuplicateService:
                     contexto = source_inst.get("contexto")
                     if isinstance(contexto, dict) and contexto:
                         inst_repo.update_contexto(new_inst_id, contexto, auto_commit=False)
-
-                    inst_diagram = inst_diagram_repo.get(old_inst_id)
-                    if inst_diagram:
-                        inst_diagram_repo.upsert_from_backup(
-                            {
-                                "instancia_id": new_inst_id,
-                                "node_ids": list(inst_diagram.get("node_ids") or []),
-                                "inherit_all": bool(inst_diagram.get("inherit_all", True)),
-                                "include_boundary_edges": bool(
-                                    inst_diagram.get("include_boundary_edges", False)
-                                ),
-                                "created_at": inst_diagram.get("created_at"),
-                                "updated_at": inst_diagram.get("updated_at"),
-                            },
-                            auto_commit=False,
-                        )
-                        stats["escopos_diagrama"] += 1
 
                     inst_decomp = inst_decomp_repo.get(old_inst_id)
                     if inst_decomp:
@@ -245,20 +213,6 @@ class ProcessoDuplicateService:
                     _merge_stats(stats, tree_stats)
 
                     for old_rev_id, new_rev_id in revisao_id_map.items():
-                        rev_diagram = rev_diagram_repo.get(old_rev_id)
-                        if rev_diagram:
-                            rev_diagram_repo.upsert_from_backup(
-                                {
-                                    "revisao_id": new_rev_id,
-                                    "conteudo": rev_diagram.get("conteudo") or {},
-                                    "mermaid_cached": rev_diagram.get("mermaid_cached"),
-                                    "created_at": rev_diagram.get("created_at"),
-                                    "updated_at": rev_diagram.get("updated_at"),
-                                },
-                                auto_commit=False,
-                            )
-                            stats["overlays_diagrama"] += 1
-
                         rev_decomp = rev_decomp_repo.get(old_rev_id)
                         if rev_decomp:
                             rev_decomp_repo.upsert_from_backup(

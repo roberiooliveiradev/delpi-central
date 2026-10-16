@@ -204,7 +204,7 @@ def test_policy_classification_acceptance_set():
         "manage_diagnostic",
         "cancel_task",
         "delete_interaction_message",
-        "import_diagram_bpmn_xml",
+        "migrate_legacy_diagram_to_native_bpmn",
     ):
         assert requires_user_confirmation(cap), cap
     # Unknown capability fails closed.

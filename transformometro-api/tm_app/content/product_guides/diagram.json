@@ -2,44 +2,44 @@
   "schema": "product_guide_v1",
   "id": "diagram",
   "title": "Diagrama do processo",
-  "summary": "A representação visual do fluxo do processo-mestre — o BPMN nativo é a autoridade canônica quando presente; flowchart_v1 é o mapeamento legado (migrável via TÉO); Mermaid é derivado pelo servidor.",
+  "summary": "O BPMN 2.0 nativo (process_bpmn_document) é a autoridade para novos diagramas; flowchart_v1 é o mapeamento legado — somente leitura e fonte de migração; Mermaid é derivado pelo servidor.",
   "authority": "GUIDANCE_NOT_DOMAIN_TRUTH",
-  "purpose": "Ensinar quando o fluxo visual é a feature certa, como editar sem perder semântica e como AS-IS/TO-BE se separam por revisão.",
+  "purpose": "Ensinar quando o fluxo visual é a feature certa, como o modelo BPMN nativo e o legado se relacionam e como AS-IS/TO-BE se separam por revisão.",
   "use_when": [
     "O usuário quer ver ou desenhar o fluxo do processo",
     "É preciso representar sequência, decisões e responsáveis visualmente",
-    "Importar um fluxo BPMN existente como diagrama macro"
+    "O processo tem mapeamento legado que precisa ser lido, analisado ou migrado para BPMN"
   ],
   "do_not_use_when": [
     "O conteúdo é hierarquia de etapas/atividades — isso é decomposition",
     "O conteúdo é explicação/procedimento textual — isso é process_document",
-    "O pedido é histórico de mudanças — isso é timeline"
+    "O pedido é histórico de mudanças — isso é timeline",
+    "O pedido é criar ou editar flowchart_v1 — o legado é somente leitura; novos diagramas nascem no editor BPMN do Portal"
   ],
   "how_to_use": [
-    "flowchart_v1 é o formato do mapeamento legado — quando existe BPMN nativo no processo, ele é a autoridade vigente e o legado é histórico somente leitura",
-    "Mermaid é derivado pelo servidor, nunca fonte canônica",
-    "Antes de criar/editar o legado, consulte diagram_catalog no catálogo vivo para tipos de nó/aresta",
-    "Nunca infira tipos por exemplo ou memória — o catálogo é a authority",
-    "O diagrama macro é do processo; diferenças por revisão usam overlay de revisão",
-    "Escopo por instância usa o scope de instância, não diagrama duplicado",
-    "Migrar o legado para BPMN nativo usa migrate_legacy_diagram_to_native_bpmn (TÉO, confirm_before_act) — ver tópico legacy_bpmn_migration",
-    "Importação BPMN substitui o diagrama macro legado — operação confirm_before_act da superfície antiga; não é o caminho de migração G8"
+    "Novos diagramas são BPMN 2.0 nativos — criação e edição acontecem no editor BPMN do Portal (não pelo TÉO)",
+    "O TÉO não cria nem edita flowchart_v1: legado é READ-only, fonte de migração e histórico",
+    "Mermaid é derivado pelo servidor, nunca fonte canônica nem payload persistível",
+    "Para ler o legado use entity=process_diagram / instance_diagram_scope / revision_diagram_overlay (get)",
+    "Para converter o legado em BPMN nativo use migrate_legacy_diagram_to_native_bpmn — ver tópico legacy_bpmn_migration",
+    "O diagrama macro é do processo; diferenças por revisão usam overlay de revisão (leitura legada)",
+    "Se o usuário pedir um novo fluxo, direcione ao Modelo BPMN do processo no Portal (Criar diagrama BPMN / Importar .bpmn)"
   ],
   "field_guidance": [
     {
       "field": "conteudo.format",
-      "guidance": "Sempre flowchart_v1 — fixo pelo contrato",
+      "guidance": "flowchart_v1 — somente leitura do estado legado existente",
       "contract_ref": "entity_schemas.process_diagram"
     },
     {
-      "field": "conteudo.nodes / edges",
-      "guidance": "Tipos válidos vêm do diagram_catalog do catálogo vivo",
-      "contract_ref": "entity_schemas.process_diagram"
+      "field": "process_bpmn_document",
+      "guidance": "Documento BPMN nativo — autoridade vigente; edição via Portal",
+      "contract_ref": "entity_schemas.process_bpmn_document"
     },
     {
-      "field": "revision overlay",
-      "guidance": "Delta AS-IS→TO-BE por revisão sobre o macro — formato próprio",
-      "contract_ref": "entity_schemas.revision_diagram_overlay"
+      "field": "migration",
+      "guidance": "migrate_legacy_diagram_to_native_bpmn converte legado em BPMN nativo",
+      "contract_ref": "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn"
     }
   ],
   "quality_rules": [
@@ -51,7 +51,8 @@
   ],
   "common_mistakes": [
     "Desenhar no documento textual o que é fluxo — ou vice-versa",
-    "Inventar tipos de nó sem consultar o diagram_catalog",
+    "Tentar criar/editar flowchart_v1 — o legado está bloqueado para escrita (LEGACY_DIAGRAM_READ_ONLY)",
+    "Persistir Mermaid como estado — Mermaid é sempre derivado",
     "Duplicar o diagrama macro para representar um cenário — use overlay",
     "Confundir diagrama (fluxo) com decomposição (hierarquia)"
   ],
@@ -66,7 +67,6 @@
     "process_diagram",
     "revision_diagram_overlay",
     "instance_diagram_scope",
-    "import_diagram_bpmn_xml",
     "migrate_legacy_diagram_to_native_bpmn",
     "process_bpmn_document",
     "analyze"
@@ -75,26 +75,25 @@
     "entity_schemas.process_diagram",
     "entity_schemas.revision_diagram_overlay",
     "entity_schemas.process_bpmn_document",
-    "capability_surface.workflows.import_diagram_bpmn_xml",
     "capability_surface.workflows.migrate_legacy_diagram_to_native_bpmn"
   ],
   "source_refs": [
     {
-      "ref": "entity_schemas.process_diagram — flowchart_v1; Mermaid server-derived",
+      "ref": "entity_schemas.process_diagram — flowchart_v1 READ ONLY",
       "classification": "PROVEN"
     },
     {
-      "ref": "get_catalog.diagram_catalog — tipos canônicos de nó/aresta",
+      "ref": "get_catalog.diagram_catalog — tipos canônicos de nó/aresta do legado",
       "classification": "PROVEN"
     },
     {
-      "ref": "capability_descriptors.import_diagram_bpmn_xml — confirm_before_act",
+      "ref": "LEGACY_DIAGRAM_READ_ONLY — writes no legado bloqueados por política",
       "classification": "PROVEN"
     },
     {
-      "ref": "G8 — flowchart_v1 reclassificado como LEGACY; BPMN nativo = autoridade vigente após migração",
+      "ref": "BPMN nativo = autoridade para novos diagramas (Portal authority)",
       "classification": "PROVEN"
     }
   ],
-  "agent_guidance": "'Desenhe/documente o fluxo' → diagram, não process_document. Para editar o legado: ler diagram_catalog primeiro; overlay de revisão para TO-BE. Para converter o legado em BPMN nativo: tópico legacy_bpmn_migration (migrate_legacy_diagram_to_native_bpmn, nunca import_diagram_bpmn_xml)."
+  "agent_guidance": "Desenhe/documente o fluxo → diagram, não process_document. Novo diagrama → editor BPMN do Portal (TÉO não cria BPMN nem legado). Legado existente → leitura/análise e migração via legacy_bpmn_migration (migrate_legacy_diagram_to_native_bpmn)."
 }

@@ -148,13 +148,17 @@ def test_mermaid_remains_derived_in_catalog(tm_client):
     ].lower() or "vista" in conventions["source_of_truth"].lower()
 
 
-def test_process_diagram_schema_still_requires_processo_id_and_conteudo():
+def test_process_diagram_schema_is_read_only_legacy_notice():
+    """flowchart_v1 is LEGACY READ ONLY — the schema advertises no writable fields."""
     guide = build_registration_guide()
     schema = guide["entity_schemas"]["process_diagram"]
-    assert schema["required"] == ["processo_id", "conteudo"]
+    assert schema.get("read_only") is True
+    assert schema["required"] == []
+    assert schema["optional"] == []
     notes = " ".join(schema["notes"])
+    assert "LEGACY_DIAGRAM_READ_ONLY" in notes
     assert "diagram_catalog" in notes
-    assert "start/process/end" in notes
+    assert "migrate_legacy_diagram_to_native_bpmn" in notes
 
 
 def test_registration_guide_does_not_duplicate_node_type_literals():

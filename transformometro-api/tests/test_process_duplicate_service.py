@@ -11,11 +11,8 @@ from tm_app.application.services.process_duplicate_service import (
 @patch("tm_app.application.services.process_duplicate_service.RevisaoEvidenceStorage")
 @patch("tm_app.application.services.process_duplicate_service.RevisaoEvidenceRepository")
 @patch("tm_app.application.services.process_duplicate_service.RevisaoDecomposicaoOverlayRepository")
-@patch("tm_app.application.services.process_duplicate_service.RevisaoDiagramOverlayRepository")
 @patch("tm_app.application.services.process_duplicate_service.InstanciaDecomposicaoEscopoRepository")
-@patch("tm_app.application.services.process_duplicate_service.InstanciaDiagramEscopoRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDecomposicaoRepository")
-@patch("tm_app.application.services.process_duplicate_service.ProcessoDiagramRepository")
 @patch("tm_app.application.services.process_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoInstanciaRepository")
 @patch("tm_app.application.services.process_duplicate_service.VinculoRepository")
@@ -31,11 +28,8 @@ def test_duplicate_copies_full_process_tree(
     mock_vin_cls,
     mock_inst_cls,
     mock_conn_factory,
-    mock_diagram_cls,
     mock_decomp_cls,
-    mock_inst_diagram_cls,
     mock_inst_decomp_cls,
-    mock_rev_diagram_cls,
     mock_rev_decomp_cls,
     mock_evidence_cls,
     mock_storage_cls,
@@ -50,11 +44,8 @@ def test_duplicate_copies_full_process_tree(
     inv_repo = mock_inv_cls.return_value
     vin_repo = mock_vin_cls.return_value
     inst_repo = mock_inst_cls.return_value
-    diagram_repo = mock_diagram_cls.return_value
     decomp_repo = mock_decomp_cls.return_value
-    inst_diagram_repo = mock_inst_diagram_cls.return_value
     inst_decomp_repo = mock_inst_decomp_cls.return_value
-    rev_diagram_repo = mock_rev_diagram_cls.return_value
     rev_decomp_repo = mock_rev_decomp_cls.return_value
     evidence_repo = mock_evidence_cls.return_value
     evidence_storage = mock_storage_cls.return_value
@@ -79,13 +70,7 @@ def test_duplicate_copies_full_process_tree(
         "codigo_processo": "PROC-0099",
         "nome_processo": "Processo A (cópia)",
     }
-    diagram_repo.get.return_value = {"conteudo": {"nodes": []}, "mermaid_cached": "graph TD"}
     decomp_repo.get.return_value = {"conteudo": {"nodes": []}}
-    inst_diagram_repo.get.return_value = {
-        "node_ids": ["n1"],
-        "inherit_all": False,
-        "include_boundary_edges": True,
-    }
     inst_decomp_repo.get.return_value = {
         "node_ids": ["pk1"],
         "inherit_all": False,
@@ -115,7 +100,6 @@ def test_duplicate_copies_full_process_tree(
             "ativo": True,
         }
     ]
-    rev_diagram_repo.get.return_value = {"conteudo": {"node_overrides": {}}, "mermaid_cached": None}
     rev_decomp_repo.get.return_value = {"conteudo": {"node_overrides": {}}}
     evidence_repo.list_by_revisao.return_value = [
         {
@@ -136,16 +120,17 @@ def test_duplicate_copies_full_process_tree(
     assert result["copiados"]["medicoes"] == 1
     assert result["copiados"]["investimentos"] == 1
     assert result["copiados"]["vinculos"] == 1
-    assert result["copiados"]["diagramas_macro"] == 1
+    # Native BPMN Convergence: duplication must produce ZERO legacy
+    # flowchart_v1 state — source rows may exist but are never copied.
+    assert result["copiados"]["diagramas_macro"] == 0
     assert result["copiados"]["decomposicao"] == 1
-    assert result["copiados"]["escopos_diagrama"] == 1
+    assert result["copiados"]["escopos_diagrama"] == 0
     assert result["copiados"]["escopos_decomposicao"] == 1
-    assert result["copiados"]["overlays_diagrama"] == 1
+    assert result["copiados"]["overlays_diagrama"] == 0
     assert result["copiados"]["overlays_decomposicao"] == 1
     assert result["copiados"]["evidencias"] == 1
     conn.commit.assert_called_once()
     inst_repo.update_contexto.assert_called_once()
-    diagram_repo.upsert_from_backup.assert_called_once()
     decomp_repo.upsert_from_backup.assert_called_once()
     evidence_storage.copy_file.assert_called_once()
 
@@ -153,13 +138,11 @@ def test_duplicate_copies_full_process_tree(
 @patch("tm_app.application.services.process_duplicate_service.RevisaoEvidenceStorage")
 @patch("tm_app.application.services.process_duplicate_service.plugins_connection")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoInstanciaRepository")
-@patch("tm_app.application.services.process_duplicate_service.ProcessoDiagramRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoDecomposicaoRepository")
 @patch("tm_app.application.services.process_duplicate_service.ProcessoRepository")
 def test_duplicate_allows_process_without_melhorias(
     mock_proc_cls,
     mock_decomp_cls,
-    mock_diagram_cls,
     mock_inst_cls,
     mock_conn_factory,
     _mock_storage_cls,
@@ -170,7 +153,6 @@ def test_duplicate_allows_process_without_melhorias(
 
     proc_repo = mock_proc_cls.return_value
     inst_repo = mock_inst_cls.return_value
-    diagram_repo = mock_diagram_cls.return_value
     decomp_repo = mock_decomp_cls.return_value
 
     proc_repo.get.return_value = {
@@ -183,12 +165,13 @@ def test_duplicate_allows_process_without_melhorias(
         "processo_id": "p-new",
         "nome_processo": "Processo vazio (cópia)",
     }
-    diagram_repo.get.return_value = {"conteudo": {"nodes": []}, "mermaid_cached": None}
 
     result = ProcessoDuplicateService().duplicate("p-old")
 
     assert result["copiados"]["melhorias"] == 0
-    assert result["copiados"]["diagramas_macro"] == 1
+    assert result["copiados"]["diagramas_macro"] == 0
+    assert result["copiados"]["escopos_diagrama"] == 0
+    assert result["copiados"]["overlays_diagrama"] == 0
     conn.commit.assert_called_once()
 
 

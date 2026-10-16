@@ -270,7 +270,7 @@ Owner da migração: **Transformômetro** — legado (`processo_diagramas`, `ins
 - **Ambiguidades nunca resolvidas silenciosamente:** `ambiguity_id` + opções explícitas; resolução via `resolutions` em novo PREPARE (proposal nunca é mutado).
 - **Governança TÉO:** capability `migrate_legacy_diagram_to_native_bpmn` — PREPARE read-only sela XML+checksum+`legacy_source_fingerprint` (`confirm_before_act`); ACT só via `commit_proposal`, revalida AuthZ+fingerprint+XOR+checksum, cria doc + revisão 1 `origin='migration'` + linha `processo_bpmn_migrations`, read-back autoritativo, compensação fail-closed.
 - **Bloqueios provados:** `NATIVE_BPMN_ALREADY_EXISTS`, `dual_mode_forbidden`, `LEGACY_DIAGRAM_EMPTY`, `proposal_stale`, candidato `AMBIGUOUS`/`BLOCKED`, BPMN inválido (`shared/bpmn_validation`).
-- **`import_diagram_bpmn_xml` não foi reutilizado** — continua escrevendo no legado macro; a capability nova é a única via TÉO para BPMN nativo a partir do legado.
+- **`import_diagram_bpmn_xml` REMOVIDO (Native BPMN Convergence)** — escrevia flowchart_v1 legado; legado é READ ONLY e `migrate_legacy_diagram_to_native_bpmn` é a única via TÉO para BPMN nativo a partir do legado.
 - **UI:** CTA "Migrar legado para BPMN nativo" só com `legacy && !native && !external`; wizard read-only (editor compartilhado NÃO é o preview); pós-migração o nativo é a autoridade vigente e o legado vira seção colapsada read-only — nunca "visão vigente". Mermaid permanece derivado legado.
 - **READ:** `record_read(entity=process_bpmn_document)` inclui `revisions` (origin=migration na R1) + `migration` (fingerprint, checksum, ator, source_summary).
 

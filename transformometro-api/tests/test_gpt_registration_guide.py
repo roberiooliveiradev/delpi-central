@@ -44,7 +44,7 @@ def test_registration_flow_routes_only_unsupported_followups_to_ui():
     )
     actions = " ".join(followup["actions"])
 
-    assert "Diagrams and WBS/decomposition may be persisted via GPT" in actions
+    assert "WBS/decomposition may be persisted via GPT" in actions
     assert "gpt_evidence_read" in actions
     assert "gpt_prepare_evidence_change" in actions
     assert "gpt_prepare_governed_operation" in actions

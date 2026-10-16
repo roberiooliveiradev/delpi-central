@@ -7,19 +7,14 @@ import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { uploadRevisaoEvidence } from "../../../data/api/transformometroEvidenceApi";
 import {
   fetchRevisaoDiagramMerged,
-  fetchRevisaoDiagramOverlay,
-  saveRevisaoDiagramOverlay,
 } from "../../../data/api/transformometroDiagramApi";
 import {
   FieldLabel,
   emptyFlowchart,
-  emptyOverlay,
-  flowToOverlayDraft,
   flowchartToMermaid,
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
   DiagramLayoutProvider,
-  type FlowchartOverlayV1,
   type FlowchartV1,
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
@@ -37,8 +32,6 @@ import { DS_GHOST_BTN } from "../../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
-  cenarioTipo?: string;
-  readOnly?: boolean;
   embeddedInCard?: boolean;
   /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
   variant?: "embedded" | "page";
@@ -55,9 +48,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 
 export function RevisaoDiagramSection({
   revisaoId,
-  cenarioTipo,
   getAccessToken,
-  readOnly = false,
   embeddedInCard = false,
   variant = "embedded",
   chromeLeading,
@@ -67,11 +58,8 @@ export function RevisaoDiagramSection({
   onReload,
 }: Props) {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [merged, setMerged] = useState<MergedRevisaoDiagram | null>(null);
   const [editable, setEditable] = useState<FlowchartV1>(emptyFlowchart());
-  const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
-  const [flowchartBase, setFlowchartBase] = useState<FlowchartV1>(emptyFlowchart());
   const [showDiff, setShowDiff] = useState(false);
   const [mermaidPreviewOpen, setMermaidPreviewOpen] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
@@ -96,14 +84,9 @@ export function RevisaoDiagramSection({
     }
     onError(null);
     try {
-      const [mergedData, overlayData] = await Promise.all([
-        fetchRevisaoDiagramMerged(revisaoId, getAccessToken),
-        fetchRevisaoDiagramOverlay(revisaoId, getAccessToken),
-      ]);
+      const mergedData = await fetchRevisaoDiagramMerged(revisaoId, getAccessToken);
       setMerged(mergedData);
       setEditable(mergedData.flowchart ?? emptyFlowchart());
-      setFlowchartBase(mergedData.flowchart_base ?? mergedData.flowchart ?? emptyFlowchart());
-      setOverlayDraft(overlayData.conteudo ?? emptyOverlay());
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar diagrama da revisão.");
     } finally {
@@ -119,26 +102,6 @@ export function RevisaoDiagramSection({
     if (!resyncVersion) return;
     void load({ silent: true });
   }, [resyncVersion, load]);
-
-  async function handleSave() {
-    setSaving(true);
-    onError(null);
-    try {
-      const defaultHighlight =
-        cenarioTipo?.toLowerCase() === "baseline" ? ("asis" as const) : ("tobe" as const);
-      const overlay = flowToOverlayDraft(flowchartBase, editable, overlayDraft, {
-        defaultHighlight,
-      });
-      overlay.modo = "partial";
-      await saveRevisaoDiagramOverlay(revisaoId, overlay, getAccessToken);
-      await load();
-      onReload?.();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao salvar overlay do diagrama.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function exportPng(asEvidence = false) {
     if (!editorRef.current) {
@@ -179,44 +142,25 @@ export function RevisaoDiagramSection({
   const actionBtnClass = isPage
     ? `${DS_GHOST_BTN} delpi-ui-bpmn-editor__chrome-action-btn`
     : DS_GHOST_BTN;
-  const primaryBtnClass = isPage
-    ? "ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
-    : "ds-primary-btn";
 
   const diagramActions = (
-    <>
-      {!readOnly ? (
-        <button
-          type="button"
-          className={primaryBtnClass}
-          disabled={saving}
-          onClick={() => void handleSave()}
-        >
-          {saving ? "Salvando…" : "Salvar diagrama da revisão"}
-        </button>
-      ) : null}
-      <DiagramIoMenu
-        triggerClassName={actionBtnClass}
-        items={[
-          {
-            id: "export-png",
-            label: "Exportar PNG",
-            icon: Download,
-            onSelect: () => void exportPng(false),
-          },
-          ...(!readOnly
-            ? [
-                {
-                  id: "export-evidence",
-                  label: "PNG como evidência",
-                  icon: ImagePlus,
-                  onSelect: () => void exportPng(true),
-                },
-              ]
-            : []),
-        ]}
-      />
-    </>
+    <DiagramIoMenu
+      triggerClassName={actionBtnClass}
+      items={[
+        {
+          id: "export-png",
+          label: "Exportar PNG",
+          icon: Download,
+          onSelect: () => void exportPng(false),
+        },
+        {
+          id: "export-evidence",
+          label: "PNG como evidência",
+          icon: ImagePlus,
+          onSelect: () => void exportPng(true),
+        },
+      ]}
+    />
   );
 
   const editorBody = (
@@ -224,26 +168,7 @@ export function RevisaoDiagramSection({
       <FlowchartEditor
         ref={editorRef}
         value={displayFlowchart}
-        onChange={
-          readOnly
-            ? undefined
-            : (next) => {
-                if (!showDiff || !diff?.removed?.length) {
-                  setEditable(next);
-                  return;
-                }
-                // Fantasmas do diff não entram no estado editável.
-                const removed = new Set(diff.removed);
-                setEditable({
-                  ...next,
-                  nodes: next.nodes.filter((node) => !removed.has(node.id)),
-                  edges: (next.edges ?? []).filter(
-                    (edge) => !removed.has(edge.from) && !removed.has(edge.to),
-                  ),
-                });
-              }
-        }
-        readOnly={readOnly}
+        readOnly
         diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         chromeLeading={isPage ? chromeLeading : undefined}
         chromeNotices={isPage ? chromeNotices : undefined}
@@ -290,25 +215,20 @@ export function RevisaoDiagramSection({
         />
       ) : null}
 
-      {!readOnly ? (
-        <p className="ds-hint tm-decomposition-revisao__edit-hint">
-          {refLabel ? (
-            <>
-              Parte do diagrama da revisão de referência <strong>{refLabel}</strong>. O{" "}
-              <strong>diagrama composto</strong> («agora») no processo reflete as revisões vigentes.
-            </>
-          ) : (
-            <>
-              Edite o fluxo no escopo desta melhoria. Sem referência, a âncora é o diagrama macro.
-            </>
-          )}
-        </p>
-      ) : null}
+      <p className="ds-hint">
+        {refLabel ? (
+          <>
+            Overlay legado somente leitura — parte do diagrama da revisão de referência{" "}
+            <strong>{refLabel}</strong>.
+          </>
+        ) : (
+          <>Overlay legado somente leitura sobre o mapa macro do processo.</>
+        )}
+      </p>
 
       {merged.seeded_from_reference ? (
         <p className="ds-hint" role="status">
-          Overlay ainda vazio — diagrama iniciado a partir da referência. Ao salvar, o delta fica
-          absoluto em relação ao macro.
+          Overlay legado vazio — diagrama exibido a partir da referência.
         </p>
       ) : null}
 

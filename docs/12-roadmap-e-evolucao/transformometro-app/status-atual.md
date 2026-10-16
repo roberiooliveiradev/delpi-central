@@ -1,6 +1,6 @@
 # Status atual — Transformômetro
 
-> **Snapshot jul/2026.** Não é a fonte da evolução do Portal Transforma+ nem das contagens de TÉO. Sequência: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). No código, MCP tem 33 tools e GPT Actions tem 21 operationIds importáveis; 20/32 são históricos. A frase «editor Mermaid bidirecional» abaixo não foi revalidada (TO_INVENTORY): o diagrama canônico continua `flowchart_v1`.
+> **Snapshot jul/2026.** Não é a fonte da evolução do Portal Transforma+ nem das contagens de TÉO. Sequência: [ARCHITECTURE-RUNWAY.md](./ARCHITECTURE-RUNWAY.md). No código, MCP tem 33 tools e GPT Actions tem 21 operationIds importáveis; 20/32 são históricos. A frase «editor Mermaid bidirecional» abaixo não foi revalidada (TO_INVENTORY): o diagrama canônico continua `flowchart_v1`. **SUPERSEDED (Native BPMN Convergence):** novos diagramas são BPMN 2.0 nativos (`process_bpmn_document`); `flowchart_v1`/scope/overlay viraram LEGADO READ ONLY — fonte de migração apenas.
 
 Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de revisão; duplicar revisão; matriz V038; V035 referência de comparação; editor Mermaid bidirecional; Playbook 20; UI SelectField + modal)
 

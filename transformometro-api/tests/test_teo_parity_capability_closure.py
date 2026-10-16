@@ -5,8 +5,9 @@ Covers the parity wave that closed the catalog gaps:
   compute, diagram/BPMN, impact-effort matrix, revision merges)
 - meeting_minute_workflow refuse action (authenticated refusal)
 - instance contexto write via prepare_record_change
-- update_signature_profile / import_diagram_bpmn_xml governed operations
+- update_signature_profile governed operation
 - signature_profile read folded into get_my_context
+- legacy flowchart_v1 write surface removed (native BPMN convergence)
 - exposure_classification accounting: parity_gap == 0
 """
 
@@ -143,7 +144,9 @@ def test_closed_gap_justifications_reference_real_surface() -> None:
     assert "changes.contexto" in exposed["instance.contexto"]
     assert "data.contexto" not in exposed["instance.contexto"]
     assert "update_signature_profile" in exposed["signature_profile"]
-    assert "import_diagram_bpmn_xml" in exposed["diagram.bpmn_xml"]
+    assert "diagram_bpmn_xml" in exposed["diagram.bpmn_xml"]
+    assert "migrate_legacy_diagram_to_native_bpmn" in exposed["diagram.bpmn_xml"]
+    assert "import_diagram_bpmn_xml" not in exposed["diagram.bpmn_xml"]
 
 
 def test_instance_contexto_published_in_entity_schema() -> None:
@@ -180,7 +183,8 @@ def test_mcp_governed_operation_enum_projects_canonical() -> None:
     schema = _input_schema(_tools()["prepare_governed_operation"])
     enum = set(schema["properties"]["action"]["enum"])
     assert enum == set(GOVERNED_OPERATION_ACTION_TO_CAPABILITY)
-    assert {"update_signature_profile", "import_diagram_bpmn_xml"} <= enum
+    assert {"update_signature_profile", "migrate_legacy_diagram_to_native_bpmn"} <= enum
+    assert "import_diagram_bpmn_xml" not in enum
 
 
 # ------------------------------------------------------- capability registry
@@ -191,11 +195,13 @@ def test_new_governed_operations_are_write_capabilities() -> None:
         "update_signature_profile"
     ] == "update_signature_profile"
     assert GOVERNED_OPERATION_ACTION_TO_CAPABILITY[
-        "import_diagram_bpmn_xml"
-    ] == "import_diagram_bpmn_xml"
-    assert {"update_signature_profile", "import_diagram_bpmn_xml"} <= (
+        "migrate_legacy_diagram_to_native_bpmn"
+    ] == "migrate_legacy_diagram_to_native_bpmn"
+    assert "import_diagram_bpmn_xml" not in GOVERNED_OPERATION_ACTION_TO_CAPABILITY
+    assert {"update_signature_profile", "migrate_legacy_diagram_to_native_bpmn"} <= (
         WRITE_CAPABILITIES
     )
+    assert "import_diagram_bpmn_xml" not in WRITE_CAPABILITIES
 
 
 def test_refuse_is_meeting_minute_workflow_capability() -> None:
@@ -218,9 +224,9 @@ def test_new_governed_operation_policies() -> None:
         execution_policy_for_capability("update_signature_profile")
         == AUTO_ACT
     )
-    # Replaces the whole macro diagram — consequential overwrite.
+    # Legacy → native BPMN migration — consequential authority transition.
     assert (
-        execution_policy_for_capability("import_diagram_bpmn_xml")
+        execution_policy_for_capability("migrate_legacy_diagram_to_native_bpmn")
         == CONFIRM_BEFORE_ACT
     )
 
@@ -324,42 +330,15 @@ def test_signature_profile_auto_act_chain() -> None:
         _reset_context(tokens)
 
 
-def test_bpmn_import_requires_confirmation() -> None:
+def test_bpmn_import_removed_from_governed_operations() -> None:
+    """import_diagram_bpmn_xml is gone — BPMN never converts INTO legacy."""
     tokens = _user_context()
     try:
-        validation = {
-            "processo_id": "p1",
-            "current_diagram": {"conteudo": {"nodes": []}},
-            "parsed_nodes": 3,
-            "parsed_edges": 2,
-        }
-        with patch.object(
-            tool_bridge._dispatch,
-            "validate_bpmn_import",
-            return_value=validation,
-        ), patch.object(
-            tool_bridge._dispatch,
-            "read_process_diagram",
-            return_value={"conteudo": {"nodes": [{"id": "n"}]}},
-        ), patch.object(
-            tool_bridge._dispatch,
-            "import_diagram_bpmn_xml",
-            return_value={"verified": True, "nodes": 3},
-        ):
-            prep = tool_bridge.tool_prepare_governed_operation(
-                action="import_diagram_bpmn_xml",
-                processo_id="p1",
-                xml="<definitions/>",
-            )
-            data = _payload(prep)["data"]
-            assert data["persisted"] is False
-            assert (
-                data["proposal"]["execution_policy"] == "confirm_before_act"
-            )
-            denied = tool_bridge.tool_commit_proposal(
-                data["proposal"]["handle"], confirmation=False
-            )
-            assert _payload(denied)["success"] is False
+        result = tool_bridge.tool_prepare_governed_operation(
+            action="import_diagram_bpmn_xml",
+            processo_id="p1",
+        )
+        assert _payload(result)["success"] is False
     finally:
         _reset_context(tokens)
 

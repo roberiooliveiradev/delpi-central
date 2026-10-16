@@ -1,17 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { EditorChromeNotice } from "@delpi/plugin-ui/index";
 
 import type { AppProps } from "../../App";
-import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/sections/InstanciaDiagramEscopoSection";
 import { RevisaoDiagramSection } from "../../components/diagram/sections/RevisaoDiagramSection";
 import { StatusAlerts } from "../../components/StatusAlerts";
-import type { CollaborationEntityType } from "../../data/api/transformometroCollaborationApi";
-import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
-import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import {
   buildInstanciaSectionHref,
   buildProcessoSecondaryHref,
@@ -28,29 +24,10 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
 };
 
-const KIND_CONFIG: Record<
-  DiagramEditorKind,
-  {
-    title: string;
-    sectionKey: string;
-    entityType: CollaborationEntityType;
-  }
-> = {
-  processo: {
-    title: "Editar diagrama macro",
-    sectionKey: "diagrama_macro",
-    entityType: "processo",
-  },
-  instancia: {
-    title: "Editar escopo no diagrama",
-    sectionKey: "diagrama_escopo",
-    entityType: "processo_instancia",
-  },
-  revisao: {
-    title: "Editar diagrama da revisão",
-    sectionKey: "diagrama_revisao",
-    entityType: "revisao",
-  },
+const KIND_CONFIG: Record<DiagramEditorKind, { title: string }> = {
+  processo: { title: "Diagrama macro legado" },
+  instancia: { title: "Escopo de diagrama legado" },
+  revisao: { title: "Diagrama de revisão legado" },
 };
 
 function backHref(input: {
@@ -73,6 +50,11 @@ function backHref(input: {
   return buildProcessoSecondaryHref(input.processoId, "fluxo");
 }
 
+/**
+ * Deep-link legado (`/diagram/edit`) — agora viewer somente leitura.
+ * flowchart_v1/scope/overlay não aceitam mais writes (LEGACY_DIAGRAM_READ_ONLY);
+ * novos diagramas são BPMN nativos criados no detalhe do processo.
+ */
 export function DiagramEditorPage({
   getAccessToken,
   kind,
@@ -82,8 +64,6 @@ export function DiagramEditorPage({
   onNavigate,
 }: Props) {
   const config = KIND_CONFIG[kind];
-  const entityId =
-    kind === "processo" ? processoId : kind === "instancia" ? instanciaId ?? "" : revisaoId ?? "";
   const detailHref = useMemo(
     () =>
       backHref({
@@ -96,77 +76,20 @@ export function DiagramEditorPage({
   );
 
   const [error, setError] = useState<string | null>(null);
-  const [lockReady, setLockReady] = useState(false);
-  const [lockFailed, setLockFailed] = useState(false);
-
-  const sectionEdit = useCollaborativeSectionEdit({
-    entityType: config.entityType,
-    entityId,
-    getAccessToken,
-    enabled: Boolean(entityId),
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    setLockReady(false);
-    setLockFailed(false);
-    void (async () => {
-      const acquired = await sectionEdit.startEdit(config.sectionKey);
-      if (cancelled) return;
-      if (acquired === false) {
-        setLockFailed(true);
-        setLockReady(true);
-        return;
-      }
-      setLockReady(true);
-    })();
-    return () => {
-      cancelled = true;
-      sectionEdit.cancelEdit(config.sectionKey);
-    };
-    // Intencional: adquirir lock uma vez ao montar / trocar entidade.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sectionEdit.startEdit/cancelEdit estáveis via hook
-  }, [config.sectionKey, entityId]);
-
-  function goBack() {
-    sectionEdit.cancelEdit(config.sectionKey);
-    onNavigate(detailHref);
-  }
-
-  useUnsavedChangesGuard({
-    id: `diagram:${kind}:${entityId}`,
-    editing: lockReady && !lockFailed && sectionEdit.isEditing(config.sectionKey),
-    dirty: false,
-    onSave: async () => undefined,
-    onDiscard: () => sectionEdit.cancelEdit(config.sectionKey),
-  });
 
   const chromeLeading = {
-    onBack: goBack,
+    onBack: () => onNavigate(detailHref),
     backLabel: "Voltar",
     title: config.title,
   };
 
   const chromeNotices = (
-    <>
-      <CollaborativePresenceBanner
-        presence={sectionEdit.presence}
-        lockError={sectionEdit.lockError}
-        realtimeNotice={sectionEdit.realtimeNotice}
-        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-        showViewers={false}
-        layout="items"
-      />
-      {lockFailed ? (
-        <EditorChromeNotice tone="warning">
-          Outro usuário está editando este diagrama. Você pode visualizar em somente leitura ou
-          voltar ao detalhe.
-        </EditorChromeNotice>
-      ) : null}
-    </>
+    <EditorChromeNotice tone="info">
+      Mapeamento legado — somente leitura. Novos diagramas são BPMN nativos:
+      crie ou importe pelo card «Modelo BPMN» no detalhe do processo.
+    </EditorChromeNotice>
   );
 
-  const readOnly = lockFailed || !lockReady;
   const missingIds =
     (kind === "instancia" && !instanciaId) || (kind === "revisao" && !revisaoId);
 
@@ -182,19 +105,17 @@ export function DiagramEditorPage({
         />
 
         {missingIds ? (
-          <p className="ds-hint">Identificadores incompletos para abrir o editor.</p>
+          <p className="ds-hint">Identificadores incompletos para abrir o diagrama.</p>
         ) : (
-          <div className="tm-diagram-editor-page__canvas" aria-busy={!lockReady}>
+          <div className="tm-diagram-editor-page__canvas">
             {kind === "processo" ? (
               <ProcessoDiagramSection
                 variant="page"
                 chromeLeading={chromeLeading}
                 chromeNotices={chromeNotices}
-                readOnly={readOnly}
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
               />
             ) : null}
             {kind === "instancia" && instanciaId ? (
@@ -202,12 +123,10 @@ export function DiagramEditorPage({
                 variant="page"
                 chromeLeading={chromeLeading}
                 chromeNotices={chromeNotices}
-                readOnly={readOnly}
                 processoId={processoId}
                 instanciaId={instanciaId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
               />
             ) : null}
             {kind === "revisao" && revisaoId ? (
@@ -215,11 +134,9 @@ export function DiagramEditorPage({
                 variant="page"
                 chromeLeading={chromeLeading}
                 chromeNotices={chromeNotices}
-                readOnly={readOnly}
                 revisaoId={revisaoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
               />
             ) : null}
           </div>

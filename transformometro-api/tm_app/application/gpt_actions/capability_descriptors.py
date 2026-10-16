@@ -275,24 +275,6 @@ def _canonical_catalog() -> dict[str, Any]:
             "read_back_policy": "authoritative",
         },
         {
-            "id": "import_diagram_bpmn_xml",
-            "kind": "workflow",
-            "owner": "transformometro-api",
-            "description": (
-                "Import BPMN XML text as the process macro diagram "
-                "(replaces current diagram — text transport, not binary)."
-            ),
-            "read_write": "WRITE",
-            "prepare_operation": "prepare_governed_operation",
-            "action": "import_diagram_bpmn_xml",
-            "commit_via": "commit_proposal",
-            "confirmation_requirement": True,
-            "confirmation_policy": confirmation_kind_for_workflow(
-                "import_diagram_bpmn_xml"
-            ),
-            "read_back_policy": "authoritative",
-        },
-        {
             "id": "migrate_legacy_diagram_to_native_bpmn",
             "kind": "workflow",
             "owner": "transformometro-api",
@@ -696,10 +678,11 @@ def _canonical_catalog() -> dict[str, Any]:
                 },
                 {
                     "id": "diagram.bpmn_xml",
-                    "via": "export via analyze view diagram_bpmn_xml "
-                    "(FlowchartBpmnXmlService.export_xml — text); import via "
-                    "prepare_governed_operation action=import_diagram_bpmn_xml "
-                    "(confirm_before_act — replaces macro diagram)",
+                    "via": "READ-ONLY export via analyze view diagram_bpmn_xml "
+                    "(FlowchartBpmnXmlService.export_xml — text). Legacy "
+                    "flowchart_v1 writes stopped: native BPMN import/edit is "
+                    "Portal authority; legacy converts only via "
+                    "migrate_legacy_diagram_to_native_bpmn.",
                     "surfaces": ["portal_http", "gpt_actions", "mcp"],
                 },
                 {

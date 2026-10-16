@@ -400,14 +400,14 @@ def openapi_record_data_properties() -> dict[str, Any]:
         "additionalProperties": True,
         "properties": {},
         "x-delpi-gpt-opaque-object": True,
-        "description": "Document payload (diagram flowchart or decomposition tr"
+        "description": "Document payload (decomposition tree; legacy diagrams are read-only)"
     },
     "node_ids": {
         "type": "array",
         "items": {
             "type": "string"
         },
-        "description": "Scope node ids for instance diagram/decomposition scope"
+        "description": "Scope node ids for instance decomposition scope"
     },
     "inherit_all": {
         "type": "boolean"

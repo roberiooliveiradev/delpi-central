@@ -198,10 +198,6 @@ from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
     DecompositionWriteService,
 )
-from tm_app.application.services.diagram_write_service import (
-    DiagramWriteError,
-    DiagramWriteService,
-)
 from tm_app.application.services.process_activity_touch import touch_processo_updated_at
 from tm_app.application.services.process_setup_stats_service import ProcessoSetupStatsService
 from tm_app.application.services.user_signature_service import UserSignatureService
@@ -266,7 +262,6 @@ class GptActionsDispatchService:
         self._recalc_hook = DashboardRecalcHookService()
         self._minutes = MeetingMinutesService()
         self._process_docs = ProcessDocumentUseCases(ProcessDocumentRepository())
-        self._diagram_writes = DiagramWriteService()
         self._decomp_writes = DecompositionWriteService()
         # Same canonical use cases as the Portal HTTP surface (task_routes /
         # interaction_room_routes) — no duplicated domain rules.
@@ -1567,9 +1562,6 @@ class GptActionsDispatchService:
             GptEntity.DECOMPOSITION_TREE,
             GptEntity.INSTANCE_DECOMPOSITION_SCOPE,
             GptEntity.REVISION_DECOMPOSITION_OVERLAY,
-            GptEntity.PROCESS_DIAGRAM,
-            GptEntity.INSTANCE_DIAGRAM_SCOPE,
-            GptEntity.REVISION_DIAGRAM_OVERLAY,
         }:
             # create == upsert for document entities
             parent_id = self._document_parent_id(entity, data)
@@ -1844,9 +1836,6 @@ class GptActionsDispatchService:
             GptEntity.DECOMPOSITION_TREE,
             GptEntity.INSTANCE_DECOMPOSITION_SCOPE,
             GptEntity.REVISION_DECOMPOSITION_OVERLAY,
-            GptEntity.PROCESS_DIAGRAM,
-            GptEntity.INSTANCE_DIAGRAM_SCOPE,
-            GptEntity.REVISION_DIAGRAM_OVERLAY,
         }:
             data_out, message, _status = self._upsert_document(
                 request, entity, rid, data
@@ -2609,77 +2598,6 @@ class GptActionsDispatchService:
             "verified": str(read_back.get("display_name") or "") == name,
         }
 
-    def read_process_diagram(self, request: Request, processo_id: str) -> dict[str, Any]:
-        """Current macro diagram row — used for proposal fingerprint/read-back."""
-        return ProcessoDiagramRepository().get(str(processo_id or "")) or {}
-
-    def validate_bpmn_import(
-        self, request: Request, *, processo_id: str, xml: str
-    ) -> dict[str, Any]:
-        """PREPARE-side validation for import_diagram_bpmn_xml.
-
-        AuthZ + existence + dry XML→flowchart parse. Never persists; ACT
-        re-runs the same parse and saves through DiagramWriteService.
-        """
-        pid = str(processo_id or "").strip()
-        if not pid:
-            raise GptActionsError("processo_id is required.", 400)
-        self._raise_http_err(check_processo_manage_access(request, pid))
-        if not ProcessoRepository().get(pid):
-            raise GptActionsError("Processo não encontrado.", 404)
-        xml_text = str(xml or "").strip()
-        if not xml_text:
-            raise GptActionsError("xml content is required.", 400)
-        try:
-            parsed = FlowchartBpmnXmlService().import_xml(xml_text)
-        except FlowchartValidationError as exc:
-            raise GptActionsError(str(exc), 400) from exc
-        return {
-            "processo_id": pid,
-            "current_diagram": self.read_process_diagram(request, pid),
-            "parsed_nodes": len(parsed.get("nodes") or []),
-            "parsed_edges": len(parsed.get("edges") or []),
-        }
-
-    def import_diagram_bpmn_xml(
-        self, request: Request, *, processo_id: str, xml: str
-    ) -> dict[str, Any]:
-        """Canonical write for PUT /processos/{id}/diagrama/bpmn.xml."""
-        pid = str(processo_id or "").strip()
-        if not pid:
-            raise GptActionsError("processo_id is required.", 400)
-        self._raise_http_err(check_processo_manage_access(request, pid))
-        if not ProcessoRepository().get(pid):
-            raise GptActionsError("Processo não encontrado.", 404)
-        xml_text = str(xml or "").strip()
-        if not xml_text:
-            raise GptActionsError("xml content is required.", 400)
-        try:
-            conteudo = FlowchartBpmnXmlService().import_xml(xml_text)
-        except FlowchartValidationError as exc:
-            raise GptActionsError(str(exc), 400) from exc
-        try:
-            saved = DiagramWriteService().save_macro(pid, conteudo)
-        except DiagramWriteError as exc:
-            raise GptActionsError(
-                exc.message, getattr(exc, "status_code", 400)
-            ) from exc
-        self._audit(
-            request,
-            "processo",
-            pid,
-            "diagram.macro.imported_bpmn",
-            {"nodes": saved["nodes"]},
-        )
-        read_back = ProcessoDiagramRepository().get(pid)
-        return {
-            "processo_id": pid,
-            "nodes": saved.get("nodes"),
-            "read_back_present": read_back is not None,
-            "persisted": True,
-            "verified": read_back is not None,
-        }
-
     def _has_processo_escopo(self, body: ProcessoCreateBody | ProcessoUpdateBody) -> bool:
         if isinstance(body, ProcessoUpdateBody):
             return (
@@ -2733,11 +2651,8 @@ class GptActionsDispatchService:
     def _document_parent_id(self, entity: GptEntity, data: dict) -> str:
         key_map = {
             GptEntity.DECOMPOSITION_TREE: "processo_id",
-            GptEntity.PROCESS_DIAGRAM: "processo_id",
             GptEntity.INSTANCE_DECOMPOSITION_SCOPE: "instancia_id",
-            GptEntity.INSTANCE_DIAGRAM_SCOPE: "instancia_id",
             GptEntity.REVISION_DECOMPOSITION_OVERLAY: "revisao_id",
-            GptEntity.REVISION_DIAGRAM_OVERLAY: "revisao_id",
         }
         key = key_map[entity]
         parent_id = str(data.get(key) or "").strip()
@@ -2898,102 +2813,6 @@ class GptActionsDispatchService:
                     200,
                 )
 
-            if entity == GptEntity.PROCESS_DIAGRAM:
-                self._raise_http_err(check_processo_manage_access(request, parent_id))
-                conteudo = (
-                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-                )
-                # Ignore client mermaid_cached — always server-derived.
-                saved = self._diagram_writes.save_macro(parent_id, conteudo)
-                read_back = self._diagram_writes.read_back_macro(parent_id)
-                self._verify_document_postcondition(
-                    expected={"conteudo": saved["conteudo"]},
-                    actual=read_back,
-                    label="process_diagram",
-                )
-                if read_back and read_back.get("mermaid_cached") != saved["mermaid"]:
-                    raise GptActionsError(
-                        "OUTCOME_VERIFICATION_FAILED: mermaid_cached não é derivado do servidor.",
-                        500,
-                    )
-                self._audit(
-                    request,
-                    "processo",
-                    parent_id,
-                    "diagram.macro.updated",
-                    {"nodes": saved["nodes"]},
-                )
-                return (
-                    {
-                        **row_to_json(saved["row"]),
-                        "mermaid": saved["mermaid"],
-                        "verified": True,
-                        "persisted": True,
-                    },
-                    "Diagrama salvo e verificado.",
-                    200,
-                )
-
-            if entity == GptEntity.INSTANCE_DIAGRAM_SCOPE:
-                self._raise_http_err(check_instancia_manage_access(request, parent_id))
-                saved = self._diagram_writes.save_instance_scope(parent_id, data)
-                read_back = InstanciaDiagramEscopoRepository().get(parent_id)
-                self._verify_document_postcondition(
-                    expected={
-                        "node_ids": saved["escopo"]["node_ids"],
-                        "inherit_all": saved["escopo"]["inherit_all"],
-                        "include_boundary_edges": saved["escopo"][
-                            "include_boundary_edges"
-                        ],
-                    },
-                    actual=read_back,
-                    label="instance_diagram_scope",
-                )
-                self._audit(
-                    request,
-                    "processo_instancia",
-                    parent_id,
-                    "diagram.escopo.updated",
-                    {"nodes": saved["nodes"]},
-                )
-                return (
-                    {**row_to_json(saved["row"]), "verified": True, "persisted": True},
-                    "Escopo de diagrama salvo e verificado.",
-                    200,
-                )
-
-            if entity == GptEntity.REVISION_DIAGRAM_OVERLAY:
-                self._require_revisao_manage_access(request, parent_id)
-                conteudo = (
-                    data.get("conteudo") if isinstance(data.get("conteudo"), dict) else data
-                )
-                saved = self._diagram_writes.save_revision_overlay(parent_id, conteudo)
-                read_back = RevisaoDiagramOverlayRepository().get(parent_id)
-                self._verify_document_postcondition(
-                    expected={"conteudo": saved["overlay"]},
-                    actual=read_back,
-                    label="revision_diagram_overlay",
-                )
-                self._audit(
-                    request,
-                    "revisao",
-                    parent_id,
-                    "diagram.overlay.updated",
-                    {"overrides": saved["overrides"]},
-                )
-                return (
-                    {
-                        **row_to_json(saved["row"]),
-                        "mermaid": saved["mermaid"],
-                        "merged_preview": saved["merged_preview"],
-                        "verified": True,
-                        "persisted": True,
-                    },
-                    "Overlay de diagrama salvo e verificado.",
-                    200,
-                )
-        except DiagramWriteError as exc:
-            raise GptActionsError(exc.message, exc.status_code) from exc
         except DecompositionWriteError as exc:
             raise GptActionsError(exc.message, exc.status_code) from exc
 

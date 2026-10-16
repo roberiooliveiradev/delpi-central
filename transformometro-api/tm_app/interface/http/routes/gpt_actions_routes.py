@@ -117,7 +117,7 @@ class GptGovernedOperationBody(BaseModel):
         description=(
             "activate_revision | recalculate_dashboard | "
             "commit_improvement_package | adjust_shared_resource_cost | "
-            "update_signature_profile | import_diagram_bpmn_xml | "
+            "update_signature_profile | "
             "migrate_legacy_diagram_to_native_bpmn"
         ),
     )
@@ -137,7 +137,6 @@ class GptGovernedOperationBody(BaseModel):
     activate_scenario: bool = False
     recalculate: bool = False
     display_name: str | None = None
-    xml: str | None = None
     resolutions: dict | None = None
     candidate_xml_override: str | None = None
     commit_now: bool = False

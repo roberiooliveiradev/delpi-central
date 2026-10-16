@@ -79,17 +79,6 @@ export async function fetchProcessoDiagramaComposed(
   return request(`/processes/${processoId}/diagram/composed${suffix}`, getAccessToken);
 }
 
-export async function saveProcessoDiagrama(
-  processoId: string,
-  conteudo: FlowchartV1,
-  getAccessToken?: () => string | undefined
-): Promise<ProcessoDiagramResponse> {
-  return request(`/processes/${processoId}/diagram`, getAccessToken, {
-    method: "PUT",
-    body: JSON.stringify({ conteudo }),
-  });
-}
-
 export async function validateProcessoDiagrama(
   processoId: string,
   conteudo: FlowchartV1,
@@ -112,33 +101,11 @@ export async function fetchProcessoDiagramBpmnXml(
   return data.xml;
 }
 
-export async function importProcessoDiagramBpmnXml(
-  processoId: string,
-  xml: string,
-  getAccessToken?: () => string | undefined
-): Promise<ProcessoDiagramResponse> {
-  return request(`/processes/${processoId}/diagram/bpmn.xml`, getAccessToken, {
-    method: "PUT",
-    body: JSON.stringify({ xml }),
-  });
-}
-
 export async function fetchInstanciaDiagramEscopo(
   instanciaId: string,
   getAccessToken?: () => string | undefined
 ): Promise<FlowchartEscopo & { instancia_id: string; empty?: boolean }> {
   return request(`/instances/${instanciaId}/scope-diagram`, getAccessToken);
-}
-
-export async function saveInstanciaDiagramEscopo(
-  instanciaId: string,
-  escopo: FlowchartEscopo,
-  getAccessToken?: () => string | undefined
-) {
-  return request(`/instances/${instanciaId}/scope-diagram`, getAccessToken, {
-    method: "PUT",
-    body: JSON.stringify(escopo),
-  });
 }
 
 export async function fetchRevisaoDiagramMerged(
@@ -156,17 +123,6 @@ export async function fetchRevisaoDiagramOverlay(
     `/revisions/${revisaoId}/diagram/overlay`,
     getAccessToken
   );
-}
-
-export async function saveRevisaoDiagramOverlay(
-  revisaoId: string,
-  conteudo: FlowchartOverlayV1,
-  getAccessToken?: () => string | undefined
-) {
-  return request(`/revisions/${revisaoId}/diagram/overlay`, getAccessToken, {
-    method: "PUT",
-    body: JSON.stringify({ conteudo }),
-  });
 }
 
 export async function fetchRevisaoDiagramMermaid(

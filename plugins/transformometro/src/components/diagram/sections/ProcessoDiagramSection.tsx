@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Download, FileCode2, ShieldCheck, Upload } from "lucide-react";
+import { Download, FileCode2, ShieldCheck } from "lucide-react";
 
 import type { AppProps } from "../../../App";
 import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../../content/flowchartEditorLabels";
@@ -7,8 +7,6 @@ import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import {
   fetchProcessoDiagramBpmnXml,
   fetchProcessoDiagrama,
-  importProcessoDiagramBpmnXml,
-  saveProcessoDiagrama,
   validateProcessoDiagrama,
   type DiagramValidationReport,
 } from "../../../data/api/transformometroDiagramApi";
@@ -29,7 +27,6 @@ import { DS_GHOST_BTN } from "../../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
-  readOnly?: boolean;
   embeddedInCard?: boolean;
   /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
   variant?: "embedded" | "page";
@@ -41,23 +38,19 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   chromeNotices?: import("react").ReactNode;
   resyncVersion?: number;
   onError: (message: string | null) => void;
-  onEntityChanged?: () => void;
 };
 
 export function ProcessoDiagramSection({
   processoId,
   getAccessToken,
-  readOnly = false,
   embeddedInCard = false,
   variant = "embedded",
   chromeLeading,
   chromeNotices,
   resyncVersion = 0,
   onError,
-  onEntityChanged,
 }: Props) {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationPanelOpen, setValidationPanelOpen] = useState(false);
   const [validationPanelCollapsed, setValidationPanelCollapsed] = useState(false);
@@ -66,7 +59,6 @@ export function ProcessoDiagramSection({
   const [validation, setValidation] = useState<DiagramValidationReport | null>(null);
   const [mermaidPreviewOpen, setMermaidPreviewOpen] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
   const isPage = variant === "page";
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
@@ -111,26 +103,6 @@ export function ProcessoDiagramSection({
     }
   }
 
-  async function handleSave() {
-    setSaving(true);
-    onError(null);
-    try {
-      const report = await validateProcessoDiagrama(processoId, flowchart, getAccessToken);
-      setValidation(report);
-      if (!report.valid) {
-        onError("Corrija os erros de validação antes de salvar.");
-        return;
-      }
-      const data = await saveProcessoDiagrama(processoId, flowchart, getAccessToken);
-      setFlowchart(data.conteudo);
-      onEntityChanged?.();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao salvar diagrama macro.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function exportPng() {
     if (!editorRef.current) {
       onError("Editor do diagrama indisponível.");
@@ -157,24 +129,9 @@ export function ProcessoDiagramSection({
     }
   }
 
-  async function importBpmnXml(file: File) {
-    try {
-      const xml = await file.text();
-      const data = await importProcessoDiagramBpmnXml(processoId, xml, getAccessToken);
-      setFlowchart(data.conteudo);
-      setValidation(null);
-      onEntityChanged?.();
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao importar BPMN XML.");
-    }
-  }
-
   const actionBtnClass = isPage
     ? `${DS_GHOST_BTN} delpi-ui-bpmn-editor__chrome-action-btn`
     : DS_GHOST_BTN;
-  const primaryBtnClass = isPage
-    ? "ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
-    : "ds-primary-btn";
 
   const ioItems = [
     {
@@ -189,68 +146,33 @@ export function ProcessoDiagramSection({
       icon: FileCode2,
       onSelect: () => void exportBpmnXml(),
     },
-    ...(!readOnly
-      ? [
-          {
-            id: "import-bpmn",
-            label: "Importar BPMN XML",
-            icon: Upload,
-            onSelect: () => importInputRef.current?.click(),
-          },
-        ]
-      : []),
   ];
 
   const diagramActions: ReactNode = (
     <>
-      {!readOnly ? (
-        <>
-          <button
-            type="button"
-            className={primaryBtnClass}
-            disabled={saving}
-            onClick={() => void handleSave()}
-          >
-            {saving ? "Salvando…" : "Salvar diagrama"}
-          </button>
-          <button
-            type="button"
-            className={[
-              actionBtnClass,
-              validationPanelOpen ? "delpi-ui-bpmn-editor__chrome-action-btn--active" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            disabled={validating}
-            aria-pressed={validationPanelOpen}
-            onClick={() => {
-              if (validationPanelOpen && validation && !validating) {
-                setValidationPanelOpen(false);
-                setValidationPanelCollapsed(false);
-                return;
-              }
-              void runValidation();
-            }}
-          >
-            <ShieldCheck size={14} />
-            Validar / simular
-          </button>
-        </>
-      ) : null}
+      <button
+        type="button"
+        className={[
+          actionBtnClass,
+          validationPanelOpen ? "delpi-ui-bpmn-editor__chrome-action-btn--active" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        disabled={validating}
+        aria-pressed={validationPanelOpen}
+        onClick={() => {
+          if (validationPanelOpen && validation && !validating) {
+            setValidationPanelOpen(false);
+            setValidationPanelCollapsed(false);
+            return;
+          }
+          void runValidation();
+        }}
+      >
+        <ShieldCheck size={14} />
+        Validar / simular
+      </button>
       <DiagramIoMenu items={ioItems} triggerClassName={actionBtnClass} />
-      {!readOnly ? (
-        <input
-          ref={importInputRef}
-          type="file"
-          accept=".bpmn,.xml,text/xml,application/xml"
-          hidden
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            if (file) void importBpmnXml(file);
-          }}
-        />
-      ) : null}
     </>
   );
 
@@ -266,8 +188,7 @@ export function ProcessoDiagramSection({
     <FlowchartEditor
       ref={editorRef}
       value={flowchart}
-      onChange={readOnly ? undefined : setFlowchart}
-      readOnly={readOnly}
+      readOnly
       chromeLeading={isPage ? chromeLeading : undefined}
       chromeNotices={isPage ? chromeNotices : undefined}
       chromeActions={isPage ? diagramActions : undefined}
