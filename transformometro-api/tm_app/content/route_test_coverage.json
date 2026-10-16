@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-14",
-  "baselineOperationCount": 214,
-  "operationCount": 214,
-  "coveredCount": 214,
+  "generatedAt": "2026-10-16",
+  "baselineOperationCount": 224,
+  "operationCount": 224,
+  "coveredCount": 224,
   "gapCount": 0,
   "exemptCount": 0,
   "byModule": {
@@ -50,8 +50,8 @@
       "exempt": 0
     },
     "interaction_rooms": {
-      "total": 16,
-      "covered": 16,
+      "total": 26,
+      "covered": 26,
       "gap": 0,
       "exempt": 0
     },
@@ -1238,6 +1238,20 @@
       "status": "covered"
     },
     {
+      "operationId": "create_transformometro_standalone_interaction_room",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/standalone",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "open_transformometro_interaction_room_for_ticket",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/ticket",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
       "method": "DELETE",
       "path": "/transformometro/interaction-rooms/{room_id}",
       "operationId": "delete_transformometro_interaction_room",
@@ -1269,6 +1283,34 @@
       "operationId": "download_transformometro_interaction_attachment",
       "method": "GET",
       "path": "/transformometro/interaction-rooms/{room_id}/attachments/{attachment_id}",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_transformometro_interaction_room_delete_impact",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/impact",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_transformometro_interaction_room_links",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/links",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "add_transformometro_interaction_room_link",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/links",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "remove_transformometro_interaction_room_link",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/links/{link_id}",
       "module": "interaction_rooms",
       "status": "covered"
     },
@@ -1329,9 +1371,37 @@
       "status": "covered"
     },
     {
+      "operationId": "list_transformometro_interaction_room_participants",
+      "method": "GET",
+      "path": "/transformometro/interaction-rooms/{room_id}/participants",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "add_transformometro_interaction_room_participant",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/participants",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "remove_transformometro_interaction_room_participant",
+      "method": "DELETE",
+      "path": "/transformometro/interaction-rooms/{room_id}/participants/{user_id}",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
       "operationId": "mark_transformometro_interaction_room_read",
       "method": "POST",
       "path": "/transformometro/interaction-rooms/{room_id}/read",
+      "module": "interaction_rooms",
+      "status": "covered"
+    },
+    {
+      "operationId": "restore_transformometro_interaction_room",
+      "method": "POST",
+      "path": "/transformometro/interaction-rooms/{room_id}/restore",
       "module": "interaction_rooms",
       "status": "covered"
     },
