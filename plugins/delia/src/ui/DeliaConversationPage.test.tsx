@@ -4,7 +4,7 @@ import { DeliaConversationPage } from "./DeliaConversationPage";
 afterEach(cleanup);
 describe("DeliaConversationPage", () => {
   it("renders one unified layout without fabricating conversation history", () => {
-    const { container } = render(<DeliaConversationPage conversation={<p>Mensagem real</p>} />);
+    const { container } = render(<DeliaConversationPage conversation={(controls) => <div>{controls.leftToggle}{controls.rightToggle}<p>Mensagem real</p></div>} />);
     const message = screen.getByText("Mensagem real");
     expect(container.querySelectorAll(".delpi-ui-conversation-three-region")).toHaveLength(1);
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
