@@ -52,6 +52,7 @@
   box-sizing: border-box;
   flex: 1;
   min-height: 0;
+  container: delia-page / inline-size;
 }
 
 /* The workspace shell (header/body/footer, reading column, padding) is
@@ -239,3 +240,6 @@
   }
 
 }
+
+/* Unavailable history/context: clear and honest, no fake app functions. */
+.dashboard-delia .delia-visually-muted { font-size: 0.8125rem; line-height: 1.55; color: var(--delia-text-muted); margin: 0; }
