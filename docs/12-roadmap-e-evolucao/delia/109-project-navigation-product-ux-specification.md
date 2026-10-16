@@ -10,7 +10,7 @@
 
 ## Propósito, fronteira e descoberta
 
-Um **projeto** pode agrupar trabalho/contexto relacionado a um objetivo, mas a UI não deve criar modelo, tabela ou API próprios só porque a categoria existe. Antes de listar/criar/editar, inventariar: (a) projetos/workspaces do Portal/Core/Domain APIs; (b) eventual conceito de projeto da DÉLIA congelado em spec; (c) owner, RBAC, recurso persistido, vínculo legítimo entre conversa e projeto, permission scopes, 生命周期 (retenção/exclusão) e consumidores.
+Um **projeto** pode agrupar trabalho/contexto relacionado a um objetivo, mas a UI não deve criar modelo, tabela ou API próprios só porque a categoria existe. Antes de listar/criar/editar, inventariar: (a) projetos/workspaces do Portal/Core/Domain APIs; (b) eventual conceito de projeto da DÉLIA congelado em spec; (c) owner, RBAC, recurso persistido, vínculo legítimo entre conversa e projeto, permission scopes, ciclo de vida (retenção/exclusão) e consumidores.
 
 `EXISTING_EQUIVALENT=TO_INVENTORY` para projeto/contrato; `REUSE_DECISION=PENDING_GATE`. `EXISTING_EQUIVALENT=YES` apenas para rail, painel, lista e primitives; `REUSE_DECISION=EXTEND` visual.
 
