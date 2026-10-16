@@ -88,6 +88,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md) | consolidação A15 de contracts, regras, validators/scripts e test matrix |
 | [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | histórico superseded do inventário de delivery externo; premissa invalidada |
 | [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md) | contrato TARGET de submit/review in-portal, reviewers autenticados e notifications |
+| [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) | rebaseline pós-merge, evidências Core/CI e gate A12/A14/A15 vigente |
 
 ## Página do usuário
 
