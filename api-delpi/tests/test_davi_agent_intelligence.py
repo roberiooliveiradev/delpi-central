@@ -70,6 +70,34 @@ def test_inventory_adjustment_directive_defaults_to_net_value() -> None:
     assert "nunca apresente gross_value como líquido" in note
 
 
+def test_product_vocabulary_directive_is_governed_and_provenanced() -> None:
+    directives = DaviAgentIntelligenceService.agent_directives()
+    vocab = directives["product_vocabulary"]
+    assert vocab["source"] == (
+        "api-delpi/docs/knowledge/product-vocabulary/normative-product-terms.md"
+    )
+    assert "TO_INVENTORY" in vocab["normative_status"]
+    rule = vocab["rule"]
+    assert "TERM. PINO" in rule
+    assert "equivalências não documentadas" in rule
+    assert "PINO DE AJUSTE" in rule
+    assert "≠ TERM. PINO" in rule
+    assert "search_products" in rule
+
+
+def test_product_vocabulary_source_document_exists_and_is_provenanced() -> None:
+    from pathlib import Path
+
+    doc = (
+        Path(__file__).resolve().parents[1]
+        / "docs/knowledge/product-vocabulary/normative-product-terms.md"
+    )
+    text = doc.read_text(encoding="utf-8")
+    assert "Normas_Tecnicas_DELPI.md" in text
+    assert "TERM. PINO" in text
+    assert "TO_INVENTORY" in text
+
+
 def test_gpt_catalog_exposes_same_directives() -> None:
     with patch(
         "app.application.external_capabilities.catalog_service.user_can_search_products",

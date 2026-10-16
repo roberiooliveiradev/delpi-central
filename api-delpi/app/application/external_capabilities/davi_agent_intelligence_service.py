@@ -95,6 +95,7 @@ class DaviAgentIntelligenceService:
             "not_exposed": doc.get("not_exposed") or {},
             "flows": doc.get("flows") or {},
             "knowledge_orchestration": doc.get("knowledge_orchestration") or {},
+            "product_vocabulary": doc.get("product_vocabulary") or {},
         }
         # Hard deny write-oriented keys if ever present in content.
         raw.pop("write_flow", None)

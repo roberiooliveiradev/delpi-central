@@ -337,6 +337,12 @@
       "Present planned Core source as available"
     ]
   },
+  "product_vocabulary": {
+    "scope": "READ search semantics only — document guidance, not AuthZ nor domain truth",
+    "source": "api-delpi/docs/knowledge/product-vocabulary/normative-product-terms.md",
+    "normative_status": "BUSINESS_OWNER=TO_INVENTORY",
+    "rule": "Busca de produto sem código → no discovery descreva a intenção (ex.: «buscar produtos cadastrados»); a forma normativa vai no argumento description do search_products: terminais = TERM.+tipo (PINO|FORQUILHA|LINGUETA|FASTON|BANDEIRA|OLHAL|ANZOL|ILHOS|TUBULAR|LUVA|EMENDA); cabos = CABO|CABO PP; grupo 1009 = ISOLADOR|INSERTO|CONECTOR. Valide pela descrição retornada; não crie equivalências não documentadas; PINO DE AJUSTE ≠ TERM. PINO."
+  },
   "flows": {
     "product_master_search": {
       "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
