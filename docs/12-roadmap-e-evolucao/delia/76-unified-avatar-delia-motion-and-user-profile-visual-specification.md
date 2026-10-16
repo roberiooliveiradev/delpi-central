@@ -1,6 +1,6 @@
 # 76 — DÉLIA: Unified Avatar, identidade viva e perfil do usuário
 
-**Status:** `APPROVED_PRODUCT_UX_DIRECTION` para **Opção A — símbolo Sparkles institucional animado** (aprovação expressa do Product Master em 2026-10-09). **Não implementado por esta tarefa**; integrações, dados de perfil, animações e permissões continuam sujeitos a inventário, contratos, fase e evidências.
+**Status:** `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE` para **Opção A — símbolo Sparkles institucional**. `UnifiedAvatar` existe em `plugins/plugin-ui`, é consumido pela DÉLIA para `assistant` e `person`, e a identidade visual real foi validada na experiência atual. Estados futuros de voz/perfil interativo continuam `TARGET / CONTRACT_REQUIRED`.
 **Escopo:** design de um sistema unificado de avatares para DÉLIA e usuário, com base visual potencialmente reutilizável em `plugins/plugin-ui` e consumer standalone `plugins/delia`. Página completa, dock e estados futuros de voz, sem criar backend.
 **Reanchor:** HEAD de elaboração `bfc539484e2f67ce875097bd0d7372430032b7d8`; execução deve sempre verificar HEAD, status, Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.
 **Referências:** [73 — identidade chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [75 — mensagem DÉLIA](./75-assistant-message-visual-specification.md), [69 — experiência conversacional](./69-conversation-experience-ux-wireframes-and-activity-plan.md), [70 — atividade](./70-tool-activity-and-source-transparency-ux-specification.md), [74 — composer](./74-message-composer-visual-specification.md).
@@ -83,26 +83,44 @@ Os números abaixo são **guidelines de design (TARGET)**, não contrato CSS con
 
 **Privacy:** não armazenar foto/base64 em memória pessoal, prompts, embeddings ou logs comuns; image loading com fallback e tratamento de erro; impedir URL arbitrária não confiável sem validação de origem pelo owner; revogação de acesso deve ser refletida pelo host/backend.
 
-## 7. API pública proposta (somente contrato visual)
+## 7. API pública implementada
+
+A API pública atual é provider-neutral e separa combinações válidas por `kind`:
 
 ```ts
-type AvatarKind = "assistant" | "person";
+type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 type AssistantMotionState =
-  | "idle" | "receiving" | "processing" | "responding"
-  | "attention" | "disabled";
-type UnifiedAvatarProps = {
-  kind: AvatarKind;
-  label: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  imageUrl?: string;          // apenas origem autorizada
-  fallbackText?: string;      // apenas perfil publicado
-  motionState?: AssistantMotionState;
-  interactive?: boolean;
-  onActivate?: () => void;    // callback host legítimo
-};
+  | "idle"
+  | "receiving"
+  | "processing"
+  | "responding"
+  | "attention"
+  | "disabled";
+
+type UnifiedAvatarProps =
+  | {
+      kind: "assistant";
+      label: string;
+      size?: AvatarSize;
+      className?: string;
+      motionState?: AssistantMotionState;
+      onMotionComplete?: () => void;
+    }
+  | {
+      kind: "person";
+      label: string;
+      size?: AvatarSize;
+      className?: string;
+      imageUrl?: string | null;
+      fallbackText?: string | null;
+    };
 ```
 
-API ilustrativa; confirmar convenções de compound components e exports do `plugin-ui`. Evitar misturar `imageUrl` de pessoa com controle de `motionState` da DÉLIA quando discriminated union reduzir combinações inválidas. `motionState` é status visual observado, **não** permissão, comando de domínio, "intenção" ou inferência de emoção. Eventos de voz futuros exigem extensão contratual, não ativação por heurística.
+**Aparência implementada:** `assistant` usa o símbolo `Sparkles` institucional em superfície circular; `person` reutiliza `InitialsAvatar`, priorizando foto já publicada, depois iniciais do nome publicado e, por último, `UserRound` neutro. O componente valida apenas formato/esquema básico da URL; a legitimidade da origem continua sendo responsabilidade do owner do perfil.
+
+**O que representa:** presença visual de quem participa da conversa. **Não representa:** autenticação, AuthZ, biometria, confiança, emoção, status de emprego ou permissão operacional.
+
+`interactive`, `onActivate` e popover de perfil **não fazem parte da API implementada atual**; continuam dependentes de contrato real do Portal/perfil.
 
 ## 8. Estados da interface e fallback
 
@@ -132,13 +150,12 @@ API ilustrativa; confirmar convenções de compound components e exports do `plu
 
 **Acceptance gates:** perfil/foto/rota reais identificados por `OWNER → SOURCE → CONSUMERS → CONTRACT`; nenhum dado pessoal inventado; AVATAR_DÉLIA visível sem animação; animações sem falsa telemetria; erro e AuthZ preservados; kit não acoplado a DÉLIA; no novo frontend/backends fora de escopo; regressões compartilhadas; commit/testes no SHA; ledger atualizado apenas com outcome factual. Aceite independente `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`.
 
-## 11. Status e decisões pendentes
+## 11. Status atual e decisões pendentes
 
-- **APPROVED:** Opção A, `Sparkles` circular azul, identidade institucional, animação leve e contextual, reduced-motion, base visual comum para DÉLIA/pessoa.
-- **DESIGN_SPECIFIED:** duração/amplitude/famílias de estado, variações por contexto, fallback e UI de perfil.
-- **TO_INVENTORY:** componente de avatar/profile do Portal/plugin-ui, origem da imagem, props de usuário publicadas, rota oficial e possibilidade de popover governado; redução de motion efetiva, tokens aplicáveis.
-- **TARGET / CONTRACT_REQUIRED:** animação de voz/Live, perfil interativo se rota não publicada, novos dados de status progressivo.
-- **TEST_NOT_RUN:** testes de implementação/deploy; este documento é apenas design.
-- **FORBIDDEN:** sentimento/consciência inferidos, loop não factual, tool metadata como autorização, impersonação da pessoa, dados de perfil fictícios, novo backend por conveniência.
+- **IMPLEMENTED / ACCEPTED_CURRENT_SCOPE:** `UnifiedAvatar` compartilhado; variantes `assistant` e `person`; Sparkles institucional; foto publicada + iniciais + fallback neutro; sizes; estados de motion atuais; reduced-motion; integração DÉLIA.
+- **PROVEN CURRENT UX:** avatar real do usuário e avatar DÉLIA renderizados corretamente em browser na experiência atual; light/dark e viewport estreito observados sem regressão material.
+- **OWNER BOUNDARY PRESERVED:** foto/nome vêm de contrato publicado pelo Portal/Core; o kit não faz fetch de identidade, não lê JWT e não autoriza.
+- **TARGET / CONTRACT_REQUIRED:** estados de voz/Live, perfil interativo/popover, novos dados de status progressivo ou ações de perfil.
+- **FORBIDDEN:** sentimento/consciência inferidos, loop não factual, tool metadata como autorização, impersonação, dados de perfil fictícios, backend novo por conveniência.
 
-**Próxima tarefa separada:** inventário real de avatar/profile e contrato de host → bounded implementation `plugin-ui` + integração DÉLIA, testes browser light/dark/dock, revisão e ledger. Documentação não avança a fase.
+Qualquer extensão futura reabre apenas o contrato específico necessário; não reabre a implementação base aceita.

@@ -159,14 +159,63 @@ O Devin deve tratar esta especificação como **detalhamento da decisão visual 
 **Status de execução desta documentação:** `DOCUMENTED`; implementação S3 `IN_PROGRESS_BY_USER_REPORT`; código/testes/deploy S3 **não atestados por este registro**. `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `PRODUCTION_READINESS=NOT_PROVEN`. Próximo trabalho/aceite seguem Plano Mestre e ledger do HEAD real.
 
 
-## 13. ConversationUserMessage — extração bounded do chrome compartilhado (2026-10-15)
+## 13. ConversationUserMessage — chrome compartilhado aceito (2026-10-16)
 
-**Task:** DELIA-UX-CONVERSATION-USER-MESSAGE-FULL-IMPLEMENTATION-01. **Estado:** implementação proposta em branch isolada, pendente de testes, Browser QA e review; esta seção não representa aceite nem prova de runtime publicado em main.
+**Task:** `DELIA-UX-CONVERSATION-USER-MESSAGE-FULL-IMPLEMENTATION-01`.  
+**Estado factual:** `ACCEPT` no escopo visual corrente; implementação mergeada em `main` pelo PR #76. O componente público `ConversationUserMessage` vive em `plugins/plugin-ui` e é consumido por `plugins/delia`.
 
-- **Owner visual:** plugin-ui, via \`ConversationUserMessage\` (bolha suave à direita, avatar/autor/conteúdo em slots, densidade confortável/compacta, quebra de linha, temas e responsividade em container estreito). O kit não conhece produto, Core, Keycloak, sessão ou autorização.
-- **Owner da identidade e semântica:** DÉLIA/Portal/Core nos contratos existentes. \`ConversationTimeline\` continua fornecendo texto original do turno, rótulo \`"Você"\` e \`UnifiedAvatar(kind="person")\` com imagem e fallback já resolvidos por \`useCurrentUserIdentity\`. O kit **não** busca imagem nem interpreta JWT.
-- **Acessibilidade:** \`role="log"\` permanece exclusivamente na timeline; o componente não cria live region nem wrapper focável. Com rótulo de autor visível, avatar decorativo evita anúncio duplicado; sem rótulo, semântica do avatar não é escondida.
-- **Contrato de conteúdo:** React text renderizado literalmente com \`white-space: pre-wrap\`, \`overflow-wrap: anywhere\`; sem parse de Markdown, HTML arbitrário, linkificação ou regras de autorização.
-- **Reuse Gate:** \`UnifiedAvatar=REUSE\`; \`MessageThread\` é acoplado à sala colaborativa e não substitui a composição de turno simples; \`EntityAvatarLabel\` não oferece chrome de mensagem. O novo componente cobre a lacuna visual específica, sem nova plataforma ou runtime.
-- **Migração de CSS:** propriedades genéricas de bolha e alinhamento do usuário saem de \`plugins/delia/src/index.css\`, preservando o chrome e as classes de resposta da DÉLIA. Tokens do consumidor se mapeiam para variáveis \`--delpi-ui-*\`.
-- **Acceptance restante:** executar suites e builds em checkout válido, verificar exports federados, inspecionar full page/dock (420/320 px, zoom 200%, dark/light) e anexar capturas reais no SHA avaliado. Sem evidência, classificar \`TEST_NOT_RUN\` e \`INCONCLUSIVE\`.
+- **O que representa:** um turno produzido pelo usuário dentro da conversa.
+- **Aparência:** alinhado à direita; bolha leve e discreta; rótulo fornecido pelo consumer (na DÉLIA, “Você”); avatar à direita; texto literal com quebras preservadas e wrapping seguro.
+- **Quando aparece:** somente para turnos `role="user"` que já pertencem à timeline.
+- **Quando não aparece:** não é placeholder, loading, estado semântico, confirmação, erro ou resposta da DÉLIA.
+- **Owner visual:** `plugin-ui`. O componente possui apenas chrome, slots, densidade, responsividade e acessibilidade de apresentação.
+- **Owner de identidade/conteúdo:** DÉLIA/Portal/Core nos contratos existentes. `ConversationTimeline` fornece o conteúdo original, “Você” e `UnifiedAvatar(kind="person")` com imagem/fallback já resolvidos.
+- **Não representa:** autenticação, autorização, identidade de segurança, persistência, ordenação da conversa ou permissão de agir.
+- **Acessibilidade:** `role="log"` permanece exclusivamente na timeline; o componente não cria live region ou wrapper focável. Com autor visível, o wrapper do avatar é decorativo para evitar anúncio duplicado.
+- **Conteúdo:** React text permanece inerte; `white-space: pre-wrap` e `overflow-wrap: anywhere`; nenhum HTML/Markdown arbitrário é executado.
+- **Reuse gate:** `UnifiedAvatar=REUSE`; `MessageThread=PARTIAL/DO_NOT_REUSE`; `EntityAvatarLabel=PARTIAL/DO_NOT_REUSE`; `ConversationUserMessage=NEW`.
+- **Evidência atual:** testes direcionados e suíte DÉLIA passaram; build/federation passaram; browser QA real confirmou full page, light/dark, 320/420px, zoom 200%, múltiplos turnos e avatar real. Nenhum overflow visual material foi observado.
+
+## 14. Inventário canônico dos componentes conversacionais já implementados
+
+Esta seção registra **significado de produto + aparência + fronteira de responsabilidade** dos componentes atualmente usados na experiência conversacional. Ela não substitui o catálogo técnico do `plugin-ui`, os testes nem as specs temáticas detalhadas; serve como índice semântico para evitar que componentes visuais adquiram autoridade indevida.
+
+| Componente | O que representa | Aparência / anatomia esperada | Quando aparece | O que NÃO representa | Owner visual / consumer | Estado |
+| --- | --- | --- | --- | --- | --- | --- |
+| `ConversationWorkspace` | Shell visual da conversa | header leve + body rolável com coluna de leitura + footer ancorado; sem card pesado | em toda superfície conversacional full-page/dock | sessão, runtime, auth, capability, decisão | `plugin-ui` / DÉLIA | `IMPLEMENTED` |
+| `ConversationHeader` | Identificação leve da superfície | título curto, subtítulo opcional, leading/actions opcionais; hierarquia subordinada à conversa | topo do workspace | navegação global, model picker, status online, auth | `plugin-ui` / DÉLIA | `IMPLEMENTED` |
+| `UnifiedAvatar` | Identidade visual de DÉLIA ou pessoa | DÉLIA: círculo azul + Sparkles; pessoa: foto publicada → iniciais → UserRound fallback; motion apenas em estado real | recepção, turnos, header/contextos permitidos | autenticação, autorização, biometria, emoção, confiança | `plugin-ui` / DÉLIA+Portal/Core publicam dados legítimos | `IMPLEMENTED` |
+| `MessageComposer` | Entrada de linguagem natural do usuário | superfície única arredondada, textarea multiline, toolbar inferior, contador/ação somente quando reais | footer da conversa | API client, persistência, permissão, capability picker | `plugin-ui` / `DeliaComposer` | `IMPLEMENTED` |
+| `ConversationUserMessage` | Turno do usuário | alinhado à direita, bolha suave, “Você”, avatar à direita, texto literal | turnos `role=user` | identidade lookup, ordenação, auth, estado semântico | `plugin-ui` / `ConversationTimeline` | `ACCEPT` |
+| `DeliaAssistantMessage` | Turno de resposta da DÉLIA | alinhado à esquerda, avatar DÉLIA, resposta aberta no canvas; atividade/status/evidência/ações subordinadas | turnos `role=delia` | timeline, backend authority, autorização | DÉLIA; compõe primitives `plugin-ui` | `IMPLEMENTED` |
+| `ConversationStatus` | Estado semântico estático da resposta | ícone decorativo + `StatusBadge` canônico, inline e proporcional | quando `presentation.message_kind` mapeia para estado não neutro | loading, atividade, erro HTTP, autorização, confirmação | `plugin-ui`; DÉLIA decide label/tone/exibição | `IMPLEMENTED` |
+| `GovernedConfirmation` | Pedido explícito de decisão do usuário sobre proposta governada já existente | superfície inline com título/contexto/preview seguro + “Cancelar” e “Confirmar” | somente com `confirmationRequest` válido e ainda não respondido | permissão, AuthZ, ACT, sucesso, postcondition | `plugin-ui`; DÉLIA/backend possuem contrato e callbacks | `IMPLEMENTED` |
+| `MessageActionBar` | Ações secundárias sobre mensagem já renderizada | barra discreta abaixo da mensagem; hover/focus no desktop, sempre acessível em touch | quando o consumer fornece ação real (hoje, copiar resposta) | ação de negócio, PREPARE/ACT, confirmação, autorização | `plugin-ui`; DÉLIA possui comportamento da ação | `IMPLEMENTED` |
+
+### 14.1 Regras de aparência transversais
+
+- **Chat-first:** usuário à direita em bolha leve; DÉLIA à esquerda com resposta aberta. Não espelhar os dois lados como cards equivalentes.
+- **Hierarquia:** conteúdo conversacional é primário; atividade, estado, evidência, confirmação e ações são subordinados.
+- **Página e dock:** mesma composição e mesmos componentes; o dock reduz densidade, não cria segunda implementação.
+- **Tema:** usar tokens `--delpi-ui-*`/Portal; light e dark preservam forma e significado.
+- **Responsividade:** sem largura fixa de viewport, sem overflow horizontal, wrapping seguro e zoom alto utilizável.
+- **Acessibilidade:** um `role="log"` pertence à timeline; estados/erros/ações usam semântica própria apenas quando necessária; não criar live regions redundantes.
+- **Motion:** decorativo e factual, sempre reduzível; animação nunca significa “autorizado”, “executando ACT” ou “pensando”.
+- **Segurança:** frontend apresenta estado; não cria permissão. `confirmation != authorization`, `PREPARE != ACT`, avatar != identidade de segurança, sucesso técnico != outcome.
+
+### 14.2 Regra documental para próximos componentes
+
+Nenhum novo componente conversacional é considerado documentalmente fechado sem registrar, no mínimo:
+
+1. o que representa;
+2. quando aparece e quando não aparece;
+3. anatomia/aparência;
+4. estados e variantes;
+5. full-page/dock e light/dark;
+6. acessibilidade;
+7. owner e consumer;
+8. o que o componente explicitamente **não** decide;
+9. entrada no catálogo `plugin-ui`, quando compartilhado;
+10. status de implementação e evidência de teste/Browser QA.
+
+Documentação descreve intenção e estado factual; não cria capability, permissionamento ou avanço de fase.

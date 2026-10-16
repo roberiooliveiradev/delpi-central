@@ -2,8 +2,8 @@
 
 ## Status
 
-- **Status:** implementado (v1) — `IMPLEMENTADO`
-- **Data:** 2025 (sessão de implementação)
+- **Status:** implementado (v1) — `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE`
+- **Data:** 2026-10 (implementação/revisões da experiência conversacional)
 - **Task:** `DELIA-UX-ASSISTANT-MESSAGE-COMPONENT-FULL-IMPLEMENTATION-01`
 - **Componente:** `DeliaAssistantMessage` (`plugins/delia/src/ui/DeliaAssistantMessage.tsx`)
 - **Escopo:** apresentação da resposta da DÉLIA na timeline. Sem alteração de backend, contratos, Portal, Composer, recepção ou arquitetura de orquestração.

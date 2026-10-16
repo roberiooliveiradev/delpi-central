@@ -1,6 +1,6 @@
 # DÉLIA — Especificação visual do Message Composer
 
-**Status:** `APPROVED_PRODUCT_UX_DIRECTION` — direção visual expressa pelo Product Master; documento de design, não evidência de implementação nem aceite de runtime.  
+**Status:** `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE` — direção visual aprovada e componente compartilhado `MessageComposer` presente em `plugins/plugin-ui`, consumido pela DÉLIA. Esta spec continua sendo autoridade visual; testes/evidence no SHA avaliado permanecem a prova de runtime.  
 **Escopo:** componente de envio de mensagem do MFE standalone `plugins/delia`, na página `/apps/delia` e no dock global do Portal.  
 **Autoridade de base:** [73 — Identidade visual chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md) → [69 — Experiência conversacional](./69-conversation-experience-ux-wireframes-and-activity-plan.md) → [09 — UX](./09-ux-copilot.md).  
 **Nome canônico:** `Message Composer` — alias PT-BR: *Componente de envio de mensagem*.
