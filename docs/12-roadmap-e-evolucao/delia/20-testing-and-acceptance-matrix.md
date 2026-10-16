@@ -1085,8 +1085,8 @@ C2-T3 / C2-PREFINAL-R1 / C2-FINAL: `LOCKED` em `25` para CP-001–CP-012, CP-025
 | Gate | Required evidence | Status |
 |---|---|---|
 | `C3-MD-B2-G0` | `CP-333` mapped, owner/fase C3 bounded, D1–D12 Product Master decision, no C/D/E inference | `PLANNED / CP_MAPPED` |
-| `C3-MD-B2-G1` | `presentation.v2` OpenAPI/JSON Schema, wire discriminator plain vs Markdown, request/response/errors, producer DÉLIA, bounds, unknown version, safe fallback and v1↔v2 compatibility; `operationId` stable as applicable | `TEST_NOT_RUN` |
-| `C3-MD-B2-G2` | Reuse Gate `EXISTING_EQUIVALENT` + `REUSE_DECISION` per component, threat model, strict positive allowlist; no unsafe `dangerouslySetInnerHTML`, images, Mermaid, HTML, tables, scripts or providers owning renderer | `TEST_NOT_RUN` |
+| `C3-MD-B2-G1` | `presentation.v2` OpenAPI/JSON Schema, wire discriminator plain vs Markdown, request/response/errors, producer DÉLIA, bounds, unknown version, safe fallback and v1↔v2 compatibility; `operationId` stable as applicable | `PROPOSAL_DOCUMENTED — doc 84 §2–§4 (2026-10-17, HEAD bbdd3a4f4d); INDEPENDENT_REVIEW=PENDING` |
+| `C3-MD-B2-G2` | Reuse Gate `EXISTING_EQUIVALENT` + `REUSE_DECISION` per component, threat model, strict positive allowlist; no unsafe `dangerouslySetInnerHTML`, images, Mermaid, HTML, tables, scripts or providers owning renderer | `PROPOSAL_DOCUMENTED — doc 84 §5 (2026-10-17, HEAD bbdd3a4f4d); INDEPENDENT_REVIEW=PENDING` |
 | `C3-MD-B2-01` | Plain text v1/v2 and hostile literal `**`/`#`/`<b>` never heuristically parsed; semantic Markdown only when explicit approved v2; no invented facts/codes/units/identifiers | `TEST_NOT_RUN` |
 | `C3-MD-B2-02` | Semantics: headings below conversation hierarchy, paragraph, bold/italic, nested `ul/ol/li`, blockquote, hr, inert inline/fenced code; no tables/charts/HTML/widgets | `TEST_NOT_RUN` |
 | `C3-MD-B2-03` | Links **internal** only via authorized Portal route/entity contracts and live Core/Domain AuthZ, **external** verified URL in new tab with `noopener noreferrer`; rejects `javascript:`, `data:`, `blob:`, `attachment:`, unsafe relatives/hashes, tracking, invented refs | `TEST_NOT_RUN` |

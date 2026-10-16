@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_PENDING / RUNTIME_NOT_AUTHORIZED`  
+**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_CANDIDATES_DOCUMENTED / RUNTIME_NOT_AUTHORIZED`  
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
@@ -376,6 +376,9 @@ B2_BOUNDED_SCOPE_AUTHORIZED = CONDITIONAL_YES
 G1_CONTRACT_SECURITY = PENDING
 G2_REUSE_SECURITY = PENDING
 G3_IMPLEMENTATION_TASK_BRIEF = PENDING
+B2_G1_CONTRACT_PROPOSAL = CANDIDATE_FOR_REVIEW (doc 84 §2–§4)
+B2_G2_REUSE_SECURITY_REPORT = CANDIDATE_FOR_REVIEW (doc 84 §5)
+B2_LINK_TYPED_SOURCE = DECISION_PENDING (doc 84 §6 — recomendação: B2 inicial sem links navegáveis)
 B2_RUNTIME_IMPLEMENTATION = BLOCKED_UNTIL_G1_G2_G3
 B2_RUNTIME_DIFF = NONE
 C_AND_D_STRUCTURED_UI = OUT_OF_SCOPE_OF_B2
@@ -391,6 +394,7 @@ Este documento é planejamento completo para decisão e execução futura, mas *
 ## 16. Referências verificadas
 
 - Autoridades: `16, 50, 17, 49, 51, 52, 21, 20, 25`; Product Spec `24`; specs `69, 70, 73, 75, 79, 80, 82`; execution ledger.
+- Proposta G1/G2 (candidata à revisão): [`84 — Proposta presentation.v2 e Reuse/Security Review`](./84-presentation-v2-contract-and-markdown-security-g1-g2-proposal.md).
 - Backend: `delia-api/app/application/interaction/presentation.py`.
 - Frontend: `plugins/delia/src/api/presentation.ts`; `interactionClient.ts`; `ui/DeliaAssistantMessage.tsx`; `ui/ConversationTimeline.tsx`; `index.css`.
 - Shared: `plugins/plugin-ui/src/components/markdown/MarkdownDocument.tsx`, `markdownDocumentModel.ts`, seus testes; `rich-text/richTextHtmlFormat.ts`; `collaboration/messageThreadMarkdown.ts`; `data/DataTable.tsx` e `charts/` somente para exclusão de escopo.

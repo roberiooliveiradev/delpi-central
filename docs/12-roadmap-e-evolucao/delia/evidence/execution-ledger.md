@@ -13961,3 +13961,15 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 `B1=PASS_STRUCTURAL`; `B2_REWORK_CODE=EVIDENCE_RECORDED`; `B2_TESTS=TEST_NOT_RUN`; `B2_INDEPENDENT_REVIEW=PENDING`; `STAGE_02_ACCEPTED=NO`; `STAGE_03_AUTHORIZED=NO`.
 `PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN`
 `NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`
+
+## §6.190 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01 (G1/G2 CANDIDATES DOCUMENTED; REVIEW PENDING)
+
+**DATE:** 2026-10-17. **MODE:** CONTRACT-FIRST / DOCUMENTATION ONLY — zero runtime diff. **TASK:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01`. **BASE_HEAD:** `bbdd3a4f4d`. **DOC:** `docs/12-roadmap-e-evolucao/delia/84-presentation-v2-contract-and-markdown-security-g1-g2-proposal.md`.
+
+- **G1 PROPOSAL (candidate, not frozen):** `presentation.v2` envelope unchanged except version + per-`text`-block `format` discriminator (`plain`|`markdown_safe`, required); bounds 8 blocks/16.384 chars; unknown version → legacy fallback; invalid format → block dropped, never downgraded; legacy `content` keeps canonical plain text; copy contract = deterministic plain text from token model; rollout order MFE-reader → backend-emitter; rollback = plain-only emission.
+- **G2 REPORT (candidate):** `MarkdownDocumentView`/`markdownDocumentModel`, `stripDangerousRichTextTags`, `markdownToRichTextHtml`, `messageThreadMarkdown` all `EXISTING_EQUIVALENT=YES` but `DO_NOT_REUSE` for conversational scope (innerHTML+denylist, Mermaid, anchors, GFM tables, attachment/blob/relative schemes, Chat semantics). Proposed NEW `ConversationMarkdown` in plugin-ui: `marked.lexer` token→React with positive allowlist, zero `dangerouslySetInnerHTML`, zero DOMParser; copy serializer shares the same token tree.
+- **INVENTORY FACTS:** Portal exposes no `navigate` prop to federated MFE; same-origin `<a href>` navigates natively, SPA-intercept only within app basePath/shell paths — internal links viable without new Portal API; cross-app falls back to safe reload with live AuthZ.
+- **DECISION_PENDING:** typed link source (RouteRef/EntityRef) not present in turn result — recommendation recorded: first B2 slice emits `markdown_safe` without navigable links (links degrade to label text) until a governed typed source exists.
+- **NO CLAIMS:** no schema published, no runtime activated, `G1_CONTRACT_DECISION=PENDING`, `G2_SECURITY_REUSE=PENDING`, `G3/G4=PENDING`, `TESTS=TEST_NOT_RUN`, `CP-333=PLANNED`, `C_D_E_TRACEABILITY_GAP=OPEN`.
+- `PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN`
+- **NEXT:** independent Architecture/Coordination review of doc 84 §2/§5 + decision on typed link source; then bounded G3 implementation brief task.
