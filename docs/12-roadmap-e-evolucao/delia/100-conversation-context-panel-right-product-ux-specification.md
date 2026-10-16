@@ -217,3 +217,11 @@ Decisão superior do Product Master: remover a **coluna fixa da direita**. O `Co
 ## 13. Contexto flutuante R3 — microinterações e hierarquia (2026-10-16)
 
 O painel flutuante mantém largura e posição da R2, sem reservar coluna à direita. A entrada/saída passa a utilizar uma transição curta de opacidade e deslocamento/escala; a superfície visual permanece durante o fechamento e só passa a aceitar foco/interação quando aberta. Utiliza o estilo comum `delpi-ui-popover-surface` já existente em `plugin-ui`. Cabeçalhos de **Detalhes / Evidências / Atividades** recebem ícones e espaçamento/contraste harmonizados, com separação delicada para um único empty state quando não há projeções autorizadas. `prefers-reduced-motion` mantém a interface instantânea. Esta melhoria não adiciona qualquer dado contextual, serviço ou autorização. Testes criados/alterados, `TEST_NOT_RUN`; browser QA e review independente pendentes.
+
+## 14. R5 — botão de fechar: fundo transparente e alinhamento fixo
+
+Evidência das capturas fornecidas: fundo cinza persistente no X em tema escuro e variação ocasional de posicionamento para o centro do cabeçalho. Causas técnicas identificadas: regra temática global do `IconButton` em `action-controls.css` e layout flex sem coluna final explicitamente reservada ao botão.
+
+Implementação R5: classe local `__context-close __chrome-icon` no `IconButton`, background/borda transparentes em repouso em light e dark, hover/press tonal e focus-visible. Cabeçalho do card usa grid `minmax(0,1fr) 40px`, título na primeira coluna e botão na segunda com `justify-self:end`; importação de estilos da conversa após `action-controls.css` garante precedência. Card flutuante e animação R3 mantidos. Nenhuma autoridade, API, ação material ou runtime da conversa foi alterado.
+
+Testes de marcação atualizados e código na main; `TESTS=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, revisão independente `PENDING`. A verificação visual em ambos os temas e larguras ainda é requisito de aceite.
