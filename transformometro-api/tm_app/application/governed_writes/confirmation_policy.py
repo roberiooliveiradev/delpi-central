@@ -199,6 +199,49 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
         AUTO_ACT,
         "mark_interaction_read"
     ),
+    # Standalone room creation — non-idempotent create (duplicates
+    # possible), outside the ratified auto_act set (E5 policy contract).
+    WritePolicyRecord(
+        "interaction_room.create_standalone",
+        CONFIRM_BEFORE_ACT,
+        "create_standalone_room",
+    ),
+    # Link writes reshape the authorization surface — consequential.
+    WritePolicyRecord(
+        "interaction_room.add_link",
+        CONFIRM_BEFORE_ACT,
+        "add_room_link",
+    ),
+    WritePolicyRecord(
+        "interaction_room.remove_link",
+        CONFIRM_BEFORE_ACT,
+        "remove_room_link",
+    ),
+    # Adding a member is additive and owner/admin-gated (ratified
+    # auto_act). Removing participation narrows a member's access —
+    # consequential, incl. governed self-removal.
+    WritePolicyRecord(
+        "interaction_room.add_participant",
+        AUTO_ACT,
+        "add_room_participant",
+    ),
+    WritePolicyRecord(
+        "interaction_room.remove_participant",
+        CONFIRM_BEFORE_ACT,
+        "remove_room_participant",
+    ),
+    # Lifecycle: logical delete preserves history but releases primary
+    # claims; governed restore revives links — both consequential.
+    WritePolicyRecord(
+        "interaction_room.delete",
+        CONFIRM_BEFORE_ACT,
+        "delete_interaction_room",
+    ),
+    WritePolicyRecord(
+        "interaction_room.restore",
+        CONFIRM_BEFORE_ACT,
+        "restore_interaction_room",
+    ),
     # Own-profile signing display name — non-destructive personal metadata.
     WritePolicyRecord(
         "signature_profile.update",

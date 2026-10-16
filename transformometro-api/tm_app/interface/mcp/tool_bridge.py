@@ -1161,9 +1161,12 @@ def tool_collaboration_read(
     inbox_filter: str = "all",
     limit: int = 50,
     before_id: str | None = None,
+    entity_type: str | None = None,
+    entity_key: str | None = None,
 ) -> CallToolResult:
     """READ: tasks (my_tasks|task|process_tasks) and rooms
-    (rooms|room|messages|attachments metadata)."""
+    (rooms|room|messages|attachments metadata|room_links|
+    room_participants|room_impact|resolve_room)."""
     try:
         action_norm = str(action or "").strip().lower()
         if action_norm not in _COLLABORATION_READ_ACTIONS:
@@ -1205,6 +1208,22 @@ def tool_collaboration_read(
                 _dispatch.list_rooms(request, inbox_filter=inbox_filter),
                 "Salas de interação.",
             )
+        if action_norm == "resolve_room":
+            if not str(entity_type or "").strip() or not str(
+                entity_key or ""
+            ).strip():
+                return _error_result(
+                    "entity_type and entity_key are required for action "
+                    "'resolve_room'.",
+                    status_code=400,
+                    error_code="validation",
+                )
+            return _ok_result(
+                _dispatch.resolve_room(
+                    request, str(entity_type), str(entity_key)
+                ),
+                "Sala resolvida pelo objeto.",
+            )
         if not str(room_id or "").strip():
             return _error_result(
                 f"room_id is required for action '{action_norm}'.",
@@ -1224,6 +1243,21 @@ def tool_collaboration_read(
                     before_id=before_id,
                 ),
                 "Mensagens da sala.",
+            )
+        if action_norm == "room_links":
+            return _ok_result(
+                _dispatch.list_room_links(request, str(room_id)),
+                "Vínculos ativos da sala.",
+            )
+        if action_norm == "room_participants":
+            return _ok_result(
+                _dispatch.list_room_participants(request, str(room_id)),
+                "Participantes da sala.",
+            )
+        if action_norm == "room_impact":
+            return _ok_result(
+                _dispatch.room_impact(request, str(room_id)),
+                "Prévia de impacto (metadados administrativos).",
             )
         return _ok_result(
             _dispatch.list_room_attachments(request, str(room_id)),
@@ -1248,6 +1282,14 @@ def tool_prepare_collaboration_change(
     parent_id: str | None = None,
     mentions: list | None = None,
     reaction: str | None = None,
+    room_kind: str | None = None,
+    ticket_id: str | None = None,
+    participant_ids: list | None = None,
+    entity_type: str | None = None,
+    entity_key: str | None = None,
+    link_role: str | None = None,
+    link_id: str | None = None,
+    user_id: str | None = None,
 ) -> CallToolResult:
     """PREPARE only — task + room/message writes via canonical use cases.
 
@@ -1280,6 +1322,14 @@ def tool_prepare_collaboration_change(
             "parent_id": parent_id,
             "mentions": mentions,
             "reaction": reaction,
+            "room_kind": room_kind,
+            "ticket_id": ticket_id,
+            "participant_ids": participant_ids,
+            "entity_type": entity_type,
+            "entity_key": entity_key,
+            "link_role": link_role,
+            "link_id": link_id,
+            "user_id": user_id,
         },
     )
 

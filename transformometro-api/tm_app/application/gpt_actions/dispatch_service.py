@@ -62,7 +62,9 @@ from tm_app.application.security.authorization_policy import AuthorizationDenied
 from tm_app.domain.services.interaction_room_access_service import (
     PrimaryLinkConflict,
     RoomAccessExpansionBlocked,
+    RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
+    StaleRoomAuthorization,
 )
 from tm_app.application.use_cases.list_my_task_items import ListMyTaskItemsUseCase
 from tm_app.application.use_cases.manage_interaction_rooms import (
@@ -2228,7 +2230,7 @@ class GptActionsDispatchService:
         """Translate canonical use-case errors to transport errors."""
         if isinstance(exc, AuthorizationDenied):
             return GptActionsError(str(exc), exc.status_code)
-        if isinstance(exc, (RoomAuthorizationDenied, RoomAccessExpansionBlocked, PrimaryLinkConflict)):
+        if isinstance(exc, (RoomAuthorizationDenied, RoomAccessExpansionBlocked, PrimaryLinkConflict, RoomAnchorLinkRemovalLocked, StaleRoomAuthorization)):
             return GptActionsError(
                 str(exc), exc.status_code, {"error_code": exc.error_code}
             )
@@ -2356,6 +2358,47 @@ class GptActionsDispatchService:
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 
+    def list_room_links(self, request: Request, room_id: str) -> dict[str, Any]:
+        try:
+            items = self._rooms.list_links(
+                request.state.user, str(room_id),
+                authorization=self._room_bearer(request),
+            )
+            return {"items": items, "total": len(items)}
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def list_room_participants(self, request: Request, room_id: str) -> dict[str, Any]:
+        try:
+            items = self._rooms.list_participants(
+                request.state.user, str(room_id),
+                authorization=self._room_bearer(request),
+            )
+            return {"items": items, "total": len(items)}
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def room_impact(self, request: Request, room_id: str) -> dict[str, Any]:
+        """Admin-safe delete/impact preview — counts and opaque ids only."""
+        try:
+            return self._rooms.delete_impact(request.state.user, str(room_id))
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
+    def resolve_room(
+        self, request: Request, entity_type: str, entity_key: str
+    ) -> dict[str, Any]:
+        """Read-only resolution of the room anchored to an object."""
+        try:
+            return self._rooms.resolve_room_for_object(
+                request.state.user,
+                str(entity_type or ""),
+                str(entity_key or ""),
+                authorization=self._room_bearer(request),
+            ).to_dict()
+        except Exception as exc:
+            raise self._map_task_room_exc(exc) from exc
+
     def list_room_attachments(self, request: Request, room_id: str) -> dict[str, Any]:
         try:
             items = self._rooms.list_attachments(
@@ -2378,6 +2421,15 @@ class GptActionsDispatchService:
         authorization = self._room_bearer(request)
         try:
             if action == "open_room":
+                room_kind = str(args.get("room_kind") or "process").strip()
+                if room_kind == "ticket":
+                    # Same-user Bearer is forwarded — the BFF decides the
+                    # ticket's external authority; GLPI outages fail safe.
+                    return self._rooms.open_for_ticket(
+                        user,
+                        str(args.get("ticket_id") or ""),
+                        authorization=authorization,
+                    ).to_dict()
                 return self._rooms.open_for_process(
                     user,
                     str(args.get("processo_id") or ""),
@@ -2422,6 +2474,49 @@ class GptActionsDispatchService:
                     if room.id == room_id:
                         return room.to_dict()
                 raise LookupError("Sala não encontrada.")
+            # --- V2 room management (E5) — same canonical use cases as the
+            # HTTP surface; every op re-authorizes inside the use case.
+            if action == "create_standalone_room":
+                return self._rooms.open_standalone(
+                    user,
+                    str(args.get("title") or ""),
+                    participant_ids=list(args.get("participant_ids") or []),
+                ).to_dict()
+            if action == "add_room_link":
+                return self._rooms.add_link(
+                    user,
+                    room_id,
+                    str(args.get("entity_type") or ""),
+                    str(args.get("entity_key") or ""),
+                    link_role=str(args.get("link_role") or "reference"),
+                    authorization=authorization,
+                ).to_dict()
+            if action == "remove_room_link":
+                self._rooms.remove_link(
+                    user, room_id, str(args.get("link_id") or "")
+                )
+                return {"removed": True, "room_id": room_id, "link_id": args.get("link_id")}
+            if action == "add_participant":
+                self._rooms.add_participant(
+                    user, room_id, str(args.get("user_id") or "")
+                )
+                return {"added": True, "room_id": room_id, "user_id": args.get("user_id")}
+            if action == "remove_participant":
+                self._rooms.remove_participant(
+                    user, room_id, str(args.get("user_id") or "")
+                )
+                return {"removed": True, "room_id": room_id, "user_id": args.get("user_id")}
+            if action == "delete_room":
+                deleted = self._rooms.delete_room(user, room_id)
+                return {"id": deleted.id, "deleted": True, "room_id": room_id}
+            if action == "restore_room":
+                restored = self._rooms.restore_room(
+                    user, room_id, authorization=authorization
+                )
+                # Minimal projection (same as the HTTP route): a
+                # manage-only admin restores without gaining content —
+                # no title, link keys or participant list here.
+                return {"id": restored.id, "room_id": room_id, "restored": True}
             raise GptActionsError(f"Unknown interaction-room action '{action}'.", 400)
         except GptActionsError:
             raise

@@ -358,6 +358,9 @@ def _canonical_catalog() -> dict[str, Any]:
                 "Interaction rooms/messages (Portal parity) — collaboration "
                 "family: open_room|post_message|edit_message|delete_message|"
                 "toggle_reaction|pin_message|unpin_message|mark_room_read "
+                "plus V2 room management: create_standalone_room|"
+                "add_room_link|remove_room_link|add_participant|"
+                "remove_participant|delete_room|restore_room "
                 "via InteractionRoomUseCases; reads via collaboration_read. "
                 "Binary attachments remain platform_blocked (no MCP/ChatGPT "
                 "file transport)."
@@ -375,6 +378,13 @@ def _canonical_catalog() -> dict[str, Any]:
                 "pin_interaction_message",
                 "unpin_interaction_message",
                 "mark_interaction_read",
+                "create_standalone_room",
+                "add_room_link",
+                "remove_room_link",
+                "add_room_participant",
+                "remove_room_participant",
+                "delete_interaction_room",
+                "restore_interaction_room",
             ],
             "actions": [
                 "open_room",
@@ -385,8 +395,24 @@ def _canonical_catalog() -> dict[str, Any]:
                 "pin_message",
                 "unpin_message",
                 "mark_room_read",
+                "create_standalone_room",
+                "add_room_link",
+                "remove_room_link",
+                "add_participant",
+                "remove_participant",
+                "delete_room",
+                "restore_room",
             ],
-            "read_actions": ["rooms", "room", "messages", "attachments"],
+            "read_actions": [
+                "rooms",
+                "room",
+                "messages",
+                "attachments",
+                "room_links",
+                "room_participants",
+                "room_impact",
+                "resolve_room",
+            ],
             "read_back_policy": "authoritative",
         },
     ]
@@ -489,7 +515,9 @@ def _canonical_catalog() -> dict[str, Any]:
             "owner": "transformometro-api",
             "description": (
                 "Interaction-room reads — collaboration family: "
-                "rooms | room | messages | attachments metadata "
+                "rooms | room | messages | attachments metadata | "
+                "room_links | room_participants | room_impact | "
+                "resolve_room (read-only object resolution) "
                 "(InteractionRoomUseCases)."
             ),
             "read_only": True,

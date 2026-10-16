@@ -269,13 +269,18 @@ def build_registration_guide(transport: str = "gpt_actions") -> dict[str, Any]:
                     "set_signers) → gpt_commit_proposal.",
                     "Tasks + interaction rooms (collaboration family): "
                     "gpt_collaboration_read (my_tasks|task|process_tasks|rooms|"
-                    "room|messages|attachments) + gpt_prepare_collaboration_change "
+                    "room|messages|attachments|room_links|room_participants|"
+                    "room_impact|resolve_room) + gpt_prepare_collaboration_change "
                     "(create_task|update_task|complete_task|cancel_task|"
                     "open_room|post_message|edit_message|delete_message|"
-                    "toggle_reaction|pin_message|unpin_message|mark_room_read) → "
-                    "gpt_commit_proposal. cancel_task and delete_message are "
-                    "confirm_before_act. Binary attachments are "
-                    "BLOCKED_BY_PLATFORM (metadata read only).",
+                    "toggle_reaction|pin_message|unpin_message|mark_room_read|"
+                    "create_standalone_room|add_room_link|remove_room_link|"
+                    "add_participant|remove_participant|delete_room|"
+                    "restore_room) → gpt_commit_proposal. cancel_task, "
+                    "delete_message, create_standalone_room, add_room_link, "
+                    "remove_room_link, remove_participant, delete_room and "
+                    "restore_room are confirm_before_act. Binary attachments "
+                    "are BLOCKED_BY_PLATFORM (metadata read only).",
                     "Offer gpt_analyze for KPIs after recalculate.",
                 ],
             },

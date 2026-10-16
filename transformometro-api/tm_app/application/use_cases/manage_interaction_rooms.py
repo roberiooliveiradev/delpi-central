@@ -530,6 +530,17 @@ class InteractionRoomUseCases:
                     if item.active
                 }
             ),
+            # Opaque structural identifiers (uuids only — no entity_key,
+            # no title) so governed transports can run authoritative
+            # read-back without content access.
+            "active_link_ids": sorted(
+                item.id for item in room.links if item.active
+            ),
+            "participant_user_ids": sorted(
+                item.user_id
+                for item in room.participants
+                if item.removed_at is None
+            ),
         }
 
     def delete_room(self, user: Any, room_id: str) -> InteractionRoom:
@@ -592,6 +603,27 @@ class InteractionRoomUseCases:
         return restored
 
     # --- existing surface ------------------------------------------------------
+
+    def resolve_room_for_object(
+        self,
+        user: Any,
+        entity_type: str,
+        entity_key: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionRoom:
+        """Read-only resolution of the canonical room holding the active
+        primary claim for an object — never creates. The process entity
+        also honors the legacy anchor (get_or_create fallback source)."""
+        self._policy.require_access(user)
+        entity = normalize_link_entity(entity_type)
+        key = normalize_entity_key(entity, entity_key)
+        room = self._repo.find_active_primary_room(entity, key)
+        if room is None and entity == LINK_ENTITY_PROCESS:
+            room = self._repo.get_by_process(key)
+        if room is None:
+            raise LookupError("Sala não encontrada.")
+        return self._authorized_room(user, room.id, authorization)
 
     def get_room(
         self, user: Any, room_id: str, *, authorization: str | None = None

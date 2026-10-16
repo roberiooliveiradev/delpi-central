@@ -530,7 +530,10 @@ def create_mcp_server() -> MCPServer:
             "interaction rooms (action=rooms, inbox_filter; action=room "
             "needs room_id; action=messages needs room_id, optional "
             "limit/before_id; action=attachments returns metadata only — "
-            "room attachments have no byte route in the BFF). Same canonical use "
+            "room attachments have no byte route in the BFF; action="
+            "room_links / room_participants / room_impact need room_id; "
+            "action=resolve_room needs entity_type + entity_key — "
+            "read-only object resolution, never creates). Same canonical use "
             "cases as the Portal."
         ),
         annotations=_annotations("collaboration_read", "Collaboration read"),
@@ -545,6 +548,10 @@ def create_mcp_server() -> MCPServer:
             "room",
             "messages",
             "attachments",
+            "room_links",
+            "room_participants",
+            "room_impact",
+            "resolve_room",
         ],
         task_id: str | None = None,
         processo_id: str | None = None,
@@ -553,6 +560,8 @@ def create_mcp_server() -> MCPServer:
         inbox_filter: str = "all",
         limit: int = 50,
         before_id: str | None = None,
+        entity_type: str | None = None,
+        entity_key: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_collaboration_read(
             action=action,
@@ -563,6 +572,8 @@ def create_mcp_server() -> MCPServer:
             inbox_filter=inbox_filter,
             limit=limit,
             before_id=before_id,
+            entity_type=entity_type,
+            entity_key=entity_key,
         )
 
     # --- Semantic family: diagnostics (MCP-native) --------------------------
@@ -775,14 +786,21 @@ def create_mcp_server() -> MCPServer:
             "writes via the same canonical use cases as the Portal. Task "
             "actions: create_task|update_task|complete_task|cancel_task "
             "(TaskCommandUseCases; create needs title; update/complete/"
-            "cancel need task_id). Room actions: open_room (processo_id)|"
-            "post_message|edit_message|delete_message|toggle_reaction|"
-            "pin_message|unpin_message|mark_room_read "
+            "cancel need task_id). Room actions: open_room (processo_id, "
+            "or room_kind=ticket + ticket_id)|post_message|edit_message|"
+            "delete_message|toggle_reaction|pin_message|unpin_message|"
+            "mark_room_read plus V2 room management: create_standalone_room "
+            "(title, optional participant_ids)|add_room_link (entity_type + "
+            "entity_key, optional link_role)|remove_room_link (link_id)|"
+            "add_participant|remove_participant (user_id)|delete_room|"
+            "restore_room (room_id) "
             "(InteractionRoomUseCases; message actions need room_id + "
             "message_id). Then commit_proposal per proposal."
             "execution_policy — auto_act commits immediately with no "
             "extra confirmation; confirm_before_act (cancel_task, "
-            "delete_message) requires one explicit user confirmation "
+            "delete_message, create_standalone_room, add_room_link, "
+            "remove_room_link, remove_participant, delete_room, "
+            "restore_room) requires one explicit user confirmation "
             "first. Binary attachment upload/download is not available "
             "on this transport."
         ),
@@ -805,6 +823,13 @@ def create_mcp_server() -> MCPServer:
             "pin_message",
             "unpin_message",
             "mark_room_read",
+            "create_standalone_room",
+            "add_room_link",
+            "remove_room_link",
+            "add_participant",
+            "remove_participant",
+            "delete_room",
+            "restore_room",
         ],
         task_id: str | None = None,
         title: str | None = None,
@@ -819,6 +844,14 @@ def create_mcp_server() -> MCPServer:
         parent_id: str | None = None,
         mentions: list | None = None,
         reaction: str | None = None,
+        room_kind: str | None = None,
+        ticket_id: str | None = None,
+        participant_ids: list | None = None,
+        entity_type: str | None = None,
+        entity_key: str | None = None,
+        link_role: str | None = None,
+        link_id: str | None = None,
+        user_id: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_prepare_collaboration_change(
             action=action,
@@ -835,6 +868,14 @@ def create_mcp_server() -> MCPServer:
             parent_id=parent_id,
             mentions=mentions,
             reaction=reaction,
+            room_kind=room_kind,
+            ticket_id=ticket_id,
+            participant_ids=participant_ids,
+            entity_type=entity_type,
+            entity_key=entity_key,
+            link_role=link_role,
+            link_id=link_id,
+            user_id=user_id,
         )
 
     @mcp.tool(

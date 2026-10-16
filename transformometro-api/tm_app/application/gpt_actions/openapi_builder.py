@@ -1464,11 +1464,11 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "operationId": "gpt_collaboration_read",
                 "summary": "READ collaboration family (tasks + interaction rooms)",
                 "description": (
-                    "Same canonical use cases as the Portal. "
-                    "action=my_tasks (status filter) | process_tasks "
-                    "(processo_id) | task (task_id) | rooms (inbox_filter) | "
-                    "room | messages | attachments (room_id; metadata only "
-                    "— binary transfer BLOCKED_BY_PLATFORM)."
+                    "Same canonical use cases as the Portal. action=my_tasks "
+                    "| process_tasks | task | rooms | room | messages | "
+                    "attachments (metadata only) | room_links | "
+                    "room_participants | room_impact | resolve_room "
+                    "(entity_type + entity_key; read-only)."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -1487,6 +1487,10 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "room",
                                 "messages",
                                 "attachments",
+                                "room_links",
+                                "room_participants",
+                                "room_impact",
+                                "resolve_room",
                             ],
                         },
                     },
@@ -1497,6 +1501,8 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     {"name": "inbox_filter", "in": "query", "required": False, "schema": {"type": "string"}},
                     {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
                     {"name": "before_id", "in": "query", "required": False, "schema": {"type": "string"}},
+                    {"name": "entity_type", "in": "query", "required": False, "schema": {"type": "string"}, "description": "process|helpdesk_ticket — resolve_room"},
+                    {"name": "entity_key", "in": "query", "required": False, "schema": {"type": "string"}, "description": "object key — resolve_room"},
                 ],
                 "responses": {
                     "200": _ok_response("Collaboration data"),
@@ -1817,6 +1823,13 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "pin_message",
                                 "unpin_message",
                                 "mark_room_read",
+                                "create_standalone_room",
+                                "add_room_link",
+                                "remove_room_link",
+                                "add_participant",
+                                "remove_participant",
+                                "delete_room",
+                                "restore_room",
                             ],
                         },
                         "task_id": {
@@ -1869,6 +1882,42 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "reaction": {
                             "type": "string",
                             "description": "Required for toggle_reaction (emoji code)",
+                        },
+                        "room_kind": {
+                            "type": "string",
+                            "enum": ["process", "ticket"],
+                            "description": "open_room target (default: process)",
+                        },
+                        "ticket_id": {
+                            "type": "string",
+                            "description": "Required for open_room room_kind=ticket",
+                        },
+                        "participant_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Initial members — create_standalone_room",
+                        },
+                        "entity_type": {
+                            "type": "string",
+                            "enum": ["process", "helpdesk_ticket"],
+                            "description": "Required for add_room_link",
+                        },
+                        "entity_key": {
+                            "type": "string",
+                            "description": "Required for add_room_link",
+                        },
+                        "link_role": {
+                            "type": "string",
+                            "enum": ["primary", "reference"],
+                            "description": "add_room_link role (default: reference)",
+                        },
+                        "link_id": {
+                            "type": "string",
+                            "description": "Required for remove_room_link",
+                        },
+                        "user_id": {
+                            "type": "string",
+                            "description": "Required for add_participant|remove_participant",
                         },
                         "commit_now": {"type": "boolean", "default": False},
                         "confirmation": {"type": "boolean", "default": False},

@@ -629,3 +629,82 @@ orphan-file cleanup test. Focused suites: **106 passed**; PG scratch:
 - External BFF revocation inside a single request still cannot serialize
   against the room lock — bounded by the BFF contract; unchanged.
 - V056 absent and unapplied; production deploy remains gated.
+
+## E5 — TÉO / MCP / GPT ACTIONS (bounded scope)
+
+TÉO consumes the V2 room-management capabilities exclusively through the
+existing governed surfaces — `gpt_collaboration_read`,
+`gpt_prepare_collaboration_change`, `gpt_commit_proposal`,
+`collaboration_read`, `prepare_collaboration_change`, `commit_proposal`.
+No new operation IDs; the Actions façade stays curated and no route was
+re-exported to the GPT contract beyond updating the collaboration
+operation's action enums, parameters and `GptCollaborationChangeBody`
+schema.
+
+### Capabilities added (orchestrator / action vocabulary)
+
+| Action | Capability | execution_policy |
+|---|---|---|
+| `open_room` (`room_kind=process|ticket`) | `open_interaction_room` | auto_act (idempotent open_or_locate — ratified class) |
+| `create_standalone_room` | `create_standalone_room` | confirm_before_act |
+| `add_room_link` | `add_room_link` | confirm_before_act |
+| `remove_room_link` | `remove_room_link` | confirm_before_act |
+| `add_participant` | `add_room_participant` | auto_act (ratified) |
+| `remove_participant` | `remove_room_participant` | confirm_before_act |
+| `delete_room` | `delete_interaction_room` | confirm_before_act |
+| `restore_room` | `restore_interaction_room` | confirm_before_act |
+
+Message/task capabilities and policies unchanged. Legacy alias map
+`INTERACTION_ROOM_ACTION_TO_CAPABILITY` extended with matching names so
+the `values() == INTERACTION_ROOM_CAPABILITIES` invariant holds.
+
+### Reads added (both transports)
+
+`room_links`, `room_participants` (content-authorized),
+`room_impact` (admin-safe: counts + opaque ids only),
+`resolve_room` (read-only object resolution — `process` honors the
+legacy anchor; never creates).
+
+### Read-back design for admin ops
+
+`delete_impact` gained two additive structural fields —
+`active_link_ids` and `participant_user_ids` (uuids only; no title, no
+entity_key). PREPARE fingerprints and post-ACT verification for the
+administrative capabilities run against that projection, so a
+manage-only admin operates and verifies without ever reading content.
+Self-removal by a plain member fingerprints the member-readable room
+instead, and verification accepts the resulting access denial as the
+postcondition proof. `restore_room` returns the same minimal projection
+as the HTTP route (`{id, room_id, restored}`).
+
+### Security invariants preserved
+
+Same-user Bearer forwarded to the BFF for ticket visibility
+(`open_room kind=ticket`, `add_room_link`, `restore_room`); no service
+account, no generic proxy/SQL, no RBAC fork; `StaleRoomAuthorization`
+and `RoomAnchorLinkRemovalLocked` map to typed transport errors
+(`stale_authorization_context` 409 / `legacy_anchor_locked` 409);
+`room_access_expansion_blocked` and `primary_link_conflict` propagate
+unchanged; binary attachments remain BLOCKED_BY_PLATFORM; idempotency
+and fingerprint drift/revocation checks inherited from the orchestrator
+(commit_now honors the same canonical policy table).
+
+### Tests
+
+`test_teo_room_management_e5.py` (18 tests, contract-level via
+`tool_bridge` + `build_gpt_actions_openapi`): policy classification,
+action/capability coverage, exact-change sealing, confirm gate, auto_act
+chain with impact read-back, delete/restore verify, fingerprint drift
+block, PREPARE→ACT revocation block, unauthorized user, unknown action,
+missing-field validation, ticket kind sealing, stale-authz typed
+propagation, all new reads, OpenAPI enum/param/schema assertions.
+Focused TÉO/collab/interaction suites: 854 passed; full suite 1774
+passed + the same 10 pre-existing baseline failures.
+
+### Gates unchanged
+
+V056 absent/unapplied; no deploy. Remaining production gates: V056 +
+schema_migrations on target, PG regression on final schema, Keycloak +
+GLPI authenticated integration, mandatory admin audit (outbox),
+end-to-end GPT Actions smoke, published OpenAPI validation, and a
+manual GPT Builder re-import of the updated schema.

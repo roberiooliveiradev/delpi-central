@@ -104,6 +104,14 @@ WRITE_CAPABILITIES = frozenset(
         "pin_interaction_message",
         "unpin_interaction_message",
         "mark_interaction_read",
+        # V2 room management (E5) — links, participants, lifecycle.
+        "create_standalone_room",
+        "add_room_link",
+        "remove_room_link",
+        "add_room_participant",
+        "remove_room_participant",
+        "delete_interaction_room",
+        "restore_interaction_room",
         # Portal parity — governed special operations (signature profile
         # metadata).
         "update_signature_profile",
@@ -131,6 +139,28 @@ INTERACTION_ROOM_CAPABILITIES = frozenset(
         "pin_interaction_message",
         "unpin_interaction_message",
         "mark_interaction_read",
+        # V2 room management (E5) — links, participants, lifecycle.
+        "create_standalone_room",
+        "add_room_link",
+        "remove_room_link",
+        "add_room_participant",
+        "remove_room_participant",
+        "delete_interaction_room",
+        "restore_interaction_room",
+    }
+)
+
+# Administrative room capabilities — fingerprinted/verified through the
+# admin-safe impact projection (delete_impact), never through content
+# reads the actor may not be authorized for.
+_ROOM_ADMIN_CAPS = frozenset(
+    {
+        "add_room_link",
+        "remove_room_link",
+        "add_room_participant",
+        "remove_room_participant",
+        "delete_interaction_room",
+        "restore_interaction_room",
     }
 )
 
@@ -152,6 +182,14 @@ COLLABORATION_ACTION_TO_CAPABILITY = {
     "pin_message": "pin_interaction_message",
     "unpin_message": "unpin_interaction_message",
     "mark_room_read": "mark_interaction_read",
+    # V2 room management (E5).
+    "create_standalone_room": "create_standalone_room",
+    "add_room_link": "add_room_link",
+    "remove_room_link": "remove_room_link",
+    "add_participant": "add_room_participant",
+    "remove_participant": "remove_room_participant",
+    "delete_room": "delete_interaction_room",
+    "restore_room": "restore_interaction_room",
 }
 
 # Collaboration READ surface — shared by MCP + GPT Actions projections.
@@ -164,6 +202,11 @@ COLLABORATION_READ_ACTIONS = frozenset(
         "room",
         "messages",
         "attachments",
+        # V2 room management reads (E5).
+        "room_links",
+        "room_participants",
+        "room_impact",
+        "resolve_room",
     }
 )
 
@@ -186,6 +229,13 @@ INTERACTION_ROOM_ACTION_TO_CAPABILITY = {
     "pin": "pin_interaction_message",
     "unpin": "unpin_interaction_message",
     "mark_read": "mark_interaction_read",
+    "create_standalone": "create_standalone_room",
+    "add_link": "add_room_link",
+    "remove_link": "remove_room_link",
+    "add_participant": "add_room_participant",
+    "remove_participant": "remove_room_participant",
+    "delete_room": "delete_interaction_room",
+    "restore_room": "restore_interaction_room",
 }
 
 # Semantic family: special governed operations — one-shot domain writes
@@ -499,12 +549,67 @@ class GovernedWriteOrchestrator:
         missing: list[str] = []
         resource_id = None
         if capability == "open_interaction_room":
-            processo_id = str(args.get("processo_id") or "").strip()
-            if not processo_id:
-                missing.append("processo_id")
+            room_kind = str(args.get("room_kind") or "process").strip()
+            if room_kind == "ticket":
+                ticket_id = str(args.get("ticket_id") or "").strip()
+                if not ticket_id:
+                    missing.append("ticket_id")
+                current_fp = fingerprint(
+                    {"interaction_room": "open_or_locate", "ticket_id": ticket_id}
+                )
+            else:
+                processo_id = str(args.get("processo_id") or "").strip()
+                if not processo_id:
+                    missing.append("processo_id")
+                current_fp = fingerprint(
+                    {
+                        "interaction_room": "get_or_create",
+                        "processo_id": processo_id,
+                    }
+                )
+        elif capability == "create_standalone_room":
+            title = str(args.get("title") or "").strip()
+            if not title:
+                missing.append("title")
             current_fp = fingerprint(
-                {"interaction_room": "get_or_create", "processo_id": processo_id}
+                {"interaction_room": "create_standalone", "title": title}
             )
+        elif capability in _ROOM_ADMIN_CAPS:
+            if not room_id:
+                missing.append("room_id")
+                current_fp = fingerprint({"room_id": None})
+            else:
+                actor_id = str(
+                    getattr(request.state.user, "id", "") or ""
+                )
+                if (
+                    capability == "remove_room_participant"
+                    and str(args.get("user_id") or "").strip() == actor_id
+                ):
+                    # Governed self-removal by a plain member: the caller
+                    # is not an admin, so the admin-safe impact
+                    # projection would deny. The member-readable room
+                    # projection is the correct drift anchor instead.
+                    current_fp = fingerprint(
+                        self._dispatch.get_room(request, room_id)
+                    )
+                else:
+                    current_fp = fingerprint(
+                        self._dispatch.room_impact(request, room_id)
+                    )
+            resource_id = room_id or None
+            if capability == "add_room_link":
+                for field in ("entity_type", "entity_key"):
+                    if not str(args.get(field) or "").strip():
+                        missing.append(field)
+            if capability == "remove_room_link":
+                if not str(args.get("link_id") or "").strip():
+                    missing.append("link_id")
+            if capability in {
+                "add_room_participant",
+                "remove_room_participant",
+            } and not str(args.get("user_id") or "").strip():
+                missing.append("user_id")
         elif capability in {"post_interaction_message", "mark_interaction_read"}:
             if not room_id:
                 missing.append("room_id")
@@ -546,6 +651,16 @@ class GovernedWriteOrchestrator:
             "parent_id": args.get("parent_id"),
             "mentions": args.get("mentions"),
             "reaction": args.get("reaction"),
+            # V2 room management fields (E5).
+            "room_kind": args.get("room_kind"),
+            "ticket_id": args.get("ticket_id"),
+            "title": args.get("title"),
+            "participant_ids": args.get("participant_ids"),
+            "entity_type": args.get("entity_type"),
+            "entity_key": args.get("entity_key"),
+            "link_role": args.get("link_role"),
+            "link_id": args.get("link_id"),
+            "user_id": args.get("user_id"),
         }
         return {
             "resource_type": "interaction_room",
@@ -1148,11 +1263,37 @@ class GovernedWriteOrchestrator:
                 self._dispatch.get_task(request, str(change["task_id"]))
             )
         if cap == "open_interaction_room":
+            if str(change.get("room_kind") or "process") == "ticket":
+                return fingerprint(
+                    {
+                        "interaction_room": "open_or_locate",
+                        "ticket_id": change.get("ticket_id"),
+                    }
+                )
             return fingerprint(
                 {
                     "interaction_room": "get_or_create",
                     "processo_id": change.get("processo_id"),
                 }
+            )
+        if cap == "create_standalone_room":
+            return fingerprint(
+                {
+                    "interaction_room": "create_standalone",
+                    "title": change.get("title"),
+                }
+            )
+        if cap in _ROOM_ADMIN_CAPS:
+            actor_id = str(getattr(request.state.user, "id", "") or "")
+            if (
+                cap == "remove_room_participant"
+                and str(change.get("user_id") or "").strip() == actor_id
+            ):
+                return fingerprint(
+                    self._dispatch.get_room(request, str(change["room_id"]))
+                )
+            return fingerprint(
+                self._dispatch.room_impact(request, str(change["room_id"]))
             )
         if cap in {"post_interaction_message", "mark_interaction_read"}:
             return fingerprint(
@@ -1436,6 +1577,8 @@ class GovernedWriteOrchestrator:
             return {"task": read, "write_result": write_result}
 
         if cap in INTERACTION_ROOM_CAPABILITIES:
+            if cap in _ROOM_ADMIN_CAPS:
+                return self._verify_room_admin(request, proposal, write_result)
             if not isinstance(write_result, dict) or not write_result.get("id"):
                 raise GovernedWriteError(
                     "Interaction-room write not confirmed by read-back.",
@@ -1478,6 +1621,64 @@ class GovernedWriteOrchestrator:
             )
 
         return {"write_result": write_result, "expected": expected}
+
+    def _verify_room_admin(
+        self, request: Request, proposal, write_result: Any
+    ) -> dict[str, Any]:
+        """Authoritative read-back for administrative room writes (E5).
+
+        Uses the admin-safe impact projection — a manager without content
+        read must never receive room content back. Self-removal by a
+        plain member is proven by the access denial itself."""
+        change = proposal.exact_change
+        cap = proposal.capability
+        room_id = str(change.get("room_id") or "")
+        actor_id = str(getattr(request.state.user, "id", "") or "")
+
+        def _fail(detail: str) -> GovernedWriteError:
+            return GovernedWriteError(
+                f"Room write not confirmed by read-back: {detail}.",
+                code=OUTCOME_VERIFICATION_FAILED,
+                status_code=409,
+                data={"write_result": write_result},
+            )
+
+        if cap == "remove_room_participant" and str(
+            change.get("user_id") or ""
+        ) == actor_id:
+            try:
+                self._dispatch.get_room(request, room_id)
+            except Exception:  # noqa: BLE001 — denial is the proof
+                return {"room_id": room_id, "self_removed": True}
+            raise _fail("room still readable after self-removal")
+
+        impact = self._dispatch.room_impact(request, room_id)
+        if cap == "add_room_link":
+            link_id = str((write_result or {}).get("id") or "")
+            if not link_id or link_id not in impact.get("active_link_ids", []):
+                raise _fail("link absent from active set")
+        elif cap == "remove_room_link":
+            if str(change.get("link_id") or "") in impact.get(
+                "active_link_ids", []
+            ):
+                raise _fail("link still active")
+        elif cap == "add_room_participant":
+            if str(change.get("user_id") or "") not in impact.get(
+                "participant_user_ids", []
+            ):
+                raise _fail("participant absent")
+        elif cap == "remove_room_participant":
+            if str(change.get("user_id") or "") in impact.get(
+                "participant_user_ids", []
+            ):
+                raise _fail("participant still active")
+        elif cap == "delete_interaction_room":
+            if not impact.get("deleted"):
+                raise _fail("room not deleted")
+        elif cap == "restore_interaction_room":
+            if impact.get("deleted"):
+                raise _fail("room still deleted")
+        return {"room_impact": impact, "write_result": write_result}
 
     @staticmethod
     def _extract_id(entity: str, row: Any) -> str | None:

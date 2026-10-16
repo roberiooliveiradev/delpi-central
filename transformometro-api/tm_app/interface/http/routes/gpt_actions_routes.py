@@ -319,7 +319,9 @@ class GptCollaborationChangeBody(BaseModel):
         description=(
             "create_task | update_task | complete_task | cancel_task | "
             "open_room | post_message | edit_message | delete_message | "
-            "toggle_reaction | pin_message | unpin_message | mark_room_read"
+            "toggle_reaction | pin_message | unpin_message | mark_room_read | "
+            "create_standalone_room | add_room_link | remove_room_link | "
+            "add_participant | remove_participant | delete_room | restore_room"
         ),
     )
     task_id: str | None = None
@@ -335,6 +337,15 @@ class GptCollaborationChangeBody(BaseModel):
     parent_id: str | None = None
     mentions: list | None = None
     reaction: str | None = None
+    # V2 room management (E5)
+    room_kind: str | None = None
+    ticket_id: str | None = None
+    participant_ids: list | None = None
+    entity_type: str | None = None
+    entity_key: str | None = None
+    link_role: str | None = None
+    link_id: str | None = None
+    user_id: str | None = None
     commit_now: bool = False
     confirmation: bool = False
     idempotency_key: str | None = None
@@ -1135,7 +1146,8 @@ def gpt_collaboration_read(
         ...,
         description=(
             "my_tasks | task | process_tasks | rooms | room | "
-            "messages | attachments"
+            "messages | attachments | room_links | room_participants | "
+            "room_impact | resolve_room"
         ),
     ),
     task_id: str | None = Query(None),
@@ -1145,6 +1157,8 @@ def gpt_collaboration_read(
     inbox_filter: str = Query("all"),
     limit: int = Query(50),
     before_id: str | None = Query(None),
+    entity_type: str | None = Query(None),
+    entity_key: str | None = Query(None),
 ):
     try:
         action_norm = str(action or "").strip().lower()
@@ -1179,6 +1193,21 @@ def gpt_collaboration_read(
                 _dispatch.list_rooms(request, inbox_filter=inbox_filter),
                 "Salas de interação.",
             )
+        if action_norm == "resolve_room":
+            if not str(entity_type or "").strip() or not str(
+                entity_key or ""
+            ).strip():
+                return fail(
+                    "entity_type and entity_key are required for action "
+                    "'resolve_room'.",
+                    400,
+                )
+            return ok(
+                _dispatch.resolve_room(
+                    request, str(entity_type), str(entity_key)
+                ),
+                "Sala resolvida pelo objeto.",
+            )
         if not str(room_id or "").strip():
             return fail(
                 f"room_id is required for action '{action_norm}'.", 400
@@ -1191,6 +1220,21 @@ def gpt_collaboration_read(
                     request, str(room_id), limit=limit, before_id=before_id
                 ),
                 "Mensagens da sala.",
+            )
+        if action_norm == "room_links":
+            return ok(
+                _dispatch.list_room_links(request, str(room_id)),
+                "Vínculos ativos da sala.",
+            )
+        if action_norm == "room_participants":
+            return ok(
+                _dispatch.list_room_participants(request, str(room_id)),
+                "Participantes da sala.",
+            )
+        if action_norm == "room_impact":
+            return ok(
+                _dispatch.room_impact(request, str(room_id)),
+                "Prévia de impacto (metadados administrativos).",
             )
         return ok(
             _dispatch.list_room_attachments(request, str(room_id)),
