@@ -92,6 +92,8 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationAssistantActions",
   "ConversationScrollNavigator",
   "ConversationThreeRegionLayout",
+  "ConversationSidebar",
+  "ConversationContextPanel",
 ];
 
 function findIndexExpose(dir) {
