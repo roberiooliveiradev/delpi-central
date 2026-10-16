@@ -14293,14 +14293,15 @@ INDEPENDENT_REVIEW=PENDING
 
 ## §6.211 — DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **LIVE_SHA:** `cd88e3f49c` on `srv-api`. **CODE_SHA:** `42991c5ae3` (includes `MAX_INDEX_OPTION_ENTRIES` fix; live evidence is on `cd88e3f49c`).
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **CODE_SHA:** `42991c5ae3` (`MAX_INDEX_OPTION_ENTRIES=48`).
 
 - **ROOT_CAUSE:** post-index provenance used substring-in-text; argument projection did not select exact owner-declared identifiers → unnecessary clarification / no guide body.
 - **FIX:** structured `_index_catalog_entities` + `INDEX_SELECT` bind + exact `_post_self_index_argument_gaps`; `MAX_INDEX_OPTION_ENTRIES=48` (follow-up after live showed resolver shortlist truncated catalogs); post-resolver revalidation; no provider hardcode.
 - **TESTS:** iterative + Stage03 targeted PASS (Atlas; description≠id; nonexistent id; catalog>10 preserved).
-- **LIVE SSH** (one MESSAGE, `moonshotai/kimi-k3`, deploy `cd88e3f49c`): `index_probe identifiers=10` → `index_select bound field=topic` → `provider_invoke arg_keys=topic` → `grounding_status=GROUNDED` guide body; `MATERIAL_ACT=0`; selected id=`decomposition` (valid exact id) while user asked process cadastro — `process` absent from truncated 10-option shortlist. `END_TO_END_VERDICT=FAIL` for requested orientation; pipeline binding proven. No second live round.
-- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `MATERIAL_ACT_COUNT=0`.
+- **LIVE SSH (binding, truncated shortlist):** deploy `cd88e3f49c`; `identifiers=10` → selected `decomposition`; `END_TO_END_VERDICT=FAIL` (pipeline ok; intent miss because `process` truncated).
+- **FINAL LIVE VALIDATION** (`DELIA-C3-MCP-INDEX-GUIDANCE-FINAL-LIVE-VALIDATION-01`, docs-only, no code change): deploy `06896575bd` on `srv-api` (ancestor of `42991c5ae3`; runtime `MAX_INDEX_OPTION_ENTRIES=48`); model `moonshotai/kimi-k3`; MESSAGE «Como faço para cadastrar um processo no Transformômetro?»; correlation `452674e9-a2c0-4870-b7f7-b62e8ef6e5f9`; sequence `index_probe identifiers=25` → `index_select bound field=topic` → `provider_invoke arg_keys=topic` → guide `id=process` → `grounding_status=GROUNDED`; `MATERIAL_ACT_COUNT=0`; `LIVE_VERDICT=PASS`.
+- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`.
 
 RW_S03_01=FIXED; STAGE_03_ACCEPTED=NO
-NEXT=INDEPENDENT_REVIEW
+NEXT=INDEPENDENT_STAGE03_ACCEPTANCE_REVIEW
 

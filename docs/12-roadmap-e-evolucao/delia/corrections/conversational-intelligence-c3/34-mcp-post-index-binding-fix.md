@@ -26,14 +26,28 @@ Após o INDEX READ, a proveniência usava substring em texto (`text in owner_evi
 
 ## 4. Live SSH
 
-Uma execução MESSAGE-only em `srv-api` com `moonshotai/kimi-k3` no SHA `cd88e3f49c` (antes do raise de `MAX_INDEX_OPTION_ENTRIES`): pipeline INDEX→select→GUIDE comprovado (`identifiers=10`, `arg_keys=topic`, GROUNDED), porém o shortlist truncado omitiu `process` e o modelo ligou `decomposition`. Ver ledger §6.211. Sem segunda execução live nesta task.
+**Primeira evidência (binding, truncado):** MESSAGE-only em `srv-api` / `moonshotai/kimi-k3` no SHA `cd88e3f49c`: INDEX→select→GUIDE (`identifiers=10`, GROUNDED) mas shortlist omitiu `process` → selecionou `decomposition`. `END_TO_END=FAIL`.
+
+**Validação final do budget (`DELIA-C3-MCP-INDEX-GUIDANCE-FINAL-LIVE-VALIDATION-01`):** deploy runtime com `MAX_INDEX_OPTION_ENTRIES=48` (repo HEAD contendo `42991c5ae3`; checkout `06896575bd`). Uma MESSAGE: «Como faço para cadastrar um processo no Transformômetro?»
+
+```text
+index_probe identifiers=25
+index_select bound field=topic
+provider_invoke arg_keys=topic
+guide id=process GROUNDED
+MATERIAL_ACT=0
+LIVE_VERDICT=PASS
+```
+
+Sem alteração de código nesta validação. `STAGE_03_ACCEPTED=NO` (aceite independente pendente).
 
 ## 5. Outcome
 
 ```text
 REUSE_DECISION=EXTEND
 NEW_PLANNER=NO PROVIDER_HARDCODE=NO
+FINAL_LIVE_VALIDATION=PASS
 STAGE_03_ACCEPTED=NO
 C3_EXECUTED=NO
-NEXT=INDEPENDENT_REVIEW
+NEXT=INDEPENDENT_STAGE03_ACCEPTANCE_REVIEW
 ```
