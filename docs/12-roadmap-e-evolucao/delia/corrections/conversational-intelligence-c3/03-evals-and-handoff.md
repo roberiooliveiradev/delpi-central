@@ -56,7 +56,7 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | Etapa | Estado neste registro | Implementação | Evals no SHA de entrega | Aceite |
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
-| 02 intent/instructions | R2 DIAGNOSTIC REVIEW=ACCEPT_WITH_RESIDUAL (§6.178), B2 ARCHITECTURE_CLOSED_BY_COORDINATION (§6.184), STAGE02 NOT_ACCEPTED | Stage02 `4a9f05e5b9`; R1 `9fd3a7bc95`; R2 diagnosis `4a0027863b` | R2 10 strict xfails + 6 controls, executor reports 1091 PASS + 10 XFAIL; implementation/test reexecution TEST_NOT_RUN | B1 PASS estrutural; B2 REWORK no runtime; contrato [18](./18-execution-scope-architecture-contract-closure.md) exige MESSAGE zero ACT, APPLY/REJECT tipados bound, owner false/true, legacy and ACT-only; Stage03 NOT_AUTHORIZED |
+| 02 intent/instructions | B2 IMPLEMENTATION EVIDENCE (§6.185), INDEPENDENT_REVIEW=REWORK (§6.186); STAGE02 NOT_ACCEPTED | Stage02 `4a9f05e5b9`; R1 `9fd3a7bc95`; B2 `397cb5c344` | executor reports 1121 pytest PASS + 189 vitest PASS + vite build PASS; tsc FAIL (4 claimed preexisting); independent reexecution TEST_NOT_RUN | B1 PASS estrutural; B2 REWORK: concurrent duplicate APPLY risk (atomic PendingWrite consume not PROVEN), Application command discrimination gap and pending-card UX; RED concurrent APPLY×APPLY/APPLY×REJECT required; Stage03 NOT_AUTHORIZED |
 | 03 discovery/guidance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
