@@ -846,6 +846,54 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                 "responses": {"200": _ok_response("DataModel inspect"), **_error_responses()},
             }
         },
+        f"{base}/playlists/{{playlist_id}}/history": {
+            "get": {
+                "operationId": "gpt_get_playlist_history",
+                "summary": "Read-only playlist revision history digest",
+                "description": (
+                    "Read-only playlist revision history. Omit snapshotId "
+                    "= paginated digest list; set = one digest. Max 500 "
+                    "retained; no coverage beyond. "
+                    "change.available=false = non-adjacent, never invent "
+                    "diffs. Slide-field granularity only. "
+                    "mutationProvenance = technical origin, not motive. "
+                    "Requires read permission."
+                ),
+                "tags": [tag],
+                "security": [{"BearerAuth": []}],
+                "parameters": [
+                    {
+                        "name": "playlist_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string", "format": "uuid"},
+                        "description": "Playlist UUID.",
+                    },
+                    {
+                        "name": "snapshotId",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "string", "format": "uuid"},
+                        "description": "History snapshot UUID — detail mode.",
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "default": 1},
+                        "description": "Page number (>=1).",
+                    },
+                    {
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": False,
+                        "schema": {"type": "integer", "default": 10},
+                        "description": "Items per page (1-100).",
+                    },
+                ],
+                "responses": {"200": _ok_response("Playlist history"), **_error_responses()},
+            }
+        },
         f"{base}/product-guides": {
             "get": {
                 "operationId": "gpt_get_product_guide",

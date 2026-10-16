@@ -35,6 +35,9 @@ from tv_app.infrastructure.gateways.core_solution_catalog_gateway import (
     CoreSolutionCatalogGateway,
 )
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
+from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
+    PlaylistHistoryRepository,
+)
 
 from .oauth_contract import build_www_authenticate_challenge
 
@@ -44,8 +47,10 @@ _repo = PlaylistRepository()
 _writes = TvPresentationWriteService(repo=_repo)
 _commit = TvGptCommitService(writes=_writes, idempotency=PostgresIdempotencyRepository())
 _solutions = CoreSolutionCatalogGateway()
+_history = PlaylistHistoryRepository()
 _dispatch = GptActionsDispatchService(
-    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions
+    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions,
+    history=_history,
 )
 
 
@@ -264,6 +269,27 @@ def tool_get_playlist_context(
         return _ok_result(data, images=[image] if image else None)
     except Exception as e:
         return handle_tool_error(e, tool="get_playlist_context", label="mcp tool")
+
+
+def tool_get_playlist_history(
+    playlist_id: str,
+    snapshot_id: str | None = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> CallToolResult:
+    try:
+        user, _ = _authed_context()
+        return _ok_result(
+            _dispatch.get_playlist_history(
+                user=user,
+                playlist_id=playlist_id,
+                snapshot_id=snapshot_id,
+                page=page,
+                page_size=page_size,
+            )
+        )
+    except Exception as e:
+        return handle_tool_error(e, tool="get_playlist_history", label="mcp tool")
 
 
 def tool_get_catalog() -> CallToolResult:

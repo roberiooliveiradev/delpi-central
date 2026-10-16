@@ -991,6 +991,145 @@
         }
       }
     },
+    "/gpt-actions/v1/playlists/{playlist_id}/history": {
+      "get": {
+        "operationId": "gpt_get_playlist_history",
+        "summary": "Read-only playlist revision history digest",
+        "description": "Read-only playlist revision history. Omit snapshotId = paginated digest list; set = one digest. Max 500 retained; no coverage beyond. change.available=false = non-adjacent, never invent diffs. Slide-field granularity only. mutationProvenance = technical origin, not motive. Requires read permission.",
+        "tags": [
+          "TV Dashboard GPT"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "playlist_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Playlist UUID."
+          },
+          {
+            "name": "snapshotId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "History snapshot UUID — detail mode."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number (>=1)."
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Items per page (1-100)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Playlist history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or unsupported capability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking TV permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (revision/catalog/plan/idempotency/partial/in-progress)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid change payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GptErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gpt-actions/v1/product-guides": {
       "get": {
         "operationId": "gpt_get_product_guide",

@@ -145,7 +145,12 @@ def test_source_families_and_statuses():
     assert sources["product_usage"]["status"] == "PROVEN"
     assert sources["design_methodology"]["status"] == "PROVEN"
     assert sources["solution_ecosystem"]["status"] == "PROVEN"
-    assert sources["history"]["status"] == "UNAVAILABLE_IN_CURRENT_SURFACE"
+    # PHASE 9 shipped the read-only history digest surface on the canonical
+    # PlaylistHistory domain (bounded retention, slide-field diff only).
+    assert sources["history"]["status"] == "PROVEN"
+    assert sources["history"]["readOnly"] is True
+    assert sources["history"]["retentionLimit"] == 500
+    assert sources["history"]["blockLevelDiff"] == "unsupported"
     # editor_context must never become an authority source.
     never = " ".join(sources["editor_context"]["never"]).lower()
     assert "authorization" in never

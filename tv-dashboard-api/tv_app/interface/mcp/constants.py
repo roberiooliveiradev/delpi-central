@@ -28,6 +28,7 @@ VISTA_MCP_SURFACE = "GOVERNED_WRITE_V1"
 TOOL_CLASS: dict[str, str] = {
     "list_playlists": "READ",
     "get_playlist_context": "READ",
+    "get_playlist_history": "READ",
     "get_catalog": "DISCOVERY",
     "search_data_routes": "READ",
     "inspect_data_model": "READ",

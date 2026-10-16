@@ -18,6 +18,7 @@ for _path in (API_ROOT, SHARED_ROOT):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
+from tv_app.application.gpt_actions import GPT_ACTIONS_OPERATION_IDS  # noqa: E402
 from tv_app.application.gpt_actions.openapi_builder import (  # noqa: E402
     count_operations,
     write_gpt_actions_openapi,
@@ -32,8 +33,12 @@ def main() -> int:
     if total > 30:
         print("ERROR: Custom GPT limit is ~30 operations", file=sys.stderr)
         return 1
-    if total != 10:
-        print(f"ERROR: expected 10 imported operations, got {total}", file=sys.stderr)
+    expected = len(GPT_ACTIONS_OPERATION_IDS)
+    if total != expected:
+        print(
+            f"ERROR: expected {expected} imported operations, got {total}",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

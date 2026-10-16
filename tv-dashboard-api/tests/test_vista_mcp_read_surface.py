@@ -130,6 +130,7 @@ def test_tools_list_exactly_ten_governed_tools():
     assert names == {
         "list_playlists",
         "get_playlist_context",
+        "get_playlist_history",
         "get_catalog",
         "search_data_routes",
         "inspect_data_model",
@@ -140,7 +141,7 @@ def test_tools_list_exactly_ten_governed_tools():
         "prepare_change",
         "commit_proposal",
     }
-    assert len(tools) == 11
+    assert len(tools) == 12
     assert "inspect_data_source" not in names
 
 
@@ -156,7 +157,7 @@ def test_no_native_op_or_legacy_tools_registered():
 def test_tool_classification_read_prepare_act():
     assert TOOL_CLASS["prepare_change"] == "PREPARE"
     assert TOOL_CLASS["commit_proposal"] == "ACT"
-    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 6
+    assert sum(1 for v in TOOL_CLASS.values() if v == "READ") == 7
     assert TOOL_CLASS["get_product_guide"] == "READ"
     assert sum(1 for v in TOOL_CLASS.values() if v == "DISCOVERY") == 1
     assert TOOL_CLASS["get_catalog"] == "DISCOVERY"

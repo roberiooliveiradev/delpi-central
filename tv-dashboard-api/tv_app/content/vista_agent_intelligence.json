@@ -95,10 +95,18 @@
         "note": "ausência no catálogo TV IS_NOT ausência de solução; knowledge != authorization; lookup user-parity no miss"
       },
       "history": {
-        "status": "UNAVAILABLE_IN_CURRENT_SURFACE",
+        "status": "PROVEN",
         "purpose": "Histórico/versões da playlist.",
-        "owner": "PlaylistHistory domain (PROVEN), surface VISTA ausente",
-        "note": "superfície de leitura para o agente = PHASE 9"
+        "owner": "PlaylistHistory domain",
+        "readOnly": true,
+        "reads": [
+          "get_playlist_history (list digest + detail digest via snapshotId)"
+        ],
+        "retentionLimit": 500,
+        "diffGranularity": "playlist fields + slide fields (added/removed/updated/reordered)",
+        "blockLevelDiff": "unsupported",
+        "privacy": "authorName only; authorId/authorEmail/raw snapshot nunca projetados",
+        "provenance": "mutationProvenance é origem técnica IS_NOT motivação do usuário"
       }
     },
     "precedence": [
@@ -120,6 +128,29 @@
         "avoid": ["design_methodology", "data_contract", "solution_ecosystem", "mutation"],
         "stop": "após presentation_truth autoritativa",
         "directives": ["editor_focus"]
+      },
+      "HISTORY_LOOKUP": {
+        "examples": [
+          "Quais foram as últimas alterações deste painel?",
+          "O que mudou da versão anterior para a atual?",
+          "Quando este slide apareceu ou foi alterado?",
+          "Quem realizou esta alteração?"
+        ],
+        "required": [
+          "history"
+        ],
+        "conditional": [
+          "history detail via snapshotId somente quando o usuário alveja uma revisão específica"
+        ],
+        "avoid": [
+          "presentation_truth (diff adjacente já compara latest↔live quando canônico)",
+          "design_methodology",
+          "data_contract",
+          "solution_ecosystem",
+          "mutation (histórico é READ-ONLY — restore/rollback/revert NÃO expostos)"
+        ],
+        "gap": "hardening: diff não-adjacente → change.available=false; retenção ≤500 revisões; granularidade de bloco NÃO suportada; mutationProvenance IS_NOT motivação",
+        "stop": "após digest de histórico autoritativo"
       },
       "PRODUCT_USAGE": {
         "examples": ["Como funcionam os filtros?", "Qual a diferença entre fonte e DataModel?"],
@@ -1210,6 +1241,7 @@
       "gpt_search_data_routes": "search_data_routes",
       "gpt_inspect_data_model": "inspect_data_model",
       "gpt_get_product_guide": "get_product_guide",
+      "gpt_get_playlist_history": "get_playlist_history",
       "gpt_preview_data_model": "preview_data_model",
       "gpt_preview_data_block": "preview_data_block",
       "gpt_suggest_change": "suggest_change",

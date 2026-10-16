@@ -24,6 +24,7 @@ from .tool_bridge import (
     tool_commit_proposal,
     tool_get_catalog,
     tool_get_playlist_context,
+    tool_get_playlist_history,
     tool_get_product_guide,
     tool_inspect_data_model,
     tool_list_playlists,
@@ -203,6 +204,29 @@ def _register_read_tools(mcp: MCPServer) -> None:
         ),
         annotations=ann,
         meta=_meta("get_playlist_context"),
+    )
+
+    mcp.add_tool(
+        tool_get_playlist_history,
+        name="get_playlist_history",
+        title="Histórico de revisões da programação",
+        description=(
+            "Lê o histórico persistido de uma programação (somente leitura): "
+            "snapshot_id ausente = lista paginada de revisões (revision, "
+            "createdAt, actor.name, mutationProvenance técnico, preview e "
+            "diff adjacente — campos de playlist, slides adicionados/"
+            "removidos/atualizados/reordenados); snapshot_id presente = "
+            "digest de uma revisão exata. Retenção máxima: 500 revisões — "
+            "cobertura histórica NÃO é garantida além da janela retida. "
+            "change.available=false indica revisão não adjacente — nunca "
+            "inventar diff. Granularidade de diff = campos de slide "
+            "(nativeConfig inteiro conta como um campo); detalhe de bloco "
+            "interno NÃO é reportado. mutationProvenance é origem técnica "
+            "da mutação, NÃO motivação do usuário. Requer playlist_id e "
+            "permissão de leitura."
+        ),
+        annotations=ann,
+        meta=_meta("get_playlist_history"),
     )
 
     mcp.add_tool(

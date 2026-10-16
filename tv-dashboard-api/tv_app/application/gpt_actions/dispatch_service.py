@@ -202,6 +202,7 @@ class GptActionsDispatchService:
         preview: TvDataPreviewService | None = None,
         suggest: TvDataRouteSuggestService | None = None,
         solutions: Any | None = None,
+        history: Any | None = None,
     ) -> None:
         self._repo = repo
         self._writes = writes
@@ -213,6 +214,7 @@ class GptActionsDispatchService:
         self._preview = preview or TvDataPreviewService()
         self._suggest = suggest or TvDataRouteSuggestService(self._catalog)
         self._solutions = solutions
+        self._history = history
         self._present = PresentationPayloadService()
         # (userId, slideId, revision) → last visual_capture_request send (mono).
         self._capture_request_last: dict[tuple[str, str, str], float] = {}
@@ -329,6 +331,73 @@ class GptActionsDispatchService:
         if focus:
             out = {"editorFocus": focus, **out}
         return out
+
+    def get_playlist_history(
+        self,
+        *,
+        user: Any,
+        playlist_id: str,
+        snapshot_id: str | None = None,
+        page: int = 1,
+        page_size: int = 10,
+    ) -> dict[str, Any]:
+        """P9 V1 — read-only semantic history digest.
+
+        Reuses the canonical Playlist history domain end-to-end: AuthZ via
+        PlaylistAccessService (need=read), persistence/retention/diff via
+        PlaylistHistoryRepository + PlaylistHistoryChangeService. Projects
+        only a bounded digest — never raw snapshots, never author id/email,
+        never block-level claims. snapshot_id absent → list mode; present →
+        detail mode (same bounded digest, cross-playlist isolated by the
+        repository's scoped lookup).
+        """
+        from tv_app.application.services.playlist_history_digest_service import (
+            PlaylistHistoryNotFoundError,
+            history_detail_projection,
+            history_list_projection,
+        )
+
+        assert_permission(user, TV_READ)
+        pid_raw = str(playlist_id or "").strip()
+        if not pid_raw:
+            raise GptActionsError(
+                "playlistId é obrigatório.", code="INVALID_CHANGE", status_code=422
+            )
+        try:
+            pid = UUID(pid_raw)
+            sid = UUID(str(snapshot_id)) if snapshot_id else None
+        except ValueError as exc:
+            raise GptActionsError(
+                "playlistId/snapshotId inválidos.",
+                code="INVALID_CHANGE",
+                status_code=422,
+            ) from exc
+        access = self._access.resolve(pid, user)
+        if not access.can_read:
+            raise GptActionsError(
+                "Programação não encontrada.",
+                code="RESOURCE_NOT_FOUND",
+                status_code=404,
+            )
+        repo = self._history
+        if repo is None:
+            raise GptActionsError(
+                "Histórico indisponível.",
+                code="INTERNAL_ERROR",
+                status_code=500,
+            )
+        if sid is not None:
+            try:
+                item = repo.get_history(pid, sid)
+            except PlaylistHistoryNotFoundError as exc:
+                raise GptActionsError(
+                    "Versão do histórico não encontrada.",
+                    code="RESOURCE_NOT_FOUND",
+                    status_code=404,
+                ) from exc
+            return history_detail_projection(item)
+        payload = repo.list_history(pid, page=page, page_size=page_size)
+        return history_list_projection(payload, playlist_id=str(pid))
 
     def get_playlist_context(
         self,

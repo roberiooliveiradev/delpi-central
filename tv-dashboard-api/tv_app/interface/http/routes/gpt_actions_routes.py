@@ -26,6 +26,9 @@ from tv_app.infrastructure.gateways.core_solution_catalog_gateway import (
     CoreSolutionCatalogGateway,
 )
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
+from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
+    PlaylistHistoryRepository,
+)
 from tv_app.interface.http.auth_http import resolve_user
 from tv_app.interface.http.gpt_actions_response import (
     correlation_id_from_request,
@@ -40,8 +43,10 @@ _writes = TvPresentationWriteService(repo=_repo)
 _idempotency = PostgresIdempotencyRepository()
 _commit = TvGptCommitService(writes=_writes, idempotency=_idempotency)
 _solutions = CoreSolutionCatalogGateway()
+_history = PlaylistHistoryRepository()
 _dispatch = GptActionsDispatchService(
-    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions
+    repo=_repo, writes=_writes, commit=_commit, solutions=_solutions,
+    history=_history,
 )
 
 
@@ -278,6 +283,31 @@ def search_data_routes(
             limit=limit,
             category=category,
             authorization=request.headers.get("Authorization"),
+        )
+        return ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _handle(exc, correlation_id=cid)
+
+
+@router.get("/playlists/{playlist_id}/history")
+def get_playlist_history(
+    request: Request,
+    playlist_id: str,
+    snapshotId: str | None = Query(
+        default=None,
+        description="History snapshot UUID — detail mode.",
+    ),
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=10, ge=1, le=100),
+):
+    cid = _correlation_id(request)
+    try:
+        data = _dispatch.get_playlist_history(
+            user=resolve_user(request),
+            playlist_id=playlist_id,
+            snapshot_id=snapshotId,
+            page=page,
+            page_size=pageSize,
         )
         return ok(data)
     except Exception as exc:  # noqa: BLE001

@@ -15,7 +15,7 @@ Do not duplicate the full matrix in Instructions, Knowledge, or DÉLIA docs — 
 | **TV Dashboard** | Domain authority (playlists, slides, data blocks, PresentationMutation) |
 | **Chat interno (Minha DELPI)** | Handoff only (`tv_dashboard_handoff`) — **não** muta TV; **não** é VISTA nem DÉLIA |
 | **DÉLIA** | App standalone industrial — **≠** Chat; adapter TV = **TARGET** (mesmo contrato PresentationMutation; sem HTTP neste HEAD) |
-| **MCP** | Backend adapter **PROVEN** (`/mcp`, 11 tools sobre o mesmo `GptActionsDispatchService`: 6 READ (incl. `get_product_guide`) + 1 DISCOVERY + 2 ANALYSIS `preview_data_block` + `suggest_change` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
+| **MCP** | Backend adapter **PROVEN** (`/mcp`, 12 tools sobre o mesmo `GptActionsDispatchService`: 7 READ (incl. `get_product_guide`) + 1 DISCOVERY + 2 ANALYSIS `preview_data_block` + `suggest_change` + PREPARE + ACT); provisioning Keycloak `mcp-tv-dashboard` + go-live externo = **PENDING** |
 | **GPT Actions** | Adapter compacto **GOVERNED_PREPARE_COMMIT_V2** (Builder-importable) |
 
 ```text
@@ -102,8 +102,8 @@ Actions, MCP, CRUD, PresentationMutation, template or builder writes.
 | Write boundary | `TvPresentationWriteService` |
 | Resource AuthZ | `PlaylistAccessService` + Core RBAC |
 | Capability metadata | `capability_surface.py` + catalog projection |
-| Actions surface | `openapi_builder.py` → generated OpenAPI (**11** ops) |
-| MCP surface | `interface/mcp` adapter → shared dispatch (**11** tools) |
+| Actions surface | `openapi_builder.py` → generated OpenAPI (**12** ops) |
+| MCP surface | `interface/mcp` adapter → shared dispatch (**12** tools) |
 | Neutral↔Actions parity registry | `vista_agent_intelligence.json` → `surface_parity.parity_map` (single source; both projections derive from it) |
 | Proposal store | in-process → **ACCEPT_WITH_RESIDUAL** |
 | GPT Instructions (stable-only) | `docs/gpt-actions/specialist-instructions.md` — **no** feature heuristics |
@@ -141,12 +141,12 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 
 | Metric | Before V2 | After V2 | Current |
 |---|---|---|---|
-| Paths (Builder-visible) | 8 | **8** | **11** |
-| Importable operations | 8 | **8** | **11** |
-| Added | opaque proposal + confirmation on commit; `capability_surface` | contract evolution | `gpt_preview_data_model`, `gpt_inspect_data_model`, `gpt_get_product_guide` |
+| Paths (Builder-visible) | 8 | **8** | **12** |
+| Importable operations | 8 | **8** | **12** |
+| Added | opaque proposal + confirmation on commit; `capability_surface` | contract evolution | `gpt_preview_data_model`, `gpt_inspect_data_model`, `gpt_get_product_guide`, `gpt_get_playlist_history` |
 | Removed from Builder | client `ops`/`planDigest` as commit authority | — | — |
 | Legacy off-schema | `POST /data/copilot/*` → **410 Gone** | yes | yes |
-| Remaining margin vs ≤30 | 22 | **22** | **19** |
+| Remaining margin vs ≤30 | 22 | **22** | **18** |
 
 ## Capability taxonomy
 
@@ -154,6 +154,7 @@ Documented project guardrail: prefer **≤ ~30 importable operations**.
 |---|---|---|---|
 | ENTITY (read) | playlist aggregate | `gpt_list_playlists`, `gpt_get_playlist_context` | `list_playlists`, `get_playlist_context` |
 | GUIDANCE (read) | product_guide (GUIDANCE_NOT_DOMAIN_TRUTH) | `gpt_get_product_guide` | `get_product_guide` |
+| ANALYSIS | playlist_history (read-only digest, retention ≤500, slide-field diff only, no restore) | `gpt_get_playlist_history` | `get_playlist_history` |
 | WORKFLOW | presentation_change (PresentationMutation) | `gpt_suggest_change`, `gpt_preview_change`, `gpt_commit_change` | `suggest_change` (ANALYSIS), `prepare_change`, `commit_proposal` |
 | ANALYSIS | data_route_search, data_block_preview, domain_intent_materialization | `gpt_search_data_routes`, `gpt_preview_data_block`, `gpt_suggest_change` | `search_data_routes`, `preview_data_block`, `suggest_change` |
 | ANALYSIS | data_model_lifecycle | `gpt_preview_data_model`, `gpt_inspect_data_model` | `preview_data_model`, `inspect_data_model` |
@@ -235,6 +236,7 @@ Consequência honesta: a implementação do servidor está correta e spec-compli
 | gpt_preview_data_model | ANALYSIS | data model preview (never persisted) | `preview_data_model` |
 | gpt_inspect_data_model | ANALYSIS | data model inspection | `inspect_data_model` |
 | gpt_get_product_guide | READ | product guidance (GUIDANCE_NOT_DOMAIN_TRUTH) | `get_product_guide` |
+| gpt_get_playlist_history | READ | playlist revision digest (retention ≤500; adjacent diff = playlist+slide fields; block-level unsupported; restore never exposed) | `get_playlist_history` |
 | gpt_suggest_change | ANALYSIS | NL → typed ops + clarification (never persists/authorizes) | `suggest_change` |
 | gpt_preview_change | WORKFLOW PREPARE | mint proposal | `prepare_change` |
 | gpt_commit_change | WORKFLOW ACT | common commit | `commit_proposal` |
@@ -258,14 +260,14 @@ on MCP via `get_playlist_context` READ).
 | Asset GET `/gpt-actions/v1/slide-previews/{token}` | **HTTP only** (signed TTL); **not** Builder-importable |
 | Vision consumption of `previewUrl` | Validate in GPT Builder smoke (`gpt-builder-go-live.md`); fallback = `layoutDigest` + user attach |
 
-Importable operations are **11** today (two DataModel ops + `gpt_get_product_guide`
-added after this gate decision). Margin vs ≤30 = **19**.
+Importable operations are **12** today (two DataModel ops + `gpt_get_product_guide` +
+`gpt_get_playlist_history` added after this gate decision). Margin vs ≤30 = **18**.
 
 ## MCP / DÉLIA
 
 | Surface | Status |
 |---|---|
-| MCP VISTA | **PROVEN** backend (`/mcp` mount + 11 semantic tools on shared dispatch; service-token rejected at transport; no `gpt_*` names or `commit_now` in the callable contract). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
+| MCP VISTA | **PROVEN** backend (`/mcp` mount + 12 semantic tools on shared dispatch; service-token rejected at transport; no `gpt_*` names or `commit_now` in the callable contract). External provisioning (`mcp-tv-dashboard`) / provider go-live = **PENDING** |
 | DÉLIA → VISTA Actions | **NONE** — target is capability/core adapter, not Actions HTTP |
 
 ## Proposal store residual

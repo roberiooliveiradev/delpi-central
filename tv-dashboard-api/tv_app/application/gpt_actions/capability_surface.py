@@ -192,6 +192,24 @@ def _canonical_surface() -> dict[str, Any]:
                 "transports": ["mcp"],
             },
             {
+                "id": "playlist_history",
+                "kind": "ANALYSIS",
+                "owner": "tv-dashboard-api",
+                "description": (
+                    "Persisted playlist revision history as bounded digest. "
+                    "Read-only; retention <=500; adjacent-diff granularity = "
+                    "playlist+slide fields; block-level diff unsupported; "
+                    "restore/rollback never exposed."
+                ),
+                "read_operations": ["get_playlist_history"],
+                "write_operations": [],
+                "required_permission_metadata": {"read": "tv-dashboard.read"},
+                # Actions discovers the capability via the
+                # gpt_get_playlist_history operation itself; taxonomy stays
+                # MCP-primary so the Actions envelope keeps headroom.
+                "transports": ["mcp"],
+            },
+            {
                 "id": "data_model_lifecycle",
                 "kind": "ANALYSIS",
                 "owner": "tv-dashboard-api",
