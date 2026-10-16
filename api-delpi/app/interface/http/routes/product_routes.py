@@ -1480,7 +1480,9 @@ def stock(
 
 @router.get(
     "/{code}/safety-stock",
-    **PRODUCT_SAFETY_STOCK,
+    summary=PRODUCT_SAFETY_STOCK["summary"],
+    description=PRODUCT_SAFETY_STOCK["description"],
+    operation_id="get_product_safety_stock",
     response_model=ProductSafetyStockResponse,
     openapi_extra=openapi_example_response(PRODUCT_SAFETY_STOCK_EXAMPLE),
 )
