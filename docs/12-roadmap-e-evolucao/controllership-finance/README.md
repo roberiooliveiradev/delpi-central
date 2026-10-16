@@ -341,3 +341,10 @@ C2 permanece: conclusão apenas com todos os pacotes aplicáveis submetidos, tod
 **DECISION_REQUIRED:** identidade/critério da autoridade operacional que confirma rejeição e comportamento quando não confirma; especificação de processo excepcional de correção (não implementá-lo sem autorização). **CONTRACT_PENDING/TO_INVENTORY:** mapeamento P6 de áreas/tipos e fonte Core de elegibilidade, DTO/estado, notification/projection/tests.
 
 `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`. Revalidar A12/A14/A15 e main antes de freeze.
+
+
+## Estado de governança após revisão documental 16/10/2026
+
+Os estados `PASS` de freezes acima representam **snapshots históricos**, não autorização vigente. C2 e P5-A..J estão decididos no documento 37, sujeitos aos bloqueios derivados explicitados no 33/34/35. A competência pode encerrar como `MONTHLY_CLOSING_COMPLETED` (regra C2) ou como rejeitada após confirmação formal (P5-I), jamais ambos. Não há permission de reviewer: somente `controllership-finance.access` e `controllership-finance.manage`. O binding Core função/grupo permanece a inventariar.
+
+`PORTAL_DESIGN_FREEZE=REVALIDATE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE`; `TEST_STRATEGY_FREEZE=REVALIDATE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
