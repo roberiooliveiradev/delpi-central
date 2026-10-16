@@ -7,13 +7,24 @@ from pydantic import BaseModel, Field, field_validator
 from tm_app.application.security.authorization_policy import AuthorizationDenied
 from tm_app.application.use_cases.manage_interaction_rooms import InteractionRoomUseCases
 from tm_app.core.responses import fail, ok
+from tm_app.domain.services.interaction_room_access_service import (
+    PrimaryLinkConflict,
+    RoomAccessExpansionBlocked,
+    RoomAuthorizationDenied,
+)
 from tm_app.domain.services.interaction_room_rules import MAX_MESSAGE_LENGTH, normalize_message_content
+from tm_app.infrastructure.gateways.helpdesk_bff_gateway import HelpdeskBffGateway
+from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
 from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
     InteractionRoomRepository,
 )
 
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro Interaction Rooms"])
-_rooms = InteractionRoomUseCases(InteractionRoomRepository())
+_rooms = InteractionRoomUseCases(
+    InteractionRoomRepository(),
+    ticket_visibility=HelpdeskBffGateway(),
+    audit=AuditRepository(),
+)
 
 
 class OpenInteractionRoomBody(BaseModel):
@@ -49,7 +60,20 @@ class ReactionBody(BaseModel):
     code: str
 
 
+def _authorization(request: Request) -> str:
+    """Same-user Bearer — forwarded to the Helpdesk BFF when a link
+    authority must be evaluated. Never a service token. Missing header
+    degrades to empty → the domain denies safely (session_missing)."""
+    headers = getattr(request, "headers", None) or {}
+    return str(headers.get("authorization") or "").strip()
+
+
 def _handle(exc: Exception):
+    if isinstance(
+        exc,
+        (RoomAuthorizationDenied, RoomAccessExpansionBlocked, PrimaryLinkConflict),
+    ):
+        return fail(str(exc), exc.status_code, {"error_code": exc.error_code})
     if isinstance(exc, AuthorizationDenied):
         return fail(str(exc), exc.status_code)
     if isinstance(exc, PermissionError):
@@ -70,7 +94,11 @@ def list_interaction_rooms(request: Request, inbox_filter: str = "all"):
             {
                 "items": [
                     room.to_dict()
-                    for room in _rooms.list_rooms(request.state.user, inbox_filter=inbox_filter)
+                    for room in _rooms.list_rooms(
+                        request.state.user,
+                        inbox_filter=inbox_filter,
+                        authorization=_authorization(request),
+                    )
                 ]
             }
         )
@@ -81,7 +109,12 @@ def list_interaction_rooms(request: Request, inbox_filter: str = "all"):
 @router.post("/interaction-rooms", operation_id="open_transformometro_interaction_room")
 def open_interaction_room(request: Request, body: OpenInteractionRoomBody):
     try:
-        return ok(_rooms.open_for_process(request.state.user, body.processo_id).to_dict(), status_code=200)
+        return ok(
+            _rooms.open_for_process(
+                request.state.user, body.processo_id, authorization=_authorization(request)
+            ).to_dict(),
+            status_code=200,
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -101,7 +134,11 @@ def delete_interaction_room(request: Request, room_id: str):
 @router.get("/interaction-rooms/{room_id}", operation_id="get_transformometro_interaction_room")
 def get_interaction_room(request: Request, room_id: str):
     try:
-        return ok(_rooms.get_room(request.state.user, room_id).to_dict())
+        return ok(
+            _rooms.get_room(
+                request.state.user, room_id, authorization=_authorization(request)
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -123,6 +160,7 @@ def list_interaction_messages(
                 room_id,
                 limit=limit,
                 before_id=before_id,
+                authorization=_authorization(request),
             )
         )
     except Exception as exc:
@@ -142,6 +180,7 @@ def post_interaction_message(request: Request, room_id: str, body: PostInteracti
                 body.content,
                 parent_id=body.parent_id,
                 mentions=[item.model_dump() for item in body.mentions],
+                authorization=_authorization(request),
             ).to_dict(),
             status_code=201,
         )
@@ -160,7 +199,12 @@ def patch_interaction_message(
     body: EditInteractionMessageBody,
 ):
     try:
-        return ok(_rooms.edit_message(request.state.user, room_id, message_id, body.content).to_dict())
+        return ok(
+            _rooms.edit_message(
+                request.state.user, room_id, message_id, body.content,
+                authorization=_authorization(request),
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -171,7 +215,12 @@ def patch_interaction_message(
 )
 def delete_interaction_message(request: Request, room_id: str, message_id: str):
     try:
-        return ok(_rooms.delete_message(request.state.user, room_id, message_id).to_dict())
+        return ok(
+            _rooms.delete_message(
+                request.state.user, room_id, message_id,
+                authorization=_authorization(request),
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -182,7 +231,12 @@ def delete_interaction_message(request: Request, room_id: str, message_id: str):
 )
 def toggle_interaction_reaction(request: Request, room_id: str, message_id: str, body: ReactionBody):
     try:
-        return ok(_rooms.toggle_reaction(request.state.user, room_id, message_id, body.code).to_dict())
+        return ok(
+            _rooms.toggle_reaction(
+                request.state.user, room_id, message_id, body.code,
+                authorization=_authorization(request),
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -193,7 +247,12 @@ def toggle_interaction_reaction(request: Request, room_id: str, message_id: str,
 )
 def pin_interaction_message(request: Request, room_id: str, message_id: str):
     try:
-        return ok(_rooms.pin_message(request.state.user, room_id, message_id).to_dict())
+        return ok(
+            _rooms.pin_message(
+                request.state.user, room_id, message_id,
+                authorization=_authorization(request),
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -204,7 +263,12 @@ def pin_interaction_message(request: Request, room_id: str, message_id: str):
 )
 def unpin_interaction_message(request: Request, room_id: str, message_id: str):
     try:
-        return ok(_rooms.unpin_message(request.state.user, room_id, message_id).to_dict())
+        return ok(
+            _rooms.unpin_message(
+                request.state.user, room_id, message_id,
+                authorization=_authorization(request),
+            ).to_dict()
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -215,7 +279,9 @@ def unpin_interaction_message(request: Request, room_id: str, message_id: str):
 )
 def mark_interaction_room_read(request: Request, room_id: str):
     try:
-        _rooms.mark_read(request.state.user, room_id)
+        _rooms.mark_read(
+            request.state.user, room_id, authorization=_authorization(request)
+        )
         return ok({"room_id": room_id})
     except Exception as exc:
         return _handle(exc)
@@ -227,7 +293,16 @@ def mark_interaction_room_read(request: Request, room_id: str):
 )
 def list_interaction_attachments(request: Request, room_id: str):
     try:
-        return ok({"items": [item.to_dict() for item in _rooms.list_attachments(request.state.user, room_id)]})
+        return ok(
+            {
+                "items": [
+                    item.to_dict()
+                    for item in _rooms.list_attachments(
+                        request.state.user, room_id, authorization=_authorization(request)
+                    )
+                ]
+            }
+        )
     except Exception as exc:
         return _handle(exc)
 
@@ -251,6 +326,7 @@ async def upload_interaction_attachment(
             file_name=file.filename or "arquivo",
             content=content,
             mime_type=file.content_type,
+            authorization=_authorization(request),
         )
         return ok(saved.to_dict(), status_code=201)
     except Exception as exc:
@@ -263,7 +339,10 @@ async def upload_interaction_attachment(
 )
 def download_interaction_attachment(request: Request, room_id: str, attachment_id: str):
     try:
-        path, name, mime = _rooms.open_attachment(request.state.user, room_id, attachment_id)
+        path, name, mime = _rooms.open_attachment(
+            request.state.user, room_id, attachment_id,
+            authorization=_authorization(request),
+        )
     except Exception as exc:
         return _handle(exc)
     return FileResponse(path, media_type=mime or "application/octet-stream", filename=name)
@@ -275,7 +354,10 @@ def download_interaction_attachment(request: Request, room_id: str, attachment_i
 )
 def delete_interaction_attachment(request: Request, room_id: str, attachment_id: str):
     try:
-        _rooms.delete_attachment(request.state.user, room_id, attachment_id)
+        _rooms.delete_attachment(
+            request.state.user, room_id, attachment_id,
+            authorization=_authorization(request),
+        )
         return ok({"id": attachment_id})
     except Exception as exc:
         return _handle(exc)

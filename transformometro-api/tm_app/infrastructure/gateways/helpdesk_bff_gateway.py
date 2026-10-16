@@ -19,6 +19,14 @@ from urllib.parse import unquote
 from tm_app.application.gpt_actions.errors import GptActionsError
 from tm_app.application.helpdesk.helpdesk_read_port import HelpdeskReadPort
 from tm_app.application.helpdesk.helpdesk_write_port import HelpdeskWritePort
+from tm_app.application.helpdesk.ticket_visibility_port import TicketVisibilityPort
+from tm_app.domain.services.interaction_room_access_service import (
+    LINK_STATE_NOT_FOUND,
+    LINK_STATE_RESTRICTED,
+    LINK_STATE_SESSION_MISSING,
+    LINK_STATE_UNAVAILABLE,
+    LINK_STATE_VISIBLE,
+)
 from tm_app.infrastructure.gateways.core_workspace_context_gateway import (
     WORKSPACE_CONTEXT_TIMEOUT_SECONDS,
 )
@@ -61,7 +69,7 @@ _ERROR_KIND_BY_HTTP_STATUS = {
 }
 
 
-class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
+class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPort):
     """Helpdesk BFF adapter — Bearer forward, bounded timeout.
 
     Writes follow the same contract as reads: the user's own Bearer plus a
@@ -275,6 +283,25 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort):
 
     def ticket(self, authorization: str, ticket_id: int) -> dict[str, Any]:
         return self._get(f"/tickets/{int(ticket_id)}", authorization)
+
+    def check_ticket_visibility(self, authorization: str, ticket_key: str) -> str:
+        """TicketVisibilityPort — maps the per-ticket read onto the
+        canonical link-state vocabulary. Only ``visible`` grants access;
+        every failure mode denies (fail closed)."""
+        try:
+            self.ticket(authorization, int(ticket_key))
+            return LINK_STATE_VISIBLE
+        except GptActionsError as exc:
+            data = exc.data or {}
+            code = str(data.get("error_code") or "")
+            kind = str(data.get("error_kind") or "")
+            if code == "glpi_link_required" or kind == "authn":
+                return LINK_STATE_SESSION_MISSING
+            if kind == "forbidden":
+                return LINK_STATE_RESTRICTED
+            if kind == "not_found":
+                return LINK_STATE_NOT_FOUND
+            return LINK_STATE_UNAVAILABLE
 
     def attachment(
         self, authorization: str, ticket_id: int, document_id: int

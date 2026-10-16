@@ -2,6 +2,14 @@ from __future__ import annotations
 
 import re
 
+from tm_app.domain.entities.interaction_room import (
+    LINK_ENTITY_HELPDESK_TICKET,
+    LINK_ENTITY_PROCESS,
+    LINK_ENTITY_TYPES,
+    LINK_ROLES,
+    ROOM_ACCESS_SCOPES,
+)
+
 MAX_MESSAGE_LENGTH = 4000
 _UUID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
@@ -51,3 +59,48 @@ def normalize_message_content(value: str | None) -> str:
     if len(text) > MAX_MESSAGE_LENGTH:
         raise ValueError(f"A mensagem pode ter no máximo {MAX_MESSAGE_LENGTH} caracteres.")
     return text
+
+
+MAX_ROOM_TITLE_LENGTH = 120
+_TICKET_KEY_RE = re.compile(r"^[0-9]{1,20}$")
+
+
+def normalize_room_title(value: str | None) -> str:
+    title = " ".join((value or "").split())
+    if not title:
+        raise ValueError("A sala precisa de um título.")
+    if len(title) > MAX_ROOM_TITLE_LENGTH:
+        raise ValueError(f"O título pode ter no máximo {MAX_ROOM_TITLE_LENGTH} caracteres.")
+    return title
+
+
+def normalize_access_scope(value: str | None) -> str:
+    scope = (value or "").strip().lower()
+    if scope not in ROOM_ACCESS_SCOPES:
+        raise ValueError("Escopo de acesso inválido.")
+    return scope
+
+
+def normalize_link_role(value: str | None) -> str:
+    role = (value or "").strip().lower()
+    if role not in LINK_ROLES:
+        raise ValueError("Papel de vínculo inválido.")
+    return role
+
+
+def normalize_link_entity(value: str | None) -> str:
+    entity_type = (value or "").strip().lower()
+    if entity_type not in LINK_ENTITY_TYPES:
+        raise ValueError("Tipo de objeto vinculado inválido.")
+    return entity_type
+
+
+def normalize_entity_key(entity_type: str, value: str | None) -> str:
+    key = (value or "").strip()
+    if entity_type == LINK_ENTITY_PROCESS:
+        return normalize_uuid(key, label="O processo vinculado")
+    if entity_type == LINK_ENTITY_HELPDESK_TICKET:
+        if not _TICKET_KEY_RE.match(key):
+            raise ValueError("O chamado vinculado precisa ser um identificador numérico válido.")
+        return key
+    raise ValueError("Tipo de objeto vinculado inválido.")

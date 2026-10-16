@@ -7,14 +7,21 @@ from typing import Any
 from uuid import uuid4
 
 from tm_app.domain.entities.interaction_room import (
+    LINK_DELETED_ROOM_DELETED,
     InteractionAttachment,
     InteractionMention,
     InteractionMessage,
     InteractionReaction,
     InteractionRoom,
+    InteractionRoomLink,
+    InteractionRoomParticipant,
 )
 from tm_app.domain.ports.interaction_room_repository_port import InteractionRoomRepositoryPort
-from tm_app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
+from tm_app.domain.services.interaction_room_access_service import PrimaryLinkConflict
+from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
+    PluginBaseRepository,
+    PluginsRepositoryError,
+)
 
 _S = "transformometro"
 _PREVIEW = 160
@@ -32,20 +39,58 @@ def _preview(content: str | None) -> str | None:
     return text[: _PREVIEW - 1].rstrip() + "…"
 
 
-def _room(row: dict[str, Any]) -> InteractionRoom:
+def _room(
+    row: dict[str, Any],
+    *,
+    links: tuple[InteractionRoomLink, ...] = (),
+    participants: tuple[InteractionRoomParticipant, ...] = (),
+) -> InteractionRoom:
+    processo_id = row.get("processo_id")
     return InteractionRoom(
         id=str(row["id"]),
-        processo_id=str(row["processo_id"]),
+        processo_id=str(processo_id) if processo_id else None,
         processo_codigo=str(row.get("codigo_processo") or ""),
         processo_nome=str(row.get("nome_processo") or ""),
         created_by_user_id=str(row["created_by_user_id"]),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
         deleted_at=row.get("deleted_at"),
+        access_scope=str(row.get("access_scope") or "open"),
+        title=str(row.get("title") or "") or None,
+        deleted_by_user_id=(
+            str(row["deleted_by_user_id"]) if row.get("deleted_by_user_id") else None
+        ),
+        links=links,
+        participants=participants,
         last_message_preview=_preview(row.get("last_content")),
         last_message_at=row.get("last_message_at"),
         unread_count=int(row.get("unread_count") or 0),
         mentioned=bool(row.get("mentioned")),
+    )
+
+
+def _link(row: dict[str, Any]) -> InteractionRoomLink:
+    return InteractionRoomLink(
+        id=str(row["id"]),
+        room_id=str(row["room_id"]),
+        entity_type=str(row["entity_type"]),
+        entity_key=str(row["entity_key"]),
+        link_role=str(row["link_role"]),
+        created_by_user_id=str(row["created_by_user_id"]),
+        created_at=row.get("created_at"),
+        deleted_at=row.get("deleted_at"),
+        deleted_cause=row.get("deleted_cause"),
+    )
+
+
+def _participant(row: dict[str, Any]) -> InteractionRoomParticipant:
+    return InteractionRoomParticipant(
+        room_id=str(row["room_id"]),
+        user_id=str(row["user_id"]),
+        role=str(row["role"]),
+        added_by_user_id=str(row["added_by_user_id"]),
+        created_at=row.get("created_at"),
+        removed_at=row.get("removed_at"),
     )
 
 
@@ -90,11 +135,11 @@ def _attachment(row: dict[str, Any]) -> InteractionAttachment:
 
 _ROOM_SELECT = f"""
 SELECT r.id, r.processo_id, r.created_by_user_id, r.created_at, r.updated_at,
-       r.deleted_at,
+       r.deleted_at, r.access_scope, r.title, r.deleted_by_user_id,
        p.codigo_processo, p.nome_processo,
        m.content AS last_content, m.created_at AS last_message_at
 FROM {_S}.tm_interaction_rooms r
-JOIN {_S}.processos p ON p.processo_id = r.processo_id AND p.deletado = FALSE
+LEFT JOIN {_S}.processos p ON p.processo_id = r.processo_id AND p.deletado = FALSE
 LEFT JOIN LATERAL (
     SELECT content, created_at
     FROM {_S}.tm_interaction_messages
@@ -123,26 +168,288 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             return None
         return self.get(str(row["id"]))
 
+    def create_room(
+        self,
+        *,
+        title: str | None,
+        access_scope: str,
+        created_by_user_id: str,
+        processo_id: str | None = None,
+    ) -> InteractionRoom | None:
+        row = self.execute_returning_one(
+            f"""INSERT INTO {_S}.tm_interaction_rooms
+                    (processo_id, title, access_scope, created_by_user_id)
+                VALUES (%s::uuid, %s, %s, %s::uuid)
+                RETURNING id""",
+            (processo_id, title, access_scope, created_by_user_id),
+        )
+        if row is None:
+            return None
+        return self.get(str(row["id"]))
+
     def get(self, room_id: str) -> InteractionRoom | None:
         """Active room only — soft-deleted rooms are invisible to reads."""
         row = self.fetch_one(
             f"{_ROOM_SELECT} WHERE r.id = %s::uuid AND r.deleted_at IS NULL",
             (room_id,),
         )
-        return _room(row) if row else None
-
-    def soft_delete(self, room_id: str) -> InteractionRoom | None:
-        row = self.execute_returning_one(
-            f"""UPDATE {_S}.tm_interaction_rooms
-                SET deleted_at = NOW(), updated_at = NOW()
-                WHERE id = %s::uuid AND deleted_at IS NULL
-                RETURNING id""",
-            (room_id,),
-        )
         if row is None:
             return None
-        full = self.fetch_one(f"{_ROOM_SELECT} WHERE r.id = %s::uuid", (room_id,))
-        return _room(full) if full else None
+        return self._with_graph(_room(row))
+
+    def get_raw(self, room_id: str) -> InteractionRoom | None:
+        row = self.fetch_one(f"{_ROOM_SELECT} WHERE r.id = %s::uuid", (room_id,))
+        if row is None:
+            return None
+        return _room(
+            row,
+            links=tuple(self.list_links(room_id, include_inactive=True)),
+            participants=tuple(self.list_participants(room_id, active_only=False)),
+        )
+
+    def _with_graph(self, room: InteractionRoom) -> InteractionRoom:
+        """Attach active links + current participants — every content read
+        re-evaluates authorization against the fresh link set."""
+        return replace(
+            room,
+            links=tuple(self.list_links(room.id)),
+            participants=tuple(self.list_participants(room.id)),
+        )
+
+    def soft_delete(
+        self, room_id: str, *, actor_user_id: str | None = None
+    ) -> InteractionRoom | None:
+        """Atomic: room tombstone + link inactivation ('room_deleted') in a
+        single transaction. Releases every active primary claim without
+        touching history."""
+        with self.db() as connection:
+            row = self.execute_returning_one(
+                f"""UPDATE {_S}.tm_interaction_rooms
+                    SET deleted_at = NOW(), deleted_by_user_id = %s::uuid,
+                        updated_at = NOW()
+                    WHERE id = %s::uuid AND deleted_at IS NULL
+                    RETURNING id""",
+                (actor_user_id, room_id),
+                auto_commit=False,
+            )
+            if row is None:
+                return None
+            self.execute(
+                f"""UPDATE {_S}.tm_interaction_room_links
+                    SET deleted_at = NOW(), deleted_cause = '{LINK_DELETED_ROOM_DELETED}'
+                    WHERE room_id = %s::uuid AND deleted_at IS NULL""",
+                (room_id,),
+                auto_commit=False,
+            )
+            connection.commit()
+        return self.get_raw(room_id)
+
+    def restore_room(self, room_id: str) -> InteractionRoom | None:
+        """Atomic restore: clears the room tombstone and revives only links
+        inactivated by the room deletion — never explicit removals. A
+        competing active primary claim aborts the whole transaction
+        (no partial reactivation)."""
+        try:
+            with self.db() as connection:
+                row = self.execute_returning_one(
+                    f"""UPDATE {_S}.tm_interaction_rooms
+                        SET deleted_at = NULL, deleted_by_user_id = NULL,
+                            updated_at = NOW()
+                        WHERE id = %s::uuid AND deleted_at IS NOT NULL
+                        RETURNING id""",
+                    (room_id,),
+                    auto_commit=False,
+                )
+                if row is None:
+                    return None
+                self.execute(
+                    f"""UPDATE {_S}.tm_interaction_room_links
+                        SET deleted_at = NULL, deleted_cause = NULL
+                        WHERE room_id = %s::uuid
+                          AND deleted_cause = '{LINK_DELETED_ROOM_DELETED}'""",
+                    (room_id,),
+                    auto_commit=False,
+                )
+                connection.commit()
+        except PluginsRepositoryError as exc:
+            if self._is_primary_conflict(exc):
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                ) from exc
+            raise
+        return self.get_raw(room_id)
+
+    # --- typed links --------------------------------------------------------
+
+    def list_links(
+        self, room_id: str, *, include_inactive: bool = False
+    ) -> list[InteractionRoomLink]:
+        inactive = "" if include_inactive else "AND deleted_at IS NULL"
+        rows = self.fetch_all(
+            f"""SELECT id, room_id, entity_type, entity_key, link_role,
+                       created_by_user_id, created_at, deleted_at, deleted_cause
+                FROM {_S}.tm_interaction_room_links
+                WHERE room_id = %s::uuid {inactive}
+                ORDER BY created_at ASC, id ASC""",
+            (room_id,),
+        )
+        return [_link(row) for row in rows]
+
+    def find_active_primary_room(
+        self, entity_type: str, entity_key: str
+    ) -> InteractionRoom | None:
+        row = self.fetch_one(
+            f"""{_ROOM_SELECT}
+                JOIN {_S}.tm_interaction_room_links l ON l.room_id = r.id
+                WHERE l.entity_type = %s AND l.entity_key = %s
+                  AND l.link_role = 'primary' AND l.deleted_at IS NULL
+                  AND r.deleted_at IS NULL""",
+            (entity_type, entity_key),
+        )
+        return self._with_graph(_room(row)) if row else None
+
+    def upsert_link(
+        self,
+        *,
+        room_id: str,
+        entity_type: str,
+        entity_key: str,
+        link_role: str,
+        actor_user_id: str,
+    ) -> InteractionRoomLink:
+        try:
+            row = self.execute_returning_one(
+                f"""INSERT INTO {_S}.tm_interaction_room_links
+                        (room_id, entity_type, entity_key, link_role, created_by_user_id)
+                    VALUES (%s::uuid, %s, %s, %s, %s::uuid)
+                    ON CONFLICT (room_id, entity_type, entity_key) DO UPDATE SET
+                        link_role = EXCLUDED.link_role,
+                        deleted_at = NULL,
+                        deleted_cause = NULL
+                    RETURNING id""",
+                (room_id, entity_type, entity_key, link_role, actor_user_id),
+            )
+        except PluginsRepositoryError as exc:
+            if self._is_primary_conflict(exc):
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                ) from exc
+            raise
+        if row is None:
+            raise RuntimeError("Falha ao gravar o vínculo.")
+        return self._link_by_id(str(row["id"])) or InteractionRoomLink(
+            id=str(row["id"]),
+            room_id=room_id,
+            entity_type=entity_type,
+            entity_key=entity_key,
+            link_role=link_role,
+            created_by_user_id=actor_user_id,
+        )
+
+    def _link_by_id(self, link_id: str) -> InteractionRoomLink | None:
+        row = self.fetch_one(
+            f"""SELECT id, room_id, entity_type, entity_key, link_role,
+                       created_by_user_id, created_at, deleted_at, deleted_cause
+                FROM {_S}.tm_interaction_room_links WHERE id = %s::uuid""",
+            (link_id,),
+        )
+        return _link(row) if row else None
+
+    def tombstone_link(self, link_id: str, *, cause: str) -> InteractionRoomLink | None:
+        row = self.execute_returning_one(
+            f"""UPDATE {_S}.tm_interaction_room_links
+                SET deleted_at = NOW(), deleted_cause = %s
+                WHERE id = %s::uuid AND deleted_at IS NULL
+                RETURNING id""",
+            (cause, link_id),
+        )
+        return self._link_by_id(str(row["id"])) if row else None
+
+    # --- participants -------------------------------------------------------
+
+    def is_participant(self, room_id: str, user_id: str) -> bool:
+        row = self.fetch_one(
+            f"""SELECT room_id FROM {_S}.tm_interaction_room_participants
+                WHERE room_id = %s::uuid AND user_id = %s::uuid
+                  AND removed_at IS NULL""",
+            (room_id, user_id),
+        )
+        return row is not None
+
+    def add_participant(
+        self, *, room_id: str, user_id: str, role: str, actor_user_id: str
+    ) -> InteractionRoomParticipant:
+        row = self.execute_returning_one(
+            f"""INSERT INTO {_S}.tm_interaction_room_participants
+                    (room_id, user_id, role, added_by_user_id)
+                VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                ON CONFLICT (room_id, user_id) DO UPDATE SET
+                    role = EXCLUDED.role,
+                    removed_at = NULL,
+                    added_by_user_id = EXCLUDED.added_by_user_id
+                RETURNING room_id, user_id, role, added_by_user_id,
+                          created_at, removed_at""",
+            (room_id, user_id, role, actor_user_id),
+        )
+        if row is None:
+            raise RuntimeError("Falha ao gravar o participante.")
+        return _participant(row)
+
+    def remove_participant(self, *, room_id: str, user_id: str) -> None:
+        self.execute(
+            f"""UPDATE {_S}.tm_interaction_room_participants
+                SET removed_at = NOW()
+                WHERE room_id = %s::uuid AND user_id = %s::uuid
+                  AND removed_at IS NULL""",
+            (room_id, user_id),
+        )
+
+    def list_participants(
+        self, room_id: str, *, active_only: bool = True
+    ) -> list[InteractionRoomParticipant]:
+        active = "AND removed_at IS NULL" if active_only else ""
+        rows = self.fetch_all(
+            f"""SELECT room_id, user_id, role, added_by_user_id,
+                       created_at, removed_at
+                FROM {_S}.tm_interaction_room_participants
+                WHERE room_id = %s::uuid {active}
+                ORDER BY created_at ASC, user_id ASC""",
+            (room_id,),
+        )
+        return [_participant(row) for row in rows]
+
+    # --- authorization support ----------------------------------------------
+
+    def protected_content_count(self, room_id: str) -> int:
+        row = self.fetch_one(
+            f"""SELECT (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_messages
+                    WHERE room_id = %s::uuid
+                ) + (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_attachments
+                    WHERE room_id = %s::uuid
+                ) AS total""",
+            (room_id, room_id),
+        )
+        return int((row or {}).get("total") or 0)
+
+    def process_exists(self, processo_id: str) -> bool:
+        row = self.fetch_one(
+            f"""SELECT processo_id FROM {_S}.processos
+                WHERE processo_id = %s::uuid AND deletado = FALSE""",
+            (processo_id,),
+        )
+        return row is not None
+
+    @staticmethod
+    def _is_primary_conflict(exc: PluginsRepositoryError) -> bool:
+        """Unique-violation backstop: the partial index on active primary
+        links is the final arbiter under races."""
+        cause = exc.__cause__
+        return type(cause).__name__ == "UniqueViolation" or (
+            "uq_tm_interaction_room_links_primary_active" in str(exc)
+            or "uq_tm_interaction_rooms_processo_active" in str(exc)
+        )
 
     def list_rooms(
         self,
@@ -187,11 +494,46 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             (viewer, viewer, viewer, viewer),
         )
         rooms = [_room(row) for row in rows]
+        self._attach_graphs(rooms)
         if inbox_filter == "unread":
             return [room for room in rooms if room.unread_count > 0]
         if inbox_filter == "mentioned":
             return [room for room in rooms if room.mentioned]
         return rooms
+
+    def _attach_graphs(self, rooms: list[InteractionRoom]) -> None:
+        """Bulk-load active links + participants for a room list — no N+1."""
+        if not rooms:
+            return
+        ids = [room.id for room in rooms]
+        link_rows = self.fetch_all(
+            f"""SELECT id, room_id, entity_type, entity_key, link_role,
+                       created_by_user_id, created_at, deleted_at, deleted_cause
+                FROM {_S}.tm_interaction_room_links
+                WHERE room_id = ANY(%s::uuid[]) AND deleted_at IS NULL
+                ORDER BY created_at ASC, id ASC""",
+            (ids,),
+        )
+        participant_rows = self.fetch_all(
+            f"""SELECT room_id, user_id, role, added_by_user_id,
+                       created_at, removed_at
+                FROM {_S}.tm_interaction_room_participants
+                WHERE room_id = ANY(%s::uuid[]) AND removed_at IS NULL
+                ORDER BY created_at ASC, user_id ASC""",
+            (ids,),
+        )
+        links: dict[str, list[InteractionRoomLink]] = defaultdict(list)
+        participants: dict[str, list[InteractionRoomParticipant]] = defaultdict(list)
+        for row in link_rows:
+            links[str(row["room_id"])].append(_link(row))
+        for row in participant_rows:
+            participants[str(row["room_id"])].append(_participant(row))
+        for index, room in enumerate(rooms):
+            rooms[index] = replace(
+                room,
+                links=tuple(links.get(room.id, ())),
+                participants=tuple(participants.get(room.id, ())),
+            )
 
     def list_messages(
         self,
@@ -466,6 +808,8 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         self.processes: set[str] = set()
         self.rooms: dict[str, InteractionRoom] = {}
         self.by_process: dict[str, str] = {}
+        self.links: dict[str, InteractionRoomLink] = {}
+        self.participants: dict[tuple[str, str], InteractionRoomParticipant] = {}
         self.messages: dict[str, InteractionMessage] = {}
         self.attachments: dict[str, InteractionAttachment] = {}
         self.pins: set[tuple[str, str]] = set()
@@ -478,7 +822,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         if existing:
             room = self.rooms[existing]
             if room.deleted_at is None:
-                return room
+                return self._graph(room)
         now = datetime.now(timezone.utc)
         room = InteractionRoom(
             id=str(uuid4()),
@@ -491,25 +835,250 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         )
         self.rooms[room.id] = room
         self.by_process[processo_id] = room.id
-        return room
+        return self._graph(room)
+
+    def create_room(
+        self,
+        *,
+        title: str | None,
+        access_scope: str,
+        created_by_user_id: str,
+        processo_id: str | None = None,
+    ) -> InteractionRoom | None:
+        now = datetime.now(timezone.utc)
+        room = InteractionRoom(
+            id=str(uuid4()),
+            processo_id=processo_id,
+            processo_codigo="",
+            processo_nome="",
+            created_by_user_id=created_by_user_id,
+            created_at=now,
+            updated_at=now,
+            access_scope=access_scope,
+            title=title,
+        )
+        self.rooms[room.id] = room
+        if processo_id:
+            self.by_process[processo_id] = room.id
+        return self._graph(room)
 
     def get(self, room_id: str) -> InteractionRoom | None:
         room = self.rooms.get(room_id)
         if room is None or room.deleted_at is not None:
             return None
-        return room
+        return self._graph(room)
 
-    def soft_delete(self, room_id: str) -> InteractionRoom | None:
+    def get_raw(self, room_id: str) -> InteractionRoom | None:
+        room = self.rooms.get(room_id)
+        if room is None:
+            return None
+        return self._graph(room, include_inactive_links=True, include_removed=True)
+
+    def _graph(
+        self,
+        room: InteractionRoom,
+        *,
+        include_inactive_links: bool = False,
+        include_removed: bool = False,
+    ) -> InteractionRoom:
+        links = tuple(
+            link
+            for link in self.links.values()
+            if link.room_id == room.id
+            and (include_inactive_links or link.deleted_at is None)
+        )
+        participants = tuple(
+            item
+            for item in self.participants.values()
+            if item.room_id == room.id and (include_removed or item.removed_at is None)
+        )
+        return replace(room, links=links, participants=participants)
+
+    def soft_delete(
+        self, room_id: str, *, actor_user_id: str | None = None
+    ) -> InteractionRoom | None:
         room = self.rooms.get(room_id)
         if room is None or room.deleted_at is not None:
             return None
+        now = datetime.now(timezone.utc)
         deleted = replace(
             room,
-            deleted_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            deleted_at=now,
+            deleted_by_user_id=actor_user_id,
+            updated_at=now,
         )
         self.rooms[room_id] = deleted
-        return deleted
+        for link_id, link in self.links.items():
+            if link.room_id == room_id and link.deleted_at is None:
+                self.links[link_id] = replace(
+                    link, deleted_at=now, deleted_cause=LINK_DELETED_ROOM_DELETED
+                )
+        return self._graph(deleted, include_inactive_links=True)
+
+    def restore_room(self, room_id: str) -> InteractionRoom | None:
+        room = self.rooms.get(room_id)
+        if room is None or room.deleted_at is None:
+            return None
+        now = datetime.now(timezone.utc)
+        revivable = [
+            link
+            for link in self.links.values()
+            if link.room_id == room_id
+            and link.deleted_cause == LINK_DELETED_ROOM_DELETED
+        ]
+        for link in revivable:
+            if link.link_role == "primary":
+                holder = self._active_primary_holder(link.entity_type, link.entity_key)
+                if holder is not None and holder != room_id:
+                    raise PrimaryLinkConflict(
+                        "O objeto já possui outra sala primária ativa."
+                    )
+        self.rooms[room_id] = replace(
+            room, deleted_at=None, deleted_by_user_id=None, updated_at=now
+        )
+        for link in revivable:
+            self.links[link.id] = replace(link, deleted_at=None, deleted_cause=None)
+        return self._graph(self.rooms[room_id], include_inactive_links=True)
+
+    # --- typed links --------------------------------------------------------
+
+    def list_links(
+        self, room_id: str, *, include_inactive: bool = False
+    ) -> list[InteractionRoomLink]:
+        return [
+            link
+            for link in self.links.values()
+            if link.room_id == room_id
+            and (include_inactive or link.deleted_at is None)
+        ]
+
+    def _active_primary_holder(self, entity_type: str, entity_key: str) -> str | None:
+        for link in self.links.values():
+            if (
+                link.entity_type == entity_type
+                and link.entity_key == entity_key
+                and link.link_role == "primary"
+                and link.deleted_at is None
+            ):
+                room = self.rooms.get(link.room_id)
+                if room is not None and room.deleted_at is None:
+                    return link.room_id
+        return None
+
+    def find_active_primary_room(
+        self, entity_type: str, entity_key: str
+    ) -> InteractionRoom | None:
+        room_id = self._active_primary_holder(entity_type, entity_key)
+        if room_id is None:
+            return None
+        return self._graph(self.rooms[room_id])
+
+    def upsert_link(
+        self,
+        *,
+        room_id: str,
+        entity_type: str,
+        entity_key: str,
+        link_role: str,
+        actor_user_id: str,
+    ) -> InteractionRoomLink:
+        if link_role == "primary":
+            holder = self._active_primary_holder(entity_type, entity_key)
+            if holder is not None and holder != room_id:
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                )
+        existing = next(
+            (
+                link
+                for link in self.links.values()
+                if link.room_id == room_id
+                and link.entity_type == entity_type
+                and link.entity_key == entity_key
+            ),
+            None,
+        )
+        now = datetime.now(timezone.utc)
+        if existing is not None:
+            revived = replace(
+                existing,
+                link_role=link_role,
+                deleted_at=None,
+                deleted_cause=None,
+            )
+            self.links[existing.id] = revived
+            return revived
+        link = InteractionRoomLink(
+            id=str(uuid4()),
+            room_id=room_id,
+            entity_type=entity_type,
+            entity_key=entity_key,
+            link_role=link_role,
+            created_by_user_id=actor_user_id,
+            created_at=now,
+        )
+        self.links[link.id] = link
+        return link
+
+    def tombstone_link(self, link_id: str, *, cause: str) -> InteractionRoomLink | None:
+        link = self.links.get(link_id)
+        if link is None or link.deleted_at is not None:
+            return None
+        tombstoned = replace(
+            link, deleted_at=datetime.now(timezone.utc), deleted_cause=cause
+        )
+        self.links[link_id] = tombstoned
+        return tombstoned
+
+    # --- participants -------------------------------------------------------
+
+    def is_participant(self, room_id: str, user_id: str) -> bool:
+        item = self.participants.get((room_id, user_id))
+        return item is not None and item.removed_at is None
+
+    def add_participant(
+        self, *, room_id: str, user_id: str, role: str, actor_user_id: str
+    ) -> InteractionRoomParticipant:
+        key = (room_id, user_id)
+        existing = self.participants.get(key)
+        if existing is not None:
+            revived = replace(existing, role=role, removed_at=None, added_by_user_id=actor_user_id)
+            self.participants[key] = revived
+            return revived
+        item = InteractionRoomParticipant(
+            room_id=room_id,
+            user_id=user_id,
+            role=role,
+            added_by_user_id=actor_user_id,
+            created_at=datetime.now(timezone.utc),
+        )
+        self.participants[key] = item
+        return item
+
+    def remove_participant(self, *, room_id: str, user_id: str) -> None:
+        key = (room_id, user_id)
+        item = self.participants.get(key)
+        if item is not None and item.removed_at is None:
+            self.participants[key] = replace(item, removed_at=datetime.now(timezone.utc))
+
+    def list_participants(
+        self, room_id: str, *, active_only: bool = True
+    ) -> list[InteractionRoomParticipant]:
+        return [
+            item
+            for (rid, _), item in self.participants.items()
+            if rid == room_id and (not active_only or item.removed_at is None)
+        ]
+
+    # --- authorization support ----------------------------------------------
+
+    def protected_content_count(self, room_id: str) -> int:
+        return sum(1 for item in self.messages.values() if item.room_id == room_id) + sum(
+            1 for item in self.attachments.values() if item.room_id == room_id
+        )
+
+    def process_exists(self, processo_id: str) -> bool:
+        return processo_id in self.processes
 
     def list_rooms(
         self,
@@ -525,7 +1094,9 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         visible: list[InteractionRoom] = []
         for room in rooms:
             unread, mentioned = self._signals(room.id, viewer_user_id)
-            shown = replace(room, unread_count=unread, mentioned=mentioned)
+            shown = replace(
+                self._graph(room), unread_count=unread, mentioned=mentioned
+            )
             if inbox_filter == "unread" and unread <= 0:
                 continue
             if inbox_filter == "mentioned" and not mentioned:

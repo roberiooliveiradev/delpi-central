@@ -3,15 +3,47 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from tm_app.application.security.authorization_policy import TransformometroAuthorizationPolicy
-from tm_app.domain.entities.interaction_room import InteractionAttachment, InteractionMessage, InteractionRoom
+from tm_app.application.security.authorization_policy import (
+    AuthorizationDenied,
+    TransformometroAuthorizationPolicy,
+)
+from tm_app.application.helpdesk.ticket_visibility_port import TicketVisibilityPort
+from tm_app.domain.entities.interaction_room import (
+    LINK_DELETED_EXPLICIT,
+    LINK_DELETED_ROOM_DELETED,
+    LINK_ENTITY_HELPDESK_TICKET,
+    LINK_ENTITY_PROCESS,
+    LINK_ROLE_PRIMARY,
+    PARTICIPANT_ROLE_MEMBER,
+    PARTICIPANT_ROLE_OWNER,
+    ROOM_ACCESS_SCOPE_MEMBERS,
+    InteractionAttachment,
+    InteractionMessage,
+    InteractionRoom,
+    InteractionRoomLink,
+)
 from tm_app.domain.ports.interaction_room_repository_port import InteractionRoomRepositoryPort
+from tm_app.domain.services.interaction_room_access_service import (
+    LINK_STATE_SESSION_MISSING,
+    LINK_STATE_UNAVAILABLE,
+    LINK_STATE_VISIBLE,
+    PrimaryLinkConflict,
+    RoomAccessExpansionBlocked,
+    RoomAuthorizationDenied,
+    check_room_access,
+    deny_reason_for_state,
+    is_externally_governed,
+)
 from tm_app.domain.services.interaction_room_rules import (
+    normalize_entity_key,
     normalize_inbox_filter,
+    normalize_link_entity,
+    normalize_link_role,
     normalize_mentions,
     normalize_message_content,
     normalize_processo_id,
     normalize_reaction_code,
+    normalize_room_title,
     normalize_uuid,
 )
 from tm_app.domain.services.transformometro_task_rules import normalize_user_id
@@ -34,57 +66,498 @@ def _limit(value: int) -> int:
 
 
 class InteractionRoomUseCases:
+    """Canonical room use cases — same paths serve HTTP routes and the
+    governed TÉO surface. Content authorization is the full intersection:
+    Core access + room scope + every active link's external authority.
+    Administrative authority (owner/manager) never grants content read.
+    """
+
     def __init__(
         self,
         repo: InteractionRoomRepositoryPort,
         policy: TransformometroAuthorizationPolicy | None = None,
         storage: InteractionAttachmentStorage | None = None,
+        ticket_visibility: TicketVisibilityPort | None = None,
+        audit: Any | None = None,
     ) -> None:
         self._repo = repo
         self._policy = policy or TransformometroAuthorizationPolicy()
         self._storage = storage
+        self._tickets = ticket_visibility
+        self._audit = audit
 
-    def open_for_process(self, user: Any, processo_id: str) -> InteractionRoom:
+    # --- effective authorization -------------------------------------------
+
+    def _resolve_link_state(
+        self, link: InteractionRoomLink, authorization: str | None
+    ) -> str:
+        """External authority probe for one active link. Fresh per call —
+        never cached, never inferred."""
+        if link.entity_type == LINK_ENTITY_PROCESS:
+            return (
+                LINK_STATE_VISIBLE
+                if self._repo.process_exists(link.entity_key)
+                else "not_found"
+            )
+        if link.entity_type == LINK_ENTITY_HELPDESK_TICKET:
+            if self._tickets is None:
+                return LINK_STATE_UNAVAILABLE
+            if not authorization:
+                return LINK_STATE_SESSION_MISSING
+            return self._tickets.check_ticket_visibility(
+                authorization, link.entity_key
+            )
+        return LINK_STATE_UNAVAILABLE
+
+    def _authorized_room(
+        self, user: Any, room_id: str, authorization: str | None
+    ) -> InteractionRoom:
+        """Content path: full intersection enforced before any content or
+        sensitive metadata is returned."""
+        self._policy.require_access(user)
+        room = self._repo.get(normalize_uuid(room_id, label="A sala"))
+        if room is None:
+            raise LookupError("Sala não encontrada.")
+        actor = _actor(user)
+        is_participant = any(
+            item.user_id == actor for item in room.participants
+        )
+        check_room_access(
+            room,
+            is_participant=is_participant,
+            resolve_link_state=lambda link: self._resolve_link_state(
+                link, authorization
+            ),
+        )
+        return room
+
+    def _admin_room(self, user: Any, room_id: str) -> InteractionRoom:
+        """Administrative path: owner or effective `transformometro.manage`.
+        Never requires `transformometro.access` and never authorizes
+        content reads — administration and reading are separate
+        authorities."""
+        self._policy._require_user(user)
+        room = self._repo.get(normalize_uuid(room_id, label="A sala"))
+        if room is None:
+            raise LookupError("Sala não encontrada.")
+        if self._can_admin(user, room):
+            return room
+        raise AuthorizationDenied("Sem autoridade administrativa sobre a sala.")
+
+    def _admin_room_raw(self, user: Any, room_id: str) -> InteractionRoom:
+        self._policy._require_user(user)
+        room = self._repo.get_raw(normalize_uuid(room_id, label="A sala"))
+        if room is None:
+            raise LookupError("Sala não encontrada.")
+        if self._can_admin(user, room):
+            return room
+        raise AuthorizationDenied("Sem autoridade administrativa sobre a sala.")
+
+    def _can_admin(self, user: Any, room: InteractionRoom) -> bool:
+        return (
+            room.created_by_user_id == _actor(user)
+            or self._policy.has_manage(user)
+        )
+
+    def _audit_log(self, action: str, room_id: str, user: Any, **extra: Any) -> None:
+        if self._audit is None:
+            return
+        self._audit.log(
+            entity_type="interaction_room",
+            entity_id=room_id,
+            action=action,
+            user_id=str(getattr(user, "id", "") or "") or None,
+            user_email=str(getattr(user, "email", "") or "") or None,
+            user_name=str(getattr(user, "name", "") or "") or None,
+            payload=extra or None,
+        )
+
+    # --- room lifecycle ------------------------------------------------------
+
+    def open_for_process(
+        self, user: Any, processo_id: str, *, authorization: str | None = None
+    ) -> InteractionRoom:
+        """Legacy process room — unchanged semantics, plus dual-write of the
+        primary process link (Expand)."""
         self._policy.require_access(user)
         actor = _actor(user)
-        room = self._repo.get_or_create(
-            processo_id=normalize_processo_id(processo_id),
-            created_by_user_id=actor,
-        )
+        processo = normalize_processo_id(processo_id)
+        # Canonical resolution first: the active primary claim is the source
+        # of truth (D-01); a room anchored elsewhere (e.g. a ticket) and
+        # later made primary for this process must still be located here.
+        room = self._repo.find_active_primary_room(LINK_ENTITY_PROCESS, processo)
+        if room is None:
+            room = self._repo.get_or_create(
+                processo_id=processo,
+                created_by_user_id=actor,
+            )
         if room is None:
             raise LookupError("Processo não encontrado.")
-        confirmed = self._repo.get(room.id)
-        if confirmed is None or confirmed.processo_id != room.processo_id:
+        self._repo.upsert_link(
+            room_id=room.id,
+            entity_type=LINK_ENTITY_PROCESS,
+            entity_key=processo,
+            link_role=LINK_ROLE_PRIMARY,
+            actor_user_id=actor,
+        )
+        confirmed = self._authorized_room(user, room.id, authorization)
+        if confirmed.id != room.id:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def get_room(self, user: Any, room_id: str) -> InteractionRoom:
+    def open_standalone(
+        self,
+        user: Any,
+        title: str,
+        *,
+        participant_ids: list[str] | None = None,
+    ) -> InteractionRoom:
+        """Standalone collaboration — always `members` scope (D-03). The
+        creator is the owner participant."""
         self._policy.require_access(user)
-        room = self._repo.get(normalize_uuid(room_id, label="A sala"))
+        actor = _actor(user)
+        room = self._repo.create_room(
+            title=normalize_room_title(title),
+            access_scope=ROOM_ACCESS_SCOPE_MEMBERS,
+            created_by_user_id=actor,
+        )
         if room is None:
-            raise LookupError("Sala não encontrada.")
-        return room
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        self._repo.add_participant(
+            room_id=room.id,
+            user_id=actor,
+            role=PARTICIPANT_ROLE_OWNER,
+            actor_user_id=actor,
+        )
+        for member_id in participant_ids or []:
+            member = normalize_user_id(str(member_id), field="O participante")
+            if member == actor:
+                continue
+            self._repo.add_participant(
+                room_id=room.id,
+                user_id=member,
+                role=PARTICIPANT_ROLE_MEMBER,
+                actor_user_id=actor,
+            )
+        self._audit_log("create", room.id, user, kind="standalone")
+        confirmed = self._authorized_room(user, room.id, None)
+        if confirmed.access_scope != ROOM_ACCESS_SCOPE_MEMBERS:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        return confirmed
+
+    def open_for_ticket(
+        self, user: Any, ticket_id: str, *, authorization: str | None = None
+    ) -> InteractionRoom:
+        """`open_or_locate` for a GLPI ticket: returns the room holding the
+        active primary claim when the caller satisfies the intersection;
+        otherwise creates a `members` room. A ticket the caller cannot
+        read can never anchor a room."""
+        self._policy.require_access(user)
+        actor = _actor(user)
+        ticket_key = normalize_entity_key(LINK_ENTITY_HELPDESK_TICKET, ticket_id)
+        existing = self._repo.find_active_primary_room(
+            LINK_ENTITY_HELPDESK_TICKET, ticket_key
+        )
+        if existing is not None:
+            return self._authorized_room(user, existing.id, authorization)
+        link = InteractionRoomLink(
+            id="",
+            room_id="",
+            entity_type=LINK_ENTITY_HELPDESK_TICKET,
+            entity_key=ticket_key,
+            link_role=LINK_ROLE_PRIMARY,
+            created_by_user_id=actor,
+        )
+        state = self._resolve_link_state(link, authorization)
+        if state != LINK_STATE_VISIBLE:
+            message, status_code, error_code = deny_reason_for_state(state)
+            raise RoomAuthorizationDenied(
+                message, status_code=status_code, error_code=error_code
+            )
+        room = self._repo.create_room(
+            title=None,
+            access_scope=ROOM_ACCESS_SCOPE_MEMBERS,
+            created_by_user_id=actor,
+        )
+        if room is None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        try:
+            self._repo.upsert_link(
+                room_id=room.id,
+                entity_type=LINK_ENTITY_HELPDESK_TICKET,
+                entity_key=ticket_key,
+                link_role=LINK_ROLE_PRIMARY,
+                actor_user_id=actor,
+            )
+        except PrimaryLinkConflict:
+            # Lost the create race — tombstone the orphan we just created
+            # and re-resolve to the canonical winner.
+            self._repo.soft_delete(room.id, actor_user_id=actor)
+            winner = self._repo.find_active_primary_room(
+                LINK_ENTITY_HELPDESK_TICKET, ticket_key
+            )
+            if winner is None:
+                raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+            return self._authorized_room(user, winner.id, authorization)
+        self._repo.add_participant(
+            room_id=room.id,
+            user_id=actor,
+            role=PARTICIPANT_ROLE_OWNER,
+            actor_user_id=actor,
+        )
+        self._audit_log("create", room.id, user, kind="ticket", ticket=ticket_key)
+        return self._authorized_room(user, room.id, authorization)
+
+    # --- links & participants -------------------------------------------------
+
+    def add_link(
+        self,
+        user: Any,
+        room_id: str,
+        entity_type: str,
+        entity_key: str,
+        *,
+        link_role: str = "reference",
+        authorization: str | None = None,
+    ) -> InteractionRoomLink:
+        """Owner/manager only. Adding a restrictive link only ever narrows
+        the audience — the safe direction — but the target itself must be
+        resolvable and visible to the actor."""
+        room = self._admin_room(user, room_id)
+        actor = _actor(user)
+        entity = normalize_link_entity(entity_type)
+        key = normalize_entity_key(entity, entity_key)
+        role = normalize_link_role(link_role)
+        probe = InteractionRoomLink(
+            id="",
+            room_id=room.id,
+            entity_type=entity,
+            entity_key=key,
+            link_role=role,
+            created_by_user_id=actor,
+        )
+        state = self._resolve_link_state(probe, authorization)
+        if state != LINK_STATE_VISIBLE:
+            message, status_code, error_code = deny_reason_for_state(state)
+            raise RoomAuthorizationDenied(
+                message, status_code=status_code, error_code=error_code
+            )
+        if role == LINK_ROLE_PRIMARY:
+            holder = self._repo.find_active_primary_room(entity, key)
+            if holder is not None and holder.id != room.id:
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                )
+        link = self._repo.upsert_link(
+            room_id=room.id,
+            entity_type=entity,
+            entity_key=key,
+            link_role=role,
+            actor_user_id=actor,
+        )
+        self._audit_log(
+            "add_link", room.id, user,
+            entity_type=entity, entity_key=key, link_role=role,
+        )
+        confirmed = self._repo.get(room.id)
+        if confirmed is None or not any(
+            item.active and item.entity_type == entity and item.entity_key == key
+            for item in confirmed.links
+        ):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        return link
+
+    def remove_link(self, user: Any, room_id: str, link_id: str) -> None:
+        """Owner/manager may request, never bypass. An externally governed
+        link cannot be removed while protected history exists — current or
+        future participants would otherwise gain access to an era they
+        could not read (no per-message segregation in V2)."""
+        room = self._admin_room(user, room_id)
+        actor = _actor(user)
+        link = next(
+            (item for item in room.links if item.id == normalize_uuid(link_id, label="O vínculo")),
+            None,
+        )
+        if link is None or not link.active:
+            raise LookupError("Vínculo não encontrado.")
+        if is_externally_governed(link) and self._repo.protected_content_count(room.id) > 0:
+            raise RoomAccessExpansionBlocked(
+                "A remoção ampliaria o acesso ao histórico protegido."
+            )
+        tombstoned = self._repo.tombstone_link(link.id, cause=LINK_DELETED_EXPLICIT)
+        if tombstoned is None or tombstoned.deleted_at is None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        self._audit_log(
+            "remove_link", room.id, user,
+            entity_type=link.entity_type, entity_key=link.entity_key,
+        )
+
+    def add_participant(self, user: Any, room_id: str, user_id: str) -> None:
+        room = self._admin_room(user, room_id)
+        actor = _actor(user)
+        member = normalize_user_id(str(user_id), field="O participante")
+        self._repo.add_participant(
+            room_id=room.id,
+            user_id=member,
+            role=PARTICIPANT_ROLE_MEMBER,
+            actor_user_id=actor,
+        )
+        self._audit_log("add_participant", room.id, user, participant=member)
+        if not self._repo.is_participant(room.id, member):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+
+    def remove_participant(self, user: Any, room_id: str, user_id: str) -> None:
+        room = self._admin_room(user, room_id)
+        member = normalize_user_id(str(user_id), field="O participante")
+        current = next(
+            (item for item in room.participants if item.user_id == member), None
+        )
+        if current is None:
+            raise LookupError("Participante não encontrado.")
+        if current.role == PARTICIPANT_ROLE_OWNER:
+            raise PermissionError("O owner não pode ser removido da sala.")
+        self._repo.remove_participant(room_id=room.id, user_id=member)
+        self._audit_log("remove_participant", room.id, user, participant=member)
+        if self._repo.is_participant(room.id, member):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+
+    def list_participants(self, user: Any, room_id: str) -> list[dict[str, Any]]:
+        room = self._authorized_room(user, room_id, None)
+        return [item.to_dict() for item in room.participants]
+
+    # --- governed delete / restore (D-04) -------------------------------------
+
+    def delete_impact(self, user: Any, room_id: str) -> dict[str, Any]:
+        """Safe administrative preview — counts and structural metadata
+        only. Title, link keys and content never leak to an admin who
+        cannot read the room (R-5)."""
+        room = self._admin_room_raw(user, room_id)
+        return {
+            "room_id": room.id,
+            "deleted": room.deleted_at is not None,
+            "access_scope": room.access_scope,
+            "message_count": self._repo.protected_content_count(room.id),
+            "participant_count": len(
+                [p for p in room.participants if p.removed_at is None]
+            ),
+            "link_roles": sorted(
+                {
+                    f"{item.entity_type}:{item.link_role}"
+                    for item in room.links
+                    if item.active
+                }
+            ),
+        }
 
     def delete_room(self, user: Any, room_id: str) -> InteractionRoom:
-        """Soft delete — history persists; a new room can be opened later.
-        Destructive capability → manage permission, never mere access."""
-        self._policy.require_manage(user)
-        room = self._repo.get(normalize_uuid(room_id, label="A sala"))
-        if room is None:
-            raise LookupError("Sala não encontrada.")
-        deleted = self._repo.soft_delete(room.id)
+        """Logical delete — history persists; primary claims release so a
+        new room can claim the objects later (D-04). Owner or effective
+        manager; never requires content read."""
+        room = self._admin_room(user, room_id)
+        actor = _actor(user)
+        deleted = self._repo.soft_delete(room.id, actor_user_id=actor)
         if deleted is None or deleted.deleted_at is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         if self._repo.get(room.id) is not None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        if any(link.active for link in deleted.links):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        self._audit_log("delete", room.id, user)
         return deleted
 
-    def list_rooms(self, user: Any, *, inbox_filter: str = "all") -> list[InteractionRoom]:
+    def restore_room(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> InteractionRoom:
+        """Governed restore: fresh admin authz, link targets must still
+        exist and be readable, active primary claims must be free.
+        Atomic — a conflict aborts the whole transaction, nothing is
+        partially revived, explicit link removals are not resurrected."""
+        room = self._admin_room_raw(user, room_id)
+        if room.deleted_at is None:
+            raise ValueError("A sala não está excluída.")
+        revivable = [
+            item
+            for item in room.links
+            if item.deleted_cause == LINK_DELETED_ROOM_DELETED
+        ]
+        for link in revivable:
+            state = self._resolve_link_state(link, authorization)
+            if state != LINK_STATE_VISIBLE:
+                message, status_code, error_code = deny_reason_for_state(state)
+                raise RoomAuthorizationDenied(
+                    message, status_code=status_code, error_code=error_code
+                )
+            if link.link_role == LINK_ROLE_PRIMARY:
+                holder = self._repo.find_active_primary_room(
+                    link.entity_type, link.entity_key
+                )
+                if holder is not None and holder.id != room.id:
+                    raise PrimaryLinkConflict(
+                        "O objeto já possui outra sala primária ativa."
+                    )
+        restored = self._repo.restore_room(room.id)
+        if restored is None or restored.deleted_at is not None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        revived = {
+            item.id
+            for item in restored.links
+            if item.active and item.deleted_cause is None
+        }
+        if any(link.id not in revived for link in revivable):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        self._audit_log("restore", room.id, user)
+        return restored
+
+    # --- existing surface ------------------------------------------------------
+
+    def get_room(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> InteractionRoom:
+        return self._authorized_room(user, room_id, authorization)
+
+    def list_rooms(
+        self,
+        user: Any,
+        *,
+        inbox_filter: str = "all",
+        authorization: str | None = None,
+    ) -> list[InteractionRoom]:
+        """R-2/Q-09: the inbox only surfaces rooms the viewer is
+        effectively authorized for — a room carrying an externally
+        governed link is visible only to participants who satisfy the
+        full intersection."""
         self._policy.require_access(user)
-        return self._repo.list_rooms(
-            viewer_user_id=_actor(user),
+        actor = _actor(user)
+        rooms = self._repo.list_rooms(
+            viewer_user_id=actor,
             inbox_filter=normalize_inbox_filter(inbox_filter),
         )
+        return [
+            room
+            for room in rooms
+            if self._inbox_visible(room, actor, authorization)
+        ]
+
+    def _inbox_visible(
+        self, room: InteractionRoom, actor: str, authorization: str | None
+    ) -> bool:
+        restricted = any(is_externally_governed(link) for link in room.links)
+        participant = any(item.user_id == actor for item in room.participants)
+        if room.access_scope == ROOM_ACCESS_SCOPE_MEMBERS and not participant:
+            return False
+        if restricted and not participant:
+            return False
+        try:
+            check_room_access(
+                room,
+                is_participant=participant,
+                resolve_link_state=lambda link: self._resolve_link_state(
+                    link, authorization
+                ),
+            )
+        except RoomAuthorizationDenied:
+            return False
+        return True
 
     def list_messages(
         self,
@@ -93,9 +566,10 @@ class InteractionRoomUseCases:
         *,
         limit: int = DEFAULT_MESSAGE_LIMIT,
         before_id: str | None = None,
+        authorization: str | None = None,
     ) -> dict[str, Any]:
         self._policy.require_access(user)
-        room = self.get_room(user, room_id)
+        room = self._authorized_room(user, room_id, authorization)
         cursor = normalize_uuid(before_id, label="A mensagem âncora") if before_id else None
         messages, has_more = self._repo.list_messages(
             room.id,
@@ -115,11 +589,12 @@ class InteractionRoomUseCases:
         *,
         parent_id: str | None = None,
         mentions: list[dict] | None = None,
+        authorization: str | None = None,
     ) -> InteractionMessage:
         self._policy.require_access(user)
         actor = _actor(user)
         text = normalize_message_content(content)
-        room = self.get_room(user, room_id)
+        room = self._authorized_room(user, room_id, authorization)
         parent = self._parent_in_room(room.id, parent_id)
         created = self._repo.add_message(
             room_id=room.id,
@@ -136,9 +611,17 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def edit_message(self, user: Any, room_id: str, message_id: str, content: str) -> InteractionMessage:
+    def edit_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        content: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor)
+        message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         text = normalize_message_content(content)
@@ -147,9 +630,16 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return updated
 
-    def delete_message(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
+    def delete_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor)
+        message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             return message
         deleted = self._repo.soft_delete_message(message.id)
@@ -157,10 +647,18 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return deleted
 
-    def toggle_reaction(self, user: Any, room_id: str, message_id: str, code: str) -> InteractionMessage:
+    def toggle_reaction(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        code: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
         self._policy.require_access(user)
         actor = _actor(user)
-        message = self._message_in_room(user, room_id, message_id)
+        message = self._message_in_room(user, room_id, message_id, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         normalized = normalize_reaction_code(code)
@@ -174,10 +672,17 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def pin_message(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
+    def pin_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
         self._policy.require_access(user)
         actor = _actor(user)
-        message = self._message_in_room(user, room_id, message_id)
+        message = self._message_in_room(user, room_id, message_id, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         self._repo.pin_message(room_id=message.room_id, message_id=message.id, user_id=actor)
@@ -186,25 +691,43 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def unpin_message(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
+    def unpin_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
         self._policy.require_access(user)
-        message = self._message_in_room(user, room_id, message_id)
+        message = self._message_in_room(user, room_id, message_id, authorization)
         self._repo.unpin_message(room_id=message.room_id, message_id=message.id)
         confirmed = self._repo.get_message(message.id)
         if confirmed is None or confirmed.pinned:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def mark_read(self, user: Any, room_id: str) -> None:
+    def mark_read(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> None:
         self._policy.require_access(user)
-        room = self.get_room(user, room_id)
+        room = self._authorized_room(user, room_id, authorization)
         self._repo.mark_read(room_id=room.id, user_id=_actor(user))
 
-    def get_message(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
-        return self._message_in_room(user, room_id, message_id)
+    def get_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        *,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
+        return self._message_in_room(user, room_id, message_id, authorization)
 
-    def list_attachments(self, user: Any, room_id: str) -> list[InteractionAttachment]:
-        room = self.get_room(user, room_id)
+    def list_attachments(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> list[InteractionAttachment]:
+        room = self._authorized_room(user, room_id, authorization)
         return self._repo.list_attachments(room.id)
 
     def add_attachment(
@@ -216,9 +739,10 @@ class InteractionRoomUseCases:
         file_name: str,
         content: bytes,
         mime_type: str | None,
+        authorization: str | None = None,
     ) -> InteractionAttachment:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor)
+        message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         stored_name, safe_name = self._files().save(
@@ -250,19 +774,33 @@ class InteractionRoomUseCases:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return confirmed
 
-    def open_attachment(self, user: Any, room_id: str, attachment_id: str):
+    def open_attachment(
+        self,
+        user: Any,
+        room_id: str,
+        attachment_id: str,
+        *,
+        authorization: str | None = None,
+    ):
         self._policy.require_access(user)
-        room = self.get_room(user, room_id)
+        room = self._authorized_room(user, room_id, authorization)
         attachment = self._repo.get_attachment(normalize_uuid(attachment_id, label="O anexo"))
         if attachment is None or attachment.room_id != room.id:
             raise LookupError("Arquivo não encontrado.")
         path = self._files().resolve_file(room_id=room.id, stored_name=attachment.stored_name)
         return path, attachment.file_name, attachment.content_type
 
-    def delete_attachment(self, user: Any, room_id: str, attachment_id: str) -> None:
+    def delete_attachment(
+        self,
+        user: Any,
+        room_id: str,
+        attachment_id: str,
+        *,
+        authorization: str | None = None,
+    ) -> None:
         actor = _actor(user)
         self._policy.require_access(user)
-        room = self.get_room(user, room_id)
+        room = self._authorized_room(user, room_id, authorization)
         attachment = self._repo.get_attachment(normalize_uuid(attachment_id, label="O anexo"))
         if attachment is None or attachment.room_id != room.id:
             raise LookupError("Arquivo não encontrado.")
@@ -288,15 +826,28 @@ class InteractionRoomUseCases:
             raise ValueError("A mensagem respondida não está nesta sala.")
         return parent.id
 
-    def _message_in_room(self, user: Any, room_id: str, message_id: str) -> InteractionMessage:
-        room = self.get_room(user, room_id)
+    def _message_in_room(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
+        room = self._authorized_room(user, room_id, authorization)
         message = self._repo.get_message(normalize_uuid(message_id, label="A mensagem"))
         if message is None or message.room_id != room.id:
             raise LookupError("Mensagem não encontrada.")
         return message
 
-    def _own_message(self, user: Any, room_id: str, message_id: str, actor: str) -> InteractionMessage:
-        message = self._message_in_room(user, room_id, message_id)
+    def _own_message(
+        self,
+        user: Any,
+        room_id: str,
+        message_id: str,
+        actor: str,
+        authorization: str | None = None,
+    ) -> InteractionMessage:
+        message = self._message_in_room(user, room_id, message_id, authorization)
         if message.author_user_id != actor:
             raise PermissionError("Só o autor pode alterar esta mensagem.")
         return message

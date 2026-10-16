@@ -59,6 +59,11 @@ from tm_app.application.services.instance_duplicate_service import (
 )
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.application.security.authorization_policy import AuthorizationDenied
+from tm_app.domain.services.interaction_room_access_service import (
+    PrimaryLinkConflict,
+    RoomAccessExpansionBlocked,
+    RoomAuthorizationDenied,
+)
 from tm_app.application.use_cases.list_my_task_items import ListMyTaskItemsUseCase
 from tm_app.application.use_cases.manage_interaction_rooms import (
     InteractionRoomUseCases,
@@ -193,6 +198,10 @@ from tm_app.infrastructure.persistence.repositories.task_repository import TaskR
 from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
     InteractionRoomRepository,
 )
+from tm_app.infrastructure.persistence.repositories.audit_repository import (
+    AuditRepository,
+)
+from tm_app.infrastructure.gateways.helpdesk_bff_gateway import HelpdeskBffGateway
 from tm_app.application.services.dashboard_recalc_hook_service import DashboardRecalcHookService
 from tm_app.application.services.decomposition_write_service import (
     DecompositionWriteError,
@@ -269,7 +278,11 @@ class GptActionsDispatchService:
         self._task_items = ListMyTaskItemsUseCase(
             self._tasks, self._minutes.pending_signatures
         )
-        self._rooms = InteractionRoomUseCases(InteractionRoomRepository())
+        self._rooms = InteractionRoomUseCases(
+            InteractionRoomRepository(),
+            ticket_visibility=HelpdeskBffGateway(),
+            audit=AuditRepository(),
+        )
         from tm_app.application.gpt_actions.parity_capabilities_service import (
             ParityCapabilitiesService,
         )
@@ -2206,10 +2219,19 @@ class GptActionsDispatchService:
     # canonical use cases as task_routes.py. Domain rules, AuthZ and
     # read-back verification stay owned by the use-case layer.
 
+    @staticmethod
+    def _room_bearer(request: Request) -> str:
+        """Same-user Bearer for room link authority probes."""
+        return str(request.headers.get("authorization") or "").strip()
+
     def _map_task_room_exc(self, exc: Exception) -> GptActionsError:
         """Translate canonical use-case errors to transport errors."""
         if isinstance(exc, AuthorizationDenied):
             return GptActionsError(str(exc), exc.status_code)
+        if isinstance(exc, (RoomAuthorizationDenied, RoomAccessExpansionBlocked, PrimaryLinkConflict)):
+            return GptActionsError(
+                str(exc), exc.status_code, {"error_code": exc.error_code}
+            )
         if isinstance(exc, PermissionError):
             return GptActionsError(str(exc), 403)
         if isinstance(exc, LookupError):
@@ -2286,14 +2308,21 @@ class GptActionsDispatchService:
 
     def list_rooms(self, request: Request, *, inbox_filter: str = "all") -> dict[str, Any]:
         try:
-            rooms = self._rooms.list_rooms(request.state.user, inbox_filter=inbox_filter)
+            rooms = self._rooms.list_rooms(
+                request.state.user,
+                inbox_filter=inbox_filter,
+                authorization=self._room_bearer(request),
+            )
             return {"items": [room.to_dict() for room in rooms], "total": len(rooms)}
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 
     def get_room(self, request: Request, room_id: str) -> dict[str, Any]:
         try:
-            return self._rooms.get_room(request.state.user, str(room_id)).to_dict()
+            return self._rooms.get_room(
+                request.state.user, str(room_id),
+                authorization=self._room_bearer(request),
+            ).to_dict()
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 
@@ -2311,6 +2340,7 @@ class GptActionsDispatchService:
                 str(room_id),
                 limit=int(limit),
                 before_id=before_id,
+                authorization=self._room_bearer(request),
             )
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
@@ -2320,14 +2350,18 @@ class GptActionsDispatchService:
     ) -> dict[str, Any]:
         try:
             return self._rooms.get_message(
-                request.state.user, str(room_id), str(message_id)
+                request.state.user, str(room_id), str(message_id),
+                authorization=self._room_bearer(request),
             ).to_dict()
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
 
     def list_room_attachments(self, request: Request, room_id: str) -> dict[str, Any]:
         try:
-            items = self._rooms.list_attachments(request.state.user, str(room_id))
+            items = self._rooms.list_attachments(
+                request.state.user, str(room_id),
+                authorization=self._room_bearer(request),
+            )
             return {"items": [item.to_dict() for item in items], "total": len(items)}
         except Exception as exc:
             raise self._map_task_room_exc(exc) from exc
@@ -2341,10 +2375,13 @@ class GptActionsDispatchService:
         user = request.state.user
         room_id = str(args.get("room_id") or "")
         message_id = str(args.get("message_id") or "")
+        authorization = self._room_bearer(request)
         try:
             if action == "open_room":
                 return self._rooms.open_for_process(
-                    user, str(args.get("processo_id") or "")
+                    user,
+                    str(args.get("processo_id") or ""),
+                    authorization=authorization,
                 ).to_dict()
             if action == "post_message":
                 return self._rooms.post_message(
@@ -2353,26 +2390,35 @@ class GptActionsDispatchService:
                     str(args.get("content") or ""),
                     parent_id=args.get("parent_id"),
                     mentions=args.get("mentions"),
+                    authorization=authorization,
                 ).to_dict()
             if action == "edit_message":
                 return self._rooms.edit_message(
-                    user, room_id, message_id, str(args.get("content") or "")
+                    user, room_id, message_id, str(args.get("content") or ""),
+                    authorization=authorization,
                 ).to_dict()
             if action == "delete_message":
-                return self._rooms.delete_message(user, room_id, message_id).to_dict()
+                return self._rooms.delete_message(
+                    user, room_id, message_id, authorization=authorization
+                ).to_dict()
             if action == "toggle_reaction":
                 return self._rooms.toggle_reaction(
-                    user, room_id, message_id, str(args.get("reaction") or "")
+                    user, room_id, message_id, str(args.get("reaction") or ""),
+                    authorization=authorization,
                 ).to_dict()
             if action == "pin_message":
-                return self._rooms.pin_message(user, room_id, message_id).to_dict()
+                return self._rooms.pin_message(
+                    user, room_id, message_id, authorization=authorization
+                ).to_dict()
             if action == "unpin_message":
-                return self._rooms.unpin_message(user, room_id, message_id).to_dict()
+                return self._rooms.unpin_message(
+                    user, room_id, message_id, authorization=authorization
+                ).to_dict()
             if action == "mark_room_read":
-                self._rooms.mark_read(user, room_id)
+                self._rooms.mark_read(user, room_id, authorization=authorization)
                 # Authoritative read-back: viewer-scoped unread_count must
                 # be zero after the write.
-                for room in self._rooms.list_rooms(user):
+                for room in self._rooms.list_rooms(user, authorization=authorization):
                     if room.id == room_id:
                         return room.to_dict()
                 raise LookupError("Sala não encontrada.")

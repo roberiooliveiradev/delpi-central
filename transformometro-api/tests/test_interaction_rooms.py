@@ -323,20 +323,30 @@ def test_http_capabilities_keep_authz():
     assert json.loads(unread.body)["data"]["items"][0]["id"] == room_id
 
 
-def test_delete_room_requires_manage_and_hides_room():
+def test_delete_room_requires_owner_or_manage_and_hides_room():
     cases, repo = _cases()
     room = cases.open_for_process(_user(), PROCESS)
     cases.post_message(_user(), room.id, "histórico")
+    # D-04: neither plain access nor non-ownership grants deletion —
+    # only the owner or an effective manager.
     with pytest.raises(AuthorizationDenied) as denied:
-        cases.delete_room(_user(), room.id)
+        cases.delete_room(_user(user_id=OTHER), room.id)
     assert denied.value.status_code == 403
 
-    manager = _user(permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
+    manager = _user(user_id=OTHER, permissions=[ACCESS_PERMISSION, MANAGE_PERMISSION])
     deleted = cases.delete_room(manager, room.id)
     assert deleted.deleted_at is not None
     with pytest.raises(LookupError):
         cases.get_room(manager, room.id)
     assert all(item.id != room.id for item in cases.list_rooms(manager))
+
+
+def test_owner_can_delete_own_room_without_manage():
+    cases, _repo = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    cases.post_message(_user(), room.id, "meu")
+    deleted = cases.delete_room(_user(), room.id)
+    assert deleted.deleted_at is not None
 
 
 def test_delete_room_allows_fresh_room_for_same_process():
