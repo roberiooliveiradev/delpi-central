@@ -13737,3 +13737,20 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.177 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02R2-DIAG (diagnóstico bounded; sem implementação)
+
+**Task:** diagnóstico de segurança do execution bound textual + decisão arquitetural; relatório `corrections/conversational-intelligence-c3/11-stage-02r2-execution-bound-diagnosis.md`. **MODE:** DIAGNOSIS_AND_ARCHITECTURE_DECISION_ONLY — zero código produtivo alterado.
+
+- **BASE:** reviewed SHA `9fd3a7bc959686a6c4828f46b7d292c81a96938c` na ancestry; execução sobre HEAD local `0018906278` (main; concorrência do usuário preservada, nada restaged).
+- **EVIDÊNCIAS EXECUTADAS (fakes, scripted):** novo harness diagnóstico `tests/test_stage02r2_execution_bound_diagnosis.py` (16 casos). Suíte completa delia-api **1091 passed + 10 xfailed** (exit 0); nenhum expected alheio alterado.
+- **FALHAS REPRODUZIDAS (safety property FAIL → xfail strict, 10 casos):** texto 'Prepare, mas não aplique' + proposta `create_or_modify + unrestricted` + ceiling `None` + owner READY/`confirmation=False` → `commit_record` invocado (DIAG-01); bound **ausente** idem (DIAG-02); bound **inválido** idem (DIAG-03); 6 formulações equivalentes com `unrestricted` → ACT em todas (DIAG-07); superfície provider/capability renomeada idem (DIAG-09). PROVEN no harness; real-model=TEST_NOT_RUN.
+- **CONTROLES PASS (6):** `max_execution_stage='prepare'` bloqueia ACT mesmo com bound `unrestricted` (DIAG-04); continuação direta governada preservada sem restrição (DIAG-05); `prepare_only` só reduz (DIAG-06); teto do request alcança o path de confirmação (DIAG-08b); owner sem ACT → `WRITE_REJECTED` fail-closed (DIAG-09b).
+- **FATOS COMPROVADOS (código):** `expected_fields` do `_propose` é metadata do adapter, não validação; `execution_bound` ausente/inválido → coagido a `'unrestricted'` com `declared=True` — fail-open para mais autoridade; `_attempt_confirmation` não recebe `input_text` — texto 'não aplique' no mesmo turno de um CONFIRM estruturado não é interpretado (DIAG-08: **lacuna de especificação de precedência**, exploit não provado; CONFIRM governa hoje); nenhum canal não-modelo transporta a restrição textual.
+- **HIPÓTESES/RESIDUAIS:** misclassification positiva ('unrestricted' emitido para texto restrito) é irredutível sem segunda leitura semântica ou aceite de resíduo — mesma classe do resíduo `goal_class` já aceito; frequência real TEST_NOT_RUN.
+- **CONTRATOS INVESTIGADOS:** `InteractiveTurnRequest` (ceiling reduction-only, validado no use-case), `confirmation` payload, `_TurnGoal`/`_understand_goal`, `_attempt`/`_attempt_prepare`/`_attempt_direct_act`/`_attempt_confirmation`, `evaluate_write_continuation`, `confirmation_requirement`, `_propose`. EXISTING_EQUIVALENT=YES para bound/ceiling/clarify; REUSE_DECISION=REUSE|EXTEND.
+- **ALTERNATIVAS:** A (teto estruturado no request) insuficiente — cliente não lê texto; B (verificação semântica independente pré-ACT) cobre o caso crítico mas é novo gate/chamada — exige autorização; C (fail-closed: bound ausente/inválido ≠ `unrestricted` → clarificar) é a menor correção legítima para a parte contratável — não cobre afirmação positiva errada.
+- **DECISÃO PENDENTE:** `ARCHITECTURE_DECISION_REQUIRED` — (i) aprovar C (contract extension, fail-closed no bound) + aceitar residual model-trust, ou (ii) autorizar estágio de verificação bounded (novo mecanismo, custo), e (iii) especificar precedência CONFIRM↔texto contraditório. Nenhuma implementação, aceite ou fase alterada por esta task; Stage 03 NOT_AUTHORIZED.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
