@@ -13,12 +13,14 @@ describe("ConversationThreeRegionLayout R2", () => {
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     const collapse = screen.getByRole("button", { name: "Recolher conversas" });
     expect(collapse.className).toContain("delpi-ui-conversation-three-region__rail-toggle");
+    expect(collapse.className).toContain("delpi-ui-conversation-three-region__chrome-icon");
     expect(collapse.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(collapse);
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByText("Rail")).toBeTruthy();
     const expand = screen.getByRole("button", { name: "Expandir conversas" });
     expect(expand.className).toContain("delpi-ui-conversation-three-region__rail-toggle");
+    expect(expand.className).toContain("delpi-ui-conversation-three-region__chrome-icon");
     expect(expand.getAttribute("aria-expanded")).toBe("false");
     expect(container.contains(center)).toBe(true);
   });
@@ -30,7 +32,10 @@ describe("ConversationThreeRegionLayout R2", () => {
     expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
     expect(screen.getByText("Contexto real")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-conversation-three-region__right")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Fechar painel de contexto" }));
+    const close = screen.getByRole("button", { name: "Fechar painel de contexto" });
+    expect(close.className).toContain("delpi-ui-conversation-three-region__context-close");
+    expect(close.className).toContain("delpi-ui-conversation-three-region__chrome-icon");
+    fireEvent.click(close);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
   it("hides context control when unavailable", () => {
