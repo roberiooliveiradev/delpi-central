@@ -248,14 +248,17 @@ Sem attachment do package.
 
 ## 9. Minhas tarefas
 
-A clarificação de produto prova P5 como producer de TaskProjection quando houver responsabilidade individual de reviewer.
+**TARGET P5-A/C/H:** P5 produz TaskProjection de obrigação de revisão por **área obrigatória** da PackageVersion vigente, apresentada self-only a cada usuário Core elegível e autorizado. Não existe TaskEntity individual paralela.
 
 Após `PACKAGE_SUBMITTED_FOR_REVIEW`:
 
 ```text
-reviewer assignment
+required_area_pending_for_current_PackageVersion
+AND authenticated_user_eligible_via_Core_group_or_function
+AND effective_permission(controllership-finance.access)
+AND resource_scope_and_business_rule
 AND review actionable
-→ project to Minhas tarefas
+→ TaskProjection self-only em Minhas tarefas
 ```
 
 TaskProjection:
