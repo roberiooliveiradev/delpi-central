@@ -58,3 +58,5 @@ export {
   ConversationScrollNavigator,
   type ConversationScrollNavigatorProps,
 } from "./ConversationScrollNavigator";
+
+export { ConversationThreeRegionLayout, type ConversationThreeRegionLayoutProps } from "./ConversationThreeRegionLayout";
