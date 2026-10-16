@@ -14293,12 +14293,12 @@ INDEPENDENT_REVIEW=PENDING
 
 ## §6.211 — DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **CODE_SHA:** fill after publish.
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-POST-INDEX-BINDING-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/34-mcp-post-index-binding-fix.md`. **BASE_HEAD:** `33748ae411`. **LIVE_SHA:** `cd88e3f49c` on `srv-api`. **CODE_SHA:** fill after index-budget follow-up publish.
 
 - **ROOT_CAUSE:** post-index provenance used substring-in-text; argument projection did not select exact owner-declared identifiers → unnecessary clarification / no guide body.
-- **FIX:** structured `_index_declared_identifiers` + `INDEX_SELECT` bind + exact `_post_self_index_argument_gaps`; post-resolver revalidation; no provider hardcode.
-- **TESTS:** iterative + Stage03 targeted PASS (Atlas positive; description≠id; nonexistent id reject).
-- **LIVE SSH:** fill after one MESSAGE probe on `srv-api` with deployed CODE_SHA.
+- **FIX:** structured `_index_catalog_entities` + `INDEX_SELECT` bind + exact `_post_self_index_argument_gaps`; `MAX_INDEX_OPTION_ENTRIES=48` (follow-up after live showed resolver shortlist truncated catalogs); post-resolver revalidation; no provider hardcode.
+- **TESTS:** iterative + Stage03 targeted PASS (Atlas; description≠id; nonexistent id; catalog>10 preserved).
+- **LIVE SSH** (one MESSAGE, `moonshotai/kimi-k3`, deploy `cd88e3f49c`): `index_probe identifiers=10` → `index_select bound field=topic` → `provider_invoke arg_keys=topic` → `grounding_status=GROUNDED` guide body; `MATERIAL_ACT=0`; selected id=`decomposition` (valid exact id) while user asked process cadastro — `process` absent from truncated 10-option shortlist. `END_TO_END_VERDICT=FAIL` for requested orientation; pipeline binding proven. No second live round.
 - **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `MATERIAL_ACT_COUNT=0`.
 
 RW_S03_01=FIXED; STAGE_03_ACCEPTED=NO

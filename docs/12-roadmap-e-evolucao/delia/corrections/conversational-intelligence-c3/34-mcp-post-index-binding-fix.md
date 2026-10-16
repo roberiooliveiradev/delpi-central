@@ -12,21 +12,21 @@ Após o INDEX READ, a proveniência usava substring em texto (`text in owner_evi
 
 ## 2. Diff funcional
 
-`orchestration.py` (REUSE `_resolver_entities` / `_entity_identifier`):
+`orchestration.py` (REUSE unwrap/entity-key conventions / `_entity_identifier`):
 
 - `_RESOLVER_ENTITY_KEYS` + `topics` (coleção genérica de catálogo).
-- `_index_declared_identifiers` / `_index_option_rows` — IDs exatos do structured.
+- `_index_catalog_entities` / `_index_declared_identifiers` / `_index_option_rows` — IDs exatos do structured; budget `MAX_INDEX_OPTION_ENTRIES=48` (não o shortlist de ambiguidade do resolver).
 - `INDEX_SELECT_INSTRUCTION` + `_bind_arguments_from_index` — seleção modelada + validação exata + projeção no campo do schema.
 - `_post_self_index_argument_gaps` — membership em frozenset de IDs (não substring).
 - Revalidação pós-resolver; sem hardcode de provider/campo/guia.
 
 ## 3. Testes
 
-`test_mcp_iterative_index_probe.py` + Stage03: Atlas positivo; descrição ≠ ID; ID inexistente rejeitado; ACT ausente.
+`test_mcp_iterative_index_probe.py` + Stage03: Atlas positivo; descrição ≠ ID; ID inexistente rejeitado; catálogo >10 IDs preservado; ACT ausente.
 
 ## 4. Live SSH
 
-Uma execução MESSAGE-only em `srv-api` com `moonshotai/kimi-k3` — ver ledger §6.211.
+Uma execução MESSAGE-only em `srv-api` com `moonshotai/kimi-k3` no SHA `cd88e3f49c` (antes do raise de `MAX_INDEX_OPTION_ENTRIES`): pipeline INDEX→select→GUIDE comprovado (`identifiers=10`, `arg_keys=topic`, GROUNDED), porém o shortlist truncado omitiu `process` e o modelo ligou `decomposition`. Ver ledger §6.211. Sem segunda execução live nesta task.
 
 ## 5. Outcome
 

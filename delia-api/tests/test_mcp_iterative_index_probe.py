@@ -853,3 +853,25 @@ def test_post_resolver_nonexistent_id_rejected_by_exact_set():
         declared,
     )
     assert gaps == ("guide_key",)
+
+
+def test_index_options_preserve_ids_beyond_resolver_shortlist():
+    """Catalog indexes must not truncate to resolver ambiguity size."""
+    topics = [
+        {"id": f"topic_{i:02d}", "title": f"Title {i}"}
+        for i in range(1, 16)
+    ]
+    topics.append(
+        {
+            "id": "process_registration",
+            "title": "Cadastro de processos",
+            "summary": "Como cadastrar um processo.",
+        }
+    )
+    declared = _index_declared_identifiers(
+        {"data": {"topics": topics}},
+        ("guide_key",),
+    )
+    assert len(declared) >= 16
+    assert "process_registration" in declared
+    assert "topic_01" in declared

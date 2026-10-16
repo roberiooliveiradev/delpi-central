@@ -190,6 +190,9 @@ MAX_OWNER_EVIDENCE_ENTRY_CHARS = 800
 MAX_ARGUMENTS_BLOCK_CHARS = 14000
 MAX_MISSING_INPUTS = 8
 MAX_RESOLVER_CANDIDATE_LABEL_CHARS = 120
+# Catalog INDEX options may exceed resolver ambiguity shortlists.
+# Keep bounded (budget/prompt), but large enough for owner registries.
+MAX_INDEX_OPTION_ENTRIES = 48
 
 # Hierarchical selection (R1): the model makes three bounded
 # proposals — specialist, then capability on that specialist's live
@@ -812,16 +815,55 @@ def _optional_unconstrained_string_keys(
     return tuple(keys[:MAX_ARGUMENT_KEYS])
 
 
+def _index_catalog_entities(
+    structured: object,
+) -> tuple[Mapping[str, Any], ...]:
+    """Catalog entities from an INDEX payload (broader than resolver).
+
+    Same shape rules as ``_resolver_entities``, but sized with
+    ``MAX_INDEX_OPTION_ENTRIES`` so owner registries are not silently
+    truncated before identifier selection.
+    """
+    doc = _unwrap_owner_payload(structured)
+    if not isinstance(doc, Mapping):
+        return ()
+
+    def _mappings(value: object) -> tuple[Mapping[str, Any], ...]:
+        if not isinstance(value, (list, tuple)):
+            return ()
+        return tuple(
+            item
+            for item in list(value)[:MAX_INDEX_OPTION_ENTRIES]
+            if isinstance(item, Mapping)
+        )
+
+    for key in _RESOLVER_ENTITY_KEYS:
+        entities = _mappings(doc.get(key))
+        if entities:
+            return entities
+    for value in list(doc.values())[:MAX_SURFACE_ENTRIES]:
+        if isinstance(value, (list, tuple)):
+            entities = _mappings(value)
+            if entities:
+                return entities
+        elif isinstance(value, Mapping):
+            for key in _RESOLVER_ENTITY_KEYS:
+                entities = _mappings(value.get(key))
+                if entities:
+                    return entities
+    return ()
+
+
 def _index_option_rows(
     structured: object,
     field_keys: tuple[str, ...],
 ) -> tuple[Mapping[str, str], ...]:
     """Bounded identifier/label rows from a structured owner index.
 
-    Reuses ``_resolver_entities`` / ``_entity_identifier`` — exact
-    owner-declared identifiers only; labels are descriptive context.
+    Reuses unwrap/entity-key conventions and ``_entity_identifier`` —
+    exact owner-declared identifiers only; labels are descriptive.
     """
-    entities = _resolver_entities(structured)
+    entities = _index_catalog_entities(structured)
     if not entities:
         return ()
     rows: list[dict[str, str]] = []
@@ -868,7 +910,7 @@ def _index_option_rows(
                 ],
             }
         )
-    return tuple(rows[:MAX_CANDIDATE_ENTRIES])
+    return tuple(rows[:MAX_INDEX_OPTION_ENTRIES])
 
 
 def _index_declared_identifiers(
@@ -6249,7 +6291,7 @@ class OperationalCapabilityOrchestrator:
                     "identifier": row["identifier"],
                     "label": row.get("label") or "",
                 }
-                for row in options[:MAX_CANDIDATE_ENTRIES]
+                for row in options[:MAX_INDEX_OPTION_ENTRIES]
             ],
             "argument_fields": list(field_keys),
         }
