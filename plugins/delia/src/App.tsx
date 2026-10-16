@@ -353,7 +353,7 @@ export default function App({
               onConfirmation={handleConfirmation}
             />
           ) : (
-            <DeliaReception />
+            <DeliaReception userIdentity={userIdentity} />
           )}
           {loading ? (
             <ActivityViewer

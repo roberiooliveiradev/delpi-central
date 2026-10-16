@@ -1,28 +1,50 @@
-import { UnifiedAvatar } from "@delpi/plugin-ui/index";
+import {
+  ConversationReception,
+  UnifiedAvatar,
+  firstNameFromDisplay,
+  formatPortalGreeting,
+} from "@delpi/plugin-ui/index";
+import type { DeliaCurrentUserIdentity } from "../identity/currentUser";
 
 /**
- * S2-A + S3 — reception surface for a session with no turns yet.
+ * S2-A + S3 + greeting — reception surface for a session with no turns.
  *
  * Chat-first identity: the DÉLIA glyph (Sparkles, same mark the
  * Portal dock uses for DÉLIA) — never the DELPI/Minha DELPI logo.
  * Honest by contract: no capability cards, no promised features —
  * the copy states only that answers depend on the sources and
  * permissions actually available.
+ *
+ * Greeting reuses the canonical Portal projections
+ * (`firstNameFromDisplay` + `formatPortalGreeting`/`portalDayPeriodGreeting`)
+ * over the already-resolved presentation identity — LOCAL_BROWSER_TIME
+ * is PRESENTATION_ONLY. No name → no greeting element; nothing is
+ * invented. displayName never implies authorization.
  */
-export function DeliaReception() {
+export function DeliaReception({
+  userIdentity,
+}: {
+  userIdentity?: DeliaCurrentUserIdentity | null;
+}) {
+  const firstName = firstNameFromDisplay(userIdentity?.displayName);
+  const greeting = firstName
+    ? `${formatPortalGreeting({ firstName })}.`
+    : undefined;
+
   return (
-    <section className="delia-reception" aria-label="Boas-vindas da DÉLIA">
-      <span className="delia-reception__mark" aria-hidden="true">
-        <UnifiedAvatar kind="assistant" label="DÉLIA" size="lg" motionState="idle" />
-      </span>
-      <h2 className="delia-reception__title">Como posso ajudar você hoje?</h2>
-      <p className="delia-reception__subtitle">
-        Converse com a inteligência operacional da DELPI. As respostas
-        dependem das informações e permissões disponíveis no momento.
-      </p>
-      <p className="delia-reception__note">
-        A conversa é mantida apenas nesta tela e não é salva.
-      </p>
-    </section>
+    <ConversationReception
+      avatar={
+        <UnifiedAvatar
+          kind="assistant"
+          label="DÉLIA"
+          size="lg"
+          motionState="idle"
+        />
+      }
+      greeting={greeting}
+      title="Como posso ajudar você hoje?"
+      description="Converse com a inteligência operacional da DELPI. As respostas dependem das informações e permissões disponíveis no momento."
+      note="A conversa é mantida apenas nesta tela e não é salva."
+    />
   );
 }

@@ -1,6 +1,7 @@
 # 81 — DÉLIA: Conversation Reception + Current User Greeting
 
-**Status:** `DESIGN_SPECIFIED / NOT_IMPLEMENTED` — direção visual, reconhecimento do usuário e boundary documentados; não é evidência de implementação, não avança fase e não autoriza personalização além dos contratos atuais.  
+**Status:** `IMPLEMENTED / INTEGRATED_IN_DELIA` — `ConversationReception` implementado em `plugin-ui` e consumido por `DeliaReception` com greeting nominal via identidade Core já publicada; não é evidência de produção, não avança fase e não autoriza personalização além dos contratos atuais.  
+**Implementado em:** task `DELIA-UX-CONVERSATION-RECEPTION-CURRENT-USER-GREETING-01` sobre HEAD `8786b605ae2ca3b108c31d64cc1cf32748a13c5f`.  
 **Escopo:** recepção da conversa antes do primeiro turno, com greeting opcional baseado na identidade legítima já publicada pela plataforma.  
 **Reanchor:** HEAD de elaboração `96e877cea61d6c4fe9260e1873b6ef0283d50f5c`; implementação futura deve revalidar HEAD/status e a cadeia Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.  
 **Referências:** [50 — arquitetura standalone](./50-standalone-copilot-application-architecture.md), [73 — identidade/anatomia chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [76 — Unified Avatar](./76-unified-avatar-visual-specification.md).
@@ -517,17 +518,39 @@ capability registry
 ## 21. Estado factual
 
 ```text
-CURRENT_USER_NAME_SOURCE = PROVEN
+CURRENT_USER_NAME_SOURCE = PROVEN (GET /core-api/me → name)
 CURRENT_USER_PHOTO_SOURCE = PROVEN_WHEN_AVAILABLE
 CURRENT_USER_IDENTITY_OWNER = CORE
 DELIA_CURRENT_USER_PRESENTATION = PROVEN
-DELIA_RECEPTION_LOCAL = PROVEN
-PERSONALIZED_GREETING = DESIGN_SPECIFIED
-CONVERSATION_RECEPTION_SHARED = NOT_IMPLEMENTED
+DELIA_RECEPTION_LOCAL = REPLACED_BY_SHARED_COMPONENT
+PERSONALIZED_GREETING = IMPLEMENTED — primeiro nome via projeção
+  canônica `firstNameFromDisplay` (regra de apresentação já existente
+  no kit/Portal, não heurística nova); período via `portalDayPeriodGreeting`
+  com relógio injetável — LOCAL_BROWSER_TIME = PRESENTATION_ONLY;
+  sem nome → greeting omitido (nada inventado)
+CONVERSATION_RECEPTION_SHARED = IMPLEMENTED (plugin-ui)
+  EMPTY_STATE = DO_NOT_REUSE (state/card semantics, role status/alert)
+  EMPTY_GUIDANCE = DO_NOT_REUSE (role=status default obrigatório,
+    sem slots greeting/note/avatar, TitleTag=p em canvas — semântica
+    de "empty guidance" ≠ reception)
+  SECOND_REAL_CONSUMER = NO (decisão arquitetural de consolidar
+    chrome conversacional no kit — mesma família de
+    ConversationWorkspace/GovernedConfirmation/EvidenceDetails)
 AUTHORITY_CHANGE = NONE
 MEMORY_CHANGE = NONE
 BACKEND_CHANGE = NONE
 PHASE_ADVANCEMENT = NONE
+
+PLUGIN_UI_TESTS = 9/9 (ConversationReception.test.tsx)
+DELIA_TESTS = 187/187 (inclui DeliaReception.test.tsx 8/8 — greeting
+  determinístico com setSystemTime, fallback, hostile inert, sem
+  live region, avatar decorativo)
+PLUGIN_UI_BUILD + HOST_EXPORTS = PASS (ConversationReception exportado)
+DELIA_BUILD + FEDERATION = PASS
+BROWSER_QA = PASS (harness dev: com/sem nome, nome longo, dark tokens,
+  320/420, zoom 200, composer ancorado, recepção some após 1º turno,
+  avatar decorativo, sem leak de campos de identidade)
+LOCAL_CSS_REMOVED = YES (delia-reception* removidas; residual limpo)
 ```
 
 ## 22. Próximo bounded step

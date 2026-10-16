@@ -631,6 +631,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Superfície inline de falha de interação no footer (ícone + título + descrição/ação opcional via ActionButton). OWNS chrome e role=alert. DOES NOT OWN erro, draft, retry, auth, PREPARE/ACT ou classificação — o consumidor resolve copy e callbacks.",
   }),
+  vc("collaboration", "ConversationReception", {
+    addedAt: "2026-10-16",
+    description:
+      "Recepção de conversa vazia: avatar do assistente + greeting opcional + título + descrição + nota subordinada. OWNS layout/hierarquia/densidade/acessibilidade. DOES NOT OWN identidade, greeting calculation, Core, AuthZ, memória ou capability suggestions — o consumidor projeta copy e greeting.",
+  }),
   vc("collaboration", "EvidenceDetails", {
     addedAt: "2026-10-16",
     description:

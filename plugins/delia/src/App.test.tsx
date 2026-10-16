@@ -52,7 +52,7 @@ describe("App shell", () => {
 
     const { container } = render(<App pathname="/apps/delia" />);
     // Remount starts at the reception — no stale conversation state.
-    expect(container.querySelector(".delia-reception")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-conversation-reception")).toBeTruthy();
     expect(container.querySelector(".delia-timeline")).toBeNull();
   });
 

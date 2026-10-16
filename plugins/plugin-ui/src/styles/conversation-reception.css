@@ -1,0 +1,73 @@
+/* ConversationReception — centered empty-conversation welcome surface.
+   No card, border or shadow; hierarchy via size/mute only.
+   Tokens resolve to --delpi-ui-* kit vars with Portal fallbacks. */
+
+.delpi-ui-conversation-reception {
+  --_text: var(--delpi-ui-text, var(--text, #1f2933));
+  --_muted: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: auto;
+  padding: 32px 24px;
+  max-width: 34rem;
+  color: var(--_text);
+}
+
+.delpi-ui-conversation-reception__avatar {
+  display: inline-flex;
+  margin-bottom: 20px;
+}
+
+.delpi-ui-conversation-reception__greeting {
+  margin: 0 0 6px;
+  font-size: 0.9375rem;
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-reception__title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--_text);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-reception__description {
+  margin: 14px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-reception__note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--_muted) 78%, transparent);
+  overflow-wrap: anywhere;
+}
+
+/* Compact density (dock/narrow) — tighter rhythm, same anatomy. */
+.delpi-ui-conversation-reception--compact {
+  padding: 20px 16px;
+}
+
+.delpi-ui-conversation-reception--compact
+  .delpi-ui-conversation-reception__avatar {
+  margin-bottom: 12px;
+}
+
+.delpi-ui-conversation-reception--compact
+  .delpi-ui-conversation-reception__title {
+  font-size: 1.125rem;
+}
+
+.delpi-ui-conversation-reception--compact
+  .delpi-ui-conversation-reception__description {
+  margin-top: 10px;
+}

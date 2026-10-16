@@ -35,6 +35,11 @@ export {
   type EvidenceDetailsProps,
 } from "./EvidenceDetails";
 export {
+  ConversationReception,
+  type ConversationReceptionDensity,
+  type ConversationReceptionProps,
+} from "./ConversationReception";
+export {
   MessageActionBar,
   type MessageActionBarAlign,
   type MessageActionBarDensity,

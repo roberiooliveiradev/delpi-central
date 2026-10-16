@@ -24,6 +24,7 @@ import { ActivityViewer } from "../../components/activity";
 import {
   ConversationError,
   ConversationHeader,
+  ConversationReception,
   ConversationUserMessage,
   ConversationStatus,
   ConversationWorkspace,
@@ -831,6 +832,103 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
                 { label: "Classificação", value: "RECOMMENDATION" },
                 { label: "Fonte", value: "Cadastro DELPI com nome longo" },
               ]}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationReception",
+    family: "collaboration",
+    exportName: "ConversationReception",
+    title: "ConversationReception",
+    description:
+      "Recepção de conversa vazia — avatar assistente + greeting opcional + título + descrição + nota. Render-only; greeting/identidade chegam projetados.",
+    propsSummary: [
+      "avatar",
+      "greeting",
+      "title",
+      "description",
+      "note",
+      "density",
+      "className",
+    ],
+    demos: [
+      {
+        id: "generic",
+        label: "Genérica (sem nome)",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationReception
+              avatar={
+                <UnifiedAvatar
+                  kind="assistant"
+                  label="DÉLIA"
+                  size="lg"
+                  motionState="idle"
+                />
+              }
+              title="Como posso ajudar você hoje?"
+              description="Converse com a inteligência operacional da DELPI. As respostas dependem das informações e permissões disponíveis no momento."
+              note="A conversa é mantida apenas nesta tela e não é salva."
+            />
+          </div>
+        ),
+      },
+      {
+        id: "greeting",
+        label: "Com greeting nominal",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationReception
+              avatar={
+                <UnifiedAvatar
+                  kind="assistant"
+                  label="DÉLIA"
+                  size="lg"
+                  motionState="idle"
+                />
+              }
+              greeting="Bom dia, Robério."
+              title="Como posso ajudar você hoje?"
+              description="Converse com a inteligência operacional da DELPI. As respostas dependem das informações e permissões disponíveis no momento."
+              note="A conversa é mantida apenas nesta tela e não é salva."
+            />
+          </div>
+        ),
+      },
+      {
+        id: "long-name",
+        label: "Nome longo",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationReception
+              greeting="Boa tarde, Maria Clara dos Santos Ferreira Albuquerque Cavalcanti."
+              title="Como posso ajudar você hoje?"
+            />
+          </div>
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compact (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationReception
+              density="compact"
+              avatar={
+                <UnifiedAvatar
+                  kind="assistant"
+                  label="DÉLIA"
+                  size="md"
+                  motionState="idle"
+                />
+              }
+              greeting="Boa noite, Ana."
+              title="Como posso ajudar você hoje?"
+              description="Converse com a inteligência operacional da DELPI."
+              note="A conversa é mantida apenas nesta tela e não é salva."
             />
           </div>
         ),

@@ -34,6 +34,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationError",
   "ActivityViewer",
   "EvidenceDetails",
+  "ConversationReception",
   "ActionButton",
   "IconButton",
   "createDashboardUserManual",

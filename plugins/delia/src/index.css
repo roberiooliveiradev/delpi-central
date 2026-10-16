@@ -93,41 +93,6 @@
   background: color-mix(in srgb, var(--warning, #b45309) 40%, transparent);
 }
 
-/* ---------- S2-A + S3 — reception (chat-first, light) */
-
-.dashboard-delia .delia-reception {
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 10px;
-  padding: clamp(16px, 4vw, 32px);
-  max-width: 460px;
-}
-
-/* Reception mark is layout only; the shared kit owns avatar chrome. */
-.dashboard-delia .delia-reception__mark { display: inline-flex; }
-
-.dashboard-delia .delia-reception__title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--delia-text);
-}
-
-.dashboard-delia .delia-reception__subtitle {
-  margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  color: var(--delia-text-muted);
-}
-
-.dashboard-delia .delia-reception__note {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--delia-text-muted);
-}
 
 /* ---------- S2-B — conversation timeline */
 

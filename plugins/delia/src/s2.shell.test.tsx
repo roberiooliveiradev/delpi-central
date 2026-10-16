@@ -74,7 +74,7 @@ describe("S2-A reception surface", () => {
         name: "Como posso ajudar você hoje?",
       }),
     ).toBeTruthy();
-    const reception = container.querySelector(".delia-reception");
+    const reception = container.querySelector(".delpi-ui-conversation-reception");
     expect(reception).toBeTruthy();
     expect(reception!.textContent).toMatch(
       /dependem das informações e permissões/,
@@ -87,7 +87,7 @@ describe("S2-A reception surface", () => {
 
   it("reception makes no unproven capability claims", () => {
     const { container } = render(<App />);
-    const reception = container.querySelector(".delia-reception");
+    const reception = container.querySelector(".delpi-ui-conversation-reception");
     expect(reception).toBeTruthy();
     // No suggestion cards / fake affordances for capabilities that
     // are not contract-proven.
@@ -129,7 +129,7 @@ describe("S2-A reception surface", () => {
 describe("S3 chat-first visual identity", () => {
   it("reception shows the DÉLIA glyph — never the DELPI wordmark", () => {
     const { container } = render(<App />);
-    const mark = container.querySelector(".delia-reception__mark");
+    const mark = container.querySelector(".delpi-ui-conversation-reception__avatar");
     expect(mark).toBeTruthy();
     // Lucide Sparkles glyph — an icon, not the DELPI logo image.
     expect(mark!.querySelector("svg")).toBeTruthy();
@@ -438,7 +438,7 @@ describe("conversation workspace layout", () => {
 
     // Viewport scrolls independently; footer (composer region) is a
     // sibling outside the scroll area — the composer never scrolls away.
-    expect(column.querySelector(".delia-reception")).toBeTruthy();
+    expect(column.querySelector(".delpi-ui-conversation-reception")).toBeTruthy();
     expect(footer.querySelector(".delia-composer")).toBeTruthy();
     expect(body.contains(footer)).toBe(false);
     expect(interaction.lastElementChild).toBe(footer);
@@ -474,7 +474,7 @@ describe("conversation workspace layout", () => {
 
     const column = container.querySelector(".delpi-ui-conversation-workspace__column")!;
     expect(column.querySelector(".delia-timeline")).toBeTruthy();
-    expect(column.querySelector(".delia-reception")).toBeNull();
+    expect(column.querySelector(".delpi-ui-conversation-reception")).toBeNull();
   });
 
   it("no host-context debug line in the conversation UI", () => {
