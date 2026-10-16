@@ -1,12 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, X } from "lucide-react";
-
+import { PanelLeftOpen, PanelLeftClose, PanelRightOpen, X } from "lucide-react";
 import { IconButton } from "../actions/IconButton";
 
-/** Shared visual layout only. Never owns conversation, history or application data. */
+export type ConversationPanelControls = {
+  leftToggle: ReactNode;
+  rightToggle: ReactNode;
+};
+
 export type ConversationThreeRegionLayoutProps = {
-  center: ReactNode;
+  /** Pass a render function to place toggles in ConversationHeader leading/actions. */
+  center: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
   left?: ReactNode;
   right?: ReactNode;
   leftTitle?: string;
@@ -15,37 +19,34 @@ export type ConversationThreeRegionLayoutProps = {
   className?: string;
 };
 
+/** Three-region visual shell: no transport, no conversation state, no fake history. */
 export function ConversationThreeRegionLayout({
-  center,
-  left,
-  right,
+  center, left, right,
   leftTitle = "Conversas",
   rightTitle = "Contexto da conversa",
-  rightAvailable = true,
-  className,
+  rightAvailable = true, className,
 }: ConversationThreeRegionLayoutProps) {
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
   const compactRef = useRef(false);
-  const layoutRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const leftTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const rightTriggerRef = useRef<HTMLButtonElement | null>(null);
   const leftId = useId();
   const rightId = useId();
-  const leftToggleRef = useRef<HTMLDivElement | null>(null);
-  const rightToggleRef = useRef<HTMLButtonElement | null>(null);
 
-  // A full-page starts with the left navigation open; a dock/mobile starts
-  // with both drawers closed. Observe the actual host container, not window.
   useEffect(() => {
-    const root = layoutRef.current;
-    const host = root?.parentElement;
+    const host = rootRef.current?.parentElement;
     if (!host) return;
     const sync = () => {
       const width = host.getBoundingClientRect().width;
-      compactRef.current = width > 0 && width <= 920;
-      if (compactRef.current) {
+      if (!width) return;
+      const nextCompact = width <= 920;
+      if (nextCompact && !compactRef.current) {
         setLeftOpen(false);
         setRightOpen(false);
       }
+      compactRef.current = nextCompact;
     };
     sync();
     if (typeof ResizeObserver === "undefined") return;
@@ -54,27 +55,50 @@ export function ConversationThreeRegionLayout({
     return () => observer.disconnect();
   }, []);
 
+  function openLeft() {
+    if (compactRef.current) setRightOpen(false);
+    setLeftOpen(true);
+  }
+  function openRight() {
+    if (compactRef.current) setLeftOpen(false);
+    setRightOpen(true);
+  }
   function closeLeft() {
     setLeftOpen(false);
-    leftToggleRef.current?.querySelector("button")?.focus();
+    requestAnimationFrame(() => leftTriggerRef.current?.focus());
   }
   function closeRight() {
     setRightOpen(false);
-    rightToggleRef.current?.querySelector("button")?.focus();
+    requestAnimationFrame(() => rightTriggerRef.current?.focus());
   }
 
+  const controls: ConversationPanelControls = {
+    leftToggle: !leftOpen && left ? (
+      <button ref={leftTriggerRef} type="button" onClick={openLeft}
+        className="delpi-ui-conversation-three-region__header-toggle"
+        aria-label="Abrir conversas" aria-controls={leftId} aria-expanded={false}>
+        <PanelLeftOpen size={18} aria-hidden="true" />
+      </button>
+    ) : null,
+    rightToggle: !rightOpen && rightAvailable && right ? (
+      <button ref={rightTriggerRef} type="button" onClick={openRight}
+        className="delpi-ui-conversation-three-region__header-toggle"
+        aria-label="Abrir contexto" aria-controls={rightId} aria-expanded={false}>
+        <PanelRightOpen size={18} aria-hidden="true" />
+      </button>
+    ) : null,
+  };
+
+  const isDrawerOpen = compactRef.current && ((leftOpen && !!left) || (rightOpen && rightAvailable && !!right));
   return (
-    <div
-      ref={layoutRef}
-      className={[
-        "delpi-ui-conversation-three-region",
-        leftOpen ? "delpi-ui-conversation-three-region--left-open" : "",
-        rightOpen && rightAvailable ? "delpi-ui-conversation-three-region--right-open" : "",
-        className,
-      ].filter(Boolean).join(" ")}
-    >
+    <div ref={rootRef} className={[
+      "delpi-ui-conversation-three-region",
+      leftOpen && left ? "delpi-ui-conversation-three-region--left-open" : "",
+      rightOpen && rightAvailable && right ? "delpi-ui-conversation-three-region--right-open" : "",
+      className,
+    ].filter(Boolean).join(" ")}>
       {leftOpen && left ? (
-        <nav id={leftId} aria-label={leftTitle} className="delpi-ui-conversation-three-region__left">
+        <nav id={leftId} className="delpi-ui-conversation-three-region__left" aria-label={leftTitle}>
           <div className="delpi-ui-conversation-three-region__side-heading">
             <strong>{leftTitle}</strong>
             <IconButton aria-label="Recolher conversas" onClick={closeLeft}>
@@ -84,38 +108,15 @@ export function ConversationThreeRegionLayout({
           <div className="delpi-ui-conversation-three-region__side-content">{left}</div>
         </nav>
       ) : null}
-
       <div className="delpi-ui-conversation-three-region__center">
-        <div className="delpi-ui-conversation-three-region__controls" aria-label="Painéis da conversa">
-          <div ref={leftToggleRef} className="delpi-ui-conversation-three-region__toggle">
-            <IconButton
-              aria-label={leftOpen ? "Ocultar conversas" : "Abrir conversas"}
-              aria-expanded={leftOpen}
-              onClick={() => { setLeftOpen((value) => !value); if (compactRef.current) setRightOpen(false); }}
-              disabled={!left}
-            >
-              {leftOpen ? <PanelLeftClose size={18} aria-hidden="true" /> : <PanelLeftOpen size={18} aria-hidden="true" />}
-            </IconButton>
-          </div>
-          <div ref={rightToggleRef} className="delpi-ui-conversation-three-region__toggle">
-            {rightAvailable && right ? (
-              <IconButton
-                aria-label={rightOpen ? "Fechar contexto" : "Abrir contexto"}
-                aria-expanded={rightOpen}
-                onClick={() => { setRightOpen((value) => !value); if (compactRef.current) setLeftOpen(false); }}
-              >
-                {rightOpen ? <PanelRightClose size={18} aria-hidden="true" /> : <PanelRightOpen size={18} aria-hidden="true" />}
-              </IconButton>
-            ) : null}
-          </div>
+        <div className="delpi-ui-conversation-three-region__conversation">
+          {typeof center === "function" ? center(controls) : center}
         </div>
-        <div className="delpi-ui-conversation-three-region__conversation">{center}</div>
       </div>
-
       {rightOpen && rightAvailable && right ? (
-        <aside id={rightId} aria-label={rightTitle} className="delpi-ui-conversation-three-region__right">
+        <aside id={rightId} className="delpi-ui-conversation-three-region__right" aria-label={rightTitle}>
           <div className="delpi-ui-conversation-three-region__side-heading">
-            <strong>{rightTitle}</strong>
+            <strong>Contexto</strong>
             <IconButton aria-label="Fechar painel de contexto" onClick={closeRight}>
               <X size={18} aria-hidden="true" />
             </IconButton>
@@ -123,14 +124,10 @@ export function ConversationThreeRegionLayout({
           <div className="delpi-ui-conversation-three-region__side-content">{right}</div>
         </aside>
       ) : null}
-      {(leftOpen && left) || (rightOpen && rightAvailable && right) ? (
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="delpi-ui-conversation-three-region__backdrop"
-          onClick={() => { setLeftOpen(false); setRightOpen(false); leftToggleRef.current?.querySelector("button")?.focus(); }}
-        />
+      {isDrawerOpen ? (
+        <button className="delpi-ui-conversation-three-region__backdrop" type="button"
+          aria-label="Fechar painel lateral"
+          onClick={() => { if (rightOpen) closeRight(); else closeLeft(); }} />
       ) : null}
     </div>
   );
