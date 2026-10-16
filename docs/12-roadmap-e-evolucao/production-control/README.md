@@ -46,7 +46,7 @@ Home: `/apps/production-control?branch=01`. Demanda: `/apps/production-control/d
 |-----------|--------|--------|
 | `home` | ativo | Gestão à vista (OTD do mês, OPs atrasadas, fila) |
 | `demand` | ativo | Carteira a entregar: saldo por cliente/produto/data com cobertura por estoque e OP |
-| `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação |
+| `machine-load` | ativo | Sequenciamento SH8 congelado por filial (janela por entrega do PA) + status HZA vivo + refresh sob confirmação; `GET /machine-load/cockpit-status` expõe os estados de execução dos runs MES locais — nova fonte oficial em transição, enquanto o `live-status` HZA permanece como legado |
 | `problem-analysis` | ativo | Grade de detectores de exceção (conjuntos, quantidades, demanda, intermediários compartilhados) |
 | `materials` | ativo | Excesso e falta de SC1 de MP vs ESTSEG + consulta de ruptura de MP no conjunto do PA |
 | `line-feeder` | ativo | Material que precisa estar nas bancadas até um corte (data + hora) sobre a fila congelada, com rateio FIFO do saldo e lista de coleta persistida |
