@@ -652,17 +652,58 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
     return False
 
 
+def _is_unconstrained_string(node: object) -> bool:
+    """True when a schema node is a free string with no closed enum/const.
+
+    Stage 03: required free strings on READ/ANALYSIS may need same-group
+    DISCOVERY to surface owner vocabulary. Closed ``enum``/``const``
+    already declare the vocabulary in-schema — no discovery trigger.
+    Structural only — never field-name or provider hardcode.
+    """
+    if not isinstance(node, Mapping):
+        return False
+    if node.get("type") != "string":
+        return False
+    if "enum" in node or "const" in node:
+        return False
+    return True
+
+
 def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
-    """Envelope detection: the capability schema declares at least one
-    top-level field whose legal values live only in the owner's own
-    DISCOVERY vocabulary — structural, never provider-specific."""
+    """Detect when argument values live only in the owner's vocabulary.
+
+    Covers: (1) opaque envelope fields (Stage envelope discovery) and
+    (2) Stage 03 — READ/ANALYSIS with at least one *required*
+    unconstrained string property. Optional free strings alone do not
+    trigger discovery (avoids catalog calls on every READ). Caller still
+    requires ``_discovery_capability`` before discovery runs. Never
+    provider-specific.
+    """
     schema = descriptor.input_schema
     if not isinstance(schema, Mapping):
         return False
     properties = schema.get("properties")
     if not isinstance(properties, Mapping):
         return False
-    return any(_is_open_vocabulary(node) for node in properties.values())
+    if any(_is_open_vocabulary(node) for node in properties.values()):
+        return True
+    if descriptor.operation_class not in (
+        SpecialistOperationClass.READ,
+        SpecialistOperationClass.ANALYSIS,
+    ):
+        return False
+    required = schema.get("required")
+    required_names = (
+        {str(name) for name in required}
+        if isinstance(required, (list, tuple))
+        else set()
+    )
+    if not required_names:
+        return False
+    return any(
+        name in required_names and _is_unconstrained_string(node)
+        for name, node in properties.items()
+    )
 
 
 # SpecialistOperationClass -> canonical OperationCharacter for the
