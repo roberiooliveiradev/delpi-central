@@ -91,6 +91,7 @@ const REQUIRED_HOST_EXPORTS = [
   "conversationMarkdownToPlainText",
   "ConversationAssistantActions",
   "ConversationScrollNavigator",
+  "ConversationThreeRegionLayout",
 ];
 
 function findIndexExpose(dir) {
