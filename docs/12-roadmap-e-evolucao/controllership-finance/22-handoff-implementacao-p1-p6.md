@@ -264,17 +264,18 @@ Ações dependem de ACCESS + resource ownership quando aplicável + business rul
 
 ### Estados/interações
 ```text
-PACKAGE_INCOMPLETE
-→ READY_TO_FINALIZE
-→ PACKAGE_FINALIZED
+PACKAGE_INCOMPLETE → READY_TO_FINALIZE → PACKAGE_FINALIZED
 → PACKAGE_SUBMITTED_FOR_REVIEW
-→ WAITING_FOR_CLARIFICATION
+→ [area review: ACCEPTED | CHANGES_REQUESTED | REVIEW_REJECTED]
+→ [C2: all areas/current version/recipients accepted, no clarification]
 → MONTHLY_CLOSING_COMPLETED
+OU, após REVIEW_REJECTED + confirmação formal DEC-01,
+→ COMPETENCE_TERMINALLY_REJECTED (distinct outcome; physical name TO_INVENTORY)
 ```
 
 Finalizar != Enviar.
 
-Pacotes por destinatário avançam independentemente. PACKAGE_SUBMITTED_FOR_REVIEW é imutável; correção pós-envio cria complemento/nova versão ligada ao histórico.
+Pacotes por destinatário avançam independentemente. PACKAGE_SUBMITTED_FOR_REVIEW é imutável; correção de conteúdo pós-envio cria **nova PackageVersion**, exigindo aceites novos de todas as áreas, preservando histórico e snapshot.
 
 ### Canal
 A finalização/versionamento está especificada.
@@ -291,14 +292,14 @@ PACKAGE_FINALIZED
 - package não vai por e-mail;
 - Core Notifications avisa in-app e pode também enviar e-mail;
 - notification/e-mail não altera business state;
-- reviewer usa ACCESS + resource scope, sem permission nova;
+- reviewer usa ACCESS efetivo via Core **AND** grupo/função corporativa elegível **AND** área congelada **AND** resource scope/ownership **AND** business rule, sem permission nova;
 - P5 passa a ser producer comprovado de TaskProjection para review acionável.
 
 Authority:
 - [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
-Residual:
-- `D-P5-REVIEW-COMPLETION`.
+Residual técnico, **não decisão C1/C2/C3**:
+- Core T05 grupos/funções e vínculo do coordenador DEC-01, contratos P6 snapshot, estados/DTOs/eventos/OCC, tests positive/sibling/negative; ver docs [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) e [40](./40-matriz-dependencias-e-slices-v1.md).
 
 
 ## P6 — Administração e Configuração
@@ -376,15 +377,6 @@ Não definir route pattern antes do inventário de plugin/basePath. O contrato d
 
 ## Regra de execução
 
-Este handoff fecha a **documentação funcional** necessária para começar inventário técnico por página.
+Este handoff organiza contratos funcionais, sem autorizar runtime. **Plugin id, BFF e base paths já estão congelados** em README, 18 e [39](./39-roadmap-mestre-implementacao-v1.md); não os redefinir.
 
-Não define:
-- plugin id;
-- BFF;
-- basePath;
-- schema físico;
-- migrations;
-- endpoints;
-- names de services.
-
-Esses itens devem ser provados no HEAD antes do primeiro diff técnico.
+Ainda devem ser inventariados no HEAD antes do primeiro diff técnico: API/Portal patterns, schemas físicos, migrations, endpoints/OpenAPI, classes/services, storage, deployment e bindings reais. A ordem/slices são governados pelos docs [39](./39-roadmap-mestre-implementacao-v1.md) e [40](./40-matriz-dependencias-e-slices-v1.md).
