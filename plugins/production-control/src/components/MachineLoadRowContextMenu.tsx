@@ -3,7 +3,7 @@ import {
   ContextMenuItem,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowUpToLine, CalendarOff, Folders, MoveRight, Route } from "lucide-react";
+import { ArrowUpToLine, CalendarOff, Folders, Group, ListChecks, MoveRight, Route, X } from "lucide-react";
 
 import { copy } from "../content/copy";
 import type { MachineLoadOperation } from "../types";
@@ -27,6 +27,13 @@ type Props = {
   prioritizeDisabled?: boolean;
   withdrawDisabled?: boolean;
   transferDisabled?: boolean;
+  /**
+   * Quando ≥2 operações estão selecionadas e o clique direito cai em uma delas,
+   * o menu assume o modo coletivo: as ações de lote aparecem desabilitadas
+   * até os contratos das Etapas 3/4 existirem — só «Limpar seleção» executa.
+   */
+  selectionCount?: number;
+  onClearSelection?: () => void;
 };
 
 /** Menu de ações do PCP ao clicar com o botão direito em uma linha da carga máquina. */
@@ -43,10 +50,60 @@ export function MachineLoadRowContextMenu({
   prioritizeDisabled = false,
   withdrawDisabled = false,
   transferDisabled = false,
+  selectionCount = 0,
+  onClearSelection,
 }: Props) {
   const conjuntoKey = conjuntoKeyFromOrder(operation?.production_order);
   const hasConjunto = Boolean(conjuntoKey);
   const hasOperation = Boolean(operation?.production_order && operation?.operation_code);
+  const collective = selectionCount >= 2 && Boolean(onClearSelection);
+
+  if (collective) {
+    return (
+      <ContextMenu
+        open={open}
+        position={position}
+        onClose={onClose}
+        aria-label={copy.machineLoad.rowActions.selectionMenuAria}
+        portalScopeClassName="dashboard-production-control"
+      >
+        <ContextMenuItem
+          label={copy.machineLoad.rowActions.selectionHeader(selectionCount)}
+          icon={ListChecks}
+          disabled
+        />
+        <ContextMenuItem
+          label={copy.machineLoad.rowActions.groupSelected}
+          icon={Group}
+          disabled
+          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          hintTrigger="label"
+        />
+        <ContextMenuItem
+          label={copy.machineLoad.rowActions.transferSelected}
+          icon={MoveRight}
+          disabled
+          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          hintTrigger="label"
+        />
+        <ContextMenuItem
+          label={copy.machineLoad.rowActions.withdrawSelected}
+          icon={CalendarOff}
+          disabled
+          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          hintTrigger="label"
+        />
+        <ContextMenuItem
+          label={copy.machineLoad.rowActions.clearSelection}
+          icon={X}
+          onSelect={() => {
+            onClearSelection?.();
+            onClose();
+          }}
+        />
+      </ContextMenu>
+    );
+  }
 
   return (
     <ContextMenu

@@ -14,11 +14,19 @@ export function moveArrayItem<T>(items: T[], from: number, to: number): T[] {
 /**
  * HTML5 drag-and-drop para reordenar linhas da carga máquina (CT ativo).
  * Padrão alinhado a `useProjectionDragReorder` do TV Dashboard.
+ *
+ * `options.enabled=false` suspende arraste e drop sem remover os handlers —
+ * usado quando a seleção múltipla está ativa (o arraste é individual).
  */
-export function useMachineLoadRowReorder<T>(items: T[], onReorder: (next: T[]) => void) {
+export function useMachineLoadRowReorder<T>(
+  items: T[],
+  onReorder: (next: T[]) => void,
+  options: { enabled?: boolean } = {},
+) {
+  const { enabled = true } = options;
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
-  const canDrag = items.length > 1;
+  const canDrag = enabled && items.length > 1;
 
   const handleDragStart = useCallback((index: number, event: DragEvent) => {
     event.dataTransfer.effectAllowed = "move";
@@ -33,17 +41,19 @@ export function useMachineLoadRowReorder<T>(items: T[], onReorder: (next: T[]) =
 
   const handleDragOver = useCallback(
     (index: number, event: DragEvent) => {
+      if (!enabled) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       if (draggedIndex !== null && draggedIndex !== index) {
         setOverIndex(index);
       }
     },
-    [draggedIndex],
+    [draggedIndex, enabled],
   );
 
   const handleDrop = useCallback(
     (index: number, event: DragEvent) => {
+      if (!enabled) return;
       event.preventDefault();
       const from =
         draggedIndex ?? Number.parseInt(event.dataTransfer.getData("text/plain"), 10);
@@ -53,7 +63,7 @@ export function useMachineLoadRowReorder<T>(items: T[], onReorder: (next: T[]) =
       setDraggedIndex(null);
       setOverIndex(null);
     },
-    [draggedIndex, items, onReorder],
+    [draggedIndex, enabled, items, onReorder],
   );
 
   const rowClassName = useCallback(

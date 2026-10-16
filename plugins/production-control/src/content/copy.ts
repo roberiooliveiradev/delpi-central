@@ -241,6 +241,30 @@ export const copy = {
       transferOperation: "Enviar item para outro centro de trabalho",
       transferOperationDisabled: "Enviar item (sem OP neste registro)",
       transferError: "Não foi possível transferir para outro centro de trabalho.",
+      selectionMenuAria: "Ações da seleção",
+      selectionHeader: (count: number) =>
+        count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
+      groupSelected: "Agrupar operações selecionadas",
+      transferSelected: "Enviar selecionadas para outro centro de trabalho",
+      withdrawSelected: "Retirar selecionadas da programação",
+      /** Ações coletivas existem como UX, mas os contratos são das Etapas 3 e 4. */
+      collectivePendingHint:
+        "Disponível nas próximas etapas — ainda não altera a programação.",
+      clearSelection: "Limpar seleção",
+    },
+    selection: {
+      selectRow: (order: string, operation: string) =>
+        `Selecionar OP ${order} · operação ${operation}`,
+      columnAria: "Seleção de operações",
+      count: (count: number) =>
+        count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
+      pendingHint:
+        "Ações em lote (agrupar, transferir, retirar) serão habilitadas nas próximas etapas.",
+      dragDisabledHint: "Arraste indisponível com várias operações selecionadas.",
+      clear: "Limpar seleção",
+      clearAria: "Limpar seleção de operações",
+      ambiguous:
+        "Operação duplicada neste centro de trabalho — seleção indisponível até o cadastro ser corrigido.",
     },
     transfer: {
       modalTitle: "Enviar item para outro centro de trabalho",

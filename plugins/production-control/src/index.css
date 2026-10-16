@@ -2793,6 +2793,73 @@
   box-shadow: inset 0 2px 0 var(--ppc-accent);
 }
 
+/* Seleção múltipla de operações — destaque discreto no accent do tema. */
+.dashboard-production-control .ppc-load-table tr.delpi-ui-table__row--selected > td,
+.dashboard-production-control .ppc-load-table tr.delpi-ui-table__row--selected > td:first-child {
+  background: color-mix(in srgb, var(--ppc-accent) 10%, transparent);
+}
+
+.dashboard-production-control .ppc-load-table tbody tr > td:not([data-interactive]) {
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-load__select-box {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--ppc-accent);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.dashboard-production-control .ppc-load__select-box:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dashboard-production-control .ppc-load__selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 8px 0 4px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--ppc-accent) 30%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ppc-accent) 7%, transparent);
+  color: var(--ppc-text);
+  font-size: var(--ppc-font-xs);
+}
+
+.dashboard-production-control .ppc-load__selection-count {
+  font-weight: 650;
+}
+
+.dashboard-production-control .ppc-load__selection-hint {
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-load__selection-clear {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid var(--ppc-border, transparent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ppc-accent);
+  font-size: var(--ppc-font-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-load__selection-clear:hover {
+  background: color-mix(in srgb, var(--ppc-accent) 12%, transparent);
+}
+
+.dashboard-production-control .ppc-load__selection-clear:focus-visible {
+  outline: 2px solid var(--ppc-accent);
+  outline-offset: 1px;
+}
+
 /* Demanda — layout local; chrome de card, tabela e badge vem do kit. */
 .dashboard-production-control .ppc-demand-chart__canvas {
   height: 240px;

@@ -15,7 +15,7 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, MessagesSquare, SendHorizontal } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, ListChecks, MessagesSquare, SendHorizontal } from "lucide-react";
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
@@ -41,10 +41,12 @@ import {
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMachineLoad } from "../hooks/useMachineLoad";
+import { useMachineLoadOperationSelection } from "../hooks/useMachineLoadOperationSelection";
 import { useOperatorFeedbackInbox } from "../hooks/useOperatorFeedbackInbox";
 import { useMachineLoadRowReorder } from "../hooks/useMachineLoadRowReorder";
 import {
   applyKeyOrder,
+  isEditableTarget,
   keysFromOperations,
   useMachineLoadSequenceHistory,
 } from "../hooks/useMachineLoadSequenceHistory";
@@ -59,6 +61,7 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
+import { machineLoadSelectionScopeKey } from "../utils/machineLoadOperationSelection";
 import {
   feedbackForOperation,
   filterOperationsWithFeedback,
@@ -155,6 +158,8 @@ export function MachineLoadPage({
   const [rowMenu, setRowMenu] = useState<{
     operation: MachineLoadOperation;
     position: FixedPanelPoint;
+    /** Snapshot da contagem no clique — menu coletivo estável enquanto aberto. */
+    selectionCount: number;
   } | null>(null);
   const [conjuntoModalOpen, setConjuntoModalOpen] = useState(false);
   const [conjuntoModalOrder, setConjuntoModalOrder] = useState<string | null>(null);
@@ -213,6 +218,47 @@ export function MachineLoadPage({
         : baseRows,
     [baseRows, feedbackMap, onlyFeedback],
   );
+
+  // Seleção múltipla: válida só no contexto visível — filial, CT, período,
+  // filtros, o snapshot congelado e qualquer mutação da sequência entram no
+  // escopo (`sequence_updated_at` muda quando a fila persiste, mesmo com o
+  // mesmo `refreshed_at`). Reordenar a ordem VISÍVEL sem mutar não limpa.
+  const selectionScopeKey = machineLoadSelectionScopeKey({
+    branch,
+    startDate: startDate ?? period?.start_date,
+    endDate: endDate ?? period?.end_date,
+    workCenter: selectedCenter,
+    refreshedAt: data?.snapshot?.refreshed_at,
+    sequenceUpdatedAt: data?.snapshot?.sequence_updated_at,
+    hideFinished,
+    feedbackOnly: onlyFeedback,
+  });
+
+  const selection = useMachineLoadOperationSelection({
+    branch,
+    scopeKey: selectionScopeKey,
+    rows,
+    visibleRows: displayRows,
+  });
+
+  // Esc limpa a seleção quando o foco está na tabela — nunca interfere com
+  // campos editáveis, modais ou menus abertos.
+  const selectionCount = selection.count;
+  const clearSelection = selection.clear;
+  useEffect(() => {
+    if (selectionCount === 0) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (isEditableTarget(target)) return;
+      if (target?.closest('[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]')) {
+        return;
+      }
+      clearSelection();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectionCount, clearSelection]);
 
   const toggleHideFinished = useCallback(() => {
     setHideFinished((prev) => {
@@ -609,7 +655,11 @@ export function MachineLoadPage({
     [hideFinished, persistOrder, rows, sequenceBusy],
   );
 
-  const reorder = useMachineLoadRowReorder(displayRows, onReorder);
+  // Com ≥2 operações selecionadas o arraste individual suspende — evita que o
+  // analista leia um arraste como movimentação de toda a seleção.
+  const reorder = useMachineLoadRowReorder(displayRows, onReorder, {
+    enabled: !selection.hasMultiple,
+  });
 
   const applyRemoteKeys = useCallback(
     async (
@@ -663,6 +713,32 @@ export function MachineLoadPage({
   const columns = useMemo(
     () => [
       {
+        key: "select",
+        header: "",
+        interactive: true,
+        render: (row: MachineLoadOperation) => {
+          const status = selection.keyStatus(row);
+          return (
+            <input
+              type="checkbox"
+              className="ppc-load__select-box"
+              checked={selection.isSelected(row)}
+              disabled={status !== "ok"}
+              aria-label={copy.machineLoad.selection.selectRow(
+                row.production_order,
+                row.operation_code,
+              )}
+              title={
+                status === "duplicate"
+                  ? copy.machineLoad.selection.ambiguous
+                  : undefined
+              }
+              onChange={() => selection.toggle(row)}
+            />
+          );
+        },
+      },
+      {
         key: "drag",
         header: "",
         interactive: true,
@@ -677,9 +753,15 @@ export function MachineLoadPage({
               type="button"
               className="ppc-load__drag-handle"
               aria-label={copy.machineLoad.dragHandle}
-              title={copy.machineLoad.dragHandle}
-              disabled={sequenceBusy}
-              {...(sequenceBusy ? {} : reorder.handleProps(Math.max(0, rowIndex)))}
+              title={
+                selection.hasMultiple
+                  ? copy.machineLoad.selection.dragDisabledHint
+                  : copy.machineLoad.dragHandle
+              }
+              disabled={sequenceBusy || selection.hasMultiple}
+              {...(sequenceBusy || selection.hasMultiple
+                ? {}
+                : reorder.handleProps(Math.max(0, rowIndex)))}
             >
               <GripVertical size={16} strokeWidth={1.75} aria-hidden />
             </button>
@@ -780,7 +862,7 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => formatIsoDate(row.pa_due_date),
       },
     ],
-    [displayRows, feedbackMap, reorder, sequenceBusy],
+    [displayRows, feedbackMap, reorder, selection, sequenceBusy],
   );
 
   const goTo = (next: {
@@ -1160,12 +1242,33 @@ export function MachineLoadPage({
             {activeCenter?.work_center_name ? (
               <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
             ) : null}
-            {displayRows.length > 1 ? (
+            {displayRows.length > 1 && !selection.hasMultiple ? (
               <p className="ppc-load__sequence-hint">
                 {hideFinished
                   ? copy.machineLoad.hideFinished.reorderWhileHidden
                   : copy.machineLoad.sequenceHint}
               </p>
+            ) : null}
+            {selection.count > 0 ? (
+              <div className="ppc-load__selection-bar" role="status">
+                <ListChecks size={15} strokeWidth={1.75} aria-hidden />
+                <span className="ppc-load__selection-count">
+                  {copy.machineLoad.selection.count(selection.count)}
+                </span>
+                {selection.hasMultiple ? (
+                  <span className="ppc-load__selection-hint">
+                    {copy.machineLoad.selection.pendingHint}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="ppc-load__selection-clear"
+                  onClick={selection.clear}
+                  aria-label={copy.machineLoad.selection.clearAria}
+                >
+                  {copy.machineLoad.selection.clear}
+                </button>
+              </div>
             ) : null}
             <DataTable
               columns={columns}
@@ -1187,14 +1290,47 @@ export function MachineLoadPage({
                   .filter(Boolean)
                   .join(" ") || undefined
               }
+              selection={
+                selection.count > 0
+                  ? { kind: "row", indices: selection.visibleIndices }
+                  : null
+              }
               getRowProps={(row, index) => ({
                 ...reorder.rowDropProps(index),
                 "data-ppc-locate-key": machineLoadLocateRowKey(row),
+                onClick: (event: MouseEvent) => {
+                  if (event.defaultPrevented) return;
+                  const target = event.target as HTMLElement | null;
+                  if (
+                    target?.closest(
+                      '[data-interactive], a, button, input, select, textarea, [role="checkbox"]',
+                    )
+                  ) {
+                    return;
+                  }
+                  const outcome = selection.activate(row, {
+                    toggle: event.ctrlKey || event.metaKey,
+                    range: event.shiftKey,
+                  });
+                  if (outcome === "ambiguous") {
+                    setSequenceNotice(copy.machineLoad.selection.ambiguous);
+                  }
+                },
                 onContextMenu: (event: MouseEvent) => {
                   event.preventDefault();
+                  // Botão direito em linha fora da seleção encerra o modo
+                  // coletivo e mantém o menu individual da linha clicada.
+                  const withinSelection = selection.isSelected(row);
+                  if (selection.count > 0 && !withinSelection) {
+                    selection.clear();
+                  }
                   setRowMenu({
                     operation: row,
                     position: { x: event.clientX, y: event.clientY },
+                    selectionCount:
+                      withinSelection && selection.count >= 2
+                        ? selection.count
+                        : 0,
                   });
                 },
               })}
@@ -1236,6 +1372,8 @@ export function MachineLoadPage({
         prioritizeDisabled={sequenceBusy}
         withdrawDisabled={sequenceBusy}
         transferDisabled={sequenceBusy}
+        selectionCount={rowMenu?.selectionCount ?? 0}
+        onClearSelection={selection.clear}
       />
 
       <MachineLoadTransferModal
