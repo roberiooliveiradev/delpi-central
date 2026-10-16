@@ -3,9 +3,6 @@ import {
   parseTransformometroPath,
 } from "../../utils/routeParser";
 import {
-  INSTANCIA_WORKSPACE_SECTIONS,
-  PROCESSO_WORKSPACE_SECTIONS,
-  REVISAO_WORKSPACE_SECTIONS,
   parseInstanciaSectionFromHash,
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
@@ -117,30 +114,4 @@ export function resolveTeoPortalContext(
       : null);
 
   return base;
-}
-
-/** Label PT da área ativa, para UI contextual (tooltip/título). */
-export function teoAreaLabel(
-  view: string | undefined,
-  area: string | null,
-): string | null {
-  if (!area) return null;
-  const sections =
-    view === "instancia" || view === "instanciaDiagramaEdit"
-      ? INSTANCIA_WORKSPACE_SECTIONS
-      : view === "revisao" || view === "revisaoDiagramaEdit"
-        ? REVISAO_WORKSPACE_SECTIONS
-        : PROCESSO_WORKSPACE_SECTIONS;
-  return sections.find((section) => section.id === area)?.label ?? null;
-}
-
-/** Payload humano e curto para o fallback "copiar contexto". */
-export function buildTeoContextClipboardText(context: TeoPortalContext): string {
-  const lines = ["TÉO, use este contexto do Portal Transforma+:"];
-  if (context.process_id) lines.push(`process_id=${context.process_id}`);
-  if (context.instance_id) lines.push(`instance_id=${context.instance_id}`);
-  if (context.revision_id) lines.push(`revision_id=${context.revision_id}`);
-  if (context.area) lines.push(`area=${context.area}`);
-  lines.push(`path=${context.canonical_path}`);
-  return lines.join("\n");
 }

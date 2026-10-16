@@ -6,9 +6,7 @@ import {
   PROCESSO_HASH_TO_PRIMARY,
 } from "../../ui/processes/processWorkspaceNav";
 import {
-  buildTeoContextClipboardText,
   resolveTeoPortalContext,
-  teoAreaLabel,
   type TeoPortalContext,
 } from "./teoPortalContext";
 
@@ -296,38 +294,6 @@ describe("resolveTeoPortalContext + workspace selection", () => {
     expect(ctx.process_id).toBeNull();
     expect(ctx.instance_id).toBeNull();
     expect(ctx.revision_id).toBeNull();
-  });
-});
-
-describe("teoAreaLabel", () => {
-  it("rotula a seção conforme a view", () => {
-    expect(teoAreaLabel("processo", "resultados")).toBe("Resultados");
-    expect(teoAreaLabel("instancia", "contexto")).toBe("Contexto operacional");
-    expect(teoAreaLabel("revisao", "medicao")).toBe("Medição operacional");
-  });
-
-  it("retorna null sem área", () => {
-    expect(teoAreaLabel("processo", null)).toBeNull();
-  });
-});
-
-describe("buildTeoContextClipboardText", () => {
-  it("K: copia só campos preenchidos, sem token nem payload completo", () => {
-    const full = buildTeoContextClipboardText(
-      resolveTeoPortalContext(REVISION, "#medicao"),
-    );
-    expect(full).toContain("process_id=proc-1");
-    expect(full).toContain("instance_id=inst-1");
-    expect(full).toContain("revision_id=rev-1");
-    expect(full).toContain("area=medicao");
-    expect(full).not.toMatch(/token|authorization|cookie|permission/i);
-
-    const partial = buildTeoContextClipboardText(resolveTeoPortalContext(PROCESS, ""));
-    expect(partial).toContain("process_id=proc-1");
-    expect(partial).not.toContain("instance_id");
-    expect(partial).not.toContain("revision_id");
-    expect(partial).not.toContain("null");
-    expect(partial).not.toContain("undefined");
   });
 });
 
