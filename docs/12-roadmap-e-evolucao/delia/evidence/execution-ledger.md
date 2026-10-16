@@ -13722,3 +13722,18 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.176 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02R1-INDEPENDENT-REVIEW (REWORK; B1 corrigido, B2 parcial)
+
+**Reviewed SHA:** `9fd3a7bc959686a6c4828f46b7d292c81a96938c`. **Review mode:** GitHub static code/test/contract review; **independent test execution=TEST_NOT_RUN**. Canonical review report `corrections/conversational-intelligence-c3/10-stage-02r1-independent-review.md`.
+
+- **B1 STRUCTURAL PASS:** write selection + absent/invalid declared goal now returns `CLARIFICATION_REQUIRED`, before PREPARE/ACT; invalid goal class degrades to neutral undeclared; owner/tool rename tests exist. Fakes/scripted; real LLM rates TEST_NOT_RUN.
+- **B2 CONDITIONAL PASS / MATERIAL GAP:** `execution_bound='prepare_only'` is validated and composes reduction-only with `max_execution_stage`; owner-direct ACT correctly blocked **when the model emits that bound**. However, absent/invalid/misclassified `execution_bound` silently becomes `unrestricted` even when input text explicitly says 'não aplique'. With request ceiling None and owner READY/`explicit_user_confirmation=false`, direct ACT remains eligible under existing §6.140 gates. Test variants all script the expected prepare-only model answer; there is no contradicting-goal test. CODE_PATH=PROVEN by inspection; actual real-model misclassification and ACT outcome TEST_NOT_RUN.
+- **OTHER TO_INVENTORY:** in `_attempt`, the `confirmation is not None` branch occurs before `_understand_goal` and cannot consume the new textual bound; test precedence of contradictory text and structured confirmation if relevant. No confirmed exploit claimed.
+- **TESTS:** executor-reported 31/31 baseline, 1085/1085 delia-api suite, RED/GREEN scripted. Reviewer did not run tests; test PASS does not establish safety against contradictory semantic input.
+- **REUSE:** EXISTING_EQUIVALENT=YES (current goal, structured max_execution_stage reduction-only, governable PREPARE/ACT and evaluation harness). REUSE_DECISION=REUSE/EXTEND conditional; no second planner/provider branches/new prompt authorized. Structural confirmation policy of owner preserved; model proposal is not authority.
+- **NEXT BOUNDED DIAGNOSIS:** reproduce an explicit 'prepare, não aplique' user text with model proposal `goal_class=create_or_modify,execution_bound=unrestricted`, request ceiling None and owner direct READY, with fake ACT. Verify fail-closed behavior of missing/invalid bound and positive direct ACT case. Define minimal authority/contract boundary for an explicit user ceiling, without universal confirmation. If a new contract/gate is materially necessary: STOP → ARCHITECTURE_DECISION_REQUIRED before implementation.
+- **VERDICT:** `REWORK` overall; `B1=PASS_STRUCTURAL`, `B2=REWORK`; `STAGE_02_ACCEPTED=NO`; `STAGE_03_AUTHORIZED=NO`; no runtime or phase change by review.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
