@@ -65,11 +65,11 @@ export function ConversationThreeRegionLayout({
   }
   function closeLeft() {
     setLeftOpen(false);
-    requestAnimationFrame(() => leftTriggerRef.current?.focus());
+    setTimeout(() => leftTriggerRef.current?.focus(), 0);
   }
   function closeRight() {
     setRightOpen(false);
-    requestAnimationFrame(() => rightTriggerRef.current?.focus());
+    setTimeout(() => rightTriggerRef.current?.focus(), 0);
   }
 
   const controls: ConversationPanelControls = {
