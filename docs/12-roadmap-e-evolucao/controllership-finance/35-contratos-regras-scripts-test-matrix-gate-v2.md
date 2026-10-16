@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Evidência e gate pós-merge vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A15=INCONCLUSIVE` até contratos/testes verificados).
+
 **TARGET / A15 HISTORICAL_CONSOLIDATION / POSTMERGE_REVALIDATION_INCONCLUSIVE / CONTRACT_BINDINGS_TO_INVENTORY**
 
 ```text
