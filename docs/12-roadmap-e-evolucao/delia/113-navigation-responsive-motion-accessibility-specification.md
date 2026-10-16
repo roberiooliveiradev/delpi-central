@@ -53,3 +53,11 @@ Cores/surfaces somente por tokens compartilhados, contraste ≥WCAG AA para text
 Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões ghost de repouso. Ícones 16–20px, hit target 40–44px, foco 2px, labels reais, keyboard e tooltip acessível; movimento 180–240ms ou nulo em `prefers-reduced-motion`. Validar container 1440/1280/1024/768/420/375/320px, zoom 200% e Companion Dock; sem overflow horizontal, remount de conversa ou perda de draft. Snapshots ou exemplos de UI nunca substituem dados/permission reais. Testes e browser QA permanecem `TEST_NOT_RUN`; independente `PENDING`.
 
 
+
+## Rework R1 — algoritmo verificável de responsividade e foco
+
+**Gate candidato:** `availableCenterWidth = hostContainerWidth - railWidth - panelWidth`. Se `availableCenterWidth >= minCenterWidth` (alvo inicial de QA: 600px), painel pode ser inline. Caso contrário, manter rail e abrir painel como overlay/drawer. Em containers ≤420px onde o rail compromete o composer, usar `launcher_only`. Limiares são hipóteses de layout a validar no Portal/Dock, não constantes canônicas congeladas. A medida vem do container do host via `ResizeObserver`/container query e não de `window.innerWidth`.
+
+**Transições:** inline → overlay: manter categoria selecionada e workspace montado, fechar overlay e fornecer trigger acessível; overlay → inline: restaurar preferência quando couber. **Uma superfície de navegação/contexto por vez em compact:** ao abrir drawer de navegação, fechar o ContextPopover e vice-versa, sem afetar proposta/confirm governada. Escape apenas fecha a superfície e restaura foco; não cancela turno, draft nem ACT. Um toggle por estado, não controles ocultos ainda tabuláveis.
+
+**QA antes de freeze:** testar container 1440/1280/1024/768/420/375/320px, Dock, zoom 200%, temas light/dark, leitor de tela, teclado e resize durante streaming/confirm. `prefers-reduced-motion` mantém funcionalidade instantânea. Screenshot/comparativo e medidas reais definem breakpoints finais. `TESTS=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`. Matriz de availability, ações e owner no [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md).
