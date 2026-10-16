@@ -202,3 +202,18 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
     animation: none;
   }
 }
+
+/* Stop is the same primary toolbar slot as Send, never a second toolbar. */
+.delpi-ui-message-composer__stop {
+  min-height: 40px;
+  white-space: nowrap;
+}
+.delpi-ui-message-composer__stop:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-message-composer__stop .delpi-ui-message-composer__send-spinner {
+    animation: none;
+  }
+}
