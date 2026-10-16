@@ -11,10 +11,15 @@ describe("ConversationThreeRegionLayout R2", () => {
     );
     const center = screen.getByText("Conversa estável");
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    const collapse = screen.getByRole("button", { name: "Recolher conversas" });
+    expect(collapse.className).toContain("delpi-ui-conversation-three-region__rail-toggle");
+    expect(collapse.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(collapse);
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByText("Rail")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Expandir conversas" })).toBeTruthy();
+    const expand = screen.getByRole("button", { name: "Expandir conversas" });
+    expect(expand.className).toContain("delpi-ui-conversation-three-region__rail-toggle");
+    expect(expand.getAttribute("aria-expanded")).toBe("false");
     expect(container.contains(center)).toBe(true);
   });
   it("opens a floating context dialog without adding a right-hand column", () => {
