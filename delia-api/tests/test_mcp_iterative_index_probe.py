@@ -232,6 +232,23 @@ def test_eligible_self_index_structural_gates():
         SpecialistOperationClass.READ,
         schema=_GUIDE_SCHEMA,
     )
+    nullable = _cap(
+        "get_product_guide",
+        SpecialistOperationClass.READ,
+        schema={
+            "type": "object",
+            "properties": {
+                "topic": {
+                    "anyOf": [{"type": "string"}, {"type": "null"}],
+                    "default": None,
+                },
+                "section": {
+                    "anyOf": [{"type": "string"}, {"type": "null"}],
+                    "default": None,
+                },
+            },
+        },
+    )
     search = _cap(
         "search_publications",
         SpecialistOperationClass.READ,
@@ -247,6 +264,7 @@ def test_eligible_self_index_structural_gates():
         },
     )
     assert _eligible_self_index_probe(guide) is True
+    assert _eligible_self_index_probe(nullable) is True
     assert _eligible_self_index_probe(search) is False
     assert _requires_owner_vocabulary(envelope) is True
     assert _eligible_self_index_probe(envelope) is False

@@ -683,16 +683,35 @@ def _is_unconstrained_string(node: object) -> bool:
 
     A free string alone is legitimate open text (search, name, description)
     — it does **not** imply owner-catalog vocabulary. Closed ``enum`` /
-    ``const`` declare values in-schema. Structural only — never
-    field-name or provider hardcode.
+    ``const`` declare values in-schema. Nullable optional strings from
+    MCP/JSON Schema often use ``anyOf``/``oneOf`` with ``string|null``;
+    those are treated as free strings when the non-null branch is a plain
+    string. Structural only — never field-name or provider hardcode.
     """
     if not isinstance(node, Mapping):
         return False
-    if node.get("type") != "string":
-        return False
     if "enum" in node or "const" in node:
         return False
-    return True
+    if node.get("type") == "string":
+        return True
+    for combiner in ("anyOf", "oneOf"):
+        branches = node.get(combiner)
+        if not isinstance(branches, (list, tuple)):
+            continue
+        non_null = [
+            branch
+            for branch in branches
+            if isinstance(branch, Mapping) and branch.get("type") != "null"
+        ]
+        if len(non_null) != 1:
+            continue
+        branch = non_null[0]
+        if branch.get("type") != "string":
+            continue
+        if "enum" in branch or "const" in branch:
+            return False
+        return True
+    return False
 
 
 def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:

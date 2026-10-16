@@ -14263,3 +14263,16 @@ NEXT=INDEPENDENT_STAGE03_REVIEW
 - **NEXT:** independent frontend review on published SHA; backend L1 binding / G3 brief remain separate blockers for end-to-end activation.
 
 INDEPENDENT_REVIEW=PENDING
+
+## §6.209 — DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/33-mcp-iterative-tool-orchestration-fix.md`. **CODE_SHA:** `d676bc1763`. **BASE_HEAD:** `3036df0888`. Note: §6.208 is Markdown frontend (unrelated); this entry is uniquely §6.209.
+
+- **ROOT_CAUSE:** after RW-S03-01, optional-identifier READ guides had no governed path to obtain owner index before argument projection → invented topics.
+- **FIX:** `_eligible_self_index_probe` + model `probe_index` → empty INDEX READ → `owner_vocabulary` → second READ; opaque-envelope DISCOVERY unchanged; required free strings still never probe.
+- **TESTS:** `test_mcp_iterative_index_probe.py` (Orion unseen) + Stage03/envelope regression; full `delia-api` pytest green.
+- **LIVE SSH:** pending fill after deploy of `d676bc1763` on `srv-api` (MESSAGE-only).
+- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `NEW_PLANNER=NO`; `PROVIDER_HARDCODE=NO`; `MATERIAL_ACT_COUNT=0`.
+
+RW_S03_01=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO
+NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
