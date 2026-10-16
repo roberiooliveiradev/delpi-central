@@ -285,15 +285,6 @@
   margin: 2px 0 6px;
 }
 
-.dashboard-delia .delia-interaction__error {
-  margin: 0 0 10px;
-  color: var(--delia-text);
-  background: color-mix(in srgb, #dc2626 12%, transparent);
-  border: 1px solid color-mix(in srgb, #dc2626 45%, transparent);
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-
 /* ---------- S2-C — composer */
 
 /* Visual owned by plugin-ui `.delpi-ui-message-composer`; the footer

@@ -621,6 +621,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Superfície inline de decisão governada (Confirmar/Cancelar via ActionButton). OWNS chrome da decisão. DOES NOT OWN request, digests, auth, PREPARE/ACT ou resultado — o consumidor controla render e callbacks.",
   }),
+  vc("collaboration", "ConversationError", {
+    addedAt: "2026-10-16",
+    description:
+      "Superfície inline de falha de interação no footer (ícone + título + descrição/ação opcional via ActionButton). OWNS chrome e role=alert. DOES NOT OWN erro, draft, retry, auth, PREPARE/ACT ou classificação — o consumidor resolve copy e callbacks.",
+  }),
   vc("collaboration", "MessageActionBar", {
     addedAt: "2026-10-15",
     description:

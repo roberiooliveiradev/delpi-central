@@ -19,6 +19,11 @@ export {
   type ConversationStatusTone,
 } from "./ConversationStatus";
 export {
+  ConversationError,
+  type ConversationErrorDensity,
+  type ConversationErrorProps,
+} from "./ConversationError";
+export {
   GovernedConfirmation,
   type GovernedConfirmationDensity,
   type GovernedConfirmationProps,

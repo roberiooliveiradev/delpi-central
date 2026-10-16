@@ -21,6 +21,7 @@ import {
 } from "../../components/collaboration";
 import { IconButton } from "../../components/actions";
 import {
+  ConversationError,
   ConversationHeader,
   ConversationUserMessage,
   ConversationStatus,
@@ -558,6 +559,65 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
               density="compact"
               onConfirm={() => {}}
               onCancel={() => {}}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationError",
+    family: "collaboration",
+    exportName: "ConversationError",
+    title: "ConversationError",
+    description:
+      "Falha de interação no footer: role=alert, ícone + título + descrição opcional + ação opcional (ActionButton). Apresentação pura — sem retry automático.",
+    propsSummary: [
+      "title",
+      "description",
+      "icon",
+      "actionLabel",
+      "onAction",
+      "actionDisabled",
+      "loading",
+      "density",
+      "className",
+    ],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationError
+              title="Não foi possível concluir esta solicitação."
+              description="Sua mensagem foi preservada."
+            />
+          </div>
+        ),
+      },
+      {
+        id: "action",
+        label: "Com ação de recuperação",
+        render: () => (
+          <div style={{ maxWidth: 480 }}>
+            <ConversationError
+              title="Não foi possível concluir esta solicitação."
+              description="Sua mensagem foi preservada."
+              actionLabel="Tentar novamente"
+              onAction={() => {}}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compacto (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationError
+              title="Não foi possível concluir."
+              density="compact"
             />
           </div>
         ),

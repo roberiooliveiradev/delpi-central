@@ -1,6 +1,6 @@
 # 78 — DÉLIA: ConversationError / Error Recovery Surface
 
-**Status:** `DESIGN_SPECIFIED / NOT_IMPLEMENTED` — direção de produto e boundary documentadas; não é evidência de runtime nem autorização para ampliar fase.  
+**Status:** `IMPLEMENTED / ACCEPTED_CURRENT_SCOPE` — componente visual implementado em `plugin-ui`, integrado na DÉLIA, com testes, build, federação e browser QA comprovados; não é evidência de runtime de produção nem autorização para ampliar fase.  
 **Escopo:** superfície visual compartilhável para falhas reais da interação conversacional da DÉLIA, posicionada no footer do `ConversationWorkspace`, imediatamente acima do `MessageComposer`, preservando o rascunho e permitindo recuperação honesta.  
 **Reanchor:** HEAD de elaboração `f53d52fab92aa202907b295ca8f7b41f0e6251d0`; implementação deve revalidar HEAD/status e a cadeia Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger.  
 **Referências:** [73 — identidade e anatomia](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [74 — Message Composer](./74-message-composer-visual-specification.md), [75 — mensagem DÉLIA](./75-assistant-message-visual-specification.md), [77 — workspace/header](./77-conversation-workspace-and-header-visual-specification.md).
@@ -469,10 +469,10 @@ COMPONENT = ConversationError
 PRODUCT_MEANING = SPECIFIED
 VISUAL_DIRECTION = APPROVED_FOR_PLANNING
 CURRENT_LOCAL_ERROR_SURFACE = PROVEN
-PLUGIN_UI_COMPONENT = NOT_IMPLEMENTED
-DELIA_INTEGRATION = NOT_IMPLEMENTED
-BROWSER_QA = TEST_NOT_RUN
-BUILD/FEDERATION = TEST_NOT_RUN
+PLUGIN_UI_COMPONENT = IMPLEMENTED
+DELIA_INTEGRATION = IMPLEMENTED
+BROWSER_QA = PASS (local harness)
+BUILD/FEDERATION = PASS
 DEPLOY = NOT_PERFORMED
 PHASE_ADVANCEMENT = NONE
 ```

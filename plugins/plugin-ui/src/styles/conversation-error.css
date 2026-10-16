@@ -1,0 +1,68 @@
+/* ConversationError — superfície inline de falha de interação no
+   footer do workspace, acima do composer. Subordinada à conversa:
+   danger sutil, sem card pesado, sem animação contínua. */
+
+.delpi-ui-conversation-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-danger, var(--danger, #dc2626)) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 88%,
+    var(--delpi-ui-danger, var(--danger, #dc2626)) 12%
+  );
+  min-width: 0;
+}
+
+.delpi-ui-conversation-error__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--delpi-ui-danger, var(--danger, #dc2626));
+}
+
+.delpi-ui-conversation-error__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.delpi-ui-conversation-error__title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-error__description {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-conversation-error__action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.delpi-ui-conversation-error--compact {
+  padding: 6px 10px;
+  gap: 6px;
+}
+
+.delpi-ui-conversation-error--compact
+  .delpi-ui-conversation-error__title {
+  font-size: 0.8125rem;
+}
