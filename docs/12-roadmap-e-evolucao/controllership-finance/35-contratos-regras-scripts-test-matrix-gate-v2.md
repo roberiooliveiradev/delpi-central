@@ -2,7 +2,7 @@
 
 ## Estado
 
-**TARGET / A15 CONSOLIDATION PASS_WITH_BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
+**TARGET / A15 HISTORICAL_CONSOLIDATION / POSTMERGE_REVALIDATION_INCONCLUSIVE / CONTRACT_BINDINGS_TO_INVENTORY**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -29,10 +29,10 @@ Authorities detalhadas continuam nos documentos de cada página; este arquivo é
 | A09 | P2 Checklist e Documentos | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 | A10 | P3 Estoque e Conciliação | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP T03 |
 | A11 | P4 Classificações e Pendências | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
-| A12 | P5 Pacote, Finalização e Envio | PORTAL_SUBMISSION_MODEL_PASS / P5_DERIVED_REVIEW_CONTRACT_PENDING |
+| A12 | P5 Pacote, Finalização e Envio | C2 / P5-A..J / DEC-01..04 PO_APPROVED; CORE_ELIGIBILITY_AND_BINDINGS_TO_INVENTORY |
 | A13 | P6 Administração / Configuração | READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY |
 
-A12 permanece com contrato derivado pendente. C2 e D-P5-01 a D-P5-05 foram aprovados pelo Product Owner; ainda faltam as semânticas de rejeição terminal, substituição, quorum versionado e ressubmissão.
+A12 tem decisões de produto aprovadas: C2, D-P5-01..05 refinadas por P5-A..J, DEC-01..04. Rejeição, reatribuição, quorum por área/versão e não reversão estão definidos semanticamente no doc 37; os contratos físicos de elegibilidade, persistência, estados, concorrência, eventos e consumers permanecem TO_INVENTORY.
 
 ## 2. Contrato arquitetural transversal
 
@@ -576,54 +576,37 @@ Se a evidence invalidar owner/semântica:
 - `EXECUTION_DRIFT`;
 - não adaptar silenciosamente.
 
-## 12. Residual que bloqueia o freeze global
+## 12. Residual vigente para o freeze transversal
 
-A premissa de external package delivery foi superseded.
-
-```text
-E04_EXTERNAL_DELIVERY = CLOSED / NOT_REQUIRED_IN_V1
-T04_EXTERNAL_DELIVERY_CAPABILITY = CLOSED / NOT_REQUIRED_IN_V1
-```
-
-Contrato vigente:
+O antigo inventário E04/T04 de envio externo por e-mail é `CLOSED / NOT_REQUIRED_IN_V1`. C2 e as decisões P5-A..J / DEC-01..04 foram aprovadas; não existe nova escolha C1/C2/C3 a solicitar.
 
 ```text
-PACKAGE_FINALIZED
-→ PACKAGE_SUBMITTED_FOR_REVIEW
-→ authenticated reviewer in Minha DELPI
-→ review lifecycle
+PRODUCT_DECISIONS_P5 = PO_APPROVED
+CORE_EFFECTIVE_ACCESS_S2S = PROVEN (source controller, no live smoke)
+CORE_CORPORATE_GROUP_FUNCTION_ATTRIBUTE = TO_INVENTORY
+P5_AREA_ELIGIBILITY_BINDING = TO_INVENTORY
+P5_REVIEW_STATE_DTO_EVENTS_AND_OCC = TO_INVENTORY
+P6_REQUIRED_AREAS_VERSIONING_BINDING = TO_INVENTORY
+A12_POSTMERGE = INCONCLUSIVE
 ```
 
-Residual:
-
-```text
-D-P5-REVIEW-COMPLETION
-= DECISION_REQUIRED
-```
-
-Opções:
-- C1 submission suficiente;
-- C2 review accepted obrigatório;
-- C3 política configurável.
-
-Authority:
-- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+Os contratos semânticos aprovados são rastreados no doc 37 e no ledger 23. Revalidar os producer/consumer bindings antes de converter planos de scripts em evidências de execução.
 
 ## 13. Freeze readiness após A15
 
 ```text
-PORTAL_DESIGN_FREEZE          = PASS
+PORTAL_DESIGN_FREEZE          = REVALIDATE_POSTMERGE
 FRONTEND_PATTERN_FREEZE       = PASS
-SECURITY_MODEL_FREEZE         = PASS
-TEST_STRATEGY_FREEZE          = PASS
-PRODUCT_CONTRACT_FREEZE       = BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT
+SECURITY_MODEL_FREEZE         = REVALIDATE_CORE_T05
+TEST_STRATEGY_FREEZE          = REVALIDATE_TEST_MATRIX
+PRODUCT_CONTRACT_FREEZE       = PENDING_CORE_T05_AND_PHYSICAL_BINDINGS
 
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED      = NO
 ```
 
 Próximo passo:
-- decidir `D-P5-REVIEW-COMPLETION`;
+- C2 já aprovada; completar binding Core T05, normalização de contratos e prova da matriz de testes;
 - reexecutar residual search;
 - somente então avaliar `PRODUCT_CONTRACT_FREEZE = PASS` e `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
 
@@ -657,8 +640,8 @@ Preservar identidade Core do ator, data/hora, ação, contexto competência/reci
 
 ### Pendências reais — sem aprovação presumida
 
-1. **DECISION_REQUIRED:** quem é a autoridade operacional de confirmação de rejeição terminal; como é designada e substituída, e se a confirmação pode ser negada (e qual estado fica então). Não equiparar automaticamente a `manage`.
-2. **DECISION_REQUIRED:** procedimento excepcional de correção de aceite P5 fora da UI V1 (owner, autorização, efeitos na conclusão mensal e revalidação), se for implementado nesta versão; na ausência de decisão, **capability não existe na V1**.
+1. **PO APPROVED DEC-01/02:** responsável formal de fechamento com ACCESS, vínculo e escopo confirma rejeição; não confirmação mantém competência pendente. Inventariar binding, não reabrir a escolha.
+2. **PO APPROVED DEC-03:** correção excepcional de aceite P5 não existe no Portal V1, por UI nem endpoint.
 3. **TO_INVENTORY / STOP ON DRIFT:** fonte canônica dos grupos/funções corporativas e sua associação às áreas, contract Core (T05), elegibilidade de múltiplos usuários; não presumir que RBAC do Core tem os atributos necessários.
 4. **CONTRACT_PENDING:** mapa versionado tipo de pacote → áreas obrigatórias em P6; regras de publicação/vigência/snapshot, defaults inválidos, configuração ausente e concorrência; não inventar tabelas/migrations.
 5. **CONTRACT_PENDING:** outcome de rejeição do pacote versus confirmação terminal da competência, estados técnicos definitivos, falha/conflito no commit, event projection/notifications/Help e matrizes de testes positive+sibling+negative.
@@ -705,4 +688,4 @@ C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válid
 
 **Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
 
-**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=BLOCKED_DIVERGED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
+**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=PR78_MERGED_TO_MAIN_VERIFIED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
