@@ -79,7 +79,6 @@
 @import "./styles/collaboration-rich-prose.css";
 @import "./styles/emoji-insert-menu.css";
 @import "./styles/activity-viewer.css";
-@import "./styles/message-composer.css";
 @import "./styles/message-thread.css";
 @import "./styles/entity-unfurl.css";
 @import "./styles/reaction-bar.css";
@@ -111,6 +110,7 @@
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
 @import "./styles/action-controls.css";
+@import "./styles/message-composer.css";
 @import "./components/conversation/ConversationThreeRegionLayout.css";
 @import "./components/conversation/ConversationSidePanels.css";
 @import "./styles/page-header.css";
