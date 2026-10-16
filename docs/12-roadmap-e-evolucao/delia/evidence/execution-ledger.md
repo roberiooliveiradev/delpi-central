@@ -13754,3 +13754,18 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.178 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02R2-DIAG-INDEPENDENT-REVIEW (ACCEPT_WITH_RESIDUAL for DIAGNOSIS ONLY)
+
+**REVIEWED_SHA:** `4a0027863b0116f5d9e9353b8ad9d8080495be6d`. **REVIEW:** static GitHub code/contract/harness evidence, no independent pytest, no runtime changes. **REPORT:** `corrections/conversational-intelligence-c3/12-stage-02r2-independent-review-and-decision-request.md`.
+
+- **DIAGNOSIS VERDICT:** `ACCEPT_WITH_RESIDUAL` as bounded structural diagnosis only, not Stage 02 acceptance. Executor-reported full suite `1091 passed + 10 xfailed`; 10 strict-xfail tests demonstrate unresolved B2 safety-property FAIL, 6 scripted controls pass. Independent test execution=TEST_NOT_RUN. No real-model outcome evidence.
+- **PROVEN B2:** user text `Prepare, mas não aplique` + LLM proposal `execution_bound=unrestricted` (also absent/invalid) + `max_execution_stage=None` + owner READY/confirmation=false allows governed direct ACT in fake path. User negative text is not independently checked; bound absent/invalid normalizes to unrestricted; request ceiling prepare correctly blocks ACT. Diagnostic commit changed only test/docs/ledger.
+- **CONFIRM PATH:** confirmation payload is handled before `_understand_goal` without consuming same-turn `input_text`. Contradictory confirmation/text precedence normative contract TO_INVENTORY, exploit not claimed.
+- **DECISION GATES:** A structured request ceiling already exists/reduction-only but does not semantically parse free text. B second LLM check is not a deterministic safeguard and adds a new potentially fallible gate (not authorized). C missing/invalid bound fail-closed is bounded EXTEND candidate, but does NOT solve positive wrong `unrestricted`; C-alone ≠ B2 completion. No provider-specific branches/regex/universal-confirmation/second planner authorized.
+- **ARCHITECTURE_DECISION_REQUIRED:** (D1) source of independent user execution-scope evidence or fail-closed ACT eligibility under fallible free text, including owner-direct compatibility §6.140; (D2) precedence of structured `CONFIRM` with contradictory same-turn text; (D3) whether to authorize C as partial interim mitigation. Product Master/coordination must decide before new implementation. No acceptance of model-trust residual implicit.
+- **REUSE:** EXISTING_EQUIVALENT=YES for `_understand_goal`, `_TurnGoal`, request `max_execution_stage`, Policy/Decision, PREPARE/ACT and harness. REUSE_DECISION=REUSE or limited EXTEND only after authorized gate/contract. No changes to CP/RQ statuses, owner authority, phase, deployed runtime or previous reports.
+
+STAGE_02R2_DIAG=ACCEPT_WITH_RESIDUAL; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
