@@ -103,7 +103,7 @@ export function ConversationThreeRegionLayout({
           <div className="delpi-ui-conversation-three-region__side-heading">
             {!collapsed ? <strong>{leftTitle}</strong> : null}
             <IconButton
-              className="delpi-ui-conversation-three-region__rail-toggle"
+              className="delpi-ui-conversation-three-region__rail-toggle delpi-ui-conversation-three-region__chrome-icon"
               aria-label={collapsed ? "Expandir conversas" : "Recolher conversas"}
               aria-expanded={!collapsed}
               onClick={() => setLeftExpanded((value) => !value)}
@@ -138,7 +138,7 @@ export function ConversationThreeRegionLayout({
             <>
               <div className="delpi-ui-conversation-three-region__side-heading">
                 <strong>Contexto</strong>
-                <IconButton aria-label="Fechar painel de contexto" onClick={() => {
+                <IconButton className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
                   setRightOpen(false);
                   contextTriggerRef.current?.focus();
                 }}>
