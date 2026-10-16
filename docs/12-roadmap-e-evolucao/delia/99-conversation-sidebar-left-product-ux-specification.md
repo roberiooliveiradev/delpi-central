@@ -1,0 +1,137 @@
+# 99 — DÉLIA | ConversationSidebar — Navegação esquerda de conversas
+
+**Data:** 2026-10-16  
+**Natureza:** especificação de produto, UX e contrato visual **somente documental**. Não autoriza runtime, migração, backend, deploy, CP ou avanço de fase.  
+**Produto:** DÉLIA standalone (não é Minha DELPI Chat).  
+**Base factual:** `main` no SHA `395bd45012f8b45899f07e226b6525df9e0a0c66`. Revalidar HEAD antes de implementar.  
+**Autoridade:** HEAD/git status → Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger. Conflito = `EXECUTION_DRIFT` ou `ARCHITECTURE_DECISION_REQUIRED`; não reconciliar silenciosamente.  
+**Propriedade:** `plugin-ui` hospeda componentes visuais reutilizáveis; `plugins/delia` compõe produto, decide estados de interface e integra contratos autorizados. Portal hospeda/navega; Core valida AuthZ; Domain APIs têm autoridade de regras/dados; DÉLIA não cria autoridade paralela.
+
+
+**Posicionamento:** região **esquerda** do layout completo [doc 98](./98-delia-full-page-three-region-layout-product-ux-specification.md). **Painel direito independente:** [doc 100](./100-conversation-context-panel-right-product-ux-specification.md). **Busca no histórico:** [doc 97](./97-conversation-search-backend-first-future-ux-specification.md).
+
+## 1. Responsabilidade e hierarquia
+
+`ConversationSidebar` oferece navegação conversacional (não navegação global de apps, não catálogo de capabilities). Contém affordances para iniciar uma conversa, localizar histórico **quando real**, selecionar conversa autorizada, identificar sessão ativa e exibir ações contextuais legitimamente contratadas.
+
+```text
++--------------------------------+
+| [☰ recolher]      Conversas    |
+| [+ Nova conversa]              |
+| [🔍 Pesquisar conversas]*      |
+|                                |
+| Recentes*                      |
+| [• Indicadores de produção]    |
+| [  Análise de capacidade] [···]|
+| Ontem*                         |
+| [  Pendências operacionais]    |
+|                                |
+| [opções pertinentes]*          |
++--------------------------------+
+* não renderizar em produção sem contrato, dados ou função reais
+```
+
+Não inventar títulos, data, agrupamento temporal ou seleção de conversas persistidas antes do backend. A sidebar **não** deve apresentar lista de sessões React transitórias como histórico real.
+
+## 2. Aparência e estrutura
+
+- Largura expandida alvo ~260–300px; border-right fina, fundo ligeiramente distinto do centro, altura do shell interno. Ajustar ao Portal e tokens existentes; valores são candidatos, não freeze de CSS.
+- Header superior compacto com rótulo “Conversas”, ícone e toggle “Recolher barra lateral”. Não duplicar título principal da DÉLIA nem logo institucional em excesso.
+- Ação “Nova conversa” prioritária, de alto reconhecimento visual (ícone `SquarePen`/Lucide ou equivalente), com label expandido; no rail, ícone acompanhado de `aria-label`/tooltip.
+- Busca posicionada abaixo de Nova conversa, mas **não ativa** até que persistence/search backend sejam contratados (doc 97); preferir omitir a affordance em runtime a abrir busca local de fachada.
+- Lista ocupa o espaço flexível e rola de modo independente; entradas leves e densidade confortável; títulos truncados com elipse, mantendo label completo por mecanismo acessível e sem fuga de dados.
+- Agrupamentos (“Recentes”, “Ontem”, “Esta semana”) são alvos UX futuros e exigem timestamps/ordenação/fuso de fonte autoritativa.
+- Item selecionado com fundo/tom do kit e indicador além de cor; hover/active/focus-visible; menu de reticências somente com operações implementadas (ex.: renomear, arquivar/excluir quando contratos existirem).
+- Rodapé reservado para opções de **conversa** legitimadas pelo produto. Não duplicar settings globais, perfil Portal, Keycloak, área de aplicações ou funcionalidades do painel direito.
+
+## 3. Estados visuais
+
+| Estado | Aparência/funcionalidade |
+|---|---|
+| `expanded` | Barra completa com labels, itens e regiões válidas |
+| `rail` | Faixa estreita com ícones de toggle/nova conversa e affordances realmente ativas; sem truncamento enganoso |
+| `closed` | Região oculta, toggle acessível disponível no centro |
+| `drawer` | Overlay em mobile/dock, com backdrop, close, focus trap e restore focus |
+| `empty_unpersisted` | Não alegar “Você não tem conversas”; mostrar apenas controles seguros e texto neutro sobre histórico não disponível, quando fizer sentido |
+| `loading_history` | Skeleton/estado honesto após API autorizada; nunca spinner permanente fictício |
+| `empty_history` | Mensagem clara somente após consulta real bem-sucedida ao escopo autorizado |
+| `history_error` | Falha tipada; opção de tentar novamente quando existir callback/contrato |
+| `permission_denied` | Sem vazamento de nomes/snippets; informação neutra |
+| `selected` | Item autorizado ativo, realçado sem depender só de cor |
+
+Não implementar lista do futuro para dar aparência de feature pronta. Layout/chrome pode existir antes de backend, com área de histórico omitida.
+
+## 4. Funcionalidades completas esperadas
+
+### 4.1 Recolher e expandir
+
+- Toggle persistente e descobrível; expandida ↔ rail ↔ fechada conforme responsive. Sem remount do `ConversationWorkspace` ou perda de draft.
+- `aria-expanded`, `aria-controls`, keyboard Enter/Space, foco visível e retorno ao toggle quando sidebar fecha. No mobile, a barra é drawer acessível, não coluna fixa estreita.
+- Preferência de expansão opcional somente por owner/capability existente de preferências; proibido criar `localStorage` ad hoc.
+
+### 4.2 Nova conversa (dependências)
+
+- Objetivo futuro: solicitar nova sessão DÉLIA persistida a um contrato legítimo e navegar somente após resposta autoritativa. Não confundir com limpar `turns` da memória React.
+- O botão pode aparecer como affordance visual em uma entrega frontend bounded, mas **não pode ser clicável sem callback seguro real**; preferir desabilitado com tratamento honesto até contrato/guardas.
+- Ao haver rascunho não enviado: proteção contra descarte, confirmar intenção com UI legítima. Em turnos em curso: interromper **somente espera local** quando permitido, nunca afirmar rollback de backend. Havendo proposta de operação governada, preservar/reconciliar estado; não navegar para contornar decisão.
+- Quando existir sessão persistida: criar/selecionar pelo backend, não gerar ID autoritativo no frontend; idempotência para duplo clique, tratamento de falhas sem perder conversa anterior.
+
+### 4.3 Lista de conversas e ações
+
+- História e títulos fornecidos pelo owner; IDs estáveis e opacos; paginação/cursor, carga progressiva e limites. Não derivar título “inteligente” por LLM sem contrato/revisão.
+- Ordem/agrupamentos por dados de publicação, observando timezone; restrições e exclusões governadas.
+- Seleção deve recuperar/validar acesso **live**, preservar foco e rolagem por mensagem, sem restaurar conteúdo de cache não autorizado.
+- Item poderá exibir menu contextual de “Renomear / Arquivar / Excluir” **apenas após** contratos write, AuthZ live, idempotência, audit e postcondition; não habilitar menu por conveniência.
+- Distinção visual entre item ativo, hover, indisponível, arquivado, sem acesso e carregando; não vazar existência de conversas restritas.
+- Pesquisa deve utilizar backend conforme doc 97, não indexação no array React. Não simular resultados.
+
+### 4.4 Acessibilidade e microinterações
+
+- Landmark `nav` nomeado “Conversas”, se não conflitar com navegação Portal; lista semântica; controles action `button` e navegação `a` apenas para rotas autorizadas.
+- Tab order: toggle, Nova conversa, busca autorizada, itens, menu contextual, sem trap fora de modal. Menu por item com semântica própria e keyboard Escape/Arrow quando adotado.
+- Labels completos em rail via `aria-label`/tooltip acessível; indicadores selected/pending não dependem exclusivamente de cor; responsividade 320/420px e zoom 200%.
+- No Dock, preferir não renderizar rail permanentemente; drawer sob demanda para não sufocar o composer.
+- Transições contidas, reduced motion respeitado; não emitir anúncios massivos a screen readers quando histórico atualiza.
+
+## 5. Reuse, owners e contratos
+
+**PROVEN:** `ConversationHeader` aceita `actions`, `ConversationWorkspace` permanece central, existem botões e chrome no `plugin-ui`. `plugins/delia/src/App.tsx` mantém conversa transitória em React, não histórica persistida.
+
+`EXISTING_EQUIVALENT=YES` para botões/layout base; `EXISTING_EQUIVALENT=TO_INVENTORY` para sidebar/drawer/lista de conversas concreta e serviços de history. `REUSE_DECISION=REUSE` primitives; `EXTEND/NEW_PENDING_GATE` para composição de sidebar. Validar kit de navegação, menus, drawer, empty state e virtualized list antes de criar novo.
+
+Contrato backend **futuro**, não definido aqui: `createConversation`, `listConversations`, `getConversation`, `listTurns`, `searchConversations`, ações de manutenção conforme owner — estes são **nomes ilustrativos**, não `operationId` nem endpoints congelados. Especificar owner/consumers, schemas/version, AuthN, Core live AuthZ, Domain rules, erros, paginação, idempotência, limites, retention, compatibilidade, observabilidade e postconditions antes de integrar.
+
+## 6. Separação de subcomponentes (proposta sujeita a gate)
+
+- `ConversationSidebar` — composição e estados de abertura.
+- `ConversationSidebarToggle` — controle de expandir/recolher.
+- `ConversationNewSession` — intenção de criar nova conversa, sem política backend no UI kit.
+- `ConversationHistoryList` + `ConversationHistoryItem` — itens e grupos de histórico real, após contrato.
+- `ConversationSidebarSearch` — entrada para a busca backend futura, não componente de busca local.
+- `ConversationItemActions` — menu de ações apenas com owner write/policy.
+- Não tratar essa enumeração como autorização para gerar todos os componentes. Reuse-before-design em cada slice.
+
+## 7. Testes/aceite futuros
+
+1. Expansão/rail/fechamento/drawer não afetam conversa ou draft.
+2. Sidebar navega por conversas reais com autenticação/Autorização e sem acesso a terceiros.
+3. Nenhum item fake, search local ou persistência frontend temporária em produção.
+4. Seleção, paginação, stale cursor, loading/error/ACL e remoção de itens funcionam via contratos.
+5. Guardas de rascunho, requisição em andamento e PREPARE/ACT pendente comprovados.
+6. Ações write não existem sem owner/Policy/AuthZ live e postcondition.
+7. Page full + Dock/mobile com browser QA, teclado, screen reader, tema e zoom 200%.
+8. Testes independentes de componente, integração, build e Module Federation com SHA/config.
+
+## 8. Estado documental
+
+```text
+SPEC_STATUS = DOCUMENTED_PRODUCT_TARGET
+CONVERSATION_SIDEBAR = NOT_IMPLEMENTED
+HISTORY_LIST_RUNTIME = NOT_AUTHORIZED_WITHOUT_BACKEND
+NEW_PERSISTED_SESSION = CONTRACT_PENDING
+CONVERSATION_SEARCH = DEFERRED_DOC_97
+VISUAL_PRIMITIVES = REUSE
+BACKEND_CONTRACTS = TO_INVENTORY
+TESTS = TEST_NOT_RUN
+PHASE_PROGRESSION = NONE
+```
