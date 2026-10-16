@@ -144,6 +144,72 @@ visível na tela.
 Não existe contrato oficial para abrir o ChatGPT/TÉO por URL com contexto
 injetado — nenhuma URL é inventada.
 
+
+## Aceite funcional do contexto automatico — 2026-10-16
+
+**Resultado:** `ACCEPT` para a navegacao contextual observada no fluxo testado;
+cenarios de isolamento, expiracao prolongada e navegacao entre dois processos
+distintos permanecem `TEST_NOT_RUN`. Este aceite nao equivale a uma
+homologacao E2E universal.
+
+**Owners:** Portal (navegacao/publicacao), Core (Workspace Context), 
+Transformometro (dados canonicos), TEO (consumidor governado).
+**Fonte da evidencia:** respostas ao vivo das capabilities
+`get_workspace_context` e `get_process_context` durante uma sessao
+autenticada em 16/10/2026. Sao leituras de runtime observadas na conversa,
+nao arquivos de log, screenshots nem testes automatizados de navegador.
+**Implementacao de referencia:** [remocao do clipboard
+`8626e87482`](https://github.com/roberiooliveiradev/delpi-central/commit/8626e874822bb1b4cf3523f559c9b8cc3993a54c)
+e [ajuste documental
+`5a458cc50d`](https://github.com/roberiooliveiradev/delpi-central/commit/5a458cc50db0199d56633cbf01336a4c835d94fe).
+
+Referencias usadas na verificacao (apenas identificadores de navegacao):
+
+- Processo `PROC-0080`: `b6c2db01-662a-4fbb-8102-11d331d00e03`
+- Instancia GLPI #1197: `d518444b-fc6f-45de-8679-99a47d057279`
+- Revisao TO-BE Dashboard Suprimentos v1.0:
+  `08df3a4c-fe2d-4f35-ba08-efa114a56bd2`
+
+| Cenario observado | Evidencia de runtime | Estado |
+| --- | --- | --- |
+| 1. Home -> processo | `home`, sem referencias -> `route_id=processo`, `process_id=PROC-0080 (UUID acima)`, `area=visao-geral` | `PASS` |
+| 2. Visao Geral -> Resultados | `area=resultados`; `canonical_path` termina em `#resultados`; processo preservado | `PASS` |
+| 3. Resolucao da instancia | `instance_id=d518444b-...`; `get_process_context` confirmou GLPI #1197 vinculada ao processo | `PASS` |
+| 4. Selecao da revisao | `route_id=revisao`, `revision_id=08df3a4c-...`, `area=vigencia`; processo e instancia preservados | `PASS` |
+| 5. Leitura autoritativa | `get_process_context(process_id, instance_id, revision_id)` retornou revisao TO-BE correta, ativa e aprovada | `PASS` |
+| 6. Saida para Dashboard | `route_id=dashboard`, `canonical_path=/apps/transformometro/dashboard`, `process_id=null`, `instance_id=null`, `revision_id=null` | `PASS` |
+
+Todas as chamadas de `get_workspace_context` na sequencia observada
+retornaram `status=active`. A validacao posterior no dominio nao promoveu
+a dica de navegacao a autorizacao: o TEO leu os dados por capability
+tipada, preservando `Workspace Context != Domain Truth != AuthZ`.
+
+**Classificacao de evidencias:** respostas efetivamente obtidas das duas
+capabilities = `PROVEN` para esses casos; relatos anteriores do Devin
+sobre 489 testes e deploy = `INFORMED` neste registro, sem reexecuta-los
+nesta rodada. Nao houve escrita de dados de negocio.
+
+**Cobertura residual (nao provada por esta sessao):**
+
+- Troca direta de um processo A para outro processo B distinto:
+  `TEST_NOT_RUN`.
+- Duas abas com selecoes concorrentes/ambiguidade: `TEST_NOT_RUN`.
+- Logout, troca de identidade e isolamento entre usuarios: `TEST_NOT_RUN`.
+- Expiracao por TTL e renovacao apos longa inatividade:
+  `TEST_NOT_RUN` (estado `stale` observado em consulta anterior,
+  mas renovacao E2E nao testada aqui).
+- Testes negativos de autorizacao com outro usuario:
+  `TEST_NOT_RUN`.
+- Automacao E2E de navegador e comprovacao independente de SHA em
+  producao nesta rodada: `TEST_NOT_RUN`.
+
+**Decisao do Chat 00:** `ACCEPT` para o fluxo de navegacao
+Home -> Processo -> Resultados/Instancia -> Revisao -> Dashboard.
+Sem nova implementacao ou alteracao de contrato por este aceite; manter
+residuais como trabalho de Integration & Acceptance (07). Nao declarar
+`PASS` para cenarios nao executados.
+
+
 ## Arquivos
 
 - `src/integrations/teo/teoPortalContext.ts` — modelo `TeoPortalContext`
