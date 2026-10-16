@@ -55,3 +55,7 @@ Itens não autorizados omitidos sem leak de nomes; resposta do catálogo tratada
 Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões ghost de repouso. Ícones 16–20px, hit target 40–44px, foco 2px, labels reais, keyboard e tooltip acessível; movimento 180–240ms ou nulo em `prefers-reduced-motion`. Validar container 1440/1280/1024/768/420/375/320px, zoom 200% e Companion Dock; sem overflow horizontal, remount de conversa ou perda de draft. Snapshots ou exemplos de UI nunca substituem dados/permission reais. Testes e browser QA permanecem `TEST_NOT_RUN`; independente `PENDING`.
 
 
+
+## Rework R1 — agentes aprovados, não descoberta como permissão
+
+Categoria Agentes é alvo visual; listagem e launch requerem `EXISTING_EQUIVALENT=TO_INVENTORY` de catálogos oficiais, Agent/Capability projection, owner e rotas governadas. `REUSE_DECISION=PENDING_GATE` para feed/launch. Um agente encontrado via MCP/A2A não vira aprovado/visible pelo metadata. Em falta de contrato, categoria apenas `contract_unavailable` quando product preview aprovado; `forbidden` é omitido. Seleção de item não delega credentials nem inicia execução sem passagem autorizada e guardas de escopo mínimo. Não criar agents/personas paralelos aos owners existentes.
