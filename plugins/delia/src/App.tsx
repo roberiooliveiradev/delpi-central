@@ -103,6 +103,12 @@ export default function App({
   const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  /** Guards late completions (including transports ignoring abort) after STOP. */
+  const requestEpochRef = useRef(0);
+  const activeStopEligibleRef = useRef(false);
+  const [requestMode, setRequestMode] = useState<
+    "idle" | "responding_cancelable" | "responding_not_cancelable" | "stopping"
+  >("idle");
   const demoSeqRef = useRef(0);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const turnsEndRef = useRef<HTMLDivElement | null>(null);
@@ -127,6 +133,7 @@ export default function App({
 
   useEffect(
     () => () => {
+      requestEpochRef.current += 1;
       abortRef.current?.abort();
     },
     [],
@@ -167,6 +174,10 @@ export default function App({
       return;
     }
 
+    const requestEpoch = ++requestEpochRef.current;
+    const stopEligible = !confirmation && (!command || command.type === "MESSAGE");
+    activeStopEligibleRef.current = stopEligible;
+    setRequestMode(stopEligible ? "responding_cancelable" : "responding_not_cancelable");
     setRespondingTurnId(null);
     setLoading(true);
     setError(null);
@@ -188,10 +199,12 @@ export default function App({
         confirmation,
         command,
         onActivityEvent: (event) => {
+          if (requestEpoch !== requestEpochRef.current || controller.signal.aborted) return;
           observed.push(event);
           setLiveEvents([...observed]);
         },
       });
+      if (requestEpoch !== requestEpochRef.current || controller.signal.aborted) return;
       setTurns((previous) => [
         // Only a response to a typed decision about THIS exact
         // proposal may close its card. Ordinary MESSAGE turns and
@@ -237,6 +250,7 @@ export default function App({
       );
       setInput("");
     } catch (submitError) {
+      if (requestEpoch !== requestEpochRef.current || controller.signal.aborted) return;
       if (
         submitError instanceof Error &&
         submitError.name === "AbortError"
@@ -251,8 +265,13 @@ export default function App({
           : "Erro inesperado ao falar com a DÉLIA.",
       );
     } finally {
-      setLoading(false);
-      setLiveEvents([]);
+      if (requestEpoch === requestEpochRef.current) {
+        abortRef.current = null;
+        activeStopEligibleRef.current = false;
+        setRequestMode("idle");
+        setLoading(false);
+        setLiveEvents([]);
+      }
     }
   }
 
@@ -289,6 +308,22 @@ export default function App({
         : `demo-delia-${seq}`,
     );
     setInput("");
+  }
+
+  function handleStopResponse() {
+    const controller = abortRef.current;
+    if (!controller || controller.signal.aborted || !activeStopEligibleRef.current) return;
+    activeStopEligibleRef.current = false;
+    setRequestMode("stopping");
+    // Invalidate the request synchronously before abort callbacks can fire.
+    requestEpochRef.current += 1;
+    controller.abort();
+    abortRef.current = null;
+    setLiveEvents([]);
+    setRespondingTurnId(null);
+    setLoading(false);
+    setRequestMode("idle");
+    // This is only a local transport stop; backend completion is unknown.
   }
 
   function handleSubmit() {
@@ -389,6 +424,8 @@ export default function App({
                 onChange={setInput}
                 onSubmit={handleSubmit}
                 loading={loading}
+                requestMode={requestMode}
+                onStop={handleStopResponse}
               />
             </>
           }
