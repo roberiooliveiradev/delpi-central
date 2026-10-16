@@ -14236,3 +14236,16 @@ NEXT=INDEPENDENT_STAGE_03_ARCHITECTURE_REVIEW
 **EVIDENCE:** GitHub file/commit persistence `PROVEN`. `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, `SSH=TEST_NOT_RUN` — esta execução via GitHub connector não dispõe de checkout/deps executáveis ou SSH nesta sessão. Não chamar a entrega de aceita/deployed.
 
 **GATES PRESERVED:** `CP-333=PLANNED_NOT_PASS`; `G1/G2=ACCEPT_WITH_RESIDUAL`; `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY`; `G3_END_TO_END=BLOCKED`; `PRESENTATION_V1=CURRENT_RUNTIME`; `PRESENTATION_V2_RUNTIME=OFF`; `C3_EXECUTED=NO`, `PHASE_PROGRESSION=NONE`. **NEXT:** bounded frontend vitest/typecheck/build/federation and real Portal full-page/dock QA + independent review on exact SHA; maintain backend feature OFF.
+
+## §6.207 — DELIA-C3-STAGE03-DISCOVERY-RELEVANCE-FIX-01 (RW-S03-01 FIXED)
+
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-STAGE03-DISCOVERY-RELEVANCE-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/32-stage-03-discovery-relevance-fix.md`. **BASE:** contains `e3104a1690` Stage03 implementation evidence. Doc 31 not rewritten.
+
+- **ROOT_CAUSE:** required free strings without enum/const were treated as owner-vocabulary need → speculative DISCOVERY.
+- **FIX:** `_requires_owner_vocabulary` = opaque envelopes only (`_is_open_vocabulary`); free strings never trigger catalog.
+- **PRESERVED:** envelope discovery; opaque-envelope guidance + rename/sibling; Stage02 B1/B2; zero material ACT.
+- **LIMIT:** free-text topic without enum/opaque envelope does not auto-DISCOVERY (contract cannot distinguish open text from controlled vocab).
+- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+RW_S03_01_STATUS=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO
+NEXT=INDEPENDENT_STAGE03_REVIEW

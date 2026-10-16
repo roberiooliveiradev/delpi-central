@@ -265,17 +265,16 @@ def _guide_provider(outcomes):
     )
 
 
-def test_ci01_open_string_field_triggers_owner_vocabulary_for_read():
-    """Stage 03: a *required* free string on READ needs owner vocabulary
-    (opaque envelope remains a separate path). Optional free strings do
-    not. Discovery still requires a unique same-group DISCOVERY peer."""
+def test_ci01_open_string_field_does_not_trigger_owner_vocabulary():
+    """RW-S03-01: a free string on READ is open text, not catalog need.
+    Opaque envelopes remain the vocabulary path; optional strings too."""
     descriptor = _cap(
         "docs", "acme-wiki", "read_guide",
         SpecialistOperationClass.READ,
         schema=_GUIDE_SCHEMA,
     )
     assert _is_open_vocabulary(_GUIDE_SCHEMA["properties"]["topic"]) is False
-    assert _requires_owner_vocabulary(descriptor) is True
+    assert _requires_owner_vocabulary(descriptor) is False
     optional_only = _cap(
         "docs", "acme-wiki", "analyze",
         SpecialistOperationClass.READ,

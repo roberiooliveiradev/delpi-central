@@ -207,11 +207,29 @@ def _orchestrator(providers, proposal):
     )
 
 
-_GUIDE_SCHEMA = {
+# Free-text string schemas — must NOT trigger DISCOVERY (RW-S03-01).
+_GUIDE_FREE_STRING_SCHEMA = {
     "type": "object",
     "properties": {"topic": {"type": "string"}},
     "required": ["topic"],
 }
+_SEARCH_QUERY_SCHEMA = {
+    "type": "object",
+    "properties": {"search_query": {"type": "string"}},
+    "required": ["search_query"],
+}
+_DESCRIPTION_SCHEMA = {
+    "type": "object",
+    "properties": {"description": {"type": "string"}},
+    "required": ["description"],
+}
+# Legitimate owner vocabulary: opaque envelope (existing Stage contract).
+_GUIDE_ENVELOPE_SCHEMA = {
+    "type": "object",
+    "properties": {"selection": {"type": "object"}},
+    "required": ["selection"],
+}
+_GUIDE_ARGS = {"selection": {"topic": "process"}}
 _ENUM_SCHEMA = {
     "type": "object",
     "properties": {
@@ -232,7 +250,7 @@ def _guide_with_discovery(provider_id="acme-wiki", group_id="docs"):
         _cap(
             group_id, provider_id, "read_guide",
             SpecialistOperationClass.READ,
-            schema=_GUIDE_SCHEMA,
+            schema=_GUIDE_ENVELOPE_SCHEMA,
             desc="read the how-to guide for a topic",
         ),
     ]
@@ -298,6 +316,7 @@ def test_d3_closed_enum_does_not_require_owner_vocabulary():
 
 
 def test_d3_01_guidance_available_runs_discovery_then_grounded_read():
+    """Opaque-envelope guidance still runs same-group DISCOVERY."""
     caps = _guide_with_discovery()
     provider = FakeProvider(
         "acme-wiki",
@@ -312,7 +331,7 @@ def test_d3_01_guidance_available_runs_discovery_then_grounded_read():
         _select(
             "docs",
             "read_guide",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [
@@ -349,7 +368,7 @@ def test_d3_02_guidance_without_discovery_peer_fails_closed_on_invented_topic():
                     _cap(
                         "docs", "acme-wiki", "read_guide",
                         SpecialistOperationClass.READ,
-                        schema=_GUIDE_SCHEMA,
+                        schema=_GUIDE_FREE_STRING_SCHEMA,
                     )
                 ],
             )
@@ -370,31 +389,117 @@ def test_d3_02_guidance_without_discovery_peer_fails_closed_on_invented_topic():
     assert provider.calls == [("read_guide", {"topic": "processo"})]
 
 
-# --- D3-03 / D3-04 free string vs enum ---
+# --- D3-03 / D3-04 free string vs enum (RW-S03-01) ---
 
 
-def test_d3_03_free_string_triggers_vocabulary_need_on_read():
+def test_d3_03_free_string_does_not_require_owner_vocabulary():
+    """Required free strings alone are open text, not catalog vocabulary."""
     descriptor = _cap(
         "docs", "acme", "read_guide",
         SpecialistOperationClass.READ,
-        schema=_GUIDE_SCHEMA,
+        schema=_GUIDE_FREE_STRING_SCHEMA,
     )
-    assert _requires_owner_vocabulary(descriptor) is True
+    assert _is_unconstrained_string(
+        _GUIDE_FREE_STRING_SCHEMA["properties"]["topic"]
+    ) is True
+    assert _requires_owner_vocabulary(descriptor) is False
 
 
-def test_d3_03b_optional_free_string_does_not_trigger_vocabulary():
-    """Optional free strings alone must not force discovery — otherwise
-    every READ with a discretionary string (e.g. view filters) would
-    call the catalog indiscriminately."""
-    descriptor = _cap(
-        "ops", "acme", "analyze",
-        SpecialistOperationClass.READ,
-        schema={
-            "type": "object",
-            "properties": {"view": {"type": "string"}},
+def test_d3_03b_required_search_query_does_not_call_unrelated_discovery():
+    caps = [
+        _cap(
+            "docs", "acme-wiki", "list_topics",
+            SpecialistOperationClass.DISCOVERY,
+        ),
+        _cap(
+            "docs", "acme-wiki", "search_docs",
+            SpecialistOperationClass.READ,
+            schema=_SEARCH_QUERY_SCHEMA,
+        ),
+    ]
+    provider = FakeProvider(
+        "acme-wiki",
+        [_group("acme-wiki", "docs", caps)],
+        outcomes={
+            ("docs", "search_docs"): _outcome(
+                "docs", "search_docs", "hits",
+                structured={
+                    "data": {"items": [{"title": "hit"}]}
+                },
+            ),
         },
     )
-    assert _requires_owner_vocabulary(descriptor) is False
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "search_docs",
+            arguments={"search_query": "processo industrial"},
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["title"]}
+                    ]
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Busque processo industrial")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [c[0] for c in provider.calls] == ["search_docs"]
+
+
+def test_d3_03c_required_description_does_not_call_discovery():
+    caps = [
+        _cap(
+            "docs", "acme-wiki", "list_topics",
+            SpecialistOperationClass.DISCOVERY,
+        ),
+        _cap(
+            "docs", "acme-wiki", "annotate",
+            SpecialistOperationClass.READ,
+            schema=_DESCRIPTION_SCHEMA,
+        ),
+    ]
+    provider = FakeProvider(
+        "acme-wiki",
+        [_group("acme-wiki", "docs", caps)],
+        outcomes={
+            ("docs", "annotate"): _outcome(
+                "docs", "annotate", "ok",
+                structured={
+                    "data": {"items": [{"status": "noted"}]}
+                },
+            ),
+        },
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "annotate",
+            arguments={"description": "texto livre do usuário"},
+            extra={
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["status"]}
+                    ]
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Anote esta descrição")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [c[0] for c in provider.calls] == ["annotate"]
+
+
+def test_d3_03d_opaque_envelope_still_requires_owner_vocabulary():
+    descriptor = _cap(
+        "docs", "acme", "read_guide",
+        SpecialistOperationClass.READ,
+        schema=_GUIDE_ENVELOPE_SCHEMA,
+    )
+    assert _requires_owner_vocabulary(descriptor) is True
 
 
 def test_d3_04_closed_enum_skips_discovery_even_with_peer():
@@ -448,7 +553,7 @@ def test_d3_05_tool_rename_preserves_discovery_then_read():
         _cap(
             "docs", "acme-wiki", "fetch_howto",
             SpecialistOperationClass.READ,
-            schema=_GUIDE_SCHEMA,
+            schema=_GUIDE_ENVELOPE_SCHEMA,
         ),
     ]
     provider = FakeProvider(
@@ -471,7 +576,7 @@ def test_d3_05_tool_rename_preserves_discovery_then_read():
         _select(
             "docs",
             "fetch_howto",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [
@@ -505,7 +610,7 @@ def test_d3_06_provider_neutral_openapi_sibling():
         _cap(
             "kb", "openapi", "get_howto",
             SpecialistOperationClass.READ,
-            schema=_GUIDE_SCHEMA,
+            schema=_GUIDE_ENVELOPE_SCHEMA,
         ),
     ]
     provider = FakeProvider(
@@ -528,7 +633,7 @@ def test_d3_06_provider_neutral_openapi_sibling():
         _select(
             "kb",
             "get_howto",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [
@@ -560,7 +665,7 @@ def test_d3_07_removed_discovery_does_not_invent_catalog_call():
                     _cap(
                         "docs", "acme-wiki", "read_guide",
                         SpecialistOperationClass.READ,
-                        schema=_GUIDE_SCHEMA,
+                        schema=_GUIDE_FREE_STRING_SCHEMA,
                     )
                 ],
             )
@@ -584,7 +689,7 @@ def test_d3_07_removed_discovery_does_not_invent_catalog_call():
 
 
 def test_d3_08_prepare_class_does_not_use_string_trigger_alone():
-    """PREPARE with a plain string field is NOT Stage03 string-trigger;
+    """PREPARE with a plain string field does not imply vocabulary need;
     opaque envelope path remains the write vocabulary path."""
     descriptor = _cap(
         "ops", "acme", "prepare_record",
@@ -626,7 +731,7 @@ def test_d3_10_guidance_question_never_invokes_prepare():
         _select(
             "docs",
             "read_guide",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [
@@ -676,7 +781,7 @@ def test_d3_11_discovery_injection_text_is_untrusted_data_not_act():
         _select(
             "docs",
             "read_guide",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [
@@ -714,7 +819,7 @@ def test_d3_12_guidance_read_authz_denied_fail_closed():
     )
     orch, _ = _orchestrator(
         [provider],
-        _select("docs", "read_guide", arguments={"topic": "process"}),
+        _select("docs", "read_guide", arguments=_GUIDE_ARGS),
     )
     attempt = orch.attempt("Como criar um processo?")
     assert attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
@@ -736,7 +841,7 @@ def test_d3_13_discovery_respects_turn_budget_exhausted():
         },
     )
     model = FakeProposalModel(
-        _select("docs", "read_guide", arguments={"topic": "process"})
+        _select("docs", "read_guide", arguments=_GUIDE_ARGS)
     )
     orch = OperationalCapabilityOrchestrator(
         [provider],
@@ -777,7 +882,7 @@ def test_d3_14_followup_guidance_does_not_elevate_history_to_act():
         _select(
             "docs",
             "read_guide",
-            arguments={"topic": "process"},
+            arguments=_GUIDE_ARGS,
             extra={
                 SYNTHESIS_INSTRUCTION_ID: {
                     "items": [

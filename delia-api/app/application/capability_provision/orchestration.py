@@ -655,10 +655,10 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
 def _is_unconstrained_string(node: object) -> bool:
     """True when a schema node is a free string with no closed enum/const.
 
-    Stage 03: required free strings on READ/ANALYSIS may need same-group
-    DISCOVERY to surface owner vocabulary. Closed ``enum``/``const``
-    already declare the vocabulary in-schema — no discovery trigger.
-    Structural only — never field-name or provider hardcode.
+    A free string alone is legitimate open text (search, name, description)
+    — it does **not** imply owner-catalog vocabulary. Closed ``enum`` /
+    ``const`` declare values in-schema. Structural only — never
+    field-name or provider hardcode.
     """
     if not isinstance(node, Mapping):
         return False
@@ -672,10 +672,12 @@ def _is_unconstrained_string(node: object) -> bool:
 def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
     """Detect when argument values live only in the owner's vocabulary.
 
-    Covers: (1) opaque envelope fields (Stage envelope discovery) and
-    (2) Stage 03 — READ/ANALYSIS with at least one *required*
-    unconstrained string property. Optional free strings alone do not
-    trigger discovery (avoids catalog calls on every READ). Caller still
+    Only opaque envelope fields (object without properties / array
+    without item shape — see ``_is_open_vocabulary``) demonstrate that
+    the JSON Schema cannot express legal values and same-group DISCOVERY
+    may supply them. Required free strings alone never trigger discovery
+    (RW-S03-01): the contract cannot distinguish controlled vocabulary
+    from open text without enum/const or an opaque envelope. Caller still
     requires ``_discovery_capability`` before discovery runs. Never
     provider-specific.
     """
@@ -685,25 +687,7 @@ def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
     properties = schema.get("properties")
     if not isinstance(properties, Mapping):
         return False
-    if any(_is_open_vocabulary(node) for node in properties.values()):
-        return True
-    if descriptor.operation_class not in (
-        SpecialistOperationClass.READ,
-        SpecialistOperationClass.ANALYSIS,
-    ):
-        return False
-    required = schema.get("required")
-    required_names = (
-        {str(name) for name in required}
-        if isinstance(required, (list, tuple))
-        else set()
-    )
-    if not required_names:
-        return False
-    return any(
-        name in required_names and _is_unconstrained_string(node)
-        for name, node in properties.items()
-    )
+    return any(_is_open_vocabulary(node) for node in properties.values())
 
 
 # SpecialistOperationClass -> canonical OperationCharacter for the
