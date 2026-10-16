@@ -91,6 +91,19 @@ class InteractionRoomRepositoryPort(Protocol):
         active."""
         ...
 
+    # Every write above and every mutation of authorizing state (link
+    # upsert/tombstone, participant add/remove, room tombstone/restore)
+    # serializes on the same single-row room lock — consistent ordering,
+    # one lock per transaction, no deadlock shape.
+    #
+    # ``expected_room`` is the snapshot the caller authorized against
+    # (``repo.get`` output). When supplied, the writer re-validates it
+    # UNDER the room lock before writing: room still active, same
+    # access_scope, identical active-link set, and the actor's
+    # participation intact when the snapshot included it. Any drift
+    # raises ``StaleRoomAuthorization`` — the authorization taken over a
+    # different context must never persist content (stale-authz fix).
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool: ...
@@ -139,26 +152,50 @@ class InteractionRoomRepositoryPort(Protocol):
         content: str,
         parent_id: str | None = None,
         mentions: tuple[tuple[str, str], ...] = (),
+        expected_room: InteractionRoom | None = None,
+        mark_author_read: bool = False,
     ) -> InteractionMessage: ...
 
     def get_message(self, message_id: str) -> InteractionMessage | None: ...
 
-    def update_message(self, *, message_id: str, content: str) -> InteractionMessage | None: ...
+    def update_message(
+        self, *, message_id: str, content: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> InteractionMessage | None: ...
 
-    def soft_delete_message(self, message_id: str) -> InteractionMessage | None: ...
+    def soft_delete_message(
+        self, message_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionMessage | None: ...
 
-    def toggle_reaction(self, *, message_id: str, user_id: str, code: str) -> None: ...
+    def toggle_reaction(
+        self, *, message_id: str, user_id: str, code: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None: ...
 
-    def pin_message(self, *, room_id: str, message_id: str, user_id: str) -> None: ...
+    def pin_message(
+        self, *, room_id: str, message_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None: ...
 
-    def unpin_message(self, *, room_id: str, message_id: str) -> None: ...
+    def unpin_message(
+        self, *, room_id: str, message_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None: ...
 
-    def mark_read(self, *, room_id: str, user_id: str) -> None: ...
+    def mark_read(
+        self, *, room_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None: ...
 
-    def add_attachment(self, attachment: InteractionAttachment) -> InteractionAttachment: ...
+    def add_attachment(
+        self, attachment: InteractionAttachment,
+        *, expected_room: InteractionRoom | None = None,
+    ) -> InteractionAttachment: ...
 
     def get_attachment(self, attachment_id: str) -> InteractionAttachment | None: ...
 
-    def delete_attachment(self, attachment_id: str) -> InteractionAttachment | None: ...
+    def delete_attachment(
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionAttachment | None: ...
 
     def list_attachments(self, room_id: str) -> list[InteractionAttachment]: ...

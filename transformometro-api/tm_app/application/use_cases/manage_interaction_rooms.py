@@ -685,8 +685,9 @@ class InteractionRoomUseCases:
             content=text,
             parent_id=parent,
             mentions=normalize_mentions(mentions),
+            expected_room=room,
+            mark_author_read=True,
         )
-        self._repo.mark_read(room_id=room.id, user_id=actor)
         confirmed = self._repo.get_message(created.id)
         if confirmed is None or confirmed.content != text or confirmed.author_user_id != actor:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
@@ -704,11 +705,13 @@ class InteractionRoomUseCases:
         authorization: str | None = None,
     ) -> InteractionMessage:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor, authorization)
+        room, message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         text = normalize_message_content(content)
-        updated = self._repo.update_message(message_id=message.id, content=text)
+        updated = self._repo.update_message(
+            message_id=message.id, content=text, expected_room=room
+        )
         if updated is None or updated.content != text or updated.edited_at is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return updated
@@ -722,10 +725,10 @@ class InteractionRoomUseCases:
         authorization: str | None = None,
     ) -> InteractionMessage:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor, authorization)
+        room, message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             return message
-        deleted = self._repo.soft_delete_message(message.id)
+        deleted = self._repo.soft_delete_message(message.id, expected_room=room)
         if deleted is None or deleted.deleted_at is None or deleted.to_dict()["content"] != "":
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return deleted
@@ -741,12 +744,15 @@ class InteractionRoomUseCases:
     ) -> InteractionMessage:
         self._policy.require_access(user)
         actor = _actor(user)
-        message = self._message_in_room(user, room_id, message_id, authorization)
+        room, message = self._message_in_room(user, room_id, message_id, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         normalized = normalize_reaction_code(code)
         had = any(item.user_id == actor and item.code == normalized for item in message.reactions)
-        self._repo.toggle_reaction(message_id=message.id, user_id=actor, code=normalized)
+        self._repo.toggle_reaction(
+            message_id=message.id, user_id=actor, code=normalized,
+            expected_room=room,
+        )
         confirmed = self._repo.get_message(message.id)
         has = confirmed is not None and any(
             item.user_id == actor and item.code == normalized for item in confirmed.reactions
@@ -765,10 +771,13 @@ class InteractionRoomUseCases:
     ) -> InteractionMessage:
         self._policy.require_access(user)
         actor = _actor(user)
-        message = self._message_in_room(user, room_id, message_id, authorization)
+        room, message = self._message_in_room(user, room_id, message_id, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
-        self._repo.pin_message(room_id=message.room_id, message_id=message.id, user_id=actor)
+        self._repo.pin_message(
+            room_id=message.room_id, message_id=message.id, user_id=actor,
+            expected_room=room,
+        )
         confirmed = self._repo.get_message(message.id)
         if confirmed is None or not confirmed.pinned:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
@@ -783,8 +792,10 @@ class InteractionRoomUseCases:
         authorization: str | None = None,
     ) -> InteractionMessage:
         self._policy.require_access(user)
-        message = self._message_in_room(user, room_id, message_id, authorization)
-        self._repo.unpin_message(room_id=message.room_id, message_id=message.id)
+        room, message = self._message_in_room(user, room_id, message_id, authorization)
+        self._repo.unpin_message(
+            room_id=message.room_id, message_id=message.id, expected_room=room
+        )
         confirmed = self._repo.get_message(message.id)
         if confirmed is None or confirmed.pinned:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
@@ -795,7 +806,9 @@ class InteractionRoomUseCases:
     ) -> None:
         self._policy.require_access(user)
         room = self._authorized_room(user, room_id, authorization)
-        self._repo.mark_read(room_id=room.id, user_id=_actor(user))
+        self._repo.mark_read(
+            room_id=room.id, user_id=_actor(user), expected_room=room
+        )
 
     def get_message(
         self,
@@ -805,7 +818,8 @@ class InteractionRoomUseCases:
         *,
         authorization: str | None = None,
     ) -> InteractionMessage:
-        return self._message_in_room(user, room_id, message_id, authorization)
+        _room, message = self._message_in_room(user, room_id, message_id, authorization)
+        return message
 
     def list_attachments(
         self, user: Any, room_id: str, *, authorization: str | None = None
@@ -825,7 +839,7 @@ class InteractionRoomUseCases:
         authorization: str | None = None,
     ) -> InteractionAttachment:
         actor = _actor(user)
-        message = self._own_message(user, room_id, message_id, actor, authorization)
+        room, message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             raise ValueError("A mensagem foi removida.")
         stored_name, safe_name = self._files().save(
@@ -845,7 +859,8 @@ class InteractionRoomUseCases:
                 uploaded_by_user_id=actor,
                 created_at=None,
                 stored_name=stored_name,
-            )
+            ),
+            expected_room=room,
         )
         confirmed = self._repo.get_attachment(created.id)
         if (
@@ -889,7 +904,7 @@ class InteractionRoomUseCases:
             raise LookupError("Arquivo não encontrado.")
         if attachment.uploaded_by_user_id != actor:
             raise PermissionError("Só quem enviou pode remover este arquivo.")
-        removed = self._repo.delete_attachment(attachment.id)
+        removed = self._repo.delete_attachment(attachment.id, expected_room=room)
         if removed is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         path = self._files().base_dir / room.id / removed.stored_name
@@ -915,12 +930,12 @@ class InteractionRoomUseCases:
         room_id: str,
         message_id: str,
         authorization: str | None = None,
-    ) -> InteractionMessage:
+    ) -> tuple[InteractionRoom, InteractionMessage]:
         room = self._authorized_room(user, room_id, authorization)
         message = self._repo.get_message(normalize_uuid(message_id, label="A mensagem"))
         if message is None or message.room_id != room.id:
             raise LookupError("Mensagem não encontrada.")
-        return message
+        return room, message
 
     def _own_message(
         self,
@@ -929,8 +944,8 @@ class InteractionRoomUseCases:
         message_id: str,
         actor: str,
         authorization: str | None = None,
-    ) -> InteractionMessage:
-        message = self._message_in_room(user, room_id, message_id, authorization)
+    ) -> tuple[InteractionRoom, InteractionMessage]:
+        room, message = self._message_in_room(user, room_id, message_id, authorization)
         if message.author_user_id != actor:
             raise PermissionError("Só o autor pode alterar esta mensagem.")
-        return message
+        return room, message

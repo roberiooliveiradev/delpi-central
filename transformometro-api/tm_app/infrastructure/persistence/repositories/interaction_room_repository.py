@@ -21,6 +21,7 @@ from tm_app.domain.ports.interaction_room_repository_port import InteractionRoom
 from tm_app.domain.services.interaction_room_access_service import (
     PrimaryLinkConflict,
     RoomAccessExpansionBlocked,
+    StaleRoomAuthorization,
 )
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
@@ -275,6 +276,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         single transaction. Releases every active primary claim without
         touching history."""
         with self.db() as connection:
+            self._lock_room(connection, room_id)
             row = self.execute_returning_one(
                 f"""UPDATE {_S}.tm_interaction_rooms
                     SET deleted_at = NOW(), deleted_by_user_id = %s::uuid,
@@ -303,6 +305,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         (no partial reactivation)."""
         try:
             with self.db() as connection:
+                self._lock_room(connection, room_id)
                 row = self.execute_returning_one(
                     f"""UPDATE {_S}.tm_interaction_rooms
                         SET deleted_at = NULL, deleted_by_user_id = NULL,
@@ -370,17 +373,23 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         actor_user_id: str,
     ) -> InteractionRoomLink:
         try:
-            row = self.execute_returning_one(
-                f"""INSERT INTO {_S}.tm_interaction_room_links
-                        (room_id, entity_type, entity_key, link_role, created_by_user_id)
-                    VALUES (%s::uuid, %s, %s, %s, %s::uuid)
-                    ON CONFLICT (room_id, entity_type, entity_key) DO UPDATE SET
-                        link_role = EXCLUDED.link_role,
-                        deleted_at = NULL,
-                        deleted_cause = NULL
-                    RETURNING id""",
-                (room_id, entity_type, entity_key, link_role, actor_user_id),
-            )
+            with self.db() as connection:
+                # A link write mutates the authorizing state — it must
+                # serialize with writers re-validating under the lock.
+                self._lock_room(connection, room_id)
+                row = self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_room_links
+                            (room_id, entity_type, entity_key, link_role, created_by_user_id)
+                        VALUES (%s::uuid, %s, %s, %s, %s::uuid)
+                        ON CONFLICT (room_id, entity_type, entity_key) DO UPDATE SET
+                            link_role = EXCLUDED.link_role,
+                            deleted_at = NULL,
+                            deleted_cause = NULL
+                        RETURNING id""",
+                    (room_id, entity_type, entity_key, link_role, actor_user_id),
+                    auto_commit=False,
+                )
+                connection.commit()
         except PluginsRepositoryError as exc:
             if self._is_primary_conflict(exc):
                 raise PrimaryLinkConflict(
@@ -408,14 +417,26 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return _link(row) if row else None
 
     def tombstone_link(self, link_id: str, *, cause: str) -> InteractionRoomLink | None:
-        row = self.execute_returning_one(
-            f"""UPDATE {_S}.tm_interaction_room_links
-                SET deleted_at = NOW(), deleted_cause = %s
-                WHERE id = %s::uuid AND deleted_at IS NULL
-                RETURNING id""",
-            (cause, link_id),
-        )
-        return self._link_by_id(str(row["id"])) if row else None
+        with self.db() as connection:
+            owner = connection.execute(
+                f"""SELECT room_id FROM {_S}.tm_interaction_room_links
+                    WHERE id = %s::uuid""",
+                (link_id,),
+            ).fetchone()
+            if owner is None:
+                return None
+            # Removing a link mutates the authorizing state — same room
+            # lock as writers so the relation serializes consistently.
+            self._lock_room(connection, str(dict(owner)["room_id"]))
+            row = connection.execute(
+                f"""UPDATE {_S}.tm_interaction_room_links
+                    SET deleted_at = NOW(), deleted_cause = %s
+                    WHERE id = %s::uuid AND deleted_at IS NULL
+                    RETURNING id""",
+                (cause, link_id),
+            ).fetchone()
+            connection.commit()
+        return self._link_by_id(str(dict(row)["id"])) if row else None
 
     @staticmethod
     def _lock_room(connection, room_id: str) -> None:
@@ -473,6 +494,66 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             connection.commit()
         return self._link_by_id(str(dict(tomb)["id"])) if tomb else None
 
+    @staticmethod
+    def _assert_authorization_current(
+        connection,
+        room_id: str,
+        expected_room: InteractionRoom,
+        *,
+        actor_user_id: str | None = None,
+    ) -> None:
+        """Re-validate the persisted authorizing state UNDER the room
+        lock — the relation between authorization and write, not just
+        physical INSERT ordering. The use case authorized exactly the
+        ``expected_room`` snapshot (``repo.get`` output); if the
+        persisted state still matches, that decision stands. Drift —
+        room tombstoned, scope changed, active-link set changed, or the
+        actor's participation revoked — raises StaleRoomAuthorization
+        before any statement mutates."""
+        row = connection.execute(
+            f"""SELECT access_scope, deleted_at
+                FROM {_S}.tm_interaction_rooms WHERE id = %s::uuid""",
+            (room_id,),
+        ).fetchone()
+        row = dict(row) if row else None
+        current_links = {
+            str(dict(item)["id"])
+            for item in connection.execute(
+                f"""SELECT id FROM {_S}.tm_interaction_room_links
+                    WHERE room_id = %s::uuid AND deleted_at IS NULL""",
+                (room_id,),
+            ).fetchall()
+        }
+        expected_links = {
+            link.id for link in expected_room.links if link.deleted_at is None
+        }
+        stale = (
+            expected_room.id != room_id
+            or row is None
+            or row["deleted_at"] is not None
+            or str(row["access_scope"]) != expected_room.access_scope
+            or current_links != expected_links
+        )
+        if (
+            not stale
+            and actor_user_id is not None
+            and any(
+                item.user_id == actor_user_id
+                for item in expected_room.participants
+            )
+        ):
+            member = connection.execute(
+                f"""SELECT user_id FROM {_S}.tm_interaction_room_participants
+                    WHERE room_id = %s::uuid AND user_id = %s::uuid
+                      AND removed_at IS NULL""",
+                (room_id, actor_user_id),
+            ).fetchone()
+            stale = member is None
+        if stale:
+            raise StaleRoomAuthorization(
+                "O contexto de autorização mudou; repita a operação."
+            )
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool:
@@ -487,30 +568,40 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def add_participant(
         self, *, room_id: str, user_id: str, role: str, actor_user_id: str
     ) -> InteractionRoomParticipant:
-        row = self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_room_participants
-                    (room_id, user_id, role, added_by_user_id)
-                VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
-                ON CONFLICT (room_id, user_id) DO UPDATE SET
-                    role = EXCLUDED.role,
-                    removed_at = NULL,
-                    added_by_user_id = EXCLUDED.added_by_user_id
-                RETURNING room_id, user_id, role, added_by_user_id,
-                          created_at, removed_at""",
-            (room_id, user_id, role, actor_user_id),
-        )
+        with self.db() as connection:
+            self._lock_room(connection, room_id)
+            row = self.execute_returning_one(
+                f"""INSERT INTO {_S}.tm_interaction_room_participants
+                        (room_id, user_id, role, added_by_user_id)
+                    VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                    ON CONFLICT (room_id, user_id) DO UPDATE SET
+                        role = EXCLUDED.role,
+                        removed_at = NULL,
+                        added_by_user_id = EXCLUDED.added_by_user_id
+                    RETURNING room_id, user_id, role, added_by_user_id,
+                              created_at, removed_at""",
+                (room_id, user_id, role, actor_user_id),
+                auto_commit=False,
+            )
+            connection.commit()
         if row is None:
             raise RuntimeError("Falha ao gravar o participante.")
         return _participant(row)
 
     def remove_participant(self, *, room_id: str, user_id: str) -> None:
-        self.execute(
-            f"""UPDATE {_S}.tm_interaction_room_participants
-                SET removed_at = NOW()
-                WHERE room_id = %s::uuid AND user_id = %s::uuid
-                  AND removed_at IS NULL""",
-            (room_id, user_id),
-        )
+        with self.db() as connection:
+            # Participation is authorizing state — serialize with
+            # writers re-validating under the room lock.
+            self._lock_room(connection, room_id)
+            self.execute(
+                f"""UPDATE {_S}.tm_interaction_room_participants
+                    SET removed_at = NOW()
+                    WHERE room_id = %s::uuid AND user_id = %s::uuid
+                      AND removed_at IS NULL""",
+                (room_id, user_id),
+                auto_commit=False,
+            )
+            connection.commit()
 
     def list_participants(
         self, room_id: str, *, active_only: bool = True
@@ -712,12 +803,20 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         content: str,
         parent_id: str | None = None,
         mentions: tuple[tuple[str, str], ...] = (),
+        expected_room: InteractionRoom | None = None,
+        mark_author_read: bool = False,
     ) -> InteractionMessage:
         with self.db() as connection:
             # Room-row lock first: serializes against guarded link
             # removal — the write either lands before the recount or
-            # waits for the commit (R-1 TOCTOU).
+            # waits for the commit (R-1 TOCTOU). Then the authorized
+            # snapshot is re-validated inside the same lock.
             self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room,
+                    actor_user_id=author_user_id,
+                )
             if parent_id:
                 row = self.execute_returning_one(
                     f"""INSERT INTO {_S}.tm_interaction_messages
@@ -748,6 +847,17 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
                     (message_id, user_id, label),
                     auto_commit=False,
                 )
+            if mark_author_read:
+                # The author's own read marker belongs to the same
+                # authorized write — same lock, same transaction.
+                self.execute_returning_one(
+                    f"""INSERT INTO {_S}.tm_interaction_reads (room_id, user_id, last_read_at)
+                        VALUES (%s::uuid, %s::uuid, NOW())
+                        ON CONFLICT (room_id, user_id) DO UPDATE SET last_read_at = NOW()
+                        RETURNING room_id""",
+                    (room_id, author_user_id),
+                    auto_commit=False,
+                )
             self.execute_returning_one(
                 f"UPDATE {_S}.tm_interaction_rooms SET updated_at = NOW() WHERE id = %s::uuid RETURNING id",
                 (room_id,),
@@ -766,38 +876,82 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             return None
         return self._decorate([_message(row)])[0]
 
-    def update_message(self, *, message_id: str, content: str) -> InteractionMessage | None:
-        row = self.execute_returning_one(
-            f"""UPDATE {_S}.tm_interaction_messages
-                SET content = %s, edited_at = NOW()
-                WHERE id = %s::uuid AND deleted_at IS NULL
-                RETURNING id""",
-            (content, message_id),
-        )
+    def update_message(
+        self, *, message_id: str, content: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> InteractionMessage | None:
+        with self.db() as connection:
+            room_id = self._message_room(connection, message_id)
+            if room_id is None:
+                return None
+            self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room
+                )
+            row = self.execute_returning_one(
+                f"""UPDATE {_S}.tm_interaction_messages
+                    SET content = %s, edited_at = NOW()
+                    WHERE id = %s::uuid AND deleted_at IS NULL
+                    RETURNING id""",
+                (content, message_id),
+                auto_commit=False,
+            )
+            connection.commit()
         if row is None:
             return None
         return self.get_message(message_id)
 
-    def soft_delete_message(self, message_id: str) -> InteractionMessage | None:
-        row = self.execute_returning_one(
-            f"""UPDATE {_S}.tm_interaction_messages
-                SET deleted_at = NOW()
-                WHERE id = %s::uuid AND deleted_at IS NULL
-                RETURNING id""",
+    def soft_delete_message(
+        self, message_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionMessage | None:
+        with self.db() as connection:
+            room_id = self._message_room(connection, message_id)
+            if room_id is None:
+                return None
+            self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room
+                )
+            row = self.execute_returning_one(
+                f"""UPDATE {_S}.tm_interaction_messages
+                    SET deleted_at = NOW()
+                    WHERE id = %s::uuid AND deleted_at IS NULL
+                    RETURNING id""",
+                (message_id,),
+                auto_commit=False,
+            )
+            connection.commit()
+        if row is None:
+            return None
+        return self.get_message(message_id)
+
+    @staticmethod
+    def _message_room(connection, message_id: str) -> str | None:
+        row = connection.execute(
+            f"SELECT room_id FROM {_S}.tm_interaction_messages WHERE id = %s::uuid",
             (message_id,),
-        )
-        if row is None:
-            return None
-        return self.get_message(message_id)
+        ).fetchone()
+        return str(dict(row)["room_id"]) if row else None
 
-    def toggle_reaction(self, *, message_id: str, user_id: str, code: str) -> None:
+    def toggle_reaction(
+        self, *, message_id: str, user_id: str, code: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self.db() as connection:
             room = connection.execute(
                 f"SELECT room_id FROM {_S}.tm_interaction_messages WHERE id = %s::uuid",
                 (message_id,),
             ).fetchone()
             if room is not None:
-                self._lock_room(connection, str(dict(room)["room_id"]))
+                room_id = str(dict(room)["room_id"])
+                self._lock_room(connection, room_id)
+                if expected_room is not None:
+                    self._assert_authorization_current(
+                        connection, room_id, expected_room,
+                        actor_user_id=user_id,
+                    )
             removed = self.execute_returning_one(
                 f"""DELETE FROM {_S}.tm_interaction_reactions
                     WHERE message_id = %s::uuid AND user_id = %s::uuid AND code = %s
@@ -815,9 +969,16 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
                 )
             connection.commit()
 
-    def pin_message(self, *, room_id: str, message_id: str, user_id: str) -> None:
+    def pin_message(
+        self, *, room_id: str, message_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self.db() as connection:
             self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room, actor_user_id=user_id
+                )
             self.execute_returning_one(
                 f"""INSERT INTO {_S}.tm_interaction_pins (room_id, message_id, pinned_by_user_id)
                     VALUES (%s::uuid, %s::uuid, %s::uuid)
@@ -828,9 +989,16 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             )
             connection.commit()
 
-    def unpin_message(self, *, room_id: str, message_id: str) -> None:
+    def unpin_message(
+        self, *, room_id: str, message_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self.db() as connection:
             self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room
+                )
             self.execute(
                 f"""DELETE FROM {_S}.tm_interaction_pins
                     WHERE room_id = %s::uuid AND message_id = %s::uuid""",
@@ -839,9 +1007,16 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             )
             connection.commit()
 
-    def mark_read(self, *, room_id: str, user_id: str) -> None:
+    def mark_read(
+        self, *, room_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self.db() as connection:
             self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room, actor_user_id=user_id
+                )
             self.execute_returning_one(
                 f"""INSERT INTO {_S}.tm_interaction_reads (room_id, user_id, last_read_at)
                     VALUES (%s::uuid, %s::uuid, NOW())
@@ -852,9 +1027,17 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             )
             connection.commit()
 
-    def add_attachment(self, attachment: InteractionAttachment) -> InteractionAttachment:
+    def add_attachment(
+        self, attachment: InteractionAttachment,
+        *, expected_room: InteractionRoom | None = None,
+    ) -> InteractionAttachment:
         with self.db() as connection:
             self._lock_room(connection, attachment.room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, attachment.room_id, expected_room,
+                    actor_user_id=attachment.uploaded_by_user_id,
+                )
             row = self.execute_returning_one(
                 f"""INSERT INTO {_S}.tm_interaction_attachments
                         (id, message_id, room_id, file_name, stored_name, content_type, byte_size, uploaded_by_user_id)
@@ -887,15 +1070,32 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         )
         return _attachment(row) if row else None
 
-    def delete_attachment(self, attachment_id: str) -> InteractionAttachment | None:
-        row = self.execute_returning_one(
-            f"""DELETE FROM {_S}.tm_interaction_attachments
-                WHERE id = %s::uuid
-                RETURNING id, message_id, room_id, file_name, stored_name, content_type, byte_size,
-                          uploaded_by_user_id, created_at""",
-            (attachment_id,),
-        )
-        return _attachment(row) if row else None
+    def delete_attachment(
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionAttachment | None:
+        with self.db() as connection:
+            owner = connection.execute(
+                f"""SELECT room_id FROM {_S}.tm_interaction_attachments
+                    WHERE id = %s::uuid""",
+                (attachment_id,),
+            ).fetchone()
+            if owner is None:
+                return None
+            room_id = str(dict(owner)["room_id"])
+            self._lock_room(connection, room_id)
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    connection, room_id, expected_room
+                )
+            row = connection.execute(
+                f"""DELETE FROM {_S}.tm_interaction_attachments
+                    WHERE id = %s::uuid
+                    RETURNING id, message_id, room_id, file_name, stored_name, content_type, byte_size,
+                              uploaded_by_user_id, created_at""",
+                (attachment_id,),
+            ).fetchone()
+            connection.commit()
+        return _attachment(dict(row)) if row else None
 
     def list_attachments(self, room_id: str) -> list[InteractionAttachment]:
         rows = self.fetch_all(
@@ -1079,48 +1279,50 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
     def soft_delete(
         self, room_id: str, *, actor_user_id: str | None = None
     ) -> InteractionRoom | None:
-        room = self.rooms.get(room_id)
-        if room is None or room.deleted_at is not None:
-            return None
-        now = datetime.now(timezone.utc)
-        deleted = replace(
-            room,
-            deleted_at=now,
-            deleted_by_user_id=actor_user_id,
-            updated_at=now,
-        )
-        self.rooms[room_id] = deleted
-        for link_id, link in self.links.items():
-            if link.room_id == room_id and link.deleted_at is None:
-                self.links[link_id] = replace(
-                    link, deleted_at=now, deleted_cause=LINK_DELETED_ROOM_DELETED
-                )
-        return self._graph(deleted, include_inactive_links=True)
+        with self._room_lock(room_id):
+            room = self.rooms.get(room_id)
+            if room is None or room.deleted_at is not None:
+                return None
+            now = datetime.now(timezone.utc)
+            deleted = replace(
+                room,
+                deleted_at=now,
+                deleted_by_user_id=actor_user_id,
+                updated_at=now,
+            )
+            self.rooms[room_id] = deleted
+            for link_id, link in self.links.items():
+                if link.room_id == room_id and link.deleted_at is None:
+                    self.links[link_id] = replace(
+                        link, deleted_at=now, deleted_cause=LINK_DELETED_ROOM_DELETED
+                    )
+            return self._graph(deleted, include_inactive_links=True)
 
     def restore_room(self, room_id: str) -> InteractionRoom | None:
-        room = self.rooms.get(room_id)
-        if room is None or room.deleted_at is None:
-            return None
-        now = datetime.now(timezone.utc)
-        revivable = [
-            link
-            for link in self.links.values()
-            if link.room_id == room_id
-            and link.deleted_cause == LINK_DELETED_ROOM_DELETED
-        ]
-        for link in revivable:
-            if link.link_role == "primary":
-                holder = self._active_primary_holder(link.entity_type, link.entity_key)
-                if holder is not None and holder != room_id:
-                    raise PrimaryLinkConflict(
-                        "O objeto já possui outra sala primária ativa."
-                    )
-        self.rooms[room_id] = replace(
-            room, deleted_at=None, deleted_by_user_id=None, updated_at=now
-        )
-        for link in revivable:
-            self.links[link.id] = replace(link, deleted_at=None, deleted_cause=None)
-        return self._graph(self.rooms[room_id], include_inactive_links=True)
+        with self._room_lock(room_id):
+            room = self.rooms.get(room_id)
+            if room is None or room.deleted_at is None:
+                return None
+            now = datetime.now(timezone.utc)
+            revivable = [
+                link
+                for link in self.links.values()
+                if link.room_id == room_id
+                and link.deleted_cause == LINK_DELETED_ROOM_DELETED
+            ]
+            for link in revivable:
+                if link.link_role == "primary":
+                    holder = self._active_primary_holder(link.entity_type, link.entity_key)
+                    if holder is not None and holder != room_id:
+                        raise PrimaryLinkConflict(
+                            "O objeto já possui outra sala primária ativa."
+                        )
+            self.rooms[room_id] = replace(
+                room, deleted_at=None, deleted_by_user_id=None, updated_at=now
+            )
+            for link in revivable:
+                self.links[link.id] = replace(link, deleted_at=None, deleted_cause=None)
+            return self._graph(self.rooms[room_id], include_inactive_links=True)
 
     # --- typed links --------------------------------------------------------
 
@@ -1164,53 +1366,58 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         link_role: str,
         actor_user_id: str,
     ) -> InteractionRoomLink:
-        if link_role == "primary":
-            holder = self._active_primary_holder(entity_type, entity_key)
-            if holder is not None and holder != room_id:
-                raise PrimaryLinkConflict(
-                    "O objeto já possui outra sala primária ativa."
-                )
-        existing = next(
-            (
-                link
-                for link in self.links.values()
-                if link.room_id == room_id
-                and link.entity_type == entity_type
-                and link.entity_key == entity_key
-            ),
-            None,
-        )
-        now = datetime.now(timezone.utc)
-        if existing is not None:
-            revived = replace(
-                existing,
-                link_role=link_role,
-                deleted_at=None,
-                deleted_cause=None,
+        with self._room_lock(room_id):
+            if link_role == "primary":
+                holder = self._active_primary_holder(entity_type, entity_key)
+                if holder is not None and holder != room_id:
+                    raise PrimaryLinkConflict(
+                        "O objeto já possui outra sala primária ativa."
+                    )
+            existing = next(
+                (
+                    link
+                    for link in self.links.values()
+                    if link.room_id == room_id
+                    and link.entity_type == entity_type
+                    and link.entity_key == entity_key
+                ),
+                None,
             )
-            self.links[existing.id] = revived
-            return revived
-        link = InteractionRoomLink(
-            id=str(uuid4()),
-            room_id=room_id,
-            entity_type=entity_type,
-            entity_key=entity_key,
-            link_role=link_role,
-            created_by_user_id=actor_user_id,
-            created_at=now,
-        )
-        self.links[link.id] = link
-        return link
+            now = datetime.now(timezone.utc)
+            if existing is not None:
+                revived = replace(
+                    existing,
+                    link_role=link_role,
+                    deleted_at=None,
+                    deleted_cause=None,
+                )
+                self.links[existing.id] = revived
+                return revived
+            link = InteractionRoomLink(
+                id=str(uuid4()),
+                room_id=room_id,
+                entity_type=entity_type,
+                entity_key=entity_key,
+                link_role=link_role,
+                created_by_user_id=actor_user_id,
+                created_at=now,
+            )
+            self.links[link.id] = link
+            return link
 
     def tombstone_link(self, link_id: str, *, cause: str) -> InteractionRoomLink | None:
         link = self.links.get(link_id)
         if link is None or link.deleted_at is not None:
             return None
-        tombstoned = replace(
-            link, deleted_at=datetime.now(timezone.utc), deleted_cause=cause
-        )
-        self.links[link_id] = tombstoned
-        return tombstoned
+        with self._room_lock(link.room_id):
+            link = self.links.get(link_id)
+            if link is None or link.deleted_at is not None:
+                return None
+            tombstoned = replace(
+                link, deleted_at=datetime.now(timezone.utc), deleted_cause=cause
+            )
+            self.links[link_id] = tombstoned
+            return tombstoned
 
     def _room_lock(self, room_id: str) -> threading.Lock:
         """Per-room mutex — InMemory twin of ``SELECT ... FOR UPDATE`` so
@@ -1238,6 +1445,45 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             self.links[link_id] = tombstoned
             return tombstoned
 
+    def _assert_authorization_current(
+        self,
+        room_id: str,
+        expected_room: InteractionRoom,
+        *,
+        actor_user_id: str | None = None,
+    ) -> None:
+        """InMemory twin of the SQL under-lock revalidation — same
+        comparisons against the dict state, same StaleRoomAuthorization."""
+        room = self.rooms.get(room_id)
+        current_links = {
+            link.id
+            for link in self.links.values()
+            if link.room_id == room_id and link.deleted_at is None
+        }
+        expected_links = {
+            link.id for link in expected_room.links if link.deleted_at is None
+        }
+        stale = (
+            expected_room.id != room_id
+            or room is None
+            or room.deleted_at is not None
+            or room.access_scope != expected_room.access_scope
+            or current_links != expected_links
+        )
+        if (
+            not stale
+            and actor_user_id is not None
+            and any(
+                item.user_id == actor_user_id
+                for item in expected_room.participants
+            )
+        ):
+            stale = not self.is_participant(room_id, actor_user_id)
+        if stale:
+            raise StaleRoomAuthorization(
+                "O contexto de autorização mudou; repita a operação."
+            )
+
     # --- participants -------------------------------------------------------
 
     def is_participant(self, room_id: str, user_id: str) -> bool:
@@ -1247,27 +1493,29 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
     def add_participant(
         self, *, room_id: str, user_id: str, role: str, actor_user_id: str
     ) -> InteractionRoomParticipant:
-        key = (room_id, user_id)
-        existing = self.participants.get(key)
-        if existing is not None:
-            revived = replace(existing, role=role, removed_at=None, added_by_user_id=actor_user_id)
-            self.participants[key] = revived
-            return revived
-        item = InteractionRoomParticipant(
-            room_id=room_id,
-            user_id=user_id,
-            role=role,
-            added_by_user_id=actor_user_id,
-            created_at=datetime.now(timezone.utc),
-        )
-        self.participants[key] = item
-        return item
+        with self._room_lock(room_id):
+            key = (room_id, user_id)
+            existing = self.participants.get(key)
+            if existing is not None:
+                revived = replace(existing, role=role, removed_at=None, added_by_user_id=actor_user_id)
+                self.participants[key] = revived
+                return revived
+            item = InteractionRoomParticipant(
+                room_id=room_id,
+                user_id=user_id,
+                role=role,
+                added_by_user_id=actor_user_id,
+                created_at=datetime.now(timezone.utc),
+            )
+            self.participants[key] = item
+            return item
 
     def remove_participant(self, *, room_id: str, user_id: str) -> None:
-        key = (room_id, user_id)
-        item = self.participants.get(key)
-        if item is not None and item.removed_at is None:
-            self.participants[key] = replace(item, removed_at=datetime.now(timezone.utc))
+        with self._room_lock(room_id):
+            key = (room_id, user_id)
+            item = self.participants.get(key)
+            if item is not None and item.removed_at is None:
+                self.participants[key] = replace(item, removed_at=datetime.now(timezone.utc))
 
     def list_participants(
         self, room_id: str, *, active_only: bool = True
@@ -1351,6 +1599,8 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         content: str,
         parent_id: str | None = None,
         mentions: tuple[tuple[str, str], ...] = (),
+        expected_room: InteractionRoom | None = None,
+        mark_author_read: bool = False,
     ) -> InteractionMessage:
         now = datetime.now(timezone.utc)
         message = InteractionMessage(
@@ -1363,7 +1613,13 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
             mentions=tuple(InteractionMention(user_id=user_id, label=label) for user_id, label in mentions),
         )
         with self._room_lock(room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    room_id, expected_room, actor_user_id=author_user_id
+                )
             self.messages[message.id] = message
+            if mark_author_read:
+                self.reads[(room_id, author_user_id)] = now
             self._refresh_preview(room_id)
             return self._view(message)
 
@@ -1371,59 +1627,117 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         message = self.messages.get(message_id)
         return self._view(message) if message else None
 
-    def update_message(self, *, message_id: str, content: str) -> InteractionMessage | None:
+    def update_message(
+        self, *, message_id: str, content: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> InteractionMessage | None:
         message = self.messages.get(message_id)
         if message is None or message.deleted_at is not None:
             return None
-        self.messages[message_id] = replace(message, content=content, edited_at=datetime.now(timezone.utc))
-        self._refresh_preview(message.room_id)
-        return self._view(self.messages[message_id])
+        with self._room_lock(message.room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    message.room_id, expected_room
+                )
+            self.messages[message_id] = replace(message, content=content, edited_at=datetime.now(timezone.utc))
+            self._refresh_preview(message.room_id)
+            return self._view(self.messages[message_id])
 
-    def soft_delete_message(self, message_id: str) -> InteractionMessage | None:
+    def soft_delete_message(
+        self, message_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionMessage | None:
         message = self.messages.get(message_id)
         if message is None or message.deleted_at is not None:
             return None
-        self.messages[message_id] = replace(message, deleted_at=datetime.now(timezone.utc))
-        self._refresh_preview(message.room_id)
-        return self._view(self.messages[message_id])
+        with self._room_lock(message.room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    message.room_id, expected_room
+                )
+            self.messages[message_id] = replace(message, deleted_at=datetime.now(timezone.utc))
+            self._refresh_preview(message.room_id)
+            return self._view(self.messages[message_id])
 
-    def toggle_reaction(self, *, message_id: str, user_id: str, code: str) -> None:
+    def toggle_reaction(
+        self, *, message_id: str, user_id: str, code: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         message = self.messages[message_id]
         with self._room_lock(message.room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    message.room_id, expected_room, actor_user_id=user_id
+                )
             current = list(message.reactions)
             kept = [item for item in current if not (item.user_id == user_id and item.code == code)]
             if len(kept) == len(current):
                 kept.append(InteractionReaction(user_id=user_id, code=code))
             self.messages[message_id] = replace(message, reactions=tuple(kept))
 
-    def pin_message(self, *, room_id: str, message_id: str, user_id: str) -> None:
-        del user_id
+    def pin_message(
+        self, *, room_id: str, message_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self._room_lock(room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    room_id, expected_room, actor_user_id=user_id
+                )
             self.pins.add((room_id, message_id))
 
-    def unpin_message(self, *, room_id: str, message_id: str) -> None:
+    def unpin_message(
+        self, *, room_id: str, message_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self._room_lock(room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(room_id, expected_room)
             self.pins.discard((room_id, message_id))
 
-    def mark_read(self, *, room_id: str, user_id: str) -> None:
+    def mark_read(
+        self, *, room_id: str, user_id: str,
+        expected_room: InteractionRoom | None = None,
+    ) -> None:
         with self._room_lock(room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    room_id, expected_room, actor_user_id=user_id
+                )
             self.reads[(room_id, user_id)] = datetime.now(timezone.utc)
 
-    def add_attachment(self, attachment: InteractionAttachment) -> InteractionAttachment:
+    def add_attachment(
+        self, attachment: InteractionAttachment,
+        *, expected_room: InteractionRoom | None = None,
+    ) -> InteractionAttachment:
         stored = replace(
             attachment,
             id=attachment.id or str(uuid4()),
             created_at=attachment.created_at or datetime.now(timezone.utc),
         )
         with self._room_lock(stored.room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    stored.room_id, expected_room,
+                    actor_user_id=stored.uploaded_by_user_id,
+                )
             self.attachments[stored.id] = stored
         return stored
 
     def get_attachment(self, attachment_id: str) -> InteractionAttachment | None:
         return self.attachments.get(attachment_id)
 
-    def delete_attachment(self, attachment_id: str) -> InteractionAttachment | None:
-        return self.attachments.pop(attachment_id, None)
+    def delete_attachment(
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+    ) -> InteractionAttachment | None:
+        attachment = self.attachments.get(attachment_id)
+        if attachment is None:
+            return None
+        with self._room_lock(attachment.room_id):
+            if expected_room is not None:
+                self._assert_authorization_current(
+                    attachment.room_id, expected_room
+                )
+            return self.attachments.pop(attachment_id, None)
 
     def list_attachments(self, room_id: str) -> list[InteractionAttachment]:
         rows = [item for item in self.attachments.values() if item.room_id == room_id]

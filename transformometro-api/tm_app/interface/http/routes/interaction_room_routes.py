@@ -12,6 +12,7 @@ from tm_app.domain.services.interaction_room_access_service import (
     RoomAccessExpansionBlocked,
     RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
+    StaleRoomAuthorization,
 )
 from tm_app.domain.services.interaction_room_rules import MAX_MESSAGE_LENGTH, normalize_message_content
 from tm_app.infrastructure.gateways.helpdesk_bff_gateway import HelpdeskBffGateway
@@ -95,6 +96,7 @@ def _handle(exc: Exception):
             RoomAuthorizationDenied,
             RoomAccessExpansionBlocked,
             RoomAnchorLinkRemovalLocked,
+            StaleRoomAuthorization,
             PrimaryLinkConflict,
         ),
     ):

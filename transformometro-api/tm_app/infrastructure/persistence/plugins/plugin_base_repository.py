@@ -28,7 +28,13 @@ class PluginBaseRepository:
     @contextmanager
     def db(self) -> Iterator[Connection[dict[str, Any]]]:
         if self._injected_connection is not None:
-            yield self._injected_connection
+            try:
+                yield self._injected_connection
+            except Exception:
+                # Same contract as the leased path: a failed unit of work
+                # never keeps an open transaction (and its locks) behind.
+                self._injected_connection.rollback()
+                raise
             return
 
         connection = acquire_plugins_connection()

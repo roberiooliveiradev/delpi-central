@@ -32,6 +32,7 @@ from tm_app.domain.services.interaction_room_access_service import (
     RoomAccessExpansionBlocked,
     RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
+    StaleRoomAuthorization,
 )
 from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
     InMemoryInteractionRoomRepository,
@@ -641,6 +642,136 @@ def test_after_race_denied_readers_stay_denied():
     with pytest.raises(RoomAuthorizationDenied) as denied:
         cases.get_room(_user(user_id=OTHER), room.id, authorization=BEARER)
     assert denied.value.status_code == 404
+
+
+# --- P0 final: stale authorization rejected under the lock ---------------------------
+
+
+def test_stale_write_rejected_after_link_removal():
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    repo.tombstone_link(link.id, cause="explicit")
+    with pytest.raises(StaleRoomAuthorization):
+        repo.add_message(
+            room_id=room.id, author_user_id=USER, content="x",
+            expected_room=room,
+        )
+    assert repo.protected_content_count(room.id) == 0
+
+
+def test_stale_write_rejected_after_participant_removal():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "membros", participant_ids=[OTHER])
+    repo.remove_participant(room_id=room.id, user_id=OTHER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.add_message(
+            room_id=room.id, author_user_id=OTHER, content="x",
+            expected_room=room,
+        )
+
+
+def test_stale_write_rejected_after_room_soft_delete():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "saiu")
+    repo.soft_delete(room.id, actor_user_id=USER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.add_message(
+            room_id=room.id, author_user_id=USER, content="x",
+            expected_room=room,
+        )
+
+
+def test_stale_write_rejected_after_new_restrictive_link():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "antes")
+    repo.upsert_link(
+        room_id=room.id, entity_type="helpdesk_ticket",
+        entity_key=TICKET, link_role="reference", actor_user_id=USER,
+    )
+    with pytest.raises(StaleRoomAuthorization):
+        repo.add_message(
+            room_id=room.id, author_user_id=USER, content="x",
+            expected_room=room,
+        )
+
+
+def test_write_proceeds_when_context_unchanged():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "ok", participant_ids=[OTHER])
+    created = repo.add_message(
+        room_id=room.id, author_user_id=OTHER, content="válido",
+        expected_room=room, mark_author_read=True,
+    )
+    assert created.id in repo.messages
+    assert (room.id, OTHER) in repo.reads
+
+
+def test_post_message_rejects_when_context_changes_midflight():
+    """Use-case level: the authorized snapshot is revalidated under the
+    lock — a mutation between authz and the write fails the whole call."""
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    link = _ticket_link(repo, room.id)
+    original = repo.add_message
+
+    def mutating_write(**kwargs):
+        repo.tombstone_link(link.id, cause="explicit")
+        return original(**kwargs)
+
+    repo.add_message = mutating_write
+    with pytest.raises(StaleRoomAuthorization):
+        cases.post_message(_user(), room.id, "fora de época", authorization=BEARER)
+    assert repo.protected_content_count(room.id) == 0
+
+
+def test_post_message_marks_author_read_atomically():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "lido")
+    cases.post_message(_user(), room.id, "oi")
+    assert (room.id, USER) in repo.reads
+    assert repo.protected_content_count(room.id) == 2
+
+
+@pytest.mark.parametrize(
+    "write",
+    [
+        lambda repo, room: repo.update_message(
+            message_id=_first_message(repo, room.id), content="e",
+            expected_room=room,
+        ),
+        lambda repo, room: repo.soft_delete_message(
+            _first_message(repo, room.id), expected_room=room
+        ),
+        lambda repo, room: repo.toggle_reaction(
+            message_id=_first_message(repo, room.id), user_id=USER,
+            code="like", expected_room=room,
+        ),
+        lambda repo, room: repo.pin_message(
+            room_id=room.id, message_id=_first_message(repo, room.id),
+            user_id=USER, expected_room=room,
+        ),
+        lambda repo, room: repo.unpin_message(
+            room_id=room.id, message_id=_first_message(repo, room.id),
+            expected_room=room,
+        ),
+        lambda repo, room: repo.mark_read(
+            room_id=room.id, user_id=OTHER, expected_room=room
+        ),
+    ],
+)
+def test_all_writers_reject_stale_context(write):
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "sweep", participant_ids=[OTHER])
+    repo.add_message(room_id=room.id, author_user_id=USER, content="m")
+    authorized = repo.get(room.id)
+    repo.soft_delete(room.id, actor_user_id=USER)
+    with pytest.raises(StaleRoomAuthorization):
+        write(repo, authorized)
+
+
+def _first_message(repo, room_id):
+    return next(m.id for m in repo.messages.values() if m.room_id == room_id)
 
 
 # --- P1 participant self-removal ---------------------------------------------------

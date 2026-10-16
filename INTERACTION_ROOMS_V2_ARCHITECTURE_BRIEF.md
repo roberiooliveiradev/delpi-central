@@ -488,3 +488,70 @@ passed + the same 10 pre-existing baseline failures (dashboard/filiais/
 shared-resource/sign-invite/bootstrap/process-instance — reproduced on
 clean worktree). V056 absent/unapplied; no deploy; E5 stays blocked
 pending independent review.
+
+## Evidence addendum — E3 FINAL SECURITY CORRECTION (stale authorization)
+
+### P0 — stale authorization between `_authorized_room` and the locked write (eliminated)
+
+**Cause:** `tombstone_link_guarded` serialized the removal against writers,
+but writers re-checked nothing under the lock — a request could authorize
+over snapshot S, then persist content after S was invalidated (link
+tombstoned/added, participant removed, room tombstoned).
+
+**Minimal fix — revalidate the authorized snapshot under the room lock:**
+
+- `StaleRoomAuthorization` (409 `stale_authorization_context`) — domain
+  typed error, mapped in the HTTP error surface.
+- Every protected-artifact writer accepts `expected_room` (the snapshot
+  the caller authorized, `repo.get` output). Under the same single-row
+  `FOR UPDATE` room lock it verifies: room still active, same
+  `access_scope`, identical active-link set, and the actor's
+  participation intact when the snapshot included it. Drift → typed
+  error BEFORE any statement mutates (zero partial writes, automatic
+  rollback — injected connections now roll back on exception like the
+  pooled path).
+- Every mutation of authorizing state takes the same room lock:
+  `upsert_link`, `tombstone_link`, `add/remove_participant`,
+  `soft_delete`, `restore_room` — the lock protects the RELATION
+  between authorizing state and write, not just physical ordering.
+  One lock per transaction, identical ordering → no deadlock shape.
+- `post_message` folds the author's `mark_read` into `add_message`'s
+  transaction (`mark_author_read`) — no write outside the critical
+  section.
+
+**Real-PostgreSQL proof** (rewritten to exercise the REAL use cases +
+persistence methods — `test_interaction_rooms_concurrency_pg.py`,
+DSN-gated, ran against `delpi_e1_scratch`):
+
+- `test_pg_scenario_a_removal_commits_first_rejects_stale_write` —
+  writer authorized while the ticket link is active, waits; remover
+  locks + recounts(0) + tombstones + COMMITS; writer then locks,
+  detects stale context → `StaleRoomAuthorization`, **zero
+  message/read rows**, link tombstoned. **PASSED**
+- `test_pg_scenario_b_writer_commits_first_blocks_removal` — writer
+  holds the lock inside the critical section; remover provably blocks
+  (thread alive check); writer revalidates unchanged, persists, commits;
+  remover recounts=1 → `room_access_expansion_blocked`, link stays
+  active, message row present. **PASSED**
+- `test_pg_scenario_c_participant_removal_stales_write` — member
+  authorized, waits; admin removes the member's participation under the
+  lock; writer's write → `StaleRoomAuthorization`, zero rows. **PASSED**
+
+Scratch schema note: `removed_at` was added to
+`tm_interaction_room_participants` in `delpi_e1_scratch` (EXPAND-style
+column the V2 code already expects; production remains gated on V056).
+
+### Residual
+
+- External BFF revocation inside a single request cannot be serialized
+  against the room lock — bounded by the BFF contract's own guarantees;
+  every response re-resolves visibility, and the writer-side recheck
+  covers all persisted state.
+- `add_participant` locks for uniformity though it only expands the
+  actor-neutral participant set.
+
+### Tests / V056 / Deploy
+
+Focused suite **100 passed**; PG scratch **3 passed**; full suite 1750
+passed + the same 10 pre-existing baseline failures. V056 absent and
+unapplied; no deploy; E5 stays blocked pending independent review.

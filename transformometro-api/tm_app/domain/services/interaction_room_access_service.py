@@ -63,6 +63,17 @@ class PrimaryLinkConflict(RuntimeError):
     status_code = 409
 
 
+class StaleRoomAuthorization(PermissionError):
+    """The persisted authorizing context changed between the caller's
+    authorization decision and the locked write: room tombstoned, scope
+    changed, the active link set differs, or the actor's participation
+    was revoked. Raised INSIDE the room lock before any mutation — the
+    caller must re-authorize and retry; nothing is partially written."""
+
+    error_code = "stale_authorization_context"
+    status_code = 409
+
+
 class RoomAnchorLinkRemovalLocked(PermissionError):
     """The legacy ``rooms.processo_id`` column still anchors this room to
     the process. Removing the matching primary link would orphan the
