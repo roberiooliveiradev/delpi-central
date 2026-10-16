@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 743,
+  "operation_count": 744,
   "operations": [
     {
       "method": "POST",

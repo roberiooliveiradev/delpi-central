@@ -1,10 +1,10 @@
 {
   "corpus_id": "davi-governed-knowledge",
   "corpus_version": 1,
-  "source_git_sha": "58d53f52ca0868983c932a2015f2fedca02102ca",
+  "source_git_sha": "0ba2a491aeaf2838f4c7e0a596ae4a83edb07880",
   "freeze_artifact": "api-delpi/docs/integrations/evidence/davi-governed-knowledge-freeze-001.md",
   "freeze_sha": "d9926cc14a8a4edd1b52775b82cf7353aede75b4",
-  "generated_at": "2026-10-16T14:43:18+00:00",
+  "generated_at": "2026-10-16T16:56:54+00:00",
   "documents": [
     {
       "path": "api-delpi/docs/api/supplies-inventory-adjustments.md",
@@ -64,8 +64,8 @@
     },
     {
       "path": "api-delpi/docs/api/production-machine-load.md",
-      "sha256": "749f4630cb6c03859fe2addce9094581a766da61389e4f1c504ff407150cd33a"
+      "sha256": "62840cb5cdad75acdd95129993faf678a790182be0e26e65ca13eb08b280a68a"
     }
   ],
-  "manifest_sha256": "48294369638d48c1c84306b67f52396082fa0b13f504a54296ca26a2e60d02a7"
+  "manifest_sha256": "5cfa469ff995d09439f7bebdc89f9028f5b84b35881c135dcf4d819299a96e3a"
 }
