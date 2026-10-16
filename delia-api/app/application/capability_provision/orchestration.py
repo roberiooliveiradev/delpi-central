@@ -4593,7 +4593,23 @@ class OperationalCapabilityOrchestrator:
             expected_session_id=record.session_id,
             now_epoch=time.time(),
         )
-        self._pending_writes.take(record.digest)
+        # RW-01: confirmation binding alone is NOT a winning claim.
+        # Two requests can read the same pending record concurrently;
+        # only the atomic, identity-checked consumer may proceed to ACT.
+        # Do not hold the store lock across owner/network calls.
+        claimed = self._pending_writes.take_if_current(
+            record.digest, record
+        )
+        if claimed is None:
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.WRITE_REJECTED,
+                correlation_id=correlation,
+                error_code="confirmation_unknown",
+                content=(
+                    "Esta operação já foi respondida ou expirou. "
+                    "Nenhuma escrita foi executada por esta decisão."
+                ),
+            )
         self._audit(
             stage="CONFIRMATION_BOUND",
             capability_ref=record.capability_ref,
