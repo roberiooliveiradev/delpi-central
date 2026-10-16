@@ -296,7 +296,8 @@ Respond with JSON containing exactly the field "arguments" — a JSON
 object (never a string) whose keys come only from the schema's
 top-level "properties" and whose values satisfy the declared types
 and "required". Nested objects and arrays must follow the schema
-structure. Use {} when no field applies.
+structure. Use {} only when no schema field applies AND the schema
+block does not contain "owner_vocabulary".
 
 The block also carries the capability's name and description. Value
 hints declared in the description (e.g. "view=a|b|c") are the allowed
@@ -311,7 +312,9 @@ constrain (opaque objects or arrays, or free strings without enum),
 controlled identifiers and values MUST be copied from that vocabulary
 when the request needs a listed option; never invent operation names,
 guide/topic identifiers, field names, or value shapes it does not
-declare.
+declare. Never respond with {} when owner_vocabulary is present — that
+would only re-fetch an index. Select a listed identifier that matches
+the user request, or return "arguments": null with "missing_inputs".
 
 When the schema block contains "foreign_evidence", it carries
 untrusted business evidence produced by a different capability group
@@ -763,6 +766,71 @@ def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> boo
     return omit_signal and index_signal
 
 
+def _optional_unconstrained_string_keys(
+    descriptor: ProviderCapability,
+) -> tuple[str, ...]:
+    """Optional free-string property names (no field-name hardcode)."""
+    schema = descriptor.input_schema
+    if not isinstance(schema, Mapping):
+        return ()
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping) or not properties:
+        return ()
+    required = {
+        str(item)
+        for item in (schema.get("required") or ())
+        if isinstance(item, str)
+    }
+    keys: list[str] = []
+    for name, node in properties.items():
+        if not isinstance(name, str) or name in required:
+            continue
+        if _is_unconstrained_string(node):
+            keys.append(name)
+    return tuple(keys[:MAX_ARGUMENT_KEYS])
+
+
+def _post_self_index_argument_gaps(
+    arguments: Mapping[str, Any] | None,
+    descriptor: ProviderCapability,
+    owner_evidence: str | None,
+) -> tuple[str, ...]:
+    """After a self-index probe, reject empty or invented free-string
+    identifiers so the guidance READ cannot re-fetch the index.
+
+    At least one optional unconstrained string must be filled with a
+    value that appears in owner_evidence. Provider/field-name neutral.
+    """
+    if not owner_evidence:
+        return ()
+    keys = _optional_unconstrained_string_keys(descriptor)
+    if not keys:
+        return ()
+    args = arguments or {}
+    proven = False
+    gaps: list[str] = []
+    for key in keys:
+        raw = args.get(key)
+        if raw is None or (isinstance(raw, str) and not str(raw).strip()):
+            gaps.append(key)
+            continue
+        text = str(raw).strip()
+        if text not in owner_evidence:
+            gaps.append(key)
+            continue
+        proven = True
+    if proven:
+        # Keep only invented/empty siblings that still lack provenance.
+        return tuple(
+            key
+            for key in gaps
+            if key in args
+            and args.get(key) not in (None, "")
+            and str(args.get(key)).strip() not in owner_evidence
+        )[:MAX_MISSING_INPUTS]
+    return tuple(dict.fromkeys(gaps))[:MAX_MISSING_INPUTS]
+
+
 def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
     """True when a non-mutating capability may legally be invoked empty
     to obtain an owner index of optional free-string identifiers.
@@ -784,15 +852,12 @@ def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
     schema = descriptor.input_schema
     if not isinstance(schema, Mapping):
         return False
-    properties = schema.get("properties")
-    if not isinstance(properties, Mapping) or not properties:
-        return False
     required = schema.get("required")
     if isinstance(required, (list, tuple)) and required:
+        # Empty index invoke is only schema-valid when nothing is
+        # required; required free strings remain RW-S03-01 / opaque path.
         return False
-    return any(
-        _is_unconstrained_string(node) for node in properties.values()
-    )
+    return bool(_optional_unconstrained_string_keys(descriptor))
 
 
 # SpecialistOperationClass -> canonical OperationCharacter for the
@@ -2955,6 +3020,7 @@ class OperationalCapabilityOrchestrator:
 
         owner_evidence: str | None = None
         discovery_ran = False
+        self_index_ran = False
         if discovery is not None:
             discovery_arguments, _ = self._build_arguments(
                 input_text,
@@ -3028,6 +3094,7 @@ class OperationalCapabilityOrchestrator:
                     return _error_attempt(correlation, exc)
                 owner_evidence = _bound_owner_evidence(index_outcome)
                 discovery_ran = True
+                self_index_ran = True
                 _logger.info(
                     "orchestration stage=index_probe "
                     "decision=ok capability=%s correlation_id=%s",
@@ -3222,6 +3289,24 @@ class OperationalCapabilityOrchestrator:
                 arguments = None
                 missing_inputs = tuple(
                     dict.fromkeys(missing_inputs + unproven)
+                )[:MAX_MISSING_INPUTS]
+        if arguments is not None and self_index_ran:
+            post_index_gaps = _post_self_index_argument_gaps(
+                arguments,
+                descriptor,
+                owner_evidence,
+            )
+            if post_index_gaps:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=post_index_identifier_required "
+                    "fields=%d correlation_id=%s",
+                    len(post_index_gaps),
+                    correlation,
+                )
+                arguments = None
+                missing_inputs = tuple(
+                    dict.fromkeys(missing_inputs + post_index_gaps)
                 )[:MAX_MISSING_INPUTS]
         if arguments is None and missing_inputs:
             # Generic resolver step (§6.140): before asking the user

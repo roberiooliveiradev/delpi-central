@@ -28,6 +28,7 @@ Após RW-S03-01, `_requires_owner_vocabulary` só abre DISCOVERY para envelopes 
 - `_eligible_self_index_probe` — READ/ANALYSIS, sem required, string livre opcional, não envelope.
 - `_contract_declares_omit_returns_index` — sinal textual omit/omitted + index/available/list na descrição da capability (provider-neutral; sem field-name hardcode).
 - Se elegível e (contrato omit→index **ou** `probe_index=true`): invoke `{}` → `owner_vocabulary` → arguments → segundo READ.
+- `_post_self_index_argument_gaps`: após o índice, rejeita `{}` ou identificador inventado (fail closed / clarificação); impede re-fetch do índice como resposta “grounded”.
 - Envelope DISCOVERY peer permanece prioritário quando aplicável.
 - Opcional sem sinal de índice **não** autoriza probe (RW-S03-01 preservado).
 

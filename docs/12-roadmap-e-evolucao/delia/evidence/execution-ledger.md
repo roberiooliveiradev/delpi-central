@@ -14266,12 +14266,12 @@ INDEPENDENT_REVIEW=PENDING
 
 ## §6.209 — DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/33-mcp-iterative-tool-orchestration-fix.md`. **BASE_HEAD:** `3036df0888` (initial) → follow-up on `54dcc0753f`. Note: §6.208 is Markdown frontend (unrelated); this entry is uniquely §6.209. **CODE_SHA:** fill after commit of contract omit→index gate.
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/33-mcp-iterative-tool-orchestration-fix.md`. **BASE_HEAD:** `3036df0888`. Note: §6.208 is Markdown frontend (unrelated). **CODE_SHA:** fill on final publish (post post-index gap gate).
 
-- **ROOT_CAUSE:** after RW-S03-01, optional-identifier READ guides had no governed path to obtain owner index before argument projection → invented topics; real model often set `probe_index=false`, so instruction-only path still invented identifiers.
-- **FIX:** `_eligible_self_index_probe` + (`_contract_declares_omit_returns_index` **or** model `probe_index`) → empty INDEX READ → `owner_vocabulary` → second READ; opaque-envelope DISCOVERY unchanged; required free strings / optional without omit→index signal still never probe.
-- **TESTS:** `test_mcp_iterative_index_probe.py` (Orion unseen + contract-gate + free-text negative) + Stage03/envelope regression; full `delia-api` pytest green.
-- **LIVE SSH:** fill after deploy of this CODE_SHA on `srv-api` (MESSAGE-only LIVE-A/B/C).
+- **ROOT_CAUSE:** after RW-S03-01, optional-identifier READ guides had no governed path to obtain owner index before argument projection; real model often skipped `probe_index` and/or re-projected `{}` after index → invented topics or grounded index dump.
+- **FIX:** `_eligible_self_index_probe` + (`_contract_declares_omit_returns_index` **or** model `probe_index`) → INDEX READ → `owner_vocabulary` → `_post_self_index_argument_gaps` (reject empty/invented) → guidance READ; opaque DISCOVERY unchanged; RW-S03-01 preserved.
+- **TESTS:** `test_mcp_iterative_index_probe.py` (Orion + contract-gate + empty/invented post-index + free-text negative) + Stage03; full `delia-api` pytest green on pre-publish HEAD.
+- **LIVE SSH:** fill after deploy (MESSAGE-only LIVE-A/B/C on `srv-api`).
 - **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `NEW_PLANNER=NO`; `PROVIDER_HARDCODE=NO`; `MATERIAL_ACT_COUNT=0`.
 
 RW_S03_01=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO

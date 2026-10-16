@@ -365,6 +365,94 @@ def test_orion_unseen_mcp_index_then_grounded_guide():
     assert 'if name == "topic"' not in src
 
 
+def test_post_index_empty_args_do_not_reinvoke_index():
+    """After INDEX READ, {} must not re-fetch the index as grounded."""
+    guide = _cap(
+        "get_inspection_guide",
+        SpecialistOperationClass.READ,
+        schema=_GUIDE_SCHEMA,
+        desc=(
+            "Omit topic to return the index of available guides; "
+            "with topic return the guide body."
+        ),
+    )
+    index = _outcome(
+        "get_inspection_guide",
+        "index",
+        structured={
+            "data": {"items": [{"topic": "equipment_inspection"}]}
+        },
+    )
+    provider = FakeProvider(
+        PROVIDER_ID,
+        [_group([guide])],
+        outcomes={
+            ("knowledge", "get_inspection_guide"): {"index": index}
+        },
+    )
+    model = FakeProposalModel(
+        _select(
+            "get_inspection_guide",
+            arguments={},
+            probe_index=False,
+        )
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Como faço para registrar uma inspeção de equipamentos?"
+    )
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert provider.calls == [("get_inspection_guide", {})]
+    assert GUIDE_BODY not in (attempt.content or "")
+
+
+def test_post_index_invented_identifier_rejected():
+    guide = _cap(
+        "get_inspection_guide",
+        SpecialistOperationClass.READ,
+        schema=_GUIDE_SCHEMA,
+        desc=(
+            "Omit topic to return the index of available guides; "
+            "with topic return the guide body."
+        ),
+    )
+    index = _outcome(
+        "get_inspection_guide",
+        "index",
+        structured={
+            "data": {"items": [{"topic": "equipment_inspection"}]}
+        },
+    )
+    provider = FakeProvider(
+        PROVIDER_ID,
+        [_group([guide])],
+        outcomes={
+            ("knowledge", "get_inspection_guide"): {"index": index}
+        },
+    )
+    model = FakeProposalModel(
+        _select(
+            "get_inspection_guide",
+            arguments={"topic": "teletransporte_quantico"},
+            probe_index=False,
+        )
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Como faço para registrar uma inspeção de equipamentos?"
+    )
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert provider.calls == [("get_inspection_guide", {})]
+
+
 def test_required_search_query_never_index_probes_or_catalog():
     caps = [
         _cap(
