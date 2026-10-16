@@ -454,3 +454,30 @@ Gate: contratos aprovados; então implementar backend+testes antes do wiring.
 | D6 | `transferred_operations`/find_operation sem CT | Incluir `source_work_center` no contrato novo; avaliar hardening do log |
 | D7 | Permissão de escrita separada da de leitura | Manter `PC_MACHINE_LOAD_VIEW` salvo decisão de segurança |
 
+## 13. Resultado da Etapa 3 — agrupamento (implementado)
+
+- **Algoritmo:** «utils/machineLoadGrouping.ts»
+  («groupSelectedMachineLoadOperations») — âncora = primeira selecionada na
+  ordem da fila; selecionadas e não selecionadas preservam ordem relativa;
+  permutação exata; já contíguas → «noop» sem write.
+- **Persistência:** reusa «PATCH /machine-load/sequence» via «persistOrder»
+  — sem endpoint novo, sem mudança de contrato, mesma pilha de Ctrl+Z e
+  mesma propagação WORKING/PUBLISHED.
+- **D1 — tratamento na E3:** gate **cliente** («groupingGate» +
+  «machineLoadOperationHasOpenRun», espelhando
+  «_protected_operation_keys»): bloqueia quando o intervalo afetado
+  deslocaria run aberto (âncora, que não se move, é permitida) e quando a
+  fonte de execução está indisponível ou não carregada
+  («executionUnavailable || !executionLoaded»). **Pendente** a decisão de
+  reforço no backend para «reorder_sequence» (afetaria também o DnD
+  individual) — segue **ARCHITECTURE_DECISION_REQUIRED**.
+- **D7 — mantido:** «_assert_can_view» no contrato vigente; permissão de
+  escrita separada segue decisão de segurança pendente.
+- **Concorrência — mantido:** contrato inalterado (FOR UPDATE + validação
+  de permutação exata); a seleção zera em qualquer «sequence_updated_at»
+  novo (E2), então a seleção parte sempre do estado vigente conhecido.
+  Expected-version no request segue decisão contratual pendente.
+- **Filtros:** «Ocultar finalizadas» suportado via
+  «mergeActiveOrderIntoMachineLoadQueue» (mesmo caminho do DnD);
+  «Somente com impedimento» deixa a ação indisponível com explicação —
+  semântica sob filtro parcial ainda não aprovada.

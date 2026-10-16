@@ -61,6 +61,7 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
+import { groupSelectedMachineLoadOperations } from "../utils/machineLoadGrouping";
 import { machineLoadSelectionScopeKey } from "../utils/machineLoadOperationSelection";
 import {
   feedbackForOperation,
@@ -132,6 +133,7 @@ export function MachineLoadPage({
     publishing,
     error,
     executionUnavailable,
+    executionLoaded,
     balancesUnavailable,
     refreshFromTotvs,
     publishToMachines,
@@ -442,11 +444,13 @@ export function MachineLoadPage({
         applyPayload(payload);
         if (options.pushUndo) history.pushUndo(options.previousKeys);
         setSequenceNotice(copy.machineLoad.sequenceSaved);
+        return true;
       } catch (err: unknown) {
         setRows(data?.selected.items ?? []);
         setSequenceNotice(
           err instanceof Error ? err.message : copy.machineLoad.sequenceError,
         );
+        return false;
       } finally {
         setSequenceBusy(false);
       }
@@ -660,6 +664,96 @@ export function MachineLoadPage({
   const reorder = useMachineLoadRowReorder(displayRows, onReorder, {
     enabled: !selection.hasMultiple,
   });
+
+  // «Agrupar» (Etapa 3): elegibilidade avaliada sobre a fila ativa do CT.
+  // Só o modo coletivo expõe a ação; cada bloqueio tem explicação própria.
+  // Proteção de run aberto segue a fonte canônica do cockpit — indisponível
+  // ou ainda não lida bloqueia a ação, nunca libera por fallback.
+  const groupingGate = useMemo((): { enabled: boolean; hint?: string } => {
+    if (!selection.hasMultiple || sequenceBusy) return { enabled: false };
+    if (onlyFeedback) {
+      return { enabled: false, hint: copy.machineLoad.selection.groupFiltered };
+    }
+    if (executionUnavailable || !executionLoaded) {
+      return { enabled: false, hint: copy.machineLoad.selection.groupUnavailable };
+    }
+    const outcome = groupSelectedMachineLoadOperations(
+      baseRows,
+      selection.keys,
+      branch,
+    );
+    if (outcome.status === "protected") {
+      return {
+        enabled: false,
+        hint: copy.machineLoad.selection.groupProtected(
+          outcome.blocked.production_order,
+          outcome.blocked.operation_code,
+        ),
+      };
+    }
+    if (outcome.status !== "ok" && outcome.status !== "noop") {
+      return { enabled: false };
+    }
+    return { enabled: true };
+  }, [
+    baseRows,
+    branch,
+    executionLoaded,
+    executionUnavailable,
+    onlyFeedback,
+    selection.hasMultiple,
+    selection.keys,
+    sequenceBusy,
+  ]);
+
+  const groupSelectedOperations = useCallback(() => {
+    if (sequenceBusy || onlyFeedback || executionUnavailable || !executionLoaded) {
+      return;
+    }
+    const outcome = groupSelectedMachineLoadOperations(
+      baseRows,
+      selection.keys,
+      branch,
+    );
+    if (outcome.status === "noop") {
+      setSequenceNotice(copy.machineLoad.selection.groupNoop);
+      return;
+    }
+    if (outcome.status === "protected") {
+      setSequenceNotice(
+        copy.machineLoad.selection.groupProtected(
+          outcome.blocked.production_order,
+          outcome.blocked.operation_code,
+        ),
+      );
+      return;
+    }
+    if (outcome.status !== "ok") return;
+    const nextRows = hideFinished
+      ? mergeActiveOrderIntoMachineLoadQueue(rows, outcome.nextRows)
+      : outcome.nextRows;
+    void persistOrder(nextRows, {
+      previousKeys: keysFromOperations(rows),
+      pushUndo: true,
+    }).then((saved) => {
+      if (saved) {
+        setSequenceNotice(
+          copy.machineLoad.selection.grouped(outcome.groupedCount),
+        );
+      }
+    });
+  }, [
+    baseRows,
+    branch,
+    executionLoaded,
+    executionUnavailable,
+    hideFinished,
+    onlyFeedback,
+    persistOrder,
+    rows,
+    selection.keys,
+    sequenceBusy,
+  ]);
 
   const applyRemoteKeys = useCallback(
     async (
@@ -1374,6 +1468,9 @@ export function MachineLoadPage({
         transferDisabled={sequenceBusy}
         selectionCount={rowMenu?.selectionCount ?? 0}
         onClearSelection={selection.clear}
+        onGroupSelected={groupSelectedOperations}
+        groupDisabled={!groupingGate.enabled}
+        groupDisabledHint={groupingGate.hint}
       />
 
       <MachineLoadTransferModal

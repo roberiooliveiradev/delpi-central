@@ -259,12 +259,23 @@ export const copy = {
       count: (count: number) =>
         count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
       pendingHint:
-        "Ações em lote (agrupar, transferir, retirar) serão habilitadas nas próximas etapas.",
+        "Agrupe pelo botão direito numa linha selecionada; transferir e retirar em lote chegam na próxima etapa.",
       dragDisabledHint: "Arraste indisponível com várias operações selecionadas.",
       clear: "Limpar seleção",
       clearAria: "Limpar seleção de operações",
       ambiguous:
         "Operação duplicada neste centro de trabalho — seleção indisponível até o cadastro ser corrigido.",
+      grouped: (count: number) =>
+        count === 1
+          ? "1 operação agrupada."
+          : `${count} operações agrupadas na posição da primeira selecionada.`,
+      groupNoop: "As operações selecionadas já estão agrupadas nesta posição.",
+      groupFiltered:
+        "Agrupamento indisponível com o filtro «Somente com impedimento» ativo.",
+      groupUnavailable:
+        "Estado de execução indisponível — agrupamento bloqueado por segurança.",
+      groupProtected: (order: string, operation: string) =>
+        `Agrupamento bloqueado: OP ${order} · operação ${operation} está em execução.`,
     },
     transfer: {
       modalTitle: "Enviar item para outro centro de trabalho",

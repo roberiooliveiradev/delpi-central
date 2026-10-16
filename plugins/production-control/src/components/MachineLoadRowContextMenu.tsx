@@ -29,11 +29,17 @@ type Props = {
   transferDisabled?: boolean;
   /**
    * Quando ≥2 operações estão selecionadas e o clique direito cai em uma delas,
-   * o menu assume o modo coletivo: as ações de lote aparecem desabilitadas
-   * até os contratos das Etapas 3/4 existirem — só «Limpar seleção» executa.
+   * o menu assume o modo coletivo: «Agrupar» executa o agrupamento da Etapa 3
+   * quando elegível; transferência e retirada coletivas seguem desabilitadas
+   * até os contratos da Etapa 4 existirem.
    */
   selectionCount?: number;
   onClearSelection?: () => void;
+  /** Elegível → habilita «Agrupar operações selecionadas». */
+  onGroupSelected?: () => void;
+  /** Bloqueios de elegibilidade (run aberto, filtro, execução indisponível). */
+  groupDisabled?: boolean;
+  groupDisabledHint?: string;
 };
 
 /** Menu de ações do PCP ao clicar com o botão direito em uma linha da carga máquina. */
@@ -52,6 +58,9 @@ export function MachineLoadRowContextMenu({
   transferDisabled = false,
   selectionCount = 0,
   onClearSelection,
+  onGroupSelected,
+  groupDisabled = false,
+  groupDisabledHint,
 }: Props) {
   const conjuntoKey = conjuntoKeyFromOrder(operation?.production_order);
   const hasConjunto = Boolean(conjuntoKey);
@@ -75,9 +84,13 @@ export function MachineLoadRowContextMenu({
         <ContextMenuItem
           label={copy.machineLoad.rowActions.groupSelected}
           icon={Group}
-          disabled
-          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          disabled={groupDisabled || !onGroupSelected}
+          hint={groupDisabled ? groupDisabledHint : undefined}
           hintTrigger="label"
+          onSelect={() => {
+            onGroupSelected?.();
+            onClose();
+          }}
         />
         <ContextMenuItem
           label={copy.machineLoad.rowActions.transferSelected}

@@ -65,6 +65,8 @@ describe("MachineLoadRowContextMenu — modo coletivo", () => {
     const group = screen.getByRole("menuitem", { name: /Agrupar operações selecionadas/i });
     const transfer = screen.getByRole("menuitem", { name: /Enviar selecionadas/i });
     const withdraw = screen.getByRole("menuitem", { name: /Retirar selecionadas/i });
+    // Sem handler de agrupamento o item continua bloqueado; transferir e
+    // retirar seguem desabilitadas até a Etapa 4.
     expect(group).toHaveProperty("disabled", true);
     expect(transfer).toHaveProperty("disabled", true);
     expect(withdraw).toHaveProperty("disabled", true);
@@ -86,14 +88,56 @@ describe("MachineLoadRowContextMenu — modo coletivo", () => {
   });
 
   it("cliques nas ações coletivas desabilitadas não executam mutação", () => {
-    const props = makeProps({ selectionCount: 4, onClearSelection: vi.fn() });
+    const onGroupSelected = vi.fn();
+    const props = makeProps({
+      selectionCount: 4,
+      onClearSelection: vi.fn(),
+      onGroupSelected,
+      groupDisabled: true,
+      groupDisabledHint: "Motivo de bloqueio",
+    });
     render(<MachineLoadRowContextMenu {...props} />);
 
     fireEvent.click(screen.getByRole("menuitem", { name: /Agrupar operações selecionadas/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: /Retirar selecionadas/i }));
+    expect(onGroupSelected).not.toHaveBeenCalled();
     expect(props.onWithdrawConjunto).not.toHaveBeenCalled();
     expect(props.onTransferConjunto).not.toHaveBeenCalled();
     expect(props.onTransferOperation).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
+  });
+
+  it("«Agrupar» elegível executa o callback e fecha o menu", () => {
+    const onGroupSelected = vi.fn();
+    const props = makeProps({
+      selectionCount: 3,
+      onClearSelection: vi.fn(),
+      onGroupSelected,
+      groupDisabled: false,
+    });
+    render(<MachineLoadRowContextMenu {...props} />);
+
+    const group = screen.getByRole("menuitem", { name: /Agrupar operações selecionadas/i });
+    expect(group).toHaveProperty("disabled", false);
+    fireEvent.click(group);
+    expect(onGroupSelected).toHaveBeenCalledTimes(1);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+    // A ação nunca toca os callbacks das operações individuais.
+    expect(props.onWithdrawConjunto).not.toHaveBeenCalled();
+    expect(props.onTransferOperation).not.toHaveBeenCalled();
+  });
+
+  it("«Agrupar» bloqueado exibe o motivo como hint", () => {
+    const props = makeProps({
+      selectionCount: 2,
+      onClearSelection: vi.fn(),
+      onGroupSelected: vi.fn(),
+      groupDisabled: true,
+      groupDisabledHint: "Agrupamento bloqueado: OP 1 · operação 02 está em execução.",
+    });
+    render(<MachineLoadRowContextMenu {...props} />);
+    expect(
+      screen.getByRole("menuitem", { name: /Agrupar operações selecionadas/i }),
+    ).toHaveProperty("disabled", true);
   });
 });

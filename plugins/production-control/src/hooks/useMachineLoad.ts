@@ -277,6 +277,8 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     publishing,
     error,
     executionUnavailable,
+    /** Primeira leitura de execução recebida — agrupamento exige fonte viva. */
+    executionLoaded: cockpitStatus != null,
     balancesUnavailable,
     reload,
     refreshFromTotvs,
