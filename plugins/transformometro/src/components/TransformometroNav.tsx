@@ -28,8 +28,6 @@ import {
 } from "../constants/portalExperience";
 import { PortalFavoritesTrigger } from "./PortalFavoritesTrigger";
 import { PortalTopBarUserIdentity } from "./PortalTopBarUserIdentity";
-import { TeoContextAction } from "../integrations/teo/TeoContextAction";
-import { useTeoPortalContext } from "../integrations/teo/useTeoPortalContext";
 import { useCanManagePortal } from "../state/portalChrome";
 
 type PortalTopBarProps = {
@@ -69,8 +67,6 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
   const activeId = resolvePortalTopBarId(currentPath);
   const canManage = useCanManagePortal();
   const items = visiblePortalTopBarItems(canManage);
-  const teoContext = useTeoPortalContext(currentPath ?? "");
-
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const chord = isPortalSearchShortcut(event);
@@ -112,7 +108,6 @@ export function PortalTopBar({ currentPath, onNavigate }: PortalTopBarProps) {
               title="Buscar caminhos e funcionalidades (Ctrl+K)"
             />
             <PortalFavoritesTrigger onNavigate={onNavigate} />
-            <TeoContextAction context={teoContext.context} view={teoContext.view} />
           </TopBarUtilityCluster>
         }
         actions={<PortalTopBarUserIdentity />}

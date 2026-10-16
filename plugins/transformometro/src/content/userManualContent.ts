@@ -192,16 +192,16 @@ export const USER_MANUAL_CONTENT = {
         "Dentro do workspace de um processo, o Portal compartilha automaticamente o contexto de navegação atual — processo, melhoria, revisão e seção — com o TÉO no ChatGPT. Você não precisa copiar nem colar nada.",
       bullets: [
         "O contexto é só a localização: identificadores e a seção aberta. Não leva token, permissão nem conteúdo do processo.",
-        "A ação TÉO na barra superior mostra o que está sendo compartilhado e orienta a conversa — o ChatGPT já recebe o contexto pelo canal do Portal.",
+        "O ChatGPT já recebe o contexto pelo canal do Portal — não existe botão nem etapa manual no Portal.",
         "O TÉO usa os identificadores para consultar os dados canônicos do Transformômetro. O contexto não concede acesso: quem não pode ver o processo continua sem acesso.",
         "Mudar de processo, melhoria, revisão ou seção atualiza o contexto automaticamente — o TÉO sempre vê a tela atual.",
-        "Se o canal automático não alcançar o seu ChatGPT, a ação TÉO ainda oferece 'Copiar contexto' como alternativa explícita.",
+        "Se o TÉO não reconhecer a tela atual, informe o código do processo na conversa (ex.: PROC-0080).",
       ],
       links: [
         {
           want: "Analisar o contexto atual com TÉO",
           where: "Workspace do processo",
-          how: "Abra o processo, escolha a melhoria/revisão e a seção, e use TÉO na barra superior para conferir o contexto compartilhado. Depois é só perguntar no ChatGPT — por exemplo, 'analise este processo'.",
+          how: "Abra o processo, escolha a melhoria/revisão e a seção. Depois é só perguntar no ChatGPT — por exemplo, 'analise este processo'.",
           path: TRANSFORMOMETRO_ROUTES.processes,
         },
       ],

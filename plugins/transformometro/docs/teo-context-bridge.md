@@ -2,7 +2,7 @@
 
 > **Status:** implementado. Canal canônico = server-side Workspace Context
 > (MFE → Core `/me/workspace-context` → TÉO `get_workspace_context`).
-> Site tool e clipboard permanecem como **fallbacks** da mesma origem.
+> Site tool WebMCP permanece como **fallback** da mesma origem.
 
 ## O que é
 
@@ -19,7 +19,7 @@ route + hash ──► resolver canônico ──► PUT /me/workspace-context
        │                            workspace_context_v1   get_workspace_context
        │                            (efêmero, TTL, por         │
        │                             usuário, multi-tab)      ▼
-       └─► fallbacks: site tool / clipboard          get_process_context
+       └─► fallback: site tool WebMCP               get_process_context
                                                               │
                                                               ▼
                                                        Transformômetro API
@@ -132,44 +132,30 @@ Suporte oficial (documentação OpenAI "Site tools", ago/2026):
 - É projeção do mesmo resolver canônico (`resolveTeoPortalContext`) —
   útil nos ambientes WebMCP; não é mais o canal primário.
 
-## Fallback explícito (clipboard)
+## Sem fluxo manual
 
-A ação **TÉO** na barra superior (visível dentro do workspace de
-processo) não exige mais copiar/colar: o clique mostra um aviso
-explicando que o contexto já é compartilhado pelo canal canônico e
-orienta a conversa ("analise este processo"). Dentro do aviso, a ação
-secundária **"Copiar contexto"** permanece como fallback explícito para
-ambientes onde o canal automático não alcança o TÉO:
-
-```text
-TÉO, use este contexto do Portal Transforma+:
-process_id=…
-instance_id=…
-revision_id=…
-area=resultados
-path=/apps/transformometro/processes/…
-```
+O fluxo legado de copiar/colar contexto foi removido: não existe ação
+TÉO no `PortalTopBar`, handler de clipboard nem payload manual. Os dois
+canais automáticos (Workspace Context server-side + site tool WebMCP)
+são suficientes. Em ambiente onde nenhum deles alcança o TÉO, o usuário
+informa o código do processo na conversa (ex.: `PROC-0080`) — dado já
+visível na tela.
 
 Não existe contrato oficial para abrir o ChatGPT/TÉO por URL com contexto
 injetado — nenhuma URL é inventada.
 
 ## Arquivos
 
-- `src/integrations/teo/teoPortalContext.ts` — modelo + resolver puro +
-  payload de clipboard;
+- `src/integrations/teo/teoPortalContext.ts` — modelo `TeoPortalContext`
+  + resolver puro (`resolveTeoPortalContext`);
 - `src/integrations/teo/teoWorkspaceSelection.ts` — loja mínima da
   seleção corrente do workspace (publicada por `ProcessResultsSection`);
 - `src/integrations/teo/teoContextBridge.ts` — adapter WebMCP
   (`document.modelContext`, fallback `navigator.modelContext` legado);
-- `src/integrations/teo/useTeoPortalContext.ts` — hook reativo a rota,
-  hash e seleção;
 - `src/integrations/teo/workspaceContextPublisher.ts` — payload
   `workspace_context_v1` + PUT/DELETE no Core;
 - `src/integrations/teo/useWorkspaceContextPublisher.ts` — hook que
-  publica em eventos semânticos e despublica no unmount;
-- `src/integrations/teo/TeoContextAction.tsx` — ação TÉO no
-  `PortalTopBar`: aviso contextual ("já compartilhado") + fallback
-  explícito "Copiar contexto".
+  publica em eventos semânticos e despublica no unmount.
 
 ## Limites conhecidos
 

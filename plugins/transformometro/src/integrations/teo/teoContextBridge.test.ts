@@ -8,7 +8,6 @@ import {
   resetTeoContextSiteToolRegistration,
   type TeoContextSiteTool,
 } from "./teoContextBridge";
-import { buildTeoContextClipboardText } from "./teoPortalContext";
 import type { TeoWorkspaceSelection } from "./teoWorkspaceSelection";
 
 const BASE = "/apps/transformometro/processes";
@@ -80,7 +79,7 @@ describe("buildTeoContextSiteTool", () => {
     expect(swapped.revision_id).toBeNull();
   });
 
-  it("J: clipboard e site tool produzem os mesmos IDs", async () => {
+  it("J: site tool expõe os IDs da rota/seleção atuais", async () => {
     const selection: TeoWorkspaceSelection = {
       process_id: "proc-1",
       instance_id: "inst-1",
@@ -91,11 +90,10 @@ describe("buildTeoContextSiteTool", () => {
       () => selection,
     );
     const context = await tool.execute();
-    const clipboard = buildTeoContextClipboardText(context);
-    expect(clipboard).toContain(`process_id=${context.process_id}`);
-    expect(clipboard).toContain(`instance_id=${context.instance_id}`);
-    expect(clipboard).toContain(`revision_id=${context.revision_id}`);
-    expect(clipboard).toContain("area=resultados");
+    expect(context.process_id).toBe("proc-1");
+    expect(context.instance_id).toBe("inst-1");
+    expect(context.revision_id).toBe("rev-1");
+    expect(context.area).toBe("resultados");
   });
 });
 
