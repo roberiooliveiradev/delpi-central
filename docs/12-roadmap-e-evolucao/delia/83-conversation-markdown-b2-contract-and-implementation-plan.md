@@ -142,6 +142,18 @@ NAVIGABLE_LINK_EMISSION = BLOCKED
 
 Sem autoaceitação de gates. Sem I1/I2/I3. Sem deploy.
 
+### 0.7 — Autorização específica de frontend desacoplado (Product Master, 2026-10-16)
+
+O Product Master determinou a execução imediata **apenas** do componente visual compartilhado e sua importação no frontend DÉLIA, sem aguardar o vínculo L1/backend. Isto não é a opção L3 de remover links do objetivo final. Separar:
+
+- `plugin-ui` pode criar o renderer conversacional seguro `ConversationMarkdown` (token→React, sem HTML executável, parsing provider-neutral, links explicitamente allowlisted, CSS próprio do kit).
+- `plugins/delia` pode importar e integrar o componente em `DeliaAssistantMessage` **com `enabled={false}`** na superfície v1. A resposta atual continua com parágrafo literal; nenhuma string de modelo/ferramenta, `presentation.v1` ou hint de frontend pode ativar Markdown.
+- `presentation.v2` producer/emitter, links navegáveis L1, ativação de `markdown_safe`, formatter backend, runtime de ACT e G3 do fluxo **end-to-end** continuam **BLOQUEADOS** até contrato legítimo e aprovação dos gates.
+- O estado `CP-333=PLANNED_NOT_PASS` e os gates G1/G2 `ACCEPT_WITH_RESIDUAL` não mudam por código render-only.
+- Aceite frontend exige unit/adversarial tests, typecheck, build/federation, real Portal full-page/dock QA e revisão independente em SHA/config verificados. Onde não executado: `TEST_NOT_RUN`. Proibido afirmar rollout ativo ou business outcome por commit documental.
+
+**Frontend-specific bounded authorization** não substitui a autorização G3 de backend/contrato. O subescopo é reversible e disabled-by-default enquanto L1 não estiver comprovado.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:
