@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_CANDIDATES_DOCUMENTED / RUNTIME_NOT_AUTHORIZED`  
+**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_INDEPENDENT_REVIEW=REWORK / RUNTIME_NOT_AUTHORIZED`  
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
@@ -41,6 +41,16 @@ As decisões a seguir foram expressamente aprovadas pelo Product Master no conte
 **Separação de homônimos:** `B2` neste documento = **Markdown B2 da spec 82**, não `C3-STAGE-02-B2` registrado no ledger para governança de execução/ACT. Status e autorizações de uma trilha **não** se transferem à outra. Responder às decisões futuras no mesmo documento assim que aprovadas.
 
 **Estado de gates:** `CP_MAPPING=CP-333_RECORDED`; `BOUNDED_SCOPE_AUTHORIZED_CONDITIONAL=YES`; `G1_CONTRACT=PENDING`; `G2_SECURITY_REUSE=PENDING`; `G3_IMPLEMENTATION_BRIEF=PENDING`; `RUNTIME_IMPLEMENTATION=BLOCKED_UNTIL_GATES`; `C_D_E_TRACEABILITY_GAP=OPEN`. Produto aprovado **não** é contrato implementado, runtime PASS ou fase concluída. Este plano é subordinado às authorities 16/25 e à spec 82.
+
+### 0.2 Independent review G1/G2 — REWORK (2026-10-16)
+
+O candidato documental [84 — G1/G2](./84-presentation-v2-contract-and-markdown-security-g1-g2-proposal.md) foi revisado independentemente no SHA `d5ed426a08f0fee2aa9179a50d75f828fadd72b2`. Veredito: [85 — Independent Review](./85-presentation-v2-g1-g2-independent-architecture-review.md) = `REWORK` para G1 e G2 (static GitHub review; testes não executados).
+
+- `RW-G1-01` provar dados estruturados governados disponíveis antes de introduzir novo formatter; `InteractiveTurnResult.content` atual é string.
+- `RW-G1-02` fechar fonte tipada/contrato de links e preservar D1/D6/D7; B2 sem links navegáveis no primeiro slice exige **nova decisão explícita do Product Master**, não pode ser redefinido pelo executor.
+- `RW-G2-01` corrigir enum de `REUSE_DECISION` e demonstrar por inventário/probe por que EXTEND compartilhado não basta antes de criar `NEW ConversationMarkdown`.
+- `RW-G1-03` especificar OpenAPI/schema machine-validatable, limites, erros/versões, interactions e fallback v2 vs legado.
+- Estado `G1=REWORK / G2=REWORK / G3=BLOCKED / CP333=PLANNED / TEST_NOT_RUN`. Nenhum impacto em D1–D12, C/D/E, fase ou runtime. Próximo bounded: `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1`.
 
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
