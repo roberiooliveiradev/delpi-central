@@ -10,6 +10,7 @@ from tm_app.core.responses import fail, ok
 from tm_app.domain.services.interaction_room_access_service import (
     PrimaryLinkConflict,
     RoomAccessExpansionBlocked,
+    RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
 )
 from tm_app.domain.services.interaction_room_rules import MAX_MESSAGE_LENGTH, normalize_message_content
@@ -29,6 +30,25 @@ _rooms = InteractionRoomUseCases(
 
 class OpenInteractionRoomBody(BaseModel):
     processo_id: str
+
+
+class OpenTicketRoomBody(BaseModel):
+    ticket_id: str = Field(..., min_length=1)
+
+
+class StandaloneRoomBody(BaseModel):
+    title: str = Field(..., min_length=1, max_length=200)
+    participant_ids: list[str] = Field(default_factory=list)
+
+
+class AddRoomLinkBody(BaseModel):
+    entity_type: str
+    entity_key: str = Field(..., min_length=1)
+    link_role: str = "reference"
+
+
+class AddRoomParticipantBody(BaseModel):
+    user_id: str = Field(..., min_length=1)
 
 
 class MentionBody(BaseModel):
@@ -71,7 +91,12 @@ def _authorization(request: Request) -> str:
 def _handle(exc: Exception):
     if isinstance(
         exc,
-        (RoomAuthorizationDenied, RoomAccessExpansionBlocked, PrimaryLinkConflict),
+        (
+            RoomAuthorizationDenied,
+            RoomAccessExpansionBlocked,
+            RoomAnchorLinkRemovalLocked,
+            PrimaryLinkConflict,
+        ),
     ):
         return fail(str(exc), exc.status_code, {"error_code": exc.error_code})
     if isinstance(exc, AuthorizationDenied):
@@ -114,6 +139,178 @@ def open_interaction_room(request: Request, body: OpenInteractionRoomBody):
                 request.state.user, body.processo_id, authorization=_authorization(request)
             ).to_dict(),
             status_code=200,
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/ticket",
+    operation_id="open_transformometro_interaction_room_for_ticket",
+)
+def open_interaction_room_for_ticket(request: Request, body: OpenTicketRoomBody):
+    """`open_or_locate` for a GLPI ticket — the caller's Bearer is
+    forwarded to the Helpdesk authority; anything it cannot prove
+    visible fails closed."""
+    try:
+        return ok(
+            _rooms.open_for_ticket(
+                request.state.user,
+                body.ticket_id,
+                authorization=_authorization(request),
+            ).to_dict(),
+            status_code=200,
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/standalone",
+    operation_id="create_transformometro_standalone_interaction_room",
+)
+def create_standalone_interaction_room(request: Request, body: StandaloneRoomBody):
+    """Standalone collaboration room — always `members` scope; creator
+    becomes the owner participant."""
+    try:
+        return ok(
+            _rooms.open_standalone(
+                request.state.user,
+                body.title,
+                participant_ids=body.participant_ids,
+            ).to_dict(),
+            status_code=201,
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms/{room_id}/links",
+    operation_id="list_transformometro_interaction_room_links",
+)
+def list_interaction_room_links(request: Request, room_id: str):
+    """Active link metadata — content-authorized surface (entity keys are
+    protected context, never exposed to admins without content access)."""
+    try:
+        return ok(
+            {
+                "items": _rooms.list_links(
+                    request.state.user, room_id, authorization=_authorization(request)
+                )
+            }
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/links",
+    operation_id="add_transformometro_interaction_room_link",
+)
+def add_interaction_room_link(request: Request, room_id: str, body: AddRoomLinkBody):
+    """Administrative write — minimal projection; echoing the caller's
+    own link id is enough for read-back."""
+    try:
+        link = _rooms.add_link(
+            request.state.user,
+            room_id,
+            body.entity_type,
+            body.entity_key,
+            link_role=body.link_role,
+            authorization=_authorization(request),
+        )
+        return ok({"id": link.id}, status_code=201)
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.delete(
+    "/interaction-rooms/{room_id}/links/{link_id}",
+    operation_id="remove_transformometro_interaction_room_link",
+)
+def remove_interaction_room_link(request: Request, room_id: str, link_id: str):
+    """Administrative write — R-1 expansion rule enforced in the use
+    case. Response carries only the tombstoned id."""
+    try:
+        _rooms.remove_link(request.state.user, room_id, link_id)
+        return ok({"id": link_id})
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms/{room_id}/participants",
+    operation_id="list_transformometro_interaction_room_participants",
+)
+def list_interaction_room_participants(request: Request, room_id: str):
+    try:
+        return ok(
+            {
+                "items": _rooms.list_participants(
+                    request.state.user, room_id, authorization=_authorization(request)
+                )
+            }
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/participants",
+    operation_id="add_transformometro_interaction_room_participant",
+)
+def add_interaction_room_participant(
+    request: Request, room_id: str, body: AddRoomParticipantBody
+):
+    try:
+        _rooms.add_participant(request.state.user, room_id, body.user_id)
+        return ok({"user_id": body.user_id}, status_code=201)
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.delete(
+    "/interaction-rooms/{room_id}/participants/{user_id}",
+    operation_id="remove_transformometro_interaction_room_participant",
+)
+def remove_interaction_room_participant(request: Request, room_id: str, user_id: str):
+    try:
+        _rooms.remove_participant(request.state.user, room_id, user_id)
+        return ok({"user_id": user_id})
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.get(
+    "/interaction-rooms/{room_id}/impact",
+    operation_id="get_transformometro_interaction_room_delete_impact",
+)
+def get_interaction_room_delete_impact(request: Request, room_id: str):
+    """Administrative delete preview (R-5) — counts and structural
+    metadata only; title, entity keys and content never leak."""
+    try:
+        return ok(_rooms.delete_impact(request.state.user, room_id))
+    except Exception as exc:
+        return _handle(exc)
+
+
+@router.post(
+    "/interaction-rooms/{room_id}/restore",
+    operation_id="restore_transformometro_interaction_room",
+)
+def restore_interaction_room(request: Request, room_id: str):
+    """Governed restore — safe projection mirroring the delete contract;
+    a conflicting primary claim aborts atomically (409)."""
+    try:
+        room = _rooms.restore_room(
+            request.state.user, room_id, authorization=_authorization(request)
+        )
+        return ok(
+            {
+                "id": room.id,
+                "deleted_at": room.deleted_at.isoformat() if room.deleted_at else None,
+            }
         )
     except Exception as exc:
         return _handle(exc)

@@ -28,6 +28,7 @@ from tm_app.domain.services.interaction_room_access_service import (
     LINK_STATE_VISIBLE,
     PrimaryLinkConflict,
     RoomAccessExpansionBlocked,
+    RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
 )
 from tm_app.infrastructure.persistence.repositories.interaction_room_repository import (
@@ -212,9 +213,9 @@ def test_remove_process_link_does_not_expand_and_is_allowed():
     """Process ACL is the platform `access` scope today — removing it does
     not widen the effective audience beyond who already qualified."""
     cases, repo, _, _ = _cases()
-    room = cases.open_for_process(_user(), PROCESS)
+    room = cases.open_standalone(_user(), "temporária")
     cases.post_message(_user(), room.id, "histórico")
-    link = next(l for l in repo.list_links(room.id) if l.entity_type == "process")
+    link = cases.add_link(_user(), room.id, "process", PROCESS, link_role="reference")
     cases.remove_link(_user(), room.id, link.id)
     assert all(not l.active for l in repo.list_links(room.id, include_inactive=True))
 
@@ -461,17 +462,34 @@ def test_open_for_process_denied_performs_no_writes():
 
 
 def test_open_for_process_does_not_revive_explicit_link_removal():
+    """An explicitly removed primary process link stays tombstoned: a new
+    open claims the object in a NEW room rather than resurrecting the
+    honored removal on the old one."""
     cases, repo, _, _ = _cases()
     room = cases.open_for_process(_user(), PROCESS)
-    link = repo.list_links(room.id)[0]
-    cases.remove_link(_user(), room.id, link.id)  # process links are removable
-    reopened = cases.open_for_process(_user(), PROCESS)
-    assert reopened.id == room.id
+    link = cases.add_link(
+        _user(), room.id, "process", PROCESS_B, link_role="primary"
+    )
+    cases.remove_link(_user(), room.id, link.id)  # non-anchor: removable
+    reopened = cases.open_for_process(_user(), PROCESS_B)
+    assert reopened.id != room.id
     tomb = next(
         item for item in repo.list_links(room.id, include_inactive=True)
-        if item.entity_type == "process" and item.entity_key == PROCESS
+        if item.entity_type == "process" and item.entity_key == PROCESS_B
     )
     assert tomb.deleted_at is not None and tomb.deleted_cause == "explicit"
+
+
+def test_anchor_process_link_removal_is_locked():
+    """5.3: the primary link matching rooms.processo_id is locked — the
+    legacy column would keep resolving this room while another claimed
+    the primary link."""
+    cases, repo, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    anchor = repo.list_links(room.id)[0]
+    with pytest.raises(RoomAnchorLinkRemovalLocked):
+        cases.remove_link(_user(), room.id, anchor.id)
+    assert repo.list_links(room.id)[0].active
 
 
 def test_create_room_graph_rolls_back_on_occupied_primary():

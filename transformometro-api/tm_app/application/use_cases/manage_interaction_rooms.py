@@ -31,6 +31,7 @@ from tm_app.domain.services.interaction_room_access_service import (
     LINK_STATE_VISIBLE,
     PrimaryLinkConflict,
     RoomAccessExpansionBlocked,
+    RoomAnchorLinkRemovalLocked,
     RoomAuthorizationDenied,
     check_room_access,
     deny_reason_for_state,
@@ -262,6 +263,17 @@ class InteractionRoomUseCases:
             link_role=LINK_ROLE_PRIMARY,
             actor_user_id=actor,
         )
+        # Authoritative read-back (5.4): the pre-write snapshot is not
+        # proof — the persisted link set must show the revived claim.
+        persisted = self._repo.list_links(room_id)
+        if not any(
+            item.active
+            and item.entity_type == LINK_ENTITY_PROCESS
+            and item.entity_key == processo
+            and item.link_role == LINK_ROLE_PRIMARY
+            for item in persisted
+        ):
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
 
     def open_standalone(
         self,
@@ -417,6 +429,14 @@ class InteractionRoomUseCases:
         )
         if link is None or not link.active:
             raise LookupError("Vínculo não encontrado.")
+        if (
+            link.entity_type == LINK_ENTITY_PROCESS
+            and link.link_role == LINK_ROLE_PRIMARY
+            and room.processo_id == link.entity_key
+        ):
+            raise RoomAnchorLinkRemovalLocked(
+                "O vínculo primário do processo âncora não pode ser removido nesta versão."
+            )
         if is_externally_governed(link) and self._repo.protected_content_count(room.id) > 0:
             raise RoomAccessExpansionBlocked(
                 "A remoção ampliaria o acesso ao histórico protegido."
@@ -428,6 +448,14 @@ class InteractionRoomUseCases:
             "remove_link", room.id, user,
             entity_type=link.entity_type, entity_key=link.entity_key,
         )
+
+    def list_links(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Active link metadata — content-authorized surface only; entity
+        keys are protected context."""
+        room = self._authorized_room(user, room_id, authorization)
+        return [item.to_dict() for item in room.links]
 
     def add_participant(self, user: Any, room_id: str, user_id: str) -> None:
         room = self._admin_room(user, room_id)

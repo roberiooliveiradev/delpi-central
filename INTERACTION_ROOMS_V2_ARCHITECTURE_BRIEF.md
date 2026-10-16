@@ -390,3 +390,46 @@ Base para a correção: HEAD `8626e874822` (E2 commit `58d53f52` é ancestral; `
 | Helpdesk/GLPI real | `TEST_NOT_RUN` — sem sessão GLPI neste ambiente |
 
 Nota operacional: durante a sessão um `__pycache__` stale (skew de relógio UNC↔WSL) produziu falsos `AttributeError` — resolvido limpando caches; rerun = 49/49.
+
+---
+
+# E3 EVIDENCE — HTTP ROUTES, AUTHORIZATION & ERROR CONTRACT
+
+Base: HEAD `ffc0c36c88` (== `origin/main`; E2C `b55c982f` ancestral confirmado). Escopo: `interaction_room_routes.py`, `manage_interaction_rooms.py`, `interaction_room_access_service.py`, testes. Sem frontend, MCP/GPT, realtime ou notifications.
+
+## Endpoints adicionados (operation_ids novos; legados inalterados)
+
+| Método | Path | operation_id | AuthZ | Resposta |
+|---|---|---|---|---|
+| POST | `/interaction-rooms/ticket` | `open_transformometro_interaction_room_for_ticket` | `access` + ACL GLPI (Bearer do usuário) | room `to_dict()` (interseção OK) |
+| POST | `/interaction-rooms/standalone` | `create_transformometro_standalone_interaction_room` | `access` | room `to_dict()` (201) |
+| GET | `/{id}/links` | `list_transformometro_interaction_room_links` | interseção completa | `items[]` |
+| POST | `/{id}/links` | `add_transformometro_interaction_room_link` | owner/manage | `{id}` (201) |
+| DELETE | `/{id}/links/{link_id}` | `remove_transformometro_interaction_room_link` | owner/manage | `{id}` |
+| GET | `/{id}/participants` | `list_transformometro_interaction_room_participants` | interseção completa | `items[]` |
+| POST | `/{id}/participants` | `add_transformometro_interaction_room_participant` | owner/manage | `{user_id}` (201) |
+| DELETE | `/{id}/participants/{user_id}` | `remove_transformometro_interaction_room_participant` | owner/manage | `{user_id}` |
+| GET | `/{id}/impact` | `get_transformometro_interaction_room_delete_impact` | owner/manage | metadados-only (R-5) |
+| POST | `/{id}/restore` | `restore_transformometro_interaction_room` | owner/manage | `{id, deleted_at}` |
+
+Admin ops respondem projeções mínimas (mesma disciplina do P0). Conteúdo sempre via `_authorized_room` (interseção). Erros tipados: `not_found` (404 — sem oráculo de existência), `glpi_link_required` (403), `upstream_unavailable` (503), `room_access_expansion_blocked` (409), `primary_link_conflict` (409), **`legacy_anchor_locked` (409 — novo, ver 5.3)**.
+
+## Contratos pendentes — fechados
+
+- **5.1 confirm_before_act:** o DELETE/REST é a superfície humana (execução direta, AuthZ reavaliada no use case). O caminho conversacional TÉO continua exclusivamente via `governed_writes` PREPARE/ACT — nenhuma Action nova criada neste slice, nenhum bypass; confirmação conversacional nunca é autorização (a autoridade é sempre `_admin_room`/`_authorized_room`).
+- **5.2 auditoria:** best-effort pós-commit documentado (perda → `logger.warning interaction_room_audit_failed`; resultado do domínio permanece verdadeiro — compatível com `gpt_actions._audit`). Compatibilidade: aceita para V2 com **gate de produção mantido** — auditoria obrigatória (outbox/retentativa) é pré-condição de rollout, não deste slice.
+- **5.3 anchor legado:** remoção explícita do link `primary` de processo que casa `rooms.processo_id` está **bloqueada** (`legacy_anchor_locked`, 409) — a coluna continuaria resolvendo esta sala enquanto outra reivindicasse a claim primária → duas salas canônicas. Links `reference` e primários não-âncora seguem removíveis.
+- **5.4 read-back:** `_assert_process_link` verifica o link persistido após o dual-write (`list_links` fresco; divergência → `OUTCOME_VERIFICATION_FAILED`).
+
+## Testes — 76 passando (`test_interaction_rooms*.py` + novo `test_interaction_rooms_http.py` = 23 HTTP)
+
+TestClient/ASGI real com middleware stub honrando o contrato `request.state.user` (ausente → 401). Cobertos: 401 authN, 422 DTO, bearer forwarding ao BFF, 404 sem vazamento de existência, 403 `glpi_link_required`/admin, 503 `upstream_unavailable`, 409 `primary_link_conflict`/`room_access_expansion_blocked`/`legacy_anchor_locked`, manage-sem-access administra com projeção mínima e não lê conteúdo, owner sem manage, multi-primary, referência restritiva, restore conflitante sem estado parcial, ausência de escrita quando negado, read-back autoritativo.
+
+Full suite: **1715 passed, 10 failed** — idênticas ao baseline limpo (pré-existentes).
+
+## TEST_NOT_RUN / PENDING
+
+- Keycloak real (stub honra contrato; integração de middleware é de infra)
+- GLPI/Helpdesk real (double controlado; mapeamento já provado)
+- PostgreSQL real com V056 (migration não aplicada — gate de deploy preservado)
+- Capabilities TÉO para as novas operações (E5 — façade OpenAPI curada não as inclui)

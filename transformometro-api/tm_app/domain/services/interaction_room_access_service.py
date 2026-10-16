@@ -63,6 +63,18 @@ class PrimaryLinkConflict(RuntimeError):
     status_code = 409
 
 
+class RoomAnchorLinkRemovalLocked(PermissionError):
+    """The legacy ``rooms.processo_id`` column still anchors this room to
+    the process. Removing the matching primary link would orphan the
+    canonical claim — the legacy column would keep resolving this room
+    while another room could claim the primary link, producing two
+    canonical rooms for one process. Migration-safe detach belongs to
+    CONTRACT phase, not a per-request removal."""
+
+    error_code = "legacy_anchor_locked"
+    status_code = 409
+
+
 def is_externally_governed(link: InteractionRoomLink) -> bool:
     return link.entity_type in EXTERNALLY_GOVERNED_ENTITY_TYPES
 
