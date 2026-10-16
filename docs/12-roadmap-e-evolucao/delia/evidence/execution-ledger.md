@@ -13819,3 +13819,22 @@ ADR_CANDIDATE=SUBMITTED; D1_SCOPE_CONTRACT=DECISION_REQUESTED; D2_CONFIRM_PRECED
 PRODUCT_PRINCIPLE=APPROVED; TECHNICAL_CONTRACT=NOT_APPROVED; STAGE_02_ACCEPTED=NO; B1=PASS_STRUCTURAL; B2=REWORK; STAGE_03_AUTHORIZED=NO
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.182 — DELIA-C3-STAGE-02-B2-EXECUTION-SCOPE-ADR-INDEPENDENT-REVIEW-01 (ACCEPT_WITH_RESIDUAL as ADR candidate only)
+
+**REVIEWED_ADR_COMMIT:** `9bc367e5ab528e5eef37ff2867cacce6f744944e`. **SOURCE:** `corrections/conversational-intelligence-c3/15-stage-02-b2-execution-scope-adr-candidate.md`. **REVIEW_REPORT:** `corrections/conversational-intelligence-c3/16-stage-02-b2-adr-independent-architecture-review.md`. **MODE:** GitHub remote code/docs/contract review, no local git status or pytest re-run, no production-code edits.
+
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL` only for completeness of the **candidate decision artifact**. `TECHNICAL_CONTRACT=NOT_APPROVED`; `D1/D2/D3=DECISION_REQUIRED`, implementation/phase NOT_AUTHORIZED. Product principle §6.179 remains approved, not equivalent to contract freeze.
+- **PROVEN:** existing `max_execution_stage=prepare` reduction-only, `_TurnGoal.execution_bound` LLM HYPOTHESIS, `_attempt_confirmation` before `_understand_goal`; `HandleInteractiveTurn._validate_input` currently requires nonempty text, whereas typed CONFIRM/REJECT candidate expects no free text. `plugins/delia` sends generated label + structured confirmation. Provider-neutral orchestration and owner-sealed confirmation §§6.130/6.140 remain authority.
+- **G1 BLOCKING FOR FREEZE:** even ALT-A may ACT when client declares `ACT_ELIGIBLE` while same-turn natural-language text contains 'não aplique' and LLM fails to flag it. This is a disclosed residual requiring explicit Product Master tradeoff/precedence decision. Do not mark B2 fixed across all variants merely because NOT_ASSERTED is capped.
+- **G2 TRUST:** typed `ACT_ELIGIBLE` in authenticated request is a scoped assertion, not independently proven UI click/volition or Core/Domain permission. Threat model of arbitrary clients, request replay and conflict must be specified.
+- **G3 SEMANTICS:** scope-decision pending on owner `explicit_user_confirmation=false` cannot be represented to user/audit as if the owner required extra confirmation; prove legitimate reuse of `PendingWrite`/`confirmation_request`, scope binding, rejection/expiry and ACT-only cases.
+- **G4 CONTRACT:** current input_text required; no-text typed decision requires discriminated request validation and staged migration of legacy generated labels. Not merely additive.
+- **G5 COMPATIBILITY:** non-MFE consumers remain TO_INVENTORY; free-text write default PREPARE alters observable behavior; determine schema version, client rollout, rollback and phase allowance.
+- **REUSE:** EXISTING_EQUIVALENT=YES for Interaction Application, ceiling, PendingWrite, bounded confirmation, Policy/Decision/UX; REUSE_DECISION=REUSE/EXTEND candidate only; no new planner/registry/provider authority.
+- **REQUIRED BEFORE CONTRACT FREEZE:** Product Master explicitly resolve D1/D2/D3 and G1 tradeoff; differentiate scope vs owner confirmation; revise discriminated request/legacy and consumer contracts; plan negative+positive/security evals against 10 existing strict-xfail. Stage 02 remains REWORK and Stage 03 NOT_AUTHORIZED. No real-model business outcome tested.
+
+ADR_ARTIFACT_REVIEW=ACCEPT_WITH_RESIDUAL; ADR_TECHNICAL_CONTRACT=NOT_APPROVED; D1_D2_D3=DECISION_REQUIRED
+B1=PASS_STRUCTURAL; B2=REWORK; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
