@@ -56,7 +56,7 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | Etapa | Estado neste registro | Implementação | Evals no SHA de entrega | Aceite |
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
-| 02 intent/instructions | IMPLEMENTED, R1 REVIEW=REWORK (§6.176) | Stage02 `4a9f05e5b9` + R1 `9fd3a7bc95` | 8 additional R1 scripted tests, 1085/1085 reported by executor; independent reexecution TEST_NOT_RUN | B1 PASS estrutural; B2 still REWORK (misclassified/unrecognized textual bound) |
+| 02 intent/instructions | R2 DIAGNOSTIC REVIEW=ACCEPT_WITH_RESIDUAL (§6.178), STAGE02 NOT_ACCEPTED | Stage02 `4a9f05e5b9`; R1 `9fd3a7bc95`; R2 diagnosis `4a0027863b` | R2 10 strict xfails + 6 controls, executor reports 1091 PASS + 10 XFAIL; independent execution TEST_NOT_RUN | B1 PASS estrutural; B2 REWORK; ADR D1/D2/D3 pendente, Stage03 NOT_AUTHORIZED |
 | 03 discovery/guidance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
