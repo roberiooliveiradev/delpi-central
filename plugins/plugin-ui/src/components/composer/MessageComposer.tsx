@@ -8,6 +8,7 @@ import { NativeTextAreaControl } from "../forms/NativeTextAreaControl";
 import { ComposerCharacterCounter } from "./ComposerCharacterCounter";
 import { ComposerSendButton } from "./ComposerSendButton";
 import { ComposerStopButton } from "./ComposerStopButton";
+import { ComposerClearDraftButton } from "./ComposerClearDraftButton";
 
 const DEFAULT_MAX_INPUT_HEIGHT_PX = 160;
 
@@ -16,6 +17,8 @@ export type MessageComposerProps = {
   onChange: (value: string) => void;
   /** Explicit user intent only — invoked by Enter or the send control. */
   onSubmit: () => void;
+  /** Explicit local draft-clear intent; supplied only by a capable host. */
+  onClearDraft?: () => void;
   /** id applied to the textarea. */
   inputId?: string;
   /** Accessible name of the textarea (no visible label by design). */
@@ -71,6 +74,7 @@ export function MessageComposer({
   value,
   onChange,
   onSubmit,
+  onClearDraft,
   inputId,
   inputLabel,
   placeholder,
@@ -149,9 +153,12 @@ export function MessageComposer({
         </div>
 
         <div className="delpi-ui-message-composer__toolbar">
-          {secondaryActions ? (
+          {(secondaryActions || (onClearDraft && value.length > 0 && !inFlight && !disabled)) ? (
             <div className="delpi-ui-message-composer__actions">
               {secondaryActions}
+              {onClearDraft && value.length > 0 && !inFlight && !disabled ? (
+                <ComposerClearDraftButton onClear={onClearDraft} />
+              ) : null}
             </div>
           ) : null}
           {keyboardHint ? (
