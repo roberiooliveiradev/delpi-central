@@ -61,31 +61,19 @@ Authority:
 EXTERNAL_PACKAGE_DELIVERY = NOT_REQUIRED_IN_V1
 ```
 
-## D-P5-REVIEW-COMPLETION — regra de conclusão mensal
+## D-P5-REVIEW-COMPLETION — C2 aprovada pelo PO
 
-**Estado:** `DECISION_REQUIRED / PRODUCT_RULE`.
-
-Opções:
+**Estado:** `CLOSED / PO_APPROVED_C2_P5-A..J_DEC-01..04`, sem escolha C1/C2/C3 pendente. C1 e C3 permanecem apenas histórico.
 
 ```text
-C1
 ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
 AND NO_OPEN_CLARIFICATION
+AND NO_TERMINAL_COMPETENCE_REJECTION
 → MONTHLY_CLOSING_COMPLETED
-
-C2
-ALL_APPLICABLE_REVIEWS_ACCEPTED
-AND NO_OPEN_CLARIFICATION
-→ MONTHLY_CLOSING_COMPLETED
-
-C3
-completion policy configurável por recipient/package type
 ```
 
-Recomendação: C2 se a avaliação externa fizer parte formal do processo de fechamento; C1 se for controle posterior ao fechamento.
-
-Authority:
-- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+A área obrigatória é configurada no P6 por tipo de pacote e congelada no snapshot da submissão; um único aceite válido por área/versão satisfaz quórum. `REVIEW_REJECTED` pela área não encerra automaticamente competência: decisão formal DEC-01/02 do coordenador com ACCESS/vínculo/scope e motivo. Sem confirmação fica pendente; erro de aceite não possui reversão de UI/endpoint V1 (DEC-03). Core T05 grupo/função e binding de P6 permanecem técnicos `TO_INVENTORY`. Authority [37](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## E05 — Attachment roles reais
 
@@ -165,11 +153,12 @@ O capability relevante à V1 é T02:
 ## T05 — Core RBAC
 
 Mapear:
-- ACCESS;
-- MANAGE;
-- resource ownership/context access;
-- effective permissions;
-- fail-closed quando a resolução do Core estiver indisponível.
+- ACCESS e MANAGE como códigos distintos;
+- Core effective permissions S2S, grupos RBAC existentes e a fonte/contrato **corporativo** de grupo/função para área elegível P5;
+- vínculo operacional do coordenador DEC-01 e resource scope/ownership na BFF;
+- fail-closed quando Core/elegibilidade/função não puderem ser resolvidos.
+
+**PROVEN no HEAD:** endpoint S2S de effective-access responde permission codes, mas não envia grupos/funções; `GET /me/access-profile` traz grupos para o titular. **TO_INVENTORY:** contrato S2S de elegibilidade corporativa adequado ao P5. Não copiar banco/roles Core nem criar permission por reviewer.
 
 Decisão de produto já fechada:
 
@@ -185,7 +174,7 @@ Filial/unidade pode ser filtro/dimensão do dado, mas não permission code dedic
 Parar e escalar quando:
 - E02 contradizer state model;
 - T03 invalidar canonical state;
-- E04/T04 não suportarem envio;
+- P5 tentar depender de entrega externa de anexos (E04/T04 NOT_REQUIRED_IN_V1);
 - T05 conflitar com ACCESS/MANAGE;
 - owner não for identificável;
 - nova evidência invalidar TARGET.
