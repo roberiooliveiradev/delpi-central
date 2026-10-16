@@ -54,3 +54,46 @@
 @media (prefers-reduced-motion:reduce) {
   .delpi-ui-conversation-three-region * { transition:none!important; scroll-behavior:auto!important; }
 }
+
+/* R2: left remains a navigable icon rail; context floats above the conversation. */
+.delpi-ui-conversation-three-region { --delpi-ui-three-rail: 64px; }
+.delpi-ui-conversation-three-region--left-collapsed .delpi-ui-conversation-three-region__left {
+  flex: 0 0 var(--delpi-ui-three-rail);
+}
+.delpi-ui-conversation-three-region--left-collapsed .delpi-ui-conversation-three-region__side-heading {
+  padding-inline: 8px;
+  justify-content: center;
+}
+.delpi-ui-conversation-three-region--left-collapsed .delpi-ui-conversation-three-region__side-content { padding: 8px; }
+.delpi-ui-conversation-three-region__context-popover {
+  position: absolute;
+  z-index: 30;
+  top: 66px;
+  right: 16px;
+  width: min(360px, calc(100% - 32px));
+  max-height: min(70vh, 620px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--delpi-ui-surface, var(--surface,#fff));
+  color: var(--delpi-ui-text, var(--text,#111));
+  border: 1px solid var(--delpi-ui-border,var(--border,#ddd));
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.18);
+}
+.delpi-ui-conversation-three-region__context-popover .delpi-ui-conversation-three-region__side-content {
+  overflow-y: auto; padding: 8px 18px 20px;
+}
+@container delia-page (max-width: 920px) {
+  .delpi-ui-conversation-three-region { --delpi-ui-three-rail: 52px; }
+  .delpi-ui-conversation-three-region--left-collapsed .delpi-ui-conversation-three-region__left {
+    position: static;
+    width: var(--delpi-ui-three-rail);
+    flex: 0 0 var(--delpi-ui-three-rail);
+    box-shadow: none;
+  }
+  .delpi-ui-conversation-three-region__context-popover {
+    top: 60px; right: 8px; width: min(360px, calc(100% - 16px));
+    max-height: 70%;
+  }
+}
