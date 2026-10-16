@@ -27,8 +27,9 @@ As decisões a seguir foram expressamente aprovadas pelo Product Master no conte
 | `B2-PD-03` | **DÉLIA controla a produção de Markdown** a partir de conteúdo admitido e governado | `APPROVED_PRODUCT_DIRECTION` | MCP/providers/especialistas não controlam apresentação nem elevam texto a FACT. DÉLIA pode organizar visualmente dados aprovados sem inventar fatos, unidades, IDs ou autoridade |
 | `B2-PD-04` | **Markdown textual completo e controlado** | `APPROVED_PRODUCT_DIRECTION` | Permitir headings subordinados, parágrafos, negrito, itálico, listas, citações, divisores, código inline/fenced e links seguros. Permanecem OFF: tabelas estruturadas/GFM tables, gráficos, métricas, imagens, Mermaid, HTML arbitrário, embeds e widgets |
 | `B2-PD-05` | **Formatação automática, contextual, proporcional e adaptável ao pedido do usuário** | `APPROVED_PRODUCT_DIRECTION` | DÉLIA decide apresentação no seu boundary com base no objetivo e no conteúdo *admitido*: saudação simples → texto natural; itens/etapas → listas quando útil; explicações longas → seções moderadas; código técnico → bloco inerte apenas quando realmente pertinente. Usuário pode solicitar brevidade/detalhamento, sem mudar fatos, autoridade nem contratos |
+| `B2-PD-06` | **Links internos e externos verificados**, ambos no escopo B2 | `APPROVED_PRODUCT_DIRECTION` | Links internos apenas para rotas/entidades legitimamente publicadas pelo ecossistema DELPI; externos apenas para URL comprovada, validada e permitida por contrato/policy. Nenhum endereço inventado pelo modelo; link não autorizado = não clicável. Modo de abertura e regras específicas de navegação ainda precisam ser fechados |
 
-**Ainda não decidido:** `B2-PD-06` — política de destinos permitidos para links seguros (internos ao ecossistema/externos verificados e como abrir); demais detalhes como limites exatos, subset do renderer, conteúdo do contrato OpenAPI, negociação entre versões e rollout.
+**Ainda não decidido (rodada consolidada após `B2-PD-06`):** abertura/navegação de links internos e externos; cópia de texto versus Markdown; fallback diante de variante desconhecida/malformada; separação entre links no texto e `EvidenceDetails`; rollout/compatibilidade na experiência; formalização CP e autorização bounded. Detalhes concretos de schema/limites, sanitização, renderer e implementação continuam sujeitos aos gates dos owners. `B2-PD-07+` ainda não foram aprovadas.
 
 **Separação de homônimos:** `B2` neste documento = **Markdown B2 da spec 82**, não `C3-STAGE-02-B2` registrado no ledger para governança de execução/ACT. Status e autorizações de uma trilha **não** se transferem à outra. Responder às decisões futuras no mesmo documento assim que aprovadas.
 
@@ -331,7 +332,8 @@ B2_FORMAT_CONTRACT_SCHEMA = TO_DESIGN
 B2_PRODUCER_OWNER = DELIA_APPROVED_BY_PRODUCT_MASTER
 B2_FORMAT_SCOPE = FULL_CONTROLLED_TEXT_MARKDOWN
 B2_AUTOMATIC_FORMATTING_POLICY = PRODUCT_APPROVED_CONTEXTUAL_PROPORTIONAL_ADAPTIVE
-B2_LINK_DESTINATION_POLICY = PENDING_PRODUCT_DECISION_06
+B2_LINK_DESTINATION_POLICY = INTERNAL_AND_VERIFIED_EXTERNAL_PRODUCT_APPROVED
+B2_LINK_NAVIGATION_BEHAVIOR = PENDING_PRODUCT_DECISION_07
 B2_RENDERER_SECURITY_FIT = TO_INVENTORY
 EXISTING_EQUIVALENT = YES (shared markdown/document primitives)
 REUSE_DECISION = PENDING_FOR_MARKDOWN_IN_DELIA
