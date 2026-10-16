@@ -38,7 +38,7 @@ Revisão de cláusulas aplicáveis; não significa aceite integral de CP/RQ nem 
 
 | Etapa | O que pode ser investigado / evoluído com aprovação | Gate de não-desvio |
 | --- | --- | --- |
-| 01 | Baseline histórico §6.171, relatório 04 | EVIDENCE_RECORDED, review independente PENDING, sem reescrever evidência anterior |
+| 01 | Baseline histórico §6.171, relatório 04, revisão independente 06 | EVIDENCE_RECORDED + REVIEWED=ACCEPT_WITH_RESIDUAL (§6.172), sem reescrever evidência anterior |
 | 02 | Coerência da finalidade na seleção, goal e instruções atuais | Sem novo goal enum/reorder/prompt por presunção; pergunta de orientação não autoriza PREPARE |
 | 03 | Tools/list live, discovery/guidance do owner e vocabulário limitado | Sem mirror, catálogo DÉLIA ou discovery para todo string |
 | 04 | Argumentos, completude, resolver same-owner, clarificação mínima | Owner valida regras, confirmação §6.140, inferência não vira default/ACT |
@@ -49,7 +49,7 @@ EXISTING_EQUIVALENT=YES: Interaction Application, OperationalCapabilityOrchestra
 
 ## Estado e continuidade
 
-C3_STARTED=YES, C3_EXECUTED=NO, C4/C5 phase-level não autorizadas; NEXT=RETURN_TO_ARCHITECTURE_COORDINATION no snapshot revalidado. Etapa 01 EVIDENCE_RECORDED pelo commit 1f29906dc45726c778e8d133b2fbdbc41f4b9939/ledger §6.171; opinião de review em chat não equivale a aceitação independente canônica. Sem novo prompt de Devin ou autorização das etapas 02–06 por este documento.
+C3_STARTED=YES, C3_EXECUTED=NO, C4/C5 phase-level não autorizadas; NEXT=RETURN_TO_ARCHITECTURE_COORDINATION no snapshot revalidado. Etapa 01 EVIDENCE_RECORDED pelo commit 1f29906dc45726c778e8d133b2fbdbc41f4b9939/ledger §6.171 e REVIEWED=ACCEPT_WITH_RESIDUAL (§6.172, relatório [06](./06-stage-01-independent-review.md)); o parecer registra residuais e condições, não autorização das etapas 02–06. Sem novo prompt de Devin ou autorização por este documento.
 
 Rastreabilidade a revalidar na 25: CP-055, CP-071, CP-073/074, CP-094, CP-151, CP-205, CP-232/233, CP-263, CP-269 se aplicável. **CP-086/087 são sobre Expertise Packs, não substituem os testes de provider/tool rename de §6.141.** Requisito sem mapeamento = TRACEABILITY_GAP; não criar CP local.
 

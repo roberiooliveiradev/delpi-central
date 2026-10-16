@@ -1,6 +1,6 @@
 # 03 — Matriz candidata de evals, revisão e handoff
 
-**Status:** EVAL_DESIGN_CANDIDATE / Etapa 01 EVIDENCE_RECORDED (§6.171: 15 testes fake/scripted + 1069/1069 relatados); revisão independente canônica PENDING, modelo real TEST_NOT_RUN.  
+**Status:** EVAL_DESIGN_CANDIDATE / Etapa 01 EVIDENCE_RECORDED (§6.171: 15 testes fake/scripted + 1069/1069) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172, [06](./06-stage-01-independent-review.md)); modelo real TEST_NOT_RUN.  
 **Owner do plano:** DÉLIA Architecture / Coordination + Intelligence / AI / Knowledge + Backend / Application.  
 **Owner de acceptance:** Integration / Acceptance Review independente; owner domain mantém decisões de negócio.
 
@@ -55,7 +55,7 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 
 | Etapa | Estado neste registro | Implementação | Evals no SHA de entrega | Aceite |
 | --- | --- | --- | --- | --- |
-| 01 baseline/harness | EVIDENCE_RECORDED (§6.171) | harness + relatório 04 publicados | 15 fake/scripted, 1069/1069 relatados; real LLM TEST_NOT_RUN | PENDING (review canônica) |
+| 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
 | 02 intent/instructions | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 03 discovery/guidance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |

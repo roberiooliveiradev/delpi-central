@@ -1,6 +1,6 @@
 # 02 — Plano das seis entregas bounded
 
-**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171; review independente PENDING); 02–06 PLANNED sem autorização automática.  
+**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172); 02–06 PLANNED sem autorização automática.  
 **Umbrella:** DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01.  
 **Regra:** uma etapa por entrega e review, sem “um prompt corrige tudo”; implementação só após reanchor e autorização; nenhum novo planner/agent/engine por conveniência.
 
@@ -12,7 +12,7 @@ Uma única DÉLIA que entende o pedido, descobre capacidades autorizadas, verifi
 
 ## Etapa 01 — Baseline factual e harness de eval
 
-**ESTADO REAL:** Relatório [04](./04-stage-01-baseline-report.md) + harness registrados no ledger §6.171; 15 testes fake/scripted e 1069/1069 relatados; review independente ainda PENDING no ledger. O texto abaixo conserva o escopo original, não afirma qualidade real do modelo nem autoriza reiniciar a etapa.
+**ESTADO REAL:** Relatório [04](./04-stage-01-baseline-report.md) + harness registrados no ledger §6.171; 15 testes fake/scripted e 1069/1069; INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172, [06](./06-stage-01-independent-review.md)). O texto abaixo conserva o escopo original, não afirma qualidade real do modelo nem autoriza reiniciar a etapa.
 
 **Problema:** não há baseline único reproduzível dos defeitos de intenção, orientação, argumentos e síntese no mesmo SHA/config.  
 **Ação candidata:** inventariar instruções realmente enviadas ao modelo e caminhos de fallback; reproduzir casos de TÉO sem mutação e owners fake, com logs redigidos, traces e expected outcomes; mapear CP/RQ/AC reais à matriz 25/20; reutilizar harness existente.  

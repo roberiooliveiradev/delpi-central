@@ -13653,3 +13653,21 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.172 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-01-INDEPENDENT-REVIEW (revisão independente registrada)
+
+**Task:** revisão independente (architecture + evaluation + security) do baseline da Etapa 01 produzido no commit `1f29906dc45726c778e8d133b2fbdbc41f4b9939`. MODE=REVIEW_ONLY; nenhuma implementação funcional, correção ou redesign.
+
+- **REVIEW_BASE_HEAD:** `4ad30b5f21aebb85aee7df1122f17ba130cedf3f` (main, sync com origin/main; sem commits concorrentes). Runtime diff `1f29906..HEAD` em `delia-api/` = NONE — evidência executada neste HEAD vale para o mesmo runtime. Alterações concorrentes do usuário em `plugins/*`/`requests-api` preservadas.
+- **TESTS EXECUTED (pelo revisor, não herdados):** `test_conversational_intelligence_baseline.py` 15/15 PASS; suíte `delia-api` completa 1069/1069 PASS em 28.48s; `git diff --check 1f29906^ 1f29906` limpo; BASE_HEAD `57da7fac` confirmado como parent do commit.
+- **GATES:** A.Arquitetura=PASS (decisões §6.126/§6.130/§6.133/§6.140/§6.141/§6.145 respeitadas e reproduzidas; sem segundo planner/registry/engine/prompt-por-provider). B.Evidências=PASS com reclassificações. C.Harness=PASS com observações. D.Segurança=PASS (sem writes reais, sem secrets, sem metadata→authority, confirmação estrutural preservada). E.Reuse=PASS (equivalentes confirmados no código; EXTEND; nenhum NEW).
+- **VERIFIED:** 13 instruction IDs (v7) + `delia.interaction.base` v3 — contagem de chars exata; `_is_open_vocabulary`/`_requires_owner_vocabulary` não cobrem string pura; `_GOAL_CLASSES` sem `orient` + normalização silenciosa para `read`; `goal_class` computado após seleção e nunca gate de write; hint "crie→prefer PREPARE" existe; validação determinística só contra `input_schema` externo; `_effective_confirmation_policy` = §6.140; `items:[]`→`empty_selection`→dump; `DELIA_INTERACTION_INSTRUCTION` só no caminho NON_GROUNDED; `_repair_once` só para surface-change; todos os orçamentos MAX_* conferem.
+- **RECLASSIFICATIONS:** metade owner do gap 4 (PREPARE READY→commit reject) = REPORTED (trace usuário, não reproduzido ao vivo; fake apenas espelha); ausência de `orient` ≠ necessidade de novo enum (não aprovado); hazard guidance→PREPARE = PROVEN_PARTIAL estrutural, frequência real-model = TEST_NOT_RUN; timings/custos de produção = REPORTED; "production chain" no docstring do teste = forma sob propostas roteirizadas.
+- **HARNESS NOTES (non-blocking):** código morto no teste de goal; `FakeProposalModel._generic`/`_last` podem misrotear propostas sem chave `_PURPOSE_IDS` ou mascarar repetições — revisar antes de estender a resolver/clarification/native_assessment; `attempt()` exercido sem `handle_interactive_turn` (auth/presentation fora do escopo baseline).
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL` — baseline suficientemente comprovado para orientar a Etapa 02; `READY_FOR_AUTHORIZATION`, mas esta revisão NÃO autoriza a Etapa 02 (autorização pertence à coordenação de arquitetura). Relatório `06-stage-01-independent-review.md`.
+- **RESIDUALS:** CI-06 e CI-11..18 TEST_NOT_RUN (Etapa 06); real-model eval/tokens/custo TEST_NOT_RUN; condição pré-implementação: sem novo enum/reorder/branch-por-provider; limites MAX_* só com evidência+review; `MODEL_AUTHORED_FACTUAL_PROSE=NONE` intacto.
+- **STATUS:** `STAGE_01_REVIEW_RECORDED`; sem avanço de fase.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION

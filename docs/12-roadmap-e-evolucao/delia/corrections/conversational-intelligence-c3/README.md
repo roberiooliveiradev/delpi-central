@@ -4,9 +4,9 @@
 **Data da decisão de planejamento:** 2026-10-15  
 **Origem:** Product Master — coordenação arquitetural DÉLIA  
 **Escopo:** qualidade da inteligência conversacional, orientação semântica, uso genérico de capabilities e composição de respostas  
-**Estado documental:** PLAN_ALIGNED / Etapa 01 EVIDENCE_RECORDED (§6.171); Etapas 02–06 PLANNED; INDEPENDENT_REVIEW=PENDING no ledger. Não equivale a aceite ou autorização de implementação.  
+**Estado documental:** PLAN_ALIGNED / Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172, relatório [06](./06-stage-01-independent-review.md)); Etapas 02–06 PLANNED. Não equivale a autorização de implementação — Etapa 02 depende de autorização bounded da coordenação.  
 **BASE_HEAD remoto examinado:** 40d7d3c0fc04a62795298fb5e45ef00434f51345 (main)  
-**EXECUTION:** NOT_STARTED nesta trilha; **TESTS:** TEST_NOT_RUN nesta trilha; **REVIEW:** PENDING  
+**EXECUTION:** NOT_STARTED nesta trilha (implementações 02–06); **TESTS:** baseline fake/scripted registrado (15 testes, 1069/1069 reexecutados na revisão); **REVIEW:** ACCEPT_WITH_RESIDUAL (§6.172)  
 **AUTORIZAÇÃO ATUAL:** somente documentação. Nenhum prompt Devin, diff funcional, deployment, PREPARE ou ACT é autorizado por estes arquivos.
 
 ## Por que esta pasta existe
@@ -22,6 +22,7 @@ Preservar no GitHub a memória verificável das decisões de produto, gaps, refe
 3. [03 — Avaliações, gates e handoff](./03-evals-and-handoff.md)
 4. [04 — Relatório histórico da Etapa 01](./04-stage-01-baseline-report.md)
 5. [05 — Revisão de alinhamento canônico](./05-canonical-decisions-alignment.md) — obrigatório antes de novo prompt
+6. [06 — Revisão independente da Etapa 01](./06-stage-01-independent-review.md) — parecer ACCEPT_WITH_RESIDUAL + condições da Etapa 02
 
 **Autoridades que prevalecem sobre esta pasta:** instruções do Projeto e regras .cursor; [16 — plano mestre](../../16-execution-master-plan.md) → [50 — arquitetura standalone](../../50-standalone-copilot-application-architecture.md) → [17 — componentes e contratos](../../17-component-and-contract-map.md) → [49 — padrões](../../49-architecture-and-design-patterns-standard.md) → [51 — baseline](../../51-platform-integration-baseline.md) → [52 — bootstrap](../../52-standalone-repository-and-bootstrap-plan.md) → [21 — dados/estado](../../21-data-and-state-model.md) → [20 — testes](../../20-testing-and-acceptance-matrix.md) → [25 — rastreabilidade](../../25-requirements-traceability.md) → [02 — arquitetura técnica](../../02-arquitetura.md) → [24 — produto](../../24-product-specification.md) → specs temáticas aplicáveis → [ledger](../../evidence/execution-ledger.md).
 
@@ -31,7 +32,7 @@ Especificações temáticas aplicáveis: [60 — MCP/A2A](../../60-agent-interop
 
 Consultar primeiro [05 — Matriz de alinhamento](./05-canonical-decisions-alignment.md): ledger §§6.126/6.130/6.133/6.140/6.141/6.145 já determinam orquestração central provider-neutral, tools/list owner-owned, resolver bounded same-owner, confirmação estrutural por PREPARE e rendering factual determinístico. **Não** criar novo goal_class, reorder do planner, discovery de toda string, cópia de Domain validator, confirmação universal, segundo planner ou superprompt sem evidência e review.
 
-O baseline da Etapa 01 foi publicado no commit `1f29906dc45726c778e8d133b2fbdbc41f4b9939`/ledger §6.171; relatório [04](./04-stage-01-baseline-report.md) preservado como histórico. Testes fake/scripted não provam comportamento com modelo real nem aceite independente. O parecer de chat não substitui registro canônico.
+O baseline da Etapa 01 foi publicado no commit `1f29906dc45726c778e8d133b2fbdbc41f4b9939`/ledger §6.171; relatório [04](./04-stage-01-baseline-report.md) preservado como histórico. A revisão independente ([06](./06-stage-01-independent-review.md), ledger §6.172) reexecutou a suíte (1069/1069 PASS), verificou as alegações no código e emitiu ACCEPT_WITH_RESIDUAL: testes fake/scripted provam o pipeline, não o comportamento do modelo real; reclassificações e condições estão no relatório 06.
 
 ## Estado de fase — snapshot, não autoridade
 
