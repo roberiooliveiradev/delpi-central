@@ -29,7 +29,7 @@ export function ConversationThreeRegionLayout({
   const layoutRef = useRef<HTMLDivElement | null>(null);
   const leftId = useId();
   const rightId = useId();
-  const leftToggleRef = useRef<HTMLButtonElement | null>(null);
+  const leftToggleRef = useRef<HTMLDivElement | null>(null);
   const rightToggleRef = useRef<HTMLButtonElement | null>(null);
 
   // A full-page starts with the left navigation open; a dock/mobile starts
@@ -89,7 +89,7 @@ export function ConversationThreeRegionLayout({
             <IconButton
               aria-label={leftOpen ? "Ocultar conversas" : "Abrir conversas"}
               aria-expanded={leftOpen}
-              onClick={() => setLeftOpen((value) => !value)}
+              onClick={() => { setLeftOpen((value) => !value); setRightOpen(false); }}
               disabled={!left}
             >
               {leftOpen ? <PanelLeftClose size={18} aria-hidden="true" /> : <PanelLeftOpen size={18} aria-hidden="true" />}
@@ -100,7 +100,7 @@ export function ConversationThreeRegionLayout({
               <IconButton
                 aria-label={rightOpen ? "Fechar contexto" : "Abrir contexto"}
                 aria-expanded={rightOpen}
-                onClick={() => setRightOpen((value) => !value)}
+                onClick={() => { setRightOpen((value) => !value); setLeftOpen(false); }}
               >
                 {rightOpen ? <PanelRightClose size={18} aria-hidden="true" /> : <PanelRightOpen size={18} aria-hidden="true" />}
               </IconButton>
@@ -127,7 +127,7 @@ export function ConversationThreeRegionLayout({
           tabIndex={-1}
           aria-hidden="true"
           className="delpi-ui-conversation-three-region__backdrop"
-          onClick={() => { setLeftOpen(false); setRightOpen(false); }}
+          onClick={() => { setLeftOpen(false); setRightOpen(false); leftToggleRef.current?.querySelector("button")?.focus(); }}
         />
       ) : null}
     </div>
