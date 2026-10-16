@@ -21,6 +21,7 @@ from production_control_app.application.services.public_machine_load_drawing_ser
 )
 from production_control_app.domain.errors import (
     BranchAccessDenied,
+    DelpiGatewayError,
     DrawingNotFound,
     InvalidBranch,
     SnapshotNotFound,
@@ -74,6 +75,7 @@ class FakeGateway:
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self.work_centers = _WORK_CENTERS if work_centers is None else work_centers
         self.status_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+        self.balances_by_key: dict[tuple[str, str], dict[str, Any]] = {}
 
     def fetch_machine_load_work_centers(
         self,
@@ -196,6 +198,21 @@ class FakeGateway:
                         "appointment_count": 0,
                     }
                 )
+        return {"success": True, "data": {"items": result, "summary": {}}}
+
+    def fetch_machine_load_operation_balances(
+        self,
+        *,
+        branch: str,
+        items: list[dict[str, str]],
+    ) -> dict[str, Any]:
+        self.calls.append(("operation_balances", {"branch": branch, "count": len(items)}))
+        result = []
+        for item in items:
+            key = (item["production_order"], item["operation_code"])
+            hit = self.balances_by_key.get(key)
+            if hit is not None:
+                result.append({**item, **hit, "branch": branch})
         return {"success": True, "data": {"items": result, "summary": {}}}
 
 
@@ -3146,3 +3163,251 @@ def test_refresh_clears_only_that_branch_live_status_cache() -> None:
 
     assert get_live_status_many("01", [("A", "010")])[1] == {("A", "010")}
     assert ("B", "010") in get_live_status_many("02", [("B", "010")])[0]
+
+
+def _cockpit_run(
+    *, order: str, operation: str, work_center: str = "CT-01A", **over: Any
+) -> dict[str, Any]:
+    """Item na projeção open_run_items do cockpit-status."""
+    return {
+        "run_id": f"run-{order}-{operation}",
+        "work_center": work_center,
+        "production_order": order,
+        "operation_code": operation,
+        "run_status": "running",
+        "operational_state": "producing",
+        "display_status": "producing",
+        "integrity_status": "complete",
+        "started_at": "2026-08-19T07:30:00Z",
+        **over,
+    }
+
+
+def test_operation_balances_returns_queue_scoped_items() -> None:
+    """Lote SH6/SC2 só das operações visíveis da fila — sem HZA."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    gateway = FakeGateway()
+    gateway.balances_by_key = {
+        ("10840401003", "01"): {
+            "operation_produced_qty": 4.0,
+            "operation_pending_qty": 0.0,
+        },
+        ("10840401003", "03"): {
+            "operation_produced_qty": 1.5,
+            "operation_pending_qty": 2.5,
+        },
+    }
+
+    payload = _service(gateway, snapshots).operation_balances(
+        _user(*FULL_PERMS), branch="01"
+    )
+
+    assert payload["branch"] == "01"
+    assert payload["summary"]["item_count"] == 2
+    keys = [
+        (item["production_order"], item["operation_code"])
+        for item in payload["items"]
+    ]
+    assert keys == [("10840401003", "01"), ("10840401003", "03")]
+    assert payload["items"][0]["operation_pending_qty"] == 0.0
+    batch_calls = [call for call in gateway.calls if call[0] == "operation_balances"]
+    assert len(batch_calls) == 1
+    # Nenhuma consulta HZA de apontamento participou da leitura de saldos.
+    assert not [call for call in gateway.calls if call[0] == "appointment_status"]
+
+
+def test_operation_balances_gateway_failure_surfaces_as_error() -> None:
+    """No endpoint dedicado, silêncio não pode passar por «sem saldo».
+
+    O MFE trata o erro como indisponibilidade e mantém o último saldo
+    conhecido na tela — diferente do mapa tolerante do rastreio.
+    """
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    gateway = FakeGateway()
+
+    def boom(**kwargs: Any) -> dict[str, Any]:
+        raise DelpiGatewayError("api-delpi indisponível")
+
+    gateway.fetch_machine_load_operation_balances = boom  # type: ignore[method-assign]
+
+    with pytest.raises(DelpiGatewayError):
+        _service(gateway, snapshots).operation_balances(
+            _user(*FULL_PERMS), branch="01"
+        )
+
+
+def test_locate_stop_execution_comes_from_cockpit_runs() -> None:
+    """Stopped do cockpit; op sem run = None mesmo com HZA congelada."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _cockpit_run(
+                order="10840401003",
+                operation="01",
+                operational_state="stopped",
+                display_status="stopped",
+            )
+        ],
+    )
+
+    payload = service.locate(_user(*FULL_PERMS), branch="01", query="10840401003")
+
+    stops = payload["journeys"][0]["stops"]
+    by_key = {
+        (stop["production_order"], stop["operation_code"]): stop for stop in stops
+    }
+    run_stop = by_key[("10840401003", "01")]
+    assert run_stop["work_center"] == "CT-01A"
+    assert run_stop["execution_status"] == "stopped"
+    assert run_stop["execution_integrity_status"] == "complete"
+    assert run_stop["execution_started_at"] == "2026-08-19T07:30:00Z"
+    # OP "started" no snapshot congelado mas sem run: ausência nunca produz.
+    assert by_key[("10840401003", "03")]["execution_status"] is None
+    assert by_key[("10840402001", "01")]["execution_status"] is None
+
+
+def test_locate_stop_execution_unknown_when_cockpit_read_fails() -> None:
+    """Fonte do cockpit fora do ar = «não confirmado», nunca falso ausente."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+
+    def failing_runs(**kwargs: Any) -> list[dict[str, Any]]:
+        raise PluginsDatabaseConnectionError("postgres fora")
+
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=failing_runs,
+    )
+
+    payload = service.locate(_user(*FULL_PERMS), branch="01", query="10840401003")
+
+    for stop in payload["journeys"][0]["stops"]:
+        assert stop["execution_status"] == "unknown"
+        assert stop["execution_integrity_status"] == "inconsistent"
+
+
+def test_locate_stops_apply_batch_balance_without_hza() -> None:
+    """Saldo SH6/SC2 chega pelo lote; apontamento HZA não é consultado."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    gateway = FakeGateway()
+    gateway.balances_by_key = {
+        ("10840401003", "01"): {
+            "operation_produced_qty": 4.0,
+            "operation_pending_qty": 0.0,
+        },
+    }
+
+    payload = _service(gateway, snapshots).locate(
+        _user(*FULL_PERMS), branch="01", query="10840401003"
+    )
+
+    stops = payload["journeys"][0]["stops"]
+    done = next(
+        s
+        for s in stops
+        if s["work_center"] == "CT-01A" and s["operation_code"] == "01"
+    )
+    assert done["operation_pending_qty"] == 0.0
+    assert not [call for call in gateway.calls if call[0] == "appointment_status"]
+
+
+def test_locate_survives_balance_batch_failure() -> None:
+    """Rastreio tolerante: saldo falha, execução do cockpit continua."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    gateway = FakeGateway()
+
+    def boom(**kwargs: Any) -> dict[str, Any]:
+        raise DelpiGatewayError("api-delpi fora")
+
+    gateway.fetch_machine_load_operation_balances = boom  # type: ignore[method-assign]
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[_cockpit_run(order="10840401003", operation="01")],
+    )
+
+    payload = service.locate(_user(*FULL_PERMS), branch="01", query="10840401003")
+
+    stop = next(
+        s
+        for s in payload["journeys"][0]["stops"]
+        if s["work_center"] == "CT-01A" and s["operation_code"] == "01"
+    )
+    assert stop["execution_status"] == "producing"
+    # Saldo do snapshot permanece — desconhecido não zera nem esconde.
+    assert stop["operation_pending_qty"] is None
+
+
+def test_locate_stop_execution_does_not_cross_work_centers() -> None:
+    """Run no CT-01A não produz na parada de mesmo OP+op do CT-02.
+
+    Cenário de transferência: a parada de OP 10840401003 operação 03 está no
+    CT-02; um run aberto para o mesmo par no CT-01A pertence à bancada de
+    origem e não pode marcar a parada do CT-02 como produzindo.
+    """
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _cockpit_run(
+                order="10840401003",
+                operation="03",
+                work_center="CT-01A",
+            )
+        ],
+    )
+
+    payload = service.locate(_user(*FULL_PERMS), branch="01", query="10840401003")
+
+    by_key = {
+        (stop["work_center"], stop["production_order"], stop["operation_code"]): stop
+        for stop in payload["journeys"][0]["stops"]
+    }
+    # Parada no CT-02: sem run correspondente nesse centro → sem execução.
+    assert by_key[("CT-02", "10840401003", "03")]["execution_status"] is None
+    # Parada irmã no CT-01A com mesmo OP mas outra operação também fica sem.
+    assert by_key[("CT-01A", "10840401003", "01")]["execution_status"] is None
+
+
+def test_locate_stop_execution_same_pair_two_centers() -> None:
+    """Dois runs com estados distintos no mesmo par OP+op: cada CT recebe o seu."""
+    snapshots = FakeSnapshotRepo()
+    _seed_locate_snapshot(snapshots)
+    # Ordem invertida de propósito — o resultado não pode depender dela.
+    runs = [
+        _cockpit_run(
+            order="10840401003",
+            operation="03",
+            work_center="CT-02",
+            run_status="stopped",
+            operational_state="stopped",
+            display_status="stopped",
+        ),
+        _cockpit_run(
+            order="10840401003",
+            operation="01",
+            work_center="CT-01A",
+        ),
+    ]
+    service = _service(FakeGateway(), snapshots, open_runs=runs)
+
+    payload = service.locate(_user(*FULL_PERMS), branch="01", query="10840401003")
+
+    by_key = {
+        (stop["work_center"], stop["production_order"], stop["operation_code"]): stop
+        for stop in payload["journeys"][0]["stops"]
+    }
+    assert by_key[("CT-01A", "10840401003", "01")]["execution_status"] == "producing"
+    assert by_key[("CT-02", "10840401003", "03")]["execution_status"] == "stopped"

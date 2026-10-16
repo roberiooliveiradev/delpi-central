@@ -1,6 +1,6 @@
 import { copy } from "../content/copy";
-import type { MachineLoadLocateJourney, MachineLoadLocateStop, ProductionStatus } from "../types";
-import { machineLoadStatusBadge } from "./machineLoadStatus";
+import type { MachineLoadLocateJourney, MachineLoadLocateStop } from "../types";
+import { hasExhaustedMachineLoadBalance, machineLoadStatusBadge } from "./machineLoadStatus";
 
 /** C2_NUM = 6 primeiros dígitos da chave completa da OP (C2_OP / H8_OP, 11 posições). */
 export const CONJUNTO_KEY_LENGTH = 6;
@@ -12,27 +12,28 @@ export function conjuntoKeyFromOrder(productionOrder: string | null | undefined)
 }
 
 export function machineLoadLocateRowKey(
-  stop: Pick<MachineLoadLocateStop, "production_order" | "operation_code">,
+  stop: Pick<MachineLoadLocateStop, "work_center" | "production_order" | "operation_code">,
 ): string {
-  return `${stop.production_order}::${stop.operation_code}`;
+  // CT entra na chave: mesmo OP+operação pode aparecer em duas bancadas.
+  return `${stop.work_center}::${stop.production_order}::${stop.operation_code}`;
 }
 
+export type LocateStopTone = "done" | "running" | "stopped" | "paused" | "unknown" | "queued";
+
 export type LocateProgressStep = {
-  tone: "done" | "running" | "queued";
+  tone: LocateStopTone;
   label: string;
 };
 
-/** Resumo visual da jornada: já apontada / em produção / na fila. */
+/**
+ * Resumo visual da jornada — mesma projeção da fila, vinda do cockpit:
+ * produzindo / parada / pausada / não confirmada / já apontada / na fila.
+ */
 export function locateJourneyProgress(stops: MachineLoadLocateStop[]): LocateProgressStep[] {
-  return stops.map((stop) => {
-    if (stop.is_in_production || stop.production_status === "in_progress") {
-      return { tone: "running", label: copy.machineLoad.status.inProgress };
-    }
-    if (stop.production_status === "started") {
-      return { tone: "done", label: copy.machineLoad.status.started };
-    }
-    return { tone: "queued", label: copy.machineLoad.status.notStarted };
-  });
+  return stops.map((stop) => ({
+    tone: locateStopStatusTone(stop),
+    label: locateStopStatusLabel(stop),
+  }));
 }
 
 export function locateJourneyTitle(journey: MachineLoadLocateJourney): string {
@@ -43,18 +44,39 @@ export function locateJourneyTitle(journey: MachineLoadLocateJourney): string {
   return copy.machineLoad.locate.journeyProduct(journey.key);
 }
 
-export function locateStopStatusLabel(status: ProductionStatus | string, isInProduction: boolean): string {
-  if (isInProduction || status === "in_progress") {
-    return machineLoadStatusBadge("in_progress").label;
+/** Label do estado da parada — execução do cockpit; saldo esgotado sem run = já apontada. */
+export function locateStopStatusLabel(stop: MachineLoadLocateStop): string {
+  switch (stop.execution_status) {
+    case "producing":
+      return machineLoadStatusBadge("in_progress").label;
+    case "stopped":
+      return machineLoadStatusBadge("stopped").label;
+    case "paused":
+      return machineLoadStatusBadge("paused").label;
+    case "unknown":
+      return machineLoadStatusBadge("unconfirmed").label;
+    default:
+      break;
   }
-  return machineLoadStatusBadge(status).label;
+  if (hasExhaustedMachineLoadBalance(stop)) {
+    return machineLoadStatusBadge("started").label;
+  }
+  return machineLoadStatusBadge("not_started").label;
 }
 
-export function locateStopStatusTone(
-  status: ProductionStatus | string,
-  isInProduction: boolean,
-): "done" | "running" | "queued" {
-  if (isInProduction || status === "in_progress") return "running";
-  if (status === "started") return "done";
+export function locateStopStatusTone(stop: MachineLoadLocateStop): LocateStopTone {
+  switch (stop.execution_status) {
+    case "producing":
+      return "running";
+    case "stopped":
+      return "stopped";
+    case "paused":
+      return "paused";
+    case "unknown":
+      return "unknown";
+    default:
+      break;
+  }
+  if (hasExhaustedMachineLoadBalance(stop)) return "done";
   return "queued";
 }

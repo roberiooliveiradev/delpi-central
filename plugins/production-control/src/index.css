@@ -1992,6 +1992,17 @@
   background: color-mix(in srgb, var(--ppc-ok) 18%, transparent);
 }
 
+.dashboard-production-control .ppc-locate__progress-step--stopped,
+.dashboard-production-control .ppc-locate__progress-step--unknown {
+  color: var(--ppc-attention);
+  background: color-mix(in srgb, var(--ppc-attention) 14%, transparent);
+}
+
+.dashboard-production-control .ppc-locate__progress-step--paused {
+  color: var(--ppc-accent);
+  background: color-mix(in srgb, var(--ppc-accent) 14%, transparent);
+}
+
 .dashboard-production-control .ppc-locate__progress-step--queued {
   color: var(--ppc-accent);
   background: color-mix(in srgb, var(--ppc-accent) 12%, transparent);
@@ -2020,6 +2031,20 @@
 .dashboard-production-control .ppc-locate__stop--running {
   border-color: color-mix(in srgb, var(--ppc-ok) 40%, var(--ppc-border));
   background: color-mix(in srgb, var(--ppc-ok) 6%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-locate__stop--stopped {
+  border-color: color-mix(in srgb, var(--ppc-attention) 45%, var(--ppc-border));
+  background: color-mix(in srgb, var(--ppc-attention) 6%, var(--ppc-surface));
+}
+
+.dashboard-production-control .ppc-locate__stop--paused {
+  border-color: color-mix(in srgb, var(--ppc-accent) 40%, var(--ppc-border));
+}
+
+.dashboard-production-control .ppc-locate__stop--unknown {
+  border-color: color-mix(in srgb, var(--ppc-attention) 45%, var(--ppc-border));
+  border-style: dashed;
 }
 
 .dashboard-production-control .ppc-locate__stop--done {
@@ -2079,6 +2104,17 @@
 .dashboard-production-control .ppc-locate__badge--running {
   color: var(--ppc-ok);
   background: color-mix(in srgb, var(--ppc-ok) 14%, transparent);
+}
+
+.dashboard-production-control .ppc-locate__badge--stopped,
+.dashboard-production-control .ppc-locate__badge--unknown {
+  color: var(--ppc-attention);
+  background: color-mix(in srgb, var(--ppc-attention) 14%, transparent);
+}
+
+.dashboard-production-control .ppc-locate__badge--paused {
+  color: var(--ppc-accent);
+  background: color-mix(in srgb, var(--ppc-accent) 14%, transparent);
 }
 
 .dashboard-production-control .ppc-locate__badge--done {
@@ -2619,17 +2655,6 @@
   gap: 6px;
 }
 
-.dashboard-production-control .ppc-load__operator {
-  font-size: var(--ppc-font-xs);
-  font-weight: 650;
-  color: var(--ppc-ok);
-}
-
-.dashboard-production-control .ppc-load__operator--started {
-  color: var(--ppc-text-muted);
-  font-weight: 500;
-}
-
 .dashboard-production-control .ppc-load__started {
   font-size: var(--ppc-font-xs);
   color: var(--ppc-text-muted);
@@ -2684,6 +2709,33 @@
 
 .dashboard-production-control .ppc-load__row--running > td:first-child {
   box-shadow: inset 3px 0 0 var(--ppc-ok);
+}
+
+/* Run parado: atenção sem animação — a borda marca a exceção na fila. */
+.dashboard-production-control .ppc-load__row--stopped > td:first-child {
+  box-shadow: inset 3px 0 0 var(--ppc-attention);
+}
+
+/* Run pausado: destaque discreto — execução suspensa pelo operador. */
+.dashboard-production-control .ppc-load__row--paused > td:first-child {
+  box-shadow: inset 3px 0 0 var(--ppc-accent);
+}
+
+/* Leitura inconsistente: tracejado sinaliza «estado não confirmado». */
+.dashboard-production-control .ppc-load__row--unconfirmed > td {
+  background: color-mix(in srgb, var(--ppc-attention) 6%, transparent);
+}
+
+.dashboard-production-control .ppc-load__row--unconfirmed > td:first-child {
+  box-shadow: inset 3px 0 0 var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-period__stale {
+  display: inline-flex;
+  margin-left: 10px;
+  font-size: var(--ppc-font-xs);
+  font-weight: 550;
+  color: var(--ppc-attention);
 }
 
 .dashboard-production-control .ppc-period__running {

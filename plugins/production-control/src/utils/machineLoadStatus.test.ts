@@ -4,7 +4,6 @@ import {
   filterActiveMachineLoadOperations,
   hasExhaustedMachineLoadBalance,
   isMachineLoadFinishedOperation,
-  isMachineLoadStarted,
   machineLoadRowModifierClass,
   machineLoadStatusBadge,
   machineLoadStatusRank,
@@ -12,8 +11,18 @@ import {
 } from "./machineLoadStatus";
 
 describe("machineLoadStatus", () => {
-  it("marca em produção com verde", () => {
+  it("produzindo marca com verde e lidera a ordenação", () => {
     expect(machineLoadStatusBadge("in_progress").variant).toBe("success");
+    expect(machineLoadStatusBadge("in_progress").label).toBe("Produzindo");
+  });
+
+  it("estados do cockpit têm badges próprios", () => {
+    expect(machineLoadStatusBadge("stopped").label).toBe("Parada");
+    expect(machineLoadStatusBadge("stopped").variant).toBe("warning");
+    expect(machineLoadStatusBadge("paused").label).toBe("Pausada");
+    expect(machineLoadStatusBadge("paused").variant).toBe("info");
+    expect(machineLoadStatusBadge("unconfirmed").label).toBe("Estado não confirmado");
+    expect(machineLoadStatusBadge("unconfirmed").variant).toBe("warning");
   });
 
   it("distingue já apontada de não iniciada", () => {
@@ -26,78 +35,90 @@ describe("machineLoadStatus", () => {
     expect(machineLoadStatusBadge("running").variant).toBe("neutral");
   });
 
-  it("ordena em produção antes de já apontada e não iniciada", () => {
-    const ordered = ["not_started", "in_progress", "started"].sort(
+  it("ordena produzindo antes dos demais estados", () => {
+    const ordered = ["not_started", "in_progress", "started", "paused", "stopped", "unconfirmed"].sort(
       (a, b) => machineLoadStatusRank(a) - machineLoadStatusRank(b),
     );
-    expect(ordered).toEqual(["in_progress", "started", "not_started"]);
+    expect(ordered[0]).toBe("in_progress");
   });
 
-  it("P0: apontamento parcial não tacha nem some no Limpar fila", () => {
+  it("P0: apontamento parcial sem run não tacha nem some no Limpar fila", () => {
     const partial = {
-      production_status: "started" as const,
-      is_in_production: false,
       operation_pending_qty: 0.12,
       pending_qty: 0.12,
+      execution_status: null,
     };
-    expect(isMachineLoadStarted("started")).toBe(true);
     expect(hasExhaustedMachineLoadBalance(partial)).toBe(false);
     expect(isMachineLoadFinishedOperation(partial)).toBe(false);
     expect(resolveMachineLoadQueueStatus(partial)).toBe("not_started");
     expect(machineLoadRowModifierClass(partial)).toBeUndefined();
   });
 
-  it("irmão: saldo esgotado tacha e conta como finalizada", () => {
+  it("irmão: saldo esgotado sem run tacha e conta como finalizada", () => {
     const done = {
-      production_status: "started" as const,
-      is_in_production: false,
       operation_pending_qty: 0,
       pending_qty: 1.1,
+      execution_status: null,
     };
     expect(isMachineLoadFinishedOperation(done)).toBe(true);
     expect(resolveMachineLoadQueueStatus(done)).toBe("started");
     expect(machineLoadRowModifierClass(done)).toBe("ppc-load__row--started");
   });
 
-  it("em produção com saldo continua com linha verde", () => {
-    expect(
-      machineLoadRowModifierClass({
-        production_status: "started",
-        is_in_production: true,
-        operation_pending_qty: 0.5,
-        pending_qty: 0.5,
-      }),
-    ).toBe("ppc-load__row--running");
+  it("negativo: HZA congelada no snapshot não marca produção — só o cockpit decide", () => {
+    // production_status/is_in_production ficaram no snapshot antigo: ignorados.
+    const staleHza = {
+      operation_pending_qty: 5,
+      pending_qty: 5,
+      execution_status: null,
+    };
+    expect(resolveMachineLoadQueueStatus(staleHza)).toBe("not_started");
+    expect(machineLoadRowModifierClass(staleHza)).toBeUndefined();
   });
 
-  it("filtra só operações com saldo esgotado, mantendo parciais e em produção", () => {
+  it("produzindo com saldo esgotado continua visível e destacada", () => {
+    const running = {
+      operation_pending_qty: 0,
+      pending_qty: 0,
+      execution_status: "producing",
+    };
+    expect(resolveMachineLoadQueueStatus(running)).toBe("in_progress");
+    expect(isMachineLoadFinishedOperation(running)).toBe(false);
+    expect(machineLoadRowModifierClass(running)).toBe("ppc-load__row--running");
+  });
+
+  it("run aberto com saldo zero não é ocultado pelo filtro de finalizadas", () => {
+    const openRunZeroBalance = {
+      operation_pending_qty: 0,
+      pending_qty: 0,
+      execution_status: "stopped",
+    };
+    expect(isMachineLoadFinishedOperation(openRunZeroBalance)).toBe(false);
+    expect(filterActiveMachineLoadOperations([openRunZeroBalance])).toHaveLength(1);
+  });
+
+  it("stopped, paused e unknown viram classes de linha próprias", () => {
+    const base = { operation_pending_qty: 5, pending_qty: 5 };
+    expect(machineLoadRowModifierClass({ ...base, execution_status: "stopped" })).toBe(
+      "ppc-load__row--stopped",
+    );
+    expect(machineLoadRowModifierClass({ ...base, execution_status: "paused" })).toBe(
+      "ppc-load__row--paused",
+    );
+    expect(machineLoadRowModifierClass({ ...base, execution_status: "unknown" })).toBe(
+      "ppc-load__row--unconfirmed",
+    );
+  });
+
+  it("filtra só esgotadas sem run, mantendo parciais e execuções abertas", () => {
     const rows = [
-      {
-        production_status: "started" as const,
-        is_in_production: false,
-        operation_pending_qty: 0,
-        pending_qty: 0,
-      },
-      {
-        production_status: "in_progress" as const,
-        is_in_production: true,
-        operation_pending_qty: 2,
-        pending_qty: 2,
-      },
-      {
-        production_status: "not_started" as const,
-        is_in_production: false,
-        operation_pending_qty: 1.1,
-        pending_qty: 1.1,
-      },
-      {
-        production_status: "started" as const,
-        is_in_production: false,
-        operation_pending_qty: 0.12,
-        pending_qty: 0.12,
-      },
+      { operation_pending_qty: 0, pending_qty: 0, execution_status: null },
+      { operation_pending_qty: 2, pending_qty: 2, execution_status: "producing" },
+      { operation_pending_qty: 1.1, pending_qty: 1.1, execution_status: null },
+      { operation_pending_qty: 0.12, pending_qty: 0.12, execution_status: null },
+      { operation_pending_qty: 0, pending_qty: 0, execution_status: "paused" },
     ];
-    expect(filterActiveMachineLoadOperations(rows)).toEqual([rows[1], rows[2], rows[3]]);
+    expect(filterActiveMachineLoadOperations(rows)).toEqual([rows[1], rows[2], rows[3], rows[4]]);
     expect(isMachineLoadFinishedOperation(rows[0]!)).toBe(true);
     expect(isMachineLoadFinishedOperation(rows[3]!)).toBe(false);
   });

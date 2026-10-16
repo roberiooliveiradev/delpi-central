@@ -31,6 +31,9 @@ export function makeMachineLoadOperation(
     active_operator_count: 0,
     appointment_count: 0,
     last_appointment_date: null,
+    execution_status: null,
+    execution_integrity_status: null,
+    execution_started_at: null,
     ...overrides,
   };
 }

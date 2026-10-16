@@ -34,6 +34,7 @@ def test_router_exposes_work_centers_and_operations() -> None:
     assert "/production/machine-load/work-centers" in paths
     assert "/production/machine-load/operations" in paths
     assert "/production/machine-load/appointment-status" in paths
+    assert "/production/machine-load/operation-balances" in paths
 
 
 @patch(
@@ -279,3 +280,62 @@ def test_appointment_status_returns_list_envelope(
     )
     assert payload["meta"]["entity"] == "production_machine_load_appointment_status"
     assert payload["data"]["items"][0]["is_in_production"] is True
+
+
+@patch(
+    "app.interface.http.routes.production.machine_load_router"
+    ".build_get_production_machine_load_operation_balances_use_case"
+)
+def test_operation_balances_returns_list_envelope(
+    mock_builder, machine_load_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "02",
+        "as_of": "2026-08-20T08:00:00+00:00",
+        "items": [
+            {
+                "production_order": "10808301002",
+                "operation_code": "01",
+                "operation_produced_qty": 3.0,
+                "operation_pending_qty": 4.8,
+            }
+        ],
+        "summary": {"requested_count": 1},
+    }
+    mock_builder.return_value = use_case
+
+    response = machine_load_client.post(
+        "/production/machine-load/operation-balances",
+        json={
+            "branch": "02",
+            "items": [{"production_order": "10808301002", "operation_code": "01"}],
+        },
+    )
+    assert response.status_code == 200
+    payload = _body(response)
+    assert payload["meta"]["operationId"] == (
+        "get_production_machine_load_operation_balances"
+    )
+    assert payload["meta"]["entity"] == "production_machine_load_operation_balances"
+    assert payload["data"]["items"][0]["operation_pending_qty"] == 4.8
+    use_case.execute.assert_called_once_with(
+        branch="02",
+        items=[{"production_order": "10808301002", "operation_code": "01"}],
+    )
+
+
+def test_operation_balances_rejects_oversized_batch(
+    machine_load_client: TestClient,
+) -> None:
+    response = machine_load_client.post(
+        "/production/machine-load/operation-balances",
+        json={
+            "branch": "01",
+            "items": [
+                {"production_order": f"OP{i:08d}", "operation_code": "01"}
+                for i in range(2001)
+            ],
+        },
+    )
+    assert response.status_code == 422

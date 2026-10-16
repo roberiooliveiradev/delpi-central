@@ -92,6 +92,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_machine_load_appointment_status": (
         "status de apontamento HZA das operações da carga máquina"
     ),
+    "production_machine_load_operation_balances": (
+        "saldos SH6/SC2 por operação da carga máquina (sem HZA)"
+    ),
     "production_operation_standard_time": (
         "tempo padrão da operação de OP (ciclo ideal e setup em segundos por peça)"
     ),

@@ -295,15 +295,20 @@ export const copy = {
       status: "Situação",
     },
     status: {
-      inProgress: "Em produção",
+      inProgress: "Produzindo",
+      stopped: "Parada",
+      paused: "Pausada",
+      unconfirmed: "Estado não confirmado",
       started: "Já apontada",
       notStarted: "Não iniciada",
       startedAt: (time: string) => `Início ${time}`,
-      operatorPrefix: "Operador",
       inProductionTabAria: (center: string, running: number) =>
         `${center}: ${running} operaç${running === 1 ? "ão" : "ões"} em produção`,
 
     },
+    executionUnavailable:
+      "Estado de execução indisponível — exibindo a última leitura do cockpit.",
+    balancesUnavailable: "Saldos podem estar desatualizados.",
     feedback: {
       openButton: (count: number) =>
         count === 1 ? "Impedimentos (1)" : `Impedimentos (${count})`,

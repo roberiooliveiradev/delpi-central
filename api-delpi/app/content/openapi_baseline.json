@@ -56039,6 +56039,22 @@
       "description": "Retorna status de apontamento HZA das operações da carga máquina via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     },
     {
+      "method": "POST",
+      "path": "/production/machine-load/operation-balances",
+      "operationId": "get_production_machine_load_operation_balances",
+      "summary": "Saldos SH6/SC2 por operação da carga máquina",
+      "tags": [
+        "Produção — Carga máquina"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "production_machine_load_operation_balances",
+        "shape": "list",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Leitura em lote de produzido e saldo por OP+operação, construída só com SH6010/SC2010 — sem consultar apontamentos HZA. É a fonte de saldos do Production Control depois que a execução migrou para o cockpit do operador."
+    },
+    {
       "method": "GET",
       "path": "/production/machine-load/operations",
       "operationId": "get_production_machine_load_operations",
@@ -56506,6 +56522,14 @@
                   "label": "Programação ↑"
                 }
               },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
               "schedule_desc": {
                 "en": {
                   "label": "Schedule ↓"
@@ -56617,6 +56641,30 @@
               "pt-BR": {
                 "description": "Quando verdadeiro, retorna apenas OPs em aberto.",
                 "label": "Somente em aberto"
+              }
+            }
+          },
+          "include_in_production_outside_period": {
+            "locale": {
+              "en": {
+                "description": "When true (default), operations with an open collector appointment are included even outside the period.",
+                "label": "Include running outside period"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro (padrão), operações com apontamento aberto no coletor entram mesmo fora do período.",
+                "label": "Incluir em produção fora do período"
+              }
+            }
+          },
+          "include_operations_outside_period": {
+            "locale": {
+              "en": {
+                "description": "CSV of production_order:operation_code pairs included regardless of the period.",
+                "label": "Extra operations outside period"
+              },
+              "pt-BR": {
+                "description": "Pares OP:operação separados por vírgula incluídos independente do período.",
+                "label": "Operações extras fora do período"
               }
             }
           }
@@ -56923,6 +56971,30 @@
               "pt-BR": {
                 "description": "Quando verdadeiro, retorna apenas OPs em aberto.",
                 "label": "Somente em aberto"
+              }
+            }
+          },
+          "include_in_production_outside_period": {
+            "locale": {
+              "en": {
+                "description": "When true (default), operations with an open collector appointment are included even outside the period.",
+                "label": "Include running outside period"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro (padrão), operações com apontamento aberto no coletor entram mesmo fora do período.",
+                "label": "Incluir em produção fora do período"
+              }
+            }
+          },
+          "include_operations_outside_period": {
+            "locale": {
+              "en": {
+                "description": "CSV of production_order:operation_code pairs included regardless of the period.",
+                "label": "Extra operations outside period"
+              },
+              "pt-BR": {
+                "description": "Pares OP:operação separados por vírgula incluídos independente do período.",
+                "label": "Operações extras fora do período"
               }
             }
           }
@@ -61077,6 +61149,14 @@
                   "label": "Programação ↑"
                 }
               },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
               "schedule_desc": {
                 "en": {
                   "label": "Schedule ↓"
@@ -63617,6 +63697,14 @@
                   "label": "Programação ↑"
                 }
               },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
               "schedule_desc": {
                 "en": {
                   "label": "Schedule ↓"
@@ -65892,6 +65980,14 @@
                   "label": "Programação ↑"
                 }
               },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
               "schedule_desc": {
                 "en": {
                   "label": "Schedule ↓"
@@ -66651,6 +66747,14 @@
                 },
                 "pt-BR": {
                   "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
                 }
               },
               "schedule_desc": {
@@ -79766,6 +79870,14 @@
                 },
                 "pt-BR": {
                   "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
                 }
               },
               "schedule_desc": {
@@ -96700,6 +96812,14 @@
                   "label": "Programação ↑"
                 }
               },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
               "schedule_desc": {
                 "en": {
                   "label": "Schedule ↓"
@@ -98175,6 +98295,14 @@
                 },
                 "pt-BR": {
                   "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
                 }
               },
               "schedule_desc": {
@@ -104793,6 +104921,14 @@
                 },
                 "pt-BR": {
                   "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
                 }
               },
               "schedule_desc": {

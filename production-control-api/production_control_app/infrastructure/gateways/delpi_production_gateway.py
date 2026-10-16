@@ -364,6 +364,18 @@ class DelpiProductionGateway:
             json_body={"branch": branch, "items": items},
         )
 
+    def fetch_machine_load_operation_balances(
+        self,
+        *,
+        branch: str,
+        items: list[dict[str, str]],
+    ) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/production/machine-load/operation-balances",
+            json_body={"branch": branch, "items": items},
+        )
+
     def fetch_production_order_sets_incomplete(
         self,
         *,

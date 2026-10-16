@@ -566,6 +566,12 @@ export type BillingDueTodayPayload = {
 
 export type ProductionStatus = "in_progress" | "started" | "not_started";
 
+/** Estado de execução canônico do cockpit (display_status do run aberto). */
+export type MachineLoadExecutionStatus = "producing" | "stopped" | "paused" | "unknown";
+
+/** Integridade da leitura do run: inconsistent = estado não confirmado. */
+export type MachineLoadIntegrityStatus = "complete" | "inconsistent";
+
 export type MachineLoadWorkCenter = {
   work_center: string;
   work_center_name: string;
@@ -606,40 +612,65 @@ export type MachineLoadOperation = {
   active_operator_count: number;
   appointment_count: number;
   last_appointment_date: string | null;
+  /**
+   * Execução oficial do cockpit — projeção do MFE a partir de
+   * GET /machine-load/cockpit-status. `null` = nenhum run aberto na operação;
+   * ausência do campo = leitura ainda não chegou. Nunca alimentar com HZA.
+   */
+  execution_status?: MachineLoadExecutionStatus | null;
+  execution_integrity_status?: MachineLoadIntegrityStatus | null;
+  /** ISO do início do run aberto. */
+  execution_started_at?: string | null;
   /** Centro de trabalho de origem, quando o PCP transferiu a operação. */
   transferred_from?: string | null;
 };
 
-/** Campos de status que o chão de fábrica (HZA) sobrescreve na fila congelada. */
-export type MachineLoadStatusFields = Pick<
-  MachineLoadOperation,
-  | "production_status"
-  | "is_in_production"
-  | "production_started_date"
-  | "production_started_time"
-  | "active_operator_code"
-  | "active_operator_name"
-  | "active_operator_count"
-  | "appointment_count"
-  | "last_appointment_date"
-  | "operation_produced_qty"
-  | "operation_pending_qty"
->;
-
-/** Só as operações com apontamento; as ausentes mantêm o valor congelado. */
-export type MachineLoadLiveStatusItem = {
+/** Run aberto do cockpit — item do snapshot de execução (fonte oficial). */
+export type MachineLoadCockpitStatusItem = {
+  run_id?: string | null;
+  work_center: string;
   production_order: string;
   operation_code: string;
-} & Partial<MachineLoadStatusFields>;
+  run_status: "running" | "paused" | string;
+  operational_state: "producing" | "stopped" | string | null;
+  display_status: MachineLoadExecutionStatus;
+  integrity_status: MachineLoadIntegrityStatus;
+  started_at: string | null;
+};
 
-export type MachineLoadLiveStatusPayload = {
+/**
+ * Snapshot completo dos runs abertos da filial — GET /machine-load/cockpit-status.
+ * Ausência de item na resposta significa «nenhum run aberto», nunca «mantém o anterior».
+ */
+export type MachineLoadCockpitStatusPayload = {
+  branch: string;
+  source: "cockpit" | string;
+  as_of: string;
+  summary: {
+    active_runs: number;
+    producing: number;
+    stopped: number;
+    paused: number;
+    unknown: number;
+  };
+  items: MachineLoadCockpitStatusItem[];
+};
+
+/** Saldo SH6/SC2 da operação — GET /machine-load/balances (sem HZA). */
+export type MachineLoadBalancesItem = {
+  production_order: string;
+  operation_code: string;
+  operation_produced_qty: number | null;
+  operation_pending_qty: number | null;
+};
+
+export type MachineLoadBalancesPayload = {
   branch: string;
   as_of: string;
   summary: {
-    operation_count: number;
-    in_production_count: number;
+    item_count: number;
   };
-  items: MachineLoadLiveStatusItem[];
+  items: MachineLoadBalancesItem[];
 };
 
 export type MachineLoadLocateStop = {
@@ -655,12 +686,13 @@ export type MachineLoadLocateStop = {
   scheduled_date: string | null;
   scheduled_start_time: string | null;
   pending_qty: number | null;
+  operation_pending_qty: number | null;
   unit: string | null;
   tool: string;
-  production_status: ProductionStatus;
-  is_in_production: boolean;
-  production_started_time: string | null;
-  active_operator_name: string | null;
+  /** Execução do cockpit: `null` = nenhum run aberto; "unknown" = leitura não confirmada. */
+  execution_status: MachineLoadExecutionStatus | null;
+  execution_integrity_status: MachineLoadIntegrityStatus | null;
+  execution_started_at: string | null;
   queue_position: number;
   queue_size: number;
   /** Conjunto fora da programação: a parada aparece no rastreio, mas não na fila. */

@@ -9,6 +9,7 @@ Fila de operações já alocadas a centros de trabalho, com uma linha por opera�
 | GET | `/production/machine-load/work-centers` | `get_production_machine_load_work_centers` | `list` |
 | GET | `/production/machine-load/operations` | `get_production_machine_load_operations` | `paged_list` |
 | POST | `/production/machine-load/appointment-status` | `get_production_machine_load_appointment_status` | `list` |
+| POST | `/production/machine-load/operation-balances` | `get_production_machine_load_operation_balances` | `list` |
 
 Permissão: `KPI_PRODUCTION_ACCESS`.
 
@@ -70,6 +71,10 @@ O congelamento da fila **não** fica na api-delpi. O `production-control-api` gr
 `POST /production/machine-load/appointment-status`
 
 para reaplicar o status HZA vivo sem remontar a SH8. Body: `{ "branch", "items": [{ "production_order", "operation_code" }] }`. A resposta também traz `operation_produced_qty` / `operation_pending_qty`: o saldo da bancada muda a cada apontamento e não pode ficar congelado no snapshot.
+
+### Saldos sem HZA (`operation-balances`)
+
+`POST /production/machine-load/operation-balances` é a leitura em lote de **somente saldos** — criada na Etapa 03 para o Production Control, depois que a execução migrou para o cockpit e o MFE deixou de consumir `appointment-status`. Mesmo body `{ "branch", "items": [{ "production_order", "operation_code" }] }`; resposta com `production_order`, `operation_code`, `operation_produced_qty`, `operation_pending_qty` por item pedido — construída **só com SH6010 (produzido da operação) + SC2010 (encerramento e quantidade da ordem)**, sem tocar a `HZA010`. A semântica do saldo (`operation_pending_qty` zerado × desconhecido) é a mesma canônica do enrich de apontamento — `MachineLoadOperationMapper` decide nos dois caminhos. Pares desconhecidos voltam com saldo `null` — «desconhecido», nunca «esgotado».
 
 ## Filtros (EN)
 

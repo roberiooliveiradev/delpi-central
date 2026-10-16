@@ -1,9 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { fetchMachineLoad, fetchMachineLoadLiveStatus, publishMachineLoad, refreshMachineLoad } from "../api/ppcApi";
+import {
+  fetchMachineLoad,
+  fetchMachineLoadBalances,
+  fetchMachineLoadCockpitStatus,
+  publishMachineLoad,
+  refreshMachineLoad,
+} from "../api/ppcApi";
 import { copy } from "../content/copy";
-import type { MachineLoadLiveStatusPayload, MachineLoadPayload, PpcBranch } from "../types";
-import { applyMachineLoadLiveStatus } from "../utils/machineLoadLiveStatus";
+import type {
+  MachineLoadBalancesPayload,
+  MachineLoadCockpitStatusPayload,
+  MachineLoadPayload,
+  PpcBranch,
+} from "../types";
+import {
+  applyMachineLoadBalances,
+  applyMachineLoadCockpitStatus,
+} from "../utils/machineLoadCockpitStatus";
 import { selectMachineLoadCenter } from "../utils/machineLoadSelection";
 
 type UseMachineLoadParams = {
@@ -25,8 +39,8 @@ function scopeKey(
   return `${branch}|${startDate ?? ""}|${endDate ?? ""}`;
 }
 
-/** Frequência do status vivo do chão de fábrica, pausado com a aba oculta. */
-const LIVE_STATUS_INTERVAL_MS = 30_000;
+/** Frequência do estado de execução e dos saldos, pausados com a aba oculta. */
+const EXECUTION_STATUS_INTERVAL_MS = 30_000;
 
 /** Filas já carregadas nesta sessão do MFE — voltar de outra aba do PPC não recarrega. */
 const MAX_CACHED_SCOPES = 4;
@@ -49,11 +63,19 @@ function writeQueueCache(key: string, payload: MachineLoadPayload): void {
 /**
  * Carrega a fila da filial uma vez por escopo e recorta o centro de trabalho em
  * memória: trocar de aba não custa requisição nem passa por estado vazio.
+ *
+ * A execução vem exclusivamente do cockpit (`/machine-load/cockpit-status`) e
+ * os saldos de `/machine-load/balances` — duas leituras best-effort a cada
+ * 30 s, suspensas com a aba oculta. Nenhuma delas toca a fila congelada:
+ * snapshot, ordem e publicação permanecem estáveis entre as consultas.
  */
 export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMachineLoadParams) {
   const scope = scopeKey(branch, startDate, endDate);
   const [snapshot, setSnapshot] = useState<MachineLoadPayload | null>(null);
-  const [liveStatus, setLiveStatus] = useState<MachineLoadLiveStatusPayload | null>(null);
+  const [cockpitStatus, setCockpitStatus] = useState<MachineLoadCockpitStatusPayload | null>(null);
+  const [balances, setBalances] = useState<MachineLoadBalancesPayload | null>(null);
+  const [executionUnavailable, setExecutionUnavailable] = useState(false);
+  const [balancesUnavailable, setBalancesUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -154,35 +176,74 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     }
   }, [branch, endDate, scope, startDate]);
 
-  // Status congelado da filial anterior não vale para a nova.
+  // Estado de execução e saldos de outra filial não valem para a nova — limpa
+  // imediatamente para não contaminar a fila que está chegando.
   useEffect(() => {
-    setLiveStatus(null);
+    setCockpitStatus(null);
+    setBalances(null);
+    setExecutionUnavailable(false);
+    setBalancesUnavailable(false);
   }, [branch]);
 
-  // O chão de fábrica sai do caminho crítico: a fila aparece primeiro e o status
-  // chega em seguida, sem recarregar a fila.
+  // Execução do cockpit e saldos saem do caminho crítico: a fila aparece
+  // primeiro e as duas leituras chegam em seguida, sem recarregar a fila.
   const hasQueue = snapshot != null;
   useEffect(() => {
     if (!hasQueue) return;
     let cancelled = false;
     const pending = new Set<AbortController>();
+    // Sem requisição concorrente redundante: enquanto a última não fecha,
+    // o próximo tick pula — resposta atrasada nunca disputa com a mais nova.
+    let statusInFlight = false;
+    let balancesInFlight = false;
 
     const poll = () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-      const controller = new AbortController();
-      pending.add(controller);
-      fetchMachineLoadLiveStatus({ branch, signal: controller.signal })
-        .then((payload) => {
-          if (!cancelled) setLiveStatus(payload);
-        })
-        .catch(() => {
-          // Best-effort: sem status vivo a fila congelada continua válida na tela.
-        })
-        .finally(() => pending.delete(controller));
+
+      if (!statusInFlight) {
+        statusInFlight = true;
+        const statusController = new AbortController();
+        pending.add(statusController);
+        fetchMachineLoadCockpitStatus({ branch, signal: statusController.signal })
+          .then((payload) => {
+            if (cancelled) return;
+            setCockpitStatus(payload);
+            setExecutionUnavailable(false);
+          })
+          .catch(() => {
+            // Best-effort: a fila e a última leitura válida permanecem; a tela
+            // sinaliza indisponibilidade em vez de esconder ou inventar execução.
+            if (!cancelled) setExecutionUnavailable(true);
+          })
+          .finally(() => {
+            statusInFlight = false;
+            pending.delete(statusController);
+          });
+      }
+
+      if (!balancesInFlight) {
+        balancesInFlight = true;
+        const balancesController = new AbortController();
+        pending.add(balancesController);
+        fetchMachineLoadBalances({ branch, signal: balancesController.signal })
+          .then((payload) => {
+            if (cancelled) return;
+            setBalances(payload);
+            setBalancesUnavailable(false);
+          })
+          .catch(() => {
+            // Saldo desconhecido não esconde trabalho: último valor conhecido fica.
+            if (!cancelled) setBalancesUnavailable(true);
+          })
+          .finally(() => {
+            balancesInFlight = false;
+            pending.delete(balancesController);
+          });
+      }
     };
 
     poll();
-    const timer = setInterval(poll, LIVE_STATUS_INTERVAL_MS);
+    const timer = setInterval(poll, EXECUTION_STATUS_INTERVAL_MS);
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") poll();
     };
@@ -196,15 +257,18 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     };
   }, [branch, hasQueue]);
 
-  // Fila congelada → status vivo → recorte do centro ativo. Trocar de centro
-  // percorre só a última etapa, em memória.
+  // Fila congelada → execução do cockpit → saldos → recorte do centro ativo.
+  // Trocar de centro percorre só a última etapa, em memória.
   const data = useMemo(() => {
     if (!snapshot) return null;
-    const withStatus = liveStatus
-      ? applyMachineLoadLiveStatus(snapshot, liveStatus)
+    const withExecution = cockpitStatus
+      ? applyMachineLoadCockpitStatus(snapshot, cockpitStatus)
       : snapshot;
-    return selectMachineLoadCenter(withStatus, workCenter);
-  }, [snapshot, liveStatus, workCenter]);
+    const withBalances = balances
+      ? applyMachineLoadBalances(withExecution, balances)
+      : withExecution;
+    return selectMachineLoadCenter(withBalances, workCenter);
+  }, [snapshot, cockpitStatus, balances, workCenter]);
 
   return {
     data,
@@ -212,6 +276,8 @@ export function useMachineLoad({ branch, workCenter, startDate, endDate }: UseMa
     refreshing,
     publishing,
     error,
+    executionUnavailable,
+    balancesUnavailable,
     reload,
     refreshFromTotvs,
     publishToMachines,

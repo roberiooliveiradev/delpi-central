@@ -1,27 +1,52 @@
 import { copy } from "../content/copy";
-import type { MachineLoadOperation, ProductionStatus } from "../types";
+import type { MachineLoadExecutionStatus } from "../types";
+
+/**
+ * Status de apresentação da fila — derivado da execução do cockpit e do saldo.
+ *
+ * - `in_progress`: run aberto produzindo no cockpit.
+ * - `stopped`: run aberto com parada registrada.
+ * - `paused`: run aberto pausado pelo operador.
+ * - `unconfirmed`: run aberto com leitura inconsistente (não confirmada).
+ * - `started`: saldo da operação esgotado e nenhum run aberto («Já apontada»).
+ * - `not_started`: nenhum run aberto — flags HZA do snapshot não contam.
+ */
+export type MachineLoadQueueStatus =
+  | "in_progress"
+  | "stopped"
+  | "paused"
+  | "unconfirmed"
+  | "started"
+  | "not_started";
 
 export type MachineLoadStatusBadge = {
   label: string;
-  variant: "success" | "info" | "neutral";
-  /** Em produção primeiro — mesma prioridade que a API aplica na fila. */
+  variant: "success" | "warning" | "info" | "neutral";
+  /** Execução primeiro — produzindo lidera a fila visual. */
   rank: number;
 };
 
-type BalanceFields = Pick<MachineLoadOperation, "operation_pending_qty" | "pending_qty">;
-type QueueStatusFields = Pick<
-  MachineLoadOperation,
-  "production_status" | "is_in_production" | "operation_pending_qty" | "pending_qty"
->;
+/** Estrutural e solto — aceita linhas parciais (reorder, locate, stops). */
+type BalanceFields = {
+  pending_qty?: number | null;
+  operation_pending_qty?: number | null;
+};
+type ExecutionFields = { execution_status?: MachineLoadExecutionStatus | string | null };
+type QueueStatusFields = BalanceFields & ExecutionFields;
 
-const BADGES: Record<ProductionStatus, MachineLoadStatusBadge> = {
+const BADGES: Record<MachineLoadQueueStatus, MachineLoadStatusBadge> = {
   in_progress: { label: copy.machineLoad.status.inProgress, variant: "success", rank: 0 },
-  started: { label: copy.machineLoad.status.started, variant: "info", rank: 1 },
-  not_started: { label: copy.machineLoad.status.notStarted, variant: "neutral", rank: 2 },
+  stopped: { label: copy.machineLoad.status.stopped, variant: "warning", rank: 1 },
+  paused: { label: copy.machineLoad.status.paused, variant: "info", rank: 2 },
+  unconfirmed: { label: copy.machineLoad.status.unconfirmed, variant: "warning", rank: 3 },
+  started: { label: copy.machineLoad.status.started, variant: "info", rank: 4 },
+  not_started: { label: copy.machineLoad.status.notStarted, variant: "neutral", rank: 5 },
 };
 
-export function machineLoadStatusBadge(status: string | null | undefined): MachineLoadStatusBadge {
-  return BADGES[status as ProductionStatus] ?? BADGES.not_started;
+export function machineLoadStatusBadge(
+  status: MachineLoadQueueStatus | string | null | undefined,
+): MachineLoadStatusBadge {
+  return BADGES[status as MachineLoadQueueStatus] ?? BADGES.not_started;
 }
 
 export function machineLoadStatusRank(status: string | null | undefined): number {
@@ -44,28 +69,35 @@ export function hasExhaustedMachineLoadBalance(operation: BalanceFields): boolea
 }
 
 /**
- * Status de apresentação da fila: «Já apontada» só com saldo esgotado.
- * `production_status === "started"` na API só indica histórico de apontamento
- * (pode ser parcial) — não basta para tachar a linha.
+ * Estado de apresentação da fila. A execução vem exclusivamente do cockpit
+ * (`execution_status`): OP com HZA aberta e sem run não aparece produzindo.
+ * Saldo esgotado só vira «Já apontada» quando não há run — execução tem
+ * prioridade visual e um run aberto nunca é escondido pelo saldo do ERP.
  */
-export function resolveMachineLoadQueueStatus(operation: QueueStatusFields): ProductionStatus {
-  if (hasExhaustedMachineLoadBalance(operation)) return "started";
-  if (operation.is_in_production || operation.production_status === "in_progress") {
-    return "in_progress";
+export function resolveMachineLoadQueueStatus(operation: QueueStatusFields): MachineLoadQueueStatus {
+  switch (operation.execution_status) {
+    case "producing":
+      return "in_progress";
+    case "stopped":
+      return "stopped";
+    case "paused":
+      return "paused";
+    case "unknown":
+      return "unconfirmed";
+    default:
+      break;
   }
+  if (hasExhaustedMachineLoadBalance(operation)) return "started";
   return "not_started";
 }
 
-/** Já apontada no contrato bruto da API (HZA com histórico, sem apontamento aberto). */
-export function isMachineLoadStarted(status: string | null | undefined): boolean {
-  return status === "started";
-}
-
 /**
- * Operação «finalizada» na fila do PCP: saldo da operação esgotado.
- * Em produção com saldo continua visível; apontamento parcial também.
+ * Operação «finalizada» na fila do PCP: saldo esgotado **sem run aberto**.
+ * Um run aberto (produzindo/parada/pausada/inconsistente) mantém a operação
+ * visível mesmo com o saldo do ERP zerado — execução real nunca é ocultada.
  */
 export function isMachineLoadFinishedOperation(operation: QueueStatusFields): boolean {
+  if (operation.execution_status != null) return false;
   return hasExhaustedMachineLoadBalance(operation);
 }
 
@@ -74,10 +106,13 @@ export function filterActiveMachineLoadOperations<T extends QueueStatusFields>(o
   return operations.filter((item) => !isMachineLoadFinishedOperation(item));
 }
 
-/** Classe de linha da fila — em produção vs já apontada (tachada). */
+/** Classe de linha da fila — execução do cockpit vs já apontada (tachada). */
 export function machineLoadRowModifierClass(operation: QueueStatusFields): string | undefined {
   const status = resolveMachineLoadQueueStatus(operation);
   if (status === "in_progress") return "ppc-load__row--running";
+  if (status === "stopped") return "ppc-load__row--stopped";
+  if (status === "paused") return "ppc-load__row--paused";
+  if (status === "unconfirmed") return "ppc-load__row--unconfirmed";
   if (status === "started") return "ppc-load__row--started";
   return undefined;
 }

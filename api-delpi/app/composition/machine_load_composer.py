@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from app.application.use_cases.production.get_production_machine_load_use_cases import (
     GetProductionMachineLoadAppointmentStatusUseCase,
+    GetProductionMachineLoadOperationBalancesUseCase,
     GetProductionMachineLoadOperationsUseCase,
     GetProductionMachineLoadWorkCentersUseCase,
 )
@@ -30,5 +31,13 @@ def build_get_production_machine_load_appointment_status_use_case() -> (
     GetProductionMachineLoadAppointmentStatusUseCase
 ):
     return GetProductionMachineLoadAppointmentStatusUseCase(
+        repository=MachineLoadRepository()
+    )
+
+
+def build_get_production_machine_load_operation_balances_use_case() -> (
+    GetProductionMachineLoadOperationBalancesUseCase
+):
+    return GetProductionMachineLoadOperationBalancesUseCase(
         repository=MachineLoadRepository()
     )

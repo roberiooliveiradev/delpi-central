@@ -378,6 +378,39 @@ class MachineLoadService:
             "items": items,
         }
 
+    def operation_balances(self, user: object | None, *, branch: str) -> dict[str, Any]:
+        """Saldos SH6/SC2 das operações da fila congelada — sem HZA.
+
+        Fonte de quantidades do PCP depois que a execução migrou para o
+        cockpit: produzido e saldo por operação, limitados às OPs da fila
+        visível, numa chamada em lote à api-delpi (que chunkeia internamente
+        para respeitar o limite de parâmetros do SQL Server). Nunca consulta
+        apontamentos HZA — execução vem de ``/machine-load/cockpit-status``.
+        """
+        self._assert_can_view(user, branch)
+        _row, payload = self._load_snapshot_payload(branch=branch)
+        operations = visible_operations(
+            payload_operations(payload), withdrawn_order_numbers(payload)
+        )
+        balance_by_key = self._operation_balances_map(
+            branch=branch, operations=operations, strict=True
+        )
+        items = [
+            {
+                "production_order": order,
+                "operation_code": operation,
+                "operation_produced_qty": raw.get("operation_produced_qty"),
+                "operation_pending_qty": raw.get("operation_pending_qty"),
+            }
+            for (order, operation), raw in sorted(balance_by_key.items())
+        ]
+        return {
+            "branch": branch,
+            "as_of": datetime.now(timezone.utc).isoformat(),
+            "summary": {"item_count": len(items)},
+            "items": items,
+        }
+
     def build_public(
         self,
         *,
@@ -1643,7 +1676,7 @@ class MachineLoadService:
 
         row, payload = self._load_snapshot_payload(branch=branch)
         operations = payload_operations(payload)
-        operations = self._enrich_live_status(branch=branch, operations=operations)
+        operations = self._enrich_execution_state(branch=branch, operations=operations)
         # Rastreio ainda encontra conjunto retirado — marcado como fora da programação.
         withdrawn_keys = withdrawn_order_numbers(payload)
         queue_index = self._queue_positions_by_center(
@@ -1825,12 +1858,12 @@ class MachineLoadService:
                     "scheduled_date": item.get("scheduled_date"),
                     "scheduled_start_time": item.get("scheduled_start_time"),
                     "pending_qty": item.get("pending_qty"),
+                    "operation_pending_qty": item.get("operation_pending_qty"),
                     "unit": item.get("unit"),
                     "tool": str(item.get("tool") or "").strip(),
-                    "production_status": item.get("production_status") or "not_started",
-                    "is_in_production": bool(item.get("is_in_production")),
-                    "production_started_time": item.get("production_started_time"),
-                    "active_operator_name": item.get("active_operator_name"),
+                    "execution_status": item.get("execution_status"),
+                    "execution_integrity_status": item.get("execution_integrity_status"),
+                    "execution_started_at": item.get("execution_started_at"),
                     "queue_position": _as_int(item.get("_queue_position"), 0),
                     "queue_size": _as_int(item.get("_queue_size"), 0),
                     "is_withdrawn": is_withdrawn(item, hidden),
@@ -2453,6 +2486,111 @@ class MachineLoadService:
         put_live_status_many(branch, fetched)
         status_by_key.update(fetched)
         return status_by_key
+
+    def _operation_balances_map(
+        self,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+        strict: bool = False,
+    ) -> dict[tuple[str, str], dict[str, Any]]:
+        """Mapa OP+operação → saldo SH6/SC2, em lote único via api-delpi.
+
+        Sem cache e sem HZA: o saldo é o fato que mais muda a cada apontamento
+        e a consulta em lote já é barata. No modo tolerante (locate), falha
+        remota devolve mapa vazio — saldo desconhecido nunca esconde operação.
+        No modo ``strict`` (endpoint dedicado do PCP) a falha propaga como
+        erro controlado: o MFE sinaliza indisponibilidade e mantém o último
+        saldo conhecido, em vez de tratar silêncio como «sem saldo».
+        """
+        pairs: list[dict[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for item in operations:
+            key = _operation_key(item)
+            if not all(key) or key in seen:
+                continue
+            seen.add(key)
+            pairs.append(
+                {"production_order": key[0], "operation_code": key[1]}
+            )
+        if not pairs:
+            return {}
+        try:
+            payload = _unwrap_data(
+                self._gateway.fetch_machine_load_operation_balances(
+                    branch=branch,
+                    items=pairs,
+                )
+            )
+        except Exception:
+            if strict:
+                raise
+            return {}
+        result: dict[tuple[str, str], dict[str, Any]] = {}
+        for raw in dict_items(payload):
+            order = str(raw.get("production_order") or "").strip()
+            code = str(raw.get("operation_code") or "").strip()
+            if order and code:
+                result[(order, code)] = raw
+        return result
+
+    def _enrich_execution_state(
+        self,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Projeção do rastreio PCP: execução do cockpit + saldo SH6/SC2, sem HZA.
+
+        ``execution_status`` recebe o ``display_status`` canônico do run aberto
+        (producing/stopped/paused/unknown) ou ``None`` quando não há run —
+        ausência nunca vira «produzindo». Falha da fonte do cockpit marca cada
+        operação como ``unknown``/``inconsistent``: leitura não confirmada é
+        honesta, «sem execução» seria um estado falso. O saldo vem do lote
+        SH6/SC2 da api-delpi — apontamento HZA não participa.
+        """
+        if not operations:
+            return operations
+        # Identidade canônica da execução: centro + OP + operação — a mesma do
+        # sequenciamento (Etapa 02). Casar só por OP+operação mostraria o run
+        # de uma bancada na parada de outra após transferência.
+        run_by_key: dict[ProtectedOperationKey, dict[str, Any]] = {}
+        cockpit_failed = False
+        if self._open_run_items is not None:
+            try:
+                for item in self._open_run_items(branch=branch):
+                    key = protected_operation_key(item)
+                    if key[0] and key[1] and key[2]:
+                        run_by_key[key] = item
+            except Exception:  # noqa: BLE001
+                cockpit_failed = True
+                logger.warning("machine_load_locate_cockpit_unavailable branch=%s", branch)
+        balance_by_key = self._operation_balances_map(
+            branch=branch, operations=operations
+        )
+        enriched: list[dict[str, Any]] = []
+        for item in operations:
+            merged = dict(item)
+            key = _operation_key(item)
+            run = run_by_key.get(protected_operation_key(item))
+            if cockpit_failed:
+                merged["execution_status"] = "unknown"
+                merged["execution_integrity_status"] = "inconsistent"
+                merged["execution_started_at"] = None
+            elif run is not None:
+                merged["execution_status"] = run.get("display_status") or "unknown"
+                merged["execution_integrity_status"] = run.get("integrity_status")
+                merged["execution_started_at"] = run.get("started_at")
+            else:
+                merged["execution_status"] = None
+                merged["execution_integrity_status"] = None
+                merged["execution_started_at"] = None
+            balance = balance_by_key.get(key)
+            if balance:
+                merged["operation_produced_qty"] = balance.get("operation_produced_qty")
+                merged["operation_pending_qty"] = balance.get("operation_pending_qty")
+            enriched.append(merged)
+        return enriched
 
     def _enrich_live_status(
         self,

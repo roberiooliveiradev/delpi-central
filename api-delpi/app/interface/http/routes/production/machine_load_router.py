@@ -20,6 +20,7 @@ from app.application.dto.production.machine_load_request import (
 from app.application.security.api_delpi_permissions import KPI_PRODUCTION_ACCESS
 from app.composition.machine_load_composer import (
     build_get_production_machine_load_appointment_status_use_case,
+    build_get_production_machine_load_operation_balances_use_case,
     build_get_production_machine_load_operations_use_case,
     build_get_production_machine_load_work_centers_use_case,
 )
@@ -121,6 +122,14 @@ _APPOINTMENT_STATUS_FIELDS = {
 }
 
 
+_OPERATION_BALANCE_FIELDS = {
+    "production_order": {"label": "OP", "type": "string"},
+    "operation_code": {"label": "Operação", "type": "string"},
+    "operation_produced_qty": {"label": "Produzido na operação", "type": "number"},
+    "operation_pending_qty": {"label": "Saldo da operação", "type": "number"},
+}
+
+
 class AppointmentStatusItem(BaseModel):
     production_order: str = Field(..., min_length=1, max_length=30)
     operation_code: str = Field(..., min_length=1, max_length=10)
@@ -129,6 +138,13 @@ class AppointmentStatusItem(BaseModel):
 class AppointmentStatusRequest(BaseModel):
     branch: str = Field(..., pattern=r"^(01|02)$")
     items: list[AppointmentStatusItem] = Field(default_factory=list)
+
+
+# Teto defensivo do lote — o use case quebra as OPs em consultas de até
+# _BALANCE_ORDER_CHUNK para respeitar o limite de parâmetros do SQL Server.
+class OperationBalancesRequest(BaseModel):
+    branch: str = Field(..., pattern=r"^(01|02)$")
+    items: list[AppointmentStatusItem] = Field(default_factory=list, max_length=2000)
 
 
 class MachineLoadCommonQuery:
@@ -390,3 +406,33 @@ def get_production_machine_load_appointment_status(
         )
     except Exception as exc:
         return _handle_errors("buscar status de apontamento da carga máquina", exc)
+
+
+@router.post(
+    "/operation-balances",
+    summary="Saldos SH6/SC2 por operação da carga máquina",
+    description=(
+        "Leitura em lote de produzido e saldo por OP+operação, construída só "
+        "com SH6010/SC2010 — sem consultar apontamentos HZA. É a fonte de "
+        "saldos do Production Control depois que a execução migrou para o "
+        "cockpit do operador."
+    ),
+    operation_id="get_production_machine_load_operation_balances",
+)
+@require_any_permission(KPI_PRODUCTION_ACCESS)
+def get_production_machine_load_operation_balances(
+    body: OperationBalancesRequest = Body(...),
+):
+    try:
+        result = build_get_production_machine_load_operation_balances_use_case().execute(
+            branch=body.branch,
+            items=[item.model_dump() for item in body.items],
+        )
+        return api_delpi_success(
+            result,
+            operation_id="get_production_machine_load_operation_balances",
+            message="Saldos por operação da carga máquina buscados com sucesso.",
+            fields=_OPERATION_BALANCE_FIELDS,
+        )
+    except Exception as exc:
+        return _handle_errors("buscar saldos da carga máquina", exc)

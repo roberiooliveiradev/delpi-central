@@ -3,7 +3,8 @@ import type {
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
   DemandPayload,
-  MachineLoadLiveStatusPayload,
+  MachineLoadBalancesPayload,
+  MachineLoadCockpitStatusPayload,
   MachineLoadLocatePayload,
   MachineLoadOptimizePayload,
   MachineLoadPayload,
@@ -586,18 +587,36 @@ export async function transferMachineLoadConjunto(params: {
   );
 }
 
-/** Status de apontamento vivo (HZA) da fila — aplicado sobre a fila já na tela. */
-export async function fetchMachineLoadLiveStatus(params: {
+/**
+ * Estado de execução oficial do cockpit — snapshot completo dos runs abertos
+ * da filial (production_runs locais, sem HZA). Aplicado sobre a fila já na
+ * tela: operação ausente na resposta não tem execução ativa.
+ */
+export async function fetchMachineLoadCockpitStatus(params: {
   branch: string;
   signal?: AbortSignal;
-}): Promise<MachineLoadLiveStatusPayload> {
+}): Promise<MachineLoadCockpitStatusPayload> {
   const search = new URLSearchParams({ branch: params.branch });
   const envelope = await httpGet<{
     success: boolean;
     message?: string;
-    data: MachineLoadLiveStatusPayload;
-  }>(ppcApiUrl(`/machine-load/live-status?${search.toString()}`), { signal: params.signal });
-  return unwrapEnvelope(envelope, "Não foi possível atualizar o status da fila.");
+    data: MachineLoadCockpitStatusPayload;
+  }>(ppcApiUrl(`/machine-load/cockpit-status?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível atualizar o estado de execução da fila.");
+}
+
+/** Saldos SH6/SC2 das operações da fila — sem HZA. Falha aqui nunca toca o estado de execução. */
+export async function fetchMachineLoadBalances(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadBalancesPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadBalancesPayload;
+  }>(ppcApiUrl(`/machine-load/balances?${search.toString()}`), { signal: params.signal });
+  return unwrapEnvelope(envelope, "Não foi possível atualizar os saldos da fila.");
 }
 
 export async function fetchMachineLoadLocate(params: {

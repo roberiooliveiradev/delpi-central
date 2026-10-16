@@ -98,7 +98,7 @@ function StopCard({
   stop: MachineLoadLocateStop;
   onGoToStop: (stop: MachineLoadLocateStop) => void;
 }) {
-  const tone = locateStopStatusTone(stop.production_status, stop.is_in_production);
+  const tone = locateStopStatusTone(stop);
   const [flash, setFlash] = useState(false);
 
   useEffect(() => {
@@ -129,14 +129,13 @@ function StopCard({
             <span>{copy.machineLoad.locate.position(stop.queue_position, stop.queue_size)}</span>
           ) : null}
           <span className={`ppc-locate__badge ppc-locate__badge--${tone}`}>
-            {locateStopStatusLabel(stop.production_status, stop.is_in_production)}
+            {locateStopStatusLabel(stop)}
           </span>
           {stop.is_withdrawn ? (
             <span className="ppc-locate__badge ppc-locate__badge--withdrawn">
               {copy.machineLoad.withdrawn.locateBadge}
             </span>
           ) : null}
-          {stop.active_operator_name ? <span>{stop.active_operator_name}</span> : null}
         </p>
       </div>
       {stop.is_withdrawn ? null : (

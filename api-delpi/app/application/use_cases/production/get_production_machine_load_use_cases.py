@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from app.application.dto.production.machine_load_request import (
@@ -23,6 +23,10 @@ from app.domain.totvs.protheus_operation_appointments import (
     APPOINTMENT_HISTORY_LOOKBACK_DAYS,
 )
 
+# Lote de OPs por consulta parametrizada — abaixo do teto de ~2100 parâmetros
+# do SQL Server com folga (a SH6 varre um IN por vez).
+_BALANCE_ORDER_CHUNK = 500
+
 
 def _optional_float(value: Any) -> float | None:
     if value is None or value == "":
@@ -31,6 +35,89 @@ def _optional_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _order_flags_by_code(
+    repository: MachineLoadRepositoryPort,
+    *,
+    branch: str,
+    production_orders: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Encerramento/quantidades SC2 por OP, em lotes — limite de parâmetros."""
+    if not production_orders or not hasattr(repository, "get_order_finish_flags"):
+        return {}
+    rows: list[dict[str, Any]] = []
+    for offset in range(0, len(production_orders), _BALANCE_ORDER_CHUNK):
+        chunk = production_orders[offset : offset + _BALANCE_ORDER_CHUNK]
+        rows.extend(
+            repository.get_order_finish_flags(
+                branch=branch, production_orders=chunk
+            )
+        )
+    out: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        order = str(row.get("production_order") or "").strip()
+        if not order:
+            continue
+        is_finished = int(float(row.get("is_finished") or 0)) > 0
+        finish_raw = row.get("finish_date")
+        finish_date = None
+        if is_finished and finish_raw is not None and str(finish_raw).strip():
+            text = str(finish_raw).strip()
+            if text.isdigit() and len(text) == 8:
+                finish_date = f"{text[0:4]}-{text[4:6]}-{text[6:8]}"
+            else:
+                finish_date = text[:10]
+        out[order] = {
+            "is_finished": is_finished,
+            "finish_date": finish_date,
+            "planned_qty": _optional_float(row.get("planned_qty")),
+            "pending_qty": _optional_float(row.get("pending_qty")),
+        }
+    return out
+
+
+def _produced_by_operation(
+    repository: MachineLoadRepositoryPort,
+    *,
+    branch: str,
+    production_orders: list[str],
+    keys: list[tuple[str, str]],
+) -> dict[tuple[str, str], float]:
+    """Produzido por OP+operação; operação coberta sem apontamento vale 0.
+
+    Ausência de linha na SH6 para uma OP consultada significa «nada apontado
+    nesta operação», não «saldo desconhecido» — só OP fora da consulta fica
+    sem entrada e cai no saldo do cabeçalho.
+    """
+    if not production_orders or not hasattr(
+        repository, "get_operation_produced_qty"
+    ):
+        return {}
+    rows: list[dict[str, Any]] = []
+    for offset in range(0, len(production_orders), _BALANCE_ORDER_CHUNK):
+        chunk = production_orders[offset : offset + _BALANCE_ORDER_CHUNK]
+        rows.extend(
+            repository.get_operation_produced_qty(
+                branch=branch, production_orders=chunk
+            )
+        )
+    covered = {str(order or "").strip() for order in production_orders}
+    produced: dict[tuple[str, str], float] = {
+        (order, operation): 0.0 for order, operation in keys if order in covered
+    }
+    for row in rows:
+        order = str(row.get("production_order") or "").strip()
+        operation = str(row.get("operation_code") or "").strip()
+        if not order or not operation:
+            continue
+        try:
+            produced[(order, operation)] = float(
+                row.get("operation_produced_qty") or 0
+            )
+        except (TypeError, ValueError):
+            continue
+    return produced
 
 
 class GetProductionMachineLoadWorkCentersUseCase:
@@ -107,12 +194,15 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
         order_codes = sorted({order for order, _operation in keys if order})
         # Encerramento e saldo da OP entram antes do mapeamento: derrubam o
         # apontamento aberto que o operador esqueceu no coletor.
-        order_flags = self._order_flags_by_code(
-            branch=branch, production_orders=order_codes
+        order_flags = _order_flags_by_code(
+            self._repository, branch=branch, production_orders=order_codes
         )
         # Saldo da própria operação (SH6): o do cabeçalho não distingue bancada.
-        produced_by_operation = self._produced_by_operation(
-            branch=branch, production_orders=order_codes, keys=keys
+        produced_by_operation = _produced_by_operation(
+            self._repository,
+            branch=branch,
+            production_orders=order_codes,
+            keys=keys,
         )
 
         mapped = MachineLoadAppointmentStatusMapper.map_rows(
@@ -159,71 +249,76 @@ class GetProductionMachineLoadAppointmentStatusUseCase:
             },
         }
 
-    def _produced_by_operation(
+
+class GetProductionMachineLoadOperationBalancesUseCase:
+    """Saldos SH6/SC2 por OP+operação — leitura em lote sem consultar a HZA.
+
+    O estado de execução migrou para o cockpit (runs MES locais); o que o PCP
+    ainda precisa do TOTVS em tempo real é o saldo da bancada: produzido na
+    operação (SH6010) e encerramento/quantidade da ordem (SC2010). A regra de
+    ``operation_pending_qty`` é a mesma canônica do enrich de apontamento —
+    ``MachineLoadOperationMapper`` decide saldo zerado/desconhecido.
+    """
+
+    def __init__(self, repository: MachineLoadRepositoryPort) -> None:
+        self._repository = repository
+
+    def execute(
         self,
         *,
         branch: str,
-        production_orders: list[str],
-        keys: list[tuple[str, str]],
-    ) -> dict[tuple[str, str], float]:
-        """Produzido por OP+operação; operação coberta sem apontamento vale 0.
+        items: list[dict[str, Any]],
+    ) -> dict:
+        wanted: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for raw in items:
+            order = str(raw.get("production_order") or "").strip()
+            operation = str(raw.get("operation_code") or "").strip()
+            key = (order, operation)
+            if order and operation and key not in seen:
+                seen.add(key)
+                wanted.append(key)
 
-        Ausência de linha na SH6 para uma OP consultada significa «nada apontado
-        nesta operação», não «saldo desconhecido» — só OP fora da consulta fica
-        sem entrada e cai no saldo do cabeçalho.
-        """
-        if not production_orders or not hasattr(
-            self._repository, "get_operation_produced_qty"
-        ):
-            return {}
-        rows = self._repository.get_operation_produced_qty(
-            branch=branch, production_orders=production_orders
+        order_codes = sorted({order for order, _operation in wanted})
+        order_flags = _order_flags_by_code(
+            self._repository, branch=branch, production_orders=order_codes
         )
-        covered = {str(order or "").strip() for order in production_orders}
-        produced: dict[tuple[str, str], float] = {
-            (order, operation): 0.0 for order, operation in keys if order in covered
+        produced_by_operation = _produced_by_operation(
+            self._repository,
+            branch=branch,
+            production_orders=order_codes,
+            keys=wanted,
+        )
+
+        result_items: list[dict[str, Any]] = []
+        for order, operation in wanted:
+            flags = order_flags.get(order) or {}
+            mapped = MachineLoadAppointmentStatusMapper.map_row(
+                {
+                    "branch": branch,
+                    "production_order": order,
+                    "operation_code": operation,
+                },
+                order_is_finished=bool(flags.get("is_finished")),
+                order_finish_date=flags.get("finish_date"),
+                planned_qty=flags.get("planned_qty"),
+                pending_qty=flags.get("pending_qty"),
+                operation_produced_qty=produced_by_operation.get(
+                    (order, operation)
+                ),
+            )
+            result_items.append(
+                {
+                    "production_order": order,
+                    "operation_code": operation,
+                    "operation_produced_qty": mapped["operation_produced_qty"],
+                    "operation_pending_qty": mapped["operation_pending_qty"],
+                }
+            )
+
+        return {
+            "branch": branch,
+            "as_of": datetime.now(timezone.utc).isoformat(),
+            "items": result_items,
+            "summary": {"requested_count": len(wanted)},
         }
-        for row in rows:
-            order = str(row.get("production_order") or "").strip()
-            operation = str(row.get("operation_code") or "").strip()
-            if not order or not operation:
-                continue
-            try:
-                produced[(order, operation)] = float(
-                    row.get("operation_produced_qty") or 0
-                )
-            except (TypeError, ValueError):
-                continue
-        return produced
-
-    def _order_flags_by_code(
-        self, *, branch: str, production_orders: list[str]
-    ) -> dict[str, dict[str, Any]]:
-        if not production_orders or not hasattr(
-            self._repository, "get_order_finish_flags"
-        ):
-            return {}
-        rows = self._repository.get_order_finish_flags(
-            branch=branch, production_orders=production_orders
-        )
-        out: dict[str, dict[str, Any]] = {}
-        for row in rows:
-            order = str(row.get("production_order") or "").strip()
-            if not order:
-                continue
-            is_finished = int(float(row.get("is_finished") or 0)) > 0
-            finish_raw = row.get("finish_date")
-            finish_date = None
-            if is_finished and finish_raw is not None and str(finish_raw).strip():
-                text = str(finish_raw).strip()
-                if text.isdigit() and len(text) == 8:
-                    finish_date = f"{text[0:4]}-{text[4:6]}-{text[6:8]}"
-                else:
-                    finish_date = text[:10]
-            out[order] = {
-                "is_finished": is_finished,
-                "finish_date": finish_date,
-                "planned_qty": _optional_float(row.get("planned_qty")),
-                "pending_qty": _optional_float(row.get("pending_qty")),
-            }
-        return out

@@ -128,6 +128,8 @@ export function MachineLoadPage({
     refreshing,
     publishing,
     error,
+    executionUnavailable,
+    balancesUnavailable,
     refreshFromTotvs,
     publishToMachines,
     applyPayload,
@@ -1070,6 +1072,16 @@ export function MachineLoadPage({
         ) : null}
         {data ? (
           <span className="ppc-period__summary">
+            {executionUnavailable ? (
+              <span className="ppc-period__stale" role="status">
+                {copy.machineLoad.executionUnavailable}
+              </span>
+            ) : null}
+            {balancesUnavailable && !executionUnavailable ? (
+              <span className="ppc-period__stale" role="status">
+                {copy.machineLoad.balancesUnavailable}
+              </span>
+            ) : null}
             {data.summary.in_production_count ? (
               <span className="ppc-period__running">
                 <span className="ppc-load__pulse" aria-hidden="true" />

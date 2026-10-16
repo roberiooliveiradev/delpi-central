@@ -174,6 +174,28 @@ def get_machine_load_cockpit_status(
     return ok(data)
 
 
+@router.get(
+    "/machine-load/balances",
+    operation_id="get_machine_load_balances",
+)
+def get_machine_load_balances(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """Saldos SH6/SC2 das operações da fila congelada — sem HZA.
+
+    Quantidades produzidas e pendentes por operação, limitadas às OPs da
+    programação visível. Execução é lida em ``/machine-load/cockpit-status``;
+    este endpoint nunca consulta apontamentos HZA.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().operation_balances(user, branch=branch)
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data)
+
+
 @router.post("/machine-load/refresh")
 def refresh_machine_load(
     request: Request,

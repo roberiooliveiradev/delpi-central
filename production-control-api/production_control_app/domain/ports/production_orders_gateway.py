@@ -126,6 +126,14 @@ class ProductionOrdersGateway(Protocol):
     ) -> dict[str, Any]:
         ...
 
+    def fetch_machine_load_operation_balances(
+        self,
+        *,
+        branch: str,
+        items: list[dict[str, str]],
+    ) -> dict[str, Any]:
+        ...
+
     def fetch_operation_materials_batch(
         self,
         *,

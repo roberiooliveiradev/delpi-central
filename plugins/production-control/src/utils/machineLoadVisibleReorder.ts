@@ -6,8 +6,7 @@ import {
 type QueueRow = {
   production_order: string;
   operation_code: string;
-  production_status?: string | null;
-  is_in_production?: boolean | null;
+  execution_status?: string | null;
   operation_pending_qty?: number | null;
   pending_qty?: number | null;
 };
