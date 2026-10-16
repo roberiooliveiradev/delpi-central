@@ -117,20 +117,31 @@ export function ConversationThreeRegionLayout({
           {typeof center === "function" ? center(controls) : center}
         </div>
       </div>
-      {rightOpen && rightAvailable && right ? (
-        <div ref={contextRef} id={rightId} role="dialog" aria-modal="false"
+      {rightAvailable && right ? (
+        <div
+          ref={contextRef}
+          id={rightId}
+          role="dialog"
+          aria-modal="false"
           aria-label={rightTitle}
-          className="delpi-ui-conversation-three-region__context-popover">
-          <div className="delpi-ui-conversation-three-region__side-heading">
-            <strong>Contexto</strong>
-            <IconButton aria-label="Fechar painel de contexto" onClick={() => {
-              setRightOpen(false);
-              contextTriggerRef.current?.focus();
-            }}>
-              <X size={18} aria-hidden="true" />
-            </IconButton>
-          </div>
-          <div className="delpi-ui-conversation-three-region__side-content">{right}</div>
+          aria-hidden={!rightOpen}
+          data-open={rightOpen ? "true" : "false"}
+          className="delpi-ui-conversation-three-region__context-popover delpi-ui-popover-surface"
+        >
+          {rightOpen ? (
+            <>
+              <div className="delpi-ui-conversation-three-region__side-heading">
+                <strong>Contexto</strong>
+                <IconButton aria-label="Fechar painel de contexto" onClick={() => {
+                  setRightOpen(false);
+                  contextTriggerRef.current?.focus();
+                }}>
+                  <X size={18} aria-hidden="true" />
+                </IconButton>
+              </div>
+              <div className="delpi-ui-conversation-three-region__side-content">{right}</div>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>
