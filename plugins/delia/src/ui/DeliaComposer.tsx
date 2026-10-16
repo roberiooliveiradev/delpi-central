@@ -39,6 +39,7 @@ export function DeliaComposer({
       inputLabel="Pergunte à DÉLIA"
       value={value}
       onChange={onChange}
+      onClearDraft={() => onChange("")}
       onSubmit={onSubmit}
       loading={loading}
       requestMode={requestMode}
