@@ -212,7 +212,7 @@ def _outcome(group_id, remote_name, text, structured=None, limitations=()):
 
 
 def _select(group_key, remote_name, arguments=None, extra=None,
-            arg_payload=None):
+            arg_payload=None, goal_class=None):
     proposal = {
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
@@ -228,6 +228,11 @@ def _select(group_key, remote_name, arguments=None, extra=None,
             else {"arguments": arguments or {}}
         ),
     }
+    # write-path fixtures pass goal_class="create_or_modify" — an
+    # undeclared goal can no longer carry a write-class selection
+    # (C3-CI-02R1 §6.174).
+    if goal_class:
+        proposal[GOAL_INSTRUCTION_ID] = {"goal_class": goal_class}
     if extra:
         proposal.update(extra)
     return proposal
@@ -678,6 +683,7 @@ def test_eval4_metamorphic_workspace_resolution(phrase):
                 _KEY,
                 "draft_style_change",
                 {"block_id": "BLK-77", "style": {"color": "black"}},
+                goal_class="create_or_modify",
             ),
         ],
     )
@@ -710,6 +716,7 @@ def test_eval4_clarification_is_business_language():
                         "applicable": False
                     }
                 },
+                goal_class="create_or_modify",
             ),
             {
                 CLARIFICATION_INSTRUCTION_ID: {
@@ -747,6 +754,7 @@ def test_eval4_clarification_wording_gate_rejects_leak():
                         "applicable": False
                     }
                 },
+                goal_class="create_or_modify",
             ),
             {
                 CLARIFICATION_INSTRUCTION_ID: {
@@ -795,6 +803,7 @@ def test_clarification_fallback_never_uses_field_vocabulary(missing):
                     },
                     CLARIFICATION_INSTRUCTION_ID: None,
                 },
+                goal_class="create_or_modify",
             ),
         ],
     )
@@ -857,6 +866,7 @@ def test_eval3_composition_clarification_never_leaks_routes():
                         "applicable": False
                     }
                 },
+                goal_class="create_or_modify",
             ),
             {
                 CLARIFICATION_INSTRUCTION_ID: {
@@ -906,6 +916,7 @@ def test_injected_owner_description_cannot_bypass_governance():
                 _KEY,
                 "draft_style_change",
                 {"block_id": "BLK-77", "style": {"color": "black"}},
+                goal_class="create_or_modify",
             ),
         ],
     )

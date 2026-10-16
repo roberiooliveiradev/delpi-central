@@ -1511,12 +1511,12 @@ def test_s2_intent_gate_is_name_invariant():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
 
 
-def test_s2_uninterpreted_goal_preserves_governed_write_path():
-    """Documented residual: when the goal proposal is absent the gate
-    is inactive — the neutral default is never treated as declared
-    intent, so the governed write chain still runs (a goal-stage
-    failure must not silently disable legitimate writes). The write
-    remains bounded by PREPARE/owner confirmation governance."""
+def test_s2r1_uninterpreted_goal_never_promotes_write():
+    """B1 (§6.174): 'Você consegue criar?' is an ability/information
+    question — an ABSENT goal interpretation is not evidence of a
+    change request. A write-class selection with no validated goal
+    must not silently proceed to PREPARE; the honest bounded path is
+    a proportional clarification ask-back."""
     provider = _s2_guided_write_provider()
     orch, _ = _orchestrator(
         [provider],
@@ -1535,21 +1535,313 @@ def test_s2_uninterpreted_goal_preserves_governed_write_path():
                     }
                 },
             },
+        ],
+    )
+    attempt = orch.attempt("Você consegue criar?")
+    assert provider.calls == []
+    assert attempt.status is (
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_s2r1_invalid_goal_guidance_never_writes():
+    """B1 (§6.174): 'Como criar um processo?' with an INVALID goal
+    proposal (rejected by the allowed-keys contract) — the failed
+    interpretation stage must not promote the earlier PREPARE
+    selection. Zero write-class invocation."""
+    provider = _s2_guided_write_provider()
+    orch, _ = _orchestrator(
+        [provider],
+        [
             {
                 CAPABILITY_SELECTION_INSTRUCTION_ID: {
                     "applicable": True,
-                    "remote_name": "read_guide",
+                    "remote_name": "stage_record",
+                },
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    # Unknown key -> whole proposal rejected by
+                    # allowed_keys -> no declared interpretation.
+                    "invented_field": True,
                 },
                 ARGUMENTS_INSTRUCTION_ID: {
-                    "arguments": {"topic": "process"},
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
                 },
             },
         ],
     )
-    attempt = orch.attempt("Você consegue criar?")
-    assert ("stage_record", {
-        "entity": "process", "operation": "create", "changes": {},
-    }) in provider.calls
+    attempt = orch.attempt("Como criar um processo?")
+    assert provider.calls == []
+    assert attempt.status is (
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_s2r1_uninterpreted_write_only_surface_never_writes():
+    """B1-05 (§6.174): owner surface with ONLY write-class
+    capabilities + absent goal — no write by elimination, and no
+    safe non-mutating alternative exists to demote to."""
+    provider = FakeProvider(
+        "acme-flow",
+        [
+            _group(
+                "acme-flow",
+                "registry",
+                [
+                    _cap(
+                        "registry", "acme-flow", "stage_record",
+                        SpecialistOperationClass.PREPARE,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "entity": {"type": "string"},
+                                "operation": {"type": "string"},
+                                "changes": {"type": "object"},
+                            },
+                            "required": [
+                                "entity", "operation", "changes",
+                            ],
+                        },
+                        desc="stage a record change for review",
+                    ),
+                ],
+            )
+        ],
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
+                },
+            }
+        ],
+    )
+    attempt = orch.attempt("Você consegue cadastrar?")
+    assert provider.calls == []
+    assert attempt.status is (
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_s2r1_uninterpreted_gate_is_name_invariant():
+    """B1 on a fully renamed owner/capability surface — the gate
+    reacts to operation class and declared goal only, never to
+    provider or remote names."""
+    provider = FakeProvider(
+        "x9-manuals",
+        [
+            _group(
+                "x9-manuals",
+                "library",
+                _s2_guided_write_caps(
+                    "x9-manuals", "library",
+                    read_name="fetch_chapter",
+                    write_name="propose_mutation",
+                ),
+            )
+        ],
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "propose_mutation",
+                },
+                # No GOAL payload.
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
+                },
+            },
+        ],
+    )
+    attempt = orch.attempt("Você consegue alterar?")
+    assert provider.calls == []
+    assert attempt.status is (
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    )
+
+
+def test_s2r1_prepare_only_bound_blocks_direct_act():
+    """B2-01 (§6.174): 'Prepare um cadastro, mas não aplique.' — the
+    validated goal declares action intent AND an explicit
+    prepare_only execution bound. With request ceiling None and an
+    owner that seals explicit_user_confirmation=False (direct
+    governed continuation), the textual bound must still cap the
+    turn: PREPARE may run, ACT must never be invoked."""
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={"data": {"record_id": "R-1"}},
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "x",
+                    "status_processo": "ativo",
+                },
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                    "execution_bound": "prepare_only",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt(
+        "Prepare um cadastro, mas não aplique."
+    )
+    assert attempt.status is (
+        GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    )
+    assert "commit_record" not in [
+        name for name, _ in provider.calls
+    ]
+    assert "stage_record" in [name for name, _ in provider.calls]
+
+
+def test_s2r1_execution_bound_semantic_variants():
+    """B2-06 (§6.174): equivalent formulations of an explicit
+    prepare-only bound produce the same capped outcome — the bound
+    comes from the validated goal interpretation, not keyword
+    matching."""
+    phrases = (
+        "Somente prepare a alteração.",
+        "Monte a proposta, sem executá-la.",
+        "Quero apenas uma prévia.",
+        "Não aplique nenhuma mudança.",
+        "Prepare agora; depois decidimos se executamos.",
+    )
+    for phrase in phrases:
+        provider = _process_provider(
+            commit_outcome=_outcome(
+                "registry", "commit_record", "created",
+                structured={"data": {"record_id": "R-1"}},
+            )
+        )
+        orch, _ = _orchestrator(
+            [provider],
+            _select(
+                "registry", "stage_record",
+                arguments={
+                    "entity": "process",
+                    "operation": "create",
+                    "changes": {
+                        "nome_processo": "x",
+                        "status_processo": "ativo",
+                    },
+                },
+                extra={
+                    GOAL_INSTRUCTION_ID: {
+                        "goal_class": "create_or_modify",
+                        "execution_bound": "prepare_only",
+                    }
+                },
+            ),
+        )
+        attempt = orch.attempt(phrase)
+        assert attempt.status is (
+            GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+        ), phrase
+        assert "commit_record" not in [
+            name for name, _ in provider.calls
+        ], phrase
+
+
+def test_s2r1_unrestricted_create_keeps_direct_continuation():
+    """B2-03 control (§6.174): explicit action request with NO
+    execution bound declared (unrestricted) and owner direct policy
+    — the governed direct continuation still runs. The bound can
+    only reduce the ceiling, never require universal confirmation."""
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={"data": {"record_id": "R-1"}},
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "x",
+                    "status_processo": "ativo",
+                },
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                    "execution_bound": "unrestricted",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Crie um processo chamado x")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [name for name, _ in provider.calls] == [
+        "get_catalog", "stage_record", "commit_record",
+    ]
+
+
+def test_s2r1_prepare_only_bound_blocks_cold_act_selection():
+    """B2 sibling: the same textual bound caps a cold ACT selection
+    too — an ACT-class target under a declared prepare-only goal is
+    refused by the execution ceiling, never invoked."""
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={"data": {"record_id": "R-1"}},
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "commit_record",
+            arguments={
+                "proposal_handle": "x",
+                "confirmation": True,
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                    "execution_bound": "prepare_only",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Somente prepare; não execute.")
+    assert attempt.status is GovernedCapabilityStatus.WRITE_REJECTED
+    assert attempt.error_code == "execution_ceiling"
+    assert provider.calls == []
 
 
 def test_s2_ineligible_or_invented_selection_rejected():

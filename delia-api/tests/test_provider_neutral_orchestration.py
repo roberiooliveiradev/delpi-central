@@ -22,6 +22,7 @@ from app.application.capability_provision.contracts import (
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CAPABILITY_SELECTION_INSTRUCTION_ID,
+    GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
 )
@@ -169,8 +170,8 @@ def _group(provider_id, group_id, capabilities, display=""):
     )
 
 
-def _select(group_key, remote_name, arguments=None):
-    return {
+def _select(group_key, remote_name, arguments=None, goal_class=None):
+    proposal = {
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
             "capability_group_id": group_key,
@@ -181,6 +182,11 @@ def _select(group_key, remote_name, arguments=None):
         },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": arguments or {}},
     }
+    # C3-CI-02R1: write-class targets need a declared action goal —
+    # write-path fixtures pass goal_class="create_or_modify".
+    if goal_class:
+        proposal[GOAL_INSTRUCTION_ID] = {"goal_class": goal_class}
+    return proposal
 
 
 def _orchestrator(providers, proposal):
@@ -530,7 +536,11 @@ def test_prepare_confirms_through_generic_chain():
         },
     )
     orch = _orchestrator(
-        [provider], _select("mcp:vista", "prepare_change")
+        [provider],
+        _select(
+            "mcp:vista", "prepare_change",
+            goal_class="create_or_modify",
+        )
     )
     attempt = orch.attempt("mude o titulo")
     # The owner payload here is minimal — the projection decides
@@ -662,6 +672,7 @@ def test_envelope_capability_runs_owner_discovery_first():
                 "target": {"playlistId": "pl-1"},
                 "ops": [{"op": "add_blank_slide"}],
             },
+            goal_class="create_or_modify",
         ),
     )
     attempt = orch.attempt("adicione um slide em branco")
@@ -714,6 +725,7 @@ def test_envelope_discovery_is_provider_neutral():
             "openapi:catalog_api",
             "stage_change",
             {"target": {"k": "v"}, "ops": [{"op": "set_flag"}]},
+            goal_class="create_or_modify",
         ),
     )
     attempt = orch.attempt("prepare a flag change")
@@ -785,6 +797,7 @@ def test_envelope_without_discovery_still_owner_validated():
             "mcp:vista",
             "prepare_change",
             {"target": {"x": 1}, "ops": [{"op": "y"}]},
+            goal_class="create_or_modify",
         ),
     )
     attempt = orch.attempt("mude algo")
@@ -803,6 +816,7 @@ def test_ambiguous_discovery_never_used():
             "mcp:vista",
             "prepare_change",
             {"target": {"x": 1}, "ops": [{"op": "y"}]},
+            goal_class="create_or_modify",
         ),
     )
     attempt = orch.attempt("mude algo")
@@ -856,7 +870,11 @@ def test_discovery_failure_is_truthful():
         ],
     )
     orch = _orchestrator(
-        [provider], _select("mcp:vista", "prepare_change", {})
+        [provider],
+        _select(
+            "mcp:vista", "prepare_change", {},
+            goal_class="create_or_modify",
+        )
     )
     attempt = orch.attempt("mude algo")
     assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
@@ -939,6 +957,7 @@ def test_owner_vocabulary_is_size_bounded():
             "mcp:vista",
             "prepare_change",
             {"target": {"x": 1}, "ops": [{"op": "y"}]},
+            goal_class="create_or_modify",
         ),
     )
     orch.attempt("mude algo")
@@ -992,6 +1011,9 @@ def test_empty_arguments_with_missing_inputs_yield_clarification():
             CAPABILITY_SELECTION_INSTRUCTION_ID: {
                 "applicable": True,
                 "remote_name": "prepare_change",
+            },
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "create_or_modify",
             },
             ARGUMENTS_INSTRUCTION_ID: {
                 "arguments": {},

@@ -4,9 +4,9 @@
 **Data da decisão de planejamento:** 2026-10-15  
 **Origem:** Product Master — coordenação arquitetural DÉLIA  
 **Escopo:** qualidade da inteligência conversacional, orientação semântica, uso genérico de capabilities e composição de respostas  
-**Estado documental:** PLAN_ALIGNED / Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172, relatório [06](./06-stage-01-independent-review.md)); Etapa 02 IMPLEMENTATION_EVIDENCE_RECORDED (§6.173, relatório [07](./07-stage-02-implementation-report.md)) e INDEPENDENT_REVIEW=REWORK (§6.174, [08](./08-stage-02-independent-review.md)); Etapas 03–06 PLANNED/NOT_AUTHORIZED. Sem aceite da Etapa 02.  
-**BASE_HEAD remoto examinado:** 40d7d3c0fc04a62795298fb5e45ef00434f51345 (main)  
-**EXECUTION:** Etapa 02 implementada (gate determinístico de finalidade + instruções v8); **TESTS:** baseline fake/scripted (24 testes no arquivo de baseline; 1078/1078 suíte delia-api); **REVIEW:** Etapa 01 ACCEPT_WITH_RESIDUAL (§6.172); Etapa 02 REWORK (§6.174) — bloqueios antes de ACT  
+**Estado documental:** PLAN_ALIGNED / Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172, relatório [06](./06-stage-01-independent-review.md)); Etapa 02 IMPLEMENTATION_EVIDENCE_RECORDED (§6.173, relatório [07](./07-stage-02-implementation-report.md)) e INDEPENDENT_REVIEW=REWORK (§6.174, [08](./08-stage-02-independent-review.md)); Etapa 02R1 REWORK_IMPLEMENTATION_EVIDENCE_RECORDED (§6.175, relatório [09](./09-stage-02r1-rework-implementation-report.md)) com INDEPENDENT_REVIEW=PENDING; Etapas 03–06 PLANNED/NOT_AUTHORIZED. Sem aceite da Etapa 02.  
+**BASE_HEAD remoto examinado:** a6196637ea84984db7689a259dac0907d6d45218 (main)  
+**EXECUTION:** Etapa 02R1 implementada (gate reforçado: objetivo não interpretado → clarificação; `execution_bound` no contrato de objetivo compõe o teto reduction-only; instruções v9); **TESTS:** baseline fake/scripted (31 testes no arquivo de baseline; 1085/1085 suíte delia-api); **REVIEW:** Etapa 01 ACCEPT_WITH_RESIDUAL (§6.172); Etapa 02 REWORK (§6.174) → rework executado; revisão independente do R1 pendente  
 **AUTORIZAÇÃO ATUAL:** somente documentação. Nenhum prompt Devin, diff funcional, deployment, PREPARE ou ACT é autorizado por estes arquivos.
 
 ## Por que esta pasta existe
@@ -25,6 +25,7 @@ Preservar no GitHub a memória verificável das decisões de produto, gaps, refe
 6. [06 — Revisão independente da Etapa 01](./06-stage-01-independent-review.md) — parecer ACCEPT_WITH_RESIDUAL + condições da Etapa 02
 7. [07 — Relatório de implementação da Etapa 02](./07-stage-02-implementation-report.md) — evidência do executor, preservada como histórico
 8. [08 — Revisão independente da Etapa 02](./08-stage-02-independent-review.md) — REWORK e dois bloqueios a corrigir antes da Etapa 03
+9. [09 — Relatório de implementação do rework Etapa 02R1](./09-stage-02r1-rework-implementation-report.md) — correção dos bloqueios B1/B2; evidência do executor, sem aceite
 
 **Autoridades que prevalecem sobre esta pasta:** instruções do Projeto e regras .cursor; [16 — plano mestre](../../16-execution-master-plan.md) → [50 — arquitetura standalone](../../50-standalone-copilot-application-architecture.md) → [17 — componentes e contratos](../../17-component-and-contract-map.md) → [49 — padrões](../../49-architecture-and-design-patterns-standard.md) → [51 — baseline](../../51-platform-integration-baseline.md) → [52 — bootstrap](../../52-standalone-repository-and-bootstrap-plan.md) → [21 — dados/estado](../../21-data-and-state-model.md) → [20 — testes](../../20-testing-and-acceptance-matrix.md) → [25 — rastreabilidade](../../25-requirements-traceability.md) → [02 — arquitetura técnica](../../02-arquitetura.md) → [24 — produto](../../24-product-specification.md) → specs temáticas aplicáveis → [ledger](../../evidence/execution-ledger.md).
 
