@@ -54,11 +54,10 @@ Documentos operacionais associados: [40 — slices/dependências](./40-matriz-de
 A ordem proposta implementa primeiro a experiência comum, depois as páginas do processo. A **topbar em runtime** preserva sua ordem funcional própria (Início, Visão geral, Sala de interação, Minhas tarefas, Administração, Ajuda); não confundir ordem do menu com ordem de PRs. Página do usuário é deep route, não novo item de topbar.
 
 ~~~text
-FASE DOCUMENTAL: A12 → A14 → A15 → A16 → quatro FREEZES → PO AUTHORIZE
-                                              |
-                                              v
-R0 — Inventário técnico sem scaffold especulativo
-       |
+R0 — Inventário técnico/documental e revalidação A12/A14/A15/A16
+       → quatro FREEZES com evidência → PO AUTHORIZE
+       |    (sem GO, STOP; sem scaffold/runtime)
+       v
 R1 — Página do usuário → Início → Visão geral → Minhas tarefas
                         → Sala de interação → Administração → Ajuda
        |
@@ -79,7 +78,7 @@ R5 — hardening, regressão, readiness operacional e release governado
 
 **Objetivo:** completar A12/A14/A15/A16, conferir padrões atuais de API/Portais antes de scaffold, resolver ou classificar explicitamente T01–T05 e E01–E06 por necessidade, mapear integração Core T05 grupos/funções elegíveis e vínculo do coordenador P5, vigência e snapshot P6, fontes de P3 T03, DTOs/eventos/concorrência. **Não pressupor** que busca de diretório por permission já fornece grupo/função.
 
-**Saída:** ata de gate documentada com evidência e SHA; owners/contracts/bindings; matriz de testes atualizada; GO/NO-GO explícito. **No gate PASS → não executar R1.**
+**Saída:** ata de gate documentada com evidência e SHA; owners/contracts/bindings; matriz de testes atualizada; GO/NO-GO explícito. **Sem gate PASS e autorização explícita → não executar R1.**
 
 ### R1 — Páginas comuns e fundação mínima dependente de uso
 
