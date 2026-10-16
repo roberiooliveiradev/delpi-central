@@ -14224,3 +14224,15 @@ NEXT=INVENTORY_BASELINE_RED_THEN_MINIMAL_EXTEND
 
 STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_AUTHORIZED=YES; STAGE_03_STARTED=YES; STAGE_03_IMPLEMENTATION=EVIDENCE_RECORDED; STAGE_03_ACCEPTED=NO; C3_EXECUTED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_STAGE_03_ARCHITECTURE_REVIEW
+
+## §6.206 — DELIA-UX-MARKDOWN-FRONTEND-DISABLED-IMPLEMENTATION-01 (FRONTEND CODE / QA PENDING)
+
+**Product Master decision:** Executar agora exclusivamente o renderer visual compartilhado no `plugin-ui` e sua integração/importação pela DÉLIA, com emissão e links desativados até contrato backend autorizado. Não é a trilha `C3-STAGE-02-B2` nem autorização de ACT.
+
+**BASE_HEAD:** `3377302b71bb2f4488d88f7fba1551d2d4a0c784`. **Code changes via GitHub main:** `ConversationMarkdown.tsx` (token→React sobre `marked.lexer`, sem innerHTML/DOMParser/HTML executável/media, `enabled=false` por default, links apenas se destino consta de allowlist explícita, bounds); `plugins/plugin-ui/src/components/markdown/index.ts` e `src/index.ts` (exports inclusive host federation); `plugins/plugin-ui/src/styles/conversation-markdown.css` e import em `styles.css`; `plugins/delia/src/ui/DeliaAssistantMessage.tsx` (componente importado, `enabled={false}`, preserva literal v1, Activity, Evidence, Confirmation e copy); `plugins/plugin-ui/src/components/markdown/ConversationMarkdown.test.tsx` (7 testes unit/adversarial criados). Nenhum backend/Domain API/Portal/ACT runtime alterado por esta task.
+
+**REUSE_GATE:** `EXISTING_EQUIVALENT=YES` (marked lexer and document HTML renderer not safe for this use); `REUSE_DECISION=REUSE lexer + NEW minimal React conversational view` no owner `plugin-ui`, conforme G2 candidate, com avaliação independente futura. Sem inventar contratos de link.
+
+**EVIDENCE:** GitHub file/commit persistence `PROVEN`. `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, `SSH=TEST_NOT_RUN` — esta execução via GitHub connector não dispõe de checkout/deps executáveis ou SSH nesta sessão. Não chamar a entrega de aceita/deployed.
+
+**GATES PRESERVED:** `CP-333=PLANNED_NOT_PASS`; `G1/G2=ACCEPT_WITH_RESIDUAL`; `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY`; `G3_END_TO_END=BLOCKED`; `PRESENTATION_V1=CURRENT_RUNTIME`; `PRESENTATION_V2_RUNTIME=OFF`; `C3_EXECUTED=NO`, `PHASE_PROGRESSION=NONE`. **NEXT:** bounded frontend vitest/typecheck/build/federation and real Portal full-page/dock QA + independent review on exact SHA; maintain backend feature OFF.
