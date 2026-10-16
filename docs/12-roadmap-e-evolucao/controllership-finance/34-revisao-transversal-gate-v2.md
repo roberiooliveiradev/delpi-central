@@ -2,7 +2,9 @@
 
 ## Estado
 
-**TARGET / A14 REVIEW PASS / TARGETED_REBASELINE_AFTER_P5_CLARIFICATION / GLOBAL_FREEZE_BLOCKED_BY_REVIEW_COMPLETION_DECISION**
+**Evidência e gate pós-merge vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A14=INCONCLUSIVE` até requisitos verificados).
+
+**TARGET / A14 HISTORICAL_REVIEW_PASS / POSTMERGE_REVALIDATION_INCONCLUSIVE / GLOBAL_FREEZE_NOT_AUTHORIZED**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -45,7 +47,7 @@ P5_REVIEW_COMPLETION_RULE     = C2_APPROVED
 IMPLEMENTATION_AUTHORIZED     = NO
 ```
 
-O único blocker material conhecido ao freeze global é `D-P5-REVIEW-COMPLETION`: definir se a conclusão mensal exige apenas submissão ou review aceito.
+C2, P5-A..J e DEC-01..04 estão aprovados. O gate atual depende de evidência de elegibilidade Core T05, contratos de estados/integrações e revalidação da matriz de testes; não há decisão C1/C2/C3 pendente.
 
 ## 1. Naming
 
@@ -89,7 +91,7 @@ Confirmados:
 | collaboration state | Sala/BFF |
 | TaskProjection | composição read-only dos owners |
 | Help content | MFE/content registry |
-| submissão/revisão P5 | **PORTAL-FIRST PASS / REVIEW_COMPLETION DECISION_REQUIRED — doc 37** |
+| submissão/revisão P5 | **PORTAL-FIRST / C2, P5-A..J, DEC-01..04 PO_APPROVED — bindings Core T05 TO_INVENTORY (doc 37)** |
 
 Nenhum owner foi transferido apenas para criar experiência unificada.
 
@@ -358,7 +360,7 @@ Isso é residual de rastreabilidade, não nova regra de produto.
 ## Gate A14
 
 ```text
-A14_TRANSVERSAL_REVIEW       = PASS
+A14_TRANSVERSAL_REVIEW       = HISTORICAL_PASS / CURRENT_REVALIDATION_INCONCLUSIVE
 PORTAL_DESIGN_CONSISTENCY    = PASS
 FRONTEND_PATTERN_CONSISTENCY = PASS
 SECURITY_CONSISTENCY         = PASS
@@ -370,7 +372,7 @@ IMPLEMENTATION_AUTHORIZED    = NO
 
 Próximo passo documental:
 - A15 — consolidar contracts + regras + scripts + test matrix;
-- manter E04/T04 explícito como DECISION_REQUIRED de contract freeze;
+- E04/T04 entrega externa NOT_REQUIRED_IN_V1, não registrar como bloqueio atual;
 - não iniciar runtime.
 
 
@@ -413,9 +415,9 @@ Authority:
 
 **STALE_EVIDENCE para os antigos flags de A14 relativos a P5.** D-P5-REVIEW-COMPLETION foi decidido como C2. D-P5-01 foi refinada por P5-A: aprovação por área obrigatória, não por todas as identidades. P5-F preserva aceite histórico em reatribuição; P5-G veda reversão por UI; P5-H configura área por tipo no P6 e congela na submissão; P5-I exige autoridade formal para confirmar rejeição terminal; P5-J desativa acionabilidade de TaskProjection após rejeição terminal. Nenhum destes fatos autoriza inferir DESIGN/SECURITY/TEST/CONTRACT FREEZE atual.
 
-`A14_CURRENT_GATE=REVALIDATE_AFTER_P5_CHANGES`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE_ROLE_SCOPE`; `TEST_STRATEGY_FREEZE=REVALIDATE_REVIEW_MATRIX`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
+`A14_CURRENT_GATE=POSTMERGE_REVALIDATION_INCONCLUSIVE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE_ROLE_SCOPE`; `TEST_STRATEGY_FREEZE=REVALIDATE_REVIEW_MATRIX`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
-**DECISION_REQUIRED:** identidade e regra de autorização da autoridade confirmadora da rejeição terminal, incluindo recusa de confirmação. Contrato excepcional de correção de aceite está fora da V1 até aprovação explícita. `Core T05` e contratos físicos permanecem `TO_INVENTORY`. E04/T04 de entrega por anexos são superseded / NOT_REQUIRED_IN_V1, não blocker vigente. Documento 37 é a authority temática do modelo de revisão.
+**PO APPROVED DEC-01/02:** coordenador formal com ACCESS, vínculo e scope confirma ou mantém pendente a rejeição; binding com Core e máquina de estados permanecem TO_INVENTORY. Contrato excepcional de correção de aceite está fora da V1 até aprovação explícita. `Core T05` e contratos físicos permanecem `TO_INVENTORY`. E04/T04 de entrega por anexos são superseded / NOT_REQUIRED_IN_V1, não blocker vigente. Documento 37 é a authority temática do modelo de revisão.
 
 
 ## Decisões finais do PO — DEC-01 a DEC-04 (16/10/2026)
@@ -455,4 +457,4 @@ C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válid
 
 **Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
 
-**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=BLOCKED_DIVERGED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
+**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=PR78_MERGED_TO_MAIN_VERIFIED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.

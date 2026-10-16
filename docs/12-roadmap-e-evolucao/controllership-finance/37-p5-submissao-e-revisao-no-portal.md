@@ -2,7 +2,9 @@
 
 ## Estado
 
-**TARGET / PRODUCT_CLARIFICATION_APPLIED / REVIEW_COMPLETION_C2_DECIDED_WITH_DERIVED_CONTRACT_GAPS**
+**Verificação pós-merge de A12 e contratos Core:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+
+**TARGET / PRODUCT DECISIONS APPROVED (C2, P5-A..J, DEC-01..04) / A12 TECHNICAL_CONTRACT_INVENTORY_PENDING**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -198,7 +200,7 @@ Depois da submissão, o review lifecycle precisa suportar pelo menos:
 ```text
 REVIEW_PENDING
 → REVIEW_IN_PROGRESS
-→ [ REVIEW_ACCEPTED | CHANGES_REQUESTED ]
+→ [ REVIEW_ACCEPTED | CHANGES_REQUESTED | REVIEW_REJECTED ]
 ```
 
 Com esclarecimento:
@@ -212,7 +214,7 @@ CHANGES_REQUESTED
 
 Se a correção mudar conteúdo material:
 - package submetido anterior permanece histórico;
-- criar complemento/nova versão conforme P5;
+- criar nova PackageVersion com histórico e novos aceites obrigatórios de todas as áreas;
 - reviewer recebe nova submissão/version adequada;
 - não sobrescrever versão já analisada.
 
@@ -429,47 +431,23 @@ Experience:
 - F5/deep link;
 - Help.
 
-## 16. Decisão material ainda aberta
+## 16. Decisão de produto vigente — conclusão mensal C2 e rejeição terminal
 
-A clarificação fecha o modelo de entrega, mas falta decidir quando o fechamento mensal é considerado concluído.
-
-### C1 — submissão é suficiente
+**TARGET / PO_APPROVED:** C1 (somente submissão) e C3 (completion configurável) são alternativas históricas não escolhidas. A opção aprovada é **C2**; não há decisão aberta sobre qual critério encerra o fechamento.
 
 ```text
 ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
 AND NO_OPEN_CLARIFICATION
+AND NO_TERMINAL_COMPETENCE_REJECTION
 → MONTHLY_CLOSING_COMPLETED
 ```
 
-Reviewer pode continuar avaliação depois.
+Cada área obrigatória é configurada por tipo de pacote no P6 e congelada no ato da submissão P5. Um único aceite auditado por usuário elegível satisfaz aquela área para aquela PackageVersion; dois usuários elegíveis não duplicam o quorum. Nova versão exige novamente os aceites de todas as áreas obrigatórias, sem herdar os anteriores. Reatribuição de pessoa preserva aceite histórico e autoria, sem reversão pela UI ou por endpoint da V1.
 
-### C2 — review aceito é obrigatório
+Rejeição `REVIEW_REJECTED` por reviewer elegível registra outcome da área/pacote, **não** rejeita automaticamente toda a competência. O responsável formal da Controladoria designado para aquela competência, com `controllership-finance.access` efetivo, vínculo operacional, scope e regra de negócio verificados pela BFF, pode confirmar a rejeição terminal mediante justificativa auditável (DEC-01). Sem confirmação, permanece pendente de decisão formal; eventual retorno para esclarecimento/correção exige transição auditada (DEC-02). Confirmada a rejeição, a competência encerra como rejeitada (distinta de `MONTHLY_CLOSING_COMPLETED`) e as projeções/tarefas de revisão deixam de ser acionáveis, preservando histórico (P5-D/J).
 
-```text
-ALL_APPLICABLE_REVIEWS_ACCEPTED
-AND NO_OPEN_CLARIFICATION
-→ MONTHLY_CLOSING_COMPLETED
-```
-
-A avaliação externa faz parte formal do completion gate.
-
-### C3 — regra configurável por recipient/package type
-
-Alguns recipients exigem review accepted; outros só submission.
-
-Maior flexibilidade, maior complexidade e configuração.
-
-### Recomendação
-
-**C2**, se a validação do pessoal externo é parte necessária do processo de fechamento.
-
-Rationale:
-- "enviar para quem vai avaliar" deixa de ser simples handoff técnico;
-- o Portal passa a modelar a continuidade real do processo;
-- evita marcar fechamento concluído antes do reviewer terminar;
-- mantém clarification/correção dentro de um lifecycle auditável.
-
-Se a avaliação externa for apenas pós-fechamento/controle posterior, C1 é o modelo correto.
+**Binding físico TO_INVENTORY:** fonte/grupo/função corporativa para elegibilidade, atribuição formal, endpoint/DTO/eventos, OCC/concorrência e nomes finais dos estados. Não criar permission de reviewer ou área. `controllership-finance.manage` não substitui ACCESS; nenhuma reversão excepcional de aceite é implementada na V1 (DEC-03).
 
 ## 17. Gate
 

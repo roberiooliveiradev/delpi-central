@@ -14,6 +14,8 @@ O pacote funcional de implementação está organizado em:
 
 ## Gate global da fase atual
 
+**Rebaseline vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md). Estados PASS históricos de A12/A14/A15 não substituem a revisão datada.
+
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
 DOCUMENTATION_CLOSURE_PHASE = ACTIVE
@@ -88,7 +90,7 @@ Decisões congeladas:
 | P2 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A09 fechado; E05/E06/T05 e bindings físicos permanecem inventário; Core notification capability PROVEN, adapter do produto a inventariar |
 | P3 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 | A10 fechado; E02 = STOCK_CLOSED terminal no Portal V1; T03 continua stop técnico para owner canônico |
 | P4 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A11 fechado; T01/T05 e contracts físicos permanecem inventário |
-| P5 — pacote/finalização/review | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | portal-first submission/review model PASS; monthly completion rule DECISION_REQUIRED |
+| P5 — pacote/finalização/review | TARGET / A12 POSTMERGE_REVALIDATION_INCONCLUSIVE | C2, P5-A..J, DEC-01..04 aprovados; regras semânticas no doc 37; binding Core T05/estado técnico a inventariar |
 | P5 — envio para análise | PRODUCT_MODEL_DEFINED / P5_C2_APPROVED_DERIVED_CONTRACT_REVALIDATE | package stays in Minha DELPI; reviewers authenticated; e-mail notification only; doc 37 |
 | P6 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A13 fechado em 13+28; Core notifications PROVEN; persistência/seeds/people/concurrency e adapter do produto permanecem inventário |
 
@@ -112,16 +114,16 @@ P5 após clarificação do Product Owner:
 - "Enviar" = submit for review dentro da Minha DELPI;
 - reviewers usam login + ACCESS + resource scope;
 - notifications podem chegar in-app e por e-mail;
-- residual material: `D-P5-REVIEW-COMPLETION` no doc 37.
+- C2 e o quorum por área obrigatória estão aprovados no doc 37; residual é de contrato físico/elegibilidade Core T05, não nova escolha C1/C2/C3.
 
 ## Freeze readiness após A15
 
 ```text
-PORTAL_DESIGN_FREEZE           = PASS
+PORTAL_DESIGN_FREEZE           = HISTORICAL_PASS_REVALIDATE
 FRONTEND_PATTERN_FREEZE        = PASS
-SECURITY_MODEL_FREEZE          = PASS
-TEST_STRATEGY_FREEZE           = PASS
-PRODUCT_CONTRACT_FREEZE        = DECISION_REQUIRED_P5_REVIEW_COMPLETION
+SECURITY_MODEL_FREEZE          = HISTORICAL_PASS_REVALIDATE
+TEST_STRATEGY_FREEZE           = HISTORICAL_PASS_REVALIDATE
+PRODUCT_CONTRACT_FREEZE        = PENDING_CORE_T05_AND_CONTRACT_BINDINGS
 DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED      = NO
 ```
@@ -268,8 +270,8 @@ A primeira execução técnica ainda deve inventariar a fundação do produto; e
 
 **TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
 
-- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
-- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
+- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias com aceite da versão vigente e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
+- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todas as áreas obrigatórias** precisam de um aceite válido da PackageVersion atual (P5-A refinou D-P5-01). Aceite parcial não atende ao quorum.
 - **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
 - **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
 - **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
@@ -369,4 +371,4 @@ C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válid
 
 **Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
 
-**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=BLOCKED_DIVERGED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
+**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=PR78_MERGED_TO_MAIN_VERIFIED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.

@@ -181,11 +181,14 @@ Não pertence à página:
 
 ## P5 reviewer projection
 
-A clarificação P5 prova um caso de responsabilidade individual:
+O P5 é producer de responsabilidade por **área obrigatória**, projetada em uma lista **self-only** para cada usuário elegível dentro do recurso; a responsabilidade não é uma TaskEntity individual:
 
 ```text
 PACKAGE_SUBMITTED_FOR_REVIEW
-AND reviewer_assignment = authenticated_user
+AND required_area_has_no_current_version_acceptance
+AND authenticated_user_is_eligible_for_area
+AND effective_permission(controllership-finance.access)
+AND resource_scope
 AND review actionable
 → TaskProjection em Minhas tarefas
 ```
@@ -197,7 +200,8 @@ Regras:
 - ação = abrir recipient package;
 - reviewer assignment não cria permission;
 - ACCESS + resource scope continuam necessários;
-- quando review deixa de exigir ação, projection desaparece;
+- quando uma das pessoas elegíveis aceita pela área, a obrigação da área é satisfeita e a projection deixa de ser acionável para todos daquela área;
+- após confirmação da rejeição terminal, projections pendentes deixam de ser acionáveis sem hard delete de histórico;
 - notification/e-mail não cria task por si só; o owner state é a authority.
 
 ## Rota

@@ -94,6 +94,8 @@ Owner: `platform-api-contracts-integration.mdc`
 - `contract-evolution-backward-compatibility.mdc`
 - `custom-gpt-actions-integration.mdc`
 - `new-api-route-checklist.mdc`
+- `openai-plugin-mcp-integration.mdc`
+- `openai-workspace-agent-integration.mdc`
 - `openapi-first-universal-tool-routing.mdc`
 - `operational-api-routing.mdc`
 - `tv-dashboard-optional-data-filters.mdc`

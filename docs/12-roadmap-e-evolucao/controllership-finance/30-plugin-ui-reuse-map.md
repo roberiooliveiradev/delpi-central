@@ -409,7 +409,7 @@ import {
 Contrato detalhado:
 - [27-minhas-tarefas.md](./27-minhas-tarefas.md)
 
-A V1 é self-only e projeta trabalho de P2/P4/P5 conditional. A única action genérica é `Abrir`; owner pages executam o negócio.
+A V1 é self-only e projeta trabalho de P2/P4 e obrigações P5 por área para cada usuário elegível, sem criar TaskEntity. A única action genérica é `Abrir`; owner pages executam o negócio.
 
 `buildTaskWorkspaceHighlights` deve ser usado com due buckets desabilitados enquanto não houver SLA/due global.
 
