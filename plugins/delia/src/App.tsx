@@ -386,7 +386,7 @@ export default function App({
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
-        <DeliaConversationPage conversation={
+        <DeliaConversationPage conversation={(panelControls) => (
         <ConversationWorkspace
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
@@ -402,6 +402,8 @@ export default function App({
             <ConversationHeader
               title="DÉLIA"
               subtitle="Inteligência operacional DELPI"
+              leading={panelControls.leftToggle}
+              actions={panelControls.rightToggle}
             />
           }
           banner={
@@ -452,7 +454,7 @@ export default function App({
           ) : null}
           <div ref={turnsEndRef} aria-hidden="true" />
         </ConversationWorkspace>
-        } />
+        )} />
       </main>
     </div>
   );
