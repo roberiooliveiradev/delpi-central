@@ -48,11 +48,12 @@ describe("ConversationContextPanel", () => {
     expect(screen.getByRole("heading", { name: "Detalhes" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Evidências" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Atividades" })).toBeTruthy();
-    expect(screen.getByText(/Nenhuma evidência adicional/)).toBeTruthy();
+    expect(screen.getByText(/Selecione uma mensagem para ver mais informações/)).toBeTruthy();
+    expect(screen.queryByText(/Nenhuma evidência adicional/)).toBeNull();
   });
   it("renders supplied authorized projections without inventing others", () => {
     render(<ConversationContextPanel details={<span>Detalhe autorizado</span>} />);
     expect(screen.getByText("Detalhe autorizado")).toBeTruthy();
-    expect(screen.getByText(/Nenhuma atividade adicional/)).toBeTruthy();
+    expect(screen.queryByText(/Selecione uma mensagem para ver mais informações/)).toBeNull();
   });
 });
