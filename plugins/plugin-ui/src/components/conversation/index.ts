@@ -63,3 +63,5 @@ export { ConversationThreeRegionLayout, type ConversationThreeRegionLayoutProps 
 
 export { ConversationSidebar, type ConversationSidebarProps } from "./ConversationSidebar";
 export { ConversationContextPanel, type ConversationContextPanelProps } from "./ConversationContextPanel";
+
+export { ConversationSidebarSearch, type ConversationSidebarSearchProps } from "./ConversationSidebarSearch";
