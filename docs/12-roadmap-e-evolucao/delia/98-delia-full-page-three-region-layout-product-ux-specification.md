@@ -268,3 +268,18 @@ PHASE_PROGRESSION = NONE
 **Composição:** sidebar esquerda `expanded|rail`, conversa central com `ConversationHeader.actions` exibindo botão de contexto e popover floating opcional no mesmo shell. Não existe coluna direita na grid/flex; popover é sobreposição sem remount da conversa, sem ocupar espaço horizontal. Modalidade compacta inicia no rail. O popover tem título Contexto, botão Fechar, Escape, outside click, foco ao fechar por botão, fundo e borda do kit, max-height/scroll próprio. Nenhum ACT nem busca resultam de abrir card. Seções de contexto e ações sem contrato continuam inertes/honestas.
 
 **Arquivos candidatos implementados:** `ConversationThreeRegionLayout.tsx/.css`, `ConversationSidebar.tsx`, `ConversationSidePanels.css`, `DeliaConversationPage.tsx`, testes. Código publicado via GitHub main; build/typecheck/browser QA não foram executados neste ambiente. `IMPLEMENTATION=CODE_COMMITTED_CANDIDATE`; `TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`. Revogar o termo “sidebar direita” no alvo vigente: **ContextPopover** é a apresentação correta, mantendo `ConversationContextPanel` como conteúdo render-only reutilizável.
+
+
+## 15. Refinamento R3 — movimento sutil unificado (2026-10-16)
+
+As capturas posteriores à R2 fornecidas pelo Product Master confirmam percepção de melhoria visual no shell. Nova decisão solicitada: **transições suaves e consistentes** para recolhimento/expansão do rail esquerdo e abrir/fechar do popover contextual, além de polimento das seções internas do contexto; sem alterar a geometria aprovada.
+
+Direção implementada no `plugin-ui`:
+- `ConversationThreeRegionLayout.css` define tokens **locais e reutilizáveis de movimento** `--delpi-ui-conversation-motion-fast` (180ms), `--delpi-ui-conversation-motion-normal` (240ms) e `--delpi-ui-conversation-motion-ease` (curva ease-out). Esses tokens são compartilhados entre sidebar e card; não introduzem framework ou abstração externa.
+- Sidebar/rail: transição de `flex-basis` com duração curta, preservando a navegação/ícones e mantendo `ConversationWorkspace` montado.
+- Popover: entrada/saída por `opacity` + `translateY(-8px)` + `scale(.975)`, com `visibility` coordenada. Superfície permanece montada para permitir transição de saída, mas fica `aria-hidden` e sem conteúdo ou interação quando fechada; mantém Escape/click outside/foco já previstos.
+- `delpi-ui-popover-surface` aplica o **chrome compartilhado** existente de borda, fundo, radius e shadow (reuse-first, sem visual parallel).
+- `prefers-reduced-motion: reduce` remove efeitos e transições sem impedir o funcionamento.
+- `ConversationSidePanels.css` refina alinhamento de ícones, spacing das três seções e um único estado vazio contextual.
+
+**QA solicitado:** verificar as transições em página completa, dock, dark/light, zoom, mudança de largura durante animação, foco ao fechar, Escape e browser sem suporte a `color-mix`. Os testes de markup foram atualizados, **mas não executados**. Não há checkout ativo do repositório e a tentativa de consultar GitHub a partir do container falhou por resolução de DNS; os commits feitos pelo conector foram verificados separadamente. `TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `INDEPENDENT_REVIEW=PENDING`. Este registro é de implementação de código candidata, **não aceite em produção**.
