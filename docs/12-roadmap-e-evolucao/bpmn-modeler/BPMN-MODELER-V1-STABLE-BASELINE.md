@@ -1,8 +1,8 @@
 # BPMN MODELER — V1 STABLE PRODUCT BASELINE
 
 > **Release:** V1 stable product baseline (G10 — Final Closure)
-> **Baseline SHA (runtime):** `42bf97b1d7ffd39456442c86d5830b7d155289b4` (`main` = `origin/main`)
-> **HEAD final:** `9252a04f01` — difere do runtime TARGET por commits **NON-BPMN** (DÉLIA docs, TÉO button `8626e87482`, Interaction Rooms V2 `58d53f52ca`/`b55c982f28`) + docs BPMN deste gate; zero diferença em `plugins/bpmn-*`, `bpmn-modeler/`, `shared/bpmn_validation/` (§5-B: runtime functional SHA registrado separadamente)
+> **Baseline SHA (runtime):** `42bf97b1d7ffd39456442c86d5830b7d155289b4` — target aceito; esse SHA era `main`/`origin/main` no fechamento do runtime.
+> **Branch após o fechamento:** a `main` pode avançar com commits **NON-BPMN** sem invalidar este runtime target. Para reutilizar a baseline, compare o TARGET com o HEAD corrente nos paths BPMN e reclassifique qualquer overlap antes de promover nova evidência. No fechamento do G10-CLOSE-1, os commits posteriores ao TARGET foram classificados sem overlap funcional nos paths BPMN.
 > **Data:** 2026-10-16
 > **Status:** `IMPLEMENTATION: PASS / CLOSED` — `FUNCTIONAL BLOCKERS: 0` — `ACTIVE IMPLEMENTATION GAPS: 0`
 
@@ -57,6 +57,7 @@ Nenhuma autoridade paralela (JSON visual, DI separado, proxy XML/FK, bypass de p
 |---|---|
 | `PROPERTIES_PANEL_VENDOR_TRANSLATION_LIMITATION` (strings leaf vendor em EN) | `ACCEPTED_RESIDUAL`, `NON_BLOCKING` |
 | Watermark bpmn.io | `REQUIRED BY LICENSE` — posição bottom-left padronizada |
+| E2E `workers=2` | fast-path suportado; mount flake ocasional do MFE é residual de harness/infra; release/deterministic baseline = `workers=1` |
 | E2E `workers=8` | best-effort, não contrato |
 | `delpi-transformometro` sem `build-info.json` | gap de instrumentação de provenance (não de produto) — conteúdo provado por asset hash |
 
@@ -74,7 +75,7 @@ Build a partir de `git worktree` limpo em detached HEAD no TARGET — zero alter
 
 | Layer | Expected | Actual | Status |
 |---|---|---|---|
-| Git source | `42bf97b1d7` | `42bf97b1d7` (HEAD = origin/main) | PASS |
+| Git source | `42bf97b1d7` | `42bf97b1d7` (era HEAD = origin/main no fechamento do runtime) | PASS |
 | Frontend OCI revision (`infra-bpmn-modeler`) | `42bf97b1d7` | `42bf97b1d7` | PASS |
 | `assets/build-info.json` git_sha | `42bf97b1d7` | `42bf97b1d7` (built_at 2026-10-16T14:31:05Z) | PASS |
 | `remoteEntry.js` servido == imagem | md5 equal | `5bfcf26c…` equal | PASS |
