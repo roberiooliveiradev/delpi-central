@@ -10,6 +10,8 @@
   --delia-section-gap: 20px;
   --delpi-ui-accent: var(--delia-accent);
   --delpi-ui-surface: var(--delia-surface);
+  --delpi-ui-surface-muted: var(--delia-surface-2);
+  --delpi-ui-text-muted: var(--delia-text-muted);
   --delpi-ui-text: var(--delia-text);
   --delpi-ui-border: var(--delia-border);
   --delpi-ui-muted: var(--delia-text-muted);
@@ -138,7 +140,7 @@
   list-style: none;
 }
 
-/* S3 — chat-first message row: avatar + bubble, no heavy card. */
+/* DÉLIA assistant-turn layout; user message chrome moved to plugin-ui. */
 .dashboard-delia .delia-turn {
   display: flex;
   gap: 10px;
@@ -180,24 +182,7 @@
   gap: 6px;
 }
 
-/* User turns right + soft bubble, DÉLIA turns left + open text (WF-02). */
-.dashboard-delia .delia-turn--user {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.dashboard-delia .delia-turn--user .delia-turn__bubble {
-  align-items: flex-end;
-  background: var(--delia-surface-2);
-  border: 1px solid var(--delia-border);
-  border-radius: 14px 14px 4px 14px;
-  padding: 8px 12px;
-}
-
-.dashboard-delia .delia-turn--user .delia-turn__label {
-  align-self: flex-end;
-}
-
+/* DÉLIA turns remain open text on the left (WF-02). */
 .dashboard-delia .delia-turn--delia {
   align-self: flex-start;
 }
@@ -317,8 +302,8 @@
   margin: 0;
 }
 
-/* ---------- Responsive (narrow dock / mobile) — workspace container
-   queries own the shell; only the product turn bubble adapts. */
+/* ---------- Responsive (narrow dock / mobile) — workspace and
+   ConversationUserMessage container queries own shared presentation. */
 
 @media (max-width: 640px) {
   .dashboard-delia .delia-turn {

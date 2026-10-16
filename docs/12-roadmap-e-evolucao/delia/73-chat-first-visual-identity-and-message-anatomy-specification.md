@@ -157,3 +157,16 @@ Classificar resultados como `PASS|FAIL|PENDING|INCONCLUSIVE|TEST_NOT_RUN|STALE_E
 O Devin deve tratar esta especificação como **detalhamento da decisão visual de produto**, sem usar sua criação para aumentar escopo, alterar arquivos já em conflito, simular contratos ou pular a reancoragem. Se houver diferença material entre o prompt S3 em execução e este documento, registrar `EXECUTION_DRIFT` e retornar à coordenação; não reconciliar silenciosamente.
 
 **Status de execução desta documentação:** `DOCUMENTED`; implementação S3 `IN_PROGRESS_BY_USER_REPORT`; código/testes/deploy S3 **não atestados por este registro**. `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `PRODUCTION_READINESS=NOT_PROVEN`. Próximo trabalho/aceite seguem Plano Mestre e ledger do HEAD real.
+
+
+## 13. ConversationUserMessage — extração bounded do chrome compartilhado (2026-10-15)
+
+**Task:** DELIA-UX-CONVERSATION-USER-MESSAGE-FULL-IMPLEMENTATION-01. **Estado:** implementação proposta em branch isolada, pendente de testes, Browser QA e review; esta seção não representa aceite nem prova de runtime publicado em main.
+
+- **Owner visual:** plugin-ui, via \`ConversationUserMessage\` (bolha suave à direita, avatar/autor/conteúdo em slots, densidade confortável/compacta, quebra de linha, temas e responsividade em container estreito). O kit não conhece produto, Core, Keycloak, sessão ou autorização.
+- **Owner da identidade e semântica:** DÉLIA/Portal/Core nos contratos existentes. \`ConversationTimeline\` continua fornecendo texto original do turno, rótulo \`"Você"\` e \`UnifiedAvatar(kind="person")\` com imagem e fallback já resolvidos por \`useCurrentUserIdentity\`. O kit **não** busca imagem nem interpreta JWT.
+- **Acessibilidade:** \`role="log"\` permanece exclusivamente na timeline; o componente não cria live region nem wrapper focável. Com rótulo de autor visível, avatar decorativo evita anúncio duplicado; sem rótulo, semântica do avatar não é escondida.
+- **Contrato de conteúdo:** React text renderizado literalmente com \`white-space: pre-wrap\`, \`overflow-wrap: anywhere\`; sem parse de Markdown, HTML arbitrário, linkificação ou regras de autorização.
+- **Reuse Gate:** \`UnifiedAvatar=REUSE\`; \`MessageThread\` é acoplado à sala colaborativa e não substitui a composição de turno simples; \`EntityAvatarLabel\` não oferece chrome de mensagem. O novo componente cobre a lacuna visual específica, sem nova plataforma ou runtime.
+- **Migração de CSS:** propriedades genéricas de bolha e alinhamento do usuário saem de \`plugins/delia/src/index.css\`, preservando o chrome e as classes de resposta da DÉLIA. Tokens do consumidor se mapeiam para variáveis \`--delpi-ui-*\`.
+- **Acceptance restante:** executar suites e builds em checkout válido, verificar exports federados, inspecionar full page/dock (420/320 px, zoom 200%, dark/light) e anexar capturas reais no SHA avaliado. Sem evidência, classificar \`TEST_NOT_RUN\` e \`INCONCLUSIVE\`.

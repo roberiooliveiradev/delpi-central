@@ -147,15 +147,23 @@ describe("demo mode ON", () => {
     setDemoLocation("simple");
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    const { container } = render(<App />);
+    render(<App />);
     submitTurn("primeira");
     await waitFor(() =>
-      expect(container.querySelectorAll(".delia-turn").length).toBe(2),
+      expect(screen.getByRole("log", { name: "Conversa atual" }).children).toHaveLength(2),
     );
     submitTurn("segunda");
     await waitFor(() =>
-      expect(container.querySelectorAll(".delia-turn").length).toBe(4),
+      expect(screen.getByRole("log", { name: "Conversa atual" }).children).toHaveLength(4),
     );
+    const items = Array.from(screen.getByRole("log").children);
+    expect(items[0].querySelector(".delpi-ui-conversation-user-message__content")?.textContent)
+      .toBe("primeira");
+    expect(items[2].querySelector(".delpi-ui-conversation-user-message__content")?.textContent)
+      .toBe("segunda");
+    expect(items[1].querySelector(".delia-turn--delia")).toBeNull();
+    expect(items[1].classList.contains("delia-turn--delia")).toBe(true);
+    expect(items[3].classList.contains("delia-turn--delia")).toBe(true);
     expect(deliaApiCalls(fetchMock)).toHaveLength(0);
   });
 

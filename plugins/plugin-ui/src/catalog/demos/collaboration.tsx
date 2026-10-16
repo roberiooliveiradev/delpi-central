@@ -22,11 +22,13 @@ import {
 import { IconButton } from "../../components/actions";
 import {
   ConversationHeader,
+  ConversationUserMessage,
   ConversationStatus,
   ConversationWorkspace,
   GovernedConfirmation,
   MessageActionBar,
 } from "../../components/conversation";
+import { UnifiedAvatar } from "../../components/layout/UnifiedAvatar";
 import type { CatalogEntryDraft } from "../types";
 
 const mentionTextCn = mentionTextBemClasses(PUC_PREFIX);
@@ -376,6 +378,73 @@ export const collaborationCatalogEntries: CatalogEntryDraft[] = [
         render: () => (
           <div style={{ maxWidth: 320 }}>
             <ConversationHeader title="DÉLIA" subtitle="Inteligência operacional DELPI" compact />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "collaboration.ConversationUserMessage",
+    family: "collaboration",
+    exportName: "ConversationUserMessage",
+    title: "ConversationUserMessage",
+    description: "Mensagem de usuário à direita, com autor, avatar e texto literal recebidos por slot.",
+    propsSummary: ["children", "avatar", "authorLabel", "density", "className", "contentClassName"],
+    demos: [
+      {
+        id: "basic",
+        label: "Básico",
+        render: () => (
+          <ConversationUserMessage
+            authorLabel="Você"
+            avatar={<UnifiedAvatar kind="person" label="Você" size="sm" fallbackText="Ana Lima" />}
+          >
+            Como está a situação deste pedido?
+          </ConversationUserMessage>
+        ),
+      },
+      {
+        id: "long",
+        label: "Mensagem longa e multiline",
+        render: () => (
+          <ConversationUserMessage
+            authorLabel="Você"
+            avatar={<UnifiedAvatar kind="person" label="Você" size="sm" />}
+          >
+            {"Primeira linha da pergunta.\nOutra linha com uma descrição extensa para validar quebra de linha, alinhamento e conteúdo técnico como <item> renderizado literalmente."}
+          </ConversationUserMessage>
+        ),
+      },
+      {
+        id: "compact",
+        label: "Compacto (dock)",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationUserMessage
+              authorLabel="Você"
+              density="compact"
+              avatar={<UnifiedAvatar kind="person" label="Você" size="sm" />}
+            >
+              Uma pergunta em espaço reduzido.
+            </ConversationUserMessage>
+          </div>
+        ),
+      },
+      {
+        id: "no-avatar",
+        label: "Sem avatar",
+        render: () => (
+          <ConversationUserMessage authorLabel="Usuário">Sem avatar disponível.</ConversationUserMessage>
+        ),
+      },
+      {
+        id: "long-author",
+        label: "Autor extenso",
+        render: () => (
+          <div style={{ maxWidth: 320 }}>
+            <ConversationUserMessage authorLabel="Participante com identificação muito extensa">
+              Texto breve.
+            </ConversationUserMessage>
           </div>
         ),
       },

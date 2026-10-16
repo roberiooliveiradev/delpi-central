@@ -27,6 +27,7 @@ const REQUIRED_HOST_EXPORTS = [
   "UnifiedAvatar",
   "ConversationWorkspace",
   "ConversationHeader",
+  "ConversationUserMessage",
   "MessageActionBar",
   "ConversationStatus",
   "GovernedConfirmation",
