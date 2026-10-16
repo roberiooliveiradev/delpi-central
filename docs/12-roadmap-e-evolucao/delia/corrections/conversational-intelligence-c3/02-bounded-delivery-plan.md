@@ -1,6 +1,6 @@
 # 02 — Plano das seis entregas bounded
 
-**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172); 02–06 PLANNED sem autorização automática.  
+**Status:** PLAN_REANCHORED_2026-10-16: Etapa 01 EVIDENCE_RECORDED (§6.171) + INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL (§6.172); 02 IMPLEMENTATION_REWORK (§6.174); 03–06 PLANNED/NOT_AUTHORIZED.  
 **Umbrella:** DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01.  
 **Regra:** uma etapa por entrega e review, sem “um prompt corrige tudo”; implementação só após reanchor e autorização; nenhum novo planner/agent/engine por conveniência.
 
@@ -20,6 +20,8 @@ Uma única DÉLIA que entende o pedido, descobre capacidades autorizadas, verifi
 **Gate:** não iniciar refactor sem distinguir falha de intent, selection, discovery, schema, evidence, response e apresentação. **Sem ACT real.**
 
 ## Etapa 02 — Intenção, finalidade e instruções bounded
+
+**ESTADO:** implementação publicada em [07](./07-stage-02-implementation-report.md), commit `4a9f05e5b9bd2b40332638d5bec49678de050bdd`, review independente [08](./08-stage-02-independent-review.md) = **REWORK** (§6.174). Bloqueios B1 (interpretação ausente ainda permite PREPARE) e B2 ('prepare, mas não aplique' não prova teto sob owner direct). A próxima task deve ser R1 bounded; não avançar para a Etapa 03 nem mudar owner confirmation policy.
 
 **Problema:** a seleção pode perder a finalidade do usuário; pedir orientação não é solicitar uma escrita.
 **Investigação/correção candidata:** avaliar a coerência entre _select_target, _understand_goal, _assess_native_path, instruções e gates atuais. No runtime presente, seleção precede goal estruturado; **novo goal_class orient e reorder goal-before-selection NÃO são decisões aprovadas**. Reutilizar contratos existentes e provar necessidade/impacto antes de propor mudança de contract ou ordem.
