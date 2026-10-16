@@ -407,3 +407,12 @@ Residual novo:
 
 Authority:
 - [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+
+
+## Addendum A14 — revisão de validade após C2 / P5-A..J (16/10/2026)
+
+**STALE_EVIDENCE para os antigos flags de A14 relativos a P5.** D-P5-REVIEW-COMPLETION foi decidido como C2. D-P5-01 foi refinada por P5-A: aprovação por área obrigatória, não por todas as identidades. P5-F preserva aceite histórico em reatribuição; P5-G veda reversão por UI; P5-H configura área por tipo no P6 e congela na submissão; P5-I exige autoridade formal para confirmar rejeição terminal; P5-J desativa acionabilidade de TaskProjection após rejeição terminal. Nenhum destes fatos autoriza inferir DESIGN/SECURITY/TEST/CONTRACT FREEZE atual.
+
+`A14_CURRENT_GATE=REVALIDATE_AFTER_P5_CHANGES`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE_ROLE_SCOPE`; `TEST_STRATEGY_FREEZE=REVALIDATE_REVIEW_MATRIX`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**DECISION_REQUIRED:** identidade e regra de autorização da autoridade confirmadora da rejeição terminal, incluindo recusa de confirmação. Contrato excepcional de correção de aceite está fora da V1 até aprovação explícita. `Core T05` e contratos físicos permanecem `TO_INVENTORY`. E04/T04 de entrega por anexos são superseded / NOT_REQUIRED_IN_V1, não blocker vigente. Documento 37 é a authority temática do modelo de revisão.
