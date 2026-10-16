@@ -1860,6 +1860,7 @@ REDACTION_MARKER = "[REDACTED]"
 # authorization_status.
 _SENSITIVE_KEY_NAMES = frozenset(
     {
+        "token",
         "candidatetoken",
         "handle",
         "proposalhandle",

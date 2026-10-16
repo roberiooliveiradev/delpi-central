@@ -1,6 +1,6 @@
 """Fidelity characterization of ``render_specialist_outcome``.
 
-DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R2 / doc 84 §4 / doc 86 §E.2.
+DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R3 / doc 84 §4 / doc 86 §E.2.
 
 These tests pin the EXISTING governed projection behaviour the
 `presentation.v2` producer extension (RW-G1-01, EXTEND — not a new
@@ -8,19 +8,18 @@ formatter) must preserve: verbatim IDs/quantities/units/order,
 inert markdown literals, credential redaction, truthful empty
 results, generic-status suppression and declared truncation.
 
-``test_bare_token_key_is_redacted`` is ``xfail(strict=True)``: it is
-the RED probe for R2-03 — the literal key ``token`` is not covered by
-``_SENSITIVE_KEY_NAMES`` today. It fails green only after the bounded
-fix lands (separate authorized slice); XPASS will fail the suite so
-the marker cannot go stale.
+R3-01 closed the bare ``token`` key residual previously tracked as
+``xfail(strict=True)`` — the canonical name is now in
+``_SENSITIVE_KEY_NAMES``. Exact-key matching is preserved so business
+fields such as ``token_count`` / ``token_value`` remain intact.
 """
 
 from __future__ import annotations
 
-import pytest
-
 from app.application.capability_provision.orchestration import (
     MAX_RENDER_CONTENT_CHARS,
+    REDACTION_MARKER,
+    _sanitize_renderable,
     render_specialist_outcome,
 )
 from app.domain.specialist_interop.model import (
@@ -86,26 +85,23 @@ def test_sensitive_structured_keys_are_redacted_business_kept() -> None:
             structured={
                 "data": {
                     "access_token": "tok-xyz-SECRET",
+                    "refresh_token": "rt-SECRET",
                     "client_secret": "cs-SECRET",
+                    "password": "pw-SECRET",
                     "op": "OP-1",
                 }
             },
         )
     )
     assert "tok-xyz-SECRET" not in text
+    assert "rt-SECRET" not in text
     assert "cs-SECRET" not in text
+    assert "pw-SECRET" not in text
     assert "OP-1" in text
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "R2-03 residual: canonical key 'token' is not in "
-        "_SENSITIVE_KEY_NAMES — value renders unredacted today. "
-        "Fix = add 'token' to the owner set (bounded brief, doc 86/R2)."
-    ),
-)
 def test_bare_token_key_is_redacted() -> None:
+    """R3-01: literal canonical key ``token`` must redact (was RED/xfail)."""
     text, _ = render_specialist_outcome(
         _outcome(
             content_text="",
@@ -114,6 +110,43 @@ def test_bare_token_key_is_redacted() -> None:
     )
     assert "tk-raw-SECRET" not in text
     assert "OP-2" in text
+
+
+def test_token_key_case_and_separator_variants_are_redacted() -> None:
+    """Exact canonical match covers Token/TOKEN; compound names stay exact."""
+    for key in ("token", "Token", "TOKEN"):
+        out = _sanitize_renderable({key: "tk-CASE-SECRET", "op": "OP-3"})
+        assert out[key] == REDACTION_MARKER, key
+        assert out["op"] == "OP-3"
+
+    # token_value / token-value canonicalize to tokenvalue — NOT the
+    # exact credential concept ``token``. Exact matching preserves them
+    # (same family as token_count); substring matching is forbidden.
+    for key in ("token_value", "token-value"):
+        out = _sanitize_renderable({key: "biz-TOKEN-VALUE", "op": "OP-4"})
+        assert out[key] == "biz-TOKEN-VALUE", key
+        assert out["op"] == "OP-4"
+
+
+def test_nested_list_token_redaction_preserves_business_siblings() -> None:
+    out = _sanitize_renderable(
+        {
+            "data": {
+                "items": [
+                    {"token": "NESTED-SECRET", "op": "OP-10", "qtd": 12, "un": "KG"},
+                    {"Token": "NESTED-SECRET-2", "op": "OP-11"},
+                ]
+            }
+        }
+    )
+    rendered = str(out)
+    assert "NESTED-SECRET" not in rendered
+    assert "NESTED-SECRET-2" not in rendered
+    assert out["data"]["items"][0]["op"] == "OP-10"
+    assert out["data"]["items"][0]["qtd"] == 12
+    assert out["data"]["items"][0]["un"] == "KG"
+    assert out["data"]["items"][1]["op"] == "OP-11"
+    assert out["data"]["items"][0]["token"] == REDACTION_MARKER
 
 
 def test_empty_authoritative_result_is_truthful() -> None:

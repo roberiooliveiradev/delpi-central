@@ -246,6 +246,25 @@ def test_fallback_v2_schema_invalid_is_neutral_error_not_downgrade() -> None:
     assert resolve_presentation(result) == "neutral_error"
 
 
+def test_fallback_v2_extra_properties_are_neutral_error_not_legacy_downgrade() -> None:
+    """R3-03: additionalProperties reject → neutral_error (not legacy fallback)."""
+    result = _result(
+        presentation={
+            **BASE,
+            "blocks": [
+                {
+                    "kind": "text",
+                    "format": "plain",
+                    "text": "safe-looking",
+                    "href": "https://evil.example",
+                }
+            ],
+        },
+        content="legacy plain must NOT be used for structurally invalid v2",
+    )
+    assert resolve_presentation(result) == "neutral_error"
+
+
 def test_fallback_v2_missing_format_is_neutral_error() -> None:
     result = _result(presentation={**BASE, "blocks": [{"kind": "text", "text": "x"}]})
     assert resolve_presentation(result) == "neutral_error"

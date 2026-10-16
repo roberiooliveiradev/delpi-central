@@ -14074,3 +14074,21 @@ LINK_L1_CONTRACT=SPECIFIED; LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY; TOKEN_EXPO
 PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_REVIEW_R2 + L1_BINDING_INVENTORY + TOKEN_FIX_AUTHORIZATION
+
+## §6.197 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R3-FINAL-CLOSURE (TOKEN REDACTION + L1 INVENTORY + FALLBACK RECONCILE; INDEPENDENT REVIEW PENDING)
+
+**DATA:** 2026-10-16. **MODE:** bounded security fix + contract inventory/docs — authorized runtime delta only `_SENSITIVE_KEY_NAMES`+`"token"` in owner `capability_provision`. **BASE_HEAD:** `40ac318a0c` (= origin/main after FF from prompt ref `772fcc66ef`; 41 concurrent controllership docs commits — no material EXECUTION_DRIFT on sanitizer owner). **REPORT:** [88](../88-presentation-v2-g1-g2-rework-r3-report.md).
+
+- **R3-01 TOKEN:** RED `test_bare_token_key_is_redacted` XFAIL→GREEN; `"token"` in `_SENSITIVE_KEY_NAMES`; exact match preserves `token_count`/`token_value`/`token-value`. EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND. No parallel sanitizer.
+- **R3-02 L1 INVENTORY:** `mural_acessos` `normalize_link_url` remains sole real governed URL contract; zero `delia-api` capability→`structured` binding. `_TRANSPORT_FORBIDDEN` intact. SourceRef/WorkspaceEntityRef/provenance NOT sources. `LINK_L1_CONTRACT=SPECIFIED` / `BINDINGS=TO_INVENTORY` / `LINK_NAVIGABLE_EMISSION=BLOCKED`.
+- **R3-03 FALLBACK:** doc 84 §2.9/§6 reconciled with §2.5 — invalid v2/`additionalProperties` → `neutral_error` (not legacy downgrade). Probe `test_fallback_v2_extra_properties_are_neutral_error_not_legacy_downgrade`. `parsePresentation` runtime untouched.
+- **SCHEMA:** subset evaluator PASS; isolated `jsonschema` 4.26.0 Draft2020-12: 4/4 pos + 17/17 neg + non-object (not added to prod deps).
+- **TESTS:** targeted delia-api **236 PASS**; full suite **1178+** PASS; plugin-ui md/rich-text **175/175**; delia vitest **191/191**; delia tsc CLEAN; plugin-ui tsc pre-existing FAIL outside scope; BUILD/FEDERATION=TEST_NOT_RUN.
+- **DOCS:** 83 §0.5, 84 fallback+token, 87 historical pointer, 88 R3 report, 20 G1/G2 rows, ledger. No doc 16/25 phase advance. No presentation.v2 / ConversationMarkdown / navigable links implemented.
+
+G1=CANDIDATE_REWORKED; G2=CANDIDATE_REWORKED; G3=BLOCKED; G4=TEST_NOT_RUN; CP-333=PLANNED_NOT_PASS
+TOKEN_REDACTION_STATUS=CLOSED_R3_01; FALLBACK_CONTRACT_STATUS=RECONCILED_R3_03
+LINK_L1_CONTRACT=SPECIFIED; LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY
+PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_REVIEW_R3

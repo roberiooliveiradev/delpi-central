@@ -1,11 +1,11 @@
 # 84 — Proposta `presentation.v2` e Reuse/Security Review de Markdown (G1/G2)
 
-**Status:** `G1_CONTRACT_PROPOSAL=REWORKED_R1_CANDIDATE_FOR_REVIEW / G2_REUSE_SECURITY=REWORKED_R1_CANDIDATE_FOR_REVIEW / RUNTIME_NOT_AUTHORIZED`
+**Status:** `G1_CONTRACT_PROPOSAL=CANDIDATE_REWORKED_R3 / G2_REUSE_SECURITY=CANDIDATE_REWORKED_R3 / RUNTIME_B2_NOT_AUTHORIZED`
 
-**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → rework `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1` (doc 85 = fonte dos achados)
+**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → R1 (doc 86) → R2 (doc 87) → R3 (doc 88)
 **BASE_HEAD R1:** `c3e090ac70977e81fbf7bdd47a391683ab6199cd`
 **CP:** `CP-333` (matriz 25 — `PLANNED`, não PASS)
-**Tipo:** CONTRACT-FIRST / DOCUMENTATION ONLY — nenhum diff de runtime nesta task.
+**Tipo:** proposta G1/G2 + fechamento bounded R3-01 (sanitização `token` no owner existente). `presentation.v2` / `ConversationMarkdown` / emissão de links **não** ativados.
 
 > **Histórico R1:** a revisão independente (doc 85) emitiu `REWORK` sobre a versão anterior (`d5ed426a08`) com 4 achados — RW-G1-01 (produtor sem estrutura comprovada), RW-G1-02 (links sem fonte tipada), RW-G1-03 (schema/fallback incompletos), RW-G2-01 (reuse gate insuficiente). Esta revisão corrige os quatro com inventário real, schema mecanicamente validado e probes executados. O relatório de rework é o doc 86.
 
@@ -164,7 +164,7 @@ O fragmento JSONC anterior foi promovido a artefato canônico versionado:
 
 Cobre: envelope completo (`version:"2"` const, `message_kind` enum canônico, `semantic_status` EpistemicClass|null, `grounding_status`, `allowed_interactions`, `blocks`), discriminadores de bloco (`text` exige `format`; `notice` exige `role:"owner_hint"`), campos obrigatórios/opcionais, semântica de null (`semantic_status` admite `null` explícito), limites (≤8 blocos, `text` ≤16.384 chars), e versões.
 
-**Mudança deliberada vs. fragmento anterior:** `additionalProperties: false` em todos os níveis — o contrato v2 é **fechado** (fail-closed). Propriedades desconhecidas invalidam o payload inteiro → fallback ao campo legado `content` (§2.5), nunca coerção silenciosa. Extensibilidade se dá por versão nova, não por campos extras tolerados. (Decisão reversível no freeze se o Coordination preferir tolerância aditiva — registrado em §6.)
+**Mudança deliberada vs. fragmento anterior:** `additionalProperties: false` em todos os níveis — o contrato v2 é **fechado** (fail-closed). Propriedades desconhecidas invalidam o payload inteiro → **`neutral_error`** (§2.5 — v2 estruturalmente inválido), **sem** downgrade silencioso para o campo legado `content`, sem conteúdo parcial e sem coerção. Extensibilidade se dá por versão nova, não por campos extras tolerados. (Decisão reversível no freeze se o Coordination preferir tolerância aditiva — registrado em §6.)
 
 **Validação mecânica executada** (`python3 jsonschema 4.10.3`, Draft 2020-12, sobre `c3e090ac70`): **22/22 checks** — 4 positivos (plain, markdown_safe, text+notice, confirmation interactions) + 18 negativos (versão ausente/v1/desconhecida, `format` ausente/inválido, kind de bloco desconhecido, prop extra em bloco/envelope, blocos vazios/excedentes, texto oversize, `message_kind`/`interaction`/`notice.role` inválidos, payload não-objeto, bloco sem `text`). Probe reproduzível registrado no doc 86 §E.
 
@@ -221,7 +221,7 @@ SpecialistOutcome{ content_text, structured, limitations, is_complete }
 - **Constraints:** bounds existentes (`MAX_RENDER_CONTENT_CHARS=2000`+sufixo fixo, `MAX_RENDER_LIST_ITEMS`, depth≤3, `_MAX_BLOCKS=8`, bloco ≤16.384); ordem e valores verbatim; falha de projeção → `plain`.
 - **Source authority:** o owner especialista (categoria A/B) ou o próprio modelo para prosa não-factual (categoria C) — nunca o frontend.
 - **Erros/observabilidade:** contadores sanitizados `presentation.version/format/fallback_reason`; nunca conteúdo nem href em log.
-- **Fidelity:** probe executado — 16/16 checks (IDs/quantidades/unidades/ordem verbatim; texto literal com `**`/`[x](y)` inerte; `access_token`/`client_secret` redigidos; resultado vazio verdadeiro; status genérico suprimido; truncamento bounded+declarado). **Residual documentado:** chave `token` bare não consta de `_SENSITIVE_KEY_NAMES` — valor passa sem redação hoje (fato do runtime atual; decisão de ampliar o conjunto pertence a outro slice de segurança).
+- **Fidelity:** probe executado — IDs/quantidades/unidades/ordem verbatim; texto literal com `**`/`[x](y)` inerte; `access_token`/`client_secret`/`token` redigidos; resultado vazio verdadeiro; status genérico suprimido; truncamento bounded+declarado. **R3-01:** chave canônica `token` incluída em `_SENSITIVE_KEY_NAMES` (owner `capability_provision`); matching exato preserva `token_count`/`token_value`/`token-value`.
 - **Modelo-assistido (LLM sugerindo estrutura):** fora da proposta — `DECISION_OPTION_DEFERRED`.
 
 ## 5. G2 — Reuse & Security Decision Report
@@ -290,9 +290,7 @@ Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos r
 
 **Gap honesto (corrigido em §2.4):** não existe fonte tipada de destino navegável no caminho do turno. A política de links está completa e pronta; a emissão depende da decisão `LINK_SOURCE_TYPED` (§2.4/§6) — escopo de links **não** foi reduzido silenciosamente.
 
-**Residual de segurança (R2-03 — brief bounded preparado):** `_SENSITIVE_KEY_NAMES` cobre `access_token`/`refresh_token`/`session_token`/`bearer_token`/`candidate_token`/`client_secret`/… mas **não** a chave canonical `token` — probe provou valor `token:` renderizado sem redação (`test_render_specialist_outcome_fidelity.py::test_bare_token_key_is_redacted` = `xfail(strict=True)`, RED probe versionado).
-
-**Correção proposta (não aplicada — task não autoriza runtime):** adicionar `"token"` a `_SENSITIVE_KEY_NAMES` em `delia-api/app/application/capability_provision/orchestration.py` (~L1861) — diff de 1 linha no owner legítimo (`capability_provision`). Trade-off: um campo de negócio literalmente nomeado `token` seria redigido — aceitável e fail-closed (valor ambíguo com nome credencial não deve vazar; semântica de negócio preservada pela chave). A correção exige **autorização bounded específica** (altera runtime de produção); brief entregue nesta task via doc 87 §R2-03. Até lá, **a projeção de `structured` não deve alimentar `markdown_safe`** — categoria A fica restrita a shapes sem chaves de risco, ou `markdown_safe` permanece emissor-vazio.
+**Residual de segurança R2-03 — FECHADO em R3-01:** `"token"` adicionado a `_SENSITIVE_KEY_NAMES` no owner `capability_provision` (`orchestration.py`). `test_bare_token_key_is_redacted` passa sem `xfail`. Matching canônico exato mantém `token_count`/`token_usage`/`token_value`/`token-value` íntegros. Trade-off aceito: campo de negócio literalmente nomeado `token` é redigido (fail-closed). A emissão `structured`→`markdown_safe` permanece bloqueada por outros gates G1/G2/G3 — este fechamento remove apenas o vetor de vazamento da chave bare.
 
 ### 5.4 Critérios de a11y/apresentação (a implementar, não agora)
 
@@ -308,9 +306,9 @@ Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos r
 |---|---|---|
 | `PORTAL_MFE_NAVIGATE_PROP` | NOT_PRESENT | Não bloqueante: `<a href>` same-origin já navega (SPA intercept dentro do app/shell; reload fora). Se produto exigir SPA-nav cross-app, abrir bounded slice Portal; **sem** inventar API agora |
 | `LINK_SOURCE_TYPED` | **L1_APPROVED_CONDITIONAL** (Product Master, 2026-10-16) | Condições e inventário em §2.4. `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` — zero links navegáveis até binding owner→capability→`structured` provado. G3 segue bloqueado neste ponto |
-| `TOKEN_KEY_EXPOSURE` | RED_PROBE_RECORDED, fix não autorizado | R2-03: `"token"` deve entrar em `_SENSITIVE_KEY_NAMES` — brief bounded pendente de autorização (doc 87 §R2-03). Projeção `structured`→`markdown_safe` bloqueada até resolução ou isolamento provado |
+| `TOKEN_KEY_EXPOSURE` | CLOSED_R3_01 | `"token"` em `_SENSITIVE_KEY_NAMES`; RED→GREEN em `test_bare_token_key_is_redacted`. Projeção `structured`→`markdown_safe` segue bloqueada por gates G3/runtime (não por este residual) |
 | `GOVERNED_FORMATTER` | RESOLVIDO — não é componente novo | RW-G1-01: o seam é `render_specialist_outcome` existente; proposta = **EXTEND** a projeção para emitir blocos tipados (§4). Freeze confirma nome/assinatura final |
-| `SCHEMA_ADDITIONAL_PROPERTIES` | DECIDIDO nesta proposta | v2 fechado (`additionalProperties:false`, fail-closed → fallback legado). Reversível no freeze se preferirem tolerância aditiva |
+| `SCHEMA_ADDITIONAL_PROPERTIES` | DECIDIDO nesta proposta | v2 fechado (`additionalProperties:false`, fail-closed → `neutral_error` por §2.5; **não** fallback legado). Reversível no freeze se preferirem tolerância aditiva |
 | `MODEL_ASSISTED_FORMATTING` | DEFERRED | Fora do slice inicial; requer prova de fidelidade |
 | `CONVERSATION_MARKDOWN` (plugin-ui token→React) | NEW componente proposto | Aprovação G2 de owner/equivalence |
 | Spec 82 TRACEABILITY_GAP tabelas/gráficos | OPEN, inalterado | B2 não cobre C/D/E |

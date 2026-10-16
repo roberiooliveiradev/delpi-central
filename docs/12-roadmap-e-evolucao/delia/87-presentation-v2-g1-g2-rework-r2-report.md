@@ -1,5 +1,7 @@
 # 87 — Rework R2 (decisão L1 + fallback + probes versionados) — Relatório de execução
 
+> **Histórico.** Sucessor factual: [88 — Rework R3](./88-presentation-v2-g1-g2-rework-r3-report.md) (fecha R2-03 `token`, reconcilia fallback §2.9, revalida inventário L1). Este documento permanece como evidência R2.
+
 **Status:** `REWORK_EXECUTED — CANDIDATE_FOR_INDEPENDENT_REVIEW / RUNTIME_NOT_AUTHORIZED`
 **Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R2`
 **BASE_HEAD (reanchor real):** `5997604835a030a6873840178a31533d77bcf4b3` (= SHA de preparação = origin/main no commit)

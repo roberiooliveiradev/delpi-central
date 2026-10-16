@@ -1470,6 +1470,7 @@ def test_key_naming_variants_redacted():
     """Case-insensitive canonical matching covers snake/kebab/camel/
     Pascal naming styles."""
     for key in (
+        "token", "Token", "TOKEN",
         "access_token", "ACCESS_TOKEN", "AccessToken", "accessToken",
         "access-token", "client_secret", "ClientSecret",
         "clientSecret", "refresh_token", "refreshToken", "api_key",

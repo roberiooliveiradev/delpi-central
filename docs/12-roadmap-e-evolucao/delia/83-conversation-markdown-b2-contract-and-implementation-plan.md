@@ -66,6 +66,16 @@ R2 executado em `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R2` (HEAD `5997604835`)
 
 - Estado pós-R2: `G1=CANDIDATE_REWORKED` / `G2=CANDIDATE_REWORKED` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `LINK_L1_CONTRACT=SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `TOKEN_EXPOSURE=RED_PROBE_RECORDED` (fix aguarda autorização bounded) / `CP-333=PLANNED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO`.
 
+### 0.5 Rework R3 — security closure + inventário L1 + fallback (2026-10-16)
+
+Task `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R3-FINAL-CLOSURE` (relatório [88](./88-presentation-v2-g1-g2-rework-r3-report.md)):
+
+1. **R3-01:** `"token"` adicionado a `_SENSITIVE_KEY_NAMES` no owner `capability_provision` — RED→GREEN em `test_bare_token_key_is_redacted` (sem `xfail`). Matching exato preserva `token_count`/`token_value`.
+2. **R3-02:** inventário L1 revalidado — único contrato URL governado continua `mural_acessos.link.url`; **nenhum** binding capability→`SpecialistOutcome.structured`→turno em `delia-api`. `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / emissão navegável `BLOCKED`.
+3. **R3-03:** doc 84 §2.9/§6 reconciliados com §2.5 — v2 estruturalmente inválido (incl. `additionalProperties`) → `neutral_error`, **não** fallback legado. Probe versionado. Runtime `parsePresentation` inalterado.
+
+- Estado pós-R3: `G1=CANDIDATE_REWORKED` / `G2=CANDIDATE_REWORKED` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `TOKEN_REDACTION_STATUS=CLOSED_R3_01` / `FALLBACK_CONTRACT_STATUS=RECONCILED_R3_03` / `LINK_L1_CONTRACT=SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `CP-333=PLANNED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO` / `INDEPENDENT_REVIEW=PENDING`.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:
