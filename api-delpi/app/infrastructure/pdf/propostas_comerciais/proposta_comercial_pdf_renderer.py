@@ -55,6 +55,12 @@ FIXED_CONDITION_TEXTS = (
     "Cancelamento/Reprogramação de pedido: somente mediante autorização prévia da Delpi.",
 )
 
+# Teto por célula de tabela: uma linha inteira precisa caber numa página
+# (~63 linhas úteis). Acima disso o texto vira linhas de continuação —
+# senão o reportlab aborta com LayoutError «too large on page» (502 no BFF).
+_CONDITION_VALUE_CHUNK_CHARS = 4000
+_ITEM_DESCRICAO_CHUNK_CHARS = 2500
+
 # Rótulos canônicos do documento por idioma (detail["idioma"]: pt default, en).
 # Valores de negócio (descrições, condições, totais) não são traduzidos.
 PDF_LABELS_PT: dict[str, str] = {
@@ -508,11 +514,16 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             prazo_text = _format_prazo_display(item.get("prazo_dias"), labels)
             lote = item.get("lote_minimo")
             lote_text = "—" if lote in (None, "") else str(lote)
+            # Descrição enorme não cabe numa única linha da tabela: divide em
+            # linhas de continuação (células vazias nas demais colunas).
+            descricao_chunks = _chunk_text(
+                _display(item.get("descricao")), _ITEM_DESCRICAO_CHUNK_CHARS
+            )
             row: list[Flowable | str] = [
                 Paragraph(_escape(_display(item.get("item"))), styles["tableCellCenter"]),
                 Paragraph(_escape(_display(item.get("produto"))), styles["tableCell"]),
                 Paragraph(_escape(_display(item.get("referencia_cliente"))), styles["tableCell"]),
-                Paragraph(_escape_multiline(_display(item.get("descricao"))), styles["tableCell"]),
+                Paragraph(_escape_multiline(descricao_chunks[0]), styles["tableCell"]),
                 Paragraph(
                     _escape(_display(item.get("valor_bruto_r_mil_formatado") or item.get("preco_unitario"))),
                     styles["tableCellMoney"],
@@ -532,6 +543,18 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 ]
             )
             rows.append(row)
+            for chunk in descricao_chunks[1:]:
+                continuation: list[Flowable | str] = [
+                    "",
+                    "",
+                    "",
+                    Paragraph(_escape_multiline(chunk), styles["tableCell"]),
+                    "",
+                ]
+                if exibir_coluna_valor_liquido:
+                    continuation.append("")
+                continuation.extend(["", ""])
+                rows.append(continuation)
 
         table = Table(rows, colWidths=widths, repeatRows=1)
         table.setStyle(
@@ -600,13 +623,20 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
             (labels["cond_validity"], validade_text),
         ]
 
-        rows = [
-            [
-                Paragraph(f"<font color='#64748B'>{_escape(label)}</font>", styles["conditionLabel"]),
-                Paragraph(_escape_multiline(value), styles["conditionValue"]),
-            ]
-            for label, value in entries
-        ]
+        rows = []
+        for label, value in entries:
+            # Valor gigante (ex.: condição de pagamento colada) vira linhas de
+            # continuação: Table quebra entre linhas, nunca dentro de uma célula.
+            for index, chunk in enumerate(_chunk_text(value, _CONDITION_VALUE_CHUNK_CHARS)):
+                rows.append(
+                    [
+                        Paragraph(
+                            f"<font color='#64748B'>{_escape(label)}</font>" if index == 0 else "",
+                            styles["conditionLabel"],
+                        ),
+                        Paragraph(_escape_multiline(chunk), styles["conditionValue"]),
+                    ]
+                )
         for note in (labels["fixed_cond_1"], labels["fixed_cond_2"]):
             rows.append(
                 [
@@ -615,33 +645,28 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
                 ]
             )
 
-        inner = Table(rows, colWidths=[42 * mm, CONTENT_WIDTH - 42 * mm - 20])
+        # A caixa é o estilo da própria tabela (não um wrapper de célula
+        # única): a Table quebra entre linhas e repete fundo/borda em cada
+        # página — condição gigante não derruba mais o documento inteiro.
+        inner = Table(rows, colWidths=[42 * mm, CONTENT_WIDTH - 42 * mm])
         inner.setStyle(
             TableStyle(
                 [
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 3),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                ]
-            )
-        )
-
-        wrapper = Table([[inner]], colWidths=[CONTENT_WIDTH])
-        wrapper.setStyle(
-            TableStyle(
-                [
                     ("BACKGROUND", (0, 0), (-1, -1), SURFACE_SOFT),
                     ("BOX", (0, 0), (-1, -1), 0.45, LINE),
                     ("LEFTPADDING", (0, 0), (-1, -1), 8),
                     ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("TOPPADDING", (0, 0), (0, -1), 5),
+                    ("BOTTOMPADDING", (0, -1), (-1, -1), 5),
                 ]
             )
         )
 
         title = Paragraph(labels["conditions_title"], styles["sectionTitle"])
-        return [title, Spacer(1, 2 * mm), wrapper]
+        return [title, Spacer(1, 2 * mm), inner]
 
     def _build_closing_sections(
         self,
@@ -652,25 +677,16 @@ class PropostaComercialPdfRenderer(PropostaComercialPdfRendererPort):
     ) -> list[Flowable]:
         labels = labels or PDF_LABELS_PT
         text = observacoes or labels["notes_empty"]
-        obs_body = Paragraph(_escape_multiline(text), styles["observations"])
-        obs_wrapper = Table([[obs_body]], colWidths=[CONTENT_WIDTH])
-        obs_wrapper.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, -1), SURFACE_SOFT),
-                    ("BOX", (0, 0), (-1, -1), 0.45, LINE),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                ]
-            )
-        )
+        # Paragraph direto (não dentro de Table de célula única): um texto de
+        # observações maior que uma página quebra no meio do parágrafo — antes
+        # o reportlab abortava com LayoutError "too large on page" e o PDF
+        # inteiro falhava (502 no BFF). O estilo boxed mantém o mesmo visual.
+        obs_body = Paragraph(_escape_multiline(text), styles["observationsBox"])
 
         obs_section = [
             Paragraph(labels["notes_title"], styles["sectionTitle"]),
             Spacer(1, 2 * mm),
-            obs_wrapper,
+            obs_body,
         ]
 
         signature_block = Table(
@@ -1040,6 +1056,20 @@ def _build_styles() -> dict[str, ParagraphStyle]:
             leading=12,
             textColor=TEXT,
         ),
+        # Mesma caixa do antigo obs_wrapper (fundo suave + borda fina), mas
+        # aplicada ao próprio Paragraph: quebra de página por fragmento.
+        "observationsBox": ParagraphStyle(
+            "ObservationsBox",
+            parent=base["Normal"],
+            fontName="Helvetica",
+            fontSize=8.5,
+            leading=12,
+            textColor=TEXT,
+            backColor=SURFACE_SOFT,
+            borderColor=LINE,
+            borderWidth=0.45,
+            borderPadding=8,
+        ),
         "signatureName": ParagraphStyle(
             "SignatureName",
             parent=base["Normal"],
@@ -1200,3 +1230,23 @@ def _display(value: object, *, empty: str = "—") -> str:
         return empty
     text = str(value).strip()
     return text or empty
+
+
+def _chunk_text(value: str, max_chars: int) -> list[str]:
+    """Divide texto longo em blocos ≤ ``max_chars`` (preferindo \\n e espaços)."""
+    text = str(value or "")
+    if len(text) <= max_chars:
+        return [text]
+    chunks: list[str] = []
+    remaining = text
+    while len(remaining) > max_chars:
+        split_at = remaining.rfind("\n", 0, max_chars)
+        if split_at < max_chars // 2:
+            split_at = remaining.rfind(" ", 0, max_chars)
+        if split_at <= 0:
+            split_at = max_chars
+        chunks.append(remaining[:split_at].rstrip())
+        remaining = remaining[split_at:].lstrip()
+    if remaining:
+        chunks.append(remaining)
+    return chunks or [""]

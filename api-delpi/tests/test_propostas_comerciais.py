@@ -1088,3 +1088,83 @@ def test_pdf_export_request_normalizes_idioma() -> None:
     }
     assert PropostaComercialPdfExportRequest(idioma="  ").to_overrides_dict() == {}
     assert PropostaComercialPdfExportRequest().to_overrides_dict() == {}
+
+
+def test_pdf_renderer_handles_giant_observacoes() -> None:
+    """Regressão: observações maiores que uma página não podem abortar o PDF.
+
+    Antes o texto inteiro ficava dentro de um Table de célula única —
+    reportlab abortava com LayoutError «too large on page» e o BFF virava 502.
+    """
+    detail = _sample_detail()
+    detail["observacoes"] = "\n".join(
+        f"Linha {index:03d} — condição especial negociada com o cliente THERMO STAR"
+        for index in range(300)
+    )
+
+    pdf_bytes = PropostaComercialPdfRenderer().render(detail)
+
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+
+
+def test_pdf_renderer_handles_many_items_with_ncm() -> None:
+    """Regressão: bloco NCM composto por item (1 linha cada) estoura com ~62+ itens."""
+    detail = _sample_detail()
+    detail["itens"] = [
+        {
+            "item": f"{index:02d}",
+            "produto": "80016332",
+            "descricao": "HARNESS",
+            "referencia_cliente": "",
+            "valor_bruto_r_mil_formatado": "1,00",
+            "valor_liquido_r_mil_formatado": "1,00",
+            "prazo_dias": "30",
+            "lote_minimo": "1",
+            "ncm": "8544.42.00",
+        }
+        for index in range(1, 121)
+    ]
+
+    pdf_bytes = PropostaComercialPdfRenderer().render(detail)
+
+    assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_pdf_renderer_handles_giant_condition_text() -> None:
+    """Condição de pagamento colada gigante vira linhas de continuação."""
+    detail = _sample_detail()
+    detail["condicoes"]["descricao"] = " ".join(
+        f"Parcela {index} em {index * 15} dias conforme negociação" for index in range(1, 400)
+    )
+
+    pdf_bytes = PropostaComercialPdfRenderer().render(detail)
+
+    assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_pdf_renderer_handles_giant_item_descricao() -> None:
+    """Descrição de item maior que uma página divide em linhas de continuação."""
+    detail = _sample_detail()
+    detail["itens"][0]["descricao"] = "ESPECIFICACAO TECNICA " + "palavra " * 2000
+
+    pdf_bytes = PropostaComercialPdfRenderer().render(detail)
+
+    assert pdf_bytes.startswith(b"%PDF")
+
+
+def test_chunk_text_splits_on_boundaries() -> None:
+    from app.infrastructure.pdf.propostas_comerciais.proposta_comercial_pdf_renderer import (
+        _chunk_text,
+    )
+
+    assert _chunk_text("curto", 10) == ["curto"]
+    assert _chunk_text("", 10) == [""]
+    # Respeita quebra de linha quando disponível.
+    chunks = _chunk_text("\n".join(f"linha {i}" for i in range(100)), 200)
+    assert len(chunks) > 1
+    assert all(len(c) <= 220 for c in chunks)
+    # Texto único sem espaço/quebra: corta em max_chars sem perder conteúdo.
+    solid = _chunk_text("x" * 5000, 1000)
+    assert len(solid) == 5
+    assert "".join(solid) == "x" * 5000
