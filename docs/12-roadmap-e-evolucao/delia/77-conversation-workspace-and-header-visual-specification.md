@@ -3,7 +3,7 @@
 **Status:** `IMPLEMENTED` — componentes existem em `plugins/plugin-ui` e são consumidos por `plugins/delia`. Nenhum backend, contrato de interação ou autorização foi alterado.
 **Escopo:** shell conversacional reutilizável (workspace + header leve), integração na DÉLIA, comportamento full-page/dock, acessibilidade, light/dark e evidências.
 **Reanchor:** HEAD de referência `2b0b1f54dc330992fda6068eae1ce21d11109cb0`; execução sempre verifica HEAD, status, WIP concorrente e a cadeia canônica de reanchor (Project Instructions → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → specs temáticas → ledger).
-**Referências:** [69 — experiência conversacional](./69-conversation-experience-ux-wireframes-and-activity-plan.md), [70 — atividade](./70-tool-activity-and-source-transparency-ux-specification.md), [73 — identidade chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [74 — composer](./74-message-composer-visual-specification.md), [76 — avatares](./76-unified-avatar-delia-motion-and-user-profile-visual-specification.md).
+**Referências:** [69 — experiência conversacional](./69-conversation-experience-ux-wireframes-and-activity-plan.md), [70 — atividade](./70-tool-activity-and-source-transparency-ux-specification.md), [73 — identidade chat-first](./73-chat-first-visual-identity-and-message-anatomy-specification.md), [74 — composer](./74-message-composer-visual-specification.md), [76 — avatares](./76-unified-avatar-delia-motion-and-user-profile-visual-specification.md), [78 — erro e recuperação](./78-conversation-error-and-recovery-surface-visual-specification.md).
 
 ## 1. Problema resolvido
 
@@ -82,7 +82,7 @@ Integração DÉLIA (`plugins/delia/src/App.tsx`): workspace compartilhado receb
 - **Empty:** header + reception centrada + composer estável.
 - **Active:** timeline ocupa o topo da coluna de leitura; sem centralização vertical de turns; `ActivityViewer` de pending dentro do body após a timeline.
 - **Dock/narrow (container queries):** mesma estrutura; subtítulo pode ocultar; coluna = 100% - padding seguro; sem overflow horizontal.
-- **Loading/erro:** erro permanece no footer acima do composer; pending no body; composer nunca some.
+- **Loading/erro:** erro permanece no footer acima do composer; pending no body; composer nunca some. A anatomia/semântica do erro conversacional é definida no doc 78; o workspace apenas oferece o slot de footer e não decide recovery.
 - **Zoom 200% / mobile 320–480px:** flex + tokens, sem larguras fixas além da coluna com `clamp`/token.
 - **Motion:** apenas transições sutis de presença; `prefers-reduced-motion` respeitado no CSS do workspace.
 
