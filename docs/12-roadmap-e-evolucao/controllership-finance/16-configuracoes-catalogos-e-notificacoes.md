@@ -33,6 +33,17 @@ Selecionáveis dentre opções autorizadas.
 
 Superfície canônica: **Minha DELPI**.
 
+Rebaseline de plataforma em 09/10/2026:
+
+```text
+CORE_NOTIFICATION_CAPABILITY = PROVEN
+```
+
+O Core atual expõe integração S2S `POST /integrations/notifications`, protegida por service token e rate limit, com recipients, `sourceApp`, action target e filtros por effective permissions.
+
+Isso fecha a existência da capability de notificação. Ainda é necessário, por evento do produto, definir adapter/payload/template/category/deep-link e recipient resolution.
+
+
 O Portal gera o evento/notificação de negócio.
 
 O e-mail reutiliza a configuração existente da plataforma.
@@ -52,7 +63,7 @@ Além de rejeição/reversão:
 - REVALIDATION_REQUIRED;
 - WAITING_FOR_THIRD_PARTY;
 - PACKAGE_READY;
-- PACKAGE_SENT.
+- PACKAGE_SUBMITTED_FOR_REVIEW.
 
 `READY_TO_FINALIZE` é estado do pacote. `PACKAGE_READY` é evento de notificação emitido quando esse estado é alcançado; não é um segundo estado.
 
@@ -63,6 +74,11 @@ A notificação de reversão usa os mesmos destinatários efetivos da rejeição
 Não apagar a notificação anterior.
 
 ## Falha de entrega
+
+```text
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
+NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
+```
 
 Falha de e-mail/notificação:
 - não altera estado de negócio;
@@ -94,3 +110,23 @@ Se a plataforma registrar leitura, ela é informativa e não bloqueia.
 ## Auditoria
 
 Registrar triggering event, destinatário resolvido, timestamp, delivery status e correlation quando disponível.
+
+
+## P5 — notifications de review
+
+Após `PACKAGE_SUBMITTED_FOR_REVIEW`, P5 emite evento para Core Notifications.
+
+A plataforma pode entregar:
+- inbox Minha DELPI;
+- e-mail conforme configuração/preferência/capability vigente.
+
+Contrato:
+
+```text
+EMAIL = NOTIFICATION_CHANNEL
+EMAIL != PACKAGE_TRANSPORT
+EMAIL_ATTACHMENT_PACKAGE = NO
+NOTIFICATION_FAILURE != PACKAGE_SUBMISSION_FAILURE
+```
+
+O action target aponta para deep link interno do recipient package. O acesso é reautorizado no Portal/BFF.

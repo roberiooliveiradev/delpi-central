@@ -14,13 +14,31 @@ Não fazer union silencioso de fontes históricas divergentes.
 
 ## E02 — Correção pós-sacramentação
 
-Confirmar:
-- existe reabertura?
-- quem autoriza?
-- quais correções são possíveis?
-- o que precisa revalidar?
-- como fica a competência?
-- qual evidência/auditoria?
+**Estado Gate V2:** `CLOSED / PRODUCT_DECISION`.
+
+Decisão aprovada em 09/10/2026:
+
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
+
+Contrato:
+- Portal V1 não reabre estoque após `STOCK_CLOSED`;
+- Portal V1 não desfaz sacramentação;
+- Portal V1 não cria workflow local de retificação pós-fechamento;
+- qualquer correção posterior pertence ao owner canônico/ERP;
+- histórico do fechamento original permanece imutável no Portal;
+- eventual novo estado/artefato posterior só pode ser refletido quando fornecido pelo owner;
+- suporte futuro a reabertura/retificação exige novo gate de produto e revisão P3/P5.
+
+Classificação:
+
+```text
+OPEN_PRODUCT_DESIGN = NO
+IMPLEMENTATION_INVENTORY = NO
+FUTURE_EXPANSION = NEW_GATE_IF_REQUIRED
+```
 
 ## E03 — Executor/permissões de sacramentação
 
@@ -28,15 +46,46 @@ Confirmar roles, scopes, rotina owner e segregações.
 
 ## E04 — Canal real de envio
 
-Necessário para Q22.
+**Estado:** `CLOSED / PRODUCT_CLARIFICATION`.
 
-Confirmar:
-- canal;
-- formato;
-- comprovante;
-- aceite;
-- segurança;
-- capability disponível.
+Decisão/clarificação:
+- package permanece dentro da Minha DELPI;
+- "Enviar" = submeter/disponibilizar para reviewers autenticados;
+- e-mail é somente notification channel;
+- nenhum package attachment é enviado por e-mail na V1.
+
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
+
+```text
+EXTERNAL_PACKAGE_DELIVERY = NOT_REQUIRED_IN_V1
+```
+
+## D-P5-REVIEW-COMPLETION — regra de conclusão mensal
+
+**Estado:** `DECISION_REQUIRED / PRODUCT_RULE`.
+
+Opções:
+
+```text
+C1
+ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
+AND NO_OPEN_CLARIFICATION
+→ MONTHLY_CLOSING_COMPLETED
+
+C2
+ALL_APPLICABLE_REVIEWS_ACCEPTED
+AND NO_OPEN_CLARIFICATION
+→ MONTHLY_CLOSING_COMPLETED
+
+C3
+completion policy configurável por recipient/package type
+```
+
+Recomendação: C2 se a avaliação externa fizer parte formal do processo de fechamento; C1 se for controle posterior ao fechamento.
+
+Authority:
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## E05 — Attachment roles reais
 
@@ -65,15 +114,36 @@ Não inventar campos físicos.
 
 ## T02 — Notificações Minha DELPI
 
-Mapear:
-- API/event;
-- templates;
-- destinatários;
-- preferences;
-- e-mail;
-- delivery status;
-- retry/failure;
-- deep links.
+**Estado:** `CAPABILITY_PROVEN / PRODUCT_ADAPTER_TO_INVENTORY`.
+
+Rebaseline de 09/10/2026 no Core:
+
+- `POST /integrations/notifications` existe;
+- S2S via service token;
+- rate limit existe;
+- recipients e filtros por effective permissions existem;
+- `sourceApp` e action target existem;
+- inbox/history/preferences do usuário existem.
+
+Não criar capability paralela.
+
+Inventariar por evento do Controladoria:
+- category/template;
+- destinatários/recipient resolution;
+- payload e dados permitidos;
+- `sourceApp=controllership-finance` ou valor canônico aprovado;
+- action target/deep link;
+- required permission filter usando apenas permission codes canônicos;
+- delivery status/retry/failure aplicável ao Core adapter.
+
+Invariantes:
+
+```text
+NOTIFICATION_FAILURE != BUSINESS_STATE_CHANGE
+NOTIFICATION_DISPATCHED != PACKAGE_SUBMITTED_FOR_REVIEW
+```
+
+T02 não fecha E04/T04.
 
 ## T03 — Cutoff / STOCK_CLOSED
 
@@ -83,12 +153,14 @@ Se não existir/for incompatível → EXECUTION_DRIFT.
 
 ## T04 — Capability corporativa de envio
 
-Inventariar serviços para:
-- documentos;
-- e-mail;
-- tracking;
-- retry;
-- proof of delivery.
+**Estado:** `CLOSED / NOT_REQUIRED_IN_V1`.
+
+A investigação de Graph/Reports/Message Trace permanece como evidence histórica no documento 36, mas não é requisito P5.
+
+O capability relevante à V1 é T02:
+- Core Notifications;
+- inbox Minha DELPI;
+- e-mail de notification quando habilitado.
 
 ## T05 — Core RBAC
 

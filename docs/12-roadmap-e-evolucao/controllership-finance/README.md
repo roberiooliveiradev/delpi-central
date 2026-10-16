@@ -28,12 +28,21 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - baseline: **1 fechamento/mês; 960 min INFORMED**
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
+- A14 revisão transversal: **PASS**
+- A15 contracts/regras/scripts/test matrix: **PASS_WITH_BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
+- `PORTAL_DESIGN_FREEZE`: **PASS**
+- `FRONTEND_PATTERN_FREEZE`: **PASS**
+- `SECURITY_MODEL_FREEZE`: **PASS**
+- `TEST_STRATEGY_FREEZE`: **PASS**
+- `PRODUCT_CONTRACT_FREEZE`: **BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
+- `DOCUMENTATION_CLOSURE_COMPLETE`: **NO**
 - ROI: **não calculado**
-- P1/P2/P4: **READY_FOR_IMPLEMENTATION_INVENTORY**
-- P6/Administração: **READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P3: **READY_WITH_STOP_CONDITION_ON_T03**
-- P5 pacote/finalização: **READY_FOR_IMPLEMENTATION_INVENTORY**
-- P5 envio real: **BLOCKED_WITH_EVIDENCE**, Q22 depende E04/T04
+- P1/P2: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P3: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03**
+- P4: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P5 pacote/finalização: **PAGE_DOCUMENTATION_GATE_V2 PACKAGE_FINALIZATION_READY**
+- P6/Administração: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+- P5 envio para análise: **PORTAL-FIRST MODEL DEFINED**; package fica na Minha DELPI; residual é a regra de monthly completion após review
 - handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
 ## Documentação
@@ -74,6 +83,11 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
 | [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
 | [32-inicio-home.md](./32-inicio-home.md) | Home comum do Portal, wireframes, launcher, eventos, busca, recentes e favoritos |
+| [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md) | plano mestre para fechar páginas, regras, RQ/AC, Help e gates antes de runtime |
+| [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md) | revisão transversal de naming, owners, security, routes, plugin-ui, states, Help e contracts |
+| [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md) | consolidação A15 de contracts, regras, validators/scripts e test matrix |
+| [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | histórico superseded do inventário de delivery externo; premissa invalidada |
+| [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md) | contrato TARGET de submit/review in-portal, reviewers autenticados e notifications |
 
 ## Página do usuário
 
@@ -179,13 +193,13 @@ A Visão geral é a superfície analítica financeira do Portal. O padrão visua
 
 ## Invariantes
 
-1. `STOCK_CLOSED != PACKAGE_SENT != MONTHLY_CLOSING_COMPLETED`
+1. `STOCK_CLOSED != PACKAGE_SUBMITTED_FOR_REVIEW != REVIEW_ACCEPTED != MONTHLY_CLOSING_COMPLETED`
 2. `ATTACHED != VALIDATED`
 3. ausência/erro de source != zero
 4. pre-cutoff dependente != final
 5. último upload != auto-send
 6. Finalizar != Enviar
-7. PACKAGE_SENT é imutável
+7. PackageVersion submetida para análise não é alterada in-place
 8. mudança mestre não altera snapshot
 9. listas operacionais são configuráveis
 10. IA sugere/explica; humano decide
@@ -218,12 +232,29 @@ A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos est�
 
 Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
 
+## FASE A — Design / Documentação Completa
+
+Gate vigente:
+
+```text
+DOCUMENTED != IMPLEMENTED
+```
+
+A ordem e o pacote uniforme de fechamento são canônicos em [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
+
+Nenhum `DOCUMENTATION_GATE PASS` anterior ao Page Documentation Gate V2 é autorização ou fechamento final da FASE A; cada página será revalidada na ordem A01–A13.
+
 ## Gate global de revisão
+
+O fechamento documental integral é governado por [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
 
 A fase atual é exclusivamente documental/design/contratos:
 
 ```text
 PORTAL_REVIEW_PHASE = ACTIVE
+DOCUMENTATION_CLOSURE_PHASE = ACTIVE
+PAGE_DOCUMENTATION_GATE = V2
+DOCUMENTATION_CLOSURE_COMPLETE = NO
 IMPLEMENTATION_AUTHORIZED = NO
 ```
 
@@ -249,3 +280,39 @@ READ → INVENTORY → VERIFY → CLASSIFY → DECIDE
 → IMPLEMENT MINIMAL DIFF → TEST → VERIFY OUTCOME
 → RESIDUAL SEARCH → DOCUMENT → REPORT
 ```
+
+
+## Rebaseline P5-F..J — decisões PO aprovadas (16/10/2026)
+
+**TARGET / DOCUMENTED_NOT_IMPLEMENTED.** P5-F: reatribuição preserva aceite válido da área/versão, autor original e histórico; substituto só atua no futuro. P5-G: aceite P5 não pode ser revertido pela UI V1; correção excepcional necessita contrato separado, não autorizado. P5-H: P6 versiona áreas obrigatórias por tipo de pacote; P5 congela áreas na submissão; elegibilidade Core + ACCESS + grupo/função + scope + regra (T05 pendente). P5-I: rejeição pelo reviewer/área não encerra automaticamente a competência; confirmação terminal exige autoridade operacional formal definida, justificativa e auditoria. P5-J: após confirmação terminal, tarefas/reviews deixam de ser acionáveis, preservando histórico.
+
+C2 permanece: conclusão apenas com todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias aceitando a versão vigente e nenhuma clarification aberta. Competência rejeitada é terminal distinto de `MONTHLY_CLOSING_COMPLETED`. D-P5-01 = unanimidade de áreas obrigatórias, não pessoas. Aceites de PackageVersion anterior não são herdados por versão nova. Referências anteriores contraditórias permanecem históricas/superseded; não são contratos vigentes.
+
+**DECISION_REQUIRED:** identidade/critério da autoridade operacional que confirma rejeição e comportamento quando não confirma; especificação de processo excepcional de correção (não implementá-lo sem autorização). **CONTRACT_PENDING/TO_INVENTORY:** mapeamento P6 de áreas/tipos e fonte Core de elegibilidade, DTO/estado, notification/projection/tests.
+
+`DOCUMENTATION_CLOSURE_COMPLETE=NO`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`. Revalidar A12/A14/A15 e main antes de freeze.
+
+
+## Estado de governança após revisão documental 16/10/2026
+
+Os estados `PASS` de freezes acima representam **snapshots históricos**, não autorização vigente. C2 e P5-A..J estão decididos no documento 37, sujeitos aos bloqueios derivados explicitados no 33/34/35. A competência pode encerrar como `MONTHLY_CLOSING_COMPLETED` (regra C2) ou como rejeitada após confirmação formal (P5-I), jamais ambos. Não há permission de reviewer: somente `controllership-finance.access` e `controllership-finance.manage`. O binding Core função/grupo permanece a inventariar.
+
+`PORTAL_DESIGN_FREEZE=REVALIDATE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE`; `TEST_STRATEGY_FREEZE=REVALIDATE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Decisoes PO DEC-01..04 aprovadas — baseline 16/10/2026
+
+**TARGET / PO_APPROVED**. DEC-01: coordenador formal da competencia, com ACCESS efetivo, vinculo operacional, scope e business rule, confirma rejeicao terminal; MANAGE sozinho nao autoriza. DEC-02: rejeicao nao confirmada permanece pendente, exige motivo e pode retornar a esclarecimento/correcao auditavel. DEC-03: nenhuma reversao/retificacao de aceite P5 por UI ou endpoint V1; incidentes tratados fora do fluxo do Portal. DEC-04: MANAGE efetivo + escopo administrativo publica configuracoes de areas obrigatorias por tipo de pacote com auditoria e vigencia prospectiva; snapshots existentes preservados. Decisoes anteriores C2, P5-A..J permanecem compatibilizadas no doc 37. Nao criar permission code adicional.
+
+**TO_INVENTORY:** Core T05 e ligacao do coordenador, configuracao P6 e contratos fisicos P5, eventos/projections/testes, regras aplicaveis no HEAD. **GATE:** DOCUMENTATION_CLOSURE_COMPLETE=NO; IMPLEMENTATION_AUTHORIZED=NO; TEST_NOT_RUN. Flags PASS antigas requerem revalidacao apos rebase.
+
+
+## Revisão documental transversal — baseline 16/10/2026
+
+**TARGET / REVIEW_INCONCLUSIVE / NO_RUNTIME_AUTHORIZATION.** Fonte de verdade das decisões P5: documento 37, decisões C2, D-P5-01..05 (conforme refinadas), P5-A..J e DEC-01..04. Quórum = um aceite por área obrigatória configurada e congelada na submissão; nova versão exige todos os aceites; reatribuição mantém autoria e aceite válido; P5 não possui reversão de aceite pela UI/endpoint V1; área pode rejeitar pacote e só o coordenador formal de competência com ACCESS efetivo, vínculo e scope pode confirmar rejeição terminal; não confirmação mantém decisão pendente e registra justificativa; rejeição terminal inativa ações projetadas, não apaga auditoria. P6 MANAGE + administrative_scope publica catálogo versionado prospectivo.
+
+**Correção de interpretação:** menções anteriores a C2 pendente, unanimidade de indivíduos, delivery por e-mail de anexos e DEC-01..04 pendentes são histórico **STALE_EVIDENCE / SUPERSEDED**, não critérios vigentes. Referências `PASS` antigas de A12/A14/A15 ou dos freezes não se revalidam automaticamente por adendo; não usar essas flags para autorizar execução.
+
+**Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
+
+**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=BLOCKED_DIVERGED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.

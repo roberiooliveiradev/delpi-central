@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / READY_FOR_IMPLEMENTATION_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 ## Job
 
@@ -13,6 +25,35 @@ O Cockpit é a página principal de uma competência dentro da **Central de Fech
 Ele é uma superfície de **leitura, composição e navegação**.
 
 Não é owner das regras de P2/P3/P4/P5 e não executa validação, sacramentação ou envio.
+
+
+## Responsabilidade, owners e non-goals
+
+P1 owns **composição e navegação da competência**, não os estados que apresenta.
+
+| Informação | Owner | Papel de P1 |
+|---|---|---|
+| contexto/competência | contract da Central | identificar recorte |
+| documentos/completude | P2 | projetar eixo/blocker |
+| estoque/cutoff/paridade/STOCK_CLOSED | P3 / owner canônico | projetar eixo/blocker |
+| classificações/pendências | P4 | destacar atenção/navegar |
+| pacote/finalização/envio/clarifications | P5 | projetar eixo/blocker |
+| effective permissions | Core | autorizar leitura |
+| histórico material | owners P2–P5 / composição auditável | apresentar timeline |
+| chrome visual | `@delpi/plugin-ui` | composição |
+
+Não pertence a P1:
+- alterar lifecycle de P2–P5;
+- calcular regra financeira nova;
+- validar evidence;
+- confirmar cutoff;
+- sacramentar estoque;
+- resolver classificação;
+- finalizar/enviar pacote;
+- criar task;
+- criar permission;
+- persistir estado duplicado apenas para reproduzir owner state.
+
 
 ---
 
@@ -208,7 +249,7 @@ Estados:
 PACKAGE_INCOMPLETE
 → READY_TO_FINALIZE
 → PACKAGE_FINALIZED
-→ PACKAGE_SENT
+→ PACKAGE_SUBMITTED_FOR_REVIEW
 → WAITING_FOR_CLARIFICATION
 → MONTHLY_CLOSING_COMPLETED
 ```
@@ -218,11 +259,11 @@ Conteúdo visual mínimo:
 - resumo por destinatário quando aplicável;
 - blockers de readiness;
 - versão atual, quando existir;
-- CTA `Abrir Pacote e Envio`.
+- CTA `Abrir Pacote, Finalização e Envio`.
 
 Regras:
 - Finalizar != Enviar;
-- PACKAGE_SENT é histórico imutável;
+- PACKAGE_SUBMITTED_FOR_REVIEW é histórico imutável;
 - envio de um destinatário não avança sibling;
 - clarification aberta impede conclusão quando aplicável.
 
@@ -359,6 +400,55 @@ A mesma estrutura visual não significa mesma regra de negócio.
 
 ---
 
+## Contratos TARGET — MFE → BFF → owners
+
+O browser consome somente `controllership-finance-api`.
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core effective permissions
+   → P2 / P3 / P4 / P5 contracts
+```
+
+P1 é read model/composição. A FASE A não congela um endpoint agregado específico por preferência.
+
+Operações semânticas necessárias:
+
+| Operação | Semântica |
+|---|---|
+| resolveClosingContext | competência/contexto autorizado |
+| composeStockAxis | estado/freshness/blockers vindos de P3 |
+| composeDocumentsAxis | completude/validation blockers vindos de P2 |
+| composePackageAxis | package/finalization/send/clarification state vindo de P5 |
+| listPriorityPendencies | subset navegável de P4/owners |
+| listClosingHistory | eventos materiais dos owners |
+| composeBlockers | normalização sem transferir regra/ownership |
+
+Se uma futura BFF oferecer um único read endpoint ou múltiplos endpoints, isso é decisão física de implementação; a semântica acima permanece.
+
+Regras:
+- BFF pode normalizar shapes/provenance;
+- BFF não recalcula state machine de owner;
+- source indisponível permanece indisponível;
+- blocker só existe quando owner/contract o sustenta;
+- nenhuma operação de write pertence a P1.
+
+### AuthZ
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND context/resource_scope
+AND business_rule_allows_read
+```
+
+- `MANAGE` não substitui `ACCESS`;
+- unidade/filial é contexto, não permission code;
+- UI não autoriza;
+- falha do Core/effective permissions → fail-closed;
+- navegação ao owner será reautorizada na página destino.
+
 ## Estados de experiência
 
 ### LOADING
@@ -366,14 +456,23 @@ A mesma estrutura visual não significa mesma regra de negócio.
 - manter layout previsível;
 - não exibir zero/default como dado real.
 
+### SUCCESS
+- contexto e eixos carregados com coverage suficiente;
+- estados e blockers refletem os owners;
+- zero real só aparece quando source respondeu validamente.
+
 ### EMPTY
 Somente quando a ausência é válida e todas as sources necessárias responderam.
 
 ### PARTIAL
 Mostrar o que é confiável + banner claro indicando o que não foi carregado.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Identificar a source indisponível e impacto no eixo.
+
+`UNAVAILABLE` é o estado de experiência do módulo/eixo; `UNAVAILABLE_SOURCE` qualifica a dependência afetada.
+
+Se a source for necessária para afirmar readiness, o eixo não pode aparecer como pronto.
 
 ### ERROR
 Mensagem clara + retry quando tecnicamente possível.
@@ -386,13 +485,36 @@ Competência/contexto inexistente ou inválido.
 
 ---
 
+## Light / dark, responsividade e acessibilidade
+
+Contrato de tema:
+
+```text
+SAME DOM
++ SAME SECTION ORDER
++ SAME STATES
++ SAME ACTIONS
++ THEME TOKENS
+= LIGHT / DARK PARITY
+```
+
+- TopBar pertence ao shell;
+- P1 é deep page da Central e usa `PagePath`;
+- desktop mantém blockers antes dos eixos;
+- mobile empilha eixos sem esconder blockers;
+- nenhum status depende só de cor;
+- CTAs/links e timeline são operáveis por teclado;
+- foco permanece visível;
+- refresh/navegação não deve perder contexto de competência;
+- CSS de componentes compartilhados permanece no `plugin-ui`.
+
 ## Navegação
 
 P1 pode navegar para:
 - P2 Checklist e Documentos;
 - P3 Estoque e Conciliação;
 - P4 Classificações e Pendências;
-- P5 Pacote e Envio;
+- P5 Pacote, Finalização e Envio;
 - Help contextual.
 
 P1 não executa:
@@ -435,7 +557,7 @@ Todos os CTAs e navegação são operáveis por teclado com foco visível.
 A competência/contexto permanece após refresh sem bypass de AuthZ.
 
 ### VA-P1-10 — Help
-Help contextual explica eixos, freshness, blockers, preliminary/final e diferença entre estoque fechado, pacote enviado e fechamento concluído.
+Help contextual explica eixos, freshness, blockers, preliminary/final e diferença entre estoque fechado, pacote submetido para análise, review e fechamento concluído.
 
 ---
 
@@ -447,11 +569,142 @@ Help contextual explica eixos, freshness, blockers, preliminary/final e diferen�
 - paridade monetária exige divergência exatamente R$ 0,00;
 - qualquer valor monetário não zero continua divergência e bloqueia READY_TO_CLOSE;
 - H02 indisponível → não zero;
-- PACKAGE_SENT + clarification → não complete;
+- PACKAGE_SUBMITTED_FOR_REVIEW + clarification → não complete;
 - source parcial → PARTIAL;
 - FORBIDDEN → sem exposição.
 
 ---
+
+## RQ / AC / testes
+
+Rastreabilidade canônica:
+- `RQ-P1-01` — competência/contexto e F5;
+- `RQ-P1-02` — eixos independentes;
+- `RQ-P1-03` — blockers com source/ação;
+- `RQ-P1-04` — source indisponível não vira zero/sucesso;
+- `RQ-P1-05` — P1 é composição/read-only;
+- `RQ-P1-06` — histórico navegável;
+- `RQ-P1-07` — Help contextual.
+
+Authority executável: [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md).
+
+Matriz futura mínima:
+
+### Positive
+- abrir competência válida;
+- navegar entre P2/P3/P4/P5 preservando contexto;
+- exibir três eixos independentes;
+- mostrar blocker com motivo/source/ação;
+- reconstruir contexto após F5;
+- exibir histórico material.
+
+### Sibling
+- mudança em Estoque não falsifica Documentos/Pacote;
+- mudança em Documentos não falsifica Estoque/Pacote;
+- source parcial de um eixo preserva siblings confiáveis.
+
+### Negative
+- sem ACCESS;
+- resource/contexto fora do scope;
+- source indisponível tratado como zero;
+- zero pré-cutoff tratado como final;
+- P1 tentando validar evidência;
+- P1 tentando sacramentar;
+- P1 tentando finalizar/enviar;
+- PACKAGE_SUBMITTED_FOR_REVIEW tratado como conclusão quando existe clarification.
+
+### Experiência
+- loading;
+- empty;
+- partial;
+- unavailable source;
+- error;
+- 403;
+- 404;
+- desktop/mobile;
+- light/dark;
+- keyboard/focus;
+- deep link/F5;
+- Help.
+
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p1-axis-contracts
+- cada eixo tem owner conhecido
+- owner state não é duplicado/recalculado
+
+validate-p1-blockers
+- blocker possui reason/source/owner/deep link
+- unavailable não vira success
+
+validate-p1-deep-links
+- competence/context roundtrip
+- F5
+- owner routes conhecidas
+- no open redirect
+
+validate-p1-authz
+- ACCESS required
+- MANAGE-only denied
+- context scope revalidado
+- fail-closed
+
+validate-p1-help
+- invariantes e links P2–P5 sincronizados
+
+validate-p1-plugin-ui
+- primitives canônicas usadas
+- nenhum clone local
+```
+
+Tecnologia/localização serão escolhidas conforme padrão vigente no HEAD da futura implementação.
+
+## Inventários técnicos remanescentes
+
+- `T01` — bindings/source/freshness dos eixos;
+- `T05` — Core effective permissions e resource ownership;
+- contratos físicos de agregação do BFF;
+- route/query param names.
+
+Esses itens são `TO_INVENTORY_BEFORE_IMPLEMENTATION` e não reabrem as regras funcionais de P1 salvo evidência incompatível.
+
+## Gate documental V2
+
+```text
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
+```
+
+Inventários:
+- T01 bindings/source/freshness;
+- T05 effective permissions/resource scope;
+- contratos físicos de composição do BFF;
+- route/query param names.
+
+Resultado:
+
+```text
+A08 P1 COCKPIT DA COMPETÊNCIA
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
 
 ## Resultado esperado
 

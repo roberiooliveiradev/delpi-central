@@ -169,7 +169,7 @@ Ela agrupa:
 | Checklist e Documentos | [09-p2-checklist-e-documentos.md](./09-p2-checklist-e-documentos.md) |
 | Estoque e Conciliação | [10-p3-estoque-cutoff-e-conciliacao.md](./10-p3-estoque-cutoff-e-conciliacao.md) |
 | Classificações e Pendências | [11-p4-classificacoes-e-pendencias.md](./11-p4-classificacoes-e-pendencias.md) |
-| Pacote e Envio | [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md) |
+| Pacote, Finalização e Envio | [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md) |
 
 Administração permanece transversal ao Portal e é documentada em [28-administracao.md](./28-administracao.md).
 

@@ -2,13 +2,51 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / READY_FOR_IMPLEMENTATION_INVENTORY**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 ## Job
 
 > Quero saber quais entregáveis são esperados, quais estão satisfeitos, quais dependem de terceiros/validação e o que falta para liberar o pacote.
 
 P2 é a superfície operacional de checklist, evidências, validação e histórico da competência.
+
+
+## Responsabilidade, owners e non-goals
+
+| Capability/dado | Owner |
+|---|---|
+| MonthlyChecklistItem / snapshot da competência | produto / `controllership-finance-api` |
+| template mestre e catálogos | P6/Administração do produto |
+| evidence metadata/versioning | produto, com storage adapter futuro |
+| validação/rejeição/reversão/N.A./cancelamento | P2 business rules |
+| sources internas derivadas | owner canônico da source, integrado via BFF |
+| identities/validator/responsible | Core |
+| notifications delivery | Minha DELPI |
+| chrome visual/attachments UI | `@delpi/plugin-ui` |
+
+Não pertence a P2:
+- editar RBAC/usuário;
+- manter template mestre diretamente fora do fluxo P6;
+- escrever regra TOTVS;
+- considerar upload como validação;
+- hard delete de evidence/histórico;
+- SMTP próprio;
+- SLA/overdue transversal;
+- promoção retroativa do snapshot;
+- browser chamar owner externo diretamente.
+
 
 ---
 
@@ -320,7 +358,7 @@ Exige justificativa e auditoria.
 
 `REQUIRED` nunca apresenta ação `Marcar N/A`.
 
-Pode ser revertido por ACCESS autorizado para PENDING antes de PACKAGE_SENT.
+Pode ser revertido por ACCESS autorizado para PENDING antes de PACKAGE_SUBMITTED_FOR_REVIEW.
 
 Fluxo visual:
 
@@ -407,6 +445,28 @@ Se a mudança afetar validade:
 
 MANAGE pode autoaprovar a própria solicitação, mantendo request e approval como eventos separados e auditados.
 
+Notificações canônicas da correção estrutural:
+
+```text
+STRUCTURAL_CORRECTION_REQUESTED
+→ notificar MANAGE aplicável
+
+STRUCTURAL_CORRECTION_APPROVED
+→ notificar requester
+
+STRUCTURAL_CORRECTION_REJECTED
+→ notificar requester
+
+STRUCTURAL_CORRECTION_REVALIDATION_REQUIRED
+→ notificar validator resolvido
+```
+
+Canal lógico:
+- Minha DELPI;
+- e-mail conforme configuração existente da plataforma.
+
+Sem SMTP próprio, sem SLA, sem reminder periódico e sem escalonamento temporal inventado.
+
 Visualmente:
 - request aparece como evento/estado contextual;
 - revisão MANAGE não substitui histórico anterior;
@@ -444,7 +504,80 @@ Timeline deve cobrir eventos materiais:
 
 Notificação anterior não desaparece quando uma decisão é revertida.
 
+Temporalidade:
+
+```text
+FORMAL_SLA = NO
+DUE_DATE = NO
+OVERDUE = NO
+TIME_BASED_ESCALATION = NO
+PENDING_SINCE = YES
+```
+
+`pending_since` é idade factual. A P2 não deriva atraso, prazo ou escalonamento apenas do tempo decorrido.
+
 ---
+
+## Contratos TARGET — MFE → BFF → owners
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → persistence própria do checklist/evidence state
+   → Core para identity/effective permissions
+   → api-delpi/outro owner somente quando uma source derivada exigir
+   → Minha DELPI notifications
+   → attachment storage adapter futuro
+```
+
+O browser não chama Core, `api-delpi`, notification provider ou storage diretamente.
+
+Operações semânticas necessárias:
+
+| Operação | Semântica |
+|---|---|
+| listChecklistItems | lista do snapshot da competência com filtros |
+| getChecklistItem | regra/estado/evidências/validation/history |
+| attachEvidence | criar nova evidence version/attachment metadata |
+| validateEvidence | aceitar/rejeitar conforme validator/business rule |
+| reverseRejection | reversão governada quando ainda válida |
+| markNotApplicable / revertNotApplicable | somente CONDITIONAL e antes do bloqueio material |
+| createExceptionalItem | item da competência, sem alterar master |
+| updateExceptionalItem | somente campos permitidos antes de evento material |
+| cancelExceptionalItem | pré-execução, com justificativa |
+| requestStructuralCorrection | request explícito pós-execução |
+| reviewStructuralCorrection | MANAGE review / nova revisão |
+| promoteToMaster | navegação/ação administrativa governada por P6 |
+| listItemHistory | timeline material |
+| resolveEligiblePeople | references Core autorizadas |
+
+Os nomes físicos/endpoints entram no OpenAPI futuro; esta lista congela a semântica, não a implementação.
+
+### AuthZ
+
+Base operacional:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND resource_scope / ownership
+AND action_business_rule
+```
+
+Ações de governança estrutural/mestre:
+
+```text
+effective_permission(controllership-finance.manage)
+AND administrative_scope/business_rule
+```
+
+Regras:
+- `MANAGE` não implica `ACCESS`;
+- validator/responsible não cria permission code;
+- UI visibility não autoriza;
+- backend revalida state/version/actor;
+- filial/unidade permanece dado/contexto;
+- falha da resolução Core → fail-closed.
 
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
@@ -535,14 +668,24 @@ Se faltar capability visual reutilizável, registrar `PLUGIN_UI_GAP_FOUND` antes
 ### LOADING
 Carregar lista e detalhe sem exibir dados default como reais.
 
+### SUCCESS
+Snapshot/item/evidências carregados de forma coerente para o recorte.
+
+Estado vazio de um campo opcional só significa ausência real quando a source correspondente respondeu validamente.
+
 ### EMPTY
 Somente quando não existirem itens aplicáveis após source/contract válidos.
 
 ### PARTIAL
 Mostrar itens confiáveis e indicar explicitamente source/segmento indisponível.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Não converter ausência de documento/source em `satisfeito` ou `zero`.
+
+`UNAVAILABLE` é o estado da experiência/capability; `UNAVAILABLE_SOURCE` qualifica a origem afetada.
+
+### VALIDATION_ERROR
+Preservar item/draft/contexto, associar erro ao campo/ação e não produzir optimistic success.
 
 ### ERROR
 Erro contextual por pane quando possível; falha do detalhe não deve necessariamente apagar a lista.
@@ -566,6 +709,27 @@ ACCESS != MANAGE
 ```
 
 Nenhuma permission por botão, item, documento ou CRUD.
+
+## Light / dark, responsividade e acessibilidade
+
+```text
+SAME DOM
++ SAME MASTER_DETAIL
++ SAME ACTIONS
++ SAME STATE ORDER
++ THEME TOKENS
+= LIGHT / DARK PARITY
+```
+
+- TopBar pertence ao shell;
+- P2 é deep page e usa `PagePath`;
+- desktop usa `ResizableColumns`;
+- mobile usa lista → detalhe full-width;
+- status nunca depende apenas de cor;
+- file actions, validation, modals e timeline são keyboard-operable;
+- focus volta ao contexto coerente após modal/action;
+- nenhum CSS de componente do kit é duplicado no MFE.
+
 
 ---
 
@@ -614,6 +778,176 @@ Competência, item selecionado e contexto relevante sobrevivem a refresh conform
 Help contextual explica requirement, ATTACHED vs VALIDATED, rejection/replacement, N/A, validation scope, cancelamento e correção estrutural.
 
 ---
+
+## RQ / AC / testes
+
+Rastreabilidade canônica:
+- `RQ-P2-01` — snapshot;
+- `RQ-P2-02` — REQUIRED / CONDITIONAL / N/A;
+- `RQ-P2-03` — ATTACHED != VALIDATED;
+- `RQ-P2-04` — rejeição histórica + motivo estruturado;
+- `RQ-P2-05` — replacement;
+- `RQ-P2-06` — PER_ATTACHMENT / WHOLE_SET;
+- `RQ-P2-07` — item excepcional por competência;
+- `RQ-P2-08` — CANCELLED;
+- `RQ-P2-09` — correção estrutural;
+- `RQ-P2-10` — reversão;
+- `RQ-P2-11` — notificações;
+- `RQ-P2-12` — Help.
+
+Authority executável: [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md).
+
+Proveniência funcional TÉO reconciliada:
+- 31.3–31.4 — validação/rejeição/multi-anexo;
+- 31.5–31.6 — notificações/sem SLA;
+- 31.7–31.8 — reversão e notificação da reversão;
+- 31.9–31.11 — item excepcional/edição/cancelamento;
+- 31.12–31.12.1 — correção estrutural/autoaprovação MANAGE;
+- 31.13 — decisões residuais e notificações da correção.
+
+A numeração histórica de RQs nos documentos TÉO é proveniência; o ledger 23 é o identificador TARGET canônico do handoff GitHub.
+
+### Matriz futura mínima — positive
+- abrir competência com snapshot;
+- upload;
+- validar ACCEPTED;
+- rejeitar com motivo estruturado;
+- replacement e nova validação;
+- PER_ATTACHMENT;
+- WHOLE_SET;
+- N/A somente CONDITIONAL;
+- reversão válida antes de replacement/PACKAGE_SUBMITTED_FOR_REVIEW;
+- item excepcional;
+- edição pré-execução;
+- cancelamento pré-execução;
+- correction request/review/new revision;
+- autoaprovação MANAGE auditada;
+- notificações de correction/reversal;
+- F5 preservando item/contexto.
+
+### Sibling
+- nova versão mestre não altera competência aberta;
+- rejeição de um anexo não altera sibling quando PER_ATTACHMENT;
+- item excepcional não altera template mestre;
+- correction de um item não reescreve evidência/validação histórica;
+- falha de uma source preserva siblings confiáveis.
+
+### Negative
+- REQUIRED marcado N/A;
+- upload tratado como ACCEPTED;
+- rejeição sem motivo;
+- replacement herdando aceite;
+- reversão quando nova versão já existe;
+- ACCESS alterando mestre;
+- cancelamento após evento material;
+- edição estrutural direta pós-execução;
+- correção sem AuthZ;
+- source indisponível tratado como empty/satisfeito;
+- `pending_since` transformado em SLA/overdue;
+- UI bypassando backend AuthZ.
+
+### Experiência
+- loading;
+- empty;
+- partial;
+- unavailable source;
+- validation error;
+- error;
+- 403;
+- 404;
+- desktop/mobile;
+- light/dark;
+- keyboard/focus;
+- deep link/F5;
+- Help.
+
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p2-state-machine
+- ATTACHED != VALIDATED
+- replacement/reversal/N.A./CANCELLED transitions
+
+validate-p2-snapshot
+- master publication não altera competence snapshot
+- exceptional item não altera master
+
+validate-p2-evidence-history
+- rejected/replaced versions preservadas
+- no hard delete
+
+validate-p2-authz
+- ACCESS/resource/action rules
+- MANAGE apenas governance
+- fail-closed
+
+validate-p2-attachment-boundary
+- roles/config
+- source unavailable != satisfied
+- storage adapter only through BFF
+
+validate-p2-notifications
+- events/targets coerentes
+- delivery failure não muda business state
+
+validate-p2-help
+- requirement/validation/N.A./replacement/correction sincronizados
+
+validate-p2-plugin-ui
+- master-detail/attachments/forms/modal/timeline reutilizados
+- no local clone
+```
+
+Tecnologia/localização seguem o padrão do HEAD da futura implementação.
+
+## Inventários técnicos remanescentes
+
+- `E05` — seed/obrigatoriedade dos attachment roles;
+- `E06` — seed/cobertura inicial de motivos de rejeição;
+- `T02` — capability física de notificações;
+- `T05` — Core effective permissions/resource ownership;
+- contracts físicos de attachment/storage/validator/people selectors.
+
+As decisões de produto correspondentes estão fechadas. Seed/binding não deve ser promovido silenciosamente a nova regra.
+
+## Gate documental V2
+
+```text
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
+PLUGIN_UI_REUSE_DEFINED     = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
+LIGHT_DARK_DEFINED          = PASS
+A11Y_DEFINED                = PASS
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+TEO_DECISIONS_RECONCILED    = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
+```
+
+Inventários:
+- E05 seed/obrigatoriedade de attachment roles;
+- E06 seed/cobertura inicial de motivos;
+- T02 notification binding;
+- T05 effective permissions/resource scope;
+- attachment storage/people/contracts físicos.
+
+Resultado:
+
+```text
+A09 P2 CHECKLIST E DOCUMENTOS
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
 
 ## Resultado esperado
 

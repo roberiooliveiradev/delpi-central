@@ -2,7 +2,19 @@
 
 ## Estado
 
-**TARGET / DOCUMENTATION_GATE PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+```
 
 Runtime do Portal Controladoria & Finanças: **NOT_IMPLEMENTED**.
 
@@ -38,6 +50,29 @@ A Ajuda é parte do produto.
 Ela não é documentação técnica, changelog, backlog ou roadmap.
 
 ---
+
+## Responsabilidade, owners e non-goals
+
+A Ajuda owns **conteúdo user-facing versionado do Portal**, não estado de negócio nem documentação técnica.
+
+| Elemento | Owner |
+|---|---|
+| conteúdo do manual | MFE / content registry do Portal |
+| chrome/TOC/FAQ/glossário | `@delpi/plugin-ui` |
+| feature/route catalog | MFE/router do Portal |
+| effective permissions | Core; consumidas pelo Portal/BFF/session |
+| regra explicada | documento/owner da feature correspondente |
+| Help contextual target | página/feature + registry do manual |
+
+Não pertence à Ajuda:
+- BFF próprio de Help;
+- DB/CMS/editor;
+- permissão nova;
+- source of truth de regra de negócio;
+- feature flag improvisada;
+- publicação de roadmap como capability;
+- busca própria V1;
+- conteúdo técnico de endpoints/SQL/infra para usuário final.
 
 ## Decisões congeladas
 
@@ -170,6 +205,60 @@ Hash é navegação local segura.
 
 Não colocar conteúdo sensível em query/hash.
 
+
+## Contrato TARGET da Ajuda
+
+O conteúdo base é local/versionado no MFE:
+
+```text
+Portal content registry
+→ createDashboardUserManual
+→ sections filtered by implemented capability + viewer authorization
+```
+
+Não existe contract BFF de conteúdo na V1.
+
+A rota continua sujeita ao guard normal do Portal:
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+```
+
+A seção Administração exige, além da rota ACCESS:
+
+```text
+effective_permission(controllership-finance.manage)
+```
+
+### Capability registry
+
+Cada seção/link operacional deve referenciar um destino tipado conhecido pelo Portal:
+
+```text
+sectionId
+source contract/page
+routeId quando aplicável
+runtimeEnabled
+requiredCapability
+contextualHelpTargets[]
+```
+
+Regras:
+- `runtimeEnabled=false` → não publicar instrução executável;
+- rota ausente → não publicar tool link;
+- MANAGE-only → esconder conteúdo operacional para ACCESS-only;
+- conceito geral pode permanecer quando necessário para entendimento, sem expor ação não autorizada;
+- Help não executa fetch/AuthZ paralelo apenas para descobrir permissions se o Portal já possui effective access resolvido;
+- se effective access necessário ao filtering estiver indisponível, fail-closed para conteúdo restrito.
+
+### MFE / BFF boundary
+
+A Ajuda não chama `api-delpi`, Core ou outros owners diretamente para renderizar conteúdo base.
+
+Dados/runtime links eventuais são derivados do catálogo/estado já autorizado do Portal. Nova necessidade de conteúdo dinâmico server-side exige decisão/contract separado; não antecipar API de Help.
+
+
 ---
 
 ## Família visual
@@ -194,6 +283,8 @@ PagePath
 ```
 
 Controladoria deve seguir a mesma família visual.
+
+A TopBar pertence ao shell. A Ajuda usa `PagePath` porque o manual apresenta retorno explícito ao Início e navegação contextual por hash; não recriar breadcrumb local.
 
 ---
 
@@ -494,12 +585,12 @@ Pendência não significa automaticamente atraso/SLA.
 ### Finalizar vs Enviar
 
 ```text
-PACKAGE_FINALIZED != PACKAGE_SENT
+PACKAGE_FINALIZED != PACKAGE_SUBMITTED_FOR_REVIEW
 ```
 
 Finalizar cria/congela uma versão do pacote.
 
-Enviar usa capability real de entrega quando disponível.
+Enviar submete PackageVersion finalizada para análise autenticada dentro da Minha DELPI; e-mail apenas notifica.
 
 ### Sala de interação
 
@@ -795,6 +886,8 @@ Explicar:
 - divergência;
 - READY_TO_CLOSE;
 - STOCK_CLOSED;
+- `STOCK_CLOSED` é terminal no lifecycle P3 do Portal V1;
+- correções pós-sacramentação pertencem ao owner canônico/ERP e não reabrem P3;
 - source unavailable;
 - V1 sem write ERP.
 
@@ -828,22 +921,24 @@ Fonte:
 
 ## Pacote, Finalização e Envio — P5
 
-Explicar apenas capacidades realmente liberadas:
+Explicar apenas capacidades runtime liberadas:
 - pacote;
 - versão;
-- finalizar != enviar;
-- recipient package;
-- package sent imutável;
-- complemento/correção;
-- esclarecimento;
-- conclusão mensal.
-
-Se envio real continuar bloqueado:
-- não instruir botão/canal inexistente;
-- explicar apenas finalização/versionamento implementados.
+- finalizar != enviar para análise;
+- "Enviar para análise" disponibiliza a versão dentro da Minha DELPI;
+- reviewer externo possui login/app access;
+- reviewer usa ACCESS + resource scope;
+- package não é anexado por e-mail;
+- Minha DELPI notifica in-app e pode também enviar e-mail;
+- e-mail é aviso/deep link;
+- review pending/in progress/changes requested/accepted;
+- esclarecimento/correção;
+- histórico/versionamento;
+- regra de conclusão mensal conforme D-P5-REVIEW-COMPLETION.
 
 Fonte:
 - [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
+- [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md)
 
 ---
 
@@ -870,6 +965,14 @@ Explicar:
 
 Contrato fonte:
 - [31-pagina-do-usuario.md](./31-pagina-do-usuario.md)
+
+Sincronização A01 / Gate V2:
+- target inexistente/fora do app não é estado vazio;
+- fonte indisponível não significa dado “não informado”;
+- effective permissions indisponíveis falham fechado;
+- Help da página continua runtime-gated e só é publicada quando a rota existir.
+
+Esta sincronização não fecha o gate A07 da própria página Ajuda.
 
 ---
 
@@ -971,7 +1074,7 @@ Termos mínimos:
 | TaskProjection | projeção pessoal de trabalho owner | Minhas tarefas |
 | Sala contextual | conversa vinculada a objeto de trabalho | Sala |
 | Finalizar | congelar versão do pacote | P5 |
-| Enviar | executar entrega por capability real | P5 |
+| Enviar | submeter versão finalizada para revisão autenticada na Minha DELPI | P5 |
 | Effective from | data de vigência administrativa | P6 |
 | Inativação | fim prospectivo de uso | P6 |
 
@@ -1172,6 +1275,20 @@ Hash inválido não deve virar 404 da aplicação inteira.
 Não usar PARTIAL para esconder feature ainda não implementada.
 
 Feature ausente simplesmente não entra no manual.
+
+### UNAVAILABLE
+
+Não é estado normal do conteúdo base, porque o manual é versionado no MFE.
+
+Usar apenas quando uma dependência necessária para montar a experiência segura estiver indisponível, por exemplo:
+- effective access necessário para filtrar seção MANAGE não pode ser resolvido;
+- registry/router necessário aos tool links falhou de forma material.
+
+Nesses casos:
+- não expor seção restrita por fallback;
+- não converter indisponibilidade em conteúdo vazio enganoso;
+- conteúdo comum pode permanecer quando a autorização necessária já estiver comprovada e a falha for isolável.
+
 
 ---
 
@@ -1561,37 +1678,42 @@ Nenhum desses itens reabre as decisões D-HELP-01..06.
 
 ---
 
-## Gate
+## Gate documental V2
 
 ```text
-VISUAL_FAMILY_DEFINED       = PASS
+OBJECTIVE_BOUNDARY_DEFINED  = PASS
+OWNERS_DEFINED              = PASS
+VISUAL_SPEC_DEFINED         = PASS
+CONTRACT_DEFINED            = PASS
+AUTHZ_DEFINED               = PASS
 PLUGIN_UI_REUSE_DEFINED     = PASS
-CONTENT_ARCHITECTURE        = PASS
-RUNTIME_ONLY_POLICY         = PASS
-CAPABILITY_GATING_DEFINED   = PASS
-CONTEXTUAL_HELP_DEFINED     = PASS
-DEEPLINK_HASH_DEFINED       = PASS
-CONCEPTS_DEFINED            = PASS
-GUIDE_TABLE_DEFINED         = PASS
-P1_P5_HELP_MODEL_DEFINED    = PASS
-FAQ_DEFINED                 = PASS
-GLOSSARY_DEFINED            = PASS
-EDITORIAL_GOVERNANCE        = PASS
-HELP_SYNC_POLICY            = PASS
+STATES_DEFINED              = PASS
+DEEP_LINK_F5_DEFINED        = PASS
+RESPONSIVE_DEFINED          = PASS
 LIGHT_DARK_DEFINED          = PASS
-MOBILE_DEFINED              = PASS
 A11Y_DEFINED                = PASS
-RQ_AC_TEST_MATRIX_DEFINED   = PASS
-IMPLEMENTATION              = NOT_AUTHORIZED
+HELP_SYNC_DEFINED           = PASS
+RQ_AC_DEFINED               = PASS
+TEST_MATRIX_DEFINED         = PASS
+SCRIPTS_ARTIFACTS_PLANNED   = PASS
+IMPLEMENTATION_AUTHORIZED   = NO
 ```
 
-Estado:
+Inventários:
+- HELP01 route/catalog binding;
+- HELP02 permission-aware filtering;
+- HELP03 hash/focus behavior;
+- HELP04 validator placement.
+
+Nenhum deles cria backend/CMS de Help nem reabre D-HELP-01..06.
+
+Resultado:
 
 ```text
-ITEM 7 = READY_FOR_IMPLEMENTATION_BRIEF
+A07 AJUDA
+= READY_FOR_IMPLEMENTATION_BRIEF
+!= IMPLEMENTED
 ```
-
----
 
 ## Resultado esperado
 
@@ -1604,3 +1726,122 @@ FEATURE EXISTS
 ```
 
 Sem manual paralelo, sem documentação de capability futura no runtime e sem Help stale.
+
+
+## Adendo de governança — decisões PO C2 e D-P5-01 a D-P5-05 (15/10/2026)
+
+**TARGET / DECIDED_BY_PRODUCT_OWNER / DOCUMENTATION_REBASELINE_PENDING**. Registro de decisão, não evidência de runtime nem aprovação de freeze. Este adendo prevalece sobre referências anteriores a C1/C2/C3 como decisão aberta; semânticas derivadas ainda pendentes não devem ser inferidas.
+
+- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, todas as revisões obrigatórias aceitas e nenhum esclarecimento aberto. Submissão ou e-mail de notificação não concluem fechamento.
+- **D-P5-01:** podem existir múltiplos reviewers por RecipientPackage; **todos os reviewers obrigatórios** precisam aceitar. Aceite parcial não atende ao quorum.
+- **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
+- **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
+- **D-P5-04:** ao perder ACCESS efetivo, reviewer perde a capacidade de agir; atribuição e histórico são preservados; substituição exige reatribuição autorizada, auditável e validada pela BFF/Core (fail-closed).
+- **D-P5-05:** solicitação de alterações (CHANGES_REQUESTED) e rejeição terminal (REVIEW_REJECTED) são outcomes distintos; não usar um como alias do outro.
+
+Regra alvo:
+
+```text
+ALL_APPLICABLE_PACKAGES_SUBMITTED
+AND ALL_REQUIRED_REVIEWS = REVIEW_ACCEPTED
+AND NO_OPEN_CLARIFICATION
+=> MONTHLY_CLOSING_COMPLETED
+```
+
+**DECISION_REQUIRED / NO CHANGE TO BEHAVIOR:** definir escopo da terminalidade de REVIEW_REJECTED (submissão vs pacote), regra de substituição/aceite anterior, congelamento ou alteração auditada do conjunto de reviewers obrigatórios, necessidade de novo quorum por versão e tratamento da competência quando houver rejeição terminal. Nenhum endpoint, migration, scaffold ou permission adicional está autorizado.
+
+**Evidência pendente:** rebase do main, .cursor aplicável, ledger RQ/AC, Core effective permissions, test matrix positive/sibling/negative, Help, postcondition. `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`.
+
+
+## Decisões supervenientes do Product Owner — P5-A a P5-E (15/10/2026)
+
+**TARGET / PO_APPROVED / DOCUMENTATION_ONLY — no runtime changes.** Este registro complementa C2 e prevalece sobre a interpretação anterior de D-P5-01 (unanimidade por identidade): o quórum é por **área/especialidade obrigatória**, não por cada usuário elegível. A multiplicidade de pessoas elegíveis na mesma área não cria múltiplos votos obrigatórios.
+
+| Decisão | Regra aprovada | Relação com decisão anterior |
+|---|---|---|
+| P5-A | Um aceite por área obrigatória, executável por qualquer usuário elegível daquela área | D-P5-01 reinterpretada: unanimidade de áreas obrigatórias, não de pessoas |
+| P5-B | Somente autor de um aceite pode alterá-lo; outra pessoa atua somente com reatribuição formal | Complementa D-P5-03; sem reversão livre na UI V1, preservar trilha imutável |
+| P5-C | ACCESS efetivo + grupo/função corporativa + escopo do recurso + regra de negócio | Complementa D-P5-04; Core é owner da identidade/effective permissions; P5 controla workflow e scope |
+| P5-D | Rejeição terminal encerra a competência em estado REJECTED, distinto de MONTHLY_CLOSING_COMPLETED; não exige ressubmissão | Concretiza D-P5-05, mantendo CHANGES_REQUESTED distinto de rejeição terminal |
+| P5-E | Nova PackageVersion exige novo aceite de todas as áreas obrigatórias, sem herdar aceites da versão anterior | Complementa D-P5-02 e preserva versionamento imutável |
+
+**C2 atualizado semanticamente:** conclusão mensal requer todos os pacotes aplicáveis submetidos, aceites válidos da **versão vigente** para cada área obrigatória e nenhuma clarification aberta. Qualquer rejeição terminal impede MONTHLY_CLOSING_COMPLETED e resulta no desfecho de competência rejeitada, com auditoria. Não inferir que uma permission genérica concede approval irrestrito.
+
+**AuthZ invariant:** JWT identifica; Core resolve `controllership-finance.access` efetivo; BFF valida função/grupo corporativo elegível, área obrigatória, resource scope/ownership e business rule, fail-closed. A origem/contrato preciso do grupo/função Core permanece **TO_INVENTORY (T05)**; não criar permission code para reviewer, área, botão, filial ou unidade. `controllership-finance.manage` não substitui ACCESS.
+
+**Auditoria mínima:** ator Core, ação, instante, competência, recipient package, PackageVersion, área/atribuição usada, decisão e justificativa quando aplicável, mudança de responsável e referência ao evento anterior. Registro original não é apagado ou reatribuído retroativamente; mudança é novo evento auditável.
+
+**DECISION_REQUIRED / ainda não inferir:** (1) efeito de reatribuição formal sobre aceite já registrado; (2) procedimento de alteração do próprio aceite compatível com irreversibilidade da UI V1; (3) mapeamento/configuração de áreas obrigatórias e elegibilidade corporativa; (4) momento e autoridade da rejeição terminal da competência quando mais de uma área participa; (5) tratamento das tarefas pendentes dos demais revisores após rejeição terminal. Separar decisões de produto de inventários físicos (DTO, Core eligibility resolver, storage, adapters).
+
+**Gate:** `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_RULES`; `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`. Estes textos registram decisões de produto, não demonstram testes, código, contratos físicos, rebase nem execução de smoke.
+
+**Conteúdo futuro Help (não publicar como runtime antes da feature):** revisão requer um aceite por área obrigatória, executado por usuário elegível, não um aceite por cada pessoa. Nova versão exige todos os aceites novamente. Rejeição terminal encerra a competência como rejeitada, distinta de conclusão; pedir alterações não é rejeição terminal. Alteração/substituição de aceite deve seguir regra auditada ainda pendente.
+
+
+## Decisões PO P5-F a P5-J — consolidação contratual vigente (16/10/2026)
+
+**TARGET / PO_APPROVED / DOCUMENTED_NOT_IMPLEMENTED.** Este adendo é superveniente aos registros de perguntas abertas P5-F..J e prevalece quando notas históricas anteriores conflitarem. C2, D-P5-02..05 e P5-A..E permanecem válidas nos termos abaixo. A antiga unanimidade de *pessoas* em D-P5-01 foi substituída pela unanimidade das *áreas obrigatórias* em P5-A.
+
+| ID | Resultado aprovado | Invariante |
+|---|---|---|
+| **P5-F = A** | Substituição de responsável mantém válido o aceite já realizado para a mesma área e PackageVersion; a autoria permanece a do executor original. Substituto assume somente ações futuras. | REASSIGNMENT != INVALIDATE_PRIOR_ACCEPTANCE |
+| **P5-G = A** | Aceite P5 não é reversível/alterável pela UI V1. Eventual erro exige processo excepcional separado, formal, auditado e **não autorizado enquanto seu contrato não for aprovado**. | NO_P5_ACCEPTANCE_REVERSAL_IN_V1 |
+| **P5-H = A** | P6 configura por tipo de pacote as áreas/especialidades obrigatórias em versão governada; P5 congela a configuração aplicável na submissão. Core fornece identidade, effective permissions e atributos de grupo/função conforme contrato a inventariar. | REVIEW_AREA_SET_SNAPSHOTTED_ON_SUBMISSION |
+| **P5-I = B** | Reviewer elegível registra rejeição do pacote em nome da área; uma **autoridade operacional formalmente definida**, distinta da simples permission MANAGE, confirma com justificativa e auditoria a rejeição terminal da competência. | AREA_PACKAGE_REJECTION != TERMINAL_COMPETENCE_REJECTION |
+| **P5-J = A** | Após confirmação da rejeição terminal, a competência fica rejeitada e todas as projeções/tarefas de revisão ainda acionáveis deixam de sê-lo; histórico, decisões e autoria permanecem consultáveis conforme AuthZ. | REJECTED_COMPETENCE != MONTHLY_CLOSING_COMPLETED |
+
+### Compatibilidade com regras anteriores
+
+- **C2:** competência concluída somente se TODOS os pacotes aplicáveis foram submetidos, TODAS as áreas obrigatórias aceitaram a PackageVersion vigente e NÃO há esclarecimento aberto. Competência rejeitada nunca satisfaz `MONTHLY_CLOSING_COMPLETED`.
+- **P5-A / D-P5-01:** quorum de um aceite por área obrigatória, executado por qualquer usuário elegível; não por indivíduo. Dois elegíveis na mesma área não criam dois aceites necessários.
+- **P5-B / D-P5-03 / P5-G:** ninguém sobrescreve aceites; nem o autor pode revertê-los pela UI V1. A referência antiga a “autor pode alterar” é **superseded para aceite P5 na V1**. Reatribuição formal não autoriza mutação de decisões anteriores.
+- **P5-C / D-P5-04:** ACCESS efetivo + grupo/função corporativa elegível + escopo do recurso + regra da ação; avaliação server-side fail-closed; reviewer assignment nunca se torna novo permission code.
+- **D-P5-02 / P5-E:** esclarecer sem alterar conteúdo preserva versão; qualquer alteração de conteúdo cria nova PackageVersion e **exige novos aceites de todas as áreas obrigatórias**; histórico de versões anteriores preservado.
+- **D-P5-05 / P5-D / P5-I:** `CHANGES_REQUESTED` não é `REVIEW_REJECTED`; rejeição da área/pacote não encerra competência automaticamente; só confirmação por autoridade operacional a leva ao estado terminal rejeitado.
+- **P5-F / P5-H:** reatribuir elegível não altera aceite já registrado, nem o snapshot de áreas obrigatórias da submissão; edição futura do catálogo P6 não altera snapshots abertos.
+- **P5-J:** `TaskProjection != TaskEntity`; P5 continua owner do lifecycle; revisão terminal rejeitada remove acionabilidade, sem hard delete nem apagamento de evidências.
+
+### Trilha de auditoria obrigatória
+
+Preservar identidade Core do ator, data/hora, ação, contexto competência/recipient package, versão, área obrigatória, elegibilidade/scope verificados, motivo/justificativa quando exigidos, estado anterior/posterior, autor original do aceite, referência a reatribuições, confirmação formal da rejeição e correlação da projeção/notificação. Histórico é append-only no nível semântico; **schema físico não definido**.
+
+### Pendências reais — sem aprovação presumida
+
+1. **DECISION_REQUIRED:** quem é a autoridade operacional de confirmação de rejeição terminal; como é designada e substituída, e se a confirmação pode ser negada (e qual estado fica então). Não equiparar automaticamente a `manage`.
+2. **DECISION_REQUIRED:** procedimento excepcional de correção de aceite P5 fora da UI V1 (owner, autorização, efeitos na conclusão mensal e revalidação), se for implementado nesta versão; na ausência de decisão, **capability não existe na V1**.
+3. **TO_INVENTORY / STOP ON DRIFT:** fonte canônica dos grupos/funções corporativas e sua associação às áreas, contract Core (T05), elegibilidade de múltiplos usuários; não presumir que RBAC do Core tem os atributos necessários.
+4. **CONTRACT_PENDING:** mapa versionado tipo de pacote → áreas obrigatórias em P6; regras de publicação/vigência/snapshot, defaults inválidos, configuração ausente e concorrência; não inventar tabelas/migrations.
+5. **CONTRACT_PENDING:** outcome de rejeição do pacote versus confirmação terminal da competência, estados técnicos definitivos, falha/conflito no commit, event projection/notifications/Help e matrizes de testes positive+sibling+negative.
+
+**Gates:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_CONTRACT_AND_OWNER`; `IMPLEMENTATION_AUTHORIZED = NO`. Nenhum teste de runtime foi executado; `TEST_NOT_RUN`. Nenhum merge/rebase autorizado por este registro.
+
+**Ajuda planejada P5-F..J:** aceites por área são registrados por usuário elegível; reatribuição não troca autor nem desfaz aceite válido; aceite P5 é irreversível na UI V1; áreas exigidas vêm da configuração P6 congelada na submissão; rejeição do pacote passa por confirmação da autoridade operacional para rejeitar a competência; tarefas deixam de ser acionáveis após rejeição terminal. Só publicar manual quando capability estiver implementada.
+
+
+## Decisões finais do PO — DEC-01 a DEC-04 (16/10/2026)
+
+**TARGET / PO_APPROVED / NOT_IMPLEMENTED.** Vigência: este contrato substitui referências históricas a `DECISION_REQUIRED` sobre autoridade de rejeição, negativa de confirmação, exceção de reversão na V1 e publicador P6. Não equivale a evidence de testes ou freeze.
+
+| ID | Decisão aprovada | Contrato normativo |
+|---|---|---|
+| DEC-01 | Responsável formal da Controladoria | A pessoa designada para coordenar o fechamento da competência pode confirmar rejeição terminal **somente** com `controllership-finance.access` efetivo, vínculo operacional, escopo do recurso e business rule verificados server-side. `manage` isolado não concede essa autoridade. A designação/substituição deve ser auditada; owner da identidade/permissão é Core; owner do vínculo operacional é o contexto P5. |
+| DEC-02 | Rejeição pendente se não confirmada | Rejeição pela área/pacote cria proposta de rejeição da competência; até decisão formal ela não está `MONTHLY_CLOSING_COMPLETED` nem terminalmente rejeitada. Autoridade registra decisão/motivo; pode devolver análise para esclarecimento ou correção nas transições autorizadas. Não apagar evento original. |
+| DEC-03 | Sem correção excepcional de aceite P5 na V1 | Aceite P5 é irreversível pela UI e não existe endpoint de reversão/retificação na V1. Incidentes são registrados e encaminhados a processo **fora do fluxo do Portal**, sem presumir ação técnica, override, database edit ou reversão automática. P2 validação de evidência mantém contrato próprio. |
+| DEC-04 | P6 publica configuração com MANAGE | Usuário com `controllership-finance.manage` efetivo **e** escopo administrativo publica nova configuração versionada de áreas obrigatórias por tipo de pacote, com justificativa, auditoria e vigência prospectiva. Competências e submissões existentes mantêm snapshots; MANAGE não implica ACCESS operacional. |
+
+### Consistência transversal
+
+C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válido de cada área obrigatória** sobre a versão atual, e nenhuma clarification aberta. Uma competência terminalmente rejeitada é desfecho diferente de conclusão, dependente de confirmação DEC-01. P5-A..J permanecem vigentes: aceites auditados por ator; reatribuição não troca autoria ou invalida aceite vigente; nova versão reinicia aceites obrigatórios; envio é submissão interna; rejeição terminal desativa TaskProjections acionáveis e preserva histórico. `CHANGES_REQUESTED` não é `REVIEW_REJECTED`.
+
+### AC mínimos (PLANNED / TEST_NOT_RUN)
+
+- DEC-01: reviewer de área não consegue encerrar competência; coordenador com ACCESS + vínculo + scope consegue confirmar; MANAGE sem vínculo/ACCESS falha; ausência de Core/elegibilidade falha fechada.
+- DEC-02: rejeição de área sem confirmação mantém estado pendente; negativa motivada permanece auditável e permite devolução somente por transição contratada; nenhuma conclusão automática.
+- DEC-03: nenhum endpoint ou ação UI V1 altera aceite P5; eventos originais imutáveis e incidentes externos não falsificam C2.
+- DEC-04: MANAGE + escopo publica com motivação e versionamento; ACCESS sem MANAGE não publica; submissão anterior não muda; nova submissão adota versão conforme vigência autorizada.
+
+### Pendências técnicas distintas de escolhas PO
+
+**TO_INVENTORY:** contrato Core T05 de effective permissions e atributos corporativos; source do coordenador/vínculo/eligibilidade; owner/contrato físico de persistência e eventos; formato de estados/DTOs, versionamento P6 e CAS/concorrência; UX, notifications, help e projections. **CONTRACT_PENDING:** mapear transições específicas e outcomes da negativa no ledger e testes; identificar .cursor e padrões HEAD aplicáveis. Não declarar `PASS` sem inspeção de código/producers/consumers/testes e reconciliação da branch com main.
+
+`DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (sujeito a inventário material posterior); `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.

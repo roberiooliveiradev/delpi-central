@@ -47,7 +47,7 @@ Início
     ├── Checklist e Documentos
     ├── Estoque e Conciliação
     ├── Classificações e Pendências
-    └── Pacote e Envio
+    └── Pacote, Finalização e Envio
 ```
 
 A `Visão geral` é a superfície analítica do Portal e deve apresentar indicadores financeiros com owner/source/fórmula comprovados.

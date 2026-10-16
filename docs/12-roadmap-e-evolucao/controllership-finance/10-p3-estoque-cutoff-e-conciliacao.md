@@ -2,13 +2,52 @@
 
 ## Estado
 
-**TARGET / VISUAL_SPEC_DEFINED / READY_WITH_STOP_CONDITION_ON_T03**
+**TARGET / PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03**
+
+```text
+DOCUMENTED != IMPLEMENTED
+IMPLEMENTATION_AUTHORIZED = NO
+
+VISUAL_SPEC_DEFINED      = PASS
+CONTRACT_DEFINED         = PASS
+AUTHZ_DEFINED            = PASS
+PLUGIN_UI_REUSE_DEFINED  = PASS
+STATES_DEFINED           = PASS
+TEST_MATRIX_DEFINED      = PASS
+
+POST_STOCK_CLOSED_RULE   = TERMINAL_IN_PORTAL_V1
+```
 
 ## Job
 
 > Quero saber se o estoque está apto ao fechamento, se as fontes estão atualizadas, se a conciliação fecha exatamente e o que impede o avanço.
 
 P3 é a superfície operacional de cutoff, revalidação, conciliação monetária e leitura do estado canônico de fechamento do estoque.
+
+
+## Responsabilidade, owners e non-goals
+
+| Capability/dado | Owner |
+|---|---|
+| state/readiness do Portal até READY_TO_CLOSE | P3 / `controllership-finance-api` |
+| regra de paridade exata | P3 business contract |
+| P7 / Entradas-Saídas / H02 e regras canônicas TOTVS | `api-delpi` / owner canônico correspondente |
+| confirmação de cutoff do Portal | P3, por ator autorizado |
+| revalidação/orquestração de leitura | P3/BFF, usando owners canônicos |
+| sacramentação ERP | owner/ERP autorizado, fora do Portal V1 |
+| `STOCK_CLOSED` canônico | owner a provar em T03 |
+| effective permissions | Core |
+| chrome visual | `@delpi/plugin-ui` |
+
+Não pertence a P3 V1:
+- executar escrita de sacramentação no ERP;
+- inventar estado `STOCK_CLOSED` local;
+- criar tolerância monetária;
+- transformar source offline em zero;
+- definir fórmula SQL/TOTVS localmente;
+- criar permission por rotina/unidade;
+- reabrir, retificar ou criar workflow pós-`STOCK_CLOSED` dentro do Portal V1.
+
 
 ---
 
@@ -365,6 +404,38 @@ Sem fallback manual silencioso.
 
 Se T03 provar ausência/incompatibilidade, registrar `EXECUTION_DRIFT`.
 
+### Regra pós-sacramentação — decisão E02
+
+Decisão aprovada pelo Product Owner em 09/10/2026:
+
+```text
+STOCK_CLOSED
+= terminal no lifecycle P3 do Portal V1
+```
+
+Consequências:
+
+- P3 não oferece ação `Reabrir estoque`;
+- P3 não oferece `Desfazer sacramentação`;
+- P3 não executa nova revalidação operacional sobre a mesma versão fechada para alterar o fechamento histórico;
+- P3 não cria estado local de `REOPENED`, `RECTIFIED` ou equivalente;
+- qualquer correção/retificação posterior pertence ao owner canônico/ERP;
+- o Portal preserva o histórico observado e pode refletir futuramente um novo estado/artefato fornecido pelo owner, sem reescrever o fechamento anterior;
+- se o processo real passar a exigir reabertura/correção suportada pelo Portal, isso exige novo gate de produto/contract e revisão explícita de P3 + P5.
+
+### Impacto em P5
+
+A decisão E02 não autoriza invalidar silenciosamente pacote finalizado/enviado.
+
+```text
+STOCK_CLOSED historical fact
+→ P5 consumes the closed-state fact
+→ later owner-side correction does not mutate package history silently
+```
+
+Qualquer correção pós-envio continua sujeita ao lifecycle versionado/complementar próprio de P5.
+
+
 ---
 
 ## Histórico
@@ -380,6 +451,53 @@ Mostrar eventos materiais:
 O histórico não deve inventar evento se o producer não o fornece.
 
 ---
+
+## Contratos TARGET — MFE → BFF → owners
+
+```text
+plugins/controllership-finance
+→ controllership-finance-api
+   → Core effective permissions
+   → api-delpi / owners canônicos de P7, Entradas-Saídas e H02
+   → owner canônico de STOCK_CLOSED quando T03 provar
+```
+
+O browser não chama `api-delpi`/ERP/Core diretamente.
+
+Operações semânticas:
+
+| Operação | Semântica |
+|---|---|
+| getStockClosingState | contexto + state model + cutoff + revalidation + canonical close state |
+| confirmCutoff | confirmação humana auditada, sem ERP write |
+| revalidateStockInputs | rerun das sources aplicáveis |
+| getReconciliation | valores + source/freshness + divergência exata |
+| getReconciliationDrilldown | total → grupo → item/evidência |
+| getStockClosingHistory | eventos auditáveis conhecidos |
+
+A BFF pode orquestrar leituras e aplicar a regra TARGET de readiness, mas:
+- SQL/TOTVS continua no `api-delpi`;
+- `STOCK_CLOSED` não é fabricado pelo Portal;
+- `confirmCutoff` não equivale a sacramentação;
+- `READY_TO_CLOSE` não equivale a `STOCK_CLOSED`.
+
+### AuthZ
+
+```text
+authenticated
+AND effective_permission(controllership-finance.access)
+AND resource_scope / context_access
+AND business_rule
+```
+
+Para `confirmCutoff`/`revalidateStockInputs`, o backend também verifica se o ator é autorizado pela regra operacional correspondente.
+
+Regras:
+- `MANAGE` não implica `ACCESS`;
+- unidade é contexto/dado;
+- UI não autoriza;
+- effective permissions indisponíveis → fail-closed;
+- owner/ERP continua authority da sacramentação.
 
 ## Reuso obrigatório de `@delpi/plugin-ui`
 
@@ -458,14 +576,26 @@ Se faltar capability visual reutilizável, registrar `PLUGIN_UI_GAP_FOUND` antes
 - manter estrutura previsível;
 - não preencher métricas com `R$ 0,00` enquanto carrega.
 
+### SUCCESS
+- sources necessárias responderam para o recorte;
+- valores/freshness/state são coerentes;
+- zero só é paridade quando as demais condições aplicáveis também estiverem válidas.
+
 ### EMPTY
 `EMPTY` só é válido quando a ausência de dado for semanticamente correta; conciliação sem source obrigatória é indisponibilidade, não empty.
 
 ### PARTIAL
 Mostrar sources válidas e bloquear conclusão, indicando exatamente o que falta.
 
-### UNAVAILABLE_SOURCE
+### UNAVAILABLE / UNAVAILABLE_SOURCE
 Exibir source afetada e impacto na paridade/readiness.
+
+`UNAVAILABLE` é o estado da experiência/módulo; `UNAVAILABLE_SOURCE` qualifica a source afetada.
+
+Source obrigatória indisponível bloqueia readiness.
+
+### VALIDATION_ERROR
+Input/ação inválida preserva o contexto; cutoff/revalidation não recebe optimistic success.
 
 ### ERROR
 Erro contextual; retry/revalidar somente quando tecnicamente permitido.
@@ -477,6 +607,26 @@ Sem exposição dos valores financeiros.
 Competência/contexto inexistente ou não acessível.
 
 ---
+
+## Light / dark, responsividade e acessibilidade
+
+```text
+SAME DOM
++ SAME STATE MODEL
++ SAME MONETARY VALUES
++ SAME BLOCKERS
++ THEME TOKENS
+= LIGHT / DARK PARITY
+```
+
+- TopBar pertence ao shell;
+- P3 é deep page e usa `PagePath`;
+- desktop mantém conciliação/readiness em hierarquia explícita;
+- mobile prioriza estado e divergência sem cards comprimidos;
+- `R$ 0,00`/divergência nunca dependem só de cor;
+- cutoff, revalidation e drilldown são keyboard-operable;
+- focus permanece visível;
+- CSS de primitives do kit permanece no `plugin-ui`.
 
 ## Edge cases visuais obrigatórios
 
@@ -542,16 +692,94 @@ Help contextual explica cutoff, revalidação, paridade exata, zero preliminar, 
 
 ---
 
+## Scripts e artefatos auxiliares PLANNED
+
+Não criar durante a FASE A.
+
+```text
+validate-p3-monetary-parity
+- exact cents
+- no epsilon
+- AC-P3-PARITY-01..07
+
+validate-p3-state-machine
+- PRELIMINARY → WAITING_FOR_CUTOFF → REVALIDATION_REQUIRED → READY_TO_CLOSE
+- READY_TO_CLOSE != STOCK_CLOSED
+
+validate-p3-source-readiness
+- unavailable != zero
+- pre-cutoff zero != final
+- input change invalidates readiness
+
+validate-p3-owner-boundary
+- no ERP write
+- STOCK_CLOSED only from canonical owner
+- T03 stop enforced
+
+validate-p3-authz
+- ACCESS/context/business rule
+- MANAGE does not bypass
+- fail-closed
+
+validate-p3-deep-links
+- competence/context/drilldown
+- F5
+- no open redirect
+
+validate-p3-help
+- exact parity/cutoff/revalidation/READY-vs-CLOSED synchronized
+
+validate-p3-plugin-ui
+- MetricKpiCard/ProgressTracker/AlertQueue/DataTableSection/Timeline reused
+- no local clone
+```
+
+Tecnologia/localização seguem o HEAD da futura implementação.
+
 ## Pendências de implementação preservadas
 
-- E02 correção pós-sacramentação;
-- E03 executor/permissões;
-- T01 bindings;
-- T03 estado canônico.
+- E02 correção pós-sacramentação — **CLOSED / PRODUCT_DECISION: STOCK_CLOSED terminal no Portal V1**;
+- E03 executor/permissões — inventory do owner da sacramentação, sem write Portal V1;
+- T01 bindings — TO_INVENTORY;
+- T03 estado canônico — STOP_CONDITION / TO_INVENTORY.
 
-Nenhuma dessas pendências é resolvida pelo design visual.
+E02 foi fechado por decisão explícita do Product Owner. O Portal V1 trata `STOCK_CLOSED` como terminal e não cria workflow pós-sacramentação. Correções posteriores permanecem no owner canônico; futura expansão exige novo gate de produto.
+
 
 ---
+
+## Gate documental V2
+
+```text
+OBJECTIVE_BOUNDARY_DEFINED   = PASS
+OWNERS_DEFINED               = PASS
+VISUAL_SPEC_DEFINED          = PASS
+CONTRACT_DEFINED             = PASS
+AUTHZ_DEFINED                = PASS
+PLUGIN_UI_REUSE_DEFINED      = PASS
+STATES_DEFINED               = PASS
+DEEP_LINK_F5_DEFINED         = PASS
+RESPONSIVE_DEFINED           = PASS
+LIGHT_DARK_DEFINED           = PASS
+A11Y_DEFINED                 = PASS
+HELP_SYNC_DEFINED            = PASS
+RQ_AC_DEFINED                = PASS
+TEST_MATRIX_DEFINED          = PASS
+SCRIPTS_ARTIFACTS_PLANNED    = PASS
+MONETARY_PARITY_DEFINED      = PASS
+POST_STOCK_CLOSED_RULE       = PASS / TERMINAL_IN_PORTAL_V1
+IMPLEMENTATION_AUTHORIZED    = NO
+```
+
+Resultado:
+
+```text
+A10 P3 ESTOQUE E CONCILIAÇÃO
+= READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY
+!= IMPLEMENTED
+```
+
+T03 permanece stop condition técnico mesmo depois de E02 ser fechado.
 
 ## Resultado esperado
 

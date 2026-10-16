@@ -52,6 +52,7 @@ Este ledger complementa:
 | RQ-P3-06 | input alterado após revalidação invalida prontidão aplicável | estado volta a requerer revalidação | positive + sibling | source version/freshness | TARGET |
 | RQ-P3-07 | V1 não grava sacramentação no ERP | nenhuma action de escrita ERP é criada | architecture negative | E03/T03 | TARGET |
 | RQ-P3-08 | STOCK_CLOSED usa estado canônico do owner se existir | sem fallback manual silencioso | integration/contract | T03 | TARGET / STOP_CONDITION |
+| RQ-P3-08A | STOCK_CLOSED é terminal no lifecycle P3 do Portal V1 | sem reabrir/desfazer/retificar localmente; correção posterior pertence ao owner e não reescreve histórico | negative + lifecycle + P5 sibling | E02 CLOSED | TARGET / PRODUCT_DECISION |
 | RQ-P3-09 | freshness/proveniência acompanham resultado | source/time/competência/unidade/finality/rule version disponíveis | contract/UI | T01 | TARGET |
 | RQ-P3-10 | Help explica cutoff, revalidação, paridade e estado canônico | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 
@@ -73,15 +74,17 @@ Este ledger complementa:
 | RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
 |---|---|---|---|---|---|
 | RQ-P5-01 | PACKAGE_INCOMPLETE só avança quando requisitos aplicáveis permitirem | blockers impedem READY_TO_FINALIZE | positive + negative | P2/P3 | TARGET |
-| RQ-P5-02 | Finalizar cria versão/snapshot e não envia | PACKAGE_FINALIZED sem PACKAGE_SENT | positive | — | TARGET |
-| RQ-P5-03 | reabrir antes do envio preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
-| RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | enviar um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
-| RQ-P5-05 | envio real usa capability corporativa comprovada | nenhum canal é assumido antes do inventário | contract/integration | E04/T04 | PENDING_IMPLEMENTATION |
-| RQ-P5-06 | PACKAGE_SENT é imutável | tentativa de editar pacote enviado é rejeitada | negative | — | TARGET |
-| RQ-P5-07 | correção pós-envio cria complemento/nova versão ligada à anterior | histórico de entrega preservado | positive + audit | — | TARGET |
-| RQ-P5-08 | conclusão exige todos pacotes aplicáveis enviados e nenhum esclarecimento aberto | sem botão de force completion | positive + negative | send capability | TARGET |
-| RQ-P5-09 | ack/read do destinatário não bloqueia V1 | ausência de ack não impede conclusão se demais regras satisfeitas | sibling/negative | — | TARGET |
-| RQ-P5-10 | Help explica finalizar, enviar, versões e esclarecimentos | conteúdo contextual disponível | UI/help check | feature help | TARGET |
+| RQ-P5-02 | Finalizar cria versão/snapshot e não submete | PACKAGE_FINALIZED sem reviewer access/task | positive | — | TARGET |
+| RQ-P5-03 | reabrir antes da submissão preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
+| RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | submit/review de um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
+| RQ-P5-05 | Enviar significa submeter dentro da Minha DELPI | PACKAGE_SUBMITTED_FOR_REVIEW; nenhum package attachment por e-mail | positive + architecture negative | doc 37 | TARGET |
+| RQ-P5-06 | reviewer é usuário autenticado | ACCESS + reviewer assignment/resource scope; MANAGE não requerido | authz positive + negative | Core/T05 | TARGET |
+| RQ-P5-07 | notifications não são business state | in-app + e-mail opcional; falha de e-mail não reverte submission | integration + sibling | T02/Core | TARGET |
+| RQ-P5-08 | reviewer work pode projetar em Minhas tarefas | self-only projection; deep link abre P5 owner | projection + authz | TSK | TARGET |
+| RQ-P5-09 | versão submetida/histórico de review são imutáveis | nova versão não apaga review anterior | positive + audit | — | TARGET |
+| RQ-P5-10 | clarification/correction preserva history | request/response/version ficam auditáveis | positive + sibling | — | TARGET |
+| RQ-P5-11 | Help explica finalize/submit/notify/review | conteúdo contextual coerente | UI/help check | feature help | TARGET |
+| RQ-P5-12 | monthly completion usa regra explícita de review | C2 aprovado pelo Product Owner; todos os pacotes aplicáveis submetidos, reviews obrigatórios aceitos e sem esclarecimento aberto | product decision test | C2 / D-P5-01..05; derived lifecycle gaps | TARGET / CONTRACT_PENDING |
 
 ## P6 — Administração e Configuração
 
@@ -196,25 +199,25 @@ Fonte detalhada: [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
 
 ## Requisitos transversais de segurança
 
-| RQ | Requisito | Aceite mínimo |
-|---|---|---|
-| RQ-SEC-01 | backend autoriza fail-closed | UI ocultar ação não concede autorização |
-| RQ-SEC-02 | effective permissions vêm do Core | JWT sozinho não é authority final |
-| RQ-SEC-03 | resource ownership/context access sempre aplicados quando houver recurso restrito | URL direta para recurso não autorizado é rejeitada |
-| RQ-SEC-04 | MANAGE não apaga histórico | delete/overwrite material rejeitado |
-| RQ-SEC-05 | IA respeita acesso/ownership e não muda estado | tool/prompt não contorna business rule |
-| RQ-SEC-06 | secrets/tokens não entram em frontend state/logs/prompts comuns | scanner/review sem exposição |
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-SEC-01 | backend autoriza fail-closed | UI ocultar ação não concede autorização | negative: chamada direta sem capability/scope + Core unavailable | Core + BFF AuthZ | TARGET |
+| RQ-SEC-02 | effective permissions vêm do Core | JWT sozinho não é authority final | contract/integration: JWT válido sem effective access não autoriza | Core PermissionResolver | TARGET |
+| RQ-SEC-03 | resource ownership/context access sempre aplicados quando houver recurso restrito | URL direta para recurso não autorizado é rejeitada | sibling + negative: resource A/B + direct URL | owner adapter | TARGET |
+| RQ-SEC-04 | MANAGE não apaga histórico | delete/overwrite material rejeitado | negative: hard delete/overwrite histórico | audit/version rules | TARGET |
+| RQ-SEC-05 | IA respeita acesso/ownership e não muda estado | tool/prompt não contorna business rule | AI negative + permission negative | governed AI adapter | TARGET |
+| RQ-SEC-06 | secrets/tokens não entram em frontend state/logs/prompts comuns | scanner/review sem exposição | secret/log/frontend-state scan | platform security | TARGET |
 
 ## Requisitos transversais de experiência
 
-| RQ | Requisito | Aceite mínimo |
-|---|---|---|
-| RQ-UX-01 | estados LOADING/EMPTY/PARTIAL/UNAVAILABLE_SOURCE/ERROR/403/404 | página não colapsa estados distintos em erro genérico |
-| RQ-UX-02 | desktop/mobile e claro/escuro | conteúdo e ações materiais permanecem utilizáveis |
-| RQ-UX-03 | teclado/foco | fluxo principal operável por teclado com foco visível |
-| RQ-UX-04 | deep link/F5 | contexto aplicável é preservado/reconstruído sem bypass de auth |
-| RQ-UX-05 | status não depende apenas de cor | labels/texto acessíveis |
-| RQ-UX-06 | Help sincronizada | mudança user-facing material atualiza ajuda antes do aceite |
+| RQ | Requisito | Aceite mínimo | Teste mínimo | Dependência | Estado |
+|---|---|---|---|---|---|
+| RQ-UX-01 | estados LOADING/SUCCESS/EMPTY/PARTIAL/UNAVAILABLE/ERROR/403/404 | página não colapsa estados distintos em erro genérico | state matrix + source unavailable negative | page contracts | TARGET |
+| RQ-UX-02 | desktop/mobile e claro/escuro | conteúdo e ações materiais permanecem utilizáveis | visual/responsive: desktop + mobile + light + dark | plugin-ui/theme | TARGET |
+| RQ-UX-03 | teclado/foco | fluxo principal operável por teclado com foco visível | keyboard-only + focus order/modal trap | plugin-ui/a11y | TARGET |
+| RQ-UX-04 | deep link/F5 | contexto aplicável é preservado/reconstruído sem bypass de auth | deep-link roundtrip + F5 + unauthorized URL negative | router/BFF | TARGET |
+| RQ-UX-05 | status não depende apenas de cor | labels/texto acessíveis | a11y/status semantics | plugin-ui | TARGET |
+| RQ-UX-06 | Help sincronizada | mudança user-facing material atualiza ajuda antes do aceite | structural Help link/section + capability gating | 29/help registry | TARGET |
 
 ## Regra de evidência para implementação
 
@@ -228,3 +231,76 @@ Cada RQ material da página em execução deve aparecer no report do Cursor com:
 - residual/unresolved.
 
 Nenhum RQ pode ser marcado PASS apenas porque outro RQ da mesma página passou.
+
+
+## Decisões PO P5-F a P5-J — consolidação contratual vigente (16/10/2026)
+
+**TARGET / PO_APPROVED / DOCUMENTED_NOT_IMPLEMENTED.** Este adendo é superveniente aos registros de perguntas abertas P5-F..J e prevalece quando notas históricas anteriores conflitarem. C2, D-P5-02..05 e P5-A..E permanecem válidas nos termos abaixo. A antiga unanimidade de *pessoas* em D-P5-01 foi substituída pela unanimidade das *áreas obrigatórias* em P5-A.
+
+| ID | Resultado aprovado | Invariante |
+|---|---|---|
+| **P5-F = A** | Substituição de responsável mantém válido o aceite já realizado para a mesma área e PackageVersion; a autoria permanece a do executor original. Substituto assume somente ações futuras. | REASSIGNMENT != INVALIDATE_PRIOR_ACCEPTANCE |
+| **P5-G = A** | Aceite P5 não é reversível/alterável pela UI V1. Eventual erro exige processo excepcional separado, formal, auditado e **não autorizado enquanto seu contrato não for aprovado**. | NO_P5_ACCEPTANCE_REVERSAL_IN_V1 |
+| **P5-H = A** | P6 configura por tipo de pacote as áreas/especialidades obrigatórias em versão governada; P5 congela a configuração aplicável na submissão. Core fornece identidade, effective permissions e atributos de grupo/função conforme contrato a inventariar. | REVIEW_AREA_SET_SNAPSHOTTED_ON_SUBMISSION |
+| **P5-I = B** | Reviewer elegível registra rejeição do pacote em nome da área; uma **autoridade operacional formalmente definida**, distinta da simples permission MANAGE, confirma com justificativa e auditoria a rejeição terminal da competência. | AREA_PACKAGE_REJECTION != TERMINAL_COMPETENCE_REJECTION |
+| **P5-J = A** | Após confirmação da rejeição terminal, a competência fica rejeitada e todas as projeções/tarefas de revisão ainda acionáveis deixam de sê-lo; histórico, decisões e autoria permanecem consultáveis conforme AuthZ. | REJECTED_COMPETENCE != MONTHLY_CLOSING_COMPLETED |
+
+### Compatibilidade com regras anteriores
+
+- **C2:** competência concluída somente se TODOS os pacotes aplicáveis foram submetidos, TODAS as áreas obrigatórias aceitaram a PackageVersion vigente e NÃO há esclarecimento aberto. Competência rejeitada nunca satisfaz `MONTHLY_CLOSING_COMPLETED`.
+- **P5-A / D-P5-01:** quorum de um aceite por área obrigatória, executado por qualquer usuário elegível; não por indivíduo. Dois elegíveis na mesma área não criam dois aceites necessários.
+- **P5-B / D-P5-03 / P5-G:** ninguém sobrescreve aceites; nem o autor pode revertê-los pela UI V1. A referência antiga a “autor pode alterar” é **superseded para aceite P5 na V1**. Reatribuição formal não autoriza mutação de decisões anteriores.
+- **P5-C / D-P5-04:** ACCESS efetivo + grupo/função corporativa elegível + escopo do recurso + regra da ação; avaliação server-side fail-closed; reviewer assignment nunca se torna novo permission code.
+- **D-P5-02 / P5-E:** esclarecer sem alterar conteúdo preserva versão; qualquer alteração de conteúdo cria nova PackageVersion e **exige novos aceites de todas as áreas obrigatórias**; histórico de versões anteriores preservado.
+- **D-P5-05 / P5-D / P5-I:** `CHANGES_REQUESTED` não é `REVIEW_REJECTED`; rejeição da área/pacote não encerra competência automaticamente; só confirmação por autoridade operacional a leva ao estado terminal rejeitado.
+- **P5-F / P5-H:** reatribuir elegível não altera aceite já registrado, nem o snapshot de áreas obrigatórias da submissão; edição futura do catálogo P6 não altera snapshots abertos.
+- **P5-J:** `TaskProjection != TaskEntity`; P5 continua owner do lifecycle; revisão terminal rejeitada remove acionabilidade, sem hard delete nem apagamento de evidências.
+
+### Trilha de auditoria obrigatória
+
+Preservar identidade Core do ator, data/hora, ação, contexto competência/recipient package, versão, área obrigatória, elegibilidade/scope verificados, motivo/justificativa quando exigidos, estado anterior/posterior, autor original do aceite, referência a reatribuições, confirmação formal da rejeição e correlação da projeção/notificação. Histórico é append-only no nível semântico; **schema físico não definido**.
+
+### Pendências reais — sem aprovação presumida
+
+1. **DECISION_REQUIRED:** quem é a autoridade operacional de confirmação de rejeição terminal; como é designada e substituída, e se a confirmação pode ser negada (e qual estado fica então). Não equiparar automaticamente a `manage`.
+2. **DECISION_REQUIRED:** procedimento excepcional de correção de aceite P5 fora da UI V1 (owner, autorização, efeitos na conclusão mensal e revalidação), se for implementado nesta versão; na ausência de decisão, **capability não existe na V1**.
+3. **TO_INVENTORY / STOP ON DRIFT:** fonte canônica dos grupos/funções corporativas e sua associação às áreas, contract Core (T05), elegibilidade de múltiplos usuários; não presumir que RBAC do Core tem os atributos necessários.
+4. **CONTRACT_PENDING:** mapa versionado tipo de pacote → áreas obrigatórias em P6; regras de publicação/vigência/snapshot, defaults inválidos, configuração ausente e concorrência; não inventar tabelas/migrations.
+5. **CONTRACT_PENDING:** outcome de rejeição do pacote versus confirmação terminal da competência, estados técnicos definitivos, falha/conflito no commit, event projection/notifications/Help e matrizes de testes positive+sibling+negative.
+
+**Gates:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_CONTRACT_AND_OWNER`; `IMPLEMENTATION_AUTHORIZED = NO`. Nenhum teste de runtime foi executado; `TEST_NOT_RUN`. Nenhum merge/rebase autorizado por este registro.
+
+| RQ-P5-F | Reatribuição preserva aceite por área/versão | aceite original continua válido; autoria não muda; novo elegível assume ações futuras | positive + sibling + audit | P5-F / Core T05 | TARGET |
+| RQ-P5-G | Aceite P5 irreversível na UI V1 | nem autor nem substituto conseguem editar/reverter; exceção não implementada | negative + audit | P5-G | TARGET |
+| RQ-P5-H | P6 versiona áreas obrigatórias por tipo e P5 congela na submissão | mudança P6 posterior não muda revisão aberta | snapshot + sibling + negative | P5-H / ADM / T05 | TARGET / CONTRACT_PENDING |
+| RQ-P5-I | Rejeição do pacote e confirmação terminal da competência separadas | rejeição por área não conclui nem encerra automaticamente; autoridade formal confirma com motivo | transitions + authz negative | P5-I / owner DECISION_REQUIRED | TARGET / CONTRACT_PENDING |
+| RQ-P5-J | Rejeição terminal remove acionabilidade das tasks | projections deixam de ser acionáveis, histórico não é apagado | positive + sibling + negative | P5-J / TSK | TARGET |
+
+
+## Decisões finais do PO — DEC-01 a DEC-04 (16/10/2026)
+
+**TARGET / PO_APPROVED / NOT_IMPLEMENTED.** Vigência: este contrato substitui referências históricas a `DECISION_REQUIRED` sobre autoridade de rejeição, negativa de confirmação, exceção de reversão na V1 e publicador P6. Não equivale a evidence de testes ou freeze.
+
+| ID | Decisão aprovada | Contrato normativo |
+|---|---|---|
+| DEC-01 | Responsável formal da Controladoria | A pessoa designada para coordenar o fechamento da competência pode confirmar rejeição terminal **somente** com `controllership-finance.access` efetivo, vínculo operacional, escopo do recurso e business rule verificados server-side. `manage` isolado não concede essa autoridade. A designação/substituição deve ser auditada; owner da identidade/permissão é Core; owner do vínculo operacional é o contexto P5. |
+| DEC-02 | Rejeição pendente se não confirmada | Rejeição pela área/pacote cria proposta de rejeição da competência; até decisão formal ela não está `MONTHLY_CLOSING_COMPLETED` nem terminalmente rejeitada. Autoridade registra decisão/motivo; pode devolver análise para esclarecimento ou correção nas transições autorizadas. Não apagar evento original. |
+| DEC-03 | Sem correção excepcional de aceite P5 na V1 | Aceite P5 é irreversível pela UI e não existe endpoint de reversão/retificação na V1. Incidentes são registrados e encaminhados a processo **fora do fluxo do Portal**, sem presumir ação técnica, override, database edit ou reversão automática. P2 validação de evidência mantém contrato próprio. |
+| DEC-04 | P6 publica configuração com MANAGE | Usuário com `controllership-finance.manage` efetivo **e** escopo administrativo publica nova configuração versionada de áreas obrigatórias por tipo de pacote, com justificativa, auditoria e vigência prospectiva. Competências e submissões existentes mantêm snapshots; MANAGE não implica ACCESS operacional. |
+
+### Consistência transversal
+
+C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válido de cada área obrigatória** sobre a versão atual, e nenhuma clarification aberta. Uma competência terminalmente rejeitada é desfecho diferente de conclusão, dependente de confirmação DEC-01. P5-A..J permanecem vigentes: aceites auditados por ator; reatribuição não troca autoria ou invalida aceite vigente; nova versão reinicia aceites obrigatórios; envio é submissão interna; rejeição terminal desativa TaskProjections acionáveis e preserva histórico. `CHANGES_REQUESTED` não é `REVIEW_REJECTED`.
+
+### AC mínimos (PLANNED / TEST_NOT_RUN)
+
+- DEC-01: reviewer de área não consegue encerrar competência; coordenador com ACCESS + vínculo + scope consegue confirmar; MANAGE sem vínculo/ACCESS falha; ausência de Core/elegibilidade falha fechada.
+- DEC-02: rejeição de área sem confirmação mantém estado pendente; negativa motivada permanece auditável e permite devolução somente por transição contratada; nenhuma conclusão automática.
+- DEC-03: nenhum endpoint ou ação UI V1 altera aceite P5; eventos originais imutáveis e incidentes externos não falsificam C2.
+- DEC-04: MANAGE + escopo publica com motivação e versionamento; ACCESS sem MANAGE não publica; submissão anterior não muda; nova submissão adota versão conforme vigência autorizada.
+
+### Pendências técnicas distintas de escolhas PO
+
+**TO_INVENTORY:** contrato Core T05 de effective permissions e atributos corporativos; source do coordenador/vínculo/eligibilidade; owner/contrato físico de persistência e eventos; formato de estados/DTOs, versionamento P6 e CAS/concorrência; UX, notifications, help e projections. **CONTRACT_PENDING:** mapear transições específicas e outcomes da negativa no ledger e testes; identificar .cursor e padrões HEAD aplicáveis. Não declarar `PASS` sem inspeção de código/producers/consumers/testes e reconciliação da branch com main.
+
+`DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (sujeito a inventário material posterior); `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.
