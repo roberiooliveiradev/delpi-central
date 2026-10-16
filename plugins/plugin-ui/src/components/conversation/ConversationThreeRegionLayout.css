@@ -97,3 +97,56 @@
     max-height: 70%;
   }
 }
+
+
+/* R3 — shared, restrained motion for the rail and the context surface.
+   No animation library or independent provider; uses existing popover chrome. */
+.delpi-ui-conversation-three-region {
+  --delpi-ui-conversation-motion-fast: 180ms;
+  --delpi-ui-conversation-motion-normal: 240ms;
+  --delpi-ui-conversation-motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+.delpi-ui-conversation-three-region__left {
+  transition: flex-basis var(--delpi-ui-conversation-motion-normal) var(--delpi-ui-conversation-motion-ease);
+  will-change: flex-basis;
+}
+.delpi-ui-conversation-three-region__side-content {
+  min-width: 0;
+}
+.delpi-ui-conversation-three-region--left-collapsed
+  .delpi-ui-conversation-sidebar__action {
+  transition: background-color var(--delpi-ui-conversation-motion-fast) ease,
+    color var(--delpi-ui-conversation-motion-fast) ease;
+}
+.delpi-ui-conversation-three-region__context-popover {
+  /* Keep the popover mounted until the exit transition has finished. */
+  transform-origin: calc(100% - 20px) 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(.975);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--delpi-ui-conversation-motion-fast) ease,
+    transform var(--delpi-ui-conversation-motion-normal) var(--delpi-ui-conversation-motion-ease),
+    visibility 0s linear var(--delpi-ui-conversation-motion-normal);
+  will-change: opacity, transform;
+}
+.delpi-ui-conversation-three-region__context-popover[data-open="true"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--delpi-ui-conversation-motion-fast) ease,
+    transform var(--delpi-ui-conversation-motion-normal) var(--delpi-ui-conversation-motion-ease),
+    visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-three-region__left,
+  .delpi-ui-conversation-three-region__context-popover,
+  .delpi-ui-conversation-three-region--left-collapsed .delpi-ui-conversation-sidebar__action {
+    transition: none !important;
+    animation: none !important;
+    will-change: auto;
+  }
+}
