@@ -270,7 +270,7 @@ PACKAGE_INCOMPLETE → READY_TO_FINALIZE → PACKAGE_FINALIZED
 → [C2: all areas/current version/recipients accepted, no clarification]
 → MONTHLY_CLOSING_COMPLETED
 OU, após REVIEW_REJECTED + confirmação formal DEC-01,
-→ COMPETENCE_TERMINALLY_REJECTED (distinct outcome; physical name TO_INVENTORY)
+→ desfecho de competência rejeitada (identificador físico TO_INVENTORY)
 ```
 
 Finalizar != Enviar.
@@ -293,7 +293,7 @@ PACKAGE_FINALIZED
 - Core Notifications avisa in-app e pode também enviar e-mail;
 - notification/e-mail não altera business state;
 - reviewer usa ACCESS efetivo via Core **AND** grupo/função corporativa elegível **AND** área congelada **AND** resource scope/ownership **AND** business rule, sem permission nova;
-- P5 passa a ser producer comprovado de TaskProjection para review acionável.
+- P5 é producer TARGET de TaskProjection de obrigação por área para cada usuário elegível, quando a revisão estiver acionável; runtime ainda não provado.
 
 Authority:
 - [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md).
