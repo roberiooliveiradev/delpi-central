@@ -259,3 +259,12 @@ COMPARATIVE_BROWSER_RESULT = INCONCLUSIVE
 INDEPENDENT_ACCEPTANCE = PENDING
 PHASE_PROGRESSION = NONE
 ```
+
+
+## 14. Direção R2 — rail persistente + contexto flutuante (2026-10-16)
+
+**Nova decisão explícita do Product Master:** não ocultar totalmente a navegação esquerda ao recolher; preservar faixa estreita com ícones de Nova conversa, Pesquisar e Opções e controle Expandir. Substituir a coluna fixa direita por **card/popover contextual flutuante ancorado ao header**, acionado pelo botão de três pontos. A região central ganha toda a largura anteriormente consumida pela sidebar direita. Esta decisão **supersede** as seções visuais R1 em conflito; não altera autoridade/contratos/fase.
+
+**Composição:** sidebar esquerda `expanded|rail`, conversa central com `ConversationHeader.actions` exibindo botão de contexto e popover floating opcional no mesmo shell. Não existe coluna direita na grid/flex; popover é sobreposição sem remount da conversa, sem ocupar espaço horizontal. Modalidade compacta inicia no rail. O popover tem título Contexto, botão Fechar, Escape, outside click, foco ao fechar por botão, fundo e borda do kit, max-height/scroll próprio. Nenhum ACT nem busca resultam de abrir card. Seções de contexto e ações sem contrato continuam inertes/honestas.
+
+**Arquivos candidatos implementados:** `ConversationThreeRegionLayout.tsx/.css`, `ConversationSidebar.tsx`, `ConversationSidePanels.css`, `DeliaConversationPage.tsx`, testes. Código publicado via GitHub main; build/typecheck/browser QA não foram executados neste ambiente. `IMPLEMENTATION=CODE_COMMITTED_CANDIDATE`; `TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`. Revogar o termo “sidebar direita” no alvo vigente: **ContextPopover** é a apresentação correta, mantendo `ConversationContextPanel` como conteúdo render-only reutilizável.
