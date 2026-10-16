@@ -14158,3 +14158,26 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_FINAL_ACCEPTANCE_DECISION
 EXISTING_EQUIVALENT=YES_PARTIAL; REUSE_DECISION=EXTEND; NO_NEW_LINKREF
 PHASE_PROGRESSION=NONE; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
 INDEPENDENT_REVIEW=PENDING
+
+## §6.201 — DELIA-C3-STAGE-02-FINAL-ARCHITECTURE-ACCEPTANCE-01 (ACCEPT_WITH_RESIDUAL PERSISTED)
+
+**DATA:** 2026-10-16. **MODE:** documentary persistence of Architecture/Coordination decision — no runtime. **REVIEW_ID:** `DELIA-C3-STAGE-02-FINAL-ARCHITECTURE-ACCEPTANCE-01`. **REVIEWED_SHA:** `c98870a6caa8d76340b6c860d2488024b15691e7`. **REPORT:** `corrections/conversational-intelligence-c3/28-stage-02-independent-architecture-acceptance-closure.md`.
+
+- **EQUIVALENCE:** `c98870a6…` ⊂ origin/main; no material B1/B2/Interaction/PendingWrite drift (post-review delta = CP-333 L1 policy probe test only; Markdown track separate). Note: ledger ID collision — prior L1 inventory also labeled §6.200; this entry is the next Stage02 acceptance record as §6.201.
+- **VERDICT PERSISTED:** `STAGE_02_VERDICT=ACCEPT_WITH_RESIDUAL`; `STAGE_02_ACCEPTED=YES_WITH_RESIDUAL`; `B1=ACCEPT`; `B2=ACCEPT_WITH_RESIDUAL`; `RW_01=ACCEPT_CURRENT_SINGLE_PROCESS_SCOPE`; `RW_02=ACCEPT`; `UX_01=ACCEPT_WITH_RESIDUAL`.
+- **RESIDUALS PRESERVED:** R-S02-01..09 (browser, holdouts, TEO empty preview, plugin-ui tsc, process-local PendingWrite, external consumers, image SHA label, business Outcome, typed live negatives) — not removed by acceptance.
+- **NO CLAIMS:** `STAGE_03_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`. Global CPs not promoted.
+
+NEXT=STAGE_03_AUTHORIZATION_GATE (implementation blocked until explicit Coordination/ledger authorize)
+
+## §6.202 — DELIA-C3-STAGE-03-DISCOVERY-GUIDANCE-AUTHORIZATION-GATE-01 (NOT AUTHORIZED; INVENTORY ONLY)
+
+**DATA:** 2026-10-16. **MODE:** Authorization Gate + inventory/brief — zero Stage03 runtime. **REPORT:** `corrections/conversational-intelligence-c3/29-stage-03-discovery-guidance-inventory-and-implementation-brief.md`.
+
+- **GATE:** `STAGE_03_IMPLEMENTATION_AUTHORIZED=NO` — no explicit Product Master/Coordination/ledger authorize found after Stage02 acceptance; doc02/03 list Etapa 03 as PLANNED only.
+- **INVENTORY:** EXISTING_EQUIVALENT=YES for Interaction/orchestration/tools-list/clarification/provenance/Stage02 write gates; REUSE|EXTEND proposed; Chat runtime DO_NOT_REUSE; no second planner/registry.
+- **STATE:** `STAGE_03_STARTED=NO`; `STAGE_03_EXECUTED=NO`; `STAGE_03_ACCEPTED=NO`; candidate RQ coverage 0% implemented under this gate.
+- **EXIT:** `STAGE_03_AUTHORIZATION_REQUIRED` → return to Architecture/Coordination. Do not interpret parent task prompt as phase authorize.
+
+STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_AUTHORIZED=NO; C3_EXECUTED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_STAGE_03_AUTHORIZATION
