@@ -1,0 +1,97 @@
+/* Three-region shell. Container context belongs to the embedding page root. */
+.delpi-ui-conversation-three-region {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--delpi-ui-surface, var(--surface, #fff));
+  --delpi-ui-three-side: clamp(240px, 22%, 292px);
+}
+.delpi-ui-conversation-three-region__left,
+.delpi-ui-conversation-three-region__right {
+  flex: 0 0 var(--delpi-ui-three-side);
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--delpi-ui-surface-2, var(--surface-2, #f5f6f8));
+  color: var(--delpi-ui-text, var(--text, #111));
+  overflow: hidden;
+}
+.delpi-ui-conversation-three-region__left { border-right: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb)); }
+.delpi-ui-conversation-three-region__right { border-left: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb)); }
+.delpi-ui-conversation-three-region__side-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: 12px;
+  min-height: 46px;
+  gap: 8px;
+}
+.delpi-ui-conversation-three-region__side-heading strong {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.delpi-ui-conversation-three-region__side-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+}
+.delpi-ui-conversation-three-region__center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--delpi-ui-surface, var(--surface, #fff));
+}
+.delpi-ui-conversation-three-region__controls {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+}
+.delpi-ui-conversation-three-region__toggle { display: inline-flex; }
+.delpi-ui-conversation-three-region__conversation {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.delpi-ui-conversation-three-region__backdrop { display: none; }
+
+@container delia-page (max-width: 920px) {
+  .delpi-ui-conversation-three-region__left,
+  .delpi-ui-conversation-three-region__right {
+    position: absolute;
+    z-index: 20;
+    top: 42px;
+    bottom: 0;
+    width: min(300px, 85%);
+    flex-basis: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+  }
+  .delpi-ui-conversation-three-region__left { left: 0; }
+  .delpi-ui-conversation-three-region__right { right: 0; }
+  .delpi-ui-conversation-three-region { position: relative; }
+  .delpi-ui-conversation-three-region__backdrop {
+    display: block;
+    position: absolute;
+    z-index: 19;
+    inset: 42px 0 0;
+    border: 0;
+    background: rgba(0,0,0,.26);
+    cursor: default;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-three-region * { scroll-behavior: auto; }
+}
