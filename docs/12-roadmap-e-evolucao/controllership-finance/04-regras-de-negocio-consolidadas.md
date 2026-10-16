@@ -167,9 +167,12 @@ PACKAGE_INCOMPLETE
 → PACKAGE_FINALIZED
 → PACKAGE_SUBMITTED_FOR_REVIEW
 → REVIEW_PENDING / REVIEW_IN_PROGRESS
-→ REVIEW_ACCEPTED | CHANGES_REQUESTED
-→ [MONTHLY_CLOSING_COMPLETED per D-P5-REVIEW-COMPLETION]
+→ REVIEW_ACCEPTED | CHANGES_REQUESTED | REVIEW_REJECTED
+→ [MONTHLY_CLOSING_COMPLETED apenas por C2, todas áreas obrigatórias na versão vigente e sem clarification]
+OU [rejeição terminal da competência somente após confirmação formal DEC-01/02]
 ```
+
+**TARGET (vigente):** submissão interna != conclusão. C2 exige todos os pacotes aplicáveis submetidos, um aceite de cada área obrigatória da PackageVersion atual e nenhuma clarification aberta. Rejeição por área não é terminal; somente coordenador formal com ACCESS/vínculo/scope confirma com motivo (DEC-01/02); sem confirmação permanece pendente. P5 aceita em área, não por cada pessoa; decisão de aceite é irreversível na V1 (DEC-03). P6 publica novo catálogo versionado prospectivo por tipo de pacote apenas com MANAGE+escopo administrativo, reason e auditoria, preservando snapshots existentes (DEC-04). Authority temática [37](./37-p5-submissao-e-revisao-no-portal.md) e [13](./13-p6-administracao-e-configuracao.md).
 
 ## Regras adicionais
 
