@@ -30,6 +30,9 @@ export * from "./components/menu";
 export * from "./components/signature";
 export * from "./components/rich-text";
 export * from "./components/markdown";
+/** Host-consumed conversational renderer must survive remote federation export pruning. */
+export { ConversationMarkdown } from "./components/markdown/ConversationMarkdown";
+export type { ConversationMarkdownProps, ConversationAuthorizedLink } from "./components/markdown/ConversationMarkdown";
 /**
  * Hosts TV (presentation) importam paint de runs via Index.
  * `export *` sozinho pode sumir no tree-shake MF → React #130 (undefined).
