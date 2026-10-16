@@ -28,13 +28,13 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - baseline: **1 fechamento/mês; 960 min INFORMED**
 - TO-BE: **TARGET consolidado**
 - implementação: **NOT_STARTED**
-- A14 revisão transversal: **PASS**
-- A15 contracts/regras/scripts/test matrix: **PASS_WITH_BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
-- `PORTAL_DESIGN_FREEZE`: **PASS**
+- A14 revisão transversal: **STALE_EVIDENCE / POSTMERGE_REVALIDATION_INCONCLUSIVE**
+- A15 contracts/regras/scripts/test matrix: **STALE_EVIDENCE / POSTMERGE_REVALIDATION_INCONCLUSIVE**
+- `PORTAL_DESIGN_FREEZE`: **REVALIDATE**
 - `FRONTEND_PATTERN_FREEZE`: **PASS**
-- `SECURITY_MODEL_FREEZE`: **PASS**
-- `TEST_STRATEGY_FREEZE`: **PASS**
-- `PRODUCT_CONTRACT_FREEZE`: **BLOCKED_BY_P5_DERIVED_REVIEW_CONTRACT**
+- `SECURITY_MODEL_FREEZE`: **REVALIDATE_CORE_ELIGIBILITY**
+- `TEST_STRATEGY_FREEZE`: **REVALIDATE_TEST_MATRIX**
+- `PRODUCT_CONTRACT_FREEZE`: **PENDING_CORE_T05_AND_CONTRACT_BINDINGS**
 - `DOCUMENTATION_CLOSURE_COMPLETE`: **NO**
 - ROI: **não calculado**
 - P1/P2: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
@@ -42,7 +42,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 - P4: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
 - P5 pacote/finalização: **PAGE_DOCUMENTATION_GATE_V2 PACKAGE_FINALIZATION_READY**
 - P6/Administração: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P5 envio para análise: **PORTAL-FIRST MODEL DEFINED**; package fica na Minha DELPI; residual é a regra de monthly completion após review
+- P5 envio para análise: **PORTAL-FIRST / C2 PO_APPROVED**; package fica na Minha DELPI; um aceite por área obrigatória e PackageVersion atual, sem esclarecimentos abertos; Core T05 grupos/funções permanece TO_INVENTORY.
 - handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
 
 ## Documentação
@@ -135,7 +135,7 @@ Decisões congeladas:
 - `TaskProjection` é projeção de trabalho dos owners, não entidade genérica;
 - sem `Nova tarefa`, editor genérico, team scope ou completed bucket na V1;
 - ação V1 é `Abrir` o contexto owner;
-- P2/P4 são producers quando houver responsabilidade individual; P5 é conditional até provar assignee user-centric;
+- P2/P4 produzem tarefas conforme owner; P5 também projeta responsabilidade por área para cada usuário elegível (self-only), sem TaskEntity paralela;
 - sem SLA global; due/overdue só quando o owner fornecer;
 - Home consome a mesma projeção;
 - Sala não cria task genérica na V1;
