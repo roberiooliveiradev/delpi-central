@@ -128,7 +128,7 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-TASK-01 | Minhas tarefas usa workspace comum | `TaskWorkspacePage` + task primitives; zero clone/CSS local | visual/component + mobile/dark | plugin-ui + 27 | TARGET |
 | RQ-TASK-02 | TaskProjection não é task entity | sem create/edit/complete/cancel/defer/reassign genérico; owner state não é copiado | architecture + negative | D-TASK-01/02 | TARGET |
 | RQ-TASK-03 | worklist é self-only | `/me/tasks`; sem user selector/team scope; MANAGE não implica team | permission/privacy negative | Core + D-TASK-03 | TARGET |
-| RQ-TASK-04 | producer exige responsabilidade individual | P2/P4 governados; P5 conditional; blocker/mention sozinho não gera task | positive + sibling + negative | TSK01 | TARGET |
+| RQ-TASK-04 | producer exige obrigação governada | P2/P4 conforme owner; P5 gera projection self-only por área para cada usuário elegível quando review acionável; blocker/mention não cria task | positive + sibling + negative | TSK01 / doc 37 / P5-A/C | TARGET / PHYSICAL_BINDING_TO_INVENTORY |
 | RQ-TASK-05 | ação V1 abre owner | deep link seguro; owner reautoriza; nenhuma ação de negócio local | navigation + stale item | TSK03 | TARGET |
 | RQ-TASK-06 | sem SLA global | sem Atrasadas/Hoje/Depois; due/overdue só owner-provided; pendingSince factual | negative due/SLA | D-TASK-04 | TARGET |
 | RQ-TASK-07 | partial coverage é honesta | source failure preserva siblings; count não parece total; empty só COMPLETE | partial + source failure | TSK04 | TARGET |
@@ -181,7 +181,7 @@ Fonte detalhada do Início: [32-inicio-home.md](./32-inicio-home.md).
 | RQ-HELP-05 | Help contextual usa hash seguro | página abre seção correta; inválido não quebra; MANAGE hash não vaza conteúdo | deep-link + negative | HELP03 | TARGET |
 | RQ-HELP-06 | guide table navega por registry tipado | Quero/Onde/Como; destinos existentes/autorizados; sem arbitrary URL | structural + navigation negative | HELP01 | TARGET |
 | RQ-HELP-07 | conceitos preservam invariantes | ATTACHED!=VALIDATED, BLOCKER!=MY_TASK, Finalizar!=Enviar, ACCESS!=MANAGE, source error!=zero | content assertions | business contracts | TARGET |
-| RQ-HELP-08 | Central de Fechamento acompanha slices reais | P1–P5 publicados conforme runtime; P5 não promete envio bloqueado; P3 zero tolerance | feature sibling + content negative | P1–P5 contracts | TARGET |
+| RQ-HELP-08 | Central de Fechamento acompanha slices reais | P1–P5 publicados somente com runtime autorizado; P5 explica submissão/revisão no Portal somente quando feature ativa; P3 zero tolerance | feature sibling + content negative | P1–P5 contracts | TARGET |
 | RQ-HELP-09 | FAQ/glossário seguem terminologia vigente | nenhum termo stale; exemplos não viram regra | structural/content | terminology catalog | TARGET |
 | RQ-HELP-10 | Help V1 não cria backend/CMS | conteúdo versionado no MFE; sem endpoint/table/editor | architecture negative | D-HELP-02 | TARGET |
 | RQ-HELP-11 | light/dark/mobile/a11y seguem kit | mesmo conteúdo; TOC/nav semântico; teclado/foco | visual/a11y | plugin-ui | TARGET |

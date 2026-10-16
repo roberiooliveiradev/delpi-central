@@ -89,6 +89,11 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 | [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | histórico superseded do inventário de delivery externo; premissa invalidada |
 | [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md) | contrato TARGET de submit/review in-portal, reviewers autenticados e notifications |
 | [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) | rebaseline pós-merge, evidências Core/CI e gate A12/A14/A15 vigente |
+| [39-roadmap-mestre-implementacao-v1.md](./39-roadmap-mestre-implementacao-v1.md) | **roadmap executivo V1:** ordem A01–A13, fases, owners, dependências e gates |
+| [40-matriz-dependencias-e-slices-v1.md](./40-matriz-dependencias-e-slices-v1.md) | backlog IMP-00..13, RQ/AC, dependências de P5/P6 e stop conditions |
+| [41-estrategia-validacao-e-gates-implementacao-v1.md](./41-estrategia-validacao-e-gates-implementacao-v1.md) | positive/sibling/negative, segurança, CI, evidências e DoD por slice |
+| [42-playbook-brief-cursor-execution-report-v1.md](./42-playbook-brief-cursor-execution-report-v1.md) | templates de GPT Brief, Cursor Execution Report, review e SHA |
+| [43-rollout-operacao-e-handoff-v1.md](./43-rollout-operacao-e-handoff-v1.md) | fases de publicação, observabilidade, rollback e gate de release |
 
 ## Página do usuário
 
@@ -229,6 +234,8 @@ Não recriar localmente componentes já exportados pelo kit.
 
 ## Handoff para implementação
 
+O **Roadmap Mestre V1** está em [39](./39-roadmap-mestre-implementacao-v1.md), com backlog de slices [40](./40-matriz-dependencias-e-slices-v1.md), testes/gates [41](./41-estrategia-validacao-e-gates-implementacao-v1.md), playbook Cursor [42](./42-playbook-brief-cursor-execution-report-v1.md) e operação/release [43](./43-rollout-operacao-e-handoff-v1.md). **São planos PLANNED, não autorização nem teste executado**. A fila de execução futura começa pela Página do usuário; dependências do owner P6 devem preceder P5 sem antecipar a UI inteira. A16/four freezes e autorização PO explícita permanecem pré-requisitos.
+
 A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos estão consolidados em 20–23.
 
 Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
@@ -272,7 +279,7 @@ SECURITY_MODEL_FREEZE = PASS
 TEST_STRATEGY_FREEZE = PASS
 ```
 
-poderá começar a implementação page-by-page.
+poderá ser avaliada **autorização explícita posterior do PO** para implementação page-by-page. Os quatro PASS, isoladamente, não autorizam runtime.
 
 ## Execução
 
