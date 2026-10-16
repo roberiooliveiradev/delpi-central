@@ -56,13 +56,15 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | Etapa | Estado neste registro | Implementação | Evals no SHA de entrega | Aceite |
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
-| 02 intent/instructions | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
+| 02 intent/instructions | IMPLEMENTED, REVIEW=REWORK (§6.174) | Stage02 commit `4a9f05e5b9` | 9 new scripted tests; 1078/1078 reported by executor, independent reexecution TEST_NOT_RUN | REWORK — B1 unknown goal→PREPARE, B2 prepare-only + direct owner-policy |
 | 03 discovery/guidance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 06 generalization/acceptance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 
 Somente resultado real no ledger/16 e review independente permitem atualizar a linha. Um plano ou commit documental não vira PASS.
+
+**Adendo de revisão da Etapa 02 (§6.174):** teste de objetivo não interpretado deve exigir zero PREPARE/ACT com pedido de capacidade (p.ex., "Você consegue criar?"); teste de "Prepare, mas não aplique" deve usar owner que declara `explicit_user_confirmation=false` e request `max_execution_stage=None`, provando zero ACT, sem inventar confirmação universal ou duplicar regra do owner. [08 — Review](./08-stage-02-independent-review.md). Não iniciar Etapa 03 até REWORK revisado e aceito.
 
 ## Gates congelados para próximas avaliações
 
