@@ -14266,12 +14266,13 @@ INDEPENDENT_REVIEW=PENDING
 
 ## §6.209 — DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/33-mcp-iterative-tool-orchestration-fix.md`. **BASE_HEAD:** `3036df0888`. Note: §6.208 is Markdown frontend (unrelated). **CODE_SHA:** fill on final publish (post post-index gap gate).
+**DATA:** 2026-10-16. **TASK:** `DELIA-C3-MCP-ITERATIVE-TOOL-ORCHESTRATION-FIX-01`. **DOC:** `corrections/conversational-intelligence-c3/33-mcp-iterative-tool-orchestration-fix.md`. **BASE_HEAD:** `3036df0888`. Note: §6.208 is Markdown frontend (unrelated). **CODE_SHA:** `826897b498` (= `origin/main` at publish; deployed on `srv-api`).
 
 - **ROOT_CAUSE:** after RW-S03-01, optional-identifier READ guides had no governed path to obtain owner index before argument projection; real model often skipped `probe_index` and/or re-projected `{}` after index → invented topics or grounded index dump.
 - **FIX:** `_eligible_self_index_probe` + (`_contract_declares_omit_returns_index` **or** model `probe_index`) → INDEX READ → `owner_vocabulary` → `_post_self_index_argument_gaps` (reject empty/invented) → guidance READ; opaque DISCOVERY unchanged; RW-S03-01 preserved.
-- **TESTS:** `test_mcp_iterative_index_probe.py` (Orion + contract-gate + empty/invented post-index + free-text negative) + Stage03; full `delia-api` pytest green on pre-publish HEAD.
-- **LIVE SSH:** fill after deploy (MESSAGE-only LIVE-A/B/C on `srv-api`).
+- **TESTS:** `test_mcp_iterative_index_probe.py` 7 PASS (Orion + contract-gate + empty/invented post-index + free-text negative); Stage03 PASS; full `delia-api` pytest green.
+- **LIVE SSH** (`operador@192.168.1.237` / `srv-api`, MESSAGE-only, deploy `826897b498`): LIVE-A `PARTIAL` — `index_probe=ok` + `self_index_eligible=True` then model `missing_inputs` → clarification (no invented topic; no second empty index dump); LIVE-B clarification without invented guide; LIVE-C no confirmation / `MATERIAL_ACT=0`; timeouts=0.
+- **RESIDUAL:** real-model argument projection after index often fails to bind a vocabulary id → honest clarification rather than grounded guide body (`GUIDANCE_DISCOVERY=PARTIAL` live).
 - **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `NEW_PLANNER=NO`; `PROVIDER_HARDCODE=NO`; `MATERIAL_ACT_COUNT=0`.
 
 RW_S03_01=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO

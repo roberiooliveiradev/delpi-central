@@ -47,7 +47,7 @@ Após RW-S03-01, `_requires_owner_vocabulary` só abre DISCOVERY para envelopes 
 
 ## 6. Live SSH
 
-Registrado no ledger §6.209 (atualização pós contract-gate) após deploy do SHA desta correção em `srv-api` (MESSAGE-only; zero ACT). Resultados LIVE-A/B/C e timeouts constam no ledger, não neste doc.
+Deploy `826897b498` em `srv-api` (MESSAGE-only; zero ACT). LIVE-A: index probe executado; modelo não projetou identificador do vocabulário → clarificação (sem inventar tópico; sem re-fetch do índice). LIVE-B/C: sem ACT. Detalhe no ledger §6.209.
 
 ## 7. Outcome
 
