@@ -439,20 +439,11 @@ class HandleInteractiveConversationTurn:
         confirmation = request.confirmation
         text = request.input_text
         if kind == TURN_COMMAND_MESSAGE:
-            if confirmation is None:
-                return
-            if not isinstance(confirmation, Mapping):
-                raise InteractionError(
-                    INVALID_REQUEST, "confirmation must be an object"
-                )
-            decision = str(confirmation.get("decision") or "").upper()
-            if (
-                text != LEGACY_CONFIRMATION_LABELS.get(decision)
-                or (
-                    decision == "CONFIRM"
-                    and request.max_execution_stage == "prepare"
-                )
-            ):
+            if confirmation is not None:
+                # Even direct in-process callers cannot turn MESSAGE
+                # into ACT by adding confirmation. The HTTP boundary
+                # normalizes a published legacy label to a typed
+                # decision command before this validation runs.
                 raise InteractionError(
                     INVALID_REQUEST,
                     "MESSAGE cannot carry a structured decision",
