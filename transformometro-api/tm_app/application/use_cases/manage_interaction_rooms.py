@@ -710,7 +710,8 @@ class InteractionRoomUseCases:
             raise ValueError("A mensagem foi removida.")
         text = normalize_message_content(content)
         updated = self._repo.update_message(
-            message_id=message.id, content=text, expected_room=room
+            message_id=message.id, content=text, expected_room=room,
+            actor_user_id=actor,
         )
         if updated is None or updated.content != text or updated.edited_at is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
@@ -728,7 +729,9 @@ class InteractionRoomUseCases:
         room, message = self._own_message(user, room_id, message_id, actor, authorization)
         if message.deleted_at is not None:
             return message
-        deleted = self._repo.soft_delete_message(message.id, expected_room=room)
+        deleted = self._repo.soft_delete_message(
+            message.id, expected_room=room, actor_user_id=actor
+        )
         if deleted is None or deleted.deleted_at is None or deleted.to_dict()["content"] != "":
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         return deleted
@@ -794,7 +797,8 @@ class InteractionRoomUseCases:
         self._policy.require_access(user)
         room, message = self._message_in_room(user, room_id, message_id, authorization)
         self._repo.unpin_message(
-            room_id=message.room_id, message_id=message.id, expected_room=room
+            room_id=message.room_id, message_id=message.id,
+            expected_room=room, actor_user_id=_actor(user),
         )
         confirmed = self._repo.get_message(message.id)
         if confirmed is None or confirmed.pinned:
@@ -848,20 +852,28 @@ class InteractionRoomUseCases:
             content=content,
             mime_type=mime_type,
         )
-        created = self._repo.add_attachment(
-            InteractionAttachment(
-                id=str(uuid4()),
-                message_id=message.id,
-                room_id=message.room_id,
-                file_name=safe_name,
-                content_type=(mime_type or "").split(";")[0].strip().lower(),
-                byte_size=len(content),
-                uploaded_by_user_id=actor,
-                created_at=None,
-                stored_name=stored_name,
-            ),
-            expected_room=room,
-        )
+        try:
+            created = self._repo.add_attachment(
+                InteractionAttachment(
+                    id=str(uuid4()),
+                    message_id=message.id,
+                    room_id=message.room_id,
+                    file_name=safe_name,
+                    content_type=(mime_type or "").split(";")[0].strip().lower(),
+                    byte_size=len(content),
+                    uploaded_by_user_id=actor,
+                    created_at=None,
+                    stored_name=stored_name,
+                ),
+                expected_room=room,
+            )
+        except Exception:
+            # No orphaned bytes: a rejected insert (stale authz, rollback)
+            # never leaves a file on disk without a persisted reference.
+            orphan = self._files().base_dir / message.room_id / stored_name
+            if orphan.is_file():
+                orphan.unlink()
+            raise
         confirmed = self._repo.get_attachment(created.id)
         if (
             confirmed is None
@@ -904,7 +916,9 @@ class InteractionRoomUseCases:
             raise LookupError("Arquivo não encontrado.")
         if attachment.uploaded_by_user_id != actor:
             raise PermissionError("Só quem enviou pode remover este arquivo.")
-        removed = self._repo.delete_attachment(attachment.id, expected_room=room)
+        removed = self._repo.delete_attachment(
+            attachment.id, expected_room=room, actor_user_id=actor
+        )
         if removed is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         path = self._files().base_dir / room.id / removed.stored_name

@@ -774,6 +774,121 @@ def _first_message(repo, room_id):
     return next(m.id for m in repo.messages.values() if m.room_id == room_id)
 
 
+# --- actor-membership coverage: the four writers that lacked it -----------------------
+
+
+def _members_room_with_message():
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "cobertura", participant_ids=[OTHER])
+    msg = repo.add_message(room_id=room.id, author_user_id=OTHER, content="v1")
+    return repo, room, msg
+
+
+def test_stale_member_cannot_edit_message():
+    repo, room, msg = _members_room_with_message()
+    snapshot = repo.get(room.id)
+    repo.remove_participant(room_id=room.id, user_id=OTHER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.update_message(
+            message_id=msg.id, content="v2", expected_room=snapshot,
+            actor_user_id=OTHER,
+        )
+    assert repo.messages[msg.id].content == "v1"
+
+
+def test_stale_member_cannot_delete_message():
+    repo, room, msg = _members_room_with_message()
+    snapshot = repo.get(room.id)
+    repo.remove_participant(room_id=room.id, user_id=OTHER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.soft_delete_message(
+            msg.id, expected_room=snapshot, actor_user_id=OTHER
+        )
+    assert repo.messages[msg.id].deleted_at is None
+
+
+def test_stale_member_cannot_unpin():
+    repo, room, msg = _members_room_with_message()
+    repo.pin_message(room_id=room.id, message_id=msg.id, user_id=USER)
+    snapshot = repo.get(room.id)
+    repo.remove_participant(room_id=room.id, user_id=OTHER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.unpin_message(
+            room_id=room.id, message_id=msg.id,
+            expected_room=snapshot, actor_user_id=OTHER,
+        )
+    assert (room.id, msg.id) in repo.pins
+
+
+def test_stale_member_cannot_delete_attachment():
+    from tm_app.domain.entities.interaction_room import InteractionAttachment
+
+    repo, room, msg = _members_room_with_message()
+    attachment = repo.add_attachment(
+        InteractionAttachment(
+            id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            message_id=msg.id, room_id=room.id, file_name="doc.txt",
+            content_type="text/plain", byte_size=10,
+            uploaded_by_user_id=OTHER, created_at=None, stored_name="x.txt",
+        )
+    )
+    snapshot = repo.get(room.id)
+    repo.remove_participant(room_id=room.id, user_id=OTHER)
+    with pytest.raises(StaleRoomAuthorization):
+        repo.delete_attachment(
+            attachment.id, expected_room=snapshot, actor_user_id=OTHER
+        )
+    assert attachment.id in repo.attachments
+
+
+def test_stale_member_edit_rejected_at_use_case_level():
+    """Mid-flight interleaving at the real call boundary: authz resolves,
+    the removal commits, then the write hits the lock + revalidation."""
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(_user(), "mid", participant_ids=[OTHER])
+    msg = repo.add_message(room_id=room.id, author_user_id=OTHER, content="v1")
+    original = repo.update_message
+
+    def mutating(**kwargs):
+        repo.remove_participant(room_id=room.id, user_id=OTHER)
+        return original(**kwargs)
+
+    repo.update_message = mutating
+    with pytest.raises(StaleRoomAuthorization):
+        cases.edit_message(_user(user_id=OTHER), room.id, msg.id, "v2")
+    assert repo.messages[msg.id].content == "v1"
+
+
+def test_stale_attachment_insert_leaves_no_orphan_file(tmp_path):
+    """Failure after the disk save must not leave a file without a
+    persisted reference."""
+    from tm_app.infrastructure.storage.interaction_attachment_storage import (
+        InteractionAttachmentStorage,
+    )
+
+    repo = InMemoryInteractionRoomRepository()
+    cases = InteractionRoomUseCases(
+        repo, storage=InteractionAttachmentStorage(str(tmp_path))
+    )
+    room = cases.open_standalone(_user(), "anexo", participant_ids=[OTHER])
+    msg = repo.add_message(room_id=room.id, author_user_id=OTHER, content="m")
+    original = repo.add_attachment
+
+    def stale_insert(attachment, **kwargs):
+        repo.remove_participant(room_id=room.id, user_id=OTHER)
+        return original(attachment, **kwargs)
+
+    repo.add_attachment = stale_insert
+    with pytest.raises(StaleRoomAuthorization):
+        cases.add_attachment(
+            _user(user_id=OTHER), room.id, msg.id,
+            file_name="doc.txt", content=b"conteudo", mime_type="text/plain",
+        )
+    files = [p for p in tmp_path.rglob("*") if p.is_file()]
+    assert files == [], f"órfão em disco: {files}"
+    assert repo.attachments == {}
+
+
 # --- P1 participant self-removal ---------------------------------------------------
 
 

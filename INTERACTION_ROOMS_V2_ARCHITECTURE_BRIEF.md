@@ -555,3 +555,77 @@ column the V2 code already expects; production remains gated on V056).
 Focused suite **100 passed**; PG scratch **3 passed**; full suite 1750
 passed + the same 10 pre-existing baseline failures. V056 absent and
 unapplied; no deploy; E5 stays blocked pending independent review.
+
+## E3 FINAL CORRECTION — ACTOR MEMBERSHIP COVERAGE
+
+Approach chosen: **A** — propagate the requesting actor's identity into
+every protected-artifact writer and revalidate its participation under
+the room lock when the room depends on membership.
+
+### Scope-aware membership revalidation
+
+`_assert_authorization_current` (SQL + InMemory, same semantics) now
+checks, under the same room `FOR UPDATE` lock:
+
+1. Room row still exists and `deleted_at IS NULL`.
+2. `access_scope` equals the authorized snapshot's.
+3. The persisted active-link set equals the snapshot's.
+4. **(new)** When `expected_room.access_scope == members` AND the actor
+   was a participant in the authorized snapshot: the persisted
+   `tm_interaction_room_participants` row for `actor_user_id` must still
+   exist with `removed_at IS NULL`. Any drift raises
+   `StaleRoomAuthorization` (409 `stale_authorization_context`) before
+   any mutation, inside the transaction, with rollback.
+
+Membership is not revalidated for `open` rooms — participation is not an
+authorization requirement there, so absence does not stale the write.
+
+### Actor propagation — writer inventory
+
+| Writer | Actor supplied via |
+|---|---|
+| `add_message` | `author_user_id` |
+| `update_message` | `actor_user_id` (new param) |
+| `soft_delete_message` | `actor_user_id` (new param) |
+| `toggle_reaction` | `user_id` |
+| `pin_message` | `user_id` |
+| `unpin_message` | `actor_user_id` (new param) |
+| `mark_read` | `user_id` |
+| `create_attachment` | `uploaded_by_user_id` |
+| `delete_attachment` | `actor_user_id` (new param) |
+
+All use-case write paths pass `expected_room` (the authorized snapshot);
+every writer that mutates protected artifacts now also supplies the
+actor identity. Port signatures updated; SQL and InMemory implementations
+kept behaviorally parallel.
+
+### Orphaned attachment file
+
+`add_attachment` saves the binary to `base_dir / room_id / stored_name`
+before `create_attachment` persists the row. The persistence call now
+runs inside `try/except`: on any rejection (stale authorization,
+rollback) the saved file is unlinked and the exception re-raised — no
+unreferenced bytes survive a rejected write.
+
+### PostgreSQL evidence (delpi_e1_scratch, real sessions, barriers)
+
+Scenarios A/B/C preserved and re-executed. **Scenario D** (new):
+member authorizes `edit_message` on a `members` room → writer pauses
+before lock acquisition → admin `remove_participant` commits → writer
+resumes → under the lock the member row is gone →
+`StaleRoomAuthorization` → message content unchanged on authoritative
+read-back. **4/4 PASSED.**
+
+### Tests
+
+InMemory suite adds per-writer removal races for `update_message`,
+`soft_delete_message`, `unpin_message`, `delete_attachment` (each
+asserts `stale_authorization_context` + zero mutation), plus the
+orphan-file cleanup test. Focused suites: **106 passed**; PG scratch:
+**4 passed**.
+
+### Residual
+
+- External BFF revocation inside a single request still cannot serialize
+  against the room lock — bounded by the BFF contract; unchanged.
+- V056 absent and unapplied; production deploy remains gated.

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from tm_app.domain.entities.interaction_room import (
     LINK_DELETED_ROOM_DELETED,
+    ROOM_ACCESS_SCOPE_MEMBERS,
     InteractionAttachment,
     InteractionMention,
     InteractionMessage,
@@ -537,6 +538,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         if (
             not stale
             and actor_user_id is not None
+            and expected_room.access_scope == ROOM_ACCESS_SCOPE_MEMBERS
             and any(
                 item.user_id == actor_user_id
                 for item in expected_room.participants
@@ -879,6 +881,7 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def update_message(
         self, *, message_id: str, content: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None:
         with self.db() as connection:
             room_id = self._message_room(connection, message_id)
@@ -887,7 +890,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             self._lock_room(connection, room_id)
             if expected_room is not None:
                 self._assert_authorization_current(
-                    connection, room_id, expected_room
+                    connection, room_id, expected_room,
+                    actor_user_id=actor_user_id,
                 )
             row = self.execute_returning_one(
                 f"""UPDATE {_S}.tm_interaction_messages
@@ -903,7 +907,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return self.get_message(message_id)
 
     def soft_delete_message(
-        self, message_id: str, *, expected_room: InteractionRoom | None = None
+        self, message_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None:
         with self.db() as connection:
             room_id = self._message_room(connection, message_id)
@@ -912,7 +917,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             self._lock_room(connection, room_id)
             if expected_room is not None:
                 self._assert_authorization_current(
-                    connection, room_id, expected_room
+                    connection, room_id, expected_room,
+                    actor_user_id=actor_user_id,
                 )
             row = self.execute_returning_one(
                 f"""UPDATE {_S}.tm_interaction_messages
@@ -992,12 +998,14 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     def unpin_message(
         self, *, room_id: str, message_id: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> None:
         with self.db() as connection:
             self._lock_room(connection, room_id)
             if expected_room is not None:
                 self._assert_authorization_current(
-                    connection, room_id, expected_room
+                    connection, room_id, expected_room,
+                    actor_user_id=actor_user_id,
                 )
             self.execute(
                 f"""DELETE FROM {_S}.tm_interaction_pins
@@ -1071,7 +1079,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
         return _attachment(row) if row else None
 
     def delete_attachment(
-        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionAttachment | None:
         with self.db() as connection:
             owner = connection.execute(
@@ -1085,7 +1094,8 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
             self._lock_room(connection, room_id)
             if expected_room is not None:
                 self._assert_authorization_current(
-                    connection, room_id, expected_room
+                    connection, room_id, expected_room,
+                    actor_user_id=actor_user_id,
                 )
             row = connection.execute(
                 f"""DELETE FROM {_S}.tm_interaction_attachments
@@ -1473,6 +1483,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         if (
             not stale
             and actor_user_id is not None
+            and expected_room.access_scope == ROOM_ACCESS_SCOPE_MEMBERS
             and any(
                 item.user_id == actor_user_id
                 for item in expected_room.participants
@@ -1630,6 +1641,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
     def update_message(
         self, *, message_id: str, content: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None:
         message = self.messages.get(message_id)
         if message is None or message.deleted_at is not None:
@@ -1637,14 +1649,15 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         with self._room_lock(message.room_id):
             if expected_room is not None:
                 self._assert_authorization_current(
-                    message.room_id, expected_room
+                    message.room_id, expected_room, actor_user_id=actor_user_id
                 )
             self.messages[message_id] = replace(message, content=content, edited_at=datetime.now(timezone.utc))
             self._refresh_preview(message.room_id)
             return self._view(self.messages[message_id])
 
     def soft_delete_message(
-        self, message_id: str, *, expected_room: InteractionRoom | None = None
+        self, message_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None:
         message = self.messages.get(message_id)
         if message is None or message.deleted_at is not None:
@@ -1652,7 +1665,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         with self._room_lock(message.room_id):
             if expected_room is not None:
                 self._assert_authorization_current(
-                    message.room_id, expected_room
+                    message.room_id, expected_room, actor_user_id=actor_user_id
                 )
             self.messages[message_id] = replace(message, deleted_at=datetime.now(timezone.utc))
             self._refresh_preview(message.room_id)
@@ -1688,10 +1701,13 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
     def unpin_message(
         self, *, room_id: str, message_id: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> None:
         with self._room_lock(room_id):
             if expected_room is not None:
-                self._assert_authorization_current(room_id, expected_room)
+                self._assert_authorization_current(
+                    room_id, expected_room, actor_user_id=actor_user_id
+                )
             self.pins.discard((room_id, message_id))
 
     def mark_read(
@@ -1727,7 +1743,8 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         return self.attachments.get(attachment_id)
 
     def delete_attachment(
-        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionAttachment | None:
         attachment = self.attachments.get(attachment_id)
         if attachment is None:
@@ -1735,7 +1752,7 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         with self._room_lock(attachment.room_id):
             if expected_room is not None:
                 self._assert_authorization_current(
-                    attachment.room_id, expected_room
+                    attachment.room_id, expected_room, actor_user_id=actor_user_id
                 )
             return self.attachments.pop(attachment_id, None)
 

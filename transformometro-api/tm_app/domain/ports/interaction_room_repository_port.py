@@ -161,10 +161,12 @@ class InteractionRoomRepositoryPort(Protocol):
     def update_message(
         self, *, message_id: str, content: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None: ...
 
     def soft_delete_message(
-        self, message_id: str, *, expected_room: InteractionRoom | None = None
+        self, message_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionMessage | None: ...
 
     def toggle_reaction(
@@ -180,6 +182,7 @@ class InteractionRoomRepositoryPort(Protocol):
     def unpin_message(
         self, *, room_id: str, message_id: str,
         expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> None: ...
 
     def mark_read(
@@ -195,7 +198,8 @@ class InteractionRoomRepositoryPort(Protocol):
     def get_attachment(self, attachment_id: str) -> InteractionAttachment | None: ...
 
     def delete_attachment(
-        self, attachment_id: str, *, expected_room: InteractionRoom | None = None
+        self, attachment_id: str, *, expected_room: InteractionRoom | None = None,
+        actor_user_id: str | None = None,
     ) -> InteractionAttachment | None: ...
 
     def list_attachments(self, room_id: str) -> list[InteractionAttachment]: ...

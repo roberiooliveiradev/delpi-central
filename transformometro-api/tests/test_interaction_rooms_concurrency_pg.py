@@ -327,3 +327,80 @@ def test_pg_scenario_c_participant_removal_stales_write(ticket_room):
         )
         assert cur.fetchone()["n"] == 0
     check.close()
+
+
+def test_pg_scenario_d_removed_member_edit_is_rejected(ticket_room):
+    """Actor-membership coverage: the stale check propagates the writer's
+    identity — an authorized edit whose actor loses participation before
+    the lock must fail closed with stale_authorization_context and
+    zero mutation."""
+    room_id, _link_id = ticket_room
+    setup_repo = InteractionRoomRepository(_connect())
+    seeded = setup_repo.add_message(
+        room_id=room_id, author_user_id=OTHER, content="original"
+    )
+    setup_repo._injected_connection.close()
+
+    paused = threading.Event()
+    release = threading.Event()
+    writer_repo = InteractionRoomRepository(_connect())
+    real_update = writer_repo.update_message
+
+    def pausing_update(**kwargs):
+        # pause AFTER the use case's authorization, BEFORE the lock
+        paused.set()
+        assert release.wait(10)
+        return real_update(**kwargs)
+
+    writer_repo.update_message = pausing_update
+    writer_cases = InteractionRoomUseCases(
+        writer_repo, ticket_visibility=_VisibleTickets()
+    )
+    admin_cases = InteractionRoomUseCases(
+        InteractionRoomRepository(_connect())
+    )
+    outcome: dict = {}
+    errors: dict = {}
+
+    def writer():
+        try:
+            outcome["msg"] = writer_cases.edit_message(
+                _user(OTHER), room_id, seeded.id, "stale edit",
+                authorization="Bearer o",
+            )
+        except StaleRoomAuthorization as exc:
+            outcome["stale"] = exc
+        except Exception as exc:  # noqa: BLE001
+            errors["writer"] = exc
+
+    def admin():
+        assert paused.wait(10)
+        try:
+            admin_cases.remove_participant(_user(USER), room_id, OTHER)
+            outcome["removed"] = True
+        except Exception as exc:  # noqa: BLE001
+            errors["admin"] = exc
+        finally:
+            release.set()
+
+    t_w = threading.Thread(target=writer)
+    t_w.start()
+    t_a = threading.Thread(target=admin)
+    t_a.start()
+    t_w.join(15)
+    t_a.join(15)
+    assert not errors, errors
+    assert "stale" in outcome and "msg" not in outcome, outcome
+    assert outcome["removed"] is True
+
+    check = _connect()
+    with check.cursor() as cur:
+        cur.execute(
+            f"SELECT content, edited_at FROM {S}.tm_interaction_messages WHERE id = %s",
+            (seeded.id,),
+        )
+        row = cur.fetchone()
+        assert row["content"] == "original"
+        assert row["edited_at"] is None
+    check.close()
+    writer_repo._injected_connection.close()
