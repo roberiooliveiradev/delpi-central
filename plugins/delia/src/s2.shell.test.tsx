@@ -27,7 +27,7 @@ function successPayload(n: number, content?: string) {
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
     String(u).startsWith("/apps/delia-api"),
-  );
+  ) as [string, RequestInit][];
 }
 
 function mockFetchSequence(payloads: object[]) {
