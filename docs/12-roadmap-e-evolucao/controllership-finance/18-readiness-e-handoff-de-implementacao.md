@@ -312,3 +312,14 @@ AND NO_OPEN_CLARIFICATION
 **Gate:** `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_RULES`; `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`. Estes textos registram decisões de produto, não demonstram testes, código, contratos físicos, rebase nem execução de smoke.
 
 **Rebaseline P5-A..E:** antigos status `D-P5-01 unanimidade de reviewers individuais` e `C2 pendente` são históricos/superseded quando conflitantes. Não inferir `PORTAL_DESIGN_FREEZE = PASS` vigente após mudança de semântica; revalidar A12/A14/A15 e matriz RQ/AC antes de novo gate explícito.
+
+
+## Rebaseline P5-F..J — decisões PO aprovadas (16/10/2026)
+
+**TARGET / DOCUMENTED_NOT_IMPLEMENTED.** P5-F: reatribuição preserva aceite válido da área/versão, autor original e histórico; substituto só atua no futuro. P5-G: aceite P5 não pode ser revertido pela UI V1; correção excepcional necessita contrato separado, não autorizado. P5-H: P6 versiona áreas obrigatórias por tipo de pacote; P5 congela áreas na submissão; elegibilidade Core + ACCESS + grupo/função + scope + regra (T05 pendente). P5-I: rejeição pelo reviewer/área não encerra automaticamente a competência; confirmação terminal exige autoridade operacional formal definida, justificativa e auditoria. P5-J: após confirmação terminal, tarefas/reviews deixam de ser acionáveis, preservando histórico.
+
+C2 permanece: conclusão apenas com todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias aceitando a versão vigente e nenhuma clarification aberta. Competência rejeitada é terminal distinto de `MONTHLY_CLOSING_COMPLETED`. D-P5-01 = unanimidade de áreas obrigatórias, não pessoas. Aceites de PackageVersion anterior não são herdados por versão nova. Referências anteriores contraditórias permanecem históricas/superseded; não são contratos vigentes.
+
+**DECISION_REQUIRED:** identidade/critério da autoridade operacional que confirma rejeição e comportamento quando não confirma; especificação de processo excepcional de correção (não implementá-lo sem autorização). **CONTRACT_PENDING/TO_INVENTORY:** mapeamento P6 de áreas/tipos e fonte Core de elegibilidade, DTO/estado, notification/projection/tests.
+
+`DOCUMENTATION_CLOSURE_COMPLETE=NO`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`. Revalidar A12/A14/A15 e main antes de freeze.
