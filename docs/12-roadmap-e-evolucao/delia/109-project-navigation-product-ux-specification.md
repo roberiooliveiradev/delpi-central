@@ -55,3 +55,9 @@ Validar 0/1/1000 projetos, nomes longos, erros, ACL revogada após listagem, mud
 Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões ghost de repouso. Ícones 16–20px, hit target 40–44px, foco 2px, labels reais, keyboard e tooltip acessível; movimento 180–240ms ou nulo em `prefers-reduced-motion`. Validar container 1440/1280/1024/768/420/375/320px, zoom 200% e Companion Dock; sem overflow horizontal, remount de conversa ou perda de draft. Snapshots ou exemplos de UI nunca substituem dados/permission reais. Testes e browser QA permanecem `TEST_NOT_RUN`; independente `PENDING`.
 
 
+
+## Rework R1 — projeto condicionado a owner legítimo
+
+A categoria Projetos é **TARGET de navegação**, não uma implementação de workspace DÉLIA nem autorização para nova entidade. Antes de qualquer listagem real, `EXISTING_EQUIVALENT=TO_INVENTORY` de Core/Portal/Domain APIs/projetos existentes, seus owners, consumers, contratos de leitura/write e entidade persistida. `REUSE_DECISION=PENDING_GATE` para feed e comandos. Se houver projeto legítimo, acessar via boundary autorizado; se não houver evidência, manter categoria `contract_unavailable` **somente** se produto a aprovar como affordance visual, sem fake “Meus projetos”.
+
+Propostas de Novo projeto, mover conversa, renomear/arquivar/excluir não estão aprovadas. Exigem decisão de produto e contracts antes de callbacks enabled. A seleção de projeto não pode mudar contexto de conversas silenciosamente nem substituir Domain authority.
