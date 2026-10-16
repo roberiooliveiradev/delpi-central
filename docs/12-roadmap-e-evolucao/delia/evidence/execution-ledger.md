@@ -14055,3 +14055,22 @@ PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMP
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 ARCHITECTURE_DECISION_REQUIRED=LINK_SOURCE_TYPED (before G3)
 NEXT=INDEPENDENT_REVIEW_OF_DOC_84_REWORKED_THEN_LINK_SOURCE_TYPED_DECISION
+
+## §6.196 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R2 (L1 RECORDED; REPRODUCIBLE TESTS; INDEPENDENT REVIEW PENDING)
+
+**DATA:** 2026-10-16. **MODE:** L1 decision record + contract/security rework — zero production-runtime diff. **BASE_HEAD:** `5997604835a030a6873840178a31533d77bcf4b3` (= origin/main no commit). Reports históricos 85/86 preservados.
+
+- **L1 DECISION (Product Master, vinculante):** `LINK_SOURCE_TYPED=L1_APPROVED_CONDITIONAL` — owner/capability governed contracts only; forbidden to promote generic `url`/`href`/`link`/`*_url` by name or presence; L2/L3 rejected; no governed binding → zero navigable links (D1/D6/D7 NOT revoked). Registered in spec 83 §0.4, reconciled doc 84 §2.4/§6.
+- **R2-01 LINK INVENTORY:** one real governed URL contract found — `api-delpi` `mural_acessos` link `url` (owner `domain/services/mural_acessos/link_url.py`, `normalize_link_url` http/https+netloc+maxlen at write); NO capability→`structured`→turn binding proven. `url` arg forbidden in external capabilities (`_TRANSPORT_FORBIDDEN`). `LINK_L1_CONTRACT=SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` — no fabricated contract; blocker remains.
+- **R2-02 FALLBACK:** doc 84 §2.5 rewritten as executable 4-state decision table (render_legacy requires proven-safe legacy validated BEFORE fallback; invalid/insecure v2 → neutral_error fail-closed; admitted-content parse failure → inert_text; valid v2 → render_v2). 8 policy cases PASS.
+- **R2-03 TOKEN EXPOSURE:** PROVEN — canonical `token` not in `_SENSITIVE_KEY_NAMES` → unredacted render. RED probe `test_bare_token_key_is_redacted` = XFAIL(strict) versioned. Bounded fix brief: add `"token"` to owner set (1 line, `capability_provision/orchestration.py` ~L1861) — **NOT APPLIED** (runtime authorization required). `structured`→`markdown_safe` emission stays blocked until resolved/isolated.
+- **R2-04 REPRODUCIBLE TESTS (now versioned, owner-correct):** `delia-api/tests/test_presentation_v2_proposal.py` (18 schema + 8 fallback policy probes), `delia-api/tests/test_render_specialist_outcome_fidelity.py` (7 characterization + 1 strict-xfail RED), `plugins/plugin-ui/src/components/markdown/conversationMarkdownLexer.probe.test.ts` (26 adversarial lexer/policy cases). Probes labeled as contract/policy probes — not runtime conformance of a nonexistent renderer.
+- **TEST RESULTS (TESTED_SHA=5997604835):** delia-api targeted **232 PASS + 1 XFAIL**; plugin-ui markdown+rich-text **175/175 PASS** (17 files, incl. new probe); plugins/delia vitest **191/191 PASS** (executed R1 on same sources; unchanged by this diff). Typecheck/build/federation TEST_NOT_RUN.
+- **SSH (read-only srv-api, authorized):** remote checkout `5997604835` = candidate base SHA (GIT_HEAD_MATCH=YES this round); `delpi-delia-api` healthy, `delpi-delia` up; `orchestration.py`/`_SENSITIVE_KEY_NAMES` L1861 present. No writes/deploy/restart/secrets.
+- **DOCS:** 83 §0.4 (L1+R2), 84 §2.4/§2.5/§5.3/§6 reworked, 86/85 preserved, 87 created, 20 rows, ledger. No runtime diff.
+
+G1=CANDIDATE_REWORKED; G2=CANDIDATE_REWORKED; G3=BLOCKED; G4=TEST_NOT_RUN; CP-333=PLANNED_NOT_PASS
+LINK_L1_CONTRACT=SPECIFIED; LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY; TOKEN_EXPOSURE=RED_PROBE_RECORDED
+PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_REVIEW_R2 + L1_BINDING_INVENTORY + TOKEN_FIX_AUTHORIZATION

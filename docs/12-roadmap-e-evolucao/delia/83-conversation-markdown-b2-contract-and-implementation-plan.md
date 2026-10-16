@@ -58,6 +58,14 @@ O rework dos 4 achados foi executado sobre `c3e090ac70` e registrado em [86 — 
 
 - Estado pós-R1: `G1=CANDIDATE_REWORKED / G2=CANDIDATE_REWORKED` (nova revisão independente pendente — o executor não emite ACCEPT) `G3=BLOCKED` (aguarda decisão `LINK_SOURCE_TYPED` + ACCEPT) `G4=TEST_NOT_RUN` `CP-333=PLANNED` `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO`.
 
+### 0.4 Decisão L1 e rework R2 (2026-10-16)
+
+**Decisão vinculante do Product Master:** `LINK_SOURCE_TYPED = L1_APPROVED_CONDITIONAL` — links navegáveis reutilizam/estendem contratos governados por owner/capability; condições completas em doc 84 §2.4. **Proibido** promover campos genéricos `url`/`href`/`link`/`*_url` a links navegáveis por nome ou presença em `structured`. L2 (`LinkRef` novo) e L3 (deferir navegável) não aprovadas. Sem contrato governado do owner publicando o destino → zero link navegável (rótulos viram texto) — isso **não** revoga D1/D6/D7.
+
+R2 executado em `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R2` (HEAD `5997604835`): fallback §2.5 reescrito como tabela de decisão executável (probe versionado); testes/probes persistidos em `delia-api/tests/test_presentation_v2_proposal.py` + `test_render_specialist_outcome_fidelity.py` e `plugin-ui/.../conversationMarkdownLexer.probe.test.ts`; residual `token` (R2-03) registrado com RED probe `xfail(strict=True)` + brief bounded de correção — **runtime não alterado**. Inventário L1 (R2-01): um contrato governado real encontrado (`mural_acessos` link `url`, owner api-delpi com validação no write) mas **sem binding capability→structured provado** → `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY`.
+
+- Estado pós-R2: `G1=CANDIDATE_REWORKED` / `G2=CANDIDATE_REWORKED` / `G3=BLOCKED` / `G4=TEST_NOT_RUN` / `LINK_L1_CONTRACT=SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` / `TOKEN_EXPOSURE=RED_PROBE_RECORDED` (fix aguarda autorização bounded) / `CP-333=PLANNED` / `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO`.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:

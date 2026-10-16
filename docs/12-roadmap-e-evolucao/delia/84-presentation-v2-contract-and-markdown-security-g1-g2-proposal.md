@@ -87,26 +87,47 @@ O produtor só pode emitir os nós da política §5.1: parágrafos, `**`/`__`, `
 - Falha de autorização no destino é resolvida pelo destino (AuthZ live de sempre); presença do link nunca é permissão. Link expirado/obsoleto → destino responde seu próprio estado; a conversa não tenta revalidar.
 - Companion Dock: mesmos `<a>` — navegação do Portal/shell, sem mecanismo paralelo.
 
-**`ARCHITECTURE_DECISION_REQUIRED = LINK_SOURCE_TYPED` — alternativas:**
+**`LINK_SOURCE_TYPED = L1_APPROVED_CONDITIONAL` — decisão vinculante do Product Master (2026-10-16).** L2 (`LinkRef` novo) e L3 (deferir navegável) **não** foram aprovadas.
 
-| Opção | Descrição | Owner | Consequência |
-|---|---|---|---|
-| **L1 — typed link field em `structured`** | Allowlist fechada de chaves de payload (`url`, `link`, `href`, `*_url`) cujo valor é validado (`https:` absoluto ou `/` interno); o **owner especialista** é a autoridade de divulgação — o link já vem do dado autoritativo admitido | delia-api `capability_provision` (projeção) + contract freeze | Zero contrato novo; usa o seam A existente; emissão fica vazia até owners publicarem campos link — **fato, não redução de escopo** |
-| **L2 — `LinkRef` tipado novo no result** | Novo tipo `{label, href, kind: internal\|external, source}` propagado por `GovernedCapabilityAttempt`/`InteractiveTurnResult` | delia-api `application/interaction` | Contrato novo a congelar; mais superfície, mas desacopla link de shape de payload |
-| **L3 — deferir navegável** | B2 inicial emite zero links navegáveis (rótulos viram texto) | Product Master | **Redução material de escopo aprovado (D1/D6/D7)** — exige decisão explícita do Product Master, não pode ser adotada silenciosamente |
+**Condições da L1 (todas obrigatórias por link emitido):**
 
-**Recomendação:** L1 como fonte primária (usa estrutura já admitida; provider-neutral) + política do consumidor sempre ativa. Se o Product Master preferir rollout parcial sem links, L3 só é válido com aprovação explícita registrada. **G3 não pode iniciar com esta decisão pendente.**
+1. Owner e fonte autoritativa identificáveis (o especialista/capability owner que publica o destino).
+2. Campo e semântica **explicitamente publicados em contrato** pelo owner — presença ou nome de campo nunca bastam.
+3. Permissão de divulgação do destino declarada pelo owner.
+4. URL e esquema validados (`https:` externo absoluto ou `/` interno same-origin).
+5. Política de navegação interna/externa aplicada pelo consumidor (§2.4 acima).
+6. Core AuthZ e Domain API permanecem a autoridade final do destino.
+7. Negativos exigidos: URL inventada → inerte; expirada/obsoleta → destino resolve seu estado; ausência de permissão → falha do destino, nunca da conversa.
 
-### 2.5 Erros de contrato e versões
+**Proibição explícita:** campos genéricos `url`, `href`, `link` ou `*_url` **não** são promovidos a link navegável por nome ou por presença em `structured`. Sem contrato governado do owner publicando o destino, **nenhum link navegável é emitido** — os rótulos degradam a texto. Isso **não** revoga D1/D6/D7: a política e o renderer ficam prontos; a emissão depende de bindings reais.
 
-| Caso | Comportamento |
-|---|---|
-| `version` ausente/`"1"` | Parse v1 atual, inalterado |
-| `version` desconhecida (`"3"`, `"2x"`…) | `parsePresentation → null` → campos legados (texto inerte) |
-| `version="2"` com `format` ausente/desconhecido num bloco `text` | **Bloco descartado** (não rebaixado silenciosamente); se nenhum bloco restar → erro neutro de apresentação |
-| `markdown_safe` malformado (parser falha em conteúdo admitido) | Fallback: renderiza `block.text` como texto inerte (pre-wrap) — conteúdo já admitido nunca se perde |
-| Payload estruturalmente inválido/não aderente ao schema | Erro neutro `ConversationError`-like/turno neutro, **sem** exibir conteúdo parcial, sem log do payload |
-| `content` ausente junto a `presentation` v2 | Estado neutro; nada fabricado |
+**Inventário de contratos governados (R2-01 — resultado factual):**
+
+| Candidato | Estado | Detalhe |
+|---|---|---|
+| `api-delpi` `mural_acessos` link `url` | CONTRATO REAL GOVERNADO | Owner: `app/domain/services/mural_acessos/link_url.py` — `normalize_link_url` valida scheme `http/https`+netloc+max len no write; semântica = destino de atalho publicado. **Porém** não foi provada nenhuma capability/specialist binding que carregue esse campo em `SpecialistOutcome.structured` até a conversa — binding `TO_INVENTORY` |
+| `api-delpi` external capabilities `url` arg | PROIBIDO por design | `argument_validator.py` `_TRANSPORT_FORBIDDEN` inclui `url` — transporte nunca é argumento |
+| `GovernedCapabilityProvenance`/`SourceRef`/`WorkspaceEntityRef`/`owner_hint` | NÃO SÃO FONTES | URL-free por construção (R1, doc 86 §3) |
+| Demais Domain APIs/specialists com campos link tipados+semântica publicada | TO_INVENTORY | Nenhum binding concreto demonstrado neste inventário |
+
+**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = TO_INVENTORY` — a política está fechada e armada; zero links navegáveis serão emitidos até que um binding owner→capability→`structured` seja provado com contrato publicado. G3 permanece bloqueado nesse ponto.
+
+### 2.5 Erros de contrato e versões (R2-02 — decisão executável)
+
+Quatro estados **distintos** — nunca fundidos:
+
+| Caso | Classificação | Comportamento |
+|---|---|---|
+| `version` ausente/`"1"` **e** legado provadamente seguro (`content` string bounded presente) | `render_legacy` | Campos legados, inalterado |
+| `version` desconhecida (`"3"`, `"2x"`, número, ausente-com-blocks estranhos) **e** legado provadamente seguro | `render_legacy` | Idem — versão desconhecida **nunca** é coagida a v2; legado é validado **antes** do fallback, não presumido |
+| `version` desconhecida **e** legado inseguro (sem `content` string bounded) | `neutral_error` | Erro neutro fail-closed — nada fabricado |
+| `version="2"` **estruturalmente inválido** (schema-reject: `format` ausente/desconhecido, kind de bloco desconhecido, prop extra, bounds excedidos) | `neutral_error` | Erro neutro fail-closed, **sem** downgrade silencioso, sem conteúdo parcial, sem log do payload |
+| `version="2"` válido, `markdown_safe` falha no parse do renderer sobre **conteúdo já admitido** | `inert_text` | `block.text` renderizado como texto literal pre-wrap — conteúdo admitido nunca se perde |
+| `version="2"` válido, `plain` | `render_v2` | Texto verbatim |
+| `version="2"` válido, `markdown_safe` íntegro | `render_v2` | Renderer por policy §5.1 |
+| `content`/`presentation` ausente onde exigido | `neutral_error` | Estado neutro; nada fabricado |
+
+Regra de ouro (D9): falha **de forma** sobre conteúdo **admitido** → texto inerte; falha **de admissão** (schema/estrutura/segurança) → erro neutro fail-closed. Conteúdo adversarial nunca é apresentado como resposta legitimamente governada. Tabela executada como probe de política em `delia-api/tests/test_presentation_v2_proposal.py` (R2-04).
 
 ### 2.6 Campo legado `content` (compatibilidade)
 
@@ -269,7 +290,9 @@ Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos r
 
 **Gap honesto (corrigido em §2.4):** não existe fonte tipada de destino navegável no caminho do turno. A política de links está completa e pronta; a emissão depende da decisão `LINK_SOURCE_TYPED` (§2.4/§6) — escopo de links **não** foi reduzido silenciosamente.
 
-**Residual de segurança (runtime atual, fora de B2):** `_SENSITIVE_KEY_NAMES` cobre `access_token`/`refresh_token`/`session_token`/`bearer_token`/`candidate_token`/`client_secret`/… mas **não** a chave bare `token` — probe mostrou valor `token:` renderizado sem redação. Registrado para decisão de segurança dedicada; B2 não amplia nem esconde.
+**Residual de segurança (R2-03 — brief bounded preparado):** `_SENSITIVE_KEY_NAMES` cobre `access_token`/`refresh_token`/`session_token`/`bearer_token`/`candidate_token`/`client_secret`/… mas **não** a chave canonical `token` — probe provou valor `token:` renderizado sem redação (`test_render_specialist_outcome_fidelity.py::test_bare_token_key_is_redacted` = `xfail(strict=True)`, RED probe versionado).
+
+**Correção proposta (não aplicada — task não autoriza runtime):** adicionar `"token"` a `_SENSITIVE_KEY_NAMES` em `delia-api/app/application/capability_provision/orchestration.py` (~L1861) — diff de 1 linha no owner legítimo (`capability_provision`). Trade-off: um campo de negócio literalmente nomeado `token` seria redigido — aceitável e fail-closed (valor ambíguo com nome credencial não deve vazar; semântica de negócio preservada pela chave). A correção exige **autorização bounded específica** (altera runtime de produção); brief entregue nesta task via doc 87 §R2-03. Até lá, **a projeção de `structured` não deve alimentar `markdown_safe`** — categoria A fica restrita a shapes sem chaves de risco, ou `markdown_safe` permanece emissor-vazio.
 
 ### 5.4 Critérios de a11y/apresentação (a implementar, não agora)
 
@@ -284,7 +307,8 @@ Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos r
 | Item | Estado | Decisão requerida |
 |---|---|---|
 | `PORTAL_MFE_NAVIGATE_PROP` | NOT_PRESENT | Não bloqueante: `<a href>` same-origin já navega (SPA intercept dentro do app/shell; reload fora). Se produto exigir SPA-nav cross-app, abrir bounded slice Portal; **sem** inventar API agora |
-| `LINK_SOURCE_TYPED` | **ARCHITECTURE_DECISION_REQUIRED** | Pacote completo em §2.4 (L1 typed field em `structured` — recomendado; L2 `LinkRef` novo; L3 deferir navegável exige Product Master). G3 bloqueado até decisão |
+| `LINK_SOURCE_TYPED` | **L1_APPROVED_CONDITIONAL** (Product Master, 2026-10-16) | Condições e inventário em §2.4. `LINK_L1_CAPABILITY_BINDINGS=TO_INVENTORY` — zero links navegáveis até binding owner→capability→`structured` provado. G3 segue bloqueado neste ponto |
+| `TOKEN_KEY_EXPOSURE` | RED_PROBE_RECORDED, fix não autorizado | R2-03: `"token"` deve entrar em `_SENSITIVE_KEY_NAMES` — brief bounded pendente de autorização (doc 87 §R2-03). Projeção `structured`→`markdown_safe` bloqueada até resolução ou isolamento provado |
 | `GOVERNED_FORMATTER` | RESOLVIDO — não é componente novo | RW-G1-01: o seam é `render_specialist_outcome` existente; proposta = **EXTEND** a projeção para emitir blocos tipados (§4). Freeze confirma nome/assinatura final |
 | `SCHEMA_ADDITIONAL_PROPERTIES` | DECIDIDO nesta proposta | v2 fechado (`additionalProperties:false`, fail-closed → fallback legado). Reversível no freeze se preferirem tolerância aditiva |
 | `MODEL_ASSISTED_FORMATTING` | DEFERRED | Fora do slice inicial; requer prova de fidelidade |
