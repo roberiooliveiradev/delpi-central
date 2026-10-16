@@ -147,7 +147,7 @@ Essas decisões não devem ser derivadas do Portal Financeiro P0.
 Para [27-minhas-tarefas.md](./27-minhas-tarefas.md):
 - `controllership-finance-api` compõe uma projeção read-only das responsabilidades dos owners;
 - P2/P4 permanecem owners do business state;
-- P5 só entra quando houver responsabilidade individual comprovada;
+- P5 produz **TaskProjection por área obrigatória** para cada usuário elegível com review acionável, vinculada ao owner P5; não exige uma TaskEntity por indivíduo (P5-A/C/H, doc 37);
 - não existe task entity genérica na V1;
 - não importar task/domain do Comercial;
 - não copiar endpoints `/tasks` do `commercial-api`;
@@ -162,7 +162,7 @@ Para [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md
 - package/version/finalization/submission/review state permanecem owned por `controllership-finance-api`;
 - package permanece na Minha DELPI;
 - reviewer externo é Core identity com app access;
-- reviewer usa `controllership-finance.access` + resource scope/assignment;
+- reviewer usa `controllership-finance.access` efetivo **AND** elegibilidade corporativa de grupo/função/área (Core T05) **AND** resource scope/assignment **AND** business rule;
 - não criar permission `.review`;
 - Core Notifications owns notification delivery in-app/e-mail;
 - e-mail é aviso/deep link, não transport do package;
