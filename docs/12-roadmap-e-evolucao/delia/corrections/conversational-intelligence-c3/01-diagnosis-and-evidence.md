@@ -59,3 +59,7 @@ Não presuma git status local, deploy, modelos ativos, permissões ou backend de
 ## Reuse-before-design — direção preliminar
 
 EXISTING_EQUIVALENT=YES para Interaction Application, Model Invocation, instruções especializadas, capability orchestration, resolver, presentation, grounded synthesis e matriz canônica de testes. REUSE_DECISION=REUSE; EXTEND somente para gaps comprovados. Novo port/engine/provider/registry/prompt é TO_INVENTORY e exige Abstraction Gate e aceitação arquitetural. Ausência de resultado de busca nunca justifica NEW automaticamente.
+
+## Adendo posterior de alinhamento (2026-10-16; sem modificar o snapshot histórico)
+
+Consultar [05 — Decisões canônicas e correções do plano](./05-canonical-decisions-alignment.md), [04 — Baseline](./04-stage-01-baseline-report.md) e ledger §6.171. Antes de projetar mudanças, preservar §6.126 (tools/list + owner authority), §6.130/§6.141 (provider-neutral), §6.133 (inteligência owner-owned), §6.140 (resolver same-owner bounded e confirmação estrutural), §6.145 (sem prosa factual do modelo). O baseline tem fakes/propostas scripted: prova behavior do pipeline com esses inputs, não frequência de erro do LLM real. Novo enum, reorder, discovery universal, validação de domínio duplicada e confirmação universal não foram autorizados. Nenhuma reclassificação silenciosa das evidências acima.
