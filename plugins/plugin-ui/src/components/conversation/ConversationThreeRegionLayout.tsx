@@ -1,17 +1,17 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { PanelLeftOpen, PanelLeftClose, PanelRightOpen, X } from "lucide-react";
+import { MoreHorizontal, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { IconButton } from "../actions/IconButton";
 
 export type ConversationPanelControls = {
   leftToggle: ReactNode;
   rightToggle: ReactNode;
 };
-
 export type ConversationThreeRegionLayoutProps = {
-  /** Pass a render function to place toggles in ConversationHeader leading/actions. */
   center: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
-  left?: ReactNode;
+  /** Collapsed rail remains mounted and retains navigation icons. */
+  left?: ReactNode | ((state: { collapsed: boolean }) => ReactNode);
+  /** Optional read-only context content presented in a floating surface. */
   right?: ReactNode;
   leftTitle?: string;
   rightTitle?: string;
@@ -19,19 +19,17 @@ export type ConversationThreeRegionLayoutProps = {
   className?: string;
 };
 
-/** Three-region visual shell: no transport, no conversation state, no fake history. */
+/** Presentation-only: left rail stays visible; right context never takes a column. */
 export function ConversationThreeRegionLayout({
-  center, left, right,
-  leftTitle = "Conversas",
-  rightTitle = "Contexto da conversa",
-  rightAvailable = true, className,
+  center, left, right, leftTitle = "Conversas",
+  rightTitle = "Contexto da conversa", rightAvailable = true, className,
 }: ConversationThreeRegionLayoutProps) {
-  const [leftOpen, setLeftOpen] = useState(true);
+  const [leftExpanded, setLeftExpanded] = useState(true);
   const [rightOpen, setRightOpen] = useState(false);
-  const compactRef = useRef(false);
+  const [compact, setCompact] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const leftTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const rightTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const contextTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const contextRef = useRef<HTMLDivElement | null>(null);
   const leftId = useId();
   const rightId = useId();
 
@@ -40,13 +38,12 @@ export function ConversationThreeRegionLayout({
     if (!host) return;
     const sync = () => {
       const width = host.getBoundingClientRect().width;
-      if (!width) return;
-      const nextCompact = width <= 920;
-      if (nextCompact && !compactRef.current) {
-        setLeftOpen(false);
-        setRightOpen(false);
-      }
-      compactRef.current = nextCompact;
+      if (width <= 0) return;
+      const isCompact = width <= 920;
+      setCompact((wasCompact) => {
+        if (isCompact && !wasCompact) setLeftExpanded(false);
+        return isCompact;
+      });
     };
     sync();
     if (typeof ResizeObserver === "undefined") return;
@@ -55,74 +52,64 @@ export function ConversationThreeRegionLayout({
     return () => observer.disconnect();
   }, []);
 
-  // Escape dismisses a compact drawer only; it never cancels a conversation
-  // or changes a governed confirmation.
   useEffect(() => {
+    if (!rightOpen) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape" || !compactRef.current) return;
-      if (rightOpen) {
+      if (event.key === "Escape") {
         setRightOpen(false);
-        setTimeout(() => rightTriggerRef.current?.focus(), 0);
-      } else if (leftOpen) {
-        setLeftOpen(false);
-        setTimeout(() => leftTriggerRef.current?.focus(), 0);
+        contextTriggerRef.current?.focus();
+      }
+    }
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!contextRef.current?.contains(target) && !contextTriggerRef.current?.contains(target)) {
+        setRightOpen(false);
       }
     }
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [leftOpen, rightOpen]);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [rightOpen]);
 
-  function openLeft() {
-    if (compactRef.current) setRightOpen(false);
-    setLeftOpen(true);
-  }
-  function openRight() {
-    if (compactRef.current) setLeftOpen(false);
-    setRightOpen(true);
-  }
-  function closeLeft() {
-    setLeftOpen(false);
-    setTimeout(() => leftTriggerRef.current?.focus(), 0);
-  }
-  function closeRight() {
-    setRightOpen(false);
-    setTimeout(() => rightTriggerRef.current?.focus(), 0);
-  }
-
+  const collapsed = !leftExpanded;
   const controls: ConversationPanelControls = {
-    leftToggle: !leftOpen && left ? (
-      <button ref={leftTriggerRef} type="button" onClick={openLeft}
+    // Left is always present as a rail in the full-page layout.
+    leftToggle: null,
+    rightToggle: rightAvailable && right ? (
+      <button ref={contextTriggerRef} type="button"
         className="delpi-ui-conversation-three-region__header-toggle"
-        aria-label="Abrir conversas" aria-controls={leftId} aria-expanded={false}>
-        <PanelLeftOpen size={18} aria-hidden="true" />
-      </button>
-    ) : null,
-    rightToggle: !rightOpen && rightAvailable && right ? (
-      <button ref={rightTriggerRef} type="button" onClick={openRight}
-        className="delpi-ui-conversation-three-region__header-toggle"
-        aria-label="Abrir contexto" aria-controls={rightId} aria-expanded={false}>
-        <PanelRightOpen size={18} aria-hidden="true" />
+        aria-label={rightOpen ? "Fechar contexto" : "Abrir contexto"}
+        aria-controls={rightId} aria-expanded={rightOpen}
+        onClick={() => setRightOpen((open) => !open)}>
+        <MoreHorizontal size={19} aria-hidden="true" />
       </button>
     ) : null,
   };
 
-  const isDrawerOpen = compactRef.current && ((leftOpen && !!left) || (rightOpen && rightAvailable && !!right));
   return (
     <div ref={rootRef} className={[
       "delpi-ui-conversation-three-region",
-      leftOpen && left ? "delpi-ui-conversation-three-region--left-open" : "",
-      rightOpen && rightAvailable && right ? "delpi-ui-conversation-three-region--right-open" : "",
+      collapsed ? "delpi-ui-conversation-three-region--left-collapsed" : "",
+      compact ? "delpi-ui-conversation-three-region--compact" : "",
       className,
     ].filter(Boolean).join(" ")}>
-      {leftOpen && left ? (
-        <nav id={leftId} className="delpi-ui-conversation-three-region__left" aria-label={leftTitle}>
+      {left ? (
+        <nav id={leftId} aria-label={leftTitle}
+          className="delpi-ui-conversation-three-region__left">
           <div className="delpi-ui-conversation-three-region__side-heading">
-            <strong>{leftTitle}</strong>
-            <IconButton aria-label="Recolher conversas" onClick={closeLeft}>
-              <PanelLeftClose size={18} aria-hidden="true" />
+            {!collapsed ? <strong>{leftTitle}</strong> : null}
+            <IconButton aria-label={collapsed ? "Expandir conversas" : "Recolher conversas"}
+              aria-expanded={!collapsed} onClick={() => setLeftExpanded((value) => !value)}>
+              {collapsed ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
             </IconButton>
           </div>
-          <div className="delpi-ui-conversation-three-region__side-content">{left}</div>
+          <div className="delpi-ui-conversation-three-region__side-content">
+            {typeof left === "function" ? left({ collapsed }) : left}
+          </div>
         </nav>
       ) : null}
       <div className="delpi-ui-conversation-three-region__center">
@@ -131,20 +118,20 @@ export function ConversationThreeRegionLayout({
         </div>
       </div>
       {rightOpen && rightAvailable && right ? (
-        <aside id={rightId} className="delpi-ui-conversation-three-region__right" aria-label={rightTitle}>
+        <div ref={contextRef} id={rightId} role="dialog" aria-modal="false"
+          aria-label={rightTitle}
+          className="delpi-ui-conversation-three-region__context-popover">
           <div className="delpi-ui-conversation-three-region__side-heading">
             <strong>Contexto</strong>
-            <IconButton aria-label="Fechar painel de contexto" onClick={closeRight}>
+            <IconButton aria-label="Fechar painel de contexto" onClick={() => {
+              setRightOpen(false);
+              contextTriggerRef.current?.focus();
+            }}>
               <X size={18} aria-hidden="true" />
             </IconButton>
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">{right}</div>
-        </aside>
-      ) : null}
-      {isDrawerOpen ? (
-        <button className="delpi-ui-conversation-three-region__backdrop" type="button"
-          aria-label="Fechar painel lateral"
-          onClick={() => { if (rightOpen) closeRight(); else closeLeft(); }} />
+        </div>
       ) : null}
     </div>
   );
