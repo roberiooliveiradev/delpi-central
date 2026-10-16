@@ -26,8 +26,11 @@ As decisões a seguir foram expressamente aprovadas pelo Product Master no conte
 | `B2-PD-02` | **`presentation.v2`** com formato explícito e transição segura de clientes | `APPROVED_PRODUCT_DIRECTION` | **Não** estender informalmente `presentation.v1`; escolher schema/semântica/ciclo de rollout de v2 em G1. Como não há histórico conversacional durável implementado, não há migração de mensagens persistidas a planejar para o runtime atual; ainda testar versões coexistentes, sessões transitórias e fallback |
 | `B2-PD-03` | **DÉLIA controla a produção de Markdown** a partir de conteúdo admitido e governado | `APPROVED_PRODUCT_DIRECTION` | MCP/providers/especialistas não controlam apresentação nem elevam texto a FACT. DÉLIA pode organizar visualmente dados aprovados sem inventar fatos, unidades, IDs ou autoridade |
 | `B2-PD-04` | **Markdown textual completo e controlado** | `APPROVED_PRODUCT_DIRECTION` | Permitir headings subordinados, parágrafos, negrito, itálico, listas, citações, divisores, código inline/fenced e links seguros. Permanecem OFF: tabelas estruturadas/GFM tables, gráficos, métricas, imagens, Mermaid, HTML arbitrário, embeds e widgets |
+| `B2-PD-05` | **Formatação automática, contextual, proporcional e adaptável ao pedido do usuário** | `APPROVED_PRODUCT_DIRECTION` | DÉLIA decide apresentação no seu boundary com base no objetivo e no conteúdo *admitido*: saudação simples → texto natural; itens/etapas → listas quando útil; explicações longas → seções moderadas; código técnico → bloco inerte apenas quando realmente pertinente. Usuário pode solicitar brevidade/detalhamento, sem mudar fatos, autoridade nem contratos |
 
-**Ainda não decidido:** `B2-PD-05` — critério de quando a DÉLIA deve usar formatação automaticamente; demais detalhes como formatos e limites exatos, subset do renderer, safe links, conteúdo do contrato OpenAPI, negociação entre versões e rollout. Responder às decisões futuras no mesmo documento assim que aprovadas.
+**Ainda não decidido:** `B2-PD-06` — política de destinos permitidos para links seguros (internos ao ecossistema/externos verificados e como abrir); demais detalhes como limites exatos, subset do renderer, conteúdo do contrato OpenAPI, negociação entre versões e rollout.
+
+**Separação de homônimos:** `B2` neste documento = **Markdown B2 da spec 82**, não `C3-STAGE-02-B2` registrado no ledger para governança de execução/ACT. Status e autorizações de uma trilha **não** se transferem à outra. Responder às decisões futuras no mesmo documento assim que aprovadas.
 
 **Gates que permanecem abertos:** `TRACEABILITY_GAP=OPEN`, `CP_MAPPING=PENDING`, `PRESENTATION_V2_SCHEMA=TO_DESIGN`, `SECURITY_REUSE_GATE=PENDING`, `B2_IMPLEMENTATION_AUTHORIZED=NO`. Produto aprovado **não** é contrato implementado nem aceite de fase. O plano 83 prevalece como detalhamento B2 sob a autoridade superior 82/16/25.
 
@@ -52,7 +55,7 @@ A autoridade superior prevalece em conflito; reportar `EXECUTION_DRIFT` ou `ARCH
 
 **Problema real:** o turno da DÉLIA atualmente apresenta `displayContent` como texto React inerte com `white-space: pre-wrap`. Exemplo observado no produto: resposta de busca com registros iniciados por hífen aparece com quebras literais, sem semântica de lista e recuo de continuidade. B1 melhorou largura/ritmo tipográfico; B2 destina-se à estrutura textual.
 
-**Resultado alvo:** quando **um produtor autorizado** fornecer uma resposta explicitamente declarada Markdown seguro, a conversa poderá exibir, de modo acessível: parágrafos, negrito/itálico, listas numeradas e com marcadores, citações, código inline e blocos de código, e níveis controlados de heading. Links são condicionados a política/contrato de URLs.
+**Resultado alvo:** quando **um produtor autorizado** fornecer uma resposta explicitamente declarada Markdown seguro, a conversa poderá exibir, de modo acessível: parágrafos, negrito/itálico, listas numeradas e com marcadores, citações, código inline e blocos de código, e níveis controlados de heading. Links são condicionados a política/contrato de URLs. Pela decisão `B2-PD-05`, a seleção do formato visual é **automática e contextual**, não uma regra de usar Markdown em toda resposta: a DÉLIA deve preferir a menor estrutura que aumenta compreensão e respeitar pedidos válidos do usuário sobre concisão, detalhamento e organização, sem mudar os fatos.
 
 **Não objetivo de B2:** converter toda saída legada; habilitar tabelas GFM automaticamente; gráficos, KPIs, Mermaid, imagens, upload, anexos, HTML livre, widgets, iframe, tool-call UI, streaming fictício, links a entidades sem Domain/Portal contract, ações e novos providers. Tabelas tipadas e gráficos permanecem nas fases C/D da spec 82.
 
@@ -133,6 +136,16 @@ Por decisão `B2-PD-03`, **a DÉLIA é o único owner da produção e admissão 
 Deve existir prova sobre **quem produz Markdown**, de quais dados e com qual transformação determinística ou política governada; não basta adicionar um flag ao frontend. O formatter não modifica identificadores, unidades, quantidades ou textos fornecidos pelo owner, nem inventa fonte. O owner do conteúdo permanece responsável pela veracidade dos dados; formatação só altera estrutura visual.
 
 A fonte pode fornecer caracteres Markdown literais. Sem formato explicitamente aceito pelo contrato, exibir os caracteres exatamente como texto. Não inferir formato por presença de `#`, `*`, `-`, crases, URLs ou regex. Não retroconverter histórico/turnos anteriores automaticamente.
+
+### 6.2.1 Política contextual de seleção de apresentação — `B2-PD-05` aprovada em produto
+
+- **Saudação, resposta curta ou esclarecimento simples:** texto natural, sem headings, divisores ou listas decorativas.
+- **Coleção de registros ou etapas distintas:** lista semântica quando houver agrupamento/ordem explícitos e o conteúdo admitido sustentar a estrutura; preservar códigos de produto, nomes, quantidades, ordem material e unidades, sem gerar novas afirmações.
+- **Explicação extensa, procedimento ou comparação narrativa:** parágrafos e seções discretas somente quando a estrutura melhorar a leitura; não transformar toda resposta em relatório ou dashboard.
+- **Código ou comandos técnicos efetivamente presentes e autorizados:** inline/fenced code inerte. Não inventar comandos, links, scripts ou instruções de operação/safety.
+- **Preferência expressa do usuário:** adaptar nível de detalhe e densidade de formatação quando compatível com dados admitidos, policy e limites; preferências não autenticam, autorizam nem substituem fatos live. Não persistir preferências nesta task.
+- **Implementação da decisão:** o produtor/formatador governado na boundary DÉLIA escolhe representação textual/Markdown explícita do contrato `presentation.v2`; **o frontend não adivinha o formato a partir de palavras, pontuação, regex, provider ou texto da conversa**. O algoritmo concreto de escolha, seus limites e avaliações de fidelidade ficam para G1/G2; não criar um segundo planner nem admitir prosa factual inventada.
+- **Critério de qualidade:** conteúdo curto continua simples; listas e headings aparecem quando justificáveis; o leitor distingue conteúdo, atividade e evidência; falha de formatação degrada para texto seguro. Não usar estilo como evidência de confiança, materialidade ou permissão.
 
 ### 6.3 Invariantes de compatibilidade
 
@@ -223,6 +236,8 @@ Estes itens servem para elaborar o brief de implementação depois de G0 e **nã
 | B2-RQ16 | CRITICAL | SHA/config, security eval, contract tests e outcome para aceite |
 | B2-RQ17 | HIGH | Escopo B2 sem gráficos/tabelas/Mermaid/remote media |
 | B2-RQ18 | HIGH | Rollout/rollback sem mudar legacy turn e sem client crash |
+| B2-RQ19 | HIGH | Escolha automática e proporcional de Markdown a partir de dados admitidos, sem overformatting |
+| B2-RQ20 | CRITICAL | Pedidos de estilo do usuário não alteram facts/IDs/units/limitações/Policy e não geram escrita ou permissão |
 
 ## 11. Matriz de testes e evidência de aceite
 
@@ -248,6 +263,10 @@ Estes itens servem para elaborar o brief de implementação depois de G0 e **nã
 | B2-AC18 | Resultado operacional com IDs, unidades, contagens e Evidence | Valores/ordem sem transformação semântica, nenhuma fonte inventada |
 | B2-AC19 | Medida de parser/DOM sob limites e erro de sanitização | Bound e degrade sem crash; sem timers ou progresso falso |
 | B2-AC20 | Backend + plugin-ui + delia frontend build/typecheck/federation; CI | Evidence no SHA exato e unrelated failures classificadas, sem falso PASS |
+| B2-AC21 | Saudação/resposta curta vs coleção de registros vs orientação em etapas vs texto longo | Saída proporcional: texto simples, lista e seções somente quando agregam legibilidade |
+| B2-AC22 | Usuário solicita "responda em uma frase", "organize em tópicos" ou "explique em detalhes" | Formatação se adapta sem perder fatos, valores, códigos, provenance ou limitações |
+| B2-AC23 | Texto contém caracteres Markdown literais mas formato explícito é plain_text | Nenhuma inferência de Markdown nem parse indevido pelo frontend |
+| B2-AC24 | Conteúdo não justifica heading/lista ou traz comandos técnicos não admitidos | Não fabricar estrutura ou instruções operacionais; fallback inerte mantém conteúdo útil |
 
 Testes unitários, integration, adversariais, smoke autenticado read-only e browser QA real devem ser executados no SHA/config entregue. **Nenhum teste foi executado nesta task documental.** Testes verdes não provam a fidelidade de fatos operacionais sem um caso grounded comparado ao owner. Em produção, validar apenas leituras autorizadas com fonte; `MATERIAL_ACT_CALLS=0` no escopo.
 
@@ -311,7 +330,8 @@ B2_CONTRACT_VERSION_DIRECTION = PRESENTATION_V2_APPROVED
 B2_FORMAT_CONTRACT_SCHEMA = TO_DESIGN
 B2_PRODUCER_OWNER = DELIA_APPROVED_BY_PRODUCT_MASTER
 B2_FORMAT_SCOPE = FULL_CONTROLLED_TEXT_MARKDOWN
-B2_AUTOMATIC_FORMATTING_POLICY = PENDING_PRODUCT_DECISION_05
+B2_AUTOMATIC_FORMATTING_POLICY = PRODUCT_APPROVED_CONTEXTUAL_PROPORTIONAL_ADAPTIVE
+B2_LINK_DESTINATION_POLICY = PENDING_PRODUCT_DECISION_06
 B2_RENDERER_SECURITY_FIT = TO_INVENTORY
 EXISTING_EQUIVALENT = YES (shared markdown/document primitives)
 REUSE_DECISION = PENDING_FOR_MARKDOWN_IN_DELIA
