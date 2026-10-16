@@ -81,6 +81,53 @@ describe("containedModalViewport", () => {
     expect(style.left).not.toBe("auto");
   });
 
+  it("dashboard curto cobre o scrollport inteiro — sem faixa branca abaixo", () => {
+    const content = document.createElement("div");
+    content.className = "content";
+    content.getBoundingClientRect = () =>
+      ({
+        top: 48,
+        left: 240,
+        width: 1000,
+        height: 800,
+        right: 1240,
+        bottom: 848,
+        x: 240,
+        y: 48,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+
+    const host = document.createElement("main");
+    host.className = "dashboard-transformometro";
+    // Página MFE curta — altura do host < scrollport (bug do strip branco).
+    host.getBoundingClientRect = () =>
+      ({
+        top: 48,
+        left: 240,
+        width: 1000,
+        height: 420,
+        right: 1240,
+        bottom: 468,
+        x: 240,
+        y: 48,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+
+    content.appendChild(host);
+    document.body.appendChild(content);
+
+    expect(measureContainedModalBox(host)).toEqual({
+      top: 48,
+      left: 240,
+      width: 1000,
+      height: 800,
+    });
+  });
+
   it("restringe a caixa ao host quando ele é menor que o scrollport", () => {
     const content = document.createElement("div");
     content.className = "content";

@@ -67,16 +67,24 @@ function intersectVisibleBoxes(
 }
 
 /**
- * Caixa visível do overlay: interseção do host com o scrollport.
- * Página MFE alta recorta no `.content`; host menor (ex.: lista da conversa)
- * permanece na coluna — não estica até a borda direita do portal.
+ * Caixa visível do overlay.
+ * Root `.dashboard-*` cobre o scrollport visível inteiro (`.content` do portal) —
+ * página curta não pode deixar faixa sem backdrop nem página longa cobrir a
+ * sidebar/chrome global. Host local (ex.: lista da conversa) fica recortado
+ * na interseção do próprio host com o scrollport.
  */
 export function measureContainedModalBox(host: HTMLElement): ContainedModalBox {
   const scrollPort = resolveContainedModalScrollPort(host);
-  return intersectVisibleBoxes(
-    host.getBoundingClientRect(),
-    scrollPort.getBoundingClientRect(),
-  );
+  const portRect = scrollPort.getBoundingClientRect();
+  if (containedHostUsesViewportBox(host)) {
+    return {
+      top: Math.max(0, portRect.top),
+      left: Math.max(0, portRect.left),
+      width: Math.max(0, portRect.width),
+      height: Math.max(0, portRect.height),
+    };
+  }
+  return intersectVisibleBoxes(host.getBoundingClientRect(), portRect);
 }
 
 export function containedModalBoxToStyle(box: ContainedModalBox): CSSProperties {

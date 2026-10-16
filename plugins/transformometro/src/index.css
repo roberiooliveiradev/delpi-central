@@ -3094,6 +3094,9 @@
 }.dashboard-transformometro .ds-badge--warning{
   background: var(--ds-warning-bg);
   color: var(--ds-warning-fg);
+}.dashboard-transformometro .ds-badge--neutral{
+  background: color-mix(in srgb, var(--ds-text-muted) 14%, var(--ds-card-bg));
+  color: var(--ds-text-muted);
 }.dashboard-transformometro .ds-badge--fase-planejado{
   background: color-mix(in srgb, var(--ds-text-muted) 14%, var(--ds-card-bg));
   color: var(--ds-text-muted);
@@ -5081,4 +5084,17 @@
 }
 .tm-bpmn-preview__lightbox--full {
   height: 72vh;
+}
+
+/* Minhas tarefas — responsável com avatar. */
+.dashboard-transformometro .tm-task-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-transformometro .tm-task-assignee > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

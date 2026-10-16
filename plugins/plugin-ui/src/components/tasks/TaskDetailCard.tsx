@@ -14,6 +14,8 @@ export type TaskDetailCardProps = {
   fields?: DetailField[];
   /** Set false when the portal supplies its own complete field set via `fields`. */
   includeDefaultFields?: boolean;
+  /** Rich Responsável value (avatar + name); defaults to item.assigneeLabel text. */
+  assigneeValue?: ReactNode;
   /** Override for the status badge label (defaults to item.statusLabel). */
   statusLabel?: string;
   /** Override for the badge variant (defaults to item.statusTone, danger when overdue). */
@@ -51,6 +53,7 @@ export function TaskDetailCard({
   item,
   fields,
   includeDefaultFields = true,
+  assigneeValue,
   statusLabel,
   statusVariant,
   icon,
@@ -79,7 +82,7 @@ export function TaskDetailCard({
   const defaultFields: DetailField[] = includeDefaultFields
     ? [
         { label: "Prazo", value: item.dueDateLabel ?? null },
-        { label: "Responsável", value: item.assigneeLabel ?? null },
+        { label: "Responsável", value: assigneeValue ?? item.assigneeLabel ?? null },
         { label: "Origem", value: item.sourceLabel ?? null },
         { label: "Contexto", value: item.contextLabel ?? null },
       ]
@@ -125,6 +128,7 @@ export function TaskDetailCard({
 
   return (
     <DetailCard
+      role="listitem"
       classNames={cardClasses}
       labels={{ titleHelpAriaLabel: (title) => `Ajuda: ${title}` }}
       title={item.title}

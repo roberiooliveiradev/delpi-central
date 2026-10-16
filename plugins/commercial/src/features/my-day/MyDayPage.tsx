@@ -1317,7 +1317,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 ) : null}
               </TaskEmptyState>
             ) : (
-              <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
+              <div
+                className="cm-my-day-list"
+                role="list"
+                aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}
+              >
                 {visibleItems.map((task) => {
                   const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
                   const priorityLabel =

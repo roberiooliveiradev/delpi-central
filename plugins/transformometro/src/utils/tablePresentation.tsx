@@ -31,7 +31,7 @@ function statusBadgeClass(value: string): string {
   if (normalized.includes("pendente") || normalized.includes("revis")) {
     return "ds-badge ds-badge--warning";
   }
-  return "ds-badge";
+  return "ds-badge ds-badge--neutral";
 }
 
 function statusLabel(value: string): string {

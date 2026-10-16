@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
+  InitialsAvatar,
   ScopeChipBar,
   TaskEditorFrame,
   TaskEmptyState,
@@ -10,10 +11,12 @@ import {
   TaskWorkspacePage,
   UserDirectoryPicker,
   buildTaskWorkspaceHighlights,
+  initialsAvatarBemClasses,
   scopeChipBarBemClasses,
   type DirectoryUserOption,
   type TaskItemPresentation,
 } from "@delpi/plugin-ui/index";
+import { X } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -36,6 +39,9 @@ import {
   type MyTaskItemsResponse,
 } from "../../data/api/transformometroTasksApi";
 import { toTaskItemPresentation } from "./myTaskPresentation";
+import { usePersonProfilePhotoUrls } from "../../hooks/usePersonProfilePhotoUrls";
+
+const AVATAR = initialsAvatarBemClasses("ds");
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -63,6 +69,8 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [me, setMe] = useState<DirectoryUserOption | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
+  // Últimos resultados do diretório — alimenta fotos dos avatares das sugestões.
+  const [searchOptions, setSearchOptions] = useState<DirectoryUserOption[]>([]);
 
   useEffect(() => {
     void fetchMeProfile(getAccessToken)
@@ -93,7 +101,7 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
   }, [load, reloadNonce]);
 
   const refreshing = Boolean(payload) && loading;
-  const items = payload?.items ?? [];
+  const items = useMemo(() => payload?.items ?? [], [payload]);
   const rows = useMemo(() => {
     const mapped = items.map((item) =>
       toTaskItemPresentation(
@@ -113,6 +121,27 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
     loading: refreshing || (loading && !payload),
     includeDueBuckets: true,
   });
+
+  // Fotos em lote: responsável selecionado + sugestões do diretório + responsáveis visíveis.
+  const avatarUserIds = useMemo(() => {
+    const ids = [
+      ...assignee.map((user) => user.id),
+      ...searchOptions.map((user) => user.id),
+      ...items.map((item) => item.assignee_user_id ?? null),
+    ];
+    return ids.filter((id): id is string => Boolean(id));
+  }, [assignee, searchOptions, items]);
+  const { photoFor } = usePersonProfilePhotoUrls(avatarUserIds, getAccessToken);
+
+  const userAvatar = (userId: string | null | undefined, name: string) => (
+    <InitialsAvatar
+      classNames={AVATAR}
+      name={name.trim() || "Usuário"}
+      src={photoFor(userId)}
+      size="sm"
+      previewable={false}
+    />
+  );
 
   function openCreate() {
     setFormMode("create");
@@ -319,8 +348,30 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
               <UserDirectoryPicker
                 value={assignee}
                 onChange={setAssignee}
-                searchUsers={(query, limit, signal) => searchDirectoryUsers(query, limit, signal, getAccessToken)}
+                searchUsers={async (query, limit, signal) => {
+                  const found = await searchDirectoryUsers(query, limit, signal, getAccessToken);
+                  setSearchOptions(found);
+                  return found;
+                }}
                 maxSelected={1}
+                renderOptionLeading={(user) =>
+                  userAvatar(user.id, user.name || user.email)
+                }
+                renderSelectedChip={({ user, label, disabled, onRemove }) => (
+                  <span className="delpi-ui-tag-chip">
+                    {userAvatar(user.id, label)}
+                    <span>{label}</span>
+                    <button
+                      type="button"
+                      className="delpi-ui-tag-chip__remove"
+                      disabled={disabled}
+                      aria-label={`Remover ${label}`}
+                      onClick={onRemove}
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </button>
+                  </span>
+                )}
                 labels={{ title: "Responsável", placeholder: "Atribuir a mim ou buscar…" }}
               />
             </TaskEditorFrame>
@@ -356,17 +407,31 @@ export function MyTasksPage({ getAccessToken, pathname, onNavigate }: Props) {
           </TaskEmptyState>
         ) : (
           <TaskCardList ariaBusy={refreshing}>
-            {rows.map((item) => (
-              <TaskDetailCard
-                key={item.id}
-                item={item}
-                readOnly={item.statusTone === "success"}
-                onOpen={onOpen}
-                onEdit={openEdit}
-                onComplete={(row) => void onComplete(row)}
-                onCancel={(row) => void onCancel(row)}
-              />
-            ))}
+            {rows.map((item) => {
+              const source = items.find((row) => row.id === item.id);
+              const assigneeId = source?.assignee_user_id;
+              return (
+                <TaskDetailCard
+                  key={item.id}
+                  item={item}
+                  readOnly={item.statusTone === "success"}
+                  assigneeValue={
+                    assigneeId
+                      ? (
+                        <span className="tm-task-assignee">
+                          {userAvatar(assigneeId, item.assigneeLabel ?? "")}
+                          <span>{item.assigneeLabel}</span>
+                        </span>
+                      )
+                      : undefined
+                  }
+                  onOpen={onOpen}
+                  onEdit={openEdit}
+                  onComplete={(row) => void onComplete(row)}
+                  onCancel={(row) => void onCancel(row)}
+                />
+              );
+            })}
           </TaskCardList>
         )}
       </TaskWorkspacePage>
