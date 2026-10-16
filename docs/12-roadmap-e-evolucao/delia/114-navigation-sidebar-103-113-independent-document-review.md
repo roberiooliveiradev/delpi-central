@@ -111,3 +111,20 @@ INDEPENDENT_RUNTIME_ACCEPTANCE = PENDING
 EXECUTION_AUTHORIZATION = NONE
 PHASE_PROGRESSION = NONE
 ```
+
+## 7. Rework R1 executado — fechamento documental (2026-10-16)
+
+O Product Master solicitou **executar o rework do parecer**, mantendo **escopo documental**; nenhuma task de código de nova navegação foi autorizada. Os docs **103–113** receberam adendos `Rework R1`, que prevalecem sobre descrições conflitantes anteriores, sem excluir o registro histórico.
+
+| Achado | Correção publicada | Estado documental |
+|---|---|---|
+| R-01 / R-06 | Doc 103/104/105/112: um owner de estado, um toggle por estado, shell atual EXTEND e centro preservado | RESOLVED_DOC |
+| R-02 / R-07 | Doc 103 + docs de categorias: matriz de availability, hidden forbidden, no fake empty/loading | RESOLVED_DOC_WITH_BACKEND_GATE |
+| R-03 | Docs 103/105/113: cálculo por container, minCenter candidato, overlay/launcher, foco e convivência ContextPopover | RESOLVED_DOC_WITH_BROWSER_QA_GATE |
+| R-04 | Docs 103/106/107/108/112: matriz READ/write/session, owner, authz, idempotência e postcondition | RESOLVED_DOC_WITH_CONTRACT_GATE |
+| R-05 | Docs 103/109/110/111: Portal/Core como owner de Apps/rotas; projetos/agentes TO_INVENTORY | RESOLVED_DOC_WITH_OWNER_INVENTORY_GATE |
+| R-08 | Docs 103/113: critérios para temas, tela, motion, Dock, build/federation e QA | DEFINED_NOT_RUN |
+
+**Evidência verificável:** arquivos 103–113 atualizados e publicados na branch `main` via conector GitHub; registrar SHA do HEAD final na resposta de execução. Não houve verificação completa das authorities 16/50/17/49/51/52/21/20/25, .cursor e ledger: as consultas de busca não trouxeram documentos e **zero resultados não prova ausência**. Portanto `FULL_CANONICAL_REANCHOR=INCONCLUSIVE`; o executor futuro deve reancorar antes de mudar arquitetura/código. A matriz de categorias foi especificada como contrato de UX, **não como backend comprovado**.
+
+**Novo parecer delimitado:** `DOCUMENTATION_REWORK_APPLIED` com residuais explícitos. `IMPLEMENTATION_AUTHORIZATION=NONE`; `RUNTIME_TESTS=TEST_NOT_RUN`; `BROWSER_QA=TEST_NOT_RUN`; `BACKEND_OWNER_CONTRACTS=TO_INVENTORY`; `PHASE_PROGRESSION=NONE`. O veredicto anterior `REWORK` é preservado como histórico; esta atualização registra apenas a correção documental e **não** a aceita como execução de frontend.
