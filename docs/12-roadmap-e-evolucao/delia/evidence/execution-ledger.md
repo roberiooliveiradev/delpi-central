@@ -14037,3 +14037,21 @@ B2_EVIDENCE=EXECUTED_ON_CURRENT_HEAD; B2_TSC_DELIA=CLEAN; TSC_PLUGIN_UI=PREEXIST
 B1=PASS_STRUCTURAL_REGRESSION_GREEN; B2=READY_FOR_INDEPENDENT_ACCEPTANCE_REVIEW; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_ACCEPTANCE_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.195 — DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1 (REWORK EXECUTED; INDEPENDENT REVIEW PENDING)
+
+**DATA:** 2026-10-16. **MODE:** contract/security/reuse rework — docs + probes only, zero runtime diff. **REVIEW_BASE:** doc 85 verdict `REWORK` on `d5ed426a08` (4 findings). **REANCHOR:** HEAD `c3e090ac70` = origin/main verified at commit time (concurrent executor commit `c3e090ac70` Stage02 evidence observed mid-task — preserved, untouched).
+
+- **RW-G1-01 RESOLVED (evidence):** producer seam exists — `SpecialistOutcome.structured` (typed Mapping) → `render_specialist_outcome` (deterministic, sanitized `_sanitize_renderable`/`_redact_text`, bounded 2000+fixed suffix, `_business_lines`/`_format_records`/`_format_structured`, `result_truncated` declared) → `attempt.content` → `InteractiveTurnResult` → `compose_presentation`. `NEW GovernedResponseFormatter` abandoned; proposal = EXTEND existing projection (doc 84 §4). Categories A(typed structured)/B(source text verbatim)/C(prose plain) formalized. **Fidelity probe 16/16 PASS** (IDs/qty/units/order verbatim, markdown literals inert, credentials redacted, empty truthful, truncation bounded+declared). **Residual:** bare `token` key not in `_SENSITIVE_KEY_NAMES` — documented, dedicated security decision required.
+- **RW-G1-02 RESOLVED (as decision package):** no typed navigable-link source exists in the turn path (provenance URL-free by design; WorkspaceEntityRef inbound hint; SourceRef has no URL). Full link policy + 3 alternatives (L1 typed field in `structured` [recommended], L2 `LinkRef` new, L3 defer = Product Master only). `ARCHITECTURE_DECISION_REQUIRED=LINK_SOURCE_TYPED`; D1/D6/D7 scope NOT silently reduced; G3 stays blocked.
+- **RW-G1-03 RESOLVED (evidence):** real JSON Schema draft 2020-12 at `docs/12-roadmap-e-evolucao/delia/contracts/presentation-v2.proposal.schema.json`; `additionalProperties:false` fail-closed; mechanically validated **22/22** (4 positive + 18 negative: versions, discriminators, bounds, unknown props).
+- **RW-G2-01 RESOLVED (evidence):** normative matrix REUSE/EXTEND/NEW — `marked.lexer`=REUSE; producer/envelope=EXTEND; `ConversationMarkdown` plugin-ui=NEW (justified: all existing renderers emit HTML string for dangerouslySetInnerHTML — `MarkdownDocumentView`:176, `MessageThread` via `markdownToRichTextHtml`+DOMParser denylist sanitizer permitting attachment:/blob:/mailto:/relative). **Lexer adversarial probe 22 cases executed** (html/script/image/javascript:/data:/obfuscated/encoded links/table/mermaid/checkbox/deep nesting/autolink) — discrete token types confirmed; denial-by-construction feasible.
+- **REGRESSIONS:** delia-api targeted **195/195 PASS** (presentation+orchestration+runtime); plugins/delia vitest **191/191**; plugin-ui markdown/rich-text **149/149**; typecheck 3 pre-existing plugin-ui errors (baseline identical §6.194, other owner). BUILD/FEDERATION=TEST_NOT_RUN (docs-only).
+- **SSH (read-only, authorized dev/homolog srv-api):** remote checkout `4af3d656c6` clean (=origin/main at inspection time, pre-`c3e090ac70` docs push); `delpi-delia-api` healthy, `delpi-delia`/`delpi-portal` up; `presentation.py` v1 contract present. Remote HEAD ≠ candidate → remote tests not claimed as candidate evidence.
+- **DOCS:** 84 reworked; 85 preserved; 86 created (R1 report); 83 §0.3 + 20 G1/G2 rows + ledger updated. No doc 17/16/25 change required.
+
+G1=CANDIDATE_REWORKED; G2=CANDIDATE_REWORKED; G3=BLOCKED; G4=TEST_NOT_RUN; CP-333=PLANNED_NOT_PASS
+PRESENTATION_V1=CURRENT_RUNTIME; PRESENTATION_V2=CONTRACT_TARGET; RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+ARCHITECTURE_DECISION_REQUIRED=LINK_SOURCE_TYPED (before G3)
+NEXT=INDEPENDENT_REVIEW_OF_DOC_84_REWORKED_THEN_LINK_SOURCE_TYPED_DECISION

@@ -52,6 +52,12 @@ O candidato documental [84 — G1/G2](./84-presentation-v2-contract-and-markdown
 - `RW-G1-03` especificar OpenAPI/schema machine-validatable, limites, erros/versões, interactions e fallback v2 vs legado.
 - Estado `G1=REWORK / G2=REWORK / G3=BLOCKED / CP333=PLANNED / TEST_NOT_RUN`. Nenhum impacto em D1–D12, C/D/E, fase ou runtime. Próximo bounded: `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1`.
 
+### 0.3 Rework R1 executado (2026-10-16)
+
+O rework dos 4 achados foi executado sobre `c3e090ac70` e registrado em [86 — Rework R1 Report](./86-presentation-v2-g1-g2-rework-r1-report.md). Correções no candidato [84](./84-presentation-v2-contract-and-markdown-security-g1-g2-proposal.md): produtor = **EXTEND** `render_specialist_outcome` existente (seam provado, categorias A/B/C, fidelity probe 16/16 — sem formatter paralelo); schema real em `contracts/presentation-v2.proposal.schema.json` validado mecanicamente (22/22); links com pacote de decisão `LINK_SOURCE_TYPED` (fonte tipada inexistente — sem redução silenciosa de D1/D6/D7); reuse gate com REUSE/EXTEND/NEW comparados e probe do lexer `marked` (22 casos adversariais). Regressões: 195/195 delia-api alvo, 191/191 vitest delia, 149/149 plugin-ui markdown/rich-text; typecheck com 3 erros pré-existentes de plugin-ui (baseline §6.194). SSH: inspeção read-only em `srv-api` executada.
+
+- Estado pós-R1: `G1=CANDIDATE_REWORKED / G2=CANDIDATE_REWORKED` (nova revisão independente pendente — o executor não emite ACCEPT) `G3=BLOCKED` (aguarda decisão `LINK_SOURCE_TYPED` + ACCEPT) `G4=TEST_NOT_RUN` `CP-333=PLANNED` `RUNTIME_B2_IMPLEMENTATION_AUTHORIZED=NO`.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:

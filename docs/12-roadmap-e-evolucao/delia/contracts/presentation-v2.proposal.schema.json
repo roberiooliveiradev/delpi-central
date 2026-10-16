@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://delpi.local/contracts/delia/presentation-v2.proposal.schema.json",
+  "title": "DeliaTurnPresentation (proposal v2)",
+  "description": "PROPOSED — not activated in runtime. Contract target for DELIA conversational presentation, extending presentation v1 (compose_presentation) with a per-block format discriminator for safe conversational Markdown (CP-333). Producer: delia-api application/interaction. Consumer: DELIA MFE via plugin-ui renderer. Unknown versions MUST NOT validate against this schema and MUST fail closed to the legacy/plain path defined in doc 84.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "message_kind",
+    "semantic_status",
+    "grounding_status",
+    "blocks",
+    "allowed_interactions"
+  ],
+  "properties": {
+    "version": {
+      "const": "2",
+      "description": "Closed discriminator. v1 payloads (version '1' or absent version member) and any other value are handled by the legacy/plain contract — never coerced into v2 semantics."
+    },
+    "message_kind": {
+      "type": "string",
+      "enum": [
+        "RESULT",
+        "CLARIFICATION_REQUIRED",
+        "CONFIRMATION_REQUIRED",
+        "WRITE_REJECTED",
+        "AUTHZ_DENIED",
+        "SOURCE_UNAVAILABLE",
+        "PRECONDITION_REQUIRED"
+      ],
+      "description": "Canonical producer-declared kind; drives allowed_interactions. Never derived from prose by the consumer."
+    },
+    "semantic_status": {
+      "type": ["string", "null"],
+      "enum": [
+        "OBSERVATION",
+        "FACT",
+        "CALCULATION",
+        "HYPOTHESIS",
+        "CONCLUSION",
+        "RECOMMENDATION",
+        null
+      ],
+      "description": "EpistemicClass verbatim from the governed result; null when the producer declared none. External specialist output is always OBSERVATION at the source."
+    },
+    "grounding_status": {
+      "type": "string",
+      "enum": ["GROUNDED", "NON_GROUNDED"],
+      "description": "Provenance marker — never truth elevation (GROUNDED != FACT)."
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/block" },
+      "description": "Ordered display blocks. Closed allowlist of kinds — providers/models can never introduce new kinds."
+    },
+    "allowed_interactions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["reply", "confirm", "reject"]
+      },
+      "description": "Existing confirmation vocabulary only. Authorizes nothing; cannot widen execution authority."
+    }
+  },
+  "$defs": {
+    "block": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "format", "text"],
+          "properties": {
+            "kind": { "const": "text" },
+            "format": {
+              "type": "string",
+              "enum": ["plain", "markdown_safe"],
+              "description": "REQUIRED discriminator. 'plain' renders verbatim inert text. 'markdown_safe' is admitted for the allowlisted token renderer — absent or unknown values fail closed to inert plain text."
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 16384,
+              "description": "Bounded block content. For 'markdown_safe' this is the raw markdown source admitted from governed inputs only (typed structured data or declared producer output) — never arbitrary model/provider prose."
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "role", "text"],
+          "properties": {
+            "kind": { "const": "notice" },
+            "role": {
+              "type": "string",
+              "enum": ["owner_hint"],
+              "description": "Bounded verbatim owner vocabulary (e.g. declared precondition). URL-free by construction — never a link, credential, or raw payload."
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 16384
+            }
+          }
+        }
+      ]
+    }
+  }
+}

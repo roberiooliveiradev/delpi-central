@@ -1,22 +1,31 @@
 # 84 — Proposta `presentation.v2` e Reuse/Security Review de Markdown (G1/G2)
 
-**Status:** `G1_CONTRACT_PROPOSAL=CANDIDATE_FOR_REVIEW / G2_REUSE_SECURITY=CANDIDATE_FOR_REVIEW / RUNTIME_NOT_AUTHORIZED`
+**Status:** `G1_CONTRACT_PROPOSAL=REWORKED_R1_CANDIDATE_FOR_REVIEW / G2_REUSE_SECURITY=REWORKED_R1_CANDIDATE_FOR_REVIEW / RUNTIME_NOT_AUTHORIZED`
 
-**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01`
-**BASE_HEAD:** `bbdd3a4f4de09097e7f80aef426e9366de601b8c`
+**Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → rework `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-R1` (doc 85 = fonte dos achados)
+**BASE_HEAD R1:** `c3e090ac70977e81fbf7bdd47a391683ab6199cd`
 **CP:** `CP-333` (matriz 25 — `PLANNED`, não PASS)
 **Tipo:** CONTRACT-FIRST / DOCUMENTATION ONLY — nenhum diff de runtime nesta task.
+
+> **Histórico R1:** a revisão independente (doc 85) emitiu `REWORK` sobre a versão anterior (`d5ed426a08`) com 4 achados — RW-G1-01 (produtor sem estrutura comprovada), RW-G1-02 (links sem fonte tipada), RW-G1-03 (schema/fallback incompletos), RW-G2-01 (reuse gate insuficiente). Esta revisão corrige os quatro com inventário real, schema mecanicamente validado e probes executados. O relatório de rework é o doc 86.
 
 > B2 aqui = Markdown conversacional da spec 82/83. **Não** confundir com `C3-STAGE-02-B2` (governança de execução PREPARE/ACT, ledger §6.183/§6.184). Nada se transfere entre as trilhas.
 
 Este documento é a **proposta** submetida à revisão independente (G1/G2). Não é contrato ativado nem aceite: `G1_CONTRACT_DECISION` e `G2_SECURITY_REUSE` permanecem `PENDING` até Architecture/Coordination emitir verdict.
 
-## 1. Inventário factual no HEAD (revalidado)
+## 1. Inventário factual no HEAD (revalidado em `c3e090ac70`, R1)
 
-| Superfície | Evidência real (`bbdd3a4f4d`) | Consequência |
+| Superfície | Evidência real | Consequência |
 |---|---|---|
-| `delia-api/app/application/interaction/presentation.py` | `PRESENTATION_CONTRACT_VERSION="1"`; blocos `text`/`notice(role=owner_hint)`; bounds `_MAX_BLOCKS=8`, `_MAX_BLOCK_TEXT_CHARS=16384`; `message_kind` de vocab canônico derivado só de sinais estruturais, nunca de prosa; allowlist fechada de kinds | Nenhum emissor de Markdown existe |
-| `delia-api` producer de `result.content` | `InteractiveTurnResult` já governado; conteúdo vem de dados admitidos — não há formatter de estrutura | Produtor de Markdown é componente **novo** na boundary DÉLIA (`TO_INVENTORY` → proposta §4) |
+| `delia-api/app/application/interaction/presentation.py` | `PRESENTATION_CONTRACT_VERSION="1"`; blocos `text`/`notice(role=owner_hint)`; bounds `_MAX_BLOCKS=8`, `_MAX_BLOCK_TEXT_CHARS=16384`; `message_kind` de vocab canônico derivado só de sinais estruturais, nunca de prosa; allowlist fechada de kinds | Nenhum emissor de Markdown existe; v2 estende este envelope |
+| `SpecialistOutcome` (`domain/specialist_interop/model.py:124`) | `content_text: str` + **`structured: Mapping[str,object] \| None`** + `limitations` + `is_complete`; `epistemic_class` fixo `OBSERVATION` | **Fonte tipada de estrutura existe** — categoria A comprovada |
+| `render_specialist_outcome` (`capability_provision/orchestration.py:~2117`) | Projeção determinística existente: sanitiza (`_sanitize_renderable` redige chaves sensíveis `_SENSITIVE_KEY_NAMES` + `_redact_text`), unwrap estrutural `_business_lines` (envelopes `data`/`result`/`payload`/`response` + `items`), projeção `_format_records`/`_format_structured` (indent determinístico, `MAX_RENDER_LIST_ITEMS`, depth ≤ 3), bounds `MAX_RENDER_CONTENT_CHARS=2000` (+ sufixo fixo de truncamento 32 chars → máx. 2032), limitação `result_truncated` declarada, resultado vazio verdadeiro (`Nenhum resultado encontrado.`), supressão de status genérico quando há payload de negócio | **Seam de projeção já existente** — o produtor governado de Markdown é uma EXTENSÃO desta projeção (ver §4), não um formatter paralelo. Probe de fidelidade: 16/16 checks (doc 86 §E) |
+| `capability_attempt._success_attempt(render)` | Recebe `outcome` tipado + callable `render` injetável — seam de injeção já existe | Extensão não exige mudança de assinatura do attempt |
+| `handle_interactive_turn.serialize_result` | Response = campos legados (`content`, `epistemic_class`, `limitations`, `grounding_status`, `provenance`, `confirmation_request`) + `presentation` via `compose_presentation` | Ponto único de serialização — v2 aditivo |
+| `GovernedCapabilityProvenance.to_projection` | `source(s)` = `{source_id, source_system, observed_at}`; `specialist_id`, `provider_id`, `capability_group_id`, `protocol`, `remote_capability`, `action_id`, `correlation_id`, `is_complete` — **sem URLs, sem tokens, sem transporte** | Não é fonte de link navegável; provenance nunca carrega href |
+| `WorkspaceEntityRef` (`interaction/workspace_context.py`) | `{entity_type, entity_id, source_system, label}` — **hint de entrada** não confiável (`grants_authorization()=False`), sem href | Não é fonte de link; é contexto inbound |
+| `owner_hint` | Vocabulário literal do owner, URL-free por construção | Nunca vira link |
+| Inventário de links legítimos (RW-G1-02) | **Não existe fonte tipada de destino navegável no caminho do turno** — nenhum RouteRef/EntityRef/LinkRef outbound; nenhum campo URL governado em `structured` por contrato hoje | `ARCHITECTURE_DECISION_REQUIRED=LINK_SOURCE_TYPED` mantido com pacote completo (§2.4, §6) |
 | `plugins/delia/src/api/presentation.ts` | Parse-only; `version !== "1"` → `null` → fallback aos campos legados (`content`, `epistemic_class`, `limitations`); bounds espelhados; allowlist `text`/`notice` | Aderente à estratégia de coexistência v1↔v2 sem crash |
 | `DeliaAssistantMessage.tsx` | `<p class="delia-turn__content">{displayContent}</p>` inerte; composição avatar→label→ActivityViewer→ConversationStatus→content→owner hint→GovernedConfirmation→EvidenceDetails→MessageActionBar; GovernedConfirmation agora distingue `pending_purpose` (§6.184) | Slot de conteúdo é o único ponto de integração; nada mais muda |
 | `interactionClient.ts` | Comandos tipados `MESSAGE`/`APPLY_PREPARED`/`REJECT_PREPARED`; response traz `presentation` + campos legados | Contrato v2 é aditivo ao response, não toca request/command |
@@ -65,19 +74,28 @@ Campos `message_kind`, `semantic_status`, `grounding_status`, `allowed_interacti
 
 O produtor só pode emitir os nós da política §5.1: parágrafos, `**`/`__`, `*`/`_`, `~~` (strikethrough informativo), `ul`/`ol`/`li` (nested ≤ 4), `>` blockquote, `` `code` `` inline, fenced code sem linguagem executável, `---`, headings `#`–`####` (clamp de renderização §7.3) e links `[t](url)` cuja `url` satisfaz §2.4. Emissor **nunca** produz: HTML inline, imagens `![]()`, tabelas GFM, autolink bare de scheme fora da política, task lists, footnotes, referências `[x][id]` por indireção.
 
-### 2.4 Contrato de links
+### 2.4 Contrato de links (RW-G1-02 — pacote de decisão)
 
-```jsonc
-// o produtor só emite href nestas formas; origem é campo governed
-{ "kind": "text", "format": "markdown_safe",
-  "text": "Veja [o pedido](/apps/my-requests).\nFonte: [portal do fornecedor](https://fornecedor.example/doc/1)" }
-```
+**Inventário concluído (factual):** no caminho do turno **não existe fonte tipada de destino navegável**. `GovernedCapabilityProvenance` exclui URLs por design; `WorkspaceEntityRef` é hint inbound não confiável sem href; `owner_hint` é vocabulário URL-free; `SourceRef` carrega `{source_id, source_system, observed_at}` — sem URL. Logo, emitir `[t](url)` a partir de prosa de modelo ou inferência está **proibido por ausência de fonte**, não apenas por política.
 
-- **Interno:** `href` começa com `/` — caminho absoluto same-origin do Portal. Só pode ser emitido quando o valor vem de RouteRef/EntityRef governed (registro/rota que o backend conhece), nunca de URL gerada por modelo. Sem `//host`, sem `?token=`, sem URL-encoding que resolva para scheme externo.
-- **Externo:** `https:` apenas, hostname presente na lista de origem verificável do turno (provenance/sources admitidas). `http:`, `mailto:`, `javascript:`, `data:`, `blob:`, `attachment:`, `file:`, relativos (`x`, `./`, `../`), hash-only `#` são **proibidos no emissor e derrubados no consumidor**.
-- Renderização: externo → `target="_blank" rel="noopener noreferrer"`; interno → `<a href>` same-origin sem `target` (Portal intercepta quando legal; caso contrário navegação nativa — ambos com AuthZ live).
+**Política de renderização (inalterada e completa — pronta para quando a fonte existir):**
+
+- **Interno:** `href` começa com `/` — caminho absoluto same-origin do Portal. Emissível somente a partir de referência tipada admitida pelo backend (ver decisão abaixo). Sem `//host`, sem `?token=`, sem URL-encoding que resolva para scheme externo.
+- **Externo:** `https:` apenas, hostname presente em fonte tipada admitida (não em prosa). `http:`, `mailto:`, `javascript:`, `data:`, `blob:`, `attachment:`, `file:`, relativos (`x`, `./`, `../`), hash-only `#` são **proibidos no emissor e derrubados no consumidor**.
+- Renderização: externo → `target="_blank" rel="noopener noreferrer"`; interno → `<a href>` same-origin sem `target` (Portal intercepta quando legal; caso contrário navegação nativa — ambos com AuthZ live; cross-app cai em reload completo, seguro).
 - Link inválido/não admitido **degrada para o texto do rótulo sem elemento `<a>`** — nunca navega, nunca alerta.
-- AuthZ: clicar num link nunca é permissão; o destino resolve com `/me/apps` + Domain authority de sempre.
+- Falha de autorização no destino é resolvida pelo destino (AuthZ live de sempre); presença do link nunca é permissão. Link expirado/obsoleto → destino responde seu próprio estado; a conversa não tenta revalidar.
+- Companion Dock: mesmos `<a>` — navegação do Portal/shell, sem mecanismo paralelo.
+
+**`ARCHITECTURE_DECISION_REQUIRED = LINK_SOURCE_TYPED` — alternativas:**
+
+| Opção | Descrição | Owner | Consequência |
+|---|---|---|---|
+| **L1 — typed link field em `structured`** | Allowlist fechada de chaves de payload (`url`, `link`, `href`, `*_url`) cujo valor é validado (`https:` absoluto ou `/` interno); o **owner especialista** é a autoridade de divulgação — o link já vem do dado autoritativo admitido | delia-api `capability_provision` (projeção) + contract freeze | Zero contrato novo; usa o seam A existente; emissão fica vazia até owners publicarem campos link — **fato, não redução de escopo** |
+| **L2 — `LinkRef` tipado novo no result** | Novo tipo `{label, href, kind: internal\|external, source}` propagado por `GovernedCapabilityAttempt`/`InteractiveTurnResult` | delia-api `application/interaction` | Contrato novo a congelar; mais superfície, mas desacopla link de shape de payload |
+| **L3 — deferir navegável** | B2 inicial emite zero links navegáveis (rótulos viram texto) | Product Master | **Redução material de escopo aprovado (D1/D6/D7)** — exige decisão explícita do Product Master, não pode ser adotada silenciosamente |
+
+**Recomendação:** L1 como fonte primária (usa estrutura já admitida; provider-neutral) + política do consumidor sempre ativa. Se o Product Master preferir rollout parcial sem links, L3 só é válido com aprovação explícita registrada. **G3 não pode iniciar com esta decisão pendente.**
 
 ### 2.5 Erros de contrato e versões
 
@@ -117,39 +135,17 @@ O backend v2 continua populando `content` com o **texto legível plain** (render
 
 **Observabilidade (proposta):** contadores sanitizados `presentation.version`, `format`, `fallback_reason` (códigos fixos), correlation id existente; **jamais** fonte Markdown, hrefs ou payload nos logs.
 
-### 2.9 JSON Schema (proposta — ainda não publicada no OpenAPI)
+### 2.9 JSON Schema — artefato canônico + validação mecânica (RW-G1-03)
 
-```jsonc
-"DeliaPresentationV2": {
-  "type": "object",
-  "required": ["version","message_kind","semantic_status","grounding_status","blocks","allowed_interactions"],
-  "properties": {
-    "version":   { "const": "2" },
-    "message_kind": { "$ref": "#/components/schemas/DeliaMessageKind" },
-    "semantic_status": { "type": ["string","null"] },
-    "grounding_status": { "enum": ["GROUNDED","NON_GROUNDED"] },
-    "blocks": {
-      "type": "array", "maxItems": 8,
-      "items": { "oneOf": [
-        { "type":"object","required":["kind","format","text"],
-          "properties":{
-            "kind":{"const":"text"},
-            "format":{"enum":["plain","markdown_safe"]},
-            "text":{"type":"string","maxLength":16384}}},
-        { "type":"object","required":["kind","role","text"],
-          "properties":{
-            "kind":{"const":"notice"},
-            "role":{"const":"owner_hint"},
-            "text":{"type":"string","maxLength":16384}}}
-      ], "additionalProperties": true }
-    },
-    "allowed_interactions": { "type":"array", "items":{"enum":["reply","confirm","reject"]} }
-  },
-  "additionalProperties": true
-}
-```
+O fragmento JSONC anterior foi promovido a artefato canônico versionado:
 
-`additionalProperties: true` nos níveis de objeto preserva extensibilidade aditiva (mesmo princípio de v1); consumidores ignoram campos desconhecidos.
+**`docs/12-roadmap-e-evolucao/delia/contracts/presentation-v2.proposal.schema.json`** (JSON Schema draft 2020-12 — proposta, não publicada no OpenAPI, não ativada em runtime).
+
+Cobre: envelope completo (`version:"2"` const, `message_kind` enum canônico, `semantic_status` EpistemicClass|null, `grounding_status`, `allowed_interactions`, `blocks`), discriminadores de bloco (`text` exige `format`; `notice` exige `role:"owner_hint"`), campos obrigatórios/opcionais, semântica de null (`semantic_status` admite `null` explícito), limites (≤8 blocos, `text` ≤16.384 chars), e versões.
+
+**Mudança deliberada vs. fragmento anterior:** `additionalProperties: false` em todos os níveis — o contrato v2 é **fechado** (fail-closed). Propriedades desconhecidas invalidam o payload inteiro → fallback ao campo legado `content` (§2.5), nunca coerção silenciosa. Extensibilidade se dá por versão nova, não por campos extras tolerados. (Decisão reversível no freeze se o Coordination preferir tolerância aditiva — registrado em §6.)
+
+**Validação mecânica executada** (`python3 jsonschema 4.10.3`, Draft 2020-12, sobre `c3e090ac70`): **22/22 checks** — 4 positivos (plain, markdown_safe, text+notice, confirmation interactions) + 18 negativos (versão ausente/v1/desconhecida, `format` ausente/inválido, kind de bloco desconhecido, prop extra em bloco/envelope, blocos vazios/excedentes, texto oversize, `message_kind`/`interaction`/`notice.role` inválidos, payload não-objeto, bloco sem `text`). Probe reproduzível registrado no doc 86 §E.
 
 ## 3. Exemplos de response (extractos)
 
@@ -173,22 +169,39 @@ O backend v2 continua populando `content` com o **texto legível plain** (render
   "confirmation_request":{"session_id":"…","proposal_digest":"…","preview_fingerprint":"…"} }
 ```
 
-## 4. Produtor governado (D3/D5) — proposta
+## 4. Produtor governado (D3/D5) — RW-G1-01 corrigido
+
+### 4.1 Inventário do pipeline real
 
 ```text
-InteractiveTurnResult (já governado)
-  → GovernedResponseFormatter (NOVO, application/interaction)
-      entrada: campos admitidos do result (content estruturável,
-               provenance.sources, owner_hint)
-      saída: blocks[] v2 com format decidido deterministicamente
-  → compose_presentation v2 (serializer tipado, fail-closed)
-  → response
+SpecialistOutcome{ content_text, structured, limitations, is_complete }
+  → render_specialist_outcome(outcome)          # projeção determinística existente
+       _sanitize_renderable → _business_lines → _format_records/_format_structured
+  → GovernedCapabilityAttempt.content (str) + limitations   # render injetável em _success_attempt
+  → InteractiveTurnResult.content + message_kind/owner_hint/provenance/confirmation/grounding
+  → serialize_result → content (legado) + presentation v1 (compose_presentation)
 ```
 
-- **Decisão de formato é determinística** no formatter: coleção de registros/etapas presentes nos dados admitidos → lista; saudação/resposta curta → `plain`; código técnico presente → fenced code. Heurística vive na boundary DÉLIA, nunca no frontend, nunca no modelo solto.
-- Formatação por modelo assistido (LLM sugerindo estrutura) fica **fora da proposta inicial**: exige prova de fidelidade contra dados admitidos; se desejado depois, novo bounded slice com validação fail-closed (todo token de conteúdo deve rastrear a campo governado). Registrado como `DECISION_OPTION_DEFERRED`.
-- Se os dados admitidos não carregam estrutura (content é prosa única), formatter emite `plain` — v2 sem falsos Markdown.
-- O formatter nunca acrescenta fatos, URLs, fontes ou instruções: sua única licença é **estruturar** texto já admitido. Falha → `plain`.
+### 4.2 Categorias de entrada (formalizadas)
+
+| Categoria | Fonte real | Regra v2 |
+|---|---|---|
+| **A — estruturado tipado comprovado** | `SpecialistOutcome.structured` (Mapping admitido na fronteira de interop; sanitizado por `_sanitize_renderable`) | **Única fonte para blocos `markdown_safe` com estrutura** — listas/registros mapeados deterministicamente (mesma semântica de `_format_records`: item→linha, chave→rótulo, sem renomeação semântica, sem valores computados) |
+| **B — texto pré-estruturado pela fonte** | `content_text` do owner (quebras/ênfases autoradas pela fonte) | Preservado verbatim; emitido como `plain` — estrutura textual pertence à fonte, nunca é reinterpretada como Markdown sem declaração tipada |
+| **C — prosa sem estrutura confiável** | Respostas de modelo, status genéricos, textos sem `structured` | `plain` inerte — proibido inferir listas/negritos/títulos de prosa |
+
+### 4.3 Contract Gate do produtor
+
+- **Responsabilidade:** projetar dados admitidos em blocos v2; nunca acrescentar fatos/URLs/instruções.
+- **Owner:** `delia-api` `application/capability_provision` (projeção) + `application/interaction` (envelope).
+- **Seam:** **EXTEND** `render_specialist_outcome` — o mesmo projetor determinístico emite, além do `str` canônico (inalterado para v1/content), a projeção tipada de blocos quando `structured` admite forma reconhecida. `compose_presentation` serializa fail-closed. Nenhum `GovernedResponseFormatter` paralelo — a revisão apontou e o inventário provou o equivalente existente.
+- **Inputs:** `SpecialistOutcome` tipado (nunca payload wire cru — já sanitizado), limitations do attempt.
+- **Outputs:** `blocks[]` conforme schema §2.9 + `content` plain canônico derivado da **mesma** projeção (display e cópia nunca divergem).
+- **Constraints:** bounds existentes (`MAX_RENDER_CONTENT_CHARS=2000`+sufixo fixo, `MAX_RENDER_LIST_ITEMS`, depth≤3, `_MAX_BLOCKS=8`, bloco ≤16.384); ordem e valores verbatim; falha de projeção → `plain`.
+- **Source authority:** o owner especialista (categoria A/B) ou o próprio modelo para prosa não-factual (categoria C) — nunca o frontend.
+- **Erros/observabilidade:** contadores sanitizados `presentation.version/format/fallback_reason`; nunca conteúdo nem href em log.
+- **Fidelity:** probe executado — 16/16 checks (IDs/quantidades/unidades/ordem verbatim; texto literal com `**`/`[x](y)` inerte; `access_token`/`client_secret` redigidos; resultado vazio verdadeiro; status genérico suprimido; truncamento bounded+declarado). **Residual documentado:** chave `token` bare não consta de `_SENSITIVE_KEY_NAMES` — valor passa sem redação hoje (fato do runtime atual; decisão de ampliar o conjunto pertence a outro slice de segurança).
+- **Modelo-assistido (LLM sugerindo estrutura):** fora da proposta — `DECISION_OPTION_DEFERRED`.
 
 ## 5. G2 — Reuse & Security Decision Report
 
@@ -209,18 +222,27 @@ Tokens `marked` admitidos e seu mapeamento (renderer React, sem HTML):
 | `br`, `space` | `\n`/ignorado | — |
 | **todos os demais** (`html`, `image`, `table`, `def`, `checkbox`,…) | **derrubado → texto literal do token** ou omitido conforme tipo | nunca HTML |
 
-### 5.2 Matriz de reutilização
+### 5.2 Matriz de reutilização (RW-G2-01 — corrigida, evidência real)
+
+Vocabulário normativo: `REUSE` | `EXTEND` | `NEW`; candidatos não escolhidos registram `NOT_SELECTED` + justificativa.
+
+**Inventário real (verificado em `c3e090ac70`):**
 
 | CANDIDATE | EXISTING_EQUIVALENT | REUSE_DECISION | JUSTIFICATIVA |
 |---|---|---|---|
-| `MarkdownDocumentView`+`buildMarkdownDocumentModel` | YES (documental) | **DO_NOT_REUSE** | innerHTML+denylist, Mermaid, anchors globais, GFM tables — tudo fora do escopo conversacional; adaptar custa mais que compor |
-| `stripDangerousRichTextTags` | YES (sanitizer genérico) | **DO_NOT_REUSE para DÉLIA** | denylist; permite `attachment:`/`blob:`/relativos/`mailto:`; fallback regex sem prova; política alvo é allowlist positiva. Não se copia nem se estende indevidamente |
-| `markdownToRichTextHtml` / `messageThreadMarkdown` | YES (colaboração) | **DO_NOT_REUSE** | semântica Chat (menções/anexos/HTML islands); regra explícita: sem dependência do runtime Chat |
-| `marked` (dependência) | YES | **REUSE** (lexer/tokenizer) | parser já homologado no kit; usa-se só `marked.lexer` + tipos — o `parse→HTML` não é usado |
-| **Novo `ConversationMarkdown` (plugin-ui)** | NO | **NEW (proposta)** | token→React com allowlist positiva; zero `dangerouslySetInnerHTML`, zero DOMParser; gera também a serialização plain-text do copy (§2.7) a partir da mesma árvore |
-| `stripDown`/turndown p/ copy | YES (TurndownService) | **DO_NOT_REUSE** | copy vem do modelo de tokens, não de reparse HTML→texto |
+| `marked` ^18.0.9 (dep. plugin-ui) — `marked.lexer` | YES | **REUSE** | Probe adversarial executado (doc 86 §E): lexer emite tipos discretos — `html`/`image`/`table`/`link`(href cru, incl. `javascript:`)/`code`/`checkbox` — permitindo negação-por-construção no renderer |
+| `MarkdownDocumentView`+`buildMarkdownDocumentModel` (`components/markdown/`) | YES (documental) | NOT_SELECTED | Saída = **HTML sanitizado via `dangerouslySetInnerHTML`** (linha 176); escopo documental (GFM tables, Mermaid via `DiagramMermaidPreview`, anchors `id` globais). Modelo de segurança pós-parse incompatível com token→React |
+| `markdownToRichTextHtml` (`rich-text/richTextMarkdown.ts`) | YES | NOT_SELECTED | `marked.parse` → **string HTML** + DOMParser (`enhanceAttachmentImagesInHtml`); consumidores renderizam via `dangerouslySetInnerHTML` — produzir React exigiria substituir o modelo de saída, não estendê-lo |
+| `messageThreadMarkdown` (`collaboration/`) | YES | NOT_SELECTED | Compõe `markdownToRichTextHtml`+`stripDangerousRichTextTags`+menções/attachment:uuid; semântica de rooms; `markdownToPlainPreview` é preview por regex — adequado ao seu escopo, não a cópia canônica DÉLIA |
+| `stripDangerousRichTextTags` (`rich-text/richTextHtmlFormat.ts:115`) | YES (sanitizer) | NOT_SELECTED para DÉLIA | Denylist DOMParser parse→mutate→serialize; permite `attachment:`/`blob:`/`mailto:`/relativos; política alvo B2 é allowlist positiva sem HTML intermediário |
+| `ChatMermaidBlock` (minha-delpi-chat) | YES | NOT_SELECTED | Mermaid fora do escopo B2; runtime Chat não é dependência |
+| `markdownImageTokens`/`richTextInlineImage` | YES (editor) | NOT_SELECTED | Mecânica de imagem/attachment — `image` fora do allowlist B2 |
+| Turndown/strip p/ copy | YES | NOT_SELECTED | Copy deriva do modelo de tokens admitido (§2.7), nunca de reparse HTML→texto |
+| **`ConversationMarkdown` (plugin-ui) — novo** | NO | **NEW** | token→React, allowlist positiva, zero `dangerouslySetInnerHTML`/DOMParser; emite também a serialização plain-text do copy da mesma árvore |
 
-`NEW` justificada: Abstraction Gate — consumer real (DÉLIA), owner legítimo `plugin-ui` (renderers/read-models do kit), boundary claro (conversational read-only), REUSE/EXTEND provados insuficientes acima, bundle mínimo (só `marked.lexer` — `marked` já é dep do kit; tree-shaking remove mermaid/turndown do caminho).
+**Opção B — EXTEND analisada e rejeitada com evidência:** todos os renderers existentes produzem **string HTML** consumida por `dangerouslySetInnerHTML`. Estender qualquer um para emitir React exigiria trocar seu modelo de saída (quebra consumidores: `MessageThread` bodyMode=markdown, previews Docx/artigos, editor) — o custo arquitetural é duplo: duas máquinas de render no mesmo util ou regressão nos consumers. `EXTEND` se aplica corretamente ao **produtor** (§4.3: extensão de `render_specialist_outcome`, seam já injetável) e ao **envelope** (v2 aditivo sobre `presentation.py`).
+
+**`NEW` justificada (Abstraction Gate):** consumer real único (DÉLIA), owner legítimo `plugin-ui` (renderers/read-models do kit — mesmo dono dos renderers existentes), boundary claro (read-only conversacional), REUSE/EXTEND provados insuficientes acima, bundle mínimo (`marked.lexer` + tipos; `marked` já é dep do kit).
 
 ### 5.3 Threat model → mitigação por construção
 
@@ -243,7 +265,11 @@ Tokens `marked` admitidos e seu mapeamento (renderer React, sem HTML):
 | Provider/modelo introduzindo ações | Formato nunca cria `allowed_interactions`; markup é dado |
 | Dados sensíveis em logs | Somente códigos de motivo/versão — nunca conteúdo |
 
-**Gap honesto:** a política de link depende de `RouteRef/EntityRef` governados existirem no producer path — hoje `result.content` é texto e links navegáveis não têm fonte tipada. Opções registradas: (a) B2 inicial emite `markdown_safe` **sem links** (links degradam a texto — D7 implementado quando houver fonte tipada); (b) inventariar/governar RouteRef primeiro. Recomendação **(a)** — reduz a superfície do primeiro slice. `DECISION_PENDING` para Architecture Coordination.
+**Evidência de probe (executada, doc 86 §E):** `marked.lexer` verificado contra 22 casos adversariais — `html` (inline e bloco `<script>`), `image`, `link` com `javascript:`/`data:`/relativo/hash/ofuscado `JaVaScRiPt:`/encoded `java%73cript:`, `table` GFM, `code` mermaid, lista aninhada >4, `checkbox`, autolink `https:` — todos chegam como tokens discretos e distinguíveis; a política do renderer decide cada tipo antes de materializar qualquer elemento. Um probe de parser **não** prova segurança de um renderer ainda não implementado — prova que o modelo token→allowlist é exequível sobre o lexer homologado.
+
+**Gap honesto (corrigido em §2.4):** não existe fonte tipada de destino navegável no caminho do turno. A política de links está completa e pronta; a emissão depende da decisão `LINK_SOURCE_TYPED` (§2.4/§6) — escopo de links **não** foi reduzido silenciosamente.
+
+**Residual de segurança (runtime atual, fora de B2):** `_SENSITIVE_KEY_NAMES` cobre `access_token`/`refresh_token`/`session_token`/`bearer_token`/`candidate_token`/`client_secret`/… mas **não** a chave bare `token` — probe mostrou valor `token:` renderizado sem redação. Registrado para decisão de segurança dedicada; B2 não amplia nem esconde.
 
 ### 5.4 Critérios de a11y/apresentação (a implementar, não agora)
 
@@ -258,8 +284,9 @@ Tokens `marked` admitidos e seu mapeamento (renderer React, sem HTML):
 | Item | Estado | Decisão requerida |
 |---|---|---|
 | `PORTAL_MFE_NAVIGATE_PROP` | NOT_PRESENT | Não bloqueante: `<a href>` same-origin já navega (SPA intercept dentro do app/shell; reload fora). Se produto exigir SPA-nav cross-app, abrir bounded slice Portal; **sem** inventar API agora |
-| `LINK_SOURCE_TYPED` (RouteRef/EntityRef no turn result) | TO_INVENTORY | Decidir: B2 inicial sem links navegáveis (recomendado) vs governar refs primeiro |
-| `GOVERNED_FORMATTER` | NEW componente proposto (backend DÉLIA) | Aprovar nome/boundary no freeze do contrato |
+| `LINK_SOURCE_TYPED` | **ARCHITECTURE_DECISION_REQUIRED** | Pacote completo em §2.4 (L1 typed field em `structured` — recomendado; L2 `LinkRef` novo; L3 deferir navegável exige Product Master). G3 bloqueado até decisão |
+| `GOVERNED_FORMATTER` | RESOLVIDO — não é componente novo | RW-G1-01: o seam é `render_specialist_outcome` existente; proposta = **EXTEND** a projeção para emitir blocos tipados (§4). Freeze confirma nome/assinatura final |
+| `SCHEMA_ADDITIONAL_PROPERTIES` | DECIDIDO nesta proposta | v2 fechado (`additionalProperties:false`, fail-closed → fallback legado). Reversível no freeze se preferirem tolerância aditiva |
 | `MODEL_ASSISTED_FORMATTING` | DEFERRED | Fora do slice inicial; requer prova de fidelidade |
 | `CONVERSATION_MARKDOWN` (plugin-ui token→React) | NEW componente proposto | Aprovação G2 de owner/equivalence |
 | Spec 82 TRACEABILITY_GAP tabelas/gráficos | OPEN, inalterado | B2 não cobre C/D/E |
@@ -268,24 +295,24 @@ Tokens `marked` admitidos e seu mapeamento (renderer React, sem HTML):
 
 ## 7. Matriz de aceite G1/G2 (CP-333)
 
-| Gate | RQ/AC cobertos | Evidência nesta doc | Status |
+| Gate | RQ/AC cobertos | Evidência | Status |
 |---|---|---|---|
-| G1 envelope/discriminator | B2-RQ01,02,05; AC01,08,23 | §2.1–2.2, §2.5 | `CANDIDATE_DOCUMENTED` |
-| G1 producer | B2-RQ03,19,20; AC18,21,22,24 | §4 | `CANDIDATE_DOCUMENTED` |
-| G1 links | B2-RQ14,21; AC25,26 | §2.4 (+pendência §6) | `CANDIDATE_DOCUMENTED_WITH_DECISION` |
-| G1 copy | B2-RQ12,22; AC14,27 | §2.7 | `CANDIDATE_DOCUMENTED` |
-| G1 fallback/compat | B2-RQ05,09,18,23,25; AC08,17,28,30 | §2.5–2.8 | `CANDIDATE_DOCUMENTED` |
-| G1 bounds | B2-RQ13; AC07,19 | §2.2, §5.3 | `CANDIDATE_DOCUMENTED` |
-| G2 reuse | B2-RQ10,17 | §5.2 | `CANDIDATE_DOCUMENTED` |
-| G2 threat model | B2-RQ04; AC05,06,12 | §5.3 | `CANDIDATE_DOCUMENTED` |
-| G2 a11y criteria | B2-RQ08,11; AC03,15,16 | §5.4 | `CANDIDATE_DOCUMENTED` |
-| Evidence separation | B2-RQ06,24; AC11,29 | §2 (inalterados), §5 | `CANDIDATE_DOCUMENTED` |
-| No authority drift | B2-RQ07,15 | §2.1, §2.8 obs | `CANDIDATE_DOCUMENTED` |
-| Conformance/outcome | B2-RQ16; AC02,04,09,10,13,20 | testes — slice futuro | `TEST_NOT_RUN` (nenhum runtime teste nesta task) |
+| G1 envelope/discriminator | B2-RQ01,02,05; AC01,08,23 | §2.1–2.2, §2.5 + schema validado 22/22 | `CANDIDATE_REWORKED` |
+| G1 producer | B2-RQ03,19,20; AC18,21,22,24 | §4 seam existente + fidelity probe 16/16 | `CANDIDATE_REWORKED` |
+| G1 links | B2-RQ14,21; AC25,26 | §2.4 pacote completo + decisão pendente | `CANDIDATE_REWORKED_WITH_DECISION` |
+| G1 copy | B2-RQ12,22; AC14,27 | §2.7 | `CANDIDATE_REWORKED` |
+| G1 fallback/compat | B2-RQ05,09,18,23,25; AC08,17,28,30 | §2.5–2.8 + schema negatives | `CANDIDATE_REWORKED` |
+| G1 bounds | B2-RQ13; AC07,19 | §2.2, §5.3 + schema limits validados | `CANDIDATE_REWORKED` |
+| G2 reuse | B2-RQ10,17 | §5.2 REUSE/EXTEND/NEW comparados + probe lexer | `CANDIDATE_REWORKED` |
+| G2 threat model | B2-RQ04; AC05,06,12 | §5.3 + probe adversarial 22 casos | `CANDIDATE_REWORKED` |
+| G2 a11y criteria | B2-RQ08,11; AC03,15,16 | §5.4 | `CANDIDATE_REWORKED` |
+| Evidence separation | B2-RQ06,24; AC11,29 | §2 (inalterados), §5 | `CANDIDATE_REWORKED` |
+| No authority drift | B2-RQ07,15 | §2.1, §2.8 obs | `CANDIDATE_REWORKED` |
+| Conformance/outcome | B2-RQ16; AC02,04,09,10,13,20 | testes de runtime — slice futuro | `TEST_NOT_RUN` (probes executados não são testes de runtime) |
 
 ## 8. Implementation readiness
 
-- **I1** (backend): `GOVERNED_FORMATTER` + serializer v2 + `content` plain canônico + OpenAPI v2 (não ativado). Depende de: freeze de §2 e decisão de links §6.
+- **I1** (backend): extensão da projeção `render_specialist_outcome` (blocos tipados) + serializer v2 em `compose_presentation` + `content` plain canônico + OpenAPI v2 (não ativado). Depende de: freeze de §2 e decisão de links §6.
 - **I2** (plugin-ui): `ConversationMarkdown` token→React + link policy + copy serializer. Depende de: aprovação G2 §5.
 - **I3** (delia MFE): `parsePresentation` aceitar v2 + slot de conteúdo em `DeliaAssistantMessage` + fallback. Depende de: I1/I2.
 - **Q1**: matriz adversarial AC01–30 + browser QA full/dock/temas/zoom/teclado.
@@ -295,7 +322,8 @@ Ordem física I1↔I2 pode inverter; contrato congelado antes de ambos.
 
 ## 9. Handoff para revisão independente
 
-- Revisar §2 (schema/semântica/compat) e §5 (allowlist/threat/reuse) como candidatos.
-- Decidir `LINK_SOURCE_TYPED` (§6) — recomendação: B2 sem links navegáveis até fonte tipada existir.
+- Revisar §2 (schema/semântica/compat — artefato `contracts/presentation-v2.proposal.schema.json`, validado 22/22), §4 (produtor = EXTEND `render_specialist_outcome`) e §5 (allowlist/threat/reuse corrigidos).
+- Decidir `LINK_SOURCE_TYPED` (§2.4/§6) — recomendação L1 (typed link field em `structured`); L3 só com aprovação explícita do Product Master.
+- Relatório de rework R1 com evidências completas: doc 86.
 - Se aprovado: próxima task bounded = `DELIA-UX-CONVERSATION-MARKDOWN-B2-G3-BRIEF` (brief de implementação por slice, sem código).
 - Estados que este documento **não** altera: `G1_CONTRACT_DECISION=PENDING`, `G2_SECURITY_REUSE=PENDING`, `G3/G4=PENDING`, `RUNTIME_IMPLEMENTATION=BLOCKED_UNTIL_GATES`, `C_D_E_TRACEABILITY_GAP=OPEN`, `CP-333=PLANNED`, `PHASE_PROGRESSION=NONE`.
