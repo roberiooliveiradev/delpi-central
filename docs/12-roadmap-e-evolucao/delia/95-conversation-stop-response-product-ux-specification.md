@@ -180,3 +180,10 @@ DEPLOY = NOT_AUTHORIZED
 PHASE_PROGRESSION = NONE
 NEXT = BOUNDED_FRONTEND_IMPLEMENTATION_IF_AUTHORIZED
 ```
+
+## 9. Registro de implementação frontend candidata (2026-10-16)
+
+**Task:** `DELIA-UX-CONVERSATION-STOP-RESPONSE-PLUGIN-UI-01`.
+O Product Master autorizou a implementação frontend nesta conversa. Composição visual implementada em `plugin-ui` por extensão de `MessageComposer`, reutilizando `ComposerSendButton` e adicionando `ComposerStopButton` no mesmo slot da toolbar. `DeliaComposer` apenas repassa props, e `App` gerencia AbortController com epoch por request. Stop é oferecido exclusivamente para MESSAGE sem confirmação/ACT, não para decisões governadas. Requisições tardias/atividade depois do abort não devem alterar estado. O stop local não confirma cancelamento remoto.
+
+**Evidência:** arquivos de código e testes comprometidos no GitHub. Sem ambiente de build/runner conectado, testes, typecheck, build, federação e QA de navegador seguem `TEST_NOT_RUN`; aceite independente `PENDING`. Nenhuma fase/CP foi promovida. **A entrega ainda depende de validação real**, inclusive concorrência entre requests, demo e browser dock/full-page.
