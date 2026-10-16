@@ -148,8 +148,8 @@ def test_invalid_reject_cannot_cancel_legitimate_pending():
     original = orch._pending_writes.get(ctx["proposal_digest"])
     assert original is not None
     rejected = _apply(orch, ctx, actor="different-user", decision="REJECT")
-    assert rejected.status is GovernedCapabilityStatus.WRITE_REJECTED
-    assert rejected.error_code == "confirmation_mismatch"
+    assert rejected.status is GovernedCapabilityStatus.AUTHZ_DENIED
+    assert rejected.error_code == "actor_mismatch"
     assert orch._pending_writes.get(ctx["proposal_digest"]) is original
     assert not any(name == "commit_record" for name, _ in provider.calls)
 
