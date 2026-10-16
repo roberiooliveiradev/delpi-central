@@ -1,0 +1,57 @@
+/* @delpi/plugin-ui — governed conversational Markdown, no host-specific overrides. */
+.delpi-ui-conversation-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  line-height: inherit;
+}
+.delpi-ui-conversation-markdown > :first-child { margin-top: 0; }
+.delpi-ui-conversation-markdown > :last-child { margin-bottom: 0; }
+.delpi-ui-conversation-markdown p,
+.delpi-ui-conversation-markdown blockquote,
+.delpi-ui-conversation-markdown ul,
+.delpi-ui-conversation-markdown ol,
+.delpi-ui-conversation-markdown pre { margin: 0.45em 0; }
+.delpi-ui-conversation-markdown ul,
+.delpi-ui-conversation-markdown ol { padding-inline-start: 1.5em; }
+.delpi-ui-conversation-markdown li + li { margin-top: 0.2em; }
+.delpi-ui-conversation-markdown li > p { margin: 0; }
+.delpi-ui-conversation-markdown h4,
+.delpi-ui-conversation-markdown h5,
+.delpi-ui-conversation-markdown h6 {
+  font: inherit;
+  font-weight: 650;
+  line-height: 1.35;
+  margin: 0.75em 0 0.3em;
+}
+.delpi-ui-conversation-markdown blockquote {
+  border-inline-start: 2px solid currentColor;
+  padding-inline-start: 0.85em;
+  opacity: 0.88;
+}
+.delpi-ui-conversation-markdown pre {
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 0.7em;
+  border-radius: 0.5em;
+  background: var(--surface-subtle, rgba(127, 127, 127, 0.09));
+}
+.delpi-ui-conversation-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  white-space: break-spaces;
+}
+.delpi-ui-conversation-markdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.delpi-ui-conversation-markdown a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.delpi-ui-conversation-markdown hr {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.2;
+  margin: 0.8em 0;
+}
