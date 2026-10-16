@@ -46,3 +46,9 @@ Validar rota interna/autorizada, links externos seguros, provider untrusted, per
 Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões ghost de repouso. Ícones 16–20px, hit target 40–44px, foco 2px, labels reais, keyboard e tooltip acessível; movimento 180–240ms ou nulo em `prefers-reduced-motion`. Validar container 1440/1280/1024/768/420/375/320px, zoom 200% e Companion Dock; sem overflow horizontal, remount de conversa ou perda de draft. Snapshots ou exemplos de UI nunca substituem dados/permission reais. Testes e browser QA permanecem `TEST_NOT_RUN`; independente `PENDING`.
 
 
+
+## Rework R1 — definição de boundary Portal/Core (R-05)
+
+**Decisão aplicável para o desenho da UX:** Plugins/Aplicações na DÉLIA representa **apenas descoberta ou atalhos para recursos já publicados e autorizados pelo Portal/Core**, sem segundo catálogo, Marketplace, instalador, permission broker ou local registry. `EXISTING_EQUIVALENT=YES` para **owner de apps/rotas** Portal/Core; `REUSE_DECISION=REUSE` por boundary/roteamento. **Disponibilidade de contrato específico e lista autorizada = TO_INVENTORY.**
+
+No rail, “Plugins” é affordance conceitual de produto; não enumerar apps indiscriminadamente. Sem projection oficial, `contract_unavailable` (se aprovada para visualização) ou ocultar; `forbidden` sempre oculto. Seleção de app = navegação aprovada, não ACT nem instalação. Se surgir requisito de gerenciar novos providers ou instalar plugins **dentro da DÉLIA**, `ARCHITECTURE_DECISION_REQUIRED` antes de redesenhar; não estender escopo silenciosamente.
