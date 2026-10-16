@@ -107,3 +107,5 @@ NEXT=INVENTORY_BASELINE_RED_THEN_MINIMAL_EXTEND
 ```
 
 After implementation evidence: `INDEPENDENT_STAGE_03_ARCHITECTURE_REVIEW`.
+
+**Post-implementation pointer (does not rewrite the authorize-time decision above):** evidence in [31](./31-stage-03-discovery-guidance-implementation-report.md) / ledger §6.205; `STAGE_03_ACCEPTED` remains `NO` until independent review.

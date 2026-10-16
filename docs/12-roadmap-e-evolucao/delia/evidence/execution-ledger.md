@@ -14211,3 +14211,16 @@ PHASE_PROGRESSION=NONE; INDEPENDENT_REVIEW=N/A_NO_RUNTIME_DIFF
 
 STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_AUTHORIZED=YES; STAGE_03_STARTED=NO; C3_EXECUTED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INVENTORY_BASELINE_RED_THEN_MINIMAL_EXTEND
+
+## §6.205 — DELIA-C3-STAGE-03-DISCOVERY-GUIDANCE-IMPLEMENTATION-01 (EVIDENCE_RECORDED; ACCEPTANCE PENDING)
+
+**DATA:** 2026-10-16. **MODE:** bounded EXTEND after §6.204 authorization. **TASK:** `DELIA-C3-CONVERSATIONAL-INTELLIGENCE-STAGE-03-IMPLEMENTATION-01`. **DOC:** `corrections/conversational-intelligence-c3/31-stage-03-discovery-guidance-implementation-report.md`. **AUTH_HEAD:** `3377302b71`. Note: historical ledger ID collision on §6.200 preserved; this entry is uniquely §6.205.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — `_requires_owner_vocabulary` for READ/ANALYSIS with *required* unconstrained string properties; unique same-group DISCOVERY peer still required at plan time; optional free strings do not trigger (anti-indiscriminate catalog).
+- **PROHIBITIONS HELD:** no second planner/registry/engine; no Chat reuse; no PendingWrite change; no material ACT; no owner-name branches; no new wire fields.
+- **TESTS:** D3-01..14 (+ optional-string negative) in `test_stage03_discovery_guidance.py`; D3-15 = Stage02/specialist/provider-neutral/turn-budget regression green; `REAL_MODEL_EVAL=TEST_NOT_RUN`.
+- **RQ:** RQ-S03-01..06 IMPLEMENTED under fake/scripted evidence only.
+- **NO CLAIMS:** `STAGE_03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; `MATERIAL_ACT_COUNT=0`.
+
+STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_AUTHORIZED=YES; STAGE_03_STARTED=YES; STAGE_03_IMPLEMENTATION=EVIDENCE_RECORDED; STAGE_03_ACCEPTED=NO; C3_EXECUTED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_STAGE_03_ARCHITECTURE_REVIEW
