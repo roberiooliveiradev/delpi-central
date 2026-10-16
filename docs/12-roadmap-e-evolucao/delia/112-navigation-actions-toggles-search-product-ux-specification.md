@@ -42,3 +42,13 @@ No rodapé visual, uma ação `Settings2` ou ícone semântico equivalente, dedi
 Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões ghost de repouso. Ícones 16–20px, hit target 40–44px, foco 2px, labels reais, keyboard e tooltip acessível; movimento 180–240ms ou nulo em `prefers-reduced-motion`. Validar container 1440/1280/1024/768/420/375/320px, zoom 200% e Companion Dock; sem overflow horizontal, remount de conversa ou perda de draft. Snapshots ou exemplos de UI nunca substituem dados/permission reais. Testes e browser QA permanecem `TEST_NOT_RUN`; independente `PENDING`.
 
 
+
+## Rework R1 — ações desambiguadas e widget contracts
+
+- `NavigationPanelToggle`: exatamente um controle por estado, no header de painel aberto ou topo do rail fechado; jamais duplicado no header central em página ampla. Em `launcher_only`, único botão no header da conversa.
+- `Nova conversa`: disabled até owner de sessão persistida + guardas de draft/stream/PREPARE/ACT + idempotência + postcondition; nenhum `setTurns([])` como “criação”.
+- `Pesquisar`: sem backend de histórico do doc 97, entrypoint disabled; nem input fake, nem busca local.
+- `Opções`: menu somente para comandos existentes/legítimos, sem duplicar settings do Portal.
+- `Fixar/Renomear/Arquivar/Excluir`: não fazem parte do shell frontend-only; menu apenas depois de contratos de write e autorização live.
+
+`EXISTING_EQUIVALENT=YES` para `IconButton`, `ConversationSidebarSearch` e `ConversationSidebar`; `REUSE_DECISION=EXTEND` dentro da composição única. Interfaces propostas são `onSelectCategory`, `onTogglePanel`, `onNewConversation?`, `onOpenSearch?`, `onOpenOptions?`; **callbacks opcionais nunca autorizam ação por si só**. A matriz owner/classificação está no [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md).
