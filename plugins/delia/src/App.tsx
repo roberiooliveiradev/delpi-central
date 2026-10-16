@@ -21,6 +21,7 @@ import {
   ConversationError,
   ConversationHeader,
   ConversationWorkspace,
+  ConversationScrollNavigator,
 } from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
@@ -106,6 +107,7 @@ export default function App({
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const turnsEndRef = useRef<HTMLDivElement | null>(null);
   const nearBottomRef = useRef(true);
+  const [showScrollNavigator, setShowScrollNavigator] = useState(false);
 
   useEffect(() => {
     const end = turnsEndRef.current;
@@ -115,8 +117,11 @@ export default function App({
     if (!end || !(nearBottomRef.current || last?.role === "user")) {
       return;
     }
-    if (typeof end.scrollIntoView === "function") {
-      end.scrollIntoView({ block: "end" });
+    const viewport = scrollRegionRef.current;
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
+      nearBottomRef.current = true;
+      setShowScrollNavigator(false);
     }
   }, [turns, loading]);
 
@@ -132,6 +137,15 @@ export default function App({
     nearBottomRef.current =
       el.scrollHeight - el.scrollTop - el.clientHeight <
       NEAR_BOTTOM_THRESHOLD_PX;
+    setShowScrollNavigator(turns.length > 0 && !nearBottomRef.current);
+  }
+
+  function handleGoToLatest() {
+    const viewport = scrollRegionRef.current;
+    if (!viewport) return;
+    viewport.scrollTop = viewport.scrollHeight;
+    nearBottomRef.current = true;
+    setShowScrollNavigator(false);
   }
 
   async function sendTurn(
@@ -341,6 +355,12 @@ export default function App({
           aria-label="Interação com a DÉLIA"
           bodyRef={scrollRegionRef}
           onBodyScroll={handleTimelineScroll}
+          scrollNavigator={
+            <ConversationScrollNavigator
+              visible={turns.length > 0 && showScrollNavigator}
+              onGoToLatest={handleGoToLatest}
+            />
+          }
           header={
             <ConversationHeader
               title="DÉLIA"
