@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+
 **Evidência e gate pós-merge vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A14=INCONCLUSIVE` até requisitos verificados).
 
 **TARGET / A14 HISTORICAL_REVIEW_PASS / POSTMERGE_REVALIDATION_INCONCLUSIVE / GLOBAL_FREEZE_NOT_AUTHORIZED**
@@ -327,7 +329,7 @@ PACKAGE_FINALIZED
 Regras:
 - package permanece na Minha DELPI;
 - reviewer possui login/app access;
-- reviewer usa `controllership-finance.access` + resource scope/assignment;
+- reviewer usa ACCESS efetivo **AND** grupo/função Core elegível **AND** área obrigatória da PackageVersion **AND** resource scope/assignment **AND** regra do P5; Core T05 S2S de elegibilidade permanece TO_INVENTORY;
 - Core Notifications avisa in-app e pode também enviar e-mail;
 - e-mail não transporta package;
 - package não vai como attachment;
@@ -366,7 +368,7 @@ FRONTEND_PATTERN_CONSISTENCY = PASS
 SECURITY_CONSISTENCY         = PASS
 HELP_CONSISTENCY             = PASS
 STATE_CONSISTENCY            = PASS
-CONTRACT_CONSISTENCY         = PASS_WITH_PENDING_P5_TERMINAL_AUTHORITY
+CONTRACT_CONSISTENCY         = P5_C2_DEC01_TO_04_APPROVED / T05_BINDING_TO_INVENTORY
 IMPLEMENTATION_AUTHORIZED    = NO
 ```
 

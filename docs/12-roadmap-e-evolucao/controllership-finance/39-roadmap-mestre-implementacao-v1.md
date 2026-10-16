@@ -1,5 +1,7 @@
 # 39 — Roadmap Mestre de Implementação V1 — Portal Controladoria & Finanças
 
+> **Última revalidação:** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). A16 continua INCONCLUSIVE; o roadmap permanece PLANNED e não autoriza runtime.
+
 > **Estado:** TARGET / PLANNED / DOCUMENTATION_ONLY — 16/10/2026. Plano executivo para futura execução incremental, não é ordem para desenvolver nem prova de runtime.
 >
 > **Gate vigente:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`; `A12/A14/A15 = INCONCLUSIVE` conforme [38 — rebaseline e evidências](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md). Qualquer referência anterior a PASS permanece histórica até revalidação formal.

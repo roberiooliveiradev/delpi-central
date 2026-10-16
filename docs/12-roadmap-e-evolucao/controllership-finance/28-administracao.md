@@ -1034,10 +1034,11 @@ Não publicar catálogo ainda não implementado.
 
 ## RQ / AC
 
-### RQ-ADM-01 — acesso simples
+### RQ-ADM-01 — acesso administrativo efetivo e por escopo
 Aceite:
-- rota exige `controllership-finance.manage`;
-- MANAGE não implica ACCESS operacional;
+- rota administrativa exige `controllership-finance.manage` efetivo;
+- publicar/alterar catálogos exige **também escopo administrativo permitido**, justificativa e auditoria conforme DEC-04;
+- MANAGE não implica ACCESS operacional e não autoriza write fora do scope;
 - nenhum permission code adicional.
 
 ### RQ-ADM-02 — IA administrativa enxuta

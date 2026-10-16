@@ -89,6 +89,8 @@ Este ledger complementa:
 | RQ-P5-AREA-02 | nova versão não herda aceites | nova PackageVersion exige novos aceites de todas as áreas e preserva histórico de versão anterior | positive + sibling + negative | P5-E / D-P5-02 | TARGET / PO_APPROVED |
 | RQ-P5-AREA-03 | reatribuição preserva aceite válido e autoria | substituição de usuário não altera/atribui retroativamente aceite já dado; substituto só age depois da atribuição autorizada | positive + sibling + audit | P5-F/B / DEC-03 | TARGET / PO_APPROVED |
 | RQ-P5-AREA-04 | eligibility e AuthZ fail-closed | ACCESS efetivo + grupo/função elegível + scope + regra da ação; ACCESS isolado, MANAGE isolado e Core indisponível não autorizam aceite | positive + sibling + negative | P5-C / Core T05 | TARGET / CORE_ATTRIBUTE_CONTRACT_TO_INVENTORY |
+| RQ-P5-AREA-05 | política para tipo P6 sem áreas obrigatórias | **Não decidido** se um conjunto vazio pode ser publicado/encerrar C2; não inferir aceite automático nem bloquear por opção inventada. Escolha explícita do PO no doc 44 | contract/negative **PLANNED após decisão** | D-FINAL-02 / P5-A/H / C2 | DECISION_REQUIRED / NOT_IMPLEMENTED |
+| RQ-P5-AREA-06 | fonte corporativa autorizada para área elegível | Core groups existem, mas o S2S atual não retorna atributo corporativo tipado; nenhuma permissão/lookup inventado; fail-closed | S2S producer/consumer positive+sibling+negative após inventory | D-FINAL-01 / P5-C / Core T05 | TO_INVENTORY / CONTRACT_PENDING |
 | RQ-P5-TERM-01 | rejeição de área não rejeita competência automaticamente | resultado da área gera proposta pendente; somente coordenador formal com ACCESS e vínculo/scope confirma com motivo | positive + negative + audit | P5-I / DEC-01/02 | TARGET / PHYSICAL_BINDING_TO_INVENTORY |
 | RQ-P5-TERM-02 | rejeição terminal interrompe ações pendentes | competência rejeitada não conclui C2; TaskProjection deixa de ser acionável, histórico/auditoria preservados | positive + sibling + negative | P5-D/J | TARGET / PO_APPROVED |
 | RQ-P5-TERM-03 | aceite P5 irreversível na V1 | não há API nem botão de reversão/retificação; P2 validação de evidência tem fluxo independente | negative + boundary + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
@@ -106,7 +108,7 @@ Este ledger complementa:
 | RQ-P6-06 | motivos de rejeição = núcleo + extensões | inativação preserva códigos históricos | positive + sibling | E06 | TARGET |
 | RQ-P6-07 | attachment roles são catalogados com genérico quando permitido | role obrigatório/configurado respeitado | positive + negative | E05 | TARGET |
 | RQ-P6-08 | notification targets usam opções governadas | targets inválidos não são free-form | positive + negative | T02 | TARGET |
-| RQ-P6-09 | um MANAGE pode publicar com auditoria no target atual | segundo MANAGE não é requisito implícito | positive | T05 | TARGET |
+| RQ-P6-09 | MANAGE efetivo **AND** escopo administrativo publica configuração versionada | um publicador autorizado, motivo/audit e vigência prospectiva; segundo MANAGE não é requisito; ACCESS isolado e MANAGE sem scope falham | positive + sibling + permission/scope negative | T05 / DEC-04 / P5-H | TARGET / PO_APPROVED |
 | RQ-P6-10 | Help explica draft/publish/effective_from/snapshot/inativação | conteúdo contextual disponível | UI/help check | feature help | TARGET |
 
 ## Superfícies da topbar
@@ -248,7 +250,7 @@ Nenhum RQ pode ser marcado PASS apenas porque outro RQ da mesma página passou.
 | ID | Resultado aprovado | Invariante |
 |---|---|---|
 | **P5-F = A** | Substituição de responsável mantém válido o aceite já realizado para a mesma área e PackageVersion; a autoria permanece a do executor original. Substituto assume somente ações futuras. | REASSIGNMENT != INVALIDATE_PRIOR_ACCEPTANCE |
-| **P5-G = A** | Aceite P5 não é reversível/alterável pela UI V1. Eventual erro exige processo excepcional separado, formal, auditado e **não autorizado enquanto seu contrato não for aprovado**. | NO_P5_ACCEPTANCE_REVERSAL_IN_V1 |
+| **P5-G = A** | Aceite P5 não é reversível/alterável pela UI V1. DEC-03 exclui qualquer processo de reversão/retificação do aceite P5 **dentro do Portal V1**, inclusive endpoint ou override; incidentes são tratados fora do fluxo. | NO_P5_ACCEPTANCE_REVERSAL_IN_V1 |
 | **P5-H = A** | P6 configura por tipo de pacote as áreas/especialidades obrigatórias em versão governada; P5 congela a configuração aplicável na submissão. Core fornece identidade, effective permissions e atributos de grupo/função conforme contrato a inventariar. | REVIEW_AREA_SET_SNAPSHOTTED_ON_SUBMISSION |
 | **P5-I = B** | Reviewer elegível registra rejeição do pacote em nome da área; uma **autoridade operacional formalmente definida**, distinta da simples permission MANAGE, confirma com justificativa e auditoria a rejeição terminal da competência. | AREA_PACKAGE_REJECTION != TERMINAL_COMPETENCE_REJECTION |
 | **P5-J = A** | Após confirmação da rejeição terminal, a competência fica rejeitada e todas as projeções/tarefas de revisão ainda acionáveis deixam de sê-lo; histórico, decisões e autoria permanecem consultáveis conforme AuthZ. | REJECTED_COMPETENCE != MONTHLY_CLOSING_COMPLETED |
@@ -270,18 +272,18 @@ Preservar identidade Core do ator, data/hora, ação, contexto competência/reci
 
 ### Pendências reais — sem aprovação presumida
 
-1. **DECISION_REQUIRED:** quem é a autoridade operacional de confirmação de rejeição terminal; como é designada e substituída, e se a confirmação pode ser negada (e qual estado fica então). Não equiparar automaticamente a `manage`.
-2. **DECISION_REQUIRED:** procedimento excepcional de correção de aceite P5 fora da UI V1 (owner, autorização, efeitos na conclusão mensal e revalidação), se for implementado nesta versão; na ausência de decisão, **capability não existe na V1**.
+1. **PO_APPROVED DEC-01/02:** a pessoa formalmente designada para coordenar o fechamento da competência confirma rejeição terminal apenas com ACCESS efetivo, vínculo operacional, scope e business rule; se não confirmar, registra motivo e mantém decisão pendente, com possível devolução auditada para esclarecimento/correção. **TO_INVENTORY:** fonte operacional da designação/substituição e binding técnico, sem usar MANAGE como atalho.
+2. **PO_APPROVED DEC-03:** retificação/reversão de aceite P5 não existe **nem por UI nem por endpoint na V1**. Incidentes são registrados fora do fluxo do Portal; não criar mecanismo excepcional, override ou alteração de banco para essa capability.
 3. **TO_INVENTORY / STOP ON DRIFT:** fonte canônica dos grupos/funções corporativas e sua associação às áreas, contract Core (T05), elegibilidade de múltiplos usuários; não presumir que RBAC do Core tem os atributos necessários.
-4. **CONTRACT_PENDING:** mapa versionado tipo de pacote → áreas obrigatórias em P6; regras de publicação/vigência/snapshot, defaults inválidos, configuração ausente e concorrência; não inventar tabelas/migrations.
+4. **PO_APPROVED P5-H/DEC-04; PHYSICAL_BINDING_TO_INVENTORY:** P6 versiona áreas obrigatórias por tipo de pacote e MANAGE+administrative scope publica prospectivamente com motivo e auditoria; P5 congela snapshot por submissão. Falta inventariar schema/DTO/OCC, source de função/grupo, vigência e tratamento de configuração ausente, sem criar tabelas/migrations antecipadas.
 5. **CONTRACT_PENDING:** outcome de rejeição do pacote versus confirmação terminal da competência, estados técnicos definitivos, falha/conflito no commit, event projection/notifications/Help e matrizes de testes positive+sibling+negative.
 
 **Gates:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_CONTRACT_AND_OWNER`; `IMPLEMENTATION_AUTHORIZED = NO`. Nenhum teste de runtime foi executado; `TEST_NOT_RUN`. Nenhum merge/rebase autorizado por este registro.
 
 | RQ-P5-F | Reatribuição preserva aceite por área/versão | aceite original continua válido; autoria não muda; novo elegível assume ações futuras | positive + sibling + audit | P5-F / Core T05 | TARGET |
-| RQ-P5-G | Aceite P5 irreversível na UI V1 | nem autor nem substituto conseguem editar/reverter; exceção não implementada | negative + audit | P5-G | TARGET |
+| RQ-P5-G | Aceite P5 irreversível pela UI **e pela API** V1 | nem autor nem substituto conseguem editar/reverter por endpoint ou tela; incidentes fora do Portal V1 | negative endpoint + UI + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
 | RQ-P5-H | P6 versiona áreas obrigatórias por tipo e P5 congela na submissão | mudança P6 posterior não muda revisão aberta | snapshot + sibling + negative | P5-H / ADM / T05 | TARGET / CONTRACT_PENDING |
-| RQ-P5-I | Rejeição do pacote e confirmação terminal da competência separadas | rejeição por área não conclui nem encerra automaticamente; autoridade formal confirma com motivo | transitions + authz negative | P5-I / owner DECISION_REQUIRED | TARGET / CONTRACT_PENDING |
+| RQ-P5-I | Rejeição do pacote e confirmação terminal da competência separadas | rejeição por área não conclui nem encerra automaticamente; coordenador formal com ACCESS/vínculo/scope confirma com motivo; sem confirmação mantém pendência | positive + sibling + transitions + authz negative | P5-I / DEC-01/02 / Core T05 | TARGET / PO_APPROVED / PHYSICAL_BINDING_TO_INVENTORY |
 | RQ-P5-J | Rejeição terminal remove acionabilidade das tasks | projections deixam de ser acionáveis, histórico não é apagado | positive + sibling + negative | P5-J / TSK | TARGET |
 
 

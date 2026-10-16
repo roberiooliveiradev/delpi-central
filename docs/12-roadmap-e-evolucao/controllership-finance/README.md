@@ -24,6 +24,8 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 
 ## Estado
 
+**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+
 - AS-IS PROC-0072: **CLOSED / ACCEPTED**
 - baseline: **1 fechamento/mês; 960 min INFORMED**
 - TO-BE: **TARGET consolidado**

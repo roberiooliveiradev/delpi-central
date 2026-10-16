@@ -2,6 +2,8 @@
 
 ## Estado
 
+**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+
 **Verificação pós-merge (vigor atual):** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 **TARGET / DOCUMENTATION_CLOSURE_PHASE ACTIVE**
@@ -584,7 +586,7 @@ A fase documental deve reavaliar os E-items para separar **dado de implantação
 | E01 | seed bancário | tentar fechar owner/semântica; valores seed podem permanecer implantação se não alterarem contract |
 | E02 | correção pós-STOCK_CLOSED | **CLOSED / PRODUCT_DECISION**: STOCK_CLOSED terminal no Portal V1; correção posterior fica no owner canônico; futura expansão exige novo gate |
 | E03 | executor/permissões de sacramentação | provar owner/segregação até o nível necessário para boundary/Help; binding físico pode ficar T03/T05 |
-| E04 | canal real de envio | não inventar; enquanto ausente, envio real permanece slice bloqueado |
+| E04 | canal real de envio | **CLOSED / NOT_REQUIRED_IN_V1**: PO aprovou submissão interna ao Portal; não depender de Graph/anexo externo. T02/Core é responsável pelo aviso |
 | E05 | attachment roles | semântica já fechada; seed pode ficar implantação |
 | E06 | motivos de rejeição | modelo já fechado; seed/cobertura inicial pode ficar implantação |
 
@@ -611,7 +613,7 @@ T01–T05 permanecem inventários técnicos **quando** não alterarem o contrato
 - T01 — bindings DAVI/api-delpi;
 - T02 — capability Core PROVEN; adapter/configuração do produto TO_INVENTORY;
 - T03 — owner/canonical STOCK_CLOSED;
-- T04 — capability corporativa de envio;
+- T04 — envio externo **CLOSED / NOT_REQUIRED_IN_V1**; pacote P5 é submetido à Minha DELPI e Core Notifications apenas avisa;
 - T05 — Core effective permissions/scopes.
 
 Se o inventário provar semântica incompatível com o TARGET:

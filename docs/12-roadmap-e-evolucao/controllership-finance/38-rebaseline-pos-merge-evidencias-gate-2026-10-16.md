@@ -1,5 +1,7 @@
 # 38 — Rebaseline pós-merge, evidências e gate transversal (16/10/2026)
 
+> **EVIDÊNCIA HISTÓRICA:** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md) registra a revisão posterior sobre o HEAD mais recente, as correções e D-FINAL-01/02. Os estados de outubro anteriores neste arquivo são snapshots, não o gate atual.
+
 ## Estado e alcance
 
 **TARGET / EVIDENCE_REVIEWED / A12+A14+A15 INCONCLUSIVE.**
