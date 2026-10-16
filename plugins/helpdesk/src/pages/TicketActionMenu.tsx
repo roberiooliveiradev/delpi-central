@@ -54,7 +54,7 @@ export function TicketActionMenu({
           selected
             ? `Ação ativa: ${selected.label}`
             : pendingDecision
-              ? "Escolher ação do chamado — solução aguardando sua decisão"
+              ? "Escolher ação do chamado — decisão pendente"
               : "Escolher ação do chamado"
         }
         aria-expanded={open}

@@ -24,7 +24,7 @@ export const helpTooltips = {
   detailUi: {
     back: "Volta à lista com o mesmo recorte (filtros e página).",
     actionMenu:
-      "Ações do chamado: responder, solução, tarefa, anexo, aprovação e aceitar/recusar solução — só o liberado.",
+      "Ações do chamado: responder, solução, tarefa, anexo, aprovação, avaliar e decidir — só o liberado.",
     reply:
       "Formatação, @ para mencionar, clipe, colar ou arrastar. Arraste o canto da imagem para redimensionar.",
     createSolution: "Registre a solução deste chamado.",

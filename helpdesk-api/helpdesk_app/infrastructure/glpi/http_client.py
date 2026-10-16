@@ -1342,6 +1342,23 @@ class HttpxGlpiClient:
                     }
                 },
             )
+            # Authoritative read-back: HTTP 201 alone is not proof of persistence.
+            rows = self._legacy_get_json(
+                session_token, f"/apirest.php/Ticket/{ticket_id}/TicketSatisfaction"
+            )
+            persisted = any(
+                isinstance(row, dict) and int(row.get("satisfaction") or 0) == int(satisfaction)
+                for row in (rows if isinstance(rows, list) else [])
+            )
+            if not persisted:
+                logger.warning(
+                    "glpi_satisfaction_unverified ticket_id=%s satisfaction=%s",
+                    ticket_id,
+                    satisfaction,
+                )
+                raise GlpiUnavailable(
+                    "Avaliação não confirmada pelo helpdesk. Tente novamente."
+                )
         finally:
             self._legacy_kill_session(session_token)
 
@@ -1362,22 +1379,88 @@ class HttpxGlpiClient:
             raise GlpiValidation("ticket_id inválido.")
         self._legacy_require_ready()
         self._json("GET", f"/api.php/v2.2/Assistance/Ticket/{ticket_id}", token=access_token)
-        body: dict = {
-            "input": {
-                "itemtype": "Ticket",
-                "items_id": ticket_id,
-                "content": content,
-            }
+        # The legacy write runs as a technical account, so ITILFollowup.users_id
+        # is stamped with the uploader. Resolve the actor's GLPI id to restore
+        # end-user attribution right after the followup exists (H12 pattern).
+        owner_user_id = self.session_user_id(access_token)
+        input_body: dict = {
+            "itemtype": "Ticket",
+            "items_id": ticket_id,
+            "content": content,
         }
+        if owner_user_id is not None:
+            input_body["users_id"] = owner_user_id
+        body: dict = {"input": input_body}
         if add_close:
             body["input"]["add_close"] = 1
         if add_reopen:
             body["input"]["add_reopen"] = 1
         session_token = self._legacy_init_session()
         try:
-            self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
+            created = self._legacy_post_json(session_token, "/apirest.php/ITILFollowup", body)
+            followup_id = int(created.get("id") or 0)
+            if owner_user_id is not None and followup_id > 0:
+                self._legacy_restore_followup_author(
+                    session_token=session_token,
+                    followup_id=followup_id,
+                    users_id=owner_user_id,
+                )
         finally:
             self._legacy_kill_session(session_token)
+
+    def _legacy_restore_followup_author(
+        self,
+        *,
+        session_token: str,
+        followup_id: int,
+        users_id: int,
+    ) -> None:
+        """Restore end-user authorship on a followup written by the technical session."""
+        try:
+            row = self._legacy_get_json(
+                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_read_failed followup_id=%s", followup_id
+            )
+            row = {}
+        if isinstance(row, dict) and int(row.get("users_id") or 0) == int(users_id):
+            logger.info(
+                "glpi_followup_author ok followup_id=%s users_id=%s",
+                followup_id,
+                users_id,
+            )
+            return
+        try:
+            self._legacy_put_json(
+                session_token,
+                f"/apirest.php/ITILFollowup/{int(followup_id)}",
+                {"input": {"id": int(followup_id), "users_id": int(users_id)}},
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_restore_failed followup_id=%s", followup_id
+            )
+            return
+        try:
+            check = self._legacy_get_json(
+                session_token, f"/apirest.php/ITILFollowup/{int(followup_id)}"
+            )
+        except Exception:
+            logger.info(
+                "glpi_followup_author_unverified followup_id=%s", followup_id
+            )
+            return
+        restored = (
+            isinstance(check, dict) and int(check.get("users_id") or 0) == int(users_id)
+        )
+        logger.info(
+            "glpi_followup_author %s followup_id=%s users_id=%s",
+            "restored" if restored else "mismatch",
+            followup_id,
+            users_id,
+        )
 
     def _legacy_ready(self) -> bool:
         return bool(
@@ -1443,7 +1526,7 @@ class HttpxGlpiClient:
         return {}
 
     def _legacy_put_json(self, session_token: str, path: str, body: dict, *, app_token: str = "") -> dict:
-        """apirest PUT — used by the profile-sync technical writer only."""
+        """apirest PUT — bounded writes: profile sync, document owner and followup author restore."""
         try:
             response = self._http.request(
                 "PUT",

@@ -1557,6 +1557,14 @@
   --helpdesk-action-accent: #16a34a;
 }
 
+.dashboard-helpdesk [data-action-variant="validation"] {
+  --helpdesk-action-accent: #7c3aed;
+}
+
+.dashboard-helpdesk [data-action-variant="satisfaction"] {
+  --helpdesk-action-accent: #ca8a04;
+}
+
 .dashboard-helpdesk [data-action-variant="reject"] {
   --helpdesk-action-accent: var(--helpdesk-danger, #b42318);
 }

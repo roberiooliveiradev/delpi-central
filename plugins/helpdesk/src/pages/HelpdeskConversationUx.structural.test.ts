@@ -87,6 +87,21 @@ describe("HELPDESK-MFE-UX-001-R3 conversation detail", () => {
     expect(lifecycle).toContain("Chamado encerrado");
   });
 
+  it("satisfaction lives inside the submit_satisfaction action card", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const start = detail.indexOf('{activeAction === "submit_satisfaction"');
+    expect(start).toBeGreaterThan(-1);
+    const end = detail.indexOf('activeAction === "create_solution" ? (');
+    const block = detail.slice(start, end > start ? end : undefined);
+    expect(block).toContain('actionId="submit_satisfaction"');
+    expect(block).toContain('role="radiogroup"');
+    expect(block).toContain("setSatisfactionScore");
+    expect(block).toContain("runSatisfaction");
+    expect(block).toContain("helpdesk-satisfaction__comment-toggle");
+    expect(block).toContain("Enviar avaliação");
+  });
+
   it("does not invent response capability on closed tickets", () => {
     const page = read("HelpdeskPage.tsx");
     const actions = read("../presentation/ticketWorkspaceActions.ts");
@@ -300,7 +315,7 @@ describe("HELPDESK-UNIFIED-RICH-TEXT-COMPOSER-V1 canonical editor", () => {
     const start = detail.indexOf(
       '{activeAction === "accept_solution" ||',
     );
-    const end = detail.indexOf('activeAction === "create_solution" ? (');
+    const end = detail.indexOf('activeAction === "decide_validation" ? (');
     const block = detail.slice(start, end > start ? end : undefined);
     expect(block).toContain("HelpdeskRichTextField");
     expect(block).toContain("value={cycleNote}");
@@ -312,15 +327,31 @@ describe("HELPDESK-UNIFIED-RICH-TEXT-COMPOSER-V1 canonical editor", () => {
     const page = read("HelpdeskPage.tsx");
     const surface = read("TicketApprovalsSurface.tsx");
     const detail = page.slice(page.indexOf("function TicketDetailPage"));
-    const cue = detail.slice(
-      detail.indexOf("helpdesk-lifecycle-validation"),
+    const card = detail.slice(
+      detail.indexOf('{activeAction === "decide_validation"'),
       detail.indexOf("helpdesk-satisfaction"),
     );
-    expect(cue).toContain("HelpdeskRichTextField");
-    expect(cue).not.toContain("<input");
+    expect(card).toContain("HelpdeskRichTextField");
+    expect(card).not.toContain("<input");
     expect(surface).toContain("HelpdeskRichTextField");
     expect(surface).toContain("value={cycleNote}");
     expect(surface).not.toContain("<input");
+  });
+
+  it("validation decisions live inside the decide_validation action card", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const start = detail.indexOf('{activeAction === "decide_validation"');
+    expect(start).toBeGreaterThan(-1);
+    const end = detail.indexOf('activeAction === "submit_satisfaction"');
+    const block = detail.slice(start, end > start ? end : undefined);
+    expect(block).toContain('actionId="decide_validation"');
+    expect(block).toContain("pendingValidations.map");
+    expect(detail).toContain("item.mine_to_decide");
+    expect(block).toContain("runValidationDecision(item.id, \"accept\")");
+    expect(block).toContain("runValidationDecision(item.id, \"reject\")");
+    expect(block).toContain("HelpdeskRichTextField");
+    expect(block).toContain("submission_comment");
   });
 
   it("satisfaction comment stays plain text (GLPI field is TEXT) but multiline", () => {
@@ -369,7 +400,7 @@ describe("HELPDESK-UNIFIED-ACTION-MENU-V1 single action menu", () => {
     expect(menu).toContain('data-pending-decision={isPendingDecision ? "true" : undefined}');
     expect(menu).toContain("helpdesk-action-menu__item--pending");
     expect(menu).toContain("helpdesk-action-menu__pending-dot");
-    expect(menu).toContain("solução aguardando sua decisão");
+    expect(menu).toContain("decisão pendente");
     expect(css).toContain(".helpdesk-action-menu__item--pending");
     expect(css).toContain(".helpdesk-action-menu__pending-dot");
     expect(css).toContain('.helpdesk-action-menu__trigger[data-pending-decision="true"]');
@@ -387,5 +418,86 @@ describe("HELPDESK-UNIFIED-ACTION-MENU-V1 single action menu", () => {
     // The menu is the single entry point.
     expect(detail.match(/TicketActionMenu/g)?.length ?? 0).toBe(1);
     expect(detail).toContain('idleLabel="Ações do chamado"');
+  });
+});
+
+describe("HELPDESK-UNIFIED-LIFECYCLE-ACTIONS-V1 lifecycle in menu", () => {
+  it("satisfaction and validation decision are selector actions gated by BFF capabilities", () => {
+    const actions = read("../presentation/ticketWorkspaceActions.ts");
+    const presentation = read("../presentation/ticketActionPresentation.ts");
+    expect(actions).toContain('"decide_validation"');
+    expect(actions).toContain('"submit_satisfaction"');
+    expect(actions).toContain("can_decide_validation");
+    expect(actions).toContain("can_submit_satisfaction");
+    expect(presentation).toMatch(
+      /SELECTOR_ACTION_IDS[\s\S]*?"decide_validation"[\s\S]*?"submit_satisfaction"/,
+    );
+    expect(presentation).toMatch(
+      /PENDING_DECISION_ACTION_IDS[\s\S]*?"decide_validation"/,
+    );
+    expect(presentation).not.toMatch(
+      /PENDING_DECISION_ACTION_IDS[\s\S]*?"submit_satisfaction"/,
+    );
+  });
+
+  it("top cue has no interactive lifecycle controls — hints point to the menu", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const cueStart = detail.indexOf("cue.showValidationActions");
+    const cueEnd = detail.indexOf("</HelpdeskStateBanner>", cueStart);
+    const validationBlock = detail.slice(cueStart, cueEnd);
+    expect(validationBlock).not.toContain("<ActionButton");
+    expect(validationBlock).not.toContain("<input");
+    expect(validationBlock).not.toContain("type=\"radio\"");
+    expect(validationBlock).not.toContain("runValidationDecision(");
+    expect(validationBlock).not.toContain("runSatisfaction");
+    expect(validationBlock).not.toContain("HelpdeskRichTextField");
+    expect(validationBlock).not.toContain("HelpdeskTextArea");
+    expect(validationBlock).toContain("menu de ações");
+  });
+
+  it("lifecycle flags still project pending state into the cue as information", () => {
+    const page = read("HelpdeskPage.tsx");
+    const lifecycle = read("../presentation/solicitanteLifecycle.ts");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    expect(detail).toContain("cue.showValidationActions");
+    expect(detail).toContain("cue.showSatisfactionForm");
+    expect(detail).toContain("cue.showNativeActions");
+    expect(lifecycle).toContain("showValidationActions");
+    expect(lifecycle).toContain("showSatisfactionForm");
+    expect(lifecycle).toContain("showNativeActions");
+  });
+
+  it("menu stays available when only lifecycle actions remain (closed ticket)", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    expect(detail).toContain(
+      "selectorActions.length > 0 || workspaceActions.length > 0",
+    );
+    // Satisfaction/validation cards render inside the composer, not the cue.
+    const composerStart = detail.indexOf(
+      'className="helpdesk-ticket-workspace__composer"',
+    );
+    expect(composerStart).toBeGreaterThan(-1);
+    const composer = detail.slice(composerStart);
+    expect(composer).toContain('activeAction === "decide_validation"');
+    expect(composer).toContain('activeAction === "submit_satisfaction"');
+  });
+
+  it("draft guard covers the new lifecycle cards", () => {
+    const page = read("HelpdeskPage.tsx");
+    const detail = page.slice(page.indexOf("function TicketDetailPage"));
+    const dirty = detail.slice(
+      detail.indexOf("function isActiveActionDirty"),
+      detail.indexOf("function confirmDiscardDraft"),
+    );
+    expect(dirty).toContain('"decide_validation"');
+    expect(dirty).toContain('"submit_satisfaction"');
+    const cancel = detail.slice(
+      detail.indexOf("function cancelActiveActionForm"),
+      detail.indexOf("function closeActionAfterSuccess"),
+    );
+    expect(cancel).toContain('"decide_validation"');
+    expect(cancel).toContain('"submit_satisfaction"');
   });
 });

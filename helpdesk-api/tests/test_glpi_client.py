@@ -1444,6 +1444,166 @@ def test_legacy_cycle_accept_reject_satisfaction():
     assert any("TicketSatisfaction" in item for item in calls)
 
 
+def test_satisfaction_submit_fails_closed_when_readback_missing():
+    """201 on POST alone is not persistence proof — a read-back that finds no
+    satisfaction row must surface an error, not a silent success."""
+    from helpdesk_app.domain.errors import GlpiUnavailable
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t", "status": {"id": 6}})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-sat"})
+        if request.url.path.endswith("/apirest.php/TicketSatisfaction"):
+            return httpx.Response(201, json={"id": 9})
+        if request.url.path.endswith("/apirest.php/Ticket/7/TicketSatisfaction"):
+            return httpx.Response(200, json=[])
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    with pytest.raises(GlpiUnavailable):
+        client.submit_ticket_satisfaction("oauth", 7, satisfaction=4, comment="ok")
+
+
+def test_legacy_cycle_write_restores_actor_as_followup_author():
+    """#1299 regression: accept/reject followup must carry the OAuth actor's
+    users_id, not the technical uploader account. POST users_id is attempted
+    first; if GLPI stamps the session user, a bounded PUT restores it."""
+    calls: list[str] = []
+    author_update: dict | None = None
+    followup_state = {"users_id": 75}  # stamped as minha-delpi-upload (75)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal author_update
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t", "status": {"id": 5}})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            assert request.headers.get("Authorization") == "Bearer oauth-access"
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if (
+            request.url.path.endswith("/apirest.php/ITILFollowup/77")
+            and request.method == "PUT"
+        ):
+            author_update = json.loads(request.content.decode())["input"]
+            followup_state["users_id"] = author_update["users_id"]
+            return httpx.Response(200, json=[{"77": True}])
+        if request.url.path.endswith("/apirest.php/ITILFollowup/77"):
+            return httpx.Response(
+                200, json={"id": 77, "users_id": followup_state["users_id"]}
+            )
+        if request.url.path.endswith("/apirest.php/ITILFollowup"):
+            body = json.loads(request.content.decode())
+            assert body["input"]["items_id"] == 7
+            assert body["input"]["users_id"] == 68
+            return httpx.Response(201, json={"id": 77})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    client.accept_ticket_solution("oauth-access", 7, "resolvido")
+    assert author_update == {"id": 77, "users_id": 68}
+    assert "GET /api.php/v2.2/session" in calls
+    assert "GET /apirest.php/ITILFollowup/77" in calls
+
+
+def test_legacy_cycle_write_skips_restore_when_post_honors_users_id():
+    """When GLPI honors input users_id on POST, read-back shows the actor —
+    no extra PUT is issued."""
+    calls: list[str] = []
+    put_calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.method == "PUT":
+            put_calls.append(request.url.path)
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(200, json={"user_id": 68})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if request.url.path.endswith("/apirest.php/ITILFollowup/77"):
+            return httpx.Response(200, json={"id": 77, "users_id": 68})
+        if request.url.path.endswith("/apirest.php/ITILFollowup"):
+            return httpx.Response(201, json={"id": 77})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    client.reject_ticket_solution("oauth-access", 7, "recuso")
+    assert put_calls == []
+    assert "GET /apirest.php/ITILFollowup/77" in calls
+
+
+def test_legacy_cycle_write_succeeds_without_session_identity():
+    """Identity resolution failure must not break the cycle write itself —
+    the followup is still created (previous behavior, minus attribution)."""
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.url.path.endswith("/Assistance/Ticket/7"):
+            return httpx.Response(200, json={"id": 7, "name": "t"})
+        if request.url.path.endswith("/api.php/v2.2/session"):
+            return httpx.Response(403, json={"error": "forbidden"})
+        if request.url.path.endswith("/apirest.php/initSession"):
+            return httpx.Response(200, json={"session_token": "sess-cycle"})
+        if request.url.path.endswith("/apirest.php/ITILFollowup"):
+            body = json.loads(request.content.decode())
+            assert "users_id" not in body["input"]
+            return httpx.Response(201, json={"id": 78})
+        if request.url.path.endswith("/apirest.php/killSession"):
+            return httpx.Response(200, json={})
+        return httpx.Response(404, json={"error": "missing"})
+
+    client = HttpxGlpiClient(
+        base_url="https://glpi.example",
+        client_id="id",
+        client_secret="super-secret",
+        redirect_uri="https://centraldelpi.com.br/apps/helpdesk-api/auth/glpi/callback",
+        legacy_upload_enabled=True,
+        legacy_app_token="app-token-x",
+        legacy_user_token="user-token-x",
+        transport=httpx.MockTransport(handler),
+    )
+    client.accept_ticket_solution("oauth-access", 7, "ok")
+    assert any("ITILFollowup" in item for item in calls)
+
+
 def test_list_technician_user_ids_falls_back_to_search_user_when_profile_user_forbidden():
     """Prod GLPI: HLAPI Profile/User 404 + Profile_User 403; search/User field 20 works."""
     from helpdesk_app.infrastructure.glpi.mapping import parse_profile_user_ids
