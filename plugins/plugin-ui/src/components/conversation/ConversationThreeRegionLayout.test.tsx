@@ -33,4 +33,27 @@ describe("ConversationThreeRegionLayout R2", () => {
       center={({ rightToggle }) => <header>{rightToggle}</header>} />);
     expect(screen.queryByRole("button", { name: "Abrir contexto" })).toBeNull();
   });
+  it("keeps floating surface mounted for exit motion but inaccessible while closed", () => {
+    const { container } = render(
+      <ConversationThreeRegionLayout
+        left={({ collapsed }) => <span>{collapsed ? "Rail" : "Sidebar"}</span>}
+        right={<span>Detalhes autorizados</span>}
+        center={({ rightToggle }) => <header>{rightToggle}</header>}
+      />,
+    );
+    const surface = container.querySelector(".delpi-ui-conversation-three-region__context-popover");
+    expect(surface).toBeTruthy();
+    expect(surface?.getAttribute("data-open")).toBe("false");
+    expect(surface?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
+    expect(surface?.getAttribute("data-open")).toBe("true");
+    expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Fechar painel de contexto" }));
+    expect(surface?.getAttribute("data-open")).toBe("false");
+    expect(surface?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText("Detalhes autorizados")).toBeNull();
+  });
+
 });
