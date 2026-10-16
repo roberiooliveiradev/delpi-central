@@ -172,22 +172,20 @@ Não criar tabela/migration antecipadamente apenas para "ter a fundação". Pers
 
 O Portal Financeiro P0 não é template obrigatório do novo Portal.
 
-## Ordem funcional sugerida
+## Ordem funcional futura — baseline executiva V1
 
-A ordem inicial de investigação permanece:
+A ordem atual é [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), detalhada em [40 — Slices e Dependências](./40-matriz-dependencias-e-slices-v1.md), [41 — Testes/Gates](./41-estrategia-validacao-e-gates-implementacao-v1.md), [42 — Cursor](./42-playbook-brief-cursor-execution-report-v1.md) e [43 — Release](./43-rollout-operacao-e-handoff-v1.md). **Esta é ordem de planejamento, não autorização de runtime.**
 
 ```text
-fundação técnica mínima
-→ P1
-→ P2
-→ P3
-→ P4
-→ P5 package/finalization
-→ P5 send quando E04/T04 fecharem
-→ P6 evolutivo conforme dependências
+IMP-00 inventário/gate A12/A14/A15/A16 → four freezes → PO authorize
+→ A01 Página do usuário → A02 Início → A03 Visão geral
+→ A04 Minhas tarefas → A05 Sala de interação → A06 Administração
+→ A07 Ajuda (com Help sync em todo slice user-facing)
+→ A08 P1 → A09 P2 → A10 P3 → A11 P4 → A12 P5 → A13 P6
+→ regressão, operação e gate de release
 ```
 
-Não seguir mecanicamente se o inventário técnico provar outra dependência. Mudança material deve ser registrada como rationale ou `EXECUTION_DRIFT` quando invalidar premissa necessária.
+E04/T04 de entrega externa por anexo foram superados pelo **envio in-portal** do doc 37; não bloquear P5 por esse contrato histórico. P5 permanece condicionado ao Core T05 e ao contrato físico de áreas P6 versionadas. P6 pode exigir micro-slice predecessor de contrato/owner antes de P2/P5; não antecipar toda UI. Alterar ordem apenas com dependência demonstrada, gate e rationale/`EXECUTION_DRIFT` se a premissa aprovada caiu.
 
 ## Gate por página
 
@@ -242,8 +240,8 @@ Smoke não executado quando material = INCONCLUSIVE, nunca PASS inferido.
 ## Estado das decisões
 
 - Q01–Q21 e Q23–Q30: fechadas;
-- Q22: depende E04/T04;
-- E01–E06: `PENDING_IMPLEMENTATION_CONFIRMATION`;
+- Q22: contrato portal-first/C2 aprovado e vigente no doc 37; E04/T04 entrega externa não é requerida na V1;
+- E01/E05/E06: catálogos/seeds TO_INVENTORY conforme slice; E04/T04 delivery externo SUPERSEDED/NOT_REQUIRED_IN_V1; demais E conforme owner e materialidade;
 - T01–T05: `TO_INVENTORY_DURING_IMPLEMENTATION`.
 
 `PENDING_IMPLEMENTATION != OPEN_PRODUCT_DESIGN`.
