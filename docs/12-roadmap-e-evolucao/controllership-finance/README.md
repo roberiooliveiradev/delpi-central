@@ -279,7 +279,7 @@ SECURITY_MODEL_FREEZE = PASS
 TEST_STRATEGY_FREEZE = PASS
 ```
 
-poderá começar a implementação page-by-page.
+poderá ser avaliada **autorização explícita posterior do PO** para implementação page-by-page. Os quatro PASS, isoladamente, não autorizam runtime.
 
 ## Execução
 
