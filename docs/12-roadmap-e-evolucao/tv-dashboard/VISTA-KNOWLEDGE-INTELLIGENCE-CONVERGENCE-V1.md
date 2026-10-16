@@ -2118,3 +2118,122 @@ extension; documented as future option, not implemented.
 
 PHASE 7 = DONE (residuals closed honestly — one measured, one classified
 non-measurable).
+
+---
+
+## 44. PHASE 9 — HISTORY INTELLIGENCE DIAGNOSTIC (DIAGNOSTIC ONLY)
+
+HEAD: `58d53f52ca` (== origin/main). Diagnostic only — zero runtime,
+zero production files, zero new tools/routes/mutations.
+
+### 44.1 CANONICAL OWNER + PIPELINE
+
+CANONICAL_HISTORY_OWNER = tv-dashboard-api Playlist history domain
+(PlaylistHistoryRepository + PlaylistHistoryChangeService) — PROVEN.
+
+Pipeline: mutation → `PlaylistRepository._capture_before_mutation` →
+`tv_dashboard.playlist_history` (JSONB snapshot, same txn) → repository
+→ change service → HTTP routes. VISTA governed writes flow through the
+same repo path (reasons like `presentation_update_slide`,
+`copilot_patch_applied` observed in runtime).
+
+Persistence PROVEN: V008 (playlist_id, revision, actor_user_id, reason,
+snapshot JSONB, unique (playlist_id, revision)) + V009 (actor_name/
+actor_email nullable). Retention: HISTORY_LIMIT_PER_PLAYLIST=500, pruned
+in capture txn. Actor snapshot: name/email captured only when the
+current authenticated user id == mutation actor id.
+
+Routes: GET list + GET detail = `require_playlist_access(need="read")`;
+POST restore = `need="edit"` + expectedRevision + 409 conflict. Cross-
+playlist isolation proven by `WHERE id AND playlist_id` — a history_id
+of playlist A is 404 under playlist B. Restore stays OUT of VISTA scope.
+
+### 44.2 CONTRACTS
+
+List item: snapshotId, playlistId, revision, authorId, authorName,
+authorEmail, reason, createdAt, preview{playlistName, slideCount,
+slideTitles[:3], selectedSlideId}, change (adjacent diff). Envelope:
+items, page, pageSize(≤100), total, totalPages, currentRevision,
+currentSnapshotId. Detail: summary + change + `playlist` (full snapshot:
+playlist fields + slides incl. nativeConfig, externalUrl,
+externalSandbox) + selectedSlideId.
+
+Diff owner `PlaylistHistoryChangeService.compare`: playlistFields[]
+(sorted field names, timestamps ignored) + slides.added/removed
+(id+title) + slides.updated (id+title+fields[]) + reordered flag +
+totals. Adjacent only: revision N ↔ persisted N+1, or latest row ↔ live
+current when current==N+1; otherwise `change.available=false` — never
+fabricated.
+
+**Correction to brief premise:** snapshots DO contain block data —
+`slides[].nativeConfig.blocks[]` present in 27 runtime rows. What is
+NOT supported is block-level diff granularity: a block change surfaces
+only as `fields:["nativeConfig"]` on the slide. So "o que mudou neste
+slide?" can report which slide fields changed (incl. the nativeConfig
+flag) but not which block/property inside it. Block-level claims remain
+out of scope unless the DOMAIN diff is extended (separate decision,
+forbidden to solve in a VISTA adapter).
+
+Reason vocabulary (runtime, 48 rows): all TECHNICAL_MUTATION_REASON
+(slide_updated, slide_created, slide_deleted, playlist_updated,
+copilot_patch_applied, …). Only restore accepts a user-supplied reason
+(RestorePlaylistBody.reason ≤500). `reason` = provenance, IS_NOT user
+intent — H8 "por que mudou?" is UNSUPPORTED_BY_CURRENT_HISTORY.
+
+Runtime evidence (read-only, plugins_hub): 48 rows / 10 playlists /
+2026-07-29→2026-10-05; 39/48 rows carry actor name+email; zero
+free-text reasons observed.
+
+### 44.3 USER STORY MATRIX
+
+| Story | Support | Bound |
+|---|---|---|
+| H1 o que mudou neste painel | SUPPORTED_NOW (latest revision; playlist scope) | "since last view" = UNSUPPORTED (no view tracking) |
+| H2 desde ontem | PARTIALLY_SUPPORTED | createdAt + bounded pagination (≤500, ≤5 pages @100); no server-side time filter, no cumulative diff |
+| H3 atual vs anterior | SUPPORTED_NOW | adjacent semantics only; revision gap → available=false |
+| H4 quando o slide mudou | PARTIALLY_SUPPORTED | scan change.slides.* across bounded pages; retention-bounded |
+| H5 o que mudou no slide | PARTIALLY_SUPPORTED | slide fields yes; block-level = opaque `nativeConfig` flag only |
+| H6 quem alterou | PARTIALLY_SUPPORTED | authorName when captured (39/48); email excluded |
+| H7 últimas alterações | SUPPORTED_NOW | existing paginated list |
+| H8 por que mudou | UNSUPPORTED_BY_CURRENT_HISTORY | reason is technical provenance, not intent |
+
+### 44.4 DECISIONS
+
+EXISTING_EQUIVALENT: storage/list/detail/diff = YES; VISTA projection =
+NO. REUSE_DECISION: REUSE domain + EXTEND (thin safe digest projection
+in application layer — future implementation brief).
+
+ACTION_SURFACE_DECISION = DEDICATED_READ (conditional). A history intent
+is distinct from context reads; Option A (fold into get_playlist_context)
+would bloat every read. Proposal for a future brief: ONE bounded semantic
+read (list mode + detail mode via optional snapshotId), MCP+Actions parity
+default. Budget: envelopeAscii 95,685B/102,400B (headroom 6,715B) — a new
+op is feasible but tight; implementation brief must measure exactly or
+fall back to MCP_ONLY. NO_NEW_SURFACE remains viable if product judges
+stories weak.
+
+SAFE PROJECTION (proposed, not implemented): revision, createdAt,
+actorName (no email), reasonCategory, change{playlistFields,
+slidesAdded/Removed/Updated, reordered, available}, retentionNote,
+currentRevision. Raw snapshot, nativeConfig, masterConfig, dataDefaults,
+externalUrl/Sandbox = NOT model-facing by default.
+
+HISTORY_MODEL_PAYLOAD_PRIVACY = PARTIAL — resolvable: authorName ok
+(already read-surface contract), authorEmail excluded (least
+disclosure), raw snapshot excluded.
+
+P7 preserved: DATA_DIAGNOSIS=MEASURABLE_NOW, USER_CORRECTION=
+NOT_RELIABLY_MEASURABLE (history IS_NOT a correction proxy).
+P8 = BLOCKED, P8_EVIDENCE = INSUFFICIENT (history need ≠ arbitration).
+
+### 44.5 P9 DECISION
+
+P9_DECISION = READY_WITH_CONSTRAINTS — canonical owner, read AuthZ,
+contracts and runtime rows all proven; constraints recorded: block-level
+claims forbidden without domain diff extension, retention/adjacency/
+diff-unavailable semantics must surface honestly, email/raw snapshot
+excluded, Actions budget tight. Implementation requires a separate brief
+(schema, parity, budget measurement, test plan) — not implemented here.
+
+history.status remains UNAVAILABLE_IN_CURRENT_SURFACE until runtime
+proof after implementation.
