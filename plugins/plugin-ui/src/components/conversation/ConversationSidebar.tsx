@@ -1,4 +1,5 @@
-import { MessageSquareText, Search, Settings2, SquarePen } from "lucide-react";
+import { MessageSquareText, Settings2, SquarePen } from "lucide-react";
+import { ConversationSidebarSearch } from "./ConversationSidebarSearch";
 
 export type ConversationSidebarProps = {
   /** Only enable after a real, authorized session creation flow exists. */
@@ -26,11 +27,7 @@ export function ConversationSidebar({
         disabled={!onNewConversation} onClick={onNewConversation} title={!onNewConversation ? "Disponível após integração das sessões" : undefined}>
         <SquarePen size={17} aria-hidden="true" /><span>Nova conversa</span>
       </button>
-      <div className="delpi-ui-conversation-sidebar__search">
-        <Search size={16} aria-hidden="true" />
-        <button type="button" disabled={!onSearch} onClick={onSearch}
-          title={!onSearch ? "Pesquisa disponível após integração do histórico" : undefined}>Pesquisar conversas</button>
-      </div>
+      <ConversationSidebarSearch onOpenSearch={onSearch} />
       <div className="delpi-ui-conversation-sidebar__section" aria-label="Conversas recentes">
         <h2 className="delpi-ui-conversation-sidebar__section-heading">Recentes</h2>
         {history.length > 0 && onSelectConversation ? (
