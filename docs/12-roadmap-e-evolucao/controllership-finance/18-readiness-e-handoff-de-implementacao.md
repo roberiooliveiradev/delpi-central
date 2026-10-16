@@ -89,7 +89,7 @@ Decisões congeladas:
 | P3 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03 | A10 fechado; E02 = STOCK_CLOSED terminal no Portal V1; T03 continua stop técnico para owner canônico |
 | P4 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A11 fechado; T01/T05 e contracts físicos permanecem inventário |
 | P5 — pacote/finalização/review | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | portal-first submission/review model PASS; monthly completion rule DECISION_REQUIRED |
-| P5 — envio para análise | PRODUCT_MODEL_DEFINED / REVIEW_COMPLETION_DECISION_REQUIRED | package stays in Minha DELPI; reviewers authenticated; e-mail notification only; doc 37 |
+| P5 — envio para análise | PRODUCT_MODEL_DEFINED / P5_C2_APPROVED_DERIVED_CONTRACT_REVALIDATE | package stays in Minha DELPI; reviewers authenticated; e-mail notification only; doc 37 |
 | P6 | PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY | A13 fechado em 13+28; Core notifications PROVEN; persistência/seeds/people/concurrency e adapter do produto permanecem inventário |
 
 Readiness não é autorização global. Depois do freeze transversal, o Portal evoluirá uma página/slice por vez.
@@ -359,3 +359,14 @@ C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válid
 **TARGET / PO_APPROVED**. DEC-01: coordenador formal da competencia, com ACCESS efetivo, vinculo operacional, scope e business rule, confirma rejeicao terminal; MANAGE sozinho nao autoriza. DEC-02: rejeicao nao confirmada permanece pendente, exige motivo e pode retornar a esclarecimento/correcao auditavel. DEC-03: nenhuma reversao/retificacao de aceite P5 por UI ou endpoint V1; incidentes tratados fora do fluxo do Portal. DEC-04: MANAGE efetivo + escopo administrativo publica configuracoes de areas obrigatorias por tipo de pacote com auditoria e vigencia prospectiva; snapshots existentes preservados. Decisoes anteriores C2, P5-A..J permanecem compatibilizadas no doc 37. Nao criar permission code adicional.
 
 **TO_INVENTORY:** Core T05 e ligacao do coordenador, configuracao P6 e contratos fisicos P5, eventos/projections/testes, regras aplicaveis no HEAD. **GATE:** DOCUMENTATION_CLOSURE_COMPLETE=NO; IMPLEMENTATION_AUTHORIZED=NO; TEST_NOT_RUN. Flags PASS antigas requerem revalidacao apos rebase.
+
+
+## Revisão documental transversal — baseline 16/10/2026
+
+**TARGET / REVIEW_INCONCLUSIVE / NO_RUNTIME_AUTHORIZATION.** Fonte de verdade das decisões P5: documento 37, decisões C2, D-P5-01..05 (conforme refinadas), P5-A..J e DEC-01..04. Quórum = um aceite por área obrigatória configurada e congelada na submissão; nova versão exige todos os aceites; reatribuição mantém autoria e aceite válido; P5 não possui reversão de aceite pela UI/endpoint V1; área pode rejeitar pacote e só o coordenador formal de competência com ACCESS efetivo, vínculo e scope pode confirmar rejeição terminal; não confirmação mantém decisão pendente e registra justificativa; rejeição terminal inativa ações projetadas, não apaga auditoria. P6 MANAGE + administrative_scope publica catálogo versionado prospectivo.
+
+**Correção de interpretação:** menções anteriores a C2 pendente, unanimidade de indivíduos, delivery por e-mail de anexos e DEC-01..04 pendentes são histórico **STALE_EVIDENCE / SUPERSEDED**, não critérios vigentes. Referências `PASS` antigas de A12/A14/A15 ou dos freezes não se revalidam automaticamente por adendo; não usar essas flags para autorizar execução.
+
+**Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
+
+**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=BLOCKED_DIVERGED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
