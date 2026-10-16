@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { ConversationPanelControls } from "@delpi/plugin-ui/index";
 import {
   ConversationContextPanel,
   ConversationSidebar,
@@ -7,7 +8,7 @@ import {
 
 /** Unified DÉLIA page: visual navigation and real conversation, with no fake backend. */
 export type DeliaConversationPageProps = {
-  conversation: ReactNode;
+  conversation: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
 };
 
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
