@@ -169,6 +169,14 @@ UNIT_SCOPE_PERMISSION_MODEL = NOT_APPLICABLE
 
 Filial/unidade pode ser filtro/dimensão do dado, mas não permission code dedicado deste Portal.
 
+## D-FINAL-01 — Core T05: grupo/função corporativa elegível por área
+
+**DECISION_REQUIRED / AUTHORITY_INVENTORY_FIRST.** O Core comprova RBAC group membership e effective permission S2S, mas os contratos S2S inspecionados não publicam group/function corporativa tipada ao P5. Não associar área obrigatória a grupo RBAC pelo nome, nem usar perfil self como S2S. Inventariar fonte corporativa e submeter owner/contrato à decisão quando material. Opções, impacto e recomendação: [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md).
+
+## D-FINAL-02 — P6: zero áreas obrigatórias
+
+**DECISION_REQUIRED / PO.** O contrato C2 é por área obrigatória na PackageVersion vigente, mas a política para tipo de pacote sem áreas configuradas ou conjunto intencionalmente vazio não está aprovada. Não permitir comportamento automático por suposição matemática. Opções, riscos e recomendação: [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md).
+
 ## Stop conditions
 
 Parar e escalar quando:
