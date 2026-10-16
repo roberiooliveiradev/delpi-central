@@ -1,6 +1,6 @@
 # 12 — P5 — Pacote, Finalização e Envio
 
-**TARGET / PAGE_DOCUMENTATION_GATE_V2 PARTIAL / PORTAL_SUBMISSION_MODEL_PASS / MONTHLY_COMPLETION_DECISION_REQUIRED**
+**TARGET / A12 POST-MERGE REVALIDATION / C2 AND P5-A..J + DEC-01..04 PO_APPROVED / PHYSICAL_BINDINGS_TO_INVENTORY**
 
 ```text
 DOCUMENTED != IMPLEMENTED
@@ -10,7 +10,7 @@ VISUAL_SPEC_DEFINED          = PASS
 PACKAGE_CONTRACT_DEFINED     = PASS
 SUBMISSION_CONTRACT_DEFINED  = PASS
 REVIEW_CONTRACT_DEFINED      = PASS
-MONTHLY_COMPLETION_RULE      = DECISION_REQUIRED
+MONTHLY_COMPLETION_RULE      = C2_PO_APPROVED / BY_REQUIRED_AREA_AND_CURRENT_VERSION
 AUTHZ_DEFINED                = PASS
 PLUGIN_UI_REUSE_DEFINED      = PASS
 STATES_DEFINED               = PASS
@@ -58,7 +58,7 @@ UI_VISIBILITY != AUTHORIZATION
 - Versão submetida para análise é histórica e não é alterada in-place.
 - Correção após submissão cria complemento/nova versão ligada à anterior.
 - Não existe botão de force completion.
-- A conclusão mensal depende da decisão pendente sobre o outcome da revisão; leitura de notificação/e-mail nunca é critério de negócio.
+- A conclusão mensal segue a regra C2 aprovada (todas as áreas obrigatórias da versão vigente aceitam, sem esclarecimentos abertos); depende do binding técnico sobre o outcome da revisão; leitura de notificação/e-mail nunca é critério de negócio.
 - O package permanece na Minha DELPI; e-mail é apenas notification channel.
 - A UI apresenta `Enviar para análise` somente quando o package está finalizado e os reviewers/resource scopes aplicáveis estão resolvidos.
 
