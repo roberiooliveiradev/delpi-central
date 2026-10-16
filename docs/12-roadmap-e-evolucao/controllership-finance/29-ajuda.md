@@ -934,7 +934,9 @@ Explicar apenas capacidades runtime liberadas:
 - review pending/in progress/changes requested/accepted;
 - esclarecimento/correção;
 - histórico/versionamento;
-- regra de conclusão mensal conforme D-P5-REVIEW-COMPLETION.
+- conclusão C2: todos os pacotes aplicáveis submetidos, um aceite por área obrigatória e versão vigente, sem esclarecimentos abertos;
+- reatribuição não troca autoria de aceites válidos; versão nova exige novos aceites;
+- rejeição de pacote depende de confirmação formal para rejeitar a competência; aceite P5 não pode ser revertido pela interface V1.
 
 Fonte:
 - [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md)
