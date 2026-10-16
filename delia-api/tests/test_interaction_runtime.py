@@ -972,6 +972,16 @@ def test_application_typed_valid_command_and_legacy_are_distinct():
     )
     assert handler._validate_turn_command(legacy) is None
 
+    # HTTP normalizes an exact published legacy label into the typed
+    # command. Application must not reject that migration path.
+    mapped_legacy = InteractiveTurnRequest(
+        access_context=_context(),
+        input_text=_legacy_label("CONFIRM"),
+        confirmation=_decision_payload("CONFIRM"),
+        command_type="APPLY_PREPARED",
+    )
+    assert handler._validate_turn_command(mapped_legacy) is None
+
     with pytest.raises(InteractionError) as err:
         handler.execute(typed)
     assert err.value.code == "invalid_request"  # no orchestration; fail closed
