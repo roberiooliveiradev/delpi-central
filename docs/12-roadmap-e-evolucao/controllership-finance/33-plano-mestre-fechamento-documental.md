@@ -228,7 +228,7 @@ Authority:
 | P2 — Checklist e Documentos | 09 | PAGE_DOCUMENTATION_GATE_V2 PASS | TÉO 31.3–31.13 reconciliado; E05/E06 seeds, Core notification adapter e T05 físicos permanecem inventário |
 | P3 — Estoque, Cutoff e Conciliação | 10 + 15.1 | PAGE_DOCUMENTATION_GATE_V2 PASS / STOP T03 | E02 fechado: STOCK_CLOSED terminal no Portal V1; T03 permanece stop técnico/owner |
 | P4 — Classificações e Pendências | 11 | PAGE_DOCUMENTATION_GATE_V2 PASS | residual transversal somente |
-| P5 — Pacote, Finalização e Envio | 12 | PAGE_DOCUMENTATION_GATE_V2 PARTIAL | package/finalization fechado; envio real continua BLOCKED/PENDING por E04/T04 |
+| P5 — Pacote, Finalização e Envio | 12 + 37 | TARGET / PO_DECISIONS_APPROVED / A12_REVALIDATION_INCONCLUSIVE | C2/P5-A..J/DEC-01..04 aprovados; entrega externa E04/T04 superada; Core T05 grupos/funções, P6 snapshot, estados/DTOs/eventos/OCC ainda a inventariar |
 | P6 — Administração e Configuração | 13 + 28 | PAGE_DOCUMENTATION_GATE_V2 PASS | 13 rules authority alinhada ao page contract completo de 28 |
 
 Não criar nova página V1 apenas para eliminar backlog histórico.
@@ -675,6 +675,8 @@ A16 Documentation closure review
 Nenhum passo A01–A16 inclui scaffold, endpoint runtime, migration, permission, schema físico ou implementação de página.
 
 ## Gate final de fechamento documental
+
+**Roadmap de execução futura:** [39 — roadmap](./39-roadmap-mestre-implementacao-v1.md), [40 — slices](./40-matriz-dependencias-e-slices-v1.md), [41 — testes/gates](./41-estrategia-validacao-e-gates-implementacao-v1.md), [42 — Cursor](./42-playbook-brief-cursor-execution-report-v1.md) e [43 — operação](./43-rollout-operacao-e-handoff-v1.md). Sua existência não fecha A16 nem autoriza runtime.
 
 `DOCUMENTATION_CLOSURE_COMPLETE = PASS` somente se:
 
