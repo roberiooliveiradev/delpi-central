@@ -20,6 +20,7 @@ import type { DeliaMessageKind } from "../api/presentation";
 import {
   ActivityViewer,
   ConversationStatus,
+  ConversationMarkdown,
   EvidenceDetails,
   GovernedConfirmation,
   IconButton,
@@ -226,7 +227,11 @@ export function DeliaAssistantMessage({
           />
         ) : null}
 
-        <p className="delia-turn__content">{displayContent}</p>
+        <ConversationMarkdown
+          className="delia-turn__content"
+          text={displayContent}
+          enabled={false} // CP-333: frontend ready; v2 backend admission/links still gated.
+        />
 
         {ownerHint ? (
           <p className="delia-turn__notice">
