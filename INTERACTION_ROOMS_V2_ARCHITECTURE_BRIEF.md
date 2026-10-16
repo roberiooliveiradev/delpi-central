@@ -345,3 +345,48 @@ O paralelo entregou **V055__interaction_room_soft_delete** + `delete_room`/`soft
 - Integração real com Helpdesk BFF: adapter escrito e mapeado; sem sessão GLPI neste ambiente.
 - TÉO open para standalone/ticket e capabilities delete/restore/link/participant: contrato de slice posterior (GATE F).
 - 8 falhas pré-existentes no suite geral (dashboard/filial/sign-invite/shared-resource) — **reproduzidas em worktree limpa @HEAD**; não causadas por este diff.
+
+---
+
+# E2 CORRECTION EVIDENCE (review REWORK → targeted pass)
+
+Base para a correção: HEAD `8626e874822` (E2 commit `58d53f52` é ancestral; `origin/main` avançou a `821f0cd7` com 4 commits docs/delia — sem overlap). Working tree: só 5 arquivos do escopo alterados; trabalho paralelo em `plugins/*` e `requests-api` preservado.
+
+## P0 — administrative response leak — FIXED
+
+- `DELETE /interaction-rooms/{id}` não serializa mais `room.to_dict()`; retorna projeção mínima `{id, deleted_at}` (read-back da exclusão apenas).
+- Residual search: demais `to_dict()` nas rotas/dispatch só saem por `_authorized_room` (interseção completa). `delete_impact` já era metadata-only (contagens + `link_roles` por tipo:papel — sem `entity_key`). Dispatch/GPT não chama `delete_room`/`restore_room`/`delete_impact`. `orchestrator.py` usa `get_or_create` apenas como literal de fingerprint.
+- Teste HTTP novo `test_http_delete_returns_safe_admin_projection`: gestor `manage`-sem-`access` exclui (200), payload sem `title`/`process_*`/`participants`/`last_message_preview`/`links`/`last_message_at`/`processo_id`, não-admin recebe 403, read-back = `LookupError`.
+
+## P1 — write-before-authorization — FIXED
+
+- `open_for_process` agora é estritamente locate → authorize → mutate: resolve a sala canônica (`find_active_primary_room` → `get_by_process` read-only), autoriza a interseção completa, e só então roda `_assert_process_link` (que também não revive remoção `explicit`). Uma tentativa negada não toca links, rooms nem cria duplicata.
+- Testes: `test_open_for_process_denied_performs_no_writes` (sala process+ticket, requester sem ACL do ticket → deny, zero upsert/create, sem duplicata) e `test_open_for_process_does_not_revive_explicit_link_removal`.
+
+## P1 — creation atomicity — FIXED
+
+- Novo `create_room_graph` no port: room + links + participants em **uma** transação (`self.db()` + `auto_commit=False`; exceção → rollback integral — sem sala órfã, sem link solto, sem participante parcial). Conflito de claim primária (23505, `uq_tm_interaction_room_links_primary_active` / `uq_tm_interaction_rooms_processo_active`) → `PrimaryLinkConflict` antes do commit → nada persistido.
+- `open_for_ticket`/`open_standalone`/`open_for_process` migrados; corrida perdedora re-resolve ao vencedor com autorização fresca. Índices canônicos continuam árbitros finais.
+- Testes: `test_create_room_graph_rolls_back_on_occupied_primary` (snapshot rooms+links+participants inalterado após conflito) e `test_open_for_ticket_race_re_resolves_to_winner` (agora também prova `len(repo.rooms)` inalterado — zero órfã).
+
+## P1 — protected historical content — FIXED
+
+- `protected_content_count` (SQL + InMemory) cobre **todo** artefato persistido da sala: mensagens (ativas **e** tombadas), anexos, menções, reações, pins e read markers. Cobertura justificada por constraints: menções/reações/anexos são filhos de mensagens da sala (FK), pins/reads são filhos diretos da sala — não existe artefato de histórico fora dessas 6 relações no schema V046/V047/V055.
+- R-1 endurecida: `test_read_marker_counts_as_protected_history` prova que até um read marker bloqueia remoção de link restritivo (block-on-doubt). `delete_impact` renomeado para `protected_content_count` (semântica correta da contagem).
+
+## P1 — audit consistency — FIXED
+
+- `_audit_log` usa o `AuditRepository` canônico e é best-effort **após** commit do domínio: falha de auditoria é logada via `logger.warning("interaction_room_audit_failed ...")` e o resultado do domínio permanece verdadeiro (convenção idêntica a `gpt_actions._audit`). Nenhuma infra genérica nova.
+- Teste: `test_audit_failure_does_not_corrupt_write_result` — audit quebrado → criação e delete persistem, read-back confirma exclusão, warning registrado.
+
+## Verification matrix
+
+| Item | Resultado |
+|---|---|
+| T-01…T-15 regression (`test_interaction_rooms_v2.py` + `test_interaction_rooms.py`) | **49 passed** |
+| Novos P0/P1 (projeção HTTP, denied-no-writes, atomicidade, R-1 read marker, audit failure, explicit-removal) | PASS — 6 testes |
+| Full suite `transformometro-api/tests` | 1688 passed, 10 failed — as 10 reproduzem em worktree limpa @`8626e874` (dashboard/filial/shared-resource/sign-invite/bootstrap) → pré-existentes |
+| PostgreSQL real com V056 | `PENDING` — V056 não aplicada; SQL revisado, constraints já provadas no E1 |
+| Helpdesk/GLPI real | `TEST_NOT_RUN` — sem sessão GLPI neste ambiente |
+
+Nota operacional: durante a sessão um `__pycache__` stale (skew de relógio UNC↔WSL) produziu falsos `AttributeError` — resolvido limpando caches; rerun = 49/49.

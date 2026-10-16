@@ -12,7 +12,9 @@ from tm_app.domain.entities.interaction_room import (
 
 
 class InteractionRoomRepositoryPort(Protocol):
-    def get_or_create(self, *, processo_id: str, created_by_user_id: str) -> InteractionRoom | None: ...
+    def get_by_process(self, processo_id: str) -> InteractionRoom | None:
+        """Read-only legacy locate by ``rooms.processo_id`` — never writes."""
+        ...
 
     def get(self, room_id: str) -> InteractionRoom | None: ...
 
@@ -21,14 +23,23 @@ class InteractionRoomRepositoryPort(Protocol):
         administrative paths only, never for content reads."""
         ...
 
-    def create_room(
+    def create_room_graph(
         self,
         *,
         title: str | None,
         access_scope: str,
         created_by_user_id: str,
         processo_id: str | None = None,
-    ) -> InteractionRoom | None: ...
+        links: tuple[tuple[str, str, str], ...] = (),
+        owner_participant: bool = False,
+        participant_ids: tuple[str, ...] = (),
+    ) -> InteractionRoom | None:
+        """Atomic creation: room + links + participants in ONE transaction.
+        ``links`` items are ``(entity_type, entity_key, link_role)``; an
+        occupied active primary claim raises ``PrimaryLinkConflict`` and the
+        whole graph rolls back — no orphan room. Returns None when the
+        ``processo_id`` target does not exist."""
+        ...
 
     def soft_delete(
         self, room_id: str, *, actor_user_id: str | None = None
@@ -85,9 +96,10 @@ class InteractionRoomRepositoryPort(Protocol):
     # --- authorization support ----------------------------------------------
 
     def protected_content_count(self, room_id: str) -> int:
-        """All persisted room content — messages INCLUDING tombstones,
-        attachments, reactions, mentions. Used by the expansion rule; a
-        visible-only count is not proof of empty history."""
+        """Every persisted artifact tied to the room: messages INCLUDING
+        tombstones, attachments, mentions, reactions, pins and read
+        markers. Used by the expansion rule — a visible-only count is not
+        proof of empty history (R-1, block on doubt)."""
         ...
 
     def process_exists(self, processo_id: str) -> bool: ...

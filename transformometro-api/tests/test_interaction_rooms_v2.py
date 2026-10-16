@@ -8,7 +8,9 @@ coverage proves the domain/application rules.
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -325,7 +327,8 @@ def test_delete_impact_is_metadata_only():
     cases.post_message(_user(), room.id, "conteúdo")
     cases.post_message(_user(), room.id, "mais")
     impact = cases.delete_impact(_manager(), room.id)
-    assert impact["message_count"] == 2
+    # 2 messages + 1 read marker created by the author's post_message
+    assert impact["protected_content_count"] == 3
     assert impact["participant_count"] == 2
     assert "title" not in impact
     assert all("entity_key" not in json for json in [impact])
@@ -419,16 +422,145 @@ def test_open_for_ticket_race_re_resolves_to_winner():
 
     repo.find_active_primary_room = racing_find
     room_count = len(repo.rooms)
-    # Non-participant loser: resolves to the winner and is denied — no orphan.
+    # Non-participant loser: resolves to the winner and is denied — and the
+    # atomic create left NO orphan room behind (rolled back as a whole).
     with pytest.raises(RoomAuthorizationDenied):
         cases.open_for_ticket(_user(user_id=THIRD), TICKET, authorization=BEARER)
-    # one orphan room was created then superseded; the claim stayed single
+    assert len(repo.rooms) == room_count
     primaries = [
         l for l in repo.links.values()
         if l.entity_key == TICKET and l.link_role == "primary" and l.deleted_at is None
     ]
     assert len(primaries) == 1
     assert primaries[0].room_id == holder.id
+
+
+def test_open_for_process_denied_performs_no_writes():
+    """P1: locate → authorize → mutate. An unauthorized requester on a
+    multi-primary room gets denied without touching links, rooms or
+    creating a duplicate."""
+    cases, repo, tickets, _ = _cases()
+    room = _ticket_room(cases)
+    cases.add_link(
+        _user(), room.id, "process", PROCESS,
+        link_role="primary", authorization=BEARER,
+    )
+    tickets.states[TICKET] = LINK_STATE_RESTRICTED
+
+    upserts: list[dict] = []
+    real_upsert = repo.upsert_link
+    repo.upsert_link = lambda **kw: (upserts.append(kw), real_upsert(**kw))[1]
+    creates: list[dict] = []
+    real_create = repo.create_room_graph
+    repo.create_room_graph = lambda **kw: (creates.append(kw), real_create(**kw))[1]
+
+    with pytest.raises(RoomAuthorizationDenied):
+        cases.open_for_process(_user(user_id=OTHER), PROCESS, authorization=BEARER)
+    assert upserts == [] and creates == []
+    assert set(repo.rooms) == {room.id}
+
+
+def test_open_for_process_does_not_revive_explicit_link_removal():
+    cases, repo, _, _ = _cases()
+    room = cases.open_for_process(_user(), PROCESS)
+    link = repo.list_links(room.id)[0]
+    cases.remove_link(_user(), room.id, link.id)  # process links are removable
+    reopened = cases.open_for_process(_user(), PROCESS)
+    assert reopened.id == room.id
+    tomb = next(
+        item for item in repo.list_links(room.id, include_inactive=True)
+        if item.entity_type == "process" and item.entity_key == PROCESS
+    )
+    assert tomb.deleted_at is not None and tomb.deleted_cause == "explicit"
+
+
+def test_create_room_graph_rolls_back_on_occupied_primary():
+    """P1 atomicity: an intermediate failure (occupied claim) leaves no
+    room, link or participant rows behind."""
+    cases, repo, _, _ = _cases()
+    holder = cases.open_standalone(_user(user_id=OTHER), "vencedora")
+    repo.upsert_link(
+        room_id=holder.id,
+        entity_type="helpdesk_ticket",
+        entity_key=TICKET,
+        link_role="primary",
+        actor_user_id=OTHER,
+    )
+    snapshot = (set(repo.rooms), set(repo.links), set(repo.participants))
+    with pytest.raises(PrimaryLinkConflict):
+        repo.create_room_graph(
+            title=None,
+            access_scope="members",
+            created_by_user_id=THIRD,
+            links=(("helpdesk_ticket", TICKET, "primary"),),
+            owner_participant=True,
+        )
+    assert (set(repo.rooms), set(repo.links), set(repo.participants)) == snapshot
+
+
+def test_read_marker_counts_as_protected_history():
+    """R-1 strict: any persisted artifact — even a read marker on an
+    otherwise empty room — blocks restrictive link removal."""
+    cases, repo, _, _ = _cases()
+    room = _ticket_room(cases)
+    cases.mark_read(_user(), room.id, authorization=BEARER)
+    link = next(l for l in repo.list_links(room.id) if l.entity_type == "helpdesk_ticket")
+    with pytest.raises(RoomAccessExpansionBlocked):
+        cases.remove_link(_user(), room.id, link.id)
+
+
+def test_audit_failure_does_not_corrupt_write_result(caplog):
+    """Audit loss after a committed write is logged, never a false failure."""
+    cases, repo, _, audit = _cases()
+    def broken(**kwargs):
+        raise RuntimeError("audit store down")
+    audit.log = broken
+    room = _ticket_room(cases)  # create path audits — must still succeed
+    deleted = cases.delete_room(_user(), room.id)
+    assert deleted.deleted_at is not None
+    with pytest.raises(LookupError):
+        cases.get_room(_user(), room.id)
+    assert "interaction_room_audit_failed" in caplog.text
+
+
+def test_http_delete_returns_safe_admin_projection():
+    """P0: the DELETE route must never serialize the room entity — a
+    manage-only admin deletes without seeing title, participants, history
+    preview or protected link keys."""
+    from tm_app.interface.http.routes import interaction_room_routes
+
+    cases, repo, _, _ = _cases()
+    room = cases.open_standalone(
+        _user(), "Título Confidencial", participant_ids=[OTHER]
+    )
+    cases.post_message(_user(), room.id, "conteúdo restrito")
+    admin_request = SimpleNamespace(
+        state=SimpleNamespace(
+            user=_user(user_id=THIRD, permissions=[MANAGE_PERMISSION])
+        )
+    )
+    with patch.object(interaction_room_routes, "_rooms", cases):
+        denied = interaction_room_routes.delete_interaction_room(
+            SimpleNamespace(state=SimpleNamespace(user=_user(user_id=OTHER))),
+            room.id,
+        )
+        assert denied.status_code == 403
+
+        response = interaction_room_routes.delete_interaction_room(
+            admin_request, room.id
+        )
+    payload = json.loads(response.body)
+    assert response.status_code == 200 and payload["success"] is True
+    assert payload["data"]["id"] == room.id
+    assert payload["data"]["deleted_at"] is not None
+    for leaked in (
+        "title", "processo_nome", "processo_codigo", "participants",
+        "last_message_preview", "links", "last_message_at", "processo_id",
+    ):
+        assert leaked not in payload["data"]
+    # read-back: the room is gone for everyone
+    with pytest.raises(LookupError):
+        cases.get_room(_user(), room.id)
 
 
 # --- standalone / participants -------------------------------------------------

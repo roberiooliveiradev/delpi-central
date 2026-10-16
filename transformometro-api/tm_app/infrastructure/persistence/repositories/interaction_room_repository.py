@@ -151,41 +151,89 @@ LEFT JOIN LATERAL (
 
 
 class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryPort):
-    def get_or_create(self, *, processo_id: str, created_by_user_id: str) -> InteractionRoom | None:
-        row = self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_rooms AS room (processo_id, created_by_user_id)
-                SELECT %s::uuid, %s::uuid
-                WHERE EXISTS (
-                    SELECT 1 FROM {_S}.processos
-                    WHERE processo_id = %s::uuid AND deletado = FALSE
-                )
-                ON CONFLICT (processo_id) WHERE deleted_at IS NULL DO UPDATE
-                    SET updated_at = room.updated_at
-                RETURNING id""",
-            (processo_id, created_by_user_id, processo_id),
+    def get_by_process(self, processo_id: str) -> InteractionRoom | None:
+        """Read-only locate by the legacy ``processo_id`` column."""
+        row = self.fetch_one(
+            f"{_ROOM_SELECT} WHERE r.processo_id = %s::uuid AND r.deleted_at IS NULL",
+            (processo_id,),
         )
-        if row is None:
-            return None
-        return self.get(str(row["id"]))
+        return self._with_graph(_room(row)) if row else None
 
-    def create_room(
+    def create_room_graph(
         self,
         *,
         title: str | None,
         access_scope: str,
         created_by_user_id: str,
         processo_id: str | None = None,
+        links: tuple[tuple[str, str, str], ...] = (),
+        owner_participant: bool = False,
+        participant_ids: tuple[str, ...] = (),
     ) -> InteractionRoom | None:
-        row = self.execute_returning_one(
-            f"""INSERT INTO {_S}.tm_interaction_rooms
-                    (processo_id, title, access_scope, created_by_user_id)
-                VALUES (%s::uuid, %s, %s, %s::uuid)
-                RETURNING id""",
-            (processo_id, title, access_scope, created_by_user_id),
-        )
-        if row is None:
-            return None
-        return self.get(str(row["id"]))
+        """One transaction: room + links + participants. Any failure —
+        including a competing primary claim (23505) — rolls back the whole
+        graph; no orphan rows."""
+        room_id: str | None = None
+        try:
+            with self.db() as connection:
+                if processo_id is None:
+                    row = self.execute_returning_one(
+                        f"""INSERT INTO {_S}.tm_interaction_rooms
+                                (title, access_scope, created_by_user_id)
+                            VALUES (%s, %s, %s::uuid)
+                            RETURNING id""",
+                        (title, access_scope, created_by_user_id),
+                        auto_commit=False,
+                    )
+                else:
+                    row = self.execute_returning_one(
+                        f"""INSERT INTO {_S}.tm_interaction_rooms
+                                (processo_id, title, access_scope, created_by_user_id)
+                            SELECT %s::uuid, %s, %s, %s::uuid
+                            WHERE EXISTS (
+                                SELECT 1 FROM {_S}.processos
+                                WHERE processo_id = %s::uuid AND deletado = FALSE
+                            )
+                            RETURNING id""",
+                        (processo_id, title, access_scope, created_by_user_id, processo_id),
+                        auto_commit=False,
+                    )
+                if row is None:
+                    return None
+                room_id = str(row["id"])
+                for entity_type, entity_key, link_role in links:
+                    self.execute(
+                        f"""INSERT INTO {_S}.tm_interaction_room_links
+                                (room_id, entity_type, entity_key, link_role, created_by_user_id)
+                            VALUES (%s::uuid, %s, %s, %s, %s::uuid)""",
+                        (room_id, entity_type, entity_key, link_role, created_by_user_id),
+                        auto_commit=False,
+                    )
+                member_ids = list(participant_ids)
+                if owner_participant:
+                    member_ids.insert(0, created_by_user_id)
+                for member_id in dict.fromkeys(member_ids):
+                    self.execute(
+                        f"""INSERT INTO {_S}.tm_interaction_room_participants
+                                (room_id, user_id, role, added_by_user_id)
+                            VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
+                            ON CONFLICT (room_id, user_id) DO NOTHING""",
+                        (
+                            room_id,
+                            member_id,
+                            "owner" if member_id == created_by_user_id else "member",
+                            created_by_user_id,
+                        ),
+                        auto_commit=False,
+                    )
+                connection.commit()
+        except PluginsRepositoryError as exc:
+            if self._is_primary_conflict(exc):
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                ) from exc
+            raise
+        return self.get(room_id)
 
     def get(self, room_id: str) -> InteractionRoom | None:
         """Active room only — soft-deleted rooms are invisible to reads."""
@@ -421,6 +469,9 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
     # --- authorization support ----------------------------------------------
 
     def protected_content_count(self, room_id: str) -> int:
+        """Every persisted artifact — tombstoned or not. Messages and
+        attachments carry content; mentions/reactions/pins annotate it;
+        read markers prove the history was seen. Block on doubt (R-1)."""
         row = self.fetch_one(
             f"""SELECT (
                     SELECT COUNT(*) FROM {_S}.tm_interaction_messages
@@ -428,8 +479,22 @@ class InteractionRoomRepository(PluginBaseRepository, InteractionRoomRepositoryP
                 ) + (
                     SELECT COUNT(*) FROM {_S}.tm_interaction_attachments
                     WHERE room_id = %s::uuid
+                ) + (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_mentions mn
+                    JOIN {_S}.tm_interaction_messages m ON m.id = mn.message_id
+                    WHERE m.room_id = %s::uuid
+                ) + (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_reactions rc
+                    JOIN {_S}.tm_interaction_messages m ON m.id = rc.message_id
+                    WHERE m.room_id = %s::uuid
+                ) + (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_pins
+                    WHERE room_id = %s::uuid
+                ) + (
+                    SELECT COUNT(*) FROM {_S}.tm_interaction_reads
+                    WHERE room_id = %s::uuid
                 ) AS total""",
-            (room_id, room_id),
+            (room_id,) * 6,
         )
         return int((row or {}).get("total") or 0)
 
@@ -815,42 +880,42 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         self.pins: set[tuple[str, str]] = set()
         self.reads: dict[tuple[str, str], datetime] = {}
 
-    def get_or_create(self, *, processo_id: str, created_by_user_id: str) -> InteractionRoom | None:
-        if processo_id not in self.processes:
+    def get_by_process(self, processo_id: str) -> InteractionRoom | None:
+        room_id = self.by_process.get(processo_id)
+        if room_id is None:
             return None
-        existing = self.by_process.get(processo_id)
-        if existing:
-            room = self.rooms[existing]
-            if room.deleted_at is None:
-                return self._graph(room)
-        now = datetime.now(timezone.utc)
-        room = InteractionRoom(
-            id=str(uuid4()),
-            processo_id=processo_id,
-            processo_codigo="PROC",
-            processo_nome="Processo",
-            created_by_user_id=created_by_user_id,
-            created_at=now,
-            updated_at=now,
-        )
-        self.rooms[room.id] = room
-        self.by_process[processo_id] = room.id
+        room = self.rooms[room_id]
+        if room.deleted_at is not None:
+            return None
         return self._graph(room)
 
-    def create_room(
+    def create_room_graph(
         self,
         *,
         title: str | None,
         access_scope: str,
         created_by_user_id: str,
         processo_id: str | None = None,
+        links: tuple[tuple[str, str, str], ...] = (),
+        owner_participant: bool = False,
+        participant_ids: tuple[str, ...] = (),
     ) -> InteractionRoom | None:
+        """Check-first then mutate — all-or-nothing like the SQL tx."""
+        if processo_id is not None and processo_id not in self.processes:
+            return None
+        for entity_type, entity_key, link_role in links:
+            if link_role == "primary" and self._active_primary_holder(
+                entity_type, entity_key
+            ) is not None:
+                raise PrimaryLinkConflict(
+                    "O objeto já possui outra sala primária ativa."
+                )
         now = datetime.now(timezone.utc)
         room = InteractionRoom(
             id=str(uuid4()),
             processo_id=processo_id,
-            processo_codigo="",
-            processo_nome="",
+            processo_codigo="PROC" if processo_id else "",
+            processo_nome="Processo" if processo_id else "",
             created_by_user_id=created_by_user_id,
             created_at=now,
             updated_at=now,
@@ -860,6 +925,27 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
         self.rooms[room.id] = room
         if processo_id:
             self.by_process[processo_id] = room.id
+        for entity_type, entity_key, link_role in links:
+            link = InteractionRoomLink(
+                id=str(uuid4()),
+                room_id=room.id,
+                entity_type=entity_type,
+                entity_key=entity_key,
+                link_role=link_role,
+                created_by_user_id=created_by_user_id,
+                created_at=now,
+            )
+            self.links[link.id] = link
+        member_ids = list(participant_ids)
+        if owner_participant:
+            member_ids.insert(0, created_by_user_id)
+        for member_id in dict.fromkeys(member_ids):
+            self.add_participant(
+                room_id=room.id,
+                user_id=member_id,
+                role="owner" if member_id == created_by_user_id else "member",
+                actor_user_id=created_by_user_id,
+            )
         return self._graph(room)
 
     def get(self, room_id: str) -> InteractionRoom | None:
@@ -1073,8 +1159,16 @@ class InMemoryInteractionRoomRepository(InteractionRoomRepositoryPort):
     # --- authorization support ----------------------------------------------
 
     def protected_content_count(self, room_id: str) -> int:
-        return sum(1 for item in self.messages.values() if item.room_id == room_id) + sum(
-            1 for item in self.attachments.values() if item.room_id == room_id
+        """Parity with the SQL adapter: every persisted artifact, including
+        tombstoned messages, attachments, embedded mentions/reactions,
+        pins and read markers."""
+        messages = [m for m in self.messages.values() if m.room_id == room_id]
+        return (
+            len(messages)
+            + sum(len(m.mentions) + len(m.reactions) for m in messages)
+            + sum(1 for item in self.attachments.values() if item.room_id == room_id)
+            + sum(1 for rid, _mid in self.pins if rid == room_id)
+            + sum(1 for rid, _uid in self.reads if rid == room_id)
         )
 
     def process_exists(self, processo_id: str) -> bool:

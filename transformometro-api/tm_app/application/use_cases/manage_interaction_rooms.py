@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from tm_app.domain.entities.interaction_room import (
     PARTICIPANT_ROLE_MEMBER,
     PARTICIPANT_ROLE_OWNER,
     ROOM_ACCESS_SCOPE_MEMBERS,
+    ROOM_ACCESS_SCOPE_OPEN,
     InteractionAttachment,
     InteractionMessage,
     InteractionRoom,
@@ -51,6 +53,8 @@ from tm_app.infrastructure.storage.interaction_attachment_storage import Interac
 
 DEFAULT_MESSAGE_LIMIT = 50
 MAX_MESSAGE_LIMIT = 100
+
+logger = logging.getLogger(__name__)
 
 
 def _actor(user: Any) -> str:
@@ -160,17 +164,29 @@ class InteractionRoomUseCases:
         )
 
     def _audit_log(self, action: str, room_id: str, user: Any, **extra: Any) -> None:
+        """Best-effort append to the canonical audit trail. An audit
+        failure after a committed write is an observability event, not a
+        reason to report a false failure — the operation result stands and
+        the loss is logged (same convention as gpt_actions._audit)."""
         if self._audit is None:
             return
-        self._audit.log(
-            entity_type="interaction_room",
-            entity_id=room_id,
-            action=action,
-            user_id=str(getattr(user, "id", "") or "") or None,
-            user_email=str(getattr(user, "email", "") or "") or None,
-            user_name=str(getattr(user, "name", "") or "") or None,
-            payload=extra or None,
-        )
+        try:
+            self._audit.log(
+                entity_type="interaction_room",
+                entity_id=room_id,
+                action=action,
+                user_id=str(getattr(user, "id", "") or "") or None,
+                user_email=str(getattr(user, "email", "") or "") or None,
+                user_name=str(getattr(user, "name", "") or "") or None,
+                payload=extra or None,
+            )
+        except Exception as exc:
+            logger.warning(
+                "interaction_room_audit_failed action=%s room=%s err=%s",
+                action,
+                room_id,
+                exc,
+            )
 
     # --- room lifecycle ------------------------------------------------------
 
@@ -178,7 +194,11 @@ class InteractionRoomUseCases:
         self, user: Any, processo_id: str, *, authorization: str | None = None
     ) -> InteractionRoom:
         """Legacy process room — unchanged semantics, plus dual-write of the
-        primary process link (Expand)."""
+        primary process link (Expand).
+
+        Order is locate → authorize → mutate: an unauthorized requester
+        resolves the canonical room and is denied BEFORE any write — no
+        link revival, no room touch, no duplicate (P1 correction)."""
         self._policy.require_access(user)
         actor = _actor(user)
         processo = normalize_processo_id(processo_id)
@@ -187,23 +207,61 @@ class InteractionRoomUseCases:
         # later made primary for this process must still be located here.
         room = self._repo.find_active_primary_room(LINK_ENTITY_PROCESS, processo)
         if room is None:
-            room = self._repo.get_or_create(
-                processo_id=processo,
+            room = self._repo.get_by_process(processo)
+        if room is not None:
+            confirmed = self._authorized_room(user, room.id, authorization)
+            self._assert_process_link(room.id, processo, actor)
+            return confirmed
+        try:
+            room = self._repo.create_room_graph(
+                title=None,
+                access_scope=ROOM_ACCESS_SCOPE_OPEN,
                 created_by_user_id=actor,
+                processo_id=processo,
+                links=((LINK_ENTITY_PROCESS, processo, LINK_ROLE_PRIMARY),),
             )
+        except PrimaryLinkConflict:
+            # Lost the create race — resolve the winner, then authorize.
+            winner = self._repo.find_active_primary_room(
+                LINK_ENTITY_PROCESS, processo
+            ) or self._repo.get_by_process(processo)
+            if winner is None:
+                raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+            return self._authorized_room(user, winner.id, authorization)
         if room is None:
             raise LookupError("Processo não encontrado.")
+        self._audit_log("create", room.id, user, kind="process", processo_id=processo)
+        confirmed = self._authorized_room(user, room.id, authorization)
+        if confirmed.id != room.id:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
+        return confirmed
+
+    def _assert_process_link(
+        self, room_id: str, processo: str, actor: str
+    ) -> None:
+        """Dual-write for the EXPAND era: materialize the primary process
+        link when missing, but NEVER resurrect a link the owner removed
+        explicitly — explicit removals are honored."""
+        existing = next(
+            (
+                item
+                for item in self._repo.list_links(room_id, include_inactive=True)
+                if item.entity_type == LINK_ENTITY_PROCESS
+                and item.entity_key == processo
+            ),
+            None,
+        )
+        if existing is not None and (
+            existing.active or existing.deleted_cause == LINK_DELETED_EXPLICIT
+        ):
+            return
         self._repo.upsert_link(
-            room_id=room.id,
+            room_id=room_id,
             entity_type=LINK_ENTITY_PROCESS,
             entity_key=processo,
             link_role=LINK_ROLE_PRIMARY,
             actor_user_id=actor,
         )
-        confirmed = self._authorized_room(user, room.id, authorization)
-        if confirmed.id != room.id:
-            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
-        return confirmed
 
     def open_standalone(
         self,
@@ -216,29 +274,18 @@ class InteractionRoomUseCases:
         creator is the owner participant."""
         self._policy.require_access(user)
         actor = _actor(user)
-        room = self._repo.create_room(
+        room = self._repo.create_room_graph(
             title=normalize_room_title(title),
             access_scope=ROOM_ACCESS_SCOPE_MEMBERS,
             created_by_user_id=actor,
+            owner_participant=True,
+            participant_ids=tuple(
+                normalize_user_id(str(member_id), field="O participante")
+                for member_id in (participant_ids or [])
+            ),
         )
         if room is None:
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
-        self._repo.add_participant(
-            room_id=room.id,
-            user_id=actor,
-            role=PARTICIPANT_ROLE_OWNER,
-            actor_user_id=actor,
-        )
-        for member_id in participant_ids or []:
-            member = normalize_user_id(str(member_id), field="O participante")
-            if member == actor:
-                continue
-            self._repo.add_participant(
-                room_id=room.id,
-                user_id=member,
-                role=PARTICIPANT_ROLE_MEMBER,
-                actor_user_id=actor,
-            )
         self._audit_log("create", room.id, user, kind="standalone")
         confirmed = self._authorized_room(user, room.id, None)
         if confirmed.access_scope != ROOM_ACCESS_SCOPE_MEMBERS:
@@ -274,37 +321,27 @@ class InteractionRoomUseCases:
             raise RoomAuthorizationDenied(
                 message, status_code=status_code, error_code=error_code
             )
-        room = self._repo.create_room(
-            title=None,
-            access_scope=ROOM_ACCESS_SCOPE_MEMBERS,
-            created_by_user_id=actor,
-        )
-        if room is None:
-            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         try:
-            self._repo.upsert_link(
-                room_id=room.id,
-                entity_type=LINK_ENTITY_HELPDESK_TICKET,
-                entity_key=ticket_key,
-                link_role=LINK_ROLE_PRIMARY,
-                actor_user_id=actor,
+            # Atomic: room + primary link + owner participant in one
+            # transaction; a competing claim rolls everything back (23505).
+            room = self._repo.create_room_graph(
+                title=None,
+                access_scope=ROOM_ACCESS_SCOPE_MEMBERS,
+                created_by_user_id=actor,
+                links=((LINK_ENTITY_HELPDESK_TICKET, ticket_key, LINK_ROLE_PRIMARY),),
+                owner_participant=True,
             )
         except PrimaryLinkConflict:
-            # Lost the create race — tombstone the orphan we just created
-            # and re-resolve to the canonical winner.
-            self._repo.soft_delete(room.id, actor_user_id=actor)
+            # Lost the create race — the transaction left nothing behind;
+            # re-resolve to the canonical winner and authorize.
             winner = self._repo.find_active_primary_room(
                 LINK_ENTITY_HELPDESK_TICKET, ticket_key
             )
             if winner is None:
                 raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
             return self._authorized_room(user, winner.id, authorization)
-        self._repo.add_participant(
-            room_id=room.id,
-            user_id=actor,
-            role=PARTICIPANT_ROLE_OWNER,
-            actor_user_id=actor,
-        )
+        if room is None:
+            raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
         self._audit_log("create", room.id, user, kind="ticket", ticket=ticket_key)
         return self._authorized_room(user, room.id, authorization)
 
@@ -421,8 +458,10 @@ class InteractionRoomUseCases:
         if self._repo.is_participant(room.id, member):
             raise RuntimeError("OUTCOME_VERIFICATION_FAILED")
 
-    def list_participants(self, user: Any, room_id: str) -> list[dict[str, Any]]:
-        room = self._authorized_room(user, room_id, None)
+    def list_participants(
+        self, user: Any, room_id: str, *, authorization: str | None = None
+    ) -> list[dict[str, Any]]:
+        room = self._authorized_room(user, room_id, authorization)
         return [item.to_dict() for item in room.participants]
 
     # --- governed delete / restore (D-04) -------------------------------------
@@ -436,7 +475,7 @@ class InteractionRoomUseCases:
             "room_id": room.id,
             "deleted": room.deleted_at is not None,
             "access_scope": room.access_scope,
-            "message_count": self._repo.protected_content_count(room.id),
+            "protected_content_count": self._repo.protected_content_count(room.id),
             "participant_count": len(
                 [p for p in room.participants if p.removed_at is None]
             ),

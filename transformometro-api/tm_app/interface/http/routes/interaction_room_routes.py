@@ -124,9 +124,17 @@ def open_interaction_room(request: Request, body: OpenInteractionRoomBody):
     operation_id="delete_transformometro_interaction_room",
 )
 def delete_interaction_room(request: Request, room_id: str):
+    """Administrative delete — safe projection only (R-3/R-5): managers
+    without content authorization may delete but must never receive
+    title, participants, history preview or protected link keys."""
     try:
         room = _rooms.delete_room(request.state.user, room_id)
-        return ok(room.to_dict())
+        return ok(
+            {
+                "id": room.id,
+                "deleted_at": room.deleted_at.isoformat() if room.deleted_at else None,
+            }
+        )
     except Exception as exc:
         return _handle(exc)
 
