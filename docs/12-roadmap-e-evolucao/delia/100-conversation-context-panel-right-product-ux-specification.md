@@ -151,3 +151,7 @@ REUSE_DECISION = REUSE_PROJECTIONS + FUTURE_GATE_FOR_SHELL
 TESTS = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 ```
+
+## Registro de implementação visual bounded — 2026-10-16
+
+`ConversationContextPanel` foi criado em `plugin-ui` e importado por `DeliaConversationPage` na região direita, com seções **Detalhes**, **Evidências** e **Atividades** e toggle de abertura/fechamento no shell. Os slots `details`, `evidence` e `activities` aceitam apenas projeções read-only publicadas pela DÉLIA. Na ausência de contrato/dados, renderizam estados neutros, sem inventar evidence nem activity; não há fetch, ACT, planner ou Domain authority na UI. `EXISTING_EQUIVALENT=YES` para primitives e presentations existentes; `REUSE_DECISION=EXTEND` para composição. Testes/build/browser `TEST_NOT_RUN`; aceite independente `PENDING`; fases inalteradas.
