@@ -57,7 +57,7 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
 | 02 intent/instructions | **ACCEPTED_WITH_RESIDUAL** (§6.201, [28](./28-stage-02-independent-architecture-acceptance-closure.md)); consolidation [27](./27-stage-02-final-evidence-consolidation-and-acceptance-candidate.md); evidence 23–26 | B2 + RW-01/02/UX-01 per [21](./21-stage-02-b2-postreview-concurrency-contract-ux-rework-report.md)/[22](./22-stage-02-b2-invalid-confirmation-claim-followup.md) | 1178 pytest + 191 vitest + 6/6 concurrent; live 01/03–10 PASS (0 ACT); residuals R-S02-01..09 | `STAGE_02_ACCEPTED=YES_WITH_RESIDUAL`; Stage03 NOT_AUTHORIZED |
-| 03 discovery/guidance | PLANNED — inventory only (§6.202, [29](./29-stage-03-discovery-guidance-inventory-and-implementation-brief.md)); **IMPLEMENTATION NOT_AUTHORIZED** | NOT_STARTED | TEST_NOT_RUN | PENDING authorization |
+| 03 discovery/guidance | **AUTHORIZED_BOUNDED** (§6.204, [30](./30-stage-03-bounded-implementation-authorization.md)); inventory [29](./29-stage-03-discovery-guidance-inventory-and-implementation-brief.md) | STARTED after auth commit | D3 suite pending/in progress | PENDING independent review; Stage03 NOT_ACCEPTED |
 | 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 06 generalization/acceptance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
