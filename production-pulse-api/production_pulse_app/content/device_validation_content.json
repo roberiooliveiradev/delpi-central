@@ -11,6 +11,9 @@
     "schedulerTickMs": {
       "default": 100
     },
+    "schedulerLivenessStaleMs": {
+      "default": 30000
+    },
     "onlineGraceMs": {
       "multiplier": 2,
       "min": 2000,

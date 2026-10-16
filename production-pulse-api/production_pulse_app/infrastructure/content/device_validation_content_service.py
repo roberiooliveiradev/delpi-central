@@ -65,6 +65,16 @@ def scheduler_tick_ms(*, default: int = 100) -> int:
     return default
 
 
+def scheduler_liveness_stale_ms(*, default: int = 30_000) -> int:
+    section = _limits_section().get("schedulerLivenessStaleMs")
+    if not isinstance(section, dict):
+        return default
+    raw = section.get("default")
+    if isinstance(raw, (int, float)):
+        return max(1, int(raw))
+    return default
+
+
 def _online_grace_section() -> dict[str, Any]:
     section = _limits_section().get("onlineGraceMs")
     return section if isinstance(section, dict) else {}
@@ -220,6 +230,7 @@ __all__ = [
     "poll_interval_default",
     "poll_interval_max",
     "poll_interval_min",
+    "scheduler_liveness_stale_ms",
     "scheduler_tick_ms",
     "valid_branches",
     "wifi_ssid_max_length",

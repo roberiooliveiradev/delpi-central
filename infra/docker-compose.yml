@@ -2534,6 +2534,7 @@ services:
       PP_ONLINE_GRACE_MIN_SECONDS: ${PP_ONLINE_GRACE_MIN_SECONDS:-}
       PP_ONLINE_GRACE_MAX_SECONDS: ${PP_ONLINE_GRACE_MAX_SECONDS:-}
       PP_ONLINE_GRACE_MULTIPLIER: ${PP_ONLINE_GRACE_MULTIPLIER:-}
+      PP_SCHEDULER_LIVENESS_STALE_MS: ${PP_SCHEDULER_LIVENESS_STALE_MS:-}
 
       DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
@@ -2553,6 +2554,13 @@ services:
         condition: service_healthy
       core-api:
         condition: service_started
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
     logging:
       driver: "json-file"

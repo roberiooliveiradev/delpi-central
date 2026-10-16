@@ -2318,6 +2318,7 @@ services:
       PP_ONLINE_GRACE_MIN_SECONDS: ${PP_ONLINE_GRACE_MIN_SECONDS:-}
       PP_ONLINE_GRACE_MAX_SECONDS: ${PP_ONLINE_GRACE_MAX_SECONDS:-}
       PP_ONLINE_GRACE_MULTIPLIER: ${PP_ONLINE_GRACE_MULTIPLIER:-}
+      PP_SCHEDULER_LIVENESS_STALE_MS: ${PP_SCHEDULER_LIVENESS_STALE_MS:-}
 
       DELPI_API_URL: ${PRODUCTION_PULSE_DELPI_API_URL:-http://127.0.0.1/apps/api-delpi}
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
@@ -2338,6 +2339,19 @@ services:
       - keycloak
       - postgres-plugins
       - core-api
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os,urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\",\"8025\")}/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   comite-etica-conduta-api:
     <<: *plugin-profile

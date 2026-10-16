@@ -77,6 +77,8 @@ class Settings:
     )
     # Preenchido após instanciação (env ou content JSON).
     PP_POLL_SCHEDULER_TICK_MS: int | None = None
+    # None → device_validation_content.json → schedulerLivenessStaleMs.default
+    PP_SCHEDULER_LIVENESS_STALE_MS: int | None = None
 
     PP_FIRMWARE_UPLOAD_DIR: str = _get_env(
         "PP_FIRMWARE_UPLOAD_DIR",
@@ -120,6 +122,9 @@ settings = Settings()
 # Override opcional; None → device_validation_content.json → schedulerTickMs.default
 settings.PP_POLL_SCHEDULER_TICK_MS = _optional_positive_int(
     _get_env("PP_POLL_SCHEDULER_TICK_MS", default="")
+)
+settings.PP_SCHEDULER_LIVENESS_STALE_MS = _optional_positive_int(
+    _get_env("PP_SCHEDULER_LIVENESS_STALE_MS", default="")
 )
 settings.PP_ONLINE_GRACE_MIN_SECONDS = _optional_positive_int(
     _get_env("PP_ONLINE_GRACE_MIN_SECONDS", default="")

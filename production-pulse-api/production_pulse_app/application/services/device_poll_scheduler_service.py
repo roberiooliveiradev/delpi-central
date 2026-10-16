@@ -19,6 +19,7 @@ from production_pulse_app.application.services.firmware_update_job_service impor
 from production_pulse_app.config import settings
 from production_pulse_app.domain.services.device_poll_schedule_service import compute_next_poll_at
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
+    scheduler_liveness_stale_ms,
     scheduler_tick_ms,
 )
 from production_pulse_app.infrastructure.content.telemetry_persistence_content_service import (
@@ -30,6 +31,8 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_devic
 
 logger = logging.getLogger(__name__)
 
+_RECREATE_BACKOFF_SECONDS = 1.0
+
 
 def resolve_scheduler_tick_seconds() -> float:
     """Tick do loop — content canônico, override opcional via env."""
@@ -37,6 +40,13 @@ def resolve_scheduler_tick_seconds() -> float:
     if tick_ms is None:
         tick_ms = scheduler_tick_ms()
     return max(0.01, float(tick_ms) / 1000.0)
+
+
+def resolve_scheduler_liveness_stale_ms() -> int:
+    stale_ms = settings.PP_SCHEDULER_LIVENESS_STALE_MS
+    if stale_ms is None:
+        stale_ms = scheduler_liveness_stale_ms()
+    return max(1, int(stale_ms))
 
 
 class DevicePollSchedulerService:
@@ -64,25 +74,118 @@ class DevicePollSchedulerService:
         self._lock = asyncio.Lock()
         self._last_purge_monotonic = 0.0
         self._purge_in_flight = False
+        self._last_tick_monotonic: float | None = None
+        self._started_monotonic: float | None = None
+        self._recreate_scheduled = False
 
     @property
     def in_flight_device_ids(self) -> frozenset[UUID]:
         return frozenset(self._in_flight)
 
+    def liveness_snapshot(self) -> dict[str, Any]:
+        """Read-only scheduler liveness for /health (no side effects)."""
+        enabled = bool(settings.PP_POLL_SCHEDULER_ENABLED)
+        running = self._task is not None and not self._task.done()
+        now = time.monotonic()
+        last_tick_age_ms: int | None = None
+        if self._last_tick_monotonic is not None:
+            last_tick_age_ms = int(max(0.0, (now - self._last_tick_monotonic) * 1000.0))
+        started_age_ms: int | None = None
+        if self._started_monotonic is not None:
+            started_age_ms = int(max(0.0, (now - self._started_monotonic) * 1000.0))
+        stale_ms = resolve_scheduler_liveness_stale_ms()
+        healthy = self._evaluate_healthy(
+            enabled=enabled,
+            running=running,
+            last_tick_age_ms=last_tick_age_ms,
+            started_age_ms=started_age_ms,
+            stale_ms=stale_ms,
+        )
+        return {
+            "enabled": enabled,
+            "running": running,
+            "healthy": healthy,
+            "lastTickAgeMs": last_tick_age_ms,
+            "inFlightCount": len(self._in_flight),
+            "staleThresholdMs": stale_ms,
+        }
+
+    @staticmethod
+    def _evaluate_healthy(
+        *,
+        enabled: bool,
+        running: bool,
+        last_tick_age_ms: int | None,
+        started_age_ms: int | None,
+        stale_ms: int,
+    ) -> bool:
+        if not enabled:
+            return True
+        if not running:
+            return False
+        if last_tick_age_ms is not None:
+            return last_tick_age_ms <= stale_ms
+        # Antes do 1º tick: healthy enquanto uptime < stale (boot grace).
+        if started_age_ms is None:
+            return True
+        return started_age_ms <= stale_ms
+
     async def start(self) -> None:
-        if self._task is not None:
+        if self._task is not None and not self._task.done():
             return
+        self._task = None
         initialized = await asyncio.to_thread(self._devices.initialize_missing_next_poll_at)
         if initialized:
             logger.info("Scheduler initialized next_poll_at for %s device(s).", initialized)
         self._stop_event.clear()
+        self._started_monotonic = time.monotonic()
+        self._recreate_scheduled = False
         self._task = asyncio.create_task(self._run_loop(), name="device-poll-scheduler")
+        self._task.add_done_callback(self._on_task_done)
 
     async def stop(self) -> None:
         self._stop_event.set()
-        if self._task is not None:
-            await self._task
+        task = self._task
+        if task is not None:
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
             self._task = None
+
+    def _on_task_done(self, task: asyncio.Task[None]) -> None:
+        if self._stop_event.is_set():
+            return
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            logger.error(
+                "Device poll scheduler task ended with error; scheduling recreate.",
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
+        else:
+            logger.error("Device poll scheduler task ended unexpectedly; scheduling recreate.")
+        if self._recreate_scheduled:
+            return
+        self._recreate_scheduled = True
+        self._task = None
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        loop.create_task(self._recreate_after_backoff(), name="device-poll-scheduler-recreate")
+
+    async def _recreate_after_backoff(self) -> None:
+        try:
+            await asyncio.sleep(_RECREATE_BACKOFF_SECONDS)
+            if self._stop_event.is_set():
+                return
+            await self.start()
+        except Exception:
+            logger.exception("Device poll scheduler recreate failed.")
+        finally:
+            self._recreate_scheduled = False
 
     async def _run_loop(self) -> None:
         logger.info(
@@ -92,13 +195,21 @@ class DevicePollSchedulerService:
         )
         try:
             while not self._stop_event.is_set():
-                await self._tick()
+                await self._safe_tick()
                 try:
                     await asyncio.wait_for(self._stop_event.wait(), timeout=self._tick_seconds)
                 except asyncio.TimeoutError:
                     continue
         finally:
             logger.info("Device poll scheduler stopped.")
+
+    async def _safe_tick(self) -> None:
+        try:
+            await self._tick()
+        except Exception:
+            logger.exception("Device poll scheduler tick failed.")
+        finally:
+            self._last_tick_monotonic = time.monotonic()
 
     async def _tick(self) -> None:
         await self._maybe_purge_raw()

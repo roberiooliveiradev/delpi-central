@@ -9,6 +9,10 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from production_pulse_app.application.services.device_poll_scheduler_service import (
+    get_device_poll_scheduler,
+    reset_device_poll_scheduler_for_tests,
+)
 from production_pulse_app.config import settings
 from production_pulse_app.core.responses import error, success
 from production_pulse_app.interface.http.routes.catalog_routes import router as catalog_router
@@ -21,10 +25,6 @@ from production_pulse_app.interface.http.routes.operator_routes import router as
 from production_pulse_app.interface.http.routes.realtime_routes import router as realtime_router
 from production_pulse_app.interface.http.routes.summary_routes import router as summary_router
 from production_pulse_app.middleware.auth_middleware import jwt_middleware
-from production_pulse_app.application.services.device_poll_scheduler_service import (
-    get_device_poll_scheduler,
-    reset_device_poll_scheduler_for_tests,
-)
 from production_pulse_app.startup.register_device_drivers import register_device_drivers
 from production_pulse_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -95,10 +95,21 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
+        scheduler_snapshot = get_device_poll_scheduler().liveness_snapshot()
+        if not scheduler_snapshot.get("healthy", True):
+            payload = error(
+                "Device poll scheduler is unhealthy.",
+                code="scheduler_unhealthy",
+                status_code=503,
+                details={"scheduler": scheduler_snapshot},
+            )
+            status_code = payload.pop("_status_code", 503)
+            return JSONResponse(status_code=status_code, content=payload)
         return success(
             {
                 "service": "production-pulse-api",
                 "status": "ok",
+                "scheduler": scheduler_snapshot,
             }
         )
 
