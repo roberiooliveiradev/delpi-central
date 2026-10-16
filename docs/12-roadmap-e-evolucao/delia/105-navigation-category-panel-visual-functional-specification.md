@@ -58,3 +58,11 @@ O kit `plugin-ui` apresenta shell, heading, loading, no-results e callback; a D�
 - **Validação:** testes de props/callbacks/estados e negativos de AuthZ, QA page/dock light/dark, check de exports/federação, prova de generalização em cenários de navegação e revisão independente no SHA executado. `TEST_NOT_RUN` não equivale a PASS.
 
 
+
+## Rework R1 — apresentação por container e identidade estável
+
+Subordina-se ao [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md). `NavigationCategoryPanel` é **slot do shell esquerdo existente**: inline quando preserva largura mínima do centro; overlay quando não há espaço; não cria nav concorrente. Quando aberto, seu header possui **o único botão de recolher**; quando fechado, não há botão no header oculto e o rail possui o único botão de expandir.
+
+Os modos são `expanded|rail_only|overlay|launcher_only`, controlados pelo consumer; o kit renderiza props e não altera autorização. Overlay fecha por backdrop/Escape, devolve foco ao botão disparador e não deixa elementos invisíveis tabuláveis. Ao trocar categoria, preservar `ConversationWorkspace` e draft; se conteúdo da categoria não possui contrato, uma mensagem indisponível por categoria basta, sem fictitious loading.
+
+**Algorithm candidate:** testar `containerWidth - railWidth - panelWidth >= minCenterWidth` para modo inline (alvo inicial `minCenterWidth=600px` desktop), senão overlay. Se rail inviabilizar composer em Dock ≤420px, mostrar launcher único e drawer. Valores dependem de QA real antes de freeze. No resize de overlay para inline, não duplicar conteúdo/menu ou controle; a seleção mantém uma identidade estável.
