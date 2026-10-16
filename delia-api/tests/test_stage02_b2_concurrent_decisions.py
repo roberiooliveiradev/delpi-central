@@ -25,7 +25,6 @@ from test_stage02r2_execution_bound_diagnosis import (
     _direct_write_provider,
     _orchestrator,
     _stage_select,
-    _STAGE_ARGS,
 )
 
 
