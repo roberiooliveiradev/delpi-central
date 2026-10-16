@@ -8,9 +8,13 @@ describe("DeliaConversationPage", () => {
     const message = screen.getByText("Mensagem real");
     expect(container.querySelectorAll(".delpi-ui-conversation-three-region")).toHaveLength(1);
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Nova conversa" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Pesquisar" })).toBeNull();
+    expect((screen.getByRole("button", { name: "Nova conversa" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Pesquisar conversas" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
+    expect(screen.getByRole("heading", { name: "Detalhes" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Evidências" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Atividades" })).toBeTruthy();
     expect(screen.getByRole("complementary", { name: "Contexto da conversa" })).toBeTruthy();
     expect(container.contains(message)).toBe(true);
   });
