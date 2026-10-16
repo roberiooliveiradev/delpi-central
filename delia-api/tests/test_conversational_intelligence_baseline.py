@@ -37,6 +37,7 @@ from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
 )
 from app.application.model_invocation.contracts import (
+    ConversationContextTurn,
     ProviderInvocationPayload,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
@@ -45,6 +46,7 @@ from app.domain.evidence.model import (
     ModelRef,
     SourceRef,
 )
+from app.domain.interaction.model import TurnKind
 from app.domain.model_invocation.model import ProviderExposureClass
 from app.domain.specialist_interop.model import (
     InteropProtocol,
@@ -407,11 +409,12 @@ def test_ci01_goal_class_has_no_orientation_class():
 
 
 def test_ci01_hazard_guidance_question_can_reach_prepare():
-    """RED hazard: nothing semantically prevents a 'how do I create'
-    question from selecting the PREPARE capability — the selection
-    instruction's 'crie -> prefer PREPARE' keyword hint can misroute
-    guidance intent into the governed-write chain
-    (SELECTION_FAILURE). Scripted to observe pipeline behavior only."""
+    """Residual hazard (stage-02): the finality gate reconciles the
+    write-class selection against the validated goal — but a goal
+    proposal that misclassifies a guidance question as
+    create_or_modify still reaches the governed write chain. The gate
+    depends on semantic interpretation quality; owner governance
+    remains the blast-radius bound (SELECTION_FAILURE residual)."""
     provider = FakeProvider(
         "acme-flow",
         [
@@ -454,12 +457,18 @@ def test_ci01_hazard_guidance_question_can_reach_prepare():
                 "operation": "create",
                 "changes": {},
             },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
         ),
     )
     attempt = orch.attempt("Como criar um processo?")
-    # Observed: a guidance question reached the owner PREPARE call —
-    # the pipeline honors a write-class selection on a read-class
-    # question; only the fake owner's outcome bounds the blast radius.
+    # A guidance question still reaches the owner PREPARE call when the
+    # goal proposal declares action intent — the gate cannot correct a
+    # misclassified goal; the fake owner's outcome bounds the blast
+    # radius.
     assert ("stage_record", {
         "entity": "process", "operation": "create", "changes": {},
     }) in provider.calls
@@ -594,6 +603,11 @@ def test_ci04_inner_required_field_not_checked_by_outer_schema():
                 "operation": "create",
                 "changes": {"nome_processo": "processo teste"},
             },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
         ),
     )
     attempt = orch.attempt("Crie um processo chamado processo teste")
@@ -655,6 +669,11 @@ def test_ci03_sibling_complete_changes_commit_directly():
                     "status_processo": "ativo",
                 },
             },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
         ),
     )
     attempt = orch.attempt("Crie um processo chamado processo teste")
@@ -688,6 +707,11 @@ def test_ci05_negative_prepare_not_ready_never_reaches_act():
                 "entity": "process",
                 "operation": "create",
                 "changes": {"nome_processo": "processo teste"},
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
             },
         ),
     )
@@ -1011,6 +1035,11 @@ def test_ci10_inner_schema_gap_is_name_invariant():
                 "operation": "create",
                 "payload": {"label": "item teste"},
             },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
         ),
     )
     attempt = orch.attempt("Crie um item chamado item teste")
@@ -1061,6 +1090,11 @@ def test_budget_model_calls_per_guided_write_path():
                     "status_processo": "ativo",
                 },
             },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
         ),
     )
     attempt = orch.attempt("Crie um processo chamado x")
@@ -1071,3 +1105,491 @@ def test_budget_model_calls_per_guided_write_path():
     # resolved without a proposal (empty schema short-circuit).
     assert len(purposes) == 5
     assert purposes.count(ARGUMENTS_INSTRUCTION_ID) == 1
+
+
+# ---------------------------------------------------------------------
+# CASE S2 (DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02)
+# — intent/finality coherence. The validated turn goal is the only
+# semantic statement of what the user wants: a write-class target
+# (PREPARE/ACT) is structurally incompatible with a non-action goal
+# and must be reconciled deterministically before the governed write
+# chain runs. Scripted proposals isolate pipeline behavior — the gate
+# compares the validated goal class to the owner-declared operation
+# class, never to provider/capability names.
+# ---------------------------------------------------------------------
+
+_S2_GUIDE_STRUCTURED = {
+    "data": {
+        "items": [
+            {"topic": "process", "content": "Crie pelo menu Processos."}
+        ]
+    }
+}
+
+
+def _s2_guided_write_caps(
+    provider_id="acme-flow", group_id="registry", read_name="read_guide",
+    write_name="stage_record",
+):
+    """One owner surface advertising a guidance READ and a PREPARE —
+    the stage-01 hazard shape on neutral vocabulary."""
+    return [
+        _cap(
+            group_id, provider_id, read_name,
+            SpecialistOperationClass.READ,
+            schema=_GUIDE_SCHEMA,
+            desc="read the how-to guide for a topic",
+        ),
+        _cap(
+            group_id, provider_id, write_name,
+            SpecialistOperationClass.PREPARE,
+            schema={
+                "type": "object",
+                "properties": {
+                    "entity": {"type": "string"},
+                    "operation": {"type": "string"},
+                    "changes": {"type": "object"},
+                },
+                "required": ["entity", "operation", "changes"],
+            },
+            desc="stage a record change for review",
+        ),
+    ]
+
+
+def _s2_guided_write_provider(
+    provider_id="acme-flow", group_id="registry",
+):
+    return FakeProvider(
+        provider_id,
+        [
+            _group(
+                provider_id,
+                group_id,
+                _s2_guided_write_caps(provider_id, group_id),
+            )
+        ],
+        outcomes={
+            (group_id, "read_guide"): _outcome(
+                group_id, "read_guide", "guide",
+                structured=_S2_GUIDE_STRUCTURED,
+            ),
+        },
+    )
+
+
+def test_s2_orientation_demotes_write_selection_to_read():
+    """'Como criar um processo?' — the model selected the PREPARE
+    capability while the validated goal is information-seeking. The
+    deterministic finality gate must demote the write-class target and
+    reselect a non-mutating capability on the same owner surface; the
+    write call must never reach the provider."""
+    provider = _s2_guided_write_provider()
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "processo",
+                },
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "read_guide",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"topic": "process"},
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                },
+            },
+        ],
+    )
+    attempt = orch.attempt("Como criar um processo?")
+    assert [name for name, _ in provider.calls] == ["read_guide"]
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "Processos" in (attempt.content or "")
+
+
+def test_s2_write_only_surface_never_writes_on_information_goal():
+    """'Não execute nada; apenas explique.' on an owner surface that
+    advertises ONLY the write capability — there is nothing to demote
+    to, so the turn must end truthfully instead of running the write
+    by elimination."""
+    provider = FakeProvider(
+        "acme-flow",
+        [
+            _group(
+                "acme-flow",
+                "registry",
+                [
+                    _cap(
+                        "registry", "acme-flow", "stage_record",
+                        SpecialistOperationClass.PREPARE,
+                        schema={
+                            "type": "object",
+                            "properties": {
+                                "entity": {"type": "string"},
+                                "operation": {"type": "string"},
+                                "changes": {"type": "object"},
+                            },
+                            "required": [
+                                "entity", "operation", "changes",
+                            ],
+                        },
+                        desc="stage a record change for review",
+                    ),
+                ],
+            )
+        ],
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+                # Arguments for the write are satisfiable — without
+                # the gate the PREPARE call fires on a negated
+                # execution request.
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
+                },
+            }
+        ],
+    )
+    attempt = orch.attempt("Não execute nada; apenas explique.")
+    assert provider.calls == []
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+
+
+def test_s2_ambiguous_request_clarifies_without_writing():
+    """'Preciso criar um processo.' — the model could not decide
+    between guidance and execution (goal_class=clarify) yet selected
+    a write capability. The gate must ask a proportional business
+    clarification instead of presuming material intent."""
+    provider = _s2_guided_write_provider()
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                GOAL_INSTRUCTION_ID: {"goal_class": "clarify"},
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
+                },
+            }
+        ],
+    )
+    attempt = orch.attempt("Preciso criar um processo.")
+    assert provider.calls == []
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    content = attempt.content or ""
+    assert content
+    assert "stage_record" not in content
+
+
+def test_s2_explicit_create_keeps_governed_write_path():
+    """Positive control: goal=create_or_modify with a write selection
+    is compatible — the governed chain (discovery -> prepare ->
+    owner-sealed direct ACT) runs exactly as before."""
+    provider = _process_provider(
+        commit_outcome=_outcome(
+            "registry", "commit_record", "created",
+            structured={"data": {"record_id": "R-1"}},
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "x",
+                    "status_processo": "ativo",
+                },
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                    "business_subject": "processo",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Quero que você cadastre um processo x")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert [name for name, _ in provider.calls] == [
+        "get_catalog", "stage_record", "commit_record",
+    ]
+
+
+def test_s2_prepare_only_request_stops_at_confirmation():
+    """'Prepare um cadastro, mas não aplique.' — action intent reaches
+    PREPARE; the owner seals explicit user confirmation and no ACT
+    call happens before the user confirms. Write governance is
+    unchanged by the intent layer."""
+    provider = _process_provider(
+        prepare_outcome=_outcome(
+            "registry", "stage_record", "",
+            structured={
+                "data": {
+                    "capability": "stage_record",
+                    "proposal_handle": "h-9",
+                    "exact_change": {
+                        "entity": "process",
+                        "operation": "create",
+                    },
+                    "ready": True,
+                    "validation_result": {"ready": True},
+                    "confirmation_requirement": {
+                        "explicit_user_confirmation": True,
+                    },
+                }
+            },
+        )
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "registry", "stage_record",
+            arguments={
+                "entity": "process",
+                "operation": "create",
+                "changes": {
+                    "nome_processo": "x",
+                    "status_processo": "ativo",
+                },
+            },
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "create_or_modify",
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Prepare um cadastro, mas não aplique.")
+    assert attempt.status is (
+        GovernedCapabilityStatus.CONFIRMATION_REQUIRED
+    )
+    assert "commit_record" not in [name for name, _ in provider.calls]
+
+
+def test_s2_prior_action_turns_do_not_escalate_guidance():
+    """Multi-turn coherence: a prior turn that executed a change must
+    not convert a later 'how do I' question into a write — the
+    validated goal of THIS turn governs compatibility."""
+    provider = _s2_guided_write_provider()
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "read_guide",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"topic": "process"},
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                },
+            },
+        ],
+    )
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="Crie um processo chamado x",
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content="Processo criado.",
+        ),
+    )
+    attempt = orch.attempt(
+        "Como criar um processo?", prior_turns=prior
+    )
+    assert [name for name, _ in provider.calls] == ["read_guide"]
+
+
+def test_s2_intent_gate_is_name_invariant():
+    """Same demotion on differently-named owner/tools — the gate
+    compares the validated goal class to the owner-declared operation
+    class, never to names."""
+    provider = FakeProvider(
+        "x9-manuals",
+        [
+            _group(
+                "x9-manuals",
+                "library",
+                _s2_guided_write_caps(
+                    "x9-manuals", "library",
+                    read_name="fetch_chapter",
+                    write_name="propose_mutation",
+                ),
+            )
+        ],
+        outcomes={
+            ("library", "fetch_chapter"): _outcome(
+                "library", "fetch_chapter", "chapter",
+                structured={
+                    "data": {
+                        "items": [
+                            {
+                                "section": "creation",
+                                "content": "Capítulo de criação.",
+                            }
+                        ]
+                    }
+                },
+            ),
+        },
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "propose_mutation",
+                },
+                GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "fetch_chapter",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"topic": "creation"},
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["content"]}
+                    ]
+                },
+            },
+        ],
+    )
+    attempt = orch.attempt("Quais são as etapas para criar?")
+    assert [name for name, _ in provider.calls] == ["fetch_chapter"]
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+
+
+def test_s2_uninterpreted_goal_preserves_governed_write_path():
+    """Documented residual: when the goal proposal is absent the gate
+    is inactive — the neutral default is never treated as declared
+    intent, so the governed write chain still runs (a goal-stage
+    failure must not silently disable legitimate writes). The write
+    remains bounded by PREPARE/owner confirmation governance."""
+    provider = _s2_guided_write_provider()
+    orch, _ = _orchestrator(
+        [provider],
+        [
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "stage_record",
+                },
+                # No GOAL payload — no declared interpretation.
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {
+                        "entity": "process",
+                        "operation": "create",
+                        "changes": {},
+                    }
+                },
+            },
+            {
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "read_guide",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": {"topic": "process"},
+                },
+            },
+        ],
+    )
+    attempt = orch.attempt("Você consegue criar?")
+    assert ("stage_record", {
+        "entity": "process", "operation": "create", "changes": {},
+    }) in provider.calls
+
+
+def test_s2_ineligible_or_invented_selection_rejected():
+    """Regression: a capability whose owner class is UNKNOWN — or a
+    remote_name absent from the live surface — is never invocable;
+    deterministic revalidation rejects both before any invocation."""
+    provider = FakeProvider(
+        "acme-flow",
+        [
+            _group(
+                "acme-flow",
+                "registry",
+                [
+                    _cap(
+                        "registry", "acme-flow", "read_guide",
+                        SpecialistOperationClass.READ,
+                        schema=_GUIDE_SCHEMA,
+                        desc="read the how-to guide",
+                    ),
+                    _cap(
+                        "registry", "acme-flow", "mystery_op",
+                        SpecialistOperationClass.UNKNOWN,
+                        desc="unclassified owner operation",
+                    ),
+                ],
+            )
+        ],
+    )
+    for remote_name in ("mystery_op", "invented_tool"):
+        orch, _ = _orchestrator(
+            [provider],
+            [
+                {
+                    CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                        "applicable": True,
+                        "remote_name": remote_name,
+                    },
+                }
+            ],
+        )
+        attempt = orch.attempt("Me explica como cadastrar.")
+        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert provider.calls == []

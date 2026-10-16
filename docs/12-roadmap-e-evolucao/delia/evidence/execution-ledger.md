@@ -13671,3 +13671,22 @@ NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
 
 PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.173 — DELIA-C3-CONVERSATIONAL-INTELLIGENCE-GAP-CLOSURE-01-STAGE-02 (implementação bounded executada; evidência registrada)
+
+**Task:** corrigir a preservação da finalidade semântica do pedido na seleção/interpretação de capabilities (orientação ≠ autorização de ação), reutilizando a orquestração central existente. Autorização: prompt bounded da coordenação; gate de entrada = §6.172 ACCEPT_WITH_RESIDUAL, sem residual bloqueante.
+
+- **BASE_HEAD:** `6ab302be59f228b1b452cd0dce77d6f171436907` (main, sync origin/main). Alterações concorrentes do usuário em `plugins/*`, `requests-api`, `helpdesk-api` e `docs/.../bpmn-modeler` preservadas, nenhuma staged.
+- **ROOT_CAUSE:** `_select_target` executa antes de `_understand_goal` sem qualquer compatibilidade determinística entre finalidade interpretada e classe owner da capability; `goal_class` (v7) nunca gateava escrita; hint "crie→PREPARE" não distinguia pedir sobre a ação de pedir a ação.
+- **EXISTING_EQUIVALENT=YES / REUSE_DECISION=EXTEND:** reutilizados `_understand_goal`, `_select_capability`, `operation_class`, `CLARIFICATION_REQUIRED`, `NOT_APPLICABLE`. Nenhum planner/registry/agente/camada/prompt-por-provider novo; `_GOAL_CLASSES` inalterado; ordem do pipeline preservada; sem ARCHITECTURE_DECISION_REQUIRED.
+- **MECHANISM:** (1) instruções v7→v8 (`SELECTION_INSTRUCTION_VERSION`; lineage sha256 cobre os textos): seleção PREPARE/ACT só quando o usuário pede a mudança em si; `read` cobre explicação/orientação; `create_or_modify` só com intenção de ação; `clarify` para ambiguidade genuína. (2) `_TurnGoal.declared` distingue interpretação validada do default neutro. (3) Gate de finalidade em `_attempt` pós-objetivo/pré-escrita: classe write + objetivo declarado não-ação → `clarify`→`CLARIFICATION_REQUIRED` (conteúdo fixo) ou demote→uma reseleção bounded na superfície não-escrita (`dataclasses.replace` no grupo congelado), `None`→`NOT_APPLICABLE`/`intent_target_incompatible`. Cadeia PREPARE/§6.140/confirmação/ACT intacta.
+- **RED→GREEN:** 6 casos de defeito reproduzidos RED (orientação→PREPARE; só-escrita+info; ambíguo→escrita; multi-turn escalando; renomeado; objetivo ausente+escrita). 9 testes novos GREEN em `test_conversational_intelligence_baseline.py` (demote, clarify, governança preservada, multi-turn, invariância de nomes, residual declared=False, controle negativo).
+- **TESTS:** suíte `delia-api` 1078/1078 PASS (1069+9). Fixtures de escrita em `test_specialist_capability_orchestration.py`/`test_execution_ceiling_turn_budget.py` passaram a declarar `goal_class="create_or_modify"` — escrita agora exige intenção de ação declarada; nenhum expected enfraquecido.
+- **METRICS (harness scripted):** seleção semântica correta 0/6→6/6 nos casos de defeito; orientação→PREPARE = 0 sob objetivo declarado não-ação; 0 escritas legítimas recusadas; +1 caminho de clarificação; +0/+1 model call por turno afetado. Latência/tokens/modelo real = TEST_NOT_RUN.
+- **SECURITY:** gate usa só `operation_class` + `goal.declared`/`goal_class`; conteúdo de clarificação fixo sem nomes internos; propostas HYPOTHESIS; sem writes reais, secrets ou metadata em output; residual search do diff limpa (zero acoplamento por nome; `git diff --check` limpo).
+- **RESIDUALS:** (1) falha do estágio de objetivo → gate inerte (declared=False), decisão deliberada de disponibilidade documentada; (2) misclassificação `create_or_modify` para orientação não eliminável deterministicamente — mitigada pela instrução v8; (3) generalização em LLM real TEST_NOT_RUN; (4) fixture OpenAPI dedicada ausente — FakeProvider neutro, cobertura estrutural; (5) demote adiciona ≤1 model call.
+- **STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`; `INDEPENDENT_REVIEW=PENDING`; sem avanço de fase. Relatório `corrections/conversational-intelligence-c3/07-stage-02-implementation-report.md`.
+
+PHASE_STATE = C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT = RETURN_TO_ARCHITECTURE_COORDINATION
