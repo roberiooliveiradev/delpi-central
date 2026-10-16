@@ -57,3 +57,9 @@ Teste titles UTF-8/RTL, longa string, HTML literal inerte, XSS, truncamento, scr
 - **Validação:** testes de props/callbacks/estados e negativos de AuthZ, QA page/dock light/dark, check de exports/federação, prova de generalização em cenários de navegação e revisão independente no SHA executado. `TEST_NOT_RUN` não equivale a PASS.
 
 
+
+## Rework R1 — item e ações sem autoridade implícita
+
+Item somente renderiza dados autorizados e recebe `onSelect` do consumer. O menu de reticências **não aparece** quando não existem ações com contrato válido; disabled não implica permissão concedida. Estados de `pending selection`, `forbidden`, `revoked`, `stale` e `authorized_empty` devem ser distintos. Ao selecionar, apenas indicar sucesso visual depois de confirmação de acesso e recuperação do owner; resultados expirados invalidam a seleção.
+
+Ações de menu são intents distintas de navegação: `pin|unpin|rename|archive|delete` não podem ser deduzidas de metadata de UI/agent/tool nem habilitadas sem live AuthZ, Domain rule, idempotência/audit/postcondition. Não usar optimistic update que antecipe aceite material sem rollback aprovado. Reusar primitives de list item, menu e tooltip existentes; `TO_INVENTORY` para equivalentes não conferidos.
