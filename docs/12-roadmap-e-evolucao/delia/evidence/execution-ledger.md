@@ -13893,3 +13893,20 @@ B2_IMPLEMENTATION=EVIDENCE_RECORDED; INDEPENDENT_REVIEW=PENDING
 B1=PASS_STRUCTURAL; B2=REWORK_PENDING_REVIEW; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
 PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
 NEXT=INDEPENDENT_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.186 — DELIA-C3-STAGE-02-B2-EXECUTION-SCOPE-FULL-IMPLEMENTATION-01-INDEPENDENT-REVIEW (REWORK)
+
+**REVIEWED_SHA:** `397cb5c34415abaf72761c8d09d8654336def9a7`. **REPORT:** `corrections/conversational-intelligence-c3/20-stage-02-b2-independent-implementation-review.md`. **REVIEW MODE:** static GitHub source/diff/harness/contract inspection; `INDEPENDENT_TEST_EXECUTION=TEST_NOT_RUN`.
+
+- **PROGRESS VERIFIED:** typed `MESSAGE/APPLY_PREPARED/REJECT_PREPARED` HTTP discriminator and conflict validation; same-turn owner-direct ACT removed from PREPARE; cold ACT fail-closed; READY PendingWrite purpose distinguishes user scope choice vs owner-required additional confirmation. MFE typed decision commands; backend role/owner/source boundaries unchanged in inspected paths.
+- **BLOCKER RW-01 (PROVEN CODE GAP):** `PendingWriteStore.get` then `take` are separate dict operations; `_attempt_confirmation` gets record, `_confirm_proposal` discards the return of `take` and can still call `_execute_prepared_act`. Two requests can get the same record before either consumes it, then both proceed; **atomic single-use is not proven**. Actual duplicate owner ACT/outcome `TEST_NOT_RUN`, not asserted. RED concurrent APPLY×APPLY and APPLY×REJECT with barrier, verify at most one owner ACT; atomic reserve/consume plus checked winner required through legitimate store/port boundary.
+- **CONTRACT GAP RW-02:** HTTP `command.type` validated but not passed to `InteractiveTurnRequest`; Application/Orchestrator dispatch solely on `confirmation != None`. Public HTTP bypass not proven; inspect direct consumers and clarify/enforce command invariants at Application seam, or return ARCHITECTURE_DECISION_REQUIRED if contract must change.
+- **UX RESIDUAL:** `plugins/delia/src/App.tsx` sets `confirmationAnswered=true` on all pending cards after **any** successful request, including unrelated MESSAGE. Presentation can diverge from backend pending; test target-specific decisions vs unrelated MESSAGE.
+- **TEST EVIDENCE:** Executor reports `1121/1121` pytest PASS, `189/189` vitest PASS, federation build PASS; `tsc` FAIL four errors claimed pre-existing, independent verification `TO_INVENTORY`; browser/live model/business Outcome `TEST_NOT_RUN`. Cannot equate regression pass with security acceptance. No independent suite execution by reviewer.
+- **REUSE GATE:** `EXISTING_EQUIVALENT=YES` for PendingWriteStore/structured confirmation/Interaction Application/UI and existing test harness. `REUSE_DECISION=REUSE/EXTEND` candidate; no new planner/engine/registry/provider-specific gate authorized.
+- **NEXT:** bounded rework concurrency+Application command contract+UI pending truth, reanchor/consumer inventory first, RED/GREEN/regression/security review. Preserve doc18/§6.184; do not authorize Stage03 or claim B2 accepted.
+
+B2_IMPLEMENTATION=EVIDENCE_RECORDED; B2_INDEPENDENT_REVIEW=REWORK; RW_01=BLOCKING; RW_02=CONTRACT_GAP; UX_01=RESIDUAL
+B1=PASS_STRUCTURAL; B2=NOT_ACCEPTED; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
