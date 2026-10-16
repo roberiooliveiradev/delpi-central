@@ -207,6 +207,10 @@ export default function App({
           provenance: result.provenance,
           confirmationRequest: result.confirmation_request,
           presentation: result.presentation,
+          presentationFault: result.presentationFault,
+          contentFormat: result.contentFormat,
+          markdownSource: result.markdownSource,
+          authorizedLinks: [],
           // The authoritative result reconciles the observed steps —
           // the live view carries only events that actually arrived.
           activityView: buildLiveActivityView(observed) ?? undefined,

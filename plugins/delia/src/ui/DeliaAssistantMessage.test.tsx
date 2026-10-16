@@ -356,7 +356,117 @@ describe("DeliaAssistantMessage — provenance, epistemic, limitations", () => {
   });
 });
 
+describe("DeliaAssistantMessage — presentation.v2 frontend reader", () => {
+  it("keeps v1 / unmarked turns as literal text (Markdown inactive)", () => {
+    const source = "**não** deve virar negrito\n- item";
+    const { container } = renderMessage(makeTurn({ content: source }));
+    const paragraph = container.querySelector("p.delia-turn__content");
+    expect(paragraph?.textContent).toBe(source);
+    expect(
+      container.querySelector(
+        ".delia-turn__content strong, .delia-turn__content ul",
+      ),
+    ).toBeNull();
+    expect(
+      container.querySelector(".delpi-ui-conversation-markdown"),
+    ).toBeNull();
+  });
+
+  it("renders markdown_safe only from an explicit synthetic v2 admission", () => {
+    const markdown = "## Resultado\n\n- OP-10293\n- 3 KG";
+    const { container } = renderMessage(
+      makeTurn({
+        content: "Resultado\n\n- OP-10293\n- 3 KG",
+        contentFormat: "markdown_safe",
+        markdownSource: markdown,
+        presentation: {
+          messageKind: "RESULT",
+          semanticStatus: "OBSERVATION",
+          groundingStatus: null,
+          blocks: [{ kind: "text", format: "markdown_safe", text: markdown }],
+          allowedInteractions: ["reply"],
+        },
+      }),
+    );
+    const md = container.querySelector(".delpi-ui-conversation-markdown");
+    expect(md).toBeTruthy();
+    expect(md?.querySelector("h4")?.textContent).toBe("Resultado");
+    expect(md?.querySelectorAll("li")).toHaveLength(2);
+    expect(md?.querySelector("a")).toBeNull();
+  });
+
+  it("renders v2 plain as literal text", () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: "**ainda literal**",
+        contentFormat: "plain",
+        markdownSource: null,
+        presentation: {
+          messageKind: "RESULT",
+          semanticStatus: null,
+          groundingStatus: null,
+          blocks: [{ kind: "text", format: "plain", text: "**ainda literal**" }],
+          allowedInteractions: ["reply"],
+        },
+      }),
+    );
+    expect(container.querySelector("strong")).toBeNull();
+    expect(container.querySelector("p.delia-turn__content")?.textContent).toBe(
+      "**ainda literal**",
+    );
+  });
+
+  it("shows a neutral error for presentationFault without activating Markdown", () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: "não usar",
+        presentationFault: "neutral_error",
+        contentFormat: "markdown_safe",
+        markdownSource: "## x",
+      }),
+    );
+    expect(container.querySelector(".delpi-ui-conversation-markdown")).toBeNull();
+    expect(
+      screen.getByText("Não foi possível apresentar esta resposta."),
+    ).toBeTruthy();
+  });
+
+  it("does not navigate unauthorized URLs even under markdown_safe", () => {
+    const { container } = renderMessage(
+      makeTurn({
+        content: "link",
+        contentFormat: "markdown_safe",
+        markdownSource: "[abrir](https://example.org)",
+        authorizedLinks: [],
+      }),
+    );
+    expect(container.querySelector("a")).toBeNull();
+    expect(container.textContent).toContain("abrir");
+  });
+
+  it("preserves EvidenceDetails and GovernedConfirmation beside markdown", () => {
+    renderMessage(
+      makeTurn({
+        content: "plain",
+        contentFormat: "markdown_safe",
+        markdownSource: "**ok**",
+        groundingStatus: "NON_GROUNDED",
+        confirmationRequest: {
+          session_id: "s",
+          proposal_digest: "d",
+          preview_fingerprint: "f",
+          pending_purpose: "execution_scope_choice",
+        },
+      }),
+    );
+    expect(screen.getByText("Sem fonte vinculada")).toBeTruthy();
+    expect(screen.getByText("Operação pronta para execução")).toBeTruthy();
+    expect(screen.getByText("ok")).toBeTruthy();
+  });
+});
+
 describe("DeliaAssistantMessage — copy action", () => {
+
   it("copies the visible response text via clipboard when available", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", {

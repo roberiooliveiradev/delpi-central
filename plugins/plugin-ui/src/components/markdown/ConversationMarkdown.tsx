@@ -1,5 +1,14 @@
 import { Fragment, type ReactNode } from "react";
-import { marked } from "marked";
+
+import {
+  safeConversationLinkDestination,
+  tokenizeConversationMarkdown,
+  type ConversationAuthorizedLink,
+  type MarkdownToken,
+} from "./conversationMarkdownModel";
+
+export type { ConversationAuthorizedLink } from "./conversationMarkdownModel";
+export { conversationMarkdownToPlainText } from "./conversationMarkdownModel";
 
 /**
  * Safe, presentation-only Markdown for a conversational surface.
@@ -11,13 +20,9 @@ import { marked } from "marked";
  * Unlike the document/editor Markdown pipeline, this component never uses
  * HTML strings, dangerouslySetInnerHTML, DOMParser, remote images or Mermaid.
  */
-export type ConversationAuthorizedLink = {
-  href: string;
-  kind: "internal" | "external";
-};
-
 export type ConversationMarkdownProps = {
   text: string;
+  /** Explicit host admission — never inferred from text shape. */
   enabled?: boolean;
   className?: string;
   /** Destinations already disclosed by an authorized owner contract.
@@ -25,70 +30,12 @@ export type ConversationMarkdownProps = {
   authorizedLinks?: readonly ConversationAuthorizedLink[];
 };
 
-type MarkdownToken = {
-  type: string;
-  raw?: string;
-  text?: string;
-  href?: string;
-  tokens?: MarkdownToken[];
-  items?: MarkdownToken[];
-  ordered?: boolean;
-  start?: number;
-  depth?: number;
-};
-
-const MAX_SOURCE_LENGTH = 16_384;
-const MAX_NODES = 256;
-const MAX_DEPTH = 8;
-const MAX_LINKS = 16;
-const FORBIDDEN_QUERY_KEY = /^(?:token|access_token|refresh_token|id_token|auth|authorization|key|api_key|secret)$/i;
-
-function safeDestination(href: string, links: readonly ConversationAuthorizedLink[]): "internal" | "external" | null {
-  if (!href || href.trim() !== href || /[\\\u0000-\u001f\u007f]/.test(href)) return null;
-  const published = links.find((entry) => entry.href === href);
-  if (!published) return null;
-  try {
-    if (published.kind === "internal") {
-      if (!href.startsWith("/") || href.startsWith("//") || href.includes("\\")) return null;
-      const url = new URL(href, "https://portal.invalid");
-      if (url.origin !== "https://portal.invalid") return null;
-      for (const name of url.searchParams.keys()) if (FORBIDDEN_QUERY_KEY.test(name)) return null;
-      return "internal";
-    }
-    if (published.kind !== "external") return null;
-    const url = new URL(href);
-    if (url.protocol !== "https:" || !url.hostname || url.username || url.password) return null;
-    for (const name of url.searchParams.keys()) if (FORBIDDEN_QUERY_KEY.test(name)) return null;
-    return "external";
-  } catch {
-    return null;
-  }
-}
-
-function tokenize(source: string): MarkdownToken[] | null {
-  if (source.length > MAX_SOURCE_LENGTH) return null;
-  try {
-    const tokens = marked.lexer(source, { gfm: true }) as unknown as MarkdownToken[];
-    let count = 0;
-    let links = 0;
-    function inspect(nodes: MarkdownToken[], depth: number): boolean {
-      if (depth > MAX_DEPTH) return false;
-      for (const node of nodes) {
-        if (++count > MAX_NODES) return false;
-        if (node.type === "link" && ++links > MAX_LINKS) return false;
-        if (node.tokens && !inspect(node.tokens, depth + 1)) return false;
-        if (node.items && !inspect(node.items, depth + 1)) return false;
-      }
-      return true;
-    }
-    return inspect(tokens, 0) ? tokens : null;
-  } catch {
-    return null;
-  }
-}
-
-function inline(nodes: MarkdownToken[] | undefined, links: readonly ConversationAuthorizedLink[], depth = 0): ReactNode {
-  if (!nodes || depth > MAX_DEPTH) return null;
+function inline(
+  nodes: MarkdownToken[] | undefined,
+  links: readonly ConversationAuthorizedLink[],
+  depth = 0,
+): ReactNode {
+  if (!nodes || depth > 8) return null;
   return nodes.map((token, index) => {
     const key = index;
     const body = token.tokens?.length
@@ -107,53 +54,94 @@ function inline(nodes: MarkdownToken[] | undefined, links: readonly Conversation
       case "codespan":
         return <code key={key}>{token.text ?? ""}</code>;
       case "br":
-        return <Fragment key={key}>{"\n"}</Fragment>;
+        return <br key={key} />;
       case "link": {
-        const kind = safeDestination(token.href ?? "", links);
+        const kind = safeConversationLinkDestination(token.href ?? "", links);
         if (!kind) return <Fragment key={key}>{body}</Fragment>;
-        return <a key={key} href={token.href} target={kind === "external" ? "_blank" : undefined} rel={kind === "external" ? "noopener noreferrer" : undefined}>{body}</a>;
+        return (
+          <a
+            key={key}
+            href={token.href}
+            target={kind === "external" ? "_blank" : undefined}
+            rel={kind === "external" ? "noopener noreferrer" : undefined}
+          >
+            {body}
+          </a>
+        );
       }
       case "image":
         return <Fragment key={key}>{token.text ?? ""}</Fragment>;
       case "html":
         return <Fragment key={key}>{token.raw ?? token.text ?? ""}</Fragment>;
       default:
-        // Unsupported extension tokens are never interpreted as markup.
         return <Fragment key={key}>{token.raw ?? token.text ?? ""}</Fragment>;
     }
   });
 }
 
-function blocks(nodes: MarkdownToken[], links: readonly ConversationAuthorizedLink[], depth = 0): ReactNode {
-  if (depth > MAX_DEPTH) return null;
+function blocks(
+  nodes: MarkdownToken[],
+  links: readonly ConversationAuthorizedLink[],
+  depth = 0,
+): ReactNode {
+  if (depth > 8) return null;
   return nodes.map((token, index) => {
     const key = index;
     switch (token.type) {
       case "paragraph":
       case "text":
-        return <p key={key}>{token.tokens?.length ? inline(token.tokens, links) : (token.text ?? "")}</p>;
+        return (
+          <p key={key}>
+            {token.tokens?.length
+              ? inline(token.tokens, links)
+              : (token.text ?? "")}
+          </p>
+        );
       case "heading": {
-        const label = token.tokens?.length ? inline(token.tokens, links) : (token.text ?? "");
-        return token.depth === 1 || token.depth === 2
-          ? <h4 key={key}>{label}</h4>
-          : token.depth === 3 ? <h5 key={key}>{label}</h5> : <h6 key={key}>{label}</h6>;
+        const label = token.tokens?.length
+          ? inline(token.tokens, links)
+          : (token.text ?? "");
+        if (token.depth === 1 || token.depth === 2) {
+          return <h4 key={key}>{label}</h4>;
+        }
+        if (token.depth === 3) return <h5 key={key}>{label}</h5>;
+        return <h6 key={key}>{label}</h6>;
       }
       case "list": {
         const children = (token.items ?? []).map((item, itemIndex) => (
-          <li key={itemIndex}>{item.tokens?.length ? blocks(item.tokens, links, depth + 1) : (item.text ?? "")}</li>
+          <li key={itemIndex}>
+            {item.tokens?.length
+              ? blocks(item.tokens, links, depth + 1)
+              : (item.text ?? "")}
+          </li>
         ));
-        return token.ordered
-          ? <ol key={key} start={token.start || 1}>{children}</ol>
-          : <ul key={key}>{children}</ul>;
+        return token.ordered ? (
+          <ol key={key} start={token.start || 1}>
+            {children}
+          </ol>
+        ) : (
+          <ul key={key}>{children}</ul>
+        );
       }
       case "blockquote":
-        return <blockquote key={key}>{blocks(token.tokens ?? [], links, depth + 1)}</blockquote>;
+        return (
+          <blockquote key={key}>
+            {blocks(token.tokens ?? [], links, depth + 1)}
+          </blockquote>
+        );
       case "code":
-        return <pre key={key}><code>{token.text ?? ""}</code></pre>;
+        return (
+          <pre key={key}>
+            <code>{token.text ?? ""}</code>
+          </pre>
+        );
       case "hr":
         return <hr key={key} />;
       case "space":
         return null;
+      case "table":
+        // GFM tables are not admitted — preserve factual text inertly.
+        return <p key={key}>{token.raw ?? token.text ?? ""}</p>;
       case "html":
         return <p key={key}>{token.raw ?? token.text ?? ""}</p>;
       case "image":
@@ -164,8 +152,6 @@ function blocks(nodes: MarkdownToken[], links: readonly ConversationAuthorizedLi
   });
 }
 
-/** The copy action currently stays on the legacy plain content. The same
- * tokens can later feed a deterministic copy projection once v2 is admitted. */
 export function ConversationMarkdown({
   text,
   enabled = false,
@@ -173,11 +159,20 @@ export function ConversationMarkdown({
   authorizedLinks = [],
 }: ConversationMarkdownProps) {
   // Keep the exact v1 DOM node and literal text when integration is off.
-  if (!enabled) return <p className={className}>{text}</p>;
-  const tokens = tokenize(text);
-  if (!tokens) return <p className={className}>{text}</p>;
+  if (!enabled) {
+    return <p className={className}>{text}</p>;
+  }
+  const tokens = tokenizeConversationMarkdown(text);
+  if (!tokens) {
+    return <p className={className}>{text}</p>;
+  }
   return (
-    <div className={["delpi-ui-conversation-markdown", className].filter(Boolean).join(" ")}>
+    <div
+      className={["delpi-ui-conversation-markdown", className]
+        .filter(Boolean)
+        .join(" ")}
+      data-delpi-ui="conversation-markdown"
+    >
       {blocks(tokens, authorizedLinks)}
     </div>
   );

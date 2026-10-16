@@ -14249,3 +14249,17 @@ NEXT=INDEPENDENT_STAGE_03_ARCHITECTURE_REVIEW
 
 RW_S03_01_STATUS=FIXED; STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=NO
 NEXT=INDEPENDENT_STAGE03_REVIEW
+
+## §6.208 — DELIA-UX-CONVERSATION-MARKDOWN-FRONTEND-COMPONENT-IMPLEMENTATION-01 (FRONTEND READY; RUNTIME OFF)
+
+**DATA:** 2026-10-16. **MODE:** frontend implementation + tests + federation — zero backend producer v2, zero L1 binding invent, zero deploy/ACT. **BASE_HEAD:** `c193d49f7669e6bc1933e54d14f3d3f5009f6ba6`. **REPORT:** [91](../91-conversation-markdown-frontend-component-implementation.md).
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES_PARTIAL`; `REUSE_DECISION=REUSE_MARKED_AND_SHARED_PRIMITIVES`; `NEW_COMPONENT=ConversationMarkdown` owner `plugin-ui`; consumer DÉLIA.
+- **PLUGIN-UI:** token→React (`marked.lexer`), bounds 16KiB/256 nodes/depth 8/16 links, fail-closed links, inert HTML/image/table/mermaid, `conversationMarkdownToPlainText`, CSS kit, exports + `verify-host-exports`.
+- **DELIA:** `parsePresentationV2` parse-only; `DeliaAssistantMessage` ativa Markdown só com `contentFormat=markdown_safe` + `markdownSource`; v1 literal; fault → erro neutro; `authorizedLinks=[]` no App; Evidence/Activity/Confirmation/copy preservados.
+- **TESTS:** plugin-ui ConversationMarkdown **20 PASS**; delia suite **202 PASS**; plugin-ui build+host-exports **PASS**; delia build+federation **PASS**; typecheck **PASS_WITH_PREEXISTING_DEBT** (InitialsAvatar/UnifiedAvatar/TaskDetailCard); browser QA **TEST_NOT_RUN**.
+- **SSH READ-ONLY** `operador@192.168.1.237`: topology delia-api/plugin-ui/gateway healthy; producer still presentation v1; `DEPLOY_NOT_AUTHORIZED`.
+- **EXIT:** `PLUGIN_UI_COMPONENT=IMPLEMENTED`; `DELIA_INTEGRATION=IMPLEMENTED`; `RUNTIME_MARKDOWN_ACTIVATION=OFF`; `BACKEND_V2_PRODUCER=NOT_IMPLEMENTED`; `L1_BINDING=NOT_PROVEN`; `NAVIGABLE_LINK_EMISSION=BLOCKED_UNTIL_CONTRACT`; `CP_333=PLANNED_NOT_PASS`; `PHASE_PROGRESSION=NONE`.
+- **NEXT:** independent frontend review on published SHA; backend L1 binding / G3 brief remain separate blockers for end-to-end activation.
+
+INDEPENDENT_REVIEW=PENDING

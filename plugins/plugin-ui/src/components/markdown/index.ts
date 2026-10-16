@@ -15,6 +15,7 @@ export {
 
 export {
   ConversationMarkdown,
+  conversationMarkdownToPlainText,
   type ConversationMarkdownProps,
   type ConversationAuthorizedLink,
 } from "./ConversationMarkdown";

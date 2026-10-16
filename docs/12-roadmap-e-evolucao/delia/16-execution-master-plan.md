@@ -1049,7 +1049,9 @@ Nenhuma capability temática `53–66` precede o Foundation Freeze.
 
 **Atualização 2026-10-16 (L1 inventory doc 90):** `LINK_L1_CAPABILITY_BINDINGS=PARTIAL` (contrato mural Domain + padrão Core notifications; path capability→DÉLIA NOT_PROVEN); `NAVIGABLE_LINK_EMISSION=BLOCKED`.
 
-**Atualização 2026-10-16 (gates/implementation STOP — task GATES-AND-IMPLEMENTATION-01):** `IMPLEMENTATION_ALLOWED=NO`. Reprovado runtime: `openapi_declarations.delpi.json` sem ops mural; `G3_TASK_BRIEF_APPROVED` ausente. **NEXT bounded desta trilha:** decisão de Coordination — (a) autorizar EXTEND declaration+disclosure mural (`…-L1-MURAL-CAPABILITY-BINDING-01`) ou (b) Product Master autorizar slice textual sem links (L3 havia sido rejeitada). Não altera NEXT global da fase. Não autoriza I1/I2/I3 nem Stage-02 ACT.
+**Atualização 2026-10-16 (gates/implementation STOP — task GATES-AND-IMPLEMENTATION-01):** `IMPLEMENTATION_ALLOWED=NO` para runtime end-to-end (backend emitter + L1). Reprovado emitter: `openapi_declarations.delpi.json` sem ops mural; `G3_TASK_BRIEF_APPROVED` ausente.
+
+**Atualização 2026-10-16 (frontend component — task FRONTEND-COMPONENT-IMPLEMENTATION-01 / §6.208 / doc 91):** Product Master autorizou slice frontend desacoplado. `ConversationMarkdown` + reader v2 parse-only + integração DÉLIA **IMPLEMENTED**; `RUNTIME_MARKDOWN_ACTIVATION=OFF`; links `authorizedLinks=[]`; `CP-333=PLANNED_NOT_PASS`. Não autoriza producer backend, L1 emission, Stage-02 ACT nem progressão de fase. **NEXT bounded trilha Markdown:** independent frontend review + (separado) L1 mural capability binding / G3 brief.
 
 
 ### C3-T5 — OpenAPI Action Catalog + Capability Projection (APPROVED)

@@ -21,6 +21,7 @@ import {
   ActivityViewer,
   ConversationStatus,
   ConversationMarkdown,
+  conversationMarkdownToPlainText,
   EvidenceDetails,
   GovernedConfirmation,
   IconButton,
@@ -32,6 +33,9 @@ import type { StatusBadgeVariant } from "@delpi/plugin-ui/index";
 import { buildDeliaActivityView } from "../activity/activityView";
 
 import type { ConversationDisplayTurn } from "./ConversationTimeline";
+
+const PRESENTATION_NEUTRAL_ERROR_COPY =
+  "Não foi possível apresentar esta resposta.";
 
 /** Semantic state presentation per canonical message_kind — the icon
  *  only restates the backend vocabulary, it never derives state from
@@ -120,6 +124,30 @@ export function DeliaAssistantMessage({
 
   const ownerHint = presentationOwnerHint(turn.presentation ?? null);
   const displayContent = dedupeOwnerHintContent(turn.content, ownerHint);
+  const presentationFault = turn.presentationFault ?? null;
+  const markdownSource = turn.markdownSource ?? null;
+  const markdownEnabled =
+    presentationFault === null &&
+    turn.contentFormat === "markdown_safe" &&
+    typeof markdownSource === "string" &&
+    markdownSource.length > 0;
+  const bodyText = presentationFault
+    ? PRESENTATION_NEUTRAL_ERROR_COPY
+    : markdownEnabled
+      ? markdownSource
+      : displayContent;
+  const copyText = (() => {
+    if (presentationFault) return PRESENTATION_NEUTRAL_ERROR_COPY;
+    if (markdownEnabled) {
+      return (
+        conversationMarkdownToPlainText(
+          markdownSource,
+          turn.authorizedLinks ?? [],
+        ) ?? displayContent
+      );
+    }
+    return displayContent;
+  })();
   const semanticState =
     turn.presentation?.messageKind &&
     turn.presentation.messageKind !== "RESULT"
@@ -183,7 +211,7 @@ export function DeliaAssistantMessage({
 
   function handleCopy() {
     try {
-      const write = navigator.clipboard?.writeText(displayContent);
+      const write = navigator.clipboard?.writeText(copyText);
       if (!write) return;
       void write
         .then(() => {
@@ -229,8 +257,9 @@ export function DeliaAssistantMessage({
 
         <ConversationMarkdown
           className="delia-turn__content"
-          text={displayContent}
-          enabled={false} // CP-333: frontend ready; v2 backend admission/links still gated.
+          text={bodyText}
+          enabled={markdownEnabled}
+          authorizedLinks={turn.authorizedLinks ?? []}
         />
 
         {ownerHint ? (

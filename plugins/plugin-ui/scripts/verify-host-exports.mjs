@@ -87,6 +87,8 @@ const REQUIRED_HOST_EXPORTS = [
   "FloatingNoticeStack",
   "floatingNoticeStackBemClasses",
   "useFloatingNotices",
+  "ConversationMarkdown",
+  "conversationMarkdownToPlainText",
 ];
 
 function findIndexExpose(dir) {

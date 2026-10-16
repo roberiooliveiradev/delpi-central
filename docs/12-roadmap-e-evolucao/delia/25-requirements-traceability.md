@@ -211,6 +211,8 @@ OUT_OF_SCOPE_WITH_DECISION
 
 **CP-333 scope / traceability note (2026-10-16):** requisito descoberto pela spec [82](./82-conversation-rich-content-and-structured-presentation-specification.md) e detalhado na [83](./83-conversation-markdown-b2-contract-and-implementation-plan.md), formalizado por decisão explícita do Product Master D12. `CP-333` é **exclusivamente** Markdown textual conversacional B2 (não `C3-STAGE-02-B2`, que trata de execução governada). O gap Markdown de 82 §11.1 passa a `CP_MAPPED / IMPLEMENTATION_GATES_PENDING`; o `TRACEABILITY_GAP` de tabelas tipadas, métricas e gráficos **permanece OPEN**, sem CP novo inferido nem permissão para C/D/E. `CP-001` mantém o escopo C2 Portal UX; `CP-196`, `CP-093`, `CP-135` e `CP-270` são invariantes transversais, não substitutos. Nenhum runtime, fase, outcome ou aceite de CP mudou por este registro documental.
 
+**CP-333 frontend contribution (2026-10-16, doc [91](./91-conversation-markdown-frontend-component-implementation.md)):** `ConversationMarkdown` + reader v2 parse-only + integração DÉLIA implementados; ativação runtime OFF sem emitter backend; L1 links bloqueados; `CP-333` permanece `PLANNED_NOT_PASS` — contribuição factual ao CP, não promoção a PASS.
+
 ## 6. C4 — Business + External Reads + Graph + Intelligence Reads
 
 | ID | Requisito | Owner | Gate | Status |

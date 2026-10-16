@@ -154,6 +154,27 @@ O Product Master determinou a execução imediata **apenas** do componente visua
 
 **Frontend-specific bounded authorization** não substitui a autorização G3 de backend/contrato. O subescopo é reversible e disabled-by-default enquanto L1 não estiver comprovado.
 
+### 0.9 — Frontend component implementation (2026-10-16)
+
+Task `DELIA-UX-CONVERSATION-MARKDOWN-FRONTEND-COMPONENT-IMPLEMENTATION-01` (relatório [91](./91-conversation-markdown-frontend-component-implementation.md)):
+
+```text
+PLUGIN_UI_COMPONENT = IMPLEMENTED
+DELIA_FRONTEND_IMPORT = IMPLEMENTED
+DELIA_INTEGRATION = IMPLEMENTED
+MARKDOWN_RENDERER_TESTS = PASS (20 plugin-ui + suite delia 202)
+LEGACY_V1_BEHAVIOR = PRESERVED
+PRESENTATION_V2_FRONTEND_READER = IMPLEMENTED (parse-only)
+RUNTIME_MARKDOWN_ACTIVATION = OFF (sem emitter backend)
+BACKEND_V2_PRODUCER = NOT_IMPLEMENTED
+L1_BINDING = NOT_PROVEN
+NAVIGABLE_LINK_EMISSION = BLOCKED_UNTIL_CONTRACT
+CP_333 = PLANNED_NOT_PASS
+PHASE_PROGRESSION = NONE
+```
+
+Ativação no MFE exige `contentFormat=markdown_safe` + `markdownSource` vindos de `parsePresentationV2` — nunca heurística sobre `turn.content`. Links só com `authorizedLinks` explícitos (App envia `[]` até L1). Build/federation PASS. Browser QA real = `TEST_NOT_RUN`. Aceite independente pendente.
+
 ## 1. Autoridades, ordem de reanchor e condição de STOP
 
 Antes de qualquer decisão vinculante ou diff, ler no HEAD real, nesta ordem:

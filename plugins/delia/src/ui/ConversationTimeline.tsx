@@ -1,12 +1,20 @@
-import { ConversationUserMessage, UnifiedAvatar } from "@delpi/plugin-ui/index";
-
-import type { ActivityViewerProps } from "@delpi/plugin-ui/index";
+import {
+  ConversationUserMessage,
+  UnifiedAvatar,
+} from "@delpi/plugin-ui/index";
+import type {
+  ActivityViewerProps,
+  ConversationAuthorizedLink,
+} from "@delpi/plugin-ui/index";
 
 import type {
   DeliaConfirmationRequest,
   DeliaInteractionProvenance,
 } from "../api/interactionClient";
-import type { DeliaPresentation } from "../api/presentation";
+import type {
+  DeliaPresentation,
+  DeliaTextFormat,
+} from "../api/presentation";
 
 import { DeliaAssistantMessage } from "./DeliaAssistantMessage";
 import type { DeliaCurrentUserIdentity } from "../identity/currentUser";
@@ -24,8 +32,16 @@ export type ConversationDisplayTurn = {
   confirmationRequest?: DeliaConfirmationRequest | null;
   /** The structured decision was already submitted for this request. */
   confirmationAnswered?: boolean;
-  /** presentation.v1 projection — semantic state surface only. */
+  /** presentation.v1/v2 projection — semantic state surface only. */
   presentation?: DeliaPresentation | null;
+  /** Fail-closed when wire claimed v2 but failed structural admission. */
+  presentationFault?: "neutral_error" | null;
+  /** Explicit format from admitted v2 text block; default plain/legacy. */
+  contentFormat?: DeliaTextFormat;
+  /** Source for markdown_safe rendering — never inferred from content. */
+  markdownSource?: string | null;
+  /** Host-published navigable destinations only (L1); empty until contract. */
+  authorizedLinks?: readonly ConversationAuthorizedLink[];
   /** Explicit activity projection override — demo fixtures only;
    *  real turns derive it via `buildDeliaActivityView`. */
   activityView?: ActivityViewerProps;

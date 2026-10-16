@@ -7,7 +7,12 @@
  * logged. No business-domain API is exposed here.
  */
 
-import { parsePresentation } from "./presentation";
+import {
+  parsePresentation,
+  parsePresentationV2,
+  type DeliaTextFormat,
+} from "./presentation";
+
 import type { DeliaPresentation } from "./presentation";
 
 export const DELIA_API_BASE = "/apps/delia-api";
@@ -215,9 +220,16 @@ export type DeliaInteractionResult = {
   grounding_status: "GROUNDED" | "NON_GROUNDED" | null;
   provenance: DeliaInteractionProvenance | null;
   confirmation_request: DeliaConfirmationRequest | null;
-  /** Additive presentation.v1 projection — null for legacy/malformed/
-   *  unknown-version payloads; never authority. */
+  /** Additive presentation projection — null for legacy/malformed/
+   *  unknown-version payloads; never authority. v2 admitted only via
+   *  parsePresentationV2 (explicit version + format). */
   presentation: DeliaPresentation | null;
+  /** Fail-closed signal when wire claims version "2" but is invalid. */
+  presentationFault: "neutral_error" | null;
+  /** Primary text format from an admitted presentation (default plain). */
+  contentFormat: DeliaTextFormat;
+  /** Markdown source for markdown_safe blocks; null when inactive. */
+  markdownSource: string | null;
 };
 
 export class DeliaInteractionError extends Error {
@@ -373,6 +385,42 @@ function parseInteractionResultPayload(
     );
   }
 
+  const v2 = parsePresentationV2(payload.presentation);
+  if (v2.status === "neutral_error") {
+    return {
+      session_id: payload.session_id,
+      user_turn_id: payload.user_turn_id,
+      result_turn_id: payload.result_turn_id,
+      content: "",
+      epistemic_class: null,
+      limitations: [],
+      generated_at:
+        typeof payload.generated_at === "string" ? payload.generated_at : "",
+      model_invocation_id:
+        typeof payload.model_invocation_id === "string"
+          ? payload.model_invocation_id
+          : "",
+      grounding_status: null,
+      provenance: null,
+      confirmation_request: null,
+      presentation: null,
+      presentationFault: "neutral_error",
+      contentFormat: "plain",
+      markdownSource: null,
+    };
+  }
+
+  const presentation =
+    v2.status === "ok"
+      ? v2.presentation
+      : parsePresentation(payload.presentation);
+  const markdownSource =
+    v2.status === "ok"
+      ? (presentation?.blocks.find(
+          (block) => block.kind === "text" && block.format === "markdown_safe",
+        )?.text ?? null)
+      : null;
+
   return {
     session_id: payload.session_id,
     user_turn_id: payload.user_turn_id,
@@ -406,7 +454,11 @@ function parseInteractionResultPayload(
     confirmation_request: parseConfirmationRequest(
       payload.confirmation_request,
     ),
-    presentation: parsePresentation(payload.presentation),
+    presentation,
+    presentationFault: null,
+    contentFormat:
+      markdownSource !== null ? "markdown_safe" : "plain",
+    markdownSource,
   };
 }
 

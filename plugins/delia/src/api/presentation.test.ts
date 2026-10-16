@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   dedupeOwnerHintContent,
   parsePresentation,
+  parsePresentationV2,
+  presentationMarkdownSource,
   presentationOwnerHint,
+  presentationPrimaryTextFormat,
 } from "./presentation";
 
 const BASE_PRESENTATION = {
@@ -158,7 +161,75 @@ describe("parsePresentation", () => {
   });
 });
 
+const BASE_V2 = {
+  version: "2",
+  message_kind: "RESULT",
+  semantic_status: "OBSERVATION",
+  grounding_status: "GROUNDED",
+  blocks: [
+    { kind: "text", format: "markdown_safe", text: "## Resultado\n\n- OP-10293" },
+  ],
+  allowed_interactions: ["reply"],
+};
+
+describe("parsePresentationV2", () => {
+  it("admits a valid markdown_safe envelope", () => {
+    const parsed = parsePresentationV2(BASE_V2);
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+    expect(presentationPrimaryTextFormat(parsed.presentation)).toBe(
+      "markdown_safe",
+    );
+    expect(presentationMarkdownSource(parsed.presentation)).toContain(
+      "OP-10293",
+    );
+  });
+
+  it("admits plain format without enabling markdown source", () => {
+    const parsed = parsePresentationV2({
+      ...BASE_V2,
+      blocks: [{ kind: "text", format: "plain", text: "literal" }],
+    });
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+    expect(presentationPrimaryTextFormat(parsed.presentation)).toBe("plain");
+    expect(presentationMarkdownSource(parsed.presentation)).toBeNull();
+  });
+
+  it("returns not_v2 for version 1 so legacy parser remains owner", () => {
+    expect(parsePresentationV2(BASE_PRESENTATION).status).toBe("not_v2");
+  });
+
+  it("fail-closes invalid format / missing format / unknown props", () => {
+    expect(
+      parsePresentationV2({
+        ...BASE_V2,
+        blocks: [{ kind: "text", text: "x" }],
+      }).status,
+    ).toBe("neutral_error");
+    expect(
+      parsePresentationV2({
+        ...BASE_V2,
+        blocks: [{ kind: "text", format: "html", text: "x" }],
+      }).status,
+    ).toBe("neutral_error");
+    expect(
+      parsePresentationV2({
+        ...BASE_V2,
+        evil: true,
+      }).status,
+    ).toBe("neutral_error");
+  });
+
+  it("does not coerce unknown versions into v2", () => {
+    expect(
+      parsePresentationV2({ ...BASE_V2, version: "3" }).status,
+    ).toBe("not_v2");
+  });
+});
+
 describe("dedupeOwnerHintContent", () => {
+
   it("strips the exact legacy owner-hint suffix once", () => {
     const content =
       "Não foi possível concluir. A fonte informou: glpi_link_required.";
