@@ -117,7 +117,9 @@ def test_instruction_lineage_bound_and_not_user_overridable():
     # bounded untrusted client hint (§6.130) — never authority.
     # ``max_execution_stage`` is a request-scoped execution ceiling
     # (LOOP-03R1) — it can only reduce execution authority, never grant
-    # or widen it.
+    # or widen it. ``command_type`` is the untrusted typed discriminant
+    # (§6.184/RW-02) — it selects the turn shape and is re-validated
+    # fail-closed at the Application boundary; it grants nothing.
     request_fields = {
         f.name for f in contracts.InteractiveTurnRequest.__dataclass_fields__.values()
     }
@@ -128,6 +130,7 @@ def test_instruction_lineage_bound_and_not_user_overridable():
         "confirmation",
         "workspace_context",
         "max_execution_stage",
+        "command_type",
     }
 
 

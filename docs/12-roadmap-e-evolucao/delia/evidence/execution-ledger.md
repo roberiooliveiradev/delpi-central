@@ -13973,3 +13973,22 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 - **NO CLAIMS:** no schema published, no runtime activated, `G1_CONTRACT_DECISION=PENDING`, `G2_SECURITY_REUSE=PENDING`, `G3/G4=PENDING`, `TESTS=TEST_NOT_RUN`, `CP-333=PLANNED`, `C_D_E_TRACEABILITY_GAP=OPEN`.
 - `PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN`
 - **NEXT:** independent Architecture/Coordination review of doc 84 §2/§5 + decision on typed link source; then bounded G3 implementation brief task.
+
+## §6.191 — DELIA-C3-STAGE-02-FINAL-CORRECTION-VALIDATION-01 (TESTS EXECUTED; READY_FOR_INDEPENDENT_REVIEW)
+
+**DATA:** 2026-10-16. **MODE:** executor validation of already-published corrections — no reimplementation. **REPORT:** `corrections/conversational-intelligence-c3/23-stage-02-final-rework-validation-report.md`. **EXECUTION HEAD:** `d572285bdf724a718bcca27b1eaa1459e7530003` (+1 commit sobre o reference `bbdd3a4f4d`, fora do escopo). Working tree limpo no início; alterações concorrentes preservadas.
+
+- **CORRECTIONS VERIFIED IN CODE (PROVEN):** RW-01 `RLock`+`take_if_current` identity-CAS antes de qualquer ACT; RW-02 `command_type` propagado e re-validado fail-closed no Application (`_validate_turn_command`); UX-01 card só fecha com decisão vinculada digest+fingerprint+session; invalid-binding rejeitado antes do claim.
+- **ÚNICO DEFEITO:** `test_interaction_runtime_architecture.py` assertava conjunto exato de campos do request e não conhecia `command_type` (evolução legítima RW-02). Fix mínimo em teste apenas — expected set + documentação de discriminante untrusted.
+- **TEST RESULTS (SHA d572285bdf + fix):** `test_stage02_b2_concurrent_decisions.py` **6/6 PASS** (Barrier determinístico, ≤1 owner ACT, replay rejeitado, invalid não consome); `test_interaction_runtime.py`+`test_stage02r2_execution_bound_diagnosis.py` **104/104 PASS**; suíte completa `delia-api` **1137/1137 PASS** (29.6s); `plugins/delia` vitest **191/191 PASS** (inclui 2 novos testes UX-01); `vite build` PASS.
+- **TSC:** 4 erros residual — `git log 397cb5c344..HEAD` prova que `s2.shell.test.tsx` e os 3 arquivos `plugin-ui` não mudaram; últimos commits são anteriores e não relacionados. Dívida independente, STALE para B2; não afrouxado.
+- **DEPLOYMENT TOPOLOGY (PROVEN):** `Dockerfile.prod` `gunicorn --workers 1 --threads 4`, compose sem replicas — processo único; claim process-local cobre o threat model real de threads. Múltiplos workers futuros exigiriam store durável — `TO_INVENTORY`, decisão separada.
+- **SECURITY GATES §9:** 15/15 verificados em código + testes — sem ACT por texto, sem grant por LLM/owner metadata, binding completo, exclusividade de decisões, audit por decisão real, frontend sem sucesso sem evidência.
+- **RESIDUAL SEARCH:** nenhum `get`→ACT sem claim, nenhum claim ignorado, `take` legado sem callers, nenhum branch por nome de tool/provider.
+- **NOT RUN:** live `real_provider_neutral_eval`, real-model evals, browser QA, Outcome empresarial — `TEST_NOT_RUN` sem ambiente autorizado.
+- **NOT ACCEPTED:** executor não auto-aprova. `VERDICT=READY_FOR_INDEPENDENT_REVIEW`.
+
+B2_REWORK_TESTS=GREEN_EXECUTED; B2_SECURITY_GATES=VERIFIED; B2_INDEPENDENT_REVIEW=PENDING
+B1=PASS_STRUCTURAL_REGRESSION_GREEN; B2=READY_FOR_INDEPENDENT_REVIEW; STAGE_02_ACCEPTED=NO; STAGE_03_AUTHORIZED=NO
+PHASE_STATE=C3_EXECUTED=NO; C4_AUTHORIZED=NO; C5_AUTHORIZED=NO; PRODUCTION_READINESS=NOT_PROVEN
+NEXT=INDEPENDENT_REVIEW_THEN_RETURN_TO_ARCHITECTURE_COORDINATION
