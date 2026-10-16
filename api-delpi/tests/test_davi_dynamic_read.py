@@ -2401,9 +2401,16 @@ def test_sql_argument_rejected_on_other_operations():
     "me dê exemplos de terminal faston",
     "quais terminais olhal existem?",
     "mostre três terminais bandeira",
+    "Me dê três exemplos de terminal pino",
+    "Liste alguns terminais Faston",
+    "Mostre três cabos PP cadastrados",
+    "Quais isoladores temos cadastrados?",
+    "Dê exemplos de produtos intermediários",
+    "Consulte o produto 10080055",
 ])
 def test_product_normative_terminal_queries_discover_search_products(query, monkeypatch):
-    """Normative product terms are governed catalog aliases, not new permissions."""
+    """Entity-domain markers are governed search arguments, not per-product
+    aliases: the catalog capability resolves by entity-class evidence."""
     set_actions_for_tests(_load_baseline_actions())
     monkeypatch.setattr(
         "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
@@ -2423,5 +2430,36 @@ def test_unrelated_adjustment_pin_does_not_gain_product_alias(monkeypatch):
     )
     result = discover_delpi_information(
         query="me dê três exemplos de pino de ajuste", top_k=5, actor_id="u1"
+    )
+    assert all(c["action_id"] != "search_products" for c in result["candidates"])
+
+
+def test_entity_marker_does_not_outrank_specific_capability(monkeypatch):
+    """Stock intent keeps its specific capability above catalog search."""
+    set_actions_for_tests(_load_baseline_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    result = discover_delpi_information(
+        query="Qual o estoque do produto 10080055?", top_k=5, actor_id="u1"
+    )
+    assert result["candidates"][0]["action_id"] == "get_product_stock"
+
+    result = discover_delpi_information(
+        query="Quais produtos estão faltando em estoque?", top_k=5, actor_id="u1"
+    )
+    assert result["candidates"][0]["action_id"] != "search_products"
+
+
+def test_entity_marker_does_not_create_false_positive(monkeypatch):
+    """Exemplar phrasing without entity-domain evidence yields no candidate."""
+    set_actions_for_tests(_load_baseline_actions())
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    result = discover_delpi_information(
+        query="Exemplos de melhoria de processos", top_k=5, actor_id="u1"
     )
     assert all(c["action_id"] != "search_products" for c in result["candidates"])

@@ -52,6 +52,7 @@ class TechnicalAction:
     approved_response_fields: tuple[str, ...] = field(default_factory=tuple)
     approved_input_fields: tuple[str, ...] = field(default_factory=tuple)
     semantic_aliases: tuple[str, ...] = field(default_factory=tuple)
+    entity_domain_markers: tuple[str, ...] = field(default_factory=tuple)
     argument_constraints: Mapping[str, Any] = field(default_factory=dict)
     semantic_transport: str | None = None
     request_body: Mapping[str, Any] | None = None
@@ -169,6 +170,7 @@ def _enrich_from_allowlist(
     Mapping[str, Any],
     Mapping[str, Any] | _InvalidNameBindings,
     tuple[str, ...],
+    tuple[str, ...],
 ]:
     entry = _allowlist_entry(allowlist, operation_id)
     mode = entry.get("executionMode")
@@ -177,6 +179,9 @@ def _enrich_from_allowlist(
     aliases = tuple(str(a) for a in (entry.get("semanticAliases") or []) if a)
     negative_aliases = tuple(
         str(a) for a in (entry.get("retrievalNegativePhrases") or []) if a
+    )
+    entity_domain_markers = tuple(
+        str(m) for m in (entry.get("entityDomainMarkers") or []) if m
     )
     raw_constraints = entry.get("argumentConstraints")
     constraints: Mapping[str, Any] = (
@@ -199,6 +204,7 @@ def _enrich_from_allowlist(
         argument_bindings,
         response_bindings,
         negative_aliases,
+        entity_domain_markers,
     )
 
 
@@ -350,6 +356,7 @@ def build_technical_actions_from_openapi(
                 argument_bindings,
                 response_bindings,
                 negative_aliases,
+                entity_domain_markers,
             ) = _enrich_from_allowlist(allowlist, str(oid))
             actions.append(
                 TechnicalAction(
@@ -385,6 +392,7 @@ def build_technical_actions_from_openapi(
                     argument_bindings=argument_bindings,
                     response_bindings=response_bindings,
                     negative_aliases=negative_aliases,
+                    entity_domain_markers=entity_domain_markers,
                 )
             )
     return actions
@@ -436,6 +444,7 @@ def build_technical_actions_from_baseline(
             argument_bindings,
             response_bindings,
             negative_aliases,
+            entity_domain_markers,
         ) = _enrich_from_allowlist(allowlist, oid_s)
         actions.append(
             TechnicalAction(
@@ -470,6 +479,7 @@ def build_technical_actions_from_baseline(
                 argument_bindings=argument_bindings,
                 response_bindings=response_bindings,
                 negative_aliases=negative_aliases,
+                entity_domain_markers=entity_domain_markers,
             )
         )
     return actions

@@ -269,6 +269,8 @@ def _catalog_idf(actions: Sequence[TechnicalAction]) -> dict[str, float]:
         tokens = tokenize(action.searchable_text)
         for alias in action.semantic_aliases:
             tokens |= tokenize(alias)
+        for marker in action.entity_domain_markers:
+            tokens |= tokenize(marker)
         docs.append(tokens)
     total = max(1, len(docs))
     df = Counter()
@@ -316,6 +318,26 @@ def score_action(
     idf = token_idf or {}
     specificity = lambda t: idf.get(t, 0.5)  # noqa: E731 - bounded local use
 
+    # Entity-domain markers: governed per-operation head nouns declaring which
+    # entity class the capability searches over (e.g. product-catalog head
+    # nouns from the normative vocabulary). They treat domain terms as search
+    # ARGUMENTS, not capability names — a generic admission channel when the
+    # query carries entity evidence but no alias/overlap intent. Score sits
+    # below phrase-alias and full-overlap paths so stronger evidence wins.
+    marker_specs = [
+        max(specificity(t) for t in tokenize(marker))
+        for marker in action.entity_domain_markers
+        if marker
+        and any(
+            _tokens_compatible(qt, mt)
+            for qt in q_content
+            for mt in tokenize(marker)
+        )
+    ]
+    marker_score = (
+        min(0.78, 0.55 + 0.20 * max(marker_specs)) if marker_specs else 0.0
+    )
+
     # Pure filler tokens (da/os/me/mostre/…) appear in almost every haystack.
     # A candidate whose overlap is ONLY filler tokens is lexical noise, not a
     # semantic match, so it is suppressed below without altering the scoring
@@ -349,6 +371,8 @@ def score_action(
     overlap = q_tokens & hay_tokens
     semantic_overlap = overlap - _PHRASE_FILLERS - neutral
     if not semantic_overlap and multiword_hits == 0 and single_hits == 0:
+        if marker_score:
+            return marker_score
         if overlap:
             # Filler/neutral-only overlap: suppress instead of emitting a
             # junk candidate.
@@ -391,15 +415,16 @@ def score_action(
         # A lone generic alias token with otherwise-uncovered query content is
         # noise, not intent ("saldo da conta corrente" is not product stock).
         if overlap_score < 0.25:
-            return 0.0
+            return marker_score
         # An action that claims the token via a governed alias must not rank
         # below one that merely contains the token in searchable text.
         alias_score = min(0.78, 0.62 + 0.16 * best_single_spec)
         return max(alias_score, min(0.84, overlap_score))
     if overlap_score < 0.50:
         # Weak generic-token noise only: not enough specific evidence to
-        # surface the action as a candidate.
-        return 0.0
+        # surface the action as a candidate — unless the query carries a
+        # declared entity-domain marker (search argument, not alias).
+        return marker_score
     return min(0.84, overlap_score)
 
 
