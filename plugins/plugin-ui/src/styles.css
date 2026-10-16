@@ -93,8 +93,6 @@
 @import "./styles/interaction-room-page.css";
 @import "./styles/conversation-drop.css";
 @import "./styles/conversation-workspace.css";
-@import "./components/conversation/ConversationThreeRegionLayout.css";
-@import "./components/conversation/ConversationSidePanels.css";
 @import "./styles/conversation-user-message.css";
 @import "./styles/message-action-bar.css";
 @import "./styles/conversation-status.css";
@@ -113,6 +111,8 @@
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
 @import "./styles/action-controls.css";
+@import "./components/conversation/ConversationThreeRegionLayout.css";
+@import "./components/conversation/ConversationSidePanels.css";
 @import "./styles/page-header.css";
 @import "./styles/navigation-card.css";
 @import "./styles/section-route-card.css";
