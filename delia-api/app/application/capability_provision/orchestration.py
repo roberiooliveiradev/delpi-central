@@ -3277,15 +3277,30 @@ class OperationalCapabilityOrchestrator:
                 goal.prior_evidence_sufficient
                 and goal.goal_class != "create_or_modify"
             ):
-                continued = self._prior_continuation_attempt(
-                    input_text,
-                    prior_turns,
-                    correlation,
-                    deadline,
-                    business_subject=goal.business_subject,
-                )
-                if continued is not None:
-                    return continued
+                prior_turn = self._prior_result_turn(prior_turns)
+                if (
+                    prior_turn is None
+                    or prior_turn.epistemic_class
+                    is not EpistemicClass.OBSERVATION
+                ):
+                    # Conversational residue without observation-class
+                    # evidence is not transformable prior evidence.
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=prior_not_observation "
+                        "correlation_id=%s",
+                        correlation,
+                    )
+                else:
+                    continued = self._prior_continuation_attempt(
+                        input_text,
+                        prior_turns,
+                        correlation,
+                        deadline,
+                        business_subject=goal.business_subject,
+                    )
+                    if continued is not None:
+                        return continued
 
         # Selection stages receive NO prior_turns: catalogues + history
         # bloated select_capability past the stage timeout on follow-ups.
@@ -4713,6 +4728,18 @@ class OperationalCapabilityOrchestrator:
         return goal
 
     @staticmethod
+    def _prior_result_turn(
+        prior_turns: tuple[ConversationContextTurn, ...],
+    ) -> ConversationContextTurn | None:
+        """Latest non-empty DELIA_RESULT turn from prior context."""
+        for turn in reversed(prior_turns):
+            if turn.kind is not TurnKind.DELIA_RESULT:
+                continue
+            if (turn.content or "").strip():
+                return turn
+        return None
+
+    @staticmethod
     def _prior_result_content(
         prior_turns: tuple[ConversationContextTurn, ...],
     ) -> str | None:
@@ -4722,13 +4749,12 @@ class OperationalCapabilityOrchestrator:
         never fresh grounding. Used only for bounded continuity when
         the validated goal declares prior evidence sufficient.
         """
-        for turn in reversed(prior_turns):
-            if turn.kind is not TurnKind.DELIA_RESULT:
-                continue
-            content = (turn.content or "").strip()
-            if content:
-                return content[:MAX_RENDER_CONTENT_CHARS]
-        return None
+        turn = OperationalCapabilityOrchestrator._prior_result_turn(
+            prior_turns
+        )
+        if turn is None:
+            return None
+        return (turn.content or "").strip()[:MAX_RENDER_CONTENT_CHARS]
 
     def _budget_allows_resolver(self, deadline: TurnDeadline) -> bool:
         """Resolver fan-out needs headroom beyond a bare clarify.
@@ -6639,23 +6665,45 @@ class OperationalCapabilityOrchestrator:
             # Bounded semantic subject from the validated turn goal —
             # untrusted selection context, never a factual value.
             block["business_subject"] = business_subject
-        proposal = self._propose(
-            input_text,
-            block_tag="records",
-            block_payload=json.dumps(
-                block,
-                ensure_ascii=False,
-                default=str,
-            )[:MAX_SURFACE_CHARS],
-            instruction_id=SYNTHESIS_INSTRUCTION_ID,
-            instruction=SYNTHESIS_INSTRUCTION,
-            expected_fields=("items",),
-            input_kind="grounded_synthesis",
-            allowed_keys=frozenset({"items", "presentation"}),
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-        )
+        # Owner evidence already exists: if the remaining budget cannot
+        # finish a synthesis stage, demote to deterministic render
+        # instead of timing out the whole turn (Stage 05 30s ceiling).
+        if deadline is not None and (
+            deadline.remaining_seconds() < MIN_VIABLE_MODEL_STAGE_SECONDS * 3
+        ):
+            _logger.info(
+                "orchestration stage=synthesis "
+                "decision=skip_budget remaining_ms=%d "
+                "correlation_id=%s",
+                int(deadline.remaining_seconds() * 1000),
+                correlation,
+            )
+            return None, ()
+        try:
+            proposal = self._propose(
+                input_text,
+                block_tag="records",
+                block_payload=json.dumps(
+                    block,
+                    ensure_ascii=False,
+                    default=str,
+                )[:MAX_SURFACE_CHARS],
+                instruction_id=SYNTHESIS_INSTRUCTION_ID,
+                instruction=SYNTHESIS_INSTRUCTION,
+                expected_fields=("items",),
+                input_kind="grounded_synthesis",
+                allowed_keys=frozenset({"items", "presentation"}),
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+        except _StageDeadlineExceeded:
+            _logger.info(
+                "orchestration stage=synthesis "
+                "decision=budget_fallback correlation_id=%s",
+                correlation,
+            )
+            return None, ()
         # LOOP-03R2A (observability): the fallback carries one bounded
         # deterministic reason code — never proposal content.
         rendered, reason = (

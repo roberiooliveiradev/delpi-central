@@ -503,6 +503,59 @@ def test_unknown_provider_summary_path_is_provider_neutral():
     assert "Manual alpha" in (attempt.content or "")
 
 
+def test_hypothesis_prior_is_not_treated_as_evidence():
+    provider = FakeProvider(
+        "acme",
+        [
+            _group(
+                "acme",
+                "guides",
+                [
+                    _cap(
+                        "guides",
+                        "acme",
+                        "read_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": True,
+            },
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": False,
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT, content="q"
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content="Fonte indisponível.",
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+        ),
+    )
+    attempt = orch.attempt("Resuma isso.", prior_turns=prior)
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert LIMITATION_PRIOR_TURN_CONTINUATION not in (
+        attempt.limitations or ()
+    )
+    purposes = [r.task_purpose_id for r in model.requests]
+    assert SYNTHESIS_INSTRUCTION_ID not in purposes
+
+
 def test_prior_synthesis_failure_does_not_reselect():
     """Failed prior transform ends honestly — no live reselection."""
     provider = FakeProvider(
