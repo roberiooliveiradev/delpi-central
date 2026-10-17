@@ -3,6 +3,7 @@ import type { ConversationPanelControls } from "@delpi/plugin-ui/index";
 import {
   ConversationContextPanel,
   ConversationSidebar,
+  NavigationRail,
   ConversationThreeRegionLayout,
 } from "@delpi/plugin-ui/index";
 
@@ -14,7 +15,9 @@ export type DeliaConversationPageProps = {
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
   return (
     <ConversationThreeRegionLayout
-      left={({ collapsed }) => <ConversationSidebar collapsed={collapsed} />}
+      left={({ collapsed, onExpand }) => collapsed
+        ? <NavigationRail activeCategory="conversations" availableCategories={["conversations"]} onSelectCategory={() => onExpand()} />
+        : <ConversationSidebar />}
       right={<ConversationContextPanel />}
       center={conversation}
     />
