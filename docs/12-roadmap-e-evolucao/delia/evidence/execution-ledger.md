@@ -14749,3 +14749,14 @@ NEXT=I02_R1_POST_FIX_VALIDATION_AND_PRE_SYNTHESIS_LATENCY_CAUSE
 - **STATE:** `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R1_INDEPENDENT_DIAGNOSTIC_REVIEW
+
+
+## §6.246 — DELIA-C3-I02-R1-INDEPENDENT-DIAGNOSTIC-ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
+
+**DATE:** 2026-10-17. **DOC:** [08](../corrections/mcp-contextual-intelligence-orchestration/08-i02r1-independent-diagnostic-acceptance.md). **REVIEWED_HEAD:** `0dbca64e6a78f43881a8228d9d2168dfa85723f5`. Independent GitHub report/code review; live telemetry reported by executor, not independently rerun.
+
+- **PROVEN FOR EVALUATED K3:** selected `vista.get_product_guide`, fifth model-stage `index_probe` 19289ms exhausted total 30024ms before owner READ (0); nested-envelope projection `INCONCLUSIVE`, not PASS. K1 TÉO success ~17816ms with multiple sequential pre-owner model steps.
+- **ARCHITECTURE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND_CANDIDATE` existing owner-declared index path, schema gates, `TurnDeadline`, index proposal. **Reject** suggestion to catch already-exhausted deadline and continue owner READ; schema-valid empty invoke may return only an index. Bound optional probe before invocation, validate actual contract/required identifiers and reserve legitimate headroom, preserve terminal timeout and fail-closed semantics.
+- **STATE:** `I02_R1_DIAGNOSTIC_REVIEW=ACCEPT_WITH_RESIDUAL`; `I02_ACCEPTED=NO`; `NESTED_FIX_LIVE_VALIDATED=INCONCLUSIVE`; `I02_R2_IMPLEMENTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R2_CONTRACT_AND_RED_GATE
