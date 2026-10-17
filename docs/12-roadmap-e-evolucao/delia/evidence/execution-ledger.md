@@ -14603,3 +14603,17 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
 - **EXECUTION:** `TESTS=TEST_NOT_RUN`, `FRONTEND_CODE_CHANGED=NO`, `PHASE_PROGRESSION=NONE`, navigation E09/E10 formal residuais unchanged.
 - **NEXT:** coordination reviews 117, authorizes F02-A only if consistent with authorities; otherwise choose another eligible render-only bounded frontend gap.
 
+## §6.235 — DELIA-C3-MCP-SPECIALIST-KNOWLEDGE-UTILIZATION-EVAL-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** [44](../corrections/conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md). **REFERENCE_HEAD:** `558421fd72`. **DEPLOYED_SHA:** `e9b2f46287` (no deploy). **MODEL:** `moonshotai/kimi-k3`. **MODE:** READ-ONLY live MESSAGE ×4.
+
+- **K1** `get_methodology_guide` (+`get_catalog`) GROUNDED 28910ms — `PASS_WITH_LIMITATION` (synthesis `skip_budget`; owner methodology projected).
+- **K2** re-invoked methodology; `prior_sufficient=no`; literal replay of K1; synthesis timeout; 30014ms — `FAIL` (continuity + budget).
+- **K3** `vista.get_product_guide` index→topic `block_types` GROUNDED truncated — `PASS_WITH_LIMITATION` (no panel invent; ACT=0).
+- **K4** `davi.discover_delpi_information` GROUNDED empty-match honesty — `PASS_WITH_LIMITATION`.
+- **SCORE:** discovery/selection broadly OK; utilization partial; `MATERIAL_ACT_COUNT=0`; `SOURCE_CODE_CHANGED=NO`.
+- **GAPS (not implemented):** prior_sufficient for guide follow-ups; synthesis headroom after discovery/index; DAVI discovery query framing when empty.
+- **DECISION:** evidence for independent review only; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_KNOWLEDGE_UTILIZATION_REVIEW
+
