@@ -37,6 +37,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R2 implementation candidate:** [09 — index probe headroom fix and deploy](./09-i02r2-index-probe-headroom-fix-and-deploy.md). Owner-contract PT + derived headroom; live K3 GROUNDED com INDEX/READ/nested sem model probe; K1/K2 TEO ainda timeout. `I02_ACCEPTED=NO` até review.
 
+**I02-R2 independent review:** [10 — bounded fix accepted with residuals](./10-i02r2-independent-architecture-and-deploy-review.md). I02 remains REWORK because K1/K2 live FAIL; optional probe floor and PT contract heuristic have open generalization risk. Next: I02-R3 pre-owner TÉO latency diagnosis and design.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
