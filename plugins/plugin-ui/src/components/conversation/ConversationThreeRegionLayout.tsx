@@ -10,7 +10,7 @@ export type ConversationPanelControls = {
 export type ConversationThreeRegionLayoutProps = {
   center: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
   /** Collapsed rail remains mounted and retains navigation icons. */
-  left?: ReactNode | ((state: { collapsed: boolean }) => ReactNode);
+  left?: ReactNode | ((state: { collapsed: boolean; onExpand: () => void }) => ReactNode);
   /** Optional read-only context content presented in a floating surface. */
   right?: ReactNode;
   leftTitle?: string;
@@ -114,7 +114,7 @@ export function ConversationThreeRegionLayout({
             </IconButton>
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">
-            {typeof left === "function" ? left({ collapsed }) : left}
+            {typeof left === "function" ? left({ collapsed, onExpand: () => setLeftExpanded(true) }) : left}
           </div>
         </nav>
       ) : null}
