@@ -12,6 +12,8 @@ export type ConversationThreeRegionLayoutProps = {
   center: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
   /** Collapsed rail remains mounted and retains navigation icons. */
   left?: ReactNode | ((state: { collapsed: boolean; onExpand: () => void }) => ReactNode);
+  /** Optional permanently mounted category rail for hosts with a separate panel. */
+  rail?: ReactNode;
   /** Optional read-only context content presented in a floating surface. */
   right?: ReactNode;
   leftTitle?: string;
@@ -22,7 +24,7 @@ export type ConversationThreeRegionLayoutProps = {
 
 /** Presentation-only: left rail stays visible; right context never takes a column. */
 export function ConversationThreeRegionLayout({
-  center, left, right, leftTitle = "Conversas",
+  center, left, rail, right, leftTitle = "Conversas",
   rightTitle = "Contexto da conversa", rightAvailable = true, className,
 }: ConversationThreeRegionLayoutProps) {
   const [leftExpanded, setLeftExpanded] = useState(true);
@@ -96,9 +98,18 @@ export function ConversationThreeRegionLayout({
       "delpi-ui-conversation-three-region",
       collapsed ? "delpi-ui-conversation-three-region--left-collapsed" : "",
       compact ? "delpi-ui-conversation-three-region--compact" : "",
+      rail ? "delpi-ui-conversation-three-region--with-rail" : "",
       className,
     ].filter(Boolean).join(" ")}>
-      {left ? (
+      {rail ? (
+        <div className="delpi-ui-conversation-three-region__category-rail">
+          {collapsed ? <div className="delpi-ui-conversation-three-region__rail-heading">
+            <NavigationActions action="toggle" expanded={false} onAction={() => setLeftExpanded(true)} />
+          </div> : null}
+          {rail}
+        </div>
+      ) : null}
+      {left && (!rail || !collapsed) ? (
         <nav id={leftId} aria-label={leftTitle}
           className="delpi-ui-conversation-three-region__left">
           <div className="delpi-ui-conversation-three-region__side-heading">
