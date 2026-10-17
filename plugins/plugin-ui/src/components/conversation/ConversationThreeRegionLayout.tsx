@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { MoreHorizontal, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { MoreHorizontal, X } from "lucide-react";
+import { NavigationActions } from "./NavigationActions";
 import { IconButton } from "../actions/IconButton";
 
 export type ConversationPanelControls = {
@@ -102,16 +103,7 @@ export function ConversationThreeRegionLayout({
           className="delpi-ui-conversation-three-region__left">
           <div className="delpi-ui-conversation-three-region__side-heading">
             {!collapsed ? <strong>{leftTitle}</strong> : null}
-            <IconButton
-              className="delpi-ui-conversation-three-region__rail-toggle delpi-ui-conversation-three-region__chrome-icon"
-              aria-label={collapsed ? "Expandir conversas" : "Recolher conversas"}
-              aria-expanded={!collapsed}
-              onClick={() => setLeftExpanded((value) => !value)}
-            >
-              {collapsed
-                ? <PanelLeftOpen size={19} strokeWidth={1.8} aria-hidden="true" />
-                : <PanelLeftClose size={19} strokeWidth={1.8} aria-hidden="true" />}
-            </IconButton>
+            <NavigationActions action="toggle" expanded={!collapsed} onAction={() => setLeftExpanded((value) => !value)} />
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">
             {typeof left === "function" ? left({ collapsed, onExpand: () => setLeftExpanded(true) }) : left}
