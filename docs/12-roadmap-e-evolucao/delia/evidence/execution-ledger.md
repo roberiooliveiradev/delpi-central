@@ -14631,3 +14631,16 @@ NEXT=INDEPENDENT_KNOWLEDGE_UTILIZATION_REVIEW
 - **STATE:** `TRACK=PLANNED`; `IMPLEMENTATION_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=I00_INDEPENDENT_EVAL_REVIEW_AND_CONTEXT_BASELINE
+
+
+## §6.237 — DELIA-C3-MCP-CONTEXT-I00-INDEPENDENT-BASELINE-ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **DOC:** [I00 formal independent acceptance](../corrections/mcp-contextual-intelligence-orchestration/01-i00-independent-context-baseline-acceptance.md). **REVIEWED_HEAD:** `ef8d555100a79d1aa926232d9df9ef8f81d4f7d5`. **MODE:** GitHub read-only review of frontend/backend context path and K1–K4 report 44; no tests/live execution in this review.
+
+- **PROVEN:** `plugins/delia/src/App.tsx` transient React turn state; `buildInteractionContext` recent pair projection under 16,384 chars; HTTP `context` strict `kind/content/epistemic_class`; backend context alternation/epistemic validations; request-scoped `InteractionSession`; `ConversationContextTurn` prior turns untrusted and non-authoritative.
+- **CONTRACT LIMIT:** client sends rendered `content` plus epistemic class, **not** UI-held structured MCP provenance/grounding/presentation. No structured MCP knowledge context in inspected turn contract; other persistence `TO_INVENTORY`. No proof this is itself the direct root cause of K2.
+- **EVIDENCE:** §6.235 K2 TÉO fail (`prior_evidence_sufficient=false`, re-invoke/replay, 30014ms); K1/K3 synthesis limits; K4 empty discovery. Executor reports only; independent reexecution `TEST_NOT_RUN`.
+- **REUSE:** `EXISTING_EQUIVALENT=YES` goal/prior_continuation/synthesis/resolver; `REUSE_DECISION=EXTEND_CANDIDATE`, subject to I01 contract/CP-RQ/safety gates. No global MCP knowledge copy, new memory store or architecture decision.
+- **DECISION:** `I00_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `I00_BASELINE_COMPLETE=YES`; `I01_STATUS=PLANNED_NOT_AUTHORIZED`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=I01_CONTRACT_AND_BOUNDED_IMPLEMENTATION_GATE
