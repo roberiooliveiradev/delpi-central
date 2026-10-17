@@ -47,3 +47,17 @@ CODE_STATUS=PENDING_EVIDENCE
 PHASE_PROGRESSION=NONE
 NEXT=D02_MINIMAL_UI_DIFF_TEST_BUILD_AND_REVIEW
 ```
+
+
+## 5. D02 — implementação publicada, QA pendente (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-COMPANION-D02-PENDING-AVATAR-MOTION-BINDING-01`. **BASE_HEAD:** `453daa26958f4f0730efb012619e4dbef4e96fc9`. **Autorização:** Product Master pediu verificar documentação e iniciar a implementação de presença/Dock. **Reuse:** `EXISTING_EQUIVALENT=YES` (`UnifiedAvatar`, `ActivityViewer`, `App.loading`); `REUSE_DECISION=REUSE_AND_EXTEND_COMPOSITION`. **Owners preservados:** UI = plugin-ui; estado/composição = DÉLIA; host = Portal.
+
+**Alteração mínima efetiva:**
+- `plugins/delia/src/App.tsx` insere `UnifiedAvatar(kind="assistant", size="sm", motionState="processing")` **somente quando `loading` for true**, ao lado do `ActivityViewer` já existente; avatar decorativo com `aria-hidden`. Os estados da resposta final e da recepção não foram alterados; o mesmo App serve full-page e Dock.
+- `plugins/delia/src/index.css` organiza ícone e atividade em linha compacta, oculta apenas o ícone decorativo do viewer dentro do pending row (evita segunda animação concorrente), mantém texto de status/disclosure e não muda o halo tokenizado de `plugin-ui`.
+- `plugins/delia/src/App.test.tsx` registra um teste de início/fim do halo usando o demo gate existente `?delia-demo=loading`, sem chamadas de produção; verifica o estado `processing` somente entre submit e resposta simulada.
+
+**Resultado factual:** implementação e teste publicados no GitHub; `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `BROWSER_QA_DOCK=TEST_NOT_RUN`. **D02_ACCEPTED=NO / IMPLEMENTED_CANDIDATE**. Teste/demo não comprova request real, CSS carregado em produção ou sessão compartilhada entre superfícies. QA deve verificar pending real, cancelamento, erro, comprimento do status, dock em tema claro/escuro e `prefers-reduced-motion`.
+
+**Próximo bounded gate:** Cursor/workspace autorizado reexecuta tests, typecheck, build/federation e QA do Dock no SHA do código, incluindo validação de carregamento de `unified-avatar.css` e ausência de clipping no halo. Registrar evidência e só então decidir ACCEPT / ACCEPT_WITH_RESIDUAL / REWORK / INCONCLUSIVE. **D01/D03/D04 não executadas nesta task.**
