@@ -7,6 +7,7 @@ import {
   NavigationRail,
   NavigationCategoryPanel,
   ProjectNavigation,
+  AgentNavigation,
   ConversationThreeRegionLayout,
 } from "@delpi/plugin-ui/index";
 
@@ -17,20 +18,20 @@ export type DeliaConversationPageProps = {
 
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
   const [category, setCategory] = useState<NavigationRailCategory>("conversations");
-  const title = category === "projects" ? "Projetos" : "Conversas";
+  const title = category === "projects" ? "Projetos" : category === "agents" ? "Agentes" : "Conversas";
   return (
     <ConversationThreeRegionLayout
       leftTitle={title}
       left={({ collapsed, onExpand }) => collapsed
         ? <NavigationRail activeCategory={category}
-            availableCategories={["conversations", "projects"]}
+            availableCategories={["conversations", "projects", "agents"]}
             onSelectCategory={(nextCategory) => {
-              if (nextCategory !== "conversations" && nextCategory !== "projects") return;
+              if (nextCategory !== "conversations" && nextCategory !== "projects" && nextCategory !== "agents") return;
               setCategory(nextCategory);
               onExpand();
             }} />
         : <NavigationCategoryPanel category={category}>
-            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : <ConversationNavigation />}
+            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : category === "agents" ? <AgentNavigation status="catalog_unavailable" /> : <ConversationNavigation />}
           </NavigationCategoryPanel>}
       right={<ConversationContextPanel />}
       center={conversation}
