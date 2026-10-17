@@ -4841,30 +4841,25 @@ class OperationalCapabilityOrchestrator:
             else (None, "proposal_absent")
         )
         if rendered is None:
-            if reason == "empty_selection" and explicit_empty:
-                _logger.info(
-                    "orchestration stage=prior_continuation "
-                    "decision=insufficient_evidence "
-                    "correlation_id=%s",
-                    correlation,
-                )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SUCCESS,
-                    correlation_id=correlation,
-                    content=_insufficiency_content(),
-                    limitations=(
-                        LIMITATION_PRIOR_TURN_CONTINUATION,
-                        LIMITATION_INSUFFICIENT_EVIDENCE,
-                    ),
-                )
+            # Already on the prior-continuation path: do not fall
+            # through to live reselection — that burns the remaining
+            # global budget after a failed transform (Stage 05 live).
             _logger.info(
                 "orchestration stage=prior_continuation "
-                "decision=synthesis_fallback reason=%s "
+                "decision=insufficient_evidence reason=%s "
                 "correlation_id=%s",
                 reason,
                 correlation,
             )
-            return None
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.SUCCESS,
+                correlation_id=correlation,
+                content=_insufficiency_content(),
+                limitations=(
+                    LIMITATION_PRIOR_TURN_CONTINUATION,
+                    LIMITATION_INSUFFICIENT_EVIDENCE,
+                ),
+            )
         normalized_prior = " ".join(prior_content.split())
         normalized_rendered = " ".join(rendered.split())
         if (

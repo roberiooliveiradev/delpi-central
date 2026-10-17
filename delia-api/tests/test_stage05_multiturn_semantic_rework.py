@@ -503,6 +503,59 @@ def test_unknown_provider_summary_path_is_provider_neutral():
     assert "Manual alpha" in (attempt.content or "")
 
 
+def test_prior_synthesis_failure_does_not_reselect():
+    """Failed prior transform ends honestly — no live reselection."""
+    provider = FakeProvider(
+        "acme",
+        [
+            _group(
+                "acme",
+                "guides",
+                [
+                    _cap(
+                        "guides",
+                        "acme",
+                        "read_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+        {
+            ("guides", "read_guide"): _outcome(
+                "guides", "read_guide", "should-not-run"
+            )
+        },
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": True,
+            },
+            # Invalid synthesis payload → proposal_absent / schema_invalid
+            SYNTHESIS_INSTRUCTION_ID: {"not_items": True},
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Resuma a orientação anterior.",
+        prior_turns=_prior(),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is None
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    assert provider.calls == []
+    purposes = [r.task_purpose_id for r in model.requests]
+    assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
+    assert GROUP_SELECTION_INSTRUCTION_ID not in purposes
+
+
 def test_literal_multi_excerpt_copy_is_rejected():
     provider = FakeProvider(
         "acme",
