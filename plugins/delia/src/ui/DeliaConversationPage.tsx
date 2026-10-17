@@ -23,10 +23,10 @@ export function DeliaConversationPage({ conversation }: DeliaConversationPagePro
   return (
     <ConversationThreeRegionLayout
       leftTitle={title}
-      rail={({ onExpand }) => <NavigationRail
+      rail={<NavigationRail
         activeCategory={category}
         availableCategories={["conversations", "projects", "agents", "plugins"]}
-        onSelectCategory={(nextCategory) => { setCategory(nextCategory); onExpand(); }}
+        onSelectCategory={setCategory}
       />}
       left={<NavigationCategoryPanel category={category}>
         {category === "projects" ? <ProjectNavigation status="contract_unavailable" />
