@@ -648,3 +648,35 @@ ROADMAP_PROGRESS = 1/10 ACCEPTED
 CHECKLIST_CHANGED = NO
 NEXT = E05_TESTS_AND_REAL_CONTAINER_QA; E06_NOT_AUTO_AUTHORIZED
 ```
+
+## 18. E06 — Coordenação de overlays e acessibilidade (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E06-OVERLAYS-A11Y-01`. **BASE_HEAD (GitHub main):** `767465bf2d9fcf55d5ca149f8b26e840e9dee24e`. **Autorização:** solicitação explícita do Product Master para implementar E06 após screenshot mostrando o ContextPopover ajustado em 375px. A captura é evidência visual pontual da E05, **não prova de QA E06**.
+
+**Owner/consumers/reuse:** `RESPONSIBILITY=COMPACT_OVERLAY_COORDINATION`; `OWNER=plugin-ui/ConversationThreeRegionLayout`; `CONSUMER=plugins/delia`; Portal host, Core/AuthZ, Domain authorities inalterados. `EXISTING_EQUIVALENT=YES` (estados `leftExpanded/rightOpen/compact`, backdrop, close e focus refs no shell); `REUSE_DECISION=EXTEND` — nenhum engine, provider, overlay manager ou componente paralelo.
+
+**Implementado no shell:**
+- `openDrawer` fecha o Contexto em modo compacto antes de expandir a navegação; `toggleContext` recolhe o drawer ao abrir o Contexto no compacto. `useEffect` de convergência fecha drawer caso ambos acabem abertos por resize/estado transitório. A regra não interfere na coexistência permitida no desktop.
+- Ao abrir Contexto compacto, foco é direcionado ao botão existente **Fechar painel de contexto**; não houve alteração no contrato `IconButton` (que não aceita `ref`). Escape fecha a superfície ativa e retorna foco ao acionador de Contexto, respeitando `defaultPrevented`. Drawer continua com foco inicial no X e retorno ao botão de expansão do rail, Escape e backdrop como no E04-R1.
+- Enquanto drawer aberto, centro e Contexto permanecem `inert`, como definido na E04-R1. A navegação Tab/Shift+Tab no drawer tenta permanecer entre elementos focáveis do rail e painel, sem mover foco para o compositor oculto. Os candidates são coletados sob o próprio shell, não no documento global; sem alteração na autorização de negócios.
+- `ConversationWorkspace` é mantido montado; a seleção/expansão não cria sessão, não envia mensagem nem dispara ACT.
+
+**Teste escrito:** `ConversationThreeRegionLayout.test.tsx` cobre em container simulado 375px: abrir Contexto, verificar foco no fechamento; abrir navegação, verificar fechamento de Contexto, drawer/backdrop e centro inert; Escape fecha drawer, input central mantém valor; reabrir Contexto e Escape restaura foco ao gatilho. Regressões anteriores E02-E05 preservadas.
+
+**Evidência e limites:** diff publicado no GitHub. **Nesta sessão não houve execução de Vitest, TypeScript, build federado, nem browser QA autenticado:** `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `PLUGIN_UI_BUILD=TEST_NOT_RUN`, `DELIA_BUILD=TEST_NOT_RUN`, `PORTAL_DOCK_QA=TEST_NOT_RUN`, `INDEPENDENT_REVIEW=PENDING`. O teste criado não demonstra foco real do navegador, zoom 200%, resize, leitor de tela ou teclado completo; estes permanecem gates de E06/E09. Não marcar `[x] E06` nem alterar o contador apenas pela publicação.
+
+```text
+E06_IMPLEMENTATION=CODE_COMMITTED_CANDIDATE
+BASE_HEAD=767465bf2d9fcf55d5ca149f8b26e840e9dee24e
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+CODE_CHANGED=ConversationThreeRegionLayout.tsx
+TEST_CHANGED=ConversationThreeRegionLayout.test.tsx
+TESTS=TEST_NOT_RUN
+BROWSER_QA=TEST_NOT_RUN
+REVIEW_VERDICT=INCONCLUSIVE
+E06_ACCEPTED=NO
+ROADMAP_PROGRESS=1/10 ACCEPTED
+CHECKLIST_CHANGED=NO
+NEXT=E06_SAME_SHA_TEST_BUILD_AND_LIVE_KEYBOARD_QA
+```
