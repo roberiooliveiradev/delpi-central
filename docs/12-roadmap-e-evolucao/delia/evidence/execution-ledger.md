@@ -14644,3 +14644,16 @@ NEXT=I00_INDEPENDENT_EVAL_REVIEW_AND_CONTEXT_BASELINE
 - **DECISION:** `I00_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `I00_BASELINE_COMPLETE=YES`; `I01_STATUS=PLANNED_NOT_AUTHORIZED`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=I01_CONTRACT_AND_BOUNDED_IMPLEMENTATION_GATE
+
+
+## §6.238 — DELIA-C3-MCP-CONTEXT-I01-ARCHITECTURE-ALIGNMENT (PROPOSED_NOT_IMPLEMENTED)
+
+**DATA:** 2026-10-17. **DOC:** [I01 proposal](../corrections/mcp-contextual-intelligence-orchestration/02-i01-architecture-alignment-and-continuity-proposal.md). **BASELINE:** `453daa26958f4f0730efb012619e4dbef4e96fc9`. **MODE:** documentation-only technical/architecture proposal.
+
+- **CANONICAL ALIGNMENT:** 16 phase/evidence; 50 standalone/owner; 49 Clean Architecture + Ports & Adapters + DDD pragmatic / Abstraction Gate; 21 DÉLIA-owned context and bounded invalidable projections, no shadow truth; 20 tests linked to SHA/config; 25 CP/RQ traceability. Remaining authority paths need revalidation in implementation.
+- **PROVEN PROBLEM:** K2 TÉO `prior_evidence_sufficient=false`, live re-invoke + replay, timeout 30014ms. Missing structured MCP context is a limitation of current turn contract but **not yet proven K2 root cause**. K1/K3 budget separately I02.
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND_CANDIDATE` existing `_understand_goal`, `_prior_continuation_attempt`, prior turn projection and `TurnDeadline`; no provider branches, new planner, engine, global MCP memory, or new persistence.
+- **REQUIRED I01 GATES:** authoritative CP/RQ and contract mapping, generic provider-neutral RED tests, fail-closed prior context, grounded-vs-prior epistemics, 30s global, zero unauthorized ACT, live real-model eval and independent review. New context fields only after explicit separate architecture/contract gate if truly required.
+- **STATE:** `I01_ARCHITECTURE_DIRECTION=PROPOSED`; `SOURCE_CODE_CHANGED=NO`; `TESTS=TEST_NOT_RUN`; `I01_IMPLEMENTATION_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I01_CONTRACT_CP_RQ_AND_RED_TEST_GATE
