@@ -241,6 +241,8 @@ def test_r_s05_01_prior_summary_render_has_no_excerpt_label():
     assert decision == "rendered"
     assert content is not None
     assert 'campo "excerpt"' not in content.lower()
+    assert "excerpt" not in content.lower()
+    assert "Diferenças comprovadas" not in content
     assert "fluxo usa etapas" in content.lower()
 
 

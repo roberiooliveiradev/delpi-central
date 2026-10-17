@@ -1847,10 +1847,17 @@ def _proven_field_differences(
     left_values: list[tuple[str, str]],
     right_values: list[tuple[str, str]],
 ) -> list[str]:
-    """Deterministic diffs of selected scalar fields present on both sides."""
+    """Deterministic diffs of selected scalar fields present on both sides.
+
+    Synthetic prior-turn ``excerpt`` leaves are session prose, not owner
+    registry fields — they are omitted from the diff section so the
+    technical field name never surfaces (R-S05-01).
+    """
     right_map = {name: value for name, value in right_values}
     lines: list[str] = []
     for name, left_value in left_values:
+        if _canonical_key(name) == "excerpt":
+            continue
         right_value = right_map.get(name)
         if right_value is None or right_value == left_value:
             continue
