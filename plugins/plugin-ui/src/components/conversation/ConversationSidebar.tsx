@@ -1,4 +1,5 @@
-import { MessageSquareText, Search, Settings2, SquarePen } from "lucide-react";
+import { Search, Settings2, SquarePen } from "lucide-react";
+import { ConversationHistoryItem } from "./ConversationHistoryItem";
 import { ConversationSidebarSearch } from "./ConversationSidebarSearch";
 
 export type ConversationSidebarProps = {
@@ -57,12 +58,7 @@ export function ConversationSidebar({
                 <ul className="delpi-ui-conversation-sidebar__history">
                   {items.map((item) => (
                     <li key={item.id}>
-                      <button type="button" aria-current={item.active ? "page" : undefined}
-                        className="delpi-ui-conversation-sidebar__history-item"
-                        onClick={() => onSelectConversation(item.id)}>
-                        <MessageSquareText size={16} aria-hidden="true" />
-                        <span title={item.title}>{item.title}</span>
-                      </button>
+                      <ConversationHistoryItem item={item} onSelect={onSelectConversation} />
                     </li>
                   ))}
                 </ul>
