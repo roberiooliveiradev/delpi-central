@@ -19,6 +19,7 @@ import type {
 } from "./api/interactionClient";
 import {
   ActivityViewer,
+  UnifiedAvatar,
   ConversationError,
   ConversationHeader,
   ConversationWorkspace,
@@ -447,10 +448,15 @@ export default function App({
             <DeliaReception userIdentity={userIdentity} />
           )}
           {loading ? (
-            <ActivityViewer
-              {...(liveActivityView ?? DELIA_ACTIVITY_PENDING_VIEW)}
-              className="delia-interaction__loading"
-            />
+            <div className="delia-interaction__pending-row">
+              <span className="delia-interaction__pending-avatar" aria-hidden="true">
+                <UnifiedAvatar kind="assistant" label="DÉLIA" size="sm" motionState="processing" />
+              </span>
+              <ActivityViewer
+                {...(liveActivityView ?? DELIA_ACTIVITY_PENDING_VIEW)}
+                className="delia-interaction__loading"
+              />
+            </div>
           ) : null}
           <div ref={turnsEndRef} aria-hidden="true" />
         </ConversationWorkspace>
