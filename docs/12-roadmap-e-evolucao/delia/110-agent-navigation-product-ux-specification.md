@@ -59,3 +59,29 @@ Usar cores/tokens do kit em light/dark, sem tons cinzas permanentes em botões g
 ## Rework R1 — agentes aprovados, não descoberta como permissão
 
 Categoria Agentes é alvo visual; listagem e launch requerem `EXISTING_EQUIVALENT=TO_INVENTORY` de catálogos oficiais, Agent/Capability projection, owner e rotas governadas. `REUSE_DECISION=PENDING_GATE` para feed/launch. Um agente encontrado via MCP/A2A não vira aprovado/visible pelo metadata. Em falta de contrato, categoria apenas `contract_unavailable` quando product preview aprovado; `forbidden` é omitido. Seleção de item não delega credentials nem inicia execução sem passagem autorizada e guardas de escopo mínimo. Não criar agents/personas paralelos aos owners existentes.
+
+## Implementação bounded 07 — AgentNavigation (2026-10-17)
+
+**Autorização:** Product Master confirmou “Ok, implemente” após a entrega `ProjectNavigation`. **BASE_HEAD consultado:** `94dd12cb0ee391135f5d6eceb596791b39d16112`. Esta task implementa **somente o componente frontend `AgentNavigation`** e sua integração como categoria de apresentação, não executa MCP/A2A, criação de agentes, planner, delegação ou integração de catálogo.
+
+### Reuse e ownership
+
+- `EXISTING_EQUIVALENT=YES` para `NavigationRail`, `NavigationCategoryPanel`, `ConversationThreeRegionLayout`, estados e estilos da navegação de projetos; `REUSE_DECISION=EXTEND` do shell existente, sem outro `nav` persistente, fonte de dados ou runtime.
+- `EXISTING_EQUIVALENT=TO_INVENTORY` para catálogo oficial de especialistas e agents, capability projection, contrato de launch, provider/connector e scopes legítimos; `REUSE_DECISION=PENDING_GATE` para qualquer interação real. Catálogo não é inventado por este componente e MCP discovery não confere permissão.
+- `plugin-ui` é owner de apresentação; `plugins/delia` consome com estado visual transitório. Core/Domain preservam AuthZ e autoridade final; o Planner não recebe endpoint, selector ou provider mechanics.
+
+### Contrato e aparência entregues
+
+`AgentNavigationProps`: `status = catalog_unavailable|ready|loading|authorized_empty|error`, `agents?: readonly {id,name,description?,selected?}[]`, `onSelectAgent?(id)`, `onRetry?`, `className?`. Sem contrato, default `catalog_unavailable` com orientação única e **nenhum agente fictício**. `ready` só renderiza itens providos pelo consumer com callback, lista semântica, heading “Especialistas disponíveis”, ícone institucional neutro `Bot` 19px (não identidade física/pessoal fabricada), descrição em até 2 linhas e título de uma linha. Não foi adicionada nova API de avatar antes do inventário de `UnifiedAvatar` e das identidades oficiais. O click sinaliza somente intenção visual; não executa/handoff/lança capability. `onRetry` aparece apenas em `error` com callback explícito. `forbidden` deve ser filtrado antes da projeção; o componente não autoriza.
+
+Estilos isolados `AgentNavigation.css` reutilizam tokens light/dark, ghost transparente, hover tonal, selected distinto, hit target mínimo 48px, foco visível e reduced motion. Nenhum provider branding hardcoded.
+
+### Integração e limites
+
+`DeliaConversationPage` habilita **Agentes como prévia visual da categoria** no `NavigationRail`, além de Conversas e Projetos. Ao selecionar, expande o único shell existente e apresenta `NavigationCategoryPanel category="agents"` com `AgentNavigation status="catalog_unavailable"`. A conversa central e o ContextPopover não são remontados intencionalmente; Plugins continua indisponível. No painel expandido, a navegação entre categorias ainda depende de recolher para acessar o rail — evolução futura do shell, **não solucionada nesta task**. Não foi criado um catálogo/registro de agentes na DÉLIA.
+
+### Arquivos e evidência
+
+Criados `plugins/plugin-ui/src/components/conversation/AgentNavigation.tsx`, `AgentNavigation.css`, `AgentNavigation.test.tsx`. Ajustados exports `components/conversation/index.ts` e `src/index.ts`, CSS import em `src/styles.css`, gate `scripts/verify-host-exports.mjs`, `plugins/delia/src/ui/DeliaConversationPage.tsx` e seu teste.
+
+Testes criados para ausência de dados fictícios, callback de seleção, ausência de ACT, textos inertes, states error/loading/empty e preservação do centro no consumer. **Execução não comprovada:** `VITEST=TEST_NOT_RUN`, `TSC=TEST_NOT_RUN`, `FEDERATION_BUILD=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, `INDEPENDENT_REVIEW=PENDING`. Reancoragem integral .cursor/16→50→17→49→51→52→21→20→25, arquitetura, ledger e workspace status não comprovados por este conector: `INCONCLUSIVE`. Não há aceite de fase ou runtime; resultado limitado a `CODE_COMMITTED_CANDIDATE` quando a publicação for verificada na main.
