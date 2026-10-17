@@ -98,6 +98,7 @@ const REQUIRED_HOST_EXPORTS = [
   "NavigationCategoryPanel",
   "ProjectNavigation",
   "AgentNavigation",
+  "PluginNavigation",
   "ConversationNavigation",
   "ConversationHistoryItem",
   "PinnedConversations",
