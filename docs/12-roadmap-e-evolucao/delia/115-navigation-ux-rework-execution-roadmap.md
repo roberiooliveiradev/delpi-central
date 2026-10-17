@@ -619,3 +619,32 @@ CHECKLIST = UNCHANGED
 ROADMAP_PROGRESS = 1/10 ACCEPTED
 NEXT = E04_R1_VITEST_BUILD_FEDERATION_AND_MOBILE_QA
 ```
+
+## 17. E05 — ContextPopover responsivo, rail-safe (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E05-CONTEXT-RESPONSIVE-01`. **BASE_HEAD:** `8b86356763ef45301d6d04c0d28b253fbdd3de0b` em GitHub `main`. **Autorização:** Product Master solicitou avanço e implementação da E05 após fornecer três capturas mobile 375×667. O conteúdo Contexto aparecia encoberto pelo rail na faixa esquerda; screenshot = `VISUAL_DEFECT_OBSERVED` e **não** mede geometria programaticamente nem prova SHA de assets.
+
+**Reuse Gate:** `RESPONSIBILITY=COMPACT_CONTEXT_POSITION_AND_SCROLL`, `OWNER=plugin-ui`, `CONSUMER=plugins/delia`, `EXISTING_EQUIVALENT=YES` (`ConversationThreeRegionLayout__context-popover` com animação, CSS e close button existentes), `REUSE_DECISION=EXTEND`, `NEW_COMPONENT=NO`, `NEW_COLUMN=NO`. Portal mantém host; Core/domain/identity/permission sem alterações. Respeita 103, 113, 115 e baseline da E01; não representa liberação de fase C3/C4.
+
+**Alteração mínima:** `plugins/plugin-ui/src/components/conversation/ConversationThreeRegionLayout.css`. Dentro da `@container delia-page (max-width:920px)` apenas para `--with-rail`, ContextPopover usa `left:calc(var(--delpi-ui-three-rail) + 8px)`, `right:8px`, `width:auto` e `max-width:calc(100% - rail - 16px)`, com `box-sizing:border-box`. Resultado esperado: nenhum título/ícone começa atrás do rail, e largura fica dentro do próprio container do Portal inclusive a 320/375/420px; a regra desktop não muda. `max-height:min(70%,calc(100% - 72px))` e body `overflow-y:auto`, `overscroll-behavior:contain`, `overflow-x:hidden`, padding compacto: evitar corte do conteúdo vertical, sem interferir no composer após fechar. A regra considera o tamanho efetivo do container em CSS, não usa `100vw/100vh`. A query de altura de container foi removida, pois o container pode ser `inline-size` e não suportar tal eixo.
+
+**Teste criado:** `ConversationThreeRegionLayout.test.tsx` cobre ambiente compacto simulado 375px, rail persistente, contexto aberto/fechado dentro do mesmo shell, sem terceira coluna, e input central preservado. **Limite:** JSDOM não prova coordenadas de CSS container queries; validar em navegador real durante E05 QA e E09. Nenhuma alteração no React para a E05, no Portal, na API ou na governança das categorias.
+
+**Resultado factual nesta task:** alterações CSS/teste publicadas em GitHub. Não houve runner Git/Node nem navegador autenticado acessíveis pelo conector: `VITEST=TEST_NOT_RUN`, `TSC=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `PORTAL_QA=TEST_NOT_RUN`, `INDEPENDENT_REVIEW=PENDING`. Não promover screenshots anteriores do defeito a validação do fix. A exclusividade de Contexto e drawer e os controles de foco pertencem à E06.
+
+```text
+STAGE = E05
+TASK_ID = DELIA-UX-NAV-REWORK-E05-CONTEXT-RESPONSIVE-01
+BASE_HEAD = 8b86356763ef45301d6d04c0d28b253fbdd3de0b
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = EXTEND
+CODE_CHANGED = CSS + UNIT_TEST
+BROWSER_QA = TEST_NOT_RUN
+AUTOMATED_TESTS = TEST_NOT_RUN
+REVIEW_VERDICT = INCONCLUSIVE
+E05_IMPLEMENTATION = CODE_COMMITTED_CANDIDATE
+E05_ACCEPTED = NO
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+CHECKLIST_CHANGED = NO
+NEXT = E05_TESTS_AND_REAL_CONTAINER_QA; E06_NOT_AUTO_AUTHORIZED
+```
