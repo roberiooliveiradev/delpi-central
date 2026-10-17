@@ -491,3 +491,57 @@ CHECKLIST_CHANGED = NO
 ROADMAP_PROGRESS = 1/10 ACCEPTED
 NEXT = E02_INDEPENDENT_TEST_AND_VISUAL_REVIEW
 ```
+
+## 13. E03 — Troca direta de categorias (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E03-CATEGORY-SWITCH-01`  
+**BASE_HEAD:** `0d4a647cf18c4fecaeae6313d820df4f549b5256` (GitHub `main`).  
+**ESCOPO:** componente frontend consumer `DeliaConversationPage` e sua suíte de integração. Nenhum novo shell, backend, API, catálogo, permissão ou ACT.
+
+### 13.1 Dependência da E02 e decisão de escopo
+
+O registro §12 declara `E02=IMPLEMENTATION_CANDIDATE / INCONCLUSIVE` e o checklist mestre ainda registra `[ ] E02` e `1/10 ACCEPTED`. A captura desktop recebida do Product Master **prova visualmente** a presença de Rail + Panel lado-a-lado no Portal, porém **não** executa a suíte E02 no SHA implantado. O Product Master autorizou explicitamente a E03 nesta interação. Portanto esta mudança é registrada **como candidato E03**, sem promover/aceitar E02 e sem reivindicar liberação automática de etapas subsequentes. A aceitação E03 fica condicionada ao fechamento da dependência e à validação no seu SHA/config.
+
+### 13.2 Reuse Gate
+
+```text
+RESPONSIBILITY = CHANGE_SELECTED_VISUAL_CATEGORY_ONLY
+OWNER = plugins/delia (category state)
+PRESENTATION_OWNER = plugins/plugin-ui (NavigationRail / NavigationCategoryPanel)
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = REUSE (existing props and onSelectCategory callback)
+NEW_COMPONENT_OR_REGISTRY = NO
+OWNER_AUTHZ_OR_DOMAIN_CHANGE = NO
+PHASE_PROGRESSION = NONE
+```
+
+**Mudança no consumer:** `DeliaConversationPage` remove o uso do `rail` render-prop `onExpand` e passa `rail={<NavigationRail onSelectCategory={setCategory} .../>}`. Com painel expandido, clicar Conversas/Projetos/Agentes/Plugins modifica apenas `category`, seleciona `aria-current="page"` via `NavigationRail` e atualiza `NavigationCategoryPanel` existente no mesmo local, sem fechar/reabrir o painel. Com painel recolhido, a seleção de categoria persiste e o toggle existente pode expandir o painel com a categoria escolhida. Nenhuma categoria torna catálogo/provider autorizado: os previews permanecem `contract_unavailable/catalog_unavailable`.
+
+**Sem alteração** de `ConversationThreeRegionLayout`, CSS, `NavigationRail`, `ConversationWorkspace`, ContextPopover, Portal/Core/Domain, sessão, history backend ou MCP. `REUSE_DECISION=REUSE` e menor diff.
+
+### 13.3 Tests and acceptance evidence
+
+- `plugins/delia/src/ui/DeliaConversationPage.test.tsx` foi atualizado para expectativas de seleção sem expansão automática; acrescentados testes para troca direta nas quatro categorias com painel expandido, rail estável, toggle único, seleção `aria-current`, conteúdo unavailable veraz, draft DOM/input intacto; e seleção do rail recolhido que só abre o painel após toggle explícito.
+- Testes **escritos, não executados** nesta sessão. Workspace do clone Git, runner local e navegador autenticado de produção não estavam disponíveis (conector GitHub só para arquivos). Portanto `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `PORTAL_QA=TEST_NOT_RUN`, `INDEPENDENT_REVIEW=PENDING`.
+- **Proven code:** um `setCategory` como única alteração em clique; `onExpand` não é mais invocado. **Pending runtime:** screenshot da troca entre categorias e preservação do rascunho/stream em browser; reexecução da suíte E02/E03 sobre o mesmo HEAD/config.
+
+### 13.4 Veredicto e contagem
+
+```text
+STAGE = E03
+TASK_ID = DELIA-UX-NAV-REWORK-E03-CATEGORY-SWITCH-01
+BASE_HEAD = 0d4a647cf18c4fecaeae6313d820df4f549b5256
+CODE_CHANGED = YES
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = REUSE
+E02_ACCEPTED = NO (upstream acceptance outstanding)
+TESTS = TEST_NOT_RUN
+BROWSER_QA = TEST_NOT_RUN
+REVIEW_VERDICT = INCONCLUSIVE
+E03_ACCEPTED = NO
+CHECKLIST_CHANGED = NO
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+NEXT = E02_E03_TEST_AND_INDEPENDENT_REVIEW
+```
+
+Não marcar `[x] E03` antes de E02 aceita e testes/evidências da própria E03. E04 não inicia automaticamente.
