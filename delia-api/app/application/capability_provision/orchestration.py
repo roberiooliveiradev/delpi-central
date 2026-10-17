@@ -1395,6 +1395,245 @@ def _missing_inputs(raw: object) -> tuple[str, ...]:
     )
 
 
+# Owner-published entity contracts (catalog DISCOVERY). Untrusted data
+# used only for structural completeness against nested payloads — never
+# Domain business rules, never AuthZ, never invented defaults.
+_ENTITY_SCHEMA_COLLECTION_KEYS = (
+    "entity_schemas",
+    "entityschemas",
+    "entities",
+)
+_ENTITY_PAYLOAD_KEYS = ("changes", "payload", "body", "record")
+
+
+def _extract_owner_entity_schemas(
+    structured: object,
+) -> Mapping[str, Mapping[str, Any]]:
+    """Bounded map of entity_id → owner-published schema fragment."""
+    doc = _unwrap_owner_payload(structured)
+    if not isinstance(doc, Mapping):
+        return {}
+    collection: object = None
+    for key, value in doc.items():
+        if _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS:
+            collection = value
+            break
+    if collection is None:
+        for value in list(doc.values())[:MAX_SURFACE_ENTRIES]:
+            if isinstance(value, Mapping):
+                for key, inner in value.items():
+                    if _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS:
+                        collection = inner
+                        break
+            if collection is not None:
+                break
+    if not isinstance(collection, Mapping):
+        return {}
+    out: dict[str, Mapping[str, Any]] = {}
+    for name, schema in list(collection.items())[:MAX_SURFACE_ENTRIES]:
+        if isinstance(name, str) and isinstance(schema, Mapping):
+            out[name] = schema
+    return out
+
+
+def _entity_payload_slot(
+    arguments: Mapping[str, Any],
+) -> tuple[str | None, str | None, Mapping[str, Any] | None]:
+    """Return (entity_id, payload_field, payload_mapping) when present."""
+    entity = arguments.get("entity")
+    entity_id = (
+        str(entity).strip()
+        if isinstance(entity, (str, int, float)) and str(entity).strip()
+        else None
+    )
+    for key in _ENTITY_PAYLOAD_KEYS:
+        raw = arguments.get(key)
+        if isinstance(raw, Mapping):
+            return entity_id, key, raw
+    return entity_id, None, None
+
+
+def _value_present(value: object) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str) and not value.strip():
+        return False
+    if isinstance(value, Mapping) and not value:
+        return False
+    return True
+
+
+def _schema_required_gaps(
+    value: object,
+    schema: Mapping[str, Any] | None,
+    *,
+    path: str = "",
+    depth: int = 0,
+) -> list[str]:
+    """Dotted paths of missing required fields from a JSON Schema fragment."""
+    if depth > 4 or not isinstance(schema, Mapping):
+        return []
+    gaps: list[str] = []
+    required = schema.get("required")
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping):
+        properties = {}
+    if isinstance(required, (list, tuple)) and isinstance(value, Mapping):
+        for name in required:
+            if not isinstance(name, str):
+                continue
+            field_path = f"{path}.{name}" if path else name
+            if name not in value:
+                gaps.append(field_path)
+                continue
+            child = value.get(name)
+            child_schema = properties.get(name)
+            if isinstance(child_schema, Mapping) and isinstance(child, Mapping):
+                nested = _schema_required_gaps(
+                    child,
+                    child_schema,
+                    path=field_path,
+                    depth=depth + 1,
+                )
+                if nested:
+                    gaps.extend(nested)
+                elif not _value_present(child) and not child_schema.get(
+                    "properties"
+                ):
+                    gaps.append(field_path)
+                continue
+            if not _value_present(child):
+                gaps.append(field_path)
+    elif isinstance(value, Mapping) and properties:
+        for name, child_schema in list(properties.items())[
+            :MAX_ARGUMENT_KEYS
+        ]:
+            if not isinstance(name, str) or not isinstance(
+                child_schema, Mapping
+            ):
+                continue
+            if name not in value or not isinstance(value.get(name), Mapping):
+                continue
+            field_path = f"{path}.{name}" if path else name
+            gaps.extend(
+                _schema_required_gaps(
+                    value.get(name),
+                    child_schema,
+                    path=field_path,
+                    depth=depth + 1,
+                )
+            )
+    return gaps[:MAX_MISSING_INPUTS]
+
+
+def _apply_owner_declared_defaults(
+    payload: Mapping[str, Any],
+    entity_schema: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Fill only defaults the owner published — never invent values."""
+    defaults = entity_schema.get("defaults")
+    if not isinstance(defaults, Mapping) or not defaults:
+        return dict(payload)
+    out = dict(payload)
+    for key, value in list(defaults.items())[:MAX_ARGUMENT_KEYS]:
+        if isinstance(key, str) and key not in out:
+            out[key] = value
+    return out
+
+
+def _owner_entity_completeness_gaps(
+    arguments: Mapping[str, Any],
+    discovery_structured: Mapping[str, Any] | None,
+) -> tuple[str, ...]:
+    """Missing inner fields declared by owner entity_schemas.
+
+    Outer tool inputSchema may accept an opaque ``changes`` object while
+    the catalog publishes required inner fields. Structural check only.
+    """
+    if discovery_structured is None:
+        return ()
+    schemas = _extract_owner_entity_schemas(discovery_structured)
+    if not schemas:
+        return ()
+    entity_id, _payload_key, payload = _entity_payload_slot(arguments)
+    if entity_id is None or payload is None:
+        return ()
+    entity_schema = schemas.get(entity_id)
+    if entity_schema is None:
+        # Case-insensitive / canonical key match — still owner keys only.
+        canon = _canonical_key(entity_id)
+        entity_schema = next(
+            (
+                schema
+                for name, schema in schemas.items()
+                if _canonical_key(name) == canon
+            ),
+            None,
+        )
+    if entity_schema is None:
+        return ()
+    filled = _apply_owner_declared_defaults(payload, entity_schema)
+    # Prefer JSON Schema shaped fragments; fall back to required list.
+    if isinstance(entity_schema.get("properties"), Mapping) or isinstance(
+        entity_schema.get("required"), (list, tuple)
+    ):
+        gaps = _schema_required_gaps(filled, entity_schema)
+        if gaps:
+            return tuple(gaps[:MAX_MISSING_INPUTS])
+    required = entity_schema.get("required")
+    if not isinstance(required, (list, tuple)):
+        return ()
+    gaps = [
+        str(name)
+        for name in required
+        if isinstance(name, str) and not _value_present(filled.get(name))
+    ]
+    return tuple(gaps[:MAX_MISSING_INPUTS])
+
+
+def _apply_entity_defaults_to_arguments(
+    arguments: dict[str, Any],
+    discovery_structured: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Return arguments with owner-declared defaults applied to payload."""
+    if discovery_structured is None:
+        return arguments
+    schemas = _extract_owner_entity_schemas(discovery_structured)
+    entity_id, payload_key, payload = _entity_payload_slot(arguments)
+    if entity_id is None or payload_key is None or payload is None:
+        return arguments
+    entity_schema = schemas.get(entity_id)
+    if entity_schema is None:
+        return arguments
+    filled = _apply_owner_declared_defaults(payload, entity_schema)
+    if filled == dict(payload):
+        return arguments
+    out = dict(arguments)
+    out[payload_key] = filled
+    return out
+
+
+def _argument_completeness_gaps(
+    arguments: Mapping[str, Any] | None,
+    descriptor: ProviderCapability,
+    discovery_structured: Mapping[str, Any] | None,
+) -> tuple[str, ...]:
+    """Owner entity_schema gaps beyond outer tool inputSchema.
+
+    Typed nested ``inputSchema`` completeness remains
+    ``validate_arguments``' job. This gate only covers opaque payload
+    fields whose inner required list is published in catalog
+    ``entity_schemas`` (Stage 04). ``descriptor`` kept for call-site
+    symmetry / future same-owner binding without Domain duplication.
+    """
+    _ = descriptor
+    if not isinstance(arguments, Mapping):
+        return ()
+    return _owner_entity_completeness_gaps(
+        arguments, discovery_structured
+    )
+
+
 # --- user-facing wording gates (C3-INTELLIGENCE-LOOP-01) ---------------
 #
 # Internal missing-input names are internal metadata, never user copy.
@@ -3172,6 +3411,7 @@ class OperationalCapabilityOrchestrator:
         )
 
         owner_evidence: str | None = None
+        discovery_structured: Mapping[str, Any] | None = None
         discovery_ran = False
         self_index_ran = False
         index_structured: Mapping[str, Any] | None = None
@@ -3202,6 +3442,8 @@ class OperationalCapabilityOrchestrator:
                     )
                     return _error_attempt(correlation, exc)
                 owner_evidence = _bound_owner_evidence(discovery_outcome)
+                if isinstance(discovery_outcome.structured, Mapping):
+                    discovery_structured = discovery_outcome.structured
                 discovery_ran = True
                 self._log_plan(plan, correlation, discovery_ran=True)
             else:
@@ -3501,6 +3743,30 @@ class OperationalCapabilityOrchestrator:
                 missing_inputs = tuple(
                     dict.fromkeys(missing_inputs + post_index_gaps)
                 )[:MAX_MISSING_INPUTS]
+        if arguments is not None and not self_index_ran:
+            # Stage 04: apply owner-declared defaults, then require
+            # nested/entity completeness before PREPARE/READ invoke.
+            arguments = _apply_entity_defaults_to_arguments(
+                dict(arguments),
+                discovery_structured,
+            )
+            completeness_gaps = _argument_completeness_gaps(
+                arguments,
+                descriptor,
+                discovery_structured,
+            )
+            if completeness_gaps:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=completeness_not_ready fields=%d "
+                    "correlation_id=%s",
+                    len(completeness_gaps),
+                    correlation,
+                )
+                arguments = None
+                missing_inputs = tuple(
+                    dict.fromkeys(missing_inputs + completeness_gaps)
+                )[:MAX_MISSING_INPUTS]
         if arguments is None and missing_inputs:
             # Generic resolver step (§6.140): before asking the user
             # for an identifier the owner itself can resolve, run one
@@ -3549,6 +3815,26 @@ class OperationalCapabilityOrchestrator:
                         )
                         arguments = None
                         missing_inputs = post_index_gaps
+                elif arguments is not None:
+                    arguments = _apply_entity_defaults_to_arguments(
+                        dict(arguments),
+                        discovery_structured,
+                    )
+                    completeness_gaps = _argument_completeness_gaps(
+                        arguments,
+                        descriptor,
+                        discovery_structured,
+                    )
+                    if completeness_gaps:
+                        _logger.info(
+                            "orchestration stage=arguments "
+                            "decision=post_resolver_completeness_reject "
+                            "fields=%d correlation_id=%s",
+                            len(completeness_gaps),
+                            correlation,
+                        )
+                        arguments = None
+                        missing_inputs = completeness_gaps
                 if arguments is not None:
                     _logger.info(
                         "orchestration stage=arguments "

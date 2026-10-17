@@ -14318,3 +14318,24 @@ NEXT=INDEPENDENT_STAGE03_ACCEPTANCE_REVIEW
 STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; C3_EXECUTED=NO
 NEXT=STAGE_04_BOUNDED_IMPLEMENTATION (coordination authorization in successor ledger entry)
 
+## §6.213 — DELIA-C3-STAGE-04-BOUNDED-IMPLEMENTATION-AUTHORIZATION-01 (AUTHORIZED_BOUNDED)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-C3-STAGE03-CLOSURE-AND-STAGE04-IMPLEMENTATION-01` / TASK B auth. **PRECONDITION:** §6.212 Stage 03 ACCEPT_WITH_RESIDUAL.
+
+- **DECISION:** `STAGE_04_AUTHORIZED=YES_BOUNDED`; `STAGE_04_IMPLEMENTATION=IN_PROGRESS`.
+- **SCOPE:** completeness via owner-published `entity_schemas`, declared defaults only, minimal clarification, PREPARE READY/NOT_READY structural — no Domain validator clone, no ACT by MESSAGE, no C3/C4/C5 phase advance.
+- **NO CLAIMS:** `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `STAGE_04_ACCEPTED=NO`.
+
+## §6.214 — DELIA-C3-STAGE-04-COMPLETENESS-RESOLUTION-IMPLEMENTATION-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/36-stage-04-completeness-resolution-implementation-report.md`. **CODE_SHA:** fill after publish.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`.
+- **FIX:** `_owner_entity_completeness_gaps` + declared defaults + post-arg/post-resolver gate; preserve resolver invented-id/ambiguity and B1/B2.
+- **TESTS:** `test_stage04_completeness_resolution.py` + CI-04/10 updated; Stage03 regression; full `delia-api` pytest green.
+- **LIVE SSH:** fill after deploy (MESSAGE prepare completeness; `MATERIAL_ACT=0`).
+- **NO CLAIMS:** `STAGE_04_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
+
+STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; STAGE_04_AUTHORIZED=YES_BOUNDED; STAGE_04_ACCEPTED=NO
+NEXT=INDEPENDENT_STAGE04_ARCHITECTURE_REVIEW
+

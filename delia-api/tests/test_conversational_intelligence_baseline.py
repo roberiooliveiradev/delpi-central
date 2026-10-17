@@ -579,23 +579,11 @@ def _process_provider(commit_outcome=None, prepare_outcome=None):
                       outcomes=outcomes)
 
 
-def test_ci04_inner_required_field_not_checked_by_outer_schema():
-    """RED repro of the production chain end to end:
-
-    arguments built missing=0 while the owner's entity schema required
-    a field absent from `changes`; PREPARE projected READY; owner-
-    declared direct execution; commit failed validation. Where
-    completeness was declared: the tool inputSchema only — the inner
-    entity contract lived as untrusted text in owner_vocabulary and
-    was never deterministically validated
-    (ARGUMENT_COMPLETENESS_FAILURE).
+def test_ci04_inner_required_field_blocks_prepare_before_act():
+    """Stage 04 GREEN: owner entity_schemas required inner fields are
+    checked before PREPARE — incomplete ``changes`` clarify; no ACT.
     """
-    commit_error = CapabilityProviderError(
-        "mcp_protocol_error",
-        "1 validation error for ProcessoCreateBody\nstatus_processo\n"
-        "  Field required [type=missing]",
-    )
-    provider = _process_provider(commit_outcome=commit_error)
+    provider = _process_provider()
     orch, model = _orchestrator(
         [provider],
         _select(
@@ -618,39 +606,10 @@ def test_ci04_inner_required_field_not_checked_by_outer_schema():
         session_id="s1",
     )
 
-    # B2 closure (§6.184): a free-text MESSAGE never reaches material
-    # ACT — the READY proposal waits as a backend pending write.
-    assert [name for name, _ in provider.calls] == [
-        "get_catalog", "stage_record",
-    ]
-    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
-
-    applied = orch.attempt(
-        "",
-        actor_user_id="u1",
-        session_id="s1",
-        confirmation={
-            "decision": "CONFIRM",
-            "proposal_digest": (
-                attempt.confirmation_context["proposal_digest"]
-            ),
-            "preview_fingerprint": (
-                attempt.confirmation_context["preview_fingerprint"]
-            ),
-            "session_id": attempt.confirmation_context["session_id"],
-        },
-    )
-
-    # Full production chain reproduced: discovery -> prepare READY ->
-    # bound APPLY -> commit validation error -> honest failure.
-    assert [name for name, _ in provider.calls] == [
-        "get_catalog", "stage_record", "commit_record",
-    ]
-    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert applied.error_code == "mcp_protocol_error"
-
-    # The entity contract WAS available to the arguments stage — as an
-    # untrusted free-text vocabulary block, not a validated schema.
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert [name for name, _ in provider.calls] == ["get_catalog"]
+    assert "stage_record" not in [name for name, _ in provider.calls]
+    assert "commit_record" not in [name for name, _ in provider.calls]
     arg_requests = _proposal_purpose(model, ARGUMENTS_INSTRUCTION_ID)
     stage_arg = [
         r for r in arg_requests
@@ -658,16 +617,6 @@ def test_ci04_inner_required_field_not_checked_by_outer_schema():
     ]
     assert stage_arg, "arguments proposal for stage_record missing"
     assert "status_processo" in stage_arg[0].input_text
-    # Yet no deterministic layer rechecked inner completeness — the
-    # model's own proposal is the only arbiter.
-    assert provider.calls[1] == (
-        "stage_record",
-        {
-            "entity": "process",
-            "operation": "create",
-            "changes": {"nome_processo": "processo teste"},
-        },
-    )
 
 
 def _apply_pending(orch, attempt, actor="u1", session="s1"):
@@ -758,7 +707,12 @@ def test_ci05_negative_prepare_not_ready_never_reaches_act():
             arguments={
                 "entity": "process",
                 "operation": "create",
-                "changes": {"nome_processo": "processo teste"},
+                # Inner entity completeness satisfied so the owner
+                # NOT_READY projection is reached (Stage 04 gate).
+                "changes": {
+                    "nome_processo": "processo teste",
+                    "status_processo": "ativo",
+                },
             },
             extra={
                 GOAL_INSTRUCTION_ID: {
@@ -1099,12 +1053,12 @@ def test_ci10_inner_schema_gap_is_name_invariant():
         actor_user_id="u1",
         session_id="s1",
     )
-    assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
-    applied = _apply_pending(orch, attempt)
-    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert [name for name, _ in provider.calls] == [
-        "describe_surface", "propose_mutation", "apply_mutation",
-    ]
+    # Name-invariant Stage 04: incomplete inner payload clarifies;
+    # PREPARE/ACT never reached (same structural gate as CI-04).
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert [name for name, _ in provider.calls] == ["describe_surface"]
+    assert "propose_mutation" not in [name for name, _ in provider.calls]
+    assert "apply_mutation" not in [name for name, _ in provider.calls]
 
 
 # ---------------------------------------------------------------------
