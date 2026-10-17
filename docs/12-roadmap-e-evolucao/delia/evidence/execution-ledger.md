@@ -14577,3 +14577,17 @@ NEXT=E09_AUTHENTICATED_PORTAL_DOCK_LIVE_MATRIX
 
 NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
 
+
+
+## §6.233 — DELIA-C3-MCP-DAVI-VISTA-INDEPENDENT-ARCHITECTURE-ACCEPTANCE-01 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **DOC:** [43](../corrections/conversational-intelligence-c3/43-davi-vista-independent-acceptance-and-functional-state.md). **CODE_SHA_REVIEWED:** `9eeb3dd1c7eb91a71d8202736af67447e920b430` + `e9b2f46287389f9376ee75502baa1e2369948c40`. **MODE:** independent GitHub diff/document review; executor-reported SSH + pytest not independently reexecuted.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` existing selection and same-owner resolver. No new planner, catalog, provider-specific rule or authority.
+- **A1:** `openapi:delpi.search_products` selected legitimately with GROUNDED READ; prior smoke's forced `mcp:davi` expectation was incorrect. `A1_VERDICT=VALID_PROVIDER_NEUTRAL_SELECTION`; `A1_FIX=NONE`; DAVI MCP pathway `NOT_RERUN`.
+- **C2:** prior `list_playlists` reselected; fixed by compact `prior_listing` selection hint, same-owner ordinal resolver/proven identifier and schema validation. Resolver headroom floor lowered without changing 30s global ceiling.
+- **EVIDENCE:** executor-reported targeted 10 tests PASS and full backend pytest PASS. Live `srv-api` SHA `e9b2f46287389f9376ee75502baa1e2369948c40`: VISTA C1 `list_playlists` GROUNDED 19203ms; C2 `get_playlist_context` GROUNDED 22805ms, slides/blocks returned, owner-proven playlist_id; 0 ACT. Correlation C2 `eb5c4374-68b1-45d3-a97d-25872f0fa3ab`.
+- **OPEN RESIDUALS:** TÉO B2 `reject_literal_copy`; DAVI MCP discovery→execute `NOT_RERUN`; broader ordinal/budget/owner generalization `NOT_PROVEN`; no global business-production readiness claim.
+- **DECISION:** `TASK_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `C2_REFERENTIAL_DETAIL=ACCEPT_FOR_EVALUATED_SCOPE`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
