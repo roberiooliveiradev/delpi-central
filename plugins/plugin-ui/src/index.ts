@@ -12,6 +12,8 @@ export { ConversationThreeRegionLayout } from "./components/conversation/Convers
 export { ConversationSidebar } from "./components/conversation/ConversationSidebar";
 /** Host-consumed grouped conversation navigation. */
 export { ConversationNavigation } from "./components/conversation/ConversationNavigation";
+/** Shared single authorized-history row; keep available in the MFE remote. */
+export { ConversationHistoryItem } from "./components/conversation/ConversationHistoryItem";
 export { NavigationRail } from "./components/conversation/NavigationRail";
 /** Host-only shared category panel. */
 export { NavigationCategoryPanel } from "./components/conversation/NavigationCategoryPanel";
