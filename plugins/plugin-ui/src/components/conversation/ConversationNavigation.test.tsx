@@ -25,7 +25,8 @@ describe("ConversationNavigation", () => {
     const active = screen.getByRole("button", { name: "Análise recente" });
     expect(active.getAttribute("aria-current")).toBe("page");
     fireEvent.click(screen.getByRole("button", { name: "Planejamento fixado" }));
-    expect(select).toHaveBeenCalledExactlyOnceWith("pin");
+    expect(select).toHaveBeenCalledTimes(1);
+    expect(select).toHaveBeenCalledWith("pin");
   });
 
   it("omits empty groups even when a real list is available", () => {
