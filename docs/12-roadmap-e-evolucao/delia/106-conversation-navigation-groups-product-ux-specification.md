@@ -60,3 +60,32 @@ Linha de item ~40–48px, ícone 16px, texto 13–14px, truncamento seguro + too
 O grupo de Conversas só pode distinguir `unavailable` (persistência ausente), `loading_real` (API em curso), `authorized_empty` (API respondeu vazio autorizado), `forbidden` (omitir) e `stale` (não navegar sem revalidação). Não declarar “zero conversas” baseado em memória React. “Fixadas”, “Recentes” e “Anteriores” serão renderizados com **itens reais** e ordenação/publicação do owner; sem sessão persistida, apenas orientação geral única.
 
 Selecionar = read + alteração de contexto sujeita a ACL live e guardas de draft/turnos em andamento. Nova conversa = criação persistida e exige idempotência/outcome; Fixar, Renomear, Arquivar, Excluir são writes **separados**, com audit, permissão live e postcondition. Pesquisar remete ao doc 97 (backend-first), nunca busca efêmera no array React. Nomes no wireframe são exemplos, não fixture de produção. Matriz vinculante de classificação/owner está no [103 — Rework R1](./103-delia-navigation-sidebar-master-product-ux-specification.md).
+
+## Implementação bounded 03 — ConversationNavigation (2026-10-17)
+
+**Autorização:** Product Master pediu “Continue implementando, próximo”, dando continuidade à sequência de um componente por vez. O único novo componente público desta task é `ConversationNavigation`, que **reutiliza e estende `ConversationSidebar`**; não cria item de histórico separado, menu contextual, registry, API, serviço ou backend.
+
+**HEAD de início:** `bc0d5b92bacb2835edc856a5b1d41b7078685edd`. Reancoragem técnica realizada por consulta de arquivos GitHub e specs 103/106; reancoragem completa das authorities 16/50/17/49/51/52/21/20/25, .cursor e ledger continua **INCONCLUSIVE** (não alegar comprovada). Nenhuma fase/CP avançou.
+
+### Reuse Gate
+
+- `EXISTING_EQUIVALENT=YES`: `ConversationSidebar`, `ConversationSidebarSearch`, `NavigationCategoryPanel` e linha de histórico existente.
+- `REUSE_DECISION=EXTEND`: `ConversationSidebar` suporta agora projeções reais `pinnedHistory`, `history` (recentes), `olderHistory` e `historyStatus`; `ConversationNavigation` é wrapper de categoria com props explícitas `pinned`, `recent`, `older`, `status` e callbacks já existentes.
+- `EXISTING_EQUIVALENT=TO_INVENTORY`: persistência, paginação, ACL de seleção, fixação e search backend; **nenhum desses mecanismos foi implementado ou substituído por storage frontend**.
+
+### Comportamento visual e funcional implementado
+
+1. Nova conversa, Pesquisar e Opções **reutilizam controles atuais**; permanecem desabilitados quando host não fornece callbacks.
+2. Quando o consumer fornece **status ready + listas autorizadas + callback de seleção**, renderiza grupos não vazios na ordem **Fixadas, Recentes, Anteriores**. Todos os itens usam o botão/lista já existente, seleção e `aria-current=page` quando aplicável. A UI não altera ordenação da API; o owner deve fornecer os grupos já classificados.
+3. Com `unavailable`, mostra **uma orientação única** explicando ausência de persistência, sem nomes fictícios, sem listagens de grupos “vazios confirmados”.
+4. `loading` só aparece quando explicitamente informado, `authorized_empty` apenas após confirmação do owner, `error` exibe erro honesto; estes são **estados visuais**, não evidência de API.
+5. O `ConversationSidebar` conserva compatibilidade de legado para um host que já passe array real + `onSelectConversation`. `ConversationNavigation` é opt-in explícito com `status=unavailable` padrão. Sem callback de seleção a lista não é apresentada como navegável.
+6. DÉLIA `DeliaConversationPage` usa `ConversationNavigation` dentro do `NavigationCategoryPanel` existente, preservando `NavigationRail`, a mesma sidebar, único toggle e `ConversationWorkspace` montado.
+
+### Arquivos/validação
+
+Criado `plugins/plugin-ui/src/components/conversation/ConversationNavigation.tsx` e `ConversationNavigation.test.tsx`. Alterados `ConversationSidebar.tsx` (grupos e estados), `ConversationSidePanels.css` (espaçamento de grupos), exports em `components/conversation/index.ts` e `src/index.ts`, `scripts/verify-host-exports.mjs`, e consumer `plugins/delia/src/ui/DeliaConversationPage.tsx`.
+
+Testes especificados: sem backend não inventa histórico, ordem de grupos e callbacks, grupos vazios omitidos, nenhum item sem callback, status loading/empty/error. **TESTS_CREATED=YES**, `VITEST=TEST_NOT_RUN`, `TSC=TEST_NOT_RUN`, `FEDERATION_BUILD=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, `INDEPENDENT_ACCEPTANCE=PENDING`.
+
+**Fora do escopo:** `ConversationHistoryItem` separado, fixar/desafixar, rename/archive/delete, paginação e cursor backend, criação de sessão, pesquisa backend, projeto/agentes/plugins, contratos de autorização. `CODE_COMMITTED_CANDIDATE` não é PASS de produção.
