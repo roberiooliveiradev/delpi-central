@@ -1955,7 +1955,7 @@ services:
       # stays >=20s under the ~100s Cloudflare edge timeout so the
       # application always answers before the edge terminates the
       # request (524).
-      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-80}
+      DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
 
     depends_on:
       keycloak:

@@ -132,14 +132,12 @@ class Settings:
         self.openapi_timeout_seconds = float(
             os.getenv("DELIA_OPENAPI_TIMEOUT_SECONDS") or "15.0"
         )
-        # LOOP-03R2A: total wall-clock budget for ONE interaction turn,
-        # shared by every governed stage (model calls, provider calls).
-        # Default 80s keeps a >=20s margin under the ~100s edge
-        # (Cloudflare proxy) timeout observed as 524 in production —
-        # the application always answers first with a deterministic
-        # bounded result.
+        # LOOP-03R2A / Stage 05: total wall-clock budget for ONE
+        # interaction turn, shared by every governed stage. Default
+        # 30s is the global conversational ceiling (edge ~100s still
+        # leaves margin). Stages are reduction-clamped only.
         self.turn_budget_seconds = float(
-            os.getenv("DELIA_TURN_BUDGET_SECONDS") or "80.0"
+            os.getenv("DELIA_TURN_BUDGET_SECONDS") or "30.0"
         )
 
 

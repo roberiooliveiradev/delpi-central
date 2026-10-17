@@ -296,7 +296,9 @@ def test_model_invocation_port_is_invoked():
     request = captured["request"]
     assert request.task_purpose_id == "delia.interaction.turn"
     assert request.model_ref == DEFAULT_MODEL_REF
-    assert request.timeout_seconds == 30.0
+    # Turn deadline reduction-clamps the general-path timeout to the
+    # remaining global budget (default 30s) — allow tiny clock skew.
+    assert 29.0 < request.timeout_seconds <= 30.0
     assert request.instruction_lineage.instruction_id == "delia.interaction.base"
 
 

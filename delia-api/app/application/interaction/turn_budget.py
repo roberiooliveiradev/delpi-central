@@ -20,11 +20,11 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 
-# Edge budget: the platform edge (Cloudflare proxy) terminates proxied
-# requests at ~100s (observed as 524). The default turn budget keeps a
-# >=20s margin below the edge deadline so the application always answers
-# first with a deterministic bounded result.
-DEFAULT_TURN_BUDGET_SECONDS = 80.0
+# Global conversational turn budget (Stage 05). The platform edge
+# (Cloudflare proxy) terminates proxied requests at ~100s (observed as
+# 524); 30s keeps a large edge margin while bounding end-to-end UX.
+# Per-stage timeouts remain reduction-clamped by this ceiling.
+DEFAULT_TURN_BUDGET_SECONDS = 30.0
 
 
 @dataclass(frozen=True, slots=True)

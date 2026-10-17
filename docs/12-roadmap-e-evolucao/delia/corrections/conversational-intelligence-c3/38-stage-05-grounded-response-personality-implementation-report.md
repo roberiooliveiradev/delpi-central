@@ -121,8 +121,54 @@ LIVE_VERDICT=LATENCY_BOTTLENECK_FIXED
 STAGE_05_ACCEPTED=NO
 ```
 
-## 8. NEXT
+## 8. Semantic continuity + 30s budget rework (histórico preservado)
+
+**TASK:** `DELIA-C3-STAGE05-MULTITURN-SEMANTIC-AND-LATENCY-REWORK-01`  
+**STATUS:** `IMPLEMENTATION_EVIDENCE_RECORDED` · `STAGE_05_ACCEPTED=NO`
+
+### R1 — continuidade semântica
 
 ```text
-NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
+R1_ROOT_CAUSE=prior_evidence_sufficient=true devolvia literalmente
+  o último DELIA_RESULT (cópia automática).
+R1_FIX=EXTEND: excertos determinísticos + síntese selection-only
+  (_prior_continuation_attempt); rejeita full-replay; NON_GROUNDED
+  + prior_turn_evidence_only; create_or_modify nunca reutiliza prior.
+```
+
+### R2 — teto global 30s
+
+```text
+R2_ROOT_CAUSE=DELIA_TURN_BUDGET_SECONDS default/prod=80; T1 live
+  acumulou ~34.5s (select_resolver ~13.3s foi o maior estágio).
+  Evidência histórica TURN1_LATENCY_MS=34502 preservada acima.
+R2_FIX=DEFAULT_TURN_BUDGET_SECONDS=30; compose default 30;
+  skip resolver quando remaining < max(stage/2, 4*MIN_VIABLE);
+  clarification_wording cai para ask-back determinístico se budget
+  esgota. INCREASE_TIMEOUT=NO (stage max 30 inalterado).
+```
+
+### Testes
+
+- `tests/test_stage05_multiturn_semantic_rework.py`
+- `tests/test_stage05_multiturn_latency.py` atualizado
+- suíte `delia-api` pytest completa verde
+
+### Live SSH (pós-rework)
+
+```text
+SSH_DEPLOYED_SHA=<filled after deploy>
+TURN1_LATENCY_MS=<filled>
+TURN2_LATENCY_MS=<filled>
+TURN2_RESPONSE_TRANSFORMED=<filled>
+TURN2_PRIOR_CONTENT_COPIED=<filled>
+LIVE_VERDICT=<filled>
+MATERIAL_ACT_COUNT=0
+STAGE_05_ACCEPTED=NO
+```
+
+## 9. NEXT
+
+```text
+NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 ```

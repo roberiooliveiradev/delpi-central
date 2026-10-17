@@ -232,8 +232,8 @@ def _context():
     )
 
 
-def test_second_turn_reuses_prior_result_without_reselection():
-    """Follow-up that only needs prior DELIA_RESULT skips selection/MCP."""
+def test_second_turn_transforms_prior_without_reselection():
+    """Follow-up transforms prior excerpts; skips selection/MCP."""
     provider = FakeProvider(
         "teo",
         [
@@ -268,6 +268,13 @@ def test_second_turn_reuses_prior_result_without_reselection():
                 "goal_class": "read",
                 "prior_evidence_sufficient": True,
             },
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": [
+                    {"record_index": 0, "fields": ["excerpt"]},
+                    {"record_index": 1, "fields": ["excerpt"]},
+                ],
+                "presentation": "answer",
+            },
         }
     )
     orch = OperationalCapabilityOrchestrator(
@@ -275,18 +282,23 @@ def test_second_turn_reuses_prior_result_without_reselection():
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
     )
-    prior = _prior_pair()
+    prior = _prior_pair(
+        "Primeira orientação sobre revisão. "
+        "Segunda orientação com etapas. "
+        "Limitação: não cobre instâncias."
+    )
     attempt = orch.attempt(
         "Resuma o que você acabou de explicar.",
         prior_turns=prior,
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.outcome is None
-    assert attempt.content == prior[1].content
+    assert attempt.content != prior[1].content
+    assert "Primeira orientação" in (attempt.content or "")
     assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
     assert provider.calls == []
     purposes = [r.task_purpose_id for r in model.requests]
-    assert purposes == [GOAL_INSTRUCTION_ID]
+    assert purposes == [GOAL_INSTRUCTION_ID, SYNTHESIS_INSTRUCTION_ID]
     assert GROUP_SELECTION_INSTRUCTION_ID not in purposes
     assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
 
@@ -567,6 +579,12 @@ def test_prior_continuation_preserves_authz_and_message_not_act():
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
                 "prior_evidence_sufficient": True,
+            },
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": [
+                    {"record_index": 0, "fields": ["excerpt"]}
+                ],
+                "presentation": "answer",
             },
         }
     )

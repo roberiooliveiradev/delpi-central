@@ -14412,3 +14412,15 @@ NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 
 NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
 
+## §6.221 — DELIA-C3-STAGE05-MULTITURN-SEMANTIC-AND-LATENCY-REWORK-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md` §8. **BASE_HEAD:** `af9cbf051e`.
+
+- **R1:** literal prior DELIA_RESULT replay → EXTEND excerpt split + selection-only synthesis (`_prior_continuation_attempt`); reject full-replay; NON_GROUNDED + `prior_turn_evidence_only`.
+- **R2:** turn budget default 80→30 (compose+settings); skip resolver without headroom; clarify wording → deterministic fallback on budget; historical T1 34502ms preserved in §6.220/doc38§7.
+- **TESTS:** `test_stage05_multiturn_semantic_rework.py` + latency/Stage05 + full `delia-api` pytest green.
+- **LIVE SSH:** preenchido após deploy do CODE_SHA (ver doc38 §8).
+- **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `INCREASE_TIMEOUT=NO`.
+
+NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
+
