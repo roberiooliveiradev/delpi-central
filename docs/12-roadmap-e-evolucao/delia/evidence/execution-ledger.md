@@ -14591,3 +14591,15 @@ NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
 - **DECISION:** `TASK_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `C2_REFERENTIAL_DETAIL=ACCEPT_FOR_EVALUATED_SCOPE`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
+
+
+## §6.234 — DELIA-UX-F01-EXPORTED-COMPONENTS-CONSUMERS-GAP-INVENTORY-01 (DOCUMENTED)
+
+**DATA:** 2026-10-17. **DOC:** [117 — F-01 components/exports/consumers/gaps](../117-frontend-f01-component-export-consumer-and-gap-inventory.md); linked by [116](../116-delia-frontend-capability-surface-and-component-execution-map.md) and INDEX. **REFERENCE_HEAD:** `eab39319c76a67b1227aa7cfd9ebd5ae031c94c1`. **MODE:** bounded documentation/discovery; GitHub-only reanchor `PARTIAL`, no local git status or CI.
+
+- **PROVEN:** `plugin-ui` root/conversation/composer exports, `DeliaConversationPage`, `DeliaAssistantMessage`, `DeliaReception`, `DeliaComposer`, `ConversationReception`, `MessageComposer`, `FloatingNoticeStack`; visual shell, Activity/Evidence/Confirmation and primitives exist. Frontend integration proven for the inspected import/composition sites, **not** runtime outcomes.
+- **REUSE:** `EXISTING_EQUIVALENT=YES` for shared reception/composer/shell/actions; `REUSE_DECISION=REUSE|EXTEND` when narrowly justified. `TO_INVENTORY` for exact optional suggestion-set equivalent beyond bounded paths, authoritative feeds/permissions, durable Work and backend actions. No code changes or contracts generated.
+- **FIRST CANDIDATE:** doc 93 `ConversationStarterSuggestions`, strictly render-only, selection fills editable draft, never sends. **`IMPLEMENTATION_DEFERRED` preserved**; candidate requires a fresh bounded authorization + CP/RQ/phase checks. Docs 96/97/102 remain deferred; Work/Inbox/Decision/Evidence future surfaces follow 116.
+- **EXECUTION:** `TESTS=TEST_NOT_RUN`, `FRONTEND_CODE_CHANGED=NO`, `PHASE_PROGRESSION=NONE`, navigation E09/E10 formal residuais unchanged.
+- **NEXT:** coordination reviews 117, authorizes F02-A only if consistent with authorities; otherwise choose another eligible render-only bounded frontend gap.
+
