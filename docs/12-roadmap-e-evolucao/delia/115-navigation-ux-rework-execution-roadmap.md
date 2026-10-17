@@ -284,3 +284,81 @@ CHECKLIST_CHANGED = NO
 STAGES_ACCEPTED = 0
 NEXT = E01_CANONICAL_AND_LIVE_BASELINE_RESIDUALS (E02 BLOCKED)
 ```
+
+## 10. E01 continuação R1 — reancoragem canônica individual completada por fontes reais (2026-10-17)
+
+**Solicitação do Product Master:** executar individualmente todas as verificações E01 possíveis neste chat, não parar no relatório anterior. Esta seção **corrige/supersede** a afirmação em §9.1 de que as autoridades 16/50/ledger não teriam caminhos descobertos. O índice oficial `docs/12-roadmap-e-evolucao/delia/README.md` publicou os caminhos exatos; buscas vazias anteriores eram um problema de discovery, **não ausência de documentos**.
+
+### 10.1 Reancoragem por ordem: fontes efetivamente lidas do GitHub main
+
+| Ordem | Fonte conferida | Resultado material |
+|---|---|---|
+| HEAD | `main` no início E01 `fe7df91879bca2957127833923f0ca80f2fb44ef`; `AGENTS.md` | Main direta/fast-forward; working tree do servidor ainda NÃO acessível por conector |
+| Project Instructions/.cursor | `AGENTS.md`, `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `evidence-driven-execution.mdc`, `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.mdc`, `english-code-identifiers.mdc` | Exigem responsabilidade, evidence-first, owner, reuse, tests; não alterar fase; plano visual é bounded |
+| 16 | `16-execution-master-plan.md` | Plano mestre vigente indica C3 `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`, `C3_EXECUTED=NO`, `RETURN_TO_ARCHITECTURE_COORDINATION`; nenhum C4/C5 liberado |
+| 50 | `50-standalone-copilot-application-architecture.md` | Boundary standalone DÉLIA; evitar runtime Minha DELPI Chat |
+| 17 | `17-component-and-contract-map.md` | Contratos/owners devem continuar nas fronteiras legítimas |
+| 49 | `49-architecture-and-design-patterns-standard.md` | Reuse/Clean Architecture; mudanças UX não criam runtime ou authority |
+| 51 | `51-platform-integration-baseline.md` | Baseline factual não implica integração de catálogos |
+| 52 | `52-standalone-repository-and-bootstrap-plan.md` | Frontend DÉLIA próprio, no Portal, respeitando o plugin-ui |
+| 21 | `21-data-and-state-model.md` | Nenhuma persistência sombra/histórico inventado |
+| 20 | `20-testing-and-acceptance-matrix.md` | Evidência de SHA/config + testes e outcome; não confundir build com UX QA |
+| 25 | `25-requirements-traceability.md` | CP-001 UX Portal/Companion Dock; CP-005 navegação/histórico (não liberado como sessão fake); CP-068 sem business action por DOM; CP-138 estado frontend; CP-181 acessibilidade/frontline; não promover CP por task visual |
+| Temáticas | `103`, `113`, `115`; `22-cursor-execution-protocol.md` | Roadmap de navegação é bounded e **não** redefine NEXT global |
+| Ledger | `evidence/execution-ledger.md` | `C3_AUTHORIZED/STARTED=YES`, `C3_EXECUTED=NO`, `C4/C5_LOCKED` phase-level; ledger volumoso contém registros históricos/superseded — não inferir fase nova de §115 |
+
+**Ressalva:** os arquivos canônicos foram fetchados e seus cabeçalhos/trechos aplicáveis analisados. Esta execução não prova audit linha a linha dos documentos enormes nem estado de arquivos não listados no working tree. **Documentary authority paths identified = PROVEN; complete environment reanchor including git status = INCONCLUSIVE.** Não interpretar uma referência a CP como aceite de seu requisito.
+
+### 10.2 Inventário técnico concluído para a mudança visual
+
+`RESPONSIBILITY=UX_SHELL_AND_RESPONSIVENESS` → `OWNER=plugin-ui` → `CONSUMER=plugins/delia/DeliaConversationPage` → `CONTRACT=render-only props + callbacks` → `IMPLEMENTATION=ConversationThreeRegionLayout / NavigationRail / NavigationCategoryPanel / ConversationNavigation / ContextPopover` → `TEST=component/integration/browser` → `OUTCOME=not yet independently proven`.
+
+- `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` para shell, rail, panel, sidebar e contexto; **não criar outro shell, controller ou domínio**.
+- `NavigationRail` e categoria são reais em código; o consumer usa escolha `collapsed ? rail : panel`, prova de que composição lado-a-lado não está entregue.
+- `ConversationThreeRegionLayout` tem `compact` a 920px por container pai, mas CSS do painel usa `width:min(344px,88%)`, sem JSX de backdrop. Testar overflow, foco, peso mobile e stacking antes de ajustar.
+- O contexto é popover absoluto (width máximo 360px), com Escape/click-outside, mas sem mutual exclusion com a sidebar; validar overlay single-surface.
+- A evidência screenshot+deploy trazida pelo usuário demonstra o problema em sessão própria, mas não substitui instrumentação e screenshot matricial de todos os breakpoints.
+- **Não foi feito** import de runtime Minha DELPI Chat, nem design de API, catálogo, provider, ledger de fase ou autorização; dados não legitimados continuam indisponíveis.
+
+### 10.3 Baseline observacional organizado (capturas da sessão do Product Master)
+
+| ID | Captura recebida | Constatação observável | Veredicto baseline |
+|---|---|---|---|
+| B-DESKTOP | 2 capturas desktop, Contexto fechado/aberto | somente sidebar Conversas expandida, rail não simultâneo; Contexto flutuante | DEFECT_REPRODUCED_VISUALLY |
+| B-MOBILE-RAIL | screenshot mobile ~375×667 | rail de quatro ícones visível e centro preservado | OBSERVED_ONLY |
+| B-MOBILE-CONTEXT | screenshot mobile Contexto aberto | popover ocupa largura grande e se sobrepõe à conversa | DEFECT_REPRODUCED_VISUALLY |
+| B-MOBILE-SIDEBAR | screenshot mobile menu expandido | painel ocupa quase toda a largura; centro aparece cortado/atrás; sem backdrop efetivo observado | DEFECT_REPRODUCED_VISUALLY |
+| B-DEPLOY | transcrição do `git pull` e do build `up-prod-sequential.sh --build 'delia' plugin-ui` | pull até `faecfd8a3`, builds Docker plugin-ui e delia bem-sucedidos, containers recriados | BUILD_REPORTED_PASS_FOR_THAT_SHA_NOT_BROWSER_QA |
+
+**Não se deve afirmar:** testes automatizados no SHA atual, deployed asset hash, ausência de bug em 320/420/768/1024, Chrome+Firefox, Dock, zoom 200%, foco e leitor de tela. Essas verificações permanecem `TEST_NOT_RUN`.
+
+### 10.4 O que foi efetivamente executado neste chat
+
+- [x] Índice oficial e caminhos reais das authorities identificados
+- [x] AGENTS + regras `.cursor` relevantes recuperadas
+- [x] Autoridades 16→50→17→49→51→52→21→20→25 e ledger recuperados e confrontados por responsabilidades
+- [x] Baseline observacional das quatro situações visualmente diferentes organizado com screenshots já enviados
+- [x] Owner/reuse/contrato/componentes e critérios AC-D01…AC-B01 mapeados
+- [ ] `git status` **da máquina srv-api**: indisponível neste chat; GitHub HEAD não expõe working tree, e container local não contém clone nem DNS para clonar repositório
+- [ ] Browser autenticado de produção **com QA instrumental e captura por breakpoint**: nenhuma ferramenta de browser interativo autenticado foi disponibilizada; screenshots do usuário são evidência pontual e não execução feita pelo assistente
+- [ ] SHA do asset realmente servido e confirmação de qual commit cada container está executando: log confirma build/restart relatados, sem manifesto/asset hash verificado independentemente
+- [ ] Revisão independente formal e reexecução de QA na configuração final
+
+**Decisão de gate:** E01 agora possui baseline de fontes canônicas por caminho exato e inventário dirigido. Contudo, o roadmap 115 exige E01 **com baseline instrumental autenticado**. Portanto `E01=INCONCLUSIVE_WITH_PROVEN_DOCUMENTARY_BASELINE`; **não marcar [x] E01**, `STAGES_ACCEPTED=0/10`, `E02=BLOCKED_BY_E01_QA_GATES`. Resíduo técnico delimitado a acesso a working tree/deployed SHA/browser autenticado; não é justificativa para inventários novos.
+
+```text
+TASK_ID=DELIA-UX-NAV-REWORK-E01-BASELINE-01-R1
+BASE_HEAD=fe7df91879bca2957127833923f0ca80f2fb44ef
+CANONICAL_FILES_RETRIEVED=YES
+DOCUMENTARY_AUTHORITY_PATHS=PROVEN
+GIT_STATUS_SRV_API=TEST_NOT_RUN
+AUTHORIZED_BROWSER_MATRIX=TEST_NOT_RUN
+DEPLOYED_SHA=TO_VERIFY
+EXISTING_EQUIVALENT_VISUAL=YES
+REUSE_DECISION_VISUAL=EXTEND
+CODE_CHANGED=NO
+REVIEW_VERDICT=INCONCLUSIVE
+E01_ACCEPTED=NO
+STAGES_ACCEPTED=0
+NEXT=E01_ENVIRONMENT_AND_BROWSER_EVIDENCE
+```
