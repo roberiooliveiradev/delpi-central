@@ -81,3 +81,5 @@ export { ProjectNavigation, type ProjectNavigationProps, type ProjectNavigationI
 export { AgentNavigation, type AgentNavigationProps, type AgentNavigationItem } from "./AgentNavigation";
 
 export { PluginNavigation, type PluginNavigationProps, type PluginNavigationItem } from "./PluginNavigation";
+
+export { NavigationActions, type NavigationActionsProps } from "./NavigationActions";
