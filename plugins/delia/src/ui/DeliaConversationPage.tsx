@@ -1,24 +1,37 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
-import type { ConversationPanelControls } from "@delpi/plugin-ui/index";
+import type { ConversationPanelControls, NavigationRailCategory } from "@delpi/plugin-ui/index";
 import {
   ConversationContextPanel,
   ConversationNavigation,
   NavigationRail,
   NavigationCategoryPanel,
+  ProjectNavigation,
   ConversationThreeRegionLayout,
 } from "@delpi/plugin-ui/index";
 
-/** Unified DÉLIA page: visual navigation and real conversation, with no fake backend. */
+/** Unified DÉLIA page; project category is UI preview, not a project contract. */
 export type DeliaConversationPageProps = {
   conversation: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
 };
 
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
+  const [category, setCategory] = useState<NavigationRailCategory>("conversations");
+  const title = category === "projects" ? "Projetos" : "Conversas";
   return (
     <ConversationThreeRegionLayout
+      leftTitle={title}
       left={({ collapsed, onExpand }) => collapsed
-        ? <NavigationRail activeCategory="conversations" availableCategories={["conversations"]} onSelectCategory={() => onExpand()} />
-        : <NavigationCategoryPanel category="conversations"><ConversationNavigation /></NavigationCategoryPanel>}
+        ? <NavigationRail activeCategory={category}
+            availableCategories={["conversations", "projects"]}
+            onSelectCategory={(nextCategory) => {
+              if (nextCategory !== "conversations" && nextCategory !== "projects") return;
+              setCategory(nextCategory);
+              onExpand();
+            }} />
+        : <NavigationCategoryPanel category={category}>
+            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : <ConversationNavigation />}
+          </NavigationCategoryPanel>}
       right={<ConversationContextPanel />}
       center={conversation}
     />
