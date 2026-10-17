@@ -14697,3 +14697,16 @@ NEXT=INDEPENDENT_I01_ARCHITECTURE_ACCEPTANCE_REVIEW
 - `I02_STATUS=PLANNED_NOT_AUTHORIZED`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=I02_SYNTHESIS_AND_BUDGET_CONTRACT_GATE
+
+## §6.242 — DELIA-UX-COMPANION-D02-MOTION-VALIDATION-AND-ACCEPTANCE-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-UX-COMPANION-D02-MOTION-VALIDATION-AND-ACCEPTANCE-01`. **TESTED_SHA:** `a7869a5d4527d251a3f99ef549aa81979ed6d535`. **DOCS:** [118](../118-companion-dock-presence-and-avatar-motion-execution-roadmap.md) §6 + [evidence](./companion-d02-motion-validation/d02-motion-validation-and-acceptance-01.md).
+
+- **Reuse confirmado:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE_AND_EXTEND_COMPOSITION`; owners plugin-ui / delia / Portal inalterados. Sem segundo avatar/shell/contrato.
+- **Vitest:** delia App+demo+shell 44 PASS; UnifiedAvatar+ActivityViewer 32 PASS; MessageComposer 23 PASS (stop cancelable).
+- **Typecheck/build:** delia tsc+build+federation PASS; plugin-ui build+host-exports PASS (`UnifiedAvatar`); plugin-ui full tsc 29 PREEXISTING; Dock unit 23 PASS.
+- **CSS:** dist `delpi-ui-unified-processing 1.9s` + reduced-motion; delia pending-row oculta ícone ActivityViewer.
+- **Playwright standalone demo LIVE:** AC-01…04/06/08…13/15/16 PASS; AC-05 PARTIAL; AC-07 demo cancel TEST_NOT_RUN; AC-14 Portal/Dock auth TEST_NOT_RUN. Coverage 81.25%.
+- **FIXES_APPLIED=NONE.** `D02_ACCEPTED=NO`; `D02_ACCEPTANCE_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `EXECUTION_STATUS=IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`. E09/E10 e D01/D03/D04 não avançados.
+
+NEXT=D01_COMPANION_DOCK_UX_IF_ACCEPTED

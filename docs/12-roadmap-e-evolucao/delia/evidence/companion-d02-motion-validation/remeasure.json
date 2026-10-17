@@ -1,0 +1,65 @@
+{
+  "iconDisplay": "none",
+  "iconVisibility": "visible",
+  "statusCount": 1,
+  "statuses": [
+    {
+      "text": "A DÉLIA está processando sua solicitação…",
+      "visible": true
+    }
+  ],
+  "afterAnim": "delpi-ui-unified-processing",
+  "afterDur": "1.9s",
+  "halo": {
+    "x": 68,
+    "y": 173.390625,
+    "w": 40,
+    "h": 40
+  },
+  "avatarBox": {
+    "x": 72,
+    "y": 177.390625,
+    "width": 32,
+    "height": 32,
+    "top": 177.390625,
+    "right": 104,
+    "bottom": 209.390625,
+    "left": 72
+  },
+  "overflows": [
+    {
+      "cls": "delpi-ui-conversation-workspace__body",
+      "overflow": "hidden auto",
+      "overflowX": "hidden",
+      "overflowY": "auto",
+      "rect": {
+        "x": 60,
+        "y": 87,
+        "width": 292,
+        "height": 148.390625,
+        "top": 87,
+        "right": 352,
+        "bottom": 235.390625,
+        "left": 60
+      }
+    },
+    {
+      "cls": "delpi-ui-conversation-workspace delpi-ui-conversation-workspace--comfortable delia-interaction",
+      "overflow": "hidden",
+      "overflowX": "hidden",
+      "overflowY": "hidden",
+      "rect": {
+        "x": 60,
+        "y": 8,
+        "width": 292,
+        "height": 388.171875,
+        "top": 8,
+        "right": 352,
+        "bottom": 396.171875,
+        "left": 60
+      }
+    }
+  ],
+  "clippedBy": [],
+  "pendingPadding": "3px"
+}

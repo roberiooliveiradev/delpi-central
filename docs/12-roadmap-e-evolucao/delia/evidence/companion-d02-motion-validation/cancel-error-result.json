@@ -1,0 +1,36 @@
+{
+  "cases": {
+    "AC07_cancel": {
+      "status": "TEST_NOT_RUN",
+      "stopped": false,
+      "processing": 1,
+      "pending": 1,
+      "composer": false,
+      "stopButtons": [
+        "Conversas",
+        "Projetos",
+        "Agentes",
+        "Plugins",
+        "Recolher conversas",
+        "Nova conversa",
+        "Pesquisar conversas",
+        "Opções",
+        "Abrir contexto",
+        "Enviando…"
+      ]
+    },
+    "AC06_error": {
+      "status": "PASS",
+      "seenProcessing": true,
+      "processing": 0,
+      "errorUi": 1,
+      "composer": true,
+      "draftPreserved": true
+    },
+    "AC08_attention": {
+      "status": "PASS",
+      "attention": 1,
+      "processing": 0
+    }
+  }
+}

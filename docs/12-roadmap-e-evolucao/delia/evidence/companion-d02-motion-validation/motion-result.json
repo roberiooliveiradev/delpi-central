@@ -1,0 +1,918 @@
+{
+  "meta": {
+    "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+    "at": "2026-10-17T22:48:46.517Z"
+  },
+  "results": [
+    {
+      "label": "full-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236836",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236836",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "full-1440",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236841",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 534.765625,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 531.765625,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236841",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 534.765625,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 531.765625,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "docklike-320",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.23684",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 71,
+            "y": 175.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 68,
+            "y": 170.390625,
+            "w": 242,
+            "h": 46.25
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.23684",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 71,
+            "y": 175.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 68,
+            "y": 170.390625,
+            "w": 242,
+            "h": 46.25
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "docklike-360",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236832",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 72,
+            "y": 177.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 69,
+            "y": 172.390625,
+            "w": 280,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236832",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 72,
+            "y": 177.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 69,
+            "y": 172.390625,
+            "w": 280,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "docklike-420",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 420,
+        "height": 720
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236833",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 73.5,
+            "y": 180.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 70.5,
+            "y": 175.390625,
+            "w": 337,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236833",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 73.5,
+            "y": 180.390625,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 70.5,
+            "y": 175.390625,
+            "w": 337,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "dark-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {
+        "colorScheme": "dark"
+      },
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236836",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "delpi-ui-unified-processing",
+            "animationDuration": "1.9s",
+            "animationIterationCount": "infinite",
+            "animationPlayState": "running",
+            "opacity": "0.236836",
+            "transform": "matrix(1.0485, 0, 0, 1.0485, 0, 0)"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "reduced-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {
+        "reducedMotion": "reduce"
+      },
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "PASS",
+        "seen": true,
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "animationIterationCount": "1",
+            "animationPlayState": "running",
+            "opacity": "1",
+            "transform": "none"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        },
+        "animOk": true
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "statusRoles": 1,
+        "activityIconsHiddenOrAbsent": 1,
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "FAIL",
+        "motion": {
+          "found": true,
+          "motion": "processing",
+          "after": {
+            "content": "\"\"",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "animationIterationCount": "1",
+            "animationPlayState": "running",
+            "opacity": "1",
+            "transform": "none"
+          },
+          "visualAnim": {
+            "animationName": "none",
+            "animationDuration": "0s"
+          },
+          "box": {
+            "x": 443.5,
+            "y": 197.03125,
+            "w": 32,
+            "h": 32
+          },
+          "parentBox": {
+            "x": 440.5,
+            "y": 192.03125,
+            "w": 718,
+            "h": 42
+          },
+          "overflowParent": {
+            "tag": "DIV",
+            "class": "delpi-ui-conversation-workspace__body",
+            "overflow": "hidden auto",
+            "overflowX": "hidden"
+          },
+          "activityIcons": 1,
+          "statusRoles": 1,
+          "pendingRows": 1
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 1
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "error-demo",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=error",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {},
+      "steps": [],
+      "http": 200,
+      "cases": {},
+      "AC01_idle": {
+        "status": "PASS",
+        "idleCount": 1,
+        "processingIdle": 0
+      },
+      "AC03_processing": {
+        "status": "FAIL",
+        "seen": false,
+        "motion": {
+          "found": false
+        },
+        "animOk": false
+      },
+      "AC13_a11y": {
+        "status": "FAIL",
+        "note": "ActivityViewer icon display:none in pending-row; avatar aria-hidden wrapper"
+      },
+      "AC12_clip": {
+        "status": "INCONCLUSIVE",
+        "motion": {
+          "found": false
+        }
+      },
+      "AC04_cleared": {
+        "status": "PASS",
+        "afterPending": 0
+      },
+      "AC05_response_motion": {
+        "status": "PASS_PARTIAL",
+        "responding": 0,
+        "attention": 0,
+        "assistantIdle": 0
+      },
+      "AC16_composer": {
+        "status": "PASS",
+        "composerEnabled": true
+      }
+    },
+    {
+      "label": "portal-host",
+      "AC_portal": {
+        "status": "TEST_NOT_RUN",
+        "railOrApp": 0,
+        "url": "http://127.0.0.1/apps/delia/",
+        "textPreview": "",
+        "note": "Authenticated Portal/Dock not available without QA session"
+      }
+    }
+  ]
+}
