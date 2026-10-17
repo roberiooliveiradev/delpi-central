@@ -12,7 +12,7 @@ import {
   ConversationThreeRegionLayout,
 } from "@delpi/plugin-ui/index";
 
-/** Unified DÉLIA page; project category is UI preview, not a project contract. */
+/** Unified DÉLIA page: persistent category rail and governed, render-only panels. */
 export type DeliaConversationPageProps = {
   conversation: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
 };
@@ -23,17 +23,17 @@ export function DeliaConversationPage({ conversation }: DeliaConversationPagePro
   return (
     <ConversationThreeRegionLayout
       leftTitle={title}
-      left={({ collapsed, onExpand }) => collapsed
-        ? <NavigationRail activeCategory={category}
-            availableCategories={["conversations", "projects", "agents", "plugins"]}
-            onSelectCategory={(nextCategory) => {
-              if (nextCategory !== "conversations" && nextCategory !== "projects" && nextCategory !== "agents" && nextCategory !== "plugins") return;
-              setCategory(nextCategory);
-              onExpand();
-            }} />
-        : <NavigationCategoryPanel category={category}>
-            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : category === "agents" ? <AgentNavigation status="catalog_unavailable" />  : category === "plugins" ? <PluginNavigation status="contract_unavailable" /> : <ConversationNavigation />}
-          </NavigationCategoryPanel>}
+      rail={<NavigationRail
+        activeCategory={category}
+        availableCategories={["conversations", "projects", "agents", "plugins"]}
+        onSelectCategory={(nextCategory) => setCategory(nextCategory)}
+      />}
+      left={<NavigationCategoryPanel category={category}>
+        {category === "projects" ? <ProjectNavigation status="contract_unavailable" />
+          : category === "agents" ? <AgentNavigation status="catalog_unavailable" />
+          : category === "plugins" ? <PluginNavigation status="contract_unavailable" />
+          : <ConversationNavigation />}
+      </NavigationCategoryPanel>}
       right={<ConversationContextPanel />}
       center={conversation}
     />
