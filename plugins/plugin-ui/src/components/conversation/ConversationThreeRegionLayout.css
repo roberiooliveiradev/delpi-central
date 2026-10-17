@@ -317,3 +317,46 @@
     flex-basis: auto;
   }
 }
+
+/* E04 — compact drawer fits within the measured host container, behind the rail.
+   Scope is left navigation only; context placement is owned by E05. */
+.delpi-ui-conversation-three-region--compact.delpi-ui-conversation-three-region--with-rail
+  .delpi-ui-conversation-three-region__left[data-drawer="true"] {
+  position: absolute;
+  z-index: 21;
+  top: 0;
+  bottom: 0;
+  left: var(--delpi-ui-three-rail);
+  right: auto;
+  box-sizing: border-box;
+  width: min(288px, calc(100% - var(--delpi-ui-three-rail) - 8px));
+  max-width: calc(100% - var(--delpi-ui-three-rail) - 8px);
+  min-width: 0;
+  flex: none;
+  box-shadow: 0 16px 38px rgba(0,0,0,.24);
+}
+.delpi-ui-conversation-three-region--compact.delpi-ui-conversation-three-region--with-rail
+  .delpi-ui-conversation-three-region__category-rail {
+  z-index: 22;
+  flex-shrink: 0;
+}
+.delpi-ui-conversation-three-region--compact .delpi-ui-conversation-three-region__backdrop {
+  display: block;
+  position: absolute;
+  z-index: 19;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: rgba(0,0,0,.36);
+  cursor: pointer;
+}
+.delpi-ui-conversation-three-region__backdrop:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent,var(--primary,#089bdb));
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-three-region--compact .delpi-ui-conversation-three-region__left {
+    transition: none !important;
+  }
+}
