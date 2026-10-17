@@ -52,11 +52,11 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | Etapa | Entrega bounded | Dependência | Estado | Evidência mínima para marcar |
 |---|---|---|---|---|
 | E01 | Reanchor, baseline e critérios de aceite | Nenhuma | **ACCEPTED_WITH_RESIDUAL** | Authorities+ledger+workspace+SSH+code baseline+unit/build; browser autenticado → residual E09 |
-| E02 | Composição Rail + Panel desktop | E01 | **PENDING** | rail e painel simultâneos, centro sem remount, testes + screenshot |
-| E03 | Troca direta das quatro categorias | E02 | **PENDING** | troca no rail sem recolher, estados honestos, testes de navegação |
-| E04 | Sidebar responsiva + drawer mobile | E03 | **PENDING** | largura baseada no host; overlay, backdrop, Escape e foco sem corte |
-| E05 | ContextPopover responsivo | E04 | **PENDING** | limites, scroll, posicionamento, sem cobrir composer indevidamente |
-| E06 | Convivência de painéis + acessibilidade | E04+E05 | **PENDING** | exclusividade mobile, teclado/foco/ARIA, não cancelar fluxo governado |
+| E02 | Composição Rail + Panel desktop | E01 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | rail e painel simultâneos, centro sem remount, testes + screenshot |
+| E03 | Troca direta das quatro categorias | E02 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | troca no rail sem recolher, estados honestos, testes de navegação |
+| E04 | Sidebar responsiva + drawer mobile | E03 | **IMPLEMENTED_R1 / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | largura baseada no host; overlay, backdrop, Escape e foco sem corte |
+| E05 | ContextPopover responsivo | E04 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | limites, scroll, posicionamento, sem cobrir composer indevidamente |
+| E06 | Convivência de painéis + acessibilidade | E04+E05 | **IMPLEMENTED / VISUAL_PARTIAL / INTERACTION_QA_PENDING** | exclusividade mobile, teclado/foco/ARIA, não cancelar fluxo governado |
 | E07 | Polimento visual e motion | E02–E06 | **PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
 | E08 | Regressão integrada e gates de build | E02–E07 | **PENDING** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
@@ -680,3 +680,41 @@ ROADMAP_PROGRESS=1/10 ACCEPTED
 CHECKLIST_CHANGED=NO
 NEXT=E06_SAME_SHA_TEST_BUILD_AND_LIVE_KEYBOARD_QA
 ```
+
+## 19. Consolidação incremental das evidências E02–E06 (2026-10-17)
+
+**Objetivo:** atualizar o quadro mestre com a implementação publicada e as capturas visuais fornecidas pelo Product Master, sem confundir implementação, observação visual e aceite técnico. Esta entrega é exclusivamente documental; nenhum teste, build ou deploy foi executado nesta interação.
+
+| Etapa | Evidência visual fornecida pelo usuário | Classificação | Pendência |
+|---|---|---|---|
+| E02 | Desktop: rail e painel coexistem; painel recolhido preserva rail e workspace visível | VISUAL_OBSERVED_PASS | testes atualizados, SHA servido e aceite |
+| E03 | Desktop: Agentes selecionado com painel aberto; Projetos selecionado com painel fechado | VISUAL_OBSERVED_PASS | fluxo completo, teclado, estado/draft e aceite |
+| E04 | Mobile 375×667: rail recolhido, drawer Conversas/Projetos, X e backdrop escurecido | VISUAL_OBSERVED_PASS | Escape, foco, clique no backdrop, 320/420px e Dock |
+| E05 | Mobile 375×667: Contexto começa após o rail, header e ações legíveis, compositor visível | VISUAL_OBSERVED_PASS | rolagem, tamanhos adicionais, QA instrumental |
+| E06 | Mobile 375×667: conversa sem overlay e drawer Projetos aberto visualmente correto | VISUAL_PARTIAL | exclusividade Contexto/drawer, Tab/Shift+Tab, Escape, foco, inert e resize |
+
+**Proveniência:** capturas do Portal minhadelpi.com.br/apps/delia em Chrome/DevTools fornecidas pelo Product Master nesta conversa, incluindo a largura simulada de 375px. Não existe vinculação verificada destas imagens ao SHA exato dos assets servidos. As capturas não comprovam comportamento não observado, testes automatizados ou QA de acessibilidade.
+
+### Estado de implementação separado do aceite
+
+- **E01:** ACCEPT_WITH_RESIDUAL, como anteriormente registrado.
+- **E02:** IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING.
+- **E03:** IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING.
+- **E04:** IMPLEMENTED_R1 / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING.
+- **E05:** IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING.
+- **E06:** IMPLEMENTED / VISUAL_PARTIAL / INTERACTION_QA_PENDING.
+- **E07–E10:** PENDING.
+
+**Aceite formal permanece 1/10.** Os checkboxes E02–E06 continuam desmarcados conforme o gate original do §4; evidência visual isolada e commit publicado não equivalem a testes/QA/review no SHA/config relevante. Este registro substitui somente o estado simplificado PENDING dessas linhas por uma representação fiel do progresso de implementação.
+
+### Próximo passo verificável
+
+Executar validação técnica acumulada E02–E06 no HEAD/ambiente correto: reanchor + Git status + Vitest plugin-ui/DÉLIA + TypeScript/dívida preexistente + builds/federation + QA de desktop, 320/375/420px, Dock, drawer e Contexto alternados, Escape, Tab/Shift+Tab, backdrop, foco, resize e preservação do composer. Registrar comandos, resultados, SHA/config e parecer por etapa. Somente após aceite independente atualizar as caixas e o contador. E07 segue como implementação temática separada, sem promoção automática de etapa ou fase canônica.
+
+TASK_ID = DELIA-UX-NAV-REWORK-E02-E06-VISUAL-EVIDENCE-CONSOLIDATION-01
+BASE_HEAD = af9cbf051ece988b71e4f775805870f5385c274b
+CODE_CHANGED = NO
+TESTS_THIS_TASK = TEST_NOT_RUN
+BROWSER_QA_THIS_TASK = TEST_NOT_RUN
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+PHASE_PROGRESSION = NONE
