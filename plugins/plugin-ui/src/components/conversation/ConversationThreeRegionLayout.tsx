@@ -13,7 +13,7 @@ export type ConversationThreeRegionLayoutProps = {
   /** Collapsed rail remains mounted and retains navigation icons. */
   left?: ReactNode | ((state: { collapsed: boolean; onExpand: () => void }) => ReactNode);
   /** Optional permanently mounted category rail for hosts with a separate panel. */
-  rail?: ReactNode;
+  rail?: ReactNode | ((state: { onExpand: () => void }) => ReactNode);
   /** Optional read-only context content presented in a floating surface. */
   right?: ReactNode;
   leftTitle?: string;
@@ -106,7 +106,7 @@ export function ConversationThreeRegionLayout({
           {collapsed ? <div className="delpi-ui-conversation-three-region__rail-heading">
             <NavigationActions action="toggle" expanded={false} onAction={() => setLeftExpanded(true)} />
           </div> : null}
-          {rail}
+          {typeof rail === "function" ? rail({ onExpand: () => setLeftExpanded(true) }) : rail}
         </div>
       ) : null}
       {left && (!rail || !collapsed) ? (
