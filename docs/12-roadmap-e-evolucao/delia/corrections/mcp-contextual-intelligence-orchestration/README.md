@@ -30,7 +30,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL.
 **I02 implementation candidate:** [05 — grounded knowledge synthesis](./05-i02-grounded-knowledge-synthesis-implementation.md). Deterministic guidance projection + budget-safe fallback; `I02_ACCEPTED=NO` até review.
 
-**I02 independent review:** [06 — REWORK decision](./06-i02-independent-review-rework-decision.md); the nested fix is not live-proven and K1 pre-synthesis latency remains failed. Continue I02-R1 before I03.
+**I02 independent review:** [06 — REWORK decision](./06-i02-independent-review-rework-decision.md).
+**I02-R1 diagnosis:** [07 — post-fix validation and latency diagnosis](./07-i02r1-post-fix-validation-and-latency-diagnosis.md) — nested live INCONCLUSIVE (index_probe timeout before READ); pre-synthesis latency PROVEN (`index_probe` model under 30s). Performance fix not applied.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -65,8 +66,11 @@ TRACK=I02_REWORK
 I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
 I02_ACCEPTED=NO
-I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
-NEXT=I02_R1_POST_FIX_VALIDATION_AND_PRE_SYNTHESIS_LATENCY_CAUSE
+I02_R1=DIAGNOSIS_RECORDED
+NESTED_FIX_LIVE=INCONCLUSIVE
+LATENCY_ROOT_CAUSE=PROVEN
+PERFORMANCE_FIX_IMPLEMENTED=NO
+NEXT=I02_R1_INDEPENDENT_DIAGNOSTIC_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

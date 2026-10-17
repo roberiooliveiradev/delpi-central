@@ -14736,3 +14736,16 @@ NEXT=INDEPENDENT_I02_ARCHITECTURE_ACCEPTANCE_REVIEW
 - **DECISION:** `I02_INDEPENDENT_REVIEW=REWORK`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=I02_R1_POST_FIX_VALIDATION_AND_PRE_SYNTHESIS_LATENCY_CAUSE
+
+
+## §6.245 — DELIA-C3-MCP-I02-R1-POST-FIX-VALIDATION-AND-LATENCY-DIAGNOSIS-01 (DIAGNOSIS_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** [07](../corrections/mcp-contextual-intelligence-orchestration/07-i02r1-post-fix-validation-and-latency-diagnosis.md). **BASE/DEPLOYED:** `abc6e28e322b47bb4bb06e99c5c7463c52a23862` (contains nested fix `cc7d2c8e3b`). **MODEL:** `moonshotai/kimi-k3`. **FINGERPRINT:** `5062d3b7f10fecaa`.
+
+- **GATE A:** Nested fix present in image. Live K3 VISTA selected `get_product_guide` then `index_probe` model timeout 19289ms → turn 30024ms `delpi_source_unverified`; owner READ/synthesis/nested projection NOT_REACHED. `NESTED_FIX_LIVE_VALIDATED=INCONCLUSIVE`.
+- **GATE B:** Critical path = sequential model stages before owner. VISTA self-index probe is the asymmetric budget consumer; TEO `with_discovery` catalog is cheap (79ms). Re-run K1 on same SHA succeeded 17816ms with `deterministic_guidance`. Historical I02 K1 fail remains valid as intermittent exhaustion class.
+- **CAUSE:** `LATENCY_ROOT_CAUSE=PROVEN` — model `index_probe` under global 30s, not MCP owner latency. Characterization test documents current fail-closed (probe timeout → zero owner calls).
+- **RECOMMENDATION (not implemented):** headroom gate + degrade probe timeout to direct READ when schema-viable; methods around `_propose_index_probe` call site. `PERFORMANCE_FIX_IMPLEMENTED=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
+- **STATE:** `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R1_INDEPENDENT_DIAGNOSTIC_REVIEW
