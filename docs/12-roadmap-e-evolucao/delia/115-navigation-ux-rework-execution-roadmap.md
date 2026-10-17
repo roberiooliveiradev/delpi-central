@@ -206,3 +206,81 @@ NEXT = E01 (REQUIRES_NEW_USER_AUTHORIZATION)
 - **Chat = working context; GitHub = persistent truth; authorities = architecture/product truth; ledger = execution state.** Quando divergir, autoridades+ledger+HEAD prevalecem.
 - O contador neste roadmap é **do rework visual**, não da fase C3/C4 ou da DÉLIA inteira. Atualizar ledger apenas mediante fatos e regras canônicas.
 - **Próxima ação autorizável após esta publicação:** E01 isolada; não agrupar E01+E02 automaticamente.
+
+## 9. Registro E01 — reancoragem dirigida, baseline e critérios (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-01`  
+**BASE_HEAD observado:** `fe7df91879bca2957127833923f0ca80f2fb44ef` na GitHub `main`; **repositório/branch:** `roberiooliveiradev/delpi-central/main`.  
+**Execution mode:** análise documental e leitura read-only de componentes pelo conector GitHub; **nenhum código/CSS, deploy ou backend alterado nesta task**.
+
+### 9.1 Evidência confirmada e restrições
+
+1. **PROVEN no GitHub HEAD:** `DeliaConversationPage.tsx` ainda compõe o slot esquerdo com `collapsed ? <NavigationRail ...> : <NavigationCategoryPanel ...>`. Logo os dois não estão presentes simultaneamente ao lado do centro no desktop. O `ConversationWorkspace` permanece como prop `center={conversation}` do mesmo shell, mas permanência da instância e draft **não foram testados ao vivo**.
+2. **PROVEN no GitHub HEAD:** `ConversationThreeRegionLayout.tsx` controla `leftExpanded`, `compact`, `rightOpen` de modo local; calcula `compact` com largura de `rootRef.current?.parentElement`, transição em `920px`; possui um único `NavigationActions action="toggle"` no header esquerdo e `leftToggle:null` no slot central.
+3. **PROVEN no CSS:** `--delpi-ui-three-left:clamp(248px,19%,288px)`, rail de `64px` e `52px` no `@container delia-page (max-width:920px)`; painel esquerdo usa posicionamento `absolute`, largura `min(344px,88%)` em compact. Existe regra de backdrop em CSS, **mas o componente TSX consultado não o renderiza**: backdrop clicável/foco/semântica **não implementados nesse shell**.
+4. **PROVEN no CSS:** `ContextPopover` `position:absolute; right:16px; top:66px; width:min(360px,calc(100% - 32px))`, compact `top:60px; right:8px; width:min(360px,calc(100% - 16px));max-height:70%`. É superfície flutuante, não terceira coluna; faltam provas de dimensões/scroll/foco em mobile.
+5. **PROVEN no TSX:** Contexto tem Escape e pointerdown outside, botão de fechar e return-focus ao trigger; não há coordenação explícita com `leftExpanded` (podem coexistir). Esse fato **não comprova** que backdrop/drawer sejam acessíveis.
+6. **EVIDÊNCIA EXTERNA fornecida pelo usuário:** capturas desktop/mobile no Portal com rail visível apenas no mobile recolhido, drawer amplo e popover grande; log de `git pull e7159c867→faecfd8a3`, `npm run build` do plugin-ui, `npx vite build` da DÉLIA e containers recriados. **Build/deploy PROVEN somente para essa execução relatada**, não para a task E01 nem para cada interação/viewport.
+7. `git status` local, deployed asset SHA, estado real do runtime em navegador autenticado, Dock, zoom 200% e evidências por viewport: **TO_INVENTORY / TEST_NOT_RUN**. Os arquivos de projeto em outro container/host não foram inspecionados por esta leitura GitHub. A pesquisa pelo nome presumido `16-delia-roadmap.md` retornou 404; consultas search de `16`, `50` e ledger retornaram 0 resultados; **isso não prova inexistência**. Não foi possível concluir reancoragem canônica integral .cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura → product spec → ledger.
+
+### 9.2 Decisão de reuse e boundaries para E02 (candidata, ainda não autorizada pelo gate)
+
+```text
+RESPONSIBILITY = COMPOSE_EXISTING_LEFT_RAIL_AND_CATEGORY_PANEL
+UI_OWNER = plugin-ui
+STATE_CONSUMER = plugins/delia
+PORTAL_HOST = EXISTING
+CORE_APP_ROUTE_RBAC_OWNER = EXISTING
+DOMAIN_FINAL_AUTHORITY = UNCHANGED
+EXISTING_EQUIVALENT_VISUAL = YES (source inspected)
+REUSE_DECISION_VISUAL = EXTEND
+NEW_SHELL_OR_REGISTRY = NOT_ALLOWED
+PROJECT_AGENT_PLUGIN_CATALOGS = TO_INVENTORY (not in scope of visual E02)
+```
+
+Os componentes inspecionados confirmam o reuso em `plugin-ui`; o slot left e o CSS serão estendidos somente após E01 aceita com reanchor canônico. Nenhuma nova autorização é inferida de label visual, callback, JWT ou MCP.
+
+### 9.3 Matriz de aceite congelada como hipóteses testáveis
+
+| ID | Cenário verificável | Critério de saída |
+|---|---|---|
+| AC-D01 | Desktop host/container 1440/1280px | rail e painel adjacentes, um único controle de recolher, centro útil, card Contexto não vira coluna |
+| AC-D02 | Resize desktop ~1024/768px | fallback inline→overlay quando `containerWidth - railWidth - panelWidth < minCenterWidth`; sem clipping ou composer estreito |
+| AC-C01 | Trocar entre Conversas/Projetos/Agentes/Plugins | mudar conteúdo de painel mantendo rail disponível, sem remount de centro/draft, nenhum catálogo fictício ou ACT |
+| AC-M01 | Mobile 420/375/320px + Dock | launcher/rail de acordo com espaço útil, drawer limitado pelo host, backdrop clicável, Escape e return-focus; nenhum elemento invisível acessível por Tab |
+| AC-M02 | Contexto 420/375/320px | popover ou sheet visível e rolável, compositor acessível quando fecha, altura/largura sem ultrapassar container |
+| AC-O01 | Drawer e Contexto em mobile | no máximo uma superfície sobreposta; abrir uma fecha a outra sem cancelar confirmação governada |
+| AC-A01 | Teclado, a11y, zoom 200%, light/dark | labels/ARIA, foco previsível, contraste, reduced motion, sem rolagem horizontal indesejada |
+| AC-R01 | Conversa ativa com draft/streaming/confirm | seleção, resize e overlays preservam estado central; nenhum reset de turns, nova sessão, send ou ACT |
+| AC-B01 | Testes e integração no SHA/config final | Vitest, TypeScript, plugin-ui federation/export gate, DÉLIA build, Portal/Dock QA executados; resultados e screenshots documentados |
+
+**Larguras em pixels são alvos de QA, não breakpoints congelados.** Confirmar largura do **container do Portal**, não apenas emulação de viewport. Prioridade: centro/composer → rail viável → painel inline ou overlay → launcher compacto. E02 não deve alterar este contrato sem registrar drift.
+
+### 9.4 Checklist E01 — execução dirigida e bloqueios
+
+- [x] Consultar HEAD GitHub main e documento 115.
+- [x] Ler consumer DÉLIA, shell TSX/CSS, rail e panel existentes.
+- [x] Confrontar os sintomas visuais recebidos e o log de deploy com a composição efetiva.
+- [x] Definir critérios AC-D01…AC-B01 verificáveis, reuse e owners frontend.
+- [ ] Reancorar **integralmente** HEAD/git status + Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura/product → temática → ledger; identificar CP/RQ/NEXT e conflitos.
+- [ ] Executar e registrar baseline instrumental em Portal/Dock autenticados: screenshots por viewport + resize, teclado, light/dark/zoom; deployed SHA/asset config.
+- [ ] Revisão da evidência E01 e aceite independente conforme regras do roadmap.
+
+**Resultado E01 nesta execução: `INCONCLUSIVE` (baseline documental PARCIAL); checklist mestre E01 permanece `[ ]` e contador `0/10 ACCEPTED`.** Não escrever `PASS` ou avançar para E02 automaticamente. As lacunas acima são concretas e delimitadas, não autorização para inventário amplo. Uma continuação E01 em workspace Git + Portal browser pode fechar o gate; se revelar conflito, retornar à coordenação com `EXECUTION_DRIFT`.
+
+```text
+STAGE = E01
+TASK_ID = DELIA-UX-NAV-REWORK-E01-BASELINE-01
+BASE_HEAD = fe7df91879bca2957127833923f0ca80f2fb44ef
+FILES_CHANGED = docs/12-roadmap-e-evolucao/delia/115-navigation-ux-rework-execution-roadmap.md
+CODE_CHANGED = NO
+REUSE_DECISION = EXTEND_VISUAL (pending full canonical reanchor)
+CANONICAL_FULL_REANCHOR = INCONCLUSIVE
+GIT_STATUS_WORKSPACE = NOT_VERIFIED
+BROWSER_QA = TEST_NOT_RUN
+DEPLOYED_SHA = TO_INVENTORY
+STAGE_VERDICT = INCONCLUSIVE
+CHECKLIST_CHANGED = NO
+STAGES_ACCEPTED = 0
+NEXT = E01_CANONICAL_AND_LIVE_BASELINE_RESIDUALS (E02 BLOCKED)
+```
