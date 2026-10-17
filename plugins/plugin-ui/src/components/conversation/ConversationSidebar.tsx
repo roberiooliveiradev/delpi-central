@@ -28,9 +28,13 @@ export function ConversationSidebar({
   history = [],
   pinnedHistory = [],
   olderHistory = [],
-  historyStatus = "unavailable",
+  historyStatus,
   onSelectConversation,
 }: ConversationSidebarProps) {
+  // Backward compatible with legitimate host-provided history arrays.
+  const effectiveHistoryStatus = historyStatus ??
+    (onSelectConversation && (history.length > 0 || pinnedHistory.length > 0 || olderHistory.length > 0)
+      ? "ready" : "unavailable");
   return (
     <div className={`delpi-ui-conversation-sidebar${collapsed ? " delpi-ui-conversation-sidebar--collapsed" : ""}`}>
       <button type="button" className="delpi-ui-conversation-sidebar__action delpi-ui-conversation-sidebar__action--primary"
@@ -41,7 +45,7 @@ export function ConversationSidebar({
         <button className="delpi-ui-conversation-sidebar__action" type="button" aria-label="Pesquisar conversas" title="Pesquisar conversas" disabled={!onSearch} onClick={onSearch}><Search size={18} aria-hidden="true" /></button>
       ) : <ConversationSidebarSearch onOpenSearch={onSearch} />}
       {!collapsed ? <div className="delpi-ui-conversation-sidebar__section" aria-label="Histórico de conversas">
-        {historyStatus === "ready" && onSelectConversation ? (
+        {effectiveHistoryStatus === "ready" && onSelectConversation ? (
           <>
             {([
               ["Fixadas", pinnedHistory],
@@ -66,16 +70,16 @@ export function ConversationSidebar({
             ) : null)}
           </>
         ) : null}
-        {historyStatus === "unavailable" ? (
+        {effectiveHistoryStatus === "unavailable" ? (
           <>
             <h2 className="delpi-ui-conversation-sidebar__section-heading">Recentes</h2>
             <p className="delpi-ui-conversation-sidebar__empty">O histórico estará disponível quando as conversas forem persistidas.</p>
           </>
-        ) : historyStatus === "loading" ? (
+        ) : effectiveHistoryStatus === "loading" ? (
           <p className="delpi-ui-conversation-sidebar__empty" role="status">Carregando conversas…</p>
-        ) : historyStatus === "authorized_empty" ? (
+        ) : effectiveHistoryStatus === "authorized_empty" ? (
           <p className="delpi-ui-conversation-sidebar__empty">Nenhuma conversa encontrada.</p>
-        ) : historyStatus === "error" ? (
+        ) : effectiveHistoryStatus === "error" ? (
           <p className="delpi-ui-conversation-sidebar__empty" role="alert">Não foi possível carregar as conversas.</p>
         ) : null}
       </div> : <div className="delpi-ui-conversation-sidebar__rail-spacer" />}
