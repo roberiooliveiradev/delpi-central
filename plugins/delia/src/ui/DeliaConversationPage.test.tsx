@@ -24,13 +24,31 @@ describe("DeliaConversationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
-    for (const name of ["Projetos", "Agentes", "Plugins"]) {
+    for (const name of ["Agentes", "Plugins"]) {
       expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
     }
     expect(container.contains(center)).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
     expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
     expect(container.contains(center)).toBe(true);
+  });
+
+  it("shows unavailable Projects preview without remounting the active conversation", () => {
+    const { container } = render(<DeliaConversationPage conversation={<p>Turno preservado</p>} />);
+    const stableCenter = screen.getByText("Turno preservado");
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    const projectCategory = screen.getByRole("button", { name: "Projetos" });
+    expect((projectCategory as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(projectCategory);
+    expect(screen.getByRole("navigation", { name: "Projetos" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Projetos" })).toBeTruthy();
+    expect(screen.getByText(/Projetos estarão disponíveis após a integração autorizada/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Novo projeto" })).toBeNull();
+    expect(container.contains(stableCenter)).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
+    expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
+    expect(container.contains(stableCenter)).toBe(true);
   });
 
 });
