@@ -133,4 +133,42 @@ describe("ConversationThreeRegionLayout R2", () => {
     }
   });
 
+  it("E05 keeps one floating context beside the rail without replacing the compact workspace", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Categorias</button>}
+        left={<p>Navegação</p>}
+        right={<p>Detalhes do contexto</p>}
+        center={({ rightToggle }) => <div>{rightToggle}<input aria-label="Rascunho E05" defaultValue="Preservado E05" /></div>}
+      />);
+      const draft = screen.getByRole("textbox", { name: "Rascunho E05" });
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact.delpi-ui-conversation-three-region--with-rail")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
+      expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
+      expect(screen.getByText("Detalhes do contexto")).toBeTruthy();
+      expect(container.querySelectorAll(".delpi-ui-conversation-three-region__context-popover")).toHaveLength(1);
+      expect(container.querySelector(".delpi-ui-conversation-three-region__right")).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__category-rail")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Fechar painel de contexto" }));
+      expect(screen.queryByRole("dialog", { name: "Contexto da conversa" })).toBeNull();
+      expect(container.contains(draft)).toBe(true);
+      expect((draft as HTMLInputElement).value).toBe("Preservado E05");
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
 });
