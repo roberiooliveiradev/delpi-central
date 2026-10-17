@@ -14774,3 +14774,14 @@ NEXT=I02_R2_CONTRACT_AND_RED_GATE
 - **STATE:** `I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL_CANDIDATE`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=INDEPENDENT_I02_R2_ARCHITECTURE_AND_DEPLOY_REVIEW
+
+
+## §6.248 — DELIA-C3-I02-R2-INDEPENDENT-ARCHITECTURE-DEPLOY-REVIEW (ACCEPT_WITH_RESIDUAL / I02 REWORK)
+
+**DATE:** 2026-10-17. **DOC:** [10 — I02-R2 independent review](../corrections/mcp-contextual-intelligence-orchestration/10-i02r2-independent-architecture-and-deploy-review.md). **REVIEWED_HEAD:** `552ff2e5cc7e9b26633a723ac02ce7b05d5d584b`; **CODE_SHA:** `4a8e4d1881957833ecce36d10344d4900f7087ed`. GitHub diff/doc review, executor tests and deployed live outcome not independently rerun.
+
+- **R2 scoped acceptance:** `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND`. PT owner omit→index contract detection and shared deadline pre-probe headroom; schema and fail-closed validations retained; no new planner/memory/public contract. Executor K3 owner INDEX → bound topic `display_formats` → guidance READ with nested content, GROUNDED, 28532ms, `PASS_WITH_LIMITATION`, semantic relevance PARTIAL. Production deploy SHA and health reported; 200 alone not business success.
+- **Remaining FAIL:** K1 TÉO timeout 30014ms, K2 no K1 evidence/timeout 30013ms. `I02_ACCEPTED=NO`. **Generalization risks:** runtime stage timeout 30s causes optional probe floor > global 30s (optional probes effectively disabled); broad PT `sem ` + `índice/lista de` may misclassify untrusted owner text as omit→index declaration. Test negative provider descriptions/configs and remain fail-closed.
+- **STATE:** `I02_R2_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `I02_OVERALL=REWORK`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=I02_R3_TEO_PRE_OWNER_LATENCY_ARCHITECTURE_DIAGNOSIS
