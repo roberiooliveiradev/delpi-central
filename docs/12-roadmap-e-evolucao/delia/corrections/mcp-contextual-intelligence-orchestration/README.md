@@ -27,6 +27,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I01 direction proposed:** [02 — architecture alignment and continuity proposal](./02-i01-architecture-alignment-and-continuity-proposal.md).
 **I01 implementation candidate (not independently accepted):** [03 — contextual knowledge continuity implementation](./03-i01-contextual-knowledge-continuity-implementation.md). `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND`; live K2 path sem reconsulta desnecessária; `I01_ACCEPTED=NO` até review.
 
+**I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL; live K2 reuse corrected, answer relevance partial due truncated K1. I02 remains gated.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -56,11 +58,11 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.
 
 ```text
-TRACK=I01_IMPLEMENTED_PENDING_ACCEPTANCE
+TRACK=I01_ACCEPTED_WITH_RESIDUAL
 I00=ACCEPTED_WITH_RESIDUAL
-I01_ACCEPTED=NO
-I01_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
-NEXT=INDEPENDENT_I01_ARCHITECTURE_ACCEPTANCE_REVIEW
+I01_ACCEPTED=YES_WITH_RESIDUAL
+I02_STATUS=PLANNED_NOT_AUTHORIZED
+NEXT=I02_SYNTHESIS_AND_BUDGET_CONTRACT_GATE
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
