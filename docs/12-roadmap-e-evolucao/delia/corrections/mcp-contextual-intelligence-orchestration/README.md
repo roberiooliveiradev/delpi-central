@@ -1,10 +1,10 @@
 # DÉLIA — Roadmap bounded · Inteligência contextual MCP e organização do orquestrador
 
-**DATA:** 2026-10-17  
-**TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`  
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01–Q03_PLANNED / PHASE_UNCHANGED`  
-**Baseline HEAD:** `42c45802f0594cb02796913c52905c14320b5879` (revalidar em cada execução).  
-**Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md), ledger §6.235; [43](../conversational-intelligence-c3/43-davi-vista-independent-acceptance-and-functional-state.md), ledger §6.233; Stage06 [41](../conversational-intelligence-c3/41-stage-06-independent-architecture-acceptance-closure.md).
+**DATA:** 2026-10-17
+**TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_IMPLEMENTED_PENDING_INDEPENDENT_ACCEPTANCE / I02–Q03_PLANNED`
+**Baseline HEAD:** `118a1814e57a57cec2fb2c57848476268efc4af8` (revalidar em cada execução).
+**Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md), ledger §6.235; I01 impl [03](./03-i01-contextual-knowledge-continuity-implementation.md), ledger §6.239; [43](../conversational-intelligence-c3/43-davi-vista-independent-acceptance-and-functional-state.md), ledger §6.233.
 
 ## 1. Decisão de produto e escopo
 
@@ -24,7 +24,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I00 formalmente aceita:** [01 — independent context baseline acceptance](./01-i00-independent-context-baseline-acceptance.md). A revisão prova o fluxo de contexto transitório e limitações do contrato examinado; não prova causa raiz do K2 nem autoriza I01 automaticamente.
 
-**I01 direction proposed (not implementation authorization):** [02 — architecture alignment and continuity proposal](./02-i01-architecture-alignment-and-continuity-proposal.md). Apply 49's Abstraction Gate to existing goal/prior-continuation/synthesis; contract/CP-RQ and RED proof first, then minimal correction. No global memory or new context contract approved.
+**I01 direction proposed:** [02 — architecture alignment and continuity proposal](./02-i01-architecture-alignment-and-continuity-proposal.md).
+**I01 implementation candidate (not independently accepted):** [03 — contextual knowledge continuity implementation](./03-i01-contextual-knowledge-continuity-implementation.md). `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND`; live K2 path sem reconsulta desnecessária; `I01_ACCEPTED=NO` até review.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -55,10 +56,11 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.
 
 ```text
-TRACK=PLANNED
+TRACK=I01_IMPLEMENTED_PENDING_ACCEPTANCE
 I00=ACCEPTED_WITH_RESIDUAL
-NEXT=I01_CONTRACT_AND_BOUNDED_IMPLEMENTATION_GATE
-IMPLEMENTATION_AUTHORIZED=NO
+I01_ACCEPTED=NO
+I01_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
+NEXT=INDEPENDENT_I01_ARCHITECTURE_ACCEPTANCE_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

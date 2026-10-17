@@ -14670,3 +14670,17 @@ NEXT=I01_CONTRACT_CP_RQ_AND_RED_TEST_GATE
 - **GATES:** `VITEST=TEST_NOT_RUN`; `TS=TEST_NOT_RUN`; `BUILD=TEST_NOT_RUN`; `FEDERATION=TEST_NOT_RUN`; `BROWSER_DOCK=TEST_NOT_RUN`. `D02_VERDICT=IMPLEMENTED_CANDIDATE`; `ACCEPTANCE=PENDING`; `PHASE_PROGRESSION=NONE`.
 - **NEXT:** same-SHA tests/build and real browser Dock/full-page pending/cancel/error/reduced-motion QA, followed by D01 layout and D03 behavior bounded work. Navigation roadmap 115 E09/E10 not auto-closed.
 
+
+
+## §6.240 — DELIA-C3-MCP-CONTEXTUAL-KNOWLEDGE-CONTINUITY-I01-IMPLEMENTATION-01 (IMPLEMENTED_CANDIDATE)
+
+**DATA:** 2026-10-17. **DOC:** [I01 implementation](../corrections/mcp-contextual-intelligence-orchestration/03-i01-contextual-knowledge-continuity-implementation.md). **BASE_HEAD:** `1ced87f1db`. **CODE_COMMIT:** `118a1814e5`. **LIVE_SHA:** `118a1814e5`. **MODEL:** `moonshotai/kimi-k3`.
+
+- **CP/RQ:** CP-094, CP-055, CP-263/264, CP-270, CP-130/134 (matrix 25). `ConversationContextTurn` unchanged.
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — GOAL instruction, prior-excerpt list split, continuity probe when model leaves `prior_evidence_sufficient=false`, existing `_prior_continuation_attempt`. No planner/memory/registry/persistence/new public contract.
+- **ROOT_CAUSE:** K2 class — false insufficiency → owner re-invoke + replay/budget. Deterministic tests + live logs (`prior_sufficient=yes` / `decision=transformed`).
+- **TESTS:** I01 suite PASS; Stage05/provider-neutral PASS; full `delia-api` PASS. Security: history≠AuthZ/ACT; live fact cues; rename; non-MCP; budget 30s.
+- **LIVE:** K1 `get_methodology_guide` GROUNDED 20725ms `PASS_WITH_LIMITATION` (truncated). K2 NON_GROUNDED `prior_turn_evidence_only`, owner reinvoke=NO, literal replay=NO, 13849ms; answer relevance PARTIAL (truncated prior content). ACT=0.
+- **STATE:** `I01_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `I01_ACCEPTED=NO`; `I02_IMPLEMENTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_I01_ARCHITECTURE_ACCEPTANCE_REVIEW
