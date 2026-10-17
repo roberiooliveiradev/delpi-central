@@ -1,0 +1,16 @@
+/* Agent category: presentation only, no provider-dependent colors or avatars. */
+.delpi-ui-agent-navigation { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; color:var(--delpi-ui-text,var(--text,#111)); }
+.delpi-ui-agent-navigation__message { margin:4px; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); font-size:.8125rem; line-height:1.55; overflow-wrap:anywhere; }
+.delpi-ui-agent-navigation__feedback { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.delpi-ui-agent-navigation__list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+.delpi-ui-agent-navigation__item { box-sizing:border-box; display:flex; width:100%; min-width:0; min-height:48px; align-items:center; gap:11px; padding:8px 11px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--delpi-ui-text,var(--text,#111)); font:inherit; text-align:start; cursor:pointer; transition:background-color 180ms ease; }
+.delpi-ui-agent-navigation__item>svg { flex:0 0 auto; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); }
+.delpi-ui-agent-navigation__item:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+.delpi-ui-agent-navigation__item[aria-current="page"] { background:color-mix(in srgb,var(--delpi-ui-accent,var(--primary,#089bdb)) 9%,transparent); }
+.delpi-ui-agent-navigation__details { display:flex; flex:1 1 auto; min-width:0; flex-direction:column; gap:2px; }
+.delpi-ui-agent-navigation__name { font-size:.875rem; font-weight:550; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.delpi-ui-agent-navigation__description { color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); font-size:.75rem; line-height:1.35; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; }
+.delpi-ui-agent-navigation__item:focus-visible,.delpi-ui-agent-navigation__retry:focus-visible { outline:2px solid var(--delpi-ui-accent,var(--primary,#089bdb)); outline-offset:2px; }
+.delpi-ui-agent-navigation__retry { min-height:40px; padding:8px 12px; border-radius:10px; border:1px solid var(--delpi-ui-border,var(--border,#ddd)); background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.delpi-ui-agent-navigation__retry:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+@media(prefers-reduced-motion:reduce){.delpi-ui-agent-navigation__item{transition:none;}}
