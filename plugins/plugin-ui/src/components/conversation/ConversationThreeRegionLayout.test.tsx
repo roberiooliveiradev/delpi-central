@@ -113,12 +113,18 @@ describe("ConversationThreeRegionLayout R2", () => {
       fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
       expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
       expect(container.querySelector('[data-drawer="true"]')).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(true);
+      expect(screen.getByRole("button", { name: "Recolher conversas" })).toBe(document.activeElement);
+      expect(screen.getByRole("button", { name: "Categorias" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
       fireEvent.keyDown(document, { key: "Escape" });
       expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
       expect(document.activeElement).toBe(screen.getByRole("button", { name: "Expandir conversas" }));
       fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
       fireEvent.click(screen.getByRole("button", { name: "Fechar navegação" }));
       expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
       expect(container.contains(input)).toBe(true);
       expect((input as HTMLInputElement).value).toBe("Texto intacto");
     } finally {
