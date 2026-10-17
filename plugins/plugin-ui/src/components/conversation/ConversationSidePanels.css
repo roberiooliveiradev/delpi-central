@@ -141,3 +141,21 @@
 /* Group headings and lists reuse the existing conversation navigation tokens. */
 .delpi-ui-conversation-sidebar__group + .delpi-ui-conversation-sidebar__group { margin-top: 16px; }
 .delpi-ui-conversation-sidebar__group { min-width: 0; }
+
+/* Single-row presentation in history groups, both themes. */
+.delpi-ui-conversation-sidebar__history-item.delpi-ui-conversation-history-item {
+  min-width: 0; min-height: 44px; background: transparent; border: 1px solid transparent;
+  box-shadow: none; transition: background-color 180ms ease, color 180ms ease;
+}
+.delpi-ui-conversation-sidebar__history-item.delpi-ui-conversation-history-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-text,var(--text,#111)) 7%, transparent);
+}
+.delpi-ui-conversation-sidebar__history-item.delpi-ui-conversation-history-item[aria-current="page"] {
+  background: color-mix(in srgb, var(--delpi-ui-accent,var(--primary,#089bdb)) 9%, transparent);
+  font-weight: 650;
+}
+.delpi-ui-conversation-history-item__title { min-width:0; flex:1 1 auto; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.delpi-ui-conversation-sidebar__history-item.delpi-ui-conversation-history-item:disabled { cursor:default; }
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-sidebar__history-item.delpi-ui-conversation-history-item { transition:none; }
+}
