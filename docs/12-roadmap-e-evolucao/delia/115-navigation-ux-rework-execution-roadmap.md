@@ -1,11 +1,11 @@
 # 115 — DÉLIA | Navigation UX Rework — Roadmap de execução e aceite
 
-**Data de abertura:** 2026-10-17  
-**Produto:** DÉLIA standalone — não é Minha DELPI Chat.  
-**Tipo:** `EXECUTION_ROADMAP / DOCUMENTATION_ONLY`  
-**Status inicial:** `PLAN_REGISTERED / 0_OF_10_ACCEPTED`  
-**Baseline do plano (GitHub main, antes deste documento):** `faecfd8a3e2070eec87f45ac39b3534c452db9e7`  
-**Owner de coordenação:** arquitetura/coordenação DÉLIA. **Implementação:** frontend DÉLIA + `plugins/plugin-ui`; Portal é host/owner de navegação global; Core é owner de apps/rotas/RBAC; Domain APIs são autoridade de domínio.  
+**Data de abertura:** 2026-10-17
+**Produto:** DÉLIA standalone — não é Minha DELPI Chat.
+**Tipo:** `EXECUTION_ROADMAP / DOCUMENTATION_ONLY`
+**Status inicial:** `PLAN_REGISTERED / 0_OF_10_ACCEPTED`
+**Baseline do plano (GitHub main, antes deste documento):** `faecfd8a3e2070eec87f45ac39b3534c452db9e7`
+**Owner de coordenação:** arquitetura/coordenação DÉLIA. **Implementação:** frontend DÉLIA + `plugins/plugin-ui`; Portal é host/owner de navegação global; Core é owner de apps/rotas/RBAC; Domain APIs são autoridade de domínio.
 **Autoridade:** este documento acompanha execução, mas **não substitui** authorities canônicas, decisões congeladas, contratos ou ledger; não declara fase/NEXT.
 
 > **Instrução expressa do Product Master:** primeiro documentar o roadmap no GitHub; depois implementar **uma etapa por vez**, registrando conclusão/pendências para não perder o estado. A publicação deste plano não autoriza iniciar automaticamente a etapa 01.
@@ -51,7 +51,7 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 
 | Etapa | Entrega bounded | Dependência | Estado | Evidência mínima para marcar |
 |---|---|---|---|---|
-| E01 | Reanchor, baseline e critérios de aceite | Nenhuma | **PENDING** | Authorities+ledger identificados, reprodução e baseline desktop/mobile/Dock |
+| E01 | Reanchor, baseline e critérios de aceite | Nenhuma | **ACCEPTED_WITH_RESIDUAL** | Authorities+ledger+workspace+SSH+code baseline+unit/build; browser autenticado → residual E09 |
 | E02 | Composição Rail + Panel desktop | E01 | **PENDING** | rail e painel simultâneos, centro sem remount, testes + screenshot |
 | E03 | Troca direta das quatro categorias | E02 | **PENDING** | troca no rail sem recolher, estados honestos, testes de navegação |
 | E04 | Sidebar responsiva + drawer mobile | E03 | **PENDING** | largura baseada no host; overlay, backdrop, Escape e foco sem corte |
@@ -62,7 +62,7 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
 
-- [ ] **E01** — Baseline e critérios de aceite
+- [x] **E01** — Baseline e critérios de aceite (`ACCEPT_WITH_RESIDUAL`; residual browser autenticado → E09; review independente PENDING)
 - [ ] **E02** — Rail + Panel simultâneos no desktop
 - [ ] **E03** — Categorias alternáveis diretamente
 - [ ] **E04** — Sidebar/drawer mobile
@@ -73,79 +73,79 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 - [ ] **E09** — QA visual integrado no Portal/Dock
 - [ ] **E10** — Aceite independente e fechamento
 
-**Progresso inicial: `0/10 ACCEPTED (0%)`.** Quantidade de commits ou componentes não altera esse indicador.
+**Progresso: `1/10 ACCEPTED (10%)` — E01 `ACCEPT_WITH_RESIDUAL`.** Quantidade de commits ou componentes não altera esse indicador. Aceite E01 não autoriza E02 automaticamente sem task bounded.
 
 ## 5. Especificação bounded de cada etapa
 
 ### E01 — Reancoragem, baseline e critérios de aceite
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-01`  
-**Responsabilidade:** coordenação + frontend QA; documentação e descoberta dirigidas aos arquivos/contratos do escopo (sem inventários infinitos).  
-**Executar:** validar as autoridades e decisões atuais; identificar fase e ledger; registrar hashes de plugin-ui/DÉLIA implantados e origem das capturas; inventariar apenas slots/toggles/layout CSS/host container/Dock, tests e a origem do `ContextPopover`; reproduzir cenários e tirar baseline das larguras.  
-**Saída:** matriz de critérios verificáveis, estado atual real, dependências e limitações; decisão de reuse explícita.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-01`
+**Responsabilidade:** coordenação + frontend QA; documentação e descoberta dirigidas aos arquivos/contratos do escopo (sem inventários infinitos).
+**Executar:** validar as autoridades e decisões atuais; identificar fase e ledger; registrar hashes de plugin-ui/DÉLIA implantados e origem das capturas; inventariar apenas slots/toggles/layout CSS/host container/Dock, tests e a origem do `ContextPopover`; reproduzir cenários e tirar baseline das larguras.
+**Saída:** matriz de critérios verificáveis, estado atual real, dependências e limitações; decisão de reuse explícita.
 **Aceite:** baseline com screenshots e evidências de código/HEAD, gaps identificados; sem design drift; `NEXT=E02` somente após aceite.
 
 ### E02 — Composição Rail + Panel simultâneos no desktop
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E02-DESKTOP-COMPOSITION-01`  
-**Responsabilidade:** `plugin-ui` (shell), DÉLIA (seleção/composição).  
-**Executar:** alterar a composição exclusiva `collapsed ? rail : panel`; manter um rail persistente e painel adjacente quando cabe; apenas **um** toggle operável por estado; dimensionamento dependente do host; não recriar nav, não duplicar header.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E02-DESKTOP-COMPOSITION-01`
+**Responsabilidade:** `plugin-ui` (shell), DÉLIA (seleção/composição).
+**Executar:** alterar a composição exclusiva `collapsed ? rail : panel`; manter um rail persistente e painel adjacente quando cabe; apenas **um** toggle operável por estado; dimensionamento dependente do host; não recriar nav, não duplicar header.
 **Aceite:** rail 56–64px + painel 248–288px como **alvos sujeitos a QA**; centro útil; panel recolhido mantém rail; `ConversationWorkspace` não é remontado e o draft não se perde.
 
 ### E03 — Categorias alternáveis no rail
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E03-CATEGORY-SWITCH-01`  
-**Responsabilidade:** DÉLIA estado `selectedCategory`, `plugin-ui` apresentação.  
-**Executar:** quatro categorias configuradas e permitidas conforme contrato visual, clique troca painel sem recolher nem mexer no centro; indicar seleção acessível; manter indisponibilidade real de Projetos/Agentes/Plugins.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E03-CATEGORY-SWITCH-01`
+**Responsabilidade:** DÉLIA estado `selectedCategory`, `plugin-ui` apresentação.
+**Executar:** quatro categorias configuradas e permitidas conforme contrato visual, clique troca painel sem recolher nem mexer no centro; indicar seleção acessível; manter indisponibilidade real de Projetos/Agentes/Plugins.
 **Aceite:** Conversas/Projetos/Agentes/Plugins diretamente alternáveis, sem catálogo fictício, nem autorização inferida, sem nova sessão/ACT; manter draft/stream e contexto.
 
 ### E04 — Sidebar responsiva e drawer mobile
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E04-MOBILE-DRAWER-01`  
-**Responsabilidade:** `plugin-ui` shell/CSS, host DÉLIA.  
-**Executar:** decidir por **largura do container Portal**, não viewport global: rail compacto ou launcher único conforme espaço do composer; painel vira drawer com limite de largura, fundo/backdrop, Escape, close e return-focus, scroll interno e sem elementos ocultos tabuláveis.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E04-MOBILE-DRAWER-01`
+**Responsabilidade:** `plugin-ui` shell/CSS, host DÉLIA.
+**Executar:** decidir por **largura do container Portal**, não viewport global: rail compacto ou launcher único conforme espaço do composer; painel vira drawer com limite de largura, fundo/backdrop, Escape, close e return-focus, scroll interno e sem elementos ocultos tabuláveis.
 **Aceite:** 420/375/320 e Dock sem vazamento ou corte do composer, drawer fecha corretamente por botões/backdrop/Escape e centro mantém instância.
 
 ### E05 — ContextPopover responsivo
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E05-CONTEXT-RESPONSIVE-01`  
-**Responsabilidade:** `plugin-ui` shell e card Contexto; DÉLIA apenas consumo.  
-**Executar:** preservar a opção de card flutuante no desktop; aplicar dimensões pelo host, limites e rolagem no mobile; não virar coluna fixa, não cobrir controles críticos indevidamente.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E05-CONTEXT-RESPONSIVE-01`
+**Responsabilidade:** `plugin-ui` shell e card Contexto; DÉLIA apenas consumo.
+**Executar:** preservar a opção de card flutuante no desktop; aplicar dimensões pelo host, limites e rolagem no mobile; não virar coluna fixa, não cobrir controles críticos indevidamente.
 **Aceite:** 1440/1024/768/420/375/320, overflow e scroll corretos; conteúdo Contexto legível, fecha sem cancelar turnos, foco seguro.
 
 ### E06 — Convivência de superfícies e acessibilidade
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E06-OVERLAYS-A11Y-01`  
-**Responsabilidade:** `plugin-ui` interaction shell.  
-**Executar:** coordenar drawer/contexto no compacto; garantir que só uma superfície sobreposta fique ativa; gerenciar Escape, foco de abertura/fechamento, backdrop, `aria-expanded`/`aria-controls`, teclado/leitor de tela e resize com overlay aberto; não tocar estado de autorização ou PREPARE/ACT.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E06-OVERLAYS-A11Y-01`
+**Responsabilidade:** `plugin-ui` interaction shell.
+**Executar:** coordenar drawer/contexto no compacto; garantir que só uma superfície sobreposta fique ativa; gerenciar Escape, foco de abertura/fechamento, backdrop, `aria-expanded`/`aria-controls`, teclado/leitor de tela e resize com overlay aberto; não tocar estado de autorização ou PREPARE/ACT.
 **Aceite:** matriz de teclado/foco aprovada; nenhuma navegação interage com conteúdo invisível; nenhuma confirmação governada é cancelada involuntariamente.
 
 ### E07 — Polimento visual e movimento
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E07-VISUAL-MOTION-01`  
-**Responsabilidade:** `plugin-ui` design system e CSS local.  
-**Executar:** uniformizar rail/painel/ícones/spacing/hover/selected, dark/light/contraste, label/truncation, transições e reduced-motion; não criar segunda biblioteca de componentes, animations engine ou paleta nova.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E07-VISUAL-MOTION-01`
+**Responsabilidade:** `plugin-ui` design system e CSS local.
+**Executar:** uniformizar rail/painel/ícones/spacing/hover/selected, dark/light/contraste, label/truncation, transições e reduced-motion; não criar segunda biblioteca de componentes, animations engine ou paleta nova.
 **Aceite:** screenshots coerentes, foco distinguível, nenhuma quebra em zoom 200% e `prefers-reduced-motion`.
 
 ### E08 — Regressão funcional, TypeScript, testes e Federation
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E08-INTEGRATION-REGRESSION-01`  
-**Responsabilidade:** frontend `plugin-ui` + `plugins/delia`.  
-**Executar:** executar e corrigir testes anteriores 104–112, testes novos 113 e regressões; TypeScript, build do remote plugin-ui, verificação host exports, build da DÉLIA, compatibilidade de federação e de consumer/Portal; preservar draft, composer, mensagens, scroll, streaming, contexto, confirmação.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E08-INTEGRATION-REGRESSION-01`
+**Responsabilidade:** frontend `plugin-ui` + `plugins/delia`.
+**Executar:** executar e corrigir testes anteriores 104–112, testes novos 113 e regressões; TypeScript, build do remote plugin-ui, verificação host exports, build da DÉLIA, compatibilidade de federação e de consumer/Portal; preservar draft, composer, mensagens, scroll, streaming, contexto, confirmação.
 **Aceite:** evidência de comandos, resultados por SHA/config; sem regressões bloqueantes; se falhar, `FAIL` com correção bounded antes de E09. `BUILD_PASS != RUNTIME_ACCEPT`.
 
 ### E09 — QA integrado de navegador no Portal e Companion Dock
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E09-LIVE-BROWSER-QA-01`  
-**Responsabilidade:** QA frontend + host Portal.  
-**Executar:** validar desktop 1440/1280/1024/768, mobile 420/375/320, zoom 200%, Dock, light/dark, reduced-motion; alternar painel, quatro categorias, contexto, voltar ao centro, resize e teclado; guardar screenshots/logs/ambiente autenticado quando autorizado.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E09-LIVE-BROWSER-QA-01`
+**Responsabilidade:** QA frontend + host Portal.
+**Executar:** validar desktop 1440/1280/1024/768, mobile 420/375/320, zoom 200%, Dock, light/dark, reduced-motion; alternar painel, quatro categorias, contexto, voltar ao centro, resize e teclado; guardar screenshots/logs/ambiente autenticado quando autorizado.
 **Aceite:** matriz completa com PASS/FAIL, evidência de ausência de corte/overlap, nenhum recurso falso habilitado; problemas residuais classificados e correções reexecutadas no mesmo SHA/config final. Se credencial/browser não estiver disponível, `TEST_NOT_RUN` e **não marcar E09**.
 
 ### E10 — Review independente e encerramento
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E10-INDEPENDENT-ACCEPTANCE-01`  
-**Responsabilidade:** revisor independente da implementação.  
-**Executar:** ler o HEAD final, diff, authorities/ledger, evidências E01–E09 e deployed SHA; revisar segurança/ownership/reuse, QA e regressões, fechar ou classificar residuais; atualizar documentos de conclusão/ledger com resultados factuais após veredicto.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E10-INDEPENDENT-ACCEPTANCE-01`
+**Responsabilidade:** revisor independente da implementação.
+**Executar:** ler o HEAD final, diff, authorities/ledger, evidências E01–E09 e deployed SHA; revisar segurança/ownership/reuse, QA e regressões, fechar ou classificar residuais; atualizar documentos de conclusão/ledger com resultados factuais após veredicto.
 **Aceite:** `ACCEPT` ou `ACCEPT_WITH_RESIDUAL` com residuais explicitamente aceitos (nenhum bloqueante); verificar push/HEAD, produção no SHA avaliado. `REWORK`, `INCONCLUSIVE` ou `EXECUTION_DRIFT` não permitem marcar a etapa como concluída.
 
 ## 6. Gates de saída e política de passagem
@@ -209,8 +209,8 @@ NEXT = E01 (REQUIRES_NEW_USER_AUTHORIZATION)
 
 ## 9. Registro E01 — reancoragem dirigida, baseline e critérios (2026-10-17)
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-01`  
-**BASE_HEAD observado:** `fe7df91879bca2957127833923f0ca80f2fb44ef` na GitHub `main`; **repositório/branch:** `roberiooliveiradev/delpi-central/main`.  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-01`
+**BASE_HEAD observado:** `fe7df91879bca2957127833923f0ca80f2fb44ef` na GitHub `main`; **repositório/branch:** `roberiooliveiradev/delpi-central/main`.
 **Execution mode:** análise documental e leitura read-only de componentes pelo conector GitHub; **nenhum código/CSS, deploy ou backend alterado nesta task**.
 
 ### 9.1 Evidência confirmada e restrições
@@ -362,3 +362,64 @@ E01_ACCEPTED=NO
 STAGES_ACCEPTED=0
 NEXT=E01_ENVIRONMENT_AND_BROWSER_EVIDENCE
 ```
+
+## 11. E01-R2 — Fechamento de ambiente, SHA e baseline instrumental (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2`
+**Evidence file:** [evidence/navigation-ux-rework-e01/e01-r2-environment-and-component-baseline.md](./evidence/navigation-ux-rework-e01/e01-r2-environment-and-component-baseline.md)
+**MODE:** REANCHOR + ENVIRONMENT + CODE BASELINE + UNIT/BUILD — **zero** alteração React/CSS; **zero** deploy; **zero** E02.
+
+### 11.1 Residuais R1 fechados nesta execução
+
+| Residual R1 | Resultado R2 |
+|---|---|
+| `git status` workspace / srv-api | **PROVEN** — clean; `LOCAL=ORIGIN=REMOTE=8a194d4a8c3d5c1e1cb84ac0983b106238547d80` |
+| Reancoragem canônica em workspace real | **PROVEN** — AGENTS/.cursor + 16→25 + 103/113/115 + ledger; `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `NEXT=RETURN_TO_ARCHITECTURE_COORDINATION`; plano 115 não altera fase |
+| Deployed / served assets | **PROVEN_PARTIAL** — containers healthy; HTTP 200; image digests + `remoteEntry` sha256 capturados; **sem** label git SHA na imagem (não inventado) |
+| Baseline código rail/panel/backdrop/Escape/contexto | **PROVEN** — exclusive XOR left; backdrop CSS sem JSX; Escape só contexto; sem exclusividade overlays |
+| Testes/builds/federation | **PASS** — plugin-ui nav 16 PASS; DeliaConversationPage 5 PASS; builds + host-exports + federation PASS; typecheck pré-existente kit |
+| Browser autenticado Portal/Dock matriz | **TEST_NOT_RUN** — residual explícito → **E09** |
+
+### 11.2 AC baseline (defeitos atuais = evidência válida de E01)
+
+| ID | Baseline | Fix stage |
+|---|---|---|
+| AC-D01 | FAIL_CURRENT — rail XOR panel | E02 |
+| AC-D02 | CODE_PARTIAL / live TEST_NOT_RUN | E04 / E09 |
+| AC-C01 | FAIL_CURRENT — select chama `onExpand()` | E03 |
+| AC-M01 | FAIL_CURRENT — sem backdrop JSX; Escape ignora left | E04 |
+| AC-M02 | CODE_PROVEN / live TEST_NOT_RUN | E05 / E09 |
+| AC-O01 | FAIL_CURRENT — overlays coexistentes | E06 |
+| AC-A01 | UNIT_PARTIAL / live TEST_NOT_RUN | E06–E09 |
+| AC-R01 | PASS_UNIT | E08 regressão |
+| AC-B01 | PASS_PARTIAL (unit/build); browser TEST_NOT_RUN | E08 / E09 |
+
+### 11.3 Reuse (confirmado)
+
+```text
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = EXTEND
+NEW_SHELL = NOT_ALLOWED
+```
+
+### 11.4 Parecer
+
+```text
+STAGE = E01
+TASK_ID = DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2
+BASE_HEAD = 8a194d4a8c3d5c1e1cb84ac0983b106238547d80
+CODE_CHANGED = NO
+CANONICAL_REANCHOR = PROVEN
+GIT_STATUS = CLEAN_SYNCED
+DEPLOYED_CORRELATION = HEAD_MATCHES_REMOTE + IMAGE_DIGESTS + REMOTEENTRY_SHA256 (no git label in image)
+AUTHORIZED_BROWSER_MATRIX = TEST_NOT_RUN
+REVIEW_VERDICT = ACCEPT_WITH_RESIDUAL
+RESIDUAL_OWNER = E09 (Portal/Dock authenticated viewport matrix, light/dark, zoom200, reduced-motion)
+INDEPENDENT_REVIEW = PENDING
+CHECKLIST_CHANGED = YES (E01 [x]; 1/10)
+E02_IMPLEMENTATION = NOT_STARTED (requires separate bounded task)
+PHASE_PROGRESSION = NONE
+NEXT = E02_DESKTOP_COMPOSITION_BOUNDED_TASK (after coordination/independent review as required)
+```
+
+**Não implementar E02 neste commit.** Coordenação pode exigir review independente antes da task E02; o residual de browser **não** bloqueia o desenho de E02, mas **bloqueia E10**.

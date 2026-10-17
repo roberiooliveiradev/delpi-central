@@ -14339,3 +14339,16 @@ NEXT=STAGE_04_BOUNDED_IMPLEMENTATION (coordination authorization in successor le
 STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; STAGE_04_AUTHORIZED=YES_BOUNDED; STAGE_04_ACCEPTED=NO
 NEXT=INDEPENDENT_STAGE04_ARCHITECTURE_REVIEW
 
+## §6.215 — DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2`. **DOCS:** [115](../115-navigation-ux-rework-execution-roadmap.md) §11 + [evidence](./navigation-ux-rework-e01/e01-r2-environment-and-component-baseline.md). **MODE:** docs/evidence only — zero React/CSS/deploy/E02.
+
+- **HEAD:** `8a194d4a8c3d5c1e1cb84ac0983b106238547d80` (= origin/main = srv-api REMOTE_HEAD); git clean.
+- **ENV:** SSH `srv-api` containers healthy; served `remoteEntry` sha256 delia=`4f63383e…` plugin-ui=`399828a8…`; image digests recorded; no git SHA in image labels.
+- **CODE BASELINE:** exclusive `rail XOR panel`; backdrop CSS without JSX; Escape closes context only; no overlay exclusivity; category select expands left.
+- **TESTS/BUILD:** plugin-ui nav 16 PASS; DeliaConversationPage 5 PASS; builds + federation + host-exports PASS; typecheck PREEXISTING_DEBT.
+- **BROWSER MATRIX:** `TEST_NOT_RUN` (no authenticated interactive session) → residual **E09**.
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL`; roadmap E01 `[x]`; `1/10 ACCEPTED`; `INDEPENDENT_REVIEW=PENDING`; `PHASE_PROGRESSION=NONE`; E02 not started.
+
+NEXT=E02_BOUNDED_TASK (coordination/independent review as required); E09 owns live Portal/Dock matrix
+
