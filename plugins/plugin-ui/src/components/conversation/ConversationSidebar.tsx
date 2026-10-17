@@ -1,5 +1,6 @@
 import { Search, Settings2, SquarePen } from "lucide-react";
 import { ConversationHistoryItem } from "./ConversationHistoryItem";
+import { PinnedConversations } from "./PinnedConversations";
 import { ConversationSidebarSearch } from "./ConversationSidebarSearch";
 
 export type ConversationSidebarProps = {
@@ -48,8 +49,8 @@ export function ConversationSidebar({
       {!collapsed ? <div className="delpi-ui-conversation-sidebar__section" aria-label="Histórico de conversas">
         {effectiveHistoryStatus === "ready" && onSelectConversation ? (
           <>
+            <PinnedConversations items={pinnedHistory} onSelectConversation={onSelectConversation} />
             {([
-              ["Fixadas", pinnedHistory],
               ["Recentes", history],
               ["Anteriores", olderHistory],
             ] as const).map(([heading, items]) => items.length > 0 ? (
