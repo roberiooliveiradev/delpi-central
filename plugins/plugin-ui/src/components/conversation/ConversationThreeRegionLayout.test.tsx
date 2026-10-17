@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConversationThreeRegionLayout } from "./ConversationThreeRegionLayout";
 afterEach(cleanup);
@@ -210,6 +210,164 @@ describe("ConversationThreeRegionLayout R2", () => {
       expect(screen.queryByRole("dialog", { name: "Contexto da conversa" })).toBeNull();
       expect(document.activeElement).toBe(trigger);
       expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
+  it("T05 closes the compact drawer via backdrop and restores an interactive center", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Rail T05</button>}
+        left={<p>Painel T05</p>}
+        center={<input aria-label="Draft T05" defaultValue="backdrop-ok" />}
+      />);
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(container.querySelector('[data-drawer="true"]')).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Fechar navegação" }));
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector('[data-drawer="true"]')).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
+      expect((screen.getByRole("textbox", { name: "Draft T05" }) as HTMLInputElement).value).toBe("backdrop-ok");
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
+  it("T07 keeps Tab and Shift+Tab inside the compact drawer focus cycle", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousRects = HTMLElement.prototype.getClientRects;
+    HTMLElement.prototype.getClientRects = function getClientRects() {
+      return {
+        length: 1,
+        item: () => ({ width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+        0: { width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect,
+      } as DOMRectList;
+    };
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Rail T07</button>}
+        left={<button type="button">Item painel</button>}
+        center={<input aria-label="Draft T07" defaultValue="fora do ciclo" />}
+      />);
+      const draft = screen.getByRole("textbox", { name: "Draft T07" });
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(true);
+      const railItem = screen.getByRole("button", { name: "Rail T07" });
+      const panelItem = screen.getByRole("button", { name: "Item painel" });
+      panelItem.focus();
+      fireEvent.keyDown(document, { key: "Tab" });
+      expect(document.activeElement).toBe(railItem);
+      expect(document.activeElement).not.toBe(draft);
+      railItem.focus();
+      fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+      expect(document.activeElement).toBe(panelItem);
+      expect(document.activeElement).not.toBe(draft);
+    } finally {
+      HTMLElement.prototype.getClientRects = previousRects;
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
+  it("T09 opening Context while the drawer is open closes the drawer", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Rail T09</button>}
+        left={<p>Painel T09</p>}
+        right={<p>Contexto T09</p>}
+        center={({ rightToggle }) => <div>{rightToggle}<input aria-label="Draft T09" defaultValue="ok" /></div>}
+      />);
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(true);
+      fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
+      expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector('[data-drawer="true"]')).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
+      expect((screen.getByRole("textbox", { name: "Draft T09" }) as HTMLInputElement).value).toBe("ok");
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
+  it("T12 reconciles compact overlays when the host container resizes", () => {
+    let hostWidth = 375;
+    let observerCallback: ResizeObserverCallback | null = null;
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: hostWidth, height: 667, top: 0, left: 0, right: hostWidth, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class ControllableObserver {
+      constructor(callback: ResizeObserverCallback) { observerCallback = callback; }
+      observe() { observerCallback?.([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", ControllableObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Rail T12</button>}
+        left={<p>Painel T12</p>}
+        right={<p>Contexto T12</p>}
+        center={({ rightToggle }) => <div>{rightToggle}<input aria-label="Draft T12" defaultValue="resize-ok" /></div>}
+      />);
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
+      hostWidth = 1280;
+      act(() => { observerCallback?.([], {} as ResizeObserver); });
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__left")).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
+      expect((screen.getByRole("textbox", { name: "Draft T12" }) as HTMLInputElement).value).toBe("resize-ok");
+      hostWidth = 375;
+      act(() => { observerCallback?.([], {} as ResizeObserver); });
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector('[data-drawer="true"]')).toBeNull();
+      expect((screen.getByRole("textbox", { name: "Draft T12" }) as HTMLInputElement).value).toBe("resize-ok");
     } finally {
       rect.mockRestore();
       vi.stubGlobal("ResizeObserver", previousObserver);

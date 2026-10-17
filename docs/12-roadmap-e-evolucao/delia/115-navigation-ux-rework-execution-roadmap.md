@@ -52,28 +52,28 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | Etapa | Entrega bounded | Dependência | Estado | Evidência mínima para marcar |
 |---|---|---|---|---|
 | E01 | Reanchor, baseline e critérios de aceite | Nenhuma | **ACCEPTED_WITH_RESIDUAL** | Authorities+ledger+workspace+SSH+code baseline+unit/build; browser autenticado → residual E09 |
-| E02 | Composição Rail + Panel desktop | E01 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | rail e painel simultâneos, centro sem remount, testes + screenshot |
-| E03 | Troca direta das quatro categorias | E02 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | troca no rail sem recolher, estados honestos, testes de navegação |
-| E04 | Sidebar responsiva + drawer mobile | E03 | **IMPLEMENTED_R1 / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | largura baseada no host; overlay, backdrop, Escape e foco sem corte |
-| E05 | ContextPopover responsivo | E04 | **IMPLEMENTED / VISUAL_OBSERVED_PASS / ACCEPTANCE_PENDING** | limites, scroll, posicionamento, sem cobrir composer indevidamente |
-| E06 | Convivência de painéis + acessibilidade | E04+E05 | **IMPLEMENTED / VISUAL_PARTIAL / INTERACTION_QA_PENDING** | exclusividade mobile, teclado/foco/ARIA, não cancelar fluxo governado |
+| E02 | Composição Rail + Panel desktop | E01 | **ACCEPTED** | rail e painel simultâneos, centro sem remount, testes + screenshot |
+| E03 | Troca direta das quatro categorias | E02 | **ACCEPTED** | troca no rail sem recolher, estados honestos, testes de navegação |
+| E04 | Sidebar responsiva + drawer mobile | E03 | **ACCEPTED_WITH_RESIDUAL** | largura baseada no host; overlay, backdrop, Escape e foco sem corte; residual browser → E09 |
+| E05 | ContextPopover responsivo | E04 | **ACCEPTED_WITH_RESIDUAL** | limites/estrutura unit + visual 375; geometria CSS real → E09 |
+| E06 | Convivência de painéis + acessibilidade | E04+E05 | **ACCEPTED_WITH_RESIDUAL** | exclusividade/foco/Tab unit; teclado real/browser → E09 |
 | E07 | Polimento visual e motion | E02–E06 | **PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
 | E08 | Regressão integrada e gates de build | E02–E07 | **PENDING** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
 
 - [x] **E01** — Baseline e critérios de aceite (`ACCEPT_WITH_RESIDUAL`; residual browser autenticado → E09; review independente PENDING)
-- [ ] **E02** — Rail + Panel simultâneos no desktop
-- [ ] **E03** — Categorias alternáveis diretamente
-- [ ] **E04** — Sidebar/drawer mobile
-- [ ] **E05** — Contexto responsivo
-- [ ] **E06** — Convivência/foco/acessibilidade
+- [x] **E02** — Rail + Panel simultâneos no desktop (`ACCEPT`)
+- [x] **E03** — Categorias alternáveis diretamente (`ACCEPT`)
+- [x] **E04** — Sidebar/drawer mobile (`ACCEPT_WITH_RESIDUAL`; browser/Dock → E09)
+- [x] **E05** — Contexto responsivo (`ACCEPT_WITH_RESIDUAL`; geometria real → E09)
+- [x] **E06** — Convivência/foco/acessibilidade (`ACCEPT_WITH_RESIDUAL`; teclado real → E09)
 - [ ] **E07** — Consistência visual/motion
 - [ ] **E08** — Testes/TypeScript/build/federação/regressão
 - [ ] **E09** — QA visual integrado no Portal/Dock
 - [ ] **E10** — Aceite independente e fechamento
 
-**Progresso: `1/10 ACCEPTED (10%)` — E01 `ACCEPT_WITH_RESIDUAL`.** Quantidade de commits ou componentes não altera esse indicador. Aceite E01 não autoriza E02 automaticamente sem task bounded.
+**Progresso: `6/10 ACCEPTED (60%)` — E01/E04/E05/E06 `ACCEPT_WITH_RESIDUAL`; E02/E03 `ACCEPT`.** Residuais de browser/geometria/teclado real permanecem na E09; E10 retém review independente. Aceite E02–E06 não autoriza E07 automaticamente sem task bounded.
 
 ## 5. Especificação bounded de cada etapa
 
@@ -718,3 +718,52 @@ TESTS_THIS_TASK = TEST_NOT_RUN
 BROWSER_QA_THIS_TASK = TEST_NOT_RUN
 ROADMAP_PROGRESS = 1/10 ACCEPTED
 PHASE_PROGRESSION = NONE
+
+## 20. E02–E06 — Validação técnica acumulada e aceite (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E02-E06-TECHNICAL-VALIDATION-01`  
+**BASE_HEAD:** `30aaa3c0560428f60d080118bd7788e9bb61210f`  
+**MODE:** REANCHOR → testes → cobertura T01–T12 → revisão → roadmap/ledger → commit/push. **Sem E07.** Sem deploy. Sem QA visual estático repetido (evidências §19 reutilizadas).
+
+**Evidence:** [`evidence/navigation-ux-rework-e02-e06/e02-e06-technical-validation-01.md`](./evidence/navigation-ux-rework-e02-e06/e02-e06-technical-validation-01.md)
+
+### Resultados técnicos
+
+| Gate | Resultado |
+|---|---|
+| plugin-ui nav Vitest | **24 PASS** (exit 0) |
+| DeliaConversationPage Vitest | **8 PASS** (exit 0) |
+| plugin-ui build + host-exports | **PASS** (exit 0); exports de navegação presentes |
+| delia build + verify:federation | **PASS** (exit 0) |
+| Typecheck delia / plugin-ui | **FAIL exit 2** — `PREEXISTING_DEBT` (InitialsAvatar, UnifiedAvatar/`PublishedAvatarProfile`, TaskDetailCard; sem erros nos arquivos E02–E06) |
+| T01–T12 | PASS / PASS_UNIT conforme evidence; T07/T12 limitados a JSDOM |
+| Browser autenticado | **TEST_NOT_RUN** → E09 |
+| NEW_REGRESSION | nenhuma |
+| Independent review | **LIMITATION** — mesmo agente; E10 permanece |
+
+### Veredictos por etapa
+
+| Etapa | Veredicto | Checklist |
+|---|---|---|
+| E02 | **ACCEPT** | `[x]` |
+| E03 | **ACCEPT** | `[x]` |
+| E04 | **ACCEPT_WITH_RESIDUAL** | `[x]` |
+| E05 | **ACCEPT_WITH_RESIDUAL** | `[x]` |
+| E06 | **ACCEPT_WITH_RESIDUAL** | `[x]` |
+
+Diff desta task: somente testes T05/T07/T09/T12 em `ConversationThreeRegionLayout.test.tsx`. Implementação React/CSS E02–E06 já estava no HEAD.
+
+```text
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+E02_VERDICT=ACCEPT
+E03_VERDICT=ACCEPT
+E04_VERDICT=ACCEPT_WITH_RESIDUAL
+E05_VERDICT=ACCEPT_WITH_RESIDUAL
+E06_VERDICT=ACCEPT_WITH_RESIDUAL
+VISUAL_EVIDENCE_REUSED=YES (§19 Product Master screenshots)
+BROWSER_QA_RESIDUALS=E09
+ROADMAP_PROGRESS=6/10 ACCEPTED
+PHASE_PROGRESSION=NONE
+NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
+```
