@@ -14489,3 +14489,16 @@ NEXT=STAGE_06_BOUNDED_GENERALIZATION_SAFETY_EVAL
 
 NEXT=E09_PORTAL_DOCK_BROWSER_QA
 
+## §6.227 — DELIA-C3-STAGE06-GENERALIZATION-SAFETY-ACCEPTANCE-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** [40](../corrections/conversational-intelligence-c3/40-stage-06-generalization-safety-acceptance-report.md). **BASE_HEAD:** `706b13af2a`. **CODE_SHA:** `d9b7fdbe90` + `2f363b45bf`. **SSH_DEPLOYED_SHA:** `2f363b45bf`. **MODE:** reuse Stage01–05 harness; no new eval framework; no Chat runtime.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`.
+- **FIX:** R-S05-01 — prior-turn `excerpt` presentation no longer exposes technical field label; proven-diff section skips synthetic excerpts.
+- **SCRIPTED:** `test_stage06_generalization_safety.py` 13/13 PASS (positive/negative/adversarial/holdout/sibling); full `delia-api` pytest green after CODE SHA.
+- **LIVE:** `moonshotai/kimi-k3` on `srv-api`; T1 GROUNDED `teo.get_product_guide` ≤19015ms; T2 either `transformed` (+ `strip_extra limitations`) or honest `reject_full_replay` insufficiency; `prior_turn_evidence_only`/NON_GROUNDED; `MAX_OBSERVED_TURN_LATENCY_MS=22836`; `UNAUTHORIZED_MATERIAL_ACT_COUNT=0`.
+- **RESIDUALS:** R-S04-01 live incomplete-owner clarification `NOT_EXERCISED`; R-S05-04 live non-TEO/non-MCP generalization `TEST_NOT_RUN`; Stage02/03 residuals preserved. R-S05-01/02/03 closed for evaluated surfaces.
+- **DECISION (executor recommendation only):** `STAGE06_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `STAGE06_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=INDEPENDENT_STAGE06_ARCHITECTURE_ACCEPTANCE_REVIEW
+
