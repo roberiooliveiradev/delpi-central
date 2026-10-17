@@ -17,5 +17,19 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("heading", { name: "Atividades" })).toBeTruthy();
     expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
     expect(container.contains(message)).toBe(true);
+  });  it("uses a single category rail in collapsed state and preserves conversation", () => {
+    const { container } = render(<DeliaConversationPage conversation={<p>Centro permanece</p>} />);
+    const center = screen.getByText("Centro permanece");
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
+    for (const name of ["Projetos", "Agentes", "Plugins"]) {
+      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
+    }
+    expect(container.contains(center)).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
+    expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
+    expect(container.contains(center)).toBe(true);
   });
+
 });
