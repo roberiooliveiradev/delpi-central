@@ -14305,3 +14305,16 @@ INDEPENDENT_REVIEW=PENDING
 RW_S03_01=FIXED; STAGE_03_ACCEPTED=NO
 NEXT=INDEPENDENT_STAGE03_ACCEPTANCE_REVIEW
 
+## §6.212 — DELIA-C3-STAGE-03-INDEPENDENT-ARCHITECTURE-ACCEPTANCE-01 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-C3-STAGE03-CLOSURE-AND-STAGE04-IMPLEMENTATION-01` / TASK A. **DOC:** `corrections/conversational-intelligence-c3/35-stage-03-independent-architecture-acceptance-closure.md`. **MODE:** documentary closure only — zero Stage 03 code change.
+
+- **DECISION:** `STAGE_03_REVIEW=ACCEPT_WITH_RESIDUAL`; `STAGE_03_ACCEPTED=YES_WITH_RESIDUAL`.
+- **ACCEPT:** `RW_S03_01=ACCEPT`; `MCP_INDEX_TO_GUIDANCE=ACCEPT`; `REAL_MODEL_GUIDANCE_EVAL=PASS_BOUNDED` (runtime `06896575bd`, model `moonshotai/kimi-k3`, `identifiers=25`, selected `process`, GROUNDED, `MATERIAL_ACT=0`).
+- **HISTORY PRESERVED:** §6.211 FAIL on truncated shortlist (`cd88e3f49c` / `decomposition`) then PASS after `42991c5ae3` budget fix.
+- **RESIDUALS:** R-S03-01..05 (other-MCP real-model NOT_PROVEN; adversarial matrix incomplete; no material ACT/Outcome; Stage 02 residuals; production readiness NOT_PROVEN).
+- **NO CLAIMS:** `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`; `STAGE_04` not auto-accepted.
+
+STAGE_02_ACCEPTED=YES_WITH_RESIDUAL; STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; C3_EXECUTED=NO
+NEXT=STAGE_04_BOUNDED_IMPLEMENTATION (coordination authorization in successor ledger entry)
+

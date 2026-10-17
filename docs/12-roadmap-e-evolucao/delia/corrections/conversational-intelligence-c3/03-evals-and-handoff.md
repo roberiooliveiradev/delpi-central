@@ -57,8 +57,8 @@ São referências externas ilustrativas; contratos/owners/autoridades canônicas
 | --- | --- | --- | --- | --- |
 | 01 baseline/harness | REVIEWED — ACCEPT_WITH_RESIDUAL (§6.172) | harness + relatório 04 publicados | 15 fake/scripted; 1069/1069 reexecutado na revisão; real LLM TEST_NOT_RUN | ACCEPT_WITH_RESIDUAL (06) |
 | 02 intent/instructions | **ACCEPTED_WITH_RESIDUAL** (§6.201, [28](./28-stage-02-independent-architecture-acceptance-closure.md)); consolidation [27](./27-stage-02-final-evidence-consolidation-and-acceptance-candidate.md); evidence 23–26 | B2 + RW-01/02/UX-01 per [21](./21-stage-02-b2-postreview-concurrency-contract-ux-rework-report.md)/[22](./22-stage-02-b2-invalid-confirmation-claim-followup.md) | 1178 pytest + 191 vitest + 6/6 concurrent; live 01/03–10 PASS (0 ACT); residuals R-S02-01..09 | `STAGE_02_ACCEPTED=YES_WITH_RESIDUAL`; Stage03 NOT_AUTHORIZED |
-| 03 discovery/guidance | **IMPLEMENTATION_EVIDENCE** (§6.205, [31](./31-stage-03-discovery-guidance-implementation-report.md)); auth [30](./30-stage-03-bounded-implementation-authorization.md); inventory [29](./29-stage-03-discovery-guidance-inventory-and-implementation-brief.md) | EXTEND `_requires_owner_vocabulary` (required free strings on READ/ANALYSIS) | D3-01..14 fake PASS; D3-15 regression PASS; real LLM TEST_NOT_RUN | PENDING independent review; `STAGE_03_ACCEPTED=NO` |
-| 04 completeness/resolution | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
+| 03 discovery/guidance | **ACCEPTED_WITH_RESIDUAL** (§6.212, [35](./35-stage-03-independent-architecture-acceptance-closure.md)); evidence 29–34 + §6.204–§6.211 | EXTEND discovery/guidance + iterative INDEX + exact post-index bind | D3 + iterative scripted PASS; real-model guidance PASS_BOUNDED (`process`, GROUNDED) | `STAGE_03_ACCEPTED=YES_WITH_RESIDUAL`; residuals R-S03-01..05 |
+| 04 completeness/resolution | PLANNED → successor authorization | NOT_STARTED at Stage 03 closure | TEST_NOT_RUN | PENDING |
 | 05 synthesis/personality | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 | 06 generalization/acceptance | PLANNED | NOT_STARTED | TEST_NOT_RUN | PENDING |
 
