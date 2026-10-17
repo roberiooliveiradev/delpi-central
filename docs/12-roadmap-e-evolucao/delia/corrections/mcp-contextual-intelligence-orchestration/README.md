@@ -30,6 +30,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL.
 **I02 implementation candidate:** [05 — grounded knowledge synthesis](./05-i02-grounded-knowledge-synthesis-implementation.md). Deterministic guidance projection + budget-safe fallback; `I02_ACCEPTED=NO` até review.
 
+**I02 independent review:** [06 — REWORK decision](./06-i02-independent-review-rework-decision.md); the nested fix is not live-proven and K1 pre-synthesis latency remains failed. Continue I02-R1 before I03.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -59,12 +61,12 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.
 
 ```text
-TRACK=I02_IMPLEMENTED_PENDING_ACCEPTANCE
+TRACK=I02_REWORK
 I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
 I02_ACCEPTED=NO
 I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
-NEXT=INDEPENDENT_I02_ARCHITECTURE_ACCEPTANCE_REVIEW
+NEXT=I02_R1_POST_FIX_VALIDATION_AND_PRE_SYNTHESIS_LATENCY_CAUSE
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
