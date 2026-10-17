@@ -271,7 +271,6 @@ export {
   UnifiedAvatar,
   type AvatarSize,
   type AssistantMotionState,
-  type PublishedAvatarProfile,
   type UnifiedAvatarProps,
 } from "./UnifiedAvatar";
 export {

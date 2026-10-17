@@ -14439,3 +14439,14 @@ NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 - **CHECKLIST:** E02–E06 `[x]`; progresso `6/10 ACCEPTED`; `INDEPENDENT_REVIEW=LIMITATION` (mesmo agente) → E10; `PHASE_PROGRESSION=NONE`.
 
 NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
+
+## §6.223 — DELIA-UX-NAV-REWORK-E02-E06-PREEXISTING-DEBT-CLOSURE-01 (CLOSED)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-UX-NAV-REWORK-E02-E06-PREEXISTING-DEBT-CLOSURE-01`. **DOCS:** [115](../115-navigation-ux-rework-execution-roadmap.md) §21 + [evidence](./navigation-ux-rework-e02-e06/e02-e06-preexisting-debt-closure-01.md). **BASE_HEAD:** `85dbfee824`.
+
+- **FIX:** InitialsAvatar lightbox `resolvedSrc`; remove orphan `PublishedAvatarProfile` reexport; TaskDetailCard `hint?: string`.
+- **TESTS:** delia typecheck PASS; avatar/task 31 PASS; nav 24+8 PASS; builds + federation PASS.
+- **RESIDUAL:** plugin-ui full `tsc` still has catalog/bpmn/charts/test debt outside delia gate.
+- **NO CLAIMS:** E07 not started; phase progression NONE; E02–E06 verdicts unchanged (`6/10 ACCEPTED`).
+
+NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED

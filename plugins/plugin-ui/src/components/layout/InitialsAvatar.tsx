@@ -195,7 +195,7 @@ export function InitialsAvatar(props: InitialsAvatarProps) {
         </button>
         <ImageLightboxModal
           open={previewOpen}
-          src={src}
+          src={resolvedSrc}
           title={resolvedPreviewTitle}
           onClose={() => setOpen(false)}
           portalScopeClassName={portalScopeClassName}

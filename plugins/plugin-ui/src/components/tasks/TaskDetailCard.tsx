@@ -25,7 +25,7 @@ export type TaskDetailCardProps = {
   /** Help tooltip on the card title. */
   titleHint?: string;
   /** Hint line under the title (defaults to due/source/context summary). */
-  hint?: ReactNode;
+  hint?: string;
   /** Full replacement for header actions (defaults to flag-driven buttons). */
   headerActions?: ReactNode;
   /** Custom description rendering (markdown etc.); defaults to plain text. */

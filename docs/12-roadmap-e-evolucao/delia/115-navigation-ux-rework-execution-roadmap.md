@@ -735,7 +735,8 @@ PHASE_PROGRESSION = NONE
 | DeliaConversationPage Vitest | **8 PASS** (exit 0) |
 | plugin-ui build + host-exports | **PASS** (exit 0); exports de navegação presentes |
 | delia build + verify:federation | **PASS** (exit 0) |
-| Typecheck delia / plugin-ui | **FAIL exit 2** — `PREEXISTING_DEBT` (InitialsAvatar, UnifiedAvatar/`PublishedAvatarProfile`, TaskDetailCard; sem erros nos arquivos E02–E06) |
+| Typecheck delia | **PASS** (exit 0) após fechamento da tríade — ver §21 |
+| Typecheck plugin-ui full (`tsc`) | residual catalog/bpmn/charts/tests **fora** do gate delia / E02–E06 |
 | T01–T12 | PASS / PASS_UNIT conforme evidence; T07/T12 limitados a JSDOM |
 | Browser autenticado | **TEST_NOT_RUN** → E09 |
 | NEW_REGRESSION | nenhuma |
@@ -764,6 +765,28 @@ E06_VERDICT=ACCEPT_WITH_RESIDUAL
 VISUAL_EVIDENCE_REUSED=YES (§19 Product Master screenshots)
 BROWSER_QA_RESIDUALS=E09
 ROADMAP_PROGRESS=6/10 ACCEPTED
+PHASE_PROGRESSION=NONE
+NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
+```
+
+## 21. Fechamento da dívida TypeScript tríade (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E02-E06-PREEXISTING-DEBT-CLOSURE-01`  
+**BASE_HEAD:** `85dbfee824bae1d1c1313c2562e220fdf8174743`  
+**Evidence:** [`evidence/navigation-ux-rework-e02-e06/e02-e06-preexisting-debt-closure-01.md`](./evidence/navigation-ux-rework-e02-e06/e02-e06-preexisting-debt-closure-01.md)
+
+Correções mínimas em `plugin-ui` (sem mudança de comportamento de navegação E02–E06):
+
+1. `InitialsAvatar` — lightbox usa `resolvedSrc` (string narrowed).
+2. `layout/index.ts` — remove reexport órfão `PublishedAvatarProfile`.
+3. `TaskDetailCard` — `hint?: string` alinhado a `DetailCard`.
+
+**Revalidação:** `delia` typecheck **PASS** (exit 0); Vitest InitialsAvatar/UnifiedAvatar/TaskDetailCard 31 PASS; nav E02–E06 24+8 PASS; builds + federation PASS. Veredictos E02–E06 e progresso `6/10` inalterados. Residual: `tsc` full do plugin-ui ainda tem erros em catalog/testes não consumidos pelo `tsconfig.app.json` da delia.
+
+```text
+DELIA_TYPECHECK=PASS
+TRIAD_PREEXISTING_DEBT=CLOSED
+E02_E06_VERDICTS_UNCHANGED
 PHASE_PROGRESSION=NONE
 NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 ```
