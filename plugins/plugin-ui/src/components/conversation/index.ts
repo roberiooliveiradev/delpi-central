@@ -73,3 +73,5 @@ export { NavigationCategoryPanel, type NavigationCategoryPanelProps, type Naviga
 export { ConversationNavigation, type ConversationNavigationProps, type ConversationNavigationItem } from "./ConversationNavigation";
 
 export { ConversationHistoryItem, type ConversationHistoryItemData, type ConversationHistoryItemProps } from "./ConversationHistoryItem";
+
+export { PinnedConversations, type PinnedConversationsProps } from "./PinnedConversations";
