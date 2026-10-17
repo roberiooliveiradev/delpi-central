@@ -94,16 +94,31 @@ ROOT_CAUSE=T2 refez seleção completa com prior_turns no prompt de
 ### Live SSH (pós-fix)
 
 ```text
-SSH_DEPLOYED_SHA=<filled after deploy>
+SSH_DEPLOYED_SHA=eb7aa931b0 (= origin/main; srv-api pull+rebuild delia-api)
+REMOTE_HEAD_MATCH=YES
 REAL_MODEL=moonshotai/kimi-k3
-MODE=MESSAGE_ONLY × 2 (cenário doc 38)
+MODE=MESSAGE_ONLY × 2 (cenário doc 38 / s05_live_multiturn.py)
+DELIA_MODEL_STAGE_TIMEOUT_SECONDS=30 (unchanged)
+DELIA_TURN_BUDGET_SECONDS=80 (unchanged; INCREASE_TIMEOUT=NO)
 
-TURN1_LATENCY_MS=<filled>
-TURN2_LATENCY_MS=<filled>
-MULTITURN_CONTINUITY=<filled>
-GLOBAL_BUDGET_EXCEEDED=<filled>
-LIVE_VERDICT=<filled>
+TURN1: latency_ms=34502 · CLARIFICATION ask-back (get_process_context;
+       missing input) · GROUNDING=NON_GROUNDED · select_capability
+       timing_ms=5259 (completed; no timeout) · ACT=0
+TURN2: latency_ms=25302 · goal-first prior_sufficient=no ·
+       select_group decision=none (no select_capability) ·
+       general-path honest insufficiency about empty prior evidence ·
+       GROUNDING=NON_GROUNDED · ACT=0
+
+GLOBAL_BUDGET_EXCEEDED=NO (no model_timeout / turn_budget_exhausted)
+UNNECESSARY_RESELECTION=NO (T2 did not re-enter select_capability)
+MULTITURN_CONTINUITY=PASS_BOUNDED (no timeout; continuity path exercised;
+  T1 was clarify-only so prior evidence correctly not reused)
 MATERIAL_ACT_COUNT=0
+
+LIVE_VERDICT=LATENCY_BOTTLENECK_FIXED
+  (original T2 select_capability model_timeout not reproduced;
+   Stage05 grounded multiturn still not proven — T1 clarify path)
+STAGE_05_ACCEPTED=NO
 ```
 
 ## 8. NEXT

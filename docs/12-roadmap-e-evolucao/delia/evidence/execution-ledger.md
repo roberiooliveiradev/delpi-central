@@ -14402,12 +14402,12 @@ NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 
 ## §6.220 — DELIA-C3-STAGE05-MULTITURN-LATENCY-BOUNDED-FIX-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md` §7. **BASE_HEAD:** `8b86356763`.
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md` §7. **BASE_HEAD:** `8b86356763`. **CODE_SHA:** `eb7aa931b0` (= `origin/main`; deployed `srv-api`).
 
 - **ROOT_CAUSE:** T2 refez seleção com `prior_turns` em `select_capability` → `model_timeout` (~30s stage). Continuity não reutilizava evidência prior validada.
 - **FIX (EXTEND):** goal-first `prior_evidence_sufficient` → prior-content continuation (NON_GROUNDED + `prior_turn_evidence_only`); selection sem `prior_turns`; budget gate `MIN_VIABLE_MODEL_STAGE_SECONDS`; sem raise de timeout global; MESSAGE≠ACT.
 - **TESTS:** `test_stage05_multiturn_latency.py` + Stage05/budget/full `delia-api` pytest green.
-- **LIVE SSH:** preenchido após deploy do SHA desta task (ver §7 doc 38).
+- **LIVE SSH** (`operador@192.168.1.237`, MESSAGE×2, model `moonshotai/kimi-k3`, deploy `eb7aa931b0`): T1 clarify `get_process_context` 34502ms (select_capability 5259ms OK); T2 goal-first `prior_sufficient=no`, `select_group=none` (no select_capability), honest insufficiency 25302ms; `GLOBAL_BUDGET_EXCEEDED=NO`; `MATERIAL_ACT=0`; `LIVE_VERDICT=LATENCY_BOTTLENECK_FIXED` (Stage05 grounded multiturn still not proven — T1 clarify).
 - **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `INCREASE_TIMEOUT=NO`.
 
 NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
