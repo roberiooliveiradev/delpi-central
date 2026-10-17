@@ -59,7 +59,7 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | E06 | Convivência de painéis + acessibilidade | E04+E05 | **ACCEPTED_WITH_RESIDUAL** | exclusividade/foco/Tab unit; teclado real/browser → E09 |
 | E07 | Polimento visual e motion | E02–E06 | **ACCEPTED_WITH_RESIDUAL** | tokens/reduced-motion/focus CODE_PASS; visual/contraste → E09 |
 | E08 | Regressão integrada e gates de build | E02–E07 | **ACCEPTED_WITH_RESIDUAL** | Vitest/delia TS/build/federation PASS; plugin-ui full tsc residual |
-| E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
+| E09 | QA de navegador Portal + Dock | E08 | **INCONCLUSIVE / AUTH_BROWSER_REQUIRED** | env+SHA/CSS servido provados; matriz B01–B12 autenticada pendente |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
 
 - [x] **E01** — Baseline e critérios de aceite (`ACCEPT_WITH_RESIDUAL`; residual browser autenticado → E09; review independente PENDING)
@@ -70,10 +70,10 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 - [x] **E06** — Convivência/foco/acessibilidade (`ACCEPT_WITH_RESIDUAL`; teclado real → E09)
 - [x] **E07** — Consistência visual/motion (`ACCEPT_WITH_RESIDUAL`; visual/contraste → E09)
 - [x] **E08** — Testes/TypeScript/build/federação/regressão (`ACCEPT_WITH_RESIDUAL`; tsc full plugin-ui residual)
-- [ ] **E09** — QA visual integrado no Portal/Dock
+- [ ] **E09** — QA visual integrado no Portal/Dock (`INCONCLUSIVE`; ambiente/CSS servido provados; sessão autenticada pendente — ver §25)
 - [ ] **E10** — Aceite independente e fechamento
 
-**Progresso: `8/10 ACCEPTED (80%)` — E01/E04–E08 `ACCEPT_WITH_RESIDUAL`; E02/E03 `ACCEPT`.** Residuais de browser/geometria/teclado real/contraste permanecem na E09; E10 retém review independente. Aceite E08 não inicia E09 automaticamente.
+**Progresso: `8/10 ACCEPTED (80%)` — E01/E04–E08 `ACCEPT_WITH_RESIDUAL`; E02/E03 `ACCEPT`.** E09 permanece aberta: sem browser autenticado não há `[x]`. E10 bloqueada por E09.
 
 ## 5. Especificação bounded de cada etapa
 
@@ -936,4 +936,42 @@ PHASE_PROGRESSION=NONE
 BROWSER_QA_RESIDUALS=E09
 NEXT=E09_PORTAL_DOCK_BROWSER_QA
 ```
+
+## 25. E09 — Ambiente Portal provado; QA autenticado inconclusivo (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E09-PORTAL-DOCK-BROWSER-QA-01`  
+**Evidence:** [`evidence/navigation-ux-rework-e09/e09-portal-dock-browser-qa-01.md`](./evidence/navigation-ux-rework-e09/e09-portal-dock-browser-qa-01.md)
+
+### O que foi executado
+
+- Reanchor `main`; SSH `srv-api`; containers Portal/DÉLIA/plugin-ui/gateway UP; HTTP 200.
+- Git HEAD no host de deploy alinhado a `origin/main` no probe; `remoteEntry` digests + chunks `Index-DYznBqB0` / `App-DWZzVOov` / CSS `style-FEkHCoj8.css`.
+- CSS servido contém marcador E07 (`[aria-current=page]:before` + `inset-inline-start:2px`), `prefers-reduced-motion`, `will-change:auto`, `overflow-x:hidden`.
+- Regressão Vitest navegação + DeliaConversationPage + delia typecheck PASS.
+- Evidências visuais do Product Master (§14/§19) **reutilizadas** como observação estática B01–B04 — sem re-pedir screenshots.
+
+### O que bloqueia o aceite
+
+| Bloqueio | Impacto |
+|---|---|
+| Sem sessão Keycloak / storage state de QA | B05–B12 live + matriz de larguras/temas/Dock = `TEST_NOT_RUN` |
+| Sem medição WCAG/axe | B10 não pode ser PASS |
+| Companion Dock live | `TEST_NOT_RUN` (não substituído por viewport genérico) |
+| Dock unit local | `ENVIRONMENT_FAILURE` (`tsx` ausente neste runner) |
+
+### Decisão
+
+```text
+E09_VERDICT=INCONCLUSIVE
+E09_ACCEPTED=NO
+CHECKLIST_E09=UNCHECKED
+ROADMAP_PROGRESS=8/10 ACCEPTED
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+DEPLOYED_SHA_VERIFIED=PARTIAL (git HEAD + remoteEntry/CSS; no OCI revision label)
+PHASE_PROGRESSION=NONE
+NEXT=E09_AUTHENTICATED_LIVE_MATRIX_WITH_PORTAL_AND_DOCK
+```
+
+**Não iniciar E10.** Não marcar `[x] E09` até B08–B12 e matriz host autenticada terem evidência executada.
 
