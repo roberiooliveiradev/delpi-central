@@ -14564,3 +14564,16 @@ NEXT=E09_AUTHENTICATED_PORTAL_DOCK_LIVE_MATRIX
 - **EXECUTION:** `DOCUMENTATION_ONLY`; `TESTS=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`. Existing navigation rework E09/E10 gates remain open; no false acceptance or implied backend authorization.
 - **NEXT:** Frontend specialized bounded F-01 reconcile actual exported components/consumers/contract dependencies; select one real missing render-only component for implementation after reanchor/CP-RQ and authorization.
 
+## §6.232 — DELIA-C3-MCP-DAVI-VISTA-SEMANTIC-ROUTING-AND-REFERENCE-FIX-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** [42](../corrections/conversational-intelligence-c3/42-davi-vista-semantic-routing-and-reference-fix.md). **BASE_HEAD:** `445f264007`. **CODE_SHA:** `9eeb3dd1c7` + `e9b2f46287`. **DEPLOYED_SHA:** `e9b2f46287`.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` (selection hint + same-owner resolver ordinal/budget). No provider preference branch.
+- **A1:** `VALID_PROVIDER_NEUTRAL_SELECTION` — `openapi:delpi.search_products` legitimate; prior smoke FAIL was incorrect MCP preference expectation; `A1_CODE_FIX=NONE`.
+- **C2 ROOT:** selection without continuity hint re-listed; after hint, `get_playlist_context` selected then `unproven_identifier` → resolver skipped under 15s floor with ~11s remaining; floor reduced (no global timeout increase) → `list_playlists` resolve → `get_playlist_context(playlist_id)`.
+- **TESTS:** `test_referential_detail_resolution.py` 10 PASS; full `delia-api` pytest green (executor).
+- **LIVE:** C1 `list_playlists` GROUNDED 19203ms PASS; C2 `get_playlist_context` GROUNDED 22805ms PASS; ACT=0; correlation `eb5c4374-68b1-45d3-a97d-25872f0fa3ab`.
+- **GATES:** `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_ARCHITECTURE_REVIEW
+
