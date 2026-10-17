@@ -14551,3 +14551,16 @@ NEXT=E09_AUTHENTICATED_PORTAL_DOCK_LIVE_MATRIX
 - **FORMAL GATES PRESERVED:** E09 `INCONCLUSIVE` por QA autenticado/Chromium/Dock runner, E10 `PENDING`; progresso `8/10`. **Decisão:** `IMPLEMENTATION_TRACK_COMPLETE_WITH_RESIDUALS` para permitir nova trilha bounded de componentes; `NAV_ROADMAP_FORMAL_CLOSURE=NO`, `PHASE_PROGRESSION=NONE`.
 - **NEXT:** bounded inventory de componentes faltantes por contratos/fontes canônicas + follow-up QA E09 quando houver infraestrutura/autorização, sem reabrir E02–E08 sem novo defeito comprovado.
 
+
+
+## §6.231 — DELIA-UX-FRONTEND-CAPABILITY-SURFACE-EXECUTION-MAP-01 (DOCUMENTED)
+
+**DATA:** 2026-10-17. **DOC:** [116 — frontend capability surface/component execution map](../116-delia-frontend-capability-surface-and-component-execution-map.md). **REFERENCE_HEAD:** `445f264007e9cb62e165502ed749f080e87f9754`. **SCOPE:** transversal documentation-first inventory and candidate sequencing only, no UI/backend code, phase or contracts changed.
+
+- **SOURCES:** authorities 16/17/24/25, selected product UX 69–115, thematic 36–43 and 53–66, plugin-ui conversation/composer exports, selected files under plugin-ui/delia; map **does not** supersede canonical authorities. `CANONICAL_REANCHOR=PARTIAL` in this GitHub session; workspace git status and code execution not observed.
+- **PROVEN:** shell/rail/category UI 104–112, conversation, composer, activity/evidence/confirmation, task/data/chart shared primitives exist as files; `DeliaConversationPage` consumes the visual category shell. `EXISTING_EQUIVALENT=YES` for those UI owners; `REUSE_DECISION=REUSE|EXTEND` per bounded responsibility.
+- **NOT PROVEN:** runtime/authorization for Project/Agent/Plugin catalogs, persistent history/search/pin, Work/Watch/Inbox, MCP/A2A execution authority, personal memory, Decision/Outcome/Simulation, artifacts and multimodal surfaces. Classify as `TO_INVENTORY|PLANNED|TARGET` according to document and contract.
+- **DOCUMENT DRIFT:** stale `NOT_IMPLEMENTED` headers in 103–113 despite later implementation records; ledger currently contains **two different §6.230** entries. Both left unchanged; editorial normalization requires separate bounded correction and cross-reference update, not a silent renumber.
+- **EXECUTION:** `DOCUMENTATION_ONLY`; `TESTS=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`. Existing navigation rework E09/E10 gates remain open; no false acceptance or implied backend authorization.
+- **NEXT:** Frontend specialized bounded F-01 reconcile actual exported components/consumers/contract dependencies; select one real missing render-only component for implementation after reanchor/CP-RQ and authorization.
+
