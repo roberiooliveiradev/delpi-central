@@ -24,6 +24,7 @@ Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-
 
 ## Frontend — mapa transversal de continuidade
 
+- [`117 — F-01: inventário de exports, consumidores e lacunas`](./117-frontend-f01-component-export-consumer-and-gap-inventory.md) — inspeção bounded de `plugin-ui`/DÉLIA, status de cada superfície e primeiro candidato F-02 ainda sujeito a autorização.
 - [`116 — Mapa executivo de superfícies, capacidades e componentes`](./116-delia-frontend-capability-surface-and-component-execution-map.md) — cruzamento produto 24 / mapa 17 / docs 69–115 com exports e consumidores observados; distingue UI existente, componentes futuros e contratos/autorizações pendentes. **Documento de navegação, não nova authority ou ordem de fase.**
 - [`115 — Navigation UX Rework`](./115-navigation-ux-rework-execution-roadmap.md) — track de implementação visual concluído com residuais; E09/E10 ainda são gates formais.
 
