@@ -423,3 +423,71 @@ NEXT = E02_DESKTOP_COMPOSITION_BOUNDED_TASK (after coordination/independent revi
 ```
 
 **Não implementar E02 neste commit.** Coordenação pode exigir review independente antes da task E02; o residual de browser **não** bloqueia o desenho de E02, mas **bloqueia E10**.
+
+## 12. E02 — Implementação bounded: rail persistente + painel desktop (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E02-DESKTOP-COMPOSITION-01`  
+**BASE_HEAD:** `1150735788b7b4c3e18b0c5f2e345647e4bb145c` (GitHub `main` consultada).  
+**MODE:** implementação mínima de apresentação + regressões declaradas, sem E03/E04/E05/E06, nenhum backend/ACT e sem deploy. **Código publicado candidato, aceite PENDING.**
+
+### 12.1 Gate de reuso/ownership
+
+```text
+RESPONSIBILITY = REUSE_AND_COMPOSE_LEFT_NAVIGATION
+OWNER = plugins/plugin-ui (shell)
+CONSUMER = plugins/delia (category state)
+AUTHORITIES = 16/50/17/49/51/52/21/20/25 + 103/113/115 + ledger
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = EXTEND
+NEW_SHELL = NO
+SESSION_CATALOG_AUTHORITY_CHANGED = NO
+PHASE_PROGRESSION = NONE
+```
+
+Reanchor canônico da E01-R2 §11 foi aceito com residual e não se presume NEXT de fase a partir deste documento. Fonte revisada por GitHub: código do `ConversationThreeRegionLayout`, CSS, `DeliaConversationPage`, suites de testes e roadmap. **Workspace `git status` e execução de testes nesta task via conector GitHub = não disponíveis;** não declarar PASS sem comando executado. E01 real instrumentado está no relatório `evidence/navigation-ux-rework-e01`.
+
+### 12.2 Diferença de implementação
+
+- `ConversationThreeRegionLayout` recebeu prop **opcional** `rail?: ReactNode | (({ onExpand }) => ReactNode)`. Ela mantém categoria persistentemente montada e cria o rail como irmão do `nav` do painel e do workspace central. Consumidores legados **sem `rail`** preservam o comportamento existente.
+- `ConversationThreeRegionLayout.css` adiciona classes `--with-rail`, `__category-rail` e `__rail-heading`: rail 64px desktop e 52px no container compact (alvos da spec 113), painel atual de 248–288px desktop sem nova estrutura de domínio. Painel recolhido é desmontado do DOM visual, rail continua.
+- **Toggle único por estado:** quando painel aberto, `NavigationActions action="toggle"` fica no header do painel; quando recolhido, aparece no rail. Composições antigas sem rail mantêm toggle prévio.
+- `DeliaConversationPage` passou de `collapsed ? NavigationRail : NavigationCategoryPanel` para `rail={NavigationRail}` + `left={NavigationCategoryPanel}`, sem criar outro estado de categoria nem outro shell. `onSelectCategory` preserva intenção existente de expandir um painel recolhido; a evolução da interação direta entre categorias é a E03.
+- `ConversationWorkspace` permanece em `center={conversation}`, sem depender do toggle; Projetos/Agentes/Plugins continuam como previews `contract_unavailable`, sem owner/Feed/ACT falsos.
+- Nenhuma modificação em ContextPopover, backdrop mobile, autenticação, catálogos, buscas, sessão, Core ou Domain APIs.
+
+### 12.3 Testes adicionados e evidência
+
+- Teste no shell compartilhado para rail+painel concomitantes, rail persistente após recolher/expandir, um toggle acessível por estado e identidade do input central.
+- Teste na DÉLIA para rail e painel simultâneos, regressão de estado central, painel recolhido com rail persistente, expansão e draft sem perda.
+- Testes antigos de seleção de categoria preservados por callback `onExpand`, sem modificar a autoridade de estado ou criar navegação falsa.
+
+**Nesta execução via GitHub API, nenhum runner local ou remoto autenticado foi disponibilizado.** Assim, `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION_GATE=TEST_NOT_RUN`, `PORTAL_BROWSER_QA=TEST_NOT_RUN`. Os testes E01-R2 se referiam ao SHA anterior e **não** cobrem o novo diff E02.
+
+### 12.4 Acceptance gate
+
+| Critério | Estado nesta execução |
+|---|---|
+| Rail e painel simultâneos no JSX | PROVEN_CODE |
+| Rail persiste recolhido e centro não depende do toggle | PROVEN_CODE + TEST_WRITTEN |
+| Um toggle por estado, acessível | PROVEN_CODE + TEST_WRITTEN |
+| Responsive width real desktop/Dock 1440/1280/1024 | TEST_NOT_RUN |
+| Plugin-ui Vitest/TypeScript/build/export gate | TEST_NOT_RUN |
+| DÉLIA Vitest/typecheck/build/federation | TEST_NOT_RUN |
+| Independent runtime acceptance | PENDING |
+
+**E02_STATUS = IMPLEMENTATION_CANDIDATE / INCONCLUSIVE**, portanto a checklist mestre **continua `[ ] E02` e o progresso permanece `1/10 ACCEPTED`**. Após execução dos testes e revisão independente em SHA/config do candidato, atualizar E02 com `ACCEPT` ou `ACCEPT_WITH_RESIDUAL` e só então marcar `[x]`. E03 não é automaticamente autorizada. Residuais E04–E09 preservados.
+
+```text
+STAGE = E02
+TASK_ID = DELIA-UX-NAV-REWORK-E02-DESKTOP-COMPOSITION-01
+BASE_HEAD = 1150735788b7b4c3e18b0c5f2e345647e4bb145c
+REUSE_DECISION = EXTEND
+CODE_CHANGED = YES
+TESTS = TEST_NOT_RUN
+BROWSER_QA = TEST_NOT_RUN
+REVIEW_VERDICT = INCONCLUSIVE
+E02_ACCEPTED = NO
+CHECKLIST_CHANGED = NO
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+NEXT = E02_INDEPENDENT_TEST_AND_VISUAL_REVIEW
+```
