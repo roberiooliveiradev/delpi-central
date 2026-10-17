@@ -590,3 +590,32 @@ CHECKLIST_E02_E03_E04 = UNCHECKED
 NEXT = E02_E03_E04_SAME_SHA_TEST_AND_INDEPENDENT_REVIEW
 PHASE_PROGRESSION = NONE
 ```
+
+## 16. E04-R1 — Hotfix bounded de isolamento visual e interativo do drawer (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E04-MOBILE-DRAWER-OVERLAY-ISOLATION-R1`. **BASE_HEAD:** `5b2f764cc3f44b43a719ca0e862e35be9ee6fd68`. O Product Master enviou três screenshots de Chrome responsivo iPhone SE 375×667: rail recolhido satisfatório, drawer aberto com uma faixa da conversa/compositor exposta à direita, Contexto alto/largo no mobile. Estes screenshots são **evidência visual fornecida pelo usuário**: `E04_DRAWER_BACKGROUND=REWORK` e `E05_CONTEXT_SIZE=PENDING` — não são prova automatizada de teclado/estado.
+
+**RESPONSIBILITY:** UI compact drawer / background isolation; **OWNER:** plugin-ui shell; **CONSUMER:** DÉLIA. `EXISTING_EQUIVALENT=YES` para `ConversationThreeRegionLayout`/CSS/NavigationActions; `REUSE_DECISION=EXTEND`; nenhum componente/registry/provider/route/authorization novo. Escopo não inclui ajustar ContextPopover E05 nem implementar exclusividade simultânea E06.
+
+**Correção E04-R1:**
+- Reutiliza o backdrop de botão existente e torna perceptível sua camada visual na área exposta do compositor: no shell `--compact --with-rail`, backdrop `rgba(0,0,0,.66)` + blur 2px, stacking isolado `center:0 < backdrop:40 < drawer:41 < rail:42`. Fica restrito ao container do Portal, com rail interativo por cima.
+- O centro recebe `inert={drawerOpen}` e o popover Contexto também fica `inert` enquanto o drawer estiver aberto; o DOM central não é desmontado nem se perde o rascunho. Esse gate previne foco/tab/click por input legítimo no compositor atrás do drawer. O isolamento de context e central **não é permissão de negócio**.
+- O botão de recolher existente no drawer compacto é apresentado por um botão visual local com ícone X e mesmo label `Recolher conversas`, vinculado ao mesmo `closeDrawer`; foco inicial no botão de fechamento após abrir; Escape/backdrop/fechar restauram foco ao toggle de rail já existente. O shell sem rail e o modo desktop mantêm o controle anterior.
+- Teste `ConversationThreeRegionLayout.test.tsx` ampliado para checar `inert` enquanto aberto e sua remoção ao fechar, foco inicial no botão, rail disponível, fechamento Escape e backdrop e input com valor preservado.
+
+**LIMITES E EVIDÊNCIA:** código/estilos/testes escritos e publicados em GitHub; `VITEST=TEST_NOT_RUN`, `TSC=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `MOBILE_BROWSER_QA=TEST_NOT_RUN` nesta execução (sem clone/runner/browser autenticado no conector). Revisão independente **PENDING**. Não marcar E04 como concluída ainda; roadmap permanece `1/10 ACCEPTED` até testes e review material em SHA/config final. A E05 continua pendente, tal como coordenação entre Contexto e drawer em E06.
+
+```text
+E04_R1_STATUS = CODE_COMMITTED_CANDIDATE
+VISUAL_USER_EVIDENCE = DEFECT_REPRODUCED_IN_375PX_DRAWER
+EXISTING_EQUIVALENT = YES
+REUSE_DECISION = EXTEND
+CODE_FILES = ConversationThreeRegionLayout.tsx, ConversationThreeRegionLayout.css
+TEST_FILE = ConversationThreeRegionLayout.test.tsx
+TESTS = TEST_NOT_RUN
+DEPLOYED_SHA = TO_VERIFY
+E04_ACCEPTED = NO
+CHECKLIST = UNCHANGED
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+NEXT = E04_R1_VITEST_BUILD_FEDERATION_AND_MOBILE_QA
+```
