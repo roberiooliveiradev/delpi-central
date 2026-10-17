@@ -10,6 +10,8 @@ export * from "./components/conversation";
 /** Host-only shared three-region conversational page shell. */
 export { ConversationThreeRegionLayout } from "./components/conversation/ConversationThreeRegionLayout";
 export { ConversationSidebar } from "./components/conversation/ConversationSidebar";
+/** Host-consumed grouped conversation navigation. */
+export { ConversationNavigation } from "./components/conversation/ConversationNavigation";
 export { NavigationRail } from "./components/conversation/NavigationRail";
 /** Host-only shared category panel. */
 export { NavigationCategoryPanel } from "./components/conversation/NavigationCategoryPanel";
