@@ -8,6 +8,7 @@ import {
   NavigationCategoryPanel,
   ProjectNavigation,
   AgentNavigation,
+  PluginNavigation,
   ConversationThreeRegionLayout,
 } from "@delpi/plugin-ui/index";
 
@@ -18,20 +19,20 @@ export type DeliaConversationPageProps = {
 
 export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
   const [category, setCategory] = useState<NavigationRailCategory>("conversations");
-  const title = category === "projects" ? "Projetos" : category === "agents" ? "Agentes" : "Conversas";
+  const title = category === "projects" ? "Projetos" : category === "agents" ? "Agentes" : category === "plugins" ? "Plugins" : "Conversas";
   return (
     <ConversationThreeRegionLayout
       leftTitle={title}
       left={({ collapsed, onExpand }) => collapsed
         ? <NavigationRail activeCategory={category}
-            availableCategories={["conversations", "projects", "agents"]}
+            availableCategories={["conversations", "projects", "agents", "plugins"]}
             onSelectCategory={(nextCategory) => {
-              if (nextCategory !== "conversations" && nextCategory !== "projects" && nextCategory !== "agents") return;
+              if (nextCategory !== "conversations" && nextCategory !== "projects" && nextCategory !== "agents" && nextCategory !== "plugins") return;
               setCategory(nextCategory);
               onExpand();
             }} />
         : <NavigationCategoryPanel category={category}>
-            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : category === "agents" ? <AgentNavigation status="catalog_unavailable" /> : <ConversationNavigation />}
+            {category === "projects" ? <ProjectNavigation status="contract_unavailable" /> : category === "agents" ? <AgentNavigation status="catalog_unavailable" />  : category === "plugins" ? <PluginNavigation status="contract_unavailable" /> : <ConversationNavigation />}
           </NavigationCategoryPanel>}
       right={<ConversationContextPanel />}
       center={conversation}
