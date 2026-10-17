@@ -25,6 +25,10 @@ from app.domain.interaction.model import GroundingStatus
 # a governed read returned a bounded/partial authoritative result.
 LIMITATION_RESULT_TRUNCATED = "result_truncated"
 
+# Stage 05: grounded synthesis could not select owner evidence that
+# answers the user intent — honest insufficiency, never invented facts.
+LIMITATION_INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+
 # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: canonical limitation
 # surfaced while a write intent awaits a structured confirmation.
 LIMITATION_CONFIRMATION_PENDING = "confirmation_pending"

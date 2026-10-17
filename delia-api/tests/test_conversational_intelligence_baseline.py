@@ -833,13 +833,13 @@ def test_ci08_sibling_with_dates_still_unverified_ordering():
     assert "Registro 9" in (attempt.content or "")
 
 
-def test_ci07_sibling_empty_selection_falls_back_to_raw_dump():
-    """Observed behavior: when the proposal declares the records cannot
-    answer ({\"items\": []}), the deterministic fallback renders the
-    FULL record set verbatim — there is no bounded 'insufficient
-    evidence' answer; an unordered 10-record dump is what reaches the
-    user instead of an explicit limitation
-    (RESPONSE_COMPOSITION_FAILURE candidate)."""
+def test_ci07_sibling_empty_selection_is_honest_insufficiency():
+    """Stage 05: empty synthesis selection is insufficient evidence —
+    honest limitation, not a raw dump of every record."""
+    from app.application.interaction.contracts import (
+        LIMITATION_INSUFFICIENT_EVIDENCE,
+    )
+
     provider = _list_provider(_unordered_records(with_dates=False))
     orch, _ = _orchestrator(
         [provider],
@@ -850,8 +850,9 @@ def test_ci07_sibling_empty_selection_falls_back_to_raw_dump():
     )
     attempt = orch.attempt("Qual o último processo cadastrado?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    # Documented fallback: the whole unordered record set is rendered.
-    assert "Registro 9" in (attempt.content or "")
+    assert "não invento" in (attempt.content or "").lower()
+    assert "Registro 9" not in (attempt.content or "")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
 
 
 # ---------------------------------------------------------------------

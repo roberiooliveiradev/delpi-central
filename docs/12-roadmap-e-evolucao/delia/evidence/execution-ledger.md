@@ -14379,3 +14379,24 @@ NEXT=INDEPENDENT_STAGE04_ACCEPTANCE_REVIEW
 STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; STAGE_04_ACCEPTED=YES_WITH_RESIDUAL
 NEXT=STAGE_05_BOUNDED_IMPLEMENTATION
 
+## §6.218 — DELIA-C3-STAGE-05-BOUNDED-IMPLEMENTATION-AUTHORIZATION-01 (AUTHORIZED_BOUNDED)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-C3-STAGE04-CLOSURE-AND-STAGE05-IMPLEMENTATION-01` / TASK B auth. **PRECONDITION:** §6.217 Stage 04 ACCEPT_WITH_RESIDUAL.
+
+- **DECISION:** `STAGE_05_AUTHORIZED=YES_BOUNDED`; `STAGE_05_IMPLEMENTATION=IN_PROGRESS`.
+- **SCOPE:** grounded synthesis intent/sufficiency/proportional presentation; multi-turn prior context; personality instruction EXTEND; no MODEL_AUTHORED_FACTUAL_PROSE; no ACT by MESSAGE; no C3/C4/C5 phase advance.
+- **NO CLAIMS:** `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `STAGE_05_ACCEPTED=NO`.
+
+## §6.219 — DELIA-C3-STAGE-05-GROUNDED-RESPONSE-IMPLEMENTATION-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md`. **CODE_SHA:** fill after publish.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`.
+- **FIX:** synthesis empty-items → insufficient_evidence; two-record proven diffs; instruction v4 personality bounds; SYNTHESIS_INSTRUCTION intent/continuity.
+- **TESTS:** `test_stage05_grounded_response.py` + CI-07 updated; full `delia-api` pytest green.
+- **LIVE SSH:** fill after deploy (two MESSAGE turns; `MATERIAL_ACT=0`).
+- **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`. R-S04-01 preserved.
+
+STAGE_04_ACCEPTED=YES_WITH_RESIDUAL; STAGE_05_AUTHORIZED=YES_BOUNDED; STAGE_05_ACCEPTED=NO
+NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
+
