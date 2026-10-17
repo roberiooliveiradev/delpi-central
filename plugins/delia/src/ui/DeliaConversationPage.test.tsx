@@ -10,6 +10,7 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect((screen.getByRole("button", { name: "Nova conversa" }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole("button", { name: "Pesquisar conversas" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole("region", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
     expect(screen.getByRole("heading", { name: "Detalhes" })).toBeTruthy();
