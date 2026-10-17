@@ -24,6 +24,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I00 formalmente aceita:** [01 — independent context baseline acceptance](./01-i00-independent-context-baseline-acceptance.md). A revisão prova o fluxo de contexto transitório e limitações do contrato examinado; não prova causa raiz do K2 nem autoriza I01 automaticamente.
 
+**I01 direction proposed (not implementation authorization):** [02 — architecture alignment and continuity proposal](./02-i01-architecture-alignment-and-continuity-proposal.md). Apply 49's Abstraction Gate to existing goal/prior-continuation/synthesis; contract/CP-RQ and RED proof first, then minimal correction. No global memory or new context contract approved.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
