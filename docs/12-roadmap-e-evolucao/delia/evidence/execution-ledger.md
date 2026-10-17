@@ -14657,3 +14657,16 @@ NEXT=I01_CONTRACT_AND_BOUNDED_IMPLEMENTATION_GATE
 - **STATE:** `I01_ARCHITECTURE_DIRECTION=PROPOSED`; `SOURCE_CODE_CHANGED=NO`; `TESTS=TEST_NOT_RUN`; `I01_IMPLEMENTATION_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I01_CONTRACT_CP_RQ_AND_RED_TEST_GATE
+
+
+## §6.239 — DELIA-UX-COMPANION-D02-PENDING-AVATAR-MOTION-BINDING-01 (IMPLEMENTED_CANDIDATE)
+
+**DATA:** 2026-10-17. **DOC:** [118 — Companion Dock/presença e Avatar Motion](../118-companion-dock-presence-and-avatar-motion-execution-roadmap.md). **BASE_HEAD:** `453daa26958f4f0730efb012619e4dbef4e96fc9`. **SCOPE:** shared avatar motion pending connection in existing DÉLIA frontend and dedicated roadmap for D01–D04. No backend, Portal host runtime or new component.
+
+- **DOCUMENTATION:** existing source of truth [69](../69-conversation-experience-ux-wireframes-and-activity-plan.md) WF-03/§14 and [76](../76-unified-avatar-delia-motion-and-user-profile-visual-specification.md) §§3–5 already cover Companion Dock and `processing` halo. 118 gives bounded implementation/QA track without superseding authorities. [116](../116-delia-frontend-capability-surface-and-component-execution-map.md) stays a cross-surface map.
+- **PROVEN CODE GAP:** `UnifiedAvatar` has `processing` CSS 1900ms loop and reduced-motion guard; `App` showed `ActivityViewer` while `loading` without pending avatar. `DeliaAssistantMessage` uses `attention/responding/idle` on existing result turns (not the pending request).
+- **REUSE GATE:** `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE_AND_EXTEND_COMPOSITION`; `OWNER_PLUGIN_UI=VISUAL`, `OWNER_DELIA=REQUEST_STATE`, `OWNER_PORTAL=DOCK_HOST`.
+- **DIFF:** `plugins/delia/src/App.tsx` reuses UnifiedAvatar in loading row with `processing` and aria-hidden; `plugins/delia/src/index.css` aligns activity and suppresses duplicate decorative status icon; `plugins/delia/src/App.test.tsx` asserts processing during demo pending and disappearance after response. No new authority or ACT.
+- **GATES:** `VITEST=TEST_NOT_RUN`; `TS=TEST_NOT_RUN`; `BUILD=TEST_NOT_RUN`; `FEDERATION=TEST_NOT_RUN`; `BROWSER_DOCK=TEST_NOT_RUN`. `D02_VERDICT=IMPLEMENTED_CANDIDATE`; `ACCEPTANCE=PENDING`; `PHASE_PROGRESSION=NONE`.
+- **NEXT:** same-SHA tests/build and real browser Dock/full-page pending/cancel/error/reduced-motion QA, followed by D01 layout and D03 behavior bounded work. Navigation roadmap 115 E09/E10 not auto-closed.
+
