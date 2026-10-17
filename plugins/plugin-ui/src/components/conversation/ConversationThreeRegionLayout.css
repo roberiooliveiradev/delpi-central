@@ -443,11 +443,3 @@
     padding: 8px 12px 16px;
   }
 }
-/* Short landscape/Dock hosts: reserve the header without overflowing the
-   host's vertical bounds; scroll the context body, not the conversation. */
-@container delia-page (max-height: 480px) {
-  .delpi-ui-conversation-three-region__context-popover {
-    top: 8px;
-    max-height: calc(100% - 16px);
-  }
-}
