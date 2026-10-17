@@ -113,6 +113,7 @@
 @import "./styles/message-composer.css";
 @import "./components/conversation/ConversationThreeRegionLayout.css";
 @import "./components/conversation/ConversationSidePanels.css";
+@import "./components/conversation/NavigationRail.css";
 @import "./styles/page-header.css";
 @import "./styles/navigation-card.css";
 @import "./styles/section-route-card.css";
