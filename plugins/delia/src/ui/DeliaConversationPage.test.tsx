@@ -24,7 +24,7 @@ describe("DeliaConversationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
-    for (const name of ["Agentes", "Plugins"]) {
+    for (const name of ["Plugins"]) {
       expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
     }
     expect(container.contains(center)).toBe(true);
@@ -49,6 +49,24 @@ describe("DeliaConversationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
     expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
     expect(container.contains(stableCenter)).toBe(true);
+  });
+
+  it("shows Agents as unavailable without remounting the conversation", () => {
+    const { container } = render(<DeliaConversationPage conversation={<p>Conversa mantida</p>} />);
+    const center = screen.getByText("Conversa mantida");
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    const button = screen.getByRole("button", { name: "Agentes" });
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(button);
+    expect(screen.getByRole("navigation", { name: "Agentes" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Agentes" })).toBeTruthy();
+    expect(screen.getByText(/Agentes estarão disponíveis após a integração autorizada/)).toBeTruthy();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(container.contains(center)).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
+    expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
+    expect(container.contains(center)).toBe(true);
   });
 
 });
