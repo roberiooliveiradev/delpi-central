@@ -157,13 +157,32 @@ R2_FIX=DEFAULT_TURN_BUDGET_SECONDS=30; compose default 30;
 ### Live SSH (pós-rework)
 
 ```text
-SSH_DEPLOYED_SHA=<filled after deploy>
-TURN1_LATENCY_MS=<filled>
-TURN2_LATENCY_MS=<filled>
-TURN2_RESPONSE_TRANSFORMED=<filled>
-TURN2_PRIOR_CONTENT_COPIED=<filled>
-LIVE_VERDICT=<filled>
+SSH_DEPLOYED_SHA=30aaa3c056 (= origin/main; srv-api)
+REAL_MODEL=moonshotai/kimi-k3
+MODE=MESSAGE_ONLY × 2
+GLOBAL_TURN_BUDGET_SECONDS=30 (SETTINGS confirmed in container)
+
+TURN1_STATUS=200 · CAPABILITY=teo.get_product_guide · GROUNDED
+TURN1_LATENCY_MS=19213
+TURN1_GROUNDING=GROUNDED
+
+TURN2_STATUS=200 · prior_sufficient=yes · synthesis proposal_absent
+TURN2_LATENCY_MS=18400
+TURN2_RESPONSE_TRANSFORMED=YES (não cópia; insuficiência honesta)
+TURN2_PRIOR_CONTENT_COPIED=NO
+TURN2_GROUNDING=NON_GROUNDED
+TURN2_LIMITATIONS=prior_turn_evidence_only,insufficient_evidence
+
 MATERIAL_ACT_COUNT=0
+GLOBAL_BUDGET_EXCEEDED=NO (ambos <30s; sem model_timeout terminal)
+
+LIVE_VERDICT=PASS_BOUNDED
+  T1 grounded sob 30s; T2 sem cópia literal e sob 30s; resumo
+  proporcional live ainda residual (proposal_absent no modelo →
+  insuficiência honesta). Stage05 não aceito.
+
+HISTÓRICO PRESERVADO: T1 34502ms (§7); lives intermediários com
+  fallthrough/timeout documentados no ledger §6.221.
 STAGE_05_ACCEPTED=NO
 ```
 
