@@ -1574,10 +1574,10 @@ def test_s2r1_uninterpreted_goal_never_promotes_write():
 
 
 def test_s2r1_invalid_goal_guidance_never_writes():
-    """B1 (§6.174): 'Como criar um processo?' with an INVALID goal
-    proposal (rejected by the allowed-keys contract) — the failed
-    interpretation stage must not promote the earlier PREPARE
-    selection. Zero write-class invocation."""
+    """B1 (§6.174): 'Como criar um processo?' with a goal proposal
+    that carries a surplus unknown key — keys are stripped, the
+    declared read class is kept, and the PREPARE selection must not
+    execute. Zero write-class invocation."""
     provider = _s2_guided_write_provider()
     orch, _ = _orchestrator(
         [provider],
@@ -1589,8 +1589,7 @@ def test_s2r1_invalid_goal_guidance_never_writes():
                 },
                 GOAL_INSTRUCTION_ID: {
                     "goal_class": "read",
-                    # Unknown key -> whole proposal rejected by
-                    # allowed_keys -> no declared interpretation.
+                    # Surplus key is stripped; goal_class remains.
                     "invented_field": True,
                 },
                 ARGUMENTS_INSTRUCTION_ID: {
@@ -1605,9 +1604,11 @@ def test_s2r1_invalid_goal_guidance_never_writes():
     )
     attempt = orch.attempt("Como criar um processo?")
     assert provider.calls == []
-    assert attempt.status is (
-        GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status in (
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+        GovernedCapabilityStatus.NOT_APPLICABLE,
     )
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
 
 
 def test_s2r1_uninterpreted_write_only_surface_never_writes():

@@ -1761,6 +1761,13 @@ def _render_synthesis(
     records compose a bounded introduced list.
     """
     items = proposal.get("items")
+    # Adapter historically told models "plain string" values; a JSON
+    # array encoded as a string is recovered once, never invented.
+    if isinstance(items, str):
+        try:
+            items = json.loads(items)
+        except ValueError:
+            return None, "schema_invalid"
     if not isinstance(items, (list, tuple)):
         return None, "schema_invalid"
     if not items:
@@ -6524,7 +6531,27 @@ class OperationalCapabilityOrchestrator:
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None
-        if set(proposal) - allowed_keys:
+        # Surplus keys (e.g. adapter-suggested "limitations" on a
+        # selection-only schema) must not discard a valid proposal —
+        # Stage 05 live: grounded_synthesis returned ok then prior
+        # continuity saw proposal_absent after a hard allowed_keys
+        # reject. Project to the declared contract instead.
+        extra = set(proposal) - allowed_keys
+        if extra:
+            _logger.info(
+                "orchestration stage=model_propose "
+                "decision=strip_extra purpose=%s extra_keys=%s "
+                "correlation_id=%s",
+                instruction_id,
+                ",".join(sorted(str(k) for k in extra)[:8]),
+                correlation or "",
+            )
+            proposal = {
+                key: value
+                for key, value in proposal.items()
+                if key in allowed_keys
+            }
+        if any(field not in proposal for field in expected_fields):
             return None
         return proposal
 

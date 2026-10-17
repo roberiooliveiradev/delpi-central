@@ -115,6 +115,21 @@ def test_adapter_is_external_approved_openai_compatible():
     assert adapter.exposure_class is ProviderExposureClass.EXTERNAL_APPROVED
 
 
+def test_structured_output_directive_allows_non_string_json_types():
+    """Synthesis/orchestration schemas need arrays/objects — not
+    'plain string' values that conflict with items[] contracts."""
+    directive = OpenAICompatibleModelInvocationAdapter._structured_output_directive(
+        _request(
+            expected_fields=("items",),
+            task_purpose_id="delia.capability_orchestration.grounded_synthesis",
+            output_schema_id="delia.capability_orchestration.grounded_synthesis",
+        )
+    )
+    assert "Required fields: \"items\"" in directive
+    assert "plain string" not in directive.lower()
+    assert "array" in directive.lower()
+
+
 def test_adapter_fails_closed_on_incomplete_config():
     with pytest.raises(ValueError):
         _adapter(api_key=" ")

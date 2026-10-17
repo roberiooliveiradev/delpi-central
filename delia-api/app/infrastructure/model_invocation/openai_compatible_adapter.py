@@ -306,11 +306,17 @@ class OpenAICompatibleModelInvocationAdapter:
     @staticmethod
     def _structured_output_directive(request: ModelInvocationRequest) -> str:
         fields = ", ".join(f'"{name}"' for name in request.expected_fields)
+        # Do not force every value to be a plain string: orchestration
+        # schemas use arrays/objects (e.g. synthesis "items"). The
+        # instruction_content / lineage carries field semantics;
+        # optional limitations must not invalidate those contracts.
         return (
             "Respond ONLY with a single JSON object. No prose, no markdown "
-            f"fences. Required fields: {fields}. Each value must be a plain "
-            'string. Optionally include "limitations": an array of short '
-            "strings describing what the answer could not verify or cover."
+            f"fences. Required fields: {fields}. Use JSON types that match "
+            "each field (string, number, boolean, object, or array). "
+            'You MAY include "limitations": an array of short strings '
+            "describing what could not be verified — omit it when the "
+            "required fields alone answer the schema."
         )
 
     @staticmethod

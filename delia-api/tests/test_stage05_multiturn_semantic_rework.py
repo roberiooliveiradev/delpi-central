@@ -5,6 +5,8 @@ Fake clock / fake model. Provider-neutral fixtures. MESSAGE ≠ ACT.
 
 from __future__ import annotations
 
+import json
+
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     CapabilityProviderError,
@@ -237,6 +239,115 @@ def test_prior_excerpt_split_is_deterministic():
     records = _prior_excerpt_records(PRIOR_GUIDE)
     assert len(records) >= 3
     assert all("excerpt" in r for r in records)
+
+
+def test_prior_synthesis_keeps_proposal_when_model_adds_limitations():
+    """RED→GREEN: surplus adapter-suggested keys must not discard items.
+
+    Live §6.221: model_propose decision=ok for grounded_synthesis then
+    prior_continuation reason=proposal_absent — caused by hard reject
+    of allowed_keys when the model also returned "limitations".
+    """
+    provider = FakeProvider(
+        "acme",
+        [
+            _group(
+                "acme",
+                "guides",
+                [
+                    _cap(
+                        "guides",
+                        "acme",
+                        "read_guide",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": True,
+            },
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": [
+                    {"record_index": 0, "fields": ["excerpt"]},
+                    {"record_index": 1, "fields": ["excerpt"]},
+                ],
+                "presentation": "answer",
+                # Surplus key historically zeroed the whole proposal.
+                "limitations": ["unverified"],
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    prior = _prior()
+    attempt = orch.attempt(
+        "Resuma essa orientação em duas frases.",
+        prior_turns=prior,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is None
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    assert attempt.content != prior[1].content
+    assert "fluxo orientado" in (attempt.content or "")
+    assert provider.calls == []
+
+
+def test_prior_synthesis_accepts_items_encoded_as_json_string():
+    provider = FakeProvider(
+        "nebula",
+        [
+            _group(
+                "nebula",
+                "docs",
+                [
+                    _cap(
+                        "docs",
+                        "nebula",
+                        "manual",
+                        SpecialistOperationClass.READ,
+                    )
+                ],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": True,
+            },
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": json.dumps(
+                    [
+                        {"record_index": 0, "fields": ["excerpt"]},
+                        {"record_index": 1, "fields": ["excerpt"]},
+                    ]
+                ),
+                "presentation": "answer",
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Resuma essa orientação em duas frases.",
+        prior_turns=_prior(),
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "fluxo orientado" in (attempt.content or "")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
 
 
 def test_summary_follow_up_is_not_literal_prior_copy():
