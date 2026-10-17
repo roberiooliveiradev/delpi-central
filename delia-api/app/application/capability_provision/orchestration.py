@@ -4962,13 +4962,18 @@ class OperationalCapabilityOrchestrator:
     def _budget_allows_resolver(self, deadline: TurnDeadline) -> bool:
         """Resolver fan-out needs headroom beyond a bare clarify.
 
-        Requires remaining budget for at least half a configured model
-        stage (or four viable minima) so clarify can still finish.
+        Requires remaining budget for a bounded model stage slice plus
+        a viable minimum so clarify can still finish. The floor is
+        intentionally below half a full stage timeout: follow-up turns
+        that already spent budget on goal/selection must still be able
+        to resolve a missing identifier via one same-owner READ
+        (e.g. ordinal bind after an unproven id) inside the global
+        30s turn budget — raising the global ceiling is forbidden.
         """
         remaining = deadline.remaining_seconds()
         floor = max(
-            self._model_stage_timeout_seconds * 0.5,
-            MIN_VIABLE_MODEL_STAGE_SECONDS * 4,
+            self._model_stage_timeout_seconds * 0.25,
+            MIN_VIABLE_MODEL_STAGE_SECONDS * 3,
         )
         return remaining >= floor
 

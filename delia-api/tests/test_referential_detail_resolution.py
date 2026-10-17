@@ -29,6 +29,7 @@ from app.application.model_invocation.contracts import (
     ConversationContextTurn,
     ProviderInvocationPayload,
 )
+from app.application.interaction.turn_budget import TurnDeadline
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.domain.evidence.model import EpistemicClass, ModelRef, SourceRef
 from app.domain.interaction.model import TurnKind
@@ -268,6 +269,29 @@ def test_user_list_ordinal_first():
     ) == 0
     assert _user_list_ordinal("the second item please") == 1
     assert _user_list_ordinal("mostre qualquer um") is None
+
+
+def test_resolver_budget_allows_follow_up_headroom():
+    """Live C2: ~11s remaining must still allow same-owner resolve."""
+    class _Clock:
+        def __init__(self) -> None:
+            self.now = 1000.0
+
+        def __call__(self) -> float:
+            return self.now
+
+    clock = _Clock()
+    deadline = TurnDeadline.start(30.0, clock=clock)
+    clock.now += 18.8  # ~11.2s remaining — observed live skip under old floor
+    orch = OperationalCapabilityOrchestrator(
+        [],
+        invoke_model=InvokeModel(FakeProposalModel({})),
+        model_ref=TEST_MODEL_REF,
+        model_stage_timeout_seconds=30.0,
+    )
+    assert orch._budget_allows_resolver(deadline) is True
+    clock.now += 8.0  # ~3.2s left — below floor
+    assert orch._budget_allows_resolver(deadline) is False
 
 
 def test_prior_listing_hint_from_observation():
