@@ -24,9 +24,7 @@ describe("DeliaConversationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
-    for (const name of ["Plugins"]) {
-      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
-    }
+    expect((screen.getByRole("button", { name: "Plugins" }) as HTMLButtonElement).disabled).toBe(false);
     expect(container.contains(center)).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
     expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
@@ -62,6 +60,23 @@ describe("DeliaConversationPage", () => {
     expect(screen.getByRole("region", { name: "Agentes" })).toBeTruthy();
     expect(screen.getByText(/Agentes estarão disponíveis após a integração autorizada/)).toBeTruthy();
     expect(screen.queryByRole("list")).toBeNull();
+    expect(container.contains(center)).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
+    expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
+    expect(container.contains(center)).toBe(true);
+  });
+
+  it("shows Plugins as Portal-dependent preview while preserving the active conversation", () => {
+    const { container } = render(<DeliaConversationPage conversation={<p>Conversa intacta</p>} />);
+    const center = screen.getByText("Conversa intacta");
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Plugins" }));
+    expect(screen.getByRole("navigation", { name: "Plugins" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Plugins" })).toBeTruthy();
+    expect(screen.getByText(/Aplicações estarão disponíveis após a integração autorizada com o Portal/)).toBeTruthy();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Instalar|Conectar/i })).toBeNull();
     expect(container.contains(center)).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
