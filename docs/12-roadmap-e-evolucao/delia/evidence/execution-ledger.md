@@ -14525,7 +14525,19 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
 - **Reuse:** Product Master screenshots B01–B04 observational; nav Vitest + delia typecheck PASS; no product code fix.
 - **DECISION:** `E09_VERDICT=INCONCLUSIVE`; checklist `[ ]`; progress `8/10`; E10 not started.
 
-NEXT=E09_AUTHENTICATED_LIVE_MATRIX_WITH_PORTAL_AND_DOCK
+NEXT=E09_LOCAL_OR_AUTHENTICATED_MATRIX
+
+## §6.230 — DELIA-UX-NAV-REWORK-E09-LOCAL-STANDALONE-LIVE-MATRIX-01 (INCONCLUSIVE / PARTIAL)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-UX-NAV-REWORK-E09-PORTAL-DOCK-BROWSER-QA-01` (continuação local). **DOCS:** [115](../115-navigation-ux-rework-execution-roadmap.md) §26 + [evidence](./navigation-ux-rework-e09/e09-portal-dock-browser-qa-01.md) + [`local-standalone/`](./navigation-ux-rework-e09/local-standalone/).
+
+- **Stack local:** gateway `:80` 200; Keycloak container Up; delia Vite `:5020` + plugin-ui `:5010`.
+- **Playwright Docker** `v1.64.1-jammy --network host` → standalone LIVE: B01–B06/B08/B09/B11/B12 **PASS**; widths 1440…320 **PASS**; B07 `TEST_NOT_RUN`; B10 `MEASUREMENT_INCONCLUSIVE`.
+- **Portal unauth:** spinner sem login form / sem rail (~20s) → auth matrix ainda `TEST_NOT_RUN`.
+- **Dock unit:** `npx tsx --test` globalDeliaDock → **23 PASS**; Dock live `TEST_NOT_RUN`.
+- **DECISION:** `E09_VERDICT=INCONCLUSIVE`; checklist `[ ]`; progress `8/10`; E10 not started; `FIXES_APPLIED=NONE`.
+
+NEXT=E09_AUTHENTICATED_PORTAL_DOCK_LIVE_MATRIX
 
 
 

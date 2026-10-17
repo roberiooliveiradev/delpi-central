@@ -1,0 +1,693 @@
+{
+  "surface": "delia-standalone-vite",
+  "url": "http://127.0.0.1:5020/apps/delia/",
+  "cases": {
+    "B01_desktop_1280": {
+      "status": "PASS",
+      "measure": {
+        "root": {
+          "x": 8,
+          "y": 8,
+          "w": 1264,
+          "h": 537,
+          "visible": true
+        },
+        "rail": {
+          "x": 8,
+          "y": 8,
+          "w": 64,
+          "h": 537,
+          "visible": true
+        },
+        "panel": {
+          "x": 72,
+          "y": 8,
+          "w": 249,
+          "h": 537,
+          "visible": true
+        },
+        "center": {
+          "x": 321,
+          "y": 8,
+          "w": 951,
+          "h": 537,
+          "visible": true
+        },
+        "composer": {
+          "x": 456,
+          "y": 405,
+          "w": 682,
+          "h": 27,
+          "visible": true
+        },
+        "compact": false,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": false,
+        "bodyScrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "shot": "/work/B01-1280.png"
+    },
+    "B02_categories": {
+      "status": "PASS",
+      "results": [
+        {
+          "label": "Conversas",
+          "found": true,
+          "panelHasLabel": false,
+          "composerStill": 1
+        },
+        {
+          "label": "Projetos",
+          "found": true,
+          "panelHasLabel": false,
+          "composerStill": 1
+        },
+        {
+          "label": "Agentes",
+          "found": true,
+          "panelHasLabel": false,
+          "composerStill": 1
+        },
+        {
+          "label": "Plugins",
+          "found": true,
+          "panelHasLabel": false,
+          "composerStill": 1
+        }
+      ],
+      "shot": "/work/B02-categories.png"
+    },
+    "widths": {
+      "320": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 304,
+            "h": 596,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 52,
+            "h": 596,
+            "visible": true
+          },
+          "panel": null,
+          "center": {
+            "x": 60,
+            "y": 8,
+            "w": 252,
+            "h": 596,
+            "visible": true
+          },
+          "composer": {
+            "x": 83,
+            "y": 463,
+            "w": 206,
+            "h": 27,
+            "visible": true
+          },
+          "compact": true,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 320,
+          "clientWidth": 320
+        },
+        "shot": "/work/width-320.png"
+      },
+      "375": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 359,
+            "h": 580,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 52,
+            "h": 580,
+            "visible": true
+          },
+          "panel": null,
+          "center": {
+            "x": 60,
+            "y": 8,
+            "w": 307,
+            "h": 580,
+            "visible": true
+          },
+          "composer": {
+            "x": 84,
+            "y": 446,
+            "w": 258,
+            "h": 27,
+            "visible": true
+          },
+          "compact": true,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 375,
+          "clientWidth": 375
+        },
+        "shot": "/work/width-375.png"
+      },
+      "420": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 404,
+            "h": 529,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 52,
+            "h": 529,
+            "visible": true
+          },
+          "panel": null,
+          "center": {
+            "x": 60,
+            "y": 8,
+            "w": 352,
+            "h": 529,
+            "visible": true
+          },
+          "composer": {
+            "x": 86,
+            "y": 410,
+            "w": 301,
+            "h": 27,
+            "visible": true
+          },
+          "compact": true,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 420,
+          "clientWidth": 420
+        },
+        "shot": "/work/width-420.png"
+      },
+      "768": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 752,
+            "h": 533,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 52,
+            "h": 533,
+            "visible": true
+          },
+          "panel": null,
+          "center": {
+            "x": 60,
+            "y": 8,
+            "w": 700,
+            "h": 533,
+            "visible": true
+          },
+          "composer": {
+            "x": 98,
+            "y": 402,
+            "w": 624,
+            "h": 27,
+            "visible": true
+          },
+          "compact": true,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 768,
+          "clientWidth": 768
+        },
+        "shot": "/work/width-768.png"
+      },
+      "1024": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 1008,
+            "h": 537,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 64,
+            "h": 537,
+            "visible": true
+          },
+          "panel": {
+            "x": 72,
+            "y": 8,
+            "w": 249,
+            "h": 537,
+            "visible": true
+          },
+          "center": {
+            "x": 321,
+            "y": 8,
+            "w": 695,
+            "h": 537,
+            "visible": true
+          },
+          "composer": {
+            "x": 360,
+            "y": 405,
+            "w": 617,
+            "h": 27,
+            "visible": true
+          },
+          "compact": false,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 1024,
+          "clientWidth": 1024
+        },
+        "shot": "/work/width-1024.png"
+      },
+      "1280": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 1264,
+            "h": 537,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 64,
+            "h": 537,
+            "visible": true
+          },
+          "panel": {
+            "x": 72,
+            "y": 8,
+            "w": 249,
+            "h": 537,
+            "visible": true
+          },
+          "center": {
+            "x": 321,
+            "y": 8,
+            "w": 951,
+            "h": 537,
+            "visible": true
+          },
+          "composer": {
+            "x": 456,
+            "y": 405,
+            "w": 682,
+            "h": 27,
+            "visible": true
+          },
+          "compact": false,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "shot": "/work/width-1280.png"
+      },
+      "1440": {
+        "status": "PASS",
+        "measure": {
+          "root": {
+            "x": 8,
+            "y": 8,
+            "w": 1424,
+            "h": 537,
+            "visible": true
+          },
+          "rail": {
+            "x": 8,
+            "y": 8,
+            "w": 64,
+            "h": 537,
+            "visible": true
+          },
+          "panel": {
+            "x": 72,
+            "y": 8,
+            "w": 272,
+            "h": 537,
+            "visible": true
+          },
+          "center": {
+            "x": 344,
+            "y": 8,
+            "w": 1088,
+            "h": 537,
+            "visible": true
+          },
+          "composer": {
+            "x": 547,
+            "y": 405,
+            "w": 682,
+            "h": 27,
+            "visible": true
+          },
+          "compact": false,
+          "overflowX": false,
+          "ariaCurrent": 1,
+          "inertCenter": false,
+          "bodyScrollWidth": 1440,
+          "clientWidth": 1440
+        },
+        "shot": "/work/width-1440.png"
+      }
+    },
+    "B03_drawer_375": {
+      "status": "PASS",
+      "measure": {
+        "root": {
+          "x": 8,
+          "y": 8,
+          "w": 359,
+          "h": 580,
+          "visible": true
+        },
+        "rail": {
+          "x": 8,
+          "y": 8,
+          "w": 52,
+          "h": 580,
+          "visible": true
+        },
+        "panel": {
+          "x": 60,
+          "y": 8,
+          "w": 288,
+          "h": 580,
+          "visible": true
+        },
+        "center": {
+          "x": 60,
+          "y": 8,
+          "w": 307,
+          "h": 580,
+          "visible": true
+        },
+        "composer": {
+          "x": 84,
+          "y": 446,
+          "w": 258,
+          "h": 27,
+          "visible": true
+        },
+        "compact": true,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": true,
+        "bodyScrollWidth": 375,
+        "clientWidth": 375
+      },
+      "backdrop": 1,
+      "shot": "/work/B03-375-drawer.png"
+    },
+    "B05_B08_B09_escape_inert_tab": {
+      "status": "PASS",
+      "mOpen": {
+        "root": {
+          "x": 8,
+          "y": 8,
+          "w": 359,
+          "h": 580,
+          "visible": true
+        },
+        "rail": {
+          "x": 8,
+          "y": 8,
+          "w": 52,
+          "h": 580,
+          "visible": true
+        },
+        "panel": {
+          "x": 60,
+          "y": 8,
+          "w": 288,
+          "h": 580,
+          "visible": true
+        },
+        "center": {
+          "x": 60,
+          "y": 8,
+          "w": 307,
+          "h": 580,
+          "visible": true
+        },
+        "composer": {
+          "x": 84,
+          "y": 446,
+          "w": 258,
+          "h": 27,
+          "visible": true
+        },
+        "compact": true,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": true,
+        "bodyScrollWidth": 375,
+        "clientWidth": 375
+      },
+      "mAfterEsc": {
+        "root": {
+          "x": 8,
+          "y": 8,
+          "w": 359,
+          "h": 580,
+          "visible": true
+        },
+        "rail": {
+          "x": 8,
+          "y": 8,
+          "w": 52,
+          "h": 580,
+          "visible": true
+        },
+        "panel": null,
+        "center": {
+          "x": 60,
+          "y": 8,
+          "w": 307,
+          "h": 580,
+          "visible": true
+        },
+        "composer": {
+          "x": 84,
+          "y": 446,
+          "w": 258,
+          "h": 27,
+          "visible": true
+        },
+        "compact": true,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": false,
+        "bodyScrollWidth": 375,
+        "clientWidth": 375
+      },
+      "ctxOpened": true,
+      "escCloses": true,
+      "tabsSample": [
+        {
+          "tag": "BUTTON",
+          "aria": "Conversas",
+          "inertAncestor": false
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "Projetos",
+          "inertAncestor": false
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "Agentes",
+          "inertAncestor": false
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "Plugins",
+          "inertAncestor": false
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "Abrir contexto",
+          "inertAncestor": false
+        },
+        {
+          "tag": "TEXTAREA",
+          "aria": "Pergunte à DÉLIA",
+          "inertAncestor": false
+        }
+      ],
+      "shot": "/work/B08-escape-tab.png"
+    },
+    "B04_context_375": {
+      "status": "PASS",
+      "opened": true,
+      "measure": {
+        "root": {
+          "x": 8,
+          "y": 8,
+          "w": 359,
+          "h": 580,
+          "visible": true
+        },
+        "rail": {
+          "x": 8,
+          "y": 8,
+          "w": 52,
+          "h": 580,
+          "visible": true
+        },
+        "panel": null,
+        "center": {
+          "x": 60,
+          "y": 8,
+          "w": 307,
+          "h": 580,
+          "visible": true
+        },
+        "composer": {
+          "x": 84,
+          "y": 446,
+          "w": 258,
+          "h": 27,
+          "visible": true
+        },
+        "compact": true,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": false,
+        "bodyScrollWidth": 375,
+        "clientWidth": 375
+      },
+      "shot": "/work/B04-context.png"
+    },
+    "B06_draft": {
+      "status": "PASS",
+      "value": "E09 draft probe texto",
+      "shot": "/work/B06-draft.png"
+    },
+    "B11_zoom_200": {
+      "status": "PASS",
+      "measure": {
+        "root": {
+          "x": 16,
+          "y": 16,
+          "w": 1248,
+          "h": 1074,
+          "visible": true
+        },
+        "rail": {
+          "x": 16,
+          "y": 16,
+          "w": 104,
+          "h": 1074,
+          "visible": true
+        },
+        "panel": null,
+        "center": {
+          "x": 120,
+          "y": 16,
+          "w": 1144,
+          "h": 1074,
+          "visible": true
+        },
+        "composer": {
+          "x": 198,
+          "y": 810,
+          "w": 988,
+          "h": 54,
+          "visible": true
+        },
+        "compact": false,
+        "overflowX": false,
+        "ariaCurrent": 1,
+        "inertCenter": false,
+        "bodyScrollWidth": 1280,
+        "clientWidth": 1280
+      },
+      "shot": "/work/B11-zoom200.png"
+    },
+    "B12_reduced_motion": {
+      "status": "PASS",
+      "motion": {
+        "found": true,
+        "transitionDuration": "0s",
+        "animationDuration": "0s",
+        "willChange": "auto",
+        "mq": true
+      }
+    },
+    "theme_dark": {
+      "status": "OBSERVED",
+      "backgroundColor": "rgba(0, 0, 0, 0)"
+    },
+    "B10_contrast_sample": {
+      "status": "FAIL",
+      "contrast": {
+        "found": true,
+        "ratio": 1.11,
+        "fg": [
+          17,
+          17,
+          17
+        ],
+        "bg": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "portal_unauth": {
+      "status": "OBSERVED",
+      "http": 200,
+      "url": "http://127.0.0.1/apps/delia/",
+      "textPreview": ""
+    },
+    "B07_stream": {
+      "status": "TEST_NOT_RUN",
+      "reason": "no streaming fixture"
+    },
+    "dock_live": {
+      "status": "TEST_NOT_RUN",
+      "reason": "Companion Dock requires Portal authenticated host"
+    }
+  },
+  "meta": {
+    "http": 200,
+    "title": "DÉLIA"
+  }
+}
