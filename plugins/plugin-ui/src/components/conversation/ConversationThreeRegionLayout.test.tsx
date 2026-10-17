@@ -66,4 +66,26 @@ describe("ConversationThreeRegionLayout R2", () => {
     expect(screen.queryByText("Detalhes autorizados")).toBeNull();
   });
 
+  it("E02 keeps a persistent category rail beside the panel while retaining legacy no-rail behavior", () => {
+    const { container } = render(
+      <ConversationThreeRegionLayout
+        rail={<button type="button">Categorias persistentes</button>}
+        left={<span>Painel existente</span>}
+        center={<input aria-label="Draft" defaultValue="Preservado" />}
+      />,
+    );
+    const draft = screen.getByRole("textbox", { name: "Draft" });
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__category-rail")).toHaveLength(1);
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Categorias persistentes" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Categorias persistentes" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Expandir conversas" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(1);
+    expect(container.contains(draft)).toBe(true);
+    expect((draft as HTMLInputElement).value).toBe("Preservado");
+  });
+
 });
