@@ -545,3 +545,48 @@ NEXT = E02_E03_TEST_AND_INDEPENDENT_REVIEW
 ```
 
 Não marcar `[x] E03` antes de E02 aceita e testes/evidências da própria E03. E04 não inicia automaticamente.
+
+## 14. E02/E03 — Consolidação de evidência visual apresentada pelo Product Master (2026-10-17)
+
+**Evidência externa da sessão:** o Product Master enviou duas capturas reais de `https://minhadelpi.com.br/apps/delia` com desktop dark-mode: (a) rail de Conversas/Projetos/Agentes/Plugins persistente à esquerda e painel **Agentes** expandido, selecionado, com texto de indisponibilidade autorizada e `ConversationWorkspace` visível; (b) rail com **Projetos** selecionado e painel recolhido, liberando espaço horizontal ao centro. São **screenshots fornecidos pelo usuário**, não browser QA executado pelo assistente. Identificação de SHA exato dos assets dessas capturas = `TO_VERIFY`.
+
+| Stage | Evidência | Resultado documental |
+|---|---|---|
+| E02 | rail e painel simultâneos na captura desktop + centro visível; painel recolhido conserva rail | `VISUAL_OBSERVED_PASS` no recorte capturado, não `ACCEPT` de teste/QA |
+| E03 | seleção Agentes abre painel existente; seleção Projetos permanece destacada com painel fechado | `VISUAL_OBSERVED_PASS` no recorte capturado; não prova fluxo completo de quatro categorias, streaming nem draft |
+| E02/E03 | unit/TypeScript/build/federation atualizados nos SHAs após código | `TEST_NOT_RUN` neste chat |
+| E02/E03 | revisão independente de runtime/config e matriz responsive | `PENDING`; QA amplo pertence à E09 |
+
+**Conclusão:** observação visual positiva, porém critérios de aceite do roadmap continuam condicionados à reexecução dos testes e revisão com SHA/config. **Checklist E02 e E03 continuam [ ] e progresso 1/10**, preservando rastreabilidade. A autorização explícita subsequente do Product Master para consolidar evidência e executar E04 é **bounded**, sem autoaceitar E02/E03. Residual extra notado ao reexaminar o HEAD: `ConversationThreeRegionLayout` continha `left && (!rail || !collapsed)` (invertia condição de painel quando rail presente); E04 faz correção mínima de regressão para `leftExpanded`. Nenhum diagnóstico de deploy é inferido da diferença código/captura sem provenance suficiente.
+
+## 15. E04 — Implementação bounded de drawer mobile (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E04-MOBILE-DRAWER-01`  
+**BASE_HEAD:** `756bee731df106288c4b0e25281e10276fa2bd2d`; execução autorizada explicitamente pelo Product Master após screenshots desktop.  
+**OWNER:** `plugins/plugin-ui`; consumer DÉLIA permanece sem diff na E04. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` (shell e CSS atuais). **Nenhum novo componente/engine/provider/regra de RBAC.** E04 não modifica ContextPopover responsivo (E05) nem faz coordenação drawer↔contexto (E06).
+
+**Diferença no shell:**
+- corrigido o predicado anterior de renderização do painel quando `rail` está presente para `leftExpanded`; elimina drift entre estado e existência do painel e torna o drawer testável em estado compacto
+- `drawerOpen` é derivado de `compact && leftExpanded && !!left`, com `compact` medido por `ResizeObserver` sobre container pai, não `window.innerWidth`
+- quando drawer aberto, renderiza `button` de backdrop nomeado **Fechar navegação**; click fecha drawer; Escape fecha e devolve o foco ao botão de expansão no rail; o botão existente de recolher utiliza o mesmo close path
+- CSS `--compact` adiciona posicionamento absoluto ao painel sobre o centro, começando **após o rail**, largura `min(288px, calc(100% - rail - 8px))`; z-index rail>drawer>backdrop, sem ocupar 100vw/100vh; centro permanece montado
+- esta task não implementa launcher-only extremo nem foco modal completo/trap do drawer; esses requisitos permanecem associados a E06/QA E09. Se o drawer atrapalhar controles do Dock em QA, `REWORK` antes do aceite.
+
+**Teste escrito:** `ConversationThreeRegionLayout.test.tsx` passou a incluir simulação de host compacto com `ResizeObserver` em 375px, estado inicialmente recolhido, abrir drawer/backdrop, fechar Escape com retorno de foco, fechar por backdrop, verificar input central intacto. Também permanece a suíte desktop de E02/E03 como regressão. **Teste escrito != PASS executado.**
+
+**Evidência operacional nesta execução:** código CSS/TSX e teste publicados no GitHub. Não houve clone local de todo o monorepo nem comando Vitest/npm/build/autenticado Portal; portanto `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `FEDERATION_BUILD=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN`, `INDEPENDENT_REVIEW=PENDING`. A E04 não é considerada concluída com base em compilação presumida ou no screenshot desktop anterior.
+
+```text
+E02_VISUAL_EVIDENCE = USER_SCREENSHOT_OBSERVED
+E03_VISUAL_EVIDENCE = USER_SCREENSHOT_OBSERVED
+E02_ACCEPTED = NO (test/review pending)
+E03_ACCEPTED = NO (test/review pending)
+E04_IMPLEMENTATION = CODE_COMMITTED_CANDIDATE
+E04_ACCEPTED = NO
+E04_TESTS = TEST_NOT_RUN
+E04_LIVE_QA = TEST_NOT_RUN
+ROADMAP_PROGRESS = 1/10 ACCEPTED
+CHECKLIST_E02_E03_E04 = UNCHECKED
+NEXT = E02_E03_E04_SAME_SHA_TEST_AND_INDEPENDENT_REVIEW
+PHASE_PROGRESSION = NONE
+```
