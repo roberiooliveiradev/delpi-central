@@ -2001,7 +2001,24 @@ def _compose_answer(
     <id>``) — copied verbatim, never invented; when the identifier
     field itself is the selected field it renders as the clause
     instead of the subject.
+
+    Prior-turn continuity records use a synthetic ``excerpt`` leaf.
+    Those values are session evidence already phrased for the user —
+    render them directly instead of the technical
+    ``O campo "excerpt" é:`` wrapper (R-S05-01).
     """
+    if values and all(
+        _canonical_key(field_name) == "excerpt" for field_name, _ in values
+    ):
+        text = " ".join(value for _, value in values).strip()
+        if not text:
+            return ""
+        if text.endswith((".", "!", "?")):
+            sentence = text
+        else:
+            sentence = text + "."
+        return sentence[:1].upper() + sentence[1:]
+
     identifier = _record_identifier(record)
     id_field, id_value = identifier if identifier else (None, None)
     subject = f" do registro {id_value}" if id_value else ""
@@ -2024,12 +2041,22 @@ def _detail_header(record: Mapping[str, Any]) -> str:
     identifier = _record_identifier(record)
     if identifier:
         return f"Detalhes do registro {identifier[1]}:"
+    # Prior-turn excerpts are not owner registry rows — avoid the
+    # technical "registro" framing when every leaf is an excerpt.
+    if record and all(
+        _canonical_key(str(key)) == "excerpt" for key in record
+    ):
+        return "Trechos anteriores:"
     return "Detalhes do registro:"
 
 
 def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
     lines = []
     for field_name, value in values:
+        if _canonical_key(field_name) == "excerpt":
+            # Presentation-only: do not expose the synthetic field name.
+            lines.append(f"- {value}")
+            continue
         labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
         label = labeled[1].capitalize() if labeled else field_name
         lines.append(f"- {label}: {value}")
