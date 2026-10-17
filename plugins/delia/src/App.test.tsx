@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import App from "./App";
@@ -54,6 +54,29 @@ describe("App shell", () => {
     // Remount starts at the reception — no stale conversation state.
     expect(container.querySelector(".delpi-ui-conversation-reception")).toBeTruthy();
     expect(container.querySelector(".delia-timeline")).toBeNull();
+  });
+
+  it("D02 animates the shared avatar only while a demo request is pending", async () => {
+    const previousUrl = window.location.href;
+    window.history.replaceState(null, "", "/apps/delia?delia-demo=loading");
+    try {
+      const { container } = render(<App />);
+      const input = screen.getByRole("textbox", { name: "Pergunte à DÉLIA" });
+      expect(container.querySelector('.delia-interaction__pending-row')).toBeNull();
+      fireEvent.change(input, { target: { value: "Pergunta de teste" } });
+      fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+      await waitFor(() => {
+        expect(container.querySelector('.delia-interaction__pending-row [data-motion="processing"]')).toBeTruthy();
+      });
+      expect(container.querySelectorAll(".delia-interaction__pending-row .delpi-ui-unified-avatar")).toHaveLength(1);
+      expect(container.querySelector(".delia-interaction__pending-row [aria-hidden='true']")).toBeTruthy();
+      await waitFor(() => {
+        expect(container.querySelector('.delia-interaction__pending-row')).toBeNull();
+      }, { timeout: 4000 });
+      expect(container.querySelector('[data-motion="processing"]')).toBeNull();
+    } finally {
+      window.history.replaceState(null, "", previousUrl);
+    }
   });
 
   it("uses container-friendly responsive foundation classes", () => {
