@@ -14400,3 +14400,15 @@ NEXT=STAGE_05_BOUNDED_IMPLEMENTATION
 STAGE_04_ACCEPTED=YES_WITH_RESIDUAL; STAGE_05_AUTHORIZED=YES_BOUNDED; STAGE_05_ACCEPTED=NO
 NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 
+## §6.220 — DELIA-C3-STAGE05-MULTITURN-LATENCY-BOUNDED-FIX-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md` §7. **BASE_HEAD:** `8b86356763`.
+
+- **ROOT_CAUSE:** T2 refez seleção com `prior_turns` em `select_capability` → `model_timeout` (~30s stage). Continuity não reutilizava evidência prior validada.
+- **FIX (EXTEND):** goal-first `prior_evidence_sufficient` → prior-content continuation (NON_GROUNDED + `prior_turn_evidence_only`); selection sem `prior_turns`; budget gate `MIN_VIABLE_MODEL_STAGE_SECONDS`; sem raise de timeout global; MESSAGE≠ACT.
+- **TESTS:** `test_stage05_multiturn_latency.py` + Stage05/budget/full `delia-api` pytest green.
+- **LIVE SSH:** preenchido após deploy do SHA desta task (ver §7 doc 38).
+- **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `INCREASE_TIMEOUT=NO`.
+
+NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
+

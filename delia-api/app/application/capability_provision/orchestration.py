@@ -79,8 +79,10 @@ from app.application.interaction.capability_attempt import (
 from app.application.interaction.contracts import (
     GovernedCapabilityProvenance,
     LIMITATION_INSUFFICIENT_EVIDENCE,
+    LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
 )
+from app.domain.interaction.model import TurnKind
 from app.application.interaction.pending_proposals import (
     DEFAULT_PENDING_TTL_SECONDS,
     PENDING_PURPOSE_SCOPE_CHOICE,
@@ -561,6 +563,13 @@ Respond with JSON containing exactly these fields:
 - "scope_constraints": an object of user-stated constraint pairs
   (e.g. {"period": "2026", "filial": "01"}) — only constraints the
   user actually stated; empty object when none.
+- "prior_evidence_sufficient": true ONLY when prior conversation
+  turns include a DELIA result that already contains enough content
+  to answer THIS user message without calling any owner capability
+  again (e.g. summarize, restate, or explain limitations of what was
+  just returned). false when new owner data, a different subject, or
+  a fresh capability call is required. When no prior DELIA result
+  exists, always false.
 
 Never write facts, never answer the message, never include fields
 other than the listed ones.
@@ -2964,6 +2973,9 @@ def _preview_render(preview: WriteProposalPreview) -> str:
 # provider is not killed before it can answer; the turn deadline still
 # reduction-clamps every stage.
 MODEL_STAGE_TIMEOUT_SECONDS = 10.0
+# Do not start a model stage that cannot finish usefully within the
+# remaining turn budget (Stage 05 multiturn latency).
+MIN_VIABLE_MODEL_STAGE_SECONDS = 2.0
 
 
 # ------------- progressive activity observation (doc 70 §16) -------------
@@ -3207,8 +3219,49 @@ class OperationalCapabilityOrchestrator:
                 error_code=(failures[0] if failures else None),
             )
 
+        # Stage 05 multiturn latency: when prior turns exist, interpret
+        # the goal first. If prior DELIA_RESULT content already answers
+        # without a new owner call, skip reselection entirely. This is
+        # conversational continuity — not AuthZ reuse and not fresh
+        # grounding (handler marks NON_GROUNDED + limitation).
+        goal: OperationalCapabilityOrchestrator._TurnGoal | None = None
+        if prior_turns:
+            goal = self._understand_goal(
+                input_text,
+                correlation,
+                workspace_context,
+                prior_turns,
+                deadline,
+            )
+            if goal.prior_evidence_sufficient:
+                prior_content = self._prior_result_content(prior_turns)
+                if prior_content:
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=reuse_prior_result "
+                        "correlation_id=%s",
+                        correlation,
+                    )
+                    return GovernedCapabilityAttempt(
+                        status=GovernedCapabilityStatus.SUCCESS,
+                        correlation_id=correlation,
+                        content=prior_content,
+                        limitations=(
+                            LIMITATION_PRIOR_TURN_CONTINUATION,
+                        ),
+                    )
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=insufficient_prior_content "
+                    "correlation_id=%s",
+                    correlation,
+                )
+
+        # Selection stages receive NO prior_turns: catalogues + history
+        # bloated select_capability past the stage timeout on follow-ups.
+        # Continuity for new owner data stays in goal/synthesis only.
         selection = self._select_target(
-            input_text, groups, workspace_context, prior_turns, deadline
+            input_text, groups, workspace_context, (), deadline
         )
         if selection is None:
             _logger.info(
@@ -3242,14 +3295,17 @@ class OperationalCapabilityOrchestrator:
         )
 
         # Bounded turn-goal interpretation (C3-INTELLIGENCE-LOOP-03R1):
-        # one validated semantic proposal reused by the native
-        # assessment, argument projection and the comparability gate —
-        # a comparison intent can never silently collapse into a
-        # single-source native success.
-        goal = self._understand_goal(
-            input_text, correlation, workspace_context, prior_turns,
-            deadline,
-        )
+        # reuse the goal already computed for multiturn; otherwise one
+        # validated semantic proposal for native assessment, argument
+        # projection and the comparability gate.
+        if goal is None:
+            goal = self._understand_goal(
+                input_text,
+                correlation,
+                workspace_context,
+                prior_turns,
+                deadline,
+            )
 
         # Semantic finality gate (C3-CONVERSATIONAL-INTELLIGENCE-02,
         # R1 §6.174): the validated turn goal is the only semantic
@@ -4467,6 +4523,9 @@ class OperationalCapabilityOrchestrator:
         # when the user explicitly forbids applying the change; the
         # bound can only reduce the effective execution ceiling.
         execution_bound: str = "unrestricted"
+        # True only when a validated proposal declares that prior
+        # DELIA_RESULT content already answers without a new owner call.
+        prior_evidence_sufficient: bool = False
 
     _GOAL_CLASSES = frozenset(
         {"read", "analyze", "compare", "create_or_modify", "clarify"}
@@ -4484,11 +4543,11 @@ class OperationalCapabilityOrchestrator:
     ) -> "OperationalCapabilityOrchestrator._TurnGoal":
         """One bounded goal-interpretation proposal (LOOP-03R1).
 
-        Runs once per turn after target selection; the same validated
-        result feeds native assessment, argument projection (business
-        subject) and the comparability gate — no duplicate model
-        stages for facts this output already carries. Any invalid or
-        absent proposal degrades to a neutral default goal — never a
+        When prior turns exist this may run before target selection so a
+        prior-evidence-sufficient follow-up can skip reselection. The
+        same validated result feeds native assessment, argument
+        projection and the comparability gate. Any invalid or absent
+        proposal degrades to a neutral default goal — never a
         fabricated interpretation.
         """
         proposal = self._propose(
@@ -4507,6 +4566,7 @@ class OperationalCapabilityOrchestrator:
                     "execution_bound",
                     "business_subject",
                     "scope_constraints",
+                    "prior_evidence_sufficient",
                     "limitations",
                 }
             ),
@@ -4552,6 +4612,10 @@ class OperationalCapabilityOrchestrator:
                     scope_pairs.append(
                         (key.strip()[:80], str(value).strip()[:200])
                     )
+        prior_sufficient = (
+            proposal.get("prior_evidence_sufficient") is True
+            and bool(prior_turns)
+        )
         goal = self._TurnGoal(
             goal_class=(
                 goal_class
@@ -4579,19 +4643,40 @@ class OperationalCapabilityOrchestrator:
                 and execution_bound in self._EXECUTION_BOUNDS
                 else "unrestricted"
             ),
+            prior_evidence_sufficient=prior_sufficient,
         )
         _logger.info(
             "orchestration stage=goal_understanding "
             "decision=interpreted class=%s comparison=%s "
-            "output_mode=%s bound=%s subject=%s correlation_id=%s",
+            "output_mode=%s bound=%s subject=%s prior_sufficient=%s "
+            "correlation_id=%s",
             goal.goal_class,
             goal.comparison_requested,
             goal.output_mode,
             goal.execution_bound,
             "yes" if goal.business_subject else "no",
+            "yes" if goal.prior_evidence_sufficient else "no",
             correlation,
         )
         return goal
+
+    @staticmethod
+    def _prior_result_content(
+        prior_turns: tuple[ConversationContextTurn, ...],
+    ) -> str | None:
+        """Latest non-empty DELIA_RESULT content from prior turns.
+
+        Untrusted conversational data — never authority, never AuthZ,
+        never fresh grounding. Used only for bounded continuity when
+        the validated goal declares prior evidence sufficient.
+        """
+        for turn in reversed(prior_turns):
+            if turn.kind is not TurnKind.DELIA_RESULT:
+                continue
+            content = (turn.content or "").strip()
+            if content:
+                return content[:MAX_RENDER_CONTENT_CHARS]
+        return None
 
     def _assess_native_path(
         self,
@@ -6114,6 +6199,18 @@ class OperationalCapabilityOrchestrator:
             if deadline is not None
             else self._model_stage_timeout_seconds
         )
+        # Honest stop: do not start a model stage that cannot finish
+        # usefully within the remaining turn budget.
+        if stage_timeout < MIN_VIABLE_MODEL_STAGE_SECONDS:
+            _logger.info(
+                "orchestration stage=model_propose "
+                "decision=budget_too_small purpose=%s "
+                "remaining_ms=%d correlation_id=%s",
+                instruction_id,
+                int(stage_timeout * 1000),
+                correlation or "",
+            )
+            raise _StageDeadlineExceeded("turn_budget_exhausted")
         workspace_block = (
             "\n<workspace_context>\n"
             + workspace_context.to_prompt_block()
@@ -6476,7 +6573,9 @@ class OperationalCapabilityOrchestrator:
                 {"applicable", "capability_group_id", "limitations"}
             ),
             workspace_context=workspace_context,
-            prior_turns=prior_turns,
+            # Group pick uses live surface summaries only — prior
+            # turns inflate latency without changing eligibility.
+            prior_turns=(),
             correlation=correlation,
             deadline=deadline,
         )
@@ -6524,7 +6623,9 @@ class OperationalCapabilityOrchestrator:
                 {"applicable", "remote_name", "limitations"}
             ),
             workspace_context=workspace_context,
-            prior_turns=prior_turns,
+            # Selection catalogues are self-contained; prior history
+            # belongs to goal/synthesis, not capability pick.
+            prior_turns=(),
             correlation=correlation,
             deadline=deadline,
         )

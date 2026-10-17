@@ -63,8 +63,51 @@ MATERIAL_ACT_COUNT=0
 - R-S04-01 live clarify NOT_EXERCISED preservado para Stage 06.
 - `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
 
-## 7. NEXT
+## 7. Multiturn latency bounded fix (histórico preservado)
+
+**TASK:** `DELIA-C3-STAGE05-MULTITURN-LATENCY-BOUNDED-FIX-01`  
+**STATUS:** `IMPLEMENTATION_EVIDENCE_RECORDED` · `STAGE_05_ACCEPTED=NO`
+
+### Causa raiz (T2 live INCONCLUSIVE acima)
 
 ```text
-NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
+BOTTLENECK_STAGE=select_capability
+ROOT_CAUSE=T2 refez seleção completa com prior_turns no prompt de
+  select_group/select_capability; select_capability esgotou o
+  timeout de estágio (~30s / InvokeModel.MAX_TIMEOUT) antes de
+  concluir. Não foi latência da resposta final.
+```
+
+### Menor correção (EXTEND, sem novo planner)
+
+- `GOAL_INSTRUCTION` + `_TurnGoal.prior_evidence_sufficient`: com prior turns, goal-first; se sufficient e há DELIA_RESULT extraível → SUCCESS sem owner call (`LIMITATION_PRIOR_TURN_CONTINUATION`).
+- Selection (`select_group` / `select_capability`) deixa de enviar `prior_turns` (catálogo vivo basta; continuidade fica em goal/synthesis).
+- `_propose`: não inicia estágio de modelo se `stage_timeout < MIN_VIABLE_MODEL_STAGE_SECONDS` (2s) → `turn_budget_exhausted` honesto.
+- Handler: SUCCESS sem `outcome` → NON_GROUNDED (nunca grounding fake). AuthZ/MESSAGE≠ACT preservados.
+- `GLOBAL_TURN_BUDGET` / `INCREASE_TIMEOUT=NO` / sem raise de 30s.
+
+### Testes
+
+- `tests/test_stage05_multiturn_latency.py` (fake clock + fake model)
+- Stage05 + turn-budget + suíte `delia-api` pytest verde
+
+### Live SSH (pós-fix)
+
+```text
+SSH_DEPLOYED_SHA=<filled after deploy>
+REAL_MODEL=moonshotai/kimi-k3
+MODE=MESSAGE_ONLY × 2 (cenário doc 38)
+
+TURN1_LATENCY_MS=<filled>
+TURN2_LATENCY_MS=<filled>
+MULTITURN_CONTINUITY=<filled>
+GLOBAL_BUDGET_EXCEEDED=<filled>
+LIVE_VERDICT=<filled>
+MATERIAL_ACT_COUNT=0
+```
+
+## 8. NEXT
+
+```text
+NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
 ```

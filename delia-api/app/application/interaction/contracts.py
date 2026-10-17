@@ -29,6 +29,10 @@ LIMITATION_RESULT_TRUNCATED = "result_truncated"
 # answers the user intent — honest insufficiency, never invented facts.
 LIMITATION_INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
+# Stage 05 multiturn: answer reused prior DELIA_RESULT content without a
+# new owner capability call — continuity, not fresh grounding.
+LIMITATION_PRIOR_TURN_CONTINUATION = "prior_turn_evidence_only"
+
 # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: canonical limitation
 # surfaced while a write intent awaits a structured confirmation.
 LIMITATION_CONFIRMATION_PENDING = "confirmation_pending"

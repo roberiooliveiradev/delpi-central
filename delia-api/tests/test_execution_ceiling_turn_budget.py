@@ -1088,12 +1088,17 @@ def test_r1_invoke_overrun_is_source_unavailable():
 def test_r1_next_stage_receives_only_remaining_budget():
     """After the surface list consumed most of the budget, the next
     provider stages receive the remainder — never the configured
-    stage max."""
+    stage max.
+
+    Leave enough remainder for a viable model stage
+    (MIN_VIABLE_MODEL_STAGE_SECONDS); sub-viable remainders fail closed
+    before starting selection (see multiturn latency tests).
+    """
     clock = [1000.0]
     port = _DeadlinePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
         clock=clock,
-        list_seconds=79.5,
+        list_seconds=70.0,
     )
     read = _vista_listing(_interop(port))
     attempt = read.attempt(
@@ -1101,9 +1106,11 @@ def test_r1_next_stage_receives_only_remaining_budget():
     )
     assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
     # list#1 got the stage max; list#2 (invoke revalidation) got only
-    # the 0.5s remainder — not the full provider timeout again.
+    # the ~10s remainder — not the full provider timeout again.
     assert port.list_timeouts[0] == DEFAULT_INVOCATION_TIMEOUT_SECONDS
-    assert 0 < port.list_timeouts[1] <= 0.5 + 0.05
+    assert len(port.list_timeouts) >= 2
+    assert 0 < port.list_timeouts[1] <= 10.0 + 0.05
+    assert port.list_timeouts[1] < DEFAULT_INVOCATION_TIMEOUT_SECONDS
     assert all(t > 0 for t in port.call_timeouts)
 
 

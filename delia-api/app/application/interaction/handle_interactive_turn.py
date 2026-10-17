@@ -32,6 +32,7 @@ from app.application.interaction.contracts import (
     TURN_COMMAND_MESSAGE,
     TURN_COMMAND_APPLY_PREPARED,
     TURN_COMMAND_REJECT_PREPARED,
+    LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
     InteractiveTurnResult,
@@ -331,7 +332,14 @@ class HandleInteractiveConversationTurn:
         if attempt is not None and (
             attempt.status is GovernedCapabilityStatus.SUCCESS
         ):
-            result = self._grounded_result(session, user_turn, attempt)
+            # Prior-turn continuity returns SUCCESS without a fresh
+            # owner outcome — honest NON_GROUNDED, never fake grounding.
+            if attempt.outcome is None:
+                result = self._prior_continuation_result(
+                    session, user_turn, attempt
+                )
+            else:
+                result = self._grounded_result(session, user_turn, attempt)
             _emit_terminal(sink, ActivityPhase.COMPLETED)
             return result
 
@@ -573,6 +581,61 @@ class HandleInteractiveConversationTurn:
             )
         return tuple(prior_turns)
 
+    def _prior_continuation_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+        attempt,
+    ) -> InteractiveTurnResult:
+        """Record continuity from prior DELIA_RESULT content.
+
+        No fresh owner outcome — NON_GROUNDED with an explicit
+        limitation. Never elevates prior conversational text to FACT
+        or reuses prior AuthZ as authority for a new capability call.
+        """
+        content = attempt.content
+        if not isinstance(content, str) or not content.strip():
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "prior continuation produced no bounded content",
+            )
+        limitations = attempt.limitations or (
+            LIMITATION_PRIOR_TURN_CONTINUATION,
+        )
+        if LIMITATION_PRIOR_TURN_CONTINUATION not in limitations:
+            limitations = limitations + (
+                LIMITATION_PRIOR_TURN_CONTINUATION,
+            )
+        occurred = _now_utc()
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=content,
+            occurred_at=occurred,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=limitations,
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "prior continuation DELIA_RESULT rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=content,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=limitations,
+            generated_at=occurred,
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.NON_GROUNDED,
+        )
+
     def _grounded_result(
         self,
         session: InteractionSession,
@@ -591,6 +654,11 @@ class HandleInteractiveConversationTurn:
         provenance = attempt.provenance
         content = attempt.content
         limitations = attempt.limitations
+        if outcome is None:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "grounded read requires a fresh owner outcome",
+            )
         if not isinstance(content, str) or not content.strip():
             raise InteractionError(
                 INTERNAL_ERROR,
