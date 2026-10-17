@@ -975,3 +975,55 @@ NEXT=E09_AUTHENTICATED_LIVE_MATRIX_WITH_PORTAL_AND_DOCK
 
 **Não iniciar E10.** Não marcar `[x] E09` até B08–B12 e matriz host autenticada terem evidência executada.
 
+
+
+## 26. Encerramento do ciclo de implementação visual e retorno ao catálogo de componentes (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-IMPLEMENTATION-TRACK-CLOSURE-AND-COMPONENT-INVENTORY-01`. **BASE_HEAD:** `d6b999e21a18adb24b2b97db10631ce533b08a60`. **Decisão do Product Master:** considerar concluído o trabalho de **implementação da correção visual planejada** e retornar ao desenvolvimento dos componentes. **Este encerramento é somente do implementation track**, não falseia `E09=INCONCLUSIVE` nem `E10=PENDING`, não aceita o roadmap completo e não remove os gates do §4.
+
+### Evidência visual e técnica aproveitada
+
+- Screenshot adicional fornecido pelo Product Master de `minhadelpi.com.br/apps/delia`: vista desktop dark com rail à esquerda (Agentes destacado), central de recepção DÉLIA e compositor legíveis, sem sobreposição aparente. `USER_SCREENSHOT_VISUAL_OBSERVED` para este recorte; não comprova versão de assets, teclado real, contraste medido, Dock ou ausência de outros defeitos.
+- E01–E08 permaneceram `ACCEPT / ACCEPT_WITH_RESIDUAL` conforme §§20–24, incluindo nav Vitest 24/24, DeliaConversationPage 8/8, builds e federation no SHA avaliado. O typecheck global de `plugin-ui` teve residual preexistente documentado (29 erros).
+- E09 (§25 / ledger §6.229): CSS E07 identificado nos assets servidos; `INCONCLUSIVE` para QA autenticado. Chromium do runner falhou por `libnspr4.so`, Dock test por `tsx` ausente, sessão Keycloak de QA indisponível. Não confundir falha do runner com falha provada no produto.
+- **Decisão operacional:** encerrar a linha de correções visuais como **IMPLEMENTATION_TRACK_COMPLETE_WITH_RESIDUALS** e manter E09/E10 como **gates de validação/encerramento formal ainda abertos**. Prosseguir em um novo chat especializado bounded de componentes, sem avançar fase canônica.
+
+### Inventário dirigido — série documental de navegação 103–113
+
+A existência dos seguintes arquivos TSX em `plugins/plugin-ui/src/components/conversation/` foi verificada no GitHub `main` deste ciclo. `FILE_EXISTS=PROVEN` não implica que dados de domínio, integração ou aceite individual de runtime sejam `PASS`.
+
+| Documento | Capability/UI no kit | Implementação verificável | Residual / próxima necessidade |
+|---|---|---|---|
+| 103 | DeliaNavigationSidebar | Shell `ConversationThreeRegionLayout`, composição E02–E07 | revisão de status documental; UX QA final E09 |
+| 104 | NavigationRail | `NavigationRail.tsx` | integração/estados já aceitos no rework, QA residual E09 |
+| 105 | NavigationCategoryPanel | `NavigationCategoryPanel.tsx` | UX QA residual E09 |
+| 106 | ConversationNavigation | `ConversationNavigation.tsx`; reutiliza sidebar | dados reais de histórico/paginação: `TO_INVENTORY` owner/contrato |
+| 107 | ConversationHistoryItem | `ConversationHistoryItem.tsx` | menu pin/rename/archive/delete depende de Domain/Core, `TO_INVENTORY` |
+| 108 | PinnedConversations | `PinnedConversations.tsx` | operações e feed autorizados de fixação: `TO_INVENTORY` |
+| 109 | ProjectNavigation | `ProjectNavigation.tsx` | catálogo/projeção e links autorizados: `TO_INVENTORY` |
+| 110 | AgentNavigation | `AgentNavigation.tsx` | catálogo oficial/launch governado: `TO_INVENTORY` |
+| 111 | PluginNavigation | `PluginNavigation.tsx` | lista oficial de apps/rotas Portal/Core: `TO_INVENTORY`; nenhum catálogo paralelo |
+| 112 | NavigationActions | `NavigationActions.tsx` + `ConversationSidebarSearch.tsx` | ações reais de nova sessão/pesquisa/configurações: contrato `TO_INVENTORY` |
+| 113 | Motion/Responsive/A11y | CSS + shell E04–E07 | browser matrix/Dock/teclado/contraste real: E09 |
+
+**Atenção aos documentos:** vários cabeçalhos de 103–113 ainda dizem `PLANNED / NOT_IMPLEMENTED`, pois são baseline históricos; o corpo contém entregas incrementais de código. Isso é **DOCUMENT_STATUS_STALE**, não prova de componente ausente. Não editar en masse nem apagar o baseline histórico; fazer atualização documental pontual ou adendo de status na nova trilha, após evidência efetiva, preservando a autoridade do roadmap e do ledger. Os documentos 114+ e outras famílias de `plugin-ui` ainda precisam de inventário dirigido separado para decidir o **próximo componente realmente faltante**; não concluir ausência por busca vazia.
+
+### Próximo trabalho de frontend separado
+
+1. Criar uma task bounded para inventariar **componentes restantes do produto completo**, consultando product master, contratos e exports de `plugin-ui`, não redesenhando a navegação já publicada. Para cada item: `PROVEN | TO_INVENTORY | PLANNED | TARGET`, owner, consumer, API/contrato, arquivo existente e `EXISTING_EQUIVALENT / REUSE_DECISION`.
+2. Priorizar apenas lacunas **render-only com owner frontal comprovado**, podendo permanecer desabilitadas até integração, em vez de esperar indefinidamente por backend. Dados/ações reais seguem Core/Domain Policy/Decision gates; `PREPARE != ACT`.
+3. A E09 de QA completo fica como residual explícito a retomar quando houver runner/browser/Keycloak QA autorizados; E10 não deve ser declarada aceita sem revisão independente. Não transformar o próximo roadmap de componentes em segundo owner de fase.
+
+```text
+IMPLEMENTATION_TRACK=COMPLETE_WITH_RESIDUALS
+NAVIGATION_UX_ROADMAP_FORMALLY_CLOSED=NO
+E01_E08_ACCEPTED=YES_WITH_RECORDED_RESIDUALS
+E09=INCONCLUSIVE
+E10=PENDING
+ACCEPTED_STAGES=8/10
+DOCUMENT_STATUS_103_113=STALE_HEADER_NEEDS_TARGETED_RECONCILIATION
+SERIES_104_112_PRESENTATION_FILES=PROVEN_PRESENT
+DOMAIN_FEEDS_AND_MATERIAL_ACTIONS=TO_INVENTORY
+NEXT_COMPONENT=TO_SELECT_AFTER_BOUNDED_INVENTORY
+PHASE_PROGRESSION=NONE
+```
