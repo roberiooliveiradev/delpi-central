@@ -119,6 +119,12 @@ A sequência abaixo é **candidata para coordenação Frontend**, não `NEXT` de
 - **Inventário de equivalência detalhada:** diretórios `tasks, charts, data, feedback, layout, composer, markdown, conversation` localizados; consumidores/export APIs de cada componente multi-surface ainda `TO_INVENTORY` (não alegar inventário exaustivo).
 - **Cadeia de reanchor desta sessão:** HEAD, 16/17/24/25, specs temáticas e código amostrado via GitHub foram consultados; status de workspace, todas as authorities, testes e ambiente do Cursor não foram reexecutados. `REANCHOR=PARTIAL`, `TESTS_THIS_DOCUMENTATION_TASK=TEST_NOT_RUN`.
 
+## F-01 — Resultado de inventário dirigido (2026-10-17)
+
+A primeira amostra **F-01** está documentada em [117 — Component exports, consumers e gaps](./117-frontend-f01-component-export-consumer-and-gap-inventory.md). Foram confrontados exports raiz e de conversa/composer de `plugin-ui` com consumidores `DeliaConversationPage`, `DeliaAssistantMessage`, `DeliaReception` e `DeliaComposer`.
+
+**Resultado:** shell/nav/reception/composer/activity/evidence têm base compartilhada existente; dados reais de projetos/agentes/plugins/histórico ainda dependem de contratos. `ConversationStarterSuggestions` (doc 93) foi selecionado como **candidato** à primeira task F-02 render-only, mas seu `IMPLEMENTATION_DEFERRED` permanece vigente e deve ser resolvido por autorização bounded antes de código. Busca (97), code blocks (96) e recuperação de rascunho (102) continuam deferidas. `FILE_EXISTS` não equivale a funcionalidade habilitada. `F01=DOCUMENTED`, `PHASE_PROGRESSION=NONE`.
+
 ## 7. Handoff de novo chat frontend especializado
 
 **Chat:** `4. DÉLIA — Frontend / MFE / UX`. **Scope:** executar próximo bounded slice da trilha de componentes, não modificar owners/fase/CP-RQ.  
