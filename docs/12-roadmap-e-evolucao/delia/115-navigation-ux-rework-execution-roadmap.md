@@ -790,3 +790,45 @@ E02_E06_VERDICTS_UNCHANGED
 PHASE_PROGRESSION=NONE
 NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 ```
+
+## 22. E07 — Polimento visual e movimento bounded (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E07-VISUAL-MOTION-POLISH-01`.
+**BASE_HEAD:** `3347a9c871bb539fae3071c052c743f8699afb29` observado em GitHub `main`.
+**Autorização:** Product Master solicitou o avanço explícito à sétima etapa após E02–E06 aceitas no roadmap (§20–21).
+**Scope:** ajuste visual estrito nos estilos existentes de `plugins/plugin-ui`. Nenhuma alteração React, Portal, Core, catálogos, AuthZ, backend, layout architecture ou comportamento de negócio.
+
+### Reanchor e reuse
+
+- Consulta do HEAD, `AGENTS.md`, regra `.cursor/rules/delia-execution-protocol.mdc`, plano mestre 16, ledger e especificação temática 113/roadmap 115. Os aceites E02–E06 de §§20–21 e ledger §6.222–6.223 foram preservados. Git status local e suite de autoridades completas no workspace não foram instrumentados nesta sessão por conector GitHub; registrar `INCONCLUSIVE` para essa parcela do reanchor, sem promover fase.
+- `RESPONSIBILITY=VISUAL_CHROME_AND_MOTION`; `OWNER=plugins/plugin-ui`; `CONSUMER=plugins/delia`; `EXISTING_EQUIVALENT=YES` para `ConversationThreeRegionLayout.css`, `NavigationRail.css`, design tokens, CSS hover/focus/reduced-motion; `REUSE_DECISION=EXTEND`. Nenhuma segunda biblioteca, palette ou animation engine.
+
+### Diff implementado
+
+1. `ConversationThreeRegionLayout.css`: remove declarações permanentes de `will-change: flex-basis` e `will-change: opacity, transform`, que induziam promoção de camadas sem ganho comprovado; preserva timings/transições atuais e o contrato de `prefers-reduced-motion`.
+2. Rail persistente passa a ter `overflow-y:auto`, scroll padding e barra fina; painel conserva borda por token compartilhado e heading com ellipsis sem overflow; drawer compacto conserva overscroll interno, sem mudar medidas ou hierarquia.
+3. `NavigationRail.css`: o item com `aria-current=page` ganha indicador fino de posição além do fundo tonal e indicação semântica ARIA já existente; 40–42px de target, foco 2px, animação curta por token existente; `prefers-reduced-motion` remove transições.
+4. Nenhum componente, callback ou sistema de tokens novo; a geometria de ContextPopover E05 e a exclusividade E06 não foram alteradas.
+
+### Evidência e condições de aceite
+
+- Arquivos CSS publicados na main pelo conector GitHub. Testes React existentes em `NavigationRail.test.tsx`, `ConversationThreeRegionLayout.test.tsx` e `DeliaConversationPage.test.tsx` não foram modificados, pois o contrato React permanece idêntico. A cobertura de layout/CSS exige navegador real.
+- `VITEST=TEST_NOT_RUN`, `TYPECHECK=TEST_NOT_RUN`, `BUILD=TEST_NOT_RUN`, `FEDERATION=TEST_NOT_RUN`, `BROWSER_QA=TEST_NOT_RUN` nesta execução. Evidências anteriores E02–E06 pertencem a SHA anterior e não são reclassificadas como execução desta task.
+- **Aceite condicionado:** reexecutar gates técnicos no SHA/config E07 e comparar light/dark, 1440/1024/768/420/375/320px, zoom 200%, dock, focus-visible, selected e reduced-motion. Nenhuma claim de contraste AA medido ou visual QA a partir de CSS apenas.
+- `INDEPENDENT_REVIEW=PENDING`, `E07=IMPLEMENTED_CANDIDATE`, `E07_ACCEPTED=NO`, checklist E07 permanece `[ ]`, progresso formal `6/10 ACCEPTED`, E08 não foi iniciada.
+
+```text
+STAGE=E07
+TASK_ID=DELIA-UX-NAV-REWORK-E07-VISUAL-MOTION-POLISH-01
+BASE_HEAD=3347a9c871bb539fae3071c052c743f8699afb29
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+CODE_CHANGED=ConversationThreeRegionLayout.css;NavigationRail.css
+TESTS=TEST_NOT_RUN
+DESKTOP_MOBILE_VISUAL_QA=TEST_NOT_RUN
+E07_STATUS=IMPLEMENTED_CANDIDATE
+E07_ACCEPTED=NO
+ROADMAP_PROGRESS=6/10_ACCEPTED
+PHASE_PROGRESSION=NONE
+NEXT=E07_TEST_BUILD_VISUAL_REVIEW
+```
