@@ -11,6 +11,8 @@ export * from "./components/conversation";
 export { ConversationThreeRegionLayout } from "./components/conversation/ConversationThreeRegionLayout";
 export { ConversationSidebar } from "./components/conversation/ConversationSidebar";
 export { NavigationRail } from "./components/conversation/NavigationRail";
+/** Host-only shared category panel. */
+export { NavigationCategoryPanel } from "./components/conversation/NavigationCategoryPanel";
 export { ConversationSidebarSearch } from "./components/conversation/ConversationSidebarSearch";
 export { ConversationContextPanel } from "./components/conversation/ConversationContextPanel";
 /** Host-consumed scroll control — retain in federated Index exports. */
