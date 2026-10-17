@@ -65,3 +65,5 @@ export { ConversationSidebar, type ConversationSidebarProps } from "./Conversati
 export { ConversationContextPanel, type ConversationContextPanelProps } from "./ConversationContextPanel";
 
 export { ConversationSidebarSearch, type ConversationSidebarSearchProps } from "./ConversationSidebarSearch";
+
+export { NavigationRail, type NavigationRailProps, type NavigationRailCategory } from "./NavigationRail";
