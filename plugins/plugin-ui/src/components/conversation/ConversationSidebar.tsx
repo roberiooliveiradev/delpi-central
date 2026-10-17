@@ -1,4 +1,5 @@
-import { Search, Settings2, SquarePen } from "lucide-react";
+import { Search } from "lucide-react";
+import { NavigationActions } from "./NavigationActions";
 import { ConversationHistoryItem } from "./ConversationHistoryItem";
 import { PinnedConversations } from "./PinnedConversations";
 import { ConversationSidebarSearch } from "./ConversationSidebarSearch";
@@ -39,10 +40,7 @@ export function ConversationSidebar({
       ? "ready" : "unavailable");
   return (
     <div className={`delpi-ui-conversation-sidebar${collapsed ? " delpi-ui-conversation-sidebar--collapsed" : ""}`}>
-      <button type="button" className="delpi-ui-conversation-sidebar__action delpi-ui-conversation-sidebar__action--primary"
-        disabled={!onNewConversation} onClick={onNewConversation} aria-label="Nova conversa" title={!onNewConversation ? "Disponível após integração das sessões" : undefined}>
-        <SquarePen size={17} aria-hidden="true" />{!collapsed ? <span>Nova conversa</span> : null}
-      </button>
+      <NavigationActions action="new" collapsed={collapsed} onAction={onNewConversation} />
       {collapsed ? (
         <button className="delpi-ui-conversation-sidebar__action" type="button" aria-label="Pesquisar conversas" title="Pesquisar conversas" disabled={!onSearch} onClick={onSearch}><Search size={18} aria-hidden="true" /></button>
       ) : <ConversationSidebarSearch onOpenSearch={onSearch} />}
@@ -81,10 +79,7 @@ export function ConversationSidebar({
         ) : null}
       </div> : <div className="delpi-ui-conversation-sidebar__rail-spacer" />}
       <div className="delpi-ui-conversation-sidebar__bottom">
-        <button type="button" className="delpi-ui-conversation-sidebar__action"
-          disabled={!onOptions} onClick={onOptions} aria-label="Opções" title={!onOptions ? "Opções de conversa ainda indisponíveis" : undefined}>
-          <Settings2 size={17} aria-hidden="true" />{!collapsed ? <span>Opções</span> : null}
-        </button>
+        <NavigationActions action="options" collapsed={collapsed} onAction={onOptions} />
       </div>
     </div>
   );
