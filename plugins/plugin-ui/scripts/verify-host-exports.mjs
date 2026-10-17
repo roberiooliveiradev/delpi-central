@@ -96,6 +96,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationSidebar",
   "NavigationRail",
   "NavigationCategoryPanel",
+  "ProjectNavigation",
   "ConversationNavigation",
   "ConversationHistoryItem",
   "PinnedConversations",
