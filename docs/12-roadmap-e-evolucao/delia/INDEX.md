@@ -22,6 +22,11 @@ Naming: [`68-delia-product-identity-and-naming.md`](./68-delia-product-identity-
 Personalidade e interação user-facing: [Pasta `personality/`](./personality/README.md) — perfil 01, comportamento 02, decisões PERS 03 e plano de eval 04. **EDITORIAL_DOCUMENTATION=COMPLETE; RUNTIME=NOT_PROVEN.**
 Cross-cutting capability map: [`67-market-capability-expansion-and-intelligence-platform.md`](./67-market-capability-expansion-and-intelligence-platform.md).
 
+## Frontend — mapa transversal de continuidade
+
+- [`116 — Mapa executivo de superfícies, capacidades e componentes`](./116-delia-frontend-capability-surface-and-component-execution-map.md) — cruzamento produto 24 / mapa 17 / docs 69–115 com exports e consumidores observados; distingue UI existente, componentes futuros e contratos/autorizações pendentes. **Documento de navegação, não nova authority ou ordem de fase.**
+- [`115 — Navigation UX Rework`](./115-navigation-ux-rework-execution-roadmap.md) — track de implementação visual concluído com residuais; E09/E10 ainda são gates formais.
+
 ## Product / architecture views
 
 - [`01-visao-produto.md`](./01-visao-produto.md)
