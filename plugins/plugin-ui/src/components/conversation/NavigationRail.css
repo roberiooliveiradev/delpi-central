@@ -1,0 +1,9 @@
+/* Category icons in the existing collapsed left rail. No second sidebar. */
+.delpi-ui-navigation-rail { display:flex; flex-direction:column; align-items:center; gap:8px; width:100%; }
+.delpi-ui-navigation-rail__item { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:42px; height:42px; min-width:42px; border:1px solid transparent; border-radius:11px; background:transparent; box-shadow:none; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); font:inherit; cursor:pointer; transition:background-color 180ms ease,color 180ms ease; }
+.delpi-ui-navigation-rail__item:hover:not(:disabled) { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 8%,transparent); color:var(--delpi-ui-text,var(--text,#111)); }
+.delpi-ui-navigation-rail__item[aria-current="page"] { color:var(--delpi-ui-text,var(--text,#111)); background:color-mix(in srgb,var(--delpi-ui-accent,var(--primary,#089bdb)) 9%,transparent); }
+.delpi-ui-navigation-rail__item:disabled:not([aria-current="page"]) { cursor:not-allowed; opacity:.42; }
+.delpi-ui-navigation-rail__item:focus-visible { outline:2px solid var(--delpi-ui-accent,var(--primary,#089bdb)); outline-offset:2px; }
+@media (prefers-reduced-motion:reduce) { .delpi-ui-navigation-rail__item { transition:none; } }
+@container delia-page (max-width:920px) { .delpi-ui-navigation-rail__item { width:40px; height:40px; min-width:40px; } }
