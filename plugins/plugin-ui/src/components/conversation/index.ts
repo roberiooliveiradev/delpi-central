@@ -71,3 +71,5 @@ export { NavigationRail, type NavigationRailProps, type NavigationRailCategory }
 export { NavigationCategoryPanel, type NavigationCategoryPanelProps, type NavigationCategoryPanelState } from "./NavigationCategoryPanel";
 
 export { ConversationNavigation, type ConversationNavigationProps, type ConversationNavigationItem } from "./ConversationNavigation";
+
+export { ConversationHistoryItem, type ConversationHistoryItemData, type ConversationHistoryItemProps } from "./ConversationHistoryItem";
