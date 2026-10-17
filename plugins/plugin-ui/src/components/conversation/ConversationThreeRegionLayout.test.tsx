@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConversationThreeRegionLayout } from "./ConversationThreeRegionLayout";
 afterEach(cleanup);
 describe("ConversationThreeRegionLayout R2", () => {
@@ -86,6 +86,45 @@ describe("ConversationThreeRegionLayout R2", () => {
     expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(1);
     expect(container.contains(draft)).toBe(true);
     expect((draft as HTMLInputElement).value).toBe("Preservado");
+  });
+
+  it("E04 opens a compact drawer with backdrop, Escape dismissal and focus return", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Categorias</button>}
+        left={<p>Conteúdo da navegação</p>}
+        center={<input aria-label="Rascunho mobile" defaultValue="Texto intacto" />}
+      />);
+      const input = screen.getByRole("textbox", { name: "Rascunho mobile" });
+      expect(container.querySelector(".delpi-ui-conversation-three-region--compact")).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
+      expect(container.querySelector('[data-drawer="true"]')).toBeTruthy();
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Expandir conversas" })).toHaveFocus();
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      fireEvent.click(screen.getByRole("button", { name: "Fechar navegação" }));
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.contains(input)).toBe(true);
+      expect((input as HTMLInputElement).value).toBe("Texto intacto");
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
   });
 
 });
