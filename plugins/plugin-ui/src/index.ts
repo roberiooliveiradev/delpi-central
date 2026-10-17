@@ -10,6 +10,8 @@ export * from "./components/conversation";
 /** Host-only shared three-region conversational page shell. */
 export { ConversationThreeRegionLayout } from "./components/conversation/ConversationThreeRegionLayout";
 export { ConversationSidebar } from "./components/conversation/ConversationSidebar";
+/** Shared navigation actions; host-only export protected from federation pruning. */
+export { NavigationActions } from "./components/conversation/NavigationActions";
 /** Host-consumed grouped conversation navigation. */
 export { ConversationNavigation } from "./components/conversation/ConversationNavigation";
 /** Shared single authorized-history row; keep available in the MFE remote. */
