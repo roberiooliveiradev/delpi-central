@@ -36,6 +36,8 @@ export function ConversationThreeRegionLayout({
   const contextRef = useRef<HTMLDivElement | null>(null);
   const drawerCloseRef = useRef<HTMLButtonElement | null>(null);
   const drawerReturnFocusRef = useRef(false);
+  const navigationRef = useRef<HTMLElement | null>(null);
+  const contextCloseRef = useRef<HTMLButtonElement | null>(null);
   const leftId = useId();
   const rightId = useId();
 
@@ -60,7 +62,8 @@ export function ConversationThreeRegionLayout({
   useEffect(() => {
     if (!rightOpen) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
         setRightOpen(false);
         contextTriggerRef.current?.focus();
       }
@@ -86,6 +89,14 @@ export function ConversationThreeRegionLayout({
     drawerReturnFocusRef.current = true;
     setLeftExpanded(false);
   };
+  const openDrawer = () => {
+    if (compact) setRightOpen(false);
+    setLeftExpanded(true);
+  };
+  const toggleContext = () => {
+    if (compact && !rightOpen && drawerOpen) setLeftExpanded(false);
+    setRightOpen(open => !open);
+  };
 
   useEffect(() => {
     if (!compact || leftExpanded || !drawerReturnFocusRef.current) return;
@@ -98,11 +109,35 @@ export function ConversationThreeRegionLayout({
   }, [drawerOpen]);
 
   useEffect(() => {
+    if (compact && rightOpen && drawerOpen) setLeftExpanded(false);
+  }, [compact, rightOpen, drawerOpen]);
+
+  useEffect(() => {
+    if (rightOpen && compact) contextCloseRef.current?.focus();
+  }, [rightOpen, compact]);
+
+  useEffect(() => {
     if (!drawerOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      event.preventDefault();
-      closeDrawer();
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDrawer();
+      } else if (event.key === "Tab") {
+        const candidates = Array.from(rootRef.current?.querySelectorAll<HTMLElement>(
+          '.delpi-ui-conversation-three-region__category-rail button:not(:disabled), .delpi-ui-conversation-three-region__left button:not(:disabled), .delpi-ui-conversation-three-region__left a[href], .delpi-ui-conversation-three-region__left input:not(:disabled)'
+        ) ?? []).filter(el => !el.closest('[inert]') && el.getClientRects().length > 0);
+        if (candidates.length === 0) return;
+        const first = candidates[0];
+        const last = candidates[candidates.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !candidates.includes(document.activeElement as HTMLElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !candidates.includes(document.activeElement as HTMLElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -115,7 +150,7 @@ export function ConversationThreeRegionLayout({
         className="delpi-ui-conversation-three-region__header-toggle"
         aria-label={rightOpen ? "Fechar contexto" : "Abrir contexto"}
         aria-controls={rightId} aria-expanded={rightOpen}
-        onClick={() => setRightOpen((open) => !open)}>
+        onClick={toggleContext}>
         <MoreHorizontal size={19} aria-hidden="true" />
       </button>
     ) : null,
@@ -132,9 +167,9 @@ export function ConversationThreeRegionLayout({
       {rail ? (
         <div className="delpi-ui-conversation-three-region__category-rail">
           {collapsed ? <div className="delpi-ui-conversation-three-region__rail-heading">
-            <NavigationActions action="toggle" expanded={false} onAction={() => setLeftExpanded(true)} />
+            <NavigationActions action="toggle" expanded={false} onAction={openDrawer} />
           </div> : null}
-          {typeof rail === "function" ? rail({ onExpand: () => setLeftExpanded(true) }) : rail}
+          {typeof rail === "function" ? rail({ onExpand: openDrawer }) : rail}
         </div>
       ) : null}
       {drawerOpen ? (
@@ -142,7 +177,7 @@ export function ConversationThreeRegionLayout({
           aria-label="Fechar navegação" onClick={closeDrawer} />
       ) : null}
       {left && (!rail || leftExpanded) ? (
-        <nav id={leftId} aria-label={leftTitle}
+        <nav ref={navigationRef} id={leftId} aria-label={leftTitle}
           className="delpi-ui-conversation-three-region__left"
           data-drawer={drawerOpen ? "true" : "false"}>
           <div className="delpi-ui-conversation-three-region__side-heading">
@@ -155,7 +190,7 @@ export function ConversationThreeRegionLayout({
             ) : <NavigationActions action="toggle" expanded={!collapsed} onAction={() => setLeftExpanded((value) => !value)} />}
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">
-            {typeof left === "function" ? left({ collapsed, onExpand: () => setLeftExpanded(true) }) : left}
+            {typeof left === "function" ? left({ collapsed, onExpand: openDrawer }) : left}
           </div>
         </nav>
       ) : null}
@@ -180,7 +215,7 @@ export function ConversationThreeRegionLayout({
             <>
               <div className="delpi-ui-conversation-three-region__side-heading">
                 <strong>Contexto</strong>
-                <IconButton className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
+                <IconButton ref={contextCloseRef} className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
                   setRightOpen(false);
                   contextTriggerRef.current?.focus();
                 }}>
