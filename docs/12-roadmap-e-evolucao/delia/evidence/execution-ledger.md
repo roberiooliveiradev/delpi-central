@@ -14760,3 +14760,17 @@ NEXT=I02_R1_INDEPENDENT_DIAGNOSTIC_REVIEW
 - **STATE:** `I02_R1_DIAGNOSTIC_REVIEW=ACCEPT_WITH_RESIDUAL`; `I02_ACCEPTED=NO`; `NESTED_FIX_LIVE_VALIDATED=INCONCLUSIVE`; `I02_R2_IMPLEMENTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R2_CONTRACT_AND_RED_GATE
+
+
+## §6.247 — DELIA-C3-MCP-I02-R2-INDEX-PROBE-HEADROOM-FIX-AND-DEPLOY-01 (IMPLEMENTED_CANDIDATE)
+
+**DATA:** 2026-10-17. **DOC:** [09](../corrections/mcp-contextual-intelligence-orchestration/09-i02r2-index-probe-headroom-fix-and-deploy.md). **BASE_HEAD:** `0ed816702a`. **CODE/DEPLOYED:** `4a8e4d1881`. **MODEL:** `moonshotai/kimi-k3`. **FINGERPRINT:** `dd51e9912270e46b`.
+
+- **ROOT_CAUSE:** PROVEN — optional model `index_probe` after VISTA selection exhausted 30s; PT owner description missed EN-only omit→index detector.
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` — `_contract_declares_omit_returns_index`, `TurnDeadline`, self-index INDEX→GUIDANCE path; new `_budget_allows_optional_index_probe` (2×stage + MIN_VIABLE×3). No planner/memory/public contract change; global budget unchanged.
+- **TESTS:** I02-R2 RED→GREEN PASS; I01/I02/index-probe regression PASS; full `delia-api` PASS.
+- **DEPLOY:** srv-api `git pull` + `up-prod-sequential.sh --pull --build delia-api`; health 200; SHA verified in host+markers.
+- **LIVE:** K3 VISTA GROUNDED 28532ms — model index_probe **not** invoked; owner INDEX+GUIDANCE+`deterministic_guidance` nested projection YES; topic `display_formats` PARTIAL relevance. K1/K2 TEO `model_timeout` ~30014ms FAIL (no retry). ACT=0.
+- **STATE:** `I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL_CANDIDATE`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_I02_R2_ARCHITECTURE_AND_DEPLOY_REVIEW

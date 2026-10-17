@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-17
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_IMPLEMENTED_PENDING_INDEPENDENT_ACCEPTANCE / I03–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_R2_IMPLEMENTED_CANDIDATE_PENDING_INDEPENDENT_REVIEW / I03–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -34,6 +34,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I02-R1 diagnosis:** [07 — post-fix validation and latency diagnosis](./07-i02r1-post-fix-validation-and-latency-diagnosis.md) — nested live INCONCLUSIVE (index_probe timeout before READ); pre-synthesis latency PROVEN (`index_probe` model under 30s). Performance fix not applied.
 
 **I02-R1 independent diagnostic acceptance:** [08 — acceptance with safety qualification](./08-i02r1-independent-diagnostic-acceptance.md). K3 index_probe pre-owner latency PROVEN; nested fix not exercised. I02-R2 must bound optional probe **before** model call; never continue after global deadline expiry or present an empty/index READ as full answer.
+
+**I02-R2 implementation candidate:** [09 — index probe headroom fix and deploy](./09-i02r2-index-probe-headroom-fix-and-deploy.md). Owner-contract PT + derived headroom; live K3 GROUNDED com INDEX/READ/nested sem model probe; K1/K2 TEO ainda timeout. `I02_ACCEPTED=NO` até review.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -68,11 +70,14 @@ TRACK=I02_REWORK
 I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
 I02_ACCEPTED=NO
-I02_R1=DIAGNOSIS_RECORDED
-NESTED_FIX_LIVE=INCONCLUSIVE
+I02_R1=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
+I02_R2=IMPLEMENTED_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+NESTED_FIX_LIVE=EXERCISED_ON_K3_PASS_WITH_LIMITATION
 LATENCY_ROOT_CAUSE=PROVEN
-PERFORMANCE_FIX_IMPLEMENTED=NO
-NEXT=I02_R1_INDEPENDENT_DIAGNOSTIC_REVIEW
+PERFORMANCE_FIX_IMPLEMENTED=YES_INDEX_PROBE_HEADROOM
+K3_OWNER_READ_REACHED=YES
+K1_K2_TEO_LIVE=FAIL_TIMEOUT
+NEXT=INDEPENDENT_I02_R2_ARCHITECTURE_AND_DEPLOY_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
