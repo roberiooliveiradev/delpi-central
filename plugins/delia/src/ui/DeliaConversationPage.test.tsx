@@ -8,6 +8,7 @@ describe("DeliaConversationPage", () => {
     const message = screen.getByText("Mensagem real");
     expect(container.querySelectorAll(".delpi-ui-conversation-three-region")).toHaveLength(1);
     expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
     expect((screen.getByRole("button", { name: "Nova conversa" }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole("button", { name: "Pesquisar conversas" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("region", { name: "Conversas" })).toBeTruthy();
@@ -22,7 +23,7 @@ describe("DeliaConversationPage", () => {
     const { container } = render(<DeliaConversationPage conversation={<p>Centro permanece</p>} />);
     const center = screen.getByText("Centro permanece");
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
-    expect(screen.getByRole("navigation", { name: "Conversas" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Conversas" })).toBeNull();
     expect(screen.getByRole("button", { name: "Conversas" })).toBeTruthy();
     expect((screen.getByRole("button", { name: "Plugins" }) as HTMLButtonElement).disabled).toBe(false);
     expect(container.contains(center)).toBe(true);
@@ -34,6 +35,7 @@ describe("DeliaConversationPage", () => {
   it("shows unavailable Projects preview without remounting the active conversation", () => {
     const { container } = render(<DeliaConversationPage conversation={<p>Turno preservado</p>} />);
     const stableCenter = screen.getByText("Turno preservado");
+    expect(screen.getByRole("button", { name: "Projetos" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     const projectCategory = screen.getByRole("button", { name: "Projetos" });
     expect((projectCategory as HTMLButtonElement).disabled).toBe(false);
@@ -70,6 +72,7 @@ describe("DeliaConversationPage", () => {
   it("shows Plugins as Portal-dependent preview while preserving the active conversation", () => {
     const { container } = render(<DeliaConversationPage conversation={<p>Conversa intacta</p>} />);
     const center = screen.getByText("Conversa intacta");
+    expect(screen.getByRole("button", { name: "Plugins" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
     fireEvent.click(screen.getByRole("button", { name: "Plugins" }));
     expect(screen.getByRole("navigation", { name: "Plugins" })).toBeTruthy();
@@ -82,6 +85,25 @@ describe("DeliaConversationPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Conversas" }));
     expect(screen.getByRole("heading", { name: "Recentes" })).toBeTruthy();
     expect(container.contains(center)).toBe(true);
+  });
+
+  it("E02 composes a persistent rail and one expanded panel without remounting the workspace", () => {
+    const { container } = render(<DeliaConversationPage conversation={<input aria-label="Rascunho persistente" defaultValue="Não perder" />} />);
+    const draft = screen.getByRole("textbox", { name: "Rascunho persistente" });
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__category-rail")).toHaveLength(1);
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Agentes" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Conversas" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Recolher conversas" })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Recolher conversas" }));
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__category-rail")).toHaveLength(1);
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(0);
+    expect(screen.getAllByRole("button", { name: "Expandir conversas" })).toHaveLength(1);
+    expect(container.contains(draft)).toBe(true);
+    expect((draft as HTMLInputElement).value).toBe("Não perder");
+    fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+    expect(container.querySelectorAll(".delpi-ui-conversation-three-region__left")).toHaveLength(1);
+    expect(container.contains(draft)).toBe(true);
   });
 
 });
