@@ -580,12 +580,16 @@ Respond with JSON containing exactly these fields:
   user actually stated; empty object when none.
 - "prior_evidence_sufficient": true ONLY when prior conversation
   turns include a DELIA result whose CONTENT can be transformed to
-  answer THIS user message without a new owner capability call
-  (e.g. summarize, reorganize, or explain limitations already stated
-  in that prior result). false when the user needs current/live
-  owner data, a different subject, an ambiguous referent, or any
-  fresh capability call. When no prior DELIA result exists, always
-  false. true never means "repeat the prior answer verbatim".
+  answer THIS user message without a new owner capability call.
+  Prefer true when the user asks to extract, list, summarize, or
+  restate inputs/steps/limitations/methods already present in that
+  prior result (e.g. "based on that guidance, which inputs do I need
+  before starting?" / "com base nessa orientação, quais informações
+  levantar?"). false when the user needs current/live owner data, a
+  different subject, an ambiguous referent, content the prior result
+  does not contain, or any fresh capability call. When no prior
+  DELIA result exists, always false. true never means "repeat the
+  prior answer verbatim".
 
 Never write facts, never answer the message, never include fields
 other than the listed ones.
@@ -1895,7 +1899,7 @@ def _prior_excerpt_records(
 ) -> tuple[Mapping[str, str], ...]:
     """Split prior DELIA_RESULT text into deterministic excerpt records.
 
-    Provider-neutral and language-agnostic punctuation split — never
+    Provider-neutral punctuation and list-line split — never owner
     keyword routing. Excerpts are untrusted conversational data for
     selection-only synthesis; they are never live owner facts.
     """
@@ -1909,16 +1913,65 @@ def _prior_excerpt_records(
     ]
     units: list[str] = []
     for paragraph in paragraphs or [text]:
-        pieces = _PRIOR_SENTENCE_SPLIT_RE.split(paragraph)
-        for piece in pieces:
-            cleaned = piece.strip()
-            if cleaned:
-                units.append(cleaned[:MAX_DESCRIPTION_CHARS])
+        # Keep bullet/numbered lines as separate selectable units so
+        # follow-ups can extract prerequisite lists without replaying
+        # an entire prior guidance dump.
+        line_chunks = re.split(r"(?m)(?=^\s*(?:[-*]|\d+[.)])\s+)", paragraph)
+        for chunk in line_chunks:
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            pieces = _PRIOR_SENTENCE_SPLIT_RE.split(chunk)
+            for piece in pieces:
+                cleaned = piece.strip()
+                if cleaned:
+                    units.append(cleaned[:MAX_DESCRIPTION_CHARS])
     if not units:
         units = [text[:MAX_DESCRIPTION_CHARS]]
     return tuple(
         {"excerpt": unit} for unit in units[:MAX_PRIOR_EXCERPTS]
     )
+
+
+# Continuity cues for probing prior-transform when the model leaves
+# prior_evidence_sufficient=false. Provider-neutral language patterns
+# — never specialist/tool names. Live/current-fact cues veto the probe.
+_PRIOR_TRANSFORM_CUE_RE = re.compile(
+    r"\b("
+    r"com\s+base|based\s+on|according\s+to|"
+    r"nessa|neste|dessa|deste|"
+    r"anterior|previous|acima|above|"
+    r"orienta(?:c|ç)(?:a|ã)o|guidance|metodologia|methodology|"
+    r"guia|guide"
+    r")\b",
+    re.IGNORECASE,
+)
+_LIVE_FACT_CUE_RE = re.compile(
+    r"\b("
+    r"agora|atual(?:mente)?|current|live|right\s+now|"
+    r"vigente|em\s+produ(?:c|ç)(?:a|ã)o"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _prior_transform_probe_eligible(
+    input_text: str,
+    goal: "OperationalCapabilityOrchestrator._TurnGoal",
+) -> bool:
+    """True when a failed model sufficiency flag may still probe prior.
+
+    Probe is reduction-only: a successful transform avoids a redundant
+    owner re-invoke; insufficiency falls through to live selection.
+    """
+    if goal.goal_class in {"create_or_modify", "clarify"}:
+        return False
+    if goal.output_mode == "dynamic":
+        return False
+    text = (input_text or "").strip()
+    if not text or _LIVE_FACT_CUE_RE.search(text):
+        return False
+    return _PRIOR_TRANSFORM_CUE_RE.search(text) is not None
 
 
 # Closed presentation vocabulary for the synthesis contract — a
@@ -3424,10 +3477,11 @@ class OperationalCapabilityOrchestrator:
                 error_code=(failures[0] if failures else None),
             )
 
-                # Stage 05 multiturn: when prior turns exist, interpret the
-        # goal first. prior_evidence_sufficient alone is never enough —
-        # deterministic excerpt synthesis must transform prior content
-        # for the new ask. Never AuthZ reuse; never fresh grounding.
+                # Stage 05 / I01 multiturn: interpret the goal first. When the
+        # model declares prior evidence sufficient — or a provider-
+        # neutral continuity probe applies — transform prior OBSERVATION
+        # content without a new owner call. Never AuthZ reuse; never
+        # fresh grounding from conversation history.
         goal: OperationalCapabilityOrchestrator._TurnGoal | None = None
         if prior_turns:
             goal = self._understand_goal(
@@ -3437,34 +3491,58 @@ class OperationalCapabilityOrchestrator:
                 prior_turns,
                 deadline,
             )
-            if (
-                goal.prior_evidence_sufficient
-                and goal.goal_class != "create_or_modify"
-            ):
+            if goal.goal_class != "create_or_modify":
                 prior_turn = self._prior_result_turn(prior_turns)
                 if (
                     prior_turn is None
                     or prior_turn.epistemic_class
                     is not EpistemicClass.OBSERVATION
                 ):
-                    # Conversational residue without observation-class
-                    # evidence is not transformable prior evidence.
-                    _logger.info(
-                        "orchestration stage=prior_continuation "
-                        "decision=prior_not_observation "
-                        "correlation_id=%s",
-                        correlation,
-                    )
+                    if goal.prior_evidence_sufficient:
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=prior_not_observation "
+                            "correlation_id=%s",
+                            correlation,
+                        )
                 else:
-                    continued = self._prior_continuation_attempt(
-                        input_text,
-                        prior_turns,
-                        correlation,
-                        deadline,
-                        business_subject=goal.business_subject,
+                    committed = goal.prior_evidence_sufficient
+                    probe = (
+                        not committed
+                        and _prior_transform_probe_eligible(
+                            input_text, goal
+                        )
                     )
-                    if continued is not None:
-                        return continued
+                    if committed or probe:
+                        continued = self._prior_continuation_attempt(
+                            input_text,
+                            prior_turns,
+                            correlation,
+                            deadline,
+                            business_subject=goal.business_subject,
+                        )
+                        if continued is not None:
+                            if committed:
+                                return continued
+                            if (
+                                LIMITATION_INSUFFICIENT_EVIDENCE
+                                not in continued.limitations
+                            ):
+                                _logger.info(
+                                    "orchestration stage="
+                                    "prior_continuation "
+                                    "decision=probe_accepted "
+                                    "correlation_id=%s",
+                                    correlation,
+                                )
+                                return continued
+                            _logger.info(
+                                "orchestration stage="
+                                "prior_continuation "
+                                "decision=probe_insufficient "
+                                "fallthrough correlation_id=%s",
+                                correlation,
+                            )
 
         # Selection must not receive full prior transcript (Stage 05
         # latency). A compact prior_listing hint may be embedded in the
