@@ -14328,12 +14328,12 @@ NEXT=STAGE_04_BOUNDED_IMPLEMENTATION (coordination authorization in successor le
 
 ## §6.214 — DELIA-C3-STAGE-04-COMPLETENESS-RESOLUTION-IMPLEMENTATION-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/36-stage-04-completeness-resolution-implementation-report.md`. **CODE_SHA:** fill after publish.
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/36-stage-04-completeness-resolution-implementation-report.md`. **CODE_SHA:** `06f3b4ebdd` (= `origin/main` at Stage04 publish; deployed `srv-api`).
 
 - **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`.
 - **FIX:** `_owner_entity_completeness_gaps` + declared defaults + post-arg/post-resolver gate; preserve resolver invented-id/ambiguity and B1/B2.
 - **TESTS:** `test_stage04_completeness_resolution.py` + CI-04/10 updated; Stage03 regression; full `delia-api` pytest green.
-- **LIVE SSH:** fill after deploy (MESSAGE prepare completeness; `MATERIAL_ACT=0`).
+- **LIVE SSH** (`operador@192.168.1.237` / `srv-api`, MESSAGE-only, deploy `06f3b4ebdd`, helpers present): correlation `c4b9c803-db6f-4cce-9464-87d71bb62990`; selected `mcp:teo` / `prepare_record_change`; discovery `teo.get_catalog` ok; arguments `invalid_structured_output` → `decision=none` (no PREPARE invoke); surface NON_GROUNDED/HYPOTHESIS; `MATERIAL_ACT=0`; invented ids=0; completeness clarify not reached this turn (`LIVE_RESULT=EVIDENCE_RECORDED_BOUNDED`).
 - **NO CLAIMS:** `STAGE_04_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
 
 STAGE_03_ACCEPTED=YES_WITH_RESIDUAL; STAGE_04_AUTHORIZED=YES_BOUNDED; STAGE_04_ACCEPTED=NO

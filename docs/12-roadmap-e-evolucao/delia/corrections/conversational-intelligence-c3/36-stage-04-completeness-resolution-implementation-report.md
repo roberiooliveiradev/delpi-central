@@ -37,13 +37,33 @@ Reutilizado: `_build_arguments`, `_resolve_missing_inputs`, `_clarification_ques
 
 ## 5. Live SSH
 
-Registrado no ledger §6.214 após deploy do SHA desta implementação (MESSAGE-only; zero ACT).
+```text
+SSH_DEPLOYED_SHA=06f3b4ebdd
+REAL_MODEL=moonshotai/kimi-k3 (runtime default)
+CORRELATION_ID=c4b9c803-db6f-4cce-9464-87d71bb62990
+REQUEST_ID=67206e7d-3255-455b-93bb-564144ddab5d
+
+LIVE_CAPABILITY_SELECTED=mcp:teo / prepare_record_change (PREPARE)
+DISCOVERY=teo.get_catalog (ok)
+ARGUMENTS=none (model invalid_structured_output; missing=0 reported)
+PREPARE_INVOKE=0
+MATERIAL_ACT_COUNT=0
+INVENTED_IDENTIFIERS=0
+HAS_CONFIRMATION=false
+GROUNDING_STATUS=NON_GROUNDED (surface content; orchestration selected capability)
+PREPARE_STATE=NOT_READY
+CLARIFICATION_RELEVANT=NO (projection failed before completeness clarify)
+LIVE_RESULT=EVIDENCE_RECORDED_BOUNDED
+```
+
+MESSAGE-only; zero ACT. Completeness gate not exercised on this live turn because argument projection failed closed before PREPARE — covered by deterministic Stage04 suite.
 
 ## 6. Limitações / resíduos
 
 - Completude tipada nested já coberta por `validate_arguments`; esta etapa cobre payloads opacos + `entity_schemas`.
 - Resolver same-owner / ambiguidade / invented-id: comportamentos pré-existentes preservados; não reescritos.
-- Live real depende de catalog owner publicar `entity_schemas` estruturado.
+- Live: seleção PREPARE + discovery ok; args projection `invalid_structured_output` → sem clarificação Stage04 nesta turn.
+- Live real de gaps `entity_schemas` ainda depende de args válidos + catalog estruturado.
 - `STAGE_04_ACCEPTED=NO` até review independente.
 - `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
 
