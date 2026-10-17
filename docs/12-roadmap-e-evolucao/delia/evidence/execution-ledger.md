@@ -14724,3 +14724,15 @@ NEXT=D01_COMPANION_DOCK_UX_IF_ACCEPTED
 - **STATE:** `I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `I02_ACCEPTED=NO`; `I03_IMPLEMENTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=INDEPENDENT_I02_ARCHITECTURE_ACCEPTANCE_REVIEW
+
+
+## §6.244 — DELIA-C3-MCP-I02-INDEPENDENT-ARCHITECTURE-REVIEW (REWORK)
+
+**DATA:** 2026-10-17. **DOC:** [06 — I02 independent REWORK](../corrections/mcp-contextual-intelligence-orchestration/06-i02-independent-review-rework-decision.md). **REVIEWED_HEAD:** `40663f65dbcdb0b831f0845db8096913a1f85e1e`. **DIFFS:** `55b0e9397100dadea10c0180e922afbc4afcaf1d`, `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e`. GitHub code/document review only; executor live and tests not independently reexecuted.
+
+- `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND`: existing synthesis/projection and deterministic guidance alignment extended without new planner, memory or contract.
+- **K1 FAIL:** pre-synthesis `model_timeout/delpi_source_unverified` at 30025ms; user knowledge goal unmet. **K2 PARTIAL:** guidance returned after owner re-invoke (K1 empty), so no proof of successful K1→K2 continuity. **K3 PARTIAL:** live SHA `55b0e939...` skip-budget/truncated dump; nested envelope follow-up fix `cc7d2c8...` is `TEST_NOT_RUN` live.
+- **REWORK:** first validate nested fix at its SHA/config with bounded owner guidance; profile K1 goal/selection/discovery/owner/synthesis timeline, make smallest warranted latency correction without increasing 30s; then K1→K2/K3 contextual outcome/generalization/safety validation. No I03 or Q advancement.
+- **DECISION:** `I02_INDEPENDENT_REVIEW=REWORK`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=I02_R1_POST_FIX_VALIDATION_AND_PRE_SYNTHESIS_LATENCY_CAUSE
