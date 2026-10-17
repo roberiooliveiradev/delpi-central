@@ -14461,3 +14461,17 @@ NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 - **NO CLAIMS:** E07 not started; phase progression NONE; E02–E06 verdicts unchanged (`6/10 ACCEPTED`).
 
 NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
+
+
+## §6.225 — DELIA-C3-STAGE05-INDEPENDENT-ARCHITECTURE-ACCEPTANCE-01 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **DOC:** [39](../corrections/conversational-intelligence-c3/39-stage-05-independent-architecture-acceptance-closure.md). **CODE_SHA_EVALUATED:** `c64b632275eaadcc2293617e2c5c41e86e9e9457`. **MODE:** independent GitHub code/document review; SSH evidence reported by executor, not independently replayed.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`; no new planner/response engine.
+- **FUNCTIONAL:** fixed surplus `limitations` → `proposal_absent` on prior synthesis; renderer transforms prior excerpts without literal replay; `prior_turn_evidence_only`, NON_GROUNDED, no renewed AuthZ inferred.
+- **TESTS:** targeted red/green, adapter and full backend suite PASS **executor-reported**; not independently re-run.
+- **LIVE:** deployed `c64b632275` model `moonshotai/kimi-k3`: T1 GROUNDED 18243ms; T2 `strip_extra limitations` → `transformed` 6777ms; zero material ACT. Scope = one bounded TÉO scenario; not model/provider generalization.
+- **RESIDUALS:** R-S05-01 user-facing `excerpt` label; R-S05-02 safety/adversarial checks for shared surplus-key projection; R-S05-03 prior-turn security/context; R-S05-04 unseen provider/model/owner evaluation. Preserve Stage02/03 residuals and R-S04-01 live minimal clarification NOT_EXERCISED.
+- **DECISION:** `STAGE_05_REVIEW=ACCEPT_WITH_RESIDUAL`; `STAGE_05_ACCEPTED=YES_WITH_RESIDUAL`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=STAGE_06_BOUNDED_GENERALIZATION_SAFETY_EVAL
