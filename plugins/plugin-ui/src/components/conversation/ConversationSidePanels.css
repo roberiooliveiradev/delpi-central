@@ -137,3 +137,7 @@
   line-height: 1.55;
   color: var(--delpi-ui-text-muted, var(--text-muted, #666));
 }
+
+/* Group headings and lists reuse the existing conversation navigation tokens. */
+.delpi-ui-conversation-sidebar__group + .delpi-ui-conversation-sidebar__group { margin-top: 16px; }
+.delpi-ui-conversation-sidebar__group { min-width: 0; }
