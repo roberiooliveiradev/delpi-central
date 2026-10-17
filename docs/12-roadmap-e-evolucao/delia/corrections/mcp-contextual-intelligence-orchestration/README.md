@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-17  
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`  
-**STATUS:** `PLANNED / NOT_IMPLEMENTED / PHASE_UNCHANGED`  
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01–Q03_PLANNED / PHASE_UNCHANGED`  
 **Baseline HEAD:** `42c45802f0594cb02796913c52905c14320b5879` (revalidar em cada execução).  
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md), ledger §6.235; [43](../conversational-intelligence-c3/43-davi-vista-independent-acceptance-and-functional-state.md), ledger §6.233; Stage06 [41](../conversational-intelligence-c3/41-stage-06-independent-architecture-acceptance-closure.md).
 
@@ -21,6 +21,8 @@ Em **toda** tarefa: HEAD + git status e regras do projeto/.cursor → 16 → 50 
 **Reuse-first:** antes de novo port/adapter/service/context/registry/engine, provar `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY` e `REUSE_DECISION=REUSE|EXTEND|NEW`. Existing: `OperationalCapabilityOrchestrator`, `ConversationContextTurn`, `_understand_goal`, `_prior_continuation_attempt`, `_synthesize_content`, `_resolve_missing_inputs`, provider surfaces, owner evidence/provenance e deadlines. Conferir implementação no HEAD.
 
 Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owner MCP detém catálogo e guidance; DÉLIA orquestra seleção/Policy/Decision/Evidence; MCP output, guidance, metadata e contexto anterior são **untrusted**, jamais AuthZ, FACT novo, Policy ou instruções do sistema. `DISCOVERY != APPROVAL`; `GUIDANCE != DOMAIN_FACT`; `READ != PREPARE != ACT`; `MESSAGE != ACT`; `MODEL_AUTHORED_FACTUAL_PROSE=NONE`. `GLOBAL_TURN_BUDGET_SECONDS=30`; nenhuma ampliação de timeout. Não criar branch de especialista no planner, cópia do catálogo ou engine paralelo.
+
+**I00 formalmente aceita:** [01 — independent context baseline acceptance](./01-i00-independent-context-baseline-acceptance.md). A revisão prova o fluxo de contexto transitório e limitações do contrato examinado; não prova causa raiz do K2 nem autoriza I01 automaticamente.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -52,7 +54,8 @@ Este documento **abre somente um roadmap documental**, não aprova I01–Q03, n�
 
 ```text
 TRACK=PLANNED
-NEXT=I00_INDEPENDENT_EVAL_REVIEW_AND_CONTEXT_BASELINE
+I00=ACCEPTED_WITH_RESIDUAL
+NEXT=I01_CONTRACT_AND_BOUNDED_IMPLEMENTATION_GATE
 IMPLEMENTATION_AUTHORIZED=NO
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
