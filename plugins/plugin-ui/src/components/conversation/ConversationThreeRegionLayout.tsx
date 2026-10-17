@@ -34,6 +34,7 @@ export function ConversationThreeRegionLayout({
   const compactRef = useRef(false);
   const contextTriggerRef = useRef<HTMLButtonElement | null>(null);
   const contextRef = useRef<HTMLDivElement | null>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement | null>(null);
   const drawerReturnFocusRef = useRef(false);
   const leftId = useId();
   const rightId = useId();
@@ -93,6 +94,10 @@ export function ConversationThreeRegionLayout({
   }, [compact, leftExpanded]);
 
   useEffect(() => {
+    if (drawerOpen) drawerCloseRef.current?.focus();
+  }, [drawerOpen]);
+
+  useEffect(() => {
     if (!drawerOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
@@ -142,14 +147,19 @@ export function ConversationThreeRegionLayout({
           data-drawer={drawerOpen ? "true" : "false"}>
           <div className="delpi-ui-conversation-three-region__side-heading">
             {!collapsed ? <strong>{leftTitle}</strong> : null}
-            <NavigationActions action="toggle" expanded={!collapsed} onAction={() => drawerOpen ? closeDrawer() : setLeftExpanded((value) => !value)} />
+            {drawerOpen ? (
+              <button ref={drawerCloseRef} type="button"
+                className="delpi-ui-conversation-three-region__drawer-close"
+                aria-label="Recolher conversas" aria-controls={leftId} aria-expanded={true}
+                onClick={closeDrawer}><X size={18} aria-hidden="true" /></button>
+            ) : <NavigationActions action="toggle" expanded={!collapsed} onAction={() => setLeftExpanded((value) => !value)} />}
           </div>
           <div className="delpi-ui-conversation-three-region__side-content">
             {typeof left === "function" ? left({ collapsed, onExpand: () => setLeftExpanded(true) }) : left}
           </div>
         </nav>
       ) : null}
-      <div className="delpi-ui-conversation-three-region__center">
+      <div className="delpi-ui-conversation-three-region__center" inert={drawerOpen}>
         <div className="delpi-ui-conversation-three-region__conversation">
           {typeof center === "function" ? center(controls) : center}
         </div>
@@ -157,6 +167,7 @@ export function ConversationThreeRegionLayout({
       {rightAvailable && right ? (
         <div
           ref={contextRef}
+          inert={drawerOpen}
           id={rightId}
           role="dialog"
           aria-modal="false"
