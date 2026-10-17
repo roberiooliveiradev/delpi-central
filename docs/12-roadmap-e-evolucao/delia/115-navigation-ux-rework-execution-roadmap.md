@@ -58,7 +58,7 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | E05 | ContextPopover responsivo | E04 | **ACCEPTED_WITH_RESIDUAL** | limites/estrutura unit + visual 375; geometria CSS real → E09 |
 | E06 | Convivência de painéis + acessibilidade | E04+E05 | **ACCEPTED_WITH_RESIDUAL** | exclusividade/foco/Tab unit; teclado real/browser → E09 |
 | E07 | Polimento visual e motion | E02–E06 | **IMPLEMENTED_CANDIDATE / TECHNICAL_QA_PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
-| E08 | Regressão integrada e gates de build | E02–E07 | **PENDING** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
+| E08 | Regressão integrada e gates de build | E02–E07 | **VALIDATION_STARTED / RUNNER_REQUIRED / INCONCLUSIVE** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
 
@@ -832,3 +832,64 @@ ROADMAP_PROGRESS=6/10_ACCEPTED
 PHASE_PROGRESSION=NONE
 NEXT=E07_TEST_BUILD_VISUAL_REVIEW
 ```
+
+
+## 23. E08 — Validação integrada iniciada, runner pendente (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E08-INTEGRATION-REGRESSION-01`. **BASE_HEAD:** `f03384cae42ef0cf1099fefef41da12166910336`, GitHub `main`. **Escopo:** apenas E08, sem E09 ou mudanças de fase/ownership. O Product Master autorizou continuar na sequência do roadmap.
+
+### Evidência disponível nesta sessão
+
+- `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE` dos scripts reais de `plugins/plugin-ui/package.json` e `plugins/delia/package.json`, testes `ConversationThreeRegionLayout.test.tsx`, `DeliaConversationPage.test.tsx` e gate de export federado.
+- E07 publicou CSS de `ConversationThreeRegionLayout` e `NavigationRail`; o CSS lido no SHA atual contém marcador `aria-current=page`, suporte `prefers-reduced-motion`, ajustes de scroll e ausência de `will-change` permanente. Isso é **prova de publicação de código, não de runtime**.
+- Inspecionado HEAD GitHub, scripts package e testes existentes. A busca por workflow runs de PR associados a esse commit retornou `[]`; **isso não prova que CI inexiste ou não foi executado por outro gatilho**.
+- O container disponível neste chat **não contém checkout do monorepo**, instalação do projeto nem sessão de acesso ao workspace Cursor ou deploy. Por isso não houve execução de comandos npm, browser, typecheck ou Vite; `TEST_NOT_RUN`. Não associar logs anteriores E02–E06 ao novo SHA E07.
+- `CANONICAL_REANCHOR=PARTIAL`: roadmap e temática 113 recuperados; reanchor integral .cursor/16/50/17/49/51/52/21/20/25/ledger e `git status` local precisam ser repetidos no workspace executor antes dos testes.
+
+### Comandos para execução real no workspace Cursor
+
+Ler novamente os scripts no HEAD e rodar de forma sequencial sem mascarar `exit code`:
+
+```bash
+git status --short
+git branch --show-current
+git fetch origin main
+git rev-parse HEAD
+git rev-parse origin/main
+cd plugins/plugin-ui
+npm run test -- src/components/conversation/ConversationThreeRegionLayout.test.tsx src/components/conversation/NavigationRail.test.tsx src/components/conversation/NavigationCategoryPanel.test.tsx src/components/conversation/NavigationActions.test.tsx
+npx tsc -p tsconfig.json --noEmit --pretty false
+npm run build
+npm run verify:host-exports
+cd ../delia
+npm run test -- src/ui/DeliaConversationPage.test.tsx
+npm run typecheck
+npm run build
+npm run verify:federation
+```
+
+Se algum arquivo de teste/script não existir no HEAD, classificar `TEST_NOT_RUN` por item, usar testes equivalentes reais e documentar alteração; não inventar arquivo. `plugin-ui` tsc full historicamente falhou por dívida em catalog/bpmn/charts/tests: obter lista e exit code **atuais**; classificar e comparar baseline por arquivo/erro antes de declarar dívida preexistente. Nunca declarar `PASS` com exit 2. Fazer regressão de `ConversationWorkspace`, rascunho, selected category, rail, drawer↔Contexto e foco; CSS/contraste, motion, zoom e geometria necessitam E09 no navegador.
+
+### Estado factual e gate
+
+```text
+E08_STATUS = VALIDATION_STARTED / INCONCLUSIVE
+BASE_HEAD = f03384cae42ef0cf1099fefef41da12166910336
+WORKSPACE_GIT_STATUS = TEST_NOT_RUN
+PLUGIN_UI_VITEST = TEST_NOT_RUN
+DELIA_VITEST = TEST_NOT_RUN
+PLUGIN_UI_TYPECHECK = TEST_NOT_RUN
+DELIA_TYPECHECK = TEST_NOT_RUN
+PLUGIN_UI_BUILD = TEST_NOT_RUN
+DELIA_BUILD = TEST_NOT_RUN
+FEDERATION = TEST_NOT_RUN
+BROWSER_QA = TEST_NOT_RUN
+E07_ACCEPTED = NO
+E08_ACCEPTED = NO
+CHECKLIST_CHANGED = NO
+ROADMAP_PROGRESS = 6/10 ACCEPTED
+PHASE_PROGRESSION = NONE
+NEXT = E08_EXECUTE_TESTS_IN_CURSOR_WORKSPACE_AND_REVIEW
+```
+
+**Não avançar E09** nem marcar E08 ou E07 por esta atualização documental. O encerramento da E08 exige log com comandos, exit codes, SHA/config e review dos resultados executados.
