@@ -820,9 +820,11 @@ def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> boo
     """True when the untrusted capability description declares that
     omitting optional identifiers returns an index of options.
 
-    Language-agnostic enough for MCP English contracts (omit/omitted +
-    index/available/list). Never field-name or provider hardcode; never
-    treats optional fields alone as sufficient (RW-S03-01).
+    Covers English MCP contracts (omit/omitted + index/available/list)
+    and Portuguese owner surfaces that use the same semantic pair
+    (omitir/sem … + índice/lista de) without field-name or provider
+    hardcode. Never treats optional fields alone as sufficient
+    (RW-S03-01).
     """
     text = (descriptor.description or "").lower()
     if not text:
@@ -832,12 +834,20 @@ def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> boo
         or "omitted" in text
         or "without the" in text
         or "when omitted" in text
+        or "omitir" in text
+        or "omita" in text
+        or "omitido" in text
+        # PT clause form: "Sem <field>: índice …" — only with index_signal.
+        or "sem " in text
     )
     index_signal = (
         "index" in text
+        or "índice" in text
+        or "indice" in text
         or "available" in text
         or "list of" in text
         or "lists the" in text
+        or "lista de" in text
     )
     return omit_signal and index_signal
 
@@ -4240,6 +4250,7 @@ class OperationalCapabilityOrchestrator:
         discovery_structured: Mapping[str, Any] | None = None
         discovery_ran = False
         self_index_ran = False
+        optional_index_probe_skipped_budget = False
         index_structured: Mapping[str, Any] | None = None
         index_declared_ids: frozenset[str] | None = None
         if discovery is not None:
@@ -4274,68 +4285,90 @@ class OperationalCapabilityOrchestrator:
                 self._log_plan(plan, correlation, discovery_ran=True)
             else:
                 self._log_plan(plan, correlation, discovery_ran=False)
-        elif self_index and (
-            _contract_declares_omit_returns_index(descriptor)
-            or self._propose_index_probe(
-                input_text,
-                descriptor,
-                workspace_context,
-                prior_turns,
-                correlation,
-                deadline,
+        elif self_index:
+            # Owner-declared omit→index authorizes empty INDEX READ
+            # without a model probe. Optional model probe runs only when
+            # TurnDeadline still has headroom for probe + index_select +
+            # presentation floor (I02-R2). Never catch an exhausted
+            # global deadline to continue.
+            contract_index = _contract_declares_omit_returns_index(
+                descriptor
             )
-        ):
-            # INDEX READ → later GUIDANCE READ (same capability).
-            # Contract omit→index declaration authorizes the empty
-            # invoke; otherwise the model must propose probe_index.
-            # Empty arguments are schema-valid only when eligibility
-            # already proved no required fields.
-            empty_args = _validate_instance({}, descriptor.input_schema)
-            if empty_args is None:
-                _logger.info(
-                    "orchestration stage=index_probe "
-                    "decision=empty_args_invalid correlation_id=%s",
+            run_index = False
+            if contract_index:
+                run_index = True
+            elif self._budget_allows_optional_index_probe(deadline):
+                run_index = self._propose_index_probe(
+                    input_text,
+                    descriptor,
+                    workspace_context,
+                    prior_turns,
                     correlation,
+                    deadline,
                 )
             else:
-                try:
-                    index_outcome = self._invoke(
-                        group,
-                        descriptor.remote_name,
-                        empty_args,
-                        correlation,
-                        deadline,
-                    )
-                except CapabilityProviderError as exc:
-                    _logger.info(
-                        "orchestration stage=index_probe "
-                        "decision=error error_code=%s "
-                        "correlation_id=%s",
-                        exc.code,
-                        correlation,
-                    )
-                    return _error_attempt(correlation, exc)
-                owner_evidence = _bound_owner_evidence(index_outcome)
-                discovery_ran = True
-                self_index_ran = True
-                if isinstance(index_outcome.structured, Mapping):
-                    index_structured = index_outcome.structured
-                    field_keys = _optional_unconstrained_string_keys(
-                        descriptor
-                    )
-                    index_declared_ids = _index_declared_identifiers(
-                        index_structured,
-                        field_keys,
-                    )
+                optional_index_probe_skipped_budget = True
                 _logger.info(
                     "orchestration stage=index_probe "
-                    "decision=ok capability=%s identifiers=%d "
+                    "decision=skip_budget remaining_ms=%d "
                     "correlation_id=%s",
-                    descriptor.remote_name,
-                    len(index_declared_ids or ()),
+                    int(deadline.remaining_seconds() * 1000),
                     correlation,
                 )
-                self._log_plan(plan, correlation, discovery_ran=True)
+            if run_index:
+                # INDEX READ → later GUIDANCE READ (same capability).
+                # Empty arguments are schema-valid only when eligibility
+                # already proved no required fields.
+                empty_args = _validate_instance(
+                    {}, descriptor.input_schema
+                )
+                if empty_args is None:
+                    _logger.info(
+                        "orchestration stage=index_probe "
+                        "decision=empty_args_invalid correlation_id=%s",
+                        correlation,
+                    )
+                else:
+                    try:
+                        index_outcome = self._invoke(
+                            group,
+                            descriptor.remote_name,
+                            empty_args,
+                            correlation,
+                            deadline,
+                        )
+                    except CapabilityProviderError as exc:
+                        _logger.info(
+                            "orchestration stage=index_probe "
+                            "decision=error error_code=%s "
+                            "correlation_id=%s",
+                            exc.code,
+                            correlation,
+                        )
+                        return _error_attempt(correlation, exc)
+                    owner_evidence = _bound_owner_evidence(index_outcome)
+                    discovery_ran = True
+                    self_index_ran = True
+                    if isinstance(index_outcome.structured, Mapping):
+                        index_structured = index_outcome.structured
+                        field_keys = _optional_unconstrained_string_keys(
+                            descriptor
+                        )
+                        index_declared_ids = _index_declared_identifiers(
+                            index_structured,
+                            field_keys,
+                        )
+                    _logger.info(
+                        "orchestration stage=index_probe "
+                        "decision=ok capability=%s identifiers=%d "
+                        "correlation_id=%s",
+                        descriptor.remote_name,
+                        len(index_declared_ids or ()),
+                        correlation,
+                    )
+                    self._log_plan(
+                        plan, correlation, discovery_ran=True
+                    )
 
         # Missing-input preflight (LOOP-03R1, D08): when a foreign step
         # is planned, the target's preliminary arguments and the
@@ -4578,6 +4611,28 @@ class OperationalCapabilityOrchestrator:
                 arguments = None
                 missing_inputs = tuple(
                     dict.fromkeys(missing_inputs + post_index_gaps)
+                )[:MAX_MISSING_INPUTS]
+        if (
+            optional_index_probe_skipped_budget
+            and not self_index_ran
+        ):
+            # Without an owner index vocabulary, optional free-string
+            # identifiers cannot be proven (model guesses and schema-
+            # valid {} INDEX invokes are not guidance answers). Clarify
+            # rather than invent or present an index payload as the
+            # user's requested knowledge.
+            id_keys = _optional_unconstrained_string_keys(descriptor)
+            if id_keys:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=skip_budget_identifier_required "
+                    "fields=%d correlation_id=%s",
+                    len(id_keys),
+                    correlation,
+                )
+                arguments = None
+                missing_inputs = tuple(
+                    dict.fromkeys(missing_inputs + id_keys)
                 )[:MAX_MISSING_INPUTS]
         if arguments is not None and not self_index_ran:
             # Stage 04: apply owner-declared defaults, then require
@@ -5473,6 +5528,32 @@ class OperationalCapabilityOrchestrator:
             MIN_VIABLE_MODEL_STAGE_SECONDS * 3,
         )
         return remaining >= floor
+
+    def _budget_allows_optional_index_probe(
+        self, deadline: TurnDeadline
+    ) -> bool:
+        """Optional model index probe needs recoverable follow-on room.
+
+        Derived only from existing caps (never widens the global 30s
+        turn budget):
+
+        - one full model-stage timeout for the probe proposal itself;
+        - one full model-stage timeout for a subsequent index_select;
+        - the same ``MIN_VIABLE_MODEL_STAGE_SECONDS * 3`` floor used by
+          synthesis/resolver so a grounded READ presentation can still
+          finish after the owner returns.
+
+        When remaining is below this floor the optional model probe is
+        not started; owner-declared omit→index remains a separate path
+        that does not require this model call.
+        """
+        remaining = deadline.remaining_seconds()
+        required = (
+            self._model_stage_timeout_seconds
+            + self._model_stage_timeout_seconds
+            + MIN_VIABLE_MODEL_STAGE_SECONDS * 3
+        )
+        return remaining >= required
 
     def _prior_continuation_attempt(
         self,

@@ -207,15 +207,18 @@ def _group(provider_id, group_id, capabilities):
 
 
 def test_index_probe_model_timeout_never_reaches_owner_read():
-    """Live K3 class: index_probe timeout → no owner READ / no synthesis.
+    """When optional probe is allowed to start and times out → no owner READ.
 
-    Characterization of current fail-closed behavior (I02-R1 evidence).
-    Desired I02-R2 degradation is NOT implemented here.
+    I02-R1 characterization of fail-closed timeout (never catch exhausted
+    deadline to continue). I02-R2 headroom skip is covered separately in
+    ``test_i02r2_index_probe_headroom``; this keeps remaining above the
+    optional-probe floor so the timeout path is still exercised.
     """
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
-    # Spend most of the budget on earlier stages (as live did ~10s).
-    clock.advance(10.0)
+    # Remaining must stay >= 2*MODEL_STAGE + MIN_VIABLE*3 (26s default)
+    # so the optional probe is eligible to start, then times out.
+    clock.advance(2.0)
     provider = FakeProvider(
         "specialist_alpha",
         [
