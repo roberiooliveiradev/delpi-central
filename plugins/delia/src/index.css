@@ -243,3 +243,30 @@
 
 /* Unavailable history/context: clear and honest, no fake app functions. */
 .dashboard-delia .delia-visually-muted { font-size: 0.8125rem; line-height: 1.55; color: var(--delia-text-muted); margin: 0; }
+
+/* D02: real pending request shares a single activity status with the
+   institutional processing halo. The activity icon is decorative and
+   replaced by the avatar; no competing progress spinner in the dock. */
+.dashboard-delia .delia-interaction__pending-row {
+  display: flex;
+  align-self: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(100%, 100%);
+  min-width: 0;
+  padding: 3px;
+}
+.dashboard-delia .delia-interaction__pending-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  margin: 2px 0;
+}
+.dashboard-delia .delia-interaction__pending-row .delia-interaction__loading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* The ActivityViewer keeps its sole text status/disclosure, while its
+   decorative icon yields to the same UnifiedAvatar used everywhere. */
+.dashboard-delia .delia-interaction__pending-row .delpi-ui-activity-viewer__icon {
+  display: none;
+}
