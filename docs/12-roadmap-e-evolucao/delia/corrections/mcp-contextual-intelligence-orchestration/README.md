@@ -2,9 +2,9 @@
 
 **DATA:** 2026-10-17
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_IMPLEMENTED_PENDING_INDEPENDENT_ACCEPTANCE / I02–Q03_PLANNED`
-**Baseline HEAD:** `118a1814e57a57cec2fb2c57848476268efc4af8` (revalidar em cada execução).
-**Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md), ledger §6.235; I01 impl [03](./03-i01-contextual-knowledge-continuity-implementation.md), ledger §6.239; [43](../conversational-intelligence-c3/43-davi-vista-independent-acceptance-and-functional-state.md), ledger §6.233.
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_IMPLEMENTED_PENDING_INDEPENDENT_ACCEPTANCE / I03–Q03_PLANNED`
+**Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
+**Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
 ## 1. Decisão de produto e escopo
 
@@ -27,7 +27,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I01 direction proposed:** [02 — architecture alignment and continuity proposal](./02-i01-architecture-alignment-and-continuity-proposal.md).
 **I01 implementation candidate (not independently accepted):** [03 — contextual knowledge continuity implementation](./03-i01-contextual-knowledge-continuity-implementation.md). `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND`; live K2 path sem reconsulta desnecessária; `I01_ACCEPTED=NO` até review.
 
-**I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL; live K2 reuse corrected, answer relevance partial due truncated K1. I02 remains gated.
+**I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL.
+**I02 implementation candidate:** [05 — grounded knowledge synthesis](./05-i02-grounded-knowledge-synthesis-implementation.md). Deterministic guidance projection + budget-safe fallback; `I02_ACCEPTED=NO` até review.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -58,11 +59,12 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.
 
 ```text
-TRACK=I01_ACCEPTED_WITH_RESIDUAL
+TRACK=I02_IMPLEMENTED_PENDING_ACCEPTANCE
 I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
-I02_STATUS=PLANNED_NOT_AUTHORIZED
-NEXT=I02_SYNTHESIS_AND_BUDGET_CONTRACT_GATE
+I02_ACCEPTED=NO
+I02_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
+NEXT=INDEPENDENT_I02_ARCHITECTURE_ACCEPTANCE_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
