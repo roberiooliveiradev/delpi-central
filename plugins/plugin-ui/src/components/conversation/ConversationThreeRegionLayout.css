@@ -271,3 +271,49 @@
     transition: none !important;
   }
 }
+
+/* E02: an optional category rail is a sibling of the panel, not an XOR body.
+   Legacy shell consumers without the rail prop keep their original layout. */
+.delpi-ui-conversation-three-region--with-rail {
+  --delpi-ui-three-rail: 64px;
+}
+.delpi-ui-conversation-three-region--with-rail .delpi-ui-conversation-three-region__category-rail {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 0 var(--delpi-ui-three-rail);
+  width: var(--delpi-ui-three-rail);
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border-right: 1px solid color-mix(in srgb,var(--delpi-ui-border,var(--border,#ddd)) 42%,transparent);
+  background: var(--delpi-ui-surface,var(--surface,#fff));
+}
+.delpi-ui-conversation-three-region__rail-heading {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+}
+.delpi-ui-conversation-three-region--with-rail .delpi-ui-conversation-three-region__left {
+  flex: 0 0 var(--delpi-ui-three-left);
+}
+.delpi-ui-conversation-three-region--with-rail .delpi-ui-conversation-three-region__category-rail .delpi-ui-navigation-rail {
+  width: 100%;
+}
+@container delia-page (max-width: 920px) {
+  .delpi-ui-conversation-three-region--with-rail { --delpi-ui-three-rail: 52px; }
+  .delpi-ui-conversation-three-region--with-rail .delpi-ui-conversation-three-region__category-rail {
+    flex: 0 0 var(--delpi-ui-three-rail);
+    width: var(--delpi-ui-three-rail);
+    padding: 8px 4px;
+  }
+  /* The already-existing compact absolute panel remains for E04's drawer task. */
+  .delpi-ui-conversation-three-region--with-rail .delpi-ui-conversation-three-region__left {
+    flex-basis: auto;
+  }
+}
