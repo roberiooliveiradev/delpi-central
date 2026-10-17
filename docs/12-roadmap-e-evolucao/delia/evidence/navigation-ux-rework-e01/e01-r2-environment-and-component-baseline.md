@@ -1,9 +1,9 @@
 # E01-R2 — Baseline técnico, ambiente e evidência (sem fix)
 
-**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2`  
-**DATE:** 2026-10-17  
-**LOCAL_HEAD / ORIGIN_MAIN / REMOTE_HEAD:** `8a194d4a8c3d5c1e1cb84ac0983b106238547d80`  
-**CODE_CHANGED:** NO  
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E01-BASELINE-ENVIRONMENT-VALIDATION-R2`
+**DATE:** 2026-10-17
+**LOCAL_HEAD / ORIGIN_MAIN / REMOTE_HEAD:** `8a194d4a8c3d5c1e1cb84ac0983b106238547d80`
+**CODE_CHANGED:** NO
 **DEPLOY:** NOT_RUN (read-only)
 
 ## 1. Ambiente
@@ -109,12 +109,12 @@ DOCK / light-dark / zoom200 / reduced-motion live = TEST_NOT_RUN → owned by E0
 
 ## 6. Defect ledger (for E02–E09; no fix in E01)
 
-1. `DeliaConversationPage.tsx` → exclusive left composition → AC-D01 → E02 compose rail+panel  
-2. `onSelectCategory` → `onExpand()` → AC-C01 → E03 keep rail while switching  
-3. `ConversationThreeRegionLayout.tsx` missing backdrop node → AC-M01 → E04  
-4. Escape/outside only for context → AC-M01/AC-O01 → E04/E06  
-5. No drawer↔context exclusivity → AC-O01 → E06  
-6. Context absolute sizing on small containers → AC-M02 → E05  
+1. `DeliaConversationPage.tsx` → exclusive left composition → AC-D01 → E02 compose rail+panel
+2. `onSelectCategory` → `onExpand()` → AC-C01 → E03 keep rail while switching
+3. `ConversationThreeRegionLayout.tsx` missing backdrop node → AC-M01 → E04
+4. Escape/outside only for context → AC-M01/AC-O01 → E04/E06
+5. No drawer↔context exclusivity → AC-O01 → E06
+6. Context absolute sizing on small containers → AC-M02 → E05
 
 ## 7. Verdict recommendation
 
