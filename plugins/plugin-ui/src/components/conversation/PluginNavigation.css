@@ -1,0 +1,16 @@
+/* Portal/Core-authorized application navigation, rendered in the existing category panel. */
+.delpi-ui-plugin-navigation { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; color:var(--delpi-ui-text,var(--text,#111)); }
+.delpi-ui-plugin-navigation__message { margin:4px; font-size:.8125rem; line-height:1.55; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); overflow-wrap:anywhere; }
+.delpi-ui-plugin-navigation__feedback { display:flex; align-items:flex-start; flex-direction:column; gap:8px; }
+.delpi-ui-plugin-navigation__list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+.delpi-ui-plugin-navigation__item { box-sizing:border-box; display:flex; align-items:center; gap:11px; width:100%; min-width:0; min-height:48px; padding:8px 11px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--delpi-ui-text,var(--text,#111)); font:inherit; text-align:start; cursor:pointer; transition:background-color 180ms ease; }
+.delpi-ui-plugin-navigation__item > svg { flex:0 0 auto; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); }
+.delpi-ui-plugin-navigation__item:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+.delpi-ui-plugin-navigation__item[aria-current="page"] { background:color-mix(in srgb,var(--delpi-ui-accent,var(--primary,#089bdb)) 9%,transparent); }
+.delpi-ui-plugin-navigation__details { display:flex; flex:1 1 auto; flex-direction:column; gap:2px; min-width:0; }
+.delpi-ui-plugin-navigation__title { font-size:.875rem; font-weight:550; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.delpi-ui-plugin-navigation__description { font-size:.75rem; line-height:1.35; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; }
+.delpi-ui-plugin-navigation__item:focus-visible,.delpi-ui-plugin-navigation__retry:focus-visible { outline:2px solid var(--delpi-ui-accent,var(--primary,#089bdb)); outline-offset:2px; }
+.delpi-ui-plugin-navigation__retry { min-height:40px; padding:8px 12px; border-radius:10px; border:1px solid var(--delpi-ui-border,var(--border,#ddd)); background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.delpi-ui-plugin-navigation__retry:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+@media (prefers-reduced-motion:reduce) { .delpi-ui-plugin-navigation__item { transition:none; } }
