@@ -467,6 +467,14 @@ Rules:
   support that claim using comparable owner fields already present in
   the records (for example dates, versions, sequence numbers, status).
   Never invent timestamps, rankings, or diffs.
+- When records carry guidance sections (keys such as section/excerpt
+  or named methodology/design sections), select the sections that
+  answer the ask: prerequisites/required inputs when the user asks
+  what to gather before starting; steps/methods when they ask how to
+  conduct an analysis; criteria/legibility when they ask how to
+  choose a visualization; always keep stated limitations when present.
+  Prefer "presentation": "list" for multi-section guidance. Do not
+  select guide_version/authority/transport metadata unless asked.
 - Prefer "presentation": "answer" for a focused intent or when the
   user asks for a short/summary reply; "detail" when they ask for more
   detail on one record; "list" when surveying several records.
@@ -2226,6 +2234,317 @@ _CONTROL_PLANE_KEYS = frozenset(
     {"agentdirectives", "capabilitysurface"}
 )
 
+# Provider-neutral guidance section families (I02). Canonical keys only
+# — never specialist/product names. Used to project selectable records
+# and to prioritize deterministic fallback under truncation/budget.
+_GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
+    "prerequisites": frozenset(
+        {
+            "prerequisites",
+            "prerequisite",
+            "requiredinputs",
+            "requiredinput",
+            "requiredinformation",
+            "inputs",
+            "informacoesnecessarias",
+            "informacoes",
+            "preconditions",
+            "beforestarting",
+            "antesdeiniciar",
+            "datatorequire",
+            "informationneeded",
+        }
+    ),
+    "steps": frozenset(
+        {
+            "steps",
+            "step",
+            "etapas",
+            "etapasrecomendadas",
+            "stages",
+            "procedure",
+            "procedures",
+            "methods",
+            "method",
+            "metodos",
+            "metodologia",
+            "methodology",
+            "playbook",
+            "playbooks",
+            "recommendedsteps",
+            "howtoconduct",
+            "analysissteps",
+        }
+    ),
+    "objective": frozenset(
+        {
+            "objective",
+            "objetivo",
+            "purpose",
+            "proposito",
+            "goal",
+            "overview",
+            "summary",
+            "resumo",
+        }
+    ),
+    "when": frozenset(
+        {
+            "when",
+            "quando",
+            "whentouse",
+            "applicability",
+            "aplicabilidade",
+            "usewhen",
+        }
+    ),
+    "criteria": frozenset(
+        {
+            "criteria",
+            "criterios",
+            "criterio",
+            "legibility",
+            "legibilidade",
+            "contrast",
+            "contraste",
+            "hierarchy",
+            "hierarquia",
+            "visualization",
+            "visualizacao",
+            "blocktypes",
+            "choicecriteria",
+            "designcriteria",
+            "readability",
+        }
+    ),
+    "limitations": frozenset(
+        {
+            "limitations",
+            "limitation",
+            "limitacoes",
+            "limitacao",
+            "constraints",
+            "restricoes",
+            "invariants",
+            "invariant",
+            "caveats",
+            "warnings",
+        }
+    ),
+}
+
+# Transport/meta keys deprioritized when truncating guidance dumps —
+# still renderable if space remains; never invented or dropped silently
+# from the full structured payload without declaring truncation.
+_GUIDANCE_META_KEYS = frozenset(
+    {
+        "guideversion",
+        "authority",
+        "readonly",
+        "writes",
+        "provenance",
+        "evidencestates",
+        "diagramrule",
+        "read_only",
+        "version",
+        "schemaversion",
+    }
+)
+
+_GUIDANCE_PREREQ_CUE_RE = re.compile(
+    r"\b("
+    r"informa(?:c|ç)(?:o|õ)es|levant|pr[eé]-?req|"
+    r"antes\s+de|dados\s+necess|input|inputs|"
+    r"what\s+(?:do\s+i|to)\s+(?:need|gather|collect)|"
+    r"before\s+(?:start|begin)"
+    r")\b",
+    re.IGNORECASE,
+)
+_GUIDANCE_STEPS_CUE_RE = re.compile(
+    r"\b("
+    r"como|etapas|passo|m[eé]todo|conduzir|realizar|"
+    r"iniciar|diagn[oó]stico|an[aá]lise|how\s+to|"
+    r"steps|methods|conduct"
+    r")\b",
+    re.IGNORECASE,
+)
+_GUIDANCE_CRITERIA_CUE_RE = re.compile(
+    r"\b("
+    r"crit[eé]rio|legibil|contraste|hierarqu|"
+    r"visualiza|painel|design|readab|contrast|"
+    r"hierarch|visuali[sz]ation"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _guidance_intent_families(input_text: str) -> tuple[str, ...]:
+    """Ordered guidance families relevant to the user ask (heuristic)."""
+    text = (input_text or "").strip()
+    ordered: list[str] = []
+    if text and _GUIDANCE_PREREQ_CUE_RE.search(text):
+        ordered.append("prerequisites")
+    if text and _GUIDANCE_STEPS_CUE_RE.search(text):
+        ordered.extend(("objective", "when", "steps"))
+    if text and _GUIDANCE_CRITERIA_CUE_RE.search(text):
+        ordered.append("criteria")
+    ordered.append("limitations")
+    seen: set[str] = set()
+    result: list[str] = []
+    for family in ordered:
+        if family not in seen:
+            seen.add(family)
+            result.append(family)
+    return tuple(result)
+
+
+def _guidance_family_for_key(key: object) -> str | None:
+    canon = _canonical_key(key)
+    if not canon or canon in _CONTROL_PLANE_KEYS:
+        return None
+    if canon in _GUIDANCE_META_KEYS:
+        return "meta"
+    for family, keys in _GUIDANCE_SECTION_FAMILIES.items():
+        if canon in keys or any(
+            canon.startswith(k) or k.startswith(canon) for k in keys
+        ):
+            return family
+    return None
+
+
+def _render_guidance_value(value: object, *, depth: int = 0) -> str:
+    """Bounded owner-value projection for one guidance section leaf."""
+    if depth > 3 or value is None:
+        return ""
+    if isinstance(value, Mapping):
+        sanitized = _sanitize_renderable(value)
+        if not isinstance(sanitized, Mapping):
+            return ""
+        lines = _format_structured(sanitized, depth=0)
+        return "\n".join(lines).strip()
+    if isinstance(value, (list, tuple)):
+        parts: list[str] = []
+        for item in list(value)[:MAX_RENDER_LIST_ITEMS]:
+            if isinstance(item, Mapping):
+                line = _render_guidance_value(item, depth=depth + 1)
+                if line:
+                    parts.append(line)
+            elif item is not None and str(item).strip():
+                parts.append(f"- {_redact_text(str(item).strip())}")
+        return "\n".join(parts).strip()
+    text = _redact_text(str(value).strip())
+    return text
+
+
+def _iter_guidance_doc_items(
+    structured: object,
+) -> tuple[tuple[str, object], ...]:
+    """Top-level guidance items under a business envelope when present."""
+    doc = _unwrap_owner_payload(structured)
+    if not isinstance(doc, Mapping):
+        return ()
+    for key in _RESOLVER_ENVELOPE_KEYS:
+        inner = doc.get(key)
+        if isinstance(inner, Mapping) and inner:
+            return tuple(
+                (str(k), v)
+                for k, v in inner.items()
+                if _canonical_key(k) not in _CONTROL_PLANE_KEYS
+            )
+    return tuple(
+        (str(k), v)
+        for k, v in doc.items()
+        if _canonical_key(k) not in _CONTROL_PLANE_KEYS
+    )
+
+
+def _guidance_section_records(
+    structured: object,
+) -> tuple[Mapping[str, str], ...]:
+    """Project guidance-shaped owner payloads into selectable records.
+
+    Each named section becomes ``{section, excerpt, family}``. Returns
+    () when fewer than two guidance/meta sections exist — ordinary
+    entity/scalar shapes keep the prior synthesis path.
+    """
+    items = _iter_guidance_doc_items(structured)
+    if not items:
+        return ()
+    records: list[Mapping[str, str]] = []
+    guidance_hits = 0
+    for key, value in items:
+        family = _guidance_family_for_key(key)
+        if family is None:
+            continue
+        if family != "meta":
+            guidance_hits += 1
+        rendered = _render_guidance_value(value)
+        if not rendered:
+            continue
+        records.append(
+            {
+                "section": str(key),
+                "excerpt": rendered[: MAX_DESCRIPTION_CHARS * 8],
+                "family": family,
+            }
+        )
+        if len(records) >= MAX_PRIOR_EXCERPTS:
+            break
+    if guidance_hits < 2 or len(records) < 2:
+        return ()
+    return tuple(records)
+
+
+def _deterministic_guidance_content(
+    input_text: str,
+    structured: object,
+    *,
+    max_chars: int = MAX_RENDER_CONTENT_CHARS,
+    owner_truncated: bool = False,
+) -> tuple[str, tuple[str, ...]] | None:
+    """Goal-aligned deterministic projection of guidance owner data.
+
+    Selection-only: copies owner section text; never invents leaves.
+    Returns None when the payload is not guidance-shaped or no
+    intent-matching section has content.
+    """
+    records = _guidance_section_records(structured)
+    if not records:
+        return None
+    families = _guidance_intent_families(input_text)
+    selected: list[Mapping[str, str]] = []
+    for family in families:
+        for record in records:
+            if record.get("family") == family and record not in selected:
+                selected.append(record)
+    if not selected:
+        # No cue match — still prefer non-meta guidance over metadata dump.
+        selected = [
+            r for r in records if r.get("family") != "meta"
+        ][:6]
+    if not selected:
+        return None
+    lines: list[str] = []
+    for record in selected:
+        section = record.get("section") or "section"
+        excerpt = (record.get("excerpt") or "").strip()
+        if not excerpt:
+            continue
+        lines.append(f"{section}:")
+        lines.append(excerpt)
+        lines.append("")
+    body = "\n".join(lines).strip()
+    if not body:
+        return None
+    limitations: list[str] = []
+    if owner_truncated:
+        limitations.append(LIMITATION_RESULT_TRUNCATED)
+    if len(body) > max_chars:
+        body = body[:max_chars].rstrip() + "\n…(resultado parcial — truncado)"
+        if LIMITATION_RESULT_TRUNCATED not in limitations:
+            limitations.append(LIMITATION_RESULT_TRUNCATED)
+    return body, tuple(limitations)
+
 
 def _synthesis_records(
     structured: object,
@@ -2233,18 +2552,18 @@ def _synthesis_records(
     """Bounded business records available to grounded synthesis.
 
     Extends the resolver entity extraction: preferred collection keys
-    and lists of mappings first, then a single business record — a
-    flat scalar object nested under exactly one non-control key
-    (``{"data": {"product": {...}}}``) or a flat scalar object as the
-    whole payload (``{"code": ..., "description": ...}``). Transport
-    envelopes are unwrapped structurally; control-plane siblings
-    (``agent_directives``, ``capability_surface``) and payloads with
-    multiple candidate record containers are never promoted to
-    records.
+    and lists of mappings first, then guidance sections as selectable
+    records (I02), then a single business record — a flat scalar
+    object nested under exactly one non-control key or a flat scalar
+    object as the whole payload. Transport envelopes are unwrapped
+    structurally; control-plane siblings are never promoted.
     """
     entities = _resolver_entities(structured)
     if entities:
         return entities
+    guidance = _guidance_section_records(structured)
+    if guidance:
+        return guidance
     doc = _unwrap_owner_payload(structured)
     if not isinstance(doc, Mapping):
         return ()
@@ -3031,18 +3350,39 @@ def _business_lines(node: Mapping, depth: int = 0) -> list[str] | None:
 
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
+    *,
+    input_text: str | None = None,
 ) -> tuple[str, tuple[str, ...]]:
     """Bounded truthful rendering of any specialist outcome.
 
     The remote payload is untrusted content: owner text is preferred and
     size-bounded; structured data is projected verbatim-bounded only
-    when no text exists. An empty authoritative result is GROUNDED +
-    empty, never a failure.
+    when no text exists. When ``input_text`` is provided and the
+    structured payload is guidance-shaped, a goal-aligned section
+    projection is preferred over a metadata-first text dump (I02).
+    An empty authoritative result is GROUNDED + empty, never a failure.
     """
     limitations = list(outcome.limitations)
     text = _redact_text(outcome.content_text or "").strip()
     structured = outcome.structured
     if isinstance(structured, Mapping) and structured:
+        # I02: guidance-shaped structured data — prefer goal-aligned
+        # section projection over truncating embedded content_text from
+        # the front (which kept authority/meta and dropped methods).
+        if input_text:
+            aligned = _deterministic_guidance_content(
+                input_text,
+                structured,
+                owner_truncated=(
+                    LIMITATION_RESULT_TRUNCATED in limitations
+                ),
+            )
+            if aligned is not None:
+                body, extra = aligned
+                for item in extra:
+                    if item not in limitations:
+                        limitations.append(item)
+                return body, tuple(limitations)
         # Owner data lives in the structured payload; generic status
         # text alone (e.g. "Execution completed.") is not an answer.
         # Owners that already embed the same payload in content_text
@@ -3064,6 +3404,22 @@ def render_specialist_outcome(
                     "\n".join(lines) if lines else text
                 )[:MAX_RENDER_CONTENT_CHARS]
             else:
+                # Embedded non-JSON text that already contains the
+                # structured payload: still prefer structured projection
+                # when guidance sections exist — avoids meta-first cut.
+                aligned = _deterministic_guidance_content(
+                    input_text or "",
+                    structured,
+                    owner_truncated=(
+                        LIMITATION_RESULT_TRUNCATED in limitations
+                    ),
+                )
+                if aligned is not None:
+                    body, extra = aligned
+                    for item in extra:
+                        if item not in limitations:
+                            limitations.append(item)
+                    return body, tuple(limitations)
                 body = text[:MAX_RENDER_CONTENT_CHARS]
             if len(body) >= MAX_RENDER_CONTENT_CHARS and (
                 LIMITATION_RESULT_TRUNCATED not in limitations
@@ -4447,6 +4803,7 @@ class OperationalCapabilityOrchestrator:
             correlation,
             content=_synth_content,
             limitations=_synth_limitations,
+            input_text=input_text,
         )
 
     # ---------------- bounded multi-step helpers ----------------
@@ -6384,12 +6741,14 @@ class OperationalCapabilityOrchestrator:
         content: str | None = None,
         limitations: tuple[str, ...] | None = None,
         extra_source_refs: tuple[SourceRef, ...] = (),
+        input_text: str | None = None,
     ) -> GovernedCapabilityAttempt:
         """Assemble a SUCCESS attempt from an owner outcome.
 
         ``extra_source_refs`` appends additional bounded business
         sources (multi-source corroboration) after the primary ref —
-        deduplicated, deterministic order.
+        deduplicated, deterministic order. ``input_text`` enables
+        goal-aligned deterministic rendering when synthesis demotes.
         """
         binding = GovernedCapabilityBinding(
             binding_id=f"{group_key}.{remote_used}",
@@ -6407,12 +6766,16 @@ class OperationalCapabilityOrchestrator:
             provider_id=group.provider_id,
             capability_group_id=group.group_id,
         )
+
+        def _render(out: SpecialistOutcome) -> tuple[str, tuple[str, ...]]:
+            return render_specialist_outcome(out, input_text=input_text)
+
         if content is None and not extra_source_refs:
             return _success_attempt(
                 correlation_id=correlation,
                 binding=binding,
                 outcome=outcome,
-                render=render_specialist_outcome,
+                render=_render,
             )
         provenance = self._provenance(
             group_key, remote_used, action_id, group, outcome
@@ -6433,7 +6796,7 @@ class OperationalCapabilityOrchestrator:
             )
         if content is None:
             content, _rendered_limitations = render_specialist_outcome(
-                outcome
+                outcome, input_text=input_text
             )
         return GovernedCapabilityAttempt(
             status=GovernedCapabilityStatus.SUCCESS,
@@ -6941,6 +7304,27 @@ class OperationalCapabilityOrchestrator:
         _emit_activity(
             phase=ActivityPhase.OUTCOME_PREPARING, correlation=correlation
         )
+        # I02: when owner evidence is guidance-shaped, prefer a
+        # deterministic goal-aligned projection before spending model
+        # budget — preserves prerequisites/steps/criteria under the
+        # global 30s ceiling without inventing prose.
+        owner_truncated = (
+            LIMITATION_RESULT_TRUNCATED in outcome.limitations
+        )
+        guided = _deterministic_guidance_content(
+            input_text,
+            outcome.structured,
+            owner_truncated=owner_truncated,
+        )
+        if guided is not None:
+            body, guided_limitations = guided
+            _logger.info(
+                "orchestration stage=synthesis "
+                "decision=deterministic_guidance "
+                "correlation_id=%s",
+                correlation,
+            )
+            return body, guided_limitations
         records = tuple(
             _sanitize_renderable(entity)
             for entity in _synthesis_records(outcome.structured)
@@ -7009,6 +7393,14 @@ class OperationalCapabilityOrchestrator:
                 "decision=budget_fallback correlation_id=%s",
                 correlation,
             )
+            # Prefer goal-aligned guidance projection over a blind dump.
+            guided_fallback = _deterministic_guidance_content(
+                input_text,
+                outcome.structured,
+                owner_truncated=owner_truncated,
+            )
+            if guided_fallback is not None:
+                return guided_fallback
             return None, ()
         # LOOP-03R2A (observability): the fallback carries one bounded
         # deterministic reason code — never proposal content.
