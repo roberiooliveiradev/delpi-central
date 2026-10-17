@@ -33,6 +33,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I02 independent review:** [06 — REWORK decision](./06-i02-independent-review-rework-decision.md).
 **I02-R1 diagnosis:** [07 — post-fix validation and latency diagnosis](./07-i02r1-post-fix-validation-and-latency-diagnosis.md) — nested live INCONCLUSIVE (index_probe timeout before READ); pre-synthesis latency PROVEN (`index_probe` model under 30s). Performance fix not applied.
 
+**I02-R1 independent diagnostic acceptance:** [08 — acceptance with safety qualification](./08-i02r1-independent-diagnostic-acceptance.md). K3 index_probe pre-owner latency PROVEN; nested fix not exercised. I02-R2 must bound optional probe **before** model call; never continue after global deadline expiry or present an empty/index READ as full answer.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
