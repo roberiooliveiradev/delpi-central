@@ -57,8 +57,8 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | E04 | Sidebar responsiva + drawer mobile | E03 | **ACCEPTED_WITH_RESIDUAL** | largura baseada no host; overlay, backdrop, Escape e foco sem corte; residual browser → E09 |
 | E05 | ContextPopover responsivo | E04 | **ACCEPTED_WITH_RESIDUAL** | limites/estrutura unit + visual 375; geometria CSS real → E09 |
 | E06 | Convivência de painéis + acessibilidade | E04+E05 | **ACCEPTED_WITH_RESIDUAL** | exclusividade/foco/Tab unit; teclado real/browser → E09 |
-| E07 | Polimento visual e motion | E02–E06 | **IMPLEMENTED_CANDIDATE / TECHNICAL_QA_PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
-| E08 | Regressão integrada e gates de build | E02–E07 | **VALIDATION_STARTED / RUNNER_REQUIRED / INCONCLUSIVE** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
+| E07 | Polimento visual e motion | E02–E06 | **ACCEPTED_WITH_RESIDUAL** | tokens/reduced-motion/focus CODE_PASS; visual/contraste → E09 |
+| E08 | Regressão integrada e gates de build | E02–E07 | **ACCEPTED_WITH_RESIDUAL** | Vitest/delia TS/build/federation PASS; plugin-ui full tsc residual |
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
 
@@ -68,12 +68,12 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 - [x] **E04** — Sidebar/drawer mobile (`ACCEPT_WITH_RESIDUAL`; browser/Dock → E09)
 - [x] **E05** — Contexto responsivo (`ACCEPT_WITH_RESIDUAL`; geometria real → E09)
 - [x] **E06** — Convivência/foco/acessibilidade (`ACCEPT_WITH_RESIDUAL`; teclado real → E09)
-- [ ] **E07** — Consistência visual/motion
-- [ ] **E08** — Testes/TypeScript/build/federação/regressão
+- [x] **E07** — Consistência visual/motion (`ACCEPT_WITH_RESIDUAL`; visual/contraste → E09)
+- [x] **E08** — Testes/TypeScript/build/federação/regressão (`ACCEPT_WITH_RESIDUAL`; tsc full plugin-ui residual)
 - [ ] **E09** — QA visual integrado no Portal/Dock
 - [ ] **E10** — Aceite independente e fechamento
 
-**Progresso: `6/10 ACCEPTED (60%)` — E01/E04/E05/E06 `ACCEPT_WITH_RESIDUAL`; E02/E03 `ACCEPT`.** Residuais de browser/geometria/teclado real permanecem na E09; E10 retém review independente. Aceite E02–E06 não autoriza E07 automaticamente sem task bounded.
+**Progresso: `8/10 ACCEPTED (80%)` — E01/E04–E08 `ACCEPT_WITH_RESIDUAL`; E02/E03 `ACCEPT`.** Residuais de browser/geometria/teclado real/contraste permanecem na E09; E10 retém review independente. Aceite E08 não inicia E09 automaticamente.
 
 ## 5. Especificação bounded de cada etapa
 
@@ -893,3 +893,47 @@ NEXT = E08_EXECUTE_TESTS_IN_CURSOR_WORKSPACE_AND_REVIEW
 ```
 
 **Não avançar E09** nem marcar E08 ou E07 por esta atualização documental. O encerramento da E08 exige log com comandos, exit codes, SHA/config e review dos resultados executados.
+
+## 24. E08 — Validação integrada executada e aceite E07/E08 (2026-10-17)
+
+**TASK_ID:** `DELIA-UX-NAV-REWORK-E08-INTEGRATED-VALIDATION-AND-CLOSURE-01`  
+**BASE_HEAD:** `7cce718c3d8fd0fdfacff0ec4bb2438c227f21e1`  
+**Evidence:** [`evidence/navigation-ux-rework-e08/e08-integrated-validation-and-closure-01.md`](./evidence/navigation-ux-rework-e08/e08-integrated-validation-and-closure-01.md)
+
+### Execução
+
+Workspace Cursor WSL com monorepo sync em `origin/main`. Comandos reais (exit codes):
+
+| Gate | EXIT | Resultado |
+|---|---|---|
+| plugin-ui nav Vitest | 0 | 24 PASS |
+| DeliaConversationPage Vitest | 0 | 8 PASS |
+| delia typecheck | 0 | PASS |
+| plugin-ui full tsc | 2 | FAIL — 29 PREEXISTING fora do escopo nav (0 erros Navigation/ThreeRegionLayout após fix) |
+| plugin-ui build + host-exports | 0 | PASS |
+| delia build + federation | 0 | PASS |
+
+**Fix mínimo:** `ConversationThreeRegionLayout.test.tsx` — mock `getClientRects` tipado corretamente (cast T07). Sem mudança CSS/React de produto.
+
+**E07 code review:** selected `::before` + `aria-current` + font-weight; `prefers-reduced-motion`; focus-visible; tokens; `overflow-x:hidden` no rail; `will-change` somente `auto` em reduced-motion. Visual/contraste/zoom/Dock = E09.
+
+### Veredictos
+
+| Etapa | Veredicto | Checklist |
+|---|---|---|
+| E07 | **ACCEPT_WITH_RESIDUAL** | `[x]` |
+| E08 | **ACCEPT_WITH_RESIDUAL** | `[x]` |
+
+```text
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+E07_VERDICT=ACCEPT_WITH_RESIDUAL
+E08_VERDICT=ACCEPT_WITH_RESIDUAL
+PLUGIN_UI_FULL_TSC=FAIL_PREEXISTING_DEBT_29
+DELIA_TYPECHECK=PASS
+ROADMAP_PROGRESS=8/10 ACCEPTED
+PHASE_PROGRESSION=NONE
+BROWSER_QA_RESIDUALS=E09
+NEXT=E09_PORTAL_DOCK_BROWSER_QA
+```
+

@@ -255,11 +255,13 @@ describe("ConversationThreeRegionLayout R2", () => {
     );
     const previousRects = HTMLElement.prototype.getClientRects;
     HTMLElement.prototype.getClientRects = function getClientRects() {
+      const box = { width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
       return {
         length: 1,
-        item: () => ({ width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
-        0: { width: 40, height: 40, top: 0, left: 0, right: 40, bottom: 40, x: 0, y: 0, toJSON: () => ({}) } as DOMRect,
-      } as DOMRectList;
+        item: () => box,
+        0: box,
+        [Symbol.iterator]: function* () { yield box; },
+      } as unknown as DOMRectList;
     };
     const previousObserver = globalThis.ResizeObserver;
     class SizedObserver {

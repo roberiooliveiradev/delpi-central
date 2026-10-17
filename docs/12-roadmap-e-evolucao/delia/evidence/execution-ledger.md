@@ -14462,7 +14462,6 @@ NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 
 NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 
-
 ## §6.225 — DELIA-C3-STAGE05-INDEPENDENT-ARCHITECTURE-ACCEPTANCE-01 (ACCEPT_WITH_RESIDUAL)
 
 **DATA:** 2026-10-17. **DOC:** [39](../corrections/conversational-intelligence-c3/39-stage-05-independent-architecture-acceptance-closure.md). **CODE_SHA_EVALUATED:** `c64b632275eaadcc2293617e2c5c41e86e9e9457`. **MODE:** independent GitHub code/document review; SSH evidence reported by executor, not independently replayed.
@@ -14475,3 +14474,18 @@ NEXT=E07_VISUAL_MOTION_POLISH_IF_GATES_SATISFIED
 - **DECISION:** `STAGE_05_REVIEW=ACCEPT_WITH_RESIDUAL`; `STAGE_05_ACCEPTED=YES_WITH_RESIDUAL`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=STAGE_06_BOUNDED_GENERALIZATION_SAFETY_EVAL
+
+## §6.226 — DELIA-UX-NAV-REWORK-E08-INTEGRATED-VALIDATION-AND-CLOSURE-01 (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **TASK:** `DELIA-UX-NAV-REWORK-E08-INTEGRATED-VALIDATION-AND-CLOSURE-01`. **DOCS:** [115](../115-navigation-ux-rework-execution-roadmap.md) §24 + [evidence](./navigation-ux-rework-e08/e08-integrated-validation-and-closure-01.md). **BASE_HEAD:** `7cce718c3d`.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`. OWNER plugin-ui; CONSUMER delia.
+- **GATES:** nav Vitest 24 PASS; DeliaConversationPage 8 PASS; delia typecheck PASS; builds + host-exports + federation PASS.
+- **FIX:** T07 `DOMRectList` mock cast in `ConversationThreeRegionLayout.test.tsx` (nav-scope TS).
+- **PLUGIN_UI_FULL_TSC:** FAIL exit 2 — 29 PREEXISTING (catalog/bpmn/charts/tests…); zero errors in Navigation/ThreeRegionLayout after fix.
+- **E07:** CODE_PASS selected/motion/reduced-motion/focus/tokens/overflow; visual QA → E09 → `ACCEPT_WITH_RESIDUAL`.
+- **E08:** `ACCEPT_WITH_RESIDUAL`. Checklist E07+E08 `[x]`; progress `8/10 ACCEPTED`.
+- **NO CLAIMS:** E09 not started; phase progression NONE; independent review → E10.
+
+NEXT=E09_PORTAL_DOCK_BROWSER_QA
+
