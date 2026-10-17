@@ -14527,3 +14527,15 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
 
 NEXT=E09_AUTHENTICATED_LIVE_MATRIX_WITH_PORTAL_AND_DOCK
 
+
+
+## §6.230 — DELIA-UX-NAV-REWORK-IMPLEMENTATION-TRACK-CLOSURE-AND-COMPONENT-INVENTORY-01 (DOCUMENTED)
+
+**DATA:** 2026-10-17. **DOC:** [115](../115-navigation-ux-rework-execution-roadmap.md) §26. **BASE_HEAD:** `d6b999e21a`. **MODE:** documentar encerramento do track de implementação visual e inventário pontual; sem código/QA novo.
+
+- **USER EVIDENCE:** screenshot desktop dark Portal `/apps/delia` com rail, Agentes selecionado, workspace/recepção/compositor visíveis. `VISUAL_OBSERVED` para o estado mostrado; não prova browser matrix, asset SHA, Dock/keyboard/contrast.
+- **NAV IMPLEMENTATION:** E01–E08 aceitas (com residuais documentados); arquivos `ConversationNavigation`, `ConversationHistoryItem`, `PinnedConversations`, `ProjectNavigation`, `AgentNavigation`, `PluginNavigation`, `NavigationActions`, `NavigationRail`, `NavigationCategoryPanel` confirmados no `plugin-ui`. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE/EXTEND` para apresentação. Feeds reais/Domain/Core grants: `TO_INVENTORY`.
+- **DOC STATUS DRIFT:** cabeçalhos 103–113 com baseline `PLANNED/NOT_IMPLEMENTED` não refletem toda a implementação publicada; revisar em bounded doc sync, preservando trilha histórica e authority superior.
+- **FORMAL GATES PRESERVED:** E09 `INCONCLUSIVE` por QA autenticado/Chromium/Dock runner, E10 `PENDING`; progresso `8/10`. **Decisão:** `IMPLEMENTATION_TRACK_COMPLETE_WITH_RESIDUALS` para permitir nova trilha bounded de componentes; `NAV_ROADMAP_FORMAL_CLOSURE=NO`, `PHASE_PROGRESSION=NONE`.
+- **NEXT:** bounded inventory de componentes faltantes por contratos/fontes canônicas + follow-up QA E09 quando houver infraestrutura/autorização, sem reabrir E02–E08 sem novo defeito comprovado.
+
