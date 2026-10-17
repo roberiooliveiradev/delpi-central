@@ -2274,6 +2274,8 @@ _GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
             "recommendedsteps",
             "howtoconduct",
             "analysissteps",
+            "howtouse",
+            "comousar",
         }
     ),
     "objective": frozenset(
@@ -2286,6 +2288,7 @@ _GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
             "overview",
             "summary",
             "resumo",
+            "title",
         }
     ),
     "when": frozenset(
@@ -2293,9 +2296,9 @@ _GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
             "when",
             "quando",
             "whentouse",
+            "usewhen",
             "applicability",
             "aplicabilidade",
-            "usewhen",
         }
     ),
     "criteria": frozenset(
@@ -2315,6 +2318,8 @@ _GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
             "choicecriteria",
             "designcriteria",
             "readability",
+            "displayformats",
+            "formatos",
         }
     ),
     "limitations": frozenset(
@@ -2329,9 +2334,26 @@ _GUIDANCE_SECTION_FAMILIES: Mapping[str, frozenset[str]] = {
             "invariant",
             "caveats",
             "warnings",
+            "donotusewhen",
+            "donotuse",
+            "naousarquando",
         }
     ),
 }
+
+# Nested owner envelopes commonly wrapping guidance sections (not
+# transport data/result keys — those are handled by unwrap).
+_GUIDANCE_NESTED_KEYS = frozenset(
+    {
+        "guide",
+        "content",
+        "body",
+        "methodology",
+        "playbook",
+        "guidance",
+        "document",
+    }
+)
 
 # Transport/meta keys deprioritized when truncating guidance dumps —
 # still renderable if space remains; never invented or dropped silently
@@ -2436,26 +2458,62 @@ def _render_guidance_value(value: object, *, depth: int = 0) -> str:
     return text
 
 
+def _mapping_items_excluding_control(
+    node: Mapping[str, Any],
+) -> tuple[tuple[str, object], ...]:
+    return tuple(
+        (str(k), v)
+        for k, v in node.items()
+        if _canonical_key(k) not in _CONTROL_PLANE_KEYS
+    )
+
+
+def _guidance_hit_count(items: tuple[tuple[str, object], ...]) -> int:
+    return sum(
+        1
+        for key, _ in items
+        if (_guidance_family_for_key(key) or "meta") != "meta"
+    )
+
+
 def _iter_guidance_doc_items(
     structured: object,
 ) -> tuple[tuple[str, object], ...]:
-    """Top-level guidance items under a business envelope when present."""
+    """Guidance items under a business or nested guide envelope."""
     doc = _unwrap_owner_payload(structured)
     if not isinstance(doc, Mapping):
         return ()
     for key in _RESOLVER_ENVELOPE_KEYS:
         inner = doc.get(key)
         if isinstance(inner, Mapping) and inner:
-            return tuple(
-                (str(k), v)
-                for k, v in inner.items()
-                if _canonical_key(k) not in _CONTROL_PLANE_KEYS
-            )
-    return tuple(
-        (str(k), v)
-        for k, v in doc.items()
-        if _canonical_key(k) not in _CONTROL_PLANE_KEYS
-    )
+            doc = inner
+            break
+    items = _mapping_items_excluding_control(doc)
+    if _guidance_hit_count(items) >= 2:
+        return items
+    # Nested guide/body envelopes (e.g. {"schema":..., "guide": {...}}).
+    for key, value in doc.items():
+        if (
+            isinstance(value, Mapping)
+            and value
+            and _canonical_key(key) in _GUIDANCE_NESTED_KEYS
+        ):
+            nested = _mapping_items_excluding_control(value)
+            if _guidance_hit_count(nested) >= 2:
+                return nested
+    nested_maps = [
+        value
+        for key, value in doc.items()
+        if isinstance(value, Mapping)
+        and value
+        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        and _canonical_key(key) not in _GUIDANCE_META_KEYS
+    ]
+    if len(nested_maps) == 1:
+        nested = _mapping_items_excluding_control(nested_maps[0])
+        if _guidance_hit_count(nested) >= 2:
+            return nested
+    return items
 
 
 def _guidance_section_records(
@@ -2517,8 +2575,12 @@ def _deterministic_guidance_content(
         for record in records:
             if record.get("family") == family and record not in selected:
                 selected.append(record)
-    if not selected:
-        # No cue match — still prefer non-meta guidance over metadata dump.
+    substantive = [
+        r for r in selected if r.get("family") != "limitations"
+    ]
+    if not selected or not substantive:
+        # Cue families absent in this payload — still prefer non-meta
+        # guidance sections over a metadata-first dump.
         selected = [
             r for r in records if r.get("family") != "meta"
         ][:6]
@@ -7361,6 +7423,20 @@ class OperationalCapabilityOrchestrator:
         if deadline is not None and (
             deadline.remaining_seconds() < MIN_VIABLE_MODEL_STAGE_SECONDS * 3
         ):
+            guided_budget = _deterministic_guidance_content(
+                input_text,
+                outcome.structured,
+                owner_truncated=owner_truncated,
+            )
+            if guided_budget is not None:
+                _logger.info(
+                    "orchestration stage=synthesis "
+                    "decision=skip_budget_deterministic "
+                    "remaining_ms=%d correlation_id=%s",
+                    int(deadline.remaining_seconds() * 1000),
+                    correlation,
+                )
+                return guided_budget
             _logger.info(
                 "orchestration stage=synthesis "
                 "decision=skip_budget remaining_ms=%d "

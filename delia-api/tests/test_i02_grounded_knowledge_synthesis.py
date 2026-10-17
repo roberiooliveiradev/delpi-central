@@ -563,6 +563,43 @@ def test_render_with_input_text_avoids_meta_first_truncation():
     assert "Escopo do processo" in body_aligned
 
 
+def test_nested_guide_envelope_projects_use_when_and_how_to_use():
+    """VISTA-like nested guide shape must project under budget skip."""
+    nested = {
+        "schema": "product_guide_v1",
+        "section": "all",
+        "guide": {
+            "id": "display_formats",
+            "title": "Formatos de exibição",
+            "summary": "Como valores são formatados para exibição.",
+            "purpose": "Explicar formatação vs valor bruto.",
+            "use_when": [
+                "O usuário pergunta como formatar um número",
+                "É preciso explicar formatação vs valor bruto",
+            ],
+            "do_not_use_when": [
+                "A pergunta é sobre transform de dado",
+            ],
+            "how_to_use": [
+                "Escolher o formato tipado adequado",
+                "Preservar legibilidade à distância",
+            ],
+            "limitations": "Cobertura tipada PARTIAL — sem inspeção de painel.",
+        },
+    }
+    records = _guidance_section_records(nested)
+    families = {r["family"] for r in records}
+    assert "when" in families or "steps" in families
+    assert "limitations" in families or "objective" in families
+    body, _ = _deterministic_guidance_content(
+        "Que critérios devo considerar para legibilidade do painel?",
+        nested,
+    )
+    assert body is not None
+    assert "legibilidade" in body.lower()
+    assert "how_to_use" in body or "use_when" in body or "purpose" in body
+
+
 def test_entity_records_not_hijacked_by_guidance_path():
     """Ordinary business entities keep the prior synthesis path."""
     structured = {
