@@ -1,0 +1,53 @@
+/* Reusable body inside the existing left nav shell: no second panel, heading or toggle. */
+.delpi-ui-navigation-category-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+.delpi-ui-navigation-category-panel__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.delpi-ui-navigation-category-panel__feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.delpi-ui-navigation-category-panel__message {
+  margin: 8px 2px;
+  font: inherit;
+  font-size: .8125rem;
+  line-height: 1.55;
+  color: var(--delpi-ui-text-muted, var(--text-muted, #667085));
+  overflow-wrap: anywhere;
+}
+.delpi-ui-navigation-category-panel__retry {
+  min-height: 40px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #ddd));
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--delpi-ui-text, var(--text, #111));
+  font: inherit;
+  cursor: pointer;
+}
+.delpi-ui-navigation-category-panel__retry:hover {
+  background: color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 7%, transparent);
+}
+.delpi-ui-navigation-category-panel__retry:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-navigation-category-panel *,
+  .delpi-ui-navigation-category-panel { transition: none !important; }
+}
