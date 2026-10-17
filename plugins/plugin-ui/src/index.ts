@@ -14,6 +14,8 @@ export { ConversationSidebar } from "./components/conversation/ConversationSideb
 export { ConversationNavigation } from "./components/conversation/ConversationNavigation";
 /** Shared single authorized-history row; keep available in the MFE remote. */
 export { ConversationHistoryItem } from "./components/conversation/ConversationHistoryItem";
+/** Shared pinned group for host consumers. */
+export { PinnedConversations } from "./components/conversation/PinnedConversations";
 export { NavigationRail } from "./components/conversation/NavigationRail";
 /** Host-only shared category panel. */
 export { NavigationCategoryPanel } from "./components/conversation/NavigationCategoryPanel";
