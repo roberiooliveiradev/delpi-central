@@ -7,3 +7,26 @@
 .delpi-ui-navigation-rail__item:focus-visible { outline:2px solid var(--delpi-ui-accent,var(--primary,#089bdb)); outline-offset:2px; }
 @media (prefers-reduced-motion:reduce) { .delpi-ui-navigation-rail__item { transition:none; } }
 @container delia-page (max-width:920px) { .delpi-ui-navigation-rail__item { width:40px; height:40px; min-width:40px; } }
+
+/* E07: distinguish the active category by more than color alone. */
+.delpi-ui-navigation-rail__item {
+  position: relative;
+  flex-shrink: 0;
+  transition-duration: var(--delpi-ui-conversation-motion-fast, 180ms);
+}
+.delpi-ui-navigation-rail__item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 2px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+.delpi-ui-navigation-rail__item[aria-current="page"] {
+  font-weight: 650;
+}
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-navigation-rail__item { transition: none !important; }
+}
