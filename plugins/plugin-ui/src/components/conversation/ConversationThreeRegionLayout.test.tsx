@@ -171,4 +171,49 @@ describe("ConversationThreeRegionLayout R2", () => {
     }
   });
 
+  it("E06 keeps only one compact overlay open, restores focus and preserves draft", () => {
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ width: 375, height: 667, top: 0, left: 0, right: 375, bottom: 667, x: 0, y: 0, toJSON: () => ({}) } as DOMRect),
+    );
+    const previousObserver = globalThis.ResizeObserver;
+    class SizedObserver {
+      private callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) { this.callback = callback; }
+      observe() { this.callback([], this as unknown as ResizeObserver); }
+      unobserve() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", SizedObserver);
+    try {
+      const { container } = render(<ConversationThreeRegionLayout
+        rail={<button type="button">Categorias E06</button>}
+        left={<p>Painel E06</p>}
+        right={<p>Contexto E06</p>}
+        center={({ rightToggle }) => <div>{rightToggle}<input aria-label="Draft E06" defaultValue="sem perder" /></div>}
+      />);
+      const draft = screen.getByRole("textbox", { name: "Draft E06" });
+      const trigger = screen.getByRole("button", { name: "Abrir contexto" });
+      fireEvent.click(trigger);
+      expect(screen.getByRole("dialog", { name: "Contexto da conversa" })).toBeTruthy();
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Fechar painel de contexto" }));
+      fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
+      expect(screen.queryByRole("dialog", { name: "Contexto da conversa" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Fechar navegação" })).toBeTruthy();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(true);
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+      expect(container.querySelector(".delpi-ui-conversation-three-region__center")?.hasAttribute("inert")).toBe(false);
+      expect(container.contains(draft)).toBe(true);
+      expect((draft as HTMLInputElement).value).toBe("sem perder");
+      fireEvent.click(screen.getByRole("button", { name: "Abrir contexto" }));
+      fireEvent.keyDown(document, { key: "Escape" });
+      expect(screen.queryByRole("dialog", { name: "Contexto da conversa" })).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+      expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
+    } finally {
+      rect.mockRestore();
+      vi.stubGlobal("ResizeObserver", previousObserver);
+    }
+  });
+
 });
