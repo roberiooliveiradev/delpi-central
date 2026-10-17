@@ -115,7 +115,7 @@ describe("ConversationThreeRegionLayout R2", () => {
       expect(container.querySelector('[data-drawer="true"]')).toBeTruthy();
       fireEvent.keyDown(document, { key: "Escape" });
       expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
-      expect(screen.getByRole("button", { name: "Expandir conversas" })).toHaveFocus();
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Expandir conversas" }));
       fireEvent.click(screen.getByRole("button", { name: "Expandir conversas" }));
       fireEvent.click(screen.getByRole("button", { name: "Fechar navegação" }));
       expect(screen.queryByRole("button", { name: "Fechar navegação" })).toBeNull();
