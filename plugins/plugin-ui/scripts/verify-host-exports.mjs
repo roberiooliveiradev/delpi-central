@@ -95,6 +95,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ComposerClearDraftButton",
   "ConversationSidebar",
   "NavigationRail",
+  "NavigationCategoryPanel",
   "ConversationSidebarSearch",
   "ConversationContextPanel",
 ];
