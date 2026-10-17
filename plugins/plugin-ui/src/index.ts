@@ -19,6 +19,8 @@ export { PinnedConversations } from "./components/conversation/PinnedConversatio
 export { NavigationRail } from "./components/conversation/NavigationRail";
 /** Host-only shared category panel. */
 export { NavigationCategoryPanel } from "./components/conversation/NavigationCategoryPanel";
+/** Host-consumed category-only project presentation. */
+export { ProjectNavigation } from "./components/conversation/ProjectNavigation";
 export { ConversationSidebarSearch } from "./components/conversation/ConversationSidebarSearch";
 export { ConversationContextPanel } from "./components/conversation/ConversationContextPanel";
 /** Host-consumed scroll control — retain in federated Index exports. */
