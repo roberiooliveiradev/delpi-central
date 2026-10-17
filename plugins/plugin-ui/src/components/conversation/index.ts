@@ -67,3 +67,5 @@ export { ConversationContextPanel, type ConversationContextPanelProps } from "./
 export { ConversationSidebarSearch, type ConversationSidebarSearchProps } from "./ConversationSidebarSearch";
 
 export { NavigationRail, type NavigationRailProps, type NavigationRailCategory } from "./NavigationRail";
+
+export { NavigationCategoryPanel, type NavigationCategoryPanelProps, type NavigationCategoryPanelState } from "./NavigationCategoryPanel";
