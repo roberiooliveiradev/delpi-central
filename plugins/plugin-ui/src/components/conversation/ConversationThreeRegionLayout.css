@@ -410,3 +410,44 @@
 @media (prefers-reduced-motion:reduce) {
   .delpi-ui-conversation-three-region__drawer-close { transition:none!important; }
 }
+
+/* E05: the floating context occupies only the usable conversation width in
+   compact DÉLIA hosts. It must never begin beneath the persistent rail. */
+@container delia-page (max-width: 920px) {
+  .delpi-ui-conversation-three-region--with-rail
+    .delpi-ui-conversation-three-region__context-popover {
+    box-sizing: border-box;
+    left: calc(var(--delpi-ui-three-rail) + 8px);
+    right: 8px;
+    width: auto;
+    max-width: calc(100% - var(--delpi-ui-three-rail) - 16px);
+    min-width: 0;
+    max-height: min(70%, calc(100% - 72px));
+    overflow: hidden;
+  }
+  .delpi-ui-conversation-three-region--with-rail
+    .delpi-ui-conversation-three-region__context-popover
+    .delpi-ui-conversation-three-region__side-heading {
+    box-sizing: border-box;
+    min-width: 0;
+    padding-inline: 12px;
+  }
+  .delpi-ui-conversation-three-region--with-rail
+    .delpi-ui-conversation-three-region__context-popover
+    .delpi-ui-conversation-three-region__side-content {
+    box-sizing: border-box;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 12px 16px;
+  }
+}
+/* Short landscape/Dock hosts: reserve the header without overflowing the
+   host's vertical bounds; scroll the context body, not the conversation. */
+@container delia-page (max-height: 480px) {
+  .delpi-ui-conversation-three-region__context-popover {
+    top: 8px;
+    max-height: calc(100% - 16px);
+  }
+}
