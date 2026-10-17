@@ -37,38 +37,59 @@ Reutilizado: `_build_arguments`, `_resolve_missing_inputs`, `_clarification_ques
 
 ## 5. Live SSH
 
+### 5.1 First live (implementation window — §6.214)
+
 ```text
 SSH_DEPLOYED_SHA=06f3b4ebdd
-REAL_MODEL=moonshotai/kimi-k3 (runtime default)
+REAL_MODEL=moonshotai/kimi-k3
 CORRELATION_ID=c4b9c803-db6f-4cce-9464-87d71bb62990
 REQUEST_ID=67206e7d-3255-455b-93bb-564144ddab5d
 
 LIVE_CAPABILITY_SELECTED=mcp:teo / prepare_record_change (PREPARE)
 DISCOVERY=teo.get_catalog (ok)
-ARGUMENTS=none (model invalid_structured_output; missing=0 reported)
+ARGUMENTS=none (model invalid_structured_output)
 PREPARE_INVOKE=0
 MATERIAL_ACT_COUNT=0
-INVENTED_IDENTIFIERS=0
-HAS_CONFIRMATION=false
-GROUNDING_STATUS=NON_GROUNDED (surface content; orchestration selected capability)
-PREPARE_STATE=NOT_READY
-CLARIFICATION_RELEVANT=NO (projection failed before completeness clarify)
 LIVE_RESULT=EVIDENCE_RECORDED_BOUNDED
 ```
 
-MESSAGE-only; zero ACT. Completeness gate not exercised on this live turn because argument projection failed closed before PREPARE — covered by deterministic Stage04 suite.
+Completeness clarify not reached (projection failed closed).
+
+### 5.2 Final completeness live — `DELIA-C3-STAGE04-FINAL-COMPLETENESS-LIVE-VALIDATION-01` (§6.216)
+
+```text
+SSH_DEPLOYED_SHA=1150735788
+REAL_MODEL=moonshotai/kimi-k3
+CORRELATION_ID=2c368fa2-fccb-4f99-bf6f-7594beeedaa3
+REQUEST_ID=0d89c00d-f5cc-4ec5-9905-0cedaf7265d9
+MODE=MESSAGE_ONLY
+
+CAPABILITY_SELECTED=YES (mcp:teo / prepare_record_change)
+OWNER_CATALOG_ACCESSED=YES (teo.get_catalog)
+ARGUMENT_PROJECTION=PASS (decision=built missing=0)
+COMPLETENESS_LOG=completeness_not_ready ABSENT (zero gaps reported)
+PREPARE_INVOKE=YES → PREPARE_PROJECTED READY → CONFIRMATION_REQUIRED
+CLARIFICATION_REQUIRED=NO
+MATERIAL_ACT_COUNT=0
+INCOMPLETE_PREPARE_INVOKED=NO
+SURFACE=GROUNDED confirmation preview (nome_processo preserved; status_processo present in preview)
+
+LIVE_VERDICT=NOT_EXERCISED
+```
+
+Owner accepted PREPARE as structurally READY with confirmation; Stage04 missing-field clarification path was not exercised (no `completeness_not_ready`, no ask-back for absent required fields). Deterministic Stage04 suite remains the evidence for gap→clarify.
 
 ## 6. Limitações / resíduos
 
 - Completude tipada nested já coberta por `validate_arguments`; esta etapa cobre payloads opacos + `entity_schemas`.
 - Resolver same-owner / ambiguidade / invented-id: comportamentos pré-existentes preservados; não reescritos.
-- Live: seleção PREPARE + discovery ok; args projection `invalid_structured_output` → sem clarificação Stage04 nesta turn.
-- Live real de gaps `entity_schemas` ainda depende de args válidos + catalog estruturado.
+- Final live: projection PASS + PREPARE READY; completeness **clarify** path `NOT_EXERCISED` (model-supplied args satisfied gate with 0 gaps).
+- Live proof of minimal clarification for missing owner-required fields still absent.
 - `STAGE_04_ACCEPTED=NO` até review independente.
 - `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
 
 ## 7. NEXT
 
 ```text
-NEXT=INDEPENDENT_STAGE04_ARCHITECTURE_REVIEW
+NEXT=INDEPENDENT_STAGE04_ACCEPTANCE_REVIEW
 ```
