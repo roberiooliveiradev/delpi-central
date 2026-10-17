@@ -14617,3 +14617,17 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION_FOR_GLOBAL_C3_GATES
 
 NEXT=INDEPENDENT_KNOWLEDGE_UTILIZATION_REVIEW
 
+
+
+## §6.236 — DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01 (ROADMAP_OPENED / PLANNED)
+
+**DATA:** 2026-10-17. **DOC:** [MCP contextual intelligence/orchestration roadmap](../corrections/mcp-contextual-intelligence-orchestration/README.md). **BASELINE:** `42c45802f0594cb02796913c52905c14320b5879`. **MODE:** documentation-only planning, no runtime tests or implementation in this event.
+
+- **SOURCE:** §6.235 / report 44: K1 TÉO methodology PASS_WITH_LIMITATION (synthesis budget), K2 TÉO context FAIL (prior_evidence_sufficient=false; replay; 30014ms), K3 VISTA guidance PASS_WITH_LIMITATION, K4 DAVI discovery PASS_WITH_LIMITATION. Capability discovery PASS, utilization PARTIAL, knowledge-to-next-step FAIL, material ACT=0.
+- **PRODUCT DIRECTION:** dynamic provider-neutral specialist knowledge utilization in active conversation, not global MCP knowledge replication/persistence. Live owner controls catalog, knowledge and authority. No automatic organizational learning.
+- **ORDER:** I00 independent review + current conversation-context baseline → I01 K2 contextual reuse → I02 K1/K3 evidence-bound synthesis + 30s budget → I03 K4 semantic discovery contract diagnosis/fix if proven → I04 provider-neutral live/holdout generalization → Q01 structural characterization → Q02 safe incremental `orchestration.py` decomposition → Q03 independent closure. Function first, refactor last.
+- **REUSE:** existing `OperationalCapabilityOrchestrator`, `ConversationContextTurn`, goal/continuation/synthesis/resolver and evidence; `EXISTING_EQUIVALENT=YES` for core mechanisms, `REUSE_DECISION=EXTEND` candidate only, new context persistence/contracts `TO_INVENTORY`; each implementation step rechecks on SHA.
+- **GATES:** no automatic progression; each bounded step must reanchor canonical docs, bind CP/RQ/owner/contracts, prove generalization/safety/outcome and receive independent review. `GLOBAL_TURN_BUDGET_SECONDS=30`; `MODEL_AUTHORED_FACTUAL_PROSE=NONE`; untrusted MCP content never authority/FACT; `MESSAGE != ACT`.
+- **STATE:** `TRACK=PLANNED`; `IMPLEMENTATION_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=I00_INDEPENDENT_EVAL_REVIEW_AND_CONTEXT_BASELINE
