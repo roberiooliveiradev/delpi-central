@@ -23,6 +23,8 @@ export { NavigationCategoryPanel } from "./components/conversation/NavigationCat
 export { ProjectNavigation } from "./components/conversation/ProjectNavigation";
 /** Host-consumed agent category presentation; not an agent runtime. */
 export { AgentNavigation } from "./components/conversation/AgentNavigation";
+/** Host-only Portal/Core application navigation view. */
+export { PluginNavigation } from "./components/conversation/PluginNavigation";
 export { ConversationSidebarSearch } from "./components/conversation/ConversationSidebarSearch";
 export { ConversationContextPanel } from "./components/conversation/ConversationContextPanel";
 /** Host-consumed scroll control — retain in federated Index exports. */
