@@ -77,3 +77,5 @@ export { ConversationHistoryItem, type ConversationHistoryItemData, type Convers
 export { PinnedConversations, type PinnedConversationsProps } from "./PinnedConversations";
 
 export { ProjectNavigation, type ProjectNavigationProps, type ProjectNavigationItem } from "./ProjectNavigation";
+
+export { AgentNavigation, type AgentNavigationProps, type AgentNavigationItem } from "./AgentNavigation";
