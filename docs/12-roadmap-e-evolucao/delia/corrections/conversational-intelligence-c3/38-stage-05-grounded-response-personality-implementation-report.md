@@ -36,7 +36,25 @@ Reutilizado: `grounded_synthesis` / `_render_synthesis` / `_synthesize_content`,
 
 ## 5. Live SSH
 
-Registrado no ledger §6.219 (MESSAGE-only multi-turn; zero ACT).
+```text
+SSH_DEPLOYED_SHA=5b2f764cc3
+REAL_MODEL=moonshotai/kimi-k3
+MODE=MESSAGE_ONLY × 2
+
+TURN1_CORRELATION=11b56417-4c81-4975-b219-16880ee696b4
+TURN1: CAPABILITY_SELECTED=YES (teo.get_product_guide READ)
+       INDEX→topic=revision → GUIDE READ → synthesis=synthesized
+       GROUNDING=GROUNDED · RESPONSE_RELEVANCE=PASS · ACT=0
+
+TURN2_CORRELATION=f383fbbf-4a8e-4cf8-8d9c-64ca419198c7
+TURN2: select_capability timeout (30s) → turn_budget model_timeout
+       GROUNDING=NON_GROUNDED · limitation=delpi_source_unverified
+       MULTI_TURN_CONTEXT=FAIL (timeout; continuity not proven)
+       ACT=0 · LIMITATIONS_HONEST=YES
+
+LIVE_VERDICT=INCONCLUSIVE (T1 grounded PASS; T2 timeout blocks multi-turn proof)
+MATERIAL_ACT_COUNT=0
+```
 
 ## 6. Limitações / resíduos
 

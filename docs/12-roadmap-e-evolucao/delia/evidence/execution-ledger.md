@@ -14389,12 +14389,12 @@ NEXT=STAGE_05_BOUNDED_IMPLEMENTATION
 
 ## §6.219 — DELIA-C3-STAGE-05-GROUNDED-RESPONSE-IMPLEMENTATION-01 (EVIDENCE_RECORDED)
 
-**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md`. **CODE_SHA:** fill after publish.
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md`. **CODE_SHA:** `5b2f764cc3` (= `origin/main` at Stage05 publish; deployed `srv-api`).
 
 - **REUSE:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`.
 - **FIX:** synthesis empty-items → insufficient_evidence; two-record proven diffs; instruction v4 personality bounds; SYNTHESIS_INSTRUCTION intent/continuity.
 - **TESTS:** `test_stage05_grounded_response.py` + CI-07 updated; full `delia-api` pytest green.
-- **LIVE SSH:** fill after deploy (two MESSAGE turns; `MATERIAL_ACT=0`).
+- **LIVE SSH** (`operador@192.168.1.237` / `srv-api`, MESSAGE-only ×2, deploy `5b2f764cc3`, model `moonshotai/kimi-k3`): T1 correlation `11b56417-4c81-4975-b219-16880ee696b4` — `teo.get_product_guide` index→revision→GUIDE→`synthesis=synthesized` GROUNDED; T2 correlation `f383fbbf-4a8e-4cf8-8d9c-64ca419198c7` — `select_capability` timeout → NON_GROUNDED / `delpi_source_unverified`; `MATERIAL_ACT=0`; `LIVE_VERDICT=INCONCLUSIVE` (multi-turn continuity not proven).
 - **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`. R-S04-01 preserved.
 
 STAGE_04_ACCEPTED=YES_WITH_RESIDUAL; STAGE_05_AUTHORIZED=YES_BOUNDED; STAGE_05_ACCEPTED=NO
