@@ -36,8 +36,6 @@ export function ConversationThreeRegionLayout({
   const contextRef = useRef<HTMLDivElement | null>(null);
   const drawerCloseRef = useRef<HTMLButtonElement | null>(null);
   const drawerReturnFocusRef = useRef(false);
-  const navigationRef = useRef<HTMLElement | null>(null);
-  const contextCloseRef = useRef<HTMLButtonElement | null>(null);
   const leftId = useId();
   const rightId = useId();
 
@@ -113,7 +111,7 @@ export function ConversationThreeRegionLayout({
   }, [compact, rightOpen, drawerOpen]);
 
   useEffect(() => {
-    if (rightOpen && compact) contextCloseRef.current?.focus();
+    if (rightOpen && compact) contextRef.current?.querySelector<HTMLButtonElement>(".delpi-ui-conversation-three-region__context-close")?.focus();
   }, [rightOpen, compact]);
 
   useEffect(() => {
@@ -177,7 +175,7 @@ export function ConversationThreeRegionLayout({
           aria-label="Fechar navegação" onClick={closeDrawer} />
       ) : null}
       {left && (!rail || leftExpanded) ? (
-        <nav ref={navigationRef} id={leftId} aria-label={leftTitle}
+        <nav id={leftId} aria-label={leftTitle}
           className="delpi-ui-conversation-three-region__left"
           data-drawer={drawerOpen ? "true" : "false"}>
           <div className="delpi-ui-conversation-three-region__side-heading">
@@ -215,7 +213,7 @@ export function ConversationThreeRegionLayout({
             <>
               <div className="delpi-ui-conversation-three-region__side-heading">
                 <strong>Contexto</strong>
-                <IconButton ref={contextCloseRef} className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
+                <IconButton className="delpi-ui-conversation-three-region__context-close delpi-ui-conversation-three-region__chrome-icon" aria-label="Fechar painel de contexto" onClick={() => {
                   setRightOpen(false);
                   contextTriggerRef.current?.focus();
                 }}>
