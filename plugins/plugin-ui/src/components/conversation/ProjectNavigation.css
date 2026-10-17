@@ -1,0 +1,13 @@
+/* Project category is render-only and uses existing DELPI color tokens. */
+.delpi-ui-project-navigation { display:flex; flex-direction:column; gap:10px; min-width:0; min-height:0; color:var(--delpi-ui-text,var(--text,#111)); }
+.delpi-ui-project-navigation__message { margin:4px; color:var(--delpi-ui-text-muted,var(--text-muted,#667085)); font-size:.8125rem; line-height:1.55; overflow-wrap:anywhere; }
+.delpi-ui-project-navigation__feedback { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.delpi-ui-project-navigation__list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px; }
+.delpi-ui-project-navigation__item { box-sizing:border-box; display:flex; width:100%; min-width:0; min-height:44px; align-items:center; gap:10px; padding:9px 11px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--delpi-ui-text,var(--text,#111)); font:inherit; font-size:.875rem; text-align:start; cursor:pointer; transition:background-color 180ms ease; }
+.delpi-ui-project-navigation__item:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+.delpi-ui-project-navigation__item[aria-current="page"] { background:color-mix(in srgb,var(--delpi-ui-accent,var(--primary,#089bdb)) 9%,transparent); font-weight:650; }
+.delpi-ui-project-navigation__title { overflow:hidden; min-width:0; white-space:nowrap; text-overflow:ellipsis; }
+.delpi-ui-project-navigation__item:focus-visible,.delpi-ui-project-navigation__retry:focus-visible { outline:2px solid var(--delpi-ui-accent,var(--primary,#089bdb)); outline-offset:2px; }
+.delpi-ui-project-navigation__retry { min-height:40px; padding:8px 12px; border-radius:10px; border:1px solid var(--delpi-ui-border,var(--border,#ddd)); background:transparent; color:inherit; font:inherit; cursor:pointer; }
+.delpi-ui-project-navigation__retry:hover { background:color-mix(in srgb,var(--delpi-ui-text,var(--text,#111)) 7%,transparent); }
+@media(prefers-reduced-motion:reduce){.delpi-ui-project-navigation__item{transition:none;}}
