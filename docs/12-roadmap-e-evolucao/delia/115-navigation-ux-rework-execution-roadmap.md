@@ -57,7 +57,7 @@ Em **cada task bounded**, no HEAD corrente e workspace:
 | E04 | Sidebar responsiva + drawer mobile | E03 | **ACCEPTED_WITH_RESIDUAL** | largura baseada no host; overlay, backdrop, Escape e foco sem corte; residual browser → E09 |
 | E05 | ContextPopover responsivo | E04 | **ACCEPTED_WITH_RESIDUAL** | limites/estrutura unit + visual 375; geometria CSS real → E09 |
 | E06 | Convivência de painéis + acessibilidade | E04+E05 | **ACCEPTED_WITH_RESIDUAL** | exclusividade/foco/Tab unit; teclado real/browser → E09 |
-| E07 | Polimento visual e motion | E02–E06 | **PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
+| E07 | Polimento visual e motion | E02–E06 | **IMPLEMENTED_CANDIDATE / TECHNICAL_QA_PENDING** | tokens/themes/light-dark, zoom, reduced-motion, regressão visual |
 | E08 | Regressão integrada e gates de build | E02–E07 | **PENDING** | Vitest/TS/build/federation no SHA, draft/stream/context preservados |
 | E09 | QA de navegador Portal + Dock | E08 | **PENDING** | matriz de larguras/temas/overlays com evidência executada |
 | E10 | Review independente e encerramento | E09 | **PENDING** | veredicto, residuais resolvidos/aceitos, ledger/docs sincronizados |
