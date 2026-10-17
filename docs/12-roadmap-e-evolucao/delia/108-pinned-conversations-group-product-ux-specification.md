@@ -50,3 +50,17 @@ Headings e listas semânticas, status legível por screen reader após postcondi
 ## Rework R1 — fixação não é estado local autoritativo
 
 Renderizar “Fixadas” **somente** com dados publicados e autorizados pelo owner; ausência de contrato não permite lista exemplificativa. A ação fixar/desafixar é write de metadados: identity → Core live AuthZ → Domain owner → Policy/Decision quando aplicável → idempotência → audit → execution → authoritative postcondition. Em falha/revogação, a conversa mantém posição autoritativa. Se pinned vazio foi confirmado pelo backend, grupo pode ser omitido; `empty_confirmed` é diferente de `unavailable`. Nenhum drag-sort ou favoritar local sem contrato.
+
+## Implementação bounded 05 — PinnedConversations (2026-10-17)
+
+**Autorização:** Product Master solicitou “Ok, implementar” para o componente seguinte à entrega do `ConversationHistoryItem`. **Base HEAD consultada:** `d4913798c07f975956457e30cb690532990518a1`.
+
+**Reuse gate:** `EXISTING_EQUIVALENT=YES` — grupo Fixadas já estava representado em `ConversationSidebar`, com linha `ConversationHistoryItem` e CSS compartilhado; `REUSE_DECISION=EXTEND`. Extraiu-se apenas o grupo visual para `plugins/plugin-ui/src/components/conversation/PinnedConversations.tsx`, sem segunda fonte de dados, shell ou navegação. `EXISTING_EQUIVALENT=TO_INVENTORY` para contrato/backend de fixação; **não foi criado**.
+
+**Contrato visual:** `items: readonly ConversationHistoryItemData[]`, `onSelectConversation?(id)`, `className?`. Grupo semanticamente rotulado Fixadas, `h2` e `ul/li`, cada linha reutiliza `ConversationHistoryItem`. A ordem é **exatamente a projeção recebida**, não uma ordenação local inferida. Se a lista estiver vazia ou não houver callback de seleção autorizado fornecido pelo consumer, retorna `null` (não declara falso zero nem apresenta controle inválido). Só é usado por `ConversationSidebar` dentro de `historyStatus=ready`.
+
+**Segurança:** nenhuma função `pin`, `unpin`, `rename`, `delete`, drag-and-drop, escrita de preferências ou persistência local. A presença de um item não autentica nem autoriza o usuário; a callback apenas sinaliza intenção, e o owner backend precisa validar a sessão antes de carregar. MCP/provider/model não é autoridade. Fixação futura permanece sob identity → Core live AuthZ → Domain authority → Policy/Decision → idempotência → audit → postcondition.
+
+**Arquivos alterados:** componente e teste `PinnedConversations.tsx` / `PinnedConversations.test.tsx`; `ConversationSidebar.tsx` troca grupo inline existente pelo componente; exports em `components/conversation/index.ts` e `src/index.ts`, gate de Federation `scripts/verify-host-exports.mjs`. DÉLIA continua a consumi-lo **indiretamente** via `DeliaConversationPage → NavigationCategoryPanel → ConversationNavigation → ConversationSidebar`, sem novo import nem sessão fictícia.
+
+**Testes criados:** grupo omitido com zero itens / callback ausente, foco em reaproveitamento de item, seleção, ausência de menu e integração ordenada com Recentes/Anteriores. **TESTS=TEST_NOT_RUN**, **TSC=TEST_NOT_RUN**, **FEDERATION_BUILD=TEST_NOT_RUN**, **BROWSER_QA=TEST_NOT_RUN** até execução real em SHA/config verificados. `CODE_COMMITTED_CANDIDATE` após confirmação de HEAD, `INDEPENDENT_REVIEW=PENDING`, `PHASE_PROGRESSION=NONE`. Reancoragem integral de autoridades e ledger não demonstrada neste ambiente: `INCONCLUSIVE`; este registro não aceita o runtime.
