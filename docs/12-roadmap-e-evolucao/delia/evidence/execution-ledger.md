@@ -14684,3 +14684,16 @@ NEXT=I01_CONTRACT_CP_RQ_AND_RED_TEST_GATE
 - **STATE:** `I01_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `I01_ACCEPTED=NO`; `I02_IMPLEMENTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=INDEPENDENT_I01_ARCHITECTURE_ACCEPTANCE_REVIEW
+
+
+## §6.241 — DELIA-C3-MCP-I01-INDEPENDENT-ARCHITECTURE-ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-17. **DOC:** [04](../corrections/mcp-contextual-intelligence-orchestration/04-i01-independent-architecture-acceptance.md). **CODE_SHA:** `118a1814e57a57cec2fb2c57848476268efc4af8`; **EVIDENCE_SHA:** `38db78574aa10f06aa56fa3325e56e509e0de604`. **REVIEW:** Independent GitHub code diff/document review; tests and live K1/K2 reported by executor, not independently rerun.
+
+- `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND`: GOAL instruction, excerpt segmentation and provider-neutral optional continuity probe of prior OBSERVATION. No new memory/registry/planner or public contract.
+- **EVIDENCE:** K1 TÉO owner guide 20725ms truncated; K2 transformed without re-invocation, no literal replay, 13849ms, `NON_GROUNDED/prior_turn_evidence_only`; 0 material ACT. Reported 14 I01 tests and full backend PASS.
+- **ACCEPT SCOPE:** `I01_ACCEPTED=YES_WITH_RESIDUAL`; continuity mechanism meets bounded structural objective; K2 user relevance PARTIAL, **not** full specialist intelligence utilization.
+- **RESIDUALS:** I02 synthesis/headroom/truncation; heuristic PT/EN continuity cue generalization; test probe failure/status handling; prevent false-positive prior sufficiency; broader owner holdouts. `K2_USER_GOAL_ACHIEVED=PARTIAL`.
+- `I02_STATUS=PLANNED_NOT_AUTHORIZED`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=I02_SYNTHESIS_AND_BUDGET_CONTRACT_GATE
