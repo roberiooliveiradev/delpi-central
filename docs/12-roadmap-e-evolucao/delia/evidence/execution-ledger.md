@@ -14424,6 +14424,17 @@ NEXT=INDEPENDENT_STAGE05_ACCEPTANCE_REVIEW
 
 NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 
+## §6.224 — DELIA-C3-STAGE05-PRIOR-CONTINUITY-SYNTHESIS-ROOT-CAUSE-FIX-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-17. **DOC:** `corrections/conversational-intelligence-c3/38-stage-05-grounded-response-personality-implementation-report.md` §9. **BASE_HEAD:** `6c7be795ad`. **CODE_SHA:** `c64b632275` (deployed `srv-api`).
+
+- **ROOT_CAUSE:** `VALIDATION_REJECTED` — `_propose` hard-reject em `allowed_keys` descartava proposal válida de síntese quando o adaptador sugeria `limitations` (live: `model_propose ok` → `proposal_absent`).
+- **FIX:** strip/project surplus keys; adapter directive sem “plain string”; `_render_synthesis` aceita `items` JSON-string.
+- **TESTS:** RED/GREEN `test_prior_synthesis_keeps_proposal_when_model_adds_limitations` + adapter directive + full `delia-api` pytest green.
+- **LIVE:** T1 GROUNDED 18243ms; T2 `strip_extra limitations` → `transformed` 6777ms; `LITERAL_REPLAY=NO`; `ACT=0`; `LIVE_VERDICT=PASS`.
+- **NO CLAIMS:** `STAGE_05_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
 
 ## §6.222 — DELIA-UX-NAV-REWORK-E02-E06-TECHNICAL-VALIDATION-01 (ACCEPT / ACCEPT_WITH_RESIDUAL)
 

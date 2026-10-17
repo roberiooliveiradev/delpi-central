@@ -186,7 +186,54 @@ HISTÓRICO PRESERVADO: T1 34502ms (§7); lives intermediários com
 STAGE_05_ACCEPTED=NO
 ```
 
-## 9. NEXT
+## 9. Prior continuity synthesis root cause (histórico preservado)
+
+**TASK:** `DELIA-C3-STAGE05-PRIOR-CONTINUITY-SYNTHESIS-ROOT-CAUSE-FIX-01`  
+**STATUS:** `IMPLEMENTATION_EVIDENCE_RECORDED` · `STAGE_05_ACCEPTED=NO`
+
+### Causa raiz comprovada
+
+```text
+FAILURE_LAYER=VALIDATION_REJECTED (allowed_keys)
+ROOT_CAUSE=Após InvokeModel OK, _propose descartava a proposta inteira
+  se houvesse chaves fora de allowed_keys. O adaptador OpenAI-compatible
+  sugeria "limitations" em todo structured output; síntese só permite
+  items|presentation → proposal=None → reason=proposal_absent →
+  insufficient_evidence (mascarando falha técnica).
+EVIDENCE_LIVE=strip_extra extra_keys=limitations → decision=transformed
+```
+
+### Menor correção
+
+- `_propose`: projetar para `allowed_keys` (strip + log) em vez de rejeitar.
+- Adapter directive: não forçar “plain string”; arrays/objects permitidos.
+- `_render_synthesis`: recuperar `items` se vier como JSON string.
+- Teste RED/GREEN: proposta com `limitations` surplus mantém resumo.
+
+### Live SSH (pós-fix)
+
+```text
+SSH_DEPLOYED_SHA=c64b632275
+REAL_MODEL=moonshotai/kimi-k3
+
+TURN1_GROUNDING=GROUNDED · teo.get_product_guide · 18243ms
+TURN2_PROPOSAL=VALID (strip_extra limitations)
+TURN2_SYNTHESIS=RENDERED (prior_continuation decision=transformed)
+TURN2_LITERAL_REPLAY=NO
+TURN2_RESPONSE_RELEVANT=YES
+TURN2_LATENCY_MS=6777
+TURN2_LIMITATIONS=prior_turn_evidence_only
+
+MATERIAL_ACT_COUNT=0
+GLOBAL_BUDGET_SECONDS=30
+LIVE_VERDICT=PASS
+STAGE_05_ACCEPTED=NO
+```
+
+Residual: rótulo genérico «O campo "excerpt" é:» na composição determinística
+ainda é apresentação tosca para resumo; não bloqueia a correção do contrato.
+
+## 10. NEXT
 
 ```text
 NEXT=INDEPENDENT_STAGE05_ARCHITECTURE_REVIEW
