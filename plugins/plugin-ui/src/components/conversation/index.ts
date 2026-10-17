@@ -75,3 +75,5 @@ export { ConversationNavigation, type ConversationNavigationProps, type Conversa
 export { ConversationHistoryItem, type ConversationHistoryItemData, type ConversationHistoryItemProps } from "./ConversationHistoryItem";
 
 export { PinnedConversations, type PinnedConversationsProps } from "./PinnedConversations";
+
+export { ProjectNavigation, type ProjectNavigationProps, type ProjectNavigationItem } from "./ProjectNavigation";
