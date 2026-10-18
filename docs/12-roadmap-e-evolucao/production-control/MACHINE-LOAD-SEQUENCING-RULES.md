@@ -52,11 +52,12 @@ Validações (`domain/sequencing_profile.py`): critério desconhecido, duplicado
 ou mal formado → `SequencingProfileInvalid` (422); `pa_due_date` fora do
 primeiro lugar → 422.
 
-## 4. Persistência (V018)
+## 4. Persistência (V018 + V019)
 
 ```
 sequencing_profiles            (id, name, description, status, revision,
-                                criteria JSONB, created/updated_*)
+                                criteria JSONB, origin_branch (V019),
+                                created/updated_*)
 sequencing_profile_revisions   (profile_id, revision, action, snapshot, actor)
                                append-only; ON DELETE RESTRICT
 sequencing_profile_bindings    PK (branch, work_center) → profile_id
@@ -98,6 +99,68 @@ Fixture de teste `pilot_profile_payload()` em
 `pa_due_date` + `material_code` com os 16 grupos de cabos
 (1037, 1038, 1053, 1007, 1042, 1047, 1040, 1041, 1055, 1049, 1002, 1001,
 1005, 1051, 1044, 1036). **Não é semeado** em produção.
+
+## 6a. Hardening pós-integração (HEAD `fa234d546` + correções locais)
+
+Correções aplicadas após o merge, motivadas pelo CI remoto e pela revisão:
+
+1. **operationIds** — o gate remoto `architecture-gate` reprovou a Etapa 1
+   com 6 `FASTAPI_OPERATION_ID_REQUIRED` (rota nova exige `operation_id`
+   literal). Adicionados ids explícitos e estáveis:
+   `list_machine_load_sequencing_profiles`,
+   `get_machine_load_sequencing_profile`,
+   `create_machine_load_sequencing_profile`,
+   `update_machine_load_sequencing_profile`,
+   `list_machine_load_sequencing_bindings`,
+   `set_machine_load_sequencing_binding`.
+2. **Autorização cross-branch** — a Etapa 1 autorizava `update_profile`
+   apenas pela filial da requisição: um admin da filial 01 poderia editar um
+   perfil vinculado só à filial 02 (violação provada por teste). V019
+   adiciona `origin_branch` (nullable; CHECK `('01','02')`). A política
+   vigente é a **estrita** (ver ADR abaixo): edição exige administração em
+   **TODAS** as filiais afetadas — `origin_branch` ∪ filiais vinculadas —
+   verificada DENTRO da transação do update, sob a mesma trava (FOR UPDATE)
+   que `set_binding` segura antes de mutar vínculos. Isso fecha o TOCTOU
+   entre «ler filiais afetadas» e «gravar». O parâmetro `branch` do request
+   não é autorização — o escopo real é computado das permissões do usuário.
+   Linhas legadas `origin_branch NULL` sem vínculo: conjunto afetado vazio →
+   edição negada (não se inventa proprietário).
+   **Expansão de vínculo:** vincular o perfil a uma filial nova exige
+   administração em TODAS as filiais afetadas (origem ∪ vínculos ∪ nova),
+   sob a mesma trava da linha do perfil — um admin só-01 não pode acoplar
+   um CT seu a um perfil da 02 e travar a edição do dono (cenário provado
+   antes/depois). Vínculo a novo CT numa filial já associada não exige
+   escopo extra. Perfil legado `origin_branch NULL` não pode ser
+   reivindicado por primeiro vínculo.
+3. **Corrida de vínculo** — `SELECT FOR UPDATE` não trava linha inexistente;
+   dois binds simultâneos no mesmo CT produziam `UniqueViolation` → 500.
+   `set_binding` agora reexecuta uma vez: a segunda tentativa serializa pela
+   trava e resolve como `rebound`; falha persistente → 409 controlado.
+
+### ARCHITECTURE_DECISION_REQUIRED (decisão recomendada — ratificação pendente)
+
+**Problema confirmado:** com a política «qualquer filial afetada», um admin
+da filial 01 (que legitimamente vinculou o perfil compartilhado a um CT seu)
+conseguia editar o perfil usado pelo CT-02B da filial 02 — alteração
+indireta de configuração de outra filial.
+
+**Decisão recomendada (implementada como padrão seguro):** edição exige
+`sequencing-profiles.manage` + escopo administrativo em **todas** as
+filiais afetadas (origem ∪ vínculos). Perfis exclusivos de uma filial
+seguem editáveis por quem a administra; perfis compartilhados ficam
+editáveis apenas para admin dual (ou superadmin). Expandir o perfil a uma
+filial nova exige o mesmo escopo total — caso contrário o bind criaria a
+violação que a edição agora bloqueia. Desvincular/substituir permanece
+ação da própria filial no SEU CT.
+
+**Alternativas rejeitadas:**
+- qualquer-filial-afetada edita → a violação original;
+- owner exclusivo (`origin_branch`) → bloquearia edição legítima de quem
+  administra todas as filiais envolvidas.
+
+**Condição de aceite:** pendente de ratificação formal pelo owner do PCP
+antes da Etapa 2. Enquanto isso o padrão implementado é o mais restritivo
+das alternativas plausíveis — nenhum acesso é concedido além do provado.
 
 ## 7. Limites desta entrega
 

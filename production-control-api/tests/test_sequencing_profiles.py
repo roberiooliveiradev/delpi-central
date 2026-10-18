@@ -100,6 +100,28 @@ def _viewer() -> SimpleNamespace:
     )
 
 
+def _dual_manager() -> SimpleNamespace:
+    return SimpleNamespace(
+        is_superadmin=False,
+        permissions=[
+            "production-control.access",
+            "production-control.machine-load.view",
+            "production-control.sequencing-profiles.manage",
+            "production-control.view.filial-01",
+            "production-control.view.filial-02",
+        ],
+        email="pcp.admin.dual@delpi.local",
+    )
+
+
+def _superadmin() -> SimpleNamespace:
+    return SimpleNamespace(
+        is_superadmin=True,
+        permissions=[],
+        email="root@delpi.local",
+    )
+
+
 def _branch01_user() -> SimpleNamespace:
     return SimpleNamespace(
         is_superadmin=False,
@@ -133,7 +155,9 @@ class FakeSequencingProfileRepository:
     def get_profile(self, *, profile_id: UUID) -> SequencingProfile | None:
         return self.profiles.get(profile_id)
 
-    def create_profile(self, *, name, description, status, criteria, actor):
+    def create_profile(
+        self, *, name, description, status, criteria, origin_branch, actor
+    ):
         self._check()
         profile = SequencingProfile(
             id=uuid4(),
@@ -142,6 +166,7 @@ class FakeSequencingProfileRepository:
             status=status,
             revision=1,
             criteria=criteria,
+            origin_branch=origin_branch,
             created_at=datetime.now(timezone.utc),
             created_by=actor,
             updated_at=datetime.now(timezone.utc),
@@ -159,11 +184,23 @@ class FakeSequencingProfileRepository:
         return profile
 
     def update_profile(
-        self, *, profile_id, expected_revision, name, description, status,
-        criteria, actor,
+        self, *, profile_id, expected_revision, managed_branches, name,
+        description, status, criteria, actor,
     ):
         self._check()
         current = self.profiles.get(profile_id)
+        if current is not None:
+            affected = {
+                b.branch
+                for b in self.bindings.values()
+                if b.profile_id == profile_id
+            }
+            if current.origin_branch:
+                affected.add(current.origin_branch)
+            if not affected or not affected <= set(managed_branches):
+                raise PermissionError(
+                    "Edição exige administração em todas as filiais afetadas."
+                )
         if current is None or current.revision != expected_revision:
             return None
         updated = SequencingProfile(
@@ -173,6 +210,7 @@ class FakeSequencingProfileRepository:
             status=status,
             revision=current.revision + 1,
             criteria=criteria,
+            origin_branch=current.origin_branch,
             created_at=current.created_at,
             created_by=current.created_by,
             updated_at=datetime.now(timezone.utc),
@@ -189,6 +227,11 @@ class FakeSequencingProfileRepository:
         )
         return updated
 
+    def list_bound_branches(self, *, profile_id):
+        return sorted(
+            {b.branch for b in self.bindings.values() if b.profile_id == profile_id}
+        )
+
     def get_binding(self, *, branch, work_center):
         return self.bindings.get((branch, work_center))
 
@@ -198,10 +241,30 @@ class FakeSequencingProfileRepository:
             items = [b for b in items if b.work_center == work_center]
         return items
 
-    def set_binding(self, *, branch, work_center, profile_id, actor):
+    def set_binding(
+        self, *, branch, work_center, profile_id, managed_branches, actor
+    ):
         self._check()
         key = (branch, work_center)
         previous = self.bindings.get(key)
+        if profile_id is not None:
+            profile = self.profiles[profile_id]
+            bound = {
+                b.branch
+                for b in self.bindings.values()
+                if b.profile_id == profile_id
+            }
+            if profile.origin_branch is None and branch not in bound:
+                raise PermissionError(
+                    "Perfil sem filial de origem não pode ser reivindicado."
+                )
+            required = set(bound) | {branch}
+            if profile.origin_branch:
+                required.add(profile.origin_branch)
+            if not required <= set(managed_branches):
+                raise PermissionError(
+                    "Vincular exige administração em todas as filiais afetadas."
+                )
         if profile_id is None:
             if previous is None:
                 return None
@@ -579,6 +642,218 @@ class TestProfileService:
                 profile_id=UUID(created["id"]),
             )
 
+    def _update(self, service, user, branch, profile_id, revision=1):
+        return service.update_profile(
+            user,
+            branch=branch,
+            profile_id=profile_id,
+            expected_revision=revision,
+            name="tentativa cross-branch",
+            description=None,
+            status="draft",
+            criteria=pilot_profile_payload()["criteria"],
+        )
+
+    def test_cross_branch_update_denied(self) -> None:
+        """Admin da filial 01 não edita perfil que só afeta a filial 02 —
+        mesmo enxergando o catálogo global com branch=01."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        with pytest.raises(PermissionError, match="todas as filiais"):
+            self._update(service, _branch01_user(), "01", profile_id)
+
+    def test_unbound_profile_cross_branch_denied(self) -> None:
+        """Perfil ainda não vinculado só é editável pela filial de origem."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        with pytest.raises(PermissionError, match="todas as filiais"):
+            self._update(service, _branch01_user(), "01", profile_id)
+        # O dono (filial de origem 02) edita normalmente.
+        updated = self._update(service, _manager(), BRANCH, profile_id)
+        assert updated["revision"] == 2
+
+    def test_shared_profile_requires_all_affected_branches(self) -> None:
+        """Admin só da filial 01 NÃO edita perfil compartilhado com a 02 —
+        a política estrita exige administração em TODAS as filiais afetadas."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        service.set_binding(
+            _dual_manager(),
+            branch="01",
+            work_center="CT-01X",
+            profile_id=profile_id,
+        )
+        with pytest.raises(PermissionError, match="todas as filiais"):
+            self._update(service, _branch01_user(), "01", profile_id)
+
+    def test_shared_profile_editable_by_dual_branch_admin(self) -> None:
+        """Quem administra as duas filiais afetadas edita o perfil
+        compartilhado — a reutilização legítima é preservada."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        service.set_binding(
+            _dual_manager(),
+            branch="01",
+            work_center="CT-01X",
+            profile_id=profile_id,
+        )
+        updated = self._update(service, _dual_manager(), "01", profile_id)
+        assert updated["revision"] == 2
+        # Superadmin (can() resolve todas as permissões) também edita.
+        updated = self._update(
+            service, _superadmin(), "01", profile_id, revision=2
+        )
+        assert updated["revision"] == 3
+
+    def test_branch_param_is_not_authorization(self) -> None:
+        """Declarar branch=02 no request não concede acesso à filial 02 —
+        o escopo vem das permissões, nunca do parâmetro."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        with pytest.raises(BranchAccessDenied):
+            self._update(service, _branch01_user(), BRANCH, profile_id)
+
+    def test_legacy_null_origin_unbound_profile_is_locked(self) -> None:
+        """Perfil legado sem origin_branch e sem vínculo: conjunto de
+        filiais afetadas vazio → edição negada (não inventa proprietário)."""
+        import dataclasses
+
+        service, repo = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        repo.profiles[profile_id] = dataclasses.replace(
+            repo.profiles[profile_id], origin_branch=None
+        )
+        with pytest.raises(PermissionError, match="todas as filiais"):
+            self._update(service, _dual_manager(), BRANCH, profile_id)
+
+    def test_cross_branch_bind_denied_and_owner_keeps_editing(self) -> None:
+        """Admin só da filial 01 NÃO pode vincular a seu CT um perfil com
+        origem/vínculos na 02 — e o dono da 02 segue editando normalmente."""
+        service, repo = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        with pytest.raises(PermissionError, match="nova filial|afetadas"):
+            service.set_binding(
+                _branch01_user(),
+                branch="01",
+                work_center="CT-01X",
+                profile_id=profile_id,
+            )
+        # O vínculo foi negado — a filial 01 não entrou no conjunto afetado
+        # e o dono continua podendo editar o próprio perfil.
+        updated = self._update(service, _manager(), BRANCH, profile_id)
+        assert updated["revision"] == 2
+        assert not any(b == "01" for b, _ in repo.bindings)
+
+    def test_same_branch_additional_bind_needs_no_extra_scope(self) -> None:
+        """Novo CT na MESMA filial já associada não exige escopo extra."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        service.set_binding(
+            _manager(),
+            branch=BRANCH,
+            work_center="CT-02C",
+            profile_id=profile_id,
+        )
+        assert service.list_bindings(_viewer(), branch=BRANCH)["total"] == 2
+
+    def test_dual_branch_admin_expands_to_new_branch(self) -> None:
+        """Quem administra todas as filiais afetadas (a 02 já associada e a
+        nova 01) pode expandir o compartilhamento."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+        bound = service.set_binding(
+            _dual_manager(),
+            branch="01",
+            work_center="CT-01X",
+            profile_id=profile_id,
+        )
+        assert bound["profile_id"] == created["id"]
+
+    def test_unbound_profile_first_bind_by_owning_branch_only(self) -> None:
+        """Perfil ainda sem vínculo só pode ser primeiro-vinculado por quem
+        administra a filial de origem (senão outra filial o reivindicaria)."""
+        service, _ = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        with pytest.raises(PermissionError):
+            service.set_binding(
+                _branch01_user(),
+                branch="01",
+                work_center="CT-01X",
+                profile_id=profile_id,
+            )
+        service.set_binding(
+            _manager(), branch=BRANCH, work_center=CENTER, profile_id=profile_id
+        )
+
+    def test_legacy_null_origin_cannot_be_claimed_by_first_bind(self) -> None:
+        """Perfil legado sem origin_branch e sem vínculo: nenhum primeiro
+        vínculo é permitido — não se adquire ownership arbitrariamente."""
+        import dataclasses
+
+        service, repo = _service()
+        created = service.create_profile(
+            _manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        profile_id = UUID(created["id"])
+        repo.profiles[profile_id] = dataclasses.replace(
+            repo.profiles[profile_id], origin_branch=None
+        )
+        with pytest.raises(PermissionError, match="reivindicado"):
+            service.set_binding(
+                _dual_manager(),
+                branch="01",
+                work_center="CT-01X",
+                profile_id=profile_id,
+            )
+
     def test_write_failure_leaves_no_partial_state(self) -> None:
         service, repo = _service()
         repo.fail_writes = True
@@ -705,6 +980,46 @@ class TestSequencingRoutes:
         )
         assert response.status_code == 403
 
+    def test_http_cross_branch_update_forbidden(self) -> None:
+        service, _ = _service()
+        owner = _client(service, _manager())
+        profile = owner.post(
+            "/machine-load/sequencing-profiles?branch=02",
+            json=pilot_profile_payload(),
+        ).json()["data"]
+        owner.put(
+            "/machine-load/sequencing-bindings?branch=02&workCenter=CT-02B",
+            json={"profile_id": profile["id"]},
+        )
+        other = _client(service, _branch01_user())
+        response = other.put(
+            f"/machine-load/sequencing-profiles/{profile['id']}?branch=01",
+            json={
+                **pilot_profile_payload(),
+                "status": "draft",
+                "expected_revision": 1,
+            },
+        )
+        assert response.status_code == 403
+
+    def test_http_cross_branch_bind_forbidden(self) -> None:
+        service, _ = _service()
+        owner = _client(service, _manager())
+        profile = owner.post(
+            "/machine-load/sequencing-profiles?branch=02",
+            json=pilot_profile_payload(),
+        ).json()["data"]
+        owner.put(
+            "/machine-load/sequencing-bindings?branch=02&workCenter=CT-02B",
+            json={"profile_id": profile["id"]},
+        )
+        other = _client(service, _branch01_user())
+        response = other.put(
+            "/machine-load/sequencing-bindings?branch=01&workCenter=CT-01X",
+            json={"profile_id": profile["id"]},
+        )
+        assert response.status_code == 403
+
     def test_http_unauthenticated_is_forbidden(self) -> None:
         service, _ = _service()
         client = _client(service, None)
@@ -809,6 +1124,7 @@ class TestSequencingProfilePostgres:
             description="fixture",
             status="draft",
             criteria=criteria,
+            origin_branch="02",
             actor="pcp.test",
         )
         assert created.revision == 1
@@ -816,6 +1132,7 @@ class TestSequencingProfilePostgres:
         stale = repo.update_profile(
             profile_id=created.id,
             expected_revision=99,
+            managed_branches=frozenset({"02"}),
             name="x",
             description=None,
             status="draft",
@@ -827,6 +1144,7 @@ class TestSequencingProfilePostgres:
         updated = repo.update_profile(
             profile_id=created.id,
             expected_revision=1,
+            managed_branches=frozenset({"02"}),
             name=f"{tag} v2",
             description=None,
             status="active",
@@ -839,6 +1157,7 @@ class TestSequencingProfilePostgres:
             branch="02",
             work_center=f"{tag}-CT",
             profile_id=created.id,
+            managed_branches=frozenset({"02"}),
             actor="pcp.test",
         )
         assert binding and binding.profile_id == created.id
@@ -864,3 +1183,131 @@ class TestSequencingProfilePostgres:
                     (f"{tag}-CT",),
                 )
                 assert cur.fetchone()["n"] == 1
+
+    def test_real_db_concurrent_first_bind_is_controlled(self, repo) -> None:
+        """Corrida de INSERT: dois vínculos simultâneos no mesmo CT.
+
+        O SELECT FOR UPDATE não trava linha inexistente — um dos lados
+        recebe UniqueViolation e o retry controlado resolve como rebind.
+        Nenhum 500/UniqueViolation pode vazar para o chamador.
+        """
+        repo, tag = repo
+        import threading
+        from production_control_app.domain.sequencing_profile import (
+            validate_criteria,
+        )
+
+        criteria = validate_criteria(pilot_profile_payload()["criteria"])
+        ids = []
+        for i in (1, 2):
+            created = repo.create_profile(
+                name=f"{tag} Race {i}",
+                description=None,
+                status="draft",
+                criteria=criteria,
+                origin_branch="02",
+                actor="pcp.test",
+            )
+            ids.append(created.id)
+
+        barrier = threading.Barrier(3)
+        results: list = []
+        errors: list = []
+
+        def bind(profile_id):
+            barrier.wait()
+            try:
+                results.append(
+                    repo.set_binding(
+                        branch="02",
+                        work_center=f"{tag}-RACE",
+                        profile_id=profile_id,
+                        managed_branches=frozenset({"02"}),
+                        actor="pcp.test",
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 — assert abaixo
+                errors.append(exc)
+
+        threads = [threading.Thread(target=bind, args=(pid,)) for pid in ids]
+        for t in threads:
+            t.start()
+        barrier.wait()  # largada simultânea
+        for t in threads:
+            t.join(timeout=30)
+
+        assert errors == []
+        assert len(results) == 2
+        final = repo.get_binding(branch="02", work_center=f"{tag}-RACE")
+        assert final is not None and final.profile_id in ids
+
+    def test_real_db_update_vs_bind_race_is_serializable(self, repo) -> None:
+        """Edição e vínculo concorrentes na mesma trava do perfil.
+
+        Se o bind na filial 01 comitar antes, o update (que só administra
+        a filial 02) DEVE ser negado; se o update vencer a trava, o bind
+        ocorre depois — ambas as ordens são linearizáveis, nunca um write
+        autorizado por vínculo fantasma nem erro 500.
+        """
+        repo, tag = repo
+        import threading
+        from production_control_app.domain.sequencing_profile import (
+            validate_criteria,
+        )
+
+        criteria = validate_criteria(pilot_profile_payload()["criteria"])
+        created = repo.create_profile(
+            name=f"{tag} UpdateRace",
+            description=None,
+            status="draft",
+            criteria=criteria,
+            origin_branch="02",
+            actor="pcp.test",
+        )
+        barrier = threading.Barrier(3)
+        errors: list = []
+        updated: list = []
+
+        def edit():
+            barrier.wait()
+            try:
+                result = repo.update_profile(
+                    profile_id=created.id,
+                    expected_revision=1,
+                    managed_branches=frozenset({"02"}),
+                    name=f"{tag} renamed",
+                    description=None,
+                    status="draft",
+                    criteria=criteria,
+                    actor="pcp.test",
+                )
+                updated.append(result)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        def bind():
+            barrier.wait()
+            try:
+                repo.set_binding(
+                    branch="01",
+                    work_center=f"{tag}-URACE",
+                    profile_id=created.id,
+                    managed_branches=frozenset({"01", "02"}),
+                    actor="pcp.test",
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        t1, t2 = threading.Thread(target=edit), threading.Thread(target=bind)
+        t1.start(); t2.start()
+        barrier.wait()
+        t1.join(timeout=30); t2.join(timeout=30)
+
+        # Sem exceção inesperada: ou o update venceu (rev 2) ou foi negado
+        # pelo vínculo que comitou antes (PermissionError — não 500).
+        unexpected = [e for e in errors if not isinstance(e, PermissionError)]
+        assert unexpected == []
+        assert len(updated) + len(errors) == 1
+        final_profile = repo.get_profile(profile_id=created.id)
+        if updated:
+            assert final_profile.revision == 2

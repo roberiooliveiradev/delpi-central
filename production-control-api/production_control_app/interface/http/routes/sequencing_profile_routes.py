@@ -83,7 +83,10 @@ def _criteria_payload(criteria: list[SequencingCriterionBody]) -> list[dict[str,
     return [{"type": item.type, "params": item.params} for item in criteria]
 
 
-@router.get("/machine-load/sequencing-profiles")
+@router.get(
+    "/machine-load/sequencing-profiles",
+    operation_id="list_machine_load_sequencing_profiles",
+)
 def list_sequencing_profiles(
     request: Request,
     branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
@@ -97,7 +100,10 @@ def list_sequencing_profiles(
     return ok(data)
 
 
-@router.get("/machine-load/sequencing-profiles/{profile_id}")
+@router.get(
+    "/machine-load/sequencing-profiles/{profile_id}",
+    operation_id="get_machine_load_sequencing_profile",
+)
 def get_sequencing_profile(
     request: Request,
     profile_id: UUID,
@@ -113,7 +119,10 @@ def get_sequencing_profile(
     return ok(data)
 
 
-@router.post("/machine-load/sequencing-profiles")
+@router.post(
+    "/machine-load/sequencing-profiles",
+    operation_id="create_machine_load_sequencing_profile",
+)
 def create_sequencing_profile(
     request: Request,
     body: SequencingProfileCreateBody,
@@ -134,7 +143,10 @@ def create_sequencing_profile(
     return ok(data)
 
 
-@router.put("/machine-load/sequencing-profiles/{profile_id}")
+@router.put(
+    "/machine-load/sequencing-profiles/{profile_id}",
+    operation_id="update_machine_load_sequencing_profile",
+)
 def update_sequencing_profile(
     request: Request,
     profile_id: UUID,
@@ -159,7 +171,10 @@ def update_sequencing_profile(
     return ok(data)
 
 
-@router.get("/machine-load/sequencing-bindings")
+@router.get(
+    "/machine-load/sequencing-bindings",
+    operation_id="list_machine_load_sequencing_bindings",
+)
 def list_sequencing_bindings(
     request: Request,
     branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
@@ -180,7 +195,10 @@ def list_sequencing_bindings(
     return ok(data)
 
 
-@router.put("/machine-load/sequencing-bindings")
+@router.put(
+    "/machine-load/sequencing-bindings",
+    operation_id="set_machine_load_sequencing_binding",
+)
 def set_sequencing_binding(
     request: Request,
     body: SequencingBindingBody,

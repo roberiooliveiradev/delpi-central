@@ -230,6 +230,10 @@ class SequencingProfile:
     status: str
     revision: int
     criteria: list[dict[str, Any]] = field(default_factory=list)
+    # Filial em que o perfil foi criado (V019) — compõe, junto às filiais
+    # onde está vinculado, o conjunto de filiais autorizadas a editá-lo.
+    # NULL apenas em linhas legadas anteriores à V019.
+    origin_branch: str | None = None
     created_at: datetime | None = None
     created_by: str | None = None
     updated_at: datetime | None = None
