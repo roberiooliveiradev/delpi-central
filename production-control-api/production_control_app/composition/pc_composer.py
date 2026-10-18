@@ -116,10 +116,17 @@ from production_control_app.infrastructure.persistence.postgres_sequencing_profi
 from production_control_app.application.services.sequencing_profile_service import (
     SequencingProfileService,
 )
+from production_control_app.application.services.sequencing_material_resolver_service import (
+    SequencingMaterialResolverService,
+)
 
 
 def build_sequencing_profile_service() -> SequencingProfileService:
     return SequencingProfileService(PostgresSequencingProfileRepository())
+
+
+def build_sequencing_material_resolver_service() -> SequencingMaterialResolverService:
+    return SequencingMaterialResolverService(DelpiProductionGateway())
 
 
 def build_catalog_service() -> SubpluginCatalogService:

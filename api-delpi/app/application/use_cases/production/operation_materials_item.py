@@ -9,9 +9,11 @@ def normalize_operation_material_item(row: dict) -> dict:
         "description": text(row.get("description")),
         "unit": text(row.get("unit")),
         "product_type": text(row.get("product_type")).upper(),
+        "product_group": text(row.get("product_group")),
         "original_qty": number(row.get("original_qty")),
         "open_qty": number(row.get("open_qty")),
         "consumed_qty": number(row.get("consumed_qty")),
+        "zeroed_commitment_count": int(row.get("zeroed_commitment_count") or 0),
         "commitment_count": int(row.get("commitment_count") or 0),
     }
 

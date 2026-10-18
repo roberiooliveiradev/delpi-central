@@ -185,3 +185,108 @@ repositório de snapshots (teste estrutural cobre).
 - Suíte API: 1171 passed, 2 falhas baseline pré-existentes (line_feeder,
   operator_directory), 30 skipped.
 - OpenAPI: rotas presentes; migration V018 aplicada e válida no banco de dev.
+
+## 10. Etapa 2 — resolução automática de material (implementada, pendente de merge)
+
+HEAD base: `02021c680` (Etapa 1 + hardening integrados). A Etapa 2 implementa a
+identificação do código exato do cabo por operação, **sem** conectar o
+resultado ao motor: ordenação, fila WORKING/PUBLISHED, refresh e publish
+permanecem intocados.
+
+### 10.1 Arquitetura
+
+```text
+operation-materials (api-delpi, SD4+SB1)   — owner da leitura TOTVS
+        ↓ fetch_operation_materials_batch (gateway existente, S2S)
+sequencing_material_resolver_service      — aplicação: dedup, fatiamento,
+        ↓                                   paralelismo, fail-closed
+sequencing_material_resolution            — domínio PURO: elegibilidade,
+        ↓                                   zerados, fallback, ambiguidade
+motor de carga máquina (Etapa 3, TARGET)  — consome o contrato interno
+```
+
+`application/services/integration_batches.py` passa a ser o owner do
+fatiamento/fan-out de consultas em lote à api-delpi — extraído do
+`LineFeederService` (que delega; mesmos knobs `commitmentBatchSize`,
+`maxCommitmentBatches`, `maxProductionOrdersPerBatch`, `fetchMaxWorkers`).
+O resolvedor **não** reutiliza métodos privados de outro serviço.
+
+### 10.2 Fonte e contrato (evolução ADITIVA na api-delpi)
+
+O contrato `operation-materials` (consulta unitária + batch, mesmo SQL de
+`production_order_operation_materials_sql.py`) ganhou dois campos aditivos:
+
+- `product_group` (`SB1.B1_GRUPO`) — entra no SELECT e no GROUP BY. Grupo só
+  qualifica elegibilidade; o agrupamento futuro usa `product_code` (D4_COD).
+- `zeroed_commitment_count` — quantos registros SD4 fonte têm
+  `D4_QTDEORI = 0 AND D4_QUANT = 0` simultaneamente. O agregado
+  `original_qty`/`open_qty` pode zerar por soma de positivos e negativos;
+  "totalmente zerado" só é provado por `zeroed_commitment_count ==
+  commitment_count`. Sem o campo (producer antigo), o consumidor trata o item
+  como **não zerado** — fail-closed para ambiguidade, nunca descarte.
+
+Nenhum campo removido/renomeado; as duas rotas compartilham a consulta;
+operationIds preservados. Consumidor legado (Alimentador de Linha) ignora os
+campos novos — compatibilidade PROVEN pelos testes producer + regressão.
+
+### 10.3 Contrato interno do resolvedor
+
+`SequencingMaterialResolverService.resolve_materials(branch, work_center,
+operations, criteria)` → `{branch, work_center, material_criterion, items[],
+summary}`.
+
+Por operação (identidade completa filial + CT atual + OP + operação):
+
+| Campo | Significado |
+|---|---|
+| `status` | `resolved` / `missing` / `ambiguous` / `source_unavailable` / `incomplete` |
+| `product_code` / `product_group` | cabo identificado + grupo (só em `resolved`) |
+| `source` | `direct` (OP+operação) / `fallback_op` (OP inteira) |
+| `candidate_codes` | códigos elegíveis distintos (diagnóstico) |
+| `detail` | motivo técnico (`material_identified_at_operation`, …) |
+
+Regras: MP + `eligible_product_groups` definem elegibilidade; exatamente um
+código distinto resolve; dois+ é `ambiguous`; nenhum é `missing`; falha de
+integração isola o lote em `source_unavailable`; resposta malformada e OPs
+acima do teto de janela (`commitmentBatchSize` × `maxCommitmentBatches`)
+viram `incomplete` — nada é truncado nem vira `missing` falso.
+`identity_source` única vigente: `operation_then_order`; outra fonte cai em
+`missing` sem fallback implícito. Não há fallback SG1.
+
+### 10.4 Limites da Etapa 2
+
+- Leitura pura: sem rota nova, sem persistência, sem mutação de snapshot.
+- `optimize_sequence`, `MachineLoadOptimizationCriteria`, refresh e publish
+  inalterados (regressão: 449 testes machine_load/line_feeder/sequencing PASS,
+  única falha = baseline pré-existente
+  `test_product_detail_aggregates_work_centers_in_cutoff`).
+- Nenhum perfil/vínculo é criado ou associado automaticamente.
+
+### 10.5 Evidências e piloto CT-02B
+
+- 30 testes novos (`tests/test_sequencing_material_resolution.py`):
+  direto, fallback, mesmo-código-duplicado, ambiguidade direta/fallback,
+  missing, MP/PI/PA, grupo fora/dentro da config, open_qty=0 com original>0,
+  zerado canônico, netting-zero agregado, campo zerado ausente, OP de
+  referência, zeros à esquerda, CT transferido, OPs repetidas, chunks >300,
+  falha parcial/total, resposta malformada, teto de janela, determinismo.
+- Producer: `tests/test_production_order_operation_materials.py` cobre
+  `product_group` no SQL/GROUP BY e `zeroed_commitment_count`; contratos
+  davi wave-001/002: 154 PASS.
+- **Leitura real (dev, somente leitura):** OP `11173301001` filial `02` —
+  SD4 trouxe `10070371` (orig 0,252 / saldo 0,252) e `10071279` (0/0,
+  `zeroed_commitment_count = commitment_count` → ignorado). Resultado:
+  `resolved` → `10070371`, `source: fallback_op`, grupo `1007`. O empenho veio
+  com `D4_OPERAC` vazio — a resolução direta não encontrou vínculo e o
+  fallback da OP resolveu, como previsto.
+- A fila WORKING dev estava vazia na data da medição — a cobertura completa
+  do CT-02B fica como evidência a repetir quando houver programação
+  carregada; discrepâncias SH8×WORKING serão registradas, não classificadas
+  como erro automaticamente.
+
+### 10.6 Dependências para a Etapa 3
+
+- Motor consome `resolve_materials` por CT, agrupa por `product_code` dentro
+  de cada janela de `pa_due_date` (soberano), nunca por `product_group`.
+- Conectar perfis compartilhados a mutação de fila **depende** da ratificação
+  da política estrita de autorização (ver ARCHITECTURE_DECISION_REQUIRED).

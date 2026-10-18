@@ -45,9 +45,12 @@ def operation_materials_sql(*, order_count: int = 1, filter_operation: bool = Tr
             RTRIM(LTRIM(P.B1_DESC)) AS description,
             RTRIM(LTRIM(P.B1_UM)) AS unit,
             RTRIM(LTRIM(P.B1_TIPO)) AS product_type,
+            RTRIM(LTRIM(P.B1_GRUPO)) AS product_group,
             CAST(SUM(RE.D4_QTDEORI) AS FLOAT) AS original_qty,
             CAST(SUM(RE.D4_QUANT) AS FLOAT) AS open_qty,
             CAST(SUM({consumption_expr}) AS FLOAT) AS consumed_qty,
+            SUM(CASE WHEN RE.D4_QTDEORI = 0 AND RE.D4_QUANT = 0 THEN 1 ELSE 0 END)
+                AS zeroed_commitment_count,
             COUNT(*) AS commitment_count
         FROM {OPERATION_MATERIALS_COMMITMENT_TABLE} RE WITH (NOLOCK)
         INNER JOIN {OPERATION_MATERIALS_PRODUCT_TABLE} P WITH (NOLOCK)
@@ -64,6 +67,7 @@ def operation_materials_sql(*, order_count: int = 1, filter_operation: bool = Tr
             RE.D4_COD,
             P.B1_DESC,
             P.B1_UM,
-            P.B1_TIPO
+            P.B1_TIPO,
+            P.B1_GRUPO
         ORDER BY RE.D4_OP ASC, RE.D4_OPERAC ASC, RE.D4_COD ASC
     """

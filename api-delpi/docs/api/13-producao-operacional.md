@@ -81,7 +81,8 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 - Teto de **300 OPs** por requisição (`MAX_BATCH_PRODUCTION_ORDERS`). Acima disso a resposta é `400` — a rota não trunca, porque devolver menos empenhos do que a janela pede faria o consumidor subestimar a necessidade de material.
 - Lista vazia responde `200` com `items: []` e nenhuma consulta ao banco.
 - Mesma definição de empenho da consulta unitária: o SQL das duas rotas vem de `production_order_operation_materials_sql.py`.
-- Cada item inclui `product_type` (`SB1.B1_TIPO`) junto com descrição e UM — o consumidor (ex.: alimentador de linha) filtra MP sem segunda consulta.
+- Cada item inclui `product_type` (`SB1.B1_TIPO`) e `product_group` (`SB1.B1_GRUPO`) junto com descrição e UM — o consumidor (ex.: alimentador de linha, resolvedor de material do sequenciamento PCP) filtra MP e grupos elegíveis sem segunda consulta.
+- `zeroed_commitment_count` conta quantos registros SD4 fonte do grupo agregado têm `D4_QTDEORI = 0 AND D4_QUANT = 0` simultaneamente. O agregado `original_qty`/`open_qty` pode zerar por soma de positivos e negativos; quem precisa saber se **todos** os empenhos do item estão zerados compara `zeroed_commitment_count == commitment_count` — nunca o saldo agregado.
 
 ---
 

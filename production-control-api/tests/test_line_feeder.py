@@ -644,6 +644,18 @@ def _settings_override(**overrides: int):
     return setting_int
 
 
+def _patch_batch_settings(monkeypatch, **overrides: int):
+    """Fatiamento/fan-out mora em integration_batches — patch nos dois módulos."""
+    from production_control_app.application.services import (
+        integration_batches,
+        line_feeder_service,
+    )
+
+    override = _settings_override(**overrides)
+    monkeypatch.setattr(line_feeder_service, "setting_int", override)
+    monkeypatch.setattr(integration_batches, "setting_int", override)
+
+
 def _four_order_service(**kwargs: Any):
     return _service(
         operations=[
@@ -668,7 +680,7 @@ def test_batch_slices_orders_into_chunks_without_losing_need(
     """
     from production_control_app.application.services import line_feeder_service as module
 
-    monkeypatch.setattr(module, "setting_int", _settings_override(commitmentBatchSize=2))
+    _patch_batch_settings(monkeypatch, commitmentBatchSize=2)
     service, gateway, _ = _four_order_service()
     data = _requirements(service)
 
@@ -691,10 +703,8 @@ def test_batch_flags_truncation_only_above_the_batch_ceiling(
 ) -> None:
     from production_control_app.application.services import line_feeder_service as module
 
-    monkeypatch.setattr(
-        module,
-        "setting_int",
-        _settings_override(commitmentBatchSize=2, maxCommitmentBatches=1),
+    _patch_batch_settings(
+        monkeypatch, commitmentBatchSize=2, maxCommitmentBatches=1
     )
     service, gateway, _ = _four_order_service()
     data = _requirements(service)
@@ -719,7 +729,7 @@ def test_parallel_reads_keep_the_caller_identity(monkeypatch: pytest.MonkeyPatch
     caller.set("alimentador@delpi.com.br")
     seen: list[str] = []
 
-    monkeypatch.setattr(module, "setting_int", _settings_override(commitmentBatchSize=2))
+    _patch_batch_settings(monkeypatch, commitmentBatchSize=2)
     service, gateway, _ = _four_order_service()
     original = gateway.fetch_operation_materials_batch
 
@@ -740,10 +750,8 @@ def test_commitment_batch_never_exceeds_the_api_delpi_cap(
     """O lote configurado nunca passa do teto por requisição do contrato."""
     from production_control_app.application.services import line_feeder_service as module
 
-    monkeypatch.setattr(
-        module,
-        "setting_int",
-        _settings_override(commitmentBatchSize=500, maxProductionOrdersPerBatch=3),
+    _patch_batch_settings(
+        monkeypatch, commitmentBatchSize=500, maxProductionOrdersPerBatch=3
     )
     service, gateway, _ = _four_order_service()
     _requirements(service)
