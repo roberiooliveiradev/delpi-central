@@ -107,3 +107,11 @@ Aceite formal permanece com o review GPT. **D01/D03/D04 e roadmap 115 E09/E10 n�
 **Diff de implementação:** regra CSS estritamente sob `.global-delia-dock` para o popover compacto com `right:12px`, `width:min(292px,78%)`, `max-width:calc(100% - rail - 24px)`, `max-height:min(55%,calc(100% - 140px))` e `left:auto`. Valores são hipótese inicial sujeita a QA geométrico; preservados trigger, Escape, foco, leitura, reduced motion, scroll interno e comportamento da página completa.
 
 **Gates pendentes:** Vitest de layout, `plugin-ui` build/exports, DÉLIA build, Browser QA no Dock autenticado (320/360/420 px de largura interna, light/dark, zoom, abertura, foco, scroll, clipping, composer). **TEST_NOT_RUN nesta edição GitHub-only**; CSS publicado não constitui aceite runtime. Após QA, corrigir apenas defeitos reproduzidos e atualizar evidence/ledger com SHA testado. Roadmap 115 E09/E10 permanece aberto. **D01_IMPLEMENTATION=CANDIDATE; D01_ACCEPTED=NO**.
+
+## 8. D01 — ajuste incremental do drawer Conversas no Companion Dock (2026-10-17)
+
+**Evidência de produto:** screenshot do Dock com drawer Conversas aberto mostrou painel lateral largo, deixando pouco espaço visual para a conversa. **Decisão de execução bounded:** preservar drawer, backdrop e semântica de fechamento já implementados e reduzir apenas sua largura no host Portal; não criar segunda navegação ou alterar o comportamento da página completa. **EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND**; owner CSS `plugin-ui`, host Portal, consumer DÉLIA.
+
+**Diff:** override CSS condicionado a `.global-delia-dock` + layout compacto `--with-rail` + `[data-drawer=true]`, com largura `min(252px, calc(100% - rail - 40px))`. A regra genérica E04 continua válida fora do Dock. Mantidos lifecycle, foco, Escape, backdrop, renderização e draft existentes; os valores estão sujeitos a QA visual e geométrico em 320/360/420px, teclado, light/dark, zoom 200% e reduced motion.
+
+**Status:** `IMPLEMENTED_CANDIDATE` no GitHub; `VITEST/BUILD/BROWSER_QA=TEST_NOT_RUN` neste acesso GitHub-only; `D01_ACCEPTED=NO`. A validação integrada foi intencionalmente postergada por orientação do Product Master, sem alterar E09/E10, D02 residuals ou fase.
