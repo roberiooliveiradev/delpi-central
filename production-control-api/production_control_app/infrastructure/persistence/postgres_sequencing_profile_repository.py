@@ -9,8 +9,15 @@ from __future__ import annotations
 
 import json
 from typing import Any
+
+import psycopg
+
 from uuid import UUID
 
+from production_control_app.domain.errors import (
+    SequencingProfileConflict,
+    SequencingProfileNotFound,
+)
 from production_control_app.domain.ports.sequencing_profile_repository import (
     SequencingProfileRepositoryPort,
 )
@@ -29,7 +36,7 @@ _BINDINGS = f"{PC_SCHEMA_NAME}.sequencing_profile_bindings"
 _BINDING_EVENTS = f"{PC_SCHEMA_NAME}.sequencing_profile_binding_events"
 
 _PROFILE_COLUMNS = """
-    id, name, description, status, revision, criteria,
+    id, name, description, status, revision, criteria, origin_branch,
     created_at, created_by, updated_at, updated_by
 """
 
@@ -45,6 +52,7 @@ def _profile_from_row(row: dict) -> SequencingProfile:
         status=str(row.get("status") or ""),
         revision=int(row.get("revision") or 0),
         criteria=list(criteria or []),
+        origin_branch=row.get("origin_branch"),
         created_at=row.get("created_at"),
         created_by=row.get("created_by"),
         updated_at=row.get("updated_at"),
@@ -97,6 +105,17 @@ class PostgresSequencingProfileRepository(SequencingProfileRepositoryPort):
                 row = cursor.fetchone()
         return _profile_from_row(row) if row else None
 
+    def list_bound_branches(self, *, profile_id: UUID) -> list[str]:
+        query = f"""
+            SELECT DISTINCT branch
+            FROM {_BINDINGS}
+            WHERE profile_id = %s
+        """
+        with get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (profile_id,))
+                return [str(row["branch"]) for row in cursor.fetchall()]
+
     def create_profile(
         self,
         *,
@@ -104,6 +123,7 @@ class PostgresSequencingProfileRepository(SequencingProfileRepositoryPort):
         description: str | None,
         status: str,
         criteria: list[dict],
+        origin_branch: str,
         actor: str | None,
     ) -> SequencingProfile:
         with get_connection() as connection:
@@ -111,11 +131,15 @@ class PostgresSequencingProfileRepository(SequencingProfileRepositoryPort):
                 cursor.execute(
                     f"""
                     INSERT INTO {_PROFILES}
-                        (name, description, status, criteria, created_by, updated_by)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                        (name, description, status, criteria, origin_branch,
+                         created_by, updated_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING {_PROFILE_COLUMNS}
                     """,
-                    (name, description, status, json.dumps(criteria), actor, actor),
+                    (
+                        name, description, status, json.dumps(criteria),
+                        origin_branch, actor, actor,
+                    ),
                 )
                 profile = _profile_from_row(cursor.fetchone())
                 cursor.execute(
@@ -138,20 +162,56 @@ class PostgresSequencingProfileRepository(SequencingProfileRepositoryPort):
         *,
         profile_id: UUID,
         expected_revision: int,
+        managed_branches: frozenset[str],
         name: str,
         description: str | None,
         status: str,
         criteria: list[dict],
         actor: str | None,
     ) -> SequencingProfile | None:
-        """Concorrência otimista: o UPDATE casa a revisão vigente.
+        """Concorrência otimista + escopo de filial na mesma transação.
 
-        Retorna None quando o perfil não existe ou a revisão divergiu — a
-        camada de aplicação distingue os dois casos com um novo get (o perfil
-        inexistente é 404; revisão divergente é 409).
+        A linha do perfil é travada (FOR UPDATE) antes da verificação:
+        `set_binding` trava a mesma linha, então um vínculo concorrente ou
+        comita antes (e é visto aqui, podendo negar a edição) ou espera o
+        commit desta transação — nunca há edição autorizada por um vínculo
+        fantasma. Retorna None quando o perfil não existe ou a revisão
+        divergiu; PermissionError quando o chamador não administra TODAS as
+        filiais afetadas (origem ∪ vínculos).
         """
         with get_connection() as connection:
             with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT revision, origin_branch
+                    FROM {_PROFILES}
+                    WHERE id = %s
+                    FOR UPDATE
+                    """,
+                    (profile_id,),
+                )
+                locked = cursor.fetchone()
+                if locked is not None:
+                    cursor.execute(
+                        f"""
+                        SELECT DISTINCT branch
+                        FROM {_BINDINGS}
+                        WHERE profile_id = %s
+                        """,
+                        (profile_id,),
+                    )
+                    affected = {str(r["branch"]) for r in cursor.fetchall()}
+                    if locked.get("origin_branch"):
+                        affected.add(str(locked["origin_branch"]))
+                    # Política estrita: TODAS as filiais afetadas precisam
+                    # estar no escopo administrado pelo chamador. Conjunto
+                    # vazio (perfil legado sem origem e sem vínculo) nega —
+                    # não inventa proprietário.
+                    if not affected or not affected <= set(managed_branches):
+                        raise PermissionError(
+                            "Edição exige administração em todas as filiais "
+                            "afetadas pelo perfil (origem e vínculos)."
+                        )
                 cursor.execute(
                     f"""
                     UPDATE {_PROFILES}
@@ -233,10 +293,85 @@ class PostgresSequencingProfileRepository(SequencingProfileRepositoryPort):
         branch: str,
         work_center: str,
         profile_id: UUID | None,
+        managed_branches: frozenset[str],
+        actor: str | None,
+    ) -> SequencingProfileBinding | None:
+        # SELECT FOR UPDATE não trava uma linha que ainda não existe: duas
+        # transações simultâneas no mesmo (branch, work_center) podem correr
+        # para o INSERT e a perdedora recebe UniqueViolation. Em vez de um
+        # 500, reexecuta uma vez — a segunda tentativa já enxerga a linha
+        # comitada e segue pelo caminho de UPDATE serializado pela trava.
+        for attempt in range(2):
+            try:
+                return self._set_binding_once(
+                    branch=branch,
+                    work_center=work_center,
+                    profile_id=profile_id,
+                    managed_branches=managed_branches,
+                    actor=actor,
+                )
+            except psycopg.errors.UniqueViolation:
+                if attempt == 1:
+                    raise SequencingProfileConflict(
+                        "Concorrência no vínculo do centro de trabalho. "
+                        "Tente novamente."
+                    )
+        return None  # unreachable
+
+    def _set_binding_once(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        profile_id: UUID | None,
+        managed_branches: frozenset[str],
         actor: str | None,
     ) -> SequencingProfileBinding | None:
         with get_connection() as connection:
             with connection.cursor() as cursor:
+                # Serializa contra update_profile: vincular este perfil muda
+                # o conjunto de filiais afetadas que a edição verifica sob
+                # a mesma trava.
+                if profile_id is not None:
+                    cursor.execute(
+                        f"""
+                        SELECT origin_branch FROM {_PROFILES}
+                        WHERE id = %s
+                        FOR UPDATE
+                        """,
+                        (profile_id,),
+                    )
+                    locked_profile = cursor.fetchone()
+                    if locked_profile is None:
+                        raise SequencingProfileNotFound(
+                            "Perfil de sequenciamento não encontrado."
+                        )
+                    cursor.execute(
+                        f"""
+                        SELECT DISTINCT branch
+                        FROM {_BINDINGS}
+                        WHERE profile_id = %s
+                        """,
+                        (profile_id,),
+                    )
+                    bound = {str(r["branch"]) for r in cursor.fetchall()}
+                    origin = locked_profile.get("origin_branch")
+                    if origin is None and branch not in bound:
+                        raise PermissionError(
+                            "Perfil sem filial de origem não pode ser "
+                            "reivindicado por um novo vínculo."
+                        )
+                    # Expandir o perfil a uma filial nova exige gerenciar
+                    # TODAS as afetadas (origem ∪ vínculos ∪ nova) — senão
+                    # um admin de outra filial travaria a edição do dono.
+                    required = set(bound) | {branch}
+                    if origin:
+                        required.add(str(origin))
+                    if not required <= set(managed_branches):
+                        raise PermissionError(
+                            "Vincular este perfil a uma nova filial exige "
+                            "administração em todas as filiais afetadas."
+                        )
                 cursor.execute(
                     f"""
                     SELECT branch, work_center, profile_id, assigned_by, assigned_at

@@ -16,6 +16,8 @@ from typing import Any
 from uuid import UUID
 
 from production_control_app.core.security import (
+    ALLOWED_BRANCHES,
+    BRANCH_VIEW_PERMISSIONS,
     PC_MACHINE_LOAD_VIEW,
     PC_SEQUENCING_PROFILES_MANAGE,
     can,
@@ -59,6 +61,7 @@ def _profile_payload(profile: SequencingProfile) -> dict[str, Any]:
         "status": profile.status,
         "revision": profile.revision,
         "criteria": profile.criteria,
+        "origin_branch": profile.origin_branch,
         "created_at": profile.created_at.isoformat() if profile.created_at else None,
         "created_by": profile.created_by,
         "updated_at": profile.updated_at.isoformat() if profile.updated_at else None,
@@ -105,6 +108,19 @@ class SequencingProfileService:
             )
         return self._branch_access.assert_valid_branch(branch)
 
+    def _managed_branches(self, user: object | None) -> frozenset[str]:
+        """Filiais que o usuário pode administrar (acesso de filial + manage).
+
+        O parâmetro `branch` do request NÃO é autorização — o escopo real vem
+        das permissões do usuário, avaliadas aqui no backend.
+        """
+        if not can(user, PC_SEQUENCING_PROFILES_MANAGE):
+            return frozenset()
+        return frozenset(
+            b for b in ALLOWED_BRANCHES
+            if can(user, BRANCH_VIEW_PERMISSIONS[b])
+        )
+
     # ---- perfis ----------------------------------------------------------
 
     def list_profiles(
@@ -150,7 +166,7 @@ class SequencingProfileService:
         description: str | None,
         criteria: Any,
     ) -> dict[str, Any]:
-        self._assert_can_manage(user, branch)
+        branch = self._assert_can_manage(user, branch)
         # Todo perfil nasce rascunho — a ativação é uma decisão posterior
         # explícita, nunca implícita no cadastro.
         profile = self._repo.create_profile(
@@ -158,6 +174,7 @@ class SequencingProfileService:
             description=(description or "").strip() or None,
             status=PROFILE_STATUS_DRAFT,
             criteria=validate_criteria(criteria),
+            origin_branch=branch,
             actor=_user_label(user),
         )
         return _profile_payload(profile)
@@ -179,9 +196,15 @@ class SequencingProfileService:
             raise SequencingProfileInvalid(
                 "expected_revision é obrigatório e deve ser >= 1."
             )
+        # Política estrita (pendente de ratificação formal — ADR no doc):
+        # o repositório re-lê, DENTRO da transação que atualiza, as filiais
+        # afetadas (origem ∪ vínculos) e exige que o chamador administre
+        # TODAS elas. Isso fecha o TOCTOU entre a verificação e o write —
+        # `set_binding` trava a mesma linha do perfil antes de mutar.
         updated = self._repo.update_profile(
             profile_id=profile_id,
             expected_revision=expected_revision,
+            managed_branches=self._managed_branches(user),
             name=validate_name(name),
             description=(description or "").strip() or None,
             status=validate_status(status),
@@ -243,6 +266,7 @@ class SequencingProfileService:
             branch=branch,
             work_center=center,
             profile_id=profile_id,
+            managed_branches=self._managed_branches(user),
             actor=_user_label(user),
         )
         return {
