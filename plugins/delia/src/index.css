@@ -270,3 +270,18 @@
 .dashboard-delia .delia-interaction__pending-row .delpi-ui-activity-viewer__icon {
   display: none;
 }
+
+/* D01: keep assistant and user turns readable across the Dock's narrow
+   conversation area. Full-page dimensions and semantics remain untouched. */
+.global-delia-dock .dashboard-delia .delia-timeline {
+  gap: 14px;
+  min-width: 0;
+}
+.global-delia-dock .dashboard-delia .delia-turn {
+  max-width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+.global-delia-dock .dashboard-delia .delpi-ui-conversation-user-message {
+  max-width: 100%;
+}
