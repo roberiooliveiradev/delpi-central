@@ -538,7 +538,9 @@ def test_service_keeps_same_order_text_in_different_branches_isolated() -> None:
     service = SequencingMaterialResolverService(gateway)
     result = service.resolve_materials(
         branch="01", work_center="CT-01A",
-        operations=[_operation(order="111111001", branch="01")],
+        operations=[
+            _operation(order="111111001", branch="01", work_center="CT-01A")
+        ],
         criteria=_criteria(),
     )
     assert result["branch"] == "01"
@@ -587,3 +589,295 @@ def test_service_orders_beyond_window_ceiling_are_incomplete() -> None:
     overflow = [i for i in result["items"] if i["status"] == RESOLUTION_INCOMPLETE]
     assert len(overflow) == 5
     assert result["summary"]["total"] == ceiling + 5
+
+
+# ---------------------------------------------------------------------------
+# Hardening E2 — dados indispensáveis, integridade de lote, escopo
+# ---------------------------------------------------------------------------
+
+
+def test_mp_material_without_product_group_is_incomplete_not_missing() -> None:
+    item = _material("10070371", product_group="")
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+    assert result["detail"] == "insufficient_material_data"
+
+
+def test_material_without_product_type_is_incomplete() -> None:
+    item = _material("10070371", product_type="")
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_proven_ineligible_material_still_ignored() -> None:
+    """Tipo conhecido ≠ MP ou grupo conhecido fora da config: descarte seguro."""
+    items = [
+        _material("30000001", product_type="PA"),
+        _material("10070371", product_group="9999"),
+    ]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=items, params=_params()
+    )
+    assert result["status"] == RESOLUTION_MISSING
+
+
+def test_absent_zeroed_count_with_zero_aggregate_is_incomplete() -> None:
+    """Convivência de versões: sem zeroed_commitment_count e agregado 0/0,
+    não dá para provar nem zerado nem ativo → nunca resolved/missing."""
+    item = _material("10070371", original_qty=0.0, open_qty=0.0)
+    del item["zeroed_commitment_count"]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_absent_zeroed_count_with_positive_aggregate_stays_eligible() -> None:
+    """Producer antigo + saldo claramente positivo: not-zeroed provado."""
+    item = _material("10070371", original_qty=10.0, open_qty=4.0)
+    del item["zeroed_commitment_count"]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_RESOLVED
+
+
+def test_absent_zeroed_count_irrelevant_when_policy_keeps_zeroed() -> None:
+    item = _material("10070371", original_qty=0.0, open_qty=0.0)
+    del item["zeroed_commitment_count"]
+    result = resolve_operation_material(
+        operation=_operation(),
+        order_items=[item],
+        params=_params(ignore_zeroed_allocations=False),
+    )
+    assert result["status"] == RESOLUTION_RESOLVED
+
+
+@pytest.mark.parametrize("zeroed,total", [(-1, 2), (3, 2), (0, 0), ("x", 1)])
+def test_invalid_zeroed_or_commitment_count_is_incomplete(
+    zeroed: Any, total: Any
+) -> None:
+    item = _material("10070371", zeroed=zeroed, count=total)
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_eligible_row_without_product_code_is_incomplete() -> None:
+    item = _material("")
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_valid_material_plus_indeterminate_companion_is_incomplete() -> None:
+    items = [
+        _material("10070371"),
+        _material("10071279", product_group=""),  # pode ser outro cabo
+    ]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=items, params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+    assert result["candidate_codes"] == ["10070371"]
+
+
+def test_two_proven_codes_stay_ambiguous_even_with_indeterminate() -> None:
+    items = [
+        _material("10070371"),
+        _material("10070372"),
+        _material("10071279", product_group=""),
+    ]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=items, params=_params()
+    )
+    assert result["status"] == RESOLUTION_AMBIGUOUS
+    assert result["candidate_codes"] == ["10070371", "10070372"]
+
+
+def test_indeterminate_at_operation_does_not_fall_back() -> None:
+    """Item indeterminado na operação também está no escopo da OP: incompleto."""
+    items = [
+        _material("10071279", operation="01", product_group=""),
+        _material("10070371", operation="02"),
+    ]
+    result = resolve_operation_material(
+        operation=_operation(operation="01"), order_items=items, params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+def _service_with(payload: Any) -> tuple[SequencingMaterialResolverService, _FakeGateway]:
+    gateway = _FakeGateway()
+    gateway.static_payload = payload
+    return SequencingMaterialResolverService(gateway), gateway
+
+
+class _RawGateway:
+    """Devolve payload arbitrário, para testar validação integral."""
+
+    def __init__(self, payload: Any):
+        self.payload = payload
+        self.calls: list[list[str]] = []
+
+    def fetch_operation_materials_batch(self, *, branch: str, production_orders: Any):
+        self.calls.append(list(production_orders))
+        return self.payload
+
+
+def _resolve(payload: Any, ops: list[dict[str, str]] | None = None, **kw):
+    gateway = _RawGateway(payload)
+    service = SequencingMaterialResolverService(gateway)
+    result = service.resolve_materials(
+        branch=kw.get("branch", "02"),
+        work_center=kw.get("work_center", "CT-02B"),
+        operations=ops or [_operation(order="111111001")],
+        criteria=_criteria(),
+    )
+    return result, gateway
+
+
+def _envelope(items: Any, **extra: Any) -> dict[str, Any]:
+    data = {"branch": "02", "production_orders": ["111111001"], "items": items}
+    data.update(extra)
+    return {"success": True, "data": data}
+
+
+def test_malformed_row_in_items_invalidates_chunk() -> None:
+    result, _ = _resolve(
+        _envelope([_material("10070371", order="111111001"), "lixo"])
+    )
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_row_without_order_invalidates_chunk() -> None:
+    row = _material("10070371")
+    del row["production_order"]
+    result, _ = _resolve(_envelope([row]))
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_row_of_unsolicited_order_invalidates_chunk() -> None:
+    result, _ = _resolve(
+        _envelope([_material("10070371", order="999999999")])
+    )
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_envelope_of_other_branch_is_rejected() -> None:
+    result, _ = _resolve(
+        _envelope([_material("10070371", order="111111001")], branch="01")
+    )
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_row_of_other_branch_is_rejected() -> None:
+    row = _material("10070371", order="111111001")
+    row["branch"] = "01"
+    result, _ = _resolve(_envelope([row]))
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_error_shaped_envelope_is_not_success() -> None:
+    result, _ = _resolve({"success": False, "data": {"items": "n/a"}})
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_truly_empty_items_is_missing_not_incomplete() -> None:
+    result, _ = _resolve(_envelope([]))
+    assert result["items"][0]["status"] == RESOLUTION_MISSING
+
+
+def test_envelope_missing_a_requested_order_is_incomplete() -> None:
+    gateway = _RawGateway(
+        _envelope([], production_orders=["111111001"])  # cobre só 1 das 2
+    )
+    service = SequencingMaterialResolverService(gateway)
+    result = service.resolve_materials(
+        branch="02", work_center="CT-02B",
+        operations=[
+            _operation(order="111111001"),
+            _operation(order="111111002"),
+        ],
+        criteria=_criteria(),
+    )
+    # o envelope ecoa só uma das OPs pedidas → lote incompleto
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+    assert result["items"][1]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_scope_rejects_foreign_branch_operation() -> None:
+    gateway = _FakeGateway()
+    service = SequencingMaterialResolverService(gateway)
+    with pytest.raises(ValueError):
+        service.resolve_materials(
+            branch="02", work_center="CT-02B",
+            operations=[_operation(branch="01")],
+            criteria=_criteria(),
+        )
+    assert gateway.calls == []
+
+
+def test_scope_rejects_operation_of_other_work_center() -> None:
+    gateway = _FakeGateway()
+    service = SequencingMaterialResolverService(gateway)
+    with pytest.raises(ValueError):
+        service.resolve_materials(
+            branch="02", work_center="CT-02B",
+            operations=[_operation(work_center="CT-01A")],
+            criteria=_criteria(),
+        )
+    assert gateway.calls == []
+
+
+def test_scope_rejects_missing_order_or_operation() -> None:
+    service = SequencingMaterialResolverService(_FakeGateway())
+    for bad in (
+        {"work_center": "CT-02B", "production_order": "", "operation_code": "01"},
+        {"work_center": "CT-02B", "production_order": "111111001", "operation_code": ""},
+        {"work_center": "CT-02B", "production_order": "111111001"},
+        "not-a-dict",
+    ):
+        with pytest.raises(ValueError):
+            service.resolve_materials(
+                branch="02", work_center="CT-02B",
+                operations=[bad], criteria=_criteria(),
+            )
+
+
+def test_scope_rejects_empty_branch_or_center() -> None:
+    service = SequencingMaterialResolverService(_FakeGateway())
+    with pytest.raises(ValueError):
+        service.resolve_materials(
+            branch="", work_center="CT-02B",
+            operations=[_operation()], criteria=_criteria(),
+        )
+    with pytest.raises(ValueError):
+        service.resolve_materials(
+            branch="02", work_center="",
+            operations=[_operation()], criteria=_criteria(),
+        )
+
+
+def test_operation_without_branch_field_inherits_context() -> None:
+    """O snapshot canônico pode não carregar filial por item: a filial vem do
+    contexto confiável (fila WORKING carregada pelo backend)."""
+    op = {"work_center": "CT-02B", "production_order": "111111001",
+          "operation_code": "01"}
+    gateway = _FakeGateway(
+        payloads={"111111001": [_material("10070371", order="111111001")]}
+    )
+    service = SequencingMaterialResolverService(gateway)
+    result = service.resolve_materials(
+        branch="02", work_center="CT-02B", operations=[op], criteria=_criteria()
+    )
+    assert result["items"][0]["branch"] == "02"
+    assert result["items"][0]["status"] == RESOLUTION_RESOLVED
+    assert op == {"work_center": "CT-02B", "production_order": "111111001",
+                  "operation_code": "01"}

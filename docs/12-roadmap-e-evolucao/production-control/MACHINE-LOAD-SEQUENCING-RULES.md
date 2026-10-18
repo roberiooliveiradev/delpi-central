@@ -186,9 +186,9 @@ repositório de snapshots (teste estrutural cobre).
   operator_directory), 30 skipped.
 - OpenAPI: rotas presentes; migration V018 aplicada e válida no banco de dev.
 
-## 10. Etapa 2 — resolução automática de material (implementada, pendente de merge)
+## 10. Etapa 2 — resolução automática de material (integrada em `5d22c4519`)
 
-HEAD base: `02021c680` (Etapa 1 + hardening integrados). A Etapa 2 implementa a
+Integrada à `main` no merge `5d22c4519` (commits `6add6f3bd` producer + `882632b9f` resolvedor), sobre o HEAD base `02021c680` (Etapa 1 + hardening). A Etapa 2 implementa a
 identificação do código exato do cabo por operação, **sem** conectar o
 resultado ao motor: ordenação, fila WORKING/PUBLISHED, refresh e publish
 permanecem intocados.
@@ -290,3 +290,49 @@ viram `incomplete` — nada é truncado nem vira `missing` falso.
   de cada janela de `pa_due_date` (soberano), nunca por `product_group`.
 - Conectar perfis compartilhados a mutação de fila **depende** da ratificação
   da política estrita de autorização (ver ARCHITECTURE_DECISION_REQUIRED).
+
+### 10.7 Hardening pós-revisão independente (E2)
+
+Três correções aplicadas sobre o merge `5d22c4519`, sem alterar a arquitetura:
+
+1. **Dados indispensáveis ausentes** — a elegibilidade de um item passou a ter
+   três estados: `eligible` provado, `ineligible` provado e `indeterminate`
+   (falta dado que pode mudar a decisão). `indeterminate` cobre: `product_type`
+   vazio; MP sem `product_group`; item elegível sem `product_code`; e contagens
+   inválidas (`commitment_count` ≤ 0/não numérico, `zeroed_commitment_count`
+   negativo, não numérico ou acima de `commitment_count`). Convivência de
+   versões: sem `zeroed_commitment_count` (producer antigo), agregado
+   original/open ambos zero não prova nem zerado nem ativo → indeterminado;
+   agregado positivo prova não-zerado e segue elegível. Qualquer item
+   indeterminado no escopo avaliado torna a operação `incomplete` — nunca
+   `resolved`/`missing` com evidência insuficiente. `ambiguous` permanece
+   quando há 2+ códigos provados (um indeterminado a mais não muda que não dá
+   para escolher).
+2. **Validação integral dos lotes** — `_validated_items` rejeita o lote
+   inteiro como `incomplete` quando: resposta não é dict; `items` não é lista;
+   alguma linha não é dict; linha sem `production_order`; linha de OP não
+   solicitada; filial do envelope ou da linha diverge da pedida; envelope
+   `production_orders` presente sem cobrir todas as OPs pedidas. Nenhum
+   registro é descartado silenciosamente — não dá para provar a qual OP um
+   registro estranho pertenceria. `items: []` válido continua significando
+   OP sem empenho → `missing` legítimo.
+3. **Identidade e escopo** — `resolve_materials` valida antes de qualquer
+   consulta externa: filial e CT obrigatórios; operação com `branch` explícita
+   diferente do contexto → `ValueError`; operação sem `work_center` ou de outro
+   CT → `ValueError`; OP/operação ausentes → `ValueError`. A filial canônica
+   vem do contexto confiável (snapshot WORKING carregado pelo backend) — itens
+   legítimos sem campo `branch` herdam o contexto; o resultado sempre carrega
+   a filial do contexto, não a da entrada. Zeros à esquerda preservados.
+   Entrada inválida não dispara nenhuma chamada à api-delpi.
+
+Compatibilidade: contrato `operation-materials` inalterado (nenhum campo novo,
+removido ou reinterpretado); Alimentador de Linha não consome os campos E2;
+cockpit público usa allowlist `_public_item` — inalterado.
+
+Testes: `test_sequencing_material_resolution.py` subiu de 31 para 57 casos —
+dados insuficientes (8 cenários), integridade de lote (envelope errado, linha
+malformada, OP estranha, filial divergente, envelope de erro com cara de
+sucesso, vazio legítimo, OP pedida ausente do eco) e escopo/identidade (filial
+divergente, CT errado, OP/operação ausente, herança de filial do contexto,
+não-disparo de consulta em entrada inválida). Regressão: suíte completa da
+API PASS com as duas falhas baseline pré-existentes já documentadas.
