@@ -1137,6 +1137,7 @@ class MachineLoadService:
         )
 
         row, payload = self._load_snapshot_payload(branch=branch)
+        expected_row_version = row.get("row_version")
         stored_operations = payload_operations(payload)
 
         # Conjunto fora da programação não participa da fila — nem para otimizar.
@@ -1153,8 +1154,6 @@ class MachineLoadService:
         # nunca o status HZA nem flags congeladas no snapshot. A leitura fica
         # fora da transação e qualquer falha propaga como erro controlado:
         # sequenciar com proteção vazia seria corromper a fila.
-        protected_keys = self._protected_operation_keys(branch=branch)
-
         # Perfis de sequenciamento por CT (Regras de Sequenciamento — E3):
         # leitura de vínculos e resolução de materiais são I/O externo e
         # ficam fora do lock de escrita. Vínculo inconsistente, perfil
@@ -1172,6 +1171,21 @@ class MachineLoadService:
             )
 
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
+            # Concorrência: qualquer escrita na linha (reordenação, refresh,
+            # transferência, retirada) após a leitura vira 409 — o usuário
+            # autoriza recalcular ajustes manuais ANTERIORES, nunca mudanças
+            # concorrentes. Vale para todos os CTs, com ou sem perfil.
+            locked_version = _row.get("row_version")
+            if not expected_row_version or not locked_version:
+                raise ValueError(
+                    "Versão da fila indisponível — a otimização não foi "
+                    "aplicada."
+                )
+            if locked_version != expected_row_version:
+                raise MachineLoadSequenceConflict(
+                    "A programação foi alterada enquanto a otimização era "
+                    "preparada. Tente otimizar novamente."
+                )
             stored = payload_operations(locked_payload)
             withdrawn = withdrawn_marks(locked_payload)
             visible = visible_operations(stored, withdrawn)
@@ -1179,8 +1193,14 @@ class MachineLoadService:
                 raise ValueError(
                     template_empty_queue
                 )
+            # Runs abertos lidos já dentro da transação — execução iniciada
+            # durante a resolução de materiais também trava o slot.
+            protected_keys = self._protected_operation_keys(branch=branch)
             center_criteria = None
-            if profile_plan:
+            # O drift-check cobre também o caso sem plano: um vínculo criado
+            # enquanto a otimização era preparada invalida a decisão de usar
+            # critérios gerais para aquele CT.
+            if use_sequencing_profiles and self._sequencing_profiles is not None:
                 self._assert_optimization_scope_unchanged(
                     branch=branch,
                     plan=profile_plan,
@@ -1376,19 +1396,37 @@ class MachineLoadService:
                 operations=center_ops,
                 criteria=entry["criteria"],
             )
+            items = result.get("items") if isinstance(result, dict) else None
+            if not isinstance(items, list):
+                raise ValueError(
+                    f"Resposta de materiais do centro {center} inválida — "
+                    "a otimização não foi aplicada."
+                )
+            expected_keys = {_queue_scope_key(item) for item in center_ops}
+            seen: set[tuple[str, str, str]] = set()
             center_flagged = 0
-            for item in result.get("items", []):
+            for item in items:
+                key = self._validated_resolution_identity(
+                    item,
+                    branch=branch,
+                    center=center,
+                    expected_keys=expected_keys,
+                )
+                if key in seen:
+                    raise ValueError(
+                        f"Resolução de materiais do centro {center} "
+                        "duplicada — a otimização não foi aplicada."
+                    )
+                seen.add(key)
                 status = item.get("status")
                 if status == RESOLUTION_RESOLVED:
-                    codes[
-                        (
-                            center,
-                            normalize_order_code(item.get("production_order")),
-                            _normalize_operation_code(
-                                item.get("operation_code")
-                            ),
+                    code = str(item.get("product_code") or "").strip()
+                    if not code:
+                        raise ValueError(
+                            f"Resolução de materiais do centro {center} "
+                            "sem código — a otimização não foi aplicada."
                         )
-                    ] = str(item.get("product_code"))
+                    codes[key] = code
                 elif status in (RESOLUTION_MISSING, RESOLUTION_AMBIGUOUS):
                     center_flagged += 1
                 else:
@@ -1396,8 +1434,50 @@ class MachineLoadService:
                         f"Materiais do centro {center} indisponíveis ou "
                         "incompletos — a otimização não foi aplicada."
                     )
+            if seen != expected_keys:
+                raise ValueError(
+                    f"Resolução de materiais do centro {center} não cobre "
+                    "todas as operações — a otimização não foi aplicada."
+                )
             flagged[center] = center_flagged
         return codes, flagged
+
+    @staticmethod
+    def _validated_resolution_identity(
+        item: Any,
+        *,
+        branch: str,
+        center: str,
+        expected_keys: set[tuple[str, str, str]],
+    ) -> tuple[str, str, str]:
+        """Identidade de um item da resolução E2 — divergência aborta."""
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"Item de resolução de materiais do centro {center} inválido."
+            )
+        item_branch = str(item.get("branch") or "").strip()
+        if item_branch and item_branch != branch:
+            raise ValueError(
+                f"Resolução de materiais do centro {center} de outra filial — "
+                "a otimização não foi aplicada."
+            )
+        item_center = str(item.get("work_center") or "").strip()
+        if item_center and item_center != center:
+            raise ValueError(
+                "Resolução de materiais de outro centro de trabalho — "
+                "a otimização não foi aplicada."
+            )
+        key = (
+            item_center or center,
+            normalize_order_code(item.get("production_order")),
+            _normalize_operation_code(item.get("operation_code")),
+        )
+        if key not in expected_keys:
+            raise ValueError(
+                f"Resolução de materiais do centro {center} fora do escopo "
+                "pedido — a otimização não foi aplicada."
+            )
+        return key
 
     def _assert_optimization_scope_unchanged(
         self,
@@ -1421,9 +1501,16 @@ class MachineLoadService:
                 "A fila foi alterada enquanto as regras eram preparadas. "
                 "Tente otimizar novamente."
             )
+        # Só CTs participantes da otimização importam — um vínculo em CT sem
+        # operações na fila não pode bloquear o processo.
+        participants = {
+            str(item.get("work_center") or "").strip()
+            for item in expected_operations
+        }
         current_bindings = {
             str(binding.work_center or "").strip(): binding.profile_id
             for binding in self._sequencing_profiles.list_bindings(branch=branch)
+            if str(binding.work_center or "").strip() in participants
         }
         if any(
             current_bindings.get(center) != binding_map.get(center)

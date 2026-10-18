@@ -734,3 +734,411 @@ def test_noop_with_profile_does_not_write() -> None:
     )
     assert snapshots.payload_updates == 0
     assert result["optimization"]["work_centers"] == []
+
+
+# ---------------------------------------------------------------------------
+# Hotfix E3 — versão da fila, runs lidos no lock e hierarquia aninhada
+# ---------------------------------------------------------------------------
+
+
+class _VersionDriftingSnapshots(FakeSnapshotRepo):
+    """Simula qualquer escrita concorrente entre get e get_for_update."""
+
+    def get_for_update(self, *, branch, conn=None):
+        row = dict(super().get_for_update(branch=branch, conn=conn))
+        row["row_version"] = str(uuid.uuid4())
+        return row
+
+
+def _opt_criteria(*grouping: str) -> MachineLoadCenterCriteria:
+    return MachineLoadCenterCriteria(grouping)
+
+
+def test_previous_manual_reorder_is_replaced_by_optimization() -> None:
+    """Ajuste manual ANTERIOR (gravado antes do Otimizar) pode ser substituído."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-04"),
+        _op("111111003", "01", work_center=_CENTER, due_date="2026-10-06"),
+    ]
+    snapshots = _queued(ops)
+    # Manual anterior: analista gravou uma ordem própria antes de otimizar.
+    manual = list(ops)
+    manual[0], manual[2] = manual[2], manual[0]
+    snapshots.update_payload(branch=_BRANCH, payload=_queue_payload(manual))
+    service = _service(snapshots)
+
+    result = service.optimize_sequence(
+        _user(*FULL_PERMS),
+        branch=_BRANCH,
+        criteria=MachineLoadOptimizationCriteria(),
+        use_sequencing_profiles=True,
+    )
+    orders = [op["production_order"] for op in result["operations"]]
+    assert orders == ["111111002", "111111001", "111111003"]
+    assert _queue_orders(snapshots, _CENTER) == orders
+
+
+def test_concurrent_write_is_conflict_for_all_centers() -> None:
+    """Escrita entre leitura e lock (reordenação, refresh, retirada) = 409,
+    sem qualquer gravação — com ou sem perfil ativo."""
+    ops = [_op("111111001", "01", work_center=_CENTER, due_date="2026-10-05")]
+
+    drifting = _VersionDriftingSnapshots()
+    drifting.upsert(
+        branch=_BRANCH, start_date=date(2026, 9, 1), end_date=date(2026, 9, 30),
+        payload=_queue_payload(ops), refreshed_by="planner-1",
+    )
+
+    # Sem perfil ativo
+    service = _service(drifting)
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.optimize_sequence(
+            _user(*FULL_PERMS),
+            branch=_BRANCH,
+            criteria=MachineLoadOptimizationCriteria(),
+        )
+    assert drifting.payload_updates == 0
+
+    # Com perfil ativo
+    profile = _profile([{"type": "pa_due_date"}])
+    service = _service(
+        drifting,
+        profiles=FakeProfileRepo(
+            profiles=[profile], bindings=[_binding(_CENTER, profile)]
+        ),
+        resolver=FakeMaterialResolver({}),
+    )
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.optimize_sequence(
+            _user(*FULL_PERMS),
+            branch=_BRANCH,
+            criteria=MachineLoadOptimizationCriteria(),
+        )
+    assert drifting.payload_updates == 0
+
+
+def test_run_started_during_material_resolution_keeps_slot() -> None:
+    """Run aberto DEPOIS da leitura inicial mas antes da reordenação trava o
+    slot — os runs são relidos já dentro da transação."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-04"),
+    ]
+    snapshots = _queued(ops)
+    late_runs: list[dict[str, Any]] = []
+
+    class RunStartingResolver:
+        def resolve_materials(self, **kwargs):
+            late_runs.append({
+                "work_center": _CENTER,
+                "production_order": "111111002",
+                "operation_code": "01",
+                "run_status": "producing",
+            })
+            return {"items": [_resolved(o, "10070371") for o in kwargs["operations"]]}
+
+    profile = _profile(_MATERIAL_CRITERIA)
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=lambda **kwargs: list(late_runs),
+        sequencing_profiles=FakeProfileRepo(
+            profiles=[profile], bindings=[_binding(_CENTER, profile)]
+        ),
+        material_resolver=RunStartingResolver(),
+    )
+    result = service.optimize_sequence(
+        _user(*FULL_PERMS),
+        branch=_BRANCH,
+        criteria=MachineLoadOptimizationCriteria(),
+    )
+    orders = [op["production_order"] for op in result["operations"]]
+    assert orders[1] == "111111002"  # slot do run aberto preservado
+
+
+def test_nested_criteria_rank_within_parent_group() -> None:
+    """tool_group → material_code: os cabos são classificados por primeira
+    ocorrência DENTRO de cada ferramenta, não na data inteira."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),
+        _op("111111003", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),
+        _op("111111004", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),
+    ]
+    material_codes = {
+        (_CENTER, "111111001", "1"): "CB",   # T1/Mb
+        (_CENTER, "111111002", "1"): "CA",   # T2/Ma
+        (_CENTER, "111111003", "1"): "CA",   # T1/Ma — Mb aparece primeiro em T1
+        (_CENTER, "111111004", "1"): "CB",   # T2/Mb — Ma aparece primeiro em T2
+    }
+    criteria = MachineLoadOptimizationCriteria()
+    center_criteria = {_CENTER: _opt_criteria("tool_group", "material_code")}
+    result = optimize_machine_load_queue(
+        operations=ops,
+        criteria=criteria,
+        protected_keys=set(),
+        center_criteria=center_criteria,
+        material_codes=material_codes,
+    )
+    orders = [op["production_order"] for op in result.operations]
+    # T1: Mb(001) veio antes de Ma(003); T2: Ma(002) veio antes de Mb(004)
+    assert orders == ["111111001", "111111003", "111111002", "111111004"]
+
+
+def test_nested_criteria_material_then_tool() -> None:
+    """material_code → tool_group: ferramenta ranqueia dentro de cada cabo."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),
+        _op("111111003", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),
+        _op("111111004", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),
+    ]
+    material_codes = {
+        (_CENTER, "111111001", "1"): "CA",   # Ca/T2
+        (_CENTER, "111111002", "1"): "CB",   # Cb/T1
+        (_CENTER, "111111003", "1"): "CA",   # Ca/T1 — T2 antes de T1 em CA
+        (_CENTER, "111111004", "1"): "CB",   # Cb/T2 — T1 antes de T2 em CB
+    }
+    criteria = MachineLoadOptimizationCriteria()
+    center_criteria = {_CENTER: _opt_criteria("material_code", "tool_group")}
+    result = optimize_machine_load_queue(
+        operations=ops,
+        criteria=criteria,
+        protected_keys=set(),
+        center_criteria=center_criteria,
+        material_codes=material_codes,
+    )
+    orders = [op["production_order"] for op in result.operations]
+    # CA: T2(001) antes de T1(003); CB: T1(002) antes de T2(004)
+    assert orders == ["111111001", "111111003", "111111002", "111111004"]
+
+
+@pytest.mark.parametrize(
+    "mutate_items",
+    [
+        lambda items: items + [dict(items[0])],          # item duplicado
+        lambda items: items[1:],                          # item ausente
+        lambda items: items + [{                           # identidade estranha
+            "branch": "01",
+            "work_center": _CENTER,
+            "production_order": "999999999",
+            "operation_code": "99",
+            "status": "resolved",
+            "product_code": "10070371",
+        }],
+        lambda items: [dict(items[0], work_center="CT-XX")] + items[1:],
+        lambda items: [dict(items[0], product_code="")] + items[1:],
+    ],
+    ids=["duplicate", "missing", "extra", "other_center", "resolved_no_code"],
+)
+def test_inconsistent_resolution_aborts_without_write(mutate_items) -> None:
+    """Resposta do resolvedor fora do pedido nunca chega ao motor nem grava."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-05"),
+    ]
+    snapshots = _queued(ops)
+    base_items = [_resolved(o, "10070371") for o in ops]
+
+    class InconsistentResolver:
+        def resolve_materials(self, **kwargs):
+            return {"items": mutate_items(list(base_items))}
+
+    profile = _profile(_MATERIAL_CRITERIA)
+    service = _service(
+        snapshots,
+        profiles=FakeProfileRepo(
+            profiles=[profile], bindings=[_binding(_CENTER, profile)]
+        ),
+        resolver=InconsistentResolver(),
+    )
+    with pytest.raises(ValueError):
+        service.optimize_sequence(
+            _user(*FULL_PERMS),
+            branch=_BRANCH,
+            criteria=MachineLoadOptimizationCriteria(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_binding_created_during_optimization_is_conflict() -> None:
+    """Vínculo criado enquanto a otimização era preparada — quando não havia
+    perfil ativo na leitura inicial — invalida a decisão de usar os critérios
+    gerais: 409 e nenhuma gravação."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-04"),
+    ]
+    snapshots = _queued(ops)
+    profile = _profile([{"type": "pa_due_date"}])
+
+    class LateBindingRepo(FakeProfileRepo):
+        """Primeira leitura sem vínculos; a partir da segunda o vínculo existe."""
+
+        def __init__(self) -> None:
+            super().__init__(profiles=[profile])
+            self._reads = 0
+
+        def list_bindings(self, *, branch, work_center=None):
+            self._reads += 1
+            if self._reads == 1:
+                return []
+            return [_binding(_CENTER, profile)]
+
+    service = _service(
+        snapshots,
+        profiles=LateBindingRepo(),
+        resolver=FakeMaterialResolver({}),
+    )
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.optimize_sequence(
+            _user(*FULL_PERMS),
+            branch=_BRANCH,
+            criteria=MachineLoadOptimizationCriteria(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_binding_on_center_without_operations_does_not_block() -> None:
+    """Vínculo em CT sem operações na fila não bloqueia a otimização —
+    apenas os CTs participantes entram no drift-check."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05"),
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-04"),
+    ]
+    snapshots = _queued(ops)
+    idle_profile = _profile([{"type": "pa_due_date"}], name="Perfil CT-01A")
+    service = _service(
+        snapshots,
+        profiles=FakeProfileRepo(
+            profiles=[idle_profile],
+            bindings=[_binding(_OTHER_CENTER, idle_profile)],
+        ),
+        resolver=FakeMaterialResolver({}),
+    )
+    result = service.optimize_sequence(
+        _user(*FULL_PERMS),
+        branch=_BRANCH,
+        criteria=MachineLoadOptimizationCriteria(),
+    )
+    orders = [op["production_order"] for op in result["operations"]]
+    assert orders == ["111111002", "111111001"]
+    assert result["optimization"]["profiles"] == {}
+
+
+def test_missing_material_keeps_relative_order_with_tool() -> None:
+    """material_code → tool_group: operações missing/ambiguous mantêm a
+    ordem relativa — a ferramenta não pode reagrupá-las."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),   # missing
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T9"),   # resolved
+        _op("111111003", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),   # missing
+    ]
+    snapshots = _queued(ops)
+    items = [
+        _flagged(ops[0], "missing"),
+        _resolved(ops[1], "10070371"),
+        _flagged(ops[2], "missing"),
+    ]
+    profile = _profile(
+        [
+            {"type": "pa_due_date"},
+            _MATERIAL_CRITERIA[1],
+            {"type": "tool_group"},
+        ]
+    )
+    service = _service(
+        snapshots,
+        profiles=FakeProfileRepo(
+            profiles=[profile], bindings=[_binding(_CENTER, profile)]
+        ),
+        resolver=FakeMaterialResolver({_CENTER: items}),
+    )
+    result = service.optimize_sequence(
+        _user(*FULL_PERMS),
+        branch=_BRANCH,
+        criteria=MachineLoadOptimizationCriteria(),
+    )
+    orders = [op["production_order"] for op in result["operations"]]
+    # Resolvido agrupa primeiro; os missing ficam depois NA ORDEM ORIGINAL
+    # (001 antes de 003), não pela ferramenta (T1 antes de T2 já coincide).
+    assert orders == ["111111002", "111111001", "111111003"]
+
+
+def test_missing_material_relative_order_inverted_tools() -> None:
+    """Mesmo com ferramentas em ordem inversa à fila, missing preserva ordem."""
+    ops = [
+        _op("111111001", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T2"),   # missing — T2
+        _op("111111002", "01", work_center=_CENTER, due_date="2026-10-05",
+            tool="T1"),   # missing — T1 viria antes se tool agrupasse
+    ]
+    snapshots = _queued(ops)
+    items = [_flagged(o, "missing") for o in ops]
+    profile = _profile(
+        [
+            {"type": "pa_due_date"},
+            _MATERIAL_CRITERIA[1],
+            {"type": "tool_group"},
+        ]
+    )
+    service = _service(
+        snapshots,
+        profiles=FakeProfileRepo(
+            profiles=[profile], bindings=[_binding(_CENTER, profile)]
+        ),
+        resolver=FakeMaterialResolver({_CENTER: items}),
+    )
+    result = service.optimize_sequence(
+        _user(*FULL_PERMS),
+        branch=_BRANCH,
+        criteria=MachineLoadOptimizationCriteria(),
+    )
+    orders = [op["production_order"] for op in result["operations"]]
+    assert orders == ["111111001", "111111002"]  # relativa, não por tool
+
+
+def test_missing_row_version_fails_closed() -> None:
+    """Sem row_version a proteção de concorrência não é dispensada —
+    a otimização falha de forma controlada e sem escrita."""
+
+    class NoVersionSnapshots(FakeSnapshotRepo):
+        def get(self, *, branch):
+            row = super().get(branch=branch)
+            if row is not None:
+                row = dict(row)
+                row.pop("row_version", None)
+            return row
+
+    snapshots = NoVersionSnapshots()
+    snapshots.upsert(
+        branch=_BRANCH,
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 9, 30),
+        payload=_queue_payload(
+            [_op("111111001", "01", work_center=_CENTER, due_date="2026-10-05")]
+        ),
+        refreshed_by="planner-1",
+    )
+    service = _service(snapshots)
+    with pytest.raises(ValueError, match="Versão da fila"):
+        service.optimize_sequence(
+            _user(*FULL_PERMS),
+            branch=_BRANCH,
+            criteria=MachineLoadOptimizationCriteria(),
+        )
+    assert snapshots.payload_updates == 0

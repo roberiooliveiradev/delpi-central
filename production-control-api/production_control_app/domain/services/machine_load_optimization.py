@@ -217,7 +217,8 @@ def _desired_free_order(
         _group_key_fn(name, center, material_codes) for name in grouping
     ]
     rankers = [
-        _group_ranks(center_ops, free, key_fn=key_fn) for key_fn in key_fns
+        _group_ranks(center_ops, free, key_fns=key_fns, index=index)
+        for index in range(len(grouping))
     ]
 
     def sort_key(position: int) -> tuple:
@@ -227,8 +228,21 @@ def _desired_free_order(
         # inclusive o bloco inteiro sem data — preserva a ordem atual.
         if due is None:
             return (1, "") + (0,) * len(grouping)
+        keys = [key_fn(operation) for key_fn in key_fns]
+        # Sem cabo resolvido (missing/ambiguous), critérios seguintes não
+        # reagrupam: todos os ranks posteriores ficam iguais e o sorted
+        # estável preserva a ordem relativa da operação.
+        material_at = (
+            grouping.index(CRITERION_MATERIAL_CODE)
+            if CRITERION_MATERIAL_CODE in grouping
+            else None
+        )
+        material_unresolved = (
+            material_at is not None and keys[material_at] is None
+        )
         ranks = tuple(
-            _group_rank(rankers[index], due, key_fns[index](operation))
+            0 if material_unresolved and index > material_at
+            else _group_rank(rankers[index], due, keys[:index], keys[index])
             for index in range(len(grouping))
         )
         return (0, due, *ranks)
@@ -237,31 +251,37 @@ def _desired_free_order(
 
 
 def _group_rank(
-    ranks: dict[str, dict[str, int]], due: str, key: str | None
+    ranks: dict[tuple, dict[str, int]],
+    due: str,
+    parent_keys: list[str | None],
+    key: str | None,
 ) -> int:
-    """Posição do grupo na data; sem grupo fica depois de todos os reais."""
-    per_date = ranks.get(due, {})
-    if key is not None and key in per_date:
-        return per_date[key]
-    return len(per_date)
+    """Posição do grupo dentro de (data, critérios anteriores); sem grupo vai
+    depois de todos os reais daquele grupo pai."""
+    per_parent = ranks.get((due, *parent_keys), {})
+    if key is not None and key in per_parent:
+        return per_parent[key]
+    return len(per_parent)
 
 
 def _group_ranks(
     center_ops: list[dict[str, Any]],
     free: list[int],
     *,
-    key_fn: Any,
-) -> dict[str, dict[str, int]]:
-    """Ranking de grupos por data, na ordem da primeira ocorrência livre."""
-    ranks: dict[str, dict[str, int]] = {}
+    key_fns: list[Any],
+    index: int,
+) -> dict[tuple, dict[str, int]]:
+    """Ranking do critério ``index`` por primeira ocorrência livre, calculado
+    **dentro** do grupo formado pelos critérios anteriores (e pela data) —
+    nunca de forma independente na data inteira."""
+    ranks: dict[tuple, dict[str, int]] = {}
     for position in free:
         due = operation_due_date(center_ops[position])
         if due is None:
             continue
-        key = key_fn(center_ops[position])
-        if key is None:
-            continue
-        per_date = ranks.setdefault(due, {})
-        if key not in per_date:
-            per_date[key] = len(per_date)
+        keys = [key_fn(center_ops[position]) for key_fn in key_fns[: index + 1]]
+        per_parent = ranks.setdefault((due, *keys[:-1]), {})
+        key = keys[-1]
+        if key is not None and key not in per_parent:
+            per_parent[key] = len(per_parent)
     return ranks

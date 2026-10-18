@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import uuid
 
 from contextlib import contextmanager
 from datetime import date, datetime, timezone
@@ -291,6 +292,7 @@ class FakeSnapshotRepo:
             "refreshed_at": datetime(2026, 8, 19, 22, 0, tzinfo=timezone.utc),
             "refreshed_by": refreshed_by,
         }
+        row["row_version"] = row["row_version"] if "row_version" in row else str(uuid.uuid4())
         self.rows[branch] = row
         return row
 
@@ -304,6 +306,7 @@ class FakeSnapshotRepo:
         updated = {
             **existing,
             "payload_json": payload,
+            "row_version": str(uuid.uuid4()),
         }
         self.rows[branch] = updated
         return updated
