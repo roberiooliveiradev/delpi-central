@@ -38,3 +38,8 @@ def can(user: Any | None, permission: str) -> bool:
     if _is_superadmin(user):
         return True
     return has_permission(user, permission)
+
+# Gestão das regras de sequenciamento do Carga-Máquina — administrativa,
+# separada da leitura (machine-load.view). Leitura dos perfis segue a
+# permissão de visualização; criação/edição/vínculo exigem esta.
+PC_SEQUENCING_PROFILES_MANAGE = "production-control.sequencing-profiles.manage"

@@ -52,6 +52,9 @@ from production_control_app.interface.http.routes.product_3d_model_routes import
     router as product_3d_model_router,
 )
 from production_control_app.interface.http.routes.reports_routes import router as reports_router
+from production_control_app.interface.http.routes.sequencing_profile_routes import (  # noqa: E501
+    router as sequencing_profile_router,
+)
 from production_control_app.interface.http.routes.subplugin_routes import router as subplugin_router
 from production_control_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -168,3 +171,4 @@ app.include_router(line_feeder_router)
 app.include_router(delivery_map_router)
 app.include_router(reports_router)
 app.include_router(product_3d_model_router)
+app.include_router(sequencing_profile_router)

@@ -219,3 +219,15 @@ class RequestsGatewayRejected(ProductionControlError):
     def __init__(self, message: str, *, status_code: int | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
+
+
+class SequencingProfileInvalid(ProductionControlError):
+    """Perfil de sequenciamento com critérios, parâmetros ou estado inválidos."""
+
+
+class SequencingProfileNotFound(ProductionControlError):
+    """Perfil de sequenciamento ausente para o identificador informado."""
+
+
+class SequencingProfileConflict(ProductionControlError):
+    """Revisão divergente ou estado incompatível com a alteração pedida."""
