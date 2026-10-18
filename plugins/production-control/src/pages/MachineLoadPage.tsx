@@ -38,6 +38,7 @@ import {
   transferMachineLoadOperation,
   withdrawMachineLoadConjunto,
 } from "../api/ppcApi";
+import { httpErrorStatus } from "../api/httpClient";
 import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMachineLoad } from "../hooks/useMachineLoad";
@@ -138,6 +139,7 @@ export function MachineLoadPage({
     refreshFromTotvs,
     publishToMachines,
     applyPayload,
+    reload,
   } = useMachineLoad({
     branch,
     workCenter,
@@ -440,6 +442,7 @@ export function MachineLoadPage({
           branch,
           workCenter: selectedCenter,
           orderedKeys,
+          expectedKeys: options.previousKeys,
         });
         applyPayload(payload);
         if (options.pushUndo) history.pushUndo(options.previousKeys);
@@ -450,12 +453,18 @@ export function MachineLoadPage({
         setSequenceNotice(
           err instanceof Error ? err.message : copy.machineLoad.sequenceError,
         );
+        if (httpErrorStatus(err) === 409) {
+          // Pilha montada sobre uma base que mudou: zera para não reaplicar
+          // permutação obsoleta sobre a programação de outro analista.
+          history.reset();
+          reload();
+        }
         return false;
       } finally {
         setSequenceBusy(false);
       }
     },
-    [applyPayload, branch, data?.selected.items, history, selectedCenter],
+    [applyPayload, branch, data?.selected.items, history, reload, selectedCenter],
   );
 
   const prioritizeConjunto = useCallback(
@@ -762,7 +771,6 @@ export function MachineLoadPage({
     ) => {
       if (!selectedCenter || sequenceBusy) return;
       const currentKeys = keysFromOperations(rows);
-      sideEffects(currentKeys);
       const nextRows = applyKeyOrder(rows, keys);
       setRows(nextRows);
       setSequenceBusy(true);
@@ -772,34 +780,50 @@ export function MachineLoadPage({
           branch,
           workCenter: selectedCenter,
           orderedKeys: keys,
+          expectedKeys: currentKeys,
         });
         applyPayload(payload);
+        // O histórico só anda quando a persistência é confirmada — falha ou
+        // 409 não pode registrar undo/redo de uma ordem que nunca existiu.
+        sideEffects(currentKeys);
         setSequenceNotice(copy.machineLoad.sequenceSaved);
       } catch (err: unknown) {
         setRows(data?.selected.items ?? []);
         setSequenceNotice(
           err instanceof Error ? err.message : copy.machineLoad.sequenceError,
         );
+        if (httpErrorStatus(err) === 409) {
+          // Pilha montada sobre uma base que mudou: zera para não reaplicar
+          // permutação obsoleta sobre a programação de outro analista.
+          history.reset();
+          reload();
+        }
       } finally {
         setSequenceBusy(false);
       }
     },
-    [applyPayload, branch, data?.selected.items, rows, selectedCenter, sequenceBusy],
+    [applyPayload, branch, data?.selected.items, history, reload, rows, selectedCenter, sequenceBusy],
   );
 
   useEffect(() => {
     return history.bindKeyboard({
       onUndo: () => {
         if (sequenceBusy) return;
-        const restored = history.undo();
+        const restored = history.peekUndo();
         if (!restored) return;
-        void applyRemoteKeys(restored, (current) => history.rememberForRedo(current));
+        void applyRemoteKeys(restored, (current) => {
+          history.undo();
+          history.rememberForRedo(current);
+        });
       },
       onRedo: () => {
         if (sequenceBusy) return;
-        const restored = history.redo();
+        const restored = history.peekRedo();
         if (!restored) return;
-        void applyRemoteKeys(restored, (current) => history.rememberForUndoAfterRedo(current));
+        void applyRemoteKeys(restored, (current) => {
+          history.redo();
+          history.rememberForUndoAfterRedo(current);
+        });
       },
     });
   }, [applyRemoteKeys, history, sequenceBusy]);

@@ -24,6 +24,7 @@ from production_control_app.domain.errors import (
     DelpiGatewayError,
     DrawingNotFound,
     InvalidBranch,
+    MachineLoadSequenceConflict,
     SnapshotNotFound,
 )
 from production_control_app.domain.product_drawing_pdf import DrawingFile
@@ -889,6 +890,11 @@ def test_reorder_sequence_permutes_only_target_work_center() -> None:
             {"production_order": "A1", "operation_code": "01"},
             {"production_order": "A2", "operation_code": "01"},
         ],
+        expected_keys=[
+            {"production_order": "A1", "operation_code": "01"},
+            {"production_order": "A2", "operation_code": "01"},
+            {"production_order": "A3", "operation_code": "01"},
+        ],
     )
 
     assert snapshots.payload_updates == 1
@@ -919,6 +925,11 @@ def test_reorder_sequence_rejects_incomplete_permutation() -> None:
                 {"production_order": "A1", "operation_code": "01"},
                 {"production_order": "A2", "operation_code": "01"},
             ],
+            expected_keys=[
+                {"production_order": "A1", "operation_code": "01"},
+                {"production_order": "A2", "operation_code": "01"},
+                {"production_order": "A3", "operation_code": "01"},
+            ],
         )
 
 
@@ -938,6 +949,11 @@ def test_reorder_sequence_rejects_extra_key() -> None:
                 {"production_order": "A3", "operation_code": "01"},
                 {"production_order": "ZZ", "operation_code": "99"},
             ],
+            expected_keys=[
+                {"production_order": "A1", "operation_code": "01"},
+                {"production_order": "A2", "operation_code": "01"},
+                {"production_order": "A3", "operation_code": "01"},
+            ],
         )
 
 
@@ -952,6 +968,7 @@ def test_reorder_sequence_rejects_unknown_work_center() -> None:
             branch="01",
             work_center="CT-ZZZ",
             ordered_keys=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=[{"production_order": "A1", "operation_code": "01"}],
         )
 
 
@@ -963,7 +980,215 @@ def test_reorder_sequence_without_snapshot_is_not_found() -> None:
             branch="01",
             work_center="CT-01A",
             ordered_keys=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=[{"production_order": "A1", "operation_code": "01"}],
         )
+
+
+def _ct01a_keys(*orders: str) -> list[dict[str, str]]:
+    return [{"production_order": order, "operation_code": "01"} for order in orders]
+
+
+def test_reorder_sequence_rejects_stale_expected_keys() -> None:
+    """Ordem-base divergente do estado vigente → 409, nada é gravado."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(MachineLoadSequenceConflict, match="mudou desde"):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            ordered_keys=_ct01a_keys("A3", "A1", "A2"),
+            # Cliente leu [A2, A1, A3] — não é a ordem atual [A1, A2, A3].
+            expected_keys=_ct01a_keys("A2", "A1", "A3"),
+        )
+
+    assert snapshots.payload_updates == 0
+
+
+def test_reorder_sequence_rejects_expected_keys_of_wrong_set() -> None:
+    """Base com chave que não existe mais no centro também é conflito."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            ordered_keys=_ct01a_keys("A1", "A2", "A3"),
+            expected_keys=_ct01a_keys("A1", "A2", "ZZ"),
+        )
+
+    assert snapshots.payload_updates == 0
+
+
+def test_reorder_sequence_rejects_moved_protected_operation() -> None:
+    """Run aberto no cockpit trava a posição — mover direto rejeita tudo."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    with pytest.raises(MachineLoadSequenceConflict, match="A2/01"):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            ordered_keys=_ct01a_keys("A2", "A1", "A3"),
+            expected_keys=_ct01a_keys("A1", "A2", "A3"),
+        )
+
+    assert snapshots.payload_updates == 0
+
+
+def test_reorder_sequence_rejects_indirect_displacement_of_protected() -> None:
+    """Agrupar/mover outras operações não pode deslocar a protegida (D1)."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    with pytest.raises(MachineLoadSequenceConflict, match="A2/01"):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            # «Agrupar» A1+A3 na posição de A1 deslocaria A2 para a 3ª posição.
+            ordered_keys=_ct01a_keys("A1", "A3", "A2"),
+            expected_keys=_ct01a_keys("A1", "A2", "A3"),
+        )
+
+    assert snapshots.payload_updates == 0
+
+
+def test_reorder_sequence_allows_permutation_around_protected() -> None:
+    """Protegida no mesmo índice: as posições livres continuam permutáveis."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    service.reorder_sequence(
+        _user(*FULL_PERMS),
+        branch="01",
+        work_center="CT-01A",
+        ordered_keys=_ct01a_keys("A3", "A2", "A1"),
+        expected_keys=_ct01a_keys("A1", "A2", "A3"),
+    )
+
+    assert snapshots.payload_updates == 1
+    row = snapshots.get(branch="01")
+    ct01 = [
+        op
+        for op in row["payload_json"]["operations"]
+        if op["work_center"] == "CT-01A"
+    ]
+    assert [op["production_order"] for op in ct01] == ["A3", "A2", "A1"]
+
+
+def test_reorder_sequence_fails_closed_when_cockpit_source_is_down() -> None:
+    """Fonte de execução indisponível nunca libera a movimentação."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=lambda **kwargs: (_ for _ in ()).throw(
+            PluginsDatabaseConnectionError("cockpit off")
+        ),
+    )
+
+    with pytest.raises(PluginsDatabaseConnectionError):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            ordered_keys=_ct01a_keys("A3", "A1", "A2"),
+            expected_keys=_ct01a_keys("A1", "A2", "A3"),
+        )
+
+    assert snapshots.payload_updates == 0
+
+
+def test_patch_sequence_http_conflict_is_409(machine_load_routes_module) -> None:
+    """Contrato HTTP: divergência da ordem-base volta como 409 identificável."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    client = _machine_load_client(_service(FakeGateway(), snapshots))
+
+    response = client.patch(
+        "/machine-load/sequence",
+        params={"branch": "01", "workCenter": "CT-01A"},
+        json={
+            "ordered_keys": _ct01a_keys("A3", "A1", "A2"),
+            "expected_keys": _ct01a_keys("A2", "A1", "A3"),
+        },
+    )
+
+    assert response.status_code == 409
+    assert snapshots.payload_updates == 0
+
+
+def test_patch_sequence_http_rejects_legacy_client(
+    machine_load_routes_module,
+) -> None:
+    """Cliente sem expected_keys (bundle antigo) recebe 409 orientando recarga — sem bypass."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    client = _machine_load_client(_service(FakeGateway(), snapshots))
+
+    response = client.patch(
+        "/machine-load/sequence",
+        params={"branch": "01", "workCenter": "CT-01A"},
+        json={"ordered_keys": _ct01a_keys("A3", "A1", "A2")},
+    )
+
+    assert response.status_code == 409
+    assert snapshots.payload_updates == 0
+
+
+def test_reorder_sequence_rejects_missing_expected_keys() -> None:
+    """expected_keys=None (cliente legado) → conflito, nunca grava."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(MachineLoadSequenceConflict, match="Recarregue"):
+        service.reorder_sequence(
+            _user(*FULL_PERMS),
+            branch="01",
+            work_center="CT-01A",
+            ordered_keys=_ct01a_keys("A3", "A1", "A2"),
+            expected_keys=None,
+        )
+
+    assert snapshots.payload_updates == 0
 
 
 # ---------------------------------------------------------------------------
@@ -1406,6 +1631,11 @@ def test_reorder_sequence_notifies_connected_cockpits() -> None:
             {"production_order": "A1", "operation_code": "01"},
             {"production_order": "A2", "operation_code": "01"},
         ],
+        expected_keys=[
+            {"production_order": "A1", "operation_code": "01"},
+            {"production_order": "A2", "operation_code": "01"},
+            {"production_order": "A3", "operation_code": "01"},
+        ],
     )
 
     assert notifier.events == [
@@ -1435,6 +1665,7 @@ def test_failed_notification_does_not_break_the_write() -> None:
         publications=FakePublicationRepo(snapshots.published),
         branch_access=BranchAccessService(),
         change_notifier=exploding_notifier,
+        open_run_items=lambda **kwargs: [],
     )
     start, end = _seed_multi_center_snapshot(snapshots)
 
@@ -1445,6 +1676,10 @@ def test_failed_notification_does_not_break_the_write() -> None:
         ordered_keys=[
             {"production_order": "B2", "operation_code": "03"},
             {"production_order": "B1", "operation_code": "03"},
+        ],
+        expected_keys=[
+            {"production_order": "B1", "operation_code": "03"},
+            {"production_order": "B2", "operation_code": "03"},
         ],
     )
 
@@ -2365,6 +2600,10 @@ def test_reorder_sequence_ignores_withdrawn_operations() -> None:
         ordered_keys=[
             {"production_order": "88800001001", "operation_code": "02"},
             {"production_order": "99900001001", "operation_code": "01"},
+        ],
+        expected_keys=[
+            {"production_order": "99900001001", "operation_code": "01"},
+            {"production_order": "88800001001", "operation_code": "02"},
         ],
     )
 

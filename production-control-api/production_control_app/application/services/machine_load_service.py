@@ -10,7 +10,11 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from production_control_app.core.security import PC_MACHINE_LOAD_VIEW, can
-from production_control_app.domain.errors import DelpiGatewayError, SnapshotNotFound
+from production_control_app.domain.errors import (
+    DelpiGatewayError,
+    MachineLoadSequenceConflict,
+    SnapshotNotFound,
+)
 from production_control_app.domain.ports.machine_load_publication_repository import (
     MachineLoadPublicationRepositoryPort,
 )
@@ -862,18 +866,40 @@ class MachineLoadService:
         branch: str,
         work_center: str,
         ordered_keys: list[dict[str, Any]],
+        expected_keys: list[dict[str, Any]] | None,
     ) -> dict[str, Any]:
-        """Reordena as operações de um CT no snapshot sem puxar o TOTVS."""
+        """Reordena as operações de um CT no snapshot sem puxar o TOTVS.
+
+        ``expected_keys`` é a ordem completa do centro que o cliente tinha na
+        tela ao montar a permutação — validada contra o estado vigente dentro
+        do lock, antes de gravar. Divergência vira 409: ninguém sobrescreve
+        silenciosamente a programação gravada por outro analista. Operações
+        com run aberto no cockpit ficam travadas na posição (mesma regra
+        canônica de priorizar/otimizar — deslocamento direto ou indireto
+        rejeita a mutação inteira).
+        """
         self._assert_can_view(user, branch)
         center = str(work_center or "").strip()
         if not center:
             raise ValueError("workCenter é obrigatório para reordenar a sequência.")
+        if expected_keys is None:
+            # Cliente de antes do contrato de concorrência — fail-closed com
+            # instrução de recarga: nunca grava sem a ordem-base.
+            raise MachineLoadSequenceConflict(
+                "A programação foi atualizada. Recarregue a página e tente reordenar novamente."
+            )
 
         def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
+            # Leitura da fonte oficial de execução já dentro do lock do
+            # snapshot — estreita a janela entre consulta e gravação; falha
+            # propaga como erro controlado, nunca fallback.
+            protected_keys = self._protected_operation_keys(branch=branch)
             reordered = self._apply_center_order(
                 payload_operations(payload),
                 work_center=center,
                 ordered_keys=ordered_keys,
+                expected_keys=expected_keys,
+                protected_keys=protected_keys,
                 withdrawn_keys=withdrawn_order_numbers(payload),
             )
             now = datetime.now(timezone.utc).isoformat()
@@ -1933,6 +1959,8 @@ class MachineLoadService:
         *,
         work_center: str,
         ordered_keys: list[dict[str, Any]],
+        expected_keys: list[dict[str, Any]],
+        protected_keys: set[ProtectedOperationKey] | None = None,
         withdrawn_keys: set[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Reordena um CT. Operações retiradas não entram na permutação e ficam na posição atual."""
@@ -1952,6 +1980,24 @@ class MachineLoadService:
                 "Há operações duplicadas (OP + operação) neste centro; não é possível reordenar."
             )
 
+        current = [_operation_key(item) for item in center_ops]
+        base: list[tuple[str, str]] = []
+        for raw in expected_keys:
+            base.append(
+                (
+                    str(raw.get("production_order") or "").strip(),
+                    str(raw.get("operation_code") or "").strip(),
+                )
+            )
+        # Ordem-base vista pelo cliente comparada ao estado vigente (dentro do
+        # lock): qualquer divergência de conjunto ou de posição é conflito —
+        # a fila mudou por outro analista ou por refresh/transferência/retirada.
+        if base != current:
+            raise MachineLoadSequenceConflict(
+                "A programação deste centro mudou desde a última leitura. "
+                "Atualize a fila e confirme a nova sequência."
+            )
+
         requested: list[tuple[str, str]] = []
         for raw in ordered_keys:
             key = (
@@ -1968,6 +2014,24 @@ class MachineLoadService:
         if set(requested) != expected:
             raise ValueError(
                 "ordered_keys deve ser a permutação exata das operações deste centro de trabalho."
+            )
+
+        # Runs abertos travam a posição — mesma mecânica canônica de
+        # priorizar/otimizar (machine_load_queue_slots): deslocamento direto
+        # ou indireto de operação protegida rejeita a mutação inteira.
+        protected = protected_keys or set()
+        moved_protected = [
+            item
+            for index, item in enumerate(center_ops)
+            if protected_operation_key(item) in protected
+            and requested[index] != current[index]
+        ]
+        if moved_protected:
+            first = moved_protected[0]
+            raise MachineLoadSequenceConflict(
+                f"Operação {first.get('production_order')}/"
+                f"{first.get('operation_code')} está em execução no cockpit e "
+                "não pode mudar de posição. Atualize a fila e ajuste a seleção."
             )
 
         slots = [

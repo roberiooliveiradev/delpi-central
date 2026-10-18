@@ -20,6 +20,7 @@ from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
     InvalidBranch,
+    MachineLoadSequenceConflict,
     SnapshotNotFound,
 )
 from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
@@ -55,6 +56,10 @@ class SequenceKeyBody(BaseModel):
 
 class SequenceReorderBody(BaseModel):
     ordered_keys: list[SequenceKeyBody] = Field(default_factory=list)
+    # Ordem-base que o cliente tinha na tela. Ausente (None) = cliente legado
+    # de antes do contrato de concorrência — rejeitado com 409 e mensagem de
+    # recarga; divergente do estado vigente = conflito 409, sem write.
+    expected_keys: list[SequenceKeyBody] | None = None
 
 
 class MachineLoadOptimizeCriteriaBody(BaseModel):
@@ -91,6 +96,8 @@ def _handle_machine_load_errors(exc: Exception):
         return fail(str(exc), 403)
     if isinstance(exc, SnapshotNotFound):
         return fail(str(exc), 404)
+    if isinstance(exc, MachineLoadSequenceConflict):
+        return fail(str(exc), 409)
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):
@@ -278,6 +285,11 @@ def patch_machine_load_sequence(
             branch=branch,
             work_center=work_center,
             ordered_keys=[item.model_dump() for item in body.ordered_keys],
+            expected_keys=(
+                [item.model_dump() for item in body.expected_keys]
+                if body.expected_keys is not None
+                else None
+            ),
         )
     except Exception as exc:
         return _handle_machine_load_errors(exc)

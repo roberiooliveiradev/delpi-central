@@ -454,30 +454,93 @@ Gate: contratos aprovados; então implementar backend+testes antes do wiring.
 | D6 | `transferred_operations`/find_operation sem CT | Incluir `source_work_center` no contrato novo; avaliar hardening do log |
 | D7 | Permissão de escrita separada da de leitura | Manter `PC_MACHINE_LOAD_VIEW` salvo decisão de segurança |
 
-## 13. Resultado da Etapa 3 — agrupamento (implementado)
+## 13. Resultado da Etapa 3 — agrupamento (implementado + hardening)
+
+### Algoritmo e persistência
 
 - **Algoritmo:** «utils/machineLoadGrouping.ts»
   («groupSelectedMachineLoadOperations») — âncora = primeira selecionada na
   ordem da fila; selecionadas e não selecionadas preservam ordem relativa;
   permutação exata; já contíguas → «noop» sem write.
-- **Persistência:** reusa «PATCH /machine-load/sequence» via «persistOrder»
-  — sem endpoint novo, sem mudança de contrato, mesma pilha de Ctrl+Z e
-  mesma propagação WORKING/PUBLISHED.
-- **D1 — tratamento na E3:** gate **cliente** («groupingGate» +
-  «machineLoadOperationHasOpenRun», espelhando
-  «_protected_operation_keys»): bloqueia quando o intervalo afetado
-  deslocaria run aberto (âncora, que não se move, é permitida) e quando a
-  fonte de execução está indisponível ou não carregada
-  («executionUnavailable || !executionLoaded»). **Pendente** a decisão de
-  reforço no backend para «reorder_sequence» (afetaria também o DnD
-  individual) — segue **ARCHITECTURE_DECISION_REQUIRED**.
-- **D7 — mantido:** «_assert_can_view» no contrato vigente; permissão de
-  escrita separada segue decisão de segurança pendente.
-- **Concorrência — mantido:** contrato inalterado (FOR UPDATE + validação
-  de permutação exata); a seleção zera em qualquer «sequence_updated_at»
-  novo (E2), então a seleção parte sempre do estado vigente conhecido.
-  Expected-version no request segue decisão contratual pendente.
+- **Persistência:** «PATCH /machine-load/sequence» via «persistOrder»
+  — sem endpoint novo, mesma pilha de Ctrl+Z e mesma propagação
+  WORKING/PUBLISHED.
 - **Filtros:** «Ocultar finalizadas» suportado via
   «mergeActiveOrderIntoMachineLoadQueue» (mesmo caminho do DnD);
   «Somente com impedimento» deixa a ação indisponível com explicação —
-  semântica sob filtro parcial ainda não aprovada.
+  semântica sob filtro parcial não aprovada.
+
+### Decisões tomadas (owner do PCP, revisão pós-E3)
+
+- **D1 — APROVADO e implementado no backend:** «reorder_sequence» passa a
+  aplicar a regra canônica de «machine_load_queue_slots» — operação com
+  run aberto no cockpit fica travada na posição; só posições livres
+  permutam. A validação ocorre dentro da transação («_apply_center_order»),
+  cobre deslocamento direto e indireto, vale para DnD, agrupamento e
+  undo/redo, e rejeita com «MachineLoadSequenceConflict» (409). A fonte
+  oficial («open_run_items») é consultada dentro do FOR UPDATE e falha
+  propaga como erro controlado — fail-closed, nunca fallback. O gate de
+  cliente da E3 («groupingGate») permanece como UX; o backend é a
+  autoridade final. **Risco residual documentado:** um run que abra entre a
+  consulta e o commit ainda escapa — mesma semântica aceita de
+  priorizar/otimizar; fechamento completo exigiria lock compartilhado com a
+  fonte de runs (advisory lock / tabela única), decisão de arquitetura
+  pendente sem necessidade comprovada.
+- **D7 — decisão do owner: manter «_assert_can_view»** (adiado). A
+  separação leitura/escrita («production-control.machine-load.manage»)
+  segue como dívida de segurança registrada — exige manifest + migração
+  de papéis no Keycloak.
+- **Concorrência — APROVADO e implementado:** «expected_keys» no PATCH
+  /sequence — a ordem-base que o cliente tinha na tela é comparada ao
+  estado vigente dentro do FOR UPDATE; divergência → 409, sem write.
+  **Sem bypass:** cliente que não envia o campo (bundle legado) recebe
+  409 «A programação foi atualizada. Recarregue a página…» — falha
+  fechada que se autocorrige: o reload carrega o «remoteEntry.js» novo
+  (assets por hash) e o próximo retry já sai pelo contrato novo.
+- **Frontend:** «persistOrder» e «applyRemoteKeys» enviam a ordem-base
+  (o mesmo «previousKeys» do undo / «currentKeys» do undo-redo).
+- **Histórico undo/redo corrigido:** o topo da pilha só é consumido
+  depois que a API confirma («peekUndo»/«peekRedo» + pop pós-sucesso) —
+  falha ou 409 não perde entradas nem registra redo de ordem que nunca
+  existiu. Em 409 «history.reset()» zera as pilhas locais para impedir
+  replay de permutação obsoleta sobre a programação de outro analista,
+  e o GET recarrega a fila autoritativa. Nenhuma entrada de histórico é
+  criada para mutação rejeitada.
+
+### Compatibilidade e rollout (breaking change governado)
+
+«expected_keys» é classificado **BREAKING** no contrato PATCH /sequence.
+Único consumidor = MFE production-control (mesmo repo). Matriz:
+
+| Combinação | Resultado |
+|---|---|
+| FE antigo + API antiga | funciona (sem proteção de concorrência — baseline) |
+| FE antigo + API nova | 409 «recarregue»; reload serve bundle novo; retry ok |
+| FE novo + API antiga | campo extra ignorado → write sem validação de frescor |
+| FE novo + API nova | funciona com concorrência + proteção de runs |
+| Bundle antigo em cache | igual «FE antigo» até o reload do remoteEntry |
+| Rollback só da API | FE novo → API velha: campo ignorado, perde-se só a validação |
+| Rollback só do MFE | FE velho → API nova: 409 com recarga até deploy da API antiga |
+| Rollback conjunto | retorna ao baseline pré-hardening |
+| Instâncias API mistas | só um pod por app (compose single-container); sem mixed-version |
+
+**Estratégia aprovada:** sequência de deploy **API → MFE** (cutover
+coordenado curto). Enquanto a API nova conviver com bundle antigo o
+pior caso é um 409 pedagógico por analista; deploy do MFE logo em
+seguida encerra a janela. Feature flag/expand-contract foi rejeitada:
+«expected_keys» ausente NUNCA pode significar «mutação permitida sem
+frescor» — seria bypass silencioso da proteção que motivou o fix.
+Critério de aceite observável: ausência de 409 «recarregue» nos logs
+após o deploy do MFE.
+
+### Verificação
+
+- Backend: «tests/test_machine_load.py» + «test_machine_load_publication.py»
+  — 211 testes (reorder: permutação, stale→409, protegida direta e
+  indireta→409, posições livres ok, fail-closed, HTTP 409 divergente,
+  HTTP 409 cliente legado sem expected_keys).
+- Suíte completa da API: 1120 passed, 2 falhas baseline fora do escopo
+  (line_feeder, operator_directory).
+- Frontend: 37 arquivos / 267 testes (hook de histórico: peek sem pop,
+  pop pós-confirmação, reset limpa pilhas, escopo zera); build OK;
+  lint/tsc só baseline.

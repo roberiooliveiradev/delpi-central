@@ -63,6 +63,11 @@ export function useMachineLoadSequenceHistory(scopeKey: string) {
     return restored;
   }, [bump]);
 
+  /** Espia o topo sem consumir — o pop só deve acontecer após a mutação ser confirmada. */
+  const peekUndo = useCallback((): SequenceKey[] | null => {
+    return undoRef.current[undoRef.current.length - 1] ?? null;
+  }, []);
+
   const redo = useCallback((): SequenceKey[] | null => {
     if (redoRef.current.length === 0) return null;
     const next = [...redoRef.current];
@@ -71,6 +76,11 @@ export function useMachineLoadSequenceHistory(scopeKey: string) {
     bump();
     return restored;
   }, [bump]);
+
+  /** Espia o topo sem consumir — o pop só deve acontecer após a mutação ser confirmada. */
+  const peekRedo = useCallback((): SequenceKey[] | null => {
+    return redoRef.current[redoRef.current.length - 1] ?? null;
+  }, []);
 
   const rememberForRedo = useCallback(
     (current: SequenceKey[]) => {
@@ -117,6 +127,8 @@ export function useMachineLoadSequenceHistory(scopeKey: string) {
     pushUndo,
     undo,
     redo,
+    peekUndo,
+    peekRedo,
     rememberForRedo,
     rememberForUndoAfterRedo,
     reset,

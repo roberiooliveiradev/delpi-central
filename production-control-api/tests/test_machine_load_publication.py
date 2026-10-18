@@ -73,6 +73,7 @@ def test_manual_mutation_keeps_the_same_generation() -> None:
         branch="01",
         work_center="CT-01A",
         ordered_keys=[{"production_order": "24640401002", "operation_code": "03"}],
+        expected_keys=[{"production_order": "24640401002", "operation_code": "03"}],
     )
 
     assert snapshots.payload_updates == 1
@@ -795,6 +796,11 @@ def _e4_mutate(service: MachineLoadService, mutation: str) -> dict[str, Any]:
                 {"production_order": "10840401003", "operation_code": "03"},
                 {"production_order": "88800001001", "operation_code": "02"},
                 {"production_order": "99900001001", "operation_code": "01"},
+            ],
+            expected_keys=[
+                {"production_order": "99900001001", "operation_code": "01"},
+                {"production_order": "88800001001", "operation_code": "02"},
+                {"production_order": "10840401003", "operation_code": "03"},
             ],
         )
     if mutation == "prioritize":

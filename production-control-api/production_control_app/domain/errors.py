@@ -33,6 +33,10 @@ class SnapshotNotFound(ProductionControlError):
     """Snapshot da carga máquina ausente para o escopo pedido."""
 
 
+class MachineLoadSequenceConflict(ProductionControlError):
+    """Programação diverge da ordem-base informada ou move operação protegida."""
+
+
 class DrawingNotFound(ProductionControlError):
     """PDF do desenho ausente para o PA (fonte acessível, documento não encontrado)."""
 

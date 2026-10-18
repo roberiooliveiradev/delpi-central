@@ -403,6 +403,9 @@ export async function patchMachineLoadSequence(params: {
   branch: string;
   workCenter: string;
   orderedKeys: Array<{ production_order: string; operation_code: string }>;
+  /** Ordem-base vista na tela — o servidor compara com o estado vigente e
+   *  rejeita divergências com 409 (programação alterada por outro analista). */
+  expectedKeys: Array<{ production_order: string; operation_code: string }>;
   signal?: AbortSignal;
 }): Promise<MachineLoadPayload> {
   const search = machineLoadSearch({
@@ -415,7 +418,10 @@ export async function patchMachineLoadSequence(params: {
     data: MachineLoadPayload;
   }>(
     ppcApiUrl(`/machine-load/sequence?${search.toString()}`),
-    { ordered_keys: params.orderedKeys },
+    {
+      ordered_keys: params.orderedKeys,
+      expected_keys: params.expectedKeys,
+    },
     { signal: params.signal },
   );
   return unwrapEnvelope(envelope, "Não foi possível salvar a sequência da carga máquina.");
