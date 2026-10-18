@@ -55,7 +55,7 @@ describe("MachineLoadRowContextMenu — modo individual", () => {
 });
 
 describe("MachineLoadRowContextMenu — modo coletivo", () => {
-  it("mostra contagem e ações coletivas inequivocamente indisponíveis", () => {
+  it("mostra contagem e mantém ações sem handler desabilitadas", () => {
     const props = makeProps({ selectionCount: 3, onClearSelection: vi.fn() });
     render(<MachineLoadRowContextMenu {...props} />);
 
@@ -65,14 +65,64 @@ describe("MachineLoadRowContextMenu — modo coletivo", () => {
     const group = screen.getByRole("menuitem", { name: /Agrupar operações selecionadas/i });
     const transfer = screen.getByRole("menuitem", { name: /Enviar selecionadas/i });
     const withdraw = screen.getByRole("menuitem", { name: /Retirar selecionadas/i });
-    // Sem handler de agrupamento o item continua bloqueado; transferir e
-    // retirar seguem desabilitadas até a Etapa 4.
+    // Sem handler a ação nunca simula disponibilidade — disabled é o default.
     expect(group).toHaveProperty("disabled", true);
     expect(transfer).toHaveProperty("disabled", true);
     expect(withdraw).toHaveProperty("disabled", true);
 
     // Menu individual não aparece no modo coletivo.
     expect(screen.queryByRole("menuitem", { name: /Rastrear produção do conjunto/i })).toBeNull();
+  });
+
+  it("transferir e retirar a seleção executam os callbacks coletivos", () => {
+    const onTransferSelected = vi.fn();
+    const onWithdrawSelected = vi.fn();
+    const props = makeProps({
+      selectionCount: 3,
+      onClearSelection: vi.fn(),
+      onTransferSelected,
+      onWithdrawSelected,
+    });
+    render(<MachineLoadRowContextMenu {...props} />);
+
+    const transfer = screen.getByRole("menuitem", { name: /Enviar selecionadas/i });
+    expect(transfer).toHaveProperty("disabled", false);
+    fireEvent.click(transfer);
+    expect(onTransferSelected).toHaveBeenCalledTimes(1);
+    expect(props.onClose).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    render(<MachineLoadRowContextMenu {...props} />);
+    const withdraw = screen.getByRole("menuitem", { name: /Retirar selecionadas/i });
+    expect(withdraw).toHaveProperty("disabled", false);
+    fireEvent.click(withdraw);
+    expect(onWithdrawSelected).toHaveBeenCalledTimes(1);
+    // As ações coletivas nunca tocam os callbacks individuais.
+    expect(props.onWithdrawConjunto).not.toHaveBeenCalled();
+    expect(props.onTransferOperation).not.toHaveBeenCalled();
+  });
+
+  it("bloqueio coletivo desabilita transferir e retirar com hint", () => {
+    const onTransferSelected = vi.fn();
+    const onWithdrawSelected = vi.fn();
+    const props = makeProps({
+      selectionCount: 2,
+      onClearSelection: vi.fn(),
+      onTransferSelected,
+      onWithdrawSelected,
+      collectiveDisabled: true,
+      collectiveDisabledHint: "Estado de execução indisponível",
+    });
+    render(<MachineLoadRowContextMenu {...props} />);
+
+    const transfer = screen.getByRole("menuitem", { name: /Enviar selecionadas/i });
+    const withdraw = screen.getByRole("menuitem", { name: /Retirar selecionadas/i });
+    expect(transfer).toHaveProperty("disabled", true);
+    expect(withdraw).toHaveProperty("disabled", true);
+    fireEvent.click(transfer);
+    fireEvent.click(withdraw);
+    expect(onTransferSelected).not.toHaveBeenCalled();
+    expect(onWithdrawSelected).not.toHaveBeenCalled();
   });
 
   it("«Limpar seleção» é a única ação executável no modo coletivo", () => {

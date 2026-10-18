@@ -3650,3 +3650,557 @@ def test_locate_stop_execution_same_pair_two_centers() -> None:
     }
     assert by_key[("CT-01A", "10840401003", "01")]["execution_status"] == "producing"
     assert by_key[("CT-02", "10840401003", "03")]["execution_status"] == "stopped"
+
+def _source_keys_ct01a() -> list[dict[str, str]]:
+    return _ct01a_keys("A1", "A2", "A3")
+
+
+# ============ E4 — Transferência coletiva ============
+
+
+def test_transfer_operations_moves_only_selected_to_end_of_target() -> None:
+    """B, E, G saem de CT-01A e entram no fim de CT-02, na ordem relativa."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    payload = service.transfer_operations(
+        _user(*FULL_PERMS),
+        branch="01",
+        source_work_center="CT-01A",
+        target_work_center="CT-02",
+        operations=[
+            {"production_order": "A1", "operation_code": "01"},
+            {"production_order": "A3", "operation_code": "01"},
+        ],
+        expected_keys=_source_keys_ct01a(),
+    )
+
+    ops = snapshots.get(branch="01")["payload_json"]["operations"]
+    ct01a = [o["production_order"] for o in ops if o["work_center"] == "CT-01A"]
+    ct02 = [o["production_order"] for o in ops if o["work_center"] == "CT-02"]
+    assert ct01a == ["A2"]
+    assert ct02 == ["B1", "B2", "A1", "A3"]
+    assert payload["transfer"]["operation_count"] == 2
+    assert snapshots.payload_updates == 1
+
+
+def test_transfer_operations_rejects_stale_expected_keys() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.transfer_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            source_work_center="CT-01A",
+            target_work_center="CT-02",
+            operations=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=_ct01a_keys("A2", "A1", "A3"),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_transfer_operations_rejects_missing_and_ambiguous() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(ValueError, match="CT-01A"):
+        service.transfer_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            source_work_center="CT-01A",
+            target_work_center="CT-02",
+            operations=[{"production_order": "B1", "operation_code": "03"}],
+            expected_keys=_source_keys_ct01a(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_transfer_operations_rejects_same_center_and_unknown_target() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+    user = _user(*FULL_PERMS)
+
+    with pytest.raises(ValueError, match="mesmo centro|já está"):
+        service.transfer_operations(
+            user, branch="01", source_work_center="CT-01A",
+            target_work_center="CT-01A",
+            operations=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=_source_keys_ct01a(),
+        )
+    with pytest.raises(ValueError, match="não existe"):
+        service.transfer_operations(
+            user, branch="01", source_work_center="CT-01A",
+            target_work_center="CT-99",
+            operations=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=_source_keys_ct01a(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_transfer_operations_rejects_protected_run() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A3", operation_code="01"
+            )
+        ],
+    )
+
+    with pytest.raises(MachineLoadSequenceConflict, match="execução"):
+        service.transfer_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            source_work_center="CT-01A",
+            target_work_center="CT-02",
+            operations=[
+                {"production_order": "A1", "operation_code": "01"},
+                {"production_order": "A3", "operation_code": "01"},
+            ],
+            expected_keys=_source_keys_ct01a(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_transfer_operations_fail_closed_when_runs_source_fails() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = MachineLoadService(
+        FakeGateway(),
+        snapshots=snapshots,
+        publications=FakePublicationRepo(snapshots.published),
+        branch_access=BranchAccessService(),
+        open_run_items=lambda **kwargs: (_ for _ in ()).throw(
+            RuntimeError("runs down")
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="runs down"):
+        service.transfer_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            source_work_center="CT-01A",
+            target_work_center="CT-02",
+            operations=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=_source_keys_ct01a(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_transfer_operations_duplicate_order_in_two_centers_moves_only_source() -> None:
+    """Mesma OP+op em dois CTs: só a instância do CT de origem se move."""
+    snapshots = FakeSnapshotRepo()
+    ops = [
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "X1", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "X1", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "B2", "operation_code": "03"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 3},
+        },
+        refreshed_by="seed",
+    )
+    service = _service(FakeGateway(), snapshots)
+
+    service.transfer_operations(
+        _user(*FULL_PERMS),
+        branch="01",
+        source_work_center="CT-01A",
+        target_work_center="CT-02",
+        operations=[{"production_order": "X1", "operation_code": "01"}],
+        expected_keys=[{"production_order": "X1", "operation_code": "01"}],
+    )
+
+    ops = snapshots.get(branch="01")["payload_json"]["operations"]
+    ct01a = [o["production_order"] for o in ops if o["work_center"] == "CT-01A"]
+    x1_in_ct02 = [
+        o for o in ops if o["work_center"] == "CT-02" and o["production_order"] == "X1"
+    ]
+    assert ct01a == []
+    assert len(x1_in_ct02) == 2  # a instância transferida + a que já estava
+
+
+def test_transfer_operations_replay_after_refresh_uses_erp_origin() -> None:
+    """A → B → C: refresh reaplica só a última posição, casando pela origem ERP."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+    user = _user(*FULL_PERMS)
+
+    service.transfer_operations(
+        user, branch="01", source_work_center="CT-01A", target_work_center="CT-02",
+        operations=[{"production_order": "A1", "operation_code": "01"}],
+        expected_keys=_source_keys_ct01a(),
+    )
+    service.transfer_operations(
+        user, branch="01", source_work_center="CT-02", target_work_center="CT-01A",
+        operations=[{"production_order": "A1", "operation_code": "01"}],
+        expected_keys=[
+            {"production_order": "B1", "operation_code": "03"},
+            {"production_order": "B2", "operation_code": "03"},
+            {"production_order": "A1", "operation_code": "01"},
+        ],
+    )
+    entries = snapshots.get(branch="01")["payload_json"]["transferred_operations"]
+    assert entries == []  # voltou à origem ERP — nada a reaplicar
+
+
+def test_transfer_operations_requires_permission() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises((PermissionError, BranchAccessDenied)):
+        service.transfer_operations(
+            _user("production-control.access"),
+            branch="01",
+            source_work_center="CT-01A",
+            target_work_center="CT-02",
+            operations=[{"production_order": "A1", "operation_code": "01"}],
+            expected_keys=_source_keys_ct01a(),
+        )
+
+
+def test_transfer_operations_http_returns_409_on_stale(
+    machine_load_routes_module,
+) -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    client = _machine_load_client(_service(FakeGateway(), snapshots))
+
+    response = client.post(
+        "/machine-load/transfer-operations",
+        params={"branch": "01", "workCenter": "CT-01A"},
+        json={
+            "source_work_center": "CT-01A",
+            "target_work_center": "CT-02",
+            "operations": [{"production_order": "A1", "operation_code": "01"}],
+            "expected_keys": _ct01a_keys("A9", "A1", "A2"),
+        },
+    )
+    assert response.status_code == 409
+    assert snapshots.payload_updates == 0
+
+
+# ============ E4 — Retirada/restauração por operação ============
+
+
+def test_withdraw_operations_hides_only_selected_ops() -> None:
+    """Retirar A1 e A3 esconde só elas — A2 continua; conjunto não é afetado."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    payload = service.withdraw_operations(
+        _user(*FULL_PERMS),
+        branch="01",
+        operations=[
+            {
+                "work_center": "CT-01A",
+                "production_order": "A1",
+                "operation_code": "01",
+            },
+            {
+                "work_center": "CT-01A",
+                "production_order": "A3",
+                "operation_code": "01",
+            },
+        ],
+        expected_keys=_source_keys_ct01a(),
+        work_center="CT-01A",
+    )
+
+    stored = snapshots.get(branch="01")["payload_json"]
+    entries = stored["withdrawn_operations"]
+    assert len(entries) == 2
+    visible = [
+        o["production_order"]
+        for o in payload["selected"]["items"]
+    ]
+    assert visible == ["A2"]
+    assert payload["withdrawal"]["operation_count"] == 2
+    # Operação retirada continua no snapshot (restaurável).
+    all_ops = [o["production_order"] for o in stored["operations"]]
+    assert "A1" in all_ops and "A3" in all_ops
+
+
+def test_withdraw_operations_rejects_stale_expected_keys() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(MachineLoadSequenceConflict):
+        service.withdraw_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            operations=[
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "operation_code": "01",
+                }
+            ],
+            expected_keys=_ct01a_keys("A3", "A2", "A1"),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_withdraw_operations_rejects_protected_run() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(
+        FakeGateway(),
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    with pytest.raises(MachineLoadSequenceConflict, match="execução"):
+        service.withdraw_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            operations=[
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "operation_code": "01",
+                },
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A2",
+                    "operation_code": "01",
+                },
+            ],
+            expected_keys=_source_keys_ct01a(),
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_withdraw_operations_all_or_nothing() -> None:
+    """Um item inválido rejeita o lote inteiro — nada é marcado."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(ValueError, match="A9"):
+        service.withdraw_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            operations=[
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "operation_code": "01",
+                },
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A9",
+                    "operation_code": "01",
+                },
+            ],
+            expected_keys=_source_keys_ct01a(),
+        )
+    row = snapshots.get(branch="01")
+    assert "withdrawn_operations" not in row["payload_json"]
+    assert snapshots.payload_updates == 0
+
+
+def test_withdraw_operations_keeps_conjunto_siblings_visible() -> None:
+    """Retirar uma OP não retira as irmãs do mesmo C2_NUM."""
+    snapshots = FakeSnapshotRepo()
+    ops = [
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840401", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840402", "operation_code": "01"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="seed",
+    )
+    service = _service(FakeGateway(), snapshots)
+    service.withdraw_operations(
+        _user(*FULL_PERMS),
+        branch="01",
+        operations=[
+            {
+                "work_center": "CT-01A",
+                "production_order": "10840401",
+                "operation_code": "01",
+            }
+        ],
+        expected_keys=[
+            {"production_order": "10840401", "operation_code": "01"},
+            {"production_order": "10840402", "operation_code": "01"},
+        ],
+    )
+    presented = service.build(
+        _user(*FULL_PERMS), branch="01", work_center="CT-01A"
+    )
+    visible = [o["production_order"] for o in presented["selected"]["items"]]
+    assert visible == ["10840402"]
+
+
+def test_restore_operations_brings_back_only_marked() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+    user = _user(*FULL_PERMS)
+    refs = [
+        {"work_center": "CT-01A", "production_order": "A1", "operation_code": "01"},
+        {"work_center": "CT-01A", "production_order": "A3", "operation_code": "01"},
+    ]
+    service.withdraw_operations(
+        user, branch="01", operations=refs, expected_keys=_source_keys_ct01a()
+    )
+    payload = service.restore_operations(
+        user, branch="01", operations=[refs[0]], work_center="CT-01A"
+    )
+    presented = service.build(user, branch="01", work_center="CT-01A")
+    visible = [o["production_order"] for o in presented["selected"]["items"]]
+    assert visible == ["A1", "A2"]
+    assert payload["withdrawal"]["action"] == "restored"
+
+
+def test_restore_operations_rejects_not_withdrawn() -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+
+    with pytest.raises(ValueError, match="não está retirada"):
+        service.restore_operations(
+            _user(*FULL_PERMS),
+            branch="01",
+            operations=[
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "operation_code": "01",
+                }
+            ],
+        )
+    assert snapshots.payload_updates == 0
+
+
+def test_operation_withdrawn_stays_hidden_when_conjunto_also_withdrawn() -> None:
+    """Marcas se somam: restaurar a operação não revela o que o conjunto esconde."""
+    snapshots = FakeSnapshotRepo()
+    ops = [
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840401", "operation_code": "01"},
+        {**_OPERATION, "work_center": "CT-01A", "production_order": "10840402", "operation_code": "01"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": 2},
+        },
+        refreshed_by="seed",
+    )
+    service = _service(FakeGateway(), snapshots)
+    user = _user(*FULL_PERMS)
+    ref = {
+        "work_center": "CT-01A",
+        "production_order": "10840401",
+        "operation_code": "01",
+    }
+    service.withdraw_operations(
+        user, branch="01", operations=[ref],
+        expected_keys=[
+            {"production_order": "10840401", "operation_code": "01"},
+            {"production_order": "10840402", "operation_code": "01"},
+        ],
+    )
+    service.withdraw_conjunto(user, branch="01", order_number="108404")
+    service.restore_operations(user, branch="01", operations=[ref])
+    presented = service.build(user, branch="01", work_center="CT-01A")
+    assert presented["selected"]["items"] == []  # conjunto retirado ainda esconde
+
+
+def test_withdraw_operations_survives_refresh() -> None:
+    """Refresh do TOTVS reaplica withdrawn_operations sobre a fila nova."""
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    service = _service(FakeGateway(), snapshots)
+    user = _user(*FULL_PERMS)
+    ref = {
+        "work_center": "CT-01A",
+        "production_order": "A1",
+        "operation_code": "01",
+    }
+    service.withdraw_operations(
+        user, branch="01", operations=[ref], expected_keys=_source_keys_ct01a()
+    )
+
+    # Simula refresh: nova fila do TOTVS + replay das marcas.
+    service2 = _service(FakeGateway(), snapshots)
+    service2._fetch_frozen_payload = lambda **kwargs: {  # noqa: SLF001
+        "work_centers": _WORK_CENTERS,
+        "operations": [
+            {**_OPERATION, "work_center": "CT-01A", "production_order": "A1", "operation_code": "01"},
+            {**_OPERATION, "work_center": "CT-01A", "production_order": "A2", "operation_code": "01"},
+            {**_OPERATION, "work_center": "CT-01A", "production_order": "A3", "operation_code": "01"},
+            {**_OPERATION, "work_center": "CT-02", "production_order": "B1", "operation_code": "03"},
+        ],
+        "summary": {"work_center_count": 2, "operation_count": 4},
+    }
+    service2._pull_and_store(user, branch="01", start=None, end=date(2026, 8, 26))
+    payload = snapshots.get(branch="01")["payload_json"]
+    assert len(payload["withdrawn_operations"]) == 1
+    presented = service2.build(user, branch="01", work_center="CT-01A")
+    visible = [o["production_order"] for o in presented["selected"]["items"]]
+    assert visible == ["A2", "A3"]
+
+
+def test_withdraw_operations_http_409_and_422(machine_load_routes_module) -> None:
+    snapshots = FakeSnapshotRepo()
+    _seed_multi_center_snapshot(snapshots)
+    client = _machine_load_client(_service(FakeGateway(), snapshots))
+
+    stale = client.post(
+        "/machine-load/withdraw-operations",
+        params={"branch": "01"},
+        json={
+            "operations": [
+                {
+                    "work_center": "CT-01A",
+                    "production_order": "A1",
+                    "operation_code": "01",
+                }
+            ],
+            "expected_keys": _ct01a_keys("A3", "A1", "A2"),
+        },
+    )
+    assert stale.status_code == 409
+
+    invalid = client.post(
+        "/machine-load/withdraw-operations",
+        params={"branch": "01"},
+        json={"operations": [], "expected_keys": []},
+    )
+    assert invalid.status_code == 422

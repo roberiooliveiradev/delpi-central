@@ -739,10 +739,23 @@ export type MachineLoadWithdrawnEntry = {
   pa_due_date: string | null;
 };
 
+/** Operação retirada individualmente (E4) — não é o conjunto inteiro. */
+export type MachineLoadWithdrawnOperation = {
+  work_center: string;
+  production_order: string;
+  operation_code: string;
+  withdrawn_at: string | null;
+  withdrawn_by: string | null;
+  pa_product_code: string | null;
+  pa_due_date: string | null;
+};
+
 export type MachineLoadWithdrawnSummary = {
   conjunto_count: number;
   operation_count: number;
   items: MachineLoadWithdrawnEntry[];
+  /** Retiradas por operação — presentes desde o contrato E4. */
+  operations?: MachineLoadWithdrawnOperation[];
 };
 
 /**
@@ -849,12 +862,19 @@ export type MachineLoadOptimizePayload = MachineLoadPayload & {
   optimization: MachineLoadOptimization;
 };
 
-/** Resultado de retirar o conjunto da programação ou devolvê-lo à fila. */
+/** Resultado de retirar da programação ou devolver à fila — conjunto ou operações. */
 export type MachineLoadWithdrawal = {
-  order_number: string;
+  /** Presente quando  é conjunto (C2_NUM). */
+  order_number?: string;
+  scope?: "conjunto" | "operations";
   action: "withdrawn" | "restored";
   operation_count: number;
   work_centers: string[];
+  operations?: Array<{
+    work_center: string;
+    production_order: string;
+    operation_code: string;
+  }>;
   message: string;
 };
 
@@ -862,17 +882,19 @@ export type MachineLoadWithdrawPayload = MachineLoadPayload & {
   withdrawal: MachineLoadWithdrawal;
 };
 
-/** Resultado de mover uma operação (ou conjunto no CT) para outro centro. */
+/** Resultado de mover operação(ões) ou conjunto no CT para outro centro. */
 export type MachineLoadTransfer = {
-  production_order: string;
+  /** Presente quando  é "operation". */
+  production_order: string | null;
   operation_code: string | null;
   order_number?: string;
   operation_count?: number;
-  scope?: "operation" | "conjunto_at_center";
+  operations?: Array<{ production_order: string; operation_code: string }>;
+  scope?: "operation" | "conjunto_at_center" | "operations";
   source_work_center: string;
   target_work_center: string;
   target_work_center_name: string | null;
-  returned_to_origin: boolean;
+  returned_to_origin?: boolean;
   message: string;
 };
 

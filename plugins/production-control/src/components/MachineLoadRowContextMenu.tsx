@@ -29,9 +29,8 @@ type Props = {
   transferDisabled?: boolean;
   /**
    * Quando ≥2 operações estão selecionadas e o clique direito cai em uma delas,
-   * o menu assume o modo coletivo: «Agrupar» executa o agrupamento da Etapa 3
-   * quando elegível; transferência e retirada coletivas seguem desabilitadas
-   * até os contratos da Etapa 4 existirem.
+   * o menu assume o modo coletivo: «Agrupar» (Etapa 3), «Enviar selecionadas»
+   * e «Retirar selecionadas» (Etapa 4) operam sobre a seleção inteira.
    */
   selectionCount?: number;
   onClearSelection?: () => void;
@@ -40,6 +39,13 @@ type Props = {
   /** Bloqueios de elegibilidade (run aberto, filtro, execução indisponível). */
   groupDisabled?: boolean;
   groupDisabledHint?: string;
+  /** Abre a escolha do centro de destino para as operações selecionadas. */
+  onTransferSelected?: () => void;
+  /** Confirma a retirada da programação das operações selecionadas. */
+  onWithdrawSelected?: () => void;
+  /** Bloqueio coletivo — execução do cockpit indisponível ou mutação em curso. */
+  collectiveDisabled?: boolean;
+  collectiveDisabledHint?: string;
 };
 
 /** Menu de ações do PCP ao clicar com o botão direito em uma linha da carga máquina. */
@@ -61,6 +67,10 @@ export function MachineLoadRowContextMenu({
   onGroupSelected,
   groupDisabled = false,
   groupDisabledHint,
+  onTransferSelected,
+  onWithdrawSelected,
+  collectiveDisabled = false,
+  collectiveDisabledHint,
 }: Props) {
   const conjuntoKey = conjuntoKeyFromOrder(operation?.production_order);
   const hasConjunto = Boolean(conjuntoKey);
@@ -95,16 +105,24 @@ export function MachineLoadRowContextMenu({
         <ContextMenuItem
           label={copy.machineLoad.rowActions.transferSelected}
           icon={MoveRight}
-          disabled
-          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          disabled={collectiveDisabled || !onTransferSelected}
+          hint={collectiveDisabled ? collectiveDisabledHint : undefined}
           hintTrigger="label"
+          onSelect={() => {
+            onTransferSelected?.();
+            onClose();
+          }}
         />
         <ContextMenuItem
           label={copy.machineLoad.rowActions.withdrawSelected}
           icon={CalendarOff}
-          disabled
-          hint={copy.machineLoad.rowActions.collectivePendingHint}
+          disabled={collectiveDisabled || !onWithdrawSelected}
+          hint={collectiveDisabled ? collectiveDisabledHint : undefined}
           hintTrigger="label"
+          onSelect={() => {
+            onWithdrawSelected?.();
+            onClose();
+          }}
         />
         <ContextMenuItem
           label={copy.machineLoad.rowActions.clearSelection}

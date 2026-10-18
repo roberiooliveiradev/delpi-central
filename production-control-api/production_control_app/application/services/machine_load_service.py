@@ -50,19 +50,26 @@ from production_control_app.domain.services.machine_load_transfer import (
     find_operation,
     move_conjunto_at_work_center,
     move_operation,
+    move_operations_at_work_center,
     normalize_work_center,
+    operation_matches_in_center,
     original_work_center,
     register_transfer,
     transfer_entries,
 )
 from production_control_app.domain.services.machine_load_withdrawal import (
     WITHDRAWN_CONJUNTOS_KEY,
+    WithdrawnMarks,
     is_withdrawn,
     restore_conjunto as restore_conjunto_from_queue,
     visible_operations,
     withdraw_conjunto as withdraw_conjunto_from_queue,
     withdrawn_entries,
-    withdrawn_order_numbers,
+    withdrawn_marks,
+    withdrawn_operation_entries,
+    restore_operation_entries,
+    withdraw_operation_entries,
+    WITHDRAWN_OPERATIONS_KEY,
 )
 from production_control_app.domain.services.production_order_key import (
     ORDER_NUMBER_LENGTH,
@@ -94,7 +101,18 @@ _WITHDRAWAL_FALLBACK_MESSAGES = {
     "notWithdrawn": "O conjunto {conjunto} não está fora da programação.",
     "applied": "Conjunto {conjunto} retirado da programação.",
     "restored": "Conjunto {conjunto} devolvido à fila.",
+    "mixedCenters": "A seleção precisa pertencer a um único centro de trabalho.",
+    "emptyBatch": "Selecione ao menos uma operação para retirada.",
+    "operationNotInQueue": "Operação {order}/{operation} não está na fila deste centro.",
+    "operationAlreadyWithdrawn": "Operação {order}/{operation} já está fora da programação.",
+    "operationNotWithdrawn": "Operação {order}/{operation} não está retirada.",
+    "operationsWithdrawn": "{operations} operação(ões) retirada(s) da programação.",
+    "operationsRestored": "{operations} operação(ões) devolvida(s) à fila.",
 }
+
+# Lote máximo das ações coletivas (transferência/retirada/restauração) —
+# uma página de fila é 300; o lote nunca pode exceder o que a tela seleciona.
+_BATCH_OPERATIONS_LIMIT = 200
 
 _TRANSFER_FALLBACK_MESSAGES = {
     "operationRequired": "Informe a OP e a operação que serão transferidas.",
@@ -108,6 +126,14 @@ _TRANSFER_FALLBACK_MESSAGES = {
         "Nenhuma operação do conjunto «{conjunto}» está na fila do centro {source}."
     ),
     "withdrawn": "O conjunto da OP {order} está fora da programação. Devolva-o à fila antes de transferir.",
+    "unknownSource": "Centro de trabalho «{center}» não existe neste período.",
+    "operationNotInSource": (
+        "Operação {order}/{operation} não está na fila do centro {source}."
+    ),
+    "operationsNotInSource": "Operações selecionadas não estão na fila do centro {source}.",
+    "operationsApplied": (
+        "{operations} operação(ões) movida(s) de {source} para {target}."
+    ),
     "applied": "OP {order} operação {operation} movida de {source} para {target}.",
     "conjuntoApplied": (
         "Conjunto {conjunto}: {operations} operação(ões) movida(s) de {source} para {target} "
@@ -347,7 +373,7 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         _row, payload = self._load_snapshot_payload(branch=branch)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         status_by_key = self._live_status_map(branch=branch, operations=operations)
         enriched = self._apply_status_map(operations, status_by_key)
@@ -394,7 +420,7 @@ class MachineLoadService:
         self._assert_can_view(user, branch)
         _row, payload = self._load_snapshot_payload(branch=branch)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         balance_by_key = self._operation_balances_map(
             branch=branch, operations=operations, strict=True
@@ -447,7 +473,7 @@ class MachineLoadService:
         row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = payload_operations(payload)
-        operations = visible_operations(operations, withdrawn_order_numbers(payload))
+        operations = visible_operations(operations, withdrawn_marks(payload))
         wanted_key = wanted.upper()
         for item in operations:
             pa = str(item.get("pa_product_code") or "").strip()
@@ -636,7 +662,7 @@ class MachineLoadService:
         row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         if enrich:
             operations = self._enrich_live_status(branch=code, operations=operations)
@@ -658,7 +684,7 @@ class MachineLoadService:
         row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         wanted_key = wanted.upper()
         for item in operations:
@@ -682,7 +708,7 @@ class MachineLoadService:
         row = self._get_publication(branch=code)
         payload = decode_snapshot_payload(row)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         center_operations = [
             item
@@ -900,7 +926,7 @@ class MachineLoadService:
                 ordered_keys=ordered_keys,
                 expected_keys=expected_keys,
                 protected_keys=protected_keys,
-                withdrawn_keys=withdrawn_order_numbers(payload),
+                withdrawn_marks=withdrawn_marks(payload),
             )
             now = datetime.now(timezone.utc).isoformat()
             payload["operations"] = reordered
@@ -951,7 +977,7 @@ class MachineLoadService:
         stored_operations = payload_operations(payload)
 
         # Conjunto fora da programação não participa da fila — nem para priorizar.
-        withdrawn_keys = withdrawn_order_numbers(payload)
+        withdrawn_keys = withdrawn_marks(payload)
         operations = visible_operations(stored_operations, withdrawn_keys)
 
         template_not_in_queue = str(
@@ -972,7 +998,7 @@ class MachineLoadService:
 
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
             stored = payload_operations(locked_payload)
-            withdrawn = withdrawn_order_numbers(locked_payload)
+            withdrawn = withdrawn_marks(locked_payload)
             visible = visible_operations(stored, withdrawn)
             if not any(
                 order_belongs_to_conjunto(item.get("production_order"), conjunto_key)
@@ -993,7 +1019,7 @@ class MachineLoadService:
                 return None
             locked_payload["operations"] = self._merge_visible_order(
                 stored,
-                withdrawn_keys=withdrawn,
+                withdrawn_marks=withdrawn,
                 reordered_visible=result.operations,
             )
             locked_payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -1075,7 +1101,7 @@ class MachineLoadService:
         stored_operations = payload_operations(payload)
 
         # Conjunto fora da programação não participa da fila — nem para otimizar.
-        withdrawn_keys = withdrawn_order_numbers(payload)
+        withdrawn_keys = withdrawn_marks(payload)
         operations = visible_operations(stored_operations, withdrawn_keys)
         template_empty_queue = str(
             messages.get("emptyQueue")
@@ -1092,7 +1118,7 @@ class MachineLoadService:
 
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
             stored = payload_operations(locked_payload)
-            withdrawn = withdrawn_order_numbers(locked_payload)
+            withdrawn = withdrawn_marks(locked_payload)
             visible = visible_operations(stored, withdrawn)
             if not visible:
                 raise ValueError(
@@ -1108,7 +1134,7 @@ class MachineLoadService:
                 return None
             locked_payload["operations"] = self._merge_visible_order(
                 stored,
-                withdrawn_keys=withdrawn,
+                withdrawn_marks=withdrawn,
                 reordered_visible=result.operations,
             )
             locked_payload["sequence_updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -1331,7 +1357,7 @@ class MachineLoadService:
                         messages, "notInQueue", order=order, operation=operation
                     )
                 )
-            if is_withdrawn(current, withdrawn_order_numbers(payload)):
+            if is_withdrawn(current, withdrawn_marks(payload)):
                 raise ValueError(
                     self._format_transfer_message(messages, "withdrawn", order=order)
                 )
@@ -1438,8 +1464,8 @@ class MachineLoadService:
 
         def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
             operations = payload_operations(payload)
-            withdrawn_keys = withdrawn_order_numbers(payload)
-            if conjunto_key in withdrawn_keys:
+            marks = withdrawn_marks(payload)
+            if conjunto_key in marks.conjuntos:
                 raise ValueError(
                     self._format_transfer_message(
                         messages, "withdrawn", order=conjunto_key
@@ -1534,6 +1560,480 @@ class MachineLoadService:
             ),
         }
         return presented
+
+    def transfer_operations(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        source_work_center: str,
+        target_work_center: str,
+        operations: list[dict[str, Any]],
+        expected_keys: list[dict[str, Any]],
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Move as operações selecionadas (CT origem + OP + operação) para o destino.
+
+        Uma única intenção de negócio = uma transação: qualquer item inválido,
+        protegido ou fora da origem rejeita o lote inteiro. expected_keys é
+        a ordem vigente do CT de origem que o analista tinha na tela — divergir
+        do estado dentro do lock é 409, nunca write. Runs abertos do cockpit
+        travam a operação (E3): lote com item protegido falha fechado.
+        """
+        self._assert_can_view(user, branch)
+        messages = self._transfer_messages()
+        source = normalize_work_center(source_work_center)
+        target = normalize_work_center(target_work_center)
+        keys = self._parse_operation_batch(
+            operations, messages=messages, label="transferência"
+        )
+        if not source:
+            raise ValueError(self._format_transfer_message(messages, "sourceRequired"))
+        if not target:
+            raise ValueError(self._format_transfer_message(messages, "targetRequired"))
+        if source == target:
+            raise ValueError(
+                self._format_transfer_message(messages, "sameCenter", center=target)
+            )
+
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            stored = payload_operations(payload)
+            marks = withdrawn_marks(payload)
+            centers = {
+                str(item.get("work_center") or "").strip(): str(
+                    item.get("work_center_name") or ""
+                ).strip()
+                for item in dict_items(payload.get("work_centers"))
+                if str(item.get("work_center") or "").strip()
+            }
+            if target not in centers:
+                raise ValueError(
+                    self._format_transfer_message(messages, "unknownTarget", center=target)
+                )
+            if source not in centers:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages, "unknownSource", center=source
+                    )
+                )
+
+            # Concorrência: a fila de origem tem de estar como o analista viu.
+            self._assert_expected_center_order(
+                stored, marks=marks, work_center=source, expected_keys=expected_keys
+            )
+
+            # Cada item precisa existir exatamente uma vez na origem —
+            # duplicata OP+op no mesmo CT é erro de dados, nunca first-match.
+            selected: list[dict[str, Any]] = []
+            for order, op in keys:
+                matches = [
+                    item
+                    for item in stored
+                    if operation_matches_in_center(
+                        item,
+                        production_order=order,
+                        operation_code=op,
+                        work_center=source,
+                    )
+                ]
+                if len(matches) != 1:
+                    raise ValueError(
+                        self._format_transfer_message(
+                            messages,
+                            "operationNotInSource",
+                            order=order,
+                            operation=op,
+                            source=source,
+                        )
+                    )
+                item = matches[0]
+                if is_withdrawn(item, marks):
+                    raise ValueError(
+                        self._format_transfer_message(
+                            messages, "withdrawn", order=order
+                        )
+                    )
+                selected.append(item)
+
+            # A origem ERP é resolvida ANTES do move — _apply_center_move limpa
+            # transferred_from quando a operação volta ao centro original.
+            entries = transfer_entries(payload)
+            origins: dict[tuple[str, str], str] = {}
+            for item in selected:
+                identity = (
+                    normalize_order_code(item.get("production_order")),
+                    normalize_order_code(item.get("operation_code")),
+                )
+                hint = (
+                    normalize_work_center(item.get("transferred_from")) or source
+                )
+                origins[identity] = original_work_center(
+                    entries,
+                    production_order=identity[0],
+                    operation_code=identity[1],
+                    fallback=source,
+                    work_center=hint,
+                )
+
+            # Runs abertos protegem a operação — qualquer selecionada em
+            # execução rejeita o lote inteiro (não há transferência parcial).
+            protected_keys = self._protected_operation_keys(branch=branch)
+            protected_hit = next(
+                (
+                    item
+                    for item in selected
+                    if protected_operation_key(item) in protected_keys
+                ),
+                None,
+            )
+            if protected_hit is not None:
+                raise MachineLoadSequenceConflict(
+                    f"Operação {protected_hit.get('production_order')}/"
+                    f"{protected_hit.get('operation_code')} está em execução no "
+                    "cockpit e não pode ser transferida. Atualize a fila e "
+                    "ajuste a seleção."
+                )
+
+            moved = move_operations_at_work_center(
+                stored,
+                keys=keys,
+                source_work_center=source,
+                target_work_center=target,
+                target_work_center_name=centers.get(target) or None,
+                transfer_log=entries,
+            )
+            if moved is None:
+                raise ValueError(
+                    self._format_transfer_message(
+                        messages,
+                        "operationsNotInSource",
+                        order="",
+                        operation="",
+                        source=source,
+                    )
+                )
+
+            now = datetime.now(timezone.utc).isoformat()
+            next_entries = entries
+            for item in moved.moved:
+                order = normalize_order_code(item.get("production_order"))
+                operation = normalize_order_code(item.get("operation_code"))
+                origin = origins.get((order, operation), source)
+                next_entries = register_transfer(
+                    next_entries,
+                    production_order=order,
+                    operation_code=operation,
+                    origin_work_center=origin,
+                    target_work_center=target,
+                    transferred_at=now,
+                    transferred_by=_user_label(user),
+                )
+
+            payload["operations"] = moved.operations
+            payload[TRANSFERRED_OPERATIONS_KEY] = next_entries
+            payload["sequence_updated_at"] = now
+            payload["sequence_updated_by"] = _user_label(user)
+            return {"centers": centers, "moved_count": len(moved.moved)}
+
+        updated, info = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="transfer", work_center=target
+        )
+        presented = self._present(
+            updated,
+            work_center=work_center or source,
+            seeded=False,
+            branch=branch,
+        )
+        presented["transfer"] = {
+            "production_order": None,
+            "operation_code": None,
+            "operation_count": info["moved_count"],
+            "operations": [
+                {"production_order": order, "operation_code": op}
+                for order, op in keys
+            ],
+            "source_work_center": source,
+            "target_work_center": target,
+            "target_work_center_name": info["centers"].get(target) or None,
+            "scope": "operations",
+            "message": self._format_transfer_message(
+                messages,
+                "operationsApplied",
+                operations=info["moved_count"],
+                source=source,
+                target=target,
+            ),
+        }
+        return presented
+
+    def withdraw_operations(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+        expected_keys: list[dict[str, Any]],
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Retira operações selecionadas da programação (não é retirada de conjunto).
+
+        Tudo-ou-nada dentro do lock: item inexistente, já retirado ou com run
+        aberto rejeita o lote inteiro. expected_keys é a ordem vigente do
+        CT que o analista viu — divergência é 409, sem write.
+        """
+        self._assert_can_view(user, branch)
+        messages = self._withdrawal_messages()
+        refs = self._parse_operation_refs(operations, messages=messages)
+        centers_in_batch = {center for center, _order, _op in refs}
+        if len(centers_in_batch) != 1:
+            raise ValueError(
+                str(
+                    messages.get("mixedCenters")
+                    or "A seleção precisa pertencer a um único centro de trabalho."
+                )
+            )
+        source = centers_in_batch.pop()
+
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            stored = payload_operations(payload)
+            marks = withdrawn_marks(payload)
+            self._assert_expected_center_order(
+                stored, marks=marks, work_center=source, expected_keys=expected_keys
+            )
+            protected_keys = self._protected_operation_keys(branch=branch)
+            selected: list[dict[str, Any]] = []
+            for center, order, op in refs:
+                matches = [
+                    candidate
+                    for candidate in stored
+                    if operation_matches_in_center(
+                        candidate,
+                        production_order=order,
+                        operation_code=op,
+                        work_center=center,
+                    )
+                ]
+                if len(matches) != 1:
+                    raise ValueError(
+                        self._format_withdrawal_message(
+                            messages,
+                            "operationNotInQueue",
+                            order=order,
+                            operation=op,
+                        )
+                    )
+                item = matches[0]
+                if protected_operation_key(item) in protected_keys:
+                    raise MachineLoadSequenceConflict(
+                        f"Operação {order}/{op} está em execução no cockpit e "
+                        "não pode sair da programação. Atualize a fila e ajuste a seleção."
+                    )
+                if is_withdrawn(item, marks):
+                    raise ValueError(
+                        self._format_withdrawal_message(
+                            messages,
+                            "operationAlreadyWithdrawn",
+                            order=order,
+                            operation=op,
+                        )
+                    )
+                selected.append(item)
+
+            now = datetime.now(timezone.utc).isoformat()
+            next_entries, added = withdraw_operation_entries(
+                withdrawn_operation_entries(payload),
+                items=selected,
+                withdrawn_at=now,
+                withdrawn_by=_user_label(user),
+            )
+            if not added:
+                return None
+            payload[WITHDRAWN_OPERATIONS_KEY] = next_entries
+            payload["withdrawal_updated_at"] = now
+            payload["withdrawal_updated_by"] = _user_label(user)
+            return {"added": added, "center": source}
+
+        row, info = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="withdrawal", work_center=source
+        )
+        presented = self._present(
+            row,
+            work_center=work_center or source,
+            seeded=False,
+            branch=branch,
+        )
+        presented["withdrawal"] = {
+            "scope": "operations",
+            "operation_count": info["added"],
+            "work_centers": [source],
+            "operations": [
+                {"work_center": c, "production_order": o, "operation_code": op}
+                for c, o, op in refs
+            ],
+            "action": "withdrawn",
+            "message": self._format_withdrawal_message(
+                messages, "operationsWithdrawn", operations=info["added"]
+            ),
+        }
+        return presented
+
+    def restore_operations(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        operations: list[dict[str, Any]],
+        work_center: str | None = None,
+    ) -> dict[str, Any]:
+        """Devolve operações retiradas individualmente à programação.
+
+        Precondição autoritativa por item: cada operação precisa constar em
+        withdrawn_operations — item não retirado ou ausente rejeita o
+        lote inteiro. A operação retirada pelo conjunto continua oculta até
+        o conjunto ser restaurado (as marcas se somam).
+        """
+        self._assert_can_view(user, branch)
+        messages = self._withdrawal_messages()
+        refs = self._parse_operation_refs(operations, messages=messages)
+
+        def mutate(_row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+            entries = withdrawn_operation_entries(payload)
+            stored_keys = {
+                (
+                    str(item.get("work_center") or "").strip().upper(),
+                    normalize_order_code(item.get("production_order")),
+                    normalize_order_code(item.get("operation_code")),
+                )
+                for item in entries
+            }
+            for center, order, op in refs:
+                if (center.upper(), order, op) not in stored_keys:
+                    raise ValueError(
+                        self._format_withdrawal_message(
+                            messages,
+                            "operationNotWithdrawn",
+                            order=order,
+                            operation=op,
+                        )
+                    )
+            next_entries, removed = restore_operation_entries(entries, keys=refs)
+            if not removed:
+                return None
+            now = datetime.now(timezone.utc).isoformat()
+            payload[WITHDRAWN_OPERATIONS_KEY] = next_entries
+            payload["withdrawal_updated_at"] = now
+            payload["withdrawal_updated_by"] = _user_label(user)
+            return {"removed": removed}
+
+        row, info = self._persist_queue_change(
+            branch=branch, mutate=mutate, reason="withdrawal"
+        )
+        presented = self._present(
+            row,
+            work_center=work_center,
+            seeded=False,
+            branch=branch,
+        )
+        presented["withdrawal"] = {
+            "scope": "operations",
+            "operation_count": info["removed"],
+            "operations": [
+                {"work_center": c, "production_order": o, "operation_code": op}
+                for c, o, op in refs
+            ],
+            "action": "restored",
+            "message": self._format_withdrawal_message(
+                messages, "operationsRestored", operations=info["removed"]
+            ),
+        }
+        return presented
+
+    def _assert_expected_center_order(
+        self,
+        operations: list[dict[str, Any]],
+        *,
+        marks: WithdrawnMarks,
+        work_center: str,
+        expected_keys: list[dict[str, Any]],
+    ) -> None:
+        """Frescor da decisão: a ordem visível do CT deve ser a que o analista viu.
+
+        Mesma precondição do PATCH /sequence — qualquer divergência de conjunto
+        ou posição é conflito 409, sem write.
+        """
+        center = str(work_center or "").strip()
+        current = [
+            _operation_key(item)
+            for item in operations
+            if str(item.get("work_center") or "").strip() == center
+            and not is_withdrawn(item, marks)
+        ]
+        base = [
+            (
+                str(raw.get("production_order") or "").strip(),
+                str(raw.get("operation_code") or "").strip(),
+            )
+            for raw in expected_keys
+        ]
+        if base != current:
+            raise MachineLoadSequenceConflict(
+                "A programação deste centro mudou desde a última leitura. "
+                "Atualize a fila e confirme a nova seleção."
+            )
+
+    def _parse_operation_batch(
+        self,
+        operations: list[dict[str, Any]],
+        *,
+        messages: dict[str, Any],
+        label: str,
+    ) -> list[tuple[str, str]]:
+        """Normaliza e valida um lote OP+operação: não vazio, ≤ limite, sem duplicatas."""
+        if not operations:
+            raise ValueError(
+                str(
+                    messages.get("emptyBatch")
+                    or f"Selecione ao menos uma operação para {label}."
+                )
+            )
+        if len(operations) > _BATCH_OPERATIONS_LIMIT:
+            raise ValueError(
+                f"A {label} aceita no máximo {_BATCH_OPERATIONS_LIMIT} operações por vez."
+            )
+        keys: list[tuple[str, str]] = []
+        for raw in operations:
+            key = (
+                normalize_order_code(raw.get("production_order")),
+                normalize_order_code(raw.get("operation_code")),
+            )
+            if not key[0] or not key[1]:
+                raise ValueError(
+                    "Cada item precisa de production_order e operation_code."
+                )
+            keys.append(key)
+        if len(keys) != len(set(keys)):
+            raise ValueError("A seleção contém operações duplicadas.")
+        return keys
+
+    def _parse_operation_refs(
+        self,
+        operations: list[dict[str, Any]],
+        *,
+        messages: dict[str, Any],
+    ) -> list[tuple[str, str, str]]:
+        """Lote CT+OP+op: valida lista, limite e identidade completa de cada item."""
+        keys = self._parse_operation_batch(
+            operations, messages=messages, label="retirada"
+        )
+        refs: list[tuple[str, str, str]] = []
+        for raw, key in zip(operations, keys):
+            center = str(raw.get("work_center") or "").strip()
+            if not center:
+                raise ValueError(
+                    "Cada item precisa de work_center, production_order e operation_code."
+                )
+            refs.append((center, key[0], key[1]))
+        return refs
 
     @staticmethod
     def _transfer_messages() -> dict[str, Any]:
@@ -1658,17 +2158,17 @@ class MachineLoadService:
     def _merge_visible_order(
         operations: list[dict[str, Any]],
         *,
-        withdrawn_keys: set[str],
+        withdrawn_marks: WithdrawnMarks,
         reordered_visible: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Reaplica a nova ordem só nos slots visíveis; retiradas ficam onde estavam."""
-        if not withdrawn_keys:
+        if not withdrawn_marks.conjuntos and not withdrawn_marks.operations:
             return reordered_visible
         merged = list(operations)
         slots = [
             index
             for index, item in enumerate(operations)
-            if not is_withdrawn(item, withdrawn_keys)
+            if not is_withdrawn(item, withdrawn_marks)
         ]
         for slot, item in zip(slots, reordered_visible, strict=True):
             merged[slot] = item
@@ -1704,7 +2204,7 @@ class MachineLoadService:
         operations = payload_operations(payload)
         operations = self._enrich_execution_state(branch=branch, operations=operations)
         # Rastreio ainda encontra conjunto retirado — marcado como fora da programação.
-        withdrawn_keys = withdrawn_order_numbers(payload)
+        withdrawn_keys = withdrawn_marks(payload)
         queue_index = self._queue_positions_by_center(
             visible_operations(operations, withdrawn_keys)
         )
@@ -1793,7 +2293,7 @@ class MachineLoadService:
                     key=key,
                     operations=journey_ops,
                     queue_index=queue_index,
-                    withdrawn_keys=withdrawn_keys,
+                    withdrawn_marks=withdrawn_keys,
                 )
             )
 
@@ -1852,9 +2352,9 @@ class MachineLoadService:
         key: str,
         operations: list[dict[str, Any]],
         queue_index: dict[tuple[str, str, str], tuple[int, int]],
-        withdrawn_keys: set[str] | None = None,
+        withdrawn_marks: WithdrawnMarks | None = None,
     ) -> dict[str, Any]:
-        hidden = withdrawn_keys or set()
+        hidden = withdrawn_marks or WithdrawnMarks(frozenset(), frozenset())
         decorated: list[dict[str, Any]] = []
         for item in operations:
             center = str(item.get("work_center") or "").strip()
@@ -1961,10 +2461,10 @@ class MachineLoadService:
         ordered_keys: list[dict[str, Any]],
         expected_keys: list[dict[str, Any]],
         protected_keys: set[ProtectedOperationKey] | None = None,
-        withdrawn_keys: set[str] | None = None,
+        withdrawn_marks: WithdrawnMarks | None = None,
     ) -> list[dict[str, Any]]:
         """Reordena um CT. Operações retiradas não entram na permutação e ficam na posição atual."""
-        hidden = withdrawn_keys or set()
+        hidden = withdrawn_marks or WithdrawnMarks(frozenset(), frozenset())
         center_ops = [
             item
             for item in operations
@@ -2068,6 +2568,11 @@ class MachineLoadService:
                 frozen[WITHDRAWN_CONJUNTOS_KEY] = entries
                 frozen["withdrawal_updated_at"] = previous_payload.get("withdrawal_updated_at")
                 frozen["withdrawal_updated_by"] = previous_payload.get("withdrawal_updated_by")
+            op_entries = withdrawn_operation_entries(previous_payload)
+            if op_entries:
+                # Retirada por operação também sobrevive ao «Atualizar» —
+                # independente de withdrawn_conjuntos e dos metadados dele.
+                frozen[WITHDRAWN_OPERATIONS_KEY] = op_entries
             transfers = transfer_entries(previous_payload)
             if transfers:
                 frozen[TRANSFERRED_OPERATIONS_KEY] = transfers
@@ -2234,7 +2739,7 @@ class MachineLoadService:
         operations = payload_operations(payload)
 
         # Conjunto retirado continua no snapshot (posição original preservada), mas some da fila.
-        withdrawn_keys = withdrawn_order_numbers(payload)
+        withdrawn_keys = withdrawn_marks(payload)
         if production_source == "cockpit":
             # Cockpit público: runs MES locais marcam a fila inteira (barato), mas o
             # enrich HZA só roda no centro de trabalho pedido — consultar a filial
@@ -2282,7 +2787,7 @@ class MachineLoadService:
                 operations, start=view_start, end=view_end
             )
         # Retirada, transferência e lente mudam quantas operações cada centro tem de fato.
-        moved_operations = bool(withdrawn_keys) or bool(transfer_entries(payload))
+        moved_operations = bool(withdrawn_keys.conjuntos or withdrawn_keys.operations) or bool(transfer_entries(payload))
         work_centers = self._recompute_center_counts(
             work_centers,
             operations,
@@ -2303,7 +2808,7 @@ class MachineLoadService:
 
         summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
         in_production = sum(1 for item in operations if item.get("is_in_production"))
-        if withdrawn_keys or filtered or open_only:
+        if withdrawn_keys.conjuntos or withdrawn_keys.operations or filtered or open_only:
             operation_count = len(operations)
             order_count = len(
                 {order for item in operations if (order := _norm_code(item.get("production_order")))}
@@ -2351,6 +2856,8 @@ class MachineLoadService:
                     _as_int(entry.get("operation_count"), 0) for entry in entries
                 ),
                 "items": entries,
+                # Retiradas por operação (E4) — identidade canônica completa.
+                "operations": withdrawn_operation_entries(payload),
             },
             "work_centers": work_centers,
             **(

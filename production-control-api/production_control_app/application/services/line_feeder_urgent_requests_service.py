@@ -47,7 +47,7 @@ from production_control_app.domain.services.machine_load_snapshot_payload import
 )
 from production_control_app.domain.services.machine_load_withdrawal import (
     visible_operations,
-    withdrawn_order_numbers,
+    withdrawn_marks,
 )
 
 logger = logging.getLogger(__name__)
@@ -241,7 +241,7 @@ class LineFeederUrgentRequestsService:
             return {}
         payload = decode_snapshot_payload(snapshot)
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         centers: dict[tuple[str, str], str] = {}
         for item in operations:

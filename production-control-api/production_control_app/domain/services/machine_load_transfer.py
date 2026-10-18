@@ -69,12 +69,36 @@ def find_operation(
     *,
     production_order: str,
     operation_code: str,
+    work_center: str | None = None,
 ) -> dict[str, Any] | None:
+    """Localiza a operação; com ``work_center`` a busca fica restrita ao centro.
+
+    Sem centro informado (chamador legado) devolve o primeiro match — a mesma
+    OP/operação em centros distintos é ambígua e quem precisa de identidade
+    inequívoca deve passar o centro.
+    """
     wanted = (normalize_order_code(production_order), normalize_order_code(operation_code))
+    center = normalize_work_center(work_center) if work_center else None
     for item in operations:
+        if center is not None and normalize_work_center(item.get("work_center")) != center:
+            continue
         if operation_identity(item) == wanted:
             return item
     return None
+
+
+def operation_matches_in_center(
+    item: dict[str, Any],
+    *,
+    production_order: str,
+    operation_code: str,
+    work_center: str,
+) -> bool:
+    """Identidade canônica CT + OP + operação — único jeito inequívoco."""
+    return (
+        operation_identity(item)
+        == (normalize_order_code(production_order), normalize_order_code(operation_code))
+    ) and normalize_work_center(item.get("work_center")) == normalize_work_center(work_center)
 
 
 def original_work_center(
@@ -83,16 +107,29 @@ def original_work_center(
     production_order: str,
     operation_code: str,
     fallback: str,
+    work_center: str | None = None,
 ) -> str:
-    """Centro de onde a operação saiu no TOTVS — preservado entre transferências."""
+    """Centro de onde a operação saiu no TOTVS — preservado entre transferências.
+
+    ``work_center`` deve ser a origem ERP conhecida da instância —
+    ``item.transferred_from`` quando já transferida, senão o centro atual.
+    Com a mesma OP/operação em dois centros, só a entrada cuja origem bate
+    com a instância é aceita; match ambíguo nunca escolhe arbitrariamente.
+    """
     wanted = (normalize_order_code(production_order), normalize_order_code(operation_code))
+    origin_hint = normalize_work_center(work_center) if work_center else None
     for item in entries:
         identity = (
             normalize_order_code(item.get("production_order")),
             normalize_order_code(item.get("operation_code")),
         )
-        if identity == wanted and normalize_work_center(item.get("source_work_center")):
-            return normalize_work_center(item.get("source_work_center"))
+        if identity != wanted:
+            continue
+        origin = normalize_work_center(item.get("source_work_center"))
+        if not origin:
+            continue
+        if origin_hint is None or origin == origin_hint:
+            return origin
     return normalize_work_center(fallback)
 
 
@@ -142,16 +179,25 @@ def move_operation(
     target_work_center: str,
     target_work_center_name: str | None = None,
     origin_work_center: str | None = None,
+    source_work_center: str | None = None,
 ) -> OperationTransfer | None:
     """Move a operação para o fim da fila do centro destino.
 
+    ``source_work_center`` restringe o match à instância que está naquele
+    centro — sem ele o comportamento legado (primeiro match OP+op) é mantido.
     Devolve ``None`` quando a operação não está no snapshot. A lista original não
     é mutada — o chamador grava o resultado.
     """
     wanted = (normalize_order_code(production_order), normalize_order_code(operation_code))
     target = normalize_work_center(target_work_center)
+    source = normalize_work_center(source_work_center) if source_work_center else None
     index = next(
-        (pos for pos, item in enumerate(operations) if operation_identity(item) == wanted),
+        (
+            pos
+            for pos, item in enumerate(operations)
+            if operation_identity(item) == wanted
+            and (source is None or normalize_work_center(item.get("work_center")) == source)
+        ),
         None,
     )
     if index is None or not target:
@@ -213,11 +259,79 @@ def move_conjunto_at_work_center(
     batch: list[dict[str, Any]] = []
     for pos in selected_indexes:
         current = operations[pos]
+        origin_hint = normalize_work_center(current.get("transferred_from")) or source
         origin = original_work_center(
             entries,
             production_order=str(current.get("production_order") or ""),
             operation_code=str(current.get("operation_code") or ""),
             fallback=source,
+            work_center=origin_hint,
+        )
+        batch.append(
+            _apply_center_move(
+                current,
+                target=target,
+                target_work_center_name=target_work_center_name,
+                origin=origin,
+            )
+        )
+
+    remaining = [item for pos, item in enumerate(operations) if pos not in selected_set]
+    next_operations = _insert_at_end_of_center(remaining, target=target, batch=batch)
+    return ConjuntoCenterTransfer(
+        operations=next_operations,
+        moved=batch,
+        source_work_center=source,
+        target_work_center=target,
+    )
+
+
+def move_operations_at_work_center(
+    operations: list[dict[str, Any]],
+    *,
+    keys: list[tuple[str, str]],
+    source_work_center: str,
+    target_work_center: str,
+    target_work_center_name: str | None = None,
+    transfer_log: list[dict[str, Any]] | None = None,
+) -> ConjuntoCenterTransfer | None:
+    """Move as operações listadas (OP + operação) que estão no centro de origem.
+
+    Seleção arbitrária do PCP — não é conjunto: só as chaves pedidas saem da
+    origem, preservando a ordem relativa, e entram no fim da fila do destino.
+    ``keys`` sem correspondência na origem devolvem ``None`` — a validação de
+    existência/ambiguidade é responsabilidade do chamador (antes do move).
+    """
+    source = normalize_work_center(source_work_center)
+    target = normalize_work_center(target_work_center)
+    if not keys or not source or not target or source == target:
+        return None
+    wanted = {
+        (normalize_order_code(order), normalize_order_code(operation))
+        for order, operation in keys
+    }
+
+    entries = transfer_log or []
+    selected_indexes = [
+        pos
+        for pos, item in enumerate(operations)
+        if normalize_work_center(item.get("work_center")) == source
+        and operation_identity(item) in wanted
+    ]
+    if not selected_indexes or len(selected_indexes) != len(wanted):
+        return None
+
+    selected_set = set(selected_indexes)
+    batch: list[dict[str, Any]] = []
+    for pos in selected_indexes:
+        current = operations[pos]
+        origin_hint = normalize_work_center(current.get("transferred_from")) or source
+        origin = original_work_center(
+            entries,
+            production_order=str(current.get("production_order") or ""),
+            operation_code=str(current.get("operation_code") or ""),
+            fallback=source,
+            work_center=origin_hint,
         )
         batch.append(
             _apply_center_move(
@@ -248,7 +362,13 @@ def register_transfer(
     transferred_at: str,
     transferred_by: str | None,
 ) -> list[dict[str, Any]]:
-    """Guarda a transferência para o replay pós-refresh (uma entrada por operação)."""
+    """Guarda a transferência para o replay pós-refresh (uma entrada por operação).
+
+    A identidade do registro é ``(OP, operação, source_work_center)`` — a mesma
+    OP/operação pode existir em dois centros ERP e cada instância tem a sua
+    transferência. Entrada legada sem ``source_work_center`` é substituída
+    quando OP+op coincidem (era a melhor informação disponível).
+    """
     order = normalize_order_code(production_order)
     operation = normalize_order_code(operation_code)
     origin = normalize_work_center(origin_work_center)
@@ -256,11 +376,17 @@ def register_transfer(
     kept = [
         item
         for item in entries
-        if (
-            normalize_order_code(item.get("production_order")),
-            normalize_order_code(item.get("operation_code")),
+        if not (
+            (
+                normalize_order_code(item.get("production_order")),
+                normalize_order_code(item.get("operation_code")),
+            )
+            == (order, operation)
+            and (
+                normalize_work_center(item.get("source_work_center")) == origin
+                or not normalize_work_center(item.get("source_work_center"))
+            )
         )
-        != (order, operation)
     ]
     # Voltar ao centro de origem desfaz a transferência: nada a reaplicar no refresh.
     if not target or origin == target:
@@ -284,18 +410,37 @@ def apply_transfers(
     *,
     work_center_names: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Reaplica as transferências sobre a fila recém-puxada do TOTVS."""
+    """Reaplica as transferências sobre a fila recém-puxada do TOTVS.
+
+    O match usa a identidade completa ``(OP, operação, centro de origem ERP)``:
+    depois do refresh a operação volta para o centro em que o TOTVS a criou,
+    e é essa instância — não um homônimo em outro centro — que é movida.
+    Entrada sem ``source_work_center`` só é aplicada quando OP+op é inequívoco
+    na fila; ambiguidade é ignorada (nunca «adivinha» a instância).
+    """
     names = work_center_names or {}
     result = list(operations)
     for entry in entries:
         target = normalize_work_center(entry.get("target_work_center"))
+        source = normalize_work_center(entry.get("source_work_center"))
+        if not source:
+            wanted = (
+                normalize_order_code(entry.get("production_order")),
+                normalize_order_code(entry.get("operation_code")),
+            )
+            matches = [
+                item for item in result if operation_identity(item) == wanted
+            ]
+            if len(matches) != 1:
+                continue
         moved = move_operation(
             result,
             production_order=str(entry.get("production_order") or ""),
             operation_code=str(entry.get("operation_code") or ""),
             target_work_center=target,
             target_work_center_name=names.get(target),
-            origin_work_center=normalize_work_center(entry.get("source_work_center")),
+            origin_work_center=source,
+            source_work_center=source or None,
         )
         if moved is not None:
             result = moved.operations

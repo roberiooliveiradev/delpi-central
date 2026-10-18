@@ -62,6 +62,35 @@ class SequenceReorderBody(BaseModel):
     expected_keys: list[SequenceKeyBody] | None = None
 
 
+class OperationKeyBody(BaseModel):
+    # Identidade canônica de uma operação no lote — OP + operação.
+    production_order: str = Field(..., min_length=1, max_length=30)
+    operation_code: str = Field(..., min_length=1, max_length=10)
+
+
+class OperationRefBody(OperationKeyBody):
+    # Identidade completa — centro + OP + operação (retirada/restauração).
+    work_center: str = Field(..., min_length=1, max_length=20)
+
+
+class TransferOperationsBody(BaseModel):
+    source_work_center: str = Field(..., min_length=1, max_length=20)
+    target_work_center: str = Field(..., min_length=1, max_length=20)
+    operations: list[OperationKeyBody] = Field(..., min_length=1, max_length=200)
+    # Ordem vigente do CT de origem que o analista viu — obrigatória: divergir
+    # do estado dentro do lock é 409, nunca write.
+    expected_keys: list[SequenceKeyBody] = Field(..., min_length=1)
+
+
+class WithdrawOperationsBody(BaseModel):
+    operations: list[OperationRefBody] = Field(..., min_length=1, max_length=200)
+    expected_keys: list[SequenceKeyBody] = Field(..., min_length=1)
+
+
+class RestoreOperationsBody(BaseModel):
+    operations: list[OperationRefBody] = Field(..., min_length=1, max_length=200)
+
+
 class MachineLoadOptimizeCriteriaBody(BaseModel):
     """Critérios secundários da otimização — a data de entrega é sempre ativa."""
     group_by_tool: bool = False
@@ -557,6 +586,97 @@ def transfer_machine_load_set(
     return ok(
         _scoped(data, include_all_centers),
         message=data.get("transfer", {}).get("message"),
+    )
+
+
+@router.post("/machine-load/transfer-operations")
+def transfer_machine_load_operations(
+    request: Request,
+    body: TransferOperationsBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta; vazio usa a origem",
+    ),
+    include_all_centers: bool = _include_all_centers_query(),
+):
+    """Move as operações selecionadas do centro de origem para o fim da fila do destino."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().transfer_operations(
+            user,
+            branch=branch,
+            source_work_center=body.source_work_center,
+            target_work_center=body.target_work_center,
+            operations=[item.model_dump() for item in body.operations],
+            expected_keys=[item.model_dump() for item in body.expected_keys],
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("transfer", {}).get("message"),
+    )
+
+
+@router.post("/machine-load/withdraw-operations")
+def withdraw_machine_load_operations(
+    request: Request,
+    body: WithdrawOperationsBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+    include_all_centers: bool = _include_all_centers_query(),
+):
+    """Retira da programação somente as operações selecionadas (não é o conjunto)."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().withdraw_operations(
+            user,
+            branch=branch,
+            operations=[item.model_dump() for item in body.operations],
+            expected_keys=[item.model_dump() for item in body.expected_keys],
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("withdrawal", {}).get("message"),
+    )
+
+
+@router.post("/machine-load/restore-operations")
+def restore_machine_load_operations(
+    request: Request,
+    body: RestoreOperationsBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    work_center: str | None = Query(
+        default=None,
+        alias="workCenter",
+        description="Centro de trabalho que continua ativo na resposta",
+    ),
+    include_all_centers: bool = _include_all_centers_query(),
+):
+    """Devolve à fila operações retiradas individualmente — não restaura o conjunto."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().restore_operations(
+            user,
+            branch=branch,
+            operations=[item.model_dump() for item in body.operations],
+            work_center=work_center,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(
+        _scoped(data, include_all_centers),
+        message=data.get("withdrawal", {}).get("message"),
     )
 
 
