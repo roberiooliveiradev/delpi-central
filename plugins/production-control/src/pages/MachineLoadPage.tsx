@@ -1056,30 +1056,6 @@ export function MachineLoadPage({
         render: (row: MachineLoadOperation) => <MachineLoadStatusCell operation={row} />,
       },
       {
-        key: "feedback",
-        header: copy.machineLoad.feedback.columnLabel,
-        render: (row: MachineLoadOperation) => {
-          const feedback = feedbackForOperation(feedbackMap, row);
-          if (!feedback) return "—";
-          const isOpen = feedback.status === "open";
-          return (
-            <span
-              className={
-                isOpen
-                  ? "ppc-load__feedback ppc-load__feedback--open"
-                  : "ppc-load__feedback ppc-load__feedback--ack"
-              }
-              title={copy.machineLoad.feedback.columnLabel}
-            >
-              <CircleAlert size={13} strokeWidth={2} aria-hidden />
-              {isOpen
-                ? copy.machineLoad.feedback.badgeOpen
-                : copy.machineLoad.feedback.badgeAcknowledged}
-            </span>
-          );
-        },
-      },
-      {
         key: "pa_product_code",
         header: copy.machineLoad.columns.paCode,
         render: (row: MachineLoadOperation) => row.pa_product_code || "—",
@@ -1524,34 +1500,54 @@ export function MachineLoadPage({
             {activeCenter?.work_center_name ? (
               <p className="ppc-load__center-name">{activeCenter.work_center_name}</p>
             ) : null}
-            {displayRows.length > 1 && !selection.hasMultiple ? (
-              <p className="ppc-load__sequence-hint">
-                {hideFinished
-                  ? copy.machineLoad.hideFinished.reorderWhileHidden
-                  : copy.machineLoad.sequenceHint}
-              </p>
-            ) : null}
-            {selection.count > 0 ? (
-              <div className="ppc-load__selection-bar" role="status">
-                <ListChecks size={15} strokeWidth={1.75} aria-hidden />
-                <span className="ppc-load__selection-count">
-                  {copy.machineLoad.selection.count(selection.count)}
-                </span>
-                {selection.hasMultiple ? (
-                  <span className="ppc-load__selection-hint">
-                    {copy.machineLoad.selection.pendingHint}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  className="ppc-load__selection-clear"
-                  onClick={selection.clear}
-                  aria-label={copy.machineLoad.selection.clearAria}
+            {(() => {
+              const hintVisible = displayRows.length > 1 && !selection.hasMultiple;
+              return (
+                <p
+                  className={
+                    hintVisible
+                      ? "ppc-load__sequence-hint"
+                      : "ppc-load__sequence-hint ppc-load__sequence-hint--idle"
+                  }
+                  aria-hidden={hintVisible ? undefined : true}
                 >
-                  {copy.machineLoad.selection.clear}
-                </button>
-              </div>
-            ) : null}
+                  {hideFinished
+                    ? copy.machineLoad.hideFinished.reorderWhileHidden
+                    : copy.machineLoad.sequenceHint}
+                </p>
+              );
+            })()}
+            <div
+              className={
+                selection.count > 0
+                  ? "ppc-load__selection-bar"
+                  : "ppc-load__selection-bar ppc-load__selection-bar--idle"
+              }
+              role={selection.count > 0 ? "status" : undefined}
+              aria-hidden={selection.count === 0 || undefined}
+            >
+              {selection.count > 0 ? (
+                <>
+                  <ListChecks size={15} strokeWidth={1.75} aria-hidden />
+                  <span className="ppc-load__selection-count">
+                    {copy.machineLoad.selection.count(selection.count)}
+                  </span>
+                  {selection.hasMultiple ? (
+                    <span className="ppc-load__selection-hint">
+                      {copy.machineLoad.selection.pendingHint}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="ppc-load__selection-clear"
+                    onClick={selection.clear}
+                    aria-label={copy.machineLoad.selection.clearAria}
+                  >
+                    {copy.machineLoad.selection.clear}
+                  </button>
+                </>
+              ) : null}
+            </div>
             <DataTable
               columns={columns}
               rows={displayRows}

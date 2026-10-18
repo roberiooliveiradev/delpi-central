@@ -2763,8 +2763,15 @@
 
 .dashboard-production-control .ppc-load__sequence-hint {
   margin: 8px 0 0;
+  min-height: calc(var(--ppc-font-xs) * 1.5);
   font-size: var(--ppc-font-xs);
   color: var(--ppc-text-muted);
+}
+
+/* Slots inertes reservam altura: a tabela não desloca no primeiro clique. */
+.dashboard-production-control .ppc-load__sequence-hint--idle,
+.dashboard-production-control .ppc-load__selection-bar--idle {
+  visibility: hidden;
 }
 
 .dashboard-production-control .ppc-load__drag-handle {
@@ -2793,13 +2800,16 @@
   box-shadow: inset 0 2px 0 var(--ppc-accent);
 }
 
-/* Seleção múltipla de operações — destaque discreto no accent do tema. */
-.dashboard-production-control .ppc-load-table tr.delpi-ui-table__row--selected > td,
-.dashboard-production-control .ppc-load-table tr.delpi-ui-table__row--selected > td:first-child {
-  background: color-mix(in srgb, var(--ppc-accent) 10%, transparent);
+/* Seleção múltipla: véu neutro que escurece a linha inteira (estilo planilha)
+   sem apagar os tons de estado (running/stopped/paused/unconfirmed). */
+.dashboard-production-control .ppc-load tr.delpi-ui-table__row--selected > td {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--ppc-text) 9%, transparent),
+    color-mix(in srgb, var(--ppc-text) 9%, transparent)
+  );
 }
 
-.dashboard-production-control .ppc-load-table tbody tr > td:not([data-interactive]) {
+.dashboard-production-control .ppc-load tbody tr > td:not([data-interactive]) {
   cursor: pointer;
 }
 
@@ -2818,6 +2828,7 @@
 }
 
 .dashboard-production-control .ppc-load__selection-bar {
+  min-height: 36px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
