@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from production_control_app.domain.services.machine_load_withdrawal import (
+    WithdrawnMarks,
     build_withdrawal_entry,
     is_withdrawn,
     restore_conjunto,
@@ -38,22 +39,29 @@ def test_withdrawn_keys_are_read_from_payload() -> None:
     assert withdrawn_order_numbers({}) == set()
 
 
+def _marks(*conjuntos: str, **kwargs: Any) -> WithdrawnMarks:
+    return WithdrawnMarks(
+        conjuntos=frozenset(conjuntos),
+        operations=frozenset(kwargs.get("operations", ())),
+    )
+
+
 def test_is_withdrawn_matches_every_order_of_the_conjunto() -> None:
-    keys = {"108404"}
-    assert is_withdrawn(_op("10840401003"), keys) is True
-    assert is_withdrawn(_op("10840402001"), keys) is True
-    assert is_withdrawn(_op("99900001001"), keys) is False
-    assert is_withdrawn(_op("10840401003"), set()) is False
+    marks = _marks("108404")
+    assert is_withdrawn(_op("10840401003"), marks) is True
+    assert is_withdrawn(_op("10840402001"), marks) is True
+    assert is_withdrawn(_op("99900001001"), marks) is False
+    assert is_withdrawn(_op("10840401003"), _marks()) is False
 
 
 def test_visible_and_withdrawn_split_keeps_order() -> None:
-    keys = {"108404"}
-    visible = visible_operations(_OPERATIONS, keys)
-    hidden = withdrawn_operations(_OPERATIONS, keys)
+    marks = _marks("108404")
+    visible = visible_operations(_OPERATIONS, marks)
+    hidden = withdrawn_operations(_OPERATIONS, marks)
 
     assert [item["production_order"] for item in visible] == ["99900001001"]
     assert [item["production_order"] for item in hidden] == ["10840401003", "10840402001"]
-    assert visible_operations(_OPERATIONS, set()) == _OPERATIONS
+    assert visible_operations(_OPERATIONS, _marks()) == _OPERATIONS
 
 
 def test_entry_summarizes_product_centers_and_count() -> None:

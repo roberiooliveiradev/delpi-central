@@ -34,9 +34,12 @@ import {
   patchMachineLoadSequence,
   prioritizeMachineLoadConjunto,
   restoreMachineLoadConjunto,
+  restoreMachineLoadOperations,
   transferMachineLoadConjunto,
   transferMachineLoadOperation,
+  transferMachineLoadOperations,
   withdrawMachineLoadConjunto,
+  withdrawMachineLoadOperations,
 } from "../api/ppcApi";
 import { httpErrorStatus } from "../api/httpClient";
 import { copy } from "../content/copy";
@@ -53,6 +56,7 @@ import {
 } from "../hooks/useMachineLoadSequenceHistory";
 import type {
   MachineLoadLocatePayload,
+  MachineLoadWithdrawnOperation,
   MachineLoadLocateStop,
   MachineLoadOperation,
   MachineLoadPayload,
@@ -176,6 +180,7 @@ export function MachineLoadPage({
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
   const [transferMode, setTransferMode] = useState<MachineLoadTransferMode>("operation");
+  const [transferSelectionOpen, setTransferSelectionOpen] = useState(false);
   const [hideFinished, setHideFinished] = useState(readHideFinishedPreference);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [onlyFeedback, setOnlyFeedback] = useState(false);
@@ -191,6 +196,8 @@ export function MachineLoadPage({
   const selectedCenter = data?.selected.work_center ?? null;
   const workCenters = data?.work_centers ?? [];
   const withdrawnEntries = data?.withdrawn?.items ?? [];
+  const withdrawnOperations = data?.withdrawn?.operations ?? [];
+  const withdrawnTotal = withdrawnEntries.length + withdrawnOperations.length;
   const missingDueDates = data?.summary.missing_due_date_count ?? 0;
 
   // Antes do paint: trocar de centro não pode exibir a fila do centro anterior
@@ -581,7 +588,12 @@ export function MachineLoadPage({
         applyPayload(payload);
         history.reset();
         setSequenceNotice(payload.withdrawal.message);
-        if ((payload.withdrawn?.items.length ?? 0) === 0) setWithdrawnModalOpen(false);
+        if (
+          (payload.withdrawn?.items.length ?? 0) === 0 &&
+          (payload.withdrawn?.operations?.length ?? 0) === 0
+        ) {
+          setWithdrawnModalOpen(false);
+        }
       } catch (err: unknown) {
         setSequenceNotice(
           err instanceof Error ? err.message : copy.machineLoad.rowActions.restoreError,
@@ -645,6 +657,158 @@ export function MachineLoadPage({
       } catch (err: unknown) {
         setSequenceNotice(
           err instanceof Error ? err.message : copy.machineLoad.rowActions.transferError,
+        );
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [applyPayload, branch, history, selectedCenter, sequenceBusy],
+  );
+
+  // E4 — ações coletivas: o backend é autoridade (lote atômico, expected_keys,
+  // runs protegidos); aqui só precondição de UX + tratamento de 409.
+  const collectiveGate = useMemo((): { enabled: boolean; hint?: string } => {
+    if (!selection.hasMultiple || sequenceBusy) return { enabled: false };
+    if (executionUnavailable || !executionLoaded) {
+      return {
+        enabled: false,
+        hint: copy.machineLoad.rowActions.collectiveUnavailableHint,
+      };
+    }
+    return { enabled: true };
+  }, [executionLoaded, executionUnavailable, selection.hasMultiple, sequenceBusy]);
+
+  const sendSelectedToWorkCenter = useCallback(
+    async (targetWorkCenter: string) => {
+      const target = targetWorkCenter.trim();
+      const source = (selectedCenter ?? "").trim();
+      const chosen = selection.selectedRows;
+      if (!target || !source || chosen.length === 0 || sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await transferMachineLoadOperations({
+          branch,
+          sourceWorkCenter: source,
+          targetWorkCenter: target,
+          operations: chosen.map((item) => ({
+            production_order: item.production_order,
+            operation_code: item.operation_code,
+          })),
+          expectedKeys: keysFromOperations(rows),
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        // O lote sai do CT ativo; o histórico de Ctrl+Z não cobre a saída.
+        history.reset();
+        selection.clear();
+        setSequenceNotice(payload.transfer.message);
+        setTransferSelectionOpen(false);
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.transferError,
+        );
+        if (httpErrorStatus(err) === 409) {
+          history.reset();
+          reload();
+        }
+      } finally {
+        setSequenceBusy(false);
+      }
+    },
+    [
+      applyPayload,
+      branch,
+      history,
+      reload,
+      rows,
+      selectedCenter,
+      selection,
+      sequenceBusy,
+    ],
+  );
+
+  const withdrawSelectedOperations = useCallback(async () => {
+    const source = (selectedCenter ?? "").trim();
+    const chosen = selection.selectedRows;
+    if (!source || chosen.length === 0 || sequenceBusy) return;
+    const accepted = await confirm({
+      title: copy.machineLoad.selection.withdrawConfirmTitle(chosen.length),
+      message: copy.machineLoad.selection.withdrawConfirmMessage,
+      confirmLabel: copy.machineLoad.selection.withdrawConfirmAction,
+      cancelLabel: copy.machineLoad.rowActions.withdrawCancel,
+      variant: "danger",
+    });
+    if (!accepted) return;
+    setSequenceBusy(true);
+    setSequenceNotice(null);
+    try {
+      const payload = await withdrawMachineLoadOperations({
+        branch,
+        operations: chosen.map((item) => ({
+          work_center: source,
+          production_order: item.production_order,
+          operation_code: item.operation_code,
+        })),
+        expectedKeys: keysFromOperations(rows),
+        workCenter: selectedCenter,
+      });
+      applyPayload(payload);
+      history.reset();
+      selection.clear();
+      setSequenceNotice(payload.withdrawal.message);
+    } catch (err: unknown) {
+      setSequenceNotice(
+        err instanceof Error ? err.message : copy.machineLoad.rowActions.withdrawError,
+      );
+      if (httpErrorStatus(err) === 409) {
+        history.reset();
+        reload();
+      }
+    } finally {
+      setSequenceBusy(false);
+    }
+  }, [
+    applyPayload,
+    branch,
+    confirm,
+    history,
+    reload,
+    rows,
+    selectedCenter,
+    selection,
+    sequenceBusy,
+  ]);
+
+  const restoreWithdrawnOperation = useCallback(
+    async (item: MachineLoadWithdrawnOperation) => {
+      if (sequenceBusy) return;
+      setSequenceBusy(true);
+      setSequenceNotice(null);
+      try {
+        const payload = await restoreMachineLoadOperations({
+          branch,
+          operations: [
+            {
+              work_center: item.work_center,
+              production_order: item.production_order,
+              operation_code: item.operation_code,
+            },
+          ],
+          workCenter: selectedCenter,
+        });
+        applyPayload(payload);
+        history.reset();
+        setSequenceNotice(payload.withdrawal.message);
+        if (
+          (payload.withdrawn?.items.length ?? 0) === 0 &&
+          (payload.withdrawn?.operations?.length ?? 0) === 0
+        ) {
+          setWithdrawnModalOpen(false);
+        }
+      } catch (err: unknown) {
+        setSequenceNotice(
+          err instanceof Error ? err.message : copy.machineLoad.rowActions.restoreError,
         );
       } finally {
         setSequenceBusy(false);
@@ -1203,14 +1367,14 @@ export function MachineLoadPage({
           <ArrowDownNarrowWide size={15} strokeWidth={1.75} aria-hidden />
           {copy.machineLoad.optimization.label}
         </button>
-        {withdrawnEntries.length > 0 ? (
+        {withdrawnTotal > 0 ? (
           <button
             type="button"
             className="ppc-period__withdrawn"
             onClick={() => setWithdrawnModalOpen(true)}
           >
             <CalendarOff size={15} strokeWidth={1.75} aria-hidden />
-            {copy.machineLoad.withdrawn.openButton(withdrawnEntries.length)}
+            {copy.machineLoad.withdrawn.openButton(withdrawnTotal)}
           </button>
         ) : null}
         <button
@@ -1495,6 +1659,10 @@ export function MachineLoadPage({
         onGroupSelected={groupSelectedOperations}
         groupDisabled={!groupingGate.enabled}
         groupDisabledHint={groupingGate.hint}
+        onTransferSelected={() => setTransferSelectionOpen(true)}
+        onWithdrawSelected={() => void withdrawSelectedOperations()}
+        collectiveDisabled={!collectiveGate.enabled}
+        collectiveDisabledHint={collectiveGate.hint}
       />
 
       <MachineLoadTransferModal
@@ -1514,6 +1682,18 @@ export function MachineLoadPage({
         }}
       />
 
+      <MachineLoadTransferModal
+        open={transferSelectionOpen}
+        mode="selection"
+        operation={null}
+        selectionCount={selection.count}
+        sourceCenter={selectedCenter}
+        workCenters={workCenters}
+        busy={sequenceBusy}
+        onClose={() => setTransferSelectionOpen(false)}
+        onConfirm={(target) => void sendSelectedToWorkCenter(target)}
+      />
+
       <MachineLoadOptimizationModal
         open={optimizationModalOpen}
         busy={sequenceBusy}
@@ -1525,9 +1705,11 @@ export function MachineLoadPage({
       <MachineLoadWithdrawnModal
         open={withdrawnModalOpen}
         entries={withdrawnEntries}
+        operations={withdrawnOperations}
         busy={sequenceBusy}
         onClose={() => setWithdrawnModalOpen(false)}
         onRestore={(orderNumber) => void restoreConjunto(orderNumber)}
+        onRestoreOperation={(item) => void restoreWithdrawnOperation(item)}
       />
 
       <OperatorFeedbackInbox

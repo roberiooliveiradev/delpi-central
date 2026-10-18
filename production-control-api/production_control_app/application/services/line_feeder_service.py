@@ -66,7 +66,7 @@ from production_control_app.domain.services.machine_load_snapshot_payload import
 )
 from production_control_app.domain.services.machine_load_withdrawal import (
     visible_operations,
-    withdrawn_order_numbers,
+    withdrawn_marks,
 )
 
 logger = logging.getLogger(__name__)
@@ -440,7 +440,7 @@ class LineFeederService:
         payload = decode_snapshot_payload(row)
         # Conjunto retirado da programação não gera necessidade de material.
         operations = visible_operations(
-            payload_operations(payload), withdrawn_order_numbers(payload)
+            payload_operations(payload), withdrawn_marks(payload)
         )
         eligible = filter_by_cutoff(operations, cutoff=cutoff)
         centers = self._work_center_catalog(payload, eligible)

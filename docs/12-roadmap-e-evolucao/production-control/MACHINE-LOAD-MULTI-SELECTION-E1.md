@@ -433,14 +433,11 @@ run aberto, alinhando ou não à proteção de prioritize/optimize.
 Gate: aprovar D1 (mesmo que a resposta seja «não protege», deve ser decisão
 explícita).
 
-### Etapa 4 — transferência e retirada em lote: **BLOCKED até aprovação de contrato**
+### Etapa 4 — transferência e retirada em lote: **IMPLEMENTADA** (ver §14)
 
-Resolvido: mecânicas de domínio reutilizáveis identificadas
-(`_insert_at_end_of_center`, `register_transfer`, `is_withdrawn`).
-Pendente: **aprovação** de `transfer-operations` e `withdraw-operations` +
-nova chave `withdrawn_operations` (D2) + D1; decisão sobre evoluir
-`withdrawn.items` na resposta.
-Gate: contratos aprovados; então implementar backend+testes antes do wiring.
+Contratos aprovados pelo owner na revisão pós-E3 (D1 rejeita lote; D2/D6
+aditivos; D7 mantém `.view`; `expected_keys` da origem como precondição).
+Backend + rotas + frontend entregues; ver §14 para semântica e evidências.
 
 ## 11. Decisões abertas (consolidado)
 
@@ -543,4 +540,78 @@ após o deploy do MFE.
   (line_feeder, operator_directory).
 - Frontend: 37 arquivos / 267 testes (hook de histórico: peek sem pop,
   pop pós-confirmação, reset limpa pilhas, escopo zera); build OK;
+  lint/tsc só baseline.
+
+## 14. Resultado da Etapa 4 — lote coletivo (implementado)
+
+### Contratos entregues (aditivos — nada do legado mudou)
+
+| Rota | Body | Semântica |
+|---|---|---|
+| `POST /machine-load/transfer-operations` | `source_work_center`, `target_work_center`, `operations[{production_order, operation_code}]` (1..200), `expected_keys` (origem) | Move as selecionadas do CT origem para o fim do destino, na ordem relativa |
+| `POST /machine-load/withdraw-operations` | `operations[{work_center, production_order, operation_code}]` (1..200, mono-CT), `expected_keys` | Retira só as operações — o conjunto e as irmãs permanecem |
+| `POST /machine-load/restore-operations` | `operations[{work_center, production_order, operation_code}]` | Devolve à fila só operações retiradas individualmente |
+
+Erros: `422` validação (lista vazia/duplicada, item fora do CT, já retirado,
+não retirado, destino desconhecido, source==target, CTs mistos na retirada);
+`409` `expected_keys` divergente ou item com run aberto (lote inteiro rejeitado
+— D1); `403`/escopo conforme `assert_can_view` (D7 mantido).
+
+### Backend — decisões implementadas
+
+- **Atomicidade:** as três rotas usam `_persist_queue_change` (FOR UPDATE +
+  transação) — qualquer item inválido/protegido aborta o lote inteiro; nunca
+  há write parcial.
+- **Concorrência:** `expected_keys` do CT de origem é comparado à ordem vigente
+  dentro do lock (`_assert_expected_center_order`); divergência → 409.
+- **Identidade CT-scoped (D6):** match por `(work_center + OP + op)` —
+  `operation_matches_in_center`/`move_operations_at_work_center` exigem
+  exatamente uma instância na origem; OP+op duplicada em CTs distintos não
+  é mais ambígua. `register_transfer`/`original_work_center`/`apply_transfers`
+  passaram a usar `source_work_center` como identidade da instância; entradas
+  legadas sem origem só são aplicadas quando OP+op é inequívoca na fila.
+- **Origem ERP correta:** a origem é resolvida antes do move
+  (`transferred_from`/registro anterior) — `A→B→A` cancela a entrada e o
+  replay pós-refresh não move nada.
+- **Runs protegidos (D1):** `_protected_operation_keys` (CT+OP+op do cockpit,
+  fail-closed) rejeita o lote com 409 antes de qualquer write.
+- **`withdrawn_operations` (D2):** nova chave no `payload_json`; marca por
+  `(CT+OP+op)` com `withdrawn_at`/`withdrawn_by`. `WithdrawnMarks` consolida
+  conjuntos + operações como única entrada de visibilidade — `is_withdrawn`,
+  `visible_operations`, line feeder e cockpit consultam o estado completo
+  (sem fallback de meia-verdade). Refresh reaplica a lista (sobrevive ao
+  «Atualizar»), idempotente e independente de `withdrawn_conjuntos`.
+- **Payload:** `withdrawn.operations[]` expõe as retiradas individuais para o
+  modal «Fora da programação» (aditivo — `items[]` de conjuntos intacto).
+
+### Frontend
+
+- Menu contextual em modo coletivo: «Enviar selecionadas» abre o modal de
+  destino (modo `selection`, contagem + centro de origem) e «Retirar
+  selecionadas» pede confirmação — ambos desabilitados com hint quando a
+  execução do cockpit está indisponível (gate de UX; o backend continua
+  autoridade).
+- `expected_keys` enviado = ordem vigente do CT ativo na tela
+  (`keysFromOperations(rows)`), mesmo contrato do reorder.
+- 409 → mensagem do servidor + `history.reset()` + `reload()` (mesmo
+  comportamento do sequenciamento).
+- Modal «Fora da programação» lista operações retiradas individualmente com
+  devolução por item; o botão conta conjuntos + operações.
+
+### Verificação
+
+- `tests/test_machine_load.py`: +20 testes E4 — lote move/ordena no destino,
+  stale `expected_keys`→409 (service e HTTP), item ausente/duplicado→422,
+  source==target/destino desconhecido→422, run protegido→409 sem write,
+  fail-closed quando a fonte de runs falha, OP+op em dois CTs move só a
+  instância da origem, replay A→B→A cancela entradas, permissão negada,
+  retirada esconde só as marcadas/irmãs do conjunto visíveis, união de marcas
+  (op retirada + conjunto retirado continua oculta), restore por operação,
+  refresh preserva `withdrawn_operations`, HTTP 409/422.
+- `tests/test_machine_load_withdrawal.py`: domínio migrado para
+  `WithdrawnMarks` (sem fallback de set solto).
+- Suíte completa da API: 1141 passed, 2 falhas baseline fora do escopo
+  (line_feeder, operator_directory).
+- Frontend: 37 arquivos / 269 testes (menu coletivo: ações habilitadas
+  executam callbacks, bloqueio coletivo desabilita com hint); build OK;
   lint/tsc só baseline.

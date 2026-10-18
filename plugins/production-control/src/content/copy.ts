@@ -247,9 +247,9 @@ export const copy = {
       groupSelected: "Agrupar operações selecionadas",
       transferSelected: "Enviar selecionadas para outro centro de trabalho",
       withdrawSelected: "Retirar selecionadas da programação",
-      /** Ações coletivas existem como UX, mas os contratos são das Etapas 3 e 4. */
-      collectivePendingHint:
-        "Disponível nas próximas etapas — ainda não altera a programação.",
+      /** Ações coletivas bloqueadas — execução do cockpit ainda não confirmada. */
+      collectiveUnavailableHint:
+        "Estado de execução indisponível — ação coletiva bloqueada por segurança.",
       clearSelection: "Limpar seleção",
     },
     selection: {
@@ -259,7 +259,7 @@ export const copy = {
       count: (count: number) =>
         count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
       pendingHint:
-        "Agrupe pelo botão direito numa linha selecionada; transferir e retirar em lote chegam na próxima etapa.",
+        "Ações coletivas pelo botão direito numa linha selecionada: agrupar, transferir ou retirar.",
       dragDisabledHint: "Arraste indisponível com várias operações selecionadas.",
       clear: "Limpar seleção",
       clearAria: "Limpar seleção de operações",
@@ -276,13 +276,31 @@ export const copy = {
         "Estado de execução indisponível — agrupamento bloqueado por segurança.",
       groupProtected: (order: string, operation: string) =>
         `Agrupamento bloqueado: OP ${order} · operação ${operation} está em execução.`,
+      withdrawConfirmTitle: (count: number) =>
+        count === 1
+          ? "Retirar 1 operação da programação?"
+          : `Retirar ${count} operações da programação?`,
+      withdrawConfirmMessage:
+        "Só as operações selecionadas saem da fila — as demais OPs do mesmo conjunto permanecem. Devolver acontece em «Fora da programação».",
+      withdrawConfirmAction: "Retirar da programação",
+      transferred: (count: number, center: string) =>
+        count === 1
+          ? `1 operação enviada para o fim da fila de ${center}.`
+          : `${count} operações enviadas para o fim da fila de ${center}.`,
     },
     transfer: {
       modalTitle: "Enviar item para outro centro de trabalho",
       modalTitleConjunto: "Enviar conjunto para outro centro de trabalho",
+      modalTitleSelection: "Enviar operações selecionadas para outro centro",
       lead: "A operação sai da fila do centro atual e entra no fim da fila do destino. Depois é só reordenar ou priorizar por lá.",
       leadConjunto:
         "Só as OPs deste conjunto que estão neste centro de trabalho vão para o destino. OPs do mesmo conjunto em outros CTs permanecem onde estão.",
+      leadSelection:
+        "As operações selecionadas saem da fila deste centro e entram no fim da fila do destino, na ordem em que aparecem. Depois é só reordenar ou priorizar por lá.",
+      selectionSummary: (count: number, center: string) =>
+        count === 1
+          ? `1 operação selecionada · centro ${center}`
+          : `${count} operações selecionadas · centro ${center}`,
       operationSummary: (order: string, operation: string) => `OP ${order} · operação ${operation}`,
       conjuntoSummary: (conjunto: string, center: string) =>
         `Conjunto ${conjunto} · apenas no centro ${center}`,
@@ -315,6 +333,12 @@ export const copy = {
         return "Retirado da programação";
       },
       restoreAction: "Devolver à fila",
+      operationsTitle: "Operações retiradas",
+      operationsLead:
+        "Só a operação volta à fila — as demais OPs do mesmo conjunto continuam fora até o conjunto ser devolvido.",
+      operationLabel: (order: string, operation: string, center: string) =>
+        `OP ${order} · operação ${operation} · ${center}`,
+      emptyOperations: "Nenhuma operação retirada individualmente neste período.",
       locateBadge: "Fora da programação",
     },
     manualTool: "Mão de obra",

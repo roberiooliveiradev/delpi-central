@@ -8,23 +8,28 @@ import { conjuntoKeyFromOrder } from "../utils/machineLoadLocate";
 
 const fieldClasses = formFieldShellBemClasses("ppc");
 
-export type MachineLoadTransferMode = "operation" | "conjunto";
+export type MachineLoadTransferMode = "operation" | "conjunto" | "selection";
 
 type Props = {
   open: boolean;
   mode?: MachineLoadTransferMode;
   operation: MachineLoadOperation | null;
+  /** Modo `selection`: quantas operações entram no lote e de que centro saem. */
+  selectionCount?: number;
+  sourceCenter?: string | null;
   workCenters: MachineLoadWorkCenter[];
   busy?: boolean;
   onClose: () => void;
   onConfirm: (targetWorkCenter: string) => void;
 };
 
-/** Escolha do centro de trabalho de destino (item ou conjunto no CT atual). */
+/** Escolha do centro de trabalho de destino (item, conjunto no CT ou seleção). */
 export function MachineLoadTransferModal({
   open,
   mode = "operation",
   operation,
+  selectionCount = 0,
+  sourceCenter = null,
   workCenters,
   busy = false,
   onClose,
@@ -33,13 +38,17 @@ export function MachineLoadTransferModal({
   const title =
     mode === "conjunto"
       ? copy.machineLoad.transfer.modalTitleConjunto
-      : copy.machineLoad.transfer.modalTitle;
+      : mode === "selection"
+        ? copy.machineLoad.transfer.modalTitleSelection
+        : copy.machineLoad.transfer.modalTitle;
   return (
     <HostContainedDialog open={open} title={title} onClose={onClose}>
       <TransferForm
         key={`${mode}:${operation?.production_order ?? ""}:${operation?.operation_code ?? ""}`}
         mode={mode}
         operation={operation}
+        selectionCount={selectionCount}
+        sourceCenter={sourceCenter}
         workCenters={workCenters}
         busy={busy}
         onClose={onClose}
@@ -53,13 +62,16 @@ export function MachineLoadTransferModal({
 function TransferForm({
   mode,
   operation,
+  selectionCount = 0,
+  sourceCenter = null,
   workCenters,
   busy,
   onClose,
   onConfirm,
 }: Omit<Props, "open">) {
   const [target, setTarget] = useState("");
-  const currentCenter = operation?.work_center ?? "";
+  const currentCenter =
+    mode === "selection" ? (sourceCenter ?? "") : (operation?.work_center ?? "");
   const conjuntoKey = conjuntoKeyFromOrder(operation?.production_order);
 
   const options = workCenters
@@ -76,9 +88,21 @@ function TransferForm({
       <p className="ppc-transfer__lead">
         {mode === "conjunto"
           ? copy.machineLoad.transfer.leadConjunto
-          : copy.machineLoad.transfer.lead}
+          : mode === "selection"
+            ? copy.machineLoad.transfer.leadSelection
+            : copy.machineLoad.transfer.lead}
       </p>
-      {operation ? (
+      {mode === "selection" ? (
+        <p className="ppc-transfer__operation">
+          <strong>
+            {copy.machineLoad.transfer.selectionSummary(
+              selectionCount,
+              currentCenter || "—",
+            )}
+          </strong>
+          <span>{copy.machineLoad.transfer.currentCenter(currentCenter || "—")}</span>
+        </p>
+      ) : operation ? (
         <p className="ppc-transfer__operation">
           <strong>
             {mode === "conjunto" && conjuntoKey

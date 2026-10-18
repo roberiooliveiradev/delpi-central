@@ -593,6 +593,96 @@ export async function transferMachineLoadConjunto(params: {
   );
 }
 
+/** Move as operações selecionadas do centro de origem para o fim da fila do destino. */
+export async function transferMachineLoadOperations(params: {
+  branch: string;
+  sourceWorkCenter: string;
+  targetWorkCenter: string;
+  operations: Array<{ production_order: string; operation_code: string }>;
+  /** Ordem vigente do CT de origem na tela — precondição de concorrência (409). */
+  expectedKeys: Array<{ production_order: string; operation_code: string }>;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadTransferPayload> {
+  const search = machineLoadSearch({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadTransferPayload;
+  }>(
+    ppcApiUrl("/machine-load/transfer-operations?" + search.toString()),
+    {
+      source_work_center: params.sourceWorkCenter,
+      target_work_center: params.targetWorkCenter,
+      operations: params.operations,
+      expected_keys: params.expectedKeys,
+    },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível transferir as operações selecionadas.",
+  );
+}
+
+/** Retira da programação somente as operações selecionadas (não é o conjunto). */
+export async function withdrawMachineLoadOperations(params: {
+  branch: string;
+  operations: Array<{
+    work_center: string;
+    production_order: string;
+    operation_code: string;
+  }>;
+  expectedKeys: Array<{ production_order: string; operation_code: string }>;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWithdrawPayload> {
+  const search = machineLoadSearch({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadWithdrawPayload;
+  }>(
+    ppcApiUrl("/machine-load/withdraw-operations?" + search.toString()),
+    { operations: params.operations, expected_keys: params.expectedKeys },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível retirar as operações selecionadas da programação.",
+  );
+}
+
+/** Devolve à fila operações retiradas individualmente — não restaura o conjunto. */
+export async function restoreMachineLoadOperations(params: {
+  branch: string;
+  operations: Array<{
+    work_center: string;
+    production_order: string;
+    operation_code: string;
+  }>;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWithdrawPayload> {
+  const search = machineLoadSearch({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadWithdrawPayload;
+  }>(
+    ppcApiUrl("/machine-load/restore-operations?" + search.toString()),
+    { operations: params.operations },
+    { signal: params.signal },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Não foi possível devolver as operações à fila.",
+  );
+}
+
 /**
  * Estado de execução oficial do cockpit — snapshot completo dos runs abertos
  * da filial (production_runs locais, sem HZA). Aplicado sobre a fila já na
