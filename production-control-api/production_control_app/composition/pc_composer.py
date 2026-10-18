@@ -258,6 +258,10 @@ def build_machine_load_service(
         PostgresProductionRunRepository,
     )
 
+    from production_control_app.infrastructure.persistence.postgres_sequencing_profile_repository import (  # noqa: E501
+        PostgresSequencingProfileRepository,
+    )
+
     return MachineLoadService(
         gateway or DelpiProductionGateway(),
         snapshots=snapshots or build_machine_load_snapshot_repository(),
@@ -266,6 +270,8 @@ def build_machine_load_service(
         change_notifier=notify_machine_load_changed,
         list_open_runs=PostgresProductionRunRepository().list_open_runs_by_branch,
         open_run_items=build_machine_load_cockpit_status_service().open_run_items,
+        sequencing_profiles=PostgresSequencingProfileRepository(),
+        material_resolver=build_sequencing_material_resolver_service(),
     )
 
 

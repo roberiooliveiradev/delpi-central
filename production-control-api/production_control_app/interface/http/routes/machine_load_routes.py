@@ -21,6 +21,7 @@ from production_control_app.domain.errors import (
     DelpiGatewayError,
     InvalidBranch,
     MachineLoadSequenceConflict,
+    SequencingProfileInvalid,
     SnapshotNotFound,
 )
 from production_control_app.infrastructure.persistence.plugins_postgres_connection import (
@@ -127,6 +128,8 @@ def _handle_machine_load_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, MachineLoadSequenceConflict):
         return fail(str(exc), 409)
+    if isinstance(exc, SequencingProfileInvalid):
+        return fail(str(exc), 422)
     if isinstance(exc, ValueError):
         return fail(str(exc), 422)
     if isinstance(exc, DelpiGatewayError):

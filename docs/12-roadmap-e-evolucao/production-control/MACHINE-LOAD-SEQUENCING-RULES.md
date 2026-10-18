@@ -343,3 +343,42 @@ legítimo, OP pedida ausente do eco) e escopo/identidade (filial
 divergente, CT errado, OP/operação ausente, herança de filial do contexto,
 não-disparo de consulta em entrada inválida). Regressão: suíte completa da
 API PASS com as duas falhas baseline pré-existentes já documentadas.
+
+## 11. Etapa 3 — perfis aplicados pelo botão Otimizar (implementada)
+
+`POST /machine-load/optimize` passa a consultar os vínculos `(filial, CT)` da
+fila WORKING e aplica o perfil ativo de cada CT, na ordem cadastrada — o CT
+sem perfil segue os critérios gerais do modal, exatamente como antes. O
+endpoint legado `/machine-load/optimize-delivery` nunca ativa perfis
+(`use_sequencing_profiles=False`).
+
+### 11.1 Semântica do motor
+
+- `pa_due_date` continua soberano e primeiro — sempre.
+- Critérios de agrupamento do perfil (`tool_group`, `material_code`) viram
+  ranks lexicográficos por data, na ordem de cadastro; ranking por primeira
+  ocorrência livre na fila, desempate estável.
+- `material_code` agrupa pelo código exato resolvido pela E2 — nunca por
+  grupo SB1. Operações `missing`/`ambiguous` (política `flag`) não formam
+  grupo: ficam depois dos grupos reais da data, preservando a ordem relativa.
+- Operações sem data seguem ao final sem reagrupamento.
+
+### 11.2 Fail-closed
+
+- Vínculo para perfil inexistente, `draft`/`archived` ou critério inválido →
+  erro 422 controlado, sem fallback silencioso e sem mutação.
+- Perfil compartilhado entre filiais (vínculo em outra filial ou
+  `origin_branch` diferente) → bloqueado até a ratificação da política
+  cross-branch (ARCHITECTURE_DECISION_REQUIRED segue pendente).
+- Resolução `incomplete`/`source_unavailable` → a otimização inteira aborta
+  sem mutação; nunca otimização parcial sobre dado insuficiente.
+- Toda leitura externa (vínculos, perfis, resolver E2) ocorre fora do lock;
+  dentro dele, drift de fila, de vínculo ou de revisão/status do perfil
+  vira `MachineLoadSequenceConflict` (409) — nada é gravado com base velha.
+- Resposta `optimization.profiles` (aditiva) informa, por CT, `profile_id`,
+  `name`, `criteria` aplicados e `flagged_count` (missing/ambiguous).
+
+### 11.3 Escopo preservado
+
+Sem novas rotas, migrations ou controles no modal; proteção de runs abertos,
+retiradas, DRAFT/LIVE, no-op sem write e notificação pós-commit inalterados.
