@@ -71,3 +71,24 @@
   .delpi-ui-conversation-reception__description {
   margin-top: 10px;
 }
+
+/* D01: compact reception rhythm only inside the Portal Companion Dock.
+   Preserve the shared anatomy and full-page appearance; no new component. */
+.global-delia-dock .delpi-ui-conversation-reception {
+  max-width: 28rem;
+  padding: 16px 12px;
+}
+.global-delia-dock .delpi-ui-conversation-reception__avatar {
+  margin-bottom: 12px;
+}
+.global-delia-dock .delpi-ui-conversation-reception__title {
+  font-size: 1.125rem;
+  line-height: 1.35;
+}
+.global-delia-dock .delpi-ui-conversation-reception__description {
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.global-delia-dock .delpi-ui-conversation-reception__note {
+  margin-top: 8px;
+}
