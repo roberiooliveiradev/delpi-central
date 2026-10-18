@@ -110,6 +110,16 @@ from production_control_app.domain.ports.product_3d_model_storage import Product
 from production_control_app.infrastructure.persistence.postgres_product_3d_model_repository import (
     PostgresProduct3DModelRepository,
 )
+from production_control_app.infrastructure.persistence.postgres_sequencing_profile_repository import (
+    PostgresSequencingProfileRepository,
+)
+from production_control_app.application.services.sequencing_profile_service import (
+    SequencingProfileService,
+)
+
+
+def build_sequencing_profile_service() -> SequencingProfileService:
+    return SequencingProfileService(PostgresSequencingProfileRepository())
 
 
 def build_catalog_service() -> SubpluginCatalogService:
