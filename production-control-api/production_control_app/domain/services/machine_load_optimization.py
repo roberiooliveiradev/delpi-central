@@ -24,6 +24,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from production_control_app.domain.sequencing_profile import (
+    CRITERION_MATERIAL_CODE,
+    CRITERION_TOOL_GROUP,
+)
+from production_control_app.domain.services.line_feeder_requirements import (
+    _normalize_operation_code,
+)
 from production_control_app.domain.services.machine_load_delivery_window import (
     missing_due_date_count,
     operation_due_date,
@@ -35,6 +42,9 @@ from production_control_app.domain.services.machine_load_queue_slots import (
     protected_predicate,
     reorder_free_slots,
     slots_by_work_center,
+)
+from production_control_app.domain.services.production_order_key import (
+    normalize_order_code,
 )
 
 # «MOD» é mão de obra — operação manual sem ferramental. Espelha o contrato
@@ -51,6 +61,18 @@ class MachineLoadOptimizationCriteria:
     """
 
     group_by_tool: bool = False
+
+
+@dataclass(frozen=True)
+class MachineLoadCenterCriteria:
+    """Critérios efetivos de um CT, na ordem de precedência após a entrega.
+
+    ``grouping`` usa os tipos de critério do perfil (``tool_group``,
+    ``material_code``) já na ordem cadastrada. ``pa_due_date`` nunca aparece
+    aqui — é sempre o critério soberano aplicado antes dos grupos.
+    """
+
+    grouping: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -80,14 +102,23 @@ def optimize_machine_load_queue(
     *,
     criteria: MachineLoadOptimizationCriteria,
     protected_keys: set[ProtectedOperationKey] | None = None,
+    center_criteria: dict[str, MachineLoadCenterCriteria] | None = None,
+    material_codes: dict[tuple[str, str, str], str] | None = None,
 ) -> MachineLoadOptimizationResult:
     """Resequencia a fila de cada centro pela hierarquia data → critérios.
 
     ``protected_keys`` traz as operações com run aberto no cockpit por
     (work_center, production_order, operation_code) — a única fonte que
     trava posição; flags do snapshot congelado não protegem.
+
+    ``center_criteria`` prevalece sobre ``criteria`` por centro: quando o CT
+    tem perfil ativo, os agrupamentos seguem a ordem cadastrada nele (a data
+    continua soberana antes de todos). ``material_codes`` traz o código de
+    cabo resolvido por (work_center, production_order, operation_code)
+    normalizados — operação sem código resolvido não forma grupo artificial.
     """
     is_protected = protected_predicate(protected_keys)
+    center_criteria = center_criteria or {}
 
     next_ops = list(operations)
     centers: list[str] = []
@@ -101,7 +132,19 @@ def optimize_machine_load_queue(
         if not free:
             continue
 
-        desired = _desired_free_order(center_ops, free, criteria)
+        plan = center_criteria.get(center)
+        grouping = (
+            plan.grouping
+            if plan is not None
+            else ((CRITERION_TOOL_GROUP,) if criteria.group_by_tool else ())
+        )
+        desired = _desired_free_order(
+            center_ops,
+            free,
+            grouping=grouping,
+            material_codes=material_codes,
+            center=center,
+        )
         if desired == free:
             continue
 
@@ -129,51 +172,96 @@ def optimize_machine_load_queue(
     )
 
 
+def _material_identity(
+    center: str, operation: dict[str, Any]
+) -> tuple[str, str, str]:
+    """Chave do material resolvido: (CT atual, OP, operação) normalizados."""
+    return (
+        center,
+        normalize_order_code(operation.get("production_order")),
+        _normalize_operation_code(operation.get("operation_code")),
+    )
+
+
+def _group_key_fn(
+    name: str,
+    center: str,
+    material_codes: dict[tuple[str, str, str], str] | None,
+) -> Any:
+    """Função item → chave de grupo (``None`` = sem grupo, vai por último)."""
+    if name == CRITERION_TOOL_GROUP:
+        return lambda op: normalize_tool_group(op.get("tool"))
+    if name == CRITERION_MATERIAL_CODE:
+        codes = material_codes or {}
+        return lambda op: codes.get(_material_identity(center, op))
+    # Critério não suportado pelo motor nunca é ignorado em silêncio.
+    raise ValueError(f"Critério de agrupamento não suportado pelo motor: {name}.")
+
+
 def _desired_free_order(
     center_ops: list[dict[str, Any]],
     free: list[int],
-    criteria: MachineLoadOptimizationCriteria,
+    *,
+    grouping: tuple[str, ...],
+    material_codes: dict[tuple[str, str, str], str] | None,
+    center: str,
 ) -> list[int]:
-    """Permutação das posições livres: data → ferramenta → ordem atual.
+    """Permutação das posições livres: data → grupos cadastrados → ordem atual.
 
-    O ranking dos grupos de ferramenta é calculado por (centro, data) olhando
-    **só os slots livres** — uma ferramenta de operação travada não comanda a
-    preferência das livres.
+    O ranking de cada critério de agrupamento é calculado por (centro, data)
+    olhando **só os slots livres** — um grupo de operação travada não comanda
+    a preferência das livres. A ordem dos critérios no perfil vira a ordem
+    lexicográfica dos ranks.
     """
-    tool_ranks = _tool_group_ranks(center_ops, free) if criteria.group_by_tool else {}
+    key_fns = [
+        _group_key_fn(name, center, material_codes) for name in grouping
+    ]
+    rankers = [
+        _group_ranks(center_ops, free, key_fn=key_fn) for key_fn in key_fns
+    ]
 
-    def sort_key(position: int) -> tuple[int, str, int]:
+    def sort_key(position: int) -> tuple:
         operation = center_ops[position]
         due = operation_due_date(operation)
         # Sem entrega vai para o fim; sorted() é estável, então o empate —
         # inclusive o bloco inteiro sem data — preserva a ordem atual.
         if due is None:
-            return (1, "", 0)
-        if not criteria.group_by_tool:
-            return (0, due, 0)
-        tool = normalize_tool_group(operation.get("tool"))
-        ranks = tool_ranks.get(due, {})
-        # Sem ferramenta fica depois de todos os grupos reais daquela data.
-        rank = len(ranks) if tool is None else ranks[tool]
-        return (0, due, rank)
+            return (1, "") + (0,) * len(grouping)
+        ranks = tuple(
+            _group_rank(rankers[index], due, key_fns[index](operation))
+            for index in range(len(grouping))
+        )
+        return (0, due, *ranks)
 
     return sorted(free, key=sort_key)
 
 
-def _tool_group_ranks(
+def _group_rank(
+    ranks: dict[str, dict[str, int]], due: str, key: str | None
+) -> int:
+    """Posição do grupo na data; sem grupo fica depois de todos os reais."""
+    per_date = ranks.get(due, {})
+    if key is not None and key in per_date:
+        return per_date[key]
+    return len(per_date)
+
+
+def _group_ranks(
     center_ops: list[dict[str, Any]],
     free: list[int],
+    *,
+    key_fn: Any,
 ) -> dict[str, dict[str, int]]:
-    """Ranking de ferramentas por data, na ordem da primeira ocorrência livre."""
+    """Ranking de grupos por data, na ordem da primeira ocorrência livre."""
     ranks: dict[str, dict[str, int]] = {}
     for position in free:
         due = operation_due_date(center_ops[position])
         if due is None:
             continue
-        tool = normalize_tool_group(center_ops[position].get("tool"))
-        if tool is None:
+        key = key_fn(center_ops[position])
+        if key is None:
             continue
         per_date = ranks.setdefault(due, {})
-        if tool not in per_date:
-            per_date[tool] = len(per_date)
+        if key not in per_date:
+            per_date[key] = len(per_date)
     return ranks

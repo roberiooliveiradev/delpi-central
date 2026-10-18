@@ -22,9 +22,24 @@ from production_control_app.domain.ports.machine_load_snapshot_repository import
     MachineLoadSnapshotRepositoryPort,
 )
 from production_control_app.domain.ports.production_orders_gateway import ProductionOrdersGateway
+from production_control_app.domain.sequencing_profile import (
+    CRITERION_MATERIAL_CODE,
+    CRITERION_TOOL_GROUP,
+    PROFILE_STATUS_ACTIVE,
+    validate_criteria as validate_sequencing_criteria,
+)
 from production_control_app.domain.services.machine_load_optimization import (
+    MachineLoadCenterCriteria,
     MachineLoadOptimizationCriteria,
     optimize_machine_load_queue,
+)
+from production_control_app.domain.services.sequencing_material_resolution import (
+    RESOLUTION_AMBIGUOUS,
+    RESOLUTION_MISSING,
+    RESOLUTION_RESOLVED,
+)
+from production_control_app.domain.services.line_feeder_requirements import (
+    _normalize_operation_code,
 )
 from production_control_app.domain.services.machine_load_delivery_window import (
     delivery_bounds,
@@ -233,6 +248,15 @@ def _user_label(user: object | None) -> str | None:
     return None
 
 
+def _queue_scope_key(item: dict[str, Any]) -> tuple[str, str, str]:
+    """Identidade de fila para drift-check: CT atual + OP + operação."""
+    return (
+        str(item.get("work_center") or "").strip(),
+        normalize_order_code(item.get("production_order")),
+        _normalize_operation_code(item.get("operation_code")),
+    )
+
+
 def _operation_key(item: dict[str, Any]) -> tuple[str, str]:
     return (
         str(item.get("production_order") or "").strip(),
@@ -294,6 +318,8 @@ class MachineLoadService:
         change_notifier: Callable[..., None] | None = None,
         list_open_runs: Callable[[str], list[dict[str, Any]]] | None = None,
         open_run_items: Callable[..., list[dict[str, Any]]] | None = None,
+        sequencing_profiles: Any | None = None,
+        material_resolver: Any | None = None,
     ) -> None:
         self._gateway = gateway
         self._snapshots = snapshots
@@ -302,6 +328,8 @@ class MachineLoadService:
         self._change_notifier = change_notifier
         self._list_open_runs = list_open_runs
         self._open_run_items = open_run_items
+        self._sequencing_profiles = sequencing_profiles
+        self._material_resolver = material_resolver
 
     def resolve_delivery_window(
         self,
@@ -1067,12 +1095,17 @@ class MachineLoadService:
         branch: str,
         work_center: str | None = None,
     ) -> dict[str, Any]:
-        """Compatibilidade do endpoint legado: otimização só por entrega do PA."""
+        """Compatibilidade do endpoint legado: otimização só por entrega do PA.
+
+        Nunca aplica perfis de sequenciamento — a ativação das regras por CT
+        pertence exclusivamente ao endpoint ``/machine-load/optimize``.
+        """
         return self.optimize_sequence(
             user,
             branch=branch,
             criteria=MachineLoadOptimizationCriteria(group_by_tool=False),
             work_center=work_center,
+            use_sequencing_profiles=False,
         )
 
     def optimize_sequence(
@@ -1082,14 +1115,20 @@ class MachineLoadService:
         branch: str,
         criteria: MachineLoadOptimizationCriteria,
         work_center: str | None = None,
+        use_sequencing_profiles: bool = True,
     ) -> dict[str, Any]:
         """Resequencia a fila de todos os centros pela entrega do PA (+critérios).
 
         O carga máquina do TOTVS às vezes deixa material de entrega distante à
         frente do que está vencendo. Operações com run aberto no cockpit
         continuam onde estão.
+
+        Com ``use_sequencing_profiles``, cada CT com perfil ativo vinculado
+        aplica os critérios cadastrados, que prevalecem sobre os critérios
+        gerais somente naquele CT; CT sem perfil segue a seleção do modal.
         """
         self._assert_can_view(user, branch)
+        branch = self._branch_access.assert_valid_branch(branch)
         cfg = _machine_load_settings()
         messages = (
             cfg.get("optimizeDelivery")
@@ -1116,6 +1155,22 @@ class MachineLoadService:
         # sequenciar com proteção vazia seria corromper a fila.
         protected_keys = self._protected_operation_keys(branch=branch)
 
+        # Perfis de sequenciamento por CT (Regras de Sequenciamento — E3):
+        # leitura de vínculos e resolução de materiais são I/O externo e
+        # ficam fora do lock de escrita. Vínculo inconsistente, perfil
+        # inativo ou resolução incompleta aborta antes de qualquer mutação.
+        profile_plan: dict[str, dict[str, Any]] = {}
+        binding_map: dict[str, Any] = {}
+        material_codes: dict[tuple[str, str, str], str] = {}
+        profile_flagged: dict[str, int] = {}
+        if use_sequencing_profiles:
+            profile_plan, binding_map = self._center_profile_plan(
+                branch=branch, operations=operations
+            )
+            material_codes, profile_flagged = self._resolve_profile_materials(
+                branch=branch, plan=profile_plan, operations=operations
+            )
+
         def mutate(_row: dict[str, Any], locked_payload: dict[str, Any]) -> Any:
             stored = payload_operations(locked_payload)
             withdrawn = withdrawn_marks(locked_payload)
@@ -1124,8 +1179,25 @@ class MachineLoadService:
                 raise ValueError(
                     template_empty_queue
                 )
+            center_criteria = None
+            if profile_plan:
+                self._assert_optimization_scope_unchanged(
+                    branch=branch,
+                    plan=profile_plan,
+                    binding_map=binding_map,
+                    expected_operations=operations,
+                    visible=visible,
+                )
+                center_criteria = {
+                    center: MachineLoadCenterCriteria(grouping=entry["grouping"])
+                    for center, entry in profile_plan.items()
+                }
             result = optimize_machine_load_queue(
-                visible, criteria=criteria, protected_keys=protected_keys
+                visible,
+                criteria=criteria,
+                protected_keys=protected_keys,
+                center_criteria=center_criteria,
+                material_codes=material_codes or None,
             )
             visible_keys = [_operation_key(item) for item in visible]
             if not result.work_centers or [
@@ -1176,6 +1248,17 @@ class MachineLoadService:
             "moved_operation_count": result.moved_operation_count if result else 0,
             "kept_ahead_count": result.kept_ahead_count if result else 0,
             "missing_due_date_count": result.missing_due_date_count if result else 0,
+            # CTs que otimizaram pelas regras próprias do perfil (RS E3) —
+            # chave aditiva; consumidores antigos a ignoram.
+            "profiles": {
+                center: {
+                    "profile_id": str(entry["profile"].id),
+                    "name": entry["profile"].name,
+                    "criteria": [c["type"] for c in entry["criteria"]],
+                    "flagged_count": profile_flagged.get(center, 0),
+                }
+                for center, entry in profile_plan.items()
+            },
             "message": template.format(
                 centers=len(work_centers),
                 operations=result.moved_operation_count if result else 0,
@@ -1184,6 +1267,189 @@ class MachineLoadService:
             ),
         }
         return presented
+
+    def _center_profile_plan(
+        self,
+        *,
+        branch: str,
+        operations: Sequence[dict[str, Any]],
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+        """Perfil ativo por CT presente na fila — leitura fora do lock.
+
+        Inconsistência nunca vira fallback silencioso: vínculo para perfil
+        inexistente, inativo ou inválido aborta a otimização com erro
+        controlado. Perfil compartilhado entre filiais (``origin_branch`` ou
+        vínculo fora da filial) NÃO comanda mutação de fila enquanto a
+        política cross-branch aguarda ratificação — ver doc §10.6.
+
+        Retorna (plano, mapa de vínculos observado) — o mapa cobre todos os
+        CTs da fila para que o drift-check no lock detecte vínculo novo.
+        """
+        if self._sequencing_profiles is None:
+            return {}, {}
+        centers = {
+            str(item.get("work_center") or "").strip() for item in operations
+        }
+        centers.discard("")
+        plan: dict[str, dict[str, Any]] = {}
+        binding_map: dict[str, Any] = {center: None for center in centers}
+        for binding in self._sequencing_profiles.list_bindings(branch=branch):
+            center = str(binding.work_center or "").strip()
+            if center not in centers:
+                continue
+            binding_map[center] = binding.profile_id
+            profile = self._sequencing_profiles.get_profile(
+                profile_id=binding.profile_id
+            )
+            if profile is None:
+                raise ValueError(
+                    f"O centro {center} está vinculado a um perfil de "
+                    "sequenciamento inexistente."
+                )
+            if profile.status != PROFILE_STATUS_ACTIVE:
+                raise ValueError(
+                    f"O perfil '{profile.name}' vinculado ao centro {center} "
+                    "não está ativo."
+                )
+            bound_branches = set(
+                self._sequencing_profiles.list_bound_branches(
+                    profile_id=profile.id
+                )
+            )
+            shared = bool(bound_branches - {branch}) or (
+                profile.origin_branch is not None
+                and profile.origin_branch != branch
+            )
+            if shared:
+                raise ValueError(
+                    f"O perfil '{profile.name}' do centro {center} é "
+                    "compartilhado entre filiais; aplicá-lo à fila aguarda a "
+                    "ratificação da política cross-branch."
+                )
+            criteria_list = validate_sequencing_criteria(profile.criteria)
+            grouping = tuple(
+                criterion["type"] for criterion in criteria_list[1:]
+            )
+            unsupported = set(grouping) - {CRITERION_MATERIAL_CODE, CRITERION_TOOL_GROUP}
+            if unsupported:
+                raise ValueError(
+                    f"O perfil '{profile.name}' do centro {center} usa "
+                    f"critério não suportado pelo motor: {sorted(unsupported)}."
+                )
+            plan[center] = {
+                "profile": profile,
+                "criteria": criteria_list,
+                "grouping": grouping,
+            }
+        return plan, binding_map
+
+    def _resolve_profile_materials(
+        self,
+        *,
+        branch: str,
+        plan: dict[str, dict[str, Any]],
+        operations: Sequence[dict[str, Any]],
+    ) -> tuple[dict[tuple[str, str, str], str], dict[str, int]]:
+        """Códigos de cabo por CT com material_code — I/O fora do lock.
+
+        ``incomplete``/``source_unavailable`` aborta a otimização inteira —
+        nunca otimização parcial sobre dado insuficiente. ``missing`` e
+        ``ambiguous`` seguem a política ``flag``: contam e não formam grupo.
+        """
+        codes: dict[tuple[str, str, str], str] = {}
+        flagged: dict[str, int] = {}
+        for center, entry in plan.items():
+            if CRITERION_MATERIAL_CODE not in entry["grouping"]:
+                continue
+            if self._material_resolver is None:
+                raise RuntimeError(
+                    "Resolvedor de materiais do sequenciamento não configurado."
+                )
+            center_ops = [
+                item
+                for item in operations
+                if str(item.get("work_center") or "").strip() == center
+            ]
+            result = self._material_resolver.resolve_materials(
+                branch=branch,
+                work_center=center,
+                operations=center_ops,
+                criteria=entry["criteria"],
+            )
+            center_flagged = 0
+            for item in result.get("items", []):
+                status = item.get("status")
+                if status == RESOLUTION_RESOLVED:
+                    codes[
+                        (
+                            center,
+                            normalize_order_code(item.get("production_order")),
+                            _normalize_operation_code(
+                                item.get("operation_code")
+                            ),
+                        )
+                    ] = str(item.get("product_code"))
+                elif status in (RESOLUTION_MISSING, RESOLUTION_AMBIGUOUS):
+                    center_flagged += 1
+                else:
+                    raise ValueError(
+                        f"Materiais do centro {center} indisponíveis ou "
+                        "incompletos — a otimização não foi aplicada."
+                    )
+            flagged[center] = center_flagged
+        return codes, flagged
+
+    def _assert_optimization_scope_unchanged(
+        self,
+        *,
+        branch: str,
+        plan: dict[str, dict[str, Any]],
+        binding_map: dict[str, Any],
+        expected_operations: Sequence[dict[str, Any]],
+        visible: list[dict[str, Any]],
+    ) -> None:
+        """Conflito controlado se fila, vínculos ou perfis mudaram após a leitura.
+
+        Os códigos de material foram resolvidos para a fila observada — uma
+        fila diferente dentro do lock invalida a decisão em vez de
+        reaproveitar dados velhos.
+        """
+        expected = sorted(_queue_scope_key(item) for item in expected_operations)
+        current = sorted(_queue_scope_key(item) for item in visible)
+        if expected != current:
+            raise MachineLoadSequenceConflict(
+                "A fila foi alterada enquanto as regras eram preparadas. "
+                "Tente otimizar novamente."
+            )
+        current_bindings = {
+            str(binding.work_center or "").strip(): binding.profile_id
+            for binding in self._sequencing_profiles.list_bindings(branch=branch)
+        }
+        if any(
+            current_bindings.get(center) != binding_map.get(center)
+            for center in binding_map
+        ) or any(
+            current_bindings.get(center) is not None
+            and center not in binding_map
+            for center in current_bindings
+        ):
+            raise MachineLoadSequenceConflict(
+                "As regras de sequenciamento mudaram durante a otimização. "
+                "Tente novamente."
+            )
+        for entry in plan.values():
+            current_profile = self._sequencing_profiles.get_profile(
+                profile_id=entry["profile"].id
+            )
+            if (
+                current_profile is None
+                or current_profile.revision != entry["profile"].revision
+                or current_profile.status != PROFILE_STATUS_ACTIVE
+            ):
+                raise MachineLoadSequenceConflict(
+                    "As regras de sequenciamento mudaram durante a otimização. "
+                    "Tente novamente."
+                )
 
     def withdraw_conjunto(
         self,
