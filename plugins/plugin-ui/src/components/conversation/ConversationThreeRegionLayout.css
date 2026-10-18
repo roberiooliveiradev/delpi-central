@@ -485,3 +485,12 @@
   max-height: min(55%, calc(100% - 140px));
   min-width: 0;
 }
+
+/* D01: Dock-specific compact Conversas drawer. Preserve the existing overlay,
+   keyboard/focus lifecycle and rail; reveal more conversation beside it. The
+   generic compact drawer and full-page layout stay unchanged. */
+.global-delia-dock .delpi-ui-conversation-three-region--compact.delpi-ui-conversation-three-region--with-rail
+  .delpi-ui-conversation-three-region__left[data-drawer="true"] {
+  width: min(252px, calc(100% - var(--delpi-ui-three-rail) - 40px));
+  max-width: calc(100% - var(--delpi-ui-three-rail) - 40px);
+}
