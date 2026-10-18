@@ -17,13 +17,16 @@ from __future__ import annotations
 
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
-from contextvars import copy_context
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Callable, Sequence
+from typing import Any, Sequence
 from uuid import UUID
 
+from production_control_app.application.services.integration_batches import (
+    commitment_batch_size,
+    fan_out,
+    max_commitment_batches,
+)
 from production_control_app.application.services.line_feeder_settings import (
     message as setting_message,
     setting_int,
@@ -476,7 +479,7 @@ class LineFeederService:
         da api-delpi: quem fatia é o BFF (ver ``_fetch_commitments``). O teto aqui
         é só o limite de quantos lotes uma leitura pode custar.
         """
-        ceiling = _commitment_batch_size() * max(setting_int("maxCommitmentBatches", 30), 1)
+        ceiling = commitment_batch_size() * max_commitment_batches()
         orders: list[str] = []
         seen: set[str] = set()
         for item in operations:
@@ -504,11 +507,11 @@ class LineFeederService:
         passava de 20 s. Os lotes vão em paralelo com pool limitado, como o
         progresso do mapa de entrega.
         """
-        size = _commitment_batch_size()
+        size = commitment_batch_size()
         orders = list(production_orders)
         chunks = [orders[start : start + size] for start in range(0, len(orders), size)]
         commitments: dict[tuple[str, str], list[dict[str, Any]]] = {}
-        for payload in self._fan_out(
+        for payload in fan_out(
             lambda chunk: self._gateway.fetch_operation_materials_batch(
                 branch=branch,
                 production_orders=chunk,
@@ -518,36 +521,6 @@ class LineFeederService:
         ):
             commitments.update(normalize_commitments(_items(payload)))
         return commitments
-
-    @staticmethod
-    def _fan_out(
-        call: Callable[[Any], Any],
-        arguments: Sequence[Any],
-        *,
-        failure: str,
-        max_workers: int | None = None,
-    ) -> list[Any]:
-        """Leituras independentes em paralelo, com teto de workers.
-
-        A primeira falha vira ``DelpiGatewayError``: bloco incompleto não é bloco
-        degradado, e quem decide degradar é o chamador.
-        """
-        if not arguments:
-            return []
-        try:
-            if len(arguments) == 1:
-                return [call(arguments[0])]
-            limit = max_workers or setting_int("fetchMaxWorkers", 6)
-            workers = max(1, min(limit, len(arguments)))
-            with ThreadPoolExecutor(
-                max_workers=workers,
-                initializer=_caller_context_initializer(),
-            ) as pool:
-                return list(pool.map(call, arguments))
-        except DelpiGatewayError:
-            raise
-        except Exception as exc:  # noqa: BLE001
-            raise DelpiGatewayError(failure) from exc
 
     def _fetch_balances(
         self,
@@ -566,7 +539,7 @@ class LineFeederService:
             setting_str("sourceWarehouse", "01"),
         )
         try:
-            point_of_use, source = self._fan_out(
+            point_of_use, source = fan_out(
                 lambda warehouse: self._fetch_warehouse_balances(
                     branch=branch,
                     warehouse=warehouse,
@@ -854,32 +827,6 @@ class LineFeederService:
         if wanted not in setting_map("statuses"):
             raise ValueError("Situação inválida para o material.")
         return wanted
-
-
-def _caller_context_initializer() -> Callable[[], None]:
-    """Replica o contexto de quem pediu em cada worker do pool.
-
-    ``contextvars`` não são herdadas por thread: sem isto o gateway perderia o
-    JWT do usuário justamente nas fatias paralelas, e a mesma rota trocaria a
-    identidade do usuário pelo token de serviço só porque o corte ficou grande.
-    A captura tem de acontecer aqui, na thread chamadora — dentro do worker ela
-    copiaria o contexto vazio dele. Cada worker escreve no próprio contexto, em
-    vez de compartilhar um ``Context``, que não pode ser entrado por duas
-    threads ao mesmo tempo.
-    """
-    snapshot = list(copy_context().items())
-
-    def initialize() -> None:
-        for variable, value in snapshot:
-            variable.set(value)
-
-    return initialize
-
-
-def _commitment_batch_size() -> int:
-    """Lote menor que o teto da api-delpi: são vários em paralelo, não um só."""
-    cap = max(setting_int("maxProductionOrdersPerBatch", 300), 1)
-    return max(1, min(setting_int("commitmentBatchSize", 100), cap))
 
 
 def _requirement_payload(
