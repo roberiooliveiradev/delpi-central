@@ -1,14 +1,18 @@
 """Serviço de aplicação: resolve o material de cada operação em lote — RS E2.
 
-Owner da etapa de I/O: deduplica OPs por filial, fatia respeitando o teto da
-api-delpi, paraleliza com pool limitado e devolve a classificação por operação
-do resolvedor de domínio (``sequencing_material_resolution``). Nunca reordena,
+Owner da etapa de I/O: valida o escopo (filial + CT + identidade), deduplica
+OPs, fatia respeitando o teto da api-delpi, paraleliza com pool limitado,
+valida integralmente cada resposta e devolve a classificação por operação do
+resolvedor de domínio (``sequencing_material_resolution``). Nunca reordena,
 nunca grava fila/snapshot, nunca cria/vincula perfil — leitura pura.
 
-Fail-closed: lote que falhou → SOURCE_UNAVAILABLE; resposta malformada →
-INCOMPLETE; OPs acima do teto de janela → INCOMPLETE (nunca trunca nem
-classifica como ausência real de cabo). Erros de integração propagam como
-``DelpiGatewayError`` apenas se o próprio gateway falhar antes do lote.
+Fail-closed:
+* escopo inválido → ``ValueError`` antes de qualquer consulta externa;
+* lote que falhou (timeout/erro) → SOURCE_UNAVAILABLE;
+* resposta malformada, de outra filial ou com registros estranhos às OPs
+  pedidas → INCOMPLETE (nunca MISSING — falha de integração não é ausência
+  real de cabo);
+* OPs acima do teto de janela → INCOMPLETE (sem truncamento silencioso).
 """
 
 from __future__ import annotations
@@ -20,11 +24,15 @@ from production_control_app.application.services.integration_batches import (
     fan_out,
     max_commitment_batches,
 )
+from production_control_app.domain.services.line_feeder_requirements import (
+    _normalize_operation_code,
+)
 from production_control_app.domain.services.production_order_key import (
     normalize_order_code,
 )
 from production_control_app.domain.services.sequencing_material_resolution import (
     RESOLUTION_STATUSES,
+    _count,
     material_criterion_params,
     resolve_operations_materials,
 )
@@ -47,18 +55,20 @@ class SequencingMaterialResolverService:
         """Classifica cada operação pelo critério ``material_code`` do perfil.
 
         ``operations`` são itens da fila WORKING (leitura): ``work_center``,
-        ``production_order``, ``operation_code``. ``criteria`` é a lista de
+        ``production_order``, ``operation_code``. A filial canônica é a do
+        snapshot carregado pelo backend (``branch``); uma operação que declare
+        outra filial explicitamente é rejeitada. ``criteria`` é a lista de
         critérios já validada/persistida do perfil.
         """
-        scope = {
-            "branch": str(branch or "").strip(),
-            "work_center": str(work_center or "").strip(),
-        }
+        scope = self._validate_scope(
+            branch=branch, work_center=work_center, operations=operations
+        )
         params = material_criterion_params(criteria)
-        ops = list(operations or [])
+        ops = scope["operations"]
         if params is None:
             return {
-                **scope,
+                "branch": scope["branch"],
+                "work_center": scope["work_center"],
                 "material_criterion": False,
                 "items": [],
                 "summary": self._summary(ops, []),
@@ -78,10 +88,61 @@ class SequencingMaterialResolverService:
             incomplete_orders=incomplete,
         )
         return {
-            **scope,
+            "branch": scope["branch"],
+            "work_center": scope["work_center"],
             "material_criterion": True,
             "items": items,
             "summary": self._summary(ops, items),
+        }
+
+    @staticmethod
+    def _validate_scope(
+        *,
+        branch: Any,
+        work_center: Any,
+        operations: Sequence[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Escopo íntegro antes de qualquer I/O — entrada inválida não consulta.
+
+        Cada operação deve pertencer ao CT atual solicitado (operação
+        transferida traz o CT de destino, que é o que conta) e não pode
+        declarar filial diferente do contexto. OP e operação são obrigatórias
+        e preservadas como texto (zeros à esquerda inclusos).
+        """
+        branch_code = str(branch or "").strip()
+        if not branch_code:
+            raise ValueError("Filial é obrigatória para resolver materiais.")
+        center = str(work_center or "").strip()
+        if not center:
+            raise ValueError("Centro de trabalho é obrigatório para resolver materiais.")
+
+        normalized: list[dict[str, Any]] = []
+        for index, item in enumerate(operations or ()):  # noqa: B007
+            if not isinstance(item, dict):
+                raise ValueError(f"Operação #{index + 1} inválida para a resolução.")
+            declared_branch = str(item.get("branch") or "").strip()
+            if declared_branch and declared_branch != branch_code:
+                raise ValueError(
+                    "Operação de outra filial fora do escopo da resolução."
+                )
+            op_center = str(item.get("work_center") or "").strip()
+            if not op_center or op_center != center:
+                raise ValueError(
+                    "Operação fora do centro de trabalho solicitado."
+                )
+            order = normalize_order_code(item.get("production_order"))
+            operation = str(item.get("operation_code") or "").strip()
+            if not order or not _normalize_operation_code(operation):
+                raise ValueError(
+                    "Operação sem OP ou código de operação válido."
+                )
+            normalized.append(
+                {**item, "branch": branch_code, "work_center": center}
+            )
+        return {
+            "branch": branch_code,
+            "work_center": center,
+            "operations": normalized,
         }
 
     @staticmethod
@@ -145,7 +206,7 @@ class SequencingMaterialResolverService:
             )
         except Exception:  # noqa: BLE001 — falha externa isola o lote
             return chunk, [], "unavailable"
-        items = _items(payload)
+        items = _validated_items(payload, branch=branch, requested=chunk)
         if items is None:
             return chunk, [], "incomplete"
         return chunk, items, "ok"
@@ -163,13 +224,56 @@ class SequencingMaterialResolverService:
         return counts
 
 
-def _items(payload: Any) -> list[dict[str, Any]] | None:
-    """Extrai ``items`` do envelope; ``None`` = resposta malformada."""
+def _validated_items(
+    payload: Any, *, branch: str, requested: Sequence[str]
+) -> list[dict[str, Any]] | None:
+    """Extrai ``items`` só se a resposta for íntegra; ``None`` = malformada.
+
+    Validação integral: envelope dict que não declare ``success: false``,
+    lista ``items`` coerente com ``summary.returned_count`` quando presente,
+    filial do envelope e das linhas coerente com a pedida, toda linha é dict
+    com OP presente e pertencente ao conjunto solicitado. ``items: []`` é
+    resposta válida (OPs sem empenho), não confundir com resposta quebrada.
+    Nenhum registro é descartado silenciosamente — um item estranho invalida
+    o lote inteiro, porque não dá para provar qual OP ele representaria.
+    """
     if not isinstance(payload, dict):
+        return None
+    if payload.get("success") is False:
         return None
     data = payload.get("data")
     source = data if isinstance(data, dict) else payload
     rows = source.get("items") if isinstance(source, dict) else None
     if not isinstance(rows, list):
         return None
-    return [row for row in rows if isinstance(row, dict)]
+
+    summary = source.get("summary")
+    if isinstance(summary, dict) and "returned_count" in summary:
+        declared = _count(summary.get("returned_count"))
+        if declared is None or declared != len(rows):
+            return None
+
+    if str(source.get("branch") or "").strip() and (
+        str(source.get("branch")).strip() != branch
+    ):
+        return None
+
+    echoed = source.get("production_orders")
+    if isinstance(echoed, list):
+        covered = {normalize_order_code(order) for order in echoed}
+        if any(normalize_order_code(order) not in covered for order in requested):
+            return None
+
+    wanted = {normalize_order_code(order) for order in requested}
+    items: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            return None
+        order = normalize_order_code(row.get("production_order"))
+        if not order or order not in wanted:
+            return None
+        row_branch = str(row.get("branch") or "").strip()
+        if row_branch and row_branch != branch:
+            return None
+        items.append(row)
+    return items
