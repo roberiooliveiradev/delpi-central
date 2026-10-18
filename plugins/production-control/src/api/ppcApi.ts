@@ -31,8 +31,9 @@ import type {
   Product3DModel,
   Product3DModelListPayload,
   ReportsCatalogPayload,
-  SequencingBinding,
+  MachineLoadWorkCentersPayload,
   SequencingBindingListPayload,
+  SequencingBindingResult,
   SequencingCriterion,
   SequencingProfile,
   SequencingProfileListPayload,
@@ -1141,7 +1142,7 @@ export async function setSequencingBinding(params: {
   branch: string;
   workCenter: string;
   profileId: string | null;
-}): Promise<SequencingBinding | null> {
+}): Promise<SequencingBindingResult> {
   const search = new URLSearchParams({
     branch: params.branch,
     workCenter: params.workCenter,
@@ -1149,10 +1150,24 @@ export async function setSequencingBinding(params: {
   const envelope = await httpPut<{
     success: boolean;
     message?: string;
-    data: SequencingBinding | null;
+    data: SequencingBindingResult;
   }>(
     ppcApiUrl(`/machine-load/sequencing-bindings?${search.toString()}`),
     { profile_id: params.profileId },
   );
   return unwrapEnvelope(envelope, "Não foi possível atualizar o vínculo.");
+}
+
+export async function fetchMachineLoadWorkCenters(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWorkCentersPayload> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadWorkCentersPayload;
+  }>(ppcApiUrl("/machine-load/work-centers?branch=" + params.branch), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os centros de trabalho.");
 }

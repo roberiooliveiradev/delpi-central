@@ -394,6 +394,37 @@ def _isolate_live_status_cache():
     clear_live_status_cache()
 
 
+def test_stored_work_centers_reads_snapshot_without_totvs_pull() -> None:
+    """Revisão E4: abrir a administração nunca cria fila — sem snapshot, a
+    leitura responde vazio e o gateway do TOTVS não é chamado."""
+    gateway = FakeGateway()
+    snapshots = FakeSnapshotRepo()
+    service = _service(gateway, snapshots)
+
+    empty = service.stored_work_centers(_user(*FULL_PERMS), branch="01")
+    assert empty == {"items": [], "snapshot_present": False}
+    assert gateway.calls == []
+    assert snapshots.rows == {}
+
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 9, 2),
+        payload={
+            "work_centers": [
+                {"work_center": "CT-01", "work_center_name": "CORTE"},
+                {"work_center": "CT-02", "work_center_name": "DECAPE"},
+            ],
+            "operations": [],
+        },
+        refreshed_by="pcp",
+    )
+    result = service.stored_work_centers(_user(*FULL_PERMS), branch="01")
+    assert result["snapshot_present"] is True
+    assert [i["work_center"] for i in result["items"]] == ["CT-01", "CT-02"]
+    assert gateway.calls == []
+
+
 def test_delivery_window_defaults_to_open_start_and_fourteen_days_ahead() -> None:
     """O PCP precisa ver o atrasado; o horizonte é a entrega de hoje + 14 dias."""
     start, end = _service(FakeGateway()).resolve_delivery_window(

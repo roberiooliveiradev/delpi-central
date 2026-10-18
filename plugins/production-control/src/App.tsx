@@ -42,9 +42,11 @@ const WORKSPACES = new Set([
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  permissions?: string[];
+  isSuperadmin?: boolean;
 };
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+export default function App({ getAccessToken, pathname: pathnameFromHost, permissions, isSuperadmin }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   const { pathname, search } = usePpcRouterPath(pathnameFromHost);
   const storedBranch = readStoredBranch();
@@ -117,7 +119,13 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   } else if (route.subpluginId === "product-models") {
     workspace = <ProductModelsPage branch={route.branch} />;
   } else if (route.subpluginId === "sequencing-profiles") {
-    workspace = <SequencingProfilesPage branch={route.branch} />;
+    workspace = (
+      <SequencingProfilesPage
+        branch={route.branch}
+        permissions={permissions}
+        isSuperadmin={isSuperadmin}
+      />
+    );
   }
 
   return (

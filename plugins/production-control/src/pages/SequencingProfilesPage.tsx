@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createSequencingProfile,
-  fetchMachineLoad,
+  fetchMachineLoadWorkCenters,
   fetchSequencingBindings,
   fetchSequencingProfiles,
   setSequencingBinding,
@@ -24,12 +24,16 @@ import { copy } from "../content/copy";
 import { helpTooltips } from "../content/helpTooltips";
 import type { PpcBranch, SequencingBinding, SequencingProfile } from "../types";
 import {
+  applyBindingResult,
   buildCriteriaPayload,
+  canManageSequencingProfiles,
   statusLabel,
 } from "../utils/sequencingProfiles";
 
 type Props = {
   branch: PpcBranch;
+  permissions?: string[];
+  isSuperadmin?: boolean;
 };
 
 type LoadState = {
@@ -38,7 +42,7 @@ type LoadState = {
   workCenters: WorkCenterOption[];
 };
 
-export function SequencingProfilesPage({ branch }: Props) {
+export function SequencingProfilesPage({ branch, permissions, isSuperadmin }: Props) {
   const confirm = usePpcConfirm();
   const texts = copy.sequencingProfiles;
   const [state, setState] = useState<LoadState>({
@@ -50,7 +54,11 @@ export function SequencingProfilesPage({ branch }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [readOnly, setReadOnly] = useState(false);
+  // Permissão efetiva: o backend continua sendo a autoridade, mas a tela já
+  // nasce somente leitura para quem não tem o grant — sem depender do 403.
+  const canManage = canManageSequencingProfiles(permissions, isSuperadmin);
+  const [forbidden, setForbidden] = useState(false);
+  const readOnly = !canManage || forbidden;
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | "new" | null>(null);
@@ -71,15 +79,18 @@ export function SequencingProfilesPage({ branch }: Props) {
     Promise.all([
       fetchSequencingProfiles({ branch, signal: controller.signal }),
       fetchSequencingBindings({ branch, signal: controller.signal }),
-      fetchMachineLoad({ branch, signal: controller.signal }).catch(() => null),
+      fetchMachineLoadWorkCenters({ branch, signal: controller.signal }).catch(() => null),
     ])
       .then(([profiles, bindings, machineLoad]) => {
         if (controller.signal.aborted) return;
         setState({
-          profiles: profiles.items ?? [],
+          profiles: (profiles.items ?? []).filter(
+            (profile) =>
+              profile.origin_branch == null || profile.origin_branch === branch,
+          ),
           bindings: bindings.items ?? [],
           workCenters:
-            machineLoad?.work_centers.map((center) => ({
+            machineLoad?.items.map((center) => ({
               work_center: center.work_center,
               work_center_name: center.work_center_name,
             })) ?? [],
@@ -99,7 +110,7 @@ export function SequencingProfilesPage({ branch }: Props) {
     (err: unknown, fallback: string) => {
       const status = httpErrorStatus(err);
       if (status === 403) {
-        setReadOnly(true);
+        setForbidden(true);
         setError(texts.forbidden);
         return;
       }
@@ -269,16 +280,29 @@ export function SequencingProfilesPage({ branch }: Props) {
       setError(null);
       setNotice(null);
       try {
-        await setSequencingBinding({ branch, workCenter, profileId });
+        const result = await setSequencingBinding({ branch, workCenter, profileId });
+        // Atualização local do vínculo — sem recarregar perfis, para não
+        // descartar um rascunho não salvo aberto no editor.
+        setState((current) => ({
+          ...current,
+          bindings: applyBindingResult(current.bindings, result),
+          workCenters: current.workCenters.some(
+            (center) => center.work_center === workCenter,
+          )
+            ? current.workCenters
+            : [
+                ...current.workCenters,
+                { work_center: workCenter, work_center_name: workCenter },
+              ],
+        }));
         setNotice(profileId ? texts.bound : texts.unbound);
-        reload();
       } catch (err) {
         handleError(err, texts.bindError);
       } finally {
         setSaving(false);
       }
     },
-    [branch, confirm, handleError, reload, state.bindings, texts],
+    [branch, confirm, handleError, state.bindings, texts],
   );
 
   return (

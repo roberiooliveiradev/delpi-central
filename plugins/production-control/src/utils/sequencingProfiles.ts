@@ -1,6 +1,8 @@
 import type {
   SequencingCriterion,
   SequencingCriterionType,
+  SequencingBinding,
+  SequencingBindingResult,
   SequencingProfile,
   SequencingProfileStatus,
 } from "../types";
@@ -77,9 +79,22 @@ export function parseProductGroups(text: string): { groups: string[]; rejected: 
   return { groups, rejected };
 }
 
+export const MANAGE_PERMISSION = "production-control.sequencing-profiles.manage";
+
+/** Gate de UI — o backend continua sendo a autoridade final da escrita. */
+export function canManageSequencingProfiles(
+  permissions: readonly string[] | undefined,
+  isSuperadmin: boolean | undefined,
+): boolean {
+  if (isSuperadmin) return true;
+  return (permissions ?? []).includes(MANAGE_PERMISSION);
+}
+
 export type CriteriaEditorItem = {
   type: SequencingCriterionType;
   groups: string[];
+  /** Params originais do critério (perfil existente) — preservados no save. */
+  params?: Record<string, unknown> | null;
 };
 
 /** Estado inicial do editor a partir de um perfil existente (ou novo). */
@@ -91,6 +106,10 @@ export function criteriaFromProfile(profile: SequencingProfile | null): Criteria
     items.push({
       type: criterion.type,
       groups: criterion.type === "material_code" ? materialGroups(criterion) : [],
+      params:
+        criterion.type === "material_code"
+          ? (criterion.params as Record<string, unknown> | null | undefined) ?? null
+          : null,
     });
   }
   return items;
@@ -98,11 +117,17 @@ export function criteriaFromProfile(profile: SequencingProfile | null): Criteria
 
 /** Monta o payload `criteria` na ordem do editor — pa_due_date primeiro. */
 export function buildCriteriaPayload(items: CriteriaEditorItem[]): SequencingCriterion[] {
-  return items.map((item) =>
-    item.type === "material_code"
-      ? { type: item.type, params: buildMaterialParams(item.groups) }
-      : { type: item.type },
-  );
+  return items.map((item) => {
+    if (item.type !== "material_code") return { type: item.type };
+    // Preserva os parâmetros já gravados (ex.: ignore_zeroed_allocations=false)
+    // e só sobrescreve os grupos — o campo que a tela realmente edita.
+    const params = {
+      ...buildMaterialParams(item.groups),
+      ...(item.params ?? {}),
+      eligible_product_groups: item.groups,
+    };
+    return { type: item.type, params };
+  });
 }
 
 /** Tipos opcionais ainda disponíveis para adicionar (sem duplicar critério). */
@@ -163,4 +188,28 @@ export function statusLabel(status: SequencingProfileStatus): string {
   if (status === "active") return "Ativo";
   if (status === "draft") return "Rascunho";
   return "Arquivado";
+}
+
+/**
+ * Aplica a resposta do PUT de vínculo ao estado local. Desvincular devolve o
+ * objeto com profile_id null — só um profile_id preenchido mantém a linha.
+ */
+export function applyBindingResult(
+  bindings: SequencingBinding[],
+  result: SequencingBindingResult,
+): SequencingBinding[] {
+  const rest = bindings.filter(
+    (binding) => binding.work_center !== result.work_center,
+  );
+  if (!result.profile_id) return rest;
+  return [
+    ...rest,
+    {
+      branch: result.branch,
+      work_center: result.work_center,
+      profile_id: result.profile_id,
+      assigned_by: result.assigned_by,
+      assigned_at: result.assigned_at,
+    },
+  ];
 }

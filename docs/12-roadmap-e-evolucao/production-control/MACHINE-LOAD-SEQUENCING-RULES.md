@@ -1,7 +1,7 @@
 # Carga-Máquina — Regras de Sequenciamento por Centro de Trabalho
 
 > Estado: **Etapa 1 implementada — fundação administrativa**.
-> Base factual: `main` @ `1ed9df25b` + worktree local (pendente de commit).
+> Base factual: `main` ` `1ed9df25b` + worktree local (pendente de commit).
 > Iniciativa nova — sem relação com as Etapas E1–E4 de seleção múltipla
 > (`MACHINE-LOAD-MULTI-SELECTION-E1.md`).
 
@@ -452,3 +452,32 @@ PCP, sem alterar o motor da Etapa 3 nem os contratos do backend.
   próxima execução de **Otimizar planejamento**.
 - Perfis de outra filial não são apresentados como administráveis; a
   política cross-branch segue `ARCHITECTURE_DECISION_REQUIRED`.
+
+### 12.1 Correções da revisão do PR #91
+
+- **CTs sem efeitos colaterais**: a administração não usa mais `GET /machine-load`
+  (que semeia a fila via TOTVS na primeira visita da filial). Nova leitura
+  dedicada `GET /machine-load/work-centers` devolve os CTs do snapshot
+  congelado — filial sem programação responde vazio, nunca puxa o ERP.
+- **Visibilidade por escopo**: `list_profiles` só devolve perfis com
+  `origin_branch` nulo (legado) ou igual à filial consultada; a tela aplica o
+  mesmo filtro defensivamente. Política cross-branch permanece pendente.
+- **Permissão efetiva**: o MFE recebe `permissions` do host e nasce somente
+  leitura sem `production-control.sequencing-profiles.manage` — sem esperar 403.
+- **Grupos SB1**: o campo guarda o texto cru durante a digitação e normaliza
+  somente no blur/save.
+- **Rascunho protegido**: vincular/desvincular atualiza os vínculos
+  localmente em vez de recarregar os perfis — edição não salva não é perdida.
+- **Parâmetros preservados**: ao editar um perfil existente, só
+  `eligible_product_groups` é sobrescrito; demais parâmetros gravados
+  (ex.: `ignore_zeroed_allocations=false`) são mantidos.
+
+- **Desvínculo consistente**: o PUT de vínculo devolve objeto com
+  `profile_id: null` ao desvincular — a tela só mantém a linha quando
+  `profile_id` vem preenchido (tipo `SequencingBindingResult` reflete o
+  contrato real).
+- **GET individual no mesmo escopo**: `get_profile` aplica a mesma
+  visibilidade da listagem — perfil de outra filial responde 404 mesmo com o
+  UUID conhecido; legados sem `origin_branch` seguem acessíveis.
+- **Superadmin**: o MFE propaga `isSuperadmin` do host; administrador global
+  habilita a edição sem concessão explícita — backend segue autoridade.

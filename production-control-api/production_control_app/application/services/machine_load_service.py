@@ -386,6 +386,33 @@ class MachineLoadService:
             allow_remote_status=False,
         )
 
+    def stored_work_centers(
+        self, user: object | None, *, branch: str
+    ) -> dict[str, Any]:
+        """CTs conhecidos da filial, **sem efeitos colaterais**.
+
+        Leitura administrativa (ex.: Regras de Sequenciamento): devolve os
+        centros do snapshot congelado se ele existir — nunca dispara pull do
+        TOTVS nem materializa uma fila nova para uma filial sem programação.
+        """
+        self._assert_can_view(user, branch)
+        code = self._branch_access.assert_valid_branch(branch)
+        row = self._snapshots.get(branch=code)
+        if row is None:
+            return {"items": [], "snapshot_present": False}
+        payload = decode_snapshot_payload(row)
+        items = [
+            {
+                "work_center": str(item.get("work_center") or "").strip(),
+                "work_center_name": str(
+                    item.get("work_center_name") or ""
+                ).strip(),
+            }
+            for item in payload_work_centers(payload)
+            if str(item.get("work_center") or "").strip()
+        ]
+        return {"items": items, "snapshot_present": True}
+
     def live_status(self, user: object | None, *, branch: str) -> dict[str, Any]:
         """Status de apontamento vivo (HZA) das operações da fila congelada.
 

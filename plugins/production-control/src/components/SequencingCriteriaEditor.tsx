@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { SequencingCriterionType } from "../types";
 import {
@@ -45,7 +45,15 @@ function MaterialGroupsField({
 }) {
   const texts = copy.sequencingProfiles.criteria;
   const [rejected, setRejected] = useState<string[]>([]);
-  const value = item.groups.join(", ");
+  // Texto cru durante a digitação — a normalização (vírgulas/espaços) só
+  // acontece no blur, para não apagar o separador que o usuário acabou de
+  // digitar entre um grupo e outro.
+  const [text, setText] = useState(() => item.groups.join(", "));
+  const groupsKey = item.groups.join(",");
+  useEffect(() => {
+    setText(item.groups.join(", "));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupsKey]);
   return (
     <div className="seq-editor__groups">
       <label className="seq-editor__groups-label" htmlFor={`seq-groups-${index}`}>
@@ -55,14 +63,14 @@ function MaterialGroupsField({
         id={`seq-groups-${index}`}
         className="seq-input seq-editor__groups-input"
         rows={2}
-        value={value}
+        value={text}
         disabled={disabled}
         placeholder={texts.groupsPlaceholder}
         onChange={(event) => {
-          const parsed = parseProductGroups(event.target.value);
-          setRejected(parsed.rejected);
-          onGroups(index, parsed.groups);
+          setText(event.target.value);
+          setRejected(parseProductGroups(event.target.value).rejected);
         }}
+        onBlur={() => onGroups(index, parseProductGroups(text).groups)}
       />
       <p className="seq-editor__hint">{texts.groupsHint}</p>
       {rejected.length > 0 ? (

@@ -1296,3 +1296,19 @@ export type SequencingBindingListPayload = {
   items: SequencingBinding[];
   total: number;
 };
+
+/** Resposta do PUT de vínculo: desvincular devolve o objeto com profile_id null. */
+export type SequencingBindingResult = {
+  branch: string;
+  work_center: string;
+  profile_id: string | null;
+  assigned_by: string | null;
+  assigned_at: string | null;
+};
+
+
+export type MachineLoadWorkCentersPayload = {
+  items: MachineLoadWorkCenter[];
+  /** true quando a filial já possui fila congelada; false = ainda sem programação. */
+  snapshot_present: boolean;
+};
