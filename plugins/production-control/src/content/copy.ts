@@ -382,9 +382,6 @@ export const copy = {
       statusOpen: "Aguardando tratativa",
       statusAcknowledged: "Em tratativa",
       statusResolved: "Resolvido",
-      badgeOpen: "Aguardando PCP",
-      badgeAcknowledged: "Em tratativa",
-      columnLabel: "Impedimento",
       filterButton: (count: number) =>
         count === 1 ? "Com impedimento (1)" : `Com impedimento (${count})`,
       filterAriaOn: "Mostrar apenas operações com impedimento",
