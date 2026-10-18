@@ -123,3 +123,11 @@ Aceite formal permanece com o review GPT. **D01/D03/D04 e roadmap 115 E09/E10 n�
 **Diff publicado:** CSS de `plugins/plugin-ui/src/styles/conversation-reception.css` escopado à classe real `.global-delia-dock`, limitando largura a 28rem e reduzindo padding (16px/12px), margem do avatar (12px), título (1.125rem), margens da descrição (10px) e nota (8px). Nenhuma lógica/componente duplicado; a página completa retém os valores existentes.
 
 **Validação ainda necessária:** inspeção no Portal real para 320/360/420px do Dock, página completa sem regressão, altura curta, zoom 200%, light/dark, acessibilidade e composer não coberto; verificar CSS federado no asset efetivamente servido. `VITEST/BUILD/BROWSER_QA=TEST_NOT_RUN` nesta edição GitHub-only. `D01_IMPLEMENTED_CANDIDATE`; `D01_ACCEPTED=NO`; não avançar E09/E10 nem C0–C7. Verificação integrada postergada a pedido do Product Master.
+
+## 10. D01 — largura útil da conversa e composer no Dock (2026-10-17)
+
+**Decisão de produto:** aproveitar melhor o espaço da timeline e do composer no Companion Dock, preservando o layout da página completa e a lógica de envio/stop/autoscroll. **Reancoragem:** HEAD observado `7eec92d4f380a0e5195c27804955b1abbd6e9117` antes do diff. **EXISTING_EQUIVALENT=YES** para `ConversationWorkspace`, `MessageComposer`, `ConversationUserMessage` e timeline DÉLIA; **REUSE_DECISION=EXTEND** com CSS estritamente condicionado a `.global-delia-dock`.
+
+**Diff:** `plugins/plugin-ui/src/styles/conversation-workspace.css` aplica padding de workspace `clamp(8px,2.5cqw,12px)`, gap de leitura 12px e toolbar que admite wrap, ocultando hint secundário apenas no Dock; `plugins/delia/src/index.css` ajusta gaps e `max-width:100%` para turnos no Dock, sem criar segundo componente. Funcionalidade de composer, autogrow, submit, stop, timeline, role=log, draft e foco permanecem sob contratos existentes. Página completa fora de `.global-delia-dock` não recebe os overrides.
+
+**Gates:** build, Vitest, typecheck, CSS no bundle federado e Playwright autenticado para Dock de 320/360/420px, temas, zoom 200%, strings longas, rolagem, composer e keyboard focus seguem `TEST_NOT_RUN` nesta edição GitHub-only; verificação posterior solicitada pelo Product Master. `D01_IMPLEMENTED_CANDIDATE`; `D01_ACCEPTED=NO`. Roadmap 115 E09/E10 e D02 residuals permanecem abertos. Sem avanço de fase.
