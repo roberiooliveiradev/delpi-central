@@ -57,6 +57,10 @@ def test_operation_materials_sql_filters_op_and_operation_without_sg1() -> None:
     assert "RE.D4_COD" in src
     assert "P.B1_TIPO" in src
     assert "AS product_type" in src
+    assert "P.B1_GRUPO" in src
+    assert "AS product_group" in src
+    assert "P.B1_GRUPO" in src.split("GROUP BY")[1]
+    assert "AS zeroed_commitment_count" in src
     assert "SG1010" not in src
     assert "JOIN SG" not in src
     assert "FROM SG" not in src
@@ -80,6 +84,9 @@ def test_batch_sql_filters_many_orders_without_operation_and_without_sg1() -> No
     assert "RE.D4_OPERAC," in src
     assert "P.B1_TIPO" in src
     assert "AS product_type" in src
+    assert "AS product_group" in src
+    assert "P.B1_GRUPO" in src.split("GROUP BY")[1]
+    assert "AS zeroed_commitment_count" in src
     assert "SG1010" not in src
     assert "JOIN SG" not in src
     assert "FROM SG" not in src
@@ -141,9 +148,11 @@ def test_batch_use_case_keeps_op_and_operation_per_item() -> None:
             "description": "Terminal",
             "unit": "PC",
             "product_type": "mp",
+            "product_group": "1007",
             "original_qty": 10.0,
             "open_qty": 4.0,
             "consumed_qty": 6.0,
+            "zeroed_commitment_count": 0,
             "commitment_count": 2,
         },
         {
@@ -176,6 +185,8 @@ def test_batch_use_case_keeps_op_and_operation_per_item() -> None:
     assert payload["items"][0]["operation"] == "01"
     assert payload["items"][0]["open_qty"] == 4.0
     assert payload["items"][0]["product_type"] == "MP"
+    assert payload["items"][0]["product_group"] == "1007"
+    assert payload["items"][0]["zeroed_commitment_count"] == 0
     assert payload["items"][1]["product_code"] == "10080002"
     assert payload["items"][1]["product_type"] == "PI"
 
@@ -199,6 +210,35 @@ def test_normalize_operation_material_item_includes_product_type() -> None:
     )
     assert item["product_type"] == "MP"
     assert "product_type" in item
+
+
+def test_normalize_operation_material_item_includes_product_group_and_zeroed() -> None:
+    from app.application.use_cases.production.operation_materials_item import (
+        normalize_operation_material_item,
+    )
+
+    item = normalize_operation_material_item(
+        {
+            "product_code": " 010070371 ",
+            "description": "Cabo",
+            "unit": "MT",
+            "product_type": "MP",
+            "product_group": " 1007 ",
+            "original_qty": 10.0,
+            "open_qty": 0.0,
+            "consumed_qty": 10.0,
+            "zeroed_commitment_count": 1,
+            "commitment_count": 2,
+        }
+    )
+    assert item["product_group"] == "1007"
+    assert item["product_code"] == "010070371"
+    assert item["zeroed_commitment_count"] == 1
+
+    # Campos novos ausentes (linha legada/mock) degradam para neutro, nunca quebram.
+    legacy = normalize_operation_material_item({"product_code": "1", "commitment_count": 1})
+    assert legacy["product_group"] == ""
+    assert legacy["zeroed_commitment_count"] == 0
 
 
 def test_batch_use_case_without_orders_does_not_touch_repository() -> None:
