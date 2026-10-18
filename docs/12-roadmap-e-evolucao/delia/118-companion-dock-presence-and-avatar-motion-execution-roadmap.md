@@ -115,3 +115,11 @@ Aceite formal permanece com o review GPT. **D01/D03/D04 e roadmap 115 E09/E10 n�
 **Diff:** override CSS condicionado a `.global-delia-dock` + layout compacto `--with-rail` + `[data-drawer=true]`, com largura `min(252px, calc(100% - rail - 40px))`. A regra genérica E04 continua válida fora do Dock. Mantidos lifecycle, foco, Escape, backdrop, renderização e draft existentes; os valores estão sujeitos a QA visual e geométrico em 320/360/420px, teclado, light/dark, zoom 200% e reduced motion.
 
 **Status:** `IMPLEMENTED_CANDIDATE` no GitHub; `VITEST/BUILD/BROWSER_QA=TEST_NOT_RUN` neste acesso GitHub-only; `D01_ACCEPTED=NO`. A validação integrada foi intencionalmente postergada por orientação do Product Master, sem alterar E09/E10, D02 residuals ou fase.
+
+## 9. D01 — densidade da recepção no Companion Dock (2026-10-17)
+
+**Fonte:** screenshots do Product Master mostram saudação/receptivo no centro da região conversacional e composer no rodapé. **Objetivo bounded:** melhorar a hierarquia e compactar o bloco de recepção sem alterar seus textos, identidade, motion, lógica de estado, scroll, composer ou a página completa. **EXISTING_EQUIVALENT=YES** (`ConversationReception`, `DeliaReception`, CSS compartilhado); **REUSE_DECISION=EXTEND**; owner visual `plugin-ui`, consumidor DÉLIA, host Portal.
+
+**Diff publicado:** CSS de `plugins/plugin-ui/src/styles/conversation-reception.css` escopado à classe real `.global-delia-dock`, limitando largura a 28rem e reduzindo padding (16px/12px), margem do avatar (12px), título (1.125rem), margens da descrição (10px) e nota (8px). Nenhuma lógica/componente duplicado; a página completa retém os valores existentes.
+
+**Validação ainda necessária:** inspeção no Portal real para 320/360/420px do Dock, página completa sem regressão, altura curta, zoom 200%, light/dark, acessibilidade e composer não coberto; verificar CSS federado no asset efetivamente servido. `VITEST/BUILD/BROWSER_QA=TEST_NOT_RUN` nesta edição GitHub-only. `D01_IMPLEMENTED_CANDIDATE`; `D01_ACCEPTED=NO`; não avançar E09/E10 nem C0–C7. Verificação integrada postergada a pedido do Product Master.
