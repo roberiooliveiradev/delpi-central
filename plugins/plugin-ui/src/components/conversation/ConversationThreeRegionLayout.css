@@ -472,3 +472,16 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* D01: Companion Dock context stays a floating surface but leaves more of the
+   conversation visible. Scope to Portal's actual Dock host; full-page layout
+   and compact hosts outside the Dock retain their existing E05 geometry. */
+.global-delia-dock .delpi-ui-conversation-three-region--compact.delpi-ui-conversation-three-region--with-rail
+  .delpi-ui-conversation-three-region__context-popover {
+  left: auto;
+  right: 12px;
+  width: min(292px, 78%);
+  max-width: calc(100% - var(--delpi-ui-three-rail) - 24px);
+  max-height: min(55%, calc(100% - 140px));
+  min-width: 0;
+}
