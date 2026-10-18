@@ -16,6 +16,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { ProblemAnalysisPage } from "./pages/ProblemAnalysisPage";
 import { ProductModelsPage } from "./pages/ProductModelsPage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { SequencingProfilesPage } from "./pages/SequencingProfilesPage";
 import {
   buildPpcHref,
   navigatePpc,
@@ -35,6 +36,7 @@ const WORKSPACES = new Set([
   "delivery-map",
   "reports",
   "product-models",
+  "sequencing-profiles",
 ]);
 
 export type AppProps = {
@@ -114,6 +116,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     workspace = <ReportsPage branch={route.branch} reportId={route.reportId} />;
   } else if (route.subpluginId === "product-models") {
     workspace = <ProductModelsPage branch={route.branch} />;
+  } else if (route.subpluginId === "sequencing-profiles") {
+    workspace = <SequencingProfilesPage branch={route.branch} />;
   }
 
   return (

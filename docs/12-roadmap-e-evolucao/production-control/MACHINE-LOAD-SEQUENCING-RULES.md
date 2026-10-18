@@ -421,3 +421,34 @@ pendente (`ARCHITECTURE_DECISION_REQUIRED`) — compartilhamento continua
 bloqueado com erro controlado.
 
 Ajustes da revisão do hotfix: o drift-check de vínculos cobre apenas os CTs com operações na fila (vínculo em CT ocioso não bloqueia; vínculo criado/alterado/removido em CT participante continua = 409); `row_version` ausente falha de forma controlada em vez de dispensar a proteção; e operações `missing`/`ambiguous` preservam a ordem relativa mesmo quando critérios posteriores ao material existem no perfil.
+
+## 12. Etapa 4 — administração visual (MFE `production-control`)
+
+A configuração de perfis e vínculos passa a ter interface própria no Portal
+PCP, sem alterar o motor da Etapa 3 nem os contratos do backend.
+
+- **Área**: *Regras de Sequenciamento*, subplugin do catálogo do
+  `production-control`, com acesso pela rail do Portal e por atalho discreto
+  no cabeçalho do Carga-Máquina.
+- **Perfis**: lista com busca e filtro por situação; criação em rascunho,
+  edição, ativação, retorno a rascunho e arquivamento via
+  `PUT /machine-load/sequencing-profiles/{id}` com `expected_revision`
+  (409 → aviso de atualização concorrente com opção de recarregar).
+- **Critérios**: `pa_due_date` fixo no topo (não removível nem movível);
+  `tool_group` e `material_code` opcionais, reordenáveis e sem duplicidade.
+  Para `material_code` a tela orienta os grupos de produto SB1 elegíveis
+  (preservando zeros à esquerda) e fixa os parâmetros `material_type=MP`,
+  `identity_source=operation_then_order`, `ignore_zeroed_allocations`,
+  `on_missing=flag`, `on_ambiguous=flag`; o agrupamento real continua pelo
+  código exato do cabo.
+- **Vínculos**: `(filial, CT)` tem no máximo um perfil; vincular/substituir
+  exige perfil ativo; vínculo com perfil inativo é sinalizado para correção.
+  Fonte de CTs: fila do Carga-Máquina + vínculos já cadastrados (sem refresh
+  TOTVS para abrir a tela).
+- **Permissões**: leitura `production-control.machine-load.view`;
+  administração exige `production-control.sequencing-profiles.manage`
+  (autoridade final no backend; o MFE apenas oculta ações).
+- **Efeito**: salvar/ativar/vincular não otimiza a fila — as regras valem na
+  próxima execução de **Otimizar planejamento**.
+- Perfis de outra filial não são apresentados como administráveis; a
+  política cross-branch segue `ARCHITECTURE_DECISION_REQUIRED`.

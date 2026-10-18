@@ -82,6 +82,15 @@
       "permission": "production-control.product-3d-models.manage"
     },
     {
+      "id": "sequencing-profiles",
+      "label": "Regras de sequenciamento",
+      "description": "Perfis que o botão Otimizar planejamento aplica por centro de trabalho — cadastro, ativação e vínculo.",
+      "icon": "list-ordered",
+      "route": "/sequencing-profiles",
+      "status": "active",
+      "permission": "production-control.machine-load.view"
+    },
+    {
       "id": "capacity",
       "label": "Capacidade",
       "description": "Subplugin futuro — carga e capacidade de centros.",

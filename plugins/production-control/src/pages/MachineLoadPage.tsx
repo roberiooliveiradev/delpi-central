@@ -15,7 +15,7 @@ import {
   underlineNavBemClasses,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, ListChecks, MessagesSquare, SendHorizontal } from "lucide-react";
+import { ArrowDownNarrowWide, CalendarOff, CheckCircle2, CircleAlert, CircleDashed, Eye, EyeOff, GripVertical, ListChecks, ListOrdered, MessagesSquare, SendHorizontal } from "lucide-react";
 
 import { MachineLoadLocateModal } from "../components/MachineLoadLocateModal";
 import { MachineLoadLocatePanel } from "../components/MachineLoadLocatePanel";
@@ -1240,6 +1240,21 @@ export function MachineLoadPage({
         endDate={endDate}
         onRefresh={onRefreshClick}
         refreshBusy={refreshing || publishing}
+        actions={
+          <button
+            type="button"
+            className="ppc-icon-btn"
+            title={copy.machineLoad.sequencingRules}
+            onClick={() =>
+              navigatePpc(
+                buildPpcHref({ subpluginId: "sequencing-profiles", branch }),
+              )
+            }
+          >
+            <ListOrdered size={16} strokeWidth={1.75} aria-hidden />
+            <span>{copy.machineLoad.sequencingRules}</span>
+          </button>
+        }
       />
 
       <div className="ppc-filters">
