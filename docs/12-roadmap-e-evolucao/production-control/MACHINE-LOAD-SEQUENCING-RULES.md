@@ -309,13 +309,18 @@ Três correções aplicadas sobre o merge `5d22c4519`, sem alterar a arquitetura
    quando há 2+ códigos provados (um indeterminado a mais não muda que não dá
    para escolher).
 2. **Validação integral dos lotes** — `_validated_items` rejeita o lote
-   inteiro como `incomplete` quando: resposta não é dict; `items` não é lista;
-   alguma linha não é dict; linha sem `production_order`; linha de OP não
+   inteiro como `incomplete` quando: resposta não é dict; envelope declara
+   `success: false` (mesmo com itens bem formados); `items` não é lista;
+   `summary.returned_count` diverge do número real de linhas (lista vazia
+   legítima exige `returned_count: 0` quando o resumo é informado); alguma
+   linha não é dict; linha sem `production_order`; linha de OP não
    solicitada; filial do envelope ou da linha diverge da pedida; envelope
    `production_orders` presente sem cobrir todas as OPs pedidas. Nenhum
    registro é descartado silenciosamente — não dá para provar a qual OP um
    registro estranho pertenceria. `items: []` válido continua significando
    OP sem empenho → `missing` legítimo.
+   Números não finitos (NaN/Infinity) em contagens e quantidades são
+   inválidos — nunca lançam exceção nem provam saldo/zeragem.
 3. **Identidade e escopo** — `resolve_materials` valida antes de qualquer
    consulta externa: filial e CT obrigatórios; operação com `branch` explícita
    diferente do contexto → `ValueError`; operação sem `work_center` ou de outro
@@ -329,10 +334,12 @@ Compatibilidade: contrato `operation-materials` inalterado (nenhum campo novo,
 removido ou reinterpretado); Alimentador de Linha não consome os campos E2;
 cockpit público usa allowlist `_public_item` — inalterado.
 
-Testes: `test_sequencing_material_resolution.py` subiu de 31 para 57 casos —
+Testes: `test_sequencing_material_resolution.py` subiu de 31 para 69 casos —
 dados insuficientes (8 cenários), integridade de lote (envelope errado, linha
 malformada, OP estranha, filial divergente, envelope de erro com cara de
-sucesso, vazio legítimo, OP pedida ausente do eco) e escopo/identidade (filial
+sucesso — inclusive `success: false` com itens válidos —, divergência de
+`summary.returned_count`, NaN/Infinity em contagens e quantidades, vazio
+legítimo, OP pedida ausente do eco) e escopo/identidade (filial
 divergente, CT errado, OP/operação ausente, herança de filial do contexto,
 não-disparo de consulta em entrada inválida). Regressão: suíte completa da
 API PASS com as duas falhas baseline pré-existentes já documentadas.

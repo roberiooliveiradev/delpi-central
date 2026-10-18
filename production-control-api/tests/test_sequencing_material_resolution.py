@@ -881,3 +881,63 @@ def test_operation_without_branch_field_inherits_context() -> None:
     assert result["items"][0]["status"] == RESOLUTION_RESOLVED
     assert op == {"work_center": "CT-02B", "production_order": "111111001",
                   "operation_code": "01"}
+
+def test_error_envelope_with_valid_items_is_incomplete() -> None:
+    """``success: false`` é falha declarada mesmo com itens bem formados."""
+    payload = _envelope([_material("10070371", order="111111001")])
+    payload["success"] = False
+    result, _ = _resolve(payload)
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_returned_count_above_actual_items_is_incomplete() -> None:
+    """Resumo declara mais itens do que a lista efetivamente traz."""
+    result, _ = _resolve(
+        _envelope(
+            [_material("10070371", order="111111001")],
+            summary={"returned_count": 3},
+        )
+    )
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+def test_matching_returned_count_keeps_valid_response() -> None:
+    result, _ = _resolve(
+        _envelope(
+            [_material("10070371", order="111111001")],
+            summary={"returned_count": 1},
+        )
+    )
+    assert result["items"][0]["status"] == RESOLUTION_RESOLVED
+
+
+def test_empty_list_with_zero_returned_count_is_missing() -> None:
+    result, _ = _resolve(_envelope([], summary={"returned_count": 0}))
+    assert result["items"][0]["status"] == RESOLUTION_MISSING
+
+
+def test_invalid_returned_count_is_incomplete() -> None:
+    result, _ = _resolve(_envelope([], summary={"returned_count": "x"}))
+    assert result["items"][0]["status"] == RESOLUTION_INCOMPLETE
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), "NaN"])
+def test_non_finite_count_fields_are_incomplete(bad: Any) -> None:
+    """NaN/Infinity nas contagens não lançam exceção nem provam estado."""
+    for kwargs in ({"zeroed": bad, "count": 1}, {"zeroed": 0, "count": bad}):
+        item = _material("10070371", **kwargs)
+        result = resolve_operation_material(
+            operation=_operation(), order_items=[item], params=_params()
+        )
+        assert result["status"] == RESOLUTION_INCOMPLETE
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_non_finite_quantities_do_not_prove_balance(bad: Any) -> None:
+    """Quantidade não finita não prova saldo positivo (fail-closed)."""
+    item = _material("10070371", original_qty=bad, open_qty=bad)
+    del item["zeroed_commitment_count"]
+    result = resolve_operation_material(
+        operation=_operation(), order_items=[item], params=_params()
+    )
+    assert result["status"] == RESOLUTION_INCOMPLETE

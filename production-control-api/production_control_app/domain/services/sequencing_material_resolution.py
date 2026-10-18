@@ -22,6 +22,7 @@ impede ``resolved``/``missing`` confiável → a operação vira ``incomplete``.
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from production_control_app.domain.sequencing_profile import (
@@ -113,22 +114,25 @@ def _zeroed_state(item: dict[str, Any]) -> str:
 
 
 def _count(value: Any) -> int | None:
+    """Inteiro provado; não finito (NaN/Infinity), não numérico ou fração → None."""
     if isinstance(value, bool):
         return None
     try:
         parsed = float(value)
     except (TypeError, ValueError):
         return None
-    if parsed != int(parsed):
+    if not math.isfinite(parsed) or parsed != int(parsed):
         return None
     return int(parsed)
 
 
 def _number(value: Any) -> float:
+    """Quantidade finita; não numérica ou não finita → 0 (não prova positivo)."""
     try:
-        return float(value or 0)
+        parsed = float(value or 0)
     except (TypeError, ValueError):
         return 0.0
+    return parsed if math.isfinite(parsed) else 0.0
 
 
 def _item_disposition(

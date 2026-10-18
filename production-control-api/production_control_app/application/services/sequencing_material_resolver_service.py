@@ -32,6 +32,7 @@ from production_control_app.domain.services.production_order_key import (
 )
 from production_control_app.domain.services.sequencing_material_resolution import (
     RESOLUTION_STATUSES,
+    _count,
     material_criterion_params,
     resolve_operations_materials,
 )
@@ -228,20 +229,29 @@ def _validated_items(
 ) -> list[dict[str, Any]] | None:
     """Extrai ``items`` só se a resposta for íntegra; ``None`` = malformada.
 
-    Validação integral: envelope dict com lista ``items``, filial do envelope
-    e das linhas coerente com a pedida, toda linha é dict com OP presente e
-    pertencente ao conjunto solicitado. ``items: []`` é resposta válida (OPs
-    sem empenho), não confundir com resposta quebrada. Nenhum registro é
-    descartado silenciosamente — um item estranho invalida o lote inteiro,
-    porque não dá para provar qual OP ele representaria.
+    Validação integral: envelope dict que não declare ``success: false``,
+    lista ``items`` coerente com ``summary.returned_count`` quando presente,
+    filial do envelope e das linhas coerente com a pedida, toda linha é dict
+    com OP presente e pertencente ao conjunto solicitado. ``items: []`` é
+    resposta válida (OPs sem empenho), não confundir com resposta quebrada.
+    Nenhum registro é descartado silenciosamente — um item estranho invalida
+    o lote inteiro, porque não dá para provar qual OP ele representaria.
     """
     if not isinstance(payload, dict):
+        return None
+    if payload.get("success") is False:
         return None
     data = payload.get("data")
     source = data if isinstance(data, dict) else payload
     rows = source.get("items") if isinstance(source, dict) else None
     if not isinstance(rows, list):
         return None
+
+    summary = source.get("summary")
+    if isinstance(summary, dict) and "returned_count" in summary:
+        declared = _count(summary.get("returned_count"))
+        if declared is None or declared != len(rows):
+            return None
 
     if str(source.get("branch") or "").strip() and (
         str(source.get("branch")).strip() != branch
