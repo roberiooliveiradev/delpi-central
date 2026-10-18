@@ -382,3 +382,42 @@ endpoint legado `/machine-load/optimize-delivery` nunca ativa perfis
 
 Sem novas rotas, migrations ou controles no modal; proteção de runs abertos,
 retiradas, DRAFT/LIVE, no-op sem write e notificação pós-commit inalterados.
+
+### 11.1 Hotfix pós-implantação — segurança e precisão (main `028f81b1`+)
+
+Correções pontuais no motor já em produção, sem nova confirmação, simulação
+ou segundo motor. O clique em **Otimizar** autoriza recalcular a ordem —
+inclusive substituindo ajustes manuais anteriores — mas nunca muda CT de
+operação, restaura retiradas ou move operações com execução aberta.
+
+1. **Concorrência por versão da fila** — em vez de comparar o conjunto de
+   chaves (que não detectava mudança de ordem), o serviço compara o
+   `row_version` (xmin) lido no início com a versão sob lock. Qualquer
+   escrita concorrente — reordenação, refresh, transferência ou retirada —
+   resulta em 409 sem gravação, para CTs com e sem perfil. Ajustes manuais
+   *anteriores* à otimização são normalmente substituídos.
+2. **Runs relidos dentro da transação** — a lista de operações em execução
+   é lida na fonte canônica local já dentro da região transacional do
+   mutate, não mais antes da resolução de materiais. Um run iniciado
+   durante a preparação também trava o slot. Falha de leitura impede a
+   mutação; flags HZA seguem sem papel. Janela residual entre leitura dos
+   runs e commit permanece limitada ao UPDATE da linha (lock de linha).
+3. **Critérios combinados aninhados** — o ranking de cada critério
+   secundário é calculado *dentro* do grupo formado pelos critérios
+   anteriores (e pela data), por primeira ocorrência naquele grupo —
+   corrigindo a classificação independente por data. Ex.: perfil
+   `pa_due_date → tool_group → material_code` agrupa por ferramenta e,
+   dentro de cada ferramenta, pelos cabos na ordem em que aparecem ali.
+4. **Validação integral da resolução E2** — a resposta do resolvedor deve
+   cobrir exatamente uma resolução por operação solicitada, com filial, CT,
+   OP e operação coerentes; itens extras, ausentes, duplicados ou
+   `resolved` sem código abortam a otimização inteira antes de qualquer
+   mutação.
+
+DRAFT/LIVE, atomicidade, no-op, proteção de retiradas/transferências,
+isolamento de filiais e o endpoint legado `optimize-delivery` permanecem
+inalterados. A política cross-branch de perfis compartilhados segue
+pendente (`ARCHITECTURE_DECISION_REQUIRED`) — compartilhamento continua
+bloqueado com erro controlado.
+
+Ajustes da revisão do hotfix: o drift-check de vínculos cobre apenas os CTs com operações na fila (vínculo em CT ocioso não bloqueia; vínculo criado/alterado/removido em CT participante continua = 409); `row_version` ausente falha de forma controlada em vez de dispensar a proteção; e operações `missing`/`ambiguous` preservam a ordem relativa mesmo quando critérios posteriores ao material existem no perfil.
