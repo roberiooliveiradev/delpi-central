@@ -97,3 +97,13 @@ NEXT=D01_COMPANION_DOCK_UX_IF_ACCEPTED
 ```
 
 Aceite formal permanece com o review GPT. **D01/D03/D04 e roadmap 115 E09/E10 não avançados.**
+
+## 7. D01 — decisão de produto e implementação bounded: Contexto compacto no Dock (2026-10-17)
+
+**Decisão do Product Master:** no Companion Dock, manter o Contexto como superfície flutuante sobre a conversa, mas menor que a área útil, deixando parte da conversa visível; em tamanhos pequenos, adaptar sem passar por baixo do rail, sem cortar conteúdo e sem cobrir integralmente o composer. Não criar outra coluna, outro painel ou outra sessão. A página completa mantém a geometria existente.
+
+**OWNER:** `plugin-ui` (geometria de `ConversationThreeRegionLayout`); **HOST:** Portal `GlobalDeliaDock`; **CONSUMER:** DÉLIA. **EXISTING_EQUIVALENT=YES**; **REUSE_DECISION=EXTEND**. Evidência inicial: screenshots fornecidos pelo Product Master; CSS E05 utilizava `left: rail + 8px` e `right: 8px`, ocupando quase toda a faixa de conversa no modo compacto.
+
+**Diff de implementação:** regra CSS estritamente sob `.global-delia-dock` para o popover compacto com `right:12px`, `width:min(292px,78%)`, `max-width:calc(100% - rail - 24px)`, `max-height:min(55%,calc(100% - 140px))` e `left:auto`. Valores são hipótese inicial sujeita a QA geométrico; preservados trigger, Escape, foco, leitura, reduced motion, scroll interno e comportamento da página completa.
+
+**Gates pendentes:** Vitest de layout, `plugin-ui` build/exports, DÉLIA build, Browser QA no Dock autenticado (320/360/420 px de largura interna, light/dark, zoom, abertura, foco, scroll, clipping, composer). **TEST_NOT_RUN nesta edição GitHub-only**; CSS publicado não constitui aceite runtime. Após QA, corrigir apenas defeitos reproduzidos e atualizar evidence/ledger com SHA testado. Roadmap 115 E09/E10 permanece aberto. **D01_IMPLEMENTATION=CANDIDATE; D01_ACCEPTED=NO**.
