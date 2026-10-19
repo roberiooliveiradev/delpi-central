@@ -1,7 +1,8 @@
 # Core API — ownership da identidade Protheus
 
-**Status código (hardening cutover):** integrado / pronto para review  
-**Cutover de produção:** `PENDING` até backup + dry-run + apply + reconciliação + flip de flag
+**Status código (hardening cutover):** integrado  
+**Cutover de produção:** `PASS` (2026-10-19) — ver ledger de evidências  
+**Sync Core → API DELPI (aba TOTVS):** `PASS` após wiring `DELPI_API_URL` + `API_DELPI_INTERNAL_SERVICE_TOKEN` no compose do `core-api`
 
 ## Decisão
 
@@ -19,6 +20,18 @@
 Tabela Core: `user_protheus_identities` (Alembic `t6u7v8w9x0`)
 
 Tabela legada: `purchase_requests.user_protheus_mappings` — permanece até autorização de limpeza pós-estabilização.
+
+## Runtime Core → API DELPI
+
+O gateway `DelpiProtheusUsersGateway` consome:
+
+| Variável | Uso |
+|----------|-----|
+| `DELPI_API_URL` | base URL (default `http://delpi-api-delpi:8000`) |
+| `DELPI_API_TIMEOUT` | timeout HTTP (default 30s) |
+| `API_DELPI_INTERNAL_SERVICE_TOKEN` | S2S (`X-Delpi-Service-Token` + `Authorization`) |
+
+Declaradas em `infra/docker-compose.yml` (serviço `core-api`) e `infra/docker-compose.dev.yml`. Token permanece só em `infra/.env` (não versionado).
 
 ## Contratos
 
