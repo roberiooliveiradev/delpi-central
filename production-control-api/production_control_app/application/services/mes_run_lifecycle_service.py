@@ -120,12 +120,19 @@ class MesRunLifecycleService:
         )
 
     def record_automatic_stopped(
-        self, run: dict[str, Any], *, conn: Any, at: datetime
+        self,
+        run: dict[str, Any],
+        *,
+        conn: Any,
+        at: datetime,
+        detected_at: datetime | None = None,
     ) -> dict[str, Any] | None:
         """Auto-stop por ausência de golpes: fecha ``producing``, abre
         ``stopped`` + downtime ``source='system'`` — tudo em ``at`` =
         ``last_count_activity_at``. Idempotente: retorna ``None`` quando a
-        parada automática já existe (tick seguinte não duplica)."""
+        parada automática já existe (tick seguinte não duplica) ou quando a
+        transição é adiada (clamp legado produziria início no futuro — sem
+        estado, downtime ou auditoria; o próximo tick reavalia)."""
         branch, wc = run["branch"], run["work_center"]
         self._close_finished_owner_facts(branch=branch, work_center=wc, conn=conn)
         open_dt = self._downtimes.get_open(branch=branch, work_center=wc, conn=conn)
@@ -141,6 +148,19 @@ class MesRunLifecycleService:
                 open_state, run, expected=WorkCenterOperationalState.PRODUCING
             )
             at = self._clamp_to_open_state_start(at, open_state)
+            if detected_at is not None and at > detected_at:
+                # Divergência legada com producing ainda "no futuro": abrir
+                # a parada agora criaria um intervalo iniciado depois da
+                # detecção — qualquer golpe antes daquele instante violaria
+                # a cronologia ao encerrar. Adia: nenhum fato é gravado e o
+                # próximo tick reavalia.
+                logger.info(
+                    "mes_auto_downtime_deferred run_id=%s effective_at=%s detected_at=%s",
+                    run["id"],
+                    at.isoformat(),
+                    detected_at.isoformat(),
+                )
+                return None
             self._states.close_open(branch=branch, work_center=wc, ended_at=at, conn=conn)
         stopped = self._states.open_event(
             branch=branch,

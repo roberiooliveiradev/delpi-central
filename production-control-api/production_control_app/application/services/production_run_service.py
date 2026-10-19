@@ -956,9 +956,13 @@ class ProductionRunService:
                 started_at = max(last2, run_started)
             else:
                 started_at = last2
-            dt = self._mes.record_automatic_stopped(locked, conn=conn, at=started_at)
+            dt = self._mes.record_automatic_stopped(
+                locked, conn=conn, at=started_at, detected_at=detected_at
+            )
             if dt is None:
-                return  # já existe parada aberta — tick idempotente
+                # já existe parada aberta (idempotente) ou transição adiada
+                # (clamp legado no futuro — nenhum fato/auditoria gravado)
+                return
             effective_started_at = dt.get("started_at")
             if effective_started_at is not None and getattr(
                 effective_started_at, "tzinfo", None

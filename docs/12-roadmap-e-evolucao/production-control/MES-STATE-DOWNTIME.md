@@ -525,7 +525,17 @@ downtime nascem nesse instante. Sem intervalo negativo e sem duração
 inventada; a auditoria registra effectiveStartedAt e
 clampedToOpenStateStart=true quando o clamp dispara.
 
-**Evidências**: test_producing_start_after_persisted_play_does_not_break_auto_stop
+**Adiamento de parada futura**: se o início efetivo calculado pelo clamp
+for POSTERIOR ao instante da detecção (producing legado "no futuro"), a
+transição é adiada — nenhum estado, downtime ou auditoria é gravado e o
+próximo tick reavalia. Sem isso, uma parada criada no futuro faria um
+golpe anterior violar a cronologia ao encerrar. Observável via log
+mes_auto_downtime_deferred.
+
+**Evidências**: test_future_clamped_stop_is_deferred_and_pulse_still_counts
+(parada futura adiada; pulso antes dela conta sem rollback; parada nasce
+no instante do producing quando o relógio o alcança),
+test_producing_start_after_persisted_play_does_not_break_auto_stop
 (relogio adiantado reproduzia CheckViolation real no Postgres; PASS após o
 fix) e test_legacy_open_run_with_late_producing_event_auto_stops
 (divergencia legada transiciona com clamp) —

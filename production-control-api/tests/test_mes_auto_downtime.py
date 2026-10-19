@@ -955,6 +955,69 @@ class TestAutoDowntimePostgres:
         ]
         assert closed and closed[0]["ended_at"] >= closed[0]["started_at"]
 
+    def test_future_clamped_stop_is_deferred_and_pulse_still_counts(
+        self, pg, clean_ct
+    ):
+        """Caso-limite: divergencia legada com producing.started_at POSTERIOR
+        ao instante da deteccao. A parada e adiada (sem estado/downtime/
+        auditoria) e um pulso antes daquele instante atualiza a contagem
+        sem rollback."""
+        from production_control_app.infrastructure.persistence.plugins_postgres_connection import (  # noqa: E501
+            PC_SCHEMA_NAME,
+            get_connection,
+        )
+
+        repo, lifecycle, states, downtimes = pg
+        clock = FakeClock()
+        service = self._service(repo, lifecycle, clock)
+        token = self._session(service, clean_ct)
+        run = self._start(service, clean_ct, token)
+
+        baseline = repo.get_run(run["id"])["last_count_activity_at"]
+        producing = states.get_open(branch="01", work_center=clean_ct)
+
+        # Legado divergente: producing aberto "no futuro" em relacao a
+        # deteccao (baseline + 300 > baseline + THRESHOLD de deteccao).
+        legacy_started = baseline + timedelta(seconds=300)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {PC_SCHEMA_NAME}.work_center_state_events "
+                    "SET started_at = %s WHERE id = %s",
+                    (legacy_started, producing["id"]),
+                )
+            conn.commit()
+
+        # Deteccao em baseline+120: threshold atingido, mas o inicio
+        # efetivo (baseline+300) esta alem do agora -> adiado.
+        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        service.tick_running_runs()
+        assert downtimes.get_open(branch="01", work_center=clean_ct) is None
+        assert (
+            states.get_open(branch="01", work_center=clean_ct)["state"]
+            == "producing"
+        )
+
+        # Pulso antes do instante futuro: contagem funciona, sem rollback.
+        clock.now = baseline + timedelta(seconds=150)
+        service._pulse.device_by_id[
+            "00000000-0000-4000-8000-0000000000a1"
+        ] = _pg_device(counter=105)
+        service.tick_running_runs()
+        fresh = repo.get_run(run["id"])
+        assert fresh["pieces_total"] == 5
+        assert downtimes.get_open(branch="01", work_center=clean_ct) is None
+
+        # Depois que o relogio alcanca o inicio do producing, sem pecas,
+        # a parada nasce exatamente naquele instante (clamp, passado).
+        clock.now = baseline + timedelta(seconds=300)
+        service.tick_running_runs()
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt is not None
+        assert open_dt["started_at"] >= legacy_started
+        open_state = states.get_open(branch="01", work_center=clean_ct)
+        assert open_state["state"] == "stopped"
+
     def test_pause_during_auto_stop_reuses_facts(self, pg, clean_ct):
         repo, lifecycle, states, downtimes = pg
         clock = FakeClock()
