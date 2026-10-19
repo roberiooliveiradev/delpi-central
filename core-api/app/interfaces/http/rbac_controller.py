@@ -57,6 +57,18 @@ from app.application.use_cases.admin.bulk_delete_groups_use_case import BulkDele
 
 from app.application.use_cases.admin.delete_role_use_case import DeleteRoleUseCase
 from app.application.use_cases.admin.bulk_delete_roles_use_case import BulkDeleteRolesUseCase
+from app.application.use_cases.protheus_identity.get_user_protheus_identity_use_case import (
+    GetUserProtheusIdentityUseCase,
+)
+from app.application.use_cases.protheus_identity.sync_user_protheus_identity_by_email_use_case import (
+    SyncUserProtheusIdentityByEmailUseCase,
+)
+from app.application.use_cases.protheus_identity.upsert_user_protheus_identity_use_case import (
+    UpsertUserProtheusIdentityUseCase,
+)
+from app.infrastructure.gateways.delpi_protheus_users_gateway import (
+    TotvsLookupUnavailableError,
+)
 
 from app.interfaces.http.serializers.user_serializer import serialize_user_dto
 from app.interfaces.http.utils.errors import api_error, server_error
@@ -67,6 +79,17 @@ from app.interfaces.http.security.authorization import (
 )
 
 rbac_bp = Blueprint("rbac", __name__)
+
+
+def _actor_user_id() -> UUID | None:
+    actor = getattr(g, "current_user", None)
+    raw = getattr(actor, "id", None) if actor is not None else None
+    if raw is None:
+        return None
+    try:
+        return UUID(str(raw))
+    except ValueError:
+        return None
 
 
 # ==========================================================
@@ -1113,5 +1136,100 @@ def list_permissions():
             "pagination": result.pagination.__dict__,
         }), 200
 
+    except Exception as e:
+        return server_error(str(e))
+
+
+# ==========================================================
+# USER PROTHEUS EXTERNAL IDENTITY
+# ==========================================================
+
+
+@rbac_bp.route(
+    "/admin/rbac/users/<user_id>/external-identities/protheus",
+    methods=["GET"],
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+def get_user_protheus_identity(user_id: str):
+    try:
+        uid = UUID(str(user_id).strip())
+    except ValueError:
+        return api_error("validation_error", "user_id inválido.", path="user_id")
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            if uow.users.get_by_id(uid) is None:
+                return api_error("not_found", "Usuário não encontrado.")
+            mapping = GetUserProtheusIdentityUseCase(uow).execute(user_id=uid)
+        return jsonify({"mapping": mapping}), 200
+    except LookupError as exc:
+        return api_error("not_found", str(exc))
+    except Exception as e:
+        return server_error(str(e))
+
+
+@rbac_bp.route(
+    "/admin/rbac/users/<user_id>/external-identities/protheus",
+    methods=["PUT"],
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+def upsert_user_protheus_identity(user_id: str):
+    try:
+        uid = UUID(str(user_id).strip())
+    except ValueError:
+        return api_error("validation_error", "user_id inválido.", path="user_id")
+
+    data = request.get_json(silent=True) or {}
+    actor_id = _actor_user_id()
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            mapping = UpsertUserProtheusIdentityUseCase(uow).execute(
+                user_id=uid,
+                actor_user_id=actor_id,
+                protheus_user_id=data.get("protheus_user_id"),
+                protheus_user_code=data.get("protheus_user_code"),
+                mapping_status=str(data.get("mapping_status") or "mapped"),
+                mapping_source=data.get("mapping_source") or "manual",
+                verified=bool(data.get("verified", False)),
+                ip_address=request.remote_addr,
+            )
+        return jsonify({"mapping": mapping}), 200
+    except LookupError as exc:
+        return api_error("not_found", str(exc))
+    except ValueError as exc:
+        return api_error("validation_error", str(exc))
+    except Exception as e:
+        return server_error(str(e))
+
+
+@rbac_bp.route(
+    "/admin/rbac/users/<user_id>/external-identities/protheus/sync",
+    methods=["POST"],
+)
+@require_all_permissions(["rbac.manage", "users.manage"])
+def sync_user_protheus_identity(user_id: str):
+    """Sync using Core-authoritative user email — ignore client-supplied email."""
+    try:
+        uid = UUID(str(user_id).strip())
+    except ValueError:
+        return api_error("validation_error", "user_id inválido.", path="user_id")
+
+    actor_id = _actor_user_id()
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            result = SyncUserProtheusIdentityByEmailUseCase(uow).execute(
+                user_id=uid,
+                actor_user_id=actor_id,
+                ip_address=request.remote_addr,
+            )
+        return jsonify(result), 200
+    except TotvsLookupUnavailableError as exc:
+        return api_error("totvs_unavailable", str(exc), status=503)
+    except LookupError as exc:
+        return api_error("not_found", str(exc), status=404)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
     except Exception as e:
         return server_error(str(e))

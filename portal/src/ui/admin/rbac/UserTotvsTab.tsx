@@ -3,9 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 import type { AdminUser } from "../../../data/adminApi";
 import type {
   ProtheusUserMatch,
-  UserProtheusMapping,
-} from "../../../data/purchaseRequestsRbacApi";
-import { usePurchaseRequestsRbacApi } from "../../../hooks/usePurchaseRequestsRbacApi";
+  UserProtheusIdentityMapping,
+} from "../../../data/coreApi";
+import { useCoreApi } from "../../../hooks/useCoreApi";
 import { Alert, Button, Spinner } from "../../../ui-kit";
 
 type UserTotvsTabProps = {
@@ -17,24 +17,39 @@ function formatMappingSource(source: string | null | undefined): string {
   if (source === "email_match" || source === "email_sync") {
     return "Sincronização por e-mail (USR_EMAIL)";
   }
-  if (source === "manual") return "Manual (admin SC)";
+  if (source === "manual") return "Manual (admin)";
+  if (source === "login_match") return "Correspondência por login";
   return source?.trim() || "—";
 }
 
+function formatCoreError(err: unknown, fallback: string): string {
+  if (!(err instanceof Error)) return fallback;
+  const message = err.message || fallback;
+  // Core returns { errors: [{ message }] } — ApiClient may surface raw text.
+  try {
+    const parsed = JSON.parse(message) as { errors?: Array<{ message?: string }> };
+    const first = parsed?.errors?.[0]?.message;
+    if (first) return first;
+  } catch {
+    /* not JSON */
+  }
+  return message;
+}
+
 export function UserTotvsTab({ user, active }: UserTotvsTabProps) {
-  const api = usePurchaseRequestsRbacApi();
+  const api = useCoreApi();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [mapping, setMapping] = useState<UserProtheusMapping | null>(null);
+  const [mapping, setMapping] = useState<UserProtheusIdentityMapping | null>(null);
   const [protheusUser, setProtheusUser] = useState<ProtheusUserMatch | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const row = await api.getUserProtheusMapping(user.id);
+      const row = await api.getUserProtheusIdentity(user.id);
       setMapping(row);
       if (row?.protheus_user_id) {
         setProtheusUser({
@@ -47,11 +62,7 @@ export function UserTotvsTab({ user, active }: UserTotvsTabProps) {
         setProtheusUser(null);
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível carregar a associação Protheus.",
-      );
+      setError(formatCoreError(err, "Não foi possível carregar a associação Protheus."));
       setMapping(null);
       setProtheusUser(null);
     } finally {
@@ -69,22 +80,15 @@ export function UserTotvsTab({ user, active }: UserTotvsTabProps) {
     setError(null);
     setSuccess(null);
     try {
-      const result = await api.syncUserProtheusMappingByEmail(
-        user.id,
-        user.email,
-        user.name,
-      );
+      // Core uses authoritative user email from its own user record — do not send email.
+      const result = await api.syncUserProtheusIdentity(user.id);
       setMapping(result.mapping);
       setProtheusUser(result.protheus_user);
       setSuccess(
         `Associado ao usuário Protheus ${result.protheus_user.name || result.protheus_user.protheus_user_id} (${result.synced_by_email}).`,
       );
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível sincronizar com o Protheus.",
-      );
+      setError(formatCoreError(err, "Não foi possível sincronizar com o Protheus."));
     } finally {
       setSyncing(false);
     }
@@ -100,7 +104,7 @@ export function UserTotvsTab({ user, active }: UserTotvsTabProps) {
             <h4>TOTVS / Protheus</h4>
             <p>
               Vincula o usuário do portal ao cadastro em <code>SYS_USR</code>, comparando o
-              e-mail do portal com <code>USR_EMAIL</code> no Protheus.
+              e-mail do portal (fonte Core) com <code>USR_EMAIL</code> no Protheus via API DELPI.
             </p>
           </div>
           <div className="user-rbac-panel-actions">
@@ -157,9 +161,10 @@ export function UserTotvsTab({ user, active }: UserTotvsTabProps) {
 
       <section className="user-rbac-panel user-rbac-totvs-hint">
         <p>
-          Esta associação é usada pelo módulo <strong>Solicitações de Compras</strong> para
-          identificar o solicitante no TOTVS. Se não houver <code>USR_EMAIL</code> igual ao
-          e-mail do portal, o vínculo não será criado automaticamente.
+          Esta associação é governada pelo <strong>Core API</strong> e reutilizada por
+          módulos autorizados (ex.: Solicitações de Compras) para identificar o solicitante
+          no TOTVS. Se não houver <code>USR_EMAIL</code> igual ao e-mail do portal, o vínculo
+          não será criado automaticamente.
         </p>
       </section>
     </div>

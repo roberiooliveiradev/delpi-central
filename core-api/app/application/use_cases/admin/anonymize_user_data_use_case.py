@@ -76,10 +76,13 @@ class AnonymizeUserDataUseCase:
             repository=self._uow.person_profiles,
         ).purge_for_user(user_id=uid)
 
+        self._uow.protheus_identities.delete(uid)
+        protheus_identity_purged = True
+
         self._uow.commit()
 
         logger.info(
-            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d usage=%d person_profile=%s",
+            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d usage=%d person_profile=%s protheus_identity=%s",
             uid,
             actor_uid,
             audit_count,
@@ -87,6 +90,7 @@ class AnonymizeUserDataUseCase:
             consent_count,
             usage_events_removed,
             person_profile_purged,
+            protheus_identity_purged,
         )
 
         return {
@@ -97,4 +101,5 @@ class AnonymizeUserDataUseCase:
             "consentsRemoved": consent_count,
             "usageEventsRemoved": usage_events_removed,
             "personProfilePurged": person_profile_purged,
+            "protheusIdentityPurged": protheus_identity_purged,
         }

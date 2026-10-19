@@ -18,6 +18,9 @@ from app.interfaces.http.utils.errors import api_error
 from app.application.use_cases.get_my_access_profile_use_case import (
     GetMyAccessProfileUseCase,
 )
+from app.application.use_cases.protheus_identity.get_user_protheus_identity_use_case import (
+    GetUserProtheusIdentityUseCase,
+)
 from app.application.use_cases.list_user_apps_use_case import (
     ListUserAppsUseCase,
 )
@@ -137,6 +140,18 @@ def get_my_access_profile():
         )
 
     return jsonify(profile), 200
+
+
+@me_bp.route("/me/external-identities/protheus", methods=["GET"])
+@require_auth()
+def get_my_protheus_identity():
+    """Authenticated user may read only their own Protheus association."""
+    user = g.current_user
+    with SqlAlchemyUnitOfWork() as uow:
+        mapping = GetUserProtheusIdentityUseCase(uow).execute(
+            user_id=UUID(str(user.id)),
+        )
+    return jsonify({"mapping": mapping}), 200
 
 
 # ==========================================================

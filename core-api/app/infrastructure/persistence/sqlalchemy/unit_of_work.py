@@ -45,6 +45,9 @@ from app.infrastructure.persistence.sqlalchemy.consent_repository import SqlAlch
 from app.infrastructure.persistence.sqlalchemy.person_profile_repository import (
     SqlAlchemyPersonProfileRepository,
 )
+from app.infrastructure.persistence.sqlalchemy.user_protheus_identity_repository import (
+    SqlAlchemyUserProtheusIdentityRepository,
+)
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
@@ -111,6 +114,13 @@ class SqlAlchemyUnitOfWork:
         # Person profile (photo / job / contacts)
         # =========================
         self.person_profiles = SqlAlchemyPersonProfileRepository(self.session)
+
+        # =========================
+        # Protheus external identity
+        # =========================
+        self.protheus_identities = SqlAlchemyUserProtheusIdentityRepository(
+            self.session
+        )
 
         # ======================================================
         # Aliases (compatibilidade com código antigo)

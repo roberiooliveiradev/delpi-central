@@ -949,4 +949,50 @@ export class CoreApi {
       emailCategories: string[];
     }>(`/core-api/admin/notifications/user-preferences/${userId}`, payload);
   }
+
+  // -------------------------------------------------------
+  // PROTHEUS EXTERNAL IDENTITY (Core ownership)
+  // -------------------------------------------------------
+
+  async getUserProtheusIdentity(userId: string): Promise<UserProtheusIdentityMapping | null> {
+    const data = await this.client.get<{ mapping: UserProtheusIdentityMapping | null }>(
+      `/core-api/admin/rbac/users/${encodeURIComponent(userId)}/external-identities/protheus`,
+    );
+    return data?.mapping ?? null;
+  }
+
+  syncUserProtheusIdentity(userId: string) {
+    return this.client.post<{
+      mapping: UserProtheusIdentityMapping;
+      protheus_user: ProtheusUserMatch;
+      synced_by_email: string;
+    }>(
+      `/core-api/admin/rbac/users/${encodeURIComponent(userId)}/external-identities/protheus/sync`,
+      {},
+    );
+  }
+
+  getMyProtheusIdentity() {
+    return this.client.get<{ mapping: UserProtheusIdentityMapping | null }>(
+      "/core-api/me/external-identities/protheus",
+    );
+  }
 }
+
+export type UserProtheusIdentityMapping = {
+  user_id: string;
+  protheus_user_id?: string | null;
+  protheus_user_code?: string | null;
+  mapping_status: string;
+  mapping_source?: string | null;
+  verified: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type ProtheusUserMatch = {
+  protheus_user_id: string;
+  code?: string | null;
+  name?: string | null;
+  email?: string | null;
+};

@@ -253,11 +253,19 @@ effective_cost_centers =
 
 ## 8. Vínculo Minha DELPI ↔ Protheus
 
+> **Ownership (2026-10):** a associação autoritativa passou a ser governada pelo **Core API**
+> (`user_protheus_identities`). Ver
+> [core-protheus-identity-ownership.md](../../11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md).
+> A tabela `purchase_requests.user_protheus_mappings` permanece apenas como fonte legada até
+> cutover (`PROTHEUS_IDENTITY_OWNER=core`) e remoção autorizada. Lookup `SYS_USR` continua na
+> API DELPI.
+
 ### 8.1 Tabela conceitual
 
 | Tabela | Colunas |
 |--------|---------|
-| `purchase_requests.user_protheus_mappings` | `user_id` (PK, Core API), `protheus_user_id` (`USR_ID`), `protheus_user_code` (`USR_CODIGO`), `mapping_status` (`mapped` \| `unmapped` \| `ambiguous`), `mapping_source` (`manual` \| `email_match` \| `login_match`), `verified` (bool), `created_at`, `updated_at` |
+| `user_protheus_identities` (**Core**, owner) | `user_id` (PK/FK `users.id`), `protheus_user_id` (`USR_ID`), `protheus_user_code` (`USR_CODIGO`), `mapping_status` (`mapped` \| `unmapped` \| `ambiguous`), `mapping_source` (`manual` \| `email_match` \| `login_match`), `verified` (bool), `updated_by_user_id`, `created_at`, `updated_at` |
+| `purchase_requests.user_protheus_mappings` (legado transitório) | mesmos campos semânticos; `user_id` TEXT |
 
 **Chave principal plataforma:** `user_id` (Core API). **Nunca** nome como chave.
 
