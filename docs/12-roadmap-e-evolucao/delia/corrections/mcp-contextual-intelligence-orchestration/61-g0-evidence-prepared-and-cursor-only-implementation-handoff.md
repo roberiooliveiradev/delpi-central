@@ -152,3 +152,40 @@ Q03_AUTHORIZED=NO
 RUNTIME_DIFF=NONE
 NEXT=COORDINATION_G0_SCOPE_AND_PHASE_DECISION
 ```
+
+
+## 7. Handoff para novo chat Architecture / Coordination (2026-10-19)
+
+**Handoff state at registration:** GitHub main `8ce3c119a3343dedb77c3b57cd520711a81e258a`; `orchestration.py` remains 10,592 lines, blob `bc13e07b31b6844e172c5d485d77f59a4b8c0a10` (recheck on each new turn). Repo and source are simultaneously updated by other DELPI tasks; **do not freeze this SHA as the next execution HEAD**.
+
+### User direction for the next coordination chat
+
+- ChatGPT does **all possible research**: canonical reconciliation, owner/contract/consumer analysis, mapping and test planning, independent code/evidence reviews, bounded acceptance and GitHub documentation updates.
+- Cursor executes **only formally authorized code refactors**, with its inevitable local `git status`, exactly one repo-wide `rg` drift check, baseline/RED/GREEN, full suite, authorized live evaluation, smallest correct diff, commit/push and execution report. Do not send Cursor broad inventory, exploratory architecture design, or uncontrolled fixes.
+- Anti-loop plan is fixed in doc 59: **G0 → Q01 → Q02-A → Q02-B → Q02-C → Q03**; do not add iterations/packs without a new material decision. The existing 42/42 map and 22 test modules in doc 60 are the accepted *research starting point*, not a claim that execution gate Q01 passed.
+- **The first and only coordination dependency:** resolve whether to (A) close I04 with **one bounded** blocker remediation plus independent acceptance before Q01, or (B) expressly amend the authority/sequence to allow the approved semantic refactor as scoped I04 remediation while **not falsely setting `Q01_AUTHORIZED=YES`**. Because I04 failures partly arise from code targeted by Q02, option B may avoid a circular dependency, but **is a recommendation to adjudicate, not a silently approved exception**. Choose by reading 16+ledger and record user/Product Master authority. If incompatible with existing frozen decisions, STOP for explicit ADR/phase decision.
+- G0 factual evidence: DAVI/OpenAPI catalog owner read **executor PASS_WITH_RESIDUAL**; TÉO methodology partial and personal count `TEST_NOT_RUN` due to authentic GLPI-subject precondition; VISTA C02 504 `FAIL`; comparison L5 can return list rather than comparative task outcome `FAIL_TASK`; no-MCP conversation executor PASS. Independent SSH tests `TEST_NOT_RUN`. Do not force fake PASS.
+- Frozen facts: ADR 58 semantic ownership approved; no Chat runtime dependency, new planner/intent engine/provider name branching, Core/Domain authority bypass, free factual model prose or `selection-only` (§6.145) relaxation. The latter needs separate architecture decision.
+- After formal G0 gate, GPT may accept Q01 by reviewing doc60 and the Cursor's small residual SHA-based consumer check; there is no justification to commission a second inventory. Then issue **one bounded implementation prompt for each Q02-A/B/C**, verify functional outcomes across DAVI/TÉO/VISTA, HTTP non-MCP and conversation with no provider; Q03 produces final independent `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
+- Always update GitHub after substantive reviews/decisions; source of truth = GitHub, ledger execution state = ledger, architecture/product = authorities; chat = working context. No phase advancement from document edits.
+
+### What the new chat should do first
+
+1. Reanchor live `main` and `.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → 24 → 60 → ledger` plus docs 56–61.
+2. Revalidate main `orchestration.py` blob and any new runtime/ledger evidence; use documented 42 findings and tests, not memory.
+3. Deliver the **one-time G0 governance verdict** with explicit options A/B/STOP; if a decision is within Product Master authority and genuinely authorized, persist to 16/ledger/roadmap as appropriate without altering frozen contracts silently.
+4. Only when implementation is authorized, send Cursor the minimal Q02 package prompt from docs 59–61; demand report on evaluated SHA/config. GPT remains reviewer.
+
+```text
+NEW_CHAT_ROLE=ARCHITECTURE_COORDINATION
+RESEARCH_INVENTORY_DOC60=COMPLETE_WITH_CONNECTOR_LIMITATION
+ROADMAP_DOC59=SIX_PACKAGES_FIXED
+CURSOR_ROLE=CODE_REFACTOR_TEST_LIVE_ONLY_AFTER_GATE
+ONE_TIME_PHASE_DECISION=G0_PENDING
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+CODE_DIFF=NONE_IN_THIS_HANDOFF
+FULL_REPO_GREP=TO_INVENTORY_ONE_PRE_DIFF_RG
+INDEPENDENT_LIVE_TEST=TEST_NOT_RUN
+NEXT=G0_COORDINATION_VERDICT_WITHOUT_REPEATED_DISCOVERY
+```
