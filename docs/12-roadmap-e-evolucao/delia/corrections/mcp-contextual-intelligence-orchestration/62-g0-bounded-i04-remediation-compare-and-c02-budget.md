@@ -242,3 +242,50 @@ NEXT=COORDINATION_FINAL_I04_GATE_DECISION
 ```
 
 No application code changed in this task. Credentials/tokens not recorded.
+
+
+## Coordination v10 — final I04/G0 gate after independent live validation (2026-10-19)
+
+**REVIEWED_EVIDENCE:** Cursor independent live validation `DELIA-C3-I04-G0-INDEPENDENT-LIVE-VALIDATION-01`; documented in this file and ledger §6.311. **GITHUB_REANCHOR_MAIN:** `d2c59845d71c0af52e17381a0c54ab55e94526bc`; `orchestration.py` blob `0d82c09883570d5fb45464e9773a23b2daaba0c2` matches previously reviewed G0 implementation `cca468a365bd592498caa0be8cb20c8e0a6f75fe`. Worktree `git status` is executor-reported, not independently accessible through GitHub. No new G0 code patch, no new backend pytest run by coordination.
+
+### Final adjudication of I04 requirements
+
+**I04 GATE = FAIL/BLOCKED; COORDINATION REVIEW VERDICT = REWORK (non-acceptance, NOT authorization for another G0 rework); IMPLEMENTATION LOOP = CLOSED/STOP.** The name `REWORK` classifies unmet acceptance criteria only; `G0_REWORK_REMAINING=0` blocks another patch cycle. There is no basis for an `INCONCLUSIVE` verdict on the main C02 result: sampled C02 task outcome demonstrably failed in the executor's real-model, real-owner runtime evidence.
+
+- **Accepted progress:** owner-admission decision `owner_surface/operational` on C02 (previous `NOT_APPLICABLE` root repaired); past 504 not seen on this sampled path. Prior-text product compare now fails closed with `prior_turn_evidence_only` + `insufficient_evidence` rather than fabricated positional differences. Material ACT observed = 0. DAVI/OpenAPI product READ + no-match and TÉO methodology had executor-reported successful business outputs, with provenance. Independent worktree full backend `1647/1647 PASS` **reported**; source and blob independently checked via GitHub, but production evaluator was Cursor, not GPT direct SSH.
+- **Critical product failure C02:** C02 formats inquiry was admitted as operational but provider selection chose `mcp:davi/discover_delpi_information` three times and `mcp:teo/get_catalog` in a variant, never the predeclared VISTA reference surface. `CAPABILITY_NOT_MATCHED`/`CAPABILITY_NOT_ENUMERABLE` and HTTP 200 did **not** answer the question; `C02_TASK_OUTCOME=FAIL`. The observed root is **semantic owner/capability selection in DÉLIA**; whether owner catalogue descriptions contribute is `TO_VERIFY`, not sufficient evidence to assign VISTA owner contract defect. No owner name branch may be added.
+- **Other blocking misses:** EV-02 general SIPOC soft-land (`turn_budget_limited`, not a task answer), EV-03 hypothetical continuity partial, EV-05 comparison task not completed (safety honesty PASS only), EV-08 personal ticket task not reached (identity GLPI precondition vs model selection not isolated), EV-10 follow-up after wrong owner cannot summarize formats, EV-13 compare 3x5 failed near 30s. EV-12 rename live `TEST_NOT_RUN`, EV-16 outage/general isolation `INCONCLUSIVE`. Several turns hit ≈30s; reported max ≈30108ms. These are not acceptable as non-material residuals for global I04.
+- **Security boundary:** no evidence of new ACT, credential leak, forced authority or relaxation of frozen `selection-only`; test matrix supports security for the sampled scope, **not** a universal security certification. A `PASS_SECURITY` or HTTP 200 never implies functional PASS. Cold/warm C02 (18562ms / 13967ms / 26710ms) were within the turn ceiling but `FAIL_TASK_OUTCOME`.
+- **Exact runtime context (executor-observed):** model `moonshotai/kimi-k3`, `RUNTIME_CONFIG_FINGERPRINT=2d7505d4142d11bc`, host deployed git differed numerically yet orchestration blob/hash and G0 code markers were matched. This establishes the reviewed orchestrator path was present, not bit-for-bit identity of every deployed application/config dependency. Do not assert exact full deployment SHA parity or independently verified business success.
+
+### Stop and Product Master phase decision (no silent B approval)
+
+Document 59 §3/§4 and 61 §8 explicitly preserve `I04_ACCEPTED` before Q01, with **one** G0 rework. Option A has exhausted both code remediation and authorized independent live validation **without** satisfying exit criteria. Further G0 patch prompts would violate the anti-loop policy. `G0_OPTION_A=STOP_EXHAUSTED`. Current governing state remains `I04_ACCEPTED=NO`, `Q01_AUTHORIZED=NO`, `Q02_AUTHORIZED=NO`.
+
+**COORDINATION RECOMMENDATION (NOT AUTHORIZATION):** Product Master explicitly consider **Option B, one-time amended sequence** permitting only the already-approved **Q02-A semantic admission/group/capability/goal refactor** as a bounded I04-remediation execution, based on existing docs 56–61 and ADR58; prohibit direct global Q02 authorization. Before any code diff, coordination must record a targeted canonical phase amendment (16 + 59/61 as applicable), resolve the Q01 dependency and consent to the narrow exception, reuse doc60 consumers/contracts/golden tests without repeating inventory, and bind exact security and task outcome matrix. No change to Q02-B/C, phase C3/C4/C5, factual-synthesis contract, Core/Domain authority or permission to deploy without separate operational approval. After bounded Q02-A execution, independent real-model multi-provider/no-provider evaluation must determine whether I04 can close or whether STOP escalates again to product/owner architecture. Alternative is **STOP/DEFER** for Product Master; no auto-rescope or case waiver.
+
+**Decision needed from Product Master:** authorize the documented **B phase exception** explicitly, or maintain STOP and request separate owner/contract/product adjudication. Current review creates neither authorization nor a code implementation prompt.
+
+```text
+TASK_ID=DELIA-C3-I04-G0-INDEPENDENT-LIVE-VALIDATION-01
+REVIEWED_ORCHESTRATION_BLOB=0d82c09883570d5fb45464e9773a23b2daaba0c2
+G0_I04_GATE_RESULT=FAIL_BLOCKED
+COORDINATION_REVIEW_VERDICT=REWORK_NO_G0_PATCH_AUTHORIZATION
+G0_OPTION_A=STOP_EXHAUSTED
+G0_IMPLEMENTATION_CYCLE=CLOSED
+G0_REWORK_REMAINING=0
+C02_ADMISSION=OPERATIONAL_OBSERVED
+C02_OWNER_SELECTION=FAIL_DAVI_TEO_NOT_VISTA
+C02_TASK_OUTCOME=FAIL
+GENERAL_CONVERSATION_SIPOC=FAIL_TASK_OUTCOME
+COMPARE_PRIOR_FAIL_CLOSED=PASS_SECURITY_NOT_TASK_COMPLETION
+BACKEND_TESTS=PASS_EXECUTOR_REPORTED_1647
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCT_MASTER_PHASE_EXCEPTION_B=PROPOSED_NOT_AUTHORIZED
+NEXT=PRODUCT_MASTER_EXPLICIT_B_OR_STOP_DECISION
+```
