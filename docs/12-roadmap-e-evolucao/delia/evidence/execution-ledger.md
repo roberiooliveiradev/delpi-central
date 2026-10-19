@@ -14964,3 +14964,14 @@ NEXT=I02_R3B_K2_K3_OUTPUT_QUALITY_BOUNDED_REMEDIATION
 - **STATE:** `ALGORITHM_COMPLETION=PARTIAL` (FAST no auto-select; K2/K3 usefulness residuals); `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.263 — DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-INDEPENDENT-REVIEW (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-19. **REVIEW:** [22](../corrections/mcp-contextual-intelligence-orchestration/22-adaptive-capability-routing-independent-review.md). **IMPLEMENTATION_SHA:** `c2ae80e364b361761bd48c0a4bfce3be11975023`.
+
+- **FAST:** telemetry only; no unsafe singleton automatic capability resolution. **OPERATIONAL:** typed merge preserved. **REASONING:** escalation preserved. **ARGS:** closed owner schema deterministic path; TÉO opaque still model.
+- **Reported live outcomes:** K1 20,199ms READ GROUNDED; K2 21,066ms, 130 chars partial usefulness (expansion gate not exercised in sample); K3 15,294ms, `display_formats` partial relevance. Independent rerun `TEST_NOT_RUN`; n=1 per case, no causal/p95 claim.
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL` limited to bounded implementation and observed/reportable outcome; `ALGORITHM_COMPLETION=PARTIAL`, `I02_ACCEPTED=NO`; C3–C5 unchanged.
+
+NEXT=I02_K2_K3_BOUNDED_OUTPUT_QUALITY_REMEDIATION
