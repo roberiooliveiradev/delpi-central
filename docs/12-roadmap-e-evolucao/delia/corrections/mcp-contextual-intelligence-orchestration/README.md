@@ -81,6 +81,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I03 regression gate and independent acceptance:** [31 — bounded K2/K3 remediation](./31-i03-k2-k3-bounded-nonregression-remediation.md) and [32 — independent I03 ACCEPT_WITH_RESIDUAL](./32-i03-independent-nonregression-review-and-acceptance.md). K1 TÉO 16.94s; K2 six bullets, 12.31s; K3 clarifies in 21.78s; K4 DAVI discovery in 17.34s. K3 deadline-fallback code synthetic PASS but not directly exercised live. I04 generalization is next; ledger §6.271 helpdesk remains separate.
 
+**Live orchestration decision/log validation (parallel residual):** [33 — L01–L06 authenticated live on runtime SHA `9a8775018f`](./33-live-orchestration-decision-and-log-validation.md). L01 routes to `helpdesk_read` (historical Transformômetro misroute NOT REPRODUCED) but blocks on `glpi_link_required`. L02/L06 fail on select_group/capability none → 504. L03–L05 PASS_WITH_LIMITATION / safe clarification. No functional patch; does not reopen I03 acceptance; does not start I04.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -151,8 +153,16 @@ LIVE_K1=PASS
 LIVE_K2=PASS
 LIVE_K3=PASS
 LIVE_K4_HOLDOUT=PASS
-I03_ACCEPTED=NO
-NEXT=COORDINATION_INDEPENDENT_REVIEW
+I03_ACCEPTED=YES_WITH_RESIDUAL
+LIVE_ORCH_DIAG_33=EVIDENCE_RECORDED
+LIVE_L01=FAIL_TASK_PASS_ROUTING_GLPI_LINK
+LIVE_L02=FAIL_GROUP_NONE_TIMEOUT
+LIVE_L03=PASS_WITH_LIMITATION
+LIVE_L04=PASS_WITH_LIMITATION_RECOVER_INVALID_INDEX
+LIVE_L05=PASS_SAFE_CLARIFICATION
+LIVE_L06=FAIL_CAPABILITY_NONE_TIMEOUT
+NEXT_MAIN=I04_PROVIDER_NEUTRAL_GENERALIZATION
+NEXT_RELATED=COORDINATION_ROOT_CAUSE_AND_REMEDIATION_REVIEW_DOC33
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
