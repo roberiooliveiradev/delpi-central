@@ -61,6 +61,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3B live validated:** [19 — authenticated K1/K2/K3](./19-i02r3b-authenticated-live-outcome-validation.md), independently reviewed in [20 — ACCEPT_WITH_RESIDUAL](./20-i02r3b-independent-live-outcome-review.md). K1 TÉO methodology READ in 21.469s; K2 output short (48 chars), K3 topic relevance partial. No causal A/B or p95; I02 still REWORK.
 
+**Adaptive routing completion (candidate):** [21 — implementation evidence](./21-adaptive-capability-routing-completion-implementation.md). Extends `OperationalCapabilityOrchestrator` (no second planner): safe FAST telemetry, comparison-declared native skip, deterministic eligible args, K2 thin-extraction expand + K3 index ranking. Full pytest PASS; live on completion SHA pending deploy. `I02_ACCEPTED=NO`.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -112,7 +114,9 @@ TYPED_CAPABILITY_GOAL_COLD_START=IMPLEMENTED
 LIVE_K1_R3B=PASS_WITH_LIMITATION
 LIVE_K2_R3B=PASS_WITH_LIMITATION
 LIVE_K3_R3B=PASS_WITH_LIMITATION
-NEXT=COORDINATION_LIVE_OUTCOME_REVIEW
+ADAPTIVE_ROUTING_COMPLETION=IMPLEMENTATION_EVIDENCE_READY
+ADAPTIVE_ROUTING_LIVE=PENDING_DEPLOY
+NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K1_K2_K3_THEN_COORDINATION_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

@@ -3082,6 +3082,152 @@ def _schema_keys(
     )
 
 
+def _property_node(
+    schema: Mapping[str, Any] | None, key: str
+) -> Mapping[str, Any] | None:
+    if not isinstance(schema, Mapping):
+        return None
+    properties = schema.get("properties")
+    if not isinstance(properties, Mapping):
+        return None
+    node = properties.get(key)
+    return node if isinstance(node, Mapping) else None
+
+
+def _deterministic_arguments_from_schema(
+    descriptor: ProviderCapability,
+) -> dict[str, Any] | None:
+    """Build arguments without a model when every non-orchestrated key
+    is owner-closed (single enum/const or default) — never invent ids.
+
+    Returns None when any required/non-orchestrated field needs
+    interpretation (free string, multi-enum, opaque object/array).
+    """
+    keys, required = _schema_keys(descriptor)
+    material = (keys | required) - ORCHESTRATED_FIELDS
+    if not material:
+        return {}
+    schema = (
+        descriptor.input_schema
+        if isinstance(descriptor.input_schema, Mapping)
+        else None
+    )
+    arguments: dict[str, Any] = {}
+    for key in sorted(material)[:MAX_ARGUMENT_KEYS]:
+        node = _property_node(schema, key)
+        if node is None:
+            return None
+        if "const" in node:
+            value = node["const"]
+            if not isinstance(value, (str, int, float, bool)):
+                return None
+            arguments[key] = value
+            continue
+        enum_values = node.get("enum")
+        if isinstance(enum_values, (list, tuple)) and len(enum_values) == 1:
+            value = enum_values[0]
+            if not isinstance(value, (str, int, float, bool)):
+                return None
+            arguments[key] = value
+            continue
+        if "default" in node and key not in required:
+            value = node["default"]
+            if not isinstance(value, (str, int, float, bool)):
+                return None
+            arguments[key] = value
+            continue
+        # Free string / multi-enum / opaque → model or clarification.
+        return None
+    for key in required - ORCHESTRATED_FIELDS:
+        if key not in arguments:
+            return None
+    return arguments
+
+
+def _rank_index_options_by_overlap(
+    input_text: str,
+    options: tuple[Mapping[str, str], ...],
+) -> tuple[Mapping[str, str], ...]:
+    """Stable reorder: higher token overlap with the user ask first.
+
+    Does not invent identifiers — only reorders owner-declared options
+    so the index-select proposal sees the most lexically relevant rows.
+    """
+    tokens = {
+        token
+        for token in re.findall(r"[a-z0-9_]{3,}", (input_text or "").lower())
+        if token
+    }
+    if not tokens or len(options) <= 1:
+        return options
+
+    def _score(row: Mapping[str, str]) -> tuple[int, str]:
+        blob = " ".join(
+            str(row.get(key) or "") for key in ("identifier", "label")
+        ).lower()
+        overlap = sum(1 for token in tokens if token in blob)
+        return (-overlap, str(row.get("identifier") or ""))
+
+    return tuple(sorted(options, key=_score))
+
+
+_MIN_USEFUL_CONTINUITY_CHARS = 120
+_EXTRACTION_FOLLOWUP_RE = re.compile(
+    r"\b("
+    r"quais|informa(?:c|ç)(?:o|õ)es|inputs?|levantar|etapas?|"
+    r"lista|list|preciso|need|prerequisit|pré-?requis"
+    r")\b",
+    re.IGNORECASE,
+)
+# Narrow extraction expansion must not rewrite limitation/caution asks
+# that intentionally select a single prior excerpt.
+_LIMITATION_FOLLOWUP_RE = re.compile(
+    r"\b("
+    r"limita\w*|limitation\w*|n[aã]o\s+usar|do\s+not\s+use|"
+    r"cuidado|caution|aviso|warning|invarian\w*"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _extraction_list_from_prior_excerpts(
+    records: tuple[Mapping[str, str], ...],
+) -> str | None:
+    """Deterministic list projection of prior bullet/numbered excerpts.
+
+    Used when model continuity under-selects on an extraction follow-up.
+    Values are copied verbatim from prior conversational excerpts —
+    never invented facts.
+    """
+    bullets: list[str] = []
+    for record in records:
+        excerpt = (record.get("excerpt") or "").strip()
+        if not excerpt:
+            continue
+        if re.match(r"^(?:[-*]|\d+[.)])\s+\S", excerpt):
+            cleaned = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", excerpt).strip()
+            if cleaned:
+                bullets.append(cleaned)
+    if len(bullets) < 2:
+        # Fall back to the longest distinct excerpts when prior text
+        # was not bullet-structured but still has multiple units.
+        ranked = sorted(
+            (
+                (record.get("excerpt") or "").strip()
+                for record in records
+            ),
+            key=len,
+            reverse=True,
+        )
+        bullets = [item for item in ranked if len(item) >= 24][:8]
+    if len(bullets) < 2:
+        return None
+    lines = [_list_header(len(bullets[:MAX_SYNTHESIS_ITEMS]))]
+    for item in bullets[:MAX_SYNTHESIS_ITEMS]:
+        lines.append("- " + item)
+    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
+
+
 def _project_surface(
     groups: Mapping[str, CapabilityGroup],
 ) -> list[tuple[str, ProviderCapability]]:
@@ -4179,25 +4325,38 @@ class OperationalCapabilityOrchestrator:
         # exposed — the assessment sees only the target group. Foreign
         # capability selection runs only when the assessment justifies
         # it (required evidence or explicit corroboration).
+        # Adaptive skip (not READ⇒skip): when the validated goal already
+        # declares comparison_requested, corroborate is forced for
+        # non-write targets — the native-assessment model call is
+        # redundant. Write targets still assess because enrichment
+        # (foreign_evidence_required) remains a valid path.
         path_mode = "native"
         foreign_cap: ProviderCapability | None = None
         foreign_group: CapabilityGroup | None = None
         foreign_key: str | None = None
         if len(groups) > 1:
-            assessment = self._assess_native_path(
-                input_text,
-                group,
-                descriptor,
-                correlation,
-                workspace_context,
-                prior_turns,
-                goal=goal,
-                deadline=deadline,
-            )
             non_write_target = descriptor.operation_class not in (
                 SpecialistOperationClass.PREPARE,
                 SpecialistOperationClass.ACT,
             )
+            if non_write_target and goal.comparison_requested:
+                assessment = "corroboration_requested"
+                _logger.info(
+                    "orchestration stage=native_assessment "
+                    "decision=skip_comparison_declared correlation_id=%s",
+                    correlation,
+                )
+            else:
+                assessment = self._assess_native_path(
+                    input_text,
+                    group,
+                    descriptor,
+                    correlation,
+                    workspace_context,
+                    prior_turns,
+                    goal=goal,
+                    deadline=deadline,
+                )
             if (
                 assessment == "corroboration_requested"
                 or goal.comparison_requested
@@ -4288,18 +4447,36 @@ class OperationalCapabilityOrchestrator:
                 correlation_id=correlation,
                 error_code="plan_validation_failed",
             )
-        # Decision-path telemetry (C3-T7 reuse): an accepted governed
-        # capability plan is honestly an OPERATIONAL turn — structured
-        # bounded context + deterministic gates, never an authoritative
-        # rule or a complex investigation. Facts are not fabricated to
-        # reach SELECTED; the routing result is logged, never authority.
+        # Decision-path telemetry (C3-T7 reuse): classify the accepted
+        # plan as FAST / OPERATIONAL / REASONING from proven routing
+        # facts only. Never authority; never invents sufficiency.
+        invocable_count = sum(
+            1
+            for cap in group.capabilities
+            if invocable_in_interactive_phase(cap.operation_class)
+        )
+        arg_keys, arg_required = _schema_keys(descriptor)
+        no_model_args = not (arg_keys - ORCHESTRATED_FIELDS) and not (
+            arg_required - ORCHESTRATED_FIELDS
+        )
+        complex_investigation = path_mode != "native" or (
+            goal is not None and goal.comparison_requested
+        )
+        fast_surface = (
+            len(groups) == 1
+            and invocable_count == 1
+            and discovery is None
+            and no_model_args
+            and path_mode == "native"
+            and not complex_investigation
+        )
         routing = select_decision_path(
             DecisionPathInput(
                 request_class="capability_orchestration",
-                authoritative_deterministic_rule_available=False,
-                authoritative_context_sufficient=False,
+                authoritative_deterministic_rule_available=fast_surface,
+                authoritative_context_sufficient=fast_surface,
                 structured_context_sufficient=True,
-                complex_investigation_required=False,
+                complex_investigation_required=complex_investigation,
                 required_evidence_missing=False,
                 evidence_conflict_present=False,
             )
@@ -5818,6 +5995,31 @@ class OperationalCapabilityOrchestrator:
                     LIMITATION_INSUFFICIENT_EVIDENCE,
                 ),
             )
+        # Extraction follow-ups: when the model under-selects (thin
+        # answer) despite rich prior excerpts, expand deterministically
+        # from those excerpts — never invent facts, never literal dump
+        # of the entire prior when a list projection is available.
+        if (
+            len(rendered) < _MIN_USEFUL_CONTINUITY_CHARS
+            and len(records) >= 3
+            and _EXTRACTION_FOLLOWUP_RE.search(input_text or "")
+            and not _LIMITATION_FOLLOWUP_RE.search(input_text or "")
+        ):
+            expanded = _extraction_list_from_prior_excerpts(records)
+            if (
+                expanded is not None
+                and len(expanded) > len(rendered)
+                and " ".join(expanded.split())
+                != " ".join(prior_content.split())
+            ):
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=expand_thin_extraction "
+                    "excerpts=%d correlation_id=%s",
+                    len(records),
+                    correlation,
+                )
+                rendered = expanded
         _logger.info(
             "orchestration stage=prior_continuation "
             "decision=transformed excerpts=%d correlation_id=%s",
@@ -7908,6 +8110,9 @@ class OperationalCapabilityOrchestrator:
         ]
         if not invocable:
             return None
+        # Note: a singleton invocable surface is NOT automatic FAST —
+        # applicability to the user ask still requires a validated
+        # proposal (applicable may be false).
         listing_hint = _prior_listing_hint(prior_turns)
         proposal = self._propose(
             input_text,
@@ -8060,9 +8265,10 @@ class OperationalCapabilityOrchestrator:
         options = _index_option_rows(index_structured, field_keys)
         if not options:
             return None
+        ranked = _rank_index_options_by_overlap(input_text, options)
         selected, argument_field = self._propose_index_identifier(
             input_text,
-            options,
+            ranked,
             field_keys,
             workspace_context,
             prior_turns,
@@ -8091,8 +8297,9 @@ class OperationalCapabilityOrchestrator:
             return None
         _logger.info(
             "orchestration stage=index_select decision=bound "
-            "field=%s correlation_id=%s",
+            "field=%s topic=%s correlation_id=%s",
             argument_field,
+            selected[:80],
             correlation,
         )
         return projected
@@ -8182,6 +8389,16 @@ class OperationalCapabilityOrchestrator:
             required - ORCHESTRATED_FIELDS
         ):
             return {}, ()
+        deterministic = _deterministic_arguments_from_schema(descriptor)
+        if deterministic is not None:
+            _logger.info(
+                "orchestration stage=arguments "
+                "decision=deterministic_schema keys=%d "
+                "correlation_id=%s",
+                len(deterministic),
+                correlation,
+            )
+            return deterministic, ()
         if (
             self._experimental_arguments_budget_guard
             and deadline is not None

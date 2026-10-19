@@ -14948,3 +14948,18 @@ NEXT=COORDINATION_LIVE_OUTCOME_REVIEW
 - **VERDICT:** `ACCEPT_WITH_RESIDUAL` for bounded R3-B functional code/live outcome; sample n=1, no causal A/B, no p95, independent live replay `TEST_NOT_RUN`. `I02_ACCEPTED=NO`; no C3–C5 progression; stage-cap 10/headroom defaults unchanged.
 
 NEXT=I02_R3B_K2_K3_OUTPUT_QUALITY_BOUNDED_REMEDIATION
+
+## §6.262 — DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-COMPLETION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-COMPLETION-01`. **BASE_HEAD:** `37c908cf1d60db8c8486f8d33ad8cf3f7fbb9082`. **DOC:** [21](../corrections/mcp-contextual-intelligence-orchestration/21-adaptive-capability-routing-completion-implementation.md). **AUTHORITIES:** docs 14–20 preserved; I02 not auto-accepted.
+
+- **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on `OperationalCapabilityOrchestrator` + `select_decision_path` + R3-B typed merge. No second planner/engine/registry.
+- **A FAST:** decision_path telemetry when singleton/native/closed-schema; unsafe singleton auto-select **not** shipped (regressions).
+- **B OPERATIONAL/native:** R3-B preserved; native skip only for non-write + declared `comparison_requested`; write enrichment still assesses; `READ⇒skip` prohibited.
+- **C Args:** deterministic schema path for const/single-enum/defaults; opaque schemas remain model.
+- **D Quality:** thin prior-continuation extraction expand; index option lexical ranking + `topic=` log.
+- **Tests:** `test_adaptive_capability_routing_completion.py` + I01/I02/R2/R3/R3A/R3B + full `delia-api` pytest **PASS**. Live on completion SHA `PENDING_DEPLOY`.
+- **Invariants:** budget=30; stage-cap10 OFF; args-headroom OFF; MESSAGE≠ACT; MATERIAL_ACT synthetic=0.
+- **STATE:** `ALGORITHM_COMPLETION=PARTIAL_UNTIL_LIVE`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K1_K2_K3

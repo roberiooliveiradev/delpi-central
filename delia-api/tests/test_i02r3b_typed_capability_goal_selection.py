@@ -567,7 +567,8 @@ def test_incomplete_typed_falls_back_to_separate_goal():
 # ---------------------------------------------------------------------------
 
 
-def test_typed_comparison_keeps_native_assessment():
+def test_typed_comparison_skips_redundant_native_keeps_foreign_path():
+    """Declared comparison_requested forces corroborate without native model."""
     providers, pid, gid = _teo_surface()
     group_key = f"{pid}:{gid}"
     attempt, _, purposes, _ = _run(
@@ -579,7 +580,8 @@ def test_typed_comparison_keeps_native_assessment():
         ),
         text="compare methodology across specialists",
     )
-    assert NATIVE_ASSESSMENT_INSTRUCTION_ID in purposes
+    assert NATIVE_ASSESSMENT_INSTRUCTION_ID not in purposes
+    # Foreign selection remains available for the corroboration path.
     # Path may or may not find foreign; never ACT invoke.
     assert "prepare_change" not in {
         c[0] for c in providers[0].calls
