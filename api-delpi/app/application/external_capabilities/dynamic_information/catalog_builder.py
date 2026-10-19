@@ -398,7 +398,6 @@ def build_technical_actions_from_openapi(
                     response_bindings=response_bindings,
                     negative_aliases=negative_aliases,
                     entity_domain_markers=entity_domain_markers,
-                response_contract=response_contract,
                     response_contract=response_contract,
                 )
             )
@@ -488,6 +487,7 @@ def build_technical_actions_from_baseline(
                 response_bindings=response_bindings,
                 negative_aliases=negative_aliases,
                 entity_domain_markers=entity_domain_markers,
+                response_contract=response_contract,
             )
         )
     return actions
