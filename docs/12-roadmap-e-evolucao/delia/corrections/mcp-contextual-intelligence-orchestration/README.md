@@ -47,7 +47,11 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3 — decisão independente:** [14 — diagnostic review and architecture decision](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md). Diagnosis ACCEPT_WITH_RESIDUAL; R3-A budget experiment then R3-B critical-path gate; stage-cap 10s **not** production-approved.
 
+**I02-R3 independent review + architecture direction:** [14 — diagnosis accepted, staged budget experiment and critical-path gate](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md). K1 `arguments` timeout PROVEN; arbitrary 10s global stage cap NOT approved as functional fix. I02 remains REWORK.
+
 **I02-R3A — experimentos controlados:** [15 — budget and critical-path experiments](./15-i02r3a-controlled-budget-and-critical-path-experiments.md). E0–E5 sintéticos: cap 10 antecipa falha; headroom opt-in só honest skip; E3–E5 sem merge/bypass default; produção inalterada.
+
+**I02-R3A independent review:** [16 — experiment evidence accepted with residuals](./16-i02r3a-independent-experiment-review.md). No K1 task-success improvement demonstrated, stage cap 10s not approved in production, arguments guard OFF. Next R3-B typed-selection contract/safety experiment gate; no functional merge approved.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -94,7 +98,7 @@ I02_R3A=EXPERIMENT_EVIDENCE_RECORDED
 K1_TIMEOUT_EXACT_STAGE=arguments
 STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
 ARGUMENTS_HEADROOM_PRODUCTION_DEFAULT=OFF
-NEXT=COORDINATION_REVIEW_OF_R3A_EVIDENCE
+NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
