@@ -1425,15 +1425,15 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Six governed proposals: interaction admission + plan calls +
-    # bounded turn-goal (LOOP-03R1 / SEM recovery). The owner result is
-    # a single record with exactly one renderable scalar — the
-    # deterministic grounded composer answers directly and the
-    # synthesis proposal is skipped (R1 token efficiency), so the
+    # Seven governed proposals: interaction admission + plan calls +
+    # bounded turn-goal (LOOP-03R1 / SEM recovery / Q02-A admission).
+    # The owner result is a single record with exactly one renderable
+    # scalar — the deterministic grounded composer answers directly and
+    # the synthesis proposal is skipped (R1 token efficiency), so the
     # fabricated "answer" payload was never even consumed by a stage;
     # model prose can never introduce factual leaf values into the
     # OBSERVATION answer.
-    assert len(read._invoke_model._port.requests) == 6
+    assert len(read._invoke_model._port.requests) == 7
 
 
 # --- R2: generic secret/token redaction --------------------------------

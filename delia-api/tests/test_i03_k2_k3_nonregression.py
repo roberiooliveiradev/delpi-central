@@ -261,7 +261,7 @@ def _prior(content: str = PRIOR_GUIDANCE):
 
 
 def test_k2_invalid_record_index_recovers_deterministic_extraction():
-    """Model proposes out-of-range index with rich prior → extract, not erase."""
+    """Q02-A: invalid index fails closed to insufficiency (no lexical dump)."""
     guide = _cap("solo", "solo_p", "get_guide", SpecialistOperationClass.READ)
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])
     model = FakeProposalModel(
@@ -288,17 +288,13 @@ def test_k2_invalid_record_index_recovers_deterministic_extraction():
     attempt = orch.attempt(FOLLOW_UP, prior_turns=_prior())
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
-    assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
-        attempt.limitations or ()
-    )
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in (attempt.limitations or ())
     assert provider.calls == []
-    content = attempt.content or ""
-    assert "Descrição do problema" in content
-    assert "Escopo do processo" in content
-    assert "ordem 99999" not in content.lower()
+    assert "ordem 99999" not in (attempt.content or "").lower()
 
 
 def test_k2_negative_index_same_recovery():
+    """Q02-A: negative index fails closed — no deterministic dump recovery."""
     guide = _cap("solo", "solo_p", "get_guide", SpecialistOperationClass.READ)
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])
     model = FakeProposalModel(
@@ -319,10 +315,7 @@ def test_k2_negative_index_same_recovery():
     )
     attempt = orch.attempt(FOLLOW_UP, prior_turns=_prior())
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
-        attempt.limitations or ()
-    )
-    assert "Evidências já disponíveis" in (attempt.content or "")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in (attempt.limitations or ())
 
 
 def test_k2_valid_index_still_works():
@@ -497,9 +490,7 @@ def test_k2_renamed_provider_invalid_index_recovery():
     )
     attempt = orch.attempt(FOLLOW_UP, prior_turns=_prior())
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
-        attempt.limitations or ()
-    )
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in (attempt.limitations or ())
     assert provider.calls == []
 
 

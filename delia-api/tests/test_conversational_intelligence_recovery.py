@@ -246,6 +246,7 @@ def test_g0_02_admission_simulated_formats_ask_routes_to_owner_selection():
     )
     from app.application.capability_provision.orchestration import (
         CAPABILITY_SELECTION_INSTRUCTION_ID,
+        GROUP_SELECTION_INSTRUCTION_ID,
         INTERACTION_ADMISSION_INSTRUCTION_ID,
         OperationalCapabilityOrchestrator,
     )
@@ -268,7 +269,8 @@ def test_g0_02_admission_simulated_formats_ask_routes_to_owner_selection():
     assert attempt.status is not GovernedCapabilityStatus.NOT_APPLICABLE
     purposes = [r.task_purpose_id for r in model.requests]
     assert INTERACTION_ADMISSION_INSTRUCTION_ID in purposes
-    # Singleton group skips select_group; capability selection must run.
+    # Q02-A: even a singleton group runs select_group; capability follows.
+    assert GROUP_SELECTION_INSTRUCTION_ID in purposes
     assert CAPABILITY_SELECTION_INSTRUCTION_ID in purposes
 
 

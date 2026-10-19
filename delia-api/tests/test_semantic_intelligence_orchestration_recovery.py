@@ -117,8 +117,23 @@ def test_sem_t17_group_selection_reserves_conversational_budget():
     assert orch is not None
 
 
-def test_sem_t20_admission_skips_when_prior_turns_present():
-    """Continuidade: admission não engole esclarecimentos."""
+def test_sem_t20_admission_runs_with_prior_turns_q02a():
+    """Q02-A: prior turns no longer skip admission (topic change allowed)."""
+    from app.application.capability_provision.orchestration import (
+        INTERACTION_ADMISSION_INSTRUCTION_ID,
+    )
+    from app.application.model_invocation.invoke_model import InvokeModel
+    from app.application.capability_provision.mcp_provider import (
+        McpCapabilityProvider,
+    )
+    from app.application.capability_provision.orchestration import (
+        OperationalCapabilityOrchestrator,
+    )
+    from tests.test_specialist_capability_orchestration import (
+        FakeProposalModel,
+        TEST_MODEL_REF,
+    )
+
     port = FakePort(
         tools_by_specialist={"teo": TEO_TOOLS, "vista": VISTA_TOOLS}
     )
@@ -133,16 +148,24 @@ def test_sem_t20_admission_skips_when_prior_turns_present():
             epistemic_class=EpistemicClass.HYPOTHESIS,
         ),
     )
-    attempt = _read(
-        _interop(port),
-        specialist_ids=("teo", "vista"),
-        proposal={
+    # Clarification still needs owner — admission must run and say so.
+    model = FakeProposalModel(
+        {
             INTERACTION_ADMISSION_INSTRUCTION_ID: {
-                "requires_owner_surface": False,
-                "interaction_class": "conversation",
+                "requires_owner_surface": True,
+                "interaction_class": "operational",
             },
             GROUP_SELECTION_INSTRUCTION_ID: {"applicable": False},
-        },
-    ).attempt("Os que sou responsável.", prior_turns=prior)
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [McpCapabilityProvider(_interop(port), ("teo", "vista"))],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt("Os que sou responsável.", prior_turns=prior)
+    assert INTERACTION_ADMISSION_INSTRUCTION_ID in [
+        r.task_purpose_id for r in model.requests
+    ]
     assert port.list_calls
     assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE

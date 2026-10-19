@@ -550,9 +550,11 @@ def _compare_prior_attempt(prior_content: str, ask: str, proposals=None):
     )
     provider = _search_provider()
     base = {
+        # Q02-A: admission runs with prior turns — compare continuity is
+        # operational, not a conversational skip.
         INTERACTION_ADMISSION_INSTRUCTION_ID: {
-            "requires_owner_surface": False,
-            "interaction_class": "conversation",
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
         },
         GOAL_INSTRUCTION_ID: {
             "goal_class": "compare",
@@ -711,8 +713,8 @@ def test_cont_t01_subset_from_prior_when_sufficient():
     provider = _search_provider()
     proposals = {
         INTERACTION_ADMISSION_INSTRUCTION_ID: {
-            "requires_owner_surface": False,
-            "interaction_class": "conversation",
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
         },
         GOAL_INSTRUCTION_ID: {
             "goal_class": "read",
@@ -737,7 +739,7 @@ def test_cont_t01_subset_from_prior_when_sufficient():
 
 
 def test_cont_t02_empty_selection_recovers_bullet_prior():
-    """Empty synthesis on a bullet prior projects excerpts, no owner."""
+    """Q02-A: empty synthesis fails closed; no lexical bullet dump."""
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
     prior = (
@@ -758,8 +760,8 @@ def test_cont_t02_empty_selection_recovers_bullet_prior():
     provider = _search_provider()
     proposals = {
         INTERACTION_ADMISSION_INSTRUCTION_ID: {
-            "requires_owner_surface": False,
-            "interaction_class": "conversation",
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
         },
         GOAL_INSTRUCTION_ID: {
             "goal_class": "read",
@@ -775,10 +777,11 @@ def test_cont_t02_empty_selection_recovers_bullet_prior():
     )
     assert provider.calls == []
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    content = attempt.content or ""
-    assert "TERM. PINO A" in content
-    assert "TERM. PINO B" in content
     assert "prior_turn_evidence_only" in attempt.limitations
+    assert "insufficient_evidence" in attempt.limitations
+    content = attempt.content or ""
+    assert "TERM. PINO A" not in content
+    assert "TERM. PINO B" not in content
 
 
 def test_cont_bullet_abbreviation_stays_atomic_excerpt():

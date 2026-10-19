@@ -298,7 +298,10 @@ def test_second_turn_transforms_prior_without_reselection():
     assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
     assert provider.calls == []
     purposes = [r.task_purpose_id for r in model.requests]
-    assert purposes == [GOAL_INSTRUCTION_ID, SYNTHESIS_INSTRUCTION_ID]
+    # Q02-A: admission always runs with prior turns (topic-change gate).
+    assert GOAL_INSTRUCTION_ID in purposes
+    assert SYNTHESIS_INSTRUCTION_ID in purposes
+    assert purposes[-2:] == [GOAL_INSTRUCTION_ID, SYNTHESIS_INSTRUCTION_ID]
     assert GROUP_SELECTION_INSTRUCTION_ID not in purposes
     assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
 

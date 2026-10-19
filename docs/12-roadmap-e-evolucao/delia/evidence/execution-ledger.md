@@ -15861,3 +15861,32 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=CURSOR_Q02_A_EXECUTION_REPORT_THEN_INDEPENDENT_REVIEW
 ```
+
+## §6.315 — Q02-A semantic consolidation executed (I04 exception B only)
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01`. **AUTHORITY:** Product Master Option B / ledger §6.313; docs 59 §0, 61 §9. **REANCHOR:** `REFERENCE_HEAD=877f654e86966b46c86052554c1ce685892a7e4d`; execution rebased onto `origin/main` tip at start of commit (`38342414f57071d8e6f6d588454311c3663304a1` before this section's commit). Residual `rg` confirmed lexical surfaces from doc60 S01–S11/S15/S20–S21 removed from `orchestration.py` (`_is_information_coverage_inquiry`, guidance cue REs, prior-transform cue REs, index intent clusters/scores, extraction/limitation follow-up REs). No contractual drift requiring STOP.
+
+**EXISTING_EQUIVALENT=YES; REUSE_DECISION=REUSE|EXTEND.** Consolidated admission → goal → group → capability via existing `InvokeModel`/`_propose`. Deterministic gates preserved (schema, live membership incl. unambiguous bare `group_id` resolve, AuthZ, provenance, PREPARE≠ACT, selection-only, 30s budget). Soft singleton only when proposal missing; explicit `applicable=false` still rejects sole group. Prior turns no longer skip admission. Lexical coverage/guidance-cue/index-score/extraction-expansion overrides removed; invalid/empty prior synthesis fails closed to insufficiency instead of dumping prior bullets.
+
+**TESTS:** full `delia-api` pytest GREEN after fixture retarget to typed proposals (no weakened negatives). New `tests/test_q02a_semantic_consolidation.py` covers C02/paraphrase/negation/rename/reorder/provider-neutral/SIPOC/hypothetical/admission-with-prior. Security/provenance subsets GREEN. **LIVE_EVAL=`TEST_NOT_RUN`** — no separate production deploy authorization in this task; HTTP 200 / soft-land not used as PASS. `MATERIAL_ACT_COUNT=0` in suite. `I04_ACCEPTED=NO`; Q01/Q02-B/Q02-C/Q03/C3–C5 unchanged.
+
+```text
+Q02_A_SCOPE_EXECUTED=YES
+Q02_A_IMPLEMENTATION_EXECUTED=YES
+Q02_A_INDEPENDENT_REVIEW=PENDING
+CONTRACT_IMPACT=NONE_PUBLIC
+MODEL_AUTHORED_FACTUAL_PROSE=NONE
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED
+FULL_BACKEND_TESTS=PASS
+LIVE_EVAL=TEST_NOT_RUN
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_Q02_A_REVIEW
+```

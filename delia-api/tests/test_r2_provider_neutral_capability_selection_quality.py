@@ -22,7 +22,6 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _capability_payload,
-    _is_information_coverage_inquiry,
     _list_header,
     _records_are_prior_excerpts,
 )
@@ -214,9 +213,28 @@ def _pair(
 
 
 def _orch(providers, proposal):
+    """Inject group selection for singleton surfaces (Q02-A S20)."""
+    routed = dict(proposal) if isinstance(proposal, dict) else proposal
+    if isinstance(routed, dict) and GROUP_SELECTION_INSTRUCTION_ID not in routed:
+        # Derive the only live group key from the first provider surface.
+        group_key = None
+        for provider in providers:
+            surface = provider.list_groups(correlation_id="r2-setup")
+            if len(surface.groups) == 1:
+                g = surface.groups[0]
+                group_key = f"{g.provider_id}:{g.group_id}"
+                break
+        if group_key is not None:
+            routed = {
+                **routed,
+                GROUP_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "capability_group_id": group_key,
+                },
+            }
     return OperationalCapabilityOrchestrator(
         providers,
-        invoke_model=InvokeModel(FakeProposalModel(proposal)),
+        invoke_model=InvokeModel(FakeProposalModel(routed)),
         model_ref=TEST_MODEL_REF,
     )
 
@@ -235,16 +253,15 @@ def _miss(group_id, remote_name, eligible=95, protocol=None):
     )
 
 
-def test_coverage_inquiry_detector():
-    assert _is_information_coverage_inquiry(BROAD_ASK)
-    assert _is_information_coverage_inquiry(
-        "What information can you consult for me?"
-    )
-    assert not _is_information_coverage_inquiry(CHECKLIST_ASK)
-    assert not _is_information_coverage_inquiry("Quanto é 2+2?")
+def test_coverage_inquiry_detector_removed_q02a():
+    """Lexical coverage detector removed — model must select DISCOVERY."""
+    import app.application.capability_provision.orchestration as orch_mod
+
+    assert not hasattr(orch_mod, "_is_information_coverage_inquiry")
 
 
-def test_r2_t01_broad_discovery_recovers_when_model_says_none():
+def test_r2_t01_broad_discovery_requires_model_selection_q02a():
+    """Q02-A: no lexical recovery when model says applicable=false."""
     discover, execute = _pair()
     provider = FakeProvider(
         "alpha",
@@ -257,9 +274,28 @@ def test_r2_t01_broad_discovery_recovers_when_model_says_none():
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
     }
     attempt = _orch([provider], proposal).attempt(BROAD_ASK)
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert provider.calls == []
+
+def test_r2_t01b_broad_discovery_when_model_selects_discovery():
+    discover, execute = _pair()
+    provider = FakeProvider(
+        "alpha",
+        [_group("alpha", "catalog", [discover, execute])],
+        outcomes={("catalog", "probe_information"): _miss("catalog", "probe_information")},
+    )
+    proposal = {
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "probe_information",
+            "goal_class": "read",
+        },
+        NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
+        ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
+    }
+    attempt = _orch([provider], proposal).attempt(BROAD_ASK)
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert provider.calls[0][0] == "probe_information"
-    assert "fetch_information" not in {c[0] for c in provider.calls}
     content = (attempt.content or "").lower()
     assert "95" in (attempt.content or "") or "elegív" in content
 
@@ -358,7 +394,8 @@ def test_r2_t05_no_applicable_capability_clarifies():
     assert provider.calls == []
 
 
-def test_r2_t06_invalid_remote_name_recovers_on_coverage():
+def test_r2_t06_invalid_remote_name_no_lexical_recovery_q02a():
+    """Q02-A: invented remote_name does not lexical-recover DISCOVERY."""
     discover, execute = _pair()
     provider = FakeProvider(
         "alpha",
@@ -379,8 +416,11 @@ def test_r2_t06_invalid_remote_name_recovers_on_coverage():
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
     }
     attempt = _orch([provider], proposal).attempt(BROAD_ASK)
-    assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert provider.calls[0][0] == "probe_information"
+    assert attempt.status in {
+        GovernedCapabilityStatus.NOT_APPLICABLE,
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+    }
+    assert provider.calls == []
 
 
 def test_r2_t07_provider_renamed():
@@ -400,7 +440,11 @@ def test_r2_t07_provider_renamed():
         },
     )
     proposal = {
-        CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False},
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "surface_probe",
+            "goal_class": "read",
+        },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
     }
@@ -428,7 +472,11 @@ def test_r2_t08_non_mcp_provider():
         protocol=protocol,
     )
     proposal = {
-        CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False},
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "probe_information",
+            "goal_class": "read",
+        },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
     }
@@ -459,7 +507,11 @@ def test_r2_t09_multi_owner_selects_discovery_group():
             "applicable": True,
             "capability_group_id": "mcp:infohub",
         },
-        CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False},
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "probe_information",
+            "goal_class": "read",
+        },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
     }
@@ -558,13 +610,18 @@ def test_r2_t12_discovery_is_not_act():
         },
     )
     proposal = {
-        CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False},
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "probe_information",
+            "goal_class": "read",
+        },
         ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": BROAD_ASK}},
         NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
     }
     attempt = _orch([provider], proposal).attempt(BROAD_ASK)
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert [c[0] for c in provider.calls] == ["probe_information"]
+    assert "commit_change" not in {c[0] for c in provider.calls}
 
 
 def test_r2_t13_group_none_still_clarifies_r1():

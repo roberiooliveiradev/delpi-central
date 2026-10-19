@@ -485,12 +485,12 @@ def test_s5_continuity_finds_prerequisites_in_prior_useful_answer():
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
                     {"record_index": i, "fields": ["excerpt"]}
-                    for i in range(2, 6)
+                    for i in (7, 8, 9, 10)
                 ],
                 "presentation": "list",
             },

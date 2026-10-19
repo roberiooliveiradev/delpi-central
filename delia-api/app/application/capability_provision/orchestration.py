@@ -250,10 +250,14 @@ Respond with JSON containing exactly the fields "applicable" and
   products, MES/production facts, or specialist owner guidance that a
   listed group owns remain applicable true.
 - "capability_group_id": copied verbatim from a listed entry; null
-  when not applicable. Choose the group whose advertised capabilities
-  semantically match the domain of the user message — match the
-  domain, not the order; never default to the first listed group.
-  Each group is the exclusive owner of its own domain surface.
+  when not applicable. Choose the group whose advertised capability
+  descriptions and operation classes semantically match the *specific*
+  domain of the user message — match meaning, not list order, and
+  never default to the first listed group. Prefer the group that owns
+  the asked surface (e.g. operational data-format/media catalogs vs
+  product/register search vs methodology/guidance vs ticket helpdesk)
+  based on those live descriptions — never by memorized specialist
+  names. Each group is the exclusive owner of its own domain surface.
   When the workspace context names the surface the user is acting on
   (host_app_id, or entity source_system in selected_entity_ref /
   entity_refs), prefer the group whose owner or source_system names
@@ -1328,43 +1332,6 @@ def _discovery_capability(group: CapabilityGroup) -> ProviderCapability | None:
     return discovery[0] if len(discovery) == 1 else None
 
 
-# R2: coverage inquiry asks what information/capabilities can be
-# consulted — distinct from methodology follow-ups that extract a
-# checklist from prior evidence ("quais informações preciso levantar").
-_COVERAGE_INQUIRY_NEGATIVE = re.compile(
-    r"(preciso\s+levantar|antes\s+de\s+come[cç]ar|"
-    r"com\s+base\s+nessa|checklist|monte\s+um)",
-    re.IGNORECASE,
-)
-_COVERAGE_INQUIRY_POSITIVE = re.compile(
-    r"("
-    r"quais\s+informa[cç][oõ]es?.{0,40}(consegue|pode|voc[eê]).{0,20}"
-    r"consultar"
-    r"|o\s+que.{0,40}(consegue|pode).{0,20}consultar"
-    r"|what\s+(information|capabilities|data).{0,40}"
-    r"(can\s+you|do\s+you).{0,20}(consult|query|access|discover|list)"
-    r"|what\s+can\s+you\s+(consult|query|access|discover|list)"
-    r"|which\s+(information|capabilities).{0,20}(available|accessible)"
-    r"|quais\s+(capacidades|a[cç][oõ]es).{0,20}"
-    r"(dispon[ií]veis|consegue|pode)"
-    r")",
-    re.IGNORECASE | re.DOTALL,
-)
-
-
-def _is_information_coverage_inquiry(text: str) -> bool:
-    """True when the user asks what information/capabilities are consultable.
-
-    Provider-neutral and language-tolerant. Never treats checklist
-    extraction from prior methodology as coverage inquiry.
-    """
-    if not isinstance(text, str) or not text.strip():
-        return False
-    if _COVERAGE_INQUIRY_NEGATIVE.search(text):
-        return False
-    return _COVERAGE_INQUIRY_POSITIVE.search(text) is not None
-
-
 _MAX_DISCOVERY_SURFACE_LINES = 6
 
 
@@ -2353,54 +2320,26 @@ def _prior_excerpt_records(
     )
 
 
-# Continuity cues for probing prior-transform when the model leaves
-# prior_evidence_sufficient=false. Provider-neutral language patterns
-# — never specialist/tool names. Live/current-fact cues veto the probe.
-_PRIOR_TRANSFORM_CUE_RE = re.compile(
-    r"\b("
-    r"com\s+base|based\s+on|according\s+to|"
-    r"nessa|neste|dessa|deste|"
-    r"anterior|previous|acima|above|"
-    r"orienta(?:c|ç)(?:a|ã)o|guidance|metodologia|methodology|"
-    r"guia|guide"
-    r")\b",
-    re.IGNORECASE,
-)
-_LIVE_FACT_CUE_RE = re.compile(
-    r"\b("
-    r"agora|atual(?:mente)?|current|live|right\s+now|"
-    r"vigente|em\s+produ(?:c|ç)(?:a|ã)o"
-    r")\b",
-    re.IGNORECASE,
-)
-
-
 def _prior_transform_probe_eligible(
     input_text: str,
     goal: "OperationalCapabilityOrchestrator._TurnGoal",
 ) -> bool:
-    """True when a failed model sufficiency flag may still probe prior.
+    """True when typed goal authorizes a prior-transform probe.
 
-    Probe is reduction-only: a successful transform avoids a redundant
-    owner re-invoke. Typed goal signals (compare/analyze /
-    comparison_requested) authorize the probe without user-text intent
-    regex; the legacy continuity cue remains a secondary hint for
-    methodology/guidance follow-ups. Insufficiency may fall through
-    only when turn budget still allows a full owner path.
+    Q02-A: lexical continuity/live-fact cues removed. Only typed goal
+    signals (compare/analyze / comparison_requested) authorize the
+    probe. Dynamic output modes and write/clarify goals never probe.
     """
     if goal.goal_class in {"create_or_modify", "clarify"}:
         return False
     if goal.output_mode == "dynamic":
         return False
-    text = (input_text or "").strip()
-    if not text or _LIVE_FACT_CUE_RE.search(text):
+    if not (input_text or "").strip():
         return False
-    if goal.comparison_requested or goal.goal_class in {
-        "compare",
-        "analyze",
-    }:
-        return True
-    return _PRIOR_TRANSFORM_CUE_RE.search(text) is not None
+    return bool(
+        goal.comparison_requested
+        or goal.goal_class in {"compare", "analyze"}
+    )
 
 
 # Closed presentation vocabulary for the synthesis contract — a
@@ -2884,51 +2823,23 @@ _GUIDANCE_META_KEYS = frozenset(
     }
 )
 
-_GUIDANCE_PREREQ_CUE_RE = re.compile(
-    r"\b("
-    r"informa(?:c|ç)(?:o|õ)es|levant|pr[eé]-?req|"
-    r"antes\s+de|dados\s+necess|input|inputs|"
-    r"what\s+(?:do\s+i|to)\s+(?:need|gather|collect)|"
-    r"before\s+(?:start|begin)"
-    r")\b",
-    re.IGNORECASE,
-)
-_GUIDANCE_STEPS_CUE_RE = re.compile(
-    r"\b("
-    r"como|etapas|passo|m[eé]todo|conduzir|realizar|"
-    r"iniciar|diagn[oó]stico|an[aá]lise|how\s+to|"
-    r"steps|methods|conduct"
-    r")\b",
-    re.IGNORECASE,
-)
-_GUIDANCE_CRITERIA_CUE_RE = re.compile(
-    r"\b("
-    r"crit[eé]rio|legibil|contraste|hierarqu|"
-    r"visualiza|painel|design|readab|contrast|"
-    r"hierarch|visuali[sz]ation"
-    r")\b",
-    re.IGNORECASE,
-)
-
-
 def _guidance_intent_families(input_text: str) -> tuple[str, ...]:
-    """Ordered guidance families relevant to the user ask (heuristic)."""
-    text = (input_text or "").strip()
-    ordered: list[str] = []
-    if text and _GUIDANCE_PREREQ_CUE_RE.search(text):
-        ordered.append("prerequisites")
-    if text and _GUIDANCE_STEPS_CUE_RE.search(text):
-        ordered.extend(("objective", "when", "steps"))
-    if text and _GUIDANCE_CRITERIA_CUE_RE.search(text):
-        ordered.append("criteria")
-    ordered.append("limitations")
-    seen: set[str] = set()
-    result: list[str] = []
-    for family in ordered:
-        if family not in seen:
-            seen.add(family)
-            result.append(family)
-    return tuple(result)
+    """Stable guidance family order — no lexical intent cues (Q02-A).
+
+    Projection remains selection-only over owner sections. The LLM goal
+    / synthesis path chooses which records to emphasize; this helper
+    only provides a deterministic non-lexical family priority.
+    ``input_text`` is accepted for call-site compatibility and ignored.
+    """
+    del input_text
+    return (
+        "objective",
+        "when",
+        "steps",
+        "prerequisites",
+        "criteria",
+        "limitations",
+    )
 
 
 def _guidance_family_for_key(key: object) -> str | None:
@@ -3643,153 +3554,20 @@ _INDEX_TOKEN_RE = re.compile(
     r"[a-z0-9_\u00c0-\u024f]{3,}",
     re.IGNORECASE,
 )
-# Provider-neutral intent clusters — language affinity only; never
-# specialist/provider product names or hard-coded topic identifiers.
-_INDEX_INTENT_CLUSTERS: tuple[frozenset[str], ...] = (
-    frozenset(
-        {
-            "legib",
-            "readable",
-            "contrast",
-            "tipograf",
-            "hierarqu",
-            "visualiz",
-            "visual",
-            "painel",
-            "panel",
-            "dashboard",
-            "layout",
-            "sobrecarga",
-            "serie",
-            "rotulo",
-            "rótulo",
-            "distancia",
-            "distância",
-        }
-    ),
-    frozenset(
-        {
-            "format",
-            "moeda",
-            "currency",
-            "percent",
-            "numero",
-            "número",
-            "date",
-            "data",
-            "exibicao",
-            "exibição",
-            "display",
-        }
-    ),
-    frozenset(
-        {
-            "playlist",
-            "agenda",
-            "schedule",
-            "turno",
-            "rotacao",
-            "rotação",
-        }
-    ),
-)
-_INDEX_RELEVANCE_FLOOR = 2
-
-
-def _index_text_tokens(text: str) -> frozenset[str]:
-    return frozenset(
-        token.lower()
-        for token in _INDEX_TOKEN_RE.findall(text or "")
-        if token
-    )
-
-
-def _index_cluster_hits(tokens: frozenset[str]) -> frozenset[int]:
-    hits: set[int] = set()
-    blob = " ".join(sorted(tokens))
-    for index, cluster in enumerate(_INDEX_INTENT_CLUSTERS):
-        if any(stem in blob for stem in cluster):
-            hits.add(index)
-    return frozenset(hits)
-
-
-def _tokens_stem_related(left: str, right: str) -> bool:
-    """Prefix/containment affinity for cross-language stems (inspec/inspection)."""
-    a = left.lower()
-    b = right.lower()
-    if len(a) < 4 or len(b) < 4:
-        return False
-    return a[:4] in b or b[:4] in a or a in b or b in a
-
-
-def _index_option_relevance_score(
-    input_text: str,
-    row: Mapping[str, str],
-) -> int:
-    """Score owner-declared index row against the user ask.
-
-    Lexical overlap is an auxiliary signal; shared intent-cluster
-    affinity strengthens relevance. Stem affinity covers compound
-    owner identifiers without inventing ids or provider names.
-    """
-    ask_tokens = _index_text_tokens(input_text)
-    if not ask_tokens:
-        return 0
-    blob = " ".join(
-        str(row.get(key) or "")
-        for key in ("identifier", "label", "hints")
-    ).lower()
-    option_tokens = _index_text_tokens(blob)
-    # Also split snake_case identifiers into stems.
-    for token in list(option_tokens):
-        if "_" in token:
-            option_tokens = option_tokens | frozenset(
-                part for part in token.split("_") if len(part) >= 3
-            )
-    lexical = sum(1 for token in ask_tokens if token in blob)
-    stem_hits = sum(
-        1
-        for ask in ask_tokens
-        for opt in option_tokens
-        if _tokens_stem_related(ask, opt)
-    )
-    ask_clusters = _index_cluster_hits(ask_tokens)
-    option_clusters = _index_cluster_hits(
-        option_tokens | frozenset(blob.split())
-    )
-    shared = ask_clusters & option_clusters
-    mismatched = (
-        1
-        if ask_clusters
-        and option_clusters
-        and not shared
-        and lexical + stem_hits <= 1
-        else 0
-    )
-    score = lexical + stem_hits + (3 * len(shared)) - (2 * mismatched)
-    return max(0, score)
 
 
 def _rank_index_options_by_overlap(
     input_text: str,
     options: tuple[Mapping[str, str], ...],
 ) -> tuple[Mapping[str, str], ...]:
-    """Stable reorder by relevance score (lexical + intent clusters).
+    """Preserve owner catalog order — no lexical relevance ranking (Q02-A).
 
-    Does not invent identifiers — only reorders owner-declared options
-    so the index-select proposal sees the most pertinent rows first.
-    Lexical overlap alone is not treated as proof of relevance.
+    ``input_text`` retained for call-site compatibility and ignored.
+    Identifier selection remains an LLM proposal validated by exact
+    owner membership only.
     """
-    if len(options) <= 1:
-        return options
-
-    def _key(row: Mapping[str, str]) -> tuple[int, str]:
-        return (
-            -_index_option_relevance_score(input_text, row),
-            str(row.get("identifier") or ""),
-        )
-
-    return tuple(sorted(options, key=_key))
+    del input_text
+    return options
 
 
 def _index_selection_is_relevant(
@@ -3797,50 +3575,19 @@ def _index_selection_is_relevant(
     selected: str,
     options: tuple[Mapping[str, str], ...],
 ) -> bool:
-    """True when the chosen owner id is adequately pertinent.
+    """True when selected id is an exact owner-declared identifier.
 
-    Rejects weak/partial picks when a stronger owner option exists, and
-    rejects all-below-floor catalogs so the turn can clarify honestly.
+    Q02-A removes lexical score/veto; membership is the only gate.
     """
+    del input_text
     if not selected or not options:
         return False
-    scores = {
-        str(row.get("identifier") or ""): _index_option_relevance_score(
-            input_text, row
-        )
-        for row in options
-        if row.get("identifier")
-    }
-    selected_score = scores.get(selected, 0)
-    best_score = max(scores.values()) if scores else 0
-    if best_score < _INDEX_RELEVANCE_FLOOR:
-        return False
-    if selected_score < _INDEX_RELEVANCE_FLOOR:
-        return False
-    # Materially worse than the best owner option → not pertinent.
-    if selected_score + 2 < best_score:
-        return False
-    return True
+    return any(
+        str(row.get("identifier") or "") == selected for row in options
+    )
 
 
 _MIN_USEFUL_CONTINUITY_CHARS = 120
-_EXTRACTION_FOLLOWUP_RE = re.compile(
-    r"\b("
-    r"quais|informa(?:c|ç)(?:o|õ)es|inputs?|levantar|etapas?|"
-    r"lista|list|checklist|preciso|need|prerequisit|pré-?requis|"
-    r"perguntas?|crit[eé]rios?|pr[oó]ximos?\s+passos?"
-    r")\b",
-    re.IGNORECASE,
-)
-# Narrow extraction expansion must not rewrite limitation/caution asks
-# that intentionally select a single prior excerpt.
-_LIMITATION_FOLLOWUP_RE = re.compile(
-    r"\b("
-    r"limita\w*|limitation\w*|n[aã]o\s+usar|do\s+not\s+use|"
-    r"cuidado|caution|aviso|warning|invarian\w*"
-    r")\b",
-    re.IGNORECASE,
-)
 
 
 def _collect_extraction_units(
@@ -3899,21 +3646,16 @@ def _prior_extraction_incomplete(
     rendered: str,
     records: tuple[Mapping[str, str], ...],
 ) -> bool:
-    """True when an extraction follow-up under-covers rich prior units.
+    """Q02-A: never expand a validated synthesis selection.
 
-    Distinguishes incomplete extraction from short-but-sufficient
-    answers without using character count as the sole quality signal.
+    Former lexical extraction/limitation detectors gated a
+    deterministic dump of prior units when coverage looked thin.
+    Without those cues, under-coverage expansion would overwrite
+    intentional narrow selections (e.g. limitations-only). Trust the
+    model proposal already revalidated by ``_render_synthesis``.
     """
-    if not _EXTRACTION_FOLLOWUP_RE.search(input_text or ""):
-        return False
-    if _LIMITATION_FOLLOWUP_RE.search(input_text or ""):
-        return False
-    units = _collect_extraction_units(records)
-    if len(units) < 3:
-        return False
-    covered = _count_covered_extraction_units(rendered, units)
-    required = min(len(units), max(3, (len(units) + 1) // 2))
-    return covered < required
+    del input_text, rendered, records
+    return False
 
 
 def _extraction_list_from_prior_excerpts(
@@ -4034,22 +3776,15 @@ def _recover_prior_extraction_after_invalid_index(
     input_text: str,
     records: tuple[Mapping[str, str], ...],
 ) -> str | None:
-    """Recover a selection-only transform after an invalid model index.
+    """Q02-A: invalid synthesis indices fail closed.
 
-    Distinguishes INVALID_MODEL_PROPOSAL from INSUFFICIENT_PRIOR_EVIDENCE:
-    when the ask is an extraction follow-up and prior excerpts already
-    expose enough selectable units, project them deterministically.
-    Never accepts the invalid index, never invents records, and never
-    arbitrarily picks the first single excerpt.
+    Former recovery dumped all prior units when a lexical extraction
+    detector matched. Without that detector, dumping every excerpt
+    would invent a transform the model did not select. Return None so
+    the caller emits insufficiency instead of a full prior replay.
     """
-    if not _EXTRACTION_FOLLOWUP_RE.search(input_text or ""):
-        return None
-    if _LIMITATION_FOLLOWUP_RE.search(input_text or ""):
-        return None
-    units = _collect_extraction_units(records)
-    if len(units) < 2:
-        return None
-    return _extraction_list_from_prior_excerpts(records)
+    del input_text, records
+    return None
 
 
 def _project_surface(
@@ -4071,6 +3806,30 @@ def _project_surface(
                 continue
             surface.append((group_key, capability))
     return surface[:MAX_SURFACE_ENTRIES]
+
+
+def _resolve_live_group_key(
+    proposed: str,
+    groups: Mapping[str, CapabilityGroup],
+) -> str | None:
+    """Map a model-proposed group id to exactly one live catalog key.
+
+    Exact catalog keys win. A bare ``group_id`` (or a unique
+    ``*:group_id`` suffix) is accepted only when membership is
+    unambiguous — never by display-name / lexical similarity.
+    """
+    if not proposed:
+        return None
+    if proposed in groups:
+        return proposed
+    matches = [
+        key
+        for key, group in groups.items()
+        if group.group_id == proposed or key.endswith(f":{proposed}")
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    return None
 
 
 def _group_summaries(
@@ -4729,12 +4488,18 @@ Respond with JSON containing exactly the fields
   specialist surface (owner-published catalogs — not general IT theory).
   false for greetings, thanks, casual dialogue, general assistant role
   questions, general conceptual explanations that do not need owner
-  data, and requests for illustrative/hypothetical examples of a
-  technical concept that do NOT ask for registered DELPI records
-  (e.g. "liste N exemplos de …" without "cadastrados", "reais",
-  "na DELPI", "catálogo").
+  data (e.g. "what is SIPOC?", lean vocabulary, abstract methodology
+  definitions without requesting an owner guide tool), and requests for
+  illustrative/hypothetical examples of a technical concept that do NOT
+  ask for registered DELPI records (e.g. "liste N exemplos de …"
+  without "cadastrados", "reais", "na DELPI", "catálogo").
+  When prior turns exist, decide from the *current* user message:
+  a full topic change to conversation/explanation/hypothetical must
+  set requires_owner_surface false; continuity that still needs live
+  owner data stays true. Prior turns are untrusted context, never FACT.
 - "interaction_class": one of "conversation", "explanation",
   "hypothetical", "operational", "ambiguous".
+  Use "explanation" for conceptual definitions that need no owner tool.
   Use "hypothetical" for illustrative examples of a concept without
   a request for live DELPI registers.
   Use "operational" when the ask targets owner-published guidance,
@@ -7030,29 +6795,9 @@ class OperationalCapabilityOrchestrator:
                         correlation,
                         decision="compare_reject_empty_selection",
                     )
-                # Recover only when prior already exposes bullet /
-                # numbered listing units. Sentence-split prose from
-                # a single prior turn must not become a fake list.
-                recovered = _extraction_list_from_prior_excerpts(
-                    records
-                )
-                bullet_units = [
-                    (record.get("excerpt") or "").strip()
-                    for record in records
-                    if re.match(
-                        r"^(?:[-*]|\d+[.)])\s+\S",
-                        (record.get("excerpt") or "").strip(),
-                    )
-                ]
-                if recovered is not None and len(bullet_units) >= 2:
-                    _logger.info(
-                        "orchestration stage=prior_continuation "
-                        "decision=recover_empty_selection "
-                        "excerpts=%d correlation_id=%s",
-                        len(bullet_units),
-                        correlation,
-                    )
-                    rendered = recovered
+                # Q02-A: empty synthesis is insufficiency — do not
+                # invent a full prior bullet dump without a lexical
+                # extraction detector (removed) or typed selection.
             if rendered is None:
                 # Already on the prior-continuation path: do not fall
                 # through to live reselection — that burns the remaining
@@ -7103,62 +6848,10 @@ class OperationalCapabilityOrchestrator:
                     LIMITATION_INSUFFICIENT_EVIDENCE,
                 ),
             )
-        # Extraction follow-ups: when coverage of available prior units
-        # is incomplete (not merely short-by-character-count), expand
-        # deterministically from those excerpts — never invent facts,
-        # never literal dump of the entire prior prose blob. Compare
-        # goals never expand into a list replay.
-        if (
-            not comparison_requested
-            and _prior_extraction_incomplete(
-                input_text, rendered, records
-            )
-        ):
-            expanded = _extraction_list_from_prior_excerpts(records)
-            if (
-                expanded is not None
-                and " ".join(expanded.split())
-                != " ".join(prior_content.split())
-                and (
-                    len(expanded) > len(rendered)
-                    or _count_covered_extraction_units(
-                        expanded, _collect_extraction_units(records)
-                    )
-                    > _count_covered_extraction_units(
-                        rendered, _collect_extraction_units(records)
-                    )
-                )
-            ):
-                _logger.info(
-                    "orchestration stage=prior_continuation "
-                    "decision=expand_incomplete_extraction "
-                    "excerpts=%d correlation_id=%s",
-                    len(records),
-                    correlation,
-                )
-                rendered = expanded
-        elif (
-            not comparison_requested
-            and len(rendered) < _MIN_USEFUL_CONTINUITY_CHARS
-            and len(records) >= 3
-            and _EXTRACTION_FOLLOWUP_RE.search(input_text or "")
-            and not _LIMITATION_FOLLOWUP_RE.search(input_text or "")
-        ):
-            expanded = _extraction_list_from_prior_excerpts(records)
-            if (
-                expanded is not None
-                and len(expanded) > len(rendered)
-                and " ".join(expanded.split())
-                != " ".join(prior_content.split())
-            ):
-                _logger.info(
-                    "orchestration stage=prior_continuation "
-                    "decision=expand_thin_extraction "
-                    "excerpts=%d correlation_id=%s",
-                    len(records),
-                    correlation,
-                )
-                rendered = expanded
+        # Q02-A: do not expand validated synthesis selections via
+        # coverage/thinness heuristics — that path previously depended
+        # on lexical extraction/limitation detectors and would overwrite
+        # intentional narrow continuity answers.
         _logger.info(
             "orchestration stage=prior_continuation "
             "decision=transformed excerpts=%d correlation_id=%s",
@@ -8601,31 +8294,9 @@ class OperationalCapabilityOrchestrator:
             )
             selected_goal = None
         if descriptor is None:
-            # R2: coverage inquiry + sole owner DISCOVERY on the already
-            # selected group is a contract-proven path — not singleton
-            # auto-select of an arbitrary capability, not provider-named.
-            # Runs before conversational not_applicable so "what can you
-            # consult?" still recovers DISCOVERY when the model said
-            # applicable=false on an execute/opaque READ.
-            discovery = _discovery_capability(group)
-            if (
-                discovery is not None
-                and _is_information_coverage_inquiry(input_text)
-            ):
-                _logger.info(
-                    "orchestration stage=select_capability "
-                    "decision=coverage_inquiry_discovery group=%s "
-                    "capability=%s correlation_id=%s",
-                    group_key,
-                    discovery.remote_name,
-                    correlation,
-                )
-                descriptor = discovery
-                if interpret_goal and selected_goal is None:
-                    selected_goal = self._TurnGoal(
-                        goal_class="read", declared=True
-                    )
-            elif cap_status == "not_applicable":
+            # Q02-A: no lexical coverage-inquiry override. Capability
+            # applicability remains a validated model proposal only.
+            if cap_status == "not_applicable":
                 _logger.info(
                     "orchestration stage=select_capability "
                     "decision=not_applicable group=%s",
@@ -9426,9 +9097,8 @@ class OperationalCapabilityOrchestrator:
         failed / timed-out admission falls through to selection (never
         invents business facts by skipping owners).
         """
-        # Continuity / pending clarification must still reach selection.
-        if prior_turns:
-            return False
+        # Q02-A: prior turns no longer skip admission — the model must
+        # classify topic change vs operational continuity explicitly.
         remaining = deadline.remaining_seconds()
         if remaining < (
             INTERACTION_ADMISSION_STAGE_CAP_SECONDS
@@ -9464,7 +9134,7 @@ class OperationalCapabilityOrchestrator:
                     }
                 ),
                 workspace_context=workspace_context,
-                prior_turns=(),
+                prior_turns=prior_turns,
                 correlation=correlation,
                 deadline=deadline,
             )
@@ -9527,8 +9197,12 @@ class OperationalCapabilityOrchestrator:
         eligible = sorted(groups)
         if not eligible:
             return ("not_applicable", None)
-        if len(eligible) == 1:
-            return ("selected", eligible[0])
+        # Q02-A S20: singleton is not automatic relevance — still ask the
+        # model. Explicit applicable=false rejects the only group.
+        # Missing proposal (fixture/timeout) with a singleton falls back
+        # to that sole live group so existing deterministic fixtures keep
+        # exercising capability/argument stages; multi-group without a
+        # proposal remains not_applicable.
         proposal = self._propose(
             input_text,
             block_tag="capability_groups",
@@ -9548,6 +9222,8 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
         )
         if proposal is None:
+            if len(eligible) == 1:
+                return ("selected", eligible[0])
             return ("not_applicable", None)
         applicable = proposal.get("applicable")
         if isinstance(applicable, str):
@@ -9559,10 +9235,13 @@ class OperationalCapabilityOrchestrator:
             return ("invalid", None)
         group_key = group_key.strip()
         # Revalidate against the fresh groups — an invented or
-        # removed group is never selectable.
-        if group_key not in groups:
+        # removed group is never selectable. Accept an unambiguous
+        # bare group_id only when it maps to exactly one live key
+        # (membership, not lexical ranking).
+        resolved = _resolve_live_group_key(group_key, groups)
+        if resolved is None:
             return ("invalid", None)
-        return ("selected", group_key)
+        return ("selected", resolved)
 
     @staticmethod
     def _capability_from_selection_proposal(
@@ -9818,19 +9497,6 @@ class OperationalCapabilityOrchestrator:
         if not options:
             return None
         ranked = _rank_index_options_by_overlap(input_text, options)
-        best_score = max(
-            (_index_option_relevance_score(input_text, row) for row in ranked),
-            default=0,
-        )
-        if best_score < _INDEX_RELEVANCE_FLOOR:
-            _logger.info(
-                "orchestration stage=index_select "
-                "decision=no_relevant_option best_score=%d "
-                "correlation_id=%s",
-                best_score,
-                correlation,
-            )
-            return None
         selected, argument_field = self._propose_index_identifier(
             input_text,
             ranked,
@@ -9850,7 +9516,7 @@ class OperationalCapabilityOrchestrator:
         if not _index_selection_is_relevant(input_text, selected, ranked):
             _logger.info(
                 "orchestration stage=index_select "
-                "decision=reject_weak_relevance topic=%s "
+                "decision=reject_non_member topic=%s "
                 "correlation_id=%s",
                 selected[:80],
                 correlation,
@@ -9871,20 +9537,9 @@ class OperationalCapabilityOrchestrator:
             return None
         _logger.info(
             "orchestration stage=index_select decision=bound "
-            "field=%s topic=%s score=%d correlation_id=%s",
+            "field=%s topic=%s correlation_id=%s",
             argument_field,
             selected[:80],
-            _index_option_relevance_score(
-                input_text,
-                next(
-                    (
-                        row
-                        for row in ranked
-                        if row.get("identifier") == selected
-                    ),
-                    {"identifier": selected},
-                ),
-            ),
             correlation,
         )
         return projected

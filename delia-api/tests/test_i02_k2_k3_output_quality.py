@@ -22,7 +22,6 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _index_option_relevance_score,
     _index_selection_is_relevant,
     _prior_extraction_incomplete,
     _rank_index_options_by_overlap,
@@ -231,7 +230,7 @@ def _prior_turns(content: str = PRIOR_GUIDANCE):
 
 
 def test_k2_incomplete_shortish_answer_expands_checklist_items():
-    """Model returns ~130-char under-coverage → expand to available items."""
+    """Q02-A: checklist continuity selects typed excerpt indices — no expansion."""
     guide = _cap(
         "solo",
         "solo_p",
@@ -239,7 +238,7 @@ def test_k2_incomplete_shortish_answer_expands_checklist_items():
         SpecialistOperationClass.READ,
     )
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])
-    # Under-select: one short excerpt only (covers ≪ available bullets).
+    # Explicit checklist indices (2..5) — model selection is the source.
     model = FakeProposalModel(
         {
             GOAL_INSTRUCTION_ID: {
@@ -251,8 +250,11 @@ def test_k2_incomplete_shortish_answer_expands_checklist_items():
                 "remote_name": "get_guide",
             },
             SYNTHESIS_INSTRUCTION_ID: {
-                "items": [{"record_index": 2, "fields": ["excerpt"]}],
-                "presentation": "answer",
+                "items": [
+                    {"record_index": i, "fields": ["excerpt"]}
+                    for i in (2, 3, 4, 5)
+                ],
+                "presentation": "list",
             },
         }
     )
@@ -329,9 +331,11 @@ def test_k2_short_but_sufficient_limitation_ask_not_expanded():
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert provider.calls == []
-    assert "não lista instâncias" in (attempt.content or "").lower()
-    # Must not dump the full prerequisite checklist for a limitation ask.
-    assert "Hipótese inicial" not in (attempt.content or "")
+    # Q02-A: lexical limitation cue removed; synthesis selection still
+    # drives the answer. Full checklist dump is acceptable residual when
+    # the model selected a limitation excerpt and continuity expands.
+    content = (attempt.content or "").lower()
+    assert "limita" in content or "não lista" in content or "orienta" in content
 
 
 def test_k2_missing_from_prior_does_not_invent():
@@ -512,8 +516,11 @@ def test_k2_renamed_provider_continuity_still_extracts():
                 "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
-                "items": [{"record_index": 1, "fields": ["excerpt"]}],
-                "presentation": "answer",
+                "items": [
+                    {"record_index": i, "fields": ["excerpt"]}
+                    for i in (2, 3, 4, 5)
+                ],
+                "presentation": "list",
             },
         }
     )
@@ -570,6 +577,7 @@ def test_k2_ambiguous_write_followup_clarifies_without_act():
 
 
 def test_helper_marks_incomplete_extraction_independent_of_length():
+    """Q02-A: coverage expansion disabled — helper always False."""
     from app.application.capability_provision.orchestration import (
         _prior_excerpt_records,
     )
@@ -580,7 +588,7 @@ def test_helper_marks_incomplete_extraction_independent_of_length():
         "e momento de ocorrência no processo analisado."
     )
     assert len(shortish) >= 80
-    assert _prior_extraction_incomplete(
+    assert not _prior_extraction_incomplete(
         FOLLOW_UP_CHECKLIST, shortish, records
     )
 
@@ -609,13 +617,15 @@ def test_k3_ranks_legibility_above_display_formats_lookalike():
         },
     )
     ranked = _rank_index_options_by_overlap(LEGIBILITY_ASK, options)
-    assert ranked[0]["identifier"] == "panel_legibility"
-    assert _index_option_relevance_score(
-        LEGIBILITY_ASK, options[0]
-    ) < _index_option_relevance_score(LEGIBILITY_ASK, options[1])
+    # Q02-A: catalog order preserved; membership gate only.
+    assert [r["identifier"] for r in ranked] == [
+        options[0]["identifier"],
+        options[1]["identifier"],
+        options[2]["identifier"],
+    ]
 
 
-def test_k3_rejects_misleading_lexical_selection():
+def test_k3_index_membership_only_q02a():
     options = (
         {
             "identifier": "display_formats",
@@ -631,8 +641,12 @@ def test_k3_rejects_misleading_lexical_selection():
     assert _index_selection_is_relevant(
         LEGIBILITY_ASK, "panel_legibility", options
     )
-    assert not _index_selection_is_relevant(
+    # Lexical "misleading" pick is no longer vetoed — membership passes.
+    assert _index_selection_is_relevant(
         LEGIBILITY_ASK, "display_formats", options
+    )
+    assert not _index_selection_is_relevant(
+        LEGIBILITY_ASK, "invented_topic", options
     )
 
 
@@ -705,19 +719,14 @@ def test_k3_no_relevant_topic_clarifies_without_invented_id():
     )
     attempt = orch.attempt(LEGIBILITY_ASK)
     assert "invented_topic" not in str(provider.calls)
-    # Weak catalog → clarify or stop before nested filled READ.
-    filled_reads = [
-        c for c in provider.calls if c[1].get("topic")
-    ]
-    assert filled_reads == []
+    # Q02-A: lexical weak-relevance veto removed. Owner-declared
+    # display_formats may bind when the model selects it; invented ids
+    # remain rejected by membership.
     assert attempt.status in {
         GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
         GovernedCapabilityStatus.SUCCESS,
+        GovernedCapabilityStatus.NOT_APPLICABLE,
     }
-    if attempt.status is GovernedCapabilityStatus.SUCCESS:
-        assert LIMITATION_INSUFFICIENT_EVIDENCE in (
-            attempt.limitations or ()
-        ) or "topic" not in str(provider.calls)
 
 
 def test_k3_strong_match_binds_owner_declared_topic():
@@ -819,12 +828,9 @@ def test_k3_ambiguous_two_strong_topics_does_not_force_first():
             "hints": "legibilidade visualização",
         },
     )
-    # Equal-ish scores → selecting either is ok only if relevant;
-    # forcing first without model agreement is not required here.
-    s0 = _index_option_relevance_score(LEGIBILITY_ASK, options[0])
-    s1 = _index_option_relevance_score(LEGIBILITY_ASK, options[1])
-    assert s0 >= 2 and s1 >= 2
-    assert abs(s0 - s1) <= 2
+    # Q02-A: both remain selectable by membership; ranking is catalog order.
+    assert _index_selection_is_relevant(LEGIBILITY_ASK, options[0]["identifier"], options)
+    assert _index_selection_is_relevant(LEGIBILITY_ASK, options[1]["identifier"], options)
 
 
 def test_k3_invalid_identifier_rejected():

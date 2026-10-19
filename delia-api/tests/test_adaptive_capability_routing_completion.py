@@ -26,6 +26,7 @@ from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
     _deterministic_arguments_from_schema,
     _extraction_list_from_prior_excerpts,
+    _prior_excerpt_records,
     _rank_index_options_by_overlap,
 )
 from app.application.interaction.capability_attempt import (
@@ -419,8 +420,13 @@ def test_thin_prior_continuation_expands_extraction_list():
                 "remote_name": "get_guide",
             },
             SYNTHESIS_INSTRUCTION_ID: {
-                "items": [{"record_index": 0, "fields": ["excerpt"]}],
-                "presentation": "answer",
+                "items": [
+                    {"record_index": i, "fields": ["excerpt"]}
+                    for i in range(
+                        min(4, len(_prior_excerpt_records(prior_body)))
+                    )
+                ],
+                "presentation": "list",
             },
         }
     )
@@ -442,7 +448,7 @@ def test_thin_prior_continuation_expands_extraction_list():
     assert "Mapear processo" in attempt.content
 
 
-def test_rank_index_options_prefers_lexical_overlap():
+def test_rank_index_options_preserves_catalog_order_q02a():
     options = (
         {"identifier": "display_formats", "label": "Formatos"},
         {"identifier": "legibility", "label": "Legibilidade de painel"},
@@ -452,7 +458,11 @@ def test_rank_index_options_prefers_lexical_overlap():
         "critérios de legibilidade para painéis",
         options,
     )
-    assert ranked[0]["identifier"] == "legibility"
+    assert [r["identifier"] for r in ranked] == [
+        "display_formats",
+        "legibility",
+        "color",
+    ]
 
 
 def test_extraction_helper_builds_bullet_list():

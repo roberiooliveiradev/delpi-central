@@ -540,12 +540,12 @@ def test_index_no_match_clarifies_without_nested_read():
 
 
 def test_continuity_invalid_index_recovers_without_owner_reinvoke():
+    """Q02-A: invalid index → insufficiency disclosure, zero owner reinvoke."""
     records = tuple({"excerpt": line} for line in PRIOR_GUIDANCE.splitlines() if line.strip())
     recovered = _recover_prior_extraction_after_invalid_index(
         CONTINUITY_ASK, records
     )
-    assert recovered is not None
-    assert "Descrição do problema" in recovered
+    assert recovered is None
 
     guide = _cap("solo", "solo_p", "get_guide", SpecialistOperationClass.READ)
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])
@@ -575,9 +575,7 @@ def test_continuity_invalid_index_recovers_without_owner_reinvoke():
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
-    assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
-        attempt.limitations or ()
-    )
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in (attempt.limitations or ())
     assert provider.calls == []
 
 

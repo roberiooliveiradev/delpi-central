@@ -354,29 +354,39 @@ def test_prior_excerpt_records_split_list_lines():
     assert len(records) > 4
 
 
-def test_prior_transform_probe_eligible_cues():
-    goal = OperationalCapabilityOrchestrator._TurnGoal(
+def test_prior_transform_probe_eligible_typed_signals():
+    """Q02-A: only typed goal signals authorize the prior-transform probe."""
+    read_goal = OperationalCapabilityOrchestrator._TurnGoal(
         goal_class="read",
         prior_evidence_sufficient=False,
     )
-    assert _prior_transform_probe_eligible(FOLLOW_UP, goal)
-    assert not _prior_transform_probe_eligible(
-        "Qual é a revisão ativa desse processo agora?",
-        goal,
+    assert not _prior_transform_probe_eligible(FOLLOW_UP, read_goal)
+    compare_goal = OperationalCapabilityOrchestrator._TurnGoal(
+        goal_class="read",
+        comparison_requested=True,
+        prior_evidence_sufficient=False,
     )
+    assert _prior_transform_probe_eligible(FOLLOW_UP, compare_goal)
+    analyze_goal = OperationalCapabilityOrchestrator._TurnGoal(
+        goal_class="analyze",
+        prior_evidence_sufficient=False,
+    )
+    assert _prior_transform_probe_eligible(FOLLOW_UP, analyze_goal)
     write_goal = OperationalCapabilityOrchestrator._TurnGoal(
         goal_class="create_or_modify",
+        comparison_requested=True,
         prior_evidence_sufficient=False,
     )
     assert not _prior_transform_probe_eligible(FOLLOW_UP, write_goal)
 
 
 def test_k2_continuity_probe_avoids_owner_reinvoke_when_prior_sufficient_content():
-    """GREEN for K2 class: model says insufficient; probe transforms.
+    """GREEN for K2 class: typed prior_evidence_sufficient transforms.
 
-    Pre-fix (RED): prior_evidence_sufficient=false forced live
-    selection → owner re-invoke. Post-fix: continuity probe accepts
-    proportional excerpt selection without provider.calls.
+    Q02-A: lexical continuity cues no longer override a false
+    prior_evidence_sufficient. Continuity requires the typed goal
+    declaration (or compare/analyze). When the model declares
+    sufficiency, excerpt selection runs without provider.calls.
     """
     provider = _alpha_provider()
     indices = _input_excerpt_indices()
@@ -384,8 +394,7 @@ def test_k2_continuity_probe_avoids_owner_reinvoke_when_prior_sufficient_content
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                # Explicit false — reproduces the live K2 model miss.
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
@@ -394,7 +403,7 @@ def test_k2_continuity_probe_avoids_owner_reinvoke_when_prior_sufficient_content
                 ],
                 "presentation": "list",
             },
-            # If probe fails incorrectly, live path would use these.
+            # If continuity fails incorrectly, live path would use these.
             CAPABILITY_SELECTION_INSTRUCTION_ID: {
                 "applicable": True,
                 "remote_name": "get_guidance",
@@ -420,7 +429,8 @@ def test_k2_continuity_probe_avoids_owner_reinvoke_when_prior_sufficient_content
     assert content.strip() != PRIOR_GUIDANCE.strip()
     assert "Proveniência: orientação" not in content
     purposes = [r.task_purpose_id for r in model.requests]
-    assert purposes == [GOAL_INSTRUCTION_ID, SYNTHESIS_INSTRUCTION_ID]
+    assert GOAL_INSTRUCTION_ID in purposes
+    assert SYNTHESIS_INSTRUCTION_ID in purposes
     assert CAPABILITY_SELECTION_INSTRUCTION_ID not in purposes
 
 
@@ -530,7 +540,7 @@ def test_provider_and_capability_rename_preserve_continuity():
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
@@ -559,7 +569,7 @@ def test_non_mcp_http_provider_uses_same_continuity_path():
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
@@ -602,7 +612,7 @@ def test_malicious_history_does_not_grant_act():
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
@@ -792,7 +802,7 @@ def test_handler_continuity_is_non_grounded_prior_evidence_only():
         {
             GOAL_INSTRUCTION_ID: {
                 "goal_class": "read",
-                "prior_evidence_sufficient": False,
+                "prior_evidence_sufficient": True,
             },
             SYNTHESIS_INSTRUCTION_ID: {
                 "items": [
