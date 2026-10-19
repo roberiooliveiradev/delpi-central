@@ -15010,3 +15010,21 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **VERDICT:** `ACCEPT_WITH_RESIDUAL` bounded correction only; backend tests/live results reported by Cursor (independent replay `TEST_NOT_RUN`); `I02_ACCEPTED=NO`, no C3–C5 progression.
 
 NEXT=I02_ACCEPTANCE_GATE_AND_K3_OWNER_CATALOG_COVERAGE_DECISION
+
+
+## §6.267 — I02 DIRECT VISTA OWNER CROSS-CHECK AND SCOPED ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
+
+**DATE:** 2026-10-19. **SOURCE:** [26](../corrections/mcp-contextual-intelligence-orchestration/26-i02-owner-crosscheck-and-acceptance-gate.md). Direct VISTA MCP GET guide index (11 topics), guides `display_formats`, `visual_verification`, `block_types`, and read-only catalog. **No writes.**
+
+- Owner guidance confirms `display_formats` covers numeric/date presentation, not general dashboard legibility; `visual_verification` explicitly excludes design-quality methodology; `block_types` is conceptual. DÉLIA K3 no-match/clarification thus defensible for the tested query; other VISTA owner design capabilities and full 11 guide bodies remain `TO_INVENTORY`.
+- **I02 scope decision:** `ACCEPT_WITH_RESIDUAL` K1 useful TÉO READ (truncated), K2 improved extraction (bounded), K3 truthful no-match. Not proof of relevant nested READ, generalized semantic recall or latency reliability. `ALGORITHM_COMPLETION=PARTIAL`, no C3–C5 advance.
+
+NEXT=I03_SEMANTIC_CAPABILITY_DISCOVERY_DAVI
+
+## §6.268 — I03 DAVI SEMANTIC DISCOVERY IMPLEMENTATION KICKOFF (PLANNED)
+
+**DATE:** 2026-10-19. **BRIEF:** [27](../corrections/mcp-contextual-intelligence-orchestration/27-i03-davi-semantic-discovery-implementation-brief.md). Bounded current owner-contract + orchestrator implementation/evaluation task, not backend code or proof of I03 completion. Must reanchor latest authorities and live DAVI catalog; discovery miss != absence, metadata != authorization, no provider-specific planner branch or invented capability.
+
+- **STATE:** `I03_IMPLEMENTATION=PLANNED`; `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01
