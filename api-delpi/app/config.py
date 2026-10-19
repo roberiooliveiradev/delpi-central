@@ -88,9 +88,12 @@ class Settings:
     INTRANET_PARAMS_KEY_COLUMN: str = _get_env(
         "INTRANET_PARAMS_KEY_COLUMN", default="PARAMETRO"
     )
+    # Canonical column in IntranetDelpiDev.PARAMETROS_MINHADELPI is CONTEUDO.
     INTRANET_PARAMS_VALUE_COLUMN: str = _get_env(
-        "INTRANET_PARAMS_VALUE_COLUMN", default="VALOR"
+        "INTRANET_PARAMS_VALUE_COLUMN", default="CONTEUDO"
     )
+    # Optional filter when the table has one row set per AMBIENTE (1/2/…).
+    INTRANET_PARAMS_AMBIENTE: str | None = _get_env("INTRANET_PARAMS_AMBIENTE")
 
     # ==========================
     # Protheus REST client

@@ -44,3 +44,27 @@ def test_connection_failure_is_controlled() -> None:
         repo.load_raw_params()
     assert exc.value.code == "PROTHEUS_CONFIG_UNAVAILABLE"
     assert "odbc" not in str(exc.value).lower()
+
+
+def test_load_raw_params_filters_ambiente_when_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "INTRANET_PARAMS_AMBIENTE", "2")
+
+    cursor = MagicMock()
+    cursor.fetchall.return_value = [
+        SimpleNamespace(param_key="USR_PROTHEUS", param_value="amb2.user"),
+    ]
+    connection = MagicMock()
+    connection.cursor.return_value = cursor
+
+    repo = ProtheusIntegrationParamsRepository(connection_factory=lambda: connection)
+    result = repo.load_raw_params()
+
+    assert result["USR_PROTHEUS"] == "amb2.user"
+    sql = cursor.execute.call_args.args[0]
+    params = cursor.execute.call_args.args[1]
+    assert "AMBIENTE" in sql
+    assert params[-1] == 2

@@ -41,6 +41,18 @@ class ProtheusIntegrationParamsRepository:
             f"FROM [{table}] "
             f"WHERE [{key_col}] IN ({placeholders})"
         )
+        params: list[object] = list(REQUIRED_PARAM_KEYS)
+
+        ambiente = (settings.INTRANET_PARAMS_AMBIENTE or "").strip()
+        if ambiente:
+            if not ambiente.isdigit() or len(ambiente) > 8:
+                raise ProtheusRestError(
+                    "Configuração Intranet de parâmetros inválida.",
+                    code="PROTHEUS_CONFIG_INVALID",
+                    status_code=503,
+                )
+            query += " AND [AMBIENTE] = ?"
+            params.append(int(ambiente))
 
         try:
             connection = self._connection_factory()
@@ -54,7 +66,7 @@ class ProtheusIntegrationParamsRepository:
 
         try:
             cursor = connection.cursor()
-            cursor.execute(query, tuple(REQUIRED_PARAM_KEYS))
+            cursor.execute(query, tuple(params))
             rows = cursor.fetchall() or []
         except Exception:
             log_error("Falha ao consultar PARAMETROS Protheus")

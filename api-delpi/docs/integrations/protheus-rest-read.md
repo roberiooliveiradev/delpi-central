@@ -21,7 +21,8 @@ Não inclui POST/PUT de fornecedores nem consulta SA2 como substituto do REST.
 | `INTRANET_DB_HOST` | Opcional; fallback `TOTVS_DB_HOST` / `DB_HOST` |
 | `INTRANET_DB_USER` / `INTRANET_DB_PASSWORD` | Opcional; fallback TOTVS/DB |
 | `INTRANET_PARAMS_TABLE` | Default `PARAMETROS_MINHADELPI` |
-| `INTRANET_PARAMS_KEY_COLUMN` / `INTRANET_PARAMS_VALUE_COLUMN` | Default `PARAMETRO` / `VALOR` |
+| `INTRANET_PARAMS_KEY_COLUMN` / `INTRANET_PARAMS_VALUE_COLUMN` | Default `PARAMETRO` / `CONTEUDO` |
+| `INTRANET_PARAMS_AMBIENTE` | Opcional; filtra coluna `AMBIENTE` quando a tabela tem conjuntos por ambiente |
 | `PROTHEUS_REST_TIMEOUT_SECONDS` | Default `30` |
 
 ## Autorização
