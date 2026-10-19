@@ -1,6 +1,6 @@
 # 40 — Matriz de Dependências e Backlog de Slices V1
 
-**Estado:** TARGET / PLANNED / TEST_NOT_RUN — execução não autorizada. `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Leia primeiro [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md) e [38 — gate](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+**Estado em 19/10/2026:** roadmap TARGET / PLANNED / TEST_NOT_RUN. `DOCUMENTATION_CLOSURE_COMPLETE=PASS` (somente documentação); `IMPLEMENTATION_AUTHORIZED=NO` até novo comando do PO. Gate vigente no [33](./33-plano-mestre-fechamento-documental.md), não no rebaseline histórico 38. Leia primeiro [39 — Roadmap Mestre](./39-roadmap-mestre-implementacao-v1.md), [23 — RQ/AC](./23-ledger-rq-ac-testes.md) e [38 — gate](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 ## 1. Semântica do backlog
 
@@ -29,7 +29,7 @@
 
 | ID / sequência | Slice e authority principal | Contrato/AC selecionados | Pré-requisitos e STOP material | Evidence/exit do slice |
 |---|---|---|---|---|
-| IMP-00 — documental | Inventário e gate A12/A14/A15/A16; [33](./33-plano-mestre-fechamento-documental.md), [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) | Owners, E/T, Core T05, P6/P5 semântica, fonte T03, branches, test matrix, four freezes | Qualquer decision/owner/binding material não provado = PENDING/DECISION_REQUIRED; **sem runtime** | Ata A16, SHA, status real, autorização PO explícita |
+| IMP-00 — documental | Inventário e gate A12/A14/A15/A16; [33](./33-plano-mestre-fechamento-documental.md), [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) | Gate documental A16 concluído, owners e matriz por slice classificados; **A01 primeiro**; T03/T05 P5 não são predecessores de A01 | Inventário geral documental encerrado; **novos** contratos materiais são verificados no slice que os consome, com STOP local; runtime só após autorização PO | Ata A16, SHA, status real, autorização PO explícita |
 | IMP-01 — A01 | [Página do usuário](./31-pagina-do-usuario.md) (deep route, sem item topbar) | RQ-USER-01..09; D1=B, D2=A; identidade/foto Core, edição externa no Meu Perfil | Primeiro slice só após gate; plugin-ui, Core S2S, BFF AuthZ, photo proxy, no RBAC de outro usuário; sem persistência local | Tela self/other com falha fechada, states, deep link/F5, Help, tests |
 | IMP-02 — A02 | [Início](./32-inicio-home.md) | RQ-HOME-01..09, RQ-NAV-01; Hero operacional, catálogo ativo, recentes, favoritos | H01/H02/H03/H04; catálogo só de rotas implementadas e autorizadas; favoritos não inventar persistence | Home família padrão, filtros, failure/partial por source, topbar/Help |
 | IMP-03 — A03 | [Visão geral](./25-visao-geral-indicadores-financeiros.md) | RQ-OVW-01..10; indicadores governados, competência/mês vigente, Consolidado | O04/O05: source/fórmula estratégica, filtros, DTOs BFF, freshness; **STOP** se inventar fórmula, meta ou zero | KPI/charts/drilldown consistentes com owner; sibling partial, UX |
