@@ -1,9 +1,9 @@
 """Mecânica de slots da fila de um centro de trabalho.
 
-Toda reordenação da carga máquina (priorizar conjunto, otimizar por entrega)
-obedece à mesma regra: operação com **run aberto no cockpit do operador** fica
-travada onde está; só as posições livres são permutadas. Este módulo é a fonte
-única dessa mecânica.
+Toda reordenação da carga máquina (priorizar conjunto, otimizar por entrega,
+reordenar, atualizar a partir do TOTVS) obedece à mesma regra: operação com
+**run aberto no cockpit do operador** fica travada onde está; só as posições
+livres são permutadas. Este módulo é a fonte única dessa mecânica.
 
 A proteção depende exclusivamente das chaves oficiais fornecidas pela aplicação
 (runs locais do MES) — nunca de apontamentos HZA nem de flags persistidas no
@@ -98,3 +98,61 @@ def reorder_free_slots(
         center_ops[position] if position in pinned else center_ops[next(pending)]
         for position in range(len(center_ops))
     ]
+
+
+def carry_pinned_positions(
+    previous_operations: list[dict[str, Any]],
+    next_operations: list[dict[str, Any]],
+    *,
+    is_pinned: Callable[[dict[str, Any]], bool],
+) -> list[dict[str, Any]]:
+    """Reposiciona operações travadas no slot que ocupavam antes do refresh.
+
+    O «Atualizar» reconstrói a fila na ordem cronológica do TOTVS e descarta a
+    ordenação manual — mas uma operação com run aberto conserva o índice que
+    ocupava dentro do seu centro de trabalho na fila anterior. Sem este reparo
+    ela cairia na posição cronológica do ERP e, por estar travada para qualquer
+    reordenação, ficaria congelada no lugar errado.
+
+    Ambas as listas chegam já filtradas (só operações visíveis). Operação
+    protegida que só existe na fila nova entra na ordem em que veio; índice
+    anterior além do fim da fila nova cai na última posição; colisões entre
+    protegidas resolvem para a frente, preservando a ordem relativa anterior.
+    """
+    previous_slots = slots_by_work_center(previous_operations)
+    next_slots = slots_by_work_center(next_operations)
+    merged = list(next_operations)
+    for center, indices in next_slots.items():
+        previous_center = [
+            previous_operations[index] for index in previous_slots.get(center, [])
+        ]
+        next_center = [next_operations[index] for index in indices]
+        # Índice relativo ao centro — a identidade OP+operação é única por CT,
+        # mesmo contrato de reorder_sequence/ordered_keys.
+        pinned_index = {
+            operation_identity(item): position
+            for position, item in enumerate(previous_center)
+            if is_pinned(item)
+        }
+        if not pinned_index:
+            continue
+        size = len(next_center)
+        pinned_slots: dict[int, dict[str, Any]] = {}
+        pending: list[dict[str, Any]] = []
+        for item in next_center:
+            target = pinned_index.get(operation_identity(item))
+            if target is None:
+                pending.append(item)
+                continue
+            position = min(target, size - 1)
+            while position in pinned_slots:
+                position += 1
+            pinned_slots[position] = item
+        free = iter(pending)
+        rebuilt = [
+            pinned_slots[position] if position in pinned_slots else next(free)
+            for position in range(size)
+        ]
+        for slot, item in zip(indices, rebuilt, strict=True):
+            merged[slot] = item
+    return merged

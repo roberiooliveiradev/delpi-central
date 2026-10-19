@@ -107,10 +107,10 @@ Consumidores verificados:
 | Line feeder | fila congelada + «está na programação» | snapshot via `MachineLoadSnapshotRepositoryPort` |
 | Locate/rastreio | snapshot + execução | `GET /machine-load/locate` |
 
-Refresh (`_pull_and_store`, `:1989`): reaplica `withdrawn_conjuntos` e
+Refresh (`_pull_and_store`): reaplica `withdrawn_conjuntos` e
 `transferred_operations` sobre a fila nova do TOTVS — retirada e transferência
 **sobrevivem** ao «Atualizar»; a ordem manual **não** (fila volta em
-`schedule_no_status_asc`).
+`schedule_no_status_asc`). Exceção de slot: operações com run aberto no cockpit conservam o índice visível que ocupavam no seu centro de trabalho (`carry_pinned_positions` em `machine_load_queue_slots.py`, mesma mecânica de priorizar/otimizar/reordenar) — sem o reparo a protegida cairia na posição cronológica do ERP e, travada para qualquer mutação, ficaria congelada no lugar errado.
 
 ## 3. Identidade das operações (E1.S2)
 
