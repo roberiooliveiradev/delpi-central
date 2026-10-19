@@ -311,3 +311,33 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 **Residuais mandatórios para slices posteriores:** D-G0-05 política stale RBAC e proteção de service principals **antes** da primeira rota autenticada; revalidar freezes e autorização para cada novo slice; Help e UX somente junto da feature correspondente. `PASS` de aprovação documental não significa `PASS` de teste, deploy ou serviço operacional. Esses estados continuam `TEST_NOT_RUN / NOT_IMPLEMENTED` até evidência do executor.
 
 **Precedência temporal:** esta decisão formal de §13 substitui os estados preparatórios §§1–12 **somente para o recorte IMP-F0**. Não generalizar seu efeito para G0 de todo o Portal.
+
+## 14. Decisões D1/D2/D3 e preparação do gate IMP-MFE-HOME — 2026-10-19
+
+**Manifestação expressa do responsável:** "Aprovo para o Portal Controladoria & Finanças as decisões D1=A, D2=A, D3=A. Registre essas decisões e prepare o gate específico IMP-MFE-HOME para implementação, com verificação dos contratos e testes obrigatórios."
+
+**Alcance:** decisão de produto e segurança para o **slice proposto IMP-MFE-HOME (IMP-02/A02 — MFE, shell e Início)**; não estende automaticamente a autorização IMP-F0 de §13, nem autoriza outros módulos, P1–P6, deploy ou cadastro.
+
+| Decisão | Estado | Contrato aprovado | Restrições e testes exigidos |
+|---|---|---|---|
+| **D1=A / D-G0-05** | **APPROVED / IMP-MFE-HOME_ONLY / SECURITY POLICY** | Para leituras, reaproveitar **apenas** snapshot de effective permissions previamente validado no Core, respeitando o limite stale de **até 900s** do `delpi_auth`; sem snapshot válido ou erro que impeça verificação, negar (*fail-closed*). Writes futuros exigem consulta atualizada (*force_refresh*) e aprovação própria. Rotas humanas exigem `principal_type == "user"`. | Validar duração efetiva do cache, expiração, revogação/invalidação, 200 com lista vazia, Core 503, token expirado, serviço em lugar de humano, ACCESS sem MANAGE e MANAGE sem ACCESS. **Nunca** derivar capabilities diretamente do JWT. A decisão não autoriza aplicação global de stale a outras APIs. |
+| **D2=A** | **APPROVED / IMP-MFE-HOME_ONLY / CONTRACT TARGET** | BFF do produto expõe `GET /viewer-context` (prefixo publicado da BFF `/apps/controllership-finance-api`), com `firstName` e `capabilities: {access, manage}`; somente usuário humano autorizado com effective `controllership-finance.access`. Identidade e autorização vêm dos owners existentes (Core); não criar banco/usuário espelho. | Verificar contrato de identidade existente, envelope e naming REST do projeto, mapeamento/normalização do nome e comportamento 401/403/503. Token service, MANAGE-only, Core indisponível e snapshot ausente não podem autorizar. Sem chamada direta do MFE ao Core ou à api-delpi para contratos do produto. |
+| **D3=A / H01** | **APPROVED / DEFERRED** | Favoritos **fora do primeiro slice**, até provar capability compartilhada, owner e contrato. | Não criar persistência BFF-local, não exibir estrela/botão sem ação ou catálogo futuro navegável. Registrar como residual de evolução, não como teste FAIL do escopo reduzido. |
+
+### Gate específico: IMP-MFE-HOME / G1 READY_TO_EXECUTE
+
+**Estado documental:** `DECISIONS_APPROVED / GATE_PREPARATION`. **IMPLEMENTATION_AUTHORIZED = NO para IMP-MFE-HOME** até confirmação explícita de gate e GO específico; a presente manifestação autoriza o registro das escolhas e a **preparação** do gate, não substitui a autorização de execução.
+
+**Escopo candidato mínimo:** `plugins/controllership-finance` (manifest schema 1.0.0, bootstrap federado, shell, rota raiz Início, adapter fino `@delpi/plugin-ui/index`, catálogo apenas de rotas implementadas, navegação e Help contextual), BFF `GET /viewer-context` protegido, Compose dev da BFF/MFE, Compose prod do MFE e testes pertinentes. Não criar páginas futuras, KPIs falsos, favorites, regras P1–P6, endpoint Home agregado, banco ou novas permissões. Seguir `plugins/commercial`, Doc 24/30/32 e padrão visual vigente.
+
+**Condições cumulativas para GO específico (verificar contra HEAD atual, não inferir do inventário):**
+1. HEAD, branch e git status, instruções oficiais e `.cursor` aplicáveis; preservação de worktree concorrente.
+2. Contratos reais de `delpi_auth` (900s, 60s, revogação e comportamento 503), Core effective-access/identidade, subject humano, `AppHost`, `plugin-ui`, manifest e gateway reconciliados com producers/consumers.
+3. DTO e envelope da BFF `/viewer-context` fechados; autorização `access` ≠ `manage`, escopo, falta/expiração de identidade e segurança do principal validados.
+4. RQ/AC mínimos do ledger 23 e doc 32 mapeados ao slice; estados vazios/indisponíveis honestos e nenhuma navegação para página não implementada.
+5. Matriz positive/sibling/negative: acesso autorizado, MANAGE-only negado, ausência de ACCESS, principal service negado, Core 503/sem snapshot, stale dentro/fora da janela, revogação, rotas futuras ocultas, `?q=`, recentes locais sem dados sensíveis, Help sincronizada, F5, mobile/desktop, tema claro/escuro, teclado/foco, build e testes de contrato.
+6. CI, owner, instalação/registro de manifest e smoke definidos; autorização de deploy separada.
+7. **GO humano e expresso para IMP-MFE-HOME**, após review das evidências do gate. Uma decisão técnica aprovada não é prova de PASS de execução.
+
+**Classificação atual:** decisões `TARGET / APPROVED`; contratos MFE/BFF `TARGET`; runtime MFE `NOT_IMPLEMENTED`; testes de implementação `TEST_NOT_RUN`. Se contrato real invalidar premissa, `EXECUTION_DRIFT` e STOP. Sem inventar evidência.
+
