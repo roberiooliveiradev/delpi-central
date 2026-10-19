@@ -15349,3 +15349,10 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_FEATURE_GATE=OFF`; `PHASE_PROGRESSION=NONE`.
 
 NEXT=INDEPENDENT_REVIEW → decisão PM: testar no stack local OU requisitar ambiente QA hospedado
+
+
+## §6.291 — Independent semantic full recovery review (ACCEPT_WITH_RESIDUAL_COLD / REWORK_SEMANTIC_ARGUMENTS)
+
+**DATE:** 2026-10-19. **REVIEW:** [49](../corrections/mcp-contextual-intelligence-orchestration/49-independent-semantic-recovery-admission-and-argument-review.md). **CODE:** `bc4c91856382f050befacf628ad87e6e13c1b749`. Early model admission fixed cold hello HTTP504 in executor live reports; full backend PASS executor-reported, independent SSH replay TEST_NOT_RUN. New `_recover_stated_arguments_from_input` relies on field-name hint sets plus `_STATED_QUANTITY_RE` to interpret free text: semantic generalization and user no-regex constraint require REWORK. Operational C01 near deadline under load, real product outcome partial, linked Helpdesk personal count TEST_NOT_RUN. `I04_ACCEPTED=NO`; C3/C4/C5/Q01 unchanged.
+
+NEXT=BOUNDED_SEMANTIC_ARGUMENT_GENERALIZATION_AND_OPERATIONAL_LOAD_REWORK
