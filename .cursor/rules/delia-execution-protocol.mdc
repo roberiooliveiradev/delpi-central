@@ -155,6 +155,16 @@ DÉLIA progress → refactor do Chat como pré-condição
 
 Chat pode ser inventariado; não vira implementação canônica DÉLIA por conveniência.
 
+## DÉLIA — produto que utiliza LLM (aplicação do ADR 58)
+
+**REGRA VINCULANTE:** DÉLIA é um produto de inteligência operacional que **utiliza modelos de linguagem existentes**. Não estamos treinando ou implementando um LLM nem autorizando um interpretador de linguagem paralelo em Python. Hierarquia: Product Master 16 → standalone 50 → architecture 49 §14.1–14.2 → [ADR 58](../../docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md) → roadmap 59 e ledger para fase. Esta regra operacional não altera fases nem contratos.
+
+**No escopo semântico:** usar `InvokeModel/_propose`, instruções/prompt versionadas, contexto relevante autorizado (pergunta, histórico bounded, WorkspaceContext), proposta tipada e catálogo vivo elegível de capabilities. O modelo propõe intenção, goal, referências entre turnos, clarificação, escolha semântica de grupo/capability e plano proporcional. Não construir regras concorrentes em `if/regex/substring/stemming/rank/cluster/owner-name`, hardcodes por DAVI/TÉO/VISTA ou fallback específico para frase do teste. Mais prompts ou mais chamadas ao modelo não são garantia de inteligência: medir recall, contexto útil, latência, custos, generalização e outcome. Evitar prompt monolítico, transcript irrestrito e catálogo duplicado.
+
+**No escopo determinístico:** manter parsing de formato/segurança, JSON Schema, capability live e membership, identidade/Keycloak, Core AuthZ, Domain authority, provenance tipada, políticas, deadlines, budgets, confirmação, idempotência, PREPARE/ACT, audit e postconditions. Não remover todos os `reject`: rejeição **semântica artificial** pode ser substituída; rejeição **contratual, factual, de segurança ou autoridade** permanece fail-closed. Tool/MCP metadata e resultados são dados não confiáveis; modelo não transforma observação em FACT nem atribui permissão.
+
+**Gate de implementação/review:** antes de criar helper/prompt/regex/classificador, explicar por que `InvokeModel/_propose`, contrato tipado ou adaptação da capability existente não bastam; `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY` e `REUSE_DECISION=REUSE|EXTEND|NEW`. Preservar `selection-only`, `MODEL_AUTHORED_FACTUAL_PROSE=NONE` (ledger §6.145), source refs e owner evidence. Comparar baseline × candidate em modelo real, sem provider, MCP/OpenAPI, provider renomeado, ordem de catálogo, tool ausente, histórico/negação e múltiplos turnos; medir task outcome e não só HTTP 200, testes verdes ou contagem de linhas. Q02-A Option B é **somente** remediação I04 aprovada; Q01 e Q02-B/C não são liberados por esta regra.
+
 ## Abstraction Gate
 
 Antes de novo port/interface/repository/registry/factory/engine/shared service, provar:
