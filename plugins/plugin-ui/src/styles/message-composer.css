@@ -203,6 +203,24 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
   }
 }
 
+/* ---------- modal capture override (voice dictation) ---------- */
+/* When `bodyOverride` renders the local audio recorder inside the
+   composer surface, the recorder panel fills the same visual space as
+   the write band — its own bordered card chrome is flattened. */
+.delpi-ui-message-composer__surface > .delpi-ui-audio-recorder-shell {
+  width: 100%;
+}
+
+.delpi-ui-message-composer__surface
+  > .delpi-ui-audio-recorder-shell
+  .delpi-ui-audio-recorder {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 4px 0;
+  min-height: 44px;
+}
+
 /* Stop is the same primary toolbar slot as Send, never a second toolbar. */
 .delpi-ui-message-composer__stop {
   min-height: 40px;

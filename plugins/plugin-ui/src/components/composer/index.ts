@@ -17,6 +17,7 @@ export { ComposerClearDraftButton, type ComposerClearDraftButtonProps } from "./
 
 export {
   AudioRecorderControl,
+  audioRecorderErrorMessage,
   type AudioRecorderControlRenderProps,
 } from "./AudioRecorderControl";
 export {

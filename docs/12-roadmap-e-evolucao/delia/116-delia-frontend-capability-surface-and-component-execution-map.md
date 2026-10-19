@@ -60,6 +60,7 @@ Em `plugins/delia/src/ui/` foram confirmados `DeliaConversationPage`, `DeliaAssi
 | Surface/capability | Fonte(s) de produto | Candidato de apresentação / reuse gate | Status **da superfície DÉLIA** e dependência |
 |---|---|---|---|
 | Chat/reception/timeline/composer | 69, 73–81, 92, 98–115 | `ConversationWorkspace`, `MessageComposer`, `EvidenceDetails`, `ActivityViewer` | `PROVEN_PARTIAL`: base funcional visual; evolução rich/voice/contract pendente |
+| Voice Dictation Composer | 119 §0 | `MessageComposer.bodyOverride` + `AudioRecorderControl`/`useLocalAudioRecorder` (EXTEND aplicado) | `VD-F02 DONE`: superfície única escrita↔captura, sem textarea durante gravação, draft preservado, página+dock validados; **STT `BLOCKED_BY_CONTRACT`** — sem owner/provider/contrato; `AUDIO_MESSAGE_ANALYSIS`/`LIVE_VOICE` futuros |
 | Starter Suggestions | 93 | `ConversationReception`, primitives de ação (`EXTEND` sujeito à spec) | `PLANNED/DEFERRED`; sem autorização implícita |
 | Code blocks e presentation rica | 82–91, 96 | `ConversationMarkdown`, markdown, data/charts; `REUSE/EXTEND` condicionado a allowlist e sanitize | `PLANNED/CONTRACT_GATED`; não ativar Markdown/mermaid/chart por output não confiável |
 | Search/history/draft recovery | 97, 102, 106–108 | sidebar/search, history item, pinned, composer | UI parcial; `BACKEND_FIRST/TO_INVENTORY` para persistência, search e pin writes |

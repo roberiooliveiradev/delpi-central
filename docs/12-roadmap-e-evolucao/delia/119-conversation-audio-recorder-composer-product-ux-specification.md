@@ -1,7 +1,8 @@
 # 119 — DÉLIA | Voice Dictation Composer — Ditado por voz para texto editável
 
 **Data:** 2026-10-19  
-**Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03+AU-F05_QA_INTEGRATION_DONE / INDEPENDENT_REVIEW_PENDING`  
+**Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03+AU-F05_QA_INTEGRATION_DONE / VD-F02_MODAL_REWORK_DONE / STT_BLOCKED_BY_CONTRACT / INDEPENDENT_REVIEW_PENDING`  
+**Evidência VD-F02:** [voice-dictation-composer-rework-01](./evidence/voice-dictation-composer-rework-01/voice-dictation-rework-evidence.md) — composição modal single-surface implementada e testada (vitest + Playwright página/dock); **STT não integrado — sem owner/contrato aprovado**.  
 **Evidência de implementação:** [audio-recorder-composer-foundation-01](./evidence/audio-recorder-composer-foundation-01/audio-recorder-foundation-execution-evidence.md) — fundação local implementada e testada; **não** habilita captura em produção sem limites aprovados.  
 **Evidência de integração QA:** [audio-recorder-live-qa-integration-01](./evidence/audio-recorder-live-qa-integration-01/audio-recorder-live-qa-integration-evidence.md) — gate `VITE_DELIA_AUDIO_QA=1` + `?delia-audio-qa=1` validado em Portal real (página + dock); produção permanece inerte.  
 **Tipo:** documentação de direção e critérios de implementação futura; **não** altera fase, backend, contratos, permissões ou feature flags.  
@@ -231,7 +232,7 @@ PHASE_PROGRESSION=NONE
 
 **Futuro separado — áudio para análise multimodal:** receber arquivo ou gravação como mídia, vincular à interação e interpretar o conteúdo de áudio; não habilitado por esta spec. Pode reutilizar captura local, **não** a autoridade, o transporte ou as decisões de retenção do ditado. Live voice/hands-free, TTS e biometria são outros escopos da spec 53.
 
-**Estado factual:** `AudioRecorderControl`/`useLocalAudioRecorder` e a composição inicial no `DeliaComposer` existem (`PROVEN` de código, conforme evidências AU-F02/F03/F05); **substituição modal exclusiva da área de escrita = PLANNED**; **Speech-to-Text integrado = TO_INVENTORY/NOT_IMPLEMENTED**; **envio de áudio à DÉLIA = NOT_IMPLEMENTED**. Testes anteriores de captura não provam transcrição nem ditado completo.
+**Estado factual:** `AudioRecorderControl`/`useLocalAudioRecorder` existem (`PROVEN`, evidências AU-F02/F03/F05); **substituição modal exclusiva da área de escrita = DONE (VD-F02)** — `MessageComposer.bodyOverride` faz o painel de captura ocupar a mesma moldura do composer (textarea/toolbar/envio não renderizados durante `requesting_permission`/`recording`/`stopping`/`preview`), com rascunho do host preservado e restauração de foco; **Speech-to-Text integrado = NOT_IMPLEMENTED/BLOCKED_BY_CONTRACT** (inventário VD-F01: nenhum owner/provider/contrato STT legítimo na plataforma); **envio de áudio à DÉLIA = NOT_IMPLEMENTED**. Finalizar captura produz **prévia local** (ouvir/descartar/regravar), nunca `transcribing` fictício nem envio.
 
 ### 0.2 Comportamento obrigatório da interface
 
@@ -264,18 +265,18 @@ PHASE_PROGRESSION=NONE
 
 | ID | Critério | Estado atual |
 |---|---|---|
-| VD-01 | Um único composer alterna escrita ↔ ditado, sem textarea enquanto grava | PLANNED |
-| VD-02 | Mic começa apenas após gesto e autorização do navegador | Base de captura existente; QA integrado reportado |
-| VD-03 | Indicador, tempo e waveform correspondem à captura real | Base existente, revalidar |
-| VD-04 | Cancelar restaura draft e libera tracks/URLs | PLANNED para composição modal |
-| VD-05 | Finalizar inicia STT real e retorna texto editável | BLOCKED_BY_CONTRACT / TO_INVENTORY |
-| VD-06 | Texto reconhecido nunca é enviado automaticamente | TARGET; exigir teste de integração |
-| VD-07 | Texto pré-existente não é sobrescrito silenciosamente | PLANNED — regra de merge a decidir |
-| VD-08 | Erro, timeout e permission denied retornam a escrita sem perda | PLANNED |
-| VD-09 | Full page e Dock com mesmo ciclo responsivo e acessível | TEST_NOT_RUN para nova UX |
-| VD-10 | STT pt-BR com termos DELPI avaliado por casos reais, correções e métricas | TEST_NOT_RUN |
-| VD-11 | Nenhum upload/análise de mídia multimodal ou ação operacional surge implicitamente | REQUIRED |
-| VD-12 | SHA/config/evidências QA/segurança/outcome versionadas e review independente | PENDING |
+| VD-01 | Um único composer alterna escrita ↔ ditado, sem textarea enquanto grava | **DONE** — `bodyOverride` remove textarea/toolbar durante captura; sem player empilhado |
+| VD-02 | Mic começa apenas após gesto e autorização do navegador | DONE — captura existente revalidada |
+| VD-03 | Indicador, tempo e waveform correspondem à captura real | DONE — revalidado (mesmo componente, níveis reais) |
+| VD-04 | Cancelar restaura draft e libera tracks/URLs | **DONE** — rascunho exato restaurado; tracks/object URLs liberadas pelo hook |
+| VD-05 | Finalizar inicia STT real e retorna texto editável | BLOCKED_BY_CONTRACT — sem owner/provider/contrato STT; finalize → prévia local honesta |
+| VD-06 | Texto reconhecido nunca é enviado automaticamente | PENDING_STT — nenhum caminho automático existe; submit bloqueado enquanto `bodyOverride` ativo |
+| VD-07 | Texto pré-existente não é sobrescrito silenciosamente | DONE parcial — draft intocado durante captura; regra de merge de transcrição = `ARCHITECTURE_DECISION_REQUIRED` quando STT existir |
+| VD-08 | Erro, timeout e permission denied retornam a escrita sem perda | **DONE** — erro renderizado no slot do composer com rascunho preservado |
+| VD-09 | Full page e Dock com mesmo ciclo responsivo e acessível | **DONE** — Playwright 20/20 (página + dock) |
+| VD-10 | STT pt-BR com termos DELPI avaliado por casos reais, correções e métricas | TEST_NOT_RUN — sem STT |
+| VD-11 | Nenhum upload/análise de mídia multimodal ou ação operacional surge implicitamente | DONE — `canSendAudio=false`, sem envio de áudio |
+| VD-12 | SHA/config/evidências QA/segurança/outcome versionadas e review independente | DONE nesta task — evidência `voice-dictation-composer-rework-01`; review pendente |
 
 **Sequência bounded sugerida (não autoriza fase/código):** `VD-F01` reanchor + inventory STT e contrato → `VD-F02` composição modal render-only em `plugin-ui` e DÉLIA, desativada sem STT → `VD-F03` integração STT aprovada e testes de transcrição → `VD-F04` browser QA integrado e revisão. Não prosseguir com backend ou provider até o Reuse/Authority Gate. O roadmap/fase permanecem 16 + ledger.
 

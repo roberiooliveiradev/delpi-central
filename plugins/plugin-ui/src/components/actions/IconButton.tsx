@@ -15,6 +15,8 @@ export type IconButtonProps = {
   disabled?: boolean;
   onClick?: () => void;
   className?: string;
+  /** Focus the control when it mounts (e.g. entering a capture state). */
+  autoFocus?: boolean;
 };
 
 /**
@@ -34,6 +36,7 @@ export function IconButton({
   disabled = false,
   onClick,
   className,
+  autoFocus = false,
 }: IconButtonProps) {
   const isPressed = pressed ?? ariaPressed;
   const rootClass = [
@@ -55,6 +58,7 @@ export function IconButton({
       aria-expanded={ariaExpanded}
       aria-haspopup={ariaHaspopup}
       aria-pressed={typeof isPressed === "boolean" ? isPressed : undefined}
+      autoFocus={autoFocus}
     >
       {children}
     </button>

@@ -238,3 +238,64 @@ describe("MessageComposer — limpar rascunho", () => {
     expect(onClearDraft).not.toHaveBeenCalled();
   });
 });
+
+describe("MessageComposer — bodyOverride (dictation surface swap)", () => {
+  it("replaces write band and toolbar inside the same surface", () => {
+    const { container } = renderComposer({
+      value: "rascunho",
+      bodyOverride: <div data-testid="capture">capture</div>,
+      secondaryActions: (
+        <IconButton aria-label="Ditar" onClick={() => {}}>
+          m
+        </IconButton>
+      ),
+    });
+    // Same single composer surface — no stacked player.
+    expect(
+      container.querySelectorAll(".delpi-ui-message-composer__surface"),
+    ).toHaveLength(1);
+    expect(screen.getByTestId("capture")).toBeTruthy();
+    // No hidden, focusable text field and no text send while capturing.
+    expect(screen.queryByLabelText("Pergunte")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ditar" })).toBeNull();
+    expect(screen.queryByText(/Enter envia/)).toBeNull();
+  });
+
+  it("cannot submit while override is active, even via stray submit control", () => {
+    const { onSubmit } = renderComposer({
+      value: "x",
+      bodyOverride: (
+        <button type="submit" data-testid="stray-submit">
+          submit
+        </button>
+      ),
+    });
+    fireEvent.click(screen.getByTestId("stray-submit"));
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("restores the write band with the preserved draft when override clears", () => {
+    const { rerender } = render(
+      <MessageComposer
+        value="rascunho intacto"
+        onChange={() => undefined}
+        onSubmit={() => undefined}
+        inputLabel="Pergunte"
+        bodyOverride={<div>capture</div>}
+      />,
+    );
+    expect(screen.queryByLabelText("Pergunte")).toBeNull();
+    rerender(
+      <MessageComposer
+        value="rascunho intacto"
+        onChange={() => undefined}
+        onSubmit={() => undefined}
+        inputLabel="Pergunte"
+      />,
+    );
+    expect(
+      (screen.getByLabelText("Pergunte") as HTMLTextAreaElement).value,
+    ).toBe("rascunho intacto");
+  });
+});

@@ -15466,3 +15466,15 @@ C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_REVIEW
 ```
 
+## §6.297 — DELIA-UX-VOICE-DICTATION-COMPOSER-REWORK-01 / VD-F02 (EVIDENCE_READY_FOR_REVIEW; STT BLOCKED_BY_CONTRACT)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-VOICE-DICTATION-COMPOSER-REWORK-01`. **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md) §0. **EVIDENCE:** [voice-dictation-composer-rework-01](voice-dictation-composer-rework-01/voice-dictation-rework-evidence.md). **BASE:** `68de5577a4` (REFERENCE_HEAD `0142c8938c` mais antigo que o merge vigente).
+
+- **REUSE GATE:** `EXISTING_EQUIVALENT_COMPOSER=YES → EXTEND` (`MessageComposer.bodyOverride`); `EXISTING_EQUIVALENT_AUDIO_CAPTURE=YES → REUSE/EXTEND` (`errorReason` nos render props, `autoFocus` em Finalizar); `EXISTING_EQUIVALENT_STT=NO → PENDING_DECISION` — inventário sem owner/provider/contrato STT legítimo; **nenhum** adapter/gateway criado.
+- **IMPLEMENTAÇÃO:** painel de captura (`requesting/recording/stopping/preview`) ocupa a **mesma moldura** do composer — textarea/toolbar/envio desmontados, `canSubmit` fail-closed sob override; erro no slot do composer com rascunho preservado; foco restaurado ao textarea; recorder achatado dentro da surface (sem card duplo). Sem `VoiceDictationComposer` separado, sem `transcribing` fictício, sem auto-submit; `canSendAudio=false`; `delia.access` + limites bounded inalterados; `VITE_DELIA_AUDIO_QA` inerte.
+- **GATES:** plugin-ui vitest 2250/2250 (incl. 3 testes `bodyOverride`), delia vitest 246/246 (incl. 6 do ciclo), tsc ambos PASS, builds + federation verify PASS.
+- **LIVE (stack local, bundles reconstruídos do worktree; remote plugin-ui também rebuildado — mismatch de export resolvido):** Playwright **20/20** — superfície única, sem textarea/envio durante gravação e prévia, rascunho exato preservado em cancel/discard/erro, dock idêntico, zero texto `transcrev*`.
+- **BLOQUEIOS:** `STT_INTEGRATION=NOT_IMPLEMENTED` (sem owner/contrato — §0.3); `VD-07` merge transcrição×draft = `ARCHITECTURE_DECISION_REQUIRED` quando STT existir; `REAL_MIC_CAPTURE`/`HUMAN_SPEECH_VALIDATION`/`REAL_TRANSCRIPTION=TEST_NOT_RUN`; deploy prod `PENDING` (runbook na evidência §7; rebuild **plugin-ui + delia** obrigatório — remote precisa exportar `audioRecorderErrorMessage`).
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; fase/CP-RQ inalterados; `PRODUCTION_READINESS=NOT_PROVEN`.
+
+NEXT=INDEPENDENT_REVIEW → decisão PM sobre provider/contrato STT (VD-F01→VD-F03) → deploy canônico (rebuild plugin-ui+delia) → QA produção

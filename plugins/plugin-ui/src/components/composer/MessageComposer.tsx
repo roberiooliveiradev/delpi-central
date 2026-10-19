@@ -51,6 +51,14 @@ export type MessageComposerProps = {
   /** Visual keyboard hint; `null` omits it. CSS may hide it on narrow docks. */
   keyboardHint?: string | null;
   /**
+   * Modal replacement for the whole write+toolbar content inside the
+   * same composer surface (e.g. voice dictation capture). When set, the
+   * textarea and the normal toolbar are NOT rendered — no hidden,
+   * focusable text field — and no submit can occur. The host's draft
+   * state is untouched; the caller restores it on exit.
+   */
+  bodyOverride?: ReactNode;
+  /**
    * Contracted input bound (e.g. backend-enforced max chars). The
    * `n/limit` counter renders only when provided — never invent it.
    */
@@ -95,6 +103,7 @@ export function MessageComposer({
   error,
   secondaryActions,
   keyboardHint = "Enter envia · Shift+Enter quebra linha",
+  bodyOverride,
   characterLimit,
   maxInputHeight = DEFAULT_MAX_INPUT_HEIGHT_PX,
   sendLabel = "Enviar",
@@ -103,7 +112,11 @@ export function MessageComposer({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const inFlight = loading || requestMode !== "idle";
   const canSubmit =
-    !disabled && !submitDisabled && !inFlight && value.trim().length > 0;
+    !disabled &&
+    !submitDisabled &&
+    !inFlight &&
+    bodyOverride == null &&
+    value.trim().length > 0;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -138,6 +151,8 @@ export function MessageComposer({
       }}
     >
       <div className="delpi-ui-message-composer__surface">
+        {bodyOverride ?? (
+          <>
         <div className="delpi-ui-message-composer__write">
           <NativeTextAreaControl
             ref={textareaRef}
@@ -196,6 +211,8 @@ export function MessageComposer({
             />
           )}
         </div>
+          </>
+        )}
       </div>
 
       {error ? (

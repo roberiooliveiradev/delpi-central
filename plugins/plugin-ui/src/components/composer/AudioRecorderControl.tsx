@@ -5,7 +5,7 @@ import type { AudioRecorderControlProps } from "./audioRecorderTypes";
 import { formatAudioDurationMs } from "./audioRecorderTypes";
 import { useLocalAudioRecorder } from "./useLocalAudioRecorder";
 
-function errorMessage(reason: string | null): string {
+export function audioRecorderErrorMessage(reason: string | null): string {
   switch (reason) {
     case "permission_denied":
       return "Permissão do microfone negada. Você pode digitar a mensagem.";
@@ -55,6 +55,8 @@ export type AudioRecorderControlRenderProps = {
   /** Host should block concurrent text submit while true */
   blocking: boolean;
   status: ReturnType<typeof useLocalAudioRecorder>["status"];
+  /** Machine-readable capture error for host-rendered messaging. */
+  errorReason: ReturnType<typeof useLocalAudioRecorder>["errorReason"];
 };
 
 /**
@@ -191,6 +193,7 @@ export function AudioRecorderControl({
             tone="primary"
             onClick={stop}
             disabled={status === "stopping"}
+            autoFocus={status === "recording"}
           >
             <Square size={16} aria-hidden="true" />
           </IconButton>
@@ -259,7 +262,7 @@ export function AudioRecorderControl({
     (status === "preview" &&
       (errorReason === "limit_duration" || errorReason === "limit_bytes")) ? (
       <p className="delpi-ui-audio-recorder__error" role="alert">
-        {errorMessage(errorReason)}
+        {audioRecorderErrorMessage(errorReason)}
       </p>
     ) : null;
 
@@ -277,6 +280,7 @@ export function AudioRecorderControl({
     ) : null,
     blocking,
     status,
+    errorReason,
   };
 
   if (typeof children === "function") {
