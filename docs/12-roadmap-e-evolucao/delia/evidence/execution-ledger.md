@@ -15823,3 +15823,41 @@ DOCS_ONLY_AUTHORITATIVE_DECISION=YES
 TESTS_THIS_DECISION=TEST_NOT_RUN
 NEXT=CURSOR_SINGLE_BOUNDED_Q02_A_I04_REMEDIATION
 ```
+
+
+## §6.314 — LLM-enabled product principle: canonical docs/rules and roadmap reinforcement
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-ARCH-LLM-ENABLED-PRODUCT-PRINCIPLE-DOCS-AND-RULES-01`. **PRODUCT MASTER INTENT (explicit user clarification):** "não estamos desenvolvendo um LLM; estamos desenvolvendo um produto que utiliza LLM" — use the existing model intelligence, prompts/instruction lineage, relevant conversational/workspace context and MCP/A2A/OpenAPI capabilities; stop accumulating regex, bespoke classifiers, provider-name branches or language-simulation functions. **AUTHORITY:** already approved [ADR 58](../corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md) and [16 Product Master Option B](../16-execution-master-plan.md); this is an interpretive reinforcement **not a new ADR, new phase, changed contract or authorization of code/deploy**.
+
+**GITHUB REANCHOR:** at start `main=dec58d9abb4783eef47278e3a0b47ebf1ec863c1`, `orchestration.py` blob `0d82c09883570d5fb45464e9773a23b2daaba0c2`; Q02-A work was reported in progress externally, implementation status NOT independently proven from GitHub and unchanged source blob at task start. Local checkout status unavailable through GitHub connector. **CHANGES ONLY DOCUMENTATION AND RULES:** `.cursor/rules/delia-execution-protocol.mdc`, normative [49 §14.2](../49-architecture-and-design-patterns-standard.md), [50 §1.1](../50-standalone-copilot-application-architecture.md), product [24 §5.1](../24-product-specification.md), [20 §1.1](../20-testing-and-acceptance-matrix.md), [22 §3.1](../22-cursor-execution-protocol.md), [16 — explanatory paragraph under Option B](../16-execution-master-plan.md), [59 §2.1](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [DÉLIA README](../README.md). No application/runtime/test code edited; no new documentation track/roadmap created. Chat-specific `ai-*` rules inspected and **not** edited or promoted as DÉLIA authority; specialized DÉLIA rule owns the guidance.
+
+**BOUNDARY/INVARIANTS:** `LLM=SEMANTIC_HYPOTHESIS` for intent, goal, references, conversation versus owner, group/capability selection and clarification from approved live catalog with minimally sufficient context. `DETERMINISTIC=CONTRACT/AUTHZ/PROVENANCE/SAFETY/EXECUTION` remains unchanged. Artificial semantic lexical `reject`/veto is targeted for replacement within authorized packages; schema/member/identity/Core/Domain/Policy/PREPARE/ACT/factual evidence/time limit rejection remains fail-closed. Tool metadata and prior conversational text do not authorize or become domain FACT. `MODEL_AUTHORED_FACTUAL_PROSE=NONE` and frozen `selection-only` (§6.145) remain mandatory. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE|EXTEND` already approved `OperationalCapabilityOrchestrator`, `InvokeModel/_propose`, typed proposals, `TurnDeadline`, live provider ports/adapters; no new model/planner/agent/intent engine/registry/provider-specific branch.
+
+**TEST/PRODUCT DoD REINFORCED, NOT EXECUTED:** outcome rather than lines/fixture/HTTP 200; generalization across unanticipated paraphrase/negation/topic switch/anaphora/hypotheticals, provider rename/reorder/add-remove/equivalent and no tool, C02 VISTA formats, DAVI/TÉO/OpenAPI and evidence-preserving READ, zero material ACT, cold/warm <=30s and model-call count; security remains mandatory. Docs/rules are the only artifacts here; `PYTEST=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`, `DEPLOY=NOT_RUN`. Q02-A remains the **only** implementation exception I04 authorized via ledger §6.313; Cursor ongoing work must reanchor new HEAD and use canonical instructions, no broadened scope.
+
+**RELATED OBSERVABILITY/GOVERNANCE DRIFT (outside task):** execution ledger currently has **two** different entries headed `§6.311` (I04 live validation and VD-F03 production deploy) due to concurrent writes. This review does not renumber historical evidence or silently reconcile independent tasks. Owner = Coordination/doc governance; resolve separately if cross-references become ambiguous, preserving immutable historic links.
+
+```text
+PRINCIPLE=DELIA_IS_LLM_ENABLED_PRODUCT_NOT_LLM_IMPLEMENTATION
+ADR58=APPROVED_UNCHANGED
+SEMANTIC_MODEL_OWNERSHIP=REINFORCED
+DETERMINISTIC_AUTHORITY=REQUIRED_UNCHANGED
+PROMPT_CONTEXT_CAPABILITY_REUSE=REQUIRED
+LLM_SPEECH_AS_BUSINESS_FACT=FORBIDDEN
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED
+DOC_RULES_UPDATED=YES
+CODE_DIFF=NONE
+TESTS=TEST_NOT_RUN
+DEPLOY=NOT_RUN
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=CURSOR_Q02_A_EXECUTION_REPORT_THEN_INDEPENDENT_REVIEW
+```
