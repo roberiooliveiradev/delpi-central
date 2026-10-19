@@ -83,6 +83,24 @@ class SqlAlchemyUserProtheusIdentityRepository(UserProtheusIdentityRepositoryPor
         )
         return [self._to_entity(row) for row in rows]
 
+    def list_page(
+        self,
+        *,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[UserProtheusIdentity], int]:
+        page = max(1, int(page))
+        page_size = max(1, min(int(page_size), 200))
+        query = self._session.query(UserProtheusIdentityModel)
+        total = query.count()
+        rows = (
+            query.order_by(UserProtheusIdentityModel.updated_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+        return [self._to_entity(row) for row in rows], total
+
     def upsert(
         self,
         *,

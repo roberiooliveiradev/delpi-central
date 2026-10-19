@@ -2,39 +2,60 @@
 
 | Campo | Valor |
 |-------|--------|
-| TASK | Core Protheus identity ownership |
-| SHA base | `8fc45e2119f3cc7b1b34a0f79bca144e5f822516` (`origin/main` no reanchor) |
-| SHA final `main` | `0bab7c315c1dcc3edddd4b1675e9994d8a0e6c51` |
-| Branch | `feat/core-protheus-identity` (rebased → merged via FF push to `main`) |
+| TASK | Core Protheus identity ownership + cutover hardening |
+| SHA base revisão | `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` |
+| SHA implementação original | `0bab7c315c` |
+| Chamado | #1354 (não encerrado automaticamente) |
 | `EXISTING_EQUIVALENT` | `NO` |
 | `REUSE_DECISION` | `EXTEND` |
-| Código | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` |
+| Código hardening | ver commit desta entrega |
 | `PRODUCTION_CUTOVER` | `PENDING` |
-| Data migração produção | não executada (proibido sem autorização) |
-| Schema local (dev) | `flask db upgrade` → `t6u7v8w9x0` (head) aplicado em `delpi-core-api` |
-| Testes Core | `pytest app/tests/test_protheus_identity.py` → **11 passed** |
-| Testes SC | facade + sync + notification preference → **7 passed** |
+| Data migração produção | não executada nesta rodada |
 
-## Matriz de consumidores (inventário)
+## Correções desta rodada (review independente)
 
-| Consumidor | Contrato anterior | Destino |
-|---|---|---|
-| Portal Admin aba TOTVS | purchase-requests `/rbac/user-protheus-mappings` | Core `/admin/rbac/users/.../external-identities/protheus` |
-| SC sync-by-email | SC use case + repo local | Repo facade → Core quando `PROTHEUS_IDENTITY_OWNER=core` |
-| SC notificações reverse lookup | `get_mapping_by_protheus_user_id` local | Idem via Core S2S |
-| SC admin PUT mappings | local writer | Facade → Core no cutover |
-| API DELPI SYS_USR | `/supplies/protheus-users/by-email` | **inalterado** (adapter) |
+| Problema | Correção |
+|----------|----------|
+| Script podia escrever antes de falhar por conflitos | Gate fail-closed: plano → bloqueio → só então apply transacional |
+| Órfãos ignorados | `orphan_user` / `inactive_user` blocking |
+| `--allow-conflicts` | removido |
+| Overwrite cego no destino | divergência Core = conflito; idêntico = no-op |
+| `list_mappings()` legado no modo core | S2S list paginado + facade Core; sem fallback legado |
+| S2S PUT sem caller/ator | allowlist `X-Delpi-Caller-App` + `actor_user_id` validado + audit |
 
-## Resultados de classificação
+## Testes (evidência)
+
+| Suíte | Resultado |
+|-------|-----------|
+| Core `test_protheus_identity` + `test_migrate_protheus_identities_script` | **20 passed** (container `delpi-core-api`) |
+| SC `test_protheus_identity_owner_facade` + sync | **8 passed** |
+
+## Operação produção
+
+| Etapa | Status |
+|-------|--------|
+| Deploy código hardening | PENDING (após merge `main`) |
+| Backup Core + plugins mappings | PENDING (autorização operacional) |
+| Inventário somente leitura | PENDING |
+| Dry-run script | PENDING |
+| Apply + reconciliação | PENDING |
+| `PROTHEUS_IDENTITY_OWNER=core` efetivo | PENDING |
+| Smoke Portal/SC/API DELPI | PENDING |
+
+## Classificação (estado factual)
 
 | Dimensão | Status |
 |----------|--------|
-| CORE_IDENTITY_CAPABILITY | PASS (código) |
-| SCHEMA_MIGRATION | PASS (Alembic criada; apply em runtime) |
-| DATA_MIGRATION | PENDING (script dry-run; prod não aplicada) |
-| PORTAL_CONSUMER | PASS (aba TOTVS → Core) |
-| PURCHASE_REQUESTS_CONSUMER | PASS (facade + flag cutover) |
-| S2S_SECURITY | PASS (token integrations) |
-| REGRESSION_TESTS | ver evidência de execução |
+| CODE_CORRECTIONS | PASS (código local; SHA final após push) |
+| MIGRATION_SCRIPT | PASS (testes de planner) |
+| SCHEMA_PRODUCTION | PENDING |
+| PRODUCTION_DEPLOYMENT | PENDING |
+| DATA_INVENTORY | PENDING |
+| DATA_MIGRATION | PENDING |
+| DATA_RECONCILIATION | PENDING |
+| CORE_OWNERSHIP | PENDING (flag ainda `legacy` até cutover) |
+| PORTAL_SMOKE | TEST_NOT_RUN (prod) |
+| PURCHASE_REQUESTS_SMOKE | TEST_NOT_RUN (prod) |
+| S2S_SECURITY | PASS (testes unitários deny/allow) |
 | DOCUMENTATION | PASS |
-| PRODUCTION_CUTOVER | PENDING |
+| BUSINESS_OUTCOME | PENDING |

@@ -215,3 +215,66 @@ def test_leading_zeros_preserved_in_entity_dict():
     data = _identity(user_id, protheus_user_id="000234").to_dict()
     assert data["protheus_user_id"] == "000234"
     assert not isinstance(data["protheus_user_id"], int)
+
+
+@patch("app.interfaces.http.integrations_protheus_identities_controller.SqlAlchemyUnitOfWork")
+def test_s2s_write_requires_allowlisted_caller(mock_uow, client, monkeypatch):
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "s2s-secret")
+    user_id = uuid4()
+    response = client.put(
+        f"/integrations/protheus-identities/by-user/{user_id}",
+        headers={"X-Delpi-Service-Token": "s2s-secret"},
+        json={"protheus_user_id": "000234", "mapping_status": "mapped"},
+    )
+    assert response.status_code == 403
+    mock_uow.assert_not_called()
+
+
+@patch(
+    "app.interfaces.http.integrations_protheus_identities_controller.UpsertUserProtheusIdentityUseCase"
+)
+@patch("app.interfaces.http.integrations_protheus_identities_controller.SqlAlchemyUnitOfWork")
+def test_s2s_write_authorized_with_caller_and_actor(mock_uow, mock_uc, client, monkeypatch):
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "s2s-secret")
+    user_id = uuid4()
+    actor_id = uuid4()
+    mock_uow.return_value.__enter__.return_value.users.get_by_id.return_value = SimpleNamespace(
+        id=actor_id, active=True
+    )
+    mock_uc.return_value.execute.return_value = _identity(user_id).to_dict()
+
+    response = client.put(
+        f"/integrations/protheus-identities/by-user/{user_id}",
+        headers={
+            "X-Delpi-Service-Token": "s2s-secret",
+            "X-Delpi-Caller-App": "purchase-requests-api",
+        },
+        json={
+            "protheus_user_id": "000234",
+            "mapping_status": "mapped",
+            "mapping_source": "manual",
+            "verified": True,
+            "actor_user_id": str(actor_id),
+        },
+    )
+    assert response.status_code == 200
+    kwargs = mock_uc.return_value.execute.call_args.kwargs
+    assert kwargs["actor_user_id"] == actor_id
+
+
+@patch("app.interfaces.http.integrations_protheus_identities_controller.SqlAlchemyUnitOfWork")
+def test_s2s_list_paginated(mock_uow, client, monkeypatch):
+    monkeypatch.setenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN", "s2s-secret")
+    user_id = uuid4()
+    mock_uow.return_value.__enter__.return_value.protheus_identities.list_page.return_value = (
+        [_identity(user_id)],
+        1,
+    )
+    response = client.get(
+        "/integrations/protheus-identities?page=1&page_size=50",
+        headers={"X-Delpi-Service-Token": "s2s-secret"},
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert len(body["items"]) == 1
+    assert body["pagination"]["total"] == 1

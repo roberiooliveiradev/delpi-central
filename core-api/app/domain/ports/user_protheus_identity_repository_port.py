@@ -26,6 +26,15 @@ class UserProtheusIdentityRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_page(
+        self,
+        *,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[UserProtheusIdentity], int]:
+        raise NotImplementedError
+
+    @abstractmethod
     def upsert(
         self,
         *,

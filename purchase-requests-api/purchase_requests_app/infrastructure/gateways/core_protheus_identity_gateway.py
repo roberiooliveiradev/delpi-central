@@ -5,12 +5,15 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from purchase_requests_app.config import settings
 
 logger = logging.getLogger(__name__)
+
+_CALLER_APP = "purchase-requests-api"
 
 
 class CoreProtheusIdentityUnavailableError(RuntimeError):
@@ -40,7 +43,10 @@ class CoreProtheusIdentityGateway:
         )
 
     def _headers(self) -> dict[str, str]:
-        headers = {"Accept": "application/json"}
+        headers = {
+            "Accept": "application/json",
+            "X-Delpi-Caller-App": _CALLER_APP,
+        }
         token = (self._token or "").strip()
         if token:
             headers["X-Delpi-Service-Token"] = token
@@ -51,13 +57,49 @@ class CoreProtheusIdentityGateway:
         return self._get_mapping(f"/integrations/protheus-identities/by-user/{user_id}")
 
     def get_by_protheus_user_id(self, protheus_user_id: str) -> dict[str, Any] | None:
-        from urllib.parse import quote
-
         path = (
             "/integrations/protheus-identities/by-protheus-user/"
             f"{quote(protheus_user_id, safe='')}"
         )
         return self._get_mapping(path)
+
+    def list_mappings(self, *, page_size: int = 200) -> list[dict[str, Any]]:
+        """Fetch all pages from Core paginated list (fail-closed)."""
+        items: list[dict[str, Any]] = []
+        page = 1
+        while True:
+            url = (
+                f"{self._base_url}/integrations/protheus-identities"
+                f"?page={page}&page_size={page_size}"
+            )
+            try:
+                with httpx.Client(timeout=self._timeout) as client:
+                    resp = client.get(url, headers=self._headers())
+            except httpx.HTTPError as exc:
+                raise CoreProtheusIdentityUnavailableError(
+                    "Core API indisponível para listagem de identidades Protheus."
+                ) from exc
+            if resp.status_code >= 400:
+                raise CoreProtheusIdentityUnavailableError(
+                    f"Core rejeitou listagem Protheus [{resp.status_code}]."
+                )
+            body = resp.json() if resp.content else {}
+            batch = body.get("items") if isinstance(body, dict) else None
+            if not isinstance(batch, list):
+                raise CoreProtheusIdentityUnavailableError(
+                    "Resposta Core de listagem sem items."
+                )
+            items.extend([row for row in batch if isinstance(row, dict)])
+            pagination = body.get("pagination") if isinstance(body, dict) else {}
+            total_pages = int((pagination or {}).get("total_pages") or 1)
+            if page >= total_pages:
+                break
+            page += 1
+            if page > 500:
+                raise CoreProtheusIdentityUnavailableError(
+                    "Listagem Protheus excedeu limite de páginas."
+                )
+        return items
 
     def upsert(
         self,
@@ -68,20 +110,24 @@ class CoreProtheusIdentityGateway:
         mapping_status: str,
         mapping_source: str | None,
         verified: bool,
+        actor_user_id: str | None = None,
     ) -> dict[str, Any]:
         url = f"{self._base_url}/integrations/protheus-identities/by-user/{user_id}"
+        payload: dict[str, Any] = {
+            "protheus_user_id": protheus_user_id,
+            "protheus_user_code": protheus_user_code,
+            "mapping_status": mapping_status,
+            "mapping_source": mapping_source,
+            "verified": verified,
+        }
+        if actor_user_id:
+            payload["actor_user_id"] = actor_user_id
         try:
             with httpx.Client(timeout=self._timeout) as client:
                 resp = client.put(
                     url,
                     headers=self._headers(),
-                    json={
-                        "protheus_user_id": protheus_user_id,
-                        "protheus_user_code": protheus_user_code,
-                        "mapping_status": mapping_status,
-                        "mapping_source": mapping_source,
-                        "verified": verified,
-                    },
+                    json=payload,
                 )
         except httpx.HTTPError as exc:
             raise CoreProtheusIdentityUnavailableError(

@@ -406,6 +406,7 @@ def upsert_user_mapping(
     user=Depends(_require_admin),
 ):
     repo = UserProtheusMappingRepository()
+    actor = str(getattr(user, "id", "") or getattr(user, "sub", "") or "").strip() or None
     mapping = repo.upsert_mapping(
         user_id=user_id,
         protheus_user_id=body.protheus_user_id,
@@ -413,6 +414,7 @@ def upsert_user_mapping(
         mapping_status=body.mapping_status,
         mapping_source=body.mapping_source,
         verified=body.verified,
+        actor_user_id=actor,
     )
     return ok(mapping, message="Mapping atualizado com sucesso.")
 

@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class UserProtheusMappingRepository:
-    """Facade: Core is authoritative when PROTHEUS_IDENTITY_OWNER=core."""
+    """Facade: Core is authoritative when PROTHEUS_IDENTITY_OWNER=core.
+
+    In ``core`` mode no operational read/write uses the legacy table.
+    """
 
     def __init__(
         self,
@@ -43,6 +46,7 @@ class UserProtheusMappingRepository:
         mapping_status: str,
         mapping_source: str | None,
         verified: bool,
+        actor_user_id: str | None = None,
     ) -> dict[str, Any]:
         if protheus_identity_owner() == "core":
             try:
@@ -53,6 +57,7 @@ class UserProtheusMappingRepository:
                     mapping_status=mapping_status,
                     mapping_source=mapping_source,
                     verified=verified,
+                    actor_user_id=actor_user_id,
                 )
             except CoreProtheusIdentityUnavailableError:
                 logger.exception("core_protheus_identity_write_failed user_id=%s", user_id)
@@ -85,11 +90,12 @@ class UserProtheusMappingRepository:
         return self._get_mapping_by_protheus_user_id_local(normalized)
 
     def list_mappings(self) -> list[dict[str, Any]]:
-        # Admin list remains local during transition; Core has no unrestricted list.
         if protheus_identity_owner() == "core":
-            logger.warning(
-                "list_mappings_not_supported_on_core_owner — returning local snapshot if any"
-            )
+            try:
+                return self._core.list_mappings()
+            except CoreProtheusIdentityUnavailableError:
+                logger.exception("core_protheus_identity_list_failed")
+                raise
         return self._list_mappings_local()
 
     def _get_mapping_local(self, user_id: str) -> dict[str, Any] | None:

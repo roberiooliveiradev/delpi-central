@@ -1,7 +1,7 @@
 # Core API — ownership da identidade Protheus
 
-**Status:** implementação de código pronta para review  
-**Cutover de produção:** `PENDING` (requer inventário, backup, dry-run, autorização)
+**Status código (hardening cutover):** integrado / pronto para review  
+**Cutover de produção:** `PENDING` até backup + dry-run + apply + reconciliação + flip de flag
 
 ## Decisão
 
@@ -10,70 +10,65 @@
 | Associação usuário Minha DELPI ↔ `SYS_USR` (`USR_ID` / `USR_CODIGO`) | **Core API** |
 | Adapter de consulta TOTVS (`SYS_USR` por e-mail) | **API DELPI** (`GET /supplies/protheus-users/by-email`) |
 | UI administrativa (aba TOTVS) | Portal → contratos Core |
-| Consumidor (notificações, filtros SC) | Purchase Requests → S2S Core |
+| Consumidor (notificações, filtros, admin SC) | Purchase Requests → S2S Core |
 
-**Reuse gate**
-
-- `EXISTING_EQUIVALENT = NO` (Core não tinha identidade externa Protheus)
-- `REUSE_DECISION = EXTEND` (gestão de usuários Core + lookup api-delpi existente)
+**Reuse gate:** `EXISTING_EQUIVALENT = NO` · `REUSE_DECISION = EXTEND`
 
 ## Persistência
 
-Tabela Core: `user_protheus_identities`
+Tabela Core: `user_protheus_identities` (Alembic `t6u7v8w9x0`)
 
-- PK/FK `user_id` → `users.id` (CASCADE)
-- `protheus_user_id` (TEXT, zeros à esquerda preservados)
-- `protheus_user_code`, `mapping_status`, `mapping_source`, `verified`
-- Índice único parcial em `protheus_user_id` quando `mapping_status='mapped'`
-- Migration Alembic: `t6u7v8w9x0_user_protheus_identities`
+Tabela legada: `purchase_requests.user_protheus_mappings` — permanece até autorização de limpeza pós-estabilização.
 
-A tabela legada `purchase_requests.user_protheus_mappings` **não é dropada** nesta entrega.
-
-## Contratos Core
+## Contratos
 
 ### Admin (JWT + `rbac.manage` + `users.manage`)
 
-- `GET /admin/rbac/users/{user_id}/external-identities/protheus`
-- `PUT /admin/rbac/users/{user_id}/external-identities/protheus`
-- `POST /admin/rbac/users/{user_id}/external-identities/protheus/sync`  
-  — e-mail autoritativo vem do Core; o body do cliente **não** define a identidade.
+- `GET|PUT /admin/rbac/users/{user_id}/external-identities/protheus`
+- `POST .../protheus/sync` — e-mail autoritativo do Core (body do cliente ignorado)
 
 ### Self
 
-- `GET /me/external-identities/protheus` — somente o usuário autenticado
+- `GET /me/external-identities/protheus`
 
-### S2S (`X-Delpi-Service-Token` / Bearer = `CORE_API_INTEGRATIONS_SERVICE_TOKEN`)
+### S2S
 
-- `GET /integrations/protheus-identities/by-user/{user_id}`
-- `GET /integrations/protheus-identities/by-protheus-user/{protheus_user_id}`
-- `POST /integrations/protheus-identities/lookup` (`user_ids` e/ou `protheus_user_ids`, máx. 50)
-- `PUT /integrations/protheus-identities/by-user/{user_id}` — compatibilidade de escrita no cutover
+Token: `CORE_API_INTEGRATIONS_SERVICE_TOKEN`
+
+| Operação | Extra |
+|----------|--------|
+| GET by-user / by-protheus-user / lookup / list paginado | token |
+| PUT by-user (WRITE) | token **+** `X-Delpi-Caller-App` allowlist (`purchase-requests-api`) + `actor_user_id` UUID Core opcional |
+
+Allowlist configurável: `CORE_PROTHEUS_IDENTITY_WRITE_CALLERS`.
+
+Listagem: `GET /integrations/protheus-identities?page=&page_size=` (máx. 200).
 
 ## Cutover
 
-| Estado | Writer | Reader SC | Portal |
-|--------|--------|-----------|--------|
-| A (legado) | purchase-requests | local | SC rbac |
-| B (prep) | ainda legado | local | **Core** (novo) |
-| C (cutover) | **Core** (`PROTHEUS_IDENTITY_OWNER=core`) | Core S2S | Core |
-| D (estabilização) | Core | Core | Core — remoção tabela legada só com autorização |
-
-Env de cutover no purchase-requests-api:
-
 ```bash
-PROTHEUS_IDENTITY_OWNER=core
+PROTHEUS_IDENTITY_OWNER=legacy   # default seguro até reconciliação
+PROTHEUS_IDENTITY_OWNER=core     # único writer/reader operacional SC
 ```
 
-Default atual do código: `legacy` (seguro até migração de dados).
+No modo `core`, o facade de Purchase Requests **não** lê nem grava a tabela legada (fail-closed se Core indisponível).
 
 ## Migração de dados
 
-Script (dry-run por padrão):
+Script: `core-api/scripts/migrate_protheus_identities_from_purchase_requests.py`
 
-`core-api/scripts/migrate_protheus_identities_from_purchase_requests.py`
+Garantias:
 
-Não executar em produção sem backup + autorização operacional.
+- Dry-run sem escrita.
+- Conflitos/órfãos/divergências bloqueiam **antes** de qualquer upsert.
+- Apply em transação única com rollback.
+- Destino idêntico = no-op; divergência Core = bloqueio (sem overwrite silencioso).
+- Sem `--allow-conflicts`.
+
+## Rollback
+
+Não reverter apenas a flag para `legacy` se o Core já recebeu escritas novas sem reconciliar. Plano: backup pré-apply → reconciliar escritas Core → só então decidir reativação legada.
 
 ## LGPD
 
-Anonimização de usuário no Core remove a linha em `user_protheus_identities`.
+Anonimização remove `user_protheus_identities` do titular.
