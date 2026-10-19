@@ -17,7 +17,12 @@ from requests_app.domain.process_issue_catalog import (
     PROCESS_ISSUE_TYPE_CODE,
 )
 
+# Origem do cockpit do operador (fluxo original P2).
 PROCESS_ISSUE_SOURCE = "operator_cockpit"
+# Origem autenticada do Portal PCP — o analista abre a solicitacao pela Carga
+# Maquina com identidade de usuario real (criacao autenticada, nao S2S).
+PCP_PORTAL_SOURCE = "pcp_portal"
+PROCESS_ISSUE_SOURCES = frozenset({PROCESS_ISSUE_SOURCE, PCP_PORTAL_SOURCE})
 
 _TEXT_LIMITS: dict[str, int] = {
     "reportedToolCode": 60,
@@ -55,7 +60,8 @@ class ProcessIssuePayloadValidator(PayloadValidatorPort):
         if not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
 
-        if str(payload.get("source") or "").strip() != PROCESS_ISSUE_SOURCE:
+        source = str(payload.get("source") or "").strip()
+        if source not in PROCESS_ISSUE_SOURCES:
             raise _invalid("source", "Origem do problema de processo inválida.")
         _require_text(payload, "reportedAt")
 
@@ -68,10 +74,21 @@ class ProcessIssuePayloadValidator(PayloadValidatorPort):
         for field in _TEXT_LIMITS:
             _optional_text(issue, field)
 
-        operator = payload.get("operator")
-        if not isinstance(operator, dict):
-            raise _invalid("operator", "Identidade do operador é obrigatória.")
-        _require_text(operator, "code")
+        if source == PROCESS_ISSUE_SOURCE:
+            operator = payload.get("operator")
+            if not isinstance(operator, dict):
+                raise _invalid("operator", "Identidade do operador é obrigatória.")
+            _require_text(operator, "code")
+        else:
+            # pcp_portal: o autoridade da identidade é o usuário autenticado
+            # (created_by do request); o bloco requester é o espelho do
+            # snapshot para exibição — nunca substitui o principal.
+            requester = payload.get("requester")
+            if not isinstance(requester, dict):
+                raise _invalid("requester", "Identidade do solicitante é obrigatória.")
+            _require_text(requester, "name")
+            if len(str(requester.get("name") or "").strip()) > 150:
+                raise _invalid("requester.name", "requester.name excede 150 caracteres.")
 
         operation = payload.get("operation")
         if not isinstance(operation, dict):

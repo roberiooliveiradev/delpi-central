@@ -1,5 +1,7 @@
 type RequestOptions = {
   signal?: AbortSignal;
+  /** Headers extras da chamada (ex.: Idempotency-Key). */
+  headers?: Record<string, string>;
 };
 
 type ApiEnvelope<T> = {
@@ -115,6 +117,7 @@ export async function httpPost<T>(
     headers: {
       ...authHeaders(),
       "Content-Type": "application/json",
+      ...options.headers,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: options.signal,

@@ -46,6 +46,14 @@ export function ProcessIssuePayloadPanel({
 }: ProcessIssuePayloadPanelProps) {
   const view = useMemo(() => parseProcessIssuePayload(payload), [payload]);
   const [drawingOpen, setDrawingOpen] = useState(false);
+  // Origem do reporte: cockpit do operador (P2) ou Portal PCP (analista).
+  const fromPcp = view.source === "pcp_portal";
+  const reporterLabel = fromPcp ? "Solicitado por" : "Operador";
+  const reporterName = fromPcp
+    ? view.requesterName
+    : view.operatorName || view.operatorCode;
+  const reporterId = fromPcp ? view.requesterName : view.operatorCode;
+  const auxActor = fromPcp ? "pelo analista" : "pelo operador";
 
   const paCode = view.paProductCode;
   const drawingFileName = paCode ? `${paCode}.pdf` : "desenho.pdf";
@@ -72,12 +80,9 @@ export function ProcessIssuePayloadPanel({
               value: formatDateTimePtBr(view.reportedAt),
             },
             {
-              label: "Operador",
-              value: view.operatorCode || view.operatorName ? (
-                <PersonIdentity
-                  name={view.operatorName || view.operatorCode}
-                  userId={view.operatorCode}
-                />
+              label: reporterLabel,
+              value: reporterName ? (
+                <PersonIdentity name={reporterName} userId={reporterId} />
               ) : (
                 "—"
               ),
@@ -85,7 +90,7 @@ export function ProcessIssuePayloadPanel({
             ...(view.reportedToolCode
               ? [
                   {
-                    label: "Ferramenta informada pelo operador",
+                    label: `Ferramenta informada ${auxActor}`,
                     value: (
                       <code className="my-requests-process-issue__code">
                         {view.reportedToolCode}
@@ -97,7 +102,7 @@ export function ProcessIssuePayloadPanel({
             ...(view.reportedMaterialCode
               ? [
                   {
-                    label: "Material informado pelo operador",
+                    label: `Material informado ${auxActor}`,
                     value: (
                       <code className="my-requests-process-issue__code">
                         {view.reportedMaterialCode}
@@ -111,7 +116,7 @@ export function ProcessIssuePayloadPanel({
         {view.note ? (
           <div className="my-requests-process-issue__note">
             <p className="my-requests-process-issue__note-label">
-              Observação do operador
+              {fromPcp ? "Observação do analista" : "Observação do operador"}
             </p>
             <p className="my-requests-process-issue__note-text">{view.note}</p>
           </div>

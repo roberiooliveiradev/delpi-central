@@ -33,6 +33,10 @@ class SnapshotNotFound(ProductionControlError):
     """Snapshot da carga máquina ausente para o escopo pedido."""
 
 
+class MachineLoadOperationNotFound(ProductionControlError):
+    """A operação não consta na fila WORKING vigente da filial."""
+
+
 class MachineLoadSequenceConflict(ProductionControlError):
     """Programação diverge da ordem-base informada ou move operação protegida."""
 

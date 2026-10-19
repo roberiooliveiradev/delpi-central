@@ -12,6 +12,7 @@ from typing import Any, Sequence
 from production_control_app.core.security import PC_MACHINE_LOAD_VIEW, can
 from production_control_app.domain.errors import (
     DelpiGatewayError,
+    MachineLoadOperationNotFound,
     MachineLoadSequenceConflict,
     SnapshotNotFound,
 )
@@ -69,6 +70,7 @@ from production_control_app.domain.services.machine_load_transfer import (
     move_operation,
     move_operations_at_work_center,
     normalize_work_center,
+    operation_identity,
     operation_matches_in_center,
     original_work_center,
     register_transfer,
@@ -82,6 +84,7 @@ from production_control_app.domain.services.machine_load_withdrawal import (
     visible_operations,
     withdraw_conjunto as withdraw_conjunto_from_queue,
     withdrawn_entries,
+    withdrawn_operations,
     withdrawn_marks,
     withdrawn_operation_entries,
     restore_operation_entries,
@@ -687,6 +690,87 @@ class MachineLoadService:
         )
         if item is None:
             return None
+        return {
+            "production_order": str(item.get("production_order") or "").strip(),
+            "operation_code": str(item.get("operation_code") or "").strip(),
+            "operation_description": str(
+                item.get("operation_description") or ""
+            ).strip(),
+            "work_center": str(item.get("work_center") or "").strip(),
+            "work_center_name": str(item.get("work_center_name") or "").strip(),
+            "product_code": item.get("product_code"),
+            "product_description": item.get("product_description"),
+            "pa_product_code": item.get("pa_product_code"),
+            "pa_product_description": item.get("pa_product_description"),
+            "tool": str(item.get("tool") or "").strip(),
+            "resource": str(item.get("resource") or "").strip() or None,
+        }
+
+    def pcp_operation_process_issue_context(
+        self,
+        user: object | None,
+        *,
+        branch: str,
+        work_center: str,
+        production_order: str,
+        operation_code: str,
+    ) -> dict[str, Any]:
+        """Contexto canônico da fila WORKING para o Problema de Processo do PCP.
+
+        Mesma fila que o analista vê na Carga Máquina (inclusive operações
+        ainda não publicadas), com transferências/retiradas vigentes
+        aplicadas. A identidade completa filial + CT + OP + operação é
+        revalidada no envio — contexto obsoleto (retirada/transferência)
+        vira conflito controlado, nunca dado velho gravado em silêncio.
+        """
+        self._assert_can_view(user, branch)
+        code = self._branch_access.assert_valid_branch(branch)
+        _row, payload = self._load_snapshot_payload(branch=code)
+        work_center_names = {
+            str(item.get("work_center") or "").strip(): str(
+                item.get("work_center_name") or ""
+            ).strip()
+            for item in payload_work_centers(payload)
+        }
+        operations = apply_transfers(
+            payload_operations(payload),
+            transfer_entries(payload),
+            work_center_names=work_center_names,
+        )
+        marks = withdrawn_marks(payload)
+        wanted = (
+            normalize_order_code(production_order),
+            normalize_order_code(operation_code),
+        )
+        center = normalize_work_center(work_center)
+
+        for item in withdrawn_operations(operations, marks):
+            if operation_identity(item) == wanted:
+                raise MachineLoadSequenceConflict(
+                    "A operação foi retirada da programação. "
+                    "Atualize a Carga Máquina e selecione novamente."
+                )
+
+        visible = visible_operations(operations, marks)
+        item = find_operation(
+            visible,
+            production_order=production_order,
+            operation_code=operation_code,
+            work_center=center,
+        )
+        if item is None:
+            if find_operation(
+                visible,
+                production_order=production_order,
+                operation_code=operation_code,
+            ) is not None:
+                raise MachineLoadSequenceConflict(
+                    "A operação não está mais neste centro de trabalho. "
+                    "Atualize a Carga Máquina e selecione novamente."
+                )
+            raise MachineLoadOperationNotFound(
+                "Operação não encontrada na carga máquina vigente."
+            )
         return {
             "production_order": str(item.get("production_order") or "").strip(),
             "operation_code": str(item.get("operation_code") or "").strip(),

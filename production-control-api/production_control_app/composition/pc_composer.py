@@ -879,3 +879,21 @@ def build_public_process_issue_service() -> Any:
         requests_gateway=build_requests_api_gateway(),
         operation_materials=build_public_operation_materials_service(),
     )
+
+
+def build_pcp_process_issue_service() -> Any:
+    """Orquestrador do Problema de Processo pelo Portal PCP.
+
+    Mesmo tipo process-issue do Requests API — contexto revalidado na
+    fila WORKING e criacao autenticada com o Bearer do proprio analista
+    (sem service token, sem identidade externa).
+    """
+    from production_control_app.application.services.pcp_process_issue_service import (  # noqa: E501
+        PcpProcessIssueService,
+    )
+
+    return PcpProcessIssueService(
+        machine_load=build_machine_load_service(),
+        requests_gateway=build_requests_api_gateway(),
+        operation_materials=build_public_operation_materials_service(),
+    )

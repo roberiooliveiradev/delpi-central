@@ -24,6 +24,7 @@ BFF do **Portal PCP**. Dono do catálogo de subplugins, da **gestão à vista**,
 | POST | `/machine-load/withdraw?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/restore?branch=01\|02&orderNumber=&workCenter=` | JWT + `machine-load.view` + filial |
 | POST | `/machine-load/transfer?branch=01\|02&productionOrder=&operationCode=&targetWorkCenter=&workCenter=` | JWT + `machine-load.view` + filial |
+| POST | `/machine-load/process-issues` | JWT + `machine-load.view` + `my-requests.process-issue.create` + filial — body: branch, workCenter, productionOrder, operationCode, issueCode, toolCode?, materialCode?, note?; header Idempotency-Key |
 | GET | `/line-feeder/requirements?branch=01\|02&cutoffDate=&cutoffTime=&workCenter=&status=&refresh=` | JWT + `line-feeder.view` + filial |
 | POST | `/line-feeder/pick-plans` | JWT + `line-feeder.view` + filial (body: branch, cutoffDate, cutoffTime, workCenter) |
 | GET | `/line-feeder/pick-plans?branch=01\|02&status=&limit=` | JWT + `line-feeder.view` + filial |
@@ -94,6 +95,8 @@ A leitura live usa uma consulta Postgres consolidada sobre `production_runs`, `w
 | WS | `/public/machine-load/{token}/ws?branch=01\|02` | público (token do cockpit) |
 
 Envelope `{ success, message, data }`.
+
+`POST /machine-load/process-issues` é o ponto de entrada autenticado do **Portal PCP** para o fluxo de *Problema de Processo* (o do cockpit é a rota pública S2S `/public/machine-load/{token}/process-issues`). O BFF exige principal humano com `access_token` (service principal → 403), `production-control.access` + `machine-load.view` + `my-requests.process-issue.create` e permissão da filial. Revalida a identidade canônica `branch + workCenter + productionOrder + operationCode` na fila **WORKING** vigente (operação retirada/movida → 409; ausente → 404), monta o payload `source=pcp_portal` com o contexto da operação e o requester de exibição, e cria a solicitação no Requests API **com o Bearer do próprio analista** (`POST /v1/requests`) — o Requests API reaplica a autorização e registra `created_by` real; sem impersonação e sem service token na identidade. O snapshot de materiais SD4 é best-effort (`materialsSnapshotAvailable=false` na degradação, sem inventar dados). Idempotency-Key atravessa até o Requests API; falha de integração nunca responde sucesso. A rota não altera sequenciamento, execução nem TOTVS.
 
 `GET /reports/production-orders` pagina a view PCP (`/production/pcp-orders/items` + `/summary`) com padrão **em aberto** e **`unbounded_delivery` sempre ligado**, inclusive quando `deliveryStart` / `deliveryEnd` vêm preenchidos. Cada ponta é um filtro opcional; não reativa a janela de 12 meses nem o teto de 24 meses da api-delpi. `openOnly` / `motherOnly` aceitam `yes|no|all`. `actualEndStart` / `actualEndEnd` entram com `openOnly=no` (recorte estrito das encerradas) e com `openOnly=all` (recorte só de quem tem fim real; OP em aberto permanece). Com `openOnly=yes` a data de fim não é enviada. Sem data de fim, `all` devolve abertas e encerradas juntas. Falha da api-delpi repassa o status upstream (4xx/5xx); sem status, responde 502.
 

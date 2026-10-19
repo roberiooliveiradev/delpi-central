@@ -7,6 +7,7 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - API: **somente** `/apps/requests-api` (`X-Delpi-Caller-App: my-requests`)
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` via `resolveActionPresentation` (ícone lucide + `HintAction` + label PT)
+- Detalhe `process-issue`: `ProcessIssuePayloadPanel` distingue a origem — `operator_cockpit` (operador, sessão de bancada) exibe «Operador» e `pcp_portal` (analista do Portal PCP, JWT real) exibe «Solicitado por» com o nome do analista; mesmo painel, mesma fila e mesmo workflow de Processos
 - Detalhe: fases **O que foi solicitado → Atendimento → Histórico**; Atendimento em stack full-width: Progresso → Ações → **Conversa** (MessageThread + MentionComposer) → Documentos gerados
 - Conversa: formatação rica + imagens (`attachment:{uuid}` via BFF comment-attachments); `is_mine`; avatares Portal via `GET /participants/{id}/avatar` (Core S2S com `CORE_API_INTEGRATIONS_SERVICE_TOKEN`); sem commercial-api
 - Escolhas finitas (Tipo NF, Tipo de documento): `SegmentToggle` (não Select)

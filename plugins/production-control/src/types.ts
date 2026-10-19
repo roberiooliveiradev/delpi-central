@@ -1312,3 +1312,11 @@ export type MachineLoadWorkCentersPayload = {
   /** true quando a filial já possui fila congelada; false = ainda sem programação. */
   snapshot_present: boolean;
 };
+
+/** Retorno da abertura de solicitacao a Processos pela Carga Maquina. */
+export type MachineLoadProcessIssueResult = {
+  requestId: string | null;
+  requestNumber: string | null;
+  status: string | null;
+  message: string | null;
+};
