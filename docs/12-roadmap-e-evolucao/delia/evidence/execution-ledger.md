@@ -14785,3 +14785,15 @@ NEXT=INDEPENDENT_I02_R2_ARCHITECTURE_AND_DEPLOY_REVIEW
 - **STATE:** `I02_R2_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL`; `I02_OVERALL=REWORK`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=I02_R3_TEO_PRE_OWNER_LATENCY_ARCHITECTURE_DIAGNOSIS
+
+
+## §6.249 — DELIA-C3-I02-R3-COORDINATION-PRE-OWNER-LATENCY-INVESTIGATION (PARTIAL)
+
+**DATE:** 2026-10-19. **DOC:** [11](../corrections/mcp-contextual-intelligence-orchestration/11-i02r3-coordination-latency-architecture-investigation.md). **BASE_HEAD:** `13167e6efc28063545aa51feec500078e67737e0`. GitHub code + previous executor timing review, market practices comparison; no independent runtime/test re-execution.
+
+- **CODE:** `_select_target` performs group→capability sequential model proposals; `_understand_goal` runs model and feeds subsequent gates; with multiple groups `_assess_native_path` proposes native/foreign before read; arguments may propose model fields unless schema deterministically empty. All `_propose` bounded by `TurnDeadline`. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND_CANDIDATE`.
+- **EVIDENCE:** executor K1 TÉO successful path ~17816ms with group 4088, cap 2803, goal 3146, native 1775, arguments ~5531; owner catalog 79ms, READ 39ms. Sequential pre-owner model cost PROVEN for that sample. R2 K1 timeout ~30014ms, exact failing stage `TO_INVENTORY`; cannot attribute to owner or individual proposal without corresponding trace.
+- **DESIGN GATE:** before code, map stage dependencies, test whether any can merge/skip while retaining write semantic finality, owner discovery, foreign-evidence requirements and provider neutrality. Prioritize reusing purpose/timing telemetry; compare options in bounded, reproducible negative/holdout suite. Do not immediately parallelize, replace planner or add caching/memory.
+- **STATE:** `I02_R3_COORDINATION_INVESTIGATION=PARTIAL`; `SOURCE_CODE_CHANGED=NO`; `TESTS=TEST_NOT_RUN`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R3_EVIDENCE_AND_DEPENDENCY_GATE_BEFORE_IMPLEMENTATION
