@@ -15127,3 +15127,14 @@ NEXT_RELATED=COORDINATION_ROOT_CAUSE_AND_REMEDIATION_REVIEW_DOC33
 
 NEXT_MAIN=I04_PROVIDER_NEUTRAL_GENERALIZATION
 NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
+
+
+## §6.276 — Coordination adaptive routing reliability decision (DESIGN_BOUNDARY_APPROVED)
+
+**DATE:** 2026-10-19. **DECISION:** [35](../corrections/mcp-contextual-intelligence-orchestration/35-coordination-adaptive-routing-reliability-decision.md). **EVIDENCE:** L01–L06 doc33, review doc34, current orchestration source. Existing engine reused; no functional runtime diff in this decision.
+
+- **PRIORITY:** bounded R1 none-selection caller/fallback handling + R3 K2 methodological response framing; R2 DAVI selection remains gated by owner/type-contract proof. No auto-select singleton, no capability-by-provider hardcode, no unsafe generic retry or 10s stage cap. Owner-linked personal ticket counting remains separate.
+- **STATUS:** `IMPLEMENTATION=PLANNED`; `I03_ACCEPTED=YES_WITH_RESIDUAL` unchanged; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`. Tests and live eval of this corrective diff `TEST_NOT_RUN`.
+
+NEXT_MAIN=I04_PROVIDER_NEUTRAL_GENERALIZATION
+NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
