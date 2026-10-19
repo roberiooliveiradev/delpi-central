@@ -18,7 +18,7 @@
 |---|---|---|---|
 | D01 | UX de host do Companion Dock: cabeçalho, viewport, drag/resize, chrome, focus, scroll, composer | `EXISTING_EQUIVALENT=YES`: Portal GlobalDeliaDock + shell conversacional; `REUSE_DECISION=EXTEND` somente após QA e owner review | `PLANNED`; não duplicar Dock nem shell |
 | D02 | Motion State binding do pending request DÉLIA | `EXISTING_EQUIVALENT=YES`: UnifiedAvatar + ActivityViewer + App loading real; `REUSE_DECISION=REUSE/EXTEND_COMPOSITION` | **IMPLEMENTED + VALIDATION EVIDENCE** (§5–§6); recomendação executor `ACCEPT_WITH_RESIDUAL`; aceite formal GPT; residual Portal/Dock auth + cancel demo |
-| D03 | Presença/interações e cópia honesta em espera/resposta/erro/atenção, com opções da personalidade | `EXISTING_EQUIVALENT=YES` para status/evidence/avatars; novos dados `TO_INVENTORY` | `PLANNED`; não inventar eventos, características pessoais ou fontes |
+| D03 | Presença/interações e cópia honesta em espera/resposta/erro/atenção, com opções da personalidade | `EXISTING_EQUIVALENT=YES` para status/evidence/avatars; novos dados `TO_INVENTORY` | **VALIDATION EVIDENCE** (§11); recomendação `ACCEPT_WITH_RESIDUAL`; preferências/proatividade runtime ainda `PLANNED`/`TO_INVENTORY` |
 | D04 | Paridade Dock/full-page, mobile, focus, theme, clipped halo, reduced motion, browser & federation | `EXISTING_EQUIVALENT=YES` para harness/tests e host; `REUSE_DECISION=REUSE` | `PLANNED` gate E09 relacionado e review independente; Dock autenticado ainda `TEST_NOT_RUN` no §115 |
 
 ## 3. D02 — contrato preciso
@@ -131,3 +131,40 @@ Aceite formal permanece com o review GPT. **D01/D03/D04 e roadmap 115 E09/E10 n�
 **Diff:** `plugins/plugin-ui/src/styles/conversation-workspace.css` aplica padding de workspace `clamp(8px,2.5cqw,12px)`, gap de leitura 12px e toolbar que admite wrap, ocultando hint secundário apenas no Dock; `plugins/delia/src/index.css` ajusta gaps e `max-width:100%` para turnos no Dock, sem criar segundo componente. Funcionalidade de composer, autogrow, submit, stop, timeline, role=log, draft e foco permanecem sob contratos existentes. Página completa fora de `.global-delia-dock` não recebe os overrides.
 
 **Gates:** build, Vitest, typecheck, CSS no bundle federado e Playwright autenticado para Dock de 320/360/420px, temas, zoom 200%, strings longas, rolagem, composer e keyboard focus seguem `TEST_NOT_RUN` nesta edição GitHub-only; verificação posterior solicitada pelo Product Master. `D01_IMPLEMENTED_CANDIDATE`; `D01_ACCEPTED=NO`. Roadmap 115 E09/E10 e D02 residuals permanecem abertos. Sem avanço de fase.
+
+## 11. D03 — validação automatizada presença/motion (2026-10-19)
+
+**TASK_ID:** `DELIA-UX-D03-PRESENCE-MOTION-AUTOMATED-VALIDATION-01`  
+**TESTED_SHA:** `06cf0f22dab4ad4e294f882b3844027f170d1e28` (+ commit de alinhamento do teste interaction)  
+**Evidence:** [`evidence/companion-d03-presence-motion-validation/d03-presence-motion-automated-validation-01.md`](./evidence/companion-d03-presence-motion-validation/d03-presence-motion-automated-validation-01.md)
+
+### Gates
+
+| Gate | Resultado |
+|---|---|
+| Vitest DÉLIA full | **212 PASS** (após fix teste stop cancelável) |
+| Vitest plugin-ui (avatar/activity/composer/layout) | **73 PASS** |
+| delia typecheck / build / federation | **PASS** |
+| plugin-ui build + host-exports | **PASS**; CSS dock D01 + processing 1.9s no bundle |
+| plugin-ui full tsc | **29 PREEXISTING** |
+| Dock unit | **23 PASS** |
+| Playwright standalone LIVE | A01–A04/A07/A10–A12 + B/C + viewports/themes/zoom **PASS**; A05/A06 PARTIAL |
+| Portal/Dock autenticado | **TEST_NOT_RUN** |
+| Preferências/proatividade runtime | **TO_INVENTORY / PLANNED** (sem implementação) |
+
+### Defeito
+
+Teste `interaction` obsoleto vs `responding_cancelable` → corrigido (somente teste). Sem diff de produto UI.
+
+### Decisão
+
+```text
+D03_VALIDATION=EVIDENCE_READY_FOR_REVIEW
+D03_ACCEPTED=NO
+D03_REVIEW_RECOMMENDATION=ACCEPT_WITH_RESIDUAL
+RESIDUALS=Portal/Dock auth live; timeout/cancel real; responding capture; personality runtime not built
+PHASE_PROGRESSION=NONE
+NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
+```
+
+Não avança E09/E10 nem C0–C7. Não implementa D03.3/D03.4 (preferências/proatividade).

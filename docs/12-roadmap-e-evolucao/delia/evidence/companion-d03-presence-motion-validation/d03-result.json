@@ -1,0 +1,764 @@
+{
+  "meta": {
+    "base": "http://127.0.0.1:5020/apps/delia/",
+    "at": "2026-10-19T10:23:34.078Z"
+  },
+  "cases": {
+    "A07_error": {
+      "status": "PASS",
+      "seenProcessing": true,
+      "draft": "err",
+      "alert": 1
+    },
+    "A10_attention": {
+      "status": "PASS",
+      "attention": 1
+    },
+    "A11_multi": {
+      "status": "PASS",
+      "turns": 2,
+      "processingOld": 0
+    },
+    "A09_cancel": {
+      "status": "TEST_NOT_RUN",
+      "reason": "demo path lacks responding_cancelable; covered by interaction Vitest + MessageComposer"
+    },
+    "A08_timeout": {
+      "status": "TEST_NOT_RUN",
+      "reason": "requires authenticated real POST / timeout fixture"
+    },
+    "D_dock_css_inject": {
+      "status": "PASS_PARTIAL",
+      "note": "CSS host class injected on standalone — not Portal GlobalDeliaDock live",
+      "geom": {
+        "found": true,
+        "rowW": 282,
+        "avatarRight": 103,
+        "clipped": false,
+        "hasDockClass": true
+      }
+    },
+    "D_portal_auth": {
+      "status": "TEST_NOT_RUN",
+      "n": 0,
+      "url": "http://127.0.0.1/login",
+      "note": "No authenticated Portal/Dock session in this executor"
+    },
+    "E_preferences_proactivity": {
+      "status": "TO_INVENTORY",
+      "classification": {
+        "discrete_pref": "PLANNED",
+        "active_pref": "PLANNED",
+        "silence_request": "PLANNED",
+        "governed_proactive_presence": "TO_INVENTORY",
+        "spontaneous_events": "TO_INVENTORY"
+      },
+      "evidence": "docs/personality/02 RUNTIME_IMPLEMENTATION=NOT_PROVEN; no delia/src preference runtime"
+    }
+  },
+  "surfaces": [
+    {
+      "label": "full-768",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "full-1024",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1024,
+        "height": 900
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "full-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "full-1440",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "docklike-320",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 320,
+        "height": 640
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "docklike-360",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 360,
+        "height": 640
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "docklike-420",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 420,
+        "height": 640
+      },
+      "opts": {},
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "dark-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {
+        "colorScheme": "dark"
+      },
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "reduced-1280",
+      "url": "http://127.0.0.1:5020/apps/delia/?delia-demo=loading",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "opts": {
+        "reducedMotion": "reduce"
+      },
+      "results": {
+        "A01_idle": {
+          "status": "PASS",
+          "idle": 1,
+          "proc0": 0
+        },
+        "C_reception": {
+          "status": "PASS",
+          "reception": 1,
+          "composer": 1
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        },
+        "A03_processing": {
+          "status": "PASS",
+          "seen": true,
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "none",
+            "dur": "0s",
+            "iter": "1",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          },
+          "animOk": true
+        },
+        "B_activity": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "none",
+            "dur": "0s",
+            "iter": "1",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "A04_cleared": {
+          "status": "PASS",
+          "procAfter": 0
+        },
+        "A05_A06_response": {
+          "status": "PASS_PARTIAL",
+          "attention": 0,
+          "responding": 0,
+          "assistant": 1
+        },
+        "C_composer": {
+          "status": "PASS",
+          "composerOk": true
+        },
+        "D_keyboard": {
+          "status": "OBSERVED",
+          "active": "BUTTON"
+        }
+      }
+    },
+    {
+      "label": "zoom-200",
+      "results": {
+        "A03_processing": {
+          "status": "PASS",
+          "motion": {
+            "found": true,
+            "motion": "processing",
+            "anim": "delpi-ui-unified-processing",
+            "dur": "1.9s",
+            "iter": "infinite",
+            "iconDisplay": "none",
+            "statusCount": 1,
+            "statusText": [
+              "A DÉLIA está processando sua solicitação…"
+            ]
+          }
+        },
+        "D_overflowX": {
+          "status": "PASS",
+          "overflowX": false
+        }
+      }
+    }
+  ]
+}

@@ -14822,6 +14822,7 @@ NEXT=I02_R3_CONSULTANT_EVIDENCE_AND_DEPENDENCY_ANALYSIS
 
 NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
 
+<<<<<<< HEAD
 
 ## §6.252 — DELIA-C3-I02-R3-INDEPENDENT-DIAGNOSTIC-AND-ARCHITECTURE-DECISION (ACCEPT_WITH_RESIDUAL)
 
@@ -14832,3 +14833,17 @@ NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
 - **STATE:** `I02_R3_INDEPENDENT_DIAGNOSTIC_REVIEW=ACCEPT_WITH_RESIDUAL`; `SAFE_FUNCTIONAL_OPTIMIZATION=NOT_YET_PROVEN`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R3A_BOUNDED_BUDGET_EXPERIMENT_AND_CRITICAL_PATH_EVIDENCE
+=======
+## §6.252 — DELIA-UX-D03-PRESENCE-MOTION-AUTOMATED-VALIDATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-D03-PRESENCE-MOTION-AUTOMATED-VALIDATION-01`. **TESTED_SHA:** `06cf0f22dab4ad4e294f882b3844027f170d1e28` (+ interaction test align). **DOCS:** [118](../118-companion-dock-presence-and-avatar-motion-execution-roadmap.md) §11 + [evidence](./companion-d03-presence-motion-validation/d03-presence-motion-automated-validation-01.md).
+
+- **Reuse:** `EXISTING_EQUIVALENT=YES` avatar/activity/composer/reception/Dock CSS; preferências/proatividade `TO_INVENTORY`/`PLANNED` (sem runtime).
+- **Vitest:** delia 212 PASS; plugin-ui presence suite 73 PASS; Dock unit 23 PASS.
+- **Build:** delia+plugin-ui+federation PASS; plugin-ui tsc 29 PREEXISTING; CSS `global-delia-dock` + processing 1.9s no bundle.
+- **Playwright standalone LIVE:** A01–A04/A07/A10–A12 PASS; A05/A06 PARTIAL; A08/Portal Dock auth TEST_NOT_RUN; A09 Vitest PASS / demo browser TEST_NOT_RUN.
+- **FIX:** `interaction.test.tsx` alinhado a stop cancelável (`Interromper resposta`) — sem diff de produto.
+- **DECISION:** `D03_ACCEPTED=NO`; `D03_REVIEW_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `PHASE_PROGRESSION=NONE`.
+
+NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
+>>>>>>> ae919729b9 (docs(delia): evidência D03 presença/motion validation e browser QA)
