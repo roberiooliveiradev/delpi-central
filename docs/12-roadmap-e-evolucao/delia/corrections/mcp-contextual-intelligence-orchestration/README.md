@@ -89,6 +89,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I04 provider-neutral generalization (candidate):** [36 — implementation + matrix](./36-i04-provider-neutral-generalization-implementation.md). REUSE orchestrator; EXTEND sole free-text args projection on `turn_budget_exhausted` after selection (K4 pre-fix FAIL→fix). Synthetic matrix PASS; full pytest PASS. Live post-fix recorded in doc 36. `I04_ACCEPTED=NO` until independent review. Q01 not authorized.
 
+**I04 implementation and independent review:** [36 — code/live evidence](./36-i04-provider-neutral-generalization-implementation.md) and [37 — independent review + direct DAVI comparison](./37-i04-independent-review-and-davi-direct-crosscheck.md). I04 global REWORK: K4 live select_capability none; K3 safe clarification exceeds strict 30s; direct DAVI owner catalog reachable. Reuse pre-existing R1 selection/projection remediation (docs34–35). Q01 not authorized.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
