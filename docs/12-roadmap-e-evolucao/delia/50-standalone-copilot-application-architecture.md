@@ -37,6 +37,14 @@ regras/ciclo de release do Chat   regras/ciclo de release da DÉLIA
 
 Chat e DÉLIA podem coexistir no Portal como aplicações independentes.
 
+## 1.1 Princípio de produto: inteligência via LLM existente
+
+A DÉLIA é **produto que utiliza inteligência de modelos disponíveis**, não um esforço de construir um LLM ou um interpretador de linguagem com funções Python. O diferencial do produto é integrar compreensão contextual, instruções/prompt governados, conversa contínua, descoberta/seleção semântica de capabilities e outcome no ambiente autorizado da DELPI. **Não** criar um segundo motor de intenção por regex, rankings léxicos, branches por especialista ou regra para cada frase/caso do usuário. Modelos/providers são substituíveis pelos ports/adapters legítimos, sem depender do runtime do Minha DELPI Chat.
+
+`LLM = semantic proposal`: intenção, contexto, referencias anafóricas, necessidades de informação, seleção de capability elegível, arguments candidatos e clarificação. `DÉLIA/Core/Domain = deterministic authority`: identidade e permissão viva, catálogo permitido, schema, provenance, limites/Policy/Decision, PREPARE/ACT, auditoria e verificação de resultado. Conhecimento do especialista continua no owner; MCP/A2A/OpenAPI fornecem interoperabilidade, nunca autorização ou FACT automático. Contexto e prompts relevantes não equivalem a histórico ilimitado; versão, minimização, segurança e medição de outcome são obrigatórias.
+
+Para mudanças em inteligência, a fonte detalhada de responsabilidade é [49 §14.1–14.2](./49-architecture-and-design-patterns-standard.md) + [ADR 58](./corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md). O [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md) controla a implementação. Este princípio **não prova runtime, não altera os congelamentos `selection-only`/§6.145 e não libera fases**.
+
 ## 2. Regra de não dependência
 
 A DÉLIA não pode depender de módulos internos, tabelas, services, controllers, sessions, agents, prompts, repositories ou migrations do Chat para funcionar.
