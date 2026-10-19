@@ -56,6 +56,9 @@ def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConf
 
     When PATH_AUTH / PATH_SUPPLIERS labels are inverted (documented case),
     resolve by path semantics without mutating the source table.
+
+    Ambiguous or unrecognized path pairs fail with a controlled configuration
+    error — never proceed with guesswork.
     """
     missing = [key for key in REQUIRED_PARAM_KEYS if not str(raw_params.get(key) or "").strip()]
     if missing:
@@ -73,32 +76,44 @@ def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConf
         str(raw_params["PATH_SUPPLIERS"]), key="PATH_SUPPLIERS"
     )
 
-    auth_ok = _looks_like_auth_path(labeled_auth)
-    suppliers_ok = _looks_like_suppliers_path(labeled_suppliers)
-    inverted = (
-        _looks_like_suppliers_path(labeled_auth)
-        and _looks_like_auth_path(labeled_suppliers)
-        and not (auth_ok and suppliers_ok)
-    )
+    auth_labeled_is_auth = _looks_like_auth_path(labeled_auth)
+    auth_labeled_is_suppliers = _looks_like_suppliers_path(labeled_auth)
+    suppliers_labeled_is_auth = _looks_like_auth_path(labeled_suppliers)
+    suppliers_labeled_is_suppliers = _looks_like_suppliers_path(labeled_suppliers)
 
-    if inverted:
-        auth_path = labeled_suppliers
-        suppliers_path = labeled_auth
-        mismatch = True
-    elif auth_ok and suppliers_ok:
-        auth_path = labeled_auth
-        suppliers_path = labeled_suppliers
-        mismatch = False
-    else:
-        auth_path = labeled_auth
-        suppliers_path = labeled_suppliers
-        mismatch = not (auth_ok and suppliers_ok)
+    # Aligned labels: PATH_AUTH looks like auth AND PATH_SUPPLIERS looks like suppliers.
+    if auth_labeled_is_auth and suppliers_labeled_is_suppliers and not (
+        auth_labeled_is_suppliers or suppliers_labeled_is_auth
+    ):
+        return ProtheusRestConfig(
+            username=username,
+            password=password,
+            base_url=base_url,
+            auth_path=labeled_auth,
+            suppliers_path=labeled_suppliers,
+            path_label_mismatch=False,
+        )
 
-    return ProtheusRestConfig(
-        username=username,
-        password=password,
-        base_url=base_url,
-        auth_path=auth_path,
-        suppliers_path=suppliers_path,
-        path_label_mismatch=mismatch,
+    # Documented inversion: PATH_AUTH looks like suppliers AND PATH_SUPPLIERS looks like auth.
+    if (
+        auth_labeled_is_suppliers
+        and suppliers_labeled_is_auth
+        and not auth_labeled_is_auth
+        and not suppliers_labeled_is_suppliers
+    ):
+        return ProtheusRestConfig(
+            username=username,
+            password=password,
+            base_url=base_url,
+            auth_path=labeled_suppliers,
+            suppliers_path=labeled_auth,
+            path_label_mismatch=True,
+        )
+
+    raise ProtheusRestError(
+        "Paths Protheus ambíguos ou não reconhecidos. "
+        "PATH_AUTH e PATH_SUPPLIERS devem mapear inequivocamente "
+        "para autenticação (oauth/token) e fornecedores (supplier).",
+        code="PROTHEUS_CONFIG_INVALID",
+        status_code=503,
     )

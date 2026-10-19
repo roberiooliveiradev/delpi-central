@@ -41,12 +41,19 @@ class ProtheusRestGateway:
         self._monotonic = monotonic
 
     def request_access_token(self, config: ProtheusRestConfig) -> ProtheusAccessToken:
-        """POST OAuth2 password grant. Credentials travel in query (Protheus contract)."""
+        """POST OAuth2 password grant.
+
+        Protheus requires credentials in the query string (not body). Credentials
+        are never logged; only the redacted auth path is written on failure.
+        Prefer HTTPS endpoints — cleartext HTTP exposes password-grant to the network.
+        """
         params = {
             "grant_type": "password",
             "username": config.username,
             "password": config.password,
         }
+        # Log only scheme+host+path (never query).
+        safe_auth_target = redact_text(config.auth_url)
         try:
             response = self._send(
                 "POST",
@@ -57,7 +64,7 @@ class ProtheusRestGateway:
         except ProtheusRestError:
             raise
         except Exception:
-            log_error("Protheus auth request failed")
+            log_error(f"Protheus auth request failed target={safe_auth_target}")
             raise ProtheusRestError(
                 "Falha na autenticação técnica com o Protheus.",
                 code="PROTHEUS_AUTH_FAILED",
@@ -66,8 +73,7 @@ class ProtheusRestGateway:
 
         if response.status_code >= 400:
             log_error(
-                f"Protheus auth HTTP {response.status_code} "
-                f"url={redact_text(config.auth_url)}"
+                f"Protheus auth HTTP {response.status_code} target={safe_auth_target}"
             )
             raise ProtheusRestError(
                 "Falha na autenticação técnica com o Protheus.",

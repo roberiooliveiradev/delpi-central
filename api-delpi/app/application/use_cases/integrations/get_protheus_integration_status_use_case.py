@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlparse
 
 from app.application.services.integrations.protheus_path_resolver import (
     resolve_protheus_rest_config,
@@ -18,6 +19,9 @@ from app.infrastructure.gateways.protheus_rest_gateway import ProtheusRestGatewa
 from app.infrastructure.persistence.intranet.protheus_integration_params_repository import (
     ProtheusIntegrationParamsRepository,
 )
+
+# Probe responses that prove the REST channel answered with a recognized outcome.
+_CONNECTION_OK_CODES = frozenset({"PROTHEUS_SUPPLIER_NOT_FOUND"})
 
 
 class GetProtheusIntegrationStatusUseCase:
@@ -39,12 +43,14 @@ class GetProtheusIntegrationStatusUseCase:
         authentication = "unavailable"
         connection = "unavailable"
         mismatch = False
+        transport = "unknown"
 
         try:
             raw = self._params_repository.load_raw_params()
             config = resolve_protheus_rest_config(raw)
             configuration = "ok"
             mismatch = config.path_label_mismatch
+            transport = _transport_label(config.base_url)
         except ProtheusRestError as exc:
             if exc.code in {"PROTHEUS_CONFIG_MISSING", "PROTHEUS_CONFIG_INVALID"}:
                 configuration = "missing" if "MISSING" in exc.code else "invalid"
@@ -56,6 +62,7 @@ class GetProtheusIntegrationStatusUseCase:
                 authentication=authentication,
                 connection=connection,
                 config_path_label_mismatch=mismatch,
+                transport=transport,
             ).to_dict()
 
         try:
@@ -69,6 +76,7 @@ class GetProtheusIntegrationStatusUseCase:
                 authentication=authentication,
                 connection=connection,
                 config_path_label_mismatch=mismatch,
+                transport=transport,
             ).to_dict()
 
         try:
@@ -79,10 +87,9 @@ class GetProtheusIntegrationStatusUseCase:
             )
             connection = "ok"
         except ProtheusRestError as exc:
-            if exc.code in {
-                "PROTHEUS_SUPPLIER_NOT_FOUND",
-                "PROTHEUS_UPSTREAM_ERROR",
-            }:
+            # Recognized business response (e.g. supplier 002) proves the channel.
+            # Unexpected ERP/HTTP failures must not be reported as healthy.
+            if exc.code in _CONNECTION_OK_CODES:
                 connection = "ok"
             else:
                 connection = "failed"
@@ -93,4 +100,14 @@ class GetProtheusIntegrationStatusUseCase:
             authentication=authentication,
             connection=connection,
             config_path_label_mismatch=mismatch,
+            transport=transport,
         ).to_dict()
+
+
+def _transport_label(base_url: str) -> str:
+    scheme = (urlparse(base_url).scheme or "").lower()
+    if scheme == "https":
+        return "https"
+    if scheme == "http":
+        return "http_cleartext"
+    return "unknown"

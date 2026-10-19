@@ -38,8 +38,29 @@ def test_resolve_inverted_labels_without_mutating_source() -> None:
     assert config.auth_path == "/api/oauth2/v1/token"
     assert config.suppliers_path == "/delpi/api/v1/suppliers/"
     assert config.path_label_mismatch is True
-    # Source dict unchanged
     assert raw["PATH_AUTH"] == "/delpi/api/v1/suppliers/"
+
+
+def test_ambiguous_paths_raise_config_invalid() -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        resolve_protheus_rest_config(
+            _base(
+                PATH_AUTH="/api/v1/unknown",
+                PATH_SUPPLIERS="/api/v1/also-unknown",
+            )
+        )
+    assert exc.value.code == "PROTHEUS_CONFIG_INVALID"
+
+
+def test_partially_recognized_paths_raise_config_invalid() -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        resolve_protheus_rest_config(
+            _base(
+                PATH_AUTH="/api/oauth2/v1/token",
+                PATH_SUPPLIERS="/api/v1/misc",
+            )
+        )
+    assert exc.value.code == "PROTHEUS_CONFIG_INVALID"
 
 
 def test_missing_param_raises_controlled_error() -> None:

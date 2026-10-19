@@ -37,6 +37,7 @@ def test_status_authorized_ok() -> None:
         "authentication": "ok",
         "connection": "ok",
         "config_path_label_mismatch": True,
+        "transport": "https",
     }
     with patch(
         "delpi_auth.authorization.resolve_user_context", return_value=user
@@ -181,6 +182,84 @@ def test_status_use_case_missing_params() -> None:
     assert result["configuration"] in {"missing", "invalid"}
     assert result["authentication"] == "unavailable"
     assert result["connection"] == "unavailable"
+
+
+def test_status_use_case_upstream_error_is_not_healthy() -> None:
+    from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
+        GetProtheusIntegrationStatusUseCase,
+    )
+    from app.domain.integrations.protheus_rest import ProtheusRestConfig
+
+    class _Repo:
+        def load_raw_params(self):
+            return {
+                "USR_PROTHEUS": "tech.user",
+                "PSW_PROTHEUS": "secret",
+                "URL_REST": "https://protheus.example/rest",
+                "PATH_AUTH": "/api/oauth2/v1/token",
+                "PATH_SUPPLIERS": "/delpi/api/v1/suppliers/",
+            }
+
+    class _Token:
+        def get_valid_token(self, config):
+            assert isinstance(config, ProtheusRestConfig)
+            return "tok"
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            raise ProtheusRestError(
+                "Erro inesperado ao consultar fornecedor no Protheus.",
+                code="PROTHEUS_UPSTREAM_ERROR",
+                status_code=502,
+            )
+
+    uc = GetProtheusIntegrationStatusUseCase(
+        params_repository=_Repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["configuration"] == "ok"
+    assert result["authentication"] == "ok"
+    assert result["connection"] == "failed"
+    assert result["transport"] == "https"
+
+
+def test_status_use_case_not_found_probe_counts_as_connected() -> None:
+    from app.application.use_cases.integrations.get_protheus_integration_status_use_case import (
+        GetProtheusIntegrationStatusUseCase,
+    )
+
+    class _Repo:
+        def load_raw_params(self):
+            return {
+                "USR_PROTHEUS": "tech.user",
+                "PSW_PROTHEUS": "secret",
+                "URL_REST": "https://protheus.example/rest",
+                "PATH_AUTH": "/api/oauth2/v1/token",
+                "PATH_SUPPLIERS": "/delpi/api/v1/suppliers/",
+            }
+
+    class _Token:
+        def get_valid_token(self, config):
+            return "tok"
+
+    class _Gateway:
+        def get_supplier(self, *args, **kwargs):
+            raise ProtheusRestError(
+                "Fornecedor não encontrado no Protheus.",
+                code="PROTHEUS_SUPPLIER_NOT_FOUND",
+                status_code=404,
+                recoverable=False,
+            )
+
+    uc = GetProtheusIntegrationStatusUseCase(
+        params_repository=_Repo(),  # type: ignore[arg-type]
+        token_service=_Token(),  # type: ignore[arg-type]
+        gateway=_Gateway(),  # type: ignore[arg-type]
+    )
+    result = uc.execute()
+    assert result["connection"] == "ok"
 
 
 def test_router_exposes_status_and_supplier_paths() -> None:

@@ -56,6 +56,7 @@ class ProtheusIntegrationStatus:
     authentication: str
     connection: str
     config_path_label_mismatch: bool = False
+    transport: str = "unknown"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -64,6 +65,7 @@ class ProtheusIntegrationStatus:
             "authentication": self.authentication,
             "connection": self.connection,
             "config_path_label_mismatch": self.config_path_label_mismatch,
+            "transport": self.transport,
         }
 
 
