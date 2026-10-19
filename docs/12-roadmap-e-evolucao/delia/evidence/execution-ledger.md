@@ -14872,3 +14872,21 @@ NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
 - **DECISION:** `TYPECHECK_PLUGIN_UI=PASS`; `PHASE_PROGRESSION=NONE`; `D01/D03/D04_ACCEPTED=NO`; recomendação de review independente: `ACCEPT_WITH_RESIDUAL` (residuals Vitest preexistentes).
 
 NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
+
+
+## §6.255 — DELIA-C3-MCP-I02-R3A-BUDGET-AND-CRITICAL-PATH-EXPERIMENTS-01 (EVIDENCE_RECORDED)
+
+**DATA:** 2026-10-19. **IMPLEMENTATION_SHA:** `353eec04ce901bde7f26b1a1cbeb0c83086f4e38`. **DOC:** [15](../corrections/mcp-contextual-intelligence-orchestration/15-i02r3a-controlled-budget-and-critical-path-experiments.md).
+
+- **E0–E2:** synthetic baseline reproduced; cap 10 seconds advances failure (not K1 task completion); opt-in arguments headroom produces honest limitation, not owner READ success; guard default `False`, no production deploy.
+- **E3–E5:** candidates characterized only; no typed merge, native bypass or new argument default. Tests 23 and backend suite PASS as reported by executor, not independently rerun. Experimental live A/B and K4 `TEST_NOT_RUN`.
+- **STATE:** `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+## §6.256 — DELIA-C3-MCP-I02-R3A-INDEPENDENT-EXPERIMENT-REVIEW (ACCEPT_WITH_RESIDUAL_SCOPED)
+
+**DATA:** 2026-10-19. **REVIEW:** [16](../corrections/mcp-contextual-intelligence-orchestration/16-i02r3a-independent-experiment-review.md). Review of SHA `353eec04ce901bde7f26b1a1cbeb0c83086f4e38` and doc15, remote code/test inspection; test replay `TEST_NOT_RUN`. R3-A experiment evidence accepted with residuals only.
+
+- **DECISION:** no stage-cap 10s production approval; arguments headroom remains OFF; prioritize gated R3-B typed-selection contract/safety experiment, not implementation. No K1 functional performance gain proven; no live experimental eval.
+- **STATE:** `I02_R3A_REVIEW=ACCEPT_WITH_RESIDUAL_SCOPED`; `I02_ACCEPTED=NO`; no C3–C5 progression.
+
+NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
