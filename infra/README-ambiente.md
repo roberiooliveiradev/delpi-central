@@ -869,6 +869,7 @@ Checklist manual (além do script):
 
 - [ ] `cp infra/.env.prod.example infra/.env` e trocar todos os `CHANGE_ME`
 - [ ] `KEYCLOAK_ISSUER` / `PUBLIC_BASE_URL` com URL HTTPS real (gateway)
+- [ ] `API_DELPI_ENV=production` — sem ele, todas as APIs incluem `http://localhost` nas origens CORS
 - [ ] `docker compose -f infra/docker-compose.yml build` na máquina de deploy (EasyOCR/Docling já na imagem)
 - [ ] `CHAT_DOCUMENT_VISION_ENABLED=true` (padrão no `.env.prod.example`)
 - [ ] `CHAT_DOCUMENT_VISION_BACKEND=docling` ou `auto` conforme política do servidor
