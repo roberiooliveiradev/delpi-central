@@ -9147,6 +9147,36 @@
         }
       },
       "category": "commercial"
+    },
+    "get_protheus_integration_status": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "Protheus REST integration status",
+          "description": "Diagnose configuration, technical authentication and REST connectivity with Protheus without exposing secrets.",
+          "label": "Protheus integration status"
+        },
+        "pt-BR": {
+          "summary": "Status da integração REST Protheus",
+          "description": "Diagnostica configuração, autenticação técnica e conectividade REST com o Protheus sem expor segredos.",
+          "label": "Status integração Protheus"
+        }
+      }
+    },
+    "get_protheus_rest_supplier": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "Get Protheus supplier by REST",
+          "description": "Fetch a supplier from the Protheus REST API using an eight-digit code+store identifier.",
+          "label": "Protheus REST supplier"
+        },
+        "pt-BR": {
+          "summary": "Consultar fornecedor Protheus via REST",
+          "description": "Consulta um fornecedor na API REST do Protheus pelo identificador de oito dígitos (código+loja).",
+          "label": "Fornecedor Protheus REST"
+        }
+      }
     }
   },
   "list_product_inventory_blocks": {

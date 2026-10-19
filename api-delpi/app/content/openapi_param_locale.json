@@ -4480,6 +4480,18 @@
         }
       }
     },
+    "supplier_id": {
+      "locale": {
+        "en": {
+          "label": "Supplier id",
+          "description": "Eight digits: six-digit supplier code plus two-digit store."
+        },
+        "pt-BR": {
+          "label": "Identificador do fornecedor",
+          "description": "Oito dígitos: seis do código do fornecedor mais dois da loja."
+        }
+      }
+    },
     "supplier_store": {
       "locale": {
         "en": {
