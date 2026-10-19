@@ -934,7 +934,7 @@ Explicar apenas capacidades runtime liberadas:
 - review pending/in progress/changes requested/accepted;
 - esclarecimento/correção;
 - histórico/versionamento;
-- conclusão C2: todos os pacotes aplicáveis submetidos, um aceite por área obrigatória e versão vigente, sem esclarecimentos abertos;
+- conclusão C2: pacotes aplicáveis submetidos e aceites **humanos reais**, incluindo cada área obrigatória na versão vigente, sem esclarecimentos abertos; sem pessoa elegível o fluxo fica pendente de revisão, sem bloqueio artificial de envio e sem aprovação automática;
 - reatribuição não troca autoria de aceites válidos; versão nova exige novos aceites;
 - rejeição de pacote depende de confirmação formal para rejeitar a competência; aceite P5 não pode ser revertido pela interface V1.
 
@@ -1734,7 +1734,7 @@ Sem manual paralelo, sem documentação de capability futura no runtime e sem He
 
 **TARGET / PO_APPROVED / DOCUMENTED_NOT_RUNTIME.** Este registro foi refinado por P5-A..J e DEC-01..04: quórum por área obrigatória, rejeição da competência somente com confirmação formal e nenhuma reversão de aceite P5 por UI ou endpoint na V1. Referências anteriores à unanimidade de indivíduos ou C1/C2/C3 pendentes são SUPERSEDED.
 
-- **C2:** conclusão mensal exige todos os pacotes aplicáveis submetidos, **um aceite de cada área obrigatória na PackageVersion vigente**, nenhuma clarification aberta e competência não terminalmente rejeitada. Submissão ou e-mail de notificação não concluem fechamento.
+- **C2 / D-FINAL-02 PO_APPROVED:** conclusão mensal exige submissões aplicáveis, **aceite humano real por pacote na versão vigente** e um aceite por área obrigatória existente, nenhuma clarification aberta e competência não rejeitada. Sem revisor o fluxo naturalmente aguarda; não bloquear envio por quantidade e não concluir por conjunto vazio. Submissão ou e-mail de notificação não concluem fechamento.
 - **D-P5-01 refinada por P5-A:** podem existir vários reviewers elegíveis por área; **um aceite válido por área obrigatória/versão** satisfaz aquela área; não é unanimidade das pessoas elegíveis.
 - **D-P5-02:** esclarecimento sem mudança de conteúdo mantém PackageVersion; qualquer conteúdo modificado exige nova PackageVersion, preservando a anterior e seu histórico.
 - **D-P5-03:** aceite não pode ser revertido pela UI V1; correção extraordinária não está automaticamente autorizada.
