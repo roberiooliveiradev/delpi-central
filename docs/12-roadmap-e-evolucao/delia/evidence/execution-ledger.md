@@ -15456,7 +15456,16 @@ NEXT=BOUNDED_ARGUMENT_PROVENANCE_AND_MULTITURN_BUDGET_REWORK
 - **ROOT_CAUSES:** (1) lexical ANY-token-overlap / `haystack in proposed` false-positive provenance; (2) compare follow-up fallthrough to full owner path under 30s → 504; (3) empty synthesis on bullet prior → insufficiency + owner burn; sentence-split inside bullets truncated `TERM. PINO`.
 - **FIX:** proposal-token coverage grounding; typed compare/analyze prior probe; probe-insufficient **stops** for typed continuity (or tight budget); methodology cue may still fall through (I01); empty synthesis recovers ≥2 bullet units only; bullet lines stay atomic in `_prior_excerpt_records`. No provider branches / planner / timeout bump.
 - **TESTS:** `test_provider_neutral_semantic_provenance_and_continuity.py` (PROV/CONT + bullet atomic) + full delia-api pytest PASS; i01/i02r2/SEMARG/R4–R5/i03/i04/interop regression green.
-- **LIVE / DEPLOYED_SHA:** filled after commit+push+canonical deploy.
+- **DEPLOY:** `git pull` @ srv-api → `up-prod-sequential.sh --fase api --build delia-api` → healthy. **SOURCE_SHA=DEPLOYED_SHA=`53a5e9cd0d`**. Model `moonshotai/kimi-k3`. Turn budget 30s. Needles `recover_empty_selection` / `probe_insufficient_stop` / `_token_covered_by_user_tokens` / bullet-atomic present in container.
+- **LIVE POST-FIX (MESSAGE, subject `user`, no MCP ChatGPT identity):**
+  - E01 Olá ~7s HYPOTHESIS; E02 SIPOC ~17s; E03 exemplos hipotéticos ~15s — no owner. **PASS no-MCP.**
+  - A02 terminal pino OBSERVATION ~30s `skip_budget_proceed` + `search_products` READ; A05 no-match OBSERVATION «Nenhum resultado encontrado.»; A01 discovery honest empty-search OBSERVATION.
+  - A03/A03b/A04 continuity: `prior_continuation decision=transformed excerpts=2` ~17–21s, **no owner re-invoke**, limitation `prior_turn_evidence_only` (epistemic HYPOTHESIS on prior-only). **PASS vs prior SOURCE_UNAVAILABLE/504.**
+  - L5 compare-over-prior after olhal search: ~9s `prior_turn_evidence_only`, recovered 2 prior bullets — **under 30s** (was 504).
+  - D01/D01b OpenAPI `search_products` OBSERVATION grounded (olhal).
+  - B01b Transformômetro methodology OBSERVATION (`result_truncated`); B03 helpdesk READ error/precondition (not personal count PASS).
+  - C01 vista catalog DISCOVERY ok / honest empty; C02 formatos **504 / 30s** residual; C04 general legibility HYPOTHESIS (not catalog authority).
+  - G05 «terminais pino industriais» → SOURCE_UNAVAILABLE (qualifier coverage reject; residual UX vs clarify). MATERIAL_ACT=0.
 
 ```text
 I04_ACCEPTED=NO

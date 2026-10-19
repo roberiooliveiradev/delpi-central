@@ -37,7 +37,7 @@ Full `delia-api` pytest PASS. Existing PROD/i01/i02r2/SEMARG/R4–R5/i03/i04/int
 
 ## Live
 
-Filled after deploy in ledger §6.296.
+**SOURCE_SHA=DEPLOYED_SHA=`53a5e9cd0d`** on `delpi-delia-api` (`moonshotai/kimi-k3`, turn budget 30s). See ledger §6.296 for matrix (DAVI/TÉO/VISTA/OpenAPI/no-MCP). Continuity A03–A04/L5 under budget via `prior_continuation transformed`; C02 formats residual 504; G05 industriais → honest SOURCE_UNAVAILABLE after provenance reject.
 
 ## Gates
 
