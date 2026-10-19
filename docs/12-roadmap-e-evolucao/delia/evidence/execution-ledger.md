@@ -15510,3 +15510,16 @@ NEXT=PROVIDER_NEUTRAL_PRIOR_COMPARISON_OUTCOME_AND_VISTA_LATENCY_DIAGNOSTIC
 - **PHASE:** `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
 
 NEXT=COORDINATION_ARCHITECTURE_DECISION_ON_SEMANTIC_OWNERSHIP_AND_BOUNDED_REFACTOR
+
+
+## §6.300 — Product Master architecture direction approved: LLM semantic decision vs deterministic enforcement
+
+**DATA:** 2026-10-19. **DECISION_ID:** `DELIA-ADR-C3-SEMANTIC-DECISION-OWNERSHIP-01`. **REFERENCE_HEAD:** `a28368dbdce3b47a6533c047d5a05132a78ec5df`. **ADR:** [58](../corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md). **Normative architecture binding:** [49 §14.1](../49-architecture-and-design-patterns-standard.md). **Audits:** [56](../corrections/mcp-contextual-intelligence-orchestration/56-orchestration-audit-semantic-ownership-checkpoint.md) and [57](../corrections/mcp-contextual-intelligence-orchestration/57-orchestration-complete-second-pass-static-audit.md).
+
+**DECISION = APPROVED_PRODUCT_ARCHITECTURE_DIRECTION_WITH_GATES**: LLM owns interpretation of meaning, context, task kind, capability and argument proposal, clarification and relevance; DÉLIA/Core/Domain/owner deterministic contracts govern live authorization, capability membership, schema, provenance, quota/deadline, Evidence, PREPARE/ACT, confirmation, idempotency, audit, and authoritative postcondition/Outcome. Reuse existing `InvokeModel`, `OperationalCapabilityOrchestrator`, `CapabilityProviderPort`; no second planner, regex semantic engine, provider-specific code or Chat dependency. Lexical intent/ranking and list-as-compare fallbacks are deprecated as architecture targets and require bounded migration with consumers/tests. `EXISTING_EQUIVALENT=YES` for semantic proposal and provider interop; `REUSE_DECISION=EXTEND/REUSE` as per ADR; typed provenance representation remains `TO_INVENTORY`.
+
+**FROZEN_CONTRACT_PRESERVED:** selection-only factual synthesis (ledger §6.145), `MODEL_AUTHORED_FACTUAL_PROSE=NONE`. Any natural-language model factual narration or comparability contract loosening requires separate ADR/review with safety evidence; no silent supersession. This approval is **NOT** a deletion/deploy/phase gate.
+
+**EVIDENCE:** docs/git inspection only. `CODE_DIFF=NONE`, `INDEPENDENT_TESTS=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`, `CROSS_FILE_CONSUMER_INVENTORY=TO_INVENTORY`; no runtime acceptance implied. `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `Q01_AUTHORIZED=NO`.
+
+NEXT=BOUNDED_SEMANTIC_INTERPRETATION_CONSOLIDATION_EXECUTION_BRIEF_AFTER_CONSUMER_CONTRACT_INVENTORY
