@@ -56,15 +56,42 @@ Live L01 (doc 42): `select_group` succeeded (~10s) then `select_capability` mode
 
 ## 6. Deploy / live
 
-Filled after SSH gate (see §6.286 ledger and execution report):
-
 ```text
+PRODUCTION_HOST_VERIFIED=srv-api (operador@192.168.1.237)
+PRODUCTION_SERVICE=delpi-delia-api
+PRODUCTION_SHA_BEFORE=70c7be6a28783189a6934917ee953db14f7a58bb
+PRODUCTION_SHA_AFTER=8caba9310f4ea8ab57731091916c5b48ad6443bd
+SOURCE_SHA=8caba9310f4ea8ab57731091916c5b48ad6443bd
+DEPLOYED_SHA=8caba9310f4ea8ab57731091916c5b48ad6443bd
 DEPLOY_METHOD=./infra/scripts/up-prod-sequential.sh --pull --build delia-api
-PRODUCTION_HOST=operador@192.168.1.237 (verify before mutate)
-PRODUCTION_SERVICE=delpi-delia-api / compose service delia-api
+HEALTH_AFTER=healthy {"service":"delia-api","status":"available"}
+MODEL_ID=moonshotai/kimi-k3
+MODEL_PROVIDER=openai_compatible
+MODEL_STAGE_TIMEOUT_SECONDS=30
+SUBJECT=password-grant preferred_username=user
+HELPDESK_SESSION_LINKED=false
+ROLLBACK_EXECUTED=NO
 ```
 
-Live outcomes recorded in ledger §6.286 (sanitized). Personal linked count remains `TEST_NOT_RUN` without authorized linked subject. Unlinked GLPI precondition must still fail closed without fabricating totals.
+| Case | HTTP | ms | Outcome (sanitized) |
+|---|---|---|---|
+| L01A para mim | 200 | 20966 | `structural_ticket_list_with_goal` → `helpdesk_read` → owner `glpi_link_required`; **no** page-as-total; corr `e2394d09-…` |
+| L01B atribuídos | 200 | 27145 | same class; corr `4a22b420-…` |
+| L01C eu abri | 200 | 24399 | same; corr `8a150c97-…` |
+| L01D em aberto | 200 | 23969 | same; corr `6c25edd0-…` (`arg_keys=action,status`) |
+| L01E liste meus | 200 | 27181 | same; corr `899e623e-…` |
+| L03 TÉO metodologia | 200 | 30040 | `NON_GROUNDED` budget class (não-ticket; residual I02) |
+| K4-C no-match | 200 | 30018 | clarification; sem total fabricado |
+
+```text
+OWNER_READ_REACHED=YES (all L01*)
+SELECT_CAPABILITY_TIMEOUT=NOT_OBSERVED_ON_L01
+STRUCTURAL_DECISION=structural_ticket_list_with_goal
+NO_FABRICATED_TEN_AS_TOTAL=PASS
+L01_UNLINKED_PRECONDITION=PROVEN (linked=false + glpi_link_required)
+L01_LINKED=TEST_NOT_RUN — NO_AUTHORIZED_LINKED_SUBJECT
+MATERIAL_ACT_COUNT=0
+```
 
 ## 7. Acceptance mapping (this task)
 

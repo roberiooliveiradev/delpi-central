@@ -15268,7 +15268,8 @@ NEXT=R45_BOUNDED_PAGINATION_INTEGRITY_REWORK
 - **R5:** `aggregate_paginated_pages` / `resolve_count_semantics` require first-page start + contiguous walk + explicit `has_more=False` (or authoritative total). `has_more=None` and isolated `page>1` never yield fabricated totals. RED R45R-T01…T18 + original R4/R5 **PASS**.
 - **Selection:** live fail class was model `select_capability` timeout under 30s before Helpdesk READ. Recovery: unique structural ticket-list capability (`action` enum contains `tickets`) for COUNT/LIST only — no provider hardcode, no budget increase. SEL suite **PASS**.
 - **Backend:** full `delia-api` pytest **PASS**.
-- **Live / deploy:** filled after controlled SSH (see doc 44 §6 and final report fields). Linked personal count remains `TEST_NOT_RUN` without authorized linked subject.
+- **Deploy (srv-api):** `--pull --build delia-api` → `DEPLOYED_SHA=8caba9310f` = `SOURCE_SHA`; healthy; model `kimi-k3`.
+- **Live L01A–E (subject `user`, linked=false):** all reached owner via `structural_ticket_list_with_goal` → `helpdesk_read` → `glpi_link_required` in ~21–27s; **no** select_capability timeout; **no** fabricated page-as-total. Linked personal count `TEST_NOT_RUN`. L03 residual 30s NON_GROUNDED (non-ticket path). ACT=0.
 - **Phase:** `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4/C5/Q01` not authorized.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
