@@ -663,3 +663,15 @@ positive + negative AuthZ acceptance
 ```
 
 Do not expose stock, pricing, BOM, production, suppliers, customers, finance or writes merely by adding fields/endpoints to MCP. Each is a separate security/product decision.
+
+
+## SQL SELECT via DAVI — restored 2026-10-19
+
+**Authorized capability:** DAVI may use canonical API DELPI `execute_readonly_sql` (`POST /data/sql`) via the existing two MCP broker tools `discover_delpi_information` and `execute_delpi_information`. The HTTP method **POST does not imply mutation**: this route is semantically **READ** and only SQL admitted by the existing backend `SqlValidator` is executable (SELECT/read-only). This MCP is not GET-only; governed semantic READ POST operations are allowed.
+
+- Identity: existing end-user OAuth; no DAVI service account, direct SQL connection or local business RBAC.
+- Authority: API DELPI backend `DATA_SQL_ACCESS`; backend 401/403 is final. `SqlValidator` owns SQL statement restrictions; MCP must not weaken or bypass them.
+- Scope: only the named canonical route, with allowlisted `sql` request body (up to 8000 characters) and bounded resultsets. No generic HTTP proxy, no mutation methods, no arbitrary SQL executor outside the route.
+- Behavior: prefer canonical business endpoints where sufficient; use SQL SELECT for authorized ad hoc analytics, reconciliation and cross-checks. Never invent data, and never retry by weakening validator constraints.
+- Restored on source `main`; deploy, provider rediscovery, authenticated SQL positive test and negative backend AuthZ test remain **TEST_NOT_RUN**, and must be verified independently. This statement supersedes the 2026-10-09 DAVI SQL exposure prohibition for this explicitly permitted route only; historical evidence is retained.
+
