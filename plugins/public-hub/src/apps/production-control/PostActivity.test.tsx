@@ -2,6 +2,7 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BenchSessionSnapshot } from "./api.ts";
+import { CockpitActivityProvider } from "./CockpitActivityProvider.tsx";
 import { PostActivityCard } from "./PostActivityCard.tsx";
 import { PostActivityPage } from "./PostActivityPage.tsx";
 import {
@@ -85,7 +86,9 @@ function errEnvelope(message: string, status: number): Response {
   });
 }
 
-function stubFetch(handler: (url: string, init?: RequestInit) => Response) {
+function stubFetch(
+  handler: (url: string, init?: RequestInit) => Response | Promise<Response>,
+) {
   const calls: { url: string; init?: RequestInit }[] = [];
   vi.stubGlobal(
     "fetch",
@@ -124,13 +127,23 @@ function sessionCtx(
   };
 }
 
+// O provider compartilha a leitura diária entre cartão, métricas e página —
+// nos testes ele continua exercitando useWorkCenterActivity contra o fetch stub.
 function renderWithSession(
   ui: React.ReactElement,
   ctx: OperatorSessionContextValue,
 ) {
   return render(
     <OperatorSessionContext.Provider value={ctx}>
-      {ui}
+      <CockpitActivityProvider
+        token="tok"
+        branch="02"
+        workCenter="CT-63"
+        runRealtimeEvent={null}
+        realtimeConnected
+      >
+        {ui}
+      </CockpitActivityProvider>
     </OperatorSessionContext.Provider>,
   );
 }
@@ -140,8 +153,6 @@ const PAGE_PROPS = {
   branch: "02",
   workCenter: "CT-63",
   workCenterName: "Corte 63",
-  runRealtimeEvent: null,
-  realtimeConnected: true,
   onBack: vi.fn(),
 };
 
@@ -301,14 +312,7 @@ describe("PostActivityCard", () => {
   it("shows compact summary with pending badge", async () => {
     stubFetch(() => ok(TODAY));
     renderWithSession(
-      <PostActivityCard
-        token="tok"
-        branch="02"
-        workCenter="CT-63"
-        runRealtimeEvent={null}
-        realtimeConnected
-        onOpen={vi.fn()}
-      />,
+      <PostActivityCard onOpen={vi.fn()} />,
       sessionCtx("identified"),
     );
     await waitFor(() =>
@@ -318,17 +322,31 @@ describe("PostActivityCard", () => {
     expect(screen.getByText("1")).toBeInTheDocument(); // badge
   });
 
+  it("shares one daily fetch between card and page under the same provider", async () => {
+    const calls = stubFetch(() => ok(TODAY));
+    renderWithSession(
+      <>
+        <PostActivityCard onOpen={vi.fn()} />
+        <PostActivityPage {...PAGE_PROPS} />
+      </>,
+      sessionCtx("identified"),
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/1 motivo pendente/)).toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Parada")).toBeInTheDocument(),
+    );
+    // Um único GET /today alimenta as duas superfícies (Etapa 4).
+    expect(
+      calls.filter((c) => c.url.includes("/mes/work-centers/today")).length,
+    ).toBe(1);
+  });
+
   it("invites identification when there is no session", () => {
     const calls = stubFetch(() => ok(TODAY));
     renderWithSession(
-      <PostActivityCard
-        token="tok"
-        branch="02"
-        workCenter="CT-63"
-        runRealtimeEvent={null}
-        realtimeConnected
-        onOpen={vi.fn()}
-      />,
+      <PostActivityCard onOpen={vi.fn()} />,
       sessionCtx("anonymous"),
     );
     expect(

@@ -23,6 +23,7 @@ from production_control_app.composition.pc_composer import (
     build_public_operation_process_inspections_service,
     build_public_work_center_downtime_items_service,
     build_public_work_center_downtime_source_service,
+    build_public_mes_work_center_period_service,
     build_public_mes_work_center_today_service,
     build_public_work_center_performance_service,
 )
@@ -582,6 +583,35 @@ def get_public_mes_work_center_today(
             branch=branch,
             work_center=work_center,
             session_token=session_token,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get(
+    "/{token}/mes/work-centers/period",
+    operation_id="get_public_mes_work_center_period",
+)
+def get_public_mes_work_center_period(
+    token: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    work_center: str = Query(..., alias="workCenter", max_length=40),
+    days: int = Query(default=7, ge=1, le=31),
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Resumo MES do posto por período de dias civis — sessão de bancada
+    obrigatória; alimenta o painel de desempenho de CTs sensorizados."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_public_mes_work_center_period_service().get_period(
+            token=token,
+            branch=branch,
+            work_center=work_center,
+            session_token=session_token,
+            days=days,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

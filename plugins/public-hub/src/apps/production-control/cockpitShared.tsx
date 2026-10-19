@@ -4,6 +4,9 @@ import {
   buildPublicProductModelGlbUrl,
   fetchPublicDrawingPdf,
 } from "./api";
+import { formatDurationHms } from "./runTimeline";
+import { useCockpitActivity } from "./CockpitActivityContext";
+import { useOperatorSession } from "./OperatorSessionContext";
 import {
   formatQty,
   formatUnit,
@@ -125,6 +128,115 @@ export function WorkCenterShiftMetrics({
           {downtimeAvailable ? formatHours(downtimeHours) : "—"}
         </strong>
       </button>
+    </div>
+  );
+}
+
+/**
+ * Tiles do posto sensorizado (Etapa 4): mesmos valores oficiais da API
+ * diária MES — sempre "hoje" (dia civil SP), nunca rotulados como turno.
+ * As paradas abrem a Atividade do posto, onde o operador classifica.
+ * Lê o CockpitActivityContext — mesma consulta do cartão e da página.
+ */
+export function MesDayMetrics({
+  onOpenActivity,
+  onOpenPerformance,
+}: {
+  onOpenActivity: () => void;
+  onOpenPerformance: () => void;
+}) {
+  const { session } = useOperatorSession();
+  const { data } = useCockpitActivity();
+  const summary = data?.source === "mes" ? data.summary : null;
+  const stopped = summary?.stoppedSeconds ?? null;
+  const pending = summary?.pendingReasonCount ?? 0;
+  const missing = Boolean(session) && summary == null;
+
+  return (
+    <div
+      className="pcp-pub__hero-metrics"
+      role="group"
+      aria-label="Atividade do posto medida pelo sensor MES hoje"
+    >
+      <button
+        type="button"
+        className="pcp-pub__hero-metric"
+        onClick={onOpenPerformance}
+        title="Tempo produzindo hoje — medido pelo sensor do posto (MES)"
+      >
+        <span className="pcp-pub__hero-metric-label">Produzindo · hoje</span>
+        <strong className="pcp-pub__hero-metric-value">
+          {summary ? formatDurationHms(summary.producingSeconds) : "—"}
+        </strong>
+      </button>
+      <button
+        type="button"
+        className="pcp-pub__hero-metric"
+        onClick={onOpenActivity}
+        title="Tempo parado hoje — abre a Atividade do posto com as paradas reais"
+      >
+        <span className="pcp-pub__hero-metric-label">Parado · hoje</span>
+        <strong className="pcp-pub__hero-metric-value">
+          {stopped != null ? formatDurationHms(stopped) : "—"}
+        </strong>
+      </button>
+      <button
+        type="button"
+        className="pcp-pub__hero-metric"
+        onClick={onOpenActivity}
+        title={
+          pending > 0
+            ? `${pending} parada(s) aguardando motivo — toque para classificar`
+            : "Paradas registradas hoje — toque para ver a Atividade do posto"
+        }
+      >
+        <span className="pcp-pub__hero-metric-label">Paradas · hoje</span>
+        <strong className="pcp-pub__hero-metric-value">
+          {summary ? String(summary.stopCount) : "—"}
+          {pending > 0 ? (
+            <span className="pcp-pub__hero-metric-alert"> · {pending}!</span>
+          ) : null}
+        </strong>
+      </button>
+      {missing ? (
+        <span className="pcp-pub__hero-metric-note">
+          Identifique-se para ver os dados reais do posto.
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/** Fonte de paradas não resolvida/indisponível — nunca exibe TOTVS. */
+export function SourceStatusMetrics({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div
+      className="pcp-pub__hero-metrics"
+      role="group"
+      aria-label="Fonte de dados do posto"
+    >
+      {onRetry ? (
+        <button
+          type="button"
+          className="pcp-pub__hero-metric"
+          onClick={onRetry}
+          title={`${message} — toque para tentar novamente`}
+        >
+          <span className="pcp-pub__hero-metric-label">Fonte do posto</span>
+          <strong className="pcp-pub__hero-metric-value">Indisponível</strong>
+        </button>
+      ) : (
+        <span className="pcp-pub__hero-metric pcp-pub__hero-metric--idle">
+          <span className="pcp-pub__hero-metric-label">Fonte do posto</span>
+          <strong className="pcp-pub__hero-metric-value">—</strong>
+        </span>
+      )}
     </div>
   );
 }

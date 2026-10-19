@@ -16,8 +16,7 @@ import {
   serverNowMs,
   stateLabel,
 } from "./runTimeline";
-import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
-import { useWorkCenterActivity } from "./useWorkCenterActivity";
+import { useCockpitActivity } from "./CockpitActivityContext";
 import {
   classifiableDowntime,
   formatTimeHmSp,
@@ -30,8 +29,6 @@ type Props = {
   branch: string;
   workCenter: string;
   workCenterName: string;
-  runRealtimeEvent: MachineLoadRealtimeEvent | null;
-  realtimeConnected: boolean;
   onBack: () => void;
 };
 
@@ -221,20 +218,12 @@ export function PostActivityPage({
   branch,
   workCenter,
   workCenterName,
-  runRealtimeEvent,
-  realtimeConnected,
   onBack,
 }: Props) {
   const { session, status, invalidate, openIdentify } = useOperatorSession();
-  const { data, error, loading, refresh } = useWorkCenterActivity({
-    token,
-    sessionToken: session?.sessionToken ?? null,
-    branch,
-    workCenter,
-    runRealtimeEvent,
-    realtimeConnected,
-    onAuthError: invalidate,
-  });
+  // Leitura diária compartilhada (Etapa 4): mesmo GET do cartão e dos
+  // indicadores do cabeçalho — classificar aqui já atualiza os tiles.
+  const { data, error, loading, refresh } = useCockpitActivity();
   const [classifying, setClassifying] = useState<ClassifyTarget | null>(null);
   const [busy, setBusy] = useState(false);
 

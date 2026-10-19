@@ -22,10 +22,13 @@ import {
   operationKey,
   operationPendingQty,
   resolveStatus,
+  MesDayMetrics,
+  SourceStatusMetrics,
   WorkCenterShiftMetrics,
   type StatusView,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
+import { CockpitActivityProvider } from "./CockpitActivityProvider";
 import { PostActivityCard } from "./PostActivityCard";
 import { PostActivityPage } from "./PostActivityPage";
 import {
@@ -40,6 +43,7 @@ import {
 } from "./usePublicMachineLoadRealtime.ts";
 import { useCockpitView } from "./useCockpitView.ts";
 import { useWorkCenterPerformance } from "./useWorkCenterPerformance.ts";
+import { useDowntimeSource } from "./useDowntimeSource.ts";
 import { usePublicWorkCenterDowntimeItems } from "./usePublicWorkCenterDowntimeItems.ts";
 import { WorkCenterPerformancePage } from "./WorkCenterPerformancePage";
 import type { PublicWorkCenterDowntimeItemsState } from "./usePublicWorkCenterDowntimeItems.ts";
@@ -234,12 +238,21 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     };
   }, [reload]);
 
-  const performance = useWorkCenterPerformance(token, branch, workCenter);
+  // Etapa 4: a fonte oficial do posto (Etapa 1) decide quais superfícies
+  // consultam TOTVS. CT MES nunca chama os endpoints TOTVS de paradas;
+  // fonte indisponível não assume nenhuma das duas.
+  const downtimeSource = useDowntimeSource(token, branch, workCenter);
+  const isTotvs = downtimeSource.source === "totvs";
+  const performance = useWorkCenterPerformance(
+    token,
+    branch,
+    isTotvs ? workCenter : null,
+  );
   const downtimeItems = usePublicWorkCenterDowntimeItems(
     token,
     branch,
     workCenter,
-    downtimeOpen,
+    downtimeOpen && isTotvs,
   );
 
   const selectWorkCenter = (center: string) => {
@@ -338,25 +351,54 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const shiftLabel = performance.data?.shift?.label ?? "Turno";
   const downtimeHours = downtime?.available ? downtime.today_hours : null;
   const downtimeAvailable = Boolean(downtime?.available);
-  const shiftMetrics = (
-    <WorkCenterShiftMetrics
-      shiftLabel={shiftLabel}
-      shiftPct={shiftPct}
-      shiftProducedQty={shiftProducedQty}
-      downtimeHours={downtimeHours}
-      downtimeAvailable={downtimeAvailable}
-      onOpenPerformance={openPerformance}
-      onOpenDowntime={() => setDowntimeOpen(true)}
-    />
-  );
-  const downtimeModal = downtimeOpen ? (
-    <DowntimeItemsModal
-      shiftLabel={shiftLabel}
-      hours={downtimeHours}
-      state={downtimeItems}
-      onClose={() => setDowntimeOpen(false)}
-    />
-  ) : null;
+  // Indicadores do cabeçalho conforme a fonte oficial (Etapa 4):
+  // - mes: tiles diários oficiais MES; o tile de paradas abre a Atividade
+  //   do posto (histórico + classificação), nunca o modal TOTVS.
+  // - totvs: eficiência/produção/paradas do turno legadas; abre o modal
+  //   de apontamentos improdutivos do ERP.
+  // - indisponível/erro: mensagem explícita, sem valores de outra fonte.
+  const openDowntime =
+    downtimeSource.source === "mes"
+      ? openActivity
+      : isTotvs
+        ? () => setDowntimeOpen(true)
+        : () => undefined;
+  const shiftMetrics =
+    downtimeSource.source === "mes" ? (
+      <MesDayMetrics
+        onOpenActivity={openActivity}
+        onOpenPerformance={openPerformance}
+      />
+    ) : isTotvs ? (
+      <WorkCenterShiftMetrics
+        shiftLabel={shiftLabel}
+        shiftPct={shiftPct}
+        shiftProducedQty={shiftProducedQty}
+        downtimeHours={downtimeHours}
+        downtimeAvailable={downtimeAvailable}
+        onOpenPerformance={openPerformance}
+        onOpenDowntime={openDowntime}
+      />
+    ) : downtimeSource.loading ? (
+      <SourceStatusMetrics message="Resolvendo a fonte de dados do posto…" />
+    ) : (
+      <SourceStatusMetrics
+        message={
+          downtimeSource.error?.message ??
+          "Fonte de paradas indisponível para este posto."
+        }
+        onRetry={downtimeSource.reload}
+      />
+    );
+  const downtimeModal =
+    downtimeOpen && isTotvs ? (
+      <DowntimeItemsModal
+        shiftLabel={shiftLabel}
+        hours={downtimeHours}
+        state={downtimeItems}
+        onClose={() => setDowntimeOpen(false)}
+      />
+    ) : null;
 
   let content: ReactNode;
 
@@ -367,20 +409,26 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         branch={branch}
         workCenter={workCenter}
         workCenterName={activeCenter?.work_center_name || workCenter}
-        runRealtimeEvent={runRealtimeEvent}
-        realtimeConnected={connected}
         onBack={openQueue}
       />
     );
   } else if (view.kind === "performance") {
     content = (
       <WorkCenterPerformancePage
+        token={token}
         branch={branch}
         workCenter={workCenter}
         workCenterName={activeCenter?.work_center_name || workCenter}
+        source={downtimeSource.source}
+        sourceLoading={downtimeSource.loading}
+        sourceError={downtimeSource.error?.message ?? null}
+        onRetrySource={downtimeSource.reload}
         performance={performance.data}
         loading={performance.loading}
         error={performance.error}
+        runRealtimeEvent={runRealtimeEvent}
+        realtimeConnected={connected}
+        onOpenActivity={openActivity}
         onBack={openQueue}
       />
     );
@@ -401,19 +449,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           queueSize={items.length}
           workCenter={workCenter}
           workCenterName={centerName}
-          shiftLabel={shiftLabel}
-          shiftPct={shiftPct}
-          shiftProducedQty={shiftProducedQty}
-          downtimeHours={downtimeHours}
-          downtimeAvailable={downtimeAvailable}
+          metrics={shiftMetrics}
           runUpdatedSignal={runUpdatedSignal}
           runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={connected}
           feedbackUpdatedSignal={feedbackUpdatedSignal}
           feedbackRealtimeEvent={feedbackRealtimeEvent}
           hasActiveRun={Boolean(counterRun)}
-          onOpenPerformance={openPerformance}
-          onOpenDowntime={() => setDowntimeOpen(true)}
           onBack={openQueue}
           onPrevious={
             previous
@@ -491,14 +533,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           />
         ) : null}
 
-        <PostActivityCard
-          token={token}
-          branch={branch}
-          workCenter={workCenter}
-          runRealtimeEvent={runRealtimeEvent}
-          realtimeConnected={connected}
-          onOpen={openActivity}
-        />
+        <PostActivityCard onOpen={openActivity} />
 
         {items.length === 0 ? (
           <p className="pcp-pub__empty">
@@ -626,7 +661,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   return (
     <OperatorSessionProvider token={token} branch={branch} workCenter={workCenter}>
-      {content}
+      <CockpitActivityProvider
+        token={token}
+        branch={branch}
+        workCenter={workCenter}
+        runRealtimeEvent={runRealtimeEvent}
+        realtimeConnected={connected}
+      >
+        {content}
+      </CockpitActivityProvider>
     </OperatorSessionProvider>
   );
 }

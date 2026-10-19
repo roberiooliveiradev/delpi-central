@@ -749,3 +749,177 @@ substituído (sessão/CT trocados em voo) não invalida mais a sessão
 vigente; pendência com reasonCode exibe "aguardando confirmação" em vez
 de "sem motivo"; modais de classificação formatam horários em
 America/Sao_Paulo em vez do fuso do dispositivo.
+
+## 16. Etapa 4 — Substituição das superfícies TOTVS por MES no cockpit
+
+**Objetivo**: quando o centro de trabalho é sensorizado (Etapa 1 resolve
+`source=mes`), todas as superfícies de paradas/atividade do cockpit
+passam a usar exclusivamente fatos MES; CT sem sensoriamento preserva os
+contratos e indicadores TOTVS legados; fonte indisponível mostra
+indisponibilidade explícita — nunca fallback silencioso.
+
+**Resolução de fonte**: `useDowntimeSource` (frontend) consulta
+`GET .../public/machine-load/{token}/downtime-source?branch=&workCenter=`
+— decisão oficial permanece no backend. Enquanto a fonte não resolve
+(`source=null`), nenhuma consulta TOTVS dependente é disparada:
+`useWorkCenterPerformance` e `usePublicWorkCenterDowntimeItems` só
+executam quando `source==="totvs"`; os leitores MES exigem sessão de
+bancada como antes.
+
+**Indicadores do cabeçalho** (fila e detalhe da operação — mesma
+política; o detalhe recebe o nó de métricas já resolvido):
+
+- `mes` → `MesDayMetrics`: "Produzindo · hoje", "Parado · hoje",
+  "Paradas · hoje" (com selo de motivos pendentes) — rótulos de **dia
+  civil**, nunca de turno. Clique nas paradas abre a Atividade do posto;
+  produzindo/parado abrem o painel de desempenho.
+- `totvs` → `WorkCenterShiftMetrics` legado (eficiência/produzido/
+  paradas de turno) e o `DowntimeItemsModal` de apontamentos TOTVS.
+- `unavailable`/erro → `SourceStatusMetrics` com mensagem e retry; o
+  clique em paradas fica inerte.
+
+**Leitura diária compartilhada**: `CockpitActivityProvider` montado
+DENTRO do `OperatorSessionProvider` — um único `useWorkCenterActivity`
+(e um único GET `/mes/work-centers/today` por escopo) alimenta o
+PostActivityCard, o MesDayMetrics e a PostActivityPage. Classificar uma
+parada na página atualiza os indicadores do cabeçalho na mesma
+instância. Sem segundo fetch, sem provider global novo fora do escopo.
+
+**Painel "Desempenho do posto"** (`?view=performance`):
+
+- `totvs` → painel legado integral (eficiência de turno/período,
+  gráficos e tabela de apontamentos TOTVS).
+- `mes` → `MesPeriodPanel` com o **novo contrato**
+  `GET .../mes/work-centers/period?branch=&workCenter=&days=` (1–31
+  dias, sessão de bancada do mesmo filial/CT): KPIs de produzindo/
+  parado/paradas/motivos pendentes no período, "Paradas por motivo"
+  e "Tempo parado por dia" (ConfigurableSeriesChart do kit), seletor
+  7/14/30 dias, atalho para a Atividade do posto e nota de qualidade
+  quando `quality.stopOverlapSeconds > 0` (paradas sobrepostas dividem
+  tempo entre motivos — exposto, nunca inventado).
+- Sem sessão → convite a identificar o operador (dados MES continuam
+  protegidos); `totvs` na resposta → aviso controlado; fonte
+  indisponível → mensagem + retry.
+
+**Backend — `PublicMesWorkCenterPeriodService`**: reutiliza a cadeia da
+Etapa 2 (token público → filial/CT publicado → sessão de bancada →
+resolvedor de fonte) e o `MesIntegrationReadService` para a janela
+`[hoje−(dias−1), agora]` em dias civis America/Sao_Paulo. Totais e
+série diária usam a **união de intervalos** por estado (sobreposição
+nunca infla); paradas que atravessam a meia-noite fatiam o trecho certo
+em cada dia; `stopCount` conta eventos únicos no período;
+`pendingReasonCount` segue `pendingReason`/confirmed do fato; runs
+encerrados entram normalmente; dias sem evento retornam zeros reais —
+nada é sintetizado. `source=totvs` responde controlado sem agregados;
+indisponível → 503. Não persiste indicadores derivados nem consulta
+TOTVS.
+
+**OEE — ARCHITECTURE_DECISION_REQUIRED**: o painel MES não exibe
+percentual de eficiência, disponibilidade ou OEE — tempo produzindo não
+vira proporção sem denominador (tempo programado, paradas planejadas,
+regras de qualidade) aprovado. `MesPerformanceCalculator` /
+`MesRunPerformanceService` existem mas medem **ritmo do run**, não
+eficiência de turno nem OEE; campos de classificação OEE seguem nulos
+no modelo. Lacuna registrada para decisão dos owners de domínio antes
+de qualquer indicador percentual.
+
+**Contratos preservados**: `.../performance` e
+`.../performance/downtime-items` continuam íntegros para CTs TOTVS e
+demais consumidores; nenhum contrato legado foi alterado ou removido.
+
+**Evidências**: `test_public_mes_work_center_period.py` (21 pytest:
+contrato, sessão, escopo, sobreposição, overnight, totvs controlado,
+limites de período) + suítes MES relacionadas 68 passed; PostActivity.
+test.tsx 44 Vitest incluindo "um único GET alimenta cartão e página";
+node:test helpers 107/107; eslint do diff = baseline (17 findings
+pré-existentes, 0 novos); vite build verde; gates de arquitetura,
+boundaries, AuthZ FastAPI, OpenAPI e guardrails de plataforma: 0
+findings novos. Validação visual em tablet real: pendente para a
+Etapa 5 (homologação industrial).
+
+## 16. Etapa 4 — Substituição das superfícies TOTVS por MES no cockpit
+
+**Objetivo**: quando o centro de trabalho é sensorizado (Etapa 1 resolve
+`source=mes`), todas as superfícies de paradas/atividade do cockpit
+passam a usar exclusivamente fatos MES; CT sem sensoriamento preserva os
+contratos e indicadores TOTVS legados; fonte indisponível mostra
+indisponibilidade explícita — nunca fallback silencioso.
+
+**Resolução de fonte**: `useDowntimeSource` (frontend) consulta
+`GET .../public/machine-load/{token}/downtime-source?branch=&workCenter=`
+— decisão oficial permanece no backend. Enquanto a fonte não resolve
+(`source=null`), nenhuma consulta TOTVS dependente é disparada:
+`useWorkCenterPerformance` e `usePublicWorkCenterDowntimeItems` só
+executam quando `source==="totvs"`; os leitores MES exigem sessão de
+bancada como antes.
+
+**Indicadores do cabeçalho** (fila e detalhe da operação — mesma
+política; o detalhe recebe o nó de métricas já resolvido):
+
+- `mes` → `MesDayMetrics`: "Produzindo · hoje", "Parado · hoje",
+  "Paradas · hoje" (com selo de motivos pendentes) — rótulos de **dia
+  civil**, nunca de turno. Clique nas paradas abre a Atividade do posto;
+  produzindo/parado abrem o painel de desempenho.
+- `totvs` → `WorkCenterShiftMetrics` legado (eficiência/produzido/
+  paradas de turno) e o `DowntimeItemsModal` de apontamentos TOTVS.
+- `unavailable`/erro → `SourceStatusMetrics` com mensagem e retry; o
+  clique em paradas fica inerte.
+
+**Leitura diária compartilhada**: `CockpitActivityProvider` montado
+DENTRO do `OperatorSessionProvider` — um único `useWorkCenterActivity`
+(e um único GET `/mes/work-centers/today` por escopo) alimenta o
+PostActivityCard, o MesDayMetrics e a PostActivityPage. Classificar uma
+parada na página atualiza os indicadores do cabeçalho na mesma
+instância. Sem segundo fetch, sem provider global novo fora do escopo.
+
+**Painel "Desempenho do posto"** (`?view=performance`):
+
+- `totvs` → painel legado integral (eficiência de turno/período,
+  gráficos e tabela de apontamentos TOTVS).
+- `mes` → `MesPeriodPanel` com o **novo contrato**
+  `GET .../mes/work-centers/period?branch=&workCenter=&days=` (1–31
+  dias, sessão de bancada do mesmo filial/CT): KPIs de produzindo/
+  parado/paradas/motivos pendentes no período, "Paradas por motivo"
+  e "Tempo parado por dia" (ConfigurableSeriesChart do kit), seletor
+  7/14/30 dias, atalho para a Atividade do posto e nota de qualidade
+  quando `quality.stopOverlapSeconds > 0` (paradas sobrepostas dividem
+  tempo entre motivos — exposto, nunca inventado).
+- Sem sessão → convite a identificar o operador (dados MES continuam
+  protegidos); `totvs` na resposta → aviso controlado; fonte
+  indisponível → mensagem + retry.
+
+**Backend — `PublicMesWorkCenterPeriodService`**: reutiliza a cadeia da
+Etapa 2 (token público → filial/CT publicado → sessão de bancada →
+resolvedor de fonte) e o `MesIntegrationReadService` para a janela
+`[hoje−(dias−1), agora]` em dias civis America/Sao_Paulo. Totais e
+série diária usam a **união de intervalos** por estado (sobreposição
+nunca infla); paradas que atravessam a meia-noite fatiam o trecho certo
+em cada dia; `stopCount` conta eventos únicos no período;
+`pendingReasonCount` segue `pendingReason`/confirmed do fato; runs
+encerrados entram normalmente; dias sem evento retornam zeros reais —
+nada é sintetizado. `source=totvs` responde controlado sem agregados;
+indisponível → 503. Não persiste indicadores derivados nem consulta
+TOTVS.
+
+**OEE — ARCHITECTURE_DECISION_REQUIRED**: o painel MES não exibe
+percentual de eficiência, disponibilidade ou OEE — tempo produzindo não
+vira proporção sem denominador (tempo programado, paradas planejadas,
+regras de qualidade) aprovado. `MesPerformanceCalculator` /
+`MesRunPerformanceService` existem mas medem **ritmo do run**, não
+eficiência de turno nem OEE; campos de classificação OEE seguem nulos
+no modelo. Lacuna registrada para decisão dos owners de domínio antes
+de qualquer indicador percentual.
+
+**Contratos preservados**: `.../performance` e
+`.../performance/downtime-items` continuam íntegros para CTs TOTVS e
+demais consumidores; nenhum contrato legado foi alterado ou removido.
+
+**Evidências**: `test_public_mes_work_center_period.py` (21 pytest:
+contrato, sessão, escopo, sobreposição, overnight, totvs controlado,
+limites de período) + suítes MES relacionadas 68 passed; PostActivity.
+test.tsx 44 Vitest incluindo "um único GET alimenta cartão e página";
+node:test helpers 107/107; eslint do diff = baseline (17 findings
+pré-existentes, 0 novos); vite build verde; gates de arquitetura,
+boundaries, AuthZ FastAPI, OpenAPI e guardrails de plataforma: 0
+findings novos. Validação visual em tablet real: pendente para a
+Etapa 5 (homologação industrial).

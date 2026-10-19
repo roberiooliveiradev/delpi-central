@@ -348,6 +348,18 @@
   color: #ffb4ac;
 }
 
+.pcp-pub__hero-metric-alert {
+  color: #ffd27a;
+}
+
+.pcp-pub__hero-metric-note {
+  align-self: center;
+  max-width: 200px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .pcp-pub__hero-aside {
   display: flex;
   flex-direction: column;
@@ -572,6 +584,19 @@
 .pcp-pub__btn--primary:hover,
 .pcp-pub__btn--primary:focus-visible {
   background: color-mix(in srgb, var(--pcp-brand) 88%, #000);
+}
+
+.pcp-pub__btn--active {
+  border-color: var(--pcp-brand);
+  color: #ffffff;
+  background: var(--pcp-brand);
+}
+
+.pcp-pub__period-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 /* ---------- Próximas operações ---------- */
