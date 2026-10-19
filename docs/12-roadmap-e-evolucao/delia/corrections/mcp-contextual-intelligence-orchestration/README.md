@@ -57,6 +57,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3B independent implementation review:** [18 — typed routing accepted with residuals, live outcome pending](./18-i02r3b-independent-implementation-review.md). Cold-start eligible path avoids one model proposal in synthetic tests; K1/K2/K3 authenticated live not yet run. I02 remains REWORK.
 
+**I02-R3B authenticated live outcome:** [19 — live K1/K2/K3 validation](./19-i02r3b-authenticated-live-outcome-validation.md). Runtime already contained R3-B; K1 TEO methodology READ in 21469ms with typed merge (no separate `turn_goal`); K2 continuity without owner reinvoke; K3 VISTA INDEX→topic→guidance. `I02_ACCEPTED=NO` until coordination review.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -100,12 +102,15 @@ K1_K2_TEO_LIVE=FAIL_TIMEOUT
 I02_R3=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
 I02_R3A=EXPERIMENT_EVIDENCE_RECORDED
 I02_R3B=TYPED_MERGE_IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+I02_R3B_LIVE=EVIDENCE_RECORDED
 K1_TIMEOUT_EXACT_STAGE=arguments
 STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
 ARGUMENTS_HEADROOM_PRODUCTION_DEFAULT=OFF
 TYPED_CAPABILITY_GOAL_COLD_START=IMPLEMENTED
-LIVE_K1_R3B=TEST_NOT_RUN
-NEXT=I02_R3B_AUTHENTICATED_LIVE_OUTCOME_VALIDATION
+LIVE_K1_R3B=PASS_WITH_LIMITATION
+LIVE_K2_R3B=PASS_WITH_LIMITATION
+LIVE_K3_R3B=PASS_WITH_LIMITATION
+NEXT=COORDINATION_LIVE_OUTCOME_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
