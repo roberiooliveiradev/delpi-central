@@ -55,6 +55,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3B — typed capability+goal (cold-start):** [17 — implementation evidence](./17-i02r3b-typed-capability-goal-selection-implementation.md). Cold-start consolidates capability+goal in one typed propose (−1 model call when `goal_class` present); legacy/incomplete payloads fall back to dedicated `turn_goal`. Native skip / stage-cap / arguments-headroom defaults unchanged. Live K1 `TEST_NOT_RUN`. `I02_ACCEPTED=NO` until independent review.
 
+**I02-R3B independent implementation review:** [18 — typed routing accepted with residuals, live outcome pending](./18-i02r3b-independent-implementation-review.md). Cold-start eligible path avoids one model proposal in synthetic tests; K1/K2/K3 authenticated live not yet run. I02 remains REWORK.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -103,7 +105,7 @@ STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
 ARGUMENTS_HEADROOM_PRODUCTION_DEFAULT=OFF
 TYPED_CAPABILITY_GOAL_COLD_START=IMPLEMENTED
 LIVE_K1_R3B=TEST_NOT_RUN
-NEXT=COORDINATION_INDEPENDENT_REVIEW
+NEXT=I02_R3B_AUTHENTICATED_LIVE_OUTCOME_VALIDATION
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
