@@ -15152,3 +15152,14 @@ NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
 
 NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW_I04
 NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
+
+
+## §6.278 — I04 INDEPENDENT LIVE/GENERALIZATION REVIEW (REWORK GLOBAL)
+
+**DATE:** 2026-10-19. **REVIEW:** [37](../corrections/mcp-contextual-intelligence-orchestration/37-i04-independent-review-and-davi-direct-crosscheck.md). **CODE/LIVE SHA:** `37f4e21229ca9de80be3aa08f7261a1a081424aa`.
+
+- **Direct DAVI** READ-only: broad question 0 candidates / 95 eligible; product thematic candidate(s) available. Owner discovery works; DÉLIA K4 after fix **FAIL** at `select_capability=none` on DAVI group (8,768ms) before arguments projection. Bounded new arguments fallback only synthetic-pass and not exercised in post-fix live.
+- **Live regressions:** K1 TÉO 18,277ms PASS grounded; K2 10,818ms PASS; K3 30,028ms INDEX no_match safe clarification but >30s strict budget (FAIL sampled timing), K4 fail selection. Full backend PASS executor-reported; independent rerun `TEST_NOT_RUN`.
+- **DECISION:** I04 code extension `ACCEPT_WITH_RESIDUAL` scoped, global I04 `REWORK`, `I04_ACCEPTED=NO`, Q01 unauthorized, C3–C5 unchanged. Reuse existing docs34–35/§§6.275–276 R1 select-none/projection remediation; no competing architecture.
+
+NEXT=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
