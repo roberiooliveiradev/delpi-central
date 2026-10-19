@@ -15204,3 +15204,14 @@ NEXT_RELATED=DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; no C3/C4/C5/Q01 progression.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.282 — Independent R2 semantic selection review (ACCEPT_WITH_RESIDUAL_BOUNDED)
+
+**DATE:** 2026-10-19. **REVIEW:** [41](../corrections/mcp-contextual-intelligence-orchestration/41-r2-independent-semantic-selection-review.md). **LIVE R2 CODE SHA:** `19843e5cf9f5684f52124f0df25ae8d131b6bb35`, **DOCS FINAL SHA:** `d63c0ae98df3bf730e14af552a948f823367c93f`.
+
+- Scoped provider-neutral coverage inquiry recovery accepted with residual: discovery owner `davi.discover_delpi_information` reached GROUNDED in K4-A 16118ms. Unique DISCOVERY only after valid group and bounded coverage-intent detector. No provider-name branch or new authority in examined diff; model-only capability none no longer automatically ends in generic R1 clarification for recognized broad coverage.
+- **Remaining:** K4-B thematic products = `PARTIAL` (arguments ask-back, no data outcome); K4-C at **30019ms > strict 30s** = `FAIL` timing; detector is regex-bounded and semantic generalization not proven. Regression controls R1/R3, TEO/VISTA reported PASS; Helpdesk count still blocked by GLPI. Tests full backend PASS executor-reported, independent replay `TEST_NOT_RUN`, ACT=0.
+- **DECISION:** `R2_BROAD_ACCEPT_WITH_RESIDUAL`, `I04_ACCEPTED=NO`, `I03_ACCEPTED=YES_WITH_RESIDUAL`, `C3_EXECUTED=NO`. Do not declare algorithm globally complete or start Q01. Prioritize bounded strict budget and thematic selection/arguments generalization with real provider-neutral evals.
+
+NEXT=I04_BOUNDED_BUDGET_AND_THEMATIC_GENERALIZATION_REWORK
