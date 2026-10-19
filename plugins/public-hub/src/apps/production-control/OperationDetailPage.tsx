@@ -13,7 +13,6 @@ import {
   formatUnit,
   useDrawingObjectUrl,
   VisualModeTabs,
-  WorkCenterShiftMetrics,
   type VisualMode,
 } from "./cockpitShared";
 import { ProductModelViewer } from "./ProductModelViewer";
@@ -42,18 +41,13 @@ type Props = {
   queueSize: number;
   workCenter: string;
   workCenterName: string;
-  shiftLabel: string;
-  shiftPct: number | null;
-  shiftProducedQty: number | null;
-  downtimeHours: number | null;
-  downtimeAvailable: boolean;
+  /** Métricas do cabeçalho já resolvidas pela fonte oficial (MES ou TOTVS). */
+  metrics: ReactNode;
   runUpdatedSignal: number;
   runRealtimeEvent: MachineLoadRealtimeEvent | null;
   realtimeConnected: boolean;
   feedbackUpdatedSignal: number;
   feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
-  onOpenPerformance: () => void;
-  onOpenDowntime: () => void;
   hasActiveRun: boolean;
   onBack: () => void;
   onPrevious?: () => void;
@@ -72,18 +66,12 @@ export function OperationDetailPage({
   queueSize,
   workCenter,
   workCenterName,
-  shiftLabel,
-  shiftPct,
-  shiftProducedQty,
-  downtimeHours,
-  downtimeAvailable,
+  metrics,
   runUpdatedSignal,
   runRealtimeEvent,
   realtimeConnected,
   feedbackUpdatedSignal,
   feedbackRealtimeEvent,
-  onOpenPerformance,
-  onOpenDowntime,
   hasActiveRun,
   onBack,
   onPrevious,
@@ -152,17 +140,7 @@ export function OperationDetailPage({
         titleExtra={
           <CopyValueButton value={operation.production_order} label="Copiar OP" />
         }
-        metrics={
-          <WorkCenterShiftMetrics
-            shiftLabel={shiftLabel}
-            shiftPct={shiftPct}
-            shiftProducedQty={shiftProducedQty}
-            downtimeHours={downtimeHours}
-            downtimeAvailable={downtimeAvailable}
-            onOpenPerformance={onOpenPerformance}
-            onOpenDowntime={onOpenDowntime}
-          />
-        }
+        metrics={metrics}
         lead={
           <button
             type="button"

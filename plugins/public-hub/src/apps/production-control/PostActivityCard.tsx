@@ -1,15 +1,9 @@
 import { Activity } from "lucide-react";
+import { useCockpitActivity } from "./CockpitActivityContext";
 import { useOperatorSession } from "./OperatorSessionContext";
 import { formatDurationHms } from "./runTimeline";
-import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
-import { useWorkCenterActivity } from "./useWorkCenterActivity";
 
 type Props = {
-  token: string;
-  branch: string;
-  workCenter: string;
-  runRealtimeEvent: MachineLoadRealtimeEvent | null;
-  realtimeConnected: boolean;
   onOpen: () => void;
 };
 
@@ -17,25 +11,12 @@ type Props = {
  * Acesso compacto à Atividade do posto (Etapa 3): faixa discreta na tela da
  * fila, sempre presente para o CT selecionado — mesmo sem operações. Um
  * toque abre o histórico diário MES; os estados especiais ficam na página.
+ * A leitura vem do CockpitActivityProvider — um único GET por escopo,
+ * compartilhado com os indicadores do cabeçalho e a página de detalhe.
  */
-export function PostActivityCard({
-  token,
-  branch,
-  workCenter,
-  runRealtimeEvent,
-  realtimeConnected,
-  onOpen,
-}: Props) {
-  const { session, status, invalidate } = useOperatorSession();
-  const { data, error, loading } = useWorkCenterActivity({
-    token,
-    sessionToken: session?.sessionToken ?? null,
-    branch,
-    workCenter,
-    runRealtimeEvent,
-    realtimeConnected,
-    onAuthError: invalidate,
-  });
+export function PostActivityCard({ onOpen }: Props) {
+  const { session, status } = useOperatorSession();
+  const { data, error, loading } = useCockpitActivity();
 
   let hint: string;
   if (status === "restoring") {

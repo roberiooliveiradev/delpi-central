@@ -406,6 +406,37 @@ def build_public_mes_work_center_today_service(
     )
 
 
+def build_public_mes_work_center_period_service(
+    *,
+    pulse_gateway: Any | None = None,
+) -> "PublicMesWorkCenterPeriodService":
+    from production_control_app.application.services.public_mes_work_center_period_service import (  # noqa: E501
+        PublicMesWorkCenterPeriodService,
+    )
+    from production_control_app.application.services.mes_integration_read_service import (  # noqa: E501
+        MesIntegrationReadService,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_monitoring_read_repository import (  # noqa: E501
+        PostgresMesMonitoringReadRepository,
+    )
+
+    mes_monitoring = PostgresMesMonitoringReadRepository()
+    return PublicMesWorkCenterPeriodService(
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(),
+        branch_access=build_branch_access_service(),
+        downtime_source=build_public_work_center_downtime_source_service(
+            pulse_gateway=pulse_gateway,
+            mes_monitoring=mes_monitoring,
+        ),
+        integration_read=MesIntegrationReadService(
+            repository=mes_monitoring,
+            branch_access=build_branch_access_service(),
+        ),
+        run_service=build_production_run_service(pulse_gateway=pulse_gateway),
+    )
+
+
 def build_public_work_center_downtime_source_service(
     *,
     pulse_gateway: Any | None = None,

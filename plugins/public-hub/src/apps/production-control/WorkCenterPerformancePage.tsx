@@ -1,9 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 // MF: import estático nomeado. lazy+dynamic do Index devolvia undefined → React #306.
 import { ConfigurableSeriesChart } from "@delpi/plugin-ui/index";
-import type { PublicWorkCenterPerformance } from "./api";
+import type {
+  MesWorkCenterPeriodMes,
+  PublicWorkCenterPerformance,
+  WorkCenterDowntimeSource,
+} from "./api";
 import {
   BrandBar,
   EFFICIENCY_GOAL_PCT,
@@ -15,28 +19,122 @@ import {
   formatQty,
   formatUnit,
 } from "./cockpitShared";
+import { useOperatorSession } from "./OperatorSessionContext";
+import { formatDurationHms } from "./runTimeline";
+import { useMesWorkCenterPeriod } from "./useMesWorkCenterPeriod";
+import type { MachineLoadRealtimeEvent } from "./usePublicMachineLoadRealtime";
 
 type ChartPoint = { label: string; value: number | null };
 
 type Props = {
+  token: string;
   branch: string;
   workCenter: string;
   workCenterName: string;
+  /** Fonte oficial de paradas do posto (Etapa 1) — decide o painel. */
+  source: WorkCenterDowntimeSource["source"] | null;
+  sourceLoading: boolean;
+  sourceError: string | null;
+  onRetrySource: () => void;
   performance: PublicWorkCenterPerformance | null;
   loading: boolean;
   error: string | null;
+  runRealtimeEvent: MachineLoadRealtimeEvent | null;
+  realtimeConnected: boolean;
+  onOpenActivity: () => void;
   onBack: () => void;
 };
 
 export function WorkCenterPerformancePage({
+  token,
   branch,
   workCenter,
   workCenterName,
+  source,
+  sourceLoading,
+  sourceError,
+  onRetrySource,
   performance,
   loading,
   error,
+  runRealtimeEvent,
+  realtimeConnected,
+  onOpenActivity,
   onBack,
 }: Props) {
+  return (
+    <section className="pcp-pub pcp-pub--performance">
+      <BrandBar
+        eyebrow={`Desempenho do posto · Filial ${branch}`}
+        title={workCenterName || workCenter}
+        code={workCenter}
+        stats={
+          source === "mes" ? (
+            <span className="pcp-pub__chip">Medido pelo sensor do posto (MES)</span>
+          ) : performance?.shift ? (
+            <span className="pcp-pub__chip">{performance.shift.label} em andamento</span>
+          ) : null
+        }
+        lead={
+          <button
+            type="button"
+            className="pcp-pub__back pcp-pub__back--icon"
+            onClick={onBack}
+            aria-label="Voltar para a fila"
+            title="Voltar para a fila"
+          >
+            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
+          </button>
+        }
+      />
+      {source === "mes" ? (
+        <MesPeriodPanel
+          token={token}
+          branch={branch}
+          workCenter={workCenter}
+          runRealtimeEvent={runRealtimeEvent}
+          realtimeConnected={realtimeConnected}
+          onOpenActivity={onOpenActivity}
+        />
+      ) : source === "totvs" ? (
+        <TotvsPerformancePanel
+          performance={performance}
+          loading={loading}
+          error={error}
+        />
+      ) : (
+        <div className="pcp-pub__wrap">
+          <p className="pcp-pub__empty">
+            {sourceLoading
+              ? "Resolvendo a fonte de dados do posto…"
+              : sourceError ??
+                "Fonte de dados do posto indisponível — sem indicadores no momento."}
+          </p>
+          {!sourceLoading && sourceError ? (
+            <button
+              type="button"
+              className="pcp-pub__btn pcp-pub__btn--ghost"
+              onClick={onRetrySource}
+            >
+              Tentar novamente
+            </button>
+          ) : null}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Painel TOTVS — CT sem sensoriamento: comportamento legado preservado. */
+function TotvsPerformancePanel({
+  performance,
+  loading,
+  error,
+}: {
+  performance: PublicWorkCenterPerformance | null;
+  loading: boolean;
+  error: string | null;
+}) {
   const efficiency = performance?.efficiency;
   const downtime = performance?.downtime;
 
@@ -77,30 +175,7 @@ export function WorkCenterPerformancePage({
   );
 
   return (
-    <section className="pcp-pub pcp-pub--performance">
-      <BrandBar
-        eyebrow={`Desempenho do posto · Filial ${branch}`}
-        title={workCenterName || workCenter}
-        code={workCenter}
-        stats={
-          performance?.shift ? (
-            <span className="pcp-pub__chip">{performance.shift.label} em andamento</span>
-          ) : null
-        }
-        lead={
-          <button
-            type="button"
-            className="pcp-pub__back pcp-pub__back--icon"
-            onClick={onBack}
-            aria-label="Voltar para a fila"
-            title="Voltar para a fila"
-          >
-            <ArrowLeft size={22} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-        }
-      />
-
-      <div className="pcp-pub__wrap">
+    <div className="pcp-pub__wrap">
         {loading && !performance ? (
           <p className="pcp-pub__empty">Carregando desempenho…</p>
         ) : null}
@@ -254,8 +329,194 @@ export function WorkCenterPerformancePage({
             )}
           </>
         ) : null}
+    </div>
+  );
+}
+
+/**
+ * Painel MES (Etapa 4): agregados oficiais do contrato de período —
+ * produzindo/parado/paradas/pendentes, paradas por motivo e tempo parado
+ * por dia. Não exibe eficiência TOTVS nem OEE (sem denominador governado).
+ */
+function MesPeriodPanel({
+  token,
+  branch,
+  workCenter,
+  runRealtimeEvent,
+  realtimeConnected,
+  onOpenActivity,
+}: {
+  token: string;
+  branch: string;
+  workCenter: string;
+  runRealtimeEvent: MachineLoadRealtimeEvent | null;
+  realtimeConnected: boolean;
+  onOpenActivity: () => void;
+}) {
+  const { session, status, invalidate, openIdentify } = useOperatorSession();
+  const [days, setDays] = useState(7);
+  const period = useMesWorkCenterPeriod({
+    token,
+    sessionToken: session?.sessionToken ?? null,
+    branch,
+    workCenter,
+    days,
+    runRealtimeEvent,
+    realtimeConnected,
+    onAuthError: invalidate,
+  });
+  const data = period.data?.source === "mes" ? period.data : null;
+
+  const dayPoints = useMemo<ChartPoint[]>(
+    () =>
+      (data?.days ?? []).map((day) => ({
+        label: formatDateShort(day.date),
+        value: day.stoppedSeconds / 3600,
+      })),
+    [data],
+  );
+
+  const reasonPoints = useMemo<ChartPoint[]>(
+    () =>
+      (data?.reasons ?? []).map((reason) => ({
+        label:
+          reason.count > 0
+            ? `${reason.label} · ${reason.count}×`
+            : reason.label,
+        value: reason.seconds / 3600,
+      })),
+    [data],
+  );
+
+  if (!session) {
+    return (
+      <div className="pcp-pub__wrap">
+        <p className="pcp-pub__notice">
+          Identifique-se no posto para ver o desempenho medido pelo sensor
+          (MES). Números de turno do ERP não são exibidos neste posto.
+        </p>
+        <button
+          type="button"
+          className="pcp-pub__btn pcp-pub__btn--ghost"
+          onClick={openIdentify}
+          disabled={status === "restoring"}
+        >
+          Identificar operador
+        </button>
       </div>
-    </section>
+    );
+  }
+
+  const mesData: MesWorkCenterPeriodMes | null = data;
+
+  return (
+    <div className="pcp-pub__wrap">
+      <div className="pcp-pub__period-tabs" role="group" aria-label="Período consultado">
+        {[7, 14, 30].map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`pcp-pub__btn pcp-pub__btn--ghost${
+              days === option ? " pcp-pub__btn--active" : ""
+            }`}
+            aria-pressed={days === option}
+            onClick={() => setDays(option)}
+          >
+            {option} dias
+          </button>
+        ))}
+        <button
+          type="button"
+          className="pcp-pub__btn pcp-pub__btn--ghost"
+          onClick={onOpenActivity}
+        >
+          Atividade do posto (hoje)
+        </button>
+      </div>
+
+      {period.loading && !mesData ? (
+        <p className="pcp-pub__empty">Carregando desempenho do posto…</p>
+      ) : null}
+      {period.error ? (
+        <>
+          <p className="pcp-pub__error">{period.error.message}</p>
+          {period.error.retryable ? (
+            <button
+              type="button"
+              className="pcp-pub__btn pcp-pub__btn--ghost"
+              onClick={() => void period.refresh()}
+            >
+              Tentar novamente
+            </button>
+          ) : null}
+        </>
+      ) : null}
+      {period.data?.source === "totvs" ? (
+        <p className="pcp-pub__notice">
+          Este posto não é sensorizado — o desempenho MES não se aplica.
+        </p>
+      ) : null}
+
+      {mesData ? (
+        <>
+          <p className="pcp-pub__notice">
+            Tempos medidos pelo sensor do posto (MES) entre{" "}
+            {formatDate(mesData.from)} e {formatDate(mesData.to)}, dias civis
+            em horário de São Paulo. Não é a eficiência de turno do ERP.
+          </p>
+
+          <h2 className="pcp-pub__detail-section">Atividade no período</h2>
+          <div className="pcp-pub__kpis">
+            <Kpi
+              label="Produzindo"
+              value={formatDurationHms(mesData.totals.producingSeconds)}
+              note="tempo medido pelo sensor"
+            />
+            <Kpi
+              label="Parado"
+              value={formatDurationHms(mesData.totals.stoppedSeconds)}
+              note={`${mesData.totals.stopCount} parada(s)`}
+            />
+            <Kpi
+              label="Motivos pendentes"
+              value={String(mesData.totals.pendingReasonCount)}
+              note={
+                mesData.totals.pendingReasonCount > 0
+                  ? "classifique na Atividade do posto"
+                  : "todos os motivos informados"
+              }
+              tone={mesData.totals.pendingReasonCount > 0 ? "warn" : "none"}
+            />
+          </div>
+
+          <ChartCard
+            title="Paradas por motivo"
+            subtitle="Tempo parado no período agrupado por motivo classificado"
+            chartType="horizontal_bar"
+            variant="reasons"
+            points={reasonPoints}
+            yAxisTitle="Horas"
+            emptyMessage="Nenhuma parada registrada no período."
+          />
+          <ChartCard
+            title="Tempo parado por dia"
+            subtitle="Horas paradas medidas pelo sensor em cada dia civil"
+            chartType="bar"
+            variant="downtime-day"
+            points={dayPoints}
+            yAxisTitle="Horas"
+            emptyMessage="Nenhuma parada registrada no período."
+          />
+          {mesData.quality.stopOverlapSeconds > 0 ? (
+            <p className="pcp-pub__notice">
+              Há {formatDurationHms(mesData.quality.stopOverlapSeconds)} de
+              paradas sobrepostas no período — a soma por motivo pode exceder o
+              total real.
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   );
 }
 

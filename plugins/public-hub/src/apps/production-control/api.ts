@@ -926,6 +926,126 @@ export async function fetchMesWorkCenterToday(
   return data;
 }
 
+// ---------------------------------------------------------------------------
+// Fonte oficial de paradas do posto (Etapa 1) — consulta pública, sem sessão.
+// ---------------------------------------------------------------------------
+
+export type WorkCenterDowntimeSource = {
+  source: "mes" | "totvs" | "unavailable";
+  reason: string;
+  branch: string;
+  workCenter: string;
+  referenceAt: string;
+};
+
+export async function fetchDowntimeSource(
+  token: string,
+  branch: string,
+  workCenter: string,
+): Promise<WorkCenterDowntimeSource> {
+  const params = new URLSearchParams({ branch, workCenter });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/downtime-source?${params}`,
+    { headers: { Accept: "application/json" } },
+  );
+  const data = await readEnvelope<WorkCenterDowntimeSource>(
+    response,
+    "Fonte de paradas do posto indisponível.",
+  );
+  if (
+    !data ||
+    (data.source !== "mes" && data.source !== "totvs" && data.source !== "unavailable")
+  ) {
+    throw new ApiError("Resposta de fonte inválida.", response.status);
+  }
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Resumo MES por período de dias civis (Etapa 4) — sessão de bancada.
+// source=totvs responde controlado SEM agregados — nunca virar histórico vazio.
+// ---------------------------------------------------------------------------
+
+export type MesWorkCenterPeriodDay = {
+  date: string;
+  producingSeconds: number;
+  stoppedSeconds: number;
+  stopCount: number;
+  pendingReasonCount: number;
+};
+
+export type MesWorkCenterPeriodReason = {
+  reasonCode: string | null;
+  label: string;
+  seconds: number;
+  count: number;
+  pendingCount: number;
+};
+
+export type MesWorkCenterPeriodMes = {
+  source: "mes";
+  branch: string;
+  workCenter: string;
+  reason: string;
+  timezone: string;
+  periodDays: number;
+  from: string;
+  to: string;
+  referenceAt: string;
+  totals: MesWorkCenterTodaySummary;
+  days: MesWorkCenterPeriodDay[];
+  reasons: MesWorkCenterPeriodReason[];
+  quality: { stopOverlapSeconds: number };
+};
+
+export type MesWorkCenterPeriodTotvs = {
+  source: "totvs";
+  branch: string;
+  workCenter: string;
+  reason: string;
+  referenceAt: string;
+};
+
+export type MesWorkCenterPeriod = MesWorkCenterPeriodMes | MesWorkCenterPeriodTotvs;
+
+export async function fetchMesWorkCenterPeriod(
+  token: string,
+  sessionToken: string,
+  branch: string,
+  workCenter: string,
+  days = 7,
+): Promise<MesWorkCenterPeriod> {
+  const params = new URLSearchParams({
+    branch,
+    workCenter,
+    days: String(days),
+  });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/mes/work-centers/period?${params}`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  const data = await readEnvelope<MesWorkCenterPeriod>(
+    response,
+    "Desempenho MES do posto indisponível.",
+  );
+  if (data?.source === "totvs") return data;
+  if (
+    data?.source !== "mes" ||
+    !Array.isArray((data as MesWorkCenterPeriodMes).days) ||
+    !Array.isArray((data as MesWorkCenterPeriodMes).reasons) ||
+    !(data as MesWorkCenterPeriodMes).totals
+  ) {
+    // Contrato inesperado: não inventar agregados vazios como se fosse sucesso.
+    throw new ApiError("Resposta de desempenho inválida.", response.status);
+  }
+  return data;
+}
+
 export async function fetchRunTimeline(
   token: string,
   sessionToken: string,
