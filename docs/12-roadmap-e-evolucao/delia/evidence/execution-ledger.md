@@ -15759,3 +15759,29 @@ C5_AUTHORIZED=NO
 OPTION_B_PHASE_AMENDMENT=PROPOSED_PENDING_PRODUCT_MASTER
 NEXT=PRODUCT_MASTER_EXPLICIT_OPTION_B_OR_STOP
 ```
+
+
+## §6.311 — VD-F03 production deploy (srv-api) — authorized controlled release
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-VD-F03-PRODUCTION-DEPLOY-AND-LIVE-QA-01`. **DEPLOY_AUTHORIZED=YES (Product Master)**. **DEPLOYED_SHA:** `d2c59845d7` (origin/main, inclui VD-F03 `9a8b05063d` + hardening `2f20886730`). **HOST:** `srv-api` (operador@192.168.1.237), checkout `~/projetos/delpi-central` `main`, `git pull --ff-only`, worktree limpo.
+
+- **Deploy:** `infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia delia-api` — 3/3 built and `delpi-delia-api` restarted healthy; `delpi-plugin-ui`/`delpi-delia` serving new bundles (dictation code verified inside container assets).
+- **Config:** `DELIA_STT_*` (8 vars) appended to host `infra/.env` — `DELIA_STT_PROVIDER=openai_compatible_audio`, `DELIA_STT_BASE_URL=${KIMI_BASE_URL}`, `DELIA_STT_MODEL=google/gemini-2.5-flash`, `DELIA_STT_API_KEY=${KIMI_API_KEY}` (reuse of the approved provider credential, same interpolation pattern as `DELIA_LLM_*`; secret never printed/committed). All 8 confirmed `SET` inside the running container.
+- **Verified server-side:** `GET /dictation/status` → `401` unauthenticated through the public gateway; an authorized `delia.access` request already returned `200` (AuthN+AuthZ live). Health checks 200.
+- **Privacy:** production logs metadata-only (path/status/request_id); no audio/transcript/token observed.
+- **Browser QA human gate:** in-browser mic QA requires a `delia.access` user credential — no QA/e2e account exists in prod realm (62 real users). Operator-assisted manual QA path: login → `/apps/delia` → mic → dictate pt-BR → finalize → transcript in composer → edit → send. Reported as pending-user-verification, not claimed PASS.
+- **Residuals:** `MODEL_APPROVAL` resolved for this controlled release by explicit PM authorization of the validated model; WER/CER corpus, human-mic formal QA, distributed rate limit remain open residuals.
+
+```text
+VD_F03_PROD_DEPLOY=EXECUTED
+DEPLOYED_SHA=d2c59845d7
+STT_CONFIGURED=YES
+STT_STATUS_ROUTE=LIVE (401 unauth / 200 authorized observed)
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+REGRESSIONS=NONE_OBSERVED
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=USER_MIC_QA_CONFIRMATION_OR_OPERATIONAL_FEEDBACK
+```
