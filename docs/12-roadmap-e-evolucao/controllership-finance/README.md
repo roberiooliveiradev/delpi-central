@@ -27,6 +27,7 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 | A12 / A14 / A15 / A16 | `INCONCLUSIVE` — revalidar com evidência de HEAD |
 | `PORTAL_DESIGN_FREEZE` / `PRODUCT_CONTRACT_FREEZE` | `PENDING` para gate transversal |
 | `SECURITY_MODEL_FREEZE` / `TEST_STRATEGY_FREEZE` | `PENDING` para bindings/testes |
+| `FASTAPI_ARCHITECTURAL_EXCEPTION` | `REGISTERED` — [doc 45](./45-g0-excecao-fastapi-e-fechamento-gates.md); validação Arquitetura pendente |
 | `DOCUMENTATION_CLOSURE_COMPLETE` | **`NO`** |
 | `IMPLEMENTATION_AUTHORIZED` | **`NO`** |
 | Portal runtime, smoke, integração live | `NOT_IMPLEMENTED / TEST_NOT_RUN` |
@@ -48,6 +49,7 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 | **Requisitos, aceites e teste por ID** | **[23 — Ledger RQ/AC/Testes](./23-ledger-rq-ac-testes.md)** · [15 — Critérios gerais](./15-requisitos-criterios-de-aceite-e-testes.md) |
 | Pendências técnicas / handoff atual | [17 — Inventários E/T](./17-backlog-de-confirmacoes-e-inventarios.md) · [18 — Readiness](./18-readiness-e-handoff-de-implementacao.md) · [22 — Handoff P1–P6](./22-handoff-implementacao-p1-p6.md) |
 | **Roadmap e execução** | **[39 — Roadmap V1](./39-roadmap-mestre-implementacao-v1.md)** · [40 — Slices/dependências](./40-matriz-dependencias-e-slices-v1.md) · [41 — Testes/gates](./41-estrategia-validacao-e-gates-implementacao-v1.md) · [42 — Playbook Cursor](./42-playbook-brief-cursor-execution-report-v1.md) · [43 — Rollout](./43-rollout-operacao-e-handoff-v1.md) |
+| Decisões de implementação G0 | [45 — Exceção FastAPI e gates](./45-g0-excecao-fastapi-e-fechamento-gates.md) |
 
 **Histórico de análise, não normas atuais nem PASS inferido:** [20 — cobertura histórica](./20-transforma-plus-coverage.md), [33 — fechamento documental](./33-plano-mestre-fechamento-documental.md), [34 — review A14](./34-revisao-transversal-gate-v2.md), [35 — review A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [36 — delivery externo superseded](./36-e04-t04-package-delivery-decision-packet.md), [38 — rebaseline após merge](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md), [44 — evidências A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). Preservados para proveniência; se conflitarem com 37/23/39 e HEAD, prevalecem sources mais altas.
 
