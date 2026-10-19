@@ -29,7 +29,7 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 | `SECURITY_MODEL_FREEZE` / `TEST_STRATEGY_FREEZE` | `PENDING` para bindings/testes |
 | `FASTAPI_ARCHITECTURAL_EXCEPTION` | `REGISTERED` — [doc 45](./45-g0-excecao-fastapi-e-fechamento-gates.md); validação Arquitetura pendente |
 | `DOCUMENTATION_CLOSURE_COMPLETE` | **`NO`** |
-| `IMPLEMENTATION_AUTHORIZED` | **`NO`** |
+| `IMPLEMENTATION_AUTHORIZED` | **`NO`** — manifestação expressa do PO para IMP-F0 registrada **condicionalmente** no [doc 45 §11](./45-g0-excecao-fastapi-e-fechamento-gates.md); não efetiva até exceção VALIDATED, quatro freezes PASS e fechamento documental PASS |
 | Portal runtime, smoke, integração live | `NOT_IMPLEMENTED / TEST_NOT_RUN` |
 
 **Regra humana aprovada (D-FINAL-02):** somente pessoas aprovam. Sem revisores elegíveis ou áreas configuradas, **não** criar trava artificial de finalização, envio ou publicação. O pacote pode entrar em revisão, mas **sem evento humano real de aceite não há conclusão mensal** — o processo permanece pendente. C2 também exige aceite de cada área obrigatória existente na versão vigente, todos os pacotes aplicáveis submetidos, nenhuma clarification aberta e ausência de rejeição terminal. Veja **somente** o [contrato canônico P5 — doc 37](./37-p5-submissao-e-revisao-no-portal.md) para todas as decisões P5.
