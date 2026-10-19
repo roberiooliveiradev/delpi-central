@@ -70,7 +70,9 @@ export function WorkCenterPerformancePage({
         code={workCenter}
         stats={
           source === "mes" ? (
-            <span className="pcp-pub__chip">Medido pelo sensor do posto (MES)</span>
+            <span className="pcp-pub__chip">
+              Eficiência do ERP · paradas medidas pelo sensor (MES)
+            </span>
           ) : performance?.shift ? (
             <span className="pcp-pub__chip">{performance.shift.label} em andamento</span>
           ) : null
@@ -88,14 +90,22 @@ export function WorkCenterPerformancePage({
         }
       />
       {source === "mes" ? (
-        <MesPeriodPanel
-          token={token}
-          branch={branch}
-          workCenter={workCenter}
-          runRealtimeEvent={runRealtimeEvent}
-          realtimeConnected={realtimeConnected}
-          onOpenActivity={onOpenActivity}
-        />
+        <>
+          <TotvsPerformancePanel
+            performance={performance}
+            loading={loading}
+            error={error}
+            includeDowntime={false}
+          />
+          <MesPeriodPanel
+            token={token}
+            branch={branch}
+            workCenter={workCenter}
+            runRealtimeEvent={runRealtimeEvent}
+            realtimeConnected={realtimeConnected}
+            onOpenActivity={onOpenActivity}
+          />
+        </>
       ) : source === "totvs" ? (
         <TotvsPerformancePanel
           performance={performance}
@@ -125,15 +135,22 @@ export function WorkCenterPerformancePage({
   );
 }
 
-/** Painel TOTVS — CT sem sensoriamento: comportamento legado preservado. */
+/**
+ * Painel TOTVS — CT sem sensoriamento: comportamento legado preservado.
+ * Com includeDowntime={false} (posto MES), eficiência e apontamentos
+ * continuam do ERP, mas o bloco de paradas é suprimido — paradas MES
+ * vêm do MesPeriodPanel logo abaixo.
+ */
 function TotvsPerformancePanel({
   performance,
   loading,
   error,
+  includeDowntime = true,
 }: {
   performance: PublicWorkCenterPerformance | null;
   loading: boolean;
   error: string | null;
+  includeDowntime?: boolean;
 }) {
   const efficiency = performance?.efficiency;
   const downtime = performance?.downtime;
@@ -212,7 +229,7 @@ function TotvsPerformancePanel({
                     }
                     note="Soma dos apontamentos do turno"
                   />
-                  {downtime?.available ? (
+                  {includeDowntime && downtime?.available ? (
                     <Kpi
                       label="Horas de paradas hoje"
                       value={formatHours(downtime.today_hours)}
@@ -241,8 +258,10 @@ function TotvsPerformancePanel({
               <Unavailable message={blockMessage(efficiency)} />
             )}
 
-            <h2 className="pcp-pub__detail-section">Paradas</h2>
-            {downtime?.available ? (
+            {includeDowntime ? (
+              <h2 className="pcp-pub__detail-section">Paradas</h2>
+            ) : null}
+            {includeDowntime && downtime?.available ? (
               <>
                 <div className="pcp-pub__kpis">
                   <Kpi
@@ -271,9 +290,9 @@ function TotvsPerformancePanel({
                   emptyMessage="Nenhuma parada apontada no período."
                 />
               </>
-            ) : (
+            ) : includeDowntime ? (
               <Unavailable message={blockMessage(downtime)} />
-            )}
+            ) : null}
 
             <h2 className="pcp-pub__detail-section">Apontamentos do turno</h2>
             {efficiency?.available && efficiency.appointments.length > 0 ? (
@@ -334,9 +353,12 @@ function TotvsPerformancePanel({
 }
 
 /**
- * Painel MES (Etapa 4): agregados oficiais do contrato de período —
- * produzindo/parado/paradas/pendentes, paradas por motivo e tempo parado
- * por dia. Não exibe eficiência TOTVS nem OEE (sem denominador governado).
+ * Seção de paradas MES (Etapa 4): agregados oficiais do contrato de
+ * período — produzindo/parado/paradas/pendentes, paradas por motivo e
+ * tempo parado por dia. Na página de desempenho ela acompanha o painel
+ * TOTVS sem o bloco de paradas: eficiência/apontamentos são do ERP,
+ * paradas são do sensor. Não exibe eficiência nem OEE (sem denominador
+ * governado).
  */
 function MesPeriodPanel({
   token,

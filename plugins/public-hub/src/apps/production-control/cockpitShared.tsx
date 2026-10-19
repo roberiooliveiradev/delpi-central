@@ -133,17 +133,25 @@ export function WorkCenterShiftMetrics({
 }
 
 /**
- * Tiles do posto sensorizado (Etapa 4): mesmos valores oficiais da API
- * diária MES — sempre "hoje" (dia civil SP), nunca rotulados como turno.
- * As paradas abrem a Atividade do posto, onde o operador classifica.
+ * Tiles do posto sensorizado (híbrido, ajuste pós-Etapa 4): eficiência e
+ * produzido continuam vindo do ERP (turno, mesmos valores do painel
+ * TOTVS); somente as paradas são medidas pelo sensor MES — sempre
+ * "hoje" (dia civil SP), nunca rotuladas como turno — e abrem a
+ * Atividade do posto, onde o operador classifica.
  * Lê o CockpitActivityContext — mesma consulta do cartão e da página.
  */
-export function MesDayMetrics({
-  onOpenActivity,
+export function MesShiftMetrics({
+  shiftLabel,
+  shiftPct,
+  shiftProducedQty,
   onOpenPerformance,
+  onOpenActivity,
 }: {
-  onOpenActivity: () => void;
+  shiftLabel: string;
+  shiftPct: number | null;
+  shiftProducedQty: number | null;
   onOpenPerformance: () => void;
+  onOpenActivity: () => void;
 }) {
   const { session } = useOperatorSession();
   const { data } = useCockpitActivity();
@@ -151,33 +159,38 @@ export function MesDayMetrics({
   const stopped = summary?.stoppedSeconds ?? null;
   const pending = summary?.pendingReasonCount ?? 0;
   const missing = Boolean(session) && summary == null;
+  const effTone = efficiencyTone(shiftPct);
+  const shiftLabelLower = shiftLabel.toLowerCase();
 
   return (
     <div
       className="pcp-pub__hero-metrics"
       role="group"
-      aria-label="Atividade do posto medida pelo sensor MES hoje"
+      aria-label="Eficiência do posto e paradas medidas pelo sensor MES"
     >
       <button
         type="button"
-        className="pcp-pub__hero-metric"
+        className={`pcp-pub__hero-metric pcp-pub__hero-metric--eff-${effTone}`}
         onClick={onOpenPerformance}
-        title="Tempo produzindo hoje — medido pelo sensor do posto (MES)"
+        title={`Eficiência do posto no ${shiftLabelLower} — apontamentos do ERP`}
       >
-        <span className="pcp-pub__hero-metric-label">Produzindo · hoje</span>
-        <strong className="pcp-pub__hero-metric-value">
-          {summary ? formatDurationHms(summary.producingSeconds) : "—"}
-        </strong>
+        <span className="pcp-pub__hero-metric-label">{shiftLabel}</span>
+        <strong className="pcp-pub__hero-metric-value">{formatPercent(shiftPct)}</strong>
       </button>
       <button
         type="button"
         className="pcp-pub__hero-metric"
-        onClick={onOpenActivity}
-        title="Tempo parado hoje — abre a Atividade do posto com as paradas reais"
+        onClick={onOpenPerformance}
+        title={`Peças produzidas no ${shiftLabelLower} — apontamentos do ERP`}
       >
-        <span className="pcp-pub__hero-metric-label">Parado · hoje</span>
+        <span className="pcp-pub__hero-metric-label">Produzido · turno</span>
         <strong className="pcp-pub__hero-metric-value">
-          {stopped != null ? formatDurationHms(stopped) : "—"}
+          {shiftProducedQty == null
+            ? "—"
+            : `${formatQty(shiftProducedQty)} ${formatUnit(
+                null,
+                shiftProducedQty,
+              )}`}
         </strong>
       </button>
       <button
@@ -187,12 +200,12 @@ export function MesDayMetrics({
         title={
           pending > 0
             ? `${pending} parada(s) aguardando motivo — toque para classificar`
-            : "Paradas registradas hoje — toque para ver a Atividade do posto"
+            : "Paradas medidas pelo sensor hoje — toque para ver a Atividade do posto"
         }
       >
         <span className="pcp-pub__hero-metric-label">Paradas · hoje</span>
         <strong className="pcp-pub__hero-metric-value">
-          {summary ? String(summary.stopCount) : "—"}
+          {stopped != null ? formatDurationHms(stopped) : "—"}
           {pending > 0 ? (
             <span className="pcp-pub__hero-metric-alert"> · {pending}!</span>
           ) : null}
@@ -200,7 +213,7 @@ export function MesDayMetrics({
       </button>
       {missing ? (
         <span className="pcp-pub__hero-metric-note">
-          Identifique-se para ver os dados reais do posto.
+          Identifique-se para ver as paradas medidas pelo sensor.
         </span>
       ) : null}
     </div>
