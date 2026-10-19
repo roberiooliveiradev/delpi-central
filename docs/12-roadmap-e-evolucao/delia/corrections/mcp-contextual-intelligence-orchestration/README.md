@@ -1,8 +1,8 @@
 # DÉLIA — Roadmap bounded · Inteligência contextual MCP e organização do orquestrador
 
-**DATA:** 2026-10-17
+**DATA:** 2026-10-19 (roadmap state refresh; original baseline remains historical)
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_R2_IMPLEMENTED_CANDIDATE_PENDING_INDEPENDENT_REVIEW / I03–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_REWORK_K2_K3_QUALITY_NEXT / I03–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -65,6 +65,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **Adaptive routing completion:** [21 — implemented slices and live evaluation](./21-adaptive-capability-routing-completion-implementation.md); [22 — independent ACCEPT_WITH_RESIDUAL review](./22-adaptive-capability-routing-independent-review.md). FAST telemetry only; OPERATIONAL functional; K2 usefulness and K3 topic relevance residuals; algorithm PARTIAL, I02 not accepted.
 
+**I02 K2/K3 next bounded implementation:** [23 — execution brief](./23-i02-k2-k3-quality-remediation-execution-brief.md). This is a task brief, not implementation or phase acceptance. K1 live pass with truncation preserved; K2 usefulness and K3 semantic topic relevance remain open.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -107,7 +109,7 @@ K3_OWNER_READ_REACHED=YES
 K1_K2_TEO_LIVE=FAIL_TIMEOUT
 I02_R3=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
 I02_R3A=EXPERIMENT_EVIDENCE_RECORDED
-I02_R3B=TYPED_MERGE_IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
+I02_R3B=IMPLEMENTED_ACCEPT_WITH_RESIDUAL
 I02_R3B_LIVE=EVIDENCE_RECORDED
 K1_TIMEOUT_EXACT_STAGE=arguments
 STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
@@ -117,7 +119,7 @@ LIVE_K1_R3B=PASS_WITH_LIMITATION
 LIVE_K2_R3B=PASS_WITH_LIMITATION
 LIVE_K3_R3B=PASS_WITH_LIMITATION
 ADAPTIVE_ROUTING_COMPLETION=PARTIAL
-ADAPTIVE_ROUTING_LIVE=EVIDENCE_RECORDED
+ADAPTIVE_ROUTING_LIVE=PASS_WITH_LIMITATION
 LIVE_K1_ACR=PASS_WITH_LIMITATION
 LIVE_K2_ACR=PASS_WITH_LIMITATION
 LIVE_K3_ACR=PASS_WITH_LIMITATION
