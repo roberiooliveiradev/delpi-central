@@ -40,6 +40,10 @@ import {
   DELIA_AUDIO_QA_BANNER,
   resolveAudioQaAdmission,
 } from "./audio/audioCaptureQaAdmission";
+import {
+  DELIA_AUDIO_TEST_BANNER,
+  resolveAudioTestAdmission,
+} from "./audio/audioCaptureTestAdmission";
 import { useCurrentUserIdentity } from "./identity/currentUser";
 
 /** Host props from Portal AppHost — presentation/transport only. */
@@ -84,10 +88,9 @@ const NEAR_BOTTOM_THRESHOLD_PX = 96;
 export default function App({
   getAccessToken,
   getWorkspaceContext,
-  permissions: _permissions,
+  permissions,
   isSuperadmin: _isSuperadmin,
 }: AppProps) {
-  void _permissions;
   void _isSuperadmin;
 
   // Demo mode is resolved once at mount — it is a dev/preview harness,
@@ -101,6 +104,15 @@ export default function App({
   const [audioQaAdmission] = useState(() =>
     resolveAudioQaAdmission(window.location.search),
   );
+  // Production-test admission — Core RBAC permission resolved backend-side
+  // and delivered via host props. Reactive (useMemo): revoking the grant
+  // flips `enabled` off and the recorder contract hard-cleans any capture
+  // in progress. Fail-closed when the projection is absent.
+  const audioTestAdmission = useMemo(
+    () => resolveAudioTestAdmission(permissions),
+    [permissions],
+  );
+  const audioAdmission = audioQaAdmission ?? audioTestAdmission;
   const userIdentity = useCurrentUserIdentity(getAccessToken);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
@@ -418,11 +430,15 @@ export default function App({
             />
           }
           banner={
-            demoScenario || audioQaAdmission ? (
+            demoScenario || audioQaAdmission || audioTestAdmission ? (
               <div className="delia-demo-banner" role="note">
                 {demoScenario ? DELIA_DEMO_BANNER : null}
-                {demoScenario && audioQaAdmission ? " " : null}
+                {demoScenario && (audioQaAdmission || audioTestAdmission)
+                  ? " "
+                  : null}
                 {audioQaAdmission ? DELIA_AUDIO_QA_BANNER : null}
+                {audioQaAdmission && audioTestAdmission ? " " : null}
+                {audioTestAdmission ? DELIA_AUDIO_TEST_BANNER : null}
               </div>
             ) : null
           }
@@ -443,9 +459,9 @@ export default function App({
                 loading={loading}
                 requestMode={requestMode}
                 onStop={handleStopResponse}
-                audioCaptureEnabled={audioQaAdmission != null}
-                audioCaptureMaxDurationMs={audioQaAdmission?.maxDurationMs}
-                audioCaptureMaxBytes={audioQaAdmission?.maxBytes}
+                audioCaptureEnabled={audioAdmission != null}
+                audioCaptureMaxDurationMs={audioAdmission?.maxDurationMs}
+                audioCaptureMaxBytes={audioAdmission?.maxBytes}
               />
             </>
           }

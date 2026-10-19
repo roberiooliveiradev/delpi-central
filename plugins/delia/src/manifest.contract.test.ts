@@ -31,11 +31,13 @@ describe("DÉLIA publication manifest contract", () => {
     expect(JSON.stringify(manifest)).not.toContain("minha-delpi-chat");
   });
 
-  it("declares only bootstrap visibility permission metadata", () => {
+  it("declares bootstrap visibility plus the bounded audio-test permission metadata", () => {
     const permissions = manifest.permissions as Array<{ code: string; module: string }>;
-    expect(permissions).toHaveLength(1);
+    expect(permissions).toHaveLength(2);
     expect(permissions[0].code).toBe("delia.access");
     expect(permissions[0].module).toBe("delia");
+    expect(permissions[1].code).toBe("delia.audio-capture.test");
+    expect(permissions[1].module).toBe("delia");
   });
 
   it("declares backend metadata without secrets", () => {
