@@ -66,3 +66,11 @@ Permitir **criação (POST)** e **atualização (PUT)** de fornecedores por inte
 - A cada mudança material de estado (investigação, contrato aprovado, implementação, testes, deploy, aceite), atualizar este handoff **e** as authorities/ledger aplicáveis no mesmo conjunto rastreável de commits/PR, com SHAs, evidências, estados PROVEN/TO_INVENTORY/PLANNED e PASS/FAIL/PENDING. Não alegar atualização sem commit confirmado.
 - Preservar `docs/integrations/protheus-rest-read.md` como contrato de leitura existente; não declarar POST/PUT implementados antecipadamente.
 - Não salvar senhas, tokens, PII nem payloads reais desnecessários.
+
+## Retomada — 2026-10-19: solicitação de implementação do POST
+
+**Intenção:** implementar o POST de fornecedor no boundary `api-delpi`; PUT continua fora do escopo desta etapa. **Situação factual:** `POST_NOT_IMPLEMENTED`, `CONTRACT_GATE=PENDING`. Não há autorização para escrita real em ERP nesta retomada.
+
+Reancoragem GitHub: `main` observada em `cca468a365bd592498caa0be8cb20c8e0a6f75fe`. O router `app/interface/http/routes/integrations/protheus_router.py` ainda contém somente status e GET por `supplier_id`; gateway/composer seguem READ. Pesquisa indexada por `codusr`, `PATH_SUPPLIERS`, `fornecedor POST`, `api/v1/suppliers` não trouxe resultados (zero search não prova ausência). Fonte canônica de campos SA2 permanece o playbook de auditoria, não um contrato REST de criação.
+
+**Gate para implementação efetiva:** obter especificação POST upstream versionada/confirmada pelo owner Protheus (payload, corpo com `fornecedor`, `codusr`, obrigatório/opcional, cenário de geração de código/loja, resposta/erros, idempotência). Depois, validar identidade autenticada do autor via Core e criar autorização WRITE específica; não aceitar `codusr` fornecido pelo cliente. Aplicar Clean Architecture, mocks, testes de 401/403/duplicidade/retry/timeout; feature flag fechada por default; proibir POST vivo até aprovação explícita. Caso contrato não esteja disponível, reportar `ARCHITECTURE_DECISION_REQUIRED` e solicitar contrato, sem inventar payload ou expor ERP.
