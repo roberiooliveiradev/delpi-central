@@ -113,10 +113,18 @@ export function useWorkCenterActivity({
           );
           setResult({ key, data: next, error: null });
         } catch (err) {
+          // Escopo vigente no momento da resposta — uma requisição lançada
+          // com sessão/CT antigos não pode produzir efeitos no atual.
+          const live = requestRef.current;
+          const stale =
+            key !==
+            scopeKey(live.token, live.sessionToken, live.branch, live.workCenter);
           if (isAuthError(err)) {
-            // 401: dados protegidos somem e a sessão local é invalidada.
+            // 401: dados protegidos somem e a sessão local é invalidada —
+            // apenas quando o 401 pertence ao escopo vigente; um 401 tardio
+            // de sessão/CT trocados não derruba a sessão atual.
             setResult({ key, data: null, error: null });
-            onAuthErrorRef.current?.(err);
+            if (!stale) onAuthErrorRef.current?.(err);
           } else {
             const status =
               err instanceof Error && "status" in err

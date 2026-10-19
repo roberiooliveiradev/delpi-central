@@ -91,7 +91,7 @@ function SummaryStrip({ data }: { data: MesWorkCenterTodayMes }) {
           pendingReasonCount > 0 ? " pcp-pub-activity__metric--pending" : ""
         }`}
       >
-        <dt>Sem motivo</dt>
+        <dt>Motivos pendentes</dt>
         <dd>{pendingReasonCount}</dd>
       </div>
     </dl>
@@ -180,7 +180,13 @@ function ActivityList({
                   {dt?.reasonLabel ??
                     (dt ? "Motivo não informado" : "Motivo não disponível")}
                   {pending ? (
-                    <span className="pcp-pub-activity__pending"> · sem motivo</span>
+                    <span className="pcp-pub-activity__pending">
+                      {" "}
+                      ·{" "}
+                      {dt?.reasonCode
+                        ? "aguardando confirmação"
+                        : "sem motivo"}
+                    </span>
                   ) : null}
                 </p>
               ) : null}
@@ -232,19 +238,19 @@ export function PostActivityPage({
   const [classifying, setClassifying] = useState<ClassifyTarget | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Relógio do servidor derivado do último referenceAt recebido — avaliado
-  // sob demanda (nunca no render), alimentando o timer da parada aberta.
-  const referenceAtRef = useRef<string | null>(null);
+  // Relógio do servidor: o offset é ANCORADO uma vez por resposta (no
+  // recebimento do referenceAt). Recalculá-lo a cada chamada congelaria o
+  // "agora" no referenceAt — o timer da parada aberta não avançaria.
+  const clockOffsetRef = useRef(0);
   useEffect(() => {
-    if (data) referenceAtRef.current = data.referenceAt;
-  }, [data]);
-  const serverNow = useCallback(() => {
-    const referenceAt = referenceAtRef.current;
-    const offset = referenceAt
-      ? serverClockOffsetMs(referenceAt, Date.now())
+    clockOffsetRef.current = data
+      ? serverClockOffsetMs(data.referenceAt, Date.now())
       : 0;
-    return serverNowMs(Date.now(), offset);
-  }, []);
+  }, [data]);
+  const serverNow = useCallback(
+    () => serverNowMs(Date.now(), clockOffsetRef.current),
+    [],
+  );
   const loadReasons = useCallback(() => fetchMesDowntimeReasons(token), [token]);
 
   const handleClassify = useCallback(

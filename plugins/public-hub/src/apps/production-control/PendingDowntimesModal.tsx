@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { PendingMesDowntime } from "./api";
-import { formatDurationHms, formatTimeHm } from "./runTimeline";
+import { formatDurationHms } from "./runTimeline";
+import { formatTimeHmSp } from "./workCenterActivity";
 
 type Props = {
   open: boolean;
@@ -78,7 +79,7 @@ export function PendingDowntimesModal({
               <li key={item.id} className="pcp-pub-pending__item">
                 <div className="pcp-pub-pending__info">
                   <strong>
-                    {item.startedAt ? formatTimeHm(item.startedAt) : "—"} ·{" "}
+                    {item.startedAt ? formatTimeHmSp(item.startedAt) : "—"} ·{" "}
                     {formatDurationHms(item.durationSeconds)}
                   </strong>
                   <span className="pcp-pub-pending__meta">
