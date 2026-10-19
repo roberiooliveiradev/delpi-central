@@ -15333,3 +15333,19 @@ NEXT_RELATED=DELIA-C3-COLD-CONVERSATIONAL-ADMISSION-AND-CONTINUITY-REWORK-01
 - **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.285 — DELIA-UX-AUDIO-RECORDER-DEPLOYMENT-DIAGNOSTIC-AND-QA-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-AUDIO-RECORDER-DEPLOYMENT-DIAGNOSTIC-AND-QA-01`. **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **EVIDENCE:** [audio-recorder-deployment-diagnostic-01](audio-recorder-deployment-diagnostic-01/deployment-diagnostic-evidence.md). **BASE:** `1ab2707546` local / `eca913e4f8` origin (divergência concorrente; plugins/delia inalterado desde `1a95344d54`).
+
+- **ROOT_CAUSE:** `WORKING_AS_DESIGNED` — `minhadelpi.com.br` serve `App-CXTCxdME.js` compilado com `VITE_DELIA_AUDIO_QA:""` + `DEV:false` → `isAudioQaBundleAllowed=false` → `?delia-audio-qa=1` inerte → mic OFF. Sem defeito de código.
+- **PROOF (não só HTTP 200):** remoteEntry prod → expose `App-C0W0ZD32` → App chunk contém admission module completo (param, banner, limites 6e4/256e3, wiring `audioCaptureEnabled`/`canSendAudio`); remote plugin-ui prod `Index-Bzru-gee.js` (hash idêntico ao build local) contém `AudioRecorderControl`. Diff token prod-vs-local build = 0.9899, único delta semântico = env flag.
+- **DEPLOYED_SHA ≥ `1a95344d54`** (admission introduzido nesse commit; plugins/delia sem commits posteriores).
+- **CACHE/CDN:** Cloudflare `BYPASS` + `no-store` — assets frescos.
+- **NO_CODE_FIX:** `CODE_FIX_REQUIRED=NO` — nenhuma modificação de código; produção permanece OFF por design.
+- **QA ENV:** nenhum host QA/staging existe na infra; ambiente autorizado = stack dev local `http://localhost/apps/delia?delia-audio-qa=1` (imagem `infra-delia` com flag QA). Suite AU-F05 reexecutada: **16/16 PASS** (full page + dock).
+- **RESIDUAIS:** `HUMAN_SPEECH_PLAYBACK=TEST_NOT_RUN`; PM remoto requer decisão de deploy QA hospedado; SHA deployado exato não assinado (prova por conteúdo).
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_FEATURE_GATE=OFF`; `PHASE_PROGRESSION=NONE`.
+
+NEXT=INDEPENDENT_REVIEW → decisão PM: testar no stack local OU requisitar ambiente QA hospedado
