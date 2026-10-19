@@ -59,6 +59,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3B authenticated live outcome:** [19 — live K1/K2/K3 validation](./19-i02r3b-authenticated-live-outcome-validation.md). Runtime already contained R3-B; K1 TEO methodology READ in 21469ms with typed merge (no separate `turn_goal`); K2 continuity without owner reinvoke; K3 VISTA INDEX→topic→guidance. `I02_ACCEPTED=NO` until coordination review.
 
+**I02-R3B live validated:** [19 — authenticated K1/K2/K3](./19-i02r3b-authenticated-live-outcome-validation.md), independently reviewed in [20 — ACCEPT_WITH_RESIDUAL](./20-i02r3b-independent-live-outcome-review.md). K1 TÉO methodology READ in 21.469s; K2 output short (48 chars), K3 topic relevance partial. No causal A/B or p95; I02 still REWORK.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
