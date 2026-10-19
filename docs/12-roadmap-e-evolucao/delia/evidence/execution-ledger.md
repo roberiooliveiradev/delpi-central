@@ -15890,3 +15890,41 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_Q02_A_REVIEW
 ```
+
+
+## §6.316 — Independent Q02-A review: REWORK, one bounded rework authorized
+
+**DATE:** 2026-10-19. **REVIEWED_EXECUTION_SHA:** `7e62894e2faa6a1b9c3fc348546f91c1a8112272`, base `38342414f57071d8e6f6d588454311c3663304a1`; orchestration blob `9d82c34bb6ac71807bc7d1c249df9982a2b18c3f`. **COORDINATION_REVIEW:** [roadmap 59 §8](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md) is the single authoritative detailed finding; no parallel ADR/roadmap/inventory. Source/diff/test assertions inspected directly on GitHub; GPT did not run pytest or perform live SSH. Executor reported full suite 1664/1664 PASS, material ACT 0 and live tests not run. **VERDICT = REWORK**, NOT PHASE ACCEPTANCE; one bounded Q02-A rework allowed under 59 §4 and Product Master Option B only.
+
+**Factual advances:** removed coverage, guidance, prior transform and index-relevance lexical classifiers in `orchestration.py` (−345 net lines) and used existing `InvokeModel/_propose`, typed admission/goal/group/capability, live membership; model queried on singleton when proposal available; prior topic change no longer auto-skips admission. Existing Core/Domain/AuthZ/Policy/schema/provenance/selection-only/PREPARE/ACT preserved in reviewed diff, not runtime certified. New group-selection prompt semantic descriptions should be tested against real model/holdouts instead of treated as C02 proof.
+
+**Independent blocking gaps:**
+1. New C02/SIPOC/renamed provider tests preprogram correct model outputs. `FakeProposalModel` proves plumbing, **not** real LLM selecting VISTA over DAVI/TÉO nor useful SIPOC/hypothetical responses; `LIVE_EVAL=TEST_NOT_RUN`.
+2. Existing `test_k3_no_relevant_topic_clarifies_without_nested_read` removed `filled_reads == []` and now allows successful calls with a semantically irrelevant but valid owner topic; `test_k2_short_but_sufficient_limitation_ask_not_expanded` allows unintended checklist dump; K2 short/incomplete probes retarget to already-complete fake selections. This weakens outcome negatives without functional replacement, contrary to §6.315 assertion "no weakened negatives". Semantic wrong-choice evaluation must be via real model or meaningful task outcome oracle, **not** reinstall lexical score/veto or heuristic Python intelligence.
+3. `_select_group()` still implicitly picks sole group when model proposal is `None`, not justified relevance; explicit false-only singleton tests miss this. Correct/bound if demonstrably leads to inappropriate live selection; no second planner.
+4. `unique_structural_ticket_list_capability` in preexisting paginated_result_semantics.py still uses lexical intent and is **not** proof all semantic heuristics removed; respect Q02-A bounded scope/contract gate and disclose residual. No broad external helper refactor authorized.
+
+**BOUNDED TASK:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01`. Update meaningful negative/positive evals, avoid test laundering, assess/fix model-absent singleton route and preserve governed business outcome. Real-model authorized read-only matrix with C02 cold+2warm/SIPOC/hypothetical/DAVI/TÉO/VISTA/OpenAPI/no-tool, semantic/provider metamorphic holdouts, injection/fake ids, full 30s, zero ACT, exact SHA/config. Deployment into production is **NOT** authorized by this decision. If tests require legitimate identity/runbook/model access, use `TEST_NOT_RUN`; no false PASS. Maintain `EXISTING_EQUIVALENT=YES; REUSE_DECISION=REUSE|EXTEND`, 58 and frozen §6.145. No new port, planner, engine, model-factual-prose channel or new contracts. After exactly one rework and one coordination review, unsolved material failures → STOP/root cause/owner/Product Master rather than further task proliferation.
+
+```text
+Q02_A_IMPLEMENTATION_EXECUTED=YES
+Q02_A_INDEPENDENT_REVIEW=REWORK
+Q02_A_REWORK_AUTHORIZED=YES_ONCE
+Q02_A_REWORK_REMAINING=1
+REAL_MODEL_C02_OUTCOME=TEST_NOT_RUN
+MODEL_CALL_PERFORMANCE=TEST_NOT_RUN
+FULL_BACKEND_TESTS=PASS_EXECUTOR_REPORTED_1664
+TEST_COVERAGE_REGRESSION=PROVEN_STATIC
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=ONE_BOUNDED_Q02_A_REWORK_THEN_INDEPENDENT_REVIEW
+```
