@@ -49,8 +49,6 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3A — experimentos controlados:** [15 — budget and critical-path experiments](./15-i02r3a-controlled-budget-and-critical-path-experiments.md). E0–E5 sintéticos: cap 10 antecipa falha; headroom opt-in só honest skip; E3–E5 sem merge/bypass default; produção inalterada.
 
-**I02-R3 independent review + architecture direction:** [14 — diagnosis accepted, staged budget experiment and critical-path gate](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md). K1 `arguments` timeout PROVEN; arbitrary 10s global stage cap NOT approved as functional fix. I02 remains REWORK.
-
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -91,9 +89,12 @@ LATENCY_ROOT_CAUSE=PROVEN
 PERFORMANCE_FIX_IMPLEMENTED=YES_INDEX_PROBE_HEADROOM
 K3_OWNER_READ_REACHED=YES
 K1_K2_TEO_LIVE=FAIL_TIMEOUT
-I02_R3=CONSULTANT_EVIDENCE_RECORDED
+I02_R3=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
+I02_R3A=EXPERIMENT_EVIDENCE_RECORDED
 K1_TIMEOUT_EXACT_STAGE=arguments
-NEXT=I02_R3A_BOUNDED_BUDGET_EXPERIMENT_AND_CRITICAL_PATH_EVIDENCE
+STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
+ARGUMENTS_HEADROOM_PRODUCTION_DEFAULT=OFF
+NEXT=COORDINATION_REVIEW_OF_R3A_EVIDENCE
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
