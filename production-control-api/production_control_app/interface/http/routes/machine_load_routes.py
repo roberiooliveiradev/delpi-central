@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Query, Request
+from fastapi import APIRouter, Body, Header, Query, Request
 from pydantic import BaseModel, Field
 
 from production_control_app.application.services.machine_load_service import (
@@ -11,6 +11,7 @@ from production_control_app.application.services.machine_load_service import (
 from production_control_app.composition.pc_composer import (
     build_machine_load_cockpit_status_service,
     build_machine_load_service,
+    build_pcp_process_issue_service,
 )
 from production_control_app.core.responses import fail, ok
 from production_control_app.domain.services.machine_load_optimization import (
@@ -20,7 +21,11 @@ from production_control_app.domain.errors import (
     BranchAccessDenied,
     DelpiGatewayError,
     InvalidBranch,
+    MachineLoadOperationNotFound,
     MachineLoadSequenceConflict,
+    RequestsGatewayRejected,
+    RequestsGatewayUnauthorized,
+    RequestsGatewayUnavailable,
     SequencingProfileInvalid,
     SnapshotNotFound,
 )
@@ -124,10 +129,16 @@ def _handle_machine_load_errors(exc: Exception):
         return fail(str(exc), 403)
     if isinstance(exc, PermissionError):
         return fail(str(exc), 403)
-    if isinstance(exc, SnapshotNotFound):
+    if isinstance(exc, (SnapshotNotFound, MachineLoadOperationNotFound)):
         return fail(str(exc), 404)
     if isinstance(exc, MachineLoadSequenceConflict):
         return fail(str(exc), 409)
+    if isinstance(exc, RequestsGatewayUnauthorized):
+        return fail(str(exc), 403)
+    if isinstance(exc, RequestsGatewayRejected):
+        return fail(str(exc), 422)
+    if isinstance(exc, RequestsGatewayUnavailable):
+        return fail(str(exc), 502)
     if isinstance(exc, SequencingProfileInvalid):
         return fail(str(exc), 422)
     if isinstance(exc, ValueError):
@@ -725,3 +736,54 @@ def locate_machine_load(
     except Exception as exc:
         return _handle_machine_load_errors(exc)
     return ok(data)
+
+
+class ReportProcessIssueBody(BaseModel):
+    """Solicitação de correção a Processos aberta pela Carga Máquina (PCP).
+
+    A identidade do analista nunca vem do payload — é resolvida do JWT no
+    backend. Filial e CT são revalidados contra a fila WORKING vigente.
+    """
+
+    work_center: str = Field(..., min_length=1, max_length=20)
+    production_order: str = Field(..., min_length=1, max_length=30)
+    operation_code: str = Field(..., min_length=1, max_length=10)
+    issue_code: str = Field(..., min_length=1, max_length=60)
+    tool_code: str | None = Field(default=None, max_length=60)
+    material_code: str | None = Field(default=None, max_length=60)
+    note: str | None = Field(default=None, max_length=500)
+
+
+@router.post("/machine-load/process-issues")
+def create_machine_load_process_issue(
+    request: Request,
+    body: ReportProcessIssueBody = Body(...),
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+    idempotency_key: str = Header(
+        ...,
+        alias="Idempotency-Key",
+        description="Chave da tentativa lógica — deduplica retries/dup clique",
+    ),
+):
+    """Abre uma solicitação process-issue em nome do analista autenticado.
+
+    Somente registra o chamado no fluxo existente de Processos — não altera
+    sequenciamento, execução nem dados do TOTVS.
+    """
+    user = resolve_user(request)
+    try:
+        data = build_pcp_process_issue_service().report(
+            user,
+            branch=branch,
+            work_center=body.work_center,
+            production_order=body.production_order,
+            operation_code=body.operation_code,
+            issue_code=body.issue_code,
+            tool_code=body.tool_code,
+            material_code=body.material_code,
+            note=body.note,
+            idempotency_key=idempotency_key,
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data, message=data.get("message") or "OK", status_code=201)

@@ -48,6 +48,8 @@ export type ProcessIssuePayloadView = {
 
   operatorCode: string | null;
   operatorName: string | null;
+  /** Nome do analista PCP que abriu a solicitação (source=pcp_portal). */
+  requesterName: string | null;
 
   productionOrder: string | null;
   operationCode: string | null;
@@ -103,6 +105,7 @@ export function parseProcessIssuePayload(
   const root = asRecord(payload);
   const issue = asRecord(root.issue);
   const operator = asRecord(root.operator);
+  const requester = asRecord(root.requester);
   const operation = asRecord(root.operation);
   const issueCode = text(issue.code);
 
@@ -120,6 +123,7 @@ export function parseProcessIssuePayload(
 
     operatorCode: text(operator.code),
     operatorName: text(operator.name),
+    requesterName: text(requester.name),
 
     productionOrder: text(operation.productionOrder),
     operationCode: text(operation.operationCode),

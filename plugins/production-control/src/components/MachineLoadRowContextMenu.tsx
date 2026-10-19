@@ -3,7 +3,7 @@ import {
   ContextMenuItem,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
-import { ArrowUpToLine, CalendarOff, Folders, Group, ListChecks, MoveRight, Route, X } from "lucide-react";
+import { ArrowUpToLine, CalendarOff, ClipboardPenLine, Folders, Group, ListChecks, MoveRight, Route, X } from "lucide-react";
 
 import { copy } from "../content/copy";
 import type { MachineLoadOperation } from "../types";
@@ -24,6 +24,8 @@ type Props = {
   onTransferConjunto: (operation: MachineLoadOperation) => void;
   /** Abre a escolha do centro de trabalho de destino desta operação (item). */
   onTransferOperation: (operation: MachineLoadOperation) => void;
+  /** Abre o modal de solicitação de correção a Processos desta operação. */
+  onReportProcessIssue?: (operation: MachineLoadOperation) => void;
   prioritizeDisabled?: boolean;
   withdrawDisabled?: boolean;
   transferDisabled?: boolean;
@@ -59,6 +61,7 @@ export function MachineLoadRowContextMenu({
   onWithdrawConjunto,
   onTransferConjunto,
   onTransferOperation,
+  onReportProcessIssue,
   prioritizeDisabled = false,
   withdrawDisabled = false,
   transferDisabled = false,
@@ -211,6 +214,20 @@ export function MachineLoadRowContextMenu({
         onSelect={() => {
           if (!operation) return;
           onTransferOperation(operation);
+          onClose();
+        }}
+      />
+      <ContextMenuItem
+        label={
+          hasOperation
+            ? copy.machineLoad.rowActions.processIssue
+            : copy.machineLoad.rowActions.processIssueDisabled
+        }
+        icon={ClipboardPenLine}
+        disabled={!hasOperation}
+        onSelect={() => {
+          if (!operation) return;
+          onReportProcessIssue?.(operation);
           onClose();
         }}
       />

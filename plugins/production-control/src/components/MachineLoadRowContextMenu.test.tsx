@@ -46,6 +46,21 @@ describe("MachineLoadRowContextMenu — modo individual", () => {
     expect(screen.queryByRole("menuitem", { name: /operações selecionadas/i })).toBeNull();
   });
 
+  it("oferece «Solicitar correção a Processos» e repassa a operação clicada", () => {
+    const onReportProcessIssue = vi.fn();
+    const onClose = vi.fn();
+    const props = makeProps({ onReportProcessIssue, onClose });
+    render(<MachineLoadRowContextMenu {...props} />);
+
+    const item = screen.getByRole("menuitem", {
+      name: /Solicitar correção a Processos/i,
+    });
+    fireEvent.click(item);
+
+    expect(onReportProcessIssue).toHaveBeenCalledWith(operation);
+    expect(onClose).toHaveBeenCalled();
+  });
+
   it("uma única operação selecionada ainda mostra o menu individual", () => {
     const props = makeProps({ selectionCount: 1, onClearSelection: vi.fn() });
     render(<MachineLoadRowContextMenu {...props} />);
@@ -70,8 +85,10 @@ describe("MachineLoadRowContextMenu — modo coletivo", () => {
     expect(transfer).toHaveProperty("disabled", true);
     expect(withdraw).toHaveProperty("disabled", true);
 
-    // Menu individual não aparece no modo coletivo.
+    // Menu individual não aparece no modo coletivo — e a abertura de
+    // chamado a Processos é sempre unitária (nunca em lote).
     expect(screen.queryByRole("menuitem", { name: /Rastrear produção do conjunto/i })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /Solicitar correção a Processos/i })).toBeNull();
   });
 
   it("transferir e retirar a seleção executam os callbacks coletivos", () => {

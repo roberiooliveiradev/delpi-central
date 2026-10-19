@@ -1,5 +1,6 @@
 import { httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPut, httpPutFormData, ppcApiUrl, unwrapEnvelope } from "./httpClient";
 import type {
+  MachineLoadProcessIssueResult,
   DeliveryMapPayload,
   DeliveryMapProgressPayload,
   DemandPayload,
@@ -1170,4 +1171,44 @@ export async function fetchMachineLoadWorkCenters(params: {
     signal: params.signal,
   });
   return unwrapEnvelope(envelope, "Não foi possível carregar os centros de trabalho.");
+}
+
+/** Abre uma solicitacao de correcao a Processos para a operacao clicada. */
+export async function createMachineLoadProcessIssue(params: {
+  branch: string;
+  workCenter: string;
+  productionOrder: string;
+  operationCode: string;
+  issueCode: string;
+  toolCode?: string | null;
+  materialCode?: string | null;
+  note?: string | null;
+  idempotencyKey: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadProcessIssueResult> {
+  const search = new URLSearchParams({ branch: params.branch });
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadProcessIssueResult;
+  }>(
+    ppcApiUrl(`/machine-load/process-issues?${search.toString()}`),
+    {
+      work_center: params.workCenter,
+      production_order: params.productionOrder,
+      operation_code: params.operationCode,
+      issue_code: params.issueCode,
+      tool_code: params.toolCode ?? null,
+      material_code: params.materialCode ?? null,
+      note: params.note ?? null,
+    },
+    {
+      signal: params.signal,
+      headers: { "Idempotency-Key": params.idempotencyKey },
+    },
+  );
+  return unwrapEnvelope(
+    envelope,
+    "Nao foi possivel enviar a solicitacao para Processos.",
+  );
 }

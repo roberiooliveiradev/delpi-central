@@ -24,11 +24,13 @@ import { MachineLoadRowContextMenu } from "../components/MachineLoadRowContextMe
 import { MachineLoadStatusCell } from "../components/MachineLoadStatusCell";
 import { OperatorFeedbackInbox } from "../components/OperatorFeedbackInbox";
 import { MachineLoadTransferModal, type MachineLoadTransferMode } from "../components/MachineLoadTransferModal";
+import { ProcessIssueModal } from "../components/ProcessIssueModal";
 import { MachineLoadWithdrawnModal } from "../components/MachineLoadWithdrawnModal";
 import { OperatorCockpitLinkButton } from "../components/OperatorCockpitLinkButton";
 import { usePpcConfirm } from "../components/PpcConfirmDialogProvider";
 import { PpcWorkspaceHeader } from "../components/PpcWorkspaceHeader";
 import {
+  createMachineLoadProcessIssue,
   fetchMachineLoadLocate,
   optimizeMachineLoadSequence,
   patchMachineLoadSequence,
@@ -43,6 +45,14 @@ import {
 } from "../api/ppcApi";
 import { httpErrorStatus } from "../api/httpClient";
 import { copy } from "../content/copy";
+import {
+  beginProcessIssueAttempt,
+  processIssueConfirmationMessage,
+  processIssueSubmitErrorMessage,
+  submitKeyForDraft,
+  type ProcessIssueAttempt,
+  type ProcessIssueDraft,
+} from "../content/processIssue";
 import { helpTooltips } from "../content/helpTooltips";
 import { useMachineLoad } from "../hooks/useMachineLoad";
 import { useMachineLoadOperationSelection } from "../hooks/useMachineLoadOperationSelection";
@@ -179,6 +189,14 @@ export function MachineLoadPage({
   const [optimizationModalOpen, setOptimizationModalOpen] = useState(false);
   const [optimizationError, setOptimizationError] = useState<string | null>(null);
   const [transferOperation, setTransferOperation] = useState<MachineLoadOperation | null>(null);
+  const [processIssueOperation, setProcessIssueOperation] = useState<MachineLoadOperation | null>(null);
+  // Filial congelada na abertura: trocar de filial com o modal aberto não
+  // envia o chamado com contexto misto (o backend também revalida).
+  const [processIssueBranch, setProcessIssueBranch] = useState<string | null>(null);
+  const [processIssueBusy, setProcessIssueBusy] = useState(false);
+  const [processIssueError, setProcessIssueError] = useState<string | null>(null);
+  // Tentativa lógica do modal aberto: 1 key por tentativa, retry reutiliza.
+  const processIssueAttemptRef = useRef<ProcessIssueAttempt | null>(null);
   const [transferMode, setTransferMode] = useState<MachineLoadTransferMode>("operation");
   const [transferSelectionOpen, setTransferSelectionOpen] = useState(false);
   const [hideFinished, setHideFinished] = useState(readHideFinishedPreference);
@@ -663,6 +681,73 @@ export function MachineLoadPage({
       }
     },
     [applyPayload, branch, history, selectedCenter, sequenceBusy],
+  );
+
+  // Solicitação de correção a Processos — só registra o chamado; a fila,
+  // a execução e o TOTVS não são tocados por este fluxo.
+  const openProcessIssue = useCallback(
+    (operation: MachineLoadOperation) => {
+      processIssueAttemptRef.current = beginProcessIssueAttempt();
+      setProcessIssueError(null);
+      setProcessIssueBranch(branch);
+      setProcessIssueOperation(operation);
+    },
+    [branch],
+  );
+
+  const closeProcessIssue = useCallback(() => {
+    if (processIssueBusy) return;
+    processIssueAttemptRef.current = null;
+    setProcessIssueError(null);
+    setProcessIssueBranch(null);
+    setProcessIssueOperation(null);
+  }, [processIssueBusy]);
+
+  const submitProcessIssue = useCallback(
+    async (draft: ProcessIssueDraft) => {
+      const operation = processIssueOperation;
+      const issueBranch = processIssueBranch;
+      if (!operation || !issueBranch || processIssueBusy) return;
+      if (!processIssueAttemptRef.current) {
+        processIssueAttemptRef.current = beginProcessIssueAttempt();
+      }
+      const { attempt, key } = submitKeyForDraft(
+        processIssueAttemptRef.current,
+        draft,
+      );
+      processIssueAttemptRef.current = attempt;
+      setProcessIssueBusy(true);
+      setProcessIssueError(null);
+      try {
+        const result = await createMachineLoadProcessIssue({
+          branch: issueBranch,
+          workCenter: operation.work_center,
+          productionOrder: operation.production_order,
+          operationCode: operation.operation_code,
+          issueCode: draft.issueCode,
+          toolCode: draft.toolCode,
+          materialCode: draft.materialCode,
+          note: draft.note,
+          idempotencyKey: key,
+        });
+        processIssueAttemptRef.current = null;
+        setProcessIssueOperation(null);
+        setProcessIssueBranch(null);
+        setSequenceNotice(
+          processIssueConfirmationMessage(result.requestNumber),
+        );
+      } catch (err: unknown) {
+        setProcessIssueError(
+          processIssueSubmitErrorMessage(
+            httpErrorStatus(err),
+            err instanceof Error ? err.message : null,
+          ),
+        );
+      } finally {
+        setProcessIssueBusy(false);
+      }
+    },
+    [processIssueBranch, processIssueBusy, processIssueOperation],
   );
 
   // E4 — ações coletivas: o backend é autoridade (lote atômico, expected_keys,
@@ -1662,6 +1747,7 @@ export function MachineLoadPage({
           setTransferMode("operation");
           setTransferOperation(operation);
         }}
+        onReportProcessIssue={openProcessIssue}
         prioritizeDisabled={sequenceBusy}
         withdrawDisabled={sequenceBusy}
         transferDisabled={sequenceBusy}
@@ -1703,6 +1789,15 @@ export function MachineLoadPage({
         busy={sequenceBusy}
         onClose={() => setTransferSelectionOpen(false)}
         onConfirm={(target) => void sendSelectedToWorkCenter(target)}
+      />
+
+      <ProcessIssueModal
+        open={Boolean(processIssueOperation)}
+        operation={processIssueOperation}
+        busy={processIssueBusy}
+        error={processIssueError}
+        onClose={closeProcessIssue}
+        onSubmit={(draft) => void submitProcessIssue(draft)}
       />
 
       <MachineLoadOptimizationModal

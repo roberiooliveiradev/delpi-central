@@ -5677,3 +5677,128 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Solicitacao de correcao a Processos (Carga Maquina -> process-issue) */
+.dashboard-production-control .ppc-process-issue {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px 8px;
+}
+
+.dashboard-production-control .ppc-process-issue__lead {
+  margin: 0;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-process-issue__context {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--ppc-border);
+  border-left: 3px solid var(--ppc-accent);
+  border-radius: var(--ppc-radius);
+  font-size: var(--ppc-font-sm);
+  background: var(--ppc-surface);
+}
+
+.dashboard-production-control .ppc-process-issue__context-row {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-process-issue__context-row dt {
+  flex: 0 0 130px;
+  color: var(--ppc-text-muted);
+  font-weight: 600;
+}
+
+.dashboard-production-control .ppc-process-issue__context-row dd {
+  margin: 0;
+  color: var(--ppc-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-production-control .ppc-process-issue__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-production-control .ppc-process-issue__field-label {
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  color: var(--ppc-text);
+}
+
+.dashboard-production-control .ppc-process-issue__input,
+.dashboard-production-control .ppc-process-issue__textarea {
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text);
+  padding: 8px 10px;
+  border: 1px solid var(--ppc-border);
+  border-radius: var(--ppc-radius);
+  background: var(--ppc-surface);
+  resize: vertical;
+}
+
+.dashboard-production-control .ppc-process-issue__input:focus,
+.dashboard-production-control .ppc-process-issue__textarea:focus {
+  outline: 2px solid var(--ppc-accent);
+  outline-offset: 1px;
+}
+
+.dashboard-production-control .ppc-process-issue__disclaimer {
+  margin: 0;
+  font-size: var(--ppc-font-sm);
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-process-issue__error {
+  margin: 0;
+  font-size: var(--ppc-font-sm);
+  font-weight: 600;
+  color: var(--ppc-attention);
+}
+
+.dashboard-production-control .ppc-process-issue__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-production-control .ppc-process-issue__cancel,
+.dashboard-production-control .ppc-process-issue__confirm {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: var(--ppc-font-sm);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.dashboard-production-control .ppc-process-issue__cancel {
+  border: 1px solid var(--ppc-border);
+  background: transparent;
+  color: var(--ppc-text-muted);
+}
+
+.dashboard-production-control .ppc-process-issue__confirm {
+  border: 1px solid transparent;
+  background: var(--ppc-accent);
+  color: #ffffff;
+}
+
+.dashboard-production-control .ppc-process-issue__cancel:disabled,
+.dashboard-production-control .ppc-process-issue__confirm:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

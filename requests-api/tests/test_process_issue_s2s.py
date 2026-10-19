@@ -373,3 +373,68 @@ def test_s2s_happy_path_returns_request(monkeypatch):
     assert call["branch_code"] == "02"
     assert call["idempotency_key"] == key
     assert call["payload"]["issue"]["code"] == "tool_not_linked"
+
+
+# --- variante pcp_portal (extensão PCP — criação autenticada) ----------------
+
+
+def _pcp_payload(**overrides):
+    """Snapshot da solicitação aberta pelo analista no Portal PCP."""
+    base = {
+        "source": "pcp_portal",
+        "reportedAt": "2026-10-08T12:00:00+00:00",
+        "issue": {
+            "code": "process_information_missing",
+            "note": "Roteiro sem tempo padrão nesta operação.",
+        },
+        "requester": {"name": "Analista PCP"},
+        "operation": {
+            "productionOrder": "24640401002",
+            "operationCode": "03",
+            "description": "MONTAGEM",
+            "reportedWorkCenter": "CT-63",
+            "workCenterName": "Montagem 03",
+            "productCode": "10045678",
+            "paProductCode": "90264238",
+            "toolSnapshot": "F99999",
+        },
+        "materialsSnapshotAvailable": False,
+        "materials": [],
+    }
+    base.update(overrides)
+    return base
+
+
+def test_validator_accepts_pcp_portal_payload():
+    ProcessIssuePayloadValidator().validate(_pcp_payload())
+
+
+def test_validator_rejects_pcp_portal_without_requester():
+    payload = _pcp_payload()
+    payload.pop("requester")
+    with pytest.raises(ApplicationError):
+        ProcessIssuePayloadValidator().validate(payload)
+
+
+def test_validator_rejects_pcp_portal_with_operator_identity():
+    """Origem PCP nunca carrega identidade de operador como autoridade."""
+    payload = _pcp_payload()
+    payload.pop("requester")
+    payload["operator"] = {"code": "000001", "name": "Burlado"}
+    with pytest.raises(ApplicationError):
+        ProcessIssuePayloadValidator().validate(payload)
+
+
+def test_validator_rejects_unknown_source():
+    payload = _pcp_payload(source="portal_livre")
+    with pytest.raises(ApplicationError):
+        ProcessIssuePayloadValidator().validate(payload)
+
+
+def test_operator_cockpit_still_rejects_requester_only():
+    """A variante do operador continua exigindo identidade de operador."""
+    payload = _payload()
+    payload.pop("operator")
+    payload["requester"] = {"name": "Analista"}
+    with pytest.raises(ApplicationError):
+        ProcessIssuePayloadValidator().validate(payload)

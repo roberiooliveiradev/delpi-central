@@ -336,3 +336,125 @@ def test_payload_edit_respects_branch(harness):
         )
     assert exc.value.status_code == 403
     assert exc.value.code == "branch_forbidden"
+
+
+# --- origem pcp_portal: criação autenticada pelo analista --------------------
+
+
+def _pcp_payload(**overrides):
+    base = {
+        "source": "pcp_portal",
+        "reportedAt": "2026-10-08T12:00:00+00:00",
+        "issue": {"code": "tool_not_linked", "reportedToolCode": "F12345"},
+        "requester": {"name": "Analista PCP"},
+        "operation": {
+            "productionOrder": "24640401002",
+            "operationCode": "03",
+            "reportedWorkCenter": "CT-02",
+        },
+        "materialsSnapshotAvailable": False,
+        "materials": [],
+    }
+    base.update(overrides)
+    return base
+
+
+def _pcp_analyst(*branches: str):
+    return _user(
+        user_id="u-pcp-analyst",
+        permissions=[
+            "my-requests.access",
+            "my-requests.process-issue.create",
+            *[f"my-requests.view.filial-{b}" for b in branches],
+        ],
+    )
+
+
+def test_pcp_portal_create_persists_real_user_identity(harness):
+    """AC-06: created_by é o usuário autenticado — nunca identidade externa."""
+    types, requests, idem = harness
+    created = CreateRequestUseCase(types, requests, idem).execute(
+        user=_pcp_analyst("02"),
+        type_code=PROCESS_ISSUE_TYPE_CODE,
+        payload=_pcp_payload(),
+        branch_code="02",
+        idempotency_key=str(uuid4()),
+    )
+
+    assert created["created_by_user_id"] == "u-pcp-analyst"
+    assert created["created_by_name"] == "Usuário Teste"
+    assert created["branch_code"] == "02"
+    assert created["payload"]["source"] == "pcp_portal"
+
+
+def test_pcp_portal_create_requires_create_permission(harness):
+    """AC-07: sem my-requests.process-issue.create a criação é negada."""
+    types, requests, idem = harness
+    user = _user(
+        user_id="u-sem-perm",
+        permissions=["my-requests.access", "my-requests.view.filial-02"],
+    )
+    with pytest.raises(ApplicationError) as exc:
+        CreateRequestUseCase(types, requests, idem).execute(
+            user=user,
+            type_code=PROCESS_ISSUE_TYPE_CODE,
+            payload=_pcp_payload(),
+            branch_code="02",
+            idempotency_key=str(uuid4()),
+        )
+    assert exc.value.status_code == 403
+
+
+def test_pcp_portal_create_requires_branch_scope(harness):
+    """AC-07: filial fora do escopo do analista é negada."""
+    types, requests, idem = harness
+    with pytest.raises(ApplicationError) as exc:
+        CreateRequestUseCase(types, requests, idem).execute(
+            user=_pcp_analyst("01"),
+            type_code=PROCESS_ISSUE_TYPE_CODE,
+            payload=_pcp_payload(),
+            branch_code="02",
+            idempotency_key=str(uuid4()),
+        )
+    assert exc.value.status_code == 403
+
+
+def test_pcp_portal_create_is_idempotent(harness):
+    """AC-10: mesma Idempotency-Key + mesmo ator = mesma solicitação."""
+    types, requests, idem = harness
+    key = str(uuid4())
+    use_case = CreateRequestUseCase(types, requests, idem)
+    first = use_case.execute(
+        user=_pcp_analyst("02"),
+        type_code=PROCESS_ISSUE_TYPE_CODE,
+        payload=_pcp_payload(),
+        branch_code="02",
+        idempotency_key=key,
+    )
+    second = use_case.execute(
+        user=_pcp_analyst("02"),
+        type_code=PROCESS_ISSUE_TYPE_CODE,
+        payload=_pcp_payload(),
+        branch_code="02",
+        idempotency_key=key,
+    )
+    assert first["id"] == second["id"]
+    assert len(requests._requests) == 1
+
+
+def test_pcp_portal_enters_process_queue(harness):
+    """AC-08: a fila de Processos recebe a solicitação da origem PCP."""
+    types, requests, idem = harness
+    CreateRequestUseCase(types, requests, idem).execute(
+        user=_pcp_analyst("02"),
+        type_code=PROCESS_ISSUE_TYPE_CODE,
+        payload=_pcp_payload(),
+        branch_code="02",
+        idempotency_key=str(uuid4()),
+    )
+    queue = ListWorkQueueRequestsUseCase(types, requests).execute(
+        user=_process_analyst("02"),
+    )
+    items = [i for i in queue["items"] if i["type_code"] == PROCESS_ISSUE_TYPE_CODE]
+    assert len(items) == 1
+    assert items[0]["payload"]["source"] == "pcp_portal"

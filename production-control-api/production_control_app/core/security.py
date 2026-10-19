@@ -43,3 +43,9 @@ def can(user: Any | None, permission: str) -> bool:
 # separada da leitura (machine-load.view). Leitura dos perfis segue a
 # permissão de visualização; criação/edição/vínculo exigem esta.
 PC_SEQUENCING_PROFILES_MANAGE = "production-control.sequencing-profiles.manage"
+
+
+# Permissao do tipo process-issue no Requests API (Minhas Solicitacoes) —
+# conferida no BFF do PCP antes de encaminhar a criacao autenticada e
+# reaplicada pelo Requests API sobre o JWT do proprio analista.
+REQUESTS_PROCESS_ISSUE_CREATE = "my-requests.process-issue.create"

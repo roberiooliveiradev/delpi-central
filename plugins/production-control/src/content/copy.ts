@@ -242,6 +242,8 @@ export const copy = {
       transferOperation: "Enviar item para outro centro de trabalho",
       transferOperationDisabled: "Enviar item (sem OP neste registro)",
       transferError: "Não foi possível transferir para outro centro de trabalho.",
+      processIssue: "Solicitar correção a Processos",
+      processIssueDisabled: "Solicitar correção (sem OP neste registro)",
       selectionMenuAria: "Ações da seleção",
       selectionHeader: (count: number) =>
         count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
@@ -314,6 +316,23 @@ export const copy = {
       cancel: "Cancelar",
       originBadge: (center: string) => `veio de ${center}`,
       originBadgeTitle: (center: string) => `Operação transferida do centro ${center}`,
+    },
+    processIssue: {
+      modalTitle: "Solicitar correção a Processos",
+      lead: "Informe o problema identificado nesta operação. A solicitação será encaminhada ao departamento de Processos.",
+      contextBranch: "Filial",
+      contextWorkCenter: "Centro de trabalho",
+      contextOrder: "Ordem / operação",
+      contextProduct: "Produto",
+      contextPa: "Produto acabado",
+      contextTool: "Ferramenta vinculada",
+      reasonLabel: "Problema encontrado",
+      reasonPlaceholder: "Selecione o tipo de problema",
+      noteLabel: "Observação (opcional)",
+      notePlaceholder: "Detalhe o problema para o analista de Processos",
+      submit: "Enviar solicitação",
+      submitting: "Enviando…",
+      cancel: "Cancelar",
     },
     withdrawn: {
       openButton: (count: number) =>
