@@ -15383,3 +15383,14 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_READINESS=NOT_PROVEN`; fase inalterada.
 
 NEXT=INDEPENDENT_REVIEW → ops executa runbook de deploy + grants → PM valida em minhadelpi.com.br
+
+
+## §6.293 — Independent SEMARG rework review (ACCEPT_WITH_RESIDUAL_BOUNDED / REWORK_REAL_CATALOG)
+
+**DATE:** 2026-10-19. **REVIEW:** [51](../corrections/mcp-contextual-intelligence-orchestration/51-independent-semantic-argument-rework-review.md). **CODE EVAL SHA:** `43b577bd4b`; final docs commit `aa13257ab4`. **EVIDENCE:** doc50, source diff and executor live reports; independent live replay `TEST_NOT_RUN`.
+
+- Heuristic argument regex/field-hint recovery deleted and fabricated 'código/filtro/escopo' clarifications removed; accept narrowly `ACCEPT_WITH_RESIDUAL`. P01/P02 illustrative examples 11.8–14.9s, cold greeting ~5.3s executor reported PASS. Full backend PASS and zero ACT executor reported.
+- **Operational user tasks still FAIL:** P03/P05/P08 catalog SOURCE_UNAVAILABLE; P06/P07 ~30014ms budget; no authoritative product result proven. Multiturn continuation `TEST_NOT_RUN`. A truthful SOURCE_UNAVAILABLE is not a successful outcome. Regex deletion tests do not prove comprehensive semantic generalization.
+- **Decision:** `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, no C4/C5/Q01 advancement. NEXT bounded owner-read real-products plus budget investigation and semantic holdouts, using existing LLM and contracts, no new planner/heuristic.
+
+NEXT=BOUNDED_LIVE_PRODUCT_OWNER_READ_AND_BUDGET_REWORK
