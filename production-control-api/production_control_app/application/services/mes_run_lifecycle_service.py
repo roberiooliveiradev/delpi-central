@@ -140,6 +140,7 @@ class MesRunLifecycleService:
             self._expect_run_state(
                 open_state, run, expected=WorkCenterOperationalState.PRODUCING
             )
+            at = self._clamp_to_open_state_start(at, open_state)
             self._states.close_open(branch=branch, work_center=wc, ended_at=at, conn=conn)
         stopped = self._states.open_event(
             branch=branch,
@@ -166,6 +167,22 @@ class MesRunLifecycleService:
             # ``setup`` (editável pelo operador enquanto a parada está aberta).
             dt = self._apply_initial_setup_reason(dt, conn=conn)
         return dt
+
+    @staticmethod
+    def _clamp_to_open_state_start(
+        at: datetime, open_state: dict[str, Any]
+    ) -> datetime:
+        """Runs legados podem ter producing.started_at posterior ao
+        baseline persistido (estado aberto com relogio divergente antes da
+        referencia unificada). O fechamento nunca precede o inicio do evento
+        aberto: clamp explicito — sem intervalo negativo e sem duracao
+        inventada."""
+        started = open_state.get("started_at")
+        if started is None:
+            return at
+        if getattr(started, "tzinfo", None) is None:
+            started = started.replace(tzinfo=timezone.utc)
+        return max(at, started)
 
     def record_automatic_resumed(
         self, run: dict[str, Any], *, conn: Any, at: datetime

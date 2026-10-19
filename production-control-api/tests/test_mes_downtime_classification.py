@@ -19,6 +19,7 @@ from production_control_app.domain.errors import (
 )
 
 from tests.test_production_run_service import (
+    FakeOperatorDirectory,
     FakeDowntimeRepo,
     FakePulse,
     FakeReasonRepo,
@@ -309,6 +310,7 @@ class TestClassificationPostgres:
             repository=repo,
             pulse_gateway=FakePulse(devices=[device], device_by_id={device["deviceId"]: device}),
             mes_lifecycle=mes,
+            operator_directory=FakeOperatorDirectory(),
         )
         token = service.create_bench_session(
             branch="01", work_center=wc, registration="USR02"

@@ -21,6 +21,7 @@ from production_control_app.domain.errors import (
 )
 
 from tests.test_production_run_service import (
+    FakeOperatorDirectory,
     FakeDowntimeRepo,
     FakePulse,
     FakeRepo,
@@ -329,6 +330,7 @@ class TestLifecyclePostgresAtomicity:
                 devices=[device], device_by_id={device["deviceId"]: device}
             ),
             mes_lifecycle=mes,
+            operator_directory=FakeOperatorDirectory(),
         )
         return service
 
@@ -372,6 +374,7 @@ class TestLifecyclePostgresAtomicity:
             mes_lifecycle=MesRunLifecycleService(
                 states=states, downtimes=ExplodingDowntimes(downtimes)
             ),
+            operator_directory=FakeOperatorDirectory(),
         )
         with pytest.raises(InvalidMesEvent):
             failing.pause_run(run["id"], session_token=token)
