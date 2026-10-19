@@ -15437,3 +15437,13 @@ C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_REVIEW
 ```
 
+
+
+## §6.295 — Independent real product READ review (ACCEPT_WITH_RESIDUAL / PROVENANCE_REWORK)
+
+**DATE:** 2026-10-19. **REVIEW:** [53](../corrections/mcp-contextual-intelligence-orchestration/53-independent-real-product-read-and-provenance-review.md). **CODE SHA:** `4c4fc7d256`. Owner `search_products` fast direct 33–158ms and DELIA L1/L2/L3/L4 grounded READ outcomes are **executor reported**, live replay independently `TEST_NOT_RUN`. Original budget/index gate wrongly discarded schema-valid arguments; fix now reaches owner in production.
+
+- **VERDICT:** scoped real-product READ `ACCEPT_WITH_RESIDUAL`; lexical provenance `REWORK`: `_free_string_grounded_in_user_input` accepts substring or any shared >=3-char token, insufficient to prove whole proposed semantic filter. Do not construe token overlap as owner/user provenance or authorization; add negative/holdout and typed/provenance gates without another NLP regex engine. L5 comparison 504; L3 ~30s; I04 global REWORK. Full backend PASS executor-reported, zero material ACT reported.
+- No phase advance. `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
+
+NEXT=BOUNDED_ARGUMENT_PROVENANCE_AND_MULTITURN_BUDGET_REWORK
