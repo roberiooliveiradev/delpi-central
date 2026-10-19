@@ -107,6 +107,61 @@ Refinar o componente **de ditado** existente para uma interface limpa, moderna, 
 
 Texto-base permitido: “Sua fala será enviada apenas para transcrição em texto. Revise o resultado antes de enviar.” Ajustar copy à capacidade real (STT remoto ou indisponível) e à política de privacidade vigente. A permissão do browser é distinta da transparência sobre envio ao STT; ambas se preservam. Evitar banners permanentes ocupando o cabeçalho da DÉLIA.
 
+## 6A. Ajuda contextual por controle — decisão adicional do Product Master
+
+**Decisão aprovada:** todas as ações e subcontroles interativos do ditado devem explicar sua função por **help tooltip padronizado ao hover e ao foco por teclado**, sem criar uma fileira adicional de rótulos visíveis que polua a composição. No touch, garantir acesso equivalente pelos mecanismos permitidos pelo componente de help compartilhado; tooltip não substitui `aria-label` nem mensagens de erro/status.
+
+**Reuso comprovado no HEAD:** `plugins/plugin-ui/src/components/help/HelpTooltip.tsx` e o barrel `components/help/index.ts`. API confirmada: `HelpTooltip({content, ariaLabel?, wrap?, placement?, trigger?, suppressed?, children?})`. O modo `wrap` permite associar o balão a **controles já existentes**, sem introduzir um ícone “?” em cada botão. `IconButton` permanece responsável por ação e nome acessível. O `HelpTooltip` usa portal/overlay e posicionamento adaptativo; validar ambos em Dock, overflow e zoom.
+
+`EXISTING_EQUIVALENT_HELP=YES`; `REUSE_DECISION_HELP=REUSE`. **PROIBIDO** criar novo componente tooltip, usar `title` HTML como substituto, duplicar help customizado em CSS ou posicionar bolhas manualmente. Revalidar compatibilidade do modo `wrap`, inclusive controle disabled, focus, touch e `aria-describedby`; se houver gap real, estender bounded o componente compartilhado com testes, nunca criar alternativa DÉLIA-only.
+
+### Conteúdo obrigatório do help — copy base
+
+| Estado | Controle / alvo | `HelpTooltip.content` sugerido | Acessibilidade |
+|---|---|---|---|
+| Escrita | microfone | “Ditar mensagem: fale e transforme sua voz em texto editável.” | `aria-label="Ditar mensagem"` |
+| Escrita | Enviar | “Enviar o texto escrito para a DÉLIA.” | preservar label acessível do Enviar |
+| Escrita/revisão | Limpar texto (X) | “Limpar o texto do campo. Não cancela gravações.” | `aria-label="Limpar texto"`; não confundir X com cancelar ditado |
+| Solicitando permissão | Cancelar | “Cancelar a solicitação do microfone e voltar ao texto.” | `aria-label` de cancelamento |
+| Gravando | Cancelar (X) | “Descartar esta gravação e voltar ao texto anterior.” | `aria-label="Cancelar ditado"` |
+| Gravando | Finalizar (quadrado/check) | “Encerrar a gravação e transcrever sua fala para texto.” | `aria-label="Finalizar ditado"` quando STT disponível; sem STT, explicar prévia local |
+| Gravando | indicador “Gravando” + ponto ativo | não exige tooltip separado se não for interativo; explicar status por texto visível e `role` correto | indicador não precisa virar botão |
+| Gravando | waveform | não criar help em cada barra; pode explicar num único alvo informativo se houver necessidade testada (“O movimento acompanha o som do microfone.”) | decorativa para SR, status textual preservado |
+| Gravando | cronômetro | tooltip opcional no grupo, se agregar informação (“Tempo decorrido da gravação.”); não transformar texto em botão | duração tabular; sem anúncio por segundo |
+| Transcrevendo | Cancelar | “Parar de esperar a transcrição e voltar ao texto. O processamento remoto pode continuar.” | distinguir cancelamento local de remoto |
+| Review | microfone | “Ditar mais texto e inseri-lo na posição do cursor.” | preservar semântica de inserção no draft |
+| Prévia local quando sem STT | Play/Pause | “Reproduzir esta gravação.” / “Pausar a reprodução.” | label dinâmico existente |
+| Prévia local | Descartar | “Descartar a gravação e voltar ao texto.” | controle distinto de limpar texto |
+| Prévia local | Regravar | “Descartar esta gravação e iniciar outra.” | gesto explícito para mic |
+| Captura indisponível | mic desabilitado | “Ditado indisponível neste navegador ou contexto.” + motivo específico quando conhecido | tooltip de botão disabled deve ser alcançável via wrapper/ajuda, sem depender só de hover |
+
+O texto final deve ser conciso, sem verbos que prometam ações não suportadas e sem divulgar detalhes internos do provider. **Não** exibir help com instruções fictícias de análise de áudio, envio automático ou Live Voice. Localizar em pt-BR conforme i18n existente; usar redação coerente entre toolbar da página completa e Dock.
+
+### Contrato de interação e aparência dos balões
+
+1. Aparece no **hover do hit-target** e no **focus-visible/foco de teclado** usando comportamento canônico do `HelpTooltip`. Não exibir todos os textos fixos na interface nem poluir toolbar com ícones “?”.
+2. O balão deve respeitar posicionamento inteligente acima/abaixo, limites do viewport, overlay e scroll; **sem clipping no Dock ou mobile**. Reusar defaults do `HelpTooltip`.
+3. Não roubar foco, não bloquear clique, não abrir modal; fechar ao sair do alvo, blur ou quando popover/menu concorrente exigir `suppressed`; testar o contrato de `HelpTooltip` existente.
+4. Em touch, validar descoberta por foco/alternativa de ajuda apropriada; se o `HelpTooltip` existente não dá acesso efetivo, classificar gap e propor extensão reutilizável, sem inventar gesto inconsistente com o design system.
+5. `aria-label` é nome do comando, tooltip traz detalhe; `aria-describedby` deve associar ajuda quando aplicável e não duplicar anúncios. Os controles nunca dependem exclusivamente do mouse.
+6. Tooltip em botões desabilitados demanda teste explícito do wrapper; não presumir que o evento de hover chega ao `button disabled`.
+7. Estados dinâmicos atualizam a ajuda: Play↔Pause, STT ativo↔prévia local, gravando↔processando, inserção nova após texto pré-existente.
+8. Se o componente de help atual aceitar crianças por `wrap`, envolver o `IconButton` original; não duplicar handlers de comando nem reimplementar portal/posicionamento.
+
+### Acceptance Gate complementar
+
+| ID | Critério de aceite | Evidência |
+|---|---|---|
+| VD-V15 | Todos os controles icon-only do fluxo de ditado apresentam tooltip adequado no hover/foco | Storybook/harness ou browser QA full + Dock |
+| VD-V16 | Tooltips de Cancelar/Finalizar/Limpar/Regravar/Play/Pause explicam a ação correta e acompanham mudanças de estado | testes de integração por estado |
+| VD-V17 | `HelpTooltip` existente reutilizado (`wrap`), sem componente novo de tooltip ou fileira de textos fixos | diff review `plugin-ui` |
+| VD-V18 | Balões não cortam no Dock/viewport, não roubam foco e funcionam com teclado, disabled e reduced motion | Playwright e a11y |
+| VD-V19 | Conteúdo de ajuda preserva transparência de STT, sem indicar auto-submit ou análise multimodal | revisão de UX/copy |
+
+`VD-V15…VD-V19 = PLANNED` até evidência no SHA de implementação. Atualizar a task VD-F04 para incluir esses critérios, **sem alterar STT backend**.
+
+---
+
 ## 7. Responsividade, temas e acessibilidade
 
 - Conferir página completa e Companion Dock em larguras **320, 360 e 420 px**, além de zoom 200%; tratar wrapping/compactação da waveform e dos botões, sem truncar ações críticas ou forçar scroll horizontal.
