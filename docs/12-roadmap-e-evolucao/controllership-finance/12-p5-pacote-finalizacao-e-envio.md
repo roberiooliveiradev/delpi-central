@@ -723,7 +723,7 @@ Fonte canônica:
 - nenhuma instrução de attachment delivery por e-mail.
 
 ### RQ-P5-11 — monthly completion (C2 aprovada, RQ-P5-12 vigente no ledger)
-- **PO_APPROVED C2/P5-A/P5-E:** competência mensal conclui somente quando TODOS os pacotes aplicáveis estão submetidos, CADA área obrigatória do snapshot aceitou a PackageVersion vigente e NÃO há clarification aberta nem rejeição terminal da competência. Rejeição de pacote/área não fecha competência automaticamente; requer confirmação DEC-01 por coordenador. Nenhuma escolha C1/C2/C3 pendente.
+- **PO_APPROVED C2/P5-A/P5-E/D-FINAL-02:** competência mensal conclui somente com TODOS os pacotes aplicáveis submetidos, **aceite humano real por pacote na PackageVersion vigente**, aceite de CADA área obrigatória existente no snapshot, NENHUMA clarification aberta e ausência de rejeição terminal da competência. Sem revisores, pacote fica pendente de aceite: **não** bloquear Finalizar/Enviar/publicação por quantidade, e **não** inferir aprovação por conjunto vazio. Rejeição de pacote/área exige confirmação DEC-01 para terminalidade da competência. Não há escolha C1/C2/C3 pendente.
 
 ## Testes futuros mínimos
 

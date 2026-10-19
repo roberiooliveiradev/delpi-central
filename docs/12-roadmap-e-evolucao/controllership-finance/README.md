@@ -24,7 +24,7 @@ O portal não deve ser tratado como aplicação exclusiva de fechamento. A arqui
 
 ## Estado
 
-**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+**Parecer transversal atualizado em 19/10/2026:** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED. **D-FINAL-02=CLOSED/PO_APPROVED:** somente pessoas aprovam; sem revisor não há aceite, o fluxo naturalmente fica pendente, sem trava extra de envio/publicação; configuração vazia nunca gera aprovação automática. **D-FINAL-01=TO_INVENTORY/CORE API:** a Core governa usuários e permissões; o Portal apenas consome o contrato autorizado e aplica regras de recurso/negócio. Contratos físicos Core T05/P5/P6 e A12/A14/A15/A16 ainda não possuem PASS global. `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS históricas não substituem o gate vigente.
 
 - AS-IS PROC-0072: **CLOSED / ACCEPTED**
 - baseline: **1 fechamento/mês; 960 min INFORMED**

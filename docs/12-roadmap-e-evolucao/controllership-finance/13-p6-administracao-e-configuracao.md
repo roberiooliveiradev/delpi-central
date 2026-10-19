@@ -101,6 +101,8 @@ Referência histórica permanece interpretável.
 
 ## Publicação
 
+**D-FINAL-02 — PO_APPROVED (19/10/2026):** publicar configuração versionada não exige inventar uma trava de quantidade mínima de revisores humanos. A ausência de pessoas elegíveis ou de áreas de revisão não gera aceite por default; o pacote poderá chegar à revisão, mas **não terá conclusão C2 sem evento real de aceite humano válido**. P6 continua responsável por versionamento, vigência e snapshots, não pela concessão/revogação de permissões. Core API é a authority exclusiva para usuários/RBAC/effective permissions; P5 aplica regras de área, recurso e negócio no BFF. Contrato físico e testes `TO_INVENTORY/PLANNED`.
+
 Um usuário com `controllership-finance.manage` **efetivo e escopo administrativo autorizado** pode publicar sozinho (sem segundo MANAGE obrigatório), com justificativa, versionamento, vigência prospectiva e auditoria conforme DEC-04.
 
 Segundo MANAGE não é obrigatório no target atual.

@@ -1,5 +1,7 @@
 # 44 — A16: Revalidação transversal final com evidências (16/10/2026)
 
+> **Atualização PO de 19/10/2026:** D-FINAL-02 foi resolvida: **aprovam pessoas**; ausência de revisor/área não gera aprovação automática e também **não cria uma trava prévia de envio/publicação**. O pacote permanece aguardando aceites humanos reais. D-FINAL-01 é inventário do contrato da Core API, **não gestão de permissões do Portal CF**. As conclusões históricas de 16/10 abaixo foram reconciliadas nestes termos.
+>
 > **Parecer:** `INCONCLUSIVE` para o fechamento documental **integral**. As escolhas C2, P5-A..J e DEC-01..04 permanecem `TARGET / PO_APPROVED`. Esta revisão corrige divergências históricas sem tocar runtime, mas não aprova produto, novo contrato Core, scope ou implementação por inferência.
 >
 > **Gate vigente:** `A12=INCONCLUSIVE`; `A14=INCONCLUSIVE`; `A15=INCONCLUSIVE`; `A16=INCONCLUSIVE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `RUNTIME_TESTS=TEST_NOT_RUN`. O roadmap [39–43](./39-roadmap-mestre-implementacao-v1.md) segue documentado, não executado.
@@ -38,7 +40,7 @@
 
 **Reparos documentais nesta revisão:** substituídos adendos que ainda pediam DEC-01/02/03 já decididas, corrigida unanimidade de indivíduos para áreas, corrigida projeção P5 individual para obrigação por área, corrigida a regra C2 em 04/12/17/18/29/35 e incluído scope de publicação P6 em 13/23/28; ver diff desta PR. **Não** inventar identificador físico para o estado de competência rejeitada.
 
-**Pendências antes de A12 PASS / freeze:** (i) source/contrato Core de grupo/função e mapeamento P6↔área; (ii) designação formal do coordenador e prova de vínculo por competência; (iii) semântica não explicitada para **configuração P6 vazia ou sem áreas obrigatórias** — pode permitir conclusão C2 vacuamente, exige decisão de produto; (iv) estados/DTOs, callbacks/events/OCC e snapshot físico como `TO_INVENTORY`, com stop nos slices. Estas lacunas não são resolvidas por testes genéricos ou supor grupo RBAC como corporate function.
+**Pendências antes de A12 PASS / freeze:** (i) contrato da **Core API** como owner de identidade/permissões e da elegibilidade corporativa consumida pelo P5 (sem administrar RBAC no Portal CF); (ii) designação formal de coordenador e vínculo por competência; (iii) especificar testes da decisão PO **D-FINAL-02=CLOSED**: nenhum bloqueio adicional no envio por ausência de revisores, nenhum aceite humano ⇒ estado pendente, nunca conclusão C2 por conjunto vazio; (iv) estados/DTOs, eventos/OCC e snapshots físicos como `TO_INVENTORY`, com stop nos slices. Ausência de aprovadores não cria novo permission code ou fluxo de aprovação automática.
 
 **A12 = INCONCLUSIVE para fechamento completo** (contrato semântico aprovado, documentação mais consistente; decisões/integração material pendentes). Testes de Portal = `TEST_NOT_RUN`.
 
@@ -73,46 +75,45 @@
 | Regras TARGET consolidadas / AS-IS separado | 04 corrigido; TÉO vigente e mapa 19 conferidos | `PASS` documental |
 | E01–E06 e T01–T05 classificados | 17, 33; E04/T04 SUPERSEDED; T03 e T05 com stop de owner | `PASS` para classificação; `TO_INVENTORY` material |
 | Segurança 14, configuração 16, boundaries 21, RQ/AC 23 | cruzamento de documentos corrigido; source Core inspecionado | `PASS` de rastreabilidade documental |
-| Nenhuma escolha material disfarçada de inventário | corporative group/function mapping Core e **zero mandatory areas P6** alteram AuthZ e C2 | **`INCONCLUSIVE / DECISION_REQUIRED`** |
+| Nenhuma escolha material disfarçada de inventário | **D-FINAL-02 fechada pelo PO**: sem aceite humano não há conclusão, sem bloqueio artificial de envio. **D-FINAL-01** permanece inventário Core S2S, sem escolha de RBAC pelo Portal | **`TARGET / PO_APPROVED`** para comportamento; `TO_INVENTORY` para integração |
 | Nenhum state conflitante ou capability antecipada | scan temático corrigido; não há MFE/BFF no HEAD examinado | `PASS` scoped documental; não é runtime |
 | README/18 status final e residual auditável | atualizar para referenciar este relatório e o SHA da PR | `PENDING` até merge |
 | `IMPLEMENTATION_AUTHORIZED=NO` | preservado em docs | `PASS` |
 
 **A16 = INCONCLUSIVE.** Não emitir `DOCUMENTATION_CLOSURE_COMPLETE=PASS` por checklist parcialmente satisfeito. Quatro freezes: `PORTAL_DESIGN_FREEZE=REVALIDATE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=PENDING_T05`; `TEST_STRATEGY_FREEZE=PENDING_CONTRACT_TESTS`.
 
-## 7. DECISION_REQUIRED — lacunas materiais novas comprovadas
+## 7. Decisões do PO e inventários técnicos remanescentes
 
 ### D-FINAL-01 — fonte corporativa de elegibilidade por área (Core T05)
 
-**Achado:** Core possui grupos RBAC com nomes/descrições, mas os contratos S2S effective-access/directory atuais não expõem função/área corporativa tipada ao BFF. A authority de elegibilidade **não pode ser inferida** de grupo de permissão, email ou perfil self. A regra P5-C exige efetivamente grupo/função.
+**TO_INVENTORY / OWNER=CORE API / NÃO É DECISÃO DE GESTÃO DE PERMISSÕES DO PORTAL.**
 
-- **Opção A:** Core adota grupo RBAC explicitamente designado e governado como representação da elegibilidade corporativa P5; requer contrato S2S específico, vínculo tipado P6↔grupo e testes; risco de confundir grupo de permission com função.
-- **Opção B:** usar a fonte corporativa **já canônica**, se encontrada no inventário de RH/Core/identidade, integrando ao Core S2S; requer owner/contrato e possível adaptação. Melhor semântica quando essa fonte existir.
-- **Opção C:** atribuição operacional manual P5 sem fonte grupo/função; **mudaria P5-C** e exige decisão explícita de produto, não é fallback técnico silencioso.
+O PO reforçou que usuários, grupos e permissões são governados pela **Core API**, fora do escopo de administração do Portal Controladoria & Finanças. O Portal usa apenas `controllership-finance.access` e `controllership-finance.manage`, que a Core resolve. O BFF verifica capability efetiva **AND** elegibilidade/vínculo operacional **AND** resource scope **AND** business rule do P5, sem administrar usuários, conceder/revogar permissions ou inventar grupo/permission code.
 
-**Recomendação condicionada a evidência:** inventariar source corporativo com owner, depois preferir **B se PROVEN**, senão submeter A versus nova capability Core à decisão. Não criar endpoint/token/permission antes dessa decisão e da revisão de segurança.
+**Pendente técnico:** identificar com o owner Core a fonte/contrato S2S autorizado de pertencimento/atributo corporativo, e como o P5 consome essa informação. A presença de grupos RBAC e um endpoint de perfil self **não autoriza** converter nomes de grupos em especialidades do fechamento, nem acessar tabelas Core diretamente. Se o inventário demonstrar mudança material de contrato/ownership, encaminhá-la à autoridade competente antes de implementar; não reabrir permissões do Portal.
 
-### D-FINAL-02 — tipo de pacote sem área obrigatória válida
+### D-FINAL-02 — fluxo de revisão depende de aceite humano (PO APPROVED em 19/10/2026)
 
-**Achado:** regra C2 exige um aceite por cada área obrigatória, mas documentos não resolvem explicitamente se P6 pode publicar configuração com zero áreas obrigatórias para um tipo de pacote, nem o que fazer quando não há configuração válida na submissão.
+**CLOSED / TARGET / PO_APPROVED.** O PO esclareceu: **quem aprova são pessoas**; se não houver pessoas para revisar, o processo **permanece parado por ausência de aceite**, sem necessidade de uma trava extra de publicação de configuração ou submissão ao P5.
 
-- **Opção A (recomendada V1 para segurança e integridade):** não permitir publicação/submissão sem ao menos uma área obrigatória válida, recusando submit com erro de configuração, até regularização P6.
-- **Opção B:** permitir explicitamente tipo sem review obrigatório, com exceção P6 versionada e autorizada, evidência de motivo e C2 ajustada para não exigir área nesse tipo; risco de fechamento sem revisão.
-- **Opção C:** separar “ausência de configuração” de “configuração intencional com conjunto vazio”, proibindo ausência mas permitindo vazio só sob política especial; contrato mais complexo, exige novos AC/testes.
+- Finalizar e submeter pacote **não** devem criar aprovação implícita. A indisponibilidade de reviewer não é razão para uma nova regra artificial que proíba o avanço até a etapa de revisão.
+- Uma área sem pessoa elegível, ou um tipo de pacote com conjunto vazio de áreas, **não pode satisfazer C2 automaticamente por lógica de conjunto vazio**: cada pacote aplicável precisa de um **aceite humano efetivo, válido e auditado na PackageVersion vigente**, além do aceite de cada área obrigatória que exista no snapshot.
+- Sem esse evento real, a revisão continua pendente e a competência não alcança `MONTHLY_CLOSING_COMPLETED`. Não há aceite automático, aprovação por sistema, fallback por MANAGE nem bypass quando Core está indisponível.
+- P6 conserva o versionamento/snapshot de áreas e DEC-04. O Portal não concede permissions; toda autorização de pessoa decorre da Core com o vínculo/especialidade e escopo da operação resolvidos na BFF.
 
-**Não selecionar por este relatório.** Owner de decisão: PO; impacto material em quórum C2, P6 snapshot, UX de submit, audit e test matrix.
+**Não implementar validação extra de quantidade de revisores no envio/publicação.** A exigência de aceite humano é a semântica própria do resultado de revisão, não um novo bloqueio anterior no fluxo. Critérios positive, sibling, negative e caso de configuração vazia devem entrar na matriz antes de qualquer runtime.
 
 ## 8. Residuais técnicos e próxima passagem
 
 | ID | Quem é owner | Ação/verificação exigida (sem runtime neste gate) | Evidência de saída |
 |---|---|---|---|
-| T05 corp function | Core owner + função corporativa + P5 consumer | Fonte org, API S2S e vínculo tipado, service caller binding, scopes/403/503 | contrato aprovado pelo owner, testes planejados, decisão D-FINAL-01 se necessária |
+| T05 corp function | **Core API** owner de usuários/permissões; P5 BFF é consumer | Fonte org, contrato S2S e vínculo, service caller, scopes/403/503 | inventário pelo owner Core, sem gestão de RBAC no Portal |
 | P5 coordinator | P5 operational owner, Core identidade/permissão | vínculo de coordenador por competência, reatribuição auditada, fail-closed | contrato de assignee e RQ-TERM/DEC-01/02 |
-| P6 snapshot/empty | P6 owner e PO para regra de vazio | D-FINAL-02, requiredAreas por package type, vigência e imutabilidade; OCC | acordo de produto + DTO/versioned policy e AC |
+| P6 snapshot/empty | P6 owner + P5 consumer | **D-FINAL-02=CLOSED**; versão de áreas e snapshots, ausência de revisor não bloqueia submissão; nenhuma conclusão sem aceite humano | DTO/versão/OCC e casos de testes positivos/sibling/negativos planejados |
 | T03 ERP | api-delpi / owner canônico TOTVS | source de `STOCK_CLOSED` e leitura sem reabertura Portal V1 | T03 PROVEN ou STOP no IMP-10 |
 | P5 DTO/eventos/OCC | BFF do Portal após gate de design | requests/responses/states canonizados sem inventar service; tests P5/P6 | contract inventory e matrix atualizada |
 | CI/runtime | owners + executor no slice autorizado | teste do Portal e smoke real, ledger por SHA, Help feature-gated | `PASS` apenas após execução; agora `TEST_NOT_RUN` |
 
-**Stop line:** sem decisão sobre a regra de conjunto vazio e fonte autorizada de elegibilidade, não liberar submissão/revisão P5 nem fechar os freezes globais. A primeira página candidata de implementação continua **Página do usuário**, **somente após** gate transversal completo e autorização explícita posterior do usuário; aprovação do roteiro ou merge deste documento nunca são esse gate.
+**Stop line:** D-FINAL-02 não é mais uma escolha pendente e não impõe trava de envio. Sem fonte Core elegível/contratos físicos e testes de C2, **não autorizar a implementação P5** nem declarar freezes globais PASS. A primeira página candidata de implementação continua **Página do usuário**, **somente após** gate transversal completo e autorização explícita posterior do usuário; aprovação do roteiro ou merge deste documento nunca são esse gate.
 
 **Veredito final: INCONCLUSIVE**. Está documentado o que é `PROVEN`, o que é `TARGET`, o que é `PLANNED/TO_INVENTORY` e o que exige decisão de autoridade. Nenhuma mudança de runtime, endpoint, schema, manifest, migration ou permission foi efetuada por esta revisão.

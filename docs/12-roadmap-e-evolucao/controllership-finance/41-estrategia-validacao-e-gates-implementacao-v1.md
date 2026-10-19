@@ -73,7 +73,7 @@ Por comportamento: ao menos **positive + sibling + negative**; sem sibling lógi
 | Autoria e não reversão | P5-AREA-03, P5-TERM-03 | Reatribuição preserva aceite e ator; substituto só ações futuras; rectification V1 inexistente |
 | Rejeição terminal | P5-TERM-01/02, DEC-01/02 | Reviewer REJECTED ≠ competence terminal; coordenador confirma; recusa mantém pending; projeções desativadas no terminal |
 | Notificações/tarefas | P5-07/08 | Notification/email failure não faz rollback de business state; projection self-only; owner deep link |
-| Conclusão C2 | P5-12 | Todos recipients submetidos, todas áreas da versão atual aceitaram, nenhuma clarification aberta, competência não rejeitada: uma negativa isolada por conjunção |
+| Conclusão C2 | P5-12 / P5-AREA-05 | Todos recipients submetidos, cada pacote com aceite humano real válido sobre a versão atual, todas áreas obrigatórias que existirem aceitas, nenhuma clarification aberta e sem terminal rejeitada; **sem revisor ou conjunto de áreas vazio mantém pendência, mas não bloqueia submit/publicação por trava extra**. Testar um negativo isolado por conjunção e ausência de aceite humano |
 
 Os scripts `validate-p5-*` citados em docs anteriores são **PLANNED**, não presumir arquivo ou teste real antes de inventariar HEAD.
 
