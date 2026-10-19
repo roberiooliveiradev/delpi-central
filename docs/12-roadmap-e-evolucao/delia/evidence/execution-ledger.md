@@ -15240,10 +15240,11 @@ NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)
 - **R4:** personal scope `ASSIGNED_TO_ME` / `REQUESTED_BY_ME` / `MY_TICKETS_AMBIGUOUS` / visible; ambiguous → clarification; assigned without proven `assignee_id` → identity limitation; requester without owner filter → contract limitation; unproven assignee demoted by existing identifier gate.
 - **R5:** `has_more` page slice ≠ total; authoritative `total_count` when present; bounded same-capability page walk for non-personal COUNT; incomplete → honest unknown. `MATERIAL_ACT=0`.
 - **OWNER GAPS (BLOCKED, not fabricated):** session does not expose GLPI `user_id` to MCP; no `requester_id` list filter; list has no projected `total_count`.
-- **TESTS:** R45-T01…T22 + orch integration PASS; R1/R3/R2/I04/ACR/presentation PASS; full `delia-api` pytest PASS.
-- **LIVE:** deploy + L01 recorded after push in this entry’s follow-up evidence; linked personal count remains subject to owner gaps.
+- **TESTS:** R45-T01…T22 + orch integration PASS; R1/R3/R2/I04/ACR/presentation PASS; full `delia-api` pytest PASS; container pytest on deployed image PASS (28).
+- **LIVE (srv-api `operador@192.168.1.237`):** deploy `--pull --build delia-api` → `DEPLOYED_SHA=31a10b8669` = `SOURCE_SHA`; model `kimi-k3`; subject `user` Helpdesk `linked=false`; L01A/B/C/D + L02 → HTTP 200 ~30s `SOURCE_UNAVAILABLE` after select_group/select_capability **timeout** (corr `e8726102-…`, `1f44d5be-…`); **no** fabricated “10 as total”; owner `glpi_link_required` **NOT_REACHED**; linked personal count `TEST_NOT_RUN`.
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no C4/C5/Q01.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
 
 

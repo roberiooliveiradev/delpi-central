@@ -76,21 +76,42 @@ Owner pages feed `_synthesis_records` → `_render_synthesis` → `_list_header(
 | I04 / ACR / presentation | **PASS** |
 | Full `delia-api` pytest | **PASS** |
 
-## 6. Live
+## 6. Live (operador@192.168.1.237)
 
 ```text
-SOURCE_SHA=<this commit>
-DEPLOYED_SHA=NOT_VERIFIED_IN_THIS_EXECUTION
-MODEL_ID=TEST_NOT_RUN
-AUTHENTICATED_SUBJECT_CLASS=TEST_NOT_RUN
-PERSONAL_COUNT_LIVE=TEST_NOT_RUN
-REASON=NO_AUTHORIZED_LINKED_SUBJECT_AND_NO_LOCAL_LIVE_ENV
-L01_UNLINKED=TEST_NOT_RUN
-L01_LINKED=TEST_NOT_RUN
-L02–L06 regression live=TEST_NOT_RUN (prior docs 38–41 evidence remains historical)
+SOURCE_SHA=31a10b866956d3ac3ee3d80b5376f6430ca27095
+DEPLOYED_SHA=31a10b866956d3ac3ee3d80b5376f6430ca27095
+HOST_GIT_HEAD=31a10b866956d3ac3ee3d80b5376f6430ca27095
+DEPLOY=./infra/scripts/up-prod-sequential.sh --pull --build delia-api
+MODEL_ID=moonshotai/kimi-k3
+MODEL_PROVIDER=openai_compatible
+CONFIG_FINGERPRINT=DELIA_LLM_PROVIDER=openai_compatible;BUDGET=30;STAGE=30
+AUTHENTICATED_SUBJECT_CLASS=password-grant Keycloak user (preferred_username=user)
+HELPDESK_SESSION_LINKED=false
+CONTAINER_R45_PYTEST=PASS (28)
+SYMBOLS=_project_paginated_personal_or_count=YES; paginated_result_semantics=YES
 ```
 
-Deterministic tests cover pagination, unknown total, personal gates, and `glpi_link_required` presentation. End-to-end personal count against a linked subject remains **blocked** on owner identity exposure / requester filter — not simulated.
+| Case | HTTP | ms | Outcome |
+|---|---|---|---|
+| L01A `Quantos chamados tem para mim?` | 200 | ~30025 | `SOURCE_UNAVAILABLE` / `NON_GROUNDED`; **no** page-as-total; corr `e8726102-…` select_group ok then select_capability **timeout** |
+| L01A2 retry | 200 | 30054 | same class; corr `1f44d5be-…` select_group ~9961ms then select_capability timeout ~19751ms |
+| L01B assigned | 200 | ~30016 | same timeout class; no fabricated total |
+| L01C requester | 200 | ~30041 | same |
+| L01D visible count | 200 | ~30015 | same |
+| L02 control | 200 | ~30039 | same timeout class (LLM budget) |
+
+```text
+PERSONAL_COUNT_LIVE=INCONCLUSIVE
+REASON=MODEL_SELECT_CAPABILITY_TIMEOUT_UNDER_30S + SUBJECT_GLPI_UNLINKED
+L01_UNLINKED_PRECONDITION=PROVEN_VIA_HELPDESK_SESSION_linked=false
+L01_GLPI_LINK_OWNER_HINT=NOT_REACHED (orchestration timed out before owner READ)
+L01_LINKED=TEST_NOT_RUN
+NO_FABRICATED_TEN_AS_TOTAL=PASS (all live cases)
+MATERIAL_ACT_COUNT=0
+```
+
+Deterministic / container tests cover pagination, unknown total, personal gates, and `glpi_link_required` presentation. End-to-end personal count against a linked subject remains **blocked** on owner identity exposure / requester filter and was not exercised live (subject unlinked + model stage timeout).
 
 ## 7. Residuals / BLOCKED (owner)
 
@@ -118,11 +139,11 @@ These are **OWNER_CONTRACT_GAP** / environment gaps — not DÉLIA parallel auth
 | AC-11 no material ACT | **PASS** |
 | AC-12 R1/R2/R3 preserved | **PASS** (regression) |
 | AC-13 backend full PASS | **PASS** |
-| AC-14 SHA/config/model live | **TEST_NOT_RUN** |
-| AC-15 live unlinked | **TEST_NOT_RUN** |
+| AC-14 SHA/config/model live | **PASS** (SOURCE=DEPLOYED=`31a10b8669`, kimi-k3) |
+| AC-15 live unlinked | **PARTIAL** — `linked=false` proven; owner `glpi_link_required` **NOT_REACHED** (model timeout before READ) |
 | AC-16/17 linked personal outcome | **TEST_NOT_RUN** / **BLOCKED** owner identity |
 | AC-18 docs/ledger | This document + §6.284 |
-| AC-19 commit/push | After this evidence |
+| AC-19 commit/push | `31a10b8669` pushed; live docs follow-up |
 | AC-20 no parallel authority | **PASS** |
 
 ```text
