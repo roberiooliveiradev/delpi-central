@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import threading
 import time
 from typing import Callable
@@ -32,7 +33,7 @@ class ProtheusTokenService:
         self._cached_auth_fingerprint: str | None = None
 
     def get_valid_token(self, config: ProtheusRestConfig) -> str:
-        fingerprint = _config_fingerprint(config)
+        fingerprint = config_auth_fingerprint(config)
         with self._lock:
             if (
                 self._cached is not None
@@ -56,5 +57,13 @@ class ProtheusTokenService:
         return age < max(1, int(token.expires_in) - self._expiry_margin_seconds)
 
 
-def _config_fingerprint(config: ProtheusRestConfig) -> str:
-    return f"{config.username}|{config.auth_url}"
+def config_auth_fingerprint(config: ProtheusRestConfig) -> str:
+    """Stable auth identity without storing plaintext password.
+
+    Includes a SHA-256 digest of the password so credential rotation
+    invalidates the in-memory token cache. The digest is never logged.
+    """
+    password_digest = hashlib.sha256(
+        config.password.encode("utf-8")
+    ).hexdigest()
+    return f"{config.username}|{config.auth_url}|{password_digest}"
