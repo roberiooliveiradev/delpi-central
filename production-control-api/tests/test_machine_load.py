@@ -73,9 +73,14 @@ _OPERATION = {
 
 
 class FakeGateway:
-    def __init__(self, work_centers: list[dict[str, Any]] | None = None) -> None:
+    def __init__(
+        self,
+        work_centers: list[dict[str, Any]] | None = None,
+        operations: list[dict[str, Any]] | None = None,
+    ) -> None:
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self.work_centers = _WORK_CENTERS if work_centers is None else work_centers
+        self.operations = operations
         self.status_by_key: dict[tuple[str, str], dict[str, Any]] = {}
         self.balances_by_key: dict[tuple[str, str], dict[str, Any]] = {}
 
@@ -160,9 +165,12 @@ class FakeGateway:
                 },
             )
         )
-        items = []
-        for center in self.work_centers:
-            items.append({**_OPERATION, "work_center": center["work_center"]})
+        if self.operations is not None:
+            items = [dict(item) for item in self.operations]
+        else:
+            items = []
+            for center in self.work_centers:
+                items.append({**_OPERATION, "work_center": center["work_center"]})
         return {
             "success": True,
             "data": {
@@ -799,6 +807,244 @@ def test_refresh_fails_closed_when_cockpit_source_is_down() -> None:
         service.refresh(_user(*FULL_PERMS), branch="01")
 
     assert snapshots.rows == {}
+
+
+def _ct_ops(*order_codes: tuple[str, str]) -> list[dict[str, Any]]:
+    """Operações de um CT na ordem informada — (OP, código de operação)."""
+    return [
+        {
+            **_OPERATION,
+            "work_center": "CT-01A",
+            "production_order": order,
+            "operation_code": code,
+        }
+        for order, code in order_codes
+    ]
+
+
+def _ct01a_orders(payload: dict[str, Any]) -> list[str]:
+    items = [
+        op for op in payload["operations"] if op["work_center"] == "CT-01A"
+    ]
+    return [op["production_order"] for op in items]
+
+
+def _stored_payload(snapshots: FakeSnapshotRepo) -> dict[str, Any]:
+    row = snapshots.get(branch="01")
+    assert row is not None
+    return row["payload_json"]
+
+
+def test_refresh_keeps_open_run_operation_at_its_slot() -> None:
+    """Caso reportado: produzindo no topo sai do lugar só porque o «Atualizar»
+    trouxe a ordem cronológica do TOTVS — a protegida conserva o slot."""
+    snapshots = FakeSnapshotRepo()
+    ops = _ct_ops(("A2", "01"), ("A1", "01"), ("A3", "01"))
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    # TOTVS devolve a fila em ordem cronológica diferente — A2 em 2º.
+    gateway = FakeGateway(operations=_ct_ops(("A1", "01"), ("A2", "01"), ("A3", "01")))
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert _ct01a_orders(_stored_payload(snapshots)) == ["A2", "A1", "A3"]
+
+
+def test_refresh_preserves_pinned_slot_in_the_middle() -> None:
+    """Protegida no meio: os livres entram na ordem nova em volta dela."""
+    snapshots = FakeSnapshotRepo()
+    ops = _ct_ops(
+        ("A1", "01"), ("A2", "01"), ("A3", "01"), ("A4", "01")
+    )
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    gateway = FakeGateway(
+        operations=_ct_ops(("A4", "01"), ("A3", "01"), ("A2", "01"), ("A1", "01"))
+    )
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert _ct01a_orders(_stored_payload(snapshots)) == [
+        "A4",
+        "A2",
+        "A3",
+        "A1",
+    ]
+
+
+def test_refresh_pinned_operation_clamps_to_last_slot() -> None:
+    """Fila nova menor que a anterior: o índice travado cai na última posição."""
+    snapshots = FakeSnapshotRepo()
+    # A2 protegida no último slot da fila anterior (índice 3).
+    ops = _ct_ops(("A1", "01"), ("A3", "01"), ("A4", "01"), ("A2", "01"))
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    gateway = FakeGateway(operations=_ct_ops(("A4", "01"), ("A1", "01"), ("A2", "01")))
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert _ct01a_orders(_stored_payload(snapshots)) == ["A4", "A1", "A2"]
+
+
+def test_refresh_ignores_stale_hza_status_when_pinning() -> None:
+    """Negativo: flag is_in_production congelada no snapshot não trava
+    posição — só o run aberto oficial protege."""
+    snapshots = FakeSnapshotRepo()
+    ops = _ct_ops(("A1", "01"), ("A2", "01"), ("A3", "01"))
+    ops[0]["is_in_production"] = True
+    ops[0]["production_status"] = "in_progress"
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    gateway = FakeGateway(operations=_ct_ops(("A3", "01"), ("A2", "01"), ("A1", "01")))
+    service = _service(gateway, snapshots)  # sem runs abertos
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert _ct01a_orders(_stored_payload(snapshots)) == ["A3", "A2", "A1"]
+
+
+def test_refresh_pinned_operation_missing_from_new_queue_is_safe() -> None:
+    """Run aberto cuja operação não voltou do TOTVS não quebra o reparo."""
+    snapshots = FakeSnapshotRepo()
+    ops = _ct_ops(("A2", "01"), ("A1", "01"), ("A3", "01"))
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    gateway = FakeGateway(operations=_ct_ops(("A1", "01"), ("A3", "01")))
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            )
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    assert _ct01a_orders(_stored_payload(snapshots)) == ["A1", "A3"]
+
+
+def test_refresh_pins_each_work_center_independently() -> None:
+    """Runs em centros diferentes: cada um trava o próprio slot."""
+    snapshots = FakeSnapshotRepo()
+    ops = _ct_ops(("A2", "01"), ("A1", "01")) + [
+        {**_OPERATION, "work_center": "CT-02", "production_order": "B2", "operation_code": "03"},
+        {**_OPERATION, "work_center": "CT-02", "production_order": "B1", "operation_code": "03"},
+    ]
+    snapshots.upsert(
+        branch="01",
+        start_date=date(2026, 8, 19),
+        end_date=date(2026, 8, 26),
+        payload={
+            "work_centers": _WORK_CENTERS,
+            "operations": ops,
+            "summary": {"work_center_count": 2, "operation_count": len(ops)},
+        },
+        refreshed_by="seed",
+    )
+    gateway = FakeGateway(
+        operations=_ct_ops(("A1", "01"), ("A2", "01"))
+        + [
+            {**_OPERATION, "work_center": "CT-02", "production_order": "B1", "operation_code": "03"},
+            {**_OPERATION, "work_center": "CT-02", "production_order": "B2", "operation_code": "03"},
+        ]
+    )
+    service = _service(
+        gateway,
+        snapshots,
+        open_runs=[
+            _run_item(
+                work_center="CT-01A", production_order="A2", operation_code="01"
+            ),
+            _run_item(
+                work_center="CT-02", production_order="B2", operation_code="03"
+            ),
+        ],
+    )
+
+    service.refresh(_user(*FULL_PERMS), branch="01")
+
+    payload = _stored_payload(snapshots)
+    assert _ct01a_orders(payload) == ["A2", "A1"]
+    ct02 = [
+        op["production_order"]
+        for op in payload["operations"]
+        if op["work_center"] == "CT-02"
+    ]
+    assert ct02 == ["B2", "B1"]
 
 
 def test_inverted_period_is_rejected() -> None:

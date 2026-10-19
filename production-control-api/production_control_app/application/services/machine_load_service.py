@@ -57,7 +57,9 @@ from production_control_app.domain.services.machine_load_priority import (
 )
 from production_control_app.domain.services.machine_load_queue_slots import (
     ProtectedOperationKey,
+    carry_pinned_positions,
     protected_operation_key,
+    protected_predicate,
 )
 from production_control_app.domain.services.machine_load_transfer import (
     TRANSFERRED_OPERATIONS_KEY,
@@ -2554,6 +2556,38 @@ class MachineLoadService:
             merged[slot] = item
         return merged
 
+    def _carry_open_run_slots(
+        self,
+        *,
+        previous_payload: dict[str, Any],
+        frozen: dict[str, Any],
+        branch: str,
+    ) -> None:
+        """Preserva o slot visível de operações com run aberto entre refreshes.
+
+        Trava as posições da fila anterior no payload novo do TOTVS — posição
+        medida na fila visível (retiradas filtradas), mesma régua que o PCP
+        vê na tela. Sem run aberto ou sem match na fila nova, nada muda.
+        """
+        protected_keys = self._protected_operation_keys(branch=branch)
+        if not protected_keys:
+            return
+        next_operations = dict_items(frozen.get("operations"))
+        next_marks = withdrawn_marks(frozen)
+        repinned = carry_pinned_positions(
+            visible_operations(
+                payload_operations(previous_payload),
+                withdrawn_marks(previous_payload),
+            ),
+            visible_operations(next_operations, next_marks),
+            is_pinned=protected_predicate(protected_keys),
+        )
+        frozen["operations"] = self._merge_visible_order(
+            next_operations,
+            withdrawn_marks=next_marks,
+            reordered_visible=repinned,
+        )
+
     def locate(
         self,
         user: object | None,
@@ -2966,6 +3000,16 @@ class MachineLoadService:
                         for item in dict_items(frozen.get("work_centers"))
                     },
                 )
+            # «Atualizar» reconstrói a fila na ordem cronológica do TOTVS —
+            # exceto operações com run aberto, que conservam o slot visível
+            # que ocupavam (mesma mecânica de priorizar/otimizar/reordenar).
+            # Sem isso a protegida sairia do lugar e, por estar travada para
+            # qualquer mutação, ficaria congelada na posição errada.
+            self._carry_open_run_slots(
+                previous_payload=previous_payload,
+                frozen=frozen,
+                branch=branch,
+            )
         # Início aberto vira a entrega mais antiga que realmente veio — é o que a
         # tela mostra no campo «De» e o que descreve a janela puxada.
         oldest_due, _newest = delivery_bounds(dict_items(frozen.get("operations")))
