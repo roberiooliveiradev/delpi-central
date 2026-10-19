@@ -208,3 +208,10 @@ C5_AUTHORIZED=NO
 Q01_AUTHORIZED=NO
 PRODUCTION_READINESS=NOT_PROVEN
 ```
+
+
+## Auditoria estrutural do orquestrador — somente documentação, sem aceite de mudança
+
+- [56 — Primeiro inventário de ownership semântico](./56-orchestration-audit-semantic-ownership-checkpoint.md): 25 candidatos de remoção, substituição ou consolidação, sem autorizar deleção nem substituir gates de segurança.
+- [57 — Segunda auditoria, cobertura estática integral](./57-orchestration-complete-second-pass-static-audit.md): `orchestration.py` 1–10.592 (20 regiões), 179 declarações indexadas, 17 achados suplementares, matriz preservar/revisar/consolidar e dependências. Execução/testes/SSH: `TEST_NOT_RUN`. Fonte código `8fc45e2119f3cc7b1b34a0f79bca144e5f822516`.
+- Ledger [§6.299](../../evidence/execution-ledger.md): `ARCHITECTURE_DECISION_REQUIRED` para revisão de contratos congelados de grounded synthesis/comparabilidade; sem avanço de I04/C3/C4/C5/Q01. Próximo passo exige reancoragem completa, inventário de consumidores, reusable existing equivalents, contrato e testes cruzados DAVI/TÉO/VISTA/OpenAPI/non-MCP/no-tool antes de remover código.
