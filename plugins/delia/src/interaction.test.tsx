@@ -163,7 +163,7 @@ describe("DÉLIA interaction surface", () => {
     );
   });
 
-  it("disables submit while a request is in flight", async () => {
+  it("exposes cancelable stop while a MESSAGE request is in flight", async () => {
     let resolveFetch: (value: Response) => void = () => {};
     vi.stubGlobal(
       "fetch",
@@ -178,13 +178,15 @@ describe("DÉLIA interaction surface", () => {
 
     submitTurn("oi");
 
+    // Ordinary MESSAGE turns set requestMode=responding_cancelable — the
+    // composer must surface stop, not a second non-cancelable "Enviando…" gate.
     await waitFor(() =>
       expect(
-        (screen.getByRole("button", {
-          name: "Enviando…",
-        }) as HTMLButtonElement).disabled,
-      ).toBe(true),
+        screen.getByRole("button", { name: "Interromper resposta" }),
+      ).toBeTruthy(),
     );
+    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviando…" })).toBeNull();
     resolveFetch(
       new Response(JSON.stringify(SUCCESS_PAYLOAD), {
         status: 200,
