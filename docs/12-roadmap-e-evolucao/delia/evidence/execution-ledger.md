@@ -14906,7 +14906,7 @@ NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
 
 ## §6.258 — DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01 (EVIDENCE_READY_FOR_REVIEW)
 
-**DATA:** 2026-10-19. **TASK:** `DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01`. **DOC:** [17](../corrections/mcp-contextual-intelligence-orchestration/17-i02r3b-typed-capability-goal-selection-implementation.md). **AUTHORITIES:** docs 14/16 preserved.
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01`. **IMPLEMENTATION_SHA:** `cda4963e52ae5cadc66392a5f4fcf37fb3c5aa17`. **DOC:** [17](../corrections/mcp-contextual-intelligence-orchestration/17-i02r3b-typed-capability-goal-selection-implementation.md). **AUTHORITIES:** docs 14/16 preserved.
 
 - **Gate:** typed cold-start capability+goal consolidation authorized as minimal safe reuse of `_propose` / `_TurnGoal` validations; no public contract; no new planner.
 - **Implementation:** `_select_capability_with_goal` + `CAPABILITY_AND_GOAL_INSTRUCTION`; fallback to dedicated `turn_goal` when `goal_class` absent; multiturn early goal unchanged; native skip / stage-cap10 / arguments-headroom defaults unchanged.

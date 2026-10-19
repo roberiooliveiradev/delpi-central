@@ -3,7 +3,7 @@
 **DATA:** 2026-10-19  
 **TASK_ID:** `DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01`  
 **BASE_HEAD (coordination ref):** `72aa0aa5f8dccac701b218c5a9434ac1d68e92fe`  
-**IMPLEMENTATION_HEAD:** (see commit after push)  
+**IMPLEMENTATION_HEAD:** `cda4963e52ae5cadc66392a5f4fcf37fb3c5aa17`  
 **AUTHORITIES:** [14](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md), [15](./15-i02r3a-controlled-budget-and-critical-path-experiments.md), [16](./16-i02r3a-independent-experiment-review.md) — **not redefined**  
 **I02_ACCEPTED:** `NO`  
 **VERDICT:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW`
