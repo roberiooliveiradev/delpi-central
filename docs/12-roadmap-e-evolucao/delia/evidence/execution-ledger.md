@@ -14989,14 +14989,14 @@ NEXT=DELIA-C3-I02-K2-K3-BOUNDED-OUTPUT-QUALITY-REMEDIATION-01
 
 ## §6.265 — DELIA-C3-I02-K2-K3-BOUNDED-OUTPUT-QUALITY-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
 
-**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I02-K2-K3-BOUNDED-OUTPUT-QUALITY-REMEDIATION-01`. **BASE_HEAD:** `dfd05a78b8…` (brief ref `9de23c918a…` ancestor). **DOC:** [24](../corrections/mcp-contextual-intelligence-orchestration/24-i02-k2-k3-output-quality-remediation-implementation.md). **AUTHORITIES:** docs 14–23 preserved; I02 not auto-accepted.
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I02-K2-K3-BOUNDED-OUTPUT-QUALITY-REMEDIATION-01`. **BASE_HEAD:** `dfd05a78b8…` (brief ref `9de23c918a…` ancestor). **IMPLEMENTATION_SHA / DEPLOYED:** `ddf0bef7870201850745c6f88b00bc6a169360b6`. **DOC:** [24](../corrections/mcp-contextual-intelligence-orchestration/24-i02-k2-k3-output-quality-remediation-implementation.md). **AUTHORITIES:** docs 14–23 preserved; I02 not auto-accepted.
 
 - **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on `OperationalCapabilityOrchestrator`. No second planner/registry/cache.
 - **K2:** `_prior_extraction_incomplete` coverage gate (not char-count-only) + `expand_incomplete_extraction` from prior units; limitation-ask carve-out; no invented facts.
 - **K3:** index `hints` + relevance score (lexical/stem/clusters); reject weak/mismatched picks; clarify when best score below floor.
 - **Tests:** `test_i02_k2_k3_output_quality.py` + I01/I02/R2/R3/R3A/R3B/ACR/MCP-index + full `delia-api` pytest **PASS**.
-- **Invariants:** budget/stage=30; stage-cap10 OFF; args-headroom OFF; MESSAGE≠ACT; MATERIAL_ACT synthetic=0.
-- **Live:** pending deploy of implementation SHA.
+- **Live (MESSAGE-only, kimi-k3, budget/stage=30):** K1 corr. `8acfc611-…` TEO methodology 17010ms GROUNDED typed merge; K2 corr. `f090331b-…` continuity 18570ms, 219 chars / 5 bullets (required_inputs+questions), no owner reinvoke; K3 corr. `7f19aa58-…` VISTA INDEX 11 ids → `index_select=no_match` → clarification (not `display_formats`). MATERIAL_ACT=0.
+- **Invariants:** budget/stage=30; stage-cap10 OFF; args-headroom OFF; MESSAGE≠ACT.
 - **STATE:** `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
-NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K1_K2_K3
+NEXT=COORDINATION_INDEPENDENT_REVIEW

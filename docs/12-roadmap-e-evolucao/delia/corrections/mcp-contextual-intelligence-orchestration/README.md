@@ -67,7 +67,7 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02 K2/K3 next bounded implementation:** [23 — execution brief](./23-i02-k2-k3-quality-remediation-execution-brief.md). This is a task brief, not implementation or phase acceptance. K1 live pass with truncation preserved; K2 usefulness and K3 semantic topic relevance remain open.
 
-**I02 K2/K3 quality remediation (candidate):** [24 — implementation evidence](./24-i02-k2-k3-output-quality-remediation-implementation.md). Coverage-based prior extraction expansion; index relevance floor + weak-topic reject; honest clarification when catalog lacks adequate topic. Full pytest PASS; live pending deploy. `I02_ACCEPTED=NO`.
+**I02 K2/K3 quality remediation (candidate):** [24 — implementation + live](./24-i02-k2-k3-output-quality-remediation-implementation.md). Coverage-based prior extraction; index relevance floor + weak-topic reject. Live SHA `ddf0bef787`: K1 TEO 17.0s; K2 checklist 219 chars / 5 bullets / no reinvoke; K3 INDEX→`no_match`→clarification (not `display_formats`). `I02_ACCEPTED=NO`.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -126,8 +126,11 @@ LIVE_K1_ACR=PASS_WITH_LIMITATION
 LIVE_K2_ACR=PASS_WITH_LIMITATION
 LIVE_K3_ACR=PASS_WITH_LIMITATION
 I02_K2_K3_QUALITY=IMPLEMENTATION_EVIDENCE_READY
-I02_K2_K3_LIVE=PENDING_DEPLOY
-NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K1_K2_K3_THEN_COORDINATION_REVIEW
+I02_K2_K3_LIVE=EVIDENCE_RECORDED
+LIVE_K1_QUALITY=PASS_WITH_LIMITATION
+LIVE_K2_QUALITY=PASS_WITH_LIMITATION
+LIVE_K3_QUALITY=PASS_SAFE_CLARIFICATION
+NEXT=COORDINATION_INDEPENDENT_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
