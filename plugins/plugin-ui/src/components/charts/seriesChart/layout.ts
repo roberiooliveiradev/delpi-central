@@ -101,7 +101,7 @@ export type SeriesChartLayoutTypography = {
 };
 
 export type BuildSeriesChartLayoutInput = {
-  points: SeriesChartPoint[];
+  points: readonly SeriesChartPoint[];
   /**
    * Valores extras para escala Y (ex.: multi-série).
    * Quando presente, substitui os values de `points` no cálculo de ticks.

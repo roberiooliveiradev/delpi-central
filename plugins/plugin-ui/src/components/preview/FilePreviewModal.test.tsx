@@ -38,7 +38,16 @@ describe("FilePreviewModal host containment", () => {
         open
         title="Igd Idd Final 1.pdf"
         onClose={vi.fn()}
-        previewState={{ status: "ready", kind: "pdf", objectUrl: "blob:test" }}
+        previewState={{
+          kind: "pdf",
+          loading: false,
+          error: null,
+          previewUrl: "blob:test",
+          textContent: null,
+          textTruncated: false,
+          spreadsheetData: null,
+          docxData: null,
+        }}
       />,
       { container: mount },
     );
@@ -86,7 +95,16 @@ describe("FilePreviewModal host containment", () => {
         title="Fullscreen.pdf"
         onClose={vi.fn()}
         containInHost={false}
-        previewState={{ status: "ready", kind: "pdf", objectUrl: "blob:test" }}
+        previewState={{
+          kind: "pdf",
+          loading: false,
+          error: null,
+          previewUrl: "blob:test",
+          textContent: null,
+          textTruncated: false,
+          spreadsheetData: null,
+          docxData: null,
+        }}
       />,
       { container: mount },
     );

@@ -32,7 +32,7 @@ const labels = {
     { id: "templateSwimlanes", label: "Modelo BPMN com faixas", hint: "Faixas." },
   ],
   nodeHints: {},
-} as FlowchartEditorLabels;
+} as unknown as FlowchartEditorLabels;
 
 afterEach(() => {
   cleanup();

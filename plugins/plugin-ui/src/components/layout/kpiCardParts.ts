@@ -702,8 +702,8 @@ export function getKpiPartState(
 
 export type KpiPartStatePatch = Omit<KpiPartState, "frame" | "style"> & {
   style?: Partial<KpiPartStyle>;
-  /** `null` remove o frame (ex.: voltar ao tamanho em px). */
-  frame?: KpiPartFrame | null;
+  /** `null` remove o frame (ex.: voltar ao tamanho em px). Partial faz merge com o frame atual. */
+  frame?: Partial<KpiPartFrame> | null;
 };
 
 /** Merge de style: `undefined` remove a chave (ex.: voltar ao auto-fit do valor). */
@@ -731,7 +731,12 @@ export function upsertKpiPartState(
     patch.frame === null
       ? undefined
       : patch.frame !== undefined
-        ? clampKpiPartFrame({ ...(prev.frame ?? {}), ...patch.frame })
+        ? clampKpiPartFrame({
+            x: 0,
+            y: 0,
+            ...(prev.frame ?? {}),
+            ...patch.frame,
+          })
         : prev.frame;
   const { frame: _ignored, ...restPatch } = patch;
   return {

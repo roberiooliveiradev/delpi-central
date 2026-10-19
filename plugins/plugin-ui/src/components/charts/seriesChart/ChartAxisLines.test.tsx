@@ -5,19 +5,27 @@ import { ChartAxisLines } from "./ChartAxisLines";
 import type { SeriesChartLayout } from "./layout";
 
 const layout: SeriesChartLayout = {
-  width: 400,
-  height: 240,
+  viewW: 400,
+  viewH: 240,
   margin: { top: 20, right: 20, bottom: 40, left: 48 },
   plotW: 332,
   plotH: 180,
   plotInset: 0,
-  xLabelStep: 1,
-  rotateXLabels: false,
-  toX: (i, n) => 48 + (i / Math.max(1, n - 1)) * 332,
-  toY: (v) => 200 - v,
+  categoryScale: "band",
+  orientation: "vertical",
+  ticks: [0, 50, 100],
   axisMin: 0,
   axisMax: 100,
-  yTicks: [0, 50, 100],
+  axisRange: 100,
+  xLabelStep: 1,
+  xLabelsRotated: false,
+  categoryLabelRotationDeg: 0,
+  categoryLabelOverflow: "skip",
+  visibleXLabelIndices: [0, 1],
+  toX: (i, n) => 48 + (i / Math.max(1, n - 1)) * 332,
+  categoryBandStart: (i) => 48 + i * 40,
+  categoryBandWidth: () => 32,
+  toY: (v) => 200 - v,
 };
 
 describe("ChartAxisLines", () => {
@@ -41,21 +49,13 @@ describe("ChartAxisLines", () => {
     expect(container.querySelector('[data-axis="y"]')).toBeNull();
   });
 
-  it("não renderiza nada quando ambos off", () => {
+  it("renderiza ambos os eixos por default", () => {
     const { container } = render(
       <svg>
-        <ChartAxisLines layout={layout} showX={false} showY={false} />
+        <ChartAxisLines layout={layout} />
       </svg>,
     );
-    expect(container.querySelectorAll('[data-axis]')).toHaveLength(0);
-  });
-
-  it("respeita visible=false como master", () => {
-    const { container } = render(
-      <svg>
-        <ChartAxisLines layout={layout} visible={false} showX showY />
-      </svg>,
-    );
-    expect(container.querySelectorAll('[data-axis]')).toHaveLength(0);
+    expect(container.querySelector('[data-axis="x"]')).not.toBeNull();
+    expect(container.querySelector('[data-axis="y"]')).not.toBeNull();
   });
 });

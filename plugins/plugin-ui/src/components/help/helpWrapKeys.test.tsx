@@ -45,6 +45,7 @@ describe("help wrap key warnings", () => {
         classNames={dataTableBemClasses("cm")}
         labels={{
           emptyMessage: "vazio",
+          loadingMessage: "carregando",
           headerHelpAriaLabel: (h) => `Ajuda ${h}`,
           sortByAriaLabel: (h) => `Ordenar ${h}`,
         }}

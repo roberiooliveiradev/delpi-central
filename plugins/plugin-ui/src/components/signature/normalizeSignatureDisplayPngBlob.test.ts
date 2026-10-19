@@ -42,10 +42,7 @@ describe("normalizeSignatureDisplayPngBlob", () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
       context as unknown as CanvasRenderingContext2D,
     );
-    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function toBlob(
-      _this: HTMLCanvasElement,
-      cb: BlobCallback,
-    ) {
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation((cb) => {
       cb(new Blob(["normalized"], { type: "image/png" }));
     });
 

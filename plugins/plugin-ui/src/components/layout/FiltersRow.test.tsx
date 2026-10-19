@@ -8,6 +8,7 @@ const classNames = {
   row: "dp-filters-row",
   rowExtended: "dp-filters-row dp-filters-row--extended",
   filterBox: "dp-filter-box dp-field",
+  filterBoxSpacer: "dp-filter-box__spacer",
   fieldLabel: "dp-field__label",
 };
 

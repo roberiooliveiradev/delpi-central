@@ -8,7 +8,8 @@ import { resolveFilePreviewKind } from "./resolveFilePreviewKind";
 const LOCAL_TEXT_MAX_CHARS = 80_000;
 
 export type UseFilePreviewLoaderOptions = {
-  source: FilePreviewSource | null | undefined;
+  /** Omitido/null quando o consumidor injeta `previewState` ou ainda não há blob. */
+  source?: FilePreviewSource | null;
   mimeType?: string | null;
   fileName?: string | null;
   declaredType?: string | null;

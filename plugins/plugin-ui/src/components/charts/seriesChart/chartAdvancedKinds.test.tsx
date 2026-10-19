@@ -26,6 +26,7 @@ const KIND_CLASS: Record<
   Exclude<SeriesChartKind, "line" | "bar" | "area" | "pie" | "combo">,
   string
 > = {
+  horizontal_bar: ".delpi-ui-series-chart__series-bar",
   stacked_bar: ".delpi-ui-series-chart__series-stacked-bar",
   histogram: ".delpi-ui-series-chart__series-histogram",
   scatter: ".delpi-ui-series-chart__series-scatter",

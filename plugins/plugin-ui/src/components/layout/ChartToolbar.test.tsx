@@ -98,6 +98,8 @@ describe("ChartToolbar", () => {
           toolbar: bem.toolbar,
           granularity: bem.granularity,
           granularityHelp: bem.granularityHelp,
+          actions: bem.actions,
+          exportButton: bem.exportButton,
         }}
         labels={labels}
         granularityToggleClassNames={{

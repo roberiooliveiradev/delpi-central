@@ -33,7 +33,7 @@ const labels = {
     { id: "templateSwimlanes", label: "Modelo BPMN com faixas", hint: "Modelo com faixas." },
   ],
   nodeHints: {},
-} as FlowchartEditorLabels;
+} as unknown as FlowchartEditorLabels;
 
 describe("searchFlowchartComponents", () => {
   it("inclui Faixa ao buscar 'faixa'", () => {

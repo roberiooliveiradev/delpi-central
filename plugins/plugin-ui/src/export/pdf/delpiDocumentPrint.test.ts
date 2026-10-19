@@ -93,7 +93,10 @@ describe("printDelpiDocumentHtml", () => {
         fakeWindow = attached.fakeWindow;
         const img = document.createElement("img");
         Object.defineProperty(img, "complete", { value: true });
-        (fakeWindow.document as { images: HTMLImageElement[] }).images = [img];
+        Object.defineProperty(fakeWindow.document, "images", {
+          configurable: true,
+          value: [img] as unknown as HTMLCollectionOf<HTMLImageElement>,
+        });
       }
       return el;
     });

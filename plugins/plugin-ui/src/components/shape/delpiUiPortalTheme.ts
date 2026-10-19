@@ -20,9 +20,14 @@ const THEME_SOURCE_VARS = [
   "--text-muted",
 ] as const;
 
+/** Custom properties emitidas pelo host para portais no `body`. */
+export type DelpiUiCssCustomProperties = {
+  [key: `--${string}`]: string | undefined;
+};
+
 export type DelpiUiPortalTheme = {
   dataTheme?: string;
-  style: CSSProperties;
+  style: CSSProperties & DelpiUiCssCustomProperties;
 };
 
 function resolveThemeAttribute(anchor?: HTMLElement | null): string | undefined {
@@ -73,7 +78,7 @@ export function resolveDelpiUiPortalTheme(anchor?: HTMLElement | null): DelpiUiP
 
   const source = findThemeSource(anchor);
   const computed = source ? getComputedStyle(source) : getComputedStyle(document.documentElement);
-  const style: Record<string, string> = {};
+  const style: DelpiUiCssCustomProperties = {};
 
   for (const key of THEME_SOURCE_VARS) {
     const value = computed.getPropertyValue(key).trim();

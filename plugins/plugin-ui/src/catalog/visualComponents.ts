@@ -28,7 +28,7 @@ export const CATALOG_EXPAND_DATE = "2026-07-13";
 function vc(
   family: CatalogFamily,
   exportName: string,
-  meta?: Pick<VisualComponentSpec, "description" | "addedAt" | "updatedAt" | "changeNote">,
+  meta?: Partial<Pick<VisualComponentSpec, "description" | "addedAt" | "updatedAt" | "changeNote">>,
 ): VisualComponentSpec {
   return {
     family,

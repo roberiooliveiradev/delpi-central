@@ -60,7 +60,10 @@ describe("ConversationWorkspace", () => {
     const footer = container.querySelector(".delpi-ui-conversation-workspace__footer");
     expect(navigator).toBeTruthy();
     expect(body?.contains(navigator)).toBe(false);
-    expect(navigator?.compareDocumentPosition(footer!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(footer).toBeTruthy();
+    expect(
+      navigator!.compareDocumentPosition(footer!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("renders banner between header and scrollable body", () => {
