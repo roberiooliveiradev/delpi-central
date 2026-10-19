@@ -1,6 +1,5 @@
 # app/main.py
 import logging
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -27,6 +26,7 @@ from app.interface.mcp import (
 from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
 from delpi_auth.credential_guard import check_credentials
+from delpi_auth.cors_policy import build_allowed_origins
 from app.config import settings
 from app.infrastructure.persistence.totvs.query_builder import (
     InvalidProtheusDateError,
@@ -107,33 +107,12 @@ from app.interface.http.swagger_portal_bridge import build_swagger_portal_bridge
 # HELPERS
 # ==========================================================
 
-def build_allowed_origins() -> list[str]:
-    origins = set()
-
-    public_base_url = getattr(settings, "PUBLIC_BASE_URL", None)
-    if public_base_url:
-        origins.add(public_base_url.rstrip("/"))
-
-    vite_kc_url = getattr(settings, "VITE_KC_URL", None)
-    if vite_kc_url:
-        if "/auth" in vite_kc_url:
-            origins.add(vite_kc_url.split("/auth")[0].rstrip("/"))
-        else:
-            origins.add(vite_kc_url.rstrip("/"))
-
-    # localhost only in development
-    api_env = os.getenv("API_DELPI_ENV", "development")
-    if api_env != "production":
-        origins.add("http://localhost")
-
+ALLOWED_ORIGINS = build_allowed_origins(
+    public_base_url=getattr(settings, "PUBLIC_BASE_URL", None),
+    keycloak_url=getattr(settings, "VITE_KC_URL", None),
     # Custom GPT Builder / Actions may preflight the public OpenAPI schema.
-    origins.add("https://chatgpt.com")
-    origins.add("https://chat.openai.com")
-
-    return sorted(origins)
-
-
-ALLOWED_ORIGINS = build_allowed_origins()
+    extra_origins=("https://chatgpt.com", "https://chat.openai.com"),
+)
 
 logger = logging.getLogger(__name__)
 
@@ -266,7 +245,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

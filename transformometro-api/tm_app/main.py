@@ -1,5 +1,4 @@
 import logging
-import os
 import asyncio
 import contextlib
 from contextlib import asynccontextmanager
@@ -11,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from delpi_auth.credential_guard import check_credentials
+from delpi_auth.cors_policy import build_allowed_origins
 from tm_app.config import settings
 from tm_app.core.errors import format_validation_error
 from tm_app.core.responses import fail
@@ -62,30 +62,12 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
-def build_allowed_origins() -> list[str]:
-    origins: set[str] = set()
-
-    if settings.PUBLIC_BASE_URL:
-        origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
-
-    if settings.VITE_KC_URL:
-        if "/auth" in settings.VITE_KC_URL:
-            origins.add(settings.VITE_KC_URL.split("/auth")[0].rstrip("/"))
-        else:
-            origins.add(settings.VITE_KC_URL.rstrip("/"))
-
-    # localhost only in development
-    api_env = os.getenv("API_DELPI_ENV", "development")
-    if api_env != "production":
-        origins.add("http://localhost")
-
+ALLOWED_ORIGINS = build_allowed_origins(
+    public_base_url=settings.PUBLIC_BASE_URL,
+    keycloak_url=settings.VITE_KC_URL,
     # Custom GPT Builder / Actions may preflight the public OpenAPI schema.
-    origins.add("https://chatgpt.com")
-    origins.add("https://chat.openai.com")
-    return sorted(origins)
-
-
-ALLOWED_ORIGINS = build_allowed_origins()
+    extra_origins=("https://chatgpt.com", "https://chat.openai.com"),
+)
 
 
 @asynccontextmanager
@@ -153,7 +135,7 @@ app.middleware("http")(mcp_mount_path_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
