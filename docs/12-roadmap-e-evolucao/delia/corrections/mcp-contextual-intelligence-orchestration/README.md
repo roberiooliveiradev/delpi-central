@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-19 (roadmap state refresh; original baseline remains historical)
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_IMPLEMENTED_K4_ACCEPT_WITH_RESIDUAL_REGRESSION_GATE / I04–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_ACCEPTED_WITH_RESIDUAL / I04–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -78,6 +78,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I03 implementation and independent review:** [28 — K4 implementation/live](./28-i03-davi-semantic-discovery-implementation.md); [29 — direct DAVI MCP cross-check + scoped review](./29-i03-independent-davi-crosscheck-review.md). Direct owner: generic discovery 0/95 eligible, thematic product discovery 1 candidate. K4 scoped ACCEPT_WITH_RESIDUAL.
 
 **I03 K2/K3 non-regression gate (candidate):** [31 — remediation + live](./31-i03-k2-k3-bounded-nonregression-remediation.md). Invalid-index recovery + index_select budget→clarify. Live SHA `9a8775018f`: K1 16.9s; K2 continuity 12.3s / 6 bullets; K3 clarify 21.8s; K4 DAVI eligible=95. `I03_ACCEPTED=NO`.
+
+**I03 regression gate and independent acceptance:** [31 — bounded K2/K3 remediation](./31-i03-k2-k3-bounded-nonregression-remediation.md) and [32 — independent I03 ACCEPT_WITH_RESIDUAL](./32-i03-independent-nonregression-review-and-acceptance.md). K1 TÉO 16.94s; K2 six bullets, 12.31s; K3 clarifies in 21.78s; K4 DAVI discovery in 17.34s. K3 deadline-fallback code synthetic PASS but not directly exercised live. I04 generalization is next; ledger §6.271 helpdesk remains separate.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
