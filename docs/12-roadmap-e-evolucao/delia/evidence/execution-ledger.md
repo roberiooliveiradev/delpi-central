@@ -15043,12 +15043,12 @@ NEXT=DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01
 
 ## §6.269 — DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01 (EVIDENCE_READY_FOR_REVIEW)
 
-**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01`. **BASE_HEAD:** `1e017bf634…`. **DOC:** [28](../corrections/mcp-contextual-intelligence-orchestration/28-i03-davi-semantic-discovery-implementation.md). **AUTHORITIES:** docs 26–27; report 44 K4; §6.164 residual closed for semantic adequacy of search-miss.
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01`. **BASE_HEAD:** `1e017bf634…`. **IMPLEMENTATION_SHA / DEPLOYED:** `3d14a51046fb27bbce303c574ed9bbcf804a30fe`. **DOC:** [28](../corrections/mcp-contextual-intelligence-orchestration/28-i03-davi-semantic-discovery-implementation.md). **AUTHORITIES:** docs 26–27; report 44 K4; §6.164 residual closed for semantic adequacy of search-miss.
 
 - **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on DISCOVERY terminal of `OperationalCapabilityOrchestrator`. No second planner/registry/DAVI branch.
 - **Fix:** zero-candidate DISCOVERY distinguishes `CAPABILITY_NOT_MATCHED` (`eligible_action_count>0`), `CAPABILITY_UNAVAILABLE` (count=0), `CAPABILITY_NOT_ENUMERABLE` (no count); projects bounded live tools/list lines; never leaks agent_directives; never auto-EXECUTE.
 - **Tests:** `test_i03_semantic_capability_discovery.py` + discovery control-plane updates + full `delia-api` pytest **PASS**.
-- **Live:** pending deploy of implementation SHA.
+- **Live K4** corr. `3d435fb9-…`: DAVI `discover_delpi_information`; `discovery_terminal=CAPABILITY_NOT_MATCHED eligible=95`; 21119ms GROUNDED; no control-plane leak; ACT=0. **K1** TEO methodology 25122ms PASS_WITH_LIMITATION. **K2** sample `invalid_record_index` insufficiency (not I03 path). **K3** 30013ms budget residual.
 - **STATE:** `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
-NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K4
+NEXT=COORDINATION_INDEPENDENT_REVIEW

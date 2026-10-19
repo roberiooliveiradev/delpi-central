@@ -73,7 +73,7 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02 owner cross-check / acceptance:** [26 — independent direct VISTA evidence and scoped ACCEPT_WITH_RESIDUAL](./26-i02-owner-crosscheck-and-acceptance-gate.md). K3 safe no-match consistent with examined guides; other VISTA design capabilities remain TO_INVENTORY. **NEXT implementation:** [27 — I03 DAVI semantic discovery bounded brief](./27-i03-davi-semantic-discovery-implementation-brief.md). No C3/C4/C5 progression.
 
-**I03 semantic discovery (candidate):** [28 — implementation evidence](./28-i03-davi-semantic-discovery-implementation.md). Distinguishes search miss (`eligible_action_count>0`) from absence/non-enumerable catalogs; preserves control-plane non-disclosure. `I03_ACCEPTED=NO` until coordination review.
+**I03 semantic discovery (candidate):** [28 — implementation + live](./28-i03-davi-semantic-discovery-implementation.md). Distinguishes search miss (`eligible_action_count>0`) from absence/non-enumerable catalogs. Live SHA `3d14a51046`: K4 DAVI `CAPABILITY_NOT_MATCHED` eligible=95 in 21.1s, no control-plane leak, ACT=0. `I03_ACCEPTED=NO`.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -138,9 +138,10 @@ LIVE_K2_QUALITY=PASS_WITH_LIMITATION
 LIVE_K3_QUALITY=PASS_SAFE_CLARIFICATION
 I02_ACCEPTED=YES_WITH_RESIDUAL
 I03_IMPLEMENTATION=EVIDENCE_READY
-I03_LIVE=PENDING_DEPLOY
+I03_LIVE=EVIDENCE_RECORDED
+LIVE_K4_I03=PASS
 I03_ACCEPTED=NO
-NEXT=DEPLOY_LIVE_K4_THEN_COORDINATION_REVIEW
+NEXT=COORDINATION_INDEPENDENT_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
