@@ -1,10 +1,12 @@
 # 35 — Contratos, Regras, Scripts e Test Matrix — Gate V2
 
+> **EVIDÊNCIA HISTÓRICA, NÃO GATE ATUAL.** Leia o README e o contrato 37. Este documento descreve análises/slices anteriores; `PASS` de seções locais não autoriza runtime.
+
 ## Estado
 
-**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+**Estado atual:** [README](./README.md). **D-FINAL-02=CLOSED/PO_APPROVED (revisão humana, sem bloqueio artificial)**; D-FINAL-01 é inventário do Core/T05, não permission do Portal. Gates transversais seguem `INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`. A16/CI neste arquivo são evidências datadas.
 
-**Evidência e gate pós-merge vigente:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A15=INCONCLUSIVE` até contratos/testes verificados).
+**Evidência pós-merge histórica:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) (`A15=INCONCLUSIVE` até contratos/testes verificados).
 
 **TARGET / A15 HISTORICAL_CONSOLIDATION / POSTMERGE_REVALIDATION_INCONCLUSIVE / CONTRACT_BINDINGS_TO_INVENTORY**
 
@@ -615,82 +617,4 @@ Próximo passo:
 - reexecutar residual search;
 - somente então avaliar `PRODUCT_CONTRACT_FREEZE = PASS` e `DOCUMENTATION_CLOSURE_COMPLETE = PASS`.
 
-
-## Decisões PO P5-F a P5-J — consolidação contratual vigente (16/10/2026)
-
-**TARGET / PO_APPROVED / DOCUMENTED_NOT_IMPLEMENTED.** Este adendo é superveniente aos registros de perguntas abertas P5-F..J e prevalece quando notas históricas anteriores conflitarem. C2, D-P5-02..05 e P5-A..E permanecem válidas nos termos abaixo. A antiga unanimidade de *pessoas* em D-P5-01 foi substituída pela unanimidade das *áreas obrigatórias* em P5-A.
-
-| ID | Resultado aprovado | Invariante |
-|---|---|---|
-| **P5-F = A** | Substituição de responsável mantém válido o aceite já realizado para a mesma área e PackageVersion; a autoria permanece a do executor original. Substituto assume somente ações futuras. | REASSIGNMENT != INVALIDATE_PRIOR_ACCEPTANCE |
-| **P5-G = A** | Aceite P5 não é reversível/alterável pela UI V1. Eventual erro exige processo excepcional separado, formal, auditado e **não autorizado enquanto seu contrato não for aprovado**. | NO_P5_ACCEPTANCE_REVERSAL_IN_V1 |
-| **P5-H = A** | P6 configura por tipo de pacote as áreas/especialidades obrigatórias em versão governada; P5 congela a configuração aplicável na submissão. Core fornece identidade, effective permissions e atributos de grupo/função conforme contrato a inventariar. | REVIEW_AREA_SET_SNAPSHOTTED_ON_SUBMISSION |
-| **P5-I = B** | Reviewer elegível registra rejeição do pacote em nome da área; uma **autoridade operacional formalmente definida**, distinta da simples permission MANAGE, confirma com justificativa e auditoria a rejeição terminal da competência. | AREA_PACKAGE_REJECTION != TERMINAL_COMPETENCE_REJECTION |
-| **P5-J = A** | Após confirmação da rejeição terminal, a competência fica rejeitada e todas as projeções/tarefas de revisão ainda acionáveis deixam de sê-lo; histórico, decisões e autoria permanecem consultáveis conforme AuthZ. | REJECTED_COMPETENCE != MONTHLY_CLOSING_COMPLETED |
-
-### Compatibilidade com regras anteriores
-
-- **C2:** competência concluída somente se TODOS os pacotes aplicáveis foram submetidos, TODAS as áreas obrigatórias aceitaram a PackageVersion vigente e NÃO há esclarecimento aberto. Competência rejeitada nunca satisfaz `MONTHLY_CLOSING_COMPLETED`.
-- **P5-A / D-P5-01:** quorum de um aceite por área obrigatória, executado por qualquer usuário elegível; não por indivíduo. Dois elegíveis na mesma área não criam dois aceites necessários.
-- **P5-B / D-P5-03 / P5-G:** ninguém sobrescreve aceites; nem o autor pode revertê-los pela UI V1. A referência antiga a “autor pode alterar” é **superseded para aceite P5 na V1**. Reatribuição formal não autoriza mutação de decisões anteriores.
-- **P5-C / D-P5-04:** ACCESS efetivo + grupo/função corporativa elegível + escopo do recurso + regra da ação; avaliação server-side fail-closed; reviewer assignment nunca se torna novo permission code.
-- **D-P5-02 / P5-E:** esclarecer sem alterar conteúdo preserva versão; qualquer alteração de conteúdo cria nova PackageVersion e **exige novos aceites de todas as áreas obrigatórias**; histórico de versões anteriores preservado.
-- **D-P5-05 / P5-D / P5-I:** `CHANGES_REQUESTED` não é `REVIEW_REJECTED`; rejeição da área/pacote não encerra competência automaticamente; só confirmação por autoridade operacional a leva ao estado terminal rejeitado.
-- **P5-F / P5-H:** reatribuir elegível não altera aceite já registrado, nem o snapshot de áreas obrigatórias da submissão; edição futura do catálogo P6 não altera snapshots abertos.
-- **P5-J:** `TaskProjection != TaskEntity`; P5 continua owner do lifecycle; revisão terminal rejeitada remove acionabilidade, sem hard delete nem apagamento de evidências.
-
-### Trilha de auditoria obrigatória
-
-Preservar identidade Core do ator, data/hora, ação, contexto competência/recipient package, versão, área obrigatória, elegibilidade/scope verificados, motivo/justificativa quando exigidos, estado anterior/posterior, autor original do aceite, referência a reatribuições, confirmação formal da rejeição e correlação da projeção/notificação. Histórico é append-only no nível semântico; **schema físico não definido**.
-
-### Pendências reais — sem aprovação presumida
-
-1. **PO APPROVED DEC-01/02:** responsável formal de fechamento com ACCESS, vínculo e escopo confirma rejeição; não confirmação mantém competência pendente. Inventariar binding, não reabrir a escolha.
-2. **PO APPROVED DEC-03:** correção excepcional de aceite P5 não existe no Portal V1, por UI nem endpoint.
-3. **TO_INVENTORY / STOP ON DRIFT:** fonte canônica dos grupos/funções corporativas e sua associação às áreas, contract Core (T05), elegibilidade de múltiplos usuários; não presumir que RBAC do Core tem os atributos necessários.
-4. **CONTRACT_PENDING:** mapa versionado tipo de pacote → áreas obrigatórias em P6; regras de publicação/vigência/snapshot, defaults inválidos, configuração ausente e concorrência; não inventar tabelas/migrations.
-5. **CONTRACT_PENDING:** outcome de rejeição do pacote versus confirmação terminal da competência, estados técnicos definitivos, falha/conflito no commit, event projection/notifications/Help e matrizes de testes positive+sibling+negative.
-
-**Gates:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `PRODUCT_CONTRACT_FREEZE = PENDING_DERIVED_CONTRACT_AND_OWNER`; `IMPLEMENTATION_AUTHORIZED = NO`. Nenhum teste de runtime foi executado; `TEST_NOT_RUN`. Nenhum merge/rebase autorizado por este registro.
-
-**Matriz P5-F..J (PLANNED / TEST_NOT_RUN):** replacement preserva aceite e autor; tentativa de reversão pela UI falha; novo tipo/template P6 não muda áreas de submissão existente; package rejected não é competência rejeitada até confirmação autorizada; confirmação terminal encerra tasks acionáveis e mantém histórico; Core indisponível bloqueia ações; pacote B não herda efeitos de A; nova versão exige todos os aceites. Incluir desktop/mobile/light-dark/teclado/foco/deep-link/Help.
-
-
-## Decisões finais do PO — DEC-01 a DEC-04 (16/10/2026)
-
-**TARGET / PO_APPROVED / NOT_IMPLEMENTED.** Vigência: este contrato substitui referências históricas a `DECISION_REQUIRED` sobre autoridade de rejeição, negativa de confirmação, exceção de reversão na V1 e publicador P6. Não equivale a evidence de testes ou freeze.
-
-| ID | Decisão aprovada | Contrato normativo |
-|---|---|---|
-| DEC-01 | Responsável formal da Controladoria | A pessoa designada para coordenar o fechamento da competência pode confirmar rejeição terminal **somente** com `controllership-finance.access` efetivo, vínculo operacional, escopo do recurso e business rule verificados server-side. `manage` isolado não concede essa autoridade. A designação/substituição deve ser auditada; owner da identidade/permissão é Core; owner do vínculo operacional é o contexto P5. |
-| DEC-02 | Rejeição pendente se não confirmada | Rejeição pela área/pacote cria proposta de rejeição da competência; até decisão formal ela não está `MONTHLY_CLOSING_COMPLETED` nem terminalmente rejeitada. Autoridade registra decisão/motivo; pode devolver análise para esclarecimento ou correção nas transições autorizadas. Não apagar evento original. |
-| DEC-03 | Sem correção excepcional de aceite P5 na V1 | Aceite P5 é irreversível pela UI e não existe endpoint de reversão/retificação na V1. Incidentes são registrados e encaminhados a processo **fora do fluxo do Portal**, sem presumir ação técnica, override, database edit ou reversão automática. P2 validação de evidência mantém contrato próprio. |
-| DEC-04 | P6 publica configuração com MANAGE | Usuário com `controllership-finance.manage` efetivo **e** escopo administrativo publica nova configuração versionada de áreas obrigatórias por tipo de pacote, com justificativa, auditoria e vigência prospectiva. Competências e submissões existentes mantêm snapshots; MANAGE não implica ACCESS operacional. |
-
-### Consistência transversal
-
-C2 continua exigindo todos os pacotes aplicáveis submetidos, **um aceite válido de cada área obrigatória** sobre a versão atual, e nenhuma clarification aberta. Uma competência terminalmente rejeitada é desfecho diferente de conclusão, dependente de confirmação DEC-01. P5-A..J permanecem vigentes: aceites auditados por ator; reatribuição não troca autoria ou invalida aceite vigente; nova versão reinicia aceites obrigatórios; envio é submissão interna; rejeição terminal desativa TaskProjections acionáveis e preserva histórico. `CHANGES_REQUESTED` não é `REVIEW_REJECTED`.
-
-### AC mínimos (PLANNED / TEST_NOT_RUN)
-
-- DEC-01: reviewer de área não consegue encerrar competência; coordenador com ACCESS + vínculo + scope consegue confirmar; MANAGE sem vínculo/ACCESS falha; ausência de Core/elegibilidade falha fechada.
-- DEC-02: rejeição de área sem confirmação mantém estado pendente; negativa motivada permanece auditável e permite devolução somente por transição contratada; nenhuma conclusão automática.
-- DEC-03: nenhum endpoint ou ação UI V1 altera aceite P5; eventos originais imutáveis e incidentes externos não falsificam C2.
-- DEC-04: MANAGE + escopo publica com motivação e versionamento; ACCESS sem MANAGE não publica; submissão anterior não muda; nova submissão adota versão conforme vigência autorizada.
-
-### Pendências técnicas distintas de escolhas PO
-
-**TO_INVENTORY:** contrato Core T05 de effective permissions e atributos corporativos; source do coordenador/vínculo/eligibilidade; owner/contrato físico de persistência e eventos; formato de estados/DTOs, versionamento P6 e CAS/concorrência; UX, notifications, help e projections. **CONTRACT_PENDING:** mapear transições específicas e outcomes da negativa no ledger e testes; identificar .cursor e padrões HEAD aplicáveis. Não declarar `PASS` sem inspeção de código/producers/consumers/testes e reconciliação da branch com main.
-
-`DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (sujeito a inventário material posterior); `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.
-
-
-## Revisão documental transversal — baseline 16/10/2026
-
-**TARGET / REVIEW_INCONCLUSIVE / NO_RUNTIME_AUTHORIZATION.** Fonte de verdade das decisões P5: documento 37, decisões C2, D-P5-01..05 (conforme refinadas), P5-A..J e DEC-01..04. Quórum = um aceite por área obrigatória configurada e congelada na submissão; nova versão exige todos os aceites; reatribuição mantém autoria e aceite válido; P5 não possui reversão de aceite pela UI/endpoint V1; área pode rejeitar pacote e só o coordenador formal de competência com ACCESS efetivo, vínculo e scope pode confirmar rejeição terminal; não confirmação mantém decisão pendente e registra justificativa; rejeição terminal inativa ações projetadas, não apaga auditoria. P6 MANAGE + administrative_scope publica catálogo versionado prospectivo.
-
-**Correção de interpretação:** menções anteriores a C2 pendente, unanimidade de indivíduos, delivery por e-mail de anexos e DEC-01..04 pendentes são histórico **STALE_EVIDENCE / SUPERSEDED**, não critérios vigentes. Referências `PASS` antigas de A12/A14/A15 ou dos freezes não se revalidam automaticamente por adendo; não usar essas flags para autorizar execução.
-
-**Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
-
-**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=PR78_MERGED_TO_MAIN_VERIFIED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
+**Nota de proveniência:** este relatório conserva a revisão/estratégia histórica; não é fonte independente de `PASS` atual. **Fonte normativa atual de P5:** [37 — contrato consolidado](./37-p5-submissao-e-revisao-no-portal.md); critérios no [ledger 23](./23-ledger-rq-ac-testes.md), plano no [39](./39-roadmap-mestre-implementacao-v1.md), estado de execução no [README](./README.md). O conteúdo anterior de P5 contraditório é `SUPERSEDED`.

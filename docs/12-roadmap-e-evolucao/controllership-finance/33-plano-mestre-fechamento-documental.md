@@ -1,10 +1,12 @@
 # 33 — Plano Mestre de Fechamento Documental
 
+> **CHECKLIST HISTÓRICO DE FECHAMENTO DOCUMENTAL:** preserve evidência/AC, mas não use flags PASS locais como freeze atual. Fonte vigente: [README](./README.md), [P5 canônico — 37](./37-p5-submissao-e-revisao-no-portal.md), [RQ/AC — 23](./23-ledger-rq-ac-testes.md), [Roadmap — 39](./39-roadmap-mestre-implementacao-v1.md).
+
 ## Estado
 
-**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+**Estado atual:** [README](./README.md). **D-FINAL-02=CLOSED/PO_APPROVED (revisão humana, sem bloqueio artificial)**; D-FINAL-01 é inventário do Core/T05, não permission do Portal. Gates transversais seguem `INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`. A16/CI neste arquivo são evidências datadas.
 
-**Verificação pós-merge (vigor atual):** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+**Rebaseline de 16/10 (histórico):** [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 **TARGET / DOCUMENTATION_CLOSURE_PHASE ACTIVE**
 
@@ -727,11 +729,4 @@ Durante o fechamento documental, se surgir escolha real de:
 
 retornar `DECISION_REQUIRED` e não preencher a lacuna por preferência.
 
-
-## Rebaseline de fechamento 16/10/2026 — decisão vigente P5
-
-O registro histórico A12 = PENDING_P5_TERMINAL_AUTHORITY foi superado pela aprovação C2 e P5-A..J. Quorum vigente: um aceite por área obrigatória sobre a PackageVersion corrente; área obrigatória é definida em configuração P6 versionada e congelada na submissão P5. Uma troca de responsável não remove aceite existente, e nova versão exige novos aceites. O aceite não pode ser revertido pela UI V1. A rejeição de uma área exige confirmação da autoridade operacional formal para encerrar a competência como rejeitada. Após confirmação, nenhuma TaskProjection de review permanece acionável. DEC-01/02 aprovaram autoridade e recusa de confirmação; DEC-03 mantém retificação excepcional fora da V1.
-
-**Fechamento ainda BLOQUEADO:** (i) requisitos DEC-01/02 para vínculo da autoridade aprovados, mas binding T05 a inventariar; (ii) correção excepcional fora da V1 por DEC-03; (iii) Core T05 (grupos/funções + effective access), P6 catalogo de áreas e snapshots físicos, binding de producers/consumers, RQ/AC/test matrix e Help; (iv) rebase/integracao com HEAD atual e rules .cursor; (v) revisão A12/A14/A15 reexecutada com evidence. Congelamentos antigos são históricos, não prova de freeze presente.
-
-`DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`.
+**Nota de proveniência:** este relatório conserva a revisão/estratégia histórica; não é fonte independente de `PASS` atual. **Fonte normativa atual de P5:** [37 — contrato consolidado](./37-p5-submissao-e-revisao-no-portal.md); critérios no [ledger 23](./23-ledger-rq-ac-testes.md), plano no [39](./39-roadmap-mestre-implementacao-v1.md), estado de execução no [README](./README.md). O conteúdo anterior de P5 contraditório é `SUPERSEDED`.

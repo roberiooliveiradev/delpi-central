@@ -1,5 +1,7 @@
 # SUPERSEDED — premissa de delivery externo invalidada
 
+> **SUPERSEDED / HISTÓRICO:** o envio por anexos/e-mail foi descartado em favor da revisão interna. Nenhuma alternativa deste packet autoriza runtime. Fonte vigente: [README](./README.md), [P5 canônico — 37](./37-p5-submissao-e-revisao-no-portal.md), [RQ/AC — 23](./23-ledger-rq-ac-testes.md), [Roadmap — 39](./39-roadmap-mestre-implementacao-v1.md).
+
 **EXECUTION_DRIFT / SUPERSEDED_BY_PRODUCT_CLARIFICATION**
 
 Decisão/clarificação do Product Owner em 09/10/2026:

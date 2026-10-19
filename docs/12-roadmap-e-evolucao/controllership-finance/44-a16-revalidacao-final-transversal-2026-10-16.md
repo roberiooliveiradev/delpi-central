@@ -1,5 +1,7 @@
 # 44 — A16: Revalidação transversal final com evidências (16/10/2026)
 
+> **EVIDÊNCIA HISTÓRICA A16:** revisão datada de 16–19/10/2026, não o gate ativo. D-FINAL-02 fechada e Core permissions fora do Portal. Fonte vigente: [README](./README.md), [P5 canônico — 37](./37-p5-submissao-e-revisao-no-portal.md), [RQ/AC — 23](./23-ledger-rq-ac-testes.md), [Roadmap — 39](./39-roadmap-mestre-implementacao-v1.md).
+
 > **Atualização PO de 19/10/2026:** D-FINAL-02 foi resolvida: **aprovam pessoas**; ausência de revisor/área não gera aprovação automática e também **não cria uma trava prévia de envio/publicação**. O pacote permanece aguardando aceites humanos reais. D-FINAL-01 é inventário do contrato da Core API, **não gestão de permissões do Portal CF**. As conclusões históricas de 16/10 abaixo foram reconciliadas nestes termos.
 >
 > **Parecer:** `INCONCLUSIVE` para o fechamento documental **integral**. As escolhas C2, P5-A..J e DEC-01..04 permanecem `TARGET / PO_APPROVED`. Esta revisão corrige divergências históricas sem tocar runtime, mas não aprova produto, novo contrato Core, scope ou implementação por inferência.
