@@ -15088,3 +15088,13 @@ NEXT_RELATED=DELIA-C3-I03-HELPDESK-PERSONAL-TICKET-COUNT-ROUTING-01
 - **STATE:** `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.273 — I03 INDEPENDENT NON-REGRESSION REVIEW AND SCOPED ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
+
+**DATE:** 2026-10-19. **REVIEW:** [32](../corrections/mcp-contextual-intelligence-orchestration/32-i03-independent-nonregression-review-and-acceptance.md). **LIVE/CODE SHA:** `9a8775018f31111ce59b11945efec962e0db73d4`.
+
+- **K1:** TÉO grounded READ 16,943ms. **K2:** recovery for invalid model index, live 12,313ms with six prior-derived bullets, no owner reinvoke. **K3:** INDEX→no_match clarification 21,784ms; timeout catch only synthetic-pass, live branch not exercised. **K4:** DAVI live discovery `CAPABILITY_NOT_MATCHED`, eligible=95, 17,335ms; independent direct DAVI contract comparison supports search-miss interpretation.
+- **DECISION:** `I03_ACCEPTED=YES_WITH_RESIDUAL` for bounded I03 scope; `ALGORITHM_COMPLETION=PARTIAL`; full pytest executor-reported, independent replay `TEST_NOT_RUN`, n=1 each. §6.271 helpdesk separate unresolved work not closed. No C3/C4/C5 progression.
+
+NEXT=I04_PROVIDER_NEUTRAL_GENERALIZATION
