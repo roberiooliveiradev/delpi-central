@@ -236,3 +236,7 @@ PRODUCTION_READINESS=NOT_PROVEN
 - [60 — inventário pré-Q01 realizado pelo GPT](./60-pre-q01-consumers-contracts-tests-inventory.md): 42/42 achados → código, callers, contratos, owner, suites e decisões de reuso; classificador de linguagem adjacente identificado.
 - [61 — evidências G0 e handoff para Cursor somente executar refatoração](./61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md): blockers I04, pacotes de código delimitados, RED/DoD, 17 classes de teste e STOP gates. Cursor só executa code/test/live após autorização, e uma busca residual para drift local, não outro inventário amplo.
 - [Ledger §6.302](../../evidence/execution-ledger.md): levantamento `PROVEN` na fonte, limitações `TO_INVENTORY/TEST_NOT_RUN` e Q01 não autorizado.
+
+### G0/I04 live validation pointer
+
+ **Independent live validation 2026-10-19:** see [62 live section](./62-g0-bounded-i04-remediation-compare-and-c02-budget.md) / ledger §6.311 — `I04_ACCEPTED=NO`; C02 task FAIL; G0 compare fail-closed PASS live.

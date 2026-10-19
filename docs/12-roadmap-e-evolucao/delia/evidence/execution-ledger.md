@@ -15704,3 +15704,26 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=INDEPENDENT_REVIEW_AND_AUTHORIZED_DEPLOY
 ```
+
+## §6.311 — G0/I04 independent live validation (VALIDATION_ONLY)
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-I04-G0-INDEPENDENT-LIVE-VALIDATION-01`. **DOC:** [62 — live validation section](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md). **REFERENCE_MAIN (task):** `6d3b438864`. **ORIGIN_MAIN_AT_DOC:** revalidated concurrently; **EVALUATED_ORCH_SHA:** `cca468a365` / blob `0d82c098` (unchanged through concurrent VD-F03 §6.310). **DEPLOYED_HOST_GIT_AT_LIVE:** `6cfb4ea7c3` initially; host later at `2f20886730` with **same orch blob**; container orch sha256 `921c5225326b02c0` matched host file during eval. **MODEL:** `moonshotai/kimi-k3`. **FINGERPRINT:** `2d7505d4142d11bc`.
+
+- **BACKEND:** independent worktree pytest on REFERENCE_MAIN ancestor with identical orch blob — `1647/1647 PASS`; security/provenance/ACT subset PASS. No application code changed by this task.
+- **AUTH:** delegated password-grant Portal subject OK (`azp=delpi-central`, sub present); tokens not documented. Historical `invalid_grant` not reproduced in this window.
+- **G0 COMPARE LIVE:** EV-05X/EV-15R → `prior_turn_evidence_only` + `insufficient_evidence` on excerpt-only prior; no positional `Comparação` SUCCESS; no ACT.
+- **C02 LIVE:** admission `owner_surface`/`operational`; selected **mcp:davi** `discover_delpi_information` (cold+2 warm) and variant **mcp:teo** `get_catalog` — **never mcp:vista**; formats **FAIL_TASK_OUTCOME**; HTTP 200 (504 avoided); soft-land **not** C02 outcome path.
+- **OTHER:** EV-04/EV-06/EV-07/EV-11 PASS class task outcomes; EV-08 personal tickets FAIL_TASK; EV-12 TEST_NOT_RUN; MATERIAL_ACT=0.
+- **GATES:** `I04_ACCEPTED=NO`; `Q01/Q02=NO`; `G0_REWORK_REMAINING=0`; Coordination verdict PENDING (executor does not accept I04).
+
+```text
+LIVE_VALIDATION_EXECUTED=YES
+I04_ACCEPTED=NO
+G0_I04_EXIT=BLOCKED_PENDING_COORDINATION_DECISION
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+CODE_DIFF=NONE
+NEXT=COORDINATION_FINAL_I04_GATE_DECISION
+```
+
