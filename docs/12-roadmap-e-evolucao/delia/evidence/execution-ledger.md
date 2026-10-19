@@ -15535,3 +15535,16 @@ NEXT=BOUNDED_SEMANTIC_INTERPRETATION_CONSOLIDATION_EXECUTION_BRIEF_AFTER_CONSUME
 - Docs-only: `CODE_DIFF=NONE`, `TESTS=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`; `I04_ACCEPTED=NO`, `Q01_AUTHORIZED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
 
 NEXT=G0_I04_EXIT_INDEPENDENT_COORDINATION_DECISION
+
+
+## §6.302 — GPT-prepared finite orchestrator refactoring dossier (consumer/test inventory and G0 gate)
+
+**DATE:** 2026-10-19. **CANONICAL:** [ADR58](../corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md), [roadmap59](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [pre-Q01 dossier60](../corrections/mcp-contextual-intelligence-orchestration/60-pre-q01-consumers-contracts-tests-inventory.md), [G0 and Cursor handoff61](../corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md). **PREPARED_FROM_MAIN:** `9dad78c53beb2a5e5de50695fbb590b40440baf6`. **SOURCE_BLOB:** `orchestration.py=bc13e07b31b6844e172c5d485d77f59a4b8c0a10`.
+
+- **GPT research `PROVEN`:** mapped all 42 doc56/57 audit groups to stages and internal calls/tests, confirmed `HandleInteractiveConversationTurn` and `CapabilityProviderPort`/MCP/OpenAPI consumers, existing `InvokeModel`, `TurnDeadline`, schema, PendingWrite, Evidence/Outcome contracts. New cross-file semantic regex/shortcut in `paginated_result_semantics.py` identified. 22 test modules sourced, 3 obsolete-semantic-assumption tests flagged for replacement by behavioral criteria, not weakened safety.
+- **G0 outcome:** `I04_ACCEPTED=NO`. DAVI/OpenAPI owner READ PASS_WITH_RESIDUAL executor, no-tool PASS executor; VISTA formats C02 reported HTTP504, L5 compare list-only, TÉO personal count blocked by missing authentic GLPI user link, performance/repeat live independent `TEST_NOT_RUN`. Cannot authorize Q01/Q02 from docs alone.
+- **Responsibility split mandated by Product Master:** GPT owns investigation, inventory, canonical/owner/contract analysis, roadmap/reviews; Cursor only authorized bounded code changes with RED/GREEN, full suite, live runtime verification and factual report/commit. Cursor allowed one `rg` drift validation since GitHub code-search index returned 0 on known present symbols, **not** a restarted exploration.
+- **Six packages immutable:** G0→Q01→Q02-A→Q02-B→Q02-C→Q03; one bounded rework per package then STOP/escalate, no silent phase bypass. `SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED`, zero new planner/regex intent engine/provider-name branches, Core/Domain safety untouched.
+- **Evidence limits:** `REPO_WIDE_CONSUMER_GREP=TO_INVENTORY`, `GIT_WORKTREE_STATUS=TO_REVALIDATE`, independent pytest and SSH eval `TEST_NOT_RUN`. `RUNTIME_DIFF=NONE`; `Q01_AUTHORIZED=NO`, `Q02_AUTHORIZED=NO`, `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
+
+NEXT=COORDINATION_G0_I04_PHASE_DECISION_THEN_CURSOR_ONLY_AUTHORIZED_CODE_PACKAGES
