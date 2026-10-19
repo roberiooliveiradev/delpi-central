@@ -179,3 +179,73 @@ D-G0-05 permanece aberta e bloqueia somente rotas protegidas futuras.
 ```
 
 **Estado vigente: NO-GO.** Todas as decisões acima aguardam declaração humana; este documento não as substitui.
+
+## 10. Registro final de aprovação — 2026-10-19 (HEAD `45721cedec`)
+
+### 10.1 Manifestação do PO registrada
+
+> **"Aceito com residuais o fechamento técnico apresentado"** — PO, 2026-10-19, sobre §8–§9.
+
+Efeitos registrados da manifestação (não é assinatura de gates):
+
+| Item | Posição do PO | Efeito |
+|---|---|---|
+| D-G0-06 | **Tecnicamente sustentada** pela evidência do orquestrador (§9.1) | Proposta aprovada em revisão técnica; **formal de Arquitetura/Ops continua pendente** |
+| D-G0-05 | **Não bloqueia IMP-F0** enquanto não houver endpoints protegidos | `/health` e `/ready` públicos, sem leitura RBAC; decisão de Segurança permanece **obrigatória antes da primeira rota autenticada** |
+| Escopo IMP-F0 | Confirmado: FastAPI + Dockerfile + Compose/gateway + `/health` + `/ready` + testes | Frontend, endpoints de negócio, A01 e P1–P6 **fora de escopo** |
+
+### 10.2 Residuais isolados por slice
+
+| Residual | Bloqueia IMP-F0? | Bloqueia |
+|---|---|---|
+| D-G0-01 exceção FastAPI (`VALIDATED`) | **Sim** — runtime não pode existir sem a exceção validada | qualquer código da BFF |
+| D-G0-02 quatro freezes | **Sim** — gate transversal | qualquer runtime do Portal |
+| D-G0-03 fechamento documental | **Sim** | qualquer runtime do Portal |
+| D-G0-04 autorização de implementação | **Sim** — aguarda assinatura do PO (§10.4) | IMP-F0 especificamente |
+| D-G0-05 política stale-RBAC | **Não** (PO confirmou §10.1) | primeira rota autenticada (Home data, A01, P1) |
+| D-G0-06 `/ready` formal | **Não** — aceito tecnicamente; registro formal residual | nenhum bloqueio de implementação; só fechamento formal |
+| `is_superadmin` de service token em rotas humanas | **Não** — não há rotas humanas em IMP-F0 | design obrigatório já especificado (`principal_type=="user"`) |
+| Path canônico do Cockpit P1 | **Não** | slice P1 |
+| Producers T01/T03/T05, P2/P3/P5 | **Não** | dados reais do Cockpit P1 |
+
+### 10.3 Quadro de assinaturas — registro formal
+
+| Owner | Assina | Referência de evidência | Assinatura |
+|---|---|---|---|
+| Arquitetura | D-G0-01 (`VALIDATED`) + D-G0-06 (aceite formal) | §1, §9.1 | ☐ PENDENTE |
+| Design | `PORTAL_DESIGN_FREEZE` = PASS | §2 (docs 24, 30, 31, 32 + plugin-ui PROVEN) | ☐ PENDENTE |
+| Produto | `PRODUCT_CONTRACT_FREEZE` = PASS | §2 (README §1, doc 31, doc 23, 39–42) | ☐ PENDENTE |
+| Segurança | `SECURITY_MODEL_FREEZE` = PASS + D-G0-05 (condição: antes da 1ª rota autenticada) | §2, §4, §8, §10.1 | ☐ PENDENTE |
+| Qualidade | `TEST_STRATEGY_FREEZE` = PASS | §2 (docs 41, 23 + matriz IMP-F0) | ☐ PENDENTE |
+| PO / Product Master | D-G0-03 `DOCUMENTATION_CLOSURE_COMPLETE` = PASS | corpus 00–45 | ☐ PENDENTE |
+| PO / Product Master | D-G0-04 — autorização IMP-F0 (§10.4) | §10.4 | ☐ PENDENTE |
+
+**Regra:** cada linha vira `PASS/YES` no README somente com owner identificado + data + referência. Manifestação em chat é registrada aqui com data; a virada do painel exige a declaração explícita.
+
+### 10.4 Texto de autorização IMP-F0 — aguardando assinatura do PO
+
+```text
+AUTORIZAÇÃO DE IMPLEMENTAÇÃO — IMP-F0 (FUNDAÇÃO DA BFF)
+
+Eu, PO/Product Master do Portal Controladoria & Finanças, autorizo a
+implementação EXCLUSIVA do slice IMP-F0:
+
+  - controllership-finance-api em FastAPI (exceção escopada — doc 45 §1);
+  - Clean Architecture mínima, sem camadas vazias e sem persistência;
+  - GET /health (liveness) e GET /ready (semântica §5/§9.1);
+  - Dockerfile padrão plataforma + entry Compose + bloco gateway nginx
+    /apps/controllership-finance-api/ + reload operacional;
+  - testes de bootstrap, health/ready, config inválida e middleware;
+  - logging sem secrets; CORS restritivo; operationId literal.
+
+EXPRESSAMENTE FORA DE ESCOPO: plugins/controllership-finance (MFE),
+Home e demais páginas, A01 Página do usuário, P1–P6, endpoints de
+negócio, novas permissions, migrations, integrações ERP.
+
+PRECONDICÕES CUMULATIVAS (o runtime só é alterado se todas valerem):
+  D-G0-01 VALIDATED; D-G0-02 quatro freezes PASS; D-G0-03 PASS.
+
+Assinatura PO: ____________________  Data: __________  HEAD: ________
+```
+
+**Estado vigente: NO-GO para IMP-F0.** Assinatura PO de §10.4 torna-se efetiva somente com D-G0-01, D-G0-02 e D-G0-03 já registrados como PASS/VALIDATED.
