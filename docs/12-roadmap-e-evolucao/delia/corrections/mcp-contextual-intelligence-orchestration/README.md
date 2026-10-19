@@ -228,3 +228,11 @@ PRODUCTION_READINESS=NOT_PROVEN
 - [59 — Plano executivo de seis pacotes](./59-orchestrator-refactoring-finite-execution-roadmap.md): `G0 I04 exit → Q01 consumer gate → Q02-A semantic ownership → Q02-B args/provenance/index → Q02-C continuity/synthesis/structural cleanup → Q03 independent closeout`. Incorpora auditorias 56/57 e ADR58; **não substitui a dependência canônica I04→Q01**.
 - Cada pacote prevê uma entrega bounded e um review; no máximo **um rework** por pacote. Nova falha material depois desse ciclo = `STOP` e decisão explícita de owner/arquitetura, nunca abrir `R2/R3/R4` automaticamente. Segurança crítica nunca vira residual aceito.
 - Este roteiro é **PLANNED / PENDING_PHASE_GATE**: `I04_ACCEPTED=NO` e `Q01_AUTHORIZED=NO` no HEAD documental; não autoriza código, deploy ou avanço de fase. O primeiro item é **G0 — decisão conclusiva de I04** com bloqueios externos classificados separadamente.
+
+
+### Pesquisa concluída no GPT antes da refatoração — sem loops de inventário no Cursor
+
+- [59 — roadmap executivo fechado (seis pacotes)](./59-orchestrator-refactoring-finite-execution-roadmap.md): G0→Q01→Q02-A/B/C→Q03, até um rework delimitado por pacote; dependências de fase preservadas.
+- [60 — inventário pré-Q01 realizado pelo GPT](./60-pre-q01-consumers-contracts-tests-inventory.md): 42/42 achados → código, callers, contratos, owner, suites e decisões de reuso; classificador de linguagem adjacente identificado.
+- [61 — evidências G0 e handoff para Cursor somente executar refatoração](./61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md): blockers I04, pacotes de código delimitados, RED/DoD, 17 classes de teste e STOP gates. Cursor só executa code/test/live após autorização, e uma busca residual para drift local, não outro inventário amplo.
+- [Ledger §6.302](../../evidence/execution-ledger.md): levantamento `PROVEN` na fonte, limitações `TO_INVENTORY/TEST_NOT_RUN` e Q01 não autorizado.
