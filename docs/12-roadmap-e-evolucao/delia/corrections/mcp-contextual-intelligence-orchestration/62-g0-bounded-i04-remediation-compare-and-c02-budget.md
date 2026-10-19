@@ -54,3 +54,39 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_G0_REVIEW
 ```
+
+
+## Coordination v10 — independent G0 review of implementation 95e6c612 (2026-10-19)
+
+**REVIEW_VERDICT=REWORK** (one bounded rework allowed under roadmap 59; do not release Q01). Base comparison `fc93fbf359 → 95e6c612`: 2 commits, 9 files including unrelated concurrent Protheus identity documentation commits; G0 implementation itself touched orchestration.py, handle_interactive_turn.py, two test files, this doc, README and ledger §6.305. Preserved concurrent changes; source blob differs from old audit snapshot, as expected.
+
+### Evidence accepted / not independently verified
+
+- **PROVEN STATIC:** existing `OperationalCapabilityOrchestrator`, typed goal, `InvokeModel`, `TurnDeadline`, selection-only owner renderer, existing provider-neutral paths reused; no visible new planner, provider branches or public DTO/OpenAPI changes in G0 diff.
+- **PROVEN STATIC:** compare empty-selection no longer replays the old full bullet list; fallback after `NOT_APPLICABLE` caps model invocation at 12 seconds and catches `MODEL_TIMEOUT` to return a bounded `NON_GROUNDED` message with `turn_budget_limited`.
+- **EXECUTOR-REPORTED TESTS:** full `delia-api` pytest PASS and new unit tests PASS, not independently re-executed by GPT. Runtime/live post-fix `TEST_NOT_RUN` (reported `invalid_grant` / expired delegated JWT), no deploy, no cold/warm evaluation. Historical VISTA C02 stage evidence is a documented executor report; exact logs were not independently re-read in this review.
+- **G0-02 residual:** instruction-string test asserts the words 'formats'/'operational', not an actual model decision or VISTA owner routing. A timeout soft-land prevents an edge HTTP 504 in a simulated path but does not prove C02 task outcome or eliminate wrong-owner TÉO selection. Keep `I04_ACCEPTED=NO`.
+
+### Blocking finding G0-01: prior text positional comparison is not typed comparable evidence
+
+`_segment_compare_prior_units()` splits rendered conversational lines by the ' — ' punctuation, silently uses `min(len(left_parts),len(right_parts),MAX_SYNTHESIS_FIELDS)`, and labels adjacent strings as differences; `_comparison_from_prior_excerpts()` chooses the first two bullet units even when an ordinal/subset might request others. Those lines are produced by `_prior_excerpt_records`, whose docstring explicitly calls them **untrusted conversational data, never live owner facts**. The helper does not verify attribute names, units, grain, schema, owner/source refs, selection of two intended records, equal cardinality or authoritative comparability. It can emit positional identifier/name differences as a 'Comparação' and bypass an empty/invalid model selection. The `_render_is_list_replay_not_compare()` success heuristic trusts literal headers 'Diferenças comprovadas:'/'Comparação:', not a typed task outcome. Test `test_g0_01_compare_empty_selection_is_not_list_success` currently rewards the questionable output and checks that `LIMITATION_INSUFFICIENT_EVIDENCE` is absent. This is a material contractual/data quality risk, not a merely unverified richer UX.
+
+**Required single bounded rework:** On a compare/analyze request, if the prior context only offers free-text excerpts (not validated typed owner records and comparable fields under the existing frozen contract), return **explicit insufficiency with** `LIMITATION_PRIOR_TURN_CONTINUATION` + `LIMITATION_INSUFFICIENT_EVIDENCE` and truthful `NON_GROUNDED` handling; never convert formatted text to field-equivalent differences. Remove or disable the newly introduced positional segment compare and text-header-as-success paths where they could classify a compare task as accomplished. Do **not** rewrite/disable legitimate typed field-level owner comparisons elsewhere or broaden new contracts; use existing insufficiency helpers and current goal flags. No new planner/provider special casing and no model-authored factual prose. If typed owner comparison under current contract is demonstrably achievable, preserve it with direct owner-ref/schema evidence; otherwise do not claim business comparison succeeded.
+
+**Mandatory RED/green additions:** different-length segment lines, swapped field order, arbitrary delimiter in content, compare second/third among 3 bullets, fake prior identifier, prior paraphrase/hypothesis vs owner fact, deceptive 'Comparação:' heading, empty/invalid synthesis and safe insufficiency; preserve subset/list-only follow-ups. Maintain existing 12s fallback and add actual admitted owner-selection behavioral assertion with fake model if possible inside existing test harness (an instruction literal assertion alone is insufficient). Full delia-api regression and zero ACT/security, strict 30s; live when identity/deploy authorization becomes available and record `TEST_NOT_RUN` otherwise.
+
+**SCOPE LIMIT:** one bounded rework of G0-01 correctness and directly related G0-02 behavioral assertion only, **not** Q02-A/B/C. After this rework, if blockers persist, STOP→ROOT_CAUSE/OWNER/ARCHITECTURE_DECISION, no iteration chain. Failed independent live replay prevents I04 acceptance regardless of unit PASS. `ARCHITECTURE_DECISION_REQUIRED=NO` for safe insufficiency within existing contract; changing frozen synthesis/comparability instead would require new Product Master approval.
+
+```text
+REVIEWED_SHA=95e6c612649d98c47c6cd94c9fd4892c41f8ecea
+REVIEW_VERDICT=REWORK
+BLOCKER=G0_01_UNTRUSTED_POSITIONAL_STRING_COMPARISON
+G0_02_STATIC_BUDGET_MITIGATION=PROVEN
+G0_02_LIVE_TASK_OUTCOME=TEST_NOT_RUN
+REWORK_QUOTA_REMAINING=1
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+NEXT=SINGLE_BOUNDED_G0_REWORK_THEN_STOP_OR_REVIEW
+```
