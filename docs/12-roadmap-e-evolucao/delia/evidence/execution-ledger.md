@@ -15548,3 +15548,17 @@ NEXT=G0_I04_EXIT_INDEPENDENT_COORDINATION_DECISION
 - **Evidence limits:** `REPO_WIDE_CONSUMER_GREP=TO_INVENTORY`, `GIT_WORKTREE_STATUS=TO_REVALIDATE`, independent pytest and SSH eval `TEST_NOT_RUN`. `RUNTIME_DIFF=NONE`; `Q01_AUTHORIZED=NO`, `Q02_AUTHORIZED=NO`, `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
 
 NEXT=COORDINATION_G0_I04_PHASE_DECISION_THEN_CURSOR_ONLY_AUTHORIZED_CODE_PACKAGES
+
+
+## §6.303 — Architecture/Coordination rollover: GPT discovery done, Cursor code refactor only
+
+**DATE:** 2026-10-19. **ROLE SPLIT:** GPT owns canonical/consumer/contract/test inventory, phase decision, independent review, GitHub documentation; Cursor performs only authorized bounded code refactor, RED/GREEN/full suite, live verification and commits. **CANONICAL:** 16, 50, 17, 49 §14.1, 51, 52, 21, 20, 25, product 24, thematic 60, .cursor protocol.
+**REFERENCES:** [59](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [60](../corrections/mcp-contextual-intelligence-orchestration/60-pre-q01-consumers-contracts-tests-inventory.md), [61 §7](../corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md).
+
+- **Static GPT inventory PROVEN:** 10,592-line orchestration.py blob `bc13e07b31b6844e172c5d485d77f59a4b8c0a10`, 42/42 audit findings, internal callers, interaction use case, MCP/OpenAPI ports and 22 test modules documented. GitHub code search returned 0 even for confirmed symbols, so full-repo `rg` remains exactly one bounded Cursor pre-diff drift validation, not open-ended re-inventory.
+- **Finite sequence:** G0 → Q01 → Q02-A → Q02-B → Q02-C → Q03; at most one bounded rework per package, then STOP and explicit coordination/owner decision for persistent defects. No new planner/engine/provider-name branches.
+- **G0 phase gate unresolved:** `I04_ACCEPTED=NO`, `Q01_AUTHORIZED=NO`, `Q02_AUTHORIZED=NO`. New coordination chat must adjudicate A) one bounded I04 remediation and independent review first; or B) explicit canonical phase exception authorizing bounded semantic remediation of I04, never silently pretending Q01 is authorized. VISTA C02 504 and comparison copying list remain user-task failures; TÉO linked personal GLPI count `TEST_NOT_RUN`.
+- **Frozen requirements:** ADR58 semantic ownership approved; selection-only factual synthesis (§6.145) preserved; no model business FACT, no Core/Domain AuthZ bypass, no PREPARE/ACT relaxation, no phase advancement by documentation.
+- **Evidence limits:** independent backend pytest `TEST_NOT_RUN`, independent SSH production `TEST_NOT_RUN`, git working tree `TO_REVALIDATE`, no runtime code edited in this ChatGPT update.
+
+NEXT=NEW_CHAT_ARCHITECTURE_COORDINATION_SINGLE_G0_DECISION_THEN_FINITE_EXECUTION
