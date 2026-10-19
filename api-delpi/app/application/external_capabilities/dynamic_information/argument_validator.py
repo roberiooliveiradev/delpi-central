@@ -35,7 +35,6 @@ _TRANSPORT_FORBIDDEN = frozenset(
         "path",
         "method",
         "operationId",
-        "sql",
         "authorization",
         "Authorization",
     }
