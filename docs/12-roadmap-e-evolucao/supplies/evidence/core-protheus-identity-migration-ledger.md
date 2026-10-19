@@ -4,7 +4,8 @@
 |-------|--------|
 | TASK | Core Protheus identity ownership |
 | SHA base | `8fc45e2119f3cc7b1b34a0f79bca144e5f822516` (`origin/main` no reanchor) |
-| Branch | `feat/core-protheus-identity` |
+| SHA final `main` | `0bab7c315c1dcc3edddd4b1675e9994d8a0e6c51` |
+| Branch | `feat/core-protheus-identity` (rebased → merged via FF push to `main`) |
 | `EXISTING_EQUIVALENT` | `NO` |
 | `REUSE_DECISION` | `EXTEND` |
 | Código | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` |
