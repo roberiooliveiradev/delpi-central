@@ -1,10 +1,10 @@
 # 39 — Roadmap Mestre de Implementação V1 — Portal Controladoria & Finanças
 
-> **Última revalidação:** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). A16 continua INCONCLUSIVE; o roadmap permanece PLANNED e não autoriza runtime.
+> **Última revalidação, 19/10/2026:** [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). Gate **documental PASS**. Roadmap permanece PLANNED para runtime, que requer comando explícito do PO no próximo chat.
 
 > **Estado:** TARGET / PLANNED / DOCUMENTATION_ONLY — 16/10/2026. Plano executivo para futura execução incremental, não é ordem para desenvolver nem prova de runtime.
 >
-> **Gate vigente:** `DOCUMENTATION_CLOSURE_COMPLETE = NO`; `IMPLEMENTATION_AUTHORIZED = NO`; `A12/A14/A15 = INCONCLUSIVE` conforme [38 — rebaseline e evidências](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md). Qualquer referência anterior a PASS permanece histórica até revalidação formal.
+> **Gate vigente:** `DOCUMENTATION_CLOSURE_COMPLETE=PASS` (escopo documental), `IMPLEMENTATION_AUTHORIZED=NO` até novo comando, `RUNTIME_TESTS=TEST_NOT_RUN`. Rebaseline antigo [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) é histórico, não bloqueio vigente.
 
 ## 1. Objetivo e fontes de verdade
 
@@ -42,23 +42,23 @@ Documentos operacionais associados: [40 — slices/dependências](./40-matriz-de
 
 | Gate | Condição mensurável | Estado inicial |
 |---|---|---|
-| G-DOC / A16 | A12/A14/A15 revalidados, residual search, owners, Help, RQ/AC e freeze documentados | PENDING / INCONCLUSIVE |
-| G-FREEZE | `PORTAL_DESIGN_FREEZE`, `PRODUCT_CONTRACT_FREEZE`, `SECURITY_MODEL_FREEZE` e `TEST_STRATEGY_FREEZE` explícitos e sustentados | PENDING |
+| G-DOC / A16 | A12/A14/A15/A16 encerrados no **escopo documental** e semantic contracts | **PASS_DOCUMENTAL** |
+| G-FREEZE | Padrão visual, contratos semânticos, modelo de segurança e estratégia de testes definidos | **PASS_DOCUMENTAL / PASS_SEMANTIC / PASS_MODEL / PASS_PLANNED** |
 | G-AUTH | Aprovação posterior explícita do PO para implementação e `IMPLEMENTATION_AUTHORIZED=YES` registrado | NO |
 | G-SLICE | HEAD + `git status`, .cursor, owners, contratos, RQs/AC, positive/sibling/negative, escopo e stop conditions do slice | NOT_STARTED |
 | G-DELIVERY | PR/commit, testes realmente executados, security/UX/Help, postcondition e residual search | NOT_RUN |
 | G-RELEASE | Readiness de operação, deploy/rollback/smoke em ambiente aplicável, gate de publicação separado | NOT_AUTHORIZED |
 
-**Nenhum diff runtime será iniciado por este roadmap.** Criar e versionar os planos não modifica G-DOC, G-FREEZE, G-AUTH ou G-RELEASE. Quando GitHub connector não disponibilizar working tree, `git status = INCONCLUSIVE` até executor com checkout registrar evidência.
+**Nenhum diff runtime é autorizado somente por este roadmap.** G-DOC/G-FREEZE estão encerrados documentalmente; G-AUTH/G-RELEASE permanecem separados e pendentes. Quando GitHub connector não disponibilizar working tree, `git status = INCONCLUSIVE` até executor com checkout registrar evidência.
 
 ## 4. Estratégia de entrega: página por página com dependências explícitas
 
 A ordem proposta implementa primeiro a experiência comum, depois as páginas do processo. A **topbar em runtime** preserva sua ordem funcional própria (Início, Visão geral, Sala de interação, Minhas tarefas, Administração, Ajuda); não confundir ordem do menu com ordem de PRs. Página do usuário é deep route, não novo item de topbar.
 
 ~~~text
-R0 — Inventário técnico/documental e revalidação A12/A14/A15/A16
-       → quatro FREEZES com evidência → PO AUTHORIZE
-       |    (sem GO, STOP; sem scaffold/runtime)
+R0 — Gate A12/A14/A15/A16 e FREEZES documentais: PASS
+       → PO autoriza IMP-01 no novo chat
+       |    (antes do código: HEAD/status e inventário A01 no Cursor)
        v
 R1 — Página do usuário → Início → Visão geral → Minhas tarefas
                         → Sala de interação → Administração → Ajuda
@@ -78,7 +78,7 @@ R5 — hardening, regressão, readiness operacional e release governado
 
 ### R0 — Pré-flight e fechamento transversal (documentação; sem runtime)
 
-**Objetivo:** completar A12/A14/A15/A16, conferir padrões atuais de API/Portais antes de scaffold, resolver ou classificar explicitamente T01–T05 e E01–E06 por necessidade, mapear integração Core T05 grupos/funções elegíveis e vínculo do coordenador P5, vigência e snapshot P6, fontes de P3 T03, DTOs/eventos/concorrência. **Não pressupor** que busca de diretório por permission já fornece grupo/função.
+**Estado: concluído para documentação; preflight técnico inicia no IMP-01.** Conferir padrões atuais de API/Portais antes de scaffold, contratos Core efetive access/directory/person profiles e plugin-ui relevantes **para A01**. T03 ERP e T05 corporativo de P5 são inventários dos **respectivos slices**; não atrasar A01 por esses temas. Reabrir gate transversal somente se novo source provar decisão material conflitante.
 
 **Saída:** ata de gate documentada com evidência e SHA; owners/contracts/bindings; matriz de testes atualizada; GO/NO-GO explícito. **Sem gate PASS e autorização explícita → não executar R1.**
 
@@ -136,6 +136,6 @@ Uma PR deve corresponder ao menor slice de comportamento/owner coerente; não ju
 
 ## 8. Critério de saída do pacote documental deste roadmap
 
-Documentos 39–43 publicados, links no README, cobertura integral das superfícies A01–A13 e dos gates A14–A16, matriz RQ/AC e dependências, playbook Cursor e plano operacional rastreáveis. **Esta saída significa apenas ROADMAP_DOCUMENTED = PASS**, nunca `DOCUMENTATION_CLOSURE_COMPLETE=PASS`, `IMPLEMENTATION_AUTHORIZED=YES`, teste executado, deploy ou aceite de negócio.
+Documentos 39–43 publicados, links no README, A01–A16 rastreados, matriz RQ/AC, brief Cursor e plano operacional. **ROADMAP_DOCUMENTED=PASS; DOCUMENTATION_CLOSURE_COMPLETE=PASS (somente documentação)**. Não significa `IMPLEMENTATION_AUTHORIZED=YES`, teste executado, deploy ou aceite de negócio.
 
-**Próximo passo real antes de runtime:** execução do inventário residual de A12/A14/A15, gate A16 com evidência sobre HEAD e autorização explícita posterior.
+**Próximo passo:** novo chat autoriza IMP-01; Cursor verifica HEAD/git status e inventaria **somente dependências materiais de A01**, fecha seu contrato técnico e executa menor diff com teste. Core T05 de P5 não pertence ao preflight da Página do usuário.
