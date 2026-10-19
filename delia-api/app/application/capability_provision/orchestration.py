@@ -202,7 +202,7 @@ MAX_INDEX_OPTION_ENTRIES = 48
 # surface, then arguments projected into the owner's live inputSchema.
 # Each stage is independently revalidated against fresh catalog data;
 # a proposal is never authority.
-SELECTION_INSTRUCTION_VERSION = "11"
+SELECTION_INSTRUCTION_VERSION = "12"
 
 GROUP_SELECTION_INSTRUCTION_ID = (
     "delia.capability_orchestration.select_group"
@@ -221,6 +221,11 @@ Respond with JSON containing exactly the fields "applicable" and
 
 - "applicable": true only when answering requires data or an action
   from one listed capability group; false or null otherwise.
+  Asking which information, capabilities or consultation surfaces
+  are available ("what can you consult/query?", "quais informações
+  você consegue consultar?") is applicable when a listed group
+  advertises a DISCOVERY or READ capability that can answer that
+  coverage question — never answer from model knowledge alone.
 - "capability_group_id": copied verbatim from a listed entry; null
   when not applicable. Choose the group whose advertised capabilities
   semantically match the domain of the user message — match the
@@ -254,6 +259,13 @@ Respond with JSON containing exactly the fields "applicable" and
   capability; false or null otherwise.
 - "remote_name": copied verbatim from a listed capability; null when
   not applicable.
+- When the user asks which information, capabilities or consultation
+  surfaces are available (coverage inquiry: "what can you
+  consult/query?", "quais informações você consegue consultar?"),
+  and a listed capability has operation_class DISCOVERY, select that
+  DISCOVERY capability with applicable true — do not answer the
+  catalog yourself and do not choose an execute/opaque READ that
+  requires a prior discovery candidate token.
 - When prior_listing shows a prior ordered listing with identifiers
   and the user refers to one of those items (e.g. first/that/the one)
   asking for parts, details, context, screens, blocks or contents,
@@ -293,6 +305,12 @@ plus the goal fields below.
   capability; false or null otherwise.
 - "remote_name": copied verbatim from a listed capability; null when
   not applicable.
+- When the user asks which information, capabilities or consultation
+  surfaces are available (coverage inquiry), and a listed capability
+  has operation_class DISCOVERY, select that DISCOVERY capability
+  with applicable true and goal_class "read" — never answer the
+  catalog from model knowledge; never pick an execute/opaque READ
+  that requires a prior discovery candidate token.
 - "goal_class": one of "read", "analyze", "compare",
   "create_or_modify", "clarify". "read" also covers explanation,
   guidance or steps about how something is done (e.g. "como criar X?",
@@ -1200,6 +1218,43 @@ def _discovery_capability(group: CapabilityGroup) -> ProviderCapability | None:
         if cap.operation_class is SpecialistOperationClass.DISCOVERY
     ]
     return discovery[0] if len(discovery) == 1 else None
+
+
+# R2: coverage inquiry asks what information/capabilities can be
+# consulted — distinct from methodology follow-ups that extract a
+# checklist from prior evidence ("quais informações preciso levantar").
+_COVERAGE_INQUIRY_NEGATIVE = re.compile(
+    r"(preciso\s+levantar|antes\s+de\s+come[cç]ar|"
+    r"com\s+base\s+nessa|checklist|monte\s+um)",
+    re.IGNORECASE,
+)
+_COVERAGE_INQUIRY_POSITIVE = re.compile(
+    r"("
+    r"quais\s+informa[cç][oõ]es?.{0,40}(consegue|pode|voc[eê]).{0,20}"
+    r"consultar"
+    r"|o\s+que.{0,40}(consegue|pode).{0,20}consultar"
+    r"|what\s+(information|capabilities|data).{0,40}"
+    r"(can\s+you|do\s+you).{0,20}(consult|query|access|discover|list)"
+    r"|what\s+can\s+you\s+(consult|query|access|discover|list)"
+    r"|which\s+(information|capabilities).{0,20}(available|accessible)"
+    r"|quais\s+(capacidades|a[cç][oõ]es).{0,20}"
+    r"(dispon[ií]veis|consegue|pode)"
+    r")",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _is_information_coverage_inquiry(text: str) -> bool:
+    """True when the user asks what information/capabilities are consultable.
+
+    Provider-neutral and language-tolerant. Never treats checklist
+    extraction from prior methodology as coverage inquiry.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return False
+    if _COVERAGE_INQUIRY_NEGATIVE.search(text):
+        return False
+    return _COVERAGE_INQUIRY_POSITIVE.search(text) is not None
 
 
 _MAX_DISCOVERY_SURFACE_LINES = 6
@@ -3791,8 +3846,9 @@ def _capability_payload(
         for cap in group.capabilities
         if invocable_in_interactive_phase(cap.operation_class)
     ]
-    entries = [
-        {
+    entries = []
+    for cap in capabilities:
+        entry: dict[str, Any] = {
             "remote_name": cap.remote_name,
             "description": (cap.description or "")[
                 :MAX_DESCRIPTION_CHARS
@@ -3801,8 +3857,11 @@ def _capability_payload(
             "argument_keys": sorted(_schema_keys(cap)[0]),
             "required": sorted(_schema_keys(cap)[1]),
         }
-        for cap in capabilities
-    ]
+        # R2: compact role derived only from operation_class — helps
+        # coverage-inquiry selection without provider-specific names.
+        if cap.operation_class is SpecialistOperationClass.DISCOVERY:
+            entry["role"] = "owner_vocabulary_discovery"
+        entries.append(entry)
     for cap_chars in (MAX_DESCRIPTION_CHARS, 120, 60, 24, 0):
         for entry in entries:
             entry["description"] = entry["description"][:cap_chars]
@@ -7957,12 +8016,34 @@ class OperationalCapabilityOrchestrator:
             )
             selected_goal = None
         if descriptor is None:
-            _logger.info(
-                "orchestration stage=select_capability decision=none "
-                "group=%s",
-                group_key,
-            )
-            return None
+            # R2: coverage inquiry + sole owner DISCOVERY on the already
+            # selected group is a contract-proven path — not singleton
+            # auto-select of an arbitrary capability, not provider-named.
+            discovery = _discovery_capability(group)
+            if (
+                discovery is not None
+                and _is_information_coverage_inquiry(input_text)
+            ):
+                _logger.info(
+                    "orchestration stage=select_capability "
+                    "decision=coverage_inquiry_discovery group=%s "
+                    "capability=%s correlation_id=%s",
+                    group_key,
+                    discovery.remote_name,
+                    correlation,
+                )
+                descriptor = discovery
+                if interpret_goal and selected_goal is None:
+                    selected_goal = self._TurnGoal(
+                        goal_class="read", declared=True
+                    )
+            else:
+                _logger.info(
+                    "orchestration stage=select_capability decision=none "
+                    "group=%s",
+                    group_key,
+                )
+                return None
         return group_key, descriptor, selected_goal
 
     def _build_plan(

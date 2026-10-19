@@ -93,6 +93,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **R1+R3 none-selection and projection remediation:** [38 — implementation](./38-orchestration-none-selection-and-projection-remediation.md). Doc 35 authorized direction. Orch: selection none → `CLARIFICATION_REQUIRED` (no avoidable 504); R3 prior-excerpt framing. Full pytest PASS. Does not close R2 / I04 / Q01.
 
+**R1/R3 independent review:** [39 — ACCEPT_WITH_RESIDUAL](./39-r1-r3-independent-acceptance-review.md). R2 semantic selection residual OPEN.
+
+**R2 provider-neutral capability selection quality:** [40 — implementation](./40-r2-provider-neutral-capability-selection-quality.md). Coverage inquiry → sole group DISCOVERY recovery + instruction v12. Full pytest PASS. Does not accept I04 / authorize Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -177,6 +181,8 @@ R1_R3_REMEDIATION=EVIDENCE_READY
 LIVE_L02_R1=PASS_CLARIFICATION_NO_504
 LIVE_L04_R3=PASS_ORIENTACAO_FRAMING
 LIVE_L06_R1=PASS_CLARIFICATION_NO_504_DISCOVERY_RESIDUAL
+R2_SELECTION_QUALITY=EVIDENCE_READY
+LIVE_K4_R2=PENDING_POST_DEPLOY
 NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW
 NEXT_RELATED=COORDINATION_INDEPENDENT_REVIEW_I04
 C3_EXECUTED=NO

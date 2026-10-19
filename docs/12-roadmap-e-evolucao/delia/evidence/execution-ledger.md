@@ -15190,3 +15190,17 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 
 NEXT_MAIN=I04_REWORK_GATE
 NEXT_RELATED=DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01
+
+
+## §6.281 — DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01`. **DOC:** [40](../corrections/mcp-contextual-intelligence-orchestration/40-r2-provider-neutral-capability-selection-quality.md). **AUTHORITIES:** doc 35 R2 gate; docs 38–39; I03 docs 27–32; §6.280 residual.
+
+- **REUSE:** `OperationalCapabilityOrchestrator._select_target` / `_discovery_capability` / selection instructions — `EXTEND`.
+- **ROOT CAUSE:** stage-2 model `applicable=false` on coverage inquiry after group `mcp:davi` → R1 clarification; I03 DISCOVERY terminal never reached despite owner `eligible_action_count>0`.
+- **FIX:** instruction v12 (coverage → DISCOVERY); payload `role=owner_vocabulary_discovery`; `_is_information_coverage_inquiry` + recovery when sole group DISCOVERY exists. No DAVI hardcode; no arbitrary singleton auto-select; checklist follow-ups excluded.
+- **TESTS:** `test_r2_provider_neutral_capability_selection_quality.py` T01–T17 PASS; R1/R3 + I01–I04 + ACR + specialist PASS; full `delia-api` pytest PASS.
+- **LIVE:** filled after deploy of this SHA (see addendum below if present).
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; no C3/C4/C5/Q01 progression.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW
