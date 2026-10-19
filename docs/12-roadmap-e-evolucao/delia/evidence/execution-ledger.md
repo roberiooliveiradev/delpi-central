@@ -15487,3 +15487,14 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; fase/CP-RQ inalterados; `PRODUCTION_READINESS=NOT_PROVEN`.
 
 NEXT=INDEPENDENT_REVIEW → decisão PM sobre provider/contrato STT (VD-F01→VD-F03) → deploy canônico (rebuild plugin-ui+delia) → QA produção
+
+
+## §6.298 — Independent provider-neutral provenance / continuity review (SCOPED_ACCEPT / COMPARISON_REWORK)
+
+**DATE:** 2026-10-19. **REVIEW:** [55](../corrections/mcp-contextual-intelligence-orchestration/55-independent-provider-neutral-provenance-continuity-review.md). **CODE:** `53a5e9cd0d`; executor deployed code same SHA, independent live `TEST_NOT_RUN`. **VERDICT:** `ACCEPT_WITH_RESIDUAL` bounded provenance full-token coverage + prior-continuation latency improvement; `REWORK` faithful comparison task outcome and VISTA formats HTTP504.
+
+- **Code confirmed:** typed compare/analyze prior probe and budget stop; bullet atomicity; >=2 bullet fallback on `empty_selection`. **Critical risk:** copied prior bullet list does not satisfy compare semantics; prior-only HYPOTHESIS is not fresh owner FACT. Full-token lexical coverage is not semantic provenance/authorization.
+- **Executor live:** DAVI/HTTP product READ and prior continuation PASS_WITH_RESIDUAL; no-MCP PASS; TÉO partial, linked helpdesk personal count TEST_NOT_RUN; VISTA C02 FAIL ~30s; L5 ~9s list recovery not rich comparison. Full backend PASS executor-reported, material ACT=0 reported.
+- No I04 acceptance or C3/C4/C5/Q01 phase progression. NEXT provider-neutral comparison outcome + VISTA latency root-cause, including DAVI/TEO/VISTA/non-MCP/no-tool holdouts.
+
+NEXT=PROVIDER_NEUTRAL_PRIOR_COMPARISON_OUTCOME_AND_VISTA_LATENCY_DIAGNOSTIC
