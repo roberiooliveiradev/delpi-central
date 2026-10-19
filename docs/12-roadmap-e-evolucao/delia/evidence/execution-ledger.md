@@ -15248,3 +15248,14 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 
 
 
+
+
+## §6.285 — Independent R4/R5 code and live review (REWORK R5 / ACCEPT_WITH_RESIDUAL R4)
+
+**DATE:** 2026-10-19. **REVIEW:** [43](../corrections/mcp-contextual-intelligence-orchestration/43-independent-r4-r5-review-pagination-integrity-gate.md). **CODE SHA:** `31a10b866956d3ac3ee3d80b5376f6430ca27095`.
+
+- **R4:** personal scope fail-closed and GLPI owner boundary preserved, `ACCEPT_WITH_RESIDUAL`; no personal count live success. Session linked=false, all L01 model stages timed out before owner READ; live outcome `INCONCLUSIVE`, authorized linked user `TEST_NOT_RUN`.
+- **R5:** `REWORK`: code `aggregate_paginated_pages()` can declare complete when `has_more=None` and no authoritative total; `resolve_count_semantics()` can count an isolated page>1 with `has_more=False` as entire total. Require RED/GREEN first-page and explicit completion proof; partial remains UNKNOWN, no fabricated count. Full tests PASS executor-reported; independent replay `TEST_NOT_RUN`.
+- **NEXT:** bounded pagination-integrity correction before R5 acceptance; owner user-id/requester-filter/total exposure remains contract gap requiring owner review. No phase progression; `I04_ACCEPTED=NO`.
+
+NEXT=R45_BOUNDED_PAGINATION_INTEGRITY_REWORK
