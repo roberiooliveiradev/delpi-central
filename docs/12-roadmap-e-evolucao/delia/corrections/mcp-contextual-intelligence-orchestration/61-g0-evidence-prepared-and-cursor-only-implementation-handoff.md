@@ -189,3 +189,20 @@ FULL_REPO_GREP=TO_INVENTORY_ONE_PRE_DIFF_RG
 INDEPENDENT_LIVE_TEST=TEST_NOT_RUN
 NEXT=G0_COORDINATION_VERDICT_WITHOUT_REPEATED_DISCOVERY
 ```
+
+
+## 8. Coordination v10 — G0 decision (2026-10-19)
+
+**REANCHOR:** main `25e0f4c127ba9d584fc6f821bd0d10f0967315f1`; `orchestration.py` blob `bc13e07b31b6844e172c5d485d77f59a4b8c0a10`. GitHub tree verified 56–61 and canonical paths; local git status unavailable via connector. Ledger last entry §6.303 before this record.
+
+**DECISION:** `G0_ALTERNATIVE=A` — preserve the higher-authority I04→Q01 dependency. Authorize exactly one bounded **I04 G0 remediation execution** addressing demonstrable DÉLIA-origin blockers B1 (VISTA C02 stage/deadline), B2 (compare task outcome versus list replay), and their shared control-flow root when evidenced, with B3 negative provenance, B4 30s performance and B5 non-MCP/no-tool/safety as compulsory nonregression checks. This does **not** authorize Q01, Q02-A/B/C, an open-ended Q02 refactor, a changed synthesis contract, or phase advancement. Cursor may not treat a VISTA owner 504 or an external contract gap as an orchestrator defect without stage evidence. GLPI personal identity precondition stays owner-blocked for positive test, not fabricated.
+
+**WHY A, NOT B:** canonical 16 and approved roadmap 59 explicitly keep Q01 blocked while I04 unaccepted. Option B needs an explicit new Product Master phase/sequence amendment; ADR58 approves architecture direction only. Remediation A is the narrow path already permitted by 59 G0, despite some overlap with later Q02-C; later packages must reuse any verified fix and avoid duplicate refactoring. If root cause demands forbidden selection-only/business-fact change or broader architecture/phase exception, STOP and return `ARCHITECTURE_DECISION_REQUIRED`; do not claim A complete or silently switch to B.
+
+**REUSE:** existing `OperationalCapabilityOrchestrator`, `InvokeModel/_propose`, `TurnDeadline`, typed goal, `ConversationContextTurn`/`SpecialistOutcome`/`SourceRef`, `CapabilityProviderPort` and approved MCP/OpenAPI adapters. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE|EXTEND`; no new engine, provider branch, registry, second planner, authority, or factual-prose channel. New typed provenance contract remains `TO_INVENTORY` and is out of G0 scope.
+
+**G0 CURSOR BOUNDED TASK:** `DELIA-C3-I04-G0-SINGLE-BOUNDED-REMEDIATION-01`. First revalidate HEAD/status, .cursor + canonical 16→50→17→49→51→52→21→20→25→technical architecture→24→60→ledger, 58–61, frozen §6.145; run only a small SHA residual caller check. Establish RED from existing failing compare-list and VISTA C02 scenarios; capture per-stage timing and owner-vs-DÉLIA attribution before changing budget logic. Patch **only demonstrated orchestrator-origin causes**, minimally, preserving selection-only and all security/owner gates. If comparison cannot be expressed under current frozen contract, return honest insufficiency and `ARCHITECTURE_DECISION_REQUIRED` with concrete contract gap, not copied-list SUCCESS. Keep external owner/GLPI blockers separate.
+
+**ACCEPTANCE:** real compare differences from owner-evidenced fields OR explicit insufficiency; VISTA C02 no avoidable DÉLIA 504 with per-stage tracing, honest owner failure otherwise; unchanged strict 30s budget; DAVI owner-read/no-match and continuity; TÉO guidance/identity-negative; HTTP non-MCP and no-tool conversation; invalid IDs/provenance/injection/renamed provider; zero unauthorized ACT. RED/GREEN + full backend and security suite; independent repeat when available (cold 1/warm 2, negative holdouts, exact SHA/config/model/policy and owner outcome). No PASS for `TEST_NOT_RUN`.
+
+**STOP/ANTI-LOOP:** one implementation and one independent review, at most one bounded rework. If blocking failures persist, STOP→root cause/owner/Product Master phase-or-contract decision, not another microtask. `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`; `Q02_AUTHORIZED=NO`; `C3_EXECUTED=NO`. This is coordination authority for a G0-only code remediation, not architectural acceptance.
