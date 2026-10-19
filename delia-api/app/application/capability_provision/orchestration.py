@@ -122,6 +122,7 @@ from app.application.capability_provision.paginated_result_semantics import (
     extract_pagination_envelope,
     personal_scope_response,
     resolve_count_semantics,
+    unique_structural_ticket_list_capability,
 )
 from app.application.capability_provision.ports import (
     CapabilityProviderPort,
@@ -8984,6 +8985,21 @@ class OperationalCapabilityOrchestrator:
         ]
         if not invocable:
             return None
+        # R45: ticket-domain + sole schema advertising action=tickets —
+        # structural, provider-neutral; avoids a redundant model stage
+        # that historically exhausted the 30s turn before owner READ.
+        structural = unique_structural_ticket_list_capability(
+            invocable, input_text
+        )
+        if structural is not None:
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=structural_ticket_list capability=%s "
+                "correlation_id=%s",
+                structural.remote_name,
+                correlation,
+            )
+            return structural
         # Note: a singleton invocable surface is NOT automatic FAST —
         # applicability to the user ask still requires a validated
         # proposal (applicable may be false).
@@ -9039,6 +9055,20 @@ class OperationalCapabilityOrchestrator:
         ]
         if not invocable:
             return None, None
+        structural = unique_structural_ticket_list_capability(
+            invocable, input_text
+        )
+        if structural is not None:
+            _logger.info(
+                "orchestration stage=select_capability "
+                "decision=structural_ticket_list_with_goal "
+                "capability=%s correlation_id=%s",
+                structural.remote_name,
+                correlation,
+            )
+            return structural, self._TurnGoal(
+                goal_class="read", declared=True
+            )
         listing_hint = _prior_listing_hint(prior_turns)
         allowed = frozenset(
             {"applicable", "remote_name", "limitations"}

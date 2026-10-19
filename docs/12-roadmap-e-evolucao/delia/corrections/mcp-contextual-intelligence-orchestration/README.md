@@ -101,6 +101,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **R4+R5 personal ticket count and pagination:** [42 — implementation](./42-r4-r5-personal-ticket-count-and-pagination-remediation.md). EXTEND orchestrator + pure pagination/personal-scope semantics; page size ≠ total; ambiguous personal clarifies; assigned/requester without owner filters honest BLOCKED; visible COUNT aggregates pages or admits unknown. Full pytest PASS. Live linked subject `TEST_NOT_RUN`. Does not accept I04 / C3–C5 / Q01.
 
+**R4/R5 independent review:** [43 — REWORK R5 / ACCEPT_WITH_RESIDUAL R4](./43-independent-r4-r5-review-pagination-integrity-gate.md). Unsigned `has_more` and isolated last-page totals unsafe; live select_capability timeout before owner READ.
+
+**R45 pagination integrity + selection timeout:** [44 — implementation](./44-r45-pagination-integrity-and-selection-timeout-rework.md). First-page + contiguous + explicit completion for exact count; structural unique ticket-list capability selection for COUNT/LIST (provider-neutral). Full pytest PASS. Does not accept I04 / C3–C5 / Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |

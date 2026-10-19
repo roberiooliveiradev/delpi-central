@@ -222,9 +222,19 @@ def test_r45_t09_has_more_true():
     assert not header.startswith("Encontrei 10")
 
 
-def test_r45_t10_last_page():
+def test_r45_t10_last_page_alone_is_not_total():
+    """Isolated page>1 with has_more=False is not the query total (doc 43)."""
     envelope = extract_pagination_envelope(
         _tickets_page(n=3, page=2, has_more=False)
+    )
+    resolution = resolve_count_semantics(envelope)
+    assert resolution.total is None
+    assert resolution.kind is CountResolutionKind.PARTIAL_UNKNOWN
+
+
+def test_r45_t10b_first_page_complete():
+    envelope = extract_pagination_envelope(
+        _tickets_page(n=3, page=1, has_more=False)
     )
     resolution = resolve_count_semantics(envelope)
     assert resolution.kind is CountResolutionKind.COMPLETE_AGGREGATE

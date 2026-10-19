@@ -318,17 +318,32 @@ def item_stable_id(item: Mapping[str, Any]) -> str | None:
     return None
 
 
+def _is_first_page(page: int | None) -> bool:
+    """True when the envelope is the first page of a query.
+
+    Missing ``page`` is treated as first-page only when the owner also
+    signals explicit completion (``has_more=False``) — never when
+    completeness is unsigned.
+    """
+    return page is None or page <= 1
+
+
 def aggregate_paginated_pages(
     pages: Sequence[Mapping[str, Any] | PaginationEnvelope | None],
     *,
     max_pages: int = DEFAULT_MAX_PAGES,
 ) -> PageAggregationResult:
-    """Merge ordered owner pages with duplicate detection.
+    """Merge ordered owner pages with integrity checks.
 
-    ``complete`` is true only when the last accepted page reports
-    ``has_more is False`` (or a single page with has_more False / None
-    with authoritative total). Failures and budget cuts yield
-    ``complete=False`` — never a fabricated total.
+    ``complete`` requires explicit evidence of a finished walk:
+
+    - authoritative owner total, or
+    - walk that starts at the first page, contiguous page numbers (when
+      present), last page ``has_more is False``, no duplicate ids, no
+      page failures, and no missing stable ids when counting.
+
+    ``has_more is None`` never proves completion. An isolated last page
+    (``page>1``) never proves the full query total.
     """
     merged: list[Mapping[str, Any]] = []
     seen: set[str] = set()
@@ -336,8 +351,14 @@ def aggregate_paginated_pages(
     pages_fetched = 0
     authoritative: int | None = None
     last_has_more: bool | None = None
+    started_at_first = False
+    expected_page: int | None = None
+    seen_page_numbers: set[int] = set()
+    missing_stable_ids = 0
+    failure_reason: str | None = None
 
-    for raw in list(pages)[: max(0, max_pages)]:
+    bounded = list(pages)[: max(0, max_pages)]
+    for raw in bounded:
         if raw is None:
             return PageAggregationResult(
                 items=tuple(merged),
@@ -363,13 +384,56 @@ def aggregate_paginated_pages(
                 failure_reason="malformed_page",
                 authoritative_total=authoritative,
             )
+
+        page_num = envelope.page
+        if pages_fetched == 0:
+            started_at_first = _is_first_page(page_num)
+            if page_num is not None:
+                expected_page = page_num
+        if page_num is not None:
+            if page_num in seen_page_numbers:
+                failure_reason = "duplicate_page"
+            elif expected_page is not None and page_num != expected_page:
+                failure_reason = (
+                    "out_of_order"
+                    if page_num < expected_page
+                    else "missing_intermediate_page"
+                )
+            seen_page_numbers.add(page_num)
+            expected_page = page_num + 1
+
+        if failure_reason is not None:
+            return PageAggregationResult(
+                items=tuple(merged),
+                pages_fetched=pages_fetched,
+                complete=False,
+                duplicate_ids=tuple(duplicates),
+                failed=True,
+                failure_reason=failure_reason,
+                authoritative_total=authoritative,
+            )
+
         pages_fetched += 1
         if envelope.total_count is not None:
+            if (
+                authoritative is not None
+                and envelope.total_count != authoritative
+            ):
+                return PageAggregationResult(
+                    items=tuple(merged),
+                    pages_fetched=pages_fetched,
+                    complete=False,
+                    duplicate_ids=tuple(duplicates),
+                    failed=True,
+                    failure_reason="authoritative_total_conflict",
+                    authoritative_total=authoritative,
+                )
             authoritative = envelope.total_count
         last_has_more = envelope.has_more
         for item in envelope.items:
             item_id = item_stable_id(item)
             if item_id is None:
+                missing_stable_ids += 1
                 merged.append(item)
                 continue
             if item_id in seen:
@@ -380,26 +444,76 @@ def aggregate_paginated_pages(
         if envelope.has_more is False:
             break
 
-    complete = (
-        authoritative is not None
-        or last_has_more is False
-        or (pages_fetched > 0 and last_has_more is None and not duplicates)
-    )
-    # has_more True on the last fetched page ⇒ incomplete unless
-    # authoritative total was provided by the owner.
-    if last_has_more is True and authoritative is None:
-        complete = False
-    if pages_fetched >= max_pages and last_has_more is True:
-        complete = False
+    if missing_stable_ids and authoritative is None:
+        # Without stable ids we cannot prove uniqueness → never exact.
+        return PageAggregationResult(
+            items=tuple(merged),
+            pages_fetched=pages_fetched,
+            complete=False,
+            duplicate_ids=tuple(duplicates),
+            failed=False,
+            failure_reason="missing_stable_ids",
+            authoritative_total=authoritative,
+        )
+
+    if duplicates:
+        return PageAggregationResult(
+            items=tuple(merged),
+            pages_fetched=pages_fetched,
+            complete=False,
+            duplicate_ids=tuple(duplicates),
+            failed=False,
+            failure_reason="duplicate_ticket_ids",
+            authoritative_total=authoritative,
+        )
+
+    if authoritative is not None:
+        # Owner total is authoritative even mid-walk; uniqueness still
+        # required above. Do not recompute from page lengths.
+        return PageAggregationResult(
+            items=tuple(merged),
+            pages_fetched=pages_fetched,
+            complete=True,
+            duplicate_ids=(),
+            failed=False,
+            failure_reason=None,
+            authoritative_total=authoritative,
+        )
+
+    # Explicit last-page signal only closes a walk that started at page 1.
+    if (
+        last_has_more is False
+        and started_at_first
+        and pages_fetched > 0
+    ):
+        return PageAggregationResult(
+            items=tuple(merged),
+            pages_fetched=pages_fetched,
+            complete=True,
+            duplicate_ids=(),
+            failed=False,
+            failure_reason=None,
+            authoritative_total=None,
+        )
+
+    reason = "partial_unknown"
+    if last_has_more is None:
+        reason = "unsigned_completeness"
+    elif not started_at_first:
+        reason = "not_started_at_first_page"
+    elif pages_fetched >= max_pages and last_has_more is True:
+        reason = "max_pages_exceeded"
+    elif last_has_more is True:
+        reason = "has_more_remaining"
 
     return PageAggregationResult(
         items=tuple(merged),
         pages_fetched=pages_fetched,
-        complete=complete and not duplicates,
-        duplicate_ids=tuple(duplicates),
+        complete=False,
+        duplicate_ids=(),
         failed=False,
-        failure_reason=None,
-        authoritative_total=authoritative,
+        failure_reason=reason,
+        authoritative_total=None,
     )
 
 
@@ -474,6 +588,23 @@ def resolve_count_semantics(
         )
 
     if envelope.returned_count == 0 and envelope.has_more is not True:
+        # Empty last page with page>1 does not prove a zero global total.
+        if envelope.has_more is False and not _is_first_page(envelope.page):
+            return CountResolution(
+                kind=CountResolutionKind.PARTIAL_UNKNOWN,
+                total=None,
+                returned_on_page=0,
+                has_more=False,
+                message=UNKNOWN_TOTAL_MESSAGE,
+            )
+        if envelope.has_more is None:
+            return CountResolution(
+                kind=CountResolutionKind.PAGE_SLICE_NOT_TOTAL,
+                total=None,
+                returned_on_page=0,
+                has_more=None,
+                message=UNKNOWN_TOTAL_MESSAGE,
+            )
         return CountResolution(
             kind=CountResolutionKind.EMPTY,
             total=0,
@@ -492,13 +623,22 @@ def resolve_count_semantics(
         )
 
     if envelope.has_more is False:
-        total = envelope.returned_count
+        # A last page in isolation (page>1) is not the query total.
+        if _is_first_page(envelope.page):
+            total = envelope.returned_count
+            return CountResolution(
+                kind=CountResolutionKind.COMPLETE_AGGREGATE,
+                total=total,
+                returned_on_page=total,
+                has_more=False,
+                message=COMPLETE_COUNT_MESSAGE.format(total=total),
+            )
         return CountResolution(
-            kind=CountResolutionKind.COMPLETE_AGGREGATE,
-            total=total,
-            returned_on_page=total,
+            kind=CountResolutionKind.PARTIAL_UNKNOWN,
+            total=None,
+            returned_on_page=envelope.returned_count,
             has_more=False,
-            message=COMPLETE_COUNT_MESSAGE.format(total=total),
+            message=UNKNOWN_TOTAL_MESSAGE,
         )
 
     # No has_more signal — page length is not a proven total.
@@ -589,3 +729,73 @@ def arguments_include_requester_filter(
         if canon in {"requester_id", "requester"} and value not in (None, ""):
             return True
     return False
+
+
+def is_ticket_domain_inquiry(input_text: str) -> bool:
+    """True when the user message is about tickets/helpdesk/chamados."""
+    return bool(_TICKET_DOMAIN_RE.search((input_text or "").strip()))
+
+
+def schema_supports_ticket_list_action(input_schema: object) -> bool:
+    """Owner schema advertises an ``action`` enum including ``tickets``.
+
+    Structural only — never matches on capability/provider display names.
+    """
+    if not isinstance(input_schema, Mapping):
+        return False
+
+    def _walk(node: object, depth: int = 0) -> bool:
+        if depth > 5 or not isinstance(node, Mapping):
+            return False
+        props = node.get("properties")
+        if isinstance(props, Mapping):
+            action = props.get("action")
+            if isinstance(action, Mapping):
+                enum_values = action.get("enum")
+                if isinstance(enum_values, (list, tuple)):
+                    normalized = {
+                        str(v).strip().lower() for v in enum_values
+                    }
+                    if "tickets" in normalized:
+                        return True
+        for value in list(node.values())[:32]:
+            if isinstance(value, Mapping) and _walk(value, depth + 1):
+                return True
+        return False
+
+    return _walk(input_schema)
+
+
+def unique_structural_ticket_list_capability(
+    capabilities: Sequence[Any],
+    input_text: str,
+) -> Any | None:
+    """Return the sole invocable capability that can list tickets.
+
+    Provider-neutral recovery for ticket COUNT/LIST asks when the owner
+    surface advertises exactly one READ schema with ``action=tickets``.
+    Returns None for write/ambiguous intents, non-ticket asks, or when
+    0/N>1 match — never invents a capability and never picks among
+    multiples. Avoids a redundant model capability-selection stage that
+    historically exhausted the turn budget before owner READ.
+    """
+    if classify_result_intent(input_text) not in {
+        ResultIntent.COUNT,
+        ResultIntent.LIST,
+    }:
+        return None
+    if not is_ticket_domain_inquiry(input_text):
+        return None
+    matches: list[Any] = []
+    for cap in capabilities:
+        op = getattr(cap, "operation_class", None)
+        op_name = getattr(op, "name", None) or getattr(op, "value", None) or op
+        if str(op_name).upper() not in {"READ", "QUERY"}:
+            continue
+        if schema_supports_ticket_list_action(
+            getattr(cap, "input_schema", None)
+        ):
+            matches.append(cap)
+    if len(matches) != 1:
+        return None
+    return matches[0]
