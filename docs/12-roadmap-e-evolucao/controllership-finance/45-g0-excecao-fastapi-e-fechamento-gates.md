@@ -109,3 +109,25 @@ Os demais valores do painel permanecem `NO`/`PENDING` até declaração humana.
 | D-G0-06 | Confirmar semântica `/ready` proposta (§5) | Arquitetura/Ops | fundação da BFF |
 
 **NO-GO permanece o estado vigente** até que D-G0-01..04 estejam resolvidas. D-G0-05 pode bloquear A01 especificamente se a política exigir tratamento adicional no BFF.
+
+
+## 8. Revisão técnica de prontidão para IMP-F0 — 19/10/2026
+
+> **TECHNICAL_REVIEW=DOCUMENTED / GATE_STATUS=NO-GO.** Esta revisão consolida critérios verificáveis e recomendações técnicas; não constitui assinatura de Arquitetura, Segurança, Qualidade ou PO. Não altera os estados do painel do README.
+
+**Escopo revisado:** fundação inicial da `controllership-finance-api` (FastAPI, Docker, `GET /health`, `GET /ready`), antes do MFE/Home. Não inclui A01 perfil nem P1–P6, persistência, endpoints de negócio ou novas permissões.
+
+| Critério | Evidência e decisão técnica proposta | Status |
+|---|---|---|
+| Framework e arquitetura | Comercial API e Financial API usam FastAPI; respeitar instrução oficial Flask por exceção específica registrada em §1, com aceite explícito de Arquitetura | `REGISTERED / PENDING VALIDATION` |
+| AuthN/AuthZ | `.cursor/rules/platform-security-identity-authorization.mdc` exige shared `delpi_auth`, issuer/audience, Core effective permissions, fail-closed; serviço não deve herdar superadmin humano | `CONTRACT DOCUMENTED / TEST_NOT_RUN` |
+| API/OpenAPI | `.cursor/rules/platform-api-contracts-integration.mdc`: `operation_id` literal e único, schemas/erros estáveis, teste de contrato, public-path coerente com middleware | `CONTRACT DOCUMENTED / TEST_NOT_RUN` |
+| `/health` | Liveness explícito, público somente conforme middleware, sem secrets e sem acoplamento a Core/DB | `TARGET` |
+| `/ready` | Semântica depende dos consumidores de healthcheck/gateway. `200 + degraded` não demonstra prontidão para receber tráfego; inspecionar orquestrador antes do aceite D-G0-06 | `DECISION_REQUIRED` |
+| stale RBAC | Cache exposto em §4: comportamento de 900s não está automaticamente autorizado para reads protegidos. Definir política por Security owner; evitar aceitar stale como equivalente a autorização atual | `DECISION_REQUIRED` |
+| Build e container | Seguir Dockerfile/Compose do commercial, `shared/delpi_auth`, gateway e configuração real; nenhuma prova de build, deploy ou smoke desta BFF | `TEST_NOT_RUN` |
+| Validação | Testes AuthN/negação, public-path, config inválida, health/ready, build Docker e smoke gateway são obrigatórios após autorização | `TEST_NOT_RUN` |
+
+**Ordem obrigatória para fechamento:** D-G0-01 Arquitetura; D-G0-05 Segurança e D-G0-06 Arquitetura/Ops; D-G0-02 aprovações de cada freeze com owner e evidência; D-G0-03 fechamento documental PO; **depois** D-G0-04 autorização explícita PO exclusivamente para IMP-F0. A escolha pelo PO de priorizar API → container → Home não é autorização automática de runtime.
+
+**Condição de mudança do README:** registrar owner/decisão/data/referência para cada aprovação. Na falta de qualquer uma, manter `PENDING` / `NO`. Não inferir `PASS` de documentação, tests não executados, search miss ou HTTP 200. A tarefa de implantação deve revalidar HEAD e worktree antes de qualquer alteração.
