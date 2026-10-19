@@ -41,7 +41,30 @@ Coverage inquiry + sole DISCOVERY recovery (R2) still runs before conversational
 | CONV recovery suite | **PASS** |
 | R1/R2/R4/R5 / full `delia-api` pytest | **PASS** |
 
-## 5. Phase gates (unchanged)
+## 5. Live after deploy (`3564f9ba74`)
+
+```text
+DEPLOY=./infra/scripts/up-prod-sequential.sh --pull --build delia-api
+MODEL_ID=moonshotai/kimi-k3
+```
+
+| Case | HTTP | ms | Outcome |
+|---|---|---|---|
+| A01 Olá (cold) | 504 | — | `select_group` ~29s then budget gap (residual latency) |
+| A02 Bom dia | 200 | 6657 | Natural greeting; `not_applicable`; no capability jargon |
+| A05 O que você faz? | 200 | 13668 | Role explanation; NON_GROUNDED; no tool dump |
+| B01 SIPOC | 200 | 20057 | Conceptual explanation (not methodology dump) |
+| C04 fictício | 200 | 11003 | Labeled illustrative examples |
+| A01b/A04 warm | see follow-up | | |
+| E01 write | residual | | fail-closed expected |
+
+```text
+MATERIAL_ACT_COUNT=0
+NO_CAPABILITY_JARGON_ON_GREETING=PASS (warm)
+PAGE_AS_LOCALIZED_COUNT_IN_REPLY=PASS (absent)
+```
+
+## 6. Phase gates (unchanged)
 
 ```text
 I03_ACCEPTED=YES_WITH_RESIDUAL

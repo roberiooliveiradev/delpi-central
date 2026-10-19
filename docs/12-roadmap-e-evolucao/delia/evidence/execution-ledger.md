@@ -15293,7 +15293,24 @@ NEXT_RELATED=HELPDESK_OWNER_PERSONAL_SCOPE_CONTRACT_DECISION
 
 - **Cause:** R1 mapped `applicable=false` to capability-jargon `CLARIFICATION_REQUIRED`; InvokeModel rejected applicable=false without `remote_name`; activity `record_count` on `has_more=True` pages → “N registro(s) localizado(s)”.
 - **Fix:** tagged selection `not_applicable|inconclusive|selected`; conversational fallback restored; page-slice omits record_count; instruction v5; R2 coverage recovery preserved.
-- **Tests:** CONV suite + full `delia-api` pytest **PASS**. Live/deploy filled after SSH gate.
+- **Tests:** CONV suite + full `delia-api` pytest **PASS**.
+- **Deploy/live (`3564f9ba74`):** A02/A05/B01/C04/A01b/A04 natural conversational; E01b refuses unilateral ACT; cold A01 residual 504 when `select_group` ~29s. ACT=0.
 - **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.284 — DELIA-UX-AUDIO-RECORDER-DELIA-LIVE-QA-INTEGRATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-AUDIO-RECORDER-DELIA-LIVE-QA-INTEGRATION-01` (AU-F05). **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **EVIDENCE:** [audio-recorder-live-qa-integration-01](audio-recorder-live-qa-integration-01/audio-recorder-live-qa-integration-evidence.md). **BASE:** `b69d2359f7`.
+
+- **REUSE:** `EXISTING_EQUIVALENT=YES` / `REUSE_OR_EXTEND` — fundação AU-F02/03 reutilizada íntegra; admissão espelha gate canônico `demoMode.isDemoAllowed`; zero novo componente/store/endpoint.
+- **GATE QA:** `audioCaptureQaAdmission.ts` — `DEV || VITE_DELIA_AUDIO_QA="1"` (bundle) **+** `?delia-audio-qa=1` (gesto); limites 60s/256KB = fixtures QA declaradas. `App.tsx` injeta no `DeliaComposer` + banner honesto. `Dockerfile`: `ARG VITE_DELIA_AUDIO_QA=""` default OFF — param inerte em produção (provado live).
+- **DEPLOY QA:** imagens `infra-plugin-ui` + `infra-delia` (com `--build-arg VITE_DELIA_AUDIO_QA=1`) reconstruídas e recriadas no stack dev; flag verificada no bundle servido (`VITE_DELIA_AUDIO_QA:"1"` em `App-CGRiKyQB.js`; `AudioRecorderControl` no remote expose). Keycloak reiniciado (estava down ~6h) para auth real.
+- **TESTES:** delia vitest 237/237 (+9 admission); tsc/build PASS; federation patch OK. plugin-ui inalterado (2246/2246 baseline §6.283).
+- **LIVE QA (Chrome real, fake media device, Portal autenticado):** 16/16 — full page sem param→sem mic (prod-like); `?delia-audio-qa=1`→mic+banner+gravação real+duração+preview+play+sem send+descartar; Companion Dock idem; dock sem param→sem mic+textarea ok.
+- **REAL_MIC:** `PASS` ciclo de captura em dispositivo físico (sem fake device): stream real, 4s gravados, playback ok, descarte+release; residual — conteúdo silêncio (sem operador falando; audibilidade de fala não verificada).
+- **RESIDUAIS:** imagem local `infra-delia` contém flag QA (Dockerfile default OFF); Firefox/Edge/Safari TEST_NOT_RUN; limites de produção CONTRACT_REQUIRED; revogação de gate mid-capture TEST_NOT_RUN.
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_FEATURE_GATE=OFF`; `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`, `CP-333=PLANNED`, `PHASE_PROGRESSION=NONE`.
+
+NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)
