@@ -74,6 +74,59 @@ def test_weekly_portfolio_forecast_where_planned_and_open() -> None:
     assert "(C6.C6_QTDVEN - ISNULL(C6.C6_QTDENT, 0)) > 0" not in where_planned
 
 
+def _capture_forecast_sql(method: str, *, open_only: bool) -> str:
+    captured: dict = {}
+
+    class _Repo(CommercialWeeklyPortfolioRepository):
+        def _connect(self):  # noqa: D102 - test stub
+            return self
+
+        def _close(self, discard: bool = False):
+            return None
+
+        def execute_query(self, query, params=()):
+            captured["sql"] = query
+            captured["params"] = params
+            return []
+
+    getattr(_Repo(), method)(
+        start_date="2026-10-12",
+        end_date="2026-10-16",
+        branch="02",
+        filters=CommercialAnalysisFilterRequest(),
+        open_only=open_only,
+    )
+    return captured["sql"]
+
+
+@pytest.mark.parametrize(
+    "method",
+    [
+        "list_delivery_week_forecast_by_customer",
+        "sum_delivery_forecast",
+        "list_delivery_forecast_by_branch",
+    ],
+)
+@pytest.mark.parametrize("open_only", [False, True])
+def test_weekly_portfolio_forecast_requires_invoice_generating_tes(
+    method, open_only
+) -> None:
+    """Forecast only counts TES resolved (branch-first, shared fallback)
+    with F4_DUPLIC = 'S'. Scalar TOP 1 — never a row-multiplying join."""
+    sql = _capture_forecast_sql(method, open_only=open_only)
+    assert "SF4010" in sql
+    assert "F4.F4_CODIGO = C6.C6_TES" in sql
+    assert "F4.F4_DUPLIC" in sql
+    assert "TOP 1" in sql
+    # Protheus precedence: branch-specific config wins over shared (blank).
+    assert "ORDER BY CASE WHEN F4.F4_FILIAL = C6.C6_FILIAL THEN 0 ELSE 1 END" in sql
+    assert "F4.F4_FILIAL = C6.C6_FILIAL OR ISNULL(F4.F4_FILIAL, '') = ''" in sql
+    # TES missing/blank resolves to 'N' and the item is excluded.
+    assert "), 'N') = 'S'" in sql
+    # Eligibility must be a WHERE predicate, not a value-multiplying join.
+    assert "JOIN SF4010" not in sql
+
+
 def test_get_billing_portfolio_summary_positive_new_business() -> None:
     portfolio = MagicMock()
     portfolio.sum_delivery_forecast.return_value = 66571.05

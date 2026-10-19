@@ -175,6 +175,21 @@ class CommercialWeeklyPortfolioRepository(
         qb.raw("RTRIM(CAST(C6.C6_ENTREG AS VARCHAR(20))) <> ''")
         qb.raw("(C6.C6_BLOQUEI IS NULL OR RTRIM(C6.C6_BLOQUEI) = '')")
         qb.raw("(C6.C6_BLQ IS NULL OR RTRIM(C6.C6_BLQ) = '')")
+        # Forecast must only count invoice-generating operations: the TES
+        # resolved per Protheus precedence (branch-specific config wins over
+        # the shared blank-filial config) must have F4_DUPLIC = 'S'. Scalar
+        # TOP 1 subquery keeps cardinality — no row multiplication — and a
+        # missing/blank TES resolves to 'N', so the item is excluded.
+        qb.raw(
+            "ISNULL(("
+            "SELECT TOP 1 F4.F4_DUPLIC "
+            "FROM SF4010 F4 WITH (NOLOCK) "
+            "WHERE F4.D_E_L_E_T_ = '' "
+            "AND F4.F4_CODIGO = C6.C6_TES "
+            "AND (F4.F4_FILIAL = C6.C6_FILIAL OR ISNULL(F4.F4_FILIAL, '') = '') "
+            "ORDER BY CASE WHEN F4.F4_FILIAL = C6.C6_FILIAL THEN 0 ELSE 1 END"
+            "), 'N') = 'S'"
+        )
         if branch:
             qb.eq("C6.C6_FILIAL", branch)
         qb.date_range("C6.C6_ENTREG", start_date, end_date)
