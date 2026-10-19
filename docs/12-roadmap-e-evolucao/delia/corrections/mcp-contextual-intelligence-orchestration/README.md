@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-19 (roadmap state refresh; original baseline remains historical)
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_ACCEPTED_WITH_RESIDUAL / I04–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_ACCEPTED_WITH_RESIDUAL / I04_EVIDENCE_READY / Q01–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -85,6 +85,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **Diagnostic L01–L06 follow-up:** [33 — live model/log evidence](./33-live-orchestration-decision-and-log-validation.md) and [34 — independent review and bounded remediation gate](./34-independent-review-live-routing-failures-and-remediation-gate.md). In eval runtime SHA 9a8775018f: L02 group none→504, L06 DAVI capability none→504, L04 projection wording; Helpdesk L01 correctly selected but GLPI link blocked count. No phase reversal or I04 auto-implementation; related priority is bounded repair of no-selection fallback and projection.
 
+**Coordination adaptive routing reliability (boundary):** [35 — design boundary approved](./35-coordination-adaptive-routing-reliability-decision.md). R1/R3 remediation planned separately; does not authorize Q01.
+
+**I04 provider-neutral generalization (candidate):** [36 — implementation + matrix](./36-i04-provider-neutral-generalization-implementation.md). REUSE orchestrator; EXTEND sole free-text args projection on `turn_budget_exhausted` after selection (K4 pre-fix FAIL→fix). Synthetic matrix PASS; full pytest PASS. Live post-fix recorded in doc 36. `I04_ACCEPTED=NO` until independent review. Q01 not authorized.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -163,10 +167,13 @@ LIVE_L03=PASS_WITH_LIMITATION
 LIVE_L04=PASS_WITH_LIMITATION_RECOVER_INVALID_INDEX
 LIVE_L05=PASS_SAFE_CLARIFICATION
 LIVE_L06=FAIL_CAPABILITY_NONE_TIMEOUT
-NEXT_MAIN=I04_PROVIDER_NEUTRAL_GENERALIZATION
-NEXT_RELATED=COORDINATION_ROOT_CAUSE_AND_REMEDIATION_REVIEW_DOC33
+I04_IMPLEMENTATION=EVIDENCE_READY
+I04_ACCEPTED=NO
+NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW_I04
+NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
+Q01_AUTHORIZED=NO
 PRODUCTION_READINESS=NOT_PROVEN
 ```

@@ -702,6 +702,14 @@ _INTENT_CLARIFICATION_CONTENT = (
     "Você quer que eu explique como fazer, ou que eu execute "
     "a ação para você?"
 )
+# R1 (doc 35): after live surfaces exist but group/capability selection
+# is inconclusive, prefer a bounded ask-back over bare NOT_APPLICABLE
+# that previously fell through to a second model call → 504.
+_SELECTION_INCONCLUSIVE_CONTENT = (
+    "Não identifiquei um especialista ou capability aplicável para "
+    "esta solicitação com as superfícies disponíveis. Pode esclarecer "
+    "o que você precisa consultar ou fazer na DELPI?"
+)
 
 
 def _lineage(instruction_id: str, content: str) -> InstructionLineage:
@@ -2055,7 +2063,10 @@ def _render_synthesis(
     if mode == "list" or (
         len(selections) > 1 and mode != "answer"
     ):
-        lines = [_list_header(len(selections))]
+        selected_records = tuple(record for record, _ in selections)
+        lines = [
+            _list_header(len(selections), records=selected_records)
+        ]
         for record, values in selections:
             lines.append("- " + " — ".join(v for _, v in values))
         return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
@@ -2356,7 +2367,31 @@ def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
     return lines
 
 
-def _list_header(count: int) -> str:
+def _records_are_prior_excerpts(
+    records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
+) -> bool:
+    """True when every record is a prior-turn excerpt leaf only."""
+    if not records:
+        return False
+    return all(
+        isinstance(record, Mapping)
+        and bool(record)
+        and all(
+            _canonical_key(str(key)) == "excerpt" for key in record
+        )
+        for record in records
+    )
+
+
+def _list_header(
+    count: int,
+    *,
+    records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] | None = None,
+) -> str:
+    """Bounded list introduction — outcome-aware (doc 35 R3)."""
+    if records is not None and _records_are_prior_excerpts(records):
+        noun = "itens" if count != 1 else "item"
+        return f"Recuperei {count} {noun} da orientação anterior:"
     noun = "registros" if count != 1 else "registro"
     return f"Encontrei {count} {noun}:"
 
@@ -3249,6 +3284,50 @@ def _property_node(
     return node if isinstance(node, Mapping) else None
 
 
+def _sole_unconstrained_string_field(
+    descriptor: ProviderCapability,
+) -> str | None:
+    """Name of the only non-orchestrated free-string field, if any.
+
+    Used for budget-safe projection of the user message into a single
+    query-like argument — never invents identifiers or multi-field
+    payloads.
+    """
+    keys, required = _schema_keys(descriptor)
+    material = sorted((keys | required) - ORCHESTRATED_FIELDS)
+    if len(material) != 1:
+        return None
+    field = material[0]
+    schema = (
+        descriptor.input_schema
+        if isinstance(descriptor.input_schema, Mapping)
+        else None
+    )
+    node = _property_node(schema, field)
+    if not _is_unconstrained_string(node):
+        return None
+    return field
+
+
+def _single_free_text_argument_from_input(
+    input_text: str,
+    descriptor: ProviderCapability,
+) -> dict[str, Any] | None:
+    """Project user text into a sole free-string schema field.
+
+    Fail closed when the schema needs more than one material field or
+    the projected instance is schema-invalid.
+    """
+    text = (input_text or "").strip()
+    if not text:
+        return None
+    field = _sole_unconstrained_string_field(descriptor)
+    if field is None:
+        return None
+    candidate = {field: text[:MAX_DESCRIPTION_CHARS]}
+    return _validate_instance(candidate, descriptor.input_schema)
+
+
 def _deterministic_arguments_from_schema(
     descriptor: ProviderCapability,
 ) -> dict[str, Any] | None:
@@ -3588,8 +3667,9 @@ def _extraction_list_from_prior_excerpts(
     bullets = list(_collect_extraction_units(records))
     if len(bullets) < 2:
         return None
-    lines = [_list_header(len(bullets[:MAX_SYNTHESIS_ITEMS]))]
-    for item in bullets[:MAX_SYNTHESIS_ITEMS]:
+    projected = bullets[:MAX_SYNTHESIS_ITEMS]
+    lines = [_list_header(len(projected), records=records)]
+    for item in projected:
         lines.append("- " + item)
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
@@ -4584,6 +4664,12 @@ class OperationalCapabilityOrchestrator:
                 "correlation_id=%s",
                 correlation,
             )
+            if self._invoke_model is not None and self._model_ref is not None:
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+                    correlation_id=correlation,
+                    content=_SELECTION_INCONCLUSIVE_CONTENT,
+                )
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
@@ -8883,8 +8969,20 @@ class OperationalCapabilityOrchestrator:
             and not self._budget_allows_arguments_propose(deadline)
         ):
             # Honest limitation: do not start a doomed arguments model
-            # call. Never invent vocabulary or treat schema-valid {}
-            # as guidance when fields remain unbound.
+            # call. Prefer sole free-text projection when schema allows;
+            # never invent identifiers or multi-field payloads.
+            projected = _single_free_text_argument_from_input(
+                input_text, descriptor
+            )
+            if projected is not None:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=budget_input_projection keys=%d "
+                    "correlation_id=%s",
+                    len(projected),
+                    correlation,
+                )
+                return projected, ()
             missing = tuple(
                 dict.fromkeys(
                     list(required - ORCHESTRATED_FIELDS)
@@ -8915,26 +9013,63 @@ class OperationalCapabilityOrchestrator:
             # keeps query-type arguments anchored on the business
             # concept, not on host/context stopwords (LOOP-03R1 D03).
             block["business_subject"] = business_subject
-        proposal = self._propose(
-            input_text,
-            block_tag="schema",
-            block_payload=json.dumps(
-                block,
-                ensure_ascii=False,
-                default=str,
-            )[:MAX_ARGUMENTS_BLOCK_CHARS],
-            instruction_id=ARGUMENTS_INSTRUCTION_ID,
-            instruction=ARGUMENTS_INSTRUCTION,
-            expected_fields=("arguments",),
-            input_kind="capability_arguments",
-            allowed_keys=frozenset(
-                {"arguments", "missing_inputs", "limitations"}
-            ),
-            workspace_context=workspace_context,
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-        )
+        try:
+            proposal = self._propose(
+                input_text,
+                block_tag="schema",
+                block_payload=json.dumps(
+                    block,
+                    ensure_ascii=False,
+                    default=str,
+                )[:MAX_ARGUMENTS_BLOCK_CHARS],
+                instruction_id=ARGUMENTS_INSTRUCTION_ID,
+                instruction=ARGUMENTS_INSTRUCTION,
+                expected_fields=("arguments",),
+                input_kind="capability_arguments",
+                allowed_keys=frozenset(
+                    {"arguments", "missing_inputs", "limitations"}
+                ),
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+        except _StageDeadlineExceeded as exc:
+            # model_timeout on arguments remains terminal (LOOP-03R2A).
+            # Only turn_budget_exhausted after selection may project a
+            # sole free-text field or clarify without inventing ids.
+            if exc.reason != "turn_budget_exhausted":
+                raise
+            projected = _single_free_text_argument_from_input(
+                input_text, descriptor
+            )
+            if projected is not None:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=budget_input_projection keys=%d "
+                    "correlation_id=%s",
+                    len(projected),
+                    correlation,
+                )
+                return projected, ()
+            missing = tuple(
+                dict.fromkeys(
+                    list(required - ORCHESTRATED_FIELDS)
+                    + list(keys - ORCHESTRATED_FIELDS)
+                )
+            )[:MAX_MISSING_INPUTS]
+            _logger.info(
+                "orchestration stage=arguments "
+                "decision=budget_skip remaining_ms=%d "
+                "correlation_id=%s",
+                int(
+                    (deadline.remaining_seconds() * 1000)
+                    if deadline is not None
+                    else 0
+                ),
+                correlation,
+            )
+            return None, missing
         if proposal is None:
             return None, ()
         missing = _missing_inputs(proposal.get("missing_inputs"))
