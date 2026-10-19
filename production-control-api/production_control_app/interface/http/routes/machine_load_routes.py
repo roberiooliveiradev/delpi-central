@@ -754,7 +754,10 @@ class ReportProcessIssueBody(BaseModel):
     note: str | None = Field(default=None, max_length=500)
 
 
-@router.post("/machine-load/process-issues")
+@router.post(
+    "/machine-load/process-issues",
+    operation_id="create_machine_load_process_issue",
+)
 def create_machine_load_process_issue(
     request: Request,
     body: ReportProcessIssueBody = Body(...),
