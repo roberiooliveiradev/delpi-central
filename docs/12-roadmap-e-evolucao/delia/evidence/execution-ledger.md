@@ -15653,3 +15653,27 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_G0_REWORK_REVIEW
 ```
+
+
+## §6.309 — G0 independent bounded-rework acceptance, I04 exit remains blocked
+
+**DATE:** 2026-10-19. **REVIEWED_IMPLEMENTATION_SHA:** `cca468a365bd592498caa0be8cb20c8e0a6f75fe` (§6.308); **REVIEW_DOC:** [62 — final Coordination v10 review](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md). **REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL** applies only to the *single bounded G0 code rework*. **G0_I04_EXIT=BLOCKED_PENDING_LIVE_EVIDENCE**, not I04 acceptance; Q01/Q02 cannot start. Independent static GitHub diff/code review; independent pytest and production replay `TEST_NOT_RUN`.
+
+- **CLOSED BUG:** the dangerous positional ` — `-split comparison of prior bullet text was removed. The actual current prior-content pipeline returns `excerpt` only; comparison now fails closed with `LIMITATION_PRIOR_TURN_CONTINUATION` and `LIMITATION_INSUFFICIENT_EVIDENCE`. Invalid selection and list-as-compare paths do not silently assert business differences; noncompare subset/list recovery remains. Selection-only factual contract and `MODEL_AUTHORED_FACTUAL_PROSE=NONE` unchanged.
+- **DESIGN RESIDUAL:** `_prior_supports_typed_attribute_compare` checks common scalar keys, **not owner provenance, schema/grain or authoritative comparability**; its positive fabricated-dict unit test is not evidence of implemented typed owner comparison. This permissive branch is unreachable with the current excerpt-only producer, so current reviewed compare path is fail-closed. `_typed_compare_outcome_content` also relies on literal 'Diferenças comprovadas:' header and must not be reused as general outcome attestation. Stale docstring references segment comparison. Later Q02-C must obey existing owner/evidence/contract gate, not treat those helpers as authority.
+- **C02 RESIDUAL:** 12s fallback cap + `NON_GROUNDED` soft-land static code verified; fake-model test merely routes *preselected* `requires_owner_surface=true` to capability selection, not actual VISTA-versus-TÉO model selection or live task outcome. Full backend `1647` collected and security subsets `PASS_EXECUTOR_REPORTED`, not independently executed; `LIVE_POST_REWORK=TEST_NOT_RUN`, `DEPLOY=NOT_RUN`, `COLD_WARM=TEST_NOT_RUN`. Historical Keycloak `invalid_grant`/expired JWT are executor-reported; do not invent a delegated subject.
+- **ANTI-LOOP:** `G0_BOUNDED_REWORK_REMAINING=0`; no extra G0 code patch. Next **validation-only** is authorized read-only replay on exact SHA/config/model/deploy with valid delegated identity, owner traces, DAVI/TÉO/VISTA/OpenAPI/no-tool, negative security and strict 30s; it is not another rework. If prerequisites remain unavailable or material failures persist: `STOP → ROOT_CAUSE / OWNER / PRODUCT_MASTER_ARCHITECTURE_OR_PHASE_DECISION`, with any B exception requiring explicit canonical amendment, not silent Q01 release. Other branches' concurrent updates do not mutate this review result.
+
+```text
+G0_BOUNDED_REWORK_REVIEW=ACCEPT_WITH_RESIDUAL
+G0_IMPLEMENTATION_CYCLE=CLOSED
+G0_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+G0_I04_EXIT=BLOCKED_PENDING_LIVE_EVIDENCE
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=VALIDATION_ONLY_WHEN_AUTH_AND_DEPLOY_AUTHORIZED_OR_PRODUCT_MASTER_PHASE_DECISION
+```
