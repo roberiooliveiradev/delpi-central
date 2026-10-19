@@ -15011,6 +15011,18 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 
 NEXT=I02_ACCEPTANCE_GATE_AND_K3_OWNER_CATALOG_COVERAGE_DECISION
 
+## §6.267 — DELIA-UX-INTERACTION-STATE-LIFECYCLE-COMPLETION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-INTERACTION-STATE-LIFECYCLE-COMPLETION-01`. **BASE_HEAD:** `cae0300bc23fbfb947ee86eef7b47223f6b908ab`. **DOCS:** [118](../118-companion-dock-presence-and-avatar-motion-execution-roadmap.md) §12 + [evidence](./interaction-state-lifecycle/interaction-state-lifecycle-completion-01.md).
+
+- **Reuse:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` (`UnifiedAvatar` null-safe matchMedia + suite lifecycle). Sem novo engine/Dock redesign.
+- **Defect:** PRODUCT_DEFECT `matchMedia?.(q).matches` → throw; fix `?.matches`. RED/GREEN em `UnifiedAvatar.test.tsx`.
+- **Lifecycle Vitest:** A/B/C/D/E **13 PASS** (`interactionStateLifecycle.test.tsx`); delia **225 PASS**; plugin-ui **2227 PASS**; typecheck/build/federation **PASS**.
+- **Playwright standalone / Portal Dock auth:** `TEST_NOT_RUN` (MF React shared sem gateway).
+- **DECISION:** `PHASE_PROGRESSION=NONE`; `D01–D04_ACCEPTED=NO`; recomendação `ACCEPT_WITH_RESIDUAL` (browser live residual).
+
+NEXT=INDEPENDENT_REVIEW_OR_PORTAL_DOCK_AUTH_LIVE_QA
+
 
 ## §6.267 — I02 DIRECT VISTA OWNER CROSS-CHECK AND SCOPED ACCEPTANCE (ACCEPT_WITH_RESIDUAL)
 

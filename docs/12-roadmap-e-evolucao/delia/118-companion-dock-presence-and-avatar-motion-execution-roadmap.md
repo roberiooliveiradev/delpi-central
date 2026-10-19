@@ -168,3 +168,17 @@ NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
 ```
 
 Não avança E09/E10 nem C0–C7. Não implementa D03.3/D03.4 (preferências/proatividade).
+
+## 12. Lifecycle de estados de interação (2026-10-19)
+
+**TASK_ID:** `DELIA-UX-INTERACTION-STATE-LIFECYCLE-COMPLETION-01`  
+**BASE_HEAD:** `cae0300bc23fbfb947ee86eef7b47223f6b908ab`  
+**Evidence:** [`evidence/interaction-state-lifecycle/interaction-state-lifecycle-completion-01.md`](./evidence/interaction-state-lifecycle/interaction-state-lifecycle-completion-01.md)
+
+### Resultado
+
+- Matriz Vitest A–E (`interactionStateLifecycle.test.tsx`) **13 PASS**; suíte DÉLIA **225 PASS**; plugin-ui **2227 PASS**.
+- **PRODUCT_DEFECT** corrigido: `UnifiedAvatar` `matchMedia?.(q)?.matches` (responding não throw sem MediaQueryList).
+- Abort/epoch/late response/error/retry cobertos sem novo state machine.
+- Playwright standalone MF / Portal Dock auth: **TEST_NOT_RUN** (gateway oficial necessário).
+- `D01/D02/D03/D04_ACCEPTED=NO`; `PHASE_PROGRESSION=NONE`.

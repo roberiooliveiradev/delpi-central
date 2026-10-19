@@ -1,0 +1,13 @@
+
+ RUN  v3.2.7 /home/analistaptd/projetos/delpi-central/plugins/delia
+
+stderr | src/interactionStateLifecycle.test.tsx > lifecycle A — fluxo normal > A07–A08 segundo turno não reutiliza processing do anterior
+Encountered two children with the same key, `ut-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ src/interactionStateLifecycle.test.tsx (13 tests) 1077ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  09:19:12
+   Duration  6.38s (transform 2.63s, setup 24ms, collect 4.56s, tests 1.08s, environment 449ms, prepare 69ms)
+

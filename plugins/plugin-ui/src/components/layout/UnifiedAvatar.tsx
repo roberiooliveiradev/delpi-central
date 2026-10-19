@@ -76,11 +76,11 @@ function AssistantAvatar({
 }: Extract<UnifiedAvatarProps, { kind: "assistant" }>) {
   // No artificial completion timer. Reduced-motion has no animationend event.
   useEffect(() => {
-    if (
-      motionState === "responding" &&
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-    ) {
+    if (motionState !== "responding" || typeof window === "undefined") return;
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    )?.matches;
+    if (reducedMotion) {
       onMotionComplete?.();
     }
   }, [motionState, onMotionComplete]);

@@ -1,8 +1,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { UnifiedAvatar } from "./UnifiedAvatar";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 describe("UnifiedAvatar", () => {
   it.each(["xs", "sm", "md", "lg", "xl"] as const)("renders assistant size %s", (size) => {
@@ -37,6 +40,61 @@ describe("UnifiedAvatar", () => {
     expect(container.textContent).toContain("AS");
     rerender(<UnifiedAvatar kind="person" label="Usuário" fallbackText="Ana Silva" imageUrl="/photos/2" />);
     expect(container.querySelector("img")?.getAttribute("src")).toBe("/photos/2");
+  });
+
+  it("responding + reduced motion chama onMotionComplete sem depender de animationend", () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue({ matches: true }),
+    });
+    const onMotionComplete = vi.fn();
+    render(
+      <UnifiedAvatar
+        kind="assistant"
+        label="DÉLIA"
+        motionState="responding"
+        onMotionComplete={onMotionComplete}
+      />,
+    );
+    expect(onMotionComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("responding não quebra quando matchMedia está ausente ou retorna undefined", () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    });
+    const onMotionComplete = vi.fn();
+    expect(() =>
+      render(
+        <UnifiedAvatar
+          kind="assistant"
+          label="DÉLIA"
+          motionState="responding"
+          onMotionComplete={onMotionComplete}
+        />,
+      ),
+    ).not.toThrow();
+    expect(onMotionComplete).not.toHaveBeenCalled();
+
+    cleanup();
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockReturnValue(undefined),
+    });
+    expect(() =>
+      render(
+        <UnifiedAvatar
+          kind="assistant"
+          label="DÉLIA"
+          motionState="responding"
+          onMotionComplete={onMotionComplete}
+        />,
+      ),
+    ).not.toThrow();
   });
 
   it("rejects unsupported image URL schemes through the component boundary", () => {
