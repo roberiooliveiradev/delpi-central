@@ -14797,3 +14797,14 @@ NEXT=I02_R3_TEO_PRE_OWNER_LATENCY_ARCHITECTURE_DIAGNOSIS
 - **STATE:** `I02_R3_COORDINATION_INVESTIGATION=PARTIAL`; `SOURCE_CODE_CHANGED=NO`; `TESTS=TEST_NOT_RUN`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R3_EVIDENCE_AND_DEPENDENCY_GATE_BEFORE_IMPLEMENTATION
+
+
+## §6.250 — DELIA-C3-I02-R3-CONSULTANT-DIAGNOSTIC-TASK-DEFINED (PLANNED_NOT_EXECUTED)
+
+**DATE:** 2026-10-19. **DOC:** [12 — consultant evidence and test task](../corrections/mcp-contextual-intelligence-orchestration/12-i02r3-consultant-diagnostic-task.md). **BASE_HEAD:** `06cf0f22dab4ad4e294f882b3844027f170d1e28`. Coordination authored bounded consultant analysis/testing instruction only.
+
+- **SCOPE:** establish exact K1 R2 timeout stage from correlated purpose/timing trace, dependency map of select_group/select_capability/turn_goal/native_assessment/arguments/owner READ, characterization and safety/negative tests, controlled A–F alternatives under 30s, and a recommended bounded design candidate. Existing code/owner contracts first; `EXISTING_EQUIVALENT=YES` on referenced HEAD, `REUSE_DECISION=EXTEND_CANDIDATE` pending evidence.
+- **BOUNDARY:** consultant must not implement performance fix, deploy, create a new planner/memory or advance phase; live only gated/read-only if authorized. Results not yet executed: `TESTS=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`; documents do not prove runtime outcome.
+- **STATE:** `I02_R3_CONSULTANT_TASK=DEFINED_NOT_EXECUTED`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R3_CONSULTANT_EVIDENCE_AND_DEPENDENCY_ANALYSIS
