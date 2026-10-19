@@ -39,6 +39,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R2 independent review:** [10 — bounded fix accepted with residuals](./10-i02r2-independent-architecture-and-deploy-review.md). I02 remains REWORK because K1/K2 live FAIL; optional probe floor and PT contract heuristic have open generalization risk. Next: I02-R3 pre-owner TÉO latency diagnosis and design.
 
+**I02-R3 (coordenação, investigação parcial):** [11 — latency architecture investigation](./11-i02r3-coordination-latency-architecture-investigation.md). Confirmado: várias propostas do modelo antes do owner, sem prova ainda de quais podem ser eliminadas; nenhuma solução de código aprovada. Próximo gate = perfis de K1 PASS/FAIL e dependências entre estágios antes do prompt de implementação.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -73,13 +75,13 @@ I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
 I02_ACCEPTED=NO
 I02_R1=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
-I02_R2=IMPLEMENTED_CANDIDATE_PENDING_INDEPENDENT_REVIEW
+I02_R2=ACCEPTED_WITH_RESIDUAL_SCOPED
 NESTED_FIX_LIVE=EXERCISED_ON_K3_PASS_WITH_LIMITATION
 LATENCY_ROOT_CAUSE=PROVEN
 PERFORMANCE_FIX_IMPLEMENTED=YES_INDEX_PROBE_HEADROOM
 K3_OWNER_READ_REACHED=YES
 K1_K2_TEO_LIVE=FAIL_TIMEOUT
-NEXT=INDEPENDENT_I02_R2_ARCHITECTURE_AND_DEPLOY_REVIEW
+NEXT=I02_R3_EVIDENCE_AND_DEPENDENCY_GATE_BEFORE_IMPLEMENTATION
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
