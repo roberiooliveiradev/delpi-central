@@ -15273,3 +15273,15 @@ NEXT=R45_BOUNDED_PAGINATION_INTEGRITY_REWORK
 - **Phase:** `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4/C5/Q01` not authorized.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.287 — Independent R45 pagination and SSH review (ACCEPT_WITH_RESIDUAL_BOUNDED)
+
+**DATE:** 2026-10-19. **REVIEW:** [45](../corrections/mcp-contextual-intelligence-orchestration/45-independent-r45-pagination-and-live-ssh-review.md). **DEPLOYED EVAL SHA:** `8caba9310f4ea8ab57731091916c5b48ad6443bd`.
+
+- **R5:** strict pagination completion/count guards accepted with residual based on code and executor RED/GREEN/full pytest; independent replay TEST_NOT_RUN. **Ticket selection:** unique structural READ with action=tickets selected in group; L01A–E reached Helpdesk in production and received valid GLPI link precondition. No invented count; ACT=0.
+- **LIMIT:** eval subject `linked=false`; linked personal count `TEST_NOT_RUN`, actual user-scoped outcome `INCONCLUSIVE`; requires owner-authorized self-scope, requester filter and linked subject. Non-ticket L03 at ~30040ms and K4-C at ~30018ms still violate strict 30s and keep I04 global REWORK.
+- **DECISION:** bounded `ACCEPT_WITH_RESIDUAL`, no phase advancement. Independent SSH execution not performed by coordination.
+
+NEXT_MAIN=I04_BOUNDED_BUDGET_AND_THEMATIC_GENERALIZATION_REWORK
+NEXT_RELATED=HELPDESK_OWNER_PERSONAL_SCOPE_CONTRACT_DECISION
