@@ -43,6 +43,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3 — task do consultor (análise/testes, sem implementação):** [12 — consultant diagnostic task](./12-i02r3-consultant-diagnostic-task.md). O consultor comprova etapa exata de timeout K1, mapa de dependências, suíte de caracterização e alternativas A–F; decisão de arquitetura e eventual patch ficam com a coordenação.
 
+**I02-R3 — evidência do consultor:** [13 — evidence and dependency analysis](./13-i02r3-consultant-evidence-and-dependency-analysis.md). Timeout K1 **PROVEN** em `arguments` pós-`get_catalog`; K3 R2 regressão OK; recomendação F+headroom arguments; **sem** patch funcional nem deploy.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -83,7 +85,9 @@ LATENCY_ROOT_CAUSE=PROVEN
 PERFORMANCE_FIX_IMPLEMENTED=YES_INDEX_PROBE_HEADROOM
 K3_OWNER_READ_REACHED=YES
 K1_K2_TEO_LIVE=FAIL_TIMEOUT
-NEXT=I02_R3_EVIDENCE_AND_DEPENDENCY_GATE_BEFORE_IMPLEMENTATION
+I02_R3=CONSULTANT_EVIDENCE_RECORDED
+K1_TIMEOUT_EXACT_STAGE=arguments
+NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

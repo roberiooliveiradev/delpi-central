@@ -14808,3 +14808,16 @@ NEXT=I02_R3_EVIDENCE_AND_DEPENDENCY_GATE_BEFORE_IMPLEMENTATION
 - **STATE:** `I02_R3_CONSULTANT_TASK=DEFINED_NOT_EXECUTED`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R3_CONSULTANT_EVIDENCE_AND_DEPENDENCY_ANALYSIS
+
+
+## §6.251 — DELIA-C3-MCP-I02-R3-TEO-PREOWNER-LATENCY-DIAGNOSTIC-01 (EVIDENCE_RECORDED)
+
+**DATE:** 2026-10-19. **DOC:** [13](../corrections/mcp-contextual-intelligence-orchestration/13-i02r3-consultant-evidence-and-dependency-analysis.md). **BASE_HEAD:** `f9bc8399619d2b929ff30f7d7f9428a77387e516`. Characterization tests + docs only; no functional orchestration change; no deploy.
+
+- **K1_TIMEOUT_EXACT_STAGE=PROVEN** `delia.capability_orchestration.arguments` after `teo.get_catalog` (live corr. `561bb788-…`; historical `ab0b61a9-…` same class). Pre-owner model: group/capability/goal/native (+ arguments fail); owner catalog ~150ms; methodology READ not reached. Amplifier: `select_capability` ≈15s under `DELIA_MODEL_STAGE_TIMEOUT_SECONDS=30`.
+- **TESTS:** `test_i02r3_teo_preowner_latency_characterization.py` PASS; I01/I02/R2 regression PASS; full `delia-api` PASS. ACT=0.
+- **LIVE:** K1 FAIL 30016ms; K2 SKIPPED (no invented context); K3 GROUNDED 15376ms R2 regression PASS. `SAFE_OPTIMIZATION_PROVEN=NO` (diagnosis only).
+- **RECOMMENDATION:** `F_STAGE_CAP_ALIGN + ARGUMENTS_HEADROOM_EXTEND` (I02-R2 pattern); optional later D/E with safety proofs. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND_CANDIDATE`.
+- **STATE:** `I02_R3_CONSULTANT_EVIDENCE=RECORDED`; `SOURCE_CODE_CHANGED=NO`; `PERFORMANCE_FIX_IMPLEMENTED=NO`; `DEPLOY_PERFORMED=NO`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
