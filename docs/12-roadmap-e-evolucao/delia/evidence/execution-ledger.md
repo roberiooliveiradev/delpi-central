@@ -15453,9 +15453,9 @@ NEXT=BOUNDED_ARGUMENT_PROVENANCE_AND_MULTITURN_BUDGET_REWORK
 
 **DATE:** 2026-10-19. **TASK:** `DELIA-C3-PROVIDER-NEUTRAL-SEMANTIC-PROVENANCE-AND-CONTINUITY-REWORK-01`. **DOC:** [54](../corrections/mcp-contextual-intelligence-orchestration/54-provider-neutral-semantic-provenance-and-continuity-rework.md). **BASE:** `db2645108b` (ancestor); worktree on `origin/main`.
 
-- **ROOT_CAUSES:** (1) lexical ANY-token-overlap / `haystack in proposed` false-positive provenance; (2) compare follow-up fallthrough to full owner path under 30s → 504.
-- **FIX:** proposal-token coverage grounding; typed compare/analyze prior probe; probe-insufficient stops without owner reselection when resolver headroom gone; GOAL copy clarifies anaphora/subset/compare. No provider branches / planner / timeout bump.
-- **TESTS:** `test_provider_neutral_semantic_provenance_and_continuity.py` + full delia-api pytest PASS.
+- **ROOT_CAUSES:** (1) lexical ANY-token-overlap / `haystack in proposed` false-positive provenance; (2) compare follow-up fallthrough to full owner path under 30s → 504; (3) empty synthesis on bullet prior → insufficiency + owner burn; sentence-split inside bullets truncated `TERM. PINO`.
+- **FIX:** proposal-token coverage grounding; typed compare/analyze prior probe; probe-insufficient **stops** for typed continuity (or tight budget); methodology cue may still fall through (I01); empty synthesis recovers ≥2 bullet units only; bullet lines stay atomic in `_prior_excerpt_records`. No provider branches / planner / timeout bump.
+- **TESTS:** `test_provider_neutral_semantic_provenance_and_continuity.py` (PROV/CONT + bullet atomic) + full delia-api pytest PASS; i01/i02r2/SEMARG/R4–R5/i03/i04/interop regression green.
 - **LIVE / DEPLOYED_SHA:** filled after commit+push+canonical deploy.
 
 ```text

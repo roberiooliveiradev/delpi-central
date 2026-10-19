@@ -2335,6 +2335,12 @@ def _prior_excerpt_records(
             chunk = chunk.strip()
             if not chunk:
                 continue
+            # Bullet/numbered lines are atomic list units — do not
+            # sentence-split inside them (abbreviations like "TERM.
+            # PINO" would otherwise truncate the selectable excerpt).
+            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", chunk):
+                units.append(chunk[:MAX_DESCRIPTION_CHARS])
+                continue
             pieces = _PRIOR_SENTENCE_SPLIT_RE.split(chunk)
             for piece in pieces:
                 cleaned = piece.strip()
@@ -4981,18 +4987,32 @@ class OperationalCapabilityOrchestrator:
                                     correlation,
                                 )
                                 return continued
-                            # Probe transform was insufficient. Falling
-                            # through to full selection+owner often burns
-                            # the remaining global budget (L5 compare
-                            # 504). Stop when resolver-class headroom is
-                            # gone; return the honest insufficiency.
-                            if not self._budget_allows_resolver(deadline):
+                            typed_continuity = (
+                                goal.comparison_requested
+                                or goal.goal_class in {
+                                    "compare",
+                                    "analyze",
+                                }
+                            )
+                            # Compare/analyze already spent a synthesis
+                            # stage on prior evidence — do not burn the
+                            # remaining 30s budget on owner reselection
+                            # (L5 timeout class). Methodology cue probes
+                            # may still fall through when headroom remains.
+                            if (
+                                typed_continuity
+                                or not self._budget_allows_resolver(
+                                    deadline
+                                )
+                            ):
                                 _logger.info(
                                     "orchestration stage="
                                     "prior_continuation "
-                                    "decision=probe_insufficient_stop_budget "
+                                    "decision=probe_insufficient_stop "
                                     "remaining_ms=%d correlation_id=%s",
-                                    int(deadline.remaining_seconds() * 1000),
+                                    int(
+                                        deadline.remaining_seconds() * 1000
+                                    ),
                                     correlation,
                                 )
                                 return continued
@@ -6874,6 +6894,31 @@ class OperationalCapabilityOrchestrator:
                         "decision=recover_invalid_index excerpts=%d "
                         "correlation_id=%s",
                         len(records),
+                        correlation,
+                    )
+                    rendered = recovered
+            if rendered is None and reason == "empty_selection":
+                # Recover only when prior already exposes bullet /
+                # numbered listing units. Sentence-split prose from a
+                # single prior turn must not become a fake list — that
+                # blocks I01 fallthrough when prior lacks the asked
+                # content. Product/search OBSERVATION already renders
+                # as bullets, so subset/compare continuity recovers.
+                recovered = _extraction_list_from_prior_excerpts(records)
+                bullet_units = [
+                    (record.get("excerpt") or "").strip()
+                    for record in records
+                    if re.match(
+                        r"^(?:[-*]|\d+[.)])\s+\S",
+                        (record.get("excerpt") or "").strip(),
+                    )
+                ]
+                if recovered is not None and len(bullet_units) >= 2:
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=recover_empty_selection excerpts=%d "
+                        "correlation_id=%s",
+                        len(bullet_units),
                         correlation,
                     )
                     rendered = recovered

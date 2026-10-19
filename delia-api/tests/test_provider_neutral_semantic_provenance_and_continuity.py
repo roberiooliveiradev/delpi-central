@@ -28,6 +28,7 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _free_string_grounded_in_user_input,
+    _prior_excerpt_records,
     _prior_transform_probe_eligible,
 )
 from app.application.interaction.capability_attempt import (
@@ -565,6 +566,62 @@ def test_cont_t01_subset_from_prior_when_sufficient():
     assert provider.calls == []
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.content
+
+
+def test_cont_t02_empty_selection_recovers_bullet_prior():
+    """Empty synthesis on a bullet prior projects excerpts, no owner."""
+    clock = FakeClock()
+    deadline = TurnDeadline.start(30.0, clock=clock)
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="Busque terminais pino cadastrados.",
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content=(
+                "Encontrei 2 registros:\n"
+                "- A — TERM. PINO A\n"
+                "- B — TERM. PINO B"
+            ),
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+    )
+    provider = _search_provider()
+    proposals = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": False,
+            "interaction_class": "conversation",
+        },
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "read",
+            "prior_evidence_sufficient": True,
+        },
+        SYNTHESIS_INSTRUCTION_ID: {"items": []},
+    }
+    orch = _orch([provider], proposals, clock=clock)
+    attempt = orch.attempt(
+        "Liste dois produtos encontrados.",
+        prior_turns=prior,
+        turn_deadline=deadline,
+    )
+    assert provider.calls == []
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    content = attempt.content or ""
+    assert "TERM. PINO A" in content
+    assert "TERM. PINO B" in content
+    assert "prior_turn_evidence_only" in attempt.limitations
+
+
+def test_cont_bullet_abbreviation_stays_atomic_excerpt():
+    units = _prior_excerpt_records(
+        "Encontrei 2 registros:\n"
+        "- A — TERM. PINO A\n"
+        "- B — TERM. PINO B"
+    )
+    excerpts = [u["excerpt"] for u in units]
+    assert any("TERM. PINO A" in e for e in excerpts)
+    assert any("TERM. PINO B" in e for e in excerpts)
 
 
 def test_cont_t08_conversation_without_mcp():
