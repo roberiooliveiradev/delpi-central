@@ -14898,7 +14898,8 @@ NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
 - **F01 TEST_DEFECT:** mock Canvas sem `measureText` → REUSE mock de `blobFromTypedSignatureName.test.ts`.
 - **F02 TEST_DEFECT:** `typeof RichTextEditor` object (`forwardRef`) → assert `displayName`.
 - **F03 TEST_DEFECT:** expectativa `1.25rem` stale → token `var(--delpi-ui-mention-composer-radius, 0.85rem)`.
-- **Final:** Vitest plugin-ui **2225/2225 PASS**; delia 212 PASS; typecheck plugin-ui+delia PASS; builds+federation PASS. Produto/CSS não alterados.
+- **Final:** Vitest plugin-ui **2225/2225 PASS** (EXIT 0, Errors 0); delia 212 PASS; typecheck plugin-ui+delia PASS; builds+federation PASS. Produto/CSS não alterados.
+- **F04 (suíte completa):** DisplayFormat `findByRole` pós-skeleton; `afterEach(cleanup)` em FiltersRow/ElementTogglePopover (portals) — flakes de teardown, não regressão F01–F03.
 - **DECISION:** `VITEST_PLUGIN_UI=PASS`; `PHASE_PROGRESSION=NONE`; `D01/D02/D03/D04_ACCEPTED=NO`; recomendação: `ACCEPT`.
 
 NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA

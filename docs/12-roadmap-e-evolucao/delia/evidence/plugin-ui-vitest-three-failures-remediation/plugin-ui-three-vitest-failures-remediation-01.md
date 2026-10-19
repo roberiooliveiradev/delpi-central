@@ -100,6 +100,17 @@ Concurrent preservado: `plugins/plugin-ui/docs/12-roadmap-e-evolucao/` (untracke
 | UNSAFE_TYPE_SUPPRESSIONS | **0** |
 | Produto/CSS alterados | **NÃO** (somente testes) |
 
-## 5. Relação com quitação TypeScript
+## 5. Flakes estabilizados na suíte completa (F04)
+
+Após F01–F03 verdes isolados, a suíte completa revelou:
+
+| ID | Sintoma | Classificação | Fix |
+|---|---|---|---|
+| F04a | `DisplayFormatDialog` option antes do loader (skeleton) | TEST_DEFECT timing | `findByRole("option")` |
+| F04b | Unhandled `window is not defined` pós-teardown (FiltersRow / ElementTogglePopover portals) | TEST_DEFECT cleanup | `afterEach(cleanup)` |
+
+Sem alteração de produto. Suíte final EXIT 0, 2225/2225, Errors 0.
+
+## 6. Relação com quitação TypeScript
 
 Fecha o residual Vitest registrado em §6.254 / relatório TypeScript (ledger §6.257). Não altera o histórico daquela task nem declara aceite D01–D04.

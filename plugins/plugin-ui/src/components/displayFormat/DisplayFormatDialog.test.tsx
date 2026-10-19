@@ -132,7 +132,10 @@ describe("DisplayFormatDialog", () => {
     );
 
     const types = await screen.findByRole("listbox", { name: "Tipo" });
-    const option = within(types).getByRole("option", { name: /Não foi possível interpretar/ });
+    // Aguardar opções reais — listbox pode montar com skeleton enquanto o loader resolve.
+    const option = await within(types).findByRole("option", {
+      name: /Não foi possível interpretar/,
+    });
     expect((option as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Aplicar" }));
     expect(onApply).not.toHaveBeenCalled();
