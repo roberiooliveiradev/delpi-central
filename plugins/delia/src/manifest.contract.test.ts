@@ -31,13 +31,14 @@ describe("DÉLIA publication manifest contract", () => {
     expect(JSON.stringify(manifest)).not.toContain("minha-delpi-chat");
   });
 
-  it("declares bootstrap visibility plus the bounded audio-test permission metadata", () => {
+  it("declares only bootstrap visibility — no dedicated audio permission", () => {
     const permissions = manifest.permissions as Array<{ code: string; module: string }>;
-    expect(permissions).toHaveLength(2);
+    expect(permissions).toHaveLength(1);
     expect(permissions[0].code).toBe("delia.access");
     expect(permissions[0].module).toBe("delia");
-    expect(permissions[1].code).toBe("delia.audio-capture.test");
-    expect(permissions[1].module).toBe("delia");
+    // PM decision REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01: local
+    // audio capture must not require a dedicated RBAC permission.
+    expect(permissions.some((p) => p.code === "delia.audio-capture.test")).toBe(false);
   });
 
   it("declares backend metadata without secrets", () => {

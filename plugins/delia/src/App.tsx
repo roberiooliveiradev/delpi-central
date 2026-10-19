@@ -42,7 +42,7 @@ import {
 } from "./audio/audioCaptureQaAdmission";
 import {
   DELIA_AUDIO_TEST_BANNER,
-  resolveAudioTestAdmission,
+  DELIA_AUDIO_TEST_LIMITS,
 } from "./audio/audioCaptureTestAdmission";
 import { useCurrentUserIdentity } from "./identity/currentUser";
 
@@ -88,9 +88,10 @@ const NEAR_BOTTOM_THRESHOLD_PX = 96;
 export default function App({
   getAccessToken,
   getWorkspaceContext,
-  permissions,
+  permissions: _permissions,
   isSuperadmin: _isSuperadmin,
 }: AppProps) {
+  void _permissions;
   void _isSuperadmin;
 
   // Demo mode is resolved once at mount — it is a dev/preview harness,
@@ -104,15 +105,13 @@ export default function App({
   const [audioQaAdmission] = useState(() =>
     resolveAudioQaAdmission(window.location.search),
   );
-  // Production-test admission — Core RBAC permission resolved backend-side
-  // and delivered via host props. Reactive (useMemo): revoking the grant
-  // flips `enabled` off and the recorder contract hard-cleans any capture
-  // in progress. Fail-closed when the projection is absent.
-  const audioTestAdmission = useMemo(
-    () => resolveAudioTestAdmission(permissions),
-    [permissions],
-  );
-  const audioAdmission = audioQaAdmission ?? audioTestAdmission;
+  // Local audio capture — available to every legitimately admitted
+  // DÉLIA user (delia.access enforced upstream by Portal/Core before
+  // this MFE mounts). No dedicated audio permission, URL param or build
+  // flag gates it (PM decision REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01).
+  // Browser/secure-context support stays fail-closed inside
+  // AudioRecorderControl; limits are the PM-bounded test values.
+  const audioAdmission = audioQaAdmission ?? DELIA_AUDIO_TEST_LIMITS;
   const userIdentity = useCurrentUserIdentity(getAccessToken);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
@@ -430,15 +429,15 @@ export default function App({
             />
           }
           banner={
-            demoScenario || audioQaAdmission || audioTestAdmission ? (
+            demoScenario || audioAdmission ? (
               <div className="delia-demo-banner" role="note">
                 {demoScenario ? DELIA_DEMO_BANNER : null}
-                {demoScenario && (audioQaAdmission || audioTestAdmission)
-                  ? " "
-                  : null}
-                {audioQaAdmission ? DELIA_AUDIO_QA_BANNER : null}
-                {audioQaAdmission && audioTestAdmission ? " " : null}
-                {audioTestAdmission ? DELIA_AUDIO_TEST_BANNER : null}
+                {demoScenario && audioAdmission ? " " : null}
+                {audioQaAdmission
+                  ? DELIA_AUDIO_QA_BANNER
+                  : audioAdmission
+                    ? DELIA_AUDIO_TEST_BANNER
+                    : null}
               </div>
             ) : null
           }

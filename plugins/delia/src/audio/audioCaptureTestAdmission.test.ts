@@ -2,42 +2,28 @@ import { describe, expect, it } from "vitest";
 
 import {
   DELIA_AUDIO_TEST_BANNER,
+  DELIA_AUDIO_TEST_LIMITS,
   DELIA_AUDIO_TEST_MAX_BYTES,
   DELIA_AUDIO_TEST_MAX_DURATION_MS,
-  DELIA_AUDIO_TEST_PERMISSION,
-  resolveAudioTestAdmission,
 } from "./audioCaptureTestAdmission";
 
-describe("audio capture production-test admission", () => {
-  it("admits when the Core-resolved permission is present", () => {
-    const admission = resolveAudioTestAdmission([
-      "delia.access",
-      DELIA_AUDIO_TEST_PERMISSION,
-    ]);
-    expect(admission).toEqual({
+describe("audio capture bounded test availability", () => {
+  it("exposes the Product Master bounded test limits", () => {
+    expect(DELIA_AUDIO_TEST_LIMITS).toEqual({
       maxDurationMs: DELIA_AUDIO_TEST_MAX_DURATION_MS,
       maxBytes: DELIA_AUDIO_TEST_MAX_BYTES,
     });
+    expect(DELIA_AUDIO_TEST_MAX_DURATION_MS).toBe(60_000);
+    expect(DELIA_AUDIO_TEST_MAX_BYTES).toBe(256_000);
   });
 
-  it("fails closed without the permission", () => {
-    expect(resolveAudioTestAdmission(["delia.access"])).toBeNull();
-    expect(resolveAudioTestAdmission([])).toBeNull();
-  });
-
-  it("fails closed when the projection is absent or null", () => {
-    expect(resolveAudioTestAdmission(undefined)).toBeNull();
-    expect(resolveAudioTestAdmission(null)).toBeNull();
-  });
-
-  it("requires an exact permission code — no prefix/suffix match", () => {
-    expect(
-      resolveAudioTestAdmission([`${DELIA_AUDIO_TEST_PERMISSION}.extra`]),
-    ).toBeNull();
-    expect(
-      resolveAudioTestAdmission([`x.${DELIA_AUDIO_TEST_PERMISSION}`]),
-    ).toBeNull();
-    expect(resolveAudioTestAdmission(["delia.audio-capture"])).toBeNull();
+  it("requires no dedicated audio permission — availability is app-access scoped", () => {
+    // The module must not consume permissions, JWT claims, URLs or
+    // flags: admission to the app (delia.access) is decided upstream.
+    expect(Object.keys(DELIA_AUDIO_TEST_LIMITS)).toEqual([
+      "maxDurationMs",
+      "maxBytes",
+    ]);
   });
 
   it("declares a bounded, honest test notice", () => {

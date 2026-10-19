@@ -113,7 +113,11 @@ describe("demo mode ON", () => {
   it("renders the visible simulated-data banner", () => {
     setDemoLocation("simple");
     render(<App />);
-    expect(screen.getByText(DELIA_DEMO_BANNER)).toBeTruthy();
+    // Banner composes with the audio-test notice in a single div —
+    // match by substring.
+    expect(
+      screen.getByText((content) => content.includes(DELIA_DEMO_BANNER)),
+    ).toBeTruthy();
   });
 
   it("appends user + simulated turn without any network call", async () => {

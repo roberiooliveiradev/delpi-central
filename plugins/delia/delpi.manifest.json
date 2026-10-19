@@ -4,7 +4,7 @@
   "name": "DÉLIA",
   "description": "Shell standalone de inteligência operacional da DÉLIA (fundação C1). Capacidades de negócio entram em tarefas posteriores.",
   "icon": "radar",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "microfrontend",
   "basePath": "/apps/delia",
   "entry": "/apps/delia/assets/remoteEntry.js",
@@ -13,12 +13,6 @@
       "code": "delia.access",
       "name": "Acessar DÉLIA",
       "description": "Acesso de visibilidade ao shell DÉLIA e rota raiz /apps/delia (Product Master APPROVED C1-T4D1). Metadata de aplicação/plataforma — não autoriza Domain AuthZ, Evidence, Decision, Work, PREPARE, ACT, provider/tool ou OT.",
-      "module": "delia"
-    },
-    {
-      "code": "delia.audio-capture.test",
-      "name": "Teste controlado de gravação de áudio",
-      "description": "Admissão ao teste controlado da gravação local de áudio no composer DÉLIA (Product Master APPROVED DELIA-UX-AUDIO-RECORDER-CONTROLLED-PRODUCTION-TEST-01). Captura local no navegador, sem envio, transcrição, retenção ou AuthZ por voz. Revogável via RBAC sem redeploy. Não autoriza Domain AuthZ ou qualquer ACT.",
       "module": "delia"
     }
   ],

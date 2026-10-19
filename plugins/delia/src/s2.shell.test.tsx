@@ -321,11 +321,14 @@ describe("S2-C composer", () => {
         "A DÉLIA pode cometer erros. Confirme informações importantes.",
       ),
     ).toBeTruthy();
-    // No speculative secondary actions are rendered.
+    // The mic trigger is the only secondary action — local capture is
+    // available to every legitimately admitted DÉLIA user (no dedicated
+    // permission), with bounded test limits.
     const toolbar = document.querySelector(
       ".delpi-ui-message-composer__toolbar",
     )!;
-    expect(toolbar.querySelectorAll("button")).toHaveLength(1);
+    expect(toolbar.querySelectorAll("button")).toHaveLength(2);
+    expect(screen.getByLabelText(/Gravar áudio|Gravação de áudio/)).toBeTruthy();
   });
 });
 
