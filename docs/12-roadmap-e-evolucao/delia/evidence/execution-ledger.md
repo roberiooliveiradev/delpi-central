@@ -14951,15 +14951,38 @@ NEXT=I02_R3B_K2_K3_OUTPUT_QUALITY_BOUNDED_REMEDIATION
 
 ## §6.262 — DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-COMPLETION-01 (EVIDENCE_READY_FOR_REVIEW)
 
-**DATA:** 2026-10-19. **TASK:** `DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-COMPLETION-01`. **BASE_HEAD:** `37c908cf1d60db8c8486f8d33ad8cf3f7fbb9082`. **DOC:** [21](../corrections/mcp-contextual-intelligence-orchestration/21-adaptive-capability-routing-completion-implementation.md). **AUTHORITIES:** docs 14–20 preserved; I02 not auto-accepted.
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-COMPLETION-01`. **BASE_HEAD:** `37c908cf1d60db8c8486f8d33ad8cf3f7fbb9082`. **IMPLEMENTATION_SHA / DEPLOYED:** `c2ae80e364b361761bd48c0a4bfce3be11975023`. **DOC:** [21](../corrections/mcp-contextual-intelligence-orchestration/21-adaptive-capability-routing-completion-implementation.md). **AUTHORITIES:** docs 14–20 preserved; I02 not auto-accepted.
 
 - **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on `OperationalCapabilityOrchestrator` + `select_decision_path` + R3-B typed merge. No second planner/engine/registry.
 - **A FAST:** decision_path telemetry when singleton/native/closed-schema; unsafe singleton auto-select **not** shipped (regressions).
-- **B OPERATIONAL/native:** R3-B preserved; native skip only for non-write + declared `comparison_requested`; write enrichment still assesses; `READ⇒skip` prohibited.
-- **C Args:** deterministic schema path for const/single-enum/defaults; opaque schemas remain model.
+- **B OPERATIONAL/native:** R3-B preserved; native skip only for non-write + declared `comparison_requested`; write enrichment still assesses; `READ⇒skip` prohibited. Live K1/K3 logged `path=OPERATIONAL`.
+- **C Args:** deterministic schema path for const/single-enum/defaults; opaque TEO schemas remain model (live K1 arguments still model).
 - **D Quality:** thin prior-continuation extraction expand; index option lexical ranking + `topic=` log.
-- **Tests:** `test_adaptive_capability_routing_completion.py` + I01/I02/R2/R3/R3A/R3B + full `delia-api` pytest **PASS**. Live on completion SHA `PENDING_DEPLOY`.
-- **Invariants:** budget=30; stage-cap10 OFF; args-headroom OFF; MESSAGE≠ACT; MATERIAL_ACT synthetic=0.
-- **STATE:** `ALGORITHM_COMPLETION=PARTIAL_UNTIL_LIVE`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+- **Tests:** `test_adaptive_capability_routing_completion.py` + I01/I02/R2/R3/R3A/R3B + full `delia-api` pytest **PASS**.
+- **Live (MESSAGE-only, model kimi-k3, budget/stage=30):** K1 corr. `5816e0b8-…` TEO methodology READ 20199ms GROUNDED 2032 chars typed merge; K2 corr. `eeb15bba-…` continuity 21066ms content 130 chars (baseline 48) no owner reinvoke; K3 corr. `10e01d5d-…` VISTA INDEX→topic=`display_formats` 15294ms GROUNDED. MATERIAL_ACT=0.
+- **Invariants:** budget=30; stage-cap10 OFF; args-headroom OFF; MESSAGE≠ACT.
+- **STATE:** `ALGORITHM_COMPLETION=PARTIAL` (FAST no auto-select; K2/K3 usefulness residuals); `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
-NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K1_K2_K3
+NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.263 — DELIA-C3-ADAPTIVE-CAPABILITY-ROUTING-INDEPENDENT-REVIEW (ACCEPT_WITH_RESIDUAL)
+
+**DATA:** 2026-10-19. **REVIEW:** [22](../corrections/mcp-contextual-intelligence-orchestration/22-adaptive-capability-routing-independent-review.md). **IMPLEMENTATION_SHA:** `c2ae80e364b361761bd48c0a4bfce3be11975023`.
+
+- **FAST:** telemetry only; no unsafe singleton automatic capability resolution. **OPERATIONAL:** typed merge preserved. **REASONING:** escalation preserved. **ARGS:** closed owner schema deterministic path; TÉO opaque still model.
+- **Reported live outcomes:** K1 20,199ms READ GROUNDED; K2 21,066ms, 130 chars partial usefulness (expansion gate not exercised in sample); K3 15,294ms, `display_formats` partial relevance. Independent rerun `TEST_NOT_RUN`; n=1 per case, no causal/p95 claim.
+- **VERDICT:** `ACCEPT_WITH_RESIDUAL` limited to bounded implementation and observed/reportable outcome; `ALGORITHM_COMPLETION=PARTIAL`, `I02_ACCEPTED=NO`; C3–C5 unchanged.
+
+NEXT=I02_K2_K3_BOUNDED_OUTPUT_QUALITY_REMEDIATION
+
+
+## §6.264 — DELIA-C3-I02-K2-K3-QUALITY-REMEDIATION-KICKOFF (PLANNED_EXECUTION)
+
+**DATA:** 2026-10-19. **DOC:** [23 — bounded output quality execution brief](../corrections/mcp-contextual-intelligence-orchestration/23-i02-k2-k3-quality-remediation-execution-brief.md). **BASELINE:** §6.262–263, live implementation SHA `c2ae80e364b361761bd48c0a4bfce3be11975023`. Roadmap index refreshed; no backend code changed in this documentation update.
+
+- **K2 unresolved:** 130-char same-session answer, owner not reinvoked, usefulness PARTIAL; test substantive grounded extraction and legitimate freshness. **K3 unresolved:** selected `display_formats` for legibility question, owner nested guidance PASS but topic relevance PARTIAL.
+- **SCOPE:** bounded existing-orchestrator remediation with RED/GREEN, complete backend regression and authorized authenticated live K1/K2/K3; preserve typed merge, 30s, Core/Domain gates and provider neutrality. No generic redesign, no new planner/registry.
+- **STATE:** `EXECUTION_STATUS=PLANNED`; `I02_ACCEPTED=NO`; `ALGORITHM_COMPLETION=PARTIAL`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=DELIA-C3-I02-K2-K3-BOUNDED-OUTPUT-QUALITY-REMEDIATION-01
