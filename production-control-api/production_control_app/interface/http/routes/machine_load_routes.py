@@ -172,6 +172,26 @@ def get_machine_load(
     return ok(_scoped(data, include_all_centers))
 
 
+@router.get(
+    "/machine-load/work-centers",
+    operation_id="get_machine_load_work_centers",
+)
+def get_machine_load_work_centers(
+    request: Request,
+    branch: str = Query(..., description="Filial TOTVS (01 ou 02)"),
+):
+    """CTs da filial vindos do snapshot congelado — leitura administrativa sem
+    efeitos colaterais: ausência de fila responde vazio, nunca puxa o TOTVS."""
+    user = resolve_user(request)
+    try:
+        data = build_machine_load_service().stored_work_centers(
+            user, branch=branch
+        )
+    except Exception as exc:
+        return _handle_machine_load_errors(exc)
+    return ok(data)
+
+
 @router.get("/machine-load/live-status")
 def get_machine_load_live_status(
     request: Request,

@@ -1,7 +1,7 @@
 # Carga-Máquina — Regras de Sequenciamento por Centro de Trabalho
 
 > Estado: **Etapa 1 implementada — fundação administrativa**.
-> Base factual: `main` @ `1ed9df25b` + worktree local (pendente de commit).
+> Base factual: `main` ` `1ed9df25b` + worktree local (pendente de commit).
 > Iniciativa nova — sem relação com as Etapas E1–E4 de seleção múltipla
 > (`MACHINE-LOAD-MULTI-SELECTION-E1.md`).
 
@@ -421,3 +421,63 @@ pendente (`ARCHITECTURE_DECISION_REQUIRED`) — compartilhamento continua
 bloqueado com erro controlado.
 
 Ajustes da revisão do hotfix: o drift-check de vínculos cobre apenas os CTs com operações na fila (vínculo em CT ocioso não bloqueia; vínculo criado/alterado/removido em CT participante continua = 409); `row_version` ausente falha de forma controlada em vez de dispensar a proteção; e operações `missing`/`ambiguous` preservam a ordem relativa mesmo quando critérios posteriores ao material existem no perfil.
+
+## 12. Etapa 4 — administração visual (MFE `production-control`)
+
+A configuração de perfis e vínculos passa a ter interface própria no Portal
+PCP, sem alterar o motor da Etapa 3 nem os contratos do backend.
+
+- **Área**: *Regras de Sequenciamento*, subplugin do catálogo do
+  `production-control`, com acesso pela rail do Portal e por atalho discreto
+  no cabeçalho do Carga-Máquina.
+- **Perfis**: lista com busca e filtro por situação; criação em rascunho,
+  edição, ativação, retorno a rascunho e arquivamento via
+  `PUT /machine-load/sequencing-profiles/{id}` com `expected_revision`
+  (409 → aviso de atualização concorrente com opção de recarregar).
+- **Critérios**: `pa_due_date` fixo no topo (não removível nem movível);
+  `tool_group` e `material_code` opcionais, reordenáveis e sem duplicidade.
+  Para `material_code` a tela orienta os grupos de produto SB1 elegíveis
+  (preservando zeros à esquerda) e fixa os parâmetros `material_type=MP`,
+  `identity_source=operation_then_order`, `ignore_zeroed_allocations`,
+  `on_missing=flag`, `on_ambiguous=flag`; o agrupamento real continua pelo
+  código exato do cabo.
+- **Vínculos**: `(filial, CT)` tem no máximo um perfil; vincular/substituir
+  exige perfil ativo; vínculo com perfil inativo é sinalizado para correção.
+  Fonte de CTs: fila do Carga-Máquina + vínculos já cadastrados (sem refresh
+  TOTVS para abrir a tela).
+- **Permissões**: leitura `production-control.machine-load.view`;
+  administração exige `production-control.sequencing-profiles.manage`
+  (autoridade final no backend; o MFE apenas oculta ações).
+- **Efeito**: salvar/ativar/vincular não otimiza a fila — as regras valem na
+  próxima execução de **Otimizar planejamento**.
+- Perfis de outra filial não são apresentados como administráveis; a
+  política cross-branch segue `ARCHITECTURE_DECISION_REQUIRED`.
+
+### 12.1 Correções da revisão do PR #91
+
+- **CTs sem efeitos colaterais**: a administração não usa mais `GET /machine-load`
+  (que semeia a fila via TOTVS na primeira visita da filial). Nova leitura
+  dedicada `GET /machine-load/work-centers` devolve os CTs do snapshot
+  congelado — filial sem programação responde vazio, nunca puxa o ERP.
+- **Visibilidade por escopo**: `list_profiles` só devolve perfis com
+  `origin_branch` nulo (legado) ou igual à filial consultada; a tela aplica o
+  mesmo filtro defensivamente. Política cross-branch permanece pendente.
+- **Permissão efetiva**: o MFE recebe `permissions` do host e nasce somente
+  leitura sem `production-control.sequencing-profiles.manage` — sem esperar 403.
+- **Grupos SB1**: o campo guarda o texto cru durante a digitação e normaliza
+  somente no blur/save.
+- **Rascunho protegido**: vincular/desvincular atualiza os vínculos
+  localmente em vez de recarregar os perfis — edição não salva não é perdida.
+- **Parâmetros preservados**: ao editar um perfil existente, só
+  `eligible_product_groups` é sobrescrito; demais parâmetros gravados
+  (ex.: `ignore_zeroed_allocations=false`) são mantidos.
+
+- **Desvínculo consistente**: o PUT de vínculo devolve objeto com
+  `profile_id: null` ao desvincular — a tela só mantém a linha quando
+  `profile_id` vem preenchido (tipo `SequencingBindingResult` reflete o
+  contrato real).
+- **GET individual no mesmo escopo**: `get_profile` aplica a mesma
+  visibilidade da listagem — perfil de outra filial responde 404 mesmo com o
+  UUID conhecido; legados sem `origin_branch` seguem acessíveis.
+- **Superadmin**: o MFE propaga `isSuperadmin` do host; administrador global
+  habilita a edição sem concessão explícita — backend segue autoridade.

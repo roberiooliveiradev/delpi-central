@@ -6,6 +6,7 @@ import {
   Gauge,
   House,
   LayoutGrid,
+  ListOrdered,
   Package,
   TriangleAlert,
   Truck,
@@ -27,6 +28,7 @@ const ICONS: Record<string, LucideIcon> = {
   package: Package,
   box: Box,
   truck: Truck,
+  "list-ordered": ListOrdered,
 };
 
 type PpcRailProps = {

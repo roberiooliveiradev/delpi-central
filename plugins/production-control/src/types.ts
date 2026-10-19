@@ -1252,3 +1252,63 @@ export type OperatorFeedbackInboxPayload = {
   items: PcpOperatorFeedback[];
   summary: OperatorFeedbackInboxSummary;
 };
+
+
+export type SequencingCriterionType = "pa_due_date" | "tool_group" | "material_code";
+
+export type SequencingCriterion = {
+  type: SequencingCriterionType;
+  params?: Record<string, unknown> | null;
+};
+
+export type SequencingProfileStatus = "draft" | "active" | "archived";
+
+export type SequencingProfile = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: SequencingProfileStatus;
+  revision: number;
+  criteria: SequencingCriterion[];
+  origin_branch: string | null;
+  created_at: string | null;
+  created_by: string | null;
+  updated_at: string | null;
+  updated_by: string | null;
+  /** CTs vinculados, presente no detalhe/listagem. */
+  bindings?: SequencingBinding[];
+};
+
+export type SequencingBinding = {
+  branch: string;
+  work_center: string;
+  profile_id: string;
+  assigned_by: string | null;
+  assigned_at: string | null;
+};
+
+export type SequencingProfileListPayload = {
+  items: SequencingProfile[];
+  total: number;
+};
+
+export type SequencingBindingListPayload = {
+  items: SequencingBinding[];
+  total: number;
+};
+
+/** Resposta do PUT de vínculo: desvincular devolve o objeto com profile_id null. */
+export type SequencingBindingResult = {
+  branch: string;
+  work_center: string;
+  profile_id: string | null;
+  assigned_by: string | null;
+  assigned_at: string | null;
+};
+
+
+export type MachineLoadWorkCentersPayload = {
+  items: MachineLoadWorkCenter[];
+  /** true quando a filial já possui fila congelada; false = ainda sem programação. */
+  snapshot_present: boolean;
+};

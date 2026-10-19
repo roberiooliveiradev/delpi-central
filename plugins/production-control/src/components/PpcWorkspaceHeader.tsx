@@ -38,6 +38,8 @@ type PpcWorkspaceHeaderProps = {
   cutoffTime?: string | null;
   lineFeederStatus?: string | null;
   planId?: string | null;
+  /** Ações extras à direita do header (ex.: link discreto p/ área admin). */
+  actions?: ReactNode;
   onRefresh?: () => void;
   refreshBusy?: boolean;
   onPeriodChange?: (next: { startDate: string; endDate: string } | null) => void;
@@ -68,6 +70,7 @@ export function PpcWorkspaceHeader({
   cutoffTime,
   lineFeederStatus,
   planId,
+  actions,
   onRefresh,
   refreshBusy,
   onPeriodChange,
@@ -134,6 +137,7 @@ export function PpcWorkspaceHeader({
         </div>
 
         <div className="ppc-header__actions">
+          {actions}
           <div className="ppc-branch" role="group" aria-label={copy.branch.label}>
             <span className="ppc-branch__label">{copy.branch.label}</span>
             <HelpTooltip content={helpTooltips.branch} trigger="icon" />

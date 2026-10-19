@@ -737,6 +737,66 @@ class TestProfileService:
         with pytest.raises(BranchAccessDenied):
             self._update(service, _branch01_user(), BRANCH, profile_id)
 
+    def test_list_profiles_hides_profiles_from_other_branches(self) -> None:
+        """Revisão E4: perfil originado em outra filial não aparece na lista —
+        não é administrável aqui (cross-branch pendente de ratificação)."""
+        import dataclasses
+
+        service, repo = _service()
+        own = service.create_profile(
+            _dual_manager(), branch=BRANCH, **pilot_profile_payload()
+        )
+        other_branch = "01" if BRANCH == "02" else "02"
+        other_payload = dict(pilot_profile_payload(), name="Perfil da outra")
+        service.create_profile(
+            _dual_manager(), branch=other_branch, **other_payload
+        )
+        legacy = service.create_profile(
+            _dual_manager(),
+            branch=BRANCH,
+            **dict(pilot_profile_payload(), name="Legado sem origem"),
+        )
+        repo.profiles[UUID(legacy["id"])] = dataclasses.replace(
+            repo.profiles[UUID(legacy["id"])], origin_branch=None
+        )
+
+        listed = service.list_profiles(_dual_manager(), branch=BRANCH)
+        names = [item["name"] for item in listed["items"]]
+        assert own["name"] in names
+        assert "Legado sem origem" in names  # legado NULL segue visível
+        assert "Perfil da outra" not in names
+        assert listed["total"] == len(names)
+
+    def test_get_profile_denies_other_branch_profile_by_uuid(self) -> None:
+        """Revisão E4.2: o GET individual aplica a mesma visibilidade da
+        listagem — perfil de outra filial responde 404 mesmo com o UUID."""
+        import dataclasses
+
+        service, repo = _service()
+        other_branch = "01" if BRANCH == "02" else "02"
+        foreign = service.create_profile(
+            _dual_manager(),
+            branch=other_branch,
+            **dict(pilot_profile_payload(), name="Perfil da outra"),
+        )
+        legacy = service.create_profile(
+            _dual_manager(),
+            branch=BRANCH,
+            **dict(pilot_profile_payload(), name="Legado sem origem"),
+        )
+        repo.profiles[UUID(legacy["id"])] = dataclasses.replace(
+            repo.profiles[UUID(legacy["id"])], origin_branch=None
+        )
+
+        with pytest.raises(SequencingProfileNotFound):
+            service.get_profile(
+                _dual_manager(), branch=BRANCH, profile_id=UUID(foreign["id"])
+            )
+        visible = service.get_profile(
+            _dual_manager(), branch=BRANCH, profile_id=UUID(legacy["id"])
+        )
+        assert visible["name"] == "Legado sem origem"
+
     def test_legacy_null_origin_unbound_profile_is_locked(self) -> None:
         """Perfil legado sem origin_branch e sem vínculo: conjunto de
         filiais afetadas vazio → edição negada (não inventa proprietário)."""

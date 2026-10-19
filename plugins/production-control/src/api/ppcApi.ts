@@ -31,6 +31,12 @@ import type {
   Product3DModel,
   Product3DModelListPayload,
   ReportsCatalogPayload,
+  MachineLoadWorkCentersPayload,
+  SequencingBindingListPayload,
+  SequencingBindingResult,
+  SequencingCriterion,
+  SequencingProfile,
+  SequencingProfileListPayload,
   StockBalancesReportPayload,
   ProductionOrdersReportPayload,
   Subplugin,
@@ -1047,4 +1053,121 @@ export async function patchLineFeederUrgentRequest(params: {
   );
   const data = unwrapEnvelope(envelope, "Não foi possível atualizar a solicitação.");
   return data.item;
+}
+
+
+// ---------------------------------------------------------------------------
+// Regras de sequenciamento (Etapa 4 — administração visual dos perfis E1–E3)
+// ---------------------------------------------------------------------------
+
+export async function fetchSequencingProfiles(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<SequencingProfileListPayload> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: SequencingProfileListPayload;
+  }>(ppcApiUrl(`/machine-load/sequencing-profiles?branch=${params.branch}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar as regras de sequenciamento.");
+}
+
+export async function createSequencingProfile(params: {
+  branch: string;
+  name: string;
+  description: string | null;
+  criteria: SequencingCriterion[];
+}): Promise<SequencingProfile> {
+  const envelope = await httpPost<{
+    success: boolean;
+    message?: string;
+    data: SequencingProfile;
+  }>(
+    ppcApiUrl(`/machine-load/sequencing-profiles?branch=${params.branch}`),
+    {
+      name: params.name,
+      description: params.description,
+      criteria: params.criteria,
+    },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível criar o perfil.");
+}
+
+export async function updateSequencingProfile(params: {
+  branch: string;
+  profileId: string;
+  expectedRevision: number;
+  name: string;
+  description: string | null;
+  status: string;
+  criteria: SequencingCriterion[];
+}): Promise<SequencingProfile> {
+  const envelope = await httpPut<{
+    success: boolean;
+    message?: string;
+    data: SequencingProfile;
+  }>(
+    ppcApiUrl(`/machine-load/sequencing-profiles/${params.profileId}?branch=${params.branch}`),
+    {
+      name: params.name,
+      description: params.description,
+      status: params.status,
+      expected_revision: params.expectedRevision,
+      criteria: params.criteria,
+    },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível salvar o perfil.");
+}
+
+export async function fetchSequencingBindings(params: {
+  branch: string;
+  workCenter?: string | null;
+  signal?: AbortSignal;
+}): Promise<SequencingBindingListPayload> {
+  const search = new URLSearchParams({ branch: params.branch });
+  if (params.workCenter) search.set("workCenter", params.workCenter);
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: SequencingBindingListPayload;
+  }>(ppcApiUrl(`/machine-load/sequencing-bindings?${search.toString()}`), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os vínculos.");
+}
+
+export async function setSequencingBinding(params: {
+  branch: string;
+  workCenter: string;
+  profileId: string | null;
+}): Promise<SequencingBindingResult> {
+  const search = new URLSearchParams({
+    branch: params.branch,
+    workCenter: params.workCenter,
+  });
+  const envelope = await httpPut<{
+    success: boolean;
+    message?: string;
+    data: SequencingBindingResult;
+  }>(
+    ppcApiUrl(`/machine-load/sequencing-bindings?${search.toString()}`),
+    { profile_id: params.profileId },
+  );
+  return unwrapEnvelope(envelope, "Não foi possível atualizar o vínculo.");
+}
+
+export async function fetchMachineLoadWorkCenters(params: {
+  branch: string;
+  signal?: AbortSignal;
+}): Promise<MachineLoadWorkCentersPayload> {
+  const envelope = await httpGet<{
+    success: boolean;
+    message?: string;
+    data: MachineLoadWorkCentersPayload;
+  }>(ppcApiUrl("/machine-load/work-centers?branch=" + params.branch), {
+    signal: params.signal,
+  });
+  return unwrapEnvelope(envelope, "Não foi possível carregar os centros de trabalho.");
 }

@@ -136,6 +136,12 @@ class SequencingProfileService:
             )
         items = []
         for profile in profiles:
+            # Visibilidade por escopo autorizado: perfil originado em outra
+            # filial não é administrável aqui (política cross-branch pendente)
+            # e não deve nem aparecer na listagem da filial. Perfis legados
+            # sem origin_branch permanecem visíveis para correção.
+            if profile.origin_branch not in (None, branch):
+                continue
             item = _profile_payload(profile)
             item["bindings"] = binding_by_profile.get(str(profile.id), [])
             items.append(item)
@@ -146,7 +152,9 @@ class SequencingProfileService:
     ) -> dict[str, Any]:
         branch = self._assert_can_view(user, branch)
         profile = self._repo.get_profile(profile_id=profile_id)
-        if profile is None:
+        # Mesma política de visibilidade da listagem: perfil de outra filial
+        # responde 404 (não vaza existência); legado sem origem segue acessível.
+        if profile is None or profile.origin_branch not in (None, branch):
             raise SequencingProfileNotFound(
                 "Perfil de sequenciamento não encontrado."
             )
