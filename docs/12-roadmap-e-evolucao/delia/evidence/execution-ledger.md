@@ -15727,3 +15727,35 @@ CODE_DIFF=NONE
 NEXT=COORDINATION_FINAL_I04_GATE_DECISION
 ```
 
+
+
+## §6.312 — I04 G0 live exit FAIL; Option A exhausted; Product Master phase decision required
+
+**DATE:** 2026-10-19. **SOURCE:** [62 — Coordination v10 I04 final gate](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md); executor live validation §6.311; reviewed G0 code `cca468a365bd592498caa0be8cb20c8e0a6f75fe` and `orchestration.py` blob `0d82c09883570d5fb45464e9773a23b2daaba0c2`. **INDEPENDENT REVIEW:** GitHub static reanchor + analysis of documented live evidence; no direct SSH model replay by GPT and no independent pytest execution by GPT.
+
+- **I04 final gate:** `FAIL_BLOCKED`; `COORDINATION_REVIEW_VERDICT=REWORK_NO_NEW_G0_PATCH`. The business outcome is decisively FAIL in the predeclared VISTA C02 case: admission correctly requires owner surface, but live model selected DAVI ×3 and TÉO ×1, never VISTA; HTTP 200/no HTTP 504 does not meet user intent. This is a DÉLIA semantic selection failure in the tested path; owner metadata sufficiency is `TO_VERIFY`, not an assumed domain contract gap.
+- **Successes separated:** prior text comparison rejected as ungrounded positional claim (safe insufficiency); DAVI/OpenAPI product reads/no-match, TÉO methodology and EV-01 greeting PASS executor; `1647/1647` pytest and selected security/ACT assertions PASS executor; material ACT observed=0. Neither technical green nor safe refusal establishes full task outcome. EV-02 SIPOC and EV-10 VISTA followup FAIL; EV-03 hypothetical continuity PARTIAL; EV-05 comparison completion FAIL with safe refusal; EV-08 personal ticket count FAIL with causality not fully isolated; EV-13 3x5 comparison FAIL; EV-12 TEST_NOT_RUN; EV-16 INCONCLUSIVE; perf several ≈30s and max reported ≈30108ms.
+- **Deployment evidence classification:** executor compared correct `orchestration.py` blob, container code markers and host file hash, model `moonshotai/kimi-k3`, config fingerprint `2d7505d4142d11bc`; exact full deployed service SHA parity not demonstrated, but G0 code match sufficiently identified for localizing the observed semantic failure. No fabrication of authorization or time values.
+- **Anti-loop gate:** G0 initial remediation, one bounded rework, one independently scoped live evaluation all finished. `G0_REWORK_REMAINING=0`; **STOP for G0 code patches**. Document 59 explicitly requires `I04_BLOCKED + Product Master decision` on failed exit; Q01 remains locked and cannot become accepted via the completed discovery doc60.
+- **Proposed path requiring explicit Product Master authority:** Option B *only* as a recorded, narrow exception to phase ordering allowing Q02-A semantic admission/group/capability/goal consolidation to remedy I04 C02 and no-tool regressions; documentary architecture ADR58 already accepted, but not code/phase. **Before implementation:** amend higher authority 16 and dependent 59/61 as applicable; reconcile existing doc60 consumer/contract baseline and prevent bypass of Q01 while not falsely authorizing it; keep other Q02 packages, frozen synthesis, evidence/authz, write gates, and C3/C4/C5 locked. Without authorization, the current decision is STOP/DEFER, not another Cursor task.
+
+```text
+G0_I04_GATE_RESULT=FAIL_BLOCKED
+COORDINATION_REVIEW_VERDICT=REWORK_NO_NEW_G0_PATCH
+G0_OPTION_A=STOP_EXHAUSTED
+G0_IMPLEMENTATION_CYCLE=CLOSED
+G0_REWORK_REMAINING=0
+LIVE_VALIDATION_EXECUTED=YES
+C02_TASK_OUTCOME=FAIL
+C02_SELECTED_PROVIDER=mcp:davi|mcp:teo
+C02_EXPECTED_VISTA=NOT_SELECTED_IN_SAMPLE
+BACKEND_TESTS=PASS_EXECUTOR_REPORTED_1647
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+OPTION_B_PHASE_AMENDMENT=PROPOSED_PENDING_PRODUCT_MASTER
+NEXT=PRODUCT_MASTER_EXPLICIT_OPTION_B_OR_STOP
+```
