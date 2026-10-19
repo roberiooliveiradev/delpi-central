@@ -15928,3 +15928,41 @@ C5_AUTHORIZED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=ONE_BOUNDED_Q02_A_REWORK_THEN_INDEPENDENT_REVIEW
 ```
+
+
+## §6.317 — Q02-A post-deploy 3-case live observation and bounded rework evidence
+
+**DATE:** 2026-10-19. **AUTHORITY/STATE:** Q02-A Product Master Option B only (§6.313), executed initial implementation (§6.315), independent first review `REWORK` with **one** rework authorized (§6.316). **SOURCE:** user-provided operator relay of three authenticated live production turns; [roadmap 59 §9](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md). Host reported deployment `2ed7dbc489218b755783f5d61c49090de25f9cc9` from approved production script `up-prod-sequential.sh --pull --build delia-api` with Q02-A code; GitHub compare shows Q02-A implementation SHA `7e62894e2faa6a1b9c3fc348546f91c1a8112272` to host git `2ed7dbc...` changes **only** documentation 59 and ledger, not application source. Executor reported healthy container, delegated `user` and material ACT=0. No direct server access in this GPT review; `/tmp/delia_q02a_live_results.json` cited but not independently fetched; original raw payloads/correlation/stage trace unavailable to GPT.
+
+**Executor-reported live cases:**
+- `C02_FORMATS`: HTTP 200, **16957ms**; typed admission `owner_surface/operational`; model selected actual `mcp:vista/get_catalog` (prior baseline consistently DAVI/TÉO), owner-result `GROUNDED/OBSERVATION`. **SEMANTIC_OWNER_SELECTION=PASS_IN_OBSERVED_SINGLE_RUN**; `TASK_OUTCOME=PARTIAL/INCONCLUSIVE` pending full text/owner contract fidelity because result included partial no-match wrapper. Not independent generalization proof; no cold+2warm.
+- `SIPOC`: HTTP 200, **14166ms**; typed `conversational`, no owner; `NON_GROUNDED/HYPOTHESIS` + `turn_budget_limited`; **CONVERSATIONAL_ADMISSION=PASS**, **TASK_OUTCOME=FAIL**, no useful concept explanation.
+- `HYPOTHETICAL_PLUS_COMPARE`: HTTP 200, **13519ms**; `conversational`, no owner; `turn_budget_limited`; **ADMISSION=PASS**, **TASK_OUTCOME=FAIL**, no generated examples or meaningful follow-up/comparison.
+
+**Independent code inspection of existing conversation handler** (source-level only): after `NOT_APPLICABLE` the handler calls `_invoke` again for a no-tool answer, capping that **stage** to 12s (`CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS`), with an explicit `MODEL_TIMEOUT` catch that produces `turn_budget_limited`. **Do not confuse 12s per-stage timeout with 30s global turn budget.** The exact upstream/root cause (model stage latency, redundant calls, prompt+context sizing, model/provider infrastructure) remains `TO_VERIFY` with correlation ID, stage times, number of model calls and timeout type. No new code, test run, production deploy or architecture authority in this documentation entry.
+
+**GATE EFFECT:** The new live evidence substantially improves C02 **owner-selection** confidence versus the previous wrong-owner outcome; it does **not** independently certify full C02 business outcome or overturn `Q02_A_FIRST_INDEPENDENT_REVIEW=REWORK`. SIPOC and hypotheses are functional blockers even though HTTP 200 and 14s wall time are below 30s. The single Q02-A rework `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01` remains the already-approved vehicle for stronger K2/K3 functional tests, fake/wrong/absent proposals, singleton applicability and source-grounded diagnostics. Diagnose real no-tool model stage before adjusting sequencing; preserve no new semantic Python engine. An actual fix to unrelated response generation/LLM provider config/Q02-C outside Q02-A requires **STOP and explicit coordination/Product Master decision**, not silent scope creep. Deploy operational permission remains separate.
+
+```text
+Q02_A_FIRST_INDEPENDENT_REVIEW=REWORK_UNCHANGED
+Q02_A_INITIAL_CODE_SHA=7e62894e2faa6a1b9c3fc348546f91c1a8112272
+Q02_A_LIVE_HOST_SHA_REPORTED=2ed7dbc489218b755783f5d61c49090de25f9cc9
+Q02_A_C02_SEMANTIC_OWNER_SELECTION=PASS_SINGLE_SAMPLE_EXECUTOR_REPORTED
+Q02_A_C02_BUSINESS_OUTCOME=PARTIAL_INCONCLUSIVE
+Q02_A_SIPOC_OUTCOME=FAIL_TASK_OUTCOME
+Q02_A_HYPOTHETICAL_CONTINUITY_OUTCOME=FAIL_TASK_OUTCOME
+Q02_A_NO_TOOL_FALLBACK_STAGE_CAP=12S_PROVEN_STATIC
+GLOBAL_TURN_BUDGET=30S_UNCHANGED
+Q02_A_NO_TOOL_TIMEOUT_ROOT_CAUSE=TO_VERIFY
+Q02_A_REWORK_REMAINING=1
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=EXISTING_SINGLE_BOUNDED_Q02_A_REWORK_WITH_LIVE_STAGE_EVIDENCE
+```
