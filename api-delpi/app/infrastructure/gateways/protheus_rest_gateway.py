@@ -159,6 +159,24 @@ class ProtheusRestGateway:
                 status_code=502,
             ) from None
 
+    def create_supplier(
+        self,
+        config: ProtheusRestConfig,
+        *,
+        body: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """POST supplier creation — **no automatic retry** (write may be non-idempotent)."""
+        url = config.suppliers_base_url.rstrip("/")
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        # Single attempt only — timeout after send is indeterminate; never auto-retry.
+        response = self._send("POST", url, headers=headers, json_body=body)
+        return _map_supplier_write_response(response, url=url, operation="create")
+
     def _get_with_retry(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
         last_error: ProtheusRestError | None = None
         for attempt in range(1, _MAX_GET_ATTEMPTS + 1):
@@ -188,6 +206,7 @@ class ProtheusRestGateway:
         *,
         headers: dict[str, str],
         params: dict[str, str] | None = None,
+        json_body: dict[str, Any] | None = None,
     ) -> httpx.Response:
         timeout = _timeout(self._timeout_seconds)
         try:
@@ -197,6 +216,7 @@ class ProtheusRestGateway:
                     url,
                     headers=headers,
                     params=params,
+                    json=json_body,
                     timeout=timeout,
                 )
             with httpx.Client(timeout=timeout, follow_redirects=False, verify=True) as client:
@@ -205,14 +225,19 @@ class ProtheusRestGateway:
                     url,
                     headers=headers,
                     params=params,
+                    json=json_body,
                     timeout=timeout,
                 )
         except httpx.TimeoutException:
             log_error(f"Protheus timeout method={method} url={redact_text(url)}")
+            # Write timeout after send is indeterminate — caller must not auto-retry.
             raise ProtheusRestError(
-                "Tempo esgotado ao comunicar com o Protheus.",
+                "Tempo esgotado ao comunicar com o Protheus. "
+                "Se foi uma escrita, o resultado pode estar indeterminado — "
+                "não reenvie automaticamente.",
                 code="PROTHEUS_TIMEOUT",
                 status_code=504,
+                recoverable=False,
             ) from None
         except httpx.HTTPError:
             log_error(f"Protheus unavailable method={method} url={redact_text(url)}")
@@ -267,3 +292,154 @@ def _is_supplier_not_found(status_code: int, payload: dict[str, Any]) -> bool:
         if nested_code in _SUPPLIER_NOT_FOUND_CODES:
             return True
     return False
+
+
+def _extract_code_error(payload: dict[str, Any]) -> str:
+    for key in ("code_error", "codeError", "code", "error_code", "errorCode"):
+        raw = payload.get(key)
+        if raw is not None and str(raw).strip():
+            return str(raw).strip()
+    nested = payload.get("error")
+    if isinstance(nested, dict):
+        for key in ("code_error", "code", "error_code"):
+            raw = nested.get(key)
+            if raw is not None and str(raw).strip():
+                return str(raw).strip()
+    return ""
+
+
+def _extract_error_text(payload: dict[str, Any]) -> str:
+    for key in ("error", "message", "detailedMessage", "detailed_message"):
+        raw = payload.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
+        if isinstance(raw, dict):
+            nested = raw.get("message") or raw.get("error") or raw.get("text")
+            if isinstance(nested, str) and nested.strip():
+                return nested.strip()
+    return ""
+
+
+def _map_supplier_write_response(
+    response: httpx.Response,
+    *,
+    url: str,
+    operation: str,
+) -> dict[str, Any]:
+    if response.status_code in {401, 403}:
+        raise ProtheusRestError(
+            "Token Protheus inválido ou expirado.",
+            code="PROTHEUS_TOKEN_INVALID",
+            status_code=502,
+        )
+
+    payload = _json_payload(response)
+
+    if response.status_code >= 500:
+        log_error(
+            f"Protheus supplier {operation} HTTP {response.status_code} "
+            f"url={redact_text(url)}"
+        )
+        raise ProtheusRestError(
+            "Erro inesperado no Protheus ao gravar fornecedor.",
+            code="PROTHEUS_UPSTREAM_ERROR",
+            status_code=502,
+        )
+
+    if response.status_code >= 400:
+        code_error = _extract_code_error(payload)
+        error_text = _extract_error_text(payload)
+        safe_detail = redact_text(error_text)[:240] if error_text else ""
+
+        if code_error in {"001", "1"}:
+            # Same code_error used for invalid ID and invalid JSON — discriminate by text.
+            lowered = error_text.lower()
+            if "json" in lowered:
+                raise ProtheusRestError(
+                    "JSON inválido rejeitado pelo Protheus."
+                    + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+                    code="PROTHEUS_SUPPLIER_WRITE_INVALID_JSON",
+                    status_code=400,
+                    recoverable=False,
+                )
+            raise ProtheusRestError(
+                "Identificador inválido rejeitado pelo Protheus."
+                + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+                code="PROTHEUS_SUPPLIER_WRITE_INVALID_ID",
+                status_code=400,
+                recoverable=False,
+            )
+        if code_error in {"002", "2"}:
+            raise ProtheusRestError(
+                "Campos obrigatórios ausentes no Protheus."
+                + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+                code="PROTHEUS_SUPPLIER_WRITE_REQUIRED_FIELDS",
+                status_code=400,
+                recoverable=False,
+            )
+        if code_error in {"003", "3"}:
+            # Contract notes literal text may say "alterar" even on create.
+            raise ProtheusRestError(
+                "Falha na rotina MATA020 ao incluir fornecedor."
+                + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+                code="PROTHEUS_SUPPLIER_WRITE_MATA020_FAILED",
+                status_code=400,
+                recoverable=False,
+            )
+
+        log_error(
+            f"Protheus supplier {operation} HTTP {response.status_code} "
+            f"code_error={code_error or '-'} url={redact_text(url)}"
+        )
+        raise ProtheusRestError(
+            "Erro ao gravar fornecedor no Protheus."
+            + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+            code="PROTHEUS_UPSTREAM_ERROR",
+            status_code=502,
+        )
+
+    # Success shape is TO_INVENTORY — never invent A2_COD.
+    if response.status_code == 204 or not payload:
+        return {
+            "write_outcome": "accepted_by_upstream",
+            "creation_confirmed": False,
+            "supplier_code": None,
+            "supplier_store": None,
+            "upstream": None,
+        }
+
+    supplier_code = _pick_first_str(
+        payload,
+        ("A2_COD", "a2_cod", "supplier_code", "codigo", "code"),
+    )
+    supplier_store = _pick_first_str(
+        payload,
+        ("A2_LOJA", "a2_loja", "supplier_store", "loja", "store"),
+    )
+    nested = payload.get("fornecedor") or payload.get("supplier") or payload.get("data")
+    if isinstance(nested, dict):
+        supplier_code = supplier_code or _pick_first_str(
+            nested, ("A2_COD", "a2_cod", "supplier_code", "codigo", "code")
+        )
+        supplier_store = supplier_store or _pick_first_str(
+            nested, ("A2_LOJA", "a2_loja", "supplier_store", "loja", "store")
+        )
+
+    return {
+        "write_outcome": "accepted_by_upstream",
+        "creation_confirmed": bool(supplier_code and supplier_store),
+        "supplier_code": supplier_code,
+        "supplier_store": supplier_store,
+        "upstream": payload,
+    }
+
+
+def _pick_first_str(payload: dict[str, Any], keys: tuple[str, ...]) -> str | None:
+    for key in keys:
+        raw = payload.get(key)
+        if raw is None:
+            continue
+        text = str(raw).strip()
+        if text:
+            return text
+    return None

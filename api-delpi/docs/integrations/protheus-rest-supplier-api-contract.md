@@ -1,7 +1,8 @@
 # API REST Protheus — contrato técnico de fornecedores (GET, POST e PUT)
 
 **Origem:** documento recebido do responsável pela solicitação, *Documentação Técnica - API de Integração Protheus e MinhaDelpi (002)*, seções 1–3.3.  
-**Registrado:** 2026-10-19. **Estado:** contrato externo documentado; POST/PUT na `api-delpi` **não implementados** nesta atualização.  
+**Registrado:** 2026-10-19. **Atualizado:** implementação backend do POST (feature-gated).  
+**Estado:** contrato externo documentado; POST na `api-delpi` **implementado com escrita real desabilitada por padrão**; PUT **fora de escopo**.  
 **Segurança:** transcrição **sanitizada**; nenhuma credencial, token ou URL de host é incluída. O PDF original contém segredo em texto claro e **não deve ser versionado**.
 
 > Esta é a descrição do contrato conforme a fonte recebida, **não** uma homologação da execução REST. Erros e detalhes não fornecidos permanecem `TO_INVENTORY`. Para contratos aprovados e estado do código, conferir HEAD, authorities e handoff vigente.
@@ -38,7 +39,15 @@ Para recursos por ID, a fonte define `:ID = A2_COD (6 dígitos) + A2_LOJA (2 dí
 - HTTP 400, `code_error=002`: fornecedor não encontrado, segundo o documento.
 - Não inferir que o upstream usa HTTP 404 para ausência: a camada interna pode traduzir os erros.
 
-### 3.2 POST / (inclusão, ainda não implementada na API DELPI)
+### 3.2 POST / (inclusão)
+
+**API DELPI:** `POST /integrations/protheus/suppliers` · `operationId=create_protheus_rest_supplier`  
+**Permissão:** `api-delpi.integrations.protheus.suppliers.create` (não herdada de read / `access.full`)  
+**Feature gate:** `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` (default) — com gate fechado **não** há POST upstream.  
+**Identidade:** `codusr` resolvido via Core S2S (`mapped` + `verified` + `protheus_user_id` 6 dígitos); cliente **não** envia `codusr`.  
+**Matriz de campos:** `protheus-rest-supplier-post-field-matrix.md`.
+
+Upstream Protheus:
 
 `POST {URL_REST}{PATH_SUPPLIERS}`
 
@@ -135,7 +144,7 @@ Antes de habilitar POST real, comprovar e testar:
 - `api-delpi/docs/api/padroes-totvs/playbooks/playbook-cadastro-fornecedor-sa2.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 
-**Estado documental:** `POST_CONTRACT_SOURCE=DOCUMENTED`; `POST_RUNTIME=NOT_IMPLEMENTED`; `LIVE_WRITE=NOT_AUTHORIZED`; `CONTRACT_GAPS=TO_INVENTORY`.
+**Estado documental:** `POST_CONTRACT_SOURCE=DOCUMENTED`; `POST_RUNTIME=IMPLEMENTED_GATED`; `LIVE_WRITE=NOT_AUTHORIZED`; `CONTRACT_GAPS=TO_INVENTORY`.
 
 ## 6. Vínculo com o de-para completo SA2 — material entregue ao Gabriel
 

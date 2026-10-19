@@ -1,92 +1,48 @@
 # Handoff — evolução da integração REST de fornecedores Protheus (POST/PUT)
 
 **Registro:** 2026-10-19  
-**Estado:** inventário e planejamento de contrato de escrita; **POST/PUT não implementados nesta frente**.  
-**Base consultada:** `origin/main` em `8e7eb9640f6b5aa13b10b8f6978ac2e81b10afbc`. Reancorar no HEAD a cada retomada.
+**Atualização:** implementação backend do POST (feature-gated); PUT permanece fora de escopo.  
+**Base:** reancorar sempre em `origin/main`.
 
-> Documento de continuidade, não substitui authorities, especificação aprovada do ERP ou contratos de API. Não converter suposições em contrato sem prova. Nenhum deploy ou escrita no Protheus é autorizado por este documento.
+> Documento de continuidade. Não autoriza live write em produção. Lacunas de contrato permanecem `TO_INVENTORY`.
 
-## Objetivo da próxima entrega
+## Objetivo
 
-Permitir **criação (POST)** e **atualização (PUT)** de fornecedores por integração REST do Protheus, com `api-delpi` como owner da integração e domínio ERP como owner das regras finais, reutilizando a associação de identidade Protheus **governada pelo Core API**. Primeiro fechar contrato backend e segurança; UI apenas após aceite do contrato.
+Permitir **criação (POST)** de fornecedores via REST Protheus com `api-delpi` como owner da integração, identidade via **Core API**, feature gate fechado até homologação. PUT fica para entrega futura.
 
-## Estado constatado no repositório
+## Reuse gate
 
-| Tema | Estado | Evidência |
-|---|---|---|
-| Autenticação Protheus (OAuth password grant), token e gateway HTTP | PROVEN: implementado para leitura | `api-delpi/app/infrastructure/gateways/protheus_rest_gateway.py` |
-| Diagnóstico e consulta REST de fornecedor | PROVEN: `GET /integrations/protheus/status` e `GET /integrations/protheus/suppliers/{supplier_id}` | `api-delpi/app/interface/http/routes/integrations/protheus_router.py` |
-| Composer e configuração técnicos existentes | PROVEN | `api-delpi/app/composition/protheus_rest_composer.py`, `api-delpi/docs/integrations/protheus-rest-read.md` |
-| POST/PUT de fornecedores | TO_INVENTORY quanto a outras superfícies; **não encontrados no router REST consultado** | Mesmo router; pesquisa residual obrigatória antes de criar endpoints |
-| Identidade externa do usuário | PROVEN: associação no Core; cutover/sincronização operacionais reportados como PASS | `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md` e ledger vigente |
-| Self identity | PROVEN: `GET /me/external-identities/protheus` | `core-api/app/interfaces/http/me_controller.py` |
-| Consultas S2S de identidade | PROVEN: Core expõe by-user e outras rotas internas com token | `core-api/app/interfaces/http/integrations_protheus_identities_controller.py` |
-| De-para SA2/SX3 | PROVEN: auditoria extensa; **não é contrato REST** | `api-delpi/docs/api/padroes-totvs/playbooks/playbook-cadastro-fornecedor-sa2.md`, seção 44 |
-| Permissões REST Protheus | PROVEN: `api-delpi.integrations.protheus.read` e bypass `api-delpi.access.full` no READ atual; **WRITE ainda não definido** | `api-delpi/app/application/security/api_delpi_permissions.py` |
-| Contrato POST/PUT upstream, `codusr`, erros, geração de código, idempotência | TO_INVENTORY / decisão requerida | Não comprovados no código consultado; obter contrato do owner TOTVS |
+| Conceito | Decisão |
+|---|---|
+| OAuth / token cache / gateway GET / params Intranet | `EXISTING_EQUIVALENT=YES` → `REUSE_DECISION=EXTEND` |
+| Identidade Protheus Core | `EXISTING_EQUIVALENT=YES` → `REUSE_DECISION=EXTEND` (S2S read) |
+| POST fornecedor | `EXISTING_EQUIVALENT=NO` → novo use case + método gateway sem retry |
 
-## Limites e decisões de ownership
+## Estado
 
-- **Core API:** fonte autoritativa UUID Minha DELPI ↔ `SYS_USR.USR_ID`/`USR_CODIGO`. Não consultar banco de Solicitações de Compras nem replicar mapping.
-- **API DELPI:** autenticação técnica e adapter REST do Protheus; autenticação/autorização da solicitação; resolução segura do usuário autenticado via contrato Core; auditoria.
-- **ERP Protheus:** validação final, geração de código e regras `MATA020`/endpoint de escrita.
-- **Portal/produto consumidor:** coleta dos dados e UX, sem definir `codusr`, autoridade ou permissões pelo frontend.
+| Tema | Estado |
+|---|---|
+| `POST /integrations/protheus/suppliers` | PROVEN no código (gate default off) |
+| `operationId` `create_protheus_rest_supplier` | PROVEN |
+| Permissão `api-delpi.integrations.protheus.suppliers.create` | PROVEN (manifest 1.0.2) |
+| Feature gate `PROTHEUS_SUPPLIER_CREATE_ENABLED` | PROVEN default `false` |
+| Matriz REST→SA2 | PROVEN doc `protheus-rest-supplier-post-field-matrix.md` |
+| Payload sucesso / `A2_COD` / idempotência / `codusr≡USR_ID` | TO_INVENTORY |
+| PUT | FORA_DO_ESCOPO |
+| Live write produção | NOT_AUTHORIZED |
 
-**Reuse gate preliminar:** `EXISTING_EQUIVALENT=YES` para gateway/identity/lookup existentes; `REUSE_DECISION=EXTEND` no boundary da API DELPI. Novas rotas devem ser justificadas após busca residual.
+## Critérios de homologação live (bloqueados)
 
-## Fatos relevantes do cadastro
+1. Owner TOTVS confirma shape de sucesso e geração de `A2_COD`.
+2. Confirmação formal `codusr` ≡ `SYS_USR.USR_ID`.
+3. Ambiente controlado + rotação de credenciais OAuth + aceite de risco de transporte.
+4. Feature gate ligado **somente** após aceite explícito.
+5. Reconciliação definida para timeout pós-envio (sem retry automático).
 
-- Chave de negócio: `A2_COD` + `A2_LOJA` no contexto apropriado de empresa/filial; CNPJ/CPF **não é chave única**.
-- Valores com zeros à esquerda são strings.
-- A geração `GETSXENUM("SA2")` foi observada nas empresas 01/05, com diferenças em 03/04; não presumir comportamento universal.
-- A auditoria de 248 campos de SA2, classificações `PROVEN_REQUIRED`/`CANDIDATE_REQUIRED` etc., deriva do dicionário SX3 e não prova o payload aceito pelo REST.
-- `MATA020` (ADVPL) e efeitos colaterais internos não foram verificados pelo código consultado.
+## Referências
 
-## Questões que devem ser fechadas antes do código de escrita
-
-1. **Contrato REST upstream:** URL/método real de POST/PUT, request/response por operação, shape de `fornecedor` (objeto versus lista), campos aceitos/obrigatórios, erro e status HTTP.
-2. **`codusr`:** confirmar com owner TOTVS se é exatamente `SYS_USR.USR_ID`, seu formato e se a API o valida.
-3. **Identidade/autorização:** validar no backend o usuário atuante e `mapping_status=mapped`, `verified=true`; escolher mecanismo autenticado Core→API DELPI que não permita impersonação; estabelecer permissão WRITE específica, sem usar `api-delpi.access.full` por atalho.
-4. **Semântica de escrita:** idempotência para POST, colisões, PUT parcial/total, concorrência, limites e timeouts; retries automáticos de GET **não** devem ser copiados cegamente para escrita.
-5. **Empresa e numeração:** contexto fiscal/empresa, códigos, loja e comportamento do Protheus quando cadastro já existe.
-6. **Auditoria/segurança:** ator, correlation ID, dados sensíveis, redaction, secrets; exigir aprovação para testes vivos. A integração OAuth atual usa query string e endpoint HTTP claro conforme documentação — risco residual, não garantia de transporte seguro.
-7. **Operação:** feature gate inicialmente fechado, homologação em ambiente controlado e rollback/compensação; não testar POST/PUT contra produção incidentalmente.
-
-## Próximo fluxo de trabalho
-
-1. Reancorar GitHub HEAD e authorities; inventariar implementações, consumidores, testes e contracts.
-2. Recuperar a documentação técnica de POST/PUT do owner Protheus (citada em investigação anterior, **não versionada nesta evidência consultada**) e verificar a semântica de `codusr`; em conflito registrar `ARCHITECTURE_DECISION_REQUIRED`.
-3. Redigir contrato API DELPI OpenAPI com `operationId` estável, DTOs, AuthN/AuthZ, erros, idempotência, auditing e critérios RQ/AC conforme convenção vigente.
-4. Implementar o menor diff backend-first **sem live writes**, com mocks e testes de segurança/regressão.
-5. Homologação controlada mediante autorização do owner; só então considerar UI de fornecedor.
-
-## Disciplina de continuidade no GitHub
-
-- **GitHub é fonte persistente; chat não é authority.** Reancorar no HEAD e ler authorities antes de cada novo trabalho.
-- A cada mudança material de estado (investigação, contrato aprovado, implementação, testes, deploy, aceite), atualizar este handoff **e** as authorities/ledger aplicáveis no mesmo conjunto rastreável de commits/PR, com SHAs, evidências, estados PROVEN/TO_INVENTORY/PLANNED e PASS/FAIL/PENDING. Não alegar atualização sem commit confirmado.
-- Preservar `docs/integrations/protheus-rest-read.md` como contrato de leitura existente; não declarar POST/PUT implementados antecipadamente.
-- Não salvar senhas, tokens, PII nem payloads reais desnecessários.
-
-## Retomada — 2026-10-19: solicitação de implementação do POST
-
-**Intenção:** implementar o POST de fornecedor no boundary `api-delpi`; PUT continua fora do escopo desta etapa. **Situação factual:** `POST_NOT_IMPLEMENTED`, `CONTRACT_GATE=PENDING`. Não há autorização para escrita real em ERP nesta retomada.
-
-Reancoragem GitHub: `main` observada em `cca468a365bd592498caa0be8cb20c8e0a6f75fe`. O router `app/interface/http/routes/integrations/protheus_router.py` ainda contém somente status e GET por `supplier_id`; gateway/composer seguem READ. Pesquisa indexada por `codusr`, `PATH_SUPPLIERS`, `fornecedor POST`, `api/v1/suppliers` não trouxe resultados (zero search não prova ausência). Fonte canônica de campos SA2 permanece o playbook de auditoria, não um contrato REST de criação.
-
-**Gate para implementação efetiva:** obter especificação POST upstream versionada/confirmada pelo owner Protheus (payload, corpo com `fornecedor`, `codusr`, obrigatório/opcional, cenário de geração de código/loja, resposta/erros, idempotência). Depois, validar identidade autenticada do autor via Core e criar autorização WRITE específica; não aceitar `codusr` fornecido pelo cliente. Aplicar Clean Architecture, mocks, testes de 401/403/duplicidade/retry/timeout; feature flag fechada por default; proibir POST vivo até aprovação explícita. Caso contrato não esteja disponível, reportar `ARCHITECTURE_DECISION_REQUIRED` e solicitar contrato, sem inventar payload ou expor ERP.
-
-## Evidência recebida — documentação técnica REST Protheus (19/10/2026)
-
-Fonte fornecida pelo solicitante: PDF **"Documentação Técnica - API de Integração Protheus e MinhaDelpi (002)"**, seção **3.3 Operação de Inclusão (POST /)**. Fonte externa fornecida em conversa; verificar versionamento, owner e vigência antes do aceite definitivo.
-
-**Contrato documentado (SOURCE-DERIVED):**
-- `POST [URL_REST][PATH_SUPPLIERS]`, Bearer OAuth, uso interno de Execauto MATA020 (não inserir diretamente em SA2).
-- Body JSON: objeto `{"codusr":"000161","fornecedor":{...}}`; **POST utiliza objeto**, enquanto PUT seção 3.2 utiliza array.
-- Campos do exemplo: `supplier_store`, `person_type`, `tax_id`, `supplier_name`, `supplier_short_name`, `address`, `district`, `postal_code`, `state`, `city`, `city_code`, `area_code`, `phone`, `state_registration`, `municipal_registration`, `contact_name`, `email`, `payment_condition_code`, `country_code`, `bacen_country_code`, `accounting_account`, `financial_nature_code`, `rohs_indicator`, `payment_method_code`.
-- POST erros HTTP 400: `code_error=001` (tanto ID inválido quanto JSON inválido; diferenciar pelo texto), `002` (campos obrigatórios ausentes), `003` (erro genérico Execauto, podendo dizer literalmente "Falha ao alterar fornecedor" mesmo no POST).
-- **Não documentado:** shape/status do sucesso POST, conjunto rigoroso de campos obrigatórios, semântica comprovada `codusr`↔`SYS_USR.USR_ID`, idempotência/retry e eventual formato de identificação retornada.
-- A própria documentação apresenta **rótulos `PATH_AUTH` e `PATH_SUPPLIERS` invertidos** em uma tabela; o resolver existente da API DELPI já cobre casos inequívocos. Nunca corrigir parâmetros automaticamente com base só no PDF.
-
-**Alerta de segurança crítico:** o PDF contém credenciais técnicas em texto claro e URL HTTP. NÃO versionar o PDF original nem reproduzir credenciais/tokens no GitHub, logs ou prompts. Confirmar rotação de senha e aceite formal do risco de transporte antes de qualquer teste autenticado contra ERP.
-
-**Decisão de execução:** `CONTRACT_SOURCE_FOUND=YES`; `CONTRACT_GATE=PARTIAL`; `POST_IMPLEMENTATION=PENDING`. O PDF permite iniciar desenho/implementação offline do POST com validação estrita e feature gate desligada, mas não autoriza escrita ao vivo nem preenche os gaps acima. Reancorar HEAD, authorities e consumidores antes de gerar código.
+- `protheus-rest-supplier-api-contract.md`
+- `protheus-rest-supplier-post-field-matrix.md`
+- `protheus-rest-read.md`
+- `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
+- playbook SA2 §44.3

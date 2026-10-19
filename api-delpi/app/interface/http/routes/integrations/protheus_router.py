@@ -1,15 +1,21 @@
-"""HTTP routes — Protheus REST integration (status + supplier read)."""
+"""HTTP routes — Protheus REST integration (status, supplier read, gated create)."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Path
+from typing import Any
+from uuid import UUID
+
+from fastapi import APIRouter, Body, Path
 
 from delpi_auth.authorization import require_any_permission
+from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
     PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
 )
 from app.composition.protheus_rest_composer import (
+    build_create_protheus_rest_supplier_use_case,
     build_get_protheus_integration_status_use_case,
     build_get_protheus_rest_supplier_use_case,
 )
@@ -22,6 +28,27 @@ router = APIRouter(
     prefix="/integrations/protheus",
     tags=["Integrations — Protheus REST"],
 )
+
+
+def _actor_user_id() -> UUID:
+    user = get_current_user()
+    if user is None:
+        raise ProtheusRestError(
+            "Usuário não autenticado.",
+            code="PROTHEUS_UNAUTHORIZED",
+            status_code=401,
+            recoverable=False,
+        )
+    raw = getattr(user, "id", None) or getattr(user, "user_id", None)
+    try:
+        return UUID(str(raw).strip())
+    except (TypeError, ValueError) as exc:
+        raise ProtheusRestError(
+            "Identificador de usuário autenticado inválido.",
+            code="PROTHEUS_UNAUTHORIZED",
+            status_code=401,
+            recoverable=False,
+        ) from exc
 
 
 @router.get("/status", operation_id="get_protheus_integration_status")
@@ -88,6 +115,66 @@ def get_protheus_rest_supplier_route(
         log_error(f"Erro inesperado na consulta Protheus: {type(exc).__name__}")
         return error_response(
             "Erro interno ao consultar fornecedor no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+@router.post(
+    "/suppliers",
+    operation_id="create_protheus_rest_supplier",
+)
+@require_any_permission(PROTHEUS_SUPPLIER_CREATE_PERMISSIONS)
+def create_protheus_rest_supplier_route(
+    body: dict[str, Any] = Body(...),
+):
+    """Create supplier via Protheus REST. Identity (codusr) resolved from Core only."""
+    if not isinstance(body, dict):
+        return error_response(
+            "Corpo da requisição deve ser um objeto JSON.",
+            status_code=422,
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            recoverable=False,
+        )
+
+    # Reject client-supplied identity at the edge (also rejected in payload normalizer).
+    for forbidden in ("codusr", "user_id", "usr_id", "protheus_user_id"):
+        if forbidden in body:
+            return error_response(
+                "Identidade Protheus não pode ser enviada pelo cliente.",
+                status_code=422,
+                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+                recoverable=False,
+            )
+
+    fornecedor = body.get("fornecedor", body)
+    try:
+        actor_id = _actor_user_id()
+        data = build_create_protheus_rest_supplier_use_case().execute(
+            actor_user_id=actor_id,
+            fornecedor=fornecedor if isinstance(fornecedor, dict) else {},
+        )
+        return api_delpi_success(
+            data,
+            operation_id="create_protheus_rest_supplier",
+            message=(
+                "Solicitação de inclusão de fornecedor processada."
+                if data.get("creation_confirmed")
+                else "Solicitação enviada ao Protheus; confirmação de código ainda não homologada."
+            ),
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado na criação Protheus: {type(exc).__name__}")
+        return error_response(
+            "Erro interno ao criar fornecedor no Protheus.",
             status_code=500,
             code="PROTHEUS_INTERNAL_ERROR",
             recoverable=True,

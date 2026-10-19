@@ -251,11 +251,18 @@ MINI_APPLICATORS_ACCESS = [
 SYSTEM_METADATA_ACCESS = [API_DELPI_ACCESS_FULL, API_DELPI_SYSTEM]
 DATA_SQL_ACCESS = [API_DELPI_ACCESS_FULL, API_DELPI_DATA]
 
-# --- Protheus REST integration (read-only diagnostic + supplier GET) ---
+# --- Protheus REST integration (read diagnostic + supplier GET; gated create) ---
 API_DELPI_INTEGRATIONS_PROTHEUS_READ = "api-delpi.integrations.protheus.read"
+API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_CREATE = (
+    "api-delpi.integrations.protheus.suppliers.create"
+)
 PROTHEUS_INTEGRATION_READ_PERMISSIONS = [
     API_DELPI_INTEGRATIONS_PROTHEUS_READ,
     API_DELPI_ACCESS_FULL,
+]
+# Write must NOT inherit read or access.full (least privilege).
+PROTHEUS_SUPPLIER_CREATE_PERMISSIONS = [
+    API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_CREATE,
 ]
 
 AUDIT_5S_READ_PERMISSIONS = [

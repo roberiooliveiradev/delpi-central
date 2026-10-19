@@ -268,6 +268,7 @@ def test_router_exposes_status_and_supplier_paths() -> None:
     paths = {getattr(route, "path", None) for route in router.routes}
     assert "/integrations/protheus/status" in paths
     assert "/integrations/protheus/suppliers/{supplier_id}" in paths
+    assert "/integrations/protheus/suppliers" in paths
     operation_ids = {
         getattr(route, "operation_id", None)
         for route in router.routes
@@ -275,3 +276,4 @@ def test_router_exposes_status_and_supplier_paths() -> None:
     }
     assert "get_protheus_integration_status" in operation_ids
     assert "get_protheus_rest_supplier" in operation_ids
+    assert "create_protheus_rest_supplier" in operation_ids

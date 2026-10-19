@@ -4,8 +4,9 @@
 
 - `GET /integrations/protheus/status` — diagnóstico seguro (configuração, autenticação técnica, conectividade).
 - `GET /integrations/protheus/suppliers/{supplier_id}` — consulta REST de fornecedor (`supplier_id` = 8 dígitos).
+- `POST /integrations/protheus/suppliers` — inclusão REST (feature-gated; ver contrato/handoff/matriz). Escrita real **desabilitada** por padrão (`PROTHEUS_SUPPLIER_CREATE_ENABLED=false`).
 
-Não inclui POST/PUT de fornecedores nem consulta SA2 como substituto do REST.
+Não inclui PUT de fornecedores nem consulta SA2 como substituto do REST.
 
 ## Ownership
 
@@ -27,7 +28,8 @@ Não inclui POST/PUT de fornecedores nem consulta SA2 como substituto do REST.
 
 ## Autorização
 
-Permissão: `api-delpi.integrations.protheus.read` (ou `api-delpi.access.full`).
+- Leitura: `api-delpi.integrations.protheus.read` (ou `api-delpi.access.full`).
+- Criação: `api-delpi.integrations.protheus.suppliers.create` (**não** herdada de read/`access.full`).
 
 ## Inversão PATH_AUTH / PATH_SUPPLIERS
 

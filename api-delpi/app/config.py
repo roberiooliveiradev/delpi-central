@@ -101,6 +101,11 @@ class Settings:
     PROTHEUS_REST_TIMEOUT_SECONDS: float = float(
         _get_env("PROTHEUS_REST_TIMEOUT_SECONDS", default="30") or "30"
     )
+    # Supplier POST stays disabled until contractual live homologation.
+    PROTHEUS_SUPPLIER_CREATE_ENABLED: bool = (
+        _get_env("PROTHEUS_SUPPLIER_CREATE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
 
     # ==========================
     # Plugins PostgreSQL
