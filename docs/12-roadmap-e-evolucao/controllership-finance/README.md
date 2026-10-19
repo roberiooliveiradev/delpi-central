@@ -1,328 +1,62 @@
-# Portal Controladoria & Finanças
+# Portal Controladoria & Finanças — Fonte de navegação e estado
 
-> **Status:** TARGET consolidado / implementação não iniciada  
-> **Produto:** Portal Controladoria & Finanças  
-> **Primeira funcionalidade:** Central de Fechamento  
-> **Primeiro processo:** PROC-0072 — Gestão do Fechamento Mensal da Controladoria  
-> **Consolidação:** 05/10/2026
+> **Consolidação documental: 19/10/2026.** Primeira funcionalidade: **Central de Fechamento**, processo **PROC-0072**. Documentação `TARGET`, sem implementação de runtime. Este README é o **único painel de estado vigente**; relatórios antigos de A12/A14/A15/A16 são evidências datadas, não gates atuais.
 
-## Objetivo
+## 1. Identidade e boundaries congelados
 
-O **Portal Controladoria & Finanças** é o produto multi-macroprocesso da Minha DELPI para concentrar processos, automações, visões operacionais, evidências, pendências, decisões e capacidades de gestão do domínio de Controladoria & Finanças.
-
-A primeira funcionalidade é a **Central de Fechamento**. O primeiro processo especificado é o **PROC-0072 — Gestão do Fechamento Mensal da Controladoria**.
-
-```text
-Minha DELPI
-└── Portal Controladoria & Finanças
-    ├── Central de Fechamento
-    │   └── Fechamento Mensal / PROC-0072
-    └── futuros macroprocessos
-```
-
-O portal não deve ser tratado como aplicação exclusiva de fechamento. A arquitetura deve permitir novos macroprocessos sem renaming do produto.
-
-## Estado
-
-**Parecer transversal atualizado em 19/10/2026:** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED. **D-FINAL-02=CLOSED/PO_APPROVED:** somente pessoas aprovam; sem revisor não há aceite, o fluxo naturalmente fica pendente, sem trava extra de envio/publicação; configuração vazia nunca gera aprovação automática. **D-FINAL-01=TO_INVENTORY/CORE API:** a Core governa usuários e permissões; o Portal apenas consome o contrato autorizado e aplica regras de recurso/negócio. Contratos físicos Core T05/P5/P6 e A12/A14/A15/A16 ainda não possuem PASS global. `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS históricas não substituem o gate vigente.
-
-- AS-IS PROC-0072: **CLOSED / ACCEPTED**
-- baseline: **1 fechamento/mês; 960 min INFORMED**
-- TO-BE: **TARGET consolidado**
-- implementação: **NOT_STARTED**
-- A14 revisão transversal: **STALE_EVIDENCE / POSTMERGE_REVALIDATION_INCONCLUSIVE**
-- A15 contracts/regras/scripts/test matrix: **STALE_EVIDENCE / POSTMERGE_REVALIDATION_INCONCLUSIVE**
-- `PORTAL_DESIGN_FREEZE`: **REVALIDATE**
-- `FRONTEND_PATTERN_FREEZE`: **PASS**
-- `SECURITY_MODEL_FREEZE`: **REVALIDATE_CORE_ELIGIBILITY**
-- `TEST_STRATEGY_FREEZE`: **REVALIDATE_TEST_MATRIX**
-- `PRODUCT_CONTRACT_FREEZE`: **PENDING_CORE_T05_AND_CONTRACT_BINDINGS**
-- `DOCUMENTATION_CLOSURE_COMPLETE`: **NO**
-- ROI: **não calculado**
-- P1/P2: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P3: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY / STOP_CONDITION_ON_T03**
-- P4: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P5 pacote/finalização: **PAGE_DOCUMENTATION_GATE_V2 PACKAGE_FINALIZATION_READY**
-- P6/Administração: **PAGE_DOCUMENTATION_GATE_V2 PASS / READY_FOR_IMPLEMENTATION_BRIEF_WITH_INVENTORY**
-- P5 envio para análise: **PORTAL-FIRST / C2 PO_APPROVED**; package fica na Minha DELPI; um aceite por área obrigatória e PackageVersion atual, sem esclarecimentos abertos; Core T05 grupos/funções permanece TO_INVENTORY.
-- handoff funcional P1–P6: **DOCUMENTED**, sujeito aos inventories E/T da página
-
-## Documentação
-
-| Documento | Finalidade |
+| Contrato | Valor |
 |---|---|
-| [00-governanca-e-authorities.md](./00-governanca-e-authorities.md) | autoridades, evidência e drift |
-| [01-visao-produto-naming-e-escopo.md](./01-visao-produto-naming-e-escopo.md) | naming, escopo e fronteiras |
-| [02-proc-0072-as-is-e-baseline.md](./02-proc-0072-as-is-e-baseline.md) | processo atual e baseline |
-| [03-evidencias-proveniencia-e-rastreabilidade.md](./03-evidencias-proveniencia-e-rastreabilidade.md) | fontes e proveniência |
-| [04-regras-de-negocio-consolidadas.md](./04-regras-de-negocio-consolidadas.md) | GAP-RULE-01 a 07 |
-| [05-diagnostico-gaps-e-oportunidades.md](./05-diagnostico-gaps-e-oportunidades.md) | diagnóstico e oportunidades |
-| [06-arquitetura-funcional-to-be.md](./06-arquitetura-funcional-to-be.md) | modelo funcional |
-| [07-ux-jornadas-e-estados-de-experiencia.md](./07-ux-jornadas-e-estados-de-experiencia.md) | UX transversal |
-| [08-p1-cockpit-da-competencia.md](./08-p1-cockpit-da-competencia.md) | P1 |
-| [09-p2-checklist-e-documentos.md](./09-p2-checklist-e-documentos.md) | P2 |
-| [10-p3-estoque-cutoff-e-conciliacao.md](./10-p3-estoque-cutoff-e-conciliacao.md) | P3 |
-| [11-p4-classificacoes-e-pendencias.md](./11-p4-classificacoes-e-pendencias.md) | P4 |
-| [12-p5-pacote-finalizacao-e-envio.md](./12-p5-pacote-finalizacao-e-envio.md) | P5 |
-| [13-p6-administracao-e-configuracao.md](./13-p6-administracao-e-configuracao.md) | P6 |
-| [14-seguranca-rbac-auditoria-e-ia.md](./14-seguranca-rbac-auditoria-e-ia.md) | AuthZ, auditoria e IA |
-| [15-requisitos-criterios-de-aceite-e-testes.md](./15-requisitos-criterios-de-aceite-e-testes.md) | RQ/AC e testes transversais |
-| [15.1-p3-criterios-paridade-monetaria.md](./15.1-p3-criterios-paridade-monetaria.md) | ACs específicos de paridade monetária P3 |
-| [16-configuracoes-catalogos-e-notificacoes.md](./16-configuracoes-catalogos-e-notificacoes.md) | configurações e notificações |
-| [17-backlog-de-confirmacoes-e-inventarios.md](./17-backlog-de-confirmacoes-e-inventarios.md) | E01–E06 e T01–T05 |
-| [18-readiness-e-handoff-de-implementacao.md](./18-readiness-e-handoff-de-implementacao.md) | readiness e handoff |
-| [19-rastreabilidade-teo.md](./19-rastreabilidade-teo.md) | mapa dos registros TÉO |
-| [20-transforma-plus-coverage.md](./20-transforma-plus-coverage.md) | cobertura CTL/CORE e residuais Transforma+ |
-| [21-boundaries-produtos-e-owners.md](./21-boundaries-produtos-e-owners.md) | boundaries, owners e integrações |
-| [22-handoff-implementacao-p1-p6.md](./22-handoff-implementacao-p1-p6.md) | handoff funcional uniforme P1–P6 |
-| [23-ledger-rq-ac-testes.md](./23-ledger-rq-ac-testes.md) | ledger RQ → AC → teste → dependência |
-| [24-inicio-e-navegacao-principal.md](./24-inicio-e-navegacao-principal.md) | topbar e página Início |
-| [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md) | Visão geral com indicadores financeiros |
-| [26-sala-de-interacao.md](./26-sala-de-interacao.md) | Sala de interação contextual |
-| [27-minhas-tarefas.md](./27-minhas-tarefas.md) | projeção pessoal de tarefas |
-| [28-administracao.md](./28-administracao.md) | página de Administração / P6 |
-| [29-ajuda.md](./29-ajuda.md) | manual e Help contextual |
-| [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md) | mapa canônico página → componente → import de `@delpi/plugin-ui` |
-| [31-pagina-do-usuario.md](./31-pagina-do-usuario.md) | perfil de usuário, wireframes, contracts, AuthZ e reuso full-page do `plugin-ui` |
-| [32-inicio-home.md](./32-inicio-home.md) | Home comum do Portal, wireframes, launcher, eventos, busca, recentes e favoritos |
-| [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md) | plano mestre para fechar páginas, regras, RQ/AC, Help e gates antes de runtime |
-| [34-revisao-transversal-gate-v2.md](./34-revisao-transversal-gate-v2.md) | revisão transversal de naming, owners, security, routes, plugin-ui, states, Help e contracts |
-| [35-contratos-regras-scripts-test-matrix-gate-v2.md](./35-contratos-regras-scripts-test-matrix-gate-v2.md) | consolidação A15 de contracts, regras, validators/scripts e test matrix |
-| [36-e04-t04-package-delivery-decision-packet.md](./36-e04-t04-package-delivery-decision-packet.md) | histórico superseded do inventário de delivery externo; premissa invalidada |
-| [37-p5-submissao-e-revisao-no-portal.md](./37-p5-submissao-e-revisao-no-portal.md) | contrato TARGET de submit/review in-portal, reviewers autenticados e notifications |
-| [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md) | rebaseline pós-merge, evidências Core/CI e gate A12/A14/A15 vigente |
-| [39-roadmap-mestre-implementacao-v1.md](./39-roadmap-mestre-implementacao-v1.md) | **roadmap executivo V1:** ordem A01–A13, fases, owners, dependências e gates |
-| [40-matriz-dependencias-e-slices-v1.md](./40-matriz-dependencias-e-slices-v1.md) | backlog IMP-00..13, RQ/AC, dependências de P5/P6 e stop conditions |
-| [41-estrategia-validacao-e-gates-implementacao-v1.md](./41-estrategia-validacao-e-gates-implementacao-v1.md) | positive/sibling/negative, segurança, CI, evidências e DoD por slice |
-| [42-playbook-brief-cursor-execution-report-v1.md](./42-playbook-brief-cursor-execution-report-v1.md) | templates de GPT Brief, Cursor Execution Report, review e SHA |
-| [43-rollout-operacao-e-handoff-v1.md](./43-rollout-operacao-e-handoff-v1.md) | fases de publicação, observabilidade, rollback e gate de release |
-
-## Página do usuário
-
-A página transversal de perfil está especificada em [31-pagina-do-usuario.md](./31-pagina-do-usuario.md).
-
-Decisões congeladas:
-
-- usuário com `controllership-finance.access` pode consultar o perfil corporativo básico de outro usuário com acesso ao mesmo Portal;
-- permissions/capabilities de outro usuário não são expostas;
-- no próprio perfil, exibir label amigável + códigos técnicos `controllership-finance.access` / `controllership-finance.manage` quando efetivos;
-- identidade/foto continuam owned pelo Core; não criar persistência local no Portal;
-- usar `createDashboardPortalUserProfilePage` como full-page reusable antes de qualquer composição local.
-
-A rota é deep route e **não** adiciona item à topbar.
-
-## Início
-
-O Item 2 — Início está fechado documentalmente em [32-inicio-home.md](./32-inicio-home.md).
-
-A Home segue a família visual comum dos Portais Minha DELPI: saudação/Hero → Eventos e interações → Caminhos e funcionalidades → Últimos acessos/cards. Indicadores financeiros permanecem na Visão geral. Implementação continua não autorizada nesta fase de revisão global.
-
-## Sala de interação
-
-O Item 4 — Sala de interação está fechado documentalmente em [26-sala-de-interacao.md](./26-sala-de-interacao.md).
-
-Decisões congeladas:
-- usar `InteractionRoomPage` do `@delpi/plugin-ui`;
-- sem chat genérico/global wall na V1;
-- uma sala contextual estável por competência, checklist item, pendência/classificação ou pacote;
-- participants não são ACL;
-- ACCESS + acesso ao contexto;
-- edição própria + soft-delete;
-- chat attachment não vira evidência P2 automaticamente;
-- realtime/storage/retention são inventories técnicos futuros;
-- criar tarefa a partir de mensagem fica fora da V1; evolução futura exige entidade/owner de task explicitamente aprovados.
-
-Implementação permanece não autorizada durante o review global.
-
-## Minhas tarefas
-
-O Item 5 — Minhas tarefas está fechado documentalmente em [27-minhas-tarefas.md](./27-minhas-tarefas.md).
-
-Decisões congeladas:
-- usar `TaskWorkspacePage` e primitives de tasks do `@delpi/plugin-ui`;
-- `TaskProjection` é projeção de trabalho dos owners, não entidade genérica;
-- sem `Nova tarefa`, editor genérico, team scope ou completed bucket na V1;
-- ação V1 é `Abrir` o contexto owner;
-- P2/P4 produzem tarefas conforme owner; P5 também projeta responsabilidade por área para cada usuário elegível (self-only), sem TaskEntity paralela;
-- sem SLA global; due/overdue só quando o owner fornecer;
-- Home consome a mesma projeção;
-- Sala não cria task genérica na V1;
-- estratégia física de projection permanece inventário técnico.
-
-Implementação permanece não autorizada durante o review global.
-
-## Administração
-
-O Item 6 — Administração está fechado documentalmente em [28-administracao.md](./28-administracao.md).
-
-Decisões congeladas:
-- uma única permission administrativa: `controllership-finance.manage`;
-- MANAGE não implica ACCESS operacional;
-- subáreas: Painel, Templates, Catálogos e Histórico;
-- catálogos não viram topbar nem permission;
-- template segue DRAFT → REVIEW → PUBLISH → EFFECTIVE_FROM;
-- publicação não altera snapshots de competências abertas;
-- inativação é prospectiva e sem hard delete;
-- responsáveis/validators/destinatários referenciam identidades do Core, sem criar usuário/RBAC;
-- notification targets configuram destinatários lógicos, não infraestrutura SMTP;
-- optimistic concurrency é obrigatório; mecanismo físico fica para inventário;
-- `@delpi/plugin-ui` fornece o chrome administrativo reutilizável.
-
-Implementação permanece não autorizada durante o review global.
-
-## Ajuda
-
-O Item 7 — Ajuda está fechado documentalmente em [29-ajuda.md](./29-ajuda.md).
-
-Decisões congeladas:
-- usar `createDashboardUserManual` do `@delpi/plugin-ui`;
-- conteúdo do manual é versionado no MFE, sem BFF/DB/CMS/editor administrativo na V1;
-- runtime Help documenta somente capabilities realmente implementadas;
-- Help contextual aponta para `/help#manual-{sectionId}`;
-- Administração só entra no manual para viewer com `controllership-finance.manage`;
-- tool links usam registry tipado e nunca URL arbitrária;
-- sem search engine própria no manual V1;
-- FAQ, glossário e guide table seguem o kit;
-- mudança user-facing material exige Help sync no mesmo gate.
-
-Implementação permanece não autorizada durante o review global.
-
-## Navegação principal
-
-A topbar do Portal é:
-
-```text
-Início | Visão geral | Sala de interação | Minhas tarefas | Administração | Ajuda
-```
-
-As páginas P1–P5 pertencem à Central de Fechamento e não viram itens independentes da topbar.
-
-A Visão geral é a superfície analítica financeira do Portal. O padrão visual, filtros, states, drilldowns e conjunto V1 estão documentados em [25-visao-geral-indicadores-financeiros.md](./25-visao-geral-indicadores-financeiros.md). Decisões congeladas: D-OVW-01=C (núcleo financeiro + contexto operacional + desempenho estratégico), D-OVW-02=A (mês atual) e D-OVW-03=A (Consolidado).
-
-## Invariantes
-
-1. `STOCK_CLOSED != PACKAGE_SUBMITTED_FOR_REVIEW != REVIEW_ACCEPTED != MONTHLY_CLOSING_COMPLETED`
-2. `ATTACHED != VALIDATED`
-3. ausência/erro de source != zero
-4. pre-cutoff dependente != final
-5. último upload != auto-send
-6. Finalizar != Enviar
-7. PackageVersion submetida para análise não é alterada in-place
-8. mudança mestre não altera snapshot
-9. listas operacionais são configuráveis
-10. IA sugere/explica; humano decide
-11. `ACCESS != MANAGE`
-12. aprovação administrativa != validação
-13. sem SLA formal
-14. V1 sem escrita ERP para sacramentação/classificação
-15. paridade monetária da conciliação tripla exige exatamente R$ 0,00; não existe tolerância de centavos
-
-## Produtos existentes
-
-`plugins/financial` + `financial-api` e o roadmap `financeiro-controladoria` continuam distintos. O novo portal não absorve nem remove esses contextos automaticamente.
-
-## UI kit
-
-Toda implementação frontend deve seguir [30-plugin-ui-reuse-map.md](./30-plugin-ui-reuse-map.md). A página de usuário segue também o contrato visual/funcional de [31-pagina-do-usuario.md](./31-pagina-do-usuario.md). O Início segue [32-inicio-home.md](./32-inicio-home.md). Minhas tarefas segue [27-minhas-tarefas.md](./27-minhas-tarefas.md). Administração segue [28-administracao.md](./28-administracao.md). Ajuda segue [29-ajuda.md](./29-ajuda.md).
-
-Import runtime canônico para MFE federado:
-
-```ts
-import { ... } from "@delpi/plugin-ui/index";
-await import("@delpi/plugin-ui/styles");
-```
-
-Não recriar localmente componentes já exportados pelo kit.
-
-## Handoff para implementação
-
-O **Roadmap Mestre V1** está em [39](./39-roadmap-mestre-implementacao-v1.md), com backlog de slices [40](./40-matriz-dependencias-e-slices-v1.md), testes/gates [41](./41-estrategia-validacao-e-gates-implementacao-v1.md), playbook Cursor [42](./42-playbook-brief-cursor-execution-report-v1.md) e operação/release [43](./43-rollout-operacao-e-handoff-v1.md). **São planos PLANNED, não autorização nem teste executado**. A fila de execução futura começa pela Página do usuário; dependências do owner P6 devem preceder P5 sem antecipar a UI inteira. A16/four freezes e autorização PO explícita permanecem pré-requisitos.
-
-A cobertura Transforma+, boundaries, handoff P1–P6 e ledger de requisitos estão consolidados em 20–23.
-
-Isso permite preparar briefs técnicos página por página. A identidade técnica do produto está congelada como `controllership-finance` + `controllership-finance-api`, com base paths `/apps/controllership-finance` e `/apps/controllership-finance-api`. Storage, schemas físicos, migrations e deployment continuam dependentes de inventário do HEAD.
-
-## FASE A — Design / Documentação Completa
-
-Gate vigente:
-
-```text
-DOCUMENTED != IMPLEMENTED
-```
-
-A ordem e o pacote uniforme de fechamento são canônicos em [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
-
-Nenhum `DOCUMENTATION_GATE PASS` anterior ao Page Documentation Gate V2 é autorização ou fechamento final da FASE A; cada página será revalidada na ordem A01–A13.
-
-## Gate global de revisão
-
-O fechamento documental integral é governado por [33-plano-mestre-fechamento-documental.md](./33-plano-mestre-fechamento-documental.md).
-
-A fase atual é exclusivamente documental/design/contratos:
-
-```text
-PORTAL_REVIEW_PHASE = ACTIVE
-DOCUMENTATION_CLOSURE_PHASE = ACTIVE
-PAGE_DOCUMENTATION_GATE = V2
-DOCUMENTATION_CLOSURE_COMPLETE = NO
-IMPLEMENTATION_AUTHORIZED = NO
-```
-
-Nenhuma página deve ser implementada enquanto não forem revisadas e fechadas todas as superfícies do Portal, incluindo páginas comuns, P1–P6, padrões visuais, contracts, AuthZ, estados, Help, RQ/AC e matriz de testes/scripts planejados.
-
-`READY_FOR_IMPLEMENTATION_BRIEF` significa somente que a página já possui documentação suficiente para um brief futuro.
-
-Somente após um gate transversal explícito do produto:
-
-```text
-PORTAL_DESIGN_FREEZE = PASS
-PRODUCT_CONTRACT_FREEZE = PASS
-SECURITY_MODEL_FREEZE = PASS
-TEST_STRATEGY_FREEZE = PASS
-```
-
-poderá ser avaliada **autorização explícita posterior do PO** para implementação page-by-page. Os quatro PASS, isoladamente, não autorizam runtime.
-
-## Execução
-
-```text
-READ → INVENTORY → VERIFY → CLASSIFY → DECIDE
-→ IMPLEMENT MINIMAL DIFF → TEST → VERIFY OUTCOME
-→ RESIDUAL SEARCH → DOCUMENT → REPORT
-```
-
-
-## Rebaseline P5-F..J — decisões PO aprovadas (16/10/2026)
-
-**TARGET / DOCUMENTED_NOT_IMPLEMENTED.** P5-F: reatribuição preserva aceite válido da área/versão, autor original e histórico; substituto só atua no futuro. P5-G: aceite P5 não pode ser revertido pela UI V1; correção excepcional necessita contrato separado, não autorizado. P5-H: P6 versiona áreas obrigatórias por tipo de pacote; P5 congela áreas na submissão; elegibilidade Core + ACCESS + grupo/função + scope + regra (T05 pendente). P5-I: rejeição pelo reviewer/área não encerra automaticamente a competência; confirmação terminal exige autoridade operacional formal definida, justificativa e auditoria. P5-J: após confirmação terminal, tarefas/reviews deixam de ser acionáveis, preservando histórico.
-
-C2 permanece: conclusão apenas com todos os pacotes aplicáveis submetidos, todas as áreas obrigatórias aceitando a versão vigente e nenhuma clarification aberta. Competência rejeitada é terminal distinto de `MONTHLY_CLOSING_COMPLETED`. D-P5-01 = unanimidade de áreas obrigatórias, não pessoas. Aceites de PackageVersion anterior não são herdados por versão nova. Referências anteriores contraditórias permanecem históricas/superseded; não são contratos vigentes.
-
-**DECISION_REQUIRED:** identidade/critério da autoridade operacional que confirma rejeição e comportamento quando não confirma; especificação de processo excepcional de correção (não implementá-lo sem autorização). **CONTRACT_PENDING/TO_INVENTORY:** mapeamento P6 de áreas/tipos e fonte Core de elegibilidade, DTO/estado, notification/projection/tests.
-
-`DOCUMENTATION_CLOSURE_COMPLETE=NO`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `TEST_NOT_RUN`. Revalidar A12/A14/A15 e main antes de freeze.
-
-
-## Estado de governança após revisão documental 16/10/2026
-
-Os estados `PASS` de freezes acima representam **snapshots históricos**, não autorização vigente. C2 e P5-A..J estão decididos no documento 37, sujeitos aos bloqueios derivados explicitados no 33/34/35. A competência pode encerrar como `MONTHLY_CLOSING_COMPLETED` (regra C2) ou como rejeitada após confirmação formal (P5-I), jamais ambos. Não há permission de reviewer: somente `controllership-finance.access` e `controllership-finance.manage`. O binding Core função/grupo permanece a inventariar.
-
-`PORTAL_DESIGN_FREEZE=REVALIDATE`; `PRODUCT_CONTRACT_FREEZE=PENDING`; `SECURITY_MODEL_FREEZE=REVALIDATE`; `TEST_STRATEGY_FREEZE=REVALIDATE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`.
-
-
-## Decisoes PO DEC-01..04 aprovadas — baseline 16/10/2026
-
-**TARGET / PO_APPROVED**. DEC-01: coordenador formal da competencia, com ACCESS efetivo, vinculo operacional, scope e business rule, confirma rejeicao terminal; MANAGE sozinho nao autoriza. DEC-02: rejeicao nao confirmada permanece pendente, exige motivo e pode retornar a esclarecimento/correcao auditavel. DEC-03: nenhuma reversao/retificacao de aceite P5 por UI ou endpoint V1; incidentes tratados fora do fluxo do Portal. DEC-04: MANAGE efetivo + escopo administrativo publica configuracoes de areas obrigatorias por tipo de pacote com auditoria e vigencia prospectiva; snapshots existentes preservados. Decisoes anteriores C2, P5-A..J permanecem compatibilizadas no doc 37. Nao criar permission code adicional.
-
-**TO_INVENTORY:** Core T05 e ligacao do coordenador, configuracao P6 e contratos fisicos P5, eventos/projections/testes, regras aplicaveis no HEAD. **GATE:** DOCUMENTATION_CLOSURE_COMPLETE=NO; IMPLEMENTATION_AUTHORIZED=NO; TEST_NOT_RUN. Flags PASS antigas requerem revalidacao apos rebase.
-
-
-## Revisão documental transversal — baseline 16/10/2026
-
-**TARGET / REVIEW_INCONCLUSIVE / NO_RUNTIME_AUTHORIZATION.** Fonte de verdade das decisões P5: documento 37, decisões C2, D-P5-01..05 (conforme refinadas), P5-A..J e DEC-01..04. Quórum = um aceite por área obrigatória configurada e congelada na submissão; nova versão exige todos os aceites; reatribuição mantém autoria e aceite válido; P5 não possui reversão de aceite pela UI/endpoint V1; área pode rejeitar pacote e só o coordenador formal de competência com ACCESS efetivo, vínculo e scope pode confirmar rejeição terminal; não confirmação mantém decisão pendente e registra justificativa; rejeição terminal inativa ações projetadas, não apaga auditoria. P6 MANAGE + administrative_scope publica catálogo versionado prospectivo.
-
-**Correção de interpretação:** menções anteriores a C2 pendente, unanimidade de indivíduos, delivery por e-mail de anexos e DEC-01..04 pendentes são histórico **STALE_EVIDENCE / SUPERSEDED**, não critérios vigentes. Referências `PASS` antigas de A12/A14/A15 ou dos freezes não se revalidam automaticamente por adendo; não usar essas flags para autorizar execução.
-
-**Evidência verificada no GitHub:** `main` e branch documental foram comparados; a branch está divergente e a árvore combinada não foi verificada como limpa. O GitHub connector não fornece `git status` de workspace local. Inventário .cursor, consumers/producers, contratos atuais do Core/T05 e testes do HEAD não estão completos. Não foi executado smoke, e documento não prova runtime.
-
-**Gate vigente:** `DECISION_REQUIRED_PRODUCT_P5=NONE_IDENTIFIED_AFTER_DEC01_DEC04` (reabrir somente com nova evidência); `GIT_INTEGRATION=PR78_MERGED_TO_MAIN_VERIFIED`; `CONTRACTS_AND_TEST_MATRIX=REVALIDATE`; `A12=REVALIDATE`; `A14=STALE_EVIDENCE`; `A15=STALE_EVIDENCE`; `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`. Antes do gate PASS: reconciliar branch com main, inventariar .cursor/T05 e contracts, verificar RQ/AC e teste matrix, harmonizar Help e declarar autorização transversal explícita. `TEST_NOT_RUN`.
+| Plugin / produto | `controllership-finance` |
+| MFE | `plugins/controllership-finance` |
+| basePath MFE | `/apps/controllership-finance` |
+| BFF | `controllership-finance-api` |
+| baseUrl BFF | `/apps/controllership-finance-api` |
+| Permissões, **somente** | `controllership-finance.access` e `controllership-finance.manage` |
+
+**Core API** é owner de identidade, usuários, grupos/RBAC e permissões efetivas; **Portal CF não administra permissões**. A BFF autoriza operações de negócio por capability efetiva **AND** vínculo/ownership **AND** escopo do recurso **AND** regra de negócio; fail-closed. JWT não é authority de permissions. Filial/unidade é dimensão de dado, não permission code. MFE consome sua BFF, nunca chama `api-delpi` do browser. `api-delpi` mantém regras canônicas TOTVS/Protheus e `strategic-indicators-api` mantém indicadores/metas. Integrações por ports/adapters e contratos, sem imports ou bancos de domínios alheios.
+
+Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md), regras `.cursor` aplicáveis e [padrão visual da plataforma](../../11-padroes-de-desenvolvimento/padrao-visual-portais-minha-delpi.md). **`@delpi/plugin-ui` first.**
+
+## 2. Estado **vigente** e gates
+
+| Controle | Estado em 19/10/2026 |
+|---|---|
+| AS-IS PROC-0072 | `PROVEN / TÉO CLOSED_ACCEPTED` |
+| Decisões de produto C2, P5-A..J, DEC-01..04, D-FINAL-02 | `TARGET / PO_APPROVED` |
+| Roadmap V1 documentado | `PASS` **somente documental** |
+| A12 / A14 / A15 / A16 | `INCONCLUSIVE` — revalidar com evidência de HEAD |
+| `PORTAL_DESIGN_FREEZE` / `PRODUCT_CONTRACT_FREEZE` | `PENDING` para gate transversal |
+| `SECURITY_MODEL_FREEZE` / `TEST_STRATEGY_FREEZE` | `PENDING` para bindings/testes |
+| `DOCUMENTATION_CLOSURE_COMPLETE` | **`NO`** |
+| `IMPLEMENTATION_AUTHORIZED` | **`NO`** |
+| Portal runtime, smoke, integração live | `NOT_IMPLEMENTED / TEST_NOT_RUN` |
+
+**Regra humana aprovada (D-FINAL-02):** somente pessoas aprovam. Sem revisores elegíveis ou áreas configuradas, **não** criar trava artificial de finalização, envio ou publicação. O pacote pode entrar em revisão, mas **sem evento humano real de aceite não há conclusão mensal** — o processo permanece pendente. C2 também exige aceite de cada área obrigatória existente na versão vigente, todos os pacotes aplicáveis submetidos, nenhuma clarification aberta e ausência de rejeição terminal. Veja **somente** o [contrato canônico P5 — doc 37](./37-p5-submissao-e-revisao-no-portal.md) para todas as decisões P5.
+
+**Residuais de implementação / inventário:** Core T05 e contrato S2S da informação corporativa usada para elegibilidade de revisor; vínculo do coordenador por competência; snapshots P6, DTO/estados/eventos/OCC P5; fonte canônica ERP T03 para P3; testes de integração, UX e Help. Não são autorização para criar nova permission, CRUD/Core shadow, tabelas ou endpoints sem owner. **Busca sem resultado não prova ausência.**
+
+## 3. Mapa curto de fontes canônicas
+
+| Assunto | Fonte a ler |
+|---|---|
+| Autoridades, escopo, AS-IS e provenance | [00 — Governança](./00-governanca-e-authorities.md) · [01 — Produto/naming](./01-visao-produto-naming-e-escopo.md) · [02 — PROC-0072 AS-IS](./02-proc-0072-as-is-e-baseline.md) · [03 — Evidências](./03-evidencias-proveniencia-e-rastreabilidade.md) · [19 — TÉO](./19-rastreabilidade-teo.md) |
+| Regras de negócio, arquitetura e UX | [04 — Regras](./04-regras-de-negocio-consolidadas.md) · [05 — Gaps](./05-diagnostico-gaps-e-oportunidades.md) · [06 — TO-BE](./06-arquitetura-funcional-to-be.md) · [07 — Jornadas](./07-ux-jornadas-e-estados-de-experiencia.md) |
+| Central P1–P6 | [08 — P1](./08-p1-cockpit-da-competencia.md) · [09 — P2](./09-p2-checklist-e-documentos.md) · [10 — P3](./10-p3-estoque-cutoff-e-conciliacao.md) · [15.1 — Paridade P3](./15.1-p3-criterios-paridade-monetaria.md) · [11 — P4](./11-p4-classificacoes-e-pendencias.md) · [12 — P5](./12-p5-pacote-finalizacao-e-envio.md) · [13 — P6](./13-p6-administracao-e-configuracao.md) |
+| **Aprovação e revisão P5 (única authority temática de decisões)** | **[37 — Submissão/revisão no Portal, C2, P5-A..J, DEC-01..04 e D-FINAL-02](./37-p5-submissao-e-revisao-no-portal.md)** |
+| Segurança, catálogos, bounded contexts | [14 — Segurança](./14-seguranca-rbac-auditoria-e-ia.md) · [16 — Catálogos/notificações](./16-configuracoes-catalogos-e-notificacoes.md) · [21 — Owners/boundaries](./21-boundaries-produtos-e-owners.md) |
+| Páginas comuns (padrão visual) | [24 — Navegação](./24-inicio-e-navegacao-principal.md) · [31 — Página do usuário](./31-pagina-do-usuario.md) · [32 — Início](./32-inicio-home.md) · [25 — Visão geral](./25-visao-geral-indicadores-financeiros.md) · [26 — Sala](./26-sala-de-interacao.md) · [27 — Minhas tarefas](./27-minhas-tarefas.md) · [28 — Administração](./28-administracao.md) · [29 — Ajuda](./29-ajuda.md) · [30 — Reuso UI](./30-plugin-ui-reuse-map.md) |
+| **Requisitos, aceites e teste por ID** | **[23 — Ledger RQ/AC/Testes](./23-ledger-rq-ac-testes.md)** · [15 — Critérios gerais](./15-requisitos-criterios-de-aceite-e-testes.md) |
+| Pendências técnicas / handoff atual | [17 — Inventários E/T](./17-backlog-de-confirmacoes-e-inventarios.md) · [18 — Readiness](./18-readiness-e-handoff-de-implementacao.md) · [22 — Handoff P1–P6](./22-handoff-implementacao-p1-p6.md) |
+| **Roadmap e execução** | **[39 — Roadmap V1](./39-roadmap-mestre-implementacao-v1.md)** · [40 — Slices/dependências](./40-matriz-dependencias-e-slices-v1.md) · [41 — Testes/gates](./41-estrategia-validacao-e-gates-implementacao-v1.md) · [42 — Playbook Cursor](./42-playbook-brief-cursor-execution-report-v1.md) · [43 — Rollout](./43-rollout-operacao-e-handoff-v1.md) |
+
+**Histórico de análise, não normas atuais nem PASS inferido:** [20 — cobertura histórica](./20-transforma-plus-coverage.md), [33 — fechamento documental](./33-plano-mestre-fechamento-documental.md), [34 — review A14](./34-revisao-transversal-gate-v2.md), [35 — review A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [36 — delivery externo superseded](./36-e04-t04-package-delivery-decision-packet.md), [38 — rebaseline após merge](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md), [44 — evidências A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). Preservados para proveniência; se conflitarem com 37/23/39 e HEAD, prevalecem sources mais altas.
+
+## 4. Sequência de coordenação para o próximo chat
+
+1. **IMP-00 — READ/INVENTORY/VERIFY (sem runtime):** HEAD + `git status` no checkout, Project Instructions, `.cursor`, contratos/Core e owners, diff e CI; confirmar gates A12/A14/A15/A16 aplicáveis **sem reabrir escolhas já aprovadas**. Produzir brief preciso do primeiro slice e decisão `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
+2. **Gate explícito transversal / PO:** registrar `DOCUMENTATION_CLOSURE_COMPLETE=PASS`, quatro freezes documentais com evidência e **autorização posterior** `IMPLEMENTATION_AUTHORIZED=YES`. Se faltar binding material, classificá-lo, bloquear somente o slice dependente quando governança permitir, sem bypass de AuthZ.
+3. **IMP-01 / A01 — Página do usuário** primeiro: somente após autorização; inventariar `@delpi/plugin-ui`, Core profile/foto S2S e padrões de MFE/BFF antes de scaffold; UI PT-BR, mobile/desktop, claro/escuro, teclado/foco, Help no mesmo gate e security fail-closed. **Página do usuário é deep route**. Depois páginas comuns e P1–P6 conforme 39/40.
+
+Navegação comum: **Início, Visão geral, Sala de interação, Minhas tarefas, Administração, Ajuda** (ordem do menu, não necessariamente ordem de PRs). Nenhuma route/page future placeholder sem capability real. A Ajuda acompanha cada slice, não só a página Ajuda final.
+
+**Conclusão:** documentação consolidada para coordenação, **não** implementação autorizada. Revalidar HEAD no novo chat e não usar SHA histórico como status atual.
