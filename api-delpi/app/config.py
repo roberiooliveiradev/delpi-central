@@ -71,6 +71,35 @@ class Settings:
     TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
 
     # ==========================
+    # Intranet SQL Server (PARAMETROS_MINHADELPI — Protheus REST)
+    # Host/user may fall back to TOTVS_DB_* when the same SQL Server hosts
+    # IntranetDelpiDev. Never store Protheus REST credentials in env.
+    # ==========================
+    INTRANET_DB_HOST: str | None = _get_env("INTRANET_DB_HOST")
+    INTRANET_DB_PORT: str = _get_env("INTRANET_DB_PORT", default="1433")
+    INTRANET_DB_USER: str | None = _get_env("INTRANET_DB_USER")
+    INTRANET_DB_PASSWORD: str | None = _get_env("INTRANET_DB_PASSWORD")
+    INTRANET_DB_DATABASE: str | None = _get_env(
+        "INTRANET_DB_DATABASE", default="IntranetDelpiDev"
+    )
+    INTRANET_PARAMS_TABLE: str = _get_env(
+        "INTRANET_PARAMS_TABLE", default="PARAMETROS_MINHADELPI"
+    )
+    INTRANET_PARAMS_KEY_COLUMN: str = _get_env(
+        "INTRANET_PARAMS_KEY_COLUMN", default="PARAMETRO"
+    )
+    INTRANET_PARAMS_VALUE_COLUMN: str = _get_env(
+        "INTRANET_PARAMS_VALUE_COLUMN", default="VALOR"
+    )
+
+    # ==========================
+    # Protheus REST client
+    # ==========================
+    PROTHEUS_REST_TIMEOUT_SECONDS: float = float(
+        _get_env("PROTHEUS_REST_TIMEOUT_SECONDS", default="30") or "30"
+    )
+
+    # ==========================
     # Plugins PostgreSQL
     # ==========================
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")

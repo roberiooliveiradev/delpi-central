@@ -49,6 +49,7 @@ from app.interface.http.routes.supplies import safety_stock_router
 from app.interface.http.routes.supplies import purchase_orders_router
 from app.interface.http.routes.supplies import purchase_requests_router
 from app.interface.http.routes.supplies import protheus_users_router
+from app.interface.http.routes.integrations import protheus_router as protheus_rest_router
 from app.interface.http.routes.supplies import inventory_adjustments_router
 from app.interface.http.routes.supplies import stock_balances_router
 from app.interface.http.routes.supplies import non_moving_stock_router
@@ -277,6 +278,7 @@ app.include_router(safety_stock_router.router)
 app.include_router(purchase_orders_router.router)
 app.include_router(purchase_requests_router.router)
 app.include_router(protheus_users_router.router)
+app.include_router(protheus_rest_router.router)
 app.include_router(stock_balances_router.router)
 app.include_router(inventory_adjustments_router.router)
 app.include_router(non_moving_stock_router.router)

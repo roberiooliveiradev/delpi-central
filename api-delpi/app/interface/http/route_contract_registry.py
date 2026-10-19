@@ -1163,6 +1163,13 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_connection_pool_stats": RouteContract("connection_pool_stats", "scalar"),
     "get_smoke_definitions": RouteContract("smoke_definitions", "scalar"),
     "get_sql_health": RouteContract("sql_health", "scalar"),
+    # Protheus REST integration
+    "get_protheus_integration_status": RouteContract(
+        "protheus_integration_status", "scalar"
+    ),
+    "get_protheus_rest_supplier": RouteContract(
+        "protheus_rest_supplier", "scalar"
+    ),
     # Lançamento de notas fiscais
     "search_lancamento_notas_fiscais_suppliers": RouteContract(
         "invoice_posting_supplier", "paged_list"

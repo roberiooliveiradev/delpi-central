@@ -1,0 +1,1 @@
+"""Intranet persistence adapters."""
