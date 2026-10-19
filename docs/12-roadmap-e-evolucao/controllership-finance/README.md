@@ -37,6 +37,20 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 
 **Residuais de implementação / inventário:** Core T05 e contrato S2S da informação corporativa usada para elegibilidade de revisor; vínculo do coordenador por competência; snapshots P6, DTO/estados/eventos/OCC P5; fonte canônica ERP T03 para P3; testes de integração, UX e Help. Não são autorização para criar nova permission, CRUD/Core shadow, tabelas ou endpoints sem owner. **Busca sem resultado não prova ausência.**
 
+## 2.1 Decisões posteriores — IMP-MFE-HOME (19/10/2026)
+
+**Registro canônico: [doc 45 §14](./45-g0-excecao-fastapi-e-fechamento-gates.md).** Após inventário READ/VERIFY do MFE + Home, o responsável aprovou expressamente:
+
+| Controle | Estado e consequência |
+|---|---|
+| **D1=A / D-G0-05** | `APPROVED / IMP-MFE-HOME_ONLY`: reads podem usar somente effective permissions previamente validadas dentro da janela stale máxima de 900s do `delpi_auth`; sem snapshot válido, fail-closed; writes futuros requerem refresh e gate próprio; rotas humanas exigem `principal_type=="user"`. Obrigatória verificação de revogação, expiração e Core indisponível no HEAD. |
+| **D2=A** | `APPROVED / CONTRACT TARGET`: BFF `GET /viewer-context` com `firstName` e `capabilities: {access, manage}`, identidade/permissions dos owners Core e autorização humana `access`. DTO/envelope e testes producer/consumer ainda requerem verificação pré-GO. |
+| **D3=A** | `APPROVED / DEFERRED`: favoritos não entram no slice inicial; sem persistência fictícia nem botões inertes. |
+| **IMP-MFE-HOME** | `DECISIONS_APPROVED / GATE_PREPARATION`. **IMPLEMENTATION_AUTHORIZED = NO para este novo slice até GO humano expresso após G1**, distinto do GO `IMP-F0_ONLY`. |
+| Runtime MFE/Home | `NOT_IMPLEMENTED / TEST_NOT_RUN` até evidência executada. |
+
+**Próximo passo:** revalidar no HEAD os contratos e testes do [doc 45 §14](./45-g0-excecao-fastapi-e-fechamento-gates.md), fechar o gate específico e solicitar GO de execução MFE + Home; não antecipar frontend, rota protegida ou deploy antes do gate.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
