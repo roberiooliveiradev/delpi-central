@@ -69,6 +69,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02 K2/K3 quality remediation (candidate):** [24 — implementation + live](./24-i02-k2-k3-output-quality-remediation-implementation.md). Coverage-based prior extraction; index relevance floor + weak-topic reject. Live SHA `ddf0bef787`: K1 TEO 17.0s; K2 checklist 219 chars / 5 bullets / no reinvoke; K3 INDEX→`no_match`→clarification (not `display_formats`). `I02_ACCEPTED=NO`.
 
+**I02 K2/K3 remediation:** [24 — implementation and live evidence](./24-i02-k2-k3-output-quality-remediation-implementation.md), [25 — independent ACCEPT_WITH_RESIDUAL review](./25-i02-k2-k3-independent-remediation-review.md). K1=17.010s TÉO READ; K2=5 bullets/219 chars; K3 safe no-match clarification near 30s, not nested topic success. Next: I02 acceptance gate + determine whether current owner catalog has an adequate VISTA topic. No phase advance.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
