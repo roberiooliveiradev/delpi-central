@@ -13,6 +13,7 @@ from app.application.capability_provision.orchestration import (
     INTERACTION_ADMISSION_INSTRUCTION_ID,
     INTERACTION_ADMISSION_STAGE_CAP_SECONDS,
     OperationalCapabilityOrchestrator,
+    _clarification_content,
     _recover_stated_arguments_from_input,
 )
 from app.application.interaction.capability_attempt import (
@@ -92,6 +93,15 @@ def test_sem_t06_stated_query_and_limit_recovered_from_user_message():
     assert args is not None
     assert "pino" in args["query"].lower()
     assert args["limit"] == 3
+
+
+def test_sem_t07b_budget_fallback_clarification_anchors_user_message():
+    text = _clarification_content(
+        ("query", "limit"),
+        user_message="Liste 3 exemplos de terminal pino.",
+    )
+    assert "terminal pino" in text.lower()
+    assert "Quais itens ou informações você quer usar?" not in text
 
 
 def test_sem_t07_missing_only_when_required_field_absent():

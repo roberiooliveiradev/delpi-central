@@ -2053,14 +2053,32 @@ def _wording_leaks_technical(text: str) -> bool:
     return any(ch in text for ch in "{}[]<>`")
 
 
-def _clarification_content(missing_inputs: tuple[str, ...]) -> str:
+def _clarification_content(
+    missing_inputs: tuple[str, ...],
+    *,
+    user_message: str | None = None,
+) -> str:
     """Deterministic bounded clarification ask-back (§6.131/§6.144).
 
     The fallback never derives wording from the internal field names —
     even humanized labels still leak field vocabulary (``source_route``
-    becomes "source route"). It stays generic and natural; the model
+    becomes "source route"). It stays natural; when the user message
+    already states a subject, the ask-back anchors on that excerpt so
+    budget-fallback clarifications are not vacuously generic. The model
     wording stage supplies richer business phrasing when available.
     """
+    excerpt = " ".join((user_message or "").split())[:72].strip()
+    if excerpt:
+        if len(missing_inputs) > 1:
+            return (
+                f"Para continuar com «{excerpt}», preciso de mais um "
+                "detalhe (por exemplo um código, filtro ou escopo). "
+                "Qual você quer usar?"
+            )[:MAX_RENDER_CONTENT_CHARS]
+        return (
+            f"Para continuar com «{excerpt}», preciso de mais um detalhe. "
+            "Qual informação você quer usar?"
+        )[:MAX_RENDER_CONTENT_CHARS]
     if len(missing_inputs) > 1:
         return (
             "Preciso de mais informações para continuar. "
@@ -8737,7 +8755,9 @@ class OperationalCapabilityOrchestrator:
                 "decision=budget_fallback correlation_id=%s",
                 correlation,
             )
-            return _clarification_content(missing_inputs)
+            return _clarification_content(
+                missing_inputs, user_message=input_text
+            )
         question = (
             proposal.get("question") if isinstance(proposal, Mapping) else None
         )
@@ -8764,7 +8784,9 @@ class OperationalCapabilityOrchestrator:
             "correlation_id=%s",
             correlation,
         )
-        return _clarification_content(missing_inputs)
+        return _clarification_content(
+            missing_inputs, user_message=input_text
+        )
 
     def _maybe_aggregate_paginated_count(
         self,
