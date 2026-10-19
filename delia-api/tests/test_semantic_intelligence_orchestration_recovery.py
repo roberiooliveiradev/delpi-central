@@ -5,7 +5,6 @@ TASK: DELIA-C3-SEMANTIC-INTELLIGENCE-ORCHESTRATION-FULL-RECOVERY-01
 
 from __future__ import annotations
 
-from app.application.capability_provision.contracts import ProviderCapability
 from app.application.capability_provision.orchestration import (
     ARGUMENTS_INSTRUCTION_ID,
     CONVERSATIONAL_FALLBACK_RESERVE_SECONDS,
@@ -14,7 +13,6 @@ from app.application.capability_provision.orchestration import (
     INTERACTION_ADMISSION_STAGE_CAP_SECONDS,
     OperationalCapabilityOrchestrator,
     _clarification_content,
-    _recover_stated_arguments_from_input,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -23,7 +21,6 @@ from app.application.interaction.turn_budget import TurnDeadline
 from app.application.model_invocation.contracts import ConversationContextTurn
 from app.domain.evidence.model import EpistemicClass
 from app.domain.interaction.model import TurnKind
-from app.domain.specialist_interop.model import SpecialistOperationClass
 from tests.test_specialist_capability_orchestration import (
     FakePort,
     TEO_TOOLS,
@@ -65,68 +62,15 @@ def test_sem_t02_operational_admission_still_lists_owners():
     assert port.list_calls
 
 
-def test_sem_t06_stated_query_and_limit_recovered_from_user_message():
-    descriptor = ProviderCapability(
-        capability_id="cap-search",
-        group_id="mcp:davi",
-        provider_id="mcp",
-        remote_name="search_products",
-        owner="davi",
-        operation_class=SpecialistOperationClass.READ,
-        description="Search products",
-        input_schema={
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "limit": {"type": "integer"},
-            },
-            "required": ["query"],
-        },
-    )
-    args, missing = _recover_stated_arguments_from_input(
-        "Liste 3 exemplos de terminal pino",
-        descriptor,
-        {},
-        ("query", "limit"),
-    )
-    assert missing == ()
-    assert args is not None
-    assert "pino" in args["query"].lower()
-    assert args["limit"] == 3
-
-
-def test_sem_t07b_budget_fallback_clarification_anchors_user_message():
+def test_sem_t07b_clarification_does_not_invent_owner_requirements():
     text = _clarification_content(
         ("query", "limit"),
         user_message="Liste 3 exemplos de terminal pino.",
     )
-    assert "terminal pino" in text.lower()
-    assert "Quais itens ou informações você quer usar?" not in text
-
-
-def test_sem_t07_missing_only_when_required_field_absent():
-    descriptor = ProviderCapability(
-        capability_id="cap-id",
-        group_id="mcp:teo",
-        provider_id="mcp",
-        remote_name="get_ticket",
-        owner="teo",
-        operation_class=SpecialistOperationClass.READ,
-        description="Fetch ticket",
-        input_schema={
-            "type": "object",
-            "properties": {"ticket_id": {"type": "string"}},
-            "required": ["ticket_id"],
-        },
-    )
-    args, missing = _recover_stated_arguments_from_input(
-        "Liste 3 exemplos de terminal pino",
-        descriptor,
-        {},
-        ("ticket_id",),
-    )
-    assert args is None or missing
-    assert "ticket_id" in (missing or ()) or args is None
+    lowered = text.lower()
+    assert "código" not in lowered and "codigo" not in lowered
+    assert "filtro" not in lowered
+    assert "«liste" not in lowered
 
 
 def test_sem_t13_operational_path_still_resolves_after_admission():

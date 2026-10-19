@@ -15356,3 +15356,14 @@ NEXT=INDEPENDENT_REVIEW → decisão PM: testar no stack local OU requisitar amb
 **DATE:** 2026-10-19. **REVIEW:** [49](../corrections/mcp-contextual-intelligence-orchestration/49-independent-semantic-recovery-admission-and-argument-review.md). **CODE:** `bc4c91856382f050befacf628ad87e6e13c1b749`. Early model admission fixed cold hello HTTP504 in executor live reports; full backend PASS executor-reported, independent SSH replay TEST_NOT_RUN. New `_recover_stated_arguments_from_input` relies on field-name hint sets plus `_STATED_QUANTITY_RE` to interpret free text: semantic generalization and user no-regex constraint require REWORK. Operational C01 near deadline under load, real product outcome partial, linked Helpdesk personal count TEST_NOT_RUN. `I04_ACCEPTED=NO`; C3/C4/C5/Q01 unchanged.
 
 NEXT=BOUNDED_SEMANTIC_ARGUMENT_GENERALIZATION_AND_OPERATIONAL_LOAD_REWORK
+
+## §6.292 — Semantic argument and task-outcome rework
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-SEMANTIC-ARGUMENT-AND-TASK-OUTCOME-REWORK-01`. **DOC:** [50](../corrections/mcp-contextual-intelligence-orchestration/50-semantic-argument-and-task-outcome-rework.md). **BASE:** `1345341440`.
+
+- **Cause:** heuristic `_recover_stated_arguments_from_input` + clarification inventing «código/filtro/escopo»; budget-skip of optional identifiers forced fake clarification (doc 49 REWORK).
+- **Fix:** remove heuristic recovery; honest `SOURCE_UNAVAILABLE` on identifier budget-skip; admission treats illustrative examples as hypothetical; LLM proposes args / schema validates.
+- **Tests:** SEMARG suite + full `delia-api` pytest **PASS**.
+- **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW

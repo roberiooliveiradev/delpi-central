@@ -2062,23 +2062,13 @@ def _clarification_content(
 
     The fallback never derives wording from the internal field names —
     even humanized labels still leak field vocabulary (``source_route``
-    becomes "source route"). It stays natural; when the user message
-    already states a subject, the ask-back anchors on that excerpt so
-    budget-fallback clarifications are not vacuously generic. The model
-    wording stage supplies richer business phrasing when available.
+    becomes "source route"). It never invents owner requirements
+    (código/filtro/escopo) that the contract did not prove missing.
+    The model wording stage supplies richer business phrasing when
+    available; ``user_message`` is unused for phrasing to avoid quoting
+    the request as a cosmetic cover for a generic ask.
     """
-    excerpt = " ".join((user_message or "").split())[:72].strip()
-    if excerpt:
-        if len(missing_inputs) > 1:
-            return (
-                f"Para continuar com «{excerpt}», preciso de mais um "
-                "detalhe (por exemplo um código, filtro ou escopo). "
-                "Qual você quer usar?"
-            )[:MAX_RENDER_CONTENT_CHARS]
-        return (
-            f"Para continuar com «{excerpt}», preciso de mais um detalhe. "
-            "Qual informação você quer usar?"
-        )[:MAX_RENDER_CONTENT_CHARS]
+    del user_message  # retained for call-site compatibility only
     if len(missing_inputs) > 1:
         return (
             "Preciso de mais informações para continuar. "
@@ -3508,132 +3498,6 @@ def _single_free_text_argument_from_input(
     return _validate_instance(candidate, descriptor.input_schema)
 
 
-_STATED_SEARCH_FIELD_HINTS = frozenset(
-    {
-        "query",
-        "q",
-        "search",
-        "term",
-        "text",
-        "keywords",
-        "filter",
-        "product",
-        "produto",
-        "name",
-        "nome",
-    }
-)
-_STATED_LIMIT_FIELD_HINTS = frozenset(
-    {
-        "limit",
-        "page_size",
-        "pagesize",
-        "max_results",
-        "maxresults",
-        "top_k",
-        "topk",
-        "count",
-        "n",
-        "size",
-    }
-)
-_STATED_QUANTITY_RE = re.compile(r"\b([1-9]\d{0,2})\b")
-
-
-def _recover_stated_arguments_from_input(
-    input_text: str,
-    descriptor: ProviderCapability,
-    base: Mapping[str, Any] | None,
-    missing_inputs: tuple[str, ...],
-) -> tuple[dict[str, Any] | None, tuple[str, ...]]:
-    """Fill schema fields already stated in the user message.
-
-    Schema-driven recovery only — field names come from the owner
-    schema; values are the full user text (search-like free strings)
-    or an explicit small integer (limit-like). Never invents ids or
-    enums. Used when the model declared missing_inputs despite the
-    user already providing subject/quantity.
-    """
-    text = (input_text or "").strip()
-    if not text:
-        return (
-            dict(base) if isinstance(base, Mapping) and base else None,
-            missing_inputs,
-        )
-    keys, required = _schema_keys(descriptor)
-    material = (keys | required) - ORCHESTRATED_FIELDS
-    if not material:
-        return ({}, ())
-    schema = (
-        descriptor.input_schema
-        if isinstance(descriptor.input_schema, Mapping)
-        else None
-    )
-    filled: dict[str, Any] = (
-        dict(base) if isinstance(base, Mapping) else {}
-    )
-    remaining = list(missing_inputs)
-    quantity_match = _STATED_QUANTITY_RE.search(text)
-    quantity = int(quantity_match.group(1)) if quantity_match else None
-    if quantity is not None and quantity > 100:
-        quantity = None
-
-    for key in sorted(material)[:MAX_ARGUMENT_KEYS]:
-        if key in filled and filled[key] not in (None, "", [], {}):
-            continue
-        node = _property_node(schema, key)
-        if node is None:
-            continue
-        canon = _canonical_key(key)
-        search_like = (
-            canon in _STATED_SEARCH_FIELD_HINTS
-            or any(hint in canon for hint in ("query", "search", "term"))
-        )
-        limit_like = (
-            canon in _STATED_LIMIT_FIELD_HINTS
-            or any(hint in canon for hint in ("limit", "page_size", "top"))
-        )
-        if search_like and _is_unconstrained_string(node):
-            filled[key] = text[:MAX_DESCRIPTION_CHARS]
-            if key in remaining:
-                remaining.remove(key)
-            continue
-        if limit_like and quantity is not None:
-            type_name = node.get("type") if isinstance(node, Mapping) else None
-            if type_name in {"integer", "number"} or (
-                isinstance(type_name, list)
-                and ("integer" in type_name or "number" in type_name)
-            ):
-                filled[key] = quantity
-                if key in remaining:
-                    remaining.remove(key)
-
-    if not filled:
-        return None, missing_inputs
-    validated = _validate_instance(filled, descriptor.input_schema)
-    if validated is None:
-        return None, missing_inputs
-    # Drop recovered fields from missing; keep truly unresolved required.
-    still_missing = tuple(
-        name
-        for name in remaining
-        if name not in validated
-        or validated.get(name) in (None, "", [], {})
-    )[:MAX_MISSING_INPUTS]
-    required_gaps = tuple(
-        name
-        for name in sorted(required - ORCHESTRATED_FIELDS)
-        if name not in validated
-        or validated.get(name) in (None, "", [], {})
-    )[:MAX_MISSING_INPUTS]
-    gaps = tuple(dict.fromkeys(still_missing + required_gaps))[
-        :MAX_MISSING_INPUTS
-    ]
-    if gaps:
-        return validated, gaps
-    return validated, ()
-
-
 def _deterministic_arguments_from_schema(
     descriptor: ProviderCapability,
 ) -> dict[str, Any] | None:
@@ -4673,15 +4537,22 @@ Respond with JSON containing exactly the fields
 
 - "requires_owner_surface": true only when answering needs live DELPI
   registers, tickets, MES/production facts, specialist owner guidance
-  from a tool, or a coverage question about what systems can consult.
+  from a tool, a catalog/search of registered products, or a coverage
+  question about what systems can consult.
   false for greetings, thanks, casual dialogue, general assistant role
   questions, general conceptual explanations that do not need owner
-  data, and explicitly hypothetical/fictional examples.
+  data, and requests for illustrative/hypothetical examples of a
+  technical concept that do NOT ask for registered DELPI records
+  (e.g. "liste N exemplos de …" without "cadastrados", "reais",
+  "na DELPI", "catálogo").
 - "interaction_class": one of "conversation", "explanation",
   "hypothetical", "operational", "ambiguous".
-  Use "ambiguous" when real DELPI records vs hypothetical examples
-  cannot be told apart — then requires_owner_surface must be true so
-  selection may clarify rather than invent business facts.
+  Use "hypothetical" for illustrative examples of a concept without
+  a request for live DELPI registers.
+  Use "ambiguous" only when the message could equally require live
+  DELPI product/catalog data OR illustrative examples — then
+  requires_owner_surface must be true so selection may clarify rather
+  than invent business facts.
 - Never invent business facts; never select tools here; never answer
   the user question itself.
 """
@@ -5740,23 +5611,23 @@ class OperationalCapabilityOrchestrator:
             and not self_index_ran
         ):
             # Without an owner index vocabulary, optional free-string
-            # identifiers cannot be proven (model guesses and schema-
-            # valid {} INDEX invokes are not guidance answers). Clarify
-            # rather than invent or present an index payload as the
-            # user's requested knowledge.
+            # identifiers cannot be proven. Budget exhaustion is a
+            # technical limitation — do NOT invent a user-facing ask
+            # for código/filtro that the contract did not require.
             id_keys = _optional_unconstrained_string_keys(descriptor)
             if id_keys:
                 _logger.info(
                     "orchestration stage=arguments "
-                    "decision=skip_budget_identifier_required "
+                    "decision=skip_budget_identifier_unavailable "
                     "fields=%d correlation_id=%s",
                     len(id_keys),
                     correlation,
                 )
-                arguments = None
-                missing_inputs = tuple(
-                    dict.fromkeys(missing_inputs + id_keys)
-                )[:MAX_MISSING_INPUTS]
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                    correlation_id=correlation,
+                    error_code="turn_budget_exhausted",
+                )
         if arguments is not None and not self_index_ran:
             # Stage 04: apply owner-declared defaults, then require
             # nested/entity completeness before PREPARE/READ invoke.
@@ -9898,74 +9769,20 @@ class OperationalCapabilityOrchestrator:
             )
             return None, missing
         if proposal is None:
-            recovered, recovered_missing = (
-                _recover_stated_arguments_from_input(
-                    input_text, descriptor, {}, ()
-                )
-            )
-            if recovered is not None and not recovered_missing:
-                _logger.info(
-                    "orchestration stage=arguments "
-                    "decision=stated_input_recovery keys=%d "
-                    "correlation_id=%s",
-                    len(recovered),
-                    correlation,
-                )
-                return recovered, ()
             return None, ()
         missing = _missing_inputs(proposal.get("missing_inputs"))
         normalized = normalize_arguments(proposal.get("arguments"))
         if normalized is None:
-            recovered, recovered_missing = (
-                _recover_stated_arguments_from_input(
-                    input_text, descriptor, {}, missing
-                )
-            )
-            if recovered is not None and not recovered_missing:
-                _logger.info(
-                    "orchestration stage=arguments "
-                    "decision=stated_input_recovery keys=%d "
-                    "correlation_id=%s",
-                    len(recovered),
-                    correlation,
-                )
-                return recovered, ()
-            return None, recovered_missing or missing
+            return None, missing
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
-            recovered, recovered_missing = (
-                _recover_stated_arguments_from_input(
-                    input_text, descriptor, normalized, missing
-                )
-            )
-            if recovered is not None and not recovered_missing:
-                return recovered, ()
-            return None, recovered_missing or missing
+            return None, missing
         if missing and not validated:
-            # Model declared owner-required inputs absent — try to
-            # recover subject/quantity already present in the message
-            # before clarifying generically.
-            recovered, recovered_missing = (
-                _recover_stated_arguments_from_input(
-                    input_text, descriptor, validated, missing
-                )
-            )
-            if recovered is not None and not recovered_missing:
-                _logger.info(
-                    "orchestration stage=arguments "
-                    "decision=stated_input_recovery keys=%d "
-                    "correlation_id=%s",
-                    len(recovered),
-                    correlation,
-                )
-                return recovered, ()
-            return None, recovered_missing or missing
-        # Enrich model args with stated search/limit fields it omitted.
-        recovered, recovered_missing = _recover_stated_arguments_from_input(
-            input_text, descriptor, validated, ()
-        )
-        if recovered is not None and not recovered_missing:
-            return recovered, ()
+            # The model declared owner-required inputs absent and
+            # produced no arguments — clarify via the wording stage /
+            # deterministic ask-back. Do not heuristically invent
+            # query/limit values from free-text (doc 49 REWORK).
+            return None, missing
         return validated, ()
 
     def _invoke_selected(

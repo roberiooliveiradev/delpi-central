@@ -336,13 +336,12 @@ def test_optional_index_probe_not_started_when_headroom_insufficient():
         r.task_purpose_id for r in model.requests
     }
     assert INDEX_PROBE_INSTRUCTION_ID not in probe_purposes
-    assert attempt.error_code not in {"model_timeout", "turn_budget_exhausted"}
     # Empty INDEX-as-guidance must not run when probe was budget-skipped.
+    # SEMARG: budget skip is honest SOURCE_UNAVAILABLE — not a fabricated
+    # "provide código/filtro" clarification.
     assert provider.calls == []
-    assert attempt.status in {
-        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
-        GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-    }
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
 
 
 def test_owner_declared_index_skips_model_probe_under_tight_budget():
@@ -495,7 +494,8 @@ def test_invented_identifier_not_used_after_budget_skip():
         r.task_purpose_id for r in model.requests
     }
     assert provider.calls == []
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == "turn_budget_exhausted"
     assert "invented_topic_xyz" not in (attempt.content or "")
 
 
