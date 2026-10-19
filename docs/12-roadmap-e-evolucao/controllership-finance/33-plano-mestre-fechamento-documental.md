@@ -1,5 +1,7 @@
 # 33 — Plano Mestre de Fechamento Documental
 
+> **CHECKLIST HISTÓRICO DE FECHAMENTO DOCUMENTAL:** preserve evidência/AC, mas não use flags PASS locais como freeze atual. Fonte vigente: [README](./README.md), [P5 canônico — 37](./37-p5-submissao-e-revisao-no-portal.md), [RQ/AC — 23](./23-ledger-rq-ac-testes.md), [Roadmap — 39](./39-roadmap-mestre-implementacao-v1.md).
+
 ## Estado
 
 **Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
