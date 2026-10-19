@@ -54,6 +54,16 @@ O roadmap anterior tem Q01–Q03, mas Q01 permanece `Q01_AUTHORIZED=NO` porque `
 
 **Congelamentos:** `MODEL_AUTHORED_FACTUAL_PROSE=NONE` e `selection-only` (ledger §6.145) não serão alterados neste roadmap. Se o resultado exigido for impossível nesse contrato, registrar `ARCHITECTURE_DECISION_REQUIRED` e **parar somente o subescopo afetado**, preservando demais gates. Produto/owner/Policy/AuthZ e PREPARE/ACT permanecem intactos.
 
+## 2.1 DoD de produto LLM-enabled — não implementar compreensão em Python
+
+**PRINCÍPIO VINCULANTE (Product Master, esclarecimento do ADR 58):** não estamos desenvolvendo um LLM nem uma linguagem de programação de prompts; construímos **a DÉLIA, produto que utiliza a inteligência de LLMs existentes** por `InvokeModel/_propose`, contexto relevante, instruction lineage, catálogo vivo de capabilities e adapters autorizados. O objetivo é **generalização para perguntas não antecipadas**, não a aprovação de fixtures codificadas. Priorizar qualidade de instruções/contexto e propostas semânticas tipadas; evitar lógica `if/regex/stem/keyword/cluster/rank` que decida intenção, grupo, capability ou continuidade no lugar do modelo. Um prompt com exceção por owner/pergunta é também acoplamento e não resolve o problema.
+
+**Boundary operacional:** modelo propõe intenção/contexto/goal/group/capability/clarificação/plano semântico proporcional; não cria FACT, autorização, owner contract, identificador nem task outcome empresarial sozinho. Código faz **somente validação legítima** (schema, catálogo vivo elegível, AuthN/Core/Domain AuthZ, provenance, security, Policy/Decision, idempotência, deadlines, confirmação/PREPARE/ACT/postcondition), e não reinterpreta linguagem após a proposta do modelo. `reject` linguístico semântico por baixa sobreposição de palavras = candidato a eliminação; `reject` de dados/segurança/contrato = preservado fail-closed. Uso de MCP/A2A/OpenAPI continua por port/adapter e não implica invocation de todas as tools.
+
+**Gate mensurável da refatoração:** antes/depois por SHA/model/prompt lineage/config/context version. Exigir (a) C02 seleção **sem branch VISTA** com capability adequada e resposta ou owner gap comprovado; (b) SIPOC e hipóteses sem tool indevida; (c) referência contextual, mudança de assunto, negação e ambiguidade; (d) providers equivalentes renomeados, reordenados, adicionados/removidos, MCP e OpenAPI não-MCP; (e) nenhuma regressão de owner-grounded DAVI/TÉO, zero ACT indevido e `selection-only`; (f) cold/warm, contagem de chamadas, latência real <=30s e resultado funcional. Menos código, nova regex, resposta genérica/soft-land ou HTTP 200 **não** substitui um `PASS_TASK_OUTCOME`. Sem evidência de modelo real, registrar `TEST_NOT_RUN/INCONCLUSIVE`, nunca PASS.
+
+**Não amplia fase:** no momento, apenas Q02-A como exceção I04 de §0; Q01/Q02-B/C/Q03 continuam bloqueados. Esta seção apenas explicita o objetivo/DoD do roadmap já aprovado; não abre Q02-C, refatoração de argumentos ou novo modelo/agent/serviço.
+
 ## 3. Seis pacotes, sem voltas ilimitadas
 
 | Pacote | Dependência/gate de entrada | Escopo único e artefato verificável | Saída / go-no-go |
