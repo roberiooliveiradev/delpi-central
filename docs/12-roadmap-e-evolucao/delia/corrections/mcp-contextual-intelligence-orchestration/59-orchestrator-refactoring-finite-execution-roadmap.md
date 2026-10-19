@@ -157,3 +157,41 @@ CURSOR_OWNER=CODE_REFACTOR_TEST_LIVE_ONLY_AFTER_PHASE_GATE
 DOC60=CONSUMER_CONTRACT_TEST_INVENTORY
 DOC61=G0_EXECUTION_CARDS
 ```
+
+
+## 8. Coordination v10 — independent Q02-A first review (2026-10-19)
+
+**REVIEWED_HEAD:** `7e62894e2faa6a1b9c3fc348546f91c1a8112272` (one commit after `38342414f57071d8e6f6d588454311c3663304a1`); `orchestration.py` blob `9d82c34bb6ac71807bc7d1c249df9982a2b18c3f`. **INDEPENDENT_REVIEW_VERDICT=REWORK** for **Q02-A test/outcome coverage and residual semantic fallback**; G0 remains CLOSED, no wider Q02 change permitted. This is an independent **GitHub static source/diff/test-assertion review**, not a GPT execution of pytest or live model eval. The executor's 1664/1664 PASS and 0 ACT are `PASS_EXECUTOR_REPORTED`, not an independently reproduced runtime outcome.
+
+**Accepted implementation direction:** `_is_information_coverage_inquiry`, continuity/guidance lexical cue regex and index intent clusters/scores removed; prior-turn admission no longer skipped; group model now queried even on singleton; live group membership normalization is exact/unambiguous; no new planner/provider-specific runtime branch, public contract or observed permission bypass. `InvokeModel/_propose`, domain/Core validation and frozen `selection-only` still reused. This is **not** final I04 acceptance.
+
+**BLOCKING A — inadequate functional test replacements:** `tests/test_q02a_semantic_consolidation.py` preprograms `FakeProposalModel` with `mcp:vista`/correct capability and asserts that route executes; repeating the *same* canned proposal for C02 paraphrase/negation/rename/order does NOT test real model semantic preference among DAVI/TÉO/VISTA, nor SIPOC explanatory content or hypothetical compare task completion (only `NOT_APPLICABLE` and 0 tools). Valid unit wiring coverage is accepted; claims of `PASS provider-neutral semantic selection/outcome` are **not proven** by these fixtures. New group-selection prompt includes category examples close to C02; unseen semantic holdouts must verify this does not overfit.
+
+**BLOCKING B — weakened negatives without equivalent outcome oracles:** `test_k3_no_relevant_topic_clarifies_without_nested_read` removed the assert that inappropriate nested filled READs do not happen and now permits `SUCCESS/NOT_APPLICABLE`; `test_k2_short_but_sufficient_limitation_ask_not_expanded` now explicitly tolerates a full checklist dump and uses a broad string check. K2 incomplete-checklist tests were retargeted from under-selection to preselected all-item proposals. Hence ledger §6.315 claim "no weakened negatives" contradicts the source diff. These tests are insufficient to demonstrate the declared nonregression in task-focused guidance, data relevance and continuity. **Do not restore the old lexical veto or keyword checker**. Replace with bounded **task-outcome/faithfulness oracles** using owner evidence and correct, incomplete, misleading, missing-proposal and adversarial model proposals, separately classifying safety, authorization, utility, and completion. A valid catalog ID is not proof that it answers the question; fallback/rejection may be correct while user task still fails. No free factual prose or new typed evidence contract.
+
+**BLOCKING C — remaining implicit singleton applicability:** `_select_group()` still returns the sole group when `_propose` returns `None` (`if len(eligible)==1`), although Q02-A's goal is to avoid interpreting singleton membership as semantic relevance. Current explicit `applicable=false` test does not exercise `None`. Analyze provider availability/model failure/timeout and preserve fail-closed behavior; no new semantic engine. `unique_structural_ticket_list_capability` in existing `paginated_result_semantics.py` also uses lexical request classification as a short circuit; **TO_INVENTORY/FUTURE_GATE**, not authorization for this task to rewrite external helper or Q02-B/C paths without approved scope. Record residual truthfully rather than asserting all lexical interpretations are gone.
+
+**Mandatory SINGLE bounded Q02-A rework:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01`. Scope limited to (1) replace weakened behavioral assertions/fixture retargets by meaningful negative/positive task-outcome oracles and explicit `NOT_PROVEN` for real semantic routing without real-model eval, (2) correct the missing-proposal singleton route **if** it can select an inappropriate live owner/capability when semantic relevance is unproven, preserving membership/AuthZ/security and 30s, (3) prove no silent wrong-owner factual PASS in C02/K2/K3 and no checklist dump for limitation-only intent, using existing model interface/owners/contracts, (4) avoid C02-specific lexical examples embedded as unique pass condition, (5) measure added admission/group calls and budget in actual authorized real-model environment if available. Exactly one diff/review cycle, not many microtasks. If actual owner/contract or runtime prevents live, `TEST_NOT_RUN`/BLOCKED; no production deploy implicitly approved.
+
+**Go/no-go:** full backend/security/safety pytest, adversarial metamorphic fake-model behavior, honest `selection-only` and no ACT/credential leak; **real model** C02 cold1+warm2, SIPOC useful answer, hypothetical follow-up, DAVI/TÉO/VISTA/OpenAPI/no tool, rename/reorder/add-remove/equivalent, negative injection/IDs, task outcomes, max wall 30s **only if operationally authorized**. Without real model/owner evidence, I04 remains `NO`. If correction demands new contract/regex classifier/provider branch/second planner, STOP and return to coordination/Product Master, not silent implementation.
+
+```text
+Q02_A_IMPLEMENTATION_EXECUTED=YES
+Q02_A_FIRST_INDEPENDENT_REVIEW=REWORK
+Q02_A_BOUNDED_REWORK_AUTHORIZED=YES
+Q02_A_REWORK_REMAINING=1
+Q02_A_ARCHITECTURE_DIRECTION=PARTIALLY_PROVEN_STATIC
+Q02_A_REAL_MODEL_SEMANTIC_SELECTION=TEST_NOT_RUN
+Q02_A_TASK_OUTCOME=NOT_PROVEN
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=CURSOR_ONE_Q02_A_REWORK_THEN_INDEPENDENT_FINAL_REVIEW_OR_STOP
+```
