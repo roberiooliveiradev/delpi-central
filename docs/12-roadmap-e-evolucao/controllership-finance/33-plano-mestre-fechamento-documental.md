@@ -4,9 +4,9 @@
 
 ## Estado
 
-**Parecer transversal vigente (16/10/2026):** [44 — Revalidação A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). C2, P5-A..J e DEC-01..04 permanecem PO_APPROVED; Core T05 source de grupo/função e política de zero áreas obrigatórias (D-FINAL-01/02) impedem fechar A12/A14/A15/A16. Até decisões/evidências: `DOCUMENTATION_CLOSURE_COMPLETE=NO`; `IMPLEMENTATION_AUTHORIZED=NO`; runtime `TEST_NOT_RUN`. Flags PASS anteriores neste documento são históricas, não substituem o gate vigente.
+**Estado atual:** [README](./README.md). **D-FINAL-02=CLOSED/PO_APPROVED (revisão humana, sem bloqueio artificial)**; D-FINAL-01 é inventário do Core/T05, não permission do Portal. Gates transversais seguem `INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`. A16/CI neste arquivo são evidências datadas.
 
-**Verificação pós-merge (vigor atual):** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+**Rebaseline de 16/10 (histórico):** [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 **TARGET / DOCUMENTATION_CLOSURE_PHASE ACTIVE**
 
