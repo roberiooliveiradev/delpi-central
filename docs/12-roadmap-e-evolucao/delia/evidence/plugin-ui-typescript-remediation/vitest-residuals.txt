@@ -1,0 +1,11 @@
+701: FAIL  src/components/collaboration/MentionComposer.test.tsx > mention-composer.css > pílula 1.25rem, focus em box-shadow e send circular 36px
+736: FAIL  src/components/signature/SignatureCapturePanel.test.tsx > SignatureCapturePanel > gera blob ao digitar o nome
+897: FAIL  src/components/signature/SignaturePad.test.tsx > cipa shared exports > exports RichTextEditor
+
+
+ Test Files  3 failed | 373 passed (376)
+      Tests  3 failed | 2222 passed (2225)
+     Errors  1 error
+   Start at  07:35:27
+   Duration  50.17s (transform 20.63s, setup 0ms, collect 114.49s, tests 97.98s, environment 403.38s, prepare 40.53s)
+

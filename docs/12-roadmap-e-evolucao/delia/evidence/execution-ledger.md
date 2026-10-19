@@ -14844,3 +14844,18 @@ NEXT=I02_R3A_BOUNDED_BUDGET_EXPERIMENT_AND_CRITICAL_PATH_EVIDENCE
 - **DECISION:** `D03_ACCEPTED=NO`; `D03_REVIEW_RECOMMENDATION=ACCEPT_WITH_RESIDUAL`; `PHASE_PROGRESSION=NONE`.
 
 NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
+
+## §6.254 — DELIA-PLUGIN-UI-TYPESCRIPT-29-ERRORS-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-PLUGIN-UI-TYPESCRIPT-29-ERRORS-REMEDIATION-01`. **BASE_HEAD:** `304583debb51248414eea60c36e8f1bbdd9965c8`. **DOCS:** [evidence](./plugin-ui-typescript-remediation/plugin-ui-typescript-29-errors-remediation-01.md). Relaciona quitação da dívida citada em D02/D03 sem alterar retrospectivamente esses resultados nem aceitar D01/D03/D04.
+
+- **Baseline:** `npx tsc -p tsconfig.json --noEmit` → EXIT 2, **29** erros (TS2345/2741/7053/2353/2352/4104/2739/2532).
+- **Reuse:** `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` (tipos/helpers/fixtures; sem novos componentes).
+- **Root causes:** meta `vc` Partial; KPI frame patch Partial; CSS custom props tipadas; layout `readonly` points; preview `source?`; fixtures chart/BPMN/DataTable/toolbar/filters/preview/canvas/print.
+- **Typecheck:** plugin-ui **PASS** (0 erros); delia **PASS**.
+- **Vitest:** delia 212 PASS; plugin-ui 2222 PASS / **3 FAIL_PREEXISTING** (SignatureCapturePanel measureText, SignaturePad RichTextEditor export, MentionComposer CSS) — reproduzidas no HEAD limpo pré-diff.
+- **Build/Federation:** plugin-ui + host-exports PASS; delia build + `verify:federation` PASS.
+- **Suppressions:** nenhuma (`@ts-ignore`/`any`/tsconfig weakenings = 0).
+- **DECISION:** `TYPECHECK_PLUGIN_UI=PASS`; `PHASE_PROGRESSION=NONE`; `D01/D03/D04_ACCEPTED=NO`; recomendação de review independente: `ACCEPT_WITH_RESIDUAL` (residuals Vitest preexistentes).
+
+NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
