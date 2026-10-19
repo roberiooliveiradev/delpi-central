@@ -1194,6 +1194,140 @@ def _discovery_capability(group: CapabilityGroup) -> ProviderCapability | None:
     return discovery[0] if len(discovery) == 1 else None
 
 
+_MAX_DISCOVERY_SURFACE_LINES = 6
+
+
+def _owner_eligible_action_count(
+    structured: Mapping[str, Any] | None,
+) -> int | None:
+    """Owner-declared eligible catalog size when present.
+
+    Provider-neutral common count keys. Missing field ≠ empty catalog.
+    """
+    if not isinstance(structured, Mapping):
+        return None
+    for key in (
+        "eligible_action_count",
+        "eligible_count",
+        "action_count",
+    ):
+        value = structured.get(key)
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value if value >= 0 else None
+    return None
+
+
+def _discovery_empty_result_class(
+    structured: Mapping[str, Any] | None,
+) -> str:
+    """Classify a zero-candidate discovery envelope.
+
+    Conceptual classes for observability/tests — not public DTOs.
+    ``0 SEARCH RESULTS != CAPABILITY ABSENT``.
+    """
+    eligible = _owner_eligible_action_count(structured)
+    if eligible is not None and eligible > 0:
+        return "CAPABILITY_NOT_MATCHED"
+    if eligible == 0:
+        return "CAPABILITY_UNAVAILABLE"
+    return "CAPABILITY_NOT_ENUMERABLE"
+
+
+def _live_interop_surface_lines(
+    group: CapabilityGroup,
+) -> tuple[str, ...]:
+    """Bounded lines from the live tools/list surface (owner-declared).
+
+    Never invents Domain API action ids. Excludes PREPARE/ACT. Descriptions
+    are untrusted display text — never authorization.
+    """
+    lines: list[str] = []
+    for capability in group.capabilities:
+        if capability.operation_class not in (
+            SpecialistOperationClass.DISCOVERY,
+            SpecialistOperationClass.READ,
+            SpecialistOperationClass.ANALYSIS,
+        ):
+            continue
+        name = (capability.remote_name or "").strip()
+        if not name:
+            continue
+        description = _redact_text(
+            (capability.description or "").strip()
+        )[:180]
+        if description:
+            lines.append(f"- {name}: {description}")
+        else:
+            lines.append(f"- {name}")
+        if len(lines) >= _MAX_DISCOVERY_SURFACE_LINES:
+            break
+    return tuple(lines)
+
+
+def _render_zero_candidate_discovery(
+    structured: Mapping[str, Any] | None,
+    group: CapabilityGroup,
+) -> str:
+    """User-facing terminal for DISCOVERY with zero candidates.
+
+    Distinguishes semantic search miss (catalog still exists) from
+    unavailable/non-enumerable catalogs. Never leaks agent_directives,
+    capability_surface blobs, tokens or telemetry keys.
+    """
+    result_class = _discovery_empty_result_class(structured)
+    eligible = _owner_eligible_action_count(structured)
+    surface = _live_interop_surface_lines(group)
+
+    if result_class == "CAPABILITY_NOT_MATCHED":
+        parts = [
+            "A busca semântica não encontrou uma ação correspondente "
+            "a este pedido.",
+            (
+                f"A fonte declara {eligible} capacidades de leitura "
+                "elegíveis — resultado vazio de busca não prova "
+                "ausência de capability."
+            ),
+            "Reformule com o tipo de informação desejada "
+            "(por exemplo produto, estoque, pedido ou indicador). "
+            "Discovery não autoriza execução.",
+        ]
+        if surface:
+            parts.append(
+                "Ferramentas de interoperabilidade observadas "
+                "neste especialista:"
+            )
+            parts.extend(surface)
+        return "\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
+
+    if result_class == "CAPABILITY_UNAVAILABLE":
+        return (
+            "Consulta concluída na fonte: nenhuma capacidade de "
+            "leitura elegível está disponível para este escopo."
+        )[:MAX_RENDER_CONTENT_CHARS]
+
+    # CAPABILITY_NOT_ENUMERABLE — owner did not expose catalog size.
+    if surface:
+        parts = [
+            "A busca não retornou correspondência e o contrato do "
+            "owner não enumerou o catálogo de ações neste resultado.",
+            "Não é possível listar todas as possibilidades "
+            "informacionais a partir deste envelope.",
+            "Ferramentas de interoperabilidade observadas "
+            "neste especialista:",
+        ]
+        parts.extend(surface)
+        parts.append(
+            "Reformule com um pedido informacional específico. "
+            "Discovery não autoriza execução."
+        )
+        return "\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
+
+    return (
+        "Consulta concluída na fonte: nenhuma ação correspondente "
+        "foi encontrada para este pedido."
+    )[:MAX_RENDER_CONTENT_CHARS]
+
+
 _PATH_FOREIGN_CLASSES = frozenset(
     {
         SpecialistOperationClass.DISCOVERY,
@@ -8875,23 +9009,38 @@ class OperationalCapabilityOrchestrator:
                     )
             # Discovery did not resolve to a usable business result —
             # never render a bare "Discovery completed." as if it were
-            # the answer. With zero candidates the truthful grounded
-            # statement is that the source held no matching action.
+            # the answer. Zero candidates is a search result, not proof
+            # that the owner catalog is empty — distinguish miss vs
+            # absence using owner-declared eligible counts + live
+            # tools/list surface. Control-plane envelopes
+            # (capability_surface / agent_directives / telemetry)
+            # stay out of user-facing content.
             if self._candidates_present(outcome.structured):
                 return None
-            # The discovery envelope is control-plane data for the
-            # orchestrator (candidate tokens, capability surface,
-            # owner agent directives, query telemetry) — never
-            # user-facing business evidence. The terminal outcome
-            # carries only the truthful statement; keeping ``structured``
-            # would let the generic outcome renderer publish the
-            # owner's operational metadata to the user.
+            content = _render_zero_candidate_discovery(
+                outcome.structured
+                if isinstance(outcome.structured, Mapping)
+                else None,
+                group,
+            )
+            _logger.info(
+                "orchestration stage=discovery_terminal "
+                "decision=%s eligible=%s correlation_id=%s",
+                _discovery_empty_result_class(
+                    outcome.structured
+                    if isinstance(outcome.structured, Mapping)
+                    else None
+                ),
+                _owner_eligible_action_count(
+                    outcome.structured
+                    if isinstance(outcome.structured, Mapping)
+                    else None
+                ),
+                correlation,
+            )
             truthful = dataclasses.replace(
                 outcome,
-                content_text=(
-                    "Consulta concluída na fonte: nenhuma ação "
-                    "correspondente foi encontrada para este pedido."
-                ),
+                content_text=content,
                 structured=None,
             )
             return truthful, remote_name, remote_name

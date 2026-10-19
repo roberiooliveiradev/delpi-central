@@ -15040,3 +15040,15 @@ NEXT=I03_SEMANTIC_CAPABILITY_DISCOVERY_DAVI
 - **STATE:** `I03_IMPLEMENTATION=PLANNED`; `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01
+
+## §6.269 — DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01`. **BASE_HEAD:** `1e017bf634…`. **DOC:** [28](../corrections/mcp-contextual-intelligence-orchestration/28-i03-davi-semantic-discovery-implementation.md). **AUTHORITIES:** docs 26–27; report 44 K4; §6.164 residual closed for semantic adequacy of search-miss.
+
+- **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on DISCOVERY terminal of `OperationalCapabilityOrchestrator`. No second planner/registry/DAVI branch.
+- **Fix:** zero-candidate DISCOVERY distinguishes `CAPABILITY_NOT_MATCHED` (`eligible_action_count>0`), `CAPABILITY_UNAVAILABLE` (count=0), `CAPABILITY_NOT_ENUMERABLE` (no count); projects bounded live tools/list lines; never leaks agent_directives; never auto-EXECUTE.
+- **Tests:** `test_i03_semantic_capability_discovery.py` + discovery control-plane updates + full `delia-api` pytest **PASS**.
+- **Live:** pending deploy of implementation SHA.
+- **STATE:** `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=DEPLOY_THEN_AUTHENTICATED_LIVE_K4

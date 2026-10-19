@@ -1112,7 +1112,16 @@ def test_zero_candidate_discovery_renders_truthfully():
     attempt = read.attempt("busque zzz")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "Discovery completed." not in (attempt.content or "")
-    assert "nenhuma" in (attempt.content or "").lower()
+    content = (attempt.content or "").lower()
+    # Without eligible_action_count, surface tools/list still allows an
+    # honest non-enumerable / reformulate response — never absolute
+    # fabrication of Domain API actions.
+    assert (
+        "nenhuma" in content
+        or "não enumerou" in content
+        or "não encontrou" in content
+        or "busca" in content
+    )
 
 
 # Sanitized reproduction of the owner's live DISCOVERY envelope
@@ -1158,7 +1167,12 @@ def test_zero_candidate_discovery_never_renders_control_plane():
     attempt = read.attempt("Quais informações você consegue consultar?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     content = attempt.content or ""
-    assert "nenhuma" in content.lower()
+    # Search miss with owner-declared eligible catalog — not absence.
+    assert "busca semântica" in content.lower() or "não encontrou" in (
+        content.lower()
+    )
+    assert "37" in content
+    assert "ausência" in content.lower() or "elegíveis" in content.lower()
     for leaked in (
         "Resultado do especialista",
         "capability_surface",
@@ -1180,6 +1194,8 @@ def test_zero_candidate_discovery_never_renders_control_plane():
     _assert_success(attempt, "davi", "discover_delpi_information")
     assert attempt.outcome.provenance.observed_at
     assert isinstance(attempt.limitations, tuple)
+    # Discovery alone must not chain into execute.
+    assert [c[1] for c in port.calls] == ["discover_delpi_information"]
 
 
 def test_discovery_control_plane_never_reaches_presentation():
@@ -1260,7 +1276,13 @@ def test_discovery_control_plane_neutral_across_providers():
     attempt = read.attempt("O que o Vista sabe listar?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     content = attempt.content or ""
-    assert "nenhuma" in content.lower()
+    lowered = content.lower()
+    assert (
+        "nenhuma" in lowered
+        or "não enumerou" in lowered
+        or "não encontrou" in lowered
+        or "busca" in lowered
+    )
     for leaked in (
         "Resultado do especialista",
         "capability_surface",
@@ -1316,7 +1338,13 @@ def test_discovery_control_plane_unknown_shape_and_vocabulary():
     attempt = read.attempt("O que este especialista consegue consultar?")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     content = attempt.content or ""
-    assert "nenhuma" in content.lower()
+    lowered = content.lower()
+    assert (
+        "nenhuma" in lowered
+        or "não enumerou" in lowered
+        or "não encontrou" in lowered
+        or "busca" in lowered
+    )
     for leaked in (
         "Resultado do especialista",
         "directives_for_agent",
