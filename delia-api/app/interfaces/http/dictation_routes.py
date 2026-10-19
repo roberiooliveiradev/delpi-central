@@ -31,6 +31,9 @@ from app.application.dictation.contracts import (
     SUPPORTED_LANGUAGE,
     DictationTranscriptionRequest,
 )
+from app.application.interaction.handle_interactive_turn import (
+    has_delia_access,
+)
 from app.application.dictation.errors import (
     DURATION_EXCEEDED,
     EMPTY_TRANSCRIPTION,
@@ -75,6 +78,17 @@ def register_dictation_routes(app: Flask, logger: logging.Logger) -> None:
 
     @bp.get("/dictation/status")
     def get_dictation_status():
+        # Same Core-resolved AuthZ boundary as the transcription use
+        # case: an authenticated user without `delia.access` must not
+        # learn the capability surface (VD-F03 hardening).
+        if not has_delia_access(getattr(g, "platform_access", None)):
+            logger.info(
+                "dictation_status_rejected reason=forbidden request_id=%s",
+                getattr(g, "request_id", None),
+            )
+            return _error(
+                FORBIDDEN, "delia.access is required for dictation"
+            )
         limits = current_app.config.get("DICTATION_LIMITS") or {}
         handler = current_app.config.get("DICTATION_TRANSCRIPTION_HANDLER")
         return jsonify(
@@ -182,8 +196,17 @@ def register_dictation_routes(app: Flask, logger: logging.Logger) -> None:
                 request_id,
             )
             return _error(exc.code, exc.message)
-        except Exception:
-            logger.exception("dictation_failed code=internal_error")
+        except Exception as exc:
+            # Privacy: no traceback/message — an unexpected exception
+            # could carry provider payload, transcript text, or request
+            # material in str(exc). Type name + request_id keep the
+            # failure diagnosable without leaking content.
+            logger.error(
+                "dictation_failed code=internal_error exc_type=%s "
+                "request_id=%s",
+                type(exc).__name__,
+                request_id,
+            )
             return _error(INTERNAL_ERROR, "internal error")
 
         # Metadata only — transcript text and audio are never logged.

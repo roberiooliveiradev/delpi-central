@@ -8,6 +8,7 @@ Audio/transcript content is never asserted into logs — only metadata.
 from __future__ import annotations
 
 import base64
+import logging
 
 import pytest
 
@@ -342,6 +343,23 @@ def test_status_reports_available_with_handler_and_limits():
     assert body["max_duration_ms"] == 60000
 
 
+def test_status_requires_authentication():
+    client = _client(handler_marker=_handler())
+    assert client.get(STATUS_PATH).status_code == 401
+
+
+def test_status_forbidden_without_delia_access():
+    client = _client(
+        context=_context(permissions=("other.permission",)),
+        handler_marker=_handler(),
+    )
+    response = client.get(
+        STATUS_PATH, headers={"Authorization": "Bearer t"}
+    )
+    assert response.status_code == 403
+    assert response.get_json()["code"] == "forbidden"
+
+
 def test_transcribe_requires_authentication():
     client = _client(handler_marker=_handler())
     assert client.post(TRANSCRIBE_PATH, json=_payload()).status_code == 401
@@ -411,3 +429,61 @@ def test_transcribe_unavailable_without_handler():
     response = _post(client, _payload())
     assert response.status_code == 503
     assert response.get_json()["code"] == "transcription_unavailable"
+
+
+# ---------------- log privacy ----------------
+
+
+class _RaisingHandler:
+    """Handler that fails with sentinels embedded in the exception."""
+
+    def execute(self, request):
+        raise RuntimeError(
+            "unexpected failure carrying sentinels: "
+            f"{_AUDIO_SENTINEL} {_TOKEN_SENTINEL} {_TRANSCRIPT_SENTINEL}"
+        )
+
+
+_AUDIO_SENTINEL = "AUDIO-SENTINEL-9f3d"
+_TOKEN_SENTINEL = "TOKEN-SENTINEL-7b2e"
+_TRANSCRIPT_SENTINEL = "TRANSCRIPT-SENTINEL-4c1a"
+
+
+class _ListHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record.getMessage())
+
+
+def test_internal_error_never_logs_audio_token_or_transcript():
+    client = _client(handler_marker=_RaisingHandler())
+    # The service logger uses propagate=False (app.infrastructure
+    # .logging), so caplog cannot see it — capture with a direct handler.
+    capture = _ListHandler()
+    service_logger = logging.getLogger("delia-api")
+    service_logger.addHandler(capture)
+    try:
+        # The request audio itself carries a sentinel: raw bytes and
+        # their base64 form must never reach the log stream either.
+        sentinel_b64 = base64.b64encode(_AUDIO_SENTINEL.encode()).decode()
+        response = _post(
+            client, _payload(audio_base64=sentinel_b64)
+        )
+    finally:
+        service_logger.removeHandler(capture)
+    assert response.status_code == 500
+    assert response.get_json()["code"] == "internal_error"
+    logged = "\n".join(capture.records)
+    for sentinel in (
+        _AUDIO_SENTINEL,
+        sentinel_b64,
+        _TOKEN_SENTINEL,
+        _TRANSCRIPT_SENTINEL,
+    ):
+        assert sentinel not in logged
+    # Legitimate observability is preserved: typed code + exc_type.
+    assert "internal_error" in logged
+    assert "RuntimeError" in logged

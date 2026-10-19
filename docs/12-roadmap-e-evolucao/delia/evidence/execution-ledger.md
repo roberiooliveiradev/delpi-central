@@ -15677,3 +15677,30 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=VALIDATION_ONLY_WHEN_AUTH_AND_DEPLOY_AUTHORIZED_OR_PRODUCT_MASTER_PHASE_DECISION
 ```
+
+
+## §6.310 — VD-F03 bounded hardening: status AuthZ, log privacy, model admission
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-VD-F03-STT-BOUNDED-HARDENING-01`. **BASE_HEAD:** `6cfb4ea7c3`; **IMPLEMENTATION_BASE:** `9a8b05063d`. **EVIDENCE:** [voice-dictation-stt-hardening-01](../evidence/voice-dictation-stt-hardening-01/voice-dictation-stt-hardening-evidence.md). Bounded single cycle over `dictation.transcription.v1`; no feature/architecture/phase change.
+
+- **GET `/dictation/status` AuthZ:** now enforced via the canonical `has_delia_access` (Core-resolved `PlatformAccessContext`) — `403 forbidden` without `delia.access`, `401` unauthenticated preserved, `available` semantics unchanged. Contract §2.1 updated.
+- **Log privacy:** unexpected-error path no longer emits traceback/`str(exc)` — logs `code=internal_error exc_type=<type> request_id` only. Sentinel test proves zero leakage of audio (raw + base64), token and transcript embedded in the exception/payload. Typed-error path was already metadata-only.
+- **Model admission verified:** fail-closed wiring requires `DELIA_STT_PROVIDER=openai_compatible_audio` + base_url + model + api_key; no hardcoded model, no `DELIA_LLM_MODEL` fallback, secrets backend-only.
+- **Rate limit:** no distributed limiter exists on the platform (core-api is also in-process); per-user window limiter stays in-process — `DISTRIBUTED_RATE_LIMIT=RESIDUAL`, no new infrastructure created.
+- **Tests:** backend dictation 25/25, backend full suite PASS, frontend targeted 56/56 (no frontend change). Live smoke on rebuilt container: status 401/200, real pt-BR webm transcription 200, container logs metadata-only.
+- **Residuals:** `MODEL_APPROVAL=TO_VERIFY` (model proven, operational approval pending); WER/CER corpus, human-mic QA and independent review pending; production deploy still gated on rebuild + host `.env`.
+
+```text
+VD_F03_HARDENING=EXECUTED
+GET_STATUS_AUTHZ=PASS
+LOG_PRIVACY=PASS
+MODEL_CONFIGURATION=PASS
+MODEL_APPROVAL=TO_VERIFY
+DISTRIBUTED_RATE_LIMIT=RESIDUAL
+REGRESSIONS=NONE
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=INDEPENDENT_REVIEW_AND_AUTHORIZED_DEPLOY
+```

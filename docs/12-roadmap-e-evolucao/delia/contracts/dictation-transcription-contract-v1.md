@@ -28,7 +28,10 @@ Base path: `/apps/delia-api` (gateway). JSON request/response.
 ### 2.1 `GET /dictation/status`
 
 Admission/status read. AuthN: Bearer token + Core context (same
-middleware as interaction turns).
+middleware as interaction turns). AuthZ: `delia.access` (or
+superadmin) enforced on the same Core-resolved context — an
+authenticated user without access receives `403 forbidden`; the
+capability surface is not disclosed (VD-F03 hardening).
 
 ```json
 {
