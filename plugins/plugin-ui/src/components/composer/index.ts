@@ -14,3 +14,24 @@ export {
 export { ComposerStopButton, type ComposerStopButtonProps } from "./ComposerStopButton";
 
 export { ComposerClearDraftButton, type ComposerClearDraftButtonProps } from "./ComposerClearDraftButton";
+
+export {
+  AudioRecorderControl,
+  type AudioRecorderControlRenderProps,
+} from "./AudioRecorderControl";
+export {
+  useLocalAudioRecorder,
+  type UseLocalAudioRecorderOptions,
+  type UseLocalAudioRecorderResult,
+} from "./useLocalAudioRecorder";
+export {
+  formatAudioDurationMs,
+  type AudioRecorderCaptureErrorReason,
+  type AudioRecorderControlProps,
+  type AudioRecorderUiStatus,
+  type LocalAudioDraft,
+} from "./audioRecorderTypes";
+export {
+  isLocalAudioCaptureSupported,
+  pickSupportedAudioRecorderMime,
+} from "./audioRecorderMime";

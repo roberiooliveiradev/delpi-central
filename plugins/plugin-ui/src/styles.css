@@ -111,6 +111,7 @@
 @import "./styles/cipa-shared.css";
 @import "./styles/action-controls.css";
 @import "./styles/message-composer.css";
+@import "./styles/audio-recorder.css";
 @import "./components/conversation/ConversationThreeRegionLayout.css";
 @import "./components/conversation/ConversationSidePanels.css";
 @import "./components/conversation/NavigationRail.css";

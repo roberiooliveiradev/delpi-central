@@ -25,6 +25,11 @@ export type MessageComposerProps = {
   inputLabel?: string;
   placeholder?: string;
   disabled?: boolean;
+  /**
+   * Blocks Enter/send without disabling the textarea (e.g. local audio
+   * capture in progress). Draft remains editable and preserved.
+   */
+  submitDisabled?: boolean;
   loading?: boolean;
   /** Controlled request state: loading alone never authorizes a stop. */
   requestMode?: "idle" | "responding_cancelable" | "responding_not_cancelable" | "stopping";
@@ -79,6 +84,7 @@ export function MessageComposer({
   inputLabel,
   placeholder,
   disabled = false,
+  submitDisabled = false,
   loading = false,
   requestMode = "idle",
   onStop,
@@ -96,7 +102,8 @@ export function MessageComposer({
 }: MessageComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const inFlight = loading || requestMode !== "idle";
-  const canSubmit = !disabled && !inFlight && value.trim().length > 0;
+  const canSubmit =
+    !disabled && !submitDisabled && !inFlight && value.trim().length > 0;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -183,7 +190,7 @@ export function MessageComposer({
           ) : (
             <ComposerSendButton
               loading={inFlight}
-              disabled={disabled || !value.trim()}
+              disabled={disabled || submitDisabled || !value.trim()}
               label={sendLabel}
               loadingLabel={loadingLabel}
             />

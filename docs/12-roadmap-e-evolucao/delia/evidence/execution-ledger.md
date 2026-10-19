@@ -15215,3 +15215,18 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** `R2_BROAD_ACCEPT_WITH_RESIDUAL`, `I04_ACCEPTED=NO`, `I03_ACCEPTED=YES_WITH_RESIDUAL`, `C3_EXECUTED=NO`. Do not declare algorithm globally complete or start Q01. Prioritize bounded strict budget and thematic selection/arguments generalization with real provider-neutral evals.
 
 NEXT=I04_BOUNDED_BUDGET_AND_THEMATIC_GENERALIZATION_REWORK
+
+
+## §6.283 — DELIA-UX-AUDIO-RECORDER-COMPOSER-FOUNDATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-AUDIO-RECORDER-COMPOSER-FOUNDATION-01`. **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **EVIDENCE:** [audio-recorder-composer-foundation-01](audio-recorder-composer-foundation-01/audio-recorder-foundation-execution-evidence.md). **AUTHORITIES:** 16→50→17→49→51→52→21→20→25; docs 53/69/76/95/116/117.
+
+- **REUSE GATE:** `EXISTING_EQUIVALENT_COMPOSER=YES` / `REUSE` (`MessageComposer.secondaryActions` + extensão aditiva `submitDisabled`); `EXISTING_EQUIVALENT_RECORDER=NO` repo-wide / `REUSE_DECISION=NEW` — menor componente compartilhado em `plugins/plugin-ui` (Abstraction Gate: consumer real DeliaComposer, sem segundo composer).
+- **AU-F02:** `AudioRecorderControl` + `useLocalAudioRecorder` + `audioRecorderMime`/`audioRecorderTypes` + `audio-recorder.css`. `getUserMedia` só por gesto, `MediaRecorder` real 250ms, waveform via AnalyserNode (fallback estático), mm:ss real, preview play/pause/progress, descartar/regravar, erros mapeados, cleanup total (tracks/URLs/AudioContext/audioEl/timers/RAF), limites `maxDurationMs`/`maxBytes` enforced e exigidos pelo gate.
+- **AU-F03:** `DeliaComposer` compõe via render-prop `{trigger→secondaryActions, panel, blocking→submitDisabled}`; `audioCaptureEnabled` default false; `canSendAudio=false` sempre; draft preservado; `busy` segue request em voo.
+- **TESTES:** plugin-ui vitest 2246/2246 (20 novos AudioRecorderControl), delia vitest 228/228 (3 novos gate), tsc ambos PASS, build ambos PASS, federation expose PASS (`AudioRecorderControl` no remote chunk).
+- **BROWSER QA:** Playwright Chrome real, fake media device (pipeline real, áudio sintético) — 28/28 PASS: estados, draft, no-submit, cancel, dock 320, dark, zoom 200%, reduced-motion, teclado, denied→alert+texto ok. `REAL_MIC_CAPTURE=TEST_NOT_RUN`. Harness QA temporário não commitado; screenshots em evidence/.
+- **RESIDUAIS:** produção sem limites aprovados (`CONTRACT_REQUIRED`) → capture permanece gated OFF; `sending`/upload/STT = AU-F04 sem contrato; Storybook inexistente.
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`, `CP-333=PLANNED`, `PHASE_PROGRESSION=NONE`.
+
+NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)

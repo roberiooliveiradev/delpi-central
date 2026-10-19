@@ -1,7 +1,8 @@
 # 119 — DÉLIA | Conversation Audio Recorder — Especificação de produto, UX, estados e contrato de frontend
 
 **Data:** 2026-10-19  
-**Status:** `PRODUCT_UX_SPEC / PLANNED / IMPLEMENTATION_NOT_STARTED`  
+**Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03_IMPLEMENTED_GATED_OFF / INDEPENDENT_REVIEW_PENDING`  
+**Evidência de implementação:** [audio-recorder-composer-foundation-01](./evidence/audio-recorder-composer-foundation-01/audio-recorder-foundation-execution-evidence.md) — fundação local implementada e testada; **não** habilita captura em produção sem limites aprovados.  
 **Tipo:** documentação de direção e critérios de implementação futura; **não** altera fase, backend, contratos, permissões ou feature flags.  
 **Referência GitHub observada:** `cb6ae480e202fc3d2817e1ed52bdb743531cde0f` (revalidar HEAD/status antes de implementar).  
 **Produto:** DÉLIA standalone; não reutilizar runtime, serviços ou frontend do Minha DELPI Chat.
@@ -202,14 +203,15 @@ A sequência real e CP/RQ dependem do documento 16 e ledger no HEAD aplicável; 
 ```text
 DOC=119_CONVERSATION_AUDIO_RECORDER_COMPOSER
 PRODUCT_DIRECTION=DOCUMENTED
-IMPLEMENTATION=NOT_STARTED
-AUDIO_CAPTURE_RUNTIME=TO_INVENTORY
+IMPLEMENTATION=AU_F02_AU_F03_LOCAL_FOUNDATION_DONE (2026-10-19, evidência linkada no cabeçalho)
+AUDIO_CAPTURE_RUNTIME=IMPLEMENTED_LOCAL_GATED_OFF
 AUDIO_UPLOAD_CONTRACT=TO_INVENTORY
 SPEECH_TO_TEXT_CONTRACT=TO_INVENTORY
+PRODUCTION_MEDIA_LIMITS=CONTRACT_REQUIRED (maxDurationMs/maxBytes exigidos pelo gate; sem valores aprovados)
 EXISTING_EQUIVALENT_COMPOSER=YES
 REUSE_DECISION_COMPOSER=REUSE
-EXISTING_EQUIVALENT_RECORDER=TO_INVENTORY
-REUSE_DECISION_RECORDER=TO_DECIDE
-NO_FAKE_SEND=MANDATORY
+EXISTING_EQUIVALENT_RECORDER=NO (após inventário repo-wide)
+REUSE_DECISION_RECORDER=NEW (AudioRecorderControl + useLocalAudioRecorder em plugin-ui)
+NO_FAKE_SEND=MANDATORY (canSendAudio=false na DÉLIA; sending/sent não implementados)
 PHASE_PROGRESSION=NONE
 ```
