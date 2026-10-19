@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-19 (roadmap state refresh; original baseline remains historical)
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_IMPLEMENTATION_PLANNED / I04–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_IMPLEMENTED_K4_ACCEPT_WITH_RESIDUAL_REGRESSION_GATE / I04–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -74,6 +74,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I02 owner cross-check / acceptance:** [26 — independent direct VISTA evidence and scoped ACCEPT_WITH_RESIDUAL](./26-i02-owner-crosscheck-and-acceptance-gate.md). K3 safe no-match consistent with examined guides; other VISTA design capabilities remain TO_INVENTORY. **NEXT implementation:** [27 — I03 DAVI semantic discovery bounded brief](./27-i03-davi-semantic-discovery-implementation-brief.md). No C3/C4/C5 progression.
 
 **I03 semantic discovery (candidate):** [28 — implementation + live](./28-i03-davi-semantic-discovery-implementation.md). Distinguishes search miss (`eligible_action_count>0`) from absence/non-enumerable catalogs. Live SHA `3d14a51046`: K4 DAVI `CAPABILITY_NOT_MATCHED` eligible=95 in 21.1s, no control-plane leak, ACT=0. `I03_ACCEPTED=NO`.
+
+**I03 implementation and independent review:** [28 — K4 implementation/live](./28-i03-davi-semantic-discovery-implementation.md); [29 — direct DAVI MCP cross-check + scoped review](./29-i03-independent-davi-crosscheck-review.md). Direct owner: generic discovery 0/95 eligible, thematic product discovery 1 candidate. K4 scoped ACCEPT_WITH_RESIDUAL; K2 invalid_record_index and K3 budget_exceeded still require bounded non-regression gate. No I04 progression.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
