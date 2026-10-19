@@ -50,6 +50,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 import uuid
 from typing import Any, Mapping, Sequence
 
@@ -349,7 +350,8 @@ plus the goal fields below.
 - "business_subject": short phrase from user words only, or null.
 - "scope_constraints": object of user-stated pairs, or {}.
 - "prior_evidence_sufficient": true ONLY when prior conversation
-  turns already answer THIS message without a new owner call; false
+  turns already answer THIS message without a new owner call
+  (subset/compare/rephrase/anaphora over prior DELIA_RESULT); false
   when no prior DELIA result exists or fresh owner data is needed.
 
 When prior_listing shows a prior ordered listing with identifiers and
@@ -688,15 +690,16 @@ Respond with JSON containing exactly these fields:
 - "prior_evidence_sufficient": true ONLY when prior conversation
   turns include a DELIA result whose CONTENT can be transformed to
   answer THIS user message without a new owner capability call.
-  Prefer true when the user asks to extract, list, summarize, or
-  restate inputs/steps/limitations/methods already present in that
-  prior result (e.g. "based on that guidance, which inputs do I need
-  before starting?" / "com base nessa orientação, quais informações
-  levantar?"). false when the user needs current/live owner data, a
-  different subject, an ambiguous referent, content the prior result
-  does not contain, or any fresh capability call. When no prior
-  DELIA result exists, always false. true never means "repeat the
-  prior answer verbatim".
+  Prefer true when the user asks to extract, list, summarize,
+  subset, compare, rephrase, or present items already present in that
+  prior result — including anaphoric references to those records
+  (e.g. "mostre dois deles", "compare os dois", "com base nessa
+  orientação…", "based on that guidance…"). false when the user
+  needs current/live owner data, a new search/discovery, a different
+  subject, an ambiguous referent, content the prior result does not
+  contain, or any fresh capability call. When no prior DELIA result
+  exists, always false. true never means "repeat the prior answer
+  verbatim".
 
 Never write facts, never answer the message, never include fields
 other than the listed ones.
@@ -869,32 +872,77 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
     return False
 
 
+def _fold_alnum_text(text: str) -> str:
+    """Lowercase ASCII-fold for provenance token comparison only."""
+    folded = unicodedata.normalize("NFKD", text or "")
+    folded = "".join(
+        char for char in folded if not unicodedata.combining(char)
+    )
+    return folded.casefold()
+
+
+def _alnum_tokens(text: str) -> frozenset[str]:
+    return frozenset(re.findall(r"[a-z0-9]{3,}", _fold_alnum_text(text)))
+
+
+def _token_covered_by_user_tokens(
+    token: str, user_tokens: frozenset[str]
+) -> bool:
+    """True when a proposal token is covered by user lexical material.
+
+    Coverage is exact match or shared leading morphology (e.g. term /
+    terminal / terminais). Never treats a single shared token as proof
+    that an entire multi-token proposal is user-grounded.
+    """
+    if token in user_tokens:
+        return True
+    for user_token in user_tokens:
+        if len(token) < 3 or len(user_token) < 3:
+            continue
+        shared = 0
+        for left, right in zip(token, user_token):
+            if left != right:
+                break
+            shared += 1
+        # Require a meaningful shared stem (min 3, prefer 4 when both
+        # sides are longer) so "term" covers "terminais" / "terminal".
+        need = 3 if min(len(token), len(user_token)) <= 4 else 4
+        if shared >= need:
+            return True
+    return False
+
+
 def _free_string_grounded_in_user_input(
     value: str, input_text: str
 ) -> bool:
-    """True when a proposed free-string arg is evidenced in user text.
+    """True when every material token of a free-string arg is user-covered.
 
-    Used when an optional index probe was budget-skipped: search/filter
-    terms that share lexical material with the request may proceed;
-    invented catalog identifiers with no user provenance must not.
-    Exact substring OR overlapping alphanumeric tokens (len≥3). Never
-    field-name or provider hardcode; not an intent classifier.
+    Used when an optional index probe was budget-skipped. Exploratory
+    READ search may paraphrase (TERM. PINO ↔ terminais pino), but must
+    not smuggle unsupported business qualifiers via incidental token
+    overlap. Exact folded substring of the user message also passes.
+    Containing the short user message inside a longer invented proposal
+    does **not** pass. Never field-name or provider hardcode; not an
+    intent classifier; never treats model claims as FACT.
     """
-    proposed = (value or "").strip().lower()
-    haystack = (input_text or "").strip().lower()
+    proposed = (value or "").strip()
+    haystack = (input_text or "").strip()
     if not proposed or not haystack:
         return False
-    if proposed in haystack or haystack in proposed:
+    proposed_fold = _fold_alnum_text(proposed)
+    haystack_fold = _fold_alnum_text(haystack)
+    if proposed_fold and proposed_fold in haystack_fold:
         return True
-    proposed_tokens = {
-        token
-        for token in re.findall(r"[a-z0-9]{3,}", proposed)
-    }
-    haystack_tokens = {
-        token
-        for token in re.findall(r"[a-z0-9]{3,}", haystack)
-    }
-    return bool(proposed_tokens & haystack_tokens)
+    proposed_tokens = _alnum_tokens(proposed)
+    if not proposed_tokens:
+        return False
+    user_tokens = _alnum_tokens(haystack)
+    if not user_tokens:
+        return False
+    return all(
+        _token_covered_by_user_tokens(token, user_tokens)
+        for token in proposed_tokens
+    )
 
 
 def _is_unconstrained_string(node: object) -> bool:
@@ -2328,7 +2376,11 @@ def _prior_transform_probe_eligible(
     """True when a failed model sufficiency flag may still probe prior.
 
     Probe is reduction-only: a successful transform avoids a redundant
-    owner re-invoke; insufficiency falls through to live selection.
+    owner re-invoke. Typed goal signals (compare/analyze /
+    comparison_requested) authorize the probe without user-text intent
+    regex; the legacy continuity cue remains a secondary hint for
+    methodology/guidance follow-ups. Insufficiency may fall through
+    only when turn budget still allows a full owner path.
     """
     if goal.goal_class in {"create_or_modify", "clarify"}:
         return False
@@ -2337,6 +2389,11 @@ def _prior_transform_probe_eligible(
     text = (input_text or "").strip()
     if not text or _LIVE_FACT_CUE_RE.search(text):
         return False
+    if goal.comparison_requested or goal.goal_class in {
+        "compare",
+        "analyze",
+    }:
+        return True
     return _PRIOR_TRANSFORM_CUE_RE.search(text) is not None
 
 
@@ -4921,6 +4978,21 @@ class OperationalCapabilityOrchestrator:
                                     "prior_continuation "
                                     "decision=probe_accepted "
                                     "correlation_id=%s",
+                                    correlation,
+                                )
+                                return continued
+                            # Probe transform was insufficient. Falling
+                            # through to full selection+owner often burns
+                            # the remaining global budget (L5 compare
+                            # 504). Stop when resolver-class headroom is
+                            # gone; return the honest insufficiency.
+                            if not self._budget_allows_resolver(deadline):
+                                _logger.info(
+                                    "orchestration stage="
+                                    "prior_continuation "
+                                    "decision=probe_insufficient_stop_budget "
+                                    "remaining_ms=%d correlation_id=%s",
+                                    int(deadline.remaining_seconds() * 1000),
                                     correlation,
                                 )
                                 return continued

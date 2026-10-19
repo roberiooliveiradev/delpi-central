@@ -15447,3 +15447,22 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - No phase advance. `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
 
 NEXT=BOUNDED_ARGUMENT_PROVENANCE_AND_MULTITURN_BUDGET_REWORK
+
+
+## §6.296 — Provider-neutral semantic provenance and continuity rework (IMPLEMENTATION)
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-PROVIDER-NEUTRAL-SEMANTIC-PROVENANCE-AND-CONTINUITY-REWORK-01`. **DOC:** [54](../corrections/mcp-contextual-intelligence-orchestration/54-provider-neutral-semantic-provenance-and-continuity-rework.md). **BASE:** `db2645108b` (ancestor); worktree on `origin/main`.
+
+- **ROOT_CAUSES:** (1) lexical ANY-token-overlap / `haystack in proposed` false-positive provenance; (2) compare follow-up fallthrough to full owner path under 30s → 504.
+- **FIX:** proposal-token coverage grounding; typed compare/analyze prior probe; probe-insufficient stops without owner reselection when resolver headroom gone; GOAL copy clarifies anaphora/subset/compare. No provider branches / planner / timeout bump.
+- **TESTS:** `test_provider_neutral_semantic_provenance_and_continuity.py` + full delia-api pytest PASS.
+- **LIVE / DEPLOYED_SHA:** filled after commit+push+canonical deploy.
+
+```text
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_REVIEW
+```
+
