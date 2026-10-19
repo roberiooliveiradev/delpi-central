@@ -41,6 +41,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3 (coordenação, investigação parcial):** [11 — latency architecture investigation](./11-i02r3-coordination-latency-architecture-investigation.md). Confirmado: várias propostas do modelo antes do owner, sem prova ainda de quais podem ser eliminadas; nenhuma solução de código aprovada. Próximo gate = perfis de K1 PASS/FAIL e dependências entre estágios antes do prompt de implementação.
 
+**I02-R3 — task do consultor (análise/testes, sem implementação):** [12 — consultant diagnostic task](./12-i02r3-consultant-diagnostic-task.md). O consultor comprova etapa exata de timeout K1, mapa de dependências, suíte de caracterização e alternativas A–F; decisão de arquitetura e eventual patch ficam com a coordenação.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
