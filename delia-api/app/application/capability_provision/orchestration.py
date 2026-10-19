@@ -429,6 +429,13 @@ and "required". Nested objects and arrays must follow the schema
 structure. Use {} only when no schema field applies AND the schema
 block does not contain "owner_vocabulary".
 
+Preserve information the user already stated: subject/topic terms,
+quantities (e.g. "3"), filters, and result kind go into matching
+schema fields (query/q/search/text/term/limit/page_size/count when
+present). Do not declare those as missing_inputs when they are
+already explicit in the user message. Only list missing_inputs for
+required fields that truly cannot be derived.
+
 The block also carries the capability's name and description. Value
 hints declared in the description (e.g. "view=a|b|c") are the allowed
 value set — prefer them. Literal examples inside descriptions
@@ -3483,6 +3490,132 @@ def _single_free_text_argument_from_input(
     return _validate_instance(candidate, descriptor.input_schema)
 
 
+_STATED_SEARCH_FIELD_HINTS = frozenset(
+    {
+        "query",
+        "q",
+        "search",
+        "term",
+        "text",
+        "keywords",
+        "filter",
+        "product",
+        "produto",
+        "name",
+        "nome",
+    }
+)
+_STATED_LIMIT_FIELD_HINTS = frozenset(
+    {
+        "limit",
+        "page_size",
+        "pagesize",
+        "max_results",
+        "maxresults",
+        "top_k",
+        "topk",
+        "count",
+        "n",
+        "size",
+    }
+)
+_STATED_QUANTITY_RE = re.compile(r"\b([1-9]\d{0,2})\b")
+
+
+def _recover_stated_arguments_from_input(
+    input_text: str,
+    descriptor: ProviderCapability,
+    base: Mapping[str, Any] | None,
+    missing_inputs: tuple[str, ...],
+) -> tuple[dict[str, Any] | None, tuple[str, ...]]:
+    """Fill schema fields already stated in the user message.
+
+    Schema-driven recovery only — field names come from the owner
+    schema; values are the full user text (search-like free strings)
+    or an explicit small integer (limit-like). Never invents ids or
+    enums. Used when the model declared missing_inputs despite the
+    user already providing subject/quantity.
+    """
+    text = (input_text or "").strip()
+    if not text:
+        return (
+            dict(base) if isinstance(base, Mapping) and base else None,
+            missing_inputs,
+        )
+    keys, required = _schema_keys(descriptor)
+    material = (keys | required) - ORCHESTRATED_FIELDS
+    if not material:
+        return ({}, ())
+    schema = (
+        descriptor.input_schema
+        if isinstance(descriptor.input_schema, Mapping)
+        else None
+    )
+    filled: dict[str, Any] = (
+        dict(base) if isinstance(base, Mapping) else {}
+    )
+    remaining = list(missing_inputs)
+    quantity_match = _STATED_QUANTITY_RE.search(text)
+    quantity = int(quantity_match.group(1)) if quantity_match else None
+    if quantity is not None and quantity > 100:
+        quantity = None
+
+    for key in sorted(material)[:MAX_ARGUMENT_KEYS]:
+        if key in filled and filled[key] not in (None, "", [], {}):
+            continue
+        node = _property_node(schema, key)
+        if node is None:
+            continue
+        canon = _canonical_key(key)
+        search_like = (
+            canon in _STATED_SEARCH_FIELD_HINTS
+            or any(hint in canon for hint in ("query", "search", "term"))
+        )
+        limit_like = (
+            canon in _STATED_LIMIT_FIELD_HINTS
+            or any(hint in canon for hint in ("limit", "page_size", "top"))
+        )
+        if search_like and _is_unconstrained_string(node):
+            filled[key] = text[:MAX_DESCRIPTION_CHARS]
+            if key in remaining:
+                remaining.remove(key)
+            continue
+        if limit_like and quantity is not None:
+            type_name = node.get("type") if isinstance(node, Mapping) else None
+            if type_name in {"integer", "number"} or (
+                isinstance(type_name, list)
+                and ("integer" in type_name or "number" in type_name)
+            ):
+                filled[key] = quantity
+                if key in remaining:
+                    remaining.remove(key)
+
+    if not filled:
+        return None, missing_inputs
+    validated = _validate_instance(filled, descriptor.input_schema)
+    if validated is None:
+        return None, missing_inputs
+    # Drop recovered fields from missing; keep truly unresolved required.
+    still_missing = tuple(
+        name
+        for name in remaining
+        if name not in validated
+        or validated.get(name) in (None, "", [], {})
+    )[:MAX_MISSING_INPUTS]
+    required_gaps = tuple(
+        name
+        for name in sorted(required - ORCHESTRATED_FIELDS)
+        if name not in validated
+        or validated.get(name) in (None, "", [], {})
+    )[:MAX_MISSING_INPUTS]
+    gaps = tuple(dict.fromkeys(still_missing + required_gaps))[
+        :MAX_MISSING_INPUTS
+    ]
+    if gaps:
+        return validated, gaps
+    return validated, ()
+
+
 def _deterministic_arguments_from_schema(
     descriptor: ProviderCapability,
 ) -> dict[str, Any] | None:
@@ -4502,6 +4635,38 @@ MODEL_STAGE_TIMEOUT_SECONDS = 10.0
 # Do not start a model stage that cannot finish usefully within the
 # remaining turn budget (Stage 05 multiturn latency).
 MIN_VIABLE_MODEL_STAGE_SECONDS = 2.0
+# Reserve wall-clock for the handler conversational fallback after an
+# admission/selection miss — prevents cold greetings from burning the
+# entire turn inside select_group when stage env cap equals the turn
+# budget (live doc 47: ~29s group propose → 504).
+CONVERSATIONAL_FALLBACK_RESERVE_SECONDS = 8.0
+# Early semantic admission (no catalog payload) — bounded stage cap.
+INTERACTION_ADMISSION_STAGE_CAP_SECONDS = 6.0
+
+INTERACTION_ADMISSION_INSTRUCTION_ID = (
+    "delia.capability_orchestration.interaction_admission"
+)
+INTERACTION_ADMISSION_INSTRUCTION = """Decide whether the user message requires a governed DELPI owner
+capability (live business data or a governed action), or can be answered
+conversationally without consulting an operational surface.
+
+Respond with JSON containing exactly the fields
+"requires_owner_surface" and "interaction_class".
+
+- "requires_owner_surface": true only when answering needs live DELPI
+  registers, tickets, MES/production facts, specialist owner guidance
+  from a tool, or a coverage question about what systems can consult.
+  false for greetings, thanks, casual dialogue, general assistant role
+  questions, general conceptual explanations that do not need owner
+  data, and explicitly hypothetical/fictional examples.
+- "interaction_class": one of "conversation", "explanation",
+  "hypothetical", "operational", "ambiguous".
+  Use "ambiguous" when real DELPI records vs hypothetical examples
+  cannot be told apart — then requires_owner_surface must be true so
+  selection may clarify rather than invent business facts.
+- Never invent business facts; never select tools here; never answer
+  the user question itself.
+"""
 
 
 # ------------- progressive activity observation (doc 70 §16) -------------
@@ -4743,6 +4908,26 @@ class OperationalCapabilityOrchestrator:
                 correlation=correlation,
                 prepare_only=prepare_only,
                 deadline=deadline,
+            )
+
+        # SEM recovery: cheap typed admission BEFORE listing providers /
+        # select_group. Skips expensive catalog+selection when the turn
+        # is conversational (doc 47 cold greeting FAIL).
+        if self._admit_conversational_turn(
+            input_text,
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        ):
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=conversational correlation_id=%s",
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
             )
 
         groups, failures = self._groups(correlation, deadline)
@@ -8359,6 +8544,34 @@ class OperationalCapabilityOrchestrator:
             if deadline is not None
             else self._model_stage_timeout_seconds
         )
+        # Cold-start headroom: when remaining budget is still large and
+        # the stage env cap could consume it whole (doc 47), leave room
+        # for conversational synthesis after a selection miss. Do NOT
+        # apply this reserve mid-turn when remaining is already tight —
+        # that would abort legitimate late stages as budget_exhausted.
+        if deadline is not None:
+            remaining = deadline.remaining_seconds()
+            if instruction_id == INTERACTION_ADMISSION_INSTRUCTION_ID:
+                stage_timeout = min(
+                    stage_timeout,
+                    INTERACTION_ADMISSION_STAGE_CAP_SECONDS,
+                )
+            elif (
+                instruction_id == GROUP_SELECTION_INSTRUCTION_ID
+                and remaining
+                >= (
+                    CONVERSATIONAL_FALLBACK_RESERVE_SECONDS
+                    + MIN_VIABLE_MODEL_STAGE_SECONDS * 2
+                )
+            ):
+                stage_timeout = min(
+                    stage_timeout,
+                    max(
+                        0.0,
+                        remaining
+                        - CONVERSATIONAL_FALLBACK_RESERVE_SECONDS,
+                    ),
+                )
         # Honest stop: do not start a model stage that cannot finish
         # usefully within the remaining turn budget.
         if stage_timeout < MIN_VIABLE_MODEL_STAGE_SECONDS:
@@ -8967,6 +9180,104 @@ class OperationalCapabilityOrchestrator:
         except CapabilityProviderError:
             return None
 
+    def _admit_conversational_turn(
+        self,
+        input_text: str,
+        *,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        correlation: str,
+        deadline: TurnDeadline,
+    ) -> bool:
+        """Cheap typed admission: conversational turns skip owner surface.
+
+        Returns True only when the model declares requires_owner_surface
+        is false with a non-operational interaction_class. Ambiguous /
+        failed / timed-out admission falls through to selection (never
+        invents business facts by skipping owners).
+        """
+        # Continuity / pending clarification must still reach selection.
+        if prior_turns:
+            return False
+        remaining = deadline.remaining_seconds()
+        if remaining < (
+            INTERACTION_ADMISSION_STAGE_CAP_SECONDS
+            + CONVERSATIONAL_FALLBACK_RESERVE_SECONDS
+        ):
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=budget_skip remaining_ms=%d "
+                "correlation_id=%s",
+                int(remaining * 1000),
+                correlation,
+            )
+            return False
+        try:
+            proposal = self._propose(
+                input_text,
+                block_tag="admission",
+                block_payload=(
+                    '{"note":"no owner catalog; classify interaction only"}'
+                ),
+                instruction_id=INTERACTION_ADMISSION_INSTRUCTION_ID,
+                instruction=INTERACTION_ADMISSION_INSTRUCTION,
+                expected_fields=(
+                    "requires_owner_surface",
+                    "interaction_class",
+                ),
+                input_kind="interaction_admission",
+                allowed_keys=frozenset(
+                    {
+                        "requires_owner_surface",
+                        "interaction_class",
+                        "limitations",
+                    }
+                ),
+                workspace_context=workspace_context,
+                prior_turns=(),
+                correlation=correlation,
+                deadline=deadline,
+            )
+        except _StageDeadlineExceeded:
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=budget_exhausted correlation_id=%s",
+                correlation,
+            )
+            return False
+        if proposal is None:
+            return False
+        raw_req = proposal.get("requires_owner_surface")
+        if isinstance(raw_req, str):
+            requires = raw_req.strip().lower() == "true"
+        elif raw_req is True:
+            requires = True
+        elif raw_req is False:
+            requires = False
+        else:
+            return False
+        raw_class = proposal.get("interaction_class")
+        if not isinstance(raw_class, str):
+            return False
+        interaction_class = raw_class.strip().lower()
+        if interaction_class not in {
+            "conversation",
+            "explanation",
+            "hypothetical",
+            "operational",
+            "ambiguous",
+        }:
+            return False
+        if requires or interaction_class in {"operational", "ambiguous"}:
+            _logger.info(
+                "orchestration stage=interaction_admission "
+                "decision=owner_surface class=%s correlation_id=%s",
+                interaction_class,
+                correlation,
+            )
+            return False
+        return True
+
     def _select_group(
         self,
         input_text: str,
@@ -9565,19 +9876,74 @@ class OperationalCapabilityOrchestrator:
             )
             return None, missing
         if proposal is None:
+            recovered, recovered_missing = (
+                _recover_stated_arguments_from_input(
+                    input_text, descriptor, {}, ()
+                )
+            )
+            if recovered is not None and not recovered_missing:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=stated_input_recovery keys=%d "
+                    "correlation_id=%s",
+                    len(recovered),
+                    correlation,
+                )
+                return recovered, ()
             return None, ()
         missing = _missing_inputs(proposal.get("missing_inputs"))
         normalized = normalize_arguments(proposal.get("arguments"))
         if normalized is None:
-            return None, missing
+            recovered, recovered_missing = (
+                _recover_stated_arguments_from_input(
+                    input_text, descriptor, {}, missing
+                )
+            )
+            if recovered is not None and not recovered_missing:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=stated_input_recovery keys=%d "
+                    "correlation_id=%s",
+                    len(recovered),
+                    correlation,
+                )
+                return recovered, ()
+            return None, recovered_missing or missing
         validated = _validate_instance(normalized, descriptor.input_schema)
         if validated is None:
-            return None, missing
+            recovered, recovered_missing = (
+                _recover_stated_arguments_from_input(
+                    input_text, descriptor, normalized, missing
+                )
+            )
+            if recovered is not None and not recovered_missing:
+                return recovered, ()
+            return None, recovered_missing or missing
         if missing and not validated:
-            # The model declared owner-required inputs absent and
-            # produced no arguments — an empty invocation would
-            # fabricate a call the owner must reject. Clarify instead.
-            return None, missing
+            # Model declared owner-required inputs absent — try to
+            # recover subject/quantity already present in the message
+            # before clarifying generically.
+            recovered, recovered_missing = (
+                _recover_stated_arguments_from_input(
+                    input_text, descriptor, validated, missing
+                )
+            )
+            if recovered is not None and not recovered_missing:
+                _logger.info(
+                    "orchestration stage=arguments "
+                    "decision=stated_input_recovery keys=%d "
+                    "correlation_id=%s",
+                    len(recovered),
+                    correlation,
+                )
+                return recovered, ()
+            return None, recovered_missing or missing
+        # Enrich model args with stated search/limit fields it omitted.
+        recovered, recovered_missing = _recover_stated_arguments_from_input(
+            input_text, descriptor, validated, ()
+        )
+        if recovered is not None and not recovered_missing:
+            return recovered, ()
         return validated, ()
 
     def _invoke_selected(

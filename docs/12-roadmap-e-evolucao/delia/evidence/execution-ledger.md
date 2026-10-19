@@ -15321,3 +15321,15 @@ NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)
 **DATE:** 2026-10-19. **REVIEW:** [47](../corrections/mcp-contextual-intelligence-orchestration/47-independent-conversational-recovery-cold-start-review.md). **LIVE CODE SHA:** 3564f9ba74d5acdf1fc9defc38caf8bd506e6760. **STATE:** scoped conversational not_applicable fallback and page-slice activity-count omission accepted with residual; executor full backend PASS, independent replay TEST_NOT_RUN. Cold A01 greeting HTTP504 after ~29s select_group=FAIL. Real product query and same-conversation clarification continuity TEST_NOT_RUN. Preserve model-versus-owner error taxonomy, no ACT/ungrounded business facts. I04_ACCEPTED=NO, C3_EXECUTED=NO, C4/C5_AUTHORIZED=NO. This review does not change phase or accepted ownership.
 
 NEXT_RELATED=DELIA-C3-COLD-CONVERSATIONAL-ADMISSION-AND-CONTINUITY-REWORK-01
+
+## §6.290 — Semantic intelligence orchestration full recovery
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-SEMANTIC-INTELLIGENCE-ORCHESTRATION-FULL-RECOVERY-01`. **DOC:** [48](../corrections/mcp-contextual-intelligence-orchestration/48-semantic-intelligence-orchestration-full-recovery.md). **BASE:** `eca913e4f8`.
+
+- **Cause:** cold conversational turns paid full `select_group` under stage timeout=turn budget (504); argument projection dropped stated subject/quantity into generic clarification; no typed admission before owner listing.
+- **Fix:** `interaction_admission` before `_groups`; cold group-selection conversational reserve (only when remaining budget is still large); schema-driven `_recover_stated_arguments_from_input`; admission skipped with prior_turns.
+- **Tests:** SEM recovery suite + full `delia-api` pytest **PASS**.
+- **Deploy/live:** see doc 48 after `up-prod-sequential.sh --pull --build delia-api`.
+- **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW
