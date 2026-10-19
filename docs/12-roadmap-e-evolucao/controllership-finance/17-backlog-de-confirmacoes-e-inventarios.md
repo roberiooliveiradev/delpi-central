@@ -169,13 +169,13 @@ UNIT_SCOPE_PERMISSION_MODEL = NOT_APPLICABLE
 
 Filial/unidade pode ser filtro/dimensão do dado, mas não permission code dedicado deste Portal.
 
-## D-FINAL-01 — Core T05: grupo/função corporativa elegível por área
+## D-FINAL-01 — Core T05: fonte de elegibilidade por área
 
-**DECISION_REQUIRED / AUTHORITY_INVENTORY_FIRST.** O Core comprova RBAC group membership e effective permission S2S, mas os contratos S2S inspecionados não publicam group/function corporativa tipada ao P5. Não associar área obrigatória a grupo RBAC pelo nome, nem usar perfil self como S2S. Inventariar fonte corporativa e submeter owner/contrato à decisão quando material. Opções, impacto e recomendação: [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md).
+**TO_INVENTORY / OWNER=CORE API.** Governança, criação, concessão e revogação de permissões/grupos são responsabilidade da Core API, não do Portal CF. A BFF consome permissões efetivas e contrato autorizado para verificar o vínculo operacional/área/scope no P5. Inventariar origem e contrato S2S com o owner Core; não criar RBAC ou permission code no Portal. Referência: [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md).
 
-## D-FINAL-02 — P6: zero áreas obrigatórias
+## D-FINAL-02 — P6/P5: ausência de revisores humanos
 
-**DECISION_REQUIRED / PO.** O contrato C2 é por área obrigatória na PackageVersion vigente, mas a política para tipo de pacote sem áreas configuradas ou conjunto intencionalmente vazio não está aprovada. Não permitir comportamento automático por suposição matemática. Opções, riscos e recomendação: [44 — A16](./44-a16-revalidacao-final-transversal-2026-10-16.md).
+**CLOSED / PO_APPROVED em 19/10/2026.** Não adicionar trava prévia de submissão ou publicação por quantidade de revisores. **Sem pessoas elegíveis não há aceite humano; sem aceite real válido não há fechamento C2.** Se áreas estiverem vazias/não configuradas, não usar verdade vacuamente satisfeita para concluir; o pacote permanece aguardando revisão até existir aceite humano efetivo e auditado. Preservar quórum por área existente e PackageVersion vigente. Nunca inventar aprovação automática, bypass MANAGE ou gestão de permissions local. Critérios no [ledger 23](./23-ledger-rq-ac-testes.md) e [P5 37](./37-p5-submissao-e-revisao-no-portal.md).
 
 ## Stop conditions
 
