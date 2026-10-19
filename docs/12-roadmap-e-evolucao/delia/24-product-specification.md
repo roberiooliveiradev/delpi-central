@@ -89,6 +89,14 @@ Uma DÉLIA dinamicamente especializada por Expertise Packs, Playbooks, Knowledge
 
 External A2A agents são integrações, não alternativas user-facing à DÉLIA.
 
+## 5.1 Diferencial: inteligência contextual com LLMs existentes
+
+**DÉLIA = produto LLM-enabled, não desenvolvimento de um novo LLM.** A aplicação utiliza a capacidade de compreensão semântica de modelos disponíveis, instruções versionadas, contexto relevante da conversa/trabalho e catálogo vivo de ferramentas/capabilities autorizadas. Seu trabalho de produto é conectar essa inteligência a DAVI/TÉO/VISTA, Domain APIs, MCP/A2A, OpenAPI e demais superfícies futuras **sem codificar previamente todas as perguntas possíveis**, sem lógica específica de owner e sem duplicar o runtime do Minha DELPI Chat.
+
+Experiência esperada: perguntar naturalmente, mudar de assunto, referir-se a turnos anteriores, solicitar explicações e exemplos hipotéticos sem ferramentas, e utilizar a ferramenta adequada quando houver dependência operacional. A DÉLIA deve generalizar para providers equivalentes, novos nomes, mudanças de ordem de catálogo e pedidos inéditos; deve fazer perguntas de esclarecimento somente quando faltarem informações realmente necessárias. Contexto anterior, prompts e tool metadata jamais concedem FACT ou AuthZ.
+
+A camada de execução e governança valida propostas semânticas tipadas do LLM contra capability live, Core/Domain, segurança, tipos/schema, provenance, budget, Policy/Decision, PREPARE/ACT e outcome. Manter `selection-only` empresarial aprovado: não abrir prosa factual de modelo sem decisão separada. A qualidade de inteligência é medida por **sucesso real de tarefa, continuidade, generalização, segurança e latência**, não por quantidade de helpers, linhas removidas, mocks verdes ou HTTP 200. Referências: [49 §14.1–14.2](./49-architecture-and-design-patterns-standard.md), [ADR 58](./corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md) e [59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md). Esta cláusula não avança fase nem autoriza features novas.
+
 ## 6. Conversation / Context / Memory
 
 - PT-BR natural;
