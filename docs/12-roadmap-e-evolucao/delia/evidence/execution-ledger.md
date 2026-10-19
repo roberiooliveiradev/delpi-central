@@ -15367,3 +15367,19 @@ NEXT=BOUNDED_SEMANTIC_ARGUMENT_GENERALIZATION_AND_OPERATIONAL_LOAD_REWORK
 - **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.286 — DELIA-UX-AUDIO-RECORDER-CONTROLLED-PRODUCTION-TEST-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-AUDIO-RECORDER-CONTROLLED-PRODUCTION-TEST-01`. **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **EVIDENCE:** [audio-recorder-controlled-production-test-01](audio-recorder-controlled-production-test-01/controlled-production-test-evidence.md). **COMMIT:** `5df2f3c517`.
+
+- **DECISÃO PM:** teste controlado do gravador em produção para usuários admitidos — sem ampliação de permissões, upload, transcrição ou AuthZ por voz.
+- **CONTRATO:** `MeResponse.permissions` → `AppProps.permissions` (Core RBAC backend-resolved → host props). Nova permissão `delia.audio-capture.test` no manifest v0.0.2 (mudança de permissão exige nova versão — contrato `plugin.permission_change_not_allowed`).
+- **IMPLEMENTAÇÃO:** `audioCaptureTestAdmission.ts` — `resolveAudioTestAdmission(permissions)` fail-closed, match exato; limites bounded 60s/256KB autorizados pelo PM p/ teste; banner honesto "Gravação de áudio em teste…". `App.tsx`: `useMemo(permissions)` reativo → revogação flipa `enabled`→`hardCleanup` mid-capture. `canSendAudio=false` mantido.
+- **LIVE (bundle paridade-prod, `VITE_DELIA_AUDIO_QA:""`):** pipeline completo exercitado no dev stack — register manifest → role `delia-audio-test` → grant e2e-delia → `/me` resolve a permissão → mic visível **sem param**, banner de teste, gravação/preview/discard OK, dock OK (13/13). `?delia-audio-qa=1` inerte. Revogação do grant → mic ausente com e sem param (fail-closed, sem redeploy) → REVOCATION_PASS.
+- **GATES:** delia vitest 242/242, tsc PASS, docker build PASS (federation verify OK); plugin-ui sem diff.
+- **DEPLOY PROD:** `PENDING` — executor sem SSH ao srv-api; runbook de 3 passos na evidência (pull+build s/ flag → register-manifest → grant RBAC). Produção permanece fail-closed em cada etapa intermediária.
+- **RESIDUAIS:** `HUMAN_SPEECH_PLAYBACK=TEST_NOT_RUN`; cache do PermissionResolver pode adiar revogação até refresh; Firefox/Edge/Safari TEST_NOT_RUN; ops note — endpoint role-permission usa `{"id": "<code>"}`.
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_READINESS=NOT_PROVEN`; fase inalterada.
+
+NEXT=INDEPENDENT_REVIEW → ops executa runbook de deploy + grants → PM valida em minhadelpi.com.br

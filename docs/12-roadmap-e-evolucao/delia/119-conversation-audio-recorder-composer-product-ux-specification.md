@@ -208,6 +208,7 @@ IMPLEMENTATION=AU_F02_AU_F03_LOCAL_FOUNDATION_DONE (2026-10-19, evidência linka
 AUDIO_CAPTURE_RUNTIME=IMPLEMENTED_LOCAL_GATED_OFF
 QA_ADMISSION=IMPLEMENTED (VITE_DELIA_AUDIO_QA bundle flag + ?delia-audio-qa=1 explícito; param inerte em produção — provado live)
 PROD_DEPLOYMENT_DIAGNOSTIC=DONE (bundle prod App-CXTCxdME contém a feature com VITE_DELIA_AUDIO_QA:"" → gate OFF por design; ausência do mic em minhadelpi.com.br é comportamento projetado, não defeito — evidência audio-recorder-deployment-diagnostic-01)
+CONTROLLED_TEST_ADMISSION=IMPLEMENTED (permissão Core RBAC `delia.audio-capture.test` → host props → mic; fail-closed, revogável sem redeploy; limites bounded 60s/256KB autorizados pelo PM p/ teste; deploy prod pendente — evidência audio-recorder-controlled-production-test-01)
 AUDIO_UPLOAD_CONTRACT=TO_INVENTORY
 SPEECH_TO_TEXT_CONTRACT=TO_INVENTORY
 PRODUCTION_MEDIA_LIMITS=CONTRACT_REQUIRED (maxDurationMs/maxBytes exigidos pelo gate; sem valores aprovados)
