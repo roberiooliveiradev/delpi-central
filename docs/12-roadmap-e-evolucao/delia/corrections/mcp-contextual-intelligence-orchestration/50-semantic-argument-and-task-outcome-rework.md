@@ -39,9 +39,29 @@ That ask invents owner requirements the contract did not prove.
 | SEM/CONV/i02r2 headroom updates | **PASS** |
 | Full `delia-api` pytest | see execution |
 
-## 5. Live (post-deploy)
+## 5. Live (post-deploy `43b577bd4b`, model `moonshotai/kimi-k3`)
 
-Filled after production verification.
+| Case | HTTP | ms | Outcome |
+|---|---|---|---|
+| **P01** Liste 2 exemplos terminal pino | 200 | 11816 | RESULT ilustrativo; **sem** código/filtro inventado |
+| P02 três exemplos | 200 | 14881 | RESULT ilustrativo |
+| P03 produtos reais DELPI | 200 | 21562 | `SOURCE_UNAVAILABLE` (budget-skip identifier — honesto, sem ask fake) |
+| P04 só ilustrativos | 200 | 12459 | RESULT / pede tema |
+| P05 cadastrados | 200 | 16665 | `SOURCE_UNAVAILABLE` (mesmo residual operacional) |
+| P06 compare 3×5 | 200 | 30014 | `SOURCE_UNAVAILABLE` / budget |
+| P07 linha 2026 | 200 | 30014 | `SOURCE_UNAVAILABLE` / budget |
+| P08 2 primeiros olhal | 200 | 14619 | `SOURCE_UNAVAILABLE` |
+| P09 exemplos conectores | 200 | 12952 | RESULT ilustrativo |
+| P10 diferença pino/olhal | 200 | 19320 | RESULT conceitual |
+| A01 Olá | 200 | 5296 | cold greeting OK |
+| F01 ACT injection | 200 | 26244 | recusa; ACT=0 |
+
+```text
+INVENTED_CODIGO_FILTRO_ASK=0/12
+HEURISTIC_RECOVERY_REMOVED=YES
+MATERIAL_ACT_COUNT=0
+OPEN_GAP=real product/catalog reads still hit skip_budget_identifier_unavailable under 30s (honest limitation; not fake clarify)
+```
 
 ## 6. Phase gates (unchanged)
 
