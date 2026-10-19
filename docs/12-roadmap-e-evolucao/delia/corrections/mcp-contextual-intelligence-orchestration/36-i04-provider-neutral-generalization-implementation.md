@@ -85,23 +85,30 @@ Full `delia-api` pytest: **PASS** (R1 concurrent suite parked outside tree).
 | K3 | 22388 | PASS clarification |
 | K4 | 29959 | FAIL arguments budget → source_unverified |
 
-### Post-fix sample
+### Post-fix sample (deployed `37f4e21229`)
 
-_(filled after deploy of implementation SHA)_
-
-| Case | ms | Result |
-|---|---|---|
-| K1 | _pending_ | _pending_ |
-| K2 | _pending_ | _pending_ |
-| K3 | _pending_ | _pending_ |
-| K4 | _pending_ | _pending_ |
+| Case | ms | session_id | Result |
+|---|---|---|---|
+| K1 | 18277 | `df0864c9-…` | **PASS** GROUNDED TÉO `get_methodology_guide` (corr. `d047be58-…`) |
+| K2 | 10818 | `192df3bc-…` | **PASS** continuity 6 bullets / `prior_turn_evidence_only` / no owner reinvoke |
+| K3 | 30028 | `30dd4afb-…` | **PASS_WITH_LIMITATION** VISTA INDEX→`no_match`→clarification `budget_fallback` (corr. `58244a59-…`) |
+| K4 | 8768 | `9411ac97-…` | **FAIL** `select_capability decision=none` after `group=mcp:davi` (corr. `6afa51fe-…`) — **not** the args-budget path; same family as doc34 L06 / §6.276 R1 residual |
 
 ```text
-SOURCE_SHA=
-DEPLOYED_SHA=
-CONFIG_FINGERPRINT=
-MATERIAL_ACT_COUNT=0 (expected MESSAGE-only)
+SOURCE_SHA=37f4e21229ca9de80be3aa08f7261a1a081424aa
+DEPLOYED_SHA=37f4e21229ca9de80be3aa08f7261a1a081424aa
+MODEL_ID=moonshotai/kimi-k3
+MODEL_PROVIDER=openai_compatible
+CONFIG_FINGERPRINT=7042edd2bc100442
+GLOBAL_TURN_BUDGET_SECONDS=30
+MATERIAL_ACT_COUNT=0
+ARGS_BUDGET_PROJECTION_LIVE_EXERCISED=NO (K4 failed earlier at select_capability none)
+ARGS_BUDGET_PROJECTION_SYNTHETIC=PASS
 ```
+
+### 5.1 Runtime config fingerprint
+
+Computed inside `delpi-delia-api` over non-secret `DELIA_*`/`LLM_*`/`KEYCLOAK_*` env keys → sha256-16 `7042edd2bc100442`. Markers in image: `_single_free_text_argument_from_input`, `budget_input_projection`, `recover_invalid_index` = present.
 
 ## 6. Direct MCP comparison
 

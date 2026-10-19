@@ -15147,8 +15147,8 @@ NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
 - **REUSE:** `OperationalCapabilityOrchestrator` / `select_decision_path` / discovery / continuity / foreign evidence — no second planner, no specialist-name branches, no parallel registry.
 - **EXTEND:** `_single_free_text_argument_from_input` on `turn_budget_exhausted` after selection (project sole unconstrained string or clarify; `model_timeout` terminal). Characterized by live K4 FAIL pre-fix (`session_id=7ff45da3-…`, 29959ms, `delpi_source_unverified` after DAVI select).
 - **SYNTHETIC:** `test_i04_provider_neutral_generalization.py` PASS; full `delia-api` pytest PASS.
-- **LIVE:** pre-fix K1/K2/K3 PASS, K4 FAIL; post-fix filled in doc 36 after deploy. MESSAGE-only; ACT=0 in sample.
-- **DECISION:** `I04_ACCEPTED=NO`; `ALGORITHM_COMPLETION=PARTIAL`; §6.271 helpdesk residual separate; R1/R3 from §6.275–§6.276 not mixed. No C3/C4/C5/Q01 progression.
+- **LIVE (deployed `37f4e21229`):** K1 PASS 18.3s; K2 PASS 10.8s continuity; K3 PASS_WITH_LIMITATION INDEX no_match + budget_fallback clarify 30.0s; K4 FAIL select_capability none on `mcp:davi` (R1 family / doc34 L06 — args projection not reached). Pre-fix K4 was args-budget SOURCE_UNAVAILABLE. MESSAGE-only; ACT=0.
+- **DECISION:** `I04_ACCEPTED=NO`; `ALGORITHM_COMPLETION=PARTIAL`; §6.271 helpdesk residual separate; R1/R3 from §6.275–§6.276 not mixed into this fix. No C3/C4/C5/Q01 progression.
 
 NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW_I04
 NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
