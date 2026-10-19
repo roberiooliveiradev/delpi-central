@@ -44,14 +44,20 @@ Regressions: I01/I02/R3B/ACR/I03/I03-nonreg/I04/specialist + **full `delia-api` 
 
 ## 4. Live (MESSAGE-only)
 
-Recorded after deploy of this SHA (see ledger §6.281). Model `moonshotai/kimi-k3`. ACT=0.
+**SOURCE_SHA = DEPLOYED_SHA = `19843e5cf9f5684f52124f0df25ae8d131b6bb35`**  
+**MODEL:** `openai_compatible` / `moonshotai/kimi-k3`  
+**BUDGET/STAGE:** 30 / 30 · **ACT:** 0
 
-| Case | Required | Result |
-|---|---|---|
-| K4-A broad discovery | Owner DISCOVERY path / honest I03 terminal — not generic R1 ask-back | _(fill on live)_ |
-| K4-B thematic | Grounded or honest miss | _(fill on live)_ |
-| L02 | No avoidable 504 | _(fill on live)_ |
-| L03/L04/L05/L01 | Controls | _(fill on live)_ |
+| Case | HTTP | ms | Result |
+|---|---|---|---|
+| **K4-A** broad | 200 | 16118 | **PASS** — `davi.discover_delpi_information` GROUNDED; I03 `eligible=95` search-miss honesty; corr `d4ddc761-…`; **not** generic R1 |
+| **K4-B** thematic products | 200 | 26163 | PASS_WITH_LIMITATION — selected `openapi:delpi.search_products` then bounded ask-back for location fields (no invented facts) |
+| **K4-C** no-match | 200 | 30019 | PASS_WITH_LIMITATION — budget edge + source unverified (honest); not false catalog absence |
+| **L02** | 200 | 3560 | **PASS** R1 clarification; no 504 |
+| **L03** | 200 | 16734 | **PASS** GROUNDED `teo.get_methodology_guide` corr `50b7657c-…` |
+| **L04** | 200 | 15420 | **PASS** R3 `Recuperei 8 itens da orientação anterior` |
+| **L05** | 200 | 21969 | **PASS** safe VISTA clarification |
+| **L01** | 200 | 10432 | **PASS** routing + `glpi_link_required` precondition preserved |
 
 ## 5. Residuals
 

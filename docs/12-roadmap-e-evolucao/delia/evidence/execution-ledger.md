@@ -15200,7 +15200,7 @@ NEXT_RELATED=DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01
 - **ROOT CAUSE:** stage-2 model `applicable=false` on coverage inquiry after group `mcp:davi` → R1 clarification; I03 DISCOVERY terminal never reached despite owner `eligible_action_count>0`.
 - **FIX:** instruction v12 (coverage → DISCOVERY); payload `role=owner_vocabulary_discovery`; `_is_information_coverage_inquiry` + recovery when sole group DISCOVERY exists. No DAVI hardcode; no arbitrary singleton auto-select; checklist follow-ups excluded.
 - **TESTS:** `test_r2_provider_neutral_capability_selection_quality.py` T01–T17 PASS; R1/R3 + I01–I04 + ACR + specialist PASS; full `delia-api` pytest PASS.
-- **LIVE:** filled after deploy of this SHA (see addendum below if present).
+- **LIVE (deployed=`19843e5cf9`, kimi-k3):** K4-A `davi.discover_delpi_information` GROUNDED 16.1s corr `d4ddc761-…` eligible=95 I03 honesty (**not** R1 generic); K4-B products ask-back after `search_products` 26.2s; L02 R1 clarify 3.6s; L03 TEO GROUNDED 16.7s; L04 orientação framing 15.4s; L05 safe clarify; L01 `glpi_link_required`. ACT=0. SOURCE_SHA=DEPLOYED_SHA.
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; no C3/C4/C5/Q01 progression.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
