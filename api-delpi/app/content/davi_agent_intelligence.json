@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.19.1",
+  "version": "2026.10.19.2",
   "owner": "api-delpi",
   "source": "capability_surface.agent_directives via gpt_get_catalog / discover_delpi_information",
   "read_only": true,
@@ -345,16 +345,36 @@
   },
   "flows": {
     "product_master_search": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "gpt_operations": ["gpt_search_products", "gpt_get_catalog"],
-      "pipeline": ["optional_catalog_or_discover_directives", "discover", "execute_candidate", "report_fields_returned"],
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_search_products",
+        "gpt_get_catalog"
+      ],
+      "pipeline": [
+        "optional_catalog_or_discover_directives",
+        "discover",
+        "execute_candidate",
+        "report_fields_returned"
+      ],
       "confirmation_policy": "read_only",
       "note": "MCP: Product Master via discover→execute only. GPT Actions gpt_search_products remains LEGACY_TRANSITIONAL on a separate transport."
     },
     "stock_and_supply": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "gpt_operations": ["gpt_get_catalog"],
-      "pipeline": ["discover", "execute_candidate", "report_or_gap"],
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_get_catalog"
+      ],
+      "pipeline": [
+        "discover",
+        "execute_candidate",
+        "report_or_gap"
+      ],
       "confirmation_policy": "read_only",
       "capabilities": [
         "product.stock.availability",
@@ -377,14 +397,28 @@
       "note": "Inventory & Material Flow: discover→execute; backend é autoridade. Movimentação kind: warehouse_transfer | inventory_adjustment | production_receipt | production_consumption; não classificar por TM/CF bruto. Ajustes: get_supplies_inventory_adjustments_summary (agregado), list_supplies_inventory_adjustments (detalhe). Sem nature explícita: summary.net_value = surplus_value - shortage_value; reportar surplus_value, shortage_value, gross_value = surplus_value + shortage_value, quantidades e contagens. net_value positivo = sobra líquida; negativo = furo líquido; nunca apresente gross_value como líquido. Pedido de furo → nature=shortage; pedido de sobra → nature=surplus. INVENT nunca é transferência. committed_quantity/reserved_quantity = empenho/reserva; estimation.* em supplies.stock.value informa método/fechamento SB9; expor data_quality_warning. Perdas: loss_type=refugo|scrap|both. Acuracidade: get_supplies_inventory_accuracy_summary/items (contagens oficiais), não ajustes. Sem giro: get_supplies_non_moving_stock_summary/items, não valor de estoque isolado. Validar resumo/detalhe com mesmo período/filiais; declarar filtros exclusivos e paginação parcial. Sem giro usa snapshot atual SB2 com janela histórica de consumo; histórico insuficiente não é sem giro. Erro não é lista vazia. Sem cálculo local por TM/CF, inferência de permissão ou SQL genérico."
     },
     "structure_bom": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "gpt_operations": ["gpt_get_catalog"],
-      "pipeline": ["discover", "execute_candidate", "empty_means_report_not_invent"],
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_get_catalog"
+      ],
+      "pipeline": [
+        "discover",
+        "execute_candidate",
+        "empty_means_report_not_invent"
+      ],
       "confirmation_policy": "read_only"
     },
     "product_master_extensions": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "gpt_operations": ["gpt_get_catalog"],
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_get_catalog"
+      ],
       "capabilities": [
         "product.physical_location",
         "product.inventory.block_status",
@@ -395,27 +429,63 @@
         "product.sales.summary",
         "product.sales.open_orders"
       ],
-      "pipeline": ["discover", "execute_candidate", "report_or_gap"],
+      "pipeline": [
+        "discover",
+        "execute_candidate",
+        "report_or_gap"
+      ],
       "confirmation_policy": "read_only",
       "note": "Product Master extended READs via discover→execute only; semantic capabilities are catalog metadata, not endpoints/operationIds/tools. product.invoice.history resolves direction semanticamente: entrada → inbound, saída → outbound — nunca aceite selector arbitrário do caller. Local físico != saldo em estoque; bloqueio de inventário != disponibilidade; pedidos de venda em aberto != pedidos de compra / ordens de produção; NF de entrada/saída != relatório financeiro; movimentação interna != faturamento; part number do fornecedor != histórico de preço. Zero linhas / agregado zero = resposta canônica, nunca prova de inexistência do produto."
     },
     "write_request": {
-      "mcp_tools": ["discover_delpi_information"],
-      "gpt_operations": ["gpt_get_catalog"],
-      "pipeline": ["state_read_only", "discover_may_return_zero", "never_claim_persisted"],
+      "mcp_tools": [
+        "discover_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_get_catalog"
+      ],
+      "pipeline": [
+        "state_read_only",
+        "discover_may_return_zero",
+        "never_claim_persisted"
+      ],
       "confirmation_policy": "read_only_deny_write"
     },
     "system_metadata": {
-      "mcp_tools": ["discover_delpi_information", "execute_delpi_information"],
-      "gpt_operations": ["gpt_get_catalog"],
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "gpt_operations": [
+        "gpt_get_catalog"
+      ],
       "capabilities": [
         "system.protheus.table.search",
         "system.protheus.column.search",
         "system.protheus.table.describe"
       ],
-      "pipeline": ["discover", "execute_candidate", "report_or_gap"],
+      "pipeline": [
+        "discover",
+        "execute_candidate",
+        "report_or_gap"
+      ],
       "confirmation_policy": "read_only",
       "note": "Dicionário Protheus (SX2/SX3/sys.tables) via discover→execute only. Metadata naming a table grants ZERO authority over its rows — nome de tabela retornado NÃO autoriza ler registros de negócio dela. Backend SYSTEM_METADATA_ACCESS is final AuthZ; api-delpi.access alone is not sufficient."
+    },
+    "ad_hoc_sql_read": {
+      "mcp_tools": [
+        "discover_delpi_information",
+        "execute_delpi_information"
+      ],
+      "pipeline": [
+        "discover_schema_metadata_if_needed",
+        "discover_sql_capability",
+        "formulate_readonly_select",
+        "execute_candidate",
+        "report_only_returned_data"
+      ],
+      "confirmation_policy": "read_only",
+      "note": "SQL somente via a rota canônica execute_readonly_sql (POST /data/sql) da API DELPI: SELECT read-only, sem bypass de permissão, backend 403 é decisão final. Prefira campos explícitos a SELECT *, use metadata (search_tables_by_description, get_protheus_table, list_protheus_table_columns) quando tabela/coluna for incerta, e não use SQL para contornar uma rota semântica canônica que responde ao pedido. Nunca tente enfraquecer restrições do validador após rejeição."
     }
   }
 }
