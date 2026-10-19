@@ -86,6 +86,8 @@ class FakeProposalModel:
         queue = self._queues.get(purpose)
         if queue:
             resolved = queue.pop(0)
+        elif purpose == "delia.capability_orchestration.interaction_admission":
+            resolved = self._last.get(purpose)
         elif self._generic:
             resolved = self._generic.pop(0)
         else:
@@ -1119,14 +1121,14 @@ def test_budget_model_calls_per_guided_write_path():
     # choice — the bound APPLY turn runs zero extra model proposals.
     assert attempt.status is GovernedCapabilityStatus.CONFIRMATION_REQUIRED
     purposes = [r.task_purpose_id for r in model.requests]
-    # select_group + select_capability + turn_goal +
-    # native_assessment + arguments (target) — discovery args are
-    # resolved without a proposal (empty schema short-circuit).
-    assert len(purposes) == 5
+    # interaction_admission + select_group + select_capability +
+    # turn_goal + native_assessment + arguments (target) — discovery
+    # args are resolved without a proposal (empty schema short-circuit).
+    assert len(purposes) == 6
     assert purposes.count(ARGUMENTS_INSTRUCTION_ID) == 1
     applied = _apply_pending(orch, attempt)
     assert applied.status is GovernedCapabilityStatus.SUCCESS
-    assert len(model.requests) == 5
+    assert len(model.requests) == 6
 
 
 # ---------------------------------------------------------------------

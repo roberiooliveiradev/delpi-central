@@ -1,5 +1,4 @@
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -8,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from delpi_auth.credential_guard import check_credentials
+from delpi_auth.cors_policy import build_allowed_origins
 from helpdesk_app.application.oauth_service import OAuthService
 from helpdesk_app.application.profile_sync_service import ProfileSyncService
 from helpdesk_app.application.ticket_service import TicketService
@@ -34,18 +34,10 @@ logging.basicConfig(
 )
 
 
-def build_allowed_origins() -> list[str]:
-    origins: set[str] = set()
-    if settings.PUBLIC_BASE_URL:
-        origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
-    if settings.VITE_KC_URL:
-        if "/auth" in settings.VITE_KC_URL:
-            origins.add(settings.VITE_KC_URL.split("/auth")[0].rstrip("/"))
-        else:
-            origins.add(settings.VITE_KC_URL.rstrip("/"))
-    if os.getenv("API_DELPI_ENV", "development") != "production":
-        origins.add("http://localhost")
-    return sorted(origins)
+ALLOWED_ORIGINS = build_allowed_origins(
+    public_base_url=settings.PUBLIC_BASE_URL,
+    keycloak_url=settings.VITE_KC_URL,
+)
 
 
 def build_runtime():
@@ -126,7 +118,7 @@ async def helpdesk_error_handler(_request: Request, exc: HelpdeskError):
 app.middleware("http")(jwt_middleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=build_allowed_origins() or ["http://localhost"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

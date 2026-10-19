@@ -1,5 +1,4 @@
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -8,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from delpi_auth.credential_guard import check_credentials
+from delpi_auth.cors_policy import build_allowed_origins
 from cec_app.config import settings
 from cec_app.core.responses import fail
 from cec_app.interface.http.routes.access_routes import router as access_router
@@ -25,21 +25,10 @@ logging.basicConfig(
 )
 
 
-def build_allowed_origins() -> list[str]:
-    origins: set[str] = set()
-    if settings.PUBLIC_BASE_URL:
-        origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
-    if settings.VITE_KC_URL:
-        if "/auth" in settings.VITE_KC_URL:
-            origins.add(settings.VITE_KC_URL.split("/auth")[0].rstrip("/"))
-        else:
-            origins.add(settings.VITE_KC_URL.rstrip("/"))
-    if os.getenv("API_DELPI_ENV", "development") != "production":
-        origins.add("http://localhost")
-    return sorted(origins)
-
-
-ALLOWED_ORIGINS = build_allowed_origins()
+ALLOWED_ORIGINS = build_allowed_origins(
+    public_base_url=settings.PUBLIC_BASE_URL,
+    keycloak_url=settings.VITE_KC_URL,
+)
 
 
 @asynccontextmanager
@@ -78,7 +67,7 @@ app.middleware("http")(jwt_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

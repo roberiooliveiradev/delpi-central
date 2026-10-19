@@ -90,6 +90,8 @@ class FakeProposalModel:
         queue = self._queues.get(purpose)
         if queue:
             resolved = queue.pop(0)
+        elif purpose == "delia.capability_orchestration.interaction_admission":
+            resolved = self._last.get(purpose)
         elif self._generic:
             resolved = self._generic.pop(0)
         else:

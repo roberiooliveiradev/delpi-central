@@ -109,6 +109,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **Conversational intelligence recovery:** [46 — implementation](./46-conversational-intelligence-and-orchestration-recovery.md). `applicable=false` → conversational NOT_APPLICABLE; page-slice activity omits record_count; instruction v5. Full pytest PASS. Does not accept I04 / C3–C5 / Q01.
 
+**Semantic intelligence full recovery (candidate):** [48 — implementation](./48-semantic-intelligence-orchestration-full-recovery.md). Typed `interaction_admission` before owner listing; cold group-selection conversational reserve; schema-driven stated-argument recovery. Full pytest PASS. Does not accept I04 / C3–C5 / Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |

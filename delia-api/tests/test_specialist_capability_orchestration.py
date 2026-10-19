@@ -267,6 +267,7 @@ from app.application.capability_provision.orchestration import (
     FOREIGN_SELECTION_INSTRUCTION_ID,
     GOAL_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
+    INTERACTION_ADMISSION_INSTRUCTION_ID,
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
 )
@@ -283,6 +284,7 @@ _STAGE_IDS = frozenset(
         CANDIDATE_SELECTION_INSTRUCTION_ID,
         CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
         SYNTHESIS_INSTRUCTION_ID,
+        INTERACTION_ADMISSION_INSTRUCTION_ID,
     }
 )
 
@@ -324,6 +326,10 @@ class FakeProposalModel:
         queue = self._queues.get(purpose)
         if queue:
             resolved = queue.pop(0)
+        elif purpose == INTERACTION_ADMISSION_INSTRUCTION_ID:
+            # Never steal later stage payloads from the generic queue —
+            # missing admission means fall through to selection.
+            resolved = self._last.get(purpose)
         elif self._generic:
             resolved = self._generic.pop(0)
         else:
@@ -361,6 +367,10 @@ def _read(
 def _select(specialist_id, remote_name, arguments=None, goal_class="read"):
     """Routing-map proposal for the hierarchical pipeline."""
     return {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
+        },
         GROUP_SELECTION_INSTRUCTION_ID: {
             "applicable": True,
             "capability_group_id": f"mcp:{specialist_id}",
@@ -1415,14 +1425,15 @@ def test_adversarial_model_prose_cannot_become_observation():
     assert "900 unidades" not in attempt.content
     # The deterministic bounded render carries the authoritative data.
     assert "TUBO 30X30X1500" in attempt.content
-    # Five governed proposals ran: the plan calls plus the bounded
-    # turn-goal proposal (LOOP-03R1). The owner result is a single
-    # record with exactly one renderable scalar — the deterministic
-    # grounded composer answers directly and the synthesis proposal
-    # is skipped (R1 token efficiency), so the fabricated "answer"
-    # payload was never even consumed by a stage; model prose can
-    # never introduce factual leaf values into the OBSERVATION answer.
-    assert len(read._invoke_model._port.requests) == 5
+    # Six governed proposals: interaction admission + plan calls +
+    # bounded turn-goal (LOOP-03R1 / SEM recovery). The owner result is
+    # a single record with exactly one renderable scalar — the
+    # deterministic grounded composer answers directly and the
+    # synthesis proposal is skipped (R1 token efficiency), so the
+    # fabricated "answer" payload was never even consumed by a stage;
+    # model prose can never introduce factual leaf values into the
+    # OBSERVATION answer.
+    assert len(read._invoke_model._port.requests) == 6
 
 
 # --- R2: generic secret/token redaction --------------------------------

@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -10,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from delpi_auth.credential_guard import check_credentials
+from delpi_auth.cors_policy import build_allowed_origins
 from tv_app.application.gpt_actions import CUSTOM_GPT_CORS_ORIGINS
 from tv_app.config import settings
 from tv_app.core.responses import fail
@@ -42,21 +42,11 @@ logging.basicConfig(
 install_sensitive_query_params_log_filter()
 
 
-def build_allowed_origins() -> list[str]:
-    origins: set[str] = set(CUSTOM_GPT_CORS_ORIGINS)
-    if settings.PUBLIC_BASE_URL:
-        origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
-    if settings.VITE_KC_URL:
-        if "/auth" in settings.VITE_KC_URL:
-            origins.add(settings.VITE_KC_URL.split("/auth")[0].rstrip("/"))
-        else:
-            origins.add(settings.VITE_KC_URL.rstrip("/"))
-    if os.getenv("API_DELPI_ENV", "development") != "production":
-        origins.add("http://localhost")
-    return sorted(origins)
-
-
-ALLOWED_ORIGINS = build_allowed_origins()
+ALLOWED_ORIGINS = build_allowed_origins(
+    public_base_url=settings.PUBLIC_BASE_URL,
+    keycloak_url=settings.VITE_KC_URL,
+    extra_origins=CUSTOM_GPT_CORS_ORIGINS,
+)
 
 
 @asynccontextmanager
@@ -130,7 +120,7 @@ app.middleware("http")(jwt_middleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
