@@ -23,6 +23,7 @@ from production_control_app.composition.pc_composer import (
     build_public_operation_process_inspections_service,
     build_public_work_center_downtime_items_service,
     build_public_work_center_downtime_source_service,
+    build_public_mes_work_center_today_service,
     build_public_work_center_performance_service,
 )
 from production_control_app.core.responses import fail, ok
@@ -30,6 +31,7 @@ from production_control_app.domain.errors import (
     BenchSessionRequired,
     DelpiGatewayError,
     DowntimeConflict,
+    DowntimeSourceUnavailable,
     DowntimeNotFound,
     DrawingNotFound,
     DrawingSourceUnavailable,
@@ -143,6 +145,8 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 422)
     if isinstance(exc, PulseDeviceUnavailable):
         return fail(str(exc), 422)
+    if isinstance(exc, DowntimeSourceUnavailable):
+        return fail(str(exc), 503)
     if isinstance(exc, PulseGatewayError):
         return fail(str(exc), 502)
     if isinstance(
@@ -551,6 +555,33 @@ def get_public_work_center_downtime_source(
             token=token,
             branch=branch,
             work_center=work_center,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get(
+    "/{token}/mes/work-centers/today",
+    operation_id="get_public_mes_work_center_today",
+)
+def get_public_mes_work_center_today(
+    token: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    work_center: str = Query(..., alias="workCenter", max_length=40),
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Linha do tempo MES do posto no dia civil — sessão de bancada
+    obrigatória; leitura sem efeitos."""
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_public_mes_work_center_today_service().get_today(
+            token=token,
+            branch=branch,
+            work_center=work_center,
+            session_token=session_token,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

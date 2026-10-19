@@ -604,3 +604,74 @@ has_activity_in_period em Postgres real com PC_TEST_MES_DB=1).
 **Pendência de governança**: AGENTS.md menciona push direto na main; a
 governança vigente deste projeto é revisão por PR. Registrado o conflito —
 integração segue o fluxo de PR.
+
+## 14. Etapa 2 — Histórico diário MES do posto no cockpit público
+
+GET /public/machine-load/{token}/mes/work-centers/today?branch&workCenter
+(operationId get_public_mes_work_center_today) responde: quais foram os
+estados e paradas MES deste CT desde 00h de hoje (civil America/Sao_Paulo)
+até agora. Somente leitura; sem efeito em run, fila, contador ou fatos.
+
+**Owner**: production-control-api — dono dos fatos e da linha do tempo.
+**Consumidor**: cockpit do operador (Etapa 3 renderizará e habilitará a
+classificação na experiência diária; nada foi migrado ainda).
+
+**Reuso (sem nova fonte nem motor paralelo)**:
+- PublicWorkCenterDowntimeSourceService (Etapa 1) decide a fonte ANTES da
+  consulta: totvs -> resposta controlada sem items (sem lista vazia como
+  sucesso); unavailable -> erro 503 explícito, sem fallback; nunca consulta
+  TOTVS nesta rota.
+- MesIntegrationReadService.get_work_center_timeline — mesmo repositório,
+  mesma query S2S; nada de SQL novo nem N+1.
+- ProductionRunService.resolve_bench_session — autentica a sessão; o
+  service confere (branch, work_center) da sessão == requisitados — token
+  público sozinho NÃO basta.
+
+**Segurança (ordem)**: 1) token público (404); 2) filial + CT na fila
+publicada (422); 3) X-Delpi-Bench-Session válida (401); 4) sessão do MESMO
+(filial, CT) — sessão de outro posto/filial -> 401 sem vazar fatos; 5)
+fonte mes. O workCenter do navegador nunca é autoridade. Operador vê a
+história do posto (inclusive runs de outros operadores do mesmo CT), não
+de outros postos.
+
+**Janela temporal**: from = meia-noite civil SP do dia; to = relógio
+oficial do backend (referenceAt). Fato que começou ontem aparece, com
+startedAt/endedAt originais preservados; a duração diária efetiva
+(effectiveDurationSeconds) é recortada à janela — parada aberta conta até
+referenceAt; run encerrado não cresce após ended_at. Intervalo sem evento
+MES nunca vira parada inventada.
+
+**DTO data**: branch, workCenter, source, reason, date, timezone, from,
+to, referenceAt, summary { producingSeconds, stoppedSeconds, stopCount,
+pendingReasonCount }, items[] com stateEventId, runId, productionOrder,
+operationCode, state, startedAt, endedAt, source, downtime { id,
+reasonCode, reasonLabel, category, note, confirmed, source,
+pendingReason }, effectiveDurationSeconds.
+
+**Motivo pendente**: downtime existente com confirmed=false OU
+reasonCode ausente. Setup confirmado pelo sistema não é pendência.
+stopped sem downtime = fato incompleto: downtime=null, sem identidade
+fictícia nem ação de classificação.
+
+**Resumo sem inflação**: producingSeconds/stoppedSeconds somam a UNIÃO
+dos intervalos recortados por estado — eventos sobrepostos anômalos não
+duplicam duração (registrado via log mes_today_overlap_detected, fatos
+históricos nunca corrigidos por leitura). stopCount conta eventos stopped
+distintos; pendingReasonCount conta downtimes distintos pendentes.
+
+**Erros estáveis**: 404 token; 422 filial/CT não publicado; 401 sessão
+ausente/expirada/de outro posto; 503 fonte unavailable; 200 totvs sem
+items (controlado); 200 mes + items=[] + resumo zero = histórico vazio
+verdadeiro. Falha no Postgres propaga como erro controlado, nunca
+histórico vazio.
+
+**Não implementado aqui** (Etapa 3): renderização no cockpit, substituição
+dos indicadores TOTVS somente nos CTs MES, classificação direta na linha
+do tempo diária.
+
+**Evidências**: tests/test_public_mes_work_center_today.py — 23 testes
+(AC-01..AC-18: política de fonte, janela meia-noite, recorte overnight,
+parada aberta, pendência, setup confirmado, identidade preservada,
+sobreposição, contrato HTTP 200/401/404/503/totvs controlado, e PG real
+com PC_TEST_MES_DB=1: run + pause -> API diária devolve downtime real;
+run encerrado permanece no histórico).

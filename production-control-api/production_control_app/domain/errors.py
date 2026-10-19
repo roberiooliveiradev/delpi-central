@@ -77,6 +77,10 @@ class PulseDeviceUnavailable(ProductionControlError):
     """Nenhum device Pulse elegível / snapshot indisponível para o posto."""
 
 
+class DowntimeSourceUnavailable(ProductionControlError):
+    """Fonte de paradas do posto indisponivel - resposta controlada 503."""
+
+
 class PulseGatewayError(ProductionControlError):
     """Falha ao consultar o production-pulse-api."""
 
