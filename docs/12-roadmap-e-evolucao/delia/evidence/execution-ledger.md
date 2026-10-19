@@ -15179,3 +15179,14 @@ NEXT=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
 - **DECISION:** remediation `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; R2 DAVI semantic selection residual OPEN; `I04_ACCEPTED=NO`; no C3/C4/C5/Q01 progression.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.280 — Independent R1/R3 remediation review (ACCEPT_WITH_RESIDUAL)
+
+**DATE:** 2026-10-19. **REVIEW:** [39](../corrections/mcp-contextual-intelligence-orchestration/39-r1-r3-independent-acceptance-review.md). **FINAL_SOURCE_SHA:** `7c7bceeda9d7c3c63216ef9ae4b7d6a2559a97e1`. **LIVE_DEPLOYED_SHA:** `ddc3c6f7e4e7b841e6526abb027de5940def54c1`.
+
+- **DECISION:** `ACCEPT_WITH_RESIDUAL` for bounded R1 terminal clarification / R3 prior-methodology framing. Executor-reported L02 30s/504→9.1s/200; L06 30s/504→10.2s/200; L04 '7 registros'→'6 itens da orientação anterior'; controls TÉO/VISTA preserved and ACT=0. Full backend PASS executor-reported; independent replay TEST_NOT_RUN.
+- **RESIDUAL:** final SOURCE SHA differs from tested deployed SHA. R1/R3 orch behavior reported present in prior deployed image, but exact SHA equivalence and final copy not independently tested. `R2_DAVI_SEMANTIC_SELECTION=OPEN`: safe clarification is not user task discovery success. `I04_ACCEPTED=NO`; phase unchanged.
+
+NEXT_MAIN=I04_REWORK_GATE
+NEXT_RELATED=DELIA-C3-R2-PROVIDER-NEUTRAL-CAPABILITY-SELECTION-QUALITY-01
