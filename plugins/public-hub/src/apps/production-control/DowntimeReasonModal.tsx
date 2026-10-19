@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { MesDowntimeReason, RunDowntimeView } from "./api";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
-import { elapsedSeconds, formatDurationHms, formatTimeHm } from "./runTimeline";
+import { elapsedSeconds, formatDurationHms } from "./runTimeline";
+import { formatTimeHmSp } from "./workCenterActivity";
 
 type Props = {
   open: boolean;
@@ -109,8 +110,8 @@ export function DowntimeReasonModal({
             )}
             <p className="pcp-pub__downtime-note">
               {downtime.endedAt
-                ? "Das " + formatTimeHm(downtime.startedAt) + " às " + formatTimeHm(downtime.endedAt)
-                : "Iniciada às " + formatTimeHm(downtime.startedAt) + " · em curso"}
+                ? "Das " + formatTimeHmSp(downtime.startedAt) + " às " + formatTimeHmSp(downtime.endedAt)
+                : "Iniciada às " + formatTimeHmSp(downtime.startedAt) + " · em curso"}
             </p>
           </div>
         ) : null}

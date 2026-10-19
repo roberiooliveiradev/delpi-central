@@ -733,8 +733,19 @@ OEE, edição de eventos além do motivo. §14 previa essa substituição
 plano aprovado a reserva para a Etapa 4.
 
 **Evidências**: src/apps/production-control/PostActivity.test.tsx
-(14 Vitest: cliente fetchMesWorkCenterToday, tipos discriminados,
-stale-CT, totvs/vazio/503/401, card, página, classificação) +
-workCenterActivity.test.ts (8 node:test: mapa de estados, legenda,
-chave de dia civil SP). Suite public-hub 40/40 Vitest + 107/107
-node:test; eslint dos arquivos novos limpo; vite build verde.
+(17 Vitest: cliente fetchMesWorkCenterToday, tipos discriminados,
+stale-CT, 401 tardio de sessão substituída não invalida a vigente,
+totvs/vazio/503/401, card, página, classificação, "aguardando
+confirmação" para motivo preenchido-não-confirmado, timer da parada
+aberta avançando com o offset ancorado) + workCenterActivity.test.ts
+(8 node:test: mapa de estados, legenda, chave de dia civil SP).
+Suite public-hub 43/43 Vitest + node:test dos helpers limpo; eslint
+dos arquivos novos limpo; vite build verde.
+
+**Rework pós-merge** (mesma Etapa 3): offset do relógio do servidor
+passou a ser ancorado uma vez por resposta — recalcular a cada chamada
+congelava o cronômetro no referenceAt; 401 de requisição de escopo
+substituído (sessão/CT trocados em voo) não invalida mais a sessão
+vigente; pendência com reasonCode exibe "aguardando confirmação" em vez
+de "sem motivo"; modais de classificação formatam horários em
+America/Sao_Paulo em vez do fuso do dispositivo.

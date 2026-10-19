@@ -145,7 +145,10 @@ const PAGE_PROPS = {
   onBack: vi.fn(),
 };
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("fetchMesWorkCenterToday (cliente)", () => {
   it("sends session header and returns mes payload", async () => {
@@ -256,6 +259,42 @@ describe("fetchMesWorkCenterToday (cliente)", () => {
     expect(calls.length).toBe(0);
     expect(hook.result.current.data).toBeNull();
   });
+
+  it("a late 401 from a replaced session does not invalidate the current one", async () => {
+    const onAuthError = vi.fn();
+    let resolveOld: ((v: Response) => void) | null = null;
+    stubFetch((_url, init) => {
+      const headers = init?.headers as Record<string, string> | undefined;
+      if (headers?.["X-Delpi-Bench-Session"] === "sess-old") {
+        return new Promise<Response>((r) => {
+          resolveOld = r;
+        });
+      }
+      return Promise.resolve(ok(TODAY));
+    });
+    const hook = renderHook(
+      ({ sess }) =>
+        useWorkCenterActivity({
+          token: "tok",
+          sessionToken: sess,
+          branch: "02",
+          workCenter: "CT-63",
+          onAuthError,
+        }),
+      { initialProps: { sess: "sess-old" } },
+    );
+    // Reidentificação enquanto o GET da sessão antiga ainda está em voo.
+    hook.rerender({ sess: "sess-new" });
+    await act(async () => {
+      resolveOld?.(errEnvelope("Sessão expirada", 401));
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(hook.result.current.data?.source).toBe("mes"),
+    );
+    // O 401 pertencia à sessão descartada — a sessão nova permanece válida.
+    expect(onAuthError).not.toHaveBeenCalled();
+  });
 });
 
 describe("PostActivityCard", () => {
@@ -273,7 +312,7 @@ describe("PostActivityCard", () => {
       sessionCtx("identified"),
     );
     await waitFor(() =>
-      expect(screen.getByText(/1 sem motivo/)).toBeInTheDocument(),
+      expect(screen.getByText(/1 motivo pendente/)).toBeInTheDocument(),
     );
     expect(screen.getByText("Atividade do posto")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument(); // badge
@@ -410,5 +449,73 @@ describe("PostActivityPage", () => {
       screen.getByRole("button", { name: "Identificar operador" }),
     );
     expect(ctx.openIdentify).toHaveBeenCalled();
+  });
+
+  it("shows 'aguardando confirmação' when the reason exists but is unconfirmed", async () => {
+    stubFetch(() =>
+      ok({
+        ...TODAY,
+        items: [
+          {
+            ...TODAY.items[1],
+            downtime: {
+              ...TODAY.items[1].downtime,
+              reasonCode: "setup",
+              reasonLabel: "Setup de máquina",
+              confirmed: false,
+              pendingReason: true,
+            },
+          },
+        ],
+      }),
+    );
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Setup de máquina")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/aguardando confirmação/)).toBeInTheDocument();
+    expect(screen.queryByText(/· sem motivo/)).not.toBeInTheDocument();
+  });
+
+  it("open-stop timer advances — serverNow anchors the offset once", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(Date.parse("2026-10-19T16:00:00Z"));
+    stubFetch((url) =>
+      url.includes("/downtime-reasons")
+        ? ok({ items: [{ code: "m", label: "Manutenção", category: "x", requiresNote: false }] })
+        : ok({
+            ...TODAY,
+            items: [
+              {
+                ...TODAY.items[1],
+                endedAt: null,
+                effectiveDurationSeconds: 10800,
+              },
+            ],
+          }),
+    );
+    renderWithSession(
+      <PostActivityPage {...PAGE_PROPS} />,
+      sessionCtx("identified"),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Informar motivo" }),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    // Parada aberta desde 13:00Z; "agora" do servidor = 16:00Z.
+    const timer = screen.getByRole("timer");
+    expect(timer.textContent).toBe("03:00:00");
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(timer.textContent).toBe("03:00:02");
   });
 });

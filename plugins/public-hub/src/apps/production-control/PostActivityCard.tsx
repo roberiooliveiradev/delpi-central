@@ -57,7 +57,9 @@ export function PostActivityCard({
     const parts = [`Parado ${formatDurationHms(stoppedSeconds)}`];
     parts.push(`${stopCount} ${stopCount === 1 ? "parada" : "paradas"}`);
     if (pendingReasonCount > 0) {
-      parts.push(`${pendingReasonCount} sem motivo`);
+      parts.push(
+        `${pendingReasonCount} ${pendingReasonCount === 1 ? "motivo pendente" : "motivos pendentes"}`,
+      );
     }
     hint = parts.join(" · ");
   }
@@ -79,7 +81,7 @@ export function PostActivityCard({
       {data?.source === "mes" && data.summary.pendingReasonCount > 0 ? (
         <span
           className="pcp-pub-activity-card__badge"
-          aria-label={`${data.summary.pendingReasonCount} parada(s) sem motivo`}
+          aria-label={`${data.summary.pendingReasonCount} parada(s) com motivo pendente`}
         >
           {data.summary.pendingReasonCount}
         </span>
