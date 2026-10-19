@@ -15394,3 +15394,19 @@ NEXT=INDEPENDENT_REVIEW → ops executa runbook de deploy + grants → PM valida
 - **Decision:** `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, no C4/C5/Q01 advancement. NEXT bounded owner-read real-products plus budget investigation and semantic holdouts, using existing LLM and contracts, no new planner/heuristic.
 
 NEXT=BOUNDED_LIVE_PRODUCT_OWNER_READ_AND_BUDGET_REWORK
+
+
+## §6.287 — DELIA-UX-AUDIO-RECORDER-REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-UX-AUDIO-RECORDER-REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01`. **SPEC:** [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **EVIDENCE:** [audio-recorder-remove-extra-permission-fix-01](audio-recorder-remove-extra-permission-fix-01/remove-extra-permission-evidence.md). **COMMIT:** `a3df0d4be6`.
+
+- **DECISÃO PM (correção):** `delia.audio-capture.test` introduzida sem solicitação → removida como requisito. Gravação local disponível a todo usuário com `delia.access` (enforced upstream pelo Portal/Core). Escopo: captura local apenas.
+- **FIX:** resolver por permissão removido; `App.tsx` aplica `DELIA_AUDIO_TEST_LIMITS` (60s/256KB bounded de teste) a todo usuário admitido; banner honesto de teste sempre visível; QA admission preservada apenas como banner dev. Manifest v0.0.3 sem a permissão; suporte browser/secure-context continua fail-closed dentro do `AudioRecorderControl`.
+- **LEGADO:** permissão/role `delia.audio-capture.test`/`delia-audio-test` ficam no Core registry sem consumidores (inertes); role removida do e2e-delia local (`/me` = `[delia.access]`). Sem remoção destrutiva.
+- **LIVE (bundle paridade-prod, `VITE_DELIA_AUDIO_QA:""`, App-C6g8yXfJ.js, 0 ocorrências de `delia.audio-capture.test`):** Playwright 13/13 — mic sem param, sem permissão extra, sem flag; record/preview/play/discard; dock mic+record+discard; param QA inerte; manifest v0.0.3 registrado `{"ok":true}`.
+- **GATES:** delia vitest 240/240, tsc PASS, docker build PASS (federation verify OK); plugin-ui sem diff.
+- **DEPLOY PROD:** `PENDING` — runbook na evidência §7 (pull+build → register-manifest v0.0.3 → validar mic com usuário `delia.access`).
+- **RESIDUAIS:** `HUMAN_SPEECH_PLAYBACK=TEST_NOT_RUN`; Firefox/Edge/Safari TEST_NOT_RUN; cleanup do registro legado RBAC = decisão ops.
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_READINESS=NOT_PROVEN`; fase inalterada.
+
+NEXT=ops executa runbook de deploy → PM valida em https://minhadelpi.com.br/apps/delia → INDEPENDENT_REVIEW
