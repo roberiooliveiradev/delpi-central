@@ -15573,3 +15573,24 @@ NEXT=NEW_CHAT_ARCHITECTURE_COORDINATION_SINGLE_G0_DECISION_THEN_FINITE_EXECUTION
 **REUSE**: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE/EXTEND` existing `OperationalCapabilityOrchestrator`, typed goal, `InvokeModel/_propose`, `TurnDeadline`, `ConversationContextTurn`/`SpecialistOutcome`/`SourceRef`, provider-neutral port/adapters. **NO** second planner, provider branch, new registry, changed factual-prose contract or broader Q02 implementation. New typed provenance contract or frozen synthesis amendment triggers STOP→`ARCHITECTURE_DECISION_REQUIRED` with Product Master decision, not silent patch. Non-MCP/no-tool, safety, IDs, owner reads, task outcomes and independent cold/warm evidence required before I04 acceptance.
 
 **STATE:** `I04_ACCEPTED=NO`; `G0_REMEDIATION_AUTHORIZED=YES`; `Q01_AUTHORIZED=NO`; `Q02_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `G0_EXECUTION=NOT_RUN`; `LIVE_INDEPENDENT_EVAL=TEST_NOT_RUN`. **NEXT:** Cursor one bounded G0 implementation→independent review; no Q01 until actual I04 gate or separate Product Master authority.
+
+## §6.305 — G0 bounded I04 remediation (compare + C02 budget) IMPLEMENTATION
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-I04-G0-SINGLE-BOUNDED-REMEDIATION-01`. **DOC:** [62](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md). **BASE:** `fc93fbf359` (Option A). Worktree rebased onto current `origin/main` before commit.
+
+- **G0-01 ROOT:** empty_selection recover listed prior bullets as compare SUCCESS (F33). **FIX:** compare/analyze → segment diffs from prior bullets or explicit insufficiency; never list replay.
+- **G0-02 ROOT (prod logs):** corr `089e31c8` / req `aa47991a` — admission conversational on formatos ask → NOT_APPLICABLE → free-form model_timeout → HTTP 504. **FIX:** admission instruction requires owner for formats/guidance catalogs; conversational fallback after NOT_APPLICABLE capped at 12s with soft-land (`turn_budget_limited`) instead of 504.
+- **TESTS:** PROV/CONT G0-01 + CONV G0-02 + full `delia-api` pytest PASS. No provider/specialist branches; selection-only preserved.
+- **LIVE_POST_FIX:** `TEST_NOT_RUN` — Keycloak password grant `invalid_grant` for subject `user`; cached JWTs expired. Historical C02 chain remains evidence for the patch.
+- **GATES:** `I04_ACCEPTED=NO`; `G0_REMEDIATION_EXECUTED=YES`; `Q01_AUTHORIZED=NO`. NEXT=independent G0 review.
+
+```text
+I04_ACCEPTED=NO
+G0_REMEDIATION_EXECUTED=YES
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_G0_REVIEW
+```

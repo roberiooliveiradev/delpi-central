@@ -3935,6 +3935,86 @@ def _extraction_list_from_prior_excerpts(
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
 
+def _segment_compare_prior_units(
+    left: str,
+    right: str,
+) -> str | None:
+    """Deterministic segment diffs from two prior list-line units.
+
+    Prior DELIA_RESULT bullets often carry ``a — b — c`` scalars from
+    an earlier owner projection. Splitting on the same separator yields
+    evidenced values only — never invents field names or FACT leaves.
+    Returns None when segments are not comparable (arity < 2 or empty).
+    """
+    left_clean = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", (left or "").strip())
+    right_clean = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", (right or "").strip())
+    if not left_clean or not right_clean or left_clean == right_clean:
+        return None
+    left_parts = [p.strip() for p in left_clean.split(" — ") if p.strip()]
+    right_parts = [p.strip() for p in right_clean.split(" — ") if p.strip()]
+    if len(left_parts) < 2 or len(right_parts) < 2:
+        return None
+    width = min(len(left_parts), len(right_parts), MAX_SYNTHESIS_FIELDS)
+    diffs: list[str] = []
+    for index in range(width):
+        if left_parts[index] == right_parts[index]:
+            continue
+        diffs.append(
+            f"- {left_parts[index]} → {right_parts[index]}"
+        )
+    if not diffs:
+        return (
+            "Comparação a partir dos registros anteriores: "
+            "valores coincidem nos trechos disponíveis."
+        )[:MAX_RENDER_CONTENT_CHARS]
+    lines = [
+        "Comparação a partir dos registros anteriores:",
+        *diffs,
+    ]
+    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
+
+
+def _comparison_from_prior_excerpts(
+    records: tuple[Mapping[str, str], ...],
+) -> str | None:
+    """Compare first two prior bullet units or declare incomparable."""
+    bullets = list(_collect_extraction_units(records))
+    if len(bullets) < 2:
+        return None
+    return _segment_compare_prior_units(bullets[0], bullets[1])
+
+
+def _render_is_list_replay_not_compare(content: str) -> bool:
+    """True when rendered text is a list projection without compare."""
+    text = (content or "").strip()
+    if not text:
+        return True
+    if "Diferenças comprovadas:" in text:
+        return False
+    if text.startswith("Comparação a partir dos registros anteriores"):
+        return False
+    if text.startswith("Comparação:"):
+        return False
+    # List headers / recover-empty projections are not comparisons.
+    lowered = text.lower()
+    if lowered.startswith("encontrei ") or lowered.startswith(
+        "recuperei "
+    ):
+        return True
+    bullet_lines = [
+        line
+        for line in text.splitlines()
+        if re.match(r"^\s*(?:[-*]|\d+[.)])\s+\S", line)
+    ]
+    prose_lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+        and not re.match(r"^\s*(?:[-*]|\d+[.)])\s+\S", line)
+    ]
+    return len(bullet_lines) >= 2 and len(prose_lines) <= 1
+
+
 def _recover_prior_extraction_after_invalid_index(
     input_text: str,
     records: tuple[Mapping[str, str], ...],
@@ -4628,8 +4708,10 @@ Respond with JSON containing exactly the fields
 
 - "requires_owner_surface": true only when answering needs live DELPI
   registers, tickets, MES/production facts, specialist owner guidance
-  from a tool, a catalog/search of registered products, or a coverage
-  question about what systems can consult.
+  from a tool, a catalog/search of registered products, a coverage
+  question about what systems can consult, or a question about which
+  operational formats / topics / guides / panels are available from a
+  specialist surface (owner-published catalogs — not general IT theory).
   false for greetings, thanks, casual dialogue, general assistant role
   questions, general conceptual explanations that do not need owner
   data, and requests for illustrative/hypothetical examples of a
@@ -4640,6 +4722,8 @@ Respond with JSON containing exactly the fields
   "hypothetical", "operational", "ambiguous".
   Use "hypothetical" for illustrative examples of a concept without
   a request for live DELPI registers.
+  Use "operational" when the ask targets owner-published guidance,
+  formats, topics, or catalogs even if no concrete record id is named.
   Use "ambiguous" only when the message could equally require live
   DELPI product/catalog data OR illustrative examples — then
   requires_owner_surface must be true so selection may clarify rather
@@ -4971,6 +5055,11 @@ class OperationalCapabilityOrchestrator:
                             correlation,
                             deadline,
                             business_subject=goal.business_subject,
+                            comparison_requested=(
+                                goal.comparison_requested
+                                or goal.goal_class
+                                in {"compare", "analyze"}
+                            ),
                         )
                         if continued is not None:
                             if committed:
@@ -6789,12 +6878,17 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline,
         *,
         business_subject: str | None,
+        comparison_requested: bool = False,
     ) -> GovernedCapabilityAttempt | None:
         """Transform prior DELIA_RESULT via selection-only synthesis.
 
         Returns None when prior content is absent or cannot be
         transformed — caller falls through to live selection. Never
         returns a literal full copy when multiple excerpts exist.
+
+        Compare/analyze asks must not succeed by replaying a bullet
+        list (G0 / F33): either emit a deterministic segment
+        comparison from prior evidenced units, or declare insufficiency.
         """
         prior_content = self._prior_result_content(prior_turns)
         if not prior_content:
@@ -6884,44 +6978,89 @@ class OperationalCapabilityOrchestrator:
             # Deterministic projection reuses the existing list helper;
             # still never invents facts or accepts the invalid index.
             if reason == "invalid_record_index":
-                recovered = _recover_prior_extraction_after_invalid_index(
-                    input_text,
-                    records,
-                )
-                if recovered is not None:
-                    _logger.info(
-                        "orchestration stage=prior_continuation "
-                        "decision=recover_invalid_index excerpts=%d "
-                        "correlation_id=%s",
-                        len(records),
-                        correlation,
+                if comparison_requested:
+                    compared = _comparison_from_prior_excerpts(records)
+                    if compared is not None:
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=compare_after_invalid_index "
+                            "excerpts=%d correlation_id=%s",
+                            len(records),
+                            correlation,
+                        )
+                        rendered = compared
+                else:
+                    recovered = (
+                        _recover_prior_extraction_after_invalid_index(
+                            input_text,
+                            records,
+                        )
                     )
-                    rendered = recovered
+                    if recovered is not None:
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=recover_invalid_index excerpts=%d "
+                            "correlation_id=%s",
+                            len(records),
+                            correlation,
+                        )
+                        rendered = recovered
             if rendered is None and reason == "empty_selection":
-                # Recover only when prior already exposes bullet /
-                # numbered listing units. Sentence-split prose from a
-                # single prior turn must not become a fake list — that
-                # blocks I01 fallthrough when prior lacks the asked
-                # content. Product/search OBSERVATION already renders
-                # as bullets, so subset/compare continuity recovers.
-                recovered = _extraction_list_from_prior_excerpts(records)
-                bullet_units = [
-                    (record.get("excerpt") or "").strip()
-                    for record in records
-                    if re.match(
-                        r"^(?:[-*]|\d+[.)])\s+\S",
-                        (record.get("excerpt") or "").strip(),
+                if comparison_requested:
+                    # G0-01 / F33: never promote list replay as compare.
+                    compared = _comparison_from_prior_excerpts(records)
+                    if compared is not None:
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=compare_from_prior_segments "
+                            "excerpts=%d correlation_id=%s",
+                            len(records),
+                            correlation,
+                        )
+                        rendered = compared
+                    else:
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=compare_insufficient_segments "
+                            "correlation_id=%s",
+                            correlation,
+                        )
+                        return GovernedCapabilityAttempt(
+                            status=GovernedCapabilityStatus.SUCCESS,
+                            correlation_id=correlation,
+                            content=_insufficiency_content(),
+                            limitations=(
+                                LIMITATION_PRIOR_TURN_CONTINUATION,
+                                LIMITATION_INSUFFICIENT_EVIDENCE,
+                            ),
+                        )
+                else:
+                    # Recover only when prior already exposes bullet /
+                    # numbered listing units. Sentence-split prose from
+                    # a single prior turn must not become a fake list.
+                    recovered = _extraction_list_from_prior_excerpts(
+                        records
                     )
-                ]
-                if recovered is not None and len(bullet_units) >= 2:
-                    _logger.info(
-                        "orchestration stage=prior_continuation "
-                        "decision=recover_empty_selection excerpts=%d "
-                        "correlation_id=%s",
-                        len(bullet_units),
-                        correlation,
-                    )
-                    rendered = recovered
+                    bullet_units = [
+                        (record.get("excerpt") or "").strip()
+                        for record in records
+                        if re.match(
+                            r"^(?:[-*]|\d+[.)])\s+\S",
+                            (record.get("excerpt") or "").strip(),
+                        )
+                    ]
+                    if (
+                        recovered is not None
+                        and len(bullet_units) >= 2
+                    ):
+                        _logger.info(
+                            "orchestration stage=prior_continuation "
+                            "decision=recover_empty_selection "
+                            "excerpts=%d correlation_id=%s",
+                            len(bullet_units),
+                            correlation,
+                        )
+                        rendered = recovered
             if rendered is None:
                 # Already on the prior-continuation path: do not fall
                 # through to live reselection — that burns the remaining
@@ -6931,6 +7070,36 @@ class OperationalCapabilityOrchestrator:
                     "decision=insufficient_evidence reason=%s "
                     "correlation_id=%s",
                     reason,
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SUCCESS,
+                    correlation_id=correlation,
+                    content=_insufficiency_content(),
+                    limitations=(
+                        LIMITATION_PRIOR_TURN_CONTINUATION,
+                        LIMITATION_INSUFFICIENT_EVIDENCE,
+                    ),
+                )
+        if (
+            comparison_requested
+            and _render_is_list_replay_not_compare(rendered)
+        ):
+            compared = _comparison_from_prior_excerpts(records)
+            if compared is not None:
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=compare_replace_list_replay "
+                    "excerpts=%d correlation_id=%s",
+                    len(records),
+                    correlation,
+                )
+                rendered = compared
+            else:
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=compare_reject_list_replay "
+                    "correlation_id=%s",
                     correlation,
                 )
                 return GovernedCapabilityAttempt(
@@ -6967,8 +7136,14 @@ class OperationalCapabilityOrchestrator:
         # Extraction follow-ups: when coverage of available prior units
         # is incomplete (not merely short-by-character-count), expand
         # deterministically from those excerpts — never invent facts,
-        # never literal dump of the entire prior prose blob.
-        if _prior_extraction_incomplete(input_text, rendered, records):
+        # never literal dump of the entire prior prose blob. Compare
+        # goals never expand into a list replay.
+        if (
+            not comparison_requested
+            and _prior_extraction_incomplete(
+                input_text, rendered, records
+            )
+        ):
             expanded = _extraction_list_from_prior_excerpts(records)
             if (
                 expanded is not None
@@ -6993,7 +7168,8 @@ class OperationalCapabilityOrchestrator:
                 )
                 rendered = expanded
         elif (
-            len(rendered) < _MIN_USEFUL_CONTINUITY_CHARS
+            not comparison_requested
+            and len(rendered) < _MIN_USEFUL_CONTINUITY_CHARS
             and len(records) >= 3
             and _EXTRACTION_FOLLOWUP_RE.search(input_text or "")
             and not _LIMITATION_FOLLOWUP_RE.search(input_text or "")

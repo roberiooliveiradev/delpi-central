@@ -170,6 +170,67 @@ def test_conv_t08_not_applicable_fallback_preserves_budget_path():
     )
     assert spy.requests
     assert result.content
+    # G0-02: conversational fallback stage is capped below the full turn.
+    from app.application.interaction.handle_interactive_turn import (
+        CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS,
+    )
+
+    assert spy.requests[0].timeout_seconds <= (
+        CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS + 0.01
+    )
+
+
+def test_g0_02_conversational_fallback_timeout_soft_lands():
+    """NOT_APPLICABLE + model timeout → bounded answer, not MODEL_TIMEOUT raise."""
+    from app.application.interaction.handle_interactive_turn import (
+        CONVERSATIONAL_BUDGET_MESSAGE,
+        LIMITATION_TURN_BUDGET,
+    )
+    from app.application.model_invocation.errors import (
+        TIMEOUT,
+        ModelInvocationError,
+    )
+    from app.domain.evidence.model import EpistemicClass
+    from app.domain.interaction.model import GroundingStatus
+
+    class _TimeoutModel:
+        adapter_kind = "TEST_ONLY"
+        exposure_class = ProviderExposureClass.TEST_ONLY
+        requests = []
+
+        def invoke(self, request):
+            self.requests.append(request)
+            raise ModelInvocationError(TIMEOUT, "stage timed out")
+
+    orch = _StatusOrchestration(GovernedCapabilityStatus.NOT_APPLICABLE)
+    model = _TimeoutModel()
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(model), capability_orchestration=orch
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=_context(),
+            input_text="Quais formatos de dados estão disponíveis?",
+            command_type="MESSAGE",
+        )
+    )
+    assert orch.calls == 1
+    assert model.requests
+    assert result.content == CONVERSATIONAL_BUDGET_MESSAGE
+    assert LIMITATION_TURN_BUDGET in result.limitations
+    assert result.epistemic_class is EpistemicClass.HYPOTHESIS
+    assert result.grounding_status is GroundingStatus.NON_GROUNDED
+
+
+def test_g0_02_admission_instruction_requires_owner_for_formats_catalog():
+    from app.application.capability_provision.orchestration import (
+        INTERACTION_ADMISSION_INSTRUCTION,
+    )
+
+    text = INTERACTION_ADMISSION_INSTRUCTION.lower()
+    assert "formats" in text or "formatos" in text
+    assert "operational" in text
+    assert "requires_owner_surface" in text
 
 
 def test_conv_t09_invalid_capability_still_specific_clarification():

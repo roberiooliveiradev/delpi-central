@@ -27,9 +27,13 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    LIMITATION_INSUFFICIENT_EVIDENCE,
+    _comparison_from_prior_excerpts,
     _free_string_grounded_in_user_input,
     _prior_excerpt_records,
     _prior_transform_probe_eligible,
+    _render_is_list_replay_not_compare,
+    _segment_compare_prior_units,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -518,6 +522,128 @@ def test_cont_t03_compare_prior_stops_without_owner_when_budget_tight():
     assert provider.calls == []
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.error_code != "turn_budget_exhausted"
+    content = attempt.content or ""
+    # G0-01: empty synthesis on compare must not succeed as list replay.
+    assert not content.lower().startswith("encontrei ")
+    assert not content.lower().startswith("recuperei ")
+    assert (
+        "Comparação a partir dos registros anteriores" in content
+        or LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    )
+
+
+def test_g0_01_compare_empty_selection_is_not_list_success():
+    """RED→GREEN: compare + empty items ≠ bullet list SUCCESS."""
+    clock = FakeClock()
+    deadline = TurnDeadline.start(30.0, clock=clock)
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="Busque terminais olhal cadastrados.",
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content=(
+                "Encontrei 2 registros:\n"
+                "- 30191627 — OLHAL CERAMICA — S — PC\n"
+                "- 30191751 — OLHAL PARA PARAF FRANCES — S — PC"
+            ),
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+    )
+    provider = _search_provider()
+    proposals = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": False,
+            "interaction_class": "conversation",
+        },
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "compare",
+            "comparison_requested": True,
+            "prior_evidence_sufficient": True,
+        },
+        SYNTHESIS_INSTRUCTION_ID: {"items": []},
+    }
+    orch = _orch([provider], proposals, clock=clock)
+    attempt = orch.attempt(
+        "Compare os dois.",
+        prior_turns=prior,
+        turn_deadline=deadline,
+    )
+    assert provider.calls == []
+    content = attempt.content or ""
+    assert "Comparação a partir dos registros anteriores" in content
+    assert "30191627" in content and "30191751" in content
+    assert "OLHAL CERAMICA" in content
+    assert not content.lower().startswith("encontrei ")
+    assert not content.lower().startswith("recuperei ")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+
+
+def test_g0_01_compare_rejects_opaque_prose_without_segments():
+    clock = FakeClock()
+    deadline = TurnDeadline.start(30.0, clock=clock)
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content="Resuma o guia.",
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content=(
+                "- Visão geral sem atributos estruturados\n"
+                "- Outra linha também sem segmentos"
+            ),
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+    )
+    provider = _search_provider()
+    proposals = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": False,
+            "interaction_class": "conversation",
+        },
+        GOAL_INSTRUCTION_ID: {
+            "goal_class": "compare",
+            "comparison_requested": True,
+            "prior_evidence_sufficient": True,
+        },
+        SYNTHESIS_INSTRUCTION_ID: {"items": []},
+    }
+    orch = _orch([provider], proposals, clock=clock)
+    attempt = orch.attempt(
+        "Compare os dois.",
+        prior_turns=prior,
+        turn_deadline=deadline,
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert "Comparação a partir" not in (attempt.content or "")
+
+
+def test_g0_01_segment_compare_helpers():
+    compared = _segment_compare_prior_units(
+        "- 1 — ALPHA — X",
+        "- 2 — BETA — X",
+    )
+    assert compared is not None
+    assert "1 → 2" in compared
+    assert "ALPHA → BETA" in compared
+    assert _render_is_list_replay_not_compare(
+        "Encontrei 2 registros:\n- A\n- B"
+    )
+    assert not _render_is_list_replay_not_compare(
+        "Comparação a partir dos registros anteriores:\n- A → B"
+    )
+    assert (
+        _comparison_from_prior_excerpts(
+            (
+                {"excerpt": "- 10 — LEFT"},
+                {"excerpt": "- 20 — RIGHT"},
+            )
+        )
+        is not None
+    )
 
 
 def test_cont_t01_subset_from_prior_when_sufficient():

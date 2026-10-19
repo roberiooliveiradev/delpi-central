@@ -109,6 +109,16 @@ OUTPUT_SCHEMA_ID = "delia.interaction.turn"
 OUTPUT_SCHEMA_VERSION = "1"
 EXPECTED_FIELDS = ("answer",)
 INTERACTION_TIMEOUT_SECONDS = 30.0
+# After governed NOT_APPLICABLE, the free-form conversational fallback
+# must not consume the entire remaining turn budget into a gateway
+# 504 (G0-02 C02 class: admission→conversational→model_timeout).
+CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS = 12.0
+LIMITATION_TURN_BUDGET = "turn_budget_limited"
+CONVERSATIONAL_BUDGET_MESSAGE = (
+    "Não consegui concluir a resposta conversacional dentro do tempo "
+    "disponível neste turno. Reformule o pedido ou tente novamente — "
+    "não inventei dados operacionais da DELPI."
+)
 
 # C4-MCP-GOVERNED-READS-01: canonical limitation code + disclosure for
 # answers produced while the authoritative DELPI source could not be
@@ -392,13 +402,47 @@ class HandleInteractiveConversationTurn:
         # CLARIFICATION_REQUIRED above — never a second free-form model
         # call. Bare NOT_APPLICABLE (empty surface / no governed path)
         # may still use the ordinary conversational fallback when budget
-        # remains.
+        # remains. Cap the fallback stage and soft-land on timeout so a
+        # hung general model cannot become HTTP 504 after admission
+        # already spent part of the 30s turn (G0-02).
 
         if sink is not None:
             sink.emit(phase=ActivityPhase.OUTCOME_PREPARING)
-        model_result = self._invoke(
-            input_text, prior_turns, deadline=turn_deadline
+        # Cap only the post-orchestration NOT_APPLICABLE fallback —
+        # legacy handler-without-orchestrator keeps the full stage cap.
+        fallback_cap = (
+            CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS
+            if (
+                attempt is not None
+                and attempt.status
+                is GovernedCapabilityStatus.NOT_APPLICABLE
+            )
+            else None
         )
+        try:
+            model_result = self._invoke(
+                input_text,
+                prior_turns,
+                deadline=turn_deadline,
+                stage_cap_seconds=fallback_cap,
+            )
+        except InteractionError as exc:
+            if (
+                exc.code == MODEL_TIMEOUT
+                and attempt is not None
+                and attempt.status
+                is GovernedCapabilityStatus.NOT_APPLICABLE
+            ):
+                result = self._conversational_budget_result(
+                    session, user_turn
+                )
+                _emit_terminal(
+                    sink,
+                    ActivityPhase.COMPLETED,
+                    state=ActivityState.BLOCKED,
+                )
+                return result
+            raise
         content, limitations = self._validate_result(model_result)
 
         result_turn = InteractionTurn(
@@ -869,21 +913,66 @@ class HandleInteractiveConversationTurn:
             "reduce, never request, execution authority",
         )
 
+    def _conversational_budget_result(
+        self,
+        session: InteractionSession,
+        user_turn: InteractionTurn,
+    ) -> InteractiveTurnResult:
+        """Honest NON_GROUNDED answer when conversational fallback times out.
+
+        Preserves the 30s turn ceiling without converting a hung general
+        model call into an edge HTTP 504 after NOT_APPLICABLE admission.
+        """
+        occurred = _now_utc()
+        result_turn = InteractionTurn(
+            turn_id=str(uuid.uuid4()),
+            session_id=session.session_id,
+            kind=TurnKind.DELIA_RESULT,
+            content=CONVERSATIONAL_BUDGET_MESSAGE,
+            occurred_at=occurred,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=(LIMITATION_TURN_BUDGET,),
+        )
+        session, result_validation = record_interaction_turn(
+            session, result_turn
+        )
+        if not result_validation.valid:
+            raise InteractionError(
+                INTERNAL_ERROR,
+                "validated DELIA_RESULT turn rejected by session rules",
+            )
+        return InteractiveTurnResult(
+            session_id=session.session_id,
+            user_turn_id=user_turn.turn_id,
+            result_turn_id=result_turn.turn_id,
+            content=CONVERSATIONAL_BUDGET_MESSAGE,
+            epistemic_class=EpistemicClass.HYPOTHESIS,
+            limitations=(LIMITATION_TURN_BUDGET,),
+            generated_at=occurred,
+            model_invocation_id=None,
+            grounding_status=GroundingStatus.NON_GROUNDED,
+        )
+
     def _invoke(
         self,
         input_text: str,
         prior_turns: tuple[ConversationContextTurn, ...],
         deadline: TurnDeadline | None = None,
+        *,
+        stage_cap_seconds: float | None = None,
     ) -> ModelInvocationResult:
+        configured = self._timeout_seconds
+        if stage_cap_seconds is not None:
+            configured = min(configured, float(stage_cap_seconds))
         if deadline is not None:
             if deadline.exhausted():
                 raise InteractionError(
                     MODEL_TIMEOUT,
                     "interaction turn budget exhausted",
                 )
-            timeout_seconds = deadline.stage_timeout(self._timeout_seconds)
+            timeout_seconds = deadline.stage_timeout(configured)
         else:
-            timeout_seconds = self._timeout_seconds
+            timeout_seconds = configured
         invocation_request = ModelInvocationRequest(
             invocation_id=ModelInvocationId(str(uuid.uuid4())),
             model_ref=self._model_ref,
