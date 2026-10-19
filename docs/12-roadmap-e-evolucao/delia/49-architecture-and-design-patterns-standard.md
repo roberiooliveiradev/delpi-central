@@ -310,6 +310,16 @@ metric.query
 
 Mapping can change RPA→API/provider A→B without planner rewrite.
 
+### 14.1 DÉLIA — semantic decision ownership (binding decision, 2026-10-19)
+
+**Approved Product Master direction:** [ADR 58 — LLM Semantic Decision Ownership](./corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md) (static audit sources [56](./corrections/mcp-contextual-intelligence-orchestration/56-orchestration-audit-semantic-ownership-checkpoint.md) and [57](./corrections/mcp-contextual-intelligence-orchestration/57-orchestration-complete-second-pass-static-audit.md)).
+
+- **LLM (inside existing DÉLIA application boundary):** semantically interprets user intent, context, follow-ups, expected task outcome, necessary clarification, capability selection and candidate arguments. Proposals are typed and untrusted HYPOTHESIS, never business FACT, authorization or execution permission.
+- **Deterministic DÉLIA/Core/Domain/provider gates:** validate live capability + schema, identity/Core/domain AuthZ, provenance, safety, Policy/Decision, confirmation, PREPARE/ACT, idempotency/audit, deadlines, factual evidence and authoritative business outcome. Do not recreate a natural-language intent classifier via regex, word/stem clusters or per-provider branches.
+- **Reuse-first:** consolidate redundant semantic model calls inside `OperationalCapabilityOrchestrator`/`InvokeModel`; no new planner/registry/engine or Chat runtime dependency.
+- **Frozen exception preserved:** the current factual `selection-only` synthesis contract (ledger §6.145; `MODEL_AUTHORED_FACTUAL_PROSE=NONE`) remains binding. Allowing model-authored factual prose or relaxing comparability/typed provenance requires a **separate explicit architecture decision and tests**; this decision does not silently supersede previous safety/grounding contracts.
+- **Approval level:** architecture direction only. Per-function deletions, contract changes, deployment, runtime acceptance and C3/C4/C5 phase advancement are **not authorized** by this documentation. Audit all consumers, prove reuse gate and test DAVI/TÉO/VISTA/OpenAPI and no-tool conversation before implementation acceptance.
+
 ## 15. Internet / External Connector Patterns
 
 Target canonical flow:
