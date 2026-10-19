@@ -136,3 +136,21 @@ Antes de habilitar POST real, comprovar e testar:
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 
 **Estado documental:** `POST_CONTRACT_SOURCE=DOCUMENTED`; `POST_RUNTIME=NOT_IMPLEMENTED`; `LIVE_WRITE=NOT_AUTHORIZED`; `CONTRACT_GAPS=TO_INVENTORY`.
+
+## 6. Vínculo com o de-para completo SA2 — material entregue ao Gabriel
+
+**Documento complementar canônico de inventário:** [Auditoria do Modelo de Fornecedores — TOTVS Protheus (DELPI)](../api/padroes-totvs/playbooks/playbook-cadastro-fornecedor-sa2.md), em especial a seção **44 — FINAL SUPPLIER FIELD MAPPING** e **44.3 — SUPPLIER_MASTER_FULL_MAPPING**.
+
+**Como usar os documentos conjuntamente:**
+
+| Fonte | Papel | Limite |
+|---|---|---|
+| **Este documento REST** | Endpoint, autenticação, shape do body `codusr` + `fornecedor`, campos semânticos exemplificados, erros e limites conhecidos | Não comprova quais campos são obrigatórios nem o payload exaustivo aceito pelo Protheus |
+| **Playbook/de-para SA2** | Correspondência entre campos de negócio e `A2_*`, tipos, comprimentos, validações SX3, F3/lookup, empresa e classificação de cadastro | Inventário de dicionário e dados; **não** substitui o contrato REST nem prova o comportamento do Execauto/MATA020 |
+| **Core identity ownership** | Associação autoritativa do usuário Minha DELPI com identidade Protheus | Não define por si só a semântica `codusr` do endpoint upstream |
+
+O de-para foi identificado como o material técnico de campos já compartilhado com Gabriel **segundo o contexto informado pelo solicitante**; o histórico de envio/aceite de Gabriel não foi verificado no GitHub. **Não presumir aceite do contrato pelo owner Protheus.**
+
+**Regra de rastreabilidade:** ao implementar o POST, cruzar cada propriedade externa de `fornecedor` com a coluna `business_field` e o respectivo `totvs_field` da seção 44.3, documentando diferenças de nomes (`tax_id` versus `tax_document`, por exemplo), obrigatoriedade, default e tratamento por empresa. Não inferir equivalência quando a nomenclatura divergir: classificar `TO_INVENTORY` e validar junto ao owner. Não enviar campos `DO_NOT_SEND` nem os marcados como `SYSTEM_GENERATED` sem contrato específico.
+
+**Próximo gate:** produzir uma matriz de rastreabilidade **campo REST → business_field do de-para → campo SA2 → regra/validação → evidência → decisão** antes de aceitar a implementação de escrita em produção. Preservar cada documento em sua autoridade e vincular alterações relevantes nos dois.
