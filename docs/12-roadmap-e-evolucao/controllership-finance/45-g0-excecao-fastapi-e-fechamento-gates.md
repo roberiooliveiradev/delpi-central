@@ -1,6 +1,6 @@
 # 45 — G0: exceção arquitetural FastAPI e fechamento dos gates de implementação
 
-> **Documento de decisão e preparação de gate. Não declara PASS/YES.**
+> **Registro de decisões G0. O GO registrado em §13 vale somente para IMP-F0; não abrange rotas de negócio ou frontend.**
 > HEAD de referência: `f8a07952868efd8e8e912b23020bd4c9063a3a81` (main, 2026-11-04).
 > Escopo: somente documentação. Nenhum runtime, scaffold, manifest, permission ou wiring criado.
 
@@ -285,3 +285,29 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 **Decisão de segurança documental:** não substituir assinatura identificável de Arquitetura, Design, Segurança ou Qualidade por endosso presumido do PO ou pelo preenchimento automático de uma tabela. O README deve continuar com `IMPLEMENTATION_AUTHORIZED=NO` enquanto os requisitos de §10.4 não forem satisfeitos. **Não implementar runtime sobre esta atualização.**
 
 **Saída objetiva para os responsáveis:** registrar owner identificável, papel, data, decisão e referência de evidência para (1) Arquitetura / D-G0-01, (2) Design, (3) Segurança, (4) Qualidade e (5) escopo transversal de Produto se aplicável; somente então o PO declara D-G0-03 PASS e o painel torna eficaz a autorização IMP-F0 já registrada. Os testes e runtime seguem `TEST_NOT_RUN` / `NOT_IMPLEMENTED`.
+
+
+## 13. Aprovações efetivas multi-owner e GO exclusivo IMP-F0 — 19/10/2026
+
+**Declaração expressa de autoridade:** em resposta à pergunta "Você tem autoridade formal para aprovar também Arquitetura, Design, Segurança e Qualidade neste projeto, além de atuar como Product Owner?", o responsável pela condução do projeto respondeu **"sim"**. A declaração é registrada como manifestação do **PO/Product Master, também atuando como autoridade formal dos papéis de Arquitetura, Design, Segurança e Qualidade para este gate**. A identidade nominal não foi informada nesta conversa; a atribuição dos papéis é autodeclarada, não verificada por sistema corporativo. Esta seção é o registro de aprovação funcional, sem fabricar assinaturas pessoais ou documentos externos.
+
+**Regra de alcance:** todas as aprovações abaixo são **exclusivas do recorte IMP-F0** (BFF vazia, dois endpoints públicos de infraestrutura, Docker/Compose/gateway e testes); não certificam interfaces, AuthZ de negócio, integrações, persistência ou pages de slices futuros.
+
+| Ordem | Decisão | Owner declarado nesta manifestação | Resultado para IMP-F0 | Evidência técnica |
+|---|---|---|---|---|
+| 1 | D-G0-01 — exceção FastAPI, sem modificar regra Flask global | Responsável pelo projeto no papel **Arquitetura** | **VALIDATED / IMP-F0_ONLY** | §1, Commercial API FastAPI, `shared/delpi_auth`, regras `.cursor` |
+| 2 | D-G0-06 — `/ready` é diagnóstico, Docker observa `/health` | Mesmo responsável no papel **Arquitetura/Ops** | **APPROVED / IMP-F0_ONLY** | §§5, 9, 10 |
+| 3 | `PORTAL_DESIGN_FREEZE` | Mesmo responsável no papel **Design** | **PASS / IMP-F0_ONLY** | §2; nenhuma tela ou MFE no slice |
+| 4 | `PRODUCT_CONTRACT_FREEZE` | Mesmo responsável no papel **Produto/PO** | **PASS / IMP-F0_ONLY** | README §1, §10.4, §§11–12 |
+| 5 | `SECURITY_MODEL_FREEZE` | Mesmo responsável no papel **Segurança** | **PASS / IMP-F0_ONLY** | §4, §8; apenas paths públicos explícitos; não autoriza stale RBAC para rotas protegidas |
+| 6 | `TEST_STRATEGY_FREEZE` | Mesmo responsável no papel **Qualidade** | **PASS / IMP-F0_ONLY** | Doc 41, §8, testes de bootstrap, paths públicos, config, Docker/gateway |
+| 7 | D-G0-03 — fechamento documental do slice | Mesmo responsável no papel **PO/Product Master** | **PASS / IMP-F0_ONLY** | Aprovações 1–6, docs 41, 45, README |
+| 8 | D-G0-04 — efetivar autorização já manifestada em §§10–12 | Mesmo responsável no papel **PO/Product Master** | **YES / IMP-F0_ONLY** | Declaração de autoridade + autorização expressa em §11 |
+
+**Assinatura funcional e proveniência:** manifestação de autoridade do declarante nesta conversa em 19/10/2026; assinatura nominal e auditoria independente de identidade **não disponíveis**. A aprovação registrada pelo PO acumulando os papéis não é apresentada como manifestação de pessoas distintas.
+
+**GO / AUTORIZAÇÃO EFETIVA APENAS PARA IMP-F0:** criar `controllership-finance-api` FastAPI mínima, `GET /health`, `GET /ready`, config e middleware com rotas públicas intencionais, Dockerfile, wiring Compose e gateway, testes unitários/contratuais/smoke e documentação operacional. Aplicar padrão da `commercial-api` e `.cursor`, preservar worktree alheio e evidenciar Docker/gateway. Não criar MFE, páginas, endpoints de negócio, banco, migrações, novas permissions ou integração ERP.
+
+**Residuais mandatórios para slices posteriores:** D-G0-05 política stale RBAC e proteção de service principals **antes** da primeira rota autenticada; revalidar freezes e autorização para cada novo slice; Help e UX somente junto da feature correspondente. `PASS` de aprovação documental não significa `PASS` de teste, deploy ou serviço operacional. Esses estados continuam `TEST_NOT_RUN / NOT_IMPLEMENTED` até evidência do executor.
+
+**Precedência temporal:** esta decisão formal de §13 substitui os estados preparatórios §§1–12 **somente para o recorte IMP-F0**. Não generalizar seu efeito para G0 de todo o Portal.
