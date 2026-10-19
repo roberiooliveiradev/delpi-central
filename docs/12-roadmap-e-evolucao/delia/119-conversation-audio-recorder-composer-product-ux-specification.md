@@ -1,6 +1,7 @@
 # 119 — DÉLIA | Voice Dictation Composer — Ditado por voz para texto editável
 
 **Data:** 2026-10-19  
+**Refinamento visual aprovado (VD-F04):** [120 — Voice Dictation Composer, estados visuais, motion e microinterações](./120-voice-dictation-composer-visual-refinement-ux-specification.md). Este documento 120 é a referência obrigatória para geometria, controles circulares, waveform, processamento, aviso contextual, full-page/Dock, acessibilidade e critérios VD-V01…VD-V14; o runtime de ditado/STT existente permanece inalterado até a implementação.  
 **Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03+AU-F05_QA_INTEGRATION_DONE / VD-F02_MODAL_REWORK_DONE / VD-F03_STT_INTEGRATION_DONE / INDEPENDENT_REVIEW_PENDING`  
 **Evidência VD-F03:** [voice-dictation-stt-integration-01](./evidence/voice-dictation-stt-integration-01/voice-dictation-stt-integration-evidence.md) — contrato `dictation.transcription.v1`, owner `delia-api`, provider family OpenAI-compatible (OpenRouter) com modelo dedicado de áudio, STT real pt-BR end-to-end (página + dock), texto editável e envio manual.  
 **Evidência VD-F02:** [voice-dictation-composer-rework-01](./evidence/voice-dictation-composer-rework-01/voice-dictation-rework-evidence.md) — composição modal single-surface implementada e testada (vitest + Playwright página/dock); **STT não integrado — sem owner/contrato aprovado**.  
