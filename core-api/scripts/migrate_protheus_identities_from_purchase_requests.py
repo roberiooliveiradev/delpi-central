@@ -154,10 +154,21 @@ def load_source(conn) -> list[dict[str, Any]]:
 
 
 def load_core_users(conn) -> dict[uuid.UUID, bool]:
-    """Map user_id → active flag."""
+    """Map user_id → active flag.
+
+    Normalize to ``uuid.UUID`` because psycopg2 may return UUID columns as
+    ``str`` depending on typecasters — mixing types causes false orphans.
+    """
     with conn.cursor() as cur:
         cur.execute("SELECT id, active FROM users")
-        return {row[0]: bool(row[1]) for row in cur.fetchall()}
+        out: dict[uuid.UUID, bool] = {}
+        for row in cur.fetchall():
+            raw = row[0]
+            uid = raw if isinstance(raw, uuid.UUID) else parse_uuid(str(raw))
+            if uid is None:
+                continue
+            out[uid] = bool(row[1])
+        return out
 
 
 def load_destination(conn) -> dict[str, dict[str, Any]]:

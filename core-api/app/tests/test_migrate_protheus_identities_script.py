@@ -146,3 +146,48 @@ def test_allow_conflicts_flag_removed(mig):
     parser.add_argument("--apply", action="store_true")
     with pytest.raises(SystemExit):
         parser.parse_args(["--plugins-dsn", "x", "--core-dsn", "y", "--allow-conflicts"])
+
+
+def test_valid_user_plans_insert_when_absent(mig):
+    uid = uuid.uuid4()
+    rows = [
+        {
+            "user_id": str(uid),
+            "protheus_user_id": "000234",
+            "protheus_user_code": "X",
+            "mapping_status": "mapped",
+            "mapping_source": "email_match",
+            "verified": True,
+        }
+    ]
+    plan, conflicts = mig.build_transfer_plan(
+        rows,
+        core_users={uid: True},
+        destination={},
+    )
+    assert not any(c.code == "orphan_user" for c in conflicts)
+    assert plan[0].action == "insert"
+
+
+def test_load_core_users_normalizes_str_ids(mig, monkeypatch):
+    class FakeCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, *_args, **_kwargs):
+            return None
+
+        def fetchall(self):
+            uid = "0481c725-1e48-481e-b924-360dc31d3c66"
+            return [(uid, True)]
+
+    class FakeConn:
+        def cursor(self):
+            return FakeCursor()
+
+    users = mig.load_core_users(FakeConn())
+    assert uuid.UUID("0481c725-1e48-481e-b924-360dc31d3c66") in users
+    assert users[uuid.UUID("0481c725-1e48-481e-b924-360dc31d3c66")] is True
