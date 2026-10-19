@@ -15498,3 +15498,15 @@ NEXT=INDEPENDENT_REVIEW → decisão PM sobre provider/contrato STT (VD-F01→VD
 - No I04 acceptance or C3/C4/C5/Q01 phase progression. NEXT provider-neutral comparison outcome + VISTA latency root-cause, including DAVI/TEO/VISTA/non-MCP/no-tool holdouts.
 
 NEXT=PROVIDER_NEUTRAL_PRIOR_COMPARISON_OUTCOME_AND_VISTA_LATENCY_DIAGNOSTIC
+
+
+## §6.299 — Orchestration.py semantic ownership: static full-file audit (56 + 57)
+
+**DATA:** 2026-10-19. **SOURCE_SHA:** `8fc45e2119f3cc7b1b34a0f79bca144e5f822516` (code unchanged by audit). **FIRST PASS:** [56](../corrections/mcp-contextual-intelligence-orchestration/56-orchestration-audit-semantic-ownership-checkpoint.md). **SECOND PASS:** [57](../corrections/mcp-contextual-intelligence-orchestration/57-orchestration-complete-second-pass-static-audit.md).
+
+- **STATIC COVERAGE:** `delia-api/app/application/capability_provision/orchestration.py` lines 1–10,592 (20 contiguous review regions), 179 declarations inventoried; 25 first-pass candidate groups + 17 supplementary audit findings. **Critical:** lexical intent/coverage/guidance/index ranking and ordinal/continuity heuristics compete with typed LLM decisions; presentation/compare fallbacks can return copied lists instead of requested comparison; model stages duplicate work and candidate flow duplicates direct `InvokeModel.execute`; optional self-index probe budget is >30s turn in current config; schema-valid free strings do not prove owner index semantics.
+- **KEEP/PROTECT:** schema/contract validation, owner capability revalidation, identity/Core/Domain AuthZ, PREPARE/ACT separation, confirmation/idempotency/audit, fail-closed provenance, redaction, truthful pagination and outcome. Regex for credential redaction and syntactic parsing is legitimate; do not remove blindly.
+- **CANONICAL GATE:** No deletions approved. `EXISTING_EQUIVALENT=TO_INVENTORY` per replacement; `REUSE_DECISION=PENDING`. Full code-change reanchor (.cursor + 17 included) required; frozen synthesis/comparison contracts require `ARCHITECTURE_DECISION_REQUIRED` if revisited. **CODE_DIFF=NONE**, independent pytest `TEST_NOT_RUN`, live SSH `TEST_NOT_RUN`, cross-file consumer mapping `TO_INVENTORY`; documentation does not advance phase.
+- **PHASE:** `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
+
+NEXT=COORDINATION_ARCHITECTURE_DECISION_ON_SEMANTIC_OWNERSHIP_AND_BOUNDED_REFACTOR
