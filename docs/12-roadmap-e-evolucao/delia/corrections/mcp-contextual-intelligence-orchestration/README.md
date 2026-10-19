@@ -2,7 +2,7 @@
 
 **DATA:** 2026-10-19 (roadmap state refresh; original baseline remains historical)
 **TRACK_ID:** `DELIA-C3-MCP-CONTEXTUAL-INTELLIGENCE-AND-ORCHESTRATOR-QUALITY-01`
-**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_REWORK_K2_K3_QUALITY_NEXT / I03–Q03_PLANNED`
+**STATUS:** `I00_ACCEPTED_WITH_RESIDUAL / I01_ACCEPTED_WITH_RESIDUAL / I02_ACCEPTED_WITH_RESIDUAL_SCOPED / I03_IMPLEMENTATION_PLANNED / I04–Q03_PLANNED`
 **Baseline HEAD:** `cc7d2c8e3ba0d70edd56088df72ee795976c2e2e` (revalidar em cada execução).
 **Origin evidence:** [44](../conversational-intelligence-c3/44-specialist-knowledge-utilization-eval.md); I01 [03](./03-i01-contextual-knowledge-continuity-implementation.md)/[04](./04-i01-independent-architecture-acceptance.md); I02 [05](./05-i02-grounded-knowledge-synthesis-implementation.md), ledger §6.243.
 
@@ -28,7 +28,7 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 **I01 implementation candidate (not independently accepted):** [03 — contextual knowledge continuity implementation](./03-i01-contextual-knowledge-continuity-implementation.md). `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND`; live K2 path sem reconsulta desnecessária; `I01_ACCEPTED=NO` até review.
 
 **I01 independente:** [04 — architecture acceptance](./04-i01-independent-architecture-acceptance.md) = ACCEPT_WITH_RESIDUAL.
-**I02 implementation candidate:** [05 — grounded knowledge synthesis](./05-i02-grounded-knowledge-synthesis-implementation.md). Deterministic guidance projection + budget-safe fallback; `I02_ACCEPTED=NO` até review.
+**I02 implementation candidate:** [05 — grounded knowledge synthesis](./05-i02-grounded-knowledge-synthesis-implementation.md). Deterministic guidance projection + budget-safe fallback; `I02_ACCEPTED=YES_WITH_RESIDUAL` até review.
 
 **I02 independent review:** [06 — REWORK decision](./06-i02-independent-review-rework-decision.md).
 **I02-R1 diagnosis:** [07 — post-fix validation and latency diagnosis](./07-i02r1-post-fix-validation-and-latency-diagnosis.md) — nested live INCONCLUSIVE (index_probe timeout before READ); pre-synthesis latency PROVEN (`index_probe` model under 30s). Performance fix not applied.
@@ -71,6 +71,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02 K2/K3 remediation:** [24 — implementation and live evidence](./24-i02-k2-k3-output-quality-remediation-implementation.md), [25 — independent ACCEPT_WITH_RESIDUAL review](./25-i02-k2-k3-independent-remediation-review.md). K1=17.010s TÉO READ; K2=5 bullets/219 chars; K3 safe no-match clarification near 30s, not nested topic success. Next: I02 acceptance gate + determine whether current owner catalog has an adequate VISTA topic. No phase advance.
 
+**I02 owner cross-check / acceptance:** [26 — independent direct VISTA evidence and scoped ACCEPT_WITH_RESIDUAL](./26-i02-owner-crosscheck-and-acceptance-gate.md). K3 safe no-match consistent with examined guides; other VISTA design capabilities remain TO_INVENTORY. **NEXT implementation:** [27 — I03 DAVI semantic discovery bounded brief](./27-i03-davi-semantic-discovery-implementation-brief.md). No C3/C4/C5 progression.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -100,7 +102,7 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.
 
 ```text
-TRACK=I02_REWORK
+TRACK=I03_PLANNED_AFTER_I02_SCOPED_ACCEPTANCE
 I00=ACCEPTED_WITH_RESIDUAL
 I01_ACCEPTED=YES_WITH_RESIDUAL
 I02_ACCEPTED=NO
@@ -132,7 +134,7 @@ I02_K2_K3_LIVE=EVIDENCE_RECORDED
 LIVE_K1_QUALITY=PASS_WITH_LIMITATION
 LIVE_K2_QUALITY=PASS_WITH_LIMITATION
 LIVE_K3_QUALITY=PASS_SAFE_CLARIFICATION
-NEXT=COORDINATION_INDEPENDENT_REVIEW
+NEXT=DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
