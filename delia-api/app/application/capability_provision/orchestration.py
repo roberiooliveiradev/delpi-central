@@ -3594,6 +3594,28 @@ def _extraction_list_from_prior_excerpts(
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
 
+def _recover_prior_extraction_after_invalid_index(
+    input_text: str,
+    records: tuple[Mapping[str, str], ...],
+) -> str | None:
+    """Recover a selection-only transform after an invalid model index.
+
+    Distinguishes INVALID_MODEL_PROPOSAL from INSUFFICIENT_PRIOR_EVIDENCE:
+    when the ask is an extraction follow-up and prior excerpts already
+    expose enough selectable units, project them deterministically.
+    Never accepts the invalid index, never invents records, and never
+    arbitrarily picks the first single excerpt.
+    """
+    if not _EXTRACTION_FOLLOWUP_RE.search(input_text or ""):
+        return None
+    if _LIMITATION_FOLLOWUP_RE.search(input_text or ""):
+        return None
+    units = _collect_extraction_units(records)
+    if len(units) < 2:
+        return None
+    return _extraction_list_from_prior_excerpts(records)
+
+
 def _project_surface(
     groups: Mapping[str, CapabilityGroup],
 ) -> list[tuple[str, ProviderCapability]]:
@@ -6320,25 +6342,44 @@ class OperationalCapabilityOrchestrator:
             else (None, "proposal_absent")
         )
         if rendered is None:
-            # Already on the prior-continuation path: do not fall
-            # through to live reselection — that burns the remaining
-            # global budget after a failed transform (Stage 05 live).
-            _logger.info(
-                "orchestration stage=prior_continuation "
-                "decision=insufficient_evidence reason=%s "
-                "correlation_id=%s",
-                reason,
-                correlation,
-            )
-            return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SUCCESS,
-                correlation_id=correlation,
-                content=_insufficiency_content(),
-                limitations=(
-                    LIMITATION_PRIOR_TURN_CONTINUATION,
-                    LIMITATION_INSUFFICIENT_EVIDENCE,
-                ),
-            )
+            # INVALID_MODEL_PROPOSAL (bad index) must not erase
+            # sufficient prior excerpts on an extraction follow-up.
+            # Deterministic projection reuses the existing list helper;
+            # still never invents facts or accepts the invalid index.
+            if reason == "invalid_record_index":
+                recovered = _recover_prior_extraction_after_invalid_index(
+                    input_text,
+                    records,
+                )
+                if recovered is not None:
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=recover_invalid_index excerpts=%d "
+                        "correlation_id=%s",
+                        len(records),
+                        correlation,
+                    )
+                    rendered = recovered
+            if rendered is None:
+                # Already on the prior-continuation path: do not fall
+                # through to live reselection — that burns the remaining
+                # global budget after a failed transform (Stage 05 live).
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=insufficient_evidence reason=%s "
+                    "correlation_id=%s",
+                    reason,
+                    correlation,
+                )
+                return GovernedCapabilityAttempt(
+                    status=GovernedCapabilityStatus.SUCCESS,
+                    correlation_id=correlation,
+                    content=_insufficiency_content(),
+                    limitations=(
+                        LIMITATION_PRIOR_TURN_CONTINUATION,
+                        LIMITATION_INSUFFICIENT_EVIDENCE,
+                    ),
+                )
         normalized_prior = " ".join(prior_content.split())
         normalized_rendered = " ".join(rendered.split())
         if (
@@ -8749,24 +8790,37 @@ class OperationalCapabilityOrchestrator:
             ],
             "argument_fields": list(field_keys),
         }
-        proposal = self._propose(
-            input_text,
-            block_tag="owner_index",
-            block_payload=json.dumps(
-                block, ensure_ascii=False, default=str
-            )[:MAX_ARGUMENTS_BLOCK_CHARS],
-            instruction_id=INDEX_SELECT_INSTRUCTION_ID,
-            instruction=INDEX_SELECT_INSTRUCTION,
-            expected_fields=("selected_identifier", "argument_field"),
-            input_kind="capability_index_select",
-            allowed_keys=frozenset(
-                {"selected_identifier", "argument_field", "limitations"}
-            ),
-            workspace_context=workspace_context,
-            prior_turns=prior_turns,
-            correlation=correlation,
-            deadline=deadline,
-        )
+        try:
+            proposal = self._propose(
+                input_text,
+                block_tag="owner_index",
+                block_payload=json.dumps(
+                    block, ensure_ascii=False, default=str
+                )[:MAX_ARGUMENTS_BLOCK_CHARS],
+                instruction_id=INDEX_SELECT_INSTRUCTION_ID,
+                instruction=INDEX_SELECT_INSTRUCTION,
+                expected_fields=("selected_identifier", "argument_field"),
+                input_kind="capability_index_select",
+                allowed_keys=frozenset(
+                    {"selected_identifier", "argument_field", "limitations"}
+                ),
+                workspace_context=workspace_context,
+                prior_turns=prior_turns,
+                correlation=correlation,
+                deadline=deadline,
+            )
+        except _StageDeadlineExceeded:
+            # INDEX already ran: a late select timeout must degrade to
+            # no_match → clarification (deterministic ask-back exists),
+            # not collapse the whole turn into SOURCE_UNAVAILABLE.
+            _logger.info(
+                "orchestration stage=index_select "
+                "decision=budget_skip remaining_ms=%d "
+                "correlation_id=%s",
+                int(deadline.remaining_seconds() * 1000),
+                correlation,
+            )
+            return None, None
         if proposal is None:
             return None, None
         selected = proposal.get("selected_identifier")
