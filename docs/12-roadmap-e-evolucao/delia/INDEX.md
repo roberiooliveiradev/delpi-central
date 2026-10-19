@@ -224,4 +224,4 @@ C5 may allow governed ACT
 C7 = advanced autonomous ACT; L5 default OFF
 OT safety remains external authority
 ```
-- [`119-conversation-audio-recorder-composer-product-ux-specification.md`](./119-conversation-audio-recorder-composer-product-ux-specification.md) — gravação de áudio no composer, UX, consentimento, preview, contratos e gates (documentação; implementação pendente).
+- [`119-conversation-audio-recorder-composer-product-ux-specification.md`](./119-conversation-audio-recorder-composer-product-ux-specification.md) — **Voice Dictation Composer**: falar → transcrever → editar → enviar texto; gravação local existente é fundação técnica, STT e substituição modal do textarea pendentes; envio de áudio para análise é capability futura separada. Nome de arquivo histórico preservado por compatibilidade.
