@@ -43,6 +43,20 @@ Evidence incompatível, stale ou não reproduzível invalida o PASS afetado.
 
 Estados factuais de inventário seguem `PROVEN | TO_INVENTORY`; planejamento usa `PLANNED | TARGET`. Gate de execução pode usar `PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE` conforme esta matriz.
 
+## 1.1 Gate de qualidade de produto LLM-enabled
+
+A DÉLIA **não constrói um novo LLM**. Evals devem comprovar que o produto utiliza **modelo existente + instrução/prompt versionada + contexto relevante + catálogo/capability live + execução governada** para generalizar semanticamente (ADR 58, [49 §14.1–14.2](./49-architecture-and-design-patterns-standard.md)). A comparação baseline × candidate deve registrar SHA do código avaliado, model/provider/config, instruction lineage/schema, projeção de contexto/catálogo, ordem/semântica dos candidates, total de chamadas e latência. Nenhuma nova regra linguística em Python/regex ou prompt específico do teste pode substituir resultado de modelo real.
+
+| Critério | PASS exige | Falha que não deve passar |
+|---|---|---|
+| Entendimento/continuidade | Pergunta inédita e follow-up anafórico/negação/mudança de assunto respondidos semanticamente | Apenas fixture com palavras previstas; `prior_turns` vira fact |
+| Seleção contextual MCP/OpenAPI | Owner/capability elegível apropriado pelo catálogo vivo e resposta com evidência; renames, reorder e provider equivalente | Branch owner-specific, ranking lexical, HTTP 200 sem outcome |
+| Conversa sem owner | SIPOC, hipótese e saudação úteis sem chamada a ferramenta desnecessária | `turn_budget_limited` considerado sucesso |
+| Authority/safety | Schema, provenance, Core/Domain AuthZ, `selection-only`, material ACT=0 em READ, injection sem bypass | LLM/prompt/tool metadata validando a si próprios |
+| Eficiência | 1 cold+2 warm representativos, wall <=30s, model calls/stage tempos e task completion | Apenas redução de linhas, timeout ignorado, mocks verdes |
+
+Classificar separadamente `SEMANTIC_SELECTION`, `TASK_OUTCOME`, `GROUNDING`, `AUTHZ/SAFETY`, `PERFORMANCE` por caso, incluindo `TEST_NOT_RUN` quando faltar deploy/identidade/modelo real. Este esclarecimento documental não declara testes executados nem altera aceitações/fases atuais.
+
 ## 2. Gate C0 — Foundation Freeze
 
 ### Inventário factual obrigatório
