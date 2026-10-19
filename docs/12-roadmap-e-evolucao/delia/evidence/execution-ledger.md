@@ -15314,3 +15314,10 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_FEATURE_GATE=OFF`; `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`, `CP-333=PLANNED`, `PHASE_PROGRESSION=NONE`.
 
 NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)
+
+
+## §6.289 - Independent conversational recovery review (ACCEPT_WITH_RESIDUAL_SCOPED / REWORK_COLD)
+
+**DATE:** 2026-10-19. **REVIEW:** [47](../corrections/mcp-contextual-intelligence-orchestration/47-independent-conversational-recovery-cold-start-review.md). **LIVE CODE SHA:** 3564f9ba74d5acdf1fc9defc38caf8bd506e6760. **STATE:** scoped conversational not_applicable fallback and page-slice activity-count omission accepted with residual; executor full backend PASS, independent replay TEST_NOT_RUN. Cold A01 greeting HTTP504 after ~29s select_group=FAIL. Real product query and same-conversation clarification continuity TEST_NOT_RUN. Preserve model-versus-owner error taxonomy, no ACT/ungrounded business facts. I04_ACCEPTED=NO, C3_EXECUTED=NO, C4/C5_AUTHORIZED=NO. This review does not change phase or accepted ownership.
+
+NEXT_RELATED=DELIA-C3-COLD-CONVERSATIONAL-ADMISSION-AND-CONTINUITY-REWORK-01
