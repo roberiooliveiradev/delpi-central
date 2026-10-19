@@ -388,6 +388,12 @@ class HandleInteractiveConversationTurn:
                 )
             return result
 
+        # R1 (doc 35): model-backed inconclusive selection returns
+        # CLARIFICATION_REQUIRED above — never a second free-form model
+        # call. Bare NOT_APPLICABLE (empty surface / no governed path)
+        # may still use the ordinary conversational fallback when budget
+        # remains.
+
         if sink is not None:
             sink.emit(phase=ActivityPhase.OUTCOME_PREPARING)
         model_result = self._invoke(

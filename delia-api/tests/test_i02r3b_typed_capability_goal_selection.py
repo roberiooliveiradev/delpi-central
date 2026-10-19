@@ -526,7 +526,7 @@ def test_typed_unknown_capability_fails_closed():
         providers,
         _typed_proposals(group_key, remote="invented_tool_xyz"),
     )
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert owner == ()
     assert GOAL_INSTRUCTION_ID not in purposes
 

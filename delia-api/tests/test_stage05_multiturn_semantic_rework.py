@@ -560,7 +560,8 @@ def test_ambiguous_referent_requests_clarification():
         "E o outro processo?",
         prior_turns=_prior(),
     )
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    # R1: applicable=false with a model present is clarification.
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert provider.calls == []
 
 
@@ -659,7 +660,8 @@ def test_hypothesis_prior_is_not_treated_as_evidence():
         ),
     )
     attempt = orch.attempt("Resuma isso.", prior_turns=prior)
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    # Hypothesis prior is not evidence; selection none → clarification (R1).
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert LIMITATION_PRIOR_TURN_CONTINUATION not in (
         attempt.limitations or ()
     )

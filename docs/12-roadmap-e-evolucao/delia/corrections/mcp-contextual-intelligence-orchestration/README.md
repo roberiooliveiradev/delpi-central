@@ -91,6 +91,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I04 implementation and independent review:** [36 — code/live evidence](./36-i04-provider-neutral-generalization-implementation.md) and [37 — independent review + direct DAVI comparison](./37-i04-independent-review-and-davi-direct-crosscheck.md). I04 global REWORK: K4 live select_capability none; K3 safe clarification exceeds strict 30s; direct DAVI owner catalog reachable. Reuse pre-existing R1 selection/projection remediation (docs34–35). Q01 not authorized.
 
+**R1+R3 none-selection and projection remediation:** [38 — implementation](./38-orchestration-none-selection-and-projection-remediation.md). Doc 35 authorized direction. Orch: selection none → `CLARIFICATION_REQUIRED` (no avoidable 504); R3 prior-excerpt framing. Full pytest PASS. Does not close R2 / I04 / Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -171,8 +173,12 @@ LIVE_L05=PASS_SAFE_CLARIFICATION
 LIVE_L06=FAIL_CAPABILITY_NONE_TIMEOUT
 I04_IMPLEMENTATION=EVIDENCE_READY
 I04_ACCEPTED=NO
-NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW_I04
-NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
+R1_R3_REMEDIATION=EVIDENCE_READY
+LIVE_L02_R1=PASS_CLARIFICATION_NO_504
+LIVE_L04_R3=PASS_ORIENTACAO_FRAMING
+LIVE_L06_R1=PASS_CLARIFICATION_NO_504_DISCOVERY_RESIDUAL
+NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW
+NEXT_RELATED=COORDINATION_INDEPENDENT_REVIEW_I04
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

@@ -15163,3 +15163,19 @@ NEXT_RELATED=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
 - **DECISION:** I04 code extension `ACCEPT_WITH_RESIDUAL` scoped, global I04 `REWORK`, `I04_ACCEPTED=NO`, Q01 unauthorized, C3–C5 unchanged. Reuse existing docs34–35/§§6.275–276 R1 select-none/projection remediation; no competing architecture.
 
 NEXT=DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01
+
+
+## §6.279 — DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-ORCHESTRATION-NONE-SELECTION-AND-PROJECTION-REMEDIATION-01`. **DOC:** [38](../corrections/mcp-contextual-intelligence-orchestration/38-orchestration-none-selection-and-projection-remediation.md). **AUTHORITIES:** doc 35; docs 33–34; §§6.274–6.278.
+
+- **REUSE:** `OperationalCapabilityOrchestrator` + clarification terminal in `HandleInteractiveConversationTurn` — `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND`.
+- **R1 root cause:** `_select_target=None` → bare `NOT_APPLICABLE` → handler general `_invoke` → 30s → HTTP 504 (L02/L06 on `9a8775018f`).
+- **R1 fix:** model-backed selection none → `CLARIFICATION_REQUIRED` + `_SELECTION_INCONCLUSIVE_CONTENT` (orch). Bare empty-surface `NOT_APPLICABLE` keeps conversational fallback.
+- **R3 fix:** `_records_are_prior_excerpts` + `_list_header(..., records=)` — methodological prior lists framed as orientação, not “registros”.
+- **NOTE:** orch R1/R3 EXTEND physically landed in `37f4e21229` (I04 commit); this task locks tests/docs/wording and proves live accept on deployed `ddc3c6f7e4`. Doc number **38** (37 reserved by I04 independent review).
+- **TESTS:** `test_r1_r3_none_selection_and_projection.py` T01–T17 PASS; I01/I02/I03/ACR/specialist/provider-neutral/I04 PASS; full `delia-api` pytest PASS.
+- **LIVE (deployed `ddc3c6f7e4`, kimi-k3):** L02 200/9053ms clarification (`2f40f7b6-…`); L06 200/10174ms clarification after `mcp:davi` capability none (`3243dd19-…`); L04 200/27048ms `Recuperei 6 itens da orientação anterior`; L03 GROUNDED TEO 15709ms; L05 safe clarify; L01 `glpi_link_required`. ACT=0. No avoidable 504 on L02/L06.
+- **DECISION:** remediation `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; R2 DAVI semantic selection residual OPEN; `I04_ACCEPTED=NO`; no C3/C4/C5/Q01 progression.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW

@@ -706,8 +706,8 @@ _INTENT_CLARIFICATION_CONTENT = (
 # is inconclusive, prefer a bounded ask-back over bare NOT_APPLICABLE
 # that previously fell through to a second model call → 504.
 _SELECTION_INCONCLUSIVE_CONTENT = (
-    "Não identifiquei um especialista ou capability aplicável para "
-    "esta solicitação com as superfícies disponíveis. Pode esclarecer "
+    "Não identifiquei uma capability ou superfície aplicável para "
+    "esta solicitação com as fontes disponíveis. Pode esclarecer "
     "o que você precisa consultar ou fazer na DELPI?"
 )
 

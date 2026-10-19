@@ -1921,5 +1921,7 @@ def test_s2_ineligible_or_invented_selection_rejected():
             ],
         )
         attempt = orch.attempt("Me explica como cadastrar.")
-        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+        # R1: invalid model-backed selection asks back (no owner call).
+        assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+        assert attempt.content
     assert provider.calls == []

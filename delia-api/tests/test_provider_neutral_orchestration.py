@@ -285,7 +285,10 @@ def test_selection_proposal_revalidated_against_fresh_groups():
         _select("openapi:nonexistent", "list_products"),
     )
     attempt = orch.attempt("Liste produtos")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    # R1: model-backed invalid group selection is clarification, not a
+    # silent NOT_APPLICABLE that races the general-model budget.
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.content
     assert not other.calls
 
 
@@ -489,7 +492,10 @@ def test_workspace_context_never_authorizes():
         ),
     )
     attempt = orch.attempt("anything", workspace_context=ctx)
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    # R1: applicable=false with a model present asks back; workspace
+    # context still never authorizes an owner call.
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.content
     assert not mcp.calls
 
 

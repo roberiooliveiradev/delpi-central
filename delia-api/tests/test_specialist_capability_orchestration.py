@@ -397,7 +397,10 @@ def test_model_marks_not_applicable():
         proposal={"applicable": False},
     )
     attempt = read.attempt("Quanto é 2+2?")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    # R1: model-backed inconclusive selection is clarification, not a
+    # silent NOT_APPLICABLE that races the general-model budget.
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.content
 
 
 def test_empty_surface_not_applicable_when_all_specialists_healthy():
@@ -493,7 +496,7 @@ def test_metamorphic_add_remove_reclassify():
 
     # T0: unknown to the owner -> selection rejected, no wire call.
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert port.calls == []
 
     # T1: owner advertises new_read_b (READ) — same read object.
@@ -511,7 +514,7 @@ def test_metamorphic_add_remove_reclassify():
         RemoteToolDescriptor("analyze", operation_class="READ"),
     )
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert port.calls == []
 
     # T3: owner reclassifies it PREPARE — now orchestrated through the
@@ -534,7 +537,7 @@ def test_metamorphic_add_remove_reclassify():
         RemoteToolDescriptor("new_read_b", operation_class=None),
     )
     attempt = read.attempt("use new_read_b")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert port.calls == []
 
 
@@ -562,7 +565,7 @@ def test_model_invented_capability_rejected():
         proposal=_select("teo", "drop_all_records"),
     )
     attempt = read.attempt("apague tudo")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert port.calls == []
 
 
@@ -575,7 +578,7 @@ def test_model_invented_specialist_rejected():
         proposal=_select("chatgpt", "analyze"),
     )
     attempt = read.attempt("resuma")
-    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
     assert port.calls == []
 
 
@@ -821,22 +824,38 @@ def test_arguments_bounded_to_owner_schema():
 def test_malformed_proposals_fail_closed():
     port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
     # Each malformed payload lands at the capability-selection stage
-    # (single specialist => stage 1 is deterministic).
+    # (single specialist => stage 1 is deterministic). R1: invalid
+    # selection with a model present is CLARIFICATION_REQUIRED.
     for proposal in (
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": True}},
         {CAPABILITY_SELECTION_INSTRUCTION_ID: "not-a-mapping"},
         {CAPABILITY_SELECTION_INSTRUCTION_ID:
          {"applicable": "yes", "remote_name": "analyze"}},
-        {CAPABILITY_SELECTION_INSTRUCTION_ID:
-         {"applicable": True, "remote_name": "analyze",
-          "extra": "x"}},
     ):
         read = _read(
             _interop(port), specialist_ids=("teo",), proposal=proposal
         )
         attempt = read.attempt("resumo")
-        assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
-    assert port.calls == []
+        assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    # Surplus keys are projected away (Stage 05 strip_extra), so a
+    # otherwise-valid selection proceeds — never invented authority.
+    read = _read(
+        _interop(port),
+        specialist_ids=("teo",),
+        proposal={
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "analyze",
+                "extra": "x",
+            },
+            ARGUMENTS_INSTRUCTION_ID: {"arguments": {"view": "summary"}},
+            GOAL_INSTRUCTION_ID: {"goal_class": "read"},
+            NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
+        },
+    )
+    attempt = read.attempt("resumo")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert port.calls[-1][:2] == ("teo", "analyze")
 
 
 # --- DAVI owner candidate flow ------------------------------------------
