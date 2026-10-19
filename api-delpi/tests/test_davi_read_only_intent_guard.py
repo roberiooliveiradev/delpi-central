@@ -97,7 +97,7 @@ def test_explicit_write_intent_returns_zero_candidates(query, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] == 0
     assert result["candidates"] == []
-    assert result["eligible_action_count"] == 88
+    assert result["eligible_action_count"] == 92
 
 
 @pytest.mark.parametrize(
@@ -166,7 +166,7 @@ def test_read_queries_still_retrieve(query, action_id, monkeypatch):
     result = discover_delpi_information(query=query, top_k=5, actor_id=_ACTOR)
     assert result["candidate_count"] >= 1
     assert result["candidates"][0]["action_id"] == action_id
-    assert result["eligible_action_count"] == 88
+    assert result["eligible_action_count"] == 92
 
 
 def test_bare_product_query_is_ambiguous_but_not_write(monkeypatch):
@@ -204,6 +204,10 @@ def test_guard_config_is_not_authz_and_eligible_unchanged():
     guard = allow.get("retrievalReadOnlyGuard") or {}
     assert "NOT AuthZ" in str(guard.get("description") or "")
     assert load_allowlist_operation_ids(allow) == {
+        "get_supplies_inventory_accuracy_summary",
+        "get_supplies_inventory_accuracy_items",
+        "get_supplies_non_moving_stock_summary",
+        "get_supplies_non_moving_stock_items",
         "get_commercial_rol_by_branch",
         "get_commercial_rol_by_customer",
         "get_commercial_rol_by_product",

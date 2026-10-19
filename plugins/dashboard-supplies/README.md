@@ -31,3 +31,11 @@ cd infra
 docker compose up -d --build dashboard-supplies api-delpi
 docker compose restart gateway
 ```
+
+### Acuracidade e estoque sem giro — recuperação de consultas
+
+O botão **Atualizar** recarrega o resumo e o detalhamento das duas abas.
+Quando a consulta do detalhamento falha, a tela mostra o erro e **Tentar novamente**;
+ela não apresenta essa falha como uma consulta bem-sucedida com zero registros.
+A ordenação por data/produto preserva desempate estável sem repetir colunas.
+Para validação com DAVI, ver `api-delpi/docs/integrations/davi-supplies-inventory-validation.md`.

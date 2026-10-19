@@ -66,6 +66,16 @@ def _param_schema(param: dict[str, Any]) -> dict[str, Any]:
             schema[key] = param[key]
         elif key in nested:
             schema[key] = nested[key]
+    if ptype == "array":
+        # Baseline flattens query schemas; live OpenAPI retains item enums.
+        # Both discovery and execution must expose/validate the same shape.
+        items = param.get("items", nested.get("items"))
+        schema["items"] = dict(items) if isinstance(items, dict) else {"type": "string"}
+        for key in ("minItems", "maxItems"):
+            if key in param:
+                schema[key] = param[key]
+            elif key in nested:
+                schema[key] = nested[key]
     return schema
 
 
@@ -578,7 +588,7 @@ def _coerce_value(name: str, value: Any, prop: dict[str, Any]) -> Any:
         for item in value:
             if not isinstance(item, str):
                 raise ArgumentValidationError(f"{name}: array items must be strings")
-            out.append(item)
+            out.append(_coerce_value(f"{name}[]", item, prop.get("items") or {"type": "string"}))
         if "minItems" in prop and len(out) < int(prop["minItems"]):
             raise ArgumentValidationError(f"{name}: fewer than minItems {prop['minItems']}")
         if "maxItems" in prop and len(out) > int(prop["maxItems"]):

@@ -513,8 +513,8 @@ def test_batch04_not_eligible_and_not_executable_through_broker(monkeypatch):
 
 def test_count01_allowlist_delta_exactly_expected():
     allow = _allow()
-    assert allow["version"] == 21
-    assert len(allow["operations"]) == 90
+    assert allow["version"] == 22
+    assert len(allow["operations"]) == 94
     ops = _ops()
     for kept in (
         "list_supplies_inventory_adjustments",
@@ -544,13 +544,13 @@ def test_count02_baseline_and_live_counts_recomputed():
     baseline_eligible = {
         a.operation_id for a in _baseline_actions() if a.executable
     }
-    assert len(baseline_eligible) == 88
+    assert len(baseline_eligible) == 92
     live_eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(live_eligible) == 90
+    assert len(live_eligible) == 94
 
 
 def test_coverage_decision_chain_records_corrective():
-    coverage = _allow()["coverageDecision"]
+    coverage = _allow()["coverageDecision"]["previousDecision"]
     assert coverage["taskId"] == "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001"
     assert coverage["decision"] == (
         "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS"

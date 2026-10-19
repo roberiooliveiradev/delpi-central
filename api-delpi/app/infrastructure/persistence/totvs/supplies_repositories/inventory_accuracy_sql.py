@@ -17,12 +17,14 @@ from app.domain.totvs.protheus_internal_movements import (
 )
 
 _TIEBREAKER = "branch ASC, product_code ASC, warehouse ASC, count_date ASC"
+_DATE_TIEBREAKER = "branch ASC, product_code ASC, warehouse ASC"
+_PRODUCT_TIEBREAKER = "branch ASC, warehouse ASC, count_date ASC"
 
 _SORT_MAP = {
-    "count_date_desc": f"count_date DESC, {_TIEBREAKER}",
-    "count_date_asc": f"count_date ASC, {_TIEBREAKER}",
-    "product_code_asc": f"product_code ASC, {_TIEBREAKER}",
-    "product_code_desc": f"product_code DESC, {_TIEBREAKER}",
+    "count_date_desc": f"count_date DESC, {_DATE_TIEBREAKER}",
+    "count_date_asc": f"count_date ASC, {_DATE_TIEBREAKER}",
+    "product_code_asc": f"product_code ASC, {_PRODUCT_TIEBREAKER}",
+    "product_code_desc": f"product_code DESC, {_PRODUCT_TIEBREAKER}",
     "divergence_value_desc": (
         f"(shortage_value + surplus_value) DESC, {_TIEBREAKER}"
     ),

@@ -65,7 +65,7 @@ def _discover(query: str, monkeypatch):
 
 def _assert_top(query: str, expected: str, monkeypatch) -> None:
     discovered = _discover(query, monkeypatch)
-    assert discovered["eligible_action_count"] == 88, query
+    assert discovered["eligible_action_count"] == 92, query
     assert discovered["candidates"], query
     assert discovered["candidates"][0]["action_id"] == expected, (
         query,
@@ -257,7 +257,7 @@ def test_real_user_write_intent_guard(query, monkeypatch):
 def test_allowlist_version_and_eligible_count():
     allow = load_external_read_allowlist()
     assert allow.get("version") >= 17
-    previous = allow.get("coverageDecision", {}).get("previousDecision") or {}
+    previous = allow["coverageDecision"]["previousDecision"].get("previousDecision") or {}
     assert previous.get("taskId") == (
         "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001"
     )
@@ -271,4 +271,4 @@ def test_allowlist_version_and_eligible_count():
         "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ"
     )
     eligible = {a.operation_id for a in _actions() if a.executable}
-    assert len(eligible) == 88
+    assert len(eligible) == 92

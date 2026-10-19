@@ -1,7 +1,7 @@
 {
  "benchmark_version": "1",
  "task_id": "DAVI-MCP-DISCOVERY-QUALITY-001",
- "description": "Governed discovery-quality benchmark for the 89-operation DAVI READ surface. Queries authored from business/contract semantics, not copied from semanticAliases.",
+ "description": "Governed discovery-quality benchmark for the DAVI READ surface, including GLPI #1197 inventory validation. Queries authored from business/contract semantics.",
  "families": {
   "product_master": "Product Master & item context",
   "commercial": "Commercial / Sales",
@@ -2629,6 +2629,102 @@
    ],
    "top1_required": true,
    "notes": "generic supplies intent stays on MP-only analysis; product-scoped queries route to get_product_safety_stock"
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-001",
+   "query": "Como está a precisão das contagens oficiais de estoque?",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_inventory_accuracy_summary"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-002",
+   "query": "Qual a acuracidade do inventário em maio?",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_inventory_accuracy_summary"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-003",
+   "query": "Preciso conferir o detalhamento das contagens",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_inventory_accuracy_items"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-004",
+   "query": "Mostre a lista de contagens oficiais",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_inventory_accuracy_items"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-005",
+   "query": "Quanto temos em matérias-primas sem giro?",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_non_moving_stock_summary"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-006",
+   "query": "Resumo de estoque sem giro por unidade",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_non_moving_stock_summary"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-007",
+   "query": "Quais são os itens sem utilização efetiva?",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_non_moving_stock_items"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
+  },
+  {
+   "id": "DQ-INVENTORY-VALIDATION-008",
+   "query": "Quero listar matérias-primas sem giro",
+   "language": "pt-BR",
+   "case_type": "POSITIVE_PARAPHRASE",
+   "family": "supplies",
+   "expected_action_ids": [
+    "get_supplies_non_moving_stock_items"
+   ],
+   "top1_required": true,
+   "notes": "GLPI #1197 canonical summary/detail validation, distinct from adjustment/stock value."
   }
  ]
 }

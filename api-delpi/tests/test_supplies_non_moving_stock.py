@@ -505,6 +505,9 @@ def test_sql_sort_tiebreaker_makes_pagination_stable() -> None:
             page_size=50,
         )
         order_by = query.split("ORDER BY", 1)[1]
+        expressions = order_by.split("OFFSET", 1)[0].strip().split(",")
+        columns = [term.strip().rsplit(" ", 1)[0] for term in expressions]
+        assert len(columns) == len(set(columns)), order_by
         assert "branch ASC" in order_by
         assert "warehouse ASC" in order_by
 

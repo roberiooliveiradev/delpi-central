@@ -221,6 +221,12 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
     [itemsParams]
   );
 
+  const reloadItems = items.reload;
+  const refreshAll = useCallback(() => {
+    reload();
+    reloadItems();
+  }, [reload, reloadItems]);
+
   const periodLabel = isDefaultWindow
     ? "Últimos 12 meses"
     : formatPeriodLabel(dateStart, dateEnd);
@@ -397,8 +403,8 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         onDateEndChange={handleTableChange(setDateEnd)}
         onBranchesChange={handleTableChange(setBranches)}
         onLocationChange={handleTableChange(setLocation)}
-        onRefresh={reload}
-        refreshing={refreshing}
+        onRefresh={refreshAll}
+        refreshing={refreshing || items.refreshing}
       />
       <SuppliesStatusAlerts
         error={error}
@@ -481,7 +487,16 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
         </section>
       ) : null}
 
-      <DataTableSection
+      <SuppliesStatusAlerts
+        error={items.error}
+        loading={items.loading}
+        refreshing={items.refreshing}
+        hasData={items.data !== null}
+        requestProgress={items.requestProgress}
+        onRetry={items.reload}
+        refreshTitle="Atualizando detalhamento"
+      />
+      {!items.error ? <DataTableSection
         title="Materiais por situação de giro"
         columns={columns}
         rows={items.data?.items ?? []}
@@ -623,7 +638,7 @@ export function NonMovingStockPage({ pathname }: NonMovingStockPageProps) {
             />
           </FiltersRow>
         }
-      />
+      /> : null}
 
       {data ? (
         <p className="ds-footnote">

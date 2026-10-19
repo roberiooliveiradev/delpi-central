@@ -3,7 +3,7 @@ export const SUPPLIES_HELP_TOOLTIPS = {
     pageSubtitle:
       "Indicadores de suprimentos no TOTVS: CPV, pontualidade de compras, estoque, giro e economia em negociações.",
     refresh:
-      "Recarrega KPIs e gráficos com os filtros atuais (período, unidade e localização).",
+      "Recarrega os indicadores com os filtros atuais. Nas abas Acuracidade e Estoque sem giro, atualiza também o detalhamento; falhas da consulta são exibidas com opção de tentar novamente.",
   },
   filters: {
     competence:

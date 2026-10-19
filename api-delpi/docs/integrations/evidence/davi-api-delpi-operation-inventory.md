@@ -2,36 +2,41 @@
 
 > Evidence artifact. Not runtime authority. Not semantic capability catalog.
 
-- Task: `DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001`
+- Task: `DAVI-SUPPLIES-INVENTORY-VALIDATION-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **743**
+- TOTAL OPERATIONS: **744**
 - TOTAL GET: **542**
-- WRITE VERBS (POST/PUT/PATCH/DELETE): **201**
-- DAVI_ELIGIBLE_READ (before→after): **87 → 88**
-- NEWLY ELIGIBLE: **1**
+- WRITE VERBS (POST/PUT/PATCH/DELETE): **202**
+- DAVI_ELIGIBLE_READ (before→after): **88 → 92**
+- NEWLY ELIGIBLE: **4**
 
 ## Coverage decision
 
 ```json
 {
-  "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
-  "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
-  "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+  "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
+  "decision": "PROMOTE_ACCURACY_AND_NON_MOVING_STOCK_READS",
+  "reason": "Expose the four existing owner GET routes for inventory accuracy and non-moving stock (summary and paged items). Backend end-user AuthZ is unchanged. Approved nested fields preserve reference periods, denominators, exclusions and valuation source; item pages are capped at 50. No SQL/proxy/write capability.",
   "previousDecision": {
-    "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
-    "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
-    "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
+    "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-CORRECTIVE-001",
+    "decision": "DEFER_OP_MATERIALS_BATCH_AND_TIGHTEN_DAVI_PROJECTIONS",
+    "reason": "Architecture corrective over the shipped wave: (1) defer list_production_order_operation_materials_batch from DAVI (CAPABILITY_NOT_PRODUCT_FROZEN_FOR_DAVI — owner route/contract unchanged, not a defect); governed allowlist 90->89 while baseline executable stays 87 because the batch was already NEEDS_BOUNDED_EXECUTION on the baseline snapshot; (2) DAVI-bound list_supplies_inventory_adjustments page_size to 50 (owner API contract remains <=500); (3) remove raw items[].movement_type from get_product_internal_movements DAVI projection — semantic fields (movement_category/direction/label, inventory_adjustment_nature) remain; (4) SB7 inventory provenance made fail-closed: exactly one candidate B7_DOC exposes document+counted_quantity, zero/ambiguous -> null (supporting provenance, not authority). All other promoted READs and DEFER entries unchanged. MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
     "previousDecision": {
-      "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
-      "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
-      "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
+      "taskId": "DAVI-INVENTORY-MATERIAL-FLOW-IMPLEMENTATION-001",
+      "decision": "PROMOTE_INVENTORY_MATERIAL_FLOW_READS",
+      "reason": "Promote 13 Inventory & Material Flow READs: 2 new inventory-adjustment ops (list + summary over SD3 doc='INVENT', CF-owned nature RE0=surplus/DE0=shortage, SB7 provenance, 366d pair, page_size<=500), raw-material set shortages (branch required, layered BranchAccessGate preserved), production consumption by-item and top-items, allocation gaps, finished-without-consumption anomaly, OP operation materials (single + SEMANTIC_READ_POST batch bounded 300), losses records and top-materials, safety-stock item details and consumption-analysis details (composite blocks minimized: collection totals/summaries and calculation memory only). Enrich get_product_stock with committed/reserved quantities, get_supplies_stock_value with estimation.* provenance, and get_product_internal_movements with governed kind enum (4 values) plus movement classification fields. DEFER: top_items_by_work_center (REWORK_REQUIRED — allocation-side semantics), top_items_validated (SEMANTICALLY_REDUNDANT), purchase_requests_open_coverage (UNBOUNDED_LIST_NO_PAGINATION, unchanged). MCP tools remain 2. GPT Actions unchanged. No deploy, no rollout.",
       "previousDecision": {
-        "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
-        "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
-        "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+        "taskId": "SYSTEM-METADATA-IMPLEMENTATION-001",
+        "decision": "PROMOTE_SYSTEM_METADATA_GOVERNED_READS",
+        "reason": "Promote 5 frozen System Metadata READs (search_tables_by_description, search_protheus_columns_by_description, search_protheus_columns_in_table, get_protheus_table, list_protheus_table_columns) via generic restrictedPathRead=BOUNDED_METADATA_READ opt-in on /system GET + explicit inputs/outputs. Exactly 3 semantic capabilities: system.protheus.table.search, system.protheus.column.search, system.protheus.table.describe. Frozen external names table_name/text bound to owner tableName/q via trusted argumentBindings; owner results[] rebound to frozen data[] via responseBindings for column search only. Governed READ 72->77. All other /system operations (indexes, relations, schema, observability, console, smoke) remain ADMIN_OUT_OF_SCOPE; execute_readonly_sql stays GENERIC_SQL_FORBIDDEN with precedence over any marker. MCP tools remain 2. GPT Actions unchanged.",
         "previousDecision": {
-          "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
-          "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+          "taskId": "PRODUCT-MASTER-EXTENSIONS-IMPLEMENTATION-001",
+          "decision": "PROMOTE_PRODUCT_MASTER_GOVERNED_READS",
+          "reason": "Promote 9 frozen Product Master READs: physical locations and inventory blocks via governed SEMANTIC_READ_POST (trusted requestBody required, product_codes 1-50), supplier part-number lookup, exclusive raw-material catalog views, internal movements, inbound/outbound invoice items (product.invoice.history directional pair), sales summary, sales open orders (PortfolioScope-owned AuthZ preserved). Eligible READ 63->72 on live OpenAPI; baseline fallback keeps semantic POSTs non-executable (NEEDS_BOUNDED_EXECUTION) since it carries no requestBody contract. get_product_sales_billing not promoted (SEMANTICALLY REDUNDANT); get_product_directives, get_product_raw_material_set_shortages and get_product_purchase_budget_history remain DEFERRED in explicitlyNotApproved. MCP tools remain 2. GPT Actions unchanged.",
+          "previousDecision": {
+            "taskId": "DAVI-CAPABILITY-EXPANSION-WAVE-006-PRODUCTION-READ",
+            "decision": "PROMOTE_PRODUCTION_OPERATIONAL_INTELLIGENCE_READ"
+          }
         }
       }
     }
@@ -43,9 +48,9 @@
 
 ```json
 {
-  "previous_total_operations": 742,
-  "current_total_operations": 743,
-  "previous_total_get": 541,
+  "previous_total_operations": 743,
+  "current_total_operations": 744,
+  "previous_total_get": 542,
   "current_total_get": 542,
   "added_operations": 1,
   "removed_operations": 0,
@@ -58,16 +63,16 @@
 | Status | Count |
 |---|---:|
 | `ADMIN_OUT_OF_SCOPE` | 71 |
-| `DAVI_ELIGIBLE_READ` | 88 |
+| `DAVI_ELIGIBLE_READ` | 92 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
 | `GENERIC_SQL_FORBIDDEN` | 2 |
 | `LEGACY_UNSAFE` | 2 |
 | `NEEDS_BOUNDED_EXECUTION` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 341 |
-| `NEEDS_NESTED_PROJECTION_SUPPORT` | 53 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 339 |
+| `NEEDS_NESTED_PROJECTION_SUPPORT` | 51 |
 | `SEMANTICALLY_REDUNDANT` | 3 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 33 |
-| `WRITE_OUT_OF_SCOPE` | 131 |
+| `WRITE_OUT_OF_SCOPE` | 132 |
 
 ## Eligible operationIds
 
@@ -128,9 +133,13 @@
 - `get_sales_order_otd_series_by_customer`
 - `get_sales_order_otd_summary`
 - `get_supplies_cpv`
+- `get_supplies_inventory_accuracy_items`
+- `get_supplies_inventory_accuracy_summary`
 - `get_supplies_inventory_adjustments_summary`
 - `get_supplies_inventory_turnover`
 - `get_supplies_negotiation_savings_summary`
+- `get_supplies_non_moving_stock_items`
+- `get_supplies_non_moving_stock_summary`
 - `get_supplies_otd`
 - `get_supplies_purchase_order_otd`
 - `get_supplies_purchase_order_otd_series`

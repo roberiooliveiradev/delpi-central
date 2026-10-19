@@ -179,6 +179,12 @@ export function InventoryAccuracyPage({
     [itemsParams]
   );
 
+  const reloadItems = items.reload;
+  const refreshAll = useCallback(() => {
+    reload();
+    reloadItems();
+  }, [reload, reloadItems]);
+
   const periodLabel = competenceParam
     ? monthKeyToLabel(competenceParam)
     : formatPeriodLabel(dateStart, dateEnd);
@@ -355,8 +361,8 @@ export function InventoryAccuracyPage({
         onDateEndChange={handleTableChange(setDateEnd)}
         onBranchesChange={handleTableChange(setBranches)}
         onLocationChange={() => {}}
-        onRefresh={reload}
-        refreshing={refreshing}
+        onRefresh={refreshAll}
+        refreshing={refreshing || items.refreshing}
       />
       <SuppliesStatusAlerts
         error={error}
@@ -454,7 +460,16 @@ export function InventoryAccuracyPage({
         </section>
       ) : null}
 
-      <DataTableSection
+      <SuppliesStatusAlerts
+        error={items.error}
+        loading={items.loading}
+        refreshing={items.refreshing}
+        hasData={items.data !== null}
+        requestProgress={items.requestProgress}
+        onRetry={items.reload}
+        refreshTitle="Atualizando detalhamento"
+      />
+      {!items.error ? <DataTableSection
         title="Detalhamento das contagens"
         columns={columns}
         rows={items.data?.items ?? []}
@@ -593,7 +608,7 @@ export function InventoryAccuracyPage({
             />
           </FiltersRow>
         }
-      />
+      /> : null}
 
       {data ? (
         <p className="ds-footnote">

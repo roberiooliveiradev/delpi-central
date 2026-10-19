@@ -16,14 +16,15 @@ from app.domain.totvs.protheus_internal_movements import (
 )
 
 _TIEBREAKER = "branch ASC, product_code ASC, warehouse ASC"
+_PRODUCT_TIEBREAKER = "branch ASC, warehouse ASC"
 
 _SORT_MAP = {
     "stock_value_desc": f"stock_value DESC, {_TIEBREAKER}",
     "stock_value_asc": f"stock_value ASC, {_TIEBREAKER}",
     "quantity_desc": f"quantity DESC, {_TIEBREAKER}",
     "quantity_asc": f"quantity ASC, {_TIEBREAKER}",
-    "product_code_asc": f"product_code ASC, {_TIEBREAKER}",
-    "product_code_desc": f"product_code DESC, {_TIEBREAKER}",
+    "product_code_asc": f"product_code ASC, {_PRODUCT_TIEBREAKER}",
+    "product_code_desc": f"product_code DESC, {_PRODUCT_TIEBREAKER}",
     "last_utilization_asc": (
         "CASE WHEN last_effective_utilization IS NULL THEN 1 ELSE 0 END, "
         f"last_effective_utilization ASC, {_TIEBREAKER}"
