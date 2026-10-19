@@ -87,3 +87,24 @@ CODE_DIFF=NONE
 TESTS=TEST_NOT_RUN
 NEXT=G0_I04_EXIT_DECISION
 ```
+
+
+## 7. Divisão de trabalho executiva após levantamento GPT (2026-10-19)
+
+O Product Master determinou que **levantamento, diagnóstico documental, inventário de contratos, consumidores, testes e planejamento ficam com o GPT/coordenação; o Cursor somente executa refatoração de código e sua validação técnica**, conforme gates de fase.
+
+- [60 — pré-Q01 já levantado pelo GPT](./60-pre-q01-consumers-contracts-tests-inventory.md): 42/42 achados mapeados para chamadas internas, testes e owners/contratos; `HandleInteractiveConversationTurn`, `CapabilityProviderPort` e adapters MCP/OpenAPI confirmados. Descoberto classificador lexical externo em `paginated_result_semantics.py`; testes existentes que reforçam ranking lexical e `prior_turns` skip identificados. Limite declarado: busca indexada GitHub retornou zero mesmo em símbolo existente; Cursor executa só **uma** busca residual `rg` para validação de consumer drift no SHA local — não um novo inventário amplo.
+- [61 — G0 e handoff só para refatoração](./61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md): estado honesto de I04 (DAVI/HTTP com avanço, VISTA C02 HTTP504, comparação ainda lista, TÉO precondition sem subject vinculado), regras de stop, RQ/RED/DoD de cada pacote Q02-A/B/C e matriz live/no-tool/segurança.
+- **Q01 permanece bloqueado** até G0/autoridade; a preparação documental antecipada não é `Q01_EXECUTED` e não libera Q02. No gate autorizado, GPT revisa o inventário 60 e qualquer drift que Cursor apure antes do diff. Assim Q01 não vira ciclo redundante de análise no Cursor.
+- **Cursor não redesenha ownership/ADR, não reinicia exploração do orquestrador, nem decide aceite/phase.** Após autorização de cada pacote, faz somente menor diff, testes RED/GREEN, full backend, live conforme runbook, relatório e commit/push.
+- Anti-loop de 59 segue válido: G0+Q01+Q02-A/B/C+Q03, máximo um rework bounded por pacote, stop/escalate diante de falha persistente. Exceção necessária: vulnerabilidade material impede deploy e demanda remediação governada.
+
+```text
+GPT_PRE_Q01_RESEARCH=COMPLETED_WITH_CONNECTOR_LIMITATIONS
+G0_I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+CURSOR_OWNER=CODE_REFACTOR_TEST_LIVE_ONLY_AFTER_PHASE_GATE
+DOC60=CONSUMER_CONTRACT_TEST_INVENTORY
+DOC61=G0_EXECUTION_CARDS
+```
