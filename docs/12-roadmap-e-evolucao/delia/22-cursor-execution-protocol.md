@@ -52,6 +52,14 @@ DÉLIA progress → Chat refactor dependency
 
 Chat is reference-only during inventory.
 
+## 3.1 Implementações de inteligência — produto LLM-enabled
+
+Aplicar a regra especializada `.cursor/rules/delia-execution-protocol.mdc`, [ADR 58](./corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md), [49 §14.1–14.2](./49-architecture-and-design-patterns-standard.md) e [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md). **DÉLIA usa LLMs existentes; o Cursor não deve desenvolver um motor de compreensão concorrente via Python/regex/rank/keywords.**
+
+**Antes de criar código:** documentar owner semântico (LLM tipado), boundary determinístico (schema/identity/Core/Domain/Policy/provenance), contexto e catálogo vivo necessários ao modelo, equivalente/reuso já existente e resultado mensurável. Preferir melhorar instruções versionadas, contexto autorizado e a ligação ao LLM e capabilities existentes a adicionar exceções por linguagem, perguntas ou especialistas. Não substituir acoplamento Python por prompt hardcoded específico de fixture/owner. Garantir budgets/cancelamento, minimização e origem das informações; prompt e memória não são authority.
+
+**Depois:** resultados reais de seleção/contexto/outcome em casos novos, negativos e metamórficos, comparados com baseline: DAVI/TÉO/VISTA/OpenAPI/sem tool, paraphrase/negation/topic switch/renames/catalog changes, segurança, zero ACT e 30s. Unit test/HTTP 200/menos linhas não demonstram inteligência do produto. Reject semântico artificial pode sair; reject de contrato/AuthZ/provenance/Policy/segurança não pode. A instrução de fase continua exclusivamente em 16/ledger, sem autonomia para expandir Q02-A.
+
 ## 4. C0.S0 — runtime read-only inventory
 
 Inventariar factual evidence for:
