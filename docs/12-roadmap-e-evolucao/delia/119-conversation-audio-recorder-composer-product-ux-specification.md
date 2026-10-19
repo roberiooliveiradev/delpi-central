@@ -1,8 +1,9 @@
 # 119 — DÉLIA | Conversation Audio Recorder — Especificação de produto, UX, estados e contrato de frontend
 
 **Data:** 2026-10-19  
-**Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03_IMPLEMENTED_GATED_OFF / INDEPENDENT_REVIEW_PENDING`  
+**Status:** `PRODUCT_UX_SPEC / AU-F02+AU-F03+AU-F05_QA_INTEGRATION_DONE / INDEPENDENT_REVIEW_PENDING`  
 **Evidência de implementação:** [audio-recorder-composer-foundation-01](./evidence/audio-recorder-composer-foundation-01/audio-recorder-foundation-execution-evidence.md) — fundação local implementada e testada; **não** habilita captura em produção sem limites aprovados.  
+**Evidência de integração QA:** [audio-recorder-live-qa-integration-01](./evidence/audio-recorder-live-qa-integration-01/audio-recorder-live-qa-integration-evidence.md) — gate `VITE_DELIA_AUDIO_QA=1` + `?delia-audio-qa=1` validado em Portal real (página + dock); produção permanece inerte.  
 **Tipo:** documentação de direção e critérios de implementação futura; **não** altera fase, backend, contratos, permissões ou feature flags.  
 **Referência GitHub observada:** `cb6ae480e202fc3d2817e1ed52bdb743531cde0f` (revalidar HEAD/status antes de implementar).  
 **Produto:** DÉLIA standalone; não reutilizar runtime, serviços ou frontend do Minha DELPI Chat.
@@ -205,6 +206,7 @@ DOC=119_CONVERSATION_AUDIO_RECORDER_COMPOSER
 PRODUCT_DIRECTION=DOCUMENTED
 IMPLEMENTATION=AU_F02_AU_F03_LOCAL_FOUNDATION_DONE (2026-10-19, evidência linkada no cabeçalho)
 AUDIO_CAPTURE_RUNTIME=IMPLEMENTED_LOCAL_GATED_OFF
+QA_ADMISSION=IMPLEMENTED (VITE_DELIA_AUDIO_QA bundle flag + ?delia-audio-qa=1 explícito; param inerte em produção — provado live)
 AUDIO_UPLOAD_CONTRACT=TO_INVENTORY
 SPEECH_TO_TEXT_CONTRACT=TO_INVENTORY
 PRODUCTION_MEDIA_LIMITS=CONTRACT_REQUIRED (maxDurationMs/maxBytes exigidos pelo gate; sem valores aprovados)

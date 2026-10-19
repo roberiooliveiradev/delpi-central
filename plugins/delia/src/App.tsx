@@ -36,6 +36,10 @@ import {
   demoTurnOutcome,
   resolveDemoScenario,
 } from "./demo/demoMode";
+import {
+  DELIA_AUDIO_QA_BANNER,
+  resolveAudioQaAdmission,
+} from "./audio/audioCaptureQaAdmission";
 import { useCurrentUserIdentity } from "./identity/currentUser";
 
 /** Host props from Portal AppHost — presentation/transport only. */
@@ -90,6 +94,12 @@ export default function App({
   // not a runtime state. Gated off in production builds.
   const [demoScenario] = useState(() =>
     resolveDemoScenario(window.location.search),
+  );
+  // Audio capture QA admission — dev/QA bundles only, explicit query
+  // param required; production bundles never admit it. QA fixture
+  // limits, not approved production media policy.
+  const [audioQaAdmission] = useState(() =>
+    resolveAudioQaAdmission(window.location.search),
   );
   const userIdentity = useCurrentUserIdentity(getAccessToken);
   const [input, setInput] = useState("");
@@ -408,9 +418,11 @@ export default function App({
             />
           }
           banner={
-            demoScenario ? (
+            demoScenario || audioQaAdmission ? (
               <div className="delia-demo-banner" role="note">
-                {DELIA_DEMO_BANNER}
+                {demoScenario ? DELIA_DEMO_BANNER : null}
+                {demoScenario && audioQaAdmission ? " " : null}
+                {audioQaAdmission ? DELIA_AUDIO_QA_BANNER : null}
               </div>
             ) : null
           }
@@ -431,6 +443,9 @@ export default function App({
                 loading={loading}
                 requestMode={requestMode}
                 onStop={handleStopResponse}
+                audioCaptureEnabled={audioQaAdmission != null}
+                audioCaptureMaxDurationMs={audioQaAdmission?.maxDurationMs}
+                audioCaptureMaxBytes={audioQaAdmission?.maxBytes}
               />
             </>
           }

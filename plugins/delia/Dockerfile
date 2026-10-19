@@ -14,6 +14,11 @@ COPY delia ./delia
 COPY vite ./vite
 
 WORKDIR /app/delia
+# QA-only audio capture admission — default off; production builds never
+# admit `?delia-audio-qa=1`. Set only for authorized QA/preview images:
+#   docker build --build-arg VITE_DELIA_AUDIO_QA=1 ...
+ARG VITE_DELIA_AUDIO_QA=""
+ENV VITE_DELIA_AUDIO_QA=$VITE_DELIA_AUDIO_QA
 # tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
 RUN npx vite build
 RUN node ../vite/verify-federation-react-patch.mjs dist/assets
