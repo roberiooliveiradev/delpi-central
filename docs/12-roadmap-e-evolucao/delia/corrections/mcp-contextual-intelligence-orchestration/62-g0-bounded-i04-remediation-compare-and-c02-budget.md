@@ -118,3 +118,37 @@ Q01_AUTHORIZED=NO
 LIVE_POST_REWORK=TEST_NOT_RUN
 NEXT=COORDINATION_INDEPENDENT_G0_REWORK_REVIEW
 ```
+
+
+## Coordination v10 — final independent bounded-rework review (2026-10-19)
+
+**REVIEWED_IMPLEMENTATION_SHA:** `cca468a365bd592498caa0be8cb20c8e0a6f75fe`. **MAIN_ON_REVIEW:** `9bad54ce583370fd6c75bd544d3181c914d218bd` (four subsequent unrelated Protheus documentation commits, no DÉLIA source/authority/ledger changes in the comparison). **REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL FOR BOUNDED REWORK ONLY**. **G0_I04_EXIT=BLOCKED_PENDING_LIVE_EVIDENCE**; `I04_ACCEPTED=NO`. The review is based on GitHub source/diff/tests and the executor report, **not** independent pytest execution or live replay.
+
+### Findings and disposition
+
+1. **REWORK BLOCKER CLOSED IN CURRENT FLOW:** `_segment_compare_prior_units` and `_comparison_from_prior_excerpts` removed. `_prior_continuation_attempt` rejects compare/analyze requests whose `_prior_excerpt_records` contain only untrusted `excerpt` strings, returning `LIMITATION_PRIOR_TURN_CONTINUATION` + `LIMITATION_INSUFFICIENT_EVIDENCE` rather than formatting positional fake differences. Invalid selections, empty selections and list replay are rejected for comparison. Noncompare extraction/subset path retained. `MODEL_AUTHORED_FACTUAL_PROSE=NONE` and selection-only remain frozen.
+2. **RESIDUAL DESIGN — NOT A PROVEN TYPED PROVENANCE GATE:** `_prior_supports_typed_attribute_compare` checks two records' shared non-excerpt scalar keys, **not** SourceRef, owner source, types/units/grain or meaningful comparability. In the current call path its input originates from `_prior_excerpt_records` which returns only `excerpt`, so it fails closed; its positive helper test with fabricated dicts is NOT proof of owner-grounded comparison. `_typed_compare_outcome_content` checks the literal string `Diferenças comprovadas:`, not an authoritative outcome; its header-based permissiveness must never be reused as a general outcome/provenance validator. No further G0 code iteration is authorized; review genuine typed owner compare under Q02-C/contract gate only if phase is later authorized.
+3. **G0-02 C02:** 12s post-NOT_APPLICABLE conversational stage cap and NON_GROUNDED `turn_budget_limited` soft-land preserved. Simulated admission sets `requires_owner_surface=true` as a *model fake* and establishes routing to live capability selection (a test of downstream wiring, not of real-model semantic admission or correct VISTA vs TÉO selection). Historical owner-never-invoked C02 root cause remains executor-reported. Live owner routing/outcome and cold/warm ≤30s are unverified on this SHA.
+4. **TEST EVIDENCE:** 40/40 targeted, 12/12 bounded filter, 1647 collected full pytest PASS, security/ACT subset PASS are **EXECUTOR_REPORTED**, not GPT-independent re-executions; residual search old segment helpers absent reported, source reviewed confirms removal in this module. `LIVE_POST_REWORK=TEST_NOT_RUN`; `DEPLOY=NOT_RUN`; `INDEPENDENT_COLD_WARM=TEST_NOT_RUN` because delegated identity and authorized deploy not available. No evidence authorizes `I04_ACCEPTED=YES` or `Q01_AUTHORIZED=YES`.
+5. **NONBLOCKING:** stale `_prior_continuation_attempt` docstring refers to 'deterministic segment comparison' but runtime path now rejects it. Record as residual documentation drift, not permission for another G0 patch.
+
+### Anti-loop and next bounded decision
+
+`G0_BOUNDED_REWORK_REMAINING=0`. Implementation/rework cycle is CLOSED; **no extra code patch in G0**. Keep roadmap59 six packages unchanged and preserve the higher-authority I04→Q01 gate. The only valid next evidence activity under Option A is a **non-code, authorized deployment and independent live read-only replay** of the predeclared G0 matrix on exact SHA/config/model/identity/owner surfaces, with stage traces, real comparative task honesty, VISTA C02 and no-tool, DAVI/TÉO/HTTP, negative IDs/injection, 0 ACT and cold/warm 30s. Production/auth runbook and legitimate user-delegated identity are prerequisites; credentials must not be fabricated or logged. If these prerequisites remain unavailable or failures persist, `STOP → ROOT_CAUSE / OWNER (Keycloak or deploy/owner environment) → PRODUCT_MASTER_PHASE_OR_CONTRACT_DECISION`; Option B still needs explicit canonical amendment; do not launch Q01 from docs-only acceptance. A validation-only replay is **not** a second implementation rework.
+
+```text
+REVIEWED_SHA=cca468a365bd592498caa0be8cb20c8e0a6f75fe
+G0_BOUNDED_REWORK_REVIEW=ACCEPT_WITH_RESIDUAL
+G0_IMPLEMENTATION_CYCLE=CLOSED
+G0_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+G0_I04_EXIT=BLOCKED_PENDING_LIVE_EVIDENCE
+INDEPENDENT_PYTEST=TEST_NOT_RUN
+LIVE_POST_REWORK=TEST_NOT_RUN
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=AUTHORIZED_VALIDATION_ONLY_OR_PRODUCT_MASTER_PHASE_DECISION
+```
