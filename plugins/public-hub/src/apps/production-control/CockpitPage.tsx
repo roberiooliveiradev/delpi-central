@@ -26,6 +26,8 @@ import {
   type StatusView,
 } from "./cockpitShared";
 import { OperationDetailPage } from "./OperationDetailPage";
+import { PostActivityCard } from "./PostActivityCard";
+import { PostActivityPage } from "./PostActivityPage";
 import {
   OperatorSessionChip,
   OperatorSessionProvider,
@@ -126,7 +128,8 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const workCenterRef = useRef(workCenter);
   workCenterRef.current = workCenter;
   const reloadGenerationRef = useRef(0);
-  const { view, openQueue, openOperation, openPerformance } = useCockpitView();
+  const { view, openQueue, openOperation, openPerformance, openActivity } =
+    useCockpitView();
 
   useEffect(() => {
     setDowntimeOpen(false);
@@ -357,7 +360,19 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
   let content: ReactNode;
 
-  if (view.kind === "performance") {
+  if (view.kind === "activity") {
+    content = (
+      <PostActivityPage
+        token={token}
+        branch={branch}
+        workCenter={workCenter}
+        workCenterName={activeCenter?.work_center_name || workCenter}
+        runRealtimeEvent={runRealtimeEvent}
+        realtimeConnected={connected}
+        onBack={openQueue}
+      />
+    );
+  } else if (view.kind === "performance") {
     content = (
       <WorkCenterPerformancePage
         branch={branch}
@@ -475,6 +490,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             onStopped={() => void reload(workCenterRef.current, { quiet: true })}
           />
         ) : null}
+
+        <PostActivityCard
+          token={token}
+          branch={branch}
+          workCenter={workCenter}
+          runRealtimeEvent={runRealtimeEvent}
+          realtimeConnected={connected}
+          onOpen={openActivity}
+        />
 
         {items.length === 0 ? (
           <p className="pcp-pub__empty">

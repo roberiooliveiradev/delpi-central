@@ -831,6 +831,101 @@ export async function classifyRunDowntime(
   return readEnvelope<RunDowntimeView>(response, "Não foi possível registrar o motivo.");
 }
 
+// ---------------------------------------------------------------------------
+// Atividade do posto — histórico diário MES (Etapa 3, API da Etapa 2).
+// source=totvs não traz summary/items: união discriminada, nunca vazio falso.
+// ---------------------------------------------------------------------------
+
+export type MesWorkCenterTodayDowntime = {
+  id: string;
+  reasonCode: string | null;
+  reasonLabel: string | null;
+  category: string | null;
+  note: string | null;
+  confirmed: boolean;
+  source?: string | null;
+  /** Motivo pendente oficial do backend: !confirmed || !reasonCode. */
+  pendingReason?: boolean;
+};
+
+export type MesWorkCenterTodayItem = {
+  stateEventId: string;
+  runId: string | null;
+  productionOrder: string | null;
+  operationCode: string | null;
+  state: "producing" | "stopped" | "setup" | "idle" | "planned_stop" | string;
+  startedAt: string;
+  endedAt: string | null;
+  source: string | null;
+  /** Duração já recortada à janela do dia (backend). */
+  effectiveDurationSeconds: number;
+  downtime: MesWorkCenterTodayDowntime | null;
+};
+
+export type MesWorkCenterTodaySummary = {
+  producingSeconds: number;
+  stoppedSeconds: number;
+  stopCount: number;
+  pendingReasonCount: number;
+};
+
+export type MesWorkCenterTodayMes = {
+  source: "mes";
+  branch: string;
+  workCenter: string;
+  reason: string;
+  date: string;
+  timezone: string;
+  from: string;
+  to: string;
+  referenceAt: string;
+  summary: MesWorkCenterTodaySummary;
+  items: MesWorkCenterTodayItem[];
+};
+
+/** CT sem sensoriamento: resposta controlada — não é histórico vazio. */
+export type MesWorkCenterTodayTotvs = {
+  source: "totvs";
+  branch: string;
+  workCenter: string;
+  reason: string;
+  referenceAt: string;
+};
+
+export type MesWorkCenterToday = MesWorkCenterTodayMes | MesWorkCenterTodayTotvs;
+
+export async function fetchMesWorkCenterToday(
+  token: string,
+  sessionToken: string,
+  branch: string,
+  workCenter: string,
+): Promise<MesWorkCenterToday> {
+  const params = new URLSearchParams({ branch, workCenter });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/mes/work-centers/today?${params}`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  const data = await readEnvelope<MesWorkCenterToday>(
+    response,
+    "Atividade do posto indisponível.",
+  );
+  if (data?.source === "totvs") return data;
+  if (
+    data?.source !== "mes" ||
+    !Array.isArray((data as MesWorkCenterTodayMes).items) ||
+    !(data as MesWorkCenterTodayMes).summary
+  ) {
+    // Contrato inesperado: não inventar timeline vazia como se fosse sucesso.
+    throw new ApiError("Resposta de atividade inválida.", response.status);
+  }
+  return data;
+}
+
 export async function fetchRunTimeline(
   token: string,
   sessionToken: string,

@@ -675,3 +675,66 @@ parada aberta, pendência, setup confirmado, identidade preservada,
 sobreposição, contrato HTTP 200/401/404/503/totvs controlado, e PG real
 com PC_TEST_MES_DB=1: run + pause -> API diária devolve downtime real;
 run encerrado permanece no histórico).
+
+## 15. Etapa 3 — Atividade do posto no cockpit do operador (public-hub)
+
+**Objetivo**: expor a API diária da Etapa 2 como experiência do operador —
+resumo do dia, faixa temporal e classificação de paradas direto do
+histórico, inclusive de runs já encerrados. Sem segunda engine de
+timeline, sem duplicar fatos MES, sem regras de negócio no frontend.
+
+**Entrada**: cartão compacto "Atividade do posto" (PostActivityCard) na
+tela da fila — visível para todo CT, inclusive sem operações pendentes.
+Resume tempo parado / nº de paradas / pendências; sem sessão convida a
+identificar o operador; 503 vira "histórico indisponível".
+
+**Detalhe**: `?view=activity` (PostActivityPage), mesmo padrão de
+navegação interna de `view=operation|performance`. Mostra
+`summary.{producingSeconds, stoppedSeconds, stopCount,
+pendingReasonCount}` — valores oficiais da API, nunca recalculados por
+soma de linhas —, faixa temporal proporcional entre `from` e `to`
+(segmentos por estado MES, cores + legenda; intervalos sem fato ficam
+neutros, nunca viram parada) e lista cronológica com estado, horários
+reais (parada overnight conserva início de ontem), duração efetiva no
+dia, OP/operação, fonte (automatic/manual), motivo, observação e selo
+"Sem motivo".
+
+**Classificação**: `downtime.pendingReason` do backend é a semântica
+oficial — parada pode ter reasonCode e continuar pendente
+(confirmed=false); setup confirmado pelo sistema não é marcado. Botão
+"Informar motivo" / "Alterar motivo" abre o DowntimeReasonModal
+existente (mesmo catálogo `fetchMesDowntimeReasons`, mesma regra
+requiresNote) e grava via `classifyRunDowntime(token, runId,
+downtimeId, ...)` — identidade real do item, autorizado pelo backend
+para runs encerrados do mesmo CT. Sucesso refaz o GET; falha mantém o
+modal com mensagem. Evento `stopped` sem downtime válido aparece como
+fato, sem ação que invente identidade.
+
+**Estados**: mes com itens / mes vazio ("nenhum evento") / totvs (posto
+não sensorizado, sem histórico fictício nem fallback) / 503 (retry) /
+401 (sessão invalidada + convite a identificar) / token-CT inválido /
+offline (fetch falha como indisponível). Dados de outro CT nunca
+aparecem: estado do hook é chaveado por (token, session, branch,
+workCenter) — resposta atrasada é descartada, loading do CT novo.
+
+**Sincronização**: useWorkCenterActivity com single-flight + pending
+(refresh durante voo remarca e repete no fim). Refaz o GET em: toque
+"Atualizar", transição relevante de run/parada/classificação via
+WebSocket existente (`pieces_updated` isolado não dispara), reconexão
+WS, retorno de aba e virada do dia civil America/Sao_Paulo. Sem nova
+conexão, sem polling fixo. Horários renderizados com Intl em
+America/Sao_Paulo — independentes do fuso do tablet; `referenceAt` do
+backend orienta os deltas do WS.
+
+**Não implementado aqui** (Etapa 4): substituição das superfícies TOTVS
+restantes do cockpit (desempenho, indicadores, históricos legados),
+OEE, edição de eventos além do motivo. §14 previa essa substituição
+"nos CTs MES" já na sequência da Etapa 2 — divergência registrada: o
+plano aprovado a reserva para a Etapa 4.
+
+**Evidências**: src/apps/production-control/PostActivity.test.tsx
+(14 Vitest: cliente fetchMesWorkCenterToday, tipos discriminados,
+stale-CT, totvs/vazio/503/401, card, página, classificação) +
+workCenterActivity.test.ts (8 node:test: mapa de estados, legenda,
+chave de dia civil SP). Suite public-hub 40/40 Vitest + 107/107
+node:test; eslint dos arquivos novos limpo; vite build verde.
