@@ -249,3 +249,20 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 ```
 
 **Estado vigente: NO-GO para IMP-F0.** Assinatura PO de §10.4 torna-se efetiva somente com D-G0-01, D-G0-02 e D-G0-03 já registrados como PASS/VALIDATED.
+
+
+## 11. Manifestação expressa do PO — autorização condicionada de IMP-F0 (19/10/2026)
+
+**Origem da decisão:** manifestação explícita do usuário na coordenação do Portal: *"autorizo, atualize o que tiver de ser atualiado e decidido no github. o prooximo prompt é de implementação"*. Esta seção registra a **vontade de implementação do PO** para o escopo de fundação descrito em §10.4, sem atribuir ao PO competências de aprovação técnica de terceiros nem declarar pré-condições que não foram comprovadas.
+
+| Decisão | Registro | Efeito |
+|---|---|---|
+| PO / D-G0-04 — autorização específica IMP-F0 | **PO_AUTHORIZATION_RECORDED_CONDITIONAL**, 19/10/2026. Escopo §10.4: somente fundação FastAPI, Dockerfile, Compose/gateway, `/health`, `/ready`, testes; MFE/Home e rotas de negócio excluídos | **Não efetiva para runtime** até D-G0-01 `VALIDATED`, D-G0-02 quatro freezes `PASS` e D-G0-03 `PASS` estarem formalmente registrados |
+| FastAPI | Escolha do PO reiterada, exceção documentada no §1 | `REGISTERED`; assinatura de Arquitetura permanece `PENDING` |
+| Sequência de entrega | API → container validado → MFE/Home posterior | Planejamento aprovado, não exceção aos gates |
+| Product Contract Freeze | Prioridade e escopo da fundação confirmados pelo PO; contratos globais exigem evidência e registro específico de freeze | `PENDING` no painel; não converter por inferência |
+| D-G0-03 documentação | Corpus e inventários preparados | `NO` até assinatura explícita de fechamento **após** aprovações transversais |
+
+**Gate atual: NO-GO.** A manifestação do PO é explícita e reaproveitável; não solicitar novamente a mesma autorização de escopo. O executor deve verificar e registrar aprovações dos owners restantes antes de alterar runtime. Sem autorização de Arquitetura, Design, Segurança e Qualidade comprovada, não criar scaffold, Compose nem gateway.
+
+**Rastreabilidade:** este registro modifica apenas a classificação da **manifestação do PO** de "não expressa" para "registrada, condicional". O indicador de execução do README continua `IMPLEMENTATION_AUTHORIZED=NO` até o gate ter efeito. Não é assinatura dos outros owners.
