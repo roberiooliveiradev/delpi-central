@@ -45,6 +45,12 @@ PERCEBER
 
 Não é “Chat + RAG”.
 
+## 2.1 Inteligência de produto — princípio LLM-enabled
+
+**Desenvolvemos a DÉLIA, não um LLM.** A DÉLIA utiliza modelos de linguagem existentes, prompts/instruções governados, contexto relevante de conversa/trabalho e ferramentas/capabilities vivas (MCP/A2A/OpenAPI/Domain APIs) para compreender perguntas e responder de modo contextual, inclusive quando a formulação não foi prevista. Não criar motor paralelo de intenção em Python, regex de palavras, rankings lexicais ou branches por especialista. Não confundir "mais prompts" com melhor compreensão: usar contratos tipados, contexto suficiente e testes de generalização/outcome.
+
+O LLM **propõe semanticamente**; backend/Core/Domain **validam deterministicamente** autorização, schema, provenance, Policy/Decision, PREPARE/ACT, limits e postconditions. `selection-only` empresarial (ledger §6.145) e zero prosa factual empresarial livre permanecem congelados. Regras e referências: [50 §1.1](./50-standalone-copilot-application-architecture.md), [49 §14.1–14.2](./49-architecture-and-design-patterns-standard.md), [24 §5.1](./24-product-specification.md), [ADR 58](./corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md), [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [regra Cursor especializada](../../.cursor/rules/delia-execution-protocol.mdc). Estado real de fase vem de 16 + ledger, não deste README histórico.
+
 ## 3. Surfaces
 
 ```text
