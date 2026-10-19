@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any, Callable
 from urllib.parse import quote
@@ -16,6 +17,11 @@ from app.domain.integrations.protheus_rest import (
     ProtheusRestError,
 )
 from app.utils.logger import log_error, log_info
+
+# Protheus OAuth puts username/password in the query string. httpx INFO logs the
+# full request URL — keep those loggers quiet so secrets never hit container logs.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 _TRANSIENT_STATUS = {408, 429, 502, 503, 504}
 _MAX_GET_ATTEMPTS = 3

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import httpx
 import pytest
 
@@ -111,3 +113,9 @@ def test_external_http_error_maps_unavailable() -> None:
     with pytest.raises(ProtheusRestError) as exc:
         gateway.request_access_token(_config())
     assert exc.value.code == "PROTHEUS_UNAVAILABLE"
+
+
+def test_httpx_request_logger_is_quiet_to_avoid_oauth_query_leak() -> None:
+    # Import side effect: gateway module must silence httpx/httpcore INFO URL logs.
+    assert logging.getLogger("httpx").level == logging.WARNING
+    assert logging.getLogger("httpcore").level == logging.WARNING
