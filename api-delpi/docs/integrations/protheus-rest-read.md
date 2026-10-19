@@ -55,3 +55,47 @@ Campo `transport`: `https` | `http_cleartext` | `unknown`.
 - Credenciais e tokens **nunca** retornam nas respostas de diagnóstico nem em logs (redaction obrigatória).
 - TLS verify permanece ativo; não há `verify=False`.
 - Preferir `URL_REST` em HTTPS. Se o ambiente só oferece HTTP cleartext, **não** executar testes com credenciais reais sem autorização explícita do owner da integração (risco de exposição em proxies/captura de rede).
+
+## Homologação operacional — evidências e bloqueios
+
+Estado revalidado no Intranet (`PARAMETROS_MINHADELPI`, colunas `PARAMETRO`/`CONTEUDO`/`AMBIENTE`):
+
+| Parâmetro | AMBIENTE 1 | AMBIENTE 2 |
+|---|---|---|
+| `USR_PROTHEUS` / `PSW_PROTHEUS` | PRESENT | PRESENT |
+| `URL_REST` | HTTP cleartext (`host:8701`) | idem |
+| `PATH_SUPPLIERS` | `/delpi/api/v1/suppliers` | idem |
+| `PATH_AUTH` | **EMPTY** | **EMPTY** |
+
+### PATH_AUTH — valor candidato (não aplicado)
+
+Descoberta sem envio de credenciais (POST apenas com `grant_type=password`):
+
+| Path | Resultado |
+|---|---|
+| `/api/oauth2/v1/token` (doc legada) | HTTP 404 |
+| `/rest/api/oauth2/v1/token` | HTTP 400 `invalid_grant - username não informado` → endpoint existe |
+
+Correção proposta (requer `PENDING_OWNER_APPROVAL` — **não executar sem owner**):
+
+```sql
+-- Backup lógico: SELECT ID, AMBIENTE, PARAMETRO, LEN(CONTEUDO) ...
+-- Aplicar por AMBIENTE autorizado, um de cada vez:
+UPDATE PARAMETROS_MINHADELPI
+SET CONTEUDO = '/rest/api/oauth2/v1/token'
+WHERE PARAMETRO = 'PATH_AUTH'
+  AND AMBIENTE = ?   -- 1 ou 2, conforme autorização
+  AND (CONTEUDO IS NULL OR LTRIM(RTRIM(CONTEUDO)) = '');
+```
+
+### Gate `SECURE_TRANSPORT`
+
+- `URL_REST` vigente aponta para **HTTP** na porta REST.
+- Porta 443 responde TLS com **certificado self-signed** (falha com verify padrão); path OAuth sob HTTPS:443 não espelha o AppServer REST.
+- Smoke com credenciais reais exige `SECURE_TRANSPORT=PASS` (HTTPS válido / terminação TLS autorizada / decisão explícita do owner de segurança). Enquanto HTTP cleartext: **FAIL**.
+
+### Permissão Keycloak / Core
+
+- Código: `api-delpi.integrations.protheus.read` (manifest + decorator).
+- Publicação: `POST /core-api/admin/apps/register` com nova versão do manifesto `api-delpi` (`apps.manage`), depois grant via RBAC admin — **não** usar `api-delpi.access.full` como atalho.
+- Deploy canônico: `git pull` + `./infra/scripts/up-prod-sequential.sh --pull --build` (escopo `api-delpi`), sem editar container.
