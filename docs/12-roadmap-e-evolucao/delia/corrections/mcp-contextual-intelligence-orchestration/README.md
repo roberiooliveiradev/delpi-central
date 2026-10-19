@@ -97,6 +97,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **R2 provider-neutral capability selection quality:** [40 — implementation](./40-r2-provider-neutral-capability-selection-quality.md). Coverage inquiry → sole group DISCOVERY recovery + instruction v12. Full pytest PASS. Does not accept I04 / authorize Q01.
 
+**R2 independent review:** [41 — ACCEPT_WITH_RESIDUAL_BOUNDED](./41-r2-independent-semantic-selection-review.md). Helpdesk personal count residual remains separate (§6.271).
+
+**R4+R5 personal ticket count and pagination:** [42 — implementation](./42-r4-r5-personal-ticket-count-and-pagination-remediation.md). EXTEND orchestrator + pure pagination/personal-scope semantics; page size ≠ total; ambiguous personal clarifies; assigned/requester without owner filters honest BLOCKED; visible COUNT aggregates pages or admits unknown. Full pytest PASS. Live linked subject `TEST_NOT_RUN`. Does not accept I04 / C3–C5 / Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -183,6 +187,9 @@ LIVE_L04_R3=PASS_ORIENTACAO_FRAMING
 LIVE_L06_R1=PASS_CLARIFICATION_NO_504_DISCOVERY_RESIDUAL
 R2_SELECTION_QUALITY=EVIDENCE_READY
 LIVE_K4_R2=PASS_DISCOVERY_GROUNDED_ELIGIBLE_95
+R4_R5_PERSONAL_TICKET_COUNT=EVIDENCE_READY
+PERSONAL_COUNT_LIVE=TEST_NOT_RUN
+ASSIGNED_REQUESTER_OWNER_GAPS=BLOCKED
 NEXT_MAIN=COORDINATION_INDEPENDENT_REVIEW
 NEXT_RELATED=COORDINATION_INDEPENDENT_REVIEW_I04
 C3_EXECUTED=NO

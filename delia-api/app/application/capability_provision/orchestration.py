@@ -109,6 +109,20 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
 )
+from app.application.capability_provision.paginated_result_semantics import (
+    DEFAULT_MAX_PAGES,
+    PersonalTicketScope,
+    ResultIntent,
+    aggregate_paginated_pages,
+    arguments_include_personal_assignee,
+    arguments_include_requester_filter,
+    classify_personal_ticket_scope,
+    classify_result_intent,
+    count_message_for_visible_query,
+    extract_pagination_envelope,
+    personal_scope_response,
+    resolve_count_semantics,
+)
 from app.application.capability_provision.ports import (
     CapabilityProviderPort,
 )
@@ -2043,6 +2057,8 @@ def _clarification_content(missing_inputs: tuple[str, ...]) -> str:
 def _render_synthesis(
     proposal: Mapping[str, Any],
     records: tuple[Mapping[str, Any], ...],
+    *,
+    has_more: bool | None = None,
 ) -> tuple[str | None, str]:
     """Deterministic render of an evidence-bound synthesis proposal.
 
@@ -2059,6 +2075,9 @@ def _render_synthesis(
     ignored and the runtime derives a safe projection — a single
     selected record composes a focused grounded sentence, several
     records compose a bounded introduced list.
+
+    ``has_more`` (R5) prevents page-slice length from being framed as
+    an authoritative total when the owner reports more pages.
     """
     items = proposal.get("items")
     # Adapter historically told models "plain string" values; a JSON
@@ -2120,7 +2139,11 @@ def _render_synthesis(
     ):
         selected_records = tuple(record for record, _ in selections)
         lines = [
-            _list_header(len(selections), records=selected_records)
+            _list_header(
+                len(selections),
+                records=selected_records,
+                has_more=has_more,
+            )
         ]
         for record, values in selections:
             lines.append("- " + " — ".join(v for _, v in values))
@@ -2442,13 +2465,79 @@ def _list_header(
     count: int,
     *,
     records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]] | None = None,
+    has_more: bool | None = None,
 ) -> str:
-    """Bounded list introduction — outcome-aware (doc 35 R3)."""
+    """Bounded list introduction — outcome-aware (doc 35 R3 + R5).
+
+    When the owner page reports ``has_more=True``, the returned item
+    count is a page slice — never presented as an authoritative total.
+    """
     if records is not None and _records_are_prior_excerpts(records):
         noun = "itens" if count != 1 else "item"
         return f"Recuperei {count} {noun} da orientação anterior:"
+    if has_more is True:
+        return (
+            f"Mostrando {count} registro(s) nesta página; há mais "
+            f"resultados além desta página — este número não é o total."
+        )
     noun = "registros" if count != 1 else "registro"
     return f"Encontrei {count} {noun}:"
+
+
+def _project_paginated_personal_or_count(
+    input_text: str,
+    structured: object,
+    *,
+    invocation_arguments: Mapping[str, Any] | None = None,
+) -> tuple[str, tuple[str, ...]] | None:
+    """Deterministic R4/R5 projection before model synthesis.
+
+    Returns a (content, limitations) pair when personal-scope gates or
+    count semantics apply; ``None`` leaves the ordinary synthesis /
+    deterministic render path unchanged.
+    """
+    scope = classify_personal_ticket_scope(input_text)
+    intent = classify_result_intent(input_text)
+    envelope = extract_pagination_envelope(structured)
+
+    if scope is PersonalTicketScope.MY_TICKETS_AMBIGUOUS and intent in {
+        ResultIntent.COUNT,
+        ResultIntent.LIST,
+    }:
+        text = personal_scope_response(scope)
+        if text:
+            return text, ()
+
+    if scope is PersonalTicketScope.ASSIGNED_TO_ME and intent in {
+        ResultIntent.COUNT,
+        ResultIntent.LIST,
+    }:
+        if not arguments_include_personal_assignee(invocation_arguments):
+            text = personal_scope_response(scope)
+            if text:
+                return text, ()
+
+    if scope is PersonalTicketScope.REQUESTED_BY_ME and intent in {
+        ResultIntent.COUNT,
+        ResultIntent.LIST,
+    }:
+        if not arguments_include_requester_filter(invocation_arguments):
+            text = personal_scope_response(scope)
+            if text:
+                return text, ()
+
+    if intent is ResultIntent.COUNT and envelope is not None:
+        resolution = resolve_count_semantics(envelope)
+        if scope in {
+            PersonalTicketScope.ALL_VISIBLE_TICKETS,
+            PersonalTicketScope.NOT_APPLICABLE,
+        }:
+            return count_message_for_visible_query(resolution), ()
+        # Personal scopes with proven filters: report count semantics
+        # without the visible-query disclaimer.
+        return resolution.message, ()
+
+    return None
 
 
 # Generic resolver-step helpers (§6.140): a RESOLVER is a role, never
@@ -4147,6 +4236,7 @@ def render_specialist_outcome(
     outcome: SpecialistOutcome,
     *,
     input_text: str | None = None,
+    invocation_arguments: Mapping[str, Any] | None = None,
 ) -> tuple[str, tuple[str, ...]]:
     """Bounded truthful rendering of any specialist outcome.
 
@@ -4156,11 +4246,27 @@ def render_specialist_outcome(
     structured payload is guidance-shaped, a goal-aligned section
     projection is preferred over a metadata-first text dump (I02).
     An empty authoritative result is GROUNDED + empty, never a failure.
+
+    R4/R5: when ``input_text`` carries personal-ticket or count intent
+    over a paginated owner envelope, project deterministically before
+    any list dump that could equate page size with total.
     """
     limitations = list(outcome.limitations)
     text = _redact_text(outcome.content_text or "").strip()
     structured = outcome.structured
     if isinstance(structured, Mapping) and structured:
+        if input_text:
+            paginated = _project_paginated_personal_or_count(
+                input_text,
+                structured,
+                invocation_arguments=invocation_arguments,
+            )
+            if paginated is not None:
+                body, extra = paginated
+                for item in extra:
+                    if item not in limitations:
+                        limitations.append(item)
+                return body, tuple(limitations)
         # I02: guidance-shaped structured data — prefer goal-aligned
         # section projection over truncating embedded content_text from
         # the front (which kept authority/meta and dropped methods).
@@ -5678,6 +5784,17 @@ class OperationalCapabilityOrchestrator:
             )
             if continued is not None:
                 return continued
+        outcome = self._maybe_aggregate_paginated_count(
+            input_text,
+            outcome,
+            arguments,
+            group_key,
+            remote_used,
+            group,
+            correlation,
+            prior_turns,
+            deadline,
+        )
         _synth_content, _synth_extra = self._synthesize_content(
             input_text,
             outcome,
@@ -5685,6 +5802,7 @@ class OperationalCapabilityOrchestrator:
             deadline,
             prior_turns=prior_turns,
             business_subject=goal.business_subject,
+            invocation_arguments=arguments,
         )
         _synth_limitations: tuple[str, ...] | None = None
         if _synth_extra:
@@ -8361,6 +8479,137 @@ class OperationalCapabilityOrchestrator:
         )
         return _clarification_content(missing_inputs)
 
+    def _maybe_aggregate_paginated_count(
+        self,
+        input_text: str,
+        outcome: SpecialistOutcome,
+        arguments: Mapping[str, Any],
+        group_key: str,
+        remote_name: str,
+        group: CapabilityGroup,
+        correlation: str,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline | None,
+    ) -> SpecialistOutcome:
+        """Bounded same-capability page walk for COUNT intents (R5).
+
+        Only for non-personal / all-visible scopes. Personal assigned /
+        requested / ambiguous paths never aggregate visible pages into
+        a fabricated personal total. Stops on ``has_more=False``,
+        authoritative total, page failure, duplicate storm, max pages,
+        or turn-budget headroom exhaustion — never invents a total.
+        """
+        intent = classify_result_intent(input_text)
+        scope = classify_personal_ticket_scope(input_text)
+        if intent is not ResultIntent.COUNT:
+            return outcome
+        if scope in {
+            PersonalTicketScope.MY_TICKETS_AMBIGUOUS,
+            PersonalTicketScope.ASSIGNED_TO_ME,
+            PersonalTicketScope.REQUESTED_BY_ME,
+        }:
+            return outcome
+        envelope = extract_pagination_envelope(outcome.structured)
+        if envelope is None:
+            return outcome
+        if envelope.total_count is not None:
+            return outcome
+        if envelope.has_more is not True:
+            return outcome
+        if not isinstance(arguments, Mapping):
+            return outcome
+        # Owner must expose a page cursor we can advance.
+        page_key = next(
+            (
+                key
+                for key in arguments
+                if str(key).strip().lower().replace("-", "_") == "page"
+            ),
+            None,
+        )
+        if page_key is None:
+            return outcome
+
+        pages: list[object] = [outcome.structured]
+        try:
+            current_page = int(arguments.get(page_key) or envelope.page or 1)
+        except (TypeError, ValueError):
+            current_page = envelope.page or 1
+        max_pages = DEFAULT_MAX_PAGES
+        while len(pages) < max_pages:
+            if deadline is not None and (
+                deadline.remaining_seconds()
+                < MIN_VIABLE_MODEL_STAGE_SECONDS * 3
+            ):
+                _logger.info(
+                    "orchestration stage=pagination "
+                    "decision=budget_exhausted pages=%d "
+                    "correlation_id=%s",
+                    len(pages),
+                    correlation,
+                )
+                break
+            current_page += 1
+            next_arguments = dict(arguments)
+            next_arguments[page_key] = current_page
+            try:
+                invoked = self._invoke_selected(
+                    group_key,
+                    remote_name,
+                    next_arguments,
+                    group,
+                    input_text,
+                    correlation,
+                    prior_turns,
+                    deadline,
+                )
+            except CapabilityProviderError:
+                pages.append(None)
+                break
+            if invoked is None:
+                pages.append(None)
+                break
+            next_outcome, _, _ = invoked
+            next_envelope = extract_pagination_envelope(
+                next_outcome.structured
+            )
+            if next_envelope is None:
+                pages.append(None)
+                break
+            pages.append(next_outcome.structured)
+            if next_envelope.total_count is not None:
+                break
+            if next_envelope.has_more is not True:
+                break
+
+        aggregation = aggregate_paginated_pages(pages, max_pages=max_pages)
+        _logger.info(
+            "orchestration stage=pagination decision=%s pages=%d "
+            "unique=%d duplicates=%d correlation_id=%s",
+            "complete" if aggregation.complete else "partial",
+            aggregation.pages_fetched,
+            aggregation.unique_count,
+            len(aggregation.duplicate_ids),
+            correlation,
+        )
+        base = (
+            dict(outcome.structured)
+            if isinstance(outcome.structured, Mapping)
+            else {}
+        )
+        merged: dict[str, Any] = {
+            **base,
+            "items": [dict(item) for item in aggregation.items],
+            "page": 1,
+            "page_size": aggregation.unique_count,
+            "has_more": not aggregation.complete,
+        }
+        if aggregation.authoritative_total is not None:
+            merged["total_count"] = aggregation.authoritative_total
+        elif aggregation.complete and not aggregation.duplicate_ids:
+            merged["has_more"] = False
+        return dataclasses.replace(outcome, structured=merged)
+
     def _synthesize_content(
         self,
         input_text: str,
@@ -8369,6 +8618,7 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         business_subject: str | None = None,
+        invocation_arguments: Mapping[str, Any] | None = None,
     ) -> tuple[str | None, tuple[str, ...]]:
         """Bounded evidence-bound synthesis for a non-mutating outcome.
 
@@ -8384,10 +8634,27 @@ class OperationalCapabilityOrchestrator:
         selection proposal only — prior data is never replayed as
         current evidence. The outcome and its epistemic class are
         never altered.
+
+        R4/R5: personal ticket scope and paginated count semantics are
+        projected deterministically before any model synthesis so a
+        page of N items is never framed as a personal or global total.
         """
         _emit_activity(
             phase=ActivityPhase.OUTCOME_PREPARING, correlation=correlation
         )
+        paginated_projection = _project_paginated_personal_or_count(
+            input_text,
+            outcome.structured,
+            invocation_arguments=invocation_arguments,
+        )
+        if paginated_projection is not None:
+            _logger.info(
+                "orchestration stage=synthesis "
+                "decision=paginated_or_personal_scope "
+                "correlation_id=%s",
+                correlation,
+            )
+            return paginated_projection
         # I02: when owner evidence is guidance-shaped, prefer a
         # deterministic goal-aligned projection before spending model
         # budget — preserves prerequisites/steps/criteria under the
@@ -8502,8 +8769,17 @@ class OperationalCapabilityOrchestrator:
             return None, ()
         # LOOP-03R2A (observability): the fallback carries one bounded
         # deterministic reason code — never proposal content.
+        page_envelope = extract_pagination_envelope(outcome.structured)
         rendered, reason = (
-            _render_synthesis(proposal, records)
+            _render_synthesis(
+                proposal,
+                records,
+                has_more=(
+                    page_envelope.has_more
+                    if page_envelope is not None
+                    else None
+                ),
+            )
             if isinstance(proposal, Mapping)
             else (None, "proposal_absent")
         )

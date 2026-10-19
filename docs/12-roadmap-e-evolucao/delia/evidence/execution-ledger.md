@@ -15230,3 +15230,20 @@ NEXT=I04_BOUNDED_BUDGET_AND_THEMATIC_GENERALIZATION_REWORK
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `C3_EXECUTED=NO`, `C4/C5_AUTHORIZED=NO`, `CP-333=PLANNED`, `PHASE_PROGRESSION=NONE`.
 
 NEXT=INDEPENDENT_REVIEW (executor não declara ACCEPT)
+
+
+## §6.284 — DELIA-C3-HELPDESK-PERSONAL-TICKET-COUNT-AND-PAGINATION-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-HELPDESK-PERSONAL-TICKET-COUNT-AND-PAGINATION-REMEDIATION-01`. **DOC:** [42](../corrections/mcp-contextual-intelligence-orchestration/42-r4-r5-personal-ticket-count-and-pagination-remediation.md). **AUTHORITIES:** docs 30/33–35/38–41; §§6.271–6.282; Helpdesk `03-contrato.md`.
+
+- **REUSE GATE:** `EXISTING_EQUIVALENT=YES` (TÉO `helpdesk_read` / Helpdesk BFF); `REUSE_DECISION=EXTEND` orchestrator + pure `paginated_result_semantics.py`. No parallel Helpdesk client, no GLPI direct, no local ticket cache, no new RBAC/planner, no specialist branch.
+- **R4:** personal scope `ASSIGNED_TO_ME` / `REQUESTED_BY_ME` / `MY_TICKETS_AMBIGUOUS` / visible; ambiguous → clarification; assigned without proven `assignee_id` → identity limitation; requester without owner filter → contract limitation; unproven assignee demoted by existing identifier gate.
+- **R5:** `has_more` page slice ≠ total; authoritative `total_count` when present; bounded same-capability page walk for non-personal COUNT; incomplete → honest unknown. `MATERIAL_ACT=0`.
+- **OWNER GAPS (BLOCKED, not fabricated):** session does not expose GLPI `user_id` to MCP; no `requester_id` list filter; list has no projected `total_count`.
+- **TESTS:** R45-T01…T22 + orch integration PASS; R1/R3/R2/I04/ACR/presentation PASS; full `delia-api` pytest PASS.
+- **LIVE:** deploy + L01 recorded after push in this entry’s follow-up evidence; linked personal count remains subject to owner gaps.
+- **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `I03_ACCEPTED=YES_WITH_RESIDUAL`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no C4/C5/Q01.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
