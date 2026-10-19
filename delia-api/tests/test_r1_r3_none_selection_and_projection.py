@@ -97,19 +97,36 @@ def _handler(orch, model=None):
 
 
 def test_t01_group_none_with_available_surface():
+    """applicable=false → conversational NOT_APPLICABLE (CONV recovery).
+
+    Operational ambiguity after a group was chosen still clarifies
+    (see T02). Greetings/hypotheticals must not be forced into
+    capability jargon ask-backs.
+    """
     attempt = _read(
-        _interop(FakePort(tools_by_specialist={"teo": TEO_TOOLS})),
-        specialist_ids=("teo",),
+        _interop(
+            FakePort(
+                tools_by_specialist={"teo": TEO_TOOLS, "vista": VISTA_TOOLS}
+            )
+        ),
+        specialist_ids=("teo", "vista"),
         proposal={GROUP_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt("5 exemplos de terminal bandeira")
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
-    assert attempt.content == _SELECTION_INCONCLUSIVE_CONTENT
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
-def test_t02_capability_none_with_valid_group():
+def test_t02_capability_applicable_false_is_conversational():
+    """Capability applicable=false → NOT_APPLICABLE (CONV recovery).
+
+    Invented/invalid remote after a selected group still clarifies (T04).
+    """
     attempt = _read(
-        _interop(FakePort(tools_by_specialist={"teo": TEO_TOOLS})),
-        specialist_ids=("teo",),
+        _interop(
+            FakePort(
+                tools_by_specialist={"teo": TEO_TOOLS, "vista": VISTA_TOOLS}
+            )
+        ),
+        specialist_ids=("teo", "vista"),
         proposal={
             GROUP_SELECTION_INSTRUCTION_ID: {
                 "applicable": True,
@@ -118,7 +135,7 @@ def test_t02_capability_none_with_valid_group():
             CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False},
         },
     ).attempt("produtos?")
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 def test_t03_invalid_model_group():
@@ -269,7 +286,10 @@ def test_t10_handler_clarification_is_terminal_no_model():
     assert spy.requests == []
     assert result.model_invocation_id is None
     assert result.message_kind == "CLARIFICATION_REQUIRED"
-    assert "capability" in result.content.lower()
+    assert "consultar" in result.content.lower() or "fonte" in (
+        result.content.lower()
+    )
+    assert "capability" not in result.content.lower()
 
 
 def test_t11_bare_not_applicable_preserves_general_fallback():

@@ -397,10 +397,10 @@ def test_model_marks_not_applicable():
         proposal={"applicable": False},
     )
     attempt = read.attempt("Quanto é 2+2?")
-    # R1: model-backed inconclusive selection is clarification, not a
-    # silent NOT_APPLICABLE that races the general-model budget.
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
-    assert attempt.content
+    # CONV recovery: applicable=false → conversational NOT_APPLICABLE.
+    # Invalid/inconclusive selection after a claimed group still
+    # clarifies (R1 residual for invented remotes).
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 def test_empty_surface_not_applicable_when_all_specialists_healthy():
@@ -824,8 +824,9 @@ def test_arguments_bounded_to_owner_schema():
 def test_malformed_proposals_fail_closed():
     port = FakePort(tools_by_specialist={"teo": TEO_TOOLS})
     # Each malformed payload lands at the capability-selection stage
-    # (single specialist => stage 1 is deterministic). R1: invalid
-    # selection with a model present is CLARIFICATION_REQUIRED.
+    # (single specialist => stage 1 is deterministic). Invalid/
+    # incomplete applicable=true selections remain CLARIFICATION;
+    # non-mapping payloads fail closed as inconclusive clarify.
     for proposal in (
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": True}},
         {CAPABILITY_SELECTION_INSTRUCTION_ID: "not-a-mapping"},

@@ -184,7 +184,26 @@ class InvokeModel:
             guard_invocation_payload(dict(structured_output))
         except (ModelInvocationDomainError, ValueError) as exc:
             raise ModelInvocationError(INVALID_STRUCTURED_OUTPUT, str(exc)) from exc
-        missing = [field for field in request.expected_fields if field not in structured_output]
+        # Selection contracts may return applicable=false without
+        # companion ids (remote_name / capability_group_id). Requiring
+        # those keys in that case forced a ModelInvocationError that
+        # the orchestrator treated as inconclusive clarification —
+        # blocking legitimate conversational fallback (CONV recovery).
+        applicable = structured_output.get("applicable")
+        if isinstance(applicable, str):
+            applicable = applicable.strip().lower() == "true"
+        if applicable is False and "applicable" in request.expected_fields:
+            if "applicable" not in structured_output:
+                raise ModelInvocationError(
+                    INVALID_STRUCTURED_OUTPUT,
+                    "missing required fields: applicable",
+                )
+            return
+        missing = [
+            field
+            for field in request.expected_fields
+            if field not in structured_output
+        ]
         if missing:
             raise ModelInvocationError(
                 INVALID_STRUCTURED_OUTPUT,

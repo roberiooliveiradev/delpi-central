@@ -351,7 +351,8 @@ def test_r2_t05_no_applicable_capability_clarifies():
         [provider],
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt(BROAD_ASK)
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    # No DISCOVERY to recover; applicable=false → conversational.
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert provider.calls == []
 
 
@@ -578,7 +579,8 @@ def test_r2_t13_group_none_still_clarifies_r1():
         [provider],
         {GROUP_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt(BROAD_ASK)
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    # CONV: group applicable=false → conversational NOT_APPLICABLE.
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert provider.calls == []
 
 
@@ -591,7 +593,7 @@ def test_r2_t14_capability_none_without_coverage_clarifies():
         [provider],
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt("Quanto é 2+2?")
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert provider.calls == []
 
 
@@ -634,7 +636,9 @@ def test_r2_t17_owner_contract_gap_no_discovery():
         [provider],
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt(BROAD_ASK)
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    # No DISCOVERY on surface → cannot recover; applicable=false is
+    # conversational (owner contract gap remains honest).
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
 
 
 def test_r2_r3_framing_not_regressed():
@@ -652,5 +656,5 @@ def test_r2_checklist_ask_does_not_force_discovery():
         [provider],
         {CAPABILITY_SELECTION_INSTRUCTION_ID: {"applicable": False}},
     ).attempt(CHECKLIST_ASK)
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert provider.calls == []

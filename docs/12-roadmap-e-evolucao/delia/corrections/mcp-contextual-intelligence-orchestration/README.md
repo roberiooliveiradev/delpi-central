@@ -105,6 +105,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **R45 pagination integrity + selection timeout:** [44 — implementation](./44-r45-pagination-integrity-and-selection-timeout-rework.md). First-page + contiguous + explicit completion for exact count; structural unique ticket-list capability selection for COUNT/LIST (provider-neutral). Full pytest PASS. Does not accept I04 / C3–C5 / Q01.
 
+**R45 independent review:** [45 — ACCEPT_WITH_RESIDUAL](./45-independent-r45-pagination-and-live-ssh-review.md). Personal ticket count still INCONCLUSIVE; I04 not accepted.
+
+**Conversational intelligence recovery:** [46 — implementation](./46-conversational-intelligence-and-orchestration-recovery.md). `applicable=false` → conversational NOT_APPLICABLE; page-slice activity omits record_count; instruction v5. Full pytest PASS. Does not accept I04 / C3–C5 / Q01.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |

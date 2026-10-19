@@ -236,11 +236,18 @@ Respond with JSON containing exactly the fields "applicable" and
 
 - "applicable": true only when answering requires data or an action
   from one listed capability group; false or null otherwise.
+  Set applicable false for greetings, thanks, casual dialogue, general
+  role questions ("what do you do?", "como você pode me ajudar?"),
+  general conceptual explanations that do not need a listed group's
+  owner data, and explicitly hypothetical/fictional examples.
   Asking which information, capabilities or consultation surfaces
   are available ("what can you consult/query?", "quais informações
   você consegue consultar?") is applicable when a listed group
   advertises a DISCOVERY or READ capability that can answer that
-  coverage question — never answer from model knowledge alone.
+  coverage question — never answer live catalog coverage from model
+  knowledge alone. Requests for real DELPI registers, tickets,
+  products, MES/production facts, or specialist owner guidance that a
+  listed group owns remain applicable true.
 - "capability_group_id": copied verbatim from a listed entry; null
   when not applicable. Choose the group whose advertised capabilities
   semantically match the domain of the user message — match the
@@ -735,13 +742,16 @@ _INTENT_CLARIFICATION_CONTENT = (
     "Você quer que eu explique como fazer, ou que eu execute "
     "a ação para você?"
 )
-# R1 (doc 35): after live surfaces exist but group/capability selection
-# is inconclusive, prefer a bounded ask-back over bare NOT_APPLICABLE
+# R1 (doc 35): after a group was chosen but capability selection is
+# inconclusive, prefer a bounded ask-back over bare NOT_APPLICABLE
 # that previously fell through to a second model call → 504.
+# Group-level applicable=false is different: it means no owner surface
+# is required → NOT_APPLICABLE → conversational fallback (CONV recovery).
 _SELECTION_INCONCLUSIVE_CONTENT = (
-    "Não identifiquei uma capability ou superfície aplicável para "
-    "esta solicitação com as fontes disponíveis. Pode esclarecer "
-    "o que você precisa consultar ou fazer na DELPI?"
+    "Não consegui identificar uma consulta ou ação adequada nas "
+    "fontes disponíveis para este pedido. Pode dizer se precisa de "
+    "dados cadastrais da DELPI, orientação de um especialista, ou se "
+    "é uma pergunta geral / exemplo hipotético?"
 )
 
 
@@ -4543,10 +4553,20 @@ def _activity_outcome_summary(
     outcome: SpecialistOutcome,
 ) -> dict[str, Any] | None:
     """Safe result projection: a truthful classification plus a record
-    count only when records were actually extracted from the outcome.
-    Never infers data from transport success; never carries payload."""
+    count only when a bounded list is complete enough to count.
+
+    Never treats an unsigned/incomplete page slice (``has_more=True``)
+    as ``record_count`` — that was surfacing as "10 registro(s)
+    localizado(s)" for a page size. Never infers data from transport
+    success; never carries payload.
+    """
     if outcome.status is SpecialistResultStatus.PARTIAL:
         return _activity_outcome_ref(status=ActivityOutcomeStatus.PARTIAL)
+    envelope = extract_pagination_envelope(outcome.structured)
+    if envelope is not None and envelope.has_more is True:
+        return _activity_outcome_ref(
+            status=ActivityOutcomeStatus.RETURNED_DATA
+        )
     records = _synthesis_records(outcome.structured)
     if records:
         return _activity_outcome_ref(
@@ -4824,7 +4844,20 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             interpret_goal=(goal is None),
         )
-        if selection is None:
+        if selection is None or selection[0] == "not_applicable":
+            # Group applicable=false / no model: conversational path.
+            _logger.info(
+                "orchestration stage=target_selection "
+                "decision=not_applicable correlation_id=%s",
+                correlation,
+            )
+            return GovernedCapabilityAttempt(
+                status=GovernedCapabilityStatus.NOT_APPLICABLE,
+                correlation_id=correlation,
+            )
+        if selection[0] == "inconclusive":
+            # Group was chosen (or invented) but capability could not be
+            # bound — bounded ask-back, never a second free-form burn.
             _logger.info(
                 "orchestration stage=target_selection decision=none "
                 "correlation_id=%s",
@@ -4840,7 +4873,7 @@ class OperationalCapabilityOrchestrator:
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
             )
-        group_key, descriptor, selected_goal = selection
+        _, group_key, descriptor, selected_goal = selection
         group = groups[group_key]
         remote_name = descriptor.remote_name
         _logger.info(
@@ -4918,7 +4951,7 @@ class OperationalCapabilityOrchestrator:
                     goal.goal_class,
                     correlation,
                 )
-                demoted = self._select_capability(
+                _demote_status, demoted = self._select_capability(
                     input_text,
                     dataclasses.replace(
                         group,
@@ -8083,7 +8116,11 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         *,
         interpret_goal: bool = False,
-    ) -> tuple[str, ProviderCapability, "_TurnGoal | None"] | None:
+    ) -> (
+        tuple[str, str, ProviderCapability, "_TurnGoal | None"]
+        | tuple[str]
+        | None
+    ):
         """Hierarchical bounded selection, never authority.
 
         SELECT GROUP -> SELECT CAPABILITY. Argument projection is a
@@ -8093,13 +8130,20 @@ class OperationalCapabilityOrchestrator:
         workspace context is an untrusted hint only. Without a model
         the turn falls back to the ordinary interaction path.
 
+        Returns:
+        - ``("selected", group_key, descriptor, goal)``
+        - ``("not_applicable",)`` when no group is required / applicable
+        - ``("inconclusive",)`` when a group path was attempted but no
+          capability could be bound (clarify, do not free-form invent)
+        - ``None`` when no model is configured
+
         When ``interpret_goal`` is True (cold start), capability
         selection may return a validated ``_TurnGoal`` from the same
         typed proposal (I02-R3B). Otherwise the third element is None.
         """
         if self._invoke_model is None or self._model_ref is None:
             return None
-        group_key = self._select_group(
+        group_status, group_key = self._select_group(
             input_text,
             groups,
             workspace_context,
@@ -8107,25 +8151,36 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             deadline=deadline,
         )
-        if group_key is None or group_key not in groups:
+        if group_status == "not_applicable":
             _logger.info(
                 "orchestration stage=select_group decision=none "
                 "groups=%d",
                 len(groups),
             )
-            return None
+            return ("not_applicable",)
+        if group_status == "invalid" or group_key is None or (
+            group_key not in groups
+        ):
+            _logger.info(
+                "orchestration stage=select_group decision=invalid "
+                "groups=%d",
+                len(groups),
+            )
+            return ("inconclusive",)
         group = groups[group_key]
         if interpret_goal:
-            descriptor, selected_goal = self._select_capability_with_goal(
-                input_text,
-                group,
-                workspace_context,
-                prior_turns,
-                correlation=correlation,
-                deadline=deadline,
+            cap_status, descriptor, selected_goal = (
+                self._select_capability_with_goal(
+                    input_text,
+                    group,
+                    workspace_context,
+                    prior_turns,
+                    correlation=correlation,
+                    deadline=deadline,
+                )
             )
         else:
-            descriptor = self._select_capability(
+            cap_status, descriptor = self._select_capability(
                 input_text,
                 group,
                 workspace_context,
@@ -8138,6 +8193,9 @@ class OperationalCapabilityOrchestrator:
             # R2: coverage inquiry + sole owner DISCOVERY on the already
             # selected group is a contract-proven path — not singleton
             # auto-select of an arbitrary capability, not provider-named.
+            # Runs before conversational not_applicable so "what can you
+            # consult?" still recovers DISCOVERY when the model said
+            # applicable=false on an execute/opaque READ.
             discovery = _discovery_capability(group)
             if (
                 discovery is not None
@@ -8156,14 +8214,21 @@ class OperationalCapabilityOrchestrator:
                     selected_goal = self._TurnGoal(
                         goal_class="read", declared=True
                     )
+            elif cap_status == "not_applicable":
+                _logger.info(
+                    "orchestration stage=select_capability "
+                    "decision=not_applicable group=%s",
+                    group_key,
+                )
+                return ("not_applicable",)
             else:
                 _logger.info(
                     "orchestration stage=select_capability decision=none "
                     "group=%s",
                     group_key,
                 )
-                return None
-        return group_key, descriptor, selected_goal
+                return ("inconclusive",)
+        return ("selected", group_key, descriptor, selected_goal)
 
     def _build_plan(
         self,
@@ -8396,6 +8461,14 @@ class OperationalCapabilityOrchestrator:
                 for key, value in proposal.items()
                 if key in allowed_keys
             }
+        # Selection proposals may declare applicable=false with null
+        # companion ids — do not reject solely for a missing
+        # capability_group_id / remote_name in that case.
+        applicable = proposal.get("applicable")
+        if isinstance(applicable, str):
+            applicable = applicable.strip().lower() == "true"
+        if applicable is False and "applicable" in expected_fields:
+            return proposal
         if any(field not in proposal for field in expected_fields):
             return None
         return proposal
@@ -8849,7 +8922,7 @@ class OperationalCapabilityOrchestrator:
             return None
         if fresh is None:
             return None
-        repick = self._select_capability(
+        _repick_status, repick = self._select_capability(
             input_text,
             fresh,
             workspace_context,
@@ -8902,13 +8975,19 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
-    ) -> str | None:
-        """Stage 1: pick the capability group whose surface matches."""
+    ) -> tuple[str, str | None]:
+        """Stage 1: pick the capability group whose surface matches.
+
+        Returns ``(status, group_key)`` where status is:
+        - ``selected`` — live group key
+        - ``not_applicable`` — no owner surface required (conversational)
+        - ``invalid`` — model claimed applicable with a non-live group
+        """
         eligible = sorted(groups)
         if not eligible:
-            return None
+            return ("not_applicable", None)
         if len(eligible) == 1:
-            return eligible[0]
+            return ("selected", eligible[0])
         proposal = self._propose(
             input_text,
             block_tag="capability_groups",
@@ -8928,38 +9007,60 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
         )
         if proposal is None:
-            return None
+            return ("not_applicable", None)
         applicable = proposal.get("applicable")
         if isinstance(applicable, str):
             applicable = applicable.strip().lower() == "true"
         if applicable is not True:
-            return None
+            return ("not_applicable", None)
         group_key = proposal.get("capability_group_id")
         if not isinstance(group_key, str):
-            return None
+            return ("invalid", None)
         group_key = group_key.strip()
         # Revalidate against the fresh groups — an invented or
         # removed group is never selectable.
-        return group_key if group_key in groups else None
+        if group_key not in groups:
+            return ("invalid", None)
+        return ("selected", group_key)
 
     @staticmethod
     def _capability_from_selection_proposal(
         proposal: Mapping[str, Any] | None,
         invocable: Sequence[ProviderCapability],
-    ) -> ProviderCapability | None:
-        """Deterministic revalidation of a capability selection proposal."""
+    ) -> tuple[str, ProviderCapability | None]:
+        """Deterministic revalidation of a capability selection proposal.
+
+        Returns ``(status, capability)``:
+        - ``selected`` — live capability
+        - ``not_applicable`` — model said no capability is required
+        - ``inconclusive`` — applicable claimed but remote missing/invalid
+        """
         if proposal is None:
-            return None
-        applicable = proposal.get("applicable")
-        if isinstance(applicable, str):
-            applicable = applicable.strip().lower() == "true"
+            return ("inconclusive", None)
+        raw_applicable = proposal.get("applicable")
+        if isinstance(raw_applicable, str):
+            normalized = raw_applicable.strip().lower()
+            if normalized == "true":
+                applicable: bool | None = True
+            elif normalized in {"false", "null", "none", ""}:
+                applicable = False
+            else:
+                # Garbage tokens like "yes" are not a valid applicable
+                # declaration — inconclusive, never conversational.
+                return ("inconclusive", None)
+        elif raw_applicable is True:
+            applicable = True
+        elif raw_applicable is False or raw_applicable is None:
+            applicable = False
+        else:
+            return ("inconclusive", None)
         if applicable is not True:
-            return None
+            return ("not_applicable", None)
         remote_name = proposal.get("remote_name")
         if not isinstance(remote_name, str):
-            return None
+            return ("inconclusive", None)
         remote_name = remote_name.strip()
-        return next(
+        match = next(
             (
                 cap
                 for cap in invocable
@@ -8967,6 +9068,9 @@ class OperationalCapabilityOrchestrator:
             ),
             None,
         )
+        if match is None:
+            return ("inconclusive", None)
+        return ("selected", match)
 
     def _select_capability(
         self,
@@ -8976,7 +9080,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str = "",
         deadline: TurnDeadline | None = None,
-    ) -> ProviderCapability | None:
+    ) -> tuple[str, ProviderCapability | None]:
         """Stage 2: pick a capability from that group's surface."""
         invocable = [
             cap
@@ -8984,7 +9088,7 @@ class OperationalCapabilityOrchestrator:
             if invocable_in_interactive_phase(cap.operation_class)
         ]
         if not invocable:
-            return None
+            return ("inconclusive", None)
         # R45: ticket-domain + sole schema advertising action=tickets —
         # structural, provider-neutral; avoids a redundant model stage
         # that historically exhausted the 30s turn before owner READ.
@@ -8999,7 +9103,7 @@ class OperationalCapabilityOrchestrator:
                 structural.remote_name,
                 correlation,
             )
-            return structural
+            return ("selected", structural)
         # Note: a singleton invocable surface is NOT automatic FAST —
         # applicability to the user ask still requires a validated
         # proposal (applicable may be false).
@@ -9037,6 +9141,7 @@ class OperationalCapabilityOrchestrator:
         correlation: str = "",
         deadline: TurnDeadline | None = None,
     ) -> tuple[
+        str,
         ProviderCapability | None,
         "OperationalCapabilityOrchestrator._TurnGoal | None",
     ]:
@@ -9054,7 +9159,7 @@ class OperationalCapabilityOrchestrator:
             if invocable_in_interactive_phase(cap.operation_class)
         ]
         if not invocable:
-            return None, None
+            return ("inconclusive", None, None)
         structural = unique_structural_ticket_list_capability(
             invocable, input_text
         )
@@ -9066,8 +9171,10 @@ class OperationalCapabilityOrchestrator:
                 structural.remote_name,
                 correlation,
             )
-            return structural, self._TurnGoal(
-                goal_class="read", declared=True
+            return (
+                "selected",
+                structural,
+                self._TurnGoal(goal_class="read", declared=True),
             )
         listing_hint = _prior_listing_hint(prior_turns)
         allowed = frozenset(
@@ -9091,18 +9198,18 @@ class OperationalCapabilityOrchestrator:
             correlation=correlation,
             deadline=deadline,
         )
-        descriptor = self._capability_from_selection_proposal(
+        cap_status, descriptor = self._capability_from_selection_proposal(
             proposal, invocable
         )
-        if descriptor is None:
-            return None, None
+        if cap_status != "selected" or descriptor is None:
+            return (cap_status, None, None)
         selected_goal = self._turn_goal_from_proposal(
             proposal,
             prior_turns,
             correlation=correlation,
             require_goal_class=False,
         )
-        return descriptor, selected_goal
+        return (cap_status, descriptor, selected_goal)
 
     def _propose_index_probe(
         self,

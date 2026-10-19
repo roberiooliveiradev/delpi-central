@@ -15285,3 +15285,15 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 
 NEXT_MAIN=I04_BOUNDED_BUDGET_AND_THEMATIC_GENERALIZATION_REWORK
 NEXT_RELATED=HELPDESK_OWNER_PERSONAL_SCOPE_CONTRACT_DECISION
+
+
+## §6.288 — Conversational intelligence + orchestration recovery
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-CONVERSATIONAL-INTELLIGENCE-AND-ORCHESTRATION-RECOVERY-01`. **DOC:** [46](../corrections/mcp-contextual-intelligence-orchestration/46-conversational-intelligence-and-orchestration-recovery.md). **BASE:** `b69d2359f7`.
+
+- **Cause:** R1 mapped `applicable=false` to capability-jargon `CLARIFICATION_REQUIRED`; InvokeModel rejected applicable=false without `remote_name`; activity `record_count` on `has_more=True` pages → “N registro(s) localizado(s)”.
+- **Fix:** tagged selection `not_applicable|inconclusive|selected`; conversational fallback restored; page-slice omits record_count; instruction v5; R2 coverage recovery preserved.
+- **Tests:** CONV suite + full `delia-api` pytest **PASS**. Live/deploy filled after SSH gate.
+- **Phase:** `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`; no Q01.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW

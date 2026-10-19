@@ -492,10 +492,8 @@ def test_workspace_context_never_authorizes():
         ),
     )
     attempt = orch.attempt("anything", workspace_context=ctx)
-    # R1: applicable=false with a model present asks back; workspace
-    # context still never authorizes an owner call.
-    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
-    assert attempt.content
+    # CONV: applicable=false → conversational; workspace never authorizes.
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
     assert not mcp.calls
 
 

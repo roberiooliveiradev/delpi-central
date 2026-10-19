@@ -566,7 +566,7 @@ def test_read_path_never_invokes_act():
 
 
 def test_personality_instruction_v4_bounds():
-    assert INSTRUCTION_VERSION == "4"
+    assert INSTRUCTION_VERSION == "5"
     text = DELIA_INTERACTION_INSTRUCTION.lower()
     assert "você" in text
     assert "fabricate" in text
