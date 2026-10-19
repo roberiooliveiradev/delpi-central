@@ -26,6 +26,7 @@ _DB_REQUIRED = pytest.mark.skipif(
 
 from tests.test_mes_run_lifecycle import _classify_open, _pg_device
 from tests.test_production_run_service import (
+    FakeOperatorDirectory,
     FakePulse,
     FakeRepo,
     make_service,
@@ -402,6 +403,7 @@ class TestAuditPostgres:
                 reasons=PostgresDowntimeReasonRepository(),
             ),
             audit=PostgresMesAuditRepository(),
+            operator_directory=FakeOperatorDirectory(),
         )
         return service
 
@@ -462,6 +464,7 @@ class TestAuditPostgres:
                 downtimes=ExplodingDowntimes(),
             ),
             audit=PostgresMesAuditRepository(),
+            operator_directory=FakeOperatorDirectory(),
         )
         session = service.create_bench_session(
             branch="01",

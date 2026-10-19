@@ -392,7 +392,7 @@ class ProductionRunService:
                 pieces_per_pulse_snapshot=1,
                 conn=conn,
             )
-            at = self._clock()
+            at = self._canonical_run_start(run)
             self._mes.record_run_started(run, conn=conn, at=at)
             self._audit(
                 "run_started", run=run, session=session, conn=conn, occurred_at=at
@@ -400,6 +400,20 @@ class ProductionRunService:
         self._notify(branch, work_center, reason="run_started")
         logger.info("mes_run_started run_id=%s", run["id"])
         return _run_to_api(run, device=device)
+
+    def _canonical_run_start(self, run: dict[str, Any]) -> datetime:
+        """Instante canonico do Play: o started_at persistido do run.
+
+        O estado operacional inicial e o baseline de inatividade compartilham
+        a mesma origem temporal gravada pelo banco — evita que o relogio da
+        aplicacao abra producing num instante divergente do fato
+        persistido."""
+        started = run.get("started_at")
+        if started is None:
+            return self._clock()
+        if getattr(started, "tzinfo", None) is None:
+            started = started.replace(tzinfo=timezone.utc)
+        return started
 
     def _resolve_standard_time(
         self,
@@ -942,9 +956,24 @@ class ProductionRunService:
                 started_at = max(last2, run_started)
             else:
                 started_at = last2
-            dt = self._mes.record_automatic_stopped(locked, conn=conn, at=started_at)
+            dt = self._mes.record_automatic_stopped(
+                locked, conn=conn, at=started_at, detected_at=detected_at
+            )
             if dt is None:
-                return  # já existe parada aberta — tick idempotente
+                # já existe parada aberta (idempotente) ou transição adiada
+                # (clamp legado no futuro — nenhum fato/auditoria gravado)
+                return
+            effective_started_at = dt.get("started_at")
+            if effective_started_at is not None and getattr(
+                effective_started_at, "tzinfo", None
+            ) is None:
+                effective_started_at = effective_started_at.replace(
+                    tzinfo=timezone.utc
+                )
+            legacy_clamped = (
+                effective_started_at is not None
+                and effective_started_at > started_at
+            )
             self._audit(
                 "automatic_downtime_started",
                 run=locked,
@@ -960,6 +989,12 @@ class ProductionRunService:
                     "cycleMultiplier": locked_resolution.cycle_multiplier,
                     "minimumThresholdSeconds": locked_resolution.minimum_seconds,
                     "lastCountActivityAt": last2.isoformat(),
+                    "effectiveStartedAt": (
+                        effective_started_at.isoformat()
+                        if effective_started_at is not None
+                        else None
+                    ),
+                    "clampedToOpenStateStart": legacy_clamped,
                     "detectedAt": detected_at.isoformat(),
                     "idleSecondsAtDetection": int((detected_at - last2).total_seconds()),
                     "initialReasonCode": dt.get("reason_code"),

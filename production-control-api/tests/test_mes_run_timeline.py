@@ -17,6 +17,7 @@ from production_control_app.application.services.production_run_service import (
 from production_control_app.domain.errors import ProductionRunNotFound
 
 from tests.test_production_run_service import (
+    FakeOperatorDirectory,
     FakePulse,
     FakeReasonRepo,
     FakeRepo,
@@ -293,6 +294,7 @@ class TestTimelinePostgres:
             repository=repo,
             pulse_gateway=FakePulse(devices=[device], device_by_id={device["deviceId"]: device}),
             mes_lifecycle=mes,
+            operator_directory=FakeOperatorDirectory(),
         )
         token = service.create_bench_session(
             branch="01", work_center=clean_ct, registration="USR03"

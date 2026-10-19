@@ -493,3 +493,55 @@ abre a lista (`usePendingMesDowntimes`, reconciliada pelo mesmo
 `runUpdatedSignal` do WS — sem polling próprio); itens da timeline do run
 ativo sem motivo também são clicáveis e abrem o `DowntimeReasonModal`
 mirando aquele `downtime_id`.
+
+
+
+## 12. Hotfix — referência temporal unificada do Play
+
+**Defeito confirmado**: create_run_with_segment persistia
+last_count_activity_at/run.started_at via NOW() do PostgreSQL, mas
+start_run abria o evento producing com self._clock() — um instante
+estritamente posterior (lido após o INSERT). Na primeira parada automática
+sem nenhuma peça contada, o detector encerrava producing em
+max(last_count_activity_at, run.started_at) = o NOW() do INSERT, que
+precedia producing.started_at — violando ck_pc_state_events_time_range.
+A exceção era engolida pelo tick (mes_tick_run_failed no log) e o run
+permanecia apresentando producing para sempre.
+
+Paradas após produção não falhavam porque o incremento atualizava
+last_count_activity_at com o relógio da app, já posterior ao início do
+producing.
+
+**Correção**: referência temporal unificada — o producing inicial e o
+run_started auditável nascem no run.started_at persistido
+(_canonical_run_start), mesma origem do baseline de inatividade, na mesma
+transação. O relógio da aplicação não participa da origem do Play.
+
+**Runs legados** (abertos antes do hotfix, com producing.started_at
+posterior ao baseline): em record_automatic_stopped, sob lock, o instante
+de fechamento faz clamp explícito para o started_at do evento aberto —
+producing encerra com duração zero no seu próprio início, stopped e o
+downtime nascem nesse instante. Sem intervalo negativo e sem duração
+inventada; a auditoria registra effectiveStartedAt e
+clampedToOpenStateStart=true quando o clamp dispara.
+
+**Adiamento de parada futura**: se o início efetivo calculado pelo clamp
+for POSTERIOR ao instante da detecção (producing legado "no futuro"), a
+transição é adiada — nenhum estado, downtime ou auditoria é gravado e o
+próximo tick reavalia. Sem isso, uma parada criada no futuro faria um
+golpe anterior violar a cronologia ao encerrar. Observável via log
+mes_auto_downtime_deferred.
+
+**Evidências**: test_future_clamped_stop_is_deferred_and_pulse_still_counts
+(parada futura adiada; pulso antes dela conta sem rollback; parada nasce
+no instante do producing quando o relógio o alcança),
+test_producing_start_after_persisted_play_does_not_break_auto_stop
+(relogio adiantado reproduzia CheckViolation real no Postgres; PASS após o
+fix) e test_legacy_open_run_with_late_producing_event_auto_stops
+(divergencia legada transiciona com clamp) —
+PC_TEST_MES_DB=1 no banco de plugins de dev, escopo ZZ-TEST-AUTODT.
+
+**Preservado**: monitoramento desde o Play, run running durante a parada,
+único downtime por transição, motivo inicial setup sem peça, auto-resume
+no primeiro incremento, baseline não reiniciado por poll vazio, Pulse
+offline/inválido não gera parada, kill switch e threshold dinâmico.

@@ -31,6 +31,7 @@ from production_control_app.domain.errors import (
 
 from tests.test_production_run_service import (
     FakeDowntimeRepo,
+    FakeOperatorDirectory,
     FakePulse,
     FakeReasonRepo,
     FakeRepo,
@@ -587,6 +588,79 @@ def test_multiple_auto_downtimes_same_run():
     assert all(e["ended_at"] is not None for e in downtimes.events)
 
 
+def test_ten_minutes_without_piece_auto_stops():
+    service, states, downtimes, repo, pulse, clock, session, audit = _setup()
+    run = _start(service, session)
+    _sync_clock(clock, repo, run["id"])
+    clock.advance(600)  # 10 min sem nenhuma peça
+    service.tick_running_runs()
+    assert len(downtimes.events) == 1
+    assert downtimes.events[0]["reason_code"] == "setup"
+    assert states.events[-1]["state"] == "stopped"
+    assert repo.runs[run["id"]]["status"] == "running"
+    # inatividade não reiniciou baseline: parada conta desde o Play
+    assert (
+        downtimes.events[0]["started_at"]
+        == repo.runs[run["id"]]["last_count_activity_at"]
+    )
+
+
+def test_long_dynamic_threshold_delays_auto_stop():
+    service, states, downtimes, repo, pulse, clock, session, audit = _setup()
+    service._dynamic_auto_downtime_enabled = True
+    service._auto_downtime_cycle_multiplier = 3.0
+    service._auto_downtime_min_seconds = THRESHOLD
+    run = _start(service, session)
+    repo.runs[run["id"]].update(
+        {
+            "workstation_type_snapshot": "manual_workstation",
+            "standard_time_data_quality_snapshot": "complete",
+            "ideal_cycle_seconds_snapshot": 600.0,  # 600 x 3 = 1800 s
+        }
+    )
+    _sync_clock(clock, repo, run["id"])
+    clock.advance(900)  # acima do legado 120, abaixo do dinâmico 1800
+    service.tick_running_runs()
+    assert downtimes.events == []
+    assert states.events[-1]["state"] == "producing"
+
+    clock.advance(900)  # 1800 s exatos
+    service.tick_running_runs()
+    assert len(downtimes.events) == 1
+    auto = [
+        e for e in audit.events if e.get("action") == "automatic_downtime_started"
+    ]
+    assert auto and auto[0]["details"]["thresholdSeconds"] == 1800
+    assert auto[0]["details"]["thresholdSource"] == "dynamic_manual_cycle"
+
+
+def test_state_conflict_open_downtime_other_run_blocks_without_facts():
+    service, states, downtimes, repo, pulse, clock, session, audit = _setup()
+    run = _start(service, session)
+    _sync_clock(clock, repo, run["id"])
+    # Parada aberta pertencente a OUTRO run no mesmo posto: conflito de estado
+    # falha de forma controlada — nenhum fato novo é gravado para este run.
+    downtimes.events.append(
+        {
+            "id": "dt-foreign",
+            "branch": "01",
+            "work_center": "CT01",
+            "run_id": "other-run",
+            "state_event_id": "se-x",
+            "source": "manual",
+            "reason_code": "setup",
+            "started_at": clock.now,
+            "ended_at": None,
+            "confirmed": False,
+            "confirmed_by_type": None,
+        }
+    )
+    clock.advance(THRESHOLD * 2)
+    service.tick_running_runs()
+    assert len(downtimes.events) == 1  # só a parada estrangeira
+    assert repo.runs[run["id"]]["status"] == "running"
+
+
 # ---------------------------------------------------------------------------
 # Integração Postgres (banco descartável): PC_TEST_MES_DB=1 + PLUGINS_DB_*
 # ---------------------------------------------------------------------------
@@ -688,6 +762,7 @@ class TestAutoDowntimePostgres:
             mes_lifecycle=lifecycle,
             clock=clock,
             auto_downtime_seconds=THRESHOLD,
+            operator_directory=FakeOperatorDirectory(),
         )
 
     def _session(self, service, wc):
@@ -753,6 +828,195 @@ class TestAutoDowntimePostgres:
         assert active["operationalState"] == "producing"
         assert active["pendingDowntime"]["id"] == open_dt["id"]
         assert active["pendingDowntimeCount"] == 1
+
+    def test_auto_stop_before_first_piece(self, pg, clean_ct):
+        """Regressão: parada automática sem nenhuma peça desde o Play.
+
+        last_count_activity_at e run.started_at nascem como NOW() do
+        Postgres; o evento producing inicial usa o relógio da app. O fim
+        do producing nao pode preceder seu inicio (ck_*_time_range).
+        """
+        repo, lifecycle, states, downtimes = pg
+        clock = FakeClock()
+        service = self._service(repo, lifecycle, clock)
+        token = self._session(service, clean_ct)
+        run = self._start(service, clean_ct, token)
+
+        stored = repo.get_run(run["id"])
+        baseline = stored["last_count_activity_at"]
+        producing = states.get_open(branch="01", work_center=clean_ct)
+        assert producing["state"] == "producing"
+
+        # threshold exato sem nenhum incremento
+        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        service.tick_running_runs()
+
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt is not None and open_dt["source"] == "system"
+        assert open_dt["started_at"] >= producing["started_at"]
+        assert open_dt["reason_code"] == "setup"
+        open_state = states.get_open(branch="01", work_center=clean_ct)
+        assert open_state["state"] == "stopped"
+        assert repo.get_run(run["id"])["status"] == "running"
+
+        # primeiro pulso real encerra a parada e reabre producing
+        resumed_at = clock.now
+        service._pulse.device_by_id[
+            "00000000-0000-4000-8000-0000000000a1"
+        ] = _pg_device(counter=101)
+        service.tick_running_runs()
+        assert downtimes.get_open(branch="01", work_center=clean_ct) is None
+        assert (
+            states.get_open(branch="01", work_center=clean_ct)["state"]
+            == "producing"
+        )
+        fresh = repo.get_run(run["id"])
+        assert fresh["pieces_total"] == 1
+        assert fresh["last_count_activity_at"] == resumed_at
+
+    def test_producing_start_after_persisted_play_does_not_break_auto_stop(
+        self, pg, clean_ct
+    ):
+        """Regressao PG: inicio do evento producing POSTERIOR ao NOW()
+        persistido no Play (run.started_at / last_count_activity_at).
+
+        Reproduz o defeito real: o detector encerrava producing no baseline
+        anterior, violando a cronologia do evento. Com a referencia unificada,
+        producing nasce no instante persistido do Play.
+        """
+        repo, lifecycle, states, downtimes = pg
+        clock = FakeClock()
+        service = self._service(repo, lifecycle, clock)
+        token = self._session(service, clean_ct)
+
+        # Relogio da app adiantado em relacao ao NOW() do banco: o evento
+        # producing legado abre depois do instante persistido do run.
+        clock.now = datetime.now(timezone.utc) + timedelta(seconds=30)
+        run = self._start(service, clean_ct, token)
+
+        stored = repo.get_run(run["id"])
+        baseline = stored["last_count_activity_at"]
+
+        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        service.tick_running_runs()
+
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt is not None, (
+            "parada automatica nao foi registrada - cronologia do producing "
+            "violada ou detector falhou"
+        )
+        open_state = states.get_open(branch="01", work_center=clean_ct)
+        assert open_state["state"] == "stopped"
+        assert repo.get_run(run["id"])["status"] == "running"
+
+    def test_legacy_open_run_with_late_producing_event_auto_stops(
+        self, pg, clean_ct
+    ):
+        """Run aberto ANTES do hotfix: evento producing com started_at
+        posterior ao baseline persistido. A transicao automatica deve ocorrer
+        com tratamento explicito - sem intervalo negativo e sem duracao
+        inventada."""
+        from production_control_app.infrastructure.persistence.plugins_postgres_connection import (  # noqa: E501
+            PC_SCHEMA_NAME,
+            get_connection,
+        )
+
+        repo, lifecycle, states, downtimes = pg
+        clock = FakeClock()
+        service = self._service(repo, lifecycle, clock)
+        token = self._session(service, clean_ct)
+        run = self._start(service, clean_ct, token)
+
+        baseline = repo.get_run(run["id"])["last_count_activity_at"]
+        producing = states.get_open(branch="01", work_center=clean_ct)
+
+        # Simula divergencia legada: producing aberto DEPOIS do baseline.
+        legacy_started = baseline + timedelta(seconds=17)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {PC_SCHEMA_NAME}.work_center_state_events "
+                    "SET started_at = %s WHERE id = %s",
+                    (legacy_started, producing["id"]),
+                )
+            conn.commit()
+
+        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        service.tick_running_runs()
+
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt is not None
+        # Fechamento respeita o inicio real do producing - sem retroagir.
+        assert open_dt["started_at"] >= legacy_started
+        closed = [
+            e
+            for e in states.list_for_run(run["id"])
+            if e["state"] == "producing"
+        ]
+        assert closed and closed[0]["ended_at"] >= closed[0]["started_at"]
+
+    def test_future_clamped_stop_is_deferred_and_pulse_still_counts(
+        self, pg, clean_ct
+    ):
+        """Caso-limite: divergencia legada com producing.started_at POSTERIOR
+        ao instante da deteccao. A parada e adiada (sem estado/downtime/
+        auditoria) e um pulso antes daquele instante atualiza a contagem
+        sem rollback."""
+        from production_control_app.infrastructure.persistence.plugins_postgres_connection import (  # noqa: E501
+            PC_SCHEMA_NAME,
+            get_connection,
+        )
+
+        repo, lifecycle, states, downtimes = pg
+        clock = FakeClock()
+        service = self._service(repo, lifecycle, clock)
+        token = self._session(service, clean_ct)
+        run = self._start(service, clean_ct, token)
+
+        baseline = repo.get_run(run["id"])["last_count_activity_at"]
+        producing = states.get_open(branch="01", work_center=clean_ct)
+
+        # Legado divergente: producing aberto "no futuro" em relacao a
+        # deteccao (baseline + 300 > baseline + THRESHOLD de deteccao).
+        legacy_started = baseline + timedelta(seconds=300)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE {PC_SCHEMA_NAME}.work_center_state_events "
+                    "SET started_at = %s WHERE id = %s",
+                    (legacy_started, producing["id"]),
+                )
+            conn.commit()
+
+        # Deteccao em baseline+120: threshold atingido, mas o inicio
+        # efetivo (baseline+300) esta alem do agora -> adiado.
+        clock.now = baseline + timedelta(seconds=THRESHOLD)
+        service.tick_running_runs()
+        assert downtimes.get_open(branch="01", work_center=clean_ct) is None
+        assert (
+            states.get_open(branch="01", work_center=clean_ct)["state"]
+            == "producing"
+        )
+
+        # Pulso antes do instante futuro: contagem funciona, sem rollback.
+        clock.now = baseline + timedelta(seconds=150)
+        service._pulse.device_by_id[
+            "00000000-0000-4000-8000-0000000000a1"
+        ] = _pg_device(counter=105)
+        service.tick_running_runs()
+        fresh = repo.get_run(run["id"])
+        assert fresh["pieces_total"] == 5
+        assert downtimes.get_open(branch="01", work_center=clean_ct) is None
+
+        # Depois que o relogio alcanca o inicio do producing, sem pecas,
+        # a parada nasce exatamente naquele instante (clamp, passado).
+        clock.now = baseline + timedelta(seconds=300)
+        service.tick_running_runs()
+        open_dt = downtimes.get_open(branch="01", work_center=clean_ct)
+        assert open_dt is not None
+        assert open_dt["started_at"] >= legacy_started
+        open_state = states.get_open(branch="01", work_center=clean_ct)
+        assert open_state["state"] == "stopped"
 
     def test_pause_during_auto_stop_reuses_facts(self, pg, clean_ct):
         repo, lifecycle, states, downtimes = pg
