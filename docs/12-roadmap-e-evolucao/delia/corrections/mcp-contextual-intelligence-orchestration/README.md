@@ -83,6 +83,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **Live orchestration decision/log validation (parallel residual):** [33 — L01–L06 authenticated live on runtime SHA `9a8775018f`](./33-live-orchestration-decision-and-log-validation.md). L01 routes to `helpdesk_read` (historical Transformômetro misroute NOT REPRODUCED) but blocks on `glpi_link_required`. L02/L06 fail on select_group/capability none → 504. L03–L05 PASS_WITH_LIMITATION / safe clarification. No functional patch; does not reopen I03 acceptance; does not start I04.
 
+**Diagnostic L01–L06 follow-up:** [33 — live model/log evidence](./33-live-orchestration-decision-and-log-validation.md) and [34 — independent review and bounded remediation gate](./34-independent-review-live-routing-failures-and-remediation-gate.md). In eval runtime SHA 9a8775018f: L02 group none→504, L06 DAVI capability none→504, L04 projection wording; Helpdesk L01 correctly selected but GLPI link blocked count. No phase reversal or I04 auto-implementation; related priority is bounded repair of no-selection fallback and projection.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
