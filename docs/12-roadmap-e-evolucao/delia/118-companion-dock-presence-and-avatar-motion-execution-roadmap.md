@@ -182,3 +182,9 @@ Não avança E09/E10 nem C0–C7. Não implementa D03.3/D03.4 (preferências/pro
 - Abort/epoch/late response/error/retry cobertos sem novo state machine.
 - Playwright standalone MF / Portal Dock auth: **TEST_NOT_RUN** (gateway oficial necessário).
 - `D01/D02/D03/D04_ACCEPTED=NO`; `PHASE_PROGRESSION=NONE`.
+
+## 13. Evidência visual manual do Portal/Dock real (2026-10-19)
+
+O Product Master forneceu três capturas do Companion Dock em funcionamento no Portal real: indicador de pending com “Interromper resposta”; resposta visual com dez registros, fonte declarada e composer restaurado; e resposta de indisponibilidade da fonte, sem apresentar dados operacionais como verificados. Registro detalhado: [evidência visual manual](./evidence/companion-dock-user-visual-check/portal-dock-real-visual-evidence-2026-10-19.md).
+
+**PROVEN pela captura:** renderização do Dock, estados visuais de processamento e posterior retorno do composer, além da apresentação de aviso de fonte indisponível. **INCONCLUSIVE/TEST_NOT_RUN:** animação responding one-shot, abort de transporte real, teclado/a11y e QA automatizado Portal autenticado. Capturas não comprovam SHA/configuração implantada nem validação da fonte. Product Master considera o layout satisfatório; evitar novas mudanças visuais sem defeito reproduzido. Não encerrar E09/E10, não avançar D01–D04 ou C0–C7 com essa evidência isolada.
