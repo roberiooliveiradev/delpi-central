@@ -42,7 +42,6 @@ from production_control_app.core.security import (
 
 logger = logging.getLogger(__name__)
 
-_PROCESS_ISSUE_SOURCE_APP = "production-control"
 _PROCESS_ISSUE_TYPE_CODE = "process-issue"
 _PROCESS_ISSUE_SOURCE = "pcp_portal"
 _CONFIRM_MESSAGE = "Solicitação enviada para Processos com sucesso."
@@ -154,11 +153,11 @@ class PcpProcessIssueService:
         result = self._requests_gateway.create_request_as_user(
             access_token=access_token,
             body={
-                "sourceApp": _PROCESS_ISSUE_SOURCE_APP,
-                "typeCode": _PROCESS_ISSUE_TYPE_CODE,
-                # O tipo process-issue exige filial (branch_scope=required) e
-                # o Requests API confere my-requests.view.filial-XX do JWT.
+                # Contrato autenticado real (CreateRequestBody): snake_case;
+                # sourceApp/typeCode sao do formato S2S e nao se aplicam aqui.
+                "type_code": _PROCESS_ISSUE_TYPE_CODE,
                 "branch": str(branch or "").strip(),
+                "priority": "normal",
                 "payload": payload,
             },
             idempotency_key=idempotency_key,

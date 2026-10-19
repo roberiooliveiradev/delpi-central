@@ -458,3 +458,58 @@ def test_pcp_portal_enters_process_queue(harness):
     items = [i for i in queue["items"] if i["type_code"] == PROCESS_ISSUE_TYPE_CODE]
     assert len(items) == 1
     assert items[0]["payload"]["source"] == "pcp_portal"
+
+
+def test_pcp_portal_body_matches_real_v1_requests_contract(harness):
+    """Integração de contrato: o corpo exato enviado pelo gateway autenticado
+    do production-control-api deve ser aceito pelo modelo real da rota
+    POST /v1/requests (CreateRequestBody) e criar a solicitação na fila.
+
+    Replica o body montado por PcpProcessIssueService — snake_case, sem
+    sourceApp/typeCode (formato exclusivo da rota S2S /integrations/requests).
+    """
+    from pydantic import ValidationError
+
+    from requests_app.interface.http.routes.requests_routes import (
+        CreateRequestBody,
+    )
+
+    body_json = {
+        "type_code": "process-issue",
+        "branch": "02",
+        "priority": "normal",
+        "payload": _pcp_payload(),
+    }
+    body = CreateRequestBody.model_validate(body_json)
+    assert body.type_code == PROCESS_ISSUE_TYPE_CODE
+    assert body.branch_code == "02"
+    assert body.priority == "normal"
+
+    types, requests, idem = harness
+    created = CreateRequestUseCase(types, requests, idem).execute(
+        user=_pcp_analyst("02"),
+        type_code=body.type_code,
+        payload=body.payload,
+        branch_code=body.branch_code,
+        priority=body.priority,
+        idempotency_key=str(uuid4()),
+    )
+    assert created["status"] == "submitted"
+    assert created["created_by_user_id"] == "u-pcp-analyst"
+
+    queue = ListWorkQueueRequestsUseCase(types, requests).execute(
+        user=_process_analyst("02"),
+    )
+    items = [i for i in queue["items"] if i["type_code"] == PROCESS_ISSUE_TYPE_CODE]
+    assert len(items) == 1
+    assert items[0]["payload"]["source"] == "pcp_portal"
+
+    # Regressão do bug corrigido: o formato camelCase/S2S NUNCA pode ser
+    # aceito pela rota autenticada — type_code e obrigatorio.
+    s2s_shaped = {
+        "sourceApp": "production-control",
+        "typeCode": "process-issue",
+        "payload": _pcp_payload(),
+    }
+    with pytest.raises(ValidationError):
+        CreateRequestBody.model_validate(s2s_shaped)

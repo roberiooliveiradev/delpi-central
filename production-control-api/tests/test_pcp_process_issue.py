@@ -209,9 +209,18 @@ def test_report_creates_with_real_user_bearer_and_pcp_source():
     assert call["access_token"] == "jwt-analyst"
     assert call["idempotency_key"] == "idem-1"
     headers_body = call["body"]
-    assert headers_body["sourceApp"] == "production-control"
-    assert headers_body["typeCode"] == "process-issue"
+    # Contrato real do endpoint autenticado POST /v1/requests
+    # (CreateRequestBody: type_code, branch, priority, payload) — o formato
+    # S2S (sourceApp/typeCode/requester externo) NAO se aplica nesta rota.
+    assert set(headers_body.keys()) == {
+        "type_code",
+        "branch",
+        "priority",
+        "payload",
+    }
+    assert headers_body["type_code"] == "process-issue"
     assert headers_body["branch"] == "01"
+    assert headers_body["priority"] == "normal"
 
     payload = headers_body["payload"]
     assert payload["source"] == "pcp_portal"
