@@ -24,7 +24,7 @@
 | AC-10 sem escrita real em produção | PASS (gate + sem deploy live) |
 | AC-11 testes automatizados | PASS (55 testes Protheus create+regressão) |
 | AC-12 docs/ledger | PASS |
-| AC-13 main integration | PENDING |
+| AC-13 main integration | PASS (`21a8fe185d` em `origin/main`) |
 | AC-14 lacunas documentadas | PASS |
 
 ## Lacunas TO_INVENTORY
