@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 export type CockpitView =
   | { kind: "queue" }
   | { kind: "operation"; productionOrder: string; operationCode: string }
-  | { kind: "performance" };
+  | { kind: "performance" }
+  | { kind: "activity" };
 
 const QUEUE_VIEW: CockpitView = { kind: "queue" };
 
@@ -18,6 +19,7 @@ export function useCockpitView(): {
   openQueue: () => void;
   openOperation: (productionOrder: string, operationCode: string) => void;
   openPerformance: () => void;
+  openActivity: () => void;
 } {
   const [view, setView] = useState<CockpitView>(() => readViewFromLocation());
 
@@ -42,6 +44,7 @@ export function useCockpitView(): {
       [apply],
     ),
     openPerformance: useCallback(() => apply({ kind: "performance" }), [apply]),
+    openActivity: useCallback(() => apply({ kind: "activity" }), [apply]),
   };
 }
 
@@ -49,6 +52,7 @@ export function readViewFromLocation(search = window.location.search): CockpitVi
   const params = new URLSearchParams(search);
   const kind = params.get("view");
   if (kind === "performance") return { kind: "performance" };
+  if (kind === "activity") return { kind: "activity" };
   if (kind === "operation") {
     const productionOrder = (params.get("op") || "").trim();
     const operationCode = (params.get("operation") || "").trim();
@@ -67,6 +71,8 @@ function writeViewToLocation(view: CockpitView): void {
 
   if (view.kind === "performance") {
     params.set("view", "performance");
+  } else if (view.kind === "activity") {
+    params.set("view", "activity");
   } else if (view.kind === "operation") {
     params.set("view", "operation");
     params.set("op", view.productionOrder);
