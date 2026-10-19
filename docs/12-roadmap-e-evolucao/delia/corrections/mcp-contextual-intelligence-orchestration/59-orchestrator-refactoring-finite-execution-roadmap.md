@@ -2,11 +2,45 @@
 
 **TRACK_ID:** `DELIA-C3-ORCHESTRATOR-SEMANTIC-REFACTOR-FINITE-ROADMAP-01`
 **DATA:** 2026-10-19
-**ESTADO:** `PLANNED / PENDING_PHASE_GATE` — plano documental consolidado, **não execução autorizada**.
+**ESTADO VIGENTE:** `OPTION_B_Q02_A_EXCEPTION_AUTHORIZED_FOR_I04_ONLY` (Product Master 2026-10-19; plano de seis pacotes preservado; Q01 não executado, Q02-B/C bloqueados). **Estado anterior** `PLANNED / PENDING_PHASE_GATE` foi supersedido somente para a entrada excepcional Q02-A.
 **BASE_HEAD de planejamento:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` (revalidar `origin/main`, `HEAD` e `git status` a cada execução; updates concorrentes não integram automaticamente o escopo).
 **CANÔNICO:** execução 16; standalone 50; ownership 17; patterns 49 §14.1; baseline 51; bootstrap 52; state 21; tests 20; traceability 25; product 24; MCP/A2A 60; `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `plan-construction.mdc`; ledger atual.
 **EVIDÊNCIAS:** [56](./56-orchestration-audit-semantic-ownership-checkpoint.md) e [57](./57-orchestration-complete-second-pass-static-audit.md), 10.592 linhas/179 definições, 42 grupos de achados; [58](./58-adr-llm-semantic-decision-ownership.md) direção `APPROVED`; ledger §6.145 (`selection-only` congelado), §§6.299–6.300.
 **ROADMAP DE REFERÊNCIA EXISTENTE:** [README da trilha](./README.md) I00–I04 → Q01 → Q02 → Q03. **Esta entrega especializa Q01–Q03 e explicita o gate I04, não revoga a ordem nem habilita Q01 sem aceite.**
+
+## 0. Product Master Option B — alteração pontual da dependência Q02-A (2026-10-19)
+
+**AUTHORITY:** [16 — Decisão vigente de execução](../../16-execution-master-plan.md) + registro Product Master na coordenação v10; ledger §6.313. **EVIDENCE:** [62 — G0 final I04 gate](./62-g0-bounded-i04-remediation-compare-and-c02-budget.md), ledger §6.311–§6.312. **ARCHITECTURE BINDING:** [58 — ADR semantic ownership](./58-adr-llm-semantic-decision-ownership.md). G0 Option A encerrou sem I04 aceite após um rework; avaliação live C02 admitiu fonte operacional mas selecionou DAVI (3x)/TÉO (1x) e nunca VISTA na amostra; SIPOC/continuidade hipotética também falharam, apesar de 1647 testes backend reportados verdes. **I04 não aceito.**
+
+**Alteração exclusivamente na transição de entrada do pacote Q02-A:** `G0_FAIL + PRODUCT_MASTER_OPTION_B_APPROVED + PRE_Q01_INVENTORY_60_REUSED + ONE_RESIDUAL_CONSUMER_CHECK → Q02_A_I04_REMEDIATION_ALLOWED`. Sem concluir G0/I04, sem autorizar ou aceitar Q01 e sem execução sequencial normal de Q02. Q01 ainda fica condicionado a um gate legítimo posterior; Q02-B, Q02-C e Q03 continuam `NOT_AUTHORIZED`. Os **seis pacotes** e seus testes/política anti-loop continuam sendo a autoridade; a exceção é um desvio controlado de uma aresta, não um pacote novo nem uma revisão global do plano. Ao concluir Q02-A, a coordenação examina o resultado e decide explicitamente I04 e os gates posteriores; nenhum avanço implícito.
+
+**Task única autorizada:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01`. Responsável implementação/testes/live/commit = Cursor; responsável inventário/contratos/gate/review = coordenação. Antes de diff: `git status/HEAD/origin/main`, reanchor canônico e **uma única** busca residual repo-wide `rg` de callers alterados vs doc 60 — retornar delta contratual à coordenação, sem reinventariar 42 grupos. Capturar goldens e RED em C02 model real e fake/provider-neutral antes de mudança, SIPOC sem tool, mudanças de assunto, anáforas, negation, catálogo rename/add-remove/reorder e safe personal scope. `EXISTING_EQUIVALENT=YES` para `InvokeModel/_propose`, goal tipado, `OperationalCapabilityOrchestrator`, `TurnDeadline` e `CapabilityProviderPort`; `REUSE_DECISION=REUSE|EXTEND`. Se faltar contrato legítimo, STOP.
+
+**Escopo:** S01–S11/S15/S20–S22 e F27/F32/F40 **somente onde forem decisões linguísticas semânticas**, com menor diff de consolidação de admission/goal/group/capability e critérios de applicability contextual. LLM propõe significado/capability a partir do catálogo vivo governado; código determinístico valida membros, live Core/Domain AuthZ, provenance, schema, deadlines e invariantes. Não mover Q02-B argumentos/index/provenance nem Q02-C comparação/synthesis/duplicated _select_candidate nesta exceção; nenhum new planner, engine por regex, provider branch, registry, Chat dependency, factual prose channel ou ACT/autonomia. Exceções de parsing sintático, logs/redaction e checagens de identificadores continuam legítimas.
+
+**Gates de saída (não negociáveis):** full backend + RED/GREEN + segurança, PREPARE/ACT negativa, proveniência, providers equivalentes e no-tool. Live autorizado sobre SHA/config/model/deploy correto: C02 deve selecionar owner/capability semanticamente adequados pelo catálogo aprovado e produzir orientação de formatos **ou disclosure explícito de gap owner comprovado** — jamais DAVI/TÉO por ranking lexical; SIPOC e diálogo hipotético devem responder sem tool desnecessária; DAVI/TÉO/OpenAPI owner reais não podem regredir; 1 cold + 2 warm e limite estrito 30 s; resultado funcional != HTTP 200. Na ausência de precondição GLPI, positivo pessoal = `TEST_NOT_RUN`; nunca simular. Aceite de Q02-A exige review independente `ACCEPT|ACCEPT_WITH_RESIDUAL` sem blocker de segurança. Máximo **um rework de Q02-A**, e **zero G0**; fail persistente STOP/Product Master/owner/contract.
+
+```text
+ORIGINAL_SEQUENCE=G0_Q01_Q02A_Q02B_Q02C_Q03
+EXCEPTION=OPTION_B_Q02_A_I04_ONLY
+PRODUCT_MASTER_APPROVED=YES
+G0_OPTION_A=STOP_EXHAUSTED
+G0_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q01_EXECUTED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_A_IMPLEMENTATION_EXECUTED=NO
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+MODEL_AUTHORED_FACTUAL_PROSE=NONE
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=CURSOR_SINGLE_BOUNDED_Q02_A_I04_REMEDIATION
+```
 
 ## 1. Por que o plano precisa ser fechado
 
@@ -26,7 +60,7 @@ O roadmap anterior tem Q01–Q03, mas Q01 permanece `Q01_AUTHORIZED=NO` porque `
 |---|---|---|---|
 | **G0 — Fechamento I04** | ADR 58 aprovado; I04 ainda NÃO aceito | Uma revisão conclusiva dos requisitos I04 com matriz de owner-vs-DÉLIA, DAVI/TÉO/VISTA/HTTP/no-provider, 30s, provenance, task outcome, continuidade. Distinguir bugs transversais de `OWNER_CONTRACT_GAP`, vínculo GLPI ausente e indisponibilidade externa. Se necessário, **um** rework bounded para blocker transversal provado. | `I04_ACCEPTED` apenas por review independente. Se não: `I04_BLOCKED` + decisão explícita de Product Master (remediação adicional, defer/rescope ou stop); **não iniciar Q01** silenciosamente. |
 | **Q01 — Preparação e consumer gate** | G0 `I04_ACCEPTED`, autorização explícita da coordenação para Q01 | Aproveitar 56/57 sem reiniciar inventário: identificar callers, imports, testes, contratos/owners e usos transversais das 42 categorias; `EXISTING_EQUIVALENT`/`REUSE_DECISION` por mudança. Congelar golden baselines e RED adversarial antes de remover código. | Mapa de consumidores de todo o arquivo, classes `REMOVE/REPLACE/KEEP/ADR`, matriz teste→achado, rollback e SHA; **sem refatorar runtime ainda**. |
-| **Q02-A — Interpretação única** | Q01 revisada; código e contrato existentes comprovados | Remover/substituir rotas de interpretação linguística manual (regex coverage/guidance/prior cues/ordinal, index clusters e semantic score/veto, singleton group and prior skip) e consolidar decisões repetidas admission/goal/group/capability **usando `InvokeModel`/`_propose` já existentes**. Preservar seleção live e contracts. | Testes RED→GREEN de paráfrase, negação, mudança de assunto, intent vs. topic, ferramenta opcional; redução comprovada de duplicação; nenhum caminho provider-specific. |
+| **Q02-A — Interpretação única** | Entrada normal: Q01 revisada; **exceção única Option B aprovada:** somente remediação I04 sem Q01 autorizado, usando dossier 60 + residual `rg`/golden baseline | Remover/substituir rotas de interpretação linguística manual (regex coverage/guidance/prior cues/ordinal, index clusters e semantic score/veto, singleton group and prior skip) e consolidar decisões repetidas admission/goal/group/capability **usando `InvokeModel`/`_propose` já existentes**. Preservar seleção live e contracts. | Testes RED→GREEN de paráfrase, negação, mudança de assunto, intent vs. topic, ferramenta opcional; redução comprovada de duplicação; nenhum caminho provider-specific. |
 | **Q02-B — Argumentos, index e provenance** | Q02-A e full regression PASS | Revisar `_free_string_grounded_in_user_input`, string passthrough, `_unproven_identifier_inputs`, identificador ordinal e `_eligible_self_index_probe`. Propostas LLM tipadas; origem factual validada por user-span/evidence/owner refs; READ exploratório tratado como interpretação, não FACT. Index probes somente sob owner contract. | Produto real via Domain owner, NO_MATCH fundamentado, ID inventado rejeitado, renamed/non-MCP/metamorphic, paginação correta; sem escalada de permissão. Se novo contrato requerido: STOP para ADR. |
 | **Q02-C — Continuidade, síntese e organização interna** | Q02-B e suite/regression PASS | Eliminar `list-as-compare`, `recover_empty_selection` como fake task success, texto anterior como fonte autoritativa, sizing/coverage de palavras como outcome. Preservar seleção-only; reutilizar evidence estruturada existente; deduplicar chamadas a `InvokeModel` fora de `_propose` e extrair helpers puros **somente por coesão/consumers reais**, nunca novos serviços/ports/engine de conveniência. | Comparação real entre campos autoritativos ou insuficiência explícita; K1/K2/TÉO, C02/VISTA, DAVI search/follow-up e conversa sem tool; comparabilidade e 30s; **sem prosa empresarial livre de modelo**. |
 | **Q03 — Aceite independente e encerramento** | Todos Q02-A/B/C examinados por review; nenhuma regressão crítica aberta | Revisar arquitetura pós-diff, owners, contratos, generalização, performance/repetição, segurança e task outcomes no exato SHA/config live; residual search completo; documentar exceções e descontinuar correções fora do escopo. | Um único parecer `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`. `C3_EXECUTED` **não** avança automaticamente. Fechar track ou retornar decisão de Produto com blockers identificados. |
@@ -65,7 +99,7 @@ O roadmap anterior tem Q01–Q03, mas Q01 permanece `Q01_AUTHORIZED=NO` porque `
 ## 6. Plano de persistência e decisão
 
 - Para cada pacote: código/diff/testes com SHA, um relatório de implementação e um review independente. Atualizar README/ledger **após evidência**, não gerar múltiplos documentos duplicados por hipótese.
-- `Q01/Q02/Q03` continuam `PLANNED / NOT_AUTHORIZED` até G0 e decisão explícita; ADR58 `ARCHITECTURE_DIRECTION=APPROVED` não concede `I04_ACCEPTED`.
+- **Regra original histórica:** `Q01/Q02/Q03` ficam `PLANNED / NOT_AUTHORIZED` até G0. **Exceção vigente:** somente Q02-A `AUTHORIZED_FOR_I04_ONLY` pela seção 0, Q01/Q02-B/C/Q03 continuam bloqueados; ADR58 `ARCHITECTURE_DIRECTION=APPROVED` não concede `I04_ACCEPTED`.
 - O encerramento do roadmap pode ser `ACCEPT_WITH_RESIDUAL` **somente** quando residual não violar gate material de segurança, proveniência, autorização ou outcome declarado como obrigatório. O que permanecer bloqueado deve ter owner/contrato/próximo responsável e não ser declarado PASS.
 
 ```text
@@ -75,9 +109,12 @@ MAX_REWORK_ATTEMPTS_PER_PACKAGE=1
 ON_REPEAT_FAILURE=STOP_ESCALATE_ARCHITECTURE_OR_OWNER_DECISION
 SOURCE_AUDIT=56_57
 BINDING_ARCHITECTURE=58
-ORIGINAL_I04_Q01_Q02_Q03_ORDER=PRESERVED
+ORIGINAL_I04_Q01_Q02_Q03_ORDER=PRESERVED_EXCEPT_ONE_Q02_A_ENTRY
 Q01_AUTHORIZED=NO
 Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
 Q03_AUTHORIZED=NO
 I04_ACCEPTED=NO
 C3_EXECUTED=NO
@@ -85,7 +122,7 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 CODE_DIFF=NONE
 TESTS=TEST_NOT_RUN
-NEXT=G0_I04_EXIT_DECISION
+NEXT=CURSOR_SINGLE_BOUNDED_Q02_A_I04_REMEDIATION
 ```
 
 
