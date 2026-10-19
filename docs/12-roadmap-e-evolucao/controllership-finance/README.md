@@ -25,11 +25,11 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 | Decisões de produto C2, P5-A..J, DEC-01..04, D-FINAL-02 | `TARGET / PO_APPROVED` |
 | Roadmap V1 documentado | `PASS` **somente documental** |
 | A12 / A14 / A15 / A16 | `INCONCLUSIVE` — revalidar com evidência de HEAD |
-| `PORTAL_DESIGN_FREEZE` / `PRODUCT_CONTRACT_FREEZE` | `PENDING` para gate transversal |
-| `SECURITY_MODEL_FREEZE` / `TEST_STRATEGY_FREEZE` | `PENDING` para bindings/testes |
-| `FASTAPI_ARCHITECTURAL_EXCEPTION` | `REGISTERED` — [doc 45](./45-g0-excecao-fastapi-e-fechamento-gates.md); validação Arquitetura pendente |
-| `DOCUMENTATION_CLOSURE_COMPLETE` | **`NO`** — aguarda assinaturas dos owners; decisão do PO registrada no [doc 45 §12](./45-g0-excecao-fastapi-e-fechamento-gates.md) |
-| `IMPLEMENTATION_AUTHORIZED` | **`NO`** — PO aprovou expressamente o escopo IMP-F0 e registrou autorização **condicional** no [doc 45 §§11–12](./45-g0-excecao-fastapi-e-fechamento-gates.md); não efetiva até exceção VALIDATED, quatro freezes PASS e fechamento documental PASS |
+| `PORTAL_DESIGN_FREEZE` / `PRODUCT_CONTRACT_FREEZE` | **`PASS / IMP-F0_ONLY`** — aprovação multi-role declarada em [doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md); outros slices requerem novo gate |
+| `SECURITY_MODEL_FREEZE` / `TEST_STRATEGY_FREEZE` | **`PASS / IMP-F0_ONLY`** — somente dois endpoints públicos e fundação; stale RBAC segue pendente para rotas protegidas ([doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md)) |
+| `FASTAPI_ARCHITECTURAL_EXCEPTION` | **`VALIDATED / IMP-F0_ONLY`** — exceção exclusiva desta BFF, sem alterar padrão global ([doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md)) |
+| `DOCUMENTATION_CLOSURE_COMPLETE` | **`PASS / IMP-F0_ONLY`** — decisão PO após freezes escopados, [doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md) |
+| `IMPLEMENTATION_AUTHORIZED` | **`YES / IMP-F0_ONLY`** — GO restrito à fundação da BFF FastAPI, Compose/gateway e testes; não autoriza MFE nem rotas de negócio ([doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md)) |
 | IMP-F0: escopo técnico aprovado pelo PO | `PO_APPROVED / SCOPE_ONLY` — BFF FastAPI + Docker/Compose/gateway + health/ready + testes; não equivale ao GO transversal ([doc 45 §12](./45-g0-excecao-fastapi-e-fechamento-gates.md)) |
 | Portal runtime, smoke, integração live | `NOT_IMPLEMENTED / TEST_NOT_RUN` |
 
@@ -57,9 +57,9 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 ## 4. Sequência de coordenação para o próximo chat
 
 1. **IMP-00 — READ/INVENTORY/VERIFY (sem runtime):** HEAD + `git status` no checkout, Project Instructions, `.cursor`, contratos/Core e owners, diff e CI; confirmar gates A12/A14/A15/A16 aplicáveis **sem reabrir escolhas já aprovadas**. Produzir brief preciso do primeiro slice e decisão `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
-2. **Gate explícito transversal / PO:** registrar `DOCUMENTATION_CLOSURE_COMPLETE=PASS`, quatro freezes documentais com evidência e **autorização posterior** `IMPLEMENTATION_AUTHORIZED=YES`. Se faltar binding material, classificá-lo, bloquear somente o slice dependente quando governança permitir, sem bypass de AuthZ.
-3. **IMP-01 / A01 — Página do usuário** primeiro: somente após autorização; inventariar `@delpi/plugin-ui`, Core profile/foto S2S e padrões de MFE/BFF antes de scaffold; UI PT-BR, mobile/desktop, claro/escuro, teclado/foco, Help no mesmo gate e security fail-closed. **Página do usuário é deep route**. Depois páginas comuns e P1–P6 conforme 39/40.
+2. **Gate IMP-F0 aprovado e restrito:** GO documental no [doc 45 §13](./45-g0-excecao-fastapi-e-fechamento-gates.md). Executar apenas a fundação da BFF, Compose/gateway, testes e smoke. Para novos slices, renovar o gate e avaliar residuais específicos; autorização inicial não se propaga.
+3. **Após aceite técnico da BFF IMP-F0:** abrir autorização específica de MFE + Home (doc 32). IMP-01 / A01 permanece planejado como deep route, sem implementação nesta autorização. UI PT-BR, mobile/desktop, claro/escuro, teclado/foco e Help no mesmo gate.
 
 Navegação comum: **Início, Visão geral, Sala de interação, Minhas tarefas, Administração, Ajuda** (ordem do menu, não necessariamente ordem de PRs). Nenhuma route/page future placeholder sem capability real. A Ajuda acompanha cada slice, não só a página Ajuda final.
 
-**Conclusão:** documentação consolidada para coordenação, **não** implementação autorizada. Revalidar HEAD no novo chat e não usar SHA histórico como status atual.
+**Conclusão:** **IMP-F0 autorizado documentalmente, apenas para a BFF de fundação**; código, container e smoke seguem `NOT_IMPLEMENTED / TEST_NOT_RUN` até execução com evidência. Demais slices sem GO. Revalidar HEAD no novo chat.
