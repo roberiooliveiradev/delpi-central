@@ -869,6 +869,34 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
     return False
 
 
+def _free_string_grounded_in_user_input(
+    value: str, input_text: str
+) -> bool:
+    """True when a proposed free-string arg is evidenced in user text.
+
+    Used when an optional index probe was budget-skipped: search/filter
+    terms that share lexical material with the request may proceed;
+    invented catalog identifiers with no user provenance must not.
+    Exact substring OR overlapping alphanumeric tokens (len≥3). Never
+    field-name or provider hardcode; not an intent classifier.
+    """
+    proposed = (value or "").strip().lower()
+    haystack = (input_text or "").strip().lower()
+    if not proposed or not haystack:
+        return False
+    if proposed in haystack or haystack in proposed:
+        return True
+    proposed_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]{3,}", proposed)
+    }
+    haystack_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]{3,}", haystack)
+    }
+    return bool(proposed_tokens & haystack_tokens)
+
+
 def _is_unconstrained_string(node: object) -> bool:
     """True when a schema node is a free string with no closed enum/const.
 
@@ -5610,23 +5638,69 @@ class OperationalCapabilityOrchestrator:
             optional_index_probe_skipped_budget
             and not self_index_ran
         ):
-            # Without an owner index vocabulary, optional free-string
-            # identifiers cannot be proven. Budget exhaustion is a
-            # technical limitation — do NOT invent a user-facing ask
-            # for código/filtro that the contract did not require.
+            # Optional model index probe skipped for turn headroom.
+            # Empty free-string invoke would be an ungoverned index READ
+            # → SOURCE_UNAVAILABLE (never invent código/filtro clarify).
+            # Filled free-string args may proceed only when each value is
+            # grounded in the user message (search/filter text). Invented
+            # catalog identifiers with no user provenance stay blocked.
+            # Pagination-only material args (no free strings) are a
+            # legitimate list READ, not an identifier index.
             id_keys = _optional_unconstrained_string_keys(descriptor)
             if id_keys:
+                filled: list[tuple[str, str]] = []
+                if arguments is not None:
+                    for key in id_keys:
+                        raw = arguments.get(key)
+                        if isinstance(raw, str) and raw.strip():
+                            filled.append((key, raw.strip()))
+                if not filled:
+                    if not arguments:
+                        _logger.info(
+                            "orchestration stage=arguments "
+                            "decision=skip_budget_identifier_unavailable "
+                            "fields=%d correlation_id=%s",
+                            len(id_keys),
+                            correlation,
+                        )
+                        return GovernedCapabilityAttempt(
+                            status=(
+                                GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                            ),
+                            correlation_id=correlation,
+                            error_code="turn_budget_exhausted",
+                        )
+                else:
+                    ungrounded = [
+                        key
+                        for key, value in filled
+                        if not _free_string_grounded_in_user_input(
+                            value, input_text
+                        )
+                    ]
+                    if ungrounded:
+                        _logger.info(
+                            "orchestration stage=arguments "
+                            "decision=skip_budget_identifier_unavailable "
+                            "fields=%d ungrounded=%d correlation_id=%s",
+                            len(id_keys),
+                            len(ungrounded),
+                            correlation,
+                        )
+                        return GovernedCapabilityAttempt(
+                            status=(
+                                GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                            ),
+                            correlation_id=correlation,
+                            error_code="turn_budget_exhausted",
+                        )
                 _logger.info(
                     "orchestration stage=arguments "
-                    "decision=skip_budget_identifier_unavailable "
-                    "fields=%d correlation_id=%s",
+                    "decision=skip_budget_proceed_with_args "
+                    "fields=%d filled=%d correlation_id=%s",
                     len(id_keys),
+                    len(filled),
                     correlation,
-                )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-                    correlation_id=correlation,
-                    error_code="turn_budget_exhausted",
                 )
         if arguments is not None and not self_index_ran:
             # Stage 04: apply owner-declared defaults, then require

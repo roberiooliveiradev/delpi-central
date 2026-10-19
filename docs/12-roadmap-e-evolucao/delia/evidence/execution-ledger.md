@@ -15410,3 +15410,23 @@ NEXT=BOUNDED_LIVE_PRODUCT_OWNER_READ_AND_BUDGET_REWORK
 - **DECISION:** `EVIDENCE_READY_FOR_REVIEW`; `PRODUCTION_READINESS=NOT_PROVEN`; fase inalterada.
 
 NEXT=ops executa runbook de deploy → PM valida em https://minhadelpi.com.br/apps/delia → INDEPENDENT_REVIEW
+
+
+## §6.294 — Real product owner READ and budget rework (IMPLEMENTATION)
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-REAL-PRODUCT-OWNER-READ-AND-BUDGET-REWORK-01`. **DOC:** [52](../corrections/mcp-contextual-intelligence-orchestration/52-real-product-owner-read-and-budget-rework.md). **BASE:** `cc18410cc6`.
+
+- **OWNER DIRECT:** `GET /apps/api-delpi/products/search` (`search_products`) PASS — P01/P02/P03 return pages; P05 no-match total=0; P04 by code from catalog. AuthZ ok for subject `user`. Latency 33–158ms. DAVI discover ranks `search_products` top-1.
+- **DELIA BASELINE (pre-fix):** P01–P05 all `SOURCE_UNAVAILABLE`. Corr `0f88e3a5-…`: selected `openapi:delpi` / `delpi.search_products`, `arguments=built`, then `skip_budget_identifier_unavailable fields=6` — **owner not invoked**. Optional probe headroom ≈66s vs turn 30s ⇒ probe always skipped.
+- **ROOT_CAUSE:** post-argument budget-skip gate discarded schema-valid search args. **FIX:** proceed when filled free-string args are grounded in user input (or pagination-only material args); empty `{}` still SOURCE_UNAVAILABLE. Helper `_free_string_grounded_in_user_input`. No regex intent / planner / timeout bump.
+- **TESTS:** `test_real_product_owner_read_and_budget_rework.py` + full delia-api pytest PASS; i02r2 invented-topic under skip preserved.
+- **LIVE L1–L5 / DEPLOYED_SHA:** filled after commit+push+canonical deploy (see report footer / amend note in same section if needed).
+
+```text
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_REVIEW
+```
+
