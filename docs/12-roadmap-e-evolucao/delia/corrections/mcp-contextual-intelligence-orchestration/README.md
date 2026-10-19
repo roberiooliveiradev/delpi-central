@@ -221,3 +221,10 @@ PRODUCTION_READINESS=NOT_PROVEN
 
 - [58 — ADR aprovado de redistribuição de responsabilidades](./58-adr-llm-semantic-decision-ownership.md): `ARCHITECTURE_DIRECTION=APPROVED` (Product Master, 2026-10-19), consolidar interpretação/seleção/contexto/argumentos pelo LLM existente; enforcement de contratos, policy, Core/Domain AuthZ, provenance e ACT permanecem determinísticos e autoritativos. Fonte normativa vinculada: [49 §14.1](../../49-architecture-and-design-patterns-standard.md); ledger [§6.300](../../evidence/execution-ledger.md).
 - `SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED` (§6.145); futura prosa factual gerada por LLM ou relaxamento de comparabilidade exige ADR separado. **Sem runtime diff, aprovação de remoções, testes ou avanço de C3–C5**.
+
+
+### Roadmap finito de refatoração — não abrir reworks infinitos
+
+- [59 — Plano executivo de seis pacotes](./59-orchestrator-refactoring-finite-execution-roadmap.md): `G0 I04 exit → Q01 consumer gate → Q02-A semantic ownership → Q02-B args/provenance/index → Q02-C continuity/synthesis/structural cleanup → Q03 independent closeout`. Incorpora auditorias 56/57 e ADR58; **não substitui a dependência canônica I04→Q01**.
+- Cada pacote prevê uma entrega bounded e um review; no máximo **um rework** por pacote. Nova falha material depois desse ciclo = `STOP` e decisão explícita de owner/arquitetura, nunca abrir `R2/R3/R4` automaticamente. Segurança crítica nunca vira residual aceito.
+- Este roteiro é **PLANNED / PENDING_PHASE_GATE**: `I04_ACCEPTED=NO` e `Q01_AUTHORIZED=NO` no HEAD documental; não autoriza código, deploy ou avanço de fase. O primeiro item é **G0 — decisão conclusiva de I04** com bloqueios externos classificados separadamente.
