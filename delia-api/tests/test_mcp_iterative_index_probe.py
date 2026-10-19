@@ -310,8 +310,15 @@ def test_orion_unseen_mcp_index_then_grounded_guide():
         structured={
             "data": {
                 "items": [
-                    {"topic": "equipment_inspection"},
-                    {"topic": "safety_walkthrough"},
+                    {
+                        "topic": "equipment_inspection",
+                        "label": "Inspeção de equipamentos",
+                        "summary": "registrar checklist equipamentos",
+                    },
+                    {
+                        "topic": "safety_walkthrough",
+                        "label": "Safety walkthrough",
+                    },
                 ]
             }
         },
@@ -558,7 +565,15 @@ def test_contract_omit_index_runs_even_when_model_probe_false():
         "get_inspection_guide",
         "index",
         structured={
-            "data": {"items": [{"topic": "equipment_inspection"}]}
+            "data": {
+                "items": [
+                    {
+                        "topic": "equipment_inspection",
+                        "label": "Inspeção de equipamentos",
+                        "summary": "registrar checklist equipamentos",
+                    }
+                ]
+            }
         },
     )
     filled = _outcome(

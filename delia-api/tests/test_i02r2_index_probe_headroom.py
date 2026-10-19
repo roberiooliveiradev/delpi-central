@@ -355,8 +355,17 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
         {
             "data": {
                 "items": [
-                    {"topic": "display_formats"},
-                    {"topic": "playlist"},
+                    {
+                        "topic": "display_formats",
+                        "label": "Formatos",
+                        "summary": "moeda percentual",
+                    },
+                    {
+                        "topic": "panel_legibility",
+                        "label": "Legibilidade de painel",
+                        "summary": "contraste tipografia visualização",
+                    },
+                    {"topic": "playlist", "label": "Playlist"},
                 ]
             }
         },
@@ -365,7 +374,7 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
         "get_product_guide",
         {
             "guide": {
-                "purpose": "Choose formats for legibility",
+                "purpose": "Choose panel legibility criteria",
                 "use_when": ["panel design"],
                 "how_to_use": ["prefer high contrast"],
                 "limitations": "no live panel inspection",
@@ -403,6 +412,10 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
         "applicable": True,
         "remote_name": "renamed_guide_capability",
     }
+    proposals[INDEX_SELECT_INSTRUCTION_ID] = {
+        "selected_identifier": "panel_legibility",
+        "argument_field": "topic",
+    }
     model = FakeProposalModel(
         proposals,
         clock=clock,
@@ -425,7 +438,7 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
         "renamed_guide_capability",
     ]
     assert provider.calls[0][1] == {}
-    assert provider.calls[1][1] == {"topic": "display_formats"}
+    assert provider.calls[1][1] == {"topic": "panel_legibility"}
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "legibility" in (attempt.content or "").lower() or (
         "contrast" in (attempt.content or "").lower()

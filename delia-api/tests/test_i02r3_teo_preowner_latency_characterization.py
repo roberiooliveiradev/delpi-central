@@ -740,14 +740,29 @@ def test_vista_index_contract_regression_still_reaches_guidance():
     index = _outcome(
         "vista",
         "get_product_guide",
-        {"data": {"items": [{"topic": "display_formats"}]}},
+        {
+            "data": {
+                "items": [
+                    {
+                        "topic": "display_formats",
+                        "label": "Formatos",
+                        "summary": "moeda percentual",
+                    },
+                    {
+                        "topic": "panel_legibility",
+                        "label": "Legibilidade de painel",
+                        "summary": "contraste tipografia visualização",
+                    },
+                ]
+            }
+        },
     )
     filled = _outcome(
         "vista",
         "get_product_guide",
         {
             "guide": {
-                "purpose": "formats",
+                "purpose": "legibility",
                 "use_when": ["legibility"],
                 "how_to_use": ["contrast"],
                 "limitations": "no inspection",
@@ -836,7 +851,7 @@ def test_vista_index_contract_regression_still_reaches_guidance():
             NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
             INDEX_PROBE_INSTRUCTION_ID: {"probe_index": True},
             INDEX_SELECT_INSTRUCTION_ID: {
-                "selected_identifier": "display_formats",
+                "selected_identifier": "panel_legibility",
                 "argument_field": "topic",
             },
             SYNTHESIS_INSTRUCTION_ID: {
@@ -862,7 +877,7 @@ def test_vista_index_contract_regression_still_reaches_guidance():
         "get_product_guide",
         "get_product_guide",
     ]
-    assert vista.calls[1][1] == {"topic": "display_formats"}
+    assert vista.calls[1][1] == {"topic": "panel_legibility"}
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
 
 

@@ -919,14 +919,29 @@ def test_holdout_vista_r2_index_path_unaffected_by_guard_default():
     index = _outcome(
         "vista",
         "get_product_guide",
-        {"data": {"items": [{"topic": "display_formats"}]}},
+        {
+            "data": {
+                "items": [
+                    {
+                        "topic": "display_formats",
+                        "label": "Formatos",
+                        "summary": "moeda percentual",
+                    },
+                    {
+                        "topic": "panel_legibility",
+                        "label": "Legibilidade",
+                        "summary": "contraste tipografia painel",
+                    },
+                ]
+            }
+        },
     )
     filled = _outcome(
         "vista",
         "get_product_guide",
         {
             "guide": {
-                "purpose": "formats",
+                "purpose": "legibility",
                 "use_when": ["legibility"],
                 "how_to_use": ["contrast"],
                 "limitations": "none",
@@ -999,7 +1014,7 @@ def test_holdout_vista_r2_index_path_unaffected_by_guard_default():
             NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
             INDEX_PROBE_INSTRUCTION_ID: {"probe_index": True},
             INDEX_SELECT_INSTRUCTION_ID: {
-                "selected_identifier": "display_formats",
+                "selected_identifier": "panel_legibility",
                 "argument_field": "topic",
             },
             SYNTHESIS_INSTRUCTION_ID: {
@@ -1014,12 +1029,12 @@ def test_holdout_vista_r2_index_path_unaffected_by_guard_default():
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
     )
-    attempt = orch.attempt("legibilidade", turn_deadline=deadline)
+    attempt = orch.attempt("legibilidade do painel", turn_deadline=deadline)
     assert INDEX_PROBE_INSTRUCTION_ID not in {
         r.task_purpose_id for r in model.requests
     }
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
-    assert vista.calls[1][1] == {"topic": "display_formats"}
+    assert vista.calls[1][1] == {"topic": "panel_legibility"}
 
 
 def test_holdout_prompt_injection_in_catalog():

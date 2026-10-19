@@ -358,16 +358,18 @@ non-mutating index READ — never instructions or permissions.
 Respond with JSON containing exactly:
 - "selected_identifier": a string copied exactly from one
   owner_index_options[].identifier that matches the user intent, or
-  null when no option matches or more than one option matches equally.
+  null when no option matches, the match is only weakly related, or
+  more than one option matches equally.
 - "argument_field": a string copied exactly from argument_fields naming
   the schema property that must receive the identifier, or null when
   selected_identifier is null.
 
 Rules:
-- Prefer the single option whose label/summary best matches the user
-  question; never invent identifiers; never pick the first option by
-  default when ambiguous; never answer the question itself; never
-  propose PREPARE or ACT.
+- Prefer the single option whose identifier/label/hints clearly address
+  the primary user intent (not a merely adjacent or lexical lookalike);
+- return null rather than forcing a weak or partial match;
+- never invent identifiers; never pick the first option by default;
+- never answer the question itself; never propose PREPARE or ACT.
 """
 
 ARGUMENTS_INSTRUCTION_ID = "delia.capability_orchestration.arguments"
@@ -1013,12 +1015,31 @@ def _index_option_rows(
                 ),
                 "",
             )
+        hint_parts: list[str] = []
+        for key, value in entity.items():
+            canon = _canonical_key(key)
+            if canon in {
+                _canonical_key(f) for f in field_keys
+            } or canon in {"id", "identifier"}:
+                continue
+            if isinstance(value, str) and value.strip():
+                text = value.strip()
+                if text != identifier and text != label:
+                    hint_parts.append(text)
+            elif isinstance(value, (list, tuple)):
+                for item in value[:6]:
+                    if isinstance(item, str) and item.strip():
+                        hint_parts.append(item.strip())
+        hints = _redact_text(" | ".join(hint_parts))[
+            : MAX_RESOLVER_CANDIDATE_LABEL_CHARS * 2
+        ]
         rows.append(
             {
                 "identifier": identifier,
                 "label": _redact_text(label)[
                     :MAX_RESOLVER_CANDIDATE_LABEL_CHARS
                 ],
+                "hints": hints,
             }
         )
     return tuple(rows[:MAX_INDEX_OPTION_ENTRIES])
@@ -3144,38 +3165,196 @@ def _deterministic_arguments_from_schema(
     return arguments
 
 
+_INDEX_TOKEN_RE = re.compile(
+    r"[a-z0-9_\u00c0-\u024f]{3,}",
+    re.IGNORECASE,
+)
+# Provider-neutral intent clusters — language affinity only; never
+# specialist/provider product names or hard-coded topic identifiers.
+_INDEX_INTENT_CLUSTERS: tuple[frozenset[str], ...] = (
+    frozenset(
+        {
+            "legib",
+            "readable",
+            "contrast",
+            "tipograf",
+            "hierarqu",
+            "visualiz",
+            "visual",
+            "painel",
+            "panel",
+            "dashboard",
+            "layout",
+            "sobrecarga",
+            "serie",
+            "rotulo",
+            "rótulo",
+            "distancia",
+            "distância",
+        }
+    ),
+    frozenset(
+        {
+            "format",
+            "moeda",
+            "currency",
+            "percent",
+            "numero",
+            "número",
+            "date",
+            "data",
+            "exibicao",
+            "exibição",
+            "display",
+        }
+    ),
+    frozenset(
+        {
+            "playlist",
+            "agenda",
+            "schedule",
+            "turno",
+            "rotacao",
+            "rotação",
+        }
+    ),
+)
+_INDEX_RELEVANCE_FLOOR = 2
+
+
+def _index_text_tokens(text: str) -> frozenset[str]:
+    return frozenset(
+        token.lower()
+        for token in _INDEX_TOKEN_RE.findall(text or "")
+        if token
+    )
+
+
+def _index_cluster_hits(tokens: frozenset[str]) -> frozenset[int]:
+    hits: set[int] = set()
+    blob = " ".join(sorted(tokens))
+    for index, cluster in enumerate(_INDEX_INTENT_CLUSTERS):
+        if any(stem in blob for stem in cluster):
+            hits.add(index)
+    return frozenset(hits)
+
+
+def _tokens_stem_related(left: str, right: str) -> bool:
+    """Prefix/containment affinity for cross-language stems (inspec/inspection)."""
+    a = left.lower()
+    b = right.lower()
+    if len(a) < 4 or len(b) < 4:
+        return False
+    return a[:4] in b or b[:4] in a or a in b or b in a
+
+
+def _index_option_relevance_score(
+    input_text: str,
+    row: Mapping[str, str],
+) -> int:
+    """Score owner-declared index row against the user ask.
+
+    Lexical overlap is an auxiliary signal; shared intent-cluster
+    affinity strengthens relevance. Stem affinity covers compound
+    owner identifiers without inventing ids or provider names.
+    """
+    ask_tokens = _index_text_tokens(input_text)
+    if not ask_tokens:
+        return 0
+    blob = " ".join(
+        str(row.get(key) or "")
+        for key in ("identifier", "label", "hints")
+    ).lower()
+    option_tokens = _index_text_tokens(blob)
+    # Also split snake_case identifiers into stems.
+    for token in list(option_tokens):
+        if "_" in token:
+            option_tokens = option_tokens | frozenset(
+                part for part in token.split("_") if len(part) >= 3
+            )
+    lexical = sum(1 for token in ask_tokens if token in blob)
+    stem_hits = sum(
+        1
+        for ask in ask_tokens
+        for opt in option_tokens
+        if _tokens_stem_related(ask, opt)
+    )
+    ask_clusters = _index_cluster_hits(ask_tokens)
+    option_clusters = _index_cluster_hits(
+        option_tokens | frozenset(blob.split())
+    )
+    shared = ask_clusters & option_clusters
+    mismatched = (
+        1
+        if ask_clusters
+        and option_clusters
+        and not shared
+        and lexical + stem_hits <= 1
+        else 0
+    )
+    score = lexical + stem_hits + (3 * len(shared)) - (2 * mismatched)
+    return max(0, score)
+
+
 def _rank_index_options_by_overlap(
     input_text: str,
     options: tuple[Mapping[str, str], ...],
 ) -> tuple[Mapping[str, str], ...]:
-    """Stable reorder: higher token overlap with the user ask first.
+    """Stable reorder by relevance score (lexical + intent clusters).
 
     Does not invent identifiers — only reorders owner-declared options
-    so the index-select proposal sees the most lexically relevant rows.
+    so the index-select proposal sees the most pertinent rows first.
+    Lexical overlap alone is not treated as proof of relevance.
     """
-    tokens = {
-        token
-        for token in re.findall(r"[a-z0-9_]{3,}", (input_text or "").lower())
-        if token
-    }
-    if not tokens or len(options) <= 1:
+    if len(options) <= 1:
         return options
 
-    def _score(row: Mapping[str, str]) -> tuple[int, str]:
-        blob = " ".join(
-            str(row.get(key) or "") for key in ("identifier", "label")
-        ).lower()
-        overlap = sum(1 for token in tokens if token in blob)
-        return (-overlap, str(row.get("identifier") or ""))
+    def _key(row: Mapping[str, str]) -> tuple[int, str]:
+        return (
+            -_index_option_relevance_score(input_text, row),
+            str(row.get("identifier") or ""),
+        )
 
-    return tuple(sorted(options, key=_score))
+    return tuple(sorted(options, key=_key))
+
+
+def _index_selection_is_relevant(
+    input_text: str,
+    selected: str,
+    options: tuple[Mapping[str, str], ...],
+) -> bool:
+    """True when the chosen owner id is adequately pertinent.
+
+    Rejects weak/partial picks when a stronger owner option exists, and
+    rejects all-below-floor catalogs so the turn can clarify honestly.
+    """
+    if not selected or not options:
+        return False
+    scores = {
+        str(row.get("identifier") or ""): _index_option_relevance_score(
+            input_text, row
+        )
+        for row in options
+        if row.get("identifier")
+    }
+    selected_score = scores.get(selected, 0)
+    best_score = max(scores.values()) if scores else 0
+    if best_score < _INDEX_RELEVANCE_FLOOR:
+        return False
+    if selected_score < _INDEX_RELEVANCE_FLOOR:
+        return False
+    # Materially worse than the best owner option → not pertinent.
+    if selected_score + 2 < best_score:
+        return False
+    return True
 
 
 _MIN_USEFUL_CONTINUITY_CHARS = 120
 _EXTRACTION_FOLLOWUP_RE = re.compile(
     r"\b("
     r"quais|informa(?:c|ç)(?:o|õ)es|inputs?|levantar|etapas?|"
-    r"lista|list|preciso|need|prerequisit|pré-?requis"
+    r"lista|list|checklist|preciso|need|prerequisit|pré-?requis|"
+    r"perguntas?|crit[eé]rios?|pr[oó]ximos?\s+passos?"
     r")\b",
     re.IGNORECASE,
 )
@@ -3190,15 +3369,10 @@ _LIMITATION_FOLLOWUP_RE = re.compile(
 )
 
 
-def _extraction_list_from_prior_excerpts(
+def _collect_extraction_units(
     records: tuple[Mapping[str, str], ...],
-) -> str | None:
-    """Deterministic list projection of prior bullet/numbered excerpts.
-
-    Used when model continuity under-selects on an extraction follow-up.
-    Values are copied verbatim from prior conversational excerpts —
-    never invented facts.
-    """
+) -> tuple[str, ...]:
+    """Bullet/numbered units available for extraction follow-ups."""
     bullets: list[str] = []
     for record in records:
         excerpt = (record.get("excerpt") or "").strip()
@@ -3208,18 +3382,76 @@ def _extraction_list_from_prior_excerpts(
             cleaned = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", excerpt).strip()
             if cleaned:
                 bullets.append(cleaned)
-    if len(bullets) < 2:
-        # Fall back to the longest distinct excerpts when prior text
-        # was not bullet-structured but still has multiple units.
-        ranked = sorted(
-            (
-                (record.get("excerpt") or "").strip()
-                for record in records
-            ),
-            key=len,
-            reverse=True,
-        )
-        bullets = [item for item in ranked if len(item) >= 24][:8]
+    if len(bullets) >= 2:
+        return tuple(bullets[:MAX_SYNTHESIS_ITEMS])
+    ranked = sorted(
+        ((record.get("excerpt") or "").strip() for record in records),
+        key=len,
+        reverse=True,
+    )
+    fallback = [item for item in ranked if len(item) >= 24][:8]
+    return tuple(fallback)
+
+
+def _count_covered_extraction_units(
+    rendered: str,
+    units: tuple[str, ...],
+) -> int:
+    """How many prior units are substantively present in the answer."""
+    haystack = " ".join((rendered or "").lower().split())
+    if not haystack:
+        return 0
+    covered = 0
+    for unit in units:
+        tokens = [
+            token
+            for token in _INDEX_TOKEN_RE.findall(unit.lower())
+            if len(token) >= 4
+        ][:5]
+        if not tokens:
+            continue
+        need = 1 if len(tokens) == 1 else min(2, len(tokens))
+        if sum(1 for token in tokens if token in haystack) >= need:
+            covered += 1
+            continue
+        tip = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", unit).strip().lower()[:36]
+        if tip and tip in haystack:
+            covered += 1
+    return covered
+
+
+def _prior_extraction_incomplete(
+    input_text: str,
+    rendered: str,
+    records: tuple[Mapping[str, str], ...],
+) -> bool:
+    """True when an extraction follow-up under-covers rich prior units.
+
+    Distinguishes incomplete extraction from short-but-sufficient
+    answers without using character count as the sole quality signal.
+    """
+    if not _EXTRACTION_FOLLOWUP_RE.search(input_text or ""):
+        return False
+    if _LIMITATION_FOLLOWUP_RE.search(input_text or ""):
+        return False
+    units = _collect_extraction_units(records)
+    if len(units) < 3:
+        return False
+    covered = _count_covered_extraction_units(rendered, units)
+    required = min(len(units), max(3, (len(units) + 1) // 2))
+    return covered < required
+
+
+def _extraction_list_from_prior_excerpts(
+    records: tuple[Mapping[str, str], ...],
+) -> str | None:
+    """Deterministic list projection of prior bullet/numbered excerpts.
+
+    Used when model continuity under-selects on an extraction follow-up.
+    Values are copied verbatim from prior conversational excerpts —
+    never invented facts.
+    """
+    bullets = list(_collect_extraction_units(records))
     if len(bullets) < 2:
         return None
     lines = [_list_header(len(bullets[:MAX_SYNTHESIS_ITEMS]))]
@@ -5995,11 +6227,35 @@ class OperationalCapabilityOrchestrator:
                     LIMITATION_INSUFFICIENT_EVIDENCE,
                 ),
             )
-        # Extraction follow-ups: when the model under-selects (thin
-        # answer) despite rich prior excerpts, expand deterministically
-        # from those excerpts — never invent facts, never literal dump
-        # of the entire prior when a list projection is available.
-        if (
+        # Extraction follow-ups: when coverage of available prior units
+        # is incomplete (not merely short-by-character-count), expand
+        # deterministically from those excerpts — never invent facts,
+        # never literal dump of the entire prior prose blob.
+        if _prior_extraction_incomplete(input_text, rendered, records):
+            expanded = _extraction_list_from_prior_excerpts(records)
+            if (
+                expanded is not None
+                and " ".join(expanded.split())
+                != " ".join(prior_content.split())
+                and (
+                    len(expanded) > len(rendered)
+                    or _count_covered_extraction_units(
+                        expanded, _collect_extraction_units(records)
+                    )
+                    > _count_covered_extraction_units(
+                        rendered, _collect_extraction_units(records)
+                    )
+                )
+            ):
+                _logger.info(
+                    "orchestration stage=prior_continuation "
+                    "decision=expand_incomplete_extraction "
+                    "excerpts=%d correlation_id=%s",
+                    len(records),
+                    correlation,
+                )
+                rendered = expanded
+        elif (
             len(rendered) < _MIN_USEFUL_CONTINUITY_CHARS
             and len(records) >= 3
             and _EXTRACTION_FOLLOWUP_RE.search(input_text or "")
@@ -8266,6 +8522,19 @@ class OperationalCapabilityOrchestrator:
         if not options:
             return None
         ranked = _rank_index_options_by_overlap(input_text, options)
+        best_score = max(
+            (_index_option_relevance_score(input_text, row) for row in ranked),
+            default=0,
+        )
+        if best_score < _INDEX_RELEVANCE_FLOOR:
+            _logger.info(
+                "orchestration stage=index_select "
+                "decision=no_relevant_option best_score=%d "
+                "correlation_id=%s",
+                best_score,
+                correlation,
+            )
+            return None
         selected, argument_field = self._propose_index_identifier(
             input_text,
             ranked,
@@ -8279,6 +8548,15 @@ class OperationalCapabilityOrchestrator:
             _logger.info(
                 "orchestration stage=index_select "
                 "decision=no_match correlation_id=%s",
+                correlation,
+            )
+            return None
+        if not _index_selection_is_relevant(input_text, selected, ranked):
+            _logger.info(
+                "orchestration stage=index_select "
+                "decision=reject_weak_relevance topic=%s "
+                "correlation_id=%s",
+                selected[:80],
                 correlation,
             )
             return None
@@ -8297,9 +8575,20 @@ class OperationalCapabilityOrchestrator:
             return None
         _logger.info(
             "orchestration stage=index_select decision=bound "
-            "field=%s topic=%s correlation_id=%s",
+            "field=%s topic=%s score=%d correlation_id=%s",
             argument_field,
             selected[:80],
+            _index_option_relevance_score(
+                input_text,
+                next(
+                    (
+                        row
+                        for row in ranked
+                        if row.get("identifier") == selected
+                    ),
+                    {"identifier": selected},
+                ),
+            ),
             correlation,
         )
         return projected
@@ -8320,6 +8609,7 @@ class OperationalCapabilityOrchestrator:
                 {
                     "identifier": row["identifier"],
                     "label": row.get("label") or "",
+                    "hints": row.get("hints") or "",
                 }
                 for row in options[:MAX_INDEX_OPTION_ENTRIES]
             ],
