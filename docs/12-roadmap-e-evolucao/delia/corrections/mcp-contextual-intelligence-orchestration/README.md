@@ -45,6 +45,10 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3 — evidência do consultor:** [13 — evidence and dependency analysis](./13-i02r3-consultant-evidence-and-dependency-analysis.md). Timeout K1 **PROVEN** em `arguments` pós-`get_catalog`; K3 R2 regressão OK; recomendação F+headroom arguments; **sem** patch funcional nem deploy.
 
+**I02-R3 — decisão independente:** [14 — diagnostic review and architecture decision](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md). Diagnosis ACCEPT_WITH_RESIDUAL; R3-A budget experiment then R3-B critical-path gate; stage-cap 10s **not** production-approved.
+
+**I02-R3A — experimentos controlados:** [15 — budget and critical-path experiments](./15-i02r3a-controlled-budget-and-critical-path-experiments.md). E0–E5 sintéticos: cap 10 antecipa falha; headroom opt-in só honest skip; E3–E5 sem merge/bypass default; produção inalterada.
+
 **I02-R3 independent review + architecture direction:** [14 — diagnosis accepted, staged budget experiment and critical-path gate](./14-i02r3-independent-diagnostic-review-and-architecture-decision.md). K1 `arguments` timeout PROVEN; arbitrary 10s global stage cap NOT approved as functional fix. I02 remains REWORK.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez

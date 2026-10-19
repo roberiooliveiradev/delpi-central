@@ -3780,6 +3780,11 @@ class OperationalCapabilityOrchestrator:
         pending_writes: PendingWriteStore | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
+        # I02-R3A experiment only: when True, skip the arguments model
+        # proposal if TurnDeadline cannot cover one capped model stage
+        # plus the existing presentation floor. Default False preserves
+        # production behavior (doc 14 — not an approved production policy).
+        experimental_arguments_budget_guard: bool = False,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
@@ -3788,6 +3793,9 @@ class OperationalCapabilityOrchestrator:
         self._turn_budget_seconds = float(turn_budget_seconds)
         self._model_stage_timeout_seconds = float(
             model_stage_timeout_seconds
+        )
+        self._experimental_arguments_budget_guard = bool(
+            experimental_arguments_budget_guard
         )
 
     def attempt(
@@ -5551,6 +5559,29 @@ class OperationalCapabilityOrchestrator:
         required = (
             self._model_stage_timeout_seconds
             + self._model_stage_timeout_seconds
+            + MIN_VIABLE_MODEL_STAGE_SECONDS * 3
+        )
+        return remaining >= required
+
+    def _budget_allows_arguments_propose(
+        self, deadline: TurnDeadline
+    ) -> bool:
+        """Whether an arguments model proposal has recoverable headroom.
+
+        Derived from existing caps only (I02-R3A experiment; production
+        callers leave ``experimental_arguments_budget_guard`` False):
+
+        - one full model-stage timeout for the arguments proposal;
+        - the same ``MIN_VIABLE_MODEL_STAGE_SECONDS * 3`` presentation
+          floor used by synthesis/resolver so a grounded READ response
+          can still finish after a cheap owner invoke.
+
+        Owner DISCOVERY/READ wall time is typically ≪ one viable stage
+        and is not added as a separate arbitrary constant.
+        """
+        remaining = deadline.remaining_seconds()
+        required = (
+            self._model_stage_timeout_seconds
             + MIN_VIABLE_MODEL_STAGE_SECONDS * 3
         )
         return remaining >= required
@@ -7969,6 +8000,28 @@ class OperationalCapabilityOrchestrator:
             required - ORCHESTRATED_FIELDS
         ):
             return {}, ()
+        if (
+            self._experimental_arguments_budget_guard
+            and deadline is not None
+            and not self._budget_allows_arguments_propose(deadline)
+        ):
+            # Honest limitation: do not start a doomed arguments model
+            # call. Never invent vocabulary or treat schema-valid {}
+            # as guidance when fields remain unbound.
+            missing = tuple(
+                dict.fromkeys(
+                    list(required - ORCHESTRATED_FIELDS)
+                    + list(keys - ORCHESTRATED_FIELDS)
+                )
+            )[:MAX_MISSING_INPUTS]
+            _logger.info(
+                "orchestration stage=arguments "
+                "decision=skip_budget remaining_ms=%d "
+                "correlation_id=%s",
+                int(deadline.remaining_seconds() * 1000),
+                correlation,
+            )
+            return None, missing
         block: dict[str, Any] = {
             "capability": descriptor.remote_name,
             "description": (descriptor.description or "")[

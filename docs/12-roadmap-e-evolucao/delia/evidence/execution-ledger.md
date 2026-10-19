@@ -14832,6 +14832,19 @@ NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
 
 NEXT=I02_R3A_BOUNDED_BUDGET_EXPERIMENT_AND_CRITICAL_PATH_EVIDENCE
 
+
+## §6.255 — DELIA-C3-MCP-I02-R3A-BUDGET-AND-CRITICAL-PATH-EXPERIMENTS-01 (EVIDENCE_RECORDED)
+
+**DATE:** 2026-10-19. **DOC:** [15](../corrections/mcp-contextual-intelligence-orchestration/15-i02r3a-controlled-budget-and-critical-path-experiments.md). **BASE_HEAD:** `1b2d6a6662b7d0557231b15211bf9c9fa4ee553a`. Decision [14] preserved (not redefined).
+
+- **E0:** Synthetic baseline success + arguments-timeout fail class (guard OFF). Historical live `561bb788` retained as fail reference.
+- **E1:** Stage cap 10 anticipates failure on long capability stage; does **not** improve methodology READ under sequential-sum exhaustion. `STAGE_CAP_10S_PRODUCTION_APPROVAL=NO`.
+- **E2:** Opt-in `experimental_arguments_budget_guard` (default False; composer unchanged). Insufficient remaining → skip arguments model + honest clarify; sufficient → SUCCESS. Formula `stage + MIN_VIABLE*3`. Enabling under runtime stage=30 would over-skip — do not enable without cap policy.
+- **E3–E5:** Characterization only (typed merge / native eligibility / deterministic args classes). No default path change. ACT=0 holdouts PASS. Full `delia-api` pytest PASS. Live experimental variants `TEST_NOT_RUN` (no unauthorized policy deploy).
+- **STATE:** `I02_R3A_EVIDENCE=RECORDED`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=COORDINATION_REVIEW_OF_R3A_EVIDENCE
+
 ## §6.253 — DELIA-UX-D03-PRESENCE-MOTION-AUTOMATED-VALIDATION-01 (EVIDENCE_READY_FOR_REVIEW)
 
 **DATA:** 2026-10-19. **TASK:** `DELIA-UX-D03-PRESENCE-MOTION-AUTOMATED-VALIDATION-01`. **TESTED_SHA:** `06cf0f22dab4ad4e294f882b3844027f170d1e28` (+ interaction test align). **DOCS:** [118](../118-companion-dock-presence-and-avatar-motion-execution-roadmap.md) §11 + [evidence](./companion-d03-presence-motion-validation/d03-presence-motion-automated-validation-01.md).
