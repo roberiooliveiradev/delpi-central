@@ -43,7 +43,7 @@ function mockFetchOk() {
  *  legitimately read /core-api/me* for the user avatar identity. */
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
-    String(u).startsWith("/apps/delia-api"),
+    String(u).startsWith("/apps/delia-api/interaction"),
   ) as [string, RequestInit][];
 }
 
@@ -264,6 +264,14 @@ function mockFetchSequence(payloads: object[]) {
         }),
       );
     }
+    if (String(input).startsWith("/apps/delia-api/dictation")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
     const body = payloads[Math.min(call, payloads.length - 1)];
     call += 1;
     return Promise.resolve(
@@ -417,6 +425,14 @@ vi.fn().mockImplementation((input: unknown) => {
               JSON.stringify({ name: null, has_photo: false }),
               { status: 200, headers: { "Content-Type": "application/json" } },
             ),
+          );
+        }
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
           );
         }
         call += 1;

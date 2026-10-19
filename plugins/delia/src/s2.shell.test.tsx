@@ -26,7 +26,7 @@ function successPayload(n: number, content?: string) {
  *  legitimately read /core-api/me* for the user avatar identity. */
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
-    String(u).startsWith("/apps/delia-api"),
+    String(u).startsWith("/apps/delia-api/interaction"),
   ) as [string, RequestInit][];
 }
 
@@ -37,6 +37,14 @@ function mockFetchSequence(payloads: object[]) {
       return Promise.resolve(
         new Response(JSON.stringify({ name: null, has_photo: false }), {
           status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    if (String(input).startsWith("/apps/delia-api/dictation")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+          status: 404,
           headers: { "Content-Type": "application/json" },
         }),
       );
@@ -393,6 +401,14 @@ vi.fn().mockImplementation((input: unknown) => {
             ),
           );
         }
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         call += 1;
         if (call === 1) {
           return Promise.resolve(
@@ -461,12 +477,22 @@ describe("conversation workspace layout", () => {
   it("timeline replaces reception inside the reading column", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(successPayload(1)), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      ),
+      vi.fn().mockImplementation((input: unknown) => {
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify(successPayload(1)), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }),
     );
     const { container } = render(<App getAccessToken={() => "t"} />);
 

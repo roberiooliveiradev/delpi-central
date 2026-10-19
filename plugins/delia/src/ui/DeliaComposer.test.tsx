@@ -5,9 +5,11 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DeliaComposer } from "./DeliaComposer";
+import type { DeliaDictationTranscriber } from "./DeliaComposer";
 
 afterEach(cleanup);
 
@@ -278,5 +280,214 @@ describe("DeliaComposer — voice dictation surface swap", () => {
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Enter" });
 
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+/* ---------- Voice Dictation STT integration (VD-F03) ---------- */
+
+function StatefulComposer({
+  initial,
+  transcriber,
+  onSubmit,
+}: {
+  initial: string;
+  transcriber: DeliaDictationTranscriber | null;
+  onSubmit: () => void;
+}) {
+  const [value, setValue] = useState(initial);
+  return (
+    <DeliaComposer
+      inputId="delia-input"
+      value={value}
+      onChange={setValue}
+      onSubmit={onSubmit}
+      audioCaptureEnabled
+      audioCaptureMaxDurationMs={60_000}
+      audioCaptureMaxBytes={256_000}
+      dictationTranscriber={transcriber}
+    />
+  );
+}
+
+function resolvedTranscriber(
+  text: string,
+  delayMs = 0,
+): DeliaDictationTranscriber {
+  return (_draft, _signal) =>
+    new Promise((resolve) =>
+      setTimeout(
+        () =>
+          resolve({ transcriptionId: "tr-1", text, language: "pt-BR" }),
+        delayMs,
+      ),
+    );
+}
+
+describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
+  beforeEach(() => {
+    FakeMediaRecorder.instances = [];
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => createFakeStream()) },
+    });
+    (
+      globalThis as unknown as { MediaRecorder: typeof FakeMediaRecorder }
+    ).MediaRecorder = FakeMediaRecorder;
+    URL.createObjectURL = vi.fn(() => "blob:test-audio");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: originalMediaDevices,
+      });
+    }
+    if (originalMediaRecorder) {
+      (
+        globalThis as unknown as { MediaRecorder: typeof MediaRecorder }
+      ).MediaRecorder = originalMediaRecorder;
+    }
+    if (originalIsSecureContext) {
+      Object.defineProperty(window, "isSecureContext", originalIsSecureContext);
+    }
+  });
+
+  it("finish → real transcribing → editable transcript, never auto-submit", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={resolvedTranscriber(
+          "Mostre os indicadores de produção desta semana.",
+          30,
+        )}
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    // Real transcribing state — no textarea, no send, no fake progress.
+    await waitFor(() => screen.getByText("Transcrevendo sua fala…"));
+    expect(screen.queryByLabelText("Pergunte à DÉLIA")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Cancelar transcrição" }),
+    ).toBeTruthy();
+
+    // Transcript lands editable in the composer — no submit fired.
+    await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"));
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("Mostre os indicadores de produção desta semana.");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("merges transcript at the recorded caret, preserving the rest", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <StatefulComposer
+        initial="olá mundo"
+        transcriber={resolvedTranscriber("DÉLIA", 30)}
+        onSubmit={onSubmit}
+      />,
+    );
+    const textarea = screen.getByLabelText(
+      "Pergunte à DÉLIA",
+    ) as HTMLTextAreaElement;
+    textarea.focus();
+    textarea.setSelectionRange(4, 4); // caret after "olá "
+    fireEvent(document, new Event("selectionchange"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"));
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("olá DÉLIAmundo");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("cancel during transcribing aborts and preserves the prior draft", async () => {
+    const onSubmit = vi.fn();
+    let resolveFn: ((r: { transcriptionId: string; text: string; language: string }) => void) | null = null;
+    const transcriber: DeliaDictationTranscriber = (_d, _s) =>
+      new Promise((resolve) => {
+        resolveFn = resolve;
+      });
+    render(
+      <StatefulComposer
+        initial="draft antes"
+        transcriber={transcriber}
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+    await waitFor(() => screen.getByText("Transcrevendo sua fala…"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar transcrição" }));
+    await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"));
+
+    // Late response after local cancel is discarded, never applied.
+    resolveFn?.({ transcriptionId: "t", text: "texto tardio", language: "pt-BR" });
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement)
+          .value,
+      ).toBe("draft antes"),
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("STT failure returns to writing with honest error and preserved draft", async () => {
+    const onSubmit = vi.fn();
+    const failing: DeliaDictationTranscriber = () =>
+      Promise.reject(
+        Object.assign(new Error("unavailable"), {
+          code: "provider_unavailable",
+        }),
+      );
+    render(
+      <StatefulComposer
+        initial="texto preservado"
+        transcriber={failing}
+        onSubmit={onSubmit}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    await waitFor(() => screen.getByRole("alert"));
+    expect(screen.getByRole("alert").textContent).toMatch(/indisponível/i);
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("texto preservado");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("without a transcriber, finishing stays in honest local preview", async () => {
+    render(
+      <StatefulComposer initial="" transcriber={null} onSubmit={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    await waitFor(() =>
+      screen.getByRole("region", { name: "Prévia do áudio gravado" }),
+    );
+    expect(screen.queryByText(/[Tt]ranscrev/)).toBeNull();
   });
 });

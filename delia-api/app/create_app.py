@@ -9,10 +9,12 @@ def create_app(
     platform_access_provider=None,
     model_invocation_port=None,
     interaction_turn_handler=None,
+    dictation_transcription_handler=None,
 ) -> Flask:
     return create_application(
         testing=testing,
         platform_access_provider=platform_access_provider,
         model_invocation_port=model_invocation_port,
         interaction_turn_handler=interaction_turn_handler,
+        dictation_transcription_handler=dictation_transcription_handler,
     )

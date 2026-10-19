@@ -38,7 +38,7 @@ afterEach(() => {
  *  legitimately read /core-api/me* for the user avatar identity. */
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
-    String(u).startsWith("/apps/delia-api"),
+    String(u).startsWith("/apps/delia-api/interaction"),
   );
 }
 

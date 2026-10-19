@@ -139,6 +139,27 @@ class Settings:
         self.turn_budget_seconds = float(
             os.getenv("DELIA_TURN_BUDGET_SECONDS") or "30.0"
         )
+        # VD-F03 dictation.transcription.v1 — dedicated audio-capable
+        # model behind the same approved OpenAI-compatible provider
+        # family. Independent DELIA_STT_* set: incomplete config fails
+        # closed (dictation status unavailable); stt_api_key is never
+        # logged or repr'd.
+        self.stt_provider = (os.getenv("DELIA_STT_PROVIDER") or "").strip()
+        self.stt_base_url = (os.getenv("DELIA_STT_BASE_URL") or "").strip()
+        self.stt_model = (os.getenv("DELIA_STT_MODEL") or "").strip()
+        self.stt_api_key = (os.getenv("DELIA_STT_API_KEY") or "").strip()
+        self.stt_timeout_seconds = float(
+            os.getenv("DELIA_STT_TIMEOUT_SECONDS") or "30.0"
+        )
+        self.stt_max_audio_bytes = int(
+            os.getenv("DELIA_STT_MAX_AUDIO_BYTES") or "4194304"
+        )
+        self.stt_max_duration_ms = int(
+            os.getenv("DELIA_STT_MAX_DURATION_MS") or "120000"
+        )
+        self.stt_rate_limit_per_minute = int(
+            os.getenv("DELIA_STT_RATE_LIMIT_PER_MINUTE") or "10"
+        )
 
 
     @classmethod

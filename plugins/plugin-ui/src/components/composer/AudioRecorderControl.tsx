@@ -57,6 +57,10 @@ export type AudioRecorderControlRenderProps = {
   status: ReturnType<typeof useLocalAudioRecorder>["status"];
   /** Machine-readable capture error for host-rendered messaging. */
   errorReason: ReturnType<typeof useLocalAudioRecorder>["errorReason"];
+  /** Completed local draft while status === "preview" (null otherwise). */
+  draft: ReturnType<typeof useLocalAudioRecorder>["draft"];
+  /** Discard the local draft/preview and return to idle writing. */
+  discard: () => void;
 };
 
 /**
@@ -281,6 +285,8 @@ export function AudioRecorderControl({
     blocking,
     status,
     errorReason,
+    draft,
+    discard,
   };
 
   if (typeof children === "function") {

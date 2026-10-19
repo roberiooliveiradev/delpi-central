@@ -14,6 +14,7 @@ def _neutralize_ambient_runtime_env(monkeypatch):
     """
     prefixes = (
         "DELIA_LLM_",
+        "DELIA_STT_",
         "DELIA_EXCHANGE_",
         "DELIA_MCP_",
         "DELIA_EVAL_",

@@ -34,7 +34,7 @@ function coreMeOk() {
 
 function deliaApiCalls(fetchMock: { mock: { calls: unknown[][] } }) {
   return fetchMock.mock.calls.filter(([u]) =>
-    String(u).startsWith("/apps/delia-api"),
+    String(u).startsWith("/apps/delia-api/interaction"),
   ) as [string, RequestInit][];
 }
 
@@ -87,6 +87,14 @@ describe("lifecycle A — fluxo normal", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise<Response>((resolve) => {
           resolveFetch = resolve;
         });
@@ -126,6 +134,14 @@ describe("lifecycle A — fluxo normal", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return Promise.resolve(
           new Response(JSON.stringify(SUCCESS_PAYLOAD), {
             status: 200,
@@ -160,6 +176,14 @@ describe("lifecycle A — fluxo normal", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise<Response>((resolve) => {
           resolvers[call] = resolve;
           call += 1;
@@ -214,6 +238,14 @@ describe("lifecycle B — erros", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return Promise.resolve(
           new Response(JSON.stringify({ detail: "boom", code: "internal" }), {
             status: 500,
@@ -244,6 +276,14 @@ describe("lifecycle B — erros", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         if (failFirst) {
           failFirst = false;
           return Promise.reject(new TypeError("Failed to fetch"));
@@ -312,6 +352,14 @@ describe("lifecycle C — cancelamento e concorrência", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise<Response>((resolve, reject) => {
           resolvers.push({ resolve, reject });
         });
@@ -354,6 +402,14 @@ describe("lifecycle C — cancelamento e concorrência", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise(() => {
           /* never resolves */
         });
@@ -380,6 +436,14 @@ describe("lifecycle C — cancelamento e concorrência", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise<Response>((resolve) => {
           resolveFetch = resolve;
         });
@@ -418,6 +482,14 @@ describe("lifecycle D — motion / a11y", () => {
       "fetch",
       vi.fn().mockImplementation((input: unknown) => {
         if (String(input).startsWith("/core-api/")) return Promise.resolve(coreMeOk());
+        if (String(input).startsWith("/apps/delia-api/dictation")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ code: "dictation_unavailable" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
         return new Promise<Response>((resolve) => {
           resolveFetch = resolve;
         });

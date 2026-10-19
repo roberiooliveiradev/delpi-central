@@ -46,6 +46,7 @@ from app.infrastructure.model_invocation.openai_compatible_adapter import (
     OpenAICompatibleModelInvocationAdapter,
 )
 from app.interfaces.http.auth_middleware import register_auth_middleware
+from app.interfaces.http.dictation_routes import register_dictation_routes
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.health_routes import health_bp
 from app.interfaces.http.interaction_routes import register_interaction_routes
@@ -73,6 +74,7 @@ def create_application(
     platform_access_provider=None,
     model_invocation_port=None,
     interaction_turn_handler=None,
+    dictation_transcription_handler=None,
 ) -> Flask:
     settings = Settings.for_testing() if testing else Settings()
     logger = configure_logging(settings.service_name, settings.log_level)
@@ -145,11 +147,26 @@ def create_application(
         )
     app.config["INTERACTION_TURN_HANDLER"] = handler
 
+    # VD-F03 dictation.transcription.v1 — same fail-closed pattern as the
+    # interaction handler: the real adapter is wired only when DELIA_STT_*
+    # is complete; otherwise the capability is absent and the route
+    # answers 503 transcription_unavailable. No implicit fallback.
+    if dictation_transcription_handler is not None:
+        dictation_handler = dictation_transcription_handler
+    else:
+        dictation_handler = _wire_dictation_handler(settings)
+    app.config["DICTATION_TRANSCRIPTION_HANDLER"] = dictation_handler
+    app.config["DICTATION_LIMITS"] = {
+        "max_audio_bytes": settings.stt_max_audio_bytes,
+        "max_duration_ms": settings.stt_max_duration_ms,
+    }
+
     register_error_handlers(app)
     register_request_logging(app, logger)
     register_auth_middleware(app, logger=logger)
     app.register_blueprint(health_bp)
     register_interaction_routes(app, logger)
+    register_dictation_routes(app, logger)
 
     logger.info(
         "delia_api_started service=%s version=%s env=%s",
@@ -277,6 +294,42 @@ def _compose_turn_handler(
         model_ref=model_ref,
         capability_orchestration=orchestration,
         turn_budget_seconds=settings.turn_budget_seconds,
+    )
+
+
+def _wire_dictation_handler(settings: Settings):
+    """Wire the dictation transcription handler only from complete config.
+
+    VD-F03: provider=openai_compatible_audio + base URL + model + key all
+    present is the only path that activates the capability — a dedicated
+    audio-capable model, never the interaction model, and only through
+    the approved OpenAI-compatible provider family. Anything else fails
+    closed to `transcription_unavailable`.
+    """
+    if not (
+        settings.stt_provider == "openai_compatible_audio"
+        and settings.stt_base_url
+        and settings.stt_model
+        and settings.stt_api_key
+    ):
+        return None
+    from app.application.dictation.transcribe_dictation import (
+        TranscribeDictation,
+    )
+    from app.infrastructure.model_invocation.openai_compatible_transcription_adapter import (
+        OpenAICompatibleTranscriptionAdapter,
+    )
+
+    return TranscribeDictation(
+        port=OpenAICompatibleTranscriptionAdapter(
+            base_url=settings.stt_base_url,
+            api_key=settings.stt_api_key,
+            model=settings.stt_model,
+            timeout_seconds=settings.stt_timeout_seconds,
+        ),
+        max_audio_bytes=settings.stt_max_audio_bytes,
+        max_duration_ms=settings.stt_max_duration_ms,
+        rate_limit_per_minute=settings.stt_rate_limit_per_minute,
     )
 
 

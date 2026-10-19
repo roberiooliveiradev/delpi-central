@@ -43,7 +43,13 @@ import {
 import {
   DELIA_AUDIO_TEST_BANNER,
   DELIA_AUDIO_TEST_LIMITS,
+  DELIA_DICTATION_STT_BANNER,
 } from "./audio/audioCaptureTestAdmission";
+import {
+  fetchDictationStatus,
+  transcribeDictationAudio,
+} from "./api/dictationClient";
+import type { DeliaDictationStatus } from "./api/dictationClient";
 import { useCurrentUserIdentity } from "./identity/currentUser";
 
 /** Host props from Portal AppHost — presentation/transport only. */
@@ -113,6 +119,30 @@ export default function App({
   // AudioRecorderControl; limits are the PM-bounded test values.
   const audioAdmission = audioQaAdmission ?? DELIA_AUDIO_TEST_LIMITS;
   const userIdentity = useCurrentUserIdentity(getAccessToken);
+  // VD-F03 dictation.transcription.v1 admission — read once per mount
+  // from the backend status boundary. Unavailable (or transport-failed)
+  // status keeps the honest local-only capture preview; it never
+  // fabricates a transcribing state.
+  const [dictationStt, setDictationStt] = useState<DeliaDictationStatus | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!getAccessToken) return;
+    const abort = new AbortController();
+    fetchDictationStatus({
+      getAccessToken: () => getAccessToken() ?? null,
+      signal: abort.signal,
+    })
+      .then((status) => {
+        if (!abort.signal.aborted) setDictationStt(status);
+      })
+      .catch(() => {
+        // Admission transport failure is non-fatal: capture stays
+        // local-only preview — honest, never a fabricated STT state.
+      });
+    return () => abort.abort();
+  }, [getAccessToken]);
+  const dictationSttAvailable = dictationStt?.available === true;
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
@@ -436,7 +466,9 @@ export default function App({
                 {audioQaAdmission
                   ? DELIA_AUDIO_QA_BANNER
                   : audioAdmission
-                    ? DELIA_AUDIO_TEST_BANNER
+                    ? dictationSttAvailable
+                      ? DELIA_DICTATION_STT_BANNER
+                      : DELIA_AUDIO_TEST_BANNER
                     : null}
               </div>
             ) : null
@@ -461,6 +493,15 @@ export default function App({
                 audioCaptureEnabled={audioAdmission != null}
                 audioCaptureMaxDurationMs={audioAdmission?.maxDurationMs}
                 audioCaptureMaxBytes={audioAdmission?.maxBytes}
+                dictationTranscriber={
+                  dictationSttAvailable && getAccessToken
+                    ? (draft, signal) =>
+                        transcribeDictationAudio(draft, {
+                          getAccessToken: () => getAccessToken() ?? null,
+                          signal,
+                        })
+                    : null
+                }
               />
             </>
           }

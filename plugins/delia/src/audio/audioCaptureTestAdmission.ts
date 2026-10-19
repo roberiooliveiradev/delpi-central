@@ -22,6 +22,15 @@
 export const DELIA_AUDIO_TEST_BANNER =
   "Gravação de áudio em teste. O áudio fica neste navegador e ainda não pode ser enviado à DÉLIA.";
 
+/**
+ * Honest purpose/consent copy shown when dictation.transcription.v1 is
+ * available (VD-F03): the audio DOES leave the device — only to the
+ * dictation contract, never to multimodal analysis — and returns as
+ * editable draft text. Shown in place of the local-only test banner.
+ */
+export const DELIA_DICTATION_STT_BANNER =
+  "Ditado por voz: sua fala é enviada apenas para transcrição em texto. Revise o texto antes de enviar.";
+
 /** Bounded test limits — Product Master authorized test scope. */
 export const DELIA_AUDIO_TEST_MAX_DURATION_MS = 60_000;
 export const DELIA_AUDIO_TEST_MAX_BYTES = 256_000;

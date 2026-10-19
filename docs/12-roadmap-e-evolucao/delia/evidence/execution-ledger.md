@@ -15537,6 +15537,7 @@ NEXT=BOUNDED_SEMANTIC_INTERPRETATION_CONSOLIDATION_EXECUTION_BRIEF_AFTER_CONSUME
 NEXT=G0_I04_EXIT_INDEPENDENT_COORDINATION_DECISION
 
 
+
 ## §6.302 — GPT-prepared finite orchestrator refactoring dossier (consumer/test inventory and G0 gate)
 
 **DATE:** 2026-10-19. **CANONICAL:** [ADR58](../corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md), [roadmap59](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [pre-Q01 dossier60](../corrections/mcp-contextual-intelligence-orchestration/60-pre-q01-consumers-contracts-tests-inventory.md), [G0 and Cursor handoff61](../corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md). **PREPARED_FROM_MAIN:** `9dad78c53beb2a5e5de50695fbb590b40440baf6`. **SOURCE_BLOB:** `orchestration.py=bc13e07b31b6844e172c5d485d77f59a4b8c0a10`.
@@ -15617,3 +15618,17 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=CURSOR_ONE_G0_REWORK_THEN_INDEPENDENT_REVIEW
 ```
+
+## §6.307 — VD-F03 Voice Dictation STT integration (dictation.transcription.v1)
+
+**DATA:** 2026-10-19. **TASK_ID:** `DELIA-UX-VOICE-DICTATION-STT-INTEGRATION-01`. **EVIDÊNCIA:** [voice-dictation-stt-integration-01](./voice-dictation-stt-integration-01/voice-dictation-stt-integration-evidence.md). **CONTRATO:** [dictation-transcription-contract-v1](../contracts/dictation-transcription-contract-v1.md).
+
+- **CAPABILITY:** `STT_EXISTING_EQUIVALENT=NO` → `REUSE_DECISION=NEW` (boundary `delia-api`) + `REUSE` da família de provider já aprovada (`openai_compatible`/OpenRouter). Modelo dedicado de áudio (`DELIA_STT_MODEL`, prova `google/gemini-2.5-flash` `input_audio` wav+webm pt-BR); modelo de interação nunca é usado para STT.
+- **CONTRATO PRIMEIRO:** `GET /dictation/status` + `POST /dictation/transcriptions` sob AuthN + `delia.access` Core; MIME allowlist, `pt-BR`, limites 4 MiB/120 s, rate limit 10/min/usuário, timeout, erros tipados, retenção zero, postcondition texto não-vazio. Transcrição = rascunho não autoritativo (não FACT/Evidence/AuthZ).
+- **FRONTEND:** `dictationClient` + `DeliaComposer` `transcribing` real na mesma superfície; merge na posição do cursor registrada; cancelável; resposta tardia invalidada; zero auto-submit; `AudioRecorderControl` EXTEND mínimo (`draft`/`discard` render props); fail-closed local-only sem status admitido.
+- **GATES:** pytest 1636/1636 (22 dictation), vitest delia 251/251, plugin-ui 2250/2250, typecheck+build+federation PASS. Browser QA 20/20 (página+dock): **STT real pt-BR end-to-end** — fala → POST → texto real mergeado (*"Mostre os indicadores de produção desta semana."*) → editável → envio manual; `turnCalls=0` pós-transcrição; áudio sem fala → erro honesto + draft preservado. Logs sem áudio/transcrição.
+- **RESIDUAIS:** WER/CER formal pendente corpus; rate limit in-process por réplica; mic humano `TEST_NOT_RUN`; deploy prod requer rebuild plugin-ui+delia+delia-api e `DELIA_STT_*` no `.env` do host. Drift de ambiente local documentado: compose `keycloak:24.0` vs credenciais argon2 (KC 26) — workaround local via override, fora do escopo.
+- **PHASE:** `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
+
+NEXT=INDEPENDENT_REVIEW_VD_F03_AND_DEPLOY_CANONICAL_STT
+
