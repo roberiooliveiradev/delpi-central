@@ -131,3 +131,51 @@ Os demais valores do painel permanecem `NO`/`PENDING` até declaração humana.
 **Ordem obrigatória para fechamento:** D-G0-01 Arquitetura; D-G0-05 Segurança e D-G0-06 Arquitetura/Ops; D-G0-02 aprovações de cada freeze com owner e evidência; D-G0-03 fechamento documental PO; **depois** D-G0-04 autorização explícita PO exclusivamente para IMP-F0. A escolha pelo PO de priorizar API → container → Home não é autorização automática de runtime.
 
 **Condição de mudança do README:** registrar owner/decisão/data/referência para cada aprovação. Na falta de qualquer uma, manter `PENDING` / `NO`. Não inferir `PASS` de documentação, tests não executados, search miss ou HTTP 200. A tarefa de implantação deve revalidar HEAD e worktree antes de qualquer alteração.
+
+## 9. Fechamento decisório — inspeção do orquestrador e matriz final (HEAD `1156cc7ce2`)
+
+> Preparação para assinatura humana. Nenhum valor abaixo constitui aprovação; cada decisão exige declaração do owner registrada no README com evidência e data.
+
+### 9.1 `/ready` — evidência do orquestrador (D-G0-06, resolvido para proposta)
+
+A revisão §8 exigiu inspecionar consumidores de healthcheck/gateway. Resultado medido no HEAD:
+
+| Fato | Evidência |
+|---|---|
+| Healthchecks Docker de **todos** os `*-api` consultam somente `/health` | `infra/docker-compose.yml` — `urllib.request.urlopen('http://127.0.0.1:8000/health')` em commercial-api e pares |
+| `/ready` **não é consumido** por healthcheck de Compose nem scripts `up-*-sequential.sh` | grep `ready` nos compose/scripts: apenas `pg_isready` do Postgres |
+| Gateway é nginx com `proxy_pass` estático por `location ^~ /apps/<svc>-api/` | `gateway/nginx.conf:465` (commercial-api), upstream `<svc>:8000`, rewrite do prefixo |
+| Nginx resolve upstream no start/reload — serviço novo exige `gateway_reload_for_service` | `infra/scripts/gateway-static-upstreams.sh` |
+| `/ready` da commercial retorna 200 + `status: ready|degraded` + hint | `commercial_app/main.py:165` |
+
+**Conclusão técnica:** `/ready` é **diagnóstico operacional**, não gate de tráfego — o orquestrador confia em `/health`. A proposta do §5 (HTTP 200 + `ready|degraded` + `config_ready` + `core_hint`, sem DB artificial, sem secrets) é **coerente com o precedente e não cria semântica falsa**. Resta apenas o aceite formal de Arquitetura/Ops.
+
+### 9.2 Wiring operacional confirmado para IMP-F0
+
+Quando autorizado, a integração exige exatamente: (a) entry em `infra/docker-compose.yml` seguindo o padrão `commercial-api` (env_file `.env`, envs `*_ROOT_PATH`, `DELPI_AUTH_CORE_API_URL`, `KEYCLOAK_*`, `CORE_API_*_SERVICE_TOKEN`, healthcheck `/health`); (b) bloco `location ^~ /apps/controllership-finance-api/` em `gateway/nginx.conf` e `nginx.dev.conf` com o padrão de rewrite/headers/rate-limit; (c) reload do gateway via `gateway_reload_for_service` (operacional, `local-first-deploy.mdc`).
+
+### 9.3 Matriz decisória final
+
+| ID | Decisão | Owner | Evidência pronta | Condição de aprovação | Estado |
+|---|---|---|---|---|---|
+| D-G0-01 | Validar exceção FastAPI escopada | Arquitetura | §1 + runtime 16/20 FastAPI + primitive `delpi_auth` FastAPI | Declaração `VALIDATED` no README ou aceite explícito do doc 45 | **PENDING** |
+| D-G0-02 | Quatro freezes | Design / Produto / Segurança / Qualidade | §2 por freeze | Quatro `PASS` com owner+data no painel | **PENDING** |
+| D-G0-03 | `DOCUMENTATION_CLOSURE_COMPLETE` | PO / Product Master | corpus 00–45 consolidado | `PASS` no painel | **PENDING** |
+| D-G0-04 | `IMPLEMENTATION_AUTHORIZED` — **escopo reduzido a IMP-F0** | PO | este documento | `YES` explícito limitado a: BFF FastAPI + Dockerfile + `/health` + `/ready` + testes + wiring compose/gateway. **MFE/Home/A01 continuam bloqueados** | **PENDING** |
+| D-G0-05 | Política stale-RBAC | Segurança | §4 + §8 | Para IMP-F0 a decisão é **não-bloqueante**: `/health` e `/ready` são rotas públicas sem dados protegidos — staleness não aplica. Decisão exigida antes da **primeira rota protegida** (Home/A01) | **PENDING — não bloqueia IMP-F0** |
+| D-G0-06 | Semântica `/ready` | Arquitetura/Ops | §9.1 — proposta validada contra orquestrador real | Aceite da proposta §5 | **PENDING — proposta pronta** |
+
+### 9.4 Gate final proposto ao PO
+
+```text
+Ordem de fechamento (preserva §8):
+1. Arquitetura: D-G0-01 VALIDATED
+2. Arquitetura/Ops: D-G0-06 aprovado (proposta já evidenciada)
+3. Owners: D-G0-02 — 4 freezes PASS
+4. PO: D-G0-03 PASS
+5. PO: D-G0-04 YES — escopo exclusivo IMP-F0 (BFF + Docker + health/ready + testes)
+
+D-G0-05 permanece aberta e bloqueia somente rotas protegidas futuras.
+```
+
+**Estado vigente: NO-GO.** Todas as decisões acima aguardam declaração humana; este documento não as substitui.
