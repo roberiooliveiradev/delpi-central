@@ -15420,7 +15420,14 @@ NEXT=ops executa runbook de deploy → PM valida em https://minhadelpi.com.br/ap
 - **DELIA BASELINE (pre-fix):** P01–P05 all `SOURCE_UNAVAILABLE`. Corr `0f88e3a5-…`: selected `openapi:delpi` / `delpi.search_products`, `arguments=built`, then `skip_budget_identifier_unavailable fields=6` — **owner not invoked**. Optional probe headroom ≈66s vs turn 30s ⇒ probe always skipped.
 - **ROOT_CAUSE:** post-argument budget-skip gate discarded schema-valid search args. **FIX:** proceed when filled free-string args are grounded in user input (or pagination-only material args); empty `{}` still SOURCE_UNAVAILABLE. Helper `_free_string_grounded_in_user_input`. No regex intent / planner / timeout bump.
 - **TESTS:** `test_real_product_owner_read_and_budget_rework.py` + full delia-api pytest PASS; i02r2 invented-topic under skip preserved.
-- **LIVE L1–L5 / DEPLOYED_SHA:** filled after commit+push+canonical deploy (see report footer / amend note in same section if needed).
+- **DEPLOY:** `git pull` @ srv-api → `up-prod-sequential.sh --fase api --build delia-api` → healthy. **SOURCE_SHA=DEPLOYED_SHA=`4c4fc7d256`**. Model `moonshotai/kimi-k3`. Fix strings present in container (`skip_budget_proceed_with_args`).
+- **LIVE POST-FIX (MESSAGE-only, subject `user`):**
+  - L1 terminal pino: **GROUNDED RESULT** ~23s; `skip_budget_proceed_with_args` + `provider_invoke search_products` ~165ms (corr `9f0e5ef6-…`).
+  - L2 terminal olhal: **GROUNDED RESULT** ~18s; owner READ ok (corr `aebdb9c1-…`).
+  - L3 descrição `terminal`: **GROUNDED RESULT** ~30s (corr `3c69dc6d-…`).
+  - L4 no-match: **GROUNDED** «Nenhum resultado encontrado.» ~18s (corr `f6a619b1-…`).
+  - L5 continuity: L5a GROUNDED search; L5b with `context` USER_INPUT/DELIA_RESULT recovers prior items (PARTIAL — epistemic NON_GROUNDED on follow-up); L5c compare hit 504 under 30s (residual). Cold «Olá» PASS. MATERIAL_ACT=0.
+- **RESIDUAL:** search description sometimes broad (`pino` vs `TERM. PINO`); multiturn compare under global budget still fragile; optional probe still never runs when stage timeout=30s (by design of headroom vs turn).
 
 ```text
 I04_ACCEPTED=NO

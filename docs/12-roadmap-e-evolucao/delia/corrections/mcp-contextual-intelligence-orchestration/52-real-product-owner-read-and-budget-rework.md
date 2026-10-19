@@ -81,7 +81,17 @@ Full `delia-api` pytest: PASS.
 
 ## Live post-deploy
 
-Filled after SSH deploy + L1–L5 in ledger §6.294 / report.
+**SOURCE_SHA = DEPLOYED_SHA = `4c4fc7d256`**. Host `operador@192.168.1.237`, service `delpi-delia-api`, model `moonshotai/kimi-k3`.
+
+| Scenario | Result | Notes |
+|---|---|---|
+| L1 terminal pino | PASS GROUNDED ~23s | `proceed_with_args` → owner READ |
+| L2 terminal olhal | PASS GROUNDED ~18s | same path |
+| L3 description terminal | PASS GROUNDED ~30s | same path |
+| L4 no-match | PASS GROUNDED empty | authoritative absence |
+| L5 continuity | PARTIAL | search + prior recover; compare 504 residual |
+| Cold greeting | PASS | «Olá» conversational |
+| MATERIAL_ACT | 0 | no ACT invoke |
 
 ## Gates
 
