@@ -266,3 +266,22 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 **Gate atual: NO-GO.** A manifestação do PO é explícita e reaproveitável; não solicitar novamente a mesma autorização de escopo. O executor deve verificar e registrar aprovações dos owners restantes antes de alterar runtime. Sem autorização de Arquitetura, Design, Segurança e Qualidade comprovada, não criar scaffold, Compose nem gateway.
 
 **Rastreabilidade:** este registro modifica apenas a classificação da **manifestação do PO** de "não expressa" para "registrada, condicional". O indicador de execução do README continua `IMPLEMENTATION_AUTHORIZED=NO` até o gate ter efeito. Não é assinatura dos outros owners.
+
+
+## 12. Deliberação expressa do PO e encaminhamento dos gates (19/10/2026)
+
+**Manifestação atual:** "faça aqui registrar as aprovações efetivas no documento 45 e atualizar o painel canônico do README, commit e push na main". Em conjunto com §11, constitui ordem de registrar decisões efetivamente sustentadas, **não comprovação de assinatura dos outros owners**.
+
+| Controle | Decisão e evidência registrada | Estado |
+|---|---|---|
+| Priorização e contrato **restritos ao slice IMP-F0** | **PO APPROVED (escopo)**: fundação FastAPI, Docker/Compose/gateway, endpoints públicos `/health` e `/ready`, testes; sem frontend, persistência e endpoints de negócio. Evidência: manifestações do PO (§§11–12). | `PO_APPROVED / IMP-F0_SCOPE_ONLY` |
+| D-G0-04 autorização do PO | **Assentimento do PO confirmado** para o conteúdo de §10.4, sujeito às precondições cumulativas expressas naquele texto. Não pedir nova confirmação de escopo. | `PO_AUTHORIZATION_RECORDED_CONDITIONAL` |
+| D-G0-01 / Arquitetura | Exceção FastAPI documentada e recomendada; **sem aceite formal do owner** demonstrado. | `REGISTERED / PENDING` |
+| D-G0-02 / Design, Produto, Segurança, Qualidade | Matriz documental §2 pronta. Aprovação do escopo reduzido pelo PO **não equivale** às assinaturas de Design, Security ou Quality, nem ao freeze transversal integral. | `PENDING` |
+| D-G0-03 / Fechamento documental | A assinatura de fechamento integral exige prévias aprovações técnicas; não é correto declarar `PASS` antes delas. | `NO` |
+| D-G0-05 stale RBAC | Residual antes da primeira rota protegida, conforme §10.2. | `PENDING / NON_BLOCKING_IMP-F0` |
+| D-G0-06 `/ready` | Comportamento fundamentado pelo inventário do orquestrador §9; aceite formal de Arq/Ops ainda não localizado. | `TECHNICALLY_SUPPORTED / FORMAL_PENDING` |
+
+**Decisão de segurança documental:** não substituir assinatura identificável de Arquitetura, Design, Segurança ou Qualidade por endosso presumido do PO ou pelo preenchimento automático de uma tabela. O README deve continuar com `IMPLEMENTATION_AUTHORIZED=NO` enquanto os requisitos de §10.4 não forem satisfeitos. **Não implementar runtime sobre esta atualização.**
+
+**Saída objetiva para os responsáveis:** registrar owner identificável, papel, data, decisão e referência de evidência para (1) Arquitetura / D-G0-01, (2) Design, (3) Segurança, (4) Qualidade e (5) escopo transversal de Produto se aplicável; somente então o PO declara D-G0-03 PASS e o painel torna eficaz a autorização IMP-F0 já registrada. Os testes e runtime seguem `TEST_NOT_RUN` / `NOT_IMPLEMENTED`.
