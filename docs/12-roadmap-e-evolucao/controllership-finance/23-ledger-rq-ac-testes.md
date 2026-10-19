@@ -78,7 +78,7 @@ Este ledger complementa:
 | RQ-P5-03 | reabrir antes da submissão preserva versão anterior | V1 histórica + working copy + V2 | positive + audit | — | TARGET |
 | RQ-P5-04 | pacotes são por destinatário dentro da mesma competência | submit/review de um destinatário não avança sibling | positive + sibling | recipients config | TARGET |
 | RQ-P5-05 | Enviar significa submeter dentro da Minha DELPI | PACKAGE_SUBMITTED_FOR_REVIEW; nenhum package attachment por e-mail | positive + architecture negative | doc 37 | TARGET |
-| RQ-P5-06 | reviewer é usuário autenticado | ACCESS + reviewer assignment/resource scope; MANAGE não requerido | authz positive + negative | Core/T05 | TARGET |
+| RQ-P5-06 | reviewer autenticado é autorizado por Core e P5 | ACCESS efetivo via Core AND elegibilidade por área/função AND PackageVersion atual AND assignment/resource scope AND regra de negócio; MANAGE isolado não basta | authz positive + sibling + negative | Core/T05 / P5-C / doc 37 | TARGET / T05_TO_INVENTORY |
 | RQ-P5-07 | notifications não são business state | in-app + e-mail opcional; falha de e-mail não reverte submission | integration + sibling | T02/Core | TARGET |
 | RQ-P5-08 | reviewer work pode projetar em Minhas tarefas | self-only projection; deep link abre P5 owner | projection + authz | TSK | TARGET |
 | RQ-P5-09 | versão submetida/histórico de review são imutáveis | nova versão não apaga review anterior | positive + audit | — | TARGET |
