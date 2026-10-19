@@ -63,6 +63,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **Adaptive routing completion (candidate):** [21 — implementation + live](./21-adaptive-capability-routing-completion-implementation.md). Extends `OperationalCapabilityOrchestrator` (no second planner): safe FAST telemetry, comparison-declared native skip, deterministic eligible args, K2 thin-extraction expand + K3 index ranking. Full pytest PASS; live SHA `c2ae80e364` K1 20.2s TEO READ, K2 130 chars (was 48), K3 INDEX→`display_formats`. `ALGORITHM_COMPLETION=PARTIAL`; `I02_ACCEPTED=NO`.
 
+**Adaptive routing completion:** [21 — implemented slices and live evaluation](./21-adaptive-capability-routing-completion-implementation.md); [22 — independent ACCEPT_WITH_RESIDUAL review](./22-adaptive-capability-routing-independent-review.md). FAST telemetry only; OPERATIONAL functional; K2 usefulness and K3 topic relevance residuals; algorithm PARTIAL, I02 not accepted.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -119,7 +121,7 @@ ADAPTIVE_ROUTING_LIVE=EVIDENCE_RECORDED
 LIVE_K1_ACR=PASS_WITH_LIMITATION
 LIVE_K2_ACR=PASS_WITH_LIMITATION
 LIVE_K3_ACR=PASS_WITH_LIMITATION
-NEXT=COORDINATION_INDEPENDENT_REVIEW
+NEXT=I02_K2_K3_BOUNDED_OUTPUT_QUALITY_REMEDIATION
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
