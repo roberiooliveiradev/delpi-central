@@ -14821,3 +14821,14 @@ NEXT=I02_R3_CONSULTANT_EVIDENCE_AND_DEPENDENCY_ANALYSIS
 - **STATE:** `I02_R3_CONSULTANT_EVIDENCE=RECORDED`; `SOURCE_CODE_CHANGED=NO`; `PERFORMANCE_FIX_IMPLEMENTED=NO`; `DEPLOY_PERFORMED=NO`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=I02_R3_COORDINATION_ARCHITECTURE_DECISION
+
+
+## §6.252 — DELIA-C3-I02-R3-INDEPENDENT-DIAGNOSTIC-AND-ARCHITECTURE-DECISION (ACCEPT_WITH_RESIDUAL)
+
+**DATE:** 2026-10-19. **DOC:** [14](../corrections/mcp-contextual-intelligence-orchestration/14-i02r3-independent-diagnostic-review-and-architecture-decision.md). **REVIEWED_HEAD:** `56d3c0b51bcb316d225d480271a773cde20f247b`. GitHub independent review of consultant report 13, code contracts and prior evidence; no independent runtime/test replay.
+
+- **PROVEN:** K1 TÉO fails model `arguments` after cheap owner DISCOVERY: group=2284ms, capability=14778ms, goal=7021ms, native=2398ms, catalog=151ms, arguments=timeout after 3015ms; owner methodology READ=0, total ~30016ms. Source is sequential pre-owner model latency; catalog not dominant. Executor characterization/full tests PASS, live K1 FAIL/K2 SKIPPED/K3 PASS, not independently rerun.
+- **DECISION:** `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND_CANDIDATE`. R3-A controlled stage-cap/headroom experiment to distinguish earlier honest failure from real completion; never declare 10s cap a proven production remedy. R3-B gated typed-proposal consolidation or safe native shortcut only after dependency and cross-owner/write safety proofs. No new planner, global memory, parallelization by convenience or backend deploy as part of decision.
+- **STATE:** `I02_R3_INDEPENDENT_DIAGNOSTIC_REVIEW=ACCEPT_WITH_RESIDUAL`; `SAFE_FUNCTIONAL_OPTIMIZATION=NOT_YET_PROVEN`; `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=I02_R3A_BOUNDED_BUDGET_EXPERIMENT_AND_CRITICAL_PATH_EVIDENCE
