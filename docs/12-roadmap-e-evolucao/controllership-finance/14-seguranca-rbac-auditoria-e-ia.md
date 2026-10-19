@@ -94,7 +94,7 @@ Regras:
 - `MANAGE` não cria visão de equipe;
 - TaskProjection não concede acesso ao recurso;
 - owner reautoriza no deep link;
-- blocker, warning ou mention sem responsabilidade individual não geram task;
+- blocker, warning ou mention sem **obrigação governada pelo owner** (individual ou por área) não geram TaskProjection;
 - nenhum permission code novo é criado para source/task/action;
 - source failure não pode ser convertido em empty;
 - due/overdue só existem quando o owner possuir regra formal.
@@ -108,6 +108,8 @@ AuthZ:
 ```text
 authenticated
 AND effective_permission(controllership-finance.manage)
+AND authorized_administrative_resource_scope
+AND administrative_business_rule
 ```
 
 Regras:
