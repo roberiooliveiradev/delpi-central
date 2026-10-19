@@ -440,11 +440,15 @@ Experience:
 
 ```text
 ALL_APPLICABLE_PACKAGES_SUBMITTED_FOR_REVIEW
-AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
+AND FOR_EACH_APPLICABLE_PACKAGE:
+    EXISTS_VALID_HUMAN_REVIEW_ACCEPTANCE_ON_CURRENT_PACKAGE_VERSION
+    AND EVERY_REQUIRED_AREA_ACCEPTED_CURRENT_PACKAGE_VERSION
 AND NO_OPEN_CLARIFICATION
 AND NO_TERMINAL_COMPETENCE_REJECTION
 → MONTHLY_CLOSING_COMPLETED
 ```
+
+**D-FINAL-02 — PO_APPROVED (19/10/2026):** a revisão depende de **aceite humano real**, nunca de aprovação automática. **Não adicionar trava prévia ao Finalizar/Enviar nem impedir publicação P6 por ausência momentânea de pessoas elegíveis.** Se não houver pessoa para revisar ou se a configuração de áreas vier vazia, o pacote permanece em revisão pendente — o conjunto vazio não é aceite e não satisfaz C2. Para qualquer pacote aplicável, o encerramento exige pelo menos um evento efetivo de aceite humano válido na versão vigente, além do aceite de cada área obrigatória do snapshot. Se não houver nenhum aceite, o fluxo não conclui naturalmente; não criar novo permission code, fallback MANAGE ou endpoint de aceite automático.
 
 Cada área obrigatória é configurada por tipo de pacote no P6 e congelada no ato da submissão P5. Um único aceite auditado por usuário elegível satisfaz aquela área para aquela PackageVersion; dois usuários elegíveis não duplicam o quorum. Nova versão exige novamente os aceites de todas as áreas obrigatórias, sem herdar os anteriores. Reatribuição de pessoa preserva aceite histórico e autoria, sem reversão pela UI ou por endpoint da V1.
 
