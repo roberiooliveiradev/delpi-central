@@ -22,7 +22,7 @@ import {
   operationKey,
   operationPendingQty,
   resolveStatus,
-  MesDayMetrics,
+  MesShiftMetrics,
   SourceStatusMetrics,
   WorkCenterShiftMetrics,
   type StatusView,
@@ -241,12 +241,15 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   // Etapa 4: a fonte oficial do posto (Etapa 1) decide quais superfícies
   // consultam TOTVS. CT MES nunca chama os endpoints TOTVS de paradas;
   // fonte indisponível não assume nenhuma das duas.
-  const downtimeSource = useDowntimeSource(token, branch, workCenter);
+  const downtimeSource = useDowntimeSource(token, branch, workCenter, connected);
   const isTotvs = downtimeSource.source === "totvs";
+  const isMes = downtimeSource.source === "mes";
+  // Eficiência/produzido/apontamentos são sempre ERP — paradas é que
+  // mudam de fonte. CT sem fonte resolvida não chama o endpoint.
   const performance = useWorkCenterPerformance(
     token,
     branch,
-    isTotvs ? workCenter : null,
+    isTotvs || isMes ? workCenter : null,
   );
   const downtimeItems = usePublicWorkCenterDowntimeItems(
     token,
@@ -351,21 +354,26 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const shiftLabel = performance.data?.shift?.label ?? "Turno";
   const downtimeHours = downtime?.available ? downtime.today_hours : null;
   const downtimeAvailable = Boolean(downtime?.available);
-  // Indicadores do cabeçalho conforme a fonte oficial (Etapa 4):
-  // - mes: tiles diários oficiais MES; o tile de paradas abre a Atividade
-  //   do posto (histórico + classificação), nunca o modal TOTVS.
+  // Indicadores do cabeçalho conforme a fonte oficial (Etapa 4, ajuste
+  // híbrido):
+  // - mes: eficiência/produzido continuam do ERP (turno); somente o tile
+  //   de paradas mede o sensor MES ("hoje") e abre a Atividade do posto,
+  //   nunca o modal TOTVS.
   // - totvs: eficiência/produção/paradas do turno legadas; abre o modal
   //   de apontamentos improdutivos do ERP.
   // - indisponível/erro: mensagem explícita, sem valores de outra fonte.
   const openDowntime =
-    downtimeSource.source === "mes"
+    isMes
       ? openActivity
       : isTotvs
         ? () => setDowntimeOpen(true)
         : () => undefined;
   const shiftMetrics =
-    downtimeSource.source === "mes" ? (
-      <MesDayMetrics
+    isMes ? (
+      <MesShiftMetrics
+        shiftLabel={shiftLabel}
+        shiftPct={shiftPct}
+        shiftProducedQty={shiftProducedQty}
         onOpenActivity={openActivity}
         onOpenPerformance={openPerformance}
       />
