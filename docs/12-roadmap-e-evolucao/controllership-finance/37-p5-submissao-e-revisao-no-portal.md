@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Verificação pós-merge de A12 e contratos Core:** [38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
+**Estado transversal atual:** [README](./README.md). Evidência anterior (histórica) no [38](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md).
 
 **TARGET / PRODUCT DECISIONS APPROVED (C2, P5-A..J, DEC-01..04) / A12 TECHNICAL_CONTRACT_INVENTORY_PENDING**
 
@@ -358,9 +358,9 @@ Help deve explicar:
 - clarification/correction/version history;
 - conclusão mensal C2 depende de aceites humanos reais da versão vigente, quorum por área e esclarecimentos resolvidos; ausência de revisores não impede envio, mas mantém revisão pendente.
 
-## 14. RQ / AC adicionais
+## 14. Critérios de aceite detalhados — IDs canônicos no ledger 23
 
-### RQ-P5-11 — submit in-portal
+### AC-P5-SUBMIT — RQ-P5-05
 
 Aceite:
 - package precisa estar FINALIZED;
@@ -368,7 +368,7 @@ Aceite:
 - não existe attachment delivery por e-mail;
 - actor/timestamp/version/reviewer scope são auditados.
 
-### RQ-P5-12 — reviewer authenticated
+### AC-P5-REVIEWER-AUTH — RQ-P5-06 / RQ-P5-AREA-04
 
 Aceite:
 - reviewer possui login Minha DELPI;
@@ -376,7 +376,7 @@ Aceite:
 - package fora do scope retorna 403/404 conforme contract;
 - MANAGE não é necessário para review.
 
-### RQ-P5-13 — notifications
+### AC-P5-NOTIFICATIONS — RQ-P5-07
 
 Aceite:
 - submit gera notification event;
@@ -384,7 +384,7 @@ Aceite:
 - e-mail pode ser enviado pela capability Core conforme configuração;
 - falha de e-mail não reverte package submission.
 
-### RQ-P5-14 — reviewer work projection
+### AC-P5-TASK-PROJECTION — RQ-P5-08
 
 Aceite:
 - actionable review pode aparecer em Minhas tarefas;
@@ -392,7 +392,7 @@ Aceite:
 - action abre owner P5;
 - nenhuma task entity paralela.
 
-### RQ-P5-15 — review history
+### AC-P5-REVIEW-HISTORY — RQ-P5-09
 
 Aceite:
 - reviewer/action/outcome/timestamps auditáveis;
