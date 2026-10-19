@@ -19,16 +19,24 @@ Documento operacional. Não contém segredos. Não substitui autorização do ow
 
 ## Checklist de desbloqueio (ordem)
 
-1. **PATH_AUTH** — owner aprova UPDATE por `AMBIENTE` para `/rest/api/oauth2/v1/token` (evidência: POST sem username → 400 `invalid_grant`).
-2. **SECURE_TRANSPORT** — owner de infra publica HTTPS válido até o REST (ou VPN/proxy com decisão explícita). Sem isso: não enviar password grant real.
-3. **Rotação PSW** — owner rotaciona credencial exposta no PDF; atualiza só na tabela Intranet; valida sem logar senha.
+1. **PATH_AUTH** — AMBIENTE 1 corrigido para `/api/oauth2/v1/token` (relativo a `URL_REST=…/rest`). AMBIENTE 2 permanece EMPTY até autorização própria.
+2. **HTTP interno** — mantido por decisão do solicitante (risco residual). Não exige HTTPS nesta entrega.
+3. **Rotação PSW** — owner rotaciona credencial exposta no PDF; atualiza só na tabela Intranet; **bloqueia** OAuth live até concluir.
 4. **Manifest 1.0.1+** — `POST /core-api/admin/apps/register` com `api-delpi.manifest.json`; grant `api-delpi.integrations.protheus.read` ao usuário/grupo de homologação.
 5. **Deploy** — `git pull` no SHA da `main` + `./infra/scripts/up-prod-sequential.sh --pull --build` (serviço `api-delpi`).
-6. **Live** — `GET /integrations/protheus/status` → supplier existente → inexistente → RBAC negado.
+6. **Live autenticado** — somente após rotação confirmada: `GET /integrations/protheus/status` → supplier existente → inexistente → RBAC negado.
 
-## SQL preparado (não executar sem aprovação)
+## SQL de referência (AMBIENTE 1 já aplicado)
 
-Ver `protheus-rest-read.md` seção Homologação. Um `AMBIENTE` por vez; backup SELECT antes; releitura depois.
+```sql
+UPDATE PARAMETROS_MINHADELPI
+SET CONTEUDO = '/api/oauth2/v1/token'
+WHERE PARAMETRO = 'PATH_AUTH'
+  AND AMBIENTE = 1
+  AND (CONTEUDO IS NULL OR LTRIM(RTRIM(CONTEUDO)) = '');
+```
+
+AMBIENTE 2: somente com autorização explícita do owner (mesmo valor relativo; não duplicar `/rest`).
 
 ## Grant RBAC (procedimento)
 

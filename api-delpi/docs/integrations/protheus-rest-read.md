@@ -58,44 +58,29 @@ Campo `transport`: `https` | `http_cleartext` | `unknown`.
 
 ## Homologação operacional — evidências e bloqueios
 
-Estado revalidado no Intranet (`PARAMETROS_MINHADELPI`, colunas `PARAMETRO`/`CONTEUDO`/`AMBIENTE`):
+Estado Intranet (`PARAMETROS_MINHADELPI`, colunas `PARAMETRO`/`CONTEUDO`/`AMBIENTE`):
 
 | Parâmetro | AMBIENTE 1 | AMBIENTE 2 |
 |---|---|---|
 | `USR_PROTHEUS` / `PSW_PROTHEUS` | PRESENT | PRESENT |
-| `URL_REST` | HTTP cleartext (`host:8701`) | idem |
+| `URL_REST` | `http://192.168.1.233:8701/rest` | idem |
 | `PATH_SUPPLIERS` | `/delpi/api/v1/suppliers` | idem |
-| `PATH_AUTH` | **EMPTY** | **EMPTY** |
+| `PATH_AUTH` | `/api/oauth2/v1/token` (**corrigido**) | **EMPTY** (não alterado) |
 
-### PATH_AUTH — valor candidato (não aplicado)
+Composição canônica (sem duplicar `/rest`):
 
-Descoberta sem envio de credenciais (POST apenas com `grant_type=password`):
+`{URL_REST}/api/oauth2/v1/token` → `http://192.168.1.233:8701/rest/api/oauth2/v1/token`
 
-| Path | Resultado |
-|---|---|
-| `/api/oauth2/v1/token` (doc legada) | HTTP 404 |
-| `/rest/api/oauth2/v1/token` | HTTP 400 `invalid_grant - username não informado` → endpoint existe |
+### Transporte HTTP (decisão operacional)
 
-Correção proposta (requer `PENDING_OWNER_APPROVAL` — **não executar sem owner**):
+O solicitante manteve HTTP na rede interna. Isso é risco residual explícito, não garantia de segurança.
 
-```sql
--- Backup lógico: SELECT ID, AMBIENTE, PARAMETRO, LEN(CONTEUDO) ...
--- Aplicar por AMBIENTE autorizado, um de cada vez:
-UPDATE PARAMETROS_MINHADELPI
-SET CONTEUDO = '/rest/api/oauth2/v1/token'
-WHERE PARAMETRO = 'PATH_AUTH'
-  AND AMBIENTE = ?   -- 1 ou 2, conforme autorização
-  AND (CONTEUDO IS NULL OR LTRIM(RTRIM(CONTEUDO)) = '');
-```
-
-### Gate `SECURE_TRANSPORT`
-
-- `URL_REST` vigente aponta para **HTTP** na porta REST.
-- Porta 443 responde TLS com **certificado self-signed** (falha com verify padrão); path OAuth sob HTTPS:443 não espelha o AppServer REST.
-- Smoke com credenciais reais exige `SECURE_TRANSPORT=PASS` (HTTPS válido / terminação TLS autorizada / decisão explícita do owner de segurança). Enquanto HTTP cleartext: **FAIL**.
+- Porta `:8701` = cleartext HTTP (`Server: HTTPREST`).
+- Smoke autenticado exige: config correta + conta vigente + **rotação da senha exposta no PDF** + aceitação do risco HTTP pelo responsável.
+- Enquanto a rotação não estiver confirmada: `AUTHENTICATED_LIVE_TEST=PENDING` (não reutilizar a senha do PDF).
 
 ### Permissão Keycloak / Core
 
-- Código: `api-delpi.integrations.protheus.read` (manifest + decorator).
-- Publicação: `POST /core-api/admin/apps/register` com nova versão do manifesto `api-delpi` (`apps.manage`), depois grant via RBAC admin — **não** usar `api-delpi.access.full` como atalho.
-- Deploy canônico: `git pull` + `./infra/scripts/up-prod-sequential.sh --pull --build` (escopo `api-delpi`), sem editar container.
+- Código: `api-delpi.integrations.protheus.read` (manifest `1.0.1` + decorator).
+- Publicação: `POST /core-api/admin/apps/register` + grant RBAC — **não** usar `api-delpi.access.full` como atalho.
+- Deploy canônico: `git pull` + `./infra/scripts/up-prod-sequential.sh --pull --build` (escopo `api-delpi`).
