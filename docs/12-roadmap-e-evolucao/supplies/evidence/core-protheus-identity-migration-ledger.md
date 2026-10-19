@@ -8,7 +8,7 @@
 | Chamado | #1354 (não encerrado automaticamente) |
 | `EXISTING_EQUIVALENT` | `NO` |
 | `REUSE_DECISION` | `EXTEND` |
-| Código hardening | ver commit desta entrega |
+| Código hardening / `origin/main` | `5896fc568b433e5ab95e18234fccfd3fc8e6ddb1` |
 | `PRODUCTION_CUTOVER` | `PENDING` |
 | Data migração produção | não executada nesta rodada |
 
