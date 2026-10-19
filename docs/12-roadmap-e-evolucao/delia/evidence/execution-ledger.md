@@ -15074,3 +15074,17 @@ NEXT=I03_K2_K3_BOUNDED_NONREGRESSION_GATE
 
 NEXT_MAIN=I03_K2_K3_BOUNDED_NONREGRESSION_GATE
 NEXT_RELATED=DELIA-C3-I03-HELPDESK-PERSONAL-TICKET-COUNT-ROUTING-01
+
+
+## §6.272 — DELIA-C3-I03-K2-K3-BOUNDED-NONREGRESSION-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-I03-K2-K3-BOUNDED-NONREGRESSION-REMEDIATION-01`. **IMPLEMENTATION_SHA / DEPLOYED:** `9a8775018f31111ce59b11945efec962e0db73d4`. **DOC:** [31](../corrections/mcp-contextual-intelligence-orchestration/31-i03-k2-k3-bounded-nonregression-remediation.md). **AUTHORITIES:** docs 24–29; §6.270 gate.
+
+- **Reuse:** `EXISTING_EQUIVALENT=YES` / `REUSE_DECISION=EXTEND` on `_prior_continuation_attempt` + `_propose_index_identifier`.
+- **K2:** invalid model index no longer erases sufficient prior excerpts on extraction follow-ups (`recover_invalid_index`). Live: prior_continuation transformed excerpts=12; 12313ms; 6 bullets; `prior_turn_evidence_only`; ACT=0.
+- **K3:** index_select deadline/timeout after INDEX degrades to clarification (`budget_skip`), not SOURCE_UNAVAILABLE. Live: VISTA INDEX→no_match clarify 21784ms; ACT=0.
+- **Holdouts:** K1 TEO methodology 16943ms GROUNDED; K4 DAVI `CAPABILITY_NOT_MATCHED` eligible=95 in 17335ms.
+- **Tests:** `test_i03_k2_k3_nonregression.py` + full `delia-api` pytest **PASS**.
+- **STATE:** `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW

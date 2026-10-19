@@ -75,7 +75,9 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I03 semantic discovery (candidate):** [28 — implementation + live](./28-i03-davi-semantic-discovery-implementation.md). Distinguishes search miss (`eligible_action_count>0`) from absence/non-enumerable catalogs. Live SHA `3d14a51046`: K4 DAVI `CAPABILITY_NOT_MATCHED` eligible=95 in 21.1s, no control-plane leak, ACT=0. `I03_ACCEPTED=NO`.
 
-**I03 implementation and independent review:** [28 — K4 implementation/live](./28-i03-davi-semantic-discovery-implementation.md); [29 — direct DAVI MCP cross-check + scoped review](./29-i03-independent-davi-crosscheck-review.md). Direct owner: generic discovery 0/95 eligible, thematic product discovery 1 candidate. K4 scoped ACCEPT_WITH_RESIDUAL; K2 invalid_record_index and K3 budget_exceeded still require bounded non-regression gate. No I04 progression.
+**I03 implementation and independent review:** [28 — K4 implementation/live](./28-i03-davi-semantic-discovery-implementation.md); [29 — direct DAVI MCP cross-check + scoped review](./29-i03-independent-davi-crosscheck-review.md). Direct owner: generic discovery 0/95 eligible, thematic product discovery 1 candidate. K4 scoped ACCEPT_WITH_RESIDUAL.
+
+**I03 K2/K3 non-regression gate (candidate):** [31 — remediation + live](./31-i03-k2-k3-bounded-nonregression-remediation.md). Invalid-index recovery + index_select budget→clarify. Live SHA `9a8775018f`: K1 16.9s; K2 continuity 12.3s / 6 bullets; K3 clarify 21.8s; K4 DAVI eligible=95. `I03_ACCEPTED=NO`.
 
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
@@ -142,6 +144,11 @@ I02_ACCEPTED=YES_WITH_RESIDUAL
 I03_IMPLEMENTATION=EVIDENCE_READY
 I03_LIVE=EVIDENCE_RECORDED
 LIVE_K4_I03=PASS
+I03_K2_K3_NONREGRESSION_LIVE=EVIDENCE_RECORDED
+LIVE_K1=PASS
+LIVE_K2=PASS
+LIVE_K3=PASS
+LIVE_K4_HOLDOUT=PASS
 I03_ACCEPTED=NO
 NEXT=COORDINATION_INDEPENDENT_REVIEW
 C3_EXECUTED=NO
