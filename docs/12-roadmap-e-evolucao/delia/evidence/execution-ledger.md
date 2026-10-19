@@ -14903,3 +14903,15 @@ NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
 - **DECISION:** `VITEST_PLUGIN_UI=PASS`; `PHASE_PROGRESSION=NONE`; `D01/D02/D03/D04_ACCEPTED=NO`; recomendação: `ACCEPT`.
 
 NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
+
+## §6.258 — DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-C3-MCP-I02-R3B-ADAPTIVE-CAPABILITY-ROUTING-IMPLEMENTATION-01`. **DOC:** [17](../corrections/mcp-contextual-intelligence-orchestration/17-i02r3b-typed-capability-goal-selection-implementation.md). **AUTHORITIES:** docs 14/16 preserved.
+
+- **Gate:** typed cold-start capability+goal consolidation authorized as minimal safe reuse of `_propose` / `_TurnGoal` validations; no public contract; no new planner.
+- **Implementation:** `_select_capability_with_goal` + `CAPABILITY_AND_GOAL_INSTRUCTION`; fallback to dedicated `turn_goal` when `goal_class` absent; multiturn early goal unchanged; native skip / stage-cap10 / arguments-headroom defaults unchanged.
+- **Tests:** `test_i02r3b_typed_capability_goal_selection.py` PASS; I01/I02/R2/R3/R3A regression PASS; full `delia-api` pytest PASS. Live K1/K2/K3 `TEST_NOT_RUN`.
+- **Metrics (synthetic):** −1 model call on eligible cold-start when typed goal present; methodology READ preserved; MATERIAL_ACT=0.
+- **STATE:** `I02_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
+
+NEXT=COORDINATION_INDEPENDENT_REVIEW

@@ -53,6 +53,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **I02-R3A independent review:** [16 — experiment evidence accepted with residuals](./16-i02r3a-independent-experiment-review.md). No K1 task-success improvement demonstrated, stage cap 10s not approved in production, arguments guard OFF. Next R3-B typed-selection contract/safety experiment gate; no functional merge approved.
 
+**I02-R3B — typed capability+goal (cold-start):** [17 — implementation evidence](./17-i02r3b-typed-capability-goal-selection-implementation.md). Cold-start consolidates capability+goal in one typed propose (−1 model call when `goal_class` present); legacy/incomplete payloads fall back to dedicated `turn_goal`. Native skip / stage-cap / arguments-headroom defaults unchanged. Live K1 `TEST_NOT_RUN`. `I02_ACCEPTED=NO` until independent review.
+
 ## 3. Ondas e etapas bounded — uma entrega de cada vez
 
 | ID | Etapa | Entrega e gate de aceite |
@@ -95,10 +97,13 @@ K3_OWNER_READ_REACHED=YES
 K1_K2_TEO_LIVE=FAIL_TIMEOUT
 I02_R3=DIAGNOSIS_ACCEPTED_WITH_RESIDUAL
 I02_R3A=EXPERIMENT_EVIDENCE_RECORDED
+I02_R3B=TYPED_MERGE_IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW
 K1_TIMEOUT_EXACT_STAGE=arguments
 STAGE_CAP_10S_PRODUCTION_APPROVAL=NO
 ARGUMENTS_HEADROOM_PRODUCTION_DEFAULT=OFF
-NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
+TYPED_CAPABILITY_GOAL_COLD_START=IMPLEMENTED
+LIVE_K1_R3B=TEST_NOT_RUN
+NEXT=COORDINATION_INDEPENDENT_REVIEW
 C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO

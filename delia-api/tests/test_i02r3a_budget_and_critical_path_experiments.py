@@ -569,8 +569,11 @@ def test_e2_headroom_formula_derivation():
 
 
 def test_e3_typed_selection_dependency_map_fields():
-    """Documents candidate merge fields — does not implement merge."""
-    # Current path issues separate proposals with distinct schemas.
+    """Legacy fixture (no goal_class on capability) still uses turn_goal.
+
+    Functional merge when goal_class is present is covered by
+    ``test_i02r3b_typed_capability_goal_selection.py``.
+    """
     required_if_merged = {
         "goal_class",
         "remote_name",  # capability
@@ -578,17 +581,14 @@ def test_e3_typed_selection_dependency_map_fields():
         "prior_evidence_sufficient",
         "business_subject",
     }
-    # Security: write gate must remain independently validated.
     write_gate_independent = True
-    # Model call reduction IF approved later: 2 → 1 for goal+capability
-    # (group selection still separate when len(groups)>1).
     estimated_call_delta_if_approved = -1
     assert "goal_class" in required_if_merged
     assert write_gate_independent is True
     assert estimated_call_delta_if_approved == -1
-    # Baseline still uses separate purposes.
+    # Legacy payloads without goal_class keep a dedicated turn_goal call.
     m = _run_teo(
-        variant="E3_baseline_separate",
+        variant="E3_legacy_separate_goal",
         stage_timeout=10.0,
         experimental_guard=False,
         advance_on={
