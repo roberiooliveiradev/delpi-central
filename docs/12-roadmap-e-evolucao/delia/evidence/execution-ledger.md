@@ -15785,3 +15785,41 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=USER_MIC_QA_CONFIRMATION_OR_OPERATIONAL_FEEDBACK
 ```
+
+
+## §6.313 — Product Master Option B: one-time Q02-A as I04 semantic remediation, other gates locked
+
+**DATE:** 2026-10-19. **AUTHORITY:** Product Master explicit approval in DÉLIA Architecture/Coordination v10 user message: *"Aprovo a alternativa B como exceção canônica delimitada: autorizar somente Q02-A para remediação de I04, preservar os demais gates."* **REANCHOR_ON_DECISION:** main `a23afa99c26adbcc262da69df6e9223ddc947b56`; `orchestration.py` blob `0d82c09883570d5fb45464e9773a23b2daaba0c2` (reviewed G0 `cca468a365bd592498caa0be8cb20c8e0a6f75fe`). GPT GitHub repository/tree reanchored; local checkout `git status` and tests not run here. **AUTHORITIES UPDATED:** [16 — current Product Master phase decision](../16-execution-master-plan.md), [59 §0 — one-time exception to the input edge](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md), [61 §9 — executable Cursor handoff](../corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md); [62](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md) supersession crosslink. Architectural ADR58 and frozen §6.145 remain unchanged.
+
+**DECISION = APPROVED_PHASE_DEPENDENCY_EXCEPTION_FOR_ONE_CODE_PACKAGE**. Option A `STOP_EXHAUSTED` after the failed independent live gate §6.311–§6.312: C02 admission `owner_surface/operational`, but `mcp:davi` selected 3× and `mcp:teo` variant, never VISTA in sample, no correct formats outcome; SIPOC and hypothetical follow-up failures also present. Rather than another prohibited G0 code patch, authorize **only Q02-A semantic interpretation consolidation** as scoped I04 remediation. Q01 remains unexecuted, its inventory doc60 is discovery only, and it must not be represented as approved merely because Q02-A has an entry exception. The ordinary six-package dependency remains for future packages until explicit follow-up decision; no implicit unlock of Q02-B, Q02-C or Q03.
+
+**TASK AUTHORIZED:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01`. Implementation Cursor; independent gate GPT Coordination. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE|EXTEND` for existing `OperationalCapabilityOrchestrator`, `InvokeModel/_propose`, typed goal, `TurnDeadline`, `CapabilityProviderPort`, MCP/OpenAPI. Semantic LLM proposes goal/admission/group/capability from available approved live catalog with history/negation/context; deterministic validation enforces schema, live membership, provenance, Core/Domain AuthZ, policy/decision, output selection-only, PREPARE/ACT, idempotency, limits and safety. Q02-A scope S01–S11/S15/S20–S22 F27/F32/F40 to the extent that they replace *semantic* lexical classifiers / redundant model decisions. Excluded: Q02-B arguments, index, typed provenance, Q02-C comparison/synthesis, duplicate candidate/arguments model invocations out of scope, public DTO changes, new planner/engine/registry/provider-specific branches, new Chat dependency and free factual model prose.
+
+**MANDATORY EXECUTION GATES:** revalidate HEAD/status, sources in canonical order, one residual `rg` caller drift check versus doc60 (no second inventory), capture baseline and RED adversarial/golden tests before diff, smallest diff, full backend/security tests, authorized real-model live on exact evaluated SHA/config with DAVI/TÉO/VISTA/OpenAPI/no-tool, C02 cold+2 warm and real owner/capability selection/format outcome, SIPOC and hypothetical dialogue success, negative IDs/injection, renamed/reordered/equivalent provider/catalog, zero unauthorized ACT and strict turn budget 30s. No positive GLPI personal scope result without genuine linked subject; no production deploy without separate operational authorization; no test green/fallback/HTTP 200 as business PASS. Q02-A one implementation, one independent review and at most one bounded rework **only if separately issued after review**. Violated frozen contract → `STOP/ARCHITECTURE_DECISION_REQUIRED`; repeat material failure → `STOP/OWNER/PRODUCT_MASTER`. GPT documentation changes do not execute runtime or advance phases.
+
+```text
+PRODUCT_MASTER_OPTION_B_Q02_A_EXCEPTION=APPROVED
+ARCHITECTURE_DIRECTION_ADR58=APPROVED_UNCHANGED
+G0_I04_GATE_RESULT=FAIL_BLOCKED
+G0_OPTION_A=STOP_EXHAUSTED
+G0_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q01_EXECUTED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_A_IMPLEMENTATION_EXECUTED=NO
+Q02_A_INDEPENDENT_REVIEW=PENDING
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+MODEL_AUTHORED_FACTUAL_PROSE=NONE
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+DOCS_ONLY_AUTHORITATIVE_DECISION=YES
+TESTS_THIS_DECISION=TEST_NOT_RUN
+NEXT=CURSOR_SINGLE_BOUNDED_Q02_A_I04_REMEDIATION
+```
