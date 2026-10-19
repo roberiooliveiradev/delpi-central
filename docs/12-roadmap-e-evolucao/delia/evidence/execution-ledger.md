@@ -15632,3 +15632,24 @@ NEXT=CURSOR_ONE_G0_REWORK_THEN_INDEPENDENT_REVIEW
 
 NEXT=INDEPENDENT_REVIEW_VD_F03_AND_DEPLOY_CANONICAL_STT
 
+
+## §6.308 — G0 bounded rework: remove positional string comparison (IMPLEMENTATION)
+
+**DATE:** 2026-10-19. **TASK:** `DELIA-C3-I04-G0-BOUNDED-REWORK-01`. **DOC:** [62](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md). **BASE:** `8e7eb9640f` (§6.306 REWORK).
+
+- **ROOT:** `_segment_compare_prior_units` treated ` — `-split prior bullets as attribute comparison without typed fields/provenance (review blocker).
+- **FIX:** deleted positional compare helpers; compare/analyze on prior path requires shared non-excerpt scalars (`_prior_supports_typed_attribute_compare`); otherwise insufficiency (`prior_turn_evidence_only` + `insufficient_evidence`). List/subset recovery preserved for non-compare. G0-02 timeout cap/soft-land preserved; admission behavioral fake-model test for formats→owner selection.
+- **TESTS:** PROV/CONT G0 rework matrix + CONV admission/soft-land; full `delia-api` pytest PASS. LIVE=`TEST_NOT_RUN`.
+- **GATES:** `G0_BOUNDED_REWORK_EXECUTED=YES`; `G0_BOUNDED_REWORK_REMAINING=0`; `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`. NEXT=independent review of this rework (no further G0 patch cycle).
+
+```text
+I04_ACCEPTED=NO
+G0_BOUNDED_REWORK_EXECUTED=YES
+G0_BOUNDED_REWORK_REMAINING=0
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_G0_REWORK_REVIEW
+```

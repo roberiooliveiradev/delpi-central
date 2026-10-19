@@ -90,3 +90,31 @@ Q02_AUTHORIZED=NO
 C3_EXECUTED=NO
 NEXT=SINGLE_BOUNDED_G0_REWORK_THEN_STOP_OR_REVIEW
 ```
+
+
+## Bounded rework execution (DELIA-C3-I04-G0-BOUNDED-REWORK-01)
+
+**DATE:** 2026-10-19. **REFERENCE_HEAD:** `8e7eb9640f6b5aa13b10b8f6978ac2e81b10afbc` (§6.306). Ledger: §6.308.
+
+### Change
+
+- **Removed** `_segment_compare_prior_units` / `_comparison_from_prior_excerpts` and all paths that converted free-text prior bullets into «Comparação» SUCCESS.
+- **Compare/analyze** over prior continuation now requires `_prior_supports_typed_attribute_compare` (≥2 records sharing non-`excerpt` scalar fields). Current `_prior_excerpt_records` yields only excerpts → **explicit insufficiency** with `LIMITATION_PRIOR_TURN_CONTINUATION` + `LIMITATION_INSUFFICIENT_EVIDENCE` before synthesis.
+- Empty/invalid synthesis and list replay on compare also fail closed to insufficiency. Only `Diferenças comprovadas:` counts as typed compare outcome (`_typed_compare_outcome_content`); bare `Comparação:` headers are rejected.
+- **Preserved:** subset/list empty_selection recovery for non-compare; G0-02 12s conversational fallback soft-land.
+- **G0-02 harness:** simulated admission with `requires_owner_surface=true` / `operational` routes formats ask into capability selection (not conversational NOT_APPLICABLE).
+
+### Tests
+
+RED/GREEN in `test_provider_neutral_semantic_provenance_and_continuity.py` (reorder, unequal segments, delimiter-in-value, 2nd/3rd items, fake id, invalid index, misleading header, typed-field helper). Admission behavioral + soft-land in `test_conversational_intelligence_recovery.py`. Full `delia-api` pytest PASS.
+
+### Gates
+
+```text
+G0_BOUNDED_REWORK_EXECUTED=YES
+G0_BOUNDED_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+LIVE_POST_REWORK=TEST_NOT_RUN
+NEXT=COORDINATION_INDEPENDENT_G0_REWORK_REVIEW
+```

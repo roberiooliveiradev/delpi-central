@@ -28,12 +28,15 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     LIMITATION_INSUFFICIENT_EVIDENCE,
-    _comparison_from_prior_excerpts,
     _free_string_grounded_in_user_input,
     _prior_excerpt_records,
+    _prior_supports_typed_attribute_compare,
     _prior_transform_probe_eligible,
     _render_is_list_replay_not_compare,
-    _segment_compare_prior_units,
+    _typed_compare_outcome_content,
+)
+from app.application.interaction.contracts import (
+    LIMITATION_PRIOR_TURN_CONTINUATION,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -523,36 +526,30 @@ def test_cont_t03_compare_prior_stops_without_owner_when_budget_tight():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.error_code != "turn_budget_exhausted"
     content = attempt.content or ""
-    # G0-01: empty synthesis on compare must not succeed as list replay.
+    # G0 rework: free-text prior bullets are never typed compare SUCCESS.
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    assert "Comparação a partir" not in content
     assert not content.lower().startswith("encontrei ")
     assert not content.lower().startswith("recuperei ")
-    assert (
-        "Comparação a partir dos registros anteriores" in content
-        or LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
-    )
 
 
-def test_g0_01_compare_empty_selection_is_not_list_success():
-    """RED→GREEN: compare + empty items ≠ bullet list SUCCESS."""
+def _compare_prior_attempt(prior_content: str, ask: str, proposals=None):
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
     prior = (
         ConversationContextTurn(
             kind=TurnKind.USER_INPUT,
-            content="Busque terminais olhal cadastrados.",
+            content="Busque itens cadastrados.",
         ),
         ConversationContextTurn(
             kind=TurnKind.DELIA_RESULT,
-            content=(
-                "Encontrei 2 registros:\n"
-                "- 30191627 — OLHAL CERAMICA — S — PC\n"
-                "- 30191751 — OLHAL PARA PARAF FRANCES — S — PC"
-            ),
+            content=prior_content,
             epistemic_class=EpistemicClass.OBSERVATION,
         ),
     )
     provider = _search_provider()
-    proposals = {
+    base = {
         INTERACTION_ADMISSION_INSTRUCTION_ID: {
             "requires_owner_surface": False,
             "interaction_class": "conversation",
@@ -564,85 +561,130 @@ def test_g0_01_compare_empty_selection_is_not_list_success():
         },
         SYNTHESIS_INSTRUCTION_ID: {"items": []},
     }
-    orch = _orch([provider], proposals, clock=clock)
+    if proposals:
+        base.update(proposals)
+    orch = _orch([provider], base, clock=clock)
     attempt = orch.attempt(
-        "Compare os dois.",
-        prior_turns=prior,
-        turn_deadline=deadline,
+        ask, prior_turns=prior, turn_deadline=deadline
     )
-    assert provider.calls == []
-    content = attempt.content or ""
-    assert "Comparação a partir dos registros anteriores" in content
-    assert "30191627" in content and "30191751" in content
-    assert "OLHAL CERAMICA" in content
-    assert not content.lower().startswith("encontrei ")
-    assert not content.lower().startswith("recuperei ")
-    assert LIMITATION_INSUFFICIENT_EVIDENCE not in attempt.limitations
+    return attempt, provider
 
 
-def test_g0_01_compare_rejects_opaque_prose_without_segments():
-    clock = FakeClock()
-    deadline = TurnDeadline.start(30.0, clock=clock)
-    prior = (
-        ConversationContextTurn(
-            kind=TurnKind.USER_INPUT,
-            content="Resuma o guia.",
-        ),
-        ConversationContextTurn(
-            kind=TurnKind.DELIA_RESULT,
-            content=(
-                "- Visão geral sem atributos estruturados\n"
-                "- Outra linha também sem segmentos"
-            ),
-            epistemic_class=EpistemicClass.OBSERVATION,
-        ),
-    )
-    provider = _search_provider()
-    proposals = {
-        INTERACTION_ADMISSION_INSTRUCTION_ID: {
-            "requires_owner_surface": False,
-            "interaction_class": "conversation",
-        },
-        GOAL_INSTRUCTION_ID: {
-            "goal_class": "compare",
-            "comparison_requested": True,
-            "prior_evidence_sufficient": True,
-        },
-        SYNTHESIS_INSTRUCTION_ID: {"items": []},
-    }
-    orch = _orch([provider], proposals, clock=clock)
-    attempt = orch.attempt(
+def test_g0_rework_compare_empty_selection_is_insufficiency():
+    """Empty items on free-text prior → insufficiency, never string diffs."""
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n"
+        "- 30191627 — OLHAL CERAMICA — S — PC\n"
+        "- 30191751 — OLHAL PARA PARAF FRANCES — S — PC",
         "Compare os dois.",
-        prior_turns=prior,
-        turn_deadline=deadline,
     )
     assert provider.calls == []
     assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
-    assert "Comparação a partir" not in (attempt.content or "")
+    assert LIMITATION_PRIOR_TURN_CONTINUATION in attempt.limitations
+    content = attempt.content or ""
+    assert "30191627" not in content or "→" not in content
+    assert "Comparação a partir" not in content
+    assert not _typed_compare_outcome_content(content)
 
 
-def test_g0_01_segment_compare_helpers():
-    compared = _segment_compare_prior_units(
-        "- 1 — ALPHA — X",
-        "- 2 — BETA — X",
+def test_g0_rework_compare_reordered_segments_not_attributes():
+    """Same tokens in different order still lack typed field provenance."""
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n"
+        "- ALPHA — 100 — KG\n"
+        "- KG — 100 — ALPHA",
+        "Compare os dois.",
     )
-    assert compared is not None
-    assert "1 → 2" in compared
-    assert "ALPHA → BETA" in compared
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+
+
+def test_g0_rework_compare_unequal_segment_counts_insufficient():
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n"
+        "- A — B — C — D\n"
+        "- X — Y",
+        "Compare os dois.",
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+
+
+def test_g0_rework_compare_delimiter_inside_value_insufficient():
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n"
+        "- TERM — PINO — INDUSTRIAL — ESPECIAL\n"
+        "- TERM — OLHAL — SIMPLES",
+        "Compare os dois.",
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+
+
+def test_g0_rework_compare_second_and_third_items_insufficient():
+    """Ordinal subset compare over prose prior cannot invent attributes."""
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 4 registros:\n"
+        "- A — ONE\n"
+        "- B — TWO\n"
+        "- C — THREE\n"
+        "- D — FOUR",
+        "Compare o segundo e o terceiro.",
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+
+
+def test_g0_rework_compare_fake_identifier_in_prior_insufficient():
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n"
+        "- FAKE-ID-999 — produto inventado\n"
+        "- FAKE-ID-998 — outro inventado",
+        "Compare os dois.",
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+    assert "FAKE-ID" not in (attempt.content or "")
+
+
+def test_g0_rework_compare_invalid_index_insufficient():
+    attempt, provider = _compare_prior_attempt(
+        "Encontrei 2 registros:\n- A — ONE\n- B — TWO",
+        "Compare os dois.",
+        proposals={
+            SYNTHESIS_INSTRUCTION_ID: {
+                "items": [
+                    {"record_index": 99, "fields": ["excerpt"]},
+                    {"record_index": 1, "fields": ["excerpt"]},
+                ]
+            }
+        },
+    )
+    assert provider.calls == []
+    assert LIMITATION_INSUFFICIENT_EVIDENCE in attempt.limitations
+
+
+def test_g0_rework_misleading_compare_header_is_not_outcome():
+    assert _typed_compare_outcome_content(
+        "Comparação: valores divergentes.\n- a → b"
+    ) is False
+    assert _typed_compare_outcome_content(
+        "Comparação a partir dos registros anteriores:\n- a → b"
+    ) is False
     assert _render_is_list_replay_not_compare(
-        "Encontrei 2 registros:\n- A\n- B"
+        "Comparação: valores divergentes.\n- a → b"
     )
-    assert not _render_is_list_replay_not_compare(
-        "Comparação a partir dos registros anteriores:\n- A → B"
+    assert _typed_compare_outcome_content(
+        "Linha.\nDiferenças comprovadas:\n- código: 1 → 2"
     )
-    assert (
-        _comparison_from_prior_excerpts(
-            (
-                {"excerpt": "- 10 — LEFT"},
-                {"excerpt": "- 20 — RIGHT"},
-            )
+    assert not _prior_supports_typed_attribute_compare(
+        ({"excerpt": "- A — B"}, {"excerpt": "- C — D"})
+    )
+    assert _prior_supports_typed_attribute_compare(
+        (
+            {"code": "1", "description": "A"},
+            {"code": "2", "description": "B"},
         )
-        is not None
     )
 
 

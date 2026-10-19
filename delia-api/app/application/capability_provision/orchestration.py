@@ -3935,71 +3935,63 @@ def _extraction_list_from_prior_excerpts(
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
 
-def _segment_compare_prior_units(
-    left: str,
-    right: str,
-) -> str | None:
-    """Deterministic segment diffs from two prior list-line units.
+def _prior_supports_typed_attribute_compare(
+    records: tuple[Mapping[str, Any], ...],
+) -> bool:
+    """True when ≥2 prior records share non-excerpt scalar fields.
 
-    Prior DELIA_RESULT bullets often carry ``a — b — c`` scalars from
-    an earlier owner projection. Splitting on the same separator yields
-    evidenced values only — never invents field names or FACT leaves.
-    Returns None when segments are not comparable (arity < 2 or empty).
+    Prior DELIA_RESULT text split by ``_prior_excerpt_records`` yields
+    only ``excerpt`` leaves — untrusted conversational data, never
+    typed owner attributes. Positional string splits are not
+    comparability. A compare task may succeed on this path only when
+    records already expose shared named scalars under the frozen
+    selection-only contract (same grain as ``_proven_field_differences``).
     """
-    left_clean = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", (left or "").strip())
-    right_clean = re.sub(r"^(?:[-*]|\d+[.)])\s+", "", (right or "").strip())
-    if not left_clean or not right_clean or left_clean == right_clean:
-        return None
-    left_parts = [p.strip() for p in left_clean.split(" — ") if p.strip()]
-    right_parts = [p.strip() for p in right_clean.split(" — ") if p.strip()]
-    if len(left_parts) < 2 or len(right_parts) < 2:
-        return None
-    width = min(len(left_parts), len(right_parts), MAX_SYNTHESIS_FIELDS)
-    diffs: list[str] = []
-    for index in range(width):
-        if left_parts[index] == right_parts[index]:
-            continue
-        diffs.append(
-            f"- {left_parts[index]} → {right_parts[index]}"
-        )
-    if not diffs:
-        return (
-            "Comparação a partir dos registros anteriores: "
-            "valores coincidem nos trechos disponíveis."
-        )[:MAX_RENDER_CONTENT_CHARS]
-    lines = [
-        "Comparação a partir dos registros anteriores:",
-        *diffs,
-    ]
-    return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
+    if len(records) < 2:
+        return False
+    field_sets: list[set[str]] = []
+    for record in records:
+        fields = {
+            _canonical_key(key)
+            for key, value in record.items()
+            if _canonical_key(key) != "excerpt"
+            and value is not None
+            and not isinstance(value, (Mapping, list, tuple))
+            and str(value).strip()
+        }
+        if not fields:
+            return False
+        field_sets.append(fields)
+    shared = set(field_sets[0])
+    for other in field_sets[1:]:
+        shared &= other
+    return bool(shared)
 
 
-def _comparison_from_prior_excerpts(
-    records: tuple[Mapping[str, str], ...],
-) -> str | None:
-    """Compare first two prior bullet units or declare incomparable."""
-    bullets = list(_collect_extraction_units(records))
-    if len(bullets) < 2:
-        return None
-    return _segment_compare_prior_units(bullets[0], bullets[1])
+def _typed_compare_outcome_content(content: str) -> bool:
+    """Only the deterministic typed field-diff section is compare SUCCESS.
+
+    Literal headers such as ``Comparação:`` are not task-outcome proof
+    (G0 bounded rework / independent review).
+    """
+    return "Diferenças comprovadas:" in (content or "")
 
 
 def _render_is_list_replay_not_compare(content: str) -> bool:
-    """True when rendered text is a list projection without compare."""
+    """True when rendered text is a list projection without typed compare."""
     text = (content or "").strip()
     if not text:
         return True
-    if "Diferenças comprovadas:" in text:
-        return False
-    if text.startswith("Comparação a partir dos registros anteriores"):
-        return False
-    if text.startswith("Comparação:"):
+    if _typed_compare_outcome_content(text):
         return False
     # List headers / recover-empty projections are not comparisons.
     lowered = text.lower()
     if lowered.startswith("encontrei ") or lowered.startswith(
         "recuperei "
     ):
+        return True
+    if lowered.startswith("comparação"):
+        # Bare/misleading compare headers without typed diffs.
         return True
     bullet_lines = [
         line
@@ -4013,6 +4005,29 @@ def _render_is_list_replay_not_compare(content: str) -> bool:
         and not re.match(r"^\s*(?:[-*]|\d+[.)])\s+\S", line)
     ]
     return len(bullet_lines) >= 2 and len(prose_lines) <= 1
+
+
+def _compare_insufficiency_attempt(
+    correlation: str,
+    *,
+    decision: str,
+) -> GovernedCapabilityAttempt:
+    """Honest insufficiency for compare without typed prior attributes."""
+    _logger.info(
+        "orchestration stage=prior_continuation "
+        "decision=%s correlation_id=%s",
+        decision,
+        correlation,
+    )
+    return GovernedCapabilityAttempt(
+        status=GovernedCapabilityStatus.SUCCESS,
+        correlation_id=correlation,
+        content=_insufficiency_content(),
+        limitations=(
+            LIMITATION_PRIOR_TURN_CONTINUATION,
+            LIMITATION_INSUFFICIENT_EVIDENCE,
+        ),
+    )
 
 
 def _recover_prior_extraction_after_invalid_index(
@@ -6902,6 +6917,17 @@ class OperationalCapabilityOrchestrator:
         records = _prior_excerpt_records(prior_content)
         if not records:
             return None
+        # G0 bounded rework: compare/analyze over free-text prior
+        # excerpts is never a typed attribute comparison. Fail closed
+        # before spending a synthesis stage on positional heuristics.
+        if (
+            comparison_requested
+            and not _prior_supports_typed_attribute_compare(records)
+        ):
+            return _compare_insufficiency_attempt(
+                correlation,
+                decision="compare_insufficient_untyped_prior",
+            )
         block: dict[str, Any] = {"records": [dict(r) for r in records]}
         if business_subject is not None:
             block["business_subject"] = business_subject
@@ -6979,88 +7005,54 @@ class OperationalCapabilityOrchestrator:
             # still never invents facts or accepts the invalid index.
             if reason == "invalid_record_index":
                 if comparison_requested:
-                    compared = _comparison_from_prior_excerpts(records)
-                    if compared is not None:
-                        _logger.info(
-                            "orchestration stage=prior_continuation "
-                            "decision=compare_after_invalid_index "
-                            "excerpts=%d correlation_id=%s",
-                            len(records),
-                            correlation,
-                        )
-                        rendered = compared
-                else:
-                    recovered = (
-                        _recover_prior_extraction_after_invalid_index(
-                            input_text,
-                            records,
-                        )
+                    return _compare_insufficiency_attempt(
+                        correlation,
+                        decision="compare_reject_invalid_index",
                     )
-                    if recovered is not None:
-                        _logger.info(
-                            "orchestration stage=prior_continuation "
-                            "decision=recover_invalid_index excerpts=%d "
-                            "correlation_id=%s",
-                            len(records),
-                            correlation,
-                        )
-                        rendered = recovered
+                recovered = (
+                    _recover_prior_extraction_after_invalid_index(
+                        input_text,
+                        records,
+                    )
+                )
+                if recovered is not None:
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=recover_invalid_index excerpts=%d "
+                        "correlation_id=%s",
+                        len(records),
+                        correlation,
+                    )
+                    rendered = recovered
             if rendered is None and reason == "empty_selection":
                 if comparison_requested:
-                    # G0-01 / F33: never promote list replay as compare.
-                    compared = _comparison_from_prior_excerpts(records)
-                    if compared is not None:
-                        _logger.info(
-                            "orchestration stage=prior_continuation "
-                            "decision=compare_from_prior_segments "
-                            "excerpts=%d correlation_id=%s",
-                            len(records),
-                            correlation,
-                        )
-                        rendered = compared
-                    else:
-                        _logger.info(
-                            "orchestration stage=prior_continuation "
-                            "decision=compare_insufficient_segments "
-                            "correlation_id=%s",
-                            correlation,
-                        )
-                        return GovernedCapabilityAttempt(
-                            status=GovernedCapabilityStatus.SUCCESS,
-                            correlation_id=correlation,
-                            content=_insufficiency_content(),
-                            limitations=(
-                                LIMITATION_PRIOR_TURN_CONTINUATION,
-                                LIMITATION_INSUFFICIENT_EVIDENCE,
-                            ),
-                        )
-                else:
-                    # Recover only when prior already exposes bullet /
-                    # numbered listing units. Sentence-split prose from
-                    # a single prior turn must not become a fake list.
-                    recovered = _extraction_list_from_prior_excerpts(
-                        records
+                    return _compare_insufficiency_attempt(
+                        correlation,
+                        decision="compare_reject_empty_selection",
                     )
-                    bullet_units = [
-                        (record.get("excerpt") or "").strip()
-                        for record in records
-                        if re.match(
-                            r"^(?:[-*]|\d+[.)])\s+\S",
-                            (record.get("excerpt") or "").strip(),
-                        )
-                    ]
-                    if (
-                        recovered is not None
-                        and len(bullet_units) >= 2
-                    ):
-                        _logger.info(
-                            "orchestration stage=prior_continuation "
-                            "decision=recover_empty_selection "
-                            "excerpts=%d correlation_id=%s",
-                            len(bullet_units),
-                            correlation,
-                        )
-                        rendered = recovered
+                # Recover only when prior already exposes bullet /
+                # numbered listing units. Sentence-split prose from
+                # a single prior turn must not become a fake list.
+                recovered = _extraction_list_from_prior_excerpts(
+                    records
+                )
+                bullet_units = [
+                    (record.get("excerpt") or "").strip()
+                    for record in records
+                    if re.match(
+                        r"^(?:[-*]|\d+[.)])\s+\S",
+                        (record.get("excerpt") or "").strip(),
+                    )
+                ]
+                if recovered is not None and len(bullet_units) >= 2:
+                    _logger.info(
+                        "orchestration stage=prior_continuation "
+                        "decision=recover_empty_selection "
+                        "excerpts=%d correlation_id=%s",
+                        len(bullet_units),
+                        correlation,
+                    )
+                    rendered = recovered
             if rendered is None:
                 # Already on the prior-continuation path: do not fall
                 # through to live reselection — that burns the remaining
@@ -7081,36 +7073,14 @@ class OperationalCapabilityOrchestrator:
                         LIMITATION_INSUFFICIENT_EVIDENCE,
                     ),
                 )
-        if (
-            comparison_requested
-            and _render_is_list_replay_not_compare(rendered)
+        if comparison_requested and (
+            _render_is_list_replay_not_compare(rendered)
+            or not _typed_compare_outcome_content(rendered)
         ):
-            compared = _comparison_from_prior_excerpts(records)
-            if compared is not None:
-                _logger.info(
-                    "orchestration stage=prior_continuation "
-                    "decision=compare_replace_list_replay "
-                    "excerpts=%d correlation_id=%s",
-                    len(records),
-                    correlation,
-                )
-                rendered = compared
-            else:
-                _logger.info(
-                    "orchestration stage=prior_continuation "
-                    "decision=compare_reject_list_replay "
-                    "correlation_id=%s",
-                    correlation,
-                )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SUCCESS,
-                    correlation_id=correlation,
-                    content=_insufficiency_content(),
-                    limitations=(
-                        LIMITATION_PRIOR_TURN_CONTINUATION,
-                        LIMITATION_INSUFFICIENT_EVIDENCE,
-                    ),
-                )
+            return _compare_insufficiency_attempt(
+                correlation,
+                decision="compare_reject_untyped_render",
+            )
         normalized_prior = " ".join(prior_content.split())
         normalized_rendered = " ".join(rendered.split())
         if (

@@ -40,7 +40,9 @@ from app.domain.specialist_interop.model import (
 from tests.test_interaction_runtime import _context
 from tests.test_specialist_capability_orchestration import (
     FakePort,
+    FakeProposalModel,
     TEO_TOOLS,
+    TEST_MODEL_REF,
     VISTA_TOOLS,
     _interop,
     _read,
@@ -231,6 +233,43 @@ def test_g0_02_admission_instruction_requires_owner_for_formats_catalog():
     assert "formats" in text or "formatos" in text
     assert "operational" in text
     assert "requires_owner_surface" in text
+
+
+def test_g0_02_admission_simulated_formats_ask_routes_to_owner_selection():
+    """Simulated admission: formats catalog ask keeps governed selection path.
+
+    Provider-neutral: no specialist-name branch — only
+    requires_owner_surface=true prevents conversational NOT_APPLICABLE.
+    """
+    from app.application.capability_provision.mcp_provider import (
+        McpCapabilityProvider,
+    )
+    from app.application.capability_provision.orchestration import (
+        CAPABILITY_SELECTION_INSTRUCTION_ID,
+        INTERACTION_ADMISSION_INSTRUCTION_ID,
+        OperationalCapabilityOrchestrator,
+    )
+
+    port = FakePort(tools_by_specialist={"vista": VISTA_TOOLS})
+    proposal = _select("vista", "get_catalog")
+    proposal[INTERACTION_ADMISSION_INSTRUCTION_ID] = {
+        "requires_owner_surface": True,
+        "interaction_class": "operational",
+    }
+    model = FakeProposalModel(proposal)
+    orch = OperationalCapabilityOrchestrator(
+        [McpCapabilityProvider(_interop(port), ("vista",))],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(
+        "Quais formatos de dados estão disponíveis?"
+    )
+    assert attempt.status is not GovernedCapabilityStatus.NOT_APPLICABLE
+    purposes = [r.task_purpose_id for r in model.requests]
+    assert INTERACTION_ADMISSION_INSTRUCTION_ID in purposes
+    # Singleton group skips select_group; capability selection must run.
+    assert CAPABILITY_SELECTION_INSTRUCTION_ID in purposes
 
 
 def test_conv_t09_invalid_capability_still_specific_clarification():
