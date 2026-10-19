@@ -206,3 +206,48 @@ NEXT=G0_COORDINATION_VERDICT_WITHOUT_REPEATED_DISCOVERY
 **ACCEPTANCE:** real compare differences from owner-evidenced fields OR explicit insufficiency; VISTA C02 no avoidable DÉLIA 504 with per-stage tracing, honest owner failure otherwise; unchanged strict 30s budget; DAVI owner-read/no-match and continuity; TÉO guidance/identity-negative; HTTP non-MCP and no-tool conversation; invalid IDs/provenance/injection/renamed provider; zero unauthorized ACT. RED/GREEN + full backend and security suite; independent repeat when available (cold 1/warm 2, negative holdouts, exact SHA/config/model/policy and owner outcome). No PASS for `TEST_NOT_RUN`.
 
 **STOP/ANTI-LOOP:** one implementation and one independent review, at most one bounded rework. If blocking failures persist, STOP→root cause/owner/Product Master phase-or-contract decision, not another microtask. `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`; `Q02_AUTHORIZED=NO`; `C3_EXECUTED=NO`. This is coordination authority for a G0-only code remediation, not architectural acceptance.
+
+
+## 9. Product Master Option B — Cursor Q02-A único autorizado (2026-10-19)
+
+**APPROVAL:** autorização explícita do Product Master no chat Architecture/Coordination v10 para **Option B somente Q02-A como remediação de I04**; [16 — autoridade de ordem](../../16-execution-master-plan.md), [59 §0](./59-orchestrator-refactoring-finite-execution-roadmap.md), ledger §6.313. Esta seção **supersede apenas** a interpretação de `Q02-A não autorizado` em §§1–8, porque Option A terminou em `STOP_EXHAUSTED` (§6.312); não altera constatações históricas. Reanchor inicial no main `a23afa99c26adbcc262da69df6e9223ddc947b56` (revalidar no Cursor; não fixar como BASE_HEAD de implementação); blob atual `orchestration.py=0d82c09883570d5fb45464e9773a23b2daaba0c2`. GPT não viu `git status` do checkout e não executou suite/SSH neste ato.
+
+**EXCEPTION TASK:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01` — `Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY`, `Q01_AUTHORIZED=NO`, `Q02_B/C_AUTHORIZED=NO`, `I04_ACCEPTED=NO`, `C3/C4/C5` inalterados. Cursor só implementa a refatoração semantic/admission/goal/group/capability delimitada em [59 §0 e Q02-A](./59-orchestrator-refactoring-finite-execution-roadmap.md), nunca o pacote inteiro Q02.
+
+### Pre-diff bounded gate — reuse-before-design
+
+- Canônicas: HEAD/status → .cursor/Project Instructions → 16→50→17→49→51→52→21→20→25→arquitetura técnica→24→60→ledger→58–62. Do not treat historical SHA as authorization.
+- Doc 60 traz **42/42 grupos e consumidores/testes** já analisados: proibir reiniciar auditoria; somente uma `rg` residual contra SHA local para chamadas/imports afetados, reportando delta. Se drift de owner/contract afetar viabilidade, STOP e coordenação, não redesenho.
+- `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE/EXTEND`: `OperationalCapabilityOrchestrator`, `InvokeModel/_propose`, `_TurnGoal`/typed selection, `TurnDeadline`, `CapabilityProviderPort`, MCP/OpenAPI adapters e semantic provider metadata válida como **untrusted**. Não criar segundo planner/ranking/engine/registry/adapter/provider branch. Dividir apenas instruções/propostas e validators tipados existentes se comprovada a necessidade e callsites; nenhuma authority nova.
+- Ouro RED em código atual: EV-09 C02 pede formatos, admission operacional e seleção de DAVI/TÉO em vez de VISTA; EV-02 SIPOC produz `turn_budget_limited`; EV-03 hipotéticos/continuidade parcialmente sem resposta; evite escopar novos contratos para corrigir os três. Preservar EV-04/06/07/11 passados e EV-05/15 fail-closed por falta de atributo tipado.
+- `RQ/AC` comportamentais: seleção semântica correta com catálogos vivos elegíveis e LLM usando compreensão contextual; ausência de provider não força owner; `singleton` não presume relevance; negative/negation/followup/topic change, rename/reorder/add/remove/equivalent/non-MCP, versões de provider não dependem de strings lexicais; sem mais model calls redundantes que violem 30 s; validar 0 ACT material e intactos Core/domain/AuthZ/scope/provenance/Policy/Decision/idempotência/confirmation e seleção-only do §6.145.
+
+### Implementação e testes mínimos
+
+**Q02-A-only:** Consolidar decisões de `interaction_admission`, `goal`, `group`, `capability` e contextual continuation quando classificam intenção por regex/cue/cluster/lexical ranking, removendo overrides manuais somente após testes/consumers. Guardar parsing sintático/credential redaction/JSON Schema/identifier provenance, checks de ownership e caminho Q02-B/C intactos. No microtasks or per-function prompt. Sem alteração de instruções como única prova de conclusão: comportamento do modelo real e owner real exigidos no gate.
+
+**Mandatory:** RED/GREEN holdout predefinido antes do patch, full `delia-api`+ contract and safety suites, metamorphic/provider-neutral fake-model negative test matrix (renaming, reordered catalog, new equivalent provider, missing tool, irrelevant singleton, injection, ambiguous/no-tool, false IDs, personal GLPI scope). Real-model live READ (quando authorized) com C02 cold1+warm2, DAVI/TÉO/VISTA/OpenAPI/no-tool, outcome verdadeiro e wall-clock <=30s; SIPOC/conversa hipotética útil sem tool, falso fact negativo, zero unauthorized ACT. Total budget 30s frozen, `MODEL_AUTHORED_FACTUAL_PROSE=NONE` and selection-only untouched. Owner personal GLPI positive only with real linked subject, else `TEST_NOT_RUN`. If live auth/runbook not authorized, report BLOCKED/TEST_NOT_RUN (no self-authorized production deploy). Never treat HTTP 200/soft-land/owner-selected-only as PASS business task.
+
+**Deliverables:** smallest diff; baseline/golden/RED/GREEN; exactly scoped consumer delta; tests/safety+performance; SHA/config/model/version; live case matrix with owners + correlation IDs; Git diff checks and evidence; commit/push to main preserving concurrency; factual `DÉLIA EXECUTION REPORT`. Only GPT coordination issues independent `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`; no automatic I04 acceptance or Q01/Q02-B/C unlock.
+
+### Anti-loop
+
+**G0 rework=0 remains closed**. Q02-A execution one bundle → one coordination review → at most one bounded Q02-A rework if specifically authorized in that review; repeated FAIL `STOP → ROOT_CAUSE/OWNER/PRODUCT_MASTER`, no new ad hoc mini-patch. If required new typed provenance DTO, free model FACT, new provider authority, budget relaxation, new scheduler/service/engine: STOP → `ARCHITECTURE_DECISION_REQUIRED`. Approved code authoring != permission to deploy production nor phase completion.
+
+```text
+DECISION=PRODUCT_MASTER_OPTION_B_APPROVED
+G0_OPTION_A=STOP_EXHAUSTED
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q01_EXECUTED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_A_IMPLEMENTATION_EXECUTED=NO
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=CURSOR_SINGLE_Q02_A_I04_REMEDIATION
+```
