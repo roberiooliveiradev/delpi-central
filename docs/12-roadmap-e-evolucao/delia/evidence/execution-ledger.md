@@ -15052,3 +15052,14 @@ NEXT=DELIA-C3-I03-DAVI-SEMANTIC-DISCOVERY-IMPLEMENTATION-01
 - **STATE:** `I03_ACCEPTED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`.
 
 NEXT=COORDINATION_INDEPENDENT_REVIEW
+
+
+## §6.270 — I03 INDEPENDENT DAVI MCP COMPARISON AND REGRESSION GATE (ACCEPT_WITH_RESIDUAL_SCOPED)
+
+**DATE:** 2026-10-19. **REVIEW:** [29](../corrections/mcp-contextual-intelligence-orchestration/29-i03-independent-davi-crosscheck-review.md). **CODE SHA:** `3d14a51046fb27bbce303c574ed9bbcf804a30fe`.
+
+- **DIRECT DAVI READ-only**: broad info request `candidate_count=0`, `eligible_action_count=95`; specific product query `candidate_count=1`, `action_id=search_products`. No owner data EXECUTE, no token persisted. Confirms miss != absence and usefulness of I03 terminal classification.
+- **DÉLIA live (Cursor-reported):** K4 21,119ms, GROUNDED, zero ACT; K1 25,122ms PASS_WITH_LIMITATION; K2 `invalid_record_index` INCONCLUSIVE usefulness; K3 `budget_exceeded` at 30,013ms = FAIL sampled outcome, not merely generic residual.
+- **DECISION:** bounded I03 K4 discovery `ACCEPT_WITH_RESIDUAL`; global `I03_ACCEPTED=NO` until bounded K2/K3 non-regression gate. Do not advance I04/Q01 or C3–C5. Tests full backend PASS executor-reported, independent replay `TEST_NOT_RUN`.
+
+NEXT=I03_K2_K3_BOUNDED_NONREGRESSION_GATE
