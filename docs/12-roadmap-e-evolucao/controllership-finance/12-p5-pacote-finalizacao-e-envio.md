@@ -701,7 +701,7 @@ Fonte canônica:
 ### RQ-P5-06 — reviewer authenticated
 - reviewer possui login Minha DELPI;
 - exige `controllership-finance.access`;
-- exige reviewer assignment/resource scope;
+- exige elegibilidade Core por grupo/função corporativa, área da PackageVersion e assignment/resource scope avaliados na BFF;
 - MANAGE não é necessário.
 
 ### RQ-P5-07 — notification side effect
@@ -710,19 +710,23 @@ Fonte canônica:
 - falha de e-mail não reverte submission;
 - notification contém deep link, não package attachment.
 
-### RQ-P5-08 — review history
+### RQ-P5-08 — projeção de trabalho do revisor
+- review acionável projeta obrigação por área ao usuário elegível, self-only;
+- ação abre o owner P5 e reautoriza scope; não criar TaskEntity paralela.
+
+### RQ-P5-09 — review history
 - reviewer/action/outcome/version/timestamps auditáveis;
 - versão submetida não é editada in-place.
 
-### RQ-P5-09 — clarification/correction
+### RQ-P5-10 — clarification/correction
 - reviewer pode solicitar esclarecimento/correção;
 - nova versão/complemento preserva histórico.
 
-### RQ-P5-10 — Help
+### RQ-P5-11 — Help
 - manual explica finalize vs submit vs notify vs review;
 - nenhuma instrução de attachment delivery por e-mail.
 
-### RQ-P5-11 — monthly completion (C2 aprovada, RQ-P5-12 vigente no ledger)
+### RQ-P5-12 — monthly completion (C2 aprovada)
 - **PO_APPROVED C2/P5-A/P5-E/D-FINAL-02:** competência mensal conclui somente com TODOS os pacotes aplicáveis submetidos, **aceite humano real por pacote na PackageVersion vigente**, aceite de CADA área obrigatória existente no snapshot, NENHUMA clarification aberta e ausência de rejeição terminal da competência. Sem revisores, pacote fica pendente de aceite: **não** bloquear Finalizar/Enviar/publicação por quantidade, e **não** inferir aprovação por conjunto vazio. Rejeição de pacote/área exige confirmação DEC-01 para terminalidade da competência. Não há escolha C1/C2/C3 pendente.
 
 ## Testes futuros mínimos
