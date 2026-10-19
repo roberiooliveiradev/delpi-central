@@ -74,3 +74,19 @@ Permitir **criação (POST)** e **atualização (PUT)** de fornecedores por inte
 Reancoragem GitHub: `main` observada em `cca468a365bd592498caa0be8cb20c8e0a6f75fe`. O router `app/interface/http/routes/integrations/protheus_router.py` ainda contém somente status e GET por `supplier_id`; gateway/composer seguem READ. Pesquisa indexada por `codusr`, `PATH_SUPPLIERS`, `fornecedor POST`, `api/v1/suppliers` não trouxe resultados (zero search não prova ausência). Fonte canônica de campos SA2 permanece o playbook de auditoria, não um contrato REST de criação.
 
 **Gate para implementação efetiva:** obter especificação POST upstream versionada/confirmada pelo owner Protheus (payload, corpo com `fornecedor`, `codusr`, obrigatório/opcional, cenário de geração de código/loja, resposta/erros, idempotência). Depois, validar identidade autenticada do autor via Core e criar autorização WRITE específica; não aceitar `codusr` fornecido pelo cliente. Aplicar Clean Architecture, mocks, testes de 401/403/duplicidade/retry/timeout; feature flag fechada por default; proibir POST vivo até aprovação explícita. Caso contrato não esteja disponível, reportar `ARCHITECTURE_DECISION_REQUIRED` e solicitar contrato, sem inventar payload ou expor ERP.
+
+## Evidência recebida — documentação técnica REST Protheus (19/10/2026)
+
+Fonte fornecida pelo solicitante: PDF **"Documentação Técnica - API de Integração Protheus e MinhaDelpi (002)"**, seção **3.3 Operação de Inclusão (POST /)**. Fonte externa fornecida em conversa; verificar versionamento, owner e vigência antes do aceite definitivo.
+
+**Contrato documentado (SOURCE-DERIVED):**
+- `POST [URL_REST][PATH_SUPPLIERS]`, Bearer OAuth, uso interno de Execauto MATA020 (não inserir diretamente em SA2).
+- Body JSON: objeto `{"codusr":"000161","fornecedor":{...}}`; **POST utiliza objeto**, enquanto PUT seção 3.2 utiliza array.
+- Campos do exemplo: `supplier_store`, `person_type`, `tax_id`, `supplier_name`, `supplier_short_name`, `address`, `district`, `postal_code`, `state`, `city`, `city_code`, `area_code`, `phone`, `state_registration`, `municipal_registration`, `contact_name`, `email`, `payment_condition_code`, `country_code`, `bacen_country_code`, `accounting_account`, `financial_nature_code`, `rohs_indicator`, `payment_method_code`.
+- POST erros HTTP 400: `code_error=001` (tanto ID inválido quanto JSON inválido; diferenciar pelo texto), `002` (campos obrigatórios ausentes), `003` (erro genérico Execauto, podendo dizer literalmente "Falha ao alterar fornecedor" mesmo no POST).
+- **Não documentado:** shape/status do sucesso POST, conjunto rigoroso de campos obrigatórios, semântica comprovada `codusr`↔`SYS_USR.USR_ID`, idempotência/retry e eventual formato de identificação retornada.
+- A própria documentação apresenta **rótulos `PATH_AUTH` e `PATH_SUPPLIERS` invertidos** em uma tabela; o resolver existente da API DELPI já cobre casos inequívocos. Nunca corrigir parâmetros automaticamente com base só no PDF.
+
+**Alerta de segurança crítico:** o PDF contém credenciais técnicas em texto claro e URL HTTP. NÃO versionar o PDF original nem reproduzir credenciais/tokens no GitHub, logs ou prompts. Confirmar rotação de senha e aceite formal do risco de transporte antes de qualquer teste autenticado contra ERP.
+
+**Decisão de execução:** `CONTRACT_SOURCE_FOUND=YES`; `CONTRACT_GATE=PARTIAL`; `POST_IMPLEMENTATION=PENDING`. O PDF permite iniciar desenho/implementação offline do POST com validação estrita e feature gate desligada, mas não autoriza escrita ao vivo nem preenche os gaps acima. Reancorar HEAD, authorities e consumidores antes de gerar código.
