@@ -24,6 +24,15 @@ class MesMonitoringReadRepositoryPort(Protocol):
         period_to: datetime,
     ) -> list[dict[str, Any]]: ...
 
+    def has_activity_in_period(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> bool: ...
+
     def list_downtimes(
         self,
         *,

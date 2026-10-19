@@ -77,6 +77,9 @@ from production_control_app.domain.ports.line_feeder_pick_plan_repository import
 from production_control_app.domain.ports.machine_load_publication_repository import (
     MachineLoadPublicationRepositoryPort,
 )
+from production_control_app.domain.ports.mes_monitoring_read_repository import (
+    MesMonitoringReadRepositoryPort,
+)
 from production_control_app.domain.ports.machine_load_snapshot_repository import (
     MachineLoadSnapshotRepositoryPort,
 )
@@ -369,6 +372,30 @@ def build_public_work_center_performance_service(
         access=build_public_cockpit_access_service(),
         machine_load=build_machine_load_service(resolved, snapshots=snapshots),
         branch_access=build_branch_access_service(),
+    )
+
+
+def build_public_work_center_downtime_source_service(
+    *,
+    pulse_gateway: Any | None = None,
+    mes_monitoring: MesMonitoringReadRepositoryPort | None = None,
+) -> "PublicWorkCenterDowntimeSourceService":
+    from production_control_app.application.services.public_work_center_downtime_source_service import (  # noqa: E501
+        PublicWorkCenterDowntimeSourceService,
+    )
+    from production_control_app.infrastructure.gateways.production_pulse_gateway import (  # noqa: E501
+        ProductionPulseGateway,
+    )
+    from production_control_app.infrastructure.persistence.postgres_mes_monitoring_read_repository import (  # noqa: E501
+        PostgresMesMonitoringReadRepository,
+    )
+
+    return PublicWorkCenterDowntimeSourceService(
+        access=build_public_cockpit_access_service(),
+        machine_load=build_machine_load_service(),
+        branch_access=build_branch_access_service(),
+        pulse_gateway=pulse_gateway or ProductionPulseGateway(),
+        mes_monitoring=mes_monitoring or PostgresMesMonitoringReadRepository(),
     )
 
 

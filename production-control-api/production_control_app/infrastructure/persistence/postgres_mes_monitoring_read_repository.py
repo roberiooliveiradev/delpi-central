@@ -135,6 +135,47 @@ class PostgresMesMonitoringReadRepository:
             )
             return [dict(row) for row in cur.fetchall()]
 
+    def has_activity_in_period(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        period_from: datetime,
+        period_to: datetime,
+    ) -> bool:
+        """Existe algum fato MES do posto sobrepondo o período?
+
+        Verificação de existência (sem montar timeline): cobre vínculo
+        removido no meio do dia — run/evento criado antes do desvínculo
+        continua provando que o posto é sensorizado naquele dia civil.
+        """
+        params = (branch, work_center, period_to, period_from)
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT EXISTS (
+                         SELECT 1 FROM {_STATES} s
+                          WHERE s.branch = %s AND s.work_center = %s
+                            AND s.started_at < %s
+                            AND (s.ended_at IS NULL OR s.ended_at >= %s)
+                       )
+                    OR EXISTS (
+                         SELECT 1 FROM {_DOWNTIMES} d
+                          WHERE d.branch = %s AND d.work_center = %s
+                            AND d.started_at < %s
+                            AND (d.ended_at IS NULL OR d.ended_at >= %s)
+                       )
+                    OR EXISTS (
+                         SELECT 1 FROM {_RUNS} r
+                          WHERE r.branch = %s AND r.work_center = %s
+                            AND r.started_at < %s
+                            AND (r.ended_at IS NULL OR r.ended_at >= %s)
+                       ) AS has_activity
+                """,
+                [*params, *params, *params],
+            )
+            return bool(cur.fetchone()["has_activity"])
+
     def list_downtimes(
         self,
         *,

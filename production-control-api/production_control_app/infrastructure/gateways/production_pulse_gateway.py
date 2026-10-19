@@ -87,7 +87,14 @@ class ProductionPulseGateway:
                 "roleKey": role_key,
             },
         )
-        return data if isinstance(data, dict) else {"items": []}
+        # Payload malformado NÃO vira items vazio: ausência de vínculo e
+        # resposta inválida são cenários distintos — consumidores tratam
+        # PulseGatewayError como indisponibilidade, nunca como "sem sensores".
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            raise PulseGatewayError(
+                "Resposta inválida do Pulso (snapshot de posto sem 'items')."
+            )
+        return data
 
     def fetch_device_snapshot(self, device_id: str) -> dict[str, Any]:
         data = self._request(

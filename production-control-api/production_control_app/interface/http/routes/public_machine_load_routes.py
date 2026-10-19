@@ -22,6 +22,7 @@ from production_control_app.composition.pc_composer import (
     build_public_operation_materials_service,
     build_public_operation_process_inspections_service,
     build_public_work_center_downtime_items_service,
+    build_public_work_center_downtime_source_service,
     build_public_work_center_performance_service,
 )
 from production_control_app.core.responses import fail, ok
@@ -523,6 +524,34 @@ def stop_production_run(
         return denied
     try:
         data = build_production_run_service().stop_run(run_id, session_token=session_token)
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get(
+    "/{token}/downtime-source",
+    operation_id="get_public_work_center_downtime_source",
+)
+def get_public_work_center_downtime_source(
+    token: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+    work_center: str = Query(..., alias="workCenter", max_length=40),
+):
+    """Fonte de paradas do posto no cockpit: mes, totvs ou unavailable.
+
+    Somente leitura — nunca consulta TOTVS, nunca escreve. unavailable
+    é resposta válida de resolução, sem fallback automático para TOTVS.
+    """
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_public_work_center_downtime_source_service().resolve(
+            token=token,
+            branch=branch,
+            work_center=work_center,
+        )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)
     return ok(data)

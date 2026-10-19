@@ -545,3 +545,62 @@ PC_TEST_MES_DB=1 no banco de plugins de dev, escopo ZZ-TEST-AUTODT.
 único downtime por transição, motivo inicial setup sem peça, auto-resume
 no primeiro incremento, baseline não reiniciado por poll vazio, Pulse
 offline/inválido não gera parada, kill switch e threshold dinâmico.
+
+
+## 13. Seleção da fonte de paradas do cockpit (Etapa 1)
+
+**Owner**: production-control-api. O Production Pulse é owner dos
+dispositivos e vínculos; o PC é owner da decisão de fonte no cockpit.
+Nenhum consumidor acessa o banco do Pulse nem cadastra CTs sensorizados
+em paralelo.
+
+**Contrato**: GET /public/machine-load/{token}/downtime-source?branch&workCenter
+(operationId get_public_work_center_downtime_source) — somente leitura.
+
+Resposta: data.branch, data.workCenter, data.source
+(mes|totvs|unavailable), data.reason, data.referenceAt (UTC, dia civil em
+America/Sao_Paulo). Não expõe deviceId, IP, serial nem dados sensíveis.
+unavailable é resposta válida — nunca há fallback silencioso para TOTVS.
+
+**Matriz de decisão** (domain/services/downtime_source_selection.py, regra
+pura):
+
+- lookup do Pulse falhou/timeout/payload inválido → unavailable
+  (source_lookup_unavailable);
+- mais de um pulse_counter elegível → unavailable
+  (multiple_bound_counters);
+- exatamente um vinculado → mes (bound_counter) — independente de
+  online/stale; device.online nunca decide fonte;
+- zero vínculos + fatos MES no dia civil → mes (mes_activity_today):
+  vínculo removido no meio do dia não troca a fonte;
+- zero vínculos + nenhum fato MES no dia → totvs (no_bound_counter):
+  ausência comprovada.
+
+**Escopo/segurança**: token público do cockpit validado, filial canônica e
+CT obrigatoriamente na fila publicada — fora do escopo o lookup de
+vínculo nem ocorre. Leitura sem efeitos: não consulta TOTVS, não semeia
+fila, não cria run, não escreve fatos.
+
+**Fatos MES do dia**: PostgresMesMonitoringReadRepository
+.has_activity_in_period — EXISTS sobre work_center_state_events,
+downtime_events e production_runs sobrepondo o dia (sem montar timeline).
+
+**Hardendness do gateway**: ProductionPulseGateway
+.fetch_work_center_snapshot agora rejeita payload sem dict/items com
+PulseGatewayError — antes, resposta malformada virava items=[] e seria
+lida como "sem sensores". Consumidores existentes (start_run/_pick_device,
+tick) já tratam PulseGatewayError como indisponibilidade — comportamento
+mais correto.
+
+**Etapas futuras**: a timeline diária de paradas MES (Etapa seguinte)
+consumirá este contrato para decidir a fonte antes de renderizar; a
+interface do cockpit e a substituição dos indicadores TOTVS são etapas
+posteriores — nada foi migrado ainda.
+
+**Evidências**: tests/test_downtime_source_selection.py — 24 testes
+(unidade + política pura + gateway MockTransport + contrato HTTP +
+has_activity_in_period em Postgres real com PC_TEST_MES_DB=1).
+
+**Pendência de governança**: AGENTS.md menciona push direto na main; a
+governança vigente deste projeto é revisão por PR. Registrado o conflito —
+integração segue o fluxo de PR.
