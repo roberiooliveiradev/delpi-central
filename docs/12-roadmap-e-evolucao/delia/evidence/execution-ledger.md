@@ -15562,3 +15562,14 @@ NEXT=COORDINATION_G0_I04_PHASE_DECISION_THEN_CURSOR_ONLY_AUTHORIZED_CODE_PACKAGE
 - **Evidence limits:** independent backend pytest `TEST_NOT_RUN`, independent SSH production `TEST_NOT_RUN`, git working tree `TO_REVALIDATE`, no runtime code edited in this ChatGPT update.
 
 NEXT=NEW_CHAT_ARCHITECTURE_COORDINATION_SINGLE_G0_DECISION_THEN_FINITE_EXECUTION
+
+
+## §6.304 — Coordination v10: one-time G0 I04 phase decision (Option A)
+
+**DATE:** 2026-10-19. **PRE_DECISION_MAIN:** `25e0f4c127ba9d584fc6f821bd0d10f0967315f1`; **ORCHESTRATION_BLOB:** `bc13e07b31b6844e172c5d485d77f59a4b8c0a10`. **DECISION RECORD:** [61 §8](../corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md); governed by canonical 16, ADR58, roadmap59, inventory60 and prior §6.303. Docs-only change; local status not available in GitHub connector.
+
+**G0_OPTION=A — APPROVED_AS_BOUNDED_I04_REMEDIATION_ONLY**: preserve I04→Q01 phase dependency rather than silently choosing B. Exactly one G0 Cursor execution task `DELIA-C3-I04-G0-SINGLE-BOUNDED-REMEDIATION-01` may remediate proven DÉLIA-origin blockers (VISTA C02 avoidable stage timeout, list-as-compare invalid outcome), while preserving selection-only factual synthesis, owner scope/provenance, Core/Domain AuthZ, PREPARE/ACT, zero unauthorized ACT and 30-second budget. External owner/GLPI identity preconditions remain honest `TEST_NOT_RUN` and owner-attributed; no fabricated PASS. Root evidence must precede patch, and one bounded rework maximum.
+
+**REUSE**: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE/EXTEND` existing `OperationalCapabilityOrchestrator`, typed goal, `InvokeModel/_propose`, `TurnDeadline`, `ConversationContextTurn`/`SpecialistOutcome`/`SourceRef`, provider-neutral port/adapters. **NO** second planner, provider branch, new registry, changed factual-prose contract or broader Q02 implementation. New typed provenance contract or frozen synthesis amendment triggers STOP→`ARCHITECTURE_DECISION_REQUIRED` with Product Master decision, not silent patch. Non-MCP/no-tool, safety, IDs, owner reads, task outcomes and independent cold/warm evidence required before I04 acceptance.
+
+**STATE:** `I04_ACCEPTED=NO`; `G0_REMEDIATION_AUTHORIZED=YES`; `Q01_AUTHORIZED=NO`; `Q02_AUTHORIZED=NO`; `C3_EXECUTED=NO`; `C4_AUTHORIZED=NO`; `C5_AUTHORIZED=NO`; `G0_EXECUTION=NOT_RUN`; `LIVE_INDEPENDENT_EVAL=TEST_NOT_RUN`. **NEXT:** Cursor one bounded G0 implementation→independent review; no Q01 until actual I04 gate or separate Product Master authority.
