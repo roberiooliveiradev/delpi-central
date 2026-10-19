@@ -61,6 +61,7 @@ class TechnicalAction:
         default_factory=dict
     )
     negative_aliases: tuple[str, ...] = field(default_factory=tuple)
+    response_contract: str | None = None
 
     @property
     def executable(self) -> bool:
@@ -171,6 +172,7 @@ def _enrich_from_allowlist(
     Mapping[str, Any] | _InvalidNameBindings,
     tuple[str, ...],
     tuple[str, ...],
+    str | None,
 ]:
     entry = _allowlist_entry(allowlist, operation_id)
     mode = entry.get("executionMode")
@@ -194,6 +196,7 @@ def _enrich_from_allowlist(
         entry.get("argumentBindings"), owner_key="ownerName"
     )
     response_bindings = _normalize_response_bindings(entry.get("responseBindings"))
+    response_contract = (entry.get("responseContract") or "").strip() or None
     return (
         str(mode) if mode else None,
         response_fields,
@@ -205,6 +208,7 @@ def _enrich_from_allowlist(
         response_bindings,
         negative_aliases,
         entity_domain_markers,
+        response_contract,
     )
 
 
@@ -357,6 +361,7 @@ def build_technical_actions_from_openapi(
                 response_bindings,
                 negative_aliases,
                 entity_domain_markers,
+                response_contract,
             ) = _enrich_from_allowlist(allowlist, str(oid))
             actions.append(
                 TechnicalAction(
@@ -393,6 +398,8 @@ def build_technical_actions_from_openapi(
                     response_bindings=response_bindings,
                     negative_aliases=negative_aliases,
                     entity_domain_markers=entity_domain_markers,
+                response_contract=response_contract,
+                    response_contract=response_contract,
                 )
             )
     return actions
@@ -445,6 +452,7 @@ def build_technical_actions_from_baseline(
             response_bindings,
             negative_aliases,
             entity_domain_markers,
+            response_contract,
         ) = _enrich_from_allowlist(allowlist, oid_s)
         actions.append(
             TechnicalAction(
