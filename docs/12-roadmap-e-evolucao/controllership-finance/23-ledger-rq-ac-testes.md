@@ -94,8 +94,6 @@ Este ledger complementa:
 | RQ-P5-TERM-01 | rejeição de área não rejeita competência automaticamente | resultado da área gera proposta pendente; somente coordenador formal com ACCESS e vínculo/scope confirma com motivo | positive + negative + audit | P5-I / DEC-01/02 | TARGET / PHYSICAL_BINDING_TO_INVENTORY |
 | RQ-P5-TERM-02 | rejeição terminal interrompe ações pendentes | competência rejeitada não conclui C2; TaskProjection deixa de ser acionável, histórico/auditoria preservados | positive + sibling + negative | P5-D/J | TARGET / PO_APPROVED |
 | RQ-P5-TERM-03 | aceite P5 irreversível na V1 | não há API nem botão de reversão/retificação; P2 validação de evidência tem fluxo independente | negative + boundary + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
-
-
 | RQ-P5-F | Reatribuição preserva aceite por área/versão | aceite original continua válido; autoria não muda; novo elegível assume ações futuras | positive + sibling + audit | P5-F / Core T05 | TARGET |
 | RQ-P5-G | Aceite P5 irreversível pela UI **e pela API** V1 | nem autor nem substituto conseguem editar/reverter por endpoint ou tela; incidentes fora do Portal V1 | negative endpoint + UI + audit | P5-G / DEC-03 | TARGET / PO_APPROVED |
 | RQ-P5-H | P6 versiona áreas obrigatórias por tipo e P5 congela na submissão | mudança P6 posterior não muda revisão aberta | snapshot + sibling + negative | P5-H / ADM / T05 | TARGET / CONTRACT_PENDING |
