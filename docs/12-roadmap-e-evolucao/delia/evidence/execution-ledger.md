@@ -15523,3 +15523,15 @@ NEXT=COORDINATION_ARCHITECTURE_DECISION_ON_SEMANTIC_OWNERSHIP_AND_BOUNDED_REFACT
 **EVIDENCE:** docs/git inspection only. `CODE_DIFF=NONE`, `INDEPENDENT_TESTS=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`, `CROSS_FILE_CONSUMER_INVENTORY=TO_INVENTORY`; no runtime acceptance implied. `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`, `Q01_AUTHORIZED=NO`.
 
 NEXT=BOUNDED_SEMANTIC_INTERPRETATION_CONSOLIDATION_EXECUTION_BRIEF_AFTER_CONSUMER_CONTRACT_INVENTORY
+
+
+## §6.301 — Finite semantic orchestrator refactoring roadmap (six gated packages)
+
+**DATE:** 2026-10-19. **DOCUMENT:** [59](../corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md). **REFERENCE_MAIN:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` planning reference. **BOUND ARCHITECTURE:** ADR [58](../corrections/mcp-contextual-intelligence-orchestration/58-adr-llm-semantic-decision-ownership.md) and canonical 49 §14.1. **AUDIT INPUT:** docs 56–57 42 candidate groups.
+
+- `ROADMAP_STATUS=PLANNED_PENDING_PHASE_GATE`. Bounded execution packages `G0_I04_EXIT → Q01_CONSUMERS_CONTRACT_TEST_BASELINE → Q02_A_INTERPRETATION → Q02_B_ARGUMENTS_INDEX_PROVENANCE → Q02_C_CONTINUITY_SYNTHESIS_AND_COHESION → Q03_INDEPENDENT_ACCEPTANCE`. This **does not authorize Q01** while `I04_ACCEPTED=NO` and does not bypass original I04→Q01→Q02→Q03 dependency.
+- Anti-loop: one deliverable/review per package; max one bounded rework; repeated failure triggers explicit STOP/owner/architecture decision rather than repeated microfix iterations. No fake PASS for external owner/subject preconditions. Critical safety failure cannot be waived.
+- `SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN_PRESERVED` (ledger §6.145). No second planner, regex intent engine, provider-specific branches or Chat runtime. Tests must cover DAVI/TÉO/VISTA/OpenAPI non-MCP/no-tool and negative/adversarial holdouts, typed provenance, owner outcome, timeout, 0 unauthorized ACT.
+- Docs-only: `CODE_DIFF=NONE`, `TESTS=TEST_NOT_RUN`, `LIVE_EVAL=TEST_NOT_RUN`; `I04_ACCEPTED=NO`, `Q01_AUTHORIZED=NO`, `C3_EXECUTED=NO`, `C4_AUTHORIZED=NO`, `C5_AUTHORIZED=NO`.
+
+NEXT=G0_I04_EXIT_INDEPENDENT_COORDINATION_DECISION
