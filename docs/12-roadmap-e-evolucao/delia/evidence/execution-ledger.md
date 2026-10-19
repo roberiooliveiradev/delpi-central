@@ -15063,3 +15063,14 @@ NEXT=COORDINATION_INDEPENDENT_REVIEW
 - **DECISION:** bounded I03 K4 discovery `ACCEPT_WITH_RESIDUAL`; global `I03_ACCEPTED=NO` until bounded K2/K3 non-regression gate. Do not advance I04/Q01 or C3–C5. Tests full backend PASS executor-reported, independent replay `TEST_NOT_RUN`.
 
 NEXT=I03_K2_K3_BOUNDED_NONREGRESSION_GATE
+
+
+## §6.271 — Helpdesk personal ticket count misrouting cross-check (EVIDENCE_RECORDED)
+
+**DATE:** 2026-10-19. **SOURCE:** [30](../corrections/mcp-contextual-intelligence-orchestration/30-helpdesk-ticket-count-crosscheck-evidence.md). Screenshots: user asked `quantos chamados tem para mim?` but DÉLIA returned 10 `transformometro-api` records after selecting TÉO, not a verified personal Helpdesk count. Direct TÉO `helpdesk_read` session and capabilities succeeded; page 1 and page 2 with `page_size=10` each returned 10 items, without authoritative total field in examined response. Read-only, no material ACT.
+
+- **DECISION:** `TEN_RECORDS_AS_PERSONAL_TOTAL=NOT_PROVEN`, `ROOT_CAUSE=TO_INVENTORY`; possible misrouting/pagination/personal-scope failure, no new architecture authorized. Reuse existing TÉO Helpdesk BFF MCP contract, separate assigned/requested semantics and avoid fabricating total. No backend change/deploy performed.
+- **PHASE:** I03 global acceptance still blocked by K2/K3 non-regression per §6.270; this issue is a separate bounded defect and does not silently replace that NEXT.
+
+NEXT_MAIN=I03_K2_K3_BOUNDED_NONREGRESSION_GATE
+NEXT_RELATED=DELIA-C3-I03-HELPDESK-PERSONAL-TICKET-COUNT-ROUTING-01
