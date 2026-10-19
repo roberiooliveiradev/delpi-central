@@ -18,6 +18,11 @@ describe("SignatureCapturePanel", () => {
       setTransform: vi.fn(),
       clearRect: vi.fn(),
       fillText: vi.fn(),
+      measureText: vi.fn((text: string) => ({
+        width: text.length * 10,
+        actualBoundingBoxAscent: 32,
+        actualBoundingBoxDescent: 10,
+      })),
       fillStyle: "",
       textAlign: "center",
       textBaseline: "middle",

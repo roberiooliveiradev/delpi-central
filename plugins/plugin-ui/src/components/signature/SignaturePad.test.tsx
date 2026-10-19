@@ -12,7 +12,9 @@ describe("cipa shared exports", () => {
   });
 
   it("exports RichTextEditor", () => {
-    expect(typeof RichTextEditor).toBe("function");
+    // forwardRef → objeto (ForwardRefExoticComponent), não function pura.
+    expect(RichTextEditor).toBeTruthy();
+    expect(RichTextEditor.displayName).toBe("RichTextEditor");
   });
 
   it("exports UserDirectoryPicker", () => {

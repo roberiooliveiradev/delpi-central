@@ -14873,7 +14873,6 @@ NEXT=D01_AUTH_LIVE_QA_OR_D04_IF_AUTHORIZED
 
 NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
 
-
 ## §6.255 — DELIA-C3-MCP-I02-R3A-BUDGET-AND-CRITICAL-PATH-EXPERIMENTS-01 (EVIDENCE_RECORDED)
 
 **DATA:** 2026-10-19. **IMPLEMENTATION_SHA:** `353eec04ce901bde7f26b1a1cbeb0c83086f4e38`. **DOC:** [15](../corrections/mcp-contextual-intelligence-orchestration/15-i02r3a-controlled-budget-and-critical-path-experiments.md).
@@ -14890,3 +14889,16 @@ NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA
 - **STATE:** `I02_R3A_REVIEW=ACCEPT_WITH_RESIDUAL_SCOPED`; `I02_ACCEPTED=NO`; no C3–C5 progression.
 
 NEXT=I02_R3B_TYPED_SELECTION_CONTRACT_AND_SAFETY_EXPERIMENT_GATE
+
+## §6.257 — DELIA-PLUGIN-UI-THREE-VITEST-FAILURES-REMEDIATION-01 (EVIDENCE_READY_FOR_REVIEW)
+
+**DATA:** 2026-10-19. **TASK:** `DELIA-PLUGIN-UI-THREE-VITEST-FAILURES-REMEDIATION-01`. **REFERENCE_HEAD:** `1b2d6a6662` (TypeScript quitação). **DOCS:** [evidence](./plugin-ui-vitest-three-failures-remediation/plugin-ui-three-vitest-failures-remediation-01.md). Fecha residual Vitest de §6.254 sem alterar seu histórico nem aceitar D01–D04.
+
+- **Baseline:** plugin-ui Vitest EXIT 1 — **2222 PASS / 3 FAIL** (mesmas F01–F03).
+- **F01 TEST_DEFECT:** mock Canvas sem `measureText` → REUSE mock de `blobFromTypedSignatureName.test.ts`.
+- **F02 TEST_DEFECT:** `typeof RichTextEditor` object (`forwardRef`) → assert `displayName`.
+- **F03 TEST_DEFECT:** expectativa `1.25rem` stale → token `var(--delpi-ui-mention-composer-radius, 0.85rem)`.
+- **Final:** Vitest plugin-ui **2225/2225 PASS**; delia 212 PASS; typecheck plugin-ui+delia PASS; builds+federation PASS. Produto/CSS não alterados.
+- **DECISION:** `VITEST_PLUGIN_UI=PASS`; `PHASE_PROGRESSION=NONE`; `D01/D02/D03/D04_ACCEPTED=NO`; recomendação: `ACCEPT`.
+
+NEXT=INDEPENDENT_REVIEW_OR_D01_AUTH_LIVE_QA

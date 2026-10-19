@@ -1,0 +1,18 @@
+BASELINE HEAD context: plugin-ui npm test EXIT 1
+Summary: Test Files 3 failed | 373 passed (376); Tests 3 failed | 2222 passed (2225)
+--- FAIL excerpts ---
+9:   × SignatureCapturePanel > gera blob ao digitar o nome 1221ms
+164:   ✓ UserDirectoryPicker > mostra chips dos selecionados com × por padrão  676ms
+171:   × cipa shared exports > exports RichTextEditor 42ms
+172:     → expected 'object' to be 'function' // Object.is equality
+187:   ✓ EntityDirectoryPicker > mostra chips dos selecionados com × por padrão  622ms
+235:   × mention-composer.css > pílula 1.25rem, focus em box-shadow e send circular 36px 27ms
+754: FAIL  src/components/collaboration/MentionComposer.test.tsx > mention-composer.css > pílula 1.25rem, focus em box-shadow e send circular 36px
+755:AssertionError: expected '.delpi-ui-mention-composer__body {\n …' to match /border-radius:\s*1\.25rem;/
+789: FAIL  src/components/signature/SignatureCapturePanel.test.tsx > SignatureCapturePanel > gera blob ao digitar o nome
+790:AssertionError: expected "spy" to be called at least once
+950: FAIL  src/components/signature/SignaturePad.test.tsx > cipa shared exports > exports RichTextEditor
+951:AssertionError: expected 'object' to be 'function' // Object.is equality
+972:TypeError: ctx.measureText is not a function
+997: Test Files  3 failed | 373 passed (376)
+998:      Tests  3 failed | 2222 passed (2225)

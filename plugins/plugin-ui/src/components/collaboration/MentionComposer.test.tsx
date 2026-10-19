@@ -476,7 +476,7 @@ describe("MentionComposer", () => {
 });
 
 describe("mention-composer.css", () => {
-  it("pílula 1.25rem, focus em box-shadow e send circular 36px", () => {
+  it("pílula com token de radius, focus em box-shadow e send circular 36px", () => {
     const css = readFileSync(join(stylesDir, "mention-composer.css"), "utf8");
     const body = css.match(/\.delpi-ui-mention-composer__body \{[^}]+\}/)?.[0] ?? "";
     const focus =
@@ -484,7 +484,9 @@ describe("mention-composer.css", () => {
     const sendBlocks = [
       ...(css.matchAll(/\.delpi-ui-mention-composer__send \{[^}]+\}/g) ?? []),
     ].map((match) => match[0]);
-    expect(body).toMatch(/border-radius:\s*1\.25rem;/);
+    expect(body).toMatch(
+      /border-radius:\s*var\(--delpi-ui-mention-composer-radius,\s*0\.85rem\);/,
+    );
     expect(focus).toMatch(/box-shadow:/);
     expect(focus).not.toMatch(/outline:\s*2px/);
     const textareaFocus =
