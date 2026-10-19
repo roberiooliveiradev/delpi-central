@@ -15594,3 +15594,26 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_G0_REVIEW
 ```
+
+
+## §6.306 — Coordination v10 independent G0 review: REWORK before I04 exit
+
+**DATE:** 2026-10-19. **REVIEWED_EXECUTION_SHA:** `95e6c612649d98c47c6cd94c9fd4892c41f8ecea` (base `fc93fbf3591a8115bd238a4c05af6c5b8a1c7361`). **REVIEW_DOCUMENT:** [62 — Coordination v10 section](../corrections/mcp-contextual-intelligence-orchestration/62-g0-bounded-i04-remediation-compare-and-c02-budget.md). **G0_REVIEW_VERDICT=REWORK** — one bounded permitted correction, not architectural acceptance. GitHub static code/diff reviewed; independent pytest/live `TEST_NOT_RUN`.
+
+- **G0-01 BLOCKER:** positional segment comparison of rendered prior `DELIA_RESULT` bullets uses ` — ` and raw text header heuristics, without typed owner field names, matching units/grain/record intent/source refs. `_prior_excerpt_records` explicitly treats these excerpts as untrusted conversational data rather than live owner facts. Contradicts comparability/provenance intent of ADR58 §D6, 49 §14.1, frozen selection-only gate and G0 acceptance. The new positive unit test rewards this behavior. Rework must fail closed to explicit `LIMITATION_INSUFFICIENT_EVIDENCE` unless validated comparable typed owner evidence is available from the **existing contract**. Do not invent a new DTO or factual prose channel.
+- **G0-02 STATIC MITIGATION:** admission prompt extended for owner-published catalogs; 12-second `NOT_APPLICABLE` fallback model cap and `NON_GROUNDED` soft-land statically verified. Instruction substring test does **not** establish correct VISTA owner selection, C02 task completion, or 30-second post-deploy performance. Historical incident root attribution is executor-log reported, not independently live replicated.
+- **EVIDENCE:** full backend pytest, material ACT zero and auth protection `PASS_EXECUTOR_REPORTED`, not independent suite run. `LIVE_POST_FIX=TEST_NOT_RUN` due to reported `invalid_grant`/expired tokens; `DEPLOY=NOT_RUN`, `COLD_WARM=TEST_NOT_RUN`.
+- **ANTI-LOOP:** authorize only one `DELIA-C3-I04-G0-BOUNDED-REWORK-01` correcting G0-01 without broad Q02 changes, plus directly related G0-02 behavior test if feasible. Thereafter review once; if materially blocked, STOP and escalate owner/contract/Product Master instead of further patches. No Q01 release without I04 independent accepted.
+
+```text
+G0_REMEDIATION_EXECUTED=YES
+G0_INDEPENDENT_REVIEW=REWORK
+G0_BOUNDED_REWORK_REMAINING=1
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=CURSOR_ONE_G0_REWORK_THEN_INDEPENDENT_REVIEW
+```
