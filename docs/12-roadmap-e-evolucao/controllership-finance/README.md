@@ -77,6 +77,12 @@ A implementação já autorizada de IMP-MFE-HOME **não** autoriza a página P1;
 
 Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY`; `SQL_PARITY=TEST_NOT_RUN`; `VIDEO_TIMECODES=STALE_EVIDENCE`; `T03_STOCK_CLOSED=PENDING_OWNER`; `IMP-08/P1=NO_GO`. Proibido inferir equivalência de saídas com endpoints adjacentes. Próximo passo: confirmar relatórios originais/vídeo e pesquisar metadados SQL tipados DAVI antes dos contratos api-delpi→BFF. Nenhuma nova autorização de runtime.
 
+### Acompanhamento quantitativo T01 — Relatórios, tabelas e colunas
+
+**Controle vivo:** [47 — Tracker de coleta, colunas e paridade](./47-t01-report-column-audit-tracker-v1.md), baseado nos 15 itens do [46](./46-t01-report-source-inventory-v1.md). Cada item possui seis gates objetivos (etapa/evidência, campos/filtros de saída, tipo/owner da fonte, bindings SQL ou contrato externo, paridade/validação, aceite). Percentuais de coleta, auditoria e itens concluídos incluem numerador/denominador; expansão de escopo requer registro e alteração explícita do denominador.
+
+**Baseline conservador (20/10/2026):** `0/60 = 0,0% de gates de coleta atestados`; `0/90 = 0,0% de gates de auditoria atestados`; `0/15 = 0,0% de itens encerrados`. Isso não apaga o inventário documental já existente: apenas distingue catalogação de evidência validada por critério. Nenhuma nova implementação está autorizada por este tracker.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
