@@ -1,9 +1,9 @@
 import {
+  resolveComunicadoIconColor,
   type ComunicadoBlockStyle,
   type ComunicadoIconBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
-  DECK_SHAPE_DEFAULTS,
   LucideIconField,
   LucideIconPickerPopover,
   ShapeFillMenu,
@@ -83,7 +83,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
   if (!isIconBlock(selected)) return null;
 
   const block = selected;
-  const iconColor = block.style?.color ?? DECK_SHAPE_DEFAULTS.fill;
+  const iconColor = resolveComunicadoIconColor(block);
   const glyphStrokeWidth = resolveIconGlyphStrokeWidth(block);
   const fillValue = resolveIconBoxFill(block);
   const strokeValue = resolveIconBoxStroke(block);

@@ -24,6 +24,12 @@ export function resolveComunicadoLucideIcon(name: string): LucideIcon {
 
 /** Cor do traço do ícone — padrão alinhado ao preenchimento das formas. */
 export function resolveComunicadoIconColor(block: ComunicadoIconBlock): string {
+  // Escolha explícita no seletor grava `colorPaint` — é o sinal que distingue
+  // branco escolhido pelo usuário do branco legado («sem escolha explícita»).
+  const paint = block.style?.colorPaint;
+  if (paint?.kind === "solid" && typeof paint.color === "string" && paint.color.trim()) {
+    return paint.color;
+  }
   const raw = block.style?.color;
   if (raw == null || raw === "" || LEGACY_ICON_COLORS.has(String(raw).trim().toLowerCase())) {
     return DECK_SHAPE_DEFAULTS.fill;

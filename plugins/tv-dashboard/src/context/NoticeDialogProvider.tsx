@@ -53,6 +53,9 @@ export function NoticeDialogProvider({ children }: { children: ReactNode }) {
       const normalized: NoticeDialogOptions =
         typeof options === "string" ? { message: options } : options;
       push({
+        // Id estável por conteúdo: repetições do mesmo aviso substituem o
+        // existente em vez de empilhar (cascata de conflitos, retries).
+        id: `td-notice:${normalized.variant ?? "info"}:${normalized.title ?? ""}:${normalized.message}`,
         message: normalized.message,
         title: normalized.title,
         variant: mapNoticeVariant(normalized.variant),

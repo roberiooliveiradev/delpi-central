@@ -546,15 +546,19 @@ export function PlaylistEditorPage({
    * (o repositório incrementa a revisão exatamente uma vez por escrita).
    */
   const recordWriteRevision = useCallback(
-    (revision: unknown, slideId?: string | null, expectedRevision?: number | null) => {
+    (
+      revision: unknown,
+      slideId?: string | null,
+      expectedRevision?: WriteGuard["expectedRevision"],
+    ) => {
+      // Thunks resolvem no ack → ainda valem a revisão enviada (lane serializa).
+      const expected =
+        typeof expectedRevision === "function" ? expectedRevision() : expectedRevision;
       let next: number | null = null;
       if (typeof revision === "number" && Number.isFinite(revision)) {
         next = Math.trunc(revision);
-      } else if (
-        typeof expectedRevision === "number" &&
-        Number.isFinite(expectedRevision)
-      ) {
-        next = Math.trunc(expectedRevision) + 1;
+      } else if (typeof expected === "number" && Number.isFinite(expected)) {
+        next = Math.trunc(expected) + 1;
       }
       if (next == null) return;
       if (next > knownPlaylistRevisionRef.current) {
@@ -574,7 +578,8 @@ export function PlaylistEditorPage({
 
   const playlistWriteGuard = useCallback(
     (): WriteGuard => ({
-      expectedRevision: knownPlaylistRevisionRef.current,
+      // Thunk: resolvido no envio, após o ack da escrita anterior na lane.
+      expectedRevision: () => knownPlaylistRevisionRef.current,
       clientId: editorPresence?.clientId,
     }),
     [editorPresence?.clientId],
@@ -582,7 +587,7 @@ export function PlaylistEditorPage({
 
   const slideWriteGuard = useCallback(
     (slideId?: string | null): WriteGuard => ({
-      expectedRevision: slideBaseRevision(slideId),
+      expectedRevision: () => slideBaseRevision(slideId),
       clientId: editorPresence?.clientId,
     }),
     [editorPresence?.clientId, slideBaseRevision],
@@ -752,8 +757,13 @@ export function PlaylistEditorPage({
       if (selectedSlideIdRef.current === slideId) {
         liveComunicadoConfigRef.current = nativeConfig;
       }
-      // O estado local agora espelha o draft do peer — base de escrita segue-o.
-      slideWriteBaseRevisionRef.current.set(slideId, baseRevision ?? remoteKnown);
+      // O estado local agora espelha o draft do peer — base de escrita segue-o,
+      // mas nunca regride abaixo do que os nossos próprios acks já confirmaram.
+      const trackedBase = slideWriteBaseRevisionRef.current.get(slideId) ?? 0;
+      slideWriteBaseRevisionRef.current.set(
+        slideId,
+        Math.max(trackedBase, baseRevision ?? remoteKnown),
+      );
       setRemoteConfigRevision((revision) => revision + 1);
     },
     [editorPresence?.clientId, playlistId],
@@ -2116,7 +2126,10 @@ export function PlaylistEditorPage({
       const pl = playlistRef.current;
       if (!pl) return;
       try {
-        const expectedRevision = captured.baseRevision ?? slideBaseRevision(captured.slide.id);
+        // baseRevision capturada fica pinned (descarta captura pré-conflito);
+        // o fallback resolve na hora do envio (lane serializada).
+        const expectedRevision = () =>
+          captured.baseRevision ?? slideBaseRevision(captured.slide.id);
         const updated = await updateSlide(
           pl.id,
           captured.slide.id,

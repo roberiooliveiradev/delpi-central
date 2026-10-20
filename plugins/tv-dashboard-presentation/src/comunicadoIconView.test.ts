@@ -35,6 +35,57 @@ describe("comunicadoIconView", () => {
     expect(resolveComunicadoIconColor(iconBlock({ style: { color: "#ef4444" } }))).toBe("#ef4444");
   });
 
+  it("colorPaint solid = escolha explícita — branco e qualquer cor vencem o sentinel legado", () => {
+    // Regressão TV-ICON-WHITE-COLOR: o seletor persiste colorPaint junto com
+    // color; branco explícito é cor válida e não pode cair no fallback accent.
+    expect(
+      resolveComunicadoIconColor(
+        iconBlock({
+          style: { color: "#ffffff", colorPaint: { kind: "solid", color: "#ffffff" } },
+        }),
+      ),
+    ).toBe("#ffffff");
+    expect(
+      resolveComunicadoIconColor(
+        iconBlock({
+          style: { color: "#ffffff", colorPaint: { kind: "solid", color: "#cccccc" } },
+        }),
+      ),
+    ).toBe("#cccccc");
+    expect(
+      resolveComunicadoIconColor(
+        iconBlock({
+          style: { color: "#ffffff", colorPaint: { kind: "solid", color: "#000000" } },
+        }),
+      ),
+    ).toBe("#000000");
+  });
+
+  it("colorPaint não-sólido (none/gradiente) mantém o caminho color/legado", () => {
+    expect(
+      resolveComunicadoIconColor(
+        iconBlock({ style: { color: "transparent", colorPaint: { kind: "none" } } }),
+      ),
+    ).toBe("transparent");
+    expect(
+      resolveComunicadoIconColor(
+        iconBlock({
+          style: {
+            color: "#089bdb",
+            colorPaint: {
+              kind: "gradient",
+              angle: 90,
+              stops: [
+                { color: "#089bdb", position: 0 },
+                { color: "#ffffff", position: 1 },
+              ],
+            },
+          },
+        }),
+      ),
+    ).toBe("#089bdb");
+  });
+
   it("iconStrokeWidth padrão 2 (e legado strokeWidth sem contorno)", () => {
     expect(resolveComunicadoIconStrokeWidth(iconBlock())).toBe(2);
     expect(
