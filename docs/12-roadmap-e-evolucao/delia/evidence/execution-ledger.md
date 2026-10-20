@@ -16389,3 +16389,25 @@ MATERIAL_ACT=0
 RUNTIME_FILES_CHANGED=NONE
 NEXT=COORDINATION_Q03_ENTRY_WITH_BUDGET_RESIDUAL
 ```
+
+
+## §6.335 — SIPOC cap held and owner 404 projection (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-REAL-MODEL-TARGETED-RESIDUAL-REMEDIATION-01`. **BASE:** `80ac8b6c7fd6db4422e6518aea6d877484506cdd`. Evidência: [64](../corrections/mcp-contextual-intelligence-orchestration/64-sipoc-budget-and-owner-404-projection.md).
+
+SIPOC: admissão conversacional + teto de 12 s no fallback `NOT_APPLICABLE` encerra a explicação com saldo no orçamento de 30 s. S01 ao vivo 14167 ms, `turn_budget_limited`, uma proposta de admissão em 2149 ms. Nenhuma alteração de teto. Proposta contratual registrada e não executada.
+
+HTTP 404 de `get_product_summary` com envelope `not_found_response` (`recoverable=false`) passa a `owner_record_not_found` e deixa de pedir nova tentativa. 404 sem esse envelope permanece falha de fonte. Smoke S02 no runtime `TEST_NOT_RUN` (deploy não autorizado). Suíte `delia-api` 1678 passed. `Q03_AUTHORIZED=NO`.
+
+```text
+SIPOC_CHANGE=BLOCKED_CAP_12S_IS_THE_CAUSE
+SIPOC_LIVE=FAIL_BUDGET_14167MS
+HTTP_404_CHANGE=OWNER_ENVELOPE_NOT_FOUND_PROJECTION
+HTTP_404_LIVE=TEST_NOT_RUN_DEPLOY_NOT_AUTHORIZED
+FULL_DELIA_API_PYTEST=1678_PASSED
+CAP_12S_PRESERVED=YES
+BUDGET_30S_PRESERVED=YES
+MATERIAL_ACT=0
+Q03_AUTHORIZED=NO
+NEXT=COORDINATION_REVIEW
+```

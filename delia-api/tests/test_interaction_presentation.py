@@ -232,6 +232,23 @@ def test_authz_denied_maps_kind():
     assert result.message_kind == MESSAGE_KIND_AUTHZ_DENIED
 
 
+def test_owner_record_not_found_is_not_source_outage():
+    hint = "Produto ZZ-SMOKE-0000 não encontrado"
+    result = _execute(
+        _attempt(
+            GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+            error_code="owner_record_not_found",
+            owner_hint=hint,
+        )
+    )
+    assert result.message_kind == MESSAGE_KIND_RESULT
+    assert result.grounding_status.value == "NON_GROUNDED"
+    assert "tente novamente" not in result.content.lower()
+    assert hint in result.content
+    assert "insufficient_evidence" in result.limitations
+    assert "delpi_source_unverified" not in result.limitations
+
+
 def test_owner_precondition_maps_kind_and_carries_hint():
     hint = "Helpdesk BFF error: glpi_link_required."
     result = _execute(

@@ -24,6 +24,7 @@ from urllib.parse import urlencode
 
 from app.infrastructure.http.bounded_request import bounded_request
 from app.application.capability_provision.contracts import (
+    OWNER_RECORD_NOT_FOUND,
     CapabilityProviderError,
     ProviderCapability,
 )
@@ -44,6 +45,42 @@ _PATH_PARAM = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
 def _now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _owner_not_found_hint(response: Any) -> str | None:
+    """Owner absence declared by the shared not-found envelope.
+
+    ``not_found_response`` answers HTTP 404 with ``success=false``,
+    ``error.recoverable=false``, a non-empty ``error.code`` and a
+    message. Any other 404 stays a transport failure.
+    """
+    if getattr(response, "status_code", 0) != 404:
+        return None
+    try:
+        parsed = response.json()
+    except Exception:
+        return None
+    if not isinstance(parsed, Mapping):
+        return None
+    if parsed.get("success") is not False:
+        return None
+    error = parsed.get("error")
+    if not isinstance(error, Mapping):
+        return None
+    if error.get("recoverable") is not False:
+        return None
+    code = error.get("code")
+    if not isinstance(code, str) or not code.strip():
+        return None
+    message = parsed.get("message")
+    if not isinstance(message, str) or not message.strip():
+        return None
+    cleaned = "".join(
+        ch if ch.isprintable() else " " for ch in message
+    ).strip()
+    if not cleaned:
+        return None
+    return cleaned[:240]
 
 
 def fetch_openapi_document(
@@ -187,6 +224,13 @@ class HttpOpenApiInvoker:
                 f"source denied the delegated call status={status}",
             )
         if status >= 400:
+            not_found_hint = _owner_not_found_hint(response)
+            if not_found_hint is not None:
+                raise CapabilityProviderError(
+                    OWNER_RECORD_NOT_FOUND,
+                    f"status={status}",
+                    owner_hint=not_found_hint,
+                )
             raise CapabilityProviderError(
                 "openapi_invocation_failed", f"status={status}"
             )

@@ -37,6 +37,12 @@ CapabilityOperationClass = SpecialistOperationClass
 ProviderOutcome = SpecialistOutcome
 
 
+# Owner HTTP 404 whose body is the shared not-found envelope
+# (success false, error.recoverable false, error.code, message).
+# A bare 404 without that envelope stays a transport failure.
+OWNER_RECORD_NOT_FOUND = "owner_record_not_found"
+
+
 class CapabilityProviderError(Exception):
     """Bounded provider failure surfaced to the orchestrator.
 

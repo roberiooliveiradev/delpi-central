@@ -247,6 +247,130 @@ def test_invoker_renders_path_and_query():
     assert outcome.provenance.protocol.value == "HTTP"
 
 
+def _product_capability(provider):
+    group = provider.list_groups(correlation_id="c").groups[0]
+    return next(
+        c for c in group.capabilities
+        if c.remote_name == "delpi.get_product"
+    )
+
+
+def test_owner_not_found_envelope_is_not_a_dead_source():
+    """HTTP 404 with the owner not-found envelope is absence."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(
+            404,
+            {
+                "success": False,
+                "message": "Produto ZZ-SMOKE-0000 não encontrado",
+                "data": None,
+                "error": {
+                    "code": "PRODUCT_NOT_FOUND",
+                    "recoverable": False,
+                },
+            },
+        )
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "ZZ-SMOKE-0000"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "owner_record_not_found"
+    assert exc.value.owner_hint == "Produto ZZ-SMOKE-0000 não encontrado"
+    assert "tente novamente" not in (exc.value.owner_hint or "").lower()
+
+
+def test_bare_404_stays_invocation_failure():
+    """A 404 without the owner envelope is not record absence."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(404, {"detail": "Not Found"})
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "missing"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "openapi_invocation_failed"
+    assert exc.value.owner_hint is None
+
+
+def test_recoverable_404_stays_invocation_failure():
+    """Recoverable 404 is not the owner's terminal absence."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(
+            404,
+            {
+                "success": False,
+                "message": "tente novamente",
+                "error": {"code": "TEMPORARY", "recoverable": True},
+            },
+        )
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "x"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "openapi_invocation_failed"
+
+
+def test_not_found_envelope_on_500_stays_invocation_failure():
+    """The same envelope on HTTP 500 remains a source failure."""
+
+    def http_get(url, headers=None, timeout=None, stream=None):
+        return FakeResponse(
+            500,
+            {
+                "success": False,
+                "message": "Produto ausente",
+                "error": {"code": "PRODUCT_NOT_FOUND", "recoverable": False},
+            },
+        )
+
+    invoker = HttpOpenApiInvoker(
+        "http://h",
+        source_id="delpi",
+        subject_bearer_getter=lambda: "t",
+        http_get=http_get,
+    )
+    provider = OpenApiCapabilityProvider([_source(invoker)])
+    with pytest.raises(CapabilityProviderError) as exc:
+        provider.invoke(
+            _product_capability(provider),
+            {"product_id": "x"},
+            correlation_id="c",
+        )
+    assert exc.value.code == "openapi_invocation_failed"
+
+
 def test_invoker_drops_undeclared_arguments():
     """Arguments not declared as OpenAPI inputs never reach the wire."""
     calls = []

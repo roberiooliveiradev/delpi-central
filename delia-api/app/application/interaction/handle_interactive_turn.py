@@ -32,10 +32,14 @@ from app.application.interaction.contracts import (
     TURN_COMMAND_MESSAGE,
     TURN_COMMAND_APPLY_PREPARED,
     TURN_COMMAND_REJECT_PREPARED,
+    LIMITATION_INSUFFICIENT_EVIDENCE,
     LIMITATION_PRIOR_TURN_CONTINUATION,
     LIMITATION_RESULT_TRUNCATED,
     InteractiveTurnRequest,
     InteractiveTurnResult,
+)
+from app.application.capability_provision.contracts import (
+    OWNER_RECORD_NOT_FOUND,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -62,6 +66,7 @@ from app.application.interaction.presentation import (
     MESSAGE_KIND_CLARIFICATION_REQUIRED,
     MESSAGE_KIND_CONFIRMATION_REQUIRED,
     MESSAGE_KIND_PRECONDITION_REQUIRED,
+    MESSAGE_KIND_RESULT,
     MESSAGE_KIND_SOURCE_UNAVAILABLE,
     MESSAGE_KIND_WRITE_REJECTED,
     compose_presentation,
@@ -137,6 +142,10 @@ DELPI_SOURCE_UNAVAILABLE_MESSAGE = (
 DELPI_SOURCE_DENIED_MESSAGE = (
     "O acesso à fonte autoritativa necessária para esta solicitação "
     "foi negado. Nenhum dado operacional foi verificado."
+)
+DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE = (
+    "A fonte consultada informou que não há registro para esta "
+    "solicitação. Nenhum dado operacional foi inventado."
 )
 
 # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: producer-declared
@@ -840,31 +849,37 @@ class HandleInteractiveConversationTurn:
         masquerading as DELPI data.
         """
         denied = attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
-        content = (
-            DELPI_SOURCE_DENIED_MESSAGE
-            if denied
-            else DELPI_SOURCE_UNAVAILABLE_MESSAGE
-        )
+        not_found = attempt.error_code == OWNER_RECORD_NOT_FOUND
         # Owner-declared precondition (bounded, verbatim owner
         # vocabulary — never a URL): tells the user WHAT the source
         # reported missing, without granting or inventing anything.
         owner_hint = getattr(attempt, "owner_hint", None)
         has_hint = isinstance(owner_hint, str) and bool(owner_hint)
-        if has_hint:
-            content = content + f" A fonte informou: {owner_hint}"
-        # An owner-declared precondition is presented distinctly from a
-        # bare source failure — PRECONDITION_REQUIRED signals the source
-        # declared a user-actionable requirement (bounded, verbatim).
-        message_kind = (
-            MESSAGE_KIND_AUTHZ_DENIED
-            if denied
-            else (
+        if denied:
+            content = DELPI_SOURCE_DENIED_MESSAGE
+            message_kind = MESSAGE_KIND_AUTHZ_DENIED
+            limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
+        elif not_found:
+            # Owner envelope proved a non-recoverable 404. That is
+            # absence of the requested record, not a dead source.
+            content = DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE
+            if has_hint:
+                content = content + f" A fonte informou: {owner_hint}"
+            message_kind = MESSAGE_KIND_RESULT
+            limitations = (LIMITATION_INSUFFICIENT_EVIDENCE,)
+        else:
+            content = DELPI_SOURCE_UNAVAILABLE_MESSAGE
+            if has_hint:
+                content = content + f" A fonte informou: {owner_hint}"
+            # An owner-declared precondition is presented distinctly
+            # from a bare source failure — PRECONDITION_REQUIRED
+            # signals a user-actionable requirement (bounded, verbatim).
+            message_kind = (
                 MESSAGE_KIND_PRECONDITION_REQUIRED
                 if has_hint
                 else MESSAGE_KIND_SOURCE_UNAVAILABLE
             )
-        )
-        limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
+            limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
         result_turn = InteractionTurn(
             turn_id=str(uuid.uuid4()),
             session_id=session.session_id,
