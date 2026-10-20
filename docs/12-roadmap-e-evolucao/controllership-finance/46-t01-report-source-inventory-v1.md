@@ -101,3 +101,38 @@ Não implementar endpoint api-delpi/BFF até existir: `report_id → owner → r
 **Próximo da fila: R03 — P7 padrão e layout Bloco H, rotina MATR460.** É distinto de R04/MATR860 (Consumo/Relação por OP). Status atual `TO_INVENTORY`: não houve ainda inventário de tabelas/campos/joins nem validação de arquivo exportado R03 nesta rodada. Confirmar no TÉO o passo exato, owner, período de estoque/competência, parâmetros, fonte TOTVS, saída e dependência do corte de estoque. Em seguida realizar descoberta DAVI e SQL READ autorizado; buscar export original, mas se não houver registrar `NOT_PROVIDED/TEST_NOT_RUN` sem bloquear a criação futura da consulta operacional. Não criar endpoint ou equivalência por analogia a R01/R02.
 
 **Método obrigatório por relatório:** AS-IS TÉO + owner; relatório/export e proveniência; colunas/tabelas SQL (DAVI); joins/cardinalidade/filtros; contrato api-delpi → BFF → visual; testes/smoke; comparação com export se presente; documentar lacuna de paridade se ausente; commit e evidências. GO de design/implementação separado por item.
+
+
+## 10. R03 — Fase A, investigação SQL real para reproduzir P7/MATR460 (20/10/2026)
+
+**Escopo:** investigação READ-only DAVI, sem alteração de runtime. GitHub TARGET, TÉO authority AS-IS. Não confundir o relatório P7 padrão com o Bloco H nem com MATR860.
+
+### 10.1 Proveniência do procedimento (TÉO vs derivado NotebookLM)
+
+- TÉO PROC-0072 identifica emissão **P7 padrão** para conferência de estoque e **P7 Bloco H** quando requerido; confronto de Entradas/Saídas − P7 − Material em Processo com divergência **R$ 0,00**, até centavos, sem tolerância. Joici Motta é a gestora do processo.
+- Resposta do NotebookLM **fornecida pelo PO** (DERIVED, não revisão direta do vídeo): apresenta emissão P7 padrão e layout H, data 30/09/2026, filiais 01/02, relatório padrão supostamente 91 páginas, total de R$ 3.776.994,69, Insumos R$ 266.321,45, impressão/PDF e conciliação preliminar. Os timecodes derivados chegam após 01:00, mas o MP4 cadastrado no doc 03 dura 00:54:44: **STALE_EVIDENCE / TIMECODE_RECONCILIATION_PENDING**. O código MATR460 está associado à documentação, mas não foi visualizado na gravação conforme a resposta. PDF original/params/export não fornecidos; `EXPORT_PARITY=TEST_NOT_RUN`.
+- A diferença aritmética entre Entradas/Saídas R$ 3.890.247,18, P7 R$ 3.776.994,69 e H02 R$ 64.591,71 é R$ 48.660,78 (ainda **derivada**, não homologada). A divergência entre R$ 266.321,46 e R$ 266.321,45 é R$ 0,01, não R$ 0,25 como afirmado no texto derivado. Nunca promover aceitação de arredondamento sem decisão de owner.
+
+### 10.2 Fontes SQL físicas, consultas read-only DAVI
+
+- Catálogo `sysobjects`: tabelas `SB1010`, `SB2010`, `SB6010`, `SB9010`, `SC2010`, `SD1010`, `SD2010`, `SD3010`, `SF4010` e `SX6010` presentes. **Existência física não prova uso pela MATR460.**
+- `SB9010`: `B9_FILIAL`, `B9_COD`, `B9_LOCAL`, `B9_DATA`, `B9_QINI`, `B9_QISEGUM`, `B9_VINI1..5`, `B9_VINIFF1..5`, `B9_CM1..5`, `B9_CUSTD`, `B9_MCUSTD`, `S_T_A_M_P_`, `I_N_S_D_T_` identificados no schema. Campos numéricos de saldo/custo `float`.
+- `SB1010`: `B1_FILIAL`, `B1_COD`, `B1_DESC`, `B1_UM`, `B1_TIPO`, `B1_GRUPO`, `B1_CUSTD`, `B1_CC`. `B1_FILIAL=''` nos 55.314 produtos ativos observados. Na amostra da filial 01 de 30/09/2026, LEFT JOIN `SB9.B9_COD=SB1.B1_COD` filtrando `D_E_L_E_T_=''` teve **zero SB9 sem SB1**; isso não garante regra de junção universal.
+- `SB9010` em `B9_DATA='20260930'`, ativos: **7.929 linhas**, filial 01 **4.812 linhas / 4.027 produtos / SUM(B9_VINI1)=3.884.439,52**; filial 02 **3.117 linhas / SUM(B9_VINI1)=10.576.487,84**; valor global **14.460.927,36** (moeda funcional ainda não provada, não rotular BRL como resultado do SQL).
+- Filial 01, `B9_LOCAL='01'`: 3.945 linhas, **3.524.856,22**; armazém `99`: 753 linhas, **293.334,20**; `98`: 101 linhas, **9.402,08**; demais locais `0`, `03`, `25`, `50` também existem. **Não subtrair 98/99 arbitrariamente**.
+- Grupo por `SB1.B1_TIPO` usando `B9_VINI1` em filial 01, data 30/09/2026: `MP=3.364.885,39`, `II=266.321,45`, `PA=190.511,24`, `PI=24.528,59`, demais tipos `=38.192,85`. **II coincide aritmeticamente com subtotal Insumos 266.321,45 informado pelo NotebookLM; não é paridade de relatório**. Total bruto SB9 excede total P7 derivado em **107.444,83**; causa ainda desconhecida (filtros, armazéns, custeio/terceiros/processo etc.). Não ajustar por tentativa-e-erro.
+- Há `B9_DATA='20260831'` com 7.813 linhas. O exemplo `SB9.B9_QINI`/ `B9_VINI1` de setembro prova posição histórica; uso exato pelo programa ainda depende de algoritmos/params.
+
+### 10.3 SX6 — configurações observadas na DELPI
+
+Consulta `SX6010`, campo `X6_VAR`/`X6_CONTEUD`: `MV_CUSFIL=A`, `MV_CONTERC=F`, `MV_ALMTERC=''`, `MV_LOCPROC=99`, `MV_M460PRC=.T.`, `MV_MT460EP=.T.`, `MV_R460PRC=1`, `MV_R460TPC=''`, `MV_SDTESN3=1`, `MV_PRODPR0=1` nas filiais 01/02. **Valores físicos PROVEN; semântica exata por release/ponto de entrada PENDING**. A existência de armazém 99 e flags de processo não autoriza classificar seu valor inteiro como WIP.
+
+### 10.4 Saída histórica Bloco H — estrutura observada
+
+`sysobjects`: **19 tabelas `H_%`** presentes (inventários 2023–2025); a mais recentemente criada é `H_2025123101_01` em 05/05/2026 14:23:54, referente no nome a 31/12/2025, com **3.450 registros**, **3.036 produtos distintos** e `SUM(TOTAL)=3.653.871,98`; situações 1 e 2 presentes. **Nenhuma H_ para 30/09/2026 encontrada** nesse inventário. A ausência nessa busca não prova que o relatório padrão não tenha sido emitido.
+- Schema físico `H_2025123101_01`: `FILIAL varchar(2)`, `SITUACAO varchar(1)`, `PRODUTO varchar(15)`, `UM varchar(2)`, `QUANTIDADE float(53)`, `VALOR_UNIT float(53)`, `TOTAL float(53)`, `ARMAZEM varchar(2)`, `CLIFOR varchar(6)`, `LOJA varchar(2)`, `TPCF varchar(1)`, `D_E_L_E_T_ varchar(1)`, `R_E_C_N_O_ bigint`, `R_E_C_D_E_L_ bigint`, todos NOT NULL. Essa é **saída histórica candidata ao Bloco H**, não mapeamento integral do cálculo do P7 padrão.
+- Último por `R_E_C_N_O_` (=3450): `FILIAL=01`, `SITUACAO=2`, `PRODUTO=50225203`, `UM=MI`, `QUANTIDADE=0.023`, `VALOR_UNIT=253.1304`, `TOTAL=5.822`; sem timestamp do item, não chamar de última atualização.
+
+### 10.5 Lacunas e próxima fase
+
+`R03_PHASE_A=ACCEPT_WITH_RESIDUAL`: fontes candidatas e metadados SQL observados; **não** afirmar algoritmo MATR460 completo, nem correspondência exata do relatório. `MATR460_SOURCE_RULES=TO_INVENTORY`, `ADVPL_CUSTOMIZATION=TO_INVENTORY`, `P7_STANDARD_PARITY=TEST_NOT_RUN`, `BLOCO_H_PARITY=TEST_NOT_RUN`. Fase B: obter versão do programa e perguntas SX1/parametrização/custos, verificar owner e fontes ADVPL ou rotina autorizada; reproduzir linha/grupo em 30/09/2026 e distinguir preliminar de fechamento final; confrontar com PDF original quando disponibilizado. Sem writes no ERP ou endpoints novos nesta fase.
