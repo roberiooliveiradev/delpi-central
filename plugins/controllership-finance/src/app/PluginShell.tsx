@@ -8,6 +8,7 @@ import {
 } from "react";
 import { Home } from "lucide-react";
 import { formatPortalGreeting } from "@delpi/plugin-ui/index";
+import { cfApiUrl, httpGetImageBlob } from "../api/httpClient";
 
 import {
   collectSearchHits,
@@ -56,6 +57,29 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const { viewer } = useViewerContext();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!viewer?.capabilities.access) {
+      setAvatarUrl(null);
+      return;
+    }
+    const controller = new AbortController();
+    let objectUrl: string | null = null;
+    void httpGetImageBlob(cfApiUrl("/viewer-photo"), controller.signal)
+      .then((blob) => {
+        if (controller.signal.aborted || !blob) return;
+        objectUrl = URL.createObjectURL(blob);
+        setAvatarUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAvatarUrl(null);
+      });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [viewer?.capabilities.access, viewer?.displayName]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
@@ -147,7 +171,10 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
           }
           actions={
             <CfTopBarUserIdentity
-              displayName={viewer?.firstName ?? null}
+              displayName={viewer?.displayName ?? viewer?.firstName ?? null}
+              avatarUrl={avatarUrl}
+              avatarHref="/profile"
+              avatarTitle="Abrir Meu Perfil na Minha DELPI"
               fallbackLabel={SHELL_NAV_CONTENT.userMenu.nameFallback}
               portalScopeClassName={CF_PORTAL_SCOPE}
             />
