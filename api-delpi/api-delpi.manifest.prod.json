@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "api-delpi",
+  "name": "API DELPI",
+  "description": "API corporativa de integrações DELPI",
+  "icon": "server",
+  "version": "1.0.3",
+  "type": "backend-only",
+  "basePath": "/apps/api-delpi",
+  "entry": null,
+  "permissions": [
+    {
+      "code": "api-delpi.access",
+      "name": "Acesso básico",
+      "description": "Permite acesso às funcionalidades básicas da API DELPI",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.access.full",
+      "name": "Acesso Total",
+      "description": "Acesso a total as funcionalidades da API DELPI",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.integrations.protheus.read",
+      "name": "Leitura Protheus REST",
+      "description": "Leitura da integração REST Protheus (status e consulta de fornecedor)",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.integrations.protheus.suppliers.create",
+      "name": "Criar fornecedor Protheus",
+      "description": "Criação de fornecedor via REST Protheus (POST; feature-gated)",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.integrations.protheus.suppliers.update",
+      "name": "Alterar fornecedor Protheus",
+      "description": "Alteração de fornecedor via REST Protheus (PUT; feature-gated)",
+      "module": "api-delpi"
+    }
+  ],
+  "routes": [],
+  "backend": {
+    "audience": "delpi-central",
+    "baseUrl": "/apps/api-delpi",
+    "issuer": "https://minhadelpi.com.br/auth/realms/delpi",
+    "required": true,
+    "requiredPermissionsHeader": "x-user-permissions",
+    "serviceName": "api-delpi",
+    "validateJwt": true
+  },
+  "lifecycle": {
+    "allowHotReload": false,
+    "allowVersionUpgrade": true,
+    "autoCreateRoutes": false,
+    "autoRegisterPermissions": true
+  },
+  "security": {
+    "requireHttps": true
+  },
+  "observability": {
+    "healthEndpoint": "/health",
+    "logFormat": "json"
+  }
+}
