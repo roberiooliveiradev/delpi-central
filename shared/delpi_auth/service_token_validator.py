@@ -18,6 +18,7 @@ import os
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
+import requests
 from jose import JWTError
 
 from .jwt_validator import JwtConfigurationError, validate_token
@@ -27,6 +28,7 @@ from .service_errors import (
     ServiceScopeDeniedError,
     ServiceTokenInvalidError,
     ServiceTokenMissingError,
+    ServiceValidatorUnavailableError,
 )
 from .service_identity import ServiceIdentity
 
@@ -91,6 +93,8 @@ class ServiceTokenValidator:
             claims = validate_token(token, expected_audience=self._config.audience)
         except JwtConfigurationError as exc:
             raise ServiceAuthConfigError(str(exc)) from exc
+        except requests.RequestException as exc:
+            raise ServiceValidatorUnavailableError() from exc
         except (JWTError, ValueError) as exc:
             raise ServiceTokenInvalidError() from exc
 

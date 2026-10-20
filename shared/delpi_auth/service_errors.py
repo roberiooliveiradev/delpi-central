@@ -30,6 +30,12 @@ class ServiceTokenInvalidError(ServiceAuthError):
     code = "S2S_TOKEN_INVALID"
 
 
+class ServiceValidatorUnavailableError(ServiceAuthError):
+    """JWKS/discovery endpoint unreachable — transient dependency, fail closed."""
+
+    code = "S2S_VALIDATOR_UNAVAILABLE"
+
+
 class ServiceClientDeniedError(ServiceAuthError):
     """Valid token, but the technical client is not in the allowlist."""
 

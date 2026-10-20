@@ -37,7 +37,7 @@ from .service_contract import (
     extract_service_authorization,
 )
 from .service_identity import ServiceIdentity
-from .service_errors import ServiceAuthError
+from .service_errors import ServiceAuthError, ServiceValidatorUnavailableError
 from .service_token_validator import ServiceTokenValidator
 from .service_token_provider import ClientCredentialsTokenProvider
 
@@ -58,6 +58,7 @@ __all__ = [
     "extract_service_authorization",
     "ServiceIdentity",
     "ServiceAuthError",
+    "ServiceValidatorUnavailableError",
     "ServiceTokenValidator",
     "ClientCredentialsTokenProvider",
 ]
