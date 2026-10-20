@@ -16,7 +16,6 @@ from app.application.capability_provision.orchestration import (
     CAPABILITY_SELECTION_INSTRUCTION_ID,
     GROUP_SELECTION_INSTRUCTION_ID,
     _SELECTION_INCONCLUSIVE_CONTENT,
-    _extraction_list_from_prior_excerpts,
     _list_header,
     _prior_excerpt_records,
     _records_are_prior_excerpts,
@@ -329,9 +328,8 @@ def test_t12_method_guidance_framing():
 
 def test_t13_checklist_framing():
     records = _prior_excerpt_records(PRIOR)
-    rendered = _extraction_list_from_prior_excerpts(records)
-    assert rendered
-    assert "registro" not in rendered.split("\n", 1)[0].lower()
+    header = _list_header(len(records), records=records)
+    assert "registro" not in header.lower()
 
 
 def test_t14_operational_record_list_framing():

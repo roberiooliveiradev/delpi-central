@@ -2,7 +2,7 @@
 
 **TRACK_ID:** `DELIA-C3-ORCHESTRATOR-SEMANTIC-REFACTOR-FINITE-ROADMAP-01`
 **DATA:** 2026-10-19
-**ESTADO VIGENTE:** Q02-B `CLOSED_WITH_RESIDUAL` pelo parecer da coordenação `ACCEPT_WITH_RESIDUAL` (2026-10-20, §15). Avaliação com modelo real permanece `TEST_NOT_RUN`. `Q02_C_AUTHORIZED=NO`; o checkpoint de entrada está preparado. A exceção `I04_FINITE_REFACTOR_CONTINUATION` permanece a autoridade de continuidade. **Estado anterior** da evidência Q02-B está na seção 14.
+**ESTADO VIGENTE:** Q02-C executado e `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (2026-10-20, §17; `Q02_C_ACCEPTED=NO`; `Q03_AUTHORIZED=NO`). Avaliação com modelo real `TEST_NOT_RUN`. A exceção `I04_FINITE_REFACTOR_CONTINUATION` permanece a autoridade de continuidade. **Estado anterior** da entrada Q02-C está na seção 16.
 **BASE_HEAD de planejamento:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` (revalidar `origin/main`, `HEAD` e `git status` a cada execução; updates concorrentes não integram automaticamente o escopo).
 **CANÔNICO:** execução 16; standalone 50; ownership 17; patterns 49 §14.1; baseline 51; bootstrap 52; state 21; tests 20; traceability 25; product 24; MCP/A2A 60; `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `plan-construction.mdc`; ledger atual.
 **EVIDÊNCIAS:** [56](./56-orchestration-audit-semantic-ownership-checkpoint.md) e [57](./57-orchestration-complete-second-pass-static-audit.md), 10.592 linhas/179 definições, 42 grupos de achados; [58](./58-adr-llm-semantic-decision-ownership.md) direção `APPROVED`; ledger §6.145 (`selection-only` congelado), §§6.299–6.300.
@@ -394,4 +394,29 @@ Q02_A_REWORK_REMAINING=0
 REAL_MODEL_Q02_B=TEST_NOT_RUN
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=Q02_C_BOUNDED_EXECUTION_AND_REVIEW
+```
+
+
+## 17. Q02-C continuity and synthesis — evidence for review (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01`. **AUTHORITY:** §16 / ledger §6.327 (`Q02_C_AUTHORIZED=YES_BOUNDED_ENTRY`). **RUNTIME:** orquestrador e testes de `delia-api`. Sem planner novo, sem contrato novo, sem deploy.
+
+Removidos do runtime: `_prior_listing_hint`, `_collect_extraction_units`, `_count_covered_extraction_units`, `_prior_extraction_incomplete`, `_extraction_list_from_prior_excerpts`, `_render_is_list_replay_not_compare`, `_recover_prior_extraction_after_invalid_index`. A seleção recebe `prior_observation` com `authoritative=false` e um trecho limitado. A comparação pedida pelo goal só passa quando a renderização contém a seção determinística `Diferenças comprovadas:`. Texto anterior continua fora da proveniência de identificador. `SELECTION_ONLY_GROUNDED_SYNTHESIS` permanece congelado.
+
+**`unique_structural_ticket_list_capability` preservado.** Callers: `_select_capability` e `_select_capability_with_goal`. O predicado só escolhe quando existe exatamente uma capability READ cujo schema publicado inclui `action=tickets` e `classify_result_intent` já é COUNT ou LIST. Esse classificador também sustenta a projeção de paginação e o escopo pessoal (R4/R5): página não vira total pessoal. Não é classificador de continuidade, comparação ou hipótese, e não usa nome de DAVI, TÉO ou VISTA. Retirá-lo acrescentaria um estágio de modelo no caminho que esgotava o orçamento de 30 s antes do READ do owner. A justificativa é estrutural e de paginação, não uma heurística nova.
+
+Chamadas de modelo na seleção não foram reduzidas: o atalho de ticket já evitava um estágio, e os helpers removidos não eram chamadas de modelo. Latência live `TEST_NOT_RUN`. Suíte `delia-api` 1665 PASS.
+
+```text
+Q02_C_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_C_ACCEPTED=NO
+LEXICAL_CONTINUITY_HEURISTICS=REMOVED
+TICKET_LIST_SHORT_CIRCUIT=PRESERVED_STRUCTURAL
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+REAL_MODEL_EVALS=TEST_NOT_RUN
+FULL_DELIA_API_PYTEST=1665_PASSED
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
 ```

@@ -31,7 +31,6 @@ from app.application.capability_provision.orchestration import (
     _prior_excerpt_records,
     _prior_supports_typed_attribute_compare,
     _prior_transform_probe_eligible,
-    _render_is_list_replay_not_compare,
     _typed_compare_outcome_content,
 )
 from app.application.interaction.contracts import (
@@ -681,9 +680,6 @@ def test_g0_rework_misleading_compare_header_is_not_outcome():
     assert _typed_compare_outcome_content(
         "Comparação a partir dos registros anteriores:\n- a → b"
     ) is False
-    assert _render_is_list_replay_not_compare(
-        "Comparação: valores divergentes.\n- a → b"
-    )
     assert _typed_compare_outcome_content(
         "Linha.\nDiferenças comprovadas:\n- código: 1 → 2"
     )

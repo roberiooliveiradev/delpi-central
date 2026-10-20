@@ -16210,3 +16210,26 @@ C3_EXECUTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=CURSOR_Q02_C_IMPLEMENTATION_REPORT
 ```
+
+
+## §6.328 — Q02-C continuity and synthesis (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01`. **AUTHORITY:** §6.327 `Q02_C_ENTRY=AUTHORIZED_BOUNDED`. **BASE:** `ac1ec85c43d9bf0bfa1f72a13e2044f086897be7`, rebase em `origin/main` `99259cd155a70118c9bb9fffc1b422724773d995` (commits de api-delpi, sem overlap neste pacote).
+
+Heurísticas de continuidade por formato saíram do orquestrador. O modelo recebe o texto anterior como observação não autoritativa. Comparação sem atributos tipados compartilhados permanece insuficiência. Identificador inventado, AuthZ, PREPARE/ACT e síntese selection-only permanecem. `unique_structural_ticket_list_capability` permanece pelo schema único `action=tickets` e pela regra de paginação R4/R5; não classifica continuidade. Orçamentos 30 s e 12 s intactos. Suíte `delia-api` 1665 passed. `REAL_MODEL_EVALS=TEST_NOT_RUN`. O executor não aceita o pacote. Q03 não está autorizado.
+
+```text
+Q02_C_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_C_ACCEPTED=NO
+LEXICAL_CONTINUITY_HEURISTICS=REMOVED
+TICKET_LIST_SHORT_CIRCUIT=PRESERVED_STRUCTURAL
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+FULL_DELIA_API_PYTEST=1665_PASSED
+REAL_MODEL_EVALS=TEST_NOT_RUN
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+MATERIAL_ACT=0
+RUNTIME_DIFF=ORCHESTRATOR_CONTINUITY_ONLY
+NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
+```

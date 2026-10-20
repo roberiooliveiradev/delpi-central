@@ -23,7 +23,6 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _index_selection_is_relevant,
-    _prior_extraction_incomplete,
     _rank_index_options_by_overlap,
 )
 from app.application.interaction.capability_attempt import (
@@ -571,21 +570,11 @@ def test_k2_ambiguous_write_followup_clarifies_without_act():
     assert provider.calls == []
 
 
-def test_helper_marks_incomplete_extraction_independent_of_length():
-    """Q02-A: coverage expansion disabled — helper always False."""
-    from app.application.capability_provision.orchestration import (
-        _prior_excerpt_records,
-    )
+def test_q02c_coverage_counter_is_not_a_continuity_oracle():
+    import app.application.capability_provision.orchestration as orch_mod
 
-    records = _prior_excerpt_records(PRIOR_GUIDANCE)
-    shortish = (
-        "Encontrei 1 registro:\n- Descrição do problema observado "
-        "e momento de ocorrência no processo analisado."
-    )
-    assert len(shortish) >= 80
-    assert not _prior_extraction_incomplete(
-        FOLLOW_UP_CHECKLIST, shortish, records
-    )
+    assert not hasattr(orch_mod, "_prior_extraction_incomplete")
+    assert not hasattr(orch_mod, "_count_covered_extraction_units")
 
 
 # ---------------------------------------------------------------------------

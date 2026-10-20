@@ -19,7 +19,7 @@ from app.application.capability_provision.orchestration import (
     RESOLVER_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _prior_listing_hint,
+    _prior_observation_context,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -307,12 +307,14 @@ def test_resolver_budget_allows_follow_up_headroom():
     assert orch._budget_allows_resolver(deadline) is False
 
 
-def test_prior_listing_hint_from_observation():
-    hint = _prior_listing_hint(_prior())
+def test_q02c_prior_observation_is_not_a_listing_classifier():
+    hint = _prior_observation_context(_prior())
     assert hint is not None
     assert hint["prior_result_available"] is True
-    assert hint["listed_identifier_count"] >= 1
-    assert hint["ordered_listing"] is True
+    assert hint["authoritative"] is False
+    assert "listed_identifier_count" not in hint
+    assert "ordered_listing" not in hint
+    assert "untrusted_excerpt" in hint
 
 
 def test_selection_payload_embeds_prior_listing_hint():
@@ -362,8 +364,9 @@ def test_selection_payload_embeds_prior_listing_hint():
         for r in model.requests
         if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
     )
-    assert "prior_listing" in select_req.input_text
-    assert "listed_identifier_count" in select_req.input_text
+    assert "prior_observation" in select_req.input_text
+    assert "authoritative" in select_req.input_text
+    assert "listed_identifier_count" not in select_req.input_text
 
 
 def test_referential_detail_ordinal_binds_proven_id():

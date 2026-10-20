@@ -5,7 +5,25 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (fechamento Q02-B e fronteira do owner):** o Product Master registra que a DÉLIA descobre capacidades e contratos; não incorpora antecipadamente a regra de negócio de cada API. Uma string de consulta compatível com o schema pode estar semanticamente inadequada e ainda assim seguir para o owner. O owner valida a regra empresarial e devolve resultado, vazio ou erro. A DÉLIA interpreta essa evidência. Isso não cria validador de domínio, catálogo paralelo nem contrato novo. A clarificação aplica a ADR 58 (D5 e D8), sem substituí-la. O parecer da coordenação sobre Q02-B é `ACCEPT_WITH_RESIDUAL`: implementação `2ab92e73eef8337d5cee4d25f52cae971f0317d9`, suíte executor 1665 PASS, avaliação com modelo real `TEST_NOT_RUN`, deploy não autorizado, fidelidade funcional aberta. Este registro não é um segundo aceite do executor e não autoriza Q02-C. O checkpoint de entrada de Q02-C está no roadmap 59 §15 e no ledger §6.326.
+**Decisão vigente de execução — 2026-10-20 (Q02-C evidência para review):** o pacote `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01` removeu a classificação de continuidade por contagem de identificadores, pela palavra de listagem e pelo formato de bullets. A referência anterior chega à proposta do modelo como texto não autoritativo. Comparação factual continua exigindo a seção determinística de diferenças tipadas. `unique_structural_ticket_list_capability` permanece: é o atalho estrutural de um único READ cujo schema publica `action=tickets`, ligado à honestidade de paginação, e não um classificador de continuidade. Suíte `delia-api` 1665 PASS. Avaliação com modelo real `TEST_NOT_RUN`. Este registro não aceita Q02-C e não autoriza Q03. Ledger §6.328. Roadmap 59 §17.
+
+```text
+Q02_C_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_C_ACCEPTED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+LEXICAL_CONTINUITY_HEURISTICS=REMOVED
+TICKET_LIST_SHORT_CIRCUIT=PRESERVED_STRUCTURAL
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+FULL_DELIA_API_PYTEST=1665_PASSED
+NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
+```
+
+**Decisão anterior — 2026-10-20 (fechamento Q02-B e fronteira do owner, SUPERSEDED como cerca vigente pela evidência Q02-C):** o Product Master registra que a DÉLIA descobre capacidades e contratos; não incorpora antecipadamente a regra de negócio de cada API. Uma string de consulta compatível com o schema pode estar semanticamente inadequada e ainda assim seguir para o owner. O owner valida a regra empresarial e devolve resultado, vazio ou erro. A DÉLIA interpreta essa evidência. Isso não cria validador de domínio, catálogo paralelo nem contrato novo. A clarificação aplica a ADR 58 (D5 e D8), sem substituí-la. O parecer da coordenação sobre Q02-B é `ACCEPT_WITH_RESIDUAL`: implementação `2ab92e73eef8337d5cee4d25f52cae971f0317d9`, suíte executor 1665 PASS, avaliação com modelo real `TEST_NOT_RUN`, deploy não autorizado, fidelidade funcional aberta. Este registro não é um segundo aceite do executor e não autoriza Q02-C. O checkpoint de entrada de Q02-C está no roadmap 59 §15 e no ledger §6.326.
 
 ```text
 Q02_B_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL
@@ -1778,4 +1796,19 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=CURSOR_Q02_C_IMPLEMENTATION
+```
+
+
+### Q02-C execution evidence (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01`. Entrada `Q02_C_ENTRY_AUTHORIZED=YES_BOUNDED`. Sem aceite deste pacote, sem Q03 e sem deploy.
+
+Continuidade deixa de contar identificadores, detectar listagem por texto ou recuperar extração por bullets. O bloco `prior_observation` leva um trecho não autoritativo. Comparação sem campos tipados compartilhados continua insuficiência. Síntese selection-only permanece. O atalho `unique_structural_ticket_list_capability` permanece justificado na seção 17 do roadmap 59. Suíte executor 1665 PASS. Live `TEST_NOT_RUN`.
+
+```text
+Q02_C_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_C_ACCEPTED=NO
+Q03_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
 ```

@@ -27,7 +27,6 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _discovery_empty_result_class,
-    _recover_prior_extraction_after_invalid_index,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -546,11 +545,11 @@ def test_index_no_match_clarifies_without_nested_read():
 
 def test_continuity_invalid_index_recovers_without_owner_reinvoke():
     """Q02-A: invalid index → insufficiency disclosure, zero owner reinvoke."""
-    records = tuple({"excerpt": line} for line in PRIOR_GUIDANCE.splitlines() if line.strip())
-    recovered = _recover_prior_extraction_after_invalid_index(
-        CONTINUITY_ASK, records
+    import app.application.capability_provision.orchestration as orch_mod
+
+    assert not hasattr(
+        orch_mod, "_recover_prior_extraction_after_invalid_index"
     )
-    assert recovered is None
 
     guide = _cap("solo", "solo_p", "get_guide", SpecialistOperationClass.READ)
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])

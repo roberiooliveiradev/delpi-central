@@ -25,7 +25,6 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _deterministic_arguments_from_schema,
-    _extraction_list_from_prior_excerpts,
     _prior_excerpt_records,
     _rank_index_options_by_overlap,
 )
@@ -470,15 +469,11 @@ def test_rank_index_options_preserves_catalog_order_q02a():
     ]
 
 
-def test_extraction_helper_builds_bullet_list():
-    records = (
-        {"excerpt": "- Um"},
-        {"excerpt": "- Dois"},
-        {"excerpt": "nota solta"},
-    )
-    text = _extraction_list_from_prior_excerpts(records)
-    assert text is not None
-    assert "Um" in text and "Dois" in text
+def test_q02c_bullet_extraction_is_not_a_continuity_oracle():
+    import app.application.capability_provision.orchestration as orch_mod
+
+    assert not hasattr(orch_mod, "_extraction_list_from_prior_excerpts")
+    assert not hasattr(orch_mod, "_collect_extraction_units")
 
 
 def test_write_ambiguous_still_clarifies_without_act():
