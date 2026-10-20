@@ -109,12 +109,20 @@ def _bindings(side: str) -> dict:
 
 
 def _from_clause(b: dict) -> str:
+    # FK7 and SED lookups can match >1 row per event (multi-title links,
+    # per-branch SED rows) — TOP 1 keeps one row per settlement event;
+    # R_E_C_N_O_/ED_FILIAL make the choice deterministic (global SED first).
     return f"""
 FROM {b["table"]} F WITH (NOLOCK)
-LEFT JOIN FK7010 T WITH (NOLOCK)
-    ON T.D_E_L_E_T_ = ''
-    AND T.FK7_ALIAS = '{b["title_alias"]}'
-    AND T.FK7_IDDOC = F.FK_IDDOC_PLACEHOLDER
+OUTER APPLY (
+    SELECT TOP 1 T2.FK7_IDDOC, T2.FK7_PREFIX, T2.FK7_NUM, T2.FK7_PARCEL,
+        T2.FK7_TIPO, T2.FK7_CLIFOR, T2.FK7_LOJA, T2.FK7_FILTIT
+    FROM FK7010 T2 WITH (NOLOCK)
+    WHERE T2.D_E_L_E_T_ = ''
+        AND T2.FK7_ALIAS = '{b["title_alias"]}'
+        AND T2.FK7_IDDOC = F.FK_IDDOC_PLACEHOLDER
+    ORDER BY T2.R_E_C_N_O_
+) T
 LEFT JOIN {b["title_table"]} TITLE WITH (NOLOCK)
     ON TITLE.D_E_L_E_T_ = ''
     AND TITLE.{b["title_filial"]} = T.FK7_FILTIT
@@ -124,9 +132,13 @@ LEFT JOIN {b["title_table"]} TITLE WITH (NOLOCK)
     AND TITLE.{b["title_tipo"]} = T.FK7_TIPO
     AND TITLE.{b["title_clifor"]} = T.FK7_CLIFOR
     AND TITLE.{b["title_loja"]} = T.FK7_LOJA
-LEFT JOIN SED010 N WITH (NOLOCK)
-    ON N.D_E_L_E_T_ = ''
-    AND N.ED_CODIGO = F.{b["nature_field"]}
+OUTER APPLY (
+    SELECT TOP 1 N2.ED_CODIGO, N2.ED_DESCRIC
+    FROM SED010 N2 WITH (NOLOCK)
+    WHERE N2.D_E_L_E_T_ = ''
+        AND N2.ED_CODIGO = F.{b["nature_field"]}
+    ORDER BY N2.ED_FILIAL
+) N
 """.strip()
 
 
@@ -246,13 +258,21 @@ SELECT
     SUM(CASE WHEN LTRIM(RTRIM(F.{b["filial_field"]})) = '' THEN 1 ELSE 0 END)
         AS unresolved_branch
 FROM {b["table"]} F WITH (NOLOCK)
-LEFT JOIN FK7010 T WITH (NOLOCK)
-    ON T.D_E_L_E_T_ = ''
-    AND T.FK7_ALIAS = '{b["title_alias"]}'
-    AND T.FK7_IDDOC = F.{id_doc_field}
-LEFT JOIN SED010 N WITH (NOLOCK)
-    ON N.D_E_L_E_T_ = ''
-    AND N.ED_CODIGO = F.{b["nature_field"]}
+OUTER APPLY (
+    SELECT TOP 1 T2.FK7_IDDOC
+    FROM FK7010 T2 WITH (NOLOCK)
+    WHERE T2.D_E_L_E_T_ = ''
+        AND T2.FK7_ALIAS = '{b["title_alias"]}'
+        AND T2.FK7_IDDOC = F.{id_doc_field}
+    ORDER BY T2.R_E_C_N_O_
+) T
+OUTER APPLY (
+    SELECT TOP 1 N2.ED_CODIGO
+    FROM SED010 N2 WITH (NOLOCK)
+    WHERE N2.D_E_L_E_T_ = ''
+        AND N2.ED_CODIGO = F.{b["nature_field"]}
+    ORDER BY N2.ED_FILIAL
+) N
 WHERE {where}
 """.strip()
     return query, tuple(params)
@@ -316,11 +336,14 @@ def build_nature_descriptions_query(
     *, nature_codes: tuple[str, ...]
 ) -> tuple[str, tuple]:
     placeholders = ", ".join("?" for _ in nature_codes)
+    # SED can hold per-branch duplicates; DESC order makes the global
+    # (ED_FILIAL='') row the last one, so dict last-wins stays deterministic.
     query = f"""
 SELECT LTRIM(RTRIM(ED_CODIGO)) AS nature_code,
     LTRIM(RTRIM(ED_DESCRIC)) AS nature_description
 FROM SED010 WITH (NOLOCK)
 WHERE D_E_L_E_T_ = ''
     AND ED_CODIGO IN ({placeholders})
+ORDER BY ED_FILIAL DESC
 """.strip()
     return query, tuple(nature_codes)

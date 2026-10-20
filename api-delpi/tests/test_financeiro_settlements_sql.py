@@ -24,9 +24,14 @@ def test_payables_list_query_binds_fk2_and_audited_joins() -> None:
     assert query.startswith("SELECT")
     assert "FROM FK2010 F WITH (NOLOCK)" in query
     assert "F.D_E_L_E_T_ = ''" in query
-    assert "T.FK7_ALIAS = 'SE2'" in query
+    assert "T2.FK7_ALIAS = 'SE2'" in query
     assert "LEFT JOIN SE2010" in query
-    assert "LEFT JOIN SED010" in query
+    assert "OUTER APPLY" in query
+    assert "FROM SED010 N2" in query
+    assert "N2.ED_CODIGO = F.FK2_NATURE" in query
+    # one row per event: FK7/SED lookups can never multiply the result
+    assert query.count("OUTER APPLY") == 2
+    assert "TOP 1" in query
     assert "F.FK2_DATA >= ?" in query
     assert "F.FK2_NATURE = ?" in query
     assert "F.FK2_TPDOC = ?" in query
@@ -47,7 +52,7 @@ def test_receivables_list_query_binds_fk1_and_title_composite() -> None:
     )
     assert query.startswith("SELECT")
     assert "FROM FK1010 F WITH (NOLOCK)" in query
-    assert "T.FK7_ALIAS = 'SE1'" in query
+    assert "T2.FK7_ALIAS = 'SE1'" in query
     assert "LEFT JOIN SE1010" in query
     assert "TITLE.E1_CLIENTE = T.FK7_CLIFOR" in query
     assert "TITLE.E1_FILIAL = T.FK7_FILTIT" in query
@@ -71,8 +76,10 @@ def test_quality_query_counts_missing_links_without_dropping_rows() -> None:
     assert "missing_document" in query
     assert "missing_nature" in query
     assert "unresolved_branch" in query
-    assert "LEFT JOIN FK7010" in query
-    assert "LEFT JOIN SED010" in query
+    # TOP 1 OUTER APPLY: counters stay event-scoped even when FK7/SED match >1 row
+    assert "OUTER APPLY" in query
+    assert "FROM FK7010 T2" in query
+    assert "FROM SED010 N2" in query
 
 
 def test_summary_groups_by_side_currency_nature_movement() -> None:
