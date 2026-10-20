@@ -41,6 +41,12 @@ type SupplierDetailPageProps = {
 type WriteState = {
   outcome: SupplierWriteOutcome;
   message?: string;
+  /** Changes sent on the last write — used by the post-write GET check. */
+  submitted?: ReadonlyArray<{
+    field: "supplier_name" | "supplier_short_name";
+    after: string;
+  }>;
+  verifying?: boolean;
 } | null;
 
 const SECTION_LABELS: Record<string, string> = {
@@ -157,10 +163,11 @@ export function SupplierDetailPage({
   const confirmSubmit = () => {
     setReviewing(false);
     setSubmitting(true);
-    updateSupplier(code, store, draft)
+    const submitted = changes.map((c) => ({ field: c.field, after: c.after }));
+    updateSupplier(code, store, changes)
       .then((response) => {
         const outcome = classifyWriteOutcome(response, 200);
-        setWriteState({ outcome });
+        setWriteState({ outcome, submitted });
         if (outcome === "persistence_confirmed") {
           setEditing(false);
           setReloadKey((v) => v + 1);
@@ -178,6 +185,34 @@ export function SupplierDetailPage({
         }
       })
       .finally(() => setSubmitting(false));
+  };
+
+  /** GET posterior: compara os campos enviados com a ficha recarregada. */
+  const verifyPersistence = () => {
+    if (!writeState?.submitted?.length) return;
+    setWriteState({ ...writeState, verifying: true });
+    getSupplier(code, store)
+      .then((fresh) => {
+        const current = fresh.sections.identification ?? {};
+        const reflected = writeState.submitted!.every(
+          (change) =>
+            (current[change.field]?.toString() ?? "") === change.after,
+        );
+        setWriteState(
+          reflected
+            ? { outcome: "persistence_confirmed" }
+            : {
+                outcome: "acknowledged",
+                submitted: writeState.submitted,
+                message: C.verifyNotReflectedMessage,
+              },
+        );
+        if (reflected) {
+          setEditing(false);
+          setReloadKey((v) => v + 1);
+        }
+      })
+      .catch(() => setWriteState({ outcome: "indeterminate" }));
   };
 
   const listHref = buildPluginPath("suppliers", basePath);
@@ -232,7 +267,16 @@ export function SupplierDetailPage({
       />
 
       {writeState ? (
-        <WriteOutcomeBanner outcome={writeState.outcome} message={writeState.message} />
+        <WriteOutcomeBanner
+          outcome={writeState.outcome}
+          message={writeState.message}
+          onVerify={
+            writeState.outcome === "acknowledged" && writeState.submitted?.length
+              ? verifyPersistence
+              : undefined
+          }
+          verifying={writeState.verifying}
+        />
       ) : null}
 
       {error ? (
@@ -426,9 +470,13 @@ function SectionFields({
 function WriteOutcomeBanner({
   outcome,
   message,
+  onVerify,
+  verifying,
 }: {
   outcome: SupplierWriteOutcome;
   message?: string;
+  onVerify?: () => void;
+  verifying?: boolean;
 }) {
   const copy = {
     write_disabled: {
@@ -460,7 +508,17 @@ function WriteOutcomeBanner({
 
   return (
     <SuppliesStateBanner variant={copy.variant}>
-      <strong>{copy.title}</strong> {copy.message}
+      <strong>{copy.title}</strong> {copy.message}{" "}
+      {onVerify ? (
+        <SuppliesActionButton
+          type="button"
+          variant="ghost"
+          onClick={onVerify}
+          disabled={verifying}
+        >
+          {C.verifyAction}
+        </SuppliesActionButton>
+      ) : null}
     </SuppliesStateBanner>
   );
 }

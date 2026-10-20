@@ -1,4 +1,5 @@
 import { httpGet, httpPost, httpPut, suppliesApiUrl } from "../../api/httpClient";
+import { buildCreateFornecedor, buildUpdateFornecedor } from "./query";
 import type {
   SupplierCreateDraft,
   SupplierDetail,
@@ -44,30 +45,21 @@ export function createSupplier(
   draft: SupplierCreateDraft,
   signal?: AbortSignal,
 ): Promise<SupplierWriteResponse> {
-  const fornecedor: Record<string, string> = {};
-  if (draft.supplier_name.trim()) fornecedor.supplier_name = draft.supplier_name.trim();
-  if (draft.supplier_short_name.trim())
-    fornecedor.supplier_short_name = draft.supplier_short_name.trim();
-  if (draft.tax_id.trim()) fornecedor.tax_id = draft.tax_id.trim();
-  if (draft.state.trim()) fornecedor.state = draft.state.trim().toUpperCase();
   return httpPost<SupplierWriteResponse>(suppliesApiUrl("/suppliers"), {
-    fornecedor,
+    fornecedor: buildCreateFornecedor(draft),
   }, { signal });
 }
 
+/** PUT parcial — somente os campos alterados (`changes` vem do diff revisado). */
 export function updateSupplier(
   code: string,
   store: string,
-  draft: SupplierEditDraft,
+  changes: ReadonlyArray<{ field: keyof SupplierEditDraft; after: string }>,
   signal?: AbortSignal,
 ): Promise<SupplierWriteResponse> {
-  const fornecedor: Record<string, string> = {};
-  if (draft.supplier_name.trim()) fornecedor.supplier_name = draft.supplier_name.trim();
-  if (draft.supplier_short_name.trim())
-    fornecedor.supplier_short_name = draft.supplier_short_name.trim();
   return httpPut<SupplierWriteResponse>(
     suppliesApiUrl(supplierPath(code, store)),
-    { fornecedor },
+    { fornecedor: buildUpdateFornecedor(changes) },
     { signal },
   );
 }

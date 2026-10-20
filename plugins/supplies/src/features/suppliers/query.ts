@@ -1,4 +1,9 @@
-import type { SupplierEditDraft, SupplierWriteResponse, SuppliersQuery } from "./types";
+import type {
+  SupplierCreateDraft,
+  SupplierEditDraft,
+  SupplierWriteResponse,
+  SuppliersQuery,
+} from "./types";
 import { SUPPLIERS_PAGE_SIZE_OPTIONS } from "./types";
 
 export function createDefaultQuery(): SuppliersQuery {
@@ -48,6 +53,30 @@ export function formatTaxIdMasked(value: string | null, masked: boolean): string
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
   }
   return value;
+}
+
+/** POST: envia somente campos preenchidos; preserva zeros à esquerda. */
+export function buildCreateFornecedor(
+  draft: SupplierCreateDraft,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(draft)) {
+    const trimmed = value.trim();
+    if (trimmed) out[key] = trimmed;
+  }
+  if (out.state) out.state = out.state.toUpperCase();
+  if (out.person_type) out.person_type = out.person_type.toUpperCase();
+  if (out.rohs_indicator) out.rohs_indicator = out.rohs_indicator.toUpperCase();
+  return out;
+}
+
+/** PUT parcial: somente campos efetivamente modificados entram no body. */
+export function buildUpdateFornecedor(
+  changes: ReadonlyArray<{ field: keyof SupplierEditDraft; after: string }>,
+): Partial<SupplierEditDraft> {
+  const out: Partial<SupplierEditDraft> = {};
+  for (const change of changes) out[change.field] = change.after;
+  return out;
 }
 
 /** Campos alterados entre o valor atual e o rascunho (PUT allowlist). */

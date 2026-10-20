@@ -69,7 +69,7 @@ export const SP_HELP = {
   suppliersCreate:
     "Cadastro de novo fornecedor. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
   suppliersCreateFields:
-    "Campos aceitos pelo contrato de cadastro. Obrigatoriedade e demais campos SA2 são definidos pelo ERP — o Portal só envia o que o contrato aprova.",
+    "Todos os campos do contrato de cadastro, organizados por seção (identificação, endereço, contato, fiscal e compras). Somente a loja é obrigatória no Portal — as demais obrigatoriedades são definidas pelo ERP, que rejeita o envio se faltar campo exigido. Nada é enviado sem a revisão final.",
   suppliersColSupplier:
     "Fornecedor com identificador completo (código + loja, 8 dígitos). Clique na linha para abrir a ficha.",
   suppliersColTaxId:
@@ -77,7 +77,7 @@ export const SP_HELP = {
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:
-    "Edição governada: somente razão social e nome fantasia podem ser alterados pelo Portal, um ou ambos por envio. Antes de gravar, uma revisão mostra o antes/depois; cancelar não persiste nada.",
+    "Edição governada: somente razão social e nome fantasia têm alteração comprovada no contrato do ERP; demais campos ficam somente leitura até homologação TOTVS. O envio leva só os campos alterados. Antes de gravar, uma revisão mostra o antes/depois; após o envio, a opção «Conferir gravação» recarrega a ficha e compara os valores.",
   suppliersEditName:
     "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
   suppliersEditShortName:

@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { navigatePluginView } from "../../app/pluginNavigation";
-import { buildPluginPath } from "../../app/pluginRoutes";
+import {
+  navigatePluginPath,
+  navigatePluginView,
+} from "../../app/pluginNavigation";
+import {
+  buildPluginPath,
+  buildSupplierDetailPath,
+} from "../../app/pluginRoutes";
 import {
   SuppliesActionButton,
   SuppliesModal,
@@ -9,17 +15,22 @@ import {
   SuppliesPagePath,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
+  SuppliesSelectField,
   SuppliesStateBanner,
   SuppliesTextField,
 } from "../../app/suppliesUi";
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { createSupplier } from "./api";
-import { SUPPLIERS_CONTENT as C } from "./content";
+import {
+  SUPPLIERS_CONTENT as C,
+  supplierFieldMaxLengthHint,
+} from "./content";
 import { classifyWriteOutcome } from "./query";
-import type {
-  SupplierCreateDraft,
-  SupplierWriteOutcome,
+import {
+  SUPPLIER_CREATE_SECTIONS,
+  type SupplierCreateDraft,
+  type SupplierWriteOutcome,
 } from "./types";
 
 type SupplierCreatePageProps = {
@@ -27,18 +38,66 @@ type SupplierCreatePageProps = {
 };
 
 const EMPTY_DRAFT: SupplierCreateDraft = {
+  supplier_store: "",
+  person_type: "",
+  tax_id: "",
   supplier_name: "",
   supplier_short_name: "",
-  tax_id: "",
+  address: "",
+  district: "",
+  postal_code: "",
   state: "",
+  city: "",
+  city_code: "",
+  area_code: "",
+  phone: "",
+  contact_name: "",
+  email: "",
+  state_registration: "",
+  municipal_registration: "",
+  country_code: "",
+  bacen_country_code: "",
+  rohs_indicator: "",
+  payment_condition_code: "",
+  payment_method_code: "",
+  accounting_account: "",
+  financial_nature_code: "",
 };
 
 const CREATE_FIELD_LABELS: Record<keyof SupplierCreateDraft, string> = {
+  supplier_store: "Loja",
+  person_type: "Tipo de pessoa",
+  tax_id: "CNPJ/CPF",
   supplier_name: "Razão social",
   supplier_short_name: "Nome fantasia",
-  tax_id: "CNPJ/CPF",
+  address: "Endereço",
+  district: "Bairro",
+  postal_code: "CEP",
   state: "UF",
+  city: "Cidade",
+  city_code: "Código IBGE",
+  area_code: "DDD",
+  phone: "Telefone",
+  contact_name: "Contato",
+  email: "E-mail",
+  state_registration: "Inscrição estadual",
+  municipal_registration: "Inscrição municipal",
+  country_code: "País",
+  bacen_country_code: "País (BACEN)",
+  rohs_indicator: "Indicador ROHS",
+  payment_condition_code: "Condição de pagamento",
+  payment_method_code: "Forma de pagamento",
+  accounting_account: "Conta contábil",
+  financial_nature_code: "Natureza financeira",
 };
+
+const CREATE_SECTION_TITLES = {
+  identification: C.sectionIdentification,
+  address: C.sectionAddress,
+  contact: C.sectionContact,
+  fiscal: C.sectionFiscal,
+  purchasing: C.sectionPurchasing,
+} as const;
 
 export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
   const [draft, setDraft] = useState<SupplierCreateDraft>(EMPTY_DRAFT);
@@ -48,6 +107,10 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     null,
   );
   const [writeMessage, setWriteMessage] = useState<string | null>(null);
+  const [createdSupplier, setCreatedSupplier] = useState<{
+    code: string;
+    store: string;
+  } | null>(null);
 
   const dirty = useMemo(
     () => Object.values(draft).some((value) => value.trim()),
@@ -61,6 +124,8 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
       ),
     [draft],
   );
+
+  const storeValid = /^\d{2}$/.test(draft.supplier_store);
 
   const listHref = buildPluginPath("suppliers", basePath);
   const goBack = (event?: { preventDefault: () => void }) => {
@@ -77,9 +142,15 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     setSubmitting(true);
     setWriteOutcome(null);
     setWriteMessage(null);
+    setCreatedSupplier(null);
     createSupplier(draft)
       .then((response) => {
-        setWriteOutcome(classifyWriteOutcome(response, 200));
+        const outcome = classifyWriteOutcome(response, 200);
+        setWriteOutcome(outcome);
+        const data = response.data ?? {};
+        const code = data.supplier_code?.toString();
+        const store = data.supplier_store?.toString();
+        if (code && store) setCreatedSupplier({ code, store });
       })
       .catch((err: unknown) => {
         if (err instanceof ApiRequestError) {
@@ -134,7 +205,28 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
       {writeOutcome === "persistence_confirmed" ? (
         <SuppliesStateBanner variant="success">
           <strong>{C.outcomePersistenceTitle}</strong>{" "}
-          {C.outcomePersistenceMessage}
+          {C.outcomePersistenceMessage}{" "}
+          {createdSupplier ? (
+            <a
+              href={buildSupplierDetailPath(
+                createdSupplier.code,
+                createdSupplier.store,
+                basePath,
+              )}
+              onClick={(event) => {
+                event.preventDefault();
+                navigatePluginPath(
+                  buildSupplierDetailPath(
+                    createdSupplier.code,
+                    createdSupplier.store,
+                    basePath,
+                  ),
+                );
+              }}
+            >
+              {C.openCreatedDetail}
+            </a>
+          ) : null}
         </SuppliesStateBanner>
       ) : null}
       {writeOutcome === "rejected" ? (
@@ -150,61 +242,66 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         </SuppliesStateBanner>
       ) : null}
 
-      <SuppliesSectionCard
-        title={C.sectionIdentification}
-        hint={SP_HELP.suppliersCreateFields}
-      >
-        <div className="sp-supplier-create__form">
-          <SuppliesTextField
-            label={CREATE_FIELD_LABELS.supplier_name}
-            hint={SP_HELP.suppliersEditName}
-            value={draft.supplier_name}
-            onChange={(value) => patchDraft({ supplier_name: value })}
-            disabled={submitting}
-          />
-          <SuppliesTextField
-            label={CREATE_FIELD_LABELS.supplier_short_name}
-            hint={SP_HELP.suppliersEditShortName}
-            value={draft.supplier_short_name}
-            onChange={(value) => patchDraft({ supplier_short_name: value })}
-            disabled={submitting}
-          />
-          <SuppliesTextField
-            label={CREATE_FIELD_LABELS.tax_id}
-            hint={SP_HELP.suppliersColTaxId}
-            value={draft.tax_id}
-            onChange={(value) => patchDraft({ tax_id: value })}
-            disabled={submitting}
-          />
-          <SuppliesTextField
-            label={CREATE_FIELD_LABELS.state}
-            hint={SP_HELP.suppliersState}
-            value={draft.state}
-            onChange={(value) =>
-              patchDraft({ state: value.toUpperCase().slice(0, 2) })
-            }
-            disabled={submitting}
-          />
-          <div className="sp-supplier-create__actions">
-            <SuppliesActionButton
-              type="button"
-              variant="primary"
-              onClick={() => setReviewing(true)}
-              disabled={!filledEntries.length || submitting}
-            >
-              {C.createSubmit}
-            </SuppliesActionButton>
-            <SuppliesActionButton
-              type="button"
-              variant="ghost"
-              onClick={() => goBack()}
-              disabled={submitting}
-            >
-              {C.createBack}
-            </SuppliesActionButton>
+      {SUPPLIER_CREATE_SECTIONS.map((section) => (
+        <SuppliesSectionCard
+          key={section.id}
+          title={CREATE_SECTION_TITLES[section.id]}
+          hint={SP_HELP.suppliersCreateFields}
+        >
+          <div className="sp-supplier-create__form">
+            {section.fields.map((field) =>
+              field.options ? (
+                <SuppliesSelectField
+                  key={field.key}
+                  label={CREATE_FIELD_LABELS[field.key]}
+                  value={draft[field.key]}
+                  options={field.options}
+                  allowEmpty
+                  emptyLabel={C.fieldEmptyOption}
+                  onChange={(value) => patchDraft({ [field.key]: value })}
+                />
+              ) : (
+                <SuppliesTextField
+                  key={field.key}
+                  label={
+                    field.required
+                      ? `${CREATE_FIELD_LABELS[field.key]} *`
+                      : CREATE_FIELD_LABELS[field.key]
+                  }
+                  hint={supplierFieldMaxLengthHint(field.maxLength)}
+                  value={draft[field.key]}
+                  onChange={(value) => {
+                    let next = value;
+                    if (field.digitsOnly) next = next.replace(/\D/g, "");
+                    if (field.uppercase) next = next.toUpperCase();
+                    patchDraft({ [field.key]: next.slice(0, field.maxLength) });
+                  }}
+                  disabled={submitting}
+                />
+              ),
+            )}
           </div>
-        </div>
-      </SuppliesSectionCard>
+        </SuppliesSectionCard>
+      ))}
+
+      <div className="sp-supplier-create__actions">
+        <SuppliesActionButton
+          type="button"
+          variant="primary"
+          onClick={() => setReviewing(true)}
+          disabled={!storeValid || !filledEntries.length || submitting}
+        >
+          {C.createSubmit}
+        </SuppliesActionButton>
+        <SuppliesActionButton
+          type="button"
+          variant="ghost"
+          onClick={() => goBack()}
+          disabled={submitting}
+        >
+          {C.createBack}
+        </SuppliesActionButton>
+      </div>
 
       <SuppliesModal
         open={reviewing}

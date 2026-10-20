@@ -10,6 +10,8 @@ import {
   SUPPLIERS_CONTENT,
 } from "./content";
 import {
+  buildCreateFornecedor,
+  buildUpdateFornecedor,
   buildUrlSearch,
   classifyWriteOutcome,
   createDefaultQuery,
@@ -18,6 +20,10 @@ import {
   hasActiveFilters,
   parseQueryFromSearch,
 } from "./query";
+import {
+  SUPPLIER_CREATE_SECTIONS,
+  type SupplierCreateDraft,
+} from "./types";
 
 describe("supplier routes", () => {
   it("resolves the suppliers list", () => {
@@ -89,6 +95,90 @@ describe("supplier edit diff", () => {
 
   it("returns empty when nothing changed", () => {
     expect(diffEditableFields(current, current)).toEqual([]);
+  });
+});
+
+describe("supplier create payload", () => {
+  const fullDraft: SupplierCreateDraft = {
+    supplier_store: "01",
+    person_type: "J",
+    tax_id: "00000000000191",
+    supplier_name: "FORNECEDOR TESTE",
+    supplier_short_name: "FORN TESTE",
+    address: "RUA X",
+    district: "CENTRO",
+    postal_code: "89120000",
+    state: "sc",
+    city: "TIMBO",
+    city_code: "18202",
+    area_code: "047",
+    phone: "99999",
+    contact_name: "CONTATO",
+    email: "a@b.com",
+    state_registration: "123",
+    municipal_registration: "",
+    country_code: "105",
+    bacen_country_code: "01058",
+    rohs_indicator: "n",
+    payment_condition_code: "010",
+    payment_method_code: "01",
+    accounting_account: "00000000",
+    financial_nature_code: "0000",
+  };
+
+  it("sends all filled contract fields preserving leading zeros", () => {
+    const body = buildCreateFornecedor(fullDraft);
+    expect(body.supplier_store).toBe("01");
+    expect(body.tax_id).toBe("00000000000191");
+    expect(body.postal_code).toBe("89120000");
+    expect(body.city_code).toBe("18202");
+    expect(body.bacen_country_code).toBe("01058");
+    expect(body.payment_condition_code).toBe("010");
+    expect(body.financial_nature_code).toBe("0000");
+  });
+
+  it("omits empty fields and uppercases enums/state", () => {
+    const body = buildCreateFornecedor(fullDraft);
+    expect(body.municipal_registration).toBeUndefined();
+    expect(body.state).toBe("SC");
+    expect(body.person_type).toBe("J");
+    expect(body.rohs_indicator).toBe("N");
+    expect(body.codusr).toBeUndefined();
+  });
+
+  it("covers every contract POST field exactly once across sections", () => {
+    const keys = SUPPLIER_CREATE_SECTIONS.flatMap((s) =>
+      s.fields.map((f) => f.key),
+    );
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(new Set(keys)).toEqual(
+      new Set(Object.keys(fullDraft) as (keyof SupplierCreateDraft)[]),
+    );
+  });
+
+  it("marks only supplier_store as required", () => {
+    const required = SUPPLIER_CREATE_SECTIONS.flatMap((s) => s.fields).filter(
+      (f) => f.required,
+    );
+    expect(required.map((f) => f.key)).toEqual(["supplier_store"]);
+  });
+});
+
+describe("supplier update payload", () => {
+  it("sends only the fields that actually changed", () => {
+    const body = buildUpdateFornecedor([
+      { field: "supplier_name", after: "NOVO NOME" },
+    ]);
+    expect(body).toEqual({ supplier_name: "NOVO NOME" });
+    expect(body.supplier_short_name).toBeUndefined();
+  });
+
+  it("supports multiple changed fields in one PUT", () => {
+    const body = buildUpdateFornecedor([
+      { field: "supplier_name", after: "A" },
+      { field: "supplier_short_name", after: "B" },
+    ]);
+    expect(body).toEqual({ supplier_name: "A", supplier_short_name: "B" });
   });
 });
 

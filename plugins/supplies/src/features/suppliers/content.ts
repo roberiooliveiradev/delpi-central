@@ -79,10 +79,20 @@ export const SUPPLIERS_CONTENT = {
 
   createTitle: "Novo fornecedor",
   createDescription:
-    "Cadastro inicial de fornecedor. Campos adicionais seguem restritos ao contrato aprovado com o ERP.",
+    "Cadastro inicial de fornecedor com todos os campos do contrato de integração. " +
+    "O envio só é liberado quando a escrita no ERP estiver homologada neste ambiente.",
   createSubmit: "Revisar e enviar",
   createBack: "Voltar para a lista",
+  fieldEmptyOption: "Não informado",
+  openCreatedDetail: "Abrir ficha do fornecedor criado",
+  verifyAction: "Conferir gravação no ERP",
+  verifyNotReflectedMessage:
+    "A consulta ao ERP ainda não reflete as alterações enviadas. Aguarde e confira novamente antes de reenviar.",
 } as const;
+
+export function supplierFieldMaxLengthHint(max: number): string {
+  return `Até ${max} caracteres, conforme o contrato de integração com o ERP.`;
+}
 
 export function mapSuppliersFetchError(message: string, code?: string): string {
   // "forbidden" is only the BFF's own supplies.access denial; upstream
