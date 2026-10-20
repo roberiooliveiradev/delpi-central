@@ -478,3 +478,21 @@ Q03_AUTHORIZED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=COORDINATION_Q03_ENTRY_AND_B1_DECISION
 ```
+
+
+## 20. Product Master — conversational budget split (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-CONVERSATIONAL-BUDGET-AND-MODEL-CONTINUATION-01`. **AUTHORITY:** Product Master decision recorded before the code change. Doc 64 had stopped at the frozen 12 s cap. This section authorizes only the split below.
+
+Early conversational admission, identified by the typed admission result already produced before owner listing, uses the remaining global `TurnDeadline` of 30 s. It does not receive the additional 12 s stage cap. `NOT_APPLICABLE` that appears after selection or a later orchestration attempt keeps the 12 s cap. The numeric caps do not change, and no attempt resets the clock. Owner errors stay governed terminals. Automatic extra model calls are not authorized in this task; a reuse proposal is recorded separately and is not an implementation permit.
+
+```text
+EARLY_CONVERSATIONAL_ADMISSION=REMAINING_GLOBAL_BUDGET
+POST_ORCHESTRATION_FALLBACK=CAP_12S
+GLOBAL_TURN_BUDGET_SECONDS=30
+CAP_12S_VALUE=UNCHANGED
+AUTOMATIC_MODEL_RETRY=NOT_AUTHORIZED
+Q03_AUTHORIZED=NO
+B1=UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+```

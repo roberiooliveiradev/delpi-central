@@ -40,6 +40,11 @@ from app.domain.evidence.model import SourceRef
 from app.domain.specialist_interop.model import SpecialistOutcome
 
 
+# Set only when typed admission returns before owner listing.
+# Absence of this marker is not conversational admission.
+EARLY_CONVERSATIONAL_ADMISSION = "early_conversational_admission"
+
+
 class GovernedCapabilityStatus(str, Enum):
     """Truthful outcome classification for one governed capability
     attempt."""
@@ -81,6 +86,9 @@ class GovernedCapabilityAttempt:
     content: str | None = None
     limitations: tuple[str, ...] = ()
     confirmation_context: Mapping[str, Any] | None = None
+    # Typed admission outcome. Only early conversational admission
+    # sets this. Later NOT_APPLICABLE leaves it empty.
+    admission_outcome: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

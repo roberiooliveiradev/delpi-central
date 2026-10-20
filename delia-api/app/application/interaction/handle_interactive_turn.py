@@ -42,6 +42,7 @@ from app.application.capability_provision.contracts import (
     OWNER_RECORD_NOT_FOUND,
 )
 from app.application.interaction.capability_attempt import (
+    EARLY_CONVERSATIONAL_ADMISSION,
     GovernedCapabilityStatus,
     SupportsGovernedCapabilityAttempt,
 )
@@ -417,16 +418,27 @@ class HandleInteractiveConversationTurn:
 
         if sink is not None:
             sink.emit(phase=ActivityPhase.OUTCOME_PREPARING)
-        # Cap only the post-orchestration NOT_APPLICABLE fallback —
-        # legacy handler-without-orchestrator keeps the full stage cap.
+        # Product Master 2026-10-20: the 12s cap applies only after
+        # orchestration has already run. Typed early conversational
+        # admission uses the remaining global deadline. A bare
+        # NOT_APPLICABLE without that marker keeps the cap.
+        early_admission = (
+            attempt is not None
+            and attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+            and attempt.admission_outcome == EARLY_CONVERSATIONAL_ADMISSION
+        )
         fallback_cap = (
-            CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS
-            if (
-                attempt is not None
-                and attempt.status
-                is GovernedCapabilityStatus.NOT_APPLICABLE
+            None
+            if early_admission
+            else (
+                CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS
+                if (
+                    attempt is not None
+                    and attempt.status
+                    is GovernedCapabilityStatus.NOT_APPLICABLE
+                )
+                else None
             )
-            else None
         )
         try:
             model_result = self._invoke(

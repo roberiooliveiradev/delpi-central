@@ -70,6 +70,7 @@ from app.application.interaction.argument_validation import (
     validate_untyped_arguments,
 )
 from app.application.interaction.capability_attempt import (
+    EARLY_CONVERSATIONAL_ADMISSION,
     GovernedCapabilityAttempt,
     GovernedCapabilityStatus,
     GovernedCapabilityBinding,
@@ -4539,6 +4540,7 @@ class OperationalCapabilityOrchestrator:
             return GovernedCapabilityAttempt(
                 status=GovernedCapabilityStatus.NOT_APPLICABLE,
                 correlation_id=correlation,
+                admission_outcome=EARLY_CONVERSATIONAL_ADMISSION,
             )
 
         groups, failures = self._groups(correlation, deadline)

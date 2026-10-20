@@ -12,7 +12,7 @@
 
 **Mudança de código:** nenhuma. Aumentar o teto de 12 s, ou deixar essa resposta usar o saldo dos 30 s, muda a decisão congelada do G0-02.
 
-**Proposta contratual, não executada:** aplicar os 12 s só ao `NOT_APPLICABLE` que chega depois de seleção de owner, e deixar a resposta da admissão conversacional antecipada sob `TurnDeadline.stage_timeout` do orçamento global, sem passar de 30 s. Alternativa equivalente: autorizar explicitamente um teto maior só para essa resposta. As duas exigem decisão da coordenação. Q03 não fica autorizado por esta proposta.
+**Proposta contratual, registrada em 2026-10-20 e depois autorizada:** aplicar os 12 s só ao `NOT_APPLICABLE` que chega depois de seleção de owner, e deixar a resposta da admissão conversacional antecipada sob `TurnDeadline.stage_timeout` do orçamento global, sem passar de 30 s. O Product Master autorizou exatamente essa distinção na task `DELIA-C3-I04-CONVERSATIONAL-BUDGET-AND-MODEL-CONTINUATION-01`. A execução está na seção seguinte. Q03 continua sem autorização.
 
 ## R2 — HTTP 404
 
@@ -27,3 +27,36 @@
 Focados: `test_openapi_capability_provider.py`, `test_interaction_presentation.py`, `test_execution_ceiling_turn_budget.py` — PASS.  
 Suíte `delia-api`: 1678 passed, 0 failed.  
 Orçamentos 30 s e 12 s inalterados. B1, gate tipado de comparação e selection-only inalterados. `MATERIAL_ACT=0`. `Q03_AUTHORIZED=NO`.
+
+## Orçamento conversacional — decisão executada
+
+O Product Master autorizou a distinção. O retorno da admissão conversacional antecipada passa a levar `admission_outcome=early_conversational_admission`. Só esse marcador dispensa o teto de 12 s. O handler então usa o saldo de `TurnDeadline`. `NOT_APPLICABLE` sem o marcador, inclusive seleção posterior com `applicable=false`, continua limitado a 12 s. Erro de owner e confirmação não chamam o modelo livre. Timeout continua no soft-land, sem inventar dado. Os números 12 e 30 não mudam.
+
+Smoke «O que é SIPOC?» neste runtime: `TEST_NOT_RUN`. Não houve autorização de deploy.
+
+Suíte após o diff: `delia-api` 1685 passed, 0 failed.
+
+## Continuidade entre chamadas — inventário, sem implementação
+
+```text
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+AUTOMATIC_RETRY_IMPLEMENTED=NO
+```
+
+O que já existe:
+
+- `prior_turns` atravessa turnos do usuário como contexto não autoritativo. Não é fato e não autoriza owner.
+- `TurnDeadline` é único no turno. Cada estágio recebe `min(teto do estágio, saldo)`. Nenhuma tentativa zera o relógio.
+- Propostas tipadas são consumidas no estágio que as pediu. Não há depósito de proposta parcial para uma segunda chamada.
+- Evidência de owner bem-sucedida entra uma vez na síntese selection-only. Timeout do modelo descarta o corpo: o adapter levanta `TIMEOUT` e não devolve texto parcial.
+- Chamadas no mesmo turno já são sequenciais (admissão, seleção, argumentos, síntese), cada uma com o mesmo deadline.
+
+Distinção:
+
+1. Chamada concluída com resultado parcial aproveitável: não há contrato. `finish_status` só aparece em conclusão.
+2. Chamada interrompida sem resultado: timeout atual. Soft-land conversacional ou erro governado. Nada a reaproveitar.
+3. Continuidade entre turnos: `prior_turns` já faz isso, sem promover o texto a fato.
+4. Continuação dentro do turno: estágios seguintes reutilizam o deadline e, quando houve owner, a evidência já obtida. Não há segunda tentativa da mesma chamada.
+
+Proposta para decisão posterior, não executada: se um timeout conversacional ocorrer com saldo acima do mínimo viável, o adapter precisaria devolver um texto parcial delimitado, sem chain-of-thought. Uma única continuação usaria esse texto como hipótese não autoritativa, no mesmo `TurnDeadline`, sem nova listagem nem nova invocação de capability. Gatilho: timeout da resposta conversacional e saldo restante. Limite: uma continuação, sem reiniciar 30 s, sem ACT. Consumidor: o mesmo `_invoke`. Lacuna de contrato: `ModelInvocationError` não carrega parcial. Segurança: o parcial não vira fato, provenance nem autorização.

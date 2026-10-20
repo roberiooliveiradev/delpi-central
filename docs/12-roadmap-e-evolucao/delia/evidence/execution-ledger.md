@@ -16411,3 +16411,23 @@ MATERIAL_ACT=0
 Q03_AUTHORIZED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.336 — Conversational budget split and continuation inventory (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-CONVERSATIONAL-BUDGET-AND-MODEL-CONTINUATION-01`. **BASE:** `b7d61a4120edd97ffea1391433da1e9d37b1994f`. Product Master autorizou a distinção antes do diff: admissão conversacional antecipada usa o saldo dos 30 s; `NOT_APPLICABLE` posterior conserva o teto de 12 s. O marcador é `admission_outcome=early_conversational_admission`, definido só no retorno tipado da admissão. Ausência do marcador não é admissão conversacional. Suíte `delia-api` 1685 passed. Smoke SIPOC `TEST_NOT_RUN` (deploy não autorizado). Continuação automática de chamada de modelo não foi implementada. `EXISTING_EQUIVALENT=YES` para `prior_turns`, deadline compartilhado e estágios sequenciais. `REUSE_DECISION=EXTEND` fica para decisão posterior: o timeout não devolve texto parcial. `Q03_AUTHORIZED=NO`.
+
+```text
+EARLY_CONVERSATIONAL_ADMISSION=REMAINING_GLOBAL_BUDGET
+POST_ORCHESTRATION_NOT_APPLICABLE=CAP_12S
+GLOBAL_TURN_BUDGET_SECONDS=30
+CAP_12S_VALUE=UNCHANGED
+FULL_DELIA_API_PYTEST=1685_PASSED
+SIPOC_LIVE=TEST_NOT_RUN
+AUTOMATIC_MODEL_RETRY=NOT_IMPLEMENTED
+CONTINUATION_EXISTING_EQUIVALENT=YES
+CONTINUATION_REUSE_DECISION=EXTEND_NOT_IN_THIS_TASK
+Q03_AUTHORIZED=NO
+MATERIAL_ACT=0
+NEXT=COORDINATION_REVIEW
+```

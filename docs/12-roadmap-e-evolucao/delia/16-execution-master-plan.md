@@ -5,7 +5,22 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (rework B2 de Q02-C, evidência para review):** o rework `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01` removeu o gate que aceitava comparação pela presença literal de `Diferenças comprovadas:` no texto renderizado. A continuação só trata a comparação como concluída quando `_selected_proven_differences` devolve diferenças de campos escalares entre exatamente dois registros selecionados. O cabeçalho permanece apenas na apresentação do modo `answer`. `classify_result_intent` e `unique_structural_ticket_list_capability` não foram alterados. Suíte `delia-api` 1673 PASS no SHA desta evidência. Avaliação com modelo real `TEST_NOT_RUN`. Este registro não aceita Q02-C e não autoriza Q03. O único rework autorizado foi consumido. Ledger §6.333. Roadmap 59 §19.
+**Decisão vigente de execução — 2026-10-20 (orçamento conversacional, Product Master):** a admissão explicitamente conversacional usa o saldo do orçamento global de 30 s, sem o teto adicional de 12 s. O fallback depois de seleção ou tentativa de orquestração conserva o teto de 12 s. O valor 12 e o teto global 30 não mudam, e nenhuma tentativa reinicia o relógio. Erro de owner continua terminal, sem prosa factual livre. Continuação automática entre chamadas do modelo não está autorizada. Esta decisão não autoriza Q03, não altera B1 e não autoriza deploy. Documento 64. Ledger §6.336.
+
+```text
+EARLY_CONVERSATIONAL_ADMISSION=REMAINING_GLOBAL_BUDGET
+POST_ORCHESTRATION_NOT_APPLICABLE=CAP_12S
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_FALLBACK_STAGE_CAP_SECONDS=12_VALUE_UNCHANGED
+AUTOMATIC_MODEL_RETRY=NOT_AUTHORIZED
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+B1_LEXICAL_TICKET_SHORTCUT=UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=IMPLEMENT_THEN_COORDINATION_REVIEW
+```
+
+**Decisão anterior — 2026-10-20 (rework B2 de Q02-C, SUPERSEDED como cerca vigente pela decisão de orçamento):** o rework `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01` removeu o gate que aceitava comparação pela presença literal de `Diferenças comprovadas:` no texto renderizado. A continuação só trata a comparação como concluída quando `_selected_proven_differences` devolve diferenças de campos escalares entre exatamente dois registros selecionados. O cabeçalho permanece apenas na apresentação do modo `answer`. `classify_result_intent` e `unique_structural_ticket_list_capability` não foram alterados. Suíte `delia-api` 1673 PASS no SHA desta evidência. Avaliação com modelo real `TEST_NOT_RUN`. Este registro não aceita Q02-C e não autoriza Q03. O único rework autorizado foi consumido. Ledger §6.333. Roadmap 59 §19.
 
 ```text
 Q02_C_REVIEW=REWORK_EXECUTED
