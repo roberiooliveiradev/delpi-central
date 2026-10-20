@@ -2036,9 +2036,10 @@ services:
       DELPI_API_CALLER_APP: supplies-api
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
 
-      # S2S individual (suppliers.read exigido por api-delpi;
-      # provisionamento: infra/scripts/keycloak_s2s_supplies_scope.py)
-      S2S_SCOPE: ${S2S_SCOPE:-suppliers.read}
+      # S2S individual (scope por operação exigido por api-delpi:
+      # suppliers.read/.create/.update; provisionamento:
+      # infra/scripts/keycloak_s2s_supplies_scope.py)
+      S2S_SCOPE: ${S2S_SCOPE:-suppliers.read suppliers.create suppliers.update}
 
       PURCHASE_REQUESTS_API_URL: ${PURCHASE_REQUESTS_API_URL:-http://delpi-purchase-requests-api:8000}
       PURCHASE_REQUESTS_API_TIMEOUT: ${PURCHASE_REQUESTS_API_TIMEOUT:-90}

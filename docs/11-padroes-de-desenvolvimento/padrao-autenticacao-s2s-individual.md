@@ -103,8 +103,9 @@ Scopes operacionais (`required_scopes`) devem ser client scopes
 atribuídos como **default** ao cliente solicitante — caso contrário o
 token omite o claim e a rota nega com `S2S_SCOPE_DENIED` (403). O
 provisionador dedicado `infra/scripts/keycloak_s2s_supplies_scope.py`
-(default `--check`, `--apply` bounded) cobre `suppliers.read` para
-`supplies-api`.
+(default `--check`, `--apply` bounded) cobre `suppliers.read`,
+`suppliers.create` e `suppliers.update` para `supplies-api` — um scope
+por operação, conforme exigido pelas rotas supplier da api-delpi.
 
 ## Integração no consumidor (ex.: supplies-api)
 

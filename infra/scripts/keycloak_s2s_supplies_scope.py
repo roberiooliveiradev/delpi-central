@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keycloak provisioner for the supplies S2S read scope (prod-safe).
+"""Keycloak provisioner for the supplies S2S scopes (prod-safe).
 
 Bounded companion to the P1.SEC S2S contract: ensures the confidential
 client ``supplies-api`` carries the ``suppliers.read`` client scope as a
@@ -40,7 +40,11 @@ from pathlib import Path
 REALM = os.environ.get("KEYCLOAK_REALM", "delpi")
 CALLER_CLIENT = "supplies-api"
 TARGET_AUDIENCE = "api-delpi"
-REQUIRED_SCOPE = "suppliers.read"
+# api-delpi exige um scope por operação (protheus_router.py):
+#   GET /integrations/protheus/suppliers -> suppliers.read
+#   POST -> suppliers.create | PUT -> suppliers.update
+# F3.4: S2S_SCOPE_DENIED no PUT porque só suppliers.read era provisionado.
+REQUIRED_SCOPES = ("suppliers.read", "suppliers.create", "suppliers.update")
 AUDIENCE_MAPPER_NAME = f"audience-{TARGET_AUDIENCE}"
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -158,53 +162,66 @@ def main() -> int:
         else "serviceAccountsEnabled=false — recriar conforme P1.SEC.5",
     )
 
-    # --- required scope exists ---
-    scopes = admin.call("GET", f"/admin/realms/{realm}/client-scopes") or []
-    scope = next((s for s in scopes if s.get("name") == REQUIRED_SCOPE), None)
-    scope_id = None
-    if scope is None:
-        if not apply_mode:
-            report(False, "client scope suppliers.read",
-                   "ausente — execute --apply para criar e atribuir")
+    # --- required scopes exist and are assigned as DEFAULT ---
+    assigned = admin.call(
+        "GET",
+        f"/admin/realms/{realm}/clients/{client_uuid}/default-client-scopes",
+    ) or []
+    for required_scope in REQUIRED_SCOPES:
+        scopes = admin.call("GET", f"/admin/realms/{realm}/client-scopes") or []
+        scope = next(
+            (s for s in scopes if s.get("name") == required_scope), None
+        )
+        scope_id = None
+        if scope is None:
+            if not apply_mode:
+                report(False, f"client scope {required_scope}",
+                       "ausente — execute --apply para criar e atribuir")
+            else:
+                admin.call(
+                    "POST", f"/admin/realms/{realm}/client-scopes",
+                    {
+                        "name": required_scope,
+                        "protocol": "openid-connect",
+                        "attributes": {"include.in.token.scope": "true"},
+                    },
+                )
+                scopes = (
+                    admin.call("GET", f"/admin/realms/{realm}/client-scopes")
+                    or []
+                )
+                scope = next(
+                    (s for s in scopes if s.get("name") == required_scope),
+                    None,
+                )
+                scope_id = scope["id"] if scope else None
+                report(bool(scope_id), f"client scope {required_scope}",
+                       "criado" if scope_id else "falha ao criar")
         else:
-            admin.call(
-                "POST", f"/admin/realms/{realm}/client-scopes",
-                {
-                    "name": REQUIRED_SCOPE,
-                    "protocol": "openid-connect",
-                    "attributes": {"include.in.token.scope": "true"},
-                },
-            )
-            scopes = admin.call("GET", f"/admin/realms/{realm}/client-scopes") or []
-            scope = next(
-                (s for s in scopes if s.get("name") == REQUIRED_SCOPE), None
-            )
-            scope_id = scope["id"] if scope else None
-            report(bool(scope_id), "client scope suppliers.read",
-                   "criado" if scope_id else "falha ao criar")
-    else:
-        scope_id = scope["id"]
-        report(True, "client scope suppliers.read", "presente")
+            scope_id = scope["id"]
+            report(True, f"client scope {required_scope}", "presente")
 
-    # --- scope assigned as DEFAULT so tokens carry it without S2S_SCOPE ---
-    if scope_id:
-        assigned = admin.call(
-            "GET",
-            f"/admin/realms/{realm}/clients/{client_uuid}/default-client-scopes",
-        ) or []
+        # --- DEFAULT assignment so tokens carry it without S2S_SCOPE ---
+        if not scope_id:
+            continue
         is_default = any(s.get("id") == scope_id for s in assigned)
         if is_default:
-            report(True, "default scope assignment", "suppliers.read atribuído")
+            report(True, f"default scope {required_scope}", "atribuído")
         elif not apply_mode:
-            report(False, "default scope assignment",
-                   "suppliers.read não atribuído — execute --apply")
+            report(False, f"default scope {required_scope}",
+                   "não atribuído — execute --apply")
         else:
             admin.call(
                 "PUT",
                 f"/admin/realms/{realm}/clients/{client_uuid}"
                 f"/default-client-scopes/{scope_id}",
             )
-            report(True, "default scope assignment", "suppliers.read atribuído")
+            assigned = admin.call(
+                "GET",
+                f"/admin/realms/{realm}/clients/{client_uuid}"
+                "/default-client-scopes",
+            ) or []
+            report(True, f"default scope {required_scope}", "atribuído")
 
     # --- audience mapper for api-delpi (evidência P1.SEC.5: já provisionado) ---
     mappers = admin.call(
