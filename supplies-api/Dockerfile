@@ -16,4 +16,4 @@ ENV FLASK_APP=app.main:app
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true; exec gunicorn -b 0.0.0.0:8000 --workers 2 --threads 4 --timeout 60 app.main:app"]
+CMD ["sh", "-c", "find /app -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true; exec gunicorn -b 0.0.0.0:8000 --workers 2 --threads 4 --timeout ${GUNICORN_TIMEOUT_SECONDS:-90} app.main:app"]
