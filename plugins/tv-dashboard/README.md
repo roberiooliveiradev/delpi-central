@@ -240,3 +240,16 @@ Correção reportada em `4d7f71423e` para a família de regressões em que um ed
 
 **Status:** deploy relatado como concluído, usuário observa melhora, testes automatizados reportados PASS; **E2E live de dois clientes, conflito/recovery, reload e expiração de presença ainda PENDING**. Não marcar incidente encerrado sem essa evidência. Veja [documentação central](../../docs/12-roadmap-e-evolucao/tv-dashboard/README.md) e [API](../../tv-dashboard-api/README.md).
 
+---
+
+## Hotfix confirmado em produção — branco explícito em ícones (20/10/2026)
+
+**Incidente:** no slide *Chamados Helpdesk*, selecionar branco no picker de um ícone mantinha ou restaurava o azul padrão mesmo após deploy de um ajuste no renderer.
+
+**Causa raiz no MFE:** `fillToColorStylePatch` em `src/utils/delpiFillAdapter.ts` convertia `DelpiFill` sólido para `{ color, colorPaint: undefined }`. O merge clearable removia `colorPaint`, e `resolveComunicadoIconColor` no pacote de apresentação interpretava o `#ffffff` sem marcador como branco legado, resolvendo a cor accent. A API não foi identificada como origem da divergência desse fluxo.
+
+**Fix:** [`6841b02d42`](https://github.com/roberiooliveiradev/delpi-central/commit/6841b02d42) emite `{ color: fill.color, colorPaint: fill }` para `fill.kind === "solid"`; o renderer já sabia consumir `colorPaint.kind === "solid"` pela correção anterior. Mantém defaults legados, sem novo renderer, esquema, engine ou regra backend.
+
+**Verificação:** testes dirigidos reportados verdes pelo executor; após deploy, **usuário confirmou a correção do problema de cor branca em produção**. `RESOLVED` aplica-se ao bug visual/persistência de branco explícito, não à totalidade dos cenários E2E de concorrência.
+
+**Separação de escopos:** eventos 409, Web Locks, autosave concorrente e escritores MCP devem continuar acompanhados como trabalho distinto. Não reabrir o fluxo de cor sem nova reprodução; preservar editor ≡ preview ≡ TV.
