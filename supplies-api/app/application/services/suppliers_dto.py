@@ -37,7 +37,13 @@ POST_SUPPLIER_FIELDS = {
     "payment_method_code",
 }
 
-PUT_SUPPLIER_FIELDS = {"supplier_name", "supplier_short_name"}
+# PO decision (F3.3): all cadastral POST fields are editable via PUT except
+# the fiscal document and the identity fields (code/store). The upstream
+# write gate stays OFF until TOTVS homologation.
+PUT_SUPPLIER_FIELDS = POST_SUPPLIER_FIELDS - {"tax_id", "supplier_store"}
+
+# Identity/document fields — rejected explicitly, never silently dropped.
+PUT_PROTECTED_FIELDS = {"tax_id", "supplier_code", "supplier_store"}
 
 IDENTITY_FORBIDDEN_FIELDS = {"codusr", "user_id", "usr_id", "protheus_user_id"}
 
@@ -162,10 +168,21 @@ def sanitize_put_body(body: Any) -> dict[str, Any]:
     source = body.get("fornecedor", body)
     if not isinstance(source, dict):
         raise ValueError("fornecedor must be a JSON object")
-    forbidden = IDENTITY_FORBIDDEN_FIELDS & source.keys()
+    lowered = {str(k).strip().lower() for k in source}
+    forbidden = IDENTITY_FORBIDDEN_FIELDS & lowered
     if forbidden:
         raise ValueError("protheus identity fields are not client-provided")
-    allowed = {k: v for k, v in source.items() if k in PUT_SUPPLIER_FIELDS}
-    if not allowed:
+    protected = PUT_PROTECTED_FIELDS & lowered
+    if protected:
+        raise ValueError(
+            "supplier identity/document fields are immutable: "
+            + ", ".join(sorted(protected))
+        )
+    unknown = {k for k in source if str(k) not in PUT_SUPPLIER_FIELDS}
+    if unknown:
+        raise ValueError(
+            "fields not editable via PUT: " + ", ".join(sorted(str(k) for k in unknown))
+        )
+    if not source:
         raise ValueError("no editable supplier field provided")
-    return allowed
+    return dict(source)

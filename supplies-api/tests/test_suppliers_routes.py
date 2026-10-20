@@ -272,12 +272,73 @@ class TestWrite:
         assert sent == {"supplier_name": "N1", "supplier_short_name": "N2"}
         assert resp.get_json()["persistence_proven"] is False
 
-    def test_put_rejects_non_allowlisted(self, client):
+    def test_put_extended_cadastral_fields(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.put.return_value = {
+                "success": True,
+                "data": {"update_acknowledged": True, "persistence_proven": False},
+            }
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={
+                    "fornecedor": {
+                        "address": "RUA X",
+                        "postal_code": "89120000",
+                        "email": "a@b.c",
+                        "state_registration": "123",
+                        "payment_condition_code": "010",
+                        "rohs_indicator": "N",
+                    }
+                },
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        sent = gw.put.call_args.kwargs["json_body"]["fornecedor"]
+        assert sent == {
+            "address": "RUA X",
+            "postal_code": "89120000",
+            "email": "a@b.c",
+            "state_registration": "123",
+            "payment_condition_code": "010",
+            "rohs_indicator": "N",
+        }
+
+    def test_put_rejects_protected_fields(self, client):
+        v, r = _auth()
+        for key in ("tax_id", "supplier_code", "supplier_store"):
+            with v, r:
+                resp = client.put(
+                    "/suppliers/000001/01",
+                    json={"fornecedor": {key: "01"}},
+                    headers={"Authorization": "Bearer t"},
+                )
+            assert resp.status_code == 422, key
+
+    def test_put_rejects_codusr_and_unknown_fields(self, client):
         v, r = _auth()
         with v, r:
             resp = client.put(
                 "/suppliers/000001/01",
-                json={"fornecedor": {"email": "a@b.c"}},
+                json={"fornecedor": {"codusr": "000161", "supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+            assert resp.status_code == 422
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={"fornecedor": {"a2_filial": "01"}},
+                headers={"Authorization": "Bearer t"},
+            )
+            assert resp.status_code == 422
+
+    def test_put_rejects_empty_body(self, client):
+        v, r = _auth()
+        with v, r:
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={"fornecedor": {}},
                 headers={"Authorization": "Bearer t"},
             )
         assert resp.status_code == 422
