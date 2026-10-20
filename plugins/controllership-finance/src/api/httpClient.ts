@@ -82,3 +82,16 @@ export async function httpGet<T>(
 
   return response.json() as Promise<T>;
 }
+
+
+/** Authenticated image request against this product BFF only. */
+export async function httpGetImageBlob(url: string, signal?: AbortSignal): Promise<Blob | null> {
+  const response = await fetch(url, { method: "GET", headers: buildHeaders(), signal });
+  if (response.status === 404) return null;
+  if (!response.ok) throw await parseError(response);
+  const mime = (response.headers.get("Content-Type") ?? "").split(";", 1)[0].toLowerCase();
+  if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) throw new Error("Invalid image type");
+  const blob = await response.blob();
+  if (!blob.size || blob.size > 2 * 1024 * 1024) throw new Error("Invalid image size");
+  return blob;
+}
