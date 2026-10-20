@@ -131,3 +131,19 @@ Testes requeridos (TEST_NOT_RUN): positivo por lado/intervalo, sibling por compe
 **Status:** `DESIGN_DRAFT=READY_FOR_PO_REVIEW`; `ENDPOINTS/DTO=TARGET_PROPOSED`; `R01/R02_G4=PENDING`; `G5=TEST_NOT_RUN`; `G6=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `RUNTIME_CHANGED=NO`; `IMP-08/P1=NO_GO`.
 
 **Plano após decisão e GO expresso:** revalidar HEAD/working tree, .cursor aplicável, framework/consumers; congelar DTO/OpenAPI; implementar producer na api-delpi com mínima diff, testes; integrar BFF com escopo Core; validar contratos e resultset; gate MFE/Help posterior; paridade com exportações; evidência + revisão + SHA. Nunca scaffold de arquitetura paralela por conveniência.
+
+## 9. Decisões do PO — 20/10/2026 (sobrepõem propostas anteriores nos itens indicados)
+
+**D1 APPROVED — padrões:** novas rotas em inglês, padronizadas e isoladas no contexto financeiro de baixas da api-delpi. Pode reutilizar padrões estruturais de inadimplência/despesas, sem misturar ownership/dados/DTOs de outro Portal. Naming final ainda requer conferência com o HEAD antes de congelar caminhos.
+
+**D2 APPROVED — ordem e UI:** primeira entrega API JSON read-only com testes/validações; depois BFF própria do Portal; depois frontend visual. **Sem exportação Excel/PDF**, inclusive como meta de entrega deste recorte. A UI visual apresenta informações do novo contrato.
+
+**D3 APPROVED como invariante de produto, não como implementação de mapeamento:** isolamento por filial (01, 02 e demais autorizadas/existentes); uma coluna de filial vazia não significa escopo global. **MAPPING/ENFORCEMENT=PENDING**: owner ERP/Core deve provar tabela compartilhada, regra filial origem/título, chave empresa↔filial e escopo autorizado. Sem isso, não executar endpoint que exponha dados de outras filiais. Se necessidade de decisão material persistir, retornar DECISION_REQUIRED.
+
+**D4 PENDING:** seleção de tipos BA/ES/VL/CP e totais oficiais precisa evidência/decisão do owner financeiro. Primeira versão pode ter campo de tipo e qualidade, mas não pode presumir significado/inclusão oficial. Não promover um relatório financeiro oficial que some movimentos sem classificação aceita.
+
+**D5 DEFERRED:** ausência de fonte _F190C/cinco arquivos **não bloqueia novo relatório operacional visual**. Paridade com legado opcional futura, fora do aceite do primeiro backend. A descrição do produto não deve alegar equivalência.
+
+**GATE revisado:** `PRODUCT_DIRECTION=APPROVED`; `EXPORTS=OUT_OF_SCOPE`; `ROUTINE_PARITY=DEFERRED`; `D3_ENFORCEMENT=TO_INVENTORY`; `D4_CLASSIFICATION=DECISION_REQUIRED`; `ENDPOINT_CONTRACT=TARGET_PROPOSED`; `IMPLEMENTATION_AUTHORIZED=NO` até contrato e controles transversais efetivamente fechados. Uma autorização genérica para começar backend não dispensa fail-closed por recurso/filial ou definição de totais por tipo.
+
+**Próximo cursor gate:** revalidar HEAD/status, .cursor, contratos de API, prova de scope/filial e semântica D4; propor subset mínimo com detalhes por baixa sem totais oficiais até aceitação do owner. Então solicitar GO explícito para runtime api-delpi somente.
