@@ -197,3 +197,35 @@ O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; 
 **Gates R01/R02:** G1 PASS; G2 PENDING (colunas observadas no **dicionário**, não no output); G3 PENDING (owner local da customização), G4 PENDING (joins/bindings/filters incompletos), G5 TEST_NOT_RUN, G6 PENDING. **Percentuais inalterados:** 2/60 = 3,3% coleta; 2/90 = 2,2% auditoria; 0/15 concluídos. Novo ganho é inventário físico de metadados, sem gate inteiramente satisfeito.
 
 **Próxima verificação bounded:** (1) obter source da rotina `_F190C` ou amostra dos cinco arquivos; (2) investigar estrutura de vínculos e chaves no dicionário e no código de leitura `api-delpi`; (3) consultar owner autorizado para execução de SELECT com datas/escopo parametrizados e dados sanitizados. Nenhuma migration/rota/API implementada neste gate.
+
+## 10. Rodada L1.4 — SQL READ pós-deploy: 8 tabelas com registros (20/10/2026)
+
+**Mecanismo efetivamente usado:** DAVI `discover_delpi_information` → `execute_readonly_sql`; execução das consultas SELECT pelo conector; sem escrita, sem dados pessoais/valores brutos registrados neste documento.
+
+### Provas realizadas
+
+- **8/8** consultas `SELECT TOP 1 1 AS PRESENT FROM [TABELA] WHERE D_E_L_E_T_ = ''` retornaram `status=ok` e **uma linha** por tabela, comprovando ao menos uma linha não excluída logicamente em cada tabela física `SE1010, SE2010, SED010, F7G010, FK1010, FK2010, FK5010, FKA010`.
+- **8/8** consultas `SELECT TOP 1` de campos de negócio explícitos retornaram `status=ok`. Presença de dados não nulos/não vazios na linha inspecionada: `FK2010`: `FK2_DATA, FK2_VALOR, FK2_NATURE, FK2_IDFK2`; `FK1010`: `FK1_DATA, FK1_VALOR, FK1_NATURE, FK1_IDFK1`; `SE2010`: `E2_EMISSAO, E2_BAIXA, E2_FORNECE, E2_VALOR`; `SE1010`: `E1_EMISSAO, E1_BAIXA, E1_CLIENTE, E1_VALOR`; `SED010`: `ED_CODIGO, ED_DESCRIC`; `F7G010`: `F7G_SIGLA, F7G_DESCRI`; `FK5010`: `FK5_DATA, FK5_VALOR, FK5_IDMOV`; `FKA010`: `FKA_IDFKA, FKA_IDPROC, FKA_TABORI`.
+- **Atenção a scope:** na única linha inspecionada de **cada** tabela, o campo `*_FILIAL` veio vazio. Isso pode representar semântica compartilhada no ERP; **não inferir** empresa/filial nem aplicar `*_FILIAL='01'` sem provar contrato de compartilhamento.
+- **5/5** verificações de existência por período `>= '20260101'` retornaram `status=ok` e uma linha: `FK2_DATA, FK1_DATA, FK5_DATA, E2_BAIXA, E1_BAIXA`. Isso demonstra pelo menos um registro com campo data compatível com o filtro em cada tabela, **não** demonstra quantos eventos, total por competência ou se o período é completo. A data `E1_BAIXA/E2_BAIXA` é data do título, não substituir pela data/evento da FKx sem regra de semântica.
+
+### Pertinência para as cinco saídas verbalmente relatadas da customização `_F190C`
+
+| Tabela | Dados observados em registros reais | Relevância para R01/R02 | Limitação |
+|---|---|---|---|
+| `FK2010` | data, valor, natureza e identificador de baixa | **Forte candidata** a fatos de baixas a pagar | faltam joins ao título/fornecedor e paridade |
+| `FK1010` | data, valor, natureza e identificador de baixa | **Forte candidata** a fatos de baixas a receber | faltam joins ao título/cliente e paridade |
+| `SE2010` | data de emissão/baixa, código fornecedor, valor do título | dimensão de títulos a pagar | `E2_VALOR` não equivale automaticamente a cada baixa |
+| `SE1010` | data de emissão/baixa, código cliente, valor do título | dimensão de títulos a receber | `E1_VALOR` não equivale automaticamente a cada baixa |
+| `SED010` | código e descrição da natureza | rótulos para PDF pagar/natureza | vínculo FKx↔SED não confirmado |
+| `F7G010` | sigla e descrição do motivo | motivo/classificação de baixas | uso efetivo pela `_F190C` a demonstrar |
+| `FK5010` | data, valor e ID do movimento bancário | conciliação/contexto financeiro | inclui movimentos que podem não representar baixa de título |
+| `FKA010` | IDs e tabela de origem de rastreabilidade | possível amarração entre eventos | cardinalidades e joins sem prova |
+
+**Campos de CNPJ do cliente/fornecedor e chaves da customização:** não localizados nesta rodada; podem exigir cadastros `SA1/SA2` e vínculos adicionais, mas isso é **hipótese a auditar**, não contrato aprovado.
+
+**Status do lote:** `SQL_READ=PASS` (8/8 tabelas); `RECENT_RECORD_EXISTS=PASS` (5/5 tabelas com campo data consultado); `ROW_SAMPLE_ONLY`; `JOIN_VALIDATION=TEST_NOT_RUN`; `OUTPUT_PARITY=TEST_NOT_RUN`; `ROUTINE_SOURCE=_F190C_TO_INVENTORY`. Sem validação de quantidade, total mensal, duplicidade, flags de exclusão para joins, divergência financeira ou comportamento de folha de resultados.
+
+**Percentuais de aceite formal R01/R02:** G1 PASS, G2/G3/G4 PENDING, G5 TEST_NOT_RUN, G6 PENDING; **2/60 = 3,3% de coleta e 2/90 = 2,2% de auditoria**, já que tabelas com dados são apenas uma subparte de G4. Não contar `TOP 1` como relatório concluído.
+
+**Próxima ação bounded:** inventariar chaves e relacionamento (dicionário `SIX/SX9` e código `_F190C`), filial compartilhada versus escopo da empresa, campos de identificação e CNPJ, depois comparar uma competência com exportação sanitizada. `IMPLEMENTATION_GATE=NO_GO`.
