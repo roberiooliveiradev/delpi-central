@@ -112,3 +112,10 @@ O dado externo é **sugestão**, não autoridade. Não usar scraping, provider, 
 - [Playbook páginas MFE](../../05-plugin-system/playbook-mfe-page-excellence.md)
 
 **Resultado:** backlog detalhado, não implementação. Atualizar este arquivo e as authorities/ledger aplicáveis quando o estado mudar; não promover fase ou declarar deploy sem evidência.
+
+
+## Decisão funcional F5 (2026-10-20) — CNPJ estruturado, sem IA no P0
+
+**Decisão expressa do PO:** avançar em paralelo à resposta de Gabriel com a evolução de consulta por CNPJ em **fontes externas estruturadas aprovadas**. A aplicação fará comparação **determinística campo a campo** e permitirá selecionar quais valores externos aplicar ao **rascunho** de Criar/Editar. **LLM/IA é opcional e não integra o P0**; não há justificativa para inferência se a fonte já entrega dados estruturados equivalentes. Não realizar preenchimento e gravação automáticos, nem substituir valores Protheus sem revisão humana. A seleção concreta de provider, termos e LGPD permanece `TO_INVENTORY`.
+
+**Contrato e fatias:** [SUPPLIERS-F5-CNPJ-ENRICHMENT-CONTRACT.md](./SUPPLIERS-F5-CNPJ-ENRICHMENT-CONTRACT.md). Essa decisão atualiza a seção 6 histórica; permanece `PLANNED` para implementação e independente do gate de produção F4. Persistência POST/PUT segue bloqueada até owner TOTVS confirmar ambiente REST sobre `DELPI`.
