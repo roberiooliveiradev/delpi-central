@@ -508,3 +508,23 @@ REUSE_DECISION_RECORDER=NEW (AudioRecorderControl + useLocalAudioRecorder em plu
 NO_FAKE_SEND=MANDATORY (canSendAudio=false na DÉLIA; sending/sent não implementados)
 PHASE_PROGRESSION=NONE
 ```
+
+## VD-F05 — Duração de ditado de 5 minutos e continuidade do rascunho (decisão de produto de 2026-10-20)
+
+**Status:** `PRODUCT_TARGET_APPROVED / IMPLEMENTATION_NOT_STARTED / CONTRACT_GATES_PENDING`. Esta decisão não modifica os limites de produção até existir implementação, testes e deployment.
+
+**Intenção:** permitir até **300 segundos por trecho de voz**; ao alcançar o limite temporal, finalizar automaticamente a captura e iniciar transcrição real quando a capacidade STT estiver disponível. Ao término, devolver o texto editável ao mesmo draft (merge na posição/cursor definida pelo VD-F03), **sem enviar mensagem**. O usuário pode acionar novamente **Ditar mensagem** para outro trecho de até 300 segundos e continuar redigindo o mesmo texto. Não acumular áudio bruto entre trechos nem alegar continuidade de uma única sessão de áudio; trata-se de múltiplas capturas independentes com um draft textual contínuo.
+
+**Estado factual antes da implementação (GitHub main observado em 2026-10-20):** `plugins/delia/src/audio/audioCaptureTestAdmission.ts` contém `DELIA_AUDIO_TEST_MAX_DURATION_MS=60000` e `DELIA_AUDIO_TEST_MAX_BYTES=256000`; o contrato `dictation.transcription.v1` documenta padrões backend `DELIA_STT_MAX_DURATION_MS=120000` e `DELIA_STT_MAX_AUDIO_BYTES=4194304` (4 MiB), com admissão frontend pelo mínimo dos limites. Assim, **a experiência de 5 minutos NÃO está implementada**; trocar apenas um número não garante duração nem compatibilidade do payload. Verificar valores efetivos do host/endpoint de produção antes de alterar.
+
+**Requisitos de implementação:**
+1. Fonte de limites deve permanecer governada pelo contrato/admission existente, sem hardcode divergente no componente. Alinhar frontend, backend e limites efetivos do provider; confirmar envelope MIME/bytes com evidência de captura real em 300s (bitrate pode variar por dispositivo/navegador). Não elevar bytes arbitrariamente, contornar limites por client ou supor que o modelo aceita 5 minutos.
+2. Ao chegar em 300s, executar o mesmo caminho seguro de Finalizar existente (stop/cleanup → STT → edição), com idempotência no estado do frontend, não descartar trecho por transição `duration_exceeded`. Interromper antecipadamente se chegar ao limite legítimo de bytes, reportando a causa e preservando o draft; tentar preservar/transcrever a captura se o contrato permitir e for segura, sem prometer transcrição quando inviável.
+3. Cronômetro discreto `mm:ss / 05:00`; aviso não intrusivo perto do limite (por exemplo, aos 4m30s) **sem** banner global nem spam `aria-live`; diferenciação clara entre Finalizar, Cancelar e auto-finalizar; reduced motion/HelpTooltip compartilhado.
+4. Transcrição concluída: inserir o trecho na posição do cursor segundo regra existente; preservar texto anterior e seu limite de caracteres; novo clique em mic inicia captura independente e mantém o draft; cancelar ou falhar não apaga texto anterior e respostas tardias continuam descartadas.
+5. Estado de transcrição honesto, sem auto-submit, sem envio de áudio para análise multimodal, sem criar novo recorder/provider/permission. Limites de custo, privacidade, tempo de retenção e taxa de requisição devem continuar governados.
+6. Testes de relógio falso nos limites 4:30/5:00, at-most-once Finalizar, limpeza do MediaStream, bytes-limit-first, cancelamento, falha de STT, draft com dois trechos sucessivos, merge com cursor, 16.384 caracteres, página e Dock, foco, a11y e revisão do contrato; um teste real de áudio próximo ao teto no SHA/config avaliado para comprovar tamanho e compatibilidade.
+
+**Gates:** `EXISTING_EQUIVALENT_RECORDER=YES / REUSE_DECISION=EXTEND`; `EXISTING_EQUIVALENT_STT=YES / REUSE_DECISION=EXTEND` apenas limites/contrato se owner aprovar; sem novo serviço. Se o backend/modelo/host não admitir 300s e payload correspondente, documentar `ARCHITECTURE_DECISION_REQUIRED` antes de mudar mecanismo. Não alterar STT em produção ou claims de disponibilidade sem evidência.
+
+**Critérios locais:** `VD-T01` 300s configurados e admitidos end-to-end; `VD-T02` auto-finalizar uma vez e transcrever; `VD-T03` usuário reinicia outro trecho e acumula texto; `VD-T04` sem perda de draft/auto-submit; `VD-T05` limite de bytes/erro com tratamento seguro; `VD-T06` QA full-page + Dock; `VD-T07` prova real de cinco minutos sob limites efetivos. Todos `PLANNED` até evidência.
