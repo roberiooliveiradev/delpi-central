@@ -319,3 +319,18 @@ Consultas READ com EXISTS(FKA_IDORIG=FK2_IDFK2) encontraram **8.969/8.969** even
 **Cautela:** a FKA contém FKA_TABORI e FKA_IDPROC. As comparações acima NÃO filtram a tabela de origem nem provam que os registros dizem respeito ao mesmo processo. Coincidência de ID != join de negócio validado. Não somar ou deduplicar valores por esse join. Exigem-se fonte da customização _F190C, regras de origem/processo e amostras do relatório antes de homologação.
 
 **Encerramento da rodada:** auditoria de chaves e existência em SQL realizada; R01/R02 G4 PENDING, G5 TEST_NOT_RUN, G6 PENDING. STOP para homologação por dependência de fonte ADVPL/owner TI e dos cinco arquivos originais/Controladoria. Sem implementação de API ou alteração de permissions.
+
+### Complemento L1.7 — Auditoria D4: RECPAG, histórico e pareamento de estorno (20/10/2026)
+
+Achados novos sobre coluna/relacionamento, obtidos por SQL READ em produção (09/2026 e 01–20/10/2026). Detalhes e matriz de decisão no doc 48 §16.
+
+- **`FKx_RECPAG`**: evidência comportamental indica direção de caixa do próprio evento (estornos em FK2 saem `R`; em FK1 saem `P`), e não apenas o lado da tabela. Existem `VL/R` e `BA/R` em FK2 sem vínculo a estorno — hipótese «valor recebido de fornecedor» a homologar.
+- **`FKx_HISTOR` discrimina subtipo dentro de `BA`**: «Baixa por Compensacao», «Bx.Emis.Fatura NNNN», «BAIXA IMP PCC DAC», «Compens. Autom. Adiantamento», «Valor pago s/ Titulo». O `FKx_TPDOC` sozinho não separa baixa bancária de compensação.
+- **Padrão de estorno comprovado**: estorno de «valor pago s/ título» gera **par `ES/P` + `VL/R`** com mesmo `FKx_IDDOC`, valor e data (4/4 casos em FK2). Estorno de baixa com título gera `ES/R` único. Esse pareamento por `IDDOC`+valor+data é nível-documento, não ponteiro explícito — qualquer netting exato exige homologação.
+- **`IDDOC` compartilhado por tipos distintos é real e parcial**: 6 docs Sep com `VL`+`CP` (compensação parcial + pagamento), 9 com `VL`+`BA`, 1 com `CP`+`BA`. Somar eventos por doc sem classificar tipo/direção duplica ou confunde.
+- **`FK2` sem `FK7` (58 casos em 2026) parcialmente explicado**: `ES/R` sem link FK7 é compatível com estorno cujo documento de baixa não gera vínculo próprio; amostra confirmou ao menos 1 `ES` sem FK7 onde o `IDDOC` pertence à baixa original. Não fecha G4 — segue PENDING.
+- **`FKB010` confirmado como catálogo canônico de `FKx_TPDOC`** (SX3 `X3_VALID = ExistCpo("FKB")`); ~45 códigos por filial; somente BA/VL/ES/CP presentes nos fatos do período.
+- **`FKx_VALOR` sempre positivo** no período (FK1 e FK2) — o sentido não está no sinal do valor.
+- Única moeda observada: `01`.
+
+Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN por dependência de homologação do owner financeiro.

@@ -364,3 +364,97 @@ Release D3 executado (`FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED=true`, RELE
 ### Gates
 
 `FINANCIAL_DATA_ACCESS=RELEASED`; `D4_CLASSIFICATION=DECISION_REQUIRED` (semântica para totais); `MOVEMENT_CATALOG=PROVEN` (FKB010 canônica); `JOIN_FANOUT=RESOLVED`; `UI_VISUAL_LIVE=TEST_NOT_RUN` (validação de browser pendente do usuário).
+
+## 16. Auditoria D4 — semântica dos movimentos e proposta de apuração (AUDIT-CF-R01R02-D4-01, 20/10/2026)
+
+Auditoria read-only sobre produção (queries via `BaseRepository`/`NOLOCK` no container `delpi-api-delpi`; janelas: 09/2026 completo e 01–20/10/2026). Nenhuma alteração de cálculo/rota nesta etapa.
+
+### 16.1 Catálogo FKB010 — inventário completo
+
+FKB010 contém ~45 tipos de movimento por filial (`FKB_FILIAL` `''`/`'01'`, descrições idênticas). Além de BA/VL/ES/CP existem, entre outros: `AP` Aplicação, `BD` Transferência por bordo(?), `BL` Baixa por Lote, `C2`/`CM`/`CX` Correção Monetária, `CA`/`CB` Cancelamentos (cheque/transação), `CD`/`CH` Cheque, `D2`/`DC` Desconto, `DB` Despesas bancárias, `DH` Dinheiro, `E2`/`EC`/`EI`/`ES` Estornos, `EP` Empréstimo, `I2`/`IS`/`IT` Impostos, `J2`/`JR` Juros, `LJ` SigaLojas, `M2`/`MT` Multa, `OC` Outros Créditos. **Somente BA/VL/ES/CP ocorrem em FK1/FK2 no período auditado**; nenhum código em uso está ausente do catálogo.
+
+### 16.2 Distribuição observada (D_E_L_E_T_='', moeda 01 apenas — única moeda no período)
+
+**FK2 payables — 09/2026 (competência fechada, 978 eventos):**
+
+| tp | rp | n | total |
+|---|---|---|---|
+| BA | P | 196 | 329.136,06 |
+| BA | R | 2 | 6,05 |
+| CP | P | 94 | 135.135,49 |
+| ES | P | 3 | 2.655,27 |
+| ES | R | 42 | 452.255,30 |
+| VL | P | 632 | 5.899.837,07 |
+| VL | R | 9 | 14.969,01 |
+
+**FK2 payables — 01–20/10/2026 (497 eventos, total bruto 3.989.767,94):** BA/P 99 (100.161,19), BA/R 1 (23.485,00), CP/P 19 (18.968,49), ES/P 1 (98,20), ES/R 10 (395.488,29), VL/P 362 (3.442.247,43), VL/R 5 (9.319,34).
+
+**FK1 receivables — 09/2026 (676 eventos):** BA/R 14 (22.459,29), CP/R 12 (20.253,76), ES/P 17 (4.537,51), VL/R 633 (5.207.871,10).
+
+**FK1 receivables — 01–20/10/2026 (424 eventos, total bruto 3.741.941,75):** somente VL/R.
+
+Nenhum valor negativo ou zero em FK1/FK2 no período — **todos os eventos carregam `VALOR` positivo; o sentido vem de `RECPAG`, não do sinal**.
+
+### 16.3 Semântica comprovada por histórico (`FKx_HISTOR`) e ciclo de vida
+
+- `VL` = «Valor pago s/ Titulo» — baixa de pagamento/recebimento direto (rotina de borderô). Dominante nos dois lados.
+- `BA` = «Baixa de titulo» — inclui subtipos pelo histórico: «Baixa por Compensacao» (105x), «Bx.Emis.Fatura NNNN» (baixa automática por emissão de fatura, ~150 eventos), «BAIXA IMP PCC DAC», «Compens. Autom. Adiantamento», «Valor pago s/ Titulo». **O tipo BA sozinho não separa baixa bancária de compensação — o histórico discrimina.**
+- `CP` = «Compens. Adiantamento» / «Compens. Autom. Adiantamento» — extinção de obrigação por compensação com adiantamento, **sem trânsito bancário** evidenciado.
+- `ES` = «Cancelamento de Baixa» / «Cancel. de Compensacao» — estorno de evento anterior, **sempre em direção oposta ao fluxo normal do lado** (FK2→R majoritário; FK1→P).
+
+### 16.4 Padrão de estorno — dois formatos observados
+
+1. **Estorno de baixa com título:** um único evento `ES/R` (FK2) ou `ES/P` (FK1) com hist «Cancelamento de Baixa», mesmo `IDDOC` da baixa original.
+2. **Estorno de «valor pago s/ título»:** par `ES/P` + `VL/R` (FK2) com mesmo `IDDOC`, valor e data — 4/4 casos confirmados. Ex.: doc `8F66…567F`: `BA/P` 98,20 em 2017 (Compens. Autom. Adiantamento) → `ES/P` 98,20 + `VL/R` 98,20 em 08/10/2026.
+
+Ciclo completo comprovado (doc `859B…567F`, FK2): `ES/P`+`VL/R` 1.537,00 em 21/09 → re-baixa por 3× `BA/P` «Baixa por Compensacao» em 30/09 (1.307,78+191,22+38,00=1.537,00). E (doc `B05F…567F`): `VL/P` 1.753,50 em 01/10 → `ES/R` 1.753,50 em 01/10 → `CP/P` «Compens. Adiantamento» 1.753,50 em 06/10.
+
+**Competência:** todos os ES de outubro referem-se a baixas criadas dentro do mesmo período auditado ou anteriores (um caso de 2017) — o evento `ES` pertence à competência de `FKx_DATA`, não da baixa original.
+
+### 16.5 Direção `P`/`R` (`FKx_RECPAG` = «Recebimento ou Pagamento»)
+
+Leitura suportada pela evidência: `RECPAG` descreve **a direção de caixa do próprio evento**, não o lado da tabela. Em FK2, estornos saem como `R` (dinheiro/direito retorna); em FK1, como `P`. Eventos `VL/R` em FK2 existem fora de estorno (hist «Valor pago s/ Titulo», ex.: 11 casos em setembro) — provável representação de valores recebidos de fornecedor; confirmação com owner.
+
+### 16.6 Candidatos de apuração (moeda 01, 09/2026 — números reais para decisão)
+
+Payables (FK2):
+- Bruto P (todos os eventos P): **6.366.763,89**
+- F1 `ΣP − ΣR` (todas as direções): **5.899.533,53**
+- F2 `Σ(BA+VL+CP, dir P) − ΣES (todas dirs)`: **5.909.198,05**
+- F3 `Σ(BA+VL+CP, dir P) − Σ(VL+BA+ES, dir R)`: **5.896.878,26**
+
+Receivables (FK1): `ΣR − ΣP` = `Σ(BA+VL+CP,R) − ΣES` = **5.246.046,64** (fórmulas coincidem — todo P em FK1 é ES).
+
+Divergência entre candidatas (~3–13 mil em setembro) decorre do tratamento do par `ES/P + VL/R` e dos `VL/R` não-estorno. **Nenhuma fórmula foi implementada.** O critério correto exige homologação do owner financeiro — preferencialmente com paridade contra o relatório oficial **FINR190** (referência AS-IS: «baixas Receber PDF/Excel; Pagar Excel/PDF» no checklist do fechamento, doc 03).
+
+### 16.7 Reconciliação SQL × API (janela 01–20/10/2026)
+
+| Métrica | SQL fato | API | Δ |
+|---|---|---|---|
+| FK2 eventos / IDs distintos | 497 / 497 | `total_items` 497 | 0 |
+| FK1 eventos / IDs distintos | 424 / 424 | `total_items` 424 | 0 |
+| FK2 soma bruta moeda 01 | 3.989.767,94 | Σ grupos summary payable | 0 (amostrado) |
+| FK1 soma bruta moeda 01 | 3.741.941,75 | Σ grupos summary receivable | 0 (amostrado) |
+
+API e fato reconciliam sem fan-out nem omissão. Divergências temporais por `NOLOCK`/ERP vivo seguem possíveis — classificar como inconclusivas só se observadas em leitura controlada.
+
+### 16.8 Matriz de decisão — owner financeiro (responsável mapeada: Joici Motta, Controladoria)
+
+| Tema | Evidência | Proposta | Impacto | Status |
+|---|---|---|---|---|
+| BA | FKB «Baixa de titulo»; hist discrimina compensação/fatura | contar como baixa; subtipo via hist/CP | total de baixas | PENDING |
+| VL | FKB «Baixa de titulo»; hist «Valor pago s/ Titulo» | baixa de pagamento direto | total de baixas | PENDING |
+| ES | «Cancelamento de Baixa/Compensacao»; par ES/P+VL/R em s/título | reversão; tratamento do par é decisão | líquido | DECISION_REQUIRED |
+| CP | «Compens. (Autom.) Adiantamento» | compensação sem trânsito bancário | líquido/caixa | DECISION_REQUIRED |
+| P/R | direção de caixa do evento (hipótese com evidência) | sinal do evento | líquido | DECISION_REQUIRED |
+| VL/R sem estorno | 11 casos set., hist «Valor pago s/ Titulo» | recebido-de-fornecedor? | líquido | DECISION_REQUIRED |
+| Competência do ES | `FKx_DATA` do estorno | estorno na competência do evento | fechamento | PENDING |
+| Paridade | FINR190 é a referência AS-IS | validar candidata vs FINR190 de competência fechada | homologação | PENDING |
+
+### 16.9 Indicadores TARGET propostos (após homologação)
+
+Com evidência hoje (implementáveis sem decisão): contagem de eventos, valor bruto por moeda/tipo/direção, estornos registrados, compensações registradas, eventos sem natureza/documento. Condicionados a decisão: **total líquido pago/recebido**, baixas bancárias vs compensações separadas (requer regra sobre `hist` ou paridade FINR190). Audiência e segurança inalteradas (D3, S2S, `.access`); `officialTotals:false` permanece até homologação.
+
+### Gates
+
+`MOVEMENT_SEMANTICS=DOCUMENTED_PROVEN`; `NET_FORMULA=DECISION_REQUIRED` (3 candidatas com números); `FINR190_PARITY=PROPOSED`; `ESTORNO_PAIRING=PROVEN` (ES/P+VL/R); `D4_IMPLEMENTATION=NOT_AUTHORIZED` nesta etapa.
