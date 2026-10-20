@@ -16052,3 +16052,25 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=USER_MIC_QA em minhadelpi.com.br/apps/delia
 ```
+
+
+## §6.321 — Coordenação: encerramento técnico Q02-A com residuais (2026-10-20)
+
+**PRODUCT MASTER:** solicitou fechamento e continuidade da refatoração. **REVIEW:** `ACCEPT_WITH_RESIDUAL` estritamente para a remediação técnica Q02-A (RQ-01–RQ-04); o gate funcional completo `INCONCLUSIVE` e `I04_ACCEPTED=NO`. Rework único esgotado; sem novo diff `delia-api` nesta decisão. Roadmap 59 §10 registra a evidência e pendências.
+
+**EVIDÊNCIA:** revisão executor do código Q02-A idêntico ao rework `ef88e59933174a58e83ea08aaf5aabdc2e0392f1`, revista no HEAD `8406b74fc7a13cb71244e45e018af07ed1fe353f`: 34/34 testes focados reportados PASS, RQ-03 singleton fail-closed confirmado estaticamente; RQ-01/RQ-04 fixtures, RQ-02 wiring + owner VISTA real em 1 amostra. C02 `TASK_OUTCOME=PARTIAL` (formatos não efetivamente apresentados). SIPOC uma resposta útil; dois turnos hipotéticos `turn_budget_limited` com stage cap 12s; continuidade não exercida. Live DAVI/TÉO/OpenAPI, rename/reorder `TEST_NOT_RUN`. `MATERIAL_ACT=0` informado. Nenhum aceite de I04 por teste HTTP 200 ou pela completude estática.
+
+**NEXT EXECUTION GATE:** a solicitação genérica de continuidade não dispensa o bloqueio em 16/59: `Q01_AUTHORIZED=NO`, `Q02_B/C_AUTHORIZED=NO`. A coordenação deve primeiro obter decisão explícita de (a) evidência que encerre I04 e libere Q01, ou (b) exceção Product Master de dependência formalizada no doc 16 e refletida no roadmap, com escopo/AC definidos; somente então Cursor aplica diffs bounded usando auditorias 56/57, ADR 58, inventário 60. Nenhuma nova auditoria ou segundo rework Q02-A.
+
+```text
+Q02_A_TECHNICAL_REWORK_REVIEW=ACCEPT_WITH_RESIDUAL
+Q02_A_FUNCTIONAL_GATE=INCONCLUSIVE
+Q02_A_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+EXECUTION_DIFF=NONE
+NEXT=EXPLICIT_PRODUCT_MASTER_CONTINUATION_GATE
+```
