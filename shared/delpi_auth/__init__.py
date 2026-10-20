@@ -31,6 +31,16 @@ from .decorators import (
 from .policy_engine import PolicyEngine
 from .policy_registry import PolicyRegistry
 
+from .service_contract import (
+    SERVICE_AUTHORIZATION_HEADER,
+    build_service_authorization,
+    extract_service_authorization,
+)
+from .service_identity import ServiceIdentity
+from .service_errors import ServiceAuthError
+from .service_token_validator import ServiceTokenValidator
+from .service_token_provider import ClientCredentialsTokenProvider
+
 
 __all__ = [
     "validate_token",
@@ -43,4 +53,11 @@ __all__ = [
     "policy",
     "PolicyEngine",
     "PolicyRegistry",
+    "SERVICE_AUTHORIZATION_HEADER",
+    "build_service_authorization",
+    "extract_service_authorization",
+    "ServiceIdentity",
+    "ServiceAuthError",
+    "ServiceTokenValidator",
+    "ClientCredentialsTokenProvider",
 ]
