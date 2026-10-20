@@ -192,3 +192,100 @@ TESTS = TEST_NOT_RUN
 PHASE_PROGRESSION = NONE
 NEXT = DEFERRED_UNTIL_PRODUCT_AND_COORDINATION_AUTHORIZATION
 ```
+
+## 12. Inventário dirigido de interações visuais e gates de capacidade real (2026-10-20)
+
+**Tipo:** `PRODUCT_DIRECTION_APPROVED / VISUAL_INVENTORY / DOCUMENTATION_ONLY`. O Product Master determina: **somente sugerir funcionalidades que a DÉLIA realmente consegue executar para o usuário e contexto atuais**. Nunca mostrar exemplos fictícios do wireframe §3 como capacidades habilitadas. Contrato backend de catálogo/projeção de sugestões **não será criado nem congelado nesta etapa**; `IMPLEMENTATION_DEFERRED` continua até autorização futura específica. Esta seção complementa os conceitos anteriores, sem promover targets a runtime.
+
+**HEAD observado nesta revisão documental:** `ca8b1d0d4a5a796c949a6e3bcb1ed765f8036395`. Fontes conferidas: specs 93, 116, 117, `ConversationReception.tsx`, `DeliaReception.tsx`, `DeliaConversationPage.tsx`, `HelpTooltip.tsx`. Git local/status, authorities completas, consumidores de capabilities e infraestrutura de autorização **não** foram inventariados integralmente; revalidar na task futura. `TEST_NOT_RUN`.
+
+### 12.1 Gate epistemológico de conteúdo
+
+| Situação | Estado visual admitido | Regra |
+|---|---|---|
+| Capacidade comprovadamente existente, contextual, operacional e autorizada no owner legítimo | `ready` com sugestão clicável | provar responsabilidade → owner → fonte → consumidor → contrato → implementação → teste/outcome |
+| Implementação identificada, mas permissão efetiva não comprovada | `hidden`/não ofertar | não deduzir de metadata, JWT, memória ou import frontend |
+| Capability `PLANNED/TARGET` | `hidden` | não transformar roadmap em promessa |
+| Descoberta MCP/provedor sem aprovação/AuthZ | `hidden` | `discovery != approval` |
+| Capability temporariamente indisponível | omitir por padrão; `disabled` apenas se a visibilidade tiver justificativa real aprovada | nunca parece acionável |
+| Nenhum item elegível / sem contrato legítimo de fornecimento | `empty` invisível, preservar recepção/composer | não popular fallback inventado |
+| Falha do provedor da projeção futura | `error-neutral` sem erro global | não bloquear texto |
+| `loading` apenas de fluxo real | indicação discreta, sem skeleton eterno | sem simular integração inexistente |
+
+**Capacidades atualmente sugeríveis:** `TO_INVENTORY`. As consultas sobre DAVI/VISTA/TÉO, roteamento, STT e outros componentes em execuções anteriores **não** provam elegibilidade geral nem AuthZ atual de cada sugestão; a próxima task deverá colher evidência por capability/usuário antes de disponibilizar textos concretos. Exemplos “Analisar indicadores”, “Investigar informações”, “Acompanhar atividades” e “Explorar possibilidades” do §5 são **placeholders de design**, nunca allowlist automática.
+
+### 12.2 Inventário de estados/interações visuais
+
+| Estado / evento | Apresentação | Resposta e invariantes |
+|---|---|---|
+| `hidden`, conversa com turnos | não renderizar sugestões | recepção desaparece pelo ciclo existente |
+| `empty`, nenhum item autorizado | renderizar recepção sem grid e sem título de sugestões | não criar espaços vazios nem fallback fictício |
+| `loading` real, antes da admissão | skeleton leve opcional abaixo da descrição | não bloquear composer nem sugerir autorização |
+| `ready`, conversa vazia | seção secundária com título discreto + conjunto limitado de cards | avatar/greeting/title/note existentes preservados |
+| Card `default` | borda discreta, cantos/tokens `plugin-ui`, ícone semântico opcional, título + descrição curta | título suficiente sem ícone; uma só superfície clicável |
+| Card hover | realce leve de borda/fundo; help contextual padronizado | sem salto de layout, sem executar ação |
+| Card focus-visible | outline acessível, tooltip `HelpTooltip` existente | tab order natural; não atualizar draft no foco |
+| Card pressed | feedback visual curto | invocar intenção uma vez, sem prometer ação material |
+| Card selecionado | aplicar `draftText` admissível e focar `MessageComposer` | não enviar; permitir edição e desfazer edição manual |
+| Seleção com draft não vazio | por default não sobrescrever; proteção explícita | decidir no contrato de integração se perguntar, inserir ou bloquear; até lá fail-safe |
+| Repetição de click/Enter | não duplicar prompt nem disparar múltiplos efeitos | callback idempotente no consumidor |
+| Composer loading/disabled | cards desabilitados ou ocultos | nenhum clique efetivo |
+| Turno criado | seção some conforme recepção existente | sem animação que reordene mensagens |
+| Items atualizados por projeção legítima futura | atualizar itens com keys estáveis, sem piscar | não depender de LLM para autorização; foco não some sem aviso |
+| `error-neutral` | omitir sugestões, manter composer | erro não vira banner global |
+| Dock compact | uma coluna, cards densos, altura contida | sem clipping/overflow; priorizar campo de texto |
+| Desktop | preferir duas colunas, no máximo bounded conforme evidência | não inferir número fixo de capacidades |
+| Touch e zoom | hit area adequada, tooltips não exclusivamente por hover | legibilidade 320/360/420px, 200% zoom |
+| Tema/motion | light/dark, reduced motion, contraste | tokens, foco, transições curtas, sem brilho ornamental |
+
+### 12.3 Estrutura visual e detalhamento
+
+- Ordem na recepção: avatar institucional → saudação condicional → `h2` atual → descrição honesta → título secundário de sugestões se houver itens → grid responsiva → composer preexistente no layout do host. Nota de privacidade/persistência permanece; não duplicar títulos.
+- Cards são botões inteiros, não links de navegação; ícone Lucide somente de allowlist; título de uma linha preferencial, descrição curta com wrapping acessível; textos variáveis sem cortar informação decisiva.
+- Usar primitives de `plugin-ui` antes de novo card/componente; `HelpTooltip` comprovadamente existente com `wrap`, trigger hover/focus, portal/viewport; não usar `title` nativo como única ajuda. Tooltip fornece descrição factual da **pergunta que será inserida**, não promessa de execução nem da competência de outra API.
+- Feedback de seleção: foco retorna ao textarea com caret apropriado e conteúdo editável; feedback de `draft populated` sem toast global ou `aria-live` duplicada. Não executar o prompt.
+- Compatibilidade de 320/360/420px, Companion Dock, zoom 200%, light/dark, teclado, leitor de tela e `prefers-reduced-motion`.
+- No backend contract / autorização nesta etapa. Em implementação visual futura, componente pode ser render-only com `items=[]` e `disabled`/empty honestos; integração de sugestões reais só após admissibilidade comprovada por owner legítimo.
+
+### 12.4 Inventário de reuso e limites
+
+| Responsabilidade | Evidência de código no HEAD consultado | Decisão |
+|---|---|---|
+| Recepção | `plugins/plugin-ui/src/components/conversation/ConversationReception.tsx` | `EXISTING_EQUIVALENT=YES; REUSE` |
+| Consumer/reception DÉLIA | `plugins/delia/src/ui/DeliaReception.tsx` | `YES; REUSE/EXTEND` para composição apenas |
+| Composer/draft | `MessageComposer` e `DeliaComposer` (inventário 117) | `YES; REUSE` |
+| Tooltip/help | `plugins/plugin-ui/src/components/help/HelpTooltip.tsx` | `YES; REUSE` |
+| Estrutura de página/Dock | `DeliaConversationPage.tsx` + superfícies do Portal | `YES; REUSE` |
+| Composição específica de starter suggestions | não provada no inventário dirigido 117 | `TO_INVENTORY`; decidir EXTEND/NEW depois |
+| Catálogo/admissão de sugestões | owner/contrato específico não validado | `TO_INVENTORY`, **não criar neste ciclo** |
+
+### 12.5 Critérios de aceite futuros do frontend (não executados)
+
+- `SS-V01`: recepção existente sem duplicação ou mudanças quando items vazios.
+- `SS-V02`: nenhuma sugestão não comprovada é exibida como ação disponível.
+- `SS-V03`: cards/tokens/ícones/help padronizados; hover/focus/pressed distinguíveis.
+- `SS-V04`: seleção preenche **só o draft** e restaura foco; sem auto-submit.
+- `SS-V05`: draft existente protegido; comportamento repetido não duplica texto.
+- `SS-V06`: conversa iniciada oculta sugestões; ausência de contratos não bloqueia escrita.
+- `SS-V07`: full-page/Dock, 320/360/420, 200%, light/dark/reduced motion.
+- `SS-V08`: teclado/Enter/Space/SR/tooltip/a11y validados.
+- `SS-V09`: componentes visuais compartilhados `plugin-ui`, sem catálogo ou autorização implementada no frontend.
+- `SS-V10`: integração futura com capabilities somente após evidência runtime/AuthZ contratada; backend/provedor/feature não inventados.
+
+**Decisões a fechar quando autorizar implementação:** quantidade máxima simultânea, política explícita de clique sobre draft não vazio, contrato UI tipado final, integração com fonte autorizada e UX de eventual refresh. Não fechar backend neste inventário; não presumir que design mock autoriza uma capability.
+
+```text
+TASK=CONVERSATION_STARTER_SUGGESTIONS_VISUAL_INVENTORY
+STATUS=DOCUMENTED_VISUAL_SCOPE_ONLY
+PRODUCT_RULE=ONLY_REAL_EXECUTABLE_AUTHORIZED_CAPABILITIES
+BACKEND_CONTRACT=NOT_DEFINED_BY_DESIGN_TASK
+ACTUAL_ELIGIBLE_SUGGESTIONS=TO_INVENTORY
+REUSE_RECEPTION=YES_REUSE
+REUSE_COMPOSER=YES_REUSE
+REUSE_HELP_TOOLTIP=YES_REUSE
+DEDICATED_SUGGESTION_COMPOSITION=TO_INVENTORY
+IMPLEMENTATION=DEFERRED_UNCHANGED
+RUNTIME=UNCHANGED
+TESTS=TEST_NOT_RUN
+PHASE_PROGRESSION=NONE
+```
