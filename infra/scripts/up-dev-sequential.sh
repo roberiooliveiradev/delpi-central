@@ -136,6 +136,7 @@ FASE_MFE=(
   inspecoes-entrada
   inspecoes-processo
   commercial
+  controllership-finance
   supplies
   financeiro-centro-custo
   financeiro-inadimplencia
@@ -174,6 +175,7 @@ FASE_API=(
   requests-api
   helpdesk-api
   commercial-api
+  controllership-finance-api
   supplies-api
   delia-api
   cipa-api
