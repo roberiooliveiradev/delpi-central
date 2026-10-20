@@ -57,6 +57,20 @@ Após o G1 de verificação técnica (HEAD de evidência `6cfb4ea7c3`) e respost
 
 **Escopo exclusivamente autorizado:** MFE/bootstrap/shell/Home real, `GET /viewer-context` protegido na BFF, Compose dev da BFF/MFE e Compose prod do MFE, testes e Help contextual. Decisões D1=A, D2=A e D3=A mantidas. **Não autoriza deploy em produção, registro de manifesto produtivo, páginas futuras, P1–P6 ou novas permissões.** Runtime e testes deste slice permanecem `NOT_IMPLEMENTED / TEST_NOT_RUN` até relatório de execução verificável; revalidar HEAD e worktree na execução.
 
+### IMP-08/P1 — Gate vigente de Cockpit (decisão de 20/10/2026)
+
+**Registro canônico:** [doc 45 §15](./45-g0-excecao-fastapi-e-fechamento-gates.md). O PO aprovou `D1=A, D2=B, D3=C` após o inventário READ/VERIFY de P1:
+
+| Controle | Estado |
+|---|---|
+| D1=A: rota `/apps/controllership-finance/closing/competence`, `?competence=` | `APPROVED / TARGET_ONLY` — o identificador de competência ainda depende do contrato real |
+| D2=B: producers e competência primeiro | `APPROVED / READ_ONLY_PREDECESSOR` — não construir cockpit de três eixos permanentemente indisponíveis |
+| D3=C: owner/persistência | `TO_INVENTORY / DECISION_REQUIRED_DEFERRED` — sem banco/migration por antecipação |
+| Implementação IMP-08/P1 | **`NO_GO / IMPLEMENTATION_AUTHORIZED=NO`**; T01/T03/T05 e contratos P2/P3/P5 sem produtores comprovados |
+| Próximo passo | Inventário com producers e owners Core/api-delpi/P2/P5/P6 e provenance TÉO; reportar contratos físicos, RQ/AC, lacunas e gate do primeiro predecessor de negócio |
+
+A implementação já autorizada de IMP-MFE-HOME **não** autoriza a página P1; readiness documental e screenshot não provam fontes operacionais. Nenhum código runtime é aprovado para P1 nesta decisão.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
