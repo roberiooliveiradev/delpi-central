@@ -339,3 +339,21 @@ Essas variantes são um **contrato de apresentação conceitual**, não nomes ob
 `SS-V11…SS-V16=PLANNED`. Testar com 0/1/2/3/4/6 itens **fictícios somente em fixtures de teste visual**, nunca como capacidades oferecidas a usuários em produção. O conteúdo real continua condicionado à elegibilidade e ao futuro owner/contrato legítimo.
 
 **Gate de reuso:** `EXISTING_EQUIVALENT=TO_INVENTORY` para composição/variantes específicas, `REUSE_DECISION=REUSE/EXTEND` dos primitives `plugin-ui` quando comprovados; nenhuma nova engine/layout service. `BACKEND_CONTRACT=NOT_DEFINED`, `IMPLEMENTATION=DEFERRED`, `PHASE_PROGRESSION=NONE`.
+
+## 14. Autorização bounded do Product Master — frontend com quatro perguntas iniciais (2026-10-20)
+
+**Decisão:** `F02-A_FRONTEND_IMPLEMENTATION_AUTHORIZED` para construir o componente compartilhado e integrá-lo à recepção da DÉLIA, **sem contrato backend de sugestão e sem inferir autorização de capabilities**. Esta decisão substitui `IMPLEMENTATION_DEFERRED` **apenas para o slice render-only e a composição do draft**, sem alterar a proibição de anunciar funções não comprovadas. Não autoriza avançar fase, modificar MCP/LLM, criar catálogo backend ou liberar ações materiais.
+
+**Quatro perguntas padrão para QA visual e funcional (copy inicial, sujeita a revalidação de execução por sessão antes de produção):**
+1. `Quais formatos de dados estão disponíveis?` — evidência de pergunta respondida em execução real via VISTA catalog, porém disponibilidade contextual sempre revalidada.
+2. `O que é SIPOC?` — pergunta explicativa compatível com especialização de processos TÉO e com exemplos já avaliados; não prometer consulta específica sem prova live.
+3. `Quais fontes de informação posso consultar com meu acesso?` — pergunta de discovery, não afirma que certa fonte está autorizada.
+4. `Que tipos de análise operacional você consegue realizar agora?` — pergunta de orientação baseada em capabilities, não promessa de ação.
+
+**Gate de visibilidade em produção:** perguntas 1–4 são **fixtures de apresentação**, não allowlist de permissions. Apenas montar sugestões cujo fluxo de resposta esteja comprovadamente admitido para a sessão/ambiente; sem projeção de admissibilidade, não exibir como quatro capabilities disponíveis para todos. Se não houver evidência de elegibilidade por contexto, manter `items=[]` em produção ou habilitar as quatro opções somente em modo QA explicitamente controlado já existente e aprovado, sem inventar nova permissão ou feature backend. O deploy do render-only pode ocorrer disabled/hidden honestamente. Não codificar owner names, tools ou metadata MCP como fonte de autorização.
+
+**Reuso:** `ConversationReception`, `MessageComposer`, botões/cards e `HelpTooltip` do `plugin-ui`; composição das opções fornecida pela DÉLIA MFE; callback somente `setInput(draftText)` e foco; **nunca `handleSubmit()`**. Implementar variants regular/compact/minimal e caps responsivos §13, com item count abaixo de quatro quando contexto/tela exigir. Texto já digitado não pode ser sobrescrito: por default, não aplicar sugestão, com feedback leve ou seleção desabilitada, até política definida.
+
+**Critérios do slice:** `SS-F01` render-only em `plugin-ui`; `SS-F02` quatro fixtures de perguntas definidos somente no consumer DÉLIA/QA com elegibilidade honesta; `SS-F03` clique/Enter/Space preenche draft com foco sem submit; `SS-F04` preserva draft existente; `SS-F05` zero sugestões se não houver fonte/gate legítimos; `SS-F06` layout 0–4 em fullpage/Dock/mobile; `SS-F07` tooltips, keyboard/a11y/theme/reduced-motion; `SS-F08` Vitest/TypeScript/build/federation/browser/evidence no SHA; `SS-F09` rollout não modifica STT, Keycloak, Core, API nem MCP; `SS-F10` registro de implantação distingue fixtures QA de capabilities admitidas. Todos `PLANNED` até execução.
+
+`BACKEND_SUGGESTIONS_CONTRACT=DEFERRED`; `FRONTEND_SLICE=AUTHORIZED`; `PRODUCTION_FOUR_CAPABILITIES=NOT_AUTHORIZED_WITHOUT_RUNTIME_EVIDENCE`; `PHASE_PROGRESSION=NONE`.
