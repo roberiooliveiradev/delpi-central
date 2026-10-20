@@ -420,3 +420,16 @@ I04_ACCEPTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
 ```
+
+
+## 18. Independent coordination review — Q02-C (2026-10-20)
+
+**REVIEWED IMPLEMENTATION:** `d62ab853c93de5d3882a716fbb8b266ba8ac7d3a`. **VERDICT: REWORK**, limited to one bounded Q02-C cycle subject to roadmap anti-loop. Executor-reported 1665 backend tests PASS; real-model evaluation and live task outcome `TEST_NOT_RUN/INCONCLUSIVE`; no production deploy. Static comparison `ac1ec85c43d9bf0bfa1f72a13e2044f086897be7 → d62ab853...` also contains concurrent api-delpi changes, which do not belong to the bounded Q02-C diff.
+
+**Accepted progress:** obsolete lexical prior-list/count/extraction heuristics removed; prior observation explicitly `authoritative=false`; prior text never identifier provenance; typed-attribute comparison guard and frozen selection-only kept. No new planner or public contract.
+
+**BLOCKER B2 (bounded fix candidate):** `_typed_compare_outcome_content` currently accepts comparison by the presence of literal rendered header `Diferenças comprovadas:`; its call site around orchestration prior-continuation uses the rendered string to decide task success. This is text-shape outcome inference, contrary to Q02-C objective. Rework must prove and reuse a typed deterministic comparison signal already available and preserve fail-closed insufficiency and frozen selection-only; if impossible without new contract STOP→ARCHITECTURE_DECISION_REQUIRED. Preserve RED/GREEN characterization, no weakened negative tests.
+
+**B1 (decision conflict / no automatic deletion):** `classify_result_intent` uses regex for LIST/COUNT/ticket cues and `unique_structural_ticket_list_capability` shortcuts capability selection at two callers, so it is not purely schema structural. However §17 explicitly retained the path for R4/R5 personal pagination, semantics and 30s budget. Do **not** delete or rewire it as part of B2 rework unless Product Master/authority resolves the frozen functional/performance constraint and equivalent semantic proposal reuse is proven. Record as `ARCHITECTURE_DECISION_REQUIRED` or accepted-scoped residual; not silent redesign.
+
+**GATE:** `Q02_C_ACCEPTED=NO`; `Q03_AUTHORIZED=NO`; `I04_ACCEPTED=NO`. Rework bounded to B2, including provenance/security/negative regression; broader B1 explicitly held for coordination decision. No production deployment or budget change.
