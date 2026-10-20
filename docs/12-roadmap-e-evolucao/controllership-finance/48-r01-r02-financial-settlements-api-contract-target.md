@@ -458,3 +458,18 @@ Com evidência hoje (implementáveis sem decisão): contagem de eventos, valor b
 ### Gates
 
 `MOVEMENT_SEMANTICS=DOCUMENTED_PROVEN`; `NET_FORMULA=DECISION_REQUIRED` (3 candidatas com números); `FINR190_PARITY=PROPOSED`; `ESTORNO_PAIRING=PROVEN` (ES/P+VL/R); `D4_IMPLEMENTATION=NOT_AUTHORIZED` nesta etapa.
+
+
+## 17. Encerramento da primeira consulta e protocolo de replicação para os demais relatórios (PO, 20/10/2026)
+
+**Decisão expressa do PO:** R01/R02 representam a primeira entrega funcional do fluxo de levantamento → fonte/coluna/chaves → contratos api-delpi/BFF → consulta visual. Essa entrega **NÃO equivale à homologação de paridade com os relatórios exportados TOTVS** nem ao fechamento mensal completo. O objetivo agora é repetir o mesmo método para os próximos relatórios do PROC-0072.
+
+**Evidência indisponível / dívida de comparação:** até o encerramento desta rodada, não foi disponibilizado arquivo real exportado do FINR190, da customização `_F190C` ou da eventual alternativa FINSV010 correspondente à competência/params testados. Os cinco arquivos relatados para pagar/receber são descrição oral/derivada, não artefatos recebidos e conferidos. Portanto `REPORT_EXPORT_EVIDENCE=NOT_PROVIDED`, `PARITY_WITH_TOTVS_EXPORT=TEST_NOT_RUN`, `OFFICIAL_NET_TOTALS=PENDING_OWNER`. Ausência de arquivo neste projeto não prova ausência no ERP. Não marcar paridade PASS por SQL reconciliado com a API (mesma origem lógica).
+
+**Estado comprovado e limites:** endpoints R01/R02, contratos e página estão implementados; smoke produtivo e conciliação dos eventos brutos foram reportados e o GitHub contém a implementação. `branchCode` nullable; dataset compartilhado autorizado ao acesso efetivo do Portal conforme D3; identificação por filial na fonte não provada. D4 identifica tipos e ciclos de estorno, mas fórmulas de líquido F1/F2/F3 **não homologadas**; `officialTotals=false` preservado. A entrega atual é uma **consulta operacional estruturada, não o pacote FINR190 homologado**.
+
+**Backlog explícito para o fechamento completo:** quando houver export do relatório nativo/customizado, coletar arquivo, versão/rotina, competência, filtros, ordenação, filial/contexto, moeda, layout e instante da extração; preservar integridade/hash e proveniência, mascarar dados sensíveis; executar comparação lado a lado por linha/identificador, natureza, documento, valores, estornos/compensações, contagens e totalizações, justificando diferenças. Validar com o responsável financeiro. Sem evidência do export, status `TEST_NOT_RUN` e sem declaração de equivalência.
+
+**Protocolo repetível de cada próximo relatório:** (1) TÉO AS-IS/owner/RQ/AC; (2) inventário de fonte e evidência de export disponível/ausente; (3) DAVI SQL read-only para tabelas/campos/chaves/semântica; (4) contratos e boundaries no GitHub; (5) api-delpi canônica, BFF com auth existente, MFE com plugin-ui; (6) testes negativos/positivos, comparação com fonte e export **somente se disponível**; (7) smoke de outcome, documentação e residual; (8) commit/SHA e próximo item. Falta do export não impede criar uma consulta operacional honesta, mas impede declarar paridade.
+
+**Próximo inventário no catálogo doc 46:** `R03 — P7 padrão / layout Bloco H (MATR460)`; não confundir com `R04 — consumo/relação por OP (MATR860)`. Próximo item é `TO_INVENTORY` (AS-IS/evidência/SQL/owner) e não possui GO implícito para código/deploy.
