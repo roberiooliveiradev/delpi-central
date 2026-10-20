@@ -156,7 +156,8 @@ def _where_and_params(
 def _select_block(b: dict) -> str:
     id_doc_field = "FK2_IDDOC" if b["table"] == "FK2010" else "FK1_IDDOC"
     return (
-        SETTLEMENT_SELECT.format(**b)
+        "SELECT\n"
+        + SETTLEMENT_SELECT.format(**b)
         + "\n"
         + _from_clause(b).replace("F.FK_IDDOC_PLACEHOLDER", f"F.{id_doc_field}")
     )

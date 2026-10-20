@@ -21,6 +21,7 @@ def test_payables_list_query_binds_fk2_and_audited_joins() -> None:
         page=2,
         page_size=50,
     )
+    assert query.startswith("SELECT")
     assert "FROM FK2010 F WITH (NOLOCK)" in query
     assert "F.D_E_L_E_T_ = ''" in query
     assert "T.FK7_ALIAS = 'SE2'" in query
@@ -44,6 +45,7 @@ def test_receivables_list_query_binds_fk1_and_title_composite() -> None:
         page=1,
         page_size=200,
     )
+    assert query.startswith("SELECT")
     assert "FROM FK1010 F WITH (NOLOCK)" in query
     assert "T.FK7_ALIAS = 'SE1'" in query
     assert "LEFT JOIN SE1010" in query
