@@ -286,7 +286,7 @@ def test_viewer_photo_requires_auth():
 
 def test_viewer_photo_service_principal_blocked(monkeypatch):
     monkeypatch.setattr(fa, "request_has_valid_internal_service_token", lambda request: True)
-    assert _get_photo(_client()).status_code == 403
+    assert _client().get("/viewer-photo", headers={"X-Delpi-Service-Token": "internal"}).status_code == 403
 
 
 def _get_photo(client):
