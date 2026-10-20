@@ -24,9 +24,11 @@ import {
   classifyWriteOutcome,
   diffEditableFields,
   formatTaxIdMasked,
+  getSupplierFieldValue,
 } from "./query";
 import {
-  SUPPLIERS_EDITABLE_FIELDS,
+  SUPPLIER_FIELD_REGISTRY,
+  SUPPLIER_FORM_SECTIONS,
   type SupplierDetail,
   type SupplierEditDraft,
   type SupplierWriteOutcome,
@@ -55,33 +57,6 @@ const SECTION_LABELS: Record<string, string> = {
   contact: C.sectionContact,
   fiscal: C.sectionFiscal,
   purchasing: C.sectionPurchasing,
-};
-
-const FIELD_LABELS: Record<string, string> = {
-  supplier_code: "Código",
-  supplier_store: "Loja",
-  supplier_name: "Razão social",
-  supplier_short_name: "Nome fantasia",
-  person_type: "Tipo de pessoa",
-  address: "Endereço",
-  district: "Bairro",
-  postal_code: "CEP",
-  city: "Cidade",
-  city_code: "Código IBGE",
-  state: "UF",
-  contact_name: "Contato",
-  area_code: "DDD",
-  phone: "Telefone",
-  email: "E-mail",
-  state_registration: "Inscrição estadual",
-  municipal_registration: "Inscrição municipal",
-  rohs_indicator: "Indicador ROHS",
-  payment_condition_code: "Condição de pagamento",
-  payment_method_code: "Forma de pagamento",
-  financial_nature_code: "Natureza financeira",
-  accounting_account: "Conta contábil",
-  country_code: "País",
-  bacen_country_code: "País (BACEN)",
 };
 
 export function SupplierDetailPage({
@@ -315,84 +290,90 @@ export function SupplierDetailPage({
             </span>
           </div>
 
-          <SuppliesSectionCard
-            title={C.sectionIdentification}
-            hint={SP_HELP.suppliersIdentification}
-          >
-            {editing ? (
-              <div className="sp-supplier-detail__edit-grid">
-                <dl className="sp-supplier-detail__identity">
-                  <div>
-                    <dt>{FIELD_LABELS.supplier_code}</dt>
-                    <dd>{identification.supplier_code ?? code}</dd>
-                  </div>
-                  <div>
-                    <dt>{FIELD_LABELS.supplier_store}</dt>
-                    <dd>{identification.supplier_store ?? store}</dd>
-                  </div>
-                </dl>
-                <SuppliesTextField
-                  label={FIELD_LABELS.supplier_name}
-                  hint={SP_HELP.suppliersEditName}
-                  value={draft.supplier_name}
-                  onChange={(value) =>
-                    setDraft((d) => ({
-                      ...d,
-                      supplier_name: value.slice(
-                        0,
-                        SUPPLIERS_EDITABLE_FIELDS.supplier_name,
-                      ),
-                    }))
-                  }
-                  disabled={submitting}
-                />
-                <SuppliesTextField
-                  label={FIELD_LABELS.supplier_short_name}
-                  hint={SP_HELP.suppliersEditShortName}
-                  value={draft.supplier_short_name}
-                  onChange={(value) =>
-                    setDraft((d) => ({
-                      ...d,
-                      supplier_short_name: value.slice(
-                        0,
-                        SUPPLIERS_EDITABLE_FIELDS.supplier_short_name,
-                      ),
-                    }))
-                  }
-                  disabled={submitting}
-                />
-                <div className="sp-supplier-detail__edit-actions">
-                  <SuppliesActionButton
-                    type="button"
-                    variant="primary"
-                    onClick={() => setReviewing(true)}
-                    disabled={!dirty || submitting}
-                  >
-                    {C.reviewAction}
-                  </SuppliesActionButton>
-                  <SuppliesActionButton
-                    type="button"
-                    variant="ghost"
-                    onClick={cancelEdit}
-                    disabled={submitting}
-                  >
-                    {C.cancelAction}
-                  </SuppliesActionButton>
+          {SUPPLIER_FORM_SECTIONS.map((section) => (
+            <SuppliesSectionCard
+              key={section.id}
+              title={SECTION_LABELS[section.id]}
+              hint={
+                section.id === "identification"
+                  ? SP_HELP.suppliersIdentification
+                  : undefined
+              }
+            >
+              {editing ? (
+                <div className="sp-supplier-detail__edit-grid">
+                  {section.fields.some((spec) => spec.put !== "editable") ? (
+                    <dl className="sp-supplier-detail__identity">
+                      {section.fields
+                        .filter((spec) => spec.put !== "editable")
+                        .map((spec) => (
+                          <div key={spec.key} title={C.readonlyFieldHint}>
+                            <dt>{spec.label}</dt>
+                            <dd>
+                              {getSupplierFieldValue(detail, spec) || "—"}
+                            </dd>
+                          </div>
+                        ))}
+                    </dl>
+                  ) : null}
+                  {section.fields
+                    .filter((spec) => spec.put === "editable")
+                    .map((spec) => (
+                      <SuppliesTextField
+                        key={spec.key}
+                        label={spec.label}
+                        hint={
+                          spec.key === "supplier_name"
+                            ? SP_HELP.suppliersEditName
+                            : SP_HELP.suppliersEditShortName
+                        }
+                        value={draft[spec.key as keyof SupplierEditDraft]}
+                        onChange={(value) =>
+                          setDraft((d) => ({
+                            ...d,
+                            [spec.key]: value.slice(0, spec.maxLength),
+                          }))
+                        }
+                        disabled={submitting}
+                      />
+                    ))}
                 </div>
-              </div>
-            ) : (
-              <SectionFields section={identification} />
-            )}
-          </SuppliesSectionCard>
+              ) : (
+                <dl className="sp-supplier-detail__identity">
+                  {section.fields.map((spec) => (
+                    <div key={spec.key}>
+                      <dt>{spec.label}</dt>
+                      <dd>{getSupplierFieldValue(detail, spec) || "—"}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </SuppliesSectionCard>
+          ))}
 
-          {(["address", "contact", "fiscal", "purchasing"] as const).map(
-            (name) =>
-              detail.sections[name] ? (
-                <SuppliesSectionCard key={name} title={SECTION_LABELS[name]}>
-                  <SectionFields section={detail.sections[name]!} />
-                </SuppliesSectionCard>
-              ) : null,
-          )}
+          {editing ? (
+            <>
+              <p className="sp-supplier-detail__readonly-note">{C.editHint}</p>
+              <div className="sp-supplier-detail__edit-actions">
+                <SuppliesActionButton
+                  type="button"
+                  variant="primary"
+                  onClick={() => setReviewing(true)}
+                  disabled={!dirty || submitting}
+                >
+                  {C.reviewAction}
+                </SuppliesActionButton>
+                <SuppliesActionButton
+                  type="button"
+                  variant="ghost"
+                  onClick={cancelEdit}
+                  disabled={submitting}
+                >
+                  {C.cancelAction}
+                </SuppliesActionButton>
+              </div>
+            </>
+          ) : null}
         </>
       ) : null}
 
@@ -433,7 +414,10 @@ export function SupplierDetailPage({
             <tbody>
               {changes.map((change) => (
                 <tr key={change.field}>
-                  <td>{FIELD_LABELS[change.field]}</td>
+                  <td>
+                    {SUPPLIER_FIELD_REGISTRY.find((s) => s.key === change.field)
+                      ?.label ?? change.field}
+                  </td>
                   <td>{change.before || "—"}</td>
                   <td>{change.after || "—"}</td>
                 </tr>
@@ -445,25 +429,6 @@ export function SupplierDetailPage({
         )}
       </SuppliesModal>
     </div>
-  );
-}
-
-function SectionFields({
-  section,
-}: {
-  section: Record<string, string | number | null>;
-}) {
-  const entries = Object.entries(section);
-  if (!entries.length) return null;
-  return (
-    <dl className="sp-supplier-detail__identity">
-      {entries.map(([field, value]) => (
-        <div key={field}>
-          <dt>{FIELD_LABELS[field] ?? field}</dt>
-          <dd>{value?.toString() || "—"}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 

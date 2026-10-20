@@ -987,6 +987,12 @@
   max-width: 34rem;
 }
 
+.dashboard-supplies-portal .sp-supplier-detail__readonly-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
 .dashboard-supplies-portal .sp-supplier-detail__edit-actions,
 .dashboard-supplies-portal .sp-supplier-create__actions {
   display: flex;

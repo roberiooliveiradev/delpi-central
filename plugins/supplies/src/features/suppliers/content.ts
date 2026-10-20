@@ -52,7 +52,9 @@ export const SUPPLIERS_CONTENT = {
 
   editAction: "Editar cadastro",
   editHint:
-    "Somente razão social e nome fantasia são editáveis hoje. Demais campos SA2 permanecem somente leitura.",
+    "Somente razão social e nome fantasia têm alteração comprovada no contrato do ERP. Os demais campos aparecem somente leitura até a homologação TOTVS.",
+  readonlyFieldHint:
+    "Somente leitura — alteração deste campo ainda não foi homologada no contrato do ERP.",
   cancelAction: "Cancelar",
   reviewAction: "Revisar alterações",
   reviewTitle: "Revisar antes de gravar",

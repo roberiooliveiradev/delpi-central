@@ -29,6 +29,7 @@ import {
 import { classifyWriteOutcome } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
+  SUPPLIER_FIELD_REGISTRY,
   type SupplierCreateDraft,
   type SupplierWriteOutcome,
 } from "./types";
@@ -62,33 +63,6 @@ const EMPTY_DRAFT: SupplierCreateDraft = {
   payment_method_code: "",
   accounting_account: "",
   financial_nature_code: "",
-};
-
-const CREATE_FIELD_LABELS: Record<keyof SupplierCreateDraft, string> = {
-  supplier_store: "Loja",
-  person_type: "Tipo de pessoa",
-  tax_id: "CNPJ/CPF",
-  supplier_name: "Razão social",
-  supplier_short_name: "Nome fantasia",
-  address: "Endereço",
-  district: "Bairro",
-  postal_code: "CEP",
-  state: "UF",
-  city: "Cidade",
-  city_code: "Código IBGE",
-  area_code: "DDD",
-  phone: "Telefone",
-  contact_name: "Contato",
-  email: "E-mail",
-  state_registration: "Inscrição estadual",
-  municipal_registration: "Inscrição municipal",
-  country_code: "País",
-  bacen_country_code: "País (BACEN)",
-  rohs_indicator: "Indicador ROHS",
-  payment_condition_code: "Condição de pagamento",
-  payment_method_code: "Forma de pagamento",
-  accounting_account: "Conta contábil",
-  financial_nature_code: "Natureza financeira",
 };
 
 const CREATE_SECTION_TITLES = {
@@ -253,7 +227,7 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               field.options ? (
                 <SuppliesSelectField
                   key={field.key}
-                  label={CREATE_FIELD_LABELS[field.key]}
+                  label={field.label}
                   value={draft[field.key]}
                   options={field.options}
                   allowEmpty
@@ -265,8 +239,8 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                   key={field.key}
                   label={
                     field.required
-                      ? `${CREATE_FIELD_LABELS[field.key]} *`
-                      : CREATE_FIELD_LABELS[field.key]
+                      ? `${field.label} *`
+                      : field.label
                   }
                   hint={supplierFieldMaxLengthHint(field.maxLength)}
                   value={draft[field.key]}
@@ -338,7 +312,10 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           <tbody>
             {filledEntries.map(([field, value]) => (
               <tr key={field}>
-                <td>{CREATE_FIELD_LABELS[field]}</td>
+                <td>
+                  {SUPPLIER_FIELD_REGISTRY.find((s) => s.key === field)?.label ??
+                    field}
+                </td>
                 <td>{value}</td>
               </tr>
             ))}

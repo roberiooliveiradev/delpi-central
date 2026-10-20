@@ -1,6 +1,8 @@
 import type {
   SupplierCreateDraft,
+  SupplierDetail,
   SupplierEditDraft,
+  SupplierFieldSpec,
   SupplierWriteResponse,
   SuppliersQuery,
 } from "./types";
@@ -53,6 +55,32 @@ export function formatTaxIdMasked(value: string | null, masked: boolean): string
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
   }
   return value;
+}
+
+/**
+ * Mapeia um campo do registry para o valor retornado pelo GET detail da BFF.
+ * Campos ausentes no payload retornam "" — nunca valor inventado.
+ */
+export function getSupplierFieldValue(
+  detail: SupplierDetail,
+  spec: SupplierFieldSpec,
+): string {
+  switch (spec.get) {
+    case "identity":
+      return (
+        (spec.key === "supplier_code"
+          ? detail.supplier_code
+          : detail.supplier_store) ?? ""
+      ).toString();
+    case "top":
+      return detail.tax_id
+        ? formatTaxIdMasked(detail.tax_id, detail.tax_id_masked)
+        : "";
+    case "section":
+      return (
+        detail.sections[spec.section]?.[spec.key]?.toString() ?? ""
+      );
+  }
 }
 
 /** POST: envia somente campos preenchidos; preserva zeros à esquerda. */

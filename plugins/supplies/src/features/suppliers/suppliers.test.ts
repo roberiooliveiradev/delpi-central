@@ -17,12 +17,17 @@ import {
   createDefaultQuery,
   diffEditableFields,
   formatTaxIdMasked,
+  getSupplierFieldValue,
   hasActiveFilters,
   parseQueryFromSearch,
 } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
+  SUPPLIER_FIELD_REGISTRY,
+  SUPPLIER_FORM_SECTIONS,
+  SUPPLIER_PUT_EDITABLE_KEYS,
   type SupplierCreateDraft,
+  type SupplierDetail,
 } from "./types";
 
 describe("supplier routes", () => {
@@ -161,6 +166,87 @@ describe("supplier create payload", () => {
       (f) => f.required,
     );
     expect(required.map((f) => f.key)).toEqual(["supplier_store"]);
+  });
+});
+
+describe("shared field registry (F3.1 create/edit parity)", () => {
+  it("edit sections contain all POST fields plus system identity", () => {
+    const formKeys = SUPPLIER_FORM_SECTIONS.flatMap((s) =>
+      s.fields.map((f) => f.key),
+    );
+    const createKeys = SUPPLIER_CREATE_SECTIONS.flatMap((s) =>
+      s.fields.map((f) => f.key),
+    );
+    expect(new Set(formKeys)).toEqual(new Set([...createKeys, "supplier_code"]));
+    expect(new Set(formKeys).size).toBe(formKeys.length);
+  });
+
+  it("keeps the same section order and ids as the create form", () => {
+    expect(SUPPLIER_FORM_SECTIONS.map((s) => s.id)).toEqual(
+      SUPPLIER_CREATE_SECTIONS.map((s) => s.id),
+    );
+  });
+
+  it("allows PUT only for upstream-proven editable fields", () => {
+    expect(SUPPLIER_PUT_EDITABLE_KEYS.sort()).toEqual([
+      "supplier_name",
+      "supplier_short_name",
+    ]);
+    const editable = SUPPLIER_FIELD_REGISTRY.filter((f) => f.put === "editable");
+    expect(editable.every((f) => f.evidence === "put-contract")).toBe(true);
+  });
+
+  it("marks system/identity fields as non-POST", () => {
+    const code = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === "supplier_code");
+    expect(code?.post).toBe(false);
+    expect(code?.evidence).toBe("system");
+    expect(
+      SUPPLIER_FIELD_REGISTRY.find((f) => f.key === "supplier_store")?.put,
+    ).toBe("readonly");
+  });
+});
+
+describe("GET to form mapping", () => {
+  const detail: SupplierDetail = {
+    supplier_id: "00246901",
+    supplier_code: "002469",
+    supplier_store: "01",
+    blocked: false,
+    tax_id: "***********",
+    tax_id_masked: true,
+    sections: {
+      identification: {
+        supplier_code: "002469",
+        supplier_store: "01",
+        supplier_name: "RODRIGUES KANNENBERG",
+        supplier_short_name: "RODRIGUES KANNENBERG",
+        person_type: "J",
+      },
+      address: { postal_code: "08910000", state: "SC" },
+    },
+  };
+  const spec = (key: string) =>
+    SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+
+  it("maps identity fields from top-level code/store", () => {
+    expect(getSupplierFieldValue(detail, spec("supplier_code"))).toBe("002469");
+    expect(getSupplierFieldValue(detail, spec("supplier_store"))).toBe("01");
+  });
+
+  it("maps section fields preserving leading zeros", () => {
+    expect(getSupplierFieldValue(detail, spec("postal_code"))).toBe("08910000");
+    expect(getSupplierFieldValue(detail, spec("supplier_name"))).toBe(
+      "RODRIGUES KANNENBERG",
+    );
+  });
+
+  it("maps tax_id through the masked projection (CPF never shown)", () => {
+    expect(getSupplierFieldValue(detail, spec("tax_id"))).toBe("••••••");
+  });
+
+  it("returns empty string for fields absent from the GET payload", () => {
+    expect(getSupplierFieldValue(detail, spec("city"))).toBe("");
+    expect(getSupplierFieldValue(detail, spec("email"))).toBe("");
   });
 });
 
