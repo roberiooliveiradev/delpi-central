@@ -104,6 +104,10 @@ Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY
 
 **Histórico de análise, não normas atuais nem PASS inferido:** [20 — cobertura histórica](./20-transforma-plus-coverage.md), [33 — fechamento documental](./33-plano-mestre-fechamento-documental.md), [34 — review A14](./34-revisao-transversal-gate-v2.md), [35 — review A15](./35-contratos-regras-scripts-test-matrix-gate-v2.md), [36 — delivery externo superseded](./36-e04-t04-package-delivery-decision-packet.md), [38 — rebaseline após merge](./38-rebaseline-pos-merge-evidencias-gate-2026-10-16.md), [44 — evidências A16](./44-a16-revalidacao-final-transversal-2026-10-16.md). Preservados para proveniência; se conflitarem com 37/23/39 e HEAD, prevalecem sources mais altas.
 
+### R01/R02 — decisão de filial nullable e próximo gate (20/10/2026)
+
+[Doc 48 §§9–11 — rotas financeiras, decisão D3.1 e gate](./48-r01-r02-financial-settlements-api-contract-target.md): PO aprovou campo `branchCode` nullable no DTO e evolução backend-first, sem preencher filial artificialmente ou exigir paridade com `_F190C`. **Separação de acesso não foi dispensada**: fontes têm filial vazia nas probes, portanto `BRANCH_ENFORCEMENT=PENDING`, `API_DELPI_PERMISSION=DECISION_REQUIRED`, `IMPLEMENTATION_AUTHORIZED=NO` para endpoints com dados reais. Próximo passo: fechamento de contrato e testes de isolamento antes do GO explícito. BFF, MFE e exportação permanecem fora do slice.
+
 ## 4. Sequência de coordenação para o próximo chat
 
 1. **IMP-00 — READ/INVENTORY/VERIFY (sem runtime):** HEAD + `git status` no checkout, Project Instructions, `.cursor`, contratos/Core e owners, diff e CI; confirmar gates A12/A14/A15/A16 aplicáveis **sem reabrir escolhas já aprovadas**. Produzir brief preciso do primeiro slice e decisão `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`.
