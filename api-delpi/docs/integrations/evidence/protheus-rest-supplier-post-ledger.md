@@ -76,4 +76,5 @@ A sonda anterior «sem vínculo → HTTP 422 com gate fechado» fica `STALE_EVID
 | PUT gate antes do Core | PASS (teste) |
 | Suíte local | PASS — 63 testes (`pytest` create/update use case, rotas, gateway, payload, Core S2S, GET) |
 | Live POST/PUT | não executado |
+| Código na `main` | `a2933514a5` |
 | Deploy desta revisão | PENDING — sem janela, responsável e rollback confirmados nesta execução |
