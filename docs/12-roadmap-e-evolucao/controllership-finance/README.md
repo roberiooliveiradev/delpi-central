@@ -121,3 +121,7 @@ Navegação comum: **Início, Visão geral, Sala de interação, Minhas tarefas,
 ### D3 R01/R02 — decisão de audiência (20/10/2026)
 
 PO aprovou dataset financeiro compartilhado read-only para baixas a pagar/receber. A audiência é o conjunto de usuários humanos designados com effective `controllership-finance.access` pelo Core; sem lista/permissão extra por relatório ou filial. `manage` isolado não permite leitura. Ver [doc 48 §13](./48-r01-r02-financial-settlements-api-contract-target.md). **Ainda sem GO de exposição em produção:** enforcement, testes e smoke reais pendentes; `branchCode=null`, D4 e ausência de totais oficiais preservados.
+
+### D4 R01/R02 — auditoria de movimentos (20/10/2026)
+
+Auditoria read-only publicada em [doc 48 §16](./48-r01-r02-financial-settlements-api-contract-target.md) e [doc 47 complemento L1.7](./47-t01-report-column-audit-tracker-v1.md): catálogo FKB, comportamento observado de BA/VL/ES/CP, direções P/R, pareamento de estornos e reconciliação SQL × API. **NET_FORMULA=DECISION_REQUIRED**: F1/F2/F3 são hipóteses de apuração para homologação pela Controladoria, não totais oficiais. `officialTotals:false`; sem alteração de runtime ou liberação adicional. Próxima etapa: homologação do owner financeiro e eventual confronto com FINR190 de competência encerrada.
