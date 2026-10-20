@@ -1424,6 +1424,9 @@ services:
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
       TRANSFORMOMETRO_API_BASE_URL: http://transformometro-api:8000
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      # PARAMETROS_MINHADELPI é multi-ambiente: sem filtro, linhas vazias de
+      # outro ambiente (ex.: PATH_AUTH@2) sobrescrevem as do ambiente produtivo.
+      INTRANET_PARAMS_AMBIENTE: ${INTRANET_PARAMS_AMBIENTE:-1}
 
       CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
