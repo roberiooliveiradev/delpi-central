@@ -117,3 +117,7 @@ Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY
 Navegação comum: **Início, Visão geral, Sala de interação, Minhas tarefas, Administração, Ajuda** (ordem do menu, não necessariamente ordem de PRs). Nenhuma route/page future placeholder sem capability real. A Ajuda acompanha cada slice, não só a página Ajuda final.
 
 **Conclusão:** **IMP-F0 autorizado documentalmente, apenas para a BFF de fundação**; código, container e smoke seguem `NOT_IMPLEMENTED / TEST_NOT_RUN` até execução com evidência. Demais slices sem GO. Revalidar HEAD no novo chat.
+
+### D3 R01/R02 — decisão de audiência (20/10/2026)
+
+PO aprovou dataset financeiro compartilhado read-only para baixas a pagar/receber. A audiência é o conjunto de usuários humanos designados com effective `controllership-finance.access` pelo Core; sem lista/permissão extra por relatório ou filial. `manage` isolado não permite leitura. Ver [doc 48 §13](./48-r01-r02-financial-settlements-api-contract-target.md). **Ainda sem GO de exposição em produção:** enforcement, testes e smoke reais pendentes; `branchCode=null`, D4 e ausência de totais oficiais preservados.
