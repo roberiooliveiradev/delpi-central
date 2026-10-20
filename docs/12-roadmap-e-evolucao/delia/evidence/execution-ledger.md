@@ -16300,3 +16300,21 @@ REGRESSIONS=NONE_OBSERVED
 ROLLBACK_REQUIRED=NO
 PHASE_ADVANCE=NO
 ```
+
+
+## §6.332 — VD-F05 human production QA: short dictation and continuity (2026-10-20)
+
+**Evidence:** [VD-F05 report §8](./voice-dictation-five-minute-vdf05/voice-dictation-five-minute-vdf05-evidence.md#8-validação-visual-por-usuário-real-em-produção--2026-10-20). User reports “tudo funcionando” and supplies four screenshots from authenticated production browser. Two segments transcribed into one editable draft, increasing 21 → 49 characters; controls, waveform and /05:00 timer displayed. This is human-observed browser evidence, not a 300-second session nor independently reexecuted network monitoring.
+
+```text
+VD_F05_HUMAN_PRODUCTION_MIC_SHORT=PASS_USER_OBSERVED
+VD_F05_HUMAN_PRODUCTION_STT_SHORT=PASS_USER_OBSERVED
+VD_F05_HUMAN_PRODUCTION_DRAFT_CONTINUITY=PASS_USER_OBSERVED
+VD_F05_HUMAN_PRODUCTION_TIMER_5MIN_DISPLAY=PASS_USER_OBSERVED
+VD_F05_HUMAN_PRODUCTION_300S_AUTOSTOP=PENDING
+VD_F05_HUMAN_PRODUCTION_MANUAL_SEND=PENDING
+VD_F05_HUMAN_PRODUCTION_DOCK=PENDING
+PRODUCTION_DEPLOYMENT=PREVIOUSLY_EXECUTED_AT_a835a97ac
+RUNTIME_CHANGES=NONE
+PHASE_ADVANCE=NO
+```
