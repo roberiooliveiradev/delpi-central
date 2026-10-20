@@ -5,7 +5,20 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (avaliação bounded I04):** no runtime atual, TÉO, VISTA e DAVI foram observados em quatro perguntas somente leitura. K3 e K4 cumprem o critério funcional. K1 e K2 ficam parciais. O sibling renomeado não tem mecanismo autorizado fora de produção e permanece `TEST_NOT_RUN`. O parecer continua `INCONCLUSIVE`. Este registro não altera `I04_ACCEPTED`. Documento 69. Ledger §6.344.
+**Decisão vigente de execução — 2026-10-20 (diagnóstico G1 e K1/K2):** o harness de renomeação existente usa modelo falso que já recebe o nome novo. Não há caminho com `kimi-k3` e catálogo isolado sem decisão posterior. O corte de K1 é a projeção determinística em 2000 caracteres. K2 parte desse texto já cortado. I04 continua não aceito. Documento 70. Ledger §6.346.
+
+```text
+I04_ACCEPTED=NO
+G1_REUSE_DECISION=EXTEND_AFTER_AUTHORIZATION
+K1_TRUNCATION_STAGE=DETERMINISTIC_GUIDANCE_RENDER_2000
+K2_INCOMPLETE_STAGE=PRIOR_EXCERPT_SPLIT_AND_SYNTHESIS_SELECTION
+CODE_CHANGED=NO
+NEW_HARNESS_AUTHORIZED=NO
+PRODUCTION_CATALOG_CHANGE_AUTHORIZED=NO
+NEXT=AUTHORIZE_ISOLATED_REAL_MODEL_G1_OR_KEEP_TEST_NOT_RUN
+```
+
+**Decisão anterior — 2026-10-20 (avaliação bounded I04, SUPERSEDED como cerca vigente pelo diagnóstico):** no runtime atual, TÉO, VISTA e DAVI foram observados em quatro perguntas somente leitura. K3 e K4 cumprem o critério funcional. K1 e K2 ficam parciais. O sibling renomeado não tem mecanismo autorizado fora de produção e permanece `TEST_NOT_RUN`. O parecer continua `INCONCLUSIVE`. Este registro não altera `I04_ACCEPTED`. Documento 69. Ledger §6.344.
 
 ```text
 I04_EXECUTOR_VERDICT=INCONCLUSIVE
