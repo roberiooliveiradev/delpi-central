@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Execução documental posterior à fila (2026-10-20):** A frente cadastral de fornecedores produziu implementação real e homologação parcial no REST de teste. [Evidência F4/F4.2 REST↔SQL e handoff Gabriel](./evidence/suppliers-f4-post-put-sql-persistence-gabriel-handoff-2026-10-20.md): SQL identificou POST de teste `003878/01` em `DELPI_TST01`, confirmado por GET REST; listagem do Portal lê `DELPI`. **Persistência produtiva permanece BLOCKED**, gates CREATE/UPDATE OFF segundo última verificação reportada, endpoint REST produtivo por confirmar com owner TOTVS. Este registro não fecha E10 nem promove automaticamente E13/E14 no plano canônico.
