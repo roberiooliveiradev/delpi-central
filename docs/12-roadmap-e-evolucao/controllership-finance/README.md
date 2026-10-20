@@ -125,3 +125,10 @@ PO aprovou dataset financeiro compartilhado read-only para baixas a pagar/recebe
 ### D4 R01/R02 — auditoria de movimentos (20/10/2026)
 
 Auditoria read-only publicada em [doc 48 §16](./48-r01-r02-financial-settlements-api-contract-target.md) e [doc 47 complemento L1.7](./47-t01-report-column-audit-tracker-v1.md): catálogo FKB, comportamento observado de BA/VL/ES/CP, direções P/R, pareamento de estornos e reconciliação SQL × API. **NET_FORMULA=DECISION_REQUIRED**: F1/F2/F3 são hipóteses de apuração para homologação pela Controladoria, não totais oficiais. `officialTotals:false`; sem alteração de runtime ou liberação adicional. Próxima etapa: homologação do owner financeiro e eventual confronto com FINR190 de competência encerrada.
+
+
+### T01 — Encerramento operacional R01/R02 e sequência R03 (decisão PO, 20/10/2026)
+
+**R01/R02:** fonte, tabelas/colunas/joins, contratos api-delpi/BFF e tela de baixas implementados; docs 46–48. A consulta real e sua reconciliação com a fonte SQL foram reportadas e os componentes constam no GitHub. **Não existe neste pacote evidência de export FINR190/`_F190C` recebida e comparada; `REPORT_EXPORT_EVIDENCE=NOT_PROVIDED` e `EXPORT_PARITY=TEST_NOT_RUN`.** A paridade oficial será retomada com o arquivo original no fechamento completo. D4 total líquido/estornos permanece pendente do owner; `officialTotals=false`.
+
+**Próximo relatório do catálogo:** **R03 — P7 padrão / layout Bloco H (MATR460)**; R04 é **MATR860** consumo por OP, relatório distinto. Começar por TÉO AS-IS, documentação de evidência/export, DAVI SQL read-only e inventário físico; não inventar correspondência nem permitir deploy por analogia. [Inventário de relatórios doc 46 §9](./46-t01-report-source-inventory-v1.md) · [Registro de decisão e pendência export doc 48 §17](./48-r01-r02-financial-settlements-api-contract-target.md).
