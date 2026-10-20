@@ -51,7 +51,6 @@ class CreateProtheusRestSupplierUseCase:
         fornecedor: Mapping[str, Any],
     ) -> dict[str, Any]:
         normalized = normalize_supplier_fields(fornecedor)
-        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
 
         if not settings.PROTHEUS_SUPPLIER_CREATE_ENABLED:
             log_info(
@@ -67,6 +66,7 @@ class CreateProtheusRestSupplierUseCase:
                 recoverable=False,
             )
 
+        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
         body = build_upstream_create_body(codusr=codusr, fornecedor=normalized)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)

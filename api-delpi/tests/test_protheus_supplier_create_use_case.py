@@ -47,19 +47,42 @@ def _mapped(verified: bool = True, status: str = "mapped", usr: str = "000161") 
     }
 
 
-def test_feature_gate_blocks_upstream_write(monkeypatch) -> None:
+def test_feature_gate_blocks_before_core_and_upstream(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", False)
     identity = MagicMock()
-    identity.get_identity_for_user.return_value = _mapped()
+    identity.get_identity_for_user.side_effect = AssertionError("core must not be called")
     gateway = MagicMock()
-    uc = _uc(identity_gateway=identity, gateway=gateway)
+    params = MagicMock()
+    token = MagicMock()
+    uc = _uc(
+        identity_gateway=identity,
+        gateway=gateway,
+        params_repository=params,
+        token_service=token,
+    )
 
     with pytest.raises(ProtheusRestError) as exc:
         uc.execute(actor_user_id=ACTOR, fornecedor={"supplier_store": "01"})
     assert exc.value.code == "PROTHEUS_SUPPLIER_CREATE_DISABLED"
+    identity.get_identity_for_user.assert_not_called()
+    params.load_raw_params.assert_not_called()
+    token.get_valid_token.assert_not_called()
     gateway.create_supplier.assert_not_called()
+
+
+def test_invalid_payload_precedes_feature_gate(monkeypatch) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", False)
+    identity = MagicMock()
+    with pytest.raises(ProtheusRestError) as exc:
+        _uc(identity_gateway=identity).execute(
+            actor_user_id=ACTOR, fornecedor={"supplier_name": "SEM LOJA"}
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+    identity.get_identity_for_user.assert_not_called()
 
 
 def test_mapped_verified_calls_gateway_when_enabled(monkeypatch) -> None:
@@ -145,7 +168,7 @@ def test_invalid_usr_id_format_blocked(monkeypatch) -> None:
     assert exc.value.code == "PROTHEUS_IDENTITY_INVALID"
 
 
-def test_core_unavailable_propagates(monkeypatch) -> None:
+def test_core_unavailable_propagates_only_when_gate_open(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", False)
@@ -155,11 +178,19 @@ def test_core_unavailable_propagates(monkeypatch) -> None:
         code="PROTHEUS_IDENTITY_CORE_UNAVAILABLE",
         status_code=503,
     )
-    with pytest.raises(ProtheusRestError) as exc:
+    with pytest.raises(ProtheusRestError) as closed:
         _uc(identity_gateway=identity).execute(
             actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
         )
-    assert exc.value.code == "PROTHEUS_IDENTITY_CORE_UNAVAILABLE"
+    assert closed.value.code == "PROTHEUS_SUPPLIER_CREATE_DISABLED"
+    identity.get_identity_for_user.assert_not_called()
+
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    with pytest.raises(ProtheusRestError) as opened:
+        _uc(identity_gateway=identity).execute(
+            actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
+        )
+    assert opened.value.code == "PROTHEUS_IDENTITY_CORE_UNAVAILABLE"
 
 
 def test_token_invalid_does_not_retry_write(monkeypatch) -> None:

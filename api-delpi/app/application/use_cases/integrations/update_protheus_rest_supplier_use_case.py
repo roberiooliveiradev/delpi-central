@@ -54,7 +54,6 @@ class UpdateProtheusRestSupplierUseCase:
     ) -> dict[str, Any]:
         normalized_id = validate_supplier_id(supplier_id)
         fields = normalize_supplier_update_fields(fornecedor)
-        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
 
         if not settings.PROTHEUS_SUPPLIER_UPDATE_ENABLED:
             log_info(
@@ -70,6 +69,7 @@ class UpdateProtheusRestSupplierUseCase:
                 recoverable=False,
             )
 
+        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
         body = build_upstream_update_body(codusr=codusr, fields=fields)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)

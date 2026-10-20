@@ -61,3 +61,19 @@
 | Permissão | `api-delpi.integrations.protheus.suppliers.update` (manifest 1.0.3) |
 | POST live | inalterado — homologação continua BLOCKED |
 | PUT live | TEST_NOT_RUN / NOT_AUTHORIZED |
+
+## Hardening — ordem do feature gate (2026-10-20)
+
+`EXISTING_EQUIVALENT=YES` · `REUSE_DECISION=EXTEND`
+
+A resolução de identidade no Core passou a ocorrer **somente** com o gate da operação aberto. Payload inválido continua precedendo o gate. Gate fechado não chama Core, parâmetros Intranet, OAuth nem Protheus. POST e PUT seguem independentes e default `false`. Escrita sem retry automático.
+
+A sonda anterior «sem vínculo → HTTP 422 com gate fechado» fica `STALE_EVIDENCE` para o código desta entrega: com gate fechado a resposta passa a ser o erro do gate, sem consultar o Core. Equivalência `codusr` ≡ `SYS_USR.USR_ID` permanece `TO_INVENTORY`.
+
+| Item | Resultado |
+|------|-----------|
+| POST gate antes do Core | PASS (teste) |
+| PUT gate antes do Core | PASS (teste) |
+| Suíte local | PASS — 63 testes (`pytest` create/update use case, rotas, gateway, payload, Core S2S, GET) |
+| Live POST/PUT | não executado |
+| Deploy desta revisão | PENDING — sem janela, responsável e rollback confirmados nesta execução |

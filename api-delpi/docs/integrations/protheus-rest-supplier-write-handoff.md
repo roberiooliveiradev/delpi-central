@@ -1,7 +1,7 @@
 # Handoff — evolução da integração REST de fornecedores Protheus (POST/PUT)
 
 **Registro:** 2026-10-19  
-**Atualização:** implementação backend do POST (feature-gated); PUT permanece fora de escopo.  
+**Atualização:** hardening 2026-10-20 — feature gate de POST e PUT é avaliado antes da identidade Core. Live write continua bloqueado.  
 **Base:** reancorar sempre em `origin/main`.
 
 > Documento de continuidade. Não autoriza live write em produção. Lacunas de contrato permanecem `TO_INVENTORY`.
@@ -25,7 +25,7 @@ Permitir **criação (POST)** de fornecedores via REST Protheus com `api-delpi` 
 | `POST /integrations/protheus/suppliers` | PROVEN no código (gate default off) |
 | `operationId` `create_protheus_rest_supplier` | PROVEN |
 | Permissão `api-delpi.integrations.protheus.suppliers.create` | PROVEN (manifest 1.0.2) |
-| Feature gate `PROTHEUS_SUPPLIER_CREATE_ENABLED` | PROVEN default `false` |
+| Feature gate `PROTHEUS_SUPPLIER_CREATE_ENABLED` | PROVEN default `false`; avaliado antes do Core |
 | Matriz REST→SA2 | PROVEN doc `protheus-rest-supplier-post-field-matrix.md` |
 | Payload sucesso / `A2_COD` / idempotência / `codusr≡USR_ID` | TO_INVENTORY |
 | PUT `update_protheus_rest_supplier` | PROVEN no código; gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED` default `false`; allowlist `supplier_name` + `supplier_short_name` |

@@ -45,21 +45,45 @@ def _mapped(usr: str = "000161", verified: bool = True, status: str = "mapped") 
     }
 
 
-def test_gate_off_does_not_call_upstream(monkeypatch) -> None:
+def test_gate_off_does_not_call_core_or_upstream(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", False)
     identity = MagicMock()
-    identity.get_identity_for_user.return_value = _mapped()
     gateway = MagicMock()
+    params = MagicMock()
+    token = MagicMock()
     with pytest.raises(ProtheusRestError) as exc:
-        _uc(identity_gateway=identity, gateway=gateway).execute(
+        _uc(
+            identity_gateway=identity,
+            gateway=gateway,
+            params_repository=params,
+            token_service=token,
+        ).execute(
             actor_user_id=ACTOR,
             supplier_id="00000101",
             fornecedor={"supplier_name": "NOME"},
         )
     assert exc.value.code == "PROTHEUS_SUPPLIER_UPDATE_DISABLED"
+    identity.get_identity_for_user.assert_not_called()
+    params.load_raw_params.assert_not_called()
+    token.get_valid_token.assert_not_called()
     gateway.update_supplier.assert_not_called()
+
+
+def test_invalid_id_precedes_feature_gate(monkeypatch) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", False)
+    identity = MagicMock()
+    with pytest.raises(ProtheusRestError) as exc:
+        _uc(identity_gateway=identity).execute(
+            actor_user_id=ACTOR,
+            supplier_id="1",
+            fornecedor={"supplier_name": "NOME"},
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_ID_INVALID"
+    identity.get_identity_for_user.assert_not_called()
 
 
 def test_enabled_sends_array_body(monkeypatch) -> None:

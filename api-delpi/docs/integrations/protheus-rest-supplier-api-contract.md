@@ -43,8 +43,9 @@ Para recursos por ID, a fonte define `:ID = A2_COD (6 dígitos) + A2_LOJA (2 dí
 
 **API DELPI:** `POST /integrations/protheus/suppliers` · `operationId=create_protheus_rest_supplier`  
 **Permissão:** `api-delpi.integrations.protheus.suppliers.create` (não herdada de read nem de `api-delpi.data`)  
-**Feature gate:** `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` (default) — com gate fechado **não** há POST upstream.  
-**Identidade:** `codusr` resolvido via Core S2S (`mapped` + `verified` + `protheus_user_id` 6 dígitos); cliente **não** envia `codusr`.  
+**Feature gate:** `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` (default) — com gate fechado **não** há consulta ao Core, parâmetros, OAuth nem POST upstream.  
+**Precedência:** payload estrutural → autenticação/permissão → feature gate → identidade Core → configuração/token → escrita. Gate fechado precede erro de identidade.  
+**Identidade:** `codusr` resolvido via Core S2S (`mapped` + `verified` + `protheus_user_id` 6 dígitos) somente com o gate aberto; cliente **não** envia `codusr`.  
 **Matriz de campos:** `protheus-rest-supplier-post-field-matrix.md`.
 
 Upstream Protheus:
@@ -99,8 +100,9 @@ A fonte não descreve status/payload de **sucesso** POST, idempotência, regras 
 
 **API DELPI:** `PUT /integrations/protheus/suppliers/{supplier_id}` · `operationId=update_protheus_rest_supplier`  
 **Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create nem de `api-delpi.data`)  
-**Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST)  
-**Request público:** objeto `fornecedor` com campos comprovados (`supplier_name`, `supplier_short_name`). O backend monta o array upstream e resolve `codusr` no Core.  
+**Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST). Gate fechado não consulta Core, parâmetros, OAuth nem executa PUT.  
+**Precedência:** id e payload → autenticação/permissão → feature gate → identidade Core → configuração/token → escrita.  
+**Request público:** objeto `fornecedor` com campos comprovados (`supplier_name`, `supplier_short_name`). O backend monta o array upstream e resolve `codusr` no Core somente com o gate aberto.  
 **Allowlist inicial:** somente os dois campos do exemplo contratual. Demais campos do POST permanecem não editáveis até prova upstream.  
 **Resposta 2xx:** `update_acknowledged=true` e `persistence_proven=false` — HTTP de sucesso não comprova persistência.  
 **Live write:** não autorizado nesta entrega.
