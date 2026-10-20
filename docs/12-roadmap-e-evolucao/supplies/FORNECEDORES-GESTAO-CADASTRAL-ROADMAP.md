@@ -23,6 +23,7 @@ A rota `/apps/supplies/suppliers` já consta do manifesto `plugins/supplies/supp
 | Edição de todos os campos | TARGET, **não suportada pelo PUT atual** | Evidência de editabilidade upstream e validações por campo/empresa |
 | Busca/preenchimento por CNPJ via internet | FUTURE/TARGET, sem provider aprovado | Contrato de consulta externa, LGPD, rate limit, dados/proveniência |
 | Deploy recente informado pelo usuário | REPORTED, não verificado por esta documentação | Revalidar SHA e flags do runtime antes de testes reais |
+| Autenticação S2S individual `supplies-api → api-delpi` | PROVEN em código/testes (ADR-010); depende de cliente confidencial `supplies-api` no Keycloak | Provisionamento autorizado de infra + smoke live antes de conectar rotas promovidas |
 
 ## 3. Jornada funcional e páginas
 
@@ -101,6 +102,8 @@ O dado externo é **sugestão**, não autoridade. Não usar scraping, provider, 
 - [Roadmap principal de Suprimentos](./README.md)
 - [Fila executável vigente](./IMPLEMENTATION-PLAN.md)
 - [Diretório de fornecedor e pessoa](./DIRECTORY-OBJECTS.md)
+- [ADR-010 — Autenticação S2S individual](./adr/ADR-010-s2s-individual-authentication.md)
+- [Padrão S2S individual (shared)](../../11-padroes-de-desenvolvimento/padrao-autenticacao-s2s-individual.md)
 - [Plano de interface transversal](../../../api-delpi/docs/integrations/protheus-supplier-management-ui-plan.md)
 - [Contrato REST fornecedores](../../../api-delpi/docs/integrations/protheus-rest-supplier-api-contract.md)
 - [Matriz REST→SA2](../../../api-delpi/docs/integrations/protheus-rest-supplier-post-field-matrix.md)
