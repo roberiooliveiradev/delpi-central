@@ -45,6 +45,24 @@ class DelpiApiGateway:
     ) -> Any:
         return self._request("GET", path, access_token=access_token, params=params)
 
+    def post(
+        self,
+        path: str,
+        *,
+        access_token: str,
+        json_body: dict[str, Any],
+    ) -> Any:
+        return self._request("POST", path, access_token=access_token, json_body=json_body)
+
+    def put(
+        self,
+        path: str,
+        *,
+        access_token: str,
+        json_body: dict[str, Any],
+    ) -> Any:
+        return self._request("PUT", path, access_token=access_token, json_body=json_body)
+
     def _build_headers(self, access_token: str) -> dict[str, str]:
         headers = {
             "Accept": "application/json",

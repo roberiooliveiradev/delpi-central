@@ -12,6 +12,7 @@ from app.interfaces.http.routes.inventory_routes import inventory_bp
 from app.interfaces.http.routes.me_routes import me_bp
 from app.interfaces.http.routes.purchase_orders_routes import purchase_orders_bp
 from app.interfaces.http.routes.purchase_requests_routes import purchase_requests_bp
+from app.interfaces.http.routes.suppliers_routes import suppliers_bp
 from app.interfaces.http.routes.users_routes import users_bp
 
 
@@ -31,6 +32,7 @@ def create_application() -> Flask:
     app.register_blueprint(purchase_orders_bp)
     app.register_blueprint(deliveries_bp)
     app.register_blueprint(inventory_bp)
+    app.register_blueprint(suppliers_bp)
     app.register_blueprint(users_bp)
 
     return app
