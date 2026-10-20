@@ -51,6 +51,12 @@ Seguir [instruções oficiais do GPT Arquiteto](../../11-padroes-de-desenvolvime
 
 **Próximo passo:** revalidar no HEAD os contratos e testes do [doc 45 §14](./45-g0-excecao-fastapi-e-fechamento-gates.md), fechar o gate específico e solicitar GO de execução MFE + Home; não antecipar frontend, rota protegida ou deploy antes do gate.
 
+### GO posterior — IMP-MFE-HOME (2026-10-20)
+
+Após o G1 de verificação técnica (HEAD de evidência `6cfb4ea7c3`) e resposta expressa **"autorizo"** à solicitação de GO específico, **`IMPLEMENTATION_AUTHORIZED = YES / IMP-MFE-HOME_ONLY`**, conforme [doc 45 §14.1](./45-g0-excecao-fastapi-e-fechamento-gates.md).
+
+**Escopo exclusivamente autorizado:** MFE/bootstrap/shell/Home real, `GET /viewer-context` protegido na BFF, Compose dev da BFF/MFE e Compose prod do MFE, testes e Help contextual. Decisões D1=A, D2=A e D3=A mantidas. **Não autoriza deploy em produção, registro de manifesto produtivo, páginas futuras, P1–P6 ou novas permissões.** Runtime e testes deste slice permanecem `NOT_IMPLEMENTED / TEST_NOT_RUN` até relatório de execução verificável; revalidar HEAD e worktree na execução.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
