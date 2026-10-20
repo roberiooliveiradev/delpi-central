@@ -23,8 +23,8 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 
 | ID | Relatório/atividade | Rotina candidata | Família | TÉO ref | G1 | G2 | G3 | G4 | G5 | G6 | Owner do próximo passo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| R01 | Baixas a pagar | FINR190 | Financeiro | `kp02_t01/kp02_st01` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R02 | Baixas a receber | FINR190 | Financeiro | `kp02_t01/kp02_st02` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R01 | Baixas a pagar | `_F190C` (NotebookLM derivado); `FINR190` (TÉO/doc) | Financeiro | `kp02_t01/kp02_st01` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R02 | Baixas a receber | `_F190C` (NotebookLM derivado); `FINR190` (TÉO/doc) | Financeiro | `kp02_t01/kp02_st02` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R03 | P7 padrão / Bloco H | MATR460 | Estoque | `kp04_t01_st01/st02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R04 | Consumo por OP | MATR860 | Produção | `kp04_t02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R05 | Entradas e Saídas / valor estoque | a confirmar | Estoque | `kp04_t03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
@@ -126,3 +126,30 @@ SCOPE_CHANGE / SUPERSEDES:
 - `COLETA = 2/60 = 3,3%`; `AUDITORIA = 2/90 = 2,2%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
 - DAVI `search_protheus_columns_by_description`: **uma operação tipada executada** (274 resultados totais, somente 20 observados). VISTA: **uma descoberta de rotas**, nenhuma execução. SQL e paridade: **TEST_NOT_RUN**.
 - Próximo lote: buscar metadados de FK2/FK1 e as exportações originais, sem afirmar FINR190=FK2/FK1; vídeo `STALE_EVIDENCE` até reconciliação.
+
+## 7. Rodada L1.2 — Evidência audiovisual indireta sobre `_F190C` (20/10/2026)
+
+**Fonte desta rodada:** resposta do NotebookLM encaminhada pelo usuário, baseada em vídeo/transcrição PROC-0072. O vídeo binário e o timestamp **não foram verificados diretamente pelo GPT**; a divergência preexistente de duration/timecode no doc 03 continua `STALE_EVIDENCE / TO_RECONCILE`. Diferenciar `NOTEBOOKLM_REPORTED` de `DIRECT_VIDEO_PROVEN` e de `TÉO_AS_IS_DOCUMENTED`.
+
+### Achados reportados pelo NotebookLM — sem promover a prova direta
+
+- A Joici teria usado `Shift+F6` para chamar a **rotina customizada `_F190C`**, e não a rotina padrão `FINR190`, por volta de `00:43:51–00:46:14`; a execução teria sido abortada por erro **"não tá compilado"**, com print para TI. **Nenhum download/arquivo de baixas foi visto na gravação**. A referência TÉO `kp02_t01` continua a mencionar FINR190, gerando **`ROUTINE_IDENTITY_DRIFT / TO_RECONCILE`**: investigar versionamento/customização, não corrigir retroativamente a fonte TÉO sem autoridade.
+- Segundo fala **informada verbalmente** por Joici, uma execução normal produz **cinco arquivos**: Pagar Excel; Receber Excel; Receber PDF por data; Pagar PDF por data; Pagar PDF por natureza. São **cinco saídas de uma tentativa de execução da mesma rotina customizada**, não cinco rotinas demonstradas. Não houve arquivo gerado na gravação.
+- Os arquivos teriam informação financeira por fornecedor/cliente e CNPJ, para importação na Contabilidade Aliança; **nomes, campos, formatos efetivos e totais não foram observados**. Datas, empresas/filiais, natureza e opção "Da Carteira?" **não ficaram visíveis na tela de parâmetros**.
+- **Títulos em aberto** (reportadamente exportados em outra atividade `ACT-15`) são **outra fonte e outra operação**, não baixas liquidadas. Demandam item próprio quando conferidos com fonte AS-IS e artefato; não misturar nos R01/R02.
+
+### Impacto no tracker
+
+- **R01:** `G1=PASS` para a *etapa/finalidade documentada no TÉO*, com complemento `NOTEBOOKLM_REPORTED` da tentativa fracassada; `G2=PENDING` (arquivos descritos, não vistos); `G3=PENDING` (ERP/customização/owner exato); `G4=PENDING`; `G5=TEST_NOT_RUN`; `G6=PENDING`.
+- **R02:** mesmos gates. TÉO e doc 03 descrevem saída; NotebookLM **não observou geração física**. Não rebaixar existência documental a ausência de processo.
+- **Candidatos `FK2010.FK2_DATA` e `FK1010.FK1_DATA` permanecem PROVEN somente no dicionário DAVI**, **NÃO** vinculados à rotina `_F190C`. Sem fonte/ADVPL da customização e amostra real, `G4` não avança.
+- Métricas conservadas: **2/60 = 3,3% coleta; 2/90 = 2,2% auditoria; 0/15 concluídos**. Houve evidência de contexto, mas **nenhum gate novo homologado** nesta rodada.
+
+### Pendências delimitadas / anti-loop
+
+1. **TI/Protheus owner:** localizar fonte/cadastro e status de compilação da customização `_F190C`, se ela delega à `FINR190` e quais tabelas, colunas, filtros e layouts efetivamente lê (sem assumir FK1/FK2).
+2. **Controladoria:** amostra sanitizada dos **cinco arquivos** exportados em **uma competência conhecida**; conferir cabeçalhos e totais, identificando Excel/PDF por data/natureza.
+3. **TÉO/video:** confirmar visualmente `Shift+F6`, `_F190C`, erro, timestamp e contexto; reconciliar o timecode anômalo documentado.
+4. **Títulos em aberto:** identificar rotina, layout e ACT-15 em evidência original antes de criar item filho/alterar denominador.
+
+**STOP:** não preparar endpoint de baixas ou SQL de equivalência enquanto o owner não comprovar a semântica de `_F190C`. Novo desvio em relação ao relatório TÉO só autoriza `EXECUTION_DRIFT` quando confirmado pela fonte primária competente. `IMPLEMENTATION_AUTHORIZED=NO` para esses relatórios.
