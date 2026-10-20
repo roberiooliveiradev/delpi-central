@@ -35,7 +35,8 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
             page=page,
             page_size=page_size,
         )
-        return self.execute_query(query, params)
+        with self:
+            return self.execute_query(query, params)
 
     def count_settlements(
         self,
@@ -53,7 +54,8 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
             nature_code=nature_code,
             movement_type=movement_type,
         )
-        row = self.execute_one(query, params)
+        with self:
+            row = self.execute_one(query, params)
         if not row:
             return 0
         return int(row.get("total_items") or 0)
@@ -74,12 +76,13 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
             nature_code=nature_code,
             movement_type=movement_type,
         )
-        return self.execute_one(query, params) or {
-            "total_events": 0,
-            "missing_document": 0,
-            "missing_nature": 0,
-            "unresolved_branch": 0,
-        }
+        with self:
+            return self.execute_one(query, params) or {
+                "total_events": 0,
+                "missing_document": 0,
+                "missing_nature": 0,
+                "unresolved_branch": 0,
+            }
 
     def summary_groups(
         self,
@@ -95,7 +98,8 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
             nature_code=nature_code,
             movement_type=movement_type,
         )
-        return self.execute_query(query, params)
+        with self:
+            return self.execute_query(query, params)
 
     def nature_descriptions(
         self, *, nature_codes: tuple[str, ...]
@@ -105,7 +109,8 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
         query, params = settlements_sql.build_nature_descriptions_query(
             nature_codes=nature_codes
         )
-        rows = self.execute_query(query, params)
+        with self:
+            rows = self.execute_query(query, params)
         return {
             row["nature_code"]: row.get("nature_description") or ""
             for row in rows
