@@ -20,6 +20,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 
 | Arquivo | Conteúdo |
 |---|---|
+| [supplies/FORNECEDORES-GESTAO-CADASTRAL-ROADMAP.md](./supplies/FORNECEDORES-GESTAO-CADASTRAL-ROADMAP.md) | E13/WF-09 e E14/WF-10: gestão cadastral, matriz de componentes `@delpi/plugin-ui`, contratos e evolução CNPJ (TARGET) |
 | [supplies/README.md](./supplies/README.md) | Documentação mestra — status E1–E8, fila, gates, boundaries |
 | [supplies/ROADMAP-TRANSFORMA-PLUS.md](./supplies/ROADMAP-TRANSFORMA-PLUS.md) | **Transforma+** — visão de negócio, backlog SUP-*, ondas (não autoriza implementação) |
 | [supplies/IMPLEMENTATION-PLAN.md](./supplies/IMPLEMENTATION-PLAN.md) | Plano executável página-a-página |
