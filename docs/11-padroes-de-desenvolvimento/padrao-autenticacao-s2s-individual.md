@@ -183,29 +183,29 @@ ausência de `X-Delpi-Service-Token` na chamada migrada.
 
 ## Evidência de produção (P1.SEC.5)
 
-Executado em  (Keycloak 24, realm ):
+Executado em `srv-api` (Keycloak 24, realm `delpi`):
 
-- Cliente confidencial  provisionado (service account;
+- Cliente confidencial `supplies-api` provisionado (service account;
   standard flow e direct access grants desabilitados); cliente
-   criado como audience holder; mapper de audience
-   inclui  no access token.
-- Emissão real:  retorna JWT com ,
-   contendo ,  igual ao  do ambiente.
-- Validação real dentro do container : token aceito com
+  `api-delpi` criado como audience holder; mapper de audience
+  `oidc-audience-mapper` inclui `api-delpi` no access token.
+- Emissão real: `client_credentials` retorna JWT com `azp=supplies-api`,
+  `aud` contendo `api-delpi`, `iss` igual ao `KEYCLOAK_ISSUER` do ambiente.
+- Validação real dentro do container `delpi-api-delpi`: token aceito com
   cliente/audience corretos via JWKS do realm.
-- Negativos reais: token  negado (),
+- Negativos reais: token `delpi-core-admin` negado (`S2S_TOKEN_INVALID`),
   segredo legado como Bearer negado, header opaco sem scheme negado,
-  assinatura adulterada negada, scope exigido ausente → ,
-  allowlist por rota excluindo  → .
-- Gateway real dentro de :  emite
-   com JWT válido, preserva o Bearer do
-  usuário e nunca inclui  nem o segredo legado.
-- Injeção por cliente:  sem JWT → 401; headers
+  assinatura adulterada negada, scope exigido ausente → `S2S_SCOPE_DENIED`,
+  allowlist por rota excluindo `supplies-api` → `S2S_CLIENT_DENIED`.
+- Gateway real dentro de `delpi-supplies-api`: `_build_headers` emite
+  `X-Delpi-Service-Authorization` com JWT válido, preserva o Bearer do
+  usuário e nunca inclui `X-Delpi-Service-Token` nem o segredo legado.
+- Injeção por cliente: `/purchase-requests` sem JWT → 401; headers
   S2S/actor forjados → 401.
-- Coexistência: , ,  e
-  consumidores legados saudáveis após o deploy;  →
-  / health 200.
-- SHAs integrados na : , , ,
-  , .
+- Coexistência: `delpi-core-api`, `delpi-gateway`, `delpi-portal` e
+  consumidores legados saudáveis após o deploy; `supplies-api` →
+  `core-api`/`api-delpi` health 200.
+- SHAs integrados na `main`: `0d4c7375e2`, `96b0424ee1`, `633390da36`,
+  `c22d30eefa`, `0b349670c0`.
 - Sem rota de negócio migrada nesta etapa: o wiring produtivo de rotas é
-   por desenho (decorators aditivos, nenhum consumer ativo).
+  `INCONCLUSIVE` por desenho (decorators aditivos, nenhum consumer ativo).
