@@ -52,6 +52,9 @@ class _FakeRepository:
     def nature_descriptions(self, *, nature_codes):
         return {code: f"Nature {code}" for code in nature_codes}
 
+    def movement_descriptions(self, *, movement_types):
+        return {code: f"Movement {code}" for code in movement_types}
+
 
 def _request(**overrides):
     return SettlementsQueryRequest.from_query(
@@ -126,6 +129,8 @@ def test_list_normalizes_item_and_flags_branch_unresolved() -> None:
     assert item["branchCode"] is None  # empty *_FILIAL → null, never "01"
     assert item["branchResolution"] == "unresolved"
     assert item["linkStatus"] == "resolved"
+    assert item["movementType"] == "BA"
+    assert item["movementDescription"] == "Movement BA"
     assert repo.list_calls[0]["side"] == "payable"
     assert repo.list_calls[0]["start_date"] == "20260101"
 
@@ -191,6 +196,7 @@ def test_summary_groups_preserve_currencies_and_no_official_total() -> None:
     assert brl["totalAmount"] == "1000.00"  # quantized decimal string
     assert usd["totalAmount"] == "10.00"  # never merged with BRL
     assert brl["natureDescription"] == "Nature 100"
+    assert brl["movementDescription"] == "Movement BA"
 
 
 def test_summary_also_fail_closed_without_scope() -> None:

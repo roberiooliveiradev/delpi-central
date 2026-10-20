@@ -21,6 +21,7 @@ export type SettlementItem = {
   dueDate: string | null;
   history: string | null;
   movementType: string | null;
+  movementDescription: string | null;
   paymentDirection: string | null;
   branchCode: string | null;
   branchResolution: string;
@@ -60,6 +61,7 @@ export type SettlementSummaryGroup = {
   natureCode: string | null;
   natureDescription: string | null;
   movementType: string | null;
+  movementDescription: string | null;
   eventCount: number;
   totalAmount: string;
 };

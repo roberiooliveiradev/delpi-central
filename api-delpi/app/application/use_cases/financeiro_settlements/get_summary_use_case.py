@@ -83,6 +83,22 @@ class GetSettlementsSummaryUseCase:
             if nature_codes
             else {}
         )
+        movement_types = tuple(
+            sorted(
+                {
+                    str(row["movement_type"]).strip()
+                    for row in rows
+                    if row.get("movement_type")
+                }
+            )
+        )
+        movement_lookup = (
+            self._repository.movement_descriptions(
+                movement_types=movement_types
+            )
+            if movement_types
+            else {}
+        )
         groups = [
             SettlementSummaryGroup(
                 side=str(row["side"]),
@@ -93,6 +109,10 @@ class GetSettlementsSummaryUseCase:
                 )
                 or None,
                 movementType=_opt(row.get("movement_type")),
+                movementDescription=movement_lookup.get(
+                    str(row.get("movement_type") or "").strip()
+                )
+                or None,
                 eventCount=as_int(row.get("event_count")),
                 totalAmount=_decimal_str(row.get("total_amount")),
             )

@@ -347,3 +347,21 @@ WHERE D_E_L_E_T_ = ''
 ORDER BY ED_FILIAL DESC
 """.strip()
     return query, tuple(nature_codes)
+
+
+def build_movement_descriptions_query(
+    *, movement_types: tuple[str, ...]
+) -> tuple[str, tuple]:
+    """FKB010 is the canonical catalog for FKx_TPDOC codes (X3_VALID
+    ``ExistCpo("FKB")``). Same per-branch duplication as SED: DESC order
+    keeps the global (FKB_FILIAL='') description as dict last-wins."""
+    placeholders = ", ".join("?" for _ in movement_types)
+    query = f"""
+SELECT LTRIM(RTRIM(FKB_TPDOC)) AS movement_type,
+    LTRIM(RTRIM(FKB_DESCR)) AS movement_description
+FROM FKB010 WITH (NOLOCK)
+WHERE D_E_L_E_T_ = ''
+    AND FKB_TPDOC IN ({placeholders})
+ORDER BY FKB_FILIAL DESC
+""".strip()
+    return query, tuple(movement_types)

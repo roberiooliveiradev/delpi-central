@@ -72,6 +72,17 @@ class GetSettlementsUseCase:
         )
 
         items = [normalize_settlement_item(row) for row in rows]
+        movement_types = tuple(
+            sorted({item.movementType for item in items if item.movementType})
+        )
+        movement_lookup = self._repository.movement_descriptions(
+            movement_types=movement_types
+        )
+        for item in items:
+            if item.movementType:
+                item.movementDescription = (
+                    movement_lookup.get(item.movementType) or None
+                )
         missing_doc = as_int(counters.get("missing_document"))
         missing_nature = as_int(counters.get("missing_nature"))
         unresolved_branch = as_int(counters.get("unresolved_branch"))

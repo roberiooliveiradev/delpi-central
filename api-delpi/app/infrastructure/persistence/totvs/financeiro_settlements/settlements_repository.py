@@ -115,3 +115,18 @@ class SettlementsRepository(BaseRepository, SettlementsRepositoryPort):
             row["nature_code"]: row.get("nature_description") or ""
             for row in rows
         }
+
+    def movement_descriptions(
+        self, *, movement_types: tuple[str, ...]
+    ) -> dict[str, str]:
+        if not movement_types:
+            return {}
+        query, params = settlements_sql.build_movement_descriptions_query(
+            movement_types=movement_types
+        )
+        with self:
+            rows = self.execute_query(query, params)
+        return {
+            row["movement_type"]: row.get("movement_description") or ""
+            for row in rows
+        }

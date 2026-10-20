@@ -72,10 +72,9 @@ function formatDate(iso: string | null): string {
   return DATE_FMT.format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-function formatAmount(raw: string, currencyCode: string | null): string {
+function formatAmount(raw: string): string {
   const value = Number(raw);
-  const rendered = Number.isFinite(value) ? AMOUNT_FMT.format(value) : raw;
-  return currencyCode ? `${currencyCode} ${rendered}` : rendered;
+  return Number.isFinite(value) ? AMOUNT_FMT.format(value) : raw;
 }
 
 function isoToday(): string {
@@ -265,7 +264,10 @@ export function FinancialSettlementsPage() {
       {
         key: "movementType",
         header: "Tipo mov.",
-        render: (row) => row.movementType ?? "—",
+        render: (row) =>
+          row.movementType
+            ? `${row.movementType}${row.movementDescription ? ` — ${row.movementDescription}` : ""}`
+            : "—",
       },
       {
         key: "paymentDirection",
@@ -281,7 +283,7 @@ export function FinancialSettlementsPage() {
         key: "settlementAmount",
         header: "Valor",
         align: "right",
-        render: (row) => formatAmount(row.settlementAmount, row.currencyCode),
+        render: (row) => formatAmount(row.settlementAmount),
       },
       {
         key: "dueDate",
@@ -463,7 +465,7 @@ export function FinancialSettlementsPage() {
                   <span className="cf-settlements-summary-label">
                     Total {code}
                   </span>
-                  <strong>{formatAmount(String(total), code === "—" ? null : code)}</strong>
+                  <strong>{formatAmount(String(total))}</strong>
                 </li>
               ))}
               <li>

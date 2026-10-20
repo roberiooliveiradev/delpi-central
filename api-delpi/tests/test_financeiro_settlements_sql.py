@@ -138,3 +138,18 @@ def test_no_write_or_legacy_token_shapes() -> None:
         )
         for forbidden in ("INSERT", "UPDATE ", "DELETE ", "MERGE", "EXEC "):
             assert forbidden not in query.upper()
+
+
+def test_movement_descriptions_query_targets_fkb_catalog() -> None:
+    query, params = settlements_sql.build_movement_descriptions_query(
+        movement_types=("BA", "ES")
+    )
+    assert query.startswith("SELECT")
+    assert "FROM FKB010" in query
+    assert "FKB_TPDOC" in query
+    assert "FKB_DESCR" in query
+    assert "IN (?, ?)" in query
+    assert "ORDER BY FKB_FILIAL DESC" in query
+    assert params == ("BA", "ES")
+    for forbidden in ("INSERT", "UPDATE ", "DELETE ", "MERGE"):
+        assert forbidden not in query.upper()

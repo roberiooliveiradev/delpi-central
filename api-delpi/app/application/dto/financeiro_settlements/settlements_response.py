@@ -6,7 +6,9 @@ Contract decisions (doc 48 §9-§11):
 - ``branchCode`` stays ``None`` when no trustworthy branch exists — never a
   fabricated ``"01"``/``"02"``/``"all"`` (D3.1);
 - ``movementType``/``paymentDirection`` are raw source codes (BA/ES/VL/CP,
-  R/P) without assigned semantics (D4 pending);
+  R/P); ``movementDescription`` is the canonical FKB010 catalog label for
+  the raw code — it documents the code, it does not classify the movement
+  into totals (D4 aggregation rules stay with finance);
 - ``linkStatus`` makes missing document/nature explicit instead of silently
   dropping rows.
 """
@@ -45,6 +47,7 @@ class SettlementItem:
     branchCode: str | None
     branchResolution: str
     linkStatus: str
+    movementDescription: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -69,6 +72,7 @@ class SettlementItem:
             "branchCode": self.branchCode,
             "branchResolution": self.branchResolution,
             "linkStatus": self.linkStatus,
+            "movementDescription": self.movementDescription,
         }
 
 
@@ -118,6 +122,7 @@ class SettlementSummaryGroup:
     natureCode: str | None
     natureDescription: str | None
     movementType: str | None
+    movementDescription: str | None
     eventCount: int
     totalAmount: str
 
@@ -128,6 +133,7 @@ class SettlementSummaryGroup:
             "natureCode": self.natureCode,
             "natureDescription": self.natureDescription,
             "movementType": self.movementType,
+            "movementDescription": self.movementDescription,
             "eventCount": self.eventCount,
             "totalAmount": self.totalAmount,
         }

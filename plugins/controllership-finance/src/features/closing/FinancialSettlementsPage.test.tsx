@@ -31,7 +31,8 @@ const ITEM = {
   issueDate: "2026-09-01",
   dueDate: "2026-10-01",
   history: "Baixa",
-  movementType: "PA",
+  movementType: "BA",
+  movementDescription: "Baixa de titulo",
   paymentDirection: "P",
   branchCode: null,
   branchResolution: "unresolved",
@@ -81,7 +82,8 @@ function summaryPayload() {
         currencyCode: "BRL",
         natureCode: "100",
         natureDescription: "Fornecedores",
-        movementType: "PA",
+        movementType: "BA",
+        movementDescription: "Baixa de titulo",
         eventCount: 3,
         totalAmount: "5000.00",
       },
@@ -90,7 +92,8 @@ function summaryPayload() {
         currencyCode: "USD",
         natureCode: "200",
         natureDescription: null,
-        movementType: "RA",
+        movementType: "VL",
+        movementDescription: "Baixa de titulo",
         eventCount: 2,
         totalAmount: "900.00",
       },
@@ -141,8 +144,13 @@ describe("FinancialSettlementsPage", () => {
       expect.anything(),
     );
     expect(await screen.findByText("Fornecedor Exemplo")).toBeTruthy();
+    // Valor não repete o código da moeda — moeda tem coluna própria.
+    expect(screen.getByText("1.250,75")).toBeTruthy();
+    expect(screen.queryByText("BRL 1.250,75")).toBeNull();
     // Filial ausente → «Não identificada» (nunca fallback 01/02).
     expect(screen.getByText("Não identificada")).toBeTruthy();
+    // Tipo de movimento exibe código + descrição canônica FKB.
+    expect(screen.getByText("BA — Baixa de titulo")).toBeTruthy();
     // Resumo por moeda somente do lado selecionado (BRL, não USD).
     expect(await screen.findByText("Total BRL")).toBeTruthy();
     expect(screen.queryByText("Total USD")).toBeNull();

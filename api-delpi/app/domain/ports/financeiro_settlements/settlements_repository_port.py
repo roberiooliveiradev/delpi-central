@@ -49,3 +49,11 @@ class SettlementsRepositoryPort(Protocol):
         nature_code: str | None = None,
         movement_type: str | None = None,
     ) -> list[dict]: ...
+
+    def nature_descriptions(
+        self, *, nature_codes: tuple[str, ...]
+    ) -> dict[str, str]: ...
+
+    def movement_descriptions(
+        self, *, movement_types: tuple[str, ...]
+    ) -> dict[str, str]: ...

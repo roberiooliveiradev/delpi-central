@@ -324,3 +324,43 @@ Consultas de baixas mantêm `WITH (NOLOCK)`, seguindo a convenção já vigente 
 ### Gates
 
 `D3_ENFORCEMENT=IMPLEMENTED`; `FINANCIAL_DATA_RELEASE=NO_GO` — dados reais exigem `FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED=true` em produção somente após gate separado com smoke aprovado. `E2E_LIVE=TEST_NOT_RUN` neste slice (smoke dev depende de merge/deploy; produção permanece gateada).
+
+## 15. Auditoria corretiva pós-release — IMP-CF-R01R02-SQL-AUDIT-CORRECTIVE-01 (20/10/2026)
+
+Release D3 executado (`FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED=true`, RELEASE-CF-R01R02-PROD-01). Com dados reais foram encontrados e corrigidos três defeitos de implementação — nenhum exigiu mudança de contrato, autenticação ou autorização:
+
+| Defeito | Causa raiz | Correção |
+|---|---|---|
+| 500/503 nas 3 rotas após gate ligado | `SettlementsRepository` chamava `execute_*` sem `with self:` — convenção `BaseRepository` (cursor `None`); testes mockavam o repositório | `with self:` em todos os métodos + teste de regressão de ciclo de conexão (`test_financeiro_settlements_repository.py`) |
+| 500 «Incorrect syntax near RTRIM» só na rota de lista | `_select_block` emitia projeções sem a keyword `SELECT` | `SELECT` adicionado; testes passaram a exigir `query.startswith("SELECT")` |
+| Fan-out (5 linhas / 4 eventos) | `SED010` mantém linha por filial (ex.: `INSS` com `ED_FILIAL=''` e `'01'`, descrições idênticas); `FK7` pode ter >1 vínculo por evento | `OUTER APPLY (SELECT TOP 1 … ORDER BY)` determinístico em FK7 (`ORDER BY R_E_C_N_O_`) e SED (`ORDER BY ED_FILIAL` — global primeiro); `nature_descriptions` com `ORDER BY ED_FILIAL DESC` (global vence no dict last-wins) |
+
+### Cardinalidade auditada (período 01/10–20/10/2026, NOLOCK, ERP vivo)
+
+- Payables: 497 eventos, 474 `FK2_IDDOC` distintos. FK7 é link **nível-documento**: 462 docs com 1 evento+1 link, 12 docs compartilhados por 2–4 eventos com 1 link, 1 doc sem link → `missing_document` correto. Sem fan-out de FK7 no período.
+- Receivables: 424 eventos, 424 IDs — 1:1, sem link ausente.
+- Reconciliação detalhe↔resumo exata (497=497, 424=424); paginação sem ID repetido.
+- SED duplicada apenas para `INSS`/`ISS` no período, descrições idênticas → critério global-primeiro é correto e determinístico.
+
+### D4 — semântica dos movimentos (evidência, não reclassificação)
+
+`X3_VALID = ExistCpo("FKB")` prova que **FKB010 é o catálogo canônico** de `FK1_TPDOC`/`FK2_TPDOC`. Consulta real à FKB010 (20/10/2026):
+
+| Código | `FKB_DESCR` | Leitura literal |
+|---|---|---|
+| `BA` | Baixa de titulo | baixa de título |
+| `VL` | Baixa de titulo | baixa de título |
+| `ES` | Estorno de Baixa | estorno de baixa |
+| `CP` | Compensação CR ou CP | compensação |
+
+`FK1_RECPAG`/`FK2_RECPAG` (SX3): «Recebimento ou Pagamento» — `R`/`P`.
+
+**Decisão técnica:** campo aditivo `movementDescription` (item e grupo de summary) populado do catálogo FKB010 — documenta o código bruto sem classificá-lo para totalização. **D4 segue PENDING** para regras de negócio: quais movimentos compõem total líquido, tratamento de `ES`/`CP` e direção `P`/`R` por origem são `DECISION_REQUIRED` do owner financeiro. `officialTotals:false` permanente. Nenhum movimento é excluído ou somado por regra inferida.
+
+### Frontend corrigido
+
+`formatAmount` recebia o código de moeda como argumento de locale/moeda e renderizava `01 2.114,20` duplicando a coluna Moeda. Corrigido para valor puro PT-BR; teste passou a assertar ausência do prefixo. Coluna «Tipo mov.» passou a exibir `código — descrição` (padrão da coluna Natureza).
+
+### Gates
+
+`FINANCIAL_DATA_ACCESS=RELEASED`; `D4_CLASSIFICATION=DECISION_REQUIRED` (semântica para totais); `MOVEMENT_CATALOG=PROVEN` (FKB010 canônica); `JOIN_FANOUT=RESOLVED`; `UI_VISUAL_LIVE=TEST_NOT_RUN` (validação de browser pendente do usuário).
