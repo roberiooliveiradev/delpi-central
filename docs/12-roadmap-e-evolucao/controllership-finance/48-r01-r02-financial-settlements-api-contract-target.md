@@ -166,3 +166,36 @@ Testes requeridos (TEST_NOT_RUN): positivo por lado/intervalo, sibling por compe
 **D3 ENFORCEMENT=BLOCKED** até localizar portador físico ou contexto de conexão/empresa, verificar domínio de todas as filiais e contrato de autorização. Não implementar acesso por filial, nem autorizar rotas com dados financeiros indiscriminados. **D-PERM=DECISION_REQUIRED**: permissões api-delpi requerem aprovação/contrato próprios e não ampliam os dois codes do Portal. D4 mantém classificação oficial PENDING. **GO_RUNTIME=NO**, apesar de paridade _F190C deferida para nova consulta visual.
 
 **Próximo inventário delimitado:** owner ERP/infra e api-delpi verifiquem o contexto de conexão do SQL Server, bancos/esquemas por empresa, regra de compartilhamento SX2 e código de extração dos relatórios financeiros existentes. Reapresentar como matriz empresa de negócio → tenant/base/schema/contexto → filial autorizada → query scope, com testes cross-branch positivos e negativos. Se separação não estiver representável em dados ou contexto, STOP e solicitação de decisão de arquitetura.
+
+## 11. Decisão D3.1 — filial nullable sem inventar scope (20/10/2026)
+
+**Manifestação expressa do PO:** continuar o desenvolvimento das rotas JSON da api-delpi, manter a informação de filial no contrato mesmo quando não preenchida pela fonte; adiar o tratamento de preenchimento/visualização confiável de filial. **Não autoriza interpretar vazio como acesso a todas as filiais**, tampouco aprova bypass de autorização entre filiais.
+
+### Contrato de representação — APPROVED
+
+- O campo de resposta `branchCode: string | null` é obrigatório no schema e **nullable**. Na falta de identificação confiável, retornar `null`, nunca `"01"`, `"02"`, `"all"` ou valor inventado.
+- Opcionalmente `branchResolution: "resolved" | "unresolved"` em DTO, sujeito a ajuste nos contracts do HEAD; se houver `unresolved`, a origem deve ser transparente e o UI não deve rotular a filial como conhecida.
+- Manter a coluna física `*_FILIAL` intacta; nenhuma migração, preenchimento artificial, alteração na origem TOTVS ou inferência por `COALESCE` de campos que são vazios.
+- A futura BFF/MFE poderá apresentar "Filial não identificada" e disabilitar filtro inconclusivo; não construir tela neste gate.
+- A decisão **não revoga a segregação de filial como princípio**; resolve apenas formato de resposta e permite trabalho isolado de backend.
+
+### Separação técnica — enforcement ainda pendente
+
+- As probes de 20/10/2026 encontraram apenas filial vazia em `FK1,FK2,SE1,SE2,FK7_FILTIT`. Logo, nenhuma dessas colunas constitui, por si, base de autorização de recurso/filial. Distinção: `branchCode=null` **não é prova de scope autorizado**.
+- Implementação de camadas **internas** e de contratos pode avançar após GO do slice: DTO, validação, consultas de leitura e testes isolados. **Publicação ou habilitação de rotas que entreguem linhas reais deve permanecer fail-closed** quando não existir escopo autorizado comprovado — a permissão HTTP isolada não o substitui.
+- Em particular, não executar consulta global sob `branch=all`, não usar o bypass de `/data/sql`, não assumir que `BranchAccessGate` existente resolva compartilhamento SQL, não criar permission por filial no Portal.
+- Se for demonstrado isolamento por base/schema/conexão autorizada (ou contrato explícito de dataset compartilhado para audiência autorizada), documentar prova e testes negativos cross-branch antes de habilitar rotas; caso contrário manter consultas reais inacessíveis externamente, com resultado tipado de scope indisponível.
+
+### Produto, movimento e release
+
+- D1: rotas técnicas em inglês e contexto separado de outras features; nomenclatura candidata `GET /financeiro/settlements/payables`, `/receivables`, `/summary`. Congelar no gate técnico.
+- D2: JSON somente leitura, backend api-delpi → testes/validações → BFF do Portal → MFE visual. **Excel/PDF fora do produto desta entrega**.
+- D4: `movementType` e `paymentDirection` códigos crus, sem semântica inventada. A exibição exploratória pode ser planejada, mas totais oficiais, exclusões por tipo e quaisquer filtragens financeiras canônicas exigem aceite do owner financeiro. Não reclassificar BA/ES/VL/CP.
+- D5: `_F190C` é referência opcional para paridade posterior, não bloqueador do relatório visual novo.
+- **Permissões**: Portal mantém somente `controllership-finance.access` e `.manage`; capability própria da api-delpi fica `DECISION_REQUIRED` até owner de segurança definir, sem criação automática em runtime.
+
+### Gate e escopo da próxima etapa
+
+`D3_RESPONSE_SHAPE=APPROVED`; `BRANCH_ENFORCEMENT=TO_INVENTORY/PENDING`; `PRODUCT_BACKEND_FIRST=APPROVED`; `IMPLEMENTATION_AUTHORIZED=NO` para publicar endpoints com dados reais. **Próxima etapa autorizável:** inventory + definição de contrato/API e testes em isolamento, seguida de pedido de GO explícito para implementação mínima da api-delpi. Não confundir avanço de código com aceite de segurança nem com deploy.
+
+**Aceites mínimos:** campo filial nullable testado; sem default para filial vazia; casos de missing FK7/SED não suprimidos; nenhuma duplicação; valores como Decimal; paginação; testes de AuthZ positivo/negativo e bloqueio de scope desconhecido; nenhuma BFF/MFE/exportação. Se os controles produzirem contexto comprovadamente autorizado, reapresentar evidências para desbloqueio de exposição.
