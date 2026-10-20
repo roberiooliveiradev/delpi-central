@@ -92,3 +92,12 @@ Não implementar endpoint api-delpi/BFF até existir: `report_id → owner → r
 `SE1` título receber; `SE2` título pagar; `SED` natureza; `F7G` motivo; `FK1` evento receber; `FK2` evento pagar; `FK5` banco; `FKA` rastreio. DAVI retornou `FK1010.FK1_DATA` e `FK2010.FK2_DATA` no dicionário disponível, **somente metadados**, sem vínculo provado com `_F190C`.
 
 **Próximo limite de auditoria:** G2 somente com nomes de colunas/layout vistos em exportação (ou fonte do programa confirmado), G3 somente quando owner/versão do programa local confirmados, G4 somente quando fonte `_F190C` e bindings físicos/regras forem comprovados; G5 após amostra de paridade. Nenhum novo gate promovido a PASS por similaridade FINSV010. `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## 9. Transição entre relatórios — R01/R02 encerrados como consulta operacional; R03 próximo (PO, 20/10/2026)
+
+**R01/R02:** mapeamento das fontes `FK1/FK2/FK7/SE1/SE2/SED/FKB`, colunas, vínculos, contratos, implementação read-only e página do Portal concluídos conforme relatório de execução e doc 48 §§12–17. Não atualizar retrospectivamente os gates históricos deste inventário como se a paridade com relatório exportado tivesse sido realizada. **Arquivo FINR190/`_F190C` comparável NÃO FORNECIDO neste projeto; `EXPORT_PARITY=TEST_NOT_RUN`**, reservado ao fechamento completo. Ver doc 48 §17.
+
+**Próximo da fila: R03 — P7 padrão e layout Bloco H, rotina MATR460.** É distinto de R04/MATR860 (Consumo/Relação por OP). Status atual `TO_INVENTORY`: não houve ainda inventário de tabelas/campos/joins nem validação de arquivo exportado R03 nesta rodada. Confirmar no TÉO o passo exato, owner, período de estoque/competência, parâmetros, fonte TOTVS, saída e dependência do corte de estoque. Em seguida realizar descoberta DAVI e SQL READ autorizado; buscar export original, mas se não houver registrar `NOT_PROVIDED/TEST_NOT_RUN` sem bloquear a criação futura da consulta operacional. Não criar endpoint ou equivalência por analogia a R01/R02.
+
+**Método obrigatório por relatório:** AS-IS TÉO + owner; relatório/export e proveniência; colunas/tabelas SQL (DAVI); joins/cardinalidade/filtros; contrato api-delpi → BFF → visual; testes/smoke; comparação com export se presente; documentar lacuna de paridade se ausente; commit e evidências. GO de design/implementação separado por item.
