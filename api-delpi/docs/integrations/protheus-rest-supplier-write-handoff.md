@@ -29,7 +29,7 @@ Permitir **criação (POST)** de fornecedores via REST Protheus com `api-delpi` 
 | Matriz REST→SA2 | PROVEN doc `protheus-rest-supplier-post-field-matrix.md` |
 | Payload sucesso / `A2_COD` / idempotência / `codusr≡USR_ID` | TO_INVENTORY |
 | PUT | FORA_DO_ESCOPO |
-| Live write produção | NOT_AUTHORIZED |
+| Live write produção | BLOCKED (2026-10-20): código implantado com gate off; POST real não autorizado nesta janela |
 
 ## Critérios de homologação live (bloqueados)
 

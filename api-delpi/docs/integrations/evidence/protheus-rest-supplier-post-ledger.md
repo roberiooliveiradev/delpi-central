@@ -36,4 +36,19 @@
 
 ## Produção
 
-`PRODUCTION_DEPLOY=NOT_AUTHORIZED` · `LIVE_POST_HOMOLOGATION=PENDING`
+`PRODUCTION_DEPLOY=PASS` (código do POST presente na imagem em execução; gate default) · `LIVE_POST_HOMOLOGATION=BLOCKED`
+
+## Homologação operacional — 2026-10-20 (`srv-api`)
+
+| Gate | Resultado |
+|------|-----------|
+| Código implantado | PASS — use case e `operationId=create_protheus_rest_supplier` presentes; `PROTHEUS_SUPPLIER_CREATE_ENABLED` ausente no env → `false` |
+| Sem autenticação | PASS — HTTP 401, sem escrita |
+| Usuário autenticado sem vínculo Core | PASS — HTTP 422 `PROTHEUS_IDENTITY_UNMAPPED`, sem escrita |
+| Usuário mapped+verified com gate off | PASS — `PROTHEUS_SUPPLIER_CREATE_DISABLED` (503) antes de qualquer POST upstream |
+| Ambiente de homologação dedicado | PENDING — alvo observado é o runtime de produção |
+| Owner operacional / dados fiscais de teste / empresa-filial / reversão | PENDING — não fornecidos nesta execução |
+| Equivalência `codusr` ≡ `SYS_USR.USR_ID` | TO_INVENTORY |
+| POST real no Protheus | **não executado** (0 chamadas) |
+
+**STOP:** gates obrigatórios de escrita real não comprovados. Feature gate permanece desligado.
