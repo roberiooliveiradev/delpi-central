@@ -16261,3 +16261,20 @@ PLAYWRIGHT_REAL=PASS_15of15_page + 8of8_dock
 PRODUCTION_DEPLOYMENT=PENDING_AUTHORIZED
 PHASE_ADVANCE=NO
 ```
+
+
+## §6.329 — Independent Q02-C review (2026-10-20)
+
+**SHA:** `d62ab853c93de5d3882a716fbb8b266ba8ac7d3a`. **VERDICT:** `REWORK` (one bounded correction under 59 §18). Static verified removal of prior lexical continuity helpers and non-authoritative prior observation; executor reported 1665 PASS, real model `TEST_NOT_RUN`. **B2:** success of comparison still inferred from literal `Diferenças comprovadas:` in rendered output, despite typed deterministic comparison requirement. Require typed outcome evidence rather than text header, RED/GREEN and full regression; STOP if new contract required. **B1:** existing `classify_result_intent` regex steers `unique_structural_ticket_list_capability`, although roadmap retained that R4/R5 fast path for budget and pagination. Conflict cannot be reconciled by code deletion: `ARCHITECTURE_DECISION_REQUIRED` for reconsideration; preserve path pending decision. No Q03 release, no I04 acceptance or deploy.
+
+```text
+Q02_C_REVIEW=REWORK
+Q02_C_ACCEPTED=NO
+Q02_C_REWORK_REMAINING=1
+Q02_C_B2_REWORK_SCOPE=TEXT_HEADER_OUTCOME_GATE
+Q02_C_B1_SHORTCUT=ARCHITECTURE_DECISION_REQUIRED_NO_SILENT_CHANGE
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=Q02_C_SINGLE_BOUNDED_REWORK_B2_AND_COORDINATION_B1_DECISION
+```
