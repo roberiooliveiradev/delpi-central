@@ -165,6 +165,11 @@ class FakeProposalModel:
             resolved = self._generic.pop(0)
         else:
             resolved = self._last.get(purpose)
+        if resolved is None:
+            from tests.support.fake_group_proposal import (
+                singleton_group_proposal_from_request,
+            )
+            resolved = singleton_group_proposal_from_request(request)
         if resolved is not None:
             self._last[purpose] = resolved
         return ProviderInvocationPayload(

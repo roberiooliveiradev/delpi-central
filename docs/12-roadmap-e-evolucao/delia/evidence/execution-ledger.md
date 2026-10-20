@@ -15966,3 +15966,39 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=EXISTING_SINGLE_BOUNDED_Q02_A_REWORK_WITH_LIVE_STAGE_EVIDENCE
 ```
+
+## §6.318 — Q02-A one bounded rework executed (outcome oracles + fail-closed singleton)
+
+**DATE:** 2026-10-20. **TASK:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01`. **AUTHORITY:** Product Master Option B; independent review §6.316; live observation §6.317. **BASE_HEAD:** `bd9284919a4706a07acad31efb6bb87cec97c465` (`origin/main` at execution). This is the **only** Q02-A rework; `Q02_A_REWORK_REMAINING=0` after this commit. G0 stays closed.
+
+**RQ-03:** `_select_group` no longer treats a missing model proposal as relevance for a sole live group. `proposal is None` → `not_applicable` (fail-closed). Explicit `applicable=false` unchanged. Test harness `tests/support/fake_group_proposal.py` binds the sole catalog key **only in FakeProposalModel** so capability-stage fixtures still run; production path does not.
+
+**RQ-01 / RQ-04:** limitation-only continuity asserts the limitation excerpt and rejects prerequisite checklist dump. K3 no-relevant path restores `filled_reads == []` + `CLARIFICATION_REQUIRED` when the model selects no index id. A membership-valid mismatched topic is recorded as plumbing, not as a completed legibility answer. No lexical veto restored.
+
+**RQ-02:** `test_q02a_semantic_consolidation.py` labels canned C02/SIPOC routes as wiring (`NOT_PROVEN` for real LLM preference). New negatives: missing group proposal (singleton fail-closed, zero owner calls), wrong-owner scripted proposal (not a formats task pass), empty capability proposal (no invoke), SIPOC wiring without content oracle.
+
+**RESIDUAL (out of scope):** `unique_structural_ticket_list_capability` in `paginated_result_semantics.py` still uses lexical request classification (`TO_INVENTORY`; not rewritten).
+
+**TESTS:** full `delia-api` pytest PASS after the diff. Security/AuthZ/provenance remain inside that suite. **LIVE on this rework SHA=`TEST_NOT_RUN`** — no new production deploy authorized. Prior executor live (§6.317) is not evidence for this SHA. `MATERIAL_ACT_COUNT=0` in suite. `I04_ACCEPTED=NO`.
+
+```text
+Q02_A_BOUNDED_REWORK_EXECUTED=YES
+Q02_A_REWORK_REMAINING=0
+Q02_A_SINGLETON_NONE_PROPOSAL=FAIL_CLOSED
+Q02_A_FAKE_MODEL_SEMANTIC_SELECTION=NOT_PROVEN_WIRING_ONLY
+Q02_A_REAL_MODEL_THIS_SHA=TEST_NOT_RUN
+LEXICAL_PAGINATED_RESULT_SEMANTICS=RESIDUAL_OUT_OF_SCOPE
+FULL_BACKEND_TESTS=PASS
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_AUTHORIZED=NO
+Q02_A_EXCEPTION_AUTHORIZED=YES_I04_ONLY
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=COORDINATION_FINAL_Q02_A_REVIEW_OR_STOP
+```
+

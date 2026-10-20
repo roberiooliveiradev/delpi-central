@@ -149,7 +149,9 @@ TEO_ARG_TOOLS = (
 
 _STAGE_DEFAULTS = {
     GOAL_INSTRUCTION_ID: {"goal_class": "read"},
-    GROUP_SELECTION_INSTRUCTION_ID: {"applicable": True},
+    # Group selection omitted: harness binds the sole catalog key when
+    # production fail-closes on a missing proposal (Q02-A RQ-03).
+    # Multi-group fixtures must script an explicit capability_group_id.
     NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
 }
 
@@ -175,6 +177,11 @@ class _StageModel:
         if request.task_purpose_id in self._timeout_purposes:
             raise ModelInvocationError(TIMEOUT, "stage timed out")
         resolved = self._proposals.get(request.task_purpose_id)
+        if resolved is None:
+            from tests.support.fake_group_proposal import (
+                singleton_group_proposal_from_request,
+            )
+            resolved = singleton_group_proposal_from_request(request)
         return ProviderInvocationPayload(
             structured_output=(
                 resolved if isinstance(resolved, dict) else {}

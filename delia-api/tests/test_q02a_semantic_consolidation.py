@@ -130,7 +130,11 @@ def test_q02a_coverage_inquiry_detector_removed():
 
 
 def test_q02a_formats_selects_format_catalog_not_product_discovery():
-    """C02: formats ask selects format-catalog group/capability."""
+    """C02 wiring: canned FakeProposalModel routes to format catalog.
+
+    NOT_PROVEN for real-LLM semantic preference among DAVI/TÉO/VISTA —
+    that requires authorized live model evaluation (RQ-02).
+    """
     proposal = {
         INTERACTION_ADMISSION_INSTRUCTION_ID: {
             "requires_owner_surface": True,
@@ -495,3 +499,153 @@ def test_q02a_no_act_on_formats_read():
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert "commit_proposal" not in {c[0] for c in port.calls}
     assert not getattr(attempt, "confirmation_request", None)
+
+
+def test_q02a_rework_missing_group_proposal_singleton_fails_closed():
+    """RQ-03: proposal None must not soft-select the sole live group."""
+    from app.application.model_invocation.contracts import (
+        ProviderInvocationPayload,
+    )
+
+    class MissingGroupFake(FakeProposalModel):
+        def invoke(self, request):
+            self.requests.append(request)
+            purpose = request.task_purpose_id
+            if purpose == GROUP_SELECTION_INSTRUCTION_ID:
+                return ProviderInvocationPayload(
+                    structured_output=None,
+                    generated_at="2026-01-01T00:00:00+00:00",
+                )
+            if purpose == INTERACTION_ADMISSION_INSTRUCTION_ID:
+                return ProviderInvocationPayload(
+                    structured_output={
+                        "requires_owner_surface": True,
+                        "interaction_class": "operational",
+                    },
+                    generated_at="2026-01-01T00:00:00+00:00",
+                )
+            return ProviderInvocationPayload(
+                structured_output={
+                    "applicable": True,
+                    "remote_name": "discover_delpi_information",
+                    "goal_class": "read",
+                },
+                generated_at="2026-01-01T00:00:00+00:00",
+            )
+
+    port = FakePort(
+        tools_by_specialist={"davi": _davi_discovery_tools()}
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [McpCapabilityProvider(_interop(port), ("davi",))],
+        invoke_model=InvokeModel(MissingGroupFake({})),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(FORMATS_ASK)
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert port.calls == []
+
+
+def test_q02a_rework_wrong_group_proposal_not_formats_task_pass():
+    """RQ-02: scripted wrong owner proves plumbing, not task success."""
+    proposal = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": True,
+            "interaction_class": "operational",
+        },
+        GROUP_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "capability_group_id": "mcp:davi",
+        },
+        CAPABILITY_SELECTION_INSTRUCTION_ID: {
+            "applicable": True,
+            "remote_name": "discover_delpi_information",
+            "goal_class": "read",
+        },
+        NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
+        ARGUMENTS_INSTRUCTION_ID: {"arguments": {"query": "formatos"}},
+    }
+    orch, port, _ = _orch(
+        {
+            "davi": _davi_discovery_tools(),
+            "vista": _formats_catalog_tools(),
+        },
+        proposal,
+        specialist_ids=("davi", "vista"),
+    )
+    port._outcomes = {
+        "discover_delpi_information": RemoteToolOutcome(
+            content_text="Produtos: TUBO 30x30.",
+            structured={"items": [{"description": "TUBO 30x30"}]},
+        )
+    }
+    attempt = orch.attempt(FORMATS_ASK)
+    assert any(c[1] == "discover_delpi_information" for c in port.calls)
+    assert "get_catalog" not in {c[1] for c in port.calls}
+    content = (attempt.content or "").lower()
+    assert "parquet" not in content
+    assert "csv" not in content or "tubo" in content
+
+
+def test_q02a_rework_empty_capability_after_group_is_inconclusive():
+    """RQ-02: applicable group + missing capability → no owner invoke."""
+    from app.application.model_invocation.contracts import (
+        ProviderInvocationPayload,
+    )
+
+    class EmptyCapFake(FakeProposalModel):
+        def invoke(self, request):
+            self.requests.append(request)
+            purpose = request.task_purpose_id
+            payloads = {
+                INTERACTION_ADMISSION_INSTRUCTION_ID: {
+                    "requires_owner_surface": True,
+                    "interaction_class": "operational",
+                },
+                GROUP_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "capability_group_id": "mcp:vista",
+                },
+                CAPABILITY_SELECTION_INSTRUCTION_ID: None,
+            }
+            return ProviderInvocationPayload(
+                structured_output=payloads.get(purpose),
+                generated_at="2026-01-01T00:00:00+00:00",
+            )
+
+    port = FakePort(
+        tools_by_specialist={
+            "vista": _formats_catalog_tools(),
+            "davi": _davi_discovery_tools(),
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [McpCapabilityProvider(_interop(port), ("vista", "davi"))],
+        invoke_model=InvokeModel(EmptyCapFake({})),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(FORMATS_ASK)
+    assert port.calls == []
+    assert attempt.status in {
+        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
+        GovernedCapabilityStatus.NOT_APPLICABLE,
+    }
+
+
+def test_q02a_rework_sipoc_wiring_not_content_oracle():
+    """SIPOC canned admission is wiring-only; content outcome NOT_PROVEN."""
+    proposal = {
+        INTERACTION_ADMISSION_INSTRUCTION_ID: {
+            "requires_owner_surface": False,
+            "interaction_class": "explanation",
+        }
+    }
+    orch, port, _ = _orch(
+        {"teo": _teo_method_tools()},
+        proposal,
+        specialist_ids=("teo",),
+    )
+    attempt = orch.attempt(SIPOC_ASK)
+    assert attempt.status is GovernedCapabilityStatus.NOT_APPLICABLE
+    assert port.calls == []
+    assert not (attempt.content or "").strip()

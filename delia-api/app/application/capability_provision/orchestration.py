@@ -9197,12 +9197,11 @@ class OperationalCapabilityOrchestrator:
         eligible = sorted(groups)
         if not eligible:
             return ("not_applicable", None)
-        # Q02-A S20: singleton is not automatic relevance — still ask the
-        # model. Explicit applicable=false rejects the only group.
-        # Missing proposal (fixture/timeout) with a singleton falls back
-        # to that sole live group so existing deterministic fixtures keep
-        # exercising capability/argument stages; multi-group without a
-        # proposal remains not_applicable.
+        # Q02-A S20 / one-rework RQ-03: singleton membership is never
+        # semantic relevance. Always require a validated model proposal.
+        # Missing/timeout proposals fail closed to not_applicable —
+        # including when only one live group exists — so unproven
+        # relevance cannot start an operational owner invoke.
         proposal = self._propose(
             input_text,
             block_tag="capability_groups",
@@ -9222,8 +9221,6 @@ class OperationalCapabilityOrchestrator:
             deadline=deadline,
         )
         if proposal is None:
-            if len(eligible) == 1:
-                return ("selected", eligible[0])
             return ("not_applicable", None)
         applicable = proposal.get("applicable")
         if isinstance(applicable, str):

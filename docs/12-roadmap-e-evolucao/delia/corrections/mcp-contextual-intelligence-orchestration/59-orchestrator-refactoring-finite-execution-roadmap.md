@@ -179,7 +179,8 @@ DOC61=G0_EXECUTION_CARDS
 Q02_A_IMPLEMENTATION_EXECUTED=YES
 Q02_A_FIRST_INDEPENDENT_REVIEW=REWORK
 Q02_A_BOUNDED_REWORK_AUTHORIZED=YES
-Q02_A_REWORK_REMAINING=1
+Q02_A_BOUNDED_REWORK_EXECUTED=YES
+Q02_A_REWORK_REMAINING=0
 Q02_A_ARCHITECTURE_DIRECTION=PARTIALLY_PROVEN_STATIC
 Q02_A_REAL_MODEL_SEMANTIC_SELECTION=TEST_NOT_RUN
 Q02_A_TASK_OUTCOME=NOT_PROVEN
@@ -193,7 +194,7 @@ C3_EXECUTED=NO
 C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
-NEXT=CURSOR_ONE_Q02_A_REWORK_THEN_INDEPENDENT_FINAL_REVIEW_OR_STOP
+NEXT=COORDINATION_FINAL_Q02_A_REVIEW_OR_STOP
 ```
 
 
@@ -211,4 +212,6 @@ NEXT=CURSOR_ONE_Q02_A_REWORK_THEN_INDEPENDENT_FINAL_REVIEW_OR_STOP
 
 **Effect on existing §8 REWORK decision:** retain `Q02_A_INDEPENDENT_REVIEW=REWORK` and one rework remaining. Reported C02 live selection **partially closes** the prior lack of *any* real-model evidence for intended provider; it **does not** resolve K2/K3 weakened tests, missing-proposal singleton or prove C02 complete success, SOP/guidance/owner contract, and exposes real conversational-output failures. Amend the already-authorized `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01` validation focus (no second rework prompt): first capture same correlation-stage timings, admission/fallback counts and exact model call timeout; assert meaningful task outcome on real no-tool SIPOC/hypothetical and C02 fidelity; restore test oracles without lexical classifiers. An **in-scope** correction is possible only if shown to be a bounded Q02-A admission/semantic sequencing issue using existing ports/instructions. If root requires modification to unrelated conversational response runtime, inference provider capacity/config, Q02-C refactor or new contract, **STOP→ROOT_CAUSE/OWNER→COORDINATION/PRODUCT_MASTER_DECISION**; do not silently expand this one rework. Operational deploy and testing require their own authorization.
 
-**States unchanged:** `Q02_A_REWORK_AUTHORIZED=YES_ONCE`; `Q02_A_REWORK_REMAINING=1`; `Q02_A_ACCEPTED=NO`; `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`; `Q02_B/C_AUTHORIZED=NO`; `C3/C4/C5` unadvanced. No new runtime change or test made by coordination.
+**States unchanged (coordination snapshot, pre-execution):** `Q02_A_REWORK_AUTHORIZED=YES_ONCE`; `Q02_A_REWORK_REMAINING=1`; `Q02_A_ACCEPTED=NO`; `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`; `Q02_B/C_AUTHORIZED=NO`; `C3/C4/C5` unadvanced. No new runtime change or test made by coordination.
+
+**Execution update (2026-10-20):** the single rework `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01` was executed; ledger §6.318. `Q02_A_REWORK_REMAINING=0`. Live SIPOC/hypothetical `turn_budget_limited` stays `TO_VERIFY` outside this diff (12s conversational stage cap). No second rework.

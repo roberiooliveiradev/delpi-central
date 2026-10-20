@@ -120,6 +120,11 @@ class FakeProposalModel:
             resolved = self._generic.pop(0)
         else:
             resolved = self._last.get(purpose)
+        if resolved is None:
+            from tests.support.fake_group_proposal import (
+                singleton_group_proposal_from_request,
+            )
+            resolved = singleton_group_proposal_from_request(request)
         if resolved is not None:
             self._last[purpose] = resolved
         return ProviderInvocationPayload(
@@ -278,24 +283,12 @@ def test_k2_incomplete_shortish_answer_expands_checklist_items():
 
 
 def test_k2_short_but_sufficient_limitation_ask_not_expanded():
+    """Limitation-only synthesis must not dump the full prior checklist."""
     prior = _prior_turns()
     guide = _cap(
         "solo", "solo_p", "get_guide", SpecialistOperationClass.READ
     )
     provider = FakeProvider("solo_p", [_group("solo_p", "solo", [guide])])
-    model = FakeProposalModel(
-        {
-            GOAL_INSTRUCTION_ID: {
-                "goal_class": "read",
-                "prior_evidence_sufficient": True,
-            },
-            SYNTHESIS_INSTRUCTION_ID: {
-                "items": [{"record_index": 10, "fields": ["excerpt"]}],
-                "presentation": "answer",
-            },
-        }
-    )
-    # Find a limitations-ish record index dynamically from split.
     from app.application.capability_provision.orchestration import (
         _prior_excerpt_records,
     )
@@ -331,11 +324,13 @@ def test_k2_short_but_sufficient_limitation_ask_not_expanded():
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert provider.calls == []
-    # Q02-A: lexical limitation cue removed; synthesis selection still
-    # drives the answer. Full checklist dump is acceptable residual when
-    # the model selected a limitation excerpt and continuity expands.
-    content = (attempt.content or "").lower()
-    assert "limita" in content or "não lista" in content or "orienta" in content
+    content = attempt.content or ""
+    lowered = content.lower()
+    assert "limita" in lowered or "não lista" in lowered
+    assert "Escopo do processo" not in content
+    assert "Evidências já disponíveis" not in content
+    assert "Descrição do problema" not in content
+    assert "Restrições de tempo" not in content
 
 
 def test_k2_missing_from_prior_does_not_invent():
@@ -706,6 +701,81 @@ def test_k3_no_relevant_topic_clarifies_without_invented_id():
             },
             NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
             INDEX_SELECT_INSTRUCTION_ID: {
+                "selected_identifier": None,
+                "argument_field": None,
+            },
+            ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    attempt = orch.attempt(LEGIBILITY_ASK)
+    assert "invented_topic" not in str(provider.calls)
+    filled_reads = [c for c in provider.calls if c[1].get("topic")]
+    assert filled_reads == []
+    assert attempt.status is GovernedCapabilityStatus.CLARIFICATION_REQUIRED
+
+
+def test_k3_membership_valid_wrong_topic_is_not_legibility_task_pass():
+    """Valid catalog id is not task completion for a mismatched ask."""
+    guide = _cap(
+        "alpha",
+        "alpha_p",
+        "get_product_guide",
+        SpecialistOperationClass.READ,
+        schema={
+            "type": "object",
+            "properties": {"topic": {"type": "string"}},
+        },
+        desc="Guia de produto. Omitir topic lista o índice.",
+    )
+    index = _outcome(
+        "alpha",
+        "get_product_guide",
+        {
+            "data": {
+                "items": [
+                    {
+                        "topic": "display_formats",
+                        "label": "Formatos",
+                        "summary": "moeda percentual data",
+                    },
+                    {
+                        "topic": "playlist",
+                        "label": "Playlist",
+                        "summary": "agenda",
+                    },
+                ]
+            }
+        },
+    )
+    filled = _outcome(
+        "alpha",
+        "get_product_guide",
+        {"guide": {"purpose": "should not be reached"}},
+    )
+    provider = FakeProvider(
+        "alpha_p",
+        [_group("alpha_p", "alpha", [guide])],
+        outcomes={
+            ("alpha", "get_product_guide"): {
+                "index": index,
+                "filled": filled,
+            }
+        },
+    )
+    model = FakeProposalModel(
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "get_product_guide",
+                "goal_class": "read",
+            },
+            NATIVE_ASSESSMENT_INSTRUCTION_ID: {"status": "sufficient"},
+            INDEX_SELECT_INSTRUCTION_ID: {
                 "selected_identifier": "display_formats",
                 "argument_field": "topic",
             },
@@ -719,14 +789,11 @@ def test_k3_no_relevant_topic_clarifies_without_invented_id():
     )
     attempt = orch.attempt(LEGIBILITY_ASK)
     assert "invented_topic" not in str(provider.calls)
-    # Q02-A: lexical weak-relevance veto removed. Owner-declared
-    # display_formats may bind when the model selects it; invented ids
-    # remain rejected by membership.
-    assert attempt.status in {
-        GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
-        GovernedCapabilityStatus.SUCCESS,
-        GovernedCapabilityStatus.NOT_APPLICABLE,
-    }
+    content = (attempt.content or "").lower()
+    assert "contraste" not in content
+    assert "tipografia" not in content
+    if any(c[1].get("topic") == "display_formats" for c in provider.calls):
+        assert "legibilidade" not in content
 
 
 def test_k3_strong_match_binds_owner_declared_topic():
