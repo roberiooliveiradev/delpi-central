@@ -16166,3 +16166,32 @@ FULL_DELIA_API_PYTEST=1665_PASSED
 MATERIAL_ACT=0
 NEXT=COORDINATION_INDEPENDENT_Q02_B_REVIEW
 ```
+
+
+## §6.326 — Q02-B owner boundary and closure (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-B-OWNER-AUTHORITY-BOUNDARY-AND-CLOSURE-01`. **AUTHORITY:** Product Master, 2026-10-20. **BASE:** `origin/main` `7b0cf3f64e8787393994b5a1d6451676e4d46689`, que contém o commit de implementação `2ab92e73eef8337d5cee4d25f52cae971f0317d9`. **RUNTIME_DIFF:** nenhum.
+
+A coordenação registrou `Q02_B_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL`. Este ledger guarda o parecer. Não o substitui por aceite do executor. A suíte 1665 PASS é evidência de executor, não avaliação live. `REAL_MODEL_EVAL=TEST_NOT_RUN`. Deploy de produção não autorizado. Fidelidade funcional permanece aberta. `I04_ACCEPTED=NO`.
+
+**ADR 58.** Reconciliada por clarificação de aplicação, sem ADR nova e sem edição do texto da ADR. D5 já admite READ exploratório como interpretação e proíbe DTO de proveniência enquanto o contrato existente bastar. D8 mantém a regra de domínio no owner. String de consulta válida no schema e semanticamente inadequada segue ao owner; o retorno autoritativo é a evidência. Identificador inventado, AuthZ, PREPARE/ACT, confirmação, idempotência e síntese selection-only permanecem. Não se cria validador de domínio na DÉLIA. `ARCHITECTURE_DECISION_REQUIRED` não se aplica.
+
+**Q02-C.** Checkpoint de entrada preparado no roadmap 59 §15, a partir do escopo já escrito na seção 3. `Q02_C_AUTHORIZED=NO`. A implementação espera o gate da coordenação.
+
+```text
+Q02_B_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL
+Q02_B_TECHNICAL_STATUS=CLOSED_WITH_RESIDUAL
+Q02_B_IMPLEMENTATION_SHA=2ab92e73eef8337d5cee4d25f52cae971f0317d9
+Q02_B_EXECUTOR_TESTS=1665_PASS
+Q02_B_REAL_MODEL_EVAL=TEST_NOT_RUN
+ADR58_RECONCILED=APPLICATION_CLARIFICATION
+EXPLORATORY_STRING_VALIDATOR_IN_DELIA=NOT_AUTHORIZED
+OWNER_BOUNDARY=DOMAIN_API_VALIDATES_BUSINESS_RULES
+Q02_C_ENTRY_CHECKPOINT=PREPARED
+Q02_C_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_DIFF=NONE
+MATERIAL_ACT=0
+NEXT=COORDINATION_Q02_C_ENTRY_GATE
+```

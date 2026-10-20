@@ -2,7 +2,7 @@
 
 **TRACK_ID:** `DELIA-C3-ORCHESTRATOR-SEMANTIC-REFACTOR-FINITE-ROADMAP-01`
 **DATA:** 2026-10-19
-**ESTADO VIGENTE:** Q02-B executado e `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (2026-10-20, §14; `Q02_B_ACCEPTED=NO`; `Q02_C_AUTHORIZED=NO`). A exceção `I04_FINITE_REFACTOR_CONTINUATION` permanece a autoridade de continuidade. **Estado anterior** da entrada Q02-B está na seção 13.
+**ESTADO VIGENTE:** Q02-B `CLOSED_WITH_RESIDUAL` pelo parecer da coordenação `ACCEPT_WITH_RESIDUAL` (2026-10-20, §15). Avaliação com modelo real permanece `TEST_NOT_RUN`. `Q02_C_AUTHORIZED=NO`; o checkpoint de entrada está preparado. A exceção `I04_FINITE_REFACTOR_CONTINUATION` permanece a autoridade de continuidade. **Estado anterior** da evidência Q02-B está na seção 14.
 **BASE_HEAD de planejamento:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` (revalidar `origin/main`, `HEAD` e `git status` a cada execução; updates concorrentes não integram automaticamente o escopo).
 **CANÔNICO:** execução 16; standalone 50; ownership 17; patterns 49 §14.1; baseline 51; bootstrap 52; state 21; tests 20; traceability 25; product 24; MCP/A2A 60; `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `plan-construction.mdc`; ledger atual.
 **EVIDÊNCIAS:** [56](./56-orchestration-audit-semantic-ownership-checkpoint.md) e [57](./57-orchestration-complete-second-pass-static-audit.md), 10.592 linhas/179 definições, 42 grupos de achados; [58](./58-adr-llm-semantic-decision-ownership.md) direção `APPROVED`; ledger §6.145 (`selection-only` congelado), §§6.299–6.300.
@@ -326,4 +326,53 @@ CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 REAL_MODEL_EVALS=TEST_NOT_RUN
 NEXT=COORDINATION_INDEPENDENT_Q02_B_REVIEW
+```
+
+
+## 15. Q02-B closure and Q02-C entry checkpoint (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-B-OWNER-AUTHORITY-BOUNDARY-AND-CLOSURE-01`. **AUTHORITY:** Product Master, 2026-10-20, aplicada sobre a ADR 58 sem nova ADR. **IMPLEMENTATION_SHA:** `2ab92e73eef8337d5cee4d25f52cae971f0317d9`. **RUNTIME_DIFF deste registro:** nenhum.
+
+**Parecer registrado, não reemitido.** A coordenação classificou Q02-B como `ACCEPT_WITH_RESIDUAL`. Este documento guarda esse parecer e os limites que ele deixa abertos. O executor não emite outro aceite. Teste estático não vira evidência live. `I04_ACCEPTED` permanece `NO`. C3 não avança.
+
+```text
+SEMANTIC_LEXICAL_VETO=REMOVED
+ORDINAL_REGEX=REMOVED
+IDENTIFIER_PROVENANCE=PRESERVED
+OWNER_CONTRACT=UNCHANGED
+FULL_BACKEND_TESTS=1665_PASS_EXECUTOR_REPORTED
+REAL_MODEL_EVAL=TEST_NOT_RUN
+PRODUCTION_DEPLOY=NOT_AUTHORIZED
+FUNCTIONAL_FIDELITY=OPEN
+```
+
+**Clarificação de aplicação da ADR 58.** A matriz da ADR 58 já entrega ao LLM a proposta semântica, à camada determinística schema, membership, AuthZ, proveniência de identificador e limites, e ao owner a regra de domínio, o FACT e a postcondition (D8). D5 troca proveniência lexical falsa por origem verificável de identificador ou por READ exploratório declarado como interpretação, nunca como identificador ou atributo factual. D5 também impede DTO novo enquanto o contrato existente bastar.
+
+A aplicação é esta: string de consulta compatível com o schema publicado pode ser semanticamente inadequada e ainda assim ser enviada ao owner. O owner processa o contrato e devolve resultado, conjunto vazio ou erro. A DÉLIA interpreta esse retorno e não inventa fato. Identificador inventado continua fail-closed. JSON Schema válido não autoriza PREPARE/ACT, não dispensa confirmação, idempotência, política de dados pessoais nem proteção contra prompt injection. `SELECTION_ONLY_GROUNDED_SYNTHESIS` permanece congelado (D6).
+
+Não há `ARCHITECTURE_DECISION_REQUIRED`: a clarificação não cria contrato, não altera a ADR 58 e não pede validador de domínio na DÉLIA. Nomes como `topic`, `description`, `query`, `search_text` e `code` são ilustração, não allowlist nem regra por campo.
+
+**Checkpoint Q02-C, sem autorização.** O pacote previsto na seção 3 continua dependente de gate próprio. Escopo já escrito, a confirmar na liberação:
+
+1. Heurística linguística que ainda interpreta continuidade.
+2. Referência conversacional proposta pelo LLM, com evidência e provenance preservadas.
+3. Chamadas semânticas redundantes fora de `InvokeModel`/`_propose`, só com medição.
+4. Avaliação de resposta que dependa só de palavra ou formatação, inclusive o residual `unique_structural_ticket_list_capability`.
+5. Diferença entre listar, comparar, explicar e formular hipótese, com seleção-only congelada.
+6. Contratos de owner intactos. Sem engine, planner, port ou serviço paralelo.
+
+Símbolos já inventariados na seção 12 e ainda presentes depois de Q02-B: `_prior_listing_hint`, `_count_covered_extraction_units`, `_prior_extraction_incomplete`, `_render_is_list_replay_not_compare`, `classify_result_intent`. O nome `recover_empty_selection` já não existe; a realocação do comportamento fica neste pacote, quando autorizado. Orçamentos 30 s e 12 s permanecem.
+
+```text
+Q02_B_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL
+Q02_B_TECHNICAL_STATUS=CLOSED_WITH_RESIDUAL
+ADR58_RECONCILED=APPLICATION_CLARIFICATION
+EXPLORATORY_STRING_VALIDATOR_IN_DELIA=NOT_AUTHORIZED
+Q02_C_ENTRY_CHECKPOINT=PREPARED
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_DIFF=NONE
+NEXT=COORDINATION_Q02_C_ENTRY_GATE
 ```

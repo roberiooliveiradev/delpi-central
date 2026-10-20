@@ -5,7 +5,32 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (Q02-B, evidência para review):** o pacote `DELIA-C3-Q02-B-ARGUMENTS-INDEX-PROVENANCE-REFACTOR-01` foi executado sobre a entrada `YES_BOUNDED_ENTRY` do ledger §6.324. A interpretação de texto livre exploratório, a escolha de índice e a referência linguística ficam na proposta do modelo. O código determinístico mantém schema, membership do catálogo vivo, proveniência de identificador (`id` / `*id`), AuthZ, budgets e outcome. Não aceita Q02-B, não autoriza Q02-C, não altera o teto conversacional de 12 s nem o orçamento global de 30 s, não faz deploy e não trata sucesso técnico como sucesso da tarefa. Ledger §6.325. Roadmap 59 §14.
+**Decisão vigente de execução — 2026-10-20 (fechamento Q02-B e fronteira do owner):** o Product Master registra que a DÉLIA descobre capacidades e contratos; não incorpora antecipadamente a regra de negócio de cada API. Uma string de consulta compatível com o schema pode estar semanticamente inadequada e ainda assim seguir para o owner. O owner valida a regra empresarial e devolve resultado, vazio ou erro. A DÉLIA interpreta essa evidência. Isso não cria validador de domínio, catálogo paralelo nem contrato novo. A clarificação aplica a ADR 58 (D5 e D8), sem substituí-la. O parecer da coordenação sobre Q02-B é `ACCEPT_WITH_RESIDUAL`: implementação `2ab92e73eef8337d5cee4d25f52cae971f0317d9`, suíte executor 1665 PASS, avaliação com modelo real `TEST_NOT_RUN`, deploy não autorizado, fidelidade funcional aberta. Este registro não é um segundo aceite do executor e não autoriza Q02-C. O checkpoint de entrada de Q02-C está no roadmap 59 §15 e no ledger §6.326.
+
+```text
+Q02_B_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL
+Q02_B_TECHNICAL_STATUS=CLOSED_WITH_RESIDUAL
+Q02_B_IMPLEMENTATION_SHA=2ab92e73eef8337d5cee4d25f52cae971f0317d9
+Q02_B_EXECUTOR_TESTS=1665_PASS
+Q02_B_REAL_MODEL_EVAL=TEST_NOT_RUN
+Q02_B_FUNCTIONAL_FIDELITY=OPEN
+ADR58_RECONCILED=APPLICATION_CLARIFICATION
+EXPLORATORY_STRING_VALIDATOR_IN_DELIA=NOT_AUTHORIZED
+OWNER_BOUNDARY=DOMAIN_API_VALIDATES_BUSINESS_RULES
+Q02_C_ENTRY_CHECKPOINT=PREPARED
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+Q01_ACCEPTED=YES_WITH_RESIDUAL
+I04_ACCEPTED=NO
+Q02_A_REWORK_REMAINING=0
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_DIFF=NONE
+NEXT=COORDINATION_Q02_C_ENTRY_GATE
+```
+
+**Decisão anterior — 2026-10-20 (Q02-B, evidência para review, SUPERSEDED como cerca vigente pelo fechamento):** o pacote `DELIA-C3-Q02-B-ARGUMENTS-INDEX-PROVENANCE-REFACTOR-01` foi executado sobre a entrada `YES_BOUNDED_ENTRY` do ledger §6.324. A interpretação de texto livre exploratório, a escolha de índice e a referência linguística ficam na proposta do modelo. O código determinístico mantém schema, membership do catálogo vivo, proveniência de identificador (`id` / `*id`), AuthZ, budgets e outcome. Não aceita Q02-B, não autoriza Q02-C, não altera o teto conversacional de 12 s nem o orçamento global de 30 s, não faz deploy e não trata sucesso técnico como sucesso da tarefa. Ledger §6.325. Roadmap 59 §14.
 
 ```text
 Q02_B_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
