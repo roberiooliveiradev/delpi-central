@@ -22,7 +22,7 @@ export type HubRouteDef = {
   kind?: HubRouteKind;
 };
 
-export type HubSectionId = "portal";
+export type HubSectionId = "portal" | "closing";
 
 export type HubSectionDef = {
   id: HubSectionId;
@@ -55,6 +55,32 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
           "comeco",
           "saudação",
           "saudacao",
+        ],
+      },
+    ],
+  },
+  {
+    id: "closing",
+    title: "Central de Fechamento",
+    description: "Consultas e acompanhamento do fechamento mensal.",
+    iconKey: "closing",
+    routes: [
+      {
+        id: "financial-settlements",
+        label: "Baixas financeiras",
+        viewId: "financial_settlements",
+        requiredCap: "always",
+        keywords: [
+          "baixas",
+          "pagamentos",
+          "recebimentos",
+          "pagar",
+          "receber",
+          "financeiro",
+          "settlement",
+          "fechamento",
+          "liquidacao",
+          "liquidação",
         ],
       },
     ],

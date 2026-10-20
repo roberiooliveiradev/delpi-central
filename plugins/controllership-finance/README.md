@@ -7,16 +7,26 @@ Microfrontend do Portal Controladoria & Finanças — Minha DELPI.
 - **BFF:** `controllership-finance-api` (`/apps/controllership-finance-api`)
 - **Permissions:** `controllership-finance.access`, `controllership-finance.manage`
 
-Escopo entregue (IMP-MFE-HOME): bootstrap federado, manifesto, shell de
-navegação, Home com saudação/estados honestos, catálogo somente de rotas
-implementadas, busca `?q=`, últimos acessos locais e ajuda contextual.
+Escopo entregue (IMP-MFE-HOME + IMP-CF-R01-R02-D3-UI-01): bootstrap
+federado, manifesto, shell de navegação, Home com saudação/estados
+honestos, catálogo somente de rotas implementadas, busca `?q=`, últimos
+acessos locais e ajuda contextual.
+
+Central de Fechamento — Baixas financeiras (R01/R02): rota interna
+`closing/financial-settlements` com visão pagar/receber, filtros de
+período/natureza/movimento, resumo por moeda (`officialTotals=false` —
+nunca soma moedas nem declara fechamento oficial), tabela paginada no
+servidor e estado tipado `scope_unavailable` quando o dataset D3 ainda
+não está habilitado no ambiente. Filial sem origem rende
+«Não identificada» — nunca fallback 01/02.
 
 ## Runtime
 
 - React 19 + Vite 7 + `@originjs/vite-plugin-federation`
 - `@delpi/plugin-ui` via remote federado (`preparePluginUiRemote`)
 - Sem React Router — resolução de rota via `resolvePluginRoute`
-- Única origem de dados: `GET /viewer-context` na BFF do produto
+- Origens de dados na BFF do produto: `GET /viewer-context`,
+  `GET /closing/financial-settlements`, `GET /closing/financial-settlements/summary`
 
 ## Testes
 

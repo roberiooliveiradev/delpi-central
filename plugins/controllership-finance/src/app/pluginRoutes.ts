@@ -2,15 +2,26 @@
 export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
 
 /**
- * IMP-MFE-HOME: somente a rota Início existe em runtime.
+ * Rotas implementadas:
+ * - `home` — hub da Central de Fechamento.
+ * - `financial_settlements` — baixas financeiras R01/R02 (closing).
  * Rotas futuras (Visão geral, Sala de interação, Minhas tarefas,
  * Administração, Ajuda) entram aqui apenas quando implementadas.
  */
-export type PluginView = "home" | "not_found";
+export type PluginView = "home" | "financial_settlements" | "not_found";
 
 export type PluginNavId = "home";
 
-export type PluginNavigationTarget = "home";
+export type PluginNavigationTarget = "home" | "financial_settlements";
+
+/** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
+const RELATIVE_TO_VIEW: Record<string, PluginView> = {
+  "closing/financial-settlements": "financial_settlements",
+};
+
+const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
+  financial_settlements: "closing/financial-settlements",
+};
 
 export type ResolvedPluginRoute = {
   view: PluginView;
@@ -42,7 +53,12 @@ export function resolvePluginRoute(
     return { view: "home", pathname: path, relativePath: "" };
   }
 
-  return { view: "not_found", pathname: path, relativePath: path.slice(base.length) };
+  const relativePath = path.startsWith(`${base}/`)
+    ? path.slice(base.length + 1)
+    : path.slice(base.length);
+  const view = RELATIVE_TO_VIEW[relativePath] ?? "not_found";
+
+  return { view, pathname: path, relativePath };
 }
 
 /** Path canônico da view (paths só via buildPluginPath — sem URL absoluta). */
@@ -52,7 +68,7 @@ export function buildPluginPath(
   search?: string,
 ): string {
   const base = normalizeBasePath(basePath);
-  const suffix = view === "home" ? "" : "";
+  const suffix = view === "home" ? "" : `/${VIEW_TO_RELATIVE[view]}`;
   const normalizedSearch = search?.startsWith("?")
     ? search
     : search

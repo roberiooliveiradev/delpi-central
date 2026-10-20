@@ -12,6 +12,7 @@ import {
   createDashboardRecentAccessStrip,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
+  createDashboardSegmentToggle,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTitleWithHelp,
@@ -112,3 +113,4 @@ export const CfTitleWithHelp = createDashboardTitleWithHelp({
     titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
   },
 });
+export const CfSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
