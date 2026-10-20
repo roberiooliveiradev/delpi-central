@@ -323,3 +323,16 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 
 Detalhes do contrato backend: [README da API](../../../tv-dashboard-api/README.md). Comportamento do editor: [README do MFE](../../../plugins/tv-dashboard/README.md).
 
+---
+
+## Incidente encerrado — seleção explícita de branco em ícone (20/10/2026)
+
+**Status:** `RESOLVED` para o defeito específico de cor branca, **confirmado pelo usuário em produção após deploy**. Playlist de referência: `566fc50c-d9b9-41e4-b31b-83ad0d799cef`, slide *Chamados Helpdesk*. O aceite informado refere-se ao comportamento observado pelo usuário, não a uma execução independente de toda a matriz E2E.
+
+**Causa raiz:** no frontend, o adaptador canônico `plugins/tv-dashboard/src/utils/delpiFillAdapter.ts`, função `fillToColorStylePatch`, emitia `color: "#ffffff"` mas `colorPaint: undefined` ao selecionar uma cor sólida. O merge eliminava o marcador de escolha explícita; o resolver compartilhado `resolveComunicadoIconColor` interpretava branco sem marcador como sentinela legado e aplicava o azul padrão. A primeira divergência estava **antes da API**, não no backend. A correção anterior no renderer, `e7d58aee98`, não bastava porque o seletor ainda não fornecia o marcador tipado.
+
+**Correção:** commit [`6841b02d42`](https://github.com/roberiooliveiradev/delpi-central/commit/6841b02d42). Para `fill.kind === "solid"`, `fillToColorStylePatch` retorna `{ color: fill.color, colorPaint: fill }`. Reutiliza o contrato existente `DelpiFill`/`colorPaint` e o renderer compartilhado, sem novo campo, migration, mutação paralela ou alteração do CAS. A compatibilidade de estilos legados sem `colorPaint` permanece: um registro antigo de branco sem marcador continua seguindo o fallback legado até ser explicitamente reformatado.
+
+**Evidência:** execução reportou 12 testes no adaptador e suites correlatas verdes, revisão do código no commit e **confirmação posterior do usuário de que a seleção de branco foi corrigida em produção**. Classificação: `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=REUSE`; `CONTRACT_IMPACT=NONE`.
+
+**Escopo do encerramento:** somente cor sólida explícita de ícone. Os conflitos HTTP 409, coordenação entre abas, escritores MCP e testes adversariais multi-cliente permanecem **independentes**; não são considerados resolvidos por este registro. O histórico anterior de edição concorrente neste README é contextual e não deve ser interpretado como encerramento de todos os riscos.
