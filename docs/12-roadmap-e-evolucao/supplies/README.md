@@ -12,6 +12,8 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 **Esta pasta é contrato de produto/arquitetura e roadmap. Ela não autoriza implementação, cutover, remoção de legados, mudança de RBAC real ou migration produtiva sem pedido explícito do Product Owner.**
 
+> **Complemento de evolução (2026-10-20):** [Gestão cadastral de fornecedores — roadmap kit-first](./FORNECEDORES-GESTAO-CADASTRAL-ROADMAP.md) detalha E13/WF-09 e E14/WF-10 (busca, ficha, POST/PUT controlados e CNPJ futuro), com componentes visuais reutilizados de `@delpi/plugin-ui` via Module Federation. **Não altera o status bloqueado nem a página em foco da fila.**
+
 ---
 
 ## 1. Fonte de verdade e regra de execução
