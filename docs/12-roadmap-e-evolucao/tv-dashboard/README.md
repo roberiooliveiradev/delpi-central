@@ -289,3 +289,37 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 - [Especificação técnica do pacote MDD](../../../tv-dashboard-api/docs/architecture/tv-deck-package-v1.md)
 - [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md)
 - [plugins/tv-dashboard-presentation/README.md](../../../plugins/tv-dashboard-presentation/README.md)
+
+---
+
+## Integridade de edição colaborativa — correção de 20/10/2026
+
+**Incidente:** `TV-EDITOR-CONCURRENCY-PRESENCE-CANONICAL-FIX`. Durante a edição simultânea de uma playlist, atributos de formatação (incluindo cor de texto) eram restaurados por gravações que transportavam um `nativeConfig` antigo. A presença de uma aba conectada em segundo plano também podia continuar sendo exibida como edição ativa.
+
+**Implementação reportada:** commit `4d7f71423e` na `main` (29 arquivos, conforme relatório de execução). O usuário confirmou commit/deploy e informou que o comportamento parece corrigido. **Isso não equivale a validação E2E live completa.**
+
+### Contrato e responsabilidades
+
+- **Autoridade de mutação:** `tv-dashboard-api` e o write boundary `TvPresentationWriteService` ou sucessor comprovado no HEAD. Não duplicar regras na VISTA, no MFE nem no player.
+- **Controle de concorrência:** o contrato introduz guarda de revisão (`If-Match`/`expectedRevision`) nos writers do editor, com verificação de conflito transacional no caminho de persistência; conflito de revisão é retornado como HTTP 409 com revisão atual. A compatibilidade de consumidores legados sem guarda deve ser observada: não supor que toda chamada sem revisão foi proibida.
+- **Editor:** autosave e mutations propagam a revisão conhecida; em conflito, não sobrescrever silenciosamente. O draft divergente é preservado para recuperação e o estado remoto é recarregado. A experiência de recuperação deve ser validada.
+- **Realtime:** `slide_draft` é efêmero e não comprova persistência. A reconciliação deve considerar a revisão de base e a origem do cliente.
+- **Presença:** conexão autenticada, presença na playlist e atividade recente não são a mesma coisa. Foi reportada a adoção de `active` e de expiração periódica no servidor, com apresentação que evita contar uma aba inativa como edição ativa. Aba oculta não deve perder automaticamente suas alterações.
+- **Paridade:** editor, preview e TV continuam sujeitos ao mesmo contrato de apresentação, sem segunda renderização ou regra de domínio.
+
+### Evidências e pendências
+
+| Verificação | Estado em 20/10/2026 |
+|---|---|
+| Diagnóstico por histórico/revisões e código | PROVEN no relatório de RCA fornecido |
+| Commit e deploy da correção | Reportados como concluídos pelo usuário |
+| Testes automatizados backend e frontend | PASS conforme relatório de execução; resultados ainda não reexecutados neste registro |
+| Observação manual após deploy | Aparentemente corrigido, segundo usuário |
+| Teste live controlado com dois clientes e snapshot obsoleto | PENDING |
+| Fechamento de aba, desconexão, expiração e presença multiaba em live | PENDING |
+| Revisão independente do diff, segurança e regressões de consumidores legados | PENDING |
+
+**Aceite:** manter `ACCEPT_WITH_RESIDUAL` até comprovar a pós-condição com dois clientes, reload, revisão obsoleta, conflito explícito, recuperação de draft e expiração de presença no runtime implantado. Não registrar `LIVE PASS` com base apenas em deploy, testes unitários ou observação manual breve.
+
+Detalhes do contrato backend: [README da API](../../../tv-dashboard-api/README.md). Comportamento do editor: [README do MFE](../../../plugins/tv-dashboard/README.md).
+
