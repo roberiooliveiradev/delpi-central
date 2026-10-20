@@ -177,6 +177,24 @@ class ProtheusRestGateway:
         response = self._send("POST", url, headers=headers, json_body=body)
         return _map_supplier_write_response(response, url=url, operation="create")
 
+    def update_supplier(
+        self,
+        config: ProtheusRestConfig,
+        *,
+        supplier_id: str,
+        body: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """PUT supplier update — single attempt; timeout is indeterminate."""
+        url = f"{config.suppliers_base_url}{quote(supplier_id, safe='')}"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
+        response = self._send("PUT", url, headers=headers, json_body=body)
+        return _map_supplier_write_response(response, url=url, operation="update")
+
     def _get_with_retry(self, url: str, *, headers: dict[str, str]) -> httpx.Response:
         last_error: ProtheusRestError | None = None
         for attempt in range(1, _MAX_GET_ATTEMPTS + 1):
@@ -351,6 +369,14 @@ def _map_supplier_write_response(
         error_text = _extract_error_text(payload)
         safe_detail = redact_text(error_text)[:240] if error_text else ""
 
+        if operation == "update":
+            _raise_supplier_update_error(
+                response.status_code,
+                code_error=code_error,
+                safe_detail=safe_detail,
+                url=url,
+            )
+
         if code_error in {"001", "1"}:
             # Same code_error used for invalid ID and invalid JSON — discriminate by text.
             lowered = error_text.lower()
@@ -400,6 +426,16 @@ def _map_supplier_write_response(
 
     # Success shape is TO_INVENTORY — never invent A2_COD.
     if response.status_code == 204 or not payload:
+        if operation == "update":
+            return {
+                "write_outcome": "accepted_by_upstream",
+                "update_confirmed": False,
+                "update_acknowledged": True,
+                "persistence_proven": False,
+                "supplier_code": None,
+                "supplier_store": None,
+                "upstream": None,
+            }
         return {
             "write_outcome": "accepted_by_upstream",
             "creation_confirmed": False,
@@ -425,13 +461,71 @@ def _map_supplier_write_response(
             nested, ("A2_LOJA", "a2_loja", "supplier_store", "loja", "store")
         )
 
+    confirmed = bool(supplier_code and supplier_store)
+    if operation == "update":
+        return {
+            "write_outcome": "accepted_by_upstream",
+            "update_confirmed": False,
+            "update_acknowledged": True,
+            "persistence_proven": False,
+            "supplier_code": supplier_code,
+            "supplier_store": supplier_store,
+            "upstream": payload,
+        }
     return {
         "write_outcome": "accepted_by_upstream",
-        "creation_confirmed": bool(supplier_code and supplier_store),
+        "creation_confirmed": confirmed,
         "supplier_code": supplier_code,
         "supplier_store": supplier_store,
         "upstream": payload,
     }
+
+
+def _raise_supplier_update_error(
+    status_code: int,
+    *,
+    code_error: str,
+    safe_detail: str,
+    url: str,
+) -> None:
+    detail = f" Detalhe: {safe_detail}" if safe_detail else ""
+    if status_code == 404 or code_error in {"004", "4"}:
+        raise ProtheusRestError(
+            "Fornecedor não encontrado no Protheus." + detail,
+            code="PROTHEUS_SUPPLIER_NOT_FOUND",
+            status_code=404,
+            recoverable=False,
+        )
+    if code_error in {"001", "1"}:
+        raise ProtheusRestError(
+            "Identificador inválido rejeitado pelo Protheus." + detail,
+            code="PROTHEUS_SUPPLIER_WRITE_INVALID_ID",
+            status_code=400,
+            recoverable=False,
+        )
+    if code_error in {"002", "2"}:
+        raise ProtheusRestError(
+            "JSON inválido rejeitado pelo Protheus." + detail,
+            code="PROTHEUS_SUPPLIER_WRITE_INVALID_JSON",
+            status_code=400,
+            recoverable=False,
+        )
+    if code_error in {"003", "3"}:
+        raise ProtheusRestError(
+            "Falha na rotina MATA020 ao alterar fornecedor." + detail,
+            code="PROTHEUS_SUPPLIER_UPDATE_MATA020_FAILED",
+            status_code=400,
+            recoverable=False,
+        )
+    log_error(
+        f"Protheus supplier update HTTP {status_code} "
+        f"code_error={code_error or '-'} url={redact_text(url)}"
+    )
+    raise ProtheusRestError(
+        "Erro ao alterar fornecedor no Protheus." + detail,
+        code="PROTHEUS_UPSTREAM_ERROR",
+        status_code=502,
+    )
 
 
 def _pick_first_str(payload: dict[str, Any], keys: tuple[str, ...]) -> str | None:

@@ -256,13 +256,19 @@ API_DELPI_INTEGRATIONS_PROTHEUS_READ = "api-delpi.integrations.protheus.read"
 API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_CREATE = (
     "api-delpi.integrations.protheus.suppliers.create"
 )
+API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_UPDATE = (
+    "api-delpi.integrations.protheus.suppliers.update"
+)
 PROTHEUS_INTEGRATION_READ_PERMISSIONS = [
     API_DELPI_INTEGRATIONS_PROTHEUS_READ,
     API_DELPI_ACCESS_FULL,
 ]
-# Write must NOT inherit read or access.full (least privilege).
+# Write must NOT inherit read, create, or access.full (least privilege).
 PROTHEUS_SUPPLIER_CREATE_PERMISSIONS = [
     API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_CREATE,
+]
+PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS = [
+    API_DELPI_INTEGRATIONS_PROTHEUS_SUPPLIERS_UPDATE,
 ]
 
 AUDIT_5S_READ_PERMISSIONS = [

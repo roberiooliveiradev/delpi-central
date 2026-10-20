@@ -106,6 +106,10 @@ class Settings:
         _get_env("PROTHEUS_SUPPLIER_CREATE_ENABLED", default="false").lower()
         in ("true", "1", "yes", "on")
     )
+    PROTHEUS_SUPPLIER_UPDATE_ENABLED: bool = (
+        _get_env("PROTHEUS_SUPPLIER_UPDATE_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
 
     # ==========================
     # Plugins PostgreSQL

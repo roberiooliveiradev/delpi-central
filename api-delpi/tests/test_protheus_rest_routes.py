@@ -277,3 +277,4 @@ def test_router_exposes_status_and_supplier_paths() -> None:
     assert "get_protheus_integration_status" in operation_ids
     assert "get_protheus_rest_supplier" in operation_ids
     assert "create_protheus_rest_supplier" in operation_ids
+    assert "update_protheus_rest_supplier" in operation_ids

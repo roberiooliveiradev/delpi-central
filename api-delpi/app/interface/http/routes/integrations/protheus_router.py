@@ -13,11 +13,13 @@ from delpi_auth.request_context import get_current_user
 from app.application.security.api_delpi_permissions import (
     PROTHEUS_INTEGRATION_READ_PERMISSIONS,
     PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
+    PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS,
 )
 from app.composition.protheus_rest_composer import (
     build_create_protheus_rest_supplier_use_case,
     build_get_protheus_integration_status_use_case,
     build_get_protheus_rest_supplier_use_case,
+    build_update_protheus_rest_supplier_use_case,
 )
 from app.core.responses import error_response, not_found_response
 from app.domain.integrations.protheus_rest import ProtheusRestError
@@ -175,6 +177,74 @@ def create_protheus_rest_supplier_route(
         log_error(f"Erro inesperado na criação Protheus: {type(exc).__name__}")
         return error_response(
             "Erro interno ao criar fornecedor no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+@router.put(
+    "/suppliers/{supplier_id}",
+    operation_id="update_protheus_rest_supplier",
+)
+@require_any_permission(PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS)
+def update_protheus_rest_supplier_route(
+    supplier_id: str = Path(
+        ...,
+        min_length=8,
+        max_length=8,
+        pattern=r"^[0-9]{8}$",
+        description="Eight digits: six-digit supplier code + two-digit store",
+    ),
+    body: dict[str, Any] = Body(...),
+):
+    """Update supplier fields via Protheus REST. codusr is resolved from Core."""
+    if not isinstance(body, dict):
+        return error_response(
+            "Corpo da requisição deve ser um objeto JSON.",
+            status_code=422,
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            recoverable=False,
+        )
+    for forbidden in ("codusr", "user_id", "usr_id", "protheus_user_id"):
+        if forbidden in body:
+            return error_response(
+                "Identidade Protheus não pode ser enviada pelo cliente.",
+                status_code=422,
+                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+                recoverable=False,
+            )
+    fornecedor = body.get("fornecedor")
+    try:
+        actor_id = _actor_user_id()
+        data = build_update_protheus_rest_supplier_use_case().execute(
+            actor_user_id=actor_id,
+            supplier_id=supplier_id,
+            fornecedor=fornecedor if isinstance(fornecedor, dict) else fornecedor,
+        )
+        acknowledged = bool(data.get("update_acknowledged"))
+        return api_delpi_success(
+            data,
+            operation_id="update_protheus_rest_supplier",
+            message=(
+                "Solicitação de alteração enviada ao Protheus; persistência ainda não comprovada pelo contrato."
+                if acknowledged and not data.get("persistence_proven")
+                else "Solicitação de alteração processada."
+            ),
+        )
+    except ProtheusRestError as exc:
+        if exc.code == "PROTHEUS_SUPPLIER_NOT_FOUND":
+            return not_found_response(exc.message, code=exc.code)
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado na alteração Protheus: {type(exc).__name__}")
+        return error_response(
+            "Erro interno ao alterar fornecedor no Protheus.",
             status_code=500,
             code="PROTHEUS_INTERNAL_ERROR",
             recoverable=True,

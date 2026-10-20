@@ -4,7 +4,7 @@
   "name": "API DELPI TOTVS",
   "description": "API corporativa de integrações DELPI",
   "icon": "server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "backend-only",
   "basePath": "/apps/api-delpi",
   "entry": null,
@@ -25,6 +25,12 @@
       "code": "api-delpi.integrations.protheus.suppliers.create",
       "name": "api-delpi.integrations.protheus.suppliers.create",
       "description": "Criação de fornecedor via REST Protheus (POST; feature-gated)",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.integrations.protheus.suppliers.update",
+      "name": "api-delpi.integrations.protheus.suppliers.update",
+      "description": "Alteração de fornecedor via REST Protheus (PUT; feature-gated)",
       "module": "api-delpi"
     }
   ],

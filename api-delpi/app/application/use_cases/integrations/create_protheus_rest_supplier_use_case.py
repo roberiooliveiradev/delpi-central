@@ -5,13 +5,15 @@ from __future__ import annotations
 from typing import Any, Mapping
 from uuid import UUID
 
+from app.application.services.integrations.protheus_actor_codusr import (
+    resolve_actor_codusr,
+)
 from app.application.services.integrations.protheus_path_resolver import (
     resolve_protheus_rest_config,
 )
 from app.application.services.integrations.protheus_supplier_create_payload import (
     build_upstream_create_body,
     normalize_supplier_fields,
-    validate_codusr,
 )
 from app.application.services.integrations.protheus_token_service import (
     ProtheusTokenService,
@@ -49,7 +51,7 @@ class CreateProtheusRestSupplierUseCase:
         fornecedor: Mapping[str, Any],
     ) -> dict[str, Any]:
         normalized = normalize_supplier_fields(fornecedor)
-        codusr = self._resolve_codusr(actor_user_id)
+        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
 
         if not settings.PROTHEUS_SUPPLIER_CREATE_ENABLED:
             log_info(
@@ -91,38 +93,3 @@ class CreateProtheusRestSupplierUseCase:
             "supplier_store": normalized.get("supplier_store"),
             **upstream,
         }
-
-    def _resolve_codusr(self, actor_user_id: UUID) -> str:
-        mapping = self._identity_gateway.get_identity_for_user(actor_user_id)
-        status = str(mapping.get("mapping_status") or "").strip().lower()
-        if status == "ambiguous":
-            raise ProtheusRestError(
-                "Identidade Protheus ambígua; resolva o vínculo no Core antes de criar fornecedor.",
-                code="PROTHEUS_IDENTITY_AMBIGUOUS",
-                status_code=422,
-                recoverable=False,
-            )
-        if status != "mapped":
-            raise ProtheusRestError(
-                "Usuário sem vínculo Protheus mapeado no Core.",
-                code="PROTHEUS_IDENTITY_UNMAPPED",
-                status_code=422,
-                recoverable=False,
-            )
-        if not bool(mapping.get("verified")):
-            raise ProtheusRestError(
-                "Identidade Protheus do usuário não está verificada.",
-                code="PROTHEUS_IDENTITY_NOT_VERIFIED",
-                status_code=422,
-                recoverable=False,
-            )
-        protheus_user_id = str(mapping.get("protheus_user_id") or "").strip()
-        if not protheus_user_id:
-            raise ProtheusRestError(
-                "Vínculo Protheus sem USR_ID.",
-                code="PROTHEUS_IDENTITY_UNMAPPED",
-                status_code=422,
-                recoverable=False,
-            )
-        # Equivalence codusr ≡ USR_ID is TO_INVENTORY; format gate is 6 digits.
-        return validate_codusr(protheus_user_id)

@@ -51,4 +51,13 @@
 | Equivalência `codusr` ≡ `SYS_USR.USR_ID` | TO_INVENTORY |
 | POST real no Protheus | **não executado** (0 chamadas) |
 
-**STOP:** gates obrigatórios de escrita real não comprovados. Feature gate permanece desligado.
+**STOP:** gates obrigatórios de escrita real não comprovados. Feature gate de criação permanece desligado.
+
+## PUT — implementação (sem live write)
+
+| Item | Resultado |
+|------|-----------|
+| Código `update_protheus_rest_supplier` | implementado; gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED` default `false` |
+| Permissão | `api-delpi.integrations.protheus.suppliers.update` (manifest 1.0.3) |
+| POST live | inalterado — homologação continua BLOCKED |
+| PUT live | TEST_NOT_RUN / NOT_AUTHORIZED |

@@ -1,0 +1,100 @@
+"""Update an existing Protheus supplier via REST — gated, no automatic retry."""
+
+from __future__ import annotations
+
+from typing import Any, Mapping
+from uuid import UUID
+
+from app.application.services.integrations.protheus_actor_codusr import (
+    resolve_actor_codusr,
+)
+from app.application.services.integrations.protheus_path_resolver import (
+    resolve_protheus_rest_config,
+)
+from app.application.services.integrations.protheus_supplier_update_payload import (
+    build_upstream_update_body,
+    normalize_supplier_update_fields,
+    validate_supplier_id,
+)
+from app.application.services.integrations.protheus_token_service import (
+    ProtheusTokenService,
+)
+from app.config import settings
+from app.domain.integrations.protheus_rest import ProtheusRestError
+from app.infrastructure.gateways.core_protheus_identity_gateway import (
+    CoreProtheusIdentityGateway,
+)
+from app.infrastructure.gateways.protheus_rest_gateway import ProtheusRestGateway
+from app.infrastructure.persistence.intranet.protheus_integration_params_repository import (
+    ProtheusIntegrationParamsRepository,
+)
+from app.utils.logger import log_info
+
+
+class UpdateProtheusRestSupplierUseCase:
+    def __init__(
+        self,
+        *,
+        params_repository: ProtheusIntegrationParamsRepository,
+        token_service: ProtheusTokenService,
+        gateway: ProtheusRestGateway,
+        identity_gateway: CoreProtheusIdentityGateway,
+    ) -> None:
+        self._params_repository = params_repository
+        self._token_service = token_service
+        self._gateway = gateway
+        self._identity_gateway = identity_gateway
+
+    def execute(
+        self,
+        *,
+        actor_user_id: UUID,
+        supplier_id: str,
+        fornecedor: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        normalized_id = validate_supplier_id(supplier_id)
+        fields = normalize_supplier_update_fields(fornecedor)
+        codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
+
+        if not settings.PROTHEUS_SUPPLIER_UPDATE_ENABLED:
+            log_info(
+                "protheus_supplier_update_blocked_by_feature_gate "
+                f"actor_user_id={actor_user_id} supplier_id={normalized_id}"
+            )
+            raise ProtheusRestError(
+                "Alteração de fornecedor Protheus desabilitada neste ambiente "
+                "(PROTHEUS_SUPPLIER_UPDATE_ENABLED=false). "
+                "Nenhuma escrita foi enviada ao ERP.",
+                code="PROTHEUS_SUPPLIER_UPDATE_DISABLED",
+                status_code=503,
+                recoverable=False,
+            )
+
+        body = build_upstream_update_body(codusr=codusr, fields=fields)
+        raw = self._params_repository.load_raw_params()
+        config = resolve_protheus_rest_config(raw)
+        token = self._token_service.get_valid_token(config)
+
+        try:
+            upstream = self._gateway.update_supplier(
+                config,
+                supplier_id=normalized_id,
+                body=body,
+                access_token=token,
+            )
+        except ProtheusRestError as exc:
+            if exc.code == "PROTHEUS_TOKEN_INVALID":
+                self._token_service.invalidate()
+            raise
+
+        log_info(
+            "protheus_supplier_update_submitted "
+            f"actor_user_id={actor_user_id} supplier_id={normalized_id} "
+            f"update_confirmed={upstream.get('update_confirmed')}"
+        )
+        return {
+            "supplier_id": normalized_id,
+            "codusr": codusr,
+            "fields_sent": sorted(fields.keys()),
+            **upstream,
+        }

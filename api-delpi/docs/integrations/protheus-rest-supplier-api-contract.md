@@ -95,7 +95,17 @@ Estrutura JSON **ilustrativa**, com dados fictícios e sem credencial:
 
 A fonte não descreve status/payload de **sucesso** POST, idempotência, regras de retry, obrigatoriedade exaustiva nem geração/retorno do novo `A2_COD`. Esses pontos são `TO_INVENTORY` e não devem ser inventados.
 
-### 3.3 PUT /:ID (alteração, fora do escopo do primeiro POST)
+### 3.3 PUT /:ID (alteração)
+
+**API DELPI:** `PUT /integrations/protheus/suppliers/{supplier_id}` · `operationId=update_protheus_rest_supplier`  
+**Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create ou `access.full`)  
+**Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST)  
+**Request público:** objeto `fornecedor` com campos comprovados (`supplier_name`, `supplier_short_name`). O backend monta o array upstream e resolve `codusr` no Core.  
+**Allowlist inicial:** somente os dois campos do exemplo contratual. Demais campos do POST permanecem não editáveis até prova upstream.  
+**Resposta 2xx:** `update_acknowledged=true` e `persistence_proven=false` — HTTP de sucesso não comprova persistência.  
+**Live write:** não autorizado nesta entrega.
+
+Upstream Protheus:
 
 `PUT {URL_REST}{PATH_SUPPLIERS}/:ID`
 
