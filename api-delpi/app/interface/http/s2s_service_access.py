@@ -29,6 +29,7 @@ from delpi_auth.service_errors import (
     ServiceAuthError,
     ServiceClientDeniedError,
     ServiceScopeDeniedError,
+    ServiceValidatorUnavailableError,
 )
 from delpi_auth.service_identity import ServiceIdentity
 from delpi_auth.service_token_validator import ServiceTokenValidator
@@ -65,6 +66,11 @@ def _require_service_identity(
         )
     except ServiceAuthConfigError as exc:
         logger.error("s2s_config_missing code=%s", exc.code)
+        raise HTTPException(
+            status_code=503, detail="Service authentication unavailable"
+        ) from exc
+    except ServiceValidatorUnavailableError as exc:
+        logger.warning("s2s_denied code=%s", exc.code)
         raise HTTPException(
             status_code=503, detail="Service authentication unavailable"
         ) from exc

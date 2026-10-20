@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+import requests
 from jose import ExpiredSignatureError, JWTError
 
 from delpi_auth import service_token_validator as validator_module
@@ -13,6 +14,7 @@ from delpi_auth.service_errors import (
     ServiceScopeDeniedError,
     ServiceTokenInvalidError,
     ServiceTokenMissingError,
+    ServiceValidatorUnavailableError,
 )
 from delpi_auth.service_token_validator import (
     ServiceTokenValidator,
@@ -89,6 +91,16 @@ def test_validate_rejects_invalid_signature_or_audience():
         with patch.object(validator_module, "validate_token", side_effect=exc):
             with pytest.raises(ServiceTokenInvalidError):
                 ServiceTokenValidator(CONFIG).validate("token")
+
+
+def test_validate_maps_jwks_fetch_failure_to_unavailable():
+    with patch.object(
+        validator_module,
+        "validate_token",
+        side_effect=requests.ConnectionError("jwks unreachable"),
+    ):
+        with pytest.raises(ServiceValidatorUnavailableError):
+            ServiceTokenValidator(CONFIG).validate("token")
 
 
 def test_validate_rejects_unknown_client():

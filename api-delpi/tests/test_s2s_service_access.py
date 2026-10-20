@@ -9,6 +9,7 @@ from delpi_auth.service_errors import (
     ServiceClientDeniedError,
     ServiceScopeDeniedError,
     ServiceTokenInvalidError,
+    ServiceValidatorUnavailableError,
 )
 from delpi_auth.service_identity import ServiceIdentity
 
@@ -143,6 +144,16 @@ def test_strict_maps_missing_config_to_503_fail_closed():
 
     request = _request(s2s_header="Bearer svc-jwt")
     with _PatchAll(_use(request, _validator(error=ServiceAuthConfigError("missing")))):
+        assert _call(handler) == ("http", 503)
+
+
+def test_strict_maps_jwks_unavailable_to_503_fail_closed():
+    @require_s2s_service()
+    def handler():
+        return "done"
+
+    request = _request(s2s_header="Bearer svc-jwt")
+    with _PatchAll(_use(request, _validator(error=ServiceValidatorUnavailableError()))):
         assert _call(handler) == ("http", 503)
 
 
