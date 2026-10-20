@@ -225,3 +225,18 @@ python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 python3 scripts/ci/check_tv_dashboard_css_scope.py --check
 bash scripts/ci/build-tv-dashboard.sh
 ```
+
+---
+
+## Autosave, revisão e presença colaborativa — atualização de 20/10/2026
+
+Correção reportada em `4d7f71423e` para a família de regressões em que um editor com `nativeConfig` obsoleto sobrescrevia cor, fonte ou outras propriedades gravadas por outra sessão.
+
+- Alterações de blocos e autosave usam o contrato de revisão do backend (`WriteGuard`/`expectedRevision`/`If-Match` conforme operação).
+- Em HTTP 409, o editor não deve confirmar silenciosamente a alteração obsoleta: estado autoritativo é recarregado e draft conflitante é preservado para recuperação. Confirmar a UX real de recuperação durante os testes live.
+- Draft em `localStorage` não deve ser reaplicado como snapshot autoritativo antigo sem verificação da revisão de base. `slide_draft` representa sincronização efêmera, não commit confirmado.
+- A presença anunciada separa conexão de atividade: uma aba oculta ainda conectada pode estar inativa e não deve necessariamente aparecer como alguém editando ativamente. Fechamento/expiração devem ser confirmados em testes reais multiaba.
+- O contrato de persistência pertence ao backend TV, não ao editor nem ao pacote de renderização compartilhado.
+
+**Status:** deploy relatado como concluído, usuário observa melhora, testes automatizados reportados PASS; **E2E live de dois clientes, conflito/recovery, reload e expiração de presença ainda PENDING**. Não marcar incidente encerrado sem essa evidência. Veja [documentação central](../../docs/12-roadmap-e-evolucao/tv-dashboard/README.md) e [API](../../tv-dashboard-api/README.md).
+
