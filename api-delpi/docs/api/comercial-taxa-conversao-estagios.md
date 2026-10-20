@@ -452,7 +452,7 @@ SELECT
 FROM ovs_base;
 ```
 
-Permissão: `api-delpi.data` ou `api-delpi.access.full`. Tabelas na whitelist: `allowed_tables.json`.
+Permissão: `api-delpi.data`. Tabelas na whitelist: `allowed_tables.json`.
 
 ---
 

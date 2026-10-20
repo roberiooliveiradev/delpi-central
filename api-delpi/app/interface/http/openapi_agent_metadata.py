@@ -1007,7 +1007,7 @@ DATA_SQL = agent_route(
     description=(
         "Executa SELECT (com CTE e recursivo permitido) no Protheus. "
         "Corpo JSON com campo sql ou text/plain com a query. "
-        "Requer permissão api-delpi.data ou api-delpi.access.full."
+        "Requer permissão api-delpi.data."
     ),
     operation_id="execute_readonly_sql",
 )

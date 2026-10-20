@@ -94,7 +94,6 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | Permissão | Finalidade |
 |---|---|
 | `api-delpi.access` | Acesso padrão a produtos, vendas e módulos departamentais gerais. |
-| `api-delpi.access.full` | Acesso ampliado (sistema + dados SQL). |
 | `api-delpi.system` | Consulta de metadados de tabelas Protheus. |
 | `api-delpi.data` | Execução de SQL somente leitura (`POST /data/sql`). |
 | `api-delpi.quality.access` | Métricas de qualidade (PPM, kaizen, 5S, NC listagem TOTVS). |

@@ -7,7 +7,6 @@ Legenda de permissões:
 | Sigla | Permissão |
 |---|---|
 | **A** | `api-delpi.access` |
-| **AF** | `api-delpi.access.full` |
 | **S** | `api-delpi.system` |
 | **D** | `api-delpi.data` |
 | **Q** | `api-delpi.quality.access` |
@@ -81,14 +80,14 @@ Legenda de permissões:
 
 | Método | Endpoint | Perm. |
 |---|---|---|
-| GET | `/system/tables/search` | AF ou S |
-| GET | `/system/tables/{tableName}` | AF ou S |
-| GET | `/system/tables/{tableName}/columns` | AF ou S |
-| GET | `/system/tables/{tableName}/indexes` | AF ou S |
-| GET | `/system/tables/{tableName}/relations` | AF ou S |
-| GET | `/system/tables/{tableName}/schema` | AF ou S |
-| GET | `/system/tables/{tableName}/columns/search` | AF ou S |
-| GET | `/system/columns/search` | AF ou S |
+| GET | `/system/tables/search` | S |
+| GET | `/system/tables/{tableName}` | S |
+| GET | `/system/tables/{tableName}/columns` | S |
+| GET | `/system/tables/{tableName}/indexes` | S |
+| GET | `/system/tables/{tableName}/relations` | S |
+| GET | `/system/tables/{tableName}/schema` | S |
+| GET | `/system/tables/{tableName}/columns/search` | S |
+| GET | `/system/columns/search` | S |
 
 ---
 
@@ -96,7 +95,7 @@ Legenda de permissões:
 
 | Método | Endpoint | Perm. |
 |---|---|---|
-| POST | `/data/sql` | AF ou D |
+| POST | `/data/sql` | D |
 
 ---
 

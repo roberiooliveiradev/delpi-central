@@ -28,8 +28,8 @@ Não inclui PUT de fornecedores nem consulta SA2 como substituto do REST.
 
 ## Autorização
 
-- Leitura: `api-delpi.integrations.protheus.read` (ou `api-delpi.access.full`).
-- Criação: `api-delpi.integrations.protheus.suppliers.create` (**não** herdada de read/`access.full`).
+- Leitura: `api-delpi.integrations.protheus.read`.
+- Criação: `api-delpi.integrations.protheus.suppliers.create` (não herdada de read nem de `api-delpi.data`).
 
 ## Inversão PATH_AUTH / PATH_SUPPLIERS
 
@@ -84,5 +84,5 @@ O solicitante manteve HTTP na rede interna. Isso é risco residual explícito, n
 ### Permissão Keycloak / Core
 
 - Código: `api-delpi.integrations.protheus.read` (manifest `1.0.1` + decorator).
-- Publicação: `POST /core-api/admin/apps/register` + grant RBAC — **não** usar `api-delpi.access.full` como atalho.
+- Publicação: `POST /core-api/admin/apps/register` + grant RBAC da permissão da rota.
 - Deploy canônico: `git pull` + `./infra/scripts/up-prod-sequential.sh --pull --build` (escopo `api-delpi`).

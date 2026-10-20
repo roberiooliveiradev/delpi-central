@@ -4,7 +4,7 @@
 
 Explora dicionário de dados do Protheus (tabelas SX2, colunas SX3, índices SIX, relacionamentos SX9).
 
-**Permissão:** `api-delpi.access.full` **ou** `api-delpi.system` (`@require_any_permission`).
+**Permissão:** `api-delpi.system`.
 
 ### GET /system/tables/search
 
@@ -90,7 +90,7 @@ Busca global de colunas por descrição (SX3010 + ranking semântico).
 
 Executa SQL **somente leitura** no SQL Server Protheus.
 
-**Permissão:** `api-delpi.access.full` **ou** `api-delpi.data`
+**Permissão:** `api-delpi.data`
 
 **Content-Type aceitos:**
 

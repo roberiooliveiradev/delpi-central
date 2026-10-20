@@ -42,7 +42,7 @@ Para recursos por ID, a fonte define `:ID = A2_COD (6 dígitos) + A2_LOJA (2 dí
 ### 3.2 POST / (inclusão)
 
 **API DELPI:** `POST /integrations/protheus/suppliers` · `operationId=create_protheus_rest_supplier`  
-**Permissão:** `api-delpi.integrations.protheus.suppliers.create` (não herdada de read / `access.full`)  
+**Permissão:** `api-delpi.integrations.protheus.suppliers.create` (não herdada de read nem de `api-delpi.data`)  
 **Feature gate:** `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` (default) — com gate fechado **não** há POST upstream.  
 **Identidade:** `codusr` resolvido via Core S2S (`mapped` + `verified` + `protheus_user_id` 6 dígitos); cliente **não** envia `codusr`.  
 **Matriz de campos:** `protheus-rest-supplier-post-field-matrix.md`.
@@ -98,7 +98,7 @@ A fonte não descreve status/payload de **sucesso** POST, idempotência, regras 
 ### 3.3 PUT /:ID (alteração)
 
 **API DELPI:** `PUT /integrations/protheus/suppliers/{supplier_id}` · `operationId=update_protheus_rest_supplier`  
-**Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create ou `access.full`)  
+**Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create nem de `api-delpi.data`)  
 **Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST)  
 **Request público:** objeto `fornecedor` com campos comprovados (`supplier_name`, `supplier_short_name`). O backend monta o array upstream e resolve `codusr` no Core.  
 **Allowlist inicial:** somente os dois campos do exemplo contratual. Demais campos do POST permanecem não editáveis até prova upstream.  

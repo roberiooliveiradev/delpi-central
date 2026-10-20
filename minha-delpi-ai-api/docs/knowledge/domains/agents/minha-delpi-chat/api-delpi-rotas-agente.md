@@ -147,7 +147,7 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 - JSON: `{ "sql": "SELECT ..." }`
 - ou `text/plain` com a query
 
-Somente leitura (SELECT, CTE). Permissão: `api-delpi.data` ou `api-delpi.access.full`.
+Somente leitura (SELECT, CTE). Permissão: `api-delpi.data`.
 
 **Exemplos**
 

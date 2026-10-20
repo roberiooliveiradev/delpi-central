@@ -4,7 +4,7 @@
   "name": "API DELPI",
   "description": "API corporativa de integrações DELPI",
   "icon": "server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "backend-only",
   "basePath": "/apps/api-delpi",
   "entry": null,
@@ -16,9 +16,9 @@
       "module": "api-delpi"
     },
     {
-      "code": "api-delpi.access.full",
-      "name": "Acesso Total",
-      "description": "Acesso a total as funcionalidades da API DELPI",
+      "code": "api-delpi.data",
+      "name": "SQL somente leitura",
+      "description": "Executa SELECT no Protheus via POST /data/sql",
       "module": "api-delpi"
     },
     {

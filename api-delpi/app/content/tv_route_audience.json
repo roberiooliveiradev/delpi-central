@@ -870,7 +870,7 @@
         },
         "pt-BR": {
           "summary": "Executar consulta SQL somente leitura",
-          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full.",
+          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data.",
           "label": "Executar consulta SQL somente leitura"
         }
       }

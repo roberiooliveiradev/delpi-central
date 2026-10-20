@@ -73,7 +73,7 @@ def test_supplier_authorized_existing() -> None:
         get_protheus_rest_supplier_route,
     )
 
-    user = _user(perms.API_DELPI_ACCESS_FULL)
+    user = _user(perms.API_DELPI_INTEGRATIONS_PROTHEUS_READ)
     payload = {"A2_COD": "000001", "A2_LOJA": "01", "A2_NOME": "ACME"}
     with patch(
         "delpi_auth.authorization.resolve_user_context", return_value=user

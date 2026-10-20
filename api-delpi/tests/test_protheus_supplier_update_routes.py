@@ -54,12 +54,12 @@ def test_create_permission_cannot_update() -> None:
             )
 
 
-def test_access_full_cannot_update() -> None:
+def test_data_permission_cannot_update() -> None:
     from app.interface.http.routes.integrations.protheus_router import (
         update_protheus_rest_supplier_route,
     )
 
-    user = _user(perms.API_DELPI_ACCESS_FULL)
+    user = _user(perms.API_DELPI_DATA)
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             update_protheus_rest_supplier_route(

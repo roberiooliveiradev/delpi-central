@@ -149,7 +149,7 @@ Conclusão da homologação: **a fórmula bate**; divergência de totais = snaps
 3. Comparar realizado com `GET /commercial/rol/by-branch` no mesmo intervalo (`nature=rol`) ou `gross_revenue` do `get_rol`.
 4. Validar HTTP: `GET /commercial/billing-portfolio/summary?start_date=2026-08-10&end_date=2026-08-16&branch=02&customer_segment=new_business`.
 
-Permissão: `api-delpi.data` / `api-delpi.system` / `api-delpi.access.full` (SQL) · `KPI_COMMERCIAL_ACCESS` (rotas comerciais).
+Permissão: `api-delpi.data` (SQL) · `KPI_COMMERCIAL_ACCESS` (rotas comerciais).
 
 ## Anti-padrões (regressão)
 

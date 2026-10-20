@@ -4,7 +4,7 @@
   "name": "API DELPI TOTVS",
   "description": "API corporativa de integrações DELPI",
   "icon": "server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "backend-only",
   "basePath": "/apps/api-delpi",
   "entry": null,
@@ -13,6 +13,12 @@
       "code": "api-delpi.access",
       "name": "api-delpi.access",
       "description": "Permite acesso à API DELPI",
+      "module": "api-delpi"
+    },
+    {
+      "code": "api-delpi.data",
+      "name": "api-delpi.data",
+      "description": "Executa SELECT somente leitura no Protheus via POST /data/sql",
       "module": "api-delpi"
     },
     {

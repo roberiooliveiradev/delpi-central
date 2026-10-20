@@ -1089,7 +1089,7 @@ _SYSTEM_METADATA_ROUTES = (
     ("permissions", "expected"),
     [
         (["api-delpi.system"], 200),
-        (["api-delpi.access.full"], 200),
+        (["api-delpi.data"], 403),
         (["api-delpi.access"], 403),
         ([], 403),
     ],

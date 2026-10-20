@@ -66,8 +66,8 @@ Strategic Indicators: JSON direto / `HTTPException`.
 | Permissão | Uso |
 |---|---|
 | `api-delpi.access` | Produtos, vendas, KPIs gerais |
-| `api-delpi.access.full` | Acesso ampliado |
-| `api-delpi.system` / `api-delpi.data` | Sistema + SQL |
+| `api-delpi.system` | Metadados de tabelas |
+| `api-delpi.data` | SQL somente leitura (`POST /data/sql`) |
 | `api-delpi.quality.access` | `/quality/*` |
 | `strategic-indicators.*` | Módulo SI |
 | `dashboard-lmps.view` | MFE Dashboard LMPs (leitura + hydrate) |

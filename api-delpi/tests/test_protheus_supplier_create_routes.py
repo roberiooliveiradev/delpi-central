@@ -39,12 +39,12 @@ def test_create_forbidden_without_permission() -> None:
             )
 
 
-def test_create_forbidden_with_access_full_only() -> None:
+def test_create_forbidden_with_data_permission() -> None:
     from app.interface.http.routes.integrations.protheus_router import (
         create_protheus_rest_supplier_route,
     )
 
-    user = _user(perms.API_DELPI_ACCESS_FULL)
+    user = _user(perms.API_DELPI_DATA)
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             create_protheus_rest_supplier_route(

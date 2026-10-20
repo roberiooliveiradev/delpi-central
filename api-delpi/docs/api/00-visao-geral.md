@@ -158,7 +158,6 @@ Consumidores TypeScript (plugins MFE): tipos em `shared/api-delpi-envelope/types
 | Permissão | Escopo |
 |---|---|
 | `api-delpi.access` | Produtos, vendas, financeiro, comercial, produção, suprimentos. |
-| `api-delpi.access.full` | Equivale a acesso total quando combinada com permissões granulares. |
 | `api-delpi.system` | Metadados de tabelas. |
 | `api-delpi.data` | `POST /data/sql`. |
 | `api-delpi.quality.access` | Rotas em `/quality/*`. |

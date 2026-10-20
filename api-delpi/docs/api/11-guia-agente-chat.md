@@ -205,7 +205,7 @@ Permissão: `api-delpi.quality.access` ou `dashboard-quality.view`.
 | `GET /system/tables/{tableName}/schema` | Schema agregado |
 | `GET /system/columns/search` | Busca global de colunas |
 
-Permissão SQL: `api-delpi.data` ou `api-delpi.access.full`. Sistema: `api-delpi.system` ou `api-delpi.access.full`.
+Permissão SQL: `api-delpi.data`. Sistema: `api-delpi.system`.
 
 ---
 

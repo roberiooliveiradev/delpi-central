@@ -41,8 +41,8 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Produção (KPIs) | `api-delpi.access` ou `dashboard-production.view` |
 | RH | `api-delpi.access` ou `dashboard-hr.view` |
 | Qualidade (métricas TOTVS) | `api-delpi.quality.access` ou `dashboard-quality.view` |
-| SQL | `api-delpi.data` ou `api-delpi.access.full` |
-| Metadados sistema (tabelas/colunas) | `api-delpi.access.full` ou `api-delpi.system` |
+| SQL | `api-delpi.data` |
+| Metadados sistema (tabelas/colunas) | `api-delpi.system` |
 
 ---
 
@@ -421,7 +421,7 @@ Consultas analíticas no Protheus; **não** confundir com módulo NC em PostgreS
 |----------------|------|--------------------------|
 | Executar SELECT / consulta analítica | `POST /data/sql` | `execute_readonly_sql` |
 
-**Corpo:** JSON `{ "sql": "SELECT ..." }` ou `text/plain` com a query. Somente leitura (SELECT, CTE). Permissão: `api-delpi.data` ou `api-delpi.access.full`.
+**Corpo:** JSON `{ "sql": "SELECT ..." }` ou `text/plain` com a query. Somente leitura (SELECT, CTE). Permissão: `api-delpi.data`.
 
 ---
 
@@ -438,7 +438,7 @@ Consultas analíticas no Protheus; **não** confundir com módulo NC em PostgreS
 | Schema agregado completo | `GET /system/tables/{tableName}/schema` | SX2+SX3+SIX+SX9 |
 | Busca global de colunas | `GET /system/columns/search` | `description`, `page`, `limit` |
 
-Permissão: `api-delpi.access.full` ou `api-delpi.system`.
+Permissão: `api-delpi.system`.
 
 ---
 
