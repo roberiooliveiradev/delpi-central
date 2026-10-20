@@ -16469,3 +16469,28 @@ CODE_CHANGED=NO
 Q03_AUTHORIZED=NO
 NEXT=COORDINATION_DEPLOY_AUTHORIZATION_THEN_SINGLE_SIPOC
 ```
+
+
+## §6.339 — SIPOC live after canonical delia-api script (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-SIPOC-REAL-MODEL-BUDGET-VALIDATION-01`. User authorized `up-prod-sequential.sh --pull --build delia-api`. Script exit 0. Host `a9c3df812dfcea13e7a27b46d5b1015edc58afea` already contained fix `a9f5f8d3c2ac389747ce4249e0e185cca72f52e1`. Image layer cached; container started `2026-10-20T17:18:18Z` was left running. In-process marker `early_conversational_admission` present; handler and orchestration use it; fallback constant remains `12.0`; `DELIA_TURN_BUDGET_SECONDS=30`; model `moonshotai/kimi-k3`. One MESSAGE, «O que é SIPOC?», no retry. HTTP 200 in 13412 ms. Admission `conversational` at 2289 ms. No owner, no confirmation, no ACT. Answer invocation present. `NON_GROUNDED` / `HYPOTHESIS`. Limitation states a general concept and no DELPI SIPOC records were checked. Budget termination phrase absent. Content names Suppliers, Inputs, Process, Outputs and Customers. Answer stage about 11123 ms, so this sample did not run past 12 s; the cap is attributed by the running marker plus a complete answer inside the 30 s budget. Evidência: [66](../corrections/mcp-contextual-intelligence-orchestration/66-sipoc-real-model-budget-validation-live.md).
+
+```text
+SIPOC_LIVE=PASS
+RUNTIME_HOST=a9c3df812dfcea13e7a27b46d5b1015edc58afea
+CONTAINER_STARTED=2026-10-20T17:18:18Z
+EARLY_ADMISSION_MARKER_IN_CONTAINER=YES
+ADMISSION_OUTCOME=conversational
+ADMISSION_LATENCY_MS=2289
+TOTAL_LATENCY_MS=13412
+MODEL_CALL_COUNT=2
+SELECTED_OWNER=none
+CONVERSATIONAL_STAGE_CAP=REMAINING_GLOBAL_DEADLINE
+GLOBAL_TURN_BUDGET_SECONDS=30
+POST_ORCHESTRATION_FALLBACK_CAP_SECONDS=12
+SIPOC_BUDGET_FIX=PASS
+MATERIAL_ACT=0
+CODE_CHANGED=NO
+Q03_AUTHORIZED=NO
+NEXT=COORDINATION_REVIEW
+```
