@@ -83,6 +83,10 @@ Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY
 
 **Baseline de abertura (20/10/2026):** `0/60` coleta, `0/90` auditoria; **após rodada L1.1 FINR190:** `2/60 = 3,3%` de critérios de coleta atestados, `2/90 = 2,2%` de auditoria atestados, `0/15 = 0,0%` de itens encerrados (documento 47 §6). Isso não apaga o inventário documental já existente: apenas distingue catalogação de evidência validada por critério. Nenhuma nova implementação está autorizada por este tracker.
 
+### R01/R02 — contrato documental de rotas (20/10/2026)
+
+[48 — Design TARGET de baixas financeiras e contratos api-delpi → BFF](./48-r01-r02-financial-settlements-api-contract-target.md): endpoints e DTOs **propostos**, campos e fontes do DAVI auditados, limitações dos joins e matriz RQ/AC. `DESIGN_DRAFT=READY_FOR_PO_REVIEW`; `D1..D5=DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`. Dados `FK1/FK2/FK7/SE1/SE2/SED` comprovados em leitura não demonstram a saída `_F190C`, cuja paridade segue `TEST_NOT_RUN`. Sem alteração de runtime.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
