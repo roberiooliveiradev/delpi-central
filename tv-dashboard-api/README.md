@@ -333,3 +333,22 @@ pytest tests/ -q
 - Compose: `tv-dashboard-api` → `delpi-tv-dashboard-api`
 - Depende: `postgres-plugins`, `keycloak`, `api-delpi`
 - Gateway: requer headers WebSocket (`Upgrade`, `Connection`) em `/apps/tv-dashboard-api/`
+
+---
+
+## Edição concorrente e presença — contrato de integridade (20/10/2026)
+
+Registro da correção `TV-EDITOR-CONCURRENCY-PRESENCE-CANONICAL-FIX`, relatada no commit `4d7f71423e`. O incidente envolveu sobrescrita persistida de propriedades de slides por `nativeConfig` antigo e presença de abas ocultas ainda conectadas.
+
+**Boundary canônico:** `TvPresentationWriteService` + transações do repositório de playlists. A implementação reporta guarda atômica de revisão no caminho transacional existente (`capture_before_mutation` / lock de linha) para impedir check-then-act entre validação e gravação. Operações com `expectedRevision`/`If-Match` incompatível retornam HTTP 409, expondo `data.currentRevision` para resolução de conflito pelo consumidor.
+
+**Compatibilidade importante:** o relatório informa que callers sem guarda ainda podem seguir o comportamento legado. Portanto, revisão esperada não deve ser descrita como obrigatória para todos os transportes até que inventário e contrato provem isso. Verificar especialmente writers de snapshot integral; não confundir ausência de falha HTTP com ausência de lost update.
+
+**Frontend:** mutations e autosave do editor propagam revisão de base; conflitos deixam de ser silenciosos, preservando o draft divergente para recuperação e carregando estado autoritativo. Não usar o clientId para autorização. Escritas VISTA/GPT/MCP permanecem sob domínio e RBAC canônicos.
+
+**Presence:** relatório descreve sinal de atividade (`active`), expiração periódica de peers e distinção entre conexão viva e editor recentemente ativo. `presence_ping`/heartbeat não constitui autorização de mutação, e ausência de atividade não equivale necessariamente a socket morto. A janela de idle/TTL é definida pelo código/config do HEAD, não por este registro.
+
+**Evidência:** testes de concorrência, histórico/revisões, realtime e contratos foram reportados como PASS no execution report. O usuário informou deploy e melhora visual; **reprodução E2E live com duas sessões, conflitos reais e fechamento de presença permanece PENDING**. Status de review: `ACCEPT_WITH_RESIDUAL`, não `LIVE PASS`.
+
+Referência funcional: [documentação central](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md).
+
