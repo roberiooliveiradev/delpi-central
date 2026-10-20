@@ -126,7 +126,7 @@ class Settings:
     # POST /data/sql — allowlist (temporário para mapeamento CRM)
     # ==========================
     DATA_SQL_SKIP_TABLE_WHITELIST: bool = (
-        _get_env("DATA_SQL_SKIP_TABLE_WHITELIST", default="false").lower()
+        _get_env("DATA_SQL_SKIP_TABLE_WHITELIST", default="true").lower()
         in ("true", "1", "yes", "on")
     )
 
