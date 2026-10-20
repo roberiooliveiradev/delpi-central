@@ -289,3 +289,53 @@ RUNTIME=UNCHANGED
 TESTS=TEST_NOT_RUN
 PHASE_PROGRESSION=NONE
 ```
+
+## 13. Limite responsivo de sugestões e variantes de apresentação (decisão de produto de 2026-10-20)
+
+**Decisão aprovada:** o número de sugestões visíveis deve respeitar **o espaço útil real da superfície**, preservando a saudação e, principalmente, o `MessageComposer`. Cards possuem variantes de densidade/tamanho adequadas a **diferentes tamanhos de viewport e modos de apresentação**. Não impor uma grade fixa de quatro itens em qualquer tela, não causar scroll horizontal nem esconder o composer atrás de sugestões. Esta é uma decisão de UX/visual; **não** aprova novas capacidades nem contrato backend.
+
+### 13.1 Orçamento visual e regra de quantidade
+
+- Ordenar apenas sugestões **efetivamente elegíveis**; `visibleCount = min(eligibleCount, presentationCap, slotsThatFit)`. `slotsThatFit` depende da largura e da altura disponíveis **após** reservar espaço para cabeçalho, recepção, composer e margens/touch-safe area.
+- **Teto inicial de design, não promessa de exibir itens:** `full/desktop ≤ 4`; `compact/tablet ≤ 3`; `mobile estreito ≤ 2`; `Companion Dock ≤ 2`. Quando a altura não permitir, mostrar 1 ou **0**. Não preencher espaços com sugestões falsas.
+- Um item continua útil; não criar placeholders. Se nada couber com segurança, esconder a seção e manter a entrada textual sempre acessível.
+- O máximo visual **não** exige que a DÉLIA tenha quatro capacidades. Uma só sugestão comprovada significa uma só sugestão visível.
+- Não utilizar paginação ou carrossel automático por padrão; o custo de esconder o campo de escrita ou criar descoberta extra não se justifica. Um futuro “Ver mais” só poderá existir se houver requisitos e fonte legítima de mais sugestões, fora deste escopo.
+- Calcular a apresentação pelo **container de conteúdo** (não apenas `window.innerWidth`), porque o Dock pode ocupar pouco espaço em um monitor grande; preferir container queries/tokens existentes. Avoid observers/engines próprios se CSS e composição resolverem.
+- Evitar layout shift, loops de `ResizeObserver` e flicker quando teclado virtual abrir ou sugestão desaparecer. Preservar estabilidade quando a conversa começa.
+
+### 13.2 Variantes visuais por espaço disponível
+
+| Modo | Variante de card | Layout preferencial | Limite inicial | Conteúdo |
+|---|---|---|---|---|
+| Página completa larga | `regular` | grade 2 colunas × até 2 linhas | 4 | ícone opcional, título e descrição curta |
+| Página completa média | `compact` | 1 ou 2 colunas conforme container | 3 | título e descrição curta somente se houver espaço |
+| Tela estreita (320–420px) | `compact` / `minimal` | 1 coluna | 2 | título legível; ícone opcional; descrição omitida visualmente se necessário, acessível via help |
+| Companion Dock | `minimal` | 1 coluna, ações horizontais/stack compacto conforme espaço | 2 | preferência a título curto e help contextual; não disputar altura do composer |
+| Altura muito reduzida / zoom 200% | `minimal` ou `hidden` | no máximo 1 card se houver espaço | 1 ou 0 | não ocultar título/área de escrita para exibir sugestão |
+
+Essas variantes são um **contrato de apresentação conceitual**, não nomes obrigatórios de props. Inventariar variantes já existentes do kit antes de criar novas. Usar tokens `plugin-ui` de radius, gaps, text, breakpoints e focus. Não fixar alturas em px que cortem títulos com fonte ampliada.
+
+### 13.3 Microcomportamentos
+
+1. **Hover/focus:** destaque sutil + `HelpTooltip` do kit, com explicação da pergunta que será inserida; não descrever capacidade não comprovada.
+2. **Card compacto:** componente inteiro é área clicável; sem controles aninhados ou ellipsis que esconda informação crítica. Quando a descrição não for visível, manter texto integral acessível por descrição/tooltip sem duplicar anúncios.
+3. **Mudança de apresentação:** preservar identidade, ordem relativa e conteúdo dos itens; nunca fazer submit nem perder draft em resize. Reduzir primeiro descrição, depois número de cards; preservar leitura e foco.
+4. **Quando a altura faltar:** prioridade `composer > recepção principal > sugestões`; esconder cards excedentes sem rolagem interna e sem forçar a página a perder funcionalidades.
+5. **Semântica de exibição:** o teto é aplicado **depois** do filtro de elegibilidade; frontend nunca decide permissão com base no tamanho.
+6. **Acessibilidade:** teclado, touch targets, leitor de tela, contraste, zoom 200%, reduced motion; se um card desaparecer durante foco, tratamento previsível (não mover foco ao body).
+7. **Estados vazios/loading:** nenhum skeleton mais alto do que o espaço reservado; sem cards fictícios para completar grade.
+8. **Full page e Dock:** mesmos significados, mas densidades próprias; nenhuma variante promete capability diferente.
+
+### 13.4 Acceptance Gate adicional (não executado)
+
+- `SS-V11`: nunca mais sugestões visíveis do que cabem com composer permanentemente utilizável.
+- `SS-V12`: teto inicial full ≤4, médio ≤3, narrow ≤2, Dock ≤2, com redução adicional por altura.
+- `SS-V13`: variantes `regular/compact/minimal` coerentes com design system e com altura/fonte responsiva.
+- `SS-V14`: container/Dock, 320/360/420px, 200% zoom, orientação/teclado virtual sem overflow horizontal ou clipping.
+- `SS-V15`: reflow/resize sem sobrescrever draft, duplicar sugestão, auto-submit, flicker ou foco perdido.
+- `SS-V16`: cards ocultos por falta de espaço não viram sugestões não elegíveis e nenhum fallback inventado é inserido.
+
+`SS-V11…SS-V16=PLANNED`. Testar com 0/1/2/3/4/6 itens **fictícios somente em fixtures de teste visual**, nunca como capacidades oferecidas a usuários em produção. O conteúdo real continua condicionado à elegibilidade e ao futuro owner/contrato legítimo.
+
+**Gate de reuso:** `EXISTING_EQUIVALENT=TO_INVENTORY` para composição/variantes específicas, `REUSE_DECISION=REUSE/EXTEND` dos primitives `plugin-ui` quando comprovados; nenhuma nova engine/layout service. `BACKEND_CONTRACT=NOT_DEFINED`, `IMPLEMENTATION=DEFERRED`, `PHASE_PROGRESSION=NONE`.
