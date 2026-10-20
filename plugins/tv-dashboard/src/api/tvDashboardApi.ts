@@ -147,7 +147,21 @@ export type Slide = {
 export type WriteGuard = {
   expectedRevision?: number | null | (() => number | null | undefined);
   clientId?: string | null;
+  /**
+   * Avaliada na hora do envio (dentro da write lane): se retornar false, a
+   * escrita é abortada com StaleWriteEpochError — capturas feitas antes de um
+   * conflito/reload server-wins não podem sobrescrever o estado autoritativo.
+   */
+  ifFresh?: () => boolean;
 };
+
+/** Escrita enfileirada capturada numa época anterior (conflito/reload venceu). */
+export class StaleWriteEpochError extends Error {
+  constructor(message = "Escrita descartada: estado autoritativo recarregado após a captura.") {
+    super(message);
+    this.name = "StaleWriteEpochError";
+  }
+}
 
 /**
  * Resolve o expectedRevision no momento do envio — thunks permitem que
@@ -158,6 +172,14 @@ export function resolveWriteExpectedRevision(
 ): number | null | undefined {
   const value = guard?.expectedRevision;
   return typeof value === "function" ? value() : value;
+}
+
+/** Avalia `ifFresh` do guard no envio; aborta a task com StaleWriteEpochError. */
+export function withWriteEpoch<T>(guard: WriteGuard | null | undefined, task: () => T): T {
+  if (guard?.ifFresh != null && !guard.ifFresh()) {
+    throw new StaleWriteEpochError();
+  }
+  return task();
 }
 
 export type NativeScreenCatalogItem = {
@@ -592,11 +614,12 @@ export async function updatePlaylist(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(id, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPatch<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`, body, {
         ifMatch: resolveWriteExpectedRevision(options),
       }),
-    ),
+    )),
   );
 }
 
@@ -606,21 +629,23 @@ export async function deletePlaylist(id: string) {
 
 export async function deactivatePlaylist(id: string, options?: WriteGuard) {
   return enqueuePlaylistWrite(id, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/deactivate`, {}, {
         ifMatch: resolveWriteExpectedRevision(options),
       }),
-    ),
+    )),
   );
 }
 
 export async function activatePlaylist(id: string, options?: WriteGuard) {
   return enqueuePlaylistWrite(id, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/activate`, {}, {
         ifMatch: resolveWriteExpectedRevision(options),
       }),
-    ),
+    )),
   );
 }
 
@@ -761,13 +786,14 @@ export async function acceptPlaylistEditInvite(token: string) {
 
 export async function duplicateSlide(playlistId: string, slideId: string, options?: WriteGuard) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<Slide>>(
         `${API_BASE}/playlists/${playlistId}/slides/${slideId}/duplicate`,
         {},
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1308,11 +1334,12 @@ export async function addSlide(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides`, body, {
         ifMatch: resolveWriteExpectedRevision(options),
       }),
-    ),
+    )),
   );
 }
 
@@ -1322,23 +1349,25 @@ export async function addSlideFromPreset(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<Slide>>(
         `${API_BASE}/playlists/${playlistId}/slides/from-preset`,
         body,
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
 export async function deleteSlide(playlistId: string, slideId: string, options?: WriteGuard) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpDelete<ApiEnvelope<null>>(`${API_BASE}/playlists/${playlistId}/slides/${slideId}`, {
         ifMatch: resolveWriteExpectedRevision(options),
       }),
-    ),
+    )),
   );
 }
 
@@ -1348,13 +1377,14 @@ export async function reorderSlides(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<{ slides: Slide[]; playlistRevision?: number }>>(
         `${API_BASE}/playlists/${playlistId}/slides/reorder`,
         { items },
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1374,13 +1404,14 @@ export async function updateSlide(
 ) {
   const clientId = options?.clientId?.trim();
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPatch<ApiEnvelope<Slide>>(
         `${API_BASE}/playlists/${playlistId}/slides/${slideId}`,
         clientId ? { ...body, clientId } : body,
         { keepalive: options?.keepalive, ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1444,13 +1475,14 @@ export async function applyPresentationMutations(
 ): Promise<PresentationMutationResult> {
   const clientId = options?.clientId?.trim();
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<PresentationMutationResult>>(
         `${API_BASE}/playlists/${playlistId}/slides/${slideId}/presentation-mutations`,
         clientId ? { ops, clientId } : { ops },
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1466,13 +1498,14 @@ export async function listPlaylistSections(playlistId: string) {
 /** Garante a seção Principal (isMain); idempotente. */
 export async function ensurePlaylistMainSection(playlistId: string, options?: WriteGuard) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<PlaylistSection>>(
         `${API_BASE}/playlists/${playlistId}/sections/ensure-main`,
         {},
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1491,13 +1524,14 @@ export async function createPlaylistSection(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<PlaylistSection>>(
         `${API_BASE}/playlists/${playlistId}/sections`,
         body,
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1516,13 +1550,14 @@ export async function updatePlaylistSection(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPatch<ApiEnvelope<PlaylistSection>>(
         `${API_BASE}/playlists/${playlistId}/sections/${sectionId}`,
         body,
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1533,12 +1568,13 @@ export async function deletePlaylistSection(
 ) {
   const qs = options?.deleteSlides ? "?deleteSlides=true" : "";
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpDelete<ApiEnvelope<{ deleted: boolean }>>(
         `${API_BASE}/playlists/${playlistId}/sections/${sectionId}${qs}`,
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 
@@ -1548,13 +1584,14 @@ export async function reorderPlaylistSections(
   options?: WriteGuard,
 ) {
   return enqueuePlaylistWrite(playlistId, () =>
-    unwrap(
+    withWriteEpoch(options, () =>
+      unwrap(
       httpPost<ApiEnvelope<{ items: PlaylistSection[]; playlistRevision?: number }>>(
         `${API_BASE}/playlists/${playlistId}/sections/reorder`,
         { items },
         { ifMatch: resolveWriteExpectedRevision(options) },
       ),
-    ),
+    )),
   );
 }
 

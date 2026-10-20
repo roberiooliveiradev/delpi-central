@@ -56,6 +56,29 @@ export function resolveNativeConfigAfterAutosave(args: {
   return serverNativeConfig;
 }
 
+/**
+ * Tick monotônico de atividade de peer por slide. O CAS é por playlist —
+ * commits de peer no MESMO slide não produzem 409 — então a detecção local
+ * de atividade (draft/commit WS) é o que protege contra lost update.
+ */
+export function bumpSlidePeerActivity(
+  activity: Map<string, number>,
+  slideId: string,
+): number {
+  const next = (activity.get(slideId) ?? 0) + 1;
+  activity.set(slideId, next);
+  return next;
+}
+
+/** Atividade de peer no slide avançou desde a captura do payload? */
+export function slidePeerActivityAdvanced(
+  activity: ReadonlyMap<string, number>,
+  slideId: string,
+  capturedTick: number | undefined,
+): boolean {
+  return (activity.get(slideId) ?? 0) > (capturedTick ?? 0);
+}
+
 /** Deve limpar draft local após save bem-sucedido? */
 export function shouldClearComunicadoDraftAfterSave(args: {
   completedVersion: number | undefined;

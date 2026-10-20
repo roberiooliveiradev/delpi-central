@@ -29,6 +29,7 @@ import {
   regeneratePlaylistToken,
   reorderPlaylistSections,
   reorderSlides,
+  StaleWriteEpochError,
   updatePlaylist,
   updatePlaylistSection,
   updateSlide,
@@ -131,9 +132,11 @@ import {
 import type { MutationCommitMeta } from "../utils/presentationMutationClient";
 import {
   bumpComunicadoAutosaveVersion,
+  bumpSlidePeerActivity,
   resolveNativeConfigAfterAutosave,
   shouldClearComunicadoDraftAfterSave,
   shouldClearComunicadoPendingAfterSave,
+  slidePeerActivityAdvanced,
 } from "../utils/comunicadoSlideAutosave";
 import {
   getEditorPresenceClientId,
@@ -207,6 +210,10 @@ export function PlaylistEditorPage({
     version: number;
     /** Revisão na qual o config pendente foi derivado (OCC). */
     baseRevision?: number | null;
+    /** Época de escrita em que o payload foi capturado (conflito/reload bumpeia). */
+    epoch?: number;
+    /** Tick de atividade de peer do slide na captura (proteção same-slide). */
+    peerTick?: number;
   } | null>(null);
   const customFanOutBaselineRef = useRef<{
     slideId: string;
@@ -236,6 +243,18 @@ export function PlaylistEditorPage({
   const knownPlaylistRevisionRef = useRef(0);
   /** Base OCC por slide para escritas de nativeConfig (draft/mutation/autosave). */
   const slideWriteBaseRevisionRef = useRef<Map<string, number>>(new Map());
+  /**
+   * Época de escrita: bumpeia quando o estado autoritativo vence (conflito).
+   * Payloads capturados em época anterior são descartados na lane — nunca
+   * sobrescrevem o estado recém-recarregado com snapshot pré-conflito.
+   */
+  const comunicadoWriteEpochRef = useRef(0);
+  /**
+   * Tick de atividade de peer por slide (drafts e commits WS de outro
+   * clientId). Como o CAS é por playlist, commits de peer no mesmo slide não
+   * geram 409 — este tick é o sinal local para tratá-los como conflito.
+   */
+  const slidePeerActivityRef = useRef(new Map<string, number>());
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
@@ -571,25 +590,42 @@ export function PlaylistEditorPage({
 
   const slideBaseRevision = useCallback(
     (slideId?: string | null) =>
-      (slideId ? slideWriteBaseRevisionRef.current.get(slideId) : undefined) ??
-      knownPlaylistRevisionRef.current,
+      // playlists.revision é global e monotônica — a entrada por slide é piso,
+      // nunca override. Sem o max, um ack de escrita em outro slide/seção deixava
+      // a base deste slide abaixo da revisão conhecida → self-409 → conflito
+      // falso → reload revertia a edição local (TV-ICON-COLOR-REVERSION).
+      Math.max(
+        slideId ? (slideWriteBaseRevisionRef.current.get(slideId) ?? 0) : 0,
+        knownPlaylistRevisionRef.current,
+      ),
     [],
   );
 
   const playlistWriteGuard = useCallback(
-    (): WriteGuard => ({
-      // Thunk: resolvido no envio, após o ack da escrita anterior na lane.
-      expectedRevision: () => knownPlaylistRevisionRef.current,
-      clientId: editorPresence?.clientId,
-    }),
+    (): WriteGuard => {
+      // Época capturada no gesto: se um conflito server-wins ocorrer antes do
+      // envio na lane, a escrita é descartada em vez de sobrescrever o estado
+      // recém-recarregado com snapshot pré-conflito.
+      const epoch = comunicadoWriteEpochRef.current;
+      return {
+        // Thunk: resolvido no envio, após o ack da escrita anterior na lane.
+        expectedRevision: () => knownPlaylistRevisionRef.current,
+        ifFresh: () => comunicadoWriteEpochRef.current === epoch,
+        clientId: editorPresence?.clientId,
+      };
+    },
     [editorPresence?.clientId],
   );
 
   const slideWriteGuard = useCallback(
-    (slideId?: string | null): WriteGuard => ({
-      expectedRevision: () => slideBaseRevision(slideId),
-      clientId: editorPresence?.clientId,
-    }),
+    (slideId?: string | null): WriteGuard => {
+      const epoch = comunicadoWriteEpochRef.current;
+      return {
+        expectedRevision: () => slideBaseRevision(slideId),
+        ifFresh: () => comunicadoWriteEpochRef.current === epoch,
+        clientId: editorPresence?.clientId,
+      };
+    },
     [editorPresence?.clientId, slideBaseRevision],
   );
 
@@ -685,12 +721,40 @@ export function PlaylistEditorPage({
   }, [playlistId, refreshPreviewThumbnails, selectSlide]);
 
   /**
-   * 409 REVISION_CONFLICT canônico: a revisão remota vence — marca o draft
-   * local como conflitado (preservado para recuperação), descarta o pending
-   * obsoleto e recarrega o estado autoritativo.
+   * Server-wins canônico: o estado remoto vence — marca o draft local como
+   * conflitado (preservado para recuperação), descarta pending/debounce
+   * obsoletos e recarrega o estado autoritativo.
    */
+  const applyServerWinsConflict = useCallback(
+    async (slideId?: string | null, message?: string) => {
+      // Nova época: payloads capturados antes do conflito não podem mais
+      // escrever — a lane descarta via `ifFresh` (server-wins).
+      comunicadoWriteEpochRef.current += 1;
+      if (slideId) {
+        slideWriteBaseRevisionRef.current.delete(slideId);
+        markComunicadoSlideDraftConflicted(playlistId, slideId);
+        const pending = pendingComunicadoSaveRef.current;
+        if (pending?.slide.id === slideId) pendingComunicadoSaveRef.current = null;
+      }
+      // O debounce de autosave não pode disparar payload pré-conflito após o reload.
+      if (saveComunicadoTimerRef.current) {
+        window.clearTimeout(saveComunicadoTimerRef.current);
+        saveComunicadoTimerRef.current = null;
+      }
+      await reloadPlaylistFromServer();
+      tvDashboardNotice(
+        message ?? "A programação foi alterada por outro editor. Recarregue e tente de novo.",
+      );
+    },
+    [playlistId, reloadPlaylistFromServer],
+  );
+
+  /** 409 REVISION_CONFLICT canônico — delega ao cleanup server-wins. */
   const handlePlaylistWriteConflict = useCallback(
     async (error: unknown, slideId?: string | null): Promise<boolean> => {
+      // Captura de época anterior já descartada pelo cleanup server-wins —
+      // tratada como resolvida para silenciar todos os catch sites.
+      if (error instanceof StaleWriteEpochError) return true;
       if (!isRevisionConflictError(error)) return false;
       const current = revisionConflictCurrentRevision(error);
       if (current != null) {
@@ -699,21 +763,13 @@ export function PlaylistEditorPage({
           current,
         );
       }
-      if (slideId) {
-        slideWriteBaseRevisionRef.current.delete(slideId);
-        markComunicadoSlideDraftConflicted(playlistId, slideId);
-        const pending = pendingComunicadoSaveRef.current;
-        if (pending?.slide.id === slideId) pendingComunicadoSaveRef.current = null;
-      }
-      await reloadPlaylistFromServer();
-      tvDashboardNotice(
-        error instanceof Error
-          ? error.message
-          : "A programação foi alterada por outro editor. Recarregue e tente de novo.",
+      await applyServerWinsConflict(
+        slideId,
+        error instanceof Error ? error.message : undefined,
       );
       return true;
     },
-    [playlistId, reloadPlaylistFromServer],
+    [applyServerWinsConflict],
   );
 
   const applyRemoteSlideDraft = useCallback(
@@ -724,6 +780,10 @@ export function PlaylistEditorPage({
       baseRevision?: number,
     ) => {
       if (clientId === editorPresence?.clientId) return;
+      // Atividade de peer neste slide — mesmo quando o draft não é aplicado
+      // (edições locais presentes). O CAS é por playlist: escritas capturadas
+      // antes desta atividade não podem sobrescrever silenciosamente o slide.
+      bumpSlidePeerActivity(slidePeerActivityRef.current, slideId);
       const pending = pendingComunicadoSaveRef.current;
       if (pending?.slide.id === slideId) return;
       if (
@@ -866,6 +926,15 @@ export function PlaylistEditorPage({
     onPresenceUpdate: handlePresenceUpdate,
     onSync: (event) => {
       // Sync canônico (WS presentation_updated) — inclui mutações do copiloto via CRUD.
+      // Commit de peer num slide específico marca atividade — autosaves locais
+      // capturados antes não podem sobrescrever silenciosamente esse slide.
+      if (
+        event?.clientId &&
+        event.clientId !== editorPresence?.clientId &&
+        event.slideId
+      ) {
+        bumpSlidePeerActivity(slidePeerActivityRef.current, event.slideId);
+      }
       // Foco só em criação/import/duplicação — nunca em slide_updated (autosave do peer).
       void reloadPlaylistFromServer({
         focusSlideId: resolvePresentationSyncFocusSlideId(event, {
@@ -1016,6 +1085,14 @@ export function PlaylistEditorPage({
         // Draft obsoleto/conflitado nunca reescreve o estado remoto automaticamente.
         if (!isComunicadoDraftApplicable(draft, remoteRevision)) continue;
         const draftVersion = draft.version;
+        // Revisão resolvida no envio: escritas irmãs não podem gerar self-409;
+        // floor por slide ainda protege contra draft de peer no mesmo slide.
+        const replayEpoch = comunicadoWriteEpochRef.current;
+        const replayGuard: WriteGuard = {
+          ...slideWriteGuard(slide.id),
+          ifFresh: () => comunicadoWriteEpochRef.current === replayEpoch,
+          clientId: editorPresence?.clientId,
+        };
         void updateSlide(
           playlistId,
           slide.id,
@@ -1024,16 +1101,18 @@ export function PlaylistEditorPage({
             durationSec: slide.durationSec ?? null,
             nativeConfig: draft.nativeConfig,
           },
-          {
-            expectedRevision: draft.baseRevision ?? remoteRevision,
-            clientId: editorPresence?.clientId,
-          },
+          replayGuard,
         )
           .then((updated) => {
-            recordWriteRevision(updated.playlistRevision, slide.id, draft.baseRevision);
+            recordWriteRevision(
+              updated.playlistRevision,
+              slide.id,
+              replayGuard.expectedRevision,
+            );
             clearComunicadoSlideDraftIfCoveredBySave(playlistId, slide.id, draftVersion);
           })
           .catch((caught) => {
+            if (caught instanceof StaleWriteEpochError) return;
             void handlePlaylistWriteConflict(caught, slide.id);
           });
       }
@@ -1952,12 +2031,34 @@ export function PlaylistEditorPage({
       externalUrl?: string | null;
       transitionStyle?: string | null;
     },
-    options?: { recordHistory?: boolean; autosaveVersion?: number },
+    options?: {
+      recordHistory?: boolean;
+      autosaveVersion?: number;
+      epoch?: number;
+      peerTick?: number;
+    },
   ) {
     if (!playlist) return;
     if (options?.recordHistory) deckHistory.recordBeforeChange();
     try {
-      const guard = slideWriteGuard(slide.id);
+      const callEpoch = options?.epoch ?? comunicadoWriteEpochRef.current;
+      const peerTick =
+        options?.peerTick ?? slidePeerActivityRef.current.get(slide.id) ?? 0;
+      const guard: WriteGuard = {
+        ...slideWriteGuard(slide.id),
+        ifFresh: () => {
+          if (comunicadoWriteEpochRef.current !== callEpoch) return false;
+          if (
+            slidePeerActivityAdvanced(slidePeerActivityRef.current, slide.id, peerTick)
+          ) {
+            // Peer tocou o mesmo slide após a captura — CAS por playlist não
+            // geraria 409; tratar como conflito server-wins.
+            queueMicrotask(() => void applyServerWinsConflict(slide.id));
+            return false;
+          }
+          return true;
+        },
+      };
       const updated = await updateSlide(playlist.id, slide.id, payload, guard);
       recordWriteRevision(updated.playlistRevision, slide.id, guard.expectedRevision);
       const latestVersion = comunicadoAutosaveVersionRef.current.get(slide.id) ?? 0;
@@ -2120,16 +2221,22 @@ export function PlaylistEditorPage({
         nativeConfig: Record<string, unknown>;
         version: number;
         baseRevision?: number | null;
+        epoch?: number;
+        peerTick?: number;
       },
       options?: { keepalive?: boolean },
     ) => {
       const pl = playlistRef.current;
       if (!pl) return;
       try {
-        // baseRevision capturada fica pinned (descarta captura pré-conflito);
-        // o fallback resolve na hora do envio (lane serializada).
-        const expectedRevision = () =>
-          captured.baseRevision ?? slideBaseRevision(captured.slide.id);
+        // Revisão fresca no envio (conteúdo é snapshot cumulativo do local); a
+        // guarda de época descarta capturas anteriores a um conflito server-wins.
+        const expectedRevision = () => slideBaseRevision(captured.slide.id);
+        const epoch = captured.epoch ?? comunicadoWriteEpochRef.current;
+        const peerTick =
+          captured.peerTick ??
+          slidePeerActivityRef.current.get(captured.slide.id) ??
+          0;
         const updated = await updateSlide(
           pl.id,
           captured.slide.id,
@@ -2141,6 +2248,24 @@ export function PlaylistEditorPage({
           {
             keepalive: options?.keepalive,
             expectedRevision,
+            ifFresh: () => {
+              if (comunicadoWriteEpochRef.current !== epoch) return false;
+              if (
+                slidePeerActivityAdvanced(
+                  slidePeerActivityRef.current,
+                  captured.slide.id,
+                  peerTick,
+                )
+              ) {
+                // Peer tocou o mesmo slide após a captura — CAS por playlist não
+                // geraria 409; tratar como conflito server-wins.
+                queueMicrotask(() =>
+                  void applyServerWinsConflict(captured.slide.id),
+                );
+                return false;
+              }
+              return true;
+            },
             clientId: editorPresence?.clientId,
           },
         );
@@ -2182,6 +2307,9 @@ export function PlaylistEditorPage({
         });
         await deckHistory.confirmChange();
       } catch (caught) {
+        // Captura de época anterior ao último conflito — descarte silencioso,
+        // o reload server-wins já aplicou o estado autoritativo.
+        if (caught instanceof StaleWriteEpochError) return;
         // Conflito de revisão: servidor vence — draft vira conflicted e o
         // estado remoto é recarregado; pending obsoleto não é reenfileirado.
         if (await handlePlaylistWriteConflict(caught, captured.slide.id)) return;
@@ -2205,6 +2333,7 @@ export function PlaylistEditorPage({
       }
     },
     [
+      applyServerWinsConflict,
       deckHistory.cancelChange,
       deckHistory.confirmChange,
       editorPresence?.clientId,
@@ -2266,7 +2395,16 @@ export function PlaylistEditorPage({
     writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig, Date.now(), version, {
       baseRevision,
     });
-    pendingComunicadoSaveRef.current = { slide, nativeConfig, version, baseRevision };
+    const captureEpoch = comunicadoWriteEpochRef.current;
+    const peerTick = slidePeerActivityRef.current.get(slide.id) ?? 0;
+    pendingComunicadoSaveRef.current = {
+      slide,
+      nativeConfig,
+      version,
+      baseRevision,
+      epoch: captureEpoch,
+      peerTick,
+    };
     const sharedSlice = pickSharedCustomSlideConfig(
       nativeConfig,
       customFanOutBaselineRef.current?.nativeConfig,
@@ -2300,8 +2438,9 @@ export function PlaylistEditorPage({
           durationSec: slide.durationSec ?? null,
           nativeConfig,
         },
-        { autosaveVersion: version },
+        { autosaveVersion: version, epoch: captureEpoch, peerTick },
       ).catch((caught) => {
+        if (caught instanceof StaleWriteEpochError) return;
         tvDashboardNotice(
           caught instanceof Error
             ? caught.message
@@ -2596,7 +2735,12 @@ export function PlaylistEditorPage({
     onSavePlaylistSettings: (field: string, value: string | number | Record<string, unknown>) =>
       void saveSettings(field, value),
     onSaveSlide: (slide: Slide, payload: Parameters<DeckSettingsProps["onSaveSlide"]>[1]) =>
-      void handleSaveSlide(slide, payload, { recordHistory: true }),
+      void handleSaveSlide(slide, payload, { recordHistory: true }).catch((caught) => {
+        if (caught instanceof StaleWriteEpochError) return;
+        tvDashboardNotice(
+          caught instanceof Error ? caught.message : "Falha ao salvar o slide.",
+        );
+      }),
     onSaveSlides: (targets: Slide[], patch: SlideBatchInput) => void handleSaveSlides(targets, patch),
   };
 

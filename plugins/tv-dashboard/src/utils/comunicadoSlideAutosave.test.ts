@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   bumpComunicadoAutosaveVersion,
+  bumpSlidePeerActivity,
   isStaleComunicadoAutosave,
   resolveNativeConfigAfterAutosave,
   shouldClearComunicadoDraftAfterSave,
   shouldClearComunicadoPendingAfterSave,
+  slidePeerActivityAdvanced,
 } from "./comunicadoSlideAutosave";
 
 describe("comunicadoSlideAutosave", () => {
@@ -56,5 +58,25 @@ describe("comunicadoSlideAutosave", () => {
         completedVersion: 2,
       }),
     ).toBe(true);
+  });
+
+  it("peer activity por slide: captura fresca não conflita, stale conflita", () => {
+    // TV-ICON-REVERSION: CAS é por playlist — commits de peer no mesmo slide
+    // não geram 409. O tick local é o que protege autosaves capturados antes
+    // da atividade do peer (server-wins) sem bloquear escritas novas.
+    const activity = new Map<string, number>();
+    const captured = activity.get("s1") ?? 0;
+    expect(slidePeerActivityAdvanced(activity, "s1", captured)).toBe(false);
+
+    bumpSlidePeerActivity(activity, "s1");
+    expect(slidePeerActivityAdvanced(activity, "s1", captured)).toBe(true);
+
+    // Nova captura após a atividade do peer volta a ser fresca.
+    const fresh = activity.get("s1") ?? 0;
+    expect(slidePeerActivityAdvanced(activity, "s1", fresh)).toBe(false);
+
+    // Atividade em outro slide não invalida a captura deste.
+    bumpSlidePeerActivity(activity, "s2");
+    expect(slidePeerActivityAdvanced(activity, "s1", fresh)).toBe(false);
   });
 });
