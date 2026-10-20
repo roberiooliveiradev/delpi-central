@@ -1036,6 +1036,81 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         ),
                     },
                     {"name": "unit_code", "in": "query", "schema": {"type": "string"}},
+                    {
+                        "name": "fase_melhoria",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": ["planejado", "piloto", "implantado", "encerrado"],
+                        },
+                        "description": "entity=instance only: improvement phase.",
+                    },
+                    {
+                        "name": "status_instancia",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["ativo", "inativo"]},
+                        "description": "entity=instance only.",
+                    },
+                    {
+                        "name": "cenario_tipo",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": ["baseline", "melhoria", "automacao", "correcao"],
+                        },
+                        "description": "entity=revision only: scenario type.",
+                    },
+                    {
+                        "name": "revisao_ativa",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["true", "false"]},
+                        "description": (
+                            "entity=revision only: effective-active flag "
+                            "(baseline and expired revisions are never active)."
+                        ),
+                    },
+                    {
+                        "name": "has_improvement",
+                        "in": "query",
+                        "schema": {"type": "string", "enum": ["true", "false"]},
+                        "description": "entity=process only: has operational improvement.",
+                    },
+                    {
+                        "name": "date_field",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": (
+                            "Whitelisted date column per entity. instance: "
+                            "created_at|updated_at|data_alvo_go_live. revision: "
+                            "data_inicio_vigencia|data_fim_vigencia|"
+                            "data_implantacao|created_at|updated_at. measurement: "
+                            "created_at|updated_at."
+                        ),
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {"type": "string", "format": "date"},
+                        "description": "ISO date, inclusive lower bound (needs date_field).",
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {"type": "string", "format": "date"},
+                        "description": "ISO date, inclusive upper bound (needs date_field).",
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "1-based page; needs page_size or uses backend max.",
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "schema": {"type": "string"},
+                        "description": "Items per page (max 40).",
+                    },
                 ],
                 "responses": {
                     "200": _ok_response("Record(s)"),

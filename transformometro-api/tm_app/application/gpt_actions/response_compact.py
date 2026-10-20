@@ -67,6 +67,8 @@ def project_search_records(payload: Mapping[str, Any]) -> dict[str, Any]:
     if truncated:
         out["truncated"] = True
         out["returned"] = len(slim)
+    if isinstance(payload.get("pagination"), dict):
+        out["pagination"] = payload["pagination"]
     return out
 
 

@@ -47,6 +47,80 @@ class RevisaoRepository(PluginBaseRepository):
             (instancia_id,),
         )
 
+    _EFFECTIVE_ACTIVE_CASE = """
+        CASE
+            WHEN lower(coalesce(r.cenario_tipo, '')) = 'baseline' THEN FALSE
+            WHEN r.data_fim_vigencia IS NOT NULL AND r.data_fim_vigencia < CURRENT_DATE THEN FALSE
+            ELSE r.revisao_ativa
+        END
+    """
+
+    def list_filtered(
+        self,
+        *,
+        processo_id: str | None = None,
+        instancia_id: str | None = None,
+        cenario_tipo: str | None = None,
+        revisao_ativa: bool | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Cross-process revision discovery. `revisao_ativa` matches the
+        canonical effective-active projection (baseline/expired excluded).
+        `date_field` is a caller-whitelisted column name.
+        """
+        allowed_date_fields = {
+            "data_inicio_vigencia",
+            "data_fim_vigencia",
+            "data_implantacao",
+            "created_at",
+            "updated_at",
+        }
+        clauses = ["r.deletado = FALSE"]
+        params: list[Any] = []
+        if processo_id:
+            clauses.append("r.processo_id = %s::uuid")
+            params.append(processo_id)
+        if instancia_id:
+            clauses.append("r.instancia_id = %s::uuid")
+            params.append(instancia_id)
+        if cenario_tipo:
+            clauses.append("lower(r.cenario_tipo) = lower(%s)")
+            params.append(cenario_tipo)
+        if revisao_ativa is not None:
+            clauses.append(f"({self._EFFECTIVE_ACTIVE_CASE}) = %s::boolean")
+            params.append(revisao_ativa)
+        if date_field:
+            if date_field not in allowed_date_fields:
+                raise ValueError(f"Unsupported revision date_field '{date_field}'.")
+            clauses.append(f"r.{date_field} IS NOT NULL")
+            if date_from:
+                clauses.append(f"r.{date_field}::date >= %s::date")
+                params.append(date_from)
+            if date_to:
+                clauses.append(f"r.{date_field}::date <= %s::date")
+                params.append(date_to)
+        return self.fetch_all(
+            f"""
+            SELECT
+                r.*,
+                {self._EFFECTIVE_ACTIVE_CASE} AS revisao_ativa,
+                p.codigo_processo,
+                p.nome_processo,
+                i.resumo_melhoria,
+                i.fase_melhoria
+            FROM transformometro.revisoes r
+            LEFT JOIN transformometro.processos p
+                ON p.processo_id = r.processo_id AND p.deletado = FALSE
+            LEFT JOIN transformometro.processo_instancias i
+                ON i.instancia_id = r.instancia_id AND i.deletado = FALSE
+            WHERE {' AND '.join(clauses)}
+            ORDER BY r.data_inicio_vigencia DESC NULLS LAST, r.versao_revisao DESC
+            """,
+            tuple(params),
+        )
+
     @staticmethod
     def build_chave_unica(instancia_id: str, versao_revisao: str) -> str:
         return f"{instancia_id}|{versao_revisao}"

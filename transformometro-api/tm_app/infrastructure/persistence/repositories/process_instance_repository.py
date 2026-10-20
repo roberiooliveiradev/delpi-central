@@ -34,6 +34,8 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             pi.contexto,
             pi.created_at,
             pi.updated_at,
+            p.codigo_processo,
+            p.nome_processo,
             COALESCE(
                 json_agg(
                     json_build_object(
@@ -48,6 +50,8 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
         FROM transformometro.processo_instancias pi
         LEFT JOIN transformometro.filiais f
             ON f.filial_id = pi.filial_id AND f.deletado = FALSE
+        LEFT JOIN transformometro.processos p
+            ON p.processo_id = pi.processo_id AND p.deletado = FALSE
         LEFT JOIN transformometro.processo_instancia_setores pis
             ON pis.instancia_id = pi.instancia_id
         LEFT JOIN transformometro.setores s
@@ -72,7 +76,9 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             pi.prioridade,
             pi.contexto,
             pi.created_at,
-            pi.updated_at
+            pi.updated_at,
+            p.codigo_processo,
+            p.nome_processo
     """
 
     @staticmethod
@@ -134,6 +140,78 @@ class ProcessoInstanciaRepository(PluginBaseRepository):
             ORDER BY f.codigo_filial NULLS LAST, pi.created_at ASC
             """,
             (processo_id,),
+        )
+        return [self._enrich_row(row) for row in rows]
+
+    def list_filtered(
+        self,
+        *,
+        processo_id: str | None = None,
+        filial_ref: str | None = None,
+        setor_ref: str | None = None,
+        fase_melhoria: str | None = None,
+        status_instancia: str | None = None,
+        q: str | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Cross-process instance discovery. Filters push down to SQL;
+        `date_field` is a caller-whitelisted column name (validated upstream).
+        """
+        allowed_date_fields = {"created_at", "updated_at", "data_alvo_go_live"}
+        clauses: list[str] = []
+        params: list[Any] = []
+        if processo_id:
+            clauses.append("pi.processo_id = %s::uuid")
+            params.append(processo_id)
+        if filial_ref:
+            clauses.append("(f.codigo_filial = %s OR pi.filial_id::text = %s)")
+            params.extend([filial_ref, filial_ref])
+        if setor_ref:
+            clauses.append(
+                """
+                EXISTS (
+                    SELECT 1
+                    FROM transformometro.processo_instancia_setores pis_f
+                    JOIN transformometro.setores s_f
+                        ON s_f.setor_id = pis_f.setor_id AND s_f.deletado = FALSE
+                    WHERE pis_f.instancia_id = pi.instancia_id
+                      AND (s_f.setor_id::text = %s OR s_f.codigo_setor = %s)
+                )
+                """
+            )
+            params.extend([setor_ref, setor_ref])
+        if fase_melhoria:
+            clauses.append("pi.fase_melhoria = %s")
+            params.append(fase_melhoria)
+        if status_instancia:
+            clauses.append("pi.status_instancia = %s")
+            params.append(status_instancia)
+        if q:
+            clauses.append(
+                "(pi.rotulo_instancia ILIKE %s OR pi.resumo_melhoria ILIKE %s)"
+            )
+            params.extend([f"%{q}%", f"%{q}%"])
+        if date_field:
+            if date_field not in allowed_date_fields:
+                raise ValueError(f"Unsupported instance date_field '{date_field}'.")
+            clauses.append(f"pi.{date_field} IS NOT NULL")
+            if date_from:
+                clauses.append(f"pi.{date_field}::date >= %s::date")
+                params.append(date_from)
+            if date_to:
+                clauses.append(f"pi.{date_field}::date <= %s::date")
+                params.append(date_to)
+        where = "\n".join(f"  AND {clause}" for clause in clauses)
+        rows = self.fetch_all(
+            f"""
+            {self._SELECT}
+            {where}
+            {self._GROUP_BY}
+            ORDER BY f.codigo_filial NULLS LAST, pi.created_at ASC
+            """,
+            tuple(params),
         )
         return [self._enrich_row(row) for row in rows]
 

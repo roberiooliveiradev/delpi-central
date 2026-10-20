@@ -633,6 +633,16 @@ def tool_record_read(
     familia_processo: str | None = None,
     q: str | None = None,
     unit_code: str | None = None,
+    fase_melhoria: str | None = None,
+    status_instancia: str | None = None,
+    cenario_tipo: str | None = None,
+    revisao_ativa: str | None = None,
+    has_improvement: str | None = None,
+    date_field: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    page: str | None = None,
+    page_size: str | None = None,
 ) -> CallToolResult:
     """Canonical record read: action=search lists; action=get fetches by id."""
     try:
@@ -650,6 +660,16 @@ def tool_record_read(
             familia_processo=familia_processo,
             q=q,
             unit_code=unit_code,
+            fase_melhoria=fase_melhoria,
+            status_instancia=status_instancia,
+            cenario_tipo=cenario_tipo,
+            revisao_ativa=revisao_ativa,
+            has_improvement=has_improvement,
+            date_field=date_field,
+            date_from=date_from,
+            date_to=date_to,
+            page=page,
+            page_size=page_size,
         )
         return _ok_result(data, "Registros." if action == "search" else "Registro.")
     except Exception as exc:

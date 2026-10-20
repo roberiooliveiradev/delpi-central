@@ -100,9 +100,11 @@ from tm_app.core.catalogs import (
     CENARIO_TIPO,
     CRITERIO_RATEIO,
     ESCOPO_RECURSO,
+    FASE_MELHORIA,
     FILIAIS,
     RECORRENCIAS,
     STATUS_FILIAL,
+    STATUS_INSTANCIA,
     STATUS_PROCESSO,
     STATUS_RECURSO,
     STATUS_SETOR,
@@ -996,6 +998,16 @@ class GptActionsDispatchService:
         familia_processo: str | None = None,
         q: str | None = None,
         unit_code: str | None = None,
+        fase_melhoria: str | None = None,
+        status_instancia: str | None = None,
+        cenario_tipo: str | None = None,
+        revisao_ativa: str | None = None,
+        has_improvement: str | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        page: str | None = None,
+        page_size: str | None = None,
     ) -> dict[str, Any]:
         """Canonical read surface: action=search|get over one entity.
 
@@ -1052,6 +1064,16 @@ class GptActionsDispatchService:
             "familia_processo": familia_processo,
             "q": q,
             "unit_code": unit_code,
+            "fase_melhoria": fase_melhoria,
+            "status_instancia": status_instancia,
+            "cenario_tipo": cenario_tipo,
+            "revisao_ativa": revisao_ativa,
+            "has_improvement": has_improvement,
+            "date_field": date_field,
+            "date_from": date_from,
+            "date_to": date_to,
+            "page": page,
+            "page_size": page_size,
         }
         allowed = ENTITY_FILTERABLE_FIELDS.get(entity.value, frozenset())
         provided = {
@@ -1081,6 +1103,16 @@ class GptActionsDispatchService:
         familia_processo: str | None = None,
         q: str | None = None,
         unit_code: str | None = None,
+        fase_melhoria: str | None = None,
+        status_instancia: str | None = None,
+        cenario_tipo: str | None = None,
+        revisao_ativa: str | None = None,
+        has_improvement: str | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        page: str | None = None,
+        page_size: str | None = None,
     ) -> dict[str, Any]:
         from tm_app.application.gpt_actions.response_compact import project_search_records
 
@@ -1095,8 +1127,33 @@ class GptActionsDispatchService:
             familia_processo=familia_processo,
             q=q,
             unit_code=unit_code,
+            fase_melhoria=fase_melhoria,
+            status_instancia=status_instancia,
+            cenario_tipo=cenario_tipo,
+            revisao_ativa=revisao_ativa,
+            has_improvement=has_improvement,
+            date_field=date_field,
+            date_from=date_from,
+            date_to=date_to,
+            page=page,
+            page_size=page_size,
         )
         return project_search_records(raw)
+
+    _SEARCH_DATE_FIELDS: dict[str, frozenset[str]] = {
+        "instance": frozenset({"created_at", "updated_at", "data_alvo_go_live"}),
+        "revision": frozenset(
+            {
+                "data_inicio_vigencia",
+                "data_fim_vigencia",
+                "data_implantacao",
+                "created_at",
+                "updated_at",
+            }
+        ),
+        "measurement": frozenset({"created_at", "updated_at"}),
+    }
+    _SEARCH_PAGE_SIZE_MAX = 40
 
     def _search_records_uncached(
         self,
@@ -1111,9 +1168,114 @@ class GptActionsDispatchService:
         familia_processo: str | None = None,
         q: str | None = None,
         unit_code: str | None = None,
+        fase_melhoria: str | None = None,
+        status_instancia: str | None = None,
+        cenario_tipo: str | None = None,
+        revisao_ativa: str | None = None,
+        has_improvement: str | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        page: str | None = None,
+        page_size: str | None = None,
     ) -> dict[str, Any]:
         entity = parse_entity(entity_value)
         self._require_capability(entity, "search")
+
+        def _invalid(msg: str, **data: Any) -> GptActionsError:
+            return GptActionsError(
+                msg,
+                400,
+                data={"error_kind": "validation", "error_code": "INVALID_FIELD", **data},
+            )
+
+        def _bool_param(value: str | None, name: str) -> bool | None:
+            if value is None:
+                return None
+            lowered = value.strip().lower()
+            if lowered in ("true", "1"):
+                return True
+            if lowered in ("false", "0"):
+                return False
+            raise _invalid(f"{name} must be 'true' or 'false'.")
+
+        def _int_param(value: str | None, name: str, *, minimum: int, maximum: int) -> int | None:
+            if value is None or str(value).strip() == "":
+                return None
+            try:
+                parsed = int(value)
+            except (TypeError, ValueError):
+                raise _invalid(f"{name} must be an integer.")
+            if parsed < minimum or parsed > maximum:
+                raise _invalid(f"{name} must be between {minimum} and {maximum}.")
+            return parsed
+
+        def _date_param(value: str | None, name: str) -> str | None:
+            from datetime import date as _isodate
+
+            if value is None or str(value).strip() == "":
+                return None
+            raw = str(value).strip()
+            try:
+                _isodate.fromisoformat(raw)
+            except ValueError:
+                raise _invalid(f"{name} must be an ISO date (YYYY-MM-DD).")
+            return raw
+
+        if fase_melhoria is not None and fase_melhoria not in FASE_MELHORIA:
+            raise _invalid(
+                f"fase_melhoria inválido: {fase_melhoria}.",
+                allowed=list(FASE_MELHORIA),
+            )
+        if status_instancia is not None and status_instancia not in STATUS_INSTANCIA:
+            raise _invalid(
+                f"status_instancia inválido: {status_instancia}.",
+                allowed=list(STATUS_INSTANCIA),
+            )
+        if cenario_tipo is not None and cenario_tipo not in CENARIO_TIPO:
+            raise _invalid(
+                f"cenario_tipo inválido: {cenario_tipo}.",
+                allowed=list(CENARIO_TIPO),
+            )
+        revisao_ativa_bool = _bool_param(revisao_ativa, "revisao_ativa")
+        has_improvement_bool = _bool_param(has_improvement, "has_improvement")
+        page_n = _int_param(page, "page", minimum=1, maximum=10_000)
+        page_size_n = _int_param(
+            page_size, "page_size", minimum=1, maximum=self._SEARCH_PAGE_SIZE_MAX
+        )
+        date_from_v = _date_param(date_from, "date_from")
+        date_to_v = _date_param(date_to, "date_to")
+        if date_from_v and date_to_v and date_from_v > date_to_v:
+            raise _invalid("date_from must be <= date_to.")
+        if date_field is not None:
+            allowed_dates = self._SEARCH_DATE_FIELDS.get(entity.value, frozenset())
+            if date_field not in allowed_dates:
+                raise _invalid(
+                    f"Unsupported date_field '{date_field}' for entity "
+                    f"'{entity.value}'.",
+                    allowed=sorted(allowed_dates),
+                )
+        if (date_from_v or date_to_v) and not date_field:
+            raise _invalid("date_from/date_to require date_field.")
+
+        def _wrap_search_rows(rows: list[Any]) -> dict[str, Any]:
+            """Unpaginated calls keep the legacy shape; page/page_size add a
+            typed pagination block (page_size capped at the response budget)."""
+            if page_n is None and page_size_n is None:
+                return {"total": len(rows), "items": rows_to_json(rows)}
+            p = page_n or 1
+            size = page_size_n or self._SEARCH_PAGE_SIZE_MAX
+            start = (p - 1) * size
+            window = rows[start : start + size]
+            return {
+                "total": len(rows),
+                "items": rows_to_json(window),
+                "pagination": {
+                    "page": p,
+                    "page_size": size,
+                    "has_more": start + size < len(rows),
+                },
+            }
 
         if entity == GptEntity.BRANCH:
             rows = FilialRepository().list(include_inactive=True)
@@ -1133,44 +1295,69 @@ class GptActionsDispatchService:
                 status_processo=status,
                 familia_processo=familia_processo,
                 q=q,
+                has_improvement=has_improvement_bool,
             )
             rows = filter_rows_for_access(request, rows)
             rows = ProcessoSetupStatsService().enrich_processos(rows)
-            return {"total": len(rows), "items": rows_to_json(rows)}
+            return _wrap_search_rows(rows)
 
         if entity == GptEntity.INSTANCE:
-            if not parent_id:
-                raise GptActionsError(
-                    "parent_id (processo_id) is required to list instances.", 400
-                )
-            self._raise_http_err(check_processo_view_access(request, parent_id))
-            rows = ProcessoInstanciaRepository().list_by_processo(parent_id)
+            if parent_id:
+                self._raise_http_err(check_processo_view_access(request, parent_id))
+            else:
+                self._raise_http_err(require_transformometro_view_access(request))
+            if filial_id:
+                self._raise_http_err(check_view_filial_access(request, filial_id))
+            setor_codigo = self._resolve_setor_codigo(setor_id) if setor_id else None
+            rows = ProcessoInstanciaRepository().list_filtered(
+                processo_id=parent_id,
+                filial_ref=filial_id,
+                setor_ref=setor_codigo,
+                fase_melhoria=fase_melhoria,
+                status_instancia=status_instancia,
+                q=q,
+                date_field=date_field,
+                date_from=date_from_v,
+                date_to=date_to_v,
+            )
             rows = filter_rows_for_access(request, rows, codigo_key="codigo_filial")
-            return {"total": len(rows), "items": rows_to_json(rows)}
+            return _wrap_search_rows(rows)
 
         if entity == GptEntity.REVISION:
             instancia_id = (instance_id or "").strip() or None
             if instancia_id:
-                self._raise_http_err(check_instancia_view_access(request, instancia_id))
-                rows = RevisaoRepository().list_by_instancia(instancia_id)
-                return {"total": len(rows), "items": rows_to_json(rows)}
-            if not parent_id:
-                raise GptActionsError(
-                    "parent_id (processo_id) or instance_id is required to list revisions.",
-                    400,
+                self._raise_http_err(
+                    check_instancia_view_access(request, instancia_id)
                 )
-            self._raise_http_err(check_processo_view_access(request, parent_id))
-            rows = RevisaoRepository().list_by_processo(parent_id)
-            return {"total": len(rows), "items": rows_to_json(rows)}
+            elif parent_id:
+                self._raise_http_err(check_processo_view_access(request, parent_id))
+            else:
+                self._raise_http_err(require_transformometro_view_access(request))
+            rows = RevisaoRepository().list_filtered(
+                processo_id=parent_id,
+                instancia_id=instancia_id,
+                cenario_tipo=cenario_tipo,
+                revisao_ativa=revisao_ativa_bool,
+                date_field=date_field,
+                date_from=date_from_v,
+                date_to=date_to_v,
+            )
+            rows = filter_rows_for_access(request, rows)
+            return _wrap_search_rows(rows)
 
         if entity == GptEntity.MEASUREMENT:
-            if not parent_id:
-                raise GptActionsError(
-                    "parent_id (revisao_id) is required to list measurements.", 400
+            self._raise_http_err(require_transformometro_view_access(request))
+            if parent_id:
+                row = MedicaoRepository().get_by_revisao(parent_id)
+                items = [row] if row else []
+            else:
+                items = MedicaoRepository().list_filtered(
+                    date_field=date_field,
+                    date_from=date_from_v,
+                    date_to=date_to_v,
                 )
-            row = MedicaoRepository().get_by_revisao(parent_id)
-            items = [row_to_json(row)] if row else []
-            return {"total": len(items), "items": items}
+                items = filter_rows_for_access(request, items)
+            return _wrap_search_rows(items)
 
         if entity == GptEntity.INVESTMENT:
             if not parent_id:

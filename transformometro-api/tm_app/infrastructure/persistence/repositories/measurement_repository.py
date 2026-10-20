@@ -17,6 +17,55 @@ class MedicaoRepository(PluginBaseRepository):
             (revisao_id,),
         )
 
+    def list_filtered(
+        self,
+        *,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Cross-revision measurement discovery with parent context so
+        callers can link gains to instance/process without extra lookups.
+        `date_field` is a caller-whitelisted column name.
+        """
+        allowed_date_fields = {"created_at", "updated_at"}
+        clauses = ["m.deletado = FALSE", "r.deletado = FALSE"]
+        params: list[Any] = []
+        if date_field:
+            if date_field not in allowed_date_fields:
+                raise ValueError(f"Unsupported measurement date_field '{date_field}'.")
+            clauses.append(f"m.{date_field} IS NOT NULL")
+            if date_from:
+                clauses.append(f"m.{date_field}::date >= %s::date")
+                params.append(date_from)
+            if date_to:
+                clauses.append(f"m.{date_field}::date <= %s::date")
+                params.append(date_to)
+        return self.fetch_all(
+            f"""
+            SELECT
+                m.*,
+                r.instancia_id,
+                r.processo_id,
+                r.cenario_tipo,
+                r.data_implantacao,
+                i.resumo_melhoria,
+                i.fase_melhoria,
+                p.codigo_processo,
+                p.nome_processo
+            FROM transformometro.medicoes m
+            JOIN transformometro.revisoes r
+                ON r.revisao_id = m.revisao_id
+            LEFT JOIN transformometro.processo_instancias i
+                ON i.instancia_id = r.instancia_id AND i.deletado = FALSE
+            LEFT JOIN transformometro.processos p
+                ON p.processo_id = r.processo_id AND p.deletado = FALSE
+            WHERE {' AND '.join(clauses)}
+            ORDER BY m.updated_at DESC, m.medicao_id
+            """,
+            tuple(params),
+        )
+
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         row = self.execute_returning_one(
             """

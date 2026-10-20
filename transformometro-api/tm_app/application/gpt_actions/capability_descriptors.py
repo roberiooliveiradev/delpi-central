@@ -77,11 +77,48 @@ SERVER_OWNED_FIELDS: dict[str, frozenset[str]] = {
 # Allowlisted search filters per entity (generic READ). Unknown filter → fail closed.
 ENTITY_FILTERABLE_FIELDS: dict[str, frozenset[str]] = {
     "process": frozenset(
-        {"filial_id", "setor_id", "status", "familia_processo", "q"}
+        {
+            "filial_id",
+            "setor_id",
+            "status",
+            "familia_processo",
+            "q",
+            "has_improvement",
+            "page",
+            "page_size",
+        }
     ),
-    "instance": frozenset({"parent_id"}),
-    "revision": frozenset({"parent_id", "instance_id"}),
-    "measurement": frozenset({"parent_id"}),
+    "instance": frozenset(
+        {
+            "parent_id",
+            "filial_id",
+            "setor_id",
+            "fase_melhoria",
+            "status_instancia",
+            "q",
+            "date_field",
+            "date_from",
+            "date_to",
+            "page",
+            "page_size",
+        }
+    ),
+    "revision": frozenset(
+        {
+            "parent_id",
+            "instance_id",
+            "cenario_tipo",
+            "revisao_ativa",
+            "date_field",
+            "date_from",
+            "date_to",
+            "page",
+            "page_size",
+        }
+    ),
+    "measurement": frozenset(
+        {"parent_id", "date_field", "date_from", "date_to", "page", "page_size"}
+    ),
     "investment": frozenset({"parent_id"}),
     "resource_cost": frozenset({"parent_id"}),
     "resource_link": frozenset({"parent_id"}),

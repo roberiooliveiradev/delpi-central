@@ -60,6 +60,7 @@ class ProcessoRepository(PluginBaseRepository):
         status_processo: str | None = None,
         familia_processo: str | None = None,
         q: str | None = None,
+        has_improvement: bool | None = None,
     ) -> list[dict[str, Any]]:
         clauses = ["p.deletado = FALSE"]
         params: list[Any] = []
@@ -146,6 +147,18 @@ class ProcessoRepository(PluginBaseRepository):
             )
             like = f"%{q}%"
             params.extend([like, like, like, like, like])
+        if has_improvement is not None:
+            clauses.append(
+                """
+                EXISTS (
+                    SELECT 1
+                    FROM transformometro.processo_instancias pi_h
+                    WHERE pi_h.processo_id = p.processo_id
+                      AND pi_h.deletado = FALSE
+                ) = %s::boolean
+                """
+            )
+            params.append(has_improvement)
 
         where_sql = " AND ".join(clauses)
         return self._enrich_rows(

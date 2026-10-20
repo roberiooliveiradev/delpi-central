@@ -618,7 +618,7 @@ def test_search_revisions_by_instance_id(tm_client):
             "tm_app.application.gpt_actions.dispatch_service.RevisaoRepository"
         ) as rev_cls,
     ):
-        rev_cls.return_value.list_by_instancia.return_value = rows
+        rev_cls.return_value.list_filtered.return_value = rows
         response = tm_client.get(
             "/transformometro/gpt-actions/v1/records",
             params={
@@ -631,6 +631,10 @@ def test_search_revisions_by_instance_id(tm_client):
     body = response.json()["data"]
     assert body["total"] == 1
     assert body["items"][0]["instancia_id"] == instancia_id
+    assert (
+        rev_cls.return_value.list_filtered.call_args.kwargs["instancia_id"]
+        == instancia_id
+    )
     rev_cls.return_value.list_by_processo.assert_not_called()
 
 

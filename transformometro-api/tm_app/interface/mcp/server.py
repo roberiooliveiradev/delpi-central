@@ -421,10 +421,12 @@ def create_mcp_server() -> MCPServer:
         title="Record read",
         description=(
             "READ Transformômetro records by entity. action=search: list "
-            "records (parent_id for children, instance_id preferred for "
-            "revisions, q for process text search). action=get: one record "
-            "by entity + id (for measurement, id is revisao_id; for "
-            "decomposition/diagram entities, id is the parent id)."
+            "records — instances/revisions can be discovered cross-process "
+            "(fase_melhoria, cenario_tipo, revisao_ativa, date_field/"
+            "date_from/date_to, page/page_size); parent_id scopes children; "
+            "q for text search. action=get: one record by entity + id (for "
+            "measurement, id is revisao_id; for decomposition/diagram "
+            "entities, id is the parent id)."
         ),
         annotations=_annotations("record_read", "Record read"),
         meta=meta,
@@ -441,6 +443,16 @@ def create_mcp_server() -> MCPServer:
         familia_processo: str | None = None,
         q: str | None = None,
         unit_code: str | None = None,
+        fase_melhoria: str | None = None,
+        status_instancia: str | None = None,
+        cenario_tipo: str | None = None,
+        revisao_ativa: str | None = None,
+        has_improvement: str | None = None,
+        date_field: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        page: str | None = None,
+        page_size: str | None = None,
     ) -> CallToolResult:
         return bridge.tool_record_read(
             action=action,
@@ -454,6 +466,16 @@ def create_mcp_server() -> MCPServer:
             familia_processo=familia_processo,
             q=q,
             unit_code=unit_code,
+            fase_melhoria=fase_melhoria,
+            status_instancia=status_instancia,
+            cenario_tipo=cenario_tipo,
+            revisao_ativa=revisao_ativa,
+            has_improvement=has_improvement,
+            date_field=date_field,
+            date_from=date_from,
+            date_to=date_to,
+            page=page,
+            page_size=page_size,
         )
 
     # --- Semantic family: evidence (structured metadata only) --------------
