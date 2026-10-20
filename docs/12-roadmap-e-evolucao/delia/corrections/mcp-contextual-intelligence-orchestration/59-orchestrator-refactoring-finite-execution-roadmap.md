@@ -496,3 +496,23 @@ Q03_AUTHORIZED=NO
 B1=UNCHANGED
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 ```
+
+
+## 21. Product Master / Coordination — Q03 independent acceptance gate (2026-10-20)
+
+**AUTHORITY:** Product Master requested continuation to Q03; condition Q02-A/B/C examined, Q02-C final technical review `ACCEPT_WITH_RESIDUAL` and zero rework remaining; live evidence §6.334/§6.339–340. **Q03 is review/acceptance, not implementation** (§3): assess current post-diff architecture, consumers, contracts, risk, provider-neutral generalization, performance, security and task outcomes on actual SHA/model/config where available; reuse audits 56–60 and previous targeted smoke results; no new large test suite or broad retest without specific gap. Re-execute only focused tests needed to resolve a material acceptance ambiguity, with operational authority; no deployment implicit.
+
+**B1 handled for entry, not accepted:** `classify_result_intent` / `unique_structural_ticket_list_capability` retained under §17 due to R4/R5 pagination and 30s budget. Formally **defer architectural redesign decision during Q03 assessment**; maintain as explicitly open `ARCHITECTURE_DECISION_REQUIRED` residual and weigh it in final verdict. Q03 may return `ACCEPT_WITH_RESIDUAL` only if risk is non-critical and no essential outcome claim relies on resolving B1. Never mark B1 closed or edit it without separate decision.
+
+**Other open evidence:** typed owner comparison not exercised live, 404 owner absence projection not observed on updated runtime, full DAVI/TÉO/VISTA/OpenAPI outcome coverage limited; SIPOC live task PASS, one sample (<12s answer), hypothetical/compare conversational PASS, OpenAPI exploratory READ PASS. `I04_ACCEPTED=NO` until independent review; `C3_EXECUTED=NO` and no phase promotion. Frozen synthesis, AuthZ, domain authority, 30s global, post-orchestration 12s cap intact.
+
+```text
+Q03_AUTHORIZED=YES_REVIEW_ONLY
+Q03_EXECUTED=NO
+B1_ARCH_DECISION=FORMALLY_DEFERRED_FOR_Q03_REVIEW_UNRESOLVED
+Q03_RUNTIME_DIFF_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=Q03_INDEPENDENT_ACCEPTANCE_REPORT
+```
