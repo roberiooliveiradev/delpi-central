@@ -136,3 +136,35 @@ Consulta `SX6010`, campo `X6_VAR`/`X6_CONTEUD`: `MV_CUSFIL=A`, `MV_CONTERC=F`, `
 ### 10.5 Lacunas e próxima fase
 
 `R03_PHASE_A=ACCEPT_WITH_RESIDUAL`: fontes candidatas e metadados SQL observados; **não** afirmar algoritmo MATR460 completo, nem correspondência exata do relatório. `MATR460_SOURCE_RULES=TO_INVENTORY`, `ADVPL_CUSTOMIZATION=TO_INVENTORY`, `P7_STANDARD_PARITY=TEST_NOT_RUN`, `BLOCO_H_PARITY=TEST_NOT_RUN`. Fase B: obter versão do programa e perguntas SX1/parametrização/custos, verificar owner e fontes ADVPL ou rotina autorizada; reproduzir linha/grupo em 30/09/2026 e distinguir preliminar de fechamento final; confrontar com PDF original quando disponibilizado. Sem writes no ERP ou endpoints novos nesta fase.
+
+
+## 11. R03 — Fase B: prova SQL de reprodução (rodada B1, 20/10/2026)
+
+**Natureza:** execução DAVI `SELECT` read-only; nenhuma execução MATR460, nenhuma escrita em TOTVS, nenhum código/API/UI alterado. Fonte AS-IS: TÉO; referência numérica do vídeo: transcrição derivada NotebookLM fornecida pelo PO, timecodes ainda `STALE_EVIDENCE`.
+
+### B1.1 Baseline e resultado de origem
+
+Em `SB9010` ativa (`D_E_L_E_T_=''`), `B9_DATA='20260930'`, `B9_FILIAL='01'`:
+- Total `SUM(B9_VINI1) = 3.884.439,52`, 4.812 linhas, 4.027 produtos. P7 relatado na derivação: **3.776.994,69**; delta fonte − relato **+107.444,83**. **Ainda não reproduzido.**
+- `B9_LOCAL='01'`: 3.945 registros, `SUM(B9_VINI1)=3.524.856,22`; `99`: 753 / **293.334,20**; `98`: 101 / **9.402,08**; `50`: 5 / **54.302,52**; `25`: 6 / **2.455,33**; `03`: 1 / **33,17**; `0`: 1 / **56,00**.
+- Filtro meramente exploratório excluindo armazéns `98`/`99` produz **3.581.703,24**, não o P7 relatado; não implementar essa exclusão como regra.
+- `B9_QINI > 0` somado separadamente pode divergir da soma bruta: armazém 01 contém **−5.038,25** de valor com quantidade zero; armazém 99 contém **+6.315,75** com quantidade zero; armazém 98 contém **−0,05** com quantidade negativa. Total filial 01 com `B9_QINI<>0`: **3.883.162,02**, também diferente do relatório. Isso pode refletir saldos/ajustes e **não** prova defeito da SB9 nem regra P7.
+- `SB1010.B1_FILIAL=''` ativo em cadastro, join por `B9_COD=B1_COD` sem ausências na janela verificada. Por `B1_TIPO`: `MP 3.364.885,39`; `II 266.321,45`; `PA 190.511,24`; `PI 24.528,59`; demais `38.192,85`. Subtotal de Insumos igual ao relato do NotebookLM (**coincidência aritmética, não aceite de paridade**).
+- Excluindo somente armazém 99, `MP` cai para **3.071.598,77**; o subtipo II permanece em **266.321,45**. A composição do processo exige regra de estoque e não simples exclusão por depósito.
+
+### B1.2 Configuração SX6 na DELPI
+
+Valores `SX6010` comprovados na leitura: `MV_CUSMED=M`, `MV_CUSFIFO=F`, `MV_CUSLIFO=F`, `MV_CUSTRON=.T.`, `MV_CUSZERO=S`, `MV_CUSTNEG=S`, `MV_CUSTCUR=1`, `MV_CUSENT=DIARIO`, `MV_CUSFIL=A`, `MV_LOCPROC=99`, `MV_M460PRC=.T.`, `MV_MT460EP=.T.`, `MV_R460PRC=1`, `MV_R460UNP=.T.`. Valores provam configuração encontrada, **não a semântica/versionamento exatos do código MATR460**.
+
+### B1.3 Metadados adicionais e lacuna do programa
+
+- `SX1010` existe e contém perguntas com `X1_GRUPO`, `X1_ORDEM`, `X1_PERGUNT`, `X1_VARIAVL`, `X1_DEF01..05`.
+- Busca exata `X1_GRUPO IN ('MATR460','MATR460A','MATR460B')` retornou zero linhas; busca de grupos com `%460%` retornou candidatos (por exemplo `MTR460`, `MT460A`, `MTA460`) **sem prova de que sejam perguntas da MATR460**. Não atribuir grupo por semelhança. Necessário confirmar versão/source ADVPL, identificador SX1 efetivo e parâmetros completos com owner TI/Protheus.
+- `SB8010` (lotes) existe; `TOP 1 *` retornou zero linhas na leitura; isso não demonstra ausência total ou irrelevância de controle de lotes.
+- Tabelas `H_*` de 2023–2025 seguem fonte de saída histórica Bloco H; nenhuma série `H_` 30/09/2026 foi identificada no inventário anterior; `H_` não substitui as regras de geração do P7 padrão.
+
+### B1.4 Resultado, classificação e próximos critérios
+
+`R03_PHASE_B1=ACCEPT_WITH_RESIDUAL` **somente para a investigação**; `P7_FULL_REPRODUCTION=INCONCLUSIVE`; `MATR460_SQL_RULES=TO_INVENTORY`; `SX1_PARAMETERS=TO_INVENTORY`; `PROTHEUS_VERSION_CUSTOMIZATIONS=TO_INVENTORY`; `VIDEO_TIMECODES=STALE_EVIDENCE`; `P7_EXPORT_PARITY=TEST_NOT_RUN`. Não declarar `PASS` para a soma P7, nem `OFFICIAL_TOTAL`.
+
+**Para continuar Fase B:** obter pergunta/grupo SX1 validado pela rotina (ou fonte ADVPL/trace autorizada), layout P7 de 30/09/2026 e parâmetros de emissão, confirmar o corte/fim do Acompanha Custos e tratamento de depósitos 98/99, critérios de `B9_QINI=0`, custos `B9_CM1` vs `B9_VINI1`, seleção de tipos/terceiros e composição do WIP. Confrontar linhas, totais por tipo/grupo e saldo geral; divergência exige explicação demonstrável. **Não desenvolver endpoint/UI nem sacramentar fechamento com fórmulas inferidas.**
