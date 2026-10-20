@@ -2401,6 +2401,17 @@ services:
       CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN: ${CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN:-}
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
 
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: controllership-finance-api
+
+      # S2S individual (credencial dedicada; env_file carrega S2S_* de supplies)
+      S2S_TOKEN_URL: ${S2S_TOKEN_URL}
+      S2S_CLIENT_ID: ${CF_S2S_CLIENT_ID:-controllership-finance-api}
+      S2S_CLIENT_SECRET: ${CF_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${CF_S2S_SCOPE:-settlements.read}
+      S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 10s

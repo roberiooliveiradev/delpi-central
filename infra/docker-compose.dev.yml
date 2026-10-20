@@ -2999,6 +2999,13 @@ services:
       CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN: ${CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN:-}
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
 
+      # S2S individual (credencial dedicada; env_file carrega S2S_* de supplies)
+      S2S_TOKEN_URL: ${S2S_TOKEN_URL}
+      S2S_CLIENT_ID: ${CF_S2S_CLIENT_ID:-controllership-finance-api}
+      S2S_CLIENT_SECRET: ${CF_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${CF_S2S_SCOPE:-settlements.read}
+      S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
+
     volumes:
       - ../controllership-finance-api:/app
       - ../shared:/shared
