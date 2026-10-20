@@ -16431,3 +16431,21 @@ Q03_AUTHORIZED=NO
 MATERIAL_ACT=0
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.337 — Coordination review of conversational budget split (2026-10-20)
+
+**REVIEWED:** implementation `a9f5f8d3c2ac389747ce4249e0e185cca72f52e1`; Product Master authority in plan 16 and roadmap 59 §20. **VERDICT: `ACCEPT_WITH_RESIDUAL` (technical scope)**. Independent static review confirms only `_admit_conversational_turn` emits typed `admission_outcome=early_conversational_admission`, and `handle_interactive_turn.py` omits the 12s fallback stage cap for precisely that outcome. Unmarked/post-orchestration `NOT_APPLICABLE` remains 12s. Shared global 30s is preserved, no automatic model retry, no owner/domain authority or write-gate changes. Executor reported full delia-api 1685 PASS; independent suite run `TEST_NOT_RUN`. **SIPOC smoke on newly deployed runtime `TEST_NOT_RUN`**, so no functional PASS asserted. The future multi-call continuation is INVENTORY/PLANNED only, not authorized: prior turns and a single deadline exist, while timeout response does not include reusable partial output. No production deploy authorized, no Q03 entry or I04 acceptance.
+
+```text
+CONVERSATIONAL_BUDGET_SPLIT_REVIEW=ACCEPT_WITH_RESIDUAL
+EARLY_ADMISSION_REMAINING_GLOBAL_BUDGET=STATIC_VERIFIED
+POST_ORCHESTRATION_12S_CAP=PRESERVED
+FULL_BACKEND=1685_PASS_EXECUTOR_REPORTED
+SIPOC_NEW_RUNTIME=TEST_NOT_RUN
+AUTOMATIC_RETRY=NOT_AUTHORIZED
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=AUTHORIZED_ENVIRONMENT_REAL_MODEL_SIPOC_SMOKE_THEN_COORDINATION_GATE
+```
