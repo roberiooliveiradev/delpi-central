@@ -54,3 +54,16 @@ Se as evidências não existirem, a entrega permanece com código e interface pr
 - `protheus-rest-read.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 - playbook SA2 §44.3
+
+
+## Evidência posterior — F4/F4.2 REST↔SQL (2026-10-20)
+
+**Fonte detalhada:** [suppliers-f4-post-put-sql-persistence-gabriel-handoff-2026-10-20.md](../../../docs/12-roadmap-e-evolucao/supplies/evidence/suppliers-f4-post-put-sql-persistence-gabriel-handoff-2026-10-20.md). A introdução e o estado histórico acima não devem prevalecer sobre a execução comprovada F4/F4.2. Status: **HOMOLOGATION_PARTIAL / PRODUCTIVE_WRITE_BLOCKED**.
+
+- POST REAL no REST `:8701` respondeu 200; SQL read-only posterior identificou o fornecedor **003878/01** em **DELPI_TST01 / SA2010**, corroborado por GET REST do mesmo ID. **Não** se trata da base produtiva `DELPI` usada pela listagem; portanto, persistência no ambiente de teste foi provada, não liberação produtiva.
+- PUT REST real persistiu mudanças verificadas por GET subsequente em campos de amostra; outros campos continuam `PENDING` de homologação por Gabriel. Alguns PUTs foram restaurados após teste. Registro POST de teste permanece bloqueado em TST01.
+- O PUT upstream aceitou `fornecedor` como **objeto**, divergindo do array no documento original, e o código foi adaptado (commit `1aabfb0851`); confirmação formal do owner ainda pendente.
+- Obrigatoriedade observada no POST testado: `phone`, `financial_nature_code`, `bacen_country_code`; sincronizar validações backend/MFE e confirmar regra por ambiente/tipo com TOTVS.
+- `codusr` do usuário foi resolvido pelo Core e relacionado a `SYS_USR` no teste, mas a semântica entre ambientes requer aprovação. Request com `codusr` top-level enviado pelo cliente **não foi rejeitado integralmente** no caso negativo; corrigir na BFF e provar ausência de efeitos de escrita.
+- **Gates CREATE/UPDATE OFF** ao fim de F4/F4.2 segundo relatório. Não habilitar escrita produtiva antes de verificar endpoint REST da base DELPI, suporte de campos, reconciliação POST e aprovação PO+TOTVS.
+- Mensagem ao Gabriel encaminhada pelo PO segundo o chat; **resposta e aprovação não documentadas**. Perguntas técnicas e checklist no handoff acima.
