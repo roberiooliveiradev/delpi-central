@@ -31,8 +31,8 @@ IDs de inventário são locais ao doc, **não** códigos nativos de relatório.
 
 | ID | Artefato ou atividade coletada | Rotina/identificação documentada | Fonte física/HTTP | Situação |
 |---|---|---|---|---|
-| R01 | Baixas a pagar, Excel e PDF por DATA/NATUREZA | FINR190; primeiro/último dia da competência | Tabelas, filtros e joins TO_INVENTORY | SOURCE DOCUMENTED |
-| R02 | Baixas a receber, PDF/Excel | FINR190; opção "Da Carteira?" a validar | Tabelas, filtros e joins TO_INVENTORY | SOURCE DOCUMENTED |
+| R01 | Baixas a pagar, Excel e PDF por DATA/NATUREZA | FINR190 (TÉO); `_F190C` (relato audiovisual derivado); FINSV010 (substituto oficial TOTVS, não equivalente provado) | Tabelas, filtros e joins TO_INVENTORY | SOURCE DOCUMENTED |
+| R02 | Baixas a receber, PDF/Excel | FINR190 (TÉO); `_F190C` (relato audiovisual derivado); FINSV010 (substituto oficial TOTVS, não equivalente provado) | Tabelas, filtros e joins TO_INVENTORY | SOURCE DOCUMENTED |
 | R03 | P7 padrão e layout Bloco H | MATR460, **não** MATR860 | Tabelas/algoritmo e output a conferir | SOURCE DOCUMENTED |
 | R04 | Consumo / Relação por OP | MATR860 | Tabelas e colunas TO_INVENTORY | SOURCE DOCUMENTED |
 | R05 | Entradas e Saídas / valor estoque | Relatório operacional a confirmar | api-delpi `GET /supplies/stock-value` adjacente; SB9/SD3/SB2 conforme executor; **não declarar equivalência** | PARTIAL |
@@ -77,3 +77,18 @@ IDs de inventário são locais ao doc, **não** códigos nativos de relatório.
 Não implementar endpoint api-delpi/BFF até existir: `report_id → owner → rotina/saída → tabela/coluna e joins → filtro empresa/filial/período → regra canônica → amostra de paridade → contrato DTO → authz/scope → RQ/AC/testes`.
 
 **Estado:** `INVENTORY_PARTIAL`; `IMP-08/P1=NO_GO`; `T01/T03/T05=TO_INVENTORY`; `SQL_VALIDATION=TEST_NOT_RUN`; `VIDEO_PROVENANCE=STALE_EVIDENCE`; `RUNTIME_CHANGED=NO`.
+
+## L1.2 — Reconciliação audiovisual derivada e documentação oficial TOTVS (20/10/2026)
+
+**Evidência derivada, não reprodução direta do vídeo:** NotebookLM reportado pelo usuário: Joici tenta `Shift+F6` / `_F190C` entre `00:43:51–00:46:14`; erro de compilação impede geração. Cinco saídas são apenas verbalmente informadas (Pagar XLS, Receber XLS, Receber PDF/data, Pagar PDF/data, Pagar PDF/natureza). O TÉO `kp02_t01` usa `FINR190`. **IDENTITY_DRIFT_TO_RECONCILE:** possível customização versus rotina padrão; sem afirmar substituição local. `VIDEO_DIRECT_VERIFICATION=TEST_NOT_RUN`.
+
+**Documentação oficial TOTVS (fontes públicas):**
+- [TOTVS — Substituição do FINR190 por FINSV010 (19/08/2026)](https://centraldeatendimento.totvs.com/hc/pt-br/articles/42165342299287-Cross-Segmentos-Linha-BackOffice-Protheus-Smartview-Qual-relat%C3%B3rio-subistitui-o-relat%C3%B3rio-de-Baixas-FINR190-no-Smartview): FINSV010 é objeto Smart View de Relação de Baixas; **tabelas lógicas declaradas** `SE1, SE2, SED, F7G, FK1, FK2, FK5, FKA`; campos semânticos descritos: cliente/fornecedor, natureza, vencimento, histórico, data de baixa, valor original, valor pago, juros, multas e taxa permanência. Não inclui movimentos bancários sem título associado.
+- [TOTVS — Reestruturação da SE5 na família FKx](https://tdn.totvs.com/pages/viewpage.action?pageId=183730415) e [documentação técnica FKx](https://tdn.totvs.com/pages/viewpage.action?pageId=203760476): FK1/FK2 baixas a receber/pagar; FK5 movimentos bancários; FK7 vínculo título-baixa; FK6 valores acessórios; FKA rastreio. A referência genérica à família não identifica o layout da customização local.
+- [TOTVS — Visão de dados FINSV010](https://centraldeatendimento.totvs.com/hc/pt-br/articles/38268207768471-Cross-Segmentos-Backoffice-Linha-Protheus-Smartview-FINSV010-Qual-relat%C3%B3rio-possibilita-a-emiss%C3%A3o-da-listagem-de-baixas): oferece saídas a pagar/receber e exportação de dados XLSX; **não confirma os cinco arquivos personalizados** da Aliança.
+- [TOTVS — Baixas parciais e relatórios de posição](https://centraldeatendimento.totvs.com/hc/pt-br/articles/39422738912663-Cross-Segmentos-Backoffice-Linha-Protheus-SIGAFIN-Relat%C3%B3rios-com-exibi%C3%A7%C3%A3o-de-baixas-parciais): FINSV010 é histórico de eventos de baixa, não confundir com posições FINSV005/FINSV013.
+
+**Matriz inicial de entidades físicas candidatos** (sufixo físico do ambiente, schema, colunas exatas, joins, filtros e customização ainda TO_INVENTORY):
+`SE1` título receber; `SE2` título pagar; `SED` natureza; `F7G` motivo; `FK1` evento receber; `FK2` evento pagar; `FK5` banco; `FKA` rastreio. DAVI retornou `FK1010.FK1_DATA` e `FK2010.FK2_DATA` no dicionário disponível, **somente metadados**, sem vínculo provado com `_F190C`.
+
+**Próximo limite de auditoria:** G2 somente com nomes de colunas/layout vistos em exportação (ou fonte do programa confirmado), G3 somente quando owner/versão do programa local confirmados, G4 somente quando fonte `_F190C` e bindings físicos/regras forem comprovados; G5 após amostra de paridade. Nenhum novo gate promovido a PASS por similaridade FINSV010. `IMPLEMENTATION_AUTHORIZED=NO`.
