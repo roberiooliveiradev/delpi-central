@@ -22,13 +22,15 @@ def test_id_invalid() -> None:
     assert exc.value.code == "PROTHEUS_SUPPLIER_ID_INVALID"
 
 
-def test_upstream_is_array_and_omits_absent_fields() -> None:
+def test_upstream_is_object_and_omits_absent_fields() -> None:
+    # F4 live evidence: upstream PUT accepts `fornecedor` as OBJECT;
+    # the documented array form returns HTTP 500 upstream.
     fields = normalize_supplier_update_fields({"supplier_name": "NOME ATUALIZADO"})
     body = build_upstream_update_body(codusr="000161", fields=fields)
     assert body["codusr"] == "000161"
-    assert isinstance(body["fornecedor"], list)
-    assert body["fornecedor"] == [{"supplier_name": "NOME ATUALIZADO"}]
-    assert "supplier_short_name" not in body["fornecedor"][0]
+    assert isinstance(body["fornecedor"], dict)
+    assert body["fornecedor"] == {"supplier_name": "NOME ATUALIZADO"}
+    assert "supplier_short_name" not in body["fornecedor"]
 
 
 def test_rejects_tax_id_and_identity_fields_as_immutable() -> None:

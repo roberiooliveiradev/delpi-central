@@ -134,7 +134,10 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
 
 
 def build_upstream_update_body(*, codusr: str, fields: Mapping[str, str]) -> dict[str, Any]:
+    # Live evidence (F4, fornecedor 002469/01): upstream accepts `fornecedor`
+    # as an OBJECT — the array form documented in the external contract
+    # returns HTTP 500 for every payload (incl. non-existent IDs).
     return {
         "codusr": validate_codusr(codusr),
-        "fornecedor": [dict(fields)],
+        "fornecedor": dict(fields),
     }

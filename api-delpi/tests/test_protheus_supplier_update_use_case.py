@@ -86,7 +86,7 @@ def test_invalid_id_precedes_feature_gate(monkeypatch) -> None:
     identity.get_identity_for_user.assert_not_called()
 
 
-def test_enabled_sends_array_body(monkeypatch) -> None:
+def test_enabled_sends_object_body(monkeypatch) -> None:
     from app.application.use_cases.integrations import (
         update_protheus_rest_supplier_use_case as uc_mod,
     )
@@ -110,7 +110,7 @@ def test_enabled_sends_array_body(monkeypatch) -> None:
     )
     body = gateway.update_supplier.call_args.kwargs["body"]
     assert body["codusr"] == "000161"
-    assert body["fornecedor"] == [{"supplier_name": "NOME"}]
+    assert body["fornecedor"] == {"supplier_name": "NOME"}
     assert result["supplier_id"] == "00000101"
     assert gateway.update_supplier.call_count == 1
 

@@ -102,7 +102,7 @@ A fonte não descreve status/payload de **sucesso** POST, idempotência, regras 
 **Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create nem de `api-delpi.data`)  
 **Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST). Gate fechado não consulta Core, parâmetros, OAuth nem executa PUT.  
 **Precedência:** id e payload → autenticação/permissão → feature gate → identidade Core → configuração/token → escrita.  
-**Request público:** objeto `fornecedor` com os campos a alterar. O backend monta o array upstream e resolve `codusr` no Core somente com o gate aberto.  
+**Request público:** objeto `fornecedor` com os campos a alterar. O backend resolve `codusr` no Core somente com o gate aberto.  
 **Allowlist (F3.3 — decisão PO):** todos os campos cadastrais do POST, **exceto** `tax_id` (documento fiscal imutável nesta funcionalidade), `supplier_code` e `supplier_store` (identidade). `tax_id`/identidade são rejeitados com `PROTHEUS_SUPPLIER_FIELD_IMMUTABLE`; campos fora do contrato com `PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE`; `codusr` cliente com `PROTHEUS_IDENTITY_CLIENT_FORBIDDEN`.  
 **Ressalva de evidência:** o exemplo contratual upstream comprova apenas `supplier_name`/`supplier_short_name`. Os demais campos foram liberados por decisão funcional e seguem **pendentes de homologação TOTVS** — o gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` permanece até essa confirmação.  
 **Semântica:** PUT parcial — campos omitidos são preservados; string vazia/null é rejeitada (`PROTHEUS_SUPPLIER_CLEAR_NOT_SUPPORTED`); tipos numéricos são rejeitados para preservar zeros à esquerda.  
@@ -118,16 +118,14 @@ Exemplo estrutural sanitizado:
 ```json
 {
   "codusr": "000161",
-  "fornecedor": [
-    {
-      "supplier_name": "FORNECEDOR EXEMPLO ATUALIZADO",
-      "supplier_short_name": "EXEMPLO"
-    }
-  ]
+  "fornecedor": {
+    "supplier_name": "FORNECEDOR EXEMPLO ATUALIZADO",
+    "supplier_short_name": "EXEMPLO"
+  }
 }
 ```
 
-No PUT, `fornecedor` é **array**, diferentemente do POST.
+**Correção F4 (evidência live 2026-10-20, fornecedor controlado 002469/01):** a documentação externa exemplificava `fornecedor` como **array**, mas o endpoint real retorna HTTP 500 para qualquer array — inclusive para ID inexistente ou array vazio. A forma aceita e **persistente** é `fornecedor` como **objeto** (resposta `200 {"message":"Fornecedor alterado com sucesso."}` + GET posterior comprovando o valor).
 
 | HTTP | `code_error` | Situação descrita |
 |---|---|---|
