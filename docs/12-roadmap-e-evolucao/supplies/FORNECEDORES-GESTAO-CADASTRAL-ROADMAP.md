@@ -112,3 +112,15 @@ O dado externo é **sugestão**, não autoridade. Não usar scraping, provider, 
 - [Playbook páginas MFE](../../05-plugin-system/playbook-mfe-page-excellence.md)
 
 **Resultado:** backlog detalhado, não implementação. Atualizar este arquivo e as authorities/ledger aplicáveis quando o estado mudar; não promover fase ou declarar deploy sem evidência.
+
+
+## Atualização de execução F4/F4.2 — 2026-10-20 (posterior ao planejamento original)
+
+> **Evidência:** [Handoff de persistência REST↔SQL e Gabriel](./evidence/suppliers-f4-post-put-sql-persistence-gabriel-handoff-2026-10-20.md). As tabelas de estado anteriores nesta página são baseline histórico e **não refletem integralmente o código e runtime F3/F4**. Reancorar no HEAD.
+
+- Listagem de fornecedores e ficha já foram observadas operando no Portal; F3.3 implementou allowlist PUT de 22 campos no código, dos quais 20 adicionais dependem de homologação TOTVS.
+- F4 comprovou PUTs de teste e POST REST 200, com persistência confirmada posteriormente por SQL: fornecedor de teste **003878/01**, base **DELPI_TST01**; GET REST por ID retornou o mesmo registro.
+- **Divergência impeditiva:** listagem do Portal usa **DELPI**, REST `:8701` corresponde a **DELPI_TST01**. Endpoint REST da base DELPI produtiva permanece não identificado; não alterar URL ou habilitar gravação por suposição.
+- CREATE/UPDATE permanecem **OFF** ao fim da execução segundo evidência Cursor; confirmação no runtime deve preceder próximo teste.
+- PUT upstream aceitou **objeto** `fornecedor` em vez de array documentado; `EXECUTION_DRIFT` contratual requer aceite Gabriel. POST necessita campos obrigatórios identificados em teste e mecanismo de retorno/reconciliação do novo A2_COD.
+- E13/E14 na fila mestra e o gate E10 não são automaticamente promovidos por este avanço técnico. Frente cadastral F4 segue com aprovação de rollout produtivo pendente.
