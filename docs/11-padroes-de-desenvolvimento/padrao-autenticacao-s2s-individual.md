@@ -180,3 +180,32 @@ ausência de `X-Delpi-Service-Token` na chamada migrada.
 - Permissões funcionais do usuário permanecem responsabilidade da BFF
   (`supplies.access`/`supplies.manage` via Core); o verificador S2S não
   cria autoridade paralela sobre autorização de produto.
+
+## Evidência de produção (P1.SEC.5)
+
+Executado em  (Keycloak 24, realm ):
+
+- Cliente confidencial  provisionado (service account;
+  standard flow e direct access grants desabilitados); cliente
+   criado como audience holder; mapper de audience
+   inclui  no access token.
+- Emissão real:  retorna JWT com ,
+   contendo ,  igual ao  do ambiente.
+- Validação real dentro do container : token aceito com
+  cliente/audience corretos via JWKS do realm.
+- Negativos reais: token  negado (),
+  segredo legado como Bearer negado, header opaco sem scheme negado,
+  assinatura adulterada negada, scope exigido ausente → ,
+  allowlist por rota excluindo  → .
+- Gateway real dentro de :  emite
+   com JWT válido, preserva o Bearer do
+  usuário e nunca inclui  nem o segredo legado.
+- Injeção por cliente:  sem JWT → 401; headers
+  S2S/actor forjados → 401.
+- Coexistência: , ,  e
+  consumidores legados saudáveis após o deploy;  →
+  / health 200.
+- SHAs integrados na : , , ,
+  , .
+- Sem rota de negócio migrada nesta etapa: o wiring produtivo de rotas é
+   por desenho (decorators aditivos, nenhum consumer ativo).
