@@ -81,7 +81,7 @@ Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY
 
 **Controle vivo:** [47 — Tracker de coleta, colunas e paridade](./47-t01-report-column-audit-tracker-v1.md), baseado nos 15 itens do [46](./46-t01-report-source-inventory-v1.md). Cada item possui seis gates objetivos (etapa/evidência, campos/filtros de saída, tipo/owner da fonte, bindings SQL ou contrato externo, paridade/validação, aceite). Percentuais de coleta, auditoria e itens concluídos incluem numerador/denominador; expansão de escopo requer registro e alteração explícita do denominador.
 
-**Baseline conservador (20/10/2026):** `0/60 = 0,0% de gates de coleta atestados`; `0/90 = 0,0% de gates de auditoria atestados`; `0/15 = 0,0% de itens encerrados`. Isso não apaga o inventário documental já existente: apenas distingue catalogação de evidência validada por critério. Nenhuma nova implementação está autorizada por este tracker.
+**Baseline de abertura (20/10/2026):** `0/60` coleta, `0/90` auditoria; **após rodada L1.1 FINR190:** `2/60 = 3,3%` de critérios de coleta atestados, `2/90 = 2,2%` de auditoria atestados, `0/15 = 0,0%` de itens encerrados (documento 47 §6). Isso não apaga o inventário documental já existente: apenas distingue catalogação de evidência validada por critério. Nenhuma nova implementação está autorizada por este tracker.
 
 ## 3. Mapa curto de fontes canônicas
 
