@@ -3,12 +3,17 @@ import type { MutableRefObject, ReactNode } from "react";
 import {
   AudioRecorderControl,
   audioRecorderErrorMessage,
+  HelpTooltip,
   IconButton,
   MessageComposer,
 } from "@delpi/plugin-ui/index";
 import { X } from "lucide-react";
 
 import { INTERACTION_INPUT_CHAR_LIMIT } from "../api/interactionClient";
+import {
+  DELIA_DICTATION_STT_DISCLOSURE,
+  DELIA_LOCAL_CAPTURE_DISCLOSURE,
+} from "../audio/audioCaptureTestAdmission";
 import type {
   DeliaDictationError,
   DeliaDictationTranscription,
@@ -119,6 +124,7 @@ export function DeliaComposer({
     loading || (requestMode != null && requestMode !== "idle");
   const [dictating, setDictating] = useState(false);
   const [dictationError, setDictationError] = useState<string | null>(null);
+  const [transcribed, setTranscribed] = useState(false);
   const discardRef: MutableRefObject<(() => void) | null> = useRef(null);
   const selectionRef: MutableRefObject<{
     start: number;
@@ -173,6 +179,7 @@ export function DeliaComposer({
     const abort = new AbortController();
     abortRef.current = abort;
     setDictationError(null);
+    setTranscribed(false);
     setDictating(true);
     dictationTranscriber(draft, abort.signal)
       .then((result) => {
@@ -182,6 +189,7 @@ export function DeliaComposer({
           value.slice(0, caret.start) + result.text + value.slice(caret.end);
         caretRef.current = caret.start + result.text.length;
         onChange(next);
+        setTranscribed(true);
       })
       .catch((error: unknown) => {
         if (session !== sessionRef.current) return;
@@ -201,6 +209,8 @@ export function DeliaComposer({
     setDictating(false);
   };
 
+  const sttAdmitted = dictationTranscriber != null;
+
   return (
     <AudioRecorderControl
       enabled={audioCaptureEnabled}
@@ -209,6 +219,17 @@ export function DeliaComposer({
       maxBytes={audioCaptureMaxBytes}
       canSendAudio={false}
       onDraftReady={handleDraftReady}
+      helpCopy={{
+        startLabel: "Ditar mensagem",
+        startHelp: sttAdmitted
+          ? "Ditar mensagem: fale e transforme sua voz em texto editável."
+          : "Gravar áudio neste navegador: a transcrição está indisponível.",
+        unavailableHelp:
+          "Ditado indisponível neste navegador ou contexto.",
+        finishHelp: sttAdmitted
+          ? "Encerrar a gravação e transcrever sua fala para texto."
+          : "Encerrar a gravação e ouvir a prévia local.",
+      }}
     >
       {({ trigger, panel, status, errorReason, discard }) => {
         discardRef.current = discard;
@@ -221,22 +242,45 @@ export function DeliaComposer({
             captureView={
               dictating ? (
                 <div
-                  className="delpi-ui-audio-recorder"
+                  className="delpi-ui-audio-recorder delpi-ui-audio-recorder--processing"
                   role="status"
                   aria-live="polite"
+                  aria-busy="true"
                 >
+                  <span
+                    className="delpi-ui-audio-recorder__activity"
+                    aria-hidden="true"
+                  >
+                    <i />
+                    <i />
+                    <i />
+                  </span>
                   <span className="delpi-ui-audio-recorder__status-text">
                     Transcrevendo sua fala…
                   </span>
-                  <IconButton
-                    aria-label="Cancelar transcrição"
-                    onClick={cancelTranscribing}
-                  >
-                    <X size={18} aria-hidden="true" />
-                  </IconButton>
+                  <div className="delpi-ui-audio-recorder__actions">
+                    <HelpTooltip
+                      wrap
+                      content="Parar de esperar a transcrição e voltar ao texto. O processamento remoto pode continuar."
+                    >
+                      <IconButton
+                        aria-label="Cancelar transcrição"
+                        onClick={cancelTranscribing}
+                      >
+                        <X size={18} aria-hidden="true" />
+                      </IconButton>
+                    </HelpTooltip>
+                  </div>
                 </div>
               ) : panel && status !== "error" ? (
-                panel
+                <div className="delia-dictation">
+                  {panel}
+                  <p className="delia-dictation__disclosure">
+                    {sttAdmitted
+                      ? DELIA_DICTATION_STT_DISCLOSURE
+                      : DELIA_LOCAL_CAPTURE_DISCLOSURE}
+                  </p>
+                </div>
               ) : null
             }
             captureStatus={dictating ? "transcribing" : status}
@@ -252,6 +296,8 @@ export function DeliaComposer({
             onStop={onStop}
             placeholder={placeholder}
             pendingCaretRef={caretRef}
+            transcribed={transcribed}
+            onUserEdit={() => setTranscribed(false)}
           />
         );
       }}
@@ -274,6 +320,8 @@ type DeliaComposerBodyProps = {
   onStop?: () => void;
   placeholder: string;
   pendingCaretRef: MutableRefObject<number | null>;
+  transcribed: boolean;
+  onUserEdit: () => void;
 };
 
 /** Internal body — component so the focus-restore effect is legal. */
@@ -292,6 +340,8 @@ function DeliaComposerBody({
   onStop,
   placeholder,
   pendingCaretRef,
+  transcribed,
+  onUserEdit,
 }: DeliaComposerBodyProps) {
   const captureActive = captureView != null;
   const wasActiveRef: MutableRefObject<boolean> = useRef(captureActive);
@@ -315,6 +365,11 @@ function DeliaComposerBody({
     }
   }, [captureActive, captureStatus, inputId, pendingCaretRef]);
 
+  const handleUserChange = (next: string) => {
+    if (transcribed) onUserEdit();
+    onChange(next);
+  };
+
   return (
     <div className="delia-composer-stack">
       <MessageComposer
@@ -322,8 +377,8 @@ function DeliaComposerBody({
         inputId={inputId}
         inputLabel="Pergunte à DÉLIA"
         value={value}
-        onChange={onChange}
-        onClearDraft={() => onChange("")}
+        onChange={handleUserChange}
+        onClearDraft={() => handleUserChange("")}
         onSubmit={onSubmit}
         loading={loading}
         requestMode={requestMode}
@@ -340,6 +395,11 @@ function DeliaComposerBody({
             : (dictationError ?? undefined)
         }
       />
+      {transcribed && !captureActive ? (
+        <p className="delia-composer__transcribed" role="status">
+          Texto transcrito. Revise antes de enviar.
+        </p>
+      ) : null}
     </div>
   );
 }

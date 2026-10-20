@@ -5,6 +5,7 @@ export type IconButtonTone = "default" | "danger" | "primary";
 export type IconButtonProps = {
   children: ReactNode;
   "aria-label": string;
+  "aria-describedby"?: string;
   "aria-expanded"?: boolean;
   "aria-haspopup"?: ButtonHTMLAttributes<HTMLButtonElement>["aria-haspopup"];
   "aria-pressed"?: boolean;
@@ -27,6 +28,7 @@ export type IconButtonProps = {
 export function IconButton({
   children,
   "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedby,
   "aria-expanded": ariaExpanded,
   "aria-haspopup": ariaHaspopup,
   "aria-pressed": ariaPressed,
@@ -55,6 +57,7 @@ export function IconButton({
       disabled={disabled}
       onClick={onClick}
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedby}
       aria-expanded={ariaExpanded}
       aria-haspopup={ariaHaspopup}
       aria-pressed={typeof isPressed === "boolean" ? isPressed : undefined}

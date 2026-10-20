@@ -2,7 +2,7 @@
 
 **Data da decisão:** 2026-10-19  
 **Tipo:** `PRODUCT_UX_DECISION / IMPLEMENTATION_REFERENCE` — especificação visual, **não** evidência de implementação.  
-**Status:** `PRODUCT_DIRECTION_APPROVED / VISUAL_REWORK_PLANNED / NO_CODE_CHANGE`  
+**Status:** `PRODUCT_DIRECTION_APPROVED / IMPLEMENTED_AWAITING_PRODUCTION_VERIFICATION` — evidência em [voice-dictation-visual-refinement-vdf04](./evidence/voice-dictation-visual-refinement-vdf04/voice-dictation-visual-refinement-vdf04-evidence.md); SHA de implementação e gates registrados no ledger §6.319.  
 **Owner:** UX/Frontend DÉLIA + `plugin-ui` (componentes visuais compartilhados).  
 **Fonte funcional:** [119 — Voice Dictation Composer](./119-conversation-audio-recorder-composer-product-ux-specification.md) §0; contrato [dictation.transcription.v1](./contracts/dictation-transcription-contract-v1.md).  
 **Fundação existente:** `MessageComposer.bodyOverride`, `AudioRecorderControl`, `useLocalAudioRecorder`, `DeliaComposer`, `dictationClient`; alterações visuais devem preservar STT e segurança.  
@@ -158,7 +158,7 @@ O texto final deve ser conciso, sem verbos que prometam ações não suportadas 
 | VD-V18 | Balões não cortam no Dock/viewport, não roubam foco e funcionam com teclado, disabled e reduced motion | Playwright e a11y |
 | VD-V19 | Conteúdo de ajuda preserva transparência de STT, sem indicar auto-submit ou análise multimodal | revisão de UX/copy |
 
-`VD-V15…VD-V19 = PLANNED` até evidência no SHA de implementação. Atualizar a task VD-F04 para incluir esses critérios, **sem alterar STT backend**.
+`VD-V15…VD-V19 = PASS` no SHA de implementação — evidência §5 do relatório VD-F04 (`qa-vdf04.mjs` 40/40 + diff review `plugin-ui`). STT backend inalterado.
 
 ---
 
@@ -202,7 +202,7 @@ Documentar estado real no HEAD. Sem import cross-bounded-context, sem novo compo
 | VD-V13 | Playwright, Vitest, TypeScript/build/federation, revisão independente com SHA/config | evidence |
 | VD-V14 | Teste produção com mic físico e transcrição real pt-BR, texto editável e envio manual | validação pós-deploy |
 
-Status de VD-V01…V14: `PLANNED` até execução/evidência. Screenshots de produto fornecidos para discovery **não** constituem aceite visual da solução futura.
+Status de VD-V01…V14 (SHA de implementação, evidência §5 do relatório VD-F04): `VD-V01…V09=PASS`, `VD-V10=PASS parcial` (360px medido sem overflow; 320/420/200% residual visual), `VD-V11…V13=PASS`, `VD-V14=PENDING_USER_VERIFICATION` (requer sessão `delia.access` em produção com microfone físico). Screenshots de produto fornecidos para discovery **não** constituem aceite visual da solução futura.
 
 ## 10. Sequência bounded de implementação — para Cursor, sem autorização automática de código
 

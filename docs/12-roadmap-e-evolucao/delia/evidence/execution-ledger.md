@@ -16002,3 +16002,28 @@ PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=COORDINATION_FINAL_Q02_A_REVIEW_OR_STOP
 ```
 
+## §6.319 — VD-F04 Voice Dictation Composer visual refinement (IMPLEMENTATION)
+
+**DATE:** 2026-10-20. **TASK:** `DELIA-UX-VOICE-DICTATION-VISUAL-REFINEMENT-AND-PRODUCTION-DEPLOY-01`. **SPEC:** [120](../120-voice-dictation-composer-visual-refinement-ux-specification.md) + functional ref [119](../119-conversation-audio-recorder-composer-product-ux-specification.md). **BASE_HEAD:** `dec58d9abb` (upstream advanced docs-only; no overlap). **EVIDENCE:** [voice-dictation-visual-refinement-vdf04](voice-dictation-visual-refinement-vdf04/voice-dictation-visual-refinement-vdf04-evidence.md).
+
+- **Scope:** visual/UX refinement of the existing dictation composer only. Backend (`delia-api`), `dictation.transcription.v1`, provider, RBAC, `DELIA_STT_*`: **zero diff**.
+- **Reuse gate:** `MessageComposer`/`AudioRecorderControl`/`useLocalAudioRecorder` extended (shared `HelpTooltip` `wrap`, typed `helpCopy`, `aria-describedby` forwarding on `IconButton`/`ActionButton`); no new composer, recorder or tooltip system.
+- **Implemented:** single rounded surface across write/record/transcribe/review; circular controls; real-amplitude refined waveform (rounded bars, stable `mm:ss` tabular timer); clean single-surface transcribing state with cancel + tooltip; contextual STT disclosure replacing the persistent yellow header banner (`App.tsx` banner slot now demo-only); "Texto transcrito. Revise antes de enviar." notice; draft/caret/merge preserved; manual submit preserved; local-preview path preserved; reduced-motion and compact-width handling.
+- **Gates:** Vitest plugin-ui 2250/2250, delia 257/257; typecheck both exit 0; builds + federation `verify-host-exports` PASS.
+- **Browser QA:** Playwright `qa-vdf04.mjs` **40/40 PASS** — full page + Companion Dock; real pt-BR STT via fake-capture speech file → transcript merged editable (len=71), transcribed notice shown, **zero `POST /interaction/turns`** (no auto-submit); tooltips on hover/focus in viewport incl. Dock; reduced-motion; 360px no overflow. Screenshots `shots-vdf04/` 01–13.
+- **VD-V:** V01–V09 PASS, V10 PASS parcial (360px measured; 320/420/200% visual residual), V11–V13 PASS, V14 `PENDING_USER_VERIFICATION` (prod physical-mic QA needs `delia.access` session — same gate as §6.311), V15–V19 PASS.
+- **QA incident (resolved):** `delpi-keycloak` container exited when its DB was recreated by the local sequential rebuild — restored via `docker start`; no code/config change.
+- **Residuals:** VD-V14 user mic QA in production; zoom-200%/320px/420px visual screenshots; physical mic not exercised locally.
+
+```text
+VD_F04_IMPLEMENTATION=EXECUTED
+VD_V01_V19=PASS (V10 partial, V14 pending-user-verification)
+BACKEND_DIFF=NONE
+PLAYWRIGHT=40/40 PASS
+PRODUCTION_DEPLOY=PENDING (authorized by task; canonical script)
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=COMMIT+PUSH MAIN → PROD DEPLOY plugin-ui+delia → USER_MIC_QA
+```

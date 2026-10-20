@@ -1,6 +1,7 @@
 import { Check, Mic, MicOff, Pause, Play, RotateCcw, Square, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { IconButton } from "../actions/IconButton";
+import { HelpTooltip } from "../help/HelpTooltip";
 import type { AudioRecorderControlProps } from "./audioRecorderTypes";
 import { formatAudioDurationMs } from "./audioRecorderTypes";
 import { useLocalAudioRecorder } from "./useLocalAudioRecorder";
@@ -74,6 +75,7 @@ export function AudioRecorderControl({
   maxDurationMs,
   maxBytes,
   canSendAudio = false,
+  helpCopy,
   onDraftReady,
   onDiscard,
   onConfirmSend,
@@ -122,28 +124,41 @@ export function AudioRecorderControl({
   if (status === "unavailable") {
     if (enabled) {
       trigger = (
-        <IconButton
-          aria-label="Gravação de áudio indisponível"
-          disabled
-          className="delpi-ui-audio-recorder__trigger"
+        <HelpTooltip
+          wrap
+          content={
+            helpCopy?.unavailableHelp ??
+            "Gravação de áudio indisponível neste navegador ou contexto."
+          }
         >
-          <MicOff size={18} aria-hidden="true" />
-        </IconButton>
+          <IconButton
+            aria-label="Gravação de áudio indisponível"
+            disabled
+            className="delpi-ui-audio-recorder__trigger"
+          >
+            <MicOff size={18} aria-hidden="true" />
+          </IconButton>
+        </HelpTooltip>
       );
     }
   } else if (status === "idle" || status === "error") {
     trigger = (
-      <IconButton
-        aria-label="Gravar áudio"
-        disabled={disabled || busy}
-        onClick={() => {
-          if (status === "error") clearError();
-          start();
-        }}
-        className="delpi-ui-audio-recorder__trigger"
+      <HelpTooltip
+        wrap
+        content={helpCopy?.startHelp ?? "Iniciar a gravação de áudio."}
       >
-        <Mic size={18} aria-hidden="true" />
-      </IconButton>
+        <IconButton
+          aria-label={helpCopy?.startLabel ?? "Gravar áudio"}
+          disabled={disabled || busy}
+          onClick={() => {
+            if (status === "error") clearError();
+            start();
+          }}
+          className="delpi-ui-audio-recorder__trigger"
+        >
+          <Mic size={18} aria-hidden="true" />
+        </IconButton>
+      </HelpTooltip>
     );
   }
 
@@ -156,12 +171,22 @@ export function AudioRecorderControl({
         role="status"
         aria-live="polite"
       >
-        <span className="delpi-ui-audio-recorder__status-text">
-          Aguardando permissão do microfone…
+        <span className="delpi-ui-audio-recorder__activity" aria-hidden="true">
+          <i />
+          <i />
+          <i />
         </span>
-        <IconButton aria-label="Cancelar solicitação de microfone" onClick={cancel}>
-          <X size={18} aria-hidden="true" />
-        </IconButton>
+        <span className="delpi-ui-audio-recorder__status-text">
+          Aguardando acesso ao microfone…
+        </span>
+        <HelpTooltip
+          wrap
+          content="Cancelar a solicitação do microfone e voltar ao texto."
+        >
+          <IconButton aria-label="Cancelar solicitação de microfone" onClick={cancel}>
+            <X size={18} aria-hidden="true" />
+          </IconButton>
+        </HelpTooltip>
       </div>
     );
   } else if (status === "recording" || status === "stopping") {
@@ -184,23 +209,33 @@ export function AudioRecorderControl({
         </span>
         <Waveform levels={levels} live />
         <div className="delpi-ui-audio-recorder__actions">
-          <IconButton
-            aria-label="Cancelar gravação"
-            tone="danger"
-            onClick={cancel}
-            disabled={status === "stopping"}
+          <HelpTooltip
+            wrap
+            content="Descartar esta gravação e voltar ao texto anterior."
           >
-            <X size={18} aria-hidden="true" />
-          </IconButton>
-          <IconButton
-            aria-label="Finalizar gravação"
-            tone="primary"
-            onClick={stop}
-            disabled={status === "stopping"}
-            autoFocus={status === "recording"}
+            <IconButton
+              aria-label="Cancelar gravação"
+              tone="danger"
+              onClick={cancel}
+              disabled={status === "stopping"}
+            >
+              <X size={18} aria-hidden="true" />
+            </IconButton>
+          </HelpTooltip>
+          <HelpTooltip
+            wrap
+            content={helpCopy?.finishHelp ?? "Encerrar a gravação."}
           >
-            <Square size={16} aria-hidden="true" />
-          </IconButton>
+            <IconButton
+              aria-label="Finalizar gravação"
+              tone="primary"
+              onClick={stop}
+              disabled={status === "stopping"}
+              autoFocus={status === "recording"}
+            >
+              <Square size={16} aria-hidden="true" />
+            </IconButton>
+          </HelpTooltip>
         </div>
       </div>
     );
@@ -211,17 +246,24 @@ export function AudioRecorderControl({
         role="region"
         aria-label="Prévia do áudio gravado"
       >
-        <IconButton
-          aria-label={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
-          aria-pressed={isPlaying}
-          onClick={togglePlayback}
+        <HelpTooltip
+          wrap
+          content={
+            isPlaying ? "Pausar a reprodução." : "Reproduzir esta gravação."
+          }
         >
-          {isPlaying ? (
-            <Pause size={18} aria-hidden="true" />
-          ) : (
-            <Play size={18} aria-hidden="true" />
-          )}
-        </IconButton>
+          <IconButton
+            aria-label={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
+            aria-pressed={isPlaying}
+            onClick={togglePlayback}
+          >
+            {isPlaying ? (
+              <Pause size={18} aria-hidden="true" />
+            ) : (
+              <Play size={18} aria-hidden="true" />
+            )}
+          </IconButton>
+        </HelpTooltip>
         <div className="delpi-ui-audio-recorder__preview-meta">
           <span className="delpi-ui-audio-recorder__duration">
             {formatAudioDurationMs(draft.durationMs)}
@@ -241,20 +283,32 @@ export function AudioRecorderControl({
           </div>
         </div>
         <div className="delpi-ui-audio-recorder__actions">
-          <IconButton aria-label="Descartar áudio" tone="danger" onClick={discard}>
-            <X size={18} aria-hidden="true" />
-          </IconButton>
-          <IconButton aria-label="Regravar áudio" onClick={rerecord}>
-            <RotateCcw size={18} aria-hidden="true" />
-          </IconButton>
-          {canSendAudio ? (
-            <IconButton
-              aria-label="Enviar áudio"
-              tone="primary"
-              onClick={() => onConfirmSend?.(draft)}
-            >
-              <Check size={18} aria-hidden="true" />
+          <HelpTooltip
+            wrap
+            content="Descartar a gravação e voltar ao texto."
+          >
+            <IconButton aria-label="Descartar áudio" tone="danger" onClick={discard}>
+              <X size={18} aria-hidden="true" />
             </IconButton>
+          </HelpTooltip>
+          <HelpTooltip
+            wrap
+            content="Descartar esta gravação e iniciar outra."
+          >
+            <IconButton aria-label="Regravar áudio" onClick={rerecord}>
+              <RotateCcw size={18} aria-hidden="true" />
+            </IconButton>
+          </HelpTooltip>
+          {canSendAudio ? (
+            <HelpTooltip wrap content="Enviar este áudio.">
+              <IconButton
+                aria-label="Enviar áudio"
+                tone="primary"
+                onClick={() => onConfirmSend?.(draft)}
+              >
+                <Check size={18} aria-hidden="true" />
+              </IconButton>
+            </HelpTooltip>
           ) : null}
         </div>
       </div>

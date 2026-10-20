@@ -36,15 +36,8 @@ import {
   demoTurnOutcome,
   resolveDemoScenario,
 } from "./demo/demoMode";
-import {
-  DELIA_AUDIO_QA_BANNER,
-  resolveAudioQaAdmission,
-} from "./audio/audioCaptureQaAdmission";
-import {
-  DELIA_AUDIO_TEST_BANNER,
-  DELIA_AUDIO_TEST_LIMITS,
-  DELIA_DICTATION_STT_BANNER,
-} from "./audio/audioCaptureTestAdmission";
+import { resolveAudioQaAdmission } from "./audio/audioCaptureQaAdmission";
+import { DELIA_AUDIO_TEST_LIMITS } from "./audio/audioCaptureTestAdmission";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -459,17 +452,9 @@ export default function App({
             />
           }
           banner={
-            demoScenario || audioAdmission ? (
+            demoScenario ? (
               <div className="delia-demo-banner" role="note">
-                {demoScenario ? DELIA_DEMO_BANNER : null}
-                {demoScenario && audioAdmission ? " " : null}
-                {audioQaAdmission
-                  ? DELIA_AUDIO_QA_BANNER
-                  : audioAdmission
-                    ? dictationSttAvailable
-                      ? DELIA_DICTATION_STT_BANNER
-                      : DELIA_AUDIO_TEST_BANNER
-                    : null}
+                {DELIA_DEMO_BANNER}
               </div>
             ) : null
           }

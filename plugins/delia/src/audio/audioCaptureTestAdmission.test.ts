@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  DELIA_AUDIO_TEST_BANNER,
   DELIA_AUDIO_TEST_LIMITS,
   DELIA_AUDIO_TEST_MAX_BYTES,
   DELIA_AUDIO_TEST_MAX_DURATION_MS,
+  DELIA_DICTATION_STT_DISCLOSURE,
+  DELIA_LOCAL_CAPTURE_DISCLOSURE,
 } from "./audioCaptureTestAdmission";
 
 describe("audio capture bounded test availability", () => {
@@ -26,8 +27,12 @@ describe("audio capture bounded test availability", () => {
     ]);
   });
 
-  it("declares a bounded, honest test notice", () => {
-    expect(DELIA_AUDIO_TEST_BANNER).toContain("teste");
-    expect(DELIA_AUDIO_TEST_BANNER).toContain("não pode ser enviado");
+  it("declares honest contextual disclosures, not a global banner (VD-F04)", () => {
+    // The permanent audio/dictation header banner was removed; the
+    // purpose copy now lives contextually inside the capture surface.
+    expect(DELIA_DICTATION_STT_DISCLOSURE).toContain("transcrição");
+    expect(DELIA_DICTATION_STT_DISCLOSURE).toContain("Revise");
+    expect(DELIA_LOCAL_CAPTURE_DISCLOSURE).toContain("navegador");
+    expect(DELIA_LOCAL_CAPTURE_DISCLOSURE).not.toContain("enviada");
   });
 });

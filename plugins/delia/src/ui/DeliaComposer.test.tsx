@@ -23,7 +23,7 @@ describe("DeliaComposer — audio capture gate", () => {
         onSubmit={() => undefined}
       />,
     );
-    expect(screen.queryByRole("button", { name: "Gravar áudio" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ditar mensagem" })).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Gravação de áudio indisponível" }),
     ).toBeNull();
@@ -83,7 +83,7 @@ describe("DeliaComposer — audio capture gate", () => {
         audioCaptureMaxBytes={256_000}
       />,
     );
-    expect(screen.getByRole("button", { name: "Gravar áudio" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ditar mensagem" })).toBeTruthy();
   });
 });
 
@@ -188,7 +188,7 @@ describe("DeliaComposer — voice dictation surface swap", () => {
 
   it("recording replaces the write area: no textarea, no send, single surface", async () => {
     const { container } = renderDictation("rascunho do usuário");
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
 
     await waitFor(() => screen.getByText("Gravando"));
 
@@ -207,7 +207,7 @@ describe("DeliaComposer — voice dictation surface swap", () => {
 
   it("cancel restores writing mode with the exact prior draft", async () => {
     const { container } = renderDictation("texto antes do ditado");
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByText("Gravando"));
 
     fireEvent.click(screen.getByRole("button", { name: "Cancelar gravação" }));
@@ -216,13 +216,13 @@ describe("DeliaComposer — voice dictation surface swap", () => {
     expect(
       (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
     ).toBe("texto antes do ditado");
-    expect(screen.getByRole("button", { name: "Gravar áudio" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ditar mensagem" })).toBeTruthy();
     void container;
   });
 
   it("finishing stays modal in preview: still no textarea, no submit", async () => {
     const { onSubmit } = renderDictation();
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
 
@@ -239,7 +239,7 @@ describe("DeliaComposer — voice dictation surface swap", () => {
 
   it("discarding preview restores writing mode with the prior draft", async () => {
     renderDictation("draft preservado");
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
     await waitFor(() => screen.getByRole("button", { name: "Descartar áudio" }));
@@ -259,19 +259,19 @@ describe("DeliaComposer — voice dictation surface swap", () => {
       Object.assign(new Error("denied"), { name: "NotAllowedError" }),
     );
     renderDictation("não perder isso");
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
 
     await waitFor(() => screen.getByRole("alert"));
     expect(screen.getByRole("alert").textContent).toMatch(/negada/i);
     expect(
       (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
     ).toBe("não perder isso");
-    expect(screen.getByRole("button", { name: "Gravar áudio" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ditar mensagem" })).toBeTruthy();
   });
 
   it("Enter inside the capture region never submits text", async () => {
     const { onSubmit } = renderDictation("não enviar");
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByText("Gravando"));
 
     fireEvent.keyDown(screen.getByRole("region", {
@@ -370,7 +370,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
         onSubmit={onSubmit}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
 
@@ -406,7 +406,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
     textarea.setSelectionRange(4, 4); // caret after "olá "
     fireEvent(document, new Event("selectionchange"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
 
@@ -431,7 +431,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
         onSubmit={onSubmit}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
     await waitFor(() => screen.getByText("Transcrevendo sua fala…"));
@@ -465,7 +465,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
         onSubmit={onSubmit}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
 
@@ -481,7 +481,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
     render(
       <StatefulComposer initial="" transcriber={null} onSubmit={vi.fn()} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
     await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
     fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
 
@@ -489,5 +489,187 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
       screen.getByRole("region", { name: "Prévia do áudio gravado" }),
     );
     expect(screen.queryByText(/[Tt]ranscrev/)).toBeNull();
+  });
+});
+
+/* ---------- VD-F04 — visual refinement, help, disclosure ---------- */
+
+describe("DeliaComposer — voice dictation visual refinement (VD-F04)", () => {
+  beforeEach(() => {
+    FakeMediaRecorder.instances = [];
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => createFakeStream()) },
+    });
+    (
+      globalThis as unknown as { MediaRecorder: typeof FakeMediaRecorder }
+    ).MediaRecorder = FakeMediaRecorder;
+    URL.createObjectURL = vi.fn(() => "blob:test-audio");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: originalMediaDevices,
+      });
+    }
+    if (originalMediaRecorder) {
+      (
+        globalThis as unknown as { MediaRecorder: typeof MediaRecorder }
+      ).MediaRecorder = originalMediaRecorder;
+    }
+    if (originalIsSecureContext) {
+      Object.defineProperty(window, "isSecureContext", originalIsSecureContext);
+    }
+  });
+
+  it("mic trigger shows the shared HelpTooltip on hover and keyboard focus", async () => {
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={resolvedTranscriber("ok")}
+        onSubmit={vi.fn()}
+      />,
+    );
+    const mic = screen.getByRole("button", { name: "Ditar mensagem" });
+
+    fireEvent.mouseEnter(mic);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/transforme sua voz em texto editável/),
+      ).toBeTruthy(),
+    );
+    fireEvent.mouseLeave(mic);
+
+    fireEvent.focus(mic);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/transforme sua voz em texto editável/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("recording surface is a single surface with disclosure and cancel/finish help", async () => {
+    const { container } = render(
+      <StatefulComposer
+        initial=""
+        transcriber={resolvedTranscriber("ok")}
+        onSubmit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByText("Gravando"));
+
+    expect(
+      container.querySelectorAll(".delpi-ui-message-composer__surface"),
+    ).toHaveLength(1);
+    // Contextual STT transparency inside the capture surface — the
+    // global yellow header banner is gone.
+    expect(
+      screen.getByText(/enviada apenas para transcrição em texto/),
+    ).toBeTruthy();
+
+    const finish = screen.getByRole("button", { name: "Finalizar gravação" });
+    fireEvent.mouseEnter(finish);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/transcrever sua fala para texto/),
+      ).toBeTruthy(),
+    );
+
+    const cancel = screen.getByRole("button", { name: "Cancelar gravação" });
+    fireEvent.mouseEnter(cancel);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Descartar esta gravação/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("transcribing uses a single surface with an activity indicator and cancel help", async () => {
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={(_d, _s) => new Promise(() => undefined)}
+        onSubmit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    await waitFor(() => screen.getByText("Transcrevendo sua fala…"));
+    expect(document.querySelector(".delpi-ui-audio-recorder__activity")).toBeTruthy();
+    expect(screen.queryByText(/enviada apenas para transcrição/)).toBeNull();
+
+    const cancel = screen.getByRole("button", { name: "Cancelar transcrição" });
+    fireEvent.mouseEnter(cancel);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/processamento remoto pode continuar/),
+      ).toBeTruthy(),
+    );
+  });
+
+  it("successful transcription announces a discreet review notice once", async () => {
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={resolvedTranscriber("texto ditado", 10)}
+        onSubmit={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByRole("button", { name: "Finalizar gravação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finalizar gravação" }));
+
+    await waitFor(() =>
+      screen.getByText("Texto transcrito. Revise antes de enviar."),
+    );
+    const textarea = screen.getByLabelText(
+      "Pergunte à DÉLIA",
+    ) as HTMLTextAreaElement;
+    expect(textarea.value).toBe("texto ditado");
+
+    // Editing clears the notice — feedback is transient, not permanent.
+    fireEvent.change(textarea, { target: { value: "texto ditado editado" } });
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Texto transcrito. Revise antes de enviar."),
+      ).toBeNull(),
+    );
+  });
+
+  it("clear-draft button keeps its own meaning, not cancel-capture", async () => {
+    render(
+      <StatefulComposer
+        initial="rascunho"
+        transcriber={resolvedTranscriber("ok")}
+        onSubmit={vi.fn()}
+      />,
+    );
+    const clear = screen.getByRole("button", { name: "Limpar texto" });
+    fireEvent.mouseEnter(clear);
+    await waitFor(() =>
+      expect(screen.getByText("Limpar o texto do campo.")).toBeTruthy(),
+    );
+  });
+
+  it("local-only capture discloses that audio stays in the browser", async () => {
+    render(
+      <StatefulComposer initial="" transcriber={null} onSubmit={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByText("Gravando"));
+    expect(
+      screen.getByText(/o áudio fica neste navegador/),
+    ).toBeTruthy();
+    expect(screen.queryByText(/enviada apenas para transcrição/)).toBeNull();
   });
 });

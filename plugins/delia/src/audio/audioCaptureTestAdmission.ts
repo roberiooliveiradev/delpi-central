@@ -19,17 +19,24 @@
  * transcription, no audio-derived AuthZ.
  */
 
-export const DELIA_AUDIO_TEST_BANNER =
-  "Gravação de áudio em teste. O áudio fica neste navegador e ainda não pode ser enviado à DÉLIA.";
+/**
+ * Honest purpose/consent copy shown contextually inside the capture
+ * surface while dictation.transcription.v1 is available (VD-F03/VD-F04):
+ * the audio DOES leave the device — only to the dictation contract,
+ * never to multimodal analysis — and returns as editable draft text.
+ * Rendered before the audio is transmitted, never as a global header
+ * banner (the permanent yellow strip was removed by the Product Master).
+ */
+export const DELIA_DICTATION_STT_DISCLOSURE =
+  "Sua fala será enviada apenas para transcrição em texto. Revise o resultado antes de enviar.";
 
 /**
- * Honest purpose/consent copy shown when dictation.transcription.v1 is
- * available (VD-F03): the audio DOES leave the device — only to the
- * dictation contract, never to multimodal analysis — and returns as
- * editable draft text. Shown in place of the local-only test banner.
+ * Contextual copy shown while capturing when the dictation contract is
+ * NOT available: the capture stays an honest local preview and the
+ * audio never leaves the browser.
  */
-export const DELIA_DICTATION_STT_BANNER =
-  "Ditado por voz: sua fala é enviada apenas para transcrição em texto. Revise o texto antes de enviar.";
+export const DELIA_LOCAL_CAPTURE_DISCLOSURE =
+  "Gravação local: o áudio fica neste navegador e não é enviado à DÉLIA.";
 
 /** Bounded test limits — Product Master authorized test scope. */
 export const DELIA_AUDIO_TEST_MAX_DURATION_MS = 60_000;

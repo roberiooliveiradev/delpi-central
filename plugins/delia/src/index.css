@@ -223,6 +223,35 @@
   margin: 0;
 }
 
+/* ---------- VD-F04 — dictation surface details */
+
+/* Capture panel + honest purpose disclosure inside the SAME composer
+   surface (replaces the removed global audio banner). */
+.dashboard-delia .delia-dictation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-delia .delia-dictation__disclosure {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.6)));
+}
+
+/* Discreet post-transcription confirmation — contextual, one-shot
+   aria-live announcement, cleared by the next user edit. */
+.dashboard-delia .delia-composer__transcribed {
+  margin: 6px 4px 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.65)));
+}
+
 /* ---------- Responsive (narrow dock / mobile) — workspace and
    ConversationUserMessage container queries own shared presentation. */
 

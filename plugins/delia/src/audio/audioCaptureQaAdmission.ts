@@ -15,9 +15,6 @@
 
 export const DELIA_AUDIO_QA_QUERY_PARAM = "delia-audio-qa";
 
-export const DELIA_AUDIO_QA_BANNER =
-  "Captura de áudio em modo QA — gravação local apenas, sem envio.";
-
 /** QA fixture limits — test values only, never production policy. */
 export const DELIA_AUDIO_QA_MAX_DURATION_MS = 60_000;
 export const DELIA_AUDIO_QA_MAX_BYTES = 256_000;

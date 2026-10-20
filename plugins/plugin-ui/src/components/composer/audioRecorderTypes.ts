@@ -30,6 +30,22 @@ export type AudioRecorderCaptureErrorReason =
   | "secure_context_required"
   | "unknown";
 
+/**
+ * Product-owned copy overrides for the capture controls' accessible
+ * names and contextual help (VD-F04). Defaults describe plain local
+ * capture; a dictation product surface passes dictation copy instead.
+ */
+export type AudioRecorderHelpCopy = {
+  /** Accessible name of the idle mic trigger (default "Gravar áudio"). */
+  startLabel?: string;
+  /** HelpTooltip content on the idle mic trigger. */
+  startHelp?: string;
+  /** HelpTooltip content on the unavailable (disabled) trigger. */
+  unavailableHelp?: string;
+  /** HelpTooltip content on the finish-recording control. */
+  finishHelp?: string;
+};
+
 export type AudioRecorderControlProps = {
   /**
    * Product/consumer admission gate — not backend AuthZ.
@@ -50,6 +66,8 @@ export type AudioRecorderControlProps = {
   onCaptureError?: (reason: AudioRecorderCaptureErrorReason) => void;
   /** True while recording/stopping/requesting — host should block text submit. */
   onBlockingChange?: (blocking: boolean) => void;
+  /** Product copy overrides for control names/help — see type docs. */
+  helpCopy?: AudioRecorderHelpCopy;
   className?: string;
 };
 

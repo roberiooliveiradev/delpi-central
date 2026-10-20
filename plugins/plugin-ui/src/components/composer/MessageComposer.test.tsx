@@ -211,14 +211,14 @@ describe("MessageComposer — stop response", () => {
 describe("MessageComposer — limpar rascunho", () => {
   it("omits clear control without host callback or draft", () => {
     renderComposer({ value: "rascunho" });
-    expect(screen.queryByRole("button", { name: "Limpar rascunho" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Limpar texto" })).toBeNull();
   });
 
   it("requests only local draft clearing when typed content exists", () => {
     const onClearDraft = vi.fn();
     const onSubmit = vi.fn();
     renderComposer({ value: "pergunta não enviada", onClearDraft, onSubmit });
-    fireEvent.click(screen.getByRole("button", { name: "Limpar rascunho" }));
+    fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
     expect(onClearDraft).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -232,7 +232,7 @@ describe("MessageComposer — limpar rascunho", () => {
       { value: "x", disabled: true },
     ]) {
       const { unmount } = renderComposer({ onClearDraft, ...overrides });
-      expect(screen.queryByRole("button", { name: "Limpar rascunho" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Limpar texto" })).toBeNull();
       unmount();
     }
     expect(onClearDraft).not.toHaveBeenCalled();

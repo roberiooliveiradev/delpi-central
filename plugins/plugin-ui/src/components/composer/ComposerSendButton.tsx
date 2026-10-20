@@ -1,6 +1,7 @@
 import { Loader2, SendHorizontal } from "lucide-react";
 
 import { ActionButton } from "../actions/ActionButton";
+import { HelpTooltip } from "../help/HelpTooltip";
 
 export type ComposerSendButtonProps = {
   /** Busy/disabled when the host request is in flight. */
@@ -11,6 +12,8 @@ export type ComposerSendButtonProps = {
   label?: string;
   /** Accessible name while sending (honest, indeterminate). */
   loadingLabel?: string;
+  /** HelpTooltip content — product may override for context. */
+  helpText?: string;
   className?: string;
 };
 
@@ -29,21 +32,23 @@ export function ComposerSendButton({
   disabled = false,
   label = "Enviar",
   loadingLabel = "Enviando…",
+  helpText = "Enviar o texto escrito.",
   className,
 }: ComposerSendButtonProps) {
   return (
-    <ActionButton
-      type="submit"
-      variant="primary"
-      disabled={disabled || loading}
-      aria-label={loading ? loadingLabel : label}
-      className={[
-        "delpi-ui-message-composer__send",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <HelpTooltip wrap content={loading ? loadingLabel : helpText}>
+      <ActionButton
+        type="submit"
+        variant="primary"
+        disabled={disabled || loading}
+        aria-label={loading ? loadingLabel : label}
+        className={[
+          "delpi-ui-message-composer__send",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
       {loading ? (
         <Loader2
           size={15}
@@ -56,6 +61,7 @@ export function ComposerSendButton({
       <span className="delpi-ui-message-composer__send-label">
         {loading ? loadingLabel : label}
       </span>
-    </ActionButton>
+      </ActionButton>
+    </HelpTooltip>
   );
 }

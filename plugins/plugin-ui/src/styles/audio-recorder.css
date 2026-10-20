@@ -1,12 +1,15 @@
 /**
  * Local audio recorder — composer companion (@delpi/plugin-ui).
  * Tokens follow MessageComposer / Portal theme variables.
+ *
+ * VD-F04: the capture states render INSIDE the composer surface — no
+ * second card, border, or shadow. Controls are circular IconButtons.
  */
 
 .delpi-ui-audio-recorder-shell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
   width: 100%;
 }
@@ -25,20 +28,28 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
+  gap: 8px 12px;
   min-width: 0;
   width: 100%;
+  min-height: 64px;
   box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid var(--delpi-ui-audio-border);
-  border-radius: 16px;
-  background: var(--delpi-ui-audio-surface);
+  padding: 4px 0;
+  background: transparent;
   color: var(--delpi-ui-audio-text);
 }
 
-.delpi-ui-audio-recorder--recording {
-  border-color: color-mix(in srgb, var(--delpi-ui-audio-danger) 45%, var(--delpi-ui-audio-border));
+/* Circular controls — same diameter and hit area inside the capture
+   surface and on the idle mic trigger. */
+.delpi-ui-audio-recorder .delpi-ui-icon-btn,
+.delpi-ui-audio-recorder__trigger.delpi-ui-icon-btn {
+  border-radius: 999px;
 }
+
+.delpi-ui-audio-recorder .delpi-ui-help-tooltip--wrap {
+  flex: 0 0 auto;
+}
+
+/* ---------- live capture indicator ---------- */
 
 .delpi-ui-audio-recorder__live-dot {
   width: 8px;
@@ -50,7 +61,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .delpi-ui-audio-recorder--recording .delpi-ui-audio-recorder__live-dot {
-    animation: delpi-ui-audio-pulse 1.2s ease-in-out infinite;
+    animation: delpi-ui-audio-pulse 1.4s ease-in-out infinite;
   }
 }
 
@@ -60,9 +71,52 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.4;
   }
 }
+
+/* Subtle indeterminate activity dots — permission request and
+   transcription processing; honest, no fake progress. */
+.delpi-ui-audio-recorder__activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.delpi-ui-audio-recorder__activity > i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--delpi-ui-audio-accent) 65%, var(--delpi-ui-audio-muted));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .delpi-ui-audio-recorder__activity > i {
+    animation: delpi-ui-audio-dot 1.1s ease-in-out infinite;
+  }
+  .delpi-ui-audio-recorder__activity > i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .delpi-ui-audio-recorder__activity > i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes delpi-ui-audio-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* ---------- text ---------- */
 
 .delpi-ui-audio-recorder__live-label,
 .delpi-ui-audio-recorder__status-text,
@@ -79,27 +133,32 @@
 
 .delpi-ui-audio-recorder__duration {
   font-variant-numeric: tabular-nums;
+  min-width: 5ch;
   color: var(--delpi-ui-audio-muted);
 }
+
+/* ---------- waveform (real amplitude, never decorative) ---------- */
 
 .delpi-ui-audio-recorder__wave {
   display: flex;
   align-items: center;
-  gap: 2px;
-  height: 28px;
-  flex: 1 1 120px;
+  justify-content: center;
+  gap: 3px;
+  height: 32px;
+  flex: 1 1 140px;
   min-width: 80px;
-  max-width: 280px;
+  max-width: 460px;
 }
 
 .delpi-ui-audio-recorder__bar {
   display: block;
   width: 3px;
+  flex: 0 0 auto;
   height: 100%;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--delpi-ui-audio-accent) 70%, var(--delpi-ui-audio-muted));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-ui-audio-accent) 68%, var(--delpi-ui-audio-muted));
   transform-origin: center;
-  transition: transform 80ms linear;
+  transition: transform 120ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -108,12 +167,16 @@
   }
 }
 
+/* ---------- actions ---------- */
+
 .delpi-ui-audio-recorder__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   margin-left: auto;
 }
+
+/* ---------- local preview ---------- */
 
 .delpi-ui-audio-recorder__preview-meta {
   display: flex;
@@ -138,6 +201,8 @@
   border-radius: inherit;
 }
 
+/* ---------- error ---------- */
+
 .delpi-ui-audio-recorder__error {
   margin: 0;
   font-size: 0.8125rem;
@@ -147,4 +212,23 @@
 
 .delpi-ui-audio-recorder__trigger.delpi-ui-icon-btn {
   flex-shrink: 0;
+}
+
+/* ---------- surface transitions ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .delpi-ui-audio-recorder {
+    animation: delpi-ui-audio-recorder-in 160ms ease-out;
+  }
+}
+
+@keyframes delpi-ui-audio-recorder-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

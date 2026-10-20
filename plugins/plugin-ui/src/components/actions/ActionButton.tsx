@@ -11,6 +11,7 @@ type ActionButtonBaseProps = {
   disabled?: boolean;
   className?: string;
   "aria-label"?: string;
+  "aria-describedby"?: string;
   "aria-expanded"?: boolean;
   /** Tooltip nativo (obrigatório com `href` para indicar o destino). */
   title?: string;
@@ -46,6 +47,7 @@ export function ActionButton(props: ActionButtonProps) {
     disabled = false,
     className,
     "aria-label": ariaLabel,
+    "aria-describedby": ariaDescribedby,
     "aria-expanded": ariaExpanded,
     title,
   } = props;
@@ -68,6 +70,7 @@ export function ActionButton(props: ActionButtonProps) {
         href={disabled ? undefined : safeHref}
         title={resolvedTitle}
         aria-label={ariaLabel ?? resolvedTitle}
+        aria-describedby={ariaDescribedby}
         aria-expanded={ariaExpanded}
         aria-disabled={disabled || undefined}
         tabIndex={disabled ? -1 : undefined}
@@ -101,6 +104,7 @@ export function ActionButton(props: ActionButtonProps) {
       onClick={buttonProps.onClick}
       form={buttonProps.form}
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedby}
       aria-expanded={ariaExpanded}
       title={title}
     >
