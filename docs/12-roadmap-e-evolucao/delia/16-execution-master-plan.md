@@ -5,7 +5,31 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-19 (Product Master):** `PRODUCT_MASTER_OPTION_B_Q02_A_EXCEPTION=APPROVED`; referência de aprovação: coordenação v10 sobre `G0_I04_GATE_RESULT=FAIL_BLOCKED` (ledger §6.312), após G0 rework esgotado. **Único próximo código autorizado:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01` — Q02-A exclusivamente como remediação transversal I04; não é início normal de Q02 nem aceite/execução de Q01. Autoridade detalhada nesta seção e no [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md) / [handoff 61](./corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md) / ledger §6.313.
+**Decisão vigente de execução — 2026-10-20 (Product Master):** `I04_FINITE_REFACTOR_CONTINUATION`. Autoriza a continuidade governada da refatoração semântica dos documentos 56–61 apesar de `I04_ACCEPTED=NO`. A ordem dos seis pacotes do roadmap 59 permanece. A mudança é só de dependência de entrada: Q01 pode ser executado; Q02-B depende do gate de Q01 aceito pela coordenação; Q02-C depende do gate de Q02-B; Q03 depende do gate de Q02-C. Não aceita I04, não autoriza segundo rework de Q02-A, não avança C3/C4/C5 e não autoriza deploy de produção. Segurança, ownership, contratos, postconditions e critérios funcionais permanecem os da ADR 58 e do roadmap 59. O documento 50 não contém trava superior incompatível; não há `ARCHITECTURE_DECISION_REQUIRED`. Ledger §6.322. Roadmap 59 §11.
+
+```text
+DECISION=I04_FINITE_REFACTOR_CONTINUATION
+PRODUCT_MASTER_AUTHORIZED=YES
+I04_ACCEPTED=NO
+Q02_A_TECHNICAL_REWORK=CLOSED_WITH_RESIDUAL
+SECOND_Q02_A_REWORK=NOT_AUTHORIZED
+Q01_EXCEPTION_ENTRY=AUTHORIZED
+Q01_EXECUTED=NO
+Q02_B=CONDITIONAL_ON_Q01_GATE
+Q02_C=CONDITIONAL_ON_Q02_B_GATE
+Q03=CONDITIONAL_ON_Q02_C_GATE
+C3_PHASE_ADVANCEMENT=NOT_AUTHORIZED_BY_THIS_DECISION
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+MODEL_AUTHORED_FACTUAL_PROSE=NONE
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+NEXT=Q01_CONSUMER_GATE
+```
+
+**Decisão histórica — 2026-10-19 (SUPERSEDED na aresta de entrada por 2026-10-20):** `PRODUCT_MASTER_OPTION_B_Q02_A_EXCEPTION=APPROVED`; referência de aprovação: coordenação v10 sobre `G0_I04_GATE_RESULT=FAIL_BLOCKED` (ledger §6.312), após G0 rework esgotado. O texto abaixo permanece como registro da exceção Q02-A. A frase que negava autorização de Q01 vale só para aquele momento. **Único próximo código daquela data:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01`. Autoridade detalhada no [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md) / [handoff 61](./corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md) / ledger §6.313.
 
 ```text
 PHASE_ORDER_EXCEPTION=OPTION_B_Q02_A_FOR_I04_ONLY

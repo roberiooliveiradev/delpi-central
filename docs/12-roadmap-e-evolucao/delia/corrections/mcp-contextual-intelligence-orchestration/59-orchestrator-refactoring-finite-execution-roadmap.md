@@ -2,7 +2,7 @@
 
 **TRACK_ID:** `DELIA-C3-ORCHESTRATOR-SEMANTIC-REFACTOR-FINITE-ROADMAP-01`
 **DATA:** 2026-10-19
-**ESTADO VIGENTE:** `OPTION_B_Q02_A_EXCEPTION_AUTHORIZED_FOR_I04_ONLY` (Product Master 2026-10-19; plano de seis pacotes preservado; Q01 não executado, Q02-B/C bloqueados). **Estado anterior** `PLANNED / PENDING_PHASE_GATE` foi supersedido somente para a entrada excepcional Q02-A.
+**ESTADO VIGENTE:** `I04_FINITE_REFACTOR_CONTINUATION` (Product Master 2026-10-20; plano de seis pacotes preservado; `I04_ACCEPTED=NO`; Q01 autorizado como gate de entrada; Q02-B/C/Q03 condicionados ao gate anterior). **Estado anterior** `OPTION_B_Q02_A_EXCEPTION_AUTHORIZED_FOR_I04_ONLY` permanece histórico na seção 0.
 **BASE_HEAD de planejamento:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` (revalidar `origin/main`, `HEAD` e `git status` a cada execução; updates concorrentes não integram automaticamente o escopo).
 **CANÔNICO:** execução 16; standalone 50; ownership 17; patterns 49 §14.1; baseline 51; bootstrap 52; state 21; tests 20; traceability 25; product 24; MCP/A2A 60; `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `plan-construction.mdc`; ledger atual.
 **EVIDÊNCIAS:** [56](./56-orchestration-audit-semantic-ownership-checkpoint.md) e [57](./57-orchestration-complete-second-pass-static-audit.md), 10.592 linhas/179 definições, 42 grupos de achados; [58](./58-adr-llm-semantic-decision-ownership.md) direção `APPROVED`; ledger §6.145 (`selection-only` congelado), §§6.299–6.300.
@@ -111,7 +111,7 @@ O roadmap anterior tem Q01–Q03, mas Q01 permanece `Q01_AUTHORIZED=NO` porque `
 ## 6. Plano de persistência e decisão
 
 - Para cada pacote: código/diff/testes com SHA, um relatório de implementação e um review independente. Atualizar README/ledger **após evidência**, não gerar múltiplos documentos duplicados por hipótese.
-- **Regra original histórica:** `Q01/Q02/Q03` ficam `PLANNED / NOT_AUTHORIZED` até G0. **Exceção vigente:** somente Q02-A `AUTHORIZED_FOR_I04_ONLY` pela seção 0, Q01/Q02-B/C/Q03 continuam bloqueados; ADR58 `ARCHITECTURE_DIRECTION=APPROVED` não concede `I04_ACCEPTED`.
+- **Regra original histórica:** `Q01/Q02/Q03` ficam `PLANNED / NOT_AUTHORIZED` até G0. **Exceção de 2026-10-19:** somente Q02-A `AUTHORIZED_FOR_I04_ONLY` pela seção 0. **Exceção vigente de entrada (2026-10-20):** seção 11 — Q01 autorizado com `I04_ACCEPTED=NO`; Q02-B/C/Q03 continuam condicionados ao gate anterior. ADR58 `ARCHITECTURE_DIRECTION=APPROVED` não concede `I04_ACCEPTED`. O fence abaixo é o snapshot de 2026-10-19.
 - O encerramento do roadmap pode ser `ACCEPT_WITH_RESIDUAL` **somente** quando residual não violar gate material de segurança, proveniência, autorização ou outcome declarado como obrigatório. O que permanecer bloqueado deve ter owner/contrato/próximo responsável e não ser declarado PASS.
 
 ```text
@@ -236,4 +236,26 @@ Q02_B_AUTHORIZED=NO
 Q02_C_AUTHORIZED=NO
 Q03_AUTHORIZED=NO
 NEXT=PRODUCT_MASTER_EXPLICIT_CONTINUATION_GATE_ON_16_AND_59
+```
+
+## 11. Product Master — exceção de continuidade I04 (2026-10-20)
+
+**AUTHORITY:** Plano Mestre 16, decisão vigente de 2026-10-20. **TASK:** `DELIA-C3-I04-FINITE-SEMANTIC-REFACTOR-EXECUTION-01`. Esta seção formaliza a exceção. Não executa Q01, Q02-B, Q02-C nem Q03.
+
+A dependência ordinária `I04_ACCEPTED → Q01 → Q02-A → Q02-B → Q02-C → Q03` continua sendo a ordem dos pacotes. A exceção abre somente a entrada de Q01 enquanto `I04_ACCEPTED=NO`. Q02-A permanece fechado no rework técnico, com residuais funcionais abertos e sem segunda tentativa. ADR 58, `SELECTION_ONLY_GROUNDED_SYNTHESIS`, orçamento global de 30s e teto conversacional de 12s não mudam. Deploy de produção não está autorizado. Nenhum pacote se autoaceita: o gate seguinte só abre depois de review da coordenação.
+
+```text
+DECISION=I04_FINITE_REFACTOR_CONTINUATION
+PRODUCT_MASTER_AUTHORIZED=YES
+I04_ACCEPTED=NO
+Q02_A_TECHNICAL_REWORK=CLOSED_WITH_RESIDUAL
+SECOND_Q02_A_REWORK=NOT_AUTHORIZED
+Q01_EXCEPTION_ENTRY=AUTHORIZED
+Q01_EXECUTED=NO
+Q02_B=CONDITIONAL_ON_Q01_GATE
+Q02_C=CONDITIONAL_ON_Q02_B_GATE
+Q03=CONDITIONAL_ON_Q02_C_GATE
+C3_PHASE_ADVANCEMENT=NOT_AUTHORIZED_BY_THIS_DECISION
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=Q01_CONSUMER_GATE
 ```
