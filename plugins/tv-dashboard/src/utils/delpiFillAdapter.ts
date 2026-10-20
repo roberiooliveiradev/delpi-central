@@ -139,7 +139,7 @@ export function fillToColorStylePatch(fill: DelpiFill): Partial<ComunicadoBlockS
     return { color: "transparent", colorPaint: undefined };
   }
   if (fill.kind === "solid") {
-    return { color: fill.color, colorPaint: undefined };
+    return { color: fill.color, colorPaint: fill };
   }
   return { color: solidFromFill(fill), colorPaint: fill };
 }

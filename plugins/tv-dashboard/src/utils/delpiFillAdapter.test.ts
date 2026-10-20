@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createShapeBlock, resolveStyleFillCss } from "@delpi/tv-dashboard-presentation";
+import { DECK_SHAPE_DEFAULTS } from "@delpi/plugin-ui/index";
+import {
+  createIconBlock,
+  createShapeBlock,
+  resolveComunicadoIconColor,
+  resolveStyleFillCss,
+  type ComunicadoIconBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 import { applyComunicadoBlockStylePatch } from "./applyComunicadoBlockStylePatch";
 import {
@@ -106,10 +113,68 @@ describe("delpiFillAdapter", () => {
     });
     expect(fillToColorStylePatch({ kind: "solid", color: "auto" })).toEqual({
       color: "auto",
-      colorPaint: undefined,
+      colorPaint: { kind: "solid", color: "auto" },
     });
     expect(styleToStrokeFill({ stroke: "transparent" })).toEqual({ kind: "none" });
     expect(styleToColorFill({ color: "#0f172a" })).toEqual({ kind: "solid", color: "#0f172a" });
+  });
+
+  it("cor sólida explícita grava colorPaint tipado — branco não é sentinela de ausência", () => {
+    for (const color of ["#ffffff", "#9ca3af", "#089bdb", "#111111"]) {
+      expect(fillToColorStylePatch({ kind: "solid", color })).toEqual({
+        color,
+        colorPaint: { kind: "solid", color },
+      });
+    }
+    expect(fillToColorStylePatch({ kind: "none" })).toEqual({
+      color: "transparent",
+      colorPaint: undefined,
+    });
+    expect(fillToColorStylePatch(gradient)).toEqual({
+      color: "#111111",
+      colorPaint: gradient,
+    });
+  });
+
+  it("round-trip branco explícito: pick → patch → merge → serialização → resolve ícone", () => {
+    const block = createIconBlock("Star");
+    const patch = sparsePropertyPatch(
+      fillToColorStylePatch({ kind: "solid", color: "#ffffff" }),
+    );
+    const merged = applyComunicadoBlockStylePatch(block, patch);
+    expect(merged.style?.colorPaint).toEqual({ kind: "solid", color: "#ffffff" });
+    // Simula persistência + read-back (JSON round-trip da nativeConfig).
+    const rehydrated = JSON.parse(JSON.stringify(merged));
+    expect(rehydrated.style.colorPaint).toEqual({ kind: "solid", color: "#ffffff" });
+    expect(resolveComunicadoIconColor(rehydrated as ComunicadoIconBlock)).toBe("#ffffff");
+    // Picker reflete a escolha explícita (não «sem cor»).
+    expect(styleToColorFill(rehydrated.style)).toEqual({ kind: "solid", color: "#ffffff" });
+  });
+
+  it("legado sem colorPaint continua recuando ao accent — compatibilidade preservada", () => {
+    const legacy = createIconBlock("Star");
+    legacy.style = { color: "#ffffff" };
+    expect(resolveComunicadoIconColor(legacy as ComunicadoIconBlock)).toBe(DECK_SHAPE_DEFAULTS.fill);
+  });
+
+  it("re-pick sólido sobre gradiente limpa o paint antigo e grava o sólido", () => {
+    const block = createIconBlock("Star");
+    block.style = { color: "#111111", colorPaint: gradient };
+    const patch = sparsePropertyPatch(
+      fillToColorStylePatch({ kind: "solid", color: "#ffffff" }),
+    );
+    const next = applyComunicadoBlockStylePatch(block, patch);
+    expect(next.style?.colorPaint).toEqual({ kind: "solid", color: "#ffffff" });
+    expect(resolveComunicadoIconColor(next as ComunicadoIconBlock)).toBe("#ffffff");
+  });
+
+  it("transparente explícito limpa paint e resolve transparente — não volta ao accent", () => {
+    const block = createIconBlock("Star");
+    block.style = { color: "#089bdb", colorPaint: { kind: "solid", color: "#089bdb" } };
+    const patch = sparsePropertyPatch(fillToColorStylePatch({ kind: "none" }));
+    const next = applyComunicadoBlockStylePatch(block, patch);
+    expect(next.style?.colorPaint).toBeUndefined();
+    expect(resolveComunicadoIconColor(next as ComunicadoIconBlock)).toBe("transparent");
   });
 
   it("backgroundToFill lê underlay quando há imagem de fundo", () => {
