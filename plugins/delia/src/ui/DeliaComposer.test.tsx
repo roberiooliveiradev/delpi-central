@@ -289,10 +289,14 @@ function StatefulComposer({
   initial,
   transcriber,
   onSubmit,
+  maxDurationMs = 60_000,
+  maxBytes = 256_000,
 }: {
   initial: string;
   transcriber: DeliaDictationTranscriber | null;
   onSubmit: () => void;
+  maxDurationMs?: number;
+  maxBytes?: number;
 }) {
   const [value, setValue] = useState(initial);
   return (
@@ -302,8 +306,8 @@ function StatefulComposer({
       onChange={setValue}
       onSubmit={onSubmit}
       audioCaptureEnabled
-      audioCaptureMaxDurationMs={60_000}
-      audioCaptureMaxBytes={256_000}
+      audioCaptureMaxDurationMs={maxDurationMs}
+      audioCaptureMaxBytes={maxBytes}
       dictationTranscriber={transcriber}
     />
   );
@@ -413,7 +417,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
     await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"));
     expect(
       (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
-    ).toBe("olá DÉLIAmundo");
+    ).toBe("olá DÉLIA mundo");
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -671,5 +675,223 @@ describe("DeliaComposer — voice dictation visual refinement (VD-F04)", () => {
       screen.getByText(/o áudio fica neste navegador/),
     ).toBeTruthy();
     expect(screen.queryByText(/enviada apenas para transcrição/)).toBeNull();
+  });
+});
+
+/* ---------- VD-F05 — 5-minute dictation + draft continuity ---------- */
+
+describe("DeliaComposer — five-minute dictation continuity (VD-F05)", () => {
+  beforeEach(() => {
+    FakeMediaRecorder.instances = [];
+    Object.defineProperty(window, "isSecureContext", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: vi.fn(async () => createFakeStream()) },
+    });
+    (
+      globalThis as unknown as { MediaRecorder: typeof FakeMediaRecorder }
+    ).MediaRecorder = FakeMediaRecorder;
+    URL.createObjectURL = vi.fn(() => "blob:test-audio");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    if (originalMediaDevices) {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: originalMediaDevices,
+      });
+    }
+    if (originalMediaRecorder) {
+      (
+        globalThis as unknown as { MediaRecorder: typeof MediaRecorder }
+      ).MediaRecorder = originalMediaRecorder;
+    }
+    if (originalIsSecureContext) {
+      Object.defineProperty(window, "isSecureContext", originalIsSecureContext);
+    }
+  });
+
+  async function dictateOnce(finishLabel = "Finalizar gravação") {
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByRole("button", { name: finishLabel }));
+    fireEvent.click(screen.getByRole("button", { name: finishLabel }));
+    await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"));
+  }
+
+  it("accumulates a second dictation into the same draft without glued words", async () => {
+    const onSubmit = vi.fn();
+    const segments = [
+      "Quero analisar os indicadores de produção desta semana.",
+      "Compare os resultados com a semana anterior.",
+    ];
+    let call = 0;
+    const transcriber: DeliaDictationTranscriber = () =>
+      Promise.resolve({
+        transcriptionId: `tr-${call}`,
+        text: segments[call++] ?? "",
+        language: "pt-BR",
+      });
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={transcriber}
+        onSubmit={onSubmit}
+        maxDurationMs={300_000}
+        maxBytes={4_194_304}
+      />,
+    );
+
+    await dictateOnce();
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("Quero analisar os indicadores de produção desta semana.");
+
+    await dictateOnce();
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe(
+      "Quero analisar os indicadores de produção desta semana. Compare os resultados com a semana anterior.",
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("a failed second dictation preserves the first transcript", async () => {
+    const onSubmit = vi.fn();
+    let call = 0;
+    const transcriber: DeliaDictationTranscriber = () =>
+      call++ === 0
+        ? Promise.resolve({
+            transcriptionId: "tr-1",
+            text: "Primeiro trecho ditado.",
+            language: "pt-BR",
+          })
+        : Promise.reject(
+            Object.assign(new Error("rate"), { code: "rate_limited" }),
+          );
+    render(
+      <StatefulComposer initial="" transcriber={transcriber} onSubmit={onSubmit} />,
+    );
+
+    await dictateOnce();
+    await dictateOnce();
+
+    await waitFor(() => screen.getByRole("alert"));
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("Primeiro trecho ditado.");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("manual edits between dictations are kept when the next transcript lands", async () => {
+    const onSubmit = vi.fn();
+    let call = 0;
+    const transcriber: DeliaDictationTranscriber = () =>
+      Promise.resolve({
+        transcriptionId: `tr-${call}`,
+        text: call++ === 0 ? "Parte um." : "Parte dois.",
+        language: "pt-BR",
+      });
+    render(
+      <StatefulComposer initial="" transcriber={transcriber} onSubmit={onSubmit} />,
+    );
+
+    await dictateOnce();
+    const textarea = screen.getByLabelText(
+      "Pergunte à DÉLIA",
+    ) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Parte um, editada." } });
+    textarea.setSelectionRange(
+      "Parte um, editada.".length,
+      "Parte um, editada.".length,
+    );
+
+    await dictateOnce();
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("Parte um, editada. Parte dois.");
+  });
+
+  it("mic help announces the admitted duration in minutes", async () => {
+    render(
+      <StatefulComposer
+        initial=""
+        transcriber={resolvedTranscriber("ok")}
+        onSubmit={vi.fn()}
+        maxDurationMs={300_000}
+      />,
+    );
+    const mic = screen.getByRole("button", { name: "Ditar mensagem" });
+    fireEvent.mouseEnter(mic);
+    await waitFor(() =>
+      expect(screen.getByText(/fale até 5 minutos/i)).toBeTruthy(),
+    );
+  });
+
+  it("auto-stop at the admitted limit transcribes once via the normal path", async () => {
+    const onSubmit = vi.fn();
+    const transcriber = vi.fn(
+      (_draft: unknown, _signal: AbortSignal) =>
+        Promise.resolve({
+          transcriptionId: "tr-auto",
+          text: "Trecho finalizado pelo limite.",
+          language: "pt-BR",
+        }),
+    ) as unknown as DeliaDictationTranscriber & ReturnType<typeof vi.fn>;
+    render(
+      <StatefulComposer
+        initial="continuação:"
+        transcriber={transcriber}
+        onSubmit={onSubmit}
+        maxDurationMs={200}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Ditar mensagem" }));
+    await waitFor(() => screen.getByText("Gravando"));
+
+    // No click on Finalizar — the admitted limit ends the capture and
+    // the transcript lands in the draft (the transcribing state may be
+    // too fast to observe; the merge is the asserted postcondition).
+    await waitFor(() => screen.getByLabelText("Pergunte à DÉLIA"), {
+      timeout: 3_000,
+    });
+
+    expect(transcriber).toHaveBeenCalledTimes(1);
+    const draft = transcriber.mock.calls[0]?.[0] as { durationMs: number };
+    expect(draft.durationMs).toBeGreaterThan(0);
+    expect(draft.durationMs).toBeLessThanOrEqual(200);
+    expect(
+      (screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement).value,
+    ).toBe("continuação: Trecho finalizado pelo limite.");
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Ditar mensagem" })).toBeTruthy();
+  });
+
+  it("reports truncation honestly when the merge exceeds the character limit", async () => {
+    const onSubmit = vi.fn();
+    const almostFull = "x".repeat(16_380);
+    render(
+      <StatefulComposer
+        initial={almostFull}
+        transcriber={resolvedTranscriber("texto ditado extra", 10)}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    await dictateOnce();
+    const textarea = screen.getByLabelText(
+      "Pergunte à DÉLIA",
+    ) as HTMLTextAreaElement;
+    expect(textarea.value.length).toBe(16_384);
+    expect(textarea.value.startsWith(almostFull)).toBe(true);
+    await waitFor(() => screen.getByRole("alert"));
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /limite de caracteres/,
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

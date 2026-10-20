@@ -16233,3 +16233,31 @@ MATERIAL_ACT=0
 RUNTIME_DIFF=ORCHESTRATOR_CONTINUITY_ONLY
 NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
 ```
+
+
+## §6.329 — VD-F05 five-minute dictation + draft continuity (IMPLEMENTATION)
+
+**DATE:** 2026-10-20. **TASK:** `DELIA-VD-F05-FIVE-MINUTE-DICTATION-CONTINUITY-01`. **SPEC:** [119 §VD-F05](../119-conversation-audio-recorder-composer-product-ux-specification.md); **CONTRACT:** [dictation.transcription.v1](../contracts/dictation-transcription-contract-v1.md). **BASE:** `38c5118e91`. **EVIDENCE:** [voice-dictation-five-minute-vdf05](voice-dictation-five-minute-vdf05/voice-dictation-five-minute-vdf05-evidence.md).
+
+**Scope executed:** product capture bound raised to 300 s per independent dictation segment; effective admission `min(product, contract)` resolved from `GET /dictation/status`; existing `limit_duration` auto-stop reused (single `onstop` → `finalizeBlob`, no second finalization path); reported duration clamped to the admitted bound; recording UI shows `mm:ss / 05:00` plus a discreet last-30s note (`role="status"`, no modal/banner); limit reached renders informational note, not an error alert; `mergeTranscriptIntoDraft` normalizes boundary whitespace and enforces the 16384-char composer limit honestly; STT/backend/provider/RBAC code unchanged.
+
+**Contract limit change (evidence-based):** backend defaults `DELIA_STT_MAX_DURATION_MS` 120000→300000 and `DELIA_STT_MAX_AUDIO_BYTES` 4194304→8388608 (settings.py + compose dev/prod; env-overridable, fail-closed preserved). Real measured Chrome webm/opus 300 s payload = 4 387 114 B — the old 4 MiB bound was proven insufficient by a real run that fail-closed correctly (`limit_bytes`, draft preserved, no fabricated transcription).
+
+**Gates:** `EXISTING_EQUIVALENT_RECORDER=YES/EXTEND`; `EXISTING_EQUIVALENT_STT=YES/EXTEND_LIMITS_ONLY`; `EXISTING_EQUIVALENT_DRAFT_MERGE=YES/EXTEND`; no new recorder/provider/endpoint/permission; `delia.access`, rate limit, typed errors, zero media in logs preserved.
+
+```text
+VD_T01_LIMIT_300S_ADMITTED=PASS
+VD_T02_AUTO_STOP_ONCE=PASS
+VD_T03_TWO_DICTATIONS_ACCUMULATE=PASS
+VD_T04_NO_DRAFT_LOSS_NO_AUTO_SUBMIT=PASS
+VD_T05_BYTES_LIMIT_SAFE=PASS
+VD_T06_FULLPAGE_AND_DOCK=PASS
+VD_T07_REAL_5MIN_AUDIO=PASS (payload 4387114 B, transcript 10939 chars, STT real <30s)
+VITEST_PLUGIN_UI=PASS_2254 (1 unrelated flaky UserDirectoryPicker, green isolated)
+VITEST_DELIA=PASS_268
+PYTEST_DICTATION=PASS_25
+TYPECHECK+BUILD+FEDERATION=PASS
+PLAYWRIGHT_REAL=PASS_15of15_page + 8of8_dock
+PRODUCTION_DEPLOYMENT=PENDING_AUTHORIZED
+PHASE_ADVANCE=NO
+```

@@ -90,6 +90,35 @@ function dictationErrorMessage(error: unknown): string {
 }
 
 /**
+ * VD-F05 draft merge: transcript replaces the snapshotted selection or
+ * lands at the caret — never a silent append/overwrite. Boundary
+ * whitespace is normalized so consecutive dictations don't glue words
+ * and the composer character limit is enforced explicitly: an
+ * overflowing merge is truncated and reported, never silently lost.
+ */
+function mergeTranscriptIntoDraft(
+  value: string,
+  start: number,
+  end: number,
+  insert: string,
+  limit: number,
+): { text: string; caret: number; truncated: boolean } {
+  const left = value.slice(0, start);
+  const right = value.slice(end);
+  let chunk = insert;
+  if (left.length > 0 && !/\s$/.test(left) && !/^\s/.test(chunk)) {
+    chunk = ` ${chunk}`;
+  }
+  if (right.length > 0 && !/^\s/.test(right) && !/\s$/.test(chunk)) {
+    chunk = `${chunk} `;
+  }
+  const merged = left + chunk + right;
+  const truncated = merged.length > limit;
+  const text = truncated ? merged.slice(0, limit) : merged;
+  return { text, caret: Math.min(start + chunk.length, limit), truncated };
+}
+
+/**
  * DÉLIA composer — thin product wrapper over the plugin-ui
  * `MessageComposer` (single surface, write band + toolbar).
  *
@@ -181,15 +210,32 @@ export function DeliaComposer({
     setDictationError(null);
     setTranscribed(false);
     setDictating(true);
-    dictationTranscriber(draft, abort.signal)
+    // The auto-stop timer can overshoot the admitted limit by one tick;
+    // the reported duration is clamped so it never exceeds the contract.
+    const boundedDraft =
+      typeof audioCaptureMaxDurationMs === "number" &&
+      draft.durationMs > audioCaptureMaxDurationMs
+        ? { ...draft, durationMs: audioCaptureMaxDurationMs }
+        : draft;
+    dictationTranscriber(boundedDraft, abort.signal)
       .then((result) => {
         if (session !== sessionRef.current) return; // late response discarded
         setDictating(false);
-        const next =
-          value.slice(0, caret.start) + result.text + value.slice(caret.end);
-        caretRef.current = caret.start + result.text.length;
-        onChange(next);
+        const merged = mergeTranscriptIntoDraft(
+          value,
+          caret.start,
+          caret.end,
+          result.text,
+          INTERACTION_INPUT_CHAR_LIMIT,
+        );
+        caretRef.current = merged.caret;
+        onChange(merged.text);
         setTranscribed(true);
+        if (merged.truncated) {
+          setDictationError(
+            "O texto atingiu o limite de caracteres; parte da transcrição foi cortada.",
+          );
+        }
       })
       .catch((error: unknown) => {
         if (session !== sessionRef.current) return;
@@ -210,6 +256,18 @@ export function DeliaComposer({
   };
 
   const sttAdmitted = dictationTranscriber != null;
+  // VD-F05: the mic help states the ADMITTED duration (product limit ∧
+  // contract limit) — never more than the backend actually accepts.
+  const admittedMinutes =
+    typeof audioCaptureMaxDurationMs === "number" &&
+    audioCaptureMaxDurationMs >= 60_000
+      ? Math.floor(audioCaptureMaxDurationMs / 60_000)
+      : null;
+  const startHelp = sttAdmitted
+    ? admittedMinutes != null
+      ? `Ditar mensagem: fale até ${admittedMinutes} minutos e transforme sua voz em texto editável.`
+      : "Ditar mensagem: fale e transforme sua voz em texto editável."
+    : "Gravar áudio neste navegador: a transcrição está indisponível.";
 
   return (
     <AudioRecorderControl
@@ -221,9 +279,7 @@ export function DeliaComposer({
       onDraftReady={handleDraftReady}
       helpCopy={{
         startLabel: "Ditar mensagem",
-        startHelp: sttAdmitted
-          ? "Ditar mensagem: fale e transforme sua voz em texto editável."
-          : "Gravar áudio neste navegador: a transcrição está indisponível.",
+        startHelp,
         unavailableHelp:
           "Ditado indisponível neste navegador ou contexto.",
         finishHelp: sttAdmitted

@@ -152,10 +152,10 @@ class Settings:
             os.getenv("DELIA_STT_TIMEOUT_SECONDS") or "30.0"
         )
         self.stt_max_audio_bytes = int(
-            os.getenv("DELIA_STT_MAX_AUDIO_BYTES") or "4194304"
+            os.getenv("DELIA_STT_MAX_AUDIO_BYTES") or "8388608"
         )
         self.stt_max_duration_ms = int(
-            os.getenv("DELIA_STT_MAX_DURATION_MS") or "120000"
+            os.getenv("DELIA_STT_MAX_DURATION_MS") or "300000"
         )
         self.stt_rate_limit_per_minute = int(
             os.getenv("DELIA_STT_RATE_LIMIT_PER_MINUTE") or "10"

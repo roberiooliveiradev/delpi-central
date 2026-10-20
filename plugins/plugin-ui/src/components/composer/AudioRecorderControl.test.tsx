@@ -492,3 +492,127 @@ describe("MessageComposer — submitDisabled", () => {
     expect(screen.getByLabelText("Mensagem")).toHaveProperty("value", "ainda aqui");
   });
 });
+
+/* ---------- VD-F05 — five-minute limit UX ---------- */
+
+describe("AudioRecorderControl — duration limit UX (VD-F05)", () => {
+  it("shows the admitted limit next to the live timer (mm:ss / mm:ss)", async () => {
+    const { container } = renderGated({ maxDurationMs: 300_000 });
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByText("Gravando"));
+
+    const duration = container.querySelector(
+      ".delpi-ui-audio-recorder__duration",
+    );
+    expect(duration?.textContent).toMatch(/\d{2}:\d{2}\s*\/\s*05:00/);
+    expect(
+      duration?.getAttribute("aria-label"),
+    ).toMatch(/^Duração \d{2}:\d{2} de 05:00$/);
+  });
+
+  it("auto-stops exactly once at the duration limit via the normal finish path", async () => {
+    vi.useFakeTimers();
+    try {
+      const onDraftReady = vi.fn();
+      renderGated({ maxDurationMs: 300_000, onDraftReady });
+      fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(FakeMediaRecorder.instances[0]?.state).toBe("recording");
+
+      // Jump past the limit; the interval tick stops the recorder once.
+      await act(async () => {
+        vi.setSystemTime(Date.now() + 300_500);
+        await vi.advanceTimersByTimeAsync(250);
+      });
+
+      expect(FakeMediaRecorder.instances[0]?.state).toBe("inactive");
+      expect(onDraftReady).toHaveBeenCalledTimes(1);
+      const draft = onDraftReady.mock.calls[0]?.[0] as {
+        durationMs: number;
+        sizeBytes: number;
+      };
+      // The interval overshoot is clamped — the contract bound is never
+      // reported as exceeded.
+      expect(draft.durationMs).toBe(300_000);
+      expect(draft.sizeBytes).toBeGreaterThan(0);
+
+      // Further ticks must never finalize a second time.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      expect(onDraftReady).toHaveBeenCalledTimes(1);
+
+      // Preview + informational note (status), never a danger alert.
+      expect(
+        screen.getByRole("region", { name: "Prévia do áudio gravado" }),
+      ).toBeTruthy();
+      const note = screen.getByText("A gravação atingiu o tempo máximo permitido.");
+      expect(note.closest('[role="status"]')).not.toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the discreet notice only in the last 30 seconds before the limit", async () => {
+    vi.useFakeTimers();
+    try {
+      renderGated({ maxDurationMs: 300_000 });
+      fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(FakeMediaRecorder.instances[0]?.state).toBe("recording");
+
+      // 04:29 — still no notice.
+      await act(async () => {
+        vi.setSystemTime(Date.now() + 269_000);
+        await vi.advanceTimersByTimeAsync(250);
+      });
+      expect(
+        screen.queryByText("A gravação será finalizada em breve."),
+      ).toBeNull();
+
+      // 04:31 — discreet notice appears once (role=status, no modal).
+      await act(async () => {
+        vi.setSystemTime(Date.now() + 2_000);
+        await vi.advanceTimersByTimeAsync(250);
+      });
+      const note = screen.getByText("A gravação será finalizada em breve.");
+      expect(note.closest('[role="status"]')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops safely with an honest error when captured bytes exceed the limit", async () => {
+    renderGated({ maxBytes: 8 });
+    fireEvent.click(screen.getByRole("button", { name: "Gravar áudio" }));
+    await waitFor(() => screen.getByText("Gravando"));
+
+    act(() => {
+      FakeMediaRecorder.instances[0]?.ondataavailable?.({
+        data: new Blob([new Uint8Array(16)], { type: "audio/webm" }),
+      });
+    });
+
+    await waitFor(() => screen.getByRole("alert"));
+    expect(screen.getByRole("alert").textContent).toMatch(
+      /tamanho máximo permitido/,
+    );
+    // No usable draft is delivered; the text draft is untouched.
+    expect(FakeMediaRecorder.instances[0]?.state).toBe("inactive");
+    expect(screen.getByLabelText("Mensagem")).toHaveProperty(
+      "value",
+      "rascunho preservado",
+    );
+  });
+});

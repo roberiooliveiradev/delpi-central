@@ -291,6 +291,13 @@ export function useLocalAudioRecorder(
 
     const sizeBytes = blob.size;
     const measuredDuration = Math.max(0, Date.now() - startedAtRef.current);
+    // The auto-stop interval can overshoot the limit by up to one tick —
+    // the recorded media cannot exceed the enforced stop, so the reported
+    // duration is clamped to the admitted bound (never over the contract).
+    const boundedDuration =
+      typeof maxDurationMs === "number"
+        ? Math.min(measuredDuration, maxDurationMs)
+        : measuredDuration;
 
     if (typeof maxBytes === "number" && sizeBytes > maxBytes) {
       fail("limit_bytes");
@@ -300,7 +307,7 @@ export function useLocalAudioRecorder(
     const nextDraft: LocalAudioDraft = {
       blob,
       mimeType,
-      durationMs: measuredDuration,
+      durationMs: boundedDuration,
       sizeBytes,
     };
 
@@ -309,7 +316,7 @@ export function useLocalAudioRecorder(
     objectUrlRef.current = url;
     setObjectUrl(url);
     setDraft(nextDraft);
-    setDurationMs(measuredDuration);
+    setDurationMs(boundedDuration);
     setStatus("preview");
     onDraftReady?.(nextDraft);
 
@@ -322,6 +329,7 @@ export function useLocalAudioRecorder(
     closeAudioGraph,
     fail,
     maxBytes,
+    maxDurationMs,
     onDraftReady,
     revokeObjectUrl,
     stopTimer,
@@ -440,7 +448,11 @@ export function useLocalAudioRecorder(
         stopTimer();
         timerRef.current = window.setInterval(() => {
           const elapsed = Date.now() - startedAtRef.current;
-          setDurationMs(elapsed);
+          setDurationMs(
+            typeof maxDurationMs === "number"
+              ? Math.min(elapsed, maxDurationMs)
+              : elapsed,
+          );
           if (
             typeof maxDurationMs === "number" &&
             elapsed >= maxDurationMs

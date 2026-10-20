@@ -37,7 +37,7 @@ import {
   resolveDemoScenario,
 } from "./demo/demoMode";
 import { resolveAudioQaAdmission } from "./audio/audioCaptureQaAdmission";
-import { DELIA_AUDIO_TEST_LIMITS } from "./audio/audioCaptureTestAdmission";
+import { resolveAudioCaptureLimits } from "./audio/audioCaptureTestAdmission";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -104,13 +104,6 @@ export default function App({
   const [audioQaAdmission] = useState(() =>
     resolveAudioQaAdmission(window.location.search),
   );
-  // Local audio capture — available to every legitimately admitted
-  // DÉLIA user (delia.access enforced upstream by Portal/Core before
-  // this MFE mounts). No dedicated audio permission, URL param or build
-  // flag gates it (PM decision REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01).
-  // Browser/secure-context support stays fail-closed inside
-  // AudioRecorderControl; limits are the PM-bounded test values.
-  const audioAdmission = audioQaAdmission ?? DELIA_AUDIO_TEST_LIMITS;
   const userIdentity = useCurrentUserIdentity(getAccessToken);
   // VD-F03 dictation.transcription.v1 admission — read once per mount
   // from the backend status boundary. Unavailable (or transport-failed)
@@ -136,6 +129,16 @@ export default function App({
     return () => abort.abort();
   }, [getAccessToken]);
   const dictationSttAvailable = dictationStt?.available === true;
+  // Local audio capture — available to every legitimately admitted
+  // DÉLIA user (delia.access enforced upstream by Portal/Core before
+  // this MFE mounts). No dedicated audio permission, URL param or build
+  // flag gates it (PM decision REMOVE-EXTRA-PERMISSION-AND-PRODUCTION-FIX-01).
+  // Browser/secure-context support stays fail-closed inside
+  // AudioRecorderControl. VD-F05: effective limits are
+  // min(product 300 s decision, contract-published limits) — the
+  // composer never admits a duration the backend does not accept.
+  const audioAdmission =
+    audioQaAdmission ?? resolveAudioCaptureLimits(dictationStt);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);

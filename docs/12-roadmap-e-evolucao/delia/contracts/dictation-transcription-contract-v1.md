@@ -38,8 +38,8 @@ capability surface is not disclosed (VD-F03 hardening).
   "contract_version": "1",
   "available": true,
   "language": "pt-BR",
-  "max_audio_bytes": 4194304,
-  "max_duration_ms": 120000
+  "max_audio_bytes": 8388608,
+  "max_duration_ms": 300000
 }
 ```
 
@@ -116,9 +116,14 @@ never a silent fallback.
 - **Consent/purpose:** dictation banner states the audio is sent only
   for transcription; capture still requires explicit gesture + browser
   mic consent.
-- **Limits:** backend `DELIA_STT_MAX_AUDIO_BYTES` (default 4 MiB),
-  `DELIA_STT_MAX_DURATION_MS` (default 120000). Frontend applies
-  `min(product admission, contract limits)`.
+- **Limits:** backend `DELIA_STT_MAX_AUDIO_BYTES` (default 8 MiB —
+  VD-F05 raised it from 4 MiB: a measured real 300 s Chrome
+  `audio/webm;codecs=opus` capture is ~4.4 MB, over the old bound),
+  `DELIA_STT_MAX_DURATION_MS` (default 300000 — VD-F05 raised the
+  governed segment bound from 120000 to the product-approved five
+  minutes). Frontend applies `min(product admission, contract limits)`
+  per segment; each segment is an independent capture — draft text
+  accumulates across segments, never the audio.
 - **Rate limit:** per-user fixed window
   (`DELIA_STT_RATE_LIMIT_PER_MINUTE`, default 10) inside the use case —
   in-process, single-replica honest bound (residual: no cross-replica
@@ -149,8 +154,8 @@ never a silent fallback.
 | `DELIA_STT_MODEL` | — | yes (audio-capable model, e.g. `google/gemini-2.5-flash`) |
 | `DELIA_STT_API_KEY` | — | yes |
 | `DELIA_STT_TIMEOUT_SECONDS` | `30` | no |
-| `DELIA_STT_MAX_AUDIO_BYTES` | `4194304` | no |
-| `DELIA_STT_MAX_DURATION_MS` | `120000` | no |
+| `DELIA_STT_MAX_AUDIO_BYTES` | `8388608` | no |
+| `DELIA_STT_MAX_DURATION_MS` | `300000` | no |
 | `DELIA_STT_RATE_LIMIT_PER_MINUTE` | `10` | no |
 
 Any missing required key → `available=false`, `503

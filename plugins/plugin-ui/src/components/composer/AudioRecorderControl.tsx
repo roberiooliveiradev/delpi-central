@@ -203,11 +203,35 @@ export function AudioRecorderControl({
         <span className="delpi-ui-audio-recorder__live-label">Gravando</span>
         <span
           className="delpi-ui-audio-recorder__duration"
-          aria-label={`Duração ${formatAudioDurationMs(durationMs)}`}
+          aria-label={
+            typeof maxDurationMs === "number" && maxDurationMs > 0
+              ? `Duração ${formatAudioDurationMs(durationMs)} de ${formatAudioDurationMs(maxDurationMs)}`
+              : `Duração ${formatAudioDurationMs(durationMs)}`
+          }
         >
           {formatAudioDurationMs(durationMs)}
+          {typeof maxDurationMs === "number" && maxDurationMs > 0 ? (
+            <span
+              className="delpi-ui-audio-recorder__duration-limit"
+              aria-hidden="true"
+            >
+              {" / "}
+              {formatAudioDurationMs(maxDurationMs)}
+            </span>
+          ) : null}
         </span>
         <Waveform levels={levels} live />
+        {status === "recording" &&
+        typeof maxDurationMs === "number" &&
+        maxDurationMs > 30_000 &&
+        durationMs >= maxDurationMs - 30_000 ? (
+          <span
+            className="delpi-ui-audio-recorder__limit-note"
+            role="status"
+          >
+            A gravação será finalizada em breve.
+          </span>
+        ) : null}
         <div className="delpi-ui-audio-recorder__actions">
           <HelpTooltip
             wrap
@@ -315,21 +339,28 @@ export function AudioRecorderControl({
     );
   }
 
-  const errorBanner =
-    status === "error" ||
-    (status === "preview" &&
-      (errorReason === "limit_duration" || errorReason === "limit_bytes")) ? (
-      <p className="delpi-ui-audio-recorder__error" role="alert">
-        {audioRecorderErrorMessage(errorReason)}
-      </p>
-    ) : null;
+  // VD-F05: a duration/byte limit that produced a usable draft is
+  // informational, not an error — muted note + role="status" instead of
+  // the danger alert used for real capture failures.
+  const limitReached =
+    status === "preview" &&
+    (errorReason === "limit_duration" || errorReason === "limit_bytes");
+  const errorBanner = limitReached ? (
+    <p className="delpi-ui-audio-recorder__limit-banner" role="status">
+      {audioRecorderErrorMessage(errorReason)}
+    </p>
+  ) : status === "error" ? (
+    <p className="delpi-ui-audio-recorder__error" role="alert">
+      {audioRecorderErrorMessage(errorReason)}
+    </p>
+  ) : null;
 
   const api: AudioRecorderControlRenderProps = {
     trigger,
     panel: panel ? (
       <div className={["delpi-ui-audio-recorder-shell", className].filter(Boolean).join(" ")}>
         {panel}
-        {errorBanner && status === "preview" ? errorBanner : null}
+        {status === "preview" ? errorBanner : null}
       </div>
     ) : status === "error" ? (
       <div className={["delpi-ui-audio-recorder-shell", className].filter(Boolean).join(" ")}>
