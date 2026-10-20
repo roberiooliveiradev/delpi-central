@@ -102,3 +102,14 @@ Verificação física de microfone em produção permanece `PENDING_USER_VERIFIC
 - `VD-F05` assume bitrate típico de voz do Chrome (~128 kbps); dispositivos com bitrate maior podem atingir 8 MiB antes de 300 s → o fluxo fail-closed (`limit_bytes`, erro contextual, draft preservado) é o comportamento correto e observado.
 - Timeout do provider permanece 30 s: evidência local cobriu ~5 min com folga; se produção apresentar `provider_timeout` em áudios longos, elevar `DELIA_STT_TIMEOUT_SECONDS` com evidência própria.
 - Rate limit 10/min inalterado: 5 ditados longos sucessivos permanecem dentro do envelope.
+
+## 8. Validação visual por usuário real em produção — 2026-10-20
+
+**Fonte:** relato direto do usuário autorizado (“tudo funcionando”) e quatro capturas da aplicação `minhadelpi.com.br/apps/delia` enviadas na conversa de coordenação. Este registro descreve evidência visual/relatada; os arquivos das capturas não foram adicionados ao GitHub. **Não é reexecução automatizada independente** nem prova de 300 segundos de gravação humana.
+
+- **PROVEN (capturas):** superfície do composer em gravação, contador `00:00 / 05:00` e depois `00:09 / 05:00`, indicador `Gravando`, waveform, ações Cancelar/Finalizar circulares e tooltip “Encerrar a gravação e transcrever sua fala para texto.”; apresentação contextual de finalidade da transcrição.
+- **PROVEN (capturas):** primeira transcrição editável “Que água, água, água.” no composer (contador `21/16384`), depois segunda transcrição no **mesmo draft**: “Que água, água, água. Mundo teste, som, testando.” (`49/16384`). O texto anterior foi preservado; o botão `Enviar` permaneceu disponível, não há mensagem enviada visível.
+- **USER_CONFIRMED:** funcionamento real do microfone, ditado, transcrição e continuidade entre dois trechos na sessão autenticada de produção; a evidência elimina a pendência genérica de QA humano para esse percurso **curto** em página completa.
+- **NOT_PROVEN_IN_THIS_USER_SESSION:** captura humana contínua até 05:00, auto-stop em 300s, envio manual efetivamente acionado, Companion Dock, outras larguras/zoom e ausência de request automático na rede. Estes casos mantêm evidências automatizadas anteriores e/ou residuais; não converter para `PASS_PRODUCTION_HUMAN` sem prova.
+
+**Outcome:** `VD_F05_HUMAN_PRODUCTION_SHORT_DICTATION_AND_CONTINUITY=PASS_USER_OBSERVED`; `VD_F05_HUMAN_PRODUCTION_300S_AUTOSTOP=PENDING`; `VD_F05_HUMAN_PRODUCTION_DOCK=PENDING`; `PHASE_ADVANCE=NO`. Nenhuma alteração de código, endpoint ou runtime decorre deste registro.
