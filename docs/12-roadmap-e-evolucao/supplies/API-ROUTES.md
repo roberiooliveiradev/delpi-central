@@ -89,8 +89,8 @@ As rotas abaixo são **alvos de composição** e só entram em implementação q
 | Consumo | GET | `/safety-stock/consumption-analysis/items` | `supplies.access` + filtro de dados `01`/`02` | api-delpi | PLANEJADO |
 | Savings | GET | `/analytics/savings` | analytics + unit | api-delpi + SI | PLANEJADO |
 | CPV dedicado | GET | `/analytics/cpv` | analytics + unit | api-delpi | PLANEJADO |
-| Fornecedores | GET | `/suppliers` | `supplies.access` quando a página existir | api-delpi / busca fornecedor | **BLOQUEADO** se contrato de busca não estiver comprovado |
-| Fornecedor 360 | GET | `/suppliers/{code}/{store}` | `supplies.access` + filtro de dados `01`/`02`/resource | api-delpi + PG; Qualidade somente após P-11 | PLANEJADO |
+| Fornecedores | GET | `/suppliers` | `supplies.access` (sem filtro de unidade — SA2 compartilhada empresa 01; ver [P2 contract](./SUPPLIERS-P2-CONTRACT-READINESS.md) §3.1/§4) | api-delpi `GET /supplies/suppliers` via S2S individual | **BLOQUEADO** — contrato congelado P2; fila em E10 |
+| Fornecedor 360 | GET | `/suppliers/{code}/{store}` | `supplies.access` + resource scoping | api-delpi `GET /integrations/protheus/suppliers/{id}` + PG; Qualidade somente após P-11 | PLANEJADO — fundação contratual em [P2 contract](./SUPPLIERS-P2-CONTRACT-READINESS.md) §6 |
 | Nota fornecedor | POST | `/suppliers/{code}/{store}/notes` | `supplies.access` + filtro de dados `01`/`02`/resource/ownership | PG | PLANEJADO |
 | Nota fornecedor | PATCH | `/suppliers/{code}/{store}/notes/{note_id}` | `supplies.access` + filtro de dados `01`/`02`/resource/ownership | PG | PLANEJADO |
 | Produtos | GET | `/products` | `supplies.access` quando a página existir | api-delpi products | PLANEJADO |

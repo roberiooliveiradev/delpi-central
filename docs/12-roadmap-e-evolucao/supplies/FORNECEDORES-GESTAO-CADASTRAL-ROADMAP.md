@@ -99,6 +99,7 @@ O dado externo é **sugestão**, não autoridade. Não usar scraping, provider, 
 
 ## 8. Referências
 
+- [Suppliers P2 — Contract Freeze & Integration Readiness](./SUPPLIERS-P2-CONTRACT-READINESS.md) — contrato canônico de lista/detalhe, BFF, S2S, escopo empresa, LGPD e matrizes de aceite
 - [Roadmap principal de Suprimentos](./README.md)
 - [Fila executável vigente](./IMPLEMENTATION-PLAN.md)
 - [Diretório de fornecedor e pessoa](./DIRECTORY-OBJECTS.md)
