@@ -258,6 +258,24 @@ class TestWrite:
             )
         assert resp.status_code == 422
 
+    def test_post_gate_disabled_reports_write_disabled(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.side_effect = DelpiApiGatewayError(
+                "gated",
+                status_code=503,
+                code="PROTHEUS_SUPPLIER_CREATE_DISABLED",
+            )
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 503
+        assert resp.get_json()["outcome"] == "write_disabled"
+
     def test_put_timeout_indeterminate(self, client):
         v, r = _auth()
         with v, r, patch(

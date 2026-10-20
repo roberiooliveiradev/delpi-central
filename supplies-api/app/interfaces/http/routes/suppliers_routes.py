@@ -44,9 +44,22 @@ def _access_token() -> str:
 
 
 def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
+    upstream_code = exc.code
+    if write and upstream_code and upstream_code.endswith("_DISABLED"):
+        # Feature gate closed upstream — explicit operational block, no write sent.
+        return jsonify(
+            {
+                "detail": "Supplier write is disabled by gate",
+                "code": upstream_code,
+                "outcome": "write_disabled",
+            }
+        ), 503
     if exc.status_code is None:
         # Timeout / connection failure — write outcome is indeterminate.
-        payload = {"detail": "api-delpi unreachable", "code": "upstream_unreachable"}
+        payload = {
+            "detail": "api-delpi unreachable",
+            "code": "upstream_unreachable",
+        }
         if write:
             payload["outcome"] = "indeterminate"
         return jsonify(payload), 504
@@ -58,8 +71,17 @@ def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
     if status == 404:
         return jsonify({"detail": "Not Found", "code": "not_found"}), 404
     if status < 500:
-        return jsonify({"detail": str(exc), "code": "upstream_client_error"}), status
-    payload = {"detail": "api-delpi unavailable", "code": "bad_gateway"}
+        payload = {
+            "detail": str(exc),
+            "code": upstream_code or "upstream_client_error",
+        }
+        if write:
+            payload["outcome"] = "rejected"
+        return jsonify(payload), status
+    payload = {
+        "detail": "api-delpi unavailable",
+        "code": upstream_code or "bad_gateway",
+    }
     if write:
         payload["outcome"] = "indeterminate"
     return jsonify(payload), 502

@@ -12,9 +12,29 @@ from app.infrastructure.config.settings import Settings
 logger = logging.getLogger("supplies-api.delpi_api")
 
 
+def _error_code(response) -> str | None:
+    """Extract the typed upstream error code when the body exposes one."""
+    try:
+        payload = response.json()
+    except ValueError:
+        return None
+    if isinstance(payload, dict):
+        code = payload.get("code") or (payload.get("error") or {}).get("code")
+        if isinstance(code, str) and code:
+            return code
+    return None
+
+
 class DelpiApiGatewayError(RuntimeError):
-    def __init__(self, message: str, *, status_code: int | None = None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int | None = None,
+        code: str | None = None,
+    ):
         self.status_code = status_code
+        self.code = code
         super().__init__(message)
 
 
@@ -118,12 +138,14 @@ class DelpiApiGateway:
             raise DelpiApiGatewayError(
                 "api-delpi server error",
                 status_code=response.status_code,
+                code=_error_code(response),
             )
 
         if response.status_code >= 400:
             raise DelpiApiGatewayError(
                 "api-delpi client error",
                 status_code=response.status_code,
+                code=_error_code(response),
             )
 
         if response.status_code == 204 or not response.content:
