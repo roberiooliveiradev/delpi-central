@@ -77,6 +77,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_recent_li
 from app.application.use_cases.supplies.list_supplies_purchase_request_requesters_use_case import (
     ListSuppliesPurchaseRequestRequestersUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_suppliers_use_case import (
+    ListSuppliesSuppliersUseCase,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_orders_list_repository import (
     PurchaseOrdersListRepository,
 )
@@ -151,6 +154,9 @@ from app.infrastructure.persistence.totvs.product_repositories.product_raw_mater
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_query_repository import (
     SafetyStockQueryRepository,
+)
+from app.infrastructure.persistence.totvs.supplier_repositories.totvs_supplier_repository import (
+    TotvsSupplierRepository,
 )
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
@@ -412,4 +418,10 @@ def build_get_inventory_adjustments_summary_use_case() -> (
 def build_list_inventory_adjustments_use_case() -> ListInventoryAdjustmentsUseCase:
     return ListInventoryAdjustmentsUseCase(
         repository=InventoryAdjustmentsRepository()
+    )
+
+
+def build_list_supplies_suppliers_use_case() -> ListSuppliesSuppliersUseCase:
+    return ListSuppliesSuppliersUseCase(
+        repository=TotvsSupplierRepository()
     )

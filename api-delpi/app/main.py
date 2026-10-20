@@ -55,6 +55,7 @@ from app.interface.http.routes.supplies import inventory_adjustments_router
 from app.interface.http.routes.supplies import stock_balances_router
 from app.interface.http.routes.supplies import non_moving_stock_router
 from app.interface.http.routes.supplies import inventory_accuracy_router
+from app.interface.http.routes.supplies import suppliers_router
 from app.interface.http.routes.supplies import third_party_materials_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
@@ -286,6 +287,7 @@ app.include_router(stock_balances_router.router)
 app.include_router(inventory_adjustments_router.router)
 app.include_router(non_moving_stock_router.router)
 app.include_router(inventory_accuracy_router.router)
+app.include_router(suppliers_router.router)
 app.include_router(third_party_materials_router.router)
 app.include_router(commercial_router.router)
 app.include_router(helpdesk_router.router)

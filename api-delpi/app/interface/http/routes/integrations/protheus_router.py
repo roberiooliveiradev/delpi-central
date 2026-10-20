@@ -24,6 +24,7 @@ from app.composition.protheus_rest_composer import (
 from app.core.responses import error_response, not_found_response
 from app.domain.integrations.protheus_rest import ProtheusRestError
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.s2s_service_access import require_s2s_or_any_permission
 from app.utils.logger import log_error
 
 router = APIRouter(
@@ -84,7 +85,11 @@ def get_protheus_integration_status_route():
     "/suppliers/{supplier_id}",
     operation_id="get_protheus_rest_supplier",
 )
-@require_any_permission(PROTHEUS_INTEGRATION_READ_PERMISSIONS)
+@require_s2s_or_any_permission(
+    PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    required_scopes=("suppliers.read",),
+    allowed_clients=("supplies-api",),
+)
 def get_protheus_rest_supplier_route(
     supplier_id: str = Path(
         ...,
@@ -127,7 +132,11 @@ def get_protheus_rest_supplier_route(
     "/suppliers",
     operation_id="create_protheus_rest_supplier",
 )
-@require_any_permission(PROTHEUS_SUPPLIER_CREATE_PERMISSIONS)
+@require_s2s_or_any_permission(
+    PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
+    required_scopes=("suppliers.create",),
+    allowed_clients=("supplies-api",),
+)
 def create_protheus_rest_supplier_route(
     body: dict[str, Any] = Body(...),
 ):
@@ -187,7 +196,11 @@ def create_protheus_rest_supplier_route(
     "/suppliers/{supplier_id}",
     operation_id="update_protheus_rest_supplier",
 )
-@require_any_permission(PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS)
+@require_s2s_or_any_permission(
+    PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS,
+    required_scopes=("suppliers.update",),
+    allowed_clients=("supplies-api",),
+)
 def update_protheus_rest_supplier_route(
     supplier_id: str = Path(
         ...,
