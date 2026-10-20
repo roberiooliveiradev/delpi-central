@@ -137,3 +137,10 @@ TESTS_PASSED=1693
 TESTS_FAILED=0
 TESTS_SKIPPED=3
 ```
+
+
+## Coordenação — revisão independente do pacote (2026-10-20)
+
+**IMPLEMENTATION VERDICT:** `ACCEPT_WITH_RESIDUAL` para a entrega bounded K1/K2/G1, sem aceite de I04. Inspeção independente do relatório e diff confirma que o pacote afetou `orchestration.py`, testes e documentação; o diff total também contém arquivos concorrentes de supplies/TV/API DELPI que **não** integram este aceite. Suíte backend 1693 PASS, 3 SKIPPED, 0 FAIL conforme executor (não reexecutada independentemente). K1 com modelo real e fake owner entregou seções inteiras em 1806 caracteres; K2 na mesma conversa extraiu duas perguntas sem nova consulta, sem `steps:` terminal nem marcador duplicado. Não foram executadas no TÉO real após o patch. Registros de seção não atravessam o contrato HTTP; histórico publicado mantém classe não autoritativa.
+
+G1 com real `moonshotai/kimi-k3` contra provider falso isolado selecionou ambas as capabilities (original/renomeada) em uma execução comparativa. **Uma segunda passagem involuntária resultou `NOT_APPLICABLE` nos dois catálogos**: ausência de assimetria nominal, mas repetibilidade/robustez da seleção ainda insuficientemente comprovada; não converter o primeiro PASS em generalização robusta. K3/K4 não foram reexecutados com este código: testes unitários verdes, evidência anterior de modelo real no SHA anterior. Nenhum ACT; sem deploy. **I04 gate continua `INCONCLUSIVE`, `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`.** Próximo passo bounded de aceite: uma conversa real K1→K2 com TÉO no código atualizado e avaliação pequena, predefinida, da estabilidade G1 no harness isolado, sem tentativas oportunistas; K3/K4 validar compatibilidade conforme alcance do diff e evidência vigente. Sem reabrir Q01–Q03 nem modificar produção sem autorização operacional.
