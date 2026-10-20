@@ -229,3 +229,34 @@ O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; 
 **Percentuais de aceite formal R01/R02:** G1 PASS, G2/G3/G4 PENDING, G5 TEST_NOT_RUN, G6 PENDING; **2/60 = 3,3% de coleta e 2/90 = 2,2% de auditoria**, já que tabelas com dados são apenas uma subparte de G4. Não contar `TOP 1` como relatório concluído.
 
 **Próxima ação bounded:** inventariar chaves e relacionamento (dicionário `SIX/SX9` e código `_F190C`), filial compartilhada versus escopo da empresa, campos de identificação e CNPJ, depois comparar uma competência com exportação sanitizada. `IMPLEMENTATION_GATE=NO_GO`.
+
+## 11. Rodada L1.5 — Teste de chaves, índices e natureza (20/10/2026)
+
+**Origem:** DAVI `execute_readonly_sql`, consulta autorizada de SIX010/SX9010 e probes de dados reais. Consultas somente SELECT, sem exportar valores ou IDs de clientes/títulos.
+
+### Índices PROVEN no dicionário SIX
+
+- `FK1`: `FK1_FILIAL+FK1_IDFK1` (ordem 1), `FK1_FILIAL+FK1_IDDOC+FK1_SEQ` (ordem 2), `FK1_IDDOC+FK1_SEQ` (ordem 5).
+- `FK2`: `FK2_FILIAL+FK2_IDFK2` (ordem 1), `FK2_FILIAL+FK2_IDDOC+FK2_SEQ` (ordem 2), `FK2_IDDOC+FK2_SEQ` (ordem 5).
+- `FK5`: `FK5_FILIAL+FK5_IDMOV` (ordem 1), `FK5_IDDOC+FK5_SEQ` (ordem 6), `FK5_IDMOV` (ordem C).
+- `FKA`: `FKA_FILIAL+FKA_IDFKA` (ordem 1), `FKA_FILIAL+FKA_IDPROC+FKA_IDORIG+FKA_TABORI` (ordem 2).
+- `SE1`: `E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO` (ordem 1).
+- **Índice registrado não significa constraint única/PK declarada no SQL Server**; é chave de navegação Protheus. A consulta `TOP 30` não constitui catálogo completo dos índices das oito famílias.
+
+### Relacionamentos declarados no SX9
+
+`SED → FK1` e `SED → FK2` com expressão `ED_CODIGO`. Outros exemplos observados: `SA6 → FK5` pela expressão `A6_COD+A6_AGENCIA+A6_NUMCON`, `SE1 → ...`, `SE2 → ...`. **SX9 não comprovou, nesta rodada, vínculo direto `FK1/FK2 → SE1/SE2`**. Não inventar uma condição de join de título.
+
+### Probes SQL (TEST RUN)
+
+| Teste | Evidência | Resultado |
+|---|---|---|
+| `FK2_NATURE = SED.ED_CODIGO` | JOIN `FK2010 F` ↔ `SED010 N`, ambos `D_E_L_E_T_=''`, `TOP 1` | **PASS parcial**: ≥1 par encontrado; não mede cobertura |
+| `FK1_NATURE = SED.ED_CODIGO` | JOIN `FK1010 F` ↔ `SED010 N`, ambos com filtro de exclusão | **PASS parcial**: ≥1 par encontrado; não mede cobertura |
+| `FK2_IDFK2` duplicado | GROUP BY ID, HAVING COUNT(*)>1 | **Nenhum duplicado encontrado no conjunto não excluído** |
+| `FK1_IDFK1` duplicado | GROUP BY ID, HAVING COUNT(*)>1 | **Nenhum duplicado encontrado no conjunto não excluído** |
+| `FKA_IDFKA` duplicado | GROUP BY ID, HAVING COUNT(*)>1 | **Nenhum duplicado encontrado no conjunto não excluído** |
+
+**Cautelas:** as probes de unicidade acima agrupam apenas o identificador e não demonstram outras chaves/cross-branch. As provas de join de natureza só demonstram existência de um par, não cardinalidade 1:1, ausência de duplicação, completude por competência/filial ou regra exata da `_F190C`. Filial vazia nas amostras anteriores exige validar convenção compartilhada antes de incluir filtro de filial. Não usar `FK2_DATA=E2_BAIXA` ou equivalência de `FK2_IDDOC=E2_*` sem fonte.
+
+**Próximo teste delimitado:** cardinalidade/cobertura de `FK1/FK2 → SED` com `COUNT`/join protegidos e filtros por competência; inventariar os identificadores/relacionamentos de título via fonte `_F190C`, `FK7` e dicionário antes de tentar `FKx → SE1/SE2`. `JOIN_NATURE=PARTIAL_PASS`; `JOIN_TITLE=TEST_NOT_RUN`; `OUTPUT_PARITY=TEST_NOT_RUN`; **G4 permanece PENDING**. Métricas inalteradas: `2/60 = 3,3%` coleta; `2/90 = 2,2%` auditoria.
