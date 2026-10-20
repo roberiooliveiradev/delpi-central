@@ -14,8 +14,12 @@ I04_ACCEPTED=NO
 Q02_A_TECHNICAL_REWORK=CLOSED_WITH_RESIDUAL
 SECOND_Q02_A_REWORK=NOT_AUTHORIZED
 Q01_EXCEPTION_ENTRY=AUTHORIZED
-Q01_EXECUTED=NO
-Q02_B=CONDITIONAL_ON_Q01_GATE
+Q01_CONSUMER_MAP=VERIFIED
+Q01_CONTRACT_IMPACT=NONE
+Q01_TEST_BASELINE=RECORDED
+Q01_ROLLBACK=DEFINED
+Q01_ACCEPTED=NO
+Q02_B=CONDITIONAL_ON_Q01_REVIEW
 Q02_C=CONDITIONAL_ON_Q02_B_GATE
 Q03=CONDITIONAL_ON_Q02_C_GATE
 C3_PHASE_ADVANCEMENT=NOT_AUTHORIZED_BY_THIS_DECISION
@@ -26,8 +30,10 @@ SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
 MODEL_AUTHORED_FACTUAL_PROSE=NONE
 GLOBAL_TURN_BUDGET_SECONDS=30
 CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
-NEXT=Q01_CONSUMER_GATE
+NEXT=COORDINATION_Q01_REVIEW
 ```
+
+Q01 foi executado como verificação residual do documento 60, sem remoção de código. O resultado está no ledger §6.323. Isso não aceita Q01 nem libera Q02-B.
 
 **Decisão histórica — 2026-10-19 (SUPERSEDED na aresta de entrada por 2026-10-20):** `PRODUCT_MASTER_OPTION_B_Q02_A_EXCEPTION=APPROVED`; referência de aprovação: coordenação v10 sobre `G0_I04_GATE_RESULT=FAIL_BLOCKED` (ledger §6.312), após G0 rework esgotado. O texto abaixo permanece como registro da exceção Q02-A. A frase que negava autorização de Q01 vale só para aquele momento. **Único próximo código daquela data:** `DELIA-C3-I04-EXCEPTION-B-Q02-A-SEMANTIC-CONSOLIDATION-01`. Autoridade detalhada no [roadmap 59](./corrections/mcp-contextual-intelligence-orchestration/59-orchestrator-refactoring-finite-execution-roadmap.md) / [handoff 61](./corrections/mcp-contextual-intelligence-orchestration/61-g0-evidence-prepared-and-cursor-only-implementation-handoff.md) / ledger §6.313.
 

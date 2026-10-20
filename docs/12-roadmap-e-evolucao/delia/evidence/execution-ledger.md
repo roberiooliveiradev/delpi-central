@@ -16098,3 +16098,22 @@ PRODUCTION_DEPLOY_AUTHORIZED=NO
 RUNTIME_DIFF=NONE
 NEXT=Q01_CONSUMER_GATE
 ```
+
+
+## §6.323 — Q01 consumer gate (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-FINITE-SEMANTIC-REFACTOR-EXECUTION-01`. **AUTHORITY:** exceção §6.322. **CÓDIGO VERIFICADO:** `78f1ca51679f886cb48e87b15cc6b8df0cf9e0f4`. **INVENTÁRIO REUTILIZADO:** documento 60 (`9dad78c53beb2a5e5de50695fbb590b40440baf6`). Roadmap 59 §12.
+
+Busca residual, sem novo inventário. Produção importa `orchestration` apenas por `root_composer.py`. Sem consumidor fora de `delia-api`. `contracts.py` e `ports.py` sem diff desde o documento 60. Mudanças posteriores em `handle_interactive_turn.py` e `root_composer.py` são o soft-land G0 (`95e6c61264`) e o ditado VD-F03 (`9a8b05063d`). Helpers de Q02-A citados por linha no documento 60 estão obsoletos; helpers de Q02-B e Q02-C continuam no orquestrador, com linhas diferentes. `recover_empty_selection` não é mais um símbolo. Suítes da seção 4 do documento 60 presentes; suíte completa `TEST_NOT_RUN`. Nenhum código removido. Rollback deste pacote = reverter o commit documental. Q01 não está aceito. Q02-B não foi iniciado.
+
+```text
+Q01_CONSUMER_MAP=VERIFIED
+Q01_CONTRACT_IMPACT=NONE
+Q01_TEST_BASELINE=RECORDED
+Q01_ROLLBACK=DEFINED
+Q01_ACCEPTED=NO
+Q02_B_AUTHORIZED=NO
+RUNTIME_DIFF=NONE
+MATERIAL_ACT=0
+NEXT=COORDINATION_Q01_REVIEW
+```

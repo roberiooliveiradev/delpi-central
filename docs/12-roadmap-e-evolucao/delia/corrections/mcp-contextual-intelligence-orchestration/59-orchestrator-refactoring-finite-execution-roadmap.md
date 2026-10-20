@@ -259,3 +259,30 @@ C3_PHASE_ADVANCEMENT=NOT_AUTHORIZED_BY_THIS_DECISION
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=Q01_CONSUMER_GATE
 ```
+
+## 12. Q01 — consumer gate executado (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-FINITE-SEMANTIC-REFACTOR-EXECUTION-01`. **BASE de código:** `78f1ca51679f886cb48e87b15cc6b8df0cf9e0f4`, igual ao commit documental anterior porque ele não altera `delia-api`. **FONTE REUTILIZADA:** documento 60, SHA de levantamento `9dad78c53beb2a5e5de50695fbb590b40440baf6`. Sem nova leitura das 10.592 linhas e sem reclassificar os 42 achados.
+
+```text
+Q01_CONSUMER_MAP=VERIFIED
+Q01_CONTRACT_IMPACT=NONE
+Q01_TEST_BASELINE=RECORDED
+Q01_ROLLBACK=DEFINED
+Q01_ACCEPTED=NO
+Q02_B_AUTHORIZED=NO
+RUNTIME_DIFF=NONE
+NEXT=COORDINATION_Q01_REVIEW
+```
+
+**Consumidores.** O import de produção de `orchestration` continua só em `root_composer.py`. `capability_attempt.py` cita o módulo em comentário. Não há import em plugin, MFE ou outra API. A entrada continua `HandleInteractiveConversationTurn` → `attempt`. Os símbolos de Q02-B/Q02-C ainda referenciados têm callers em `orchestration.py` e em testes de `delia-api`.
+
+**Drift desde o documento 60.** `contracts.py` e `ports.py` não mudaram. `handle_interactive_turn.py` e `root_composer.py` mudaram em `95e6c61264` (soft-land G0) e `9a8b05063d` (ditado VD-F03), sem contrato novo de capability. As linhas citadas no documento 60 para os helpers de Q02-A estão obsoletas: `_is_information_coverage_inquiry` não existe mais. Os helpers de Q02-B e Q02-C continuam definidos, em outras linhas: `_free_string_grounded_in_user_input`, `_eligible_self_index_probe`, `_unproven_identifier_inputs`, `_single_free_text_argument_from_input`, `_user_list_ordinal`, `_prior_listing_hint`, `_count_covered_extraction_units`, `_prior_extraction_incomplete`, `_render_is_list_replay_not_compare`. `classify_result_intent` e `unique_structural_ticket_list_capability` continuam em `paginated_result_semantics.py`. O nome `recover_empty_selection` não existe mais; a realocação desse comportamento fica para Q02-C. `experimental_arguments_budget_guard` continua no construtor, default falso.
+
+**Contrato.** Nenhum DTO, porta ou contrato de owner mudou nesta verificação. Impacto classificado como drift interno de implementação. Não há `ARCHITECTURE_DECISION_REQUIRED`.
+
+**Testes.** As suítes listadas na seção 4 do documento 60 seguem no repositório. Houve suíte adicional de Q02-A (`test_q02a_semantic_consolidation.py`). As contagens do documento 60 não foram recoletadas e a suíte completa não foi reexecutada neste pacote (`TEST_NOT_RUN`). A baseline registrada é a lista de suítes a preservar no rollback dos pacotes seguintes.
+
+**Rollback.** Este pacote é documental. Reverter o commit desfaz o registro. Não há migration nem mudança de runtime. O rework Q02-A não é revertido aqui. O rollback de Q02-B/Q02-C, quando existirem, é reverter o commit do pacote.
+
+**Código removido:** nenhum. Q02-B não inicia neste ciclo.

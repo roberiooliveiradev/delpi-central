@@ -130,3 +130,9 @@ LIVE_G0_REEVAL=TEST_NOT_RUN
 Q01_EXECUTED=NO
 RUNTIME_DIFF=NONE
 ```
+
+## 6. Verificação residual Q01 — 2026-10-20
+
+Este adendo não substitui o levantamento. O gate Q01 reutilizou as seções 1–5 no SHA `78f1ca51679f886cb48e87b15cc6b8df0cf9e0f4` e registrou o resultado no ledger §6.323 e no roadmap 59 §12.
+
+As linhas deste documento para helpers já removidos em Q02-A estão obsoletas. Os símbolos de Q02-B e Q02-C citados aqui continuam em `orchestration.py`, fora das linhas originais. `contracts.py` e `ports.py` não mudaram desde `9dad78c53beb2a5e5de50695fbb590b40440baf6`. Não houve consumidor novo fora de `delia-api`. `Q01_ACCEPTED=NO`.
