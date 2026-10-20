@@ -121,6 +121,30 @@
   padding-left: 1.1rem;
 }
 
+/* Emissão de NF — seções do detalhe (layout entre cards do kit) */
+.dashboard-my-requests .my-requests-invoice-payload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-invoice-item + .my-requests-invoice-item {
+  margin-top: 1rem;
+}
+
+.dashboard-my-requests .my-requests-invoice-item__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--my-requests-title);
+}
+
+.dashboard-my-requests .my-requests-invoice-payload__text {
+  white-space: pre-wrap;
+}
+
 /* Process-issue — painel do analista (P4) */
 .dashboard-my-requests .my-requests-process-issue {
   display: flex;

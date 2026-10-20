@@ -70,7 +70,19 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     actions:
       "Use os botões para avançar o atendimento. Cada ação explica o impacto. Devolver e cancelar pedem um motivo antes de confirmar.",
     invoicePayload:
-      "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
+      "Tudo o que foi informado na solicitação de emissão: destinatário, nota, frete, peso, volumes, observação e cada item.",
+    partyType: "Se o destinatário é cliente ou fornecedor.",
+    taxId: "CPF ou CNPJ do destinatário informado na solicitação.",
+    invoiceTypeOther: "Texto livre preenchido quando o tipo da nota é Outros.",
+    carrier: "Transportadora escolhida para a remessa, quando houver.",
+    weight: "Peso informado para a emissão, em quilogramas.",
+    volumes: "Quantidade de volumes informada para a remessa.",
+    observation: "Observação livre deixada por quem pediu a emissão.",
+    productDescription: "Descrição do produto incluída no item.",
+    unitPrice: "Preço unitário informado para o item, sem recálculo.",
+    salesOrder: "Pedido de venda e item vinculados, quando preenchidos.",
+    stockWriteOff:
+      "Indica se o item foi marcado para baixa de estoque. Só aparece quando essa informação foi gravada.",
     processIssueReport:
       "O que o operador informou na bancada: o motivo do problema, data/hora, quem registrou e os códigos de ferramenta ou material digitados — mesmo que não existam no cadastro da operação.",
     processIssueContext:
@@ -99,7 +111,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     party: "Cliente ou fornecedor que receberá a nota fiscal.",
     invoiceType: "Tipo da nota escolhido no pedido de emissão.",
     freight: "Quem assume o frete (CIF ou FOB) e dados relacionados.",
-    items: "Quantidade de produtos incluídos na emissão.",
+    items: "Cada produto informado na emissão, com quantidade, preço e demais dados preenchidos.",
   },
   actions: {
     start:
