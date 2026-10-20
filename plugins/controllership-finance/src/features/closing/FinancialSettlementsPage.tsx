@@ -449,7 +449,7 @@ export function FinancialSettlementsPage() {
       {list || loading ? (
         <CfSectionCard
           title="Resumo do período"
-          subtitle="Agrupamento por lado, moeda, natureza e tipo de movimento."
+          subtitle="Soma bruta dos eventos financeiros por lado e moeda. Inclui baixas, estornos e compensações; não representa total líquido pago/recebido nem conciliação bancária."
           hint={CF_HELP.closing.summary}
         >
           {summaryForSide && summaryForSide.length > 0 ? (
@@ -463,7 +463,7 @@ export function FinancialSettlementsPage() {
               {currencyTotals.map(({ code, total }) => (
                 <li key={code}>
                   <span className="cf-settlements-summary-label">
-                    Total {code}
+                    Movimentações registradas — moeda {code}
                   </span>
                   <strong>{formatAmount(String(total))}</strong>
                 </li>
