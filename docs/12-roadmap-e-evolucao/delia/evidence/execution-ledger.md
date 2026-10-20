@@ -16449,3 +16449,23 @@ I04_ACCEPTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=AUTHORIZED_ENVIRONMENT_REAL_MODEL_SIPOC_SMOKE_THEN_COORDINATION_GATE
 ```
+
+
+## §6.338 — SIPOC real-model budget validation blocked (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-SIPOC-REAL-MODEL-BUDGET-VALIDATION-01`. **SOURCE:** `e7d58aee98eed346c741c6d665d9746469b22fcd`, which contains fix `a9f5f8d3c2ac389747ce4249e0e185cca72f52e1`. **RUNTIME:** container image created `2026-10-20T16:45:32Z`. In-process check: `EARLY_CONVERSATIONAL_ADMISSION` absent, handler does not reference the marker, fallback cap `12.0`, `DELIA_TURN_BUDGET_SECONDS=30`, model `moonshotai/kimi-k3`. Host git and the running process diverge. Ledger §6.337 and plan 16 keep `PRODUCTION_DEPLOY_AUTHORIZED=NO`. This task does not authorize deploy. No SIPOC question was sent. Evidência: [65](../corrections/mcp-contextual-intelligence-orchestration/65-sipoc-real-model-budget-validation.md).
+
+```text
+SIPOC_LIVE=TEST_NOT_RUN
+BLOCKED=DEPLOY_NOT_AUTHORIZED
+EARLY_ADMISSION_MARKER_IN_CONTAINER=NO
+IMAGE_CREATED=2026-10-20T16:45:32Z
+MODEL_ID=moonshotai/kimi-k3
+GLOBAL_TURN_BUDGET_SECONDS=30
+POST_ORCHESTRATION_FALLBACK_CAP_SECONDS=12
+SIPOC_BUDGET_FIX=INCONCLUSIVE
+MATERIAL_ACT=0
+CODE_CHANGED=NO
+Q03_AUTHORIZED=NO
+NEXT=COORDINATION_DEPLOY_AUTHORIZATION_THEN_SINGLE_SIPOC
+```
