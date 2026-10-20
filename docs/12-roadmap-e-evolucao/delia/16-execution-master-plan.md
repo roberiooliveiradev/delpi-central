@@ -5,7 +5,20 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (Q03, parecer independente):** a trilha finita de refatoração semântica encerra com `ACCEPT_WITH_RESIDUAL`. Os requisitos centrais de Q01 e Q02-A/B/C estão comprovados no código vigente, a suíte histórica permanece aplicável porque `delia-api` não mudou desde `a9f5f8d3c2`, e o SIPOC real passou no processo que contém o marcador. B1 continua atalho lexical de listagem de chamados, adiado e não resolvido. Comparação tipada de dois registros de owner e a projeção de HTTP 404 não foram exercidas no runtime atualizado. Esta decisão não aceita I04, não marca C3 executado, não declara produção pronta e não autoriza deploy nem mudança de código. Documento 67. Ledger §6.342.
+**Decisão vigente de execução — 2026-10-20 (revisão funcional I04):** o parecer do executor é `INCONCLUSIVE`. O gate canônico de I04, no README da trilha, exige testes bounded com TÉO, VISTA, DAVI e um sibling renomeado no runtime avaliado. Essa evidência não existe para o código pós-refatoração. Conversação, paráfrase OpenAPI e os limites de 30 s / 12 s estão comprovados em amostras já registradas. Este registro não altera `I04_ACCEPTED`, não reabre Q01–Q03 e não autoriza código, deploy ou fase. Documento 68. Ledger §6.343.
+
+```text
+I04_EXECUTOR_VERDICT=INCONCLUSIVE
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+Q01_Q03=CLOSED_WITH_RESIDUAL
+ADDITIONAL_TESTS_EXECUTED=0
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_CHANGES_AUTHORIZED=NO
+NEXT=COORDINATION_I04_EVIDENCE_OR_GATE_DECISION
+```
+
+**Decisão anterior — 2026-10-20 (Q03, parecer independente, SUPERSEDED como cerca vigente pela revisão funcional I04):** a trilha finita de refatoração semântica encerra com `ACCEPT_WITH_RESIDUAL`. Os requisitos centrais de Q01 e Q02-A/B/C estão comprovados no código vigente, a suíte histórica permanece aplicável porque `delia-api` não mudou desde `a9f5f8d3c2`, e o SIPOC real passou no processo que contém o marcador. B1 continua atalho lexical de listagem de chamados, adiado e não resolvido. Comparação tipada de dois registros de owner e a projeção de HTTP 404 não foram exercidas no runtime atualizado. Esta decisão não aceita I04, não marca C3 executado, não declara produção pronta e não autoriza deploy nem mudança de código. Documento 67. Ledger §6.342.
 
 ```text
 Q03_VERDICT=ACCEPT_WITH_RESIDUAL

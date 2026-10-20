@@ -16546,3 +16546,22 @@ CODE_CHANGED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=PRODUCT_DECISION_ON_OPEN_RESIDUALS
 ```
+
+
+## §6.343 — I04 independent functional acceptance review (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-INDEPENDENT-FUNCTIONAL-ACCEPTANCE-REVIEW-01`. **BASE:** `d7c10a44061db5ca5f79017c097fce6545f801ac`. `delia-api` unchanged since `a9f5f8d3c2`. Canonical I04 gate is the track README: bounded live tests with TÉO, VISTA, DAVI and a renamed sibling. Those observations are absent on the post-refactor runtime. Docs 63/66 prove conversational SIPOC, hypotheses, conversational comparison and one grounded OpenAPI READ on `moonshotai/kimi-k3`. Formats were an honest catalog limitation, not a VISTA guidance outcome. Older DAVI/TÉO/VISTA lives are `STALE_EVIDENCE`. Typed owner comparison and HTTP 404 projection remain unobserved live. No new questions, no code, no deploy. **EXECUTOR_VERDICT: `INCONCLUSIVE`.** `I04_ACCEPTED` unchanged at `NO`. Relatório: [68](../corrections/mcp-contextual-intelligence-orchestration/68-i04-independent-functional-acceptance-review.md).
+
+```text
+I04_EXECUTOR_VERDICT=INCONCLUSIVE
+I04_ACCEPTED=NO
+ADDITIONAL_TESTS_EXECUTED=0
+DAVI_CURRENT_RUNTIME=TEST_NOT_RUN
+TEO_CURRENT_RUNTIME=TEST_NOT_RUN
+VISTA_CURRENT_RUNTIME=TEST_NOT_RUN
+TYPED_COMPARE_LIVE=NOT_EXERCISED
+HTTP_404_LIVE=TEST_NOT_RUN
+CODE_CHANGED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_I04_EVIDENCE_OR_GATE_DECISION
+```
