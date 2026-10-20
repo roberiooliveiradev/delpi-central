@@ -16361,3 +16361,31 @@ I04_ACCEPTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=Q03_ENTRY_DECISION
 ```
+
+
+## §6.334 — Q02 real-model residual smoke (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-REAL-MODEL-RESIDUAL-SMOKE-TESTS-01`. **SOURCE_SHA:** `4d7f71423e67b4721ea376d50d6bd7feac1360dc`, igual ao HEAD do host. Imagem da API criada `2026-10-20T16:28:26Z`. Modelo `moonshotai/kimi-k3`, provider `openai_compatible`, timeout 30 s, orçamento global 30 s. O processo em execução tinha `_selected_proven_differences` e não tinha `_typed_compare_outcome_content`. A imagem anterior, ainda com o gate textual, não recebeu nenhuma pergunta desta bateria. Evidência: [63](../corrections/mcp-contextual-intelligence-orchestration/63-q02-real-model-residual-smoke.md).
+
+Seis perguntas, uma vez cada, comando MESSAGE, sem confirmação. T01 SIPOC `FAIL` por `turn_budget_limited` 12 s após admissão conversacional (latência total 13981 ms). T02 formatos `PASS` com `select_group=none` e limitação honesta. T03 hipóteses `PASS`. T04 comparação das duas primeiras hipóteses `PASS` no caminho conversacional, sem entrar no gate tipado. T05 paráfrase de busca de mercadoria `PASS`, READ `delpi.search_products`, síntese `GROUNDED`. T06 código sintético `PARTIAL`: owner HTTP 404 em `delpi.get_product_summary`, sem registro inventado, texto de fonte indisponível. `MATERIAL_ACT=0`. Q03 permanece fechado.
+
+```text
+TESTS_EXECUTED=6
+TESTS_PASS=4
+TESTS_PARTIAL=1
+TESTS_FAIL=1
+T01_SIPOC=FAIL_BUDGET
+T02_FORMATOS=PASS
+T03_HIPOTESES=PASS
+T04_COMPARACAO=PASS_CONVERSATIONAL
+T05_PARAFRASE=PASS_GROUNDED
+T06_IDENTIFIER=PARTIAL_404_AS_SOURCE_UNAVAILABLE
+TYPED_COMPARE_LIVE=NOT_EXERCISED
+B1_STATUS=UNCHANGED
+Q02_C_REWORK_REMAINING=0
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+MATERIAL_ACT=0
+RUNTIME_FILES_CHANGED=NONE
+NEXT=COORDINATION_Q03_ENTRY_WITH_BUDGET_RESIDUAL
+```
