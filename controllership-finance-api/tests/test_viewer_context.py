@@ -106,6 +106,7 @@ def test_viewer_context_human_with_access_returns_200(_auth_pipeline):
     assert body["meta"]["operationId"] == "get_viewer_context"
     assert body["data"] == {
         "firstName": "Ana",
+        "displayName": "Ana Souza",
         "capabilities": {"access": True, "manage": False},
     }
 
@@ -277,3 +278,64 @@ def test_viewer_context_route_is_not_public():
         )
         is False
     )
+
+
+def test_viewer_photo_requires_auth():
+    assert _client().get("/viewer-photo").status_code == 401
+
+
+def test_viewer_photo_service_principal_blocked(monkeypatch):
+    monkeypatch.setattr(fa, "request_has_valid_internal_service_token", lambda request: True)
+    assert _get_photo(_client()).status_code == 403
+
+
+def _get_photo(client):
+    return client.get("/viewer-photo", headers={"Authorization": "Bearer " + TOKEN})
+
+
+def test_viewer_photo_proxies_only_image(monkeypatch):
+    import httpx
+    from controllership_finance_app.interface.http.routes import viewer_context_routes as routes
+
+    class FakeAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def get(self, url, headers):
+            assert url.endswith("/me/person-profile/photo")
+            assert headers["Authorization"] == "Bearer " + TOKEN
+            return httpx.Response(200, content=b"mock-image", headers={"content-type": "image/png"})
+
+    monkeypatch.setattr(routes.httpx, "AsyncClient", FakeAsyncClient)
+    response = _get_photo(_client())
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content == b"mock-image"
+    assert response.headers["cache-control"] == "private, no-store"
+
+
+def test_viewer_photo_core_no_photo(monkeypatch):
+    import httpx
+    from controllership_finance_app.interface.http.routes import viewer_context_routes as routes
+
+    class FakeAsyncClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def get(self, url, headers):
+            return httpx.Response(404)
+
+    monkeypatch.setattr(routes.httpx, "AsyncClient", FakeAsyncClient)
+    assert _get_photo(_client()).status_code == 404
