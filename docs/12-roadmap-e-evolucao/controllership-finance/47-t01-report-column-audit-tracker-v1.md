@@ -260,3 +260,54 @@ O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; 
 **Cautelas:** as probes de unicidade acima agrupam apenas o identificador e não demonstram outras chaves/cross-branch. As provas de join de natureza só demonstram existência de um par, não cardinalidade 1:1, ausência de duplicação, completude por competência/filial ou regra exata da `_F190C`. Filial vazia nas amostras anteriores exige validar convenção compartilhada antes de incluir filtro de filial. Não usar `FK2_DATA=E2_BAIXA` ou equivalência de `FK2_IDDOC=E2_*` sem fonte.
 
 **Próximo teste delimitado:** cardinalidade/cobertura de `FK1/FK2 → SED` com `COUNT`/join protegidos e filtros por competência; inventariar os identificadores/relacionamentos de título via fonte `_F190C`, `FK7` e dicionário antes de tentar `FKx → SE1/SE2`. `JOIN_NATURE=PARTIAL_PASS`; `JOIN_TITLE=TEST_NOT_RUN`; `OUTPUT_PARITY=TEST_NOT_RUN`; **G4 permanece PENDING**. Métricas inalteradas: `2/60 = 3,3%` coleta; `2/90 = 2,2%` auditoria.
+
+## 12. L1.6 — Validação SQL de FK7 / título / exceções (20/10/2026)
+
+**Origem:** DAVI `execute_readonly_sql` com SQL SELECT parametrizado no texto, `D_E_L_E_T_=''` em tabelas de negócio, filtro `FK1_DATA/FK2_DATA >= '20260101'`. Este registro contém somente **agregados**, sem valores financeiros, identificadores individuais ou PII. **Representa o ambiente consultado em 20/10/2026, não snapshot imutável.**
+
+### Descoberta do vínculo correto
+
+- `FK7010` existe fisicamente e possui dados (SELECT TOP 1 PASS). SX3 expõe `FK7_IDDOC, FK7_ALIAS, FK7_FILTIT, FK7_PREFIX, FK7_NUM, FK7_PARCEL, FK7_TIPO, FK7_CLIFOR, FK7_LOJA, FK7_FILIAL, FK7_CHAVE, FK7_IDPAI`.
+- SX9 aponta `FK7 → FK1` e `FK7 → FK2` via `FK7_IDDOC`; `SE1 → FK7` via `E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA`; `SE2 → FK7` via `E2_FILIAL+E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA`. Também há vínculo SX9 `SA1/SA2 → FK7` (cliente/fornecedor e loja) e `FKA → FK1/FK2/FK5` (rastreio).
+- SIX `FK7`: índice 1 `FK7_FILIAL+FK7_IDDOC`, índice 3 chave título composta; índice 5 `FK7_IDDOC`. `SELECT TOP 1 ... GROUP BY FK7_IDDOC HAVING COUNT(*) > 1` não encontrou duplicado entre registros não excluídos. **Índices SX/SIX não constituem constraints DB, e singularidade observada não valida o join da customização `_F190C`.**
+
+### Resultados por período — `>= 2026-01-01`
+
+| Teste SQL READ | Resultado | Classificação |
+|---|---:|---|
+| Baixas `FK2010` no período | 8.969 | PROVEN no instante da consulta |
+| `FK2_IDDOC` com par em `FK7010.FK7_IDDOC` | 8.911 | PASS para existência |
+| FK2 sem FK7 correspondente | **58** | GAP a classificar |
+| `FK2 → FK7 → SE2` por `FK7_ALIAS='SE2'` + prefixo/número/parcela/tipo/fornecedor/loja | 8.911 | PASS de existência; não paridade |
+| Baixas `FK1010` no período | 5.578 | PROVEN no instante da consulta |
+| FK1 sem FK7 correspondente | **0** | PASS |
+| `FK1 → FK7 → SE1` por `FK7_ALIAS='SE1'` + prefixo/número/parcela/tipo/cliente/loja | 5.578 | PASS de existência |
+| FK2 sem `SED` correspondente pela natureza | **49** | GAP a classificar |
+| FK1 sem `SED` correspondente | **0** | PASS |
+| `FK7_ALIAS='SE2'` com título SE2 encontrado (histórico sem filtro de data) | 96.454 de 96.454 | PASS de existência |
+| `FK7_ALIAS='SE1'` com título SE1 encontrado (histórico sem filtro de data) | 114.615 de 114.627 | **12 gaps**, investigar |
+
+**ATENÇÃO:** os números são relativos às condições SQL indicadas. `EXISTS` evita contar múltiplas linhas como uma única baixa repetida, mas não prova cardinalidade de todos os joins, diferenças entre filiais ou seleção efetiva da rotina. Os 12 gaps SE1 históricos não foram relacionados às 5.578 baixas de 2026.
+
+### Classificação objetiva das exceções FK2 em 2026
+
+`FK2` sem `FK7`, por `FK2_TPDOC` / `FK2_RECPAG`:
+- `ES/R`: 29
+- `BA/P`: 17
+- `VL/P`: 9
+- `CP/P`: 3
+
+`FK2` sem correspondência SED (por tipo):
+- `BA`: 48
+- `ES`: 1
+
+**Não atribuir significado de negócio aos códigos BA/ES/VL/CP sem consultar dicionário/owner.** A ausência do vínculo pode representar semântica legítima, customização ou inconsistência. `G4` fica **PENDING**, não FAIL, até validar o universo incluído no relatório da Joici.
+
+### Próxima etapa e encerramento condicionado
+
+1. Conferir política de filiais, ramo real `FK7_FILTIT` e join completo com `FK7_ALIAS`, inclusive possíveis documentos de origens distintas.
+2. Inspecionar `_F190C` em ADVPL ou um conjunto representativo dos cinco arquivos, com filtros, layouts, fornecedor/cliente, CNPJ, valores, ordenações e tratamento das exceções.
+3. Testar `FK1/FK2 → FKA → FK5` somente após identificar regra de rastreabilidade e cardinalidade sem multiplicar valor de baixa.
+4. Executar paridade exata por competência/empresa/filial e obter aceite da Controladoria; sem isso **`_F190C` não está replicado/homologado**.
+
+**Síntese:** `FK7_TABLE=PROVEN`; `FKx_TO_FK7_TO_TITLES=PASS_FOR_EXISTENCE`; `EXCEPTIONS=TO_CLASSIFY`; `_F190C_SOURCE=TO_INVENTORY`; `REPORT_PARITY=TEST_NOT_RUN`; `G4/G5/G6=PENDING`. Métricas do tracker **inalteradas** (2/60 coleta, 2/90 auditoria, 0/15 concluídos), porque o gate G4 também exige joins, escopo e semântica homologados.
