@@ -68,8 +68,10 @@ class HelpdeskBffGateway:
                 _safe_message(payload, "Não foi possível consultar os chamados do Helpdesk."),
                 _mapped_status(response.status_code),
             )
-        data = payload.get("data")
-        if not isinstance(data, dict):
+        # Contrato do BFF (helpdesk-api): página crua {items, page, page_size,
+        # has_more} — sem o envelope {success,data,meta} da api-delpi.
+        data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
             raise HelpdeskBffGatewayError(
                 "A consulta de chamados retornou um formato inválido.",
                 502,
@@ -129,10 +131,16 @@ def _safe_message(payload: dict[str, Any], fallback: str) -> str:
     if isinstance(message, str) and message.strip():
         return message.strip()
     error = payload.get("error")
+    # helpdesk-api retorna {"error": "<code>"} — código como string.
+    if isinstance(error, str) and error.strip():
+        return f"{fallback} ({error.strip()})"
     if isinstance(error, dict):
         code = error.get("code")
         if isinstance(code, str) and code.strip():
             return f"{fallback} ({code.strip()})"
+    detail = payload.get("detail")
+    if isinstance(detail, str) and detail.strip():
+        return detail.strip()
     return fallback
 
 

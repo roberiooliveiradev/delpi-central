@@ -223,6 +223,47 @@ class TestGatewayHttp:
         client = httpx.Client(transport=transport, base_url="http://bff.test")
         return HelpdeskBffGateway(client=client, base_url="http://bff.test", sleep=lambda _: None)
 
+    def test_bff_raw_page_envelope_is_accepted(self) -> None:
+        """Regressão do 502 em produção: o BFF retorna a página crua
+        {items, page, page_size, has_more} — sem wrapper success/data."""
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "items": [{"id": 1, "status_id": 1}],
+                    "page": 1,
+                    "page_size": 50,
+                    "has_more": False,
+                },
+            )
+
+        data = self._gateway(handler).list_tickets(
+            authorization="Bearer abc", page=1, page_size=50
+        )
+        assert data["items"] == [{"id": 1, "status_id": 1}]
+        assert data["has_more"] is False
+
+    def test_200_without_items_is_invalid_format(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"unexpected": True})
+
+        with pytest.raises(HelpdeskBffGatewayError) as exc_info:
+            self._gateway(handler).list_tickets(
+                authorization="Bearer x", page=1, page_size=50
+            )
+        assert exc_info.value.status_code == 502
+
+    def test_bff_error_code_string_is_surfaced(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(409, json={"error": "glpi_link_required"})
+
+        with pytest.raises(HelpdeskBffGatewayError) as exc_info:
+            self._gateway(handler).list_tickets(
+                authorization="Bearer x", page=1, page_size=50
+            )
+        assert "glpi_link_required" in str(exc_info.value)
+
     def test_bearer_forwarded_and_params_sent(self) -> None:
         seen: dict[str, Any] = {}
 
