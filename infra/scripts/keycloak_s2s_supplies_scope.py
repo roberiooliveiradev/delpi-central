@@ -42,6 +42,10 @@ CALLER_CLIENT = "supplies-api"
 TARGET_AUDIENCE = "api-delpi"
 REQUIRED_SCOPE = "suppliers.read"
 AUDIENCE_MAPPER_NAME = f"audience-{TARGET_AUDIENCE}"
+_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+)
 
 _INFRA_ENV = Path(__file__).resolve().parents[1] / ".env"
 
@@ -68,6 +72,9 @@ class KcAdmin:
             f"{self.base}{path}", data=data, method=method,
         )
         req.add_header("Authorization", f"Bearer {self.token}")
+        # Cloudflare WAF bans non-browser signatures (error 1010) on the
+        # public /auth proxy; inside the docker network this is a no-op.
+        req.add_header("User-Agent", _USER_AGENT)
         if data is not None:
             req.add_header("Content-Type", "application/json")
         try:
@@ -105,6 +112,7 @@ def mint_admin_token(base: str) -> str:
         data=data,
     )
     req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    req.add_header("User-Agent", _USER_AGENT)
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read())["access_token"]
 
@@ -134,7 +142,7 @@ def main() -> int:
 
     # --- caller client must exist (creation out of scope) ---
     clients = admin.call(
-        "GET", f"/realms/{realm}/clients?clientId={CALLER_CLIENT}"
+        "GET", f"/admin/realms/{realm}/clients?clientId={CALLER_CLIENT}"
     )
     if not clients:
         report(False, "client supplies-api", "inexistente — provisionar "
@@ -151,7 +159,7 @@ def main() -> int:
     )
 
     # --- required scope exists ---
-    scopes = admin.call("GET", f"/realms/{realm}/client-scopes") or []
+    scopes = admin.call("GET", f"/admin/realms/{realm}/client-scopes") or []
     scope = next((s for s in scopes if s.get("name") == REQUIRED_SCOPE), None)
     scope_id = None
     if scope is None:
@@ -160,14 +168,14 @@ def main() -> int:
                    "ausente — execute --apply para criar e atribuir")
         else:
             admin.call(
-                "POST", f"/realms/{realm}/client-scopes",
+                "POST", f"/admin/realms/{realm}/client-scopes",
                 {
                     "name": REQUIRED_SCOPE,
                     "protocol": "openid-connect",
                     "attributes": {"include.in.token.scope": "true"},
                 },
             )
-            scopes = admin.call("GET", f"/realms/{realm}/client-scopes") or []
+            scopes = admin.call("GET", f"/admin/realms/{realm}/client-scopes") or []
             scope = next(
                 (s for s in scopes if s.get("name") == REQUIRED_SCOPE), None
             )
@@ -182,7 +190,7 @@ def main() -> int:
     if scope_id:
         assigned = admin.call(
             "GET",
-            f"/realms/{realm}/clients/{client_uuid}/default-client-scopes",
+            f"/admin/realms/{realm}/clients/{client_uuid}/default-client-scopes",
         ) or []
         is_default = any(s.get("id") == scope_id for s in assigned)
         if is_default:
@@ -193,7 +201,7 @@ def main() -> int:
         else:
             admin.call(
                 "PUT",
-                f"/realms/{realm}/clients/{client_uuid}"
+                f"/admin/realms/{realm}/clients/{client_uuid}"
                 f"/default-client-scopes/{scope_id}",
             )
             report(True, "default scope assignment", "suppliers.read atribuído")
@@ -201,7 +209,7 @@ def main() -> int:
     # --- audience mapper for api-delpi (evidência P1.SEC.5: já provisionado) ---
     mappers = admin.call(
         "GET",
-        f"/realms/{realm}/clients/{client_uuid}/protocol-mappers/models",
+        f"/admin/realms/{realm}/clients/{client_uuid}/protocol-mappers/models",
     ) or []
     has_aud = any(
         m.get("protocolMapper") == "oidc-audience-mapper"
@@ -218,7 +226,7 @@ def main() -> int:
     else:
         admin.call(
             "POST",
-            f"/realms/{realm}/clients/{client_uuid}/protocol-mappers/models",
+            f"/admin/realms/{realm}/clients/{client_uuid}/protocol-mappers/models",
             {
                 "name": AUDIENCE_MAPPER_NAME,
                 "protocol": "openid-connect",
