@@ -172,3 +172,28 @@ SCOPE_CHANGE / SUPERSEDES:
 O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; não comprovam paridade `_F190C`, parâmetros do relatório, layouts PDF/Excel, cliente/fornecedor+CNPJ efetivamente exportados, moeda, baixas parciais, natureza, chave e deduplicação.
 
 **Próxima coleta delimitada:** inspecionar fonte `_F190C` no owner TI/ADVPL e metadados autorizados (DAVI) das oito famílias; obter os cinco arquivos sanitizados. Só então vincular `output_field → physical_column → join → filter → totals`. `G1 PASS` para R01/R02 se mantém; `G2/G3/G4 PENDING`; `G5 TEST_NOT_RUN`; `G6 PENDING`. **Progressos permanecem 2/60 coleta e 2/90 auditoria**, sem inflar percentuais por evidência adjacente.
+
+## 9. Rodada L1.3 — DAVI: dicionário físico de oito famílias (20/10/2026)
+
+**Ferramenta executada:** DAVI `discover_delpi_information` → `get_protheus_table` (8 consultas) e `list_protheus_table_columns` (8 consultas, página 1, limite 50). Todos os retornos `status=ok`. **Prova de entradas no dicionário SX2/SX3 acessível, não prova de linhas na base SQL, SELECT físico, join ou semântica da customização `_F190C`.** O retorno da lista inclui `X3_CAMPO, X3_DESCRIC, X3_TIPO, X3_TAMANHO, X3_DECIMAL`; o sufixo `010` foi validado apenas nessas entradas de catálogo, não inferido para outras empresas/filiais.
+
+| Entrada dicionário | X2_NOME | Campos relevantes observados (descrições resumidas; não são bindings de output ainda) | SX3 observado |
+|---|---|---|---|
+| `SE1010` | Contas a Receber | `E1_FILIAL`, `E1_CLIENTE`, `E1_LOJA`, `E1_NOMCLI`, `E1_NUM`, `E1_PARCELA`, `E1_NATUREZ`, `E1_EMISSAO`, `E1_VENCTO`, `E1_VALOR`, `E1_SALDO`, `E1_BAIXA` | 50 de 274 (página 1) |
+| `SE2010` | Contas a Pagar | `E2_FILIAL`, `E2_FORNECE`, `E2_LOJA`, `E2_NOMFOR`, `E2_NUM`, `E2_PARCELA`, `E2_NATUREZ`, `E2_EMISSAO`, `E2_VENCTO`, `E2_VALOR`, `E2_BAIXA` | 50 de 255 |
+| `SED010` | Naturezas | `ED_FILIAL`, `ED_CODIGO`, `ED_DESCRIC` | 50 de 113 |
+| `F7G010` | Motivos de Baixa | `F7G_FILIAL`, `F7G_SIGLA`, `F7G_DESCRI`, `F7G_CART`, `F7G_MOVBCO` | 10 de 10 |
+| `FK1010` | Baixas a Receber | `FK1_FILIAL`, `FK1_IDFK1`, `FK1_DATA`, `FK1_VALOR`, `FK1_MOEDA`, `FK1_NATURE`, `FK1_VENCTO`, `FK1_HISTOR`, `FK1_MOTBX`, `FK1_IDDOC`, `FK1_IDPROC` | 35 de 35 |
+| `FK2010` | Baixas a Pagar | `FK2_FILIAL`, `FK2_IDFK2`, `FK2_DATA`, `FK2_VALOR`, `FK2_MOEDA`, `FK2_NATURE`, `FK2_VENCTO`, `FK2_HISTOR`, `FK2_MOTBX`, `FK2_IDDOC`, `FK2_IDPROC` | 34 de 34 |
+| `FK5010` | Movimentos Bancários | `FK5_FILIAL`, `FK5_IDMOV`, `FK5_DATA`, `FK5_VALOR`, `FK5_NATURE`, `FK5_BANCO`, `FK5_AGENCI`, `FK5_CONTA`, `FK5_DOC`, `FK5_SEQ` | 39 de 39 |
+| `FKA010` | Rastreio de Movimentos | `FKA_FILIAL`, `FKA_IDFKA`, `FKA_IDPROC`, `FKA_IDORIG`, `FKA_TABORI` | 5 de 5 |
+
+**Tipos efetivamente retornados (exemplos):** `FK2_DATA` tipo D, comprimento 8; `FK2_VALOR` tipo N, comprimento 16, 2 decimais; `FK2_FILIAL` tipo C, comprimento 2; `FK1_DATA` tipo D, comprimento 8; `FK1_VALOR` tipo N, comprimento 16, 2 decimais. São propriedades do catálogo Protheus, não validação SQL física.
+
+**Correção de rigor:** `FK5_IDPROC` não está entre os campos confirmados no resumo desta rodada; não promover esse campo como PROVEN sem buscar página/metadata específica. A identidade de relacionamento `FK1/FK2 → FK5/FKA → SE1/SE2`, suas cardinalidades, exclusão lógica, filiais e campos de CNPJ permanecem **TO_INVENTORY**.
+
+**Acesso às linhas:** `get_protheus_table` e `list_protheus_table_columns` retornam **metadados**, não `SELECT` nem contagens de lançamentos. Não foi executado SELECT de tabela financeira ou prova de amostra real. A disponibilidade de `get_financeiro_*` na VISTA é adjacente, não uma leitura equivalente da rotina `_F190C`.
+
+**Gates R01/R02:** G1 PASS; G2 PENDING (colunas observadas no **dicionário**, não no output); G3 PENDING (owner local da customização), G4 PENDING (joins/bindings/filters incompletos), G5 TEST_NOT_RUN, G6 PENDING. **Percentuais inalterados:** 2/60 = 3,3% coleta; 2/90 = 2,2% auditoria; 0/15 concluídos. Novo ganho é inventário físico de metadados, sem gate inteiramente satisfeito.
+
+**Próxima verificação bounded:** (1) obter source da rotina `_F190C` ou amostra dos cinco arquivos; (2) investigar estrutura de vínculos e chaves no dicionário e no código de leitura `api-delpi`; (3) consultar owner autorizado para execução de SELECT com datas/escopo parametrizados e dados sanitizados. Nenhuma migration/rota/API implementada neste gate.
