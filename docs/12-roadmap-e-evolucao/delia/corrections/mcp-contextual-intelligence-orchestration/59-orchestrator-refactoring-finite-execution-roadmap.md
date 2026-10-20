@@ -215,3 +215,25 @@ NEXT=COORDINATION_FINAL_Q02_A_REVIEW_OR_STOP
 **States unchanged (coordination snapshot, pre-execution):** `Q02_A_REWORK_AUTHORIZED=YES_ONCE`; `Q02_A_REWORK_REMAINING=1`; `Q02_A_ACCEPTED=NO`; `I04_ACCEPTED=NO`; `Q01_AUTHORIZED=NO`; `Q02_B/C_AUTHORIZED=NO`; `C3/C4/C5` unadvanced. No new runtime change or test made by coordination.
 
 **Execution update (2026-10-20):** the single rework `DELIA-C3-I04-EXCEPTION-B-Q02-A-ONE-REWORK-01` was executed; ledger §6.318. `Q02_A_REWORK_REMAINING=0`. Live SIPOC/hypothetical `turn_budget_limited` stays `TO_VERIFY` outside this diff (12s conversational stage cap). No second rework.
+
+## 10. Coordination — fechamento do rework Q02-A e continuidade solicitada (2026-10-20)
+
+**DECISÃO PRODUCT MASTER comunicada na coordenação:** fechar o rework técnico Q02-A e dar continuidade à refatoração previamente definida. **REVIEW:** `ACCEPT_WITH_RESIDUAL` aplica-se **somente** ao diff bounded RQ-01–RQ-04 de Q02-A; não declara conclusão funcional do pacote, `I04_ACCEPTED` ou avanço de fase. Esta decisão sucede o snapshot pré-revisão em §8/§9 apenas para o fechamento administrativo/técnico; não reescreve a evidência histórica.
+
+**BASE DE EVIDÊNCIA:** rework `ef88e59933174a58e83ea08aaf5aabdc2e0392f1` mantido no código; revisão executor em `8406b74fc7a13cb71244e45e018af07ed1fe353f` com 34/34 testes focados PASS, nenhum diff e `MATERIAL_ACT=0`. RQ-03 singleton sem proposta = `not_applicable` (provado estaticamente); RQ-01/RQ-04 = oráculos fixture relatados; RQ-02 = wiring fixture e 1 owner real VISTA correto, mas **resposta C02 parcial**. SIPOC resposta real útil (uma amostra), hipóteses/compare com `turn_budget_limited` no teto conversacional 12s; sem conclusão de continuidade. DAVI/TÉO/OpenAPI e generalização live `TEST_NOT_RUN`; full suite pós-revisão `TEST_NOT_RUN` (suite anterior PASS relatado). `HTTP 200` e `is_complete=true` não certificam task outcome.
+
+**RESIDUAIS:** F3 formatos C02 = Q02-B/Q02-C/owner fidelity; F4 teto conversacional 12s + continuidade = fora Q02-A; F5 lexical `unique_structural_ticket_list_capability` = residual documentado fora Q02-A. Nenhum segundo rework de Q02-A permitido (`Q02_A_REWORK_REMAINING=0`). Preservar docs 56/57 (auditoria feita), ADR 58 (direção aprovada), inventário 60 e plano 59 (6 pacotes). Sem novo inventário, engine, planner ou regex de intenção.
+
+**GATE DE CONTINUIDADE:** solicitação de continuidade **não** equivale, por si, a `I04_ACCEPTED` nem revoga a dependência do §0/§3. Preparar e submeter **uma decisão explícita de entrada** para o próximo pacote: ou (a) satisfazer/rever I04 com evidência e liberar Q01 segundo gate existente, ou (b) aprovar exceção Product Master de dependência com escopo e testes definidos, registrando alteração normativa em doc 16 antes de qualquer diff Q01/Q02-B/Q02-C. Até esse ato, usar exclusivamente os documentos existentes para definir o próximo bounded step; nada de execução de código por autorização implícita.
+
+```text
+Q02_A_BOUNDED_REWORK=ACCEPT_WITH_RESIDUAL_TECHNICAL_SCOPE
+Q02_A_FUNCTIONAL_GATE=INCONCLUSIVE
+Q02_A_REWORK_REMAINING=0
+I04_ACCEPTED=NO
+Q01_AUTHORIZED=NO
+Q02_B_AUTHORIZED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+NEXT=PRODUCT_MASTER_EXPLICIT_CONTINUATION_GATE_ON_16_AND_59
+```
