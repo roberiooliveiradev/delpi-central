@@ -5,7 +5,25 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (Product Master):** `I04_FINITE_REFACTOR_CONTINUATION`. Autoriza a continuidade governada da refatoração semântica dos documentos 56–61 apesar de `I04_ACCEPTED=NO`. A ordem dos seis pacotes do roadmap 59 permanece. A mudança é só de dependência de entrada: Q01 pode ser executado; Q02-B depende do gate de Q01 aceito pela coordenação; Q02-C depende do gate de Q02-B; Q03 depende do gate de Q02-C. Não aceita I04, não autoriza segundo rework de Q02-A, não avança C3/C4/C5 e não autoriza deploy de produção. Segurança, ownership, contratos, postconditions e critérios funcionais permanecem os da ADR 58 e do roadmap 59. O documento 50 não contém trava superior incompatível; não há `ARCHITECTURE_DECISION_REQUIRED`. Ledger §6.322. Roadmap 59 §11.
+**Decisão vigente de execução — 2026-10-20 (Q02-B, evidência para review):** o pacote `DELIA-C3-Q02-B-ARGUMENTS-INDEX-PROVENANCE-REFACTOR-01` foi executado sobre a entrada `YES_BOUNDED_ENTRY` do ledger §6.324. A interpretação de texto livre exploratório, a escolha de índice e a referência linguística ficam na proposta do modelo. O código determinístico mantém schema, membership do catálogo vivo, proveniência de identificador (`id` / `*id`), AuthZ, budgets e outcome. Não aceita Q02-B, não autoriza Q02-C, não altera o teto conversacional de 12 s nem o orçamento global de 30 s, não faz deploy e não trata sucesso técnico como sucesso da tarefa. Ledger §6.325. Roadmap 59 §14.
+
+```text
+Q02_B_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_B_ACCEPTED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+Q01_ACCEPTED=YES_WITH_RESIDUAL
+I04_ACCEPTED=NO
+Q02_A_REWORK_REMAINING=0
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+MODEL_CANDIDATE_IF_LATER_AUTHORIZED=moonshotai/kimi-k3
+NEXT=COORDINATION_INDEPENDENT_Q02_B_REVIEW
+```
+
+**Decisão anterior — 2026-10-20 (Product Master, SUPERSEDED como cerca vigente pelo registro Q02-B; a exceção de continuidade permanece):** `I04_FINITE_REFACTOR_CONTINUATION`. Autoriza a continuidade governada da refatoração semântica dos documentos 56–61 apesar de `I04_ACCEPTED=NO`. A ordem dos seis pacotes do roadmap 59 permanece. A mudança é só de dependência de entrada: Q01 pode ser executado; Q02-B depende do gate de Q01 aceito pela coordenação; Q02-C depende do gate de Q02-B; Q03 depende do gate de Q02-C. Não aceita I04, não autoriza segundo rework de Q02-A, não avança C3/C4/C5 e não autoriza deploy de produção. Segurança, ownership, contratos, postconditions e critérios funcionais permanecem os da ADR 58 e do roadmap 59. O documento 50 não contém trava superior incompatível; não há `ARCHITECTURE_DECISION_REQUIRED`. Ledger §6.322. Roadmap 59 §11.
 
 ```text
 DECISION=I04_FINITE_REFACTOR_CONTINUATION

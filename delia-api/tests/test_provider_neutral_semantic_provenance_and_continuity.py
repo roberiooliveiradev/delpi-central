@@ -28,7 +28,6 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     LIMITATION_INSUFFICIENT_EVIDENCE,
-    _free_string_grounded_in_user_input,
     _prior_excerpt_records,
     _prior_supports_typed_attribute_compare,
     _prior_transform_probe_eligible,
@@ -307,81 +306,41 @@ def _search_provider(provider_id="openapi", group_id="delpi", remote="search_pro
     )
 
 
-# --- PROV unit gates -------------------------------------------------------
-
-
-def test_prov_t01_false_positive_token_overlap_rejected():
-    assert (
-        _free_string_grounded_in_user_input(
-            "terminal pino industrial especial aprovado",
-            "Mostre terminais pino.",
-        )
-        is False
-    )
-
-
-def test_prov_t02_unsupported_business_qualifier_rejected():
-    assert (
-        _free_string_grounded_in_user_input(
-            "terminal pino homologado anatel",
-            "Liste terminais pino.",
-        )
-        is False
-    )
-
-
-def test_prov_t03_literal_user_argument_accepted():
-    assert (
-        _free_string_grounded_in_user_input(
-            "terminal",
-            "Pesquise produtos pela descrição terminal.",
-        )
-        is True
-    )
-
-
-def test_prov_t04_semantic_paraphrase_accepted():
-    assert (
-        _free_string_grounded_in_user_input(
-            "TERM. PINO",
-            "Liste terminais pino cadastrados.",
-        )
-        is True
-    )
-
-
-def test_prov_t06_model_invented_identifier_rejected():
-    assert (
-        _free_string_grounded_in_user_input(
-            "invented_topic_xyz",
-            "Quero orientação sobre um tópico específico",
-        )
-        is False
-    )
-
-
-def test_prov_t01_haystack_inside_longer_proposal_rejected():
-    """Short user text contained in a longer invented proposal is not proof."""
-    assert (
-        _free_string_grounded_in_user_input(
-            "terminal pino industrial especial aprovado",
-            "pino",
-        )
-        is False
-    )
-
-
 # --- PROV orchestration under budget skip ---------------------------------
 
 
-def test_prov_t02_orchestration_rejects_ungrounded_qualifier():
+def test_q02b_paraphrase_without_stem_overlap_reaches_owner():
+    """Exploratory search text is a typed model proposal, not a stem match."""
+    clock, deadline = _tight_deadline()
+    provider = _search_provider()
+    orch = _orch(
+        [provider],
+        _search_proposals(
+            {"description": "terminais de produção", "page_size": 2}
+        ),
+        clock=clock,
+    )
+    attempt = orch.attempt(
+        "Quero consultar os equipamentos do chão de fábrica.",
+        turn_deadline=deadline,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert provider.calls
+    assert provider.calls[0][1].get("description") == "terminais de produção"
+    content = (attempt.content or "").lower()
+    assert "term. pino" in content
+    assert "chão de fábrica" not in content
+
+
+def test_prov_t02_exploratory_qualifier_is_not_rendered_as_fact():
+    """Extra search words go to the owner. The answer stays owner evidence."""
     clock, deadline = _tight_deadline()
     provider = _search_provider()
     orch = _orch(
         [provider],
         _search_proposals(
             {
-                "description": "terminal pino industrial especial aprovado",
+                "description": "terminal pino homologado anatel",
                 "page_size": 2,
             }
         ),
@@ -391,9 +350,53 @@ def test_prov_t02_orchestration_rejects_ungrounded_qualifier():
         "Mostre terminais pino.",
         turn_deadline=deadline,
     )
-    assert provider.calls == []
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert attempt.error_code == "turn_budget_exhausted"
+    assert provider.calls
+    assert (
+        provider.calls[0][1].get("description")
+        == "terminal pino homologado anatel"
+    )
+    content = (attempt.content or "").lower()
+    assert "term. pino" in content
+    assert "anatel" not in content
+    assert "homologado" not in content
+
+
+def test_q02b_invented_identifier_does_not_invoke_owner():
+    clock, deadline = _tight_deadline()
+    schema = {
+        "type": "object",
+        "properties": {
+            "ticket_id": {"type": "string"},
+            "page_size": {"type": "integer"},
+        },
+    }
+    provider = _search_provider()
+    provider._groups[0] = _group(
+        "openapi",
+        "delpi",
+        [
+            _cap(
+                "delpi",
+                "openapi",
+                "search_products",
+                SpecialistOperationClass.READ,
+                schema=schema,
+            )
+        ],
+    )
+    orch = _orch(
+        [provider],
+        _search_proposals({"ticket_id": "123456", "page_size": 2}),
+        clock=clock,
+    )
+    attempt = orch.attempt(
+        "Quero consultar os terminais utilizados na produção.",
+        turn_deadline=deadline,
+    )
+    assert all(
+        call[1].get("ticket_id") != "123456" for call in provider.calls
+    )
+    assert "123456" not in (attempt.content or "")
 
 
 def test_prov_t04_orchestration_allows_paraphrase_search():

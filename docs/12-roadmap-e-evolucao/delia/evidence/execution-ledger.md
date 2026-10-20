@@ -16136,3 +16136,33 @@ I04_ACCEPTED=NO
 MATERIAL_ACT=0_Q01_DOCUMENTATION_ONLY
 NEXT=Q02_B_IMPLEMENTATION_REPORT_FOR_COORDINATION
 ```
+
+
+## §6.325 — Q02-B arguments, index and provenance (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-B-ARGUMENTS-INDEX-PROVENANCE-REFACTOR-01`. **AUTHORITY:** §6.324 `Q02_B_AUTHORIZED=YES_BOUNDED_ENTRY`. **BASE ANTES DO DIFF:** `38c5118e914c4acbdfabaf73b698985215775685`, depois rebase em `origin/main` `e86a2a4de018aa8c77d9052feb5d0961cb86c743` (dois commits de controladoria, sem overlap em `delia-api` nem nestes documentos).
+
+Texto livre exploratório deixa de ser vetado por radical no budget-skip. Invocação vazia de string livre continua `SOURCE_UNAVAILABLE`. Identificador inventado (`ticket_id` ausente do usuário e da evidência do owner) não invoca o owner. Qualificador extra na proposta de busca pode ir ao owner; a resposta renderizada não o apresenta como fato. Índice continua por membership e contrato omit→index. Lista ambígua vincula só identificador provado por nova proposta de argumentos sobre a evidência do owner. `unique_structural_ticket_list_capability` intacto. Tetos 30 s e 12 s intactos.
+
+**RED.** No tree anterior ao fix, `test_q02b_paraphrase_without_stem_overlap_reaches_owner` terminou `SOURCE_UNAVAILABLE` (exit 1). Esse tree foi perdido antes do commit; o comportamento é o veto por radical que este pacote remove.
+
+**GREEN.** Suíte completa `delia-api` no tree pós-fix: 1665 passed, 0 failed. Inclui proveniência, resolução referencial, budget/index, Q02-A e o retarget do oráculo que tratava `topic` livre como identificador.
+
+**Residual.** Campo string que não é `id`/`*id` pode carregar token inventado até o owner. Sem contrato novo. `REAL_MODEL_EVALS=TEST_NOT_RUN` (deploy não autorizado; modelo candidato posterior `moonshotai/kimi-k3`). O executor não aceita o pacote.
+
+```text
+Q02_B_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_B_ACCEPTED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+Q01_ACCEPTED=YES_WITH_RESIDUAL
+I04_ACCEPTED=NO
+Q02_A_REWORK_REMAINING=0
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+FULL_DELIA_API_PYTEST=1665_PASSED
+MATERIAL_ACT=0
+NEXT=COORDINATION_INDEPENDENT_Q02_B_REVIEW
+```

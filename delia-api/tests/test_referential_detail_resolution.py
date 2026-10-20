@@ -20,7 +20,6 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _prior_listing_hint,
-    _user_list_ordinal,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -270,12 +269,19 @@ def _detail_outcome():
     )
 
 
-def test_user_list_ordinal_first():
-    assert _user_list_ordinal(
-        "Da primeira programação encontrada, mostre as telas."
-    ) == 0
-    assert _user_list_ordinal("the second item please") == 1
-    assert _user_list_ordinal("mostre qualquer um") is None
+def test_q02b_position_words_are_not_a_selector():
+    import app.application.capability_provision.orchestration as orch_mod
+
+    assert not hasattr(orch_mod, "_user_list_ordinal")
+
+
+def _proven_argument_followup(field: str, value: str) -> dict:
+    return {
+        ARGUMENTS_INSTRUCTION_ID: {
+            "arguments": {field: value},
+            "missing_inputs": [],
+        }
+    }
 
 
 def test_resolver_budget_allows_follow_up_headroom():
@@ -361,7 +367,7 @@ def test_selection_payload_embeds_prior_listing_hint():
 
 
 def test_referential_detail_ordinal_binds_proven_id():
-    """GREEN: detail capability + missing id → list resolver → ordinal."""
+    """Ambiguous owner list binds only a later proven identifier proposal."""
     provider = FakeProvider(
         "holdout",
         [_group("holdout", "ops", _surface_caps())],
@@ -371,33 +377,36 @@ def test_referential_detail_ordinal_binds_proven_id():
         },
     )
     model = FakeProposalModel(
-        {
-            GOAL_INSTRUCTION_ID: {
-                "goal_class": "read",
-                "prior_evidence_sufficient": False,
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": False,
+                },
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "get_entity_context",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": None,
+                    "missing_inputs": ["entity_id"],
+                },
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "list_entities",
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {
+                            "record_index": 0,
+                            "fields": ["screens", "blocks"],
+                        }
+                    ],
+                    "presentation": "answer",
+                },
             },
-            CAPABILITY_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "get_entity_context",
-            },
-            ARGUMENTS_INSTRUCTION_ID: {
-                "arguments": None,
-                "missing_inputs": ["entity_id"],
-            },
-            RESOLVER_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "list_entities",
-            },
-            SYNTHESIS_INSTRUCTION_ID: {
-                "items": [
-                    {
-                        "record_index": 0,
-                        "fields": ["screens", "blocks"],
-                    }
-                ],
-                "presentation": "answer",
-            },
-        }
+            _proven_argument_followup("entity_id", "ent-alpha-001"),
+        ]
     )
     orch = OperationalCapabilityOrchestrator(
         [provider],
@@ -580,30 +589,33 @@ def test_message_path_never_acts_on_detail_surface():
         },
     )
     model = FakeProposalModel(
-        {
-            GOAL_INSTRUCTION_ID: {
-                "goal_class": "read",
-                "prior_evidence_sufficient": False,
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": False,
+                },
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "get_entity_context",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": None,
+                    "missing_inputs": ["entity_id"],
+                },
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "list_entities",
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["screens"]}
+                    ],
+                    "presentation": "answer",
+                },
             },
-            CAPABILITY_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "get_entity_context",
-            },
-            ARGUMENTS_INSTRUCTION_ID: {
-                "arguments": None,
-                "missing_inputs": ["entity_id"],
-            },
-            RESOLVER_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "list_entities",
-            },
-            SYNTHESIS_INSTRUCTION_ID: {
-                "items": [
-                    {"record_index": 0, "fields": ["screens"]}
-                ],
-                "presentation": "answer",
-            },
-        }
+            _proven_argument_followup("entity_id", "ent-alpha-001"),
+        ]
     )
     orch = OperationalCapabilityOrchestrator(
         [provider],
@@ -672,30 +684,33 @@ def test_renamed_detail_capability_still_resolves():
         },
     )
     model = FakeProposalModel(
-        {
-            GOAL_INSTRUCTION_ID: {
-                "goal_class": "read",
-                "prior_evidence_sufficient": False,
+        [
+            {
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "prior_evidence_sufficient": False,
+                },
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "fetch_item_bundle",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {
+                    "arguments": None,
+                    "missing_inputs": ["item_id"],
+                },
+                RESOLVER_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "catalog_scan",
+                },
+                SYNTHESIS_INSTRUCTION_ID: {
+                    "items": [
+                        {"record_index": 0, "fields": ["parts"]}
+                    ],
+                    "presentation": "answer",
+                },
             },
-            CAPABILITY_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "fetch_item_bundle",
-            },
-            ARGUMENTS_INSTRUCTION_ID: {
-                "arguments": None,
-                "missing_inputs": ["item_id"],
-            },
-            RESOLVER_SELECTION_INSTRUCTION_ID: {
-                "applicable": True,
-                "remote_name": "catalog_scan",
-            },
-            SYNTHESIS_INSTRUCTION_ID: {
-                "items": [
-                    {"record_index": 0, "fields": ["parts"]}
-                ],
-                "presentation": "answer",
-            },
-        }
+            _proven_argument_followup("item_id", "item-1"),
+        ]
     )
     orch = OperationalCapabilityOrchestrator(
         [provider],

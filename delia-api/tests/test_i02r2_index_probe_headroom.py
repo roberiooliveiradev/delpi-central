@@ -452,7 +452,8 @@ def test_owner_declared_index_skips_model_probe_under_tight_budget():
     )
 
 
-def test_invented_identifier_not_used_after_budget_skip():
+def test_exploratory_free_string_is_forwarded_not_rendered_as_fact():
+    """Non-id free text is not a stem veto. The answer stays owner evidence."""
     clock = FakeClock()
     deadline = TurnDeadline.start(30.0, clock=clock)
     required = _required_optional_probe_headroom()
@@ -498,9 +499,8 @@ def test_invented_identifier_not_used_after_budget_skip():
     assert INDEX_PROBE_INSTRUCTION_ID not in {
         r.task_purpose_id for r in model.requests
     }
-    assert provider.calls == []
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-    assert attempt.error_code == "turn_budget_exhausted"
+    assert provider.calls
+    assert provider.calls[-1][1].get("topic") == "invented_topic_xyz"
     assert "invented_topic_xyz" not in (attempt.content or "")
 
 

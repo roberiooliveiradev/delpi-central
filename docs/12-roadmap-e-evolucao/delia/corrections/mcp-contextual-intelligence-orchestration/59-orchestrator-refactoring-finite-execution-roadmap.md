@@ -2,7 +2,7 @@
 
 **TRACK_ID:** `DELIA-C3-ORCHESTRATOR-SEMANTIC-REFACTOR-FINITE-ROADMAP-01`
 **DATA:** 2026-10-19
-**ESTADO VIGENTE:** `I04_FINITE_REFACTOR_CONTINUATION` (Product Master 2026-10-20; plano de seis pacotes preservado; `I04_ACCEPTED=NO`; Q01 autorizado como gate de entrada; Q02-B/C/Q03 condicionados ao gate anterior). **Estado anterior** `OPTION_B_Q02_A_EXCEPTION_AUTHORIZED_FOR_I04_ONLY` permanece histórico na seção 0.
+**ESTADO VIGENTE:** Q02-B executado e `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` (2026-10-20, §14; `Q02_B_ACCEPTED=NO`; `Q02_C_AUTHORIZED=NO`). A exceção `I04_FINITE_REFACTOR_CONTINUATION` permanece a autoridade de continuidade. **Estado anterior** da entrada Q02-B está na seção 13.
 **BASE_HEAD de planejamento:** `095f3f0bb22cf92518e0cf075a6fd1a0fc73cd92` (revalidar `origin/main`, `HEAD` e `git status` a cada execução; updates concorrentes não integram automaticamente o escopo).
 **CANÔNICO:** execução 16; standalone 50; ownership 17; patterns 49 §14.1; baseline 51; bootstrap 52; state 21; tests 20; traceability 25; product 24; MCP/A2A 60; `.cursor/rules/development-standards-index.mdc`, `delia-execution-protocol.mdc`, `plan-construction.mdc`; ledger atual.
 **EVIDÊNCIAS:** [56](./56-orchestration-audit-semantic-ownership-checkpoint.md) e [57](./57-orchestration-complete-second-pass-static-audit.md), 10.592 linhas/179 definições, 42 grupos de achados; [58](./58-adr-llm-semantic-decision-ownership.md) direção `APPROVED`; ledger §6.145 (`selection-only` congelado), §§6.299–6.300.
@@ -304,4 +304,26 @@ Q03_AUTHORIZED=NO
 I04_ACCEPTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=CURSOR_Q02_B_ARGUMENTS_INDEX_PROVENANCE
+```
+
+
+## 14. Q02-B arguments, index and provenance — evidence for review (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-B-ARGUMENTS-INDEX-PROVENANCE-REFACTOR-01`. **AUTHORITY:** §13 / ledger §6.324 (`Q02_B_AUTHORIZED=YES_BOUNDED_ENTRY`). **BASE:** `origin/main` revalidado na execução. Sem plano novo, sem Q02-C, sem aceite deste pacote e sem deploy.
+
+O veto lexical por radical em argumento de texto livre exploratório saiu do caminho de budget-skip. Uma proposta preenchida segue para o owner. Uma invocação vazia de string livre continua `SOURCE_UNAVAILABLE` / `turn_budget_exhausted`. Identificadores (`id` ou sufixo `id`) continuam em `_unproven_identifier_inputs`: ocorrência exata no texto do usuário, na evidência do owner, no bloco de workspace ou em literal de schema. `prior_turns` não é proveniência. Palavras de posição deixaram de ser seletor por regex; a lista ambígua só vincula uma segunda proposta de `_build_arguments` quando o identificador está provado na evidência do owner e `_resolved_values_proven` passa. Sem essa prova, o turno clarifica. `_eligible_self_index_probe` permanece estrutural. `unique_structural_ticket_list_capability` não foi reescrito.
+
+**Residual.** Um campo de string livre que o schema não marca como identificador (`description`, `code`, `topic`) pode levar um token inventado até o owner. A resposta renderizada permanece a evidência devolvida pelo owner. Não foi criado contrato novo de filtro autoritativo. Avaliação com modelo real = `TEST_NOT_RUN` porque o deploy de produção não está autorizado.
+
+```text
+Q02_B_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
+Q02_B_ACCEPTED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+NEXT=COORDINATION_INDEPENDENT_Q02_B_REVIEW
 ```

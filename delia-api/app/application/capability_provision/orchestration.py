@@ -50,7 +50,6 @@ import json
 import logging
 import re
 import time
-import unicodedata
 import uuid
 from typing import Any, Mapping, Sequence
 
@@ -874,79 +873,6 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
         ):
             return True
     return False
-
-
-def _fold_alnum_text(text: str) -> str:
-    """Lowercase ASCII-fold for provenance token comparison only."""
-    folded = unicodedata.normalize("NFKD", text or "")
-    folded = "".join(
-        char for char in folded if not unicodedata.combining(char)
-    )
-    return folded.casefold()
-
-
-def _alnum_tokens(text: str) -> frozenset[str]:
-    return frozenset(re.findall(r"[a-z0-9]{3,}", _fold_alnum_text(text)))
-
-
-def _token_covered_by_user_tokens(
-    token: str, user_tokens: frozenset[str]
-) -> bool:
-    """True when a proposal token is covered by user lexical material.
-
-    Coverage is exact match or shared leading morphology (e.g. term /
-    terminal / terminais). Never treats a single shared token as proof
-    that an entire multi-token proposal is user-grounded.
-    """
-    if token in user_tokens:
-        return True
-    for user_token in user_tokens:
-        if len(token) < 3 or len(user_token) < 3:
-            continue
-        shared = 0
-        for left, right in zip(token, user_token):
-            if left != right:
-                break
-            shared += 1
-        # Require a meaningful shared stem (min 3, prefer 4 when both
-        # sides are longer) so "term" covers "terminais" / "terminal".
-        need = 3 if min(len(token), len(user_token)) <= 4 else 4
-        if shared >= need:
-            return True
-    return False
-
-
-def _free_string_grounded_in_user_input(
-    value: str, input_text: str
-) -> bool:
-    """True when every material token of a free-string arg is user-covered.
-
-    Used when an optional index probe was budget-skipped. Exploratory
-    READ search may paraphrase (TERM. PINO ↔ terminais pino), but must
-    not smuggle unsupported business qualifiers via incidental token
-    overlap. Exact folded substring of the user message also passes.
-    Containing the short user message inside a longer invented proposal
-    does **not** pass. Never field-name or provider hardcode; not an
-    intent classifier; never treats model claims as FACT.
-    """
-    proposed = (value or "").strip()
-    haystack = (input_text or "").strip()
-    if not proposed or not haystack:
-        return False
-    proposed_fold = _fold_alnum_text(proposed)
-    haystack_fold = _fold_alnum_text(haystack)
-    if proposed_fold and proposed_fold in haystack_fold:
-        return True
-    proposed_tokens = _alnum_tokens(proposed)
-    if not proposed_tokens:
-        return False
-    user_tokens = _alnum_tokens(haystack)
-    if not user_tokens:
-        return False
-    return all(
-        _token_covered_by_user_tokens(token, user_tokens)
-        for token in proposed_tokens
-    )
 
 
 def _is_unconstrained_string(node: object) -> bool:
@@ -3127,27 +3053,6 @@ def _resolver_ambiguous(
     }
     identifiers.discard(None)
     return len(identifiers) != 1
-
-
-# Bounded ordinal cues in the user message — used only to disambiguate
-# an already-fetched same-owner entity list when the user names a
-# position. Never invents identifiers; never grants AuthZ.
-_USER_LIST_ORDINAL_PATTERNS: tuple[tuple[re.Pattern[str], int], ...] = (
-    (re.compile(r"\b(primeira|primeiro|first|1st|1[oºª])\b", re.I), 0),
-    (re.compile(r"\b(segunda|segundo|second|2nd|2[oºª])\b", re.I), 1),
-    (re.compile(r"\b(terceira|terceiro|third|3rd|3[oºª])\b", re.I), 2),
-)
-
-
-def _user_list_ordinal(input_text: str) -> int | None:
-    """Return a 0-based list ordinal when the user names one clearly."""
-    text = (input_text or "").strip()
-    if not text:
-        return None
-    for pattern, index in _USER_LIST_ORDINAL_PATTERNS:
-        if pattern.search(text):
-            return index
-    return None
 
 
 def _prior_listing_hint(
@@ -5601,66 +5506,39 @@ class OperationalCapabilityOrchestrator:
         ):
             # Optional model index probe skipped for turn headroom.
             # Empty free-string invoke would be an ungoverned index READ
-            # → SOURCE_UNAVAILABLE (never invent código/filtro clarify).
-            # Filled free-string args may proceed only when each value is
-            # grounded in the user message (search/filter text). Invented
-            # catalog identifiers with no user provenance stay blocked.
-            # Pagination-only material args (no free strings) are a
-            # legitimate list READ, not an identifier index.
+            # → SOURCE_UNAVAILABLE. A filled exploratory proposal proceeds
+            # as the typed model argument. Identifier provenance stays on
+            # _unproven_identifier_inputs, not on stem overlap.
+            # Pagination-only material args are a legitimate list READ.
             id_keys = _optional_unconstrained_string_keys(descriptor)
             if id_keys:
-                filled: list[tuple[str, str]] = []
+                filled_count = 0
                 if arguments is not None:
                     for key in id_keys:
                         raw = arguments.get(key)
                         if isinstance(raw, str) and raw.strip():
-                            filled.append((key, raw.strip()))
-                if not filled:
-                    if not arguments:
-                        _logger.info(
-                            "orchestration stage=arguments "
-                            "decision=skip_budget_identifier_unavailable "
-                            "fields=%d correlation_id=%s",
-                            len(id_keys),
-                            correlation,
-                        )
-                        return GovernedCapabilityAttempt(
-                            status=(
-                                GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-                            ),
-                            correlation_id=correlation,
-                            error_code="turn_budget_exhausted",
-                        )
-                else:
-                    ungrounded = [
-                        key
-                        for key, value in filled
-                        if not _free_string_grounded_in_user_input(
-                            value, input_text
-                        )
-                    ]
-                    if ungrounded:
-                        _logger.info(
-                            "orchestration stage=arguments "
-                            "decision=skip_budget_identifier_unavailable "
-                            "fields=%d ungrounded=%d correlation_id=%s",
-                            len(id_keys),
-                            len(ungrounded),
-                            correlation,
-                        )
-                        return GovernedCapabilityAttempt(
-                            status=(
-                                GovernedCapabilityStatus.SOURCE_UNAVAILABLE
-                            ),
-                            correlation_id=correlation,
-                            error_code="turn_budget_exhausted",
-                        )
+                            filled_count += 1
+                if filled_count == 0 and not arguments:
+                    _logger.info(
+                        "orchestration stage=arguments "
+                        "decision=skip_budget_identifier_unavailable "
+                        "fields=%d correlation_id=%s",
+                        len(id_keys),
+                        correlation,
+                    )
+                    return GovernedCapabilityAttempt(
+                        status=(
+                            GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                        ),
+                        correlation_id=correlation,
+                        error_code="turn_budget_exhausted",
+                    )
                 _logger.info(
                     "orchestration stage=arguments "
                     "decision=skip_budget_proceed_with_args "
                     "fields=%d filled=%d correlation_id=%s",
                     len(id_keys),
-                    len(filled),
+                    filled_count,
                     correlation,
                 )
         if arguments is not None and not self_index_ran:
@@ -6081,29 +5959,42 @@ class OperationalCapabilityOrchestrator:
         self._log_plan(plan, correlation, discovery_ran=discovery is not None)
         entities = _resolver_entities(outcome.structured)
         evidence = _bound_owner_evidence(outcome)
-        ordinal = _user_list_ordinal(input_text)
         if _resolver_ambiguous(entities, missing_inputs):
+            # Position words are not a selector. Reuse the arguments
+            # proposal against owner evidence; only a proven identifier
+            # binds. Ambiguity without that proof clarifies.
+            rebuilt, _still_missing = self._build_arguments(
+                input_text,
+                descriptor,
+                workspace_context,
+                owner_evidence=evidence,
+                foreign_evidence=foreign_evidence,
+                correlation=correlation,
+                prior_turns=prior_turns,
+                deadline=deadline,
+            )
             if (
-                ordinal is not None
-                and 0 <= ordinal < len(entities)
-            ):
-                chosen = entities[ordinal]
-                filled = _fill_missing_from_entity(
-                    descriptor, missing_inputs, chosen
+                rebuilt is not None
+                and not _unproven_identifier_inputs(
+                    rebuilt,
+                    descriptor,
+                    input_text,
+                    workspace_context,
+                    evidence,
                 )
-                if filled is not None and _resolved_values_proven(
-                    filled, missing_inputs, outcome.structured
-                ):
-                    _logger.info(
-                        "orchestration stage=resolver "
-                        "decision=ordinal_bound index=%d "
-                        "correlation_id=%s",
-                        ordinal,
-                        correlation,
-                    )
-                    return self._Resolution(
-                        arguments=filled, owner_evidence=evidence
-                    )
+                and _resolved_values_proven(
+                    rebuilt, missing_inputs, outcome.structured
+                )
+            ):
+                _logger.info(
+                    "orchestration stage=resolver "
+                    "decision=ambiguous_proven_selection "
+                    "correlation_id=%s",
+                    correlation,
+                )
+                return self._Resolution(
+                    arguments=rebuilt, owner_evidence=evidence
+                )
             _logger.info(
                 "orchestration stage=resolver decision=ambiguous "
                 "candidates=%d correlation_id=%s",
