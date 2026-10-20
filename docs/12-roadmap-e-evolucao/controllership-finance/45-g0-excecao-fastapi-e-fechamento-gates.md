@@ -341,3 +341,17 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 
 **Classificação atual:** decisões `TARGET / APPROVED`; contratos MFE/BFF `TARGET`; runtime MFE `NOT_IMPLEMENTED`; testes de implementação `TEST_NOT_RUN`. Se contrato real invalidar premissa, `EXECUTION_DRIFT` e STOP. Sem inventar evidência.
 
+### 14.1 GO expresso — IMP-MFE-HOME (2026-10-20)
+
+**Manifestação do responsável pelo projeto:** diante do G1 FINAL VERIFICATION com recomendação `READY_FOR_GO` e da solicitação expressa de autorização `"Autorizo a implementação IMP-MFE-HOME"`, o usuário respondeu **"autorizo"** em 2026-10-20. Esta declaração é autorização funcional **apenas** para o recorte IMP-MFE-HOME já aprovado em §14 (D1=A, D2=A, D3=A). Não atribuir novas identidades ou assinaturas independentes.
+
+**G1:** `READY_FOR_GO / EVIDENCE_REVIEW_ACCEPT_WITH_RESIDUAL` conforme Execution Report no HEAD `6cfb4ea7c3`; implementar requer revalidar HEAD/status e contratos críticos se a main avançar.
+
+**IMPLEMENTATION_AUTHORIZED = YES / IMP-MFE-HOME_ONLY.**
+
+**Dentro do GO:** MFE `plugins/controllership-finance` (manifest schema 1.0.0; shell/Module Federation; somente rota Home implementada; componentes `@delpi/plugin-ui/index`; busca, recentes, ajuda contextual e estados honestos), endpoint humano protegido `GET /viewer-context` na BFF, configuração mínima de Compose dev BFF+MFE e prod MFE, testes unitários/contratuais/structural/build/smoke locais. Capabilities derivadas do Core; D1 restringe stale validado ≤900s para read, service principals negados explicitamente, `access` distinto de `manage`. D3 favoritos deferred.
+
+**Fora do GO:** deploy/restart de produção, manifest registration em Core de produção ou grants reais, novas permissions, banco/migrations, favoritos persistentes, rotas futuras, P1–P6, ERP, mensagens/tarefas/indicadores simulados. Todos exigem gates específicos.
+
+**Condições de execução:** preservar worktree concorrente, conferir producers/consumers no HEAD, não transformar auth ausente em bypass; Help na mesma entrega; G2/G3/G4 com testes positivos/negativos/sibling e evidência de SHA. Qualquer divergência material = `EXECUTION_DRIFT`/STOP. Testes ainda `TEST_NOT_RUN` até execução.
+
