@@ -1,7 +1,7 @@
 # Handoff — evolução da integração REST de fornecedores Protheus (POST/PUT)
 
 **Registro:** 2026-10-19  
-**Atualização:** F3 2026-10-20 — UI de inclusão passa a cobrir todos os campos comprovados do POST (24 campos em 5 seções via spec registry no MFE); PUT permanece restrito à allowlist comprovada (`supplier_name`, `supplier_short_name`) e passa a enviar **somente campos alterados** (PUT parcial, sem read-modify-write). Verificação de persistência por GET posterior disponível na ficha ("Conferir gravação"). Feature gates de POST/PUT continuam avaliados antes da identidade Core. Live write continua bloqueado.  
+**Atualização:** F3/F3.1 2026-10-20 — registry compartilhado `SUPPLIER_FIELD_REGISTRY` no MFE passa a ser a fonte única de campos/seções para criação, consulta e edição (25 specs: 24 POST + `supplier_code` system-generated). Cada campo carrega capacidade POST, capacidade PUT (`editable` somente com evidência `put-contract`), origem do valor no GET (`section`/`top`/`identity`) e evidência contratual. A ficha em modo edição exibe todas as seções do formulário de inclusão; campos sem evidência PUT aparecem somente leitura. PUT envia **somente campos alterados** (parcial, sem read-modify-write) e a verificação "Conferir gravação" compara o GET posterior. Feature gates de POST/PUT continuam avaliados antes da identidade Core. Live write continua bloqueado.  
 **Base:** reancorar sempre em `origin/main`.
 
 > Documento de continuidade. Não autoriza live write em produção. Lacunas de contrato permanecem `TO_INVENTORY`.
