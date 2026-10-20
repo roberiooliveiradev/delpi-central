@@ -286,3 +286,22 @@ NEXT=COORDINATION_Q01_REVIEW
 **Rollback.** Este pacote é documental. Reverter o commit desfaz o registro. Não há migration nem mudança de runtime. O rework Q02-A não é revertido aqui. O rollback de Q02-B/Q02-C, quando existirem, é reverter o commit do pacote.
 
 **Código removido:** nenhum. Q02-B não inicia neste ciclo.
+
+
+## 13. Coordination independent review — Q01 accepted with residual (2026-10-20)
+
+**EVIDENCE BASE:** Q01 report on `374f5c2a21f9435483588b238e7090b73f1d46fa`; §§11–12 and document 60 §6; only documentation changed between `78f1ca51679f886cb48e87b15cc6b8df0cf9e0f4` and Q01 HEAD. Four Q01 outputs (consumer map, contract impact, test baseline list, rollback) recorded. No new external runtime consumer or contract change reported; full regression/live not run for documentation-only gate. **REVIEW = ACCEPT_WITH_RESIDUAL (Q01 only).** Residual: full test baseline is inventoried, not freshly executed; remains mandatory in Q02-B code-changing package. `recover_empty_selection` old symbol absent and Q02-C behavior not assessed here.
+
+**AUTHORIZED NEXT:** Product Master's §11 exception is now satisfied for entry into **Q02-B only**. Implement bounded arguments/index/provenance change per §3, ADR58, audits56–57, inventory60 with RED/GREEN, owner contract and strict 30s, preserved 12s conversational cap. Q02-B cannot self-accept or deploy; no Q02-C until independent coordination review of Q02-B. In case of new owner contract/provenance representation gap, STOP affected subscope → ARCHITECTURE_DECISION_REQUIRED. Preserve I04=NO, Q02-A rework=0, full safety/authorization boundaries.
+
+```text
+Q01_COORDINATION_REVIEW=ACCEPT_WITH_RESIDUAL
+Q01_ACCEPTED=YES
+Q02_B_AUTHORIZED=YES_BOUNDED_ENTRY
+Q02_B_EXECUTED=NO
+Q02_C_AUTHORIZED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=CURSOR_Q02_B_ARGUMENTS_INDEX_PROVENANCE
+```
