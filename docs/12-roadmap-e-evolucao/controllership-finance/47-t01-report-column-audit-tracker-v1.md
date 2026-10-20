@@ -311,3 +311,11 @@ O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; 
 4. Executar paridade exata por competência/empresa/filial e obter aceite da Controladoria; sem isso **`_F190C` não está replicado/homologado**.
 
 **Síntese:** `FK7_TABLE=PROVEN`; `FKx_TO_FK7_TO_TITLES=PASS_FOR_EXISTENCE`; `EXCEPTIONS=TO_CLASSIFY`; `_F190C_SOURCE=TO_INVENTORY`; `REPORT_PARITY=TEST_NOT_RUN`; `G4/G5/G6=PENDING`. Métricas do tracker **inalteradas** (2/60 coleta, 2/90 auditoria, 0/15 concluídos), porque o gate G4 também exige joins, escopo e semântica homologados.
+
+### Complemento L1.6 — Rastreabilidade FKA
+
+Consultas READ com EXISTS(FKA_IDORIG=FK2_IDFK2) encontraram **8.969/8.969** eventos FK2 em 2026; EXISTS(FKA_IDORIG=FK1_IDFK1) encontrou **5.578/5.578** eventos FK1. Também foi encontrado ao menos um par de IDs FKA_IDORIG=FK5_IDMOV em FK5.
+
+**Cautela:** a FKA contém FKA_TABORI e FKA_IDPROC. As comparações acima NÃO filtram a tabela de origem nem provam que os registros dizem respeito ao mesmo processo. Coincidência de ID != join de negócio validado. Não somar ou deduplicar valores por esse join. Exigem-se fonte da customização _F190C, regras de origem/processo e amostras do relatório antes de homologação.
+
+**Encerramento da rodada:** auditoria de chaves e existência em SQL realizada; R01/R02 G4 PENDING, G5 TEST_NOT_RUN, G6 PENDING. STOP para homologação por dependência de fonte ADVPL/owner TI e dos cinco arquivos originais/Controladoria. Sem implementação de API ou alteração de permissions.
