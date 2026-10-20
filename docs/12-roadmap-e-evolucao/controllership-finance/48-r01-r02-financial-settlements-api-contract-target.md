@@ -243,3 +243,18 @@ BFF: `controllership_finance_app/interface/http/routes/closing_routes.py`; `infr
 - D4 pendente: totais oficiais/semântica BA-ES-VL-CP exigem aceite financeiro.
 - FKA/FK5 fora do contrato; `partyTaxId`/`bankReference` não expostos.
 - Pré-existente no HEAD: `test_route_contract_registry_completeness` já falhava por opIds de outros módulos (supplies/protheus-rest/audit-5s/gpt) sem registro — não causado por este slice.
+
+
+## 13. D3 — Audiência compartilhada autorizada pelo acesso ao Portal (decisão do PO, 20/10/2026)
+
+**DECISÃO DE PRODUTO APROVADA:** O conjunto de baixas R01 (a pagar) e R02 (a receber) é compartilhado e read-only na versão inicial. Os usuários com concessão efetiva e explícita de `controllership-finance.access` no Core — atribuída administrativamente apenas às pessoas designadas para o Portal — podem visualizar todos os registros de baixas do conjunto compartilhado, **sem segunda lista de usuários, permission ou capability por relatório/filial**. `controllership-finance.manage` isoladamente não substitui `.access`. Não estender esta autorização a outros relatórios, produtos ou datasets.
+
+**Boundary de confiança:** A BFF deve confirmar principal humano e effective permission atual no Core; chamada BFF→api-delpi exige S2S individual Keycloak (client `controllership-finance-api`, scope `settlements.read`) e Bearer humano delegado. Apenas token de serviço, apenas Bearer humano direto à api-delpi, headers de caller autodeclarados ou JWT claims de permissions não autorizam os dados. A política do producer deve garantir que essa rota seja utilizável exclusivamente por esse BFF com delegação verificada; se não houver prova de autorização do conjunto na chamada, fail-closed. A decisão de audiência é **de produto**; implantação do resolver requer revisão de owner segurança/dados e resultados positivos e negativos antes de deploy.
+
+**Filial:** os campos físicos observados estão vazios e a base é única; `branchCode=null`, `branchResolution='unresolved'` no v1. Escopo aprovado corresponde ao dataset compartilhado, não à filial 01/02 nem a `branch=all`. Não criar filtro de filial fictício, não adicionar permission por filial.
+
+**Outros limites:** JSON read-only; D4 códigos crus BA/ES/VL/CP, `officialTotals=false`; não produzir valor oficial, não editar Protheus; sem Excel/PDF, sem paridade obrigatória `_F190C`. UX PT-BR e `@delpi/plugin-ui` primeiro; tela específica de R01/R02 dentro da Central de Fechamento, sem inventar menus e páginas duplicados.
+
+**Implementação planejada, NÃO executada por esta decisão documental:** substituir `UnresolvedSettlementScopeResolver` por contrato de escopo compartilhado somente se o producer puder provar caller S2S estrito + delegado e a BFF puder comprovar Core effective access (sem confiar em flags injetadas pelo navegador). Testar Core indisponível, access revogado, manage-only, ausência/erro de service JWT, client/scopes incorretos, tentativa de acesso direto, usuário sem auth, caminhos de resposta sem PII/segredos, tenant/caller forjado, reconciliação dos eventos e ausência de duplicações.
+
+**GATES:** `D3_PRODUCT_AUDIENCE=APPROVED`; `D3_DATASET=SHARED_R01_R02_READ_ONLY`; `D3_EXTRA_PORTAL_PERMISSION=NONE`; `D3_ENFORCEMENT=PLANNED`; `FINANCIAL_DATA_RELEASE=NO_GO` até validação técnica, smoke aprovado e autorização explícita de deploy. Somente mudança de contrato não prova que o resolver já está seguro ou funcional.
