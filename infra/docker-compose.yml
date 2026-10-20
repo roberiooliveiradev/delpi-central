@@ -1428,6 +1428,11 @@ services:
       # outro ambiente (ex.: PATH_AUTH@2) sobrescrevem as do ambiente produtivo.
       INTRANET_PARAMS_AMBIENTE: ${INTRANET_PARAMS_AMBIENTE:-1}
 
+      # Gates de escrita fornecedor Protheus — default OFF; ligar somente após
+      # homologação TOTVS + aceite PO (protheus-rest-supplier-write-handoff.md)
+      PROTHEUS_SUPPLIER_CREATE_ENABLED: ${PROTHEUS_SUPPLIER_CREATE_ENABLED:-false}
+      PROTHEUS_SUPPLIER_UPDATE_ENABLED: ${PROTHEUS_SUPPLIER_UPDATE_ENABLED:-false}
+
       CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
       APP_USAGE_APP_ID: api-delpi
