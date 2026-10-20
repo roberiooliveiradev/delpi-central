@@ -1,8 +1,13 @@
 """Normalize PUT supplier fields and build the upstream array body.
 
-Proven editable fields (REST contract example): supplier_name, supplier_short_name.
-Other POST fields stay out of the allowlist until the upstream owner confirms them.
-Omitted keys are not sent. Explicit null/empty is rejected (clear semantics TO_INVENTORY).
+PUT allowlist (PO decision, F3.3): every POST-cadastral field is editable
+EXCEPT the fiscal document (tax_id) and the identity fields
+(supplier_code/supplier_store). Upstream evidence for fields beyond
+supplier_name/supplier_short_name is still pending TOTVS homologation —
+the live-write gate PROTHEUS_SUPPLIER_UPDATE_ENABLED stays OFF until then.
+
+Omitted keys are not sent (partial PUT). Explicit null/empty is rejected —
+clear semantics remain TO_INVENTORY.
 """
 
 from __future__ import annotations
@@ -11,17 +16,36 @@ import re
 from typing import Any, Mapping
 
 from app.application.services.integrations.protheus_supplier_create_payload import (
+    SUPPLIER_FIELD_SPECS,
+    normalize_supplier_field_value,
     validate_codusr,
 )
 from app.domain.integrations.protheus_rest import SUPPLIER_ID_PATTERN, ProtheusRestError
 
+# Cadastral fields excluded from PUT: fiscal document (immutable here) and
+# the store, which is part of the supplier identity (code+store).
+_PUT_EXCLUDED = frozenset({"tax_id", "supplier_store"})
+
 _UPDATE_SPECS: dict[str, dict[str, Any]] = {
-    "supplier_name": {"max": 50},
-    "supplier_short_name": {"max": 20},
+    field: spec
+    for field, spec in SUPPLIER_FIELD_SPECS.items()
+    if field not in _PUT_EXCLUDED
 }
 
+# Fields that identify the supplier record or the ERP context — never writable.
+_IMMUTABLE_FIELDS = frozenset(
+    {
+        "tax_id",
+        "supplier_code",
+        "supplier_store",
+        "a2_cod",
+        "a2_loja",
+        "a2_filial",
+    }
+)
+
 _FORBIDDEN_IDENTITY = frozenset(
-    {"codusr", "user_id", "usr_id", "protheus_user_id", "supplier_id", "a2_cod", "a2_loja"}
+    {"codusr", "user_id", "usr_id", "protheus_user_id", "supplier_id"}
 )
 
 
@@ -54,14 +78,25 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
             recoverable=False,
         )
 
-    for key in raw:
-        if str(key).strip().lower() in _FORBIDDEN_IDENTITY:
-            raise ProtheusRestError(
-                "Identidade do fornecedor ou do usuário não pode ser alterada nesta rota.",
-                code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
-                status_code=422,
-                recoverable=False,
-            )
+    lowered_keys = {str(k).strip().lower(): k for k in raw}
+    forbidden = _FORBIDDEN_IDENTITY & lowered_keys.keys()
+    if forbidden:
+        raise ProtheusRestError(
+            "Identidade do fornecedor ou do usuário não pode ser alterada nesta rota.",
+            code="PROTHEUS_IDENTITY_CLIENT_FORBIDDEN",
+            status_code=422,
+            recoverable=False,
+        )
+    immutable = _IMMUTABLE_FIELDS & lowered_keys.keys()
+    if immutable:
+        raise ProtheusRestError(
+            "Campo protegido da identidade cadastral não é editável: "
+            + ", ".join(sorted(immutable))
+            + ".",
+            code="PROTHEUS_SUPPLIER_FIELD_IMMUTABLE",
+            status_code=422,
+            recoverable=False,
+        )
 
     unknown = [str(k) for k in raw.keys() if str(k) not in _UPDATE_SPECS]
     if unknown:
@@ -75,7 +110,7 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
         )
 
     out: dict[str, str] = {}
-    for field, spec in _UPDATE_SPECS.items():
+    for field in _UPDATE_SPECS:
         if field not in raw:
             continue
         value = raw[field]
@@ -86,23 +121,7 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
                 status_code=422,
                 recoverable=False,
             )
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            raise ProtheusRestError(
-                f"Campo {field} deve ser string.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        text = str(value).strip()
-        max_len = int(spec["max"])
-        if len(text) > max_len:
-            raise ProtheusRestError(
-                f"Campo {field} excede o tamanho máximo ({max_len}).",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        out[field] = text
+        out[field] = normalize_supplier_field_value(field, value)
 
     if not out:
         raise ProtheusRestError(

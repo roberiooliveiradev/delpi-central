@@ -32,18 +32,21 @@
 | `payment_method_code` | payment_method | `A2_FORMPAG` | C(2) | ≤2; preserva zeros | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `codusr` (backend) | — | `SYS_USR.USR_ID` (hipótese) | C(6) | 6 dígitos; **nunca** do cliente | required no upstream | contrato REST; equivalência USR_ID **TO_INVENTORY** |
 
-## PUT — campos editáveis (allowlist inicial)
+## PUT — campos editáveis (F3.3, decisão PO)
 
 | Campo REST | SA2 | Status PUT |
 |---|---|---|
-| `supplier_name` | `A2_NOME` | comprovado no exemplo contratual; C(50) |
-| `supplier_short_name` | `A2_NREDUZ` | comprovado no exemplo contratual; C(20) |
-| demais campos do POST | — | **não editáveis** até prova upstream (`PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE`) |
-| identidade `A2_COD`/`A2_LOJA`/`codusr` | — | proibidos na rota |
-| omissão | — | campo não entra no array upstream |
+| `supplier_name` | `A2_NOME` | editável — comprovado no exemplo contratual; C(50) |
+| `supplier_short_name` | `A2_NREDUZ` | editável — comprovado no exemplo contratual; C(20) |
+| `person_type` | `A2_TIPO` | editável — decisão PO; upstream **pendente** de homologação |
+| `address` … `payment_method_code` (19 campos restantes do POST) | conforme tabela acima | editável — decisão PO; upstream **pendente** de homologação |
+| `tax_id` | `A2_CGC` | **protegido** — documento fiscal nunca editável (`PROTHEUS_SUPPLIER_FIELD_IMMUTABLE`) |
+| `supplier_code`/`supplier_store` | `A2_COD`/`A2_LOJA` | **protegido** — identidade do cadastro |
+| `codusr`, `a2_filial`, demais sistema | — | proibidos na rota (`PROTHEUS_IDENTITY_CLIENT_FORBIDDEN`/imutable) |
+| omissão | — | campo não entra no array upstream (PUT parcial preserva) |
 | string vazia / null | — | rejeitado (`PROTHEUS_SUPPLIER_CLEAR_NOT_SUPPORTED`); limpeza explícita = TO_INVENTORY |
 
-Preservação dos campos omitidos no MATA020 permanece **TO_INVENTORY**. Sem read-modify-write.
+Preservação dos campos omitidos e a aceitação upstream dos campos liberados por decisão PO permanecem **TO_INVENTORY** até homologação TOTVS — o gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED` segue OFF. Sem read-modify-write.
 
 ## Campos proibidos no POST desta entrega
 

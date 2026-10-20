@@ -8,7 +8,8 @@ from typing import Any, Mapping
 from app.domain.integrations.protheus_rest import ProtheusRestError
 
 # Max lengths from SA2 SX3 (§44.3) for REST field names in the POST contract example.
-_FIELD_SPECS: dict[str, dict[str, Any]] = {
+# Shared canonical source — PUT validation reuses these specs per field.
+SUPPLIER_FIELD_SPECS: dict[str, dict[str, Any]] = {
     "supplier_store": {"max": 2, "digits": True, "required": True},
     "person_type": {"max": 1, "enum": frozenset({"F", "J", "X"})},
     "tax_id": {"max": 14, "digits": True},
@@ -35,7 +36,7 @@ _FIELD_SPECS: dict[str, dict[str, Any]] = {
     "payment_method_code": {"max": 2},
 }
 
-_ALLOWED_FIELDS = frozenset(_FIELD_SPECS)
+_ALLOWED_FIELDS = frozenset(SUPPLIER_FIELD_SPECS)
 _DIGITS_RE = re.compile(r"^\d*$")
 _CODUSR_RE = re.compile(r"^\d{6}$")
 
@@ -90,7 +91,7 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
         )
 
     out: dict[str, str] = {}
-    for field, spec in _FIELD_SPECS.items():
+    for field, spec in SUPPLIER_FIELD_SPECS.items():
         if field not in raw:
             if spec.get("required"):
                 raise ProtheusRestError(
@@ -110,65 +111,71 @@ def normalize_supplier_fields(raw: Mapping[str, Any] | None) -> dict[str, str]:
                     recoverable=False,
                 )
             continue
-        text = str(value).strip() if not isinstance(value, str) else value.strip()
-        # Preserve leading zeros — never cast numeric types back after stringify of ints.
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            raise ProtheusRestError(
-                f"Campo {field} deve ser string para preservar zeros à esquerda.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-
-        if spec.get("upper"):
-            text = text.upper()
-        if spec.get("digits") and text and not _DIGITS_RE.fullmatch(text):
-            raise ProtheusRestError(
-                f"Campo {field} deve conter apenas dígitos.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        allowed = spec.get("enum")
-        if allowed is not None and text not in allowed:
-            raise ProtheusRestError(
-                f"Campo {field} com valor inválido.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        max_len = int(spec["max"])
-        if len(text) > max_len:
-            raise ProtheusRestError(
-                f"Campo {field} excede o tamanho máximo ({max_len}).",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        if field == "supplier_store" and not re.fullmatch(r"^\d{2}$", text):
-            raise ProtheusRestError(
-                "supplier_store deve ter exatamente 2 dígitos.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        if spec.get("email") and text and "@" not in text:
-            raise ProtheusRestError(
-                "Campo email inválido.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        if spec.get("required") and not text:
-            raise ProtheusRestError(
-                f"Campo obrigatório ausente: {field}.",
-                code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
-                status_code=422,
-                recoverable=False,
-            )
-        out[field] = text
+        out[field] = normalize_supplier_field_value(field, value)
 
     return out
+
+
+def normalize_supplier_field_value(field: str, value: Any) -> str:
+    """Canonical per-field normalization shared by POST and PUT."""
+    spec = SUPPLIER_FIELD_SPECS[field]
+    # Preserve leading zeros — never cast numeric types back after stringify of ints.
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        raise ProtheusRestError(
+            f"Campo {field} deve ser string para preservar zeros à esquerda.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    text = str(value).strip()
+
+    if spec.get("upper"):
+        text = text.upper()
+    if spec.get("digits") and text and not _DIGITS_RE.fullmatch(text):
+        raise ProtheusRestError(
+            f"Campo {field} deve conter apenas dígitos.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    allowed = spec.get("enum")
+    if allowed is not None and text not in allowed:
+        raise ProtheusRestError(
+            f"Campo {field} com valor inválido.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    max_len = int(spec["max"])
+    if len(text) > max_len:
+        raise ProtheusRestError(
+            f"Campo {field} excede o tamanho máximo ({max_len}).",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    if field == "supplier_store" and not re.fullmatch(r"^\d{2}$", text):
+        raise ProtheusRestError(
+            "supplier_store deve ter exatamente 2 dígitos.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    if spec.get("email") and text and "@" not in text:
+        raise ProtheusRestError(
+            "Campo email inválido.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    if spec.get("required") and not text:
+        raise ProtheusRestError(
+            f"Campo obrigatório ausente: {field}.",
+            code="PROTHEUS_SUPPLIER_PAYLOAD_INVALID",
+            status_code=422,
+            recoverable=False,
+        )
+    return text
 
 
 def build_upstream_create_body(*, codusr: str, fornecedor: Mapping[str, str]) -> dict[str, Any]:

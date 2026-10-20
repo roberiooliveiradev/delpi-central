@@ -102,8 +102,10 @@ A fonte não descreve status/payload de **sucesso** POST, idempotência, regras 
 **Permissão:** `api-delpi.integrations.protheus.suppliers.update` (não herdada de read, create nem de `api-delpi.data`)  
 **Feature gate:** `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` (independente do POST). Gate fechado não consulta Core, parâmetros, OAuth nem executa PUT.  
 **Precedência:** id e payload → autenticação/permissão → feature gate → identidade Core → configuração/token → escrita.  
-**Request público:** objeto `fornecedor` com campos comprovados (`supplier_name`, `supplier_short_name`). O backend monta o array upstream e resolve `codusr` no Core somente com o gate aberto.  
-**Allowlist inicial:** somente os dois campos do exemplo contratual. Demais campos do POST permanecem não editáveis até prova upstream.  
+**Request público:** objeto `fornecedor` com os campos a alterar. O backend monta o array upstream e resolve `codusr` no Core somente com o gate aberto.  
+**Allowlist (F3.3 — decisão PO):** todos os campos cadastrais do POST, **exceto** `tax_id` (documento fiscal imutável nesta funcionalidade), `supplier_code` e `supplier_store` (identidade). `tax_id`/identidade são rejeitados com `PROTHEUS_SUPPLIER_FIELD_IMMUTABLE`; campos fora do contrato com `PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE`; `codusr` cliente com `PROTHEUS_IDENTITY_CLIENT_FORBIDDEN`.  
+**Ressalva de evidência:** o exemplo contratual upstream comprova apenas `supplier_name`/`supplier_short_name`. Os demais campos foram liberados por decisão funcional e seguem **pendentes de homologação TOTVS** — o gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` permanece até essa confirmação.  
+**Semântica:** PUT parcial — campos omitidos são preservados; string vazia/null é rejeitada (`PROTHEUS_SUPPLIER_CLEAR_NOT_SUPPORTED`); tipos numéricos são rejeitados para preservar zeros à esquerda.  
 **Resposta 2xx:** `update_acknowledged=true` e `persistence_proven=false` — HTTP de sucesso não comprova persistência.  
 **Live write:** não autorizado nesta entrega.
 
