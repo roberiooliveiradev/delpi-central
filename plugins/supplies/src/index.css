@@ -922,3 +922,103 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.dashboard-supplies-portal .sp-suppliers__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-suppliers__filters > * {
+  min-width: min(100%, 12rem);
+}
+
+.dashboard-supplies-portal .sp-suppliers__error,
+.dashboard-supplies-portal .sp-supplier-detail__error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__doc {
+  font-size: 0.85rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__identity {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__identity > div {
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__identity dt {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__identity dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__edit-grid,
+.dashboard-supplies-portal .sp-supplier-create__form {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 34rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-detail__edit-actions,
+.dashboard-supplies-portal .sp-supplier-create__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-diff {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-diff th,
+.dashboard-supplies-portal .sp-supplier-diff td {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--sp-border);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-supplies-portal .sp-supplier-diff th {
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .dashboard-supplies-portal .sp-suppliers__filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

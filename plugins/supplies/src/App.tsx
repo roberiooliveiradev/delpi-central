@@ -23,6 +23,9 @@ import { PurchaseOrderDetailPage } from "./features/purchase-orders/PurchaseOrde
 import { PurchaseOrdersPage } from "./features/purchase-orders/PurchaseOrdersPage";
 import { PurchaseRequestDetailPage } from "./features/purchase-requests/PurchaseRequestDetailPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { SupplierCreatePage } from "./features/suppliers/SupplierCreatePage";
+import { SupplierDetailPage } from "./features/suppliers/SupplierDetailPage";
+import { SuppliersPage } from "./features/suppliers/SuppliersPage";
 import { UserProfilePage } from "./features/users/UserProfilePage";
 
 export type AppProps = {
@@ -38,10 +41,6 @@ const PLACEHOLDER: Partial<
   my_tasks: {
     title: "Minhas tarefas",
     description: "A fila de acompanhamento será composta nas jornadas seguintes.",
-  },
-  suppliers: {
-    title: "Fornecedores",
-    description: "Composição 360 entra depois da fundação do shell.",
   },
   products: {
     title: "Produtos",
@@ -100,7 +99,8 @@ function AppRoutes({
     );
   }
 
-  const { view, userId, branch, orderNumber, requestNumber } = route;
+  const { view, userId, branch, orderNumber, requestNumber, supplierCode, supplierStore } =
+    route;
 
   if (view === "not_found") {
     return (
@@ -161,6 +161,18 @@ function AppRoutes({
         orderNumber={orderNumber || ""}
       />
     );
+  } else if (view === "suppliers") {
+    content = <SuppliersPage basePath={basePath} />;
+  } else if (view === "supplier_detail") {
+    content = (
+      <SupplierDetailPage
+        basePath={basePath}
+        code={supplierCode || ""}
+        store={supplierStore || ""}
+      />
+    );
+  } else if (view === "supplier_create") {
+    content = <SupplierCreatePage basePath={basePath} />;
   } else if (view === "deliveries") {
     content = <DeliveriesPage basePath={basePath} />;
   } else if (view === "inventory") {

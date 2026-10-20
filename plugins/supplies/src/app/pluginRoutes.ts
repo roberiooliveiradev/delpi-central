@@ -12,6 +12,8 @@ export type PluginView =
   | "purchase_order_detail"
   | "deliveries"
   | "suppliers"
+  | "supplier_detail"
+  | "supplier_create"
   | "products"
   | "inventory"
   | "safety_stock"
@@ -37,7 +39,10 @@ export type PluginNavigationTarget = Exclude<PluginView, "forbidden" | "not_foun
 /** Views navegáveis pelo shell/hub (perfil usa buildUserProfileHref). */
 export type PluginRoutableView = Exclude<
   PluginNavigationTarget,
-  "user_profile" | "purchase_order_detail" | "purchase_request_detail"
+  | "user_profile"
+  | "purchase_order_detail"
+  | "purchase_request_detail"
+  | "supplier_detail"
 >;
 
 export type ResolvedPluginRoute = {
@@ -48,6 +53,8 @@ export type ResolvedPluginRoute = {
   branch?: string;
   orderNumber?: string;
   requestNumber?: string;
+  supplierCode?: string;
+  supplierStore?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -71,6 +78,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "purchase-orders": "purchase_orders",
   deliveries: "deliveries",
   suppliers: "suppliers",
+  "suppliers/new": "supplier_create",
   products: "products",
   inventory: "inventory",
   "safety-stock": "safety_stock",
@@ -89,6 +97,7 @@ export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   purchase_orders: "purchase-orders",
   deliveries: "deliveries",
   suppliers: "suppliers",
+  supplier_create: "suppliers/new",
   products: "products",
   inventory: "inventory",
   safety_stock: "safety-stock",
@@ -143,6 +152,16 @@ export function resolvePluginRoute(
       orderNumber: decodeURIComponent(poMatch[2]),
     };
   }
+  const supplierMatch = /^suppliers\/(\d{1,6})\/(\d{1,2})$/.exec(relativePath);
+  if (supplierMatch?.[1] && supplierMatch[2]) {
+    return {
+      view: "supplier_detail",
+      pathname: path,
+      relativePath,
+      supplierCode: decodeURIComponent(supplierMatch[1]),
+      supplierStore: decodeURIComponent(supplierMatch[2]),
+    };
+  }
   const view = RELATIVE_TO_VIEW[relativePath];
   if (!view) {
     return { view: "not_found", pathname: path, relativePath };
@@ -181,6 +200,20 @@ export function buildPurchaseOrderDetailPath(
   return `${base}/purchase-orders/${encodeURIComponent(branch)}/${encodeURIComponent(orderNumber)}`;
 }
 
+export function buildSupplierDetailPath(
+  code: string,
+  store: string,
+  basePath?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  return `${base}/suppliers/${encodeURIComponent(code)}/${encodeURIComponent(store)}`;
+}
+
+export function buildSupplierCreatePath(basePath?: string): string {
+  const base = normalizeBasePath(basePath);
+  return `${base}/suppliers/new`;
+}
+
 export function buildPluginPath(
   view: PluginRoutableView,
   basePath?: string,
@@ -213,6 +246,8 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     case "purchase_order_detail":
     case "deliveries":
     case "suppliers":
+    case "supplier_detail":
+    case "supplier_create":
     case "products":
     case "inventory":
     case "safety_stock":

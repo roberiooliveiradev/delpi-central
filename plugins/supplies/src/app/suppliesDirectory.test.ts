@@ -23,7 +23,8 @@ describe("suppliesDirectory reserved paths", () => {
 
   it("builds person path and does not invent a live route (negative)", () => {
     expect(reservedPersonDetailPath("JOSI")).toBe("/apps/supplies/people/JOSI");
-    expect(resolvePluginRoute("/apps/supplies/suppliers/000123/01").view).toBe("not_found");
+    // Supplier detail went live in S3 — the reserved path now resolves.
+    expect(resolvePluginRoute("/apps/supplies/suppliers/000123/01").view).toBe("supplier_detail");
     expect(resolvePluginRoute("/apps/supplies/people/JOSI").view).toBe("not_found");
     expect(resolvePluginRoute("/apps/supplies/suppliers").view).toBe("suppliers");
   });

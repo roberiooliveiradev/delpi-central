@@ -46,6 +46,8 @@ import {
   createDashboardEntityAvatarLabel,
   createDashboardInlineNavLink,
   ClearFiltersButton,
+  ModalShell,
+  modalShellBemClasses,
   DataTable,
   DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   ExcelExportButton,
@@ -262,6 +264,19 @@ export function SuppliesDataTable<T>(props: DashboardDataTableProps<T>) {
   return createElement(DataTable<T>, {
     classNames: spDataTableClassNames,
     labels: spDataTableLabels,
+    ...props,
+  });
+}
+
+const spModalShellClassNames = modalShellBemClasses(UI_PREFIX);
+
+export function SuppliesModal(
+  props: Omit<ComponentProps<typeof ModalShell>, "classNames">,
+) {
+  return createElement(ModalShell, {
+    classNames: spModalShellClassNames,
+    portalScopeClassName: SP_PORTAL_SCOPE,
+    closeAriaLabel: "Fechar",
     ...props,
   });
 }

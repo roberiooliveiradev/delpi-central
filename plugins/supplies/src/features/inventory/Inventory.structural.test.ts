@@ -33,7 +33,6 @@ describe("Inventory feature (E10.S3)", () => {
     expect(app).not.toMatch(/inventory:\s*\{\s*title:\s*"Estoque"/);
     expect(app).toMatch(/safety_stock:\s*\{/);
     expect(app).toMatch(/products:\s*\{/);
-    expect(app).toMatch(/suppliers:\s*\{/);
   });
 
   it("cliente fala só com supplies-api inventory stock-balances", () => {

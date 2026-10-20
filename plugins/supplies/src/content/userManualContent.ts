@@ -141,7 +141,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Consultar fornecedor",
           where: "Fornecedores",
-          how: "Lista 360 reservada; hoje o avatar identifica o fornecedor nos pedidos",
+          how: "Busca por código, loja, razão social, fantasia ou documento; clique na linha para abrir a ficha cadastral",
         },
         {
           want: "Acompanhar pedidos em aberto",
@@ -224,7 +224,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que o avatar do fornecedor ou do solicitante não abre uma ficha?",
-          a: "A identificação visual já segue o padrão do Portal Comercial. As páginas de fornecedor e de pessoa estão reservadas e ainda não existem — o avatar não navega.",
+          a: "A página de pessoa continua reservada — o avatar não navega. Para fornecedor, abra a ficha pela lista Fornecedores (clique na linha).",
+        },
+        {
+          q: "Como altero o cadastro de um fornecedor?",
+          a: "Na ficha do fornecedor, Editar cadastro permite mudar razão social e nome fantasia — um ou ambos. Antes de gravar, revise o antes/depois; cancelar não persiste nada. O envio depende de homologação de escrita no ERP: se estiver bloqueado, o Portal avisa e nada é enviado; se a resposta demorar, recarregue a ficha antes de repetir para evitar duplicidade.",
         },
         {
           q: "Como abro e compartilho o detalhe de um pedido de compra?",

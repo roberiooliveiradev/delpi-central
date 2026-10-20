@@ -56,6 +56,34 @@ export const SP_HELP = {
   /** Alias estável para consumidores existentes. */
   homeVsOverview: HOME_HELP.vsOverview,
   homeAttention: HOME_HELP.attention,
+  suppliers:
+    "Cadastro central de fornecedores (SA2, empresa 01): busca por código, loja, razão social, fantasia ou documento. A ficha abre no modo consulta; edição cobre apenas razão social e nome fantasia. A URL guarda busca e filtros para compartilhar.",
+  suppliersSearch:
+    "Busca livre por código, loja, razão social, nome fantasia ou documento (CNPJ/CPF). A lista é paginada no servidor — resultados grandes não travam a tela.",
+  suppliersBlocked:
+    "Situação no cadastro do ERP: Ativo ou Bloqueado (MSBLQL). Fornecedor bloqueado não deve receber novos pedidos sem validação de Compras.",
+  suppliersState:
+    "Filtra pelo estado (UF) do endereço cadastrado no Protheus. A opção «Todas» lista fornecedores de qualquer UF.",
+  suppliersRefresh:
+    "Recarrega a lista mantendo busca e filtros atuais.",
+  suppliersCreate:
+    "Cadastro de novo fornecedor. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
+  suppliersCreateFields:
+    "Campos aceitos pelo contrato de cadastro. Obrigatoriedade e demais campos SA2 são definidos pelo ERP — o Portal só envia o que o contrato aprova.",
+  suppliersColSupplier:
+    "Fornecedor com identificador completo (código + loja, 8 dígitos). Clique na linha para abrir a ficha.",
+  suppliersColTaxId:
+    "CNPJ/CPF do fornecedor. Não é chave única — podem existir cadastros distintos com o mesmo documento. Dados de CPF chegam mascarados do backend (LGPD).",
+  suppliersColBlocked:
+    "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
+  suppliersEdit:
+    "Edição governada: somente razão social e nome fantasia podem ser alterados pelo Portal, um ou ambos por envio. Antes de gravar, uma revisão mostra o antes/depois; cancelar não persiste nada.",
+  suppliersEditName:
+    "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
+  suppliersEditShortName:
+    "Nome fantasia / nome reduzido (A2_NREDUZ), até 20 caracteres.",
+  suppliersIdentification:
+    "Identificação cadastral: código, loja, razão social, fantasia e tipo de pessoa. Código + loja compõem o identificador único do fornecedor.",
   overviewTemporal:
     "Cada card tem natureza temporal própria: intervalo (OTD, CPV, economia), snapshot (estoque, críticos) ou estado atual (SC pendentes). Início não substitui este painel.",
   overviewFiltersPeriod:

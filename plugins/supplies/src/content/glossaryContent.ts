@@ -64,4 +64,9 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
     term: "Filial 02",
     meaning: "Unidade Espírito Santo no escopo TOTVS do Portal.",
   },
+  {
+    term: "SA2",
+    meaning:
+      "Tabela de fornecedores do Protheus. O identificador é código + loja (8 dígitos); CNPJ/CPF não é chave única. O cadastro é compartilhado da empresa 01 — a filial da tela do Portal é filtro, não permissão sobre fornecedores.",
+  },
 ] as const;

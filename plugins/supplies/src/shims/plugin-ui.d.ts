@@ -1053,6 +1053,28 @@ declare module "@delpi/plugin-ui/index" {
     now?: Date;
     fallback?: string | null;
   }): string;
+
+  export type ModalShellClassNames = Record<string, string>;
+  export function modalShellBemClasses(prefix: string): ModalShellClassNames;
+  export function ModalShell(props: {
+    open: boolean;
+    title: string;
+    description?: string;
+    footer?: ReactNode;
+    headerActions?: ReactNode;
+    onClose: () => void;
+    children?: ReactNode;
+    classNames: ModalShellClassNames;
+    className?: string;
+    overlayClassName?: string;
+    closeAriaLabel?: string;
+    closeOnOverlayClick?: boolean;
+    initialFocusSelector?: string;
+    portalScopeClassName?: string;
+    portalTarget?: Element | null;
+    containedInPortalTarget?: boolean;
+    containedLayout?: "fill" | "dialog";
+  }): ReactNode;
 }
 
 declare module "@delpi/plugin-ui/styles";
