@@ -8,7 +8,12 @@ MESSAGE ≠ ACT. GLOBAL_TURN_BUDGET=30.
 from __future__ import annotations
 
 import inspect
+import json
+import os
 import re
+import time
+
+import pytest
 
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
@@ -1026,3 +1031,317 @@ def test_multi_field_schema_budget_skip_does_not_invent_ids():
         },
     )
     assert _single_free_text_argument_from_input("pedido 1", cap) is None
+
+
+_REAL_MODEL_ASK = (
+    "Leia o guia de metodologia publicado neste catálogo e traga a "
+    "orientação para analisar a causa raiz de um problema em um processo."
+)
+
+
+_REAL_MODEL_ENV_KEYS = (
+    "DELIA_LLM_PROVIDER",
+    "DELIA_LLM_MODEL",
+    "DELIA_LLM_BASE_URL",
+    "DELIA_LLM_API_KEY",
+    "DELIA_LLM_TIMEOUT_SECONDS",
+    "DELIA_LLM_MAX_OUTPUT_TOKENS",
+)
+# Captured at import, before the autouse fixture removes ambient LLM env.
+_REAL_MODEL_ENV_SNAPSHOT = {
+    key: os.environ.get(key) for key in _REAL_MODEL_ENV_KEYS
+}
+
+
+def _restore_real_model_env(monkeypatch) -> None:
+    for key, value in _REAL_MODEL_ENV_SNAPSHOT.items():
+        if value:
+            monkeypatch.setenv(key, value)
+
+
+def _real_model_configured() -> bool:
+    return bool(
+        os.getenv("DELIA_I04_REAL_MODEL") == "1"
+        and os.getenv("DELIA_LLM_PROVIDER") == "openai_compatible"
+        and os.getenv("DELIA_LLM_MODEL")
+        and os.getenv("DELIA_LLM_BASE_URL")
+        and os.getenv("DELIA_LLM_API_KEY")
+    )
+
+
+def _real_orchestrator(provider):
+    from app.infrastructure.model_invocation.openai_compatible_adapter import (
+        OpenAICompatibleModelInvocationAdapter,
+    )
+
+    adapter = OpenAICompatibleModelInvocationAdapter(
+        base_url=os.environ["DELIA_LLM_BASE_URL"],
+        api_key=os.environ["DELIA_LLM_API_KEY"],
+        model=os.environ["DELIA_LLM_MODEL"],
+        timeout_seconds=float(os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30"),
+        default_max_output_units=int(os.environ["DELIA_LLM_MAX_OUTPUT_TOKENS"])
+        if os.getenv("DELIA_LLM_MAX_OUTPUT_TOKENS")
+        else None,
+    )
+    class _CountingAdapter:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def invoke(self, request):
+            self.calls += 1
+            return adapter.invoke(request)
+
+        def __getattr__(self, name):
+            return getattr(adapter, name)
+
+    counter = _CountingAdapter()
+    orchestrator = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(counter),
+        model_ref=ModelRef(
+            model_id=os.environ["DELIA_LLM_MODEL"],
+            version="configured",
+            owner_ref="DELPI",
+            provider_ref="openai_compatible",
+        ),
+    )
+    return orchestrator, counter
+
+
+def _note_real_case(case_id: str, fields: dict) -> None:
+    path = os.environ.get("DELIA_I04_EVIDENCE_PATH")
+    if not path:
+        return
+    row = {"CASE_ID": case_id, "MODEL_ID": os.environ.get("DELIA_LLM_MODEL")}
+    row.update(fields)
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def _assert_real_guide_selection(case_id: str, remote_name: str) -> None:
+    provider = _methodology_surface(
+        "omega_http",
+        "owner_omega",
+        remote_name,
+        protocol=InteropProtocol.HTTP,
+    )
+    orchestrator, counter = _real_orchestrator(provider)
+    started = time.perf_counter()
+    attempt = orchestrator.attempt(_REAL_MODEL_ASK)
+    latency_ms = int((time.perf_counter() - started) * 1000)
+    _note_real_case(
+        case_id,
+        {
+            "CAPABILITY_EXPECTED": remote_name,
+            "MODEL_SELECTED_CAPABILITY": (
+                provider.calls[0][0] if provider.calls else None
+            ),
+            "SCHEMA_VALID": bool(provider.calls),
+            "FAKE_PROVIDER_INVOKED": bool(provider.calls),
+            "REAL_PROVIDER_INVOKED": False,
+            "MODEL_CALL_COUNT": counter.calls,
+            "LATENCY_MS": latency_ms,
+            "STATUS": str(attempt.status),
+            "CONTENT_CHARS": len(attempt.content or ""),
+        },
+    )
+    assert provider.calls, attempt.status
+    assert provider.calls[0][0] == remote_name
+    assert all(name != "irrelevant_catalog_probe" for name, _args in provider.calls)
+    content = (attempt.content or "").lower()
+    assert "causal" in content or "hypothesis" in content or "evidence" in content
+
+
+@pytest.mark.skipif(
+    not _real_model_configured(),
+    reason="real-model G1 is opt-in via DELIA_I04_REAL_MODEL=1",
+)
+def test_real_model_selects_original_methodology_name(monkeypatch):
+    _restore_real_model_env(monkeypatch)
+    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    _assert_real_guide_selection("G1-A", "get_methodology_guide")
+
+
+@pytest.mark.skipif(
+    not _real_model_configured(),
+    reason="real-model G1 is opt-in via DELIA_I04_REAL_MODEL=1",
+)
+def test_real_model_selects_renamed_methodology_sibling(monkeypatch):
+    _restore_real_model_env(monkeypatch)
+    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    _assert_real_guide_selection("G1-B", "opaque_method_v9")
+
+
+_LONG_GUIDE = {
+    "objective": "Definir o indicador sem inventar meta da empresa.",
+    "prerequisites": [
+        "What decision should this indicator change?",
+        "What is the formula, unit, direction, source and frequency?",
+    ],
+    "steps": ["Coletar a definicao", "Registrar a fonte"],
+    "criteria": "C" * 1500,
+    "limitations": "Guia somente leitura. Nao e fato da operacao.",
+}
+_K2_ASK = (
+    "A partir dessa orientacao, extraia somente as perguntas, "
+    "sem repetir o restante do guia."
+)
+
+
+def _long_guidance_surface():
+    remote = "get_methodology_guide"
+    guide = _cap(
+        "owner_omega",
+        "omega_http",
+        remote,
+        SpecialistOperationClass.READ,
+        desc="READ methodology guidance for root-cause analysis",
+    )
+    return FakeProvider(
+        "omega_http",
+        [_group("omega_http", "owner_omega", [guide])],
+        outcomes={
+            ("owner_omega", remote): _outcome(
+                "owner_omega",
+                remote,
+                _LONG_GUIDE,
+                protocol=InteropProtocol.HTTP,
+                text="method guide",
+            )
+        },
+        protocol=InteropProtocol.HTTP,
+    )
+
+
+@pytest.mark.skipif(
+    not _real_model_configured(),
+    reason="real-model K1/K2 is opt-in via DELIA_I04_REAL_MODEL=1",
+)
+def test_real_model_packs_guidance_then_extracts_prior_questions(monkeypatch):
+    """One conversation: packed guidance, then question extraction.
+
+    The owner is an in-process fake. Production MCPs are not called.
+    """
+    _restore_real_model_env(monkeypatch)
+    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    provider = _long_guidance_surface()
+    orchestrator, counter = _real_orchestrator(provider)
+    started = time.perf_counter()
+    first = orchestrator.attempt(_REAL_MODEL_ASK)
+    first_ms = int((time.perf_counter() - started) * 1000)
+    body = first.content or ""
+    _note_real_case(
+        "K1",
+        {
+            "OWNER": "in_process_fake",
+            "CAPABILITY": provider.calls[0][0] if provider.calls else None,
+            "MODEL_CALL_COUNT": counter.calls,
+            "LATENCY_MS": first_ms,
+            "CONTENT_CHARS": len(body),
+            "WITHIN_CAP": len(body) <= 2000,
+            "DESTRUCTIVE_SUFFIX": "resultado parcial — truncado" in body,
+            "OMISSION_DISCLOSED": "não exibidas" in body or "nao exibidas" in body,
+            "QUESTIONS_PRESENT": (
+                "What decision should this indicator change?" in body
+                and "formula, unit, direction" in body
+            ),
+            "LIMITATIONS": list(first.limitations),
+            "STATUS": str(first.status),
+            "REAL_PROVIDER_INVOKED": False,
+        },
+    )
+    assert provider.calls and provider.calls[0][0] == "get_methodology_guide"
+    assert len(body) <= 2000
+    assert "resultado parcial — truncado" not in body
+    assert "What decision should this indicator change?" in body
+    assert "formula, unit, direction" in body
+    calls_after_first = len(provider.calls)
+    prior = (
+        ConversationContextTurn(
+            kind=TurnKind.USER_INPUT,
+            content=_REAL_MODEL_ASK,
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+        ConversationContextTurn(
+            kind=TurnKind.DELIA_RESULT,
+            content=body,
+            epistemic_class=EpistemicClass.OBSERVATION,
+        ),
+    )
+    started = time.perf_counter()
+    second = orchestrator.attempt(_K2_ASK, prior_turns=prior)
+    second_ms = int((time.perf_counter() - started) * 1000)
+    follow = second.content or ""
+    _note_real_case(
+        "K2",
+        {
+            "OWNER": "in_process_fake",
+            "PRIOR_EVIDENCE_SOURCE": "published_delia_result",
+            "OWNER_REINVOKED": len(provider.calls) > calls_after_first,
+            "MODEL_CALL_COUNT": counter.calls,
+            "LATENCY_MS": second_ms,
+            "EXTRACTION_HAS_BOTH_QUESTIONS": (
+                "What decision should this indicator change?" in follow
+                and "formula, unit, direction" in follow
+            ),
+            "DOUBLE_DASH": "- -" in follow,
+            "ENDS_WITH_STEPS": follow.rstrip().endswith("steps:"),
+            "LIMITATIONS": list(second.limitations),
+            "STATUS": str(second.status),
+            "CONTENT_CHARS": len(follow),
+        },
+    )
+    assert len(provider.calls) == calls_after_first
+    assert "- -" not in follow
+    assert not follow.rstrip().endswith("steps:")
+    assert "What decision should this indicator change?" in follow
+    assert "formula, unit, direction" in follow
+
+
+def test_unapplicable_selection_does_not_invoke_provider():
+    provider = _methodology_surface(
+        "omega_http",
+        "owner_omega",
+        "opaque_method_v9",
+        protocol=InteropProtocol.HTTP,
+    )
+    model = FakeProposalModel(
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": False,
+                "remote_name": None,
+                "goal_class": "read",
+            }
+        }
+    )
+    _orch([provider], model).attempt(METHODOLOGY_ASK)
+    assert provider.calls == []
+
+
+def test_write_capability_is_not_invoked_as_a_read():
+    write = _cap(
+        "owner_omega",
+        "omega_http",
+        "save_method",
+        SpecialistOperationClass.ACT,
+        desc="Persist a methodology change",
+    )
+    provider = FakeProvider(
+        "omega_http",
+        [_group("omega_http", "owner_omega", [write])],
+        protocol=InteropProtocol.HTTP,
+    )
+    model = FakeProposalModel(
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "save_method",
+                "goal_class": "read",
+            }
+        }
+    )
+    attempt = _orch([provider], model).attempt(METHODOLOGY_ASK)
+    assert provider.calls == []
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS or (
+        "save_method" not in (attempt.content or "")
+    )

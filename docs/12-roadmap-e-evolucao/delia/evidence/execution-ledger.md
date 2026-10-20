@@ -16619,3 +16619,21 @@ I04_ACCEPTED=NO
 LEDGER_RESTORED_FROM=71e3e00cf2
 NEXT=AUTHORIZE_ISOLATED_REAL_MODEL_G1_OR_KEEP_TEST_NOT_RUN
 ```
+
+
+## §6.347 — K1/K2 presentation fix and isolated real-model G1 (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-TEO-GUIDANCE-GENERALIZATION-FULL-VALIDATION-01`. Extends `_deterministic_guidance_content`, `_prior_excerpt_records` and the list renderer in `OperationalCapabilityOrchestrator`. No new planner, no TÉO-specific parser, no budget change, no production catalog change, no deploy. Structured guidance records still do not cross the HTTP turn boundary (`kind` / `content` / `epistemic_class` only); no new context field was added. Continuity keeps using the published prose, now as whole sections and atomic list items. Relatório: [71](../corrections/mcp-contextual-intelligence-orchestration/71-i04-teo-guidance-generalization-full-validation.md).
+
+```text
+I04_EXECUTOR_STATUS=FUNCTIONAL_EVIDENCE_READY
+I04_ACCEPTED=NO_PENDING_COORDINATION
+C3_EXECUTED=NO
+Q01_Q03=CLOSED_WITH_RESIDUAL
+PRODUCTION_READINESS=NOT_PROVEN
+G1_REAL_MODEL=PASS_ISOLATED
+K1_K2_ISOLATED=PASS
+K3_K4_LIVE=NOT_RERUN_NO_DEPLOY
+CONTRACT_CHANGE_NOT_MADE=NO_STRUCTURED_TURN_FIELD
+NEXT=COORDINATION_I04_REVIEW
+```

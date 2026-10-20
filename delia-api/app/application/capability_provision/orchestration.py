@@ -2155,8 +2155,14 @@ def _render_synthesis(
                 has_more=has_more,
             )
         ]
-        for record, values in selections:
-            lines.append("- " + " — ".join(v for _, v in values))
+        for _record, values in selections:
+            rendered = " — ".join(value for _, value in values).strip()
+            # A prior excerpt may already be a list item. Do not nest
+            # a second marker in front of it.
+            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", rendered):
+                lines.append(rendered)
+            else:
+                lines.append(f"- {rendered}")
         return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS], "rendered"
     if len(selections) == 2 and mode == "answer":
         # Stage 05: two focused selections → grounded sentences plus
@@ -2234,6 +2240,55 @@ def _insufficiency_content() -> str:
     return _INSUFFICIENCY_CONTENT[:MAX_RENDER_CONTENT_CHARS]
 
 
+def _is_prior_list_item(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[-*]|\d+[.)])\s+\S", line))
+
+
+def _prior_paragraph_units(paragraph: str) -> list[str]:
+    """Split one prior paragraph into selectable units.
+
+    List markers stay atomic. A following heading is not part of the
+    previous item. Non-list runs still split on sentence boundaries.
+    """
+    lines = paragraph.splitlines() or [paragraph]
+    units: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+        if _is_prior_list_item(line):
+            base = len(line) - len(line.lstrip(" "))
+            chunk = [line.strip()]
+            index += 1
+            while index < len(lines):
+                nxt = lines[index]
+                if not nxt.strip() or _is_prior_list_item(nxt):
+                    break
+                indent = len(nxt) - len(nxt.lstrip(" "))
+                if indent <= base:
+                    break
+                chunk.append(nxt.strip())
+                index += 1
+            units.append("\n".join(chunk)[:MAX_DESCRIPTION_CHARS])
+            continue
+        run = [line.strip()]
+        index += 1
+        while index < len(lines):
+            nxt = lines[index]
+            if not nxt.strip() or _is_prior_list_item(nxt):
+                break
+            run.append(nxt.strip())
+            index += 1
+        pieces = _PRIOR_SENTENCE_SPLIT_RE.split(" ".join(run))
+        for piece in pieces:
+            cleaned = piece.strip()
+            if cleaned:
+                units.append(cleaned[:MAX_DESCRIPTION_CHARS])
+    return units
+
+
 def _prior_excerpt_records(
     content: str,
 ) -> tuple[Mapping[str, str], ...]:
@@ -2253,25 +2308,10 @@ def _prior_excerpt_records(
     ]
     units: list[str] = []
     for paragraph in paragraphs or [text]:
-        # Keep bullet/numbered lines as separate selectable units so
-        # follow-ups can extract prerequisite lists without replaying
-        # an entire prior guidance dump.
-        line_chunks = re.split(r"(?m)(?=^\s*(?:[-*]|\d+[.)])\s+)", paragraph)
-        for chunk in line_chunks:
-            chunk = chunk.strip()
-            if not chunk:
-                continue
-            # Bullet/numbered lines are atomic list units — do not
-            # sentence-split inside them (abbreviations like "TERM.
-            # PINO" would otherwise truncate the selectable excerpt).
-            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", chunk):
-                units.append(chunk[:MAX_DESCRIPTION_CHARS])
-                continue
-            pieces = _PRIOR_SENTENCE_SPLIT_RE.split(chunk)
-            for piece in pieces:
-                cleaned = piece.strip()
-                if cleaned:
-                    units.append(cleaned[:MAX_DESCRIPTION_CHARS])
+        # A list item is only its own line plus more-indented
+        # continuation. The next heading stays a separate unit so a
+        # follow-up cannot inherit a dangling section label.
+        units.extend(_prior_paragraph_units(paragraph))
     if not units:
         units = [text[:MAX_DESCRIPTION_CHARS]]
     return tuple(
@@ -2452,7 +2492,12 @@ def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
     for field_name, value in values:
         if _canonical_key(field_name) == "excerpt":
             # Presentation-only: do not expose the synthetic field name.
-            lines.append(f"- {value}")
+            # Keep a marker the excerpt already has; do not nest another.
+            text = value.strip()
+            if re.match(r"^(?:[-*]|\d+[.)])\s+\S", text):
+                lines.append(text)
+            else:
+                lines.append(f"- {text}")
             continue
         labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
         label = labeled[1].capitalize() if labeled else field_name
@@ -2934,6 +2979,84 @@ def _guidance_section_records(
     return tuple(records)
 
 
+def _omitted_sections_line(names: list[str], max_chars: int) -> str:
+    """Disclose omitted guidance section names without their bodies."""
+    if not names or max_chars < 24:
+        return ""
+    prefix = "Seções do guia não exibidas neste turno: "
+    shown: list[str] = []
+    for name in names:
+        trial = prefix + ", ".join(shown + [name])
+        if len(trial) <= max_chars:
+            shown.append(name)
+            continue
+        break
+    if not shown:
+        return "Há seções do guia não exibidas neste turno."[:max_chars]
+    text = prefix + ", ".join(shown)
+    hidden = len(names) - len(shown)
+    if hidden:
+        suffix = f" (+{hidden})"
+        if len(text) + len(suffix) <= max_chars:
+            text += suffix
+    return text
+
+
+def _pack_guidance_sections(
+    blocks: list[tuple[str, str]],
+    max_chars: int,
+) -> tuple[str, tuple[str, ...]]:
+    """Fit whole guidance sections into the existing render cap.
+
+    A section is not cut to make room for the next one. Names of
+    sections that do not fit are disclosed. One oversized section is
+    cut on a line boundary and still marked partial.
+    """
+    if not blocks or max_chars <= 0:
+        return "", ()
+    chosen: list[str] = []
+    for index, (_name, block) in enumerate(blocks):
+        rest = [name for name, _block in blocks[index + 1 :]]
+        already_len = len("\n\n".join(chosen))
+        separator = 2 if chosen else 0
+        room_for_disclosure = max_chars - (already_len + separator + len(block))
+        if room_for_disclosure < 0:
+            break
+        disclosure = (
+            _omitted_sections_line(rest, room_for_disclosure) if rest else ""
+        )
+        disc_len = (2 + len(disclosure)) if disclosure else 0
+        if already_len + separator + len(block) + disc_len <= max_chars:
+            chosen.append(block)
+            continue
+        break
+    if chosen:
+        omitted = tuple(name for name, _block in blocks[len(chosen) :])
+        body = "\n\n".join(chosen)
+        if omitted:
+            room = max_chars - len(body) - 2
+            line = _omitted_sections_line(list(omitted), room)
+            if line:
+                body = f"{body}\n\n{line}"
+        return body[:max_chars], omitted
+    name, block = blocks[0]
+    rest = [item for item, _block in blocks[1:]]
+    disclosure = _omitted_sections_line([name, *rest], max_chars)
+    marker = "\n…(resultado parcial — truncado)"
+    disc = f"\n\n{disclosure}" if disclosure else ""
+    room = max_chars - len(marker) - len(disc)
+    if room < 1:
+        room = max(1, max_chars - len(marker))
+        disc = ""
+    cut = block[:room]
+    if "\n" in cut:
+        cut = cut.rsplit("\n", 1)[0]
+    body = cut.rstrip() + marker + disc
+    if len(body) > max_chars:
+        body = body[:max_chars].rstrip()
+    return body, tuple(item for item, _block in blocks)
+
+
 def _deterministic_guidance_content(
     input_text: str,
     structured: object,
@@ -2967,25 +3090,21 @@ def _deterministic_guidance_content(
         ][:6]
     if not selected:
         return None
-    lines: list[str] = []
+    blocks: list[tuple[str, str]] = []
     for record in selected:
         section = record.get("section") or "section"
         excerpt = (record.get("excerpt") or "").strip()
         if not excerpt:
             continue
-        lines.append(f"{section}:")
-        lines.append(excerpt)
-        lines.append("")
-    body = "\n".join(lines).strip()
+        blocks.append((section, f"{section}:\n{excerpt}"))
+    if not blocks:
+        return None
+    body, omitted = _pack_guidance_sections(blocks, max_chars)
     if not body:
         return None
     limitations: list[str] = []
-    if owner_truncated:
+    if owner_truncated or omitted:
         limitations.append(LIMITATION_RESULT_TRUNCATED)
-    if len(body) > max_chars:
-        body = body[:max_chars].rstrip() + "\n…(resultado parcial — truncado)"
-        if LIMITATION_RESULT_TRUNCATED not in limitations:
-            limitations.append(LIMITATION_RESULT_TRUNCATED)
     return body, tuple(limitations)
 
 

@@ -135,6 +135,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 - **Generalização**: renomeação de tool/owner e provider não MCP, prompt injection e histórico forjado, id não comprovado, autorização stale, limites de 30s, 0 ACT material sem comando/gates.
 - Resultado `PASS` exige evidência real onde pertinente + scripts/holdout + task outcome; teste scripted não prova comportamento do modelo. Exceções `INCONCLUSIVE`, `TEST_NOT_RUN` ou `STALE_EVIDENCE` explícitas.
 
+**2026-10-20 — evidência de correção, sem aceite:** o relatório [71](./71-i04-teo-guidance-generalization-full-validation.md) registra a projeção por seção, a lista de continuidade e o sibling renomeado com `kimi-k3` em provider falso. `I04_ACCEPTED` permanece `NO`. Produção não foi atualizada.
+
 ## 5. Limites e próximos passos
 
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.

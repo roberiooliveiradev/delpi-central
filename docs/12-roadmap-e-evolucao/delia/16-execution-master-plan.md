@@ -5,7 +5,25 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (diagnóstico G1 e K1/K2):** o harness de renomeação existente usa modelo falso que já recebe o nome novo. Não há caminho com `kimi-k3` e catálogo isolado sem decisão posterior. O corte de K1 é a projeção determinística em 2000 caracteres. K2 parte desse texto já cortado. I04 continua não aceito. Documento 70. Ledger §6.346.
+**Decisão vigente de execução — 2026-10-20 (correção K1/K2 e G1 isolado):** a projeção de guia passa a caber seções inteiras no teto de 2000 caracteres e a nomear o que ficou de fora. A continuidade separa itens de lista e não duplica o marcador. O teste de renomeação ganhou uma execução opt-in com `moonshotai/kimi-k3` e provider falso. I04 continua não aceito. Documento 71. Ledger §6.347.
+
+```text
+I04_EXECUTOR_STATUS=FUNCTIONAL_EVIDENCE_READY
+I04_ACCEPTED=NO_PENDING_COORDINATION
+C3_EXECUTED=NO
+Q01_Q03=CLOSED_WITH_RESIDUAL
+G1_REAL_MODEL=PASS_ISOLATED
+K1_K2_ISOLATED_REAL_MODEL=PASS
+K3_K4_LIVE=NOT_RERUN_NO_DEPLOY
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+PRODUCTION_READINESS=NOT_PROVEN
+GLOBAL_TURN_BUDGET_SECONDS=30
+POST_ORCHESTRATION_FALLBACK_CAP_SECONDS=12
+MAX_RENDER_CONTENT_CHARS=2000
+NEXT=COORDINATION_I04_REVIEW
+```
+
+**Decisão anterior — 2026-10-20 (diagnóstico G1 e K1/K2, SUPERSEDED como cerca vigente pela correção bounded):** o harness de renomeação existente usa modelo falso que já recebe o nome novo. Não há caminho com `kimi-k3` e catálogo isolado sem decisão posterior. O corte de K1 é a projeção determinística em 2000 caracteres. K2 parte desse texto já cortado. I04 continua não aceito. Documento 70. Ledger §6.346.
 
 ```text
 I04_ACCEPTED=NO
