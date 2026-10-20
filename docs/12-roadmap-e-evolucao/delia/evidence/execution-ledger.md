@@ -16195,3 +16195,18 @@ RUNTIME_DIFF=NONE
 MATERIAL_ACT=0
 NEXT=COORDINATION_Q02_C_ENTRY_GATE
 ```
+
+
+## §6.327 — Coordination Q02-C entry decision (2026-10-20)
+
+**AUTHORITY:** Product Master continuation exception recorded in 16 and roadmap 59 §11; condition Q02-B independent review satisfied by recorded `ACCEPT_WITH_RESIDUAL` (roadmap §15, ledger §6.326). **ACTION:** authorize **only bounded Q02-C implementation** per roadmap §3, ADR58 and source audits 56/57/consumer map60. No new inventory, planner, provider-specific branching, domain validators or free model-authored factual enterprise prose. Q02-B real-model evaluation still `TEST_NOT_RUN`; acceptance for technical closure is not business outcome proof. Require RED/GREEN, full delia-api suite, security negative and metamorphic tests; live tests only when operationally authorized, otherwise `TEST_NOT_RUN`. Preserve identifier provenance, selection-only, global 30s, conversational 12s, Q02-A closed, I04 unaccepted. Stop if a new contract/frozen decision must change. Do not automatically release Q03 or production deploy.
+
+```text
+Q02_C_ENTRY=AUTHORIZED_BOUNDED
+Q02_C_EXECUTED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=CURSOR_Q02_C_IMPLEMENTATION_REPORT
+```
