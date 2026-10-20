@@ -6,6 +6,13 @@ export type PresentationPresencePeer = {
   clientId: string;
   displayName: string;
   role: PresentationPresenceRole;
+  /** userId estável do usuário (derivado do JWT no servidor). */
+  userId?: string | null;
+  /**
+   * false = conectado porém sem atividade de edição (aba oculta ou idle).
+   * Sessões inativas permanecem na sala mas não contam como «editando».
+   */
+  active?: boolean;
 };
 
 export type PresentationSlideDraftEvent = {
@@ -14,6 +21,8 @@ export type PresentationSlideDraftEvent = {
   slideId: string;
   clientId: string;
   nativeConfig: Record<string, unknown>;
+  /** Revisão da playlist em que o draft foi derivado (OCC efêmero). */
+  baseRevision?: number;
 };
 
 export type PresentationSelectionUpdateEvent = {
@@ -75,6 +84,8 @@ export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
   revision?: string;
+  /** Revisão-base de um evento slide_draft (OCC efêmero). */
+  baseRevision?: number;
   playlistId?: string;
   slideId?: string;
   clientId?: string;
@@ -114,6 +125,11 @@ type Options = {
   reconnectMs?: number;
   pingMs?: number;
   updateDebounceMs?: number;
+  /**
+   * Janela de atividade para presence `active` (default: max(2×pingMs, 120s)).
+   * Aba oculta (visibilityState === "hidden") reporta inativa imediatamente.
+   */
+  presenceActivityWindowMs?: number;
 };
 
 function parseNormPoint(value: unknown): { x: number; y: number } | null {
@@ -149,6 +165,10 @@ export function parsePresentationRealtimeEvent(
       slideId,
       clientId,
       nativeConfig: nativeConfig as Record<string, unknown>,
+      baseRevision:
+        typeof payload.baseRevision === "number" && Number.isFinite(payload.baseRevision)
+          ? payload.baseRevision
+          : undefined,
     };
   }
   if (payload.type === "selection_update") {
@@ -330,6 +350,7 @@ export function usePresentationRealtime({
   reconnectMs = 5000,
   pingMs = 30000,
   updateDebounceMs = 200,
+  presenceActivityWindowMs,
 }: Options) {
   const handlerRef = useRef(onPresentationUpdated);
   handlerRef.current = onPresentationUpdated;
@@ -369,6 +390,42 @@ export function usePresentationRealtime({
     let pingTimer: number | null = null;
     let pathGuardTimer: number | null = null;
     let closedByUser = false;
+    let lastActivityAt = Date.now();
+    let lastReportedActive = true;
+    const activityWindowMs = presenceActivityWindowMs ?? Math.max(pingMs * 2, 120000);
+
+    function presenceActiveNow(): boolean {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return false;
+      }
+      return Date.now() - lastActivityAt < activityWindowMs;
+    }
+
+    function sendPresencePing() {
+      if (!presence || ws?.readyState !== WebSocket.OPEN) return;
+      lastReportedActive = presenceActiveNow();
+      ws.send(
+        JSON.stringify({
+          type: "presence_ping",
+          clientId: presence.clientId,
+          active: lastReportedActive,
+        }),
+      );
+    }
+
+    function onUserActivity() {
+      lastActivityAt = Date.now();
+      // Reativação instantânea: não espera o tick do ping para voltar a «editando».
+      if (presence && !lastReportedActive && presenceActiveNow()) {
+        sendPresencePing();
+      }
+    }
+
+    function onVisibilityChange() {
+      lastActivityAt = Date.now();
+      // Transição hidden/visible propagada na hora — semântica «editando» fiel.
+      sendPresencePing();
+    }
 
     function flushPresentationUpdated() {
       updateTimerRef.current = null;
@@ -403,16 +460,23 @@ export function usePresentationRealtime({
         if (sendRefStable) sendRefStable.current = send;
         if (externalSendRefStable) externalSendRefStable.current = send;
         if (presence) {
-          ws?.send(JSON.stringify({ type: "presence_join", ...presence }));
+          lastReportedActive = presenceActiveNow();
+          ws?.send(
+            JSON.stringify({
+              type: "presence_join",
+              ...presence,
+              active: lastReportedActive,
+            }),
+          );
         }
         if (pingTimer != null) window.clearInterval(pingTimer);
         pingTimer = window.setInterval(() => {
           if (ws?.readyState !== WebSocket.OPEN) return;
-          ws.send(
-            presence
-              ? JSON.stringify({ type: "presence_ping", clientId: presence.clientId })
-              : "ping",
-          );
+          if (presence) {
+            sendPresencePing();
+          } else {
+            ws.send("ping");
+          }
         }, pingMs);
       };
       ws.onmessage = (event) => {
@@ -543,6 +607,9 @@ export function usePresentationRealtime({
     window.addEventListener("pageshow", onPageShow);
     if (presence) {
       window.addEventListener("popstate", guardPortalPath);
+      window.addEventListener("pointerdown", onUserActivity, { passive: true });
+      window.addEventListener("keydown", onUserActivity);
+      document.addEventListener("visibilitychange", onVisibilityChange);
       pathGuardTimer = window.setInterval(guardPortalPath, 1000);
     }
 
@@ -550,6 +617,9 @@ export function usePresentationRealtime({
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("popstate", guardPortalPath);
+      window.removeEventListener("pointerdown", onUserActivity);
+      window.removeEventListener("keydown", onUserActivity);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       if (updateTimerRef.current != null) {
         window.clearTimeout(updateTimerRef.current);
         updateTimerRef.current = null;
@@ -563,6 +633,7 @@ export function usePresentationRealtime({
     reconnectMs,
     pingMs,
     updateDebounceMs,
+    presenceActivityWindowMs,
     sendRefStable,
     externalSendRefStable,
     presence?.clientId,

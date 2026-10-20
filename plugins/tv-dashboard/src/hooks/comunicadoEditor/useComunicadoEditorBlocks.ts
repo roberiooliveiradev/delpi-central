@@ -139,7 +139,9 @@ import {
   commitCreateBlock,
   commitDuplicateBlocks,
   commitPatchDataModel,
+  type MutationCommitMeta,
 } from "../../utils/presentationMutationClient";
+import type { WriteGuard } from "../../api/tvDashboardApi";
 import { buildFieldLabelsMergePatch } from "../../utils/dataModelPatchPlan";
 import { tvDashboardNotice } from "../../utils/tvDashboardNotice";
 import {
@@ -207,6 +209,12 @@ type Options = {
   chooseDataSourceDuplicatePolicy?: () => Promise<DataSourceDuplicatePolicy | null>;
   /** Largura/altura do palco (design) — órbita de rotação em grupo. */
   getSlideAspectRatio?: () => number;
+  /** OCC guard resolved per commit — slide base revision + clientId. */
+  resolveWriteGuard?: () => WriteGuard | null | undefined;
+  /** Revision metadata emitted after each committed mutation. */
+  onWriteCommitted?: (meta: MutationCommitMeta) => void;
+  /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
+  onWriteError?: (error: unknown) => void;
 };
 
 /**
@@ -255,11 +263,19 @@ export function useComunicadoEditorBlocks({
   canvasRef,
   canvasWrapRef,
   getSlideAspectRatio,
+  resolveWriteGuard,
+  onWriteCommitted,
+  onWriteError,
 }: Options) {
   const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio ?? (() => 1));
   getSlideAspectRatioRef.current = getSlideAspectRatio ?? (() => 1);
   const mutationGateRef = useRef(createMutationGenerationGate());
+  const commitWriteMeta = () => ({
+    writeGuard: resolveWriteGuard?.() ?? undefined,
+    onCommitted: onWriteCommitted,
+    onError: onWriteError,
+  });
 
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
@@ -282,6 +298,7 @@ export function useComunicadoEditorBlocks({
     (blocks: ComunicadoBlock[]) => {
       if (!playlistId || !slideId || blocks.length === 0) return;
       void ackUpsertBlocksWithGeneration({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         blocks: blocks as unknown as Record<string, unknown>[],
@@ -343,6 +360,7 @@ export function useComunicadoEditorBlocks({
 
       const blockId = newBlockId();
       void commitCreateBlock({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         type,
@@ -368,7 +386,8 @@ export function useComunicadoEditorBlocks({
           } as ComunicadoBlock);
           // Persist viewport placement as geometry authority ack.
           void ackUpsertBlocksWithGeneration({
-            playlistId,
+        ...commitWriteMeta(),
+        playlistId,
             slideId,
             blocks: [placed as unknown as Record<string, unknown>],
             gate: mutationGateRef.current,
@@ -920,7 +939,8 @@ export function useComunicadoEditorBlocks({
               );
             const token = mutationGateRef.current.next();
             void commitPatchDataModel({
-              playlistId,
+        ...commitWriteMeta(),
+        playlistId,
               slideId,
               modelId: modelPatch.id,
               modelPatch: { fieldLabels: fieldLabelsPatch },
@@ -1160,7 +1180,8 @@ export function useComunicadoEditorBlocks({
               }));
 
         void commitOpsAndApplyAck({
-          playlistId,
+        ...commitWriteMeta(),
+        playlistId,
           slideId,
           ops,
           gate: mutationGateRef.current,
@@ -1245,6 +1266,7 @@ export function useComunicadoEditorBlocks({
         return;
       }
       void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         ops: targets.map((block) => ({
@@ -1300,7 +1322,8 @@ export function useComunicadoEditorBlocks({
       try {
         const token = mutationGateRef.current.next();
         const canonical = await commitDuplicateBlocks({
-          playlistId,
+        ...commitWriteMeta(),
+        playlistId,
           slideId,
           blockIds: sourceIds,
         });
@@ -1351,6 +1374,7 @@ export function useComunicadoEditorBlocks({
     if (playlistId && slideId) {
       const pasted = blocks.filter((b) => pastedIds.includes(b.id));
       void ackUpsertBlocksWithGeneration({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         blocks: pasted as unknown as Record<string, unknown>[],
@@ -1549,6 +1573,7 @@ export function useComunicadoEditorBlocks({
         return;
       }
       void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         ops: [{ op: "reorder_block_z", blockIds: ids, command }],
@@ -1701,6 +1726,7 @@ export function useComunicadoEditorBlocks({
       const ops = buildSlideThemeOps({ before, next });
       if (ops.length === 0) return;
       void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         ops,
@@ -1729,6 +1755,7 @@ export function useComunicadoEditorBlocks({
         return;
       }
       void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         ops: [{ op: "align_blocks", blockIds: ids, command }],
@@ -1903,6 +1930,7 @@ export function useComunicadoEditorBlocks({
         return;
       }
       void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
         playlistId,
         slideId,
         ops: [{ op: "patch_native_config", patch: { background } }],

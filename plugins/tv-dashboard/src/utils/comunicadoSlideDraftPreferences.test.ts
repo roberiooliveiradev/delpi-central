@@ -7,6 +7,8 @@ import {
   clearComunicadoSlideDraftIfCoveredBySave,
   comunicadoDraftIncludesPartKeys,
   hasLocalComunicadoEdits,
+  isComunicadoDraftApplicable,
+  markComunicadoSlideDraftConflicted,
   mergePlaylistSlidesWithComunicadoDrafts,
   normalizeComunicadoSlideDraft,
   readComunicadoSlideDraft,
@@ -74,9 +76,12 @@ describe("comunicadoSlideDraftPreferences", () => {
   });
 
   it("mergePlaylistSlidesWithComunicadoDrafts só em custom_message", () => {
-    writeComunicadoSlideDraft("pl-1", "custom-1", { blocks: [{ id: "draft" }] }, 1, 1);
+    writeComunicadoSlideDraft("pl-1", "custom-1", { blocks: [{ id: "draft" }] }, 1, 1, {
+      baseRevision: 5,
+    });
     const merged = mergePlaylistSlidesWithComunicadoDrafts("pl-1", {
       id: "pl-1",
+      revision: 5,
       slides: [
         {
           id: "custom-1",
@@ -95,11 +100,14 @@ describe("comunicadoSlideDraftPreferences", () => {
   });
 
   it("applyServerPlaylistPreservingLocalEdits: draft + pending + live", () => {
-    writeComunicadoSlideDraft("pl-1", "s-1", { blocks: [{ id: "draft" }] }, 1, 1);
+    writeComunicadoSlideDraft("pl-1", "s-1", { blocks: [{ id: "draft" }] }, 1, 1, {
+      baseRevision: 5,
+    });
     const merged = applyServerPlaylistPreservingLocalEdits({
       playlistId: "pl-1",
       remote: {
         id: "pl-1",
+        revision: 5,
         slides: [
           {
             id: "s-1",
@@ -113,6 +121,82 @@ describe("comunicadoSlideDraftPreferences", () => {
     });
     // Pending tem prioridade sobre draft; live só se não houver pending.
     expect(merged.slides?.[0]?.nativeConfig).toEqual({ blocks: [{ id: "pending" }] });
+  });
+
+  it("draft obsoleto (baseRevision < remota) não aplica e vira conflicted", () => {
+    // Regressão TV-EDITOR-TEXT-COLOR: draft de snapshot antigo nunca pode
+    // sobrescrever silenciosamente uma revisão mais recente do servidor.
+    writeComunicadoSlideDraft("pl-1", "s-1", { blocks: [{ id: "stale" }] }, 1, 1, {
+      baseRevision: 4,
+    });
+    const merged = mergePlaylistSlidesWithComunicadoDrafts("pl-1", {
+      id: "pl-1",
+      revision: 9,
+      slides: [
+        {
+          id: "s-1",
+          nativeScreenKey: "custom_message",
+          nativeConfig: { blocks: [{ id: "server" }] },
+        },
+      ],
+    });
+    expect(merged.slides?.[0]?.nativeConfig).toEqual({ blocks: [{ id: "server" }] });
+    const draft = readComunicadoSlideDraft("pl-1", "s-1");
+    expect(draft?.conflicted).toBe(true);
+    // Conteúdo preservado para recuperação manual.
+    expect(draft?.nativeConfig).toEqual({ blocks: [{ id: "stale" }] });
+    // Draft conflitado não bloqueia estado remoto.
+    expect(hasLocalComunicadoEdits({ playlistId: "pl-1", slideId: "s-1" })).toBe(false);
+  });
+
+  it("draft legado sem baseRevision não aplica automaticamente", () => {
+    writeComunicadoSlideDraft("pl-1", "s-1", { blocks: [{ id: "legacy" }] }, 1, 1);
+    const draft = readComunicadoSlideDraft("pl-1", "s-1");
+    expect(isComunicadoDraftApplicable(draft, 5)).toBe(false);
+    const merged = mergePlaylistSlidesWithComunicadoDrafts("pl-1", {
+      id: "pl-1",
+      revision: 5,
+      slides: [
+        {
+          id: "s-1",
+          nativeScreenKey: "custom_message",
+          nativeConfig: { blocks: [{ id: "server" }] },
+        },
+      ],
+    });
+    expect(merged.slides?.[0]?.nativeConfig).toEqual({ blocks: [{ id: "server" }] });
+    expect(readComunicadoSlideDraft("pl-1", "s-1")?.conflicted).toBe(true);
+  });
+
+  it("isComunicadoDraftApplicable: base == remota aplica; conflicted nunca", () => {
+    const base = { updatedAt: 1, version: 1, nativeConfig: { blocks: [] } };
+    expect(
+      isComunicadoDraftApplicable({ ...base, baseRevision: 5 }, 5),
+    ).toBe(true);
+    expect(
+      isComunicadoDraftApplicable({ ...base, baseRevision: 4 }, 5),
+    ).toBe(false);
+    expect(
+      isComunicadoDraftApplicable({ ...base, baseRevision: 5, conflicted: true }, 5),
+    ).toBe(false);
+    expect(isComunicadoDraftApplicable(null, 5)).toBe(false);
+    expect(isComunicadoDraftApplicable({ ...base, baseRevision: 5 }, null)).toBe(false);
+  });
+
+  it("markComunicadoSlideDraftConflicted preserva conteúdo e impede reapply", () => {
+    writeComunicadoSlideDraft("pl-1", "s-1", { blocks: [{ id: "kept" }] }, 7, 2, {
+      baseRevision: 9,
+    });
+    expect(markComunicadoSlideDraftConflicted("pl-1", "s-1")).toBe(true);
+    const draft = readComunicadoSlideDraft("pl-1", "s-1");
+    expect(draft?.conflicted).toBe(true);
+    expect(draft?.nativeConfig).toEqual({ blocks: [{ id: "kept" }] });
+    const slide = applyComunicadoSlideDraft(
+      { id: "s-1", nativeConfig: { blocks: [{ id: "server" }] } },
+      draft,
+    );
+    expect(slide.nativeConfig).toEqual({ blocks: [{ id: "server" }] });
+    expect(markComunicadoSlideDraftConflicted("pl-1", "inexistente")).toBe(false);
   });
 
   it("hasLocalComunicadoEdits detecta draft ou pending", () => {

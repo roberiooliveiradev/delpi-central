@@ -10,6 +10,7 @@ from uuid import UUID
 from tv_app.application.errors.playlist_persistence import (
     MainSectionProtectedError,
     PlaylistNotFoundError,
+    PlaylistRevisionConflictError,
     SectionNotFoundError,
     SlideNotFoundError,
 )
@@ -120,6 +121,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str,
+        expected_revision: int | None = None,
     ) -> None:
         try:
             PlaylistHistoryRepository.capture_before_mutation(
@@ -127,9 +129,35 @@ class PlaylistRepository:
                 playlist_id,
                 actor_user_id=actor_user_id,
                 reason=reason,
+                expected_revision=expected_revision,
             )
         except PlaylistHistoryNotFoundError as exc:
             raise PlaylistNotFoundError from exc
+
+    @staticmethod
+    def _assert_expected_revision_locked(
+        cur,
+        playlist_id: UUID,
+        expected_revision: int,
+    ) -> None:
+        """CAS sem captura de histórico — para writes de suporte (ex.: ensure_main)."""
+        cur.execute(
+            """
+            SELECT revision
+            FROM tv_dashboard.playlists
+            WHERE id = %s
+            FOR UPDATE
+            """,
+            (str(playlist_id),),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise PlaylistNotFoundError
+        if int(row["revision"]) != int(expected_revision):
+            raise PlaylistRevisionConflictError(
+                int(row["revision"]),
+                expected_revision=expected_revision,
+            )
 
     @staticmethod
     def _touch_playlist_updated_at(cur, playlist_id: UUID) -> None:
@@ -539,6 +567,7 @@ class PlaylistRepository:
         global_refresh_sec: int | None = None,
         data_defaults: dict[str, Any] | None = None,
         master_config: dict[str, Any] | None = None,
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
@@ -583,6 +612,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 cur.execute(
                     f"""
@@ -607,12 +637,14 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "playlist_data_defaults",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         return self.update(
             playlist_id,
             actor_user_id=actor_user_id,
             reason=reason,
             data_defaults=data_defaults,
+            expected_revision=expected_revision,
         )
 
     def set_active(
@@ -622,6 +654,7 @@ class PlaylistRepository:
         is_active: bool,
         actor_user_id: str,
         reason: str,
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -630,6 +663,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 cur.execute(
                     """
@@ -831,6 +865,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "slide_duplicated",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         slide = self.get_slide(slide_id, playlist_id=playlist_id)
         copy_title = f"{slide['title']} (cópia)".strip()
@@ -850,6 +885,7 @@ class PlaylistRepository:
             },
             actor_user_id=actor_user_id,
             reason=reason,
+            expected_revision=expected_revision,
         )
 
     def touch_view(self, token: str) -> None:
@@ -919,6 +955,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "slide_created",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         sort_order = payload.get("sortOrder")
         with get_connection() as conn:
@@ -928,6 +965,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 if sort_order is None:
                     cur.execute(
@@ -977,6 +1015,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "slide_updated",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
@@ -1027,6 +1066,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 cur.execute(
                     f"""
@@ -1073,6 +1113,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "slide_deleted",
+        expected_revision: int | None = None,
     ) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -1081,6 +1122,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 cur.execute(
                     """
@@ -1103,6 +1145,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "slides_reordered",
+        expected_revision: int | None = None,
     ) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -1111,6 +1154,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 # Fase 1: ordens temporárias negativas — evita violar idx_slides_playlist_order ao trocar posições.
                 for offset, item in enumerate(items):
@@ -1171,10 +1215,17 @@ class PlaylistRepository:
         actor_user_id: str,
         reason: str = "section_main_ensured",
         assign_orphans: bool = True,
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         """Garante uma seção Principal (is_main) por playlist; idempotente."""
         with get_connection() as conn:
             with conn.cursor() as cur:
+                if expected_revision is not None:
+                    self._assert_expected_revision_locked(
+                        cur,
+                        playlist_id,
+                        expected_revision,
+                    )
                 cur.execute(
                     """
                     SELECT * FROM tv_dashboard.playlist_sections
@@ -1266,6 +1317,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "section_created",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         is_main = bool(payload.get("isMain", False))
         if is_main:
@@ -1274,6 +1326,7 @@ class PlaylistRepository:
                 actor_user_id=actor_user_id,
                 reason=reason,
                 assign_orphans=True,
+                expected_revision=expected_revision,
             )
 
         # Seção de usuário: garante Principal antes.
@@ -1282,6 +1335,7 @@ class PlaylistRepository:
             actor_user_id=actor_user_id,
             reason="section_main_ensured",
             assign_orphans=True,
+            expected_revision=expected_revision,
         )
 
         sort_order = payload.get("sortOrder")
@@ -1292,6 +1346,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 if sort_order is None:
                     cur.execute(
@@ -1337,6 +1392,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "section_updated",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
@@ -1379,6 +1435,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 cur.execute(
                     f"""
@@ -1404,6 +1461,7 @@ class PlaylistRepository:
         actor_user_id: str,
         delete_slides: bool = False,
         reason: str = "section_deleted",
+        expected_revision: int | None = None,
     ) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -1425,6 +1483,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 if delete_slides:
                     cur.execute(
@@ -1483,6 +1542,7 @@ class PlaylistRepository:
         *,
         actor_user_id: str,
         reason: str = "sections_reordered",
+        expected_revision: int | None = None,
     ) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -1491,6 +1551,7 @@ class PlaylistRepository:
                     playlist_id,
                     actor_user_id=actor_user_id,
                     reason=reason,
+                    expected_revision=expected_revision,
                 )
                 for offset, item in enumerate(items):
                     cur.execute(

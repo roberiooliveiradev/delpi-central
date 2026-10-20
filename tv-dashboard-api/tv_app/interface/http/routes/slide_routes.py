@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
+from tv_app.application.errors.playlist_persistence import PlaylistRevisionConflictError
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
@@ -28,9 +30,12 @@ from tv_app.interface.http.playlist_access_http import (
 )
 from tv_app.interface.http.playlist_revision_http import (
     parse_if_match_revision,
+    playlist_revision_conflict_response,
     revision_response_headers,
     with_revision,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/playlists/{playlist_id}/slides", tags=["Slides"])
 _repo = PlaylistRepository()
@@ -88,6 +93,8 @@ class UpdateSlideBody(BaseModel):
     isActive: bool | None = None
     transitionStyle: str | None = Field(default=None, pattern=TRANSITION_STYLE_PATTERN)
     sectionId: UUID | None = None
+    # Correlação de auditoria — nunca autoridade/AuthZ.
+    clientId: str | None = Field(default=None, max_length=120)
 
     @field_validator("durationSec")
     @classmethod
@@ -129,14 +136,34 @@ class PresentationMutationBody(BaseModel):
     """Editor ack path — TvPresentationPatchV1 ops committed server-side."""
 
     ops: list[dict[str, Any]] = Field(min_length=1, max_length=80)
+    # Correlação de auditoria — nunca autoridade/AuthZ.
+    clientId: str | None = Field(default=None, max_length=120)
 
 
 def _actor_id(user: Any) -> str | None:
     return _access.actor_id(user)
 
 
-def _ok_with_revision(data: Any, *, playlist_id: UUID, message: str, status_code: int = 200):
+def _ok_with_revision(
+    data: Any,
+    *,
+    playlist_id: UUID,
+    message: str,
+    status_code: int = 200,
+    log_context: dict[str, Any] | None = None,
+):
     revision = _writes.get_revision(playlist_id)
+    if log_context:
+        logger.info(
+            "slide_write_committed playlist_id=%s slide_id=%s actor=%s "
+            "client_id=%s expected_revision=%s result_revision=%s",
+            playlist_id,
+            log_context.get("slideId"),
+            log_context.get("actor"),
+            log_context.get("clientId"),
+            log_context.get("expectedRevision"),
+            revision,
+        )
     response = ok(with_revision(data, revision), message=message, status_code=status_code)
     for key, value in revision_response_headers(revision).items():
         response.headers[key] = value
@@ -240,18 +267,29 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    expected_revision = parse_if_match_revision(request)
     try:
         slide = _writes.update_slide(
             playlist_id,
             slide_id,
-            body.model_dump(exclude_unset=True),
+            body.model_dump(exclude_unset=True, exclude={"clientId"}),
             actor_user_id=actor,
             user=user,
-            expected_revision=parse_if_match_revision(request),
+            expected_revision=expected_revision,
         )
     except PresentationWriteError as exc:
         return _map_write_error(exc)
-    return _ok_with_revision(slide, playlist_id=playlist_id, message="Tela atualizada.")
+    return _ok_with_revision(
+        slide,
+        playlist_id=playlist_id,
+        message="Tela atualizada.",
+        log_context={
+            "slideId": slide_id,
+            "actor": actor,
+            "clientId": body.clientId,
+            "expectedRevision": expected_revision,
+        },
+    )
 
 
 _RENDERED_PREVIEW_MAX_BYTES = 8_000_000
@@ -430,6 +468,7 @@ def apply_presentation_mutations(
     if not actor:
         return fail("Usuário não identificado.", 401)
     auth = request.headers.get("Authorization")
+    expected_revision = parse_if_match_revision(request)
     try:
         result = PresentationMutationCommitService(writes=_writes).commit(
             playlist_id=playlist_id,
@@ -438,7 +477,7 @@ def apply_presentation_mutations(
             user=user,
             actor_user_id=actor,
             authorization=auth,
-            expected_revision=parse_if_match_revision(request),
+            expected_revision=expected_revision,
         )
     except PresentationPatchError as exc:
         return fail(str(exc), 422, data=getattr(exc, "details", None) or None)
@@ -462,6 +501,12 @@ def apply_presentation_mutations(
         },
         playlist_id=playlist_id,
         message=str(result.get("message") or "Mutação aplicada."),
+        log_context={
+            "slideId": slide_id,
+            "actor": actor,
+            "clientId": body.clientId,
+            "expectedRevision": expected_revision,
+        },
     )
 
 
@@ -495,13 +540,17 @@ def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    expected_revision = parse_if_match_revision(request)
     try:
         slide = _repo.duplicate_slide(
             playlist_id,
             slide_id,
             actor_user_id=actor,
             reason="slide_duplicated",
+            expected_revision=expected_revision,
         )
+    except PlaylistRevisionConflictError as exc:
+        return playlist_revision_conflict_response(exc, expected=expected_revision)
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     notify_presentation_changed(

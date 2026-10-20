@@ -28,6 +28,7 @@ from tv_app.application.services.tv_deck_package_service import (
     TvDeckPackageError,
     TvDeckPackageService,
 )
+from tv_app.application.errors.playlist_persistence import PlaylistRevisionConflictError
 from tv_app.application.services.tv_presentation_write_service import (
     PresentationWriteError,
     TvPresentationWriteService,
@@ -45,6 +46,10 @@ from tv_app.interface.http.playlist_access_http import (
     is_access_error,
     require_governed_write,
     require_playlist_access,
+)
+from tv_app.interface.http.playlist_revision_http import (
+    parse_if_match_revision,
+    playlist_revision_conflict_response,
 )
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
@@ -304,6 +309,7 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
         )
     except ValueError as exc:
         return fail(str(exc), 400)
+    expected_revision = parse_if_match_revision(request)
     try:
         data_defaults = body.dataDefaults
         if data_defaults is not None:
@@ -326,7 +332,10 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             global_refresh_sec=body.globalRefreshSec,
             data_defaults=data_defaults,
             master_config=body.masterConfig,
+            expected_revision=expected_revision,
         )
+    except PlaylistRevisionConflictError as exc:
+        return playlist_revision_conflict_response(exc, expected=expected_revision)
     except PresentationWriteError as exc:
         return fail(exc.message, exc.status_code, data=exc.details or None)
     except PlaylistNotFoundError:
@@ -379,13 +388,17 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    expected_revision = parse_if_match_revision(request)
     try:
         playlist = _repo.set_active(
             playlist_id,
             is_active=False,
             actor_user_id=actor,
             reason="playlist_deactivated",
+            expected_revision=expected_revision,
         )
+    except PlaylistRevisionConflictError as exc:
+        return playlist_revision_conflict_response(exc, expected=expected_revision)
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(
@@ -406,13 +419,17 @@ def activate_playlist(request: Request, playlist_id: UUID):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    expected_revision = parse_if_match_revision(request)
     try:
         playlist = _repo.set_active(
             playlist_id,
             is_active=True,
             actor_user_id=actor,
             reason="playlist_activated",
+            expected_revision=expected_revision,
         )
+    except PlaylistRevisionConflictError as exc:
+        return playlist_revision_conflict_response(exc, expected=expected_revision)
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(

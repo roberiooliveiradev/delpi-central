@@ -213,6 +213,8 @@ class PresentationRealtimeHub:
 
         message_type = payload.get("type")
         client_id = self._clean_text(payload.get("clientId"))
+        active_field = payload.get("active")
+        active: bool | None = active_field if isinstance(active_field, bool) else None
         if message_type == "presence_join":
             session = self._sessions.get(websocket)
             if not session or not session.allow_presence or not client_id:
@@ -224,8 +226,15 @@ class PresentationRealtimeHub:
                     "displayName": session.display_name,
                     "role": session.role,
                     "canEdit": session.can_edit,
+                    "active": active if active is not None else True,
                     "lastSeen": time.monotonic(),
                 }
+            logger.info(
+                "presentation_presence_joined playlist_id=%s user_id=%s client_id=%s",
+                playlist_id,
+                session.user_id,
+                client_id,
+            )
             await self._broadcast_presence(playlist_id)
             return
 
@@ -240,6 +249,11 @@ class PresentationRealtimeHub:
                     if not room_meta:
                         del self._client_meta[playlist_id]
             if removed:
+                logger.info(
+                    "presentation_presence_left playlist_id=%s client_id=%s",
+                    playlist_id,
+                    client_id,
+                )
                 await self._broadcast_presence(playlist_id)
             return
 
@@ -252,6 +266,9 @@ class PresentationRealtimeHub:
                 current = room_meta.get(websocket)
                 if current and current["clientId"] == client_id:
                     current["lastSeen"] = now
+                    if active is not None and bool(current.get("active", True)) != active:
+                        current["active"] = active
+                        presence_changed = True
                 elif session and session.allow_presence:
                     # Rehidrata presença se o TTL limpou o meta enquanto o socket segue vivo.
                     room_meta[websocket] = {
@@ -260,6 +277,7 @@ class PresentationRealtimeHub:
                         "displayName": session.display_name,
                         "role": session.role,
                         "canEdit": session.can_edit,
+                        "active": active if active is not None else True,
                         "lastSeen": now,
                     }
                     presence_changed = True
@@ -282,16 +300,17 @@ class PresentationRealtimeHub:
                 or not isinstance(native_config, dict)
             ):
                 return
-            await self.broadcast_now(
-                playlist_id,
-                {
-                    "type": "slide_draft",
-                    "playlistId": playlist_id,
-                    "slideId": slide_id,
-                    "clientId": client_id,
-                    "nativeConfig": native_config,
-                },
-            )
+            event = {
+                "type": "slide_draft",
+                "playlistId": playlist_id,
+                "slideId": slide_id,
+                "clientId": client_id,
+                "nativeConfig": native_config,
+            }
+            base_revision = payload.get("baseRevision")
+            if isinstance(base_revision, int) and not isinstance(base_revision, bool):
+                event["baseRevision"] = int(base_revision)
+            await self.broadcast_now(playlist_id, event)
             return
 
         if message_type == "selection_update":
@@ -488,12 +507,14 @@ class PresentationRealtimeHub:
     async def _presence_payload(self, playlist_id: str) -> dict[str, Any]:
         async with self._lock:
             self._purge_stale_presence_locked(playlist_id)
-            peers_by_id: dict[str, dict[str, str]] = {}
+            peers_by_id: dict[str, dict[str, Any]] = {}
             for meta in self._client_meta.get(playlist_id, {}).values():
                 peers_by_id[meta["clientId"]] = {
                     "clientId": meta["clientId"],
+                    "userId": meta.get("userId"),
                     "displayName": meta["displayName"],
                     "role": meta["role"],
+                    "active": bool(meta.get("active", True)),
                 }
         return {
             "type": "presence_update",
@@ -524,6 +545,33 @@ class PresentationRealtimeHub:
         ):
             editor_focus_store.clear_playlist_for_user(session.user_id, playlist_id)
         return presence_changed
+
+    async def sweep_stale_once(self) -> list[str]:
+        """Uma passada de expurgo server-side; retorna salas que mudaram.
+
+        Garante expiração mesmo quando nenhum evento futuro chega à sala —
+        o expurgo lazy (ping/broadcast) sozinho deixaria entradas mortas
+        anunciadas indefinidamente numa sala inativa.
+        """
+        changed_rooms: list[str] = []
+        for playlist_id in list(self._client_meta.keys()):
+            async with self._lock:
+                changed = self._purge_stale_presence_locked(playlist_id)
+            if changed:
+                changed_rooms.append(playlist_id)
+        for playlist_id in changed_rooms:
+            await self._broadcast_presence(playlist_id)
+        return changed_rooms
+
+    async def presence_sweeper(self, *, interval_seconds: float = 30.0) -> None:
+        """Worker de expurgo ativo — expira presenças mortas sem depender de tráfego."""
+        interval = max(5.0, float(interval_seconds))
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                await self.sweep_stale_once()
+            except Exception:  # noqa: BLE001
+                logger.exception("presentation_presence_sweeper_failed")
 
     async def broadcast_now(self, playlist_id: str, payload: dict[str, Any]) -> None:
         async with self._lock:

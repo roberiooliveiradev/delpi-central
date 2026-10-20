@@ -73,6 +73,36 @@ describe("parsePresentationRealtimeEvent", () => {
     });
   });
 
+  it("relê baseRevision do slide_draft (OCC efêmero)", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        playlistId: "playlist-1",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        nativeConfig: { title: "Olá" },
+        baseRevision: 10810,
+      }),
+    ).toEqual({
+      type: "slide_draft",
+      playlistId: "playlist-1",
+      slideId: "slide-a",
+      clientId: "editor-1",
+      nativeConfig: { title: "Olá" },
+      baseRevision: 10810,
+    });
+    // baseRevision inválido é descartado pelo parser.
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        nativeConfig: {},
+        baseRevision: "abc",
+      }),
+    ).toMatchObject({ baseRevision: undefined });
+  });
+
   it("rejeita slide_draft sem nativeConfig", () => {
     expect(
       parsePresentationRealtimeEvent({

@@ -450,3 +450,180 @@ def test_realtime_hub_connect_does_not_snapshot_meeting_ink():
         assert all(item["type"] != "meeting_laser" for item in received)
 
     asyncio.run(_run())
+
+
+def test_realtime_hub_presence_tracks_active_flag():
+    """«Também editando» exige atividade — join/ping carregam `active` e uma
+    aba oculta/idle deixa de contar sem sair da sala."""
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-1","active":false}',
+        )
+        peers = sent[-1]["peers"]
+        assert peers[0]["clientId"] == "editor-1"
+        assert peers[0]["active"] is False
+        assert peers[0]["userId"] == "user-1"
+
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_ping","clientId":"editor-1","active":true}',
+        )
+        assert sent[-1]["type"] == "presence_update"
+        assert sent[-1]["peers"][0]["active"] is True
+
+        # Ping sem campo `active` preserva o estado reportado (compat).
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_ping","clientId":"editor-1"}',
+        )
+        meta = hub._client_meta["playlist-1"][websocket]  # noqa: SLF001
+        assert meta["active"] is True
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_sweeper_purges_dead_presence_without_traffic():
+    """Sessão efetivamente morta expira via sweeper server-side mesmo sem
+    nenhum evento futuro chegando à sala."""
+    import asyncio
+    import time
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub(presence_stale_ttl_seconds=15)
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-1"}',
+        )
+        sent.clear()
+        hub._client_meta["playlist-1"][websocket]["lastSeen"] = (  # noqa: SLF001
+            time.monotonic() - 120
+        )
+        changed = await hub.sweep_stale_once()
+        assert changed == ["playlist-1"]
+        assert "playlist-1" not in hub._client_meta  # noqa: SLF001
+        assert sent[-1]["type"] == "presence_update"
+        assert sent[-1]["peers"] == []
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_sweeper_keeps_alive_presence():
+    """Aba viva continua presente enquanto envia atividade — o sweeper não
+    corta sessão válida por timeout de tráfego externo."""
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub(presence_stale_ttl_seconds=15)
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-1"}',
+        )
+        changed = await hub.sweep_stale_once()
+        assert changed == []
+        assert websocket in hub._client_meta["playlist-1"]  # noqa: SLF001
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_slide_draft_relays_base_revision():
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        websocket = FakeWebSocket()
+        hub._rooms["playlist-1"] = {websocket}  # noqa: SLF001
+        hub._sessions[websocket] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-1"}',
+        )
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"slide_draft","clientId":"editor-1","slideId":"slide-a",'
+                '"nativeConfig":{"body":"x"},"baseRevision":10810}'
+            ),
+        )
+        assert sent[0]["type"] == "slide_draft"
+        assert sent[0]["baseRevision"] == 10810
+
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            websocket,
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"slide_draft","clientId":"editor-1","slideId":"slide-a",'
+                '"nativeConfig":{"body":"y"}}'
+            ),
+        )
+        assert sent[0]["type"] == "slide_draft"
+        assert "baseRevision" not in sent[0]
+
+    asyncio.run(_run())

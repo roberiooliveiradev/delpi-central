@@ -5,12 +5,15 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+import pytest
+
 from tv_app.application.services.playlist_access_service import PlaylistAccess
 from tv_app.application.services.playlist_history_change_service import (
     PlaylistHistoryChangeService,
 )
 from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
     HISTORY_LIMIT_PER_PLAYLIST,
+    PlaylistHistoryNotFoundError,
     PlaylistHistoryRepository,
     PlaylistRevisionConflictError,
     _history_change,
@@ -84,16 +87,91 @@ def test_capture_records_actor_reason_and_prunes_after_500():
         )
 
     assert cursor.execute.call_count == 2
+    capture_sql = cursor.execute.call_args_list[0].args[0]
     capture_args = cursor.execute.call_args_list[0].args[1]
     prune_args = cursor.execute.call_args_list[1].args[1]
+    assert "%s::bigint IS NULL OR p.revision = %s" in capture_sql
+    assert "FOR UPDATE" in capture_sql
     assert capture_args == (
         "user-1",
         "Robério Oliveira",
         "roberio@delpi.com.br",
         "slide_updated",
         str(playlist_id),
+        None,
+        None,
     )
     assert prune_args[-1] == 500
+
+
+def test_capture_cas_rejects_stale_expected_revision_with_current():
+    """OCC atômico: snapshot obsoleto falha dentro do FOR UPDATE com a
+    revisão efetivamente persistida — nunca sobrescreve last-write-wins."""
+    cursor = MagicMock()
+    cursor.rowcount = 0
+    cursor.fetchone.return_value = {"revision": 9}
+    playlist_id = uuid4()
+
+    with patch(
+        "tv_app.infrastructure.persistence.repositories.playlist_history_repository.get_current_user",
+        return_value=SimpleNamespace(id="user-1", name=None, email=None),
+    ):
+        with pytest.raises(PlaylistRevisionConflictError) as excinfo:
+            PlaylistHistoryRepository.capture_before_mutation(
+                cursor,
+                playlist_id,
+                actor_user_id="user-1",
+                reason="slide_updated",
+                expected_revision=7,
+            )
+
+    assert excinfo.value.current_revision == 9
+    assert excinfo.value.expected_revision == 7
+    # INSERT CAS + SELECT ... FOR UPDATE de leitura da revisão atual.
+    assert cursor.execute.call_count == 2
+    fallback_sql = cursor.execute.call_args_list[1].args[0]
+    assert "FOR UPDATE" in fallback_sql
+
+
+def test_capture_cas_raises_not_found_when_playlist_missing():
+    cursor = MagicMock()
+    cursor.rowcount = 0
+    cursor.fetchone.return_value = None
+    playlist_id = uuid4()
+
+    with patch(
+        "tv_app.infrastructure.persistence.repositories.playlist_history_repository.get_current_user",
+        return_value=SimpleNamespace(id="user-1", name=None, email=None),
+    ):
+        with pytest.raises(PlaylistHistoryNotFoundError):
+            PlaylistHistoryRepository.capture_before_mutation(
+                cursor,
+                playlist_id,
+                actor_user_id="user-1",
+                reason="slide_updated",
+                expected_revision=7,
+            )
+
+
+def test_capture_accepts_matching_expected_revision():
+    cursor = MagicMock()
+    cursor.rowcount = 1
+    playlist_id = uuid4()
+
+    with patch(
+        "tv_app.infrastructure.persistence.repositories.playlist_history_repository.get_current_user",
+        return_value=SimpleNamespace(id="user-1", name=None, email=None),
+    ):
+        PlaylistHistoryRepository.capture_before_mutation(
+            cursor,
+            playlist_id,
+            actor_user_id="user-1",
+            reason="slide_updated",
+            expected_revision=7,
+        )
+
+    capture_args = cursor.execute.call_args_list[0].args[1]
+    assert capture_args[-2:] == (7, 7)
 
 
 def test_actor_snapshot_is_ignored_when_request_user_id_differs():
@@ -354,13 +432,17 @@ def test_update_and_delete_slide_scope_mutation_by_playlist():
             "tv_app.application.services.tv_presentation_write_service.notify_presentation_changed"
         ),
     ):
+        update_request = _request()
+        update_request.headers = {}
         update_response = slide_routes.update_slide(
-            _request(),
+            update_request,
             playlist_id,
             slide_id,
             slide_routes.UpdateSlideBody(title="Título"),
         )
-        delete_response = slide_routes.delete_slide(_request(), playlist_id, slide_id)
+        delete_request = _request()
+        delete_request.headers = {}
+        delete_response = slide_routes.delete_slide(delete_request, playlist_id, slide_id)
 
     assert update_response.status_code == 200
     repo.update_slide.assert_called_once_with(
@@ -369,6 +451,7 @@ def test_update_and_delete_slide_scope_mutation_by_playlist():
         {"title": "Título"},
         actor_user_id="user-1",
         reason="slide_updated",
+        expected_revision=None,
     )
     assert delete_response.status_code == 200
     repo.delete_slide.assert_called_once_with(
@@ -376,4 +459,5 @@ def test_update_and_delete_slide_scope_mutation_by_playlist():
         slide_id,
         actor_user_id="user-1",
         reason="slide_deleted",
+        expected_revision=None,
     )

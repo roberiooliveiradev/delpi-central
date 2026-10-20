@@ -47,6 +47,8 @@ import {
   ackUpsertBlocksWithGeneration,
   createMutationGenerationGate,
 } from "../../utils/mutationAckGeneration";
+import type { WriteGuard } from "../../api/tvDashboardApi";
+import type { MutationCommitMeta } from "../../utils/presentationMutationClient";
 
 /** Janela para distinguir 2º toque (limpa) de clique duplo (isola / edita). */
 export const TAP_DESELECT_DELAY_MS = 320;
@@ -66,6 +68,12 @@ type Options = {
   clearSelection: () => void;
   /** Largura/altura do palco (design) — órbita de rotação em grupo. */
   getSlideAspectRatio: () => number;
+  /** OCC guard resolved per commit — slide base revision + clientId. */
+  resolveWriteGuard?: () => WriteGuard | null | undefined;
+  /** Revision metadata emitted after each committed mutation. */
+  onWriteCommitted?: (meta: MutationCommitMeta) => void;
+  /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
+  onWriteError?: (error: unknown) => void;
 };
 
 function resolveDraggedExcludeIds(
@@ -146,6 +154,9 @@ export function useComunicadoEditorDrag({
   stageGridSizePercentRef,
   clearSelection,
   getSlideAspectRatio,
+  resolveWriteGuard,
+  onWriteCommitted,
+  onWriteError,
 }: Options) {
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio);
   getSlideAspectRatioRef.current = getSlideAspectRatio;
@@ -656,6 +667,9 @@ export function useComunicadoEditorDrag({
           slideId,
           blocks: changed as unknown as Record<string, unknown>[],
           gate: mutationGateRef.current,
+          writeGuard: resolveWriteGuard?.() ?? undefined,
+          onCommitted: onWriteCommitted,
+          onError: onWriteError,
           applyAck: (canonical) => {
             applyConfig(canonical);
           },

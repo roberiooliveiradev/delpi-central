@@ -1,6 +1,11 @@
 import { mediaUploadHttpErrorMessage } from "./mediaUploadLimits";
 
-type RequestOptions = { signal?: AbortSignal; keepalive?: boolean };
+type RequestOptions = {
+  signal?: AbortSignal;
+  keepalive?: boolean;
+  /** OCC: revisão esperada de playlists.revision enviada como If-Match. */
+  ifMatch?: number | null;
+};
 
 const API_BASE = "/apps/tv-dashboard-api";
 const DELPI_CALLER_APP = "tv-dashboard";
@@ -9,11 +14,31 @@ let accessTokenGetter: (() => string | undefined) | null = null;
 
 export class HttpRequestError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /** `data` do envelope de erro canônico (ex.: detalhes de REVISION_CONFLICT). */
+  data?: Record<string, unknown> | null;
+  constructor(message: string, status: number, data?: Record<string, unknown> | null) {
     super(message);
     this.name = "HttpRequestError";
     this.status = status;
+    this.data = data ?? null;
   }
+}
+
+/** 409 REVISION_CONFLICT com detalhes esperados do contrato de concorrência. */
+export function isRevisionConflictError(
+  error: unknown,
+): error is HttpRequestError {
+  if (!(error instanceof HttpRequestError) || error.status !== 409) return false;
+  const data = error.data;
+  if (!data || typeof data !== "object") return false;
+  return typeof data.currentRevision === "number" || data.code === "REVISION_CONFLICT";
+}
+
+/** Revisão atual informada pelo servidor em um REVISION_CONFLICT. */
+export function revisionConflictCurrentRevision(error: unknown): number | null {
+  if (!isRevisionConflictError(error)) return null;
+  const current = error.data?.currentRevision;
+  return typeof current === "number" && Number.isFinite(current) ? current : null;
 }
 
 export function configureHttpClient(getAccessToken: () => string | undefined) {
@@ -85,13 +110,21 @@ function localizeAuthError(message: string, status: number): string {
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = `Erro HTTP ${response.status}`;
+    let data: Record<string, unknown> | null = null;
     try {
       const body = await response.json();
       message = resolveHttpErrorMessage(body, response.status);
+      if (body && typeof body === "object") {
+        const envelope = body as Record<string, unknown>;
+        data =
+          envelope.data && typeof envelope.data === "object"
+            ? (envelope.data as Record<string, unknown>)
+            : envelope;
+      }
     } catch {
       // noop
     }
-    throw new HttpRequestError(message, response.status);
+    throw new HttpRequestError(message, response.status, data);
   }
   return response.json() as Promise<T>;
 }
@@ -101,10 +134,23 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
   return parseJson<T>(response);
 }
 
+function withIfMatch(
+  headers: Record<string, string>,
+  ifMatch: number | null | undefined,
+): Record<string, string> {
+  if (typeof ifMatch === "number" && Number.isFinite(ifMatch)) {
+    return { ...headers, "If-Match": `"${Math.trunc(ifMatch)}"` };
+  }
+  return headers;
+}
+
 export async function httpPost<T>(url: string, body: unknown, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    headers: withIfMatch(
+      { ...authHeaders(), "Content-Type": "application/json" },
+      options.ifMatch,
+    ),
     body: JSON.stringify(body),
     signal: options.signal,
     keepalive: options.keepalive,
@@ -115,7 +161,10 @@ export async function httpPost<T>(url: string, body: unknown, options: RequestOp
 export async function httpPatch<T>(url: string, body: unknown, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(url, {
     method: "PATCH",
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    headers: withIfMatch(
+      { ...authHeaders(), "Content-Type": "application/json" },
+      options.ifMatch,
+    ),
     body: JSON.stringify(body),
     signal: options.signal,
     keepalive: options.keepalive,
@@ -124,7 +173,11 @@ export async function httpPatch<T>(url: string, body: unknown, options: RequestO
 }
 
 export async function httpDelete<T>(url: string, options: RequestOptions = {}): Promise<T> {
-  const response = await fetch(url, { method: "DELETE", headers: authHeaders(), signal: options.signal });
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: withIfMatch(authHeaders(), options.ifMatch),
+    signal: options.signal,
+  });
   return parseJson<T>(response);
 }
 

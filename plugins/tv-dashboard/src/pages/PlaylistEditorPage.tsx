@@ -33,6 +33,7 @@ import {
   updatePlaylistSection,
   updateSlide,
   type BranchScope,
+  type WriteGuard,
   type NativeScreenCatalogItem,
   type Playlist,
   type PlaylistSection,
@@ -41,7 +42,11 @@ import {
   type Slide,
   type TvDashboardUiContent,
 } from "../api/tvDashboardApi";
-import { getAccessToken } from "../api/httpClient";
+import {
+  getAccessToken,
+  isRevisionConflictError,
+  revisionConflictCurrentRevision,
+} from "../api/httpClient";
 import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
@@ -117,10 +122,13 @@ import {
   applyServerPlaylistPreservingLocalEdits,
   clearComunicadoSlideDraftIfCoveredBySave,
   hasLocalComunicadoEdits,
+  isComunicadoDraftApplicable,
+  markComunicadoSlideDraftConflicted,
   mergePlaylistSlidesWithComunicadoDrafts,
   readComunicadoSlideDraft,
   writeComunicadoSlideDraft,
 } from "../utils/comunicadoSlideDraftPreferences";
+import type { MutationCommitMeta } from "../utils/presentationMutationClient";
 import {
   bumpComunicadoAutosaveVersion,
   resolveNativeConfigAfterAutosave,
@@ -197,6 +205,8 @@ export function PlaylistEditorPage({
     slide: Slide;
     nativeConfig: Record<string, unknown>;
     version: number;
+    /** Revisão na qual o config pendente foi derivado (OCC). */
+    baseRevision?: number | null;
   } | null>(null);
   const customFanOutBaselineRef = useRef<{
     slideId: string;
@@ -222,6 +232,10 @@ export function PlaylistEditorPage({
   const selectedSlideIdsRef = useRef<string[]>([]);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
   const flushPendingComunicadoSaveRef = useRef<(() => Promise<void>) | null>(null);
+  /** Última revisão persistida conhecida — reads + write acks (OCC If-Match). */
+  const knownPlaylistRevisionRef = useRef(0);
+  /** Base OCC por slide para escritas de nativeConfig (draft/mutation/autosave). */
+  const slideWriteBaseRevisionRef = useRef<Map<string, number>>(new Map());
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
@@ -501,9 +515,83 @@ export function PlaylistEditorPage({
   const otherEditors = useMemo(
     () =>
       presencePeers.filter(
-        (peer) => peer.role === "editor" && peer.clientId !== editorPresence?.clientId,
+        (peer) =>
+          peer.role === "editor" &&
+          peer.clientId !== editorPresence?.clientId &&
+          // «Também editando» exige atividade real — conectado/oculto não conta.
+          peer.active !== false,
       ),
     [presencePeers, editorPresence?.clientId],
+  );
+
+  /** Nome distinto por usuário — mesma conta em 2 sessões vira «Nome (2 sessões)». */
+  const otherEditorsLabel = useMemo(() => {
+    const byUser = new Map<string, { name: string; count: number }>();
+    for (const peer of otherEditors) {
+      const key = peer.userId ?? peer.displayName;
+      const entry = byUser.get(key);
+      if (entry) entry.count += 1;
+      else byUser.set(key, { name: peer.displayName, count: 1 });
+    }
+    return [...byUser.values()]
+      .map((entry) =>
+        entry.count > 1 ? `${entry.name} (${entry.count} sessões)` : entry.name,
+      )
+      .join(", ");
+  }, [otherEditors]);
+
+  /**
+   * Registra a revisão confirmada pelo write ack. Quando a resposta não
+   * carrega playlistRevision, a guarda If-Match vencida prova expected+1
+   * (o repositório incrementa a revisão exatamente uma vez por escrita).
+   */
+  const recordWriteRevision = useCallback(
+    (revision: unknown, slideId?: string | null, expectedRevision?: number | null) => {
+      let next: number | null = null;
+      if (typeof revision === "number" && Number.isFinite(revision)) {
+        next = Math.trunc(revision);
+      } else if (
+        typeof expectedRevision === "number" &&
+        Number.isFinite(expectedRevision)
+      ) {
+        next = Math.trunc(expectedRevision) + 1;
+      }
+      if (next == null) return;
+      if (next > knownPlaylistRevisionRef.current) {
+        knownPlaylistRevisionRef.current = next;
+      }
+      if (slideId) slideWriteBaseRevisionRef.current.set(slideId, next);
+    },
+    [],
+  );
+
+  const slideBaseRevision = useCallback(
+    (slideId?: string | null) =>
+      (slideId ? slideWriteBaseRevisionRef.current.get(slideId) : undefined) ??
+      knownPlaylistRevisionRef.current,
+    [],
+  );
+
+  const playlistWriteGuard = useCallback(
+    (): WriteGuard => ({
+      expectedRevision: knownPlaylistRevisionRef.current,
+      clientId: editorPresence?.clientId,
+    }),
+    [editorPresence?.clientId],
+  );
+
+  const slideWriteGuard = useCallback(
+    (slideId?: string | null): WriteGuard => ({
+      expectedRevision: slideBaseRevision(slideId),
+      clientId: editorPresence?.clientId,
+    }),
+    [editorPresence?.clientId, slideBaseRevision],
+  );
+
+  /** Guard resolvido no commit — mutations do provider atuam no slide ativo. */
+  const resolveWriteGuard = useCallback(
+    (): WriteGuard => slideWriteGuard(selectedSlideIdRef.current),
+    [slideWriteGuard],
   );
 
   const currentRemoteSelections = useMemo(
@@ -532,6 +620,12 @@ export function PlaylistEditorPage({
   const reloadPlaylistFromServer = useCallback(async (opts?: { focusSlideId?: string | null }) => {
     try {
       const pl = await getPlaylist(playlistId);
+      const remoteRevision =
+        pl.revision ?? pl.currentRevision ?? knownPlaylistRevisionRef.current;
+      knownPlaylistRevisionRef.current = Math.max(
+        knownPlaylistRevisionRef.current,
+        remoteRevision,
+      );
       const pending = pendingComunicadoSaveRef.current;
       const activeId = selectedSlideIdRef.current;
       // liveComunicadoConfigRef espelha o slide aberto — só sobrepõe o remoto
@@ -549,6 +643,15 @@ export function PlaylistEditorPage({
         live,
       });
       setPlaylist((current) => (current ? { ...merged } : merged));
+      for (const slide of merged.slides ?? []) {
+        if (slide.nativeScreenKey !== "custom_message") continue;
+        const draft = readComunicadoSlideDraft(playlistId, slide.id);
+        if (draft && !draft.conflicted && typeof draft.baseRevision === "number") {
+          slideWriteBaseRevisionRef.current.set(slide.id, draft.baseRevision);
+        } else {
+          slideWriteBaseRevisionRef.current.set(slide.id, remoteRevision);
+        }
+      }
       const dirty = hasLocalComunicadoEdits({
         playlistId,
         slideId: activeId,
@@ -576,8 +679,45 @@ export function PlaylistEditorPage({
     }
   }, [playlistId, refreshPreviewThumbnails, selectSlide]);
 
+  /**
+   * 409 REVISION_CONFLICT canônico: a revisão remota vence — marca o draft
+   * local como conflitado (preservado para recuperação), descarta o pending
+   * obsoleto e recarrega o estado autoritativo.
+   */
+  const handlePlaylistWriteConflict = useCallback(
+    async (error: unknown, slideId?: string | null): Promise<boolean> => {
+      if (!isRevisionConflictError(error)) return false;
+      const current = revisionConflictCurrentRevision(error);
+      if (current != null) {
+        knownPlaylistRevisionRef.current = Math.max(
+          knownPlaylistRevisionRef.current,
+          current,
+        );
+      }
+      if (slideId) {
+        slideWriteBaseRevisionRef.current.delete(slideId);
+        markComunicadoSlideDraftConflicted(playlistId, slideId);
+        const pending = pendingComunicadoSaveRef.current;
+        if (pending?.slide.id === slideId) pendingComunicadoSaveRef.current = null;
+      }
+      await reloadPlaylistFromServer();
+      tvDashboardNotice(
+        error instanceof Error
+          ? error.message
+          : "A programação foi alterada por outro editor. Recarregue e tente de novo.",
+      );
+      return true;
+    },
+    [playlistId, reloadPlaylistFromServer],
+  );
+
   const applyRemoteSlideDraft = useCallback(
-    (slideId: string, nativeConfig: Record<string, unknown>, clientId: string) => {
+    (
+      slideId: string,
+      nativeConfig: Record<string, unknown>,
+      clientId: string,
+      baseRevision?: number,
+    ) => {
       if (clientId === editorPresence?.clientId) return;
       const pending = pendingComunicadoSaveRef.current;
       if (pending?.slide.id === slideId) return;
@@ -590,6 +730,12 @@ export function PlaylistEditorPage({
       ) {
         return;
       }
+      // Draft derivado de revisão mais antiga que a remota conhecida é obsoleto.
+      const remoteKnown = Math.max(
+        knownPlaylistRevisionRef.current,
+        playlistRef.current?.revision ?? playlistRef.current?.currentRevision ?? 0,
+      );
+      if (typeof baseRevision === "number" && baseRevision < remoteKnown) return;
 
       setPlaylist((current) => {
         if (!current) return current;
@@ -606,9 +752,25 @@ export function PlaylistEditorPage({
       if (selectedSlideIdRef.current === slideId) {
         liveComunicadoConfigRef.current = nativeConfig;
       }
+      // O estado local agora espelha o draft do peer — base de escrita segue-o.
+      slideWriteBaseRevisionRef.current.set(slideId, baseRevision ?? remoteKnown);
       setRemoteConfigRevision((revision) => revision + 1);
     },
     [editorPresence?.clientId, playlistId],
+  );
+
+  const handleMutationCommitted = useCallback(
+    (meta: MutationCommitMeta) => {
+      recordWriteRevision(meta.playlistRevision, selectedSlideIdRef.current);
+    },
+    [recordWriteRevision],
+  );
+
+  const handleMutationWriteError = useCallback(
+    (error: unknown) => {
+      void handlePlaylistWriteConflict(error, selectedSlideIdRef.current);
+    },
+    [handlePlaylistWriteConflict],
   );
 
   useEffect(() => {
@@ -702,7 +864,12 @@ export function PlaylistEditorPage({
       }).then(() => deckHistory.handleRemoteUpdate());
     },
     onSlideDraft: (event) => {
-      applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
+      applyRemoteSlideDraft(
+        event.slideId,
+        event.nativeConfig,
+        event.clientId,
+        event.baseRevision,
+      );
     },
     onSelectionUpdate: handleRemoteSelection,
     onVisualCaptureRequest: (event: PresentationVisualCaptureRequestEvent) => {
@@ -813,26 +980,51 @@ export function PlaylistEditorPage({
         getUiContent(),
         getBranchScope(),
       ]);
+      const remoteRevision =
+        pl.revision ?? pl.currentRevision ?? knownPlaylistRevisionRef.current;
+      knownPlaylistRevisionRef.current = remoteRevision;
       const merged = mergePlaylistSlidesWithComunicadoDrafts(playlistId, pl);
       setPlaylist(merged);
       writePlaylistShell(merged);
+      // Base OCC por slide: draft aplicável deriva de sua própria baseRevision;
+      // slide limpo deriva da revisão remota.
+      for (const slide of merged.slides ?? []) {
+        if (slide.nativeScreenKey !== "custom_message") continue;
+        const draft = readComunicadoSlideDraft(playlistId, slide.id);
+        const base =
+          draft && !draft.conflicted && typeof draft.baseRevision === "number"
+            ? draft.baseRevision
+            : remoteRevision;
+        slideWriteBaseRevisionRef.current.set(slide.id, base);
+      }
       // Reenvia à API drafts locais ainda não confirmados (ex.: F5 no meio do debounce).
       // Nunca limpar draft sem guarda de versão — save antigo não pode apagar edição nova.
       for (const slide of merged.slides ?? []) {
         if (slide.nativeScreenKey !== "custom_message") continue;
         const draft = readComunicadoSlideDraft(playlistId, slide.id);
         if (!draft) continue;
+        // Draft obsoleto/conflitado nunca reescreve o estado remoto automaticamente.
+        if (!isComunicadoDraftApplicable(draft, remoteRevision)) continue;
         const draftVersion = draft.version;
-        void updateSlide(playlistId, slide.id, {
-          title: slide.title,
-          durationSec: slide.durationSec ?? null,
-          nativeConfig: draft.nativeConfig,
-        })
-          .then(() => {
+        void updateSlide(
+          playlistId,
+          slide.id,
+          {
+            title: slide.title,
+            durationSec: slide.durationSec ?? null,
+            nativeConfig: draft.nativeConfig,
+          },
+          {
+            expectedRevision: draft.baseRevision ?? remoteRevision,
+            clientId: editorPresence?.clientId,
+          },
+        )
+          .then((updated) => {
+            recordWriteRevision(updated.playlistRevision, slide.id, draft.baseRevision);
             clearComunicadoSlideDraftIfCoveredBySave(playlistId, slide.id, draftVersion);
           })
-          .catch(() => {
-            /* draft permanece */
+          .catch((caught) => {
+            void handlePlaylistWriteConflict(caught, slide.id);
           });
       }
       setCatalog(screens);
@@ -899,7 +1091,13 @@ export function PlaylistEditorPage({
         field === "viewport" && value && typeof value === "object"
           ? (value as Parameters<typeof updatePlaylist>[1])
           : ({ [field]: value } as Parameters<typeof updatePlaylist>[1]);
-      const updated = await updatePlaylist(playlist.id, body);
+      const guard = playlistWriteGuard();
+      const updated = await updatePlaylist(playlist.id, body, guard);
+      recordWriteRevision(
+        updated.playlistRevision ?? updated.revision,
+        null,
+        guard.expectedRevision,
+      );
       if (saveGen !== playlistSettingsSaveGenRef.current) return;
       setPlaylist({ ...updated, slides: previousPlaylist.slides });
       await deckHistory.confirmChange();
@@ -908,6 +1106,7 @@ export function PlaylistEditorPage({
         setPlaylist(previousPlaylist);
       }
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1150,7 +1349,9 @@ export function PlaylistEditorPage({
       return newSlide;
     }
     const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-    const result = await reorderSlides(playlist.id, items);
+    const guard = playlistWriteGuard();
+    const result = await reorderSlides(playlist.id, items, guard);
+    recordWriteRevision(result.playlistRevision, null, guard.expectedRevision);
     setPlaylist({ ...playlist, slides: result.slides });
     return result.slides.find((item) => item.id === newSlide.id) ?? newSlide;
   }
@@ -1175,9 +1376,17 @@ export function PlaylistEditorPage({
       if (explicitSectionId) {
         const target = sections.find((section) => section.id === explicitSectionId);
         if (target?.isCollapsed) {
-          await updatePlaylistSection(playlist.id, explicitSectionId, { isCollapsed: false });
+          const guard = playlistWriteGuard();
+          const expanded = await updatePlaylistSection(
+            playlist.id,
+            explicitSectionId,
+            { isCollapsed: false },
+            guard,
+          );
+          recordWriteRevision(expanded.playlistRevision, null, guard.expectedRevision);
         }
       }
+      const slideGuard = playlistWriteGuard();
       const slide = await addSlide(playlist.id, {
         slideType: "native",
         title,
@@ -1188,7 +1397,8 @@ export function PlaylistEditorPage({
         durationSec: null,
         transitionStyle: null,
         sectionId: anchorSectionId,
-      });
+      }, slideGuard);
+      recordWriteRevision(slide.playlistRevision, null, slideGuard.expectedRevision);
       let placed = slide;
       if (explicitSectionId) {
         const ordered = assignSlideToSectionOrder(
@@ -1197,7 +1407,9 @@ export function PlaylistEditorPage({
           explicitSectionId,
         );
         const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-        const result = await reorderSlides(playlist.id, items);
+        const reorderGuard = playlistWriteGuard();
+        const result = await reorderSlides(playlist.id, items, reorderGuard);
+        recordWriteRevision(result.playlistRevision, null, reorderGuard.expectedRevision);
         const nextSections =
           sections.find((section) => section.id === explicitSectionId)?.isCollapsed
             ? (playlist.sections ?? []).map((section) =>
@@ -1222,6 +1434,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1230,7 +1443,9 @@ export function PlaylistEditorPage({
     if (!playlist) return;
     deckHistory.recordBeforeChange();
     try {
-      const main = await ensurePlaylistMainSection(playlist.id);
+      const ensureGuard = playlistWriteGuard();
+      const main = await ensurePlaylistMainSection(playlist.id, ensureGuard);
+      recordWriteRevision(main.playlistRevision, null, ensureGuard.expectedRevision);
       let workingSections = await listPlaylistSections(playlist.id);
       if (!workingSections.some((section) => section.id === main.id)) {
         workingSections = [main, ...workingSections.filter((s) => !s.isMain)];
@@ -1255,11 +1470,13 @@ export function PlaylistEditorPage({
       );
 
       if (!anchor) {
+        const createGuard = playlistWriteGuard();
         const section = await createPlaylistSection(playlist.id, {
           name: `Seção ${userCount + 1}`,
           sortOrder: maxOrder + 1,
           isCollapsed: false,
-        });
+        }, createGuard);
+        recordWriteRevision(section.playlistRevision, null, createGuard.expectedRevision);
         setPlaylist({
           ...playlist,
           sections: [...workingSections.filter((s) => s.id !== section.id), section],
@@ -1271,11 +1488,13 @@ export function PlaylistEditorPage({
 
       const claim = claimSlidesForNewSection(localSlides, workingSections, anchor.id);
       const afterSectionId = claim.anchorSectionId ?? main.id;
+      const createGuard = playlistWriteGuard();
       const section = await createPlaylistSection(playlist.id, {
         name: `Seção ${userCount + 1}`,
         sortOrder: maxOrder + 1,
         isCollapsed: false,
-      });
+      }, createGuard);
+      recordWriteRevision(section.playlistRevision, null, createGuard.expectedRevision);
 
       const baseOrder = workingSections.filter((s) => s.id !== section.id);
       const afterIdx = baseOrder.findIndex((s) => s.id === afterSectionId);
@@ -1286,7 +1505,18 @@ export function PlaylistEditorPage({
         id: item.id,
         sortOrder,
       }));
-      workingSections = await reorderPlaylistSections(playlist.id, reorderItems);
+      const sectionReorderGuard = playlistWriteGuard();
+      const reordered = await reorderPlaylistSections(
+        playlist.id,
+        reorderItems,
+        sectionReorderGuard,
+      );
+      workingSections = reordered.items;
+      recordWriteRevision(
+        reordered.playlistRevision,
+        null,
+        sectionReorderGuard.expectedRevision,
+      );
 
       const claimSet = new Set(claim.claimIds);
       const beforeSet = new Set(claim.beforeIds);
@@ -1303,14 +1533,23 @@ export function PlaylistEditorPage({
       });
 
       for (const update of sectionUpdates) {
-        await updateSlide(playlist.id, update.id, { sectionId: update.sectionId });
+        const guard = playlistWriteGuard();
+        const claimed = await updateSlide(
+          playlist.id,
+          update.id,
+          { sectionId: update.sectionId },
+          guard,
+        );
+        recordWriteRevision(claimed.playlistRevision, null, guard.expectedRevision);
       }
 
       const items = localSlides
         .slice()
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((item, sortOrder) => ({ id: item.id, sortOrder }));
-      const result = await reorderSlides(playlist.id, items);
+      const reorderGuard = playlistWriteGuard();
+      const result = await reorderSlides(playlist.id, items, reorderGuard);
+      recordWriteRevision(result.playlistRevision, null, reorderGuard.expectedRevision);
       const nextSlides = result.slides.map((item) => {
         const local = localSlides.find((slide) => slide.id === item.id);
         return local ? { ...item, sectionId: local.sectionId } : item;
@@ -1322,7 +1561,14 @@ export function PlaylistEditorPage({
       for (const sectionId of expandIds) {
         const target = workingSections.find((s) => s.id === sectionId);
         if (target?.isCollapsed) {
-          await updatePlaylistSection(playlist.id, sectionId, { isCollapsed: false });
+          const guard = playlistWriteGuard();
+          const expanded = await updatePlaylistSection(
+            playlist.id,
+            sectionId,
+            { isCollapsed: false },
+            guard,
+          );
+          recordWriteRevision(expanded.playlistRevision, null, guard.expectedRevision);
         }
       }
       workingSections = workingSections.map((s) =>
@@ -1337,6 +1583,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1376,10 +1623,19 @@ export function PlaylistEditorPage({
       }
     }
     for (const update of sectionUpdates) {
-      await updateSlide(playlist.id, update.id, { sectionId: update.sectionId });
+      const guard = playlistWriteGuard();
+      const moved = await updateSlide(
+        playlist.id,
+        update.id,
+        { sectionId: update.sectionId },
+        guard,
+      );
+      recordWriteRevision(moved.playlistRevision, null, guard.expectedRevision);
     }
     const items = nextSlides.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-    const result = await reorderSlides(playlist.id, items);
+    const reorderGuard = playlistWriteGuard();
+    const result = await reorderSlides(playlist.id, items, reorderGuard);
+    recordWriteRevision(result.playlistRevision, null, reorderGuard.expectedRevision);
     const sectionById = new Map(nextSlides.map((slide) => [slide.id, slide.sectionId ?? null]));
     const expandId = options?.expandSectionId ?? null;
     setPlaylist({
@@ -1408,9 +1664,11 @@ export function PlaylistEditorPage({
     if (movingIds.length === 0) return;
     let targetSectionId = sectionId;
     if (targetSectionId == null) {
+      const ensureGuard = playlistWriteGuard();
       const main =
         sections.find((section) => section.isMain) ??
-        (await ensurePlaylistMainSection(playlist.id));
+        (await ensurePlaylistMainSection(playlist.id, ensureGuard));
+      recordWriteRevision(main.playlistRevision, null, ensureGuard.expectedRevision);
       targetSectionId = main.id;
       if (!sections.some((section) => section.id === main.id)) {
         setPlaylist((prev) =>
@@ -1445,13 +1703,21 @@ export function PlaylistEditorPage({
     try {
       const target = sections.find((section) => section.id === targetSectionId);
       if (target?.isCollapsed) {
-        await updatePlaylistSection(playlist.id, targetSectionId, { isCollapsed: false });
+        const guard = playlistWriteGuard();
+        const expanded = await updatePlaylistSection(
+          playlist.id,
+          targetSectionId,
+          { isCollapsed: false },
+          guard,
+        );
+        recordWriteRevision(expanded.playlistRevision, null, guard.expectedRevision);
       }
       await persistFilmstripRelocation(ordered, { expandSectionId: targetSectionId });
       endFilmstripDrag();
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1460,6 +1726,7 @@ export function PlaylistEditorPage({
     if (!playlist) return;
     deckHistory.recordBeforeChange();
     try {
+      const guard = playlistWriteGuard();
       const updated = await updatePlaylistSection(playlist.id, sectionId, {
         name: patch.name,
         sortOrder: patch.sortOrder,
@@ -1468,7 +1735,8 @@ export function PlaylistEditorPage({
         defaultDurationSec: patch.defaultDurationSec,
         transitionStyle: patch.transitionStyle,
         masterConfig: patch.masterConfig,
-      });
+      }, guard);
+      recordWriteRevision(updated.playlistRevision, null, guard.expectedRevision);
       setPlaylist({
         ...playlist,
         sections: (playlist.sections ?? []).map((item) =>
@@ -1478,6 +1746,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1501,7 +1770,12 @@ export function PlaylistEditorPage({
     if (!confirmed) return;
     deckHistory.recordBeforeChange();
     try {
-      await deletePlaylistSection(playlist.id, sectionId, { deleteSlides });
+      const guard = playlistWriteGuard();
+      await deletePlaylistSection(playlist.id, sectionId, {
+        deleteSlides,
+        expectedRevision: guard.expectedRevision,
+      });
+      recordWriteRevision(null, null, guard.expectedRevision);
       const nextSections = (playlist.sections ?? []).filter((item) => item.id !== sectionId);
       const nextSlides = deleteSlides
         ? (playlist.slides ?? []).filter((slide) => slide.sectionId !== sectionId)
@@ -1523,6 +1797,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -1533,7 +1808,9 @@ export function PlaylistEditorPage({
     if (!title || title === slide.title) return;
     deckHistory.recordBeforeChange();
     try {
-      const updated = await updateSlide(playlist.id, slide.id, { title });
+      const guard = slideWriteGuard(slide.id);
+      const updated = await updateSlide(playlist.id, slide.id, { title }, guard);
+      recordWriteRevision(updated.playlistRevision, slide.id, guard.expectedRevision);
       setPlaylist({
         ...playlist,
         slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
@@ -1541,6 +1818,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught, slide.id)) return;
       throw caught;
     }
   }
@@ -1564,7 +1842,9 @@ export function PlaylistEditorPage({
     try {
       const removeIds = new Set(unique.map((slide) => slide.id));
       for (const slide of unique) {
-        await deleteSlide(playlist.id, slide.id);
+        const guard = playlistWriteGuard();
+        await deleteSlide(playlist.id, slide.id, guard);
+        recordWriteRevision(null, null, guard.expectedRevision);
       }
       const remaining = (playlist.slides ?? []).filter((item) => !removeIds.has(item.id));
       setPlaylist({ ...playlist, slides: remaining });
@@ -1585,16 +1865,28 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
 
   async function handleToggleActive() {
     if (!playlist) return;
-    const updated = playlist.isActive
-      ? await deactivatePlaylist(playlist.id)
-      : await activatePlaylist(playlist.id);
-    setPlaylist({ ...updated, slides: playlist.slides });
+    try {
+      const guard = playlistWriteGuard();
+      const updated = playlist.isActive
+        ? await deactivatePlaylist(playlist.id, guard)
+        : await activatePlaylist(playlist.id, guard);
+      recordWriteRevision(
+        updated.playlistRevision ?? updated.revision,
+        null,
+        guard.expectedRevision,
+      );
+      setPlaylist({ ...updated, slides: playlist.slides });
+    } catch (caught) {
+      if (await handlePlaylistWriteConflict(caught)) return;
+      throw caught;
+    }
   }
 
   async function handleDelete() {
@@ -1655,7 +1947,9 @@ export function PlaylistEditorPage({
     if (!playlist) return;
     if (options?.recordHistory) deckHistory.recordBeforeChange();
     try {
-      const updated = await updateSlide(playlist.id, slide.id, payload);
+      const guard = slideWriteGuard(slide.id);
+      const updated = await updateSlide(playlist.id, slide.id, payload, guard);
+      recordWriteRevision(updated.playlistRevision, slide.id, guard.expectedRevision);
       const latestVersion = comunicadoAutosaveVersionRef.current.get(slide.id) ?? 0;
       const completedVersion = options?.autosaveVersion;
 
@@ -1724,6 +2018,8 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       if (options?.recordHistory) deckHistory.cancelChange();
+      // 409: conflito já tratado (reload + notice) — não propagar como falha genérica.
+      if (await handlePlaylistWriteConflict(caught, slide.id)) return;
       throw caught;
     }
   }
@@ -1748,7 +2044,15 @@ export function PlaylistEditorPage({
     if (applied.length === 0) return;
     const updates = new Map<string, Slide>();
     for (const item of applied) {
-      updates.set(item.slideId, await updateSlide(pl.id, item.slideId, item.payload));
+      const guard = slideWriteGuard(item.slideId);
+      try {
+        const updated = await updateSlide(pl.id, item.slideId, item.payload, guard);
+        recordWriteRevision(updated.playlistRevision, item.slideId, guard.expectedRevision);
+        updates.set(item.slideId, updated);
+      } catch (caught) {
+        if (await handlePlaylistWriteConflict(caught, item.slideId)) return;
+        throw caught;
+      }
     }
     setPlaylist((current) => {
       if (!current) return current;
@@ -1767,7 +2071,15 @@ export function PlaylistEditorPage({
     try {
       const updates = new Map<string, Slide>();
       for (const item of applied) {
-        updates.set(item.slideId, await updateSlide(playlist.id, item.slideId, item.payload));
+        const guard = slideWriteGuard(item.slideId);
+        try {
+          const updated = await updateSlide(playlist.id, item.slideId, item.payload, guard);
+          recordWriteRevision(updated.playlistRevision, item.slideId, guard.expectedRevision);
+          updates.set(item.slideId, updated);
+        } catch (caught) {
+          if (await handlePlaylistWriteConflict(caught, item.slideId)) return;
+          throw caught;
+        }
       }
       setPlaylist((current) => {
         if (!current) return current;
@@ -1797,12 +2109,14 @@ export function PlaylistEditorPage({
         slide: Slide;
         nativeConfig: Record<string, unknown>;
         version: number;
+        baseRevision?: number | null;
       },
       options?: { keepalive?: boolean },
     ) => {
       const pl = playlistRef.current;
       if (!pl) return;
       try {
+        const expectedRevision = captured.baseRevision ?? slideBaseRevision(captured.slide.id);
         const updated = await updateSlide(
           pl.id,
           captured.slide.id,
@@ -1811,8 +2125,13 @@ export function PlaylistEditorPage({
             durationSec: captured.slide.durationSec ?? null,
             nativeConfig: captured.nativeConfig,
           },
-          { keepalive: options?.keepalive },
+          {
+            keepalive: options?.keepalive,
+            expectedRevision,
+            clientId: editorPresence?.clientId,
+          },
         );
+        recordWriteRevision(updated.playlistRevision, captured.slide.id, expectedRevision);
         const latestVersion = comunicadoAutosaveVersionRef.current.get(captured.slide.id) ?? 0;
         if (
           shouldClearComunicadoDraftAfterSave({
@@ -1850,6 +2169,9 @@ export function PlaylistEditorPage({
         });
         await deckHistory.confirmChange();
       } catch (caught) {
+        // Conflito de revisão: servidor vence — draft vira conflicted e o
+        // estado remoto é recarregado; pending obsoleto não é reenfileirado.
+        if (await handlePlaylistWriteConflict(caught, captured.slide.id)) return;
         // Draft permanece no localStorage. Reenfileira só se não houver pending mais novo.
         const currentPending = pendingComunicadoSaveRef.current;
         if (
@@ -1869,7 +2191,14 @@ export function PlaylistEditorPage({
         }
       }
     },
-    [deckHistory.cancelChange, deckHistory.confirmChange],
+    [
+      deckHistory.cancelChange,
+      deckHistory.confirmChange,
+      editorPresence?.clientId,
+      handlePlaylistWriteConflict,
+      recordWriteRevision,
+      slideBaseRevision,
+    ],
   );
 
   const flushPendingComunicadoSave = useCallback(
@@ -1920,8 +2249,11 @@ export function PlaylistEditorPage({
 
     liveComunicadoConfigRef.current = nativeConfig;
     const version = bumpComunicadoAutosaveVersion(comunicadoAutosaveVersionRef.current, slide.id);
-    writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig, Date.now(), version);
-    pendingComunicadoSaveRef.current = { slide, nativeConfig, version };
+    const baseRevision = slideBaseRevision(slide.id);
+    writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig, Date.now(), version, {
+      baseRevision,
+    });
+    pendingComunicadoSaveRef.current = { slide, nativeConfig, version, baseRevision };
     const sharedSlice = pickSharedCustomSlideConfig(
       nativeConfig,
       customFanOutBaselineRef.current?.nativeConfig,
@@ -1975,6 +2307,7 @@ export function PlaylistEditorPage({
         slideId: slide.id,
         clientId,
         nativeConfig,
+        baseRevision,
       });
     }, 120);
   }
@@ -2002,7 +2335,9 @@ export function PlaylistEditorPage({
     try {
       let lastPlaced: Slide | null = null;
       for (const slide of unique) {
-        const copy = await duplicateSlide(playlist.id, slide.id);
+        const guard = playlistWriteGuard();
+        const copy = await duplicateSlide(playlist.id, slide.id, guard);
+        recordWriteRevision(copy.playlistRevision, null, guard.expectedRevision);
         const placed = await placeSlideAfterActive(copy, lastPlaced?.id ?? slide.id);
         lastPlaced = placed;
       }
@@ -2018,6 +2353,7 @@ export function PlaylistEditorPage({
       }
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -2046,6 +2382,7 @@ export function PlaylistEditorPage({
         selectedSlide?.sectionId ??
         payload.sectionId ??
         null;
+      const guard = playlistWriteGuard();
       const slide = await addSlide(playlist.id, {
         ...payload,
         title: pasteTitleFromClipboard(payload),
@@ -2053,12 +2390,14 @@ export function PlaylistEditorPage({
         nativeConfig: payload.nativeConfig ?? undefined,
         externalUrl: payload.externalUrl ?? undefined,
         sectionId: anchorSectionId,
-      });
+      }, guard);
+      recordWriteRevision(slide.playlistRevision, null, guard.expectedRevision);
       const placed = await placeSlideAfterActive(slide, anchorId);
       selectSlide(placed.id, placed);
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -2075,7 +2414,14 @@ export function PlaylistEditorPage({
     try {
       const updates = new Map<string, Slide>();
       for (const slide of unique) {
-        const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+        const guard = playlistWriteGuard();
+        const updated = await updateSlide(
+          playlist.id,
+          slide.id,
+          { isActive: !slide.isActive },
+          guard,
+        );
+        recordWriteRevision(updated.playlistRevision, null, guard.expectedRevision);
         updates.set(updated.id, updated);
       }
       setPlaylist({
@@ -2093,6 +2439,7 @@ export function PlaylistEditorPage({
       }
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -2151,6 +2498,7 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
+      if (await handlePlaylistWriteConflict(caught)) return;
       throw caught;
     }
   }
@@ -2202,7 +2550,7 @@ export function PlaylistEditorPage({
       tvStatusClass: tvStatusClass(),
       editingPresence:
         otherEditors.length > 0
-          ? `Também editando: ${otherEditors.map((peer) => peer.displayName).join(", ")}`
+          ? `Também editando: ${otherEditorsLabel}`
           : null,
       linkActive: playlist.isActive,
       onBack,
@@ -2314,6 +2662,9 @@ export function PlaylistEditorPage({
           remoteSelections={currentRemoteSelections}
           onSelectionChange={sendSelectionUpdate}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
+          resolveWriteGuard={resolveWriteGuard}
+          onWriteCommitted={handleMutationCommitted}
+          onWriteError={handleMutationWriteError}
         >
           <CustomSlideEditorLayout
             selectedSlide={selectedSlide}

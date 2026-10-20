@@ -97,7 +97,7 @@ class _FakeRepo:
     def get_revision(self, playlist_id):
         return 7
 
-    def update_slide(self, playlist_id, slide_id, payload, *, actor_user_id, reason):
+    def update_slide(self, playlist_id, slide_id, payload, *, actor_user_id, reason, expected_revision=None):
         self.updated.append(
             {
                 "playlist_id": str(playlist_id),
@@ -126,7 +126,7 @@ class _FakeRepo:
         self.created_playlists.append(item)
         return item
 
-    def add_slide(self, playlist_id, payload, *, actor_user_id, reason):
+    def add_slide(self, playlist_id, payload, *, actor_user_id, reason, expected_revision=None):
         slide = {
             "id": f"slide-{len(self.added_slides)+2}",
             **payload,
@@ -135,7 +135,7 @@ class _FakeRepo:
         self.slides[str(slide["id"])] = slide
         return slide
 
-    def delete_slide(self, playlist_id, slide_id, *, actor_user_id, reason):
+    def delete_slide(self, playlist_id, slide_id, *, actor_user_id, reason, expected_revision=None):
         key = str(slide_id)
         if key not in self.slides:
             from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -146,11 +146,11 @@ class _FakeRepo:
         del self.slides[key]
         self.deleted_slides.append(key)
 
-    def reorder_slides(self, playlist_id, items, *, actor_user_id, reason):
+    def reorder_slides(self, playlist_id, items, *, actor_user_id, reason, expected_revision=None):
         self.reordered.append(list(items))
         return [dict(self.slides[str(item["id"])]) for item in items if str(item["id"]) in self.slides]
 
-    def add_section(self, playlist_id, payload, *, actor_user_id, reason):
+    def add_section(self, playlist_id, payload, *, actor_user_id, reason, expected_revision=None):
         section = {
             "id": f"sec-{len(self.sections)+1}",
             "name": payload.get("name"),
@@ -160,7 +160,7 @@ class _FakeRepo:
         self.section_ops.append({"op": "add", **section})
         return section
 
-    def update_section(self, playlist_id, section_id, payload, *, actor_user_id, reason):
+    def update_section(self, playlist_id, section_id, payload, *, actor_user_id, reason, expected_revision=None):
         key = str(section_id)
         if key not in self.sections:
             from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -174,7 +174,7 @@ class _FakeRepo:
         self.section_ops.append({"op": "update", **section})
         return dict(section)
 
-    def delete_section(self, playlist_id, section_id, *, actor_user_id, reason, delete_slides=False):
+    def delete_section(self, playlist_id, section_id, *, actor_user_id, reason, delete_slides=False, expected_revision=None):
         key = str(section_id)
         if key not in self.sections:
             from tv_app.infrastructure.persistence.repositories.playlist_repository import (

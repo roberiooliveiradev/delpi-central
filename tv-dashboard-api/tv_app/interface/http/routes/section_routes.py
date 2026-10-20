@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
+from tv_app.application.errors.playlist_persistence import PlaylistRevisionConflictError
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_transition_catalog import TRANSITION_STYLE_PATTERN
 from tv_app.application.services.tv_presentation_write_service import (
@@ -20,6 +21,7 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 from tv_app.interface.http.playlist_revision_http import (
     parse_if_match_revision,
+    playlist_revision_conflict_response,
     revision_response_headers,
     with_revision,
 )
@@ -94,14 +96,15 @@ def ensure_main_section(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    expected_revision = parse_if_match_revision(request)
     try:
-        _writes.assert_expected_revision(playlist_id, parse_if_match_revision(request))
         section = _repo.ensure_main_section(
             playlist_id,
             actor_user_id=_actor_id(user) or "unknown",
+            expected_revision=expected_revision,
         )
-    except PresentationWriteError as exc:
-        return _map_write_error(exc)
+    except PlaylistRevisionConflictError as exc:
+        return playlist_revision_conflict_response(exc, expected=expected_revision)
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
     from tv_app.application.services.presentation_change_notifier import (

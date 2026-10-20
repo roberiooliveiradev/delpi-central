@@ -12,6 +12,13 @@ export type ComunicadoSlideDraft = {
   /** Versão monotônica do autosave no momento da gravação (0 = legado). */
   version: number;
   nativeConfig: Record<string, unknown>;
+  /**
+   * Revisão da playlist na qual o conteúdo do draft foi derivado.
+   * Ausente = draft pré-contrato → tratado como conflitado (não aplica).
+   */
+  baseRevision?: number | null;
+  /** Draft preservado para recuperação — nunca aplica automaticamente. */
+  conflicted?: boolean;
 };
 
 export type ComunicadoSlideDraftSnapshot = {
@@ -37,10 +44,16 @@ export function normalizeComunicadoSlideDraft(raw: unknown): ComunicadoSlideDraf
   if (!isRecord(raw.nativeConfig)) return null;
   const version =
     typeof raw.version === "number" && Number.isFinite(raw.version) ? Math.max(0, raw.version) : 0;
+  const baseRevision =
+    typeof raw.baseRevision === "number" && Number.isFinite(raw.baseRevision)
+      ? Math.max(0, raw.baseRevision)
+      : null;
   return {
     updatedAt: raw.updatedAt,
     version,
     nativeConfig: raw.nativeConfig,
+    baseRevision,
+    conflicted: raw.conflicted === true,
   };
 }
 
@@ -65,6 +78,7 @@ export function writeComunicadoSlideDraft(
   nativeConfig: Record<string, unknown>,
   updatedAt: number = Date.now(),
   version: number = 0,
+  options?: { baseRevision?: number | null; conflicted?: boolean },
 ): void {
   if (!canUseLocalStorage() || !playlistId.trim() || !slideId.trim()) return;
   try {
@@ -72,6 +86,11 @@ export function writeComunicadoSlideDraft(
       updatedAt,
       version: Math.max(0, version),
       nativeConfig,
+      baseRevision:
+        typeof options?.baseRevision === "number" && Number.isFinite(options.baseRevision)
+          ? Math.max(0, options.baseRevision)
+          : null,
+      conflicted: options?.conflicted === true,
     };
     window.localStorage.setItem(storageKey(playlistId, slideId), JSON.stringify(entry));
   } catch {
@@ -105,19 +124,50 @@ export function clearComunicadoSlideDraftIfCoveredBySave(
 }
 
 /**
- * Aplica draft local sobre o slide remoto quando o draft é mais recente
- * (timestamp do draft vs. o que já está no shell; sem updatedAt no Slide remoto,
- * qualquer draft presente vence até o save confirmar e limpar).
+ * Verdadeiro quando o draft pode aplicar sobre a revisão remota:
+ * não conflitado e derivado de uma revisão conhecida e não-anterior.
+ * Draft sem baseRevision (legado) ou com base < revisão remota é obsoleto —
+ * preservado em storage, mas nunca sobrescreve automaticamente o servidor.
+ */
+export function isComunicadoDraftApplicable(
+  draft: ComunicadoSlideDraft | null,
+  playlistRevision: number | null | undefined,
+): draft is ComunicadoSlideDraft {
+  if (!draft || draft.conflicted) return false;
+  if (draft.baseRevision == null) return false;
+  if (playlistRevision == null || !Number.isFinite(playlistRevision)) return false;
+  return draft.baseRevision >= playlistRevision;
+}
+
+/**
+ * Marca o draft como conflitado preservando o conteúdo para recuperação —
+ * o servidor vence; o draft nunca mais aplica automaticamente.
+ */
+export function markComunicadoSlideDraftConflicted(playlistId: string, slideId: string): boolean {
+  const draft = readComunicadoSlideDraft(playlistId, slideId);
+  if (!draft) return false;
+  writeComunicadoSlideDraft(playlistId, slideId, draft.nativeConfig, draft.updatedAt, draft.version, {
+    baseRevision: draft.baseRevision,
+    conflicted: true,
+  });
+  return true;
+}
+
+/**
+ * Aplica draft local sobre o slide remoto quando o draft é aplicável
+ * à revisão remota conhecida (ver `isComunicadoDraftApplicable`).
  */
 export function applyComunicadoSlideDraft<T extends { id: string; nativeConfig?: Record<string, unknown> }>(
   slide: T,
   draft: ComunicadoSlideDraft | null,
 ): T {
-  if (!draft) return slide;
+  if (!draft || draft.conflicted) return slide;
   return { ...slide, nativeConfig: draft.nativeConfig };
 }
 
 type PlaylistWithSlides = {
+  revision?: number;
+  currentRevision?: number;
   slides?: Array<{
     id: string;
     nativeScreenKey?: string | null;
@@ -132,11 +182,22 @@ export function mergePlaylistSlidesWithComunicadoDrafts<T extends PlaylistWithSl
 ): T {
   const slides = playlist.slides;
   if (!slides?.length) return playlist;
+  const playlistRevision =
+    typeof playlist.revision === "number"
+      ? playlist.revision
+      : typeof playlist.currentRevision === "number"
+        ? playlist.currentRevision
+        : null;
   let changed = false;
   const nextSlides = slides.map((slide) => {
     if (slide.nativeScreenKey !== "custom_message") return slide;
     const draft = readComunicadoSlideDraft(playlistId, slide.id);
     if (!draft) return slide;
+    if (!isComunicadoDraftApplicable(draft, playlistRevision)) {
+      // Obsoleto ou conflitado: preserva para recuperação, não aplica.
+      markComunicadoSlideDraftConflicted(playlistId, slide.id);
+      return slide;
+    }
     changed = true;
     return applyComunicadoSlideDraft(slide, draft);
   });
@@ -189,7 +250,9 @@ export function hasLocalComunicadoEdits(args: {
   const slideId = args.slideId?.trim();
   if (!slideId) return false;
   if (args.pendingSlideId === slideId) return true;
-  return readComunicadoSlideDraft(args.playlistId, slideId) != null;
+  const draft = readComunicadoSlideDraft(args.playlistId, slideId);
+  // Draft conflitado fica preservado mas não bloqueia estado remoto.
+  return draft != null && draft.conflicted !== true;
 }
 
 /** Fingerprint leve para testes — inclui kpiParts/chartParts no JSON. */

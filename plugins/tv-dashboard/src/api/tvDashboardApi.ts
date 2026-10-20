@@ -57,6 +57,8 @@ export type PlaylistSection = {
   masterConfig?: PlaylistMasterConfig;
   createdAt?: string | null;
   updatedAt?: string | null;
+  /** Revisão da playlist após a escrita — presente nas respostas de mutação. */
+  playlistRevision?: number;
 };
 
 export type Playlist = {
@@ -64,6 +66,8 @@ export type Playlist = {
   /** Revisão otimista do agregado, quando entregue pelo backend. */
   revision?: number;
   currentRevision?: number;
+  /** Revisão da playlist após a escrita — presente nas respostas de mutação. */
+  playlistRevision?: number;
   publicToken: string;
   name: string;
   description?: string | null;
@@ -130,6 +134,18 @@ export type Slide = {
   transitionStyle?: string | null;
   /** Seção da programação; null = sem seção. */
   sectionId?: string | null;
+  /** Revisão da playlist após a escrita — presente nas respostas de mutação. */
+  playlistRevision?: number;
+};
+
+/**
+ * Concorrência otimista + correlação de auditoria para escritas na programação.
+ * `expectedRevision` vira header If-Match; omitir mantém escrita incondicional
+ * (legado). `clientId` é metadata de correlação — nunca autoridade.
+ */
+export type WriteGuard = {
+  expectedRevision?: number | null;
+  clientId?: string | null;
 };
 
 export type NativeScreenCatalogItem = {
@@ -561,20 +577,33 @@ export async function updatePlaylist(
     dataDefaults: Record<string, unknown>;
     masterConfig: PlaylistMasterConfig;
   }>,
+  options?: WriteGuard,
 ) {
-  return unwrap(httpPatch<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`, body));
+  return unwrap(
+    httpPatch<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`, body, {
+      ifMatch: options?.expectedRevision,
+    }),
+  );
 }
 
 export async function deletePlaylist(id: string) {
   return unwrap(httpDelete<ApiEnvelope<null>>(`${API_BASE}/playlists/${id}`));
 }
 
-export async function deactivatePlaylist(id: string) {
-  return unwrap(httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/deactivate`, {}));
+export async function deactivatePlaylist(id: string, options?: WriteGuard) {
+  return unwrap(
+    httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/deactivate`, {}, {
+      ifMatch: options?.expectedRevision,
+    }),
+  );
 }
 
-export async function activatePlaylist(id: string) {
-  return unwrap(httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/activate`, {}));
+export async function activatePlaylist(id: string, options?: WriteGuard) {
+  return unwrap(
+    httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/activate`, {}, {
+      ifMatch: options?.expectedRevision,
+    }),
+  );
 }
 
 export async function duplicatePlaylist(id: string) {
@@ -712,11 +741,12 @@ export async function acceptPlaylistEditInvite(token: string) {
   );
 }
 
-export async function duplicateSlide(playlistId: string, slideId: string) {
+export async function duplicateSlide(playlistId: string, slideId: string, options?: WriteGuard) {
   return unwrap(
     httpPost<ApiEnvelope<Slide>>(
       `${API_BASE}/playlists/${playlistId}/slides/${slideId}/duplicate`,
       {},
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1255,38 +1285,47 @@ export async function addSlide(
     transitionStyle?: string | null;
     sectionId?: string | null;
   },
+  options?: WriteGuard,
 ) {
   return unwrap(
-    httpPost<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides`, body),
+    httpPost<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides`, body, {
+      ifMatch: options?.expectedRevision,
+    }),
   );
 }
 
 export async function addSlideFromPreset(
   playlistId: string,
   body: { presetKey: string; branch?: string },
+  options?: WriteGuard,
 ) {
   return unwrap(
     httpPost<ApiEnvelope<Slide>>(
       `${API_BASE}/playlists/${playlistId}/slides/from-preset`,
       body,
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
 
-export async function deleteSlide(playlistId: string, slideId: string) {
+export async function deleteSlide(playlistId: string, slideId: string, options?: WriteGuard) {
   return unwrap(
-    httpDelete<ApiEnvelope<null>>(`${API_BASE}/playlists/${playlistId}/slides/${slideId}`),
+    httpDelete<ApiEnvelope<null>>(`${API_BASE}/playlists/${playlistId}/slides/${slideId}`, {
+      ifMatch: options?.expectedRevision,
+    }),
   );
 }
 
 export async function reorderSlides(
   playlistId: string,
   items: Array<{ id: string; sortOrder: number }>,
+  options?: WriteGuard,
 ) {
   return unwrap(
-    httpPost<ApiEnvelope<{ slides: Slide[] }>>(
+    httpPost<ApiEnvelope<{ slides: Slide[]; playlistRevision?: number }>>(
       `${API_BASE}/playlists/${playlistId}/slides/reorder`,
       { items },
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1303,13 +1342,14 @@ export async function updateSlide(
     transitionStyle: string | null;
     sectionId: string | null;
   }>,
-  options?: { keepalive?: boolean },
+  options?: WriteGuard & { keepalive?: boolean },
 ) {
+  const clientId = options?.clientId?.trim();
   return unwrap(
     httpPatch<ApiEnvelope<Slide>>(
       `${API_BASE}/playlists/${playlistId}/slides/${slideId}`,
-      body,
-      { keepalive: options?.keepalive },
+      clientId ? { ...body, clientId } : body,
+      { keepalive: options?.keepalive, ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1361,6 +1401,8 @@ export type PresentationMutationResult = {
   sideEffectHints?: string[];
   persisted?: boolean;
   executionMode?: string;
+  /** Revisão da playlist após o commit. */
+  playlistRevision?: number;
 };
 
 /** Commit typed PresentationMutation ops (backend presentation authority). */
@@ -1368,11 +1410,14 @@ export async function applyPresentationMutations(
   playlistId: string,
   slideId: string,
   ops: PresentationMutationOp[],
+  options?: WriteGuard,
 ): Promise<PresentationMutationResult> {
+  const clientId = options?.clientId?.trim();
   return unwrap(
     httpPost<ApiEnvelope<PresentationMutationResult>>(
       `${API_BASE}/playlists/${playlistId}/slides/${slideId}/presentation-mutations`,
-      { ops },
+      clientId ? { ops, clientId } : { ops },
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1387,11 +1432,12 @@ export async function listPlaylistSections(playlistId: string) {
 }
 
 /** Garante a seção Principal (isMain); idempotente. */
-export async function ensurePlaylistMainSection(playlistId: string) {
+export async function ensurePlaylistMainSection(playlistId: string, options?: WriteGuard) {
   return unwrap(
     httpPost<ApiEnvelope<PlaylistSection>>(
       `${API_BASE}/playlists/${playlistId}/sections/ensure-main`,
       {},
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1408,11 +1454,13 @@ export async function createPlaylistSection(
     transitionStyle?: string | null;
     masterConfig?: PlaylistMasterConfig;
   },
+  options?: WriteGuard,
 ) {
   return unwrap(
     httpPost<ApiEnvelope<PlaylistSection>>(
       `${API_BASE}/playlists/${playlistId}/sections`,
       body,
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1429,11 +1477,13 @@ export async function updatePlaylistSection(
     transitionStyle: string | null;
     masterConfig: PlaylistMasterConfig;
   }>,
+  options?: WriteGuard,
 ) {
   return unwrap(
     httpPatch<ApiEnvelope<PlaylistSection>>(
       `${API_BASE}/playlists/${playlistId}/sections/${sectionId}`,
       body,
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1441,12 +1491,13 @@ export async function updatePlaylistSection(
 export async function deletePlaylistSection(
   playlistId: string,
   sectionId: string,
-  options?: { deleteSlides?: boolean },
+  options?: { deleteSlides?: boolean } & WriteGuard,
 ) {
   const qs = options?.deleteSlides ? "?deleteSlides=true" : "";
   return unwrap(
     httpDelete<ApiEnvelope<{ deleted: boolean }>>(
       `${API_BASE}/playlists/${playlistId}/sections/${sectionId}${qs}`,
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }
@@ -1454,11 +1505,13 @@ export async function deletePlaylistSection(
 export async function reorderPlaylistSections(
   playlistId: string,
   items: Array<{ id: string; sortOrder: number }>,
+  options?: WriteGuard,
 ) {
   return unwrap(
-    httpPost<ApiEnvelope<{ items: PlaylistSection[] }>>(
+    httpPost<ApiEnvelope<{ items: PlaylistSection[]; playlistRevision?: number }>>(
       `${API_BASE}/playlists/${playlistId}/sections/reorder`,
       { items },
+      { ifMatch: options?.expectedRevision },
     ),
   );
 }

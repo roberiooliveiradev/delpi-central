@@ -35,7 +35,7 @@ import {
   type TvDataModel,
 } from "@delpi/tv-dashboard-presentation";
 
-import type { PlaylistMasterConfig } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, WriteGuard } from "../api/tvDashboardApi";
 import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext";
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
@@ -64,6 +64,7 @@ import {
   commitDeleteDataModel,
   commitPatchDataModel,
   commitUpsertDataModel,
+  type MutationCommitMeta,
 } from "../utils/presentationMutationClient";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
@@ -108,6 +109,12 @@ type ProviderProps = {
   remoteSelections?: PresentationSelectionUpdateEvent[];
   onSelectionChange?: (slideId: string, selectedIds: string[]) => void;
   onChange: (config: Record<string, unknown>) => void;
+  /** OCC guard resolved per persisted mutation — slide base revision + clientId. */
+  resolveWriteGuard?: () => WriteGuard | null | undefined;
+  /** Revision metadata emitted after each committed mutation. */
+  onWriteCommitted?: (meta: MutationCommitMeta) => void;
+  /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
+  onWriteError?: (error: unknown) => void;
   children: ReactNode;
 };
 
@@ -234,6 +241,9 @@ export function ComunicadoEditorProvider({
   remoteSelections = [],
   onSelectionChange,
   onChange,
+  resolveWriteGuard,
+  onWriteCommitted,
+  onWriteError,
   children,
 }: ProviderProps) {
   const deckHistory = useDeckEditorHistoryContext();
@@ -562,6 +572,9 @@ export function ComunicadoEditorProvider({
     clearSelection: selection.clearSelection,
     getSlideAspectRatio: () =>
       designSizeRef.current.width / Math.max(designSizeRef.current.height, 1),
+    resolveWriteGuard,
+    onWriteCommitted,
+    onWriteError,
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -691,6 +704,9 @@ export function ComunicadoEditorProvider({
     canvasWrapRef: stage.canvasWrapRef,
     getSlideAspectRatio: () =>
       designSizeRef.current.width / Math.max(designSizeRef.current.height, 1),
+    resolveWriteGuard,
+    onWriteCommitted,
+    onWriteError,
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
@@ -777,11 +793,15 @@ export function ComunicadoEditorProvider({
                 modelId: plan.patch.modelId,
                 inputPatches: plan.patch.inputPatches,
                 modelPatch: plan.patch.modelPatch,
+                writeGuard: resolveWriteGuard?.() ?? undefined,
+                onCommitted: onWriteCommitted,
               })
             : await commitUpsertDataModel({
                 playlistId,
                 slideId: currentSlideId,
                 model: serializeDataModelForPreview(model),
+                writeGuard: resolveWriteGuard?.() ?? undefined,
+                onCommitted: onWriteCommitted,
               });
         if (!canonical) {
           throw new Error(
@@ -804,6 +824,8 @@ export function ComunicadoEditorProvider({
           playlistId,
           slideId: currentSlideId,
           modelId,
+          writeGuard: resolveWriteGuard?.() ?? undefined,
+          onCommitted: onWriteCommitted,
         });
         if (!canonical) {
           throw new Error(

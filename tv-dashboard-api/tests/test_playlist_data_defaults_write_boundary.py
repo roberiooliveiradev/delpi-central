@@ -100,7 +100,15 @@ class _FakePlaylistRepo:
             self._playlist["dataDefaults"] = kwargs["data_defaults"]
         return dict(self._playlist)
 
-    def update_data_defaults(self, playlist_id, data_defaults, *, actor_user_id, reason):
+    def update_data_defaults(
+        self,
+        playlist_id,
+        data_defaults,
+        *,
+        actor_user_id,
+        reason,
+        expected_revision=None,
+    ):
         self._playlist["dataDefaults"] = data_defaults
         return dict(self._playlist)
 

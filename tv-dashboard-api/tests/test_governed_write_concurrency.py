@@ -122,7 +122,16 @@ class _Repo:
     def list_slides(self, playlist_id):
         return [copy.deepcopy(self.slide)]
 
-    def update_slide(self, playlist_id, slide_id, body, *, actor_user_id, reason):
+    def update_slide(
+        self,
+        playlist_id,
+        slide_id,
+        body,
+        *,
+        actor_user_id,
+        reason,
+        expected_revision=None,
+    ):
         self.update_calls.append({"reason": reason, "body": copy.deepcopy(body)})
         self.slide.update(copy.deepcopy(body))
         self.revision += 1

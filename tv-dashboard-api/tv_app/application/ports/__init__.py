@@ -26,6 +26,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         reason: str = "slide_created",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]: ...
 
     def update_slide(
@@ -36,6 +37,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         reason: str = "slide_updated",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]: ...
 
     def delete_slide(
@@ -45,6 +47,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         reason: str = "slide_deleted",
+        expected_revision: int | None = None,
     ) -> None: ...
 
     def reorder_slides(
@@ -54,6 +57,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         reason: str = "slides_reordered",
+        expected_revision: int | None = None,
     ) -> list[dict[str, Any]]: ...
 
     def list_slides(self, playlist_id: UUID) -> list[dict[str, Any]]: ...
@@ -68,6 +72,7 @@ class PresentationRepositoryPort(Protocol):
         payload: dict[str, Any],
         *,
         actor_user_id: str,
+        expected_revision: int | None = None,
     ) -> dict[str, Any]: ...
 
     def update_section(
@@ -77,6 +82,7 @@ class PresentationRepositoryPort(Protocol):
         payload: dict[str, Any],
         *,
         actor_user_id: str,
+        expected_revision: int | None = None,
     ) -> dict[str, Any]: ...
 
     def delete_section(
@@ -86,6 +92,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         delete_slides: bool = False,
+        expected_revision: int | None = None,
     ) -> None: ...
 
     def reorder_sections(
@@ -94,6 +101,7 @@ class PresentationRepositoryPort(Protocol):
         items: list[dict[str, Any]],
         *,
         actor_user_id: str,
+        expected_revision: int | None = None,
     ) -> list[dict[str, Any]]: ...
 
     def list_sections(self, playlist_id: UUID) -> list[dict[str, Any]]: ...
@@ -105,6 +113,7 @@ class PresentationRepositoryPort(Protocol):
         *,
         actor_user_id: str,
         reason: str = "playlist_data_defaults",
+        expected_revision: int | None = None,
     ) -> dict[str, Any]: ...
 
     def list_playlists(

@@ -12,6 +12,9 @@ from uuid import UUID
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from tv_app.application.errors.playlist_persistence import (
+    PlaylistRevisionConflictError,
+)
 from tv_app.core.responses import fail
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistRepository,
@@ -49,6 +52,22 @@ def assert_playlist_revision_or_conflict(
             data={"currentRevision": current, "expectedRevision": int(expected)},
         )
     return current
+
+
+def playlist_revision_conflict_response(
+    exc: PlaylistRevisionConflictError,
+    *,
+    expected: int | None,
+) -> JSONResponse:
+    """409 canônico para conflito de CAS atômico vindo do repositório."""
+    return fail(
+        "A programação foi alterada por outro editor. Recarregue e tente de novo.",
+        409,
+        data={
+            "currentRevision": int(exc.current_revision),
+            "expectedRevision": int(expected) if expected is not None else None,
+        },
+    )
 
 
 def revision_response_headers(revision: int) -> dict[str, str]:

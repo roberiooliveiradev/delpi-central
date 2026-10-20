@@ -10,17 +10,26 @@ import { parseComunicadoConfig, type ComunicadoConfig } from "@delpi/tv-dashboar
 import {
   applyPresentationMutations,
   type PresentationMutationOp,
+  type WriteGuard,
 } from "../api/tvDashboardApi";
 import { isParamExpressionValue } from "./paramExpressions";
+
+/** Result revision metadata surfaced after a committed mutation. */
+export type MutationCommitMeta = {
+  playlistRevision?: number;
+};
 
 export async function commitPresentationOps(args: {
   playlistId: string;
   slideId: string;
   ops: PresentationMutationOp[];
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   const { playlistId, slideId, ops } = args;
   if (!playlistId || !slideId || ops.length === 0) return null;
-  const result = await applyPresentationMutations(playlistId, slideId, ops);
+  const result = await applyPresentationMutations(playlistId, slideId, ops, args.writeGuard);
+  args.onCommitted?.({ playlistRevision: result.playlistRevision });
   const raw = result.nativeConfig;
   if (!raw || typeof raw !== "object") return null;
   return parseComunicadoConfig(raw);
@@ -38,6 +47,8 @@ export async function commitCreateBlock(args: {
   content?: string;
   frame?: Record<string, number>;
   style?: Record<string, unknown>;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   const op: PresentationMutationOp = {
     op: "create_block",
@@ -54,6 +65,8 @@ export async function commitCreateBlock(args: {
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops: [op],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -62,6 +75,8 @@ export async function commitAlignBlocks(args: {
   slideId: string;
   blockIds: string[];
   command: string;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
@@ -73,6 +88,8 @@ export async function commitAlignBlocks(args: {
         command: args.command,
       },
     ],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -81,6 +98,8 @@ export async function commitReorderBlockZ(args: {
   slideId: string;
   blockIds: string[];
   command: "bring-to-front" | "send-to-back" | "bring-forward" | "send-backward";
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
@@ -92,6 +111,8 @@ export async function commitReorderBlockZ(args: {
         command: args.command,
       },
     ],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -101,6 +122,8 @@ export async function commitDuplicateBlocks(args: {
   blockIds: string[];
   offsetX?: number;
   offsetY?: number;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
@@ -113,6 +136,8 @@ export async function commitDuplicateBlocks(args: {
         ...(args.offsetY != null ? { offsetY: args.offsetY } : {}),
       },
     ],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -170,11 +195,15 @@ export async function commitPatchNativeConfig(args: {
   playlistId: string;
   slideId: string;
   patch: Record<string, unknown>;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops: [{ op: "patch_native_config", patch: args.patch }],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -183,11 +212,15 @@ export async function commitUpsertDataModel(args: {
   playlistId: string;
   slideId: string;
   model: Record<string, unknown>;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops: [{ op: "upsert_data_model", model: args.model }],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -201,6 +234,8 @@ export async function commitPatchDataModel(args: {
   modelId: string;
   inputPatches?: Record<string, unknown>[];
   modelPatch?: Record<string, unknown>;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   const op: PresentationMutationOp = {
     op: "patch_data_model",
@@ -214,6 +249,8 @@ export async function commitPatchDataModel(args: {
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops: [op],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -222,11 +259,15 @@ export async function commitDeleteDataModel(args: {
   playlistId: string;
   slideId: string;
   modelId: string;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   return commitPresentationOps({
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops: [{ op: "delete_data_model", modelId: args.modelId }],
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }
 
@@ -273,6 +314,8 @@ export async function commitUpsertBlocks(args: {
   playlistId: string;
   slideId: string;
   blocks: Record<string, unknown>[];
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
 }): Promise<ComunicadoConfig | null> {
   if (args.blocks.length === 0) return null;
   const ops: PresentationMutationOp[] = [];
@@ -291,5 +334,7 @@ export async function commitUpsertBlocks(args: {
     playlistId: args.playlistId,
     slideId: args.slideId,
     ops,
+    writeGuard: args.writeGuard,
+    onCommitted: args.onCommitted,
   });
 }

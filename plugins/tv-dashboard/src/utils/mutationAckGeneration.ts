@@ -7,8 +7,12 @@
 
 import type { ComunicadoConfig } from "@delpi/tv-dashboard-presentation";
 
-import type { PresentationMutationOp } from "../api/tvDashboardApi";
-import { commitPresentationOps, commitUpsertBlocks } from "./presentationMutationClient";
+import type { PresentationMutationOp, WriteGuard } from "../api/tvDashboardApi";
+import {
+  commitPresentationOps,
+  commitUpsertBlocks,
+  type MutationCommitMeta,
+} from "./presentationMutationClient";
 
 export type MutationAckApply = (canonical: ComunicadoConfig) => void;
 
@@ -41,16 +45,26 @@ export async function ackUpsertBlocksWithGeneration(args: {
   blocks: Record<string, unknown>[];
   gate: MutationGenerationGate;
   applyAck: MutationAckApply;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
+  onError?: (error: unknown) => void;
 }): Promise<ComunicadoConfig | null> {
   const { playlistId, slideId, blocks, gate, applyAck } = args;
   if (!playlistId || !slideId || blocks.length === 0) return null;
   const token = gate.next();
   try {
-    const canonical = await commitUpsertBlocks({ playlistId, slideId, blocks });
+    const canonical = await commitUpsertBlocks({
+      playlistId,
+      slideId,
+      blocks,
+      writeGuard: args.writeGuard,
+      onCommitted: args.onCommitted,
+    });
     if (!canonical || !gate.isCurrent(token)) return null;
     applyAck(canonical);
     return canonical;
-  } catch {
+  } catch (error) {
+    args.onError?.(error);
     return null;
   }
 }
@@ -66,20 +80,30 @@ export async function commitOpsAndApplyAck(args: {
   applyAck: MutationAckApply;
   /** Local preview applied before the network round-trip. */
   optimistic?: () => void;
+  writeGuard?: WriteGuard;
+  onCommitted?: (meta: MutationCommitMeta) => void;
+  onError?: (error: unknown) => void;
 }): Promise<ComunicadoConfig | null> {
   const { playlistId, slideId, ops, gate, applyAck, optimistic } = args;
   if (!playlistId || !slideId || ops.length === 0) return null;
   const token = gate.next();
   optimistic?.();
   try {
-    const canonical = await commitPresentationOps({ playlistId, slideId, ops });
+    const canonical = await commitPresentationOps({
+      playlistId,
+      slideId,
+      ops,
+      writeGuard: args.writeGuard,
+      onCommitted: args.onCommitted,
+    });
     if (!canonical) {
       return null;
     }
     if (!gate.isCurrent(token)) return null;
     applyAck(canonical);
     return canonical;
-  } catch {
+  } catch (error) {
+    args.onError?.(error);
     return null;
   }
 }

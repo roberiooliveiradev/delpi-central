@@ -6,12 +6,15 @@ AuthZ remains at the caller; this service owns sanitize/validate + persist + not
 
 from __future__ import annotations
 
-from typing import Any
+import logging
+from collections.abc import Callable
+from typing import Any, TypeVar
 from uuid import UUID
 
 from tv_app.application.errors.playlist_persistence import (
     MainSectionProtectedError,
     PlaylistNotFoundError,
+    PlaylistRevisionConflictError,
     SectionNotFoundError,
     SlideNotFoundError,
 )
@@ -68,6 +71,11 @@ class RevisionConflictError(PresentationWriteError):
         )
         self.expected_revision = int(expected_revision)
         self.current_revision = int(current_revision)
+
+
+logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 
 _PLAYLIST_DEFAULT_SCALAR_TYPES = (str, int, float, bool, type(None))
@@ -138,6 +146,37 @@ class TvPresentationWriteService:
             )
         return current
 
+    def _persist(
+        self,
+        playlist_id: UUID,
+        expected_revision: int | None,
+        write: Callable[[], _T],
+    ) -> _T:
+        """Executa a escrita com o CAS atômico do repositório.
+
+        ``assert_expected_revision`` é fail-fast; o repositório revalida a
+        revisão dentro da transação ``FOR UPDATE``. Um conflito detectado só
+        no CAS (race entre a leitura e o commit) vira RevisionConflictError.
+        """
+        try:
+            return write()
+        except PlaylistRevisionConflictError as exc:
+            logger.info(
+                "presentation_write_revision_conflict playlist_id=%s "
+                "expected_revision=%s current_revision=%s",
+                playlist_id,
+                expected_revision,
+                exc.current_revision,
+            )
+            raise RevisionConflictError(
+                expected_revision=int(
+                    exc.expected_revision
+                    if exc.expected_revision is not None
+                    else (expected_revision or 0)
+                ),
+                current_revision=exc.current_revision,
+            ) from exc
+
     def prepare_native_config(
         self,
         native_config: dict | None,
@@ -201,11 +240,16 @@ class TvPresentationWriteService:
             next_defaults = normalize_period_params_for_persistence(cleaned)
         else:
             next_defaults = merge_period_params_layer(existing, cleaned)
-        playlist = self._repo.update_data_defaults(
+        playlist = self._persist(
             playlist_id,
-            next_defaults,
-            actor_user_id=actor_user_id,
-            reason="playlist_data_defaults",
+            expected_revision,
+            lambda: self._repo.update_data_defaults(
+                playlist_id,
+                next_defaults,
+                actor_user_id=actor_user_id,
+                reason="playlist_data_defaults",
+                expected_revision=expected_revision,
+            ),
         )
         notify_presentation_changed(
             playlist_id=str(playlist_id),
@@ -239,11 +283,16 @@ class TvPresentationWriteService:
                 )
             except ValueError as exc:
                 raise PresentationWriteError(str(exc), status_code=422) from exc
-        slide = self._repo.add_slide(
+        slide = self._persist(
             playlist_id,
-            body,
-            actor_user_id=actor_user_id,
-            reason=reason,
+            expected_revision,
+            lambda: self._repo.add_slide(
+                playlist_id,
+                body,
+                actor_user_id=actor_user_id,
+                reason=reason,
+                expected_revision=expected_revision,
+            ),
         )
         if notify:
             notify_presentation_changed(
@@ -284,11 +333,16 @@ class TvPresentationWriteService:
                 validate_native_branch(preset_payload.get("nativeConfig"), user=user)
             except ValueError as exc:
                 raise PresentationWriteError(str(exc), status_code=422) from exc
-        slide = self._repo.add_slide(
+        slide = self._persist(
             playlist_id,
-            preset_payload,
-            actor_user_id=actor_user_id,
-            reason="slide_imported",
+            expected_revision,
+            lambda: self._repo.add_slide(
+                playlist_id,
+                preset_payload,
+                actor_user_id=actor_user_id,
+                reason="slide_imported",
+                expected_revision=expected_revision,
+            ),
         )
         if notify:
             notify_presentation_changed(
@@ -320,12 +374,17 @@ class TvPresentationWriteService:
             except ValueError as exc:
                 raise PresentationWriteError(str(exc), status_code=422) from exc
         try:
-            slide = self._repo.update_slide(
+            slide = self._persist(
                 playlist_id,
-                slide_id,
-                body,
-                actor_user_id=actor_user_id,
-                reason=reason,
+                expected_revision,
+                lambda: self._repo.update_slide(
+                    playlist_id,
+                    slide_id,
+                    body,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                    expected_revision=expected_revision,
+                ),
             )
         except SlideNotFoundError as exc:
             raise PresentationWriteError(
@@ -352,11 +411,16 @@ class TvPresentationWriteService:
     ) -> None:
         self.assert_expected_revision(playlist_id, expected_revision)
         try:
-            self._repo.delete_slide(
+            self._persist(
                 playlist_id,
-                slide_id,
-                actor_user_id=actor_user_id,
-                reason="slide_deleted",
+                expected_revision,
+                lambda: self._repo.delete_slide(
+                    playlist_id,
+                    slide_id,
+                    actor_user_id=actor_user_id,
+                    reason="slide_deleted",
+                    expected_revision=expected_revision,
+                ),
             )
         except SlideNotFoundError as exc:
             raise PresentationWriteError(
@@ -381,11 +445,16 @@ class TvPresentationWriteService:
         notify: bool = True,
     ) -> list[dict[str, Any]]:
         self.assert_expected_revision(playlist_id, expected_revision)
-        slides = self._repo.reorder_slides(
+        slides = self._persist(
             playlist_id,
-            items,
-            actor_user_id=actor_user_id,
-            reason="slides_reordered",
+            expected_revision,
+            lambda: self._repo.reorder_slides(
+                playlist_id,
+                items,
+                actor_user_id=actor_user_id,
+                reason="slides_reordered",
+                expected_revision=expected_revision,
+            ),
         )
         if notify:
             notify_presentation_changed(
@@ -405,10 +474,15 @@ class TvPresentationWriteService:
     ) -> dict[str, Any]:
         self.assert_expected_revision(playlist_id, expected_revision)
         try:
-            section = self._repo.add_section(
+            section = self._persist(
                 playlist_id,
-                payload,
-                actor_user_id=actor_user_id,
+                expected_revision,
+                lambda: self._repo.add_section(
+                    playlist_id,
+                    payload,
+                    actor_user_id=actor_user_id,
+                    expected_revision=expected_revision,
+                ),
             )
         except PlaylistNotFoundError as exc:
             raise PresentationWriteError(
@@ -435,11 +509,16 @@ class TvPresentationWriteService:
     ) -> dict[str, Any]:
         self.assert_expected_revision(playlist_id, expected_revision)
         try:
-            section = self._repo.update_section(
+            section = self._persist(
                 playlist_id,
-                section_id,
-                payload,
-                actor_user_id=actor_user_id,
+                expected_revision,
+                lambda: self._repo.update_section(
+                    playlist_id,
+                    section_id,
+                    payload,
+                    actor_user_id=actor_user_id,
+                    expected_revision=expected_revision,
+                ),
             )
         except PlaylistNotFoundError as exc:
             raise PresentationWriteError(
@@ -472,11 +551,16 @@ class TvPresentationWriteService:
     ) -> None:
         self.assert_expected_revision(playlist_id, expected_revision)
         try:
-            self._repo.delete_section(
+            self._persist(
                 playlist_id,
-                section_id,
-                actor_user_id=actor_user_id,
-                delete_slides=delete_slides,
+                expected_revision,
+                lambda: self._repo.delete_section(
+                    playlist_id,
+                    section_id,
+                    actor_user_id=actor_user_id,
+                    delete_slides=delete_slides,
+                    expected_revision=expected_revision,
+                ),
             )
         except PlaylistNotFoundError as exc:
             raise PresentationWriteError(
@@ -513,10 +597,15 @@ class TvPresentationWriteService:
     ) -> list[dict[str, Any]]:
         self.assert_expected_revision(playlist_id, expected_revision)
         try:
-            sections = self._repo.reorder_sections(
+            sections = self._persist(
                 playlist_id,
-                items,
-                actor_user_id=actor_user_id,
+                expected_revision,
+                lambda: self._repo.reorder_sections(
+                    playlist_id,
+                    items,
+                    actor_user_id=actor_user_id,
+                    expected_revision=expected_revision,
+                ),
             )
         except PlaylistNotFoundError as exc:
             raise PresentationWriteError(

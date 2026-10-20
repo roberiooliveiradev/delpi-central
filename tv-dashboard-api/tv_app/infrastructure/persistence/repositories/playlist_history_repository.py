@@ -8,22 +8,25 @@ from uuid import UUID
 
 from delpi_auth.request_context import get_current_user
 
+from tv_app.application.errors.playlist_persistence import (
+    PlaylistRevisionConflictError,
+)
 from tv_app.application.services.playlist_history_change_service import (
     PlaylistHistoryChangeService,
 )
 from tv_app.infrastructure.persistence.plugins_postgres_connection import get_connection
+
+__all__ = [
+    "PlaylistHistoryNotFoundError",
+    "PlaylistHistoryRepository",
+    "PlaylistRevisionConflictError",
+]
 
 HISTORY_LIMIT_PER_PLAYLIST = 500
 
 
 class PlaylistHistoryNotFoundError(LookupError):
     pass
-
-
-class PlaylistRevisionConflictError(RuntimeError):
-    def __init__(self, current_revision: int) -> None:
-        self.current_revision = current_revision
-        super().__init__(f"Revisão atual: {current_revision}")
 
 
 def _history_summary(row: dict[str, Any]) -> dict[str, Any]:
@@ -184,8 +187,17 @@ class PlaylistHistoryRepository:
         *,
         actor_user_id: str,
         reason: str,
+        expected_revision: int | None = None,
     ) -> None:
-        """Captura o estado bloqueado e poda versões antigas na transação chamadora."""
+        """Captura o estado bloqueado e poda versões antigas na transação chamadora.
+
+        ``expected_revision`` aplica compare-and-swap atômico: a revisão é
+        verificada dentro do mesmo ``FOR UPDATE`` que bloqueia a linha da
+        programação, então uma escrita baseada em snapshot obsoleto falha com
+        :class:`PlaylistRevisionConflictError` em vez de sobrescrever uma
+        revisão persistida mais recente. ``None`` preserva o comportamento
+        legado (escrita incondicional) para consumidores sem If-Match.
+        """
         actor = PlaylistHistoryRepository._resolve_actor_snapshot(actor_user_id)
         cur.execute(
             """
@@ -239,6 +251,7 @@ class PlaylistHistoryRepository:
               )
             FROM tv_dashboard.playlists p
             WHERE p.id = %s
+              AND (%s::bigint IS NULL OR p.revision = %s)
             FOR UPDATE
             """,
             (
@@ -247,10 +260,30 @@ class PlaylistHistoryRepository:
                 actor["email"],
                 reason.strip(),
                 str(playlist_id),
+                expected_revision,
+                expected_revision,
             ),
         )
         if cur.rowcount != 1:
-            raise PlaylistHistoryNotFoundError
+            # A linha existe com revisão divergente (CAS falhou) ou não existe.
+            # O SELECT FOR UPDATE serializa com escritas concorrentes e
+            # reporta a revisão efetivamente persistida.
+            cur.execute(
+                """
+                SELECT revision
+                FROM tv_dashboard.playlists
+                WHERE id = %s
+                FOR UPDATE
+                """,
+                (str(playlist_id),),
+            )
+            current = cur.fetchone()
+            if not current:
+                raise PlaylistHistoryNotFoundError
+            raise PlaylistRevisionConflictError(
+                int(current["revision"]),
+                expected_revision=expected_revision,
+            )
         cur.execute(
             """
             DELETE FROM tv_dashboard.playlist_history h

@@ -73,12 +73,16 @@ async def lifespan(_app: FastAPI):
     loop = asyncio.get_running_loop()
     presentation_realtime_hub.bind_loop(loop)
     worker = asyncio.create_task(presentation_realtime_hub.worker())
+    sweeper = asyncio.create_task(presentation_realtime_hub.presence_sweeper())
     try:
         yield
     finally:
         worker.cancel()
+        sweeper.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await worker
+        with contextlib.suppress(asyncio.CancelledError):
+            await sweeper
 
 
 app = FastAPI(
