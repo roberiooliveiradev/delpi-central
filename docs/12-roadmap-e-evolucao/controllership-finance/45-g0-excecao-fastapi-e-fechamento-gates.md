@@ -355,3 +355,26 @@ Assinatura PO: ____________________  Data: __________  HEAD: ________
 
 **Condições de execução:** preservar worktree concorrente, conferir producers/consumers no HEAD, não transformar auth ausente em bypass; Help na mesma entrega; G2/G3/G4 com testes positivos/negativos/sibling e evidência de SHA. Qualquer divergência material = `EXECUTION_DRIFT`/STOP. Testes ainda `TEST_NOT_RUN` até execução.
 
+
+## 15. IMP-08/P1 — decisões de rota, sequência e competência (2026-10-20)
+
+**Manifestação expressa do PO/autoridade do projeto:** "Aprovo as decisões do IMP-08/P1: D1=A, D2=B, D3=C. Registre as decisões no GitHub, atualize o gate canônico e prepare o próximo prompt executivo conforme o escopo escolhido, sem implementar runtime fora do gate."
+
+**D1=A — ROUTE_FREEZE / TARGET:** a rota interna do Cockpit da Competência é `/apps/controllership-finance/closing/competence`, com o parâmetro de deep link `?competence=` (valor/identificador tipado ainda a comprovar pelo contrato de competência). Rota aprovada **não** equivale a rota implementada ou publicada no manifest. Não presumir as rotas de P2–P5 como congeladas.
+
+**D2=B — SEQUENCING / APPROVED:** preceder a implementação do Cockpit P1 por verificação dos contratos reais da competência, T01/T03/T05 e dos producers P2/P3/P5. **Não** implementar agora o micro-slice de navegação, cards ou três eixos indisponíveis sem dados. Retornar com propostas de contratos e gates de predecessores por owner, sem fabricar estado ou endpoint agregado.
+
+**D3=C — PERSISTENCE_DECISION_DEFERRED:** manter `TO_INVENTORY / DECISION_REQUIRED` a definição do owner físico e da persistência da competência. Comparar derivação de producers versus entidade própria somente após provenance, lifecycle, escopo, versionamento e dependências provados. Nenhum schema, migration, tabela, repositório ou workaround está autorizado nesta etapa.
+
+### Gate específico IMP-08/P1 — estado após as decisões
+
+- `ROUTE_DECISION = APPROVED / TARGET_ONLY`.
+- `PRODUCER_DISCOVERY = AUTHORIZED / READ_ONLY`.
+- `IMPLEMENTATION_AUTHORIZED = NO / IMP-08-P1`.
+- `COCKPIT_RUNTIME_GATE = NO_GO / BLOCKED_BY_T01_T03_T05_AND_P2_P3_P5`.
+- `STORAGE_ARCHITECTURE = DEFERRED / TO_INVENTORY`.
+- `TESTS = TEST_NOT_RUN` para novo runtime P1.
+
+**Saída obrigatória do predecessor documental:** revalidar HEAD/status, authority TÉO AS-IS e GitHub TARGET; evidenciar para competência, P7, H02, Entradas/Saídas, cutoff, conciliação e `STOCK_CLOSED` os producers reais, DTOs/paths, scope, temporalidade, freshness, estados, owners e lacunas. Inventariar Core T05 `user × competence × unit`; P2/P5 e catálogo P6. Entregar matriz owner→producer→consumer, RQ-P1-01..07 e testes positive/sibling/negative, decisões pendentes, recomendação de primeiro micro-slice *de negócio* e autorização específica posterior. `Search miss != ausência`; documentação e HTTP 200 não provam outcome.
+
+**Limite explícito:** sem mudanças de runtime, manifest, BFF, Core, api-delpi, permission, banco ou deploy sob este registro. Qualquer escolha real de ownership/persistência/contrato volta como `DECISION_REQUIRED` antes de implementar.
