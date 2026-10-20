@@ -97,7 +97,12 @@ Estado de erro honesto também observado: tom sintético (sem fala) → “Não 
 
 ## 6. Deploy de produção
 
-**PLUGIN_UI_DEPLOY / DELIA_DEPLOY / PRODUCTION_*:** ver §6.319 do ledger e o relatório de execução da task — preenchidos somente com evidência pós-deploy. Browser QA de produção com mic físico depende de credencial `delia.access` (nenhuma conta QA no realm de produção — mesmo gate da §6.311).
+**Deploy executado em 2026-10-20 em `srv-api` (`operador@192.168.1.237`)**
+
+- `git pull --ff-only` → `a82dab16268b92e0c054d4da6d6638b600c1d413` (worktree limpo).
+- `infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia` — `infra-plugin-ui` e `infra-delia` reconstruídas, `verify-host-exports OK` (expose `__federation_expose_Index-CH5qqPYa.js`, idêntico ao build local testado), containers recriados e `Started`; `delia-api` **não** rebuildado (backend sem diff).
+- Verificado: `GET /apps/plugin-ui/assets/remoteEntry.js` → 200; `GET /apps/delia/assets/remoteEntry.js` → 200; bundle `App-YHMoA3Zc.js` contém `Ditar mensagem` + `Texto transcrito` (código VD-F04 servido); `GET /apps/delia-api/dictation/status` sem token → `401` (AuthZ hardened preservada, log metadata-only); `delpi-delia-api` healthy.
+- **PRODUCTION_BROWSER_QA = PENDING_USER_VERIFICATION** — mic físico + fluxo completo exige sessão `delia.access` (sem conta QA no realm de produção — mesmo gate da §6.311).
 
 ## 7. Residuals
 

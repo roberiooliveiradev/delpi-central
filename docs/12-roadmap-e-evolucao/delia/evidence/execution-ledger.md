@@ -16027,3 +16027,28 @@ C4_AUTHORIZED=NO
 C5_AUTHORIZED=NO
 NEXT=COMMIT+PUSH MAIN → PROD DEPLOY plugin-ui+delia → USER_MIC_QA
 ```
+
+
+## §6.320 — VD-F04 production deploy (srv-api) — authorized release
+
+**DATE:** 2026-10-20. **TASK:** `DELIA-UX-VOICE-DICTATION-VISUAL-REFINEMENT-AND-PRODUCTION-DEPLOY-01`. **DEPLOY_AUTHORIZED=YES (Product Master).** **DEPLOYED_SHA:** `a82dab16268b92e0c054d4da6d6638b600c1d413` (= `origin/main` após push ff `22b928e2eb..a82dab1626`). **HOST:** `srv-api` (`operador@192.168.1.237`), checkout `~/projetos/delpi-central` limpo, `git pull --ff-only`.
+
+- **Deploy:** `infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia` — imagens `infra-plugin-ui` + `infra-delia` reconstruídas; `verify-host-exports OK` com expose `__federation_expose_Index-CH5qqPYa.js` **idêntico ao build local testado**; containers `delpi-plugin-ui`/`delpi-delia` recriados e `Started`. `delia-api` não rebuildado (zero diff backend nesta task; container healthy).
+- **Verificado em produção:** `remoteEntry.js` de `plugin-ui` e `delia` → 200; bundle `App-YHMoA3Zc.js` contém `Ditar mensagem` e `Texto transcrito` (código VD-F04 efetivamente servido); `GET /apps/delia-api/dictation/status` sem token → `401` com log metadata-only (AuthZ §6.310 preservada); `DELIA_STT_*` inalterado (config §6.311 intacta, sem necessidade de alteração).
+- **Browser QA human gate:** QA visual de produção com mic físico exige sessão `delia.access` — sem conta QA no realm (gate idêntico ao §6.311). Registrado como `PENDING_USER_VERIFICATION`, não PASS.
+
+```text
+VD_F04_PROD_DEPLOY=EXECUTED
+DEPLOYED_SHA=a82dab1626
+PLUGIN_UI_DEPLOY=PASS
+DELIA_DEPLOY=PASS
+DELIA_API_REBUILT=NO (backend sem diff)
+DICTATION_ROUTE=LIVE (401 unauth observado)
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+REGRESSIONS=NONE_OBSERVED
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+C4_AUTHORIZED=NO
+C5_AUTHORIZED=NO
+NEXT=USER_MIC_QA em minhadelpi.com.br/apps/delia
+```
