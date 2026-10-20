@@ -29,6 +29,15 @@ class Settings:
     )
     DELPI_API_CALLER_APP = SUPPLIES_CALLER_APP
 
+    # Individual S2S credential for migrated calls into api-delpi.
+    # Missing values keep the mechanism disabled — the S2S gateway fails
+    # closed and never falls back to the shared internal token.
+    S2S_TOKEN_URL = os.getenv("S2S_TOKEN_URL", "")
+    S2S_CLIENT_ID = os.getenv("S2S_CLIENT_ID", "")
+    S2S_CLIENT_SECRET = os.getenv("S2S_CLIENT_SECRET", "")
+    S2S_SCOPE = os.getenv("S2S_SCOPE", "")
+    S2S_TIMEOUT_SECONDS = float(os.getenv("S2S_TIMEOUT_SECONDS", "10"))
+
     PURCHASE_REQUESTS_API_URL = os.getenv(
         "PURCHASE_REQUESTS_API_URL",
         "http://delpi-purchase-requests-api:8000",
@@ -56,6 +65,10 @@ class Settings:
     PLUGINS_DB_PASSWORD = os.getenv("PLUGINS_DB_PASSWORD", "")
     PLUGINS_DB_CONNECT_TIMEOUT = int(os.getenv("PLUGINS_DB_CONNECT_TIMEOUT", "5"))
     PLUGINS_DB_SSLMODE = os.getenv("PLUGINS_DB_SSLMODE", "prefer")
+
+    @classmethod
+    def s2s_configured(cls) -> bool:
+        return bool(cls.S2S_TOKEN_URL and cls.S2S_CLIENT_ID and cls.S2S_CLIENT_SECRET)
 
     @classmethod
     def plugins_db_configured(cls) -> bool:

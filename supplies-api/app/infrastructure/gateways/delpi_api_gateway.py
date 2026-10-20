@@ -45,6 +45,15 @@ class DelpiApiGateway:
     ) -> Any:
         return self._request("GET", path, access_token=access_token, params=params)
 
+    def _build_headers(self, access_token: str) -> dict[str, str]:
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {access_token}",
+            "X-Delpi-Caller-App": self.caller_app,
+        }
+        apply_internal_service_headers(headers)
+        return headers
+
     def _request(
         self,
         method: str,
@@ -60,12 +69,7 @@ class DelpiApiGateway:
             pass
 
         url = urljoin(self.base_url, path.lstrip("/"))
-        headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {access_token}",
-            "X-Delpi-Caller-App": self.caller_app,
-        }
-        apply_internal_service_headers(headers)
+        headers = self._build_headers(access_token)
         try:
             from flask import g, has_request_context
 
