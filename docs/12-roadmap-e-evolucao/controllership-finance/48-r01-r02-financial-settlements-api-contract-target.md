@@ -1,0 +1,133 @@
+# 48 — DESIGN TARGET | Rotas de Baixas R01/R02 — PROC-0072
+
+> 20/10/2026 — DOCUMENTATION / PROPOSED / DECISION_REQUIRED. **Sem GO de runtime**. Fonte: TÉO PROC-0072, docs 03/21/45/46/47, resultados DAVI em 20/10/2026; vídeo analisado indiretamente pelo NotebookLM, não homologado. FINSV010/FINR190 padrão TOTVS não prova equivalência da customização DELPI `_F190C`.
+
+## 1. Objetivo e arquitetura
+
+Disponibilizar leitura de eventos efetivos de **baixas a pagar (R01)** e **baixas a receber (R02)**, com filtros, resumo e tabela de detalhe para conferência por competência. Os cinco arquivos relatados por Joici (Pagar XLS/PDF data/PDF natureza; Receber XLS/PDF data) são **saídas informadas verbalmente**, não exportações observadas. A primeira etapa proposta é JSON read-only; exportação fica em gate separado.
+
+- **api-delpi**: owner da consulta, joins e regras financeiras Protheus (Clean Architecture, ports/adapters). Contrato tipado dedicado; nunca usar `POST /data/sql` como API produtiva do Portal.
+- **controllership-finance-api**: BFF owner de composição do Portal, authorization por effective permissions Core **AND** resource_scope/ownership **AND** business rule; fail closed. `access` para leitura; não criar novas permissions.
+- **MFE**: consome exclusivamente `/apps/controllership-finance-api`; nenhuma consulta direta a api-delpi.
+- **Boundaries**: este projeto de rotas não autoriza a página P1, competência persistida ou exportações. Doc 45 §15 mantém P1 NO-GO.
+
+## 2. Inventário físico e evidências de chave
+
+| Função | Tabela | Colunas documentadas (candidatas para DTO) |
+|---|---|---|
+| Fato de baixa a pagar | `FK2010` | `FK2_IDFK2, FK2_IDDOC, FK2_DATA, FK2_VALOR, FK2_MOEDA, FK2_NATURE, FK2_TPDOC, FK2_RECPAG, FK2_SEQ, FK2_FILIAL, FK2_HISTOR` |
+| Fato de baixa a receber | `FK1010` | `FK1_IDFK1, FK1_IDDOC, FK1_DATA, FK1_VALOR, FK1_MOEDA, FK1_NATURE, FK1_TPDOC, FK1_RECPAG, FK1_SEQ, FK1_FILIAL, FK1_HISTOR` |
+| Ponte para título | `FK7010` | `FK7_IDDOC, FK7_ALIAS, FK7_FILTIT, FK7_PREFIX, FK7_NUM, FK7_PARCEL, FK7_TIPO, FK7_CLIFOR, FK7_LOJA, FK7_FILIAL` |
+| Título a pagar | `SE2010` | `E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_EMISSAO, E2_VENCTO, E2_VALOR, E2_FILIAL` |
+| Título a receber | `SE1010` | `E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, E1_CLIENTE, E1_LOJA, E1_NOMCLI, E1_EMISSAO, E1_VENCTO, E1_VALOR, E1_FILIAL` |
+| Natureza | `SED010` | `ED_CODIGO, ED_DESCRIC, ED_FILIAL` |
+| Motivo | `F7G010` | `F7G_SIGLA, F7G_DESCRI` |
+| Rastreamento | `FKA010` | `FKA_IDPROC, FKA_IDORIG, FKA_TABORI, FKA_FILIAL` |
+| Banco | `FK5010` | `FK5_IDMOV, FK5_DATA, FK5_VALOR, FK5_BANCO` |
+| CNPJ / identificação legal | `SA1010/SA2010` | **TO_INVENTORY** — campo, necessidade e projeção restrita não confirmados |
+
+**Provas SQL READ (20/10):** FK2 8.969 eventos e FK1 5.578 a partir de 2026-01-01; `EXISTS(FK7)` FK2 8.911, FK1 5.578; `EXISTS(FK7→SE2)` 8.911, `EXISTS(FK7→SE1)` 5.578. FK2 58 sem ponte FK7 e 49 sem natureza SED. FK7→SE1 histórico 12 sem título nos filtros usados. `FKA_IDORIG` isolado não comprova join de negócio: exigir `FKA_TABORI` + contexto. Índices SIX não são constraints DB. Filial vazia nas linhas de amostra demanda política de compartilhamento; **não assumir `branch=01/02`**. Probes não provam paridade com `_F190C`.
+
+## 3. Rotas candidatas — ainda não congeladas
+
+| Owner | Método/path TARGET PROPOSED | Função |
+|---|---|---|
+| api-delpi | `GET /financeiro/baixas/pagar` | Detalhes paginados de eventos FK2 |
+| api-delpi | `GET /financeiro/baixas/receber` | Detalhes paginados de eventos FK1 |
+| api-delpi | `GET /financeiro/baixas/resumo` | Totais por lado/moeda/natureza e métricas de qualidade |
+| CF BFF | `GET /closing/financial-settlements` | Fachada com `side=payable\|receivable` |
+| CF BFF | `GET /closing/financial-settlements/summary` | Resumo com escopo resolvido no Core |
+| CF BFF | `GET /closing/financial-settlements/exports` | **DEFERRED** — não implementar neste slice |
+
+A BFF jamais faz SELECT SQL diretamente. Conectar via client/adapter HTTP tipado, autorizado S2S, com contratos e tratamento de erros. Api-delpi mantém owner dos relacionamentos TOTVS. Padrão técnico existente inspecionado: `api-delpi/app/interface/http/routes/financeiro/inadimplencia_router.py` e `despesas_centro_custo_router.py` (FastAPI APIRouter, composition/use case, DTO e gates). Antes da implementação, confirmar padrão vigente no HEAD, producer/consumer e contratos OpenAPI.
+
+## 4. Parâmetros sugeridos
+
+| Parâmetro | Regra candidata |
+|---|---|
+| `start_date`, `end_date` | Obrigatórios `YYYY-MM-DD`, intervalo inclusivo para eventos `FKx_DATA`; limites máximos e timezone a decidir |
+| `side` | `payable` ou `receivable` somente na BFF |
+| `company_code` / `branch_code` | Obrigatórios conforme scope resolvido, **mapeamento empresa 01/03/04 vs Protheus TO_INVENTORY** |
+| `nature_code` | Filtro opcional por natureza, caso homologada |
+| `sort_by` | `settlement_date\|nature`, com desempate estável pelo ID do evento |
+| `sort_dir` | `asc\|desc` |
+| `page`, `page_size` | Paginação controlada; teto deve seguir padrões da plataforma |
+| `competence` | Contexto apenas quando existir contrato de competência aprovado; não tratar texto do deep link como scope |
+
+Sem fallback para período ilimitado, sem perda silenciosa de filtros de filial, sem aceitar `principal_type=service` como usuário humano na BFF. `D_E_L_E_T_=''` aplicado a todos os objetos Protheus; timestamps/frescor/erro tipados.
+
+## 5. Campos do relatório JSON (TARGET CANDIDATE)
+
+| Campo do contrato | Fonte candidata | Exibição | Risco |
+|---|---|---|---|
+| `settlementId` | `FK1_IDFK1/FK2_IDFK2` | ID interno oculto | PROVEN source |
+| `settlementDate` | `FK1_DATA/FK2_DATA` | Data baixa | PROVEN source |
+| `settlementAmount` | `FK1_VALOR/FK2_VALOR` | Valor evento | PROVEN source |
+| `currencyCode` | `FKx_MOEDA` | Moeda (não somar moedas distintas) | Mapeamento display pendente |
+| `natureCode`, `natureDescription` | `FKx_NATURE` + `SED` | Código/natureza | 49 exceções FK2 observadas |
+| `documentNumber`, `prefix`, `installment`, `documentType` | `FK7` + `SE1/SE2` | Título | Prova de existência, join cardinality pending |
+| `partyCode`, `partyStore`, `partyName` | `FK7` / `SE1/SE2` | Cliente/fornecedor | Dados de terceiros; scope + minimização |
+| `partyTaxId` | cadastro SA1/SA2 | CNPJ para Aliança | TO_INVENTORY/PII — não expor por padrão |
+| `issueDate`, `dueDate` | `SE1/SE2` | Emissão/vencimento | Necessidade no relatório a confirmar |
+| `history`, `movementType` | `FK1/FK2` | Histórico/tipo | Códigos exigem dicionário |
+| `bankReference` | `FK5/FKA` | Detalhe bancário | DEFERRED até semântica validada |
+| `linkStatus` | regra de integridade | `resolved\|missing_document\|missing_nature\|unresolved_scope` (valores propostos) | Nunca suprimir gap automaticamente |
+
+Linha base = **um evento FK1/FK2**, nunca somar `E1/E2_VALOR` como evento de baixa. `EXISTS` prova que registro relacionado existe, não define JOIN final. Não multiplicar valores por vínculo FKA ou por várias naturezas.
+
+### Envelope ilustrativo — não é schema congelado
+
+```json
+{
+  "report": "payable_settlements",
+  "period": {"startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD"},
+  "scope": {"companyCode": null, "branchCode": null, "resolution": "pending"},
+  "status": "partial",
+  "totalsByCurrency": [],
+  "quality": {"missingDocumentCount": null, "missingNatureCount": null},
+  "pagination": {"page": 1, "pageSize": 50, "totalItems": null},
+  "items": [{
+    "settlementId": "<technical-id>",
+    "settlementDate": "YYYY-MM-DD",
+    "settlementAmount": "0.00",
+    "currencyCode": "<ERP-code>",
+    "natureCode": null,
+    "documentNumber": null,
+    "partyName": null,
+    "linkStatus": "unresolved"
+  }]
+}
+```
+
+Valores monetários como strings decimais; agrupamentos por moeda. `status=partial` não pode ser fabricado: calculado de evidência real, e `HTTP 200` não equivale a relatório completo. Se o scope não resolver, **retornar erro de autorização**, não linhas com `resolution=pending` em runtime.
+
+## 6. Apresentação sugerida para o consumidor
+
+Tela do Portal (após gate de página) com abas **Baixas a Pagar** e **Baixas a Receber**, cabeçalho período/competência/empresa-filial explícitos, filtros data/natureza, cartões de quantidade/total por moeda/pendências documentais, tabela de **Data | Documento | Parcela | Cliente ou Fornecedor | Natureza | Valor | Moeda | Situação do vínculo**, ordenação e paginação. Estado loading/empty/partial/failed e aviso de fonte; exportação **indisponível até homologação**. UX PT-BR, mesmo chrome `@delpi/plugin-ui`, Help sincronizada e navegação por teclado. Não apresentar como FINR190 reproduzido até prova de paridade.
+
+## 7. RQ/AC propostos
+
+| ID | Critério objetivo |
+|---|---|
+| RQ-SET-01 | Separar fato pago/recebido de título em aberto e preservar ID de cada baixa |
+| RQ-SET-02 | Expor somente campos de apresentação autorizados com data, valor, moeda, natureza e documento enriquecido |
+| RQ-SET-03 | Filtros e paginação estáveis, datas validadas, sem carga aberta |
+| RQ-SET-04 | Contar links não resolvidos e explicar exceções (58 sem FK7 e 49 sem SED no recorte auditado) |
+| RQ-SET-05 | Autorização Core effective permissions + ownership + scope, fail closed; nenhuma permission por relatório |
+| RQ-SET-06 | Paridade de contagem e centavos por moeda, período, empresa e variantes com saídas reais da `_F190C` |
+| RQ-SET-07 | No data vs falha upstream vs dados parciais distintos, sem PASS inferido |
+| RQ-SET-08 | Excel/PDF e CNPJ somente em gate futuro de layout, privacidade e integração contábil |
+
+Testes requeridos (TEST_NOT_RUN): positivo por lado/intervalo, sibling por competência/filial, negativo sem ACCESS/sem scope/Core 503, principal de serviço, data inválida e intervalo amplo, títulos sem FK7/natureza, múltiplas moedas, filial compartilhada, joins sem duplicação, paginação determinística, upstream timeout, OpenAPI/DTO/BFF contract tests, smoke real, paridade PDF/XLS somente depois.
+
+## 8. DECISION_REQUIRED e gates
+
+1. **D1 — Endpoints/boundary**: proposta separada api-delpi + fachada BFF unificada; owner precisa confirmar nomes/contrato e consumidores.
+2. **D2 — Faseamento**: recomendar JSON read-only primeiro; PDF/XLS como entrega posterior (não substitui os cinco arquivos da Aliança).
+3. **D3 — Escopo**: empresa 01/03/04 vs filial 01/02, compartilhamento e contrato Core T05. **STOP** sem resolução.
+4. **D4 — Semântica de exceções**: tipos BA/ES/VL/CP, 58 sem FK7, 49 sem natureza: inclusão/omissão exige decisão owner financeiro, não automatizar.
+5. **D5 — Fidelidade ao legado**: confirmar código ADVPL da `_F190C` ou cinco arquivos reais sanitizados, colunas, filtros e campos CNPJ. Sem isso declarar relatório novo TARGET, jamais substituto validado.
+
+**Status:** `DESIGN_DRAFT=READY_FOR_PO_REVIEW`; `ENDPOINTS/DTO=TARGET_PROPOSED`; `R01/R02_G4=PENDING`; `G5=TEST_NOT_RUN`; `G6=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `RUNTIME_CHANGED=NO`; `IMP-08/P1=NO_GO`.
+
+**Plano após decisão e GO expresso:** revalidar HEAD/working tree, .cursor aplicável, framework/consumers; congelar DTO/OpenAPI; implementar producer na api-delpi com mínima diff, testes; integrar BFF com escopo Core; validar contratos e resultset; gate MFE/Help posterior; paridade com exportações; evidência + revisão + SHA. Nunca scaffold de arquitetura paralela por conveniência.
