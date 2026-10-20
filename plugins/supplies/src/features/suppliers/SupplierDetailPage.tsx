@@ -14,15 +14,16 @@ import {
   SuppliesSectionHintLabel,
   SuppliesStateBanner,
   SuppliesStatusBadge,
-  SuppliesTextField,
 } from "../../app/suppliesUi";
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { getSupplier, updateSupplier } from "./api";
 import { SUPPLIERS_CONTENT as C } from "./content";
+import { SupplierFieldInput } from "./SupplierFormFields";
 import {
   classifyWriteOutcome,
   diffEditableFields,
+  draftFromDetail,
   formatTaxIdMasked,
   getSupplierFieldValue,
 } from "./query";
@@ -31,6 +32,7 @@ import {
   SUPPLIER_FORM_SECTIONS,
   type SupplierDetail,
   type SupplierEditDraft,
+  type SupplierEditableFieldKey,
   type SupplierWriteOutcome,
 } from "./types";
 
@@ -45,7 +47,7 @@ type WriteState = {
   message?: string;
   /** Changes sent on the last write — used by the post-write GET check. */
   submitted?: ReadonlyArray<{
-    field: "supplier_name" | "supplier_short_name";
+    field: SupplierEditableFieldKey;
     after: string;
   }>;
   verifying?: boolean;
@@ -69,10 +71,9 @@ export function SupplierDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<SupplierEditDraft>({
-    supplier_name: "",
-    supplier_short_name: "",
-  });
+  const [draft, setDraft] = useState<SupplierEditDraft>(
+    {} as SupplierEditDraft,
+  );
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [writeState, setWriteState] = useState<WriteState>(null);
@@ -86,12 +87,7 @@ export function SupplierDetailPage({
     getSupplier(code, store, controller.signal)
       .then((payload) => {
         setDetail(payload);
-        setDraft({
-          supplier_name:
-            payload.sections.identification?.supplier_name?.toString() ?? "",
-          supplier_short_name:
-            payload.sections.identification?.supplier_short_name?.toString() ?? "",
-        });
+        setDraft(draftFromDetail(payload));
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -109,11 +105,7 @@ export function SupplierDetailPage({
   }, [code, store, reloadKey]);
 
   const changes = useMemo(
-    () =>
-      diffEditableFields(
-        detail?.sections.identification ?? {},
-        draft,
-      ),
+    () => (detail ? diffEditableFields(detail, draft) : []),
     [detail, draft],
   );
 
@@ -127,12 +119,7 @@ export function SupplierDetailPage({
   const cancelEdit = () => {
     setEditing(false);
     setReviewing(false);
-    setDraft({
-      supplier_name:
-        detail?.sections.identification?.supplier_name?.toString() ?? "",
-      supplier_short_name:
-        detail?.sections.identification?.supplier_short_name?.toString() ?? "",
-    });
+    if (detail) setDraft(draftFromDetail(detail));
   };
 
   const confirmSubmit = () => {
@@ -168,11 +155,13 @@ export function SupplierDetailPage({
     setWriteState({ ...writeState, verifying: true });
     getSupplier(code, store)
       .then((fresh) => {
-        const current = fresh.sections.identification ?? {};
-        const reflected = writeState.submitted!.every(
-          (change) =>
-            (current[change.field]?.toString() ?? "") === change.after,
-        );
+        const reflected = writeState.submitted!.every((change) => {
+          const spec = SUPPLIER_FIELD_REGISTRY.find(
+            (s) => s.key === change.field,
+          );
+          if (!spec) return false;
+          return getSupplierFieldValue(fresh, spec).trim() === change.after;
+        });
         setWriteState(
           reflected
             ? { outcome: "persistence_confirmed" }
@@ -307,7 +296,14 @@ export function SupplierDetailPage({
                       {section.fields
                         .filter((spec) => spec.put !== "editable")
                         .map((spec) => (
-                          <div key={spec.key} title={C.readonlyFieldHint}>
+                          <div
+                            key={spec.key}
+                            title={
+                              spec.put === "protected"
+                                ? C.protectedFieldHint
+                                : C.readonlyFieldHint
+                            }
+                          >
                             <dt>{spec.label}</dt>
                             <dd>
                               {getSupplierFieldValue(detail, spec) || "—"}
@@ -319,19 +315,21 @@ export function SupplierDetailPage({
                   {section.fields
                     .filter((spec) => spec.put === "editable")
                     .map((spec) => (
-                      <SuppliesTextField
+                      <SupplierFieldInput
                         key={spec.key}
-                        label={spec.label}
+                        spec={spec}
                         hint={
                           spec.key === "supplier_name"
                             ? SP_HELP.suppliersEditName
-                            : SP_HELP.suppliersEditShortName
+                            : spec.key === "supplier_short_name"
+                              ? SP_HELP.suppliersEditShortName
+                              : undefined
                         }
-                        value={draft[spec.key as keyof SupplierEditDraft]}
+                        value={draft[spec.key as SupplierEditableFieldKey] ?? ""}
                         onChange={(value) =>
                           setDraft((d) => ({
                             ...d,
-                            [spec.key]: value.slice(0, spec.maxLength),
+                            [spec.key]: value,
                           }))
                         }
                         disabled={submitting}

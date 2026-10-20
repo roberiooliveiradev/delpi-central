@@ -52,9 +52,11 @@ export const SUPPLIERS_CONTENT = {
 
   editAction: "Editar cadastro",
   editHint:
-    "Somente razão social e nome fantasia têm alteração comprovada no contrato do ERP. Os demais campos aparecem somente leitura até a homologação TOTVS.",
+    "Edite os campos cadastrais necessários — código, loja e CNPJ/CPF são protegidos e não podem ser alterados. Antes de gravar, revise as diferenças; nenhuma gravação ocorre sem confirmação.",
   readonlyFieldHint:
     "Somente leitura — alteração deste campo ainda não foi homologada no contrato do ERP.",
+  protectedFieldHint:
+    "Campo protegido — documento fiscal e identidade do fornecedor não são alteráveis nesta operação.",
   cancelAction: "Cancelar",
   reviewAction: "Revisar alterações",
   reviewTitle: "Revisar antes de gravar",

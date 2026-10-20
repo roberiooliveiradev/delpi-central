@@ -16,6 +16,7 @@ import {
   classifyWriteOutcome,
   createDefaultQuery,
   diffEditableFields,
+  draftFromDetail,
   formatTaxIdMasked,
   getSupplierFieldValue,
   hasActiveFilters,
@@ -78,28 +79,57 @@ describe("suppliers query", () => {
 });
 
 describe("supplier edit diff", () => {
-  const current = { supplier_name: "DELPI", supplier_short_name: "DELPI" };
+  const detail: SupplierDetail = {
+    supplier_id: "00246901",
+    supplier_code: "002469",
+    supplier_store: "01",
+    blocked: false,
+    tax_id: "00000000000191",
+    tax_id_masked: false,
+    sections: {
+      identification: {
+        supplier_name: "DELPI",
+        supplier_short_name: "DELPI",
+        person_type: "J",
+      },
+      address: { city: "TIMBO", state: "SC" },
+      contact: { email: "a@b.com" },
+    },
+  };
 
   it("detects a single changed field", () => {
-    const diff = diffEditableFields(current, {
-      supplier_name: "DELPI NOVA",
-      supplier_short_name: "DELPI",
-    });
+    const draft = draftFromDetail(detail);
+    draft.supplier_name = "DELPI NOVA";
+    const diff = diffEditableFields(detail, draft);
     expect(diff).toEqual([
       { field: "supplier_name", before: "DELPI", after: "DELPI NOVA" },
     ]);
   });
 
-  it("detects both fields changed together", () => {
-    const diff = diffEditableFields(current, {
-      supplier_name: "A",
-      supplier_short_name: "B",
-    });
-    expect(diff).toHaveLength(2);
+  it("detects changes across multiple sections in one PUT", () => {
+    const draft = draftFromDetail(detail);
+    draft.supplier_name = "A";
+    draft.city = "BLUMENAU";
+    draft.email = "novo@b.com";
+    const diff = diffEditableFields(detail, draft);
+    expect(diff.map((c) => c.field).sort()).toEqual([
+      "city",
+      "email",
+      "supplier_name",
+    ]);
   });
 
   it("returns empty when nothing changed", () => {
-    expect(diffEditableFields(current, current)).toEqual([]);
+    expect(diffEditableFields(detail, draftFromDetail(detail))).toEqual([]);
+  });
+
+  it("never diffs protected/readonly fields", () => {
+    const fields = diffEditableFields(detail, {
+      ...draftFromDetail(detail),
+    }).map((c) => c.field);
+    expect(fields).not.toContain("tax_id");
+    expect(fields).not.toContain("supplier_store");
+    expect(fields).not.toContain("supplier_code");
   });
 });
 
@@ -187,22 +217,50 @@ describe("shared field registry (F3.1 create/edit parity)", () => {
     );
   });
 
-  it("allows PUT only for upstream-proven editable fields", () => {
-    expect(SUPPLIER_PUT_EDITABLE_KEYS.sort()).toEqual([
-      "supplier_name",
-      "supplier_short_name",
-    ]);
+  it("allows PUT for all cadastral fields except document and identity", () => {
+    expect([...SUPPLIER_PUT_EDITABLE_KEYS].sort()).toEqual(
+      [
+        "person_type",
+        "supplier_name",
+        "supplier_short_name",
+        "address",
+        "district",
+        "postal_code",
+        "state",
+        "city",
+        "city_code",
+        "area_code",
+        "phone",
+        "contact_name",
+        "email",
+        "state_registration",
+        "municipal_registration",
+        "country_code",
+        "bacen_country_code",
+        "rohs_indicator",
+        "payment_condition_code",
+        "payment_method_code",
+        "accounting_account",
+        "financial_nature_code",
+      ].sort(),
+    );
     const editable = SUPPLIER_FIELD_REGISTRY.filter((f) => f.put === "editable");
-    expect(editable.every((f) => f.evidence === "put-contract")).toBe(true);
+    expect(
+      editable.every(
+        (f) => f.evidence === "put-contract" || f.evidence === "po-decision",
+      ),
+    ).toBe(true);
   });
 
-  it("marks system/identity fields as non-POST", () => {
+  it("marks document and identity fields as protected (never editable)", () => {
+    for (const key of ["supplier_code", "supplier_store", "tax_id"] as const) {
+      expect(
+        SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)?.put,
+      ).toBe("protected");
+    }
     const code = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === "supplier_code");
     expect(code?.post).toBe(false);
     expect(code?.evidence).toBe("system");
-    expect(
-      SUPPLIER_FIELD_REGISTRY.find((f) => f.key === "supplier_store")?.put,
-    ).toBe("readonly");
   });
 });
 

@@ -2,11 +2,12 @@ import type {
   SupplierCreateDraft,
   SupplierDetail,
   SupplierEditDraft,
+  SupplierEditableFieldKey,
   SupplierFieldSpec,
   SupplierWriteResponse,
   SuppliersQuery,
 } from "./types";
-import { SUPPLIERS_PAGE_SIZE_OPTIONS } from "./types";
+import { SUPPLIER_FIELD_REGISTRY, SUPPLIERS_PAGE_SIZE_OPTIONS } from "./types";
 
 export function createDefaultQuery(): SuppliersQuery {
   return { query: "", state: "", blocked: "", page: 1, page_size: 20 };
@@ -107,25 +108,43 @@ export function buildUpdateFornecedor(
   return out;
 }
 
-/** Campos alterados entre o valor atual e o rascunho (PUT allowlist). */
+export type SupplierFieldChange = {
+  field: SupplierEditableFieldKey;
+  before: string;
+  after: string;
+};
+
+/**
+ * Campos alterados entre o valor atual (GET) e o rascunho — somente campos
+ * com `put === "editable"` entram no diff; readonly/protected nunca são
+ * comparados nem enviados.
+ */
 export function diffEditableFields(
-  current: { supplier_name?: string | number | null; supplier_short_name?: string | number | null },
+  detail: SupplierDetail,
   draft: SupplierEditDraft,
-): Array<{ field: "supplier_name" | "supplier_short_name"; before: string; after: string }> {
-  const out: Array<{ field: "supplier_name" | "supplier_short_name"; before: string; after: string }> = [];
-  const name = (current.supplier_name ?? "").toString().trim();
-  const shortName = (current.supplier_short_name ?? "").toString().trim();
-  if (draft.supplier_name.trim() !== name) {
-    out.push({ field: "supplier_name", before: name, after: draft.supplier_name.trim() });
-  }
-  if (draft.supplier_short_name.trim() !== shortName) {
-    out.push({
-      field: "supplier_short_name",
-      before: shortName,
-      after: draft.supplier_short_name.trim(),
-    });
+): SupplierFieldChange[] {
+  const out: SupplierFieldChange[] = [];
+  for (const spec of SUPPLIER_FIELD_REGISTRY) {
+    if (spec.put !== "editable") continue;
+    const key = spec.key as SupplierEditableFieldKey;
+    const before = getSupplierFieldValue(detail, spec).trim();
+    const after = (draft[key] ?? "").trim();
+    if (after !== before) out.push({ field: key, before, after });
   }
   return out;
+}
+
+/** Monta o draft de edição a partir do GET detail (registry-driven). */
+export function draftFromDetail(detail: SupplierDetail): SupplierEditDraft {
+  const draft = {} as SupplierEditDraft;
+  for (const spec of SUPPLIER_FIELD_REGISTRY) {
+    if (spec.put !== "editable") continue;
+    draft[spec.key as SupplierEditableFieldKey] = getSupplierFieldValue(
+      detail,
+      spec,
+    );
+  }
+  return draft;
 }
 
 /**

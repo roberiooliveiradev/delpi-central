@@ -61,10 +61,13 @@ export type SupplierWriteResponse = {
   code?: string;
 };
 
-export type SupplierEditDraft = {
-  supplier_name: string;
-  supplier_short_name: string;
-};
+/** Campos editáveis via PUT: todo POST cadastral exceto documento e loja. */
+export type SupplierEditableFieldKey = Exclude<
+  keyof SupplierCreateDraft,
+  "tax_id" | "supplier_store"
+>;
+
+export type SupplierEditDraft = Record<SupplierEditableFieldKey, string>;
 
 export type SupplierCreateDraft = {
   supplier_store: string;
@@ -106,6 +109,7 @@ export type SupplierFieldGetSource =
 export type SupplierFieldEvidence =
   | "post-matrix" // matriz REST→SA2 (POST documentado)
   | "put-contract" // exemplo PUT do contrato REST (editável comprovado)
+  | "po-decision" // decisão funcional PO (F3.3) — upstream pendente de homologação
   | "identity" // parte da chave supplier_id (A2_COD + A2_LOJA)
   | "system"; // gerado pelo ERP — nunca enviado pelo cliente
 
@@ -127,10 +131,11 @@ export type SupplierFieldSpec = {
   /** POST: obrigatório no Portal; demais obrigatoriedades ficam no ERP. */
   required?: boolean;
   /**
-   * PUT: "editable" somente com evidência upstream comprovada no contrato.
-   * Campos sem evidência permanecem "readonly" até homologação TOTVS.
+   * PUT: "editable" = liberado pela decisão funcional (gate upstream ainda
+   * protege a escrita real); "protected" = documento/identidade, nunca
+   * editável nesta funcionalidade; "readonly" = pendente de contrato.
    */
-  put: "editable" | "readonly";
+  put: "editable" | "readonly" | "protected";
   get: SupplierFieldGetSource;
   evidence: SupplierFieldEvidence;
 };
@@ -145,6 +150,16 @@ const F = (
   ...spec,
 });
 
+/**
+ * Campo cadastral editável via PUT — decisão funcional do PO (F3.3).
+ * A evidência upstream PUT permanece pendente de homologação TOTVS; a
+ * escrita real continua protegida pelo feature gate no backend.
+ */
+const E = (
+  spec: Omit<SupplierFieldSpec, "get" | "put" | "evidence" | "post">,
+): SupplierFieldSpec =>
+  F({ ...spec, post: true, put: "editable", evidence: "po-decision" });
+
 export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Identificação
   F({
@@ -154,6 +169,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 6,
     digitsOnly: true,
     post: false,
+    put: "protected",
     get: "identity",
     evidence: "system",
   }),
@@ -165,15 +181,15 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     required: true,
     post: true,
+    put: "protected",
     get: "identity",
     evidence: "identity",
   }),
-  F({
+  E({
     key: "person_type",
     label: "Tipo de pessoa",
     section: "identification",
     maxLength: 1,
-    post: true,
     options: [
       { value: "J", label: "Jurídica (CNPJ)" },
       { value: "F", label: "Física (CPF)" },
@@ -187,6 +203,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 14,
     digitsOnly: true,
     post: true,
+    put: "protected",
     get: "top",
   }),
   F({
@@ -208,108 +225,96 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     evidence: "put-contract",
   }),
   // Endereço
-  F({ key: "address", label: "Endereço", section: "address", maxLength: 40, post: true }),
-  F({ key: "district", label: "Bairro", section: "address", maxLength: 20, post: true }),
-  F({
+  E({ key: "address", label: "Endereço", section: "address", maxLength: 40 }),
+  E({ key: "district", label: "Bairro", section: "address", maxLength: 20 }),
+  E({
     key: "postal_code",
     label: "CEP",
     section: "address",
     maxLength: 8,
     digitsOnly: true,
-    post: true,
   }),
-  F({
+  E({
     key: "state",
     label: "UF",
     section: "address",
     maxLength: 2,
     uppercase: true,
-    post: true,
   }),
-  F({ key: "city", label: "Cidade", section: "address", maxLength: 25, post: true }),
-  F({
+  E({ key: "city", label: "Cidade", section: "address", maxLength: 25 }),
+  E({
     key: "city_code",
     label: "Código IBGE",
     section: "address",
     maxLength: 5,
     digitsOnly: true,
-    post: true,
   }),
   // Contato
-  F({
+  E({
     key: "area_code",
     label: "DDD",
     section: "contact",
     maxLength: 3,
     digitsOnly: true,
-    post: true,
   }),
-  F({ key: "phone", label: "Telefone", section: "contact", maxLength: 50, post: true }),
-  F({ key: "contact_name", label: "Contato", section: "contact", maxLength: 15, post: true }),
-  F({ key: "email", label: "E-mail", section: "contact", maxLength: 50, post: true }),
+  E({ key: "phone", label: "Telefone", section: "contact", maxLength: 50 }),
+  E({ key: "contact_name", label: "Contato", section: "contact", maxLength: 15 }),
+  E({ key: "email", label: "E-mail", section: "contact", maxLength: 50 }),
   // Fiscal
-  F({
+  E({
     key: "state_registration",
     label: "Inscrição estadual",
     section: "fiscal",
     maxLength: 18,
-    post: true,
   }),
-  F({
+  E({
     key: "municipal_registration",
     label: "Inscrição municipal",
     section: "fiscal",
     maxLength: 18,
-    post: true,
   }),
-  F({ key: "country_code", label: "País", section: "fiscal", maxLength: 3, post: true }),
-  F({
+  E({ key: "country_code", label: "País", section: "fiscal", maxLength: 3 }),
+  E({
     key: "bacen_country_code",
     label: "País (BACEN)",
     section: "fiscal",
     maxLength: 5,
     digitsOnly: true,
-    post: true,
   }),
-  F({
+  E({
     key: "rohs_indicator",
     label: "Indicador ROHS",
     section: "fiscal",
     maxLength: 1,
-    post: true,
     options: [
       { value: "N", label: "Não" },
       { value: "S", label: "Sim" },
     ],
   }),
   // Compras
-  F({
+  E({
     key: "payment_condition_code",
     label: "Condição de pagamento",
     section: "purchasing",
     maxLength: 3,
-    post: true,
   }),
-  F({
+  E({
     key: "payment_method_code",
     label: "Forma de pagamento",
     section: "purchasing",
     maxLength: 2,
-    post: true,
   }),
-  F({
+  E({
     key: "accounting_account",
     label: "Conta contábil",
     section: "purchasing",
     maxLength: 20,
-    post: true,
   }),
-  F({
+  E({
     key: "financial_nature_code",
     label: "Natureza financeira",
     section: "purchasing",
     maxLength: 10,
-    post: true,
   }),
 ];
 
@@ -365,7 +370,3 @@ export const SUPPLIER_PUT_EDITABLE_KEYS = SUPPLIER_FIELD_REGISTRY.filter(
 ).map((f) => f.key);
 
 export const SUPPLIERS_PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
-export const SUPPLIERS_EDITABLE_FIELDS = {
-  supplier_name: 50,
-  supplier_short_name: 20,
-} as const;

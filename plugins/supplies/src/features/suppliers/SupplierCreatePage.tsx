@@ -15,18 +15,14 @@ import {
   SuppliesPagePath,
   SuppliesSectionCard,
   SuppliesSectionHintLabel,
-  SuppliesSelectField,
   SuppliesStateBanner,
-  SuppliesTextField,
 } from "../../app/suppliesUi";
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { createSupplier } from "./api";
-import {
-  SUPPLIERS_CONTENT as C,
-  supplierFieldMaxLengthHint,
-} from "./content";
+import { SUPPLIERS_CONTENT as C } from "./content";
 import { classifyWriteOutcome } from "./query";
+import { SupplierFieldInput } from "./SupplierFormFields";
 import {
   SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
@@ -223,37 +219,16 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           hint={SP_HELP.suppliersCreateFields}
         >
           <div className="sp-supplier-create__form">
-            {section.fields.map((field) =>
-              field.options ? (
-                <SuppliesSelectField
-                  key={field.key}
-                  label={field.label}
-                  value={draft[field.key]}
-                  options={field.options}
-                  allowEmpty
-                  emptyLabel={C.fieldEmptyOption}
-                  onChange={(value) => patchDraft({ [field.key]: value })}
-                />
-              ) : (
-                <SuppliesTextField
-                  key={field.key}
-                  label={
-                    field.required
-                      ? `${field.label} *`
-                      : field.label
-                  }
-                  hint={supplierFieldMaxLengthHint(field.maxLength)}
-                  value={draft[field.key]}
-                  onChange={(value) => {
-                    let next = value;
-                    if (field.digitsOnly) next = next.replace(/\D/g, "");
-                    if (field.uppercase) next = next.toUpperCase();
-                    patchDraft({ [field.key]: next.slice(0, field.maxLength) });
-                  }}
-                  disabled={submitting}
-                />
-              ),
-            )}
+            {section.fields.map((field) => (
+              <SupplierFieldInput
+                key={field.key}
+                spec={field}
+                value={draft[field.key]}
+                onChange={(value) => patchDraft({ [field.key]: value })}
+                disabled={submitting}
+                showRequiredMark
+              />
+            ))}
           </div>
         </SuppliesSectionCard>
       ))}

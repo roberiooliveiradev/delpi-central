@@ -77,7 +77,7 @@ export const SP_HELP = {
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:
-    "Edição governada: somente razão social e nome fantasia têm alteração comprovada no contrato do ERP; demais campos ficam somente leitura até homologação TOTVS. O envio leva só os campos alterados. Antes de gravar, uma revisão mostra o antes/depois; após o envio, a opção «Conferir gravação» recarrega a ficha e compara os valores.",
+    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja e CNPJ/CPF, que são protegidos. O envio leva só os campos modificados (PUT parcial). Antes de gravar, uma revisão mostra o antes/depois; após o envio, a opção «Conferir gravação» recarrega a ficha e compara os valores.",
   suppliersEditName:
     "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
   suppliersEditShortName:
