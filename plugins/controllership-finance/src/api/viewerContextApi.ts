@@ -7,6 +7,7 @@ export type ViewerCapabilities = {
 
 export type ViewerContext = {
   firstName: string | null;
+  displayName?: string | null;
   capabilities: ViewerCapabilities;
 };
 
@@ -30,6 +31,7 @@ export async function getViewerContext(options?: {
   const data = envelope?.data;
   return {
     firstName: data?.firstName ?? null,
+    displayName: data?.displayName ?? null,
     capabilities: {
       access: Boolean(data?.capabilities?.access),
       manage: Boolean(data?.capabilities?.manage),
