@@ -147,3 +147,22 @@ Testes requeridos (TEST_NOT_RUN): positivo por lado/intervalo, sibling por compe
 **GATE revisado:** `PRODUCT_DIRECTION=APPROVED`; `EXPORTS=OUT_OF_SCOPE`; `ROUTINE_PARITY=DEFERRED`; `D3_ENFORCEMENT=TO_INVENTORY`; `D4_CLASSIFICATION=DECISION_REQUIRED`; `ENDPOINT_CONTRACT=TARGET_PROPOSED`; `IMPLEMENTATION_AUTHORIZED=NO` até contrato e controles transversais efetivamente fechados. Uma autorização genérica para começar backend não dispensa fail-closed por recurso/filial ou definição de totais por tipo.
 
 **Próximo cursor gate:** revalidar HEAD/status, .cursor, contratos de API, prova de scope/filial e semântica D4; propor subset mínimo com detalhes por baixa sem totais oficiais até aceitação do owner. Então solicitar GO explícito para runtime api-delpi somente.
+
+## 10. Probe DAVI — distribuição de filiais nas fontes financeiras (20/10/2026)
+
+**EXECUTADO / SQL READ via DAVI**: GROUP BY da filial, incluindo somente D_E_L_E_T_=''. Resultado exaustivo de grupos retornados no ambiente consultado:
+
+| Fonte | Coluna | Grupo retornado | Quantidade |
+|---|---|---|---:|
+| SE2010 | E2_FILIAL | vazio | 120377 |
+| SE1010 | E1_FILIAL | vazio | 115558 |
+| FK2010 | FK2_FILIAL | vazio | 128057 |
+| FK1010 | FK1_FILIAL | vazio | 108849 |
+| FK7010 WHERE FK7_ALIAS='SE1' | FK7_FILTIT | vazio | 114634 |
+| FK7010 WHERE FK7_ALIAS='SE2' | FK7_FILTIT | vazio | 96454 |
+
+**Achado crítico / EXECUTION_DRIFT da hipótese de campo portador:** COALESCE(FK7_FILTIT, E1_FILIAL/E2_FILIAL) não discrimina filial; todas as opções amostradas e agora agregadas são vazias. Isso **não prova** que o ERP não possua separação empresarial: pode depender de schema/base, compartilhamento do Protheus, contexto de empresa, outro atributo ou política. NÃO aplicar branch=all ou interpretar vazio como filial 01. Filial/empresa autorizadas devem vir de fonte e contexto comprovados, com fail-closed.
+
+**D3 ENFORCEMENT=BLOCKED** até localizar portador físico ou contexto de conexão/empresa, verificar domínio de todas as filiais e contrato de autorização. Não implementar acesso por filial, nem autorizar rotas com dados financeiros indiscriminados. **D-PERM=DECISION_REQUIRED**: permissões api-delpi requerem aprovação/contrato próprios e não ampliam os dois codes do Portal. D4 mantém classificação oficial PENDING. **GO_RUNTIME=NO**, apesar de paridade _F190C deferida para nova consulta visual.
+
+**Próximo inventário delimitado:** owner ERP/infra e api-delpi verifiquem o contexto de conexão do SQL Server, bancos/esquemas por empresa, regra de compartilhamento SX2 e código de extração dos relatórios financeiros existentes. Reapresentar como matriz empresa de negócio → tenant/base/schema/contexto → filial autorizada → query scope, com testes cross-branch positivos e negativos. Se separação não estiver representável em dados ou contexto, STOP e solicitação de decisão de arquitetura.
