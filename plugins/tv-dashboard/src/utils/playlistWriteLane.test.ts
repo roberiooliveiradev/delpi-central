@@ -1,6 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { enqueuePlaylistWrite } from "./playlistWriteLane";
+
+/**
+ * Web Locks API fake — o registry é por ORIGIN: dois "contextos" (abas)
+ * compartilham o mesmo registro e serializam pelo nome do lock.
+ */
+function makeLockRegistry() {
+  const chains = new Map<string, Promise<unknown>>();
+  const calls: string[] = [];
+  return {
+    calls,
+    request(name: string, callback: () => Promise<unknown>): Promise<unknown> {
+      calls.push(name);
+      const prev = chains.get(name) ?? Promise.resolve();
+      const next = prev.then(callback, callback);
+      chains.set(name, next.catch(() => undefined));
+      return next;
+    },
+  };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("enqueuePlaylistWrite", () => {
   it("serializa escritas na mesma playlist — a segunda só envia após o ack da primeira", async () => {
@@ -50,5 +73,98 @@ describe("enqueuePlaylistWrite", () => {
     await expect(free).resolves.toBe("free");
     release();
     await expect(held).resolves.toBe("held");
+  });
+
+  it("serializa entre contextos via Web Locks — thunk resolve revisão fresca", async () => {
+    // TV-EDITOR-CROSS-CONTEXT: dois contextos JS (abas) com trackers próprios
+    // produziam 409 determinístico; o lock por playlist faz o segundo contexto
+    // esperar o commit do primeiro e resolver expectedRevision atualizado.
+    const locks = makeLockRegistry();
+    vi.stubGlobal("navigator", { locks });
+
+    const sentIfMatch: number[] = [];
+    const tracker = { revision: 10 };
+    let releaseFirst!: () => void;
+    const gate = new Promise<void>((resolve) => (releaseFirst = resolve));
+
+    // "contexto A" — commita primeiro
+    const first = enqueuePlaylistWrite("pl-ctx", async () => {
+      sentIfMatch.push(tracker.revision);
+      await gate;
+      tracker.revision += 1;
+      return "first";
+    });
+    // "contexto B" — enfileirado em outra aba; thunk deve resolver dentro do
+    // lock, DEPOIS do ack de A (revisão já avançada).
+    const second = enqueuePlaylistWrite("pl-ctx", async () => {
+      sentIfMatch.push(tracker.revision);
+      tracker.revision += 1;
+      return "second";
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0)); // flush microtasks
+    expect(sentIfMatch).toEqual([10]); // B ainda não enviou
+    releaseFirst();
+    await Promise.all([first, second]);
+
+    expect(sentIfMatch).toEqual([10, 11]); // B usou revisão fresca
+    expect(locks.calls).toEqual([
+      "tv-dashboard:playlist-write:pl-ctx",
+      "tv-dashboard:playlist-write:pl-ctx",
+    ]);
+  });
+
+  it("libera o lock após falha — a fila cross-context continua", async () => {
+    const locks = makeLockRegistry();
+    vi.stubGlobal("navigator", { locks });
+
+    const failing = enqueuePlaylistWrite("pl-lock", () =>
+      Promise.reject(new Error("revision conflict")),
+    );
+    await expect(failing).rejects.toThrow("revision conflict");
+
+    const recovered = enqueuePlaylistWrite("pl-lock", async () => "ok");
+    await expect(recovered).resolves.toBe("ok");
+    expect(locks.calls).toHaveLength(2);
+  });
+
+  it("locks são por playlist — playlists distintas não bloqueiam", async () => {
+    const locks = makeLockRegistry();
+    vi.stubGlobal("navigator", { locks });
+
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => (release = resolve));
+    const held = enqueuePlaylistWrite("pl-a", () => hold.then(() => "held"));
+    const free = enqueuePlaylistWrite("pl-b", async () => "free");
+
+    await expect(free).resolves.toBe("free");
+    release();
+    await expect(held).resolves.toBe("held");
+    expect(locks.calls).toEqual([
+      "tv-dashboard:playlist-write:pl-a",
+      "tv-dashboard:playlist-write:pl-b",
+    ]);
+  });
+
+  it("fallback sem Web Locks mantém FIFO local", async () => {
+    vi.stubGlobal("navigator", {}); // ambiente sem navigator.locks
+    const sentIfMatch: number[] = [];
+    const tracker = { revision: 3 };
+    let releaseFirst!: () => void;
+    const gate = new Promise<void>((resolve) => (releaseFirst = resolve));
+
+    const first = enqueuePlaylistWrite("pl-fb", async () => {
+      sentIfMatch.push(tracker.revision);
+      await gate;
+      tracker.revision += 1;
+    });
+    const second = enqueuePlaylistWrite("pl-fb", async () => {
+      sentIfMatch.push(tracker.revision);
+    });
+
+    await Promise.resolve();
+    releaseFirst();
+    await Promise.all([first, second]);
+    expect(sentIfMatch).toEqual([3, 4]);
   });
 });

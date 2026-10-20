@@ -38,14 +38,33 @@ export function resolveEditorDisplayName(accessToken: string | undefined): strin
   return composedName || clean(claims.preferred_username) || "Editor";
 }
 
+function randomId(): string {
+  return typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `editor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+// Gerado uma vez por contexto JS (módulo) — distinto por aba/janela, inclusive
+// aba duplicada que herda sessionStorage. Não persistido propositalmente.
+const editorContextId =
+  typeof window === "undefined" ? "server" : randomId();
+
+/**
+ * Identidade de correlação do editor: `sessionId:contextId`.
+ *
+ * - sessionId: estável por aba (sessionStorage) — correlaciona reloads da
+ *   mesma aba nos logs de auditoria.
+ * - contextId: único por contexto JS — duas abas/contextos (incluindo aba
+ *   duplicada que copia sessionStorage) têm identidades distintas, o que
+ *   permite separar "mesma sessão de editor" de "outro contexto" em
+ *   presence, mutations e logs.
+ *
+ * Metadado de correlação apenas — nunca autorização nem identidade Keycloak.
+ */
 export function getEditorPresenceClientId(): string {
   if (typeof window === "undefined") return "editor-server";
   const stored = window.sessionStorage.getItem(EDITOR_CLIENT_ID_KEY);
-  if (stored) return stored;
-  const generated =
-    typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `editor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  window.sessionStorage.setItem(EDITOR_CLIENT_ID_KEY, generated);
-  return generated;
+  const sessionId = stored ?? randomId();
+  if (!stored) window.sessionStorage.setItem(EDITOR_CLIENT_ID_KEY, sessionId);
+  return `${sessionId}:${editorContextId}`;
 }

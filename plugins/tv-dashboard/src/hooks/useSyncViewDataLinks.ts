@@ -15,6 +15,8 @@ import {
   type ComunicadoDataResolved,
 } from "@delpi/tv-dashboard-presentation";
 
+import { stableEquals } from "../utils/stableSerialize";
+
 /**
  * Quando o preview da fonte chega (ou visual/texto ligado sem projection),
  * materializa projeção — mesmo fluxo do link manual.
@@ -80,6 +82,10 @@ export function useSyncViewDataLinks({
       ...new Set([...viewSync.changedIds, ...textSync.changedIds, ...canvasSync.changedIds]),
     ];
     if (changedIds.length === 0) return;
+    // Gate semântico: sync idempotente não pode commitar diffs que não mudam
+    // o conteúdo material (ex.: ordem de chaves de normalização) — cada
+    // commitBlocks alimenta o autosave e bumpa playlists.revision.
+    if (stableEquals(next, current)) return;
 
     const syncKey = changedIds
       .map((id) => {

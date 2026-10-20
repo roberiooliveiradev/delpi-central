@@ -104,7 +104,16 @@ def ensure_main_section(request: Request, playlist_id: UUID):
             expected_revision=expected_revision,
         )
     except PlaylistRevisionConflictError as exc:
-        return playlist_revision_conflict_response(exc, expected=expected_revision)
+        return playlist_revision_conflict_response(
+            exc,
+            expected=expected_revision,
+            log_context={
+                "playlistId": playlist_id,
+                "requestId": request.headers.get("x-request-id"),
+                "actor": _actor_id(user),
+                "operation": "section_ensure_main",
+            },
+        )
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
     from tv_app.application.services.presentation_change_notifier import (

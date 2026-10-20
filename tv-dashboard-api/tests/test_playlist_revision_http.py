@@ -5,11 +5,17 @@ from __future__ import annotations
 from types import SimpleNamespace
 from uuid import UUID
 
+import logging
+
 from fastapi.responses import JSONResponse
 
+from tv_app.application.errors.playlist_persistence import (
+    PlaylistRevisionConflictError,
+)
 from tv_app.interface.http.playlist_revision_http import (
     assert_playlist_revision_or_conflict,
     parse_if_match_revision,
+    playlist_revision_conflict_response,
     revision_response_headers,
     with_revision,
 )
@@ -58,3 +64,45 @@ def test_revision_headers_and_payload():
     assert revision_response_headers(4) == {"X-Playlist-Revision": "4"}
     assert with_revision({"id": "s"}, 4)["playlistRevision"] == 4
     assert with_revision(None, 4) is None
+
+
+def test_conflict_response_logs_rejection_with_context(caplog):
+    """409 CAS deve registrar correlação segura (playlist/actor/client/op)."""
+    exc = PlaylistRevisionConflictError(9, expected_revision=7)
+    with caplog.at_level(logging.WARNING):
+        response = playlist_revision_conflict_response(
+            exc,
+            expected=7,
+            log_context={
+                "playlistId": PLAYLIST_ID,
+                "slideId": "slide-x",
+                "requestId": "req-42",
+                "actor": "actor-9",
+                "clientId": "sess:ctx",
+                "operation": "slide_duplicate",
+            },
+        )
+    assert response.status_code == 409
+    record = next(
+        (entry for entry in caplog.records if "playlist_write_rejected" in entry.message),
+        None,
+    )
+    assert record is not None
+    message = record.getMessage()
+    assert str(PLAYLIST_ID) in message
+    assert "slide-x" in message
+    assert "req-42" in message
+    assert "actor-9" in message
+    assert "sess:ctx" in message
+    assert "slide_duplicate" in message
+    assert "expected_revision=7" in message
+    assert "current_revision=9" in message
+    assert "result=revision_conflict" in message
+
+
+def test_conflict_response_logs_without_context(caplog):
+    """Sem contexto adicional o 409 ainda registra revisões (observabilidade base)."""
+    exc = PlaylistRevisionConflictError(4, expected_revision=None)
+    with caplog.at_level(logging.WARNING):
+        playlist_revision_conflict_response(exc, expected=None)
+    assert any("playlist_write_rejected" in entry.getMessage() for entry in caplog.records)

@@ -6,6 +6,7 @@ No HTTP loopback. No second catalog. Executes ops through TvPresentationWriteSer
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -38,6 +39,8 @@ from tv_app.application.services.tv_presentation_write_service import (
 # Esta era a terceira cópia divergente do conjunto (sem create_block e as
 # demais ops de geometria/texto) — commit rejeitava ops válidas do catálogo.
 _NATIVE_CONFIG_OPS = PresentationOpsContentService.native_config_ops()
+
+logger = logging.getLogger(__name__)
 
 _ERROR_OUTCOME_STATUSES = frozenset(
     {"PARTIAL_COMMIT", "OUTCOME_NOT_VERIFIED"}
@@ -441,6 +444,20 @@ class TvGptCommitService:
             try:
                 self._writes.assert_expected_revision(playlist_uuid, int(expected_revision))
             except RevisionConflictError as exc:
+                logger.warning(
+                    "playlist_write_rejected playlist_id=%s slide_id=%s request_id=%s "
+                    "actor=%s client_id=%s operation=%s expected_revision=%s "
+                    "current_revision=%s result=%s",
+                    playlist_uuid,
+                    (target or {}).get("slideId"),
+                    key,
+                    actor_id,
+                    None,
+                    "gpt_commit",
+                    int(expected_revision),
+                    exc.current_revision,
+                    "proposal_changed",
+                )
                 err = {
                     "status": "PROPOSAL_CHANGED",
                     "_raise": True,
@@ -1020,6 +1037,21 @@ class TvGptCommitService:
                     )
 
         except PresentationWriteError as exc:
+            if exc.status_code == 409:
+                logger.warning(
+                    "playlist_write_rejected playlist_id=%s slide_id=%s request_id=%s "
+                    "actor=%s client_id=%s operation=%s expected_revision=%s "
+                    "current_revision=%s result=%s",
+                    current_playlist,
+                    current_slide,
+                    key,
+                    actor_id,
+                    None,
+                    "gpt_commit",
+                    (exc.details or {}).get("expectedRevision"),
+                    (exc.details or {}).get("currentRevision"),
+                    exc.code or "conflict",
+                )
             if applied:
                 partial = {
                     "status": "PARTIAL_COMMIT",

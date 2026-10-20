@@ -29,6 +29,7 @@ from tv_app.interface.http.playlist_access_http import (
     require_playlist_access,
 )
 from tv_app.interface.http.playlist_revision_http import (
+    log_playlist_write_rejected,
     parse_if_match_revision,
     playlist_revision_conflict_response,
     revision_response_headers,
@@ -170,7 +171,44 @@ def _ok_with_revision(
     return response
 
 
-def _map_write_error(exc: PresentationWriteError):
+def _write_error_log_context(
+    request: Request,
+    *,
+    playlist_id: UUID,
+    slide_id: UUID | None = None,
+    actor: str | None = None,
+    client_id: str | None = None,
+    operation: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "playlistId": playlist_id,
+        "slideId": slide_id,
+        "requestId": request.headers.get("x-request-id"),
+        "actor": actor,
+        "clientId": client_id,
+        "operation": operation,
+    }
+
+
+def _map_write_error(
+    exc: PresentationWriteError,
+    *,
+    log_context: dict[str, Any] | None = None,
+):
+    if getattr(exc, "status_code", None) == 409:
+        details = exc.details or {}
+        ctx = log_context or {}
+        log_playlist_write_rejected(
+            playlist_id=ctx.get("playlistId"),
+            slide_id=ctx.get("slideId"),
+            request_id=ctx.get("requestId"),
+            actor=ctx.get("actor"),
+            client_id=ctx.get("clientId"),
+            operation=ctx.get("operation"),
+            expected_revision=details.get("expectedRevision"),
+            current_revision=details.get("currentRevision"),
+            result=exc.code or "conflict",
+        )
     return fail(exc.message, exc.status_code, data=exc.details or None)
 
 
@@ -204,7 +242,16 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             reason="slide_created",
         )
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                actor=actor,
+                client_id=body.clientId,
+                operation="slide_create",
+            ),
+        )
     return _ok_with_revision(
         slide, playlist_id=playlist_id, message="Tela adicionada.", status_code=201
     )
@@ -229,7 +276,15 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
             expected_revision=parse_if_match_revision(request),
         )
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                actor=actor,
+                operation="slide_create_from_preset",
+            ),
+        )
     return _ok_with_revision(
         slide, playlist_id=playlist_id, message="Tela importada do catálogo.", status_code=201
     )
@@ -252,7 +307,15 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
             expected_revision=parse_if_match_revision(request),
         )
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                actor=actor,
+                operation="slides_reorder",
+            ),
+        )
     return _ok_with_revision(
         {"slides": slides}, playlist_id=playlist_id, message="Ordem atualizada."
     )
@@ -278,7 +341,17 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
             expected_revision=expected_revision,
         )
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                slide_id=slide_id,
+                actor=actor,
+                client_id=body.clientId,
+                operation="slide_update",
+            ),
+        )
     return _ok_with_revision(
         slide,
         playlist_id=playlist_id,
@@ -482,7 +555,17 @@ def apply_presentation_mutations(
     except PresentationPatchError as exc:
         return fail(str(exc), 422, data=getattr(exc, "details", None) or None)
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                slide_id=slide_id,
+                actor=actor,
+                client_id=body.clientId,
+                operation="presentation_mutations",
+            ),
+        )
     slide = result.get("slide")
     notify_presentation_changed(
         playlist_id=str(playlist_id),
@@ -527,7 +610,16 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
             expected_revision=parse_if_match_revision(request),
         )
     except PresentationWriteError as exc:
-        return _map_write_error(exc)
+        return _map_write_error(
+            exc,
+            log_context=_write_error_log_context(
+                request,
+                playlist_id=playlist_id,
+                slide_id=slide_id,
+                actor=actor,
+                operation="slide_delete",
+            ),
+        )
     return _ok_with_revision(None, playlist_id=playlist_id, message="Tela removida.")
 
 
@@ -550,7 +642,17 @@ def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
             expected_revision=expected_revision,
         )
     except PlaylistRevisionConflictError as exc:
-        return playlist_revision_conflict_response(exc, expected=expected_revision)
+        return playlist_revision_conflict_response(
+            exc,
+            expected=expected_revision,
+            log_context={
+                "playlistId": playlist_id,
+                "slideId": slide_id,
+                "requestId": request.headers.get("x-request-id"),
+                "actor": actor,
+                "operation": "slide_duplicate",
+            },
+        )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     notify_presentation_changed(

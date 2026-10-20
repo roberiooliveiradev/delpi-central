@@ -142,6 +142,11 @@ import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
+import {
+  detectSharedSlideWrite,
+  publishPlaylistWriteHead,
+  readSharedPlaylistRevision,
+} from "../utils/playlistWriteHead";
 import { handleVisualCaptureRequest } from "../utils/liveStageVisualCapture";
 import {
   applySlideBatchPatch,
@@ -584,8 +589,16 @@ export function PlaylistEditorPage({
         knownPlaylistRevisionRef.current = next;
       }
       if (slideId) slideWriteBaseRevisionRef.current.set(slideId, next);
+      // Publica o commit próprio para contextos irmãos (abas/janelas
+      // same-origin) — o thunk deles resolve a revisão fresca dentro do
+      // Web Lock e o freshness gate por slide detecta escrita concorrente.
+      publishPlaylistWriteHead(playlistId, {
+        revision: next,
+        slideId: slideId ?? null,
+        clientId: editorPresence?.clientId ?? null,
+      });
     },
-    [],
+    [playlistId, editorPresence?.clientId],
   );
 
   const slideBaseRevision = useCallback(
@@ -594,11 +607,14 @@ export function PlaylistEditorPage({
       // nunca override. Sem o max, um ack de escrita em outro slide/seção deixava
       // a base deste slide abaixo da revisão conhecida → self-409 → conflito
       // falso → reload revertia a edição local (TV-ICON-COLOR-REVERSION).
+      // O head compartilhado cobre commits de contextos irmãos do mesmo
+      // origin; writers externos seguem cobertos pelo CAS (409 real).
       Math.max(
         slideId ? (slideWriteBaseRevisionRef.current.get(slideId) ?? 0) : 0,
         knownPlaylistRevisionRef.current,
+        readSharedPlaylistRevision(playlistId),
       ),
-    [],
+    [playlistId],
   );
 
   const playlistWriteGuard = useCallback(
@@ -608,25 +624,55 @@ export function PlaylistEditorPage({
       // recém-recarregado com snapshot pré-conflito.
       const epoch = comunicadoWriteEpochRef.current;
       return {
-        // Thunk: resolvido no envio, após o ack da escrita anterior na lane.
-        expectedRevision: () => knownPlaylistRevisionRef.current,
-        ifFresh: () => comunicadoWriteEpochRef.current === epoch,
-        clientId: editorPresence?.clientId,
-      };
-    },
-    [editorPresence?.clientId],
-  );
-
-  const slideWriteGuard = useCallback(
-    (slideId?: string | null): WriteGuard => {
-      const epoch = comunicadoWriteEpochRef.current;
-      return {
-        expectedRevision: () => slideBaseRevision(slideId),
+        // Thunk: resolvido no envio, após o ack da escrita anterior na lane
+        // (e após commits de contextos irmãos via write head compartilhado).
+        expectedRevision: () => slideBaseRevision(null),
         ifFresh: () => comunicadoWriteEpochRef.current === epoch,
         clientId: editorPresence?.clientId,
       };
     },
     [editorPresence?.clientId, slideBaseRevision],
+  );
+
+  // Ponte tardia: o freshness gate do slideWriteGuard aciona o cleanup
+  // server-wins, definido abaixo — ref evita reordenar o componente.
+  const applyServerWinsConflictRef = useRef<
+    ((slideId?: string | null, message?: string) => Promise<void>) | null
+  >(null);
+
+  const slideWriteGuard = useCallback(
+    (slideId?: string | null): WriteGuard => {
+      const epoch = comunicadoWriteEpochRef.current;
+      // Base de autoria capturada no gesto. Se um contexto irmão (outra
+      // aba/janela same-origin) comitar neste slide depois da captura, o
+      // snapshot é stale: obter o Web Lock NÃO torna conteúdo velho seguro —
+      // rejeita localmente e aciona o cleanup server-wins canônico em vez de
+      // enviar o full-config com revisão artificialmente atualizada.
+      const capturedBase = slideBaseRevision(slideId);
+      return {
+        expectedRevision: () => slideBaseRevision(slideId),
+        ifFresh: () => {
+          if (comunicadoWriteEpochRef.current !== epoch) return false;
+          if (
+            slideId &&
+            detectSharedSlideWrite(
+              playlistId,
+              slideId,
+              capturedBase,
+              editorPresence?.clientId,
+            )
+          ) {
+            queueMicrotask(() => {
+              void applyServerWinsConflictRef.current?.(slideId);
+            });
+            return false;
+          }
+          return true;
+        },
+        clientId: editorPresence?.clientId,
+      };
+    },
+    [editorPresence?.clientId, playlistId, slideBaseRevision],
   );
 
   /** Guard resolvido no commit — mutations do provider atuam no slide ativo. */
@@ -748,6 +794,9 @@ export function PlaylistEditorPage({
     },
     [playlistId, reloadPlaylistFromServer],
   );
+  useEffect(() => {
+    applyServerWinsConflictRef.current = applyServerWinsConflict;
+  }, [applyServerWinsConflict]);
 
   /** 409 REVISION_CONFLICT canônico — delega ao cleanup server-wins. */
   const handlePlaylistWriteConflict = useCallback(
@@ -2044,15 +2093,22 @@ export function PlaylistEditorPage({
       const callEpoch = options?.epoch ?? comunicadoWriteEpochRef.current;
       const peerTick =
         options?.peerTick ?? slidePeerActivityRef.current.get(slide.id) ?? 0;
+      const capturedBase = slideBaseRevision(slide.id);
       const guard: WriteGuard = {
         ...slideWriteGuard(slide.id),
         ifFresh: () => {
           if (comunicadoWriteEpochRef.current !== callEpoch) return false;
           if (
-            slidePeerActivityAdvanced(slidePeerActivityRef.current, slide.id, peerTick)
+            slidePeerActivityAdvanced(slidePeerActivityRef.current, slide.id, peerTick) ||
+            detectSharedSlideWrite(
+              playlistId,
+              slide.id,
+              capturedBase,
+              editorPresence?.clientId,
+            )
           ) {
-            // Peer tocou o mesmo slide após a captura — CAS por playlist não
-            // geraria 409; tratar como conflito server-wins.
+            // Peer ou contexto irmão tocou o mesmo slide após a captura —
+            // CAS por playlist não geraria 409; tratar como conflito server-wins.
             queueMicrotask(() => void applyServerWinsConflict(slide.id));
             return false;
           }

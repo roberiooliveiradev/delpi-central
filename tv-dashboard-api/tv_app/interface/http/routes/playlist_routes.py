@@ -335,7 +335,16 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
             expected_revision=expected_revision,
         )
     except PlaylistRevisionConflictError as exc:
-        return playlist_revision_conflict_response(exc, expected=expected_revision)
+        return playlist_revision_conflict_response(
+            exc,
+            expected=expected_revision,
+            log_context={
+                "playlistId": playlist_id,
+                "requestId": request.headers.get("x-request-id"),
+                "actor": actor,
+                "operation": "playlist_update",
+            },
+        )
     except PresentationWriteError as exc:
         return fail(exc.message, exc.status_code, data=exc.details or None)
     except PlaylistNotFoundError:
@@ -398,7 +407,16 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
             expected_revision=expected_revision,
         )
     except PlaylistRevisionConflictError as exc:
-        return playlist_revision_conflict_response(exc, expected=expected_revision)
+        return playlist_revision_conflict_response(
+            exc,
+            expected=expected_revision,
+            log_context={
+                "playlistId": playlist_id,
+                "requestId": request.headers.get("x-request-id"),
+                "actor": actor,
+                "operation": "playlist_deactivate",
+            },
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(
@@ -429,7 +447,16 @@ def activate_playlist(request: Request, playlist_id: UUID):
             expected_revision=expected_revision,
         )
     except PlaylistRevisionConflictError as exc:
-        return playlist_revision_conflict_response(exc, expected=expected_revision)
+        return playlist_revision_conflict_response(
+            exc,
+            expected=expected_revision,
+            log_context={
+                "playlistId": playlist_id,
+                "requestId": request.headers.get("x-request-id"),
+                "actor": actor,
+                "operation": "playlist_activate",
+            },
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(

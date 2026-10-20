@@ -6,6 +6,7 @@ Conflito → 409 com ``currentRevision``.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import UUID
 
@@ -54,12 +55,59 @@ def assert_playlist_revision_or_conflict(
     return current
 
 
+logger = logging.getLogger(__name__)
+
+
+def log_playlist_write_rejected(
+    *,
+    playlist_id: Any = None,
+    slide_id: Any = None,
+    request_id: Any = None,
+    actor: Any = None,
+    client_id: Any = None,
+    operation: Any = None,
+    expected_revision: Any = None,
+    current_revision: Any = None,
+    result: str = "revision_conflict",
+) -> None:
+    """Log estruturado canônico de rejeição de escrita (CAS/409).
+
+    Metadados de correlação apenas — nunca tokens, cookies ou conteúdo.
+    """
+    logger.warning(
+        "playlist_write_rejected playlist_id=%s slide_id=%s request_id=%s "
+        "actor=%s client_id=%s operation=%s expected_revision=%s "
+        "current_revision=%s result=%s",
+        playlist_id,
+        slide_id,
+        request_id,
+        actor,
+        client_id,
+        operation,
+        expected_revision,
+        current_revision,
+        result,
+    )
+
+
 def playlist_revision_conflict_response(
     exc: PlaylistRevisionConflictError,
     *,
     expected: int | None,
+    log_context: dict[str, Any] | None = None,
 ) -> JSONResponse:
     """409 canônico para conflito de CAS atômico vindo do repositório."""
+    ctx = log_context or {}
+    log_playlist_write_rejected(
+        playlist_id=ctx.get("playlistId"),
+        slide_id=ctx.get("slideId"),
+        request_id=ctx.get("requestId"),
+        actor=ctx.get("actor"),
+        client_id=ctx.get("clientId"),
+        operation=ctx.get("operation"),
+        expected_revision=int(expected) if expected is not None else None,
+        current_revision=int(exc.current_revision),
+    )
     return fail(
         "A programação foi alterada por outro editor. Recarregue e tente de novo.",
         409,
