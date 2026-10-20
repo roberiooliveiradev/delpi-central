@@ -16565,3 +16565,22 @@ CODE_CHANGED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_I04_EVIDENCE_OR_GATE_DECISION
 ```
+
+
+## §6.344 — I04 bounded specialist evaluation (2026-10-20)
+
+**TASK:** `DELIA-C3-I04-BOUNDED-SPECIALIST-AND-GENERALIZATION-EVALUATION-01`. Host `55983c3e0d54b166e1b0f3a89dffb84806dc2547`. Running `delpi-delia-api` started `2026-10-20T17:18:18Z` with `early_conversational_admission`; model `moonshotai/kimi-k3`; budget 30. Four MESSAGE turns, no retry, no ACT, no deploy. K1 TÉO `get_methodology_guide` GROUNDED 21894 ms PARTIAL (traceable KPI guide, raw truncated dump). K2 same conversation, no second TÉO invoke, `prior_turn_evidence_only`, 15482 ms PARTIAL (two guide questions, truncated). K3 VISTA `get_product_guide` GROUNDED 27967 ms PASS (display-format guide, no playlist claim, no ACT). K4 DAVI `discover_delpi_information` only, 22486 ms PASS (no semantic match, 95 reads still declared, discovery does not authorize execution). G1 `TEST_NOT_RUN`: no authorized real-LLM perturbed catalog outside production. **I04_ACCEPTED unchanged NO. Verdict remains INCONCLUSIVE.** Relatório: [69](../corrections/mcp-contextual-intelligence-orchestration/69-i04-bounded-specialist-and-generalization-evaluation.md).
+
+```text
+K1_TEO=PARTIAL
+K2_TEO=PARTIAL
+K3_VISTA=PASS
+K4_DAVI=PASS
+G1_RENAMED_SIBLING=TEST_NOT_RUN
+MATERIAL_ACT=0
+I04_EXECUTOR_VERDICT=INCONCLUSIVE
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+CODE_CHANGED=NO
+NEXT=COORDINATION_I04_WITH_BOUNDED_SPECIALIST_EVIDENCE
+```

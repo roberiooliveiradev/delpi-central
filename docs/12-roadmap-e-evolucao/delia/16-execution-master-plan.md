@@ -5,7 +5,24 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (revisão funcional I04):** o parecer do executor é `INCONCLUSIVE`. O gate canônico de I04, no README da trilha, exige testes bounded com TÉO, VISTA, DAVI e um sibling renomeado no runtime avaliado. Essa evidência não existe para o código pós-refatoração. Conversação, paráfrase OpenAPI e os limites de 30 s / 12 s estão comprovados em amostras já registradas. Este registro não altera `I04_ACCEPTED`, não reabre Q01–Q03 e não autoriza código, deploy ou fase. Documento 68. Ledger §6.343.
+**Decisão vigente de execução — 2026-10-20 (avaliação bounded I04):** no runtime atual, TÉO, VISTA e DAVI foram observados em quatro perguntas somente leitura. K3 e K4 cumprem o critério funcional. K1 e K2 ficam parciais. O sibling renomeado não tem mecanismo autorizado fora de produção e permanece `TEST_NOT_RUN`. O parecer continua `INCONCLUSIVE`. Este registro não altera `I04_ACCEPTED`. Documento 69. Ledger §6.344.
+
+```text
+I04_EXECUTOR_VERDICT=INCONCLUSIVE
+I04_ACCEPTED=NO
+K1_TEO=PARTIAL
+K2_TEO=PARTIAL
+K3_VISTA=PASS
+K4_DAVI=PASS
+G1_RENAMED_SIBLING=TEST_NOT_RUN
+MATERIAL_ACT=0
+C3_EXECUTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_CHANGES_AUTHORIZED=NO
+NEXT=COORDINATION_I04_WITH_BOUNDED_SPECIALIST_EVIDENCE
+```
+
+**Decisão anterior — 2026-10-20 (revisão funcional I04, SUPERSEDED como cerca vigente pela avaliação bounded):** o parecer do executor é `INCONCLUSIVE`. O gate canônico de I04, no README da trilha, exige testes bounded com TÉO, VISTA, DAVI e um sibling renomeado no runtime avaliado. Essa evidência não existe para o código pós-refatoração. Conversação, paráfrase OpenAPI e os limites de 30 s / 12 s estão comprovados em amostras já registradas. Este registro não altera `I04_ACCEPTED`, não reabre Q01–Q03 e não autoriza código, deploy ou fase. Documento 68. Ledger §6.343.
 
 ```text
 I04_EXECUTOR_VERDICT=INCONCLUSIVE
