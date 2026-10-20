@@ -21,6 +21,7 @@ import {
   SuppliesStateBanner,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
+import { ApiRequestError } from "../../api/httpClient";
 import { listSuppliers } from "./api";
 import { mapSuppliersFetchError, SUPPLIERS_CONTENT as C } from "./content";
 import {
@@ -80,7 +81,8 @@ export function SuppliersPage({ basePath }: SuppliersPageProps) {
         setTotal(0);
         setTotalPages(0);
         const message = err instanceof Error ? err.message : C.error;
-        setError(mapSuppliersFetchError(message));
+        const code = err instanceof ApiRequestError ? err.code : undefined;
+        setError(mapSuppliersFetchError(message, code));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);

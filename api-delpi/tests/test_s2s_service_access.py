@@ -82,6 +82,14 @@ def _call(handler):
         return ("exc", str(exc))
 
 
+def _call_error(handler) -> HTTPException | None:
+    try:
+        handler()
+    except HTTPException as exc:
+        return exc
+    return None
+
+
 def test_strict_allows_valid_service_credential():
     @require_s2s_service(required_scopes=("suppliers.read",))
     def handler():
@@ -125,6 +133,36 @@ def test_strict_maps_client_and_scope_denials_to_403():
     for error in (ServiceClientDeniedError(), ServiceScopeDeniedError()):
         with _PatchAll(_use(request, _validator(error=error))):
             assert _call(handler) == ("http", 403)
+
+
+def test_strict_denials_carry_typed_error_code():
+    @require_s2s_service(required_scopes=("suppliers.read",))
+    def handler():
+        return "done"
+
+    request = _request(s2s_header="Bearer svc-jwt")
+    cases = [
+        (ServiceClientDeniedError(), 403, "S2S_CLIENT_DENIED"),
+        (ServiceScopeDeniedError(), 403, "S2S_SCOPE_DENIED"),
+        (ServiceTokenInvalidError(), 401, "S2S_TOKEN_INVALID"),
+        (ServiceAuthConfigError("missing"), 503, "S2S_CONFIG_MISSING"),
+        (
+            ServiceValidatorUnavailableError(),
+            503,
+            "S2S_VALIDATOR_UNAVAILABLE",
+        ),
+    ]
+    for error, status, code in cases:
+        with _PatchAll(_use(request, _validator(error=error))):
+            exc = _call_error(handler)
+            assert exc is not None
+            assert exc.status_code == status
+            assert exc.error_code == code
+
+    with _PatchAll(_use(_request())):
+        exc = _call_error(handler)
+        assert exc.status_code == 401
+        assert exc.error_code == "S2S_TOKEN_MISSING"
 
 
 def test_strict_maps_invalid_token_to_401():

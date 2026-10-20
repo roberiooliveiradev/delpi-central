@@ -8,6 +8,8 @@ from an ACK alone.
 
 from __future__ import annotations
 
+import logging
+
 from flask import Blueprint, jsonify, request
 
 from app.application.security.supplies_permissions import can_use_operations
@@ -25,6 +27,8 @@ from app.interfaces.http.auth_decorators import require_policy
 from flask import g
 
 suppliers_bp = Blueprint("suppliers", __name__)
+
+logger = logging.getLogger(__name__)
 
 _GATEWAY = DelpiS2SApiGateway()
 
@@ -67,7 +71,19 @@ def _gateway_error_response(exc: DelpiApiGatewayError, *, write: bool = False):
     if status == 401:
         return jsonify({"detail": "Unauthorized", "code": "unauthorized"}), 401
     if status == 403:
-        return jsonify({"detail": "Forbidden", "code": "forbidden"}), 403
+        # Propagate the upstream denial code so the response identifies the
+        # denial owner (e.g. S2S_SCOPE_DENIED) instead of collapsing into the
+        # same "forbidden" the BFF uses for its own supplies.access denial.
+        logger.warning(
+            "suppliers_upstream_denied status=403 upstream_code=%s",
+            upstream_code or "none",
+        )
+        return jsonify(
+            {
+                "detail": "Forbidden",
+                "code": upstream_code or "upstream_forbidden",
+            }
+        ), 403
     if status == 404:
         return jsonify({"detail": "Not Found", "code": "not_found"}), 404
     if status < 500:

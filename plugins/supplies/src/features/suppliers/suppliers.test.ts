@@ -6,6 +6,10 @@ import {
   resolvePluginRoute,
 } from "../../app/pluginRoutes";
 import {
+  mapSuppliersFetchError,
+  SUPPLIERS_CONTENT,
+} from "./content";
+import {
   buildUrlSearch,
   classifyWriteOutcome,
   createDefaultQuery,
@@ -115,6 +119,30 @@ describe("write outcome classification", () => {
     expect(classifyWriteOutcome(undefined, 422)).toBe("rejected");
     expect(classifyWriteOutcome({}, 504)).toBe("indeterminate");
     expect(classifyWriteOutcome(undefined, undefined)).toBe("indeterminate");
+  });
+});
+
+describe("fetch error mapping", () => {
+  it("shows the permission message only for the BFF supplies.access denial", () => {
+    expect(mapSuppliersFetchError("Forbidden", "forbidden")).toBe(
+      SUPPLIERS_CONTENT.errorForbidden,
+    );
+  });
+
+  it("does not claim a missing permission on upstream S2S denials", () => {
+    expect(mapSuppliersFetchError("Forbidden", "S2S_SCOPE_DENIED")).toBe(
+      SUPPLIERS_CONTENT.error,
+    );
+    expect(mapSuppliersFetchError("Forbidden", "upstream_forbidden")).toBe(
+      SUPPLIERS_CONTENT.error,
+    );
+  });
+
+  it("keeps the message heuristic when no typed code is present", () => {
+    expect(mapSuppliersFetchError("Forbidden")).toBe(
+      SUPPLIERS_CONTENT.errorForbidden,
+    );
+    expect(mapSuppliersFetchError("unexpected")).toBe(SUPPLIERS_CONTENT.error);
   });
 });
 

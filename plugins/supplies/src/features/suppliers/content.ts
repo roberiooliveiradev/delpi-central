@@ -84,7 +84,15 @@ export const SUPPLIERS_CONTENT = {
   createBack: "Voltar para a lista",
 } as const;
 
-export function mapSuppliersFetchError(message: string): string {
+export function mapSuppliersFetchError(message: string, code?: string): string {
+  // "forbidden" is only the BFF's own supplies.access denial; upstream
+  // denials surface typed codes (e.g. S2S_SCOPE_DENIED) or
+  // "upstream_forbidden" and must not claim a missing user permission.
+  if (code !== undefined) {
+    return code === "forbidden"
+      ? SUPPLIERS_CONTENT.errorForbidden
+      : SUPPLIERS_CONTENT.error;
+  }
   const normalized = message.toLowerCase();
   if (normalized.includes("forbidden") || normalized.includes("não autorizado")) {
     return SUPPLIERS_CONTENT.errorForbidden;

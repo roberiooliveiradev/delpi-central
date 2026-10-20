@@ -210,7 +210,11 @@ async def http_exception_handler(_request: Request, exc: StarletteHTTPException)
     detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     if exc.status_code == 404:
         return not_found_response(detail or "Recurso não encontrado")
-    code = "VALIDATION_ERROR" if exc.status_code == 422 else "HTTP_ERROR"
+    typed_code = getattr(exc, "error_code", None)
+    if typed_code:
+        code = typed_code
+    else:
+        code = "VALIDATION_ERROR" if exc.status_code == 422 else "HTTP_ERROR"
     return error_response(detail, status_code=exc.status_code, code=code)
 
 

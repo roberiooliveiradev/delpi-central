@@ -139,6 +139,30 @@ class TestList:
                 "/suppliers", headers={"Authorization": "Bearer t"}
             ).status_code == 502
 
+    def test_upstream_403_propagates_s2s_denial_code(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError(
+                "denied", status_code=403, code="S2S_SCOPE_DENIED"
+            )
+            resp = client.get("/suppliers", headers={"Authorization": "Bearer t"})
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "S2S_SCOPE_DENIED"
+
+    def test_upstream_403_without_code_maps_upstream_forbidden(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError(
+                "denied", status_code=403
+            )
+            resp = client.get("/suppliers", headers={"Authorization": "Bearer t"})
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "upstream_forbidden"
+
 
 class TestDetail:
     def test_detail_composes_supplier_id(self, client):

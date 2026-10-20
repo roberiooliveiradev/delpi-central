@@ -39,6 +39,20 @@ from app.infrastructure.observability.request_context import get_request
 logger = logging.getLogger("api-delpi.s2s")
 
 
+class _S2SHttpException(HTTPException):
+    """HTTPException carrying the stable S2S denial code into the error envelope.
+
+    ``main.http_exception_handler`` reads ``error_code`` when present so the
+    typed code (``S2S_CLIENT_DENIED``, ``S2S_SCOPE_DENIED``...) reaches the
+    response body — callers can tell a service-credential denial from a user
+    permission denial without log access.
+    """
+
+    def __init__(self, status_code: int, detail: str, code: str) -> None:
+        super().__init__(status_code=status_code, detail=detail)
+        self.error_code = code
+
+
 def _extract_service_token() -> str | None:
     request = get_request()
     if request is None:
@@ -46,8 +60,10 @@ def _extract_service_token() -> str | None:
     try:
         return extract_service_authorization(request.headers)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=401, detail="Invalid service authorization"
+        raise _S2SHttpException(
+            status_code=401,
+            detail="Invalid service authorization",
+            code="S2S_TOKEN_INVALID",
         ) from exc
 
 
@@ -66,21 +82,29 @@ def _require_service_identity(
         )
     except ServiceAuthConfigError as exc:
         logger.error("s2s_config_missing code=%s", exc.code)
-        raise HTTPException(
-            status_code=503, detail="Service authentication unavailable"
+        raise _S2SHttpException(
+            status_code=503,
+            detail="Service authentication unavailable",
+            code=exc.code,
         ) from exc
     except ServiceValidatorUnavailableError as exc:
         logger.warning("s2s_denied code=%s", exc.code)
-        raise HTTPException(
-            status_code=503, detail="Service authentication unavailable"
+        raise _S2SHttpException(
+            status_code=503,
+            detail="Service authentication unavailable",
+            code=exc.code,
         ) from exc
     except (ServiceClientDeniedError, ServiceScopeDeniedError) as exc:
         logger.info("s2s_denied code=%s", exc.code)
-        raise HTTPException(status_code=403, detail="Forbidden") from exc
+        raise _S2SHttpException(
+            status_code=403, detail="Forbidden", code=exc.code
+        ) from exc
     except ServiceAuthError as exc:
         logger.info("s2s_denied code=%s", exc.code)
-        raise HTTPException(
-            status_code=401, detail="Invalid service authorization"
+        raise _S2SHttpException(
+            status_code=401,
+            detail="Invalid service authorization",
+            code=exc.code,
         ) from exc
 
     request = get_request()
@@ -103,8 +127,10 @@ def require_s2s_service(
             async def async_wrapper(*args, **kwargs):
                 token = _extract_service_token()
                 if token is None:
-                    raise HTTPException(
-                        status_code=401, detail="Service authentication required"
+                    raise _S2SHttpException(
+                        status_code=401,
+                        detail="Service authentication required",
+                        code="S2S_TOKEN_MISSING",
                     )
                 _require_service_identity(
                     token,
@@ -119,8 +145,10 @@ def require_s2s_service(
         def sync_wrapper(*args, **kwargs):
             token = _extract_service_token()
             if token is None:
-                raise HTTPException(
-                    status_code=401, detail="Service authentication required"
+                raise _S2SHttpException(
+                    status_code=401,
+                    detail="Service authentication required",
+                    code="S2S_TOKEN_MISSING",
                 )
             _require_service_identity(
                 token,
@@ -165,7 +193,11 @@ def require_s2s_or_any_permission(
             user = resolve_user_context()
             if user is not None and getattr(user, "principal_type", None) == "service":
                 logger.info("s2s_denied code=LEGACY_SERVICE_TOKEN")
-                raise HTTPException(status_code=403, detail="Forbidden")
+                raise _S2SHttpException(
+                    status_code=403,
+                    detail="Forbidden",
+                    code="LEGACY_SERVICE_TOKEN",
+                )
             return guarded(*args, **kwargs)
 
         if inspect.iscoroutinefunction(fn):
@@ -184,7 +216,11 @@ def require_s2s_or_any_permission(
                 user = resolve_user_context()
                 if user is not None and getattr(user, "principal_type", None) == "service":
                     logger.info("s2s_denied code=LEGACY_SERVICE_TOKEN")
-                    raise HTTPException(status_code=403, detail="Forbidden")
+                    raise _S2SHttpException(
+                        status_code=403,
+                        detail="Forbidden",
+                        code="LEGACY_SERVICE_TOKEN",
+                    )
                 return await guarded(*args, **kwargs)
 
             return async_wrapper

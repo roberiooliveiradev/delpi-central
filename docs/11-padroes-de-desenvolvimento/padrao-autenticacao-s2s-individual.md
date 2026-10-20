@@ -99,6 +99,12 @@ Configuração obrigatória ausente falha fechado (`S2S_CONFIG_MISSING` →
 infraestrutura: provisionar o cliente confidencial no Keycloak com
 service account habilitada e audience mapper para `S2S_AUDIENCE`
 (autorização de infraestrutura separada — não é feita pelo código).
+Scopes operacionais (`required_scopes`) devem ser client scopes
+atribuídos como **default** ao cliente solicitante — caso contrário o
+token omite o claim e a rota nega com `S2S_SCOPE_DENIED` (403). O
+provisionador dedicado `infra/scripts/keycloak_s2s_supplies_scope.py`
+(default `--check`, `--apply` bounded) cobre `suppliers.read` para
+`supplies-api`.
 
 ## Integração no consumidor (ex.: supplies-api)
 
