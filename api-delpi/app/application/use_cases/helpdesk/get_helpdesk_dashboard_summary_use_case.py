@@ -16,6 +16,10 @@ Semântica dos indicadores (mapeamento efetivo dos status GLPI via helpdesk-api)
   Ticket sem prazo registrado nunca é contado como atrasado.
 - ``pending_overdue``: UNIÃO de ``pending`` e ``overdue`` (sem dupla contagem —
   um ticket pendente e atrasado conta uma única vez).
+- ``total_created_in_period``: tickets distintos cuja ``created_at`` recai no
+  período solicitado (datas inclusivas, mesma semântica de ``resolved``; sem
+  período, todos os tickets autorizados). Cada chamado conta uma única vez
+  (deduplicado por ``id``) — nunca é soma de agrupamentos.
 
 A visibilidade dos tickets é decidida pela helpdesk-api com a sessão GLPI do
 usuário autenticado; este use case apenas agrega o que o BFF retorna.
@@ -110,7 +114,9 @@ class GetHelpdeskDashboardSummaryUseCase:
             "resolved": 0,
             "pending": 0,
             "overdue": 0,
+            "total_created_in_period": 0,
         }
+        created_seen: set[Any] = set()
         for ticket in tickets:
             if not isinstance(ticket, dict):
                 continue
@@ -125,6 +131,9 @@ class GetHelpdeskDashboardSummaryUseCase:
                 counts["resolved"] += 1
             if status_id in _UNFINISHED_IDS and _is_overdue(ticket, now):
                 counts["overdue"] += 1
+            if _created_in_range(ticket, start_date, end_date):
+                created_seen.add(_dedup_key(ticket))
+        counts["total_created_in_period"] = len(created_seen)
 
         counts["pending_overdue"] = _count_pending_overdue(tickets, now)
 
@@ -231,17 +240,46 @@ def _solved_in_range(
     start_date: date | None,
     end_date: date | None,
 ) -> bool:
+    return _date_field_in_range(
+        ticket.get("solved_at"), start_date, end_date
+    )
+
+
+def _created_in_range(
+    ticket: dict[str, Any],
+    start_date: date | None,
+    end_date: date | None,
+) -> bool:
+    return _date_field_in_range(
+        ticket.get("created_at"), start_date, end_date
+    )
+
+
+def _date_field_in_range(
+    value: Any,
+    start_date: date | None,
+    end_date: date | None,
+) -> bool:
     if start_date is None and end_date is None:
         return True
-    solved_at = _parse_dt(ticket.get("solved_at"))
-    if solved_at is None:
+    parsed = _parse_dt(value)
+    if parsed is None:
         return False
-    solved_date = solved_at.date()
-    if start_date is not None and solved_date < start_date:
+    parsed_date = parsed.date()
+    if start_date is not None and parsed_date < start_date:
         return False
-    if end_date is not None and solved_date > end_date:
+    if end_date is not None and parsed_date > end_date:
         return False
     return True
+
+
+def _dedup_key(ticket: dict[str, Any]) -> Any:
+    ticket_id = ticket.get("id")
+    if isinstance(ticket_id, bool):
+        return ("_obj", id(ticket))
+    if isinstance(ticket_id, (int, str)):
+        return ticket_id
+    return ("_obj", id(ticket))
 
 
 def _is_overdue(ticket: dict[str, Any], now: datetime) -> bool:

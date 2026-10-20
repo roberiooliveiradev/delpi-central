@@ -13284,7 +13284,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "KPIs consolidados de chamados GLPI por status efetivo: abertos, em atendimento, resolvidos na janela (solved_at), pendentes, atrasados por SLA vencido e o consolidado pendente-ou-atrasado sem dupla contagem.",
+      "description": "KPIs consolidados de chamados GLPI por status efetivo: abertos, em atendimento, resolvidos na janela (solved_at), pendentes, atrasados por SLA vencido, o consolidado pendente-ou-atrasado sem dupla contagem e o total de chamados criados no período (created_at).",
       "whenToUse": "Cards de KPI do TV Dashboard de chamados; um campo por componente visual. Visibilidade sempre a do escopo autorizado da sessão.",
       "paramSchema": {
         "start_date": {
@@ -13385,6 +13385,15 @@
           "origin": "result",
           "semanticType": "number",
           "label": "Atrasados (SLA vencido)"
+        },
+        {
+          "name": "total_created_in_period",
+          "type": "number",
+          "nullable": true,
+          "projectable": true,
+          "origin": "result",
+          "semanticType": "number",
+          "label": "Criados no período"
         }
       ],
       "valueFields": [
@@ -13393,7 +13402,8 @@
         "resolved",
         "pending_overdue",
         "pending",
-        "overdue"
+        "overdue",
+        "total_created_in_period"
       ],
       "tvConstraints": {
         "maxRows": 1
@@ -13404,7 +13414,8 @@
         "resolved": "Resolvidos no período",
         "pending_overdue": "Pendentes ou atrasados",
         "pending": "Pendentes",
-        "overdue": "Atrasados (SLA vencido)"
+        "overdue": "Atrasados (SLA vencido)",
+        "total_created_in_period": "Criados no período"
       },
       "valueFieldTypes": {
         "open": "number",
@@ -13412,7 +13423,8 @@
         "resolved": "number",
         "pending_overdue": "number",
         "pending": "number",
-        "overdue": "number"
+        "overdue": "number",
+        "total_created_in_period": "number"
       }
     },
     {

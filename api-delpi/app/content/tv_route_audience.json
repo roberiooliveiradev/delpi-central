@@ -1780,13 +1780,13 @@
       "locale": {
         "en": {
           "summary": "Helpdesk ticket KPIs",
-          "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue) for the tickets visible to the caller's authorized session.",
+          "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue, total created in period) for the tickets visible to the caller's authorized session.",
           "whenToUse": "KPI cards for helpdesk ticket volume by status on the TV Dashboard.",
           "label": "Helpdesk — ticket summary"
         },
         "pt-BR": {
           "summary": "Chamados Helpdesk — resumo de KPIs",
-          "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados) sobre os chamados visíveis ao escopo autorizado da sessão.",
+          "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados, total criado no período) sobre os chamados visíveis ao escopo autorizado da sessão.",
           "whenToUse": "Cards de KPI de volume de chamados por status no TV Dashboard.",
           "label": "Helpdesk — resumo de chamados"
         }
@@ -1795,20 +1795,20 @@
         "start_date": {
           "locale": {
             "en": {
-              "label": "Resolution window start"
+              "label": "Period start"
             },
             "pt-BR": {
-              "label": "Início da janela de resolução"
+              "label": "Início do período"
             }
           }
         },
         "end_date": {
           "locale": {
             "en": {
-              "label": "Resolution window end"
+              "label": "Period end"
             },
             "pt-BR": {
-              "label": "Fim da janela de resolução"
+              "label": "Fim do período"
             }
           }
         },

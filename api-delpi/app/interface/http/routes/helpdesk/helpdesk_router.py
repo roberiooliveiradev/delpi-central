@@ -30,11 +30,17 @@ _HELPDESK_ACCESS = [API_DELPI_ACCESS]
 def get_helpdesk_dashboard_summary(
     start_date: date | None = Query(
         default=None,
-        description="Start of the resolution window (YYYY-MM-DD). Only tickets solved on or after this date count toward `resolved`.",
+        description=(
+            "Start of the period window (YYYY-MM-DD, inclusive). Bounds `resolved` "
+            "(solved_at) and `total_created_in_period` (created_at)."
+        ),
     ),
     end_date: date | None = Query(
         default=None,
-        description="End of the resolution window (YYYY-MM-DD). Only tickets solved on or before this date count toward `resolved`.",
+        description=(
+            "End of the period window (YYYY-MM-DD, inclusive). Bounds `resolved` "
+            "(solved_at) and `total_created_in_period` (created_at)."
+        ),
     ),
     assignee_id: int | None = Query(
         default=None,

@@ -35857,7 +35857,7 @@
           "name": "start_date",
           "in": "query",
           "required": false,
-          "description": "Start of the resolution window (YYYY-MM-DD). Only tickets solved on or after this date count toward `resolved`.",
+          "description": "Start of the period window (YYYY-MM-DD, inclusive). Bounds `resolved` (solved_at) and `total_created_in_period` (created_at).",
           "type": "string",
           "format": "date"
         },
@@ -35865,7 +35865,7 @@
           "name": "end_date",
           "in": "query",
           "required": false,
-          "description": "End of the resolution window (YYYY-MM-DD). Only tickets solved on or before this date count toward `resolved`.",
+          "description": "End of the period window (YYYY-MM-DD, inclusive). Bounds `resolved` (solved_at) and `total_created_in_period` (created_at).",
           "type": "string",
           "format": "date"
         },
@@ -35905,13 +35905,13 @@
         "locale": {
           "en": {
             "summary": "Helpdesk ticket KPIs",
-            "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue) for the tickets visible to the caller's authorized session.",
+            "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue, total created in period) for the tickets visible to the caller's authorized session.",
             "whenToUse": "KPI cards for helpdesk ticket volume by status on the TV Dashboard.",
             "label": "Helpdesk — ticket summary"
           },
           "pt-BR": {
             "summary": "Chamados Helpdesk — resumo de KPIs",
-            "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados) sobre os chamados visíveis ao escopo autorizado da sessão.",
+            "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados, total criado no período) sobre os chamados visíveis ao escopo autorizado da sessão.",
             "whenToUse": "Cards de KPI de volume de chamados por status no TV Dashboard.",
             "label": "Helpdesk — resumo de chamados"
           }
@@ -35921,11 +35921,11 @@
             "locale": {
               "en": {
                 "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Resolution window end"
+                "label": "Period end"
               },
               "pt-BR": {
                 "description": "Fim do período (AAAA-MM-DD).",
-                "label": "Fim da janela de resolução"
+                "label": "Fim do período"
               }
             },
             "format": "date"
@@ -35946,11 +35946,11 @@
             "locale": {
               "en": {
                 "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
-                "label": "Resolution window start"
+                "label": "Period start"
               },
               "pt-BR": {
                 "description": "Início do período (AAAA-MM-DD).",
-                "label": "Início da janela de resolução"
+                "label": "Início do período"
               }
             },
             "format": "date"
@@ -35988,12 +35988,12 @@
         },
         "tv": {
           "whenToUse": "Cards de KPI de volume de chamados por status no TV Dashboard.",
-          "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados) sobre os chamados visíveis ao escopo autorizado da sessão.",
+          "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados, total criado no período) sobre os chamados visíveis ao escopo autorizado da sessão.",
           "label": "Helpdesk — resumo de chamados"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue) for the tickets visible to the caller's authorized session."
+      "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue, total created in period) for the tickets visible to the caller's authorized session."
     },
     {
       "method": "GET",

@@ -162,6 +162,99 @@ class TestOverdue:
         assert data["pending_overdue"] == 3  # 2+2-1 overlap
 
 
+class TestTotalCreatedInPeriod:
+    def test_counts_distinct_tickets_created_in_range_once(self) -> None:
+        items = [
+            _ticket(1, id=10, created_at="2026-03-05T09:00:00Z"),
+            _ticket(5, id=11, created_at="2026-03-06T09:00:00Z",
+                    solved_at="2026-03-07T09:00:00Z"),
+            _ticket(6, id=12, created_at="2026-03-08T09:00:00Z"),  # closed counts too
+            _ticket(1, id=10, created_at="2026-03-05T09:00:00Z"),  # dup id: once
+        ]
+        result = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=4)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        assert result["data"]["total_created_in_period"] == 3
+
+    def test_boundaries_inclusive_and_outside_excluded(self) -> None:
+        items = [
+            _ticket(1, id=1, created_at="2026-03-01T00:00:00Z"),   # first day edge
+            _ticket(1, id=2, created_at="2026-03-31T23:59:59Z"),   # last day edge
+            _ticket(1, id=3, created_at="2026-02-28T23:59:59Z"),   # before
+            _ticket(1, id=4, created_at="2026-04-01T00:00:00Z"),   # after
+        ]
+        result = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=4)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        assert result["data"]["total_created_in_period"] == 2
+
+    def test_all_statuses_are_eligible(self) -> None:
+        created = "2026-03-10T08:00:00Z"
+        items = [
+            _ticket(s, id=100 + s, created_at=created)
+            for s in (1, 2, 3, 4, 5, 6, 10)
+        ]
+        result = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=7)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        assert result["data"]["total_created_in_period"] == 7
+
+    def test_empty_result_returns_zero(self) -> None:
+        result = _execute(
+            FakeGateway([_page([], page=1, page_size=50, total=0)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        assert result["data"]["total_created_in_period"] == 0
+
+    def test_not_derived_from_status_groupings(self) -> None:
+        # Um chamado closed criado no período não aparece em nenhum KPI de
+        # status, mas deve entrar no total — prova de que não é soma de grupos.
+        items = [_ticket(6, id=7, created_at="2026-03-05T09:00:00Z")]
+        result = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=1)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        data = result["data"]
+        assert data["total_created_in_period"] == 1
+        assert data["open"] + data["in_progress"] + data["resolved"] + data["pending"] == 0
+
+    def test_missing_created_at_excluded_only_when_range_given(self) -> None:
+        items = [_ticket(1, id=1), _ticket(1, id=2, created_at="2026-03-05T00:00:00Z")]
+        ranged = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=2)]),
+            start_date=date(2026, 3, 1),
+        )
+        assert ranged["data"]["total_created_in_period"] == 1
+        unranged = _execute(FakeGateway([_page(items, page=1, page_size=50, total=2)]))
+        assert unranged["data"]["total_created_in_period"] == 2
+
+    def test_existing_kpis_unchanged_by_new_field(self) -> None:
+        past = (_NOW - timedelta(hours=2)).isoformat()
+        items = [
+            _ticket(1, id=1, created_at="2026-03-05T00:00:00Z", sla_tto=past),
+            _ticket(5, id=2, created_at="2025-12-01T00:00:00Z",
+                    solved_at="2026-03-05T00:00:00Z"),
+        ]
+        result = _execute(
+            FakeGateway([_page(items, page=1, page_size=50, total=2)]),
+            start_date=date(2026, 3, 1),
+            end_date=date(2026, 3, 31),
+        )
+        data = result["data"]
+        assert data["open"] == 1
+        assert data["resolved"] == 1
+        assert data["overdue"] == 1
+        assert data["total_created_in_period"] == 1
+
+
 class TestPaginationAndPartial:
     def test_aggregates_across_multiple_pages(self) -> None:
         page1 = _page([_ticket(1)] * 50, page=1, page_size=50, total=75)
