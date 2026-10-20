@@ -31,7 +31,6 @@ from app.application.capability_provision.orchestration import (
     _prior_excerpt_records,
     _prior_supports_typed_attribute_compare,
     _prior_transform_probe_eligible,
-    _typed_compare_outcome_content,
 )
 from app.application.interaction.contracts import (
     LIMITATION_PRIOR_TURN_CONTINUATION,
@@ -593,7 +592,7 @@ def test_g0_rework_compare_empty_selection_is_insufficiency():
     content = attempt.content or ""
     assert "30191627" not in content or "→" not in content
     assert "Comparação a partir" not in content
-    assert not _typed_compare_outcome_content(content)
+    assert "Diferenças comprovadas:" not in content
 
 
 def test_g0_rework_compare_reordered_segments_not_attributes():
@@ -674,15 +673,9 @@ def test_g0_rework_compare_invalid_index_insufficient():
 
 
 def test_g0_rework_misleading_compare_header_is_not_outcome():
-    assert _typed_compare_outcome_content(
-        "Comparação: valores divergentes.\n- a → b"
-    ) is False
-    assert _typed_compare_outcome_content(
-        "Comparação a partir dos registros anteriores:\n- a → b"
-    ) is False
-    assert _typed_compare_outcome_content(
-        "Linha.\nDiferenças comprovadas:\n- código: 1 → 2"
-    )
+    import app.application.capability_provision.orchestration as orch_mod
+
+    assert not hasattr(orch_mod, "_typed_compare_outcome_content")
     assert not _prior_supports_typed_attribute_compare(
         ({"excerpt": "- A — B"}, {"excerpt": "- C — D"})
     )

@@ -16318,3 +16318,28 @@ PRODUCTION_DEPLOYMENT=PREVIOUSLY_EXECUTED_AT_a835a97ac
 RUNTIME_CHANGES=NONE
 PHASE_ADVANCE=NO
 ```
+
+
+## §6.333 — Q02-C B2 typed comparison outcome rework (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01`. **AUTHORITY:** §6.330 / roadmap 59 §18 (`B2_REWORK=AUTHORIZED`, `B1_REFACTOR=NOT_AUTHORIZED`). O prompt citava §6.329; a revisão Q02-C neste histórico é §6.330. **BASE:** `ca8b1d0d4a5a796c949a6e3bcb1ed765f8036395`.
+
+`_typed_compare_outcome_content` removido. A decisão de comparação na continuação usa `_selected_proven_differences` sobre `_synthesis_selections` e `_proven_field_differences`. Cabeçalho renderizado não é evidência. B1 (`classify_result_intent`, `unique_structural_ticket_list_capability`, `paginated_result_semantics.py`) sem diff. Sem contrato público novo, sem chamada extra de modelo, orçamentos 30 s / 12 s intactos.
+
+**RED:** pytest do oráculo textual falhou (exit 1) antes do fix — cabeçalho sem diferença tipada foi aceito; linha tipada sem cabeçalho foi rejeitada. **GREEN + FULL:** `delia-api` 1673 passed, 0 failed. `REAL_MODEL_EVAL=TEST_NOT_RUN`. `MATERIAL_ACT=0`. O executor não aceita Q02-C. O rework restante passa a 0.
+
+```text
+B2_TEXT_HEADER_OUTCOME_GATE=REMOVED
+B2_TYPED_COMPARISON_SIGNAL=PROVEN
+Q02_C_REWORK_REMAINING=0
+Q02_C_ACCEPTED=NO_PENDING_COORDINATION
+B1_LEXICAL_TICKET_SHORTCUT=UNCHANGED
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+IDENTIFIER_PROVENANCE=PRESERVED
+FULL_BACKEND_TESTS=1673_PASSED
+REAL_MODEL_EVAL=TEST_NOT_RUN
+Q03_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+MATERIAL_ACT=0
+NEXT=COORDINATION_FINAL_Q02_C_REVIEW
+```

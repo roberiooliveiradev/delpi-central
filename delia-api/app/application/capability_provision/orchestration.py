@@ -2043,30 +2043,18 @@ def _clarification_content(
     )[:MAX_RENDER_CONTENT_CHARS]
 
 
-def _render_synthesis(
+def _synthesis_selections(
     proposal: Mapping[str, Any],
     records: tuple[Mapping[str, Any], ...],
-    *,
-    has_more: bool | None = None,
-) -> tuple[str | None, str]:
-    """Deterministic render of an evidence-bound synthesis proposal.
+) -> tuple[
+    list[tuple[Mapping[str, Any], list[tuple[str, str]]]] | None,
+    str,
+]:
+    """Selection-only parse of a synthesis proposal.
 
-    The contract is selection-only: there is no model-authored prose
-    channel, so no model text can ever introduce a factual leaf value.
-    Every rendered value is copied verbatim from the sanitized
-    records — invalid indices, unknown fields, empty selections or
-    non-scalar values reject the whole proposal. The bounded rejection
-    reason code is returned for observability (LOOP-03R2A) — never
-    proposal content.
-
-    The optional ``presentation`` field carries a closed vocabulary
-    hint (``answer`` | ``list`` | ``detail``); anything outside it is
-    ignored and the runtime derives a safe projection — a single
-    selected record composes a focused grounded sentence, several
-    records compose a bounded introduced list.
-
-    ``has_more`` (R5) prevents page-slice length from being framed as
-    an authoritative total when the owner reports more pages.
+    Returns the selected scalar leaves copied from ``records``, or
+    ``(None, reason)``. This is the typed input of a comparison; the
+    rendered sentence is not.
     """
     items = proposal.get("items")
     # Adapter historically told models "plain string" values; a JSON
@@ -2114,6 +2102,38 @@ def _render_synthesis(
             selections.append((record, values))
     if not selections:
         return None, "empty_selection"
+    return selections, "ok"
+
+
+def _render_synthesis(
+    proposal: Mapping[str, Any],
+    records: tuple[Mapping[str, Any], ...],
+    *,
+    has_more: bool | None = None,
+) -> tuple[str | None, str]:
+    """Deterministic render of an evidence-bound synthesis proposal.
+
+    The contract is selection-only: there is no model-authored prose
+    channel, so no model text can ever introduce a factual leaf value.
+    Every rendered value is copied verbatim from the sanitized
+    records — invalid indices, unknown fields, empty selections or
+    non-scalar values reject the whole proposal. The bounded rejection
+    reason code is returned for observability (LOOP-03R2A) — never
+    proposal content.
+
+    The optional ``presentation`` field carries a closed vocabulary
+    hint (``answer`` | ``list`` | ``detail``); anything outside it is
+    ignored and the runtime derives a safe projection — a single
+    selected record composes a focused grounded sentence, several
+    records compose a bounded introduced list.
+
+    ``has_more`` (R5) prevents page-slice length from being framed as
+    an authoritative total when the owner reports more pages.
+    Presentation does not decide whether a comparison succeeded.
+    """
+    selections, reason = _synthesis_selections(proposal, records)
+    if selections is None:
+        return None, reason
     mode = proposal.get("presentation")
     if mode not in _PRESENTATION_INTENTS:
         mode = "answer" if len(selections) == 1 else "list"
@@ -2180,6 +2200,24 @@ def _proven_field_differences(
         label = labeled[1] if labeled is not None else name
         lines.append(f"- {label}: {left_value} → {right_value}")
     return lines[:MAX_SYNTHESIS_FIELDS]
+
+
+def _selected_proven_differences(
+    proposal: Mapping[str, Any] | None,
+    records: tuple[Mapping[str, Any], ...],
+) -> list[str]:
+    """Typed field diffs for a two-record selection.
+
+    Empty when the proposal does not select exactly two records or
+    when shared scalars do not differ. A rendered heading is not an
+    input and is not proof.
+    """
+    if not isinstance(proposal, Mapping):
+        return []
+    selections, reason = _synthesis_selections(proposal, records)
+    if reason != "ok" or not selections or len(selections) != 2:
+        return []
+    return _proven_field_differences(selections[0][1], selections[1][1])
 
 
 _INSUFFICIENCY_CONTENT = (
@@ -3491,15 +3529,6 @@ def _prior_supports_typed_attribute_compare(
     for other in field_sets[1:]:
         shared &= other
     return bool(shared)
-
-
-def _typed_compare_outcome_content(content: str) -> bool:
-    """Only the deterministic typed field-diff section is compare SUCCESS.
-
-    Literal headers such as ``Comparação:`` are not task-outcome proof
-    (G0 bounded rework / independent review).
-    """
-    return "Diferenças comprovadas:" in (content or "")
 
 
 def _compare_insufficiency_attempt(
@@ -6522,12 +6551,15 @@ class OperationalCapabilityOrchestrator:
                         LIMITATION_INSUFFICIENT_EVIDENCE,
                     ),
                 )
-        if comparison_requested and not _typed_compare_outcome_content(
-            rendered
-        ):
+        proven_differences = (
+            _selected_proven_differences(proposal, records)
+            if isinstance(proposal, Mapping)
+            else []
+        )
+        if comparison_requested and not proven_differences:
             return _compare_insufficiency_attempt(
                 correlation,
-                decision="compare_reject_untyped_render",
+                decision="compare_reject_without_typed_diff",
             )
         normalized_prior = " ".join(prior_content.split())
         normalized_rendered = " ".join(rendered.split())

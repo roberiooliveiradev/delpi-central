@@ -5,7 +5,30 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (Q02-C evidência para review):** o pacote `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01` removeu a classificação de continuidade por contagem de identificadores, pela palavra de listagem e pelo formato de bullets. A referência anterior chega à proposta do modelo como texto não autoritativo. Comparação factual continua exigindo a seção determinística de diferenças tipadas. `unique_structural_ticket_list_capability` permanece: é o atalho estrutural de um único READ cujo schema publica `action=tickets`, ligado à honestidade de paginação, e não um classificador de continuidade. Suíte `delia-api` 1665 PASS. Avaliação com modelo real `TEST_NOT_RUN`. Este registro não aceita Q02-C e não autoriza Q03. Ledger §6.328. Roadmap 59 §17.
+**Decisão vigente de execução — 2026-10-20 (rework B2 de Q02-C, evidência para review):** o rework `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01` removeu o gate que aceitava comparação pela presença literal de `Diferenças comprovadas:` no texto renderizado. A continuação só trata a comparação como concluída quando `_selected_proven_differences` devolve diferenças de campos escalares entre exatamente dois registros selecionados. O cabeçalho permanece apenas na apresentação do modo `answer`. `classify_result_intent` e `unique_structural_ticket_list_capability` não foram alterados. Suíte `delia-api` 1673 PASS no SHA desta evidência. Avaliação com modelo real `TEST_NOT_RUN`. Este registro não aceita Q02-C e não autoriza Q03. O único rework autorizado foi consumido. Ledger §6.333. Roadmap 59 §19.
+
+```text
+Q02_C_REVIEW=REWORK_EXECUTED
+Q02_C_ACCEPTED=NO_PENDING_COORDINATION
+Q02_C_REWORK_REMAINING=0
+B2_TEXT_HEADER_OUTCOME_GATE=REMOVED
+B2_TYPED_COMPARISON_SIGNAL=PROVEN
+B1_LEXICAL_TICKET_SHORTCUT=UNCHANGED
+B1_REFACTOR=NOT_AUTHORIZED
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+GLOBAL_TURN_BUDGET_SECONDS=30
+CONVERSATIONAL_STAGE_CAP_SECONDS=12_UNCHANGED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+REAL_MODEL_EVALS=TEST_NOT_RUN
+FULL_DELIA_API_PYTEST=1673_PASSED
+MATERIAL_ACT=0
+NEXT=COORDINATION_FINAL_Q02_C_REVIEW
+```
+
+**Decisão anterior — 2026-10-20 (Q02-C evidência para review, SUPERSEDED como cerca vigente pelo rework B2):** o pacote `DELIA-C3-Q02-C-CONTINUITY-SYNTHESIS-ORCHESTRATION-REFACTOR-01` removeu a classificação de continuidade por contagem de identificadores, pela palavra de listagem e pelo formato de bullets. A referência anterior chega à proposta do modelo como texto não autoritativo. A revisão independente (§6.330 / roadmap 59 §18) devolveu REWORK porque o sucesso da comparação ainda dependia do cabeçalho renderizado. Suíte daquela evidência: 1665 PASS. Avaliação com modelo real `TEST_NOT_RUN`.
 
 ```text
 Q02_C_EXECUTED=YES_EVIDENCE_READY_FOR_REVIEW
@@ -1811,4 +1834,23 @@ Q02_C_ACCEPTED=NO
 Q03_AUTHORIZED=NO
 REAL_MODEL_EVALS=TEST_NOT_RUN
 NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
+```
+
+
+### Q02-C rework B2 — typed comparison outcome (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01`. Autoridade: roadmap 59 §18 e ledger §6.330 (`Q02_C_REWORK_REMAINING=1`, somente B2). O prompt de execução citava §6.329; nesse SHA a seção da revisão Q02-C é §6.330. §6.329 é a implementação VD-F05.
+
+`_typed_compare_outcome_content` foi removido. A continuação usa `_selected_proven_differences`, que só devolve linhas quando a seleção valida exatamente dois registros e `_proven_field_differences` encontra escalares compartilhados diferentes. Cabeçalho sem essa lista não conclui a comparação. Registros só com `excerpt`, índice inválido, seleção vazia e texto anterior não autoritativo permanecem insuficiência. `paginated_result_semantics.py` não entrou no diff. Sem contrato novo, sem chamada extra de modelo, sem mudança de orçamento. Suíte `delia-api` 1673 PASS. `REAL_MODEL_EVAL=TEST_NOT_RUN`. O executor não aceita Q02-C. Q03 permanece bloqueado. O rework único foi consumido.
+
+```text
+B2_TEXT_HEADER_OUTCOME_GATE=REMOVED
+B2_TYPED_COMPARISON_SIGNAL=PROVEN
+Q02_C_REWORK_REMAINING=0
+Q02_C_ACCEPTED=NO_PENDING_COORDINATION
+B1_LEXICAL_TICKET_SHORTCUT=UNCHANGED
+Q03_AUTHORIZED=NO
+FULL_DELIA_API_PYTEST=1673_PASSED
+REAL_MODEL_EVAL=TEST_NOT_RUN
+NEXT=COORDINATION_FINAL_Q02_C_REVIEW
 ```

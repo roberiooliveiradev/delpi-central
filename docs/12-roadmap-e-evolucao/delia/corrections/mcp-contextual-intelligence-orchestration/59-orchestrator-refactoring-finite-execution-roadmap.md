@@ -433,3 +433,28 @@ NEXT=COORDINATION_INDEPENDENT_Q02_C_REVIEW
 **B1 (decision conflict / no automatic deletion):** `classify_result_intent` uses regex for LIST/COUNT/ticket cues and `unique_structural_ticket_list_capability` shortcuts capability selection at two callers, so it is not purely schema structural. However §17 explicitly retained the path for R4/R5 personal pagination, semantics and 30s budget. Do **not** delete or rewire it as part of B2 rework unless Product Master/authority resolves the frozen functional/performance constraint and equivalent semantic proposal reuse is proven. Record as `ARCHITECTURE_DECISION_REQUIRED` or accepted-scoped residual; not silent redesign.
 
 **GATE:** `Q02_C_ACCEPTED=NO`; `Q03_AUTHORIZED=NO`; `I04_ACCEPTED=NO`. Rework bounded to B2, including provenance/security/negative regression; broader B1 explicitly held for coordination decision. No production deployment or budget change.
+
+
+## 19. Q02-C B2 rework — typed comparison outcome (2026-10-20)
+
+**TASK:** `DELIA-C3-Q02-C-B2-TYPED-COMPARISON-OUTCOME-REWORK-01`. **AUTHORITY:** §18 / ledger §6.330. **BASE:** `ca8b1d0d4a5a796c949a6e3bcb1ed765f8036395`. B1 fora deste diff.
+
+O gate de continuação deixou de ler o texto renderizado. `_synthesis_selections` concentra a validação de índices e campos já existente em `_render_synthesis`. `_selected_proven_differences` reutiliza `_proven_field_differences` e só sinaliza comparação quando há exatamente duas seleções válidas com escalares diferentes. O renderer ainda pode imprimir `Diferenças comprovadas:` no modo `answer`; essa string não decide o resultado. `EXISTING_EQUIVALENT=YES`. `REUSE_DECISION=EXTEND` dos helpers puros já presentes. Nenhum DTO, port ou engine novo.
+
+**RED (antes do fix, pytest exit 1):** o oráculo textual antigo aceitava `"Diferenças comprovadas:"` sem diferença tipada (`assert False` obteve `True`) e rejeitava a linha `- código: 1 → 2` sem esse cabeçalho (`assert True` obteve `False`). **GREEN:** `tests/test_q02c_b2_typed_comparison_outcome.py` mais proveniência, stage05, stage06 e projeção R1/R3. **FULL:** `delia-api` 1673 passed, 0 failed, cwd `delia-api`. `REAL_MODEL_EVAL=TEST_NOT_RUN`. Orçamentos 30 s e 12 s intactos. `MATERIAL_ACT=0`.
+
+Registros de continuidade continuam embrulhados como `excerpt`. Comparação factual de texto livre segue insuficiência, sem contrato novo de registro anterior. O executor não aceita Q02-C. Q03 permanece `NO`. O rework único está consumido.
+
+```text
+B2_TEXT_HEADER_OUTCOME_GATE=REMOVED
+B2_TYPED_COMPARISON_SIGNAL=PROVEN
+Q02_C_REWORK_REMAINING=0
+Q02_C_ACCEPTED=NO_PENDING_COORDINATION
+B1_LEXICAL_TICKET_SHORTCUT=UNCHANGED
+SELECTION_ONLY_GROUNDED_SYNTHESIS=FROZEN
+FULL_DELIA_API_PYTEST=1673_PASSED
+REAL_MODEL_EVAL=TEST_NOT_RUN
+Q03_AUTHORIZED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=COORDINATION_FINAL_Q02_C_REVIEW
+```
