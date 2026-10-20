@@ -34,23 +34,47 @@ function buildHeaders(): Record<string, string> {
 
 export class ApiError extends Error {
   readonly status: number;
+  readonly code: string | null;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code: string | null = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
   }
+}
+
+/** Extrai `data.error.code`/`detail.code` do envelope tipado, quando presente. */
+function extractErrorCode(errorBody: unknown): string | null {
+  if (!errorBody || typeof errorBody !== "object") return null;
+  const record = errorBody as Record<string, unknown>;
+  const data = record.data;
+  if (data && typeof data === "object") {
+    const err = (data as Record<string, unknown>).error;
+    if (err && typeof err === "object") {
+      const code = (err as Record<string, unknown>).code;
+      if (typeof code === "string" && code) return code;
+    }
+  }
+  const detail = record.detail;
+  if (detail && typeof detail === "object") {
+    const code = (detail as Record<string, unknown>).code;
+    if (typeof code === "string" && code) return code;
+  }
+  return null;
 }
 
 async function parseError(response: Response): Promise<ApiError> {
   const status = response.status;
   let rawFromBody: string | null = null;
+  let code: string | null = null;
   try {
     const text = await response.text();
     if (text.trim()) {
       try {
         const errorBody: unknown = JSON.parse(text);
         rawFromBody = formatApiErrorBody(errorBody, text);
+        code = extractErrorCode(errorBody);
       } catch {
         rawFromBody = text;
       }
@@ -58,7 +82,7 @@ async function parseError(response: Response): Promise<ApiError> {
   } catch {
     rawFromBody = null;
   }
-  return new ApiError(status, resolveHttpErrorMessage(status, rawFromBody));
+  return new ApiError(status, resolveHttpErrorMessage(status, rawFromBody), code);
 }
 
 export function cfApiUrl(path: string): string {

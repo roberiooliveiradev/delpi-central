@@ -106,6 +106,51 @@
   margin: 0;
 }
 
+/* Baixas financeiras (closing): filtros, ações e resumo por moeda. */
+.dashboard-controllership-finance .cf-settlements-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+}
+
+.dashboard-controllership-finance .cf-settlements-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-settlements-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-controllership-finance .cf-settlements-summary > li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--cf-border);
+  border-radius: 10px;
+  background: var(--cf-surface-muted);
+}
+
+.dashboard-controllership-finance .cf-settlements-summary-label {
+  font-size: 0.78rem;
+  color: var(--cf-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dashboard-controllership-finance .cf-settlements-quality {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--cf-text-muted);
+}
+
 @media (max-width: 900px) {
   .dashboard-controllership-finance .cf-home-sections-grid {
     grid-template-columns: 1fr;

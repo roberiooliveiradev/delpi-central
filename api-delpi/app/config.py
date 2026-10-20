@@ -111,6 +111,16 @@ class Settings:
         in ("true", "1", "yes", "on")
     )
 
+    # Financial settlements (R01/R02) shared-dataset gate — doc 48 D3.
+    # Stays disabled until the explicit production enablement gate; when off,
+    # SettlementScopeResolver keeps answers fail-closed (scope_unavailable).
+    FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED: bool = (
+        _get_env(
+            "FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED", default="false"
+        ).lower()
+        in ("true", "1", "yes", "on")
+    )
+
     # ==========================
     # Plugins PostgreSQL
     # ==========================

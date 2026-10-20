@@ -9,6 +9,7 @@ import {
   resolvePluginRoute,
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
+import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
 import { HomePage } from "./features/home/HomePage";
 
 export type AppProps = {
@@ -43,6 +44,8 @@ function AppRoutes({
       >
         {resolved.view === "home" ? (
           <HomePage basePath={basePath} />
+        ) : resolved.view === "financial_settlements" ? (
+          <FinancialSettlementsPage />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}

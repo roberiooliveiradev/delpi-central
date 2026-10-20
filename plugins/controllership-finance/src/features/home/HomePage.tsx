@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Landmark } from "lucide-react";
+import { CalendarCheck2, Landmark } from "lucide-react";
 
 import { useViewerContext } from "../../app/ViewerContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -43,6 +43,7 @@ const FEATURES = HUB_CONTENT.features;
 
 const SECTION_ICONS: Record<HubSectionId, ReactNode> = {
   portal: <Landmark size={20} strokeWidth={1.75} aria-hidden="true" />,
+  closing: <CalendarCheck2 size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 const FORBIDDEN_STATUS = 403;

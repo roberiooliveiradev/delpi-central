@@ -34,7 +34,10 @@ describe("home honesty", () => {
   it("catálogo publica somente viewIds implementados", () => {
     const catalog = readSrc("content/pluginRouteCatalog.ts");
     const viewIds = [...catalog.matchAll(/viewId: "([^"]+)"/g)].map((m) => m[1]);
-    assert.deepEqual(new Set(viewIds), new Set(["home"]));
+    assert.deepEqual(
+      new Set(viewIds),
+      new Set(["home", "financial_settlements"]),
+    );
     assert.doesNotMatch(catalog, /my_tasks|overview|interaction_rooms|administration|help|open_orders/);
   });
 

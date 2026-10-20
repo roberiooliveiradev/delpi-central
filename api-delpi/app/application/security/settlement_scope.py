@@ -47,6 +47,52 @@ class UnresolvedSettlementScopeResolver:
         )
 
 
+class SharedDatasetSettlementScopeResolver:
+    """Approved D3 shared-dataset resolver for R01/R02 settlements.
+
+    ``resolved`` requires both trust preconditions proven at request time:
+
+    1. the shared-dataset feature gate
+       (``FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED``) is on — the
+       separate production enablement gate, off by default; and
+    2. a real delegated human principal exists (``user_subject`` non-empty —
+       the interface layer only forwards the subject of a ``principal_type
+       == "user"`` context, so service principals and anonymous callers
+       never qualify).
+
+    The dedicated S2S client identity (``controllership-finance-api``) and
+    the ``settlements.read`` scope are enforced upstream by the route guard;
+    functional ``controllership-finance.access`` is enforced by the BFF
+    against Core effective permissions. This resolver never resolves
+    unconditionally and never self-declares scope from request input.
+    """
+
+    def __init__(self, *, shared_dataset_enabled: bool) -> None:
+        self._enabled = bool(shared_dataset_enabled)
+
+    def resolve(self, *, user_subject: str | None) -> SettlementScope:
+        if not self._enabled:
+            return SettlementScope(
+                resolved=False,
+                reason=(
+                    "shared financial dataset gate is disabled "
+                    "(FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED; doc 48 D3)"
+                ),
+            )
+        if not (user_subject or "").strip():
+            return SettlementScope(
+                resolved=False,
+                reason=(
+                    "shared financial dataset requires a delegated human "
+                    "principal (doc 48 D3)"
+                ),
+            )
+        return SettlementScope(
+            resolved=True,
+            reason="shared dataset authorized via D3 (dedicated S2S client + delegated user)",
+        )
+
+
 def require_settlement_scope(
     resolver: SettlementScopeResolver, *, user_subject: str | None
 ) -> SettlementScope:
