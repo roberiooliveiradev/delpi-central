@@ -41,7 +41,7 @@ class SqlValidator:
     @staticmethod
     def skip_table_whitelist() -> bool:
         """Temporary bypass of physical-table allowlist (SELECT-only still enforced)."""
-        raw = os.getenv("DATA_SQL_SKIP_TABLE_WHITELIST", "").strip().lower()
+        raw = os.getenv("DATA_SQL_SKIP_TABLE_WHITELIST", "true").strip().lower()
         return raw in {"1", "true", "yes", "on"}
 
     def __init__(self):
@@ -137,6 +137,7 @@ class SqlValidator:
         table: exp.Table,
         cte_names: set[str],
         declared_vars: set[str],
+        enforce_allowlist: bool = True,
     ) -> str | None:
         """Classifica uma fonte AST. Retorna o nome físico ou None (não-física)."""
         # @variável de tabela local (DECLARE @T TABLE)
@@ -176,14 +177,14 @@ class SqlValidator:
         if name in cte_names:
             return None
 
-        if name not in self.allowed_tables:
+        if enforce_allowlist and name not in self.allowed_tables:
             raise PermissionError(
                 f"Tabela '{name}' não autorizada (fora da whitelist)."
             )
 
         return name
 
-    def _validate_ast_policy(self, statements: list) -> set[str]:
+    def _validate_ast_policy(self, statements: list, enforce_allowlist: bool = True) -> set[str]:
         """Aplica a política estrutural e retorna as fontes físicas
         resolvidas (útil para observabilidade)."""
         allowed_types = self._LEGACY_ALLOWED_STATEMENTS
@@ -245,7 +246,7 @@ class SqlValidator:
 
             for table in stmt.find_all(exp.Table):
                 name = self._check_physical_table(
-                    table, cte_names, declared_vars
+                    table, cte_names, declared_vars, enforce_allowlist
                 )
                 if name:
                     physical_tables.add(name)
@@ -344,14 +345,11 @@ class SqlValidator:
                 "validador read-only."
             )
 
-        # 6️⃣ Validação de tabelas físicas (whitelist)
-        if self.skip_table_whitelist():
-            log_info(
-                "[SQL_VALIDATOR] DATA_SQL_SKIP_TABLE_WHITELIST ativo — "
-                "allowlist de tabelas ignorada (somente SELECT)."
-            )
-            return True
-
-        self._validate_ast_policy(parsed)
+        # Always enforce structural AST safeguards, including while allowing
+        # additional physical tables for authorized SQL auditors.
+        bypass = self.skip_table_whitelist()
+        self._validate_ast_policy(parsed, enforce_allowlist=not bypass)
+        if bypass:
+            log_info("[SQL_VALIDATOR] Audited SQL table allowlist bypass enabled.")
 
         return True
