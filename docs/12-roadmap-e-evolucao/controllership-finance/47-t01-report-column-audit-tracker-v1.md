@@ -153,3 +153,22 @@ SCOPE_CHANGE / SUPERSEDES:
 4. **Títulos em aberto:** identificar rotina, layout e ACT-15 em evidência original antes de criar item filho/alterar denominador.
 
 **STOP:** não preparar endpoint de baixas ou SQL de equivalência enquanto o owner não comprovar a semântica de `_F190C`. Novo desvio em relação ao relatório TÉO só autoriza `EXECUTION_DRIFT` quando confirmado pela fonte primária competente. `IMPLEMENTATION_AUTHORIZED=NO` para esses relatórios.
+
+## 8. Pesquisa TOTVS oficial — mapeamento FINR190 → FINSV010 (20/10/2026)
+
+**Referência:** [doc 46, seção L1.2](./46-t01-report-source-inventory-v1.md) com URLs públicas da TOTVS. O relatório Smart View `FINSV010` substitui `FINR190` nas releases de referência, mas **não confirma o comportamento da customização DELPI `_F190C`**. O NotebookLM reportou erro de compilação e nenhuma geração real de arquivo na gravação.
+
+| Papel | Tabela lógica do FINSV010 conforme TOTVS | Resultado na DELPI |
+|---|---|---|
+| Título receber | `SE1` | TO_INVENTORY |
+| Título pagar | `SE2` | TO_INVENTORY |
+| Natureza | `SED` | TO_INVENTORY |
+| Motivo baixa | `F7G` | TO_INVENTORY |
+| Evento de baixa receber | `FK1` | `FK1010.FK1_DATA` encontrado via DAVI; outros campos/joins pendentes |
+| Evento de baixa pagar | `FK2` | `FK2010.FK2_DATA` encontrado via DAVI; outros campos/joins pendentes |
+| Movimento bancário | `FK5` | TO_INVENTORY |
+| Rastreio movimento | `FKA` | TO_INVENTORY |
+
+O dicionário e docs demonstram *candidatos físicos* e *semântica genérica*; não comprovam paridade `_F190C`, parâmetros do relatório, layouts PDF/Excel, cliente/fornecedor+CNPJ efetivamente exportados, moeda, baixas parciais, natureza, chave e deduplicação.
+
+**Próxima coleta delimitada:** inspecionar fonte `_F190C` no owner TI/ADVPL e metadados autorizados (DAVI) das oito famílias; obter os cinco arquivos sanitizados. Só então vincular `output_field → physical_column → join → filter → totals`. `G1 PASS` para R01/R02 se mantém; `G2/G3/G4 PENDING`; `G5 TEST_NOT_RUN`; `G6 PENDING`. **Progressos permanecem 2/60 coleta e 2/90 auditoria**, sem inflar percentuais por evidência adjacente.
