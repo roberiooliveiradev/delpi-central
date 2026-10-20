@@ -16510,3 +16510,19 @@ Q03_AUTHORIZED=NO
 I04_ACCEPTED=NO
 NEXT=Q03_ENTRY_DECISION_WITH_B1_AND_REMAINING_OUTCOME_RESIDUALS
 ```
+
+
+## §6.341 — Q03 independent acceptance entry gate (2026-10-20)
+
+Product Master explicitly requested continuation to Q03. Roadmap 59 §3 defines Q03 as independent acceptance/closure, not another code package. Coordination authorizes **review only** based on Q02-A/B/C technical reviews and evidence 63/64/66, including SIPOC real-model PASS, exploratory OpenAPI READ and hypothetical comparison PASS, typed owner comparison live not exercised, 404 absence projection live not verified. B1 lexical ticket shortcut kept under R4/R5 performance decision (§17); its architecture decision is **formally deferred for purposes of Q03 review**, not settled or removed, and must be weighed transparently in verdict. Reuse existing audits/reviews; avoid rework loop and broad new testing; no code/deploy/ACT. Final verdict must be `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`, separate documentation/static/test/live evidence, and avoid automatic `I04_ACCEPTED` or `C3_EXECUTED` promotion.
+
+```text
+Q03_AUTHORIZED=YES_INDEPENDENT_REVIEW_ONLY
+Q03_EXECUTED=NO
+B1=UNRESOLVED_FORMALLY_DEFERRED_FOR_REVIEW
+Q03_CODE_CHANGE_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=CURSOR_Q03_INDEPENDENT_ACCEPTANCE_AND_CLOSURE_REPORT
+```
