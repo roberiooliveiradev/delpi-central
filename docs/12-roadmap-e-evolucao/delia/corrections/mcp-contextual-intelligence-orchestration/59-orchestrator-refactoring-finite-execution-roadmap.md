@@ -376,3 +376,22 @@ PRODUCTION_DEPLOY_AUTHORIZED=NO
 RUNTIME_DIFF=NONE
 NEXT=COORDINATION_Q02_C_ENTRY_GATE
 ```
+
+
+## 16. Coordination — Q02-C bounded entry authorized (2026-10-20)
+
+**INPUT:** closure Q02-B §15, ledger §6.326 (`ACCEPT_WITH_RESIDUAL` technical; real-model fidelity `TEST_NOT_RUN`). The conditional next-package gate from §11 is satisfied **only for entry into Q02-C**. The authority to execute code is limited to existing Q02-C scope in §3, under ADR58: contextual referents, list vs compare vs hypothetical, truthful selection-only synthesis, eliminate text-shape/lexical task oracles, and reduce redundant LLM proposals when measured. Residual `unique_structural_ticket_list_capability` requires owner/caller/contract verification prior to any removal, not automatic deletion. No domain validation in DÉLIA; preserve identifier provenance and owner business authority.
+
+**TEST GATES:** RED/GREEN for actual affected behavior, full backend, negative security/AuthZ/provenance, provider rename/reorder, no-tool SIPOC/hypothetical compare, owner-grounded DAVI/TÉO/VISTA/OpenAPI as permitted, 30s global and unchanged 12s cap. Last conversational soft-lands may block live continuity tests; report `INCONCLUSIVE/TEST_NOT_RUN` rather than expanding timeout or claiming PASS. If frozen `SELECTION_ONLY_GROUNDED_SYNTHESIS` makes a desired output impossible, STOP sub-scope and request ADR; do not silently allow model-authored factual enterprise prose. No production deployment authorization or Q03 self-entry.
+
+```text
+Q02_B_TECHNICAL_REVIEW=ACCEPT_WITH_RESIDUAL
+Q02_C_AUTHORIZED=YES_BOUNDED_ENTRY
+Q02_C_EXECUTED=NO
+Q03_AUTHORIZED=NO
+I04_ACCEPTED=NO
+Q02_A_REWORK_REMAINING=0
+REAL_MODEL_Q02_B=TEST_NOT_RUN
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+NEXT=Q02_C_BOUNDED_EXECUTION_AND_REVIEW
+```
