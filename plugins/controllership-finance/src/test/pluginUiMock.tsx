@@ -14,12 +14,15 @@ export function ActionButton(props: {
   children?: ReactNode;
   onClick?: () => void;
   variant?: string;
+  type?: "button" | "submit";
+  disabled?: boolean;
   "aria-label"?: string;
 }) {
   return el(
     "button",
     {
-      type: "button",
+      type: props.type ?? "button",
+      disabled: props.disabled,
       onClick: props.onClick,
       "aria-label": props["aria-label"],
     },
@@ -75,6 +78,32 @@ export function createDashboardPageHero() {
 export function createDashboardStatusBadge() {
   return function StatusBadge(props: { label?: ReactNode }) {
     return el("span", null, props.label);
+  };
+}
+
+export function createDashboardSegmentToggle() {
+  return function SegmentToggle(props: {
+    options?: Array<{ value: string; label: string }>;
+    value?: string;
+    onChange?: (value: string) => void;
+    ariaLabel?: string;
+  }) {
+    return el(
+      "div",
+      { role: "group", "aria-label": props.ariaLabel },
+      ...(props.options ?? []).map((option) =>
+        el(
+          "button",
+          {
+            key: option.value,
+            type: "button",
+            "aria-pressed": option.value === props.value ? "true" : "false",
+            onClick: () => props.onChange?.(option.value),
+          },
+          option.label,
+        ),
+      ),
+    );
   };
 }
 
@@ -297,4 +326,179 @@ export function createDashboardCommandPalette() {
       ),
     );
   };
+}
+
+export const TABLE_PAGE_SIZE_OPTIONS = [25, 50, 100];
+
+export function createDashboardPaginationKit() {
+  function Pagination(props: {
+    page?: number;
+    totalPages?: number;
+    onPageChange?: (page: number) => void;
+  }) {
+    return el(
+      "nav",
+      { "aria-label": "Paginação" },
+      el(
+        "button",
+        {
+          type: "button",
+          onClick: () => props.onPageChange?.((props.page ?? 1) - 1),
+        },
+        "Anterior",
+      ),
+      el(
+        "button",
+        {
+          type: "button",
+          onClick: () => props.onPageChange?.((props.page ?? 1) + 1),
+        },
+        "Próxima",
+      ),
+    );
+  }
+  function TablePageSizeSelect() {
+    return null;
+  }
+  return { Pagination, TablePageSizeSelect };
+}
+
+export function createDashboardDataTableKit() {
+  function DataTableSection<T>(props: {
+    title?: ReactNode;
+    titleHint?: string;
+    columns?: Array<{
+      key: string;
+      header: ReactNode;
+      render?: (row: T) => ReactNode;
+    }>;
+    rows?: T[];
+    rowKey?: (row: T) => string;
+    loading?: boolean;
+    emptyMessage?: string;
+    serverPagination?: {
+      page: number;
+      pageSize: number;
+      total: number;
+      onPageChange: (page: number) => void;
+    };
+  }) {
+    const columns = props.columns ?? [];
+    const rows = props.rows ?? [];
+    const pager = props.serverPagination;
+    const totalPages = pager ? Math.max(1, Math.ceil(pager.total / pager.pageSize)) : 1;
+    return el(
+      "section",
+      null,
+      el("h2", null, props.title),
+      props.loading ? el("p", { role: "status" }, "Carregando…") : null,
+      !props.loading && rows.length === 0
+        ? el("p", null, props.emptyMessage)
+        : null,
+      rows.length > 0
+        ? el(
+            "table",
+            null,
+            el(
+              "thead",
+              null,
+              el(
+                "tr",
+                null,
+                columns.map((c) => el("th", { key: c.key }, c.header)),
+              ),
+            ),
+            el(
+              "tbody",
+              null,
+              rows.map((row, index) =>
+                el(
+                  "tr",
+                  { key: props.rowKey?.(row) ?? String(index) },
+                  columns.map((c) =>
+                    el(
+                      "td",
+                      { key: c.key },
+                      c.render
+                        ? c.render(row)
+                        : String((row as Record<string, unknown>)[c.key] ?? ""),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
+        : null,
+      pager
+        ? el(
+            "nav",
+            { "aria-label": "Paginação da tabela" },
+            el(
+              "button",
+              {
+                type: "button",
+                disabled: pager.page <= 1,
+                onClick: () => pager.onPageChange(pager.page - 1),
+              },
+              "Anterior",
+            ),
+            el(
+              "button",
+              {
+                type: "button",
+                disabled: pager.page >= totalPages,
+                onClick: () => pager.onPageChange(pager.page + 1),
+              },
+              "Próxima",
+            ),
+          )
+        : null,
+    );
+  }
+  return { DataTableSection };
+}
+
+export function createDashboardFiltersKit() {
+  function FiltersRow(props: { children?: ReactNode; ariaLabel?: string }) {
+    return el("div", { role: "group", "aria-label": props.ariaLabel }, props.children);
+  }
+  function FilterInputField(props: {
+    label: string;
+    hint?: string;
+    id?: string;
+    type?: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+  }) {
+    return el("input", {
+      id: props.id,
+      type: props.type ?? "text",
+      "aria-label": props.label,
+      placeholder: props.placeholder,
+      value: props.value,
+      onChange: (event: { target: { value: string } }) =>
+        props.onChange(event.target.value),
+    });
+  }
+  function FilterSelectField(props: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    options?: Array<{ value: string; label: string }>;
+  }) {
+    return el(
+      "select",
+      {
+        "aria-label": props.label,
+        value: props.value,
+        onChange: (event: { target: { value: string } }) =>
+          props.onChange(event.target.value),
+      },
+      (props.options ?? []).map((option) =>
+        el("option", { key: option.value, value: option.value }, option.label),
+      ),
+    );
+  }
+  return { FiltersRow, FilterInputField, FilterSelectField };
 }

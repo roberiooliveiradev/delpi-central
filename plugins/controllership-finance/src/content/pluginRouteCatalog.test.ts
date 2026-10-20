@@ -11,11 +11,13 @@ import {
 } from "./pluginRouteCatalog";
 
 describe("pluginRouteCatalog — apenas rotas implementadas", () => {
-  it("cataloga somente a rota Início (única implementada no slice)", () => {
+  it("cataloga somente as rotas implementadas no slice", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
-    expect(routeIds).toEqual(["home"]);
+    expect(routeIds).toEqual(["home", "financial-settlements"]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
-    expect(new Set(viewIds)).toEqual(new Set(["home"]));
+    expect(new Set(viewIds)).toEqual(
+      new Set(["home", "financial_settlements"]),
+    );
   });
 
   it("não expõe rotas futuras (Visão geral, Sala, Tarefas, Admin, Ajuda, P1–P6)", () => {
@@ -35,8 +37,9 @@ describe("pluginRouteCatalog — apenas rotas implementadas", () => {
 
   it("resolveHubSections mantém seções com rotas always sem capabilities", () => {
     const sections = resolveHubSections({ manage: false });
-    expect(sections.length).toBe(1);
+    expect(sections.length).toBe(2);
     expect(sections[0].routes[0].id).toBe("home");
+    expect(sections[1].routes[0].id).toBe("financial-settlements");
   });
 });
 
@@ -57,7 +60,8 @@ describe("busca do catálogo", () => {
   it("filterRouteCatalog filtra e retorna vazio sem match", () => {
     expect(filterRouteCatalog(HUB_SECTIONS, "ini").length).toBe(1);
     expect(filterRouteCatalog(HUB_SECTIONS, "xyz-inexistente").length).toBe(0);
-    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(1);
+    expect(filterRouteCatalog(HUB_SECTIONS, "").length).toBe(2);
+    expect(filterRouteCatalog(HUB_SECTIONS, "baixas").length).toBe(1);
   });
 
   it("collectSearchHits retorna hit do Início", () => {

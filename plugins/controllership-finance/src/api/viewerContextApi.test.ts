@@ -29,6 +29,7 @@ describe("viewerContextApi", () => {
     const ctx = await getViewerContext();
     expect(ctx).toEqual({
       firstName: "Ana",
+      displayName: null,
       capabilities: { access: true, manage: false },
     });
     const url = fetchMock.mock.calls[0][0] as string;
@@ -42,6 +43,7 @@ describe("viewerContextApi", () => {
     const ctx = await getViewerContext();
     expect(ctx).toEqual({
       firstName: null,
+      displayName: null,
       capabilities: { access: false, manage: false },
     });
   });

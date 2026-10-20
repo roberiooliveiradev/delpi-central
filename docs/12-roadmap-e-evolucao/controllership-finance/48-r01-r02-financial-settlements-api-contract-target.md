@@ -258,3 +258,69 @@ BFF: `controllership_finance_app/interface/http/routes/closing_routes.py`; `infr
 **Implementação planejada, NÃO executada por esta decisão documental:** substituir `UnresolvedSettlementScopeResolver` por contrato de escopo compartilhado somente se o producer puder provar caller S2S estrito + delegado e a BFF puder comprovar Core effective access (sem confiar em flags injetadas pelo navegador). Testar Core indisponível, access revogado, manage-only, ausência/erro de service JWT, client/scopes incorretos, tentativa de acesso direto, usuário sem auth, caminhos de resposta sem PII/segredos, tenant/caller forjado, reconciliação dos eventos e ausência de duplicações.
 
 **GATES:** `D3_PRODUCT_AUDIENCE=APPROVED`; `D3_DATASET=SHARED_R01_R02_READ_ONLY`; `D3_EXTRA_PORTAL_PERMISSION=NONE`; `D3_ENFORCEMENT=PLANNED`; `FINANCIAL_DATA_RELEASE=NO_GO` até validação técnica, smoke aprovado e autorização explícita de deploy. Somente mudança de contrato não prova que o resolver já está seguro ou funcional.
+
+## 14. Registro de implementação — D3 dataset compartilhado + tela (IMP-CF-R01-R02-D3-UI-01)
+
+### Resolver de escopo
+
+ foi substituído por  (). O resolver **não resolve incondicionalmente**: exige as duas pré-condições provadas em tempo de request —
+
+1. gate de habilitação  (default ) — gate separado de disponibilização produtiva;
+2. principal humano delegado ( não vazio, somente quando  no contexto — service principal e anônimo nunca resolvem).
+
+Upstream a guarda S2S já exige client  + scope ; a BFF exige  efetivo via Core (fail-closed em ;  isolado → 403).
+
+### NOLOCK — decisão
+
+Consultas de baixas mantêm , seguindo a convenção já vigente do mesmo domínio () para relatórios read-only TOTVS: leitura exploratória de alta frequência sobre tabelas quentes do ERP, sem exigência de consistência transacional serializável nesta versão. Valores seguem ; decisão revisável se uma futura leitura oficial exigir snapshot consistente.
+
+### BFF
+
+ (+ ) retransmitindo envelope tipado:  → 403 tipado; 401/403 upstream mapeados; 5xx/timeout → 503; envelope inválido → 502. Sem nomes de tabelas nem SQL na superfície.
+
+### Tela
+
+ — rota interna  (view , catalogada no hub «Central de Fechamento» e no manifest com ): segmento pagar/receber, filtros de período obrigatório + natureza + tipo de movimento + ordenação, resumo por moeda sem soma cruzada, tabela servidor com paginação,  como estado próprio, filial ausente como «Não identificada». Componentes  (SectionCard, SegmentToggle, FiltersRow, DataTableSection, Pagination, StateBanner, EmptyState) e ajuda contextual em  ().
+
+### Testes executados
+
+-  (container isolado, worktree): 35 testes — resolver (gate off/on, humano exigido), guarda S2S (client errado, scope insuficiente, header ausente → 401/403), período inválido/ausente → 400, happy path tipado.
+- : 59 testes —  ok, -only → 403, sem permissão → 403, service principal → negado,  → fail-closed, relay , mapeamento 401/403/503/502, Bearer delegado + S2S individual.
+- MFE: 50 vitest + 17 structural — catálogo, manifest (2 rotas, só ), página (filtros, paginação, moeda, filial não identificada, , 403, período inválido, vazio).
+
+### Gates
+
+;  — dados reais exigem  em produção somente após gate separado com smoke aprovado.  neste slice (smoke dev depende de merge/deploy; produção permanece gateada).
+
+## 14. Registro de implementação — D3 dataset compartilhado + tela (IMP-CF-R01-R02-D3-UI-01)
+
+### Resolver de escopo
+
+`UnresolvedSettlementScopeResolver` foi substituído por `SharedDatasetSettlementScopeResolver` (`api-delpi/app/application/security/settlement_scope.py`). O resolver **não resolve incondicionalmente**: exige as duas pré-condições provadas em tempo de request —
+
+1. gate de habilitação `FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED` (default `false`) — gate separado de disponibilização produtiva;
+2. principal humano delegado (`user_subject` não vazio, somente quando `principal_type == "user"` no contexto — service principal e anônimo nunca resolvem).
+
+Upstream a guarda S2S já exige client `controllership-finance-api` + scope `settlements.read`; a BFF exige `controllership-finance.access` efetivo via Core (fail-closed em `rbac_unavailable`; `.manage` isolado → 403).
+
+### NOLOCK — decisão
+
+Consultas de baixas mantêm `WITH (NOLOCK)`, seguindo a convenção já vigente do mesmo domínio (`financeiro_inadimplencia`) para relatórios read-only TOTVS: leitura exploratória de alta frequência sobre tabelas quentes do ERP, sem exigência de consistência transacional serializável nesta versão. Valores seguem `officialTotals=false`; decisão revisável se uma futura leitura oficial exigir snapshot consistente.
+
+### BFF
+
+`GET /closing/financial-settlements` (+ `/summary`) retransmitindo envelope tipado: `scope_unavailable` → 403 tipado; 401/403 upstream mapeados; 5xx/timeout → 503; envelope inválido → 502. Sem nomes de tabelas nem SQL na superfície.
+
+### Tela
+
+`plugins/controllership-finance` — rota interna `closing/financial-settlements` (view `financial_settlements`, catalogada no hub «Central de Fechamento» e no manifest com `showInMenu=false`): segmento pagar/receber, filtros de período obrigatório + natureza + tipo de movimento + ordenação, resumo por moeda sem soma cruzada, tabela servidor com paginação, `scope_unavailable` como estado próprio, filial ausente como «Não identificada». Componentes `@delpi/plugin-ui` (SectionCard, SegmentToggle, FiltersRow, DataTableSection, Pagination, StateBanner, EmptyState) e ajuda contextual em `helpTooltips.ts` (`closing.*`).
+
+### Testes executados
+
+- `api-delpi` (container isolado, worktree): 35 testes — resolver (gate off/on, humano exigido), guarda S2S (client errado, scope insuficiente, header ausente → 401/403), período inválido/ausente → 400, happy path tipado.
+- `controllership-finance-api`: 59 testes — `.access` ok, `.manage`-only → 403, sem permissão → 403, service principal → negado, `rbac_unavailable` → fail-closed, relay `scope_unavailable`, mapeamento 401/403/503/502, Bearer delegado + S2S individual.
+- MFE: 50 vitest + 17 structural — catálogo, manifest (2 rotas, só `.access`), página (filtros, paginação, moeda, filial não identificada, `scope_unavailable`, 403, período inválido, vazio).
+
+### Gates
+
+`D3_ENFORCEMENT=IMPLEMENTED`; `FINANCIAL_DATA_RELEASE=NO_GO` — dados reais exigem `FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED=true` em produção somente após gate separado com smoke aprovado. `E2E_LIVE=TEST_NOT_RUN` neste slice (smoke dev depende de merge/deploy; produção permanece gateada).
