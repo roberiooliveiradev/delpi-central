@@ -41,7 +41,7 @@
 | `plugins/delia/src/ui/DeliaComposer.tsx` | `mergeTranscriptIntoDraft` (espaço limítrofe + limite de caracteres com aviso honesto); clamp defensivo de `durationMs`; tooltip do mic anuncia “fale até 5 minutos”; dictationError para truncamento |
 | `delia-api/app/infrastructure/config/settings.py` | defaults `stt_max_duration_ms`/`stt_max_audio_bytes` → 300000/8388608 |
 | `infra/docker-compose.yml`, `infra/docker-compose.dev.yml` | defaults env `DELIA_STT_MAX_DURATION_MS`/`DELIA_STT_MAX_AUDIO_BYTES` → 300000/8388608 |
-| contrato v1 + spec 119 + este relatório + ledger §6.329 | documentação |
+| contrato v1 + spec 119 + este relatório + ledger §6.329 (implantação) + §6.331 (deploy) | documentação |
 
 Backend de transcrição (`transcribe_dictation.py`, rotas, adapter, rate limit, AuthZ): **diff zero**.
 
@@ -79,7 +79,23 @@ Screenshots: `C:\temp\delia-qa\shots-vdf05\`.
 
 ## 6. Produção
 
-Deployment autorizado na task; execução e verificação live registradas na atualização pós-deploy (ledger §6.329). Verificação física de microfone por usuário autorizado permanece `PENDING_USER_VERIFICATION` (mesmo gate das entregas VD-F03/F04).
+Deploy executado via `infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia` + recreate do `delia-api` (mudança só de env) em `operador@srv-api` (`192.168.1.237`), checkout `a835a97ac` — mesmo SHA testado localmente.
+
+Configuração efetiva atualizada no mecanismo protegido do host (`infra/.env`, valores não secretos):
+
+- `DELIA_STT_MAX_DURATION_MS=300000` (antes 120000);
+- `DELIA_STT_MAX_AUDIO_BYTES=8388608` (antes 4194304);
+- provider, modelo, timeout (30 s), rate limit (10/min) e `delia.access` **inalterados**.
+
+Verificação pós-deploy (live):
+
+- `docker exec delpi-delia-api env` → `DELIA_STT_MAX_DURATION_MS=300000`, `DELIA_STT_MAX_AUDIO_BYTES=8388608` — container healthy;
+- `delpi-delia` e `delpi-plugin-ui` recriados e servindo bundles novos: `App-C5dbkJxV.js` (delia) contém o tooltip VD-F05 “fale até 5 minutos … texto editável”; `Index-DRC41Uyf.js` (plugin-ui) contém “A gravação será finalizada em breve.”;
+- `GET /apps/delia-api/dictation/status` → **401** sem credencial (hardening preservado);
+- `remoteEntry.js` de `delia` e `plugin-ui` → 200; gateway healthy;
+- nenhum outro serviço tocado.
+
+Verificação física de microfone em produção permanece `PENDING_USER_VERIFICATION` — exige sessão `delia.access` real (mesmo gate das entregas VD-F03/F04).
 
 ## 7. Residuais
 

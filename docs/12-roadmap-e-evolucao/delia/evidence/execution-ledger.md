@@ -16263,7 +16263,7 @@ PHASE_ADVANCE=NO
 ```
 
 
-## §6.329 — Independent Q02-C review (2026-10-20)
+## §6.330 — Independent Q02-C review (2026-10-20)
 
 **SHA:** `d62ab853c93de5d3882a716fbb8b266ba8ac7d3a`. **VERDICT:** `REWORK` (one bounded correction under 59 §18). Static verified removal of prior lexical continuity helpers and non-authoritative prior observation; executor reported 1665 PASS, real model `TEST_NOT_RUN`. **B2:** success of comparison still inferred from literal `Diferenças comprovadas:` in rendered output, despite typed deterministic comparison requirement. Require typed outcome evidence rather than text header, RED/GREEN and full regression; STOP if new contract required. **B1:** existing `classify_result_intent` regex steers `unique_structural_ticket_list_capability`, although roadmap retained that R4/R5 fast path for budget and pagination. Conflict cannot be reconciled by code deletion: `ARCHITECTURE_DECISION_REQUIRED` for reconsideration; preserve path pending decision. No Q03 release, no I04 acceptance or deploy.
 
@@ -16277,4 +16277,26 @@ Q03_AUTHORIZED=NO
 I04_ACCEPTED=NO
 PRODUCTION_DEPLOY_AUTHORIZED=NO
 NEXT=Q02_C_SINGLE_BOUNDED_REWORK_B2_AND_COORDINATION_B1_DECISION
+```
+
+
+## §6.331 — VD-F05 production deployment (srv-api)
+
+**DATE:** 2026-10-20. **TASK:** `DELIA-VD-F05-FIVE-MINUTE-DICTATION-CONTINUITY-01` — etapa de deployment autorizada. **DEPLOYED_SHA:** `a835a97ac` (mesmo SHA testado, `git pull --ff-only` no host). **PROCEDURE:** `infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia` + `docker compose ... up -d delia-api` (recriação por mudança apenas de env). Host `.env` protegido atualizado: `DELIA_STT_MAX_DURATION_MS=300000`, `DELIA_STT_MAX_AUDIO_BYTES=8388608`; provider/modelo/timeout/rate-limit/`delia.access` inalterados.
+
+**Live verification:** container `delpi-delia-api` healthy com env efetivo 300000/8388608; `delpi-delia` e `delpi-plugin-ui` servindo bundles novos (`App-C5dbkJxV.js` com tooltip "fale até 5 minutos"; `Index-DRC41Uyf.js` com "será finalizada em breve"); `GET /apps/delia-api/dictation/status` → 401 sem credencial (AuthZ preservada); remoteEntries 200; gateway healthy; nenhum outro serviço alterado.
+
+```text
+PRODUCTION_DEPLOYMENT=EXECUTED
+PRODUCTION_SHA=a835a97ac
+PRODUCTION_STT_LIMITS=300000ms_8388608B_verified_in_container_env
+PRODUCTION_STATUS_ROUTE=401_UNAUTH_PRESERVED
+PRODUCTION_BUNDLES=VD-F05_FINGERPRINTS_PRESENT
+PRODUCTION_5_MIN_CAPTURE=PENDING_USER_VERIFICATION
+PRODUCTION_AUTO_STOP=PENDING_USER_VERIFICATION
+PRODUCTION_SECOND_DICTATION=PENDING_USER_VERIFICATION
+PRODUCTION_NO_AUTO_SUBMIT=PENDING_USER_VERIFICATION
+REGRESSIONS=NONE_OBSERVED
+ROLLBACK_REQUIRED=NO
+PHASE_ADVANCE=NO
 ```
