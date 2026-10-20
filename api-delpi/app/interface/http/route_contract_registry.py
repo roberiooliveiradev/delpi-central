@@ -629,6 +629,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financeiro_inadimplencia_titulos": RouteContract(
         "financeiro_inadimplencia_titulo", "paged_list"
     ),
+    "get_financeiro_settlements_payables": RouteContract(
+        "financeiro_settlement", "paged_list"
+    ),
+    "get_financeiro_settlements_receivables": RouteContract(
+        "financeiro_settlement", "paged_list"
+    ),
+    "get_financeiro_settlements_summary": RouteContract(
+        "financeiro_settlements_summary", "list"
+    ),
     "get_retrabalhos_health": RouteContract(
         "retrabalho_horas_improdutivas_health", "scalar"
     ),

@@ -46,6 +46,28 @@ class Settings:
     )
     CORE_API_TIMEOUT: str = _get_env("CORE_API_TIMEOUT", default="10")
 
+    # api-delpi upstream (financial settlement routes, S2S individual).
+    DELPI_API_URL: str = _get_env(
+        "DELPI_API_URL", default="http://delpi-api-delpi:8000"
+    )
+    DELPI_API_TIMEOUT_SECONDS: float = float(
+        _get_env("DELPI_API_TIMEOUT", default="30")
+    )
+    DELPI_API_CALLER_APP: str = _get_env(
+        "DELPI_API_CALLER_APP", default="controllership-finance-api"
+    )
+
+    # Individual S2S credential (client_credentials) — own client, never the
+    # supplies credential. Missing values keep the mechanism disabled and the
+    # gateway fails closed.
+    S2S_TOKEN_URL: str = _get_env("S2S_TOKEN_URL", default="")
+    S2S_CLIENT_ID: str = _get_env("S2S_CLIENT_ID", default="")
+    S2S_CLIENT_SECRET: str = _get_env("S2S_CLIENT_SECRET", default="")
+    S2S_SCOPE: str = _get_env("S2S_SCOPE", default="")
+    S2S_TIMEOUT_SECONDS: float = float(
+        _get_env("S2S_TIMEOUT_SECONDS", default="10")
+    )
+
 
 settings = Settings()
 

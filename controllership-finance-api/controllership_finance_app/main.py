@@ -10,6 +10,9 @@ from delpi_auth.credential_guard import check_credentials
 from delpi_auth.cors_policy import build_allowed_origins
 from controllership_finance_app.config import settings
 from controllership_finance_app.core.responses import fail
+from controllership_finance_app.interface.http.routes.closing_routes import (
+    router as closing_router,
+)
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
 )
@@ -76,3 +79,4 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(viewer_context_router)
+app.include_router(closing_router)

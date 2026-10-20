@@ -1,0 +1,183 @@
+"""Central de Fechamento — financial settlements (R01/R02) BFF routes.
+
+The BFF owns: human principal check, ``controllership-finance.access``
+(Core-resolved effective permissions only), delegation of the user Bearer and
+typed error mapping. Dataset-scope authorization stays fail-closed at the
+producer: when api-delpi answers ``scope_unavailable`` the BFF relays the
+typed 403 without inventing access (doc 48 D3.1). No SQL lives here; no
+physical table names leave this boundary.
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Query, Request
+
+from delpi_auth.authz_core import has_permission
+
+from controllership_finance_app.core.responses import fail, ok
+from controllership_finance_app.infrastructure.api_delpi_gateway import (
+    ApiDelpiSettlementsGateway,
+    DelpiApiGatewayError,
+)
+
+logger = logging.getLogger("controllership-finance-api.closing")
+
+ACCESS_PERMISSION = "controllership-finance.access"
+
+router = APIRouter(prefix="/closing", tags=["Closing"])
+
+_SIDE_TO_PATH = {
+    "payable": "/financeiro/settlements/payables",
+    "receivable": "/financeiro/settlements/receivables",
+}
+SUMMARY_PATH = "/financeiro/settlements/summary"
+
+
+def _authorized_user(request: Request):
+    """Human principal + effective ``access`` — same chain as /viewer-context."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise Exception("Unauthorized")
+    if getattr(user, "principal_type", None) != "user":
+        raise Exception("Forbidden")
+    if getattr(user, "rbac_unavailable", False):
+        raise Exception("Service Unavailable")
+    if not has_permission(user, ACCESS_PERMISSION):
+        raise Exception("Forbidden")
+    return user
+
+
+def _user_bearer(request: Request) -> str:
+    bearer = request.headers.get("Authorization", "")
+    if not bearer.startswith("Bearer "):
+        raise Exception("Unauthorized")
+    return bearer.split(" ", 1)[1]
+
+
+def _map_gateway_error(exc: DelpiApiGatewayError, operation_id: str):
+    """Typed passthrough — never turn an authorization failure into success."""
+    if exc.error_code == "scope_unavailable":
+        return fail(
+            "Escopo de dados financeiros não autorizado.",
+            403,
+            data={"error": {"code": "scope_unavailable"}},
+            operation_id=operation_id,
+        )
+    if exc.status_code == 401:
+        return fail("Não autorizado.", 401, operation_id=operation_id)
+    if exc.status_code == 403:
+        return fail("Acesso negado.", 403, operation_id=operation_id)
+    if exc.status_code == 400:
+        return fail("Parâmetros inválidos.", 400, operation_id=operation_id)
+    if exc.status_code is None or exc.status_code >= 500:
+        return fail(
+            "Origem de dados financeiros indisponível.",
+            503,
+            operation_id=operation_id,
+        )
+    return fail("Erro na origem de dados.", 502, operation_id=operation_id)
+
+
+def _call_gateway(
+    request: Request,
+    *,
+    path: str,
+    params: dict[str, Any],
+    operation_id: str,
+):
+    try:
+        user = _authorized_user(request)
+    except Exception:
+        raise
+    access_token = _user_bearer(request)
+    _ = user  # principal already validated; subject stays in the delegated JWT
+    try:
+        body = ApiDelpiSettlementsGateway().get(
+            path, access_token=access_token, params=params
+        )
+    except DelpiApiGatewayError as exc:
+        return _map_gateway_error(exc, operation_id)
+    if not isinstance(body, dict):
+        return fail(
+            "Resposta inesperada da origem de dados.", 502,
+            operation_id=operation_id,
+        )
+    # api-delpi envelope: {success, message, data, meta} — unwrap data,
+    # surface its status/quality verbatim (no fabricated totals).
+    if body.get("success") is not True:
+        return fail(
+            body.get("message") or "Erro na origem de dados.",
+            502,
+            operation_id=operation_id,
+        )
+    return ok(
+        body.get("data"),
+        message=body.get("message") or "OK",
+        operation_id=operation_id,
+    )
+
+
+@router.get(
+    "/financial-settlements",
+    operation_id="get_closing_financial_settlements",
+)
+def get_closing_financial_settlements(
+    request: Request,
+    side: str = Query(..., pattern="^(payable|receivable)$"),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    nature_code: str | None = Query(None),
+    movement_type: str | None = Query(None),
+    sort_by: str = Query("settlement_date"),
+    sort_dir: str = Query("desc", pattern="^(asc|desc)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    params: dict[str, Any] = {
+        "start_date": start_date,
+        "end_date": end_date,
+        "sort_by": sort_by,
+        "sort_dir": sort_dir,
+        "page": page,
+        "page_size": page_size,
+    }
+    if nature_code:
+        params["nature_code"] = nature_code
+    if movement_type:
+        params["movement_type"] = movement_type
+    return _call_gateway(
+        request,
+        path=_SIDE_TO_PATH[side],
+        params=params,
+        operation_id="get_closing_financial_settlements",
+    )
+
+
+@router.get(
+    "/financial-settlements/summary",
+    operation_id="get_closing_financial_settlements_summary",
+)
+def get_closing_financial_settlements_summary(
+    request: Request,
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    nature_code: str | None = Query(None),
+    movement_type: str | None = Query(None),
+):
+    params: dict[str, Any] = {
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    if nature_code:
+        params["nature_code"] = nature_code
+    if movement_type:
+        params["movement_type"] = movement_type
+    return _call_gateway(
+        request,
+        path=SUMMARY_PATH,
+        params=params,
+        operation_id="get_closing_financial_settlements_summary",
+    )

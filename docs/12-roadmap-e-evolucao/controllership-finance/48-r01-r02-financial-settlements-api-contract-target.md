@@ -199,3 +199,47 @@ Testes requeridos (TEST_NOT_RUN): positivo por lado/intervalo, sibling por compe
 `D3_RESPONSE_SHAPE=APPROVED`; `BRANCH_ENFORCEMENT=TO_INVENTORY/PENDING`; `PRODUCT_BACKEND_FIRST=APPROVED`; `IMPLEMENTATION_AUTHORIZED=NO` para publicar endpoints com dados reais. **Próxima etapa autorizável:** inventory + definição de contrato/API e testes em isolamento, seguida de pedido de GO explícito para implementação mínima da api-delpi. Não confundir avanço de código com aceite de segurança nem com deploy.
 
 **Aceites mínimos:** campo filial nullable testado; sem default para filial vazia; casos de missing FK7/SED não suprimidos; nenhuma duplicação; valores como Decimal; paginação; testes de AuthZ positivo/negativo e bloqueio de scope desconhecido; nenhuma BFF/MFE/exportação. Se os controles produzirem contexto comprovadamente autorizado, reapresentar evidências para desbloqueio de exposição.
+
+## 12. Registro de implementação — S2S backend-first (20/10/2026)
+
+Escopo executado: `controllership-finance-api → api-delpi → Protheus`, reutilizando o padrão S2S individual OAuth2 Client Credentials da plataforma (referência: `supplies-api`, commit `633390da`). Fora do escopo e não implementado: MFE/frontend, exportação Excel/PDF, paridade `_F190C`, migrações, grants produtivos.
+
+### Rotas implementadas
+
+| Camada | Rota | operationId | AuthN/AuthZ |
+|---|---|---|---|
+| api-delpi | `GET /financeiro/settlements/payables` | `get_financeiro_settlements_payables` | `require_s2s_service` estrito (cliente `controllership-finance-api`, scope `settlements.read`) + Bearer de usuário obrigatório |
+| api-delpi | `GET /financeiro/settlements/receivables` | `get_financeiro_settlements_receivables` | idem |
+| api-delpi | `GET /financeiro/settlements/summary` | `get_financeiro_settlements_summary` | idem |
+| BFF | `GET /closing/financial-settlements` | `get_closing_financial_settlements` | `principal_type=="user"` + `controllership-finance.access` (effective permissions via Core) |
+| BFF | `GET /closing/financial-settlements/summary` | `get_closing_financial_settlements_summary` | idem |
+
+`side=payable|receivable` na rota de detalhe da BFF. Nenhum nome físico de tabela é exposto ao navegador.
+
+### Controles aplicados
+
+- **D3.1**: `branchCode: string|null` — `*_FILIAL` vazio rende `null` + `branchResolution:"unresolved"`; nenhum param `branch` aceito; nenhum fallback 01/02/all.
+- **Fail-closed de dataset**: `SettlementScopeResolver` (port na application, composição em `financeiro_settlements_composer`) retorna `unresolved` enquanto não existir mecanismo de escopo comprovado → rota responde 403 `scope_unavailable`. Linhas reais nunca são servidas sem escopo autorizado.
+- **D4**: `movementType`/`paymentDirection` são códigos crus; `officialTotals:false` permanente; summary agrupa por `side × currencyCode × natureCode × movementType`, nunca soma cross-moeda.
+- **Dados**: FK1/FK2 fatos; LEFT JOINs auditados FK7→SE1/SE2 (composto SX9) e SED; `D_E_L_E_T_=''`; valores em string decimal; `linkStatus` preserva eventos sem vínculo (`missing_document`, `missing_nature`, `missing_document_and_nature`).
+- **S2S**: `Authorization`=Bearer do usuário + `X-Delpi-Service-Authorization`=JWT client-credentials próprio da BFF; `X-Delpi-Caller-App` só telemetria; token legado compartilhado nunca autoriza; sem secrets em código/docs.
+
+### Configuração necessária (nomes apenas — valores via .env/secret store)
+
+- BFF `controllership-finance-api`: `DELPI_API_URL`, `DELPI_API_TIMEOUT`, `DELPI_API_CALLER_APP=controllership-finance-api`, `S2S_TOKEN_URL`, `S2S_CLIENT_ID`, `S2S_CLIENT_SECRET`, `S2S_SCOPE`, `S2S_TIMEOUT_SECONDS` (credencial própria, não a de suprimentos).
+- api-delpi (validator): `S2S_AUDIENCE`, `S2S_ALLOWED_CLIENTS` (incluir `controllership-finance-api`).
+- Keycloak: client `controllership-finance-api` (client_credentials) com scope `settlements.read` — provisionamento owner-side.
+
+### Arquivos principais
+
+api-delpi: `interface/http/routes/financeiro/settlements_router.py` + `settlements_route_helpers.py`; `application/dto/financeiro_settlements/*`; `application/use_cases/financeiro_settlements/*`; `application/security/settlement_scope.py`; `domain/ports/financeiro_settlements/settlements_repository_port.py`; `infrastructure/persistence/totvs/financeiro_settlements/*`; `composition/financeiro_settlements_composer.py`; registros em `route_contract_registry.py`, `main.py`, `openapi_baseline.json`.
+
+BFF: `controllership_finance_app/interface/http/routes/closing_routes.py`; `infrastructure/api_delpi_gateway.py`; `config.py`; `main.py`; compose dev (`DELPI_API_*`, `S2S_AUDIENCE`/`S2S_ALLOWED_CLIENTS`).
+
+### Residuais conhecidos
+
+- `DATA_ACCESS=BLOCKED_BY_SCOPE` por design até contrato de escopo autorizado (D3 enforcement).
+- D-PERM: não criada família `financial-settlements.*` — autorização usa S2S client+scope existente + permissões do Portal na BFF; se o owner de segurança preferir capability própria na api-delpi, é troca localizada do decorator.
+- D4 pendente: totais oficiais/semântica BA-ES-VL-CP exigem aceite financeiro.
+- FKA/FK5 fora do contrato; `partyTaxId`/`bankReference` não expostos.
+- Pré-existente no HEAD: `test_route_contract_registry_completeness` já falhava por opIds de outros módulos (supplies/protheus-rest/audit-5s/gpt) sem registro — não causado por este slice.

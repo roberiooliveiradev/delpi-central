@@ -1352,6 +1352,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL}
       TZ: ${TZ}
 
+      # Individual S2S validation (ADR-010): audience of this API + technical
+      # client allowlist. Missing/empty → fail-closed on S2S-guarded routes.
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-api-delpi}
+      S2S_ALLOWED_CLIENTS: ${S2S_ALLOWED_CLIENTS:-}
+
       PLUGINS_DB_HOST: postgres-plugins
       PLUGINS_DB_PORT: 5432
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
@@ -2975,6 +2980,10 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
       API_DELPI_ENV: ${API_DELPI_ENV}
+
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: controllership-finance-api
 
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
