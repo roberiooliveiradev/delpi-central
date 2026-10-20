@@ -350,6 +350,13 @@ class Settings:
     FINANCIAL_API_TIMEOUT_SECONDS: float = float(
         _get_env("FINANCIAL_API_TIMEOUT_SECONDS", default="30") or "30"
     )
+    HELPDESK_API_BASE_URL: str = _get_env(
+        "HELPDESK_API_BASE_URL",
+        default="http://helpdesk-api:8000",
+    )
+    HELPDESK_API_TIMEOUT_SECONDS: float = float(
+        _get_env("HELPDESK_API_TIMEOUT_SECONDS", default="15") or "15"
+    )
 
     # ==========================
     # Central de Agendamento — aprovação + notificações

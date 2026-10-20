@@ -1196,3 +1196,21 @@ DASHBOARD_DEPARTMENTS_INDICATORS = agent_route(
     ),
     operation_id="get_dashboard_departments_indicators",
 )
+
+HELPDESK_DASHBOARD_SUMMARY = agent_route(
+    summary="Helpdesk ticket KPIs (open/in-progress/resolved/pending-overdue)",
+    description=(
+        "Consolidated GLPI ticket counts for the TV Dashboard, aggregated over the "
+        "tickets visible to the caller's authorized GLPI session. Returns open "
+        "(status 1), in_progress (status 2-3), resolved (status 5 solved within the "
+        "requested start_date/end_date window; closed tickets are never counted as "
+        "resolved), pending (status 4 or 10 waiting), overdue (unfinished tickets "
+        "whose sla_tto/sla_ttr deadline already elapsed — tickets without a deadline "
+        "are never overdue) and pending_overdue (union of pending and overdue, each "
+        "ticket counted once). Without filters, all authorized tickets are counted "
+        "and resolved counts every solved ticket. Use for KPI cards of ticket volume "
+        "by status; do not use for ticket detail or lists — those live in the "
+        "helpdesk BFF."
+    ),
+    operation_id="get_helpdesk_dashboard_summary",
+)

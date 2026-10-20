@@ -1637,6 +1637,43 @@
         "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)"
       },
       "projectableFields": null
+    },
+    "get_helpdesk_dashboard_summary": {
+      "valueFields": [
+        "open",
+        "in_progress",
+        "resolved",
+        "pending_overdue",
+        "pending",
+        "overdue"
+      ],
+      "valueFieldTypes": {
+        "open": "number",
+        "in_progress": "number",
+        "resolved": "number",
+        "pending_overdue": "number",
+        "pending": "number",
+        "overdue": "number"
+      },
+      "valueFieldLabels": {
+        "open": "Chamados abertos",
+        "in_progress": "Em atendimento",
+        "resolved": "Resolvidos no período",
+        "pending_overdue": "Pendentes ou atrasados",
+        "pending": "Pendentes",
+        "overdue": "Atrasados (SLA vencido)"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "label": "Helpdesk — resumo de chamados",
+      "description": "KPIs consolidados de chamados GLPI por status efetivo: abertos, em atendimento, resolvidos na janela (solved_at), pendentes, atrasados por SLA vencido e o consolidado pendente-ou-atrasado sem dupla contagem.",
+      "whenToUse": "Cards de KPI do TV Dashboard de chamados; um campo por componente visual. Visibilidade sempre a do escopo autorizado da sessão.",
+      "category": "helpdesk"
     }
   }
 }

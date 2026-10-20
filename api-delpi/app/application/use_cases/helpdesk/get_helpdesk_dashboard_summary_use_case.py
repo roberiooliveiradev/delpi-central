@@ -1,0 +1,280 @@
+"""Agrega indicadores consolidados de chamados GLPI para o TV Dashboard.
+
+Semântica dos indicadores (mapeamento efetivo dos status GLPI via helpdesk-api):
+
+- ``open``: tickets com status GLPI ``new`` (status_id 1).
+- ``in_progress``: tickets em atendimento — ``processing assigned``/``processing
+  planned`` (status_id 2 e 3), espelhando o grupo ``in_progress`` do BFF.
+- ``pending``: tickets aguardando ação/resposta — ``waiting`` (status_id 4) e
+  ``waiting approval`` (status_id 10).
+- ``resolved``: tickets com status ``solved`` (status_id 5) cuja ``solved_at``
+  recai no período solicitado (sem período, todos). Tickets ``closed`` (6) NÃO
+  contam — fechamento é um ciclo posterior à resolução e mantemos a distinção
+  exigida pelo indicador.
+- ``overdue``: tickets não finalizados (status_id 1, 2, 3, 4, 10) cujo prazo
+  aplicável (``sla_tto``, depois ``sla_ttr``) já venceu no instante do cálculo.
+  Ticket sem prazo registrado nunca é contado como atrasado.
+- ``pending_overdue``: UNIÃO de ``pending`` e ``overdue`` (sem dupla contagem —
+  um ticket pendente e atrasado conta uma única vez).
+
+A visibilidade dos tickets é decidida pela helpdesk-api com a sessão GLPI do
+usuário autenticado; este use case apenas agrega o que o BFF retorna.
+"""
+from __future__ import annotations
+
+from datetime import date, datetime, timezone
+from typing import Any, Protocol
+
+from app.infrastructure.gateways.helpdesk_bff_gateway import (
+    HelpdeskBffGatewayError,
+)
+
+_STATUS_NEW = 1
+_STATUS_PROCESSING_ASSIGNED = 2
+_STATUS_PROCESSING_PLANNED = 3
+_STATUS_WAITING = 4
+_STATUS_SOLVED = 5
+_STATUS_CLOSED = 6
+_STATUS_WAITING_APPROVAL = 10
+
+_IN_PROGRESS_IDS = frozenset({_STATUS_PROCESSING_ASSIGNED, _STATUS_PROCESSING_PLANNED})
+_PENDING_IDS = frozenset({_STATUS_WAITING, _STATUS_WAITING_APPROVAL})
+_UNFINISHED_IDS = frozenset(
+    {
+        _STATUS_NEW,
+        _STATUS_PROCESSING_ASSIGNED,
+        _STATUS_PROCESSING_PLANNED,
+        _STATUS_WAITING,
+        _STATUS_WAITING_APPROVAL,
+    }
+)
+
+_STATUS_MAPPING_DOC = {
+    "open": "GLPI status_id 1 (new)",
+    "in_progress": "GLPI status_id 2, 3 (processing assigned/planned)",
+    "pending": "GLPI status_id 4, 10 (waiting, waiting approval)",
+    "resolved": "GLPI status_id 5 (solved) filtered by solved_at in the requested period; closed (status_id 6) is not counted as resolved",
+    "overdue": "unfinished ticket (status_id 1, 2, 3, 4, 10) with sla_tto/sla_ttr deadline already elapsed at calculated_at; tickets without a registered deadline are never overdue",
+    "pending_overdue": "union of pending and overdue tickets (each ticket counted once)",
+}
+
+_PAGE_SIZE = 50
+_MAX_PAGES = 200
+
+
+class HelpdeskTicketsPageReader(Protocol):
+    def list_tickets(
+        self,
+        *,
+        authorization: str,
+        page: int,
+        page_size: int,
+        assignee_id: int | None = None,
+        category_id: int | None = None,
+        urgency_id: int | None = None,
+    ) -> dict[str, Any]: ...
+
+
+class GetHelpdeskDashboardSummaryUseCase:
+    def __init__(
+        self,
+        *,
+        gateway: HelpdeskTicketsPageReader,
+        now_provider=lambda: datetime.now(timezone.utc),
+    ) -> None:
+        self._gateway = gateway
+        self._now_provider = now_provider
+
+    def execute(
+        self,
+        *,
+        authorization: str,
+        start_date: date | None,
+        end_date: date | None,
+        assignee_id: int | None,
+        category_id: int | None,
+        urgency_id: int | None,
+        scope: str | None,
+    ) -> dict[str, Any]:
+        tickets, partial = self._collect_all_pages(
+            authorization=authorization,
+            assignee_id=assignee_id,
+            category_id=category_id,
+            urgency_id=urgency_id,
+        )
+
+        now = self._now_provider()
+        counts = {
+            "open": 0,
+            "in_progress": 0,
+            "resolved": 0,
+            "pending": 0,
+            "overdue": 0,
+        }
+        for ticket in tickets:
+            if not isinstance(ticket, dict):
+                continue
+            status_id = _status_id(ticket)
+            if status_id == _STATUS_NEW:
+                counts["open"] += 1
+            elif status_id in _IN_PROGRESS_IDS:
+                counts["in_progress"] += 1
+            elif status_id in _PENDING_IDS:
+                counts["pending"] += 1
+            elif status_id == _STATUS_SOLVED and _solved_in_range(ticket, start_date, end_date):
+                counts["resolved"] += 1
+            if status_id in _UNFINISHED_IDS and _is_overdue(ticket, now):
+                counts["overdue"] += 1
+
+        counts["pending_overdue"] = _count_pending_overdue(tickets, now)
+
+        filters: dict[str, Any] = {}
+        if start_date is not None:
+            filters["start_date"] = start_date.isoformat()
+        if end_date is not None:
+            filters["end_date"] = end_date.isoformat()
+        if assignee_id is not None:
+            filters["assignee_id"] = assignee_id
+        if category_id is not None:
+            filters["category_id"] = category_id
+        if urgency_id is not None:
+            filters["urgency_id"] = urgency_id
+
+        return {
+            "data": counts,
+            "meta": {
+                "source": "glpi",
+                "calculated_at": now.isoformat(),
+                "filters": filters,
+                "status_mapping": _STATUS_MAPPING_DOC,
+                "scope": scope or "authorized",
+                "partial": partial,
+                "tickets_evaluated": len(tickets),
+            },
+        }
+
+    def _collect_all_pages(
+        self,
+        *,
+        authorization: str,
+        assignee_id: int | None,
+        category_id: int | None,
+        urgency_id: int | None,
+    ) -> tuple[list[dict[str, Any]], bool]:
+        tickets: list[dict[str, Any]] = []
+        for page in range(1, _MAX_PAGES + 1):
+            payload = self._gateway.list_tickets(
+                authorization=authorization,
+                page=page,
+                page_size=_PAGE_SIZE,
+                assignee_id=assignee_id,
+                category_id=category_id,
+                urgency_id=urgency_id,
+            )
+            items = _extract_items(payload)
+            tickets.extend(items)
+            if len(items) < _PAGE_SIZE or not _has_more(payload):
+                return tickets, False
+        return tickets, True
+
+
+def _extract_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    items = payload.get("items")
+    if isinstance(items, list):
+        return items
+    if isinstance(payload.get("tickets"), list):
+        return payload["tickets"]
+    return []
+
+
+def _has_more(payload: dict[str, Any]) -> bool:
+    pagination = payload.get("pagination")
+    if isinstance(pagination, dict):
+        total = pagination.get("total")
+        page = pagination.get("page")
+        page_size = pagination.get("page_size") or pagination.get("pageSize")
+        if all(isinstance(v, int) for v in (total, page, page_size)):
+            return page * page_size < total
+        if isinstance(pagination.get("has_more"), bool):
+            return pagination["has_more"]
+    if isinstance(payload.get("has_more"), bool):
+        return payload["has_more"]
+    return True
+
+
+def _status_id(ticket: dict[str, Any]) -> int | None:
+    raw = ticket.get("status_id")
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, int):
+        return raw
+    if isinstance(raw, str) and raw.strip().isdigit():
+        return int(raw.strip())
+    return None
+
+
+def _parse_dt(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip().replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _solved_in_range(
+    ticket: dict[str, Any],
+    start_date: date | None,
+    end_date: date | None,
+) -> bool:
+    if start_date is None and end_date is None:
+        return True
+    solved_at = _parse_dt(ticket.get("solved_at"))
+    if solved_at is None:
+        return False
+    solved_date = solved_at.date()
+    if start_date is not None and solved_date < start_date:
+        return False
+    if end_date is not None and solved_date > end_date:
+        return False
+    return True
+
+
+def _is_overdue(ticket: dict[str, Any], now: datetime) -> bool:
+    for field in ("sla_tto", "sla_ttr"):
+        deadline = _parse_dt(ticket.get(field))
+        if deadline is not None:
+            return deadline < now
+    return False
+
+
+def _count_pending_overdue(tickets: list[Any], now: datetime) -> int:
+    total = 0
+    for ticket in tickets:
+        if not isinstance(ticket, dict):
+            continue
+        status_id = _status_id(ticket)
+        is_pending = status_id in _PENDING_IDS
+        is_overdue = status_id in _UNFINISHED_IDS and _is_overdue(ticket, now)
+        if is_pending or is_overdue:
+            total += 1
+    return total
+
+
+def build_get_helpdesk_dashboard_summary_use_case() -> GetHelpdeskDashboardSummaryUseCase:
+    from app.infrastructure.gateways.helpdesk_bff_gateway import (
+        build_helpdesk_bff_gateway,
+    )
+
+    return GetHelpdeskDashboardSummaryUseCase(gateway=build_helpdesk_bff_gateway())
+
+
+__all__ = [
+    "GetHelpdeskDashboardSummaryUseCase",
+    "HelpdeskBffGatewayError",
+    "build_get_helpdesk_dashboard_summary_use_case",
+]

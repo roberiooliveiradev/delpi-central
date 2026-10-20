@@ -1,27 +1,22 @@
 {
   "source": "openapi_baseline.json",
   "baseline_version": "3",
-  "baseline_operation_count": 744,
+  "baseline_operation_count": 749,
   "taskId": "DAVI-SUPPLIES-INVENTORY-VALIDATION-001",
-  "TOTAL_OPERATIONS": 744,
-  "TOTAL_GET": 542,
-  "TOTAL_WRITE_VERBS": 202,
+  "TOTAL_OPERATIONS": 749,
+  "TOTAL_GET": 545,
+  "TOTAL_WRITE_VERBS": 204,
   "DAVI_ELIGIBLE_READ": 92,
-  "ELIGIBLE_BEFORE": 88,
+  "ELIGIBLE_BEFORE": 92,
   "ELIGIBLE_AFTER": 92,
-  "NEWLY_ELIGIBLE": [
-    "get_supplies_inventory_accuracy_items",
-    "get_supplies_inventory_accuracy_summary",
-    "get_supplies_non_moving_stock_items",
-    "get_supplies_non_moving_stock_summary"
-  ],
+  "NEWLY_ELIGIBLE": [],
   "REMOVED_ELIGIBLE": [],
   "INVENTORY_DELTA": {
-    "previous_total_operations": 743,
-    "current_total_operations": 744,
-    "previous_total_get": 542,
-    "current_total_get": 542,
-    "added_operations": 1,
+    "previous_total_operations": 745,
+    "current_total_operations": 749,
+    "previous_total_get": 543,
+    "current_total_get": 545,
+    "added_operations": 4,
     "removed_operations": 0,
     "note": "Delta vs last committed inventory artifact (HEAD)"
   },
@@ -205,14 +200,14 @@
     "ADMIN_OUT_OF_SCOPE": 71,
     "DAVI_ELIGIBLE_READ": 92,
     "DESTRUCTIVE_OUT_OF_SCOPE": 17,
-    "GENERIC_SQL_FORBIDDEN": 2,
+    "GENERIC_SQL_FORBIDDEN": 1,
     "LEGACY_UNSAFE": 2,
-    "NEEDS_BOUNDED_EXECUTION": 2,
-    "NEEDS_MODEL_SAFE_PROJECTION": 339,
+    "NEEDS_BOUNDED_EXECUTION": 3,
+    "NEEDS_MODEL_SAFE_PROJECTION": 342,
     "NEEDS_NESTED_PROJECTION_SUPPORT": 51,
     "SEMANTICALLY_REDUNDANT": 3,
     "STREAM_BINARY_OUT_OF_SCOPE": 33,
-    "WRITE_OUT_OF_SCOPE": 132
+    "WRITE_OUT_OF_SCOPE": 134
   },
   "ELIGIBLE_OPERATION_IDS": [
     "get_commercial_rol_by_branch",
@@ -2110,16 +2105,6 @@
       "executable": false
     },
     {
-      "operationId": "execute_readonly_sql",
-      "method": "POST",
-      "path": "/data/sql",
-      "summary": "Execute readonly sql",
-      "entity": "sql_result",
-      "shape": "paged_list",
-      "davi_status": "GENERIC_SQL_FORBIDDEN",
-      "executable": false
-    },
-    {
       "operationId": "get_sql_health",
       "method": "GET",
       "path": "/system/sql-health",
@@ -2147,6 +2132,16 @@
       "entity": "gpt_product_search",
       "shape": "paged_list",
       "davi_status": "LEGACY_UNSAFE",
+      "executable": false
+    },
+    {
+      "operationId": "execute_readonly_sql",
+      "method": "POST",
+      "path": "/data/sql",
+      "summary": "Execute readonly sql",
+      "entity": "sql_result",
+      "shape": "paged_list",
+      "davi_status": "NEEDS_BOUNDED_EXECUTION",
       "executable": false
     },
     {
@@ -2545,6 +2540,16 @@
       "path": "/health",
       "summary": "Root",
       "entity": "health",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_helpdesk_dashboard_summary",
+      "method": "GET",
+      "path": "/helpdesk/dashboard/summary",
+      "summary": "Helpdesk ticket KPIs",
+      "entity": "helpdesk_dashboard_summary",
       "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
@@ -3306,6 +3311,26 @@
       "summary": "Unproductive hours daily series",
       "entity": "production_unproductive_hours_series",
       "shape": "list",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_protheus_integration_status",
+      "method": "GET",
+      "path": "/integrations/protheus/status",
+      "summary": "Protheus REST integration status",
+      "entity": "protheus_integration_status",
+      "shape": "scalar",
+      "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
+      "executable": false
+    },
+    {
+      "operationId": "get_protheus_rest_supplier",
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "summary": "Get Protheus supplier by REST",
+      "entity": "protheus_rest_supplier",
+      "shape": "scalar",
       "davi_status": "NEEDS_MODEL_SAFE_PROJECTION",
       "executable": false
     },
@@ -6780,6 +6805,16 @@
       "executable": false
     },
     {
+      "operationId": "create_protheus_rest_supplier",
+      "method": "POST",
+      "path": "/integrations/protheus/suppliers",
+      "summary": "Create Protheus Rest Supplier Route",
+      "entity": "protheus_rest_supplier",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
       "operationId": "create_public_canal_denuncia",
       "method": "POST",
       "path": "/public/canal-denuncia/denuncias",
@@ -7575,6 +7610,16 @@
       "path": "/planejamento-orcamentario/personnel/lines/{line_id}",
       "summary": "Update Personnel Plan Line",
       "entity": "personnel_plan_line",
+      "shape": "scalar",
+      "davi_status": "WRITE_OUT_OF_SCOPE",
+      "executable": false
+    },
+    {
+      "operationId": "update_protheus_rest_supplier",
+      "method": "PUT",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "summary": "Update Protheus Rest Supplier Route",
+      "entity": "protheus_rest_supplier",
       "shape": "scalar",
       "davi_status": "WRITE_OUT_OF_SCOPE",
       "executable": false

@@ -4,11 +4,11 @@
 
 - Task: `DAVI-SUPPLIES-INVENTORY-VALIDATION-001`
 - Source: `openapi_baseline.json` version `3`
-- TOTAL OPERATIONS: **744**
-- TOTAL GET: **542**
-- WRITE VERBS (POST/PUT/PATCH/DELETE): **202**
-- DAVI_ELIGIBLE_READ (before→after): **88 → 92**
-- NEWLY ELIGIBLE: **4**
+- TOTAL OPERATIONS: **749**
+- TOTAL GET: **545**
+- WRITE VERBS (POST/PUT/PATCH/DELETE): **204**
+- DAVI_ELIGIBLE_READ (before→after): **92 → 92**
+- NEWLY ELIGIBLE: **0**
 
 ## Coverage decision
 
@@ -48,11 +48,11 @@
 
 ```json
 {
-  "previous_total_operations": 743,
-  "current_total_operations": 744,
-  "previous_total_get": 542,
-  "current_total_get": 542,
-  "added_operations": 1,
+  "previous_total_operations": 745,
+  "current_total_operations": 749,
+  "previous_total_get": 543,
+  "current_total_get": 545,
+  "added_operations": 4,
   "removed_operations": 0,
   "note": "Delta vs last committed inventory artifact (HEAD)"
 }
@@ -65,14 +65,14 @@
 | `ADMIN_OUT_OF_SCOPE` | 71 |
 | `DAVI_ELIGIBLE_READ` | 92 |
 | `DESTRUCTIVE_OUT_OF_SCOPE` | 17 |
-| `GENERIC_SQL_FORBIDDEN` | 2 |
+| `GENERIC_SQL_FORBIDDEN` | 1 |
 | `LEGACY_UNSAFE` | 2 |
-| `NEEDS_BOUNDED_EXECUTION` | 2 |
-| `NEEDS_MODEL_SAFE_PROJECTION` | 339 |
+| `NEEDS_BOUNDED_EXECUTION` | 3 |
+| `NEEDS_MODEL_SAFE_PROJECTION` | 342 |
 | `NEEDS_NESTED_PROJECTION_SUPPORT` | 51 |
 | `SEMANTICALLY_REDUNDANT` | 3 |
 | `STREAM_BINARY_OUT_OF_SCOPE` | 33 |
-| `WRITE_OUT_OF_SCOPE` | 132 |
+| `WRITE_OUT_OF_SCOPE` | 134 |
 
 ## Eligible operationIds
 

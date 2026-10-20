@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 744,
+  "operation_count": 749,
   "operations": [
     {
       "method": "POST",
@@ -35845,6 +35845,158 @@
     },
     {
       "method": "GET",
+      "path": "/helpdesk/dashboard/summary",
+      "operationId": "get_helpdesk_dashboard_summary",
+      "summary": "Helpdesk ticket KPIs",
+      "tags": [
+        "Helpdesk"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Start of the resolution window (YYYY-MM-DD). Only tickets solved on or after this date count toward `resolved`.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "End of the resolution window (YYYY-MM-DD). Only tickets solved on or before this date count toward `resolved`.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "assignee_id",
+          "in": "query",
+          "required": false,
+          "description": "Filter tickets by assignee (GLPI technician user id).",
+          "type": "integer"
+        },
+        {
+          "name": "category_id",
+          "in": "query",
+          "required": false,
+          "description": "Filter tickets by GLPI category id.",
+          "type": "integer"
+        },
+        {
+          "name": "urgency_id",
+          "in": "query",
+          "required": false,
+          "description": "Filter tickets by GLPI urgency id (1-5).",
+          "type": "integer"
+        },
+        {
+          "name": "scope",
+          "in": "query",
+          "required": false,
+          "description": "Informational scope label echoed in meta.scope. Ticket visibility is always the authorized GLPI scope of the caller's session — this parameter never widens access.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "helpdesk_dashboard_summary",
+        "shape": "scalar",
+        "category": "helpdesk",
+        "locale": {
+          "en": {
+            "summary": "Helpdesk ticket KPIs",
+            "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue) for the tickets visible to the caller's authorized session.",
+            "whenToUse": "KPI cards for helpdesk ticket volume by status on the TV Dashboard.",
+            "label": "Helpdesk — ticket summary"
+          },
+          "pt-BR": {
+            "summary": "Chamados Helpdesk — resumo de KPIs",
+            "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados) sobre os chamados visíveis ao escopo autorizado da sessão.",
+            "whenToUse": "Cards de KPI de volume de chamados por status no TV Dashboard.",
+            "label": "Helpdesk — resumo de chamados"
+          }
+        },
+        "params": {
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Resolution window end"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Fim da janela de resolução"
+              }
+            },
+            "format": "date"
+          },
+          "scope": {
+            "locale": {
+              "en": {
+                "description": "Scheduling or listing scope.",
+                "label": "Scope label"
+              },
+              "pt-BR": {
+                "description": "Escopo da consulta (ex.: occurrence, future, all).",
+                "label": "Escopo"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Resolution window start"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Início da janela de resolução"
+              }
+            },
+            "format": "date"
+          },
+          "assignee_id": {
+            "locale": {
+              "en": {
+                "label": "Assignee"
+              },
+              "pt-BR": {
+                "label": "Responsável"
+              }
+            }
+          },
+          "category_id": {
+            "locale": {
+              "en": {
+                "label": "Category"
+              },
+              "pt-BR": {
+                "label": "Categoria"
+              }
+            }
+          },
+          "urgency_id": {
+            "locale": {
+              "en": {
+                "label": "Urgency"
+              },
+              "pt-BR": {
+                "label": "Urgência"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Cards de KPI de volume de chamados por status no TV Dashboard.",
+          "description": "Contagens consolidadas de chamados GLPI (abertos, em atendimento, resolvidos no período, pendentes, atrasados, pendentes-ou-atrasados) sobre os chamados visíveis ao escopo autorizado da sessão.",
+          "label": "Helpdesk — resumo de chamados"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Consolidated GLPI ticket counts (open, in progress, resolved in period, pending, overdue, pending-or-overdue) for the tickets visible to the caller's authorized session."
+    },
+    {
+      "method": "GET",
       "path": "/hr/active-pdi-count",
       "operationId": "get_hr_active_pdi_count",
       "summary": "Indicator — Pdis ativos",
@@ -39276,6 +39428,150 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Summary KPIs for in-process inspections (orders, tests, approval rates)."
+    },
+    {
+      "method": "GET",
+      "path": "/integrations/protheus/status",
+      "operationId": "get_protheus_integration_status",
+      "summary": "Protheus REST integration status",
+      "tags": [
+        "Integrations — Protheus REST"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "protheus_integration_status",
+        "shape": "scalar",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Protheus REST integration status",
+            "description": "Diagnose configuration, technical authentication and REST connectivity with Protheus without exposing secrets.",
+            "label": "Protheus integration status"
+          },
+          "pt-BR": {
+            "summary": "Status da integração REST Protheus",
+            "description": "Diagnostica configuração, autenticação técnica e conectividade REST com o Protheus sem expor segredos.",
+            "label": "Status integração Protheus"
+          }
+        },
+        "tv": {
+          "description": "Diagnostica configuração, autenticação técnica e conectividade REST com o Protheus sem expor segredos.",
+          "label": "Status integração Protheus"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Diagnose configuration, technical authentication and REST connectivity with Protheus without exposing secrets."
+    },
+    {
+      "method": "POST",
+      "path": "/integrations/protheus/suppliers",
+      "operationId": "create_protheus_rest_supplier",
+      "summary": "Create Protheus Rest Supplier Route",
+      "tags": [
+        "Integrations — Protheus REST"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "protheus_rest_supplier",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Create supplier via Protheus REST. Identity (codusr) resolved from Core only."
+    },
+    {
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "operationId": "get_protheus_rest_supplier",
+      "summary": "Get Protheus supplier by REST",
+      "tags": [
+        "Integrations — Protheus REST"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "supplier_id",
+          "in": "path",
+          "required": true,
+          "description": "Eight digits: six-digit supplier code + two-digit store",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "protheus_rest_supplier",
+        "shape": "scalar",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Get Protheus supplier by REST",
+            "description": "Fetch a supplier from the Protheus REST API using an eight-digit code+store identifier.",
+            "label": "Protheus REST supplier"
+          },
+          "pt-BR": {
+            "summary": "Consultar fornecedor Protheus via REST",
+            "description": "Consulta um fornecedor na API REST do Protheus pelo identificador de oito dígitos (código+loja).",
+            "label": "Fornecedor Protheus REST"
+          }
+        },
+        "params": {
+          "supplier_id": {
+            "locale": {
+              "en": {
+                "description": "Eight digits: six-digit supplier code plus two-digit store.",
+                "label": "Supplier id"
+              },
+              "pt-BR": {
+                "description": "Oito dígitos: seis do código do fornecedor mais dois da loja.",
+                "label": "Identificador do fornecedor"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Consulta um fornecedor na API REST do Protheus pelo identificador de oito dígitos (código+loja).",
+          "label": "Fornecedor Protheus REST"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Fetch a supplier from the Protheus REST API using an eight-digit code+store identifier."
+    },
+    {
+      "method": "PUT",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "operationId": "update_protheus_rest_supplier",
+      "summary": "Update Protheus Rest Supplier Route",
+      "tags": [
+        "Integrations — Protheus REST"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "supplier_id",
+          "in": "path",
+          "required": true,
+          "description": "Eight digits: six-digit supplier code + two-digit store",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "protheus_rest_supplier",
+        "shape": "scalar",
+        "params": {
+          "supplier_id": {
+            "locale": {
+              "en": {
+                "description": "Eight digits: six-digit supplier code plus two-digit store.",
+                "label": "Supplier id"
+              },
+              "pt-BR": {
+                "description": "Oito dígitos: seis do código do fornecedor mais dois da loja.",
+                "label": "Identificador do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Update supplier fields via Protheus REST. codusr is resolved from Core."
     },
     {
       "method": "GET",
