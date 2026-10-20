@@ -23,8 +23,8 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 
 | ID | Relatório/atividade | Rotina candidata | Família | TÉO ref | G1 | G2 | G3 | G4 | G5 | G6 | Owner do próximo passo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| R01 | Baixas a pagar | FINR190 | Financeiro | `kp02_t01/kp02_st01` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R02 | Baixas a receber | FINR190 | Financeiro | `kp02_t01/kp02_st02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R01 | Baixas a pagar | FINR190 | Financeiro | `kp02_t01/kp02_st01` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R02 | Baixas a receber | FINR190 | Financeiro | `kp02_t01/kp02_st02` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R03 | P7 padrão / Bloco H | MATR460 | Estoque | `kp04_t01_st01/st02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R04 | Consumo por OP | MATR860 | Produção | `kp04_t02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R05 | Entradas e Saídas / valor estoque | a confirmar | Estoque | `kp04_t03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
@@ -97,4 +97,32 @@ SCOPE_CHANGE / SUPERSEDES:
 
 | Data | Lote | Autor | IDs | Gates novos PASS | Denominador | % coleta | % auditoria | Bloqueio e próximo owner | SHA |
 |---|---|---|---|---|---|---|---|---|---|
-| 2026-10-20 | Setup | GPT (documental) | R01–R15 | 0 (sem ateste formal) | 15 | 0/60 = 0,0% | 0/90 = 0,0% | Coletar evidências artefato/vídeo/DAVI | commit de criação |
+| 2026-10-20 | Setup | GPT (documental) | R01–R15 | 0 (sem ateste formal) | 15 | 0/60 = 0,0% | 0/90 = 0,0% | Coletar evidências artefato/vídeo/DAVI | `52dbbf45b671` |
+| 2026-10-20 | L1.1 FINR190 | GPT/TÉO/DAVI/VISTA/GitHub | R01,R02 | G1 R01+R02 (2) | 15 | **2/60 = 3,3%** | **2/90 = 2,2%** | Exportações e layouts FINR190 pendentes; owner Controladoria/ERP | commit desta rodada |
+
+## 6. Rodada L1.1 — FINR190 (20/10/2026)
+
+### R01 — Baixas a pagar — primeira análise
+
+**G1 PASS / PROVEN:** decomposição AS-IS do TÉO `kp02_t01` ("Gerar relação de baixas no FINR190"), subtarefa `kp02_st01` ("Gerar relação de baixas a pagar") e `kp02_st03` (ordenações requeridas). Documento GitHub `03-evidencias-proveniencia-e-rastreabilidade.md`: pagar em Excel, PDF por natureza e PDF por data; procedimento usa primeiro/último dia do período. Finalidade: compor entregáveis financeiros e permitir conferência/envio no fechamento. **O PDF original e sua lista de colunas ainda não foram reabertos nesta rodada.**
+
+**G2 PENDING:** parâmetros documentados = data inicial/final da competência, disposição por DATA/NATUREZA. Ainda faltam nomes/tipos exatos de todas as colunas, seleção por empresa/filial, natureza e critérios de ordenação/totalização realmente exibidos. **Não supor layout por conhecimento geral de FINR190.**
+
+**DAVI executado, READ:** `discover_delpi_information` → `search_protheus_columns_by_description` com `description="baixa", page=1, limit=20`, retorno `status=ok`, `total_records=274`, `is_complete=false`, página 1/14. Nesta página o dicionário tipado trouxe **`FK2010` / descrição "Baixas a Pagar" / coluna `FK2_DATA` / descrição "Data Baixa"**. **É candidato de binding; não há prova de que FINR190 consulta FK2 ou de que a coluna representa cada campo do relatório.** Resultado da pesquisa também contém entidades não financeiras e é paginado — não promover descoberta de nome a equivalência.
+
+**VISTA executada, READ discovery:** `search_data_routes("FINR190 baixas contas a pagar e receber relatório financeiro Protheus")` trouxe rotas financeiras **adjacentes**, incluindo `get_financeiro_inadimplencia_titulos` e `get_financeiro_despesas_centro_custo_lancamentos`; nenhuma delas é comprovadamente equivalente às baixas FINR190. Rota de títulos inadimplentes é receber em atraso, não relação de baixas a pagar. **Não declarar FINR190 exposto.**
+
+**G3 PENDING:** ERP Protheus é fonte candidata do relatório, mas owner da semântica FINR190, origem dos layouts PDF/Excel e vinculação tabelas/colunas devem ser confirmados com ERP e Controladoria. **G4 PENDING**, `FK2010.FK2_DATA` candidato apenas; joins, filtros, colunas de valores, datas e exclusão lógica TO_INVENTORY. **G5 TEST_NOT_RUN:** nenhuma query de paridade realizada. **G6 PENDING:** sem aceite da Controladoria.
+
+**Próxima evidência obrigatória para R01:** (1) amostra sanitizada FINR190 **Pagar Excel, Pagar PDF por DATA e por NATUREZA** para mesma competência; (2) cabeçalhos, filtros e totais; (3) dicionário das tabelas de baixas e dos títulos correlatos, com colunas, chaves e tipos; (4) prova de correspondência em ambiente READ autorizado; (5) alinhamento empresa/filial 01/03/04 versus 01/02 antes de comparar. Se consulta de metadados não retornar coluna/join suficiente, bloquear owner ERP em vez de inventar.
+
+### R02 — Baixas a receber
+
+**G1 PASS / PROVEN:** TÉO `kp02_st02` e `kp02_st03` comprovam geração de baixas a receber no FINR190; doc 03 prevê PDF/Excel e parâmetro "Da Carteira?" a confirmar contra procedimento original. **G2 PENDING** até layouts e campos. No mesmo resultado DAVI, `FK1010` ("Baixas a Receber") com `FK1_DATA` ("Data Baixa") foi identificado como **candidato**, não vínculo FINR190 comprovado. **G3/G4 PENDING, G5 TEST_NOT_RUN, G6 PENDING**.
+
+### Controle desta rodada
+
+- Gates formalmente promovidos: **somente G1 de R01 e G1 de R02**, após confrontar tarefa e finalidade em TÉO e doc 03. Todos os demais preservados pendentes.
+- `COLETA = 2/60 = 3,3%`; `AUDITORIA = 2/90 = 2,2%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+- DAVI `search_protheus_columns_by_description`: **uma operação tipada executada** (274 resultados totais, somente 20 observados). VISTA: **uma descoberta de rotas**, nenhuma execução. SQL e paridade: **TEST_NOT_RUN**.
+- Próximo lote: buscar metadados de FK2/FK1 e as exportações originais, sem afirmar FINR190=FK2/FK1; vídeo `STALE_EVIDENCE` até reconciliação.
