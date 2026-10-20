@@ -5,7 +5,24 @@
 **Produto:** **DÉLIA**, aplicação standalone nova  
 
 
-**Decisão vigente de execução — 2026-10-20 (orçamento conversacional, Product Master):** a admissão explicitamente conversacional usa o saldo do orçamento global de 30 s, sem o teto adicional de 12 s. O fallback depois de seleção ou tentativa de orquestração conserva o teto de 12 s. O valor 12 e o teto global 30 não mudam, e nenhuma tentativa reinicia o relógio. Erro de owner continua terminal, sem prosa factual livre. Continuação automática entre chamadas do modelo não está autorizada. Esta decisão não autoriza Q03, não altera B1 e não autoriza deploy. Documento 64. Ledger §6.336.
+**Decisão vigente de execução — 2026-10-20 (Q03, parecer independente):** a trilha finita de refatoração semântica encerra com `ACCEPT_WITH_RESIDUAL`. Os requisitos centrais de Q01 e Q02-A/B/C estão comprovados no código vigente, a suíte histórica permanece aplicável porque `delia-api` não mudou desde `a9f5f8d3c2`, e o SIPOC real passou no processo que contém o marcador. B1 continua atalho lexical de listagem de chamados, adiado e não resolvido. Comparação tipada de dois registros de owner e a projeção de HTTP 404 não foram exercidas no runtime atualizado. Esta decisão não aceita I04, não marca C3 executado, não declara produção pronta e não autoriza deploy nem mudança de código. Documento 67. Ledger §6.342.
+
+```text
+Q03_VERDICT=ACCEPT_WITH_RESIDUAL
+Q03_EXECUTED=YES_REVIEW_ONLY
+B1=UNRESOLVED_FORMALLY_DEFERRED
+B1_RISK=NON_CRITICAL
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+GLOBAL_TURN_BUDGET_SECONDS=30
+POST_ORCHESTRATION_FALLBACK_CAP_SECONDS=12
+AUTOMATIC_MODEL_RETRY=NOT_AUTHORIZED
+PRODUCTION_DEPLOY_AUTHORIZED=NO
+RUNTIME_CHANGES_AUTHORIZED=NO
+NEXT=PRODUCT_DECISION_B1_AND_LIVE_GAPS
+```
+
+**Decisão anterior — 2026-10-20 (orçamento conversacional, SUPERSEDED como cerca vigente pelo parecer Q03):** a admissão explicitamente conversacional usa o saldo do orçamento global de 30 s, sem o teto adicional de 12 s. O fallback depois de seleção ou tentativa de orquestração conserva o teto de 12 s. O valor 12 e o teto global 30 não mudam, e nenhuma tentativa reinicia o relógio. Erro de owner continua terminal, sem prosa factual livre. Continuação automática entre chamadas do modelo não está autorizada. Documento 64. Ledger §6.336.
 
 ```text
 EARLY_CONVERSATIONAL_ADMISSION=REMAINING_GLOBAL_BUDGET
