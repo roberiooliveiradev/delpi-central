@@ -13,6 +13,9 @@ from controllership_finance_app.core.responses import fail
 from controllership_finance_app.interface.http.routes.health_routes import (
     router as health_router,
 )
+from controllership_finance_app.interface.http.routes.viewer_context_routes import (
+    router as viewer_context_router,
+)
 from controllership_finance_app.middleware.auth_middleware import jwt_middleware
 
 logging.basicConfig(
@@ -72,3 +75,4 @@ app.add_middleware(
 )
 
 app.include_router(health_router)
+app.include_router(viewer_context_router)

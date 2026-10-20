@@ -1,0 +1,117 @@
+/**
+ * Portal Controladoria & Finanças — tokens cf-* ligados aos tokens do host.
+ * Escopo `.dashboard-controllership-finance` (mesma convenção dos demais MFEs).
+ */
+
+.dashboard-controllership-finance,
+.dashboard-controllership-finance * {
+  box-sizing: border-box;
+}
+
+.dashboard-controllership-finance {
+  --cf-page-padding: 24px;
+  --cf-section-gap: 24px;
+  --cf-grid-gap: 16px;
+  --cf-accent: var(--primary, #089bdb);
+  --cf-text: var(--text, #111111);
+  --cf-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --cf-surface: var(--surface, #ffffff);
+  --cf-surface-muted: var(--surface-muted, #f6f8fa);
+  --cf-border: var(--border, #e6e6e6);
+  --cf-danger: #b91c1c;
+  --cf-success: #15803d;
+  --delpi-ui-accent: var(--cf-accent);
+  --delpi-ui-surface: var(--cf-surface);
+  --delpi-ui-surface-muted: var(--cf-surface-muted);
+  --delpi-ui-text: var(--cf-text);
+  --delpi-ui-title: var(--secundary, #003866);
+  --delpi-ui-text-muted: var(--cf-text-muted);
+  --delpi-ui-border: var(--cf-border);
+  --delpi-ui-muted: var(--cf-text-muted);
+  --delpi-ui-section-gap: var(--cf-section-gap);
+  --delpi-ui-grid-gap: var(--cf-grid-gap);
+  --delpi-ui-page-padding: var(--cf-page-padding, 24px);
+}
+
+:root[data-theme="dark"] .dashboard-controllership-finance {
+  --cf-accent: var(--primary, #089bdb);
+  --cf-text: rgba(255, 255, 255, 0.94);
+  --cf-text-muted: rgba(255, 255, 255, 0.78);
+  --cf-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --cf-surface-muted: color-mix(in srgb, var(--surface-2, #1b2030) 70%, #0b0e14);
+  --cf-border: rgba(255, 255, 255, 0.14);
+  --cf-danger: #f87171;
+  --cf-success: #4ade80;
+  --delpi-ui-accent: var(--cf-accent);
+  --delpi-ui-surface: var(--cf-surface);
+  --delpi-ui-surface-muted: var(--cf-surface-muted);
+  --delpi-ui-text: var(--cf-text);
+  --delpi-ui-title: var(--cf-text);
+  --delpi-ui-text-muted: var(--cf-text-muted);
+  --delpi-ui-border: var(--cf-border);
+  --delpi-ui-muted: var(--cf-text-muted);
+}
+
+.dashboard-controllership-finance.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  max-width: none;
+  padding: var(--cf-page-padding);
+  gap: var(--cf-section-gap);
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--app-canvas, var(--bg))),
+    var(--app-canvas, var(--bg)) 280px
+  );
+}
+
+.dashboard-controllership-finance .cf-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-section-gap);
+}
+
+/* Início: stack Eventos → busca → recentes → seções */
+.dashboard-controllership-finance .cf-home-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-grid-gap, 16px);
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-home-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-home-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-controllership-finance .cf-banner-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.dashboard-controllership-finance .cf-banner-text {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-controllership-finance .cf-home-sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-controllership-finance.dashboard-page {
+    padding: 16px;
+  }
+}

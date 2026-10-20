@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "controllership-finance",
+  "name": "Portal Controladoria & Finanças",
+  "description": "Portal de controladoria e finanças — Início, navegação e contexto operacional.",
+  "icon": "landmark",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/controllership-finance",
+  "entry": "/apps/controllership-finance/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "controllership-finance.access",
+      "name": "Acessar Portal Controladoria & Finanças",
+      "description": "Acesso às funcionalidades do produto (Início e demais áreas conforme liberadas).",
+      "module": "controllership-finance"
+    },
+    {
+      "code": "controllership-finance.manage",
+      "name": "Administrar Portal Controladoria & Finanças",
+      "description": "Administração do produto (áreas de gestão conforme liberadas). Não implica acesso às demais rotas.",
+      "module": "controllership-finance"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/controllership-finance",
+      "label": "Controladoria & Finanças",
+      "permission": "controllership-finance.access",
+      "icon": "landmark",
+      "order": 30,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

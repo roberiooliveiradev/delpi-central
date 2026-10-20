@@ -2956,6 +2956,70 @@ services:
       - delpi-network
 
 
+  controllership-finance-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: controllership-finance-api/Dockerfile
+
+    container_name: delpi-controllership-finance-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      CONTROLLERSHIP_FINANCE_API_ROOT_PATH: /apps/controllership-finance-api
+
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DELPI_AUTH_CORE_API_URL: http://core-api:8000
+      API_DELPI_ENV: ${API_DELPI_ENV}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN: ${CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN:-}
+      CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
+
+    volumes:
+      - ../controllership-finance-api:/app
+      - ../shared:/shared
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      core-api:
+        condition: service_started
+
+    networks:
+      - delpi-network
+
+  controllership-finance:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: controllership-finance/Dockerfile
+      target: production
+
+    container_name: delpi-controllership-finance
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
+
 networks:
   delpi-network:
     driver: bridge

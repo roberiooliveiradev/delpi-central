@@ -2423,6 +2423,23 @@ services:
     networks:
       - delpi-network
 
+  controllership-finance:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: controllership-finance/Dockerfile
+      target: production
+
+    container_name: delpi-controllership-finance
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cipa-api:
     build:
       context: ..
