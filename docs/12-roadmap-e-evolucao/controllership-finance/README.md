@@ -71,6 +71,12 @@ Após o G1 de verificação técnica (HEAD de evidência `6cfb4ea7c3`) e respost
 
 A implementação já autorizada de IMP-MFE-HOME **não** autoriza a página P1; readiness documental e screenshot não provam fontes operacionais. Nenhum código runtime é aprovado para P1 nesta decisão.
 
+### T01 — Inventário de relatórios e fontes (20/10/2026)
+
+**Novo documento versionado:** [46 — T01 REPORT-SOURCE-INVENTORY V1](./46-t01-report-source-inventory-v1.md). Levantamento parcial a partir do TÉO (processo/decomposição/diagrama), docs 02/03/17/21/45 do GitHub, inventário técnico CF-CLOSING-PREDECESSORS-01 e discovery do DAVI.
+
+Status: `REPORT_CATALOG=DOCUMENTED_PARTIAL`; `TABLE_COLUMN_BINDINGS=TO_INVENTORY`; `SQL_PARITY=TEST_NOT_RUN`; `VIDEO_TIMECODES=STALE_EVIDENCE`; `T03_STOCK_CLOSED=PENDING_OWNER`; `IMP-08/P1=NO_GO`. Proibido inferir equivalência de saídas com endpoints adjacentes. Próximo passo: confirmar relatórios originais/vídeo e pesquisar metadados SQL tipados DAVI antes dos contratos api-delpi→BFF. Nenhuma nova autorização de runtime.
+
 ## 3. Mapa curto de fontes canônicas
 
 | Assunto | Fonte a ler |
