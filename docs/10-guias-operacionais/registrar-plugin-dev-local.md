@@ -101,6 +101,7 @@ Outros plugins (mesmo padrão):
 | Eficiência Fabril | `plugins/eficiencia-fabril/eficiencia-fabril.manifest.json` | `plugins/eficiencia-fabril/scripts/register-manifest.sh` |
 | Central de Agendamento | `plugins/central-agendamento/central-agendamento.manifest.json` | `plugins/central-agendamento/scripts/register-manifest.sh` |
 | Auditoria 5S | `plugins/auditoria-5s/auditoria-5s.manifest.json` | `plugins/auditoria-5s/scripts/register-manifest.sh` |
+| Metalografia DELPI | `plugins/metalography/metalography.manifest.json` | `plugins/metalography/scripts/register-manifest.sh` |
 
 Lista completa de manifestos: [registrar-plugin.md](./registrar-plugin.md) §3.
 

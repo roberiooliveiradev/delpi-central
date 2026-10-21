@@ -55,10 +55,8 @@ docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui
 Registro no Core, com token de quem tem `apps.manage`:
 
 ```bash
-curl -s -X POST http://localhost/core-api/admin/apps/register \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  --data-binary @plugins/metalography/metalography.manifest.json
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+bash plugins/metalography/scripts/register-manifest.sh
 ```
 
 ## Smoke
