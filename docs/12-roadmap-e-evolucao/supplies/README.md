@@ -247,3 +247,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **Inventário oficial de fontes CNPJ (2026-10-21):** [Serpro PJ × Conecta gov.br × REDESIM × dados abertos RFB, schema e matriz SA2](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md). Evidência documental e recomendação condicional, **não** comprova acesso/contratação nem autoriza consulta automática ou implementação. Fonte/compliance/mapping permanecem gates.
+
+
+> **Verificações de contrato e trilha da origem de alterações (2026-10-21):** [Serpro, mapeamento SA2, LGPD e retenção](./FORNECEDORES-CNPJ-VERIFICACOES-ACESSO-LGPD-PROVENIENCIA.md). Contrato transversal **proposto** da `api-delpi` para manter `source_type/source_id/change_mode` por campo em POST/PUT de **qualquer BFF consumidor**, com estados de confirmação e auditoria: `api-delpi/docs/integrations/supplier-write-provenance-contract-proposal.md`. Nenhuma gravação, endpoint ou migration implementado.
