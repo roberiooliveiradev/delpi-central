@@ -102,24 +102,24 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
   );
 
   const reviewGroups = useMemo(() => {
-    const grouped = new Map<string, { label: string; after: string }[]>();
-    for (const [field, value] of filledEntries) {
-      const spec = SUPPLIER_FIELD_REGISTRY.find((s) => s.key === field);
-      const section = spec?.section ?? "identification";
-      grouped.set(section, [
-        ...(grouped.get(section) ?? []),
-        { label: spec?.label ?? field, after: value },
-      ]);
-    }
+    const filled = new Map(filledEntries);
     return (Object.keys(CREATE_SECTION_TITLES) as Array<
       keyof typeof CREATE_SECTION_TITLES
     >)
-      .filter((id) => grouped.has(id))
       .map((id) => ({
         section: id,
         title: CREATE_SECTION_TITLES[id],
-        rows: grouped.get(id)!,
-      }));
+        rows: SUPPLIER_FIELD_REGISTRY.filter(
+          (spec) =>
+            spec.section === id &&
+            filled.has(spec.key as keyof SupplierCreateDraft),
+        ).map((spec) => ({
+          label: spec.label,
+          after: filled.get(spec.key as keyof SupplierCreateDraft)!,
+          help: spec.help,
+        })),
+      }))
+      .filter((group) => group.rows.length > 0);
   }, [filledEntries]);
 
   const storeValid = /^\d{2}$/.test(draft.supplier_store);

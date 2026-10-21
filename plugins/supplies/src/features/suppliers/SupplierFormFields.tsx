@@ -2,6 +2,7 @@ import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
+  SuppliesSectionHintLabel,
   SuppliesSelectField,
   SuppliesTextField,
 } from "../../app/suppliesUi";
@@ -44,6 +45,7 @@ export function SupplierFieldInput({
     return (
       <SuppliesSelectField
         label={label}
+        hint={hint ?? spec.help}
         value={value}
         options={spec.options}
         allowEmpty
@@ -57,7 +59,12 @@ export function SupplierFieldInput({
   return (
     <SuppliesTextField
       label={label}
-      hint={hint ?? supplierFieldMaxLengthHint(spec.maxLength)}
+      hint={
+        hint ??
+        [spec.help, supplierFieldMaxLengthHint(spec.maxLength)]
+          .filter(Boolean)
+          .join(" ")
+      }
       value={value}
       onChange={(raw) => {
         let next = raw;
@@ -98,8 +105,14 @@ export function SupplierDisplayField({
 }: SupplierDisplayFieldProps) {
   const display = value.trim();
   return (
-    <div className="sp-supplier-display" title={hint}>
-      <span className="sp-supplier-display__label">{label}</span>
+    <div className="sp-supplier-display">
+      <span className="sp-supplier-display__label">
+        {hint ? (
+          <SuppliesSectionHintLabel label={label} hint={hint} />
+        ) : (
+          label
+        )}
+      </span>
       <span
         className={`sp-supplier-display__value${display ? "" : " sp-supplier-display__value--empty"}${unavailable ? " sp-supplier-display__value--unavailable" : ""}`}
       >
@@ -130,13 +143,16 @@ export function SupplierProtectedField({
   return (
     <div
       className={`sp-supplier-display${isProtected ? " sp-supplier-display--protected" : ""}`}
-      title={hint}
     >
       <span className="sp-supplier-display__label">
         {isProtected ? (
           <Lock size={12} aria-hidden="true" className="sp-supplier-display__lock" />
         ) : null}
-        {label}
+        {hint ? (
+          <SuppliesSectionHintLabel label={label} hint={hint} />
+        ) : (
+          label
+        )}
       </span>
       <span
         className={`sp-supplier-display__value${display ? "" : " sp-supplier-display__value--empty"}${unavailable ? " sp-supplier-display__value--unavailable" : ""}`}
@@ -173,6 +189,8 @@ export type SupplierReviewRow = {
   /** Valor anterior; `undefined` no CREATE (não existe valor atual). */
   before?: string;
   after: string;
+  /** Ajuda contextual do campo (tooltip oficial na label da linha). */
+  help?: string;
 };
 
 export type SupplierReviewGroup = {
@@ -208,7 +226,16 @@ export function SupplierReviewTable({
             <tbody>
               {group.rows.map((row) => (
                 <tr key={row.label}>
-                  <td>{row.label}</td>
+                  <td>
+                    {row.help ? (
+                      <SuppliesSectionHintLabel
+                        label={row.label}
+                        hint={row.help}
+                      />
+                    ) : (
+                      row.label
+                    )}
+                  </td>
                   {showBefore ? <td>{row.before?.trim() || "—"}</td> : null}
                   <td>{row.after.trim() || "—"}</td>
                 </tr>

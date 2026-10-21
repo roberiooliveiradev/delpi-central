@@ -513,3 +513,113 @@ describe("tax id masking", () => {
     expect(formatTaxIdMasked(null, true)).toBe("—");
   });
 });
+
+describe('F5-UX-R2 — CNPJ/CPF primeiro', () => {
+  it('tax_id is the first identification field in the shared form sections', () => {
+    const section = SUPPLIER_FORM_SECTIONS.find(
+      (s) => s.id === 'identification',
+    )!;
+    expect(section.fields[0].key).toBe('tax_id');
+    expect(section.fields.map((f) => f.key).slice(0, 4)).toEqual([
+      'tax_id',
+      'person_type',
+      'supplier_code',
+      'supplier_store',
+    ]);
+  });
+
+  it('tax_id is the first identification field in the create sections', () => {
+    const section = SUPPLIER_CREATE_SECTIONS.find(
+      (s) => s.id === 'identification',
+    )!;
+    expect(section.fields[0].key).toBe('tax_id');
+    // CREATE não renderiza supplier_code (gerado pelo ERP).
+    expect(section.fields.map((f) => f.key).slice(0, 3)).toEqual([
+      'tax_id',
+      'person_type',
+      'supplier_store',
+    ]);
+  });
+
+  it('keeps the field unique per section (no duplicated tax_id)', () => {
+    const keys = SUPPLIER_FORM_SECTIONS.flatMap((s) =>
+      s.fields.map((f) => f.key),
+    );
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('F5-UX-R2 — cobertura de Help contextual', () => {
+  it('every registry field carries a specific, non-empty help text', () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      expect(spec.help, ).toBeTruthy();
+      expect(spec.help!.trim().length).toBeGreaterThanOrEqual(30);
+      // Não é placeholder genérico nem repetição crua do label.
+      expect(spec.help!.trim()).not.toBe(spec.label);
+      expect(spec.help).not.toMatch(/^(ajuda|help|todo|tbd)[.!]?$/i);
+    }
+  });
+
+  it('protected fields (código, loja, CNPJ/CPF) also carry help', () => {
+    for (const key of ['supplier_code', 'supplier_store', 'tax_id'] as const) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.put).toBe('protected');
+      expect(spec.help).toBeTruthy();
+    }
+  });
+});
+
+describe('F5-UX-R2 — CNPJ/CPF primeiro', () => {
+  it('tax_id is the first identification field in the shared form sections', () => {
+    const section = SUPPLIER_FORM_SECTIONS.find(
+      (s) => s.id === 'identification',
+    )!;
+    expect(section.fields[0].key).toBe('tax_id');
+    expect(section.fields.map((f) => f.key).slice(0, 4)).toEqual([
+      'tax_id',
+      'person_type',
+      'supplier_code',
+      'supplier_store',
+    ]);
+  });
+
+  it('tax_id is the first identification field in the create sections', () => {
+    const section = SUPPLIER_CREATE_SECTIONS.find(
+      (s) => s.id === 'identification',
+    )!;
+    expect(section.fields[0].key).toBe('tax_id');
+    // CREATE não renderiza supplier_code (gerado pelo ERP).
+    expect(section.fields.map((f) => f.key).slice(0, 3)).toEqual([
+      'tax_id',
+      'person_type',
+      'supplier_store',
+    ]);
+  });
+
+  it('keeps the field unique per section (no duplicated tax_id)', () => {
+    const keys = SUPPLIER_FORM_SECTIONS.flatMap((s) =>
+      s.fields.map((f) => f.key),
+    );
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('F5-UX-R2 — cobertura de Help contextual', () => {
+  it('every registry field carries a specific, non-empty help text', () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      expect(spec.help, `help ausente em ${spec.key}`).toBeTruthy();
+      expect(spec.help!.trim().length).toBeGreaterThanOrEqual(30);
+      // Não é placeholder genérico nem repetição crua do label.
+      expect(spec.help!.trim()).not.toBe(spec.label);
+      expect(spec.help).not.toMatch(/^(ajuda|help|todo|tbd)[.!]?$/i);
+    }
+  });
+
+  it('protected fields (código, loja, CNPJ/CPF) also carry help', () => {
+    for (const key of ['supplier_code', 'supplier_store', 'tax_id'] as const) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.put).toBe('protected');
+      expect(spec.help).toBeTruthy();
+    }
+  });
+});

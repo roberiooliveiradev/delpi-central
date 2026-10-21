@@ -140,6 +140,8 @@ export type SupplierFieldSpec = {
   evidence: SupplierFieldEvidence;
   /** Largura visual no grid de 12 colunas (UX spec; mobile colapsa para 1 col). */
   span: number;
+  /** Ajuda contextual exibida na própria label (tooltip oficial do kit). */
+  help?: string;
 };
 
 const F = (
@@ -163,7 +165,32 @@ const E = (
   F({ ...spec, post: true, put: "editable", evidence: "po-decision" });
 
 export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
-  // Identificação
+  // Identificação — CNPJ/CPF primeiro (decisão visual do PO, F5-UX-R2)
+  F({
+    key: "tax_id",
+    label: "CNPJ/CPF",
+    section: "identification",
+    maxLength: 14,
+    digitsOnly: true,
+    post: true,
+    put: "protected",
+    get: "top",
+    span: 4,
+    help: "Documento fiscal (CNPJ ou CPF) que identifica o fornecedor. Na inclusão informe um documento válido; na edição é protegido e não pode ser alterado.",
+  }),
+  E({
+    key: "person_type",
+    label: "Tipo de pessoa",
+    section: "identification",
+    maxLength: 1,
+    span: 4,
+    options: [
+      { value: "J", label: "Jurídica (CNPJ)" },
+      { value: "F", label: "Física (CPF)" },
+      { value: "X", label: "Outros" },
+    ],
+    help: "Classificação cadastral do fornecedor conforme os tipos aceitos pelo Protheus (Jurídica, Física, Outros).",
+  }),
   F({
     key: "supplier_code",
     label: "Código",
@@ -175,6 +202,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     get: "identity",
     evidence: "system",
     span: 2,
+    help: "Identificador do fornecedor no Protheus, gerado pelo ERP na inclusão; protegido na edição.",
   }),
   F({
     key: "supplier_store",
@@ -188,29 +216,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     get: "identity",
     evidence: "identity",
     span: 2,
-  }),
-  E({
-    key: "person_type",
-    label: "Tipo de pessoa",
-    section: "identification",
-    maxLength: 1,
-    span: 4,
-    options: [
-      { value: "J", label: "Jurídica (CNPJ)" },
-      { value: "F", label: "Física (CPF)" },
-      { value: "X", label: "Outros" },
-    ],
-  }),
-  F({
-    key: "tax_id",
-    label: "CNPJ/CPF",
-    section: "identification",
-    maxLength: 14,
-    digitsOnly: true,
-    post: true,
-    put: "protected",
-    get: "top",
-    span: 4,
+    help: "Estabelecimento (loja) associado ao código do fornecedor. Obrigatória na inclusão e protegida na edição.",
   }),
   F({
     key: "supplier_name",
@@ -221,6 +227,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "editable",
     evidence: "put-contract",
     span: 6,
+    help: "Razão social do fornecedor no cadastro do Protheus (A2_NOME), até 50 caracteres.",
   }),
   F({
     key: "supplier_short_name",
@@ -231,6 +238,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "editable",
     evidence: "put-contract",
     span: 6,
+    help: "Nome fantasia ou nome reduzido do fornecedor (A2_NREDUZ), até 20 caracteres.",
   }),
   // Endereço
   E({
@@ -239,6 +247,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 40,
     span: 6,
+    help: "Logradouro e identificação do endereço cadastral do fornecedor (A2_END).",
   }),
   E({
     key: "district",
@@ -246,6 +255,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 20,
     span: 3,
+    help: "Bairro correspondente ao endereço informado (A2_BAIRRO).",
   }),
   E({
     key: "postal_code",
@@ -254,6 +264,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 8,
     digitsOnly: true,
     span: 3,
+    help: "Código postal do endereço do fornecedor, somente dígitos (A2_CEP).",
   }),
   E({
     key: "city",
@@ -261,6 +272,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 25,
     span: 4,
+    help: "Município do endereço cadastral (A2_MUN).",
   }),
   E({
     key: "city_code",
@@ -269,6 +281,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 5,
     digitsOnly: true,
     span: 2,
+    help: "Código do município usado no cadastro Protheus (A2_COD_MUN); deve corresponder à cidade e à UF.",
   }),
   E({
     key: "state",
@@ -277,6 +290,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 2,
     uppercase: true,
     span: 2,
+    help: "Unidade federativa correspondente ao endereço (A2_EST).",
   }),
   E({
     key: "country_code",
@@ -284,6 +298,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 3,
     span: 4,
+    help: "País cadastral associado ao endereço do fornecedor (A2_PAIS).",
   }),
   // Contato
   E({
@@ -292,6 +307,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 15,
     span: 4,
+    help: "Pessoa de referência para comunicação com o fornecedor (A2_CONTATO).",
   }),
   E({
     key: "area_code",
@@ -300,6 +316,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     digitsOnly: true,
     span: 2,
+    help: "Código de área do telefone cadastrado (A2_DDD).",
   }),
   E({
     key: "phone",
@@ -307,6 +324,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 50,
     span: 3,
+    help: "Telefone utilizado para contato com o fornecedor (A2_TEL).",
   }),
   E({
     key: "email",
@@ -314,6 +332,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "contact",
     maxLength: 50,
     span: 3,
+    help: "Endereço eletrônico de contato do fornecedor (A2_EMAIL).",
   }),
   // Fiscal
   E({
@@ -322,6 +341,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "fiscal",
     maxLength: 18,
     span: 4,
+    help: "Identificação fiscal estadual do fornecedor, quando aplicável (A2_INSCR).",
   }),
   E({
     key: "municipal_registration",
@@ -329,6 +349,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "fiscal",
     maxLength: 18,
     span: 4,
+    help: "Identificação fiscal municipal do fornecedor, quando aplicável.",
   }),
   E({
     key: "rohs_indicator",
@@ -340,6 +361,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
       { value: "N", label: "Não" },
       { value: "S", label: "Sim" },
     ],
+    help: "Indicador cadastral ROHS utilizado pelo Protheus. A semântica detalhada é definida pelo ERP.",
   }),
   E({
     key: "bacen_country_code",
@@ -348,6 +370,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 5,
     digitsOnly: true,
     span: 4,
+    help: "Código de país BACEN usado pelo Protheus (A2_CODPAIS) — campo distinto do país cadastral.",
   }),
   // Compras
   E({
@@ -356,6 +379,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 3,
     span: 4,
+    help: "Código da condição de pagamento associada ao cadastro do fornecedor (A2_COND).",
   }),
   E({
     key: "payment_method_code",
@@ -363,6 +387,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 2,
     span: 4,
+    help: "Código da modalidade de pagamento usada no cadastro, conforme a tabela válida do Protheus.",
   }),
   E({
     key: "accounting_account",
@@ -370,6 +395,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 20,
     span: 6,
+    help: "Código da conta contábil associada ao fornecedor (A2_CONTA), até 20 caracteres, conforme as regras do ERP.",
   }),
   E({
     key: "financial_nature_code",
@@ -377,6 +403,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 10,
     span: 6,
+    help: "Código da natureza financeira vinculada ao fornecedor (A2_NATUREZ).",
   }),
 ];
 

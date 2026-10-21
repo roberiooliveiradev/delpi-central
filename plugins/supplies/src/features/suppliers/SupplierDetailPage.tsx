@@ -337,11 +337,14 @@ export function SupplierDetailPage({
                             unavailable={
                               !isSupplierFieldAvailable(detail, spec)
                             }
-                            hint={
+                            hint={[
+                              spec.help,
                               spec.put === "protected"
                                 ? C.protectedFieldHint
-                                : C.readonlyFieldHint
-                            }
+                                : C.readonlyFieldHint,
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                             protected={spec.put === "protected"}
                           />
                         </div>
@@ -389,7 +392,16 @@ export function SupplierDetailPage({
                         key={spec.key}
                         className={supplierFieldItemClass(spec)}
                       >
-                        <dt>{spec.label}</dt>
+                        <dt>
+                          {spec.help ? (
+                            <SuppliesSectionHintLabel
+                              label={spec.label}
+                              hint={spec.help}
+                            />
+                          ) : (
+                            spec.label
+                          )}
+                        </dt>
                         <dd
                           className={
                             unavailable ? "sp-supplier-value--unavailable" : ""
@@ -468,13 +480,17 @@ export function SupplierDetailPage({
               groups={groupChangesBySection(changes).map((group) => ({
                 section: group.section,
                 title: SECTION_LABELS[group.section],
-                rows: group.changes.map((change) => ({
-                  label:
-                    SUPPLIER_FIELD_REGISTRY.find((s) => s.key === change.field)
-                      ?.label ?? change.field,
-                  before: change.before,
-                  after: change.after,
-                })),
+                rows: group.changes.map((change) => {
+                  const spec = SUPPLIER_FIELD_REGISTRY.find(
+                    (s) => s.key === change.field,
+                  );
+                  return {
+                    label: spec?.label ?? change.field,
+                    before: change.before,
+                    after: change.after,
+                    help: spec?.help,
+                  };
+                }),
               }))}
               showBefore
             />
