@@ -104,3 +104,18 @@ Sem mudanças em backend/Core/Keycloak/MCP; sem controle permanente na toolbar; 
 STATUS = IMPLEMENTED_TESTED_LOCAL_QA_PASS
 PHASE_PROGRESSION = NONE
 ```
+
+## 9. Deploy em produção (2026-10-21)
+
+```text
+PROD_HOST              = operador@srv-api (192.168.1.237)
+PROD_CHECKOUT          = ~/projetos/delpi-central (main, pull --ff-only até 54d2b47fb0)
+PROD_SCRIPT            = infra/scripts/up-prod-sequential.sh --cpu --build plugin-ui delia
+DEPLOYED_SHA           = 54d2b47fb0d27ed1932059a56f7edf510551272e
+CONTAINERS             = delpi-delia + delpi-plugin-ui recriados; delia-api/backend não tocados
+BUNDLE_CHAIN           = /apps/delia/assets/remoteEntry.js (200)
+                         -> __federation_expose_App-D-Qnq36X.js
+                         -> App-Dj41tMIx.js contém "Rascunho limpo"/"Desfazer limpeza do rascunho"
+PLUGIN_UI_EXPOSE       = __federation_expose_Index-BVz5t-Qo.js contém EditorChromeNotice
+PRODUCTION_BROWSER_QA  = PENDING_USER_VERIFICATION (sem sessão autenticada de teste em produção)
+```
