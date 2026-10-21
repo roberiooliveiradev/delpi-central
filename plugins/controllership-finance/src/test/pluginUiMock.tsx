@@ -178,6 +178,25 @@ export function createDashboardMetricStrip() {
   };
 }
 
+export function createMetricKpiCard() {
+  return function MetricKpiCard(props: {
+    label?: string;
+    value?: string;
+    hint?: ReactNode;
+    icon?: ReactNode;
+    tone?: string;
+  }) {
+    return el(
+      "article",
+      { "data-tone": props.tone ?? "default" },
+      props.icon,
+      el("span", null, props.label),
+      el("strong", null, props.value),
+      props.hint ? el("span", null, props.hint) : null,
+    );
+  };
+}
+
 export function createDashboardSectionCard() {
   return function SectionCard(props: {
     title?: ReactNode;

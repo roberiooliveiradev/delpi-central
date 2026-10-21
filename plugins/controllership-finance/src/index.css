@@ -138,15 +138,62 @@
 }
 
 /* Hero das páginas da Central de Fechamento (doc 50). */
+.dashboard-controllership-finance .cf-hero-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--cf-grid-gap, 16px);
+}
+
 .dashboard-controllership-finance .cf-hero-filters {
-  border-top: 1px solid var(--cf-border);
-  padding-top: var(--cf-grid-gap, 16px);
+  border: 1px solid var(--cf-border);
+  border-radius: var(--radius, 12px);
+  padding: var(--cf-grid-gap, 16px);
+  background: color-mix(in srgb, var(--cf-surface-muted) 62%, transparent);
 }
 
 .dashboard-controllership-finance .cf-hero-updated {
   align-self: center;
   font-size: 12px;
   color: var(--cf-text-muted);
+}
+
+/* Feedback contextual — ícone + tom semântico por intent. */
+.dashboard-controllership-finance .cf-feedback .cf-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-controllership-finance .cf-feedback-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--cf-accent) 16%, transparent);
+  color: var(--cf-accent);
+}
+
+.dashboard-controllership-finance .cf-feedback--warning {
+  border-color: color-mix(in srgb, var(--delpi-warning) 55%, var(--cf-border));
+  background: color-mix(in srgb, var(--delpi-warning) 12%, var(--cf-surface));
+}
+
+.dashboard-controllership-finance .cf-feedback--warning .cf-feedback-icon {
+  background: color-mix(in srgb, var(--delpi-warning) 22%, transparent);
+  color: var(--delpi-warning-strong);
+}
+
+/* Resumos P7 lado a lado quando houver largura; empilham sem compressão. */
+.dashboard-controllership-finance .cf-summary-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: var(--cf-section-gap);
+  align-items: start;
 }
 
 @media (max-width: 900px) {
