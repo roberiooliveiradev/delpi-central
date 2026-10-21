@@ -241,3 +241,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **UX detalhada do enriquecimento por CNPJ:** [páginas, wireframes, componentes, decisões e critérios](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md), complementar ao [fluxo/contratos candidatos](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **Somente documentação TARGET**; não implementa componente, rota ou escrita. Históricos e novos endpoints dependem de contract freeze e autorização específica.
+
+
+> **Backend técnico do enriquecimento por CNPJ (2026-10-21):** [contrato proposto](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md) cobre endpoints, schemas, estados, persistência própria, decisões individuais/em lote, Idempotency, AuthZ, auditoria, privacy gates e rollout. Complementa o [frontend](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md) e o [fluxo](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **TARGET, não congelado e sem autorização para código/endpoint/migration.**
