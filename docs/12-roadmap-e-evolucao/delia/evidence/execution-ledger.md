@@ -17003,3 +17003,25 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.363 — CRI semantic field interpretation: lexical heuristic removed (2026-10-21)
+
+**TASK:** DELIA-CRI-SEMANTIC-FIELD-INTERPRETATION-AND-AUTHORITY-ALIGNMENT-01. The E3-R2 lexical mechanism is gone — `_field_declares_modification`, `_MODIFICATION_FIELD_TOKENS`, `_TEMPORAL_FIELD_CONNECTIVES` and the camelCase/accent tokenizers deleted from `conversational_response.py` (~95 lines). Replacement follows the directed architecture: the SAME goal stage may propose `ordering_semantic` `{event, field, contract_evidence}` — fail-closed parse (bounded event vocabulary `{"modification"}`, exact keys, evidence must reference the field, semantic requires `ordering`); `verified_ordering_event()` in `outcome_assessment.py` verifies deterministically — proposed field must equal the field that actually proves the ordering in the returned records AND `contract_evidence` must be a verbatim substring of `ProviderCapability.description` (owner-declared contract text; MCP = verbatim tool description, OpenAPI = semantic name). Composer signature `ordering_field` -> `ordering_event`; alteration wording only on verified event. Instruction resource `delia.cri.answer_requirements_instruction` v2 (v1 kept valid for rollback) — teaches the grammar and explicitly decouples the semantic from request arguments (first v2 draft observed live to induce `date_field` filter misuse; refined text removed that rejection class). `stage=cri_response` now logs `semantic_proposed`/`ordering_event`. Full suite PASS in container. **Live real-model evidence (isolated eval container, worktree mount, effective=cri, v2+v2):** real TÉO `record_read` turns GROUNDED; superlative with `page_size=1` honestly `ordering_unproven`; `semantic_proposed=False` on all observed turns — correct abstention, no owner description declares field semantics. **Contractual gap recorded:** verified-modification wording cannot trigger on real owners until an owner-side contract evolution (separate decision) — tests cover the positive path. `LEXICAL_HEURISTIC_REMOVED=YES`, `PROVIDER_BRANCHES=0`, `NEW_REGISTRIES=0`, `NEW_MODEL_STAGES=0`, `MODEL_CALL_DELTA=0`, `OFF_PARITY=PASS`, `MATERIAL_ACT=0`, `CRI_PRODUCTION_ON=NOT_AUTHORIZED`, `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`. Report: [82](../corrections/mcp-contextual-intelligence-orchestration/82-cri-semantic-field-interpretation.md).
+
+```text
+CRI_SEMANTIC_INTERPRETATION=EXECUTED
+LEXICAL_HEURISTIC_REMOVED=YES (_field_declares_modification + token sets)
+MODEL_PROPOSAL_CONTRACT=ordering_semantic {event,field,contract_evidence} — hypothesis only
+SEMANTIC_VERIFICATION=verified_ordering_event (proving-field match + verbatim owner-contract quote)
+AUTHORITATIVE_SEMANTIC_SOURCE=ProviderCapability.description (owner-declared)
+DECLARATIVE_RESOURCE=cri_instructions.delpi.json v2 (v1 rollback-valid)
+NEW_MODEL_STAGES=0 / NEW_REGISTRIES=0 / PROVIDER_BRANCHES=0
+OFF_PARITY=PASS / FULL_SUITE=PASS / LIVE_TEO_GROUNDED=PASS
+OWNER_SEMANTICS_GAP=RECORDED (no owner declares field event semantics — contract evolution decision)
+MATERIAL_ACT=0
+RUNTIME_CODE_CHANGED=YES (3 app files + 2 governed artifacts + 2 test files)
+CRI_PRODUCTION_ON=NOT_AUTHORIZED
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```

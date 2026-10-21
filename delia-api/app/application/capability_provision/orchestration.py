@@ -125,6 +125,7 @@ from app.application.capability_provision.outcome_assessment import (
     assess_outcome,
     distinct_delivered_count,
     ordering_proof_fields,
+    verified_ordering_event,
     parse_answer_requirements,
     parse_temporal_value,
 )
@@ -5925,7 +5926,11 @@ class OperationalCapabilityOrchestrator:
         )
         cri = (
             self._compose_cri_response(
-                cri_facts, cri_verdict, goal, correlation
+                cri_facts,
+                cri_verdict,
+                goal,
+                correlation,
+                contract_text=descriptor.description,
             )
             if cri_verdict is not None
             else None
@@ -8187,6 +8192,8 @@ class OperationalCapabilityOrchestrator:
         verdict: OutcomeVerdict | None,
         goal: _TurnGoal,
         correlation: str,
+        *,
+        contract_text: str | None = None,
     ) -> CriComposition | None:
         """CRI E3 — one grounded conversational composition.
 
@@ -8213,7 +8220,7 @@ class OperationalCapabilityOrchestrator:
         )
         req = goal.answer_requirements
         ordering_date = None
-        ordering_field = None
+        ordering_event = None
         if (
             verdict.decision == OUTCOME_ANSWERED
             and req is not None
@@ -8222,6 +8229,14 @@ class OperationalCapabilityOrchestrator:
         ):
             ordering_field = ordering_proof_fields(facts.records).get(
                 req.ordering
+            )
+            # SEMANTIC-INTERPRETATION-01: the model may propose the
+            # ordering's event meaning; it is claimed only after the
+            # deterministic check binds the proposal to the field that
+            # actually proves the ordering AND to owner-declared
+            # contract text.
+            ordering_event = verified_ordering_event(
+                req, ordering_field, contract_text
             )
             raw = (
                 facts.records[0].get(ordering_field)
@@ -8247,15 +8262,20 @@ class OperationalCapabilityOrchestrator:
             total_count=facts.total_count,
             coverage_complete=facts.coverage_complete,
             ordering_date=ordering_date,
-            ordering_field=ordering_field,
+            ordering_event=ordering_event,
             vocabulary=self._cri_vocabulary,
         )
         _logger.info(
             "orchestration stage=cri_response decision=%s "
-            "presented=%s delivered=%s correlation_id=%s",
+            "presented=%s delivered=%s semantic_proposed=%s "
+            "ordering_event=%s correlation_id=%s",
             "composed" if cri is not None else "fallback",
             cri.presented_records if cri is not None else 0,
             len(facts.records),
+            (
+                req is not None and req.ordering_semantic is not None
+            ),
+            ordering_event or "none",
             correlation,
         )
         return cri

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Mapping
 
 _RESOURCE_KIND = "instruction_clause"
-_CLAUSE_VERSIONS = frozenset({"1"})
+_CLAUSE_VERSIONS = frozenset({"1", "2"})
 _RESOURCE_KEYS = frozenset(
     {"resource_id", "version", "kind", "owner", "instruction_text"}
 )

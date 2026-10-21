@@ -32,11 +32,35 @@ OUTCOME_ENVELOPE_ONLY = "envelope_only"
 OUTCOME_INSUFFICIENT = "insufficient"
 
 _REQUIREMENT_KEYS = frozenset(
-    {"min_items", "ordering", "complete_coverage"}
+    {"min_items", "ordering", "complete_coverage", "ordering_semantic"}
 )
 _ORDERINGS = frozenset({"newest_first", "oldest_first"})
 MAX_REQUIREMENT_ITEMS = 50
 _MAX_ORDERING_FIELD_SCAN = 24
+_MAX_SEMANTIC_EVIDENCE_LEN = 400
+
+# Bounded event vocabulary — the only business-event meanings the
+# presentation vocabulary can express. An event the model names outside
+# this set is unverifiable by construction, not coerced.
+SEMANTIC_EVENTS = frozenset({"modification"})
+_SEMANTIC_KEYS = frozenset({"event", "field", "contract_evidence"})
+
+
+@dataclass(frozen=True, slots=True)
+class OrderingSemantic:
+    """Model-proposed event meaning of the required ordering.
+
+    A structured hypothesis only: the model claims the ordering it
+    required carries a business event meaning (``event``) proven on a
+    specific ``field``, and cites the owner-declared contract text
+    (``contract_evidence``) where that meaning is declared. The runtime
+    verifies all three deterministically — a proposal is never
+    authority by itself.
+    """
+
+    event: str
+    field: str
+    contract_evidence: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +77,7 @@ class AnswerRequirements:
     min_items: int | None = None
     ordering: str | None = None
     complete_coverage: bool = False
+    ordering_semantic: OrderingSemantic | None = None
 
     @property
     def declared(self) -> bool:
@@ -86,12 +111,93 @@ def parse_answer_requirements(value: object) -> AnswerRequirements | None:
     ordering = value.get("ordering")
     if ordering is not None and ordering not in _ORDERINGS:
         return None
+    ordering_semantic = _parse_ordering_semantic(
+        value.get("ordering_semantic")
+    )
+    if "ordering_semantic" in value and ordering_semantic is None:
+        return None
+    if ordering_semantic is not None and ordering is None:
+        # A semantic claim attaches to an ordering requirement — a
+        # semantic with no ordering is an unverifiable fragment.
+        return None
     requirements = AnswerRequirements(
         min_items=min_items,
         ordering=ordering,
         complete_coverage=value.get("complete_coverage") is True,
+        ordering_semantic=ordering_semantic,
     )
     return requirements if requirements.declared else None
+
+
+def _parse_ordering_semantic(value: object) -> OrderingSemantic | None:
+    """Structural validation of an ordering-semantic proposal.
+
+    Rejects anything outside the contract rather than coercing it:
+    exact keys, bounded event vocabulary, non-empty bounded strings,
+    and the claimed field must appear inside the cited evidence — a
+    quote that does not even name the field cannot be the declaration
+    of that field's meaning.
+    """
+
+    if not isinstance(value, Mapping) or set(value) != _SEMANTIC_KEYS:
+        return None
+    event = value.get("event")
+    field = value.get("field")
+    evidence = value.get("contract_evidence")
+    if event not in SEMANTIC_EVENTS:
+        return None
+    if (
+        not isinstance(field, str)
+        or not field
+        or len(field) > _MAX_ORDERING_FIELD_SCAN * 4
+    ):
+        return None
+    if (
+        not isinstance(evidence, str)
+        or not evidence.strip()
+        or len(evidence) > _MAX_SEMANTIC_EVIDENCE_LEN
+        or field not in evidence
+    ):
+        return None
+    return OrderingSemantic(
+        event=event, field=field, contract_evidence=evidence
+    )
+
+
+def verified_ordering_event(
+    requirements: AnswerRequirements | None,
+    proving_field: str | None,
+    owner_contract_text: str | None,
+) -> str | None:
+    """Verified event meaning of the proven ordering — or None.
+
+    Deterministic verification of the model's semantic hypothesis
+    against the owner's own contract text:
+
+    - the proposed ``field`` must be the field that actually proves
+      the required ordering in the returned records;
+    - the cited ``contract_evidence`` must be a verbatim substring of
+      the owner-declared contract text — a fabricated or paraphrased
+      quote proves nothing;
+    - only then is the bounded ``event`` vocabulary item returned.
+
+    Absence of a proposal, a proving-field mismatch, or a missing/
+    unmatched quote all degrade to ``None`` — meaning stays unproven
+    and the presentation must say so rather than guess from names.
+    """
+
+    semantic = (
+        requirements.ordering_semantic if requirements is not None else None
+    )
+    if (
+        semantic is None
+        or proving_field is None
+        or semantic.field != proving_field
+        or not owner_contract_text
+        or semantic.contract_evidence not in owner_contract_text
+    ):
+        return None
+    return semantic.event
 
 
 @dataclass(frozen=True, slots=True)

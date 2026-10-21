@@ -32,9 +32,13 @@ from app.application.capability_provision.outcome_assessment import (
     OUTCOME_EMPTY_RESULT,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
+    AnswerRequirements,
     EvidenceFacts,
+    OrderingSemantic,
     assess_outcome,
+    ordering_proof_fields,
     parse_answer_requirements,
+    verified_ordering_event,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -1008,9 +1012,10 @@ def test_r3_valid_resource_loads_with_version_and_hash():
     assert clause.resource_id == (
         "delia.cri.answer_requirements_instruction"
     )
-    assert clause.version == "1"
+    assert clause.version == "2"
     assert len(clause.content_hash) == 64
     assert "answer_requirements" in clause.text
+    assert "ordering_semantic" in clause.text
 
 
 def test_r3_missing_file_fails_closed(tmp_path):
@@ -1166,7 +1171,7 @@ def test_r3_on_lineage_carries_resource_version():
         if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
     )
     lineage = req.instruction_lineage
-    assert "+cri.1" in lineage.version
+    assert "+cri.2" in lineage.version
     import hashlib
 
     assert lineage.content_hash == hashlib.sha256(
@@ -1190,3 +1195,207 @@ def test_r3_off_never_consumes_resource():
     )
     assert "+cri." not in req.instruction_lineage.version
     assert "answer_requirements" not in (req.instruction_content or "")
+
+
+# ---------------------------------------------------------------------------
+# E — ordering semantic hypothesis (SEMANTIC-INTERPRETATION-01)
+#
+# The model may propose that the required ordering carries an event
+# meaning (e.g. "alterado" -> modification), but only by citing the
+# owner-declared contract text that declares the field's semantics.
+# The runtime verifies the proposal deterministically: bounded event
+# vocabulary, the proposed field must be the field that actually
+# proves the ordering in the returned records, and the cited evidence
+# must be a verbatim substring of owner-declared contract text.
+# Field names alone never carry meaning.
+# ---------------------------------------------------------------------------
+
+
+_CONTRACT_TEXT = (
+    'READ Transformômetro records by entity. action=search: list '
+    'records — field updated_at is the data de atualização do '
+    'registro, refreshed on every change.'
+)
+
+
+def test_semantic_parse_valid():
+    req = parse_answer_requirements(
+        {
+            'ordering': 'newest_first',
+            'ordering_semantic': {
+                'event': 'modification',
+                'field': 'updated_at',
+                'contract_evidence': (
+                    'updated_at is the data de atualização do registro'
+                ),
+            },
+        }
+    )
+    assert req is not None
+    assert req.ordering == 'newest_first'
+    assert req.ordering_semantic is not None
+    assert req.ordering_semantic.event == 'modification'
+    assert req.ordering_semantic.field == 'updated_at'
+    assert 'atualização' in req.ordering_semantic.contract_evidence
+
+
+@pytest.mark.parametrize(
+    'semantic',
+    [
+        # unknown event — bounded vocabulary only
+        {
+            'event': 'creation',
+            'field': 'updated_at',
+            'contract_evidence': 'updated_at is the data de criação',
+        },
+        # evidence does not reference the claimed field
+        {
+            'event': 'modification',
+            'field': 'updated_at',
+            'contract_evidence': 'records are sorted',
+        },
+        # missing keys
+        {'event': 'modification', 'field': 'updated_at'},
+        {'event': 'modification'},
+        # wrong types / empty
+        {'event': 'modification', 'field': 7, 'contract_evidence': 'x'},
+        {
+            'event': 'modification',
+            'field': '',
+            'contract_evidence': 'x',
+        },
+        {
+            'event': 'modification',
+            'field': 'updated_at',
+            'contract_evidence': '',
+        },
+        # extra keys never allowed
+        {
+            'event': 'modification',
+            'field': 'updated_at',
+            'contract_evidence': 'updated_at x',
+            'note': 'trust me',
+        },
+        # non-mapping
+        'modification',
+        7,
+        [],
+    ],
+)
+def test_semantic_parse_fails_closed(semantic):
+    assert (
+        parse_answer_requirements(
+            {
+                'ordering': 'newest_first',
+                'ordering_semantic': semantic,
+            }
+        )
+        is None
+    )
+
+
+def test_semantic_without_ordering_fails_closed():
+    """The semantic claim attaches to an ordering requirement — a
+    semantic with no ordering is an unverifiable fragment."""
+    assert (
+        parse_answer_requirements(
+            {
+                "ordering_semantic": {
+                    "event": "modification",
+                    "field": "updated_at",
+                    "contract_evidence": "updated_at is the update date",
+                },
+            }
+        )
+        is None
+    )
+
+
+def test_semantic_verified_against_owner_contract():
+    req = AnswerRequirements(
+        ordering="newest_first",
+        ordering_semantic=OrderingSemantic(
+            event="modification",
+            field="updated_at",
+            contract_evidence="data de atualização do registro",
+        ),
+    )
+    assert (
+        verified_ordering_event(req, "updated_at", _CONTRACT_TEXT)
+        == "modification"
+    )
+
+
+def test_semantic_fabricated_quote_rejected():
+    """The cited evidence is not present verbatim in the owner
+    contract — meaning stays unproven even though the field name is
+    suggestive."""
+    req = AnswerRequirements(
+        ordering="newest_first",
+        ordering_semantic=OrderingSemantic(
+            event="modification",
+            field="updated_at",
+            contract_evidence="updated_at is the modification date",
+        ),
+    )
+    assert (
+        verified_ordering_event(req, "updated_at", _CONTRACT_TEXT) is None
+    )
+
+
+def test_semantic_field_mismatch_rejected():
+    """Ordering proven on criado_em cannot borrow the modification
+    meaning proposed for updated_at."""
+    req = AnswerRequirements(
+        ordering="newest_first",
+        ordering_semantic=OrderingSemantic(
+            event="modification",
+            field="updated_at",
+            contract_evidence="data de atualização do registro",
+        ),
+    )
+    assert (
+        verified_ordering_event(req, "criado_em", _CONTRACT_TEXT) is None
+    )
+
+
+def test_semantic_no_proving_field_rejected():
+    req = AnswerRequirements(
+        ordering="newest_first",
+        ordering_semantic=OrderingSemantic(
+            event="modification",
+            field="updated_at",
+            contract_evidence="data de atualização do registro",
+        ),
+    )
+    assert (
+        verified_ordering_event(req, None, _CONTRACT_TEXT) is None
+    )
+
+
+def test_semantic_absent_proposal_stays_unproven():
+    req = AnswerRequirements(ordering="newest_first")
+    assert (
+        verified_ordering_event(req, "updated_at", _CONTRACT_TEXT)
+        is None
+    )
+    assert (
+        verified_ordering_event(None, "updated_at", _CONTRACT_TEXT)
+        is None
+    )
+
+
+def test_semantic_malicious_contract_text_not_leveraged():
+    """A suggestive field name + a contract that does not declare the
+    meaning: the model's quote must exist verbatim — a near-miss
+    paraphrase or an injected-looking string still fails closed."""
+    contract = "action=search: list records (date_field, page, q)."
+    req = AnswerRequirements(
+        ordering="newest_first",
+        ordering_semantic=OrderingSemantic(
+            event="modification",
+            field="updated_at",
+            contract_evidence="updated_at means last alteration",
+        ),
+    )
+    assert verified_ordering_event(req, "updated_at", contract) is None

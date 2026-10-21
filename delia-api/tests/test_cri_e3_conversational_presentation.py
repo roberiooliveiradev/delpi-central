@@ -204,7 +204,7 @@ class FakeProvider:
         return self._outcomes[key]
 
 
-def _cap(group_id, provider_id, name):
+def _cap(group_id, provider_id, name, *, description="read items"):
     return ProviderCapability(
         capability_id=f"{group_id}.{name}",
         group_id=group_id,
@@ -212,7 +212,7 @@ def _cap(group_id, provider_id, name):
         remote_name=name,
         owner=group_id,
         operation_class=SpecialistOperationClass.READ,
-        description="read items",
+        description=description,
         input_schema={"type": "object", "properties": {}},
         binding={"ref": name},
     )
@@ -250,10 +250,26 @@ def _select(group_key, remote_name, goal=None):
     return proposal
 
 
-def _orchestrator(outcome, proposal, *, enabled: bool, vocabulary=True):
+def _orchestrator(
+    outcome, proposal, *, enabled: bool, vocabulary=True,
+    description="read items",
+):
     provider = FakeProvider(
         "mcp",
-        [_group("mcp", "alpha", [_cap("alpha", "mcp", "read_items")])],
+        [
+            _group(
+                "mcp",
+                "alpha",
+                [
+                    _cap(
+                        "alpha",
+                        "mcp",
+                        "read_items",
+                        description=description,
+                    )
+                ],
+            )
+        ],
         outcomes={("alpha", "read_items"): outcome},
     )
     clause = _clause() if enabled else None
@@ -275,12 +291,16 @@ def _orchestrator(outcome, proposal, *, enabled: bool, vocabulary=True):
     )
 
 
-def _attempt(outcome, goal=None, *, enabled: bool, vocabulary=True):
+def _attempt(
+    outcome, goal=None, *, enabled: bool, vocabulary=True,
+    description="read items",
+):
     orch = _orchestrator(
         outcome,
         _select("mcp:alpha", "read_items", goal=goal),
         enabled=enabled,
         vocabulary=vocabulary,
+        description=description,
     )
     return orch, orch.attempt("traga os exemplos")
 
@@ -431,7 +451,7 @@ def _compose(verdict, records, **kwargs):
         total_count=kwargs.pop("total_count", None),
         coverage_complete=kwargs.pop("coverage_complete", True),
         ordering_date=kwargs.pop("ordering_date", None),
-        ordering_field=kwargs.pop("ordering_field", None),
+        ordering_event=kwargs.pop("ordering_event", None),
         vocabulary=_vocab(),
     )
     return compose_cri_response(**params)
@@ -462,7 +482,7 @@ def test_compose_ordering_newest_leads_with_subject_and_date():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026 às 10h57",
-        ordering_field="atualizado_em",
+        ordering_event="modification",
     )
     assert cri is not None
     assert cri.presented_records == 1
@@ -487,7 +507,7 @@ def test_compose_ordering_oldest_uses_oldest_lead():
         records,
         requirements=AnswerRequirements(ordering="oldest_first"),
         ordering_date="02/01/2020",
-        ordering_field="criado_em",
+        ordering_event=None,
     )
     assert cri is not None
     assert "A-1" in cri.content
@@ -753,13 +773,16 @@ def test_r1_truncation_declares_presented_not_returned():
 
 
 # ---------------------------------------------------------------------------
-# B3 — E3-R2: temporal ordering is not alteration semantics
+# B3 — E3-R2 + SEMANTIC-INTERPRETATION-01: temporal ordering is not
+# alteration semantics. Alteration wording requires a verified
+# ordering event (model-proposed, contract-verified upstream) —
+# field names alone never carry business meaning.
 # ---------------------------------------------------------------------------
 
 
-def test_r2_modification_field_allows_alteration_language():
-    """The owner declared 'data_ultima_alteracao' — the field's own
-    schema name carries the alteration meaning."""
+def test_r2_verified_modification_event_allows_alteration_language():
+    """A verified modification event on the proven ordering field
+    unlocks alteration wording."""
     records = _records(
         {
             "fields": (("Código", "P-1"), ("Alteração", "hoje")),
@@ -771,16 +794,16 @@ def test_r2_modification_field_allows_alteration_language():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026",
-        ordering_field="data_ultima_alteracao",
+        ordering_event="modification",
     )
     assert cri is not None
     assert "mais recentemente alterado" in cri.content
     assert "última alteração registrada" in cri.content
 
 
-def test_r2_creation_date_stays_neutral():
-    """A creation timestamp orders the set but cannot prove
-    alteration — neutral lead + explicit unproven-meaning clause."""
+def test_r2_unverified_event_stays_neutral():
+    """A temporally ordered set with no verified event semantics —
+    neutral lead + explicit unproven-meaning clause."""
     records = _records(
         {
             "fields": (("Código", "P-1"), ("Criado", "hoje")),
@@ -792,7 +815,7 @@ def test_r2_creation_date_stays_neutral():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026",
-        ordering_field="criado_em",
+        ordering_event=None,
     )
     assert cri is not None
     assert "mais recente entre os retornados" in cri.content
@@ -800,51 +823,28 @@ def test_r2_creation_date_stays_neutral():
     assert "não comprova" in cri.content
 
 
-def test_r2_undocumented_temporal_field_stays_neutral():
-    records = _records(
-        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
-    )
-    cri = _compose(
-        OutcomeVerdict(OUTCOME_ANSWERED),
-        records,
-        requirements=AnswerRequirements(ordering="newest_first"),
-        ordering_date="16/10/2026",
-        ordering_field="registrado_em",
-    )
-    assert cri is not None
-    assert "mais recentemente alterado" not in cri.content
-    assert "alteração registrada" not in cri.content
-
-
-def test_r2_other_modification_field_does_not_rescue_semantics():
-    """The proving field governs: ordering proven on 'criado_em'
-    stays neutral even though a modification field also exists in
-    the records."""
-    records = _records(
-        {
-            "fields": (
-                ("Código", "P-1"),
-                ("Criado", "hoje"),
-                ("Alteração", "ontem"),
-            ),
-            "identifier": "P-1",
-        }
-    )
-    cri = _compose(
-        OutcomeVerdict(OUTCOME_ANSWERED),
-        records,
-        requirements=AnswerRequirements(ordering="newest_first"),
-        ordering_date="16/10/2026",
-        ordering_field="criado_em",
-    )
-    assert cri is not None
-    assert "mais recentemente alterado" not in cri.content
+def test_r2_suggestive_field_name_stays_neutral():
+    """'data_alteracao' / 'updated_at' names alone can never declare
+    meaning — without a verified event the wording stays neutral."""
+    for event_field in ("data_alteracao", "updated_at", "dataAlteracao"):
+        records = _records(
+            {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+        )
+        cri = _compose(
+            OutcomeVerdict(OUTCOME_ANSWERED),
+            records,
+            requirements=AnswerRequirements(ordering="newest_first"),
+            ordering_date="16/10/2026",
+            ordering_event=None,
+        )
+        assert cri is not None
+        assert "mais recentemente alterado" not in cri.content
+        assert "alteração registrada" not in cri.content
 
 
 def test_r2_owner_metadata_text_cannot_declare_semantics():
     """A field VALUE claiming 'this is the alteration date' is
-    untrusted prose — semantics come only from the proving field's
-    own schema key."""
+    untrusted prose — semantics come only from a verified event."""
     records = _records(
         {
             "fields": (
@@ -859,14 +859,15 @@ def test_r2_owner_metadata_text_cannot_declare_semantics():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026",
-        ordering_field="criado_em",
+        ordering_event=None,
     )
     assert cri is not None
     assert "mais recentemente alterado" not in cri.content
     assert "última alteração registrada" not in cri.content
 
 
-def test_r2_camelcase_field_declares_modification():
+def test_r2_unknown_event_value_stays_neutral():
+    """An event outside the verified vocabulary is never claimed."""
     records = _records(
         {"fields": (("Código", "P-1"),), "identifier": "P-1"}
     )
@@ -875,24 +876,7 @@ def test_r2_camelcase_field_declares_modification():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026",
-        ordering_field="dataAlteracao",
-    )
-    assert cri is not None
-    assert "mais recentemente alterado" in cri.content
-
-
-def test_r2_compound_ambiguous_field_stays_neutral():
-    """'alteracao_original' contains the marker but adds an
-    unclassified qualifier — degraded to neutral, never guessed."""
-    records = _records(
-        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
-    )
-    cri = _compose(
-        OutcomeVerdict(OUTCOME_ANSWERED),
-        records,
-        requirements=AnswerRequirements(ordering="newest_first"),
-        ordering_date="16/10/2026",
-        ordering_field="alteracao_original",
+        ordering_event="creation",
     )
     assert cri is not None
     assert "mais recentemente alterado" not in cri.content
@@ -909,7 +893,7 @@ def test_r2_missing_proof_field_stays_neutral():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026",
-        ordering_field=None,
+        ordering_event=None,
     )
     assert cri is not None
     assert "mais recente entre os retornados" in cri.content
@@ -925,7 +909,7 @@ def test_r2_oldest_without_semantics_avoids_alteration_clause():
         records,
         requirements=AnswerRequirements(ordering="oldest_first"),
         ordering_date="02/01/2020",
-        ordering_field="vencimento",
+        ordering_event=None,
     )
     assert cri is not None
     assert "A alteração mais antiga" not in cri.content
@@ -987,7 +971,7 @@ def test_compose_missing_vocabulary_entry_returns_none():
         total_count=None,
         coverage_complete=True,
         ordering_date=None,
-        ordering_field=None,
+        ordering_event=None,
         vocabulary={
             "leads": {},
             "temporal_clauses": {},
@@ -1033,16 +1017,32 @@ def test_on_composes_ordering_answer_from_owner_evidence():
     )
     _, attempt = _attempt(
         outcome,
-        goal=_goal(ordering="newest_first"),
+        goal=_goal(
+            ordering="newest_first",
+            ordering_semantic={
+                "event": "modification",
+                "field": "atualizado_em",
+                "contract_evidence": (
+                    "atualizado_em is the data de "
+                    "atualização do registro"
+                ),
+            },
+        ),
         enabled=True,
+        description=(
+            "read items — field atualizado_em is the data de "
+            "atualização do registro"
+        ),
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
     assert attempt.content is not None
     assert "PROC-0080" in attempt.content
     assert "Monitoramento de Estoque" in attempt.content
     assert "16/10/2026 às 10h57" in attempt.content
-    # The owner field is 'atualizado_em' — modification semantics
-    # proven by the field's own schema name (E3-R2).
+    # SEMANTIC-INTERPRETATION-01: the model proposed the modification
+    # meaning, the proving field matched, and the cited owner
+    # contract text verified it — alteration wording is earned, not
+    # inferred from the field name.
     assert "mais recentemente alterado" in attempt.content
     assert "Posso detalhar" not in attempt.content
     assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
@@ -1051,9 +1051,11 @@ def test_on_composes_ordering_answer_from_owner_evidence():
 
 
 def test_r2_on_creation_date_never_claims_alteration():
-    """E3-R2 integration: records ordered by 'criado_em' — ordering
-    proven, but the field's schema name declares creation, not
-    modification; the response must not answer 'último alterado'."""
+    """E3-R2/SEMANTIC integration: records ordered by 'criado_em' —
+    ordering proven, but the model's modification proposal cites a
+    contract quote the capability description does not contain, so
+    the semantic hypothesis fails verification and the response must
+    not answer 'último alterado'."""
     outcome = _outcome(
         "processes",
         structured={
@@ -1074,7 +1076,16 @@ def test_r2_on_creation_date_never_claims_alteration():
     )
     _, attempt = _attempt(
         outcome,
-        goal=_goal(ordering="newest_first"),
+        goal=_goal(
+            ordering="newest_first",
+            ordering_semantic={
+                "event": "modification",
+                "field": "criado_em",
+                "contract_evidence": (
+                    "criado_em is the data de criação"
+                ),
+            },
+        ),
         enabled=True,
     )
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -1301,7 +1312,7 @@ def test_compose_fallback_when_vocabulary_missing_section():
         total_count=None,
         coverage_complete=True,
         ordering_date=None,
-        ordering_field=None,
+        ordering_event=None,
         vocabulary={},
     )
     assert cri is None

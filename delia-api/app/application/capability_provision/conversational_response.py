@@ -19,8 +19,9 @@ calls a model, never sees provider names or raw payloads:
   coverage supports it — returned/presented counts never describe
   the source's stock (E3-R1);
 - temporal ordering proves order, never meaning — alteration
-  language is emitted only when the proving field's own schema key
-  declares modification semantics (E3-R2);
+  language is emitted only for a verified ordering event: a
+  model-proposed semantic bound to the proving field and to
+  owner-declared contract text (E3-R2, SEMANTIC-INTERPRETATION-01);
 - no continuity offer is emitted while no serviceable mechanism
   backs it (E3-R3).
 
@@ -30,8 +31,6 @@ composition is an enhancement, never a correctness dependency.
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Mapping, Sequence
 
@@ -63,97 +62,6 @@ _REASON_MESSAGES = (
     ("partial_outcome", "partial_outcome"),
     ("no_business_data", "envelope_only"),
 )
-
-# E3-R2 — modification semantics are proven only by the proving
-# field's OWN schema key (owner-declared business meaning), never by
-# provider metadata prose or by the model. A normalized key qualifies
-# only when it carries a modification marker and every remaining
-# token is a generic connective — an extra qualifier (``original``,
-# ``prevista``…) leaves the meaning unclassified, so the response
-# degrades to neutral wording instead of guessing.
-_MODIFICATION_FIELD_TOKENS = frozenset(
-    {
-        "alteracao",
-        "alterado",
-        "alterada",
-        "atualizacao",
-        "atualizado",
-        "atualizada",
-        "modificacao",
-        "modificado",
-        "modificada",
-        "modification",
-        "modified",
-        "update",
-        "updated",
-        "revisao",
-        "revisado",
-        "revision",
-        "revised",
-        "changed",
-    }
-)
-_TEMPORAL_FIELD_CONNECTIVES = frozenset(
-    {
-        "a",
-        "da",
-        "de",
-        "do",
-        "e",
-        "em",
-        "o",
-        "data",
-        "date",
-        "dt",
-        "first",
-        "hora",
-        "last",
-        "mais",
-        "primeira",
-        "primeiro",
-        "recente",
-        "rec",
-        "record",
-        "reg",
-        "registro",
-        "time",
-        "timestamp",
-        "ts",
-        "ultima",
-        "ultimo",
-    }
-)
-_FIELD_TOKEN_SPLIT = re.compile(r"[^0-9a-z]+")
-_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
-
-
-def _field_tokens(field_name: str) -> tuple[str, ...]:
-    """Split a field key into comparable tokens — snake/kebab/space
-    and camelCase boundaries, accents folded, lower-cased."""
-
-    spaced = _CAMEL_BOUNDARY.sub(" ", field_name)
-    folded = unicodedata.normalize("NFKD", spaced)
-    ascii_only = "".join(
-        ch for ch in folded if not unicodedata.combining(ch)
-    ).lower()
-    return tuple(tok for tok in _FIELD_TOKEN_SPLIT.split(ascii_only) if tok)
-
-
-def _field_declares_modification(field_name: str | None) -> bool:
-    """True only when the proving field's own key declares
-    modification — conservative: every token must be a marker or a
-    generic connective, and at least one marker must be present."""
-
-    if not isinstance(field_name, str) or not field_name.strip():
-        return False
-    tokens = _field_tokens(field_name)
-    if not tokens:
-        return False
-    allowed = _MODIFICATION_FIELD_TOKENS | _TEMPORAL_FIELD_CONNECTIVES
-    return any(tok in _MODIFICATION_FIELD_TOKENS for tok in tokens) and all(
-        tok in allowed for tok in tokens
-    )
-
 
 def _shortage_key(
     *,
@@ -253,7 +161,7 @@ def compose_cri_response(
     total_count: int | None,
     coverage_complete: bool | None,
     ordering_date: str | None,
-    ordering_field: str | None,
+    ordering_event: str | None,
     vocabulary: Mapping[str, Mapping[str, str]],
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
@@ -324,11 +232,13 @@ def compose_cri_response(
     ordering = req.ordering
     if ordering in ("newest_first", "oldest_first"):
         subject = _subject(records[0])
-        # E3-R2: ordering proves ORDER only. The alteration claim is
-        # allowed solely when the proving field's own schema key
-        # declares modification semantics; otherwise the wording is
-        # neutral and the clause states the meaning is unproven.
-        modified = _field_declares_modification(ordering_field)
+        # E3-R2 / SEMANTIC-INTERPRETATION-01: ordering proves ORDER
+        # only. Alteration wording is allowed solely when the proven
+        # ordering carries a verified event meaning — a model-proposed,
+        # owner-contract-verified semantic, never a field-name guess;
+        # otherwise the wording is neutral and states the meaning is
+        # unproven.
+        modified = ordering_event == "modification"
         lead_key = (
             "ordering_newest_single_modified"
             if ordering == "newest_first" and modified
