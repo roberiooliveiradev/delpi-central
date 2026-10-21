@@ -41,3 +41,8 @@ RICH_FACTUAL_PROSE=ARCHITECTURE_DECISION_REQUIRED
 I04_ACCEPTED=NO
 C3_EXECUTED=NO
 ```
+
+
+## Foundational implementation convention — versioned text/instruction resources
+
+Product Master requires new CRI code from E0 to separate behavioral instructions, long prompt text and user-facing prose resources from Python flow implementation. See [73 §9](./73-conversational-response-intelligence-personality-product-front.md). **E0 acceptance adds an inventory** of existing instruction ID/lineage, declarative resource format/loader, JSON/schema conventions, personality specs, copy/localization and governance. Prefer versioned JSON resources **where existing legitimate contracts support them**; reuse existing canonical formats, do not create competing registries. E1 must preserve centralized ON/OFF and record effective resource version; E2/E3 consume approved resources without embedding long instruction prose inside Python/TypeScript; E4 checks versioned configuration, OFF parity, invalid-resource fail-closed and provenance/security tests. Existing orchestration.py textual migration is outside this roadmap; no code authorized by this documentary decision.
