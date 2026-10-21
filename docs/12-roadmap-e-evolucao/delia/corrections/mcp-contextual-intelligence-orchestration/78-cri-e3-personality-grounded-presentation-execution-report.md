@@ -315,3 +315,17 @@ as seções canônicas.
 - `REAL_MODEL_EVALUATION=TEST_NOT_RUN` — escopo E4.
 
 `E3_REWORK=IMPLEMENTED`; `E3_ACCEPTED=PENDING_INDEPENDENT_REVIEW`.
+
+
+## 12. Independent coordination acceptance of bounded R1–R3 rework (2026-10-21)
+
+**Verdict: `ACCEPT_WITH_RESIDUAL` (E3 bounded implementation closed, not real-world quality acceptance).** Confirmed published SHA `fd77245793055e10556031aeb4e04f2cdc2bc0b7`; statically reviewed `conversational_response.py`, `cri_presentation.delpi.json` v2 and rework §11. **Independent test re-execution: `TEST_NOT_RUN`.** Executor-reported suite `1838 passed / 3 skipped`; real model/provider evidence `TEST_NOT_RUN`.
+
+- **R1 CLOSED within demonstrated contract:** distinct source total, records returned and examples presented; revised v2 vocabulary avoids asserting owner scarcity from mere delivered count.
+- **R3 CLOSED:** unsupported detail continuation offer omitted, rather than presenting a nonserviceable action.
+- **R2 CLOSED WITH MATERIAL E4 VALIDATION GATE:** new code does not infer modification meaning from chronological order alone; however `_field_declares_modification` still infers business semantics lexically from the owner's field *name*. `updated_at`/`data_alteracao` naming may be suggestive but is **not proof of authoritative domain-field semantics** without actual owner schema/contract evidence. This is a bounded heuristic rather than proven source authority. Do not claim actual latest modification in real responses solely from matching key tokens; E4 must independently check the owner contract and actual business outcome. If such authoritative evidence is unavailable, use neutral wording/insufficiency. Do not reopen a second E3 rework or silently promote lexical inference to fact. If a frozen decision must change, STOP `ARCHITECTURE_DECISION_REQUIRED`.
+- G1 requested/effective mode and G2 presented-count gate remain implemented as reported; frontend public presentation v1 unchanged. OFF parity and resource v2 rejection of v1 reported by executor; independent verification static only.
+
+**E4 qualification:** authorize a separate *bounded evaluation* of real model/provider OFF/ON with SHA/config pinning, actual owner temporal schema/ordering proof, quantity/provenance, personality quality, security, latency and rollback. E4 evaluation is not permission to deploy/turn ON production or to create unbounded new implementation tasks. If outcomes remain unproven, verdict `INCONCLUSIVE` / `ACCEPT_WITH_RESIDUAL`, not PASS.
+
+`E3_VERDICT=ACCEPT_WITH_RESIDUAL`; `E3_CLOSED=YES`; `E4_AUTHORIZABLE=YES_FOR_BOUNDED_EVALUATION`; `E4_IMPLEMENTED=NO`; `REAL_MODEL_EVAL=TEST_NOT_RUN`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
