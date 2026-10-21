@@ -374,3 +374,172 @@ class TestWrite:
             )
         assert resp.status_code == 504
         assert resp.get_json()["outcome"] == "indeterminate"
+
+
+class TestOperationStatus:
+    _OP = "a43b7ba2-c1b3-486a-bf9e-6731200817d4"
+
+    def _op_payload(self, status="CONFIRMED"):
+        return {
+            "success": True,
+            "data": {
+                "operation_id": self._OP,
+                "status": status,
+                "http_status": 200,
+                "resource_key": "99988801",
+                "correlation_id": "c-1",
+                "created_at": "2026-10-21T09:00:00-03:00",
+                "acknowledged_at": "2026-10-21T09:00:01-03:00",
+                "confirmed_at": "2026-10-21T09:00:02-03:00" if status == "CONFIRMED" else None,
+                "error_details": None,
+                "confirmation_evidence": {"result": "match" if status == "CONFIRMED" else "unverifiable"},
+                "request_payload": {"fields": {"tax_id": "[REDACTED]"}},
+            },
+        }
+
+    def test_missing_bearer_401(self, client):
+        assert client.get(f"/suppliers/operations/{self._OP}").status_code == 401
+
+    def test_no_access_403(self, client):
+        v, r = _auth(permissions={"supplies.manage"})
+        with v, r:
+            assert client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            ).status_code == 403
+
+    def test_malformed_uuid_422(self, client):
+        v, r = _auth()
+        with v, r:
+            assert client.get(
+                "/suppliers/operations/not-a-uuid",
+                headers={"Authorization": "Bearer t"},
+            ).status_code == 422
+
+    def test_operation_segment_does_not_hit_supplier_detail(self, client):
+        """Static 'operations' segment must win over /<code>/<store>."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = self._op_payload("ACKNOWLEDGED")
+            resp = client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        gw.get.assert_called_once_with(
+            f"/integrations/operations/{self._OP}", access_token="user-jwt"
+        )
+
+    def test_confirmed_projects_outcome(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = self._op_payload("CONFIRMED")
+            resp = client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert body["outcome"] == "confirmed"
+        assert body["persistence_proven"] is True
+        assert body["operation_id"] == self._OP
+        assert "request_payload" not in body
+
+    def test_unknown_maps_indeterminate(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = self._op_payload("UNKNOWN")
+            resp = client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert body["outcome"] == "indeterminate"
+        assert body["persistence_proven"] is False
+
+    def test_error_details_code_becomes_tracking_warning(self, client):
+        v, r = _auth()
+        payload = self._op_payload("REJECTED")
+        payload["data"]["error_details"] = {"code": "MATA020_INVALID"}
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.return_value = payload
+            resp = client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert body["outcome"] == "rejected"
+        assert body["tracking_warning"] == "MATA020_INVALID"
+
+    def test_upstream_404_maps_not_found(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError("nf", status_code=404)
+            assert client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            ).status_code == 404
+
+    def test_upstream_403_propagates_denial_code(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError(
+                "denied", status_code=403, code="INTEGRATION_OPERATION_FORBIDDEN"
+            )
+            resp = client.get(
+                f"/suppliers/operations/{self._OP}",
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 403
+        assert resp.get_json()["code"] == "INTEGRATION_OPERATION_FORBIDDEN"
+
+    def test_post_response_surfaces_operation_id(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.post.return_value = {
+                "success": True,
+                "data": {"operation_id": self._OP, "creation_confirmed": False},
+            }
+            resp = client.post(
+                "/suppliers",
+                json={"fornecedor": {"supplier_name": "X"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert body["operation_id"] == self._OP
+        assert body["acknowledged"] is True
+
+    def test_put_response_surfaces_operation_id(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.put.return_value = {
+                "success": True,
+                "data": {
+                    "operation_id": self._OP,
+                    "update_acknowledged": True,
+                    "persistence_proven": True,
+                },
+            }
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={"fornecedor": {"supplier_name": "N"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        body = resp.get_json()
+        assert body["operation_id"] == self._OP
+        assert body["persistence_proven"] is True

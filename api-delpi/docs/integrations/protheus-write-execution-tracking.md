@@ -155,3 +155,20 @@ aplicável, `tracking_warning` / `mismatched_fields`.
 - Operações em `SENDING`/`UNKNOWN`/`RECONCILIATION_REQUIRED` exigem
   investigação manual (SQL/REST no ambiente correto). Nunca re-emitir o write
   sem prova de não-efeito.
+
+
+## Consumo pela supplies-api (BFF)
+
+- `GET /suppliers/operations/{operation_id}` — proxy read-only para
+  `GET /integrations/operations/{id}`. O BFF usa a credencial S2S individual
+  `supplies-api` (scope `suppliers.read`); o vínculo caller_app+actor é
+  aplicado no backend da api-delpi. A resposta é minimizada para UX
+  (`project_operation` em `suppliers_dto.py`):
+  `operation_id`, `status`, `outcome` (`sent`/`acknowledged`/`confirmed`/
+  `indeterminate`/`rejected`/`reconciliation_required`),
+  `persistence_proven`, `tracking_warning`, `http_status`, `resource_key`,
+  `correlation_id` e timestamps — sem payloads brutos, hashes ou identidade.
+- Respostas POST/PUT da BFF expõem `operation_id` e `tracking_warning` no
+  top-level (além de `data.operation_id`, já propagado do envelope da
+  api-delpi).
+- O frontend nunca acessa a api-delpi diretamente.

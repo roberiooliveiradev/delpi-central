@@ -8,6 +8,7 @@ Visual-only masking is not sufficient — projection happens here, backend-side.
 from __future__ import annotations
 
 import re
+import uuid
 from typing import Any
 
 POST_SUPPLIER_FIELDS = {
@@ -148,6 +149,57 @@ def normalize_supplier_id(code: Any, store: Any) -> str:
     if len(code_digits) > 6 or len(store_digits) > 2:
         raise ValueError("supplier code max 6 digits, store max 2 digits")
     return code_digits.zfill(6) + store_digits.zfill(2)
+
+
+_OPERATION_OUTCOME = {
+    "CREATED": "sent",
+    "SENDING": "sent",
+    "ACKNOWLEDGED": "acknowledged",
+    "CONFIRMED": "confirmed",
+    "UNKNOWN": "indeterminate",
+    "REJECTED": "rejected",
+    "FAILED_PRE_SEND": "rejected",
+    "RECONCILIATION_REQUIRED": "reconciliation_required",
+}
+
+
+def normalize_operation_id(value: Any) -> str:
+    try:
+        return str(uuid.UUID(str(value).strip()))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("operation_id must be a UUID") from exc
+
+
+def project_operation(data: Any) -> dict[str, Any]:
+    """Safe UX-facing projection of an api-delpi tracked write operation.
+
+    Server-side sanitization already redacts payloads; the BFF further
+    minimizes to status/outcome evidence — never raw payloads, hashes or
+    caller internals.
+    """
+    if not isinstance(data, dict):
+        data = {}
+    status = str(data.get("status") or "").upper()
+    error_details = data.get("error_details")
+    evidence = data.get("confirmation_evidence")
+    tracking_warning = None
+    if isinstance(error_details, dict) and error_details.get("code"):
+        tracking_warning = str(error_details["code"])
+    elif isinstance(evidence, dict) and evidence.get("result") not in (None, "match"):
+        tracking_warning = str(evidence["result"])
+    return {
+        "operation_id": data.get("operation_id"),
+        "status": status or None,
+        "outcome": _OPERATION_OUTCOME.get(status, "indeterminate"),
+        "persistence_proven": status == "CONFIRMED",
+        "tracking_warning": tracking_warning,
+        "http_status": data.get("http_status"),
+        "resource_key": data.get("resource_key"),
+        "correlation_id": data.get("correlation_id"),
+        "created_at": data.get("created_at"),
+        "acknowledged_at": data.get("acknowledged_at"),
+        "confirmed_at": data.get("confirmed_at"),
+    }
 
 
 def sanitize_post_body(body: Any) -> dict[str, Any]:

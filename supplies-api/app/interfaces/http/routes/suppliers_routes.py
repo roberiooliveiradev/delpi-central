@@ -14,9 +14,11 @@ from flask import Blueprint, jsonify, request
 
 from app.application.security.supplies_permissions import can_use_operations
 from app.application.services.suppliers_dto import (
+    normalize_operation_id,
     normalize_supplier_id,
     project_detail,
     project_list_envelope,
+    project_operation,
     sanitize_post_body,
     sanitize_put_body,
 )
@@ -146,6 +148,30 @@ def get_supplier(code: str, store: str):
     return jsonify(project_detail(unwrap_delpi_envelope(payload))), 200
 
 
+@suppliers_bp.get("/suppliers/operations/<operation_id>")
+@require_policy(can_use_operations)
+def get_supplier_operation(operation_id: str):
+    """operationId: get_portal_supplier_operation — tracked write status.
+
+    Read-only proxy for the api-delpi integration-tracking projection.
+    api-delpi enforces caller-app + actor binding; the BFF only minimizes
+    the payload for UX consumption (no state machine, no tracking storage).
+    """
+    try:
+        normalized = normalize_operation_id(operation_id)
+    except ValueError as exc:
+        return _validation_error(exc)
+    try:
+        payload = _GATEWAY.get(
+            f"/integrations/operations/{normalized}",
+            access_token=_access_token(),
+        )
+    except DelpiApiGatewayError as exc:
+        return _gateway_error_response(exc)
+    data = unwrap_delpi_envelope(payload)
+    return jsonify(project_operation(data)), 200
+
+
 @suppliers_bp.post("/suppliers")
 @require_policy(can_use_operations)
 def create_supplier():
@@ -169,6 +195,8 @@ def create_supplier():
         {
             "acknowledged": True,
             "persistence_proven": bool(data.get("creation_confirmed")),
+            "operation_id": data.get("operation_id"),
+            "tracking_warning": data.get("tracking_warning"),
             "data": data,
         }
     ), 200
@@ -198,6 +226,8 @@ def update_supplier(code: str, store: str):
         {
             "acknowledged": bool(data.get("update_acknowledged", True)),
             "persistence_proven": bool(data.get("persistence_proven")),
+            "operation_id": data.get("operation_id"),
+            "tracking_warning": data.get("tracking_warning"),
             "data": data,
         }
     ), 200
