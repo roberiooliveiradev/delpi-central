@@ -81,7 +81,7 @@ Implementado em frontend-only, somente slots publicos do `DataTableSection` e CS
 | T15, T16 | PROVEN/KEEP | filial+armazem separados; qtd/valor a direita sem R$ inventado |
 | T17 | DECISION_REQUIRED | coluna competencia: redundante com filtro — avaliar com PO |
 | T18 | DONE | `source_missing` nao renderiza tabela nem emptyMessage — apenas banner (ausencia != zero); `no_matching_items` mantem tabela+empty legitimo |
-| T19 | VERIFY_REQUIRED | kit fornece aria-busy/labels/focus-visible; prova visual teclado/zoom/temas pendente de sessao autenticada |
+| T19 | PARTIAL | dark desktop autenticado comprovado (capturas PO 21/10/2026); tema claro, tablet, mobile, teclado, zoom ainda TEST_NOT_RUN |
 
 Testes: Vitest 91/91 com novas assercoes (contagem `120 registros` junto ao titulo; `source_missing` sem `<table>` nem emptyMessage). Visual autenticado: `TEST_NOT_RUN`.
 

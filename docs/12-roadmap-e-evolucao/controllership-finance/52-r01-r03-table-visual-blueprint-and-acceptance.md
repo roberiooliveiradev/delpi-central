@@ -118,8 +118,16 @@ compartilhado, contrato ou feature:
   badges semanticos reais, moeda de origem, sem R$.
 
 Verificacao: Vitest 91/91, estruturais 17/17, lint 0 erros, tsc, build.
-Screenshot comparativo autenticado desktop/mobile/2 temas:
-`TEST_NOT_RUN` — sem sessao; per AC-T09, fidelidade visual NAO declarada.
+Deploy `35b554975c` (srv-api, apenas MFE) verificado: remoteEntry 200,
+bundle contem `.cf-table-section{display:flex`. **Capturas autenticadas
+de producao fornecidas pelo PO (21/10/2026, tema escuro desktop)**:
+- R03: banda unica com pill "7.813 registros", controles a direita na
+  mesma linha; badges neutros de tipo; numeric a direita; sem R$.
+- R01/R02: pill "529 registros", fornecedor/natureza/tipo em 2 linhas,
+  badge direcao + codigo cru, moeda 01, "Nao identificada" legivel.
+AC-T01/T02/T03/T05/T06/T07 parcialmente comprovados (dark desktop).
+Pendentes: tema claro, tablet, mobile, teclado, zoom, comparacao
+lado a lado com mockup (AC-T04/T09 nao fecham sem isso).
 
 ## 8. Relatorio inicial exigido do Devin
 
