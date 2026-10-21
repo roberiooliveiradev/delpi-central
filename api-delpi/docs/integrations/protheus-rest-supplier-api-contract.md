@@ -146,6 +146,10 @@ Execução controlada com usuário real (`codusr` resolvido pelo Core) e registr
 
 **POST — resposta de sucesso:** `200 {"message":"Fornecedor Incluido com sucesso."}` — **não retorna `A2_COD`/`A2_LOJA` gerados**. Reconciliação do identificador exige consulta externa (SA2 por `A2_CGC`); sem isso o registro criado não é endereçável pela API (`GET /:ID` aceita apenas `supplier_id`).
 
+**Evolução observada (2026-10-21, homologação tracking):** o POST passou a retornar `supplier_code`/`supplier_store` no sucesso (`003874`/`01` observado). O código da `api-delpi` já captura essas chaves quando presentes e reconcilia via read-after-write. O retorno é comportamento **observado (PROVEN em runtime)**, porém ainda **sem contrato formal** do owner — classificar campos de resposta adicionais como TO_INVENTORY até a matriz oficial.
+
+**Divergência `tax_id` → `A2_CGC` (2026-10-21, PROVEN, boundary upstream):** POST aceito (HTTP 200, `supplier_code=003874`) com `fornecedor.tax_id` preenchido conforme contrato, porém `A2_CGC` persistiu **vazio** em `DELPI_TST01.SA2010` e o GET REST não ecoou o documento. O `outbound_payload` registrado no tracking comprova o envio da chave contratual. Divergência é de responsabilidade do endpoint REST/Execauto (owner Gabriel/TOTVS) — **não há evidência de perda dentro da `api-delpi`**. Ver handoff `evidence/protheus-rest-supplier-f43-homologation-2026-10-21.md`.
+
 **DIVERGÊNCIA DE AMBIENTE (crítica, BLOCKED para produção):** o `URL_REST` configurado (`PARAMETROS_MINHADELPI`, `AMBIENTE=1`) aponta para base Protheus **distinta** da base SQL (`TOTVS_DB_*`) que alimenta a listagem do Portal. Evidência: POST `200` sem registro correspondente na SA2 da base SQL; PUT `200` persistiu no endpoint REST sem alterar a SA2 SQL; o REST também não conhece os códigos mais recentes da SA2 produtiva (`003944+` → 404). Toda escrita desta homologação ocorreu no ambiente do endpoint REST — **nenhuma escrita atingiu a base `TOTVS_DB`**. Antes de qualquer liberação produtiva: owner TOTVS deve confirmar qual `URL_REST` corresponde à base produtiva e alinhar leitura REST × listagem SQL na mesma fonte.
 
 ## 4. Contrato interno da API DELPI — gates de implementação
@@ -168,7 +172,7 @@ Antes de habilitar POST real, comprovar e testar:
 - `api-delpi/docs/api/padroes-totvs/playbooks/playbook-cadastro-fornecedor-sa2.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 
-**Estado documental:** `POST_CONTRACT_SOURCE=DOCUMENTED`; `POST_RUNTIME=IMPLEMENTED_GATED`; `LIVE_WRITE=HOMOLOGATED_ON_REST_ENVIRONMENT`; `PROD_WRITE=NOT_AUTHORIZED`; `REST_SQL_BASE_DIVERGENCE=BLOCKED`; `CONTRACT_GAPS=POST_REQUIRED_FIELDS + POST_NO_ID_RETURN`.
+**Estado documental:** `POST_CONTRACT_SOURCE=DOCUMENTED`; `POST_RUNTIME=IMPLEMENTED_GATED`; `LIVE_WRITE=HOMOLOGATED_ON_REST_ENVIRONMENT`; `PROD_WRITE=NOT_AUTHORIZED`; `REST_SQL_BASE_DIVERGENCE=BLOCKED`; `CONTRACT_GAPS=POST_REQUIRED_FIELDS + POST_NO_ID_RETURN(contract evolution observed) + TAX_ID_NOT_PERSISTED_UPSTREAM`.
 
 ## 6. Vínculo com o de-para completo SA2 — material entregue ao Gabriel
 

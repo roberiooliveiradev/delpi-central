@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|---|
 | `supplier_store` | supplier_store | `A2_LOJA` | C(2) | string 2 dígitos; preserva zeros | **required** (chave parcial do ID REST) | contrato REST + SX3 PROVEN |
 | `person_type` | person_type | `A2_TIPO` | C(1) | enum `F\|J\|X` quando informado | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 `pertence("FJX")` |
-| `tax_id` | tax_document | `A2_CGC` | C(14) | só dígitos, ≤14; preserva zeros | TO_INVENTORY (PROVEN_OPTIONAL) | SX3 |
+| `tax_id` | tax_document | `A2_CGC` | C(14) | só dígitos, ≤14; preserva zeros | **DIVERGENCE_UPSTREAM** — chave contratual enviada (comprovado no tracking), mas `A2_CGC` persistiu vazio em `003874/01` (2026-10-21); `003878/01` da F4 havia persistido → suspeita de regressão/comportamento upstream; handoff Gabriel | SX3 + runtime F4/F4.3 |
 | `supplier_name` | legal_name | `A2_NOME` | C(50) | trim, ≤50 | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `supplier_short_name` | trade_name | `A2_NREDUZ` | C(20) | trim, ≤20 | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `address` | street | `A2_END` | C(40) | trim, ≤40 | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
@@ -28,7 +28,7 @@
 | `bacen_country_code` | country_bacen_code | `A2_CODPAIS` | C(5) | dígitos ≤5; preserva zeros | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `accounting_account` | ledger_account | `A2_CONTA` | C(20) | ≤20; preserva zeros | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `financial_nature_code` | finance_nature | `A2_NATUREZ` | C(10) | ≤10; preserva zeros | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 / SED |
-| `rohs_indicator` | rohs_flag | `A2_YROHS` | C(1) | `S\|N` quando informado | TO_INVENTORY (CANDIDATE_REQUIRED; emp 01/05) | SX3 DELPI |
+| `rohs_indicator` | rohs_flag | `A2_YROHS` | C(1) | `S\|N` quando informado | TO_INVENTORY (CANDIDATE_REQUIRED; emp 01/05) — enviado no POST bem-sucedido de 2026-10-21, mas obrigatoriedade **não comprovada** (erros upstream nomearam apenas `A2_TEL`, `A2_NATUREZ`, `A2_CODPAIS`) | SX3 DELPI |
 | `payment_method_code` | payment_method | `A2_FORMPAG` | C(2) | ≤2; preserva zeros | TO_INVENTORY (CANDIDATE_REQUIRED) | SX3 |
 | `codusr` (backend) | — | `SYS_USR.USR_ID` (hipótese) | C(6) | 6 dígitos; **nunca** do cliente | required no upstream | contrato REST; equivalência USR_ID **TO_INVENTORY** |
 
@@ -37,7 +37,7 @@
 | Campo REST | SA2 | Status PUT |
 |---|---|---|
 | `supplier_name` | `A2_NOME` | editável — comprovado no exemplo contratual; C(50) |
-| `supplier_short_name` | `A2_NREDUZ` | editável — comprovado no exemplo contratual; C(20) |
+| `supplier_short_name` | `A2_NREDUZ` | editável — **PROVEN em runtime** (2026-10-20 e 2026-10-21: persistência SQL `DELPI_TST01` + read-after-write; campos omitidos preservados); C(20) |
 | `person_type` | `A2_TIPO` | editável — decisão PO; upstream **pendente** de homologação |
 | `address` … `payment_method_code` (19 campos restantes do POST) | conforme tabela acima | editável — decisão PO; upstream **pendente** de homologação |
 | `tax_id` | `A2_CGC` | **protegido** — documento fiscal nunca editável (`PROTHEUS_SUPPLIER_FIELD_IMMUTABLE`) |

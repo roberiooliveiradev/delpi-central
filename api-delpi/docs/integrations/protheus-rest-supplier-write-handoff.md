@@ -30,6 +30,9 @@ Permitir **criação (POST)** de fornecedores via REST Protheus com `api-delpi` 
 | Payload sucesso / `A2_COD` / idempotência / `codusr≡USR_ID` | TO_INVENTORY |
 | PUT `update_protheus_rest_supplier` | PROVEN no código; gate `PROTHEUS_SUPPLIER_UPDATE_ENABLED` default `false`; allowlist ampliada (F3.3, decisão PO) para **todos os campos cadastrais do POST exceto `tax_id`, `supplier_code`, `supplier_store`** — campos além de name/short_name marcados `po-decision`, upstream pendente |
 | Live write produção | BLOCKED (2026-10-20): POST real não autorizado; PUT live TEST_NOT_RUN |
+| Integration Tracking (F4) | PROVEN código+migrations V001/V002; runtime TST01 registrou CREATED→SENDING→ACKNOWLEDGED/REJECTED/RECONCILIATION_REQUIRED com `attempt_count=1`, sem retry |
+| F4.3 correções | `confirm()` com `evidence` corrigido (defeito `confirmation_record_failed`); parser REST passa a extrair `details`/`detail` e classifica 4xx com evidência como REJECTED (era UNKNOWN/502); divergência `tax_id→A2_CGC` é boundary upstream — `CREATE_CONTRACT=PENDING_UPSTREAM` (handoff em `evidence/protheus-rest-supplier-f43-homologation-2026-10-21.md`) |
+| POST retorno `supplier_code`/`supplier_store` | PROVEN runtime 2026-10-21 (upstream evoluiu); contrato formal PENDING owner |
 
 ## Critérios de homologação live (bloqueados)
 
