@@ -159,3 +159,14 @@ SELECTION_ONLY=PRESERVED
 RUNTIME_CODE_CHANGED=NO
 NEXT=COORDINATION_ACCEPTANCE_THEN_E1
 ```
+
+
+## 9. Independent coordination review (2026-10-21)
+
+**Verdict: `ACCEPT_WITH_RESIDUAL` for E0 specification.** Independent read of published doc 75 and direct static check of existing `Settings._env_flag`, `root_composer`, `presentation.py`, and approved `personality/02-behavior-and-interaction.md`. No runtime modifications or live tests in this review.
+
+**Accepted:** E0 finds legitimate reuse candidates for personality PERS-001..018, central env-backed config resolved at composition, Evidence/Outcome and closed presentation path, plugin-ui render-only components, and existing `InstructionLineage` plus governed JSON loader *pattern*. E1 can be authorized separately under a narrow OFF-first implementation contract.
+
+**Residuals (must not be promoted to proven runtime capability):** (a) centrally controlled env toggle requires restart; rollback is not instantaneous. (b) There is no existing JSON instruction-content loader: E0 chooses EXTEND an existing loader *pattern*, not REUSE a functioning CRI loader. E1 cannot claim resource-loading behavior implemented until code and tests prove it. (c) Doc 75 §5 conclusion that all four observed business cases are satisfiable with frozen selection-only is a **design hypothesis**, not proven. No broad permanent ADR exemption granted; if E2/E3 fail to meet conversational quality without model-authored FACT, return to architecture decision instead of layering domain-topic keyword templates. (d) OFF parity and ON engagement are acceptance obligations, not facts already established.
+
+`E0_VERDICT=ACCEPT_WITH_RESIDUAL`; `E0_CLOSED=YES`; `E1_AUTHORIZABLE=YES_SEPARATE_BOUNDED_EXECUTION`; `E1_IMPLEMENTED=NO`; `CRI_ON_PRODUCTION=NO`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`. No phase advancement or automatic E2/E3 authorization.
