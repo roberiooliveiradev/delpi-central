@@ -278,6 +278,13 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     uppercase: true,
     span: 2,
   }),
+  E({
+    key: "country_code",
+    label: "País",
+    section: "address",
+    maxLength: 3,
+    span: 4,
+  }),
   // Contato
   E({
     key: "contact_name",
@@ -335,19 +342,12 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     ],
   }),
   E({
-    key: "country_code",
-    label: "País",
-    section: "fiscal",
-    maxLength: 3,
-    span: 3,
-  }),
-  E({
     key: "bacen_country_code",
     label: "País (BACEN)",
     section: "fiscal",
     maxLength: 5,
     digitsOnly: true,
-    span: 3,
+    span: 4,
   }),
   // Compras
   E({

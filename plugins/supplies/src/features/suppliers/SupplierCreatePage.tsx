@@ -303,7 +303,7 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               onClick={() => setReviewing(false)}
               disabled={submitting}
             >
-              {C.cancelAction}
+              {C.reviewBackAction}
             </SuppliesActionButton>
           </>
         }

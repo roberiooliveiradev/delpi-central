@@ -89,6 +89,27 @@ export function getSupplierFieldValue(
   }
 }
 
+/**
+ * Indica se o GET detail retornou o campo — distingue "não informado"
+ * (chave presente, valor vazio) de "indisponível na consulta" (chave ausente
+ * no payload upstream).
+ */
+export function isSupplierFieldAvailable(
+  detail: SupplierDetail,
+  spec: SupplierFieldSpec,
+): boolean {
+  switch (spec.get) {
+    case "identity":
+      return true;
+    case "top":
+      return detail.tax_id !== null || detail.tax_id_masked;
+    case "section": {
+      const section = detail.sections[spec.section];
+      return section ? spec.key in section : false;
+    }
+  }
+}
+
 /** POST: envia somente campos preenchidos; preserva zeros à esquerda. */
 export function buildCreateFornecedor(
   draft: SupplierCreateDraft,

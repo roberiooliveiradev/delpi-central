@@ -36,6 +36,7 @@ import {
   formatTaxIdMasked,
   getSupplierFieldValue,
   groupChangesBySection,
+  isSupplierFieldAvailable,
   personTypeLabel,
   supplierFieldItemClass,
 } from "./query";
@@ -219,14 +220,22 @@ export function SupplierDetailPage({
       <SuppliesPageHero
         eyebrow={C.eyebrow}
         title={
-          <SuppliesSectionHintLabel
-            label={
-              identification.supplier_name?.toString() || `${code}/${store}`
-            }
-            hint={SP_HELP.suppliers}
-          />
+          editing ? (
+            C.editModeTitle
+          ) : (
+            <SuppliesSectionHintLabel
+              label={
+                identification.supplier_name?.toString() || `${code}/${store}`
+              }
+              hint={SP_HELP.suppliers}
+            />
+          )
         }
-        description={`${C.detailTitle} · ${code}/${store}`}
+        description={
+          editing
+            ? `${identification.supplier_name?.toString() || C.detailTitle} · ${code}/${store}`
+            : `${C.detailTitle} · ${code}/${store}`
+        }
         actions={
           !editing && detail ? (
             <SuppliesActionButton
@@ -324,6 +333,10 @@ export function SupplierDetailPage({
                           <SupplierProtectedField
                             label={spec.label}
                             value={getSupplierFieldValue(detail, spec)}
+                            emptyLabel={C.fieldNotProvided}
+                            unavailable={
+                              !isSupplierFieldAvailable(detail, spec)
+                            }
                             hint={
                               spec.put === "protected"
                                 ? C.protectedFieldHint
@@ -365,12 +378,31 @@ export function SupplierDetailPage({
                 </SupplierFieldGrid>
               ) : (
                 <dl className="sp-supplier-fields">
-                  {section.fields.map((spec) => (
-                    <div key={spec.key} className={supplierFieldItemClass(spec)}>
-                      <dt>{spec.label}</dt>
-                      <dd>{getSupplierFieldValue(detail, spec) || "—"}</dd>
-                    </div>
-                  ))}
+                  {section.fields.map((spec) => {
+                    const value = getSupplierFieldValue(detail, spec);
+                    const unavailable = !isSupplierFieldAvailable(
+                      detail,
+                      spec,
+                    );
+                    return (
+                      <div
+                        key={spec.key}
+                        className={supplierFieldItemClass(spec)}
+                      >
+                        <dt>{spec.label}</dt>
+                        <dd
+                          className={
+                            unavailable ? "sp-supplier-value--unavailable" : ""
+                          }
+                        >
+                          {value ||
+                            (unavailable
+                              ? C.fieldUnavailable
+                              : C.fieldNotProvided)}
+                        </dd>
+                      </div>
+                    );
+                  })}
                 </dl>
               )}
             </SuppliesSectionCard>
@@ -422,7 +454,7 @@ export function SupplierDetailPage({
               onClick={() => setReviewing(false)}
               disabled={submitting}
             >
-              {C.cancelAction}
+              {C.reviewBackAction}
             </SuppliesActionButton>
           </>
         }

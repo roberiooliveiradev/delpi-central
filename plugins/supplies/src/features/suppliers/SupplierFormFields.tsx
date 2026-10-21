@@ -82,6 +82,10 @@ type SupplierDisplayFieldProps = {
   label: string;
   value: string;
   hint?: string;
+  /** Texto para valor vazio (ex.: "Não informado"); padrão "—". */
+  emptyLabel?: string;
+  /** Valor indisponível na consulta (campo ausente no GET) — estilo atenuado. */
+  unavailable?: boolean;
 };
 
 /** Exibição somente leitura de um campo cadastral — nunca um input desabilitado. */
@@ -89,11 +93,18 @@ export function SupplierDisplayField({
   label,
   value,
   hint,
+  emptyLabel = "—",
+  unavailable,
 }: SupplierDisplayFieldProps) {
+  const display = value.trim();
   return (
     <div className="sp-supplier-display" title={hint}>
       <span className="sp-supplier-display__label">{label}</span>
-      <span className="sp-supplier-display__value">{value.trim() || "—"}</span>
+      <span
+        className={`sp-supplier-display__value${display ? "" : " sp-supplier-display__value--empty"}${unavailable ? " sp-supplier-display__value--unavailable" : ""}`}
+      >
+        {display || (unavailable ? C.fieldUnavailable : emptyLabel)}
+      </span>
     </div>
   );
 }
@@ -111,8 +122,11 @@ export function SupplierProtectedField({
   label,
   value,
   hint,
+  emptyLabel = "—",
+  unavailable,
   protected: isProtected,
 }: SupplierProtectedFieldProps) {
+  const display = value.trim();
   return (
     <div
       className={`sp-supplier-display${isProtected ? " sp-supplier-display--protected" : ""}`}
@@ -124,7 +138,11 @@ export function SupplierProtectedField({
         ) : null}
         {label}
       </span>
-      <span className="sp-supplier-display__value">{value.trim() || "—"}</span>
+      <span
+        className={`sp-supplier-display__value${display ? "" : " sp-supplier-display__value--empty"}${unavailable ? " sp-supplier-display__value--unavailable" : ""}`}
+      >
+        {display || (unavailable ? C.fieldUnavailable : emptyLabel)}
+      </span>
     </div>
   );
 }

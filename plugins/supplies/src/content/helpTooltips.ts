@@ -77,7 +77,7 @@ export const SP_HELP = {
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:
-    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja e CNPJ/CPF, que são protegidos. O envio leva só os campos modificados (PUT parcial). Antes de gravar, uma revisão mostra o antes/depois; após o envio, a opção «Conferir gravação» recarrega a ficha e compara os valores.",
+    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja e CNPJ/CPF, que são protegidos. Campos modificados ganham destaque e o contador mostra quantas alterações estão pendentes; «Indisponível na consulta» indica campo não retornado pelo ERP. O envio leva só os campos modificados (PUT parcial). Antes de gravar, a revisão mostra o antes/depois agrupado por seção; após o envio, «Conferir gravação» recarrega a ficha e compara os valores.",
   suppliersEditName:
     "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
   suppliersEditShortName:

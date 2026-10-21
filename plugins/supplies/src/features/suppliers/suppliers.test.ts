@@ -21,6 +21,7 @@ import {
   getSupplierFieldValue,
   groupChangesBySection,
   hasActiveFilters,
+  isSupplierFieldAvailable,
   parseQueryFromSearch,
   personTypeLabel,
 } from "./query";
@@ -429,6 +430,62 @@ describe("review grouping", () => {
       "contact",
     ]);
     expect(groups[0].changes[0].field).toBe("supplier_name");
+  });
+});
+
+describe("field availability (R3 empty vs unavailable)", () => {
+  const detail: SupplierDetail = {
+    supplier_id: "00246901",
+    supplier_code: "002469",
+    supplier_store: "01",
+    blocked: false,
+    tax_id: null,
+    tax_id_masked: true,
+    sections: {
+      identification: { supplier_name: "DELPI" },
+      address: { city: "" },
+    },
+  };
+  const spec = (key: string) =>
+    SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+
+  it("marks present-but-empty keys as available (não informado)", () => {
+    expect(isSupplierFieldAvailable(detail, spec("city"))).toBe(true);
+  });
+
+  it("marks keys absent from the payload as unavailable", () => {
+    expect(isSupplierFieldAvailable(detail, spec("email"))).toBe(false);
+    expect(isSupplierFieldAvailable(detail, spec("district"))).toBe(false);
+  });
+
+  it("identity fields are always available", () => {
+    expect(isSupplierFieldAvailable(detail, spec("supplier_code"))).toBe(true);
+    expect(isSupplierFieldAvailable(detail, spec("supplier_store"))).toBe(true);
+  });
+});
+
+describe("grid section assignment (R2)", () => {
+  it("keeps country_code in the address section, distinct from BACEN", () => {
+    const country = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === "country_code",
+    )!;
+    const bacen = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === "bacen_country_code",
+    )!;
+    expect(country.section).toBe("address");
+    expect(bacen.section).toBe("fiscal");
+    expect(country.key).not.toBe(bacen.key);
+  });
+});
+
+describe("accounting account contract (R4)", () => {
+  it("A2_CONTA accepts up to 20 chars — 11 digits is contract-valid", () => {
+    const spec = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === "accounting_account",
+    )!;
+    expect(spec.maxLength).toBe(20);
+    expect(spec.put).toBe("editable");
+    expect("21101559000".length).toBeLessThanOrEqual(spec.maxLength);
   });
 });
 

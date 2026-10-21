@@ -988,6 +988,25 @@
   word-break: break-word;
 }
 
+/* Ausência de valor: "Indisponível na consulta" é mais discreto que vazio. */
+.dashboard-supplies-portal .sp-supplier-value--unavailable,
+.dashboard-supplies-portal .sp-supplier-display__value--unavailable {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-display__value--empty {
+  font-weight: 400;
+  color: var(--sp-text-muted);
+}
+
+/* Cabeçalho compacto nas páginas de fornecedor (hero do kit, escopo local). */
+.dashboard-supplies-portal .sp-supplier-detail .sp-page-hero,
+.dashboard-supplies-portal .sp-supplier-create .sp-page-hero {
+  margin-bottom: 0;
+}
+
 /* Display-only value (consulta e campos protegidos/readonly na edição). */
 .dashboard-supplies-portal .sp-supplier-display {
   display: grid;

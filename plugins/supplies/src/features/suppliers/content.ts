@@ -59,6 +59,8 @@ export const SUPPLIERS_CONTENT = {
     "Campo protegido — documento fiscal e identidade do fornecedor não são alteráveis nesta operação.",
   cancelAction: "Cancelar",
   reviewAction: "Revisar alterações",
+  reviewBackAction: "Voltar para edição",
+  editModeTitle: "Editando fornecedor",
   reviewTitle: "Revisar alterações",
   reviewEditDescription:
     "Confira as alterações antes de salvar. Somente campos modificados são listados.",
@@ -94,6 +96,8 @@ export const SUPPLIERS_CONTENT = {
   createConfirmAction: "Confirmar inclusão",
   createBack: "Voltar para a lista",
   fieldEmptyOption: "Não informado",
+  fieldNotProvided: "Não informado",
+  fieldUnavailable: "Indisponível na consulta",
   openCreatedDetail: "Abrir ficha do fornecedor criado",
   verifyAction: "Conferir gravação no ERP",
   verifyNotReflectedMessage:
