@@ -397,3 +397,30 @@ Essas variantes são um **contrato de apresentação conceitual**, não nomes ob
 **Resultado:** `SS-R2-01…SS-R2-07=PASS`. Vitest plugin-ui 2269/2269, delia 276/276; typecheck/build/federation PASS; browser QA 49/49 (Dock 360/420/520×900=4 cards, 520px em 2×2, 420×720=4, 420×650=2, 360×560/450=0, 320×400=0 sem overflow, zoom 200%, tooltip, foco visível, draft-only, preservação de rascunho, zero auto-submit, página 4 cards/descrições, ocultação após turn real, VD-F05 presente). Evidência: `evidence/starter-suggestions-f02a/starter-suggestions-f02a-r2-evidence.md`. Ledger §6.356.
 
 **Status:** `IMPLEMENTATION=EXECUTED`; `TESTS=EXECUTED`. `PHASE_PROGRESSION=NONE`.
+
+## 19. F02-A-R3 — centralizacao vertical do bloco de cards no Companion Dock (decisao de produto, 2026-10-21)
+
+**Problema observado pelo Product Master:** apos F02-A-R2, as quatro sugestoes estao visiveis em producao e o composer permanece acessivel, mas o **grupo das sugestoes** deve ficar **centralizado verticalmente no espaco disponivel entre a recepcao e o composer**, em vez de ficar apenas empilhado no fluxo com distribuicao visual desigual.
+
+**Direcao aprovada:** centralizar o **conjunto** `titulo de secao + grid de cards` como um bloco unico na faixa util entre a base da recepcao da DELIA e o topo do composer. A centralizacao se refere ao espaco **remanescente dessa faixa**, nao ao viewport inteiro nem a cada card isoladamente. Preservar o posicionamento da recepcao, do compositor e o modo de timeline com turnos. Ajustar somente o que for necessario nos owners CSS existentes de `plugin-ui` / Portal, apos medir suas dimensoes reais. Evitar `position:absolute`, alturas fixas frageis e transformacoes que causem sobreposicao.
+
+**Layout alvo:**
+- Dock alto, quatro itens: cards equidistantes entre si e bloco centrado no espaco util; uma coluna se estreito, 2x2 se largo como F02-A-R2.
+- Dock medio/baixo: respeitar o budget de altura ja implementado, reduzir 4→3→2→1→0 conforme medidas reais; sem overlap, scroll interno ou card cortado.
+- Titulo de sugestoes acompanha o grupo; nao permanecer ancorado separadamente.
+- Alinhamento horizontal e larguras atuais preservados, exceto menor ajuste necessario; no Dock estreito, os cards continuam legiveis, com hit targets adequados.
+- Composer sempre visivel/utilizavel e ancora inferior preservada; saudacao/avatar/nota de privacidade sem cortes e com prioridade sobre sugestoes; safe areas e foco preservados.
+- Em redimensionamento e zoom 200%, sem layout shift excessivo, flicker ou foco perdido. Hover, HelpTooltip, teclado, reduzido movimento e dark/light inalterados.
+- Nao deslocar o bloco no fluxo full-page se a alteracao visar apenas Dock; garantir paridade de interacao (draft-only, nenhum submit automatico).
+
+**Ajuste de interpretacao:** a centralizacao de `recepcao + sugestoes` como par em F02-A-R2 foi correta para eliminar grande vazio, mas a presente decisao especifica tambem a posicao **interna** do bloco de sugestoes relativamente a recepcao e composer. Nao desfazer R2 nem criar segundo mecanismo de layout concorrente. Verificar se a faixa util pode ser representada pelos layouts flex/grid existentes; reutilizar container size do Dock quando aplicavel.
+
+**Criterios de aceite (PLANNED):**
+- `SS-R3-01` grupo titulo+cards visualmente centralizado entre recepcao e composer em Dock alto.
+- `SS-R3-02` quatro cards legiveis em Dock alto, com colunas e tamanhos R2 preservados.
+- `SS-R3-03` Dock baixo reduz itens antes de invadir composer/recepcao.
+- `SS-R3-04` nenhuma regressao em pagina completa, teclado/foco, tooltip, preenchimento draft-only ou VD-F05.
+- `SS-R3-05` QA com screenshot e medicao das distancias livres acima/abaixo do bloco de sugestoes (tolerancia justificada por layout, nao exigir simetria pixel-perfect) em 360/420/520px, alturas 900/650/450, 200% zoom e tema escuro/claro.
+- `SS-R3-06` teste apos resize/abertura/fechamento Dock: nenhuma sobreposicao, scroll horizontal ou perda de foco.
+
+**Ownership/reuse:** `EXISTING_EQUIVALENT=YES` para estrutura, componente e estilos existentes; `REUSE_DECISION=EXTEND_CSS_ONLY` preferencial. Nenhum novo componente, API, capability, backend, MCP, autorizacao ou provider. Contrato de sugestoes dinamicas continua diferido. `IMPLEMENTATION=PENDING`, `TESTS=TEST_NOT_RUN`, `PHASE_PROGRESSION=NONE`.
