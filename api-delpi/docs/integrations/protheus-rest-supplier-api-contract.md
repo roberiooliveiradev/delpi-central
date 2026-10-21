@@ -191,3 +191,8 @@ O de-para foi identificado como o material técnico de campos já compartilhado 
 **Regra de rastreabilidade:** ao implementar o POST, cruzar cada propriedade externa de `fornecedor` com a coluna `business_field` e o respectivo `totvs_field` da seção 44.3, documentando diferenças de nomes (`tax_id` versus `tax_document`, por exemplo), obrigatoriedade, default e tratamento por empresa. Não inferir equivalência quando a nomenclatura divergir: classificar `TO_INVENTORY` e validar junto ao owner. Não enviar campos `DO_NOT_SEND` nem os marcados como `SYSTEM_GENERATED` sem contrato específico.
 
 **Próximo gate:** produzir uma matriz de rastreabilidade **campo REST → business_field do de-para → campo SA2 → regra/validação → evidência → decisão** antes de aceitar a implementação de escrita em produção. Preservar cada documento em sua autoridade e vincular alterações relevantes nos dois.
+
+
+## Proposta transversal futura — proveniência de gravações (não implementada)
+
+Para qualquer consumidor BFF autorizado de POST/PUT de fornecedor, consultar [supplier-write-provenance-contract-proposal.md](./supplier-write-provenance-contract-proposal.md): fonte da informação e modo de alteração **por campo**, ator/consumer/política, vínculo com operation_id e confirmação da persistência. A proposta é versionada e separada do payload REST Protheus; **não adicionar metadata diretamente a campos SA2/MATA020 sem contrato TOTVS**. Não considerar ACK como prova de persistência. Status: TARGET, sem alteração do contrato upstream nem autorização de implementação.
