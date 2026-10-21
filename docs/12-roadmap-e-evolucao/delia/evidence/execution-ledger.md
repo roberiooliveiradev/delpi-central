@@ -16652,3 +16652,20 @@ PRODUCTION_READINESS=NOT_PROVEN
 EXECUTOR_VERDICT=ACCEPT_WITH_RESIDUAL
 NEXT=INDEPENDENT_ACCEPTANCE_REVIEW
 ```
+
+
+## §6.349 — CRI E0 contract and decision specification (2026-10-21)
+
+**TASK:** DELIA-CRI-E0-CONTRACT-AND-DECISION-01. Specification-only gate for the Conversational Response Intelligence & Personality front (docs 73/74); no runtime code, contract, schema or test changed. Reanchor on origin/main 3c0484ec28 (concurrent api-delpi/controllership work preserved). Inventory proven: personality specs canonical at docs/12-roadmap-e-evolucao/delia/personality/01-04 (PERS-001..018 APPROVED_PRODUCT_DIRECTION); central ON/OFF reuses Settings._env_flag + root_composer single-injection precedent (DELIA_MCP_*_ENABLED) as DELIA_RESPONSE_INTELLIGENCE_ENABLED default OFF fail-closed, restart-dependent rollback documented; declarative resources EXTEND the governed load_declarations JSON/whitelist/fail-closed pattern + InstructionLineage id+version+sha256 versioning; presentation EXTENDs compose_presentation v1 closed-block contract; frontend REUSEs plugin-ui conversation components + plugins/delia parse-only adapter. Factual-prose decision: ADR NOT required for E1-E4 scope — all four reference cases achievable inside frozen selection-only (model stays hypothesis; deterministic projections + versioned resources phrase owner data); escalation clause to dedicated ADR if E4 evidence disproves. E1-E4 briefs recorded. Report: 75-cri-e0-contract-and-decision-specification.md.
+
+```text
+CRI_E0=SPEC_CLOSED
+E0_CONTRACT_READY=YES
+RICH_FACTUAL_PROSE_ADR=NOT_REQUIRED_CURRENT_SCOPE
+SELECTION_ONLY=PRESERVED
+RUNTIME_CODE_CHANGED=NO
+IMPLEMENTATION_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_ACCEPTANCE_THEN_E1
+```

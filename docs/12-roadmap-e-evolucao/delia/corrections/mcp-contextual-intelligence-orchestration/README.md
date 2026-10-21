@@ -139,6 +139,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **2026-10-21 — limpeza estrutural do orquestrador:** o relatório [72](./72-orchestration-structural-cleanup-execution-report.md) (`DELIA-ORCHESTRATION-STRUCTURAL-CLEANUP-01`) removeu compatibilidade morta pós-Q02-A (constantes, regex, wrappers sem consumidores, flag experimental harness-only) e consolidou os três caminhos de invocação de modelo em `_model_stage_proposal`, sem mudança de contrato público; suíte `delia-api` 1690 PASS / 3 SKIP. `Q01_Q03`, `B1`, `I04_ACCEPTED=NO` e `C3_EXECUTED=NO` permanecem inalterados.
 
+**2026-10-21 — frente CRI, especificação E0 fechada:** [73](./73-conversational-response-intelligence-personality-product-front.md) registra a frente Conversational Response Intelligence & Personality e [74](./74-conversational-response-intelligence-finite-implementation-roadmap.md) o roadmap de 5 gates. O relatório [75](./75-cri-e0-contract-and-decision-specification.md) (`DELIA-CRI-E0-CONTRACT-AND-DECISION-01`) fecha os contratos: ON/OFF central via `Settings`+composição (default OFF, fail-closed), recursos declarativos JSON no padrão `load_declarations`, personalidade `personality/01–04` reutilizada, `compose_presentation` estendido, e decisão de **não exigir ADR de prosa factual** no escopo E1–E4 (`selection-only` preservado; cláusula de escalonamento documentada). Documental apenas — `IMPLEMENTATION_AUTHORIZED=NO` aguardando aceite da coordenação.
+
 ## 5. Limites e próximos passos
 
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.

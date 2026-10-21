@@ -43,6 +43,10 @@ C3_EXECUTED=NO
 ```
 
 
+## E0 outcome (2026-10-21)
+
+`DELIA-CRI-E0-CONTRACT-AND-DECISION-01` executed → [75 — contracts and decisions specification](./75-cri-e0-contract-and-decision-specification.md). Resolved: central control = REUSE `Settings._env_flag` + `root_composer` single injection (`DELIA_RESPONSE_INTELLIGENCE_ENABLED`, default OFF, fail-closed, restart-dependent rollback documented); declarative resources = EXTEND the `load_declarations` JSON/whitelist/fail-closed pattern + `InstructionLineage` versioning; personality = REUSE `personality/01–04` (PERS-001..018); presentation = EXTEND `compose_presentation`; **rich-factual-prose ADR = NOT required** for E1–E4 scope (all four cases satisfiable inside frozen `selection-only`; explicit escalation clause if E4 disproves). `E0_CONTRACT_READY=YES`; implementation still requires distinct coordination authorization per gate.
+
 ## Foundational implementation convention — versioned text/instruction resources
 
 Product Master requires new CRI code from E0 to separate behavioral instructions, long prompt text and user-facing prose resources from Python flow implementation. See [73 §9](./73-conversational-response-intelligence-personality-product-front.md). **E0 acceptance adds an inventory** of existing instruction ID/lineage, declarative resource format/loader, JSON/schema conventions, personality specs, copy/localization and governance. Prefer versioned JSON resources **where existing legitimate contracts support them**; reuse existing canonical formats, do not create competing registries. E1 must preserve centralized ON/OFF and record effective resource version; E2/E3 consume approved resources without embedding long instruction prose inside Python/TypeScript; E4 checks versioned configuration, OFF parity, invalid-resource fail-closed and provenance/security tests. Existing orchestration.py textual migration is outside this roadmap; no code authorized by this documentary decision.
