@@ -168,3 +168,16 @@ Valores `SX6010` comprovados na leitura: `MV_CUSMED=M`, `MV_CUSFIFO=F`, `MV_CUSL
 `R03_PHASE_B1=ACCEPT_WITH_RESIDUAL` **somente para a investigação**; `P7_FULL_REPRODUCTION=INCONCLUSIVE`; `MATR460_SQL_RULES=TO_INVENTORY`; `SX1_PARAMETERS=TO_INVENTORY`; `PROTHEUS_VERSION_CUSTOMIZATIONS=TO_INVENTORY`; `VIDEO_TIMECODES=STALE_EVIDENCE`; `P7_EXPORT_PARITY=TEST_NOT_RUN`. Não declarar `PASS` para a soma P7, nem `OFFICIAL_TOTAL`.
 
 **Para continuar Fase B:** obter pergunta/grupo SX1 validado pela rotina (ou fonte ADVPL/trace autorizada), layout P7 de 30/09/2026 e parâmetros de emissão, confirmar o corte/fim do Acompanha Custos e tratamento de depósitos 98/99, critérios de `B9_QINI=0`, custos `B9_CM1` vs `B9_VINI1`, seleção de tipos/terceiros e composição do WIP. Confrontar linhas, totais por tipo/grupo e saldo geral; divergência exige explicação demonstrável. **Não desenvolver endpoint/UI nem sacramentar fechamento com fórmulas inferidas.**
+
+
+## 12. R03 — Rechecagem temporal e drift da posição histórica (21/10/2026)
+
+**Motivo:** PO pediu verificar se o delta entre P7 NotebookLM (3.776.994,69) e SUM(SB9.B9_VINI1) (3.884.439,52), ambos atribuídos a 30/09/2026 filial 01, poderia vir da data/período ou erro de extração derivada.
+
+**NOVO RESULTADO DAVI READ-ONLY:** `SELECT ... FROM SB9010 WHERE B9_DATA='20260930' AND B9_FILIAL='01'` retornou **zero linhas**, inclusive sem filtro `D_E_L_E_T_`. Repetição por `GROUP BY B9_DATA,B9_FILIAL` confirma que setembro/2026 tem **3.117 linhas apenas filial 02** (10.576.487,84), enquanto a Fase A/B1 (20/10/2026) tinha **4.812 linhas filial 01** e 3.884.439,52, com amostras de `S_T_A_M_P_` em 01/10/2026. Este é um **EXECUTION_DRIFT** na fonte observada entre rodadas; **causa UNKNOWN**, não presumir deleção nem alteração ou erro na consulta anterior.
+
+**Histórico agora observado (filial 01, ativos, SUM B9_VINI1):** 31/08/2026 = 4.720 linhas / **3.931.904,10**; 31/07/2026 = 4.631 / **3.784.923,95**; 30/06/2026 = 4.585 / **3.766.250,64**; 31/05/2026 = 4.472 / **3.813.064,69**; 30/04/2026 = 4.400 / **3.608.427,62**; 31/03/2026 = 4.442 / **3.564.942,32**; 28/02/2026 = 4.435 / **3.474.907,58**; 31/01/2026 = 4.372 / **3.468.259,86**. Nenhum desses totais brutos coincide com o P7 derivado de 3.776.994,69; proximidade de junho/julho não comprova erro de competência ou regra MATR460.
+
+**Validação do NotebookLM:** original catalogado no doc 03 com 00:54:44, mas resposta derivada menciona >01:00; período informado como 30/09/2026, valores de P7 e Insumos são `INFORMED_DERIVED`, não uma exportação analisada diretamente. Sem PDF original, captura de parâmetros e explicação da mudança na SB9, **não é possível atribuir delta a erro de data ou NotebookLM**.
+
+**Conclusão:** `R03_SB9_SEP_FILIAL01=EXECUTION_DRIFT`; `P7_DIFF_10744483=STALE_EVIDENCE` como comparação contra estado atual (era diferença aritmética válida nos snapshots anteriores), `MATR460_REPRODUCTION=INCONCLUSIVE`; `EXPORT_PARITY=TEST_NOT_RUN`. **Próximo gate:** owner api-delpi/TI-Protheus verificar histórico de movimentação/manutenção da SB9, origem/ambiente da consulta e preservação de snapshots; obter relatório P7/PDF de 30/09/2026 com parâmetros e data/hora de execução; só então reexecutar conciliação do período. Não escrever/reconstituir a SB9 e não mudar filtros para forçar igualdade.
