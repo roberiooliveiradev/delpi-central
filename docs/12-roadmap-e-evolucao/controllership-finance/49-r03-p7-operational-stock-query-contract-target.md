@@ -61,3 +61,10 @@ MFE consome somente BFF; usar `@delpi/plugin-ui`, UX PT-BR, claro/escuro mesma �
 `OPTION_A_APPROVED=YES`; `DESIGN=TARGET`; `DATA_SOURCE=PROVEN_WITH_EXECUTION_DRIFT`; `CURRENT_P7_RUNTIME=NOT_PROVEN`; `TRANSVERSAL_RUNTIME_GATE=PENDING`; `P7_PARITY=TEST_NOT_RUN`; `OWNER_CALCULATION_RULES=TO_INVENTORY`.
 
 **Próxima ação:** executor retornar inventário de rotas/contratos atuais e teste de fonte, com dúvidas reais destacadas como `DECISION_REQUIRED`, antes de alterar código.
+
+
+## 8. Decisao de produto: filial e somente filtro (21/10/2026)
+
+O PO confirmou explicitamente que **o Portal Controladoria & Financas nao separa acessos, paginas, funcionalidades nem usuarios por filial**. Filial (`branch` / `B9_FILIAL`) e exclusivamente um filtro de dados nos visuais, incluindo opcao `all` para consolidacao. O usuario com acesso efetivo `controllership-finance.access` ao contexto de consulta pode filtrar 01, 02 ou todas as filiais disponiveis, sem regras de ownership ou permissoes por filial. Essa e a regra de negocio do produto (`OWNER_DECISION=PROVEN`), nao uma inferencia do modelo `BranchAccessGate` de outros produtos. **Nao usar `BranchAccessGate` baseado em permissions por filial**, nem criar novas permission codes, nem bloquear a filial 02 para usuario da filial 01. A BFF continua validando acesso efetivo via Core, identidade humana delegada, regras gerais do recurso e autorizacao fail-closed; o filtro de filial nao confere acesso ao produto.
+
+Inventario relatado pelo executor: rota S2S sugerida `/financeiro/stock-inventory` na api-delpi, BFF `/apps/controllership-finance-api/closing/stock-inventory`, MFE `/apps/controllership-finance/closing/stock-inventory`; scope S2S `stock-inventory.read` e flag default-off sao propostas, **nao provisionamento ou runtime comprovados**. Snapshot SB9 setembro/2026 filial01 ausente no inventario: `EXECUTION_DRIFT`. `BRANCH_POLICY=DECIDED`; `TRANSVERSAL_RUNTIME_GATE=PENDING` ate autorizacao explicita de executar contrato/codigo e verificar provisioning S2S.
