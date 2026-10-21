@@ -727,9 +727,6 @@ has no comparable record.
   no comparable scalar values, respond with both fields null.
 """
 
-MAX_FOREIGN_GROUPS = 1
-MAX_SEMANTIC_PATH_CAPABILITIES = MAX_OPERATIONAL_PLAN_STEPS
-
 # Write-class operation classes (C3-CI-02): PREPARE and ACT carry
 # material-effect potential — they are structurally incompatible
 # with a non-action turn goal. Class is orchestration eligibility,
@@ -2827,23 +2824,17 @@ _GUIDANCE_META_KEYS = frozenset(
     }
 )
 
-def _guidance_intent_families(input_text: str) -> tuple[str, ...]:
-    """Stable guidance family order — no lexical intent cues (Q02-A).
-
-    Projection remains selection-only over owner sections. The LLM goal
-    / synthesis path chooses which records to emphasize; this helper
-    only provides a deterministic non-lexical family priority.
-    ``input_text`` is accepted for call-site compatibility and ignored.
-    """
-    del input_text
-    return (
-        "objective",
-        "when",
-        "steps",
-        "prerequisites",
-        "criteria",
-        "limitations",
-    )
+# Stable presentation order for guidance sections — a deterministic
+# priority, never a lexical intent cue (Q02-A). The LLM goal /
+# synthesis path chooses which records to emphasize.
+_GUIDANCE_FAMILY_ORDER: tuple[str, ...] = (
+    "objective",
+    "when",
+    "steps",
+    "prerequisites",
+    "criteria",
+    "limitations",
+)
 
 
 def _guidance_family_for_key(key: object) -> str | None:
@@ -3058,7 +3049,6 @@ def _pack_guidance_sections(
 
 
 def _deterministic_guidance_content(
-    input_text: str,
     structured: object,
     *,
     max_chars: int = MAX_RENDER_CONTENT_CHARS,
@@ -3073,9 +3063,8 @@ def _deterministic_guidance_content(
     records = _guidance_section_records(structured)
     if not records:
         return None
-    families = _guidance_intent_families(input_text)
     selected: list[Mapping[str, str]] = []
-    for family in families:
+    for family in _GUIDANCE_FAMILY_ORDER:
         for record in records:
             if record.get("family") == family and record not in selected:
                 selected.append(record)
@@ -3581,28 +3570,7 @@ def _deterministic_arguments_from_schema(
     return arguments
 
 
-_INDEX_TOKEN_RE = re.compile(
-    r"[a-z0-9_\u00c0-\u024f]{3,}",
-    re.IGNORECASE,
-)
-
-
-def _rank_index_options_by_overlap(
-    input_text: str,
-    options: tuple[Mapping[str, str], ...],
-) -> tuple[Mapping[str, str], ...]:
-    """Preserve owner catalog order — no lexical relevance ranking (Q02-A).
-
-    ``input_text`` retained for call-site compatibility and ignored.
-    Identifier selection remains an LLM proposal validated by exact
-    owner membership only.
-    """
-    del input_text
-    return options
-
-
-def _index_selection_is_relevant(
-    input_text: str,
+def _index_selection_is_member(
     selected: str,
     options: tuple[Mapping[str, str], ...],
 ) -> bool:
@@ -3610,7 +3578,6 @@ def _index_selection_is_relevant(
 
     Q02-A removes lexical score/veto; membership is the only gate.
     """
-    del input_text
     if not selected or not options:
         return False
     return any(
@@ -3968,7 +3935,6 @@ _GENERIC_COMPLETION_TEXTS = frozenset(
     {"execution completed.", "discovery completed.", "ok", "success"}
 )
 EMPTY_RESULT_TEXT = "Nenhum resultado encontrado."
-_BUSINESS_PAYLOAD_KEY = "data"
 _ITEMS_KEY = "items"
 
 
@@ -4130,7 +4096,6 @@ def render_specialist_outcome(
         # the front (which kept authority/meta and dropped methods).
         if input_text:
             aligned = _deterministic_guidance_content(
-                input_text,
                 structured,
                 owner_truncated=(
                     LIMITATION_RESULT_TRUNCATED in limitations
@@ -4167,7 +4132,6 @@ def render_specialist_outcome(
                 # structured payload: still prefer structured projection
                 # when guidance sections exist — avoids meta-first cut.
                 aligned = _deterministic_guidance_content(
-                    input_text or "",
                     structured,
                     owner_truncated=(
                         LIMITATION_RESULT_TRUNCATED in limitations
@@ -4526,11 +4490,6 @@ class OperationalCapabilityOrchestrator:
         pending_writes: PendingWriteStore | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
-        # I02-R3A experiment only: when True, skip the arguments model
-        # proposal if TurnDeadline cannot cover one capped model stage
-        # plus the existing presentation floor. Default False preserves
-        # production behavior (doc 14 — not an approved production policy).
-        experimental_arguments_budget_guard: bool = False,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
@@ -4539,9 +4498,6 @@ class OperationalCapabilityOrchestrator:
         self._turn_budget_seconds = float(turn_budget_seconds)
         self._model_stage_timeout_seconds = float(
             model_stage_timeout_seconds
-        )
-        self._experimental_arguments_budget_guard = bool(
-            experimental_arguments_budget_guard
         )
 
     def attempt(
@@ -6501,29 +6457,6 @@ class OperationalCapabilityOrchestrator:
         )
         return remaining >= required
 
-    def _budget_allows_arguments_propose(
-        self, deadline: TurnDeadline
-    ) -> bool:
-        """Whether an arguments model proposal has recoverable headroom.
-
-        Derived from existing caps only (I02-R3A experiment; production
-        callers leave ``experimental_arguments_budget_guard`` False):
-
-        - one full model-stage timeout for the arguments proposal;
-        - the same ``MIN_VIABLE_MODEL_STAGE_SECONDS * 3`` presentation
-          floor used by synthesis/resolver so a grounded READ response
-          can still finish after a cheap owner invoke.
-
-        Owner DISCOVERY/READ wall time is typically ≪ one viable stage
-        and is not added as a separate arbitrary constant.
-        """
-        remaining = deadline.remaining_seconds()
-        required = (
-            self._model_stage_timeout_seconds
-            + MIN_VIABLE_MODEL_STAGE_SECONDS * 3
-        )
-        return remaining >= required
-
     def _prior_continuation_attempt(
         self,
         input_text: str,
@@ -8266,7 +8199,7 @@ class OperationalCapabilityOrchestrator:
             correlation,
         )
 
-    def _propose(
+    def _model_stage_proposal(
         self,
         input_text: str,
         *,
@@ -8274,15 +8207,22 @@ class OperationalCapabilityOrchestrator:
         block_payload: str,
         instruction_id: str,
         instruction: str,
+        instruction_lineage: tuple[str, ...],
         expected_fields: tuple[str, ...],
         input_kind: str,
-        allowed_keys: frozenset[str],
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str | None = None,
         deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
-        """One bounded model proposal — structured output only."""
+        """One bounded model stage — raw structured proposal or None.
+
+        Shared invocation mechanics for every orchestrator-owned model
+        call: deadline check, stage-timeout resolution with cold-start
+        headroom, minimum-viable-budget fail-fast, request assembly,
+        error/timeout taxonomy and bounded stage logging. Per-purpose
+        proposal validation stays with each caller.
+        """
         if self._invoke_model is None or self._model_ref is None:
             return None
         if deadline is not None:
@@ -8368,7 +8308,7 @@ class OperationalCapabilityOrchestrator:
                     output_schema_id=instruction_id,
                     output_schema_version=SELECTION_INSTRUCTION_VERSION,
                     expected_fields=expected_fields,
-                    instruction_lineage=_lineage(instruction_id, instruction),
+                    instruction_lineage=instruction_lineage,
                     instruction_content=instruction,
                     timeout_seconds=stage_timeout,
                     declared_epistemic_class=EpistemicClass.HYPOTHESIS,
@@ -8406,6 +8346,41 @@ class OperationalCapabilityOrchestrator:
         )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
+            return None
+        return proposal
+
+    def _propose(
+        self,
+        input_text: str,
+        *,
+        block_tag: str,
+        block_payload: str,
+        instruction_id: str,
+        instruction: str,
+        expected_fields: tuple[str, ...],
+        input_kind: str,
+        allowed_keys: frozenset[str],
+        workspace_context: WorkspaceContext | None = None,
+        prior_turns: tuple[ConversationContextTurn, ...] = (),
+        correlation: str | None = None,
+        deadline: TurnDeadline | None = None,
+    ) -> Mapping[str, Any] | None:
+        """One bounded model proposal — structured output only."""
+        proposal = self._model_stage_proposal(
+            input_text,
+            block_tag=block_tag,
+            block_payload=block_payload,
+            instruction_id=instruction_id,
+            instruction=instruction,
+            instruction_lineage=_lineage(instruction_id, instruction),
+            expected_fields=expected_fields,
+            input_kind=input_kind,
+            workspace_context=workspace_context,
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
+        )
+        if proposal is None:
             return None
         # Surplus keys (e.g. adapter-suggested "limitations" on a
         # selection-only schema) must not discard a valid proposal —
@@ -8707,7 +8682,6 @@ class OperationalCapabilityOrchestrator:
             LIMITATION_RESULT_TRUNCATED in outcome.limitations
         )
         guided = _deterministic_guidance_content(
-            input_text,
             outcome.structured,
             owner_truncated=owner_truncated,
         )
@@ -8757,7 +8731,6 @@ class OperationalCapabilityOrchestrator:
             deadline.remaining_seconds() < MIN_VIABLE_MODEL_STAGE_SECONDS * 3
         ):
             guided_budget = _deterministic_guidance_content(
-                input_text,
                 outcome.structured,
                 owner_truncated=owner_truncated,
             )
@@ -8804,7 +8777,6 @@ class OperationalCapabilityOrchestrator:
             )
             # Prefer goal-aligned guidance projection over a blind dump.
             guided_fallback = _deterministic_guidance_content(
-                input_text,
                 outcome.structured,
                 owner_truncated=owner_truncated,
             )
@@ -9352,10 +9324,9 @@ class OperationalCapabilityOrchestrator:
         options = _index_option_rows(index_structured, field_keys)
         if not options:
             return None
-        ranked = _rank_index_options_by_overlap(input_text, options)
         selected, argument_field = self._propose_index_identifier(
             input_text,
-            ranked,
+            options,
             field_keys,
             workspace_context,
             prior_turns,
@@ -9369,7 +9340,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return None
-        if not _index_selection_is_relevant(input_text, selected, ranked):
+        if not _index_selection_is_member(selected, options):
             _logger.info(
                 "orchestration stage=index_select "
                 "decision=reject_non_member topic=%s "
@@ -9509,40 +9480,6 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return deterministic, ()
-        if (
-            self._experimental_arguments_budget_guard
-            and deadline is not None
-            and not self._budget_allows_arguments_propose(deadline)
-        ):
-            # Honest limitation: do not start a doomed arguments model
-            # call. Prefer sole free-text projection when schema allows;
-            # never invent identifiers or multi-field payloads.
-            projected = _single_free_text_argument_from_input(
-                input_text, descriptor
-            )
-            if projected is not None:
-                _logger.info(
-                    "orchestration stage=arguments "
-                    "decision=budget_input_projection keys=%d "
-                    "correlation_id=%s",
-                    len(projected),
-                    correlation,
-                )
-                return projected, ()
-            missing = tuple(
-                dict.fromkeys(
-                    list(required - ORCHESTRATED_FIELDS)
-                    + list(keys - ORCHESTRATED_FIELDS)
-                )
-            )[:MAX_MISSING_INPUTS]
-            _logger.info(
-                "orchestration stage=arguments "
-                "decision=skip_budget remaining_ms=%d "
-                "correlation_id=%s",
-                int(deadline.remaining_seconds() * 1000),
-                correlation,
-            )
-            return None, missing
         block: dict[str, Any] = {
             "capability": descriptor.remote_name,
             "description": (descriptor.description or "")[
@@ -9876,20 +9813,6 @@ class OperationalCapabilityOrchestrator:
         candidate tokens never reach the model and are never accepted
         from a proposal.
         """
-        if self._invoke_model is None or self._model_ref is None:
-            return None
-        if deadline is not None:
-            try:
-                deadline.check("model_propose")
-            except TurnBudgetExhausted as exc:
-                raise _StageDeadlineExceeded(
-                    "turn_budget_exhausted"
-                ) from exc
-        stage_timeout = (
-            deadline.stage_timeout(self._model_stage_timeout_seconds)
-            if deadline is not None
-            else self._model_stage_timeout_seconds
-        )
         entries = []
         by_action: dict[str, list[Mapping[str, Any]]] = {}
         for candidate in candidates[:MAX_CANDIDATE_ENTRIES]:
@@ -9914,56 +9837,20 @@ class OperationalCapabilityOrchestrator:
         payload = json.dumps(entries, ensure_ascii=False)[
             :MAX_SURFACE_CHARS
         ]
-        started = time.monotonic()
-        try:
-            result = self._invoke_model.execute(
-                ModelInvocationRequest(
-                    invocation_id=ModelInvocationId(str(uuid.uuid4())),
-                    model_ref=self._model_ref,
-                    prior_context=prior_turns,
-                    input_text=(
-                        "<user_message>\n"
-                        + input_text
-                        + "\n</user_message>\n<candidates>\n"
-                        + payload
-                        + "\n</candidates>"
-                    ),
-                    task_purpose_id=CANDIDATE_SELECTION_INSTRUCTION_ID,
-                    output_schema_id=CANDIDATE_SELECTION_INSTRUCTION_ID,
-                    output_schema_version=SELECTION_INSTRUCTION_VERSION,
-                    expected_fields=("applicable", "action_id"),
-                    instruction_lineage=_candidate_selection_lineage(),
-                    instruction_content=CANDIDATE_SELECTION_INSTRUCTION,
-                    timeout_seconds=stage_timeout,
-                    declared_epistemic_class=EpistemicClass.HYPOTHESIS,
-                    untrusted_external_metadata={
-                        "interaction_surface": "delia-mfe",
-                        "input_kind": "specialist_candidate_selection",
-                    },
-                )
-            )
-        except ModelInvocationError as exc:
-            _logger.info(
-                "orchestration stage=model_propose decision=error "
-                "purpose=%s error_code=%s timing_ms=%d "
-                "correlation_id=%s",
-                CANDIDATE_SELECTION_INSTRUCTION_ID,
-                exc.code,
-                int((time.monotonic() - started) * 1000),
-                correlation,
-            )
-            if exc.code == TIMEOUT:
-                raise _StageDeadlineExceeded("model_timeout") from exc
-            return None
-        _logger.info(
-            "orchestration stage=model_propose decision=ok "
-            "purpose=%s timing_ms=%d correlation_id=%s",
-            CANDIDATE_SELECTION_INSTRUCTION_ID,
-            int((time.monotonic() - started) * 1000),
-            correlation,
+        proposal = self._model_stage_proposal(
+            input_text,
+            block_tag="candidates",
+            block_payload=payload,
+            instruction_id=CANDIDATE_SELECTION_INSTRUCTION_ID,
+            instruction=CANDIDATE_SELECTION_INSTRUCTION,
+            instruction_lineage=_candidate_selection_lineage(),
+            expected_fields=("applicable", "action_id"),
+            input_kind="specialist_candidate_selection",
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
-        proposal = result.structured_output
-        if not isinstance(proposal, Mapping):
+        if proposal is None:
             return None
         if set(proposal) - {"applicable", "action_id", "limitations"}:
             return None
@@ -10043,73 +9930,23 @@ class OperationalCapabilityOrchestrator:
         deadline: TurnDeadline | None = None,
     ) -> Mapping[str, Any] | None:
         """Bounded model proposal of inner arguments, schema-scoped."""
-        if self._invoke_model is None or self._model_ref is None:
-            return None
-        if deadline is not None:
-            try:
-                deadline.check("model_propose")
-            except TurnBudgetExhausted as exc:
-                raise _StageDeadlineExceeded(
-                    "turn_budget_exhausted"
-                ) from exc
-        stage_timeout = (
-            deadline.stage_timeout(self._model_stage_timeout_seconds)
-            if deadline is not None
-            else self._model_stage_timeout_seconds
-        )
         schema_payload = json.dumps(
             schema or {"type": "object"}, ensure_ascii=False, default=str
         )[:MAX_SURFACE_CHARS]
-        started = time.monotonic()
-        try:
-            result = self._invoke_model.execute(
-                ModelInvocationRequest(
-                    invocation_id=ModelInvocationId(str(uuid.uuid4())),
-                    model_ref=self._model_ref,
-                    prior_context=prior_turns,
-                    input_text=(
-                        "<user_message>\n"
-                        + input_text
-                        + "\n</user_message>\n<schema>\n"
-                        + schema_payload
-                        + "\n</schema>"
-                    ),
-                    task_purpose_id=CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
-                    output_schema_id=CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
-                    output_schema_version=SELECTION_INSTRUCTION_VERSION,
-                    expected_fields=("arguments",),
-                    instruction_lineage=_candidate_args_lineage(),
-                    instruction_content=CANDIDATE_ARGUMENTS_INSTRUCTION,
-                    timeout_seconds=stage_timeout,
-                    declared_epistemic_class=EpistemicClass.HYPOTHESIS,
-                    untrusted_external_metadata={
-                        "interaction_surface": "delia-mfe",
-                        "input_kind": "specialist_candidate_arguments",
-                    },
-                )
-            )
-        except ModelInvocationError as exc:
-            _logger.info(
-                "orchestration stage=model_propose decision=error "
-                "purpose=%s error_code=%s timing_ms=%d "
-                "correlation_id=%s",
-                CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
-                exc.code,
-                int((time.monotonic() - started) * 1000),
-                correlation,
-            )
-            if exc.code == TIMEOUT:
-                raise _StageDeadlineExceeded("model_timeout") from exc
-            return None
-        _logger.info(
-            "orchestration stage=model_propose decision=ok "
-            "purpose=%s timing_ms=%d correlation_id=%s",
-            CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
-            int((time.monotonic() - started) * 1000),
-            correlation,
+        proposal = self._model_stage_proposal(
+            input_text,
+            block_tag="schema",
+            block_payload=schema_payload,
+            instruction_id=CANDIDATE_ARGUMENTS_INSTRUCTION_ID,
+            instruction=CANDIDATE_ARGUMENTS_INSTRUCTION,
+            instruction_lineage=_candidate_args_lineage(),
+            expected_fields=("arguments",),
+            input_kind="specialist_candidate_arguments",
+            prior_turns=prior_turns,
+            correlation=correlation,
+            deadline=deadline,
         )
-        proposal = result.structured_output
-        if not isinstance(proposal, Mapping):
+        if proposal is None:
             return None
         if set(proposal) - {"arguments", "limitations"}:
             return None

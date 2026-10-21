@@ -29,7 +29,6 @@ def _long_guide() -> dict:
 
 def test_short_guide_is_complete_without_truncation():
     body, limitations = _deterministic_guidance_content(
-        "Qual é a orientação?",
         {
             "objective": "Orientação curta.",
             "prerequisites": ["Qual decisão o indicador muda?"],
@@ -45,7 +44,6 @@ def test_short_guide_is_complete_without_truncation():
 
 def test_long_guide_keeps_whole_sections_and_names_the_rest():
     body, limitations = _deterministic_guidance_content(
-        "Qual é a orientação?",
         _long_guide(),
     )
     assert body is not None

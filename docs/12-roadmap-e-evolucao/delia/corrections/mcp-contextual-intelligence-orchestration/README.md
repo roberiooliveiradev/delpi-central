@@ -137,6 +137,8 @@ Keycloak identidade; Core live AuthZ; Domain API autoridade factual/regras; owne
 
 **2026-10-20 — evidência de correção, sem aceite:** o relatório [71](./71-i04-teo-guidance-generalization-full-validation.md) registra a projeção por seção, a lista de continuidade e o sibling renomeado com `kimi-k3` em provider falso. `I04_ACCEPTED` permanece `NO`. Produção não foi atualizada.
 
+**2026-10-21 — limpeza estrutural do orquestrador:** o relatório [72](./72-orchestration-structural-cleanup-execution-report.md) (`DELIA-ORCHESTRATION-STRUCTURAL-CLEANUP-01`) removeu compatibilidade morta pós-Q02-A (constantes, regex, wrappers sem consumidores, flag experimental harness-only) e consolidou os três caminhos de invocação de modelo em `_model_stage_proposal`, sem mudança de contrato público; suíte `delia-api` 1690 PASS / 3 SKIP. `Q01_Q03`, `B1`, `I04_ACCEPTED=NO` e `C3_EXECUTED=NO` permanecem inalterados.
+
 ## 5. Limites e próximos passos
 
 Este documento **abre somente um roadmap documental**, não aprova I01–Q03, não implanta código, não cria memory store ou contract novo, não fecha §6.235 sem review e **não** declara produção pronta. Em caso de evidência nova que invalide pressuposto, STOP.

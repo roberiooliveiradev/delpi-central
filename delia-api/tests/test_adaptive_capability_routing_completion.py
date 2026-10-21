@@ -25,8 +25,8 @@ from app.application.capability_provision.orchestration import (
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
     _deterministic_arguments_from_schema,
+    _index_option_rows,
     _prior_excerpt_records,
-    _rank_index_options_by_overlap,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -452,17 +452,16 @@ def test_thin_prior_continuation_expands_extraction_list():
     assert "Mapear processo" in attempt.content
 
 
-def test_rank_index_options_preserves_catalog_order_q02a():
-    options = (
-        {"identifier": "display_formats", "label": "Formatos"},
-        {"identifier": "legibility", "label": "Legibilidade de painel"},
-        {"identifier": "color", "label": "Cores"},
-    )
-    ranked = _rank_index_options_by_overlap(
-        "critérios de legibilidade para painéis",
-        options,
-    )
-    assert [r["identifier"] for r in ranked] == [
+def test_index_option_rows_preserve_catalog_order_q02a():
+    structured = {
+        "items": [
+            {"id": "display_formats", "label": "Formatos"},
+            {"id": "legibility", "label": "Legibilidade de painel"},
+            {"id": "color", "label": "Cores"},
+        ]
+    }
+    rows = _index_option_rows(structured, ("topic",))
+    assert [r["identifier"] for r in rows] == [
         "display_formats",
         "legibility",
         "color",

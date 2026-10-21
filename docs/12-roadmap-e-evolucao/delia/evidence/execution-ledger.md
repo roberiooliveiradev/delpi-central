@@ -16637,3 +16637,18 @@ K3_K4_LIVE=NOT_RERUN_NO_DEPLOY
 CONTRACT_CHANGE_NOT_MADE=NO_STRUCTURED_TURN_FIELD
 NEXT=COORDINATION_I04_REVIEW
 ```
+
+## §6.348 — Orchestration structural cleanup (2026-10-21)
+
+**TASK:** DELIA-ORCHESTRATION-STRUCTURAL-CLEANUP-01. Bounded structural hygiene of delia-api/app/application/capability_provision/orchestration.py at base fe61449102; no semantic redesign, no public-contract change, no C3 promotion. Removed proven-dead compat post-Q02-A: constants MAX_FOREIGN_GROUPS / MAX_SEMANTIC_PATH_CAPABILITIES / _BUSINESS_PAYLOAD_KEY, regex _INDEX_TOKEN_RE, no-op _rank_index_options_by_overlap, _guidance_intent_families replaced by constant _GUIDANCE_FAMILY_ORDER, _index_selection_is_relevant renamed to _index_selection_is_member (same owner-membership gate), ignored input_text params dropped from _deterministic_guidance_content call sites, and harness-only experimental_arguments_budget_guard + _budget_allows_arguments_propose retired (production never enabled it). Pacote B: three model-invocation paths consolidated into shared _model_stage_proposal (deadline, stage timeout, cold-start headroom, min-viable fail-fast, request assembly, error/timeout taxonomy, stage logging); _propose keeps allowed_keys/applicable projection, candidate paths keep strict-key validation and own lineages. Pacote C: no extraction — audited projection/redaction helpers PRESERVED (no legitimate separate owner; extraction would be aesthetic churn). Result: 10248 to 10085 lines. Evidence: pytest tests/ = 1690 passed / 3 skipped; py_compile SYNTAX_OK; residual grep clean; B1/paginated_result_semantics untouched; budgets 30s/12s unchanged; MATERIAL_ACT=0; REAL_MODEL_REGRESSION=TEST_NOT_RUN. Report: 72-orchestration-structural-cleanup-execution-report.md.
+
+```text
+STRUCTURAL_CLEANUP=EXECUTED_BOUNDED
+Q01_Q03=CLOSED_WITH_RESIDUAL
+B1=UNRESOLVED_FORMALLY_DEFERRED
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+PRODUCTION_READINESS=NOT_PROVEN
+EXECUTOR_VERDICT=ACCEPT_WITH_RESIDUAL
+NEXT=INDEPENDENT_ACCEPTANCE_REVIEW
+```

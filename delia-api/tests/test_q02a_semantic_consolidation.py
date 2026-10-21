@@ -20,10 +20,10 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     ARGUMENTS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _guidance_intent_families,
-    _index_selection_is_relevant,
+    _GUIDANCE_FAMILY_ORDER,
+    _index_option_rows,
+    _index_selection_is_member,
     _prior_transform_probe_eligible,
-    _rank_index_options_by_overlap,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -421,23 +421,20 @@ def test_q02a_hypothetical_continuity_stays_non_owner():
 
 
 def test_q02a_index_no_lexical_rerank_or_veto():
-    options = (
-        {"identifier": "currency_format", "label": "Currency", "hints": ""},
-        {"identifier": "legibility_guide", "label": "Legibility", "hints": ""},
-    )
-    ranked = _rank_index_options_by_overlap(
-        "Quero o guia de legibilidade tipográfica", options
-    )
-    assert [r["identifier"] for r in ranked] == [
+    structured = {
+        "items": [
+            {"id": "currency_format", "label": "Currency"},
+            {"id": "legibility_guide", "label": "Legibility"},
+        ]
+    }
+    options = _index_option_rows(structured, ("topic",))
+    # Owner catalog order is preserved verbatim — no lexical rerank.
+    assert [r["identifier"] for r in options] == [
         "currency_format",
         "legibility_guide",
     ]
-    assert _index_selection_is_relevant(
-        "anything", "legibility_guide", options
-    )
-    assert not _index_selection_is_relevant(
-        "anything", "invented_id", options
-    )
+    assert _index_selection_is_member("legibility_guide", options)
+    assert not _index_selection_is_member("invented_id", options)
 
 
 def test_q02a_prior_transform_probe_typed_only():
@@ -457,13 +454,17 @@ def test_q02a_prior_transform_probe_typed_only():
     assert _prior_transform_probe_eligible("compare os dois", goal_cmp)
 
 
-def test_q02a_guidance_families_not_lexical_cues():
-    families = _guidance_intent_families(
-        "como conduzir a análise e quais critérios de contraste"
-    )
-    # Stable non-lexical family order; limitations always included.
-    assert "limitations" in families
-    assert families == _guidance_intent_families("xyz unrelated tokens")
+def test_q02a_guidance_family_order_is_lexical_free_constant():
+    # Stable non-lexical presentation order; limitations always included.
+    assert "limitations" in _GUIDANCE_FAMILY_ORDER
+    assert set(_GUIDANCE_FAMILY_ORDER) == {
+        "objective",
+        "when",
+        "steps",
+        "prerequisites",
+        "criteria",
+        "limitations",
+    }
 
 
 def test_q02a_no_act_on_formats_read():

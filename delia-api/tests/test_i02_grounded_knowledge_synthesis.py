@@ -336,8 +336,6 @@ def test_guidance_section_records_project_named_sections():
 
 def test_deterministic_guidance_prioritizes_prerequisites_for_s1_ask():
     body, limitations = _deterministic_guidance_content(
-        "Como devo iniciar um diagnóstico de processo e quais "
-        "informações preciso levantar?",
         METHOD_GUIDE,
     )
     assert "Descrição do problema" in body
@@ -456,7 +454,6 @@ def test_s4_partial_truncation_declared_without_invention():
         "authority": "GUIDANCE_NOT_SOURCE_OF_TRUTH",
     }
     body, limitations = _deterministic_guidance_content(
-        "Quais informações preciso levantar?",
         truncated,
         owner_truncated=True,
     )
@@ -471,7 +468,6 @@ def test_s5_continuity_finds_prerequisites_in_prior_useful_answer():
     provider = _alpha(METHOD_GUIDE)
     # Build a useful prior answer as I02 would produce.
     prior_body, _ = _deterministic_guidance_content(
-        "Como iniciar e quais informações levantar?",
         METHOD_GUIDE,
     )
     assert prior_body
@@ -599,7 +595,6 @@ def test_nested_guide_envelope_projects_use_when_and_how_to_use():
     assert "when" in families or "steps" in families
     assert "limitations" in families or "objective" in families
     body, _ = _deterministic_guidance_content(
-        "Que critérios devo considerar para legibilidade do painel?",
         nested,
     )
     assert body is not None
@@ -632,7 +627,6 @@ def test_malicious_provider_content_redacted_in_guidance():
         "access_token": "SECRET-TOKEN-VALUE",
     }
     body, _ = _deterministic_guidance_content(
-        "Quais informações levantar?",
         structured,
     )
     assert "SECRET-TOKEN-VALUE" not in body

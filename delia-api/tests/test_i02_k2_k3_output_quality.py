@@ -22,8 +22,8 @@ from app.application.capability_provision.orchestration import (
     NATIVE_ASSESSMENT_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
-    _index_selection_is_relevant,
-    _rank_index_options_by_overlap,
+    _index_option_rows,
+    _index_selection_is_member,
 )
 from app.application.interaction.capability_attempt import (
     GovernedCapabilityStatus,
@@ -582,30 +582,21 @@ def test_q02c_coverage_counter_is_not_a_continuity_oracle():
 # ---------------------------------------------------------------------------
 
 
-def test_k3_ranks_legibility_above_display_formats_lookalike():
-    options = (
-        {
-            "identifier": "display_formats",
-            "label": "Formatos de exibição",
-            "hints": "moeda percentual data número",
-        },
-        {
-            "identifier": "panel_legibility",
-            "label": "Legibilidade de painéis",
-            "hints": "contraste tipografia hierarquia visual",
-        },
-        {
-            "identifier": "playlist",
-            "label": "Playlist",
-            "hints": "agenda de turnos",
-        },
-    )
-    ranked = _rank_index_options_by_overlap(LEGIBILITY_ASK, options)
-    # Q02-A: catalog order preserved; membership gate only.
-    assert [r["identifier"] for r in ranked] == [
-        options[0]["identifier"],
-        options[1]["identifier"],
-        options[2]["identifier"],
+def test_k3_index_rows_preserve_owner_catalog_order():
+    # Structural cleanup: lexical rerank removed — rows keep the
+    # owner-declared document order verbatim.
+    structured = {
+        "items": [
+            {"id": "display_formats", "label": "Formatos de exibição"},
+            {"id": "panel_legibility", "label": "Legibilidade de painéis"},
+            {"id": "playlist", "label": "Playlist"},
+        ]
+    }
+    rows = _index_option_rows(structured, ("topic",))
+    assert [r["identifier"] for r in rows] == [
+        "display_formats",
+        "panel_legibility",
+        "playlist",
     ]
 
 
@@ -622,16 +613,10 @@ def test_k3_index_membership_only_q02a():
             "hints": "contraste tipografia painel",
         },
     )
-    assert _index_selection_is_relevant(
-        LEGIBILITY_ASK, "panel_legibility", options
-    )
+    assert _index_selection_is_member("panel_legibility", options)
     # Lexical "misleading" pick is no longer vetoed — membership passes.
-    assert _index_selection_is_relevant(
-        LEGIBILITY_ASK, "display_formats", options
-    )
-    assert not _index_selection_is_relevant(
-        LEGIBILITY_ASK, "invented_topic", options
-    )
+    assert _index_selection_is_member("display_formats", options)
+    assert not _index_selection_is_member("invented_topic", options)
 
 
 def test_k3_no_relevant_topic_clarifies_without_invented_id():
@@ -885,8 +870,8 @@ def test_k3_ambiguous_two_strong_topics_does_not_force_first():
         },
     )
     # Q02-A: both remain selectable by membership; ranking is catalog order.
-    assert _index_selection_is_relevant(LEGIBILITY_ASK, options[0]["identifier"], options)
-    assert _index_selection_is_relevant(LEGIBILITY_ASK, options[1]["identifier"], options)
+    assert _index_selection_is_member(options[0]["identifier"], options)
+    assert _index_selection_is_member(options[1]["identifier"], options)
 
 
 def test_k3_invalid_identifier_rejected():

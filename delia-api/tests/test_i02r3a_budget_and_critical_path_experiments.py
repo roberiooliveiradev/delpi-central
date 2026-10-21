@@ -3,10 +3,10 @@
 Compares E0–E5 variants with fake clock / fake model / synthetic
 providers. MESSAGE ≠ ACT. GLOBAL_TURN_BUDGET_SECONDS = 30.
 
-Production defaults are unchanged: experimental_arguments_budget_guard
-defaults to False; stage timeout experiments pass constructor overrides
-only. E3–E5 are characterization / eligibility analysis — no default
-path merge or native bypass.
+The E2 budget-guard experiment was retired (structural cleanup):
+the harness-only flag is gone and the production path attempts the
+arguments proposal unconditionally. E3–E5 remain characterization /
+eligibility analysis — no default path merge or native bypass.
 """
 
 from __future__ import annotations
@@ -344,7 +344,6 @@ def _run_teo(
     *,
     variant: str,
     stage_timeout: float,
-    experimental_guard: bool,
     clock_advance_before: float = 0.0,
     advance_on: dict | None = None,
     timeout_purposes: frozenset = frozenset(),
@@ -366,7 +365,6 @@ def _run_teo(
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
         model_stage_timeout_seconds=stage_timeout,
-        experimental_arguments_budget_guard=experimental_guard,
     )
     start = clock.now
     attempt = orch.attempt(
@@ -405,7 +403,6 @@ def test_e0_baseline_success_path_reaches_methodology():
     m = _run_teo(
         variant="E0_success",
         stage_timeout=30.0,
-        experimental_guard=False,
         advance_on={
             GROUP_SELECTION_INSTRUCTION_ID: 2.0,
             CAPABILITY_SELECTION_INSTRUCTION_ID: 3.0,
@@ -427,7 +424,6 @@ def test_e0_baseline_fail_class_arguments_timeout_after_catalog():
     m = _run_teo(
         variant="E0_fail_arguments",
         stage_timeout=30.0,
-        experimental_guard=False,
         clock_advance_before=27.0,
         timeout_purposes=frozenset({ARGUMENTS_INSTRUCTION_ID}),
         advance_on={
@@ -454,7 +450,6 @@ def test_e1_stage_cap_10_kills_long_capability_before_discovery():
     m = _run_teo(
         variant="E1_cap10_long_capability",
         stage_timeout=10.0,
-        experimental_guard=False,
         timeout_purposes=frozenset({CAPABILITY_SELECTION_INSTRUCTION_ID}),
     )
     assert m.task_success is False
@@ -470,7 +465,6 @@ def test_e1_stage_cap_10_still_succeeds_when_stages_fit():
     m = _run_teo(
         variant="E1_cap10_fit",
         stage_timeout=10.0,
-        experimental_guard=False,
         advance_on={
             GROUP_SELECTION_INSTRUCTION_ID: 2.0,
             CAPABILITY_SELECTION_INSTRUCTION_ID: 5.0,
@@ -489,15 +483,15 @@ def test_e1_stage_cap_does_not_change_production_default_constant():
 
 
 # ---------------------------------------------------------------------------
-# E2 — experimental arguments headroom (opt-in only)
+# E2 — arguments stage under budget pressure
 # ---------------------------------------------------------------------------
 
 
-def test_e2_guard_off_still_starts_doomed_arguments_call():
+def test_e2_tight_budget_still_starts_doomed_arguments_call():
+    """Experiment retired: no guard — the doomed call is attempted."""
     m = _run_teo(
-        variant="E2_guard_off",
+        variant="E2_tight_budget",
         stage_timeout=10.0,
-        experimental_guard=False,
         clock_advance_before=27.0,
         timeout_purposes=frozenset({ARGUMENTS_INSTRUCTION_ID}),
     )
@@ -505,32 +499,10 @@ def test_e2_guard_off_still_starts_doomed_arguments_call():
     assert m.methodology_read is False
 
 
-def test_e2_guard_on_insufficient_budget_skips_arguments_model():
-    """remaining ≈ 3s < stage(10)+MIN_VIABLE*3(6)=16 → skip_budget."""
+def test_e2_sufficient_budget_reaches_methodology():
     m = _run_teo(
-        variant="E2_guard_on_insufficient",
+        variant="E2_ok",
         stage_timeout=10.0,
-        experimental_guard=True,
-        clock_advance_before=27.0,
-        timeout_purposes=frozenset({ARGUMENTS_INSTRUCTION_ID}),
-    )
-    assert m.arguments_invoked is False
-    assert m.owner_calls == ("get_catalog",)
-    assert m.methodology_read is False
-    # Honest limitation path — not model_timeout on arguments.
-    assert m.error_code != "model_timeout" or m.status != "SUCCESS"
-    assert m.task_success is False
-    assert m.status in {
-        GovernedCapabilityStatus.CLARIFICATION_REQUIRED.value,
-        GovernedCapabilityStatus.SOURCE_UNAVAILABLE.value,
-    }
-
-
-def test_e2_guard_on_sufficient_budget_still_reaches_methodology():
-    m = _run_teo(
-        variant="E2_guard_on_sufficient",
-        stage_timeout=10.0,
-        experimental_guard=True,
         advance_on={
             GROUP_SELECTION_INSTRUCTION_ID: 1.0,
             CAPABILITY_SELECTION_INSTRUCTION_ID: 2.0,
@@ -542,32 +514,6 @@ def test_e2_guard_on_sufficient_budget_still_reaches_methodology():
     assert m.task_success is True
     assert m.arguments_invoked is True
     assert m.methodology_read is True
-
-
-def test_e2_production_default_guard_is_disabled():
-    orch = OperationalCapabilityOrchestrator(
-        _teo_providers(),
-        invoke_model=InvokeModel(FakeProposalModel(_teo_proposals())),
-        model_ref=TEST_MODEL_REF,
-    )
-    assert orch._experimental_arguments_budget_guard is False
-
-
-def test_e2_headroom_formula_derivation():
-    orch = OperationalCapabilityOrchestrator(
-        _teo_providers(),
-        invoke_model=InvokeModel(FakeProposalModel(_teo_proposals())),
-        model_ref=TEST_MODEL_REF,
-        model_stage_timeout_seconds=10.0,
-        experimental_arguments_budget_guard=True,
-    )
-    clock = FakeClock()
-    deadline = TurnDeadline.start(30.0, clock=clock)
-    # required = 10 + 6 = 16
-    clock.advance(14.0)  # remaining 16
-    assert orch._budget_allows_arguments_propose(deadline) is True
-    clock.advance(0.1)  # remaining 15.9
-    assert orch._budget_allows_arguments_propose(deadline) is False
 
 
 # ---------------------------------------------------------------------------
@@ -597,7 +543,6 @@ def test_e3_typed_selection_dependency_map_fields():
     m = _run_teo(
         variant="E3_legacy_separate_goal",
         stage_timeout=10.0,
-        experimental_guard=False,
         advance_on={
             GROUP_SELECTION_INSTRUCTION_ID: 0.5,
             CAPABILITY_SELECTION_INSTRUCTION_ID: 0.5,
@@ -620,7 +565,6 @@ def test_e4_native_runs_when_multiple_groups():
     m = _run_teo(
         variant="E4_multi_group",
         stage_timeout=10.0,
-        experimental_guard=False,
         advance_on={
             GROUP_SELECTION_INSTRUCTION_ID: 0.2,
             CAPABILITY_SELECTION_INSTRUCTION_ID: 0.2,
@@ -700,7 +644,6 @@ def test_e4_foreign_required_must_keep_native_assessment():
     m = _run_teo(
         variant="E4_foreign_required",
         stage_timeout=10.0,
-        experimental_guard=False,
         proposals=_teo_proposals(
             **{
                 NATIVE_ASSESSMENT_INSTRUCTION_ID: {
@@ -801,18 +744,17 @@ def test_e5_invented_identifier_not_deterministic_safe():
 # ---------------------------------------------------------------------------
 
 
-def test_holdout_message_never_act_on_e2_skip():
+def test_holdout_message_never_act_on_tight_budget():
     m = _run_teo(
         variant="holdout_act",
         stage_timeout=10.0,
-        experimental_guard=True,
         clock_advance_before=27.0,
     )
     assert m.material_act is False
     assert "apply" not in "".join(m.owner_calls)
 
 
-def test_holdout_renamed_provider_success_under_guard():
+def test_holdout_renamed_provider_success():
     catalog = _cap(
         "omega",
         "http_omega",
@@ -876,7 +818,6 @@ def test_holdout_renamed_provider_success_under_guard():
         [p1, p2],
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
-        experimental_arguments_budget_guard=True,
     )
     attempt = orch.attempt("playbook")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -1059,7 +1000,6 @@ def test_holdout_prompt_injection_in_catalog():
         providers,
         invoke_model=InvokeModel(model),
         model_ref=TEST_MODEL_REF,
-        experimental_arguments_budget_guard=True,
     )
     attempt = orch.attempt("metodologia")
     assert attempt.status is GovernedCapabilityStatus.SUCCESS
@@ -1072,7 +1012,6 @@ def test_matrix_summary_synthetic_counts():
         _run_teo(
             variant="E0_ok",
             stage_timeout=30.0,
-            experimental_guard=False,
             advance_on={
                 GROUP_SELECTION_INSTRUCTION_ID: 1,
                 CAPABILITY_SELECTION_INSTRUCTION_ID: 2,
@@ -1084,28 +1023,24 @@ def test_matrix_summary_synthetic_counts():
         _run_teo(
             variant="E0_fail",
             stage_timeout=30.0,
-            experimental_guard=False,
             clock_advance_before=27.0,
             timeout_purposes=frozenset({ARGUMENTS_INSTRUCTION_ID}),
         ),
         _run_teo(
             variant="E1_fail_early",
             stage_timeout=10.0,
-            experimental_guard=False,
             timeout_purposes=frozenset(
                 {CAPABILITY_SELECTION_INSTRUCTION_ID}
             ),
         ),
         _run_teo(
-            variant="E2_skip",
+            variant="E2_tight",
             stage_timeout=10.0,
-            experimental_guard=True,
             clock_advance_before=27.0,
         ),
         _run_teo(
             variant="E2_ok",
             stage_timeout=10.0,
-            experimental_guard=True,
             advance_on={
                 GROUP_SELECTION_INSTRUCTION_ID: 1,
                 CAPABILITY_SELECTION_INSTRUCTION_ID: 2,
@@ -1122,10 +1057,10 @@ def test_matrix_summary_synthetic_counts():
         not by["E1_fail_early"].task_success
         and not by["E1_fail_early"].methodology_read
     )
-    assert (
-        not by["E2_skip"].arguments_invoked
-        and not by["E2_skip"].task_success
-    )
+    # Guard removed: the arguments call is attempted even under a
+    # tight remaining budget; the fake model answers, so the run
+    # still reaches the methodology READ.
+    assert by["E2_tight"].arguments_invoked
     assert by["E2_ok"].task_success
     # P50/P95: sample too small — report INCONCLUSIVE in docs, not here.
     assert len(rows) == 5
