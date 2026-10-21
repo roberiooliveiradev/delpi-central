@@ -209,7 +209,7 @@ def test_composer_injects_cri_mode(monkeypatch, capture_mode_logs):
         {},
     )
     assert handler._response_mode == "cri"
-    assert "mode=cri" in capture_mode_logs.text
+    assert "requested=cri effective=cri" in capture_mode_logs.text
     assert "config_source=environment" in capture_mode_logs.text
     assert "runtime_sha=" in capture_mode_logs.text
 
@@ -224,7 +224,7 @@ def test_composer_injects_baseline_mode(monkeypatch, capture_mode_logs):
         {},
     )
     assert handler._response_mode == "baseline"
-    assert "mode=baseline" in capture_mode_logs.text
+    assert "effective=baseline" in capture_mode_logs.text
 
 
 def test_composer_invalid_env_fails_closed_with_warning(

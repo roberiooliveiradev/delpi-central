@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import string
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -26,6 +27,65 @@ _RESOURCE_KEYS = frozenset(
 )
 _REQUIRED_KEYS = _RESOURCE_KEYS
 _MAX_INSTRUCTION_TEXT_BYTES = 4096
+
+# CRI E3: presentation vocabulary resource — the response composer is
+# a different consumer than the instruction clause, so it has its own
+# kind/id/contract, never a second registry.
+_VOCABULARY_RESOURCE_ID = "delia.cri.presentation_vocabulary"
+_VOCABULARY_KIND = "presentation_vocabulary"
+_VOCABULARY_SECTIONS = (
+    "leads",
+    "temporal_clauses",
+    "insufficiency",
+    "continuity",
+    "labels",
+)
+_VOCABULARY_KEYS = frozenset(
+    {"resource_id", "version", "kind", "owner", *_VOCABULARY_SECTIONS}
+)
+_VOCABULARY_REQUIRED_ENTRIES: Mapping[str, frozenset[str]] = {
+    "leads": frozenset(
+        {
+            "ordering_newest_single",
+            "ordering_oldest_single",
+            "examples_fulfilled",
+            "records_found",
+            "single_found",
+        }
+    ),
+    "temporal_clauses": frozenset({"newest_first", "oldest_first"}),
+    "insufficiency": frozenset(
+        {
+            "coverage_unproven",
+            "ordering_unproven",
+            "quantity_unproven",
+            "fewer_than_requested",
+            "envelope_only",
+            "empty_result",
+            "partial_outcome",
+            "generic",
+        }
+    ),
+    "continuity": frozenset({"detail_offer"}),
+    "labels": frozenset(
+        {"truncation_notice", "available_notice", "more_available"}
+    ),
+}
+_VOCABULARY_PLACEHOLDERS = frozenset(
+    {
+        "identifier",
+        "date",
+        "count",
+        "presented",
+        "returned",
+        "available",
+        "requested",
+        "delivered",
+        "total",
+    }
+)
+_MAX_VOCABULARY_SECTION_ENTRIES = 32
+_MAX_VOCABULARY_ENTRY_BYTES = 512
 
 
 class CriInstructionResourceError(Exception):
@@ -46,14 +106,19 @@ class CriInstructionClause:
     content_hash: str
 
 
-def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
-    """Load and validate the governed CRI instruction resource.
+@dataclass(frozen=True)
+class CriPresentationVocabulary:
+    """Validated presentation vocabulary — typed sections for the
+    response composer."""
 
-    Fail-closed: every deviation — missing file, malformed JSON,
-    unsupported or missing fields, unknown kind or version, oversized
-    or empty text — raises CriInstructionResourceError. The clause is
-    returned whole or not at all.
-    """
+    resource_id: str
+    version: str
+    sections: Mapping[str, Mapping[str, str]]
+    content_hash: str
+
+
+def _load_resource_object(path: str | Path) -> Mapping:
+    """Read + JSON-parse a governed resource — fail closed."""
 
     try:
         raw = Path(path).read_text(encoding="utf-8")
@@ -71,6 +136,36 @@ def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid", "resource not an object"
         )
+    return data
+
+
+def _validate_identity(data: Mapping, *, kind: str) -> str:
+    """Shared kind/version gate — returns the validated version."""
+
+    if str(data.get("kind")) != kind:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unknown kind: {data.get('kind')!r}",
+        )
+    version = str(data.get("version"))
+    if version not in _KNOWN_VERSIONS:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unknown version: {version!r}",
+        )
+    return version
+
+
+def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
+    """Load and validate the governed CRI instruction resource.
+
+    Fail-closed: every deviation — missing file, malformed JSON,
+    unsupported or missing fields, unknown kind or version, oversized
+    or empty text — raises CriInstructionResourceError. The clause is
+    returned whole or not at all.
+    """
+
+    data = _load_resource_object(path)
     extra = set(data) - _RESOURCE_KEYS
     if extra:
         raise CriInstructionResourceError(
@@ -83,17 +178,7 @@ def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
             "cri_instruction_resource_invalid",
             f"missing fields: {sorted(missing)}",
         )
-    if str(data["kind"]) != _RESOURCE_KIND:
-        raise CriInstructionResourceError(
-            "cri_instruction_resource_invalid",
-            f"unknown kind: {data['kind']!r}",
-        )
-    version = str(data["version"])
-    if version not in _KNOWN_VERSIONS:
-        raise CriInstructionResourceError(
-            "cri_instruction_resource_invalid",
-            f"unknown version: {version!r}",
-        )
+    version = _validate_identity(data, kind=_RESOURCE_KIND)
     text = str(data["instruction_text"])
     if not text.strip() or len(text.encode("utf-8")) > (
         _MAX_INSTRUCTION_TEXT_BYTES
@@ -108,5 +193,96 @@ def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
         text=text,
         content_hash=hashlib.sha256(
             text.encode("utf-8")
+        ).hexdigest(),
+    )
+
+
+def _vocabulary_entries(
+    value: object, section: str
+) -> dict[str, str]:
+    """Validate one vocabulary section — bounded str->str entries with
+    governed placeholders only."""
+
+    if not isinstance(value, Mapping) or not value:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"section {section!r} missing or not an object",
+        )
+    entries = dict(value)
+    if len(entries) > _MAX_VOCABULARY_SECTION_ENTRIES:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"section {section!r} oversized",
+        )
+    required = _VOCABULARY_REQUIRED_ENTRIES[section]
+    missing = required - set(entries)
+    if missing:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"section {section!r} missing entries: {sorted(missing)}",
+        )
+    out: dict[str, str] = {}
+    for key, text in entries.items():
+        if (
+            not isinstance(key, str)
+            or not key.strip()
+            or not isinstance(text, str)
+            or not text.strip()
+            or len(text.encode("utf-8")) > _MAX_VOCABULARY_ENTRY_BYTES
+        ):
+            raise CriInstructionResourceError(
+                "cri_instruction_resource_invalid",
+                f"section {section!r} invalid entry {key!r}",
+            )
+        for _, placeholder, _, _ in string.Formatter().parse(text):
+            if (
+                placeholder is not None
+                and placeholder not in _VOCABULARY_PLACEHOLDERS
+            ):
+                raise CriInstructionResourceError(
+                    "cri_instruction_resource_invalid",
+                    f"section {section!r} entry {key!r} has unknown "
+                    f"placeholder {placeholder!r}",
+                )
+        out[key] = text
+    return out
+
+
+def load_cri_presentation_vocabulary(
+    path: str | Path,
+) -> CriPresentationVocabulary:
+    """Load and validate the governed CRI presentation vocabulary.
+
+    CRI E3: same fail-closed contract as the instruction clause —
+    wrong identity/kind/version, extra or missing keys, malformed
+    sections, unknown placeholders or oversized entries all raise
+    ``CriInstructionResourceError``; the vocabulary is returned whole
+    or not at all.
+    """
+
+    data = _load_resource_object(path)
+    extra = set(data) - _VOCABULARY_KEYS
+    if extra:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unsupported fields: {sorted(extra)}",
+        )
+    if str(data.get("resource_id")) != _VOCABULARY_RESOURCE_ID:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            f"unexpected resource_id: {data.get('resource_id')!r}",
+        )
+    version = _validate_identity(data, kind=_VOCABULARY_KIND)
+    sections = {
+        section: _vocabulary_entries(data.get(section), section)
+        for section in _VOCABULARY_SECTIONS
+    }
+    canonical = json.dumps(sections, sort_keys=True, ensure_ascii=False)
+    return CriPresentationVocabulary(
+        resource_id=_VOCABULARY_RESOURCE_ID,
+        version=version,
+        sections=sections,
+        content_hash=hashlib.sha256(
+            canonical.encode("utf-8")
         ).hexdigest(),
     )

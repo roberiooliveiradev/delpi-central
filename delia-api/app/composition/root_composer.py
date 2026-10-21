@@ -32,6 +32,7 @@ from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapt
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.config.cri_instruction_resource import (
     load_cri_instruction_clause,
+    load_cri_presentation_vocabulary,
 )
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
 from app.infrastructure.interoperability.config import (
@@ -60,12 +61,17 @@ from app.interfaces.http.request_logging import register_request_logging
 
 _logger = logging.getLogger(__name__)
 
-# CRI E2-R3: governed declarative instruction resource — a fixed
-# repo artifact, never a request/env-supplied path.
+# CRI E2-R3/E3: governed declarative resources — fixed repo
+# artifacts, never request/env-supplied paths.
 _CRI_INSTRUCTIONS_PATH = (
     Path(__file__).resolve().parents[2]
     / "config"
     / "cri_instructions.delpi.json"
+)
+_CRI_PRESENTATION_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "cri_presentation.delpi.json"
 )
 
 
@@ -294,29 +300,44 @@ def _compose_turn_handler(
     openapi_provider = _wire_openapi_provider(settings)
     if openapi_provider is not None:
         providers.append(openapi_provider)
-    # CRI E2-R3: the answer-requirements clause is a governed
-    # declarative resource — loaded and validated only when the mode
-    # is ON. Absent/invalid fails closed: the orchestrator receives no
-    # clause and the whole CRI enhancement stays at baseline.
+    # CRI E2-R3/E3-G1: the declarative resources are loaded and
+    # validated only when the mode is REQUESTED. The *effective* mode
+    # is the single resolved truth propagated to both the handler
+    # (observability) and the orchestrator (behavior): requested ON
+    # with any absent/invalid resource resolves to baseline — CRI is
+    # never logged as executed when the fallback deactivated it.
     cri_clause = None
     cri_version = None
-    if settings.response_intelligence_enabled:
+    cri_vocabulary = None
+    cri_requested = bool(settings.response_intelligence_enabled)
+    if cri_requested:
         try:
             clause = load_cri_instruction_clause(_CRI_INSTRUCTIONS_PATH)
+            vocabulary = load_cri_presentation_vocabulary(
+                _CRI_PRESENTATION_PATH
+            )
         except Exception:
             _logger.warning(
                 "delia_response_intelligence decision=fail_closed "
-                "reason=cri_instruction_resource_invalid"
+                "reason=cri_resource_invalid"
             )
         else:
             cri_clause = clause.text
             cri_version = clause.version
+            cri_vocabulary = vocabulary.sections
             _logger.info(
                 "cri_instruction_resource id=%s version=%s sha256=%s",
                 clause.resource_id,
                 clause.version,
                 clause.content_hash,
             )
+            _logger.info(
+                "cri_presentation_resource id=%s version=%s sha256=%s",
+                vocabulary.resource_id,
+                vocabulary.version,
+                vocabulary.content_hash,
+            )
+    cri_effective = cri_requested and cri_vocabulary is not None
     orchestration = (
         OperationalCapabilityOrchestrator(
             providers,
@@ -324,11 +345,10 @@ def _compose_turn_handler(
             model_ref=model_ref,
             turn_budget_seconds=settings.turn_budget_seconds,
             model_stage_timeout_seconds=settings.model_stage_timeout_seconds,
-            response_intelligence_enabled=(
-                settings.response_intelligence_enabled
-            ),
+            response_intelligence_enabled=cri_effective,
             cri_instruction_clause=cri_clause,
             cri_instruction_version=cri_version,
+            cri_presentation_vocabulary=cri_vocabulary,
         )
         if providers
         else None
@@ -338,12 +358,11 @@ def _compose_turn_handler(
     # request, model, provider or frontend state. Invalid env values
     # fail closed to baseline; the switch selects only the governed
     # outcome → response boundary mode, it authorizes nothing.
-    response_intelligence_enabled = settings.response_intelligence_enabled
     _logger.info(
-        "delia_response_intelligence mode=%s enabled=%s "
+        "delia_response_intelligence requested=%s effective=%s "
         "config_source=%s runtime_sha=%s",
-        "cri" if response_intelligence_enabled else "baseline",
-        response_intelligence_enabled,
+        "cri" if cri_requested else "baseline",
+        "cri" if cri_effective else "baseline",
         settings.response_intelligence_config_source,
         settings.runtime_sha,
     )
@@ -357,7 +376,7 @@ def _compose_turn_handler(
         model_ref=model_ref,
         capability_orchestration=orchestration,
         turn_budget_seconds=settings.turn_budget_seconds,
-        response_intelligence_enabled=response_intelligence_enabled,
+        response_intelligence_enabled=cri_effective,
     )
 
 

@@ -16779,3 +16779,29 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW_THEN_E3
 ```
+
+
+## §6.355 — CRI E3 personality & grounded presentation (2026-10-21)
+
+**TASK:** DELIA-CRI-E3-PERSONALITY-AND-GROUNDED-PRESENTATION-01. First conversational response of the CRI front (docs 73/74, residual gates E3-G1/G2 from doc 77 §11). New leaf `conversational_response.py` composes the answer at the governed binding edge from the E2 verdict + sanitized owner leaves — shape-by-verdict composition (ordering extreme / min_items / list / single / insufficiency), never provider/subject templates; verdict computed once in `_attempt` and shared between `_apply_outcome_assessment` and composition. **G1:** `root_composer` resolves requested (trusted config) vs effective (post-resource-validation) — single effective mode propagated to orchestrator AND handler; `requested ON + invalid/absent resource → baseline` in behavior and observability (`requested=%s effective=%s` log). **G2:** presented count is the content's claim — duplicates collapse, `presented<returned` → `result_truncated`, `presented<requested` → `insufficient_evidence`; `stage=cri_response presented=N delivered=M`. New governed resource `config/cri_presentation.delpi.json` (id/version/kind/owner + 5 sections, placeholder allowlist) + `load_cri_presentation_vocabulary` (same fail-closed contract, shared `_load_resource_object`/`_validate_identity`). Outcome-assessment exposes `ordering_proof_fields`/`distinct_delivered_count`/`parse_temporal_value` (proof retains the carrying field). `compose_presentation` v1 + frontend untouched. Files: conversational_response.py (new), cri_presentation.delpi.json (new), outcome_assessment.py, cri_instruction_resource.py, orchestration.py, root_composer.py, tests/test_cri_e3_conversational_presentation.py (new, 42), test_cri_e1 (+2 asserts updated to requested/effective). Suite: 1823 collected, 1820 passed, 3 skipped, 0 failures (JUnit XML; one isolated timing flake in test_activity_streaming, outside diff).
+
+```text
+CRI_E3=EXECUTED
+E3_G1_EFFECTIVE_MODE=REQUESTED_VS_EFFECTIVE_PROPAGATED
+E3_G2_PRESENTED_COUNT=CONTENT_CLAIMS_PRESENTED
+DECLARATIVE_RESOURCE=cri_presentation.delpi.json_V1_VALIDATED
+ADDITIONAL_MODEL_CALLS=0
+OFF_PARITY=BYTE_IDENTICAL
+SELECTION_ONLY=PRESERVED
+PRESENTATION_CONTRACT=UNCHANGED_V1
+FRONTEND_FILES_CHANGED=0
+PUBLIC_CONTRACT_CHANGE=NO
+TESTS=1820_PASSED_3_SKIPPED_1823_COLLECTED
+REAL_MODEL_EVALUATION=NOT_RUN
+MATERIAL_ACT=0
+PRODUCTION_DEPLOY=NO
+E3_ACCEPTED=PENDING_INDEPENDENT_REVIEW
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW_THEN_E4
+```

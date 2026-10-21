@@ -110,13 +110,23 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
 )
+from app.application.capability_provision.conversational_response import (
+    CriComposition,
+    PresentedRecord,
+    compose_cri_response,
+)
 from app.application.capability_provision.outcome_assessment import (
+    OUTCOME_ANSWERED,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
     AnswerRequirements,
     EvidenceFacts,
+    OutcomeVerdict,
     assess_outcome,
+    distinct_delivered_count,
+    ordering_proof_fields,
     parse_answer_requirements,
+    parse_temporal_value,
 )
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
@@ -4576,6 +4586,9 @@ class OperationalCapabilityOrchestrator:
         response_intelligence_enabled: bool = False,
         cri_instruction_clause: str | None = None,
         cri_instruction_version: str | None = None,
+        cri_presentation_vocabulary: (
+            Mapping[str, Mapping[str, str]] | None
+        ) = None,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
@@ -4619,6 +4632,17 @@ class OperationalCapabilityOrchestrator:
             f"{SELECTION_INSTRUCTION_VERSION}+cri.{cri_instruction_version}"
             if self._cri_active and cri_instruction_version
             else SELECTION_INSTRUCTION_VERSION
+        )
+        # CRI E3: the grounded conversational composer needs its own
+        # governed declarative vocabulary — a different consumer, a
+        # different resource. It activates only when CRI is active AND
+        # a validated vocabulary was injected; without it the verdict
+        # still runs but presentation stays at the baseline render.
+        self._cri_vocabulary = cri_presentation_vocabulary
+        self._cri_present_active = (
+            self._cri_active
+            and isinstance(cri_presentation_vocabulary, Mapping)
+            and bool(cri_presentation_vocabulary)
         )
 
     def attempt(
@@ -5885,13 +5909,34 @@ class OperationalCapabilityOrchestrator:
             business_subject=goal.business_subject,
             invocation_arguments=arguments,
         )
+        # CRI E2/E3: one verdict feeds both the insufficiency marker
+        # and the grounded conversational composition — same edge,
+        # same facts, never a second assessment.
+        cri_facts = (
+            self._outcome_facts(outcome) if self._cri_active else None
+        )
+        cri_verdict = (
+            assess_outcome(cri_facts, goal.answer_requirements)
+            if cri_facts is not None
+            else None
+        )
         outcome = self._apply_outcome_assessment(
-            outcome, goal, correlation
+            outcome, cri_verdict, correlation
+        )
+        cri = (
+            self._compose_cri_response(
+                cri_facts, cri_verdict, goal, correlation
+            )
+            if cri_verdict is not None
+            else None
+        )
+        _extra = _synth_extra + (
+            cri.limitations if cri is not None else ()
         )
         _synth_limitations: tuple[str, ...] | None = None
-        if _synth_extra:
+        if _extra:
             _synth_limitations = tuple(
-                dict.fromkeys(outcome.limitations + _synth_extra)
+                dict.fromkeys(outcome.limitations + _extra)
             )
         return self._outcome_attempt(
             group_key,
@@ -5900,7 +5945,9 @@ class OperationalCapabilityOrchestrator:
             group,
             outcome,
             correlation,
-            content=_synth_content,
+            content=(
+                cri.content if cri is not None else _synth_content
+            ),
             limitations=_synth_limitations,
             input_text=input_text,
         )
@@ -7955,25 +8002,22 @@ class OperationalCapabilityOrchestrator:
     def _apply_outcome_assessment(
         self,
         outcome: SpecialistOutcome,
-        goal: _TurnGoal,
+        verdict: OutcomeVerdict | None,
         correlation: str,
     ) -> SpecialistOutcome:
         """CRI E2 — governed sufficiency assessment at the binding edge.
 
-        Response-intelligence ON only: classifies typed outcome facts
-        into the bounded verdict vocabulary and verifies the goal-stage
-        ``answer_requirements`` hypothesis against owner evidence. The
-        wire keeps SUCCESS — insufficiency is marked on the outcome's
-        own limitations so every render path (synthesized or
-        deterministic) carries it; status is never rewritten and no
-        confident answer is fabricated. OFF returns the outcome
-        untouched (byte-identical baseline).
+        Response-intelligence ON only: the caller computes one verdict
+        (typed facts x goal-stage ``answer_requirements`` hypothesis)
+        and shares it with the E3 presentation composer — the wire
+        keeps SUCCESS, insufficiency is marked on the outcome's own
+        limitations so every render path carries it; status is never
+        rewritten and no confident answer is fabricated. OFF (or no
+        verdict) returns the outcome untouched (byte-identical
+        baseline).
         """
-        if not self._cri_active:
+        if not self._cri_active or verdict is None:
             return outcome
-        verdict = assess_outcome(
-            self._outcome_facts(outcome), goal.answer_requirements
-        )
         _logger.info(
             "orchestration stage=outcome_assessment "
             "decision=%s reasons=%s correlation_id=%s",
@@ -8034,6 +8078,185 @@ class OperationalCapabilityOrchestrator:
             ),
             is_complete=outcome.is_complete,
         )
+
+    # ---- CRI E3 — grounded conversational composition ------------
+
+    _CRI_RECORD_SCAN = 32
+    _CRI_MAX_VALUE_CHARS = 140
+
+    @staticmethod
+    def _cri_scalar_text(value: object) -> str | None:
+        """Render one owner leaf for CRI presentation — verbatim
+        values, pt-BR readable booleans/dates, bounded."""
+        if isinstance(value, bool):
+            return "sim" if value else "não"
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return None
+            parsed = parse_temporal_value(text)
+            if parsed is not None:
+                base = parsed.strftime("%d/%m/%Y")
+                if (
+                    parsed.hour
+                    or parsed.minute
+                    or parsed.second
+                    or parsed.microsecond
+                ):
+                    return f"{base} às {parsed.strftime('%Hh%M')}"
+                return base
+            return text
+        return None
+
+    def _cri_presented_record(
+        self, record: Mapping[str, Any]
+    ) -> PresentedRecord:
+        """Sanitized render-ready projection of one owner record.
+
+        Scalars only — nested payloads stay out of the natural line
+        and remain reachable through the existing detail paths. Field
+        order is presentational: identifier first, then name/title,
+        then the rest in owner order. All values are verbatim
+        sanitized leaves — selection-only stays frozen.
+        """
+        sanitized = _sanitize_renderable(record)
+        if not isinstance(sanitized, Mapping):
+            return PresentedRecord()
+        triples: list[tuple[str, str, str]] = []
+        for key, value in sanitized.items():
+            rendered = self._cri_scalar_text(value)
+            if rendered is None:
+                continue
+            canon = _canonical_key(key)
+            labeled = _FIELD_CLAUSE_LABELS.get(canon)
+            label = (
+                labeled[1].capitalize()
+                if labeled
+                else canon.replace("_", " ").capitalize()
+            )
+            triples.append(
+                (canon, label, rendered[: self._CRI_MAX_VALUE_CHARS])
+            )
+        identifier = _record_identifier(record)
+        id_canon = (
+            _canonical_key(identifier[0]) if identifier else None
+        )
+        name_keys = {
+            "nome",
+            "name",
+            "titulo",
+            "title",
+            "descricao",
+            "description",
+        }
+        triples.sort(
+            key=lambda item: (
+                0
+                if item[0] == id_canon
+                else 1
+                if item[0] in name_keys
+                else 2
+            )
+        )
+        by_key = {canon: rendered for canon, _, rendered in triples}
+        title = next(
+            (
+                rendered
+                for canon, _, rendered in triples
+                if canon in name_keys and canon != id_canon
+            ),
+            None,
+        )
+        return PresentedRecord(
+            fields=tuple(
+                (label, rendered) for _, label, rendered in triples
+            ),
+            identifier=(
+                by_key.get(id_canon, identifier[1])
+                if id_canon is not None
+                else None
+            ),
+            title=title,
+        )
+
+    def _compose_cri_response(
+        self,
+        facts: EvidenceFacts | None,
+        verdict: OutcomeVerdict | None,
+        goal: _TurnGoal,
+        correlation: str,
+    ) -> CriComposition | None:
+        """CRI E3 — one grounded conversational composition.
+
+        Active only when CRI is on AND the governed vocabulary
+        resource was injected; prior-turn excerpt records keep the
+        existing render (their content is already phrased). The
+        composed content carries the count actually presented — a
+        projection shortfall re-marks insufficiency instead of
+        claiming success (E3-G2). Any failure degrades to the
+        synthesized render — composition is an enhancement, never a
+        correctness dependency.
+        """
+        if (
+            not self._cri_present_active
+            or facts is None
+            or verdict is None
+        ):
+            return None
+        if _records_are_prior_excerpts(facts.records):
+            return None
+        prepared = tuple(
+            self._cri_presented_record(record)
+            for record in facts.records[: self._CRI_RECORD_SCAN]
+        )
+        req = goal.answer_requirements
+        ordering_date = None
+        if (
+            verdict.decision == OUTCOME_ANSWERED
+            and req is not None
+            and req.ordering
+            and facts.records
+        ):
+            field_name = ordering_proof_fields(facts.records).get(
+                req.ordering
+            )
+            raw = (
+                facts.records[0].get(field_name)
+                if field_name is not None
+                else None
+            )
+            if raw is None and len(facts.records) == 1:
+                raw = next(
+                    (
+                        value
+                        for value in facts.records[0].values()
+                        if parse_temporal_value(value) is not None
+                    ),
+                    None,
+                )
+            if parse_temporal_value(raw) is not None:
+                ordering_date = self._cri_scalar_text(raw)
+        cri = compose_cri_response(
+            verdict=verdict,
+            requirements=req,
+            records=prepared,
+            delivered_count=distinct_delivered_count(facts.records),
+            total_count=facts.total_count,
+            coverage_complete=facts.coverage_complete,
+            ordering_date=ordering_date,
+            vocabulary=self._cri_vocabulary,
+        )
+        _logger.info(
+            "orchestration stage=cri_response decision=%s "
+            "presented=%s delivered=%s correlation_id=%s",
+            "composed" if cri is not None else "fallback",
+            cri.presented_records if cri is not None else 0,
+            len(facts.records),
+            correlation,
+        )
+        return cri
 
     def _outcome_attempt(
         self,

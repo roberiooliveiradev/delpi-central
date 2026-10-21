@@ -137,20 +137,23 @@ def _parse_temporal(value: object) -> datetime | None:
     return parsed
 
 
-def _temporal_orders(
+def _temporal_proofs(
     records: Sequence[Mapping[str, Any]],
-) -> frozenset[str]:
-    """Proven uniform temporal orderings across ALL returned records.
+) -> dict[str, str]:
+    """Proven uniform temporal orderings — direction -> proving field.
 
     A direction is proven only when one field carries a temporally
     parseable value in EVERY record — a subset of ordered values inside
     a larger collection never proves ordering (E2-R1). Field *names*
     are never matched — the values themselves carry the type evidence.
-    Ties remain monotonic in both directions.
+    Ties remain monotonic in both directions. The returned map keeps
+    the first (sorted) field that proves each direction so the
+    presentation edge can quote the proven temporal value verbatim
+    (E3-G2) instead of re-deriving it.
     """
 
     if len(records) < 2:
-        return frozenset()
+        return {}
     keys = sorted(
         {
             key
@@ -159,7 +162,7 @@ def _temporal_orders(
             if isinstance(key, str)
         }
     )[:_MAX_ORDERING_FIELD_SCAN]
-    proven: set[str] = set()
+    proofs: dict[str, str] = {}
     for key in keys:
         values: list[datetime] = []
         for record in records:
@@ -173,10 +176,42 @@ def _temporal_orders(
         if len(values) != len(records):
             continue
         if all(a >= b for a, b in zip(values, values[1:])):
-            proven.add("newest_first")
+            proofs.setdefault("newest_first", key)
         if all(a <= b for a, b in zip(values, values[1:])):
-            proven.add("oldest_first")
-    return frozenset(proven)
+            proofs.setdefault("oldest_first", key)
+    return proofs
+
+
+def _temporal_orders(
+    records: Sequence[Mapping[str, Any]],
+) -> frozenset[str]:
+    """Proven uniform temporal orderings across ALL returned records.
+
+    Direction names only — see ``_temporal_proofs`` for the proof
+    semantics and the field that carries each proof.
+    """
+
+    return frozenset(_temporal_proofs(records))
+
+
+def ordering_proof_fields(
+    records: Sequence[Mapping[str, Any]],
+) -> Mapping[str, str]:
+    """Direction -> first field that proves the temporal ordering.
+
+    Bounded consumer-facing view of ``_temporal_proofs`` for the
+    governed presentation edge: lets the response layer quote the
+    proven temporal value verbatim from the extreme record.
+    """
+
+    return dict(_temporal_proofs(records))
+
+
+def parse_temporal_value(value: object) -> datetime | None:
+    """Public bounded temporal parse — same semantics as the
+    assessment's internal helper; strings only, never coerced."""
+
+    return _parse_temporal(value)
 
 
 def _distinct_delivered(records: Sequence[Mapping[str, Any]]) -> int:
@@ -194,6 +229,16 @@ def _distinct_delivered(records: Sequence[Mapping[str, Any]]) -> int:
         except (TypeError, ValueError):
             seen.add(repr(record))
     return len(seen)
+
+
+def distinct_delivered_count(
+    records: Sequence[Mapping[str, Any]],
+) -> int:
+    """Public view of ``_distinct_delivered`` for the presentation
+    edge — the same exact-content dedup bound, never an invented
+    identity."""
+
+    return _distinct_delivered(records)
 
 
 def _unproven_requirements(
