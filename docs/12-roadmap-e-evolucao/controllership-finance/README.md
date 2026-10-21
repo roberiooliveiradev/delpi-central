@@ -158,3 +158,8 @@ Auditoria read-only publicada em [doc 48 §16](./48-r01-r02-financial-settlement
 ### R03 — Alerta de drift da SB9 em setembro/2026 (21/10/2026)
 
 Nova rechecagem DAVI constatou que `SB9010` para **30/09/2026, filial 01** retorna **zero linhas**, embora auditoria de 20/10/2026 tenha comprovado **4.812 linhas e 3.884.439,52** para a mesma seleção. A filial 02 de setembro permanece com 3.117 linhas. Causa não comprovada: `EXECUTION_DRIFT`; a divergência histórica de 107.444,83 contra o P7 relatado pelo NotebookLM é agora `STALE_EVIDENCE` para fins de comparação com o estado atual. Consulta de junho/julho/agosto não reproduziu o total P7 derivado por mera troca de competência. [Detalhes e números: doc 46 §12](./46-t01-report-source-inventory-v1.md). **Bloqueio de paridade:** verificar contexto/alteração na origem com TI-Protheus/api-delpi e obter export original com parâmetros; não inferir causa nem reconstruir dados.
+
+
+### PROC-0072 — índice de vídeo derivado do NotebookLM (21/10/2026)
+
+O PO forneceu índice de janelas para Acompanha Custos, Custo Reposição, Refaz Saldos, financeiro, CPV/Kardex, Entradas/Saídas, P7 padrão/H, H02, SD1/CC e extratos. **Persistido em [doc 46 §13](./46-t01-report-source-inventory-v1.md)** como `INFORMED_DERIVED`, **não** `OBSERVED_VISUAL`: o NotebookLM afirma vídeo de 01:02:15, enquanto arquivo anteriormente catalogado tem 00:54:44.125; há timecodes sobrepostos e `_F190C` diverge de extração anterior. Usar apenas como roteiro para conferência de prints e vídeo, sem inferir execução concluída, rotina ADVPL, dependência ou regra operacional. `VIDEO_DIRECT_VERIFICATION=TEST_NOT_RUN`; `TIMECODE_PROVENANCE=STALE_EVIDENCE`.
