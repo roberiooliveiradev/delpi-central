@@ -162,3 +162,14 @@ AUTH_AND_API_DIFF: NONE
 DECISION_REQUIRED:
 RUNTIME_GATE: PENDING
 ```
+
+
+## 11. REVIEW VISUAL PO - REWORK de fidelidade (21/10/2026)
+
+O PO comparou mockups de referencia com o resultado do commit `7254eef580` e informou que falta parte relevante do visual proposto. **Conclusao do review de fidelidade: REWORK**, distinta do sucesso de build e integracao. A entrega confirmou PageHero/hi ghlights/filtros e toolbar de fonte, mas nao comprovou paridade de hierarquia e acabamento com os mockups. Nao interpretar aceite anterior de estrutura como aceite final do design.
+
+**Gaps visuais que exigem inventario + demonstracao antes/depois**: (1) KPI cards ainda muito textuais, faltam hierarquia de numero/titulo e eventual iconografia nativa do kit; (2) divisao e alinhamento da area de filtros/alternancia/acoes ainda pouco distintos; (3) notas e avisos devem usar feedback semantico com contraste e posicionamento consistente, sem parecer texto bruto; (4) toolbar de resultados precisa organizacao clara, nao prometer funcoes ausentes; (5) resumo P7 exige melhor leitura visual da categoria, valor e quantidade, sem eliminar categorias. Comparar visualmente R01/R02 e R03 em desktop dark/light, tablet e mobile; registrar componentes oficiais reais e screenshot de cada estado.
+
+**Limite funcional**: as referencias geradas contem numeros, percentuais, datas, links, view Cards e botao Excel ilustrativos. Nao criar metrics de variacao, opcoes MP/PI/PA separadas, exportacao, links, badges ou controles inertes sem contrato e decisao do PO. Existe escolha real entre fidelidade exclusivamente visual com componentes atuais e expansao de produto: `DECISION_REQUIRED` para qualquer feature nova. O rework visual pode preparar layout/slots, mas deve manter action-only real, texto correto, auto-query e autorizacao intactos.
+
+**Gates de aceite reforcados**: `VISUAL_DIFF_MATRIX` por secao e pagina (mockup | runtime atual | correcao proposta | componente plugin-ui | origem de dados | teste); `KPI_VISUAL_HIERARCHY=REVIEW_REQUIRED`; `FILTER_ACTION_HIERARCHY=REVIEW_REQUIRED`; `STATUS_BANNER_VISUAL=REVIEW_REQUIRED`; `TABLE_TOOLBAR_HIERARCHY=REVIEW_REQUIRED`; `P7_SUMMARY_CARD_HIERARCHY=REVIEW_REQUIRED`. O executor deve apresentar evidencias visuais autenticadas antes da conclusao; smoke nao executado = `TEST_NOT_RUN`. Deploy/commit nao supre o gate visual.
