@@ -1418,6 +1418,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL}
       TZ: ${TZ}
 
+      # Individual S2S validation (ADR-010): audience of this API + technical
+      # client allowlist. Missing/empty → fail-closed on S2S-guarded routes.
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-api-delpi}
+      S2S_ALLOWED_CLIENTS: ${S2S_ALLOWED_CLIENTS:-}
+
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
