@@ -28,12 +28,16 @@ tipados `available` / `incomplete` / `source_missing` /
 vazia (ausência não é saldo zero).
 
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
-`cfDataTableUi` — banda única com título + pill de contagem do universo
-filtrado à esquerda e controles nativos (itens/página + Fonte + Colunas)
-à direita, quebrando para a linha seguinte em telas estreitas; células
-em duas linhas (`cf-cell-primary/secondary`), proporções de coluna via
-classes do kit (`cf-table__col--wrap/wide/compact/status/numeric`),
-preferências de coluna/fonte persistidas pelo kit.
+`cfDataTableUi` — banda única com ícone + título + pill de contagem do
+universo filtrado à esquerda e controles nativos (itens/página + Fonte +
+Colunas) à direita, quebrando para a linha seguinte em telas estreitas;
+células em duas linhas (`cf-cell-primary/secondary`), proporções de
+coluna via classes do kit (`cf-table__col--wrap/wide/compact/status/
+numeric`), `resizableColumns` com handles nativos do kit, preferências
+de coluna/fonte persistidas pelo kit. Código cru de auditoria (ex.:
+`paymentDirection`) fica em tooltip/`cf-visually-hidden`, nunca como
+caractere solto na célula. Resumos P7 exibem participação percentual
+derivada do total histórico do contrato.
 
 ## Runtime
 
