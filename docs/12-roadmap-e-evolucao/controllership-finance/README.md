@@ -183,3 +183,8 @@ Joici confirmou ao PO que a segunda saida P7 utiliza layout H e atende ao acompa
 ### R03 — Consulta operacional P7: opcao A aprovada, contrato de design (21/10/2026)
 
 PO aprovou preparar uma consulta inicial de estoque historico read-only para P7, com `all_products` e `mp_pi_pa`, sem alegar reproducao integral da MATR460. **[Doc 49 — contrato e gates R03](./49-r03-p7-operational-stock-query-contract-target.md)**. HEAD do MFE `src/app/pluginRoutes.ts` inclui `home` e `financial_settlements`, nao uma rota P7. Caminho de pagina e BFF sao candidatos de design, nao rotas implementadas. `OPTION_A_APPROVED=YES`; `DOCUMENTATION_DESIGN=TARGET`; `TRANSVERSAL_RUNTIME_GATE=PENDING`; `P7_PARITY=TEST_NOT_RUN`; `SB9_SEPT_FILIAL01=EXECUTION_DRIFT`. Proximo: inventario do executor sobre rotas, contratos `api-delpi`, BFF, auth, dados e testes, depois gate transversal explicito antes de codigo/deploy. Nao apresentar soma SB9 como total P7 oficial.
+
+
+### R03 — Regra de filial aprovada pelo PO (21/10/2026)
+
+**Filial e apenas filtro nos visuais e consultas**: nao existe segregacao de usuarios, paginas ou dados por filial dentro do Portal Controladoria & Financas. Com `controllership-finance.access` efetiva, a consulta R03 oferece filial individual ou `all`; nao criar permission por filial ou reutilizar `BranchAccessGate` que exija tais permissions. O backend continua a validar permissao efetiva do Core e regras gerais da consulta. Decisao registrada no [doc 49, secao 8](./49-r03-p7-operational-stock-query-contract-target.md). `BRANCH_POLICY=DECIDED`; `TRANSVERSAL_RUNTIME_GATE=PENDING` (sem liberacao automatica de implementacao); `SB9_SEPT_FILIAL01=EXECUTION_DRIFT`.
