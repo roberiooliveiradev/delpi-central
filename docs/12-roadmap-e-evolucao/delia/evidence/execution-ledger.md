@@ -16758,6 +16758,7 @@ NEXT=COORDINATION_REVIEW_THEN_E3
 ```
 
 
+
 ## §6.354 — CRI E2 bounded rework R1–R3 (2026-10-21)
 
 **TASK:** DELIA-CRI-E2-BOUNDED-REWORK-R1-R3-01. Single permitted bounded correction cycle over the independent-review findings in doc 77 §9. R1: `_temporal_orders` now proves a direction only when one field carries a parseable temporal value in EVERY returned record (missing/unparseable unified; ties conservative — both-direction set, never name-matched; local ordering still requires proven coverage). R2: `min_items` verified against `_distinct_delivered` (structural-equality dedup — the only legitimate identity bound); `total_count` proves only `fewer_than_requested`, never delivery. R3: clause externalized to `config/cri_instructions.delpi.json` (resource_id/version/kind/owner/instruction_text) + validated loader `app/infrastructure/config/cri_instruction_resource.py` (strict keys, kind+version allowlist, bounded text, fail-closed `CriInstructionResourceError`); composition loads fixed repo path only when flag ON, logs `cri_instruction_resource id=… version=… sha256=…`, injects typed clause+version; `_cri_active = flag AND clause` — invalid/absent resource degrades whole CRI mode to baseline; `InstructionLineage` version `12+cri.1`, hash over effective text. Files: outcome_assessment.py, orchestration.py, root_composer.py, cri_instruction_resource.py (new), cri_instructions.delpi.json (new), tests +22 (65 in E2 file). Suite: 1781 collected, 1778 passed, 3 skipped, 0 failures.
@@ -16805,3 +16806,31 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW_THEN_E4
 ```
+
+## §6.356 — F02-A-R2 Companion Dock responsive starter suggestions (2026-10-21)
+
+**DATE:** 2026-10-21. **TASK:** DELIA-UX-F02A-R2-RESPONSIVE-DOCK-STARTER-SUGGESTIONS-01. **SPEC:** 93 §17 (Product Master). Reanchor sobre 6648c4026b. Causa raiz: teto rigido nth-child(n+3) display:none no Dock + recepcao com margin:auto isolada criando vazio vertical. Solucao CSS-only nos owners existentes: .global-delia-dock__body virou container-type:size (altura real do Dock queryable — nao viewport); budget de altura por bandas de largura medidas (4->3->2->1->0 estreito; 2 col x 2 linhas em dock >=500px escondendo por fileiras inteiras); par recepcao+sugestoes centralizado como unidade via __column:has() justify-content:center no Dock; pagina completa e demais gates intocados. Zero novo componente/observer/backend; 4 perguntas congeladas preservadas; draft-only/foco/tooltip/zero-submit inalterados.
+
+```text
+F02A_R2_DOCK_RESPONSIVE=EXECUTED
+OLD_RIGID_CAP_REMOVED=YES
+HEIGHT_AWARE=DOCK_BODY_SIZE_CONTAINER
+WIDTH_AWARE=WORKSPACE_INLINE_SIZE_CONTAINER
+TWO_COL_DOCK_WIDE=YES
+VITEST_PLUGIN_UI=2269_PASSED
+VITEST_DELIA=276_PASSED
+TYPECHECK=PASS
+BUILD=PASS
+FEDERATION=PASS
+BROWSER_QA_LOCAL_PROD_PARITY=49_49
+PRODUCTION_DEPLOYMENT=PENDING
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+BACKEND_SUGGESTIONS_CONTRACT=DEFERRED
+PHASE_ADVANCE=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=DEPLOY_THEN_COORDINATION_REVIEW
+```
+
+
+

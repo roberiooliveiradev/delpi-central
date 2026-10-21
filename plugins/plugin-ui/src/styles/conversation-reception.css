@@ -77,6 +77,11 @@
 .global-delia-dock .delpi-ui-conversation-reception {
   max-width: 28rem;
   padding: 16px 12px;
+  /* Vertical auto margins yielded to the empty-state column pairing
+     (conversation-workspace.css :has rule) so reception + suggestions
+     center as one group instead of the reception floating alone. */
+  margin-top: 0;
+  margin-bottom: 0;
 }
 .global-delia-dock .delpi-ui-conversation-reception__avatar {
   margin-bottom: 12px;

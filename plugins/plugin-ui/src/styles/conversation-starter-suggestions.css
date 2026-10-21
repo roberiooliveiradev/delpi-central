@@ -210,7 +210,11 @@
   }
 }
 
-/* Companion Dock — minimal density, never more than 2 cards. */
+/* Companion Dock — minimal density; the visible count now follows the
+   dock's real usable height (measured on .global-delia-dock__body, a
+   size container) instead of a rigid two-card cap (doc 93 §17).
+   Width queries resolve on the same container. No internal scroll,
+   no filler cards — visibleCount <= eligibleCount. */
 .global-delia-dock .delpi-ui-starter-suggestions {
   padding: 0 12px 12px;
 }
@@ -220,12 +224,6 @@
   gap: 8px;
 }
 
-.global-delia-dock
-  .delpi-ui-starter-suggestions
-  .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
-  display: none;
-}
-
 .global-delia-dock .delpi-ui-starter-suggestions__card {
   padding: 8px 10px;
   min-height: 40px;
@@ -233,6 +231,135 @@
 
 .global-delia-dock .delpi-ui-starter-suggestions__card-description {
   display: none;
+}
+
+/* Wide dock → two compact columns (dock largo/alto = 2 x 2). Width
+   queries resolve on the workspace container — ~52px narrower than the
+   dock shell (mount padding + border). */
+@container (min-width: 448px) {
+  .global-delia-dock .delpi-ui-starter-suggestions__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The generic narrow-container cap-2 rule (≤480px) yields inside the
+   dock to the height budget below — this override wins by specificity,
+   letting a tall narrow dock show all four minimal cards. */
+@container (max-width: 480px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: list-item;
+  }
+}
+
+/* Height budget on the dock body (real measured surface): reception and
+   composer stay priority; cards fit 4 → 3 → 2 → 1 → 0 as space tightens.
+   Width-only queries resolve on the workspace container (~52px
+   narrower than the dock shell); mixed width+height and height-only
+   queries resolve on .global-delia-dock__body (size container), whose
+   width equals the dock shell — so band bounds below are in dock units.
+   Measured budgets: card rows ≈48px each + label/padding ≈56px,
+   composer+header ≈192px; compact reception ≈328px tall at ws≤300px,
+   ≈283px at ws≤348px, ≈245px below ws<448px, ≈224px at ws≥448px. */
+
+/* Ultra-narrow dock (dock ≤352px / ws ≤300px) — 1 column. */
+@container (max-width: 352px) and (max-height: 758px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 4) {
+    display: none;
+  }
+}
+@container (max-width: 352px) and (max-height: 710px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+@container (max-width: 352px) and (max-height: 662px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 2) {
+    display: none;
+  }
+}
+@container (max-width: 352px) and (max-height: 614px) {
+  .global-delia-dock .delpi-ui-starter-suggestions {
+    display: none;
+  }
+}
+
+/* Narrow dock (dock 353–400px / ws 301–348px) — 1 column. */
+@container (min-width: 353px) and (max-width: 400px) and (max-height: 713px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 4) {
+    display: none;
+  }
+}
+@container (min-width: 353px) and (max-width: 400px) and (max-height: 665px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+@container (min-width: 353px) and (max-width: 400px) and (max-height: 617px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 2) {
+    display: none;
+  }
+}
+@container (min-width: 353px) and (max-width: 400px) and (max-height: 569px) {
+  .global-delia-dock .delpi-ui-starter-suggestions {
+    display: none;
+  }
+}
+
+/* Mid dock (dock 401–499px / ws 349–447px) — 1 column, shorter reception. */
+@container (min-width: 401px) and (max-width: 499px) and (max-height: 675px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 4) {
+    display: none;
+  }
+}
+@container (min-width: 401px) and (max-width: 499px) and (max-height: 627px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+@container (min-width: 401px) and (max-width: 499px) and (max-height: 579px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 2) {
+    display: none;
+  }
+}
+@container (min-width: 401px) and (max-width: 499px) and (max-height: 531px) {
+  .global-delia-dock .delpi-ui-starter-suggestions {
+    display: none;
+  }
+}
+
+/* Wide dock (dock ≥500px / ws ≥448px) — 2 columns; hides in whole rows:
+   4 (2x2) → 2 (one row) → 0. */
+@container (min-width: 500px) and (max-height: 601px) {
+  .global-delia-dock
+    .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+@container (min-width: 500px) and (max-height: 549px) {
+  .global-delia-dock .delpi-ui-starter-suggestions {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

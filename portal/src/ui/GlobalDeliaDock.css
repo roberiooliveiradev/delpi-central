@@ -125,6 +125,10 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* Size container: the dock's real usable height (rail excluded) becomes
+     queryable by the mounted surface — starter suggestions scale their
+     card count to it instead of a viewport proxy (doc 93 §17). */
+  container-type: size;
 }
 
 .global-delia-dock__status {
