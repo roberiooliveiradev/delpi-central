@@ -50,6 +50,20 @@ Inclui esquema de referência das cotas. **Não inventar limites de engenharia**
 
 Criar novo; salvar; reabrir e atualizar; duplicar com novo identificador; excluir com confirmação e autorização; voltar com aviso de mudanças não salvas; filtrar/limpar; recortar/restaurar imagem; exportar PDF; imprimir. Salvar e emitir são operações distintas. Não afirmar sucesso de gravação até confirmação do servidor.
 
+
+## 2A. Diretriz aprovada pelo solicitante — preservar o visual do HTML
+
+**Decisão de produto (21/10/2026):** aproveitar a **identidade visual e a composição gráfica propostas no HTML recebido** como baseline do relatório metalográfico. Não reinterpretar o pedido como liberdade para substituir a aparência por um modelo genérico de relatório da plataforma. A integração ao Minha DELPI deve tornar a ferramenta nativa em autenticação, navegação, persistência e componentes de interação, **sem descaracterizar a apresentação do laudo**.
+
+- **Editor integrado:** manter a organização, hierarquia dos blocos, títulos, tabela de parâmetros, espaços das duas micrografias, esquema de cotas, conclusão, identificação do responsável e rodapé conforme a referência; componentes de formulário e comandos podem utilizar `@delpi/plugin-ui` onde isso não altera a aparência técnica do documento.
+- **Prévia de documento:** fornecer visualização fiel da composição paginada que será exportada, evitando diferença inesperada entre preenchimento, prévia e PDF.
+- **Exportação PDF (obrigatória):** ação explícita **Exportar PDF**, disponível em relatório salvo e conforme política aprovada também na edição; gerar A4 com o mesmo projeto gráfico do HTML de referência, incluindo identidade visual, cabeçalho, disposição, dados, imagens e recortes, indicadores, tabela, conclusão, assinaturas/identificação e rodapé. Exportar não deve modificar o documento gravado nem implicar aprovação.
+- **Paridade visual verificável:** criar amostra com todos os campos preenchidos e duas micrografias; comparar lado a lado referência HTML/impressão e PDF exportado (tipografia, alinhamentos, espaçamentos, bordas, cores, imagens, paginação, legibilidade). Desvios materiais só com aceite explícito do requisitante e owner do documento técnico.
+- **Responsividade sem deformação:** controles podem se reorganizar em tela pequena, mas o documento e PDF mantêm proporção A4 e diagramação técnica; prever zoom e rolagem quando necessário.
+- **Separação de concerns:** editor/preview e gerador/exportador podem compartilhar representação sem criar duas definições divergentes de layout; determinar abordagem técnica com base no código real e testes, sem exigir tecnologia nova antes do inventário.
+
+**AC-07 ampliado:** o PDF exportado deve ser visualmente fiel ao HTML fornecido, além de preservar conteúdo e seções. **AC-08 ampliado:** aderência ao Minha DELPI se aplica à experiência de uso e integração, não substitui a identidade visual técnica da página proposta.
+
 ## 3. Arquitetura e boundaries — decisão pendente de inventário
 
 - **Host e navegação:** Portal Minha DELPI, segundo seus contratos de registro de app/rota.
