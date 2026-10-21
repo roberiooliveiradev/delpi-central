@@ -108,7 +108,21 @@ Screenshots: `C:\temp\delia-qa\shots-f02a-r2\` (probe-* e casos nomeados).
   — resolvido com `docker restart delpi-gateway`, mesmo incidente documentado no
   F02-A original.
 
-## 7. Não-objetos preservados
+## 7. Deployment em produção (fato)
+
+Deploy canônico `192.168.1.237` via `up-prod-sequential.sh --cpu --build plugin-ui portal`
+(somente os frontends alterados; `delia`, `delia-api`, backend e gateway não rebuildados).
+
+- Host pós-pull: `0fdb467ff848b82b6378459c71c86a1e04a43de3` (= commit R2).
+- Containers `delpi-portal` e `delpi-plugin-ui` recriados e saudáveis; upstreams do gateway OK.
+- plugin-ui servido: `assets/style-B2do0SIi.css` contém as regras R2
+  (`@container (min-width: 500px) and (max-height: 601px)`, bandas 352px, undo `list-item`, `repeat(2,...)`).
+- portal servido: `assets/index-Kj2Gbb07.css` contém
+  `.global-delia-dock__body{...container-type:size}` e é o CSS referenciado pelo index.html.
+- QA autenticado de produção: **PENDING_USER_VERIFICATION** — Keycloak de prod não
+  possui usuário de teste e sua modificação está fora de escopo (mesmo precedente F02-A-R1).
+
+## 8. Não-objetos preservados
 
 Sem backend, Core/RBAC, Keycloak, MCP, orquestração, STT/VD-F05, contratos de
 capacidade ou projeção de elegibilidade. Quatro perguntas §16 congeladas e
