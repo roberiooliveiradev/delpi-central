@@ -236,3 +236,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Blueprint detalhado das tabelas de fechamento (design target, 21/10/2026)
 
 [Doc 52 - R01/R02 e R03: tabelas, colunas, toolbar, regras de visualizacao e gates](./52-r01-r03-table-visual-blueprint-and-acceptance.md). Especificacao detalhada para Devin, com mockups somente como referencia visual, sem inventar dados, exportacao, Cards, links ou outros recursos sem contrato. `DESIGN=TARGET`; `RUNTIME_GATE=PENDING`.
+
+
+## Roadmap executivo Table UX — ate 3 interacoes (21/10/2026)
+
+[Doc 53 — Table UX final em tres interacoes](./53-table-ux-final-3-interactions-execution-roadmap.md) e o plano de execucao V7: 1/3 Baixas financeiras R01/R02; 2/3 Estoque historico P7 R03; 3/3 homologacao transversal e correcoes finais. Em cada interacao: implementar, testar, comparar no navegador, commit, push, deploy MFE via runbook SSH e smoke registrado. Estado inicial `TARGET / EXECUTION_PENDING`; nao inferir PASS de bundle HTTP 200 ou capturas antigas. Features dependentes de contrato/decisao permanecem em gate separado.
