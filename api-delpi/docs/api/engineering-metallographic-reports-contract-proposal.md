@@ -7,10 +7,13 @@
 
 ## 1. Fonte, owner e gates
 
-- Producer **candidato**: API DELPI / Engenharia (preferência do solicitante; validar owner e existência de equivalente).
+**Esclarecimento vinculante do solicitante:** todas as operações serão implementadas no serviço `api-delpi` já existente. Não construir `engineering-api`, backend dedicado ao plugin, novo container ou API paralela. A rota `engineering/...` é uma seção HTTP interna do `api-delpi`. O banco/armazenamento será integrado pelo serviço existente, seguindo seus patterns e migrações canônicas.
+
+
+- **Producer definido pelo solicitante:** serviço **API DELPI existente** (`api-delpi`), sem criação de API, serviço, container ou deployment de Engenharia. `engineering` designa somente namespace/agrupamento de rotas no serviço existente; validar padrões internos e persistência.
 - Consumer: MFE `metalography`, eventualmente Portal de Engenharia, ainda não implementado.
 - Base gateway existente: `/apps/api-delpi`. **Prefixo de domínio proposto**: `/engineering/metallographic-reports`.
-- O documento `platform-frontend-mfe-experience.mdc` exige que MFE com API própria não consuma `api-delpi` diretamente. Definir contratualmente se há BFF/adapter próprio antes da implementação; **ARCHITECTURE_DECISION_REQUIRED** para o wiring, sem autorizar bypass da regra.
+- O plugin MFE será apenas frontend consumidor. Não criar API própria do MFE nem API separada de Engenharia. Verificar como os MFEs existentes consomem a API DELPI e compatibilizar o cliente HTTP com a regra `platform-frontend-mfe-experience.mdc`; se a regra exigir outro boundary, registrar conflito para decisão, **sem criar outro serviço por padrão**.
 - `EXISTING_EQUIVALENT=TO_INVENTORY`; `REUSE_DECISION=PENDING`. Inventariar rotas de Engenharia, upload/arquivos, armazenamento, PDF, RBAC e consumidores.
 - Sem schema de DB, migration, endpoint real, permissão cadastrada, deploy ou teste criado por este texto.
 - Alteração planejada: **ADDITIVE**, condicionada à ausência de colisão e à compatibilidade comprovada.
@@ -163,4 +166,4 @@ Não revelar path físico, stacktrace, SQL, token ou segredo. Correlation ID e a
 10. Testar OpenAPI, operationId, segurança, schema e status codes, suíte backend, client/BFF/MFE, integração no Portal, mobile/a11y e CI.
 11. Validar documentação, README, índice de endpoints **somente após implementação**, migrations e ledger factual, deploy e smoke real quando autorizados.
 
-**STOP CONDITIONS:** owner real conflitante; equivalente existente; decisão BFF/direct API sem resolução; permissão/dados sem contrato; schema de Engenharia indefinido; geração PDF diferente do HTML sem aceite; retenção/upload sem segurança aprovada. **Não executar implementação apenas a partir desta proposta.**
+**STOP CONDITIONS:** proposta de nova API/serviço de Engenharia; owner real conflitante; equivalente existente; boundary HTTP não validada; permissão/dados sem contrato; schema de Engenharia indefinido; geração PDF diferente do HTML sem aceite; retenção/upload sem segurança aprovada. **Não executar implementação apenas a partir desta proposta.**
