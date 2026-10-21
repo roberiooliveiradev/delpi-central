@@ -67,9 +67,9 @@ Implementado em frontend-only, somente slots publicos do `DataTableSection` e CS
 
 | ID | Status | Resolucao |
 |---|---|---|
-| T01 | DONE | toolbar integrada por divisor (`cf-table-toolbar` border-top) + eliminada margem duplicada `.cf-table-section` dentro de `cf-page-stack` |
+| T01 | DONE (V3) | banda unica header+toolbar via flex-wrap da `.cf-table-section` — controles reais na mesma linha do titulo, quebram para a linha seguinte em telas estreitas |
 | T02 | DONE | contagem "N registros" em pill (`cf-table-section__meta`), valor do universo filtrado via `labels.recordsCount` |
-| T03 | DONE | controles nativos agrupados (pageSize | extras `margin-left:auto`); divider melhora coesao; zero botoes inertes |
+| T03 | DONE (V3) | controles nativos agrupados a direita da banda unica; zero botoes inertes |
 | T04 | KEEP | sem `serverSort` por coluna no contrato — headers permanecem honestos, sem indicadores clicaveis enganosos |
 | T05 | DECISION_REQUIRED | Excel: sem contrato de exportacao — nao implementado |
 | T06 | TARGET_FUTURE | Tabela/Cards: sem `renderCard` nem decisao de produto |

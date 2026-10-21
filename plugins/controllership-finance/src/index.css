@@ -197,10 +197,42 @@
   overflow: visible;
 }
 
-/* Painel de resultados (doc 51): o gap do stack já separa as seções —
+/* Painel de resultados (doc 51/52): o gap do stack já separa as seções —
    a margem própria da seção de tabela não deve somar. */
 .dashboard-controllership-finance .cf-page-stack .cf-table-section {
   margin-bottom: 0;
+}
+
+/* Banda única (doc 52 §2): a `<section>` do kit vira flex-wrap, então o
+   header (título + contagem) e a toolbar nativa (itens/página, Fonte,
+   Colunas) dividem a mesma linha em desktop; em telas estreitas a
+   toolbar quebra para a linha seguinte, ainda dentro do painel. Os
+   demais filhos (loading, filtros, tabela, paginação) seguem 100%. */
+.dashboard-controllership-finance .cf-table-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  --delpi-ui-table-cell-pad-y: 8px;
+}
+
+.dashboard-controllership-finance .cf-table-section > * {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.dashboard-controllership-finance .cf-table-section__header {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dashboard-controllership-finance .cf-table-toolbar {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0 0 12px auto;
+  justify-content: flex-end;
 }
 
 /* Contagem de registros como pill discreto ao lado do título (T02).
@@ -214,13 +246,7 @@
   background: var(--cf-surface-muted);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-
-/* Toolbar integrada ao painel: faixa separada por divisor, mesma
-   superfície — controles nativos (itens/página, fonte, colunas). */
-.dashboard-controllership-finance .cf-table-toolbar {
-  border-top: 1px solid var(--cf-border);
-  padding-top: 12px;
+  white-space: nowrap;
 }
 
 /* Células das tabelas da Central — hierarquia em duas linhas. */

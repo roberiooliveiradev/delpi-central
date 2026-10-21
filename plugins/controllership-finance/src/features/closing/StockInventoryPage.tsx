@@ -211,6 +211,7 @@ export function StockInventoryPage() {
       {
         key: "productType",
         header: "Tipo",
+        className: "cf-table__col--status",
         render: (row) =>
           row.productType ? (
             <CfStatusBadge label={row.productType} variant="neutral" />
@@ -221,22 +222,26 @@ export function StockInventoryPage() {
       {
         key: "productGroup",
         header: "Grupo",
+        className: "cf-table__col--compact",
         render: (row) => row.productGroup ?? "—",
       },
       {
         key: "unit",
         header: "UM",
         mobileLabel: "Unidade",
+        className: "cf-table__col--compact",
         render: (row) => row.unit ?? "—",
       },
       {
         key: "warehouse",
         header: "Armazém",
+        className: "cf-table__col--compact",
         render: (row) => row.warehouse ?? "—",
       },
       {
         key: "branchCode",
         header: "Filial",
+        className: "cf-table__col--compact",
         render: (row) =>
           row.branchCode ? (
             `Filial ${row.branchCode}`
@@ -248,12 +253,14 @@ export function StockInventoryPage() {
         key: "historicalQuantity",
         header: "Quantidade",
         align: "right",
+        className: "cf-table__col--numeric",
         render: (row) => formatQuantity(row.historicalQuantity),
       },
       {
         key: "historicalStockValue",
         header: "Valor histórico",
         align: "right",
+        className: "cf-table__col--numeric",
         render: (row) => (
           <span className="cf-cell-amount">
             {formatAmount(row.historicalStockValue)}

@@ -95,6 +95,32 @@ Quando `report_scope=all_products`, todos os tipos permanecem, inclusive II, EM,
 
 A maior limitacao atual: `DataTableSection` fornece controles e slots, mas talvez nao permita replicar sem composicao maior a posicao de toolbar ou toggle do mockup. **Nao contornar com uma tabela nova por conta propria**: demonstrar limite concreto e alternativas com impacto e recomendacao.
 
+## 7b. Resultado da execucao V3 (pos `3b7aa14a07`)
+
+Implementado somente com slots publicos do `DataTableSection` + CSS escopado
+`.dashboard-controllership-finance` — zero alteracao em componente
+compartilhado, contrato ou feature:
+
+- **Banda unica header+toolbar (§2)**: a `<section>` do kit passa a
+  `display:flex; flex-wrap` — header (titulo + pill `N registros`) a
+  esquerda e toolbar nativa (Itens/pagina + Fonte + Colunas) a direita
+  na mesma linha; em largura estreita a toolbar quebra para a linha
+  seguinte dentro do painel. Demais filhos (loading, tabela, paginacao)
+  seguem em linha propria 100%.
+- **Proporcoes de coluna (§2 "Largura")**: classes do kit via
+  `className: "cf-table__col--*"` — `compact` (datas, parcela, moeda,
+  filial, grupo, UM, armazem), `wrap`/`wide` (fornecedor, natureza,
+  tipo de movimento, descricao), `status` (direcao, vinculo, tipo de
+  produto), `numeric` (valor, quantidade, valor historico);
+  `Parcela` com `align:"center"`. Densidade sutil via
+  `--delpi-ui-table-cell-pad-y: 8px`.
+- Mantido: pill de contagem, `source_missing` sem tabela (V2/T18),
+  badges semanticos reais, moeda de origem, sem R$.
+
+Verificacao: Vitest 91/91, estruturais 17/17, lint 0 erros, tsc, build.
+Screenshot comparativo autenticado desktop/mobile/2 temas:
+`TEST_NOT_RUN` — sem sessao; per AC-T09, fidelidade visual NAO declarada.
+
 ## 8. Relatorio inicial exigido do Devin
 
 ```text

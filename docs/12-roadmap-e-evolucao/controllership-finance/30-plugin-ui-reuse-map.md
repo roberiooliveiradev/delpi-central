@@ -695,11 +695,12 @@ de palavra), evitando coluna gigante sem inventar larguras locais.
 existem no kit para outros casos.
 
 Painel de resultados: a contagem do `DataTableSection` (`recordsCount`)
-fica em `cf-table-section__meta` — estilizada como pill discreto no
-escopo do MFE; a toolbar nativa ganha divisor superior
-(`cf-table-toolbar` border-top) e a seção de tabela não soma margem
-extra dentro de `cf-page-stack`. Não criar toolbar/tabela paralela —
-essas faixas são a API de composição do kit.
+fica em `cf-table-section__meta` — pill discreto ao lado do título.
+Header e toolbar nativa dividem a MESMA linha via `display:flex;
+flex-wrap` na `.cf-table-section` (toolbar quebra para baixo em telas
+estreitas) — composição CSS escopada sobre o DOM do kit, sem fork nem
+segunda toolbar. A seção de tabela não soma margem extra dentro de
+`cf-page-stack`. Densidade via `--delpi-ui-table-cell-pad-y` no escopo.
 
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,

@@ -28,9 +28,11 @@ tipados `available` / `incomplete` / `source_missing` /
 vazia (ausência não é saldo zero).
 
 Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
-`cfDataTableUi` — contagem do universo filtrado em pill junto ao título,
-toolbar nativa (itens/página + Fonte + Colunas), células em duas linhas
-(`cf-cell-primary/secondary`), colunas longas com `cf-table__col--wrap`,
+`cfDataTableUi` — banda única com título + pill de contagem do universo
+filtrado à esquerda e controles nativos (itens/página + Fonte + Colunas)
+à direita, quebrando para a linha seguinte em telas estreitas; células
+em duas linhas (`cf-cell-primary/secondary`), proporções de coluna via
+classes do kit (`cf-table__col--wrap/wide/compact/status/numeric`),
 preferências de coluna/fonte persistidas pelo kit.
 
 ## Runtime

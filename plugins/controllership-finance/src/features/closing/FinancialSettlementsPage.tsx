@@ -313,6 +313,7 @@ export function FinancialSettlementsPage() {
       {
         key: "settlementDate",
         header: "Data da baixa",
+        className: "cf-table__col--compact",
         render: (row) => formatCivilDate(row.settlementDate),
       },
       {
@@ -328,12 +329,14 @@ export function FinancialSettlementsPage() {
       {
         key: "installment",
         header: "Parcela",
+        align: "center",
+        className: "cf-table__col--compact",
         render: (row) => row.installment ?? "—",
       },
       {
         key: "party",
         header: applied?.side === "receivable" ? "Cliente" : "Fornecedor",
-        className: "cf-table__col--wrap",
+        className: "cf-table__col--wide",
         render: (row) => {
           const code = [row.partyCode, row.partyStore]
             .filter(Boolean)
@@ -371,6 +374,7 @@ export function FinancialSettlementsPage() {
         key: "movementType",
         header: "Tipo mov.",
         mobileLabel: "Tipo de movimento",
+        className: "cf-table__col--wrap",
         render: (row) =>
           row.movementType ? (
             <>
@@ -388,6 +392,7 @@ export function FinancialSettlementsPage() {
       {
         key: "paymentDirection",
         header: "Direção",
+        className: "cf-table__col--status",
         // `side` do contrato é real; o código cru `paymentDirection` (D4)
         // permanece visível — sem reclassificar BA/ES/VL/CP.
         render: (row) =>
@@ -412,12 +417,14 @@ export function FinancialSettlementsPage() {
       {
         key: "currencyCode",
         header: "Moeda",
+        className: "cf-table__col--compact",
         render: (row) => row.currencyCode ?? "—",
       },
       {
         key: "settlementAmount",
         header: "Valor",
         align: "right",
+        className: "cf-table__col--numeric",
         render: (row) => (
           <span className="cf-cell-amount">
             {formatAmount(row.settlementAmount)}
@@ -427,11 +434,13 @@ export function FinancialSettlementsPage() {
       {
         key: "dueDate",
         header: "Vencimento",
+        className: "cf-table__col--compact",
         render: (row) => formatCivilDate(row.dueDate),
       },
       {
         key: "linkStatus",
         header: "Vínculo",
+        className: "cf-table__col--status",
         render: (row) => (
           <CfStatusBadge
             label={LINK_STATUS_LABELS[row.linkStatus] ?? row.linkStatus}
@@ -442,6 +451,7 @@ export function FinancialSettlementsPage() {
       {
         key: "branchCode",
         header: "Filial",
+        className: "cf-table__col--compact",
         render: (row) =>
           row.branchCode ? (
             `Filial ${row.branchCode}`
