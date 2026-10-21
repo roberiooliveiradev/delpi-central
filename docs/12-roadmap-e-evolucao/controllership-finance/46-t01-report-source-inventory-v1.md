@@ -299,3 +299,15 @@ Cabeçalho do documento: `REGISTRO DE INVENTÁRIO`, `DELPI COMPONENTES LTDA`, `M
 **Comparação com exportações originais recebidas pelo PO:** `Estoque.pdf` indica `FOLHA 000.101` / total **3.946.431,87**; `Resumo Estoque.pdf` indica `FOLHA 000.074` / total **2.976.967,56**; **nenhum corresponde exatamente à tela de 00:31:00, folha 91/91, total 3.776.994,69**. Não se conclui falha NotebookLM quanto ao total 3.776.994,69, que está corroborado por frame. Vídeo tem relógio visível em 30/09/2026, ~15:02 e a página aponta estoque em 30/09/2026; PDFs foram criados em 01/10/2026 ~19:22 e 19:37 UTC segundo metadados. Isto sugere **emissões/cortes distintos**, ainda não prova quais filtros/layout diferiram ou se houve processamento entre elas.
 
 **Ponto de controle:** a numeração 91 vs 101 vs 74 e a existência de duas abas P7 na gravação orientam investigação das perguntas/layout de cada saída. Sem registros de parâmetros e PDF completo da emissão do vídeo, `P7_REPORT_VARIANT=TO_VERIFY`; `VIDEO_P7_31M_TOTAL=PROVEN_VISUAL`; `SEPT_EXPORT_COMPARABILITY=INCONCLUSIVE`; `R03_PARITY=TEST_NOT_RUN`. Avançar por evidência e não forçar equivalência de três totais.
+
+
+## 18. R03 - P7: dois escopos confirmados por Joici (relato do PO, 21/10/2026)
+
+Joici informou ao PO que **Estoque.pdf** e **Resumo Estoque.pdf** sao duas saidas P7 com finalidades e selecoes de produtos diferentes. Evidencia: `OWNER_INFORMED_VIA_PO`; arquivos PDF comprovam os grupos e valores impressos, nao os parametros escolhidos na rotina.
+
+- `Estoque.pdf`: P7 abrangente para analise interna do estoque, incluindo MP, PI, PA, insumos e demais tipos. Matriz, 30/09/2026, folha 101, total impresso **3.946.431,87**.
+- `Resumo Estoque.pdf`: P7 restrito a MP, PI e PA solicitado pelo Financeiro para seu acompanhamento. Mesma data/Matriz, folha 74, total impresso **2.976.967,56**. Nao equiparar automaticamente a saida fiscal Bloco H.
+- Diferenca entre totais **969.464,31**. A diferenca de escopo tem confirmacao funcional, mas o delta ainda **nao foi reconciliado linha a linha**. MP em estoque difere **587.698,28** (3.071.684,80 versus 2.483.986,52); MP em processo difere **77.251,73** (354.938,50 versus 277.686,77). Portanto, a retirada das outras categorias visiveis, sozinha, nao explica a diferenca. PA 190.511,24 e PI 24.528,60 em estoque coincidem nos dois PDFs.
+- A pagina 91/91 do video traz outra emissao P7 com total 3.776.994,69; ainda nao equiparar com nenhum dos dois PDFs. Investigar filtros, competencia efetiva, depositos, momento de geracao e parametros de processo/custeio.
+
+Conceitos funcionais TARGET para inventario (nao contratos liberados): `P7_ALL_PRODUCT_TYPES` e `P7_MP_PI_PA`. `BUSINESS_PURPOSE=OWNER_INFORMED_VIA_PO`; `PDF_NUMBERS=PROVEN`; `EXACT_FILTERS=TO_INVENTORY`; `QUANTITATIVE_PARITY=INCONCLUSIVE`; `RUNTIME_AUTHORIZATION=NO`. Registrar como variantes do mesmo P7, sem novas permissoes.
