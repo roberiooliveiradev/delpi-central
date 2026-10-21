@@ -1799,6 +1799,7 @@ services:
       DELIA_LLM_MODEL: ${DELIA_LLM_MODEL:-}
       DELIA_LLM_API_KEY: ${DELIA_LLM_API_KEY:-}
       DELIA_LLM_TIMEOUT_SECONDS: ${DELIA_LLM_TIMEOUT_SECONDS:-30}
+      DELIA_MODEL_STAGE_TIMEOUT_SECONDS: ${DELIA_MODEL_STAGE_TIMEOUT_SECONDS:-30}
 
       # VD-F03 dictation.transcription.v1 — dedicated audio-capable model;
       # unset fails closed (dictation status unavailable).
@@ -1832,6 +1833,9 @@ services:
       # LOOP-03R2A: total wall-clock budget for one interaction turn —
       # stays >=20s under the ~100s Cloudflare edge timeout.
       DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
+      # CRI E1: central ON/OFF for conversational response intelligence —
+      # default OFF; fail-closed to baseline on invalid/absent resources.
+      DELIA_RESPONSE_INTELLIGENCE_ENABLED: ${DELIA_RESPONSE_INTELLIGENCE_ENABLED:-}
       # C4-MCP-GOVERNED-READS-01/02: bounded read switches — each flag
       # enables exactly its own authorized tuple.
       # DAVI: execute_delpi_information -> search_products only.

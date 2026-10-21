@@ -1435,6 +1435,9 @@ services:
       # PARAMETROS_MINHADELPI é multi-ambiente: sem filtro, linhas vazias de
       # outro ambiente (ex.: PATH_AUTH@2) sobrescrevem as do ambiente produtivo.
       INTRANET_PARAMS_AMBIENTE: ${INTRANET_PARAMS_AMBIENTE:-1}
+      # Exact MCP resource audience this service requires on bearer tokens
+      # (canonical public URL; must match what the issuer mints).
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_API_DELPI:-https://minhadelpi.com.br/apps/api-delpi/mcp}
 
       # Gates de escrita fornecedor Protheus — default OFF; ligar somente após
       # homologação TOTVS + aceite PO (protheus-rest-supplier-write-handoff.md)
@@ -1676,6 +1679,9 @@ services:
       TM_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES: ${TM_SIGN_INVITE_MAIL_TRACE_INTERVAL_MINUTES:-15}
       TM_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT: ${TM_SIGN_INVITE_MAIL_TRACE_BATCH_LIMIT:-50}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      # Exact MCP resource audience this service requires on bearer tokens
+      # (canonical public URL; must match what the issuer mints).
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_TRANSFORMOMETRO:-https://minhadelpi.com.br/apps/transformometro-api/mcp}
       GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
       GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
       GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
@@ -1998,6 +2004,10 @@ services:
       # application always answers before the edge terminates the
       # request (524).
       DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
+      # CRI E1: central ON/OFF for conversational response intelligence —
+      # default OFF; fail-closed to baseline on invalid/absent resources.
+      # Stays unset in prod .env unless rollout is separately authorized.
+      DELIA_RESPONSE_INTELLIGENCE_ENABLED: ${DELIA_RESPONSE_INTELLIGENCE_ENABLED:-}
 
     depends_on:
       keycloak:
@@ -3121,6 +3131,9 @@ services:
       TV_DASHBOARD_API_ROOT_PATH: /apps/tv-dashboard-api
       TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP: ${TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP:-true}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      # Exact MCP resource audience this service requires on bearer tokens
+      # (canonical public URL; must match what the issuer mints).
+      MCP_RESOURCE_URL: ${MCP_RESOURCE_URL_TV_DASHBOARD:-https://minhadelpi.com.br/apps/tv-dashboard-api/mcp}
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}

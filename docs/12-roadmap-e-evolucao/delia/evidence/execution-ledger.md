@@ -16983,3 +16983,23 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.362 — CRI persistent activation (dev) + implementation audit (2026-10-21)
+
+**TASK:** DELIA-CRI-PERSISTENT-ACTIVATION-AND-CODE-REVIEW-01. Phase A first, audit second. **Activation PASS on the real service** (`delpi-delia-api`, DELIA_ENV=development): applied the doc-80-proposed MCP audience fix as **versioned infra config** — `MCP_RESOURCE_URL=<canonical>` now mapped in `infra/docker-compose.yml` (dev file already carried it since cc65cc6388; the running specialists were stale base-file containers resolving required aud from `PUBLIC_BASE_URL=http://localhost`); flag `DELIA_RESPONSE_INTELLIGENCE_ENABLED=true` persisted via gitignored `infra/.env` + explicit compose mapping (default OFF → production gate preserved). Boot proves `requested=cri effective=cri`, instruction v1 (sha256 7e3c5515…) + vocabulary v2 (sha256 c947616d…) loaded, `DELIA_RUNTIME_SHA` pinned and logged (`2f6cb084db…`). **Live READ turns on the real service:** TÉO `record_read` GROUNDED (conservative coverage hedge on superlative), VISTA `list_playlists` GROUNDED, DAVI `execute_delpi_information` GROUNDED (3 examples + attributed total 65 — DAVI-MCP owner distinct from openapi:delpi), DELPI `search_products` GROUNDED (attributed total 55324). **Persistence PROVEN:** `docker restart` + container recreation + no-change compose reapply all keep `effective=cri`; governed rollback available (unset flag + recreate); activation left ON (healthy). **Audit EXECUTED (doc 81 §Report B):** leaf separation confirmed (outcome_assessment/conversational_response/cri_instruction_resource are pure deterministic leaves; model output stays hypothesis); no dead code; no long prose in Python; single edge, single verdict; 51+ E2 tests; orchestration.py 10532-line size is pre-existing debt outside scope. Classification: all CRI modules KEEP; micro-SIMPLIFY `_temporal_orders`; CONSOLIDATE coverage derivation vs `paginated_result_semantics` (owner decision); REQUIRES_DECISION on pluralization template (`Aqui estão 1 exemplos` observed live), superlative-hedging policy, E3-R2 lexical residual. `RUNTIME_CODE_CHANGED=NO` (CRI code), `MATERIAL_ACT=0`, `ADDITIONAL_MODEL_CALLS=0`, `CRI_PRODUCTION_ON=NOT_AUTHORIZED`, `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`. Report: [81](../corrections/mcp-contextual-intelligence-orchestration/81-cri-persistent-activation-and-code-audit.md).
+
+```text
+CRI_PERSISTENT_ACTIVATION=EXECUTED_PASS_DEV
+CRI_DEV_ENABLED=YES_PERSISTENT (restart+recreate+reapply verified)
+RUNTIME_SHA=2f6cb084dbae9db06affb3b59fe6c5a0a264e5c4 (pinned, logged)
+MCP_RESOURCE_URL_FIX=APPLIED_VERSIONED (compose base+dev, shared containers recreated)
+FEATURE_FLAG_PERSISTENCE=INFRA_ENV (gitignored .env + versioned compose mapping; default OFF)
+TEO_LIVE=PASS / VISTA_LIVE=PASS / DAVI_LIVE=PASS / DELPI_LIVE=PASS
+AUDIT=EXECUTED_NO_MANDATORY_REFACTOR
+MATERIAL_ACT=0
+RUNTIME_CODE_CHANGED=NO
+CRI_PRODUCTION_ON=NOT_AUTHORIZED (prod mapping defaults OFF; rollout gate pending)
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```
