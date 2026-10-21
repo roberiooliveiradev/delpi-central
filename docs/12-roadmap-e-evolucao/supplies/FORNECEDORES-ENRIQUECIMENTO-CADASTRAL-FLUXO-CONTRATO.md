@@ -263,3 +263,8 @@ Desktop: tabela de comparação; mobile: cards com valores empilhados; labels/He
 Produzir inventário comparativo de provedores oficiais e contratos disponíveis; mapear SA2, campos protegidos, campos publicamente verificáveis e campos elegíveis para PUT; validar as decisões D-01..D-10 com PO; fazer avaliação de LGPD e security. Só então preparar contrato freeze e pedido explícito de GO para implementação.
 
 **STATUS FINAL DESTA FRENTE:** `TARGET / DOCUMENTED`; `IMPLEMENTATION = NOT_AUTHORIZED`; `NO CODE / NO DEPLOY / NO WRITES`.
+
+
+## Complemento específico de frontend — UX-01..UX-06
+
+A definição detalhada de **cada superfície, navegação, wireframes desktop/mobile, 13 responsabilidades de componentes, props/estados conceituais, interação individual/em lote, modal de revisão, histórico condicional, Help, acessibilidade e 20 critérios UX-AC** está em [FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md). **TARGET/DOCUMENTED; não cria rotas nem componentes**. O desenho da ficha existente é preferido a novas páginas desnecessárias. O contrato de backend ainda depende do freeze de sources, armazenamento de decisões, AuthZ, LGPD e policy do lote.
