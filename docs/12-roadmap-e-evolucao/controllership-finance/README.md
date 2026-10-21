@@ -231,3 +231,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Auditoria de lacunas das tabelas R01/R02 e R03 — TARGET (21/10/2026)
 
 [Documento 51 — auditoria e gates Table UX](./51-r01-r03-table-ux-gap-audit-and-implementation-gates.md): matriz T01-T19 das diferencas observadas nas capturas atuais versus mockups ilustrativos, capacidades reais de `DataTableSection`, restricoes de contrato/seguranca, blueprint de toolbar, verificacao visual e handoff ao Devin. `VISUAL_REWORK=TARGET`; `RUNTIME_GATE=PENDING`. Exportacao Excel, view Cards e links/acoes por linha dependem de gates especificos: nao sao bugs nem autorizacao implicita.
+
+
+### Blueprint detalhado das tabelas de fechamento (design target, 21/10/2026)
+
+[Doc 52 - R01/R02 e R03: tabelas, colunas, toolbar, regras de visualizacao e gates](./52-r01-r03-table-visual-blueprint-and-acceptance.md). Especificacao detalhada para Devin, com mockups somente como referencia visual, sem inventar dados, exportacao, Cards, links ou outros recursos sem contrato. `DESIGN=TARGET`; `RUNTIME_GATE=PENDING`.
