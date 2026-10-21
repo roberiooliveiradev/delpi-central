@@ -202,13 +202,13 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 - Joici tenta abrir a rotina DELPI `Relacao de Baixas DLP [02.9.0006]`, descrita pelo PO como reunindo movimentacoes de baixas do Financeiro, tanto pagar quanto receber, com contraparte fornecedor/cliente e identificacao CNPJ.
 - A tentativa da gravacao falha. Captura apresenta `Help: NO_IX`, com texto de que uma funcao de usuario nao esta compilada no repositorio. Em outra captura, a Central de Diagnostico identifica a rotina `U_FINR190C` (leitura visual; confirmar no codigo customizado) com estado `Nao configurado`; nao inferir que o erro inteiro decorre somente desse campo.
 - **Nao houve geracao de output da Relacao de Baixas DLP neste trecho**; `REPORT_OUTPUT=TEST_NOT_RUN` / `ERROR=PROVEN_SCREENSHOT`. Nao chamar a rotina de FINR190 padrao sem verificacao.
-- Segundo PO/Joici, o relatorio configurado especificamente para DELPI combina **cinco saidas** usadas pela Aliança, parceira terceirizada da Controladoria, para importacao em sua ferramenta:
+- Segundo PO/Joici, o relatorio configurado especificamente para DELPI combina **cinco saidas** usadas pela Aliance, parceira terceirizada da Controladoria, para importacao em sua ferramenta:
   1. Excel de Contas a Pagar;
   2. Excel de Contas a Receber;
   3. PDF de Contas a Receber por data;
   4. PDF de Contas a Pagar por data;
   5. PDF de Contas a Pagar por natureza de operacao.
-- A fala relata que essas saidas permitem compor a informacao consolidada; **nao comprova** que sejam um `UNION` simples, que tenham o mesmo granulo/linhas nem as chaves e o layout de importacao da Aliança. O PDF/Excel real do ultimo fechamento, mapeamento campo a campo, duplicidades, competencias, filtragem e parametrizacao estao `TO_INVENTORY`.
+- A fala relata que essas saidas permitem compor a informacao consolidada; **nao comprova** que sejam um `UNION` simples, que tenham o mesmo granulo/linhas nem as chaves e o layout de importacao da Aliance. O PDF/Excel real do ultimo fechamento, mapeamento campo a campo, duplicidades, competencias, filtragem e parametrizacao estao `TO_INVENTORY`.
 - Relacao com Portal: R01/R02 ja consultam **eventos de baixas financeiras** via BFF, portanto ha fonte candidata reutilizavel para analise READ. Contudo `R01_R02_TO_DLP_PARITY=TEST_NOT_RUN`; CNPJ no payload, abrangencia de todas as naturezas, cinco saidas e layout da importacao nao estao comprovados. **Nao adicionar CNPJ por inferencia nem exportacao do universo inteiro sem contrato e gate.**
 - Diferenca para Registro 06: Posicao dos Titulos em aberto (FINR150/FINR130 provisoriamente) **nao equivale** a Relacao de Baixas DLP; tampouco a compensacao de titulos e a mesma transacao que uma baixa.
 
@@ -223,7 +223,7 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 | Item | Evidencia atual | O que falta |
 |---|---|---|
 | `U_FINR190C` DELPI | screenshot de diagnostico e falha `NO_IX` | owner do fonte customizado, versao, regra/rotina e motivo preciso de indisponibilidade |
-| Cinco exportacoes Aliança | relato PO | arquivos originais do ultimo fechamento, filtro, campo, relacao entre formatos, contrato de ingestao |
+| Cinco exportacoes Aliance | relato PO | arquivos originais do ultimo fechamento, filtro, campo, relacao entre formatos, contrato de ingestao |
 | R01/R02 vs relatorio DELPI | endpoints operacionais implementados | prova campo a campo e reconciliacao de totais/linhas com cinco saidas |
 | Calculo custo | etapa 100% e checks visiveis | resultado de job, historico e contrato de consulta |
 | Analise/revisao custo medio | tabela e variacoes visiveis | criterios de excecao, tolerancias e resultado humano por competencia |
