@@ -970,7 +970,10 @@ def create_mcp_server() -> MCPServer:
             "set_assignee (ticket_id + user_id — resolve the target user "
             "first via helpdesk_read catalog users purpose=assignee; never "
             "infer an id) | add_followup (ticket_id + content; optional "
-            "request_type_id) | create_task (ticket_id + content; optional "
+            "request_type_id) | update_followup (ticket_id + followup_id + "
+            "content — edits the body of an existing followup; read the "
+            "ticket first to resolve the real followup_id, never infer it) | "
+            "create_task (ticket_id + content; optional "
             "state/duration_seconds/task_category_id/user_tech_id/"
             "group_tech_id/planned_begin/planned_end) | add_solution "
             "(ticket_id + content; optional solution_type_id) | "
@@ -1000,6 +1003,7 @@ def create_mcp_server() -> MCPServer:
     def prepare_helpdesk_change(
         action: _HelpdeskActionParam,
         ticket_id: int | None = None,
+        followup_id: int | None = None,
         title: str | None = None,
         file: _ChatGptFileParam | None = None,
         description: str | None = None,
@@ -1027,6 +1031,7 @@ def create_mcp_server() -> MCPServer:
         return bridge.tool_prepare_helpdesk_change(
             action=action,
             ticket_id=ticket_id,
+            followup_id=followup_id,
             title=title,
             description=description,
             category_id=category_id,

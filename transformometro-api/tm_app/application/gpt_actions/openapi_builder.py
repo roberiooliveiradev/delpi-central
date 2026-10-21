@@ -2022,6 +2022,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "create_ticket",
                                 "set_assignee",
                                 "add_followup",
+                                "update_followup",
                                 "create_task",
                                 "add_solution",
                                 "request_validation",
@@ -2038,6 +2039,14 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                         "ticket_id": {
                             "type": "integer",
                             "description": "Required for all ticket-scoped actions.",
+                        },
+                        "followup_id": {
+                            "type": "integer",
+                            "description": (
+                                "Required for update_followup — real followup "
+                                "id resolved via gpt_helpdesk_read(action=ticket) "
+                                "timeline; never inferred."
+                            ),
                         },
                         "title": {
                             "type": "string",

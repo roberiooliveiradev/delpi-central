@@ -504,6 +504,104 @@ class TicketService:
         self._idempotency.save(subject, operation, key, stored)
         return stored
 
+    def update_followup(
+        self,
+        subject: str,
+        ticket_id: int,
+        followup_id: int,
+        *,
+        content: str,
+        viewer_email: str = "",
+        idempotency_key: str | None = None,
+    ) -> StoredResponse:
+        """Edit the content of an existing followup on the ticket.
+
+        The entry must exist in the ticket's own timeline (kind=followup,
+        same id) — a followup belonging to another ticket is not_found,
+        never silently updated. The write runs under the actor's own OAuth
+        token, so GLPI's native canUpdate decides edit rights (fail closed);
+        the BFF never widens them with technical credentials. Read-back is
+        authoritative: a PATCH that does not persist raises instead of a
+        false 200.
+        """
+        key = _require_key(idempotency_key)
+        operation = f"update_followup:{ticket_id}:{followup_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        token = self._token(subject)
+        ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        entry = next(
+            (
+                item
+                for item in ticket.timeline
+                if item.kind == "followup" and int(item.id) == int(followup_id)
+            ),
+            None,
+        )
+        if entry is None:
+            raise GlpiNotFound("Acompanhamento não encontrado neste chamado.")
+        allowed = {item.document_id for item in ticket.attachments}
+        html_refs = {
+            doc_id
+            for ref_ticket, doc_id in extract_bff_attachment_refs(content)
+            if ref_ticket == ticket_id
+        }
+        if html_refs - allowed:
+            ticket = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+            allowed = {item.document_id for item in ticket.attachments}
+        for doc_id in html_refs - allowed:
+            if self._glpi.ticket_owns_document(token, ticket_id, doc_id):
+                allowed.add(doc_id)
+        content_html = _prepare_message_html(
+            content,
+            "content",
+            ticket_id=ticket_id,
+            allowed_document_ids=allowed,
+        )
+        self._glpi.update_followup(
+            token,
+            ticket_id,
+            int(followup_id),
+            content_html,
+        )
+        refreshed = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        updated = next(
+            (
+                item
+                for item in refreshed.timeline
+                if item.kind == "followup" and int(item.id) == int(followup_id)
+            ),
+            None,
+        )
+        expected_text = " ".join(
+            message_html_to_plain_text(content_html).split()
+        )
+        actual_text = " ".join(
+            message_html_to_plain_text(
+                updated.content_html or updated.content or ""
+            ).split()
+        ) if updated else ""
+        if updated is None or actual_text != expected_text:
+            raise GlpiValidation(
+                "O acompanhamento não foi confirmado no chamado."
+            )
+        stored = StoredResponse(
+            status_code=200,
+            body={
+                "id": int(followup_id),
+                "content": updated.content,
+                "content_html": updated.content_html,
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info(
+            "helpdesk_update_followup ticket_id=%s followup_id=%s",
+            ticket_id,
+            followup_id,
+        )
+        return stored
+
     def create_solution(
         self,
         subject: str,

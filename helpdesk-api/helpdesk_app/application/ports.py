@@ -98,6 +98,14 @@ class GlpiGateway(Protocol):
         request_type_id: int | None = None,
     ) -> int: ...
 
+    def update_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        followup_id: int,
+        content: str,
+    ) -> None: ...
+
     def add_ticket_solution(
         self,
         access_token: str,

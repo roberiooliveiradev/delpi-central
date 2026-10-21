@@ -167,7 +167,8 @@ class GptHelpdeskChangeBody(BaseModel):
     action: str = Field(
         ...,
         description=(
-            "create_ticket | set_assignee | add_followup | create_task | "
+            "create_ticket | set_assignee | add_followup | update_followup | "
+            "create_task | "
             "add_solution | request_validation | accept_solution | "
             "reject_solution | submit_satisfaction | accept_validation | "
             "reject_validation | delete_ticket | unlink_glpi_session | "
@@ -175,6 +176,7 @@ class GptHelpdeskChangeBody(BaseModel):
         ),
     )
     ticket_id: int | None = None
+    followup_id: int | None = None
     title: str | None = None
     file: GptFileParam | None = Field(
         default=None,

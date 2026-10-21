@@ -1037,6 +1037,29 @@ class HttpxGlpiClient:
         )
         return parse_created_id(payload)
 
+    def update_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        followup_id: int,
+        content: str,
+    ) -> None:
+        """Update an existing ITILFollowup via HLAPI PATCH under the actor's
+        own OAuth token — GLPI ``canUpdate`` on that profile is the
+        authorization of record (a user without edit rights gets 403, fail
+        closed). Only ``content`` is sent; authorship and siblings untouched.
+        """
+        ticket_id = int(ticket_id)
+        followup_id = int(followup_id)
+        if ticket_id <= 0 or followup_id <= 0:
+            raise GlpiValidation("followup_id inválido.")
+        self._json(
+            "PATCH",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}/Timeline/Followup/{followup_id}",
+            token=access_token,
+            json_body={"content": content},
+        )
+
     def add_ticket_solution(
         self,
         access_token: str,

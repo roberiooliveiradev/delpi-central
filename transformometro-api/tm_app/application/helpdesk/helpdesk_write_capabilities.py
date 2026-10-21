@@ -36,6 +36,7 @@ HELPDESK_ACTION_TO_CAPABILITY: dict[str, str] = {
     "create_ticket": "helpdesk_create_ticket",
     "set_assignee": "helpdesk_set_assignee",
     "add_followup": "helpdesk_add_followup",
+    "update_followup": "helpdesk_update_followup",
     "create_task": "helpdesk_create_task",
     "add_solution": "helpdesk_add_solution",
     "request_validation": "helpdesk_request_validation",
@@ -62,6 +63,7 @@ _REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     ),
     "helpdesk_set_assignee": ("user_id",),
     "helpdesk_add_followup": ("content",),
+    "helpdesk_update_followup": ("followup_id", "content"),
     "helpdesk_create_task": ("content",),
     "helpdesk_add_solution": ("content",),
     "helpdesk_request_validation": ("approver_id",),
@@ -149,8 +151,31 @@ def _validation_status(ticket: dict[str, Any], validation_id: int) -> int | None
     return None
 
 
+def _timeline_followup(ticket: dict[str, Any], followup_id: int) -> dict[str, Any] | None:
+    for entry in ticket.get("timeline") or []:
+        if str(entry.get("kind") or "") != "followup":
+            continue
+        if str(entry.get("id")) == str(followup_id):
+            return entry
+    return None
+
+
+def _plain_text(value: Any) -> str:
+    """Comparable plain text — strips markup and collapses whitespace so a
+    user input, its sanitized HTML and the read-back content all reduce to
+    the same canonical string."""
+    import html as _html
+    import re as _re
+
+    text = _re.sub(r"<[^>]+>", " ", str(value or ""))
+    return " ".join(_html.unescape(text).split())
+
+
 def _ticket_fingerprint(
-    ticket: dict[str, Any], *, validation_id: int | None = None
+    ticket: dict[str, Any],
+    *,
+    validation_id: int | None = None,
+    followup_id: int | None = None,
 ) -> str:
     """Relevant-field fingerprint — enough to catch drift that could
     invalidate the prepared change (§17), nothing more."""
@@ -164,6 +189,15 @@ def _ticket_fingerprint(
         base["validation"] = {
             "id": int(validation_id),
             "status": _validation_status(ticket, int(validation_id)),
+        }
+    if followup_id is not None:
+        entry = _timeline_followup(ticket, int(followup_id))
+        base["followup"] = {
+            "id": int(followup_id),
+            "found": entry is not None,
+            # Seals the current body — a concurrent edit between PREPARE and
+            # ACT marks the proposal stale instead of silently overwriting.
+            "content": _plain_text((entry or {}).get("content") or (entry or {}).get("content_html")),
         }
     return fingerprint(base)
 
@@ -186,6 +220,10 @@ def _normalize_change(capability: str, args: dict[str, Any]) -> dict[str, Any]:
     elif capability == "helpdesk_add_followup":
         change["content"] = args.get("content")
         change["request_type_id"] = args.get("request_type_id")
+    elif capability == "helpdesk_update_followup":
+        fid = args.get("followup_id")
+        change["followup_id"] = int(fid) if fid is not None else None
+        change["content"] = args.get("content")
     elif capability == "helpdesk_create_task":
         body = {
             key: args.get(key)
@@ -253,6 +291,16 @@ def _expected_postcondition(capability: str, change: dict[str, Any]) -> dict[str
             "capability": capability,
             "ticket_id": None,
             "expected": {"linked": False},
+        }
+    if capability == "helpdesk_update_followup":
+        return {
+            "type": "helpdesk_followup_update",
+            "capability": capability,
+            "ticket_id": change.get("ticket_id"),
+            "expected": {
+                "followup_id": change.get("followup_id"),
+                "content_plain": _plain_text(change.get("content")),
+            },
         }
     if capability == "helpdesk_upload_attachment":
         file_arg = change.get("file") if isinstance(change.get("file"), dict) else {}
@@ -357,8 +405,36 @@ def prepare(
                     blocked.append("validation_not_found")
                 elif not entry.get("mine_to_decide"):
                     blocked.append("validation_not_mine_to_decide")
+            if capability == "helpdesk_update_followup":
+                checks.append("followup_target_read")
+                fid = change.get("followup_id")
+                if fid is None or int(fid or 0) <= 0:
+                    missing.append("followup_id")
+                    target = None
+                else:
+                    target = _timeline_followup(ticket, int(fid))
+                if target is None and fid is not None:
+                    blocked.append("followup_not_found")
+                # Exact before→after preview for confirm_before_act — the
+                # user sees the current body and the replacement, never a
+                # vague "edit". mine/author surfaces as guidance; the BFF
+                # (GLPI canUpdate under the user's own token) revalidates.
+                if target is not None:
+                    confirmation_req["display"] = {
+                        "operation": "update_followup",
+                        "ticket_id": int(ticket_id),
+                        "followup_id": int(fid),
+                        "author_display_name": target.get("author_display_name"),
+                        "mine": bool(target.get("mine")),
+                        "current_content": str(
+                            target.get("content") or ""
+                        )[:500],
+                        "new_content": str(change.get("content") or "")[:500],
+                    }
             current_fp = _ticket_fingerprint(
-                ticket, validation_id=change.get("validation_id")
+                ticket,
+                validation_id=change.get("validation_id"),
+                followup_id=change.get("followup_id"),
             )
             resource_id = str(ticket_id)
             if capability == "helpdesk_upload_attachment":
@@ -430,7 +506,11 @@ def recompute_fingerprint(
     if ticket_id is None:
         return fingerprint({"ticket_id": None})
     ticket = stack.read.ticket(authorization, int(ticket_id))
-    return _ticket_fingerprint(ticket, validation_id=change.get("validation_id"))
+    return _ticket_fingerprint(
+        ticket,
+        validation_id=change.get("validation_id"),
+        followup_id=change.get("followup_id"),
+    )
 
 
 def _idempotency_key(proposal) -> str:
@@ -464,6 +544,14 @@ def execute(
             int(ticket_id),
             content=str(change["content"]),
             request_type_id=change.get("request_type_id"),
+            idempotency_key=key,
+        )
+    if capability == "helpdesk_update_followup":
+        return w.update_followup(
+            authorization,
+            int(ticket_id),
+            int(change["followup_id"]),
+            content=str(change["content"]),
             idempotency_key=key,
         )
     if capability == "helpdesk_create_task":
@@ -676,6 +764,21 @@ def verify(
             raise _verification_failed(
                 "Follow-up not found in authoritative ticket timeline.",
                 expected_id=rid,
+            )
+        return {"ticket": ticket, "write_result": result}
+
+    if capability == "helpdesk_update_followup":
+        fid = change.get("followup_id")
+        entry = _timeline_followup(ticket, int(fid))
+        expected = _plain_text(change.get("content"))
+        actual = _plain_text(
+            (entry or {}).get("content") or (entry or {}).get("content_html")
+        )
+        if entry is None or actual != expected:
+            raise _verification_failed(
+                "Edited follow-up content not confirmed by authoritative "
+                "read-back.",
+                expected_id=fid,
             )
         return {"ticket": ticket, "write_result": result}
 

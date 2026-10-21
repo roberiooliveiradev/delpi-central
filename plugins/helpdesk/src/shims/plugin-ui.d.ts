@@ -1060,6 +1060,8 @@ declare module "@delpi/plugin-ui/index" {
     onClick: () => void;
     danger?: boolean;
     title?: string;
+    icon?: ReactNode;
+    disabled?: boolean;
   };
 
   export type DashboardMessageThreadProps = {
@@ -1077,6 +1079,10 @@ declare module "@delpi/plugin-ui/index" {
     ) => string | null | undefined;
     onAttachmentImageClick?: (attachmentId: string) => void;
     resolveActions?: (message: MessageThreadItem) => MessageThreadAction[];
+    /** When set, that message shows `renderEditSlot` instead of the body. */
+    editingId?: string | null;
+    /** In-place editor while `editingId` matches the message id. */
+    renderEditSlot?: (message: MessageThreadItem) => ReactNode;
   };
 
   export function rewriteInlinePendingInMarkdown(
@@ -1225,6 +1231,8 @@ declare module "@delpi/plugin-ui/index" {
     required?: boolean;
     id?: string;
     icon?: ReactNode;
+    className?: string;
+    maxLength?: number;
   };
 
   export function textAreaFieldBemClasses(prefix: string): TextFieldClassNames;

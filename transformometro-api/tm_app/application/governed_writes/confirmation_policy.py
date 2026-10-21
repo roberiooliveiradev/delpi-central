@@ -266,6 +266,13 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
     WritePolicyRecord(
         "helpdesk.followup.add", AUTO_ACT, "helpdesk_add_followup"
     ),
+    # Rewrites the body of an existing followup — replaces authored
+    # content; the user must see the exact before→after diff first.
+    WritePolicyRecord(
+        "helpdesk.followup.update",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_update_followup",
+    ),
     # Additive task entry on an existing ticket.
     WritePolicyRecord(
         "helpdesk.task.create", AUTO_ACT, "helpdesk_create_task"

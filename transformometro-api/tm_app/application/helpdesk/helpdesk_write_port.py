@@ -56,6 +56,18 @@ class HelpdeskWritePort(Protocol):
         """POST /tickets/{id}/followups → ``{"id": followup_id}``."""
         ...
 
+    def update_followup(
+        self,
+        authorization: str,
+        ticket_id: int,
+        followup_id: int,
+        *,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """PUT /tickets/{id}/followups/{fid} → read-back ``{"id", "content"}``."""
+        ...
+
     def create_task(
         self,
         authorization: str,

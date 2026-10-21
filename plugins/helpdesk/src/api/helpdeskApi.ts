@@ -269,6 +269,25 @@ export function createFollowup(
   });
 }
 
+export function updateFollowup(
+  ticketId: string,
+  followupId: string | number,
+  body: { content: string },
+  idempotencyKey: string,
+) {
+  return request<{ id: number; content: string; content_html?: string }>(
+    `/tickets/${ticketId}/followups/${followupId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    },
+  );
+}
+
 export function createTicketSolution(
   ticketId: string,
   body: { content: string; solution_type_id?: number },

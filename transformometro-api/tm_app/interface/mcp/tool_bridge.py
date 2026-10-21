@@ -1357,6 +1357,7 @@ def tool_prepare_collaboration_change(
 def tool_prepare_helpdesk_change(
     action: str,
     ticket_id: int | None = None,
+    followup_id: int | None = None,
     title: str | None = None,
     description: str | None = None,
     category_id: int | None = None,
@@ -1398,6 +1399,7 @@ def tool_prepare_helpdesk_change(
         capability,
         {
             "ticket_id": ticket_id,
+            "followup_id": followup_id,
             "title": title,
             "description": description,
             "category_id": category_id,

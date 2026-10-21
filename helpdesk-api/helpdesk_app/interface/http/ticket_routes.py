@@ -51,6 +51,12 @@ class FollowupBody(BaseModel):
     request_type_id: int | None = Field(default=None, gt=0)
 
 
+class FollowupUpdateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str = Field(min_length=1)
+
+
 class SolutionCreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -551,6 +557,29 @@ def create_followup(
             ticket_id,
             content=body.content,
             request_type_id=body.request_type_id,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.put("/tickets/{ticket_id}/followups/{followup_id}")
+def update_followup(
+    request: Request,
+    ticket_id: int,
+    followup_id: int,
+    body: FollowupUpdateBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).update_followup(
+            actor.subject,
+            ticket_id,
+            followup_id,
+            content=body.content,
+            viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )
     except HelpdeskError as exc:

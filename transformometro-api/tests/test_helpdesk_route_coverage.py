@@ -161,6 +161,10 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
         "EXPOSED_WRITE",
         "prepare_helpdesk_change(action=add_followup)",
     ),
+    ("PUT", "/tickets/{ticket_id}/followups/{followup_id}"): (
+        "EXPOSED_WRITE",
+        "prepare_helpdesk_change(action=update_followup)",
+    ),
     ("POST", "/tickets/{ticket_id}/solutions"): (
         "EXPOSED_WRITE",
         "prepare_helpdesk_change(action=add_solution)",
@@ -240,7 +244,7 @@ def _bff_routes() -> set[tuple[str, str]]:
 def test_bff_route_source_inventory_matches_runtime():
     """Sanity: the source scan finds the expected route surface."""
     routes = _bff_routes()
-    assert len(routes) == 37  # 36 baseline + DELETE /tickets/{id}
+    assert len(routes) == 38  # 37 baseline + PUT /tickets/{id}/followups/{fid}
     assert ("DELETE", "/tickets/{ticket_id}") in routes
 
 

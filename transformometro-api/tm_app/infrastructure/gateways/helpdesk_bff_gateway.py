@@ -388,6 +388,23 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             json_body=body, idempotency_key=idempotency_key,
         )
 
+    def update_followup(
+        self,
+        authorization: str,
+        ticket_id: int,
+        followup_id: int,
+        *,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return self._write(
+            "PUT",
+            f"/tickets/{int(ticket_id)}/followups/{int(followup_id)}",
+            authorization,
+            json_body={"content": content},
+            idempotency_key=idempotency_key,
+        )
+
     def create_task(
         self,
         authorization: str,

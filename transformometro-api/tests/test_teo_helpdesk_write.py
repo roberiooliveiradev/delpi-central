@@ -111,6 +111,9 @@ class _FakeHelpdeskPorts:
         # simulates a 2xx write that never materializes on read-back.
         self.attachments: dict[int, dict[str, Any]] = {}
         self.upload_actually_appears = True
+        # When False, the update write returns 2xx but the timeline entry
+        # keeps the old body — simulates a 2xx that never persisted.
+        self.update_followup_applies = True
         self.file_source = _FakeFileSource()
 
     # read port
@@ -162,6 +165,22 @@ class _FakeHelpdeskPorts:
             {"id": 41, "kind": "followup", "content": kw["content"]},
         ]
         return {"id": 41}
+
+    def update_followup(self, authorization, ticket_id, followup_id, **kw):
+        self.write_calls.append(
+            ("update_followup", ticket_id, followup_id, kw["content"])
+        )
+        self._key(kw)
+        if not self.update_followup_applies:
+            return {"id": followup_id}
+        state = self._state(ticket_id)
+        state["timeline"] = [
+            {**entry, "content": kw["content"]}
+            if str(entry.get("id")) == str(followup_id)
+            else entry
+            for entry in state["timeline"]
+        ]
+        return {"id": followup_id, "content": kw["content"]}
 
     def create_task(self, authorization, ticket_id, body, **kw):
         self.write_calls.append(("create_task", ticket_id, dict(body)))
@@ -441,6 +460,7 @@ def test_policy_auto_act(cap):
     "cap",
     [
         "helpdesk_set_assignee",
+        "helpdesk_update_followup",
         "helpdesk_add_solution",
         "helpdesk_request_validation",
         "helpdesk_accept_solution",
@@ -1026,4 +1046,118 @@ def test_upload_attachment_via_attachment_refs_when_inventory_lags():
 def test_action_enum_covers_upload_attachment():
     assert HELPDESK_ACTION_TO_CAPABILITY["upload_attachment"] == (
         "helpdesk_upload_attachment"
+    )
+
+
+# --------------------------------------------------------------------------
+# update_followup — exact target, confirmation, read-back postcondition
+# --------------------------------------------------------------------------
+
+
+def _with_followup(ports, followup_id: int = 41, content: str = "old"):
+    ports.ticket_state["timeline"] = [
+        {"id": followup_id, "kind": "followup", "content": content},
+    ]
+
+
+def test_prepare_update_followup_ready_with_exact_change():
+    facade, _ports = _facade()
+    _ports.ticket_state["timeline"] = [
+        {"id": 41, "kind": "followup", "content": "texto antigo"},
+    ]
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=500, followup_id=41, content="texto corrigido",
+    )
+    prop = out["proposal"]
+    assert prop["ready"] is True
+    assert prop["exact_change"]["content"] == "texto corrigido"
+    assert prop["exact_change"]["followup_id"] == 41
+    assert prop["expected_postcondition"]["ticket_id"] == 500
+
+
+def test_prepare_update_followup_missing_target_not_ready():
+    facade, ports = _facade()
+    ports.ticket_state["timeline"] = [
+        {"id": 41, "kind": "followup", "content": "old"},
+    ]
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=500, followup_id=999, content="x",
+    )
+    proposal = out["proposal"]
+    assert proposal["ready"] is False
+    assert ports.write_calls == []
+
+
+def test_update_followup_requires_confirmation_then_executes():
+    facade, ports = _facade()
+    _with_followup(ports)
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=500, followup_id=41, content="novo texto",
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.data.get("error_code") == "CONFIRMATION_REQUIRED"
+    assert ports.write_calls == []
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert ports.write_calls == [
+        ("update_followup", 500, 41, "novo texto")
+    ]
+    assert ports.ticket_state["timeline"][0]["content"] == "novo texto"
+
+
+def test_update_followup_readback_mismatch_fails():
+    """2xx + read-back content unchanged → OUTCOME_VERIFICATION_FAILED."""
+    facade, ports = _facade()
+    _with_followup(ports)
+    ports.update_followup_applies = False
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=500, followup_id=41, content="novo texto",
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+
+
+def test_update_followup_sibling_entries_untouched():
+    facade, ports = _facade()
+    ports.ticket_state["timeline"] = [
+        {"id": 41, "kind": "followup", "content": "old"},
+        {"id": 42, "kind": "followup", "content": "keep me"},
+    ]
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=500, followup_id=41, content="v2",
+    )
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert ports.ticket_state["timeline"][1]["content"] == "keep me"
+
+
+def test_update_followup_wrong_ticket_followup_prepare_blocks():
+    """A followup that lives on another ticket is not an eligible target."""
+    facade, ports = _facade()
+    _with_followup(ports)
+    original = ports.ticket
+
+    def other_ticket(authorization, ticket_id):
+        # ticket 777 exists but has no followup 41 in its timeline
+        return {**original(authorization, ticket_id), "timeline": []}
+
+    ports.ticket = other_ticket  # type: ignore[method-assign]
+    out = _prepare(
+        facade, "update_followup",
+        ticket_id=777, followup_id=41, content="x",
+    )
+    assert out["proposal"]["ready"] is False
+    assert ports.write_calls == []
+
+
+def test_action_enum_covers_update_followup():
+    assert HELPDESK_ACTION_TO_CAPABILITY["update_followup"] == (
+        "helpdesk_update_followup"
     )

@@ -1443,3 +1443,109 @@ def test_cycle_write_stored_response_status_unverified():
     assert stored.body["outcome"] == "status_unverified"
     assert stored.body["author_verified"] is True
     assert stored.body["status_verified"] is False
+
+
+def test_update_followup_edits_existing_entry():
+    client, glpi = build_client()
+    link(client)
+    response = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "texto corrigido"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-1"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == 1
+    assert "texto corrigido" in (body["content"] or body["content_html"])
+    assert glpi.updated_followups == [(7, 1, "texto corrigido")]
+
+
+def test_update_followup_not_found_on_this_ticket():
+    client, glpi = build_client()
+    link(client)
+    response = client.put(
+        "/tickets/7/followups/999",
+        json={"content": "x"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-2"},
+    )
+    assert response.status_code == 404
+    assert glpi.updated_followups == []
+
+
+def test_update_followup_requires_idempotency_key():
+    client, _glpi = build_client()
+    link(client)
+    response = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "x"},
+        headers=auth_headers(),
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "idempotency_key_required"
+
+
+def test_update_followup_rejects_empty_and_oversized_content():
+    client, glpi = build_client()
+    link(client)
+    empty = client.put(
+        "/tickets/7/followups/1",
+        json={"content": ""},
+        headers={**auth_headers(), "Idempotency-Key": "upd-3"},
+    )
+    assert empty.status_code == 422
+    too_long = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "x" * 50_001},
+        headers={**auth_headers(), "Idempotency-Key": "upd-4"},
+    )
+    assert too_long.status_code == 422
+    assert glpi.updated_followups == []
+
+
+def test_update_followup_glpi_forbidden_propagates():
+    from helpdesk_app.domain.errors import GlpiForbidden
+
+    client, glpi = build_client()
+    link(client)
+
+    def _deny(access_token, ticket_id, followup_id, content):
+        raise GlpiForbidden("sem permissão")
+
+    glpi.update_followup = _deny  # type: ignore[method-assign]
+    response = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "x"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-5"},
+    )
+    assert response.status_code == 403
+
+
+def test_update_followup_readback_mismatch_fails():
+    client, glpi = build_client()
+    link(client)
+    glpi.update_followup_applies = False
+    response = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "texto novo"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-6"},
+    )
+    assert response.status_code == 422
+
+
+def test_update_followup_idempotent_replay():
+    client, glpi = build_client()
+    link(client)
+    first = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "v2"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-7"},
+    )
+    second = client.put(
+        "/tickets/7/followups/1",
+        json={"content": "v2"},
+        headers={**auth_headers(), "Idempotency-Key": "upd-7"},
+    )
+    assert first.status_code == 200
+    assert second.status_code == 200
+    # Replay hits the idempotency store — GLPI sees a single write.
+    assert len(glpi.updated_followups) == 1

@@ -2154,3 +2154,23 @@
     flex: 1 1 auto;
   }
 }
+
+/* In-place follow-up edit (MessageThread editSlot) — reuses the rich-text
+ * field inside the bubble; spacing mirrors the reply form actions. */
+.dashboard-helpdesk .helpdesk-followup-edit {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-helpdesk .helpdesk-followup-edit .delpi-ui-form-actions,
+.dashboard-helpdesk .helpdesk-followup-edit .helpdesk-form-actions {
+  margin-block-start: 0.2rem !important;
+  justify-content: flex-end;
+}
+
+.dashboard-helpdesk .helpdesk-followup-edit__error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--helpdesk-danger, #c0392b);
+}

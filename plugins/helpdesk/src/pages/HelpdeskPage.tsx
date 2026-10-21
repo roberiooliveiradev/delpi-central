@@ -7,7 +7,7 @@ import {
   SectionHintLabel,
   TableColumnVisibilityMenu,
 } from "@delpi/plugin-ui/index";
-import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
+import { AlignLeft, ChevronLeft, ExternalLink, FilterX, FolderTree, Gauge, Pencil, Plus, RefreshCw, Send, TicketPlus, Type, Users } from "lucide-react";
 
 import {
   HelpdeskApiError,
@@ -30,6 +30,7 @@ import {
   requestTicketApproval,
   setTicketAssignee,
   submitTicketSatisfaction,
+  updateFollowup,
   uploadTicketAttachment,
   type TicketAttachment,
   type TicketDetail,
@@ -1174,6 +1175,12 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
     () => pendingAttachments.find((item) => item.id === pendingPreviewId) ?? null,
     [pendingAttachments, pendingPreviewId],
   );
+  /** In-place follow-up editing — `editingId`/`renderEditSlot` contract. */
+  const [followupEditingId, setFollowupEditingId] = useState<string | null>(null);
+  const [followupEditContent, setFollowupEditContent] = useState("");
+  const [followupEditSaving, setFollowupEditSaving] = useState(false);
+  const [followupEditError, setFollowupEditError] = useState<string | null>(null);
+  const [followupEditKey, setFollowupEditKey] = useState(newIdempotencyKey);
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -1317,6 +1324,48 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setAssignSaving(false));
+  }
+
+  function beginFollowupEdit(message: { id: string; bodyText: string; bodyHtml?: string | null }) {
+    setFollowupEditingId(message.id);
+    // bodyHtml keeps inline images (`data-attachment-id`) resolvable in the editor.
+    setFollowupEditContent(message.bodyHtml || message.bodyText);
+    setFollowupEditError(null);
+    setFollowupEditKey(newIdempotencyKey());
+  }
+
+  function cancelFollowupEdit() {
+    setFollowupEditingId(null);
+    setFollowupEditContent("");
+    setFollowupEditError(null);
+  }
+
+  function saveFollowupEdit() {
+    if (!ticket || !followupEditingId || followupEditSaving) return;
+    if (!hasVisibleRichText(followupEditContent)) {
+      setFollowupEditError("Escreva o novo texto do acompanhamento antes de salvar.");
+      return;
+    }
+    setFollowupEditSaving(true);
+    setFollowupEditError(null);
+    void updateFollowup(
+      ticketId,
+      followupEditingId,
+      { content: followupEditContent.trim() },
+      followupEditKey,
+    )
+      .then(() => {
+        cancelFollowupEdit();
+        // Authoritative re-read — only the persisted GLPI content reaches the timeline.
+        load();
+      })
+      .catch((error) => {
+        // Draft survives a recoverable failure; same idempotency key covers the retry.
+        setFollowupEditError(
+          messageFor(error).text || "Não foi possível salvar a edição do acompanhamento.",
+        );
+      })
+      .finally(() => setFollowupEditSaving(false));
   }
 
   function runCycle(action: "accept" | "reject") {
@@ -1746,6 +1795,68 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                               />
                             ) : undefined,
                         }))}
+                        editingId={followupEditingId}
+                        renderEditSlot={() => (
+                          <form
+                            className="helpdesk-followup-edit"
+                            aria-label="Editar acompanhamento"
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              saveFollowupEdit();
+                            }}
+                          >
+                            <HelpdeskRichTextField
+                              label="Texto do acompanhamento"
+                              value={followupEditContent}
+                              onChange={setFollowupEditContent}
+                              minHeight={96}
+                              required
+                              disabled={followupEditSaving}
+                              resolveAttachmentImageSrc={resolveReplyAttachmentImageSrc}
+                            />
+                            {followupEditError ? (
+                              <p className="helpdesk-followup-edit__error" role="alert">
+                                {followupEditError}
+                              </p>
+                            ) : null}
+                            <HelpdeskFormActions>
+                              <ActionButton
+                                variant="primary"
+                                type="submit"
+                                disabled={
+                                  followupEditSaving ||
+                                  !hasVisibleRichText(followupEditContent)
+                                }
+                              >
+                                {followupEditSaving ? "Salvando…" : "Salvar"}
+                              </ActionButton>
+                              <ActionButton
+                                variant="ghost"
+                                type="button"
+                                disabled={followupEditSaving}
+                                onClick={cancelFollowupEdit}
+                              >
+                                Cancelar
+                              </ActionButton>
+                            </HelpdeskFormActions>
+                          </form>
+                        )}
+                        resolveActions={(message) => {
+                          if (followupEditingId) return [];
+                          // Follow-ups de outros autores / outros tipos de entrada
+                          // não oferecem edição; a BFF segue fail-closed no GLPI.
+                          if (message.kind !== "followup" || message.mine !== true) {
+                            return [];
+                          }
+                          return [
+                            {
+                              id: "edit",
+                              label: "Editar",
+                              icon: <Pencil size={14} aria-hidden />,
+                              onClick: () => beginFollowupEdit(message),
+                            },
+                          ];
+                        }}
                       />
                       {(timelineVisibility.documents || timelineVisibility.approvals) &&
                       ((timelineVisibility.documents && unassignedDocs.length > 0) ||

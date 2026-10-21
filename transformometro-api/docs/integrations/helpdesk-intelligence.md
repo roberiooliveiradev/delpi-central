@@ -376,6 +376,7 @@ authorization` · `2xx != business outcome`.
 | create_ticket | `POST /tickets` | — (can_assign if assignee) | `Idempotency-Key` | `GET /tickets/{id}` | AUTO_ACT | IMPLEMENT |
 | set_assignee | `PUT /tickets/{id}/assignee` | can_assign | yes | `assigned_user_id` | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | add_followup | `POST /tickets/{id}/followups` | can_followup | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
+| update_followup | `PUT /tickets/{id}/followups/{fid}` | entry.mine + GLPI canUpdate | `Idempotency-Key` | timeline content match | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | create_task | `POST /tickets/{id}/tasks` | can_create_task | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
 | add_solution | `POST /tickets/{id}/solutions` | can_create_solution | yes | timeline id+kind | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | request_validation | `POST /tickets/{id}/validations` | can_request_approval | yes | validations[].id | CONFIRM_BEFORE_ACT | IMPLEMENT |
@@ -390,7 +391,7 @@ All ticket-scoped operations require `ticket_id`; PREPARE reads the
 current ticket through the BFF first (`current_state_read`) and seals a
 relevant-field fingerprint (`ticket_id`, `status_id`,
 `assigned_user_id`, `updated_at`, + target validation state when
-deciding). `can_*` flags are early UX/validation guidance only — the BFF
+deciding, + target followup content when updating). `can_*` flags are early UX/validation guidance only — the BFF
 revalidates on commit; `can_*` false makes the proposal `ready=false`,
 never widens authority.
 
@@ -410,6 +411,9 @@ conflict detection — recorded as owner-side behavior, not widened here.
 - `set_assignee`: `ticket.assigned_user_id == target`.
 - `add_followup`/`create_task`/`add_solution`: returned entry id present
   in authoritative `timeline[]` with matching `kind`.
+- `update_followup`: `timeline[]` entry (same id, kind=followup) whose
+  plain-text content equals the prepared change — identity bound to the
+  ticket timeline, so a foreign-ticket followup is never a target.
 - `request_validation`: returned id present in `validations[]`.
 - `accept/reject_solution`: `ticket.status_id` equals the BFF-returned
   post-decision status.
@@ -533,6 +537,7 @@ decorators vs the ledger; drift fails CI).
 | POST | `/tickets` | EXPOSED_WRITE | `create_ticket` |
 | PUT | `/tickets/{id}/assignee` | EXPOSED_WRITE | `set_assignee` |
 | POST | `/tickets/{id}/followups` | EXPOSED_WRITE | `add_followup` |
+| PUT | `/tickets/{id}/followups/{fid}` | EXPOSED_WRITE | `update_followup` via `prepare_helpdesk_change` → `commit_proposal` |
 | POST | `/tickets/{id}/solutions` | EXPOSED_WRITE | `add_solution` |
 | POST | `/tickets/{id}/tasks` | EXPOSED_WRITE | `create_task` |
 | POST | `/tickets/{id}/validations` | EXPOSED_WRITE | `request_validation` |

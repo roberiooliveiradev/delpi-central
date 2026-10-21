@@ -69,6 +69,10 @@ class FakeGlpi:
         self.downloaded = []
         self.created = []
         self.followups = []
+        self.updated_followups: list[tuple[int, int, str]] = []
+        # When False, the PATCH returns ok but the read-back content stays
+        # stale — simulates an upstream that lies about persistence.
+        self.update_followup_applies = True
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
         self.created_validations: list[tuple[int, str, int, str]] = []
@@ -410,6 +414,29 @@ class FakeGlpi:
             raise GlpiNotFound("ausente")
         self.followups.append((ticket_id, content, request_type_id))
         return 8
+
+    def update_followup(
+        self,
+        access_token: str,
+        ticket_id: int,
+        followup_id: int,
+        content: str,
+    ):
+        self.calls += 1
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        self.updated_followups.append((ticket_id, followup_id, content))
+        if not self.update_followup_applies:
+            return
+        from dataclasses import replace as _replace
+
+        timeline = tuple(
+            _replace(entry, content=content, content_html=content)
+            if entry.kind == "followup" and int(entry.id) == int(followup_id)
+            else entry
+            for entry in self.detail.timeline
+        )
+        self.detail = _replace(self.detail, timeline=timeline)
 
     def add_ticket_solution(
         self,
