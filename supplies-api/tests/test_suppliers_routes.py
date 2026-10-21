@@ -794,6 +794,126 @@ class TestPostalAddressGateway:
         from app.infrastructure.gateways.postal_address_gateway import (
             PostalAddressGateway,
         )
-        fake = SimpleNamespace(status_code=200, json=lambda: {'erro': 'true'})
-        with patch('requests.get', return_value=fake):
+        def fake_get(url, **_kw):
+            if 'viacep' in url:
+                return SimpleNamespace(
+                    status_code=200, json=lambda: {'erro': 'true'}
+                )
+            return SimpleNamespace(status_code=404, json=lambda: {})
+        with patch('requests.get', side_effect=fake_get):
             assert PostalAddressGateway().lookup('99999999') is None
+
+    def test_lookup_falls_back_to_brasilapi_when_viacep_misses(self):
+        """R4.1 regression — 89120000 absent in ViaCEP, present in BrasilAPI."""
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        def fake_get(url, **_kw):
+            if 'viacep' in url:
+                return SimpleNamespace(
+                    status_code=200, json=lambda: {'erro': 'true'}
+                )
+            return SimpleNamespace(
+                status_code=200,
+                json=lambda: {
+                    'cep': '89120000',
+                    'state': 'SC',
+                    'city': 'Timbó',
+                    'neighborhood': '',
+                    'street': '',
+                    'service': 'open-cep',
+                    'ibge': {'city': '4218202', 'state': '42'},
+                },
+            )
+        with patch('requests.get', side_effect=fake_get) as get:
+            out = PostalAddressGateway().lookup('89120000')
+        assert get.call_count == 2
+        assert out['found'] is True
+        assert out['source'] == 'brasilapi'
+        assert out['city'] == 'Timbó'
+        assert out['state'] == 'SC'
+        assert out['ibge_city_code'] == '4218202'
+
+    def test_lookup_short_circuits_when_viacep_finds(self):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        fake = SimpleNamespace(
+            status_code=200,
+            json=lambda: {
+                'cep': '01310-100',
+                'logradouro': 'Avenida Paulista',
+                'bairro': 'Bela Vista',
+                'localidade': 'São Paulo',
+                'uf': 'SP',
+                'ibge': '3550308',
+            },
+        )
+        with patch('requests.get', return_value=fake) as get:
+            out = PostalAddressGateway().lookup('01310100')
+        assert get.call_count == 1
+        assert out['source'] == 'viacep'
+
+    def test_lookup_falls_back_on_viacep_network_error(self):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        import requests as _requests
+        def fake_get(url, **_kw):
+            if 'viacep' in url:
+                raise _requests.ConnectionError('down')
+            return SimpleNamespace(
+                status_code=200,
+                json=lambda: {
+                    'cep': '89120000',
+                    'state': 'SC',
+                    'city': 'Timbó',
+                    'neighborhood': None,
+                    'street': None,
+                    'ibge': {'city': '4218202'},
+                },
+            )
+        with patch('requests.get', side_effect=fake_get):
+            out = PostalAddressGateway().lookup('89120000')
+        assert out['found'] is True
+        assert out['source'] == 'brasilapi'
+
+    def test_lookup_raises_when_provider_fails_and_none_found(self):
+        """Indisponibilidade não pode virar found:false (S2)."""
+        import pytest as _pytest
+        import requests as _requests
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+            PostalAddressGatewayError,
+        )
+        def fake_get(url, **_kw):
+            if 'viacep' in url:
+                raise _requests.ConnectionError('down')
+            return SimpleNamespace(status_code=404, json=lambda: {})
+        with patch('requests.get', side_effect=fake_get):
+            with _pytest.raises(PostalAddressGatewayError):
+                PostalAddressGateway().lookup('99999999')
+
+    def test_lookup_raises_when_all_providers_fail(self):
+        import pytest as _pytest
+        import requests as _requests
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+            PostalAddressGatewayError,
+        )
+        with patch(
+            'requests.get', side_effect=_requests.ConnectionError('down')
+        ):
+            with _pytest.raises(PostalAddressGatewayError):
+                PostalAddressGateway().lookup('01310100')
+
+    def test_request_sends_user_agent_for_brasilapi(self):
+        """BrasilAPI nega 403 sem UA — o gateway envia header próprio."""
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        fake = SimpleNamespace(status_code=404, json=lambda: {})
+        with patch('requests.get', return_value=fake) as get:
+            assert PostalAddressGateway().lookup('99999999') is None
+        for call in get.call_args_list:
+            assert 'User-Agent' in call.kwargs['headers']

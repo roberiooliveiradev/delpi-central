@@ -94,13 +94,30 @@ contagens convergem): `166`→"7 DIAS", `45`→"PIX Transferência" (SX5/58),
 ## Consulta de CEP — F5-UX-R4
 
 `GET /suppliers/postal-codes/<cep>` na `supplies-api` (mesma capability
-`supplies.access`), provider ViaCEP (`POSTAL_ADDRESS_PROVIDER_URL`,
-timeout 6s, path fixo `/<8 dígitos>/json/` — anti-SSRF, sem credencial,
-sem persistência do retorno).
+`supplies.access`), cadeia de providers aprovada: **ViaCEP**
+(`POSTAL_ADDRESS_PROVIDER_URL`) → fallback **BrasilAPI v1**
+(`POSTAL_ADDRESS_FALLBACK_URL`), timeout 6s por provider, path fixo
+derivado dos 8 dígitos validados — anti-SSRF, sem credencial, sem
+persistência do retorno. BrasilAPI exige `User-Agent` próprio (403 sem).
+
+**Correção F5-UX-R4.1 — causa raiz comprovada:** o CEP `89120000`
+(Timbó/SC, CEP de cidade única) **não existe na base do ViaCEP**
+(`{"erro":"true"}` em 200), mas existe na BrasilAPI (open-cep):
+`{state:"SC", city:"Timbó", ibge:{city:"4218202"}}`. O sintoma "CEP não
+encontrado" era cobertura do provider, não bug de frontend/BFF. A
+cadeia consulta ViaCEP primeiro (dados mais ricos) e BrasilAPI quando o
+primeiro não acha ou falha tecnicamente.
+
+Semântica da cadeia: provider que acha → retorna; not-found comprovado →
+tenta o próximo; erro técnico → tenta o próximo; se **nenhum** provider
+acha e houve falha técnica → propaga erro (indisponibilidade nunca vira
+`found:false`); só retorna `{found:false}` quando todos os providers
+responderam definitivamente "não existe".
 
 Saída: `{postal_code, street, district, city, state, ibge_city_code,
-source:"viacep", found}`. CEP inválido → 422; não encontrado →
-`{found:false}`; timeout/inacessível → 504/502 sanitizados.
+source:"viacep"|"brasilapi", found}`. CEP inválido → 422; não
+encontrado → `{found:false, source:"postal_address_providers"}`;
+timeout/inacessível → 504/502 sanitizados.
 
 Conciliação municipal (MFE): `ibge_city_code` → `CC2_CODMUN` =
 últimos 5 dígitos do IBGE dentro de `CC2_EST` (comprovado:

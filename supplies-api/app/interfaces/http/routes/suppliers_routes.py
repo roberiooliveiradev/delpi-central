@@ -215,7 +215,11 @@ def lookup_postal_code(postal_code: str):
         ), 502
     if result is None:
         return jsonify(
-            {"postal_code": digits, "found": False, "source": "viacep"}
+            {
+                "postal_code": digits,
+                "found": False,
+                "source": "postal_address_providers",
+            }
         ), 200
     return jsonify(result), 200
 

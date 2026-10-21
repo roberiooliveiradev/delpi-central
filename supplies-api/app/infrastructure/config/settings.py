@@ -56,6 +56,9 @@ class Settings:
     POSTAL_ADDRESS_PROVIDER_URL = os.getenv(
         "POSTAL_ADDRESS_PROVIDER_URL", "https://viacep.com.br/ws"
     )
+    POSTAL_ADDRESS_FALLBACK_URL = os.getenv(
+        "POSTAL_ADDRESS_FALLBACK_URL", "https://brasilapi.com.br/api/cep/v1"
+    )
     POSTAL_ADDRESS_TIMEOUT_SECONDS = float(
         os.getenv("POSTAL_ADDRESS_TIMEOUT", "6")
     )
