@@ -1987,3 +1987,8 @@ FURTHER_CODE_REWORK_AUTHORIZED=NO
 PRODUCTION_READINESS=NOT_PROVEN
 NEXT=AWAIT_PRODUCT_MASTER_COMMAND
 ```
+
+
+### Product Master — new product front registered (2026-10-21)
+
+A separate DÉLIA product direction for **Conversational Response Intelligence & Personality Integration** is registered in [product front 73](./corrections/mcp-contextual-intelligence-orchestration/73-conversational-response-intelligence-personality-product-front.md), based on real screenshots: owner/tool completion may still yield technical field dumps, ambiguous empty-result narratives or insufficiently conversational presentation. This is **planning/specification only**: reuse canonical personality sources and existing Evidence/Outcome/synthesis/rendering contracts; do not assume missing features; preserve `selection-only` frozen by ADR 58/ledger §6.145. Unrestricted model-authored factual prose needs a separate explicit architecture decision. `NEXT_FRONT_TASK=DELIA-CONVERSATIONAL-RESPONSE-INTELLIGENCE-SPEC-01` (not yet implementation authorized). `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, phase unchanged.
