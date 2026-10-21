@@ -48,6 +48,7 @@ describe("painel de tabela — uso do kit nas páginas", () => {
       assert.match(code, /columnPreferencesKey=/);
       assert.match(code, /fontSizePreferencesKey=/);
       assert.match(code, /serverPagination=/);
+      assert.match(code, /resizableColumns/);
       assert.match(code, /hideSearch/);
       // sem fork do kit nem toolbar paralela
       assert.doesNotMatch(code, /from\s+"@delpi\/plugin-ui\/index"[^;]*\bDataTable\b/);

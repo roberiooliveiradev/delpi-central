@@ -36,7 +36,7 @@ export const CF_HELP = {
     summary:
       "Resumo exploratório do período: quantidade de eventos, valores por moeda e qualidade dos vínculos. Não é total oficial de fechamento.",
     table:
-      "Detalhe dos eventos de baixa. A contagem junto ao título mostra o universo filtrado, não apenas a página atual. «Filial não identificada» significa que a origem não informa a filial do registro — não é erro nem filial 01/02.",
+      "Detalhe dos eventos de baixa. A contagem junto ao título mostra o universo filtrado, não apenas a página atual. Em «Colunas» você escolhe quais campos exibir, em «Fonte» ajusta o tamanho do texto e a borda direita de cada cabeçalho permite redimensionar a coluna — as preferências ficam gravadas no seu usuário. «Filial não identificada» significa que a origem não informa a filial do registro — não é erro nem filial 01/02.",
     linkStatus:
       "Situação do vínculo: indica quando o documento ou a natureza financeira de origem não foi localizado, preservando o evento em vez de escondê-lo.",
     pagination: {
@@ -60,10 +60,10 @@ export const CF_HELP = {
     status:
       "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros. Estados de acesso: «Acesso restrito» = seu usuário não possui a permissão do Portal; «Consulta ainda não habilitada» = a liberação do conjunto de dados está desativada no ambiente; «Integração de dados pendente» = a credencial técnica entre o Portal e a origem ainda aguarda autorização — acione o suporte.",
     summaryType:
-      "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado.",
+      "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     summaryWarehouse:
-      "Totais por armazém e filial sobre o universo filtrado.",
+      "Totais por armazém e filial sobre o universo filtrado, com a participação percentual de cada grupo no valor histórico total.",
     table:
-      "Detalhamento por produto e armazém no snapshot do mês, com a contagem do universo filtrado junto ao título. Ordenação fixa por filial, armazém e produto. Quando o snapshot não existe para a competência, só o aviso é exibido — a tabela vazia não representaria saldo zero.",
+      "Detalhamento por produto e armazém no snapshot do mês, com a contagem do universo filtrado junto ao título. Ordenação fixa por filial, armazém e produto. Em «Colunas» você escolhe campos, em «Fonte» ajusta o texto e a borda direita de cada cabeçalho redimensiona a coluna — preferências gravadas no seu usuário. Quando o snapshot não existe para a competência, só o aviso é exibido — a tabela vazia não representaria saldo zero.",
   },
 } as const;
