@@ -311,3 +311,8 @@ Joici informou ao PO que **Estoque.pdf** e **Resumo Estoque.pdf** sao duas saida
 - A pagina 91/91 do video traz outra emissao P7 com total 3.776.994,69; ainda nao equiparar com nenhum dos dois PDFs. Investigar filtros, competencia efetiva, depositos, momento de geracao e parametros de processo/custeio.
 
 Conceitos funcionais TARGET para inventario (nao contratos liberados): `P7_ALL_PRODUCT_TYPES` e `P7_MP_PI_PA`. `BUSINESS_PURPOSE=OWNER_INFORMED_VIA_PO`; `PDF_NUMBERS=PROVEN`; `EXACT_FILTERS=TO_INVENTORY`; `QUANTITATIVE_PARITY=INCONCLUSIVE`; `RUNTIME_AUTHORIZATION=NO`. Registrar como variantes do mesmo P7, sem novas permissoes.
+
+
+## 19. R03 - Marco audiovisual P7 confirmado pelo PO (21/10/2026)
+
+O PO enviou captura da gravacao com marcador do reprodutor em **00:17:44**. A tela mostra TOTVS Estoque/Custos, busca por `P7` e resultado `Registro de Inventario Modelo P7` sob a categoria `Legais`. O PO, reassistindo ao video, confirma que Joici passa a explicar o P7 nesse trecho como o saldo em estoque. `P7_NAVIGATION_TIMECODE=PROVEN_USER_SCREENSHOT`; `P7_PURPOSE=OWNER_VERBAL_REPORTED_BY_PO`. A imagem comprova localizacao da rotina, nao parametros, processamento, arquivo exportado ou calculo. As telas subsequentes anteriormente recebidas situam resumos do P7 por volta de 00:33:59 e 00:36:35 (folhas 91 e 64), sem atribuir esses dois instantes a exportacoes dos PDFs `Estoque` e `Resumo Estoque`. Atualizar a linha do tempo com precedencia a evidencia de video confirmada pelo PO em vez dos indices deslocados do NotebookLM. Proximo gate: tela das perguntas imediatamente apos selecao do P7.
