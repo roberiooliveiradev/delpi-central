@@ -642,3 +642,158 @@ class TestSupplierCatalogs:
             )
         assert resp.status_code == 403
         assert resp.get_json()['code'] == 'S2S_SCOPE_DENIED'
+
+
+class TestPostalCodeLookup:
+    """F5-UX-R4 — CEP via provider aprovado (ViaCEP), sem persistência."""
+
+    _FOUND = {
+        'postal_code': '01310100',
+        'street': 'Avenida Paulista',
+        'district': 'Bela Vista',
+        'city': 'São Paulo',
+        'state': 'SP',
+        'ibge_city_code': '3550308',
+        'source': 'viacep',
+        'found': True,
+    }
+
+    def test_missing_bearer_401(self, client):
+        assert client.get('/suppliers/postal-codes/01310100').status_code == 401
+
+    def test_no_access_403(self, client):
+        v, r = _auth(permissions={'supplies.manage'})
+        with v, r:
+            assert client.get(
+                '/suppliers/postal-codes/01310100',
+                headers={'Authorization': 'Bearer t'},
+            ).status_code == 403
+
+    def test_valid_masked_cep_normalizes_and_returns(self, client):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGatewayError,
+        )
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+        ) as gw:
+            gw.lookup.return_value = self._FOUND
+            resp = client.get(
+                '/suppliers/postal-codes/01310-100',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body['found'] is True
+        assert body['ibge_city_code'] == '3550308'
+        assert body['street'] == 'Avenida Paulista'
+        gw.lookup.assert_called_once_with('01310100')
+
+    def test_invalid_cep_rejected_before_provider(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+        ) as gw:
+            resp = client.get(
+                '/suppliers/postal-codes/123',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 422
+        gw.lookup.assert_not_called()
+
+    def test_cep_not_found_returns_found_false(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+        ) as gw:
+            gw.lookup.return_value = None
+            resp = client.get(
+                '/suppliers/postal-codes/99999999',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 200
+        assert resp.get_json()['found'] is False
+
+    def test_provider_timeout_maps_504(self, client):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGatewayError,
+        )
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+        ) as gw:
+            gw.lookup.side_effect = PostalAddressGatewayError('timeout')
+            resp = client.get(
+                '/suppliers/postal-codes/01310100',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 504
+        assert resp.get_json()['code'] == 'provider_unreachable'
+
+    def test_provider_http_error_maps_502(self, client):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGatewayError,
+        )
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+        ) as gw:
+            gw.lookup.side_effect = PostalAddressGatewayError(
+                'boom', status_code=500
+            )
+            resp = client.get(
+                '/suppliers/postal-codes/01310100',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 502
+
+
+class TestPostalAddressGateway:
+    """Normalização e parsing do provider — sem rede real."""
+
+    def test_normalize_accepts_mask_and_digits(self):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            normalize_postal_code,
+        )
+        assert normalize_postal_code('01310-100') == '01310100'
+        assert normalize_postal_code('89120000') == '89120000'
+
+    def test_normalize_rejects_wrong_length(self):
+        import pytest as _pytest
+        from app.infrastructure.gateways.postal_address_gateway import (
+            normalize_postal_code,
+        )
+        for bad in ('', '123', '123456789', 'abcdefgh', '01310-1000'):
+            with _pytest.raises(ValueError):
+                normalize_postal_code(bad)
+
+    def test_lookup_maps_viacep_payload(self):
+        import requests as _requests
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        fake = SimpleNamespace(
+            status_code=200,
+            json=lambda: {
+                'cep': '01310-100',
+                'logradouro': 'Avenida Paulista',
+                'bairro': 'Bela Vista',
+                'localidade': 'São Paulo',
+                'uf': 'sp',
+                'ibge': '3550308',
+            },
+        )
+        with patch('requests.get', return_value=fake) as get:
+            out = PostalAddressGateway().lookup('01310-100')
+        assert get.call_args.args[0].endswith('/01310100/json/')
+        assert get.call_args.kwargs['timeout'] > 0
+        assert out['state'] == 'SP'
+        assert out['ibge_city_code'] == '3550308'
+
+    def test_lookup_returns_none_on_erro_flag(self):
+        from app.infrastructure.gateways.postal_address_gateway import (
+            PostalAddressGateway,
+        )
+        fake = SimpleNamespace(status_code=200, json=lambda: {'erro': 'true'})
+        with patch('requests.get', return_value=fake):
+            assert PostalAddressGateway().lookup('99999999') is None

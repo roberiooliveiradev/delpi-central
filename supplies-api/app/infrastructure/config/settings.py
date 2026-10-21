@@ -53,6 +53,13 @@ class Settings:
         os.getenv("STRATEGIC_INDICATORS_API_TIMEOUT", "30")
     )
 
+    POSTAL_ADDRESS_PROVIDER_URL = os.getenv(
+        "POSTAL_ADDRESS_PROVIDER_URL", "https://viacep.com.br/ws"
+    )
+    POSTAL_ADDRESS_TIMEOUT_SECONDS = float(
+        os.getenv("POSTAL_ADDRESS_TIMEOUT", "6")
+    )
+
     RUN_MIGRATIONS_ON_STARTUP = (
         os.getenv("SUPPLIES_RUN_MIGRATIONS_ON_STARTUP", "true").strip().lower()
         in {"1", "true", "yes", "on"}
