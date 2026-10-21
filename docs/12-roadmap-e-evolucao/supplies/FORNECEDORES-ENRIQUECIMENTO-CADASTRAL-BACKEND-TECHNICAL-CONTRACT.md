@@ -326,3 +326,8 @@ Deployment when authorized: backend compatible before MFE; no altered ERP endpoi
 `GATE_DECISION_POLICY = PENDING`  
 `IMPLEMENTATION = NOT_AUTHORIZED`  
 `NO_SCHEMA_CHANGE / NO_ENDPOINT / NO_PROVIDER_CALL / NO_DEPLOY`
+
+
+## Inventário de fontes oficiais pesquisadas (2026-10-21)
+
+Consultar [FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md) antes de congelar `CompanyRegistryProvider`: contrato comercial Serpro PJ é candidato prioritário mas não contratado/provado acessível; Conecta gov.br documenta schema para órgãos públicos e **não concede acesso privado à DELPI**; REDESIM é canal público humano, não API automatizada comprovada; dados abertos RFB são arquivos, não API realtime. A matriz de campos separa comparáveis, revisão manual, informativos, protegidos e internos. `GATE_PROVIDER=TO_INVENTORY`, `IMPLEMENTATION=NOT_AUTHORIZED`.
