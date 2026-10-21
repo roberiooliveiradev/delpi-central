@@ -76,3 +76,16 @@ Source da matriz: api-delpi/docs/integrations/protheus-rest-supplier-post-field-
 - Próxima execução correta: Cursor P0.1 somente inventário real supplies-api no HEAD; Compras/Security para contrato Serpro; DPO para retenção; arquitetura para evidência v2 antes de qualquer implementação.
 
 **FINAL: INVENTORY PARTIAL/DOCUMENTED; IMPLEMENTATION NOT AUTHORIZED; NO CODE/DB/DEPLOY.**
+
+## 9. Correção de inventário — LGPD institucional existente (2026-10-21)
+
+**EXECUTION_DRIFT documental identificado e corrigido:** o inventário P0 inicial tratou LGPD como se faltasse uma política institucional. No `main`, `docs/README.md` indica a pasta canônica `docs/13-auditoria-lgpd/`, e há documentação já vigente:
+
+- `docs/13-auditoria-lgpd/ropa-registro-tratamento.md` (26/05/2026): controlador DELPI, encarregado, bases legais e retenção por categoria. Logs de auditoria de Core/Transformômetro/Indicadores: **2 anos**, com anonimização de IP/payload; uso de aplicações **1 ano** com consentimento `usage_tracking`; consentimentos **5 anos após revogação**; notificações **180 dias**; conta de usuário enquanto ativa. **Não converter esses prazos automaticamente em prazo de snapshot CNPJ ou integration_tracking**, pois são tratamentos/categorias diferentes.
+- `docs/13-auditoria-lgpd/relatorio-lgpd.md`: auditoria de 26/05/2026, 38 inconformidades resolvidas conforme status documental.
+- `docs/13-auditoria-lgpd/relatorio-adequacao-lgpd.md`: 12 fases de adequação, 38 ocorrências resolvidas/risco aceito, registro de jobs de retenção, anonimização, acesso/portabilidade e consentimento. Descrição documental não substitui prova runtime.
+- `docs/04-core-api/rastreamento-uso-apps.md`: enum `usage_tracking`, consentimento/revogação, purge e exportação do titular.
+
+**Gate LGPD reclassificado:** `INSTITUTIONAL_LGPD_POLICY = PROVEN (docs)`; `LGPD_CONTROLS_IMPLEMENTED = DOCUMENTED (runtime not revalidated)`; `ENRICHMENT_CNPJ_TREATMENT_COVERAGE_IN_ROPA = TO_INVENTORY`; `REVIEW/PROPOSAL/DECISION_RETENTION = TO_INVENTORY`; `SERPRO_DATA_USE_TERMS = PENDING`; `LEGAL_NEW_TREATMENT_DECISION = PENDING ONLY IF NOT COVERED BY CURRENT ROPA/POLICY`. O próximo passo é *aplicar a política existente* e registrar extensão pontual da operação ROPA caso não esteja coberta — não criar política paralela ou exigir nova avaliação genérica do zero.
+
+A regra de dois anos para audit logs no ROPA **não prova** prazo de `integration_tracking.supplier_field_provenance`, que, conforme relatório SUPPLIER-PROVENANCE-01, mantém retenção atual sem expurgo automático e pendência de prazo formal. Confirmar escopo/owner antes de afirmar conformidade completa.
