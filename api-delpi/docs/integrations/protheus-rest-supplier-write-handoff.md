@@ -57,3 +57,10 @@ Se as evidências não existirem, a entrega permanece com código e interface pr
 - `protheus-rest-read.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 - playbook SA2 §44.3
+
+
+## F4.4 — Fechamento do cenário CREATE com 18 campos (2026-10-21)
+
+O owner Gabriel **já entregou** `Campos Obrigatorios.xlsx` (18 mapeamentos). A homologação POST `003875/01` na `DELPI_TST01` retornou **código `003875` e loja `01`**, com **18/18 MATCH** por SQL, incluindo `tax_id→A2_CGC`. Tracking ficou `CONFIRMED` e gates CREATE/UPDATE OFF ao final. Ver [evidência F4.4](../../../docs/12-roadmap-e-evolucao/supplies/evidence/suppliers-f44-create-18-field-sql-confirmation-2026-10-21.md).
+
+A pendência `A2_CGC vazio` do teste `003874/01` permanece **caso histórico divergente**, não bloqueio do cenário F4.4. O documento inválido pelo DV é hipótese forte de explicação, **não causa raiz upstream definitivamente provada**. Recomendação: nova fatia de validação CNPJ/DV antes do envio, retornando 422, sem nova escrita real. Registros `003874/01` e `003875/01` bloqueados, a tratar pelo owner TOTVS. GET upstream incompleto; paridade 18/18 confirmada por SQL, não via GET. Endpoint produtivo informado mas **não ativado**; manter REST de teste `:8701` e gates OFF fora de janelas homologadas.
