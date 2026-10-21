@@ -69,7 +69,7 @@ export const SP_HELP = {
   suppliersCreate:
     "Cadastro de novo fornecedor. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
   suppliersCreateFields:
-    "Todos os campos do contrato de cadastro, organizados por seção (identificação, endereço, contato, fiscal e compras), com o documento (CNPJ/CPF) em primeiro lugar. Cada label tem ajuda contextual — passe o mouse ou use o teclado sobre o nome do campo. Somente a loja é obrigatória no Portal — as demais obrigatoriedades são definidas pelo ERP, que rejeita o envio se faltar campo exigido. Nada é enviado sem a revisão final.",
+    "Todos os campos do contrato de cadastro, organizados por seção (identificação, endereço, contato, fiscal e compras), com o documento (CNPJ/CPF) em primeiro lugar. Cada label tem ajuda contextual — passe o mouse ou use o teclado sobre o nome do campo. UF, país, condição/forma de pagamento, natureza financeira, conta contábil e município trazem opções reais do Protheus — pesquise pela descrição e o código correto é enviado. Somente a loja é obrigatória no Portal — as demais obrigatoriedades são definidas pelo ERP, que rejeita o envio se faltar campo exigido. Nada é enviado sem a revisão final.",
   suppliersColSupplier:
     "Fornecedor com identificador completo (código + loja, 8 dígitos). Clique na linha para abrir a ficha.",
   suppliersColTaxId:
@@ -77,7 +77,7 @@ export const SP_HELP = {
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:
-    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja e CNPJ/CPF, que são protegidos. Todas as labels têm ajuda contextual, inclusive nos campos protegidos e na revisão. Campos modificados ganham destaque e o contador mostra quantas alterações estão pendentes; «Indisponível na consulta» indica campo não retornado pelo ERP. O envio leva só os campos modificados (PUT parcial). Antes de gravar, a revisão mostra o antes/depois agrupado por seção; após o envio, «Conferir gravação» recarrega a ficha e compara os valores.",
+    "Edição governada: os campos cadastrais podem ser alterados em uma única operação — exceto código, loja e CNPJ/CPF, que são protegidos. Campos com catálogo (UF, país, pagamento, natureza, conta contábil, município) oferecem pesquisa por código ou descrição — a descrição é exibida, o código é enviado. Todas as labels têm ajuda contextual, inclusive nos campos protegidos e na revisão. Campos modificados ganham destaque e o contador mostra quantas alterações estão pendentes; «Indisponível na consulta» indica campo não retornado pelo ERP. O envio leva só os campos modificados (PUT parcial). Antes de gravar, a revisão mostra o antes/depois agrupado por seção; após o envio, «Conferir gravação» recarrega a ficha e compara os valores.",
   suppliersEditName:
     "Razão social do fornecedor (A2_NOME), até 50 caracteres.",
   suppliersEditShortName:

@@ -44,6 +44,22 @@ _LIST_QUERY_KEYS = (
     "sort_dir",
 )
 
+# Catálogos TOTVS servidos pela api-delpi — allowlist fechada (nenhum nome do
+# cliente seleciona tabela SQL arbitrária).
+_CATALOG_KINDS = frozenset(
+    {
+        "states",
+        "countries",
+        "bacen-countries",
+        "payment-conditions",
+        "payment-methods",
+        "financial-natures",
+        "accounting-accounts",
+        "municipalities",
+    }
+)
+_CATALOG_QUERY_KEYS = ("query", "state", "limit")
+
 
 def _access_token() -> str:
     return g.current_user.access_token or ""
@@ -128,6 +144,37 @@ def list_suppliers():
         return _gateway_error_response(exc)
     data = unwrap_delpi_envelope(payload)
     return jsonify(project_list_envelope(data)), 200
+
+
+@suppliers_bp.get("/suppliers/catalogs/<catalog>")
+@require_policy(can_use_operations)
+def list_supplier_catalog(catalog: str):
+    """operationId: list_portal_supplier_catalog — catálogos SA2 via api-delpi."""
+    kind = (catalog or "").strip().lower()
+    if kind not in _CATALOG_KINDS:
+        return jsonify(
+            {"detail": "Unknown supplier catalog", "code": "invalid_request"}
+        ), 422
+    params = {
+        key: request.args[key]
+        for key in _CATALOG_QUERY_KEYS
+        if (request.args.get(key) or "").strip()
+    }
+    limit = params.get("limit")
+    if limit is not None:
+        try:
+            params["limit"] = str(max(1, min(int(limit), 500)))
+        except ValueError:
+            return _validation_error(ValueError("invalid 'limit'"))
+    try:
+        payload = _GATEWAY.get(
+            f"/supplies/supplier-catalogs/{kind}",
+            access_token=_access_token(),
+            params=params,
+        )
+    except DelpiApiGatewayError as exc:
+        return _gateway_error_response(exc)
+    return jsonify(unwrap_delpi_envelope(payload)), 200
 
 
 @suppliers_bp.get("/suppliers/<code>/<store>")

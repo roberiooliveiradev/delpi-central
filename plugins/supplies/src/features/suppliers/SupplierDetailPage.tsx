@@ -23,6 +23,8 @@ import {
   supplierPendingChangesLabel,
 } from "./content";
 import {
+  SupplierCatalogField,
+  SupplierCatalogViewValue,
   SupplierFieldInput,
   SupplierFieldGrid,
   SupplierFormActions,
@@ -38,6 +40,7 @@ import {
   groupChangesBySection,
   isSupplierFieldAvailable,
   personTypeLabel,
+  supplierCatalogValueText,
   supplierFieldItemClass,
 } from "./query";
 import {
@@ -352,29 +355,73 @@ export function SupplierDetailPage({
                     }
                     const key = spec.key as SupplierEditableFieldKey;
                     const changed = changes.some((c) => c.field === key);
+                    const derivedActive =
+                      spec.catalogDerivedFrom === "city" &&
+                      Boolean((draft.state ?? "").trim());
                     return (
                       <div
                         key={spec.key}
                         className={supplierFieldItemClass(spec, { changed })}
                       >
-                        <SupplierFieldInput
-                          spec={spec}
-                          hint={
-                            spec.key === "supplier_name"
-                              ? SP_HELP.suppliersEditName
-                              : spec.key === "supplier_short_name"
-                                ? SP_HELP.suppliersEditShortName
+                        {spec.catalog ? (
+                          <SupplierCatalogField
+                            spec={spec}
+                            value={
+                              spec.key === "city"
+                                ? (draft.city_code ?? "")
+                                : (draft[key] ?? "")
+                            }
+                            currentLabel={
+                              spec.key === "city" ? draft.city : undefined
+                            }
+                            dependsOnValue={
+                              spec.catalogDependsOn
+                                ? (draft[
+                                    spec.catalogDependsOn as SupplierEditableFieldKey
+                                  ] ?? "")
                                 : undefined
-                          }
-                          value={draft[key] ?? ""}
-                          onChange={(value) =>
-                            setDraft((d) => ({
-                              ...d,
-                              [key]: value,
-                            }))
-                          }
-                          disabled={submitting}
-                        />
+                            }
+                            onPick={(code, label) =>
+                              setDraft((d) => {
+                                const next = { ...d };
+                                if (spec.key === "city") {
+                                  next.city = label || code;
+                                  next.city_code = code;
+                                } else {
+                                  next[key] = code;
+                                }
+                                return next;
+                              })
+                            }
+                            disabled={submitting}
+                          />
+                        ) : derivedActive ? (
+                          <SupplierProtectedField
+                            label={spec.label}
+                            value={draft[key] ?? ""}
+                            emptyLabel={C.fieldNotProvided}
+                            hint={spec.help}
+                          />
+                        ) : (
+                          <SupplierFieldInput
+                            spec={spec}
+                            hint={
+                              spec.key === "supplier_name"
+                                ? SP_HELP.suppliersEditName
+                                : spec.key === "supplier_short_name"
+                                  ? SP_HELP.suppliersEditShortName
+                                  : undefined
+                            }
+                            value={draft[key] ?? ""}
+                            onChange={(value) =>
+                              setDraft((d) => ({
+                                ...d,
+                                [key]: value,
+                              }))
+                            }
+                            disabled={submitting}
+                          />
+                        )}
                       </div>
                     );
                   })}
@@ -407,10 +454,30 @@ export function SupplierDetailPage({
                             unavailable ? "sp-supplier-value--unavailable" : ""
                           }
                         >
-                          {value ||
-                            (unavailable
-                              ? C.fieldUnavailable
-                              : C.fieldNotProvided)}
+                          {value ? (
+                            spec.catalog ? (
+                              <SupplierCatalogViewValue
+                                spec={spec}
+                                value={value}
+                                dependsOnValue={
+                                  spec.catalogDependsOn
+                                    ? getSupplierFieldValue(
+                                        detail,
+                                        SUPPLIER_FIELD_REGISTRY.find(
+                                          (s) => s.key === spec.catalogDependsOn,
+                                        )!,
+                                      )
+                                    : undefined
+                                }
+                              />
+                            ) : (
+                              value
+                            )
+                          ) : unavailable ? (
+                            C.fieldUnavailable
+                          ) : (
+                            C.fieldNotProvided
+                          )}
                         </dd>
                       </div>
                     );
@@ -486,8 +553,8 @@ export function SupplierDetailPage({
                   );
                   return {
                     label: spec?.label ?? change.field,
-                    before: change.before,
-                    after: change.after,
+                    before: supplierCatalogValueText(spec, change.before),
+                    after: supplierCatalogValueText(spec, change.after),
                     help: spec?.help,
                   };
                 }),

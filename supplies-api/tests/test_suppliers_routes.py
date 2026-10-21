@@ -543,3 +543,102 @@ class TestOperationStatus:
         body = resp.get_json()
         assert body["operation_id"] == self._OP
         assert body["persistence_proven"] is True
+
+
+class TestSupplierCatalogs:
+    _ENVELOPE = {
+        'success': True,
+        'data': {
+            'catalog': 'states',
+            'items': [{'code': 'SC', 'label': 'SANTA CATARINA', 'disabled': False}],
+            'has_more': False,
+            'total': 1,
+        },
+        'meta': {'operation_id': 'list_supplies_supplier_catalog_items'},
+    }
+
+    def test_missing_bearer_401(self, client):
+        assert client.get('/suppliers/catalogs/states').status_code == 401
+
+    def test_no_access_403(self, client):
+        v, r = _auth(permissions={'supplies.manage'})
+        with v, r:
+            assert client.get(
+                '/suppliers/catalogs/states',
+                headers={'Authorization': 'Bearer t'},
+            ).status_code == 403
+
+    def test_known_catalog_proxies_s2s(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = self._ENVELOPE
+            resp = client.get(
+                '/suppliers/catalogs/payment-conditions?query=30&limit=10',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body['items'][0]['code'] == 'SC'
+        gw.get.assert_called_once_with(
+            '/supplies/supplier-catalogs/payment-conditions',
+            access_token='user-jwt',
+            params={'query': '30', 'limit': '10'},
+        )
+
+    def test_unknown_catalog_422_no_upstream_call(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            resp = client.get(
+                '/suppliers/catalogs/orders',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 422
+        gw.get.assert_not_called()
+
+    def test_municipalities_forward_state_filter(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = self._ENVELOPE
+            resp = client.get(
+                '/suppliers/catalogs/municipalities?state=SC&query=cha',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 200
+        gw.get.assert_called_once_with(
+            '/supplies/supplier-catalogs/municipalities',
+            access_token='user-jwt',
+            params={'state': 'SC', 'query': 'cha'},
+        )
+
+    def test_limit_is_bounded(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = self._ENVELOPE
+            client.get(
+                '/suppliers/catalogs/countries?limit=9999',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert gw.get.call_args.kwargs['params']['limit'] == '500'
+
+    def test_upstream_403_propagates_code(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError(
+                'denied', status_code=403, code='S2S_SCOPE_DENIED'
+            )
+            resp = client.get(
+                '/suppliers/catalogs/states',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 403
+        assert resp.get_json()['code'] == 'S2S_SCOPE_DENIED'

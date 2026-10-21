@@ -1155,3 +1155,118 @@
     align-items: stretch;
   }
 }
+
+/* F5-UX-R3 — combobox de catálogo TOTVS (pesquisa remota limitada) */
+.dashboard-supplies-portal .sp-supplier-combo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 8px;
+  background: var(--sp-surface);
+  color: var(--sp-text);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__trigger:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 1px;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: var(--sp-surface-elevated);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__search {
+  margin: 8px;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 6px;
+  background: var(--sp-surface);
+  color: var(--sp-text);
+  font-size: 0.85rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__search:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 1px;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__list {
+  margin: 0;
+  padding: 0 4px 6px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__option {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sp-text);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__option:hover,
+.dashboard-supplies-portal .sp-supplier-combo__option--active {
+  background: var(--sp-surface-soft);
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-supplies-portal .sp-supplier-combo__empty,
+.dashboard-supplies-portal .sp-supplier-combo__more {
+  padding: 0.5rem 0.6rem;
+  margin: 0;
+  color: var(--sp-text-muted);
+  font-size: 0.8rem;
+}

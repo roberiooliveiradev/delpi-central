@@ -23,12 +23,17 @@ import { createSupplier } from "./api";
 import { SUPPLIERS_CONTENT as C } from "./content";
 import { classifyWriteOutcome } from "./query";
 import {
+  SupplierCatalogField,
   SupplierFieldInput,
   SupplierFieldGrid,
   SupplierFormActions,
+  SupplierProtectedField,
   SupplierReviewTable,
 } from "./SupplierFormFields";
-import { supplierFieldItemClass } from "./query";
+import {
+  supplierCatalogValueText,
+  supplierFieldItemClass,
+} from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
@@ -115,7 +120,10 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
             filled.has(spec.key as keyof SupplierCreateDraft),
         ).map((spec) => ({
           label: spec.label,
-          after: filled.get(spec.key as keyof SupplierCreateDraft)!,
+          after: supplierCatalogValueText(
+            spec,
+            filled.get(spec.key as keyof SupplierCreateDraft)!,
+          ),
           help: spec.help,
         })),
       }))
@@ -246,20 +254,61 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           hint={SP_HELP.suppliersCreateFields}
         >
           <SupplierFieldGrid>
-            {section.fields.map((field) => (
-              <div
-                key={field.key}
-                className={supplierFieldItemClass(field)}
-              >
-                <SupplierFieldInput
-                  spec={field}
-                  value={draft[field.key]}
-                  onChange={(value) => patchDraft({ [field.key]: value })}
-                  disabled={submitting}
-                  showRequiredMark
-                />
-              </div>
-            ))}
+            {section.fields.map((field) => {
+              const derivedActive =
+                field.catalogDerivedFrom === "city" &&
+                Boolean((draft.state ?? "").trim());
+              return (
+                <div
+                  key={field.key}
+                  className={supplierFieldItemClass(field)}
+                >
+                  {field.catalog ? (
+                    <SupplierCatalogField
+                      spec={field}
+                      value={
+                        field.key === "city"
+                          ? (draft.city_code ?? "")
+                          : (draft[field.key] ?? "")
+                      }
+                      currentLabel={
+                        field.key === "city" ? draft.city : undefined
+                      }
+                      dependsOnValue={
+                        field.catalogDependsOn
+                          ? (draft[
+                              field.catalogDependsOn as keyof SupplierCreateDraft
+                            ] ?? "")
+                          : undefined
+                      }
+                      onPick={(code, label) => {
+                        if (field.key === "city") {
+                          patchDraft({ city: label || code, city_code: code });
+                        } else {
+                          patchDraft({ [field.key]: code });
+                        }
+                      }}
+                      disabled={submitting}
+                    />
+                  ) : derivedActive ? (
+                    <SupplierProtectedField
+                      label={field.label}
+                      value={draft[field.key] ?? ""}
+                      emptyLabel={C.fieldNotProvided}
+                      hint={field.help}
+                    />
+                  ) : (
+                    <SupplierFieldInput
+                      spec={field}
+                      value={draft[field.key]}
+                      onChange={(value) => patchDraft({ [field.key]: value })}
+                      disabled={submitting}
+                      showRequiredMark
+                    />
+                  )}
+                </div>
+              );
+            })}
           </SupplierFieldGrid>
         </SuppliesSectionCard>
       ))}

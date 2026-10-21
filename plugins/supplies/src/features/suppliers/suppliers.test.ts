@@ -623,3 +623,85 @@ describe('F5-UX-R2 — cobertura de Help contextual', () => {
     }
   });
 });
+
+describe('F5-UX-R3 — metadados de catálogo TOTVS', () => {
+  const CATALOGED: Record<string, string> = {
+    state: 'states',
+    country_code: 'countries',
+    bacen_country_code: 'bacen-countries',
+    payment_condition_code: 'payment-conditions',
+    payment_method_code: 'payment-methods',
+    financial_nature_code: 'financial-natures',
+    accounting_account: 'accounting-accounts',
+    city: 'municipalities',
+  };
+
+  it('every cataloged field references a known BFF catalog kind', () => {
+    const kinds = new Set(Object.values(CATALOGED));
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      if (spec.catalog) {
+        expect(kinds).toContain(spec.catalog);
+      }
+    }
+    for (const [field, kind] of Object.entries(CATALOGED)) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === field)!;
+      expect(spec.catalog, `catálogo ausente em ${field}`).toBe(kind);
+    }
+  });
+
+  it('municipalities catalog depends on state (UF) and never fires unfiltered', () => {
+    const city = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === 'city')!;
+    expect(city.catalog).toBe('municipalities');
+    expect(city.catalogDependsOn).toBe('state');
+  });
+
+  it('city_code is derived from the municipality pick (single source of truth)', () => {
+    const code = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === 'city_code')!;
+    expect(code.catalogDerivedFrom).toBe('city');
+    expect(code.catalog).toBeUndefined();
+  });
+
+  it('catalog selection still stores the contracted code, not the label', () => {
+    // O draft guarda `spec.key → code`; labels nunca entram no payload.
+    const spec = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === 'payment_condition_code',
+    )!;
+    const draft = {
+      supplier_store: "01",
+      person_type: "J",
+      tax_id: "00000000000191",
+      supplier_name: "FORNECEDOR TESTE",
+      supplier_short_name: "FORN TESTE",
+      address: "RUA X",
+      district: "CENTRO",
+      postal_code: "89120000",
+      state: "SC",
+      city: "TIMBO",
+      city_code: "18202",
+      area_code: "047",
+      phone: "99999",
+      contact_name: "CONTATO",
+      email: "a@b.com",
+      state_registration: "123",
+      municipal_registration: "",
+      country_code: "105",
+      bacen_country_code: "01058",
+      rohs_indicator: "n",
+      payment_condition_code: "001",
+      payment_method_code: "01",
+      accounting_account: "00000000",
+      financial_nature_code: "0000",
+    };
+    const body = buildCreateFornecedor(draft);
+    expect(body.payment_condition_code).toBe('001');
+    expect(spec.maxLength).toBe(3);
+  });
+
+  it('no field became multiselect — all catalog specs keep single code value', () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY.filter((f) => f.catalog)) {
+      expect(typeof spec.maxLength).toBe('number');
+      // Cardinalidade 1 comprovada: campo escalar no payload POST.
+      expect(spec.post).toBe(true);
+    }
+  });
+});

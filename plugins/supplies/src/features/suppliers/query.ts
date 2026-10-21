@@ -7,6 +7,7 @@ import type {
   SupplierWriteResponse,
   SuppliersQuery,
 } from "./types";
+import { catalogLabelOf } from "./supplierCatalogs";
 import {
   SUPPLIER_FIELD_REGISTRY,
   SUPPLIER_PERSON_TYPE_LABELS,
@@ -179,6 +180,20 @@ export function supplierFieldItemClass(
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+/**
+ * Texto de exibição de um valor de campo com catálogo — "descrição · código"
+ * quando o rótulo já foi resolvido (cache), senão o código original.
+ */
+export function supplierCatalogValueText(
+  spec: SupplierFieldSpec | undefined,
+  value: string,
+): string {
+  const trimmed = value.trim();
+  if (!spec?.catalog || !trimmed) return value;
+  const label = catalogLabelOf(spec.catalog, trimmed);
+  return label ? `${label} · ${trimmed}` : value;
 }
 
 /** Agrupa alterações por seção do registry, preservando a ordem canônica. */

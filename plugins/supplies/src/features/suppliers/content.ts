@@ -98,6 +98,13 @@ export const SUPPLIERS_CONTENT = {
   fieldEmptyOption: "Não informado",
   fieldNotProvided: "Não informado",
   fieldUnavailable: "Indisponível na consulta",
+  catalogComboPlaceholder: "Selecione…",
+  catalogSearchPlaceholder: "Buscar por código ou descrição…",
+  catalogSearchAriaLabel: "Buscar opções",
+  catalogLoading: "Carregando opções…",
+  catalogEmpty: "Nenhuma opção encontrada.",
+  catalogError: "Catálogo indisponível no momento.",
+  catalogMoreHint: "Resultados limitados — refine a busca.",
   openCreatedDetail: "Abrir ficha do fornecedor criado",
   verifyAction: "Conferir gravação no ERP",
   verifyNotReflectedMessage:

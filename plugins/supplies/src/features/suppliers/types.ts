@@ -142,7 +142,27 @@ export type SupplierFieldSpec = {
   span: number;
   /** Ajuda contextual exibida na própria label (tooltip oficial do kit). */
   help?: string;
+  /**
+   * Catálogo TOTVS da BFF (`/suppliers/catalogs/<kind>`) que fornece as
+   * opções válidas do campo — ver `supplierCatalogs.ts`.
+   */
+  catalog?: SupplierCatalogKind;
+  /** Campo cujo valor alimenta o filtro do catálogo (ex.: UF → municípios). */
+  catalogDependsOn?: SupplierFieldKey;
+  /** Campo preenchido automaticamente pela seleção de outro catálogo. */
+  catalogDerivedFrom?: SupplierFieldKey;
 };
+
+/** Catálogos expostos pela BFF (`supplies-api` allowlist espelha o serviço de integração). */
+export type SupplierCatalogKind =
+  | "states"
+  | "countries"
+  | "bacen-countries"
+  | "payment-conditions"
+  | "payment-methods"
+  | "financial-natures"
+  | "accounting-accounts"
+  | "municipalities";
 
 const F = (
   spec: Omit<SupplierFieldSpec, "get" | "put" | "evidence"> &
@@ -272,7 +292,9 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 25,
     span: 4,
-    help: "Município do endereço cadastral (A2_MUN).",
+    catalog: "municipalities",
+    catalogDependsOn: "state",
+    help: "Município do endereço cadastral (A2_MUN) — selecione a UF e pesquise pelo nome; o código IBGE é preenchido junto.",
   }),
   E({
     key: "city_code",
@@ -281,7 +303,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 5,
     digitsOnly: true,
     span: 2,
-    help: "Código do município usado no cadastro Protheus (A2_COD_MUN); deve corresponder à cidade e à UF.",
+    catalogDerivedFrom: "city",
+    help: "Código IBGE do município (A2_COD_MUN) — preenchido automaticamente ao selecionar a cidade com a UF definida.",
   }),
   E({
     key: "state",
@@ -290,7 +313,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 2,
     uppercase: true,
     span: 2,
-    help: "Unidade federativa correspondente ao endereço (A2_EST).",
+    catalog: "states",
+    help: "Unidade federativa do endereço (A2_EST) — selecione a UF cadastrada no Protheus.",
   }),
   E({
     key: "country_code",
@@ -298,7 +322,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 3,
     span: 4,
-    help: "País cadastral associado ao endereço do fornecedor (A2_PAIS).",
+    catalog: "countries",
+    help: "País cadastral do endereço (A2_PAIS) — pesquise pelo código ou descrição e selecione uma opção válida.",
   }),
   // Contato
   E({
@@ -370,7 +395,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 5,
     digitsOnly: true,
     span: 4,
-    help: "Código de país BACEN usado pelo Protheus (A2_CODPAIS) — campo distinto do país cadastral.",
+    catalog: "bacen-countries",
+    help: "Código de país BACEN usado pelo Protheus (A2_CODPAIS) — pesquise pelo código ou nome; campo distinto do país cadastral.",
   }),
   // Compras
   E({
@@ -379,7 +405,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 3,
     span: 4,
-    help: "Código da condição de pagamento associada ao cadastro do fornecedor (A2_COND).",
+    catalog: "payment-conditions",
+    help: "Pesquise pelo código ou descrição e selecione a condição de pagamento cadastrada no Protheus (SE4/A2_COND).",
   }),
   E({
     key: "payment_method_code",
@@ -387,7 +414,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 2,
     span: 4,
-    help: "Código da modalidade de pagamento usada no cadastro, conforme a tabela válida do Protheus.",
+    catalog: "payment-methods",
+    help: "Selecione a forma de pagamento cadastrada no Protheus (tabela de opções 58 / A2_FORMPAG).",
   }),
   E({
     key: "accounting_account",
@@ -395,7 +423,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 20,
     span: 6,
-    help: "Código da conta contábil associada ao fornecedor (A2_CONTA), até 20 caracteres, conforme as regras do ERP.",
+    catalog: "accounting-accounts",
+    help: "Pesquise pelo código ou descrição e selecione a conta contábil do plano de contas (CT1/A2_CONTA), até 20 caracteres.",
   }),
   E({
     key: "financial_nature_code",
@@ -403,7 +432,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "purchasing",
     maxLength: 10,
     span: 6,
-    help: "Código da natureza financeira vinculada ao fornecedor (A2_NATUREZ).",
+    catalog: "financial-natures",
+    help: "Pesquise pelo código ou descrição e selecione a natureza financeira cadastrada no Protheus (SED/A2_NATUREZ).",
   }),
 ];
 
