@@ -268,3 +268,8 @@ Produzir inventário comparativo de provedores oficiais e contratos disponíveis
 ## Complemento específico de frontend — UX-01..UX-06
 
 A definição detalhada de **cada superfície, navegação, wireframes desktop/mobile, 13 responsabilidades de componentes, props/estados conceituais, interação individual/em lote, modal de revisão, histórico condicional, Help, acessibilidade e 20 critérios UX-AC** está em [FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md). **TARGET/DOCUMENTED; não cria rotas nem componentes**. O desenho da ficha existente é preferido a novas páginas desnecessárias. O contrato de backend ainda depende do freeze de sources, armazenamento de decisões, AuthZ, LGPD e policy do lote.
+
+
+## Contrato técnico do backend — complemento proposto
+
+O detalhamento de **Ports & Adapters, seis rotas HTTP de review/decisões/histórico/preparação, schemas JSON propostos, regras de estado, idempotência, revisão otimista, lote transacional, modelo relacional no schema supplies, AuthZ por recurso/unidade, integração ao provider CNPJ, auditoria, retenção, erros, testes e rollout** está em [FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md). **PROPOSED/TARGET, não FROZEN**: fonte governamental concreta, LGPD/retention e elegibilidade de campos ainda dependem de inventário e aprovação. Nenhum endpoint/migration foi implementado.
