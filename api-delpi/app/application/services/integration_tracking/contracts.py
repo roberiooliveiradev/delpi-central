@@ -35,6 +35,9 @@ class NewOperationInput:
     request_hash: str | None
     outbound_hash: str | None
     payload_schema_version: int
+    # Field-level write provenance records, inserted in the same
+    # transaction as the operation. Immutable facts of intent.
+    field_provenance: tuple[dict, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,4 +92,20 @@ class IntegrationOperationRepository(Protocol):
         self, operation_id: str, *, limit: int, offset: int
     ) -> list[dict]:
         """Return events ordered by sequence_number ascending."""
+        ...
+
+    def list_supplier_field_provenance(
+        self,
+        *,
+        resource_key: str,
+        supplier_code: str | None,
+        supplier_store: str | None,
+        caller_app: str | None,
+        actor_subject: str | None,
+        field_key: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict]:
+        """Return provenance rows joined with the operation (status
+        authority), scoped to the caller's identity binding."""
         ...

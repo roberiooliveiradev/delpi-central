@@ -64,6 +64,95 @@ class IntegrationTrackingService:
             operation_id, limit=limit, offset=offset
         )
 
+    def list_supplier_provenance(
+        self,
+        *,
+        supplier_id: str,
+        caller_app: str | None,
+        actor_subject: str | None,
+        field_key: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict:
+        """Per-field provenance for one supplier, scoped to the caller.
+
+        ``latest_confirmed`` considers ONLY operations whose authoritative
+        status is CONFIRMED — ACK/UNKNOWN/pending attempts never replace it.
+        Attempts remain visible separately, ordered newest first.
+        """
+        limit = max(1, min(int(limit), 200))
+        offset = max(0, int(offset))
+        rows = self._repository.list_supplier_field_provenance(
+            resource_key=supplier_id,
+            supplier_code=supplier_id[:6],
+            supplier_store=supplier_id[6:],
+            caller_app=caller_app,
+            actor_subject=actor_subject,
+            field_key=field_key,
+            limit=limit,
+            offset=offset,
+        )
+        by_field: dict[str, list[dict]] = {}
+        for row in rows:
+            by_field.setdefault(str(row["field_key"]), []).append(row)
+
+        fields = []
+        for key, items in sorted(by_field.items()):
+            confirmed = [
+                item
+                for item in items
+                if item.get("operation_status") == "CONFIRMED"
+            ]
+            latest = confirmed[0] if confirmed else None
+            pending_newer = (
+                any(
+                    item.get("operation_status") != "CONFIRMED"
+                    for item in items[: items.index(latest)]
+                )
+                if latest is not None
+                else bool(items)
+            )
+            fields.append(
+                {
+                    "field_key": key,
+                    "latest_confirmed": self._project_provenance(latest)
+                    if latest
+                    else None,
+                    "has_unconfirmed_newer_attempts": pending_newer,
+                    "attempt_count": len(items),
+                }
+            )
+
+        return {
+            "supplier_id": supplier_id,
+            "fields": fields,
+            "attempts": [self._project_provenance(row) for row in rows],
+            "page": {"limit": limit, "offset": offset},
+        }
+
+    @staticmethod
+    def _project_provenance(row: dict | None) -> dict | None:
+        if row is None:
+            return None
+        return {
+            "provenance_id": row.get("provenance_id"),
+            "operation_id": row.get("operation_id"),
+            "field_key": row.get("field_key"),
+            "source_type": row.get("source_type"),
+            "change_mode": row.get("change_mode"),
+            "source_id": row.get("source_id"),
+            "source_reference": row.get("source_reference"),
+            "source_retrieved_at": row.get("source_retrieved_at"),
+            "reason_code": row.get("reason_code"),
+            "review_id": row.get("review_id"),
+            "decision_id": row.get("decision_id"),
+            "initiating_client_id": row.get("initiating_client_id"),
+            "operation_status": row.get("operation_status"),
+            "operation_action": row.get("operation_action"),
+            "recorded_at": row.get("created_at"),
+            "confirmed_at": row.get("operation_confirmed_at"),
+        }
+
     # --------------------------------------------------------------- creation
 
     def begin_operation(
@@ -86,6 +175,7 @@ class IntegrationTrackingService:
         correlation_id: str | None,
         request_id: str | None,
         idempotency_key: str | None = None,
+        field_provenance: list[dict] | None = None,
     ) -> str:
         """Persist the CREATED operation atomically. Fail closed on error."""
         operation_id = str(uuid.uuid4())
@@ -109,6 +199,7 @@ class IntegrationTrackingService:
             request_hash=request_hash,
             outbound_hash=outbound_hash,
             payload_schema_version=1,
+            field_provenance=tuple(field_provenance or ()),
         )
         self._repository.insert_operation(data, schema_version=SCHEMA_VERSION)
         logger.info(

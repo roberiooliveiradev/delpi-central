@@ -100,3 +100,62 @@ def test_v002_normalizes_null_caller_in_idempotency_index() -> None:
     assert "UNIQUE INDEX" in sql
     assert "DROP TABLE" not in sql.upper()
     assert "DROP SCHEMA" not in sql.upper()
+
+
+V003 = _MIGRATIONS / 'V003__supplier_field_provenance.sql'
+
+
+def test_v003_exists() -> None:
+    assert V003.exists()
+
+
+def test_v003_provenance_bound_to_operation_and_supplier() -> None:
+    sql = V003.read_text(encoding='utf-8')
+    assert 'supplier_field_provenance' in sql
+    assert 'REFERENCES integration_tracking.integration_operations' in sql
+    assert 'ON DELETE RESTRICT' in sql
+    for column in (
+        'field_key',
+        'source_type',
+        'change_mode',
+        'supplier_code',
+        'supplier_store',
+        'initiating_client_id',
+        'actor_subject',
+        'operation_id',
+    ):
+        assert column in sql
+
+
+def test_v003_check_constraints_cover_enums() -> None:
+    sql = V003.read_text(encoding='utf-8')
+    for source in (
+        'MANUAL_USER_INPUT', 'GOVERNMENT_API', 'THIRD_PARTY_API',
+        'INTERNAL_SYSTEM', 'IMPORT', 'AUTOMATION_RULE', 'UNKNOWN_LEGACY',
+    ):
+        assert source in sql
+    for mode in (
+        'MANUAL_DIRECT', 'EXTERNAL_SUGGESTION_USER_APPROVED',
+        'BULK_SUGGESTION_USER_APPROVED', 'AUTOMATED_BY_APPROVED_POLICY',
+        'SYSTEM_SYNC', 'IMPORT_JOB',
+    ):
+        assert mode in sql
+
+
+def test_v003_no_field_values_no_secrets_no_destructive() -> None:
+    sql = V003.read_text(encoding='utf-8').lower()
+    assert 'drop table' not in sql
+    assert 'drop schema' not in sql
+    assert 'truncate' not in sql
+    assert 'password' not in sql
+    assert 'value_before' not in sql
+    assert 'value_after' not in sql
+    assert 'old_value' not in sql
+    assert 'new_value' not in sql
+
+
+def test_v003_useful_indexes() -> None:
+    sql = V003.read_text(encoding='utf-8')
+    assert '(operation_id)' in sql
+    assert '(supplier_code, supplier_store, field_key)' in sql
+    assert '(initiating_client_id)' in sql

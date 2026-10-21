@@ -113,6 +113,40 @@ class PostgresIntegrationOperationRepository(PluginBaseRepository):
                             data.correlation_id,
                         ),
                     )
+                    for record in data.field_provenance:
+                        cursor.execute(
+                            f"""
+                            INSERT INTO {_SCHEMA}.supplier_field_provenance (
+                                operation_id, supplier_code, supplier_store,
+                                environment_key, field_key,
+                                source_type, change_mode,
+                                source_id, source_reference,
+                                source_retrieved_at,
+                                reason_code, review_id, decision_id,
+                                initiating_client_id, actor_subject
+                            ) VALUES (
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s
+                            )
+                            """,
+                            (
+                                data.operation_id,
+                                record.get("supplier_code"),
+                                record.get("supplier_store"),
+                                record.get("environment_key"),
+                                record.get("field_key"),
+                                record.get("source_type"),
+                                record.get("change_mode"),
+                                record.get("source_id"),
+                                record.get("source_reference"),
+                                record.get("source_retrieved_at"),
+                                record.get("reason_code"),
+                                record.get("review_id"),
+                                record.get("decision_id"),
+                                record.get("initiating_client_id"),
+                                record.get("actor_subject"),
+                            ),
+                        )
                 connection.commit()
         except PluginsRepositoryError:
             raise
@@ -261,4 +295,71 @@ class PostgresIntegrationOperationRepository(PluginBaseRepository):
             LIMIT %s OFFSET %s
             """,
             (operation_id, limit, offset),
+        )
+
+    def list_supplier_field_provenance(
+        self,
+        *,
+        resource_key: str,
+        supplier_code: str | None,
+        supplier_store: str | None,
+        caller_app: str | None,
+        actor_subject: str | None,
+        field_key: str | None,
+        limit: int,
+        offset: int,
+    ) -> list[dict[str, Any]]:
+        """Provenance rows joined to the operation status authority.
+
+        Scope binding: an S2S caller sees only rows recorded for its own
+        client_id; a direct user sees only rows of operations they recorded
+        themselves without a service caller.
+        """
+        return self.fetch_all(
+            f"""
+            SELECT p.provenance_id::text AS provenance_id,
+                   p.operation_id::text AS operation_id,
+                   p.supplier_code, p.supplier_store,
+                   p.environment_key, p.field_key,
+                   p.source_type, p.change_mode,
+                   p.source_id, p.source_reference,
+                   p.source_retrieved_at,
+                   p.reason_code, p.review_id, p.decision_id,
+                   p.initiating_client_id, p.actor_subject,
+                   p.provenance_schema_version, p.created_at,
+                   op.status AS operation_status,
+                   op.action AS operation_action,
+                   op.confirmed_at AS operation_confirmed_at,
+                   op.created_at AS operation_created_at
+            FROM {_SCHEMA}.supplier_field_provenance p
+            JOIN {_SCHEMA}.integration_operations op
+              ON op.operation_id = p.operation_id
+            WHERE op.integration = 'protheus'
+              AND op.resource = 'supplier'
+              AND (
+                    op.resource_key = %s
+                    OR (p.supplier_code = %s AND p.supplier_store = %s)
+                  )
+              AND (
+                    (%s IS NOT NULL AND op.caller_app = %s)
+                    OR (%s IS NULL AND op.caller_app IS NULL
+                        AND op.actor_subject = %s)
+                  )
+              AND (%s IS NULL OR p.field_key = %s)
+            ORDER BY p.created_at DESC, p.provenance_id
+            LIMIT %s OFFSET %s
+            """,
+            (
+                resource_key,
+                supplier_code,
+                supplier_store,
+                caller_app,
+                caller_app,
+                caller_app,
+                actor_subject,
+                field_key,
+                field_key,
+                limit,
+                offset,
+            ),
         )
