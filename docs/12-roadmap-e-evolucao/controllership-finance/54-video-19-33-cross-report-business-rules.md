@@ -18,7 +18,7 @@ Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo
 | 25:10-25:50 | Revisao de item conhecido de terceiros | Residuo ~R$3,80 considerado de pequeno efeito no CPV *por julgamento humano* | SOURCE_REPORTED; NAO definir threshold automatico |
 | 26:12-26:50 | Kardex 01 filtra codigos fiscais | Transcricao registra 501, 514, 61, 6124; pre-CPV ~388 mil | TO_VERIFY: codigos exatos, zeros/mascaras, colunas e sinal |
 | 27:15-29:20 | Relatorio faturamento x MOD em Excel | Desmesclar, converter texto para numero, filtrar MOD; soma ~172 mil | SOURCE_REPORTED; DRE/planilha Minha DELPI nao comprovados como owner |
-| 30:45 | Conferencia deveria preceder salvamento de Kardex | A executora destaca uma conferencia anterior ainda nao demonstrada/fechada neste ponto | PENDING; nao declarar fluxo completo |
+| ~30:45 | Suposta conferencia anterior ao salvamento dos Kardex | Referencia nao localizada pelo PO no trecho enviado; fala nao verificavel nas evidencias revisadas | STALE_EVIDENCE / RETRACTED; nao usar como regra ou dependencia |
 
 A Joici declara que nao segue sequencia rigida: alterna rotinas para otimizar tempo. Logo a central de conferencia deve expor dependencias verificadas e nao impor ordem arbitraria baseada na gravacao.
 
@@ -36,7 +36,7 @@ Exibir origem, filtros, competencia, status, evidencias, divergencias e responsa
 2. Resolver diferenca entre valores da gravacao e os PDFs P7/MATR320, e entre filial, armazem e competencia.
 3. Identificar no api-delpi as fontes e contratos READ reais (SD3 apenas mencionada para inventario; nao presumir equivalencia de consulta existente).
 4. Identificar owner e eventual ingestao do Excel de MOD: nao ler planilha de terceiro diretamente por conveniencia.
-5. Reconstituir a conferencia referida em 30:45 e o confronto P7/MATR320/Saldo em Processo em trecho seguinte da gravacao.
+5. Mapear as comparacoes P7/MATR320/Saldo em Processo com evidencias positivas; a suposta fala aos 30:45 foi RETRACTED e nao pode ser exigida como conferencia.
 6. Abrir DECISION_REQUIRED antes de novo produto/pagina/contrato; nenhuma permissao adicional nem acesso direto a api-delpi do browser.
 
 ## Evidencia e resultado
