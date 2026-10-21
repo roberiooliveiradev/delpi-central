@@ -270,3 +270,8 @@ FURTHER_CODE_REWORK_AUTHORIZED=NO
 PRODUCTION_READINESS=NOT_PROVEN
 NEXT=AWAIT_PRODUCT_MASTER_COMMAND
 ```
+
+
+### Independent coordination review — Structural Cleanup 01 (2026-10-21)
+
+Reviewed published `main` SHA `352f1bd0524d5a37f069e82489d868266b2f65ab` against base `fe61449102a35d2636bd58047a019753f2ad6fd9`, source and [report 72](./72-orchestration-structural-cleanup-execution-report.md). **Verdict: `ACCEPT_WITH_RESIDUAL` for structural scope only.** GitHub compare: orchestration.py 87 additions/250 deletions, one remaining `self._invoke_model.execute` through `_model_stage_proposal`, removed compatibility symbols/experimental flag absent, B1 retained, separate candidate lineage/validation preserved. Executor reports post-change suite `1690 PASS / 3 SKIP`; independently verified published code statically, **not** independently rerun tests. Published SHA followed a rebase with unrelated controllership-finance documentation; full 12-file compare is not exclusively cleanup scope (report's 7 touched source/test files + documentation). No live-model regression and no post-rebase published-SHA suite demonstrated: `TEST_NOT_RUN`; cannot claim production functional equivalence. No code or public contract changes in this review. Do not reopen Q01–Q03 or claim I04 accepted. `I04_ACCEPTED=NO`, `C3_EXECUTED=NO`, `B1=UNRESOLVED`, `PRODUCTION_DEPLOY_AUTHORIZED=NO`. Structural cleanup package CLOSED_WITH_RESIDUAL, no automatic rework; future deployment/eval gates separate.
