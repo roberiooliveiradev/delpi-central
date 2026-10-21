@@ -40,6 +40,15 @@ export {
   type ConversationReceptionProps,
 } from "./ConversationReception";
 export {
+  ConversationStarterSuggestions,
+  STARTER_SUGGESTIONS_DEFAULT_LABEL,
+  STARTER_SUGGESTIONS_MAX_VISIBLE,
+  type ConversationStarterSuggestion,
+  type ConversationStarterSuggestionIconKey,
+  type ConversationStarterSuggestionsDensity,
+  type ConversationStarterSuggestionsProps,
+} from "./ConversationStarterSuggestions";
+export {
   MessageActionBar,
   type MessageActionBarAlign,
   type MessageActionBarDensity,

@@ -19,6 +19,12 @@ WORKDIR /app/delia
 #   docker build --build-arg VITE_DELIA_AUDIO_QA=1 ...
 ARG VITE_DELIA_AUDIO_QA=""
 ENV VITE_DELIA_AUDIO_QA=$VITE_DELIA_AUDIO_QA
+# QA-only demo/fixture admission — default off; production builds never
+# admit `?delia-demo=` scenarios nor starter-suggestion fixtures.
+# Set only for authorized QA/preview images:
+#   docker build --build-arg VITE_DELIA_DEMO=1 ...
+ARG VITE_DELIA_DEMO=""
+ENV VITE_DELIA_DEMO=$VITE_DELIA_DEMO
 # tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
 RUN npx vite build
 RUN node ../vite/verify-federation-react-patch.mjs dist/assets

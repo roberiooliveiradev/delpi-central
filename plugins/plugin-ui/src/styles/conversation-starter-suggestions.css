@@ -1,0 +1,245 @@
+/* ConversationStarterSuggestions — optional question starters inside an
+   empty-conversation reception (doc 93 §§3–14).
+
+   Presentation caps by real container width: the conversation
+   workspace is already `container-type: inline-size`, so @container
+   queries adapt card count/density to the Companion Dock and narrow
+   surfaces without a resize engine. Viewport-height media queries are
+   a fallback that reduces cards to 1 or 0 before competing with the
+   composer. Tokens resolve to --delpi-ui-* kit vars with fallbacks. */
+
+.delpi-ui-starter-suggestions {
+  --_text: var(--delpi-ui-text, var(--text, #1f2933));
+  --_muted: var(--delpi-ui-text-muted, var(--text-muted, #64748b));
+  --_surface: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --_border: var(--delpi-ui-border, var(--border, #d9e2ec));
+  --_accent: var(--delpi-ui-accent, var(--accent, #0b5fff));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 24px 24px;
+  color: var(--_text);
+  box-sizing: border-box;
+}
+
+.delpi-ui-starter-suggestions__label {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--_muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-starter-suggestions__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delpi-ui-starter-suggestions__item {
+  min-width: 0;
+}
+
+/* HelpTooltip wrap root must stretch the hit target to the cell. */
+.delpi-ui-starter-suggestions__item > .delpi-ui-help-tooltip--wrap {
+  display: block;
+  height: 100%;
+}
+
+.delpi-ui-starter-suggestions__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 44px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  text-align: left;
+  font: inherit;
+  color: var(--_text);
+  background: var(--_surface);
+  border: 1px solid var(--_border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.delpi-ui-starter-suggestions__card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--_accent) 45%, var(--_border));
+  background: color-mix(in srgb, var(--_accent) 4%, var(--_surface));
+}
+
+.delpi-ui-starter-suggestions__card:active:not(:disabled) {
+  background: color-mix(in srgb, var(--_accent) 8%, var(--_surface));
+}
+
+.delpi-ui-starter-suggestions__card:focus-visible {
+  outline: 2px solid var(--_accent);
+  outline-offset: 2px;
+}
+
+.delpi-ui-starter-suggestions__card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.delpi-ui-starter-suggestions__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--_muted);
+}
+
+.delpi-ui-starter-suggestions__card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.delpi-ui-starter-suggestions__card-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-starter-suggestions__card-description {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--_muted);
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-starter-suggestions__note {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--_muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Loading — light honest skeleton, bounded, decorative only. */
+.delpi-ui-starter-suggestions__card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+.delpi-ui-starter-suggestions__skeleton-line {
+  display: block;
+  width: 100%;
+  height: 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--_muted) 18%, transparent);
+  animation: delpi-ui-starter-suggestions-pulse 1.6s ease-in-out infinite;
+}
+
+.delpi-ui-starter-suggestions__skeleton-line--short {
+  width: 62%;
+  margin-top: 6px;
+}
+
+@keyframes delpi-ui-starter-suggestions-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Compact density (dock/narrow containers). */
+.delpi-ui-starter-suggestions--compact {
+  padding: 0 16px 16px;
+}
+
+.delpi-ui-starter-suggestions--compact
+  .delpi-ui-starter-suggestions__card {
+  padding: 10px 12px;
+}
+
+/* Narrow container → one column, cap 2 cards (spec §13.2). */
+@container (max-width: 560px) {
+  .delpi-ui-starter-suggestions__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 480px) {
+  .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* Minimal mode (very narrow / dock): hide the description visually —
+   the full text stays accessible via the card's describedby tooltip. */
+@container (max-width: 400px) {
+  .delpi-ui-starter-suggestions__card-description {
+    display: none;
+  }
+}
+
+/* Short viewports (zoom 200%, small heights): reduce before the
+   composer ever loses space — 1 card, then none (spec §13). */
+@media (max-height: 420px) {
+  .delpi-ui-starter-suggestions
+    .delpi-ui-starter-suggestions__item:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (max-height: 300px) {
+  .delpi-ui-starter-suggestions {
+    display: none;
+  }
+}
+
+/* Companion Dock — minimal density, never more than 2 cards. */
+.global-delia-dock .delpi-ui-starter-suggestions {
+  padding: 0 12px 12px;
+}
+
+.global-delia-dock .delpi-ui-starter-suggestions__grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.global-delia-dock
+  .delpi-ui-starter-suggestions
+  .delpi-ui-starter-suggestions__item:nth-child(n + 3) {
+  display: none;
+}
+
+.global-delia-dock .delpi-ui-starter-suggestions__card {
+  padding: 8px 10px;
+  min-height: 40px;
+}
+
+.global-delia-dock .delpi-ui-starter-suggestions__card-description {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-starter-suggestions__card {
+    transition: none;
+  }
+  .delpi-ui-starter-suggestions__skeleton-line {
+    animation: none;
+  }
+}

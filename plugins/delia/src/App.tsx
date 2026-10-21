@@ -9,6 +9,7 @@ import { ConversationTimeline } from "./ui/ConversationTimeline";
 import type { ConversationDisplayTurn } from "./ui/ConversationTimeline";
 import {
   DeliaInteractionError,
+  INTERACTION_INPUT_CHAR_LIMIT,
   buildInteractionContext,
   submitInteractionTurn,
 } from "./api/interactionClient";
@@ -22,9 +23,11 @@ import {
   UnifiedAvatar,
   ConversationError,
   ConversationHeader,
+  ConversationStarterSuggestions,
   ConversationWorkspace,
   ConversationScrollNavigator,
 } from "@delpi/plugin-ui/index";
+import type { ConversationStarterSuggestion } from "@delpi/plugin-ui/index";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
   buildLiveActivityView,
@@ -38,6 +41,7 @@ import {
 } from "./demo/demoMode";
 import { resolveAudioQaAdmission } from "./audio/audioCaptureQaAdmission";
 import { resolveAudioCaptureLimits } from "./audio/audioCaptureTestAdmission";
+import { resolveStarterSuggestions } from "./suggestions/starterSuggestions";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -140,6 +144,14 @@ export default function App({
   const audioAdmission =
     audioQaAdmission ?? resolveAudioCaptureLimits(dictationStt);
   const [input, setInput] = useState("");
+  // F02-A — starter suggestions (doc 93 §14): QA fixtures only in
+  // demo/QA-admitted bundles; production resolves to [] and the
+  // section stays hidden. Selecting one fills the controlled draft —
+  // never submits.
+  const [starterItems] = useState<readonly ConversationStarterSuggestion[]>(
+    () => resolveStarterSuggestions(demoScenario),
+  );
+  const [suggestionNote, setSuggestionNote] = useState<string | null>(null);
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
   const [loading, setLoading] = useState(false);
   // Progressive activity (doc 70 §16): observed events for the
@@ -382,6 +394,36 @@ export default function App({
   }
 
   /**
+   * F02-A: a suggestion only edits the controlled draft — never
+   * submits, never claims a capability. Fail-safe with a non-empty
+   * draft (spec 93 §14): do not overwrite silently; show a light note
+   * instead. Repeated clicks cannot duplicate text.
+   */
+  function handleStarterSelect(item: ConversationStarterSuggestion) {
+    if (input.trim().length > 0) {
+      setSuggestionNote(
+        "Edite ou apague o texto atual antes de usar uma sugestão.",
+      );
+      return;
+    }
+    setSuggestionNote(null);
+    const text = item.draftText.slice(0, INTERACTION_INPUT_CHAR_LIMIT);
+    setInput(text);
+    requestAnimationFrame(() => {
+      const el = document.getElementById("delia-interaction-input");
+      if (el instanceof HTMLTextAreaElement) {
+        el.focus();
+        el.setSelectionRange(text.length, text.length);
+      }
+    });
+  }
+
+  function handleComposerChange(value: string) {
+    if (suggestionNote != null) setSuggestionNote(null);
+    setInput(value);
+  }
+
+  /**
    * Governed-write scope choice (§6.184): Executar/Cancelar send typed
    * decision commands bound to the exact pending proposal — the MFE
    * echoes the bounded digests back verbatim, never sees the raw owner
@@ -473,7 +515,7 @@ export default function App({
               <DeliaComposer
                 inputId="delia-interaction-input"
                 value={input}
-                onChange={setInput}
+                onChange={handleComposerChange}
                 onSubmit={handleSubmit}
                 loading={loading}
                 requestMode={requestMode}
@@ -504,7 +546,15 @@ export default function App({
               onConfirmation={handleConfirmation}
             />
           ) : (
-            <DeliaReception userIdentity={userIdentity} />
+            <>
+              <DeliaReception userIdentity={userIdentity} />
+              <ConversationStarterSuggestions
+                items={starterItems}
+                onSelect={handleStarterSelect}
+                disabled={loading || requestMode !== "idle"}
+                note={suggestionNote}
+              />
+            </>
           )}
           {loading ? (
             <div className="delia-interaction__pending-row">

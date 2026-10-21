@@ -257,11 +257,11 @@ const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
 };
 
 /** Whether this bundle is even allowed to entertain demo mode. */
-export function isDemoAllowed(): boolean {
-  return (
-    Boolean(import.meta.env.DEV) ||
-    import.meta.env.VITE_DELIA_DEMO === "1"
-  );
+export function isDemoAllowed(
+  env: Pick<ImportMetaEnv, "DEV"> & { VITE_DELIA_DEMO?: string } =
+    import.meta.env,
+): boolean {
+  return Boolean(env.DEV) || env.VITE_DELIA_DEMO === "1";
 }
 
 /**
