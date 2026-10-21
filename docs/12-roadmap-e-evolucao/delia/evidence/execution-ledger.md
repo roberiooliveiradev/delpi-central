@@ -16864,3 +16864,27 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.358 — F02-A-R3 Companion Dock vertical centering of starter suggestions (2026-10-21)
+
+**DATE:** 2026-10-21. **TASK:** DELIA-UX-F02A-R3-DOCK-STARTER-VERTICAL-CENTERING-01. **SPEC:** 93 §19 (Product Master). Reanchor sobre fd77245793. Causa raiz: bloco titulo+grid ancorado no topo da faixa livre (offset medido -37 a -78px em Dock alto; todo o espaco livre ficava abaixo do grupo). Solucao CSS-only no owner existente (1 arquivo, escopo .global-delia-dock): a secao de sugestoes cresce (flex:1 1 auto; min-height:0) preenchendo a faixa entre recepcao e composer, e centraliza o grupo com justify-content:center (raiz ja e flex-column); padding vertical tornado simetrico (12px) para nao enviesar o centro. Regra justify-content:center da coluna (R2) vira no-op com secao visivel e mantem recepcao centrada quando budget esconde todos os cards. Recepcao volta ao topo -> tres regioes claras. Zero componente/observer/backend; budgets R2, draft-only, zero-submit, VD-F05 intocados.
+
+
+
+```text
+F02A_R3_VERTICAL_CENTERING=EXECUTED
+APPROACH=SECTION_GROWS_AND_CENTERS_OWN_GROUP
+OFFSET_BEFORE=-37_-78PX
+OFFSET_AFTER=-7_-9PX_JUSTIFIED(gap12+composer-chrome)
+VITEST_DIRECTED=159_PASSED
+TYPECHECK=PASS
+BUILD=PASS
+FEDERATION=PASS
+BROWSER_QA_LOCAL_PROD_PARITY=44_44
+PRODUCTION_DEPLOYMENT=PENDING
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+PHASE_ADVANCE=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=DEPLOY_THEN_COORDINATION_REVIEW
+```

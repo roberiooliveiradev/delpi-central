@@ -216,7 +216,19 @@
    Width queries resolve on the same container. No internal scroll,
    no filler cards — visibleCount <= eligibleCount. */
 .global-delia-dock .delpi-ui-starter-suggestions {
-  padding: 0 12px 12px;
+  /* Symmetric vertical padding keeps justify-content:center's inner
+     box centered on the band (an uneven padding would bias the group
+     up or down by half the difference). */
+  padding: 12px;
+  /* F02-A-R3 (doc 93 §19): the section itself grows to fill the free
+     band between the reception and the composer, then centers its own
+     packed [label + grid] group inside that band. The column's
+     justify-content:center (R2) becomes a no-op while the section is
+     visible and still centers the reception alone when the height
+     budget hides every card. */
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
 }
 
 .global-delia-dock .delpi-ui-starter-suggestions__grid {
