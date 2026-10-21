@@ -17050,3 +17050,21 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.365 — C3 audit: MCP semantic contract projection (2026-10-21)
+
+**TASK:** DELIA-C3-MCP-SEMANTIC-CONTRACT-PROJECTION-AUDIT-01. READ-only audit — live authenticated tools/list + get_catalog/discover on TÉO/VISTA/DAVI via real delegation path, plus full projection trace at `6538e04265`. **Finding 1 (projection gap, proven):** `capability_surface.entities[].filterable_fields` is published by TÉO+VISTA (`process` excludes `date_field`; `instance`/`revision` include it) but never reaches the READ path — the DISCOVERY step requires `_requires_owner_vocabulary` (opaque-envelope schema) which `record_read` does not satisfy, so `get_catalog` never runs; the flat `inputSchema` admits `date_field` unconditionally and `validate_arguments` passes it. Explains live owner rejections — owner fails closed correctly. **Finding 2 (owner contract gaps):** no owner publishes field→event semantics (`updated_at` exists only as a name in `server_owned_fields`) nor server-side ordering (`sortable_fields` exists empty on VISTA, absent on TÉO); `delia_projection_hint.status=PLANNED` confirms owner-anticipated future consumption. **Finding 3 (verified):** `verified_ordering_event` proves quote provenance + field binding, NOT semantic entailment (independent review `2ed55ba47a` confirmed); description budget compaction to 0 chars makes the quote impossible → safe abstention. **Verified clean:** tools/list→ProviderCapability lossless except intentional title/annotations drop; DAVI candidate argument_schema/semantic_hints/pagination_hints DO reach the model via `owner_vocabulary` on the opaque-envelope path; pagination/coverage fail-closed. Report: [83](../corrections/mcp-contextual-intelligence-orchestration/83-c3-mcp-semantic-contract-projection-audit.md).
+
+```text
+AUDIT_VERDICT=ACCEPT_WITH_RESIDUAL
+PROJECTION_GAPS=entity_filterable_fields_not_consumed_on_read
+CONTRACT_GAPS=field_event_semantics+server_ordering (owner-side)
+RUNTIME_CODE_CHANGED=NO
+MINIMAL_PACKAGE=owner typed declarations + bounded consumer reuse
+CRI_DEV_ENABLED=YES_PERSISTENT
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_DECISION (read-path filterable_fields channel + owner contract evolution)
+```

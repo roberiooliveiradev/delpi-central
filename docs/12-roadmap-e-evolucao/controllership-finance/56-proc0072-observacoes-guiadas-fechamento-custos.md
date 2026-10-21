@@ -192,3 +192,42 @@ Estado: KARDEX_DEPENDENCY=OWNER_REPORTED_VIA_PO; COMPENSATION_PURPOSE=OWNER_REPO
 5. Seguir a narracao apos ~11:32 e capturar quais comparacoes Joici realmente faz com os outputs.
 
 Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `PRINT_DIALOGS=PROVEN_SCREENSHOT_PARTIAL`; `PRINTED_CONTENT=TO_INVENTORY`; `R01_R02_PARITY=NOT_ESTABLISHED`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Registro 07 - Relacao de baixas DELPI e revisao do custo medio (12:48-16:57)
+
+**Proveniencia:** descricao oral do PO durante revisao do video e quatro capturas TOTVS. `OWNER_REPORTED_VIA_PO` para explicacoes de Joici narradas pelo PO; `PROVEN_SCREENSHOT` para mensagens e campos visiveis. Nao usar como prova de paridade de dados. Capturas do erro TOTVS e dos passos do Acompanha Custos sao artefatos de evidencia do dialogo; nao armazenar credenciais ou identificadores de usuario no repo.
+
+### 12:48-13:52 - Relacao de Baixas DLP e limitacao do ambiente
+- Joici tenta abrir a rotina DELPI `Relacao de Baixas DLP [02.9.0006]`, descrita pelo PO como reunindo movimentacoes de baixas do Financeiro, tanto pagar quanto receber, com contraparte fornecedor/cliente e identificacao CNPJ.
+- A tentativa da gravacao falha. Captura apresenta `Help: NO_IX`, com texto de que uma funcao de usuario nao esta compilada no repositorio. Em outra captura, a Central de Diagnostico identifica a rotina `U_FINR190C` (leitura visual; confirmar no codigo customizado) com estado `Nao configurado`; nao inferir que o erro inteiro decorre somente desse campo.
+- **Nao houve geracao de output da Relacao de Baixas DLP neste trecho**; `REPORT_OUTPUT=TEST_NOT_RUN` / `ERROR=PROVEN_SCREENSHOT`. Nao chamar a rotina de FINR190 padrao sem verificacao.
+- Segundo PO/Joici, o relatorio configurado especificamente para DELPI combina **cinco saidas** usadas pela Aliança, parceira terceirizada da Controladoria, para importacao em sua ferramenta:
+  1. Excel de Contas a Pagar;
+  2. Excel de Contas a Receber;
+  3. PDF de Contas a Receber por data;
+  4. PDF de Contas a Pagar por data;
+  5. PDF de Contas a Pagar por natureza de operacao.
+- A fala relata que essas saidas permitem compor a informacao consolidada; **nao comprova** que sejam um `UNION` simples, que tenham o mesmo granulo/linhas nem as chaves e o layout de importacao da Aliança. O PDF/Excel real do ultimo fechamento, mapeamento campo a campo, duplicidades, competencias, filtragem e parametrizacao estao `TO_INVENTORY`.
+- Relacao com Portal: R01/R02 ja consultam **eventos de baixas financeiras** via BFF, portanto ha fonte candidata reutilizavel para analise READ. Contudo `R01_R02_TO_DLP_PARITY=TEST_NOT_RUN`; CNPJ no payload, abrangencia de todas as naturezas, cinco saidas e layout da importacao nao estao comprovados. **Nao adicionar CNPJ por inferencia nem exportacao do universo inteiro sem contrato e gate.**
+- Diferenca para Registro 06: Posicao dos Titulos em aberto (FINR150/FINR130 provisoriamente) **nao equivale** a Relacao de Baixas DLP; tampouco a compensacao de titulos e a mesma transacao que uma baixa.
+
+### ~16:00-16:57 - Acompanha Custos: calculo 100% e revisao ainda aberta
+- Captura da etapa **Calculo de custo** do assistente TOTVS mostra barra **100%**, com marcacoes `Niveis validados`, `Arquivo de trabalho montado`, `Transferencias entre filiais processadas` e `Analise das movimentacoes concluida`, alem do botao `Proximo passo`. Isso evidencia **conclusao visual desta etapa**, nao confirmacao do fechamento mensal.
+- Apos avancar, tela **Analise e revisao** apresenta tabela por filial, codigo de produto, tipo, grupo, armazem, custo medio inicial, custo medio final e variacao percentual, com status (como POSITIVO), busca, opcao de exportar e acao `Refazer calculo`. Um texto de pagina menciona `Mostrando 10 de 1991 produtos em custo medio do periodo` na captura.
+- Segundo PO/Joici, as variacoes de custo medio precisam ser avaliadas antes de concluir; **ela nao avanca para a etapa final de Fechamento naquele momento**, porque ainda ha outras conferencias a realizar.
+- Nao interpretar status `POSITIVO` da linha como aceite ou ausencia de discrepancia, nem o percentual variacao como erro automatico; limiares, resultados e criterios humanos ainda `TO_INVENTORY`.
+- **Distincao fundamental:** processamento do custo medio completo (100%) != analise/revisao homologada != fechamento mensal confirmado. Qualquer proposta futura no Portal deve manter esses tres estados separados, sem executar comando TOTVS de fechamento sem autorizacao especifica.
+
+### Mapa de verificacoes proximas
+| Item | Evidencia atual | O que falta |
+|---|---|---|
+| `U_FINR190C` DELPI | screenshot de diagnostico e falha `NO_IX` | owner do fonte customizado, versao, regra/rotina e motivo preciso de indisponibilidade |
+| Cinco exportacoes Aliança | relato PO | arquivos originais do ultimo fechamento, filtro, campo, relacao entre formatos, contrato de ingestao |
+| R01/R02 vs relatorio DELPI | endpoints operacionais implementados | prova campo a campo e reconciliacao de totais/linhas com cinco saidas |
+| Calculo custo | etapa 100% e checks visiveis | resultado de job, historico e contrato de consulta |
+| Analise/revisao custo medio | tabela e variacoes visiveis | criterios de excecao, tolerancias e resultado humano por competencia |
+| Fechamento definitivo | ainda nao observado neste registro | sequencia e comprovante da confirmacao final |
+
+### Status
+`DELPI_DLP_REPORT=OWNER_REPORTED_VIA_PO`; `DLP_RUNTIME_FAILURE=PROVEN_SCREENSHOT`; `CUSTOM_ROUTINE_ID=PROVEN_SCREENSHOT_PARTIAL`; `DLP_FIVE_OUTPUTS=OWNER_REPORTED_VIA_PO`; `DLP_SQL_PARITY=TEST_NOT_RUN`; `COST_CALC_STAGE_100=PROVEN_SCREENSHOT`; `COST_REVIEW_SCREEN=PROVEN_SCREENSHOT`; `COST_CLOSING_COMPLETED=NOT_PROVEN`; `IMPLEMENTATION_AUTHORIZED=NO`.
