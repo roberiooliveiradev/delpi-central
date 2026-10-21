@@ -3742,6 +3742,38 @@
           "pt-BR": {
             "label": "Valor ↓"
           }
+        },
+        "created_at_desc": {
+          "en": {
+            "label": "Created ↓"
+          },
+          "pt-BR": {
+            "label": "Criação ↓"
+          }
+        },
+        "created_at_asc": {
+          "en": {
+            "label": "Created ↑"
+          },
+          "pt-BR": {
+            "label": "Criação ↑"
+          }
+        },
+        "report_date_desc": {
+          "en": {
+            "label": "Report date ↓"
+          },
+          "pt-BR": {
+            "label": "Data do relatório ↓"
+          }
+        },
+        "report_number_asc": {
+          "en": {
+            "label": "Report number ↑"
+          },
+          "pt-BR": {
+            "label": "Número do relatório ↑"
+          }
         }
       }
     },
@@ -5130,6 +5162,182 @@
         "pt-BR": {
           "label": "NF de retorno",
           "description": "Número da nota fiscal de retorno."
+        }
+      }
+    },
+    "applicator_tool": {
+      "locale": {
+        "en": {
+          "label": "Applicator tool",
+          "description": "Applicator or crimp tool used on the sample."
+        },
+        "pt-BR": {
+          "label": "Aplicador",
+          "description": "Ferramenta aplicadora ou de crimpagem usada na amostra."
+        }
+      }
+    },
+    "batch_production_order": {
+      "locale": {
+        "en": {
+          "label": "Batch / production order",
+          "description": "Batch or production order of the sample."
+        },
+        "pt-BR": {
+          "label": "Lote / ordem de produção",
+          "description": "Lote ou ordem de produção da amostra."
+        }
+      }
+    },
+    "cable": {
+      "locale": {
+        "en": {
+          "label": "Cable",
+          "description": "Cable identification of the sample."
+        },
+        "pt-BR": {
+          "label": "Cabo",
+          "description": "Identificação do cabo da amostra."
+        }
+      }
+    },
+    "conductor_section": {
+      "locale": {
+        "en": {
+          "label": "Conductor section",
+          "description": "Conductor cross-section of the sample."
+        },
+        "pt-BR": {
+          "label": "Seção do condutor",
+          "description": "Seção do condutor da amostra."
+        }
+      }
+    },
+    "press_equipment": {
+      "locale": {
+        "en": {
+          "label": "Press equipment",
+          "description": "Press or equipment used to produce the sample."
+        },
+        "pt-BR": {
+          "label": "Prensa / equipamento",
+          "description": "Prensa ou equipamento usado na amostra."
+        }
+      }
+    },
+    "product_harness": {
+      "locale": {
+        "en": {
+          "label": "Product / harness",
+          "description": "Product or harness of the sample."
+        },
+        "pt-BR": {
+          "label": "Produto / chicote",
+          "description": "Produto ou chicote da amostra."
+        }
+      }
+    },
+    "report_number": {
+      "locale": {
+        "en": {
+          "label": "Report number",
+          "description": "Human metallographic report number (MET-year-sequence)."
+        },
+        "pt-BR": {
+          "label": "Número do relatório",
+          "description": "Número humano do relatório metalográfico (MET-ano-sequência)."
+        }
+      }
+    },
+    "sample_identification": {
+      "locale": {
+        "en": {
+          "label": "Sample identification",
+          "description": "Free-text identification of the metallographic sample."
+        },
+        "pt-BR": {
+          "label": "Identificação da amostra",
+          "description": "Identificação livre da amostra metalográfica."
+        }
+      }
+    },
+    "terminal_code": {
+      "locale": {
+        "en": {
+          "label": "Terminal code",
+          "description": "Terminal code of the sample."
+        },
+        "pt-BR": {
+          "label": "Código do terminal",
+          "description": "Código do terminal da amostra."
+        }
+      }
+    },
+    "terminal_part_number": {
+      "locale": {
+        "en": {
+          "label": "Terminal part number",
+          "description": "Terminal part number of the sample."
+        },
+        "pt-BR": {
+          "label": "Part number do terminal",
+          "description": "Part number do terminal da amostra."
+        }
+      }
+    },
+    "report_date_from": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Report date from",
+          "description": "Inclusive start of the report date filter (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data do relatório de",
+          "description": "Início inclusivo do filtro de data do relatório (AAAA-MM-DD)."
+        }
+      }
+    },
+    "report_date_to": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Report date to",
+          "description": "Inclusive end of the report date filter (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data do relatório até",
+          "description": "Fim inclusivo do filtro de data do relatório (AAAA-MM-DD)."
+        }
+      }
+    },
+    "conclusion_result": {
+      "locale": {
+        "en": {
+          "label": "Conclusion",
+          "description": "Analysis result filter: conforming or nonconforming."
+        },
+        "pt-BR": {
+          "label": "Conclusão",
+          "description": "Filtro do resultado da análise: conforme ou não conforme."
+        }
+      },
+      "enumLabels": {
+        "conforming": {
+          "en": {
+            "label": "Conforming"
+          },
+          "pt-BR": {
+            "label": "Conforme"
+          }
+        },
+        "nonconforming": {
+          "en": {
+            "label": "Nonconforming"
+          },
+          "pt-BR": {
+            "label": "Não conforme"
+          }
         }
       }
     }

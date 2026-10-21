@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 759,
+  "operation_count": 769,
   "operations": [
     {
       "method": "GET",
@@ -27748,6 +27748,1045 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Lmp history flow."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/metallographic-reports",
+      "operationId": "engineering_list_metallographic_reports",
+      "summary": "List metallographic reports",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=20 ge=1 le=100",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Stable sort: created_at_desc, created_at_asc, report_date_desc or report_number_asc.",
+          "type": "string",
+          "default": "created_at_desc",
+          "enum": [
+            "created_at_desc",
+            "created_at_asc",
+            "report_date_desc",
+            "report_number_asc"
+          ]
+        },
+        {
+          "name": "report_date_from",
+          "in": "query",
+          "required": false,
+          "description": "Inclusive start of the report date filter (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "report_date_to",
+          "in": "query",
+          "required": false,
+          "description": "Inclusive end of the report date filter (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "report_number",
+          "in": "query",
+          "required": false,
+          "description": "Human metallographic report number (MET-year-sequence).",
+          "type": "string"
+        },
+        {
+          "name": "terminal_code",
+          "in": "query",
+          "required": false,
+          "description": "Terminal code of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "terminal_part_number",
+          "in": "query",
+          "required": false,
+          "description": "Terminal part number of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "product_harness",
+          "in": "query",
+          "required": false,
+          "description": "Product or harness of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "cable",
+          "in": "query",
+          "required": false,
+          "description": "Cable identification of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "conductor_section",
+          "in": "query",
+          "required": false,
+          "description": "Conductor cross-section of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "applicator_tool",
+          "in": "query",
+          "required": false,
+          "description": "Applicator or crimp tool used on the sample.",
+          "type": "string"
+        },
+        {
+          "name": "press_equipment",
+          "in": "query",
+          "required": false,
+          "description": "Press or equipment used to produce the sample.",
+          "type": "string"
+        },
+        {
+          "name": "batch_production_order",
+          "in": "query",
+          "required": false,
+          "description": "Batch or production order of the sample.",
+          "type": "string"
+        },
+        {
+          "name": "sample_identification",
+          "in": "query",
+          "required": false,
+          "description": "Free-text identification of the metallographic sample.",
+          "type": "string"
+        },
+        {
+          "name": "conclusion_result",
+          "in": "query",
+          "required": false,
+          "description": "Analysis result filter: conforming or nonconforming.",
+          "enum": [
+            "conforming",
+            "nonconforming"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "paged_list",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "List metallographic reports",
+            "description": "Lists metallographic reports with combined filters, pagination and stable sort.",
+            "label": "List metallographic reports"
+          },
+          "pt-BR": {
+            "summary": "Listar relatórios metalográficos",
+            "description": "Lista relatórios metalográficos com filtros combinados, paginação e ordenação estável.",
+            "label": "Listar relatórios metalográficos"
+          }
+        },
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "sort": {
+            "locale": {
+              "en": {
+                "description": "Sort query parameter.",
+                "label": "Sort"
+              },
+              "pt-BR": {
+                "description": "Critério de ordenação da listagem.",
+                "label": "Ordenação"
+              }
+            },
+            "enumLabels": {
+              "cost_asc": {
+                "en": {
+                  "label": "Cost ↑"
+                },
+                "pt-BR": {
+                  "label": "Custo ↑"
+                }
+              },
+              "cost_desc": {
+                "en": {
+                  "label": "Cost ↓"
+                },
+                "pt-BR": {
+                  "label": "Custo ↓"
+                }
+              },
+              "created_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "date_asc": {
+                "en": {
+                  "label": "Date ↑"
+                },
+                "pt-BR": {
+                  "label": "Data ↑"
+                }
+              },
+              "date_desc": {
+                "en": {
+                  "label": "Date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data ↓"
+                }
+              },
+              "delay_asc": {
+                "en": {
+                  "label": "Delay ↑"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↑"
+                }
+              },
+              "delay_desc": {
+                "en": {
+                  "label": "Delay ↓"
+                },
+                "pt-BR": {
+                  "label": "Atraso ↓"
+                }
+              },
+              "delivery_asc": {
+                "en": {
+                  "label": "Delivery ↑"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↑"
+                }
+              },
+              "delivery_desc": {
+                "en": {
+                  "label": "Delivery ↓"
+                },
+                "pt-BR": {
+                  "label": "Entrega ↓"
+                }
+              },
+              "due_date_asc": {
+                "en": {
+                  "label": "Due date ↑"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↑"
+                }
+              },
+              "due_date_desc": {
+                "en": {
+                  "label": "Due date ↓"
+                },
+                "pt-BR": {
+                  "label": "Vencimento ↓"
+                }
+              },
+              "hours_asc": {
+                "en": {
+                  "label": "Hours ↑"
+                },
+                "pt-BR": {
+                  "label": "Horas ↑"
+                }
+              },
+              "hours_desc": {
+                "en": {
+                  "label": "Hours ↓"
+                },
+                "pt-BR": {
+                  "label": "Horas ↓"
+                }
+              },
+              "issue_asc": {
+                "en": {
+                  "label": "Issue ↑"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↑"
+                }
+              },
+              "issue_desc": {
+                "en": {
+                  "label": "Issue ↓"
+                },
+                "pt-BR": {
+                  "label": "Emissão ↓"
+                }
+              },
+              "op_asc": {
+                "en": {
+                  "label": "OP ↑"
+                },
+                "pt-BR": {
+                  "label": "OP ↑"
+                }
+              },
+              "op_desc": {
+                "en": {
+                  "label": "OP ↓"
+                },
+                "pt-BR": {
+                  "label": "OP ↓"
+                }
+              },
+              "priority_desc": {
+                "en": {
+                  "label": "Priority ↓"
+                },
+                "pt-BR": {
+                  "label": "Prioridade ↓"
+                }
+              },
+              "product_code_asc": {
+                "en": {
+                  "label": "Product code ↑"
+                },
+                "pt-BR": {
+                  "label": "Código ↑"
+                }
+              },
+              "product_code_desc": {
+                "en": {
+                  "label": "Product code ↓"
+                },
+                "pt-BR": {
+                  "label": "Código ↓"
+                }
+              },
+              "qty_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "qty_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "quantity_asc": {
+                "en": {
+                  "label": "Quantity ↑"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↑"
+                }
+              },
+              "quantity_desc": {
+                "en": {
+                  "label": "Quantity ↓"
+                },
+                "pt-BR": {
+                  "label": "Quantidade ↓"
+                }
+              },
+              "schedule_asc": {
+                "en": {
+                  "label": "Schedule ↑"
+                },
+                "pt-BR": {
+                  "label": "Programação ↑"
+                }
+              },
+              "schedule_no_status_asc": {
+                "en": {
+                  "label": "Schedule ↑ (chronological)"
+                },
+                "pt-BR": {
+                  "label": "Programação cronológica ↑"
+                }
+              },
+              "schedule_desc": {
+                "en": {
+                  "label": "Schedule ↓"
+                },
+                "pt-BR": {
+                  "label": "Programação ↓"
+                }
+              },
+              "stock_value_asc": {
+                "en": {
+                  "label": "Stock value ↑"
+                },
+                "pt-BR": {
+                  "label": "Valor ↑"
+                }
+              },
+              "stock_value_desc": {
+                "en": {
+                  "label": "Stock value ↓"
+                },
+                "pt-BR": {
+                  "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
+              }
+            }
+          },
+          "applicator_tool": {
+            "locale": {
+              "en": {
+                "description": "Applicator or crimp tool used on the sample.",
+                "label": "Applicator tool"
+              },
+              "pt-BR": {
+                "description": "Ferramenta aplicadora ou de crimpagem usada na amostra.",
+                "label": "Aplicador"
+              }
+            }
+          },
+          "batch_production_order": {
+            "locale": {
+              "en": {
+                "description": "Batch or production order of the sample.",
+                "label": "Batch / production order"
+              },
+              "pt-BR": {
+                "description": "Lote ou ordem de produção da amostra.",
+                "label": "Lote / ordem de produção"
+              }
+            }
+          },
+          "cable": {
+            "locale": {
+              "en": {
+                "description": "Cable identification of the sample.",
+                "label": "Cable"
+              },
+              "pt-BR": {
+                "description": "Identificação do cabo da amostra.",
+                "label": "Cabo"
+              }
+            }
+          },
+          "conductor_section": {
+            "locale": {
+              "en": {
+                "description": "Conductor cross-section of the sample.",
+                "label": "Conductor section"
+              },
+              "pt-BR": {
+                "description": "Seção do condutor da amostra.",
+                "label": "Seção do condutor"
+              }
+            }
+          },
+          "press_equipment": {
+            "locale": {
+              "en": {
+                "description": "Press or equipment used to produce the sample.",
+                "label": "Press equipment"
+              },
+              "pt-BR": {
+                "description": "Prensa ou equipamento usado na amostra.",
+                "label": "Prensa / equipamento"
+              }
+            }
+          },
+          "product_harness": {
+            "locale": {
+              "en": {
+                "description": "Product or harness of the sample.",
+                "label": "Product / harness"
+              },
+              "pt-BR": {
+                "description": "Produto ou chicote da amostra.",
+                "label": "Produto / chicote"
+              }
+            }
+          },
+          "report_number": {
+            "locale": {
+              "en": {
+                "description": "Human metallographic report number (MET-year-sequence).",
+                "label": "Report number"
+              },
+              "pt-BR": {
+                "description": "Número humano do relatório metalográfico (MET-ano-sequência).",
+                "label": "Número do relatório"
+              }
+            }
+          },
+          "sample_identification": {
+            "locale": {
+              "en": {
+                "description": "Free-text identification of the metallographic sample.",
+                "label": "Sample identification"
+              },
+              "pt-BR": {
+                "description": "Identificação livre da amostra metalográfica.",
+                "label": "Identificação da amostra"
+              }
+            }
+          },
+          "terminal_code": {
+            "locale": {
+              "en": {
+                "description": "Terminal code of the sample.",
+                "label": "Terminal code"
+              },
+              "pt-BR": {
+                "description": "Código do terminal da amostra.",
+                "label": "Código do terminal"
+              }
+            }
+          },
+          "terminal_part_number": {
+            "locale": {
+              "en": {
+                "description": "Terminal part number of the sample.",
+                "label": "Terminal part number"
+              },
+              "pt-BR": {
+                "description": "Part number do terminal da amostra.",
+                "label": "Part number do terminal"
+              }
+            }
+          },
+          "report_date_from": {
+            "locale": {
+              "en": {
+                "description": "Inclusive start of the report date filter (YYYY-MM-DD).",
+                "label": "Report date from"
+              },
+              "pt-BR": {
+                "description": "Início inclusivo do filtro de data do relatório (AAAA-MM-DD).",
+                "label": "Data do relatório de"
+              }
+            },
+            "format": "date"
+          },
+          "report_date_to": {
+            "locale": {
+              "en": {
+                "description": "Inclusive end of the report date filter (YYYY-MM-DD).",
+                "label": "Report date to"
+              },
+              "pt-BR": {
+                "description": "Fim inclusivo do filtro de data do relatório (AAAA-MM-DD).",
+                "label": "Data do relatório até"
+              }
+            },
+            "format": "date"
+          },
+          "conclusion_result": {
+            "locale": {
+              "en": {
+                "description": "Analysis result filter: conforming or nonconforming.",
+                "label": "Conclusion"
+              },
+              "pt-BR": {
+                "description": "Filtro do resultado da análise: conforme ou não conforme.",
+                "label": "Conclusão"
+              }
+            },
+            "enumLabels": {
+              "conforming": {
+                "en": {
+                  "label": "Conforming"
+                },
+                "pt-BR": {
+                  "label": "Conforme"
+                }
+              },
+              "nonconforming": {
+                "en": {
+                  "label": "Nonconforming"
+                },
+                "pt-BR": {
+                  "label": "Não conforme"
+                }
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Lista relatórios metalográficos com filtros combinados, paginação e ordenação estável.",
+          "label": "Listar relatórios metalográficos"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists metallographic reports with combined filters, pagination and stable sort."
+    },
+    {
+      "method": "POST",
+      "path": "/engineering/metallographic-reports",
+      "operationId": "engineering_create_metallographic_report",
+      "summary": "Create metallographic report",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Create metallographic report",
+            "description": "Creates a draft metallographic analysis report. The server assigns id, number and version.",
+            "label": "Create metallographic report"
+          },
+          "pt-BR": {
+            "summary": "Criar relatório metalográfico",
+            "description": "Cria um relatório de análise metalográfica em rascunho. O servidor define id, número e versão.",
+            "label": "Criar relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Cria um relatório de análise metalográfica em rascunho. O servidor define id, número e versão.",
+          "label": "Criar relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Creates a draft metallographic analysis report. The server assigns id, number and version."
+    },
+    {
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "operationId": "engineering_delete_metallographic_report",
+      "summary": "Delete metallographic report",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Delete metallographic report",
+            "description": "Soft-deletes a metallographic report. Requires If-Match.",
+            "label": "Delete metallographic report"
+          },
+          "pt-BR": {
+            "summary": "Excluir relatório metalográfico",
+            "description": "Exclui logicamente um relatório metalográfico. Exige If-Match.",
+            "label": "Excluir relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Exclui logicamente um relatório metalográfico. Exige If-Match.",
+          "label": "Excluir relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Soft-deletes a metallographic report. Requires If-Match."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "operationId": "engineering_get_metallographic_report",
+      "summary": "Get metallographic report",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Get metallographic report",
+            "description": "Returns one metallographic report by its stable id.",
+            "label": "Get metallographic report"
+          },
+          "pt-BR": {
+            "summary": "Consultar relatório metalográfico",
+            "description": "Retorna um relatório metalográfico pelo id estável.",
+            "label": "Consultar relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Retorna um relatório metalográfico pelo id estável.",
+          "label": "Consultar relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Returns one metallographic report by its stable id."
+    },
+    {
+      "method": "PATCH",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "operationId": "engineering_update_metallographic_report",
+      "summary": "Update metallographic report",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Update metallographic report",
+            "description": "Partially updates a metallographic report. Requires If-Match with the current version.",
+            "label": "Update metallographic report"
+          },
+          "pt-BR": {
+            "summary": "Atualizar relatório metalográfico",
+            "description": "Atualiza parcialmente um relatório metalográfico. Exige If-Match com a versão atual.",
+            "label": "Atualizar relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Atualiza parcialmente um relatório metalográfico. Exige If-Match com a versão atual.",
+          "label": "Atualizar relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Partially updates a metallographic report. Requires If-Match with the current version."
+    },
+    {
+      "method": "POST",
+      "path": "/engineering/metallographic-reports/{report_id}/copies",
+      "operationId": "engineering_copy_metallographic_report",
+      "summary": "Copy metallographic report",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Copy metallographic report",
+            "description": "Duplicates a metallographic report with a new id and report number.",
+            "label": "Copy metallographic report"
+          },
+          "pt-BR": {
+            "summary": "Copiar relatório metalográfico",
+            "description": "Duplica um relatório metalográfico com novo id e novo número.",
+            "label": "Copiar relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Duplica um relatório metalográfico com novo id e novo número.",
+          "label": "Copiar relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Duplicates a metallographic report with a new id and report number."
+    },
+    {
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "operationId": "engineering_delete_metallographic_image",
+      "summary": "Delete metallographic micrograph",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "name": "slot",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report_image",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Delete metallographic micrograph",
+            "description": "Removes one micrograph slot. Requires If-Match.",
+            "label": "Delete metallographic micrograph"
+          },
+          "pt-BR": {
+            "summary": "Remover micrografia metalográfica",
+            "description": "Remove um slot de micrografia. Exige If-Match.",
+            "label": "Remover micrografia metalográfica"
+          }
+        },
+        "tv": {
+          "description": "Remove um slot de micrografia. Exige If-Match.",
+          "label": "Remover micrografia metalográfica"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Removes one micrograph slot. Requires If-Match."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "operationId": "engineering_get_metallographic_image",
+      "summary": "Download metallographic micrograph",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "name": "slot",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report_image",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Download metallographic micrograph",
+            "description": "Returns the authorized micrograph bytes. No public URL is issued.",
+            "label": "Download metallographic micrograph"
+          },
+          "pt-BR": {
+            "summary": "Baixar micrografia metalográfica",
+            "description": "Devolve os bytes autorizados da micrografia. Nenhuma URL pública é emitida.",
+            "label": "Baixar micrografia metalográfica"
+          }
+        },
+        "tv": {
+          "description": "Devolve os bytes autorizados da micrografia. Nenhuma URL pública é emitida.",
+          "label": "Baixar micrografia metalográfica"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Returns the authorized micrograph bytes. No public URL is issued."
+    },
+    {
+      "method": "PUT",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "operationId": "engineering_put_metallographic_image",
+      "summary": "Upload metallographic micrograph",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "name": "slot",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report_image",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Upload metallographic micrograph",
+            "description": "Stores or replaces the original or measured micrograph. Requires If-Match.",
+            "label": "Upload metallographic micrograph"
+          },
+          "pt-BR": {
+            "summary": "Enviar micrografia metalográfica",
+            "description": "Grava ou substitui a micrografia original ou medida. Exige If-Match.",
+            "label": "Enviar micrografia metalográfica"
+          }
+        },
+        "tv": {
+          "description": "Grava ou substitui a micrografia original ou medida. Exige If-Match.",
+          "label": "Enviar micrografia metalográfica"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Stores or replaces the original or measured micrograph. Requires If-Match."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/pdf",
+      "operationId": "engineering_export_metallographic_report_pdf",
+      "summary": "Export metallographic report PDF",
+      "tags": [
+        "Engenharia",
+        "Engenharia — Metalografia"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "report_id",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "format": "uuid"
+        }
+      ],
+      "xDelpi": {
+        "entity": "metallographic_report_pdf",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Export metallographic report PDF",
+            "description": "Renders an A4 PDF from the saved report snapshot without changing it.",
+            "label": "Export metallographic report PDF"
+          },
+          "pt-BR": {
+            "summary": "Exportar PDF do relatório metalográfico",
+            "description": "Gera um PDF A4 a partir do snapshot salvo, sem alterar o relatório.",
+            "label": "Exportar PDF do relatório metalográfico"
+          }
+        },
+        "tv": {
+          "description": "Gera um PDF A4 a partir do snapshot salvo, sem alterar o relatório.",
+          "label": "Exportar PDF do relatório metalográfico"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Renders an A4 PDF from the saved report snapshot without changing it."
     },
     {
       "method": "GET",
@@ -57874,6 +58913,38 @@
                 "pt-BR": {
                   "label": "Valor ↓"
                 }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
               }
             }
           },
@@ -62501,6 +63572,38 @@
                 "pt-BR": {
                   "label": "Valor ↓"
                 }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
               }
             }
           },
@@ -65049,6 +66152,38 @@
                 "pt-BR": {
                   "label": "Valor ↓"
                 }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
               }
             }
           },
@@ -67332,6 +68467,38 @@
                 "pt-BR": {
                   "label": "Valor ↓"
                 }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
               }
             }
           }
@@ -67621,7 +68788,7 @@
       "method": "POST",
       "path": "/products/inventory-blocks",
       "operationId": "list_product_inventory_blocks",
-      "summary": "Lista — Bloqueio de inventário sb2 (b2_dtinv/b2_dinvfim) de vários produtos no armazém",
+      "summary": "Inventory block status in batch",
       "tags": [
         "products"
       ],
@@ -67629,9 +68796,26 @@
       "xDelpi": {
         "entity": "product_inventory_blocks",
         "shape": "list",
+        "category": "products",
+        "locale": {
+          "en": {
+            "summary": "Inventory block status in batch",
+            "description": "SB2 inventory block window (B2_DTINV/B2_DINVFIM) for product codes in one branch and warehouse. Products without SB2 are omitted — the consumer treats absence as not blocked.",
+            "label": "Product inventory blocks (batch)"
+          },
+          "pt-BR": {
+            "summary": "Bloqueio de inventário (SB2) de vários produtos",
+            "description": "Janela B2_DTINV/B2_DINVFIM para uma lista de códigos na filial e armazém. Produto sem SB2 não aparece — o consumidor trata ausência como livre.",
+            "label": "Bloqueios de inventário dos produtos em lote"
+          }
+        },
+        "tv": {
+          "description": "Janela B2_DTINV/B2_DINVFIM para uma lista de códigos na filial e armazém. Produto sem SB2 não aparece — o consumidor trata ausência como livre.",
+          "label": "Bloqueios de inventário dos produtos em lote"
+        },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retorna bloqueio de inventário SB2 (B2_DTINV/B2_DINVFIM) de vários produtos no armazém via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Produto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+      "description": "SB2 inventory block window (B2_DTINV/B2_DINVFIM) for product codes in one branch and warehouse. Products without SB2 are omitted — the consumer treats absence as not blocked."
     },
     {
       "method": "POST",
@@ -68100,6 +69284,38 @@
                 },
                 "pt-BR": {
                   "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
                 }
               }
             }
@@ -81223,6 +82439,38 @@
                 },
                 "pt-BR": {
                   "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
                 }
               }
             }
@@ -98164,6 +99412,38 @@
                 "pt-BR": {
                   "label": "Valor ↓"
                 }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
+                }
               }
             }
           },
@@ -99648,6 +100928,38 @@
                 },
                 "pt-BR": {
                   "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
                 }
               }
             }
@@ -106274,6 +107586,38 @@
                 },
                 "pt-BR": {
                   "label": "Valor ↓"
+                }
+              },
+              "created_at_desc": {
+                "en": {
+                  "label": "Created ↓"
+                },
+                "pt-BR": {
+                  "label": "Criação ↓"
+                }
+              },
+              "created_at_asc": {
+                "en": {
+                  "label": "Created ↑"
+                },
+                "pt-BR": {
+                  "label": "Criação ↑"
+                }
+              },
+              "report_date_desc": {
+                "en": {
+                  "label": "Report date ↓"
+                },
+                "pt-BR": {
+                  "label": "Data do relatório ↓"
+                }
+              },
+              "report_number_asc": {
+                "en": {
+                  "label": "Report number ↑"
+                },
+                "pt-BR": {
+                  "label": "Número do relatório ↑"
                 }
               }
             }

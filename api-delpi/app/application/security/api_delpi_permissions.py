@@ -235,6 +235,14 @@ ENGINEERING_LMP_NC_WRITE = [
     API_DELPI_ACCESS,
     DASHBOARD_LMPS_NC_WRITE,
 ]
+
+# Metalografia DELPI — códigos propostos no chamado #1400.
+# O registro no Core ocorre pelo manifesto do MFE, fora desta entrega.
+METALOGRAPHY_VIEW = "metalography.view"
+METALOGRAPHY_CREATE = "metalography.create"
+METALOGRAPHY_EDIT = "metalography.edit"
+METALOGRAPHY_DELETE = "metalography.delete"
+METALOGRAPHY_EXPORT = "metalography.export"
 TRANSFORMOMETRO_VIEW = "transformometro.view"
 ENGINEERING_TRANSFORMOMETRO_ACCESS = [
     *ENGINEERING_LMP_ACCESS,

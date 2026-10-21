@@ -420,6 +420,23 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 
 Filtros de processos: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`.
 
+### Metalografia
+
+CRUD de relatórios de análise metalográfica no serviço api-delpi. Contrato e diferenças em relação à proposta: [engineering-metallographic-reports.md](./engineering-metallographic-reports.md).
+
+| Método | Rota | Permissão |
+|---|---|---|
+| POST | `/engineering/metallographic-reports` | `metalography.create` |
+| GET | `/engineering/metallographic-reports` | `metalography.view` |
+| GET | `/engineering/metallographic-reports/{report_id}` | `metalography.view` |
+| PATCH | `/engineering/metallographic-reports/{report_id}` | `metalography.edit` |
+| DELETE | `/engineering/metallographic-reports/{report_id}` | `metalography.delete` |
+| POST | `/engineering/metallographic-reports/{report_id}/copies` | `metalography.create` |
+| PUT | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.edit` |
+| GET | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.view` |
+| DELETE | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.edit` |
+| GET | `/engineering/metallographic-reports/{report_id}/pdf` | `metalography.export` |
+
 ---
 
 ## Qualidade (métricas TOTVS) — `/quality`

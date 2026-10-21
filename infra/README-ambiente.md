@@ -553,6 +553,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `COMMERCIAL_USER_AVATAR_UPLOAD_DIR` | `/app/data/commercial-user-avatars` | `${DELPI_DATA_HOST_DIR}/commercial-user-avatars` |
 | `CORE_USER_AVATAR_UPLOAD_DIR` | `/app/data/core-user-avatars` | `${DELPI_DATA_HOST_DIR}/core-user-avatars` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
+| `METALLOGRAPHIC_IMAGE_UPLOAD_DIR` | `/app/data/metallographic-images` | `${DELPI_DATA_HOST_DIR}/metallographic-images` |
 | `GUIAS_PROCEDIMENTOS_UPLOAD_DIR` | `/app/data/guias-procedimentos` | `${DELPI_DATA_HOST_DIR}/guias-procedimentos` |
 | `MURAL_ACESSOS_UPLOAD_DIR` | `/app/data/mural-acessos` | `${DELPI_DATA_HOST_DIR}/mural-acessos` |
 | `AUDIT_5S_RESPONSE_UPLOAD_DIR` | `/app/data/audit-5s-responses` | `${DELPI_DATA_HOST_DIR}/audit-5s-responses` |
@@ -574,7 +575,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/mural-acessos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs /var/lib/delpi/invoice-issuance /var/lib/delpi/lancamento-notas-fiscais-danfe /var/lib/delpi/my-requests-attachments /var/lib/delpi/my-requests-artifacts
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/metallographic-images /var/lib/delpi/guias-procedimentos /var/lib/delpi/mural-acessos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs /var/lib/delpi/invoice-issuance /var/lib/delpi/lancamento-notas-fiscais-danfe /var/lib/delpi/my-requests-attachments /var/lib/delpi/my-requests-artifacts
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

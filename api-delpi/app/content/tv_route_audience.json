@@ -9256,21 +9256,171 @@
           "label": "Fornecedor Protheus REST"
         }
       }
-    }
-  },
-  "list_product_inventory_blocks": {
-    "locale": {
-      "en": {
-        "summary": "Inventory block status in batch",
-        "description": "SB2 inventory block window (B2_DTINV/B2_DINVFIM) for product codes in one branch and warehouse. Products without SB2 are omitted — the consumer treats absence as not blocked.",
-        "label": "Product inventory blocks (batch)"
-      },
-      "pt-BR": {
-        "label": "Bloqueios de inventário dos produtos em lote",
-        "summary": "Bloqueio de inventário (SB2) de vários produtos",
-        "description": "Janela B2_DTINV/B2_DINVFIM para uma lista de códigos na filial e armazém. Produto sem SB2 não aparece — o consumidor trata ausência como livre."
-      }
     },
-    "category": "products"
+    "engineering_create_metallographic_report": {
+      "locale": {
+        "en": {
+          "summary": "Create metallographic report",
+          "description": "Creates a draft metallographic analysis report. The server assigns id, number and version.",
+          "label": "Create metallographic report"
+        },
+        "pt-BR": {
+          "summary": "Criar relatório metalográfico",
+          "description": "Cria um relatório de análise metalográfica em rascunho. O servidor define id, número e versão.",
+          "label": "Criar relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_list_metallographic_reports": {
+      "locale": {
+        "en": {
+          "summary": "List metallographic reports",
+          "description": "Lists metallographic reports with combined filters, pagination and stable sort.",
+          "label": "List metallographic reports"
+        },
+        "pt-BR": {
+          "summary": "Listar relatórios metalográficos",
+          "description": "Lista relatórios metalográficos com filtros combinados, paginação e ordenação estável.",
+          "label": "Listar relatórios metalográficos"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_get_metallographic_report": {
+      "locale": {
+        "en": {
+          "summary": "Get metallographic report",
+          "description": "Returns one metallographic report by its stable id.",
+          "label": "Get metallographic report"
+        },
+        "pt-BR": {
+          "summary": "Consultar relatório metalográfico",
+          "description": "Retorna um relatório metalográfico pelo id estável.",
+          "label": "Consultar relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_update_metallographic_report": {
+      "locale": {
+        "en": {
+          "summary": "Update metallographic report",
+          "description": "Partially updates a metallographic report. Requires If-Match with the current version.",
+          "label": "Update metallographic report"
+        },
+        "pt-BR": {
+          "summary": "Atualizar relatório metalográfico",
+          "description": "Atualiza parcialmente um relatório metalográfico. Exige If-Match com a versão atual.",
+          "label": "Atualizar relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_delete_metallographic_report": {
+      "locale": {
+        "en": {
+          "summary": "Delete metallographic report",
+          "description": "Soft-deletes a metallographic report. Requires If-Match.",
+          "label": "Delete metallographic report"
+        },
+        "pt-BR": {
+          "summary": "Excluir relatório metalográfico",
+          "description": "Exclui logicamente um relatório metalográfico. Exige If-Match.",
+          "label": "Excluir relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_copy_metallographic_report": {
+      "locale": {
+        "en": {
+          "summary": "Copy metallographic report",
+          "description": "Duplicates a metallographic report with a new id and report number.",
+          "label": "Copy metallographic report"
+        },
+        "pt-BR": {
+          "summary": "Copiar relatório metalográfico",
+          "description": "Duplica um relatório metalográfico com novo id e novo número.",
+          "label": "Copiar relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_put_metallographic_image": {
+      "locale": {
+        "en": {
+          "summary": "Upload metallographic micrograph",
+          "description": "Stores or replaces the original or measured micrograph. Requires If-Match.",
+          "label": "Upload metallographic micrograph"
+        },
+        "pt-BR": {
+          "summary": "Enviar micrografia metalográfica",
+          "description": "Grava ou substitui a micrografia original ou medida. Exige If-Match.",
+          "label": "Enviar micrografia metalográfica"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_get_metallographic_image": {
+      "locale": {
+        "en": {
+          "summary": "Download metallographic micrograph",
+          "description": "Returns the authorized micrograph bytes. No public URL is issued.",
+          "label": "Download metallographic micrograph"
+        },
+        "pt-BR": {
+          "summary": "Baixar micrografia metalográfica",
+          "description": "Devolve os bytes autorizados da micrografia. Nenhuma URL pública é emitida.",
+          "label": "Baixar micrografia metalográfica"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_delete_metallographic_image": {
+      "locale": {
+        "en": {
+          "summary": "Delete metallographic micrograph",
+          "description": "Removes one micrograph slot. Requires If-Match.",
+          "label": "Delete metallographic micrograph"
+        },
+        "pt-BR": {
+          "summary": "Remover micrografia metalográfica",
+          "description": "Remove um slot de micrografia. Exige If-Match.",
+          "label": "Remover micrografia metalográfica"
+        }
+      },
+      "category": "engineering"
+    },
+    "engineering_export_metallographic_report_pdf": {
+      "locale": {
+        "en": {
+          "summary": "Export metallographic report PDF",
+          "description": "Renders an A4 PDF from the saved report snapshot without changing it.",
+          "label": "Export metallographic report PDF"
+        },
+        "pt-BR": {
+          "summary": "Exportar PDF do relatório metalográfico",
+          "description": "Gera um PDF A4 a partir do snapshot salvo, sem alterar o relatório.",
+          "label": "Exportar PDF do relatório metalográfico"
+        }
+      },
+      "category": "engineering"
+    },
+    "list_product_inventory_blocks": {
+      "locale": {
+        "en": {
+          "summary": "Inventory block status in batch",
+          "description": "SB2 inventory block window (B2_DTINV/B2_DINVFIM) for product codes in one branch and warehouse. Products without SB2 are omitted — the consumer treats absence as not blocked.",
+          "label": "Product inventory blocks (batch)"
+        },
+        "pt-BR": {
+          "label": "Bloqueios de inventário dos produtos em lote",
+          "summary": "Bloqueio de inventário (SB2) de vários produtos",
+          "description": "Janela B2_DTINV/B2_DINVFIM para uma lista de códigos na filial e armazém. Produto sem SB2 não aparece — o consumidor trata ausência como livre."
+        }
+      },
+      "category": "products"
+    }
   }
 }

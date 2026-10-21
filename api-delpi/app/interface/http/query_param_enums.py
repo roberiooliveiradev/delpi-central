@@ -876,3 +876,30 @@ def INVOICE_ISSUANCE_INVOICE_TYPE_QUERY_OPTIONAL():
         pattern=_enum_pattern(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES),
         json_schema_extra={"enum": list(INVOICE_ISSUANCE_INVOICE_TYPE_VALUES)},
     )
+
+
+METALLOGRAPHIC_SORT_VALUES = (
+    "created_at_desc",
+    "created_at_asc",
+    "report_date_desc",
+    "report_number_asc",
+)
+METALLOGRAPHIC_CONCLUSION_VALUES = ("conforming", "nonconforming")
+
+
+def METALLOGRAPHIC_SORT_QUERY():
+    return Query(
+        "created_at_desc",
+        description="Stable sort: created_at_desc, created_at_asc, report_date_desc or report_number_asc.",
+        pattern=_enum_pattern(METALLOGRAPHIC_SORT_VALUES),
+        json_schema_extra={"enum": list(METALLOGRAPHIC_SORT_VALUES)},
+    )
+
+
+def METALLOGRAPHIC_CONCLUSION_QUERY():
+    return Query(
+        None,
+        description="Analysis result filter: conforming or nonconforming.",
+        pattern=_enum_pattern(METALLOGRAPHIC_CONCLUSION_VALUES),
+        json_schema_extra={"enum": list(METALLOGRAPHIC_CONCLUSION_VALUES)},
+    )

@@ -18,6 +18,7 @@ readonly DELPI_PROTECTED_DATA_SUBDIRS=(
   chat-sources
   pac-evidences
   kaizen-evidences
+  metallographic-images
   guias-procedimentos
   audit-5s-nc
   audit-5s-responses

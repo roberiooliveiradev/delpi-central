@@ -321,6 +321,16 @@ O cockpit público do PCP não chama estas rotas direto: quem compõe é o `prod
 | GET | `/engineering/transforma-mais/processes` | A ou L |
 | GET | `/engineering/transforma-mais/processes/summary` | A ou L |
 | GET | `/engineering/transformometro/savings-investment/series` | A ou L |
+| POST | `/engineering/metallographic-reports` | `metalography.create` |
+| GET | `/engineering/metallographic-reports` | `metalography.view` |
+| GET | `/engineering/metallographic-reports/{report_id}` | `metalography.view` |
+| PATCH | `/engineering/metallographic-reports/{report_id}` | `metalography.edit` |
+| DELETE | `/engineering/metallographic-reports/{report_id}` | `metalography.delete` |
+| POST | `/engineering/metallographic-reports/{report_id}/copies` | `metalography.create` |
+| PUT | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.edit` |
+| GET | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.view` |
+| DELETE | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `metalography.edit` |
+| GET | `/engineering/metallographic-reports/{report_id}/pdf` | `metalography.export` |
 
 ---
 

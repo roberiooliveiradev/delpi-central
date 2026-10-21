@@ -200,6 +200,10 @@ class Settings:
         "KAIZEN_EVIDENCE_UPLOAD_DIR",
         default="/app/data/kaizen-evidences",
     )
+    METALLOGRAPHIC_IMAGE_UPLOAD_DIR: str = _get_env(
+        "METALLOGRAPHIC_IMAGE_UPLOAD_DIR",
+        default="/app/data/metallographic-images",
+    )
     GUIAS_PROCEDIMENTOS_UPLOAD_DIR: str = _get_env(
         "GUIAS_PROCEDIMENTOS_UPLOAD_DIR",
         default="/app/data/guias-procedimentos",

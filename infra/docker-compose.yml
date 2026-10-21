@@ -1482,6 +1482,7 @@ services:
       PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR: ${PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR:-/app/data/planejamento-orcamentario}
       PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: ${PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR:-/app/data/pedidos-venda-abertos/avatars}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
+      METALLOGRAPHIC_IMAGE_UPLOAD_DIR: ${METALLOGRAPHIC_IMAGE_UPLOAD_DIR:-/app/data/metallographic-images}
       GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
       MURAL_ACESSOS_UPLOAD_DIR: ${MURAL_ACESSOS_UPLOAD_DIR:-/app/data/mural-acessos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
@@ -1555,6 +1556,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/kaizen-evidences:/app/data/kaizen-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/metallographic-images:/app/data/metallographic-images
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/guias-procedimentos:/app/data/guias-procedimentos
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/mural-acessos:/app/data/mural-acessos
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc

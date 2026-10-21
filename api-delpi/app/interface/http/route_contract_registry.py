@@ -279,6 +279,36 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "create_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "update_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "delete_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
+    "engineering_create_metallographic_report": RouteContract(
+        "metallographic_report", "scalar"
+    ),
+    "engineering_list_metallographic_reports": RouteContract(
+        "metallographic_report", "paged_list"
+    ),
+    "engineering_get_metallographic_report": RouteContract(
+        "metallographic_report", "scalar"
+    ),
+    "engineering_update_metallographic_report": RouteContract(
+        "metallographic_report", "scalar"
+    ),
+    "engineering_delete_metallographic_report": RouteContract(
+        "metallographic_report", "scalar"
+    ),
+    "engineering_copy_metallographic_report": RouteContract(
+        "metallographic_report", "scalar"
+    ),
+    "engineering_put_metallographic_image": RouteContract(
+        "metallographic_report_image", "scalar"
+    ),
+    "engineering_get_metallographic_image": RouteContract(
+        "metallographic_report_image", "scalar"
+    ),
+    "engineering_delete_metallographic_image": RouteContract(
+        "metallographic_report_image", "scalar"
+    ),
+    "engineering_export_metallographic_report_pdf": RouteContract(
+        "metallographic_report_pdf", "scalar"
+    ),
     "list_transforma_mais_processes": RouteContract(
         "transforma_mais_process", "paged_list"
     ),

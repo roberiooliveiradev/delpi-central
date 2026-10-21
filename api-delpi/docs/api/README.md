@@ -74,6 +74,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
 | [quality-labels.md](./quality-labels.md) | Etiquetas da Qualidade — inspeção por OP, QR público, certificado RQ-032. |
+| [engineering-metallographic-reports.md](./engineering-metallographic-reports.md) | Relatórios metalográficos — CRUD, micrografias e PDF A4 no serviço api-delpi. |
 | [guias-procedimentos.md](./guias-procedimentos.md) | Guias e Procedimentos — leitura pública (departamentos e procedimentos publicados). |
 | [canal-denuncia.md](./canal-denuncia.md) | Canal de Denúncia — relato anônimo (portal + formulário público). |
 | [mural-acessos.md](./mural-acessos.md) | Mural de Acessos — vários murais de links + QR público por mural. |

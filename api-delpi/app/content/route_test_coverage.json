@@ -1,12 +1,18 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07",
-  "baselineOperationCount": 736,
-  "operationCount": 736,
-  "coveredCount": 658,
-  "gapCount": 77,
+  "generatedAt": "2026-10-21",
+  "baselineOperationCount": 769,
+  "operationCount": 769,
+  "coveredCount": 690,
+  "gapCount": 78,
   "exemptCount": 1,
   "byModule": {
+    "addresses": {
+      "total": 1,
+      "covered": 1,
+      "gap": 0,
+      "exempt": 0
+    },
     "canal-denuncia": {
       "total": 1,
       "covered": 1,
@@ -44,14 +50,14 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 28,
-      "covered": 28,
+      "total": 38,
+      "covered": 38,
       "gap": 0,
       "exempt": 0
     },
     "financeiro": {
-      "total": 11,
-      "covered": 11,
+      "total": 15,
+      "covered": 15,
       "gap": 0,
       "exempt": 0
     },
@@ -79,6 +85,12 @@
       "gap": 0,
       "exempt": 1
     },
+    "helpdesk": {
+      "total": 1,
+      "covered": 1,
+      "gap": 0,
+      "exempt": 0
+    },
     "hr": {
       "total": 4,
       "covered": 4,
@@ -94,6 +106,12 @@
     "inspecoes-processo": {
       "total": 9,
       "covered": 9,
+      "gap": 0,
+      "exempt": 0
+    },
+    "integrations": {
+      "total": 7,
+      "covered": 7,
       "gap": 0,
       "exempt": 0
     },
@@ -134,14 +152,14 @@
       "exempt": 0
     },
     "production": {
-      "total": 55,
-      "covered": 55,
+      "total": 56,
+      "covered": 56,
       "gap": 0,
       "exempt": 0
     },
     "products": {
-      "total": 38,
-      "covered": 38,
+      "total": 39,
+      "covered": 39,
       "gap": 0,
       "exempt": 0
     },
@@ -206,9 +224,9 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 35,
-      "covered": 35,
-      "gap": 0,
+      "total": 43,
+      "covered": 42,
+      "gap": 1,
       "exempt": 0
     },
     "system": {
@@ -219,6 +237,15 @@
     }
   },
   "operations": [
+    {
+      "operationId": "lookup_postal_address",
+      "method": "GET",
+      "path": "/addresses/postal-codes/{postal_code}",
+      "module": "addresses",
+      "entity": "postal_address",
+      "shape": "scalar",
+      "status": "covered"
+    },
     {
       "operationId": "create_canal_denuncia",
       "method": "POST",
@@ -1390,6 +1417,96 @@
       "status": "covered"
     },
     {
+      "operationId": "engineering_list_metallographic_reports",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_create_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_delete_metallographic_report",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_get_metallographic_report",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_update_metallographic_report",
+      "method": "PATCH",
+      "path": "/engineering/metallographic-reports/{report_id}",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_copy_metallographic_report",
+      "method": "POST",
+      "path": "/engineering/metallographic-reports/{report_id}/copies",
+      "module": "engineering",
+      "entity": "metallographic_report",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_delete_metallographic_image",
+      "method": "DELETE",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "module": "engineering",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_get_metallographic_image",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "module": "engineering",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_put_metallographic_image",
+      "method": "PUT",
+      "path": "/engineering/metallographic-reports/{report_id}/images/{slot}",
+      "module": "engineering",
+      "entity": "metallographic_report_image",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "engineering_export_metallographic_report_pdf",
+      "method": "GET",
+      "path": "/engineering/metallographic-reports/{report_id}/pdf",
+      "module": "engineering",
+      "entity": "metallographic_report_pdf",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_mini_applicators_ferramentas",
       "method": "GET",
       "path": "/engineering/mini-applicators/ferramentas",
@@ -1575,6 +1692,42 @@
       "path": "/financeiro/inadimplencia/titulos",
       "module": "financeiro",
       "entity": "financeiro_inadimplencia_titulo",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_settlements_payables",
+      "method": "GET",
+      "path": "/financeiro/settlements/payables",
+      "module": "financeiro",
+      "entity": "financeiro_settlement",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_settlements_receivables",
+      "method": "GET",
+      "path": "/financeiro/settlements/receivables",
+      "module": "financeiro",
+      "entity": "financeiro_settlement",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_settlements_summary",
+      "method": "GET",
+      "path": "/financeiro/settlements/summary",
+      "module": "financeiro",
+      "entity": "financeiro_settlements_summary",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_financeiro_stock_inventory",
+      "method": "GET",
+      "path": "/financeiro/stock-inventory",
+      "module": "financeiro",
+      "entity": "financeiro_stock_inventory",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -1922,6 +2075,15 @@
       "exemptReason": "legacy_plain_json_without_envelope"
     },
     {
+      "operationId": "get_helpdesk_dashboard_summary",
+      "method": "GET",
+      "path": "/helpdesk/dashboard/summary",
+      "module": "helpdesk",
+      "entity": "helpdesk_dashboard_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_hr_active_pdi_count",
       "method": "GET",
       "path": "/hr/active-pdi-count",
@@ -2099,6 +2261,69 @@
       "module": "inspecoes-processo",
       "entity": "inspecoes_processo_resumo",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_integration_operation",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}",
+      "module": "integrations",
+      "entity": "integration_operation",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_integration_operation_events",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}/events",
+      "module": "integrations",
+      "entity": "integration_operation_events",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_protheus_integration_status",
+      "method": "GET",
+      "path": "/integrations/protheus/status",
+      "module": "integrations",
+      "entity": "protheus_integration_status",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_protheus_rest_supplier",
+      "method": "POST",
+      "path": "/integrations/protheus/suppliers",
+      "module": "integrations",
+      "entity": "protheus_rest_supplier",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_protheus_rest_supplier",
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "module": "integrations",
+      "entity": "protheus_rest_supplier",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_protheus_rest_supplier",
+      "method": "PUT",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "module": "integrations",
+      "entity": "protheus_rest_supplier",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplier_field_provenance",
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}/provenance",
+      "module": "integrations",
+      "entity": "supplier_field_provenance",
+      "shape": "composite_analysis",
       "status": "covered"
     },
     {
@@ -3785,6 +4010,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_production_machine_load_operation_balances",
+      "method": "POST",
+      "path": "/production/machine-load/operation-balances",
+      "module": "production",
+      "entity": "production_machine_load_operation_balances",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_machine_load_operations",
       "method": "GET",
       "path": "/production/machine-load/operations",
@@ -4322,6 +4556,15 @@
       "module": "products",
       "entity": "product_raw_material_set_shortages",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_product_safety_stock",
+      "method": "GET",
+      "path": "/products/{code}/safety-stock",
+      "module": "products",
+      "entity": "product_safety_stock",
+      "shape": "nested_object",
       "status": "covered"
     },
     {
@@ -6359,6 +6602,42 @@
       "status": "covered"
     },
     {
+      "operationId": "get_supplies_inventory_accuracy_items",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/items",
+      "module": "supplies",
+      "entity": "supplies_inventory_accuracy_item",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_inventory_accuracy_summary",
+      "method": "GET",
+      "path": "/supplies/inventory-accuracy/summary",
+      "module": "supplies",
+      "entity": "supplies_inventory_accuracy_summary",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_inventory_adjustments",
+      "method": "GET",
+      "path": "/supplies/inventory-adjustments",
+      "module": "supplies",
+      "entity": "supplies_inventory_adjustment",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_inventory_adjustments_summary",
+      "method": "GET",
+      "path": "/supplies/inventory-adjustments/summary",
+      "module": "supplies",
+      "entity": "supplies_inventory_adjustments_summary",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_supplies_inventory_turnover",
       "method": "GET",
       "path": "/supplies/inventory-turnover",
@@ -6374,6 +6653,24 @@
       "module": "supplies",
       "entity": "supplies_negotiation_savings",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_items",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/items",
+      "module": "supplies",
+      "entity": "supplies_non_moving_stock_item",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_non_moving_stock_summary",
+      "method": "GET",
+      "path": "/supplies/non-moving-stock/summary",
+      "module": "supplies",
+      "entity": "supplies_non_moving_stock_summary",
+      "shape": "playbook_report",
       "status": "covered"
     },
     {
@@ -6626,6 +6923,24 @@
       "module": "supplies",
       "entity": "supplies_stock_value",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_supplies_supplier_catalog_items",
+      "method": "GET",
+      "path": "/supplies/supplier-catalogs/{catalog}",
+      "module": "supplies",
+      "entity": "supplies_supplier_catalog_item",
+      "shape": "list",
+      "status": "gap"
+    },
+    {
+      "operationId": "list_supplies_suppliers",
+      "method": "GET",
+      "path": "/supplies/suppliers",
+      "module": "supplies",
+      "entity": "supplies_supplier",
+      "shape": "paged_list",
       "status": "covered"
     },
     {

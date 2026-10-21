@@ -614,6 +614,57 @@ LMP_NONCONFORMITY_DELETE = agent_route(
     operation_id="delete_lmp_nonconformity",
 )
 
+METALLOGRAPHIC_REPORT_CREATE = agent_route(
+    summary="Create metallographic report",
+    description="Creates a draft metallographic analysis report. The server assigns id, number and version.",
+    operation_id="engineering_create_metallographic_report",
+)
+METALLOGRAPHIC_REPORT_LIST = agent_route(
+    summary="List metallographic reports",
+    description="Lists metallographic reports with combined filters, pagination and stable sort.",
+    operation_id="engineering_list_metallographic_reports",
+)
+METALLOGRAPHIC_REPORT_GET = agent_route(
+    summary="Get metallographic report",
+    description="Returns one metallographic report by its stable id.",
+    operation_id="engineering_get_metallographic_report",
+)
+METALLOGRAPHIC_REPORT_UPDATE = agent_route(
+    summary="Update metallographic report",
+    description="Partially updates a metallographic report. Requires If-Match with the current version.",
+    operation_id="engineering_update_metallographic_report",
+)
+METALLOGRAPHIC_REPORT_DELETE = agent_route(
+    summary="Delete metallographic report",
+    description="Soft-deletes a metallographic report. Requires If-Match.",
+    operation_id="engineering_delete_metallographic_report",
+)
+METALLOGRAPHIC_REPORT_COPY = agent_route(
+    summary="Copy metallographic report",
+    description="Duplicates a metallographic report with a new id and report number.",
+    operation_id="engineering_copy_metallographic_report",
+)
+METALLOGRAPHIC_REPORT_PUT_IMAGE = agent_route(
+    summary="Upload metallographic micrograph",
+    description="Stores or replaces the original or measured micrograph. Requires If-Match.",
+    operation_id="engineering_put_metallographic_image",
+)
+METALLOGRAPHIC_REPORT_GET_IMAGE = agent_route(
+    summary="Download metallographic micrograph",
+    description="Returns the authorized micrograph bytes. No public URL is issued.",
+    operation_id="engineering_get_metallographic_image",
+)
+METALLOGRAPHIC_REPORT_DELETE_IMAGE = agent_route(
+    summary="Delete metallographic micrograph",
+    description="Removes one micrograph slot. Requires If-Match.",
+    operation_id="engineering_delete_metallographic_image",
+)
+METALLOGRAPHIC_REPORT_EXPORT_PDF = agent_route(
+    summary="Export metallographic report PDF",
+    description="Renders an A4 PDF from the saved report snapshot without changing it.",
+    operation_id="engineering_export_metallographic_report_pdf",
+)
+
 SUPPLIES_CPV = agent_route(
     summary="CPV — custo de produto vendido (Kardex / suprimentos)",
     description=(
