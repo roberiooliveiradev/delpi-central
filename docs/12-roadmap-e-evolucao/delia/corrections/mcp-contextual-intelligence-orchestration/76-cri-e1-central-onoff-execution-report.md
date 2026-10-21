@@ -125,3 +125,12 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW_THEN_E2
 ```
+
+
+## 9. Independent coordination review — 2026-10-21
+
+**VERDICT: `ACCEPT_WITH_RESIDUAL` for bounded E1.** Reviewed published implementation at `d65d5035a8a30cd2f8f23773780ab4d095f21f64` against E0 doc 75 and E1 gates: `Settings` uses the existing `_env_flag` convention and invalid-value diagnostics; `root_composer` resolves once and injects mode into `HandleInteractiveConversationTurn`; handler records per-turn `response_mode` without changing attempt/synthesis/presentation content. `orchestration.py` unchanged. Executor-reported full suite: `1713 passed / 3 skipped`; **independent suite re-execution `TEST_NOT_RUN`**, source inspected statically. Compare from baseline includes unrelated concurrent controllership commits, not part of E1.
+
+**Accepted within E1:** OFF baseline preserved by design and executor tests, ON observability-only path, no model-call additions, no new flag engine, no resource loader or speculative CRI behavior. **Residual:** mode switch still requires environment modification and restart, not hot toggle; effective model/resource real-runtime quality awaits E2–E4. Do not represent E1 as a fully functional answer-intelligence feature or assert production activation. E2 must actually consume the centrally injected decision and prove OFF parity, outcome correctness, and fail-closed semantics; no independent production run authorized here.
+
+`E1_VERDICT=ACCEPT_WITH_RESIDUAL`; `E1_CLOSED=YES`; `E2_AUTHORIZABLE=YES_SEPARATE_BOUNDED_TASK`; `E2_IMPLEMENTED=NO`; `PRODUCTION_DEPLOY=NO`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
