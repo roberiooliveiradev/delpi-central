@@ -244,3 +244,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **Backend técnico do enriquecimento por CNPJ (2026-10-21):** [contrato proposto](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md) cobre endpoints, schemas, estados, persistência própria, decisões individuais/em lote, Idempotency, AuthZ, auditoria, privacy gates e rollout. Complementa o [frontend](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md) e o [fluxo](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **TARGET, não congelado e sem autorização para código/endpoint/migration.**
+
+
+> **Inventário oficial de fontes CNPJ (2026-10-21):** [Serpro PJ × Conecta gov.br × REDESIM × dados abertos RFB, schema e matriz SA2](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md). Evidência documental e recomendação condicional, **não** comprova acesso/contratação nem autoriza consulta automática ou implementação. Fonte/compliance/mapping permanecem gates.
