@@ -250,3 +250,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **Verificações de contrato e trilha da origem de alterações (2026-10-21):** [Serpro, mapeamento SA2, LGPD e retenção](./FORNECEDORES-CNPJ-VERIFICACOES-ACESSO-LGPD-PROVENIENCIA.md). Contrato transversal **proposto** da `api-delpi` para manter `source_type/source_id/change_mode` por campo em POST/PUT de **qualquer BFF consumidor**, com estados de confirmação e auditoria: `api-delpi/docs/integrations/supplier-write-provenance-contract-proposal.md`. Nenhuma gravação, endpoint ou migration implementado.
+
+
+> **P0 do enriquecimento por CNPJ (2026-10-21):** [inventário técnico, limites de fonte oficial e contrato de evidência](./SUPPLIES-ENRICHMENT-01-INVENTORY-AND-EVIDENCE-GATE.md). Estado INVENTORY PARTIAL: contrato api-delpi de provenance v1 comprovado no main; Serpro depende de contratação; payload/licença/LGPD e inventory de código supplies-api ainda bloqueiam freeze. Não há implementação de fluxo de enriquecimento autorizada.
