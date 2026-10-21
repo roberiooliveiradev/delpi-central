@@ -106,3 +106,25 @@ C3_EXECUTED=NO
 ## 8. Finite implementation sequence (Product Master, 2026-10-21)
 
 The fixed implementation roadmap is [74 — five-gate plan](./74-conversational-response-intelligence-finite-implementation-roadmap.md), E0 contract/decision → E1 central ON/OFF → E2 outcome-aware answer → E3 grounded personality/presentation → E4 live OFF/ON eval and rollback. At most one bounded rework per gate; no automatic code authorization. E0 must inventory reuse and frozen factual-prose decision first. `NEXT=DELIA-CRI-E0-CONTRACT-AND-DECISION-01`.
+
+
+## 9. Implementation standard from inception — separate declarative text from Python (Product Master, 2026-10-21)
+
+**Mandatory for the new CRI front starting at E0; explicitly NOT an instruction to refactor legacy orchestration.py in this wave.** Keep Python/TypeScript focused on application rules, control flow, policy/security enforcement, validation and technical integration. Do not embed large prompt bodies, behavior guidelines, conversational scripts, user-visible copy, domain documentation or model instructions as sprawling source-code string literals. Author these as explicit **versioned declarative resources**, preferring JSON when suited to the project's **existing authorized instruction/configuration contract**; do not invent a parallel registry or loader. Other canonical existing formats (e.g., localized text assets) must be reused if already owned legitimately. JSON is data, not executable policy.
+
+**E0 must inventory first** existing instruction IDs, instruction-lineage/version fields, JSON/schema loaders, config ownership, presentation/localization assets, tests, and canonical personality documents. Record `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY` and `REUSE_DECISION=REUSE|EXTEND|NEW`. Preserve existing owner, consumers and formats when legitimate; architectural conflict → `ARCHITECTURE_DECISION_REQUIRED`, not silent replacement. Do not treat absent GitHub code-search results as proof of absence.
+
+**Resource contract required before E1/E3 implementation:** stable resource ID and purpose, schema and version, canonical owner, path, expected consumers, model/instruction lineage compatibility, content trust/grounding boundary, localization, lifecycle/review/approval, deterministic loading, validation error/fallback, observability of effective version and tests. Keep user-facing copy distinguishable from LLM instruction, structured schema metadata and business facts. User preferences may tune allowed communication style but never override safety, policy, authorization, owner evidence or system instruction hierarchy.
+
+**Operational requirements:** content changes are reviewed/versioned in Git, synchronized to runtime by a defined deployment/config-release process; never claim edit-on-Git instantly changes live instruction. Resource loading fails closed to the OFF/baseline path when invalid and does not create arbitrary free-text override of frozen `selection-only` or a prompt injection channel. Central ON/OFF from §7 gates new behavior even if resources exist. No secrets, bearer tokens, employee-sensitive data, model reasoning or uncontrolled MCP metadata inside resources. Regression tests pin schema, lineage, missing/invalid resource, OFF parity, ON use, prompt injection handling and version traceability.
+
+```text
+NEW_FRONT_CODE_TEXT_SEPARATION=REQUIRED_FROM_E0
+DECLARATIVE_TEXT_RESOURCES=VERSIONED_REUSE_FIRST
+JSON_PREFERENCE=YES_WHEN_EXISTING_CONTRACT_SUPPORTS
+NEW_PARALLEL_INSTRUCTION_REGISTRY=NOT_AUTHORIZED
+LEGACY_ORCHESTRATION_MIGRATION=OUT_OF_SCOPE
+CENTRAL_ON_OFF=REQUIRED
+RESOURCE_VERSION_IN_OBSERVABILITY=REQUIRED
+IMPLEMENTATION_AUTHORIZED=NO
+```
