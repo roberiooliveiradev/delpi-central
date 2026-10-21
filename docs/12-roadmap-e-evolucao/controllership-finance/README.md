@@ -246,3 +246,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ## Mapeamento consolidado Estoques e Custos (21/10/2026)
 
 [Doc 55 — Matriz de conferencias e evidencias AS-IS](./55-proc0072-matriz-conferencias-estoques-custos-asis.md): consolida o recorte do video 19–33min, Kardex 01/99, R05 MATR320, inventarios, previa CPV, terceiros, MOD, saldos em processo, parametros, formulas candidatas e criterios que ainda precisam de comprovacao. Status `DOCUMENTED_PARTIAL`, reconciliacao `INCONCLUSIVE`, SQL parity `TEST_NOT_RUN`, sem GO runtime. Complementa docs 46 e 54 e nao autoriza paginas isoladas adicionais.
+
+
+## Observacoes guiadas do PO - fluxo de fechamento de custos (21/10/2026)
+
+[Doc 56 - Registro incremental do Acompanha Custos](./56-proc0072-observacoes-guiadas-fechamento-custos.md): primeiro trecho narrado pelo PO (aprox. 01:25-02:08): processamento demorado e paralelo a outras tarefas, ajuste operacional de data ao fim do mes, wizard TOTVS, metodo Diario, filial corrente e proximo passo. Campos do screenshot PROVEN; fala OWNER_REPORTED_VIA_PO; algoritmo e job TO_INVENTORY; nenhum GO de automacao.
