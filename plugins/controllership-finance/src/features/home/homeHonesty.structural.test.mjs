@@ -36,7 +36,7 @@ describe("home honesty", () => {
     const viewIds = [...catalog.matchAll(/viewId: "([^"]+)"/g)].map((m) => m[1]);
     assert.deepEqual(
       new Set(viewIds),
-      new Set(["home", "financial_settlements"]),
+      new Set(["home", "financial_settlements", "stock_inventory"]),
     );
     assert.doesNotMatch(catalog, /my_tasks|overview|interaction_rooms|administration|help|open_orders/);
   });

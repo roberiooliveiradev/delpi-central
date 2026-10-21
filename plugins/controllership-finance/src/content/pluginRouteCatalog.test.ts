@@ -13,10 +13,10 @@ import {
 describe("pluginRouteCatalog — apenas rotas implementadas", () => {
   it("cataloga somente as rotas implementadas no slice", () => {
     const routeIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.id));
-    expect(routeIds).toEqual(["home", "financial-settlements"]);
+    expect(routeIds).toEqual(["home", "financial-settlements", "stock-inventory"]);
     const viewIds = HUB_SECTIONS.flatMap((s) => s.routes.map((r) => r.viewId));
     expect(new Set(viewIds)).toEqual(
-      new Set(["home", "financial_settlements"]),
+      new Set(["home", "financial_settlements", "stock_inventory"]),
     );
   });
 

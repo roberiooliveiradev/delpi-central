@@ -10,6 +10,7 @@ import {
 } from "./app/pluginRoutes";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { FinancialSettlementsPage } from "./features/closing/FinancialSettlementsPage";
+import { StockInventoryPage } from "./features/closing/StockInventoryPage";
 import { HomePage } from "./features/home/HomePage";
 
 export type AppProps = {
@@ -46,6 +47,8 @@ function AppRoutes({
           <HomePage basePath={basePath} />
         ) : resolved.view === "financial_settlements" ? (
           <FinancialSettlementsPage />
+        ) : resolved.view === "stock_inventory" ? (
+          <StockInventoryPage />
         ) : (
           <NotFoundPage basePath={basePath} />
         )}

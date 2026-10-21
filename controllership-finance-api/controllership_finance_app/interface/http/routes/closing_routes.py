@@ -157,6 +157,38 @@ def get_closing_financial_settlements(
 
 
 @router.get(
+    "/stock-inventory",
+    operation_id="get_closing_stock_inventory",
+)
+def get_closing_stock_inventory(
+    request: Request,
+    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    branch: str = Query("all", pattern="^(all|01|02)$"),
+    report_scope: str = Query(
+        "all_products", pattern="^(all_products|mp_pi_pa)$"
+    ),
+    warehouse: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    params: dict[str, Any] = {
+        "period": period,
+        "branch": branch,
+        "report_scope": report_scope,
+        "page": page,
+        "page_size": page_size,
+    }
+    if warehouse:
+        params["warehouse"] = warehouse
+    return _call_gateway(
+        request,
+        path="/financeiro/stock-inventory",
+        params=params,
+        operation_id="get_closing_stock_inventory",
+    )
+
+
+@router.get(
     "/financial-settlements/summary",
     operation_id="get_closing_financial_settlements_summary",
 )

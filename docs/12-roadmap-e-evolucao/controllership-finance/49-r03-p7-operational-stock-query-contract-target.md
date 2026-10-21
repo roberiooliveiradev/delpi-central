@@ -68,3 +68,29 @@ MFE consome somente BFF; usar `@delpi/plugin-ui`, UX PT-BR, claro/escuro mesma �
 O PO confirmou explicitamente que **o Portal Controladoria & Financas nao separa acessos, paginas, funcionalidades nem usuarios por filial**. Filial (`branch` / `B9_FILIAL`) e exclusivamente um filtro de dados nos visuais, incluindo opcao `all` para consolidacao. O usuario com acesso efetivo `controllership-finance.access` ao contexto de consulta pode filtrar 01, 02 ou todas as filiais disponiveis, sem regras de ownership ou permissoes por filial. Essa e a regra de negocio do produto (`OWNER_DECISION=PROVEN`), nao uma inferencia do modelo `BranchAccessGate` de outros produtos. **Nao usar `BranchAccessGate` baseado em permissions por filial**, nem criar novas permission codes, nem bloquear a filial 02 para usuario da filial 01. A BFF continua validando acesso efetivo via Core, identidade humana delegada, regras gerais do recurso e autorizacao fail-closed; o filtro de filial nao confere acesso ao produto.
 
 Inventario relatado pelo executor: rota S2S sugerida `/financeiro/stock-inventory` na api-delpi, BFF `/apps/controllership-finance-api/closing/stock-inventory`, MFE `/apps/controllership-finance/closing/stock-inventory`; scope S2S `stock-inventory.read` e flag default-off sao propostas, **nao provisionamento ou runtime comprovados**. Snapshot SB9 setembro/2026 filial01 ausente no inventario: `EXECUTION_DRIFT`. `BRANCH_POLICY=DECIDED`; `TRANSVERSAL_RUNTIME_GATE=PENDING` ate autorizacao explicita de executar contrato/codigo e verificar provisioning S2S.
+
+
+## 9. Implementacao v1 executada (21/10/2026)
+
+Gate transversal autorizado pelo briefing de execucao (escopo S2S dedicado, flag propria, contexto dedicado, filial como filtro). Implementacao nas tres camadas, seguindo o padrao `financeiro_settlements` (ADR-010):
+
+**api-delpi** — contexto `financeiro_stock_inventory` (isolado, sem import de `supplies`):
+- `GET /financeiro/stock-inventory` — guard S2S `require_s2s_service(required_scopes=("stock-inventory.read",), allowed_clients=("controllership-finance-api",))` + Bearer humano delegado obrigatorio.
+- DTOs: `stock_inventory_request.py` (`period=YYYY-MM` → `B9_DATA` = ultimo dia calendario via `calendar.monthrange`; `branch=all|01|02`; `report_scope=all_products|mp_pi_pa`; `warehouse`; `page`/`page_size`), `stock_inventory_response.py`, `constantes.py`.
+- Resolver de escopo `stock_inventory_scope.py` espelha D3: `SharedDatasetStockInventoryScopeResolver` exige `FINANCEIRO_STOCK_INVENTORY_ENABLED=true` **e** principal humano delegado; default off → `scope_unavailable` 403 tipado, fail-closed.
+- SQL `stock_inventory_sql.py`: subquery agrupada por (`B9_FILIAL`, `B9_LOCAL`, `B9_COD`) com `SUM(B9_QINI)`/`SUM(B9_VINI1)`, `LEFT JOIN SB1010` por `B1_COD`, `D_E_L_E_T_=''` nas duas tabelas, `NOLOCK`, paginacao `OFFSET/FETCH` ordenada deterministicamente; presenca de snapshot medida por `COUNT` por filial **sem** filtros funcionais.
+- Status: `available` | `incomplete` (filial esperada sem snapshot em `all`) | `source_missing` (nenhum snapshot → `historicalTotal=null`, `dataAsOf=null`, sem queries de itens) | `no_matching_items` (snapshot existe, filtro vazio → total `0` legitimo).
+- Testes: `tests/test_financeiro_stock_inventory_{request,sql,use_case,routes,scope}.py` — 36 casos (bissexto 2028-02, escopos, ausencia/incompletude, S2S 401/403, flag off, principal nao-humano).
+
+**BFF** `controllership-finance-api` — `GET /closing/stock-inventory` em `closing_routes.py`: mesma cadeia `_authorized_user` (principal humano + `controllership-finance.access` efetiva via Core, `rbac_unavailable`→503), Bearer delegado, gateway S2S `ApiDelpiSettlementsGateway` reutilizado (mesmo client credential), envelope `ok`/`fail` com repasse de `scope_unavailable` e status do payload intacto. Testes `test_closing_stock_inventory.py` — 22 casos.
+
+**MFE** `plugins/controllership-finance` — rota `closing/stock-inventory` (`stock_inventory` view), client `api/stockInventoryApi.ts`, pagina `features/closing/StockInventoryPage.tsx` (filtros competencia/filial/visao/armazem, indicadores, resumos por tipo e armazem, tabela paginada, estados dedicados para `source_missing`/`incomplete`/`no_matching_items`/403/503/erro; disclaimer "nao equivale ao MATR460"), ajuda contextual `CF_HELP.stockInventory`, catalogo do hub e manifest atualizados. Testes `StockInventoryPage.test.tsx` (9 casos) + rotas/catalogo/manifesto.
+
+**Evidencia SQL real** (Protheus, 21/10/2026): presenca 2026-09 → somente filial 02 (3.117 linhas); totals `all_products` filial 02 = 3.117 itens / 10.576.487,839; `mp_pi_pa` = 2.547 itens / 10.002.994,971; resumo por armazem soma consistente (00/01/03/25/50/98/99); filial 01 ausente → `source_missing` confirmado. `SB9_SEPT_FILIAL01=EXECUTION_DRIFT` persiste.
+
+**Pendencias externas (nao bloqueiam o codigo):**
+- Provisioning Keycloak do scope `stock-inventory.read` no client `controllership-finance-api` — mesma rotina `PROD-CF-S2S-KEYCLOAK-01`. Sem ele a rota responde 403 de scope S2S.
+- `FINANCEIRO_STOCK_INVENTORY_ENABLED=true` no ambiente para habilitar o dataset (gate separado de enablement, default off).
+- TI-Protheus: causa da ausencia da SB9 30/09/2026 filial 01.
+
+`R03_IMPLEMENTATION=EXECUTED_V1`; `P7_PARITY=TEST_NOT_RUN`; `E2E_SMOKE=TEST_NOT_RUN` (depende do provisioning S2S e da flag); `S2S_KEYCLOAK_PROVISIONING=PENDING`; `FEATURE_FLAG=OFF`.

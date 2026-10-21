@@ -152,8 +152,10 @@ describe("FinancialSettlementsPage", () => {
     // Tipo de movimento exibe código + descrição canônica FKB.
     expect(screen.getByText("BA — Baixa de titulo")).toBeTruthy();
     // Resumo por moeda somente do lado selecionado (BRL, não USD).
-    expect(await screen.findByText("Total BRL")).toBeTruthy();
-    expect(screen.queryByText("Total USD")).toBeNull();
+    expect(
+      await screen.findByText("Movimentações registradas — moeda BRL"),
+    ).toBeTruthy();
+    expect(screen.queryByText("Movimentações registradas — moeda USD")).toBeNull();
   });
 
   it("alterna visão para receber e refaz a consulta", async () => {

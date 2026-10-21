@@ -1,0 +1,55 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+
+class StockInventoryRepositoryPort(Protocol):
+    """Read-only access to the Protheus stock snapshot (SB9010) enriched
+    with the product register (SB1010)."""
+
+    def snapshot_branch_counts(
+        self, *, snapshot_date: str, branches: tuple[str, ...]
+    ) -> dict[str, int]:
+        """Rows per branch at ``B9_DATA = snapshot_date`` — no functional
+        filters, so snapshot presence is proven independently of scope."""
+        ...
+
+    def totals(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        warehouse: str | None,
+    ) -> dict:
+        """Filtered-universe counters: item_count, total_quantity, total_value."""
+        ...
+
+    def list_items(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        warehouse: str | None,
+        page: int,
+        page_size: int,
+    ) -> list[dict]: ...
+
+    def summary_by_type(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        warehouse: str | None,
+    ) -> list[dict]: ...
+
+    def summary_by_warehouse(
+        self,
+        *,
+        snapshot_date: str,
+        branches: tuple[str, ...],
+        product_types: tuple[str, ...] | None,
+        warehouse: str | None,
+    ) -> list[dict]: ...

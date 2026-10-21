@@ -21,6 +21,17 @@ describe("pluginRoutes", () => {
     expect(resolved.view).toBe("home");
   });
 
+  it("resolve a rota de estoque histórico", () => {
+    const resolved = resolvePluginRoute(
+      "/apps/controllership-finance/closing/stock-inventory",
+    );
+    expect(resolved.view).toBe("stock_inventory");
+    expect(resolved.relativePath).toBe("closing/stock-inventory");
+    expect(buildPluginPath("stock_inventory")).toBe(
+      "/apps/controllership-finance/closing/stock-inventory",
+    );
+  });
+
   it("qualquer subrota não implementada cai em not_found", () => {
     for (const path of [
       "/apps/controllership-finance/overview",

@@ -38,6 +38,14 @@
       "icon": "calendar-check",
       "order": 31,
       "showInMenu": false
+    },
+    {
+      "path": "/apps/controllership-finance/closing/stock-inventory",
+      "label": "Estoque histórico — P7",
+      "permission": "controllership-finance.access",
+      "icon": "boxes",
+      "order": 32,
+      "showInMenu": false
     }
   ],
   "ui": {

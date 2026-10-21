@@ -5,22 +5,32 @@ export const CONTROLLERSHIP_FINANCE_BASE_PATH = "/apps/controllership-finance";
  * Rotas implementadas:
  * - `home` — hub da Central de Fechamento.
  * - `financial_settlements` — baixas financeiras R01/R02 (closing).
+ * - `stock_inventory` — estoque histórico R03/P7 (closing).
  * Rotas futuras (Visão geral, Sala de interação, Minhas tarefas,
  * Administração, Ajuda) entram aqui apenas quando implementadas.
  */
-export type PluginView = "home" | "financial_settlements" | "not_found";
+export type PluginView =
+  | "home"
+  | "financial_settlements"
+  | "stock_inventory"
+  | "not_found";
 
 export type PluginNavId = "home";
 
-export type PluginNavigationTarget = "home" | "financial_settlements";
+export type PluginNavigationTarget =
+  | "home"
+  | "financial_settlements"
+  | "stock_inventory";
 
 /** Mapa rota relativa → view (paths técnicos em inglês, kebab-case). */
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   "closing/financial-settlements": "financial_settlements",
+  "closing/stock-inventory": "stock_inventory",
 };
 
 const VIEW_TO_RELATIVE: Record<Exclude<PluginNavigationTarget, "home">, string> = {
   financial_settlements: "closing/financial-settlements",
+  stock_inventory: "closing/stock-inventory",
 };
 
 export type ResolvedPluginRoute = {

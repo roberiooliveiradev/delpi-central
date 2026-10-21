@@ -121,6 +121,14 @@ class Settings:
         in ("true", "1", "yes", "on")
     )
 
+    # Stock inventory snapshot (R03/P7) shared-dataset gate — doc 49.
+    # Stays disabled until the explicit production enablement gate; when off,
+    # StockInventoryScopeResolver keeps answers fail-closed (scope_unavailable).
+    FINANCEIRO_STOCK_INVENTORY_ENABLED: bool = (
+        _get_env("FINANCEIRO_STOCK_INVENTORY_ENABLED", default="false").lower()
+        in ("true", "1", "yes", "on")
+    )
+
     # ==========================
     # Plugins PostgreSQL
     # ==========================

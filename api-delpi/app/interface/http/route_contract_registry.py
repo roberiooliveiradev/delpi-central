@@ -639,6 +639,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financeiro_settlements_summary": RouteContract(
         "financeiro_settlements_summary", "list"
     ),
+    "get_financeiro_stock_inventory": RouteContract(
+        "financeiro_stock_inventory", "paged_list"
+    ),
     "get_retrabalhos_health": RouteContract(
         "retrabalho_horas_improdutivas_health", "scalar"
     ),

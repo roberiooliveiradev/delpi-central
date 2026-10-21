@@ -50,4 +50,20 @@ export const CF_HELP = {
       jumpBelowMin: "A página mínima é 1.",
     },
   },
+  stockInventory: {
+    page:
+      "Estoque histórico — P7: consulta operacional dos saldos de estoque registrados no fechamento de cada mês no ERP. Os resultados ainda não equivalem ao relatório oficial MATR460 — use-os como consulta de apoio ao fechamento, não como documento oficial.",
+    filters:
+      "Competência é obrigatória e sempre aponta para o último dia do mês. Filial é apenas filtro de dados — Matriz (01), Filial 02 ou Todas — sem alterar permissões. Visão restringe os tipos de produto; Armazém usa o código de origem do ERP.",
+    indicators:
+      "Valor histórico total e quantidade de itens calculados sobre todo o universo do filtro, não apenas a página exibida. Quando o snapshot do mês não existe na origem, o total não é exibido — ausência nunca aparece como zero.",
+    status:
+      "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros.",
+    summaryType:
+      "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado.",
+    summaryWarehouse:
+      "Totais por armazém e filial sobre o universo filtrado.",
+    table:
+      "Detalhamento por produto e armazém no snapshot do mês. Ordenação fixa por filial, armazém e produto.",
+  },
 } as const;
