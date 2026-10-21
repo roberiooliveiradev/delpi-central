@@ -226,3 +226,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Proposta UX hero/filtros/tabelas R01-R03 — DESIGN TARGET (21/10/2026)
 
 [Documento 50 — especificacao detalhada para Devin](./50-closing-pages-hero-filters-table-ux-target.md): composicao visual de hero com KPIs e filtros nas duas paginas de fechamento; ordenacao e barra de ferramentas da tabela; design responsivo, mensagens, reuso de plugin-ui, contratos de dados e criterios de aceite. Referencias visuais sao mockups ilustrativos, sem autorizacao para inventar numeros, comparativos, layout H ou features nao existentes (Excel/Cards/MP/PI/PA isolados). `DESIGN=TARGET`; `RUNTIME_GATE=PENDING` ate execucao autorizada; nenhum backend ou runtime alterado neste registro.
+
+
+### Auditoria de lacunas das tabelas R01/R02 e R03 — TARGET (21/10/2026)
+
+[Documento 51 — auditoria e gates Table UX](./51-r01-r03-table-ux-gap-audit-and-implementation-gates.md): matriz T01-T19 das diferencas observadas nas capturas atuais versus mockups ilustrativos, capacidades reais de `DataTableSection`, restricoes de contrato/seguranca, blueprint de toolbar, verificacao visual e handoff ao Devin. `VISUAL_REWORK=TARGET`; `RUNTIME_GATE=PENDING`. Exportacao Excel, view Cards e links/acoes por linha dependem de gates especificos: nao sao bugs nem autorizacao implicita.
