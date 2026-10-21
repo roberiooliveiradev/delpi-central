@@ -337,7 +337,11 @@ describe("StockInventoryPage — estados", () => {
     expect(screen.getByText("10.113.731,78")).toBeTruthy();
     // associação armazém·filial preservada no rótulo do card
     expect(screen.getByText("Armazém 01 · Filial 02")).toBeTruthy();
-    expect(screen.getAllByText(/itens$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/itens/).length).toBeGreaterThan(0);
+    // participação sobre o total histórico do contrato (mockup: "% do total")
+    expect(
+      screen.getAllByText(/itens · \d+(?:,\d+)?% do total/).length,
+    ).toBe(2);
     // tipo de produto renderiza como badge neutro do kit (sem semântica inventada)
     expect(screen.getAllByText("MP").length).toBeGreaterThan(0);
   });

@@ -10,6 +10,10 @@ const QUANTITY_FMT = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 4,
 });
 
+const SHARE_FMT = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 1,
+});
+
 /**
  * Formata data civil `YYYY-MM-DD` sem deslocamento de fuso — interpreta
  * os componentes no calendário local (`new Date(y, m, d)`), não em UTC.
@@ -29,4 +33,15 @@ export function formatAmount(raw: string): string {
 export function formatQuantity(raw: string): string {
   const value = Number(raw);
   return Number.isFinite(value) ? QUANTITY_FMT.format(value) : raw;
+}
+
+/** Participação `part/total` em % pt-BR; null quando o total não existe. */
+export function formatSharePercent(
+  part: string,
+  total: string | null,
+): string | null {
+  const p = Number(part);
+  const t = total === null ? NaN : Number(total);
+  if (!Number.isFinite(p) || !Number.isFinite(t) || t <= 0) return null;
+  return `${SHARE_FMT.format((p / t) * 100)}%`;
 }

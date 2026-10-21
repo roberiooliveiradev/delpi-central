@@ -157,6 +157,23 @@ cabecalho azul dos mockups ja e o padrao nativo do kit
 (gradiente `--delpi-ui-title` no claro, tint accent no escuro) —
 mantido. Excel/Cards/sort por coluna seguem DECISION_REQUIRED.
 
+**V7 (22/10/2026) - evidencia autenticada e % do total**: capturas de
+producao (PO, dark desktop) confirmam runtime: banda unica com icone
+de tabela + pill, header azul, densidade compacta, handles de resize
+visiveis nos headers, sem "P" solto. Resumos P7 agora exibem
+"N itens · X,X% do total" (share derivado de `totalStockValue`/
+`historicalTotal` do contrato — nao e dado inventado; omitido quando
+o total e nulo). Lacunas restantes do mockup sao TODAS decision-gated:
+Excel do universo completo (exige endpoint ou fan-out server-side),
+Tabela/Cards (kit suporta, falta decisao de produto), sort por coluna
+(backend nao ordena o universo), links Pedido/OP/Duplicata (rotas
+inexistentes), "..." por linha, avatares (vedado pelo spec), badges
+coloridos de natureza/tipo (sem mapa homologado), nome do grupo (so
+ha codigo), R$ em valor (sem mapa de moeda), coluna competencia
+(redundante com filtro), "% vs periodo anterior" (sem serie
+historica), chips por tipo de produto (contrato so tem mp_pi_pa
+combinado).
+
 ## 8. Relatorio inicial exigido do Devin
 
 ```text

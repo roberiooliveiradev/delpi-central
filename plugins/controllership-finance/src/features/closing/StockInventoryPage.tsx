@@ -51,6 +51,7 @@ import {
   formatCivilDate,
   formatQuantity,
   formatAmount,
+  formatSharePercent,
 } from "../../utils/formatters";
 import { useDebouncedValue } from "../../utils/useDebouncedValue";
 
@@ -494,12 +495,20 @@ export function StockInventoryPage() {
             >
               <CfMetricStrip
                 aria-label="Resumo por tipo de produto"
-                items={payload.summariesByType.map((group) => ({
-                  id: group.productType ?? "sem-tipo",
-                  label: group.productType ?? "Sem tipo",
-                  value: formatAmount(group.totalStockValue),
-                  description: `${group.itemCount} itens`,
-                }))}
+                items={payload.summariesByType.map((group) => {
+                  const share = formatSharePercent(
+                    group.totalStockValue,
+                    payload.historicalTotal,
+                  );
+                  return {
+                    id: group.productType ?? "sem-tipo",
+                    label: group.productType ?? "Sem tipo",
+                    value: formatAmount(group.totalStockValue),
+                    description: `${group.itemCount} itens${
+                      share ? ` · ${share} do total` : ""
+                    }`,
+                  };
+                })}
               />
             </CfSectionCard>
           ) : null}
@@ -511,12 +520,20 @@ export function StockInventoryPage() {
             >
               <CfMetricStrip
                 aria-label="Resumo por armazém"
-                items={payload.summariesByWarehouse.map((group) => ({
-                  id: `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`,
-                  label: `Armazém ${group.warehouse ?? "—"} · Filial ${group.branchCode ?? "—"}`,
-                  value: formatAmount(group.totalStockValue),
-                  description: `${group.itemCount} itens`,
-                }))}
+                items={payload.summariesByWarehouse.map((group) => {
+                  const share = formatSharePercent(
+                    group.totalStockValue,
+                    payload.historicalTotal,
+                  );
+                  return {
+                    id: `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`,
+                    label: `Armazém ${group.warehouse ?? "—"} · Filial ${group.branchCode ?? "—"}`,
+                    value: formatAmount(group.totalStockValue),
+                    description: `${group.itemCount} itens${
+                      share ? ` · ${share} do total` : ""
+                    }`,
+                  };
+                })}
               />
             </CfSectionCard>
           ) : null}
