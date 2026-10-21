@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Body, Path, Request
+from fastapi import APIRouter, Body, Path, Query, Request
 
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
@@ -15,6 +15,10 @@ from app.application.security.api_delpi_permissions import (
     PROTHEUS_SUPPLIER_CREATE_PERMISSIONS,
     PROTHEUS_SUPPLIER_UPDATE_PERMISSIONS,
 )
+from app.composition.integration_tracking_composer import (
+    build_integration_tracking_service,
+)
+from app.interface.http.pagination_query import LIMIT_QUERY
 from app.composition.protheus_rest_composer import (
     build_create_protheus_rest_supplier_use_case,
     build_get_protheus_integration_status_use_case,
@@ -182,11 +186,20 @@ def create_protheus_rest_supplier_route(
             )
 
     fornecedor = body.get("fornecedor", body)
+    change_context = body.get("change_context")
+    if change_context is not None and not isinstance(change_context, dict):
+        return error_response(
+            "change_context deve ser um objeto JSON.",
+            status_code=422,
+            code="PROVENANCE_CONTEXT_INVALID",
+            recoverable=False,
+        )
     try:
         actor_id = _actor_user_id()
         data = build_create_protheus_rest_supplier_use_case().execute(
             actor_user_id=actor_id,
             fornecedor=fornecedor if isinstance(fornecedor, dict) else {},
+            change_context=change_context,
             **_tracking_context(request),
         )
         return api_delpi_success(
@@ -252,12 +265,21 @@ def update_protheus_rest_supplier_route(
                 recoverable=False,
             )
     fornecedor = body.get("fornecedor")
+    change_context = body.get("change_context")
+    if change_context is not None and not isinstance(change_context, dict):
+        return error_response(
+            "change_context deve ser um objeto JSON.",
+            status_code=422,
+            code="PROVENANCE_CONTEXT_INVALID",
+            recoverable=False,
+        )
     try:
         actor_id = _actor_user_id()
         data = build_update_protheus_rest_supplier_use_case().execute(
             actor_user_id=actor_id,
             supplier_id=supplier_id,
             fornecedor=fornecedor if isinstance(fornecedor, dict) else fornecedor,
+            change_context=change_context,
             **_tracking_context(request),
         )
         acknowledged = bool(data.get("update_acknowledged"))
@@ -283,6 +305,156 @@ def update_protheus_rest_supplier_route(
         log_error(f"Erro inesperado na alteração Protheus: {type(exc).__name__}")
         return error_response(
             "Erro interno ao alterar fornecedor no Protheus.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+def _provenance_binding(request: Request) -> dict[str, str | None]:
+    service_identity = getattr(request.state, "service_identity", None)
+    caller_app = getattr(service_identity, "client_id", None)
+    actor = getattr(request.state, "user", None)
+    actor_id = getattr(actor, "id", None) or getattr(actor, "user_id", None)
+    if actor_id is None:
+        user = get_current_user()
+        actor_id = getattr(user, "id", None) or getattr(user, "user_id", None)
+    return {
+        "caller_app": str(caller_app) if caller_app else None,
+        "actor_subject": str(actor_id).strip() if actor_id else None,
+    }
+
+
+@router.get(
+    "/suppliers/{supplier_id}/provenance",
+    operation_id="list_supplier_field_provenance",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    required_scopes=("suppliers.read",),
+    allowed_clients=("supplies-api",),
+)
+def list_supplier_field_provenance_route(
+    request: Request,
+    supplier_id: str = Path(
+        ...,
+        min_length=8,
+        max_length=8,
+        pattern=r"^[0-9]{8}$",
+        description="Eight digits: six-digit supplier code + two-digit store",
+    ),
+    field_key: str | None = Query(None, max_length=60),
+    limit: int = LIMIT_QUERY("limit_100_200"),
+    offset: int = Query(0, ge=0),
+):
+    """Field-level write provenance for a supplier, scoped to the caller.
+
+    latest_confirmed only reflects CONFIRMED operations; acknowledged or
+    indeterminate attempts stay visible but never replace confirmed origin.
+    """
+    try:
+        service = build_integration_tracking_service()
+        data = service.list_supplier_provenance(
+            supplier_id=supplier_id,
+            field_key=field_key,
+            limit=limit,
+            offset=offset,
+            **_provenance_binding(request),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_supplier_field_provenance",
+            message="Proveniência de alterações do fornecedor consultada.",
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+        )
+    except Exception as exc:
+        log_error(
+            "Erro inesperado na consulta de proveniência: "
+            f"{type(exc).__name__}"
+        )
+        return error_response(
+            "Erro interno ao consultar a proveniência do fornecedor.",
+            status_code=500,
+            code="PROTHEUS_INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+def _provenance_binding(request: Request) -> dict[str, str | None]:
+    service_identity = getattr(request.state, "service_identity", None)
+    caller_app = getattr(service_identity, "client_id", None)
+    actor = getattr(request.state, "user", None)
+    actor_id = getattr(actor, "id", None) or getattr(actor, "user_id", None)
+    if actor_id is None:
+        user = get_current_user()
+        actor_id = getattr(user, "id", None) or getattr(user, "user_id", None)
+    return {
+        "caller_app": str(caller_app) if caller_app else None,
+        "actor_subject": str(actor_id).strip() if actor_id else None,
+    }
+
+
+@router.get(
+    "/suppliers/{supplier_id}/provenance",
+    operation_id="list_supplier_field_provenance",
+)
+@require_s2s_or_any_permission(
+    PROTHEUS_INTEGRATION_READ_PERMISSIONS,
+    required_scopes=("suppliers.read",),
+    allowed_clients=("supplies-api",),
+)
+def list_supplier_field_provenance_route(
+    request: Request,
+    supplier_id: str = Path(
+        ...,
+        min_length=8,
+        max_length=8,
+        pattern=r"^[0-9]{8}$",
+        description="Eight digits: six-digit supplier code + two-digit store",
+    ),
+    field_key: str | None = Query(None, max_length=60),
+    limit: int = LIMIT_QUERY("limit_100_200"),
+    offset: int = Query(0, ge=0),
+):
+    """Field-level write provenance for a supplier, scoped to the caller.
+
+    latest_confirmed only reflects CONFIRMED operations; acknowledged or
+    indeterminate attempts stay visible but never replace confirmed origin.
+    """
+    try:
+        service = build_integration_tracking_service()
+        data = service.list_supplier_provenance(
+            supplier_id=supplier_id,
+            field_key=field_key,
+            limit=limit,
+            offset=offset,
+            **_provenance_binding(request),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="list_supplier_field_provenance",
+            message="Proveniência de alterações do fornecedor consultada.",
+        )
+    except ProtheusRestError as exc:
+        return error_response(
+            exc.message,
+            status_code=exc.status_code,
+            code=exc.code,
+            recoverable=exc.recoverable,
+        )
+    except Exception as exc:
+        log_error(
+            "Erro inesperado na consulta de proveniência: "
+            f"{type(exc).__name__}"
+        )
+        return error_response(
+            "Erro interno ao consultar a proveniência do fornecedor.",
             status_code=500,
             code="PROTHEUS_INTERNAL_ERROR",
             recoverable=True,

@@ -34,6 +34,9 @@ from app.application.services.integrations.protheus_write_tracker import (
 )
 from app.config import settings
 from app.domain.integrations.protheus_rest import ProtheusRestError
+from app.domain.integrations.supplier_change_provenance import (
+    build_supplier_field_provenance,
+)
 from app.infrastructure.gateways.core_protheus_identity_gateway import (
     CoreProtheusIdentityGateway,
 )
@@ -68,6 +71,7 @@ class CreateProtheusRestSupplierUseCase:
         caller_app: str | None = None,
         correlation_id: str | None = None,
         request_id: str | None = None,
+        change_context: Any = None,
     ) -> dict[str, Any]:
         normalized = normalize_supplier_fields(fornecedor)
 
@@ -89,6 +93,20 @@ class CreateProtheusRestSupplierUseCase:
         body = build_upstream_create_body(codusr=codusr, fornecedor=normalized)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)
+        environment_key = environment_key_from_config(
+            config, settings.INTRANET_PARAMS_AMBIENTE or ""
+        )
+        provenance = build_supplier_field_provenance(
+            change_context,
+            sent_fields=normalized,
+            # POST may not know the final A2_COD until upstream assigns it;
+            # the operation resource_key is reconciled at ACK time.
+            supplier_code=None,
+            supplier_store=normalized.get("supplier_store"),
+            environment_key=environment_key,
+            caller_app=caller_app,
+            actor_subject=str(actor_user_id),
+        )
         token = self._token_service.get_valid_token(config)
 
         # Tracking persists CREATED + SENDING before any upstream byte.
@@ -96,9 +114,7 @@ class CreateProtheusRestSupplierUseCase:
             action="create",
             method="POST",
             resource_key=None,
-            environment_key=environment_key_from_config(
-                config, settings.INTRANET_PARAMS_AMBIENTE or ""
-            ),
+            environment_key=environment_key,
             caller_app=caller_app,
             actor_user_id=actor_user_id,
             codusr=codusr,
@@ -106,6 +122,7 @@ class CreateProtheusRestSupplierUseCase:
             outbound_body=body,
             correlation_id=correlation_id,
             request_id=request_id,
+            field_provenance=provenance,
         )
 
         try:

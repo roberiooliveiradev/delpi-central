@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 758,
+  "operation_count": 759,
   "operations": [
     {
       "method": "GET",
@@ -40512,6 +40512,91 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Update supplier fields via Protheus REST. codusr is resolved from Core."
+    },
+    {
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}/provenance",
+      "operationId": "list_supplier_field_provenance",
+      "summary": "List Supplier Field Provenance Route",
+      "tags": [
+        "Integrations — Protheus REST"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "supplier_id",
+          "in": "path",
+          "required": true,
+          "description": "Eight digits: six-digit supplier code + two-digit store",
+          "type": "string"
+        },
+        {
+          "name": "field_key",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=100 ge=1 le=200",
+          "type": "integer",
+          "default": 100
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Offset query parameter.",
+          "type": "integer",
+          "default": 0
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplier_field_provenance",
+        "shape": "composite_analysis",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          },
+          "supplier_id": {
+            "locale": {
+              "en": {
+                "description": "Eight digits: six-digit supplier code plus two-digit store.",
+                "label": "Supplier id"
+              },
+              "pt-BR": {
+                "description": "Oito dígitos: seis do código do fornecedor mais dois da loja.",
+                "label": "Identificador do fornecedor"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Field-level write provenance for a supplier, scoped to the caller.\n\nlatest_confirmed only reflects CONFIRMED operations; acknowledged or\nindeterminate attempts stay visible but never replace confirmed origin."
     },
     {
       "method": "GET",

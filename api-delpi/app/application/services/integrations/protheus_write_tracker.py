@@ -85,6 +85,7 @@ class ProtheusWriteTracker:
         outbound_body: dict[str, Any],
         correlation_id: str | None,
         request_id: str | None,
+        field_provenance: list[dict] | None = None,
     ) -> str:
         """Persist CREATED then SENDING. Any failure aborts before send."""
         tracker = self._require_tracker()
@@ -120,6 +121,7 @@ class ProtheusWriteTracker:
                 outbound_hash=canonical_hash(outbound_body),
                 correlation_id=correlation_id,
                 request_id=request_id,
+                field_provenance=field_provenance,
             )
             tracker.mark_sending(operation_id)
         except IntegrationTrackingError as exc:

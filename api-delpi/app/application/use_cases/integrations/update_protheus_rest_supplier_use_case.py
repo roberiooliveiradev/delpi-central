@@ -33,6 +33,9 @@ from app.application.services.integrations.protheus_write_tracker import (
     environment_key_from_config,
     extract_supplier_fields,
 )
+from app.domain.integrations.supplier_change_provenance import (
+    build_supplier_field_provenance,
+)
 from app.config import settings
 from app.domain.integrations.protheus_rest import ProtheusRestError
 from app.infrastructure.gateways.core_protheus_identity_gateway import (
@@ -70,6 +73,7 @@ class UpdateProtheusRestSupplierUseCase:
         caller_app: str | None = None,
         correlation_id: str | None = None,
         request_id: str | None = None,
+        change_context: Any = None,
     ) -> dict[str, Any]:
         normalized_id = validate_supplier_id(supplier_id)
         fields = normalize_supplier_update_fields(fornecedor)
@@ -92,6 +96,18 @@ class UpdateProtheusRestSupplierUseCase:
         body = build_upstream_update_body(codusr=codusr, fields=fields)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)
+        environment_key = environment_key_from_config(
+            config, settings.INTRANET_PARAMS_AMBIENTE or ""
+        )
+        provenance = build_supplier_field_provenance(
+            change_context,
+            sent_fields=fields,
+            supplier_code=normalized_id[:6],
+            supplier_store=normalized_id[6:],
+            environment_key=environment_key,
+            caller_app=caller_app,
+            actor_subject=str(actor_user_id),
+        )
         token = self._token_service.get_valid_token(config)
 
         # Tracking persists CREATED + SENDING before any upstream byte.
@@ -99,9 +115,7 @@ class UpdateProtheusRestSupplierUseCase:
             action="update",
             method="PUT",
             resource_key=normalized_id,
-            environment_key=environment_key_from_config(
-                config, settings.INTRANET_PARAMS_AMBIENTE or ""
-            ),
+            environment_key=environment_key,
             caller_app=caller_app,
             actor_user_id=actor_user_id,
             codusr=codusr,
@@ -109,6 +123,7 @@ class UpdateProtheusRestSupplierUseCase:
             outbound_body=body,
             correlation_id=correlation_id,
             request_id=request_id,
+            field_provenance=provenance,
         )
 
         try:

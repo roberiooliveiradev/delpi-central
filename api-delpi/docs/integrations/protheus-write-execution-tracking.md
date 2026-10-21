@@ -16,7 +16,7 @@ integração de escrita; começa por `supplier` `create`/`update`.
 | Owner | `api-delpi` (executa e rastreia o que ela própria envia) |
 | Banco | `postgres-plugins` (`PLUGINS_DB_*`), pool existente |
 | Schema | `integration_tracking` (slug de migrations `integration-tracking`) |
-| Tabelas | `integration_operations`, `integration_operation_events` |
+| Tabelas | `integration_operations`, `integration_operation_events`, `supplier_field_provenance` (V003 — origem/modo por campo; ver `supplier-write-provenance-contract.md`) |
 | Migrations | `api-delpi/migrations/plugins/integration-tracking/V001__...` via `run_plugins_migrations.py` (só `up` em produção) |
 | Retenção | Sem expurgo automático nesta entrega; política de retenção/expurgo exige decisão futura autorizada |
 

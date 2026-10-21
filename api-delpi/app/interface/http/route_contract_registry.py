@@ -1190,6 +1190,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_protheus_rest_supplier": RouteContract(
         "protheus_rest_supplier", "scalar"
     ),
+    "list_supplier_field_provenance": RouteContract(
+        "supplier_field_provenance", "composite_analysis"
+    ),
     # Lançamento de notas fiscais
     "search_lancamento_notas_fiscais_suppliers": RouteContract(
         "invoice_posting_supplier", "paged_list"
