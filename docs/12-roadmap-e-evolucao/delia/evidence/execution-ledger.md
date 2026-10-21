@@ -16925,3 +16925,35 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.360 — CRI complementary MCP operational acceptance (2026-10-21)
+
+**TASK:** DELIA-CRI-COMPLEMENTARY-MCP-OPERATIONAL-ACCEPTANCE-01. Bounded environment diagnostic + complementary acceptance to close E4's material gaps (doc 79 §12 verdict `CRI_OPERATIONAL_ACCEPTANCE=INCONCLUSIVE`) — zero runtime lines changed. Runtime SHA `8af42ae79d24d138044aff7c9a25fe583802547c` on isolated containers (`delia-eval-cri` + isolated specialist replicas `delia-eval-teo/vista/davi`; shared stack containers never modified). **MCP auth root cause PROVEN:** all three specialist containers logged `mcp_auth_denied class=RESOURCE_AUDIENCE_MISMATCH` — shared `delpi_mcp` auth step 2 rejects the token because the dev stack resolves the required audience from `PUBLIC_BASE_URL=http://localhost` (`http://localhost/apps/<app>/mcp`) while Keycloak mints the canonical `https://minhadelpi.com.br/apps/<app>/mcp` bound to the `mcp-<app>` client. Signature/issuer/subject/azp/`mcp:tools`/expiration all pass — the single failing term is the environment-dependent audience string. Owner = infra env configuration; existing designed override `MCP_RESOURCE_URL` identified (`EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=REUSE`); bounded fix proposed for separate authorization, not applied to shared env. **Live evidence obtained in isolated contract-aligned env** (`MCP_RESOURCE_URL=<canonical>` on replicas): all authenticated `tools/list`+`tools/call` 200/202; capability surface `groups=4`. **TÉO PASS** — `mcp:teo record_read` GROUNDED, records strictly ordered `updated_at` DESC, top = most recently altered process → `TEO_TEMPORAL_LIVE_EVIDENCE=PROVEN` (owner ORDER BY consumed end-to-end); ON grounded but hedged via `insufficient_evidence` (sufficiency gate conservative on superlative). **VISTA PASS** — `mcp:vista list_playlists` 5 playlists; OFF raw dump vs ON labeled "Encontrei 5 registros" (3 attempts: model selection nondeterminism recorded). **DAVI PASS** — `mcp:davi execute_delpi_information` 3 terminals group 1008; OFF raw fields vs ON "Aqui estão 3 exemplos" + labels + "A fonte informa 65 registros no total"; DAVI-MCP proven distinct from `openapi:delpi` (`group=davi, protocol=MCP, source=api-delpi`). **EMPTY_RESULT PASS** — real empty `delpi.search_products` collection; OFF "Nenhum resultado encontrado." vs ON "A fonte respondeu com uma coleção vazia". **Injection user-vector PASS** both modes (clean refusals, no internals); payload-level vectors `TEST_NOT_RUN` (no sanctioned injection mechanism without modifying owner data). **Config deviation recorded:** `DELIA_MODEL_STAGE_TIMEOUT_SECONDS=15.0` on eval container (default 10s too small for OpenRouter `moonshotai/kimi-k3` stage latency; `GLOBAL_TURN_BUDGET=30s` preserved — all turns inside it). `response_mode decision=cri` logged per ON turn; `ADDITIONAL_MODEL_CALLS=0`; `MATERIAL_ACT=0`; `RUNTIME_CODE_CHANGED=NO`; `PRODUCTION_ACTIVATION=NO`. Report: [80](../corrections/mcp-contextual-intelligence-orchestration/80-cri-complementary-mcp-operational-acceptance.md).
+
+```text
+CRI_COMPLEMENTARY_MCP_ACCEPTANCE=EXECUTED
+RUNTIME_SHA=8af42ae79d24d138044aff7c9a25fe583802547c
+MCP_AUTH_ROOT_CAUSE=RESOURCE_AUDIENCE_MISMATCH_PROVEN
+MCP_AUTH_OWNER=INFRA_ENV_CONFIG (PUBLIC_BASE_URL vs canonical minted aud)
+MCP_AUTH_CONTRACT=resolve_required_mcp_resource_audience + delpi_mcp step 2
+EXISTING_EQUIVALENT=YES_MCP_RESOURCE_URL
+REUSE_DECISION=REUSE
+TEO_MCP=PASS
+TEO_TEMPORAL_LIVE_EVIDENCE=PROVEN (owner updated_at DESC ordering consumed live)
+VISTA_MCP=PASS (ON after selection/budget variance — nondeterminism recorded)
+DAVI_MCP=PASS (real MCP owner proven, distinct from openapi:delpi)
+EMPTY_RESULT=PASS_BOTH_MODES
+PAGINATION=PARTIAL_PROVEN (truncated marker + owner total attribution)
+PROMPT_INJECTION_USER_VECTOR=PASS / PAYLOAD_VECTORS=TEST_NOT_RUN
+AUTHORITY_BOUNDARIES=PRESERVED_FAIL_CLOSED
+MATERIAL_ACT=0
+ADDITIONAL_MODEL_CALLS=0
+RUNTIME_CODE_CHANGED=NO
+PRODUCTION_ACTIVATION=NO
+CRI_OFF=DEFAULT
+EXECUTOR_VERDICT=ACCEPT_WITH_RESIDUAL
+CRI_OPERATIONAL_ACCEPTANCE=PENDING_COORDINATION
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```
