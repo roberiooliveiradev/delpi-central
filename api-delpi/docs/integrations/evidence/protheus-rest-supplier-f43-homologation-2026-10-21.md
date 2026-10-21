@@ -51,6 +51,19 @@ Cadeia de evidência (sem novo POST):
 - `protheus-rest-supplier-api-contract.md` §3.4 — POST retornando `supplier_code`/`supplier_store` (PROVEN runtime, contrato formal PENDING); divergência `tax_id` registrada; `CONTRACT_GAPS` atualizado.
 - `protheus-rest-supplier-post-field-matrix.md` — `tax_id` marcado `DIVERGENCE_UPSTREAM`; `supplier_short_name` PUT promovido a PROVEN runtime; `rohs_indicator` mantido TO_INVENTORY (enviado no POST, obrigatoriedade não comprovada).
 
-## 5. Re-homologação runtime (S6)
+## 5. Re-homologação runtime (S6) — executada 2026-10-21
 
-Pendente de deploy do SHA corrigido no `srv-api` — PUT controlado em `003878/01` esperando `CONFIRMED` + `confirmation_evidence` persistido. Resultado registrado na seção final após execução.
+Deploy `srv-api`: `api-delpi` reconstruída a partir de `origin/main` `d20a0acd6c` (commits `8660b482d2` fix + `d20a0acd6c` docs). Gate UPDATE habilitado temporariamente; CREATE permaneceu OFF.
+
+**PUT controlado — `003878/01`, `supplier_short_name` → `ZZ HOMOLOG F43 TEST`:**
+
+- HTTP 200, `update_confirmed=true`, `persistence_proven=true`, sem `tracking_warning`.
+- `operation_id=c0025fe9-2949-4b51-8787-579a4bcbbf49` → status `CONFIRMED`, `attempt_count=1`, `http_status=200`.
+- `confirmation_evidence`: `method=READ_AFTER_WRITE`, `result=MATCH`, `resource_key=00387801`, `checked_fields=["supplier_short_name"]`, `environment_key=ambiente:1@192.168.1.233:8701`, `schema_version=1`, `confirmed_at` preenchido.
+- Eventos: `operation_created → send_started → upstream_response → status_transition(ACKNOWLEDGED→CONFIRMED)` — sequência válida.
+
+**Restauração (segunda escrita rastreada):** PUT `supplier_short_name` → `ZZ HOMOLOG F4`; `operation_id=1b5ccfa0-9473-4932-9db1-c72b2d226a11` → `CONFIRMED`, `attempt_count=1`. SQL `DELPI_TST01`: `A2_NREDUZ='ZZ HOMOLOG F4'` restaurado.
+
+**Pós-condição:** gates CREATE=False, UPDATE=False no runtime; containers healthy; nenhuma escrita em `DELPI` (verificação separada: zero ocorrências do padrão de teste na base produtiva).
+
+**Classificação:** `UPDATE_TRACKING=PASS` · `UPDATE_PERSISTENCE=PASS` · `SECURITY/S2S=PASS` · `GATE_FINAL=PASS` · `CREATE_TRACKING=PASS` (RECONCILIATION_REQUIRED correto) · `CREATE_PERSISTENCE=PENDING_UPSTREAM` (`tax_id` boundary Gabriel) · `COMPENSATION=PASS` (resíduo `003874/01` bloqueado, sem DELETE).
