@@ -273,3 +273,8 @@ A definição detalhada de **cada superfície, navegação, wireframes desktop/m
 ## Contrato técnico do backend — complemento proposto
 
 O detalhamento de **Ports & Adapters, seis rotas HTTP de review/decisões/histórico/preparação, schemas JSON propostos, regras de estado, idempotência, revisão otimista, lote transacional, modelo relacional no schema supplies, AuthZ por recurso/unidade, integração ao provider CNPJ, auditoria, retenção, erros, testes e rollout** está em [FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md). **PROPOSED/TARGET, não FROZEN**: fonte governamental concreta, LGPD/retention e elegibilidade de campos ainda dependem de inventário e aprovação. Nenhum endpoint/migration foi implementado.
+
+
+## Inventário de fontes e atributos CNPJ
+
+A pesquisa em fontes oficiais (2026-10-21) está registrada em [FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md). Inclui acesso para empresa privada, limitações da plataforma Conecta, Serpro comercial, REDESIM, dados abertos RFB e matriz de atributos para SA2. **Sem evidência de contratação/credenciais, provider continua TO_INVENTORY** e não está autorizado o consumo live.
