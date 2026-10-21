@@ -173,3 +173,8 @@ Arquivo anexo do PO `PROC-0072_Transcricao_Integral_Video.md` analisado. **[Doc 
 ### R03 — Primeiro artefato físico P7 recebido (21/10/2026)
 
 PO forneceu **`Resumo Estoque.pdf`**, página única de `REGISTRO DE INVENTÁRIO`, Matriz, folha 000.074, posição `30/09/2026`. Totais impressos: `EM ESTOQUE=2.699.026,36`, `EM PROCESSO=277.941,20`, **`TOTAL GERAL=2.976.967,56`**, distinto de `3.776.994,69` (NotebookLM derivado; delta `800.027,13`). O PDF foi criado em 01/10/2026 19:37:32 UTC segundo metadados; não inferir data do corte. Subtotal processo diverge em R$0,01 da soma das linhas impressas; PA `190.511,24` corresponde a agregação anterior SB9, PI diverge R$0,01. **[Auditoria detalhada doc 46 §15](./46-t01-report-source-inventory-v1.md).** `REPORT_EXPORT_EVIDENCE=PROVIDED` somente para esse resumo, `REPORT_VARIANT=TO_VERIFY`, `FULL_PARITY=TEST_NOT_RUN`. Próximo: receber individualmente o arquivo `Estoque.pdf` para esclarecer o relatório de origem e a composição, evitando suposições.
+
+
+### R03 - P7 Layout H e classificacao MP/PI/PA (21/10/2026)
+
+Joici confirmou ao PO que a segunda saida P7 utiliza layout H e atende ao acompanhamento restrito a materia-prima (MP), produto intermediario (PI) e acabado (PA). `SB1010.B1_TIPO` e campo real verificado no Protheus para essas categorias; nao assumir que esse filtro isolado reproduza MATR460. PDFs de 30/09/2026: `Estoque.pdf` amplo 3.946.431,87 e `Resumo Estoque.pdf` restrito 2.976.967,56, com diferencas inclusive em MP. Destinatario Financeiro/Contabilidade e regra completa de parametros ainda pendentes de verificacao; paridade `TEST_NOT_RUN`. Detalhes: [doc 46 secao 22](./46-t01-report-source-inventory-v1.md). Sem alteracoes de runtime.
