@@ -18,14 +18,26 @@ import {
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { getSupplier, updateSupplier } from "./api";
-import { SUPPLIERS_CONTENT as C } from "./content";
-import { SupplierFieldInput } from "./SupplierFormFields";
+import {
+  SUPPLIERS_CONTENT as C,
+  supplierPendingChangesLabel,
+} from "./content";
+import {
+  SupplierFieldInput,
+  SupplierFieldGrid,
+  SupplierFormActions,
+  SupplierProtectedField,
+  SupplierReviewTable,
+} from "./SupplierFormFields";
 import {
   classifyWriteOutcome,
   diffEditableFields,
   draftFromDetail,
   formatTaxIdMasked,
   getSupplierFieldValue,
+  groupChangesBySection,
+  personTypeLabel,
+  supplierFieldItemClass,
 } from "./query";
 import {
   SUPPLIER_FIELD_REGISTRY,
@@ -277,7 +289,18 @@ export function SupplierDetailPage({
             <span className="sp-supplier-detail__doc" title={SP_HELP.suppliersColTaxId}>
               {formatTaxIdMasked(detail.tax_id, detail.tax_id_masked)}
             </span>
+            {personTypeLabel(
+              identification.person_type?.toString() ?? "",
+            ) ? (
+              <span className="sp-supplier-detail__doc">
+                {personTypeLabel(identification.person_type?.toString() ?? "")}
+              </span>
+            ) : null}
           </div>
+
+          {editing ? (
+            <p className="sp-supplier-detail__readonly-note">{C.editHint}</p>
+          ) : null}
 
           {SUPPLIER_FORM_SECTIONS.map((section) => (
             <SuppliesSectionCard
@@ -290,56 +313,60 @@ export function SupplierDetailPage({
               }
             >
               {editing ? (
-                <div className="sp-supplier-detail__edit-grid">
-                  {section.fields.some((spec) => spec.put !== "editable") ? (
-                    <dl className="sp-supplier-detail__identity">
-                      {section.fields
-                        .filter((spec) => spec.put !== "editable")
-                        .map((spec) => (
-                          <div
-                            key={spec.key}
-                            title={
+                <SupplierFieldGrid>
+                  {section.fields.map((spec) => {
+                    if (spec.put !== "editable") {
+                      return (
+                        <div
+                          key={spec.key}
+                          className={supplierFieldItemClass(spec)}
+                        >
+                          <SupplierProtectedField
+                            label={spec.label}
+                            value={getSupplierFieldValue(detail, spec)}
+                            hint={
                               spec.put === "protected"
                                 ? C.protectedFieldHint
                                 : C.readonlyFieldHint
                             }
-                          >
-                            <dt>{spec.label}</dt>
-                            <dd>
-                              {getSupplierFieldValue(detail, spec) || "—"}
-                            </dd>
-                          </div>
-                        ))}
-                    </dl>
-                  ) : null}
-                  {section.fields
-                    .filter((spec) => spec.put === "editable")
-                    .map((spec) => (
-                      <SupplierFieldInput
+                            protected={spec.put === "protected"}
+                          />
+                        </div>
+                      );
+                    }
+                    const key = spec.key as SupplierEditableFieldKey;
+                    const changed = changes.some((c) => c.field === key);
+                    return (
+                      <div
                         key={spec.key}
-                        spec={spec}
-                        hint={
-                          spec.key === "supplier_name"
-                            ? SP_HELP.suppliersEditName
-                            : spec.key === "supplier_short_name"
-                              ? SP_HELP.suppliersEditShortName
-                              : undefined
-                        }
-                        value={draft[spec.key as SupplierEditableFieldKey] ?? ""}
-                        onChange={(value) =>
-                          setDraft((d) => ({
-                            ...d,
-                            [spec.key]: value,
-                          }))
-                        }
-                        disabled={submitting}
-                      />
-                    ))}
-                </div>
+                        className={supplierFieldItemClass(spec, { changed })}
+                      >
+                        <SupplierFieldInput
+                          spec={spec}
+                          hint={
+                            spec.key === "supplier_name"
+                              ? SP_HELP.suppliersEditName
+                              : spec.key === "supplier_short_name"
+                                ? SP_HELP.suppliersEditShortName
+                                : undefined
+                          }
+                          value={draft[key] ?? ""}
+                          onChange={(value) =>
+                            setDraft((d) => ({
+                              ...d,
+                              [key]: value,
+                            }))
+                          }
+                          disabled={submitting}
+                        />
+                      </div>
+                    );
+                  })}
+                </SupplierFieldGrid>
               ) : (
-                <dl className="sp-supplier-detail__identity">
+                <dl className="sp-supplier-fields">
                   {section.fields.map((spec) => (
-                    <div key={spec.key}>
+                    <div key={spec.key} className={supplierFieldItemClass(spec)}>
                       <dt>{spec.label}</dt>
                       <dd>{getSupplierFieldValue(detail, spec) || "—"}</dd>
                     </div>
@@ -350,27 +377,27 @@ export function SupplierDetailPage({
           ))}
 
           {editing ? (
-            <>
-              <p className="sp-supplier-detail__readonly-note">{C.editHint}</p>
-              <div className="sp-supplier-detail__edit-actions">
-                <SuppliesActionButton
-                  type="button"
-                  variant="primary"
-                  onClick={() => setReviewing(true)}
-                  disabled={!dirty || submitting}
-                >
-                  {C.reviewAction}
-                </SuppliesActionButton>
-                <SuppliesActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={cancelEdit}
-                  disabled={submitting}
-                >
-                  {C.cancelAction}
-                </SuppliesActionButton>
-              </div>
-            </>
+            <SupplierFormActions
+              counter={dirty ? supplierPendingChangesLabel(changes.length) : ""}
+            >
+              <SuppliesActionButton
+                type="button"
+                variant="ghost"
+                onClick={cancelEdit}
+                disabled={submitting}
+              >
+                {C.cancelAction}
+              </SuppliesActionButton>
+              <SuppliesActionButton
+                type="button"
+                variant="primary"
+                onClick={() => setReviewing(true)}
+                disabled={!dirty || submitting}
+                title={dirty ? undefined : C.noChangesMessage}
+              >
+                {C.reviewAction}
+              </SuppliesActionButton>
+            </SupplierFormActions>
           ) : null}
         </>
       ) : null}
@@ -401,27 +428,25 @@ export function SupplierDetailPage({
         }
       >
         {changes.length ? (
-          <table className="sp-supplier-diff">
-            <thead>
-              <tr>
-                <th>Campo</th>
-                <th>Valor atual</th>
-                <th>Novo valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change) => (
-                <tr key={change.field}>
-                  <td>
-                    {SUPPLIER_FIELD_REGISTRY.find((s) => s.key === change.field)
-                      ?.label ?? change.field}
-                  </td>
-                  <td>{change.before || "—"}</td>
-                  <td>{change.after || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <p className="sp-supplier-detail__readonly-note">
+              {C.reviewEditDescription}
+            </p>
+            <SupplierReviewTable
+              groups={groupChangesBySection(changes).map((group) => ({
+                section: group.section,
+                title: SECTION_LABELS[group.section],
+                rows: group.changes.map((change) => ({
+                  label:
+                    SUPPLIER_FIELD_REGISTRY.find((s) => s.key === change.field)
+                      ?.label ?? change.field,
+                  before: change.before,
+                  after: change.after,
+                })),
+              }))}
+              showBefore
+            />
+          </>
         ) : (
           <p>{C.noChangesMessage}</p>
         )}

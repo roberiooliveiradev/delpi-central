@@ -955,36 +955,117 @@
   color: var(--sp-text-muted);
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__identity {
+/* Supplier cadastral grid — logical 12 columns shared by view/create/edit. */
+.dashboard-supplies-portal .sp-supplier-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.9rem;
   margin: 0;
   min-width: 0;
   max-width: 100%;
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__identity > div {
+.dashboard-supplies-portal .sp-supplier-field {
+  grid-column: span 4;
   min-width: 0;
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__identity dt {
+.dashboard-supplies-portal .sp-supplier-field--span-2 { grid-column: span 2; }
+.dashboard-supplies-portal .sp-supplier-field--span-3 { grid-column: span 3; }
+.dashboard-supplies-portal .sp-supplier-field--span-4 { grid-column: span 4; }
+.dashboard-supplies-portal .sp-supplier-field--span-6 { grid-column: span 6; }
+.dashboard-supplies-portal .sp-supplier-field--span-12 { grid-column: span 12; }
+
+.dashboard-supplies-portal .sp-supplier-fields dt {
   font-size: 0.75rem;
   color: var(--sp-text-muted);
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__identity dd {
+.dashboard-supplies-portal .sp-supplier-fields dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__edit-grid,
-.dashboard-supplies-portal .sp-supplier-create__form {
+/* Display-only value (consulta e campos protegidos/readonly na edição). */
+.dashboard-supplies-portal .sp-supplier-display {
   display: grid;
-  gap: 0.9rem;
-  max-width: 34rem;
+  gap: 0.15rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--sp-radius, 0.5rem);
+  background: var(--sp-surface-soft, transparent);
+  border: 1px solid var(--sp-border);
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-supplier-display__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-display__value {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-supplies-portal .sp-supplier-display--protected {
+  border-style: dashed;
+}
+
+.dashboard-supplies-portal .sp-supplier-display__lock {
+  flex-shrink: 0;
+}
+
+/* Campo alterado na edição — destaque sutil, não dependente apenas de cor. */
+.dashboard-supplies-portal .sp-supplier-field--changed {
+  border-left: 2px solid var(--sp-accent);
+  padding-left: 0.5rem;
+}
+
+/* Barra de ações: contador à esquerda, botões à direita. */
+.dashboard-supplies-portal .sp-supplier-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-top: 0.35rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-actions__counter {
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__review-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-review {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-review__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .dashboard-supplies-portal .sp-supplier-detail__readonly-note {
@@ -993,11 +1074,38 @@
   color: var(--sp-text-muted);
 }
 
-.dashboard-supplies-portal .sp-supplier-detail__edit-actions,
-.dashboard-supplies-portal .sp-supplier-create__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+/* Tablet: duas colunas. */
+@media (max-width: 1024px) {
+  .dashboard-supplies-portal .sp-supplier-field,
+  .dashboard-supplies-portal .sp-supplier-field--span-2,
+  .dashboard-supplies-portal .sp-supplier-field--span-3,
+  .dashboard-supplies-portal .sp-supplier-field--span-4 {
+    grid-column: span 6;
+  }
+}
+
+/* Mobile: uma coluna, sem scroll horizontal. */
+@media (max-width: 720px) {
+  .dashboard-supplies-portal .sp-supplier-field,
+  .dashboard-supplies-portal .sp-supplier-field--span-2,
+  .dashboard-supplies-portal .sp-supplier-field--span-3,
+  .dashboard-supplies-portal .sp-supplier-field--span-4,
+  .dashboard-supplies-portal .sp-supplier-field--span-6 {
+    grid-column: span 12;
+  }
+
+  .dashboard-supplies-portal .sp-supplier-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-supplies-portal .sp-supplier-actions__buttons {
+    justify-content: stretch;
+  }
+
+  .dashboard-supplies-portal .sp-supplier-actions__buttons > * {
+    flex: 1;
+  }
 }
 
 .dashboard-supplies-portal .sp-supplier-diff {

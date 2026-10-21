@@ -138,6 +138,8 @@ export type SupplierFieldSpec = {
   put: "editable" | "readonly" | "protected";
   get: SupplierFieldGetSource;
   evidence: SupplierFieldEvidence;
+  /** Largura visual no grid de 12 colunas (UX spec; mobile colapsa para 1 col). */
+  span: number;
 };
 
 const F = (
@@ -172,6 +174,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "protected",
     get: "identity",
     evidence: "system",
+    span: 2,
   }),
   F({
     key: "supplier_store",
@@ -184,12 +187,14 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     put: "protected",
     get: "identity",
     evidence: "identity",
+    span: 2,
   }),
   E({
     key: "person_type",
     label: "Tipo de pessoa",
     section: "identification",
     maxLength: 1,
+    span: 4,
     options: [
       { value: "J", label: "Jurídica (CNPJ)" },
       { value: "F", label: "Física (CPF)" },
@@ -205,6 +210,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     put: "protected",
     get: "top",
+    span: 4,
   }),
   F({
     key: "supplier_name",
@@ -214,6 +220,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     put: "editable",
     evidence: "put-contract",
+    span: 6,
   }),
   F({
     key: "supplier_short_name",
@@ -223,16 +230,45 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     post: true,
     put: "editable",
     evidence: "put-contract",
+    span: 6,
   }),
   // Endereço
-  E({ key: "address", label: "Endereço", section: "address", maxLength: 40 }),
-  E({ key: "district", label: "Bairro", section: "address", maxLength: 20 }),
+  E({
+    key: "address",
+    label: "Endereço",
+    section: "address",
+    maxLength: 40,
+    span: 6,
+  }),
+  E({
+    key: "district",
+    label: "Bairro",
+    section: "address",
+    maxLength: 20,
+    span: 3,
+  }),
   E({
     key: "postal_code",
     label: "CEP",
     section: "address",
     maxLength: 8,
     digitsOnly: true,
+    span: 3,
+  }),
+  E({
+    key: "city",
+    label: "Cidade",
+    section: "address",
+    maxLength: 25,
+    span: 4,
+  }),
+  E({
+    key: "city_code",
+    label: "Código IBGE",
+    section: "address",
+    maxLength: 5,
+    digitsOnly: true,
+    span: 2,
   }),
   E({
     key: "state",
@@ -240,56 +276,78 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 2,
     uppercase: true,
-  }),
-  E({ key: "city", label: "Cidade", section: "address", maxLength: 25 }),
-  E({
-    key: "city_code",
-    label: "Código IBGE",
-    section: "address",
-    maxLength: 5,
-    digitsOnly: true,
+    span: 2,
   }),
   // Contato
+  E({
+    key: "contact_name",
+    label: "Contato",
+    section: "contact",
+    maxLength: 15,
+    span: 4,
+  }),
   E({
     key: "area_code",
     label: "DDD",
     section: "contact",
     maxLength: 3,
     digitsOnly: true,
+    span: 2,
   }),
-  E({ key: "phone", label: "Telefone", section: "contact", maxLength: 50 }),
-  E({ key: "contact_name", label: "Contato", section: "contact", maxLength: 15 }),
-  E({ key: "email", label: "E-mail", section: "contact", maxLength: 50 }),
+  E({
+    key: "phone",
+    label: "Telefone",
+    section: "contact",
+    maxLength: 50,
+    span: 3,
+  }),
+  E({
+    key: "email",
+    label: "E-mail",
+    section: "contact",
+    maxLength: 50,
+    span: 3,
+  }),
   // Fiscal
   E({
     key: "state_registration",
     label: "Inscrição estadual",
     section: "fiscal",
     maxLength: 18,
+    span: 4,
   }),
   E({
     key: "municipal_registration",
     label: "Inscrição municipal",
     section: "fiscal",
     maxLength: 18,
-  }),
-  E({ key: "country_code", label: "País", section: "fiscal", maxLength: 3 }),
-  E({
-    key: "bacen_country_code",
-    label: "País (BACEN)",
-    section: "fiscal",
-    maxLength: 5,
-    digitsOnly: true,
+    span: 4,
   }),
   E({
     key: "rohs_indicator",
     label: "Indicador ROHS",
     section: "fiscal",
     maxLength: 1,
+    span: 4,
     options: [
       { value: "N", label: "Não" },
       { value: "S", label: "Sim" },
     ],
+  }),
+  E({
+    key: "country_code",
+    label: "País",
+    section: "fiscal",
+    maxLength: 3,
+    span: 3,
+  }),
+  E({
+    key: "bacen_country_code",
+    label: "País (BACEN)",
+    section: "fiscal",
+    maxLength: 5,
+    digitsOnly: true,
+    span: 3,
   }),
   // Compras
   E({
@@ -297,26 +355,37 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     label: "Condição de pagamento",
     section: "purchasing",
     maxLength: 3,
+    span: 4,
   }),
   E({
     key: "payment_method_code",
     label: "Forma de pagamento",
     section: "purchasing",
     maxLength: 2,
+    span: 4,
   }),
   E({
     key: "accounting_account",
     label: "Conta contábil",
     section: "purchasing",
     maxLength: 20,
+    span: 6,
   }),
   E({
     key: "financial_nature_code",
     label: "Natureza financeira",
     section: "purchasing",
     maxLength: 10,
+    span: 6,
   }),
 ];
+
+/** Rótulo curto de tipo de pessoa para chips de identidade (header/consulta). */
+export const SUPPLIER_PERSON_TYPE_LABELS: Record<string, string> = {
+  J: "Jurídica",
+  F: "Física",
+  X: "Outros",
+};
 
 export type SupplierFormSection = {
   id: SupplierDetailSectionKey;

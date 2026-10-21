@@ -59,8 +59,10 @@ export const SUPPLIERS_CONTENT = {
     "Campo protegido — documento fiscal e identidade do fornecedor não são alteráveis nesta operação.",
   cancelAction: "Cancelar",
   reviewAction: "Revisar alterações",
-  reviewTitle: "Revisar antes de gravar",
-  confirmAction: "Confirmar envio",
+  reviewTitle: "Revisar alterações",
+  reviewEditDescription:
+    "Confira as alterações antes de salvar. Somente campos modificados são listados.",
+  confirmAction: "Confirmar e salvar",
   noChangesMessage: "Nenhum campo editável foi alterado.",
   unsavedChangesWarning:
     "Você tem alterações não gravadas. Ao sair desta tela elas serão descartadas.",
@@ -83,9 +85,13 @@ export const SUPPLIERS_CONTENT = {
 
   createTitle: "Novo fornecedor",
   createDescription:
-    "Cadastro inicial de fornecedor com todos os campos do contrato de integração. " +
+    "Preencha os dados para cadastrar um fornecedor no Protheus. " +
     "O envio só é liberado quando a escrita no ERP estiver homologada neste ambiente.",
-  createSubmit: "Revisar e enviar",
+  createSubmit: "Revisar dados",
+  createReviewTitle: "Revisar dados do fornecedor",
+  createReviewDescription:
+    "Confira os dados que serão enviados ao ERP para inclusão.",
+  createConfirmAction: "Confirmar inclusão",
   createBack: "Voltar para a lista",
   fieldEmptyOption: "Não informado",
   openCreatedDetail: "Abrir ficha do fornecedor criado",
@@ -93,6 +99,12 @@ export const SUPPLIERS_CONTENT = {
   verifyNotReflectedMessage:
     "A consulta ao ERP ainda não reflete as alterações enviadas. Aguarde e confira novamente antes de reenviar.",
 } as const;
+
+export function supplierPendingChangesLabel(count: number): string {
+  return count === 1
+    ? "1 alteração pendente"
+    : `${count} alterações pendentes`;
+}
 
 export function supplierFieldMaxLengthHint(max: number): string {
   return `Até ${max} caracteres, conforme o contrato de integração com o ERP.`;

@@ -22,7 +22,13 @@ import { SP_HELP } from "../../content/helpTooltips";
 import { createSupplier } from "./api";
 import { SUPPLIERS_CONTENT as C } from "./content";
 import { classifyWriteOutcome } from "./query";
-import { SupplierFieldInput } from "./SupplierFormFields";
+import {
+  SupplierFieldInput,
+  SupplierFieldGrid,
+  SupplierFormActions,
+  SupplierReviewTable,
+} from "./SupplierFormFields";
+import { supplierFieldItemClass } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
   SUPPLIER_FIELD_REGISTRY,
@@ -94,6 +100,27 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
       ),
     [draft],
   );
+
+  const reviewGroups = useMemo(() => {
+    const grouped = new Map<string, { label: string; after: string }[]>();
+    for (const [field, value] of filledEntries) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((s) => s.key === field);
+      const section = spec?.section ?? "identification";
+      grouped.set(section, [
+        ...(grouped.get(section) ?? []),
+        { label: spec?.label ?? field, after: value },
+      ]);
+    }
+    return (Object.keys(CREATE_SECTION_TITLES) as Array<
+      keyof typeof CREATE_SECTION_TITLES
+    >)
+      .filter((id) => grouped.has(id))
+      .map((id) => ({
+        section: id,
+        title: CREATE_SECTION_TITLES[id],
+        rows: grouped.get(id)!,
+      }));
+  }, [filledEntries]);
 
   const storeValid = /^\d{2}$/.test(draft.supplier_store);
 
@@ -218,30 +245,26 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           title={CREATE_SECTION_TITLES[section.id]}
           hint={SP_HELP.suppliersCreateFields}
         >
-          <div className="sp-supplier-create__form">
+          <SupplierFieldGrid>
             {section.fields.map((field) => (
-              <SupplierFieldInput
+              <div
                 key={field.key}
-                spec={field}
-                value={draft[field.key]}
-                onChange={(value) => patchDraft({ [field.key]: value })}
-                disabled={submitting}
-                showRequiredMark
-              />
+                className={supplierFieldItemClass(field)}
+              >
+                <SupplierFieldInput
+                  spec={field}
+                  value={draft[field.key]}
+                  onChange={(value) => patchDraft({ [field.key]: value })}
+                  disabled={submitting}
+                  showRequiredMark
+                />
+              </div>
             ))}
-          </div>
+          </SupplierFieldGrid>
         </SuppliesSectionCard>
       ))}
 
-      <div className="sp-supplier-create__actions">
-        <SuppliesActionButton
-          type="button"
-          variant="primary"
-          onClick={() => setReviewing(true)}
-          disabled={!storeValid || !filledEntries.length || submitting}
-        >
-          {C.createSubmit}
-        </SuppliesActionButton>
+      <SupplierFormActions>
         <SuppliesActionButton
           type="button"
           variant="ghost"
@@ -250,11 +273,19 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
         >
           {C.createBack}
         </SuppliesActionButton>
-      </div>
+        <SuppliesActionButton
+          type="button"
+          variant="primary"
+          onClick={() => setReviewing(true)}
+          disabled={!storeValid || !filledEntries.length || submitting}
+        >
+          {C.createSubmit}
+        </SuppliesActionButton>
+      </SupplierFormActions>
 
       <SuppliesModal
         open={reviewing}
-        title={C.reviewTitle}
+        title={C.createReviewTitle}
         onClose={() => setReviewing(false)}
         footer={
           <>
@@ -264,7 +295,7 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
               onClick={confirmSubmit}
               disabled={submitting}
             >
-              {C.confirmAction}
+              {C.createConfirmAction}
             </SuppliesActionButton>
             <SuppliesActionButton
               type="button"
@@ -277,25 +308,13 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           </>
         }
       >
-        <table className="sp-supplier-diff">
-          <thead>
-            <tr>
-              <th>Campo</th>
-              <th>Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filledEntries.map(([field, value]) => (
-              <tr key={field}>
-                <td>
-                  {SUPPLIER_FIELD_REGISTRY.find((s) => s.key === field)?.label ??
-                    field}
-                </td>
-                <td>{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <p className="sp-supplier-create__review-note">
+          {C.createReviewDescription}
+        </p>
+        <SupplierReviewTable
+          groups={reviewGroups}
+          showBefore={false}
+        />
       </SuppliesModal>
     </div>
   );

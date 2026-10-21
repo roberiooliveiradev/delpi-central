@@ -7,7 +7,12 @@ import type {
   SupplierWriteResponse,
   SuppliersQuery,
 } from "./types";
-import { SUPPLIER_FIELD_REGISTRY, SUPPLIERS_PAGE_SIZE_OPTIONS } from "./types";
+import {
+  SUPPLIER_FIELD_REGISTRY,
+  SUPPLIER_PERSON_TYPE_LABELS,
+  SUPPLIERS_PAGE_SIZE_OPTIONS,
+  type SupplierDetailSectionKey,
+} from "./types";
 
 export function createDefaultQuery(): SuppliersQuery {
   return { query: "", state: "", blocked: "", page: 1, page_size: 20 };
@@ -132,6 +137,54 @@ export function diffEditableFields(
     if (after !== before) out.push({ field: key, before, after });
   }
   return out;
+}
+
+/** Rótulo curto de tipo de pessoa para exibição (header/chips); "" se ausente. */
+export function personTypeLabel(value: string | null | undefined): string {
+  if (!value) return "";
+  return SUPPLIER_PERSON_TYPE_LABELS[value.trim().toUpperCase()] ?? "";
+}
+
+/** Classe utilitária do item de grid: span declarado no spec + estado visual. */
+export function supplierFieldItemClass(
+  spec: SupplierFieldSpec,
+  options?: { changed?: boolean },
+): string {
+  const span = Math.min(Math.max(spec.span, 1), 12);
+  return [
+    "sp-supplier-field",
+    `sp-supplier-field--span-${span}`,
+    options?.changed ? "sp-supplier-field--changed" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Agrupa alterações por seção do registry, preservando a ordem canônica. */
+export type SupplierChangeSection = {
+  section: SupplierDetailSectionKey;
+  changes: SupplierFieldChange[];
+};
+
+export function groupChangesBySection(
+  changes: ReadonlyArray<SupplierFieldChange>,
+): SupplierChangeSection[] {
+  const order: SupplierDetailSectionKey[] = [
+    "identification",
+    "address",
+    "contact",
+    "fiscal",
+    "purchasing",
+  ];
+  const sections = new Map<SupplierDetailSectionKey, SupplierFieldChange[]>();
+  for (const change of changes) {
+    const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === change.field);
+    const section = spec?.section ?? "identification";
+    sections.set(section, [...(sections.get(section) ?? []), change]);
+  }
+  return order
+    .filter((id) => sections.has(id))
+    .map((id) => ({ section: id, changes: sections.get(id)! }));
 }
 
 /** Monta o draft de edição a partir do GET detail (registry-driven). */

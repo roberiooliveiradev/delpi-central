@@ -57,7 +57,7 @@ export const SP_HELP = {
   homeVsOverview: HOME_HELP.vsOverview,
   homeAttention: HOME_HELP.attention,
   suppliers:
-    "Cadastro central de fornecedores (SA2, empresa 01): busca por código, loja, razão social, fantasia ou documento. A ficha abre no modo consulta; edição cobre apenas razão social e nome fantasia. A URL guarda busca e filtros para compartilhar.",
+    "Cadastro central de fornecedores (SA2, empresa 01): busca por código, loja, razão social, fantasia ou documento. A ficha abre no modo consulta com os campos agrupados por seção; na edição, código, loja e CNPJ/CPF aparecem protegidos e a revisão mostra somente o que mudou. A URL guarda busca e filtros para compartilhar.",
   suppliersSearch:
     "Busca livre por código, loja, razão social, nome fantasia ou documento (CNPJ/CPF). A lista é paginada no servidor — resultados grandes não travam a tela.",
   suppliersBlocked:

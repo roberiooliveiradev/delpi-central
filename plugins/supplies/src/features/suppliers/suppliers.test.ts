@@ -19,8 +19,10 @@ import {
   draftFromDetail,
   formatTaxIdMasked,
   getSupplierFieldValue,
+  groupChangesBySection,
   hasActiveFilters,
   parseQueryFromSearch,
+  personTypeLabel,
 } from "./query";
 import {
   SUPPLIER_CREATE_SECTIONS,
@@ -377,6 +379,70 @@ describe("fetch error mapping", () => {
       SUPPLIERS_CONTENT.errorForbidden,
     );
     expect(mapSuppliersFetchError("unexpected")).toBe(SUPPLIERS_CONTENT.error);
+  });
+});
+
+describe("supplier field grid spans", () => {
+  it("declares a valid 12-col span for every field", () => {
+    for (const spec of SUPPLIER_FIELD_REGISTRY) {
+      expect(spec.span).toBeGreaterThanOrEqual(2);
+      expect(spec.span).toBeLessThanOrEqual(12);
+      expect(Number.isInteger(spec.span)).toBe(true);
+    }
+  });
+
+  it("keeps long fields wide and short fields narrow", () => {
+    const span = (key: string) =>
+      SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!.span;
+    expect(span("supplier_name")).toBe(6);
+    expect(span("address")).toBe(6);
+    expect(span("supplier_code")).toBe(2);
+    expect(span("supplier_store")).toBe(2);
+    expect(span("state")).toBe(2);
+  });
+});
+
+describe("review grouping", () => {
+  const detail: SupplierDetail = {
+    supplier_id: "00246901",
+    supplier_code: "002469",
+    supplier_store: "01",
+    blocked: false,
+    tax_id: null,
+    tax_id_masked: true,
+    sections: {
+      identification: { supplier_name: "A" },
+      address: { city: "TIMBO" },
+      contact: { email: "a@b.com" },
+    },
+  };
+
+  it("groups changes under their registry sections in canonical order", () => {
+    const draft = draftFromDetail(detail);
+    draft.supplier_name = "B";
+    draft.city = "BLUMENAU";
+    draft.email = "x@y.com";
+    const groups = groupChangesBySection(diffEditableFields(detail, draft));
+    expect(groups.map((g) => g.section)).toEqual([
+      "identification",
+      "address",
+      "contact",
+    ]);
+    expect(groups[0].changes[0].field).toBe("supplier_name");
+  });
+});
+
+describe("person type label", () => {
+  it("maps known codes to short labels", () => {
+    expect(personTypeLabel("J")).toBe("Jurídica");
+    expect(personTypeLabel("f")).toBe("Física");
+    expect(personTypeLabel("X")).toBe("Outros");
+  });
+
+  it("returns empty for missing or unknown values", () => {
+    expect(personTypeLabel(null)).toBe("");
+    expect(personTypeLabel("")).toBe("");
+    expect(personTypeLabel("Z")).toBe("");
   });
 });
 
