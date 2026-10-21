@@ -101,3 +101,8 @@ SELECTION_ONLY=FROZEN_UNCHANGED
 I04_ACCEPTED=NO
 C3_EXECUTED=NO
 ```
+
+
+## 8. Finite implementation sequence (Product Master, 2026-10-21)
+
+The fixed implementation roadmap is [74 — five-gate plan](./74-conversational-response-intelligence-finite-implementation-roadmap.md), E0 contract/decision → E1 central ON/OFF → E2 outcome-aware answer → E3 grounded personality/presentation → E4 live OFF/ON eval and rollback. At most one bounded rework per gate; no automatic code authorization. E0 must inventory reuse and frozen factual-prose decision first. `NEXT=DELIA-CRI-E0-CONTRACT-AND-DECISION-01`.
