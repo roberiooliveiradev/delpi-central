@@ -5,7 +5,7 @@ Chamado Helpdesk **#1400**. Owner HTTP: serviço **`api-delpi`** existente, pref
 `EXISTING_EQUIVALENT = NO` para CRUD de relatório metalográfico.  
 `REUSE_DECISION = EXTEND` — schema `engineering` no PostgreSQL de plugins, volume de upload da api-delpi e PDF com ReportLab (já dependência). Não há API, container ou banco novos.
 
-O MFE Metalografia DELPI consome este contrato em `/apps/metalography`. Não há BFF próprio: o plugin não tem API de módulo, e o CRUD permanece na api-delpi. A paridade visual com o HTML de referência continua não validada.
+O MFE Metalografia DELPI consome este contrato em `/apps/metalography`. Não há BFF próprio: o plugin não tem API de módulo, e o CRUD permanece na api-delpi. A folha do MFE foi comparada ao HTML de referência no Chrome, com diferença zero na região da folha. O PDF desta API segue as coordenadas em milímetros desse HTML.
 
 ## Rotas
 
@@ -39,7 +39,7 @@ JSON de sucesso usa o envelope `api_delpi_success` (**HTTP 200**), com `meta.ope
 | `analyst.user_id` institucional | Coluna existe; o cliente não envia identidade. A API grava `user_id` nulo |
 | Registro das permissões no Core | Códigos declarados e cobrados na api-delpi. O Core recebe permissão de plugin pelo manifesto do MFE, que ficou fora desta entrega |
 | 429 por rota | Não há limitador canônico por rota na api-delpi; não foi criado um limitador só desta coleção |
-| Fidelidade visual ao HTML | O HTML de referência (SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`) **não está no repositório**. O PDF cobre as seções A4 documentadas. **A paridade visual com o HTML não foi validada** |
+| Fidelidade visual ao HTML | HTML de referência em `docs/12-roadmap-e-evolucao/quality/reference/` (SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`). A folha do MFE coincidiu pixel a pixel nessa captura. O PDF usa a mesma composição em milímetros; a marca RASCUNHO continua só no rascunho |
 
 ## Persistência
 

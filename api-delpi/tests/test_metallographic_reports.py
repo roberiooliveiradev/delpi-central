@@ -567,7 +567,7 @@ def test_pdf_export_keeps_snapshot_and_sections(tmp_path: Path) -> None:
     assert exported["filename"] == f"metalografia-{created['report_number']}.pdf"
     text = exported["content"].decode("latin1", errors="ignore")
     assert created["report_number"] in text
-    assert "Identifica" in text
+    assert "IDENTIFICA" in text
     assert "CH" in text
     assert "RASCUNHO" in text
     assert "Conforme" in text

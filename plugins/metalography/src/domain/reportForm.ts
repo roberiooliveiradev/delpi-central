@@ -104,6 +104,21 @@ function textOrNull(value: string, limit: number): string | null {
   return text.slice(0, limit);
 }
 
+export function isoToDisplayDate(value: string | null | undefined): string {
+  const text = (value ?? "").trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  if (!match) return text;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+export function displayDateToIso(value: string): string | null {
+  const text = value.trim();
+  if (!text) return null;
+  const brazilian = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text);
+  if (brazilian) return `${brazilian[3]}-${brazilian[2]}-${brazilian[1]}`;
+  return text.slice(0, 10);
+}
+
 export function formFromReport(report: ReportSnapshot): ReportFormState {
   const sample = blankSample();
   for (const field of SAMPLE_FIELDS) {
@@ -119,7 +134,7 @@ export function formFromReport(report: ReportSnapshot): ReportFormState {
   }
   const result = report.conclusion.result;
   return {
-    reportDate: report.report_date ?? "",
+    reportDate: isoToDisplayDate(report.report_date),
     revision: report.revision || "00",
     sample,
     measurements,
@@ -153,7 +168,7 @@ export function toWritePayload(form: ReportFormState): ReportWritePayload {
     };
   }
   return {
-    report_date: textOrNull(form.reportDate, 10),
+    report_date: displayDateToIso(form.reportDate),
     revision: textOrNull(form.revision, REVISION_MAX) ?? "00",
     sample,
     measurements,

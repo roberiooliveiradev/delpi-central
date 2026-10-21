@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
-import { ReportEditorPage } from "./pages/ReportEditorPage";
-import { ReportListPage } from "./pages/ReportListPage";
+import { MetallographicWorkspace } from "./components/MetallographicWorkspace";
 import { parseMetalographyPath } from "./utils/route";
 
 export type AppProps = {
@@ -27,18 +26,13 @@ export default function App({ getAccessToken, pathname, permissions, isSuperadmi
   }, []);
 
   const route = parseMetalographyPath(path || undefined);
-  if (route.kind === "create") {
-    return <ReportEditorPage readOnly={false} permissions={permissions} isSuperadmin={isSuperadmin} />;
-  }
-  if (route.kind === "editor") {
-    return (
-      <ReportEditorPage
-        reportId={route.reportId}
-        readOnly={route.readOnly}
-        permissions={permissions}
-        isSuperadmin={isSuperadmin}
-      />
-    );
-  }
-  return <ReportListPage permissions={permissions} isSuperadmin={isSuperadmin} />;
+  return (
+    <MetallographicWorkspace
+      editing={route.kind !== "list"}
+      reportId={route.kind === "editor" ? route.reportId : undefined}
+      readOnly={route.kind === "editor" ? route.readOnly : false}
+      permissions={permissions}
+      isSuperadmin={isSuperadmin}
+    />
+  );
 }

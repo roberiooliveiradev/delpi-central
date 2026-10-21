@@ -49,6 +49,8 @@ describe("report form", () => {
     expect(payload).not.toHaveProperty("id");
     expect(payload).not.toHaveProperty("report_number");
     expect(payload.analyst).toEqual({ name: "Ana" });
+    expect(form.reportDate).toBe("21/10/2026");
+    expect(payload.report_date).toBe("2026-10-21");
   });
 
   it("treats an untouched empty form as clean and a typed value as dirty", () => {
