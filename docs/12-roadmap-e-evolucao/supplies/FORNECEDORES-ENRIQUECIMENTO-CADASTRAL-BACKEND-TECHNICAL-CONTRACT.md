@@ -331,3 +331,8 @@ Deployment when authorized: backend compatible before MFE; no altered ERP endpoi
 ## Inventário de fontes oficiais pesquisadas (2026-10-21)
 
 Consultar [FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md) antes de congelar `CompanyRegistryProvider`: contrato comercial Serpro PJ é candidato prioritário mas não contratado/provado acessível; Conecta gov.br documenta schema para órgãos públicos e **não concede acesso privado à DELPI**; REDESIM é canal público humano, não API automatizada comprovada; dados abertos RFB são arquivos, não API realtime. A matriz de campos separa comparáveis, revisão manual, informativos, protegidos e internos. `GATE_PROVIDER=TO_INVENTORY`, `IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+## Extensão de proveniência, verificação comercial e LGPD (2026-10-21)
+
+[Verificações Serpro/Conecta, contrato real, mapeamento SA2, LGPD/retenção e decisão do PO](./FORNECEDORES-CNPJ-VERIFICACOES-ACESSO-LGPD-PROVENIENCIA.md) e [proposta de contrato transversal api-delpi para POST/PUT multi-consumer](https://github.com/roberiooliveiradev/delpi-central/blob/docs/supplies-supplier-data-enrichment-decision-flow-20261021/api-delpi/docs/integrations/supplier-write-provenance-contract-proposal.md). Em todas as revisões guardar a **origem da sugestão por campo**, a decisão, o modo de alteração e o vínculo com operation_id. Informação confirmada no ERP exibe origem/método verificados; aceite sem gravação não equivale a persistência. **Não congelar contrato sem Serpro contratado/manual, DPO e inventory dos writers.**
