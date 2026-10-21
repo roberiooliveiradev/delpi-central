@@ -241,3 +241,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ## Roadmap executivo Table UX — ate 3 interacoes (21/10/2026)
 
 [Doc 53 — Table UX final em tres interacoes](./53-table-ux-final-3-interactions-execution-roadmap.md) e o plano de execucao V7: 1/3 Baixas financeiras R01/R02; 2/3 Estoque historico P7 R03; 3/3 homologacao transversal e correcoes finais. Em cada interacao: implementar, testar, comparar no navegador, commit, push, deploy MFE via runbook SSH e smoke registrado. Estado inicial `TARGET / EXECUTION_PENDING`; nao inferir PASS de bundle HTTP 200 ou capturas antigas. Features dependentes de contrato/decisao permanecem em gate separado.
+
+
+## Mapeamento consolidado Estoques e Custos (21/10/2026)
+
+[Doc 55 — Matriz de conferencias e evidencias AS-IS](./55-proc0072-matriz-conferencias-estoques-custos-asis.md): consolida o recorte do video 19–33min, Kardex 01/99, R05 MATR320, inventarios, previa CPV, terceiros, MOD, saldos em processo, parametros, formulas candidatas e criterios que ainda precisam de comprovacao. Status `DOCUMENTED_PARTIAL`, reconciliacao `INCONCLUSIVE`, SQL parity `TEST_NOT_RUN`, sem GO runtime. Complementa docs 46 e 54 e nao autoriza paginas isoladas adicionais.
