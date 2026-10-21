@@ -71,6 +71,83 @@ def test_create_maps_002_and_003() -> None:
     assert exc2.value.code == "PROTHEUS_SUPPLIER_WRITE_MATA020_FAILED"
 
 
+def test_create_400_details_shape_is_deterministic_rejection() -> None:
+    """F4.3: MATA020 rejections may carry `details` instead of code_error."""
+    client = MagicMock()
+    client.request.return_value = _response(
+        400, {"details": "SA2MASTER | VLDDATA_OBRIGAT | A2_TEL"}
+    )
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.create_supplier(
+            _CONFIG, body={"codusr": "000161", "fornecedor": {}}, access_token="t"
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_WRITE_REJECTED"
+    assert exc.value.status_code == 400
+    assert exc.value.recoverable is False
+    assert "A2_TEL" in str(exc.value)
+
+
+def test_create_400_unknown_code_error_is_rejected_not_unknown() -> None:
+    client = MagicMock()
+    client.request.return_value = _response(
+        400, {"code_error": "009", "error": "alguma falha"}
+    )
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.create_supplier(
+            _CONFIG, body={"codusr": "000161", "fornecedor": {}}, access_token="t"
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_WRITE_REJECTED"
+    assert exc.value.status_code == 400
+
+
+def test_create_400_bare_body_stays_indeterminate() -> None:
+    """A 4xx with no parseable error content cannot prove no-write."""
+    client = MagicMock()
+    client.request.return_value = _response(400, {})
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.create_supplier(
+            _CONFIG, body={"codusr": "000161", "fornecedor": {}}, access_token="t"
+        )
+    assert exc.value.code == "PROTHEUS_UPSTREAM_ERROR"
+    assert exc.value.status_code == 502
+
+
+def test_create_400_details_list_and_dict_shapes() -> None:
+    client = MagicMock()
+    gw = ProtheusRestGateway(client=client)
+    for payload in (
+        {"details": ["A2_TEL obrigatório", "A2_NATUREZ obrigatório"]},
+        {"details": {"message": "MATA020 falhou"}},
+    ):
+        client.request.return_value = _response(400, payload)
+        with pytest.raises(ProtheusRestError) as exc:
+            gw.create_supplier(
+                _CONFIG,
+                body={"codusr": "000161", "fornecedor": {}},
+                access_token="t",
+            )
+        assert exc.value.code == "PROTHEUS_SUPPLIER_WRITE_REJECTED"
+
+
+def test_create_400_details_redacts_secrets() -> None:
+    client = MagicMock()
+    client.request.return_value = _response(
+        400,
+        {"details": "auth fail Bearer s3cr3t-tok3n password=hunter2"},
+    )
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.create_supplier(
+            _CONFIG, body={"codusr": "000161", "fornecedor": {}}, access_token="t"
+        )
+    message = str(exc.value)
+    assert "s3cr3t-tok3n" not in message
+    assert "hunter2" not in message
+
+
 def test_create_timeout_no_retry() -> None:
     client = MagicMock()
     client.request.side_effect = httpx.TimeoutException("timeout")

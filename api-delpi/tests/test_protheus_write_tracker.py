@@ -157,6 +157,99 @@ def test_record_send_failure_never_reraises_tracking_error() -> None:
     )
 
 
+# ------------------------------------------------------- confirm lifecycle
+
+
+def test_tracker_confirm_promotes_to_confirmed_with_evidence() -> None:
+    """Regression F4.3: confirm() must supply the required evidence argument.
+
+    Uses the real IntegrationTrackingService over the in-memory repository —
+    a spec'd MagicMock silently accepts the missing kwarg that caused
+    `confirmation_record_failed` in production.
+    """
+    from tests.test_integration_tracking_service import (
+        InMemoryIntegrationOperationRepository,
+    )
+
+    repo = InMemoryIntegrationOperationRepository()
+    service = IntegrationTrackingService(repository=repo)
+    wt = ProtheusWriteTracker(service)
+
+    operation_id = wt.begin(**_tracker_kwargs())
+    wt.record_ack(
+        operation_id,
+        upstream={"http_status": 200, "upstream": {"mensagem": "ok"}},
+        resource_key="00387801",
+    )
+    assert wt.confirm(
+        operation_id, checked_fields=["supplier_name"], result="MATCH"
+    ) is True
+
+    row = repo.get_operation(operation_id)
+    assert row["status"] == "CONFIRMED"
+    evidence = row["confirmation_evidence"]
+    assert evidence["method"] == "READ_AFTER_WRITE"
+    assert evidence["resource_key"] == "00387801"
+    assert evidence["environment_key"] == "ambiente:1@host:8701"
+    assert evidence["checked_fields"] == ["supplier_name"]
+    assert evidence["result"] == "MATCH"
+    assert evidence["schema_version"] == 1
+    event_types = [
+        e["event_type"]
+        for e in repo.list_events(operation_id, limit=10, offset=0)
+    ]
+    assert event_types == [
+        "operation_created",
+        "send_started",
+        "upstream_response",
+        "status_transition",
+    ]
+
+
+def test_use_case_update_confirmed_with_real_tracker(monkeypatch) -> None:
+    """End-to-end: UPDATE + matching GET promotes the operation to CONFIRMED."""
+    from tests.test_integration_tracking_service import (
+        InMemoryIntegrationOperationRepository,
+    )
+
+    _enable(monkeypatch)
+    repo = InMemoryIntegrationOperationRepository()
+    service = IntegrationTrackingService(repository=repo)
+    identity = MagicMock()
+    identity.get_identity_for_user.return_value = _mapped()
+    gateway = MagicMock()
+    gateway.update_supplier.return_value = {
+        "write_outcome": "accepted_by_upstream",
+        "update_acknowledged": True,
+        "http_status": 200,
+        "upstream": {"mensagem": "Fornecedor alterado com sucesso."},
+    }
+    gateway.get_supplier.return_value = {
+        "fornecedor": {"supplier_short_name": "HOMOLOG X"}
+    }
+
+    result = _uc(
+        identity_gateway=identity, gateway=gateway, tracker=service
+    ).execute(
+        actor_user_id=ACTOR,
+        supplier_id="00387801",
+        fornecedor={"supplier_short_name": "HOMOLOG X"},
+        caller_app="supplies-api",
+    )
+
+    assert result["update_confirmed"] is True
+    assert result["persistence_proven"] is True
+    assert "tracking_warning" not in result
+    operation_id = result["operation_id"]
+    row = repo.get_operation(operation_id)
+    assert row["status"] == "CONFIRMED"
+    assert row["confirmation_evidence"]["checked_fields"] == [
+        "supplier_short_name"
+    ]
+    assert row["attempt_count"] == 1
+    assert gateway.update_supplier.call_count == 1
+
+
 # ---------------------------------------------------------- use case wiring
 
 

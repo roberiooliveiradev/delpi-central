@@ -50,6 +50,39 @@ def test_update_maps_001_to_004() -> None:
         client.request.reset_mock()
 
 
+def test_update_400_details_shape_is_rejected() -> None:
+    client = MagicMock()
+    client.request.return_value = _response(
+        400, {"details": "SA2MASTER | campo inválido"}
+    )
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.update_supplier(
+            _CONFIG,
+            supplier_id="00000101",
+            body={"codusr": "000161", "fornecedor": {"supplier_name": "X"}},
+            access_token="t",
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_UPDATE_REJECTED"
+    assert exc.value.status_code == 400
+    assert "campo inválido" in str(exc.value)
+
+
+def test_update_400_bare_body_stays_indeterminate() -> None:
+    client = MagicMock()
+    client.request.return_value = _response(400, {})
+    gw = ProtheusRestGateway(client=client)
+    with pytest.raises(ProtheusRestError) as exc:
+        gw.update_supplier(
+            _CONFIG,
+            supplier_id="00000101",
+            body={"codusr": "000161", "fornecedor": {"supplier_name": "X"}},
+            access_token="t",
+        )
+    assert exc.value.code == "PROTHEUS_UPSTREAM_ERROR"
+    assert exc.value.status_code == 502
+
+
 def test_update_timeout_single_attempt() -> None:
     client = MagicMock()
     client.request.side_effect = httpx.TimeoutException("timeout")

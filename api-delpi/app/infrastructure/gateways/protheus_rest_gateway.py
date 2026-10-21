@@ -327,7 +327,14 @@ def _extract_code_error(payload: dict[str, Any]) -> str:
 
 
 def _extract_error_text(payload: dict[str, Any]) -> str:
-    for key in ("error", "message", "detailedMessage", "detailed_message"):
+    for key in (
+        "error",
+        "message",
+        "detailedMessage",
+        "detailed_message",
+        "details",
+        "detail",
+    ):
         raw = payload.get(key)
         if isinstance(raw, str) and raw.strip():
             return raw.strip()
@@ -335,6 +342,10 @@ def _extract_error_text(payload: dict[str, Any]) -> str:
             nested = raw.get("message") or raw.get("error") or raw.get("text")
             if isinstance(nested, str) and nested.strip():
                 return nested.strip()
+        if isinstance(raw, (list, tuple)):
+            parts = [str(item).strip() for item in raw if str(item).strip()]
+            if parts:
+                return "; ".join(parts)
     return ""
 
 
@@ -409,6 +420,19 @@ def _map_supplier_write_response(
                 "Falha na rotina MATA020 ao incluir fornecedor."
                 + (f" Detalhe: {safe_detail}" if safe_detail else ""),
                 code="PROTHEUS_SUPPLIER_WRITE_MATA020_FAILED",
+                status_code=400,
+                recoverable=False,
+            )
+
+        # 4xx with extractable upstream evidence (code_error in another shape
+        # or details/message) is a deterministic refusal — REJECTED, not a
+        # 5xx-style indeterminate outcome. Only a bare 4xx with no parseable
+        # error content stays UNKNOWN (the write effect cannot be proven).
+        if code_error or safe_detail:
+            raise ProtheusRestError(
+                "Escrita rejeitada pelo Protheus."
+                + (f" Detalhe: {safe_detail}" if safe_detail else ""),
+                code="PROTHEUS_SUPPLIER_WRITE_REJECTED",
                 status_code=400,
                 recoverable=False,
             )
@@ -518,6 +542,15 @@ def _raise_supplier_update_error(
         raise ProtheusRestError(
             "Falha na rotina MATA020 ao alterar fornecedor." + detail,
             code="PROTHEUS_SUPPLIER_UPDATE_MATA020_FAILED",
+            status_code=400,
+            recoverable=False,
+        )
+    # Deterministic refusal with parseable upstream evidence -> REJECTED;
+    # a bare 4xx without error content stays indeterminate (502/UNKNOWN).
+    if code_error or safe_detail:
+        raise ProtheusRestError(
+            "Alteração rejeitada pelo Protheus." + detail,
+            code="PROTHEUS_SUPPLIER_UPDATE_REJECTED",
             status_code=400,
             recoverable=False,
         )

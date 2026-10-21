@@ -228,8 +228,13 @@ class ProtheusWriteTracker:
         if operation_id is None or self._tracker is None:
             return False
         try:
+            # evidence=None delegates to the canonical builder, which fills
+            # method/resource_key/environment_key from the stored operation.
             self._tracker.confirm(
-                operation_id, checked_fields=checked_fields, result=result
+                operation_id,
+                evidence=None,
+                checked_fields=checked_fields,
+                result=result,
             )
             return True
         except Exception:
