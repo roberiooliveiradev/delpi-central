@@ -160,3 +160,17 @@ C3_EXECUTED=NO
 ```
 
 **Lineage note:** authored against `origin/main` `6538e04265…`; this document's own commit SHA is recorded in the ledger, never inside the file.
+
+## 10. Independent coordination review — 2026-10-21
+
+Verdict: ACCEPT_WITH_RESIDUAL for the bounded read-only audit. Independently inspected the published doc 83 and its source-to-consumer trace; real MCP runtime probes and 598KB dumps were reported by executor, not rerun independently in this review (INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN). HEAD verified at 46cf48dccd5997994f68b8ee9a54a7d3535fe7ca before review.
+
+Confirmed scoped findings: tools/list input_schema reaches the arguments stage, whereas TEO entity-specific filterable_fields published by get_catalog are not consumed in the ordinary READ path. Thus flat date_field validation permits a parameter that the process owner ultimately rejects. The gap is semantic argument admissibility, not loss of the full tool schema. The audit also establishes no consumable typed field-to-event meaning nor trustworthy server-side global-ordering contract in the inspected owner surfaces; do not infer absence in every uninspected source.
+
+Coordination direction (decision, not implementation authorization): prefer expressing entity-sensitive admissibility in the existing owner-controlled MCP inputSchema when representable without breaking tool compatibility, with runtime argument validation continuing to reuse that schema. Assess JSON Schema conditional constructs, consumers and generated-tool compatibility before any change. Extend a bounded existing capability projection only if canonical entity-specific constraints genuinely cannot be represented/consumed by the existing schema. Avoid an unconditional extra discovery call, per-provider branches, duplicated registry and second LLM stage.
+
+Separately, authoritative field-event semantics and global ordering need owner-owned, versioned, consumer-visible declarations through an existing contract surface. A sortable_fields list by itself does not prove result ordering or global completeness; verification must cover actual operation, order direction, filter/scope, pagination and authoritative outcome. The current quote-substring check cannot validate semantic entailment. Preserve fail-closed neutral presentation until owner proof is available.
+
+Next bounded decision requires an owner-contract compatibility inventory and finite plan for schema admissibility and typed temporal proof, followed by real provider-neutral evaluation; do not modify runtime from this audit. Document 83 notes a duplicated/mangled ledger section 6.364, which should be handled by a separate minimal ledger integrity correction if independently confirmed.
+
+AUDIT_REVIEW=ACCEPT_WITH_RESIDUAL; READ_ARGUMENT_PROJECTION_GAP=PROVEN_BY_REPORTED_TRACE; INPUT_SCHEMA_OWNER_EXTENSION=PREFERRED_SUBJECT_TO_COMPATIBILITY_GATE; FIELD_EVENT_AUTHORITY=TO_INVENTORY_FOR_CONSUMER_CONTRACT; INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN; IMPLEMENTATION_AUTHORIZED=NO; CRI_DEV_ON=PRESERVED_BY_NON_INTERFERENCE; CRI_PRODUCTION_ON=NOT_AUTHORIZED; I04_ACCEPTED=NO; C3_EXECUTED=NO.
