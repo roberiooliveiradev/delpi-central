@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "metalography",
+  "name": "Metalografia DELPI",
+  "description": "Relatórios de análise metalográfica — criação, consulta, micrografias e PDF",
+  "icon": "clipboard-check-icon",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/metalography",
+  "entry": "/apps/metalography/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "metalography.view",
+      "name": "Visualizar relatórios metalográficos",
+      "description": "Consultar a lista, o detalhe e as micrografias",
+      "module": "metalography"
+    },
+    {
+      "code": "metalography.create",
+      "name": "Criar relatórios metalográficos",
+      "description": "Criar e duplicar relatórios",
+      "module": "metalography"
+    },
+    {
+      "code": "metalography.edit",
+      "name": "Editar relatórios metalográficos",
+      "description": "Alterar dados e micrografias",
+      "module": "metalography"
+    },
+    {
+      "code": "metalography.delete",
+      "name": "Excluir relatórios metalográficos",
+      "description": "Excluir logicamente um relatório",
+      "module": "metalography"
+    },
+    {
+      "code": "metalography.export",
+      "name": "Exportar PDF metalográfico",
+      "description": "Baixar o PDF A4 do relatório salvo",
+      "module": "metalography"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/metalography",
+      "label": "Metalografia DELPI",
+      "permission": "metalography.view",
+      "icon": "clipboard-check-icon",
+      "order": 46,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

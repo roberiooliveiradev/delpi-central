@@ -93,6 +93,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
 | `plugins/codigo-etica` | `codigo-etica` | microfrontend | plugin | `/apps/codigo-etica` | `delpi-codigo-etica` |
 | `plugins/mural-acessos` | `mural-acessos` | microfrontend | plugin | `/apps/mural-acessos` | `delpi-mural-acessos` |
+| `plugins/metalography` | `metalography` | microfrontend | plugin | `/apps/metalography` | `delpi-metalography` |
 | `plugins/reports` | `reports` | microfrontend | plugin | `/apps/reports` | `delpi-reports` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -157,6 +158,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
 | CIPA | `/apps/cipa-api/*` (atas, membros, SIPAT); público `/p/cipa/sipat/{token}` — [README](../../plugins/cipa/README.md) · [API](../../cipa-api/README.md) · [playbook](../12-roadmap-e-evolucao/cipa/PLAYBOOK.md) |
 | Mural de Acessos | `/apps/api-delpi/mural-acessos/*` + público `/public/mural-acessos/*` — [README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) |
+| Metalografia DELPI | `/apps/api-delpi/engineering/metallographic-reports` — [README](../../plugins/metalography/README.md) · [API](../../api-delpi/docs/api/engineering-metallographic-reports.md) |
 
 ---
 
@@ -212,6 +214,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
 | mural-acessos | `mural-acessos` |
+| metalography | `metalography` |
 | reports | `reports` |
 | commercial | `commercial` |
 | financial | `financial` (BFF; não chama api-delpi no browser) |
@@ -245,6 +248,7 @@ Declaradas no manifesto e persistidas na Core API:
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
 | mural-acessos | `mural-acessos.access`, `mural-acessos.manage` |
+| metalography | `metalography.view`, `metalography.create`, `metalography.edit`, `metalography.delete`, `metalography.export` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 | quality-labels | `quality-labels.view`, `quality-labels.write` |

@@ -5,7 +5,7 @@ Chamado Helpdesk **#1400**. Owner HTTP: serviço **`api-delpi`** existente, pref
 `EXISTING_EQUIVALENT = NO` para CRUD de relatório metalográfico.  
 `REUSE_DECISION = EXTEND` — schema `engineering` no PostgreSQL de plugins, volume de upload da api-delpi e PDF com ReportLab (já dependência). Não há API, container ou banco novos.
 
-O MFE Metalografia DELPI **não** faz parte desta entrega.
+O MFE Metalografia DELPI consome este contrato em `/apps/metalography`. Não há BFF próprio: o plugin não tem API de módulo, e o CRUD permanece na api-delpi. A paridade visual com o HTML de referência continua não validada.
 
 ## Rotas
 

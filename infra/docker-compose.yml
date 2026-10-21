@@ -1196,6 +1196,23 @@ services:
     networks:
       - delpi-network
 
+  metalography:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: metalography/Dockerfile
+      target: production
+
+    container_name: delpi-metalography
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   reports:
     depends_on:
       - plugin-ui

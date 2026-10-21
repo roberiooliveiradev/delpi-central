@@ -1148,6 +1148,22 @@ services:
     networks:
       - delpi-network
 
+  metalography:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: metalography/Dockerfile
+      target: production
+
+    container_name: delpi-metalography
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   reports:
     <<: *plugin-ui-federated
     build:

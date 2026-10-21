@@ -148,6 +148,7 @@ FASE_MFE=(
   central-agendamento
   canal-denuncia
   mural-acessos
+  metalography
   reports
   planejamento-orcamentario
   cipa

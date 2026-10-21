@@ -8,9 +8,10 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 |---|---|
 | CRUD, filtros, cópia, exclusão lógica, imagens e PDF na `api-delpi` | Implementado e coberto por testes automatizados. Contrato: [engineering-metallographic-reports.md](../../../api-delpi/docs/api/engineering-metallographic-reports.md) |
 | Paridade visual do PDF com o HTML recebido | Não validada — o arquivo não está neste ambiente |
-| MFE Metalografia DELPI, manifesto, Ajuda e navegação no Portal | Não implementado |
-| Permissões `metalography.*` atribuíveis no Core | Códigos cobrados pela API; o cadastro no Core acompanha o manifesto do MFE |
-| Deploy | Não executado |
+| MFE Metalografia DELPI, manifesto e Ajuda | Implementado em `plugins/metalography`. O registro no Core ocorre no deploy, com `apps.manage`. As permissões do manifesto não são atribuídas automaticamente aos usuários |
+| Paridade visual do PDF e da tela com o HTML recebido | Não validada — o arquivo não está neste ambiente |
+| Portal de Engenharia | TARGET. Não há segundo app nem segunda API |
+| Deploy da API e do MFE | Não executado nesta entrega |
 
 ## Aceites desta etapa de API
 
