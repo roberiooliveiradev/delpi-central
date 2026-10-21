@@ -142,6 +142,11 @@ composicao protegido por `closingTablePanel.structural.test.mjs`
 (estruturais 25/25). Demais verificacoes (temas claro, viewports,
 teclado, zoom) seguem TEST_NOT_RUN.
 
+**V5 (22/10/2026) - correcao AC01**: codigo de direcao cru (`P`) nao e
+mais renderizado como segunda linha solta; badge permanece o elemento
+principal e o codigo fica em `title` tooltip + span `.cf-visually-hidden`
+para auditoria/leitor de tela. Contrato e modelo inalterados.
+
 ## 8. Relatorio inicial exigido do Devin
 
 ```text

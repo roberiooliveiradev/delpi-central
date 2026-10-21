@@ -394,10 +394,14 @@ export function FinancialSettlementsPage() {
         header: "Direção",
         className: "cf-table__col--status",
         // `side` do contrato é real; o código cru `paymentDirection` (D4)
-        // permanece visível — sem reclassificar BA/ES/VL/CP.
+        // fica em tooltip + texto para leitor de tela — nunca como
+        // caractere solto em segunda linha (doc 52 / AC01).
         render: (row) =>
           row.paymentDirection ? (
-            <>
+            <span
+              className="cf-cell-direction"
+              title={`Código de direção na origem: ${row.paymentDirection}`}
+            >
               <CfStatusBadge
                 label={
                   applied?.side === "receivable" ? "A receber" : "A pagar"
@@ -406,10 +410,10 @@ export function FinancialSettlementsPage() {
                   applied?.side === "receivable" ? "success" : "info"
                 }
               />
-              <span className="cf-cell-secondary">
-                {row.paymentDirection}
+              <span className="cf-visually-hidden">
+                {`código de direção na origem: ${row.paymentDirection}`}
               </span>
-            </>
+            </span>
           ) : (
             "—"
           ),

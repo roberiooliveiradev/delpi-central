@@ -170,9 +170,17 @@ describe("FinancialSettlementsPage — consulta automática", () => {
     // natureza: código em primária + descrição em linha secundária
     expect(screen.getByText("BA")).toBeTruthy();
     expect(screen.getByText("Baixa de titulo")).toBeTruthy();
-    // direção: badge com lado real da consulta + código cru visível (D4)
+    // direção: badge com lado real da consulta; código cru só em
+    // tooltip/AT — nunca como caractere solto em segunda linha (AC01)
     expect(screen.getByText("A pagar")).toBeTruthy();
-    expect(screen.getByText("P")).toBeTruthy();
+    expect(screen.queryByText("P")).toBeNull();
+    const directionCell = screen.getByTitle(
+      "Código de direção na origem: P",
+    );
+    expect(directionCell.className).toContain("cf-cell-direction");
+    expect(
+      screen.getByText("código de direção na origem: P").className,
+    ).toContain("cf-visually-hidden");
     // vínculo resolvido renderiza como badge de qualidade
     expect(screen.getByText("Vínculo completo")).toBeTruthy();
     expect(

@@ -96,6 +96,21 @@ Contrato protegido por `closingTablePanel.structural.test.mjs`
 (estruturais 25/25). T19 permanece PARTIAL: apenas dark desktop
 comprovado em producao.
 
+**V5 (22/10/2026) - AC01 bug do codigo solto**: a celula Direcao exibia
+badge "A pagar/A receber" + caractere cru (`P`) em segunda linha.
+Corrigido: badge segue elemento principal e `paymentDirection` cru passa
+a tooltip nativa (`title`) + `.cf-visually-hidden` para leitor de tela —
+nenhum caractere isolado, sem alterar contrato nem semantica BA/ES/VL/CP.
+Teste reforcado: `queryByText("P")` = null, tooltip e sr-only presentes.
+
+**V5 (22/10/2026) - AC01 bug do codigo solto**: a celula Direcao exibia
+badge "A pagar/A receber" + caractere cru () em segunda linha.
+Corrigido: badge segue o elemento principal e  cru
+passa a tooltip nativa () +  para leitor
+de tela - nenhum caractere isolado, sem alterar contrato nem semantica
+BA/ES/VL/CP. Teste reforcado:  = null, tooltip e
+sr-only presentes.
+
 ## 8. Entrega inicial exigida do Devin
 
 ```text
