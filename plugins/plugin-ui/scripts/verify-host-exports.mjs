@@ -93,6 +93,7 @@ const REQUIRED_HOST_EXPORTS = [
   "ConversationScrollNavigator",
   "ConversationThreeRegionLayout",
   "ComposerClearDraftButton",
+  "EditorChromeNotice",
   "ConversationSidebar",
   "NavigationRail",
   "NavigationCategoryPanel",

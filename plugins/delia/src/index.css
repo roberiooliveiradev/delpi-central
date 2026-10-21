@@ -223,6 +223,13 @@
   margin: 0;
 }
 
+/* Doc 102 — transient draft-recovery notice below the anchored
+   composer; presentation tokens are owned by plugin-ui
+   `.delpi-ui-editor-chrome-notice`, this only supplies placement. */
+.dashboard-delia .delia-draft-recovery {
+  margin-top: 6px;
+}
+
 /* ---------- VD-F04 — dictation surface details */
 
 /* Capture panel + honest purpose disclosure inside the SAME composer

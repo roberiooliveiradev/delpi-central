@@ -1,8 +1,8 @@
 # 102 — DÉLIA | ConversationDraftRecovery — Especificação futura completa
 
 **Data:** 2026-10-16  
-**Status:** `PRODUCT_UX_SPEC / IMPLEMENTATION_DEFERRED`  
-**Decisão explícita:** documentar a recuperação de rascunho, **sem implementar ainda**. Corrigir separadamente, nesta mesma task, a apresentação do botão `ComposerClearDraftButton` existente.  
+**Status:** `PRODUCT_UX_SPEC / IMPLEMENTATION_AUTHORIZED (task DELIA-UX-CONVERSATION-DRAFT-RECOVERY-FULL-IMPLEMENTATION-01, 2026-10-21)`  
+**Decisão explícita:** documentar a recuperação de rascunho. O status `IMPLEMENTATION_DEFERRED` original é **substituído pela autorização de produto** da task `DELIA-UX-CONVERSATION-DRAFT-RECOVERY-FULL-IMPLEMENTATION-01`, restrita ao escopo definido nesta especificação: recuperação local, transitória e em memória do último rascunho explicitamente limpo, com feedback temporário e ação Desfazer. Sem persistência, sem backend, sem recuperação de mensagens enviadas nem restauração após reload. A correção separada de `ComposerClearDraftButton` (doc 101 §5) já está publicada.  
 **Owners:** `plugins/plugin-ui` (apresentação e interações render-only), `plugins/delia` (estado transitório do draft e regras de transição permitidas). Não é serviço backend, persistência de conversas, memória nem nova capacidade de ação.  
 **Referências:** [101 — ComposerClearDraftButton](./101-conversation-composer-clear-draft-ux-implementation.md), [98 — layout DÉLIA](./98-delia-full-page-three-region-layout-product-ux-specification.md), [99 — sidebar](./99-conversation-sidebar-left-product-ux-specification.md), [95 — StopResponse](./95-conversation-stop-response-product-ux-specification.md).  
 **Reancoragem para execução futura:** HEAD/git status → Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs temáticas → ledger. Este documento não altera decisões de autoridade superior.
@@ -112,15 +112,38 @@ Ações visuais de callback/evento devem manter **determinismo**. A apresentaç�
 
 **Não implementar agora:** snapshots, callback de desfazer, timer, snackbar/toast, keyboard shortcut, storage, mudanças no App da DÉLIA ou contratos backend. Apenas a especificação futura é criada. A única mudança de runtime autorizada nesta task é a **correção do CSS de `ComposerClearDraftButton` existente**, registrada no doc 101.
 
+> **Atualização (2026-10-21):** o parágrafo acima registra a decisão original da task de documentação. A autorização de produto da task `DELIA-UX-CONVERSATION-DRAFT-RECOVERY-FULL-IMPLEMENTATION-01` substitui o deferimento para o escopo definido nesta spec — ver §8.
+
+## 8. Resultado de implementação (2026-10-21)
+
+**Task:** `DELIA-UX-CONVERSATION-DRAFT-RECOVERY-FULL-IMPLEMENTATION-01` · base `670fc6568742` · implementação em `plugins/delia` + export federado no `plugin-ui`.
+
+**Arquitetura entregue:**
+
 ```text
-DRAFT_RECOVERY_SPEC = DOCUMENTED_FUTURE_TARGET
-DRAFT_RECOVERY_IMPLEMENTATION = NOT_STARTED
-DRAFT_RECOVERY_VISUAL_PATTERN = TEMPORARY_UNDO_PREFERRED_PENDING_PRODUCT_GATE
-EXISTING_EQUIVALENT = YES_FOR_COMPOSER; TO_INVENTORY_FOR_SNACKBAR
-REUSE_DECISION = EXTEND_WHEN_AUTHORIZED
+ComposerClearDraftButton (existente)
+→ DeliaComposer.onClearDraft(clearedValue)   // seam nova, valor antes de limpar
+→ App.handleClearDraft                       // gate: não-vazio + idle + sem loading
+→ useDraftRecovery.capture(text)             // snapshot em memória + epoch + timer 8s
+→ EditorChromeNotice (plugin-ui, export novo) // "Rascunho limpo — Desfazer", role=status
+→ Desfazer → undo(): epoch + canRestore + consume-atômico → onRestore → setInput + foco
+```
+
+**Comportamento entregue (verificado em Vitest + browser QA):** snapshot apenas na limpeza explícita; um candidato por vez; expiração de 8 s com pausa em hover/focus; invalidação por texto novo, envio, epoch/request-mode, unmount e reload (memória apenas); restauração exata (whitespace/Unicode/multiline); foco devolvido ao composer; zero `POST /interaction/turns` no ciclo clear→undo; sem persistência, telemetria de conteúdo ou storage.
+
+**Owners preservados:** `plugin-ui` = apresentação (`EditorChromeNotice`, role=status, ação tipada, `:focus-visible` no action); `plugins/delia` = estado transitório, epoch (`requestEpochRef`), invalidação e autorização local do restore. Nenhum componente compartilhado lê estado da DÉLIA.
+
+Evidência completa: [`evidence/draft-recovery/draft-recovery-evidence.md`](evidence/draft-recovery/draft-recovery-evidence.md).
+
+```text
+DRAFT_RECOVERY_SPEC = DOCUMENTED_TARGET_AUTHORIZED
+DRAFT_RECOVERY_IMPLEMENTATION = IMPLEMENTED_TESTED (frontend, in-memory only)
+DRAFT_RECOVERY_VISUAL_PATTERN = TEMPORARY_UNDO_DELIVERED
+EXISTING_EQUIVALENT = YES_PARTIAL (composer seam + EditorChromeNotice reuse)
+REUSE_DECISION = EXTEND_EXISTING
 BACKEND_PERSISTENCE = NOT_REQUIRED_FOR_LOCAL_UNDO
-DRAFT_CLEAR_VISUAL_FIX = SEPARATE_BOUNDED_IMPLEMENTATION
-TESTS = TEST_NOT_RUN
-BROWSER_QA = TEST_NOT_RUN
+DRAFT_CLEAR_VISUAL_FIX = SEPARATE_BOUNDED_IMPLEMENTATION_DONE
+TESTS = PASS (hook 10/10; App integration 5/5; delia 291/291; plugin-ui dir. 335/335)
+BROWSER_QA = PASS 33/33 (dock, fullpage, expiry, pause, new-text, replace, overlap, zoom-eq, dark, kbd, starters, VD-F05)
 PHASE_PROGRESSION = NONE
 ```

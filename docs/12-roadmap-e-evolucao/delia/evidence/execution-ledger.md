@@ -16957,3 +16957,29 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.361 — ConversationDraftRecovery frontend implementation (2026-10-21)
+
+**TASK:** DELIA-UX-CONVERSATION-DRAFT-RECOVERY-FULL-IMPLEMENTATION-01. Product authorization superseded spec 102 IMPLEMENTATION_DEFERRED for the bounded local-undo scope only. **Reuse gate:** EXISTING_EQUIVALENT=YES_PARTIAL, REUSE_DECISION=EXTEND_EXISTING — FloatingNoticeStack rejected (fixed top-right, no hover/focus pause); EditorChromeNotice adopted as the shared inline notice and explicitly exported from plugin-ui remoteEntry (verify-host-exports protected). **Delivered:** useDraftRecovery hook owns the single in-memory candidate (explicit-clear snapshot + epoch + 8s pausable expiry + atomic consume); DeliaComposer.onClearDraft(clearedValue) is the only new seam; App gates capture/undo on idle+non-loading request state, invalidates on new draft text, send, epoch change, non-idle mode, unmount, reload. Zero persistence/telemetry/backend calls. **Tests:** hook 10/10, App integration 5/5, delia 291/291, plugin-ui directed 335/335, typecheck PASS, builds PASS, federation verify PASS. **Browser QA:** 33/33 — exact restore (Unicode/multiline), focus return, zero POST /interaction/turns, hover/focus pause, new-text protection, candidate replacement, no button overlap, fullpage + dock + short dock + zoom-200%-equivalent + dark, keyboard Enter, starters R2/R3 and VD-F05 preserved. Evidence: [draft-recovery](draft-recovery/draft-recovery-evidence.md).
+
+```text
+DRAFT_RECOVERY=IMPLEMENTED_TESTED
+SCOPE=LOCAL_TRANSIENT_UNDO_ONLY
+CLEAR_SNAPSHOT=PASS
+UNDO_EXACT_RESTORE=PASS
+TIMEOUT_8S_PAUSABLE=PASS
+NEW_DRAFT_PROTECTION=PASS
+EPOCH_REQUEST_GATES=PASS
+AUTO_SUBMIT=0
+PERSISTENCE=NONE
+VITEST=PASS (delia 291/291; plugin-ui directed 335/335)
+TYPECHECK=PASS
+BUILD=PASS (plugin-ui + delia)
+FEDERATION=PASS
+PLAYWRIGHT=PASS_33_33
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+EXECUTION_DRIFT=NONE
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```

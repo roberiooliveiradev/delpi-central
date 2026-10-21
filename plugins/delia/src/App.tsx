@@ -26,6 +26,7 @@ import {
   ConversationStarterSuggestions,
   ConversationWorkspace,
   ConversationScrollNavigator,
+  EditorChromeNotice,
 } from "@delpi/plugin-ui/index";
 import type { ConversationStarterSuggestion } from "@delpi/plugin-ui/index";
 import {
@@ -42,6 +43,7 @@ import {
 import { resolveAudioQaAdmission } from "./audio/audioCaptureQaAdmission";
 import { resolveAudioCaptureLimits } from "./audio/audioCaptureTestAdmission";
 import { resolveStarterSuggestions } from "./suggestions/starterSuggestions";
+import { useDraftRecovery } from "./draft/draftRecovery";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -198,6 +200,45 @@ export default function App({
     },
     [],
   );
+
+  // Doc 102 — ConversationDraftRecovery: a single transient, in-memory
+  // candidate born only from the explicit "Limpar rascunho" action.
+  // Gates are evaluated lazily at undo time so a stale callback can
+  // never restore into a different epoch/request state/draft.
+  const {
+    visible: draftRecoveryVisible,
+    capture: captureDraftRecovery,
+    undo: undoDraftRecovery,
+    invalidate: invalidateDraftRecovery,
+    pause: pauseDraftRecovery,
+    resume: resumeDraftRecovery,
+  } = useDraftRecovery({
+    epoch: () => requestEpochRef.current,
+    canRestore: () =>
+      requestMode === "idle" && !loading && input === "",
+    onRestore: (text) => {
+      setInput(text);
+      requestAnimationFrame(() => {
+        const el = document.getElementById("delia-interaction-input");
+        if (el instanceof HTMLTextAreaElement) {
+          el.focus();
+          el.setSelectionRange(text.length, text.length);
+        }
+      });
+    },
+  });
+
+  // Any non-empty draft after a clear (typing, suggestion fill,
+  // dictation merge) kills the candidate — undo must never overwrite
+  // or merge new content.
+  useEffect(() => {
+    if (input !== "") invalidateDraftRecovery();
+  }, [input, invalidateDraftRecovery]);
+
+  // Sends, stops and any non-idle request state discard the candidate.
+  useEffect(() => {
+    if (loading || requestMode !== "idle") invalidateDraftRecovery();
+  }, [loading, requestMode, invalidateDraftRecovery]);
 
   function handleTimelineScroll(event: ReactUIEvent<HTMLDivElement>) {
     const el = event.currentTarget;
@@ -423,6 +464,17 @@ export default function App({
   }
 
   /**
+   * Doc 102: the explicit clear action snapshots the cleared text and
+   * opens the transient undo notice — only for a non-empty draft and
+   * only while the composer is in an allowed state.
+   */
+  function handleClearDraft(clearedValue: string) {
+    if (clearedValue.length === 0) return;
+    if (loading || requestMode !== "idle") return;
+    captureDraftRecovery(clearedValue);
+  }
+
+  /**
    * Governed-write scope choice (§6.184): Executar/Cancelar send typed
    * decision commands bound to the exact pending proposal — the MFE
    * echoes the bounded digests back verbatim, never sees the raw owner
@@ -531,7 +583,29 @@ export default function App({
                         })
                     : null
                 }
+                onClearDraft={handleClearDraft}
               />
+
+              {draftRecoveryVisible ? (
+                <div
+                  className="delia-draft-recovery"
+                  onMouseEnter={pauseDraftRecovery}
+                  onMouseLeave={resumeDraftRecovery}
+                  onFocusCapture={pauseDraftRecovery}
+                  onBlurCapture={resumeDraftRecovery}
+                >
+                  <EditorChromeNotice
+                    tone="neutral"
+                    actionLabel="Desfazer"
+                    onAction={undoDraftRecovery}
+                    actionProps={{
+                      "aria-label": "Desfazer limpeza do rascunho",
+                    }}
+                  >
+                    Rascunho limpo
+                  </EditorChromeNotice>
+                </div>
+              ) : null}
             </>
           }
         >

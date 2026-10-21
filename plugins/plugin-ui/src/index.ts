@@ -38,6 +38,11 @@ export * from "./components/help";
 export * from "./components/layout";
 /** Host-only export: protected from remote federation tree-shake. */
 export { UnifiedAvatar } from "./components/layout/UnifiedAvatar";
+/** Host-only export (DÉLIA draft-recovery notice): explicit re-export
+ *  protects it from Module Federation tree-shake like the other
+ *  host-consumed components above. */
+export { EditorChromeNotice } from "./components/layout/EditorChromeNotice";
+export type { EditorChromeNoticeProps } from "./components/layout/EditorChromeNotice";
 export * from "./components/navigation";
 export * from "./components/feedback";
 export * from "./components/data";

@@ -57,6 +57,13 @@ export type DeliaComposerProps = {
    * transcribing state, no fabricated text.
    */
   dictationTranscriber?: DeliaDictationTranscriber | null;
+  /**
+   * Draft recovery seam (doc 102): called with the CURRENT draft text
+   * right before the explicit "Limpar rascunho" action clears it, so
+   * the host can snapshot it for the transient undo notice. Optional —
+   * without it the button still clears as before.
+   */
+  onClearDraft?: (clearedValue: string) => void;
 };
 
 function dictationErrorMessage(error: unknown): string {
@@ -148,6 +155,7 @@ export function DeliaComposer({
   audioCaptureMaxDurationMs,
   audioCaptureMaxBytes,
   dictationTranscriber = null,
+  onClearDraft,
 }: DeliaComposerProps) {
   const inFlight =
     loading || (requestMode != null && requestMode !== "idle");
@@ -354,6 +362,7 @@ export function DeliaComposer({
             pendingCaretRef={caretRef}
             transcribed={transcribed}
             onUserEdit={() => setTranscribed(false)}
+            onClearDraft={onClearDraft}
           />
         );
       }}
@@ -378,6 +387,7 @@ type DeliaComposerBodyProps = {
   pendingCaretRef: MutableRefObject<number | null>;
   transcribed: boolean;
   onUserEdit: () => void;
+  onClearDraft?: (clearedValue: string) => void;
 };
 
 /** Internal body — component so the focus-restore effect is legal. */
@@ -398,6 +408,7 @@ function DeliaComposerBody({
   pendingCaretRef,
   transcribed,
   onUserEdit,
+  onClearDraft,
 }: DeliaComposerBodyProps) {
   const captureActive = captureView != null;
   const wasActiveRef: MutableRefObject<boolean> = useRef(captureActive);
@@ -434,7 +445,10 @@ function DeliaComposerBody({
         inputLabel="Pergunte à DÉLIA"
         value={value}
         onChange={handleUserChange}
-        onClearDraft={() => handleUserChange("")}
+        onClearDraft={() => {
+          onClearDraft?.(value);
+          handleUserChange("");
+        }}
         onSubmit={onSubmit}
         loading={loading}
         requestMode={requestMode}
