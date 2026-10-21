@@ -17025,3 +17025,28 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.364 — DraftRecovery R1: barra substituida por icone Undo2 na toolbar (2026-10-21)
+
+**TASK:** DELIA-UX-DRAFT-RECOVERY-R1-UNDO-ICON-TOOLBAR-01. Spec 102 §9 product decision executed: the dedicated  bar below the composer removed from the DÉLIA composition (shared component/export/styles preserved); a single transient   (ghost, ,  wrap,  wrapper carrying pause/resume) injected via new  seam into  — placed BEFORE the dictation trigger so the stationary cursor after Clear rests on the mic, not the freshly-mounted undo (Chromium synthetic boundary  would otherwise fire  at birth and freeze the 8s timer — proven via timer instrumentation).  untouched: snapshot/epoch/8s/pause/invalidation/atomic consume identical. Ghost styling scoped in delia  incl. dark-theme override. **Tests:** hook 10/10, App integration 5/5, delia 291/291, typecheck PASS, build PASS, federation verify PASS. **Browser QA:** 44/44 — full cycle, exact restore, zero POST, expiry, hover/focus pause+resume, invalidations, double-click, Enter/Space, single toolbar row (36px→36px), fullpage + Dock 420×900/360×450 + 320px + zoom 200% + dark, VD-F05 and starters R2/R3 preserved. Evidence: [draft-recovery-r1](draft-recovery/draft-recovery-r1-undo-icon-evidence.md).
+
+
+
+## §6.364 — DraftRecovery R1: barra substituida por icone Undo2 na toolbar (2026-10-21)
+
+**TASK:** DELIA-UX-DRAFT-RECOVERY-R1-UNDO-ICON-TOOLBAR-01. Spec 102 §9 product decision executed: the dedicated `EditorChromeNotice` bar below the composer removed from the DÉLIA composition (shared component/export/styles preserved); a single transient `Undo2` `IconButton` (ghost, `aria-label="Desfazer limpeza do rascunho"`, `HelpTooltip` wrap, `role="status"` wrapper carrying pause/resume) injected via new `DeliaComposer.draftRecoveryAction` seam into `MessageComposer.secondaryActions` — placed BEFORE the dictation trigger so the stationary cursor after Clear rests on the mic, not the freshly-mounted undo (Chromium synthetic boundary `mouseover` would otherwise fire `pause()` at birth and freeze the 8s timer — proven via timer instrumentation). `useDraftRecovery` untouched: snapshot/epoch/8s/pause/invalidation/atomic consume identical. Ghost styling scoped in delia `index.css` incl. dark-theme override. **Tests:** hook 10/10, App integration 5/5, delia 291/291, typecheck PASS, build PASS, federation verify PASS. **Browser QA:** 44/44 — full cycle, exact restore, zero POST, expiry, hover/focus pause+resume, invalidations, double-click, Enter/Space, single toolbar row (36px→36px), fullpage + Dock 420×900/360×450 + 320px + zoom 200% + dark, VD-F05 and starters R2/R3 preserved. Evidence: [draft-recovery-r1](draft-recovery/draft-recovery-r1-undo-icon-evidence.md).
+
+```text
+DRAFT_RECOVERY_R1=EXECUTED
+OLD_NOTICE_REMOVED=YES (delia composition only)
+UNDO_ICON_IN_TOOLBAR=PASS (secondaryActions, before mic)
+HOVER_FOCUS_PAUSE=PASS / TIMEOUT_8S=PASS / EXACT_RESTORE=PASS
+AUTO_SUBMIT=0 / PERSISTENCE=NONE
+VITEST=PASS_291 / TYPECHECK=PASS / BUILD=PASS / FEDERATION=PASS
+PLAYWRIGHT=PASS_44_44
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+EXECUTION_DRIFT=NONE
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```

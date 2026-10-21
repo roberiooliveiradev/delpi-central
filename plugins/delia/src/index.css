@@ -223,11 +223,28 @@
   margin: 0;
 }
 
-/* Doc 102 — transient draft-recovery notice below the anchored
-   composer; presentation tokens are owned by plugin-ui
-   `.delpi-ui-editor-chrome-notice`, this only supplies placement. */
-.dashboard-delia .delia-draft-recovery {
-  margin-top: 6px;
+/* Doc 102 R1 — the transient draft-recovery undo affordance is a ghost
+   icon in the existing composer toolbar: transparent at rest, subtle
+   tonal hover, focus ring inherited from `.delpi-ui-icon-btn`. */
+.dashboard-delia .delia-draft-undo .delpi-ui-icon-btn,
+:root[data-theme="dark"]
+  .dashboard-delia
+  .delia-draft-undo
+  .delpi-ui-help-tooltip--wrap
+  .delpi-ui-icon-btn {
+  background: transparent;
+  border-color: transparent;
+}
+.dashboard-delia .delia-draft-undo .delpi-ui-icon-btn:hover:not(:disabled),
+:root[data-theme="dark"]
+  .dashboard-delia
+  .delia-draft-undo
+  .delpi-ui-icon-btn:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    transparent
+  );
 }
 
 /* ---------- VD-F04 — dictation surface details */

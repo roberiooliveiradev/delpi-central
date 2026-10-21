@@ -26,9 +26,11 @@ import {
   ConversationStarterSuggestions,
   ConversationWorkspace,
   ConversationScrollNavigator,
-  EditorChromeNotice,
+  HelpTooltip,
+  IconButton,
 } from "@delpi/plugin-ui/index";
 import type { ConversationStarterSuggestion } from "@delpi/plugin-ui/index";
+import { Undo2 } from "lucide-react";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
   buildLiveActivityView,
@@ -584,28 +586,28 @@ export default function App({
                     : null
                 }
                 onClearDraft={handleClearDraft}
+                draftRecoveryAction={
+                  draftRecoveryVisible ? (
+                    <span
+                      className="delia-draft-undo"
+                      role="status"
+                      onMouseEnter={pauseDraftRecovery}
+                      onMouseLeave={resumeDraftRecovery}
+                      onFocusCapture={pauseDraftRecovery}
+                      onBlurCapture={resumeDraftRecovery}
+                    >
+                      <HelpTooltip wrap content="Desfazer limpeza do rascunho">
+                        <IconButton
+                          aria-label="Desfazer limpeza do rascunho"
+                          onClick={undoDraftRecovery}
+                        >
+                          <Undo2 size={18} aria-hidden="true" />
+                        </IconButton>
+                      </HelpTooltip>
+                    </span>
+                  ) : undefined
+                }
               />
-
-              {draftRecoveryVisible ? (
-                <div
-                  className="delia-draft-recovery"
-                  onMouseEnter={pauseDraftRecovery}
-                  onMouseLeave={resumeDraftRecovery}
-                  onFocusCapture={pauseDraftRecovery}
-                  onBlurCapture={resumeDraftRecovery}
-                >
-                  <EditorChromeNotice
-                    tone="neutral"
-                    actionLabel="Desfazer"
-                    onAction={undoDraftRecovery}
-                    actionProps={{
-                      "aria-label": "Desfazer limpeza do rascunho",
-                    }}
-                  >
-                    Rascunho limpo
-                  </EditorChromeNotice>
-                </div>
-              ) : null}
             </>
           }
         >

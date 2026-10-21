@@ -60,10 +60,17 @@ export type DeliaComposerProps = {
   /**
    * Draft recovery seam (doc 102): called with the CURRENT draft text
    * right before the explicit "Limpar rascunho" action clears it, so
-   * the host can snapshot it for the transient undo notice. Optional —
-   * without it the button still clears as before.
+   * the host can snapshot it for the transient undo affordance.
+   * Optional — without it the button still clears as before.
    */
   onClearDraft?: (clearedValue: string) => void;
+  /**
+   * Transient undo affordance (doc 102 R1): render-only node injected
+   * into the composer secondary-actions row — next to the dictation
+   * trigger — only while a recovery candidate exists. Owned by the
+   * host (plugins/delia); this component never inspects it.
+   */
+  draftRecoveryAction?: ReactNode;
 };
 
 function dictationErrorMessage(error: unknown): string {
@@ -156,6 +163,7 @@ export function DeliaComposer({
   audioCaptureMaxBytes,
   dictationTranscriber = null,
   onClearDraft,
+  draftRecoveryAction,
 }: DeliaComposerProps) {
   const inFlight =
     loading || (requestMode != null && requestMode !== "idle");
@@ -363,6 +371,7 @@ export function DeliaComposer({
             transcribed={transcribed}
             onUserEdit={() => setTranscribed(false)}
             onClearDraft={onClearDraft}
+            draftRecoveryAction={draftRecoveryAction}
           />
         );
       }}
@@ -388,6 +397,7 @@ type DeliaComposerBodyProps = {
   transcribed: boolean;
   onUserEdit: () => void;
   onClearDraft?: (clearedValue: string) => void;
+  draftRecoveryAction?: ReactNode;
 };
 
 /** Internal body — component so the focus-restore effect is legal. */
@@ -409,6 +419,7 @@ function DeliaComposerBody({
   transcribed,
   onUserEdit,
   onClearDraft,
+  draftRecoveryAction,
 }: DeliaComposerBodyProps) {
   const captureActive = captureView != null;
   const wasActiveRef: MutableRefObject<boolean> = useRef(captureActive);
@@ -457,7 +468,14 @@ function DeliaComposerBody({
         characterLimit={INTERACTION_INPUT_CHAR_LIMIT}
         helperText="A DÉLIA pode cometer erros. Confirme informações importantes."
         bodyOverride={captureView ?? undefined}
-        secondaryActions={captureView ? undefined : (trigger ?? undefined)}
+        secondaryActions={
+          captureView ? undefined : (
+            <>
+              {draftRecoveryAction}
+              {trigger}
+            </>
+          )
+        }
         submitDisabled={captureActive}
         error={
           captureStatus === "error"

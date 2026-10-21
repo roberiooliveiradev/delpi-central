@@ -11,8 +11,20 @@ function composer(): HTMLTextAreaElement {
   return screen.getByLabelText("Pergunte à DÉLIA") as HTMLTextAreaElement;
 }
 
-describe("ConversationDraftRecovery (doc 102 — App integration)", () => {
-  it("clear → Desfazer restores the exact draft without submitting", () => {
+function undoButton(): HTMLElement {
+  return screen.getByRole("button", {
+    name: "Desfazer limpeza do rascunho",
+  });
+}
+
+function queryUndoButton(): HTMLElement | null {
+  return screen.queryByRole("button", {
+    name: "Desfazer limpeza do rascunho",
+  });
+}
+
+describe("ConversationDraftRecovery (doc 102 §9 — App integration)", () => {
+  it("clear → toolbar undo icon restores the exact draft without submitting", () => {
     render(<App />);
     const field = composer();
     const draft = "primeira linha\nsegunda linha — çã é ✓";
@@ -20,25 +32,24 @@ describe("ConversationDraftRecovery (doc 102 — App integration)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
     expect(field.value).toBe("");
-    expect(screen.getByText("Rascunho limpo")).toBeTruthy();
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Desfazer limpeza do rascunho" }),
-    );
-    expect(field.value).toBe(draft);
+    expect(undoButton()).toBeTruthy();
     expect(screen.queryByText("Rascunho limpo")).toBeNull();
+
+    fireEvent.click(undoButton());
+    expect(field.value).toBe(draft);
+    expect(queryUndoButton()).toBeNull();
     // No turn was created by clear or undo.
-    expect(screen.queryByText(draft.split("\n")[0]!, {
-      selector: ".delia-turn",
-    })).toBeNull();
+    expect(
+      screen.queryByText(draft.split("\n")[0]!, { selector: ".delia-turn" }),
+    ).toBeNull();
   });
 
-  it("clear on an empty draft is impossible — no notice affordance", () => {
+  it("clear on an empty draft is impossible — no undo affordance", () => {
     render(<App />);
     expect(
       screen.queryByRole("button", { name: "Limpar texto" }),
     ).toBeNull();
-    expect(screen.queryByText("Rascunho limpo")).toBeNull();
+    expect(queryUndoButton()).toBeNull();
   });
 
   it("new text after clearing invalidates the candidate — undo never overwrites it", () => {
@@ -46,25 +57,24 @@ describe("ConversationDraftRecovery (doc 102 — App integration)", () => {
     const field = composer();
     fireEvent.change(field, { target: { value: "rascunho original" } });
     fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
-    expect(screen.getByText("Rascunho limpo")).toBeTruthy();
+    expect(undoButton()).toBeTruthy();
 
     fireEvent.change(field, { target: { value: "novo texto" } });
-    expect(screen.queryByText("Rascunho limpo")).toBeNull();
+    expect(queryUndoButton()).toBeNull();
     expect(field.value).toBe("novo texto");
   });
 
-  it("the notice is a polite status region with a named undo action", () => {
+  it("the undo icon renders inside the composer toolbar as a polite status", () => {
     render(<App />);
     fireEvent.change(composer(), { target: { value: "algo" } });
     fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
 
-    const status = screen.getAllByRole("status").find((el) =>
-      el.textContent?.includes("Rascunho limpo"),
-    );
+    const undo = undoButton();
+    expect(undo.closest(".delpi-ui-message-composer__toolbar")).toBeTruthy();
+    const status = screen
+      .getAllByRole("status")
+      .find((el) => el.contains(undo));
     expect(status).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: "Desfazer limpeza do rascunho" }),
-    ).toBeTruthy();
   });
 
   it("a second clear replaces the first candidate — undo restores the latest only", () => {
@@ -74,9 +84,8 @@ describe("ConversationDraftRecovery (doc 102 — App integration)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
     fireEvent.change(field, { target: { value: "segundo" } });
     fireEvent.click(screen.getByRole("button", { name: "Limpar texto" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Desfazer limpeza do rascunho" }),
-    );
+    fireEvent.click(undoButton());
     expect(field.value).toBe("segundo");
+    expect(queryUndoButton()).toBeNull();
   });
 });
