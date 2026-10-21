@@ -314,3 +314,8 @@ Mappings, visibility scopes e settings tipados; audit obrigatório; administraç
 - teclado/focus;
 - nenhum dado/regra de negócio inventado no frontend;
 - Ajuda sincronizada no mesmo deliverable.
+
+
+## Fornecedores — proposta aprovada de layout v1 (2026-10-21)
+
+A especificação visual detalhada para **consulta, criação, edição e revisão de alterações** foi registrada em [SUPPLIERS-CREATE-EDIT-UX-SPEC.md](./SUPPLIERS-CREATE-EDIT-UX-SPEC.md). Inclui wireframes textuais, grid responsivo 12 colunas desktop / 2 tablet / 1 mobile, cinco seções, estados, componentes propostos e mapeamento dos 18 campos recebidos do Gabriel. **Status TARGET/PLANNED:** proposta de UX, sem implementação ou liberação de feature. Preferir `@delpi/plugin-ui`, CSS em `.dashboard-supplies-portal`, preservar owner de AuthZ/REST e regras de campos, dark/light/teclado/Help. O mockup visual discutido em chat é uma referência conceitual, não um asset binário versionado neste PR.
