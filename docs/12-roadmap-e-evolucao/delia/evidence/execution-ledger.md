@@ -16888,3 +16888,36 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=DEPLOY_THEN_COORDINATION_REVIEW
 ```
+
+## §6.359 — CRI E4 real evaluation, rollback & acceptance (2026-10-21)
+
+**TASK:** DELIA-CRI-E4-REAL-EVAL-ROLLBACK-AND-ACCEPTANCE-01. Bounded independent evaluation per doc 78 §12 authorization — zero runtime lines changed. Evaluated SHA `0af32302e9ca3072e73a9b47d09206111c9c2e5d` on isolated container `delia-eval-cri` (local dev/homologation stack, real OpenRouter `moonshotai/kimi-k3`, real HTTP boundary `/interaction/turns`, documented dev identity; the in-use `delpi-delia-api` service never touched). **Activation proven live:** `requested=cri effective=cri`; clause v1 (sha256 `7e3c5515…`) + vocabulary v2 (sha256 `c947616d…`) loaded; per-turn `response_mode=cri` + `outcome_assessment` + `cri_response decision=composed` stages. **Environment limitation (recorded, not bypassed):** TÉO/VISTA/DAVI-MCP transport reachable and delegated credential bound+scoped, but `tools/list` returns `mcp_authentication_failed` for all three — identical on the main `delpi-delia-api` container (pre-CRI code); capability surface = `openapi:delpi` only. **OFF/ON matrix (11 turns each):** DAVI PASS (3 presented/3 delivered/`A fonte informa 65 no total`, labeled fields vs OFF raw dump); DELPI PASS (3/3/`40 no total`, group 1008 verified); GEN_SINGLE PASS-ON (`1` asked → `1` presented + `result_truncated` + `Exibindo 1 de 32`; OFF showed 4 claiming 4); TEO/VISTA TEST_NOT_RUN (honest NON_GROUNDED refusals both modes); budget-limited turns identical in both modes (30s global preserved). **E4-G1:** `updated_at` PROVEN at owner-contract level (`processos.updated_at` = "Data de atualização", touched on every process-family mutation, owner's own `ORDER BY updated_at DESC`, `_SEARCH_DATE_FIELDS` allowlist) — lexical heuristic live exercise TEST_NOT_RUN. **Rollback real:** OFF→ON→OFF via container restart — baseline restored, OFF format reproduced, zero residual CRI state. **Fail-closed real:** `requested=cri` + version-99 vocabulary → `fail_closed reason=cri_resource_invalid` → `effective=baseline` → real baseline turn. **Latency:** mean OFF ≈19.1s / ON ≈20.0s (≈+5%, model variance; deterministic composer adds zero model calls). **Defects:** 1 cosmetic — vocabulary pluralization (`Aqui estão 1 exemplos`); not fixed (evaluation-only phase). Report: [79](../corrections/mcp-contextual-intelligence-orchestration/79-cri-e4-real-evaluation-rollback-and-acceptance.md).
+
+```text
+CRI_E4=EXECUTED_BOUNDED_EVALUATION
+EVALUATED_SHA=0af32302e9ca3072e73a9b47d09206111c9c2e5d
+REAL_MODEL_EVALUATION=EXECUTED_PARTIAL (delpi OpenAPI grounded; TEO/VISTA MCP auth env-wide failure)
+OFF_EVALUATION=EXECUTED_11_TURNS
+ON_EVALUATION=EXECUTED_11_TURNS_EFFECTIVE_CRI
+DAVI_CASE=PASS
+DELPI_CASE=PASS
+TEO_CASE=TEST_NOT_RUN_ENV_LIMITATION
+VISTA_CASE=TEST_NOT_RUN_ENV_LIMITATION
+E4_G1=PROVEN_CONTRACT_LEVEL_LIVE_NOT_EXERCISED
+ROLLBACK_REAL=YES (OFF->ON->OFF, baseline restored)
+INVALID_RESOURCE_FALLBACK=PROVEN_LIVE (fail_closed -> effective=baseline)
+LATENCY=ON_APPROX_PLUS_5_PERCENT_WITHIN_MODEL_VARIANCE
+ADDITIONAL_MODEL_CALLS=0
+SELECTION_ONLY=PRESERVED_LIVE
+AUTHORITY_BOUNDARIES_PRESERVED=YES
+GLOBAL_TURN_BUDGET_30S=PRESERVED
+DEFECTS_FOUND=1_COSMETIC_PLURALIZATION_VOCAB_V2
+MATERIAL_ACT=0
+PRODUCTION_ACTIVATION=NO
+RUNTIME_CODE_CHANGED=NO
+EXECUTOR_VERDICT=ACCEPT_WITH_RESIDUAL
+CRI_E4_ACCEPTED=NO_PENDING_COORDINATION
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```
