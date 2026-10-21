@@ -134,3 +134,26 @@ Data de registro: 2026-10-21. Fonte: relato direto do PO enquanto acompanha a gr
 **Status:** `MOD_REPORT_PARAMETERS=PROVEN_SCREENSHOT_PARTIAL`; `MOD_BUSINESS_PURPOSE=OWNER_REPORTED_VIA_PO`; `MOD_FORMULA=TO_INVENTORY`; `MOD_OUTPUT=TEST_NOT_RUN`; `REBUILD_BALANCES_THREAD_LOG=PROVEN_SCREENSHOT_PARTIAL`; `REBUILD_BALANCES_SUCCESS=OWNER_REPORTED_VIA_PO`; `POST_JOB_BUSINESS_OUTCOME=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 **Proximo registro:** continuar cronologicamente a partir da fala do PO; nao reavaliar como comprovadas as formulas/conciliacoes so por existirem parametros ou logs.
+
+
+## Registro 05 - Dependencias do calculo e compensacoes financeiras (07:25 a 09:18)
+
+Fonte: narrativa do PO nesta conversa e screenshots do TOTVS. Classificar falas como OWNER_REPORTED_VIA_PO e elementos visuais como PROVEN_SCREENSHOT. Nao afirmar resultado transacional sem comprovante.
+
+### 07:25 - Restricoes durante Acompanha Custos
+Joici relata que, enquanto o processamento de fechamento de custo esta em andamento, nao consegue emitir/exportar o Kardex do armazem 01 (usado para previa de CPV), o Kardex do armazem 99 (inventario e perda de contagem) e relatorio de saldo em estoque. Aguarda a conclusao do processamento; aproveita esse intervalo para outras atividades. Mecanismo de bloqueio, API de status e lista exata de relatórios afetados ainda TO_INVENTORY. Nao inferir lock global nem dependencia contratual do Portal.
+
+### 07:56 a 09:18 - Conferencia de titulos para compensacao
+Joici acessa TOTVS Financeiro > Contas a Pagar; revisa titulos e filtros para localizar pares a compensar. PO explica a finalidade de conciliar pagamentos antecipados (PA), notas de devolucao e outros creditos/debitos. Na tela de exemplo (~08:48), dois documentos apresentam valor igual segundo o PO. Explicacao dada: houve pagamento antecipado antes de lancar a nota; depois do lancamento, precisa compensar os documentos. Nao inferir que igualdade de valor e condicao suficiente, nem que o evento final foi comprovado pela captura.
+
+Screenshots confirmam tabela de Contas a Pagar e janelas Gerenciador de Filtros e Compensacao de Titulos, com campos de valor compensado, saldo e selecao. Caso Mercado Livre foi citado como de localizacao mais dificil, sem regra causal confirmada. Evitar publicar dados de titulos individuais.
+
+**Fronteira:** R01/R02 hoje consultam eventos de baixas. Nao comprovam cobertura de titulos em aberto ou candidatos a compensacao e nao executam compensacao. Uma eventual lista READ-only de pendencias e TARGET / DECISION_REQUIRED, dependente de owner, campos e contrato; acao transacional no ERP NAO autorizada.
+
+### Questões objetivas a validar
+- Chaves e criterios para pareamento: tipo PA/devolucao, fornecedor/loja, documento, filial, moeda, data, saldo; compensacoes parciais, autorizacao e resultado.
+- Regras especificas de identificacao dos casos Mercado Livre.
+- APIs e tabelas READ existentes para titulos em aberto e adiantamentos; nao substituir com endpoint de baixas sem prova.
+- Sinal verificavel de fim de Acompanha Custos e escopo preciso das extracoes bloqueadas.
+
+Estado: KARDEX_DEPENDENCY=OWNER_REPORTED_VIA_PO; COMPENSATION_PURPOSE=OWNER_REPORTED_VIA_PO; COMPENSATION_SCREEN=PROVEN_SCREENSHOT_PARTIAL; COMPENSATION_OUTCOME=INCONCLUSIVE; MATCHING_RULE=TO_INVENTORY; ERP_WRITES=NOT_AUTHORIZED.
