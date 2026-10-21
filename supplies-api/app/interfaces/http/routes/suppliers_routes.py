@@ -9,6 +9,7 @@ from an ACK alone.
 from __future__ import annotations
 
 import logging
+import re
 
 from flask import Blueprint, jsonify, request
 
@@ -25,11 +26,6 @@ from app.application.services.suppliers_dto import (
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.delpi_envelope import unwrap_delpi_envelope
 from app.infrastructure.gateways.delpi_s2s_gateway import DelpiS2SApiGateway
-from app.infrastructure.gateways.postal_address_gateway import (
-    PostalAddressGateway,
-    PostalAddressGatewayError,
-    normalize_postal_code,
-)
 from app.interfaces.http.auth_decorators import require_policy
 from flask import g
 
@@ -38,7 +34,18 @@ suppliers_bp = Blueprint("suppliers", __name__)
 logger = logging.getLogger(__name__)
 
 _GATEWAY = DelpiS2SApiGateway()
-_POSTAL_GATEWAY = PostalAddressGateway()
+
+# CEP — o BFF nunca chama providers externos; a api-delpi é a owner da
+# integração (INT-CEP-01). Validação local só rejeita formato inválido
+# antes do S2S.
+_POSTAL_DIGITS = re.compile(r"\D")
+
+
+def normalize_postal_code(value: str) -> str:
+    digits = _POSTAL_DIGITS.sub("", value or "")
+    if len(digits) != 8:
+        raise ValueError("CEP deve conter exatamente 8 dígitos.")
+    return digits
 
 _LIST_QUERY_KEYS = (
     "query",
@@ -196,31 +203,41 @@ def lookup_postal_code(postal_code: str):
     except ValueError as exc:
         return _validation_error(exc)
     try:
-        result = _POSTAL_GATEWAY.lookup(digits)
-    except ValueError as exc:
-        return _validation_error(exc)
-    except PostalAddressGatewayError as exc:
-        if exc.status_code is None:
+        payload = _GATEWAY.get(
+            f"/addresses/postal-codes/{digits}",
+            access_token=_access_token(),
+        )
+    except DelpiApiGatewayError as exc:
+        if exc.status_code is None or exc.status_code == 504:
             return jsonify(
                 {
                     "detail": "Postal address provider unreachable",
                     "code": "provider_unreachable",
                 }
             ), 504
+        if exc.status_code == 400:
+            return _validation_error(ValueError("CEP inválido"))
+        if exc.status_code in (401, 403):
+            return _gateway_error_response(exc)
         return jsonify(
             {
                 "detail": "Postal address provider error",
                 "code": "provider_error",
             }
         ), 502
-    if result is None:
-        return jsonify(
-            {
-                "postal_code": digits,
-                "found": False,
-                "source": "postal_address_providers",
-            }
-        ), 200
+    data = unwrap_delpi_envelope(payload) or {}
+    result = {
+        "postal_code": data.get("postal_code") or digits,
+        "street": data.get("street") or "",
+        "district": data.get("district") or "",
+        "city": data.get("city") or "",
+        "state": data.get("state") or "",
+        "ibge_city_code": data.get("ibge_city_code") or "",
+        "source": data.get("source") or "",
+        "found": bool(data.get("found")),
+    }
+    if data.get("result_type"):
+        result["result_type"] = data["result_type"]
     return jsonify(result), 200
 
 

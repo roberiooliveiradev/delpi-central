@@ -643,19 +643,26 @@ class TestSupplierCatalogs:
         assert resp.status_code == 403
         assert resp.get_json()['code'] == 'S2S_SCOPE_DENIED'
 
-
 class TestPostalCodeLookup:
-    """F5-UX-R4 — CEP via provider aprovado (ViaCEP), sem persistência."""
+    """INT-CEP-01 — CEP via api-delpi (owner da integração), S2S.
 
-    _FOUND = {
-        'postal_code': '01310100',
-        'street': 'Avenida Paulista',
-        'district': 'Bela Vista',
-        'city': 'São Paulo',
-        'state': 'SP',
-        'ibge_city_code': '3550308',
-        'source': 'viacep',
-        'found': True,
+    O BFF não conhece ViaCEP/BrasilAPI: só valida formato, delega via
+    ``_GATEWAY`` e preserva o envelope público do Portal.
+    """
+
+    _UPSTREAM_FOUND = {
+        'success': True,
+        'data': {
+            'postal_code': '01310100',
+            'found': True,
+            'street': 'Avenida Paulista',
+            'district': 'Bela Vista',
+            'city': 'São Paulo',
+            'state': 'SP',
+            'ibge_city_code': '3550308',
+            'source': 'viacep',
+            'result_type': 'street',
+        },
     }
 
     def test_missing_bearer_401(self, client):
@@ -669,15 +676,12 @@ class TestPostalCodeLookup:
                 headers={'Authorization': 'Bearer t'},
             ).status_code == 403
 
-    def test_valid_masked_cep_normalizes_and_returns(self, client):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGatewayError,
-        )
+    def test_valid_masked_cep_proxies_and_returns(self, client):
         v, r = _auth()
         with v, r, patch(
-            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
         ) as gw:
-            gw.lookup.return_value = self._FOUND
+            gw.get.return_value = self._UPSTREAM_FOUND
             resp = client.get(
                 '/suppliers/postal-codes/01310-100',
                 headers={'Authorization': 'Bearer t'},
@@ -687,26 +691,69 @@ class TestPostalCodeLookup:
         assert body['found'] is True
         assert body['ibge_city_code'] == '3550308'
         assert body['street'] == 'Avenida Paulista'
-        gw.lookup.assert_called_once_with('01310100')
+        assert body['source'] == 'viacep'
+        assert body['result_type'] == 'street'
+        gw.get.assert_called_once_with(
+            '/addresses/postal-codes/01310100', access_token='user-jwt'
+        )
 
-    def test_invalid_cep_rejected_before_provider(self, client):
+    def test_partial_municipality_result_passes_through(self, client):
+        """89120000 — CEP geral: street/district vazios, IBGE presente."""
         v, r = _auth()
         with v, r, patch(
-            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = {
+                'success': True,
+                'data': {
+                    'postal_code': '89120000',
+                    'found': True,
+                    'street': None,
+                    'district': None,
+                    'city': 'Timbó',
+                    'state': 'SC',
+                    'ibge_city_code': '4218202',
+                    'source': 'brasilapi',
+                    'result_type': 'municipality',
+                },
+            }
+            resp = client.get(
+                '/suppliers/postal-codes/89120000',
+                headers={'Authorization': 'Bearer t'},
+            )
+        body = resp.get_json()
+        assert resp.status_code == 200
+        assert body['found'] is True
+        assert body['street'] == '' and body['district'] == ''
+        assert body['city'] == 'Timbó' and body['ibge_city_code'] == '4218202'
+        assert body['result_type'] == 'municipality'
+
+    def test_invalid_cep_rejected_before_upstream(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
         ) as gw:
             resp = client.get(
                 '/suppliers/postal-codes/123',
                 headers={'Authorization': 'Bearer t'},
             )
         assert resp.status_code == 422
-        gw.lookup.assert_not_called()
+        gw.get.assert_not_called()
 
     def test_cep_not_found_returns_found_false(self, client):
         v, r = _auth()
         with v, r, patch(
-            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
         ) as gw:
-            gw.lookup.return_value = None
+            gw.get.return_value = {
+                'success': True,
+                'data': {
+                    'postal_code': '99999999',
+                    'found': False,
+                    'source': 'postal_address_providers',
+                    'result_type': 'municipality',
+                },
+            }
             resp = client.get(
                 '/suppliers/postal-codes/99999999',
                 headers={'Authorization': 'Bearer t'},
@@ -714,15 +761,15 @@ class TestPostalCodeLookup:
         assert resp.status_code == 200
         assert resp.get_json()['found'] is False
 
-    def test_provider_timeout_maps_504(self, client):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGatewayError,
+    def test_upstream_timeout_maps_504(self, client):
+        from app.infrastructure.gateways.delpi_api_gateway import (
+            DelpiApiGatewayError,
         )
         v, r = _auth()
         with v, r, patch(
-            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
         ) as gw:
-            gw.lookup.side_effect = PostalAddressGatewayError('timeout')
+            gw.get.side_effect = DelpiApiGatewayError('api-delpi timeout')
             resp = client.get(
                 '/suppliers/postal-codes/01310100',
                 headers={'Authorization': 'Bearer t'},
@@ -730,190 +777,58 @@ class TestPostalCodeLookup:
         assert resp.status_code == 504
         assert resp.get_json()['code'] == 'provider_unreachable'
 
-    def test_provider_http_error_maps_502(self, client):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGatewayError,
+    def test_upstream_provider_error_maps_502(self, client):
+        from app.infrastructure.gateways.delpi_api_gateway import (
+            DelpiApiGatewayError,
         )
         v, r = _auth()
         with v, r, patch(
-            'app.interfaces.http.routes.suppliers_routes._POSTAL_GATEWAY'
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
         ) as gw:
-            gw.lookup.side_effect = PostalAddressGatewayError(
-                'boom', status_code=500
+            gw.get.side_effect = DelpiApiGatewayError(
+                'api-delpi server error', status_code=502
             )
             resp = client.get(
                 '/suppliers/postal-codes/01310100',
                 headers={'Authorization': 'Bearer t'},
             )
         assert resp.status_code == 502
+        assert resp.get_json()['code'] == 'provider_error'
 
-
-class TestPostalAddressGateway:
-    """Normalização e parsing do provider — sem rede real."""
-
-    def test_normalize_accepts_mask_and_digits(self):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            normalize_postal_code,
+    def test_upstream_s2s_denial_propagates(self, client):
+        from app.infrastructure.gateways.delpi_api_gateway import (
+            DelpiApiGatewayError,
         )
-        assert normalize_postal_code('01310-100') == '01310100'
-        assert normalize_postal_code('89120000') == '89120000'
-
-    def test_normalize_rejects_wrong_length(self):
-        import pytest as _pytest
-        from app.infrastructure.gateways.postal_address_gateway import (
-            normalize_postal_code,
-        )
-        for bad in ('', '123', '123456789', 'abcdefgh', '01310-1000'):
-            with _pytest.raises(ValueError):
-                normalize_postal_code(bad)
-
-    def test_lookup_maps_viacep_payload(self):
-        import requests as _requests
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-        )
-        fake = SimpleNamespace(
-            status_code=200,
-            json=lambda: {
-                'cep': '01310-100',
-                'logradouro': 'Avenida Paulista',
-                'bairro': 'Bela Vista',
-                'localidade': 'São Paulo',
-                'uf': 'sp',
-                'ibge': '3550308',
-            },
-        )
-        with patch('requests.get', return_value=fake) as get:
-            out = PostalAddressGateway().lookup('01310-100')
-        assert get.call_args.args[0].endswith('/01310100/json/')
-        assert get.call_args.kwargs['timeout'] > 0
-        assert out['state'] == 'SP'
-        assert out['ibge_city_code'] == '3550308'
-
-    def test_lookup_returns_none_on_erro_flag(self):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-        )
-        def fake_get(url, **_kw):
-            if 'viacep' in url:
-                return SimpleNamespace(
-                    status_code=200, json=lambda: {'erro': 'true'}
-                )
-            return SimpleNamespace(status_code=404, json=lambda: {})
-        with patch('requests.get', side_effect=fake_get):
-            assert PostalAddressGateway().lookup('99999999') is None
-
-    def test_lookup_falls_back_to_brasilapi_when_viacep_misses(self):
-        """R4.1 regression — 89120000 absent in ViaCEP, present in BrasilAPI."""
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-        )
-        def fake_get(url, **_kw):
-            if 'viacep' in url:
-                return SimpleNamespace(
-                    status_code=200, json=lambda: {'erro': 'true'}
-                )
-            return SimpleNamespace(
-                status_code=200,
-                json=lambda: {
-                    'cep': '89120000',
-                    'state': 'SC',
-                    'city': 'Timbó',
-                    'neighborhood': '',
-                    'street': '',
-                    'service': 'open-cep',
-                    'ibge': {'city': '4218202', 'state': '42'},
-                },
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.side_effect = DelpiApiGatewayError(
+                'denied', status_code=403, code='S2S_CLIENT_DENIED'
             )
-        with patch('requests.get', side_effect=fake_get) as get:
-            out = PostalAddressGateway().lookup('89120000')
-        assert get.call_count == 2
-        assert out['found'] is True
-        assert out['source'] == 'brasilapi'
-        assert out['city'] == 'Timbó'
-        assert out['state'] == 'SC'
-        assert out['ibge_city_code'] == '4218202'
-
-    def test_lookup_short_circuits_when_viacep_finds(self):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-        )
-        fake = SimpleNamespace(
-            status_code=200,
-            json=lambda: {
-                'cep': '01310-100',
-                'logradouro': 'Avenida Paulista',
-                'bairro': 'Bela Vista',
-                'localidade': 'São Paulo',
-                'uf': 'SP',
-                'ibge': '3550308',
-            },
-        )
-        with patch('requests.get', return_value=fake) as get:
-            out = PostalAddressGateway().lookup('01310100')
-        assert get.call_count == 1
-        assert out['source'] == 'viacep'
-
-    def test_lookup_falls_back_on_viacep_network_error(self):
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-        )
-        import requests as _requests
-        def fake_get(url, **_kw):
-            if 'viacep' in url:
-                raise _requests.ConnectionError('down')
-            return SimpleNamespace(
-                status_code=200,
-                json=lambda: {
-                    'cep': '89120000',
-                    'state': 'SC',
-                    'city': 'Timbó',
-                    'neighborhood': None,
-                    'street': None,
-                    'ibge': {'city': '4218202'},
-                },
+            resp = client.get(
+                '/suppliers/postal-codes/01310100',
+                headers={'Authorization': 'Bearer t'},
             )
-        with patch('requests.get', side_effect=fake_get):
-            out = PostalAddressGateway().lookup('89120000')
-        assert out['found'] is True
-        assert out['source'] == 'brasilapi'
+        assert resp.status_code == 403
+        assert resp.get_json()['code'] == 'S2S_CLIENT_DENIED'
 
-    def test_lookup_raises_when_provider_fails_and_none_found(self):
-        """Indisponibilidade não pode virar found:false (S2)."""
-        import pytest as _pytest
-        import requests as _requests
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-            PostalAddressGatewayError,
-        )
-        def fake_get(url, **_kw):
-            if 'viacep' in url:
-                raise _requests.ConnectionError('down')
-            return SimpleNamespace(status_code=404, json=lambda: {})
-        with patch('requests.get', side_effect=fake_get):
-            with _pytest.raises(PostalAddressGatewayError):
-                PostalAddressGateway().lookup('99999999')
 
-    def test_lookup_raises_when_all_providers_fail(self):
-        import pytest as _pytest
-        import requests as _requests
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
-            PostalAddressGatewayError,
-        )
-        with patch(
-            'requests.get', side_effect=_requests.ConnectionError('down')
-        ):
-            with _pytest.raises(PostalAddressGatewayError):
-                PostalAddressGateway().lookup('01310100')
+class TestPostalLookupBoundaries:
+    """O BFF não pode conhecer providers externos nem consultá-los."""
 
-    def test_request_sends_user_agent_for_brasilapi(self):
-        """BrasilAPI nega 403 sem UA — o gateway envia header próprio."""
-        from app.infrastructure.gateways.postal_address_gateway import (
-            PostalAddressGateway,
+    def test_bff_has_no_direct_provider_gateway(self):
+        import app.interfaces.http.routes.suppliers_routes as routes
+        assert not hasattr(routes, '_POSTAL_GATEWAY')
+        source = open(routes.__file__, encoding='utf-8').read()
+        assert 'viacep' not in source.lower()
+        assert 'brasilapi' not in source.lower()
+        assert 'postal_address_gateway' not in source
+
+    def test_no_direct_provider_module_in_supplies_api(self):
+        import pathlib
+        gw_dir = (
+            pathlib.Path(__file__).resolve().parent.parent
+            / 'app' / 'infrastructure' / 'gateways'
         )
-        fake = SimpleNamespace(status_code=404, json=lambda: {})
-        with patch('requests.get', return_value=fake) as get:
-            assert PostalAddressGateway().lookup('99999999') is None
-        for call in get.call_args_list:
-            assert 'User-Agent' in call.kwargs['headers']
+        assert not (gw_dir / 'postal_address_gateway.py').exists()
