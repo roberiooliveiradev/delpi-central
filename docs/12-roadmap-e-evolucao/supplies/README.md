@@ -238,3 +238,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **Proposta de enriquecimento cadastral assistido por CNPJ (2026-10-21):** [fluxo completo, decisões individuais e em lote](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). Consulta externa estruturada, comparação com SA2, aceitar/recusar sugestão por campo ou todos os divergentes elegíveis, controle de proveniência, auditoria, LGPD e posterior revisão de PUT autorizado. **TARGET / DOCUMENTED — sem implementação, sem endpoint novo, sem job, sem escrita no ERP.** Fontes governamentais e campos elegíveis exigem inventário/contrato antes do GO. Escopo provisório: fornecedores SA2 (confirmar terminologia "clientes").
+
+
+> **UX detalhada do enriquecimento por CNPJ:** [páginas, wireframes, componentes, decisões e critérios](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md), complementar ao [fluxo/contratos candidatos](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **Somente documentação TARGET**; não implementa componente, rota ou escrita. Históricos e novos endpoints dependem de contract freeze e autorização específica.
