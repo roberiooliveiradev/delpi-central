@@ -170,7 +170,7 @@ def get_supplies_stock_balances_items(
     sort: str = Query(
         default="stock_value_desc",
         description="Sort key for stock balance items.",
-        enum=list(_SORT_VALUES),
+        json_schema_extra={"enum": list(_SORT_VALUES)},
         pattern="^(" + "|".join(_SORT_VALUES) + ")$",
     ),
 ):

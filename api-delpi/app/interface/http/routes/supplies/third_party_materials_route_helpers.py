@@ -120,6 +120,6 @@ def EXPORT_FORMAT_QUERY():
     return Query(
         EXPORT_FORMAT_CSV,
         description="Export format: csv or xlsx.",
-        enum=list(EXPORT_FORMAT_VALUES),
+        json_schema_extra={"enum": list(EXPORT_FORMAT_VALUES)},
         pattern="^(csv|xlsx)$",
     )

@@ -87,7 +87,7 @@ def list_supplies_purchase_orders_route(
     sort_by: str | None = Query(
         None,
         description="Allow-listed sort field for open purchase order lines.",
-        enum=list(PURCHASE_ORDERS_SORT_FIELDS),
+        json_schema_extra={"enum": list(PURCHASE_ORDERS_SORT_FIELDS)},
     ),
     sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
 ):
@@ -158,7 +158,7 @@ def export_supplies_purchase_orders_route(
     sort_by: str | None = Query(
         None,
         description="Allow-listed sort field for the export dataset.",
-        enum=list(PURCHASE_ORDERS_SORT_FIELDS),
+        json_schema_extra={"enum": list(PURCHASE_ORDERS_SORT_FIELDS)},
     ),
     sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
 ):

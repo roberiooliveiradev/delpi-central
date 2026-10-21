@@ -155,7 +155,7 @@ def list_supplies_purchase_request_lines_route(
     sort_by: str | None = Query(
         None,
         description="Allow-listed header-stable sort field.",
-        enum=list(PURCHASE_REQUESTS_SORT_FIELDS),
+        json_schema_extra={"enum": list(PURCHASE_REQUESTS_SORT_FIELDS)},
     ),
     sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
     page: int = Query(1, ge=1),
@@ -237,7 +237,7 @@ def export_supplies_purchase_request_lines_route(
     sort_by: str | None = Query(
         None,
         description="Allow-listed sort field for the export dataset.",
-        enum=list(PURCHASE_REQUESTS_SORT_FIELDS),
+        json_schema_extra={"enum": list(PURCHASE_REQUESTS_SORT_FIELDS)},
     ),
     sort_dir: str | None = SORT_DIR_QUERY_OPTIONAL(),
 ):

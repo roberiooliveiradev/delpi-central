@@ -173,7 +173,7 @@ def get_supplies_inventory_accuracy_items(
     outcome: str | None = Query(
         default=None,
         description="Outcome filter.",
-        enum=list(_OUTCOME_VALUES),
+        json_schema_extra={"enum": list(_OUTCOME_VALUES)},
     ),
     search: str | None = Query(
         default=None,
@@ -190,7 +190,7 @@ def get_supplies_inventory_accuracy_items(
     sort: str = Query(
         default="count_date_desc",
         description="Sort key for inventory accuracy events.",
-        enum=list(_SORT_VALUES),
+        json_schema_extra={"enum": list(_SORT_VALUES)},
     ),
 ):
     try:

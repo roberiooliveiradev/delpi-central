@@ -84,12 +84,12 @@ def list_supplies_suppliers(
     ),
     sort_by: str = Query(
         default="supplier_name",
-        enum=list(_SORT_BY_VALUES),
+        json_schema_extra={"enum": list(_SORT_BY_VALUES)},
         description="Sortable columns: supplier_name, supplier_code, tax_id, state.",
     ),
     sort_dir: str = Query(
         default="asc",
-        enum=list(_SORT_DIR_VALUES),
+        json_schema_extra={"enum": list(_SORT_DIR_VALUES)},
         description="Sort direction.",
     ),
 ):

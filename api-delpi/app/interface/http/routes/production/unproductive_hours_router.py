@@ -266,7 +266,7 @@ def get_production_unproductive_hours_items(
     sort: str = Query(
         default=DEFAULT_ITEMS_SORT,
         description="Sort key for unproductive hours items.",
-        enum=list(ITEMS_SORT_VALUES),
+        json_schema_extra={"enum": list(ITEMS_SORT_VALUES)},
         pattern="^(" + "|".join(ITEMS_SORT_VALUES) + ")$",
     ),
     shift: str | None = FACTORY_SHIFT_QUERY(),
@@ -409,7 +409,7 @@ def get_production_unproductive_hours_ranking(
             "Ranking dimension: stop_reason, resource, cost_center, "
             "operator, product or operation."
         ),
-        enum=list(RANK_BY_VALUES),
+        json_schema_extra={"enum": list(RANK_BY_VALUES)},
         pattern="^(" + "|".join(RANK_BY_VALUES) + ")$",
     ),
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
@@ -440,7 +440,7 @@ def get_production_unproductive_hours_ranking(
     metric: str = Query(
         default=METRIC_HOURS,
         description="Ranking metric: hours or cost (descending).",
-        enum=list(METRIC_VALUES),
+        json_schema_extra={"enum": list(METRIC_VALUES)},
         pattern="^(" + "|".join(METRIC_VALUES) + ")$",
     ),
     limit: int = LIMIT_QUERY("limit_ranking_10_50", description="Top N rows (max 50)."),

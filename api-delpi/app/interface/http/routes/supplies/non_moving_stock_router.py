@@ -189,7 +189,7 @@ def get_supplies_non_moving_stock_items(
     turnover_status: str | None = Query(
         default=None,
         description="Turnover status filter.",
-        enum=list(_STATUS_VALUES),
+        json_schema_extra={"enum": list(_STATUS_VALUES)},
     ),
     blocked: bool | None = Query(
         default=None,
@@ -214,7 +214,7 @@ def get_supplies_non_moving_stock_items(
     sort: str = Query(
         default="stock_value_desc",
         description="Sort key for non-moving stock items.",
-        enum=list(_SORT_VALUES),
+        json_schema_extra={"enum": list(_SORT_VALUES)},
     ),
 ):
     try:
