@@ -16732,3 +16732,25 @@ C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
 
+
+## §6.353 — CRI E2 outcome-aware answer implementation (2026-10-21)
+
+**TASK:** DELIA-CRI-E2-OUTCOME-AWARE-ANSWER-01. Governed task-outcome sufficiency assessment bound to the E1 ON mode (spec 75, docs 73/74). Reuse gate: existing turn-goal stage extended with typed answer_requirements (min_items/ordering/complete_coverage — model hypothesis, fail-closed parse, _GOAL_ALLOWED_KEYS); zero additional model calls (requirements ride capability_selection_with_goal / turn_goal); EvidenceFacts projected by existing helpers (extract_pagination_envelope, _synthesis_records, is_complete, control-plane exclusion); insufficiency surfaced through the existing insufficient_evidence limitation folded onto outcome.limitations so every render path carries it — SUCCESS never rewritten. New leaf module outcome_assessment.py (internal verdict vocabulary answered|empty_result|envelope_only|insufficient; unavailable stays upstream as SOURCE_UNAVAILABLE). CRI instruction variants = baseline text + requirements clause (strict prefix; InstructionLineage hash covers versioning; no decorative JSON resource, no second registry/planner/flag). Assessment at the read binding edge post-synthesis, OFF byte-identical. Cases: TEO latest single-record = ordering_unproven; DAVI envelope = envelope_only; DELPI 2-of-3 authoritative total = fewer_than_requested; VISTA plain read = answered. Files: outcome_assessment.py (new), orchestration.py, root_composer.py, tests/test_cri_e2_outcome_assessment.py (43 tests). Suite 1756 passed / 3 skipped.
+
+```text
+CRI_E2=EXECUTED
+OUTCOME_ASSESSMENT=GOVERNED_TYPED_FACTS
+ADDITIONAL_MODEL_CALLS=0
+OFF_PARITY=BYTE_IDENTICAL
+TECHNICAL_SUCCESS_SEPARATED_FROM_TASK_OUTCOME=YES
+TESTS=1756_PASSED_3_SKIPPED
+PUBLIC_CONTRACT_CHANGE=NO
+SELECTION_ONLY=PRESERVED
+DECLARATIVE_RESOURCES=NONE_NEEDED_INSTRUCTION_LINEAGE
+REAL_MODEL_EVALUATION=NOT_RUN
+MATERIAL_ACT=0
+PRODUCTION_DEPLOY=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW_THEN_E3
+```

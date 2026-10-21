@@ -289,6 +289,9 @@ def _compose_turn_handler(
             model_ref=model_ref,
             turn_budget_seconds=settings.turn_budget_seconds,
             model_stage_timeout_seconds=settings.model_stage_timeout_seconds,
+            response_intelligence_enabled=(
+                settings.response_intelligence_enabled
+            ),
         )
         if providers
         else None

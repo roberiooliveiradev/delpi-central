@@ -110,6 +110,14 @@ from app.application.capability_provision.contracts import (
     CapabilityProviderError,
     ProviderCapability,
 )
+from app.application.capability_provision.outcome_assessment import (
+    OUTCOME_ENVELOPE_ONLY,
+    OUTCOME_INSUFFICIENT,
+    AnswerRequirements,
+    EvidenceFacts,
+    assess_outcome,
+    parse_answer_requirements,
+)
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
     PersonalTicketScope,
@@ -702,6 +710,29 @@ Respond with JSON containing exactly these fields:
 Never write facts, never answer the message, never include fields
 other than the listed ones.
 """
+
+# CRI E2 (doc 73 §3-§6 / spec 75): when the response-intelligence
+# switch is ON, the SAME goal stage also proposes typed sufficiency
+# requirements — a hypothesis the runtime verifies against typed
+# evidence at the outcome edge. Baseline instructions are untouched:
+# OFF sends the byte-identical original prompt.
+_ANSWER_REQUIREMENTS_CLAUSE = """The proposal may also include "answer_requirements": an object
+declaring typed evidence the answer requires to be considered
+sufficient — only requirements the user message itself states or
+clearly implies: {"min_items": <integer|null>, "ordering":
+"newest_first"|"oldest_first"|null, "complete_coverage":
+<boolean>}. "min_items" is the exact quantity the user asked for
+(e.g. "tres exemplos" -> 3); "ordering" applies when the user demands
+a superlative position (e.g. "o ultimo", "mais recente" ->
+"newest_first"); "complete_coverage" is true only when the user asks
+for ALL items or an authoritative total. Use nulls or omit the object
+when the request is a plain read with no stated quantity, ordering or
+coverage demand.
+"""
+GOAL_INSTRUCTION_CRI = GOAL_INSTRUCTION + _ANSWER_REQUIREMENTS_CLAUSE
+CAPABILITY_AND_GOAL_INSTRUCTION_CRI = (
+    CAPABILITY_AND_GOAL_INSTRUCTION + _ANSWER_REQUIREMENTS_CLAUSE
+)
 
 COMPARISON_INSTRUCTION_ID = (
     "delia.capability_orchestration.comparison"
@@ -3097,6 +3128,69 @@ def _deterministic_guidance_content(
     return body, tuple(limitations)
 
 
+# Pagination/control-plane scalar keys — presence of these never
+# disqualifies an explicitly empty business collection.
+_ENVELOPE_SCALAR_KEYS = frozenset(
+    {
+        "total",
+        "totalcount",
+        "count",
+        "page",
+        "pages",
+        "pagesize",
+        "hasmore",
+        "limit",
+        "offset",
+        "cursor",
+        "nextcursor",
+    }
+)
+
+
+def _explicit_empty_business_collection(structured: object) -> bool:
+    """Proven-empty business collection in a non-paginated payload.
+
+    A list-shaped business payload that is empty is a definitive empty
+    result — never inferred from scalars alone. Control-plane and
+    envelope keys are excluded from the judgment; a mapping of only
+    scalars is a record/envelope, not an empty collection.
+    """
+    doc = _unwrap_owner_payload(structured)
+    if isinstance(doc, (list, tuple)):
+        return not doc
+    if not isinstance(doc, Mapping):
+        return False
+    collections = [
+        value
+        for key, value in doc.items()
+        if isinstance(value, (list, tuple))
+        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
+    ]
+    scalars = [
+        value
+        for key, value in doc.items()
+        if not isinstance(value, (Mapping, list, tuple))
+        and value is not None
+        and str(value).strip()
+        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        and _canonical_key(key) not in _ENVELOPE_SCALAR_KEYS
+    ]
+    mappings = [
+        key
+        for key, value in doc.items()
+        if isinstance(value, Mapping)
+        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
+    ]
+    return (
+        bool(collections)
+        and all(len(value) == 0 for value in collections)
+        and not scalars
+        and not mappings
+    )
+
+
 def _synthesis_records(
     structured: object,
 ) -> tuple[Mapping[str, Any], ...]:
@@ -4490,6 +4584,7 @@ class OperationalCapabilityOrchestrator:
         pending_writes: PendingWriteStore | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
+        response_intelligence_enabled: bool = False,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
@@ -4498,6 +4593,14 @@ class OperationalCapabilityOrchestrator:
         self._turn_budget_seconds = float(turn_budget_seconds)
         self._model_stage_timeout_seconds = float(
             model_stage_timeout_seconds
+        )
+        # CRI E1/E2: composition-resolved response mode — when ON, the
+        # goal stage may propose typed answer requirements and the
+        # outcome binding edge runs the governed sufficiency
+        # assessment. OFF keeps baseline prompts and verdicts
+        # byte-identical.
+        self._response_intelligence_enabled = bool(
+            response_intelligence_enabled
         )
 
     def attempt(
@@ -5764,6 +5867,9 @@ class OperationalCapabilityOrchestrator:
             business_subject=goal.business_subject,
             invocation_arguments=arguments,
         )
+        outcome = self._apply_outcome_assessment(
+            outcome, goal, correlation
+        )
         _synth_limitations: tuple[str, ...] | None = None
         if _synth_extra:
             _synth_limitations = tuple(
@@ -6219,6 +6325,10 @@ class OperationalCapabilityOrchestrator:
         # True only when a validated proposal declares that prior
         # DELIA_RESULT content already answers without a new owner call.
         prior_evidence_sufficient: bool = False
+        # CRI E2: typed sufficiency requirements proposed by the SAME
+        # goal stage — a hypothesis validated against typed outcome
+        # evidence, never a fact. None when undeclared.
+        answer_requirements: AnswerRequirements | None = None
 
     _GOAL_CLASSES = frozenset(
         {"read", "analyze", "compare", "create_or_modify", "clarify"}
@@ -6236,6 +6346,7 @@ class OperationalCapabilityOrchestrator:
             "scope_constraints",
             "prior_evidence_sufficient",
             "limitations",
+            "answer_requirements",
         }
     )
 
@@ -6329,6 +6440,9 @@ class OperationalCapabilityOrchestrator:
                 else "unrestricted"
             ),
             prior_evidence_sufficient=prior_sufficient,
+            answer_requirements=parse_answer_requirements(
+                proposal.get("answer_requirements")
+            ),
         )
         _logger.info(
             "orchestration stage=goal_understanding "
@@ -6367,7 +6481,11 @@ class OperationalCapabilityOrchestrator:
             block_tag="turn_context",
             block_payload="{}",
             instruction_id=GOAL_INSTRUCTION_ID,
-            instruction=GOAL_INSTRUCTION,
+            instruction=(
+                GOAL_INSTRUCTION_CRI
+                if self._response_intelligence_enabled
+                else GOAL_INSTRUCTION
+            ),
             expected_fields=("goal_class",),
             input_kind="turn_goal",
             allowed_keys=self._GOAL_ALLOWED_KEYS,
@@ -7819,6 +7937,89 @@ class OperationalCapabilityOrchestrator:
             capability_group_id=group.group_id,
         )
 
+    def _apply_outcome_assessment(
+        self,
+        outcome: SpecialistOutcome,
+        goal: _TurnGoal,
+        correlation: str,
+    ) -> SpecialistOutcome:
+        """CRI E2 — governed sufficiency assessment at the binding edge.
+
+        Response-intelligence ON only: classifies typed outcome facts
+        into the bounded verdict vocabulary and verifies the goal-stage
+        ``answer_requirements`` hypothesis against owner evidence. The
+        wire keeps SUCCESS — insufficiency is marked on the outcome's
+        own limitations so every render path (synthesized or
+        deterministic) carries it; status is never rewritten and no
+        confident answer is fabricated. OFF returns the outcome
+        untouched (byte-identical baseline).
+        """
+        if not self._response_intelligence_enabled:
+            return outcome
+        verdict = assess_outcome(
+            self._outcome_facts(outcome), goal.answer_requirements
+        )
+        _logger.info(
+            "orchestration stage=outcome_assessment "
+            "decision=%s reasons=%s correlation_id=%s",
+            verdict.decision,
+            ",".join(verdict.reasons),
+            correlation,
+        )
+        if (
+            verdict.decision
+            in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
+            and LIMITATION_INSUFFICIENT_EVIDENCE not in outcome.limitations
+        ):
+            return dataclasses.replace(
+                outcome,
+                limitations=(
+                    outcome.limitations
+                    + (LIMITATION_INSUFFICIENT_EVIDENCE,)
+                ),
+            )
+        return outcome
+
+    @staticmethod
+    def _outcome_facts(outcome: SpecialistOutcome) -> EvidenceFacts:
+        """Bounded typed projection of a governed outcome.
+
+        Records, proven emptiness, coverage and authoritative totals
+        only — extracted through the existing structural helpers; never
+        raw payloads, never model-inferred fields.
+        """
+        envelope = extract_pagination_envelope(outcome.structured)
+        if envelope is not None:
+            if envelope.has_more is True:
+                coverage: bool | None = False
+            elif envelope.has_more is False:
+                coverage = True
+            elif envelope.total_count is not None:
+                coverage = envelope.total_count <= len(envelope.items)
+            else:
+                coverage = None
+            return EvidenceFacts(
+                records=envelope.items,
+                has_business_evidence=bool(envelope.items),
+                explicit_empty=not envelope.items
+                and (
+                    envelope.has_more is False
+                    or envelope.total_count == 0
+                ),
+                is_complete=outcome.is_complete,
+                coverage_complete=coverage,
+                total_count=envelope.total_count,
+            )
+        records = _synthesis_records(outcome.structured)
+        return EvidenceFacts(
+            records=records,
+            has_business_evidence=bool(records),
+            explicit_empty=_explicit_empty_business_collection(
+                outcome.structured
+            ),
+            is_complete=outcome.is_complete,
+        )
+
     def _outcome_attempt(
         self,
         group_key: str,
@@ -9235,7 +9436,11 @@ class OperationalCapabilityOrchestrator:
                 group, prior_observation=observation
             ),
             instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
-            instruction=CAPABILITY_AND_GOAL_INSTRUCTION,
+            instruction=(
+                CAPABILITY_AND_GOAL_INSTRUCTION_CRI
+                if self._response_intelligence_enabled
+                else CAPABILITY_AND_GOAL_INSTRUCTION
+            ),
             expected_fields=("applicable", "remote_name"),
             input_kind="capability_selection_with_goal",
             allowed_keys=allowed,
