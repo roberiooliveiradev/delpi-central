@@ -147,6 +147,16 @@ mais renderizado como segunda linha solta; badge permanece o elemento
 principal e o codigo fica em `title` tooltip + span `.cf-visually-hidden`
 para auditoria/leitor de tela. Contrato e modelo inalterados.
 
+**V6 (22/10/2026) - capacidades do kit ativadas**: `resizableColumns`
+nas duas tabelas (handles do kit com estado interno, sem prop
+controlada); densidade alinhada ao modo `--compact` do kit
+(`cell-pad-y: 6px`); icone lucide "table" no titulo do painel de
+resultados e icones "package"/"warehouse" nos resumos P7 via
+`::before` com mask-image em currentColor (tema-agnostico). O
+cabecalho azul dos mockups ja e o padrao nativo do kit
+(gradiente `--delpi-ui-title` no claro, tint accent no escuro) —
+mantido. Excel/Cards/sort por coluna seguem DECISION_REQUIRED.
+
 ## 8. Relatorio inicial exigido do Devin
 
 ```text

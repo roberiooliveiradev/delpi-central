@@ -488,6 +488,7 @@ export function StockInventoryPage() {
         <div className="cf-summary-panels">
           {payload.summariesByType.length > 0 ? (
             <CfSectionCard
+              className="cf-summary-card--type"
               title="Resumo por tipo de produto"
               hint={CF_HELP.stockInventory.summaryType}
             >
@@ -504,6 +505,7 @@ export function StockInventoryPage() {
           ) : null}
           {payload.summariesByWarehouse.length > 0 ? (
             <CfSectionCard
+              className="cf-summary-card--warehouse"
               title="Resumo por armazém"
               hint={CF_HELP.stockInventory.summaryWarehouse}
             >
@@ -547,6 +549,7 @@ export function StockInventoryPage() {
           emptyMessage="Nenhum item de estoque encontrado para os filtros aplicados."
           columnPreferencesKey={`cf:closing:stock-inventory:${applied?.reportScope ?? "all_products"}:v1`}
           fontSizePreferencesKey="cf:closing:stock-inventory:font:v1"
+          resizableColumns
         />
       ) : null}
       </div>

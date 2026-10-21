@@ -619,6 +619,7 @@ export function FinancialSettlementsPage() {
           emptyMessage="Nenhuma baixa encontrada no período para os filtros aplicados."
           columnPreferencesKey={`cf:closing:financial-settlements:${applied?.side ?? "payable"}:v1`}
           fontSizePreferencesKey="cf:closing:financial-settlements:font:v1"
+          resizableColumns
         />
       ) : null}
       </div>
