@@ -35,7 +35,7 @@ Objetivo: capturar as regras e dependencias demonstradas no recorte audiovisual 
 | 25:10–25:50 | avaliacao de residuo de materiais de terceiros da ordem de R$3,80 | conferir custo residual | SOURCE_REPORTED; decisao humana contextual |
 | 26:12–26:50 | Kardex 01, selecao de codigos fiscais; previa de CPV por soma | CPV operacional | SOURCE_REPORTED, codigos exatos TO_VERIFY |
 | 27:15–29:20 | Excel faturamento/MOD, desmesclar, converter valores em numero, filtrar MOD | apurar parcela MOD | SOURCE_REPORTED, total/linhas pendentes |
-| ~30:45 | mencao de conferencia a realizar antes de salvar Kardex | dependencia nao esclarecida | PENDING: fala/tela especifica e outcome ainda nao transcritos com confianca |
+| ~30:45 | Alegacao anterior de conferencia previa ao salvamento | PO nao encontrou a fala no trecho; evidencia positiva ausente | RETRACTED / STALE_EVIDENCE; retirar da lista de requisitos |
 
 Nao transformar a ordem de navegacao em workflow imutavel; Joici relata alternancia para economia de tempo.
 
@@ -67,9 +67,8 @@ Nao transformar a ordem de navegacao em workflow imutavel; Joici relata alternan
 **Hipotese de necessidade:** comparar saldos de fechamento, movimentos do periodo e saldos em processo. Os relatorios nao estao demonstrados como equivalentes: podem ter algoritmos, escopos e datas distintos.
 **Nao comprovado:** equacao de reconciliacao, param filtro, tratamento dos armazens 01/99, terceiros, MOD e custo. **Nao** usar soma direta sem evidenciar semantica e movimentos.
 
-### CF-GATE-01 — Conferencia anterior ao salvamento dos Kardex
-**Origem:** fala observada/relatada perto de 30:45.
-**Estado:** PENDING. Registrar acao exata, entrada, criterio e resultado antes de promover a requisito de bloqueio.
+### CF-GATE-01 — Alegacao retirada
+A referencia anterior a uma conferencia obrigatoria aos 30:45 nao foi localizada pelo PO e nao apresenta audio, citacao literal ou imagem verificavel. **RETRACTED / STALE_EVIDENCE**. Nao e dependencia do processo, gate de implementacao nem pergunta obrigatoria. So reabrir com evidencia primaria localizada e validada.
 
 ## 5. Referencia monetaria de R05 (MATR320), setembro de 2026
 PDF `SIGA/MATR320.prt/v.12`, moeda da impressao indicada como R$, filial MATRIZ, periodo 01–30/09, tres decimais:
@@ -111,13 +110,13 @@ Uma area por competencia/filial poderia ter guias `Saldos`, `Inventarios`, `CPV`
 Esta e hipotese TARGET; nao criar nova rota, nova permission, SQL em frontend ou estado automatico de aceite.
 
 ## 8. Plano de verificacao sem refazer o levantamento
-**Gate V1 — AS-IS audiovisual/TEO:** confirmar CF-GATE-01, codigos fiscais e operacoes que seguem apos 30:45, mais formulas INVENT, terceiros e MOD. Perguntas objetivas apenas para pontos sem prova.
+**Gate V1 — AS-IS audiovisual/TEO:** confirmar codigos fiscais e formulas INVENT, terceiros e MOD com evidencias positivas. A alegacao CF-GATE-01 foi retirada e nao deve bloquear o processo.
 **Gate V2 — fonte tecnica DAVI + GitHub:** localizar owners/programas, APIs READ existentes, tabelas e semantica; testar consulta/fixture de setembro 2026 sem alterar dados.
 **Gate V3 — conciliacao:** reproduzir totais por relatorio com mesmo universo e parametrizacao, explicar divergencias e obter aceite humano.
 **Gate V4 — DECISION_REQUIRED:** PO decide modelo consolidado, boundaries, contrato, rotas e quais comparacoes virarão controles. Gate transversal antes de implementar.
 
 ## 9. Perguntas residuais objetivas para a Joici/TEO
-1. Qual conferencia exata e mencionada aos 30:45, qual entrada, calculo e criterio de conclusao?
+1. (Retirada) Nao ha evidencia confirmada de conferencia especifica aos 30:45; nao consultar a Joici sobre premissa nao comprovada.
 2. O filtro `INVENT` soma os movimentos do 01 e do 99 em separado ou liquida um contra o outro?
 3. Quais codigos/CFOP completos compoem o CPV e como entradas, saidas e devolucoes afetam sinal?
 4. Em quais condicoes um saldo de terceiros exige justificativa ou bloqueia fechamento?
@@ -125,6 +124,6 @@ Esta e hipotese TARGET; nao criar nova rota, nova permission, SQL em frontend ou
 6. Quais totais concretos de P7, MATR320, Saldo em Processo e Em Processo devem bater, em qual data/moeda/armazem/filial?
 
 ## 10. Estado de conclusao
-`AS_IS_REPORT_SET=PROVEN_PARTIAL`; `INV_FORMULA=SOURCE_REPORTED/PENDING_VERIFICATION`; `CPV_FILTERS=TO_VERIFY`; `MOD_PROVENANCE=TO_INVENTORY`; `PRE_KARDEX_CHECK=PENDING`; `MATR320_ORIGINAL=PROVEN`; `CONSOLIDATED_RECONCILIATION=INCONCLUSIVE`; `SQL_PARITY=TEST_NOT_RUN`; `IMPLEMENTATION_AUTHORIZED=NO`.
+`AS_IS_REPORT_SET=PROVEN_PARTIAL`; `INV_FORMULA=SOURCE_REPORTED/PENDING_VERIFICATION`; `CPV_FILTERS=TO_VERIFY`; `MOD_PROVENANCE=TO_INVENTORY`; `PRE_KARDEX_CHECK=RETRACTED_STALE_EVIDENCE`; `MATR320_ORIGINAL=PROVEN`; `CONSOLIDATED_RECONCILIATION=INCONCLUSIVE`; `SQL_PARITY=TEST_NOT_RUN`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 Proxima acao: validar itens pontuais do video com TEO e owners; depois coordenar verificacao READ de producers e contratos. **Nao exigir reenviar o mesmo recorte para repetir levantamento.**
