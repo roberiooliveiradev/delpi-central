@@ -147,3 +147,17 @@ TESTS = PASS (hook 10/10; App integration 5/5; delia 291/291; plugin-ui dir. 335
 BROWSER_QA = PASS 33/33 (dock, fullpage, expiry, pause, new-text, replace, overlap, zoom-eq, dark, kbd, starters, VD-F05)
 PHASE_PROGRESSION = NONE
 ```
+
+## 9. Decisao de produto — R1: Desfazer por icone na toolbar do composer (2026-10-21)
+
+**Autorizacao do Product Master para alterar a direcao visual:** apos observar em producao a barra horizontal "Rascunho limpo — Desfazer" abaixo do composer, substituir **essa apresentacao** por **um unico botao temporario de icone `Undo2` (seta de voltar)** na toolbar ja existente do composer, preferencialmente proximo ao microfone e a acao de limpar. O feedback nao deve criar outra linha abaixo do composer, deslocar a timeline ou ocupar largura inteira. A preferencia anterior de `EditorChromeNotice` inline no §3 e o estado `TEMPORARY_UNDO_DELIVERED` da §8 descrevem a entrega anterior e ficam **superados somente no aspecto visual** por esta nova decisao; nao remover seus registros historicos nem alterar a logica aceita.
+
+**Interacao e acessibilidade:** o botao aparece apenas enquanto houver candidato valido apos limpeza explicita de texto; desaparece depois de restaurar, invalidador ou timeout. `aria-label="Desfazer limpeza do rascunho"`; `title` ou `HelpTooltip` acessivel com mesmo significado; target e foco visivel conforme `IconButton` compartilhado. Posicionar ao lado dos controles secundarios da toolbar, evitando conflito com limpar, ditado e enviar. Nada de label visivel permanente, toast separado, badge ou segundo botao. Preservar operacao por teclado (Enter/Space) e reduced motion.
+
+**Comportamento congelado da entrega original:** `useDraftRecovery` continua sendo o owner dos snapshots, epoch, expiracao aproximada de 8s, pausa durante hover/foco, protecao contra sobrescrita de texto novo, request-mode gates, invalidacao ao enviar/trocar contexto e undo atomico. Integrar os callbacks de pausa/retomada pelo elemento interativo ou wrapper existente, sem acoplar o estado ao `plugin-ui`. Quando o botao for desmontado, nenhuma recuperacao continua acessivel. Nao modificar backend, persistencia, AuthZ, MCP, VD-F05 ou as quatro sugestoes.
+
+**Abstraction Gate:** primeiro inspecionar `MessageComposer.secondaryActions`, `ComposerClearDraftButton`, `IconButton`, `HelpTooltip`, `DeliaComposer` e a implementacao atual; `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND_EXISTING` (a confirmar no HEAD), **sem criar componente novo** se o kit suporta a composicao. Evitar migrar para uma notification stack ou criar nova toolbar.
+
+**Aceite R1 (PLANNED):** (1) apos Limpar, surge um unico icone Desfazer dentro da toolbar; (2) sem barra/aviso separado e sem layout shift; (3) clique/teclado restaura texto exato e devolve foco; (4) expiracao 8s com pausa em hover/foco, nova digitacao e transicoes invalidam; (5) full-page e Companion Dock, 320/360/420px, zoom 200%, temas claro/escuro, sem sobreposicao; (6) zero auto-submit e regressao zero em dictation, enviar, limpar, Starter Suggestions; (7) Vitest/typecheck/build/federation/QA e deploy com evidencias no SHA efetivo.
+
+**Task proposta:** `DELIA-UX-DRAFT-RECOVERY-R1-UNDO-ICON-TOOLBAR-01`. Esta secao **autoriza a decisao de produto** e especifica o comportamento, mas nao prova execucao nem deployment. `IMPLEMENTATION=PENDING`; `TESTS=TEST_NOT_RUN`; `DEPLOYMENT=PENDING`; `PHASE_PROGRESSION=NONE`.
