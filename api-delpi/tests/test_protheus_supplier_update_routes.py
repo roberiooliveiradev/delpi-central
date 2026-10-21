@@ -22,6 +22,13 @@ def _user(*permission_codes: str):
     )
 
 
+def _fake_request():
+    return SimpleNamespace(
+        state=SimpleNamespace(service_identity=None),
+        headers={},
+    )
+
+
 def _body(response) -> dict:
     return json.loads(response.body.decode("utf-8"))
 
@@ -35,6 +42,7 @@ def test_read_permission_cannot_update() -> None:
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             update_protheus_rest_supplier_route(
+            request=_fake_request(),
                 supplier_id="00000101",
                 body={"fornecedor": {"supplier_name": "X"}},
             )
@@ -49,6 +57,7 @@ def test_create_permission_cannot_update() -> None:
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             update_protheus_rest_supplier_route(
+            request=_fake_request(),
                 supplier_id="00000101",
                 body={"fornecedor": {"supplier_name": "X"}},
             )
@@ -63,6 +72,7 @@ def test_data_permission_cannot_update() -> None:
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             update_protheus_rest_supplier_route(
+            request=_fake_request(),
                 supplier_id="00000101",
                 body={"fornecedor": {"supplier_name": "X"}},
             )
@@ -81,6 +91,7 @@ def test_rejects_client_codusr() -> None:
         return_value=user,
     ):
         response = update_protheus_rest_supplier_route(
+            request=_fake_request(),
             supplier_id="00000101",
             body={"codusr": "000999", "fornecedor": {"supplier_name": "X"}},
         )
@@ -108,6 +119,7 @@ def test_gate_disabled_envelope() -> None:
             recoverable=False,
         )
         response = update_protheus_rest_supplier_route(
+            request=_fake_request(),
             supplier_id="00000101",
             body={"fornecedor": {"supplier_name": "X"}},
         )

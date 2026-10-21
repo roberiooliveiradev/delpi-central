@@ -32,6 +32,7 @@ def _uc(**overrides) -> UpdateProtheusRestSupplierUseCase:
         token_service=token,
         gateway=MagicMock(),
         identity_gateway=MagicMock(),
+        tracker=MagicMock(),
     )
     kwargs.update(overrides)
     return UpdateProtheusRestSupplierUseCase(**kwargs)

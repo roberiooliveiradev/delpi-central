@@ -21,6 +21,9 @@ from app.infrastructure.gateways.core_protheus_identity_gateway import (
     CoreProtheusIdentityGateway,
 )
 from app.infrastructure.gateways.protheus_rest_gateway import ProtheusRestGateway
+from app.composition.integration_tracking_composer import (
+    build_integration_tracking_service,
+)
 from app.infrastructure.persistence.intranet.protheus_integration_params_repository import (
     ProtheusIntegrationParamsRepository,
 )
@@ -77,6 +80,7 @@ def build_create_protheus_rest_supplier_use_case() -> CreateProtheusRestSupplier
         token_service=build_protheus_token_service(),
         gateway=build_protheus_rest_gateway(),
         identity_gateway=build_core_protheus_identity_gateway(),
+        tracker=build_integration_tracking_service(),
     )
 
 
@@ -86,6 +90,7 @@ def build_update_protheus_rest_supplier_use_case() -> UpdateProtheusRestSupplier
         token_service=build_protheus_token_service(),
         gateway=build_protheus_rest_gateway(),
         identity_gateway=build_core_protheus_identity_gateway(),
+        tracker=build_integration_tracking_service(),
     )
 
 

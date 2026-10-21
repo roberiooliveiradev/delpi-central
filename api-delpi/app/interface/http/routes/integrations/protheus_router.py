@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Body, Path
+from fastapi import APIRouter, Body, Path, Request
 
 from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
@@ -31,6 +31,27 @@ router = APIRouter(
     prefix="/integrations/protheus",
     tags=["Integrations — Protheus REST"],
 )
+
+
+def _tracking_context(request: Request) -> dict[str, str | None]:
+    """Validated caller identity + correlation for execution tracking.
+
+    caller_app comes ONLY from the validated S2S token — the
+    X-Delpi-Caller-App header is metadata and never accepted as identity.
+    """
+    service_identity = getattr(request.state, "service_identity", None)
+    caller_app = getattr(service_identity, "client_id", None)
+    correlation_id = (
+        request.headers.get("X-Correlation-ID")
+        or request.headers.get("X-Request-ID")
+        or str(uuid4())
+    )
+    request_id = request.headers.get("X-Request-ID")
+    return {
+        "caller_app": str(caller_app) if caller_app else None,
+        "correlation_id": correlation_id[:120],
+        "request_id": request_id[:120] if request_id else None,
+    }
 
 
 def _actor_user_id() -> UUID:
@@ -138,6 +159,7 @@ def get_protheus_rest_supplier_route(
     allowed_clients=("supplies-api",),
 )
 def create_protheus_rest_supplier_route(
+    request: Request,
     body: dict[str, Any] = Body(...),
 ):
     """Create supplier via Protheus REST. Identity (codusr) resolved from Core only."""
@@ -165,6 +187,7 @@ def create_protheus_rest_supplier_route(
         data = build_create_protheus_rest_supplier_use_case().execute(
             actor_user_id=actor_id,
             fornecedor=fornecedor if isinstance(fornecedor, dict) else {},
+            **_tracking_context(request),
         )
         return api_delpi_success(
             data,
@@ -202,6 +225,7 @@ def create_protheus_rest_supplier_route(
     allowed_clients=("supplies-api",),
 )
 def update_protheus_rest_supplier_route(
+    request: Request,
     supplier_id: str = Path(
         ...,
         min_length=8,
@@ -234,6 +258,7 @@ def update_protheus_rest_supplier_route(
             actor_user_id=actor_id,
             supplier_id=supplier_id,
             fornecedor=fornecedor if isinstance(fornecedor, dict) else fornecedor,
+            **_tracking_context(request),
         )
         acknowledged = bool(data.get("update_acknowledged"))
         return api_delpi_success(

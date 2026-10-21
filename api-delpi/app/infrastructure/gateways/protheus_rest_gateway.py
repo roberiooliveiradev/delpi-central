@@ -434,6 +434,7 @@ def _map_supplier_write_response(
                 "persistence_proven": False,
                 "supplier_code": None,
                 "supplier_store": None,
+                "http_status": response.status_code,
                 "upstream": None,
             }
         return {
@@ -441,6 +442,7 @@ def _map_supplier_write_response(
             "creation_confirmed": False,
             "supplier_code": None,
             "supplier_store": None,
+            "http_status": response.status_code,
             "upstream": None,
         }
 
@@ -470,6 +472,7 @@ def _map_supplier_write_response(
             "persistence_proven": False,
             "supplier_code": supplier_code,
             "supplier_store": supplier_store,
+            "http_status": response.status_code,
             "upstream": payload,
         }
     return {
@@ -477,6 +480,7 @@ def _map_supplier_write_response(
         "creation_confirmed": confirmed,
         "supplier_code": supplier_code,
         "supplier_store": supplier_store,
+        "http_status": response.status_code,
         "upstream": payload,
     }
 

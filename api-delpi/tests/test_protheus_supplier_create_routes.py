@@ -22,6 +22,13 @@ def _user(*permission_codes: str, user_id: str = "401b25fa-ccd1-4800-8a12-a76790
     )
 
 
+def _fake_request():
+    return SimpleNamespace(
+        state=SimpleNamespace(service_identity=None),
+        headers={},
+    )
+
+
 def _body(response) -> dict:
     return json.loads(response.body.decode("utf-8"))
 
@@ -35,6 +42,7 @@ def test_create_forbidden_without_permission() -> None:
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             create_protheus_rest_supplier_route(
+            request=_fake_request(),
                 body={"fornecedor": {"supplier_store": "01"}}
             )
 
@@ -48,6 +56,7 @@ def test_create_forbidden_with_data_permission() -> None:
     with patch("delpi_auth.authorization.resolve_user_context", return_value=user):
         with pytest.raises(Exception, match="Forbidden"):
             create_protheus_rest_supplier_route(
+            request=_fake_request(),
                 body={"fornecedor": {"supplier_store": "01"}}
             )
 
@@ -65,6 +74,7 @@ def test_create_rejects_client_codusr() -> None:
         return_value=user,
     ):
         response = create_protheus_rest_supplier_route(
+            request=_fake_request(),
             body={
                 "codusr": "000161",
                 "fornecedor": {"supplier_store": "01"},
@@ -96,6 +106,7 @@ def test_create_feature_gate_disabled_no_upstream() -> None:
             recoverable=False,
         )
         response = create_protheus_rest_supplier_route(
+            request=_fake_request(),
             body={"fornecedor": {"supplier_store": "01"}}
         )
     body = _body(response)
@@ -130,6 +141,7 @@ def test_create_authorized_success_envelope() -> None:
     ) as build_uc:
         build_uc.return_value.execute.return_value = payload
         response = create_protheus_rest_supplier_route(
+            request=_fake_request(),
             body={"fornecedor": {"supplier_store": "01"}}
         )
     body = _body(response)
