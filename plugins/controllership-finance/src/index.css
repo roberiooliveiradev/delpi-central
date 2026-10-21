@@ -188,6 +188,37 @@
   color: var(--delpi-warning-strong);
 }
 
+/* KPIs do hero: valores longos quebram em vez de truncar com reticências
+   (o kit já aplica a mesma regra abaixo de 260px — estendemos ao escopo). */
+.dashboard-controllership-finance .cf-hero-kpis .delpi-ui-kpi-value {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: unset;
+  overflow: visible;
+}
+
+/* Células das tabelas da Central — hierarquia em duas linhas. */
+.dashboard-controllership-finance .cf-cell-primary {
+  display: block;
+  font-weight: 600;
+}
+
+.dashboard-controllership-finance .cf-cell-secondary {
+  display: block;
+  font-size: 12px;
+  color: var(--cf-text-muted);
+  margin-top: 2px;
+}
+
+.dashboard-controllership-finance .cf-cell-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-controllership-finance .cf-cell-muted {
+  color: var(--cf-text-muted);
+}
+
 /* Resumos P7 lado a lado quando houver largura; empilham sem compressão. */
 .dashboard-controllership-finance .cf-summary-panels {
   display: grid;

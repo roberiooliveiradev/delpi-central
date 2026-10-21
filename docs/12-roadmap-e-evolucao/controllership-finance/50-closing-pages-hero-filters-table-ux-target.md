@@ -1,5 +1,21 @@
 # 50 — TARGET UX: Hero, filtros e tabelas da Central de Fechamento (R01/R02 e R03)
 
+> 21/10/2026 — **REWORK TABLE UX IMPLEMENTADO** (pos `7b4c51f883`). Celulas
+> das duas tabelas ganharam hierarquia em duas linhas (`cf-cell-primary`/
+> `cf-cell-secondary`): documento e codigos em peso 600 + descricao mutada
+> (natureza, tipo de movimento, fornecedor/cliente com codigo/loja). Badges
+> reais via `CfStatusBadge`: Direcao exibe rotulo do `side` do contrato
+> (info/success) + codigo cru `paymentDirection` visivel — sem
+> reclassificar BA/ES/VL/CP (doc48 D4); Vinculo `resolved`→success,
+> `missing_*`→warning; Tipo de produto R03 em badge neutro. Filial sem
+> codigo exibe "Nao identificada" mutada; valores monetarios com
+> `cf-cell-amount` (600 + tabular-nums); `mobileLabel` em colunas densas.
+> Contagem da toolbar passou a plural real "N registros". KPIs do hero:
+> override local em `cf-hero-kpis` remove nowrap/ellipsis de
+> `.delpi-ui-kpi-value` (o proprio kit prefere quebra em card estreito) —
+> "Parcialmente disponivel" nao trunca mais. Excel/Cards/Board/selecao/
+> links permanecem TARGET_FUTURE. Verificacao visual autenticada: pendente.
+>
 > 21/10/2026 — **REWORK de fidelidade visual IMPLEMENTADO** (commit seguinte a
 > 7254eef580). KPIs migraram de `PageHero.highlights` para tiles
 > `CfMetricKpiCard` (`createMetricKpiCard` do kit — icone, label, valor

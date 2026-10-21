@@ -62,7 +62,8 @@ const LABELS = {
   searchPlaceholder: "Buscar na tabela…",
   searchAriaLabel: "Filtrar registros da tabela",
   searchHelpAriaLabel: "Ajuda: busca na tabela",
-  recordsCount: (total: number) => `${total} registro(s)`,
+  recordsCount: (total: number) =>
+    `${total.toLocaleString("pt-BR")} ${total === 1 ? "registro" : "registros"}`,
   refreshLoadingTitle: "Atualizando tabela",
   refreshLoadingDescription:
     "Mantendo os dados visíveis enquanto a nova consulta é aplicada.",

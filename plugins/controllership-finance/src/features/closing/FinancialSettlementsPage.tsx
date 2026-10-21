@@ -19,6 +19,7 @@ import {
 import {
   CfEmptyState,
   CfSegmentToggle,
+  CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
@@ -317,10 +318,12 @@ export function FinancialSettlementsPage() {
       {
         key: "document",
         header: "Documento",
-        render: (row) =>
-          [row.prefix, row.documentNumber, row.documentType]
+        render: (row) => {
+          const doc = [row.prefix, row.documentNumber, row.documentType]
             .filter(Boolean)
-            .join(" ") || "—",
+            .join(" ");
+          return doc ? <span className="cf-cell-primary">{doc}</span> : "—";
+        },
       },
       {
         key: "installment",
@@ -330,30 +333,79 @@ export function FinancialSettlementsPage() {
       {
         key: "party",
         header: applied?.side === "receivable" ? "Cliente" : "Fornecedor",
-        render: (row) =>
-          row.partyName ??
-          ([row.partyCode, row.partyStore].filter(Boolean).join("/") || "—"),
+        render: (row) => {
+          const code = [row.partyCode, row.partyStore]
+            .filter(Boolean)
+            .join("/");
+          if (!row.partyName) return code || "—";
+          return (
+            <>
+              <span className="cf-cell-primary">{row.partyName}</span>
+              {code ? (
+                <span className="cf-cell-secondary">{code}</span>
+              ) : null}
+            </>
+          );
+        },
       },
       {
         key: "nature",
         header: "Natureza",
         render: (row) =>
-          row.natureCode
-            ? `${row.natureCode}${row.natureDescription ? ` — ${row.natureDescription}` : ""}`
-            : "—",
+          row.natureCode ? (
+            <>
+              <span className="cf-cell-primary">{row.natureCode}</span>
+              {row.natureDescription ? (
+                <span className="cf-cell-secondary">
+                  {row.natureDescription}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "movementType",
         header: "Tipo mov.",
+        mobileLabel: "Tipo de movimento",
         render: (row) =>
-          row.movementType
-            ? `${row.movementType}${row.movementDescription ? ` — ${row.movementDescription}` : ""}`
-            : "—",
+          row.movementType ? (
+            <>
+              <span className="cf-cell-primary">{row.movementType}</span>
+              {row.movementDescription ? (
+                <span className="cf-cell-secondary">
+                  {row.movementDescription}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "paymentDirection",
         header: "Direção",
-        render: (row) => row.paymentDirection ?? "—",
+        // `side` do contrato é real; o código cru `paymentDirection` (D4)
+        // permanece visível — sem reclassificar BA/ES/VL/CP.
+        render: (row) =>
+          row.paymentDirection ? (
+            <>
+              <CfStatusBadge
+                label={
+                  applied?.side === "receivable" ? "A receber" : "A pagar"
+                }
+                variant={
+                  applied?.side === "receivable" ? "success" : "info"
+                }
+              />
+              <span className="cf-cell-secondary">
+                {row.paymentDirection}
+              </span>
+            </>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "currencyCode",
@@ -364,7 +416,11 @@ export function FinancialSettlementsPage() {
         key: "settlementAmount",
         header: "Valor",
         align: "right",
-        render: (row) => formatAmount(row.settlementAmount),
+        render: (row) => (
+          <span className="cf-cell-amount">
+            {formatAmount(row.settlementAmount)}
+          </span>
+        ),
       },
       {
         key: "dueDate",
@@ -374,12 +430,22 @@ export function FinancialSettlementsPage() {
       {
         key: "linkStatus",
         header: "Vínculo",
-        render: (row) => LINK_STATUS_LABELS[row.linkStatus] ?? row.linkStatus,
+        render: (row) => (
+          <CfStatusBadge
+            label={LINK_STATUS_LABELS[row.linkStatus] ?? row.linkStatus}
+            variant={row.linkStatus === "resolved" ? "success" : "warning"}
+          />
+        ),
       },
       {
         key: "branchCode",
         header: "Filial",
-        render: (row) => row.branchCode ?? "Não identificada",
+        render: (row) =>
+          row.branchCode ? (
+            `Filial ${row.branchCode}`
+          ) : (
+            <span className="cf-cell-muted">Não identificada</span>
+          ),
       },
     ],
     [applied?.side],

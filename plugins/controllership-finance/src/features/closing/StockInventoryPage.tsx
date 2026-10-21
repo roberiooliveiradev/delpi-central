@@ -21,6 +21,7 @@ import {
   CfMetricStrip,
   CfSectionCard,
   CfSegmentToggle,
+  CfStatusBadge,
   CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
@@ -194,7 +195,12 @@ export function StockInventoryPage() {
       {
         key: "productCode",
         header: "Produto",
-        render: (row) => row.productCode || "—",
+        render: (row) =>
+          row.productCode ? (
+            <span className="cf-cell-primary">{row.productCode}</span>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "description",
@@ -204,7 +210,12 @@ export function StockInventoryPage() {
       {
         key: "productType",
         header: "Tipo",
-        render: (row) => row.productType ?? "—",
+        render: (row) =>
+          row.productType ? (
+            <CfStatusBadge label={row.productType} variant="neutral" />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "productGroup",
@@ -214,6 +225,7 @@ export function StockInventoryPage() {
       {
         key: "unit",
         header: "UM",
+        mobileLabel: "Unidade",
         render: (row) => row.unit ?? "—",
       },
       {
@@ -224,7 +236,12 @@ export function StockInventoryPage() {
       {
         key: "branchCode",
         header: "Filial",
-        render: (row) => row.branchCode ?? "—",
+        render: (row) =>
+          row.branchCode ? (
+            `Filial ${row.branchCode}`
+          ) : (
+            <span className="cf-cell-muted">Não identificada</span>
+          ),
       },
       {
         key: "historicalQuantity",
@@ -236,7 +253,11 @@ export function StockInventoryPage() {
         key: "historicalStockValue",
         header: "Valor histórico",
         align: "right",
-        render: (row) => formatAmount(row.historicalStockValue),
+        render: (row) => (
+          <span className="cf-cell-amount">
+            {formatAmount(row.historicalStockValue)}
+          </span>
+        ),
       },
     ],
     [],

@@ -167,7 +167,14 @@ describe("FinancialSettlementsPage — consulta automática", () => {
     expect(screen.getByText("1.250,75")).toBeTruthy();
     expect(screen.queryByText("BRL 1.250,75")).toBeNull();
     expect(screen.getByText("Não identificada")).toBeTruthy();
-    expect(screen.getByText("BA — Baixa de titulo")).toBeTruthy();
+    // natureza: código em primária + descrição em linha secundária
+    expect(screen.getByText("BA")).toBeTruthy();
+    expect(screen.getByText("Baixa de titulo")).toBeTruthy();
+    // direção: badge com lado real da consulta + código cru visível (D4)
+    expect(screen.getByText("A pagar")).toBeTruthy();
+    expect(screen.getByText("P")).toBeTruthy();
+    // vínculo resolvido renderiza como badge de qualidade
+    expect(screen.getByText("Vínculo completo")).toBeTruthy();
     expect(
       await screen.findByText("Movimentações registradas"),
     ).toBeTruthy();

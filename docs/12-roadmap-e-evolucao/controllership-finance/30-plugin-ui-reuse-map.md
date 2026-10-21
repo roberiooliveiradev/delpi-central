@@ -672,6 +672,22 @@ minmax 420px — lado a lado só quando a largura comporta).
 borda/fundo amber via tokens `--delpi-warning*` (avisos persistentes
 como "Dados parcialmente disponíveis"), `info` permanece discreto.
 
+### Células de tabela da Central de Fechamento (padrão vigente)
+
+Células com hierarquia em duas linhas usam `cf-cell-primary` (peso 600) +
+`cf-cell-secondary` (12px mutada) — documento, códigos com descrição
+(natureza, tipo de movimento) e fornecedor/cliente (nome + código/loja).
+Valores monetários usam `cf-cell-amount` (600 + `tabular-nums`);
+ausências usam `cf-cell-muted` ("Não identificada").
+
+Classificações com valor real do contrato usam `CfStatusBadge`
+(neutral/info/success/warning/danger): Direção exibe o rótulo do `side`
+consultado + código cru `paymentDirection` (doc48 D4 — sem
+reclassificação), Vínculo `resolved`→success / `missing_*`→warning, Tipo
+de produto em badge neutro. Semântica inventada (cores por tipo de
+produto, percentuais) continua proibida. `mobileLabel` rotula colunas
+abreviadas no modo responsivo do kit.
+
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,
 campos digitáveis passam por `useDebouncedValue` (400ms, `src/utils/`).

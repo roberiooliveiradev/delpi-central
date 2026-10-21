@@ -336,6 +336,8 @@ describe("StockInventoryPage — estados", () => {
     // associação armazém·filial preservada no rótulo do card
     expect(screen.getByText("Armazém 01 · Filial 02")).toBeTruthy();
     expect(screen.getAllByText(/itens$/).length).toBeGreaterThan(0);
+    // tipo de produto renderiza como badge neutro do kit (sem semântica inventada)
+    expect(screen.getAllByText("MP").length).toBeGreaterThan(0);
   });
 
   it("seções de resultado ficam dentro do stack com gap (regressão)", async () => {
