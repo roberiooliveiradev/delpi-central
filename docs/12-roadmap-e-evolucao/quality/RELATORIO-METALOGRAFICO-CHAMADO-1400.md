@@ -125,3 +125,40 @@ AuthN/SSO institucional, AuthZ live no backend, menor privilégio; diferenciar c
 - **PENDING:** implementação, contrato aprovado, PR de código, merge de software e deploy.
 
 Este documento não declara o chamado resolvido; ele registra o requisito para execução subsequente.
+
+
+## 10. Definição de produto e arquitetura proposta — 21/10/2026
+
+**Nome de exibição escolhido:** **Metalografia DELPI**. **Identificador técnico proposto:** `metalography` (sem afirmar reserva prévia no registry). **Título principal da página/documento:** `Relatório de Análise Metalográfica`. **Modelo:** plugin MFE autônomo, acessível diretamente pelo launcher do Minha DELPI, reaproveitável futuramente como página do Portal de Engenharia.
+
+### Sequência de implantação desejada pelo solicitante
+
+1. **Agora:** plugin MFE independente `Metalografia DELPI`, seguindo o HTML recebido **no fluxo e na composição visual**, com listagem, editor, duas micrografias, recorte, medições, conclusão, persistência e exportação A4/PDF fiel à referência.
+2. **Agora:** os CRUDs dos relatórios devem residir na **área de Engenharia da API DELPI**, por preferência explícita do solicitante. Esta intenção precisa ser validada contra o owner, contracts e regras vigentes antes do código.
+3. **Depois:** incluir a mesma aplicação como página do Portal de Engenharia, quando o Portal existir, sem recriar dados, serviço, formulários nem PDF; usar roteamento/composição oficial no futuro. **O Portal de Engenharia ainda não foi implementado, segundo o solicitante**; não criar dependência bloqueante.
+
+### Boundary e conflito de diretrizes a resolver antes da implementação
+
+A `.cursor/rules/platform-frontend-mfe-experience.mdc` consultada afirma: **“MFE com API própria consome sua API/BFF, não api-delpi diretamente.”** A preferência do solicitante é **CRUD na API DELPI/Engenharia**. Essas duas afirmações não precisam ser confundidas: o proprietário dos CRUDs pode ser API DELPI **se o ownership do domínio confirmar**, enquanto o MFE pode exigir adapter/BFF contratual em vez de consumo HTTP direto. `ARCHITECTURE_DECISION_REQUIRED` para o desenho de acesso caso o MFE siga o padrão de API própria. Não criar bypass, exceção silenciosa ou backend espelho; documentar o producer oficial, consumidor e caminho HTTP escolhido antes do código.
+
+- **Owner de dados proposto:** módulo Engenharia da API DELPI, condicionado à confirmação nas authorities vigentes; não declarar PROVEN antes de inventário de implementação, schema e consumers.
+- **API REST candidata (NÃO congelada):** coleção `/engineering/metallographic-reports`, com listar/criar, obter/atualizar/excluir por ID e operação de PDF caso geração server-side seja escolhida. O gateway publica sob prefixo vigente `/apps/api-delpi/`; **confirmar roteamento real e OpenAPI antes de registrar endpoint**.
+- **Modelo de dados:** report_id imutável, número único server-side, revisão/data, identificação de amostra, resultados/critério e medição, conclusão, observações, identificação de autor e referências às duas imagens; metadados de criação/alteração/auditoria e versionamento para concorrência. Não alterar semântica técnica de campos do HTML.
+- **Imagem/arquivo:** armazenamento persistente e protegido a definir pelo owner; banco para metadados/registros e storage de objetos/binário aprovado conforme infraestrutura existente. Backup/retention e acesso autorizados; não supor que salvar base64 em coluna ou disco local seja solução final.
+- **Operações e autorização:** leitura/lista, criação, atualização, exclusão e exportação com permission codes confirmados no Core; AuthZ backend live, 401/403/404/409/422/413/5xx coerentes, tratamento de concorrência e idempotência quando aplicável; OpenAPI com operationIds explícitos.
+- **Manifesto e Portal:** `schemaVersion: 1.0.0`, `type: microfrontend` conforme contrato atual; `basePath`, `remoteEntry`, permission codes e registro de rota definidos após inspeção de plugins reais. Não usar manifesto 1.1.0 como runtime atual.
+- **Design:** documento e PDF usam a linguagem visual **recebida** como baseline; chrome/ações e integrações do MFE usam `@delpi/plugin-ui` sem descaracterizar o relatório; não transformar editor num layout de cards diferente do protótipo.
+
+### Gate de reutilização
+
+`EXISTING_EQUIVALENT = TO_INVENTORY` para módulo Engenharia, rotas CRUD, modelos de arquivo, mecanismo de PDF e componente de recorte; `REUSE_DECISION = PENDING` até inspeção das fontes e consumers. Para design system, prioridade `REUSE`/`EXTEND`. Nome/ID e paths acima são **TARGET**, não evidência de código.
+
+### Aceites adicionais
+
+- **AC-11:** MFE funciona como plugin autônomo no launcher Minha DELPI sem Portal de Engenharia e com navegação autorizada.
+- **AC-12:** CRUD centralizado no owner comprovado da Engenharia (API DELPI se ratificado) é acessado pelo MFE apenas via boundary/contrato aprovado; nenhuma escrita fica somente no browser.
+- **AC-13:** após refresh e em outro navegador, um usuário autorizado recupera os mesmos dados e micrografias, e um usuário sem acesso recebe negação de backend.
+- **AC-14:** PDF A4 exportado reproduz visual/composição do HTML fornecido, com as imagens e medições persistidas, sem mudança silenciosa de conteúdo.
+- **AC-15 (evolução futura, não implementação agora):** o MFE existente poderá ser composto em página do Portal de Engenharia sem bifurcar app ou banco; a integração futura será contratada quando o Portal existir.
+
+**Status desta decisão:** intenção de produto registrada; owner final, consumers, contrato OpenAPI e boundary BFF continuam pendentes de validação técnica. Nenhum endpoint, plugin, banco ou PDF foi criado nesta etapa.
