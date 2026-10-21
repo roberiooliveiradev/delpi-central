@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Mapping
 
 _RESOURCE_KIND = "instruction_clause"
-_KNOWN_VERSIONS = frozenset({"1"})
+_CLAUSE_VERSIONS = frozenset({"1"})
 _RESOURCE_KEYS = frozenset(
     {"resource_id", "version", "kind", "owner", "instruction_text"}
 )
@@ -33,11 +33,14 @@ _MAX_INSTRUCTION_TEXT_BYTES = 4096
 # kind/id/contract, never a second registry.
 _VOCABULARY_RESOURCE_ID = "delia.cri.presentation_vocabulary"
 _VOCABULARY_KIND = "presentation_vocabulary"
+# E3-R1–R3 rework: v2 corrects count-source claims, splits temporal
+# clauses by owner-declared field semantics and drops the
+# unserviceable continuity offer. v1 is intentionally rejected.
+_VOCABULARY_VERSIONS = frozenset({"2"})
 _VOCABULARY_SECTIONS = (
     "leads",
     "temporal_clauses",
     "insufficiency",
-    "continuity",
     "labels",
 )
 _VOCABULARY_KEYS = frozenset(
@@ -46,27 +49,36 @@ _VOCABULARY_KEYS = frozenset(
 _VOCABULARY_REQUIRED_ENTRIES: Mapping[str, frozenset[str]] = {
     "leads": frozenset(
         {
-            "ordering_newest_single",
+            "ordering_newest_single_modified",
+            "ordering_newest_single_neutral",
             "ordering_oldest_single",
             "examples_fulfilled",
             "records_found",
             "single_found",
         }
     ),
-    "temporal_clauses": frozenset({"newest_first", "oldest_first"}),
+    "temporal_clauses": frozenset(
+        {
+            "newest_first_modified",
+            "newest_first_neutral",
+            "oldest_first_modified",
+            "oldest_first_neutral",
+        }
+    ),
     "insufficiency": frozenset(
         {
             "coverage_unproven",
             "ordering_unproven",
             "quantity_unproven",
-            "fewer_than_requested",
+            "fewer_than_requested_source",
+            "fewer_than_requested_coverage",
+            "fewer_than_requested_returned",
             "envelope_only",
             "empty_result",
             "partial_outcome",
             "generic",
         }
     ),
-    "continuity": frozenset({"detail_offer"}),
     "labels": frozenset(
         {"truncation_notice", "available_notice", "more_available"}
     ),
@@ -139,7 +151,9 @@ def _load_resource_object(path: str | Path) -> Mapping:
     return data
 
 
-def _validate_identity(data: Mapping, *, kind: str) -> str:
+def _validate_identity(
+    data: Mapping, *, kind: str, versions: frozenset
+) -> str:
     """Shared kind/version gate — returns the validated version."""
 
     if str(data.get("kind")) != kind:
@@ -148,7 +162,7 @@ def _validate_identity(data: Mapping, *, kind: str) -> str:
             f"unknown kind: {data.get('kind')!r}",
         )
     version = str(data.get("version"))
-    if version not in _KNOWN_VERSIONS:
+    if version not in versions:
         raise CriInstructionResourceError(
             "cri_instruction_resource_invalid",
             f"unknown version: {version!r}",
@@ -178,7 +192,9 @@ def load_cri_instruction_clause(path: str | Path) -> CriInstructionClause:
             "cri_instruction_resource_invalid",
             f"missing fields: {sorted(missing)}",
         )
-    version = _validate_identity(data, kind=_RESOURCE_KIND)
+    version = _validate_identity(
+        data, kind=_RESOURCE_KIND, versions=_CLAUSE_VERSIONS
+    )
     text = str(data["instruction_text"])
     if not text.strip() or len(text.encode("utf-8")) > (
         _MAX_INSTRUCTION_TEXT_BYTES
@@ -272,7 +288,9 @@ def load_cri_presentation_vocabulary(
             "cri_instruction_resource_invalid",
             f"unexpected resource_id: {data.get('resource_id')!r}",
         )
-    version = _validate_identity(data, kind=_VOCABULARY_KIND)
+    version = _validate_identity(
+        data, kind=_VOCABULARY_KIND, versions=_VOCABULARY_VERSIONS
+    )
     sections = {
         section: _vocabulary_entries(data.get(section), section)
         for section in _VOCABULARY_SECTIONS

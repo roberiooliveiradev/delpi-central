@@ -1,31 +1,33 @@
 {
   "resource_id": "delia.cri.presentation_vocabulary",
-  "version": "1",
+  "version": "2",
   "kind": "presentation_vocabulary",
   "owner": "DELPI",
   "leads": {
-    "ordering_newest_single": "O registro mais recentemente alterado foi {identifier}.",
+    "ordering_newest_single_modified": "O registro mais recentemente alterado foi {identifier}.",
+    "ordering_newest_single_neutral": "O registro mais recente entre os retornados foi {identifier}.",
     "ordering_oldest_single": "O registro mais antigo disponível foi {identifier}.",
     "examples_fulfilled": "Aqui estão {count} exemplos:",
     "records_found": "Encontrei {count} registros:",
     "single_found": "Encontrei este registro:"
   },
   "temporal_clauses": {
-    "newest_first": "A última alteração registrada ocorreu em {date}.",
-    "oldest_first": "A alteração mais antiga registrada ocorreu em {date}."
+    "newest_first_modified": "A última alteração registrada ocorreu em {date}.",
+    "newest_first_neutral": "A data mais recente encontrada foi {date}; a fonte não comprova que ela represente uma alteração.",
+    "oldest_first_modified": "A alteração mais antiga registrada ocorreu em {date}.",
+    "oldest_first_neutral": "A data mais antiga encontrada foi {date}; a fonte não comprova que ela represente uma alteração."
   },
   "insufficiency": {
     "coverage_unproven": "Encontrei registros, mas a fonte não confirma que eles cobrem todo o conjunto — não posso garantir que este seja o resultado definitivo.",
     "ordering_unproven": "A fonte retornou registros, mas não consegui comprovar a ordenação completa — não posso afirmar com segurança qual é a posição exata.",
-    "quantity_unproven": "A fonte não retornou dados suficientes para comprovar a quantidade solicitada.",
-    "fewer_than_requested": "A fonte só dispõe de {delivered} dos {requested} exemplos pedidos — não vou inventar os que faltam.",
+    "quantity_unproven": "Foram obtidos somente {delivered} dos {requested} exemplos pedidos — a fonte não comprova quantos existem no escopo consultado.",
+    "fewer_than_requested_source": "A fonte informa apenas {total} registros no escopo consultado — não vou inventar os que faltam.",
+    "fewer_than_requested_coverage": "A fonte retornou {delivered} dos {requested} exemplos pedidos, cobrindo todo o escopo consultado — não vou inventar os que faltam.",
+    "fewer_than_requested_returned": "Foram retornados somente {delivered} dos {requested} exemplos pedidos — não vou inventar os que faltam.",
     "envelope_only": "A consulta foi concluída, mas a fonte não retornou dados de negócio.",
     "empty_result": "A fonte respondeu com uma coleção vazia — não há registros para esse pedido.",
     "partial_outcome": "A resposta da fonte chegou incompleta; os dados podem não cobrir tudo o que foi pedido.",
     "generic": "Com as evidências disponíveis, não consigo responder de forma fundamentada."
-  },
-  "continuity": {
-    "detail_offer": "Posso detalhar os campos de um registro específico se você quiser."
   },
   "labels": {
     "truncation_notice": "Exibindo {presented} de {returned} registros retornados.",

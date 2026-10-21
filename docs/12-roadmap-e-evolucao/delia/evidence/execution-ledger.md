@@ -16836,3 +16836,31 @@ NEXT=DEPLOY_THEN_COORDINATION_REVIEW
 
 
 
+## §6.357 — CRI E3 bounded rework R1–R3 (2026-10-21)
+
+**TASK:** DELIA-CRI-E3-BOUNDED-REWORK-R1-R3-01. Single permitted correction cycle over independent-review findings (doc 78 §10, review commit `ed19f4bdc2`); reanchor `b3420c7fb6`. Scope exclusively R1–R3 — no new planner/flag/model call/registry/public contract. **R1:** `fewer_than_requested` no longer claims source stock from delivered counts — `_shortage_key` selects among `fewer_than_requested_source` (owner `total_count < requested`), `fewer_than_requested_coverage` (complete coverage, no total), `fewer_than_requested_returned` (neutral; contradictory evidence stays neutral); `quantity_unproven` states only the returned count. **R2:** ordering proves order, not meaning — `_field_declares_modification` reads the proving field's own schema key (normalized tokens: >=1 modification marker, all others generic connectives; unclassified compounds degrade neutral); vocabulary gains `*_modified`/`*_neutral` lead+clause variants; metadata prose cannot declare semantics. **R3:** `continuity.detail_offer` removed — no serviceable mechanism exists (v1 text/notice blocks only; no proven next-turn retrieval binding), so no offer is emitted. Vocabulary `cri_presentation.delpi.json` bumped to `version "2"`; loader allowlists split (`_CLAUSE_VERSIONS={"1"}`, `_VOCABULARY_VERSIONS={"2"}` — v1 rejected -> baseline). Files: cri_presentation.delpi.json (v2), cri_instruction_resource.py, conversational_response.py, orchestration.py, test_cri_e3 (+20 rework tests), docs 74/78/README/ledger. RED->GREEN confirmed (35 failing at base SHA -> all green). E3-G1/G2 preserved; OFF byte-identical; `compose_presentation` v1 + frontend untouched.
+
+```text
+E3_REWORK=EXECUTED
+E3_R1=RESOLVED_TYPED_COUNT_LANGUAGE
+E3_R2=RESOLVED_OWNER_DECLARED_FIELD_SEMANTICS
+E3_R3=RESOLVED_UNSERVICEABLE_OFFER_OMITTED
+VOCABULARY_VERSION=2
+VOCABULARY_HASH=c947616dcc906eaa49a7c0f5f57fd388aada0a5b42b1a2d6151567d95baf0c28
+E3_G1_PRESERVED=YES
+E3_G2_PRESERVED=YES
+OFF_PARITY=BYTE_IDENTICAL
+ADDITIONAL_MODEL_CALLS=0
+SELECTION_ONLY=PRESERVED
+PUBLIC_CONTRACT_CHANGE=NO
+FRONTEND_FILES_CHANGED=0
+TESTS=1838_PASSED_3_SKIPPED_1841_COLLECTED
+REAL_MODEL_EVALUATION=TEST_NOT_RUN
+MATERIAL_ACT=0
+PRODUCTION_DEPLOY=NO
+E3_ACCEPTED=PENDING_INDEPENDENT_REVIEW
+E4_AUTHORIZED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```

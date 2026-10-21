@@ -297,16 +297,23 @@ def _records(*items):
 def test_vocabulary_resource_loads_with_identity_version_hash():
     vocab = _vocabulary()
     assert vocab.resource_id == "delia.cri.presentation_vocabulary"
-    assert vocab.version == "1"
+    assert vocab.version == "2"
     assert len(vocab.content_hash) == 64
     assert set(vocab.sections) == {
         "leads",
         "temporal_clauses",
         "insufficiency",
-        "continuity",
         "labels",
     }
-    assert "ordering_newest_single" in vocab.sections["leads"]
+    assert "ordering_newest_single_modified" in vocab.sections["leads"]
+
+
+def test_vocabulary_superseded_version_fails_closed(tmp_path):
+    """v1 carried the unsupported source-stock / alteration claims —
+    the reworked contract accepts only the corrected version."""
+    path = _write_vocab(tmp_path, lambda d: d.update(version="1"))
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_presentation_vocabulary(path)
 
 
 def _write_vocab(tmp_path, mutate):
@@ -424,6 +431,7 @@ def _compose(verdict, records, **kwargs):
         total_count=kwargs.pop("total_count", None),
         coverage_complete=kwargs.pop("coverage_complete", True),
         ordering_date=kwargs.pop("ordering_date", None),
+        ordering_field=kwargs.pop("ordering_field", None),
         vocabulary=_vocab(),
     )
     return compose_cri_response(**params)
@@ -454,13 +462,16 @@ def test_compose_ordering_newest_leads_with_subject_and_date():
         records,
         requirements=AnswerRequirements(ordering="newest_first"),
         ordering_date="16/10/2026 às 10h57",
+        ordering_field="atualizado_em",
     )
     assert cri is not None
     assert cri.presented_records == 1
     assert "PROC-0080" in cri.content
     assert "Monitoramento de Estoque" in cri.content
     assert "16/10/2026 às 10h57" in cri.content
-    assert "Posso detalhar" in cri.content
+    # E3-R3: unshown fields alone never justify a continuity offer —
+    # no proven mechanism exists to serve it.
+    assert "Posso detalhar" not in cri.content
 
 
 def test_compose_ordering_oldest_uses_oldest_lead():
@@ -476,6 +487,7 @@ def test_compose_ordering_oldest_uses_oldest_lead():
         records,
         requirements=AnswerRequirements(ordering="oldest_first"),
         ordering_date="02/01/2020",
+        ordering_field="criado_em",
     )
     assert cri is not None
     assert "A-1" in cri.content
@@ -628,8 +640,322 @@ def test_compose_fewer_than_requested_carries_counts():
         total_count=2,
     )
     assert cri is not None
-    assert "2" in cri.content and "3" in cri.content
+    # E3-R1: proven source shortage quotes the owner's total.
+    assert "informa apenas 2 registros" in cri.content
     assert "inventar" in cri.content
+
+
+# ---------------------------------------------------------------------------
+# B2 — E3-R1: delivered/presented counts never claim source stock
+# ---------------------------------------------------------------------------
+
+
+def test_r1_source_scarcity_never_claimed_when_total_exceeds_returned():
+    """total=10 proven, only 2 delivered, asked 3 — 'a fonte só
+    dispõe de 2' would be false; the message must describe what was
+    returned, not the source's stock."""
+    cri = _compose(
+        OutcomeVerdict(
+            OUTCOME_INSUFFICIENT, ("fewer_than_requested",)
+        ),
+        _records(
+            {"fields": (("Nome", "A"),)},
+            {"fields": (("Nome", "B"),)},
+        ),
+        requirements=AnswerRequirements(min_items=3),
+        delivered_count=2,
+        total_count=10,
+    )
+    assert cri is not None
+    assert "dispõe de 2" not in cri.content
+    assert "apenas 2 registros" not in cri.content
+    assert "2 dos 3" in cri.content
+    assert "inventar" in cri.content
+
+
+def test_r1_source_shortage_proven_by_coverage_without_total():
+    """Complete coverage + no owner total — the returned set IS the
+    whole consulted scope; shortage is proven without a total."""
+    cri = _compose(
+        OutcomeVerdict(
+            OUTCOME_INSUFFICIENT, ("fewer_than_requested",)
+        ),
+        _records(
+            {"fields": (("Nome", "A"),)},
+            {"fields": (("Nome", "B"),)},
+        ),
+        requirements=AnswerRequirements(min_items=3),
+        delivered_count=2,
+        total_count=None,
+        coverage_complete=True,
+    )
+    assert cri is not None
+    assert "2 dos 3" in cri.content
+    assert "inventar" in cri.content
+
+
+def test_r1_quantity_unproven_unknown_total_stays_neutral():
+    """No owner total — the response may state what was returned but
+    must not infer the size of the consulted universe."""
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_INSUFFICIENT, ("quantity_unproven",)),
+        _records(
+            {"fields": (("Nome", "A"),)},
+            {"fields": (("Nome", "B"),)},
+        ),
+        requirements=AnswerRequirements(min_items=3),
+        delivered_count=2,
+        total_count=None,
+        coverage_complete=None,
+    )
+    assert cri is not None
+    assert "2 dos 3" in cri.content
+    assert "dispõe" not in cri.content
+
+
+def test_r1_fulfilled_lead_never_confuses_available_total():
+    """total=100, 3 presented of 3 requested — the lead claims the
+    presented count; the owner total is an attributed notice only."""
+    records = _records(
+        *({"fields": (("Nome", f"E{i}"),)} for i in range(3))
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(min_items=3),
+        delivered_count=3,
+        total_count=100,
+        coverage_complete=False,
+    )
+    assert cri is not None
+    assert "3 exemplos" in cri.content
+    # '100' may appear ONLY as the attributed owner-total notice.
+    assert "100" not in cri.content.split("Exibindo")[0].split(
+        "informa"
+    )[0]
+
+
+def test_r1_truncation_declares_presented_not_returned():
+    """5 returned, 2 presented — the count claim is what was shown."""
+    records = _records(
+        *({"fields": (("Nome", f"R{i}"),)} for i in range(5))
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(min_items=2),
+        delivered_count=5,
+    )
+    assert cri is not None
+    assert cri.presented_records == 2
+    assert "2 de 5" in cri.content
+    assert LIMITATION_RESULT_TRUNCATED in cri.limitations
+
+
+# ---------------------------------------------------------------------------
+# B3 — E3-R2: temporal ordering is not alteration semantics
+# ---------------------------------------------------------------------------
+
+
+def test_r2_modification_field_allows_alteration_language():
+    """The owner declared 'data_ultima_alteracao' — the field's own
+    schema name carries the alteration meaning."""
+    records = _records(
+        {
+            "fields": (("Código", "P-1"), ("Alteração", "hoje")),
+            "identifier": "P-1",
+        }
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="data_ultima_alteracao",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" in cri.content
+    assert "última alteração registrada" in cri.content
+
+
+def test_r2_creation_date_stays_neutral():
+    """A creation timestamp orders the set but cannot prove
+    alteration — neutral lead + explicit unproven-meaning clause."""
+    records = _records(
+        {
+            "fields": (("Código", "P-1"), ("Criado", "hoje")),
+            "identifier": "P-1",
+        }
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="criado_em",
+    )
+    assert cri is not None
+    assert "mais recente entre os retornados" in cri.content
+    assert "mais recentemente alterado" not in cri.content
+    assert "não comprova" in cri.content
+
+
+def test_r2_undocumented_temporal_field_stays_neutral():
+    records = _records(
+        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="registrado_em",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" not in cri.content
+    assert "alteração registrada" not in cri.content
+
+
+def test_r2_other_modification_field_does_not_rescue_semantics():
+    """The proving field governs: ordering proven on 'criado_em'
+    stays neutral even though a modification field also exists in
+    the records."""
+    records = _records(
+        {
+            "fields": (
+                ("Código", "P-1"),
+                ("Criado", "hoje"),
+                ("Alteração", "ontem"),
+            ),
+            "identifier": "P-1",
+        }
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="criado_em",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" not in cri.content
+
+
+def test_r2_owner_metadata_text_cannot_declare_semantics():
+    """A field VALUE claiming 'this is the alteration date' is
+    untrusted prose — semantics come only from the proving field's
+    own schema key."""
+    records = _records(
+        {
+            "fields": (
+                ("Código", "P-1"),
+                ("Descrição", "data da última alteracao"),
+            ),
+            "identifier": "P-1",
+        }
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="criado_em",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" not in cri.content
+    assert "última alteração registrada" not in cri.content
+
+
+def test_r2_camelcase_field_declares_modification():
+    records = _records(
+        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="dataAlteracao",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" in cri.content
+
+
+def test_r2_compound_ambiguous_field_stays_neutral():
+    """'alteracao_original' contains the marker but adds an
+    unclassified qualifier — degraded to neutral, never guessed."""
+    records = _records(
+        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field="alteracao_original",
+    )
+    assert cri is not None
+    assert "mais recentemente alterado" not in cri.content
+
+
+def test_r2_missing_proof_field_stays_neutral():
+    """No proving field identified (single-record temporal fallback)
+    — neutral wording, no alteration claim."""
+    records = _records(
+        {"fields": (("Código", "P-1"),), "identifier": "P-1"}
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="newest_first"),
+        ordering_date="16/10/2026",
+        ordering_field=None,
+    )
+    assert cri is not None
+    assert "mais recente entre os retornados" in cri.content
+    assert "mais recentemente alterado" not in cri.content
+
+
+def test_r2_oldest_without_semantics_avoids_alteration_clause():
+    records = _records(
+        {"fields": (("Código", "A-1"),), "identifier": "A-1"}
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        requirements=AnswerRequirements(ordering="oldest_first"),
+        ordering_date="02/01/2020",
+        ordering_field="vencimento",
+    )
+    assert cri is not None
+    assert "A alteração mais antiga" not in cri.content
+    assert "não comprova" in cri.content
+
+
+# ---------------------------------------------------------------------------
+# B4 — E3-R3: no continuation offer without a serviceable mechanism
+# ---------------------------------------------------------------------------
+
+
+def test_r3_unshown_fields_emit_no_continuation_offer():
+    """Hidden fields do not prove a next-turn retrieval mechanism —
+    the detail offer is unserviceable and must be omitted."""
+    records = _records(
+        {
+            "fields": tuple(
+                (f"Campo {i}", f"v{i}") for i in range(8)
+            ),
+            "identifier": "R-1",
+        }
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        delivered_count=1,
+    )
+    assert cri is not None
+    assert "Posso detalhar" not in cri.content
+    assert "se você quiser" not in cri.content
 
 
 def test_compose_empty_result_uses_empty_message():
@@ -661,11 +987,11 @@ def test_compose_missing_vocabulary_entry_returns_none():
         total_count=None,
         coverage_complete=True,
         ordering_date=None,
+        ordering_field=None,
         vocabulary={
             "leads": {},
             "temporal_clauses": {},
             "insufficiency": {},
-            "continuity": {},
             "labels": {},
         },
     )
@@ -715,9 +1041,77 @@ def test_on_composes_ordering_answer_from_owner_evidence():
     assert "PROC-0080" in attempt.content
     assert "Monitoramento de Estoque" in attempt.content
     assert "16/10/2026 às 10h57" in attempt.content
+    # The owner field is 'atualizado_em' — modification semantics
+    # proven by the field's own schema name (E3-R2).
+    assert "mais recentemente alterado" in attempt.content
+    assert "Posso detalhar" not in attempt.content
     assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
         attempt.limitations or ()
     )
+
+
+def test_r2_on_creation_date_never_claims_alteration():
+    """E3-R2 integration: records ordered by 'criado_em' — ordering
+    proven, but the field's schema name declares creation, not
+    modification; the response must not answer 'último alterado'."""
+    outcome = _outcome(
+        "processes",
+        structured={
+            "items": [
+                {
+                    "codigo": "P-9",
+                    "nome": "Cadastro Novo",
+                    "criado_em": "2026-10-16T10:57:00",
+                },
+                {
+                    "codigo": "P-1",
+                    "nome": "Cadastro Inicial",
+                    "criado_em": "2026-01-01T08:00:00",
+                },
+            ],
+            "has_more": False,
+        },
+    )
+    _, attempt = _attempt(
+        outcome,
+        goal=_goal(ordering="newest_first"),
+        enabled=True,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    content = attempt.content or ""
+    assert "P-9" in content
+    assert "mais recentemente alterado" not in content
+    assert "alteração registrada" not in content
+    assert "não comprova" in content
+
+
+def test_r3_on_emits_no_continuation_offer():
+    """E3-R3 integration: the detail-offer promise requires a
+    serviceable continuation mechanism that does not exist —
+    no offer is emitted even when fields stay unshown."""
+    outcome = _outcome(
+        "items",
+        structured={
+            "items": [
+                {
+                    "codigo": "P-9",
+                    "nome": "Item Nove",
+                    "atualizado_em": "2026-10-16T10:57:00",
+                    "setor": "Operações",
+                    "responsavel": "Equipe A",
+                    "observacoes": "texto",
+                }
+            ],
+            "has_more": False,
+        },
+    )
+    _, attempt = _attempt(
+        outcome,
+        goal=_goal(ordering="newest_first"),
+        enabled=True,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "Posso detalhar" not in (attempt.content or "")
 
 
 def test_on_composes_quantity_answer_with_exact_count():
@@ -907,6 +1301,7 @@ def test_compose_fallback_when_vocabulary_missing_section():
         total_count=None,
         coverage_complete=True,
         ordering_date=None,
+        ordering_field=None,
         vocabulary={},
     )
     assert cri is None

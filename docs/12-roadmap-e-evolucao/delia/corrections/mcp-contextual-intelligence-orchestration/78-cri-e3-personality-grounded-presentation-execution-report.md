@@ -233,3 +233,85 @@ nunca vira autoridade:
 **E3-R3 — continuation must be serviceable:** `continuity.detail_offer` promises `Posso detalhar os campos de um registro específico` solely when hidden fields exist. Unshown fields do not prove a legitimate next-turn capability/context binding for follow-up retrieval. Gate the suggestion on verified same-turn detail availability or a genuine authorized continuation contract; otherwise omit it, with tests for unavailable detail path and non-actionable follow-up. No new capability/ACT introduced.
 
 **Finite scope:** fix only R1–R3 and associated negative/off-on/generalization tests and versioned presentation resource as necessary. Keep baseline OFF byte-identical, selection-only frozen, E3-G1/G2 retained, existing v1 presentation and frontend unless a concrete need appears. This is the **single bounded E3 rework** permitted by roadmap 74. No new planner, prompt registry, provider-specific templates, factual-prose ADR bypass or production activation. Acceptance needs faithful statements on example counts/date semantics, actionable follow-up, full regression and evidence. `E3_VERDICT=REWORK`; `E3_ACCEPTED=NO`; `E3_REWORK_ALLOWED=ONE_BOUNDED_CYCLE`; `E4_AUTHORIZED=NO`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
+
+
+## 11. Bounded rework resolution — 2026-10-21
+
+Rework executado sobre `origin/main` reancorado (`b3420c7fb6`,
+que já inclui a revisão `ed19f4bdc2`). Escopo exclusivo R1–R3;
+nenhum planner, flag, chamada ao modelo ou contrato público novo.
+
+### E3-R1 — disponibilidade da fonte ≠ entrega (RESOLVIDO)
+
+O motivo `fewer_than_requested` agora seleciona uma de três
+mensagens por fatos tipados (`_shortage_key`), nunca afirmando
+estoque da fonte sem prova:
+
+- `fewer_than_requested_source` — somente quando `total_count`
+  autoritativo `< requested`: "A fonte informa apenas {total}
+  registros no escopo consultado".
+- `fewer_than_requested_coverage` — `coverage_complete` comprovado
+  sem total: a coleção retornada é o escopo completo.
+- `fewer_than_requested_returned` — demais casos (incluindo
+  evidência contraditória `total=10`/entregues=2): "Foram
+  retornados somente {delivered} dos {requested} exemplos pedidos".
+
+`quantity_unproven` foi reescrita para afirmar apenas a contagem
+retornada, sem inferir o tamanho do universo. O lead de sucesso
+continua usando a contagem efetivamente apresentada; o total do
+owner permanece aviso atribuído ("A fonte informa {available}
+registros no total").
+
+### E3-R2 — ordenação temporal ≠ semântica de alteração (RESOLVIDO)
+
+Ordenação prova ordem, nunca significado. `_field_declares_
+modification` deriva a semântica exclusivamente da **chave do campo
+que provou a ordenação** (nome declarado pelo owner no próprio
+registro — camelCase/snake/acentos normalizados; todo token deve ser
+marcador de modificação ou conectivo genérico, e ao menos um
+marcador obrigatório). Prosa de metadados, valores de campo e
+hipótese do modelo não criam semântica; campos compostos não
+classificados (`alteracao_original`) degradam para neutro.
+
+- Comprovação (`atualizado_em`, `data_alteracao`, `updated_at`…):
+  leads/cláusulas `*_modified` preservam "mais recentemente
+  alterado" / "última alteração registrada".
+- Sem comprovação (`criado_em`, `vencimento`, fallback de campo
+  ausente): lead neutro "mais recente entre os retornados" +
+  cláusula declarativa "a fonte não comprova que ela represente uma
+  alteração".
+
+A insuficiência é preservada pela linguagem: quando a semântica não
+é comprovada, a resposta nunca converte ordenação técnica em
+resposta definitiva sobre alteração.
+
+### E3-R3 — continuidade servível (RESOLVIDO)
+
+`continuity.detail_offer` removido. Nenhum mecanismo comprovado
+existe nos contratos atuais: o `compose_presentation` v1 só emite
+blocos de texto/notice (sem expansão local de campos ocultos — os
+valores não renderizados não integram a resposta) e não há contrato
+que prove identidade + contexto + capability + autorização para
+recuperação no próximo turno. Ausência de sugestão é o resultado
+correto — `compose_cri_response` não emite mais oferta alguma.
+
+### Recurso declarativo
+
+`cri_presentation.delpi.json` bumped para `version: "2"`; a
+allowlist do loader aceita **somente** `"2"` para o vocabulário (v1
+carrega as afirmações incorretas e é rejeitada → fallback baseline).
+A cláusula E2 segue em `{"1"}` via allowlist separada
+(`_CLAUSE_VERSIONS`/`_VOCABULARY_VERSIONS`). Seção `continuity`
+removida do recurso e do schema; hash de conteúdo recomputado sobre
+as seções canônicas.
+
+### Evidência
+
+- RED: 35 testes novos/atualizados falhavam em `b3420c7fb6`
+  (assinatura `ordering_field`, versão, claims R1–R3).
+- GREEN: suite E3 completa verde; regressões E1/E2 verdes.
+- OFF byte-idêntico preservado; `ADDITIONAL_MODEL_CALLS=0`;
+  `compose_presentation` v1 e frontend intocados.
+- `REAL_MODEL_EVALUATION=TEST_NOT_RUN` — escopo E4.
+
+`E3_REWORK=IMPLEMENTED`; `E3_ACCEPTED=PENDING_INDEPENDENT_REVIEW`.

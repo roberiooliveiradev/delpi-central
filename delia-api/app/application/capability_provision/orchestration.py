@@ -8213,18 +8213,19 @@ class OperationalCapabilityOrchestrator:
         )
         req = goal.answer_requirements
         ordering_date = None
+        ordering_field = None
         if (
             verdict.decision == OUTCOME_ANSWERED
             and req is not None
             and req.ordering
             and facts.records
         ):
-            field_name = ordering_proof_fields(facts.records).get(
+            ordering_field = ordering_proof_fields(facts.records).get(
                 req.ordering
             )
             raw = (
-                facts.records[0].get(field_name)
-                if field_name is not None
+                facts.records[0].get(ordering_field)
+                if ordering_field is not None
                 else None
             )
             if raw is None and len(facts.records) == 1:
@@ -8246,6 +8247,7 @@ class OperationalCapabilityOrchestrator:
             total_count=facts.total_count,
             coverage_complete=facts.coverage_complete,
             ordering_date=ordering_date,
+            ordering_field=ordering_field,
             vocabulary=self._cri_vocabulary,
         )
         _logger.info(
