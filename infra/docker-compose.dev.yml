@@ -1450,6 +1450,11 @@ services:
       # false = atualiza schemas OpenAPI + embeddings (padrão)
       OPENAPI_CONSUMER_CHAT_SKIP_EMBEDDINGS: ${OPENAPI_CONSUMER_CHAT_SKIP_EMBEDDINGS:-false}
 
+      # Gates de dataset financeiro (fail-closed; ligar após provisioning S2S
+      # correspondente — doc 48 R01/R02, doc 49 R03/P7).
+      FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED: ${FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED:-false}
+      FINANCEIRO_STOCK_INVENTORY_ENABLED: ${FINANCEIRO_STOCK_INVENTORY_ENABLED:-false}
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s
@@ -3003,11 +3008,13 @@ services:
       CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN: ${CORE_API_EFFECTIVE_ACCESS_SERVICE_TOKEN:-}
       CORE_API_TIMEOUT: ${CORE_API_TIMEOUT:-10}
 
-      # S2S individual (credencial dedicada; env_file carrega S2S_* de supplies)
+      # S2S individual (credencial dedicada; env_file carrega S2S_* de supplies).
+      # S2S_SCOPE vazio = token carrega TODOS os default scopes do client
+      # (settlements.read + stock-inventory.read após provisioning Keycloak).
       S2S_TOKEN_URL: ${S2S_TOKEN_URL}
       S2S_CLIENT_ID: ${CF_S2S_CLIENT_ID:-controllership-finance-api}
       S2S_CLIENT_SECRET: ${CF_S2S_CLIENT_SECRET:-}
-      S2S_SCOPE: ${CF_S2S_SCOPE:-settlements.read}
+      S2S_SCOPE: ${CF_S2S_SCOPE:-}
       S2S_TIMEOUT_SECONDS: ${CF_S2S_TIMEOUT_SECONDS:-10}
 
     volumes:

@@ -294,10 +294,22 @@ export function StockInventoryPage() {
     if (current.code === "scope_unavailable") {
       return (
         <CfStateBanner variant="error">
-          <p className="cf-banner-title">Escopo de dados indisponível</p>
+          <p className="cf-banner-title">Consulta ainda não habilitada</p>
           <p className="cf-banner-text">
             O acesso ao conjunto de dados de estoque ainda não está liberado
             para este ambiente.
+          </p>
+        </CfStateBanner>
+      );
+    }
+    if (current.code && current.code.startsWith("S2S_")) {
+      return (
+        <CfStateBanner variant="error">
+          <p className="cf-banner-title">Integração de dados pendente</p>
+          <p className="cf-banner-text">
+            A credencial técnica entre o Portal e a origem de dados ainda não
+            possui a autorização necessária para esta consulta. Acione o
+            suporte informando esta tela.
           </p>
         </CfStateBanner>
       );

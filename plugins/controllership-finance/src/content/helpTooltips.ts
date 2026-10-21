@@ -58,7 +58,7 @@ export const CF_HELP = {
     indicators:
       "Valor histórico total e quantidade de itens calculados sobre todo o universo do filtro, não apenas a página exibida. Quando o snapshot do mês não existe na origem, o total não é exibido — ausência nunca aparece como zero.",
     status:
-      "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros.",
+      "Disponibilidade da origem: «Disponível» = snapshot encontrado; «Parcial» = alguma filial solicitada não tem snapshot no mês; «Não encontrado» = o ERP não gravou fechamento de estoque para a competência; «Sem itens» = o snapshot existe mas os filtros não retornaram registros. Estados de acesso: «Acesso restrito» = seu usuário não possui a permissão do Portal; «Consulta ainda não habilitada» = a liberação do conjunto de dados está desativada no ambiente; «Integração de dados pendente» = a credencial técnica entre o Portal e a origem ainda aguarda autorização — acione o suporte.",
     summaryType:
       "Totais por tipo de produto (MP, PI, PA e demais) sobre o universo filtrado.",
     summaryWarehouse:

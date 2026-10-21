@@ -223,6 +223,30 @@ def test_upstream_403_maps_403(gateway):
     assert _get(_client(), f"{ROUTE}?{PERIOD}").status_code == 403
 
 
+def test_s2s_scope_denied_relays_typed_code(gateway):
+    """S2S denial is distinguishable from RBAC denial (403 without code)."""
+    gateway.get.side_effect = DelpiApiGatewayError(
+        "api-delpi client error",
+        status_code=403,
+        error_code="S2S_SCOPE_DENIED",
+    )
+    response = _get(_client(), f"{ROUTE}?{PERIOD}")
+    assert response.status_code == 403
+    body = response.json()
+    assert body["success"] is False
+    assert body["data"]["error"]["code"] == "S2S_SCOPE_DENIED"
+
+
+def test_s2s_client_denied_relays_typed_code(gateway):
+    gateway.get.side_effect = DelpiApiGatewayError(
+        "api-delpi client error",
+        status_code=403,
+        error_code="S2S_CLIENT_DENIED",
+    )
+    response = _get(_client(), f"{ROUTE}?{PERIOD}")
+    assert response.json()["data"]["error"]["code"] == "S2S_CLIENT_DENIED"
+
+
 def test_upstream_timeout_maps_503(gateway):
     gateway.get.side_effect = DelpiApiGatewayError("api-delpi timeout")
     assert _get(_client(), f"{ROUTE}?{PERIOD}").status_code == 503

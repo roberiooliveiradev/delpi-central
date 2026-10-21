@@ -94,3 +94,28 @@ Gate transversal autorizado pelo briefing de execucao (escopo S2S dedicado, flag
 - TI-Protheus: causa da ausencia da SB9 30/09/2026 filial 01.
 
 `R03_IMPLEMENTATION=EXECUTED_V1`; `P7_PARITY=TEST_NOT_RUN`; `E2E_SMOKE=TEST_NOT_RUN` (depende do provisioning S2S e da flag); `S2S_KEYCLOAK_PROVISIONING=PENDING`; `FEATURE_FLAG=OFF`.
+
+## 10. RCA do bloqueio 403 em producao (21/10/2026, segunda execucao)
+
+Sintoma reportado: pagina `/apps/controllership-finance/closing/stock-inventory` exibia "Acesso restrito" (403 sem `error.code`). Rastreio das tres origens possiveis de 403 na cadeia:
+
+| Origem | Condicao | Codigo tipado upstream | Estado MFE |
+|---|---|---|---|
+| BFF `_authorized_user` | sem `.access` efetiva via Core | nenhum (403 direto) | "Acesso restrito" |
+| api-delpi guard S2S | token sem `stock-inventory.read` ou client errado | `S2S_SCOPE_DENIED` / `S2S_CLIENT_DENIED` | colapsava em "Acesso restrito" |
+| api-delpi resolver de dataset | flag off ou principal nao-humano | `scope_unavailable` | "Escopo de dados indisponivel" |
+
+**Causa raiz comprovada (config, deterministica):** `S2S_SCOPE: ${CF_S2S_SCOPE:-settlements.read}` nos dois docker-compose fazia a BFF solicitar apenas `settlements.read` no token client-credentials — o JWT S2S nunca carrega `stock-inventory.read`, mesmo apos provisioning do scope no client. api-delpi responde `S2S_SCOPE_DENIED` (403) → BFF mapeava 403 generico sem codigo → MFE "Acesso restrito". A convencao documentada (`infra/.env.prod.example`: "use S2S_SCOPE apenas para scopes optional nao-default") exige `S2S_SCOPE` vazio para que o token carregue todos os default scopes do client.
+
+**Causa composta pendente (ops):** scope `stock-inventory.read` ainda nao provisionado como client scope + default scope no client `controllership-finance-api` (`S2S_KEYCLOAK_PROVISIONING=PENDING`); sem ele o 403 persistiria mesmo com `S2S_SCOPE` corrigido. Alem disso `FINANCEIRO_STOCK_INVENTORY_ENABLED` precisa estar `true` no ambiente — com flag off o usuario veria "Consulta ainda nao habilitada", nao dados.
+
+**Correcao aplicada:**
+- `infra/docker-compose.yml` + `infra/docker-compose.dev.yml`: `S2S_SCOPE: ${CF_S2S_SCOPE:-}` (vazio → token carrega todos os default scopes do client) e `FINANCEIRO_STOCK_INVENTORY_ENABLED`/`FINANCEIRO_SETTLEMENTS_SHARED_DATASET_ENABLED` explicitados com default `false` no servico api-delpi.
+- `infra/scripts/keycloak_s2s_controllership_finance_scope.py` — provisioner bounded (mesmo padrao `keycloak_s2s_supplies_scope.py`): garante `settlements.read` + `stock-inventory.read` como client scopes com atribuicao DEFAULT no client `controllership-finance-api` + audience mapper `api-delpi`. `--check` read-only; `--apply` exige `https://`.
+- BFF `_map_gateway_error`: propaga `error.code` upstream (`S2S_*`) em `data.error.code` nos 401/403 — RBAC (sem codigo), negacao S2S e gate de dataset agora distinguiveis.
+- MFE: banners distintos — `S2S_*` → "Integracao de dados pendente"; `scope_unavailable` → "Consulta ainda nao habilitada"; 403 sem codigo → "Acesso restrito" (RBAC). Ajuda contextual atualizada (`CF_HELP.stockInventory.status`).
+- Testes: BFF +2 (`S2S_SCOPE_DENIED`/`S2S_CLIENT_DENIED` propagados tipados → 24 pass); MFE +1 (banner S2S → 61 pass vitest; eslint clean; tsc clean).
+
+**Smoke real:** `TEST_NOT_RUN` neste ambiente — stack local nao roda os servicos CF, credenciais admin do Keycloak local e `CF_S2S_CLIENT_SECRET` indisponiveis neste contexto. Procedimento de ativacao: (1) deploy do commit em `main`; (2) `python3 infra/scripts/keycloak_s2s_controllership_finance_scope.py --check` e `--apply` no Keycloak de producao; (3) `FINANCEIRO_STOCK_INVENTORY_ENABLED=true` no `.env` de producao; (4) smoke `2026-09`/`branch=02` (dados) e `branch=01` (`source_missing`).
+
+`S2S_SCOPE_FIX=EXECUTED`; `S2S_KEYCLOAK_PROVISIONING=PENDING_OPS`; `FEATURE_FLAG=OFF_UNTIL_OPS_ENABLES`; `E2E_SMOKE=TEST_NOT_RUN`.

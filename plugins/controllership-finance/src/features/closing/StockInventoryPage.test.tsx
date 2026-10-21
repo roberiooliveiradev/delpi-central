@@ -176,7 +176,16 @@ describe("StockInventoryPage", () => {
     );
     render(<StockInventoryPage />);
     fillPeriodAndSubmit();
-    await waitFor(() => screen.getByText("Escopo de dados indisponível"));
+    await waitFor(() => screen.getByText("Consulta ainda não habilitada"));
+  });
+
+  it("S2S_SCOPE_DENIED mostra estado de integração pendente", async () => {
+    getMock.mockRejectedValue(
+      new ApiError(403, "Acesso negado.", "S2S_SCOPE_DENIED"),
+    );
+    render(<StockInventoryPage />);
+    fillPeriodAndSubmit();
+    await waitFor(() => screen.getByText("Integração de dados pendente"));
   });
 
   it("503 mostra dependência indisponível", async () => {

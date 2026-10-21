@@ -57,6 +57,15 @@ def _user_bearer(request: Request) -> str:
     return bearer.split(" ", 1)[1]
 
 
+def _error_data(exc: DelpiApiGatewayError) -> dict[str, Any] | None:
+    """Preserve the upstream typed code so the MFE can distinguish RBAC
+    denials (no code) from S2S credential/scope denials (``S2S_*``) and
+    dataset-gate denials (``scope_unavailable``)."""
+    if exc.error_code:
+        return {"error": {"code": exc.error_code}}
+    return None
+
+
 def _map_gateway_error(exc: DelpiApiGatewayError, operation_id: str):
     """Typed passthrough — never turn an authorization failure into success."""
     if exc.error_code == "scope_unavailable":
@@ -67,9 +76,15 @@ def _map_gateway_error(exc: DelpiApiGatewayError, operation_id: str):
             operation_id=operation_id,
         )
     if exc.status_code == 401:
-        return fail("Não autorizado.", 401, operation_id=operation_id)
+        return fail(
+            "Não autorizado.", 401,
+            data=_error_data(exc), operation_id=operation_id,
+        )
     if exc.status_code == 403:
-        return fail("Acesso negado.", 403, operation_id=operation_id)
+        return fail(
+            "Acesso negado.", 403,
+            data=_error_data(exc), operation_id=operation_id,
+        )
     if exc.status_code == 400:
         return fail("Parâmetros inválidos.", 400, operation_id=operation_id)
     if exc.status_code is None or exc.status_code >= 500:
