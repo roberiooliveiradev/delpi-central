@@ -16710,3 +16710,25 @@ C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW
 ```
 
+## §6.352 — F02-A-R1 starter suggestions habilitadas por padrão em produção
+
+**DATE:** 2026-10-21. **TASK:** `DELIA-UX-F02A-R1-PRODUCTION-DEFAULT-STARTERS-01`. **SPEC:** 93 §16 (autorização explícita do Product Master). Reanchor sobre `9c69742a1b` (upstream avançou por `2de2b96210` e `9c69742a1b`; worktree rebased). Correção pontual autorizada: `resolveStarterSuggestions()` retorna as quatro perguntas congeladas a todo usuário admitido à aplicação — sem `VITE_DELIA_DEMO`, sem `?delia-demo=`, sem cenário, sem permissão inventada; seam único preservado para projeção de elegibilidade por sessão. Componente `ConversationStarterSuggestions` (plugin-ui) e comportamento draft-only/foco/zero-submit inalterados. `demoMode.ts` e gates demo das demais funcionalidades intactos (suíte demo-mode verde). Backend/Core/RBAC/Keycloak/MCPs/orquestração/VD-F05 não tocados. Diff: 3 arquivos (`starterSuggestions.ts`, `App.tsx`, teste). Evidência: `starter-suggestions-f02a-r1-evidence.md`.
+
+```text
+F02A_R1_DEFAULT_STARTERS=EXECUTED
+TESTED_SHA=41fbb9657d70af45bea036627da26c5b26cd7309
+DEMO_GATE_REMOVED_FOR_DEFAULT_STARTERS=YES
+OTHER_DEMO_GATES_PRESERVED=YES
+VITEST_DELIA=276_PASSED
+TYPECHECK=PASS
+BUILD=PASS
+BROWSER_QA_LOCAL_PROD_PARITY=40_40
+PRODUCTION_DEPLOYMENT=PENDING
+PRODUCTION_BROWSER_QA=PENDING
+BACKEND_SUGGESTIONS_CONTRACT=DEFERRED
+PHASE_ADVANCE=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```
+
