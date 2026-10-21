@@ -25,6 +25,7 @@ import { classifyWriteOutcome } from "./query";
 import {
   SupplierCatalogField,
   SupplierFieldInput,
+  SupplierPostalCodeAssistant,
   SupplierFieldGrid,
   SupplierFormActions,
   SupplierProtectedField,
@@ -296,6 +297,23 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                       value={draft[field.key] ?? ""}
                       emptyLabel={C.fieldNotProvided}
                       hint={field.help}
+                    />
+                  ) : field.key === "postal_code" ? (
+                    <SupplierPostalCodeAssistant
+                      spec={field}
+                      value={draft.postal_code}
+                      onChange={(value) =>
+                        patchDraft({ postal_code: value })
+                      }
+                      onApply={(patch) => patchDraft(patch)}
+                      current={{
+                        address: draft.address,
+                        district: draft.district,
+                        city: draft.city,
+                        state: draft.state,
+                      }}
+                      disabled={submitting}
+                      showRequiredMark
                     />
                   ) : (
                     <SupplierFieldInput

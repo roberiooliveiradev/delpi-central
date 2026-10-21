@@ -10,6 +10,13 @@ import {
   SUPPLIERS_CONTENT,
 } from "./content";
 import {
+  deriveProtheusCityCode,
+  isCompletePostalCode,
+  normalizePostalDigits,
+  reconcileMunicipality,
+} from "./postalAddress";
+import { catalogDisplayText } from "./supplierCatalogs";
+import {
   buildCreateFornecedor,
   buildUpdateFornecedor,
   buildUrlSearch,
@@ -703,5 +710,86 @@ describe('F5-UX-R3 — metadados de catálogo TOTVS', () => {
       // Cardinalidade 1 comprovada: campo escalar no payload POST.
       expect(spec.post).toBe(true);
     }
+  });
+});
+
+
+describe('F5-UX-R3.1 — fallback honesto de descrição de catálogo', () => {
+  it('nunca exibe "codigo · codigo" quando a descrição está ausente', () => {
+    expect(catalogDisplayText('166', '')).toBe('166');
+    expect(catalogDisplayText('166', null)).toBe('166');
+    expect(catalogDisplayText('166', '166')).toBe('166');
+    expect(catalogDisplayText('166', '7 DIAS')).toBe('7 DIAS · 166');
+  });
+});
+
+describe('F5-UX-R4 — consulta de CEP e conciliação CC2', () => {
+  it('normaliza CEP com e sem máscara para 8 dígitos', () => {
+    expect(normalizePostalDigits('01310-100')).toBe('01310100');
+    expect(normalizePostalDigits('89120000')).toBe('89120000');
+    expect(isCompletePostalCode('01310-100')).toBe(true);
+    expect(isCompletePostalCode('01310')).toBe(false);
+  });
+
+  it('deriva CC2_CODMUN dos 5 últimos dígitos do IBGE', () => {
+    expect(deriveProtheusCityCode('3550308')).toBe('50308');
+    expect(deriveProtheusCityCode('4218202')).toBe('18202');
+    expect(deriveProtheusCityCode('')).toBe('');
+    expect(deriveProtheusCityCode('123')).toBe('');
+  });
+
+  it('concilia município pelo código derivado do IBGE dentro da UF', async () => {
+    const fetcher = async (_k: 'municipalities', o: { state?: string }) => ({
+      items:
+        o.state === 'SP'
+          ? [{ code: '50308', label: 'SAO PAULO', disabled: false }]
+          : [],
+    });
+    const out = await reconcileMunicipality('SP', '3550308', 'São Paulo', fetcher);
+    expect(out).toEqual({
+      status: 'matched',
+      code: '50308',
+      label: 'SAO PAULO',
+    });
+  });
+
+  it('concilia pelo nome normalizado quando o IBGE não casa', async () => {
+    const fetcher = async (_k: 'municipalities', o: { query?: string }) => ({
+      items:
+        o.query === '10001'
+          ? []
+          : [
+              { code: '10001', label: 'LUIZ ALVES', disabled: false },
+              { code: '10002', label: 'OUTRO', disabled: false },
+            ],
+    });
+    const out = await reconcileMunicipality(
+      'SC',
+      '9999999',
+      'Luiz Alves',
+      fetcher,
+    );
+    expect(out).toEqual({
+      status: 'matched',
+      code: '10001',
+      label: 'LUIZ ALVES',
+    });
+  });
+
+  it('devolve múltiplos candidatos para escolha — nunca escolhe sozinho', async () => {
+    const fetcher = async () => ({
+      items: [
+        { code: '11111', label: 'CENTRO DO NORTE', disabled: false },
+        { code: '22222', label: 'CENTRO SUL', disabled: false },
+      ],
+    });
+    const out = await reconcileMunicipality('SC', '', 'Centro', fetcher);
+    expect(out.status).toBe('multiple');
+  });
+
+  it('sem correspondência não inventa código', async () => {
+    const fetcher = async () => ({ items: [] });
+    const out = await reconcileMunicipality('SC', '', 'Nada', fetcher);
+    expect(out.status).toBe('unmatched');
   });
 });

@@ -68,6 +68,17 @@ export function catalogLabelOf(
   return hit ?? null;
 }
 
+/**
+ * "descrição · código" quando a descrição é real; apenas o código quando a
+ * descrição está ausente ou igual ao código — fallback honesto (nunca
+ * apresenta `166 · 166` como se houvesse descrição).
+ */
+export function catalogDisplayText(code: string, label?: string | null): string {
+  const c = code.trim();
+  const l = (label ?? "").trim();
+  return l && l !== c ? `${l} · ${c}` : c;
+}
+
 function rememberLabels(
   kind: SupplierCatalogKind,
   items: SupplierCatalogOption[],

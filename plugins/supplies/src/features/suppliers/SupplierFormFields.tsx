@@ -11,11 +11,21 @@ import {
   supplierFieldMaxLengthHint,
 } from "./content";
 import {
+  fetchPostalCodeSuggestion,
+  isCompletePostalCode,
+  normalizePostalDigits,
+  reconcileMunicipality,
+  type MunicipalityReconciliation,
+  type PostalAddressSuggestion,
+} from "./postalAddress";
+import {
+  catalogDisplayText,
   catalogLabelOf,
   isPreloadCatalog,
   useCatalogLabel,
   useCatalogOptions,
   useCatalogSearch,
+  type SupplierCatalogOption,
 } from "./supplierCatalogs";
 import type {
   SupplierDetailSectionKey,
@@ -171,7 +181,7 @@ function SupplierCatalogPreloadSelect({
       value={trimmed}
       options={merged.map((o) => ({
         value: o.code,
-        label: `${o.label} · ${o.code}`,
+        label: catalogDisplayText(o.code, o.label),
       }))}
       allowEmpty
       emptyLabel={C.fieldEmptyOption}
@@ -281,7 +291,7 @@ function SupplierCatalogSearchCombo({
         onClick={() => setOpen((current) => !current)}
       >
         <span className="sp-supplier-combo__trigger-text">
-          {trimmed ? `${label || trimmed} · ${trimmed}` : C.catalogComboPlaceholder}
+          {trimmed ? catalogDisplayText(trimmed, label) : C.catalogComboPlaceholder}
         </span>
       </button>
       {open ? (
@@ -320,7 +330,7 @@ function SupplierCatalogSearchCombo({
                     disabled={option.disabled}
                     onClick={() => pick(option.code, option.label)}
                   >
-                    {option.label} · {option.code}
+                    {catalogDisplayText(option.code, option.label)}
                   </button>
                 </li>
               ))
@@ -329,6 +339,295 @@ function SupplierCatalogSearchCombo({
           {hasMore ? (
             <p className="sp-supplier-combo__more">{C.catalogMoreHint}</p>
           ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Campos do draft que a proposta de CEP pode preencher (só com confirmação). */
+export type SupplierPostalApplyPatch = {
+  postal_code?: string;
+  address?: string;
+  district?: string;
+  state?: string;
+  city?: string;
+  city_code?: string;
+};
+
+type SupplierPostalCodeAssistantProps = {
+  spec: SupplierFieldSpec;
+  value: string;
+  onChange: (value: string) => void;
+  /** Aplica a proposta confirmada — o parent atualiza o draft (diff-only). */
+  onApply: (patch: SupplierPostalApplyPatch) => void;
+  /** Valores atuais para evidenciar sobrescrita antes da confirmação. */
+  current: { address: string; district: string; city: string; state: string };
+  disabled?: boolean;
+  showRequiredMark?: boolean;
+  hint?: string;
+};
+
+/**
+ * CEP com consulta assistida (F5-UX-R4): busca explícita, proposta visível,
+ * conciliação do município com o catálogo Protheus (CC2) e aplicação somente
+ * mediante confirmação. Respostas de CEP diferente do campo atual nunca são
+ * aplicadas; a digitação manual permanece disponível em qualquer estado.
+ */
+export function SupplierPostalCodeAssistant({
+  spec,
+  value,
+  onChange,
+  onApply,
+  current,
+  disabled,
+  showRequiredMark,
+  hint,
+}: SupplierPostalCodeAssistantProps) {
+  const [phase, setPhase] = useState<
+    "idle" | "invalid" | "loading" | "found" | "notfound" | "error"
+  >("idle");
+  const [suggestion, setSuggestion] =
+    useState<PostalAddressSuggestion | null>(null);
+  const [recon, setRecon] = useState<MunicipalityReconciliation | null>(null);
+  const [picked, setPicked] = useState<SupplierCatalogOption | null>(null);
+  const seqRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const digits = normalizePostalDigits(value);
+  const suggestionMatchesField =
+    suggestion !== null && suggestion.postal_code === digits;
+
+  const search = () => {
+    const seq = ++seqRef.current;
+    abortRef.current?.abort();
+    setSuggestion(null);
+    setRecon(null);
+    setPicked(null);
+    if (!isCompletePostalCode(value)) {
+      setPhase("invalid");
+      return;
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setPhase("loading");
+    fetchPostalCodeSuggestion(digits, controller.signal)
+      .then(async (result) => {
+        if (seq !== seqRef.current || controller.signal.aborted) return;
+        if (!result || !result.found) {
+          setPhase("notfound");
+          return;
+        }
+        setSuggestion(result);
+        let reconciliation: MunicipalityReconciliation = {
+          status: "unmatched",
+        };
+        try {
+          reconciliation = await reconcileMunicipality(
+            result.state,
+            result.ibge_city_code,
+            result.city,
+          );
+        } catch {
+          /* catálogo indisponível → município fica para seleção manual */
+        }
+        if (seq !== seqRef.current) return;
+        setRecon(reconciliation);
+        setPhase("found");
+      })
+      .catch(() => {
+        if (seq !== seqRef.current) return;
+        setPhase("error");
+      });
+  };
+
+  const reset = () => {
+    seqRef.current += 1;
+    abortRef.current?.abort();
+    setPhase("idle");
+    setSuggestion(null);
+    setRecon(null);
+    setPicked(null);
+  };
+
+  const apply = () => {
+    if (!suggestion || !suggestionMatchesField) return;
+    const patch: SupplierPostalApplyPatch = {
+      postal_code: suggestion.postal_code,
+    };
+    if (suggestion.street.trim()) patch.address = suggestion.street.trim();
+    if (suggestion.district.trim()) {
+      patch.district = suggestion.district.trim();
+    }
+    if (suggestion.state.trim()) {
+      patch.state = suggestion.state.trim().toUpperCase();
+    }
+    const municipality =
+      recon?.status === "matched"
+        ? recon
+        : picked
+          ? { status: "matched" as const, code: picked.code, label: picked.label }
+          : null;
+    if (municipality) {
+      patch.city = municipality.label;
+      patch.city_code = municipality.code;
+    }
+    onApply(patch);
+    reset();
+  };
+
+  const label =
+    showRequiredMark && spec.required ? `${spec.label} *` : spec.label;
+  const municipalityPending =
+    phase === "found" &&
+    suggestionMatchesField &&
+    (recon?.status === "unmatched" ||
+      (recon?.status === "multiple" && !picked));
+
+  const rows: { label: string; proposed: string; current: string }[] =
+    suggestion && suggestionMatchesField
+      ? [
+          {
+            label: C.postalFieldAddress,
+            proposed: suggestion.street.trim(),
+            current: current.address,
+          },
+          {
+            label: C.postalFieldDistrict,
+            proposed: suggestion.district.trim(),
+            current: current.district,
+          },
+          {
+            label: C.postalFieldState,
+            proposed: suggestion.state.trim().toUpperCase(),
+            current: current.state,
+          },
+          ...(recon?.status === "matched"
+            ? [
+                {
+                  label: C.postalFieldCity,
+                  proposed: recon.label,
+                  current: current.city,
+                },
+              ]
+            : picked
+              ? [
+                  {
+                    label: C.postalFieldCity,
+                    proposed: picked.label,
+                    current: current.city,
+                  },
+                ]
+              : []),
+        ].filter((row) => row.proposed)
+      : [];
+
+  return (
+    <div className="sp-postal">
+      <SuppliesTextField
+        label={label}
+        hint={hint ?? spec.help}
+        value={value}
+        onChange={(raw) => onChange(raw.replace(/\D/g, ""))}
+        disabled={disabled}
+      />
+      <div className="sp-postal__actions">
+        <button
+          type="button"
+          className="sp-postal__search"
+          onClick={search}
+          disabled={disabled || phase === "loading"}
+        >
+          {phase === "loading"
+            ? C.postalLookupLoading
+            : C.postalLookupButton}
+        </button>
+        {phase !== "idle" && phase !== "loading" ? (
+          <button
+            type="button"
+            className="sp-postal__discard"
+            onClick={reset}
+            disabled={disabled}
+          >
+            {C.postalDiscard}
+          </button>
+        ) : null}
+      </div>
+      {phase === "invalid" ? (
+        <p className="sp-postal__feedback">{C.postalInvalid}</p>
+      ) : null}
+      {phase === "notfound" ? (
+        <p className="sp-postal__feedback">{C.postalNotFound}</p>
+      ) : null}
+      {phase === "error" ? (
+        <p className="sp-postal__feedback">{C.postalError}</p>
+      ) : null}
+      {phase === "found" && suggestion && suggestionMatchesField ? (
+        <div className="sp-postal__card" role="group" aria-label={C.postalFoundTitle}>
+          <p className="sp-postal__card-title">{C.postalFoundTitle}</p>
+          <dl className="sp-postal__rows">
+            {rows.map((row) => (
+              <div key={row.label} className="sp-postal__row">
+                <dt>{row.label}</dt>
+                <dd>
+                  {row.current.trim() &&
+                  row.current.trim().toUpperCase() !==
+                    row.proposed.toUpperCase() ? (
+                    <>
+                      <span className="sp-postal__old">{row.current}</span>
+                      {" → "}
+                    </>
+                  ) : null}
+                  <strong>{row.proposed}</strong>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          {recon?.status === "matched" || picked ? (
+            <p className="sp-postal__note">{C.postalMunicipalityMatched}</p>
+          ) : null}
+          {recon?.status === "multiple" && !picked ? (
+            <>
+              <p className="sp-postal__note">
+                {C.postalMunicipalityMultiple}
+              </p>
+              <ul className="sp-postal__options">
+                {recon.options.map((option) => (
+                  <li key={option.code}>
+                    <button
+                      type="button"
+                      className="sp-postal__option"
+                      onClick={() => setPicked(option)}
+                    >
+                      {catalogDisplayText(option.code, option.label)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {recon?.status === "unmatched" ? (
+            <p className="sp-postal__note">
+              {C.postalMunicipalityUnmatched}
+            </p>
+          ) : null}
+          <div className="sp-postal__card-actions">
+            <button
+              type="button"
+              className="sp-postal__apply"
+              onClick={apply}
+              disabled={
+                disabled || (recon?.status === "multiple" && !picked)
+              }
+            >
+              {C.postalApply}
+            </button>
+            {municipalityPending && recon?.status === "unmatched" ? (
+              <span className="sp-postal__hint">
+                {C.postalMunicipalityUnmatched}
+              </span>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>
@@ -356,7 +655,7 @@ export function SupplierCatalogViewValue({
     { state: dependsOnValue },
   );
   if (!spec.catalog || !trimmed) return <>{value}</>;
-  return <>{label ? `${label} · ${trimmed}` : value}</>;
+  return <>{catalogDisplayText(trimmed, label || null)}</>;
 }
 
 /**

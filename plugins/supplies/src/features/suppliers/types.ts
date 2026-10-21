@@ -267,7 +267,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 40,
     span: 6,
-    help: "Logradouro e identificação do endereço cadastral do fornecedor (A2_END).",
+    help: "Logradouro cadastral do fornecedor (A2_END). Pode receber sugestão da consulta por CEP e ser ajustado manualmente.",
   }),
   E({
     key: "district",
@@ -275,7 +275,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     section: "address",
     maxLength: 20,
     span: 3,
-    help: "Bairro correspondente ao endereço informado (A2_BAIRRO).",
+    help: "Bairro do endereço (A2_BAIRRO). Confira a sugestão retornada pela consulta de CEP.",
   }),
   E({
     key: "postal_code",
@@ -284,7 +284,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 8,
     digitsOnly: true,
     span: 3,
-    help: "Código postal do endereço do fornecedor, somente dígitos (A2_CEP).",
+    help: "Informe o CEP (somente dígitos, A2_CEP) para consultar uma sugestão de endereço. Confira os dados antes de aplicá-los.",
   }),
   E({
     key: "city",
@@ -294,7 +294,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     span: 4,
     catalog: "municipalities",
     catalogDependsOn: "state",
-    help: "Município do endereço cadastral (A2_MUN) — selecione a UF e pesquise pelo nome; o código IBGE é preenchido junto.",
+    help: "Município do fornecedor (A2_MUN), conciliado com o cadastro Protheus quando possível — selecione a UF e pesquise pelo nome.",
   }),
   E({
     key: "city_code",
@@ -304,7 +304,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     digitsOnly: true,
     span: 2,
     catalogDerivedFrom: "city",
-    help: "Código IBGE do município (A2_COD_MUN) — preenchido automaticamente ao selecionar a cidade com a UF definida.",
+    help: "Código do município utilizado no cadastro Protheus (A2_COD_MUN). A correspondência com o código IBGE externo é validada antes de aplicar.",
   }),
   E({
     key: "state",
@@ -314,7 +314,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     uppercase: true,
     span: 2,
     catalog: "states",
-    help: "Unidade federativa do endereço (A2_EST) — selecione a UF cadastrada no Protheus.",
+    help: "Unidade federativa do endereço (A2_EST) — selecione a UF cadastrada no Protheus; pode ser sugerida pela consulta de CEP.",
   }),
   E({
     key: "country_code",

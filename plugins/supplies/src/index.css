@@ -1270,3 +1270,145 @@
   color: var(--sp-text-muted);
   font-size: 0.8rem;
 }
+
+/* F5-UX-R4 — consulta assistida de CEP */
+.dashboard-supplies-portal .sp-postal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-postal__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-supplies-portal .sp-postal__search,
+.dashboard-supplies-portal .sp-postal__apply {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--sp-accent);
+  border-radius: 8px;
+  background: var(--sp-accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-postal__search {
+  background: transparent;
+  color: var(--sp-accent);
+}
+
+.dashboard-supplies-portal .sp-postal__search:disabled,
+.dashboard-supplies-portal .sp-postal__apply:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-supplies-portal .sp-postal__discard {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sp-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-postal__feedback {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sp-warning);
+}
+
+.dashboard-supplies-portal .sp-postal__card {
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: var(--sp-surface-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-supplies-portal .sp-postal__card-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--sp-title);
+}
+
+.dashboard-supplies-portal .sp-postal__rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-supplies-portal .sp-postal__row {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-postal__row dt {
+  min-width: 72px;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-postal__row dd {
+  margin: 0;
+  color: var(--sp-text);
+}
+
+.dashboard-supplies-portal .sp-postal__old {
+  color: var(--sp-text-muted);
+  text-decoration: line-through;
+}
+
+.dashboard-supplies-portal .sp-postal__note {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-postal__options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.dashboard-supplies-portal .sp-postal__option {
+  width: 100%;
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sp-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-postal__option:hover {
+  background: var(--sp-surface-elevated);
+}
+
+.dashboard-supplies-portal .sp-postal__card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-supplies-portal .sp-postal__hint {
+  font-size: 0.76rem;
+  color: var(--sp-text-muted);
+}

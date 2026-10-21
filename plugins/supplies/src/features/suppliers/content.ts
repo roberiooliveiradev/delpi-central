@@ -105,6 +105,26 @@ export const SUPPLIERS_CONTENT = {
   catalogEmpty: "Nenhuma opção encontrada.",
   catalogError: "Catálogo indisponível no momento.",
   catalogMoreHint: "Resultados limitados — refine a busca.",
+
+  // Consulta de CEP (F5-UX-R4) — proposta assistida, nunca automática.
+  postalLookupButton: "Buscar endereço",
+  postalLookupLoading: "Consultando CEP…",
+  postalInvalid: "Informe os 8 dígitos do CEP para consultar.",
+  postalNotFound: "CEP não encontrado — preencha o endereço manualmente.",
+  postalError:
+    "Consulta de CEP indisponível no momento — preencha manualmente.",
+  postalFoundTitle: "Endereço encontrado",
+  postalApply: "Aplicar endereço",
+  postalDiscard: "Descartar",
+  postalMunicipalityMatched: "Município conciliado com o cadastro Protheus.",
+  postalMunicipalityUnmatched:
+    "Município não localizado no catálogo Protheus — selecione manualmente após aplicar.",
+  postalMunicipalityMultiple:
+    "Mais de um município corresponde — escolha o correto antes de aplicar.",
+  postalFieldAddress: "Endereço",
+  postalFieldDistrict: "Bairro",
+  postalFieldCity: "Cidade",
+  postalFieldState: "UF",
   openCreatedDetail: "Abrir ficha do fornecedor criado",
   verifyAction: "Conferir gravação no ERP",
   verifyNotReflectedMessage:

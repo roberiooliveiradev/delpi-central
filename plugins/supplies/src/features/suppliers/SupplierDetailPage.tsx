@@ -28,6 +28,7 @@ import {
   SupplierFieldInput,
   SupplierFieldGrid,
   SupplierFormActions,
+  SupplierPostalCodeAssistant,
   SupplierProtectedField,
   SupplierReviewTable,
 } from "./SupplierFormFields";
@@ -401,6 +402,27 @@ export function SupplierDetailPage({
                             value={draft[key] ?? ""}
                             emptyLabel={C.fieldNotProvided}
                             hint={spec.help}
+                          />
+                        ) : spec.key === "postal_code" ? (
+                          <SupplierPostalCodeAssistant
+                            spec={spec}
+                            value={draft.postal_code ?? ""}
+                            onChange={(value) =>
+                              setDraft((d) => ({
+                                ...d,
+                                postal_code: value,
+                              }))
+                            }
+                            onApply={(patch) =>
+                              setDraft((d) => ({ ...d, ...patch }))
+                            }
+                            current={{
+                              address: draft.address ?? "",
+                              district: draft.district ?? "",
+                              city: draft.city ?? "",
+                              state: draft.state ?? "",
+                            }}
+                            disabled={submitting}
                           />
                         ) : (
                           <SupplierFieldInput

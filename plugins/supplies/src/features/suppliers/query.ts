@@ -7,7 +7,10 @@ import type {
   SupplierWriteResponse,
   SuppliersQuery,
 } from "./types";
-import { catalogLabelOf } from "./supplierCatalogs";
+import {
+  catalogDisplayText,
+  catalogLabelOf,
+} from "./supplierCatalogs";
 import {
   SUPPLIER_FIELD_REGISTRY,
   SUPPLIER_PERSON_TYPE_LABELS,
@@ -193,7 +196,7 @@ export function supplierCatalogValueText(
   const trimmed = value.trim();
   if (!spec?.catalog || !trimmed) return value;
   const label = catalogLabelOf(spec.catalog, trimmed);
-  return label ? `${label} · ${trimmed}` : value;
+  return catalogDisplayText(trimmed, label);
 }
 
 /** Agrupa alterações por seção do registry, preservando a ordem canônica. */

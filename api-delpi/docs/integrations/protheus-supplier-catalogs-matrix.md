@@ -70,6 +70,44 @@ endpoints de fornecedores). Envelope:
   (`CI_AI LIKE '%q%'`).
 - Erros sanitizados; sem exposição de tabela/coluna ao cliente.
 
+## Correção F5-UX-R3.1 (2026-10-21)
+
+Sintoma: seletores exibiam `código · código` e lista só com o valor atual.
+
+Causa raiz comprovada nos logs de `delpi-api-delpi`: `ORDER BY
+{order}, {code_col}` duplicava a coluna quando a ordenação coincidia
+com a chave (erro SQL 169 em `states`, `payment-methods`,
+`payment-conditions`, `financial-natures`, `accounting-accounts` → 503
+sanitizado). O MFE preservava o valor corrente com `label = code`
+(fallback legítimo), o que gerava o `166 · 166`.
+
+Correção: `ORDER BY` deduplicado no repositório (regressão coberta por
+`test_order_by_never_repeats_a_column`). Exibição passa a usar
+`catalogDisplayText(code, label)` — descrição real ou apenas o código,
+nunca `code · code`.
+
+Validação em `DELPI` (base efetiva do runtime — **o container consulta
+`DELPI`, não `DELPI_TST01`**; ambas compartilham o dicionário e as
+contagens convergem): `166`→"7 DIAS", `45`→"PIX Transferência" (SX5/58),
+`2094`→"SERVIÇOS TERCEIROS", `21101559`→"RESERVA".
+
+## Consulta de CEP — F5-UX-R4
+
+`GET /suppliers/postal-codes/<cep>` na `supplies-api` (mesma capability
+`supplies.access`), provider ViaCEP (`POSTAL_ADDRESS_PROVIDER_URL`,
+timeout 6s, path fixo `/<8 dígitos>/json/` — anti-SSRF, sem credencial,
+sem persistência do retorno).
+
+Saída: `{postal_code, street, district, city, state, ibge_city_code,
+source:"viacep", found}`. CEP inválido → 422; não encontrado →
+`{found:false}`; timeout/inacessível → 504/502 sanitizados.
+
+Conciliação municipal (MFE): `ibge_city_code` → `CC2_CODMUN` =
+últimos 5 dígitos do IBGE dentro de `CC2_EST` (comprovado:
+SP/50308=SÃO PAULO, SC/18202=TIMBO, SC/10001=LUIZ ALVES). Fallback por
+nome normalizado na UF; múltiplos candidatos exigem escolha; sem match
+o `city_code` não é preenchido.
+
 ## Residual / pendente
 
 - Nenhum campo candidato ficou `PENDING` — todos os gates fecharam.
