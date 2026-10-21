@@ -71,6 +71,35 @@ def _clear_user():
 def test_operation_ids_are_explicit_and_registered() -> None:
     found = {route.operation_id for route in router.routes}
     assert found == _OPERATION_IDS
+    from app.interface.http.openapi_agent_metadata import (
+        METALLOGRAPHIC_REPORT_COPY,
+        METALLOGRAPHIC_REPORT_CREATE,
+        METALLOGRAPHIC_REPORT_DELETE,
+        METALLOGRAPHIC_REPORT_DELETE_IMAGE,
+        METALLOGRAPHIC_REPORT_EXPORT_PDF,
+        METALLOGRAPHIC_REPORT_GET,
+        METALLOGRAPHIC_REPORT_GET_IMAGE,
+        METALLOGRAPHIC_REPORT_LIST,
+        METALLOGRAPHIC_REPORT_PUT_IMAGE,
+        METALLOGRAPHIC_REPORT_UPDATE,
+    )
+
+    catalog_ids = {
+        meta["operation_id"]
+        for meta in (
+            METALLOGRAPHIC_REPORT_CREATE,
+            METALLOGRAPHIC_REPORT_LIST,
+            METALLOGRAPHIC_REPORT_GET,
+            METALLOGRAPHIC_REPORT_UPDATE,
+            METALLOGRAPHIC_REPORT_DELETE,
+            METALLOGRAPHIC_REPORT_COPY,
+            METALLOGRAPHIC_REPORT_PUT_IMAGE,
+            METALLOGRAPHIC_REPORT_GET_IMAGE,
+            METALLOGRAPHIC_REPORT_DELETE_IMAGE,
+            METALLOGRAPHIC_REPORT_EXPORT_PDF,
+        )
+    }
+    assert catalog_ids == found
     for operation_id in _OPERATION_IDS:
         assert operation_id in ROUTE_CONTRACTS
     child_paths = {route.path for route in router.routes}

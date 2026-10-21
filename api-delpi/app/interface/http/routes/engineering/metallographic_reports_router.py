@@ -54,6 +54,11 @@ from app.utils.logger import log_error
 router = APIRouter(prefix="/metallographic-reports", tags=["Engenharia — Metalografia"])
 
 
+def _openapi_meta(meta: dict[str, str]) -> dict[str, str]:
+    """Summary/description do catálogo; operation_id fica literal no decorator (gate OpenAPI)."""
+    return {key: value for key, value in meta.items() if key != "operation_id"}
+
+
 class MetallographicMeasurementBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     criterion: str | None = None
@@ -151,7 +156,11 @@ def _failure(exc: Exception):
     )
 
 
-@router.post("", **METALLOGRAPHIC_REPORT_CREATE)
+@router.post(
+    "",
+    operation_id="engineering_create_metallographic_report",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_CREATE),
+)
 @require_permission(METALOGRAPHY_CREATE)
 def create_metallographic_report(
     body: MetallographicReportWriteBody,
@@ -173,7 +182,11 @@ def create_metallographic_report(
         return _failure(exc)
 
 
-@router.get("", **METALLOGRAPHIC_REPORT_LIST)
+@router.get(
+    "",
+    operation_id="engineering_list_metallographic_reports",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_LIST),
+)
 @require_permission(METALOGRAPHY_VIEW)
 def list_metallographic_reports(
     page: int = Query(1, ge=1),
@@ -223,7 +236,11 @@ def list_metallographic_reports(
         return _failure(exc)
 
 
-@router.get("/{report_id}", **METALLOGRAPHIC_REPORT_GET)
+@router.get(
+    "/{report_id}",
+    operation_id="engineering_get_metallographic_report",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_GET),
+)
 @require_permission(METALOGRAPHY_VIEW)
 def get_metallographic_report(report_id: UUID):
     try:
@@ -238,7 +255,11 @@ def get_metallographic_report(report_id: UUID):
         return _failure(exc)
 
 
-@router.patch("/{report_id}", **METALLOGRAPHIC_REPORT_UPDATE)
+@router.patch(
+    "/{report_id}",
+    operation_id="engineering_update_metallographic_report",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_UPDATE),
+)
 @require_permission(METALOGRAPHY_EDIT)
 def update_metallographic_report(
     report_id: UUID,
@@ -262,7 +283,11 @@ def update_metallographic_report(
         return _failure(exc)
 
 
-@router.delete("/{report_id}", **METALLOGRAPHIC_REPORT_DELETE)
+@router.delete(
+    "/{report_id}",
+    operation_id="engineering_delete_metallographic_report",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_DELETE),
+)
 @require_permission(METALOGRAPHY_DELETE)
 def delete_metallographic_report(
     report_id: UUID,
@@ -283,7 +308,11 @@ def delete_metallographic_report(
         return _failure(exc)
 
 
-@router.post("/{report_id}/copies", **METALLOGRAPHIC_REPORT_COPY)
+@router.post(
+    "/{report_id}/copies",
+    operation_id="engineering_copy_metallographic_report",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_COPY),
+)
 @require_permission(METALOGRAPHY_CREATE)
 def copy_metallographic_report(
     report_id: UUID,
@@ -305,7 +334,11 @@ def copy_metallographic_report(
         return _failure(exc)
 
 
-@router.put("/{report_id}/images/{slot}", **METALLOGRAPHIC_REPORT_PUT_IMAGE)
+@router.put(
+    "/{report_id}/images/{slot}",
+    operation_id="engineering_put_metallographic_image",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_PUT_IMAGE),
+)
 @require_permission(METALOGRAPHY_EDIT)
 def put_metallographic_image(
     report_id: UUID,
@@ -333,7 +366,11 @@ def put_metallographic_image(
         return _failure(exc)
 
 
-@router.get("/{report_id}/images/{slot}", **METALLOGRAPHIC_REPORT_GET_IMAGE)
+@router.get(
+    "/{report_id}/images/{slot}",
+    operation_id="engineering_get_metallographic_image",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_GET_IMAGE),
+)
 @require_permission(METALOGRAPHY_VIEW)
 def get_metallographic_image(report_id: UUID, slot: str):
     try:
@@ -351,7 +388,11 @@ def get_metallographic_image(report_id: UUID, slot: str):
         return _failure(exc)
 
 
-@router.delete("/{report_id}/images/{slot}", **METALLOGRAPHIC_REPORT_DELETE_IMAGE)
+@router.delete(
+    "/{report_id}/images/{slot}",
+    operation_id="engineering_delete_metallographic_image",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_DELETE_IMAGE),
+)
 @require_permission(METALOGRAPHY_EDIT)
 def delete_metallographic_image(
     report_id: UUID,
@@ -375,7 +416,11 @@ def delete_metallographic_image(
         return _failure(exc)
 
 
-@router.get("/{report_id}/pdf", **METALLOGRAPHIC_REPORT_EXPORT_PDF)
+@router.get(
+    "/{report_id}/pdf",
+    operation_id="engineering_export_metallographic_report_pdf",
+    **_openapi_meta(METALLOGRAPHIC_REPORT_EXPORT_PDF),
+)
 @require_permission(METALOGRAPHY_EXPORT)
 def export_metallographic_report_pdf(report_id: UUID):
     try:
