@@ -157,3 +157,38 @@ Screenshots confirmam tabela de Contas a Pagar e janelas Gerenciador de Filtros 
 - Sinal verificavel de fim de Acompanha Custos e escopo preciso das extracoes bloqueadas.
 
 Estado: KARDEX_DEPENDENCY=OWNER_REPORTED_VIA_PO; COMPENSATION_PURPOSE=OWNER_REPORTED_VIA_PO; COMPENSATION_SCREEN=PROVEN_SCREENSHOT_PARTIAL; COMPENSATION_OUTCOME=INCONCLUSIVE; MATCHING_RULE=TO_INVENTORY; ERP_WRITES=NOT_AUTHORIZED.
+
+
+## Registro 06 - Emissao de titulos em aberto, pagar e receber (10:09-11:32)
+
+**Fonte:** narracao guiada do PO nesta conversa; duas capturas do TOTVS Financeiro com janelas de impressao e parametros. `OWNER_REPORTED_VIA_PO` para comportamento/escopo descrito; `PROVEN_SCREENSHOT` apenas para rotinas e filtros visiveis.
+
+### 10:09 - Posicao dos Titulos a Pagar
+- Joici inicia a emissao de `Posicao dos Titulos a Pagar`; a rotina de impressao na captura mostra `FINR150` (leitura visual a confirmar no artefato impresso).
+- Segundo o PO, o objetivo e obter **todos os titulos ainda em aberto**, incluindo vencimentos passados e futuros, **nao somente o mes de referencia**. Isso nao significa necessariamente que nao existam outros filtros do relatorio.
+- Na captura a tela `Parametros` inclui filtros por natureza, vencimento e banco. O intervalo mostrado de vencimento deve ser preservado como **parametro efetivamente selecionado** quando for confirmado; nao afirmar que o relatorio contempla um universo ilimitado sem comparar o output.
+- `OWNER_REPORTED_VIA_PO`: emissao iniciada; `OUTPUT_PARITY=TEST_NOT_RUN`.
+
+### ~11:08 - Posicao dos Titulos a Receber
+- Joici repete o procedimento no Contas a Receber, com janela `Posicao dos Titulos a Receber` e rotina visual `FINR130` (identificador sujeito a confirmacao em original gerado).
+- A imagem revela campos de titulo, banco, vencimento e natureza. O recorte mostra filtro de vencimento na tela; nao pressupor inclusao de qualquer data fora da selecao.
+- Intencao, segundo o PO: consultar posicao aberta a receber, equivalente funcional de levantamento de pendencias, com regras e filtros especificos do relatorio a validar.
+
+### ~11:32 - Inicio de analise dos outputs
+- PO informa que a Posicao dos Titulos a Pagar ja foi gerada e que Joici comeca a examinar os relatorios produzidos.
+- Capturas fornecidas nao comprovam valores totais, detalhes da planilha/PDF, criterio de classificacao de vencidos/vincendos, nem desfecho de compensacao.
+
+### Conexao com o Portal e riscos de equivalencia
+- **R01/R02 atuais = eventos de baixas financeiras** (o que foi liquidado), com filtros por data de baixa, natureza e movimento; nao sao o universo de titulos abertos. Os relatorios `Posicao dos Titulos` constituem **novas fontes/visoes AS-IS para mapear**, mas nao autorizam criar endpoints ou paginas.
+- Candidata futura: `Posicao Financeira em Aberto` com lado pagar/receber, vencidos/vincendos, riscos de prazo e possiveis compensacoes; **TARGET / DECISION_REQUIRED**, dependente de producer e ownership api-delpi, criterios e permission effective access/manage conforme contrato do produto.
+- A janela de impressao com periodo selecionado nao comprova universo completo historico; conferir documento original e parametros gravados. Nao inventar totais.
+- Manter **compensacao**, **baixa** e **posicao em aberto** como tres conceitos financeiros distintos.
+
+### Pendencias objetivas
+1. Obter PDF/Excel original da Posicao dos Titulos a Pagar e a Receber ou seu layout/colunas e filtros efetivos.
+2. Confirmar `FINR150` e `FINR130` e variacoes customizadas do ambiente.
+3. Verificar regra de aberto: saldo parcial, titulos vencidos/futuros, antecipacoes, notas de devolucao, filiais e datas de referencia.
+4. Identificar leitura canonica em api-delpi/Protheus antes de qualquer proposta de comparacao com baixas R01/R02.
+5. Seguir a narracao apos ~11:32 e capturar quais comparacoes Joici realmente faz com os outputs.
+
+Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `PRINT_DIALOGS=PROVEN_SCREENSHOT_PARTIAL`; `PRINTED_CONTENT=TO_INVENTORY`; `R01_R02_PARITY=NOT_ESTABLISHED`; `IMPLEMENTATION_AUTHORIZED=NO`.
