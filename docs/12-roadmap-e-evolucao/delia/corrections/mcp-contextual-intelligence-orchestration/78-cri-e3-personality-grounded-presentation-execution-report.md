@@ -220,3 +220,16 @@ nunca vira autoridade:
 
 `E3_IMPLEMENTED=YES`; `E3_ACCEPTED=PENDING_INDEPENDENT_REVIEW`;
 `NEXT=COORDINATION_REVIEW_THEN_E4`.
+
+
+## 10. Independent coordination review — 2026-10-21
+
+**Verdict: `REWORK` (one bounded E3 correction cycle); E3 not accepted.** Static review of E3 commit `6acb70cc7f3b557e99461a721357859f17e0f56c` and actual `conversational_response.py`, `cri_presentation.delpi.json`, `root_composer.py`, doc 78. Executor reports `1820 passed / 3 skipped`; **independent test run `TEST_NOT_RUN`**, real-model/provider evaluation `TEST_NOT_RUN`. G1 requested/effective mode is correctly wired; G2 distinguishes presented/returned counts and remains a valid foundation. No independent production behavior asserted.
+
+**E3-R1 — source availability ≠ delivered items:** vocabulary `insufficiency.fewer_than_requested` says `A fonte só dispõe de {delivered} dos {requested} exemplos pedidos`; this is false for `total_count=10, delivered=2, requested=3`. The available business inventory and the number returned/presented are distinct. Make response language accurately distinguish *source-proven shortage* versus *insufficient returned/presented examples* using owner evidence; prevent provider-neutral verdict templates from making unsupported source-stock statements.
+
+**E3-R2 — temporal meaning cannot be inferred from order:** `ordering_newest_single` claims `mais recentemente alterado` and the `newest_first` temporal clause claims `última alteração registrada` based on a parseable, sorted time field without evidence that it represents *modification*. A date of creation or other owner temporal field can order results but cannot prove alteration semantics. Require owner-authoritative temporal meaning or use bounded neutral wording; test creation-date/other-date counterexamples and preserve coverage/ordering checks. If owner semantics are missing, do not claim `último alterado` merely from monotonic dates.
+
+**E3-R3 — continuation must be serviceable:** `continuity.detail_offer` promises `Posso detalhar os campos de um registro específico` solely when hidden fields exist. Unshown fields do not prove a legitimate next-turn capability/context binding for follow-up retrieval. Gate the suggestion on verified same-turn detail availability or a genuine authorized continuation contract; otherwise omit it, with tests for unavailable detail path and non-actionable follow-up. No new capability/ACT introduced.
+
+**Finite scope:** fix only R1–R3 and associated negative/off-on/generalization tests and versioned presentation resource as necessary. Keep baseline OFF byte-identical, selection-only frozen, E3-G1/G2 retained, existing v1 presentation and frontend unless a concrete need appears. This is the **single bounded E3 rework** permitted by roadmap 74. No new planner, prompt registry, provider-specific templates, factual-prose ADR bypass or production activation. Acceptance needs faithful statements on example counts/date semantics, actionable follow-up, full regression and evidence. `E3_VERDICT=REWORK`; `E3_ACCEPTED=NO`; `E3_REWORK_ALLOWED=ONE_BOUNDED_CYCLE`; `E4_AUTHORIZED=NO`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
