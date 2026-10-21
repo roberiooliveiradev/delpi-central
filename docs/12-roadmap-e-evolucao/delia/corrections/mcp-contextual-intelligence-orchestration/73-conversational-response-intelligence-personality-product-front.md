@@ -68,3 +68,36 @@ C3_EXECUTED=NO
 **`DELIA-CONVERSATIONAL-RESPONSE-INTELLIGENCE-SPEC-01`** = reanchor → locate authoritative personality/behavior specs and existing Evidence/Outcome/synthesis + shared frontend contracts → reuse inventory → product-to-contract mapping → determine whether a separate factual-prose ADR is required → deliver finite implementation split by legitimate owners. No code, runtime, schema or stage change during this specification step. Execution needs distinct authorization after review.
 
 This front is **separate** from closed Q01–Q03 semantic refactor and Structural Cleanup 01. Previous functional I04 gate and C3 state remain unpromoted.
+
+## 7. Foundational requirement — centrally governed enable/disable and interference isolation (Product Master, 2026-10-21)
+
+**MANDATORY FROM THE FIRST SPECIFICATION AND IMPLEMENTATION STEP:** The entire conversational response intelligence/personality flow must have a **single coherent, centrally owned activation decision**, with an independently verifiable OFF baseline. Its purpose is to isolate regressions and interference, support staged rollout, diagnosis and safe rollback. This is a product acceptance requirement, **not authorization to invent a new flag service or parallel platform governance**.
+
+Before design, inventory existing Core/platform governance, configuration/feature-toggle mechanisms and legitimate DÉLIA application composition/config facilities. Record `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY`, `REUSE_DECISION=REUSE|EXTEND|NEW`, owner, readers/consumers, deployment and rollback path. Core remains the owner of app governance/RBAC; DÉLIA owns behavior/orchestration within authorized context; Portal/plugin-ui displays authorized state and never decides backend authority. **Do not use frontend state, model output, provider metadata, local prompt text or user settings as a security permission.**
+
+### Required behavior and isolation contract
+
+- **OFF / baseline:** no new response-intelligence/personality processing is invoked; requests use the existing governed `selection-only` outcome and presentation path, without changing authorization, evidence, capabilities, input interpretation, execution, or read/write gates. Confirm equivalence on the same request and owner evidence.
+- **ON / enabled:** only the approved new response-quality behavior runs, behind the centrally resolved control; evidence provenance, grounded synthesis restrictions, deadline and policy gates are identical to baseline until explicitly superseded by an authorized ADR.
+- **Central decision:** one source of operational truth for the activation state, delivered by the legitimate owner to the DÉLIA backend. No scattered `if` branches, environment flags in multiple components, competing UI switches or independent per-provider toggles. The implementation may internally have bounded stages but their activation must derive from that one central decision.
+- **Default:** OFF until contract, safety, tests, rollout ownership and activation authorization are confirmed; do not silently turn ON in production. Fail-closed behavior on unavailable/invalid control state. If existing platform governance prescribes a different fallback, document conflict and STOP for coordination rather than silently overriding.
+- **Diagnostics:** include non-sensitive feature state, resolved config version, runtime SHA/model configuration, response-mode path, relevant stage timings, grounding/outcome and correlation ID in existing observability surfaces. Never log secrets, private payload or unrestricted model reasoning.
+- **Isolation:** same approved test corpus evaluated with OFF and ON at specific SHA/config/model/owner evidence; compare outcome, grounding, latency, safety, provider selection and user-facing clarity; distinguish inherent LLM variation from toggle effect; no unapproved ACT.
+- **Rollback:** disable centrally to restore the baseline without code edits or redeploy **if supported by the selected existing mechanism**; otherwise document actual latency/deployment dependency and treat rapid disable as an acceptance gate. No promise of instant rollback without a proven contract.
+- **Frontend:** may surface state or a governed diagnostic control only when the backend/platform contract explicitly authorizes it; no new user-facing control implied by this requirement.
+
+### Acceptance and evidence
+
+`CONTROL_OWNER=TO_INVENTORY`; `EXISTING_EQUIVALENT=TO_INVENTORY`; `REUSE_DECISION=PENDING`. Specification task `DELIA-CONVERSATIONAL-RESPONSE-INTELLIGENCE-SPEC-01` must resolve these and define OFF/ON behavior, configuration authority, auditability, blast radius, safety-negative cases, A/B equivalence baseline, rollout, and rollback **before** any implementation. Tests must prove OFF does not engage the new behavior, ON engages only approved behavior, and misconfiguration fails safely.
+
+```text
+CENTRAL_FEATURE_CONTROL=PRODUCT_REQUIREMENT_APPROVED
+FEATURE_DEFAULT=OFF_UNTIL_AUTHORIZED
+ON_OFF_PARITY_BASELINE=REQUIRED
+ISOLATED_INTERFERENCE_EVALUATION=REQUIRED
+RUNTIME_TOGGLE_MECHANISM=TO_INVENTORY
+IMPLEMENTATION_AUTHORIZED=NO
+SELECTION_ONLY=FROZEN_UNCHANGED
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+```
