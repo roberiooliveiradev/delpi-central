@@ -147,3 +147,14 @@ C3_EXECUTED=NO
 ```
 
 **Lineage note:** authored against `origin/main` `2f6cb084db…`; this document's own commit SHA is recorded in the ledger, never inside the file.
+
+
+## Independent coordination review — 2026-10-21
+
+**Verdict: `ACCEPT_WITH_RESIDUAL` for the bounded dev/homologation activation-and-audit task.** Confirmed published `main` commit `62fc3444660ae2f0a0f5278fbcad6cccf6b19d5d`, reviewed report 81 and both committed compose mappings. `DELIA_RESPONSE_INTELLIGENCE_ENABLED` is explicitly mapped with empty/OFF default in compose and the specialist `MCP_RESOURCE_URL` canonical contract is present. CRI runtime code was not changed by the task; the audit appropriately recommends no mandatory refactoring.
+
+**Evidence boundary:** Actual Docker restarts, ON state, real MCP calls and persistence of the gitignored `infra/.env` are **executor-reported evidence, not independently re-executed from this GitHub review**. Local persistent ON does **not** imply production ON or persist on other hosts; the real desired value remains local environment state, not versioned `main` configuration. Production rollout is not authorized. No claim of independent runtime PASS.
+
+**Audited residuals for bounded product decisions:** (1) singular/plural vocabulary defect (`1 exemplos`); (2) superlative answer policy and coverage-unproven hedge; (3) lexical temporal semantics is not equivalent to owner contract; (4) pagination coverage derivation owner boundary; (5) 24–30 second model-bound latency and per-stage timeout configuration should be separately evaluated before performance tuning. No generalized orchestration cleanup, new engine, or speculative deduplication is authorized based on this audit. Any later code change must reanchor at the then-current HEAD and prove reuse/contract/test/outcome gates.
+
+`CRI_DEV_ACTIVATION_REVIEW=ACCEPT_WITH_RESIDUAL`; `CRI_DEV_ON=EXECUTOR_VERIFIED`; `PRODUCTION_ON=NOT_AUTHORIZED`; `CODE_AUDIT=ACCEPT_WITH_RESIDUAL`; `MANDATORY_REFACTOR=NO`; `INDEPENDENT_RUNTIME_VERIFICATION=TEST_NOT_RUN`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
