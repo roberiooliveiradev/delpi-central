@@ -116,6 +116,18 @@ Sintoma reportado: pagina `/apps/controllership-finance/closing/stock-inventory`
 - MFE: banners distintos — `S2S_*` → "Integracao de dados pendente"; `scope_unavailable` → "Consulta ainda nao habilitada"; 403 sem codigo → "Acesso restrito" (RBAC). Ajuda contextual atualizada (`CF_HELP.stockInventory.status`).
 - Testes: BFF +2 (`S2S_SCOPE_DENIED`/`S2S_CLIENT_DENIED` propagados tipados → 24 pass); MFE +1 (banner S2S → 61 pass vitest; eslint clean; tsc clean).
 
-**Smoke real:** `TEST_NOT_RUN` neste ambiente — stack local nao roda os servicos CF, credenciais admin do Keycloak local e `CF_S2S_CLIENT_SECRET` indisponiveis neste contexto. Procedimento de ativacao: (1) deploy do commit em `main`; (2) `python3 infra/scripts/keycloak_s2s_controllership_finance_scope.py --check` e `--apply` no Keycloak de producao; (3) `FINANCEIRO_STOCK_INVENTORY_ENABLED=true` no `.env` de producao; (4) smoke `2026-09`/`branch=02` (dados) e `branch=01` (`source_missing`).
+**Ativacao em producao (21/10/2026, srv-api via SSH operador):** `PASS`.
 
-`S2S_SCOPE_FIX=EXECUTED`; `S2S_KEYCLOAK_PROVISIONING=PENDING_OPS`; `FEATURE_FLAG=OFF_UNTIL_OPS_ENABLES`; `E2E_SMOKE=TEST_NOT_RUN`.
+- `--check` confirmou drift: scope `stock-inventory.read` **ausente**; token real continha apenas `settlements.read` (evidencia direta do `S2S_SCOPE_DENIED`).
+- `--apply` executado: scope criado + atribuido como DEFAULT no client `controllership-finance-api`; `settlements.read` e audience mapper `api-delpi` ja consistentes.
+- `.env` prod: `CF_S2S_SCOPE=` (vazio — token herda todos os default scopes; backup `.env.bak-r03-20261021`) + `FINANCEIRO_STOCK_INVENTORY_ENABLED=true`; containers `controllership-finance-api` e `api-delpi` recriados.
+- Token client-credentials pos-fix: `scope: "stock-inventory.read settlements.read email profile"`, `aud` inclui `api-delpi`, `azp=controllership-finance-api`.
+- **Smoke E2E real** (usuario humano `rober` com `.access` efetiva, via token exchange, gateway publico `minhadelpi.com.br`):
+  - `branch=02` + `all_products`: HTTP 200 `status=available`, `historicalTotal=10576487.839` — identico a evidencia SQL.
+  - `branch=02` + `mp_pi_pa`: 2.547 itens, resumos por tipo MP/PA/PI coerentes (≈10.002.994,971).
+  - `branch=01`: `status=source_missing`, `historicalTotal=null`, `branchesMissing=["01"]` — sem falso zero (AC09).
+  - `branch=all`: `status=incomplete`, consolidado da filial 02 com `branchesMissing=["01"]`.
+  - Negativo RBAC: usuario sem `.access` (adalberto) → 403 sem `error.code` → "Acesso restrito" corretamente distinto.
+- Contrato de paginacao confirmado em producao (`page`, `page_size`, `total_items`, `total_pages`, `has_next`, `has_previous`) — o MFE ja consome `total_items`.
+
+`S2S_SCOPE_FIX=EXECUTED`; `S2S_KEYCLOAK_PROVISIONING=DONE`; `FEATURE_FLAG=ON`; `E2E_SMOKE=PASS`.
