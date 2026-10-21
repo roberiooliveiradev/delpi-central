@@ -61,6 +61,7 @@ from app.interface.http.routes.supplies import non_moving_stock_router
 from app.interface.http.routes.supplies import inventory_accuracy_router
 from app.interface.http.routes.supplies import supplier_catalogs_router
 from app.interface.http.routes.supplies import suppliers_router
+from app.interface.http.routes.addresses import postal_codes_router
 from app.interface.http.routes.supplies import third_party_materials_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
@@ -289,6 +290,7 @@ app.include_router(retrabalho_router.router)
 app.include_router(refugos_router.router)
 app.include_router(supplies_router.router)
 app.include_router(supplier_catalogs_router.router)
+app.include_router(postal_codes_router.router)
 app.include_router(safety_stock_router.router)
 app.include_router(purchase_orders_router.router)
 app.include_router(purchase_requests_router.router)

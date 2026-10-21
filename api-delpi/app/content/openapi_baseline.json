@@ -3,8 +3,32 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 752,
+  "operation_count": 758,
   "operations": [
+    {
+      "method": "GET",
+      "path": "/addresses/postal-codes/{postal_code}",
+      "operationId": "lookup_postal_address",
+      "summary": "Indicador — Postal address",
+      "tags": [
+        "Addresses — Postal codes"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "postal_code",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "postal_address",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna postal address via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
     {
       "method": "POST",
       "path": "/canal-denuncia/denuncias",
@@ -33391,6 +33415,162 @@
     },
     {
       "method": "GET",
+      "path": "/financeiro/stock-inventory",
+      "operationId": "get_financeiro_stock_inventory",
+      "summary": "Lista paginada — Financeiro stock inventory",
+      "tags": [
+        "Financeiro — Stock Inventory"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "period",
+          "in": "query",
+          "required": true,
+          "description": "Competence in YYYY-MM. The SB9 snapshot is read at the last calendar day of that month (no month substitution).",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "report_scope",
+          "in": "query",
+          "required": false,
+          "description": "Operational view: all_products | mp_pi_pa.",
+          "default": "all_products",
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse filter (SB9 B9_LOCAL).",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number (minimum 1).",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "page_size default=50 ge=1 le=200",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "financeiro_stock_inventory",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna financeiro stock inventory via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
       "path": "/financial/ebitda_pct",
       "operationId": "get_financial_ebitda_pct",
       "summary": "Financial EBITDA percentage",
@@ -40072,6 +40252,122 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Summary KPIs for in-process inspections (orders, tests, approval rates)."
+    },
+    {
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}",
+      "operationId": "get_integration_operation",
+      "summary": "Get Integration Operation Route",
+      "tags": [
+        "Integrations — Operation Tracking"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "operation_id",
+          "in": "path",
+          "required": true,
+          "description": "Tracked operation UUID",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "integration_operation",
+        "shape": "scalar",
+        "params": {
+          "operation_id": {
+            "locale": {
+              "en": {
+                "description": "Operation query parameter.",
+                "label": "Operation"
+              },
+              "pt-BR": {
+                "description": "Identificador da operação.",
+                "label": "Operação"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}/events",
+      "operationId": "list_integration_operation_events",
+      "summary": "List Integration Operation Events Route",
+      "tags": [
+        "Integrations — Operation Tracking"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "operation_id",
+          "in": "path",
+          "required": true,
+          "description": "Tracked operation UUID",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=100 ge=1 le=200",
+          "type": "integer",
+          "default": 100
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "description": "Offset query parameter.",
+          "type": "integer",
+          "default": 0
+        }
+      ],
+      "xDelpi": {
+        "entity": "integration_operation_events",
+        "shape": "scalar",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "offset": {
+            "locale": {
+              "en": {
+                "description": "Offset query parameter.",
+                "label": "Offset"
+              },
+              "pt-BR": {
+                "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
+                "label": "Deslocamento"
+              }
+            }
+          },
+          "operation_id": {
+            "locale": {
+              "en": {
+                "description": "Operation query parameter.",
+                "label": "Operation"
+              },
+              "pt-BR": {
+                "description": "Identificador da operação.",
+                "label": "Operação"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      }
     },
     {
       "method": "GET",
@@ -106323,6 +106619,345 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Supplies stock value."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/supplier-catalogs/{catalog}",
+      "operationId": "list_supplies_supplier_catalog_items",
+      "summary": "Lista — Supplies supplier catalog item",
+      "tags": [
+        "Supplies — Supplier catalogs"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "catalog",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search by code prefix or description (accent-insensitive).",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "description": "Two-letter UF — required for the 'municipalities' catalog.",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Max items per page (1-500).",
+          "type": "integer",
+          "default": 100
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_supplier_catalog_item",
+        "shape": "list",
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna supplies supplier catalog item via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/suppliers",
+      "operationId": "list_supplies_suppliers",
+      "summary": "Lista paginada — Supplies supplier",
+      "tags": [
+        "Supplies — Suppliers"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": false,
+          "description": "Search over supplier code (prefix), legal name and trade name (accent-insensitive contains), tax id digits, or 'code store' pair.",
+          "type": "string"
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "description": "Two-letter state filter (A2_EST).",
+          "type": "string"
+        },
+        {
+          "name": "blocked",
+          "in": "query",
+          "required": false,
+          "description": "Registration block flag (A2_MSBLQL).",
+          "type": "boolean"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page (max 100).",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Sortable columns: supplier_name, supplier_code, tax_id, state.",
+          "type": "string",
+          "default": "supplier_name",
+          "enum": [
+            "supplier_name",
+            "supplier_code",
+            "tax_id",
+            "state"
+          ]
+        },
+        {
+          "name": "sort_dir",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction.",
+          "type": "string",
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_supplier",
+        "shape": "paged_list",
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
+              }
+            }
+          },
+          "sort_dir": {
+            "locale": {
+              "en": {
+                "description": "Sort direction: asc or desc.",
+                "label": "Sort direction"
+              },
+              "pt-BR": {
+                "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
+                "label": "Direção da ordenação"
+              }
+            },
+            "enumLabels": {
+              "asc": {
+                "en": {
+                  "label": "Ascending"
+                },
+                "pt-BR": {
+                  "label": "Crescente"
+                }
+              },
+              "desc": {
+                "en": {
+                  "label": "Descending"
+                },
+                "pt-BR": {
+                  "label": "Decrescente"
+                }
+              }
+            }
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna supplies supplier via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
     },
     {
       "method": "GET",

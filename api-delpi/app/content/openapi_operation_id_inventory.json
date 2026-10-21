@@ -1,12 +1,19 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 743,
-  "stableCount": 743,
+  "operationCount": 758,
+  "stableCount": 758,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
   "operations": [
+    {
+      "operationId": "lookup_postal_address",
+      "method": "GET",
+      "path": "/addresses/postal-codes/{postal_code}",
+      "tag": "Addresses — Postal codes",
+      "stable": true
+    },
     {
       "operationId": "create_canal_denuncia",
       "method": "POST",
@@ -1065,6 +1072,34 @@
       "stable": true
     },
     {
+      "operationId": "get_financeiro_settlements_payables",
+      "method": "GET",
+      "path": "/financeiro/settlements/payables",
+      "tag": "Financeiro — Financial Settlements",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_settlements_receivables",
+      "method": "GET",
+      "path": "/financeiro/settlements/receivables",
+      "tag": "Financeiro — Financial Settlements",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_settlements_summary",
+      "method": "GET",
+      "path": "/financeiro/settlements/summary",
+      "tag": "Financeiro — Financial Settlements",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_stock_inventory",
+      "method": "GET",
+      "path": "/financeiro/stock-inventory",
+      "tag": "Financeiro — Stock Inventory",
+      "stable": true
+    },
+    {
       "operationId": "get_financial_ebitda_pct",
       "method": "GET",
       "path": "/financial/ebitda_pct",
@@ -1331,6 +1366,13 @@
       "stable": true
     },
     {
+      "operationId": "get_helpdesk_dashboard_summary",
+      "method": "GET",
+      "path": "/helpdesk/dashboard/summary",
+      "tag": "Helpdesk",
+      "stable": true
+    },
+    {
       "operationId": "get_hr_active_pdi_count",
       "method": "GET",
       "path": "/hr/active-pdi-count",
@@ -1468,6 +1510,48 @@
       "method": "GET",
       "path": "/inspecoes-processo/resumo",
       "tag": "Inspeções de Processo",
+      "stable": true
+    },
+    {
+      "operationId": "get_integration_operation",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}",
+      "tag": "Integrations — Operation Tracking",
+      "stable": true
+    },
+    {
+      "operationId": "list_integration_operation_events",
+      "method": "GET",
+      "path": "/integrations/operations/{operation_id}/events",
+      "tag": "Integrations — Operation Tracking",
+      "stable": true
+    },
+    {
+      "operationId": "get_protheus_integration_status",
+      "method": "GET",
+      "path": "/integrations/protheus/status",
+      "tag": "Integrations — Protheus REST",
+      "stable": true
+    },
+    {
+      "operationId": "create_protheus_rest_supplier",
+      "method": "POST",
+      "path": "/integrations/protheus/suppliers",
+      "tag": "Integrations — Protheus REST",
+      "stable": true
+    },
+    {
+      "operationId": "get_protheus_rest_supplier",
+      "method": "GET",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "tag": "Integrations — Protheus REST",
+      "stable": true
+    },
+    {
+      "operationId": "update_protheus_rest_supplier",
+      "method": "PUT",
+      "path": "/integrations/protheus/suppliers/{supplier_id}",
+      "tag": "Integrations — Protheus REST",
       "stable": true
     },
     {
@@ -2776,6 +2860,13 @@
       "operationId": "get_production_machine_load_appointment_status",
       "method": "POST",
       "path": "/production/machine-load/appointment-status",
+      "tag": "Produção — Carga máquina",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_machine_load_operation_balances",
+      "method": "POST",
+      "path": "/production/machine-load/operation-balances",
       "tag": "Produção — Carga máquina",
       "stable": true
     },
@@ -5038,6 +5129,20 @@
       "method": "GET",
       "path": "/supplies/stock-value",
       "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_supplier_catalog_items",
+      "method": "GET",
+      "path": "/supplies/supplier-catalogs/{catalog}",
+      "tag": "Supplies — Supplier catalogs",
+      "stable": true
+    },
+    {
+      "operationId": "list_supplies_suppliers",
+      "method": "GET",
+      "path": "/supplies/suppliers",
+      "tag": "Supplies — Suppliers",
       "stable": true
     },
     {

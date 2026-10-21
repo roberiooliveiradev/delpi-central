@@ -377,6 +377,21 @@ class Settings:
     )
 
     # ==========================
+    # Consulta de CEP — providers externos (INT-CEP-01)
+    # ==========================
+    POSTAL_ADDRESS_VIACEP_URL: str = _get_env(
+        "POSTAL_ADDRESS_VIACEP_URL",
+        default="https://viacep.com.br/ws",
+    )
+    POSTAL_ADDRESS_BRASILAPI_URL: str = _get_env(
+        "POSTAL_ADDRESS_BRASILAPI_URL",
+        default="https://brasilapi.com.br/api/cep/v1",
+    )
+    POSTAL_ADDRESS_TIMEOUT_SECONDS: float = float(
+        _get_env("POSTAL_ADDRESS_TIMEOUT_SECONDS", default="6") or "6"
+    )
+
+    # ==========================
     # Central de Agendamento — aprovação + notificações
     # ==========================
     SCHEDULING_NOTIFICATIONS_ENABLED: bool = (
