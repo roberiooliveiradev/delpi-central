@@ -37,7 +37,7 @@ Excel do universo completo, Tabela/Cards, ordenar por coluna com server paginati
 ## 6. Quadro de acompanhamento por interacao
 | Interacao | Meta | Codigo | Testes | Commit/SHA | Push main | Deploy SHA/artefato | Smoke autenticado | Veredito |
 |---|---|---|---|---|---|---|---|---|
-| 1/3 | R01/R02 fechado | PENDING | TEST_NOT_RUN | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING |
+| 1/3 | R01/R02 fechado | DONE (V3-V7) | Vitest 91/91, estruturais 25/25, tsc OK, lint 0err, build OK | 3771f83095 (push confirmado em main) | PUSHED | prod @ 1556f5484 inclui 3771f83095; bundle `App-evvCpsQt.js` com `resizableColumns` + tooltip `Código de direção`; remoteEntry 200; container recriado Up; BFF/api-delpi/Keycloak intactos | capturas autenticadas PO (dark desktop): banda única, pill 529, header azul, badge A pagar sem P solto, Filial "Não identificada", resize handles nos headers | PASS_PARCIAL — AC1.2/AC1.4/AC1.6 PASS; AC1.1 lado a lado pagar+receber, AC1.3 interação dos controles e AC1.5 light/mobile aguardam capturas do PO |
 | 2/3 | R03 fechado | PENDING | TEST_NOT_RUN | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING |
 | 3/3 | Homologacao integrada | PENDING | TEST_NOT_RUN | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING |
 
