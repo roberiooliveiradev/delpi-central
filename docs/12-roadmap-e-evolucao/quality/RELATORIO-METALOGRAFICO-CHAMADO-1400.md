@@ -129,17 +129,20 @@ Este documento não declara o chamado resolvido; ele registra o requisito para e
 
 ## 10. Definição de produto e arquitetura proposta — 21/10/2026
 
+> **Esclarecimento posterior do solicitante:** não haverá API de Engenharia separada. CRUD, imagens e PDF pertencem ao serviço `api-delpi` já existente; `engineering` é apenas um prefixo organizacional de rotas. Não criar backend dedicado ao MFE nem novo serviço ou container. Esta definição prevalece sobre leituras ambíguas das menções anteriores a “API DELPI / Engenharia”.
+
+
 **Nome de exibição escolhido:** **Metalografia DELPI**. **Identificador técnico proposto:** `metalography` (sem afirmar reserva prévia no registry). **Título principal da página/documento:** `Relatório de Análise Metalográfica`. **Modelo:** plugin MFE autônomo, acessível diretamente pelo launcher do Minha DELPI, reaproveitável futuramente como página do Portal de Engenharia.
 
 ### Sequência de implantação desejada pelo solicitante
 
 1. **Agora:** plugin MFE independente `Metalografia DELPI`, seguindo o HTML recebido **no fluxo e na composição visual**, com listagem, editor, duas micrografias, recorte, medições, conclusão, persistência e exportação A4/PDF fiel à referência.
-2. **Agora:** os CRUDs dos relatórios devem residir na **área de Engenharia da API DELPI**, por preferência explícita do solicitante. Esta intenção precisa ser validada contra o owner, contracts e regras vigentes antes do código.
+2. **Agora:** os CRUDs dos relatórios devem ser adicionados ao **serviço API DELPI já existente**, preferencialmente organizados sob o namespace de rotas `engineering`, sem criar API de Engenharia independente. Esta intenção precisa ser validada contra o owner, contracts e regras vigentes antes do código.
 3. **Depois:** incluir a mesma aplicação como página do Portal de Engenharia, quando o Portal existir, sem recriar dados, serviço, formulários nem PDF; usar roteamento/composição oficial no futuro. **O Portal de Engenharia ainda não foi implementado, segundo o solicitante**; não criar dependência bloqueante.
 
 ### Boundary e conflito de diretrizes a resolver antes da implementação
 
-A `.cursor/rules/platform-frontend-mfe-experience.mdc` consultada afirma: **“MFE com API própria consome sua API/BFF, não api-delpi diretamente.”** A preferência do solicitante é **CRUD na API DELPI/Engenharia**. Essas duas afirmações não precisam ser confundidas: o proprietário dos CRUDs pode ser API DELPI **se o ownership do domínio confirmar**, enquanto o MFE pode exigir adapter/BFF contratual em vez de consumo HTTP direto. `ARCHITECTURE_DECISION_REQUIRED` para o desenho de acesso caso o MFE siga o padrão de API própria. Não criar bypass, exceção silenciosa ou backend espelho; documentar o producer oficial, consumidor e caminho HTTP escolhido antes do código.
+A `.cursor/rules/platform-frontend-mfe-experience.mdc` consultada afirma: **“MFE com API própria consome sua API/BFF, não api-delpi diretamente.”** A preferência do solicitante é **CRUD na API DELPI/Engenharia**. Essas duas afirmações não precisam ser confundidas: o proprietário dos CRUDs pode ser API DELPI **se o ownership do domínio confirmar**, enquanto a forma de consumo pelo MFE exige verificação do cliente/adapters existentes e da regra do repositório. Não criar API adicional por conveniência; escalar conflito real de boundary se identificado. Não criar bypass, exceção silenciosa ou backend espelho; documentar o producer oficial, consumidor e caminho HTTP escolhido antes do código.
 
 - **Owner de dados proposto:** módulo Engenharia da API DELPI, condicionado à confirmação nas authorities vigentes; não declarar PROVEN antes de inventário de implementação, schema e consumers.
 - **API REST candidata (NÃO congelada):** coleção `/engineering/metallographic-reports`, com listar/criar, obter/atualizar/excluir por ID e operação de PDF caso geração server-side seja escolhida. O gateway publica sob prefixo vigente `/apps/api-delpi/`; **confirmar roteamento real e OpenAPI antes de registrar endpoint**.
