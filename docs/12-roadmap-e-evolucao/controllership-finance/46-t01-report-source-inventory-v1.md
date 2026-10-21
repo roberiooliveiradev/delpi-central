@@ -181,3 +181,41 @@ Valores `SX6010` comprovados na leitura: `MV_CUSMED=M`, `MV_CUSFIFO=F`, `MV_CUSL
 **Validação do NotebookLM:** original catalogado no doc 03 com 00:54:44, mas resposta derivada menciona >01:00; período informado como 30/09/2026, valores de P7 e Insumos são `INFORMED_DERIVED`, não uma exportação analisada diretamente. Sem PDF original, captura de parâmetros e explicação da mudança na SB9, **não é possível atribuir delta a erro de data ou NotebookLM**.
 
 **Conclusão:** `R03_SB9_SEP_FILIAL01=EXECUTION_DRIFT`; `P7_DIFF_10744483=STALE_EVIDENCE` como comparação contra estado atual (era diferença aritmética válida nos snapshots anteriores), `MATR460_REPRODUCTION=INCONCLUSIVE`; `EXPORT_PARITY=TEST_NOT_RUN`. **Próximo gate:** owner api-delpi/TI-Protheus verificar histórico de movimentação/manutenção da SB9, origem/ambiente da consulta e preservação de snapshots; obter relatório P7/PDF de 30/09/2026 com parâmetros e data/hora de execução; só então reexecutar conciliação do período. Não escrever/reconstituir a SB9 e não mudar filtros para forçar igualdade.
+
+
+## 13. Índice cronológico NotebookLM recebido do PO (21/10/2026) — NÃO verificado diretamente
+
+**Proveniência:** texto integral do índice fornecido pelo PO a partir do NotebookLM. `EVIDENCE_CLASS=INFORMED_DERIVED`; `VIDEO_DIRECT_VERIFICATION=TEST_NOT_RUN`; `TIMECODE_PROVENANCE=STALE_EVIDENCE`. O NotebookLM afirma duração **01:02:15** para arquivo `Acompanhamento do Processo do Fechamento Mensal de Estoques e Custos-20260930_143151-Gravação de Reunião (1) (1).mp4`; metadado catalogado no doc 03 do arquivo original aponta **00:54:44.125**. **Não promover a duração ou timecodes para PROVEN** até verificar integridade/hash e eventual versão distinta do vídeo.
+
+### 13.1 Janelas candidatas para navegação (transcrição do NotebookLM)
+
+| Tema | Início candidato | Geração/saída candidata | Situação relatada |
+|---|---|---|---|
+| Acompanha Custos (código MATA330 não comprovado no vídeo) | 00:00:15 | 00:02:40; conferência 00:18:20 | derivado a verificar; suposto processamento, não export observado |
+| Custo Reposição (MATA331 não comprovado) | 00:05:12 | 00:08:31 | derivado |
+| Posição de títulos Pagar/Receber | 00:08:31 | Excel 00:09:50 | derivado; confirmar qual relatório |
+| Refaz Saldos (MATA280 não comprovado em tela) | 00:09:45 | 00:11:10 | derivado; potencial operação com escrita ERP, não executar sem autorização |
+| Faturamento × MOD | 00:14:30 | Excel 00:19:15; conferência 00:37:14–00:40:10 | derivado |
+| Baixas DLP / _F190C | 00:18:20 | erro 00:19:30–00:23:10 | derivado; conferir drift com referência anterior de 00:43:51–00:46:14 |
+| Kardex 01 / CPV | 00:21:10 | Excel 00:23:30; conferência 00:24:00–00:28:39 | derivado |
+| Entradas/Saídas | 00:23:10 | PDF 00:33:45; conferência 00:33:00–00:37:13 | derivado |
+| P7 padrão | 00:28:40 | PDF/spool 00:31:00; conferência 00:36:30 e 00:40:11–00:43:50 | derivado; total reportado 3.776.994,69 |
+| P7 Bloco H | 00:31:30 | PDF 00:32:50 | derivado |
+| H02 / Material em Processo | 00:33:00 | PDF 00:34:50; confronto 00:40:11–00:42:10 | derivado; valor relatado 64.591,71 |
+| SD1 / CC | 00:52:31 | XML 00:54:50; Excel 00:55:00–00:58:30 | derivado; fora do MP4 catalogado após 54:44 |
+| Extratos Bradesco | 00:55:41 | PDFs 00:56:50 | derivado; fora do MP4 catalogado |
+
+**Mencionados sem execução demonstrada segundo NotebookLM:** Kardex 99 (~00:21:10, ~00:45:30), MATR860 (~00:21:10), extratos BB/Sicoob/BNB/XP (~00:58–00:59), repetição filial 02 (~00:59:50) e virada/sacramentação (00:42:11 e 01:00:11). Horários concatenados recebidos `00:21:1000:45:30` e `00:42:1101:00:11` foram **interpretados somente como candidatos separados, não prova**.
+
+### 13.2 Inconsistências a depurar no vídeo
+
+1. Janelas sobrepostas: Acompanha Custos 00:01–00:18, Custo Reposição 00:05–00:09, Financeiro 00:08–00:10 e Refaz Saldos 00:09–00:14. Podem ser operações assíncronas/intercaladas, mas o índice não prova simultaneidade nem conclusão de processos.
+2. `_F190C` agora aparece 00:18–00:23; extração derivada anterior indica 00:43:51–00:46:14. `IDENTITY_TIMECODE_DRIFT=YES`; não eleger um sem inspeção.
+3. P7 às 00:28–00:33, Entradas/Saídas 00:23–00:37 e H02 00:33–00:35 têm sobreposições. Confirmar precisamente abertura, spool, PDF e contexto da tela.
+4. Rotinas MATA330/MATA331/MATA280 e valores de conclusão (`CONCLUÍDO`, custos recalculados/saldos regravados) são **afirmações derivadas**, não execução ou efeito comprovado; não autorizar writes ERP ou inferir dependência.
+5. Duração catalogada 00:54:44 vs 01:02:15 ainda sem reconciliação. Identificar artefato, faixa real, cortes/transcrição ou outra versão antes de utilizar timecodes finais.
+6. Alegação de necessidade universal de re-extração após 18h não está homologada: confirmar ponto de corte operacional do mês e owner; `AFTER_18H_RULE=NOT_PROVEN`.
+
+### 13.3 Próximo método de verificação conjunta
+
+Usar índice como **roteiro de busca**, não `OBSERVED_VISUAL` em nosso repositório. PO pode conferir vídeo ou fornecer prints em janelas prioritárias **00:00–00:03 Acompanha Custos**, **00:09–00:14 Refaz Saldos**, **00:18–00:24 financeiro/Kardex**, **00:28–00:35 P7 e H02**, **00:40–00:44 conciliação**, depois resolver divergência de duração e blocos finais. Para cada tela registrar nome visível, duração/arquivo, filial, competência, parâmetros, tipo de ação (consulta/processamento/export), valores, arquivo gerado, e evidência visual ou verbal. Depois reclassificar o trecho individualmente, sem inferir ordem ótima e sem misturar R03 (P7), R04 (MATR860) e R12 (rotinas).
