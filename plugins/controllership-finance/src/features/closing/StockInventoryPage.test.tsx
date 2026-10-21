@@ -205,6 +205,8 @@ describe("StockInventoryPage — consulta automática", () => {
     render(<StockInventoryPage />);
     await waitInitialFetch();
     await screen.findByText("Produto Exemplo");
+    // T02: contagem do universo filtrado junto ao título, não só da página
+    expect(screen.getByText("120 registros")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
     await waitFor(() =>
@@ -379,6 +381,13 @@ describe("StockInventoryPage — estados", () => {
     render(<StockInventoryPage />);
     await waitFor(() => screen.getByText("Snapshot não encontrado"));
     expect(screen.queryByText("Valor histórico total")).toBeNull();
+    // T18: snapshot ausente ≠ tabela vazia — nenhuma grid/emptyMessage
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(
+      screen.queryByText(
+        "Nenhum item de estoque encontrado para os filtros aplicados.",
+      ),
+    ).toBeNull();
   });
 
   it("incomplete sinaliza filial ausente", async () => {

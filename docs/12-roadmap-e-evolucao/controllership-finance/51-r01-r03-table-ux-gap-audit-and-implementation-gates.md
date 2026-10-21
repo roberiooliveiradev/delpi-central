@@ -61,7 +61,31 @@ G0 READ: HEAD/status + instructions + cursor + doc 30/48/49/50/51 + codigo dos p
 
 **AC de aceite:** T01-T04 e T07-T10/T13/T18 devem estar comprovadamente melhores; T05/T06/T12/T14/T17 excluidos sem falsos botoes; T11/T15/T16 preservados. Sem output enganoso ou paridade MATR460 inferida. Veredito somente `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`.
 
-## 7. Entrega inicial exigida do Devin
+## 7. Status da execução V2 (pos-rebase em `origin/main`)
+
+Implementado em frontend-only, somente slots publicos do `DataTableSection` e CSS escopado em `.dashboard-controllership-finance`:
+
+| ID | Status | Resolucao |
+|---|---|---|
+| T01 | DONE | toolbar integrada por divisor (`cf-table-toolbar` border-top) + eliminada margem duplicada `.cf-table-section` dentro de `cf-page-stack` |
+| T02 | DONE | contagem "N registros" em pill (`cf-table-section__meta`), valor do universo filtrado via `labels.recordsCount` |
+| T03 | DONE | controles nativos agrupados (pageSize | extras `margin-left:auto`); divider melhora coesao; zero botoes inertes |
+| T04 | KEEP | sem `serverSort` por coluna no contrato — headers permanecem honestos, sem indicadores clicaveis enganosos |
+| T05 | DECISION_REQUIRED | Excel: sem contrato de exportacao — nao implementado |
+| T06 | TARGET_FUTURE | Tabela/Cards: sem `renderCard` nem decisao de produto |
+| T07 | DONE | kit ja fornece wrap+scroll interno com fades; corrigida margem duplicada do painel |
+| T08–T11 | PROVEN/KEEP | celulas 2 linhas, badges reais (side/vinculo), moeda de origem, valores a direita — preservados do rework anterior |
+| T12 | DECISION_REQUIRED | links/acoes por linha: sem endpoint — nao criado |
+| T13 | DONE | `cf-table__col--wrap` (kit `__col--wrap`: min 8rem/max 16rem + quebra) na Descricao R03 e Fornecedor/Natureza R01/R02 |
+| T14 | TARGET_FUTURE | chips coloridos MP/PI/PA: sem mapa oficial de cores; badge neutro mantido |
+| T15, T16 | PROVEN/KEEP | filial+armazem separados; qtd/valor a direita sem R$ inventado |
+| T17 | DECISION_REQUIRED | coluna competencia: redundante com filtro — avaliar com PO |
+| T18 | DONE | `source_missing` nao renderiza tabela nem emptyMessage — apenas banner (ausencia != zero); `no_matching_items` mantem tabela+empty legitimo |
+| T19 | VERIFY_REQUIRED | kit fornece aria-busy/labels/focus-visible; prova visual teclado/zoom/temas pendente de sessao autenticada |
+
+Testes: Vitest 91/91 com novas assercoes (contagem `120 registros` junto ao titulo; `source_missing` sem `<table>` nem emptyMessage). Visual autenticado: `TEST_NOT_RUN`.
+
+## 8. Entrega inicial exigida do Devin
 
 ```text
 HEAD_STATUS:

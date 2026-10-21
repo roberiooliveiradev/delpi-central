@@ -36,7 +36,7 @@ export const CF_HELP = {
     summary:
       "Resumo exploratório do período: quantidade de eventos, valores por moeda e qualidade dos vínculos. Não é total oficial de fechamento.",
     table:
-      "Detalhe dos eventos de baixa. «Filial não identificada» significa que a origem não informa a filial do registro — não é erro nem filial 01/02.",
+      "Detalhe dos eventos de baixa. A contagem junto ao título mostra o universo filtrado, não apenas a página atual. «Filial não identificada» significa que a origem não informa a filial do registro — não é erro nem filial 01/02.",
     linkStatus:
       "Situação do vínculo: indica quando o documento ou a natureza financeira de origem não foi localizado, preservando o evento em vez de escondê-lo.",
     pagination: {
@@ -64,6 +64,6 @@ export const CF_HELP = {
     summaryWarehouse:
       "Totais por armazém e filial sobre o universo filtrado.",
     table:
-      "Detalhamento por produto e armazém no snapshot do mês. Ordenação fixa por filial, armazém e produto.",
+      "Detalhamento por produto e armazém no snapshot do mês, com a contagem do universo filtrado junto ao título. Ordenação fixa por filial, armazém e produto. Quando o snapshot não existe para a competência, só o aviso é exibido — a tabela vazia não representaria saldo zero.",
   },
 } as const;

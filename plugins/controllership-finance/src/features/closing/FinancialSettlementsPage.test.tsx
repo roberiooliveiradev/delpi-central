@@ -266,6 +266,8 @@ describe("FinancialSettlementsPage — consulta automática", () => {
     render(<FinancialSettlementsPage />);
     await waitInitialFetch();
     await screen.findByText("Fornecedor Exemplo");
+    // T02: contagem do universo filtrado junto ao título, não só da página
+    expect(screen.getByText("120 registros")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
     await waitFor(() =>

@@ -688,6 +688,19 @@ de produto em badge neutro. Semântica inventada (cores por tipo de
 produto, percentuais) continua proibida. `mobileLabel` rotula colunas
 abreviadas no modo responsivo do kit.
 
+Colunas de texto longo usam `className: "cf-table__col--wrap"` — o kit
+resolve para `delpi-ui-table__col--wrap` (min 8rem / max 16rem + quebra
+de palavra), evitando coluna gigante sem inventar larguras locais.
+`__col--wide` (200–360px) e `__col--compact`/`--numeric`/`--status`
+existem no kit para outros casos.
+
+Painel de resultados: a contagem do `DataTableSection` (`recordsCount`)
+fica em `cf-table-section__meta` — estilizada como pill discreto no
+escopo do MFE; a toolbar nativa ganha divisor superior
+(`cf-table-toolbar` border-top) e a seção de tabela não soma margem
+extra dentro de `cf-page-stack`. Não criar toolbar/tabela paralela —
+essas faixas são a API de composição do kit.
+
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,
 campos digitáveis passam por `useDebouncedValue` (400ms, `src/utils/`).

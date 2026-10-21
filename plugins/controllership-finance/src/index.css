@@ -197,6 +197,32 @@
   overflow: visible;
 }
 
+/* Painel de resultados (doc 51): o gap do stack já separa as seções —
+   a margem própria da seção de tabela não deve somar. */
+.dashboard-controllership-finance .cf-page-stack .cf-table-section {
+  margin-bottom: 0;
+}
+
+/* Contagem de registros como pill discreto ao lado do título (T02).
+   `__meta` só carrega a contagem — o slot `hint` não é usado aqui. */
+.dashboard-controllership-finance .cf-table-section__meta {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--cf-border);
+  border-radius: 999px;
+  background: var(--cf-surface-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toolbar integrada ao painel: faixa separada por divisor, mesma
+   superfície — controles nativos (itens/página, fonte, colunas). */
+.dashboard-controllership-finance .cf-table-toolbar {
+  border-top: 1px solid var(--cf-border);
+  padding-top: 12px;
+}
+
 /* Células das tabelas da Central — hierarquia em duas linhas. */
 .dashboard-controllership-finance .cf-cell-primary {
   display: block;

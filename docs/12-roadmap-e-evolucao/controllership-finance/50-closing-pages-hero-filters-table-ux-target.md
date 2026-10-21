@@ -1,5 +1,19 @@
 # 50 — TARGET UX: Hero, filtros e tabelas da Central de Fechamento (R01/R02 e R03)
 
+> 21/10/2026 — **REWORK TABLE UX V2 IMPLEMENTADO** (doc 51, pos `1390e248c0`).
+> Painel de resultados: contagem "N registros" agora pill discreta junto ao
+> titulo (`cf-table-section__meta`); toolbar nativa (itens/pagina + Fonte +
+> Colunas) integrada ao painel por divisor superior; margem duplicada da
+> `.cf-table-section` dentro de `cf-page-stack` removida. Colunas longas com
+> wrap via classe do kit (`cf-table__col--wrap` → min 8rem/max 16rem +
+> quebra): Descricao (R03), Fornecedor/Cliente e Natureza (R01/R02).
+> `source_missing` deixa de renderizar tabela vazia — apenas o banner
+> (ausencia nao e saldo zero); `no_matching_items` mantem tabela + empty
+> legitimo. Sem nova toolbar, sem segunda tabela, sem sort por coluna
+> (contrato so ordena via filtros). Excel/Cards/Board/links/selecao/coluna
+> competencia permanecem DECISION_REQUIRED/TARGET_FUTURE. Visual
+> autenticado: TEST_NOT_RUN.
+>
 > 21/10/2026 — **REWORK TABLE UX IMPLEMENTADO** (pos `7b4c51f883`). Celulas
 > das duas tabelas ganharam hierarquia em duas linhas (`cf-cell-primary`/
 > `cf-cell-secondary`): documento e codigos em peso 600 + descricao mutada

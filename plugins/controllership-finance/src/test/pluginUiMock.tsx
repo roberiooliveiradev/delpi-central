@@ -454,6 +454,13 @@ export function createDashboardDataTableKit() {
       "section",
       null,
       el("h2", null, props.title),
+      pager
+        ? el(
+            "span",
+            { className: "cf-table-section__meta delpi-ui-table-section__meta" },
+            `${pager.total.toLocaleString("pt-BR")} ${pager.total === 1 ? "registro" : "registros"}`,
+          )
+        : null,
       props.loading ? el("p", { role: "status" }, "Carregando…") : null,
       !props.loading && rows.length === 0
         ? el("p", null, props.emptyMessage)

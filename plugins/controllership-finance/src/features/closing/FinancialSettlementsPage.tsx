@@ -333,6 +333,7 @@ export function FinancialSettlementsPage() {
       {
         key: "party",
         header: applied?.side === "receivable" ? "Cliente" : "Fornecedor",
+        className: "cf-table__col--wrap",
         render: (row) => {
           const code = [row.partyCode, row.partyStore]
             .filter(Boolean)
@@ -351,6 +352,7 @@ export function FinancialSettlementsPage() {
       {
         key: "nature",
         header: "Natureza",
+        className: "cf-table__col--wrap",
         render: (row) =>
           row.natureCode ? (
             <>

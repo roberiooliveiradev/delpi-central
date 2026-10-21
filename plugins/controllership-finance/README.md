@@ -20,6 +20,19 @@ servidor e estado tipado `scope_unavailable` quando o dataset D3 ainda
 não está habilitado no ambiente. Filial sem origem rende
 «Não identificada» — nunca fallback 01/02.
 
+Central de Fechamento — Estoque histórico P7 (R03): rota interna
+`closing/stock-inventory`, consulta operacional por competência/filial
+(`officialP7=false` — não é o relatório oficial MATR460). Estados
+tipados `available` / `incomplete` / `source_missing` /
+`no_matching_items`; snapshot ausente exibe apenas banner — nunca tabela
+vazia (ausência não é saldo zero).
+
+Padrão de tabelas: `DataTableSection` do `@delpi/plugin-ui` via
+`cfDataTableUi` — contagem do universo filtrado em pill junto ao título,
+toolbar nativa (itens/página + Fonte + Colunas), células em duas linhas
+(`cf-cell-primary/secondary`), colunas longas com `cf-table__col--wrap`,
+preferências de coluna/fonte persistidas pelo kit.
+
 ## Runtime
 
 - React 19 + Vite 7 + `@originjs/vite-plugin-federation`

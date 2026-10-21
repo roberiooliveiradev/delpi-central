@@ -205,6 +205,7 @@ export function StockInventoryPage() {
       {
         key: "description",
         header: "Descrição",
+        className: "cf-table__col--wrap",
         render: (row) => row.description ?? "—",
       },
       {
@@ -513,7 +514,9 @@ export function StockInventoryPage() {
         </div>
       ) : null}
 
-      {showData ? (
+      {/* T18: sem snapshot, só o banner — a tabela vazia sugeriria
+          «nenhum item» quando na verdade não há dados para a competência. */}
+      {showData && payload?.status !== "source_missing" ? (
         <DataTableSection<StockInventoryItem>
           title="Detalhamento por produto e armazém"
           titleHint={CF_HELP.stockInventory.table}
