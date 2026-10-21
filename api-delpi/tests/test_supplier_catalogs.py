@@ -97,6 +97,17 @@ class TestRepositorySql:
         items, _ = repo.list_catalog_items("payment-conditions")
         assert items[0]["disabled"] is True
 
+    def test_order_by_never_repeats_a_column(self):
+        """Regressão F5-UX-R3.1 — ORDER BY duplicado derrubava catálogos
+        cuja ordenação coincide com a coluna de código (erro SQL 169)."""
+        for catalog in SUPPLIER_CATALOG_KINDS:
+            repo = _FakeRepo()
+            repo.list_catalog_items(catalog, state="SC")
+            sql, _ = repo.queries[0]
+            order_clause = sql.split("ORDER BY", 1)[1]
+            cols = [c.strip() for c in order_clause.strip().split(",")]
+            assert len(cols) == len(set(cols)), catalog
+
     def test_unknown_catalog_raises(self):
         with pytest.raises(KeyError):
             _FakeRepo().list_catalog_items("orders")

@@ -154,12 +154,16 @@ class TotvsSupplierCatalogsRepository(BaseRepository):
             )
             params.extend([f"{q}%", f"%{q}%"])
 
+        order_cols = [source["order"]]
+        if source["code_col"] != source["order"]:
+            order_cols.append(source["code_col"])
+
         sql = f"""
             SELECT TOP ({limit + 1})
                 {source['select']}
             FROM {source['from']}
             WHERE {' AND '.join(where)}
-            ORDER BY {source['order']}, {source['code_col']}
+            ORDER BY {', '.join(order_cols)}
         """
 
         with self as repo:
