@@ -336,7 +336,7 @@ describe("FinancialSettlementsPage — estados", () => {
     summaryMock.mockRejectedValue(new ApiError(403, "x", "scope_unavailable"));
     render(<FinancialSettlementsPage />);
 
-    expect(await screen.findByText("Escopo de dados indisponível")).toBeTruthy();
+    expect(await screen.findByText("Consulta ainda não habilitada")).toBeTruthy();
     expect(screen.queryByText("Acesso restrito")).toBeNull();
     expect(screen.queryByText(/Nenhuma baixa encontrada/)).toBeNull();
   });
@@ -361,6 +361,21 @@ describe("FinancialSettlementsPage — estados", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByText("Fornecedor Exemplo")).toBeTruthy();
     expect(listMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("resumo usa o card-strip centralizado e qualidade é mensagem informativa", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await screen.findByText("Fornecedor Exemplo");
+
+    expect(
+      screen.getByRole("group", { name: "Resumo por moeda" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Eventos")).toBeTruthy();
+    expect(screen.getByText("Qualidade dos vínculos")).toBeTruthy();
+    expect(
+      screen.getByText(/1 sem filial identificada/),
+    ).toBeTruthy();
   });
 
   it("resultado vazio mostra mensagem de vazio da tabela", async () => {

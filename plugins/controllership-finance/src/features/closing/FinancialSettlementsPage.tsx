@@ -20,11 +20,15 @@ import {
   CfActionButton,
   CfEmptyState,
   CfLoadingCard,
+  CfMetricStrip,
   CfSectionCard,
   CfSegmentToggle,
-  CfStateBanner,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import {
+  CfFeedbackMessage,
+  CfQueryErrorBanner,
+} from "../../app/cfFeedbackUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import { FilterInputField, FilterSelectField, FiltersRow } from "../../app/cfFiltersUi";
 import { CF_HELP } from "../../content/helpTooltips";
@@ -313,43 +317,12 @@ export function FinancialSettlementsPage() {
 
   const renderError = () => {
     if (current?.kind !== "error") return null;
-    if (current.code === "scope_unavailable") {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Escopo de dados indisponível</p>
-          <p className="cf-banner-text">
-            O acesso ao conjunto de dados financeiros ainda não está liberado
-            para este ambiente.
-          </p>
-        </CfStateBanner>
-      );
-    }
-    if (current.status === 401) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Sessão expirada</p>
-          <p className="cf-banner-text">Entre novamente para continuar.</p>
-        </CfStateBanner>
-      );
-    }
-    if (current.status === 403) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Acesso restrito</p>
-          <p className="cf-banner-text">
-            Você não tem autorização para consultar as baixas financeiras.
-          </p>
-        </CfStateBanner>
-      );
-    }
     return (
-      <CfStateBanner variant="error">
-        <p className="cf-banner-title">Falha de comunicação</p>
-        <p className="cf-banner-text">{current.message}</p>
-        <CfActionButton variant="ghost" onClick={retry}>
-          Tentar novamente
-        </CfActionButton>
-      </CfStateBanner>
+      <CfQueryErrorBanner
+        error={current}
+        dataset="as baixas financeiras"
+        onRetry={retry}
+      />
     );
   };
 
@@ -419,12 +392,10 @@ export function FinancialSettlementsPage() {
             />
           </FiltersRow>
           {!filtersValid ? (
-            <CfStateBanner variant="error">
-              <p className="cf-banner-text">
-                Informe um período válido: a data inicial deve ser anterior ou
-                igual à data final.
-              </p>
-            </CfStateBanner>
+            <CfFeedbackMessage intent="error" title="Período inválido">
+              Informe um período válido: a data inicial deve ser anterior ou
+              igual à data final.
+            </CfFeedbackMessage>
           ) : null}
           <div className="cf-settlements-actions">
             <CfActionButton
@@ -455,36 +426,39 @@ export function FinancialSettlementsPage() {
           hint={CF_HELP.closing.summary}
         >
           {summaryForSide && summaryForSide.length > 0 ? (
-            <ul className="cf-settlements-summary" aria-label="Resumo por moeda">
-              <li>
-                <span className="cf-settlements-summary-label">Eventos</span>
-                <strong>
-                  {summaryForSide.reduce((acc, g) => acc + g.eventCount, 0)}
-                </strong>
-              </li>
-              {currencyTotals.map(({ code, total }) => (
-                <li key={code}>
-                  <span className="cf-settlements-summary-label">
-                    Movimentações registradas — moeda {code}
-                  </span>
-                  <strong>{formatAmount(String(total))}</strong>
-                </li>
-              ))}
-              <li>
-                <span className="cf-settlements-summary-label">Naturezas</span>
-                <strong>
-                  {new Set(summaryForSide.map((g) => g.natureCode ?? "—")).size}
-                </strong>
-              </li>
-              <li>
-                <span className="cf-settlements-summary-label">
-                  Tipos de movimento
-                </span>
-                <strong>
-                  {new Set(summaryForSide.map((g) => g.movementType ?? "—")).size}
-                </strong>
-              </li>
-            </ul>
+            <CfMetricStrip
+              aria-label="Resumo por moeda"
+              items={[
+                {
+                  id: "events",
+                  label: "Eventos",
+                  value: String(
+                    summaryForSide.reduce((acc, g) => acc + g.eventCount, 0),
+                  ),
+                },
+                ...currencyTotals.map(({ code, total }) => ({
+                  id: `currency-${code}`,
+                  label: `Movimentações registradas — moeda ${code}`,
+                  value: formatAmount(String(total)),
+                })),
+                {
+                  id: "natures",
+                  label: "Naturezas",
+                  value: String(
+                    new Set(summaryForSide.map((g) => g.natureCode ?? "—"))
+                      .size,
+                  ),
+                },
+                {
+                  id: "movementTypes",
+                  label: "Tipos de movimento",
+                  value: String(
+                    new Set(summaryForSide.map((g) => g.movementType ?? "—"))
+                      .size,
+                  ),
+                },
+              ]}
+            />
           ) : loading ? (
             <CfLoadingCard
               title="Carregando resumo"
@@ -492,14 +466,16 @@ export function FinancialSettlementsPage() {
               variant="compact"
             />
           ) : (
-            <p className="cf-banner-text">Sem dados de resumo no período.</p>
+            <CfFeedbackMessage intent="info" title="Resumo do período">
+              Sem dados de resumo no período.
+            </CfFeedbackMessage>
           )}
           {list ? (
-            <p className="cf-settlements-quality" role="note">
-              Qualidade dos vínculos: {list.quality.missingDocumentCount} sem
-              documento · {list.quality.missingNatureCount} sem natureza ·{" "}
+            <CfFeedbackMessage intent="info" title="Qualidade dos vínculos">
+              {list.quality.missingDocumentCount} sem documento ·{" "}
+              {list.quality.missingNatureCount} sem natureza ·{" "}
               {list.quality.unresolvedBranchCount} sem filial identificada.
-            </p>
+            </CfFeedbackMessage>
           ) : null}
         </CfSectionCard>
       ) : null}

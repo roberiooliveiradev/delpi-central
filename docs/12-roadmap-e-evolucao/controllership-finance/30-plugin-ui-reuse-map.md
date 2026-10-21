@@ -595,6 +595,51 @@ Regras de uso:
 - **Erro**: `CfStateBanner` + ação `Tentar novamente`; loading/erro/vazio/
   parcial continuam estados distintos.
 
+### Grid de cards centralizado (padrão vigente)
+
+O adaptador canônico de cards de indicadores/resumos é `CfMetricStrip`
+(`src/app/controllershipFinanceUi.ts`), bound de
+`createDashboardMetricStrip` — grid responsivo do kit (quebra por largura,
+gap consistente entre cards, `tabular-nums`, `word-break` para valores
+longos, `role="group"` com `aria-label`) com prefixo de classe `cf`.
+
+Regras de uso:
+
+- Indicadores e resumos (por tipo, por armazém, por moeda) usam
+  `<CfMetricStrip aria-label="…" items=[{label, value, description, tone}]>`;
+  `tone` cobre `warning`/`danger` para estados de atenção/ausência.
+- Páginas novas **não** devem criar `<ul className="cf-…-summary">` ou
+  grid de cards próprio; reutilizar `CfMetricStrip`.
+- Tokens legados `--delpi-*` consumidos pelo MetricStrip do kit são
+  boundados aos tokens `--cf-*` do Portal em `index.css` (tema claro/escuro).
+
+### Mensagens centralizadas ao usuário (padrão vigente)
+
+O adaptador canônico de mensagens é `CfFeedbackMessage`
+(`src/app/cfFeedbackUi.ts`), bound de `CfStateBanner` — recebe intenção
+semântica `info | warning | error | success` e mapeia às variantes reais
+do kit (error/success/default); `warning`/`info` distinguem-se por ícone
+(`⚠`/`ℹ`) sem inventar `variant` inexistente.
+
+`CfQueryErrorBanner` é o catálogo único de falhas de consulta das duas
+páginas: mapeia `{status, code}` tipado do BFF para título/orientação/ação
+— `scope_unavailable` → "Consulta ainda não habilitada", `S2S_*` →
+"Integração de dados pendente", `401` → "Sessão expirada", `403` →
+"Acesso restrito", `503`/rede → "Origem indisponível"/"Falha de
+comunicação", genérico expõe `error.message` real — sempre com
+"Tentar novamente" quando aplicável.
+
+Regras de uso:
+
+- Nenhuma mensagem de operação aparece como `<p>`/`<div>` de texto solto;
+  usar `CfFeedbackMessage` (informativa/aviso/dados parciais) ou
+  `CfQueryErrorBanner` (erro de consulta).
+- Uma mensagem, um contexto: não duplicar o mesmo erro em banner + tabela.
+- `CfLoadingCard` nunca é apresentado como erro; loading/erro/vazio/
+  parcial/snapshot-ausente permanecem estados distintos.
+- Snapshot ausente é estado informativo específico ("Snapshot não
+  encontrado"), nunca saldo zero.
+
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,
 campos digitáveis passam por `useDebouncedValue` (400ms, `src/utils/`).

@@ -8,6 +8,7 @@ import {
   createDashboardCommandPalette,
   createDashboardEventsSection,
   createDashboardLoadingActivityCard,
+  createDashboardMetricStrip,
   createDashboardPageHero,
   createDashboardRecentAccessStrip,
   createDashboardSectionCard,
@@ -106,6 +107,9 @@ export const CfLoadingCard = createDashboardLoadingActivityCard({
 });
 export const CfStateBanner = createDashboardStateBanner({
   classNames: cfStateBannerClassNames,
+});
+export const CfMetricStrip = createDashboardMetricStrip({
+  prefix: UI_PREFIX,
 });
 export const CfTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),

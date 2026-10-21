@@ -134,6 +134,34 @@ export function createDashboardLoadingActivityCard() {
   };
 }
 
+export function createDashboardMetricStrip() {
+  return function MetricStrip(props: {
+    items?: Array<{
+      id: string;
+      label?: ReactNode;
+      value?: ReactNode;
+      description?: ReactNode;
+      tone?: string;
+      loading?: boolean;
+    }>;
+    "aria-label"?: string;
+  }) {
+    return el(
+      "div",
+      { role: "group", "aria-label": props["aria-label"] },
+      (props.items ?? []).map((item) =>
+        el(
+          "div",
+          { key: item.id, "data-tone": item.tone ?? "neutral" },
+          el("span", null, item.label),
+          el("span", null, item.loading ? "…" : item.value),
+          item.description ? el("span", null, item.description) : null,
+        ),
+      ),
+    );
+  };
+}
+
 export function createDashboardSectionCard() {
   return function SectionCard(props: {
     title?: ReactNode;

@@ -20,11 +20,15 @@ import {
   CfActionButton,
   CfEmptyState,
   CfLoadingCard,
+  CfMetricStrip,
   CfSectionCard,
   CfSegmentToggle,
-  CfStateBanner,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import {
+  CfFeedbackMessage,
+  CfQueryErrorBanner,
+} from "../../app/cfFeedbackUi";
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import {
   FilterInputField,
@@ -230,113 +234,40 @@ export function StockInventoryPage() {
     if (!payload || payload.status === "available") return null;
     if (payload.status === "source_missing") {
       return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Snapshot não encontrado</p>
-          <p className="cf-banner-text">
-            O ERP não possui fechamento de estoque registrado para{" "}
-            {payload.period}
-            {payload.branchesMissing.length > 0
-              ? ` na filial ${payload.branchesMissing.join(", ")}`
-              : ""}
-            . Consulte outra competência ou filial — a ausência não é um
-            saldo zero.
-          </p>
-        </CfStateBanner>
+        <CfFeedbackMessage intent="warning" title="Snapshot não encontrado">
+          O ERP não possui fechamento de estoque registrado para{" "}
+          {payload.period}
+          {payload.branchesMissing.length > 0
+            ? ` na filial ${payload.branchesMissing.join(", ")}`
+            : ""}
+          . Consulte outra competência ou filial — a ausência não é um saldo
+          zero.
+        </CfFeedbackMessage>
       );
     }
     if (payload.status === "incomplete") {
       return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Dados parcialmente disponíveis</p>
-          <p className="cf-banner-text">
-            O snapshot de {payload.period} não existe para{" "}
-            {payload.branchesMissing.length === 1
-              ? `a filial ${payload.branchesMissing[0]}`
-              : `as filiais ${payload.branchesMissing.join(", ")}`}
-            . Os totais abaixo cobrem somente{" "}
-            {payload.branchesAvailable.length === 1
-              ? `a filial ${payload.branchesAvailable[0]}`
-              : `as filiais ${payload.branchesAvailable.join(", ")}`}
-            .
-          </p>
-        </CfStateBanner>
+        <CfFeedbackMessage
+          intent="warning"
+          title="Dados parcialmente disponíveis"
+        >
+          O snapshot de {payload.period} não existe para{" "}
+          {payload.branchesMissing.length === 1
+            ? `a filial ${payload.branchesMissing[0]}`
+            : `as filiais ${payload.branchesMissing.join(", ")}`}
+          . Os totais abaixo cobrem somente{" "}
+          {payload.branchesAvailable.length === 1
+            ? `a filial ${payload.branchesAvailable[0]}`
+            : `as filiais ${payload.branchesAvailable.join(", ")}`}
+          .
+        </CfFeedbackMessage>
       );
     }
     return (
-      <CfStateBanner variant="error">
-        <p className="cf-banner-title">Sem itens para o filtro</p>
-        <p className="cf-banner-text">
-          O snapshot de {payload.period} existe, mas nenhum item corresponde
-          aos filtros aplicados.
-        </p>
-      </CfStateBanner>
-    );
-  };
-
-  const renderError = () => {
-    if (current?.kind !== "error") return null;
-    if (current.code === "scope_unavailable") {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Consulta ainda não habilitada</p>
-          <p className="cf-banner-text">
-            O acesso ao conjunto de dados de estoque ainda não está liberado
-            para este ambiente.
-          </p>
-        </CfStateBanner>
-      );
-    }
-    if (current.code && current.code.startsWith("S2S_")) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Integração de dados pendente</p>
-          <p className="cf-banner-text">
-            A credencial técnica entre o Portal e a origem de dados ainda não
-            possui a autorização necessária para esta consulta. Acione o
-            suporte informando esta tela.
-          </p>
-        </CfStateBanner>
-      );
-    }
-    if (current.status === 401) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Sessão expirada</p>
-          <p className="cf-banner-text">Entre novamente para continuar.</p>
-        </CfStateBanner>
-      );
-    }
-    if (current.status === 403) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Acesso restrito</p>
-          <p className="cf-banner-text">
-            Você não tem autorização para consultar o estoque histórico.
-          </p>
-        </CfStateBanner>
-      );
-    }
-    if (current.status === 503) {
-      return (
-        <CfStateBanner variant="error">
-          <p className="cf-banner-title">Origem indisponível</p>
-          <p className="cf-banner-text">
-            A fonte de dados de estoque está temporariamente indisponível.
-          </p>
-          <CfActionButton variant="ghost" onClick={retry}>
-            Tentar novamente
-          </CfActionButton>
-        </CfStateBanner>
-      );
-    }
-    return (
-      <CfStateBanner variant="error">
-        <p className="cf-banner-title">Falha de comunicação</p>
-        <p className="cf-banner-text">{current.message}</p>
-        <CfActionButton variant="ghost" onClick={retry}>
-          Tentar novamente
-        </CfActionButton>
-      </CfStateBanner>
+      <CfFeedbackMessage intent="info" title="Sem itens para o filtro">
+        O snapshot de {payload.period} existe, mas nenhum item corresponde aos
+        filtros aplicados.
+      </CfFeedbackMessage>
     );
   };
 
@@ -352,10 +283,9 @@ export function StockInventoryPage() {
         subtitle="Consulta operacional dos saldos históricos de estoque por competência, filial e classificação de produto."
         hint={CF_HELP.stockInventory.page}
       >
-        <p className="cf-banner-text" role="note">
-          Consulta operacional — os resultados ainda não equivalem ao
-          relatório oficial MATR460.
-        </p>
+        <CfFeedbackMessage intent="info" title="Consulta operacional">
+          Os resultados ainda não equivalem ao relatório oficial MATR460.
+        </CfFeedbackMessage>
         <form
           className="cf-settlements-filters"
           onSubmit={(event) => event.preventDefault()}
@@ -391,11 +321,9 @@ export function StockInventoryPage() {
             />
           </FiltersRow>
           {!filtersValid ? (
-            <CfStateBanner variant="error">
-              <p className="cf-banner-text">
-                Informe uma competência válida no formato AAAA-MM.
-              </p>
-            </CfStateBanner>
+            <CfFeedbackMessage intent="error" title="Competência inválida">
+              Informe uma competência válida no formato AAAA-MM.
+            </CfFeedbackMessage>
           ) : null}
           <div className="cf-settlements-actions">
             <CfActionButton
@@ -410,7 +338,13 @@ export function StockInventoryPage() {
       </CfSectionCard>
 
       <div aria-busy={loading}>
-      {renderError()}
+      {current?.kind === "error" ? (
+        <CfQueryErrorBanner
+          error={current}
+          dataset="o estoque histórico"
+          onRetry={retry}
+        />
+      ) : null}
       {renderStatusBanner()}
 
       {!applied ? (
@@ -427,40 +361,44 @@ export function StockInventoryPage() {
           hint={CF_HELP.stockInventory.indicators}
         >
           {payload ? (
-            <ul className="cf-settlements-summary" aria-label="Indicadores do estoque">
-              <li>
-                <span className="cf-settlements-summary-label">
-                  Disponibilidade
-                </span>
-                <strong>
-                  {STATUS_LABELS[payload.status] ?? payload.status}
-                </strong>
-              </li>
-              <li>
-                <span className="cf-settlements-summary-label">Data-base</span>
-                <strong>{formatCivilDate(payload.dataAsOf)}</strong>
-              </li>
-              <li>
-                <span className="cf-settlements-summary-label">Itens</span>
-                <strong>{payload.pagination.total_items}</strong>
-              </li>
-              {payload.branchCode === "all" ? (
-                <li>
-                  <span className="cf-settlements-summary-label">
-                    Filiais com dados
-                  </span>
-                  <strong>{payload.branchesAvailable.length}</strong>
-                </li>
-              ) : null}
-              {payload.historicalTotal !== null ? (
-                <li>
-                  <span className="cf-settlements-summary-label">
-                    Valor histórico total
-                  </span>
-                  <strong>{formatAmount(payload.historicalTotal)}</strong>
-                </li>
-              ) : null}
-            </ul>
+            <CfMetricStrip
+              aria-label="Indicadores do estoque"
+              items={[
+                {
+                  id: "status",
+                  label: "Disponibilidade",
+                  value: STATUS_LABELS[payload.status] ?? payload.status,
+                },
+                {
+                  id: "dataAsOf",
+                  label: "Data-base",
+                  value: formatCivilDate(payload.dataAsOf),
+                },
+                {
+                  id: "items",
+                  label: "Itens",
+                  value: String(payload.pagination.total_items),
+                },
+                ...(payload.branchCode === "all"
+                  ? [
+                      {
+                        id: "branches",
+                        label: "Filiais com dados",
+                        value: String(payload.branchesAvailable.length),
+                      },
+                    ]
+                  : []),
+                ...(payload.historicalTotal !== null
+                  ? [
+                      {
+                        id: "total",
+                        label: "Valor histórico total",
+                        value: formatAmount(payload.historicalTotal),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           ) : (
             <CfLoadingCard
               title="Carregando indicadores"
@@ -468,12 +406,6 @@ export function StockInventoryPage() {
               variant="compact"
             />
           )}
-          {payload ? (
-            <p className="cf-settlements-quality" role="note">
-              Consulta operacional — não é o relatório oficial MATR460 (
-              {STATUS_LABELS[payload.status] ?? payload.status}).
-            </p>
-          ) : null}
         </CfSectionCard>
       ) : null}
 
@@ -482,19 +414,15 @@ export function StockInventoryPage() {
           title="Resumo por tipo de produto"
           hint={CF_HELP.stockInventory.summaryType}
         >
-          <ul
-            className="cf-settlements-summary"
+          <CfMetricStrip
             aria-label="Resumo por tipo de produto"
-          >
-            {payload.summariesByType.map((group) => (
-              <li key={group.productType ?? "sem-tipo"}>
-                <span className="cf-settlements-summary-label">
-                  {group.productType ?? "Sem tipo"} — {group.itemCount} itens
-                </span>
-                <strong>{formatAmount(group.totalStockValue)}</strong>
-              </li>
-            ))}
-          </ul>
+            items={payload.summariesByType.map((group) => ({
+              id: group.productType ?? "sem-tipo",
+              label: group.productType ?? "Sem tipo",
+              value: formatAmount(group.totalStockValue),
+              description: `${group.itemCount} itens`,
+            }))}
+          />
         </CfSectionCard>
       ) : null}
 
@@ -503,22 +431,15 @@ export function StockInventoryPage() {
           title="Resumo por armazém"
           hint={CF_HELP.stockInventory.summaryWarehouse}
         >
-          <ul
-            className="cf-settlements-summary"
+          <CfMetricStrip
             aria-label="Resumo por armazém"
-          >
-            {payload.summariesByWarehouse.map((group) => (
-              <li
-                key={`${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`}
-              >
-                <span className="cf-settlements-summary-label">
-                  Armazém {group.warehouse ?? "—"} · Filial{" "}
-                  {group.branchCode ?? "—"} — {group.itemCount} itens
-                </span>
-                <strong>{formatAmount(group.totalStockValue)}</strong>
-              </li>
-            ))}
-          </ul>
+            items={payload.summariesByWarehouse.map((group) => ({
+              id: `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`,
+              label: `Armazém ${group.warehouse ?? "—"} · Filial ${group.branchCode ?? "—"}`,
+              value: formatAmount(group.totalStockValue),
+              description: `${group.itemCount} itens`,
+            }))}
+          />
         </CfSectionCard>
       ) : null}
 

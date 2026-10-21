@@ -286,6 +286,49 @@ describe("StockInventoryPage — estados", () => {
     expect(screen.getByText("10.576.487,84")).toBeTruthy();
   });
 
+  it("grid de indicadores e resumos usa o card-strip centralizado", async () => {
+    getMock.mockResolvedValue(
+      payload({
+        summariesByType: [
+          {
+            productType: "MP",
+            itemCount: 3867,
+            totalQuantity: "1.0000",
+            totalStockValue: "12896290.8900",
+          },
+        ],
+        summariesByWarehouse: [
+          {
+            branchCode: "02",
+            warehouse: "01",
+            itemCount: 42,
+            totalQuantity: "1.0000",
+            totalStockValue: "10113731.7800",
+          },
+        ],
+      }),
+    );
+    render(<StockInventoryPage />);
+
+    await screen.findByText("Produto Exemplo");
+    // grupos acessíveis do grid centralizado
+    expect(
+      screen.getByRole("group", { name: "Indicadores do estoque" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Resumo por tipo de produto" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Resumo por armazém" }),
+    ).toBeTruthy();
+    // valor financeiro longo exibido por inteiro — sem truncamento
+    expect(screen.getByText("12.896.290,89")).toBeTruthy();
+    expect(screen.getByText("10.113.731,78")).toBeTruthy();
+    // associação armazém·filial preservada no rótulo do card
+    expect(screen.getByText("Armazém 01 · Filial 02")).toBeTruthy();
+    expect(screen.getAllByText(/itens$/).length).toBeGreaterThan(0);
+  });
+
   it("source_missing não exibe total nem zero", async () => {
     getMock.mockResolvedValue(
       payload({
