@@ -63,3 +63,12 @@ Preservação dos campos omitidos e a aceitação upstream dos campos liberados 
 - Idempotência nativa do upstream: **TO_INVENTORY**.
 - Obrigatoriedade efetiva MATA020: **TO_INVENTORY** (não inferida do SX3).
 - Equivalência formal `codusr` ≡ `SYS_USR.USR_ID`: **TO_INVENTORY** (bloqueia live write até homologação).
+
+
+## F4.4 — Status formal da lista fornecida pelo owner (2026-10-21)
+
+**RECEIVED / PROVEN documental:** Gabriel já encaminhou `Campos Obrigatorios.xlsx` com **18 campos** e o respectivo mapeamento `minha_delpi_field → totvs_field`. **Não existe pendência de envio da lista**. O conteúdo deve ser tratado como *referência oficial de campos informados pelo owner*, sem confundir recebimento com execução de validações condicionais do MATA020. A relação foi registrada integralmente em [retorno Gabriel 2026-10-21](./protheus-rest-supplier-gabriel-response-2026-10-21.md), quando essa evidência estiver integrada; se ainda estiver em PR, consultar PR #102 e não assumir sua presença na main.
+
+`tax_id → A2_CGC` consta explicitamente na relação recebida. F4.3 comprovou que `api-delpi` enviou `fornecedor.tax_id`, mas o POST de teste `003874/01` gravou `A2_CGC` vazio em `DELPI_TST01`. **Essa é a pendência de integridade do CREATE**, não falta de matriz. Confirmar comportamento REST/Execauto com Gabriel e revalidar por GET+SQL antes de declarar CREATE completo. POST passou a retornar código/loja segundo owner e houve retorno de código na homologação; confirmar shape dos dois valores na mesma resposta. As condições de obrigatoriedade de cada um dos 18 campos continuam `TO_INVENTORY` quando não expressas na planilha.
+
+**Decisão PO:** manter REST `:8701` → `DELPI_TST01` para homologação; não trocar para endpoint produtivo informado por Gabriel (`http://192.168.1.231:8061/restall`), não alterar configurações de ambiente e preservar gates OFF fora de testes autorizados. Esta seção retifica a lacuna histórica "matriz ainda não enviada"; não muda código nem validações atuais.
