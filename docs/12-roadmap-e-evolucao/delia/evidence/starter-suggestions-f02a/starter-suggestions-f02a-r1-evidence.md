@@ -79,3 +79,13 @@ OTHER_DEMO_GATES_PRESERVED=YES
 BACKEND_TOUCHED=NO
 PHASE_ADVANCE=NO
 ```
+
+## 8. Confirmacao visual por usuario em producao (2026-10-21)
+
+**Evidence provenance:** duas capturas da sessao autenticada enviadas pelo usuario no chat de coordenacao, URL normal `minhadelpi.com.br/apps/delia` sem `?delia-demo`. Capturas nao foram versionadas no repositorio. Esta e evidencia visual de usuario, nao reexecucao independente de Playwright nem inspecao de requests de rede.
+
+- **PASS_USER_OBSERVED:** recepcao vazia apresenta quatro Starter Suggestions em grid de duas colunas, com titulos Formatos de dados, O que e SIPOC?, Fontes disponiveis e Tipos de analise. Composer permanece visivel.
+- **PASS_USER_OBSERVED:** clique em `O que e SIPOC?` preenche o composer com `O que e SIPOC?`, cursor/foco aparente e botao Enviar ainda disponivel. Nao ha turno novo visivel na captura.
+- **NOT_PROVEN_BY_SCREENSHOT:** ausencia absoluta de POST automatico (coberta por testes reportados), comportamento com draft preenchido, Dock, mobile, leitura por tecnologia assistiva e capacidade real de responder a cada pergunta. O gate de backend de futuras sugestoes dinamicas permanece nao definido.
+
+`PRODUCTION_DEFAULT_STARTERS_VISUAL=PASS_USER_OBSERVED`; `PRODUCTION_SELECT_TO_DRAFT_VISUAL=PASS_USER_OBSERVED`; `PRODUCTION_DOCK_HUMAN_QA=PENDING`; `PRODUCTION_NETWORK_NO_AUTO_SUBMIT=NOT_DIRECTLY_OBSERVED`; `PHASE_ADVANCE=NO`. Nenhuma mudanca de codigo ou runtime nesta atualizacao documental.
