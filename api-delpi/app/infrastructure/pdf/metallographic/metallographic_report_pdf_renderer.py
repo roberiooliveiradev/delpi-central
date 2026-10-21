@@ -84,6 +84,14 @@ def _register_fonts() -> None:
         pdfmetrics.registerFont(TTFont(_BOLD, str(_ASSETS / "delpi-sans-700.ttf")))
 
 
+def _mark_overflow(line: str) -> str:
+    marker = "..."
+    if line.endswith(marker):
+        return line
+    room = max(0, len(line) - len(marker))
+    return f"{line[:room].rstrip()}{marker}"
+
+
 def _safe(value: Any) -> str:
     text = "" if value is None else str(value)
     return text.replace("\r", "").replace("–", "-").replace("—", "-").replace("\u00a0", " ").strip()
@@ -225,8 +233,11 @@ class MetallographicReportPdfRenderer:
         self._text(drawing, "OBSERVAÇÕES / DESVIOS", left + 2.2, top + 12.3, 6.7, _BOLD, _MUTED)
         for index in range(3):
             self._line(drawing, left + 2.2, top + 18.2 + index * 4.7, left + width - 2.2, top + 18.2 + index * 4.7, _OBS_LINE, 0.45)
-        lines = self._wrap(_safe(conclusion.get("notes")), _REGULAR, 7.6, width - 4.6)[:2]
-        for index, line in enumerate(lines):
+        wrapped = self._wrap(_safe(conclusion.get("notes")), _REGULAR, 7.6, width - 4.6)
+        visible = wrapped[:3]
+        if len(wrapped) > 3 and visible:
+            visible[-1] = _mark_overflow(visible[-1])
+        for index, line in enumerate(visible):
             self._text(drawing, line, left + 2.5, top + 18.8 + index * 4.7, 7.6, _REGULAR, _INK)
 
     def _analyst(self, drawing: canvas.Canvas, name: str) -> None:

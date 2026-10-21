@@ -577,6 +577,19 @@ def test_pdf_export_keeps_snapshot_and_sections(tmp_path: Path) -> None:
     assert any(item["operation"] == "export_pdf" for item in repository.audits)
 
 
+def test_pdf_marks_notes_that_exceed_the_sheet(tmp_path: Path) -> None:
+    service, _repository = _service(tmp_path)
+    created = service.create(
+        actor="user-1",
+        idempotency_key="create-key-01",
+        payload=_payload(conclusion={"result": "conforming", "notes": " ".join(["desvio"] * 80)}),
+    )
+    exported = service.export_pdf(actor="user-1", report_id=created["id"])
+    text = exported["content"].decode("latin1", errors="ignore")
+    assert "..." in text
+    assert service.get(created["id"])["version"] == created["version"]
+
+
 def test_server_owned_fields_and_numeric_measurement_are_rejected() -> None:
     with pytest.raises(PayloadValidationError):
         normalize_create_payload({"id": "not-allowed", "report_number": "MET-1"})

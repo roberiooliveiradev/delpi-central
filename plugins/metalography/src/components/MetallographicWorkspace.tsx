@@ -16,6 +16,7 @@ import { HttpRequestError } from "../api/httpClient";
 import { clearKey, idempotencyKey } from "../domain/draftSession";
 import { allows, METALOGRAPHY_PERMISSIONS } from "../domain/permissions";
 import {
+  copyReportForm,
   emptyReportForm,
   formFromReport,
   formsEqual,
@@ -23,6 +24,7 @@ import {
   type ReportFormState,
   type ReportSnapshot,
 } from "../domain/reportForm";
+import { EMPTY_REPORT_FILTERS, reportMatches, type ReportListFilters } from "../domain/reportListFilter";
 import { CropDialog } from "./CropDialog";
 import { editorPath, listPath, navigateMetalography } from "../utils/route";
 
@@ -32,24 +34,6 @@ type SlotView = {
   previewUrl: string | null;
   fileName: string;
   pending: File | null;
-};
-
-type FilterState = {
-  from: string;
-  to: string;
-  terminal: string;
-  part: string;
-  product: string;
-  cable: string;
-  section: string;
-  applicator: string;
-  press: string;
-  lot: string;
-  sample: string;
-};
-
-const EMPTY_FILTERS: FilterState = {
-  from: "", to: "", terminal: "", part: "", product: "", cable: "", section: "", applicator: "", press: "", lot: "", sample: "",
 };
 
 const SLOT_HINT: Record<SlotKey, string> = {
@@ -64,51 +48,10 @@ function emptySlots(): Record<SlotKey, SlotView> {
   };
 }
 
-function normalize(value: string): string {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
-}
-
-function dateKey(value: string | null | undefined): number | null {
-  const text = (value ?? "").trim();
-  if (!text) return null;
-  let match = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(text);
-  if (match) return Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
-  match = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(text);
-  if (match) return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) return null;
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
 function formatStamp(value: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-}
-
-function matches(report: ReportSnapshot, filters: FilterState): boolean {
-  const sample = report.sample;
-  const pairs: Array<[string, string | null]> = [
-    [filters.terminal, sample.terminal_code],
-    [filters.part, sample.terminal_part_number],
-    [filters.product, sample.product_harness],
-    [filters.cable, sample.cable],
-    [filters.section, sample.conductor_section],
-    [filters.applicator, sample.applicator_tool],
-    [filters.press, sample.press_equipment],
-    [filters.lot, sample.batch_production_order],
-    [filters.sample, sample.sample_identification],
-  ];
-  for (const [query, field] of pairs) {
-    if (query && !normalize(field ?? "").includes(normalize(query))) return false;
-  }
-  const start = dateKey(filters.from);
-  const end = dateKey(filters.to);
-  if (start !== null || end !== null) {
-    const key = dateKey(report.report_date) ?? dateKey(report.created_at) ?? dateKey(report.updated_at);
-    if (key === null || (start !== null && key < start) || (end !== null && key > end)) return false;
-  }
-  return true;
 }
 
 function hostBox(host: HTMLElement | null): CSSProperties | undefined {
@@ -158,7 +101,7 @@ export function MetallographicWorkspace({
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [reports, setReports] = useState<ReportSnapshot[]>([]);
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<ReportListFilters>(EMPTY_REPORT_FILTERS);
   const [hint, setHint] = useState("Carregando os relatórios salvos no servidor.");
   const [hintError, setHintError] = useState(false);
   const [forbidden, setForbidden] = useState(false);
@@ -265,7 +208,7 @@ export function MetallographicWorkspace({
     return () => window.removeEventListener("beforeunload", onLeave);
   }, [dirty, editing]);
 
-  const visible = reports.filter((report) => matches(report, filters));
+  const visible = reports.filter((report) => reportMatches(report, filters));
   const filtersActive = Object.values(filters).some((value) => value.trim() !== "");
   const total = reports.length;
 
@@ -389,21 +332,7 @@ export function MetallographicWorkspace({
     if (!pendingReport || !canCreate) return;
     setBusy(true);
     try {
-      const source = formFromReport(pendingReport);
-      const copy = emptyReportForm();
-      copy.revision = source.revision;
-      copy.sample = {
-        ...source.sample,
-        batch_production_order: "",
-        sample_identification: "",
-      };
-      copy.measurements = {
-        crimp_height_ch: { criterion: source.measurements.crimp_height_ch.criterion, measured: "" },
-        crimp_width_cb: { criterion: source.measurements.crimp_width_cb.criterion, measured: "" },
-        void_area_av: { criterion: source.measurements.void_area_av.criterion, measured: "" },
-        left_burr_gh_e: { criterion: source.measurements.left_burr_gh_e.criterion, measured: "" },
-        right_burr_gh_d: { criterion: source.measurements.right_burr_gh_d.criterion, measured: "" },
-      };
+      const copy = copyReportForm(formFromReport(pendingReport));
       const key = idempotencyKey(sessionStorage, `metalography:copy:${pendingReport.id}`, () => crypto.randomUUID());
       const created = await createReport(toWritePayload(copy), key);
       clearKey(sessionStorage, `metalography:copy:${pendingReport.id}`);
@@ -469,7 +398,7 @@ export function MetallographicWorkspace({
           <section className="reports-panel" aria-labelledby="reports-heading">
             <div className="reports-panel-head"><div><h2 id="reports-heading">Relatórios salvos</h2><p>Acesse e edite as análises registradas no Metalografia DELPI.</p></div><span id="report-count" className="report-count">{countLabel}</span></div>
             <section id="report-filters" className="report-filter-box" aria-label="Filtros dos relatórios salvos">
-              <div className="report-filter-top"><div className="report-filter-title"><strong>Filtrar relatórios</strong><span>Combine período e identificação da amostra; os critérios preenchidos são aplicados juntos. Se a data do relatório estiver vazia, usa-se a data de criação.</span></div><button id="clear-report-filters" className="filter-clear" type="button" disabled={!filtersActive} onClick={() => setFilters(EMPTY_FILTERS)}>Limpar filtros</button></div>
+              <div className="report-filter-top"><div className="report-filter-title"><strong>Filtrar relatórios</strong><span>Combine período e identificação da amostra; os critérios preenchidos são aplicados juntos. Se a data do relatório estiver vazia, usa-se a data de criação.</span></div><button id="clear-report-filters" className="filter-clear" type="button" disabled={!filtersActive} onClick={() => setFilters(EMPTY_REPORT_FILTERS)}>Limpar filtros</button></div>
               <div className="report-filter-grid">
                 <label className="filter-field"><span>Data inicial</span><input id="filter-date-from" type="date" aria-label="Data inicial do período" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></label>
                 <label className="filter-field"><span>Data final</span><input id="filter-date-to" type="date" aria-label="Data final do período" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></label>

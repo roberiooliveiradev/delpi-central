@@ -181,6 +181,24 @@ export function toWritePayload(form: ReportFormState): ReportWritePayload {
   };
 }
 
+export function copyReportForm(source: ReportFormState): ReportFormState {
+  const copy = emptyReportForm();
+  copy.revision = source.revision;
+  copy.sample = {
+    ...source.sample,
+    batch_production_order: "",
+    sample_identification: "",
+  };
+  copy.measurements = {
+    crimp_height_ch: { criterion: source.measurements.crimp_height_ch.criterion, measured: "" },
+    crimp_width_cb: { criterion: source.measurements.crimp_width_cb.criterion, measured: "" },
+    void_area_av: { criterion: source.measurements.void_area_av.criterion, measured: "" },
+    left_burr_gh_e: { criterion: source.measurements.left_burr_gh_e.criterion, measured: "" },
+    right_burr_gh_d: { criterion: source.measurements.right_burr_gh_d.criterion, measured: "" },
+  };
+  return copy;
+}
+
 export function formsEqual(left: ReportFormState, right: ReportFormState): boolean {
   return JSON.stringify(toWritePayload(left)) === JSON.stringify(toWritePayload(right));
 }

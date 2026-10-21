@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { emptyReportForm, formFromReport, formsEqual, toWritePayload, type ReportSnapshot } from "./reportForm";
+import { copyReportForm, emptyReportForm, formFromReport, formsEqual, toWritePayload, type ReportSnapshot } from "./reportForm";
 
 const report = {
   id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
@@ -62,5 +62,23 @@ describe("report form", () => {
 
   it("does not send a blank conclusion as conforming", () => {
     expect(toWritePayload(emptyReportForm()).conclusion.result).toBeNull();
+  });
+
+  it("copies the html field policy instead of cloning the whole report", () => {
+    const source = formFromReport(report);
+    source.sample.batch_production_order = "OP-1";
+    source.measurements.crimp_width_cb = { criterion: "2.0", measured: "2.1" };
+    const copy = copyReportForm(source);
+    const payload = toWritePayload(copy);
+    expect(payload.revision).toBe("01");
+    expect(payload.sample.terminal_code).toBe("T1");
+    expect(payload.sample.batch_production_order).toBeNull();
+    expect(payload.sample.sample_identification).toBeNull();
+    expect(payload.measurements.crimp_height_ch).toEqual({ criterion: "1.0", measured: null });
+    expect(payload.measurements.crimp_width_cb).toEqual({ criterion: "2.0", measured: null });
+    expect(payload.report_date).toBeNull();
+    expect(payload.conclusion).toEqual({ result: null, notes: null });
+    expect(payload.analyst).toEqual({ name: null });
+    expect(payload).not.toHaveProperty("images");
   });
 });
