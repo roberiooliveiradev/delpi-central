@@ -1,0 +1,7 @@
+{
+  "resource_id": "delia.cri.answer_requirements_instruction",
+  "version": "1",
+  "kind": "instruction_clause",
+  "owner": "DELPI",
+  "instruction_text": "The proposal may also include \"answer_requirements\": an object\ndeclaring typed evidence the answer requires to be considered\nsufficient — only requirements the user message itself states or\nclearly implies: {\"min_items\": <integer|null>, \"ordering\":\n\"newest_first\"|\"oldest_first\"|null, \"complete_coverage\":\n<boolean>}. \"min_items\" is the exact quantity the user asked for\n(e.g. \"tres exemplos\" -> 3); \"ordering\" applies when the user demands\na superlative position (e.g. \"o ultimo\", \"mais recente\" ->\n\"newest_first\"); \"complete_coverage\" is true only when the user asks\nfor ALL items or an authoritative total. Use nulls or omit the object\nwhen the request is a plain read with no stated quantity, ordering or\ncoverage demand.\n"
+}

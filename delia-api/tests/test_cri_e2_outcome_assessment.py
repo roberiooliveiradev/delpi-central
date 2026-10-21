@@ -11,6 +11,7 @@ existing limitations contract — SUCCESS is never rewritten.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -45,6 +46,10 @@ from app.application.model_invocation.contracts import (
     ProviderInvocationPayload,
 )
 from app.application.model_invocation.invoke_model import InvokeModel
+from app.infrastructure.config.cri_instruction_resource import (
+    CriInstructionResourceError,
+    load_cri_instruction_clause,
+)
 from app.domain.evidence.model import ModelRef, SourceRef
 from app.domain.model_invocation.model import ProviderExposureClass
 from app.domain.specialist_interop.model import (
@@ -213,17 +218,36 @@ def _select(group_key, remote_name, goal=None):
     return proposal
 
 
+_CRI_RESOURCE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "config"
+    / "cri_instructions.delpi.json"
+)
+
+
+def _cri_clause():
+    """The real governed resource — never a test-side copy."""
+    return load_cri_instruction_clause(_CRI_RESOURCE_PATH)
+
+
 def _orchestrator(outcome, proposal, *, enabled: bool):
     provider = FakeProvider(
         "mcp",
         [_group("mcp", "alpha", [_cap("alpha", "mcp", "read_items")])],
         outcomes={("alpha", "read_items"): outcome},
     )
+    clause = _cri_clause() if enabled else None
     return OperationalCapabilityOrchestrator(
         [provider],
         invoke_model=InvokeModel(FakeProposalModel(proposal)),
         model_ref=TEST_MODEL_REF,
         response_intelligence_enabled=enabled,
+        cri_instruction_clause=(
+            clause.text if clause is not None else None
+        ),
+        cri_instruction_version=(
+            clause.version if clause is not None else None
+        ),
     )
 
 
@@ -695,20 +719,27 @@ def test_on_adds_zero_model_calls():
 
 def test_cri_instruction_variant_carries_requirements_clause():
     """The CRI goal instructions extend the same contract — baseline
-    text is a strict prefix, never a rewritten prompt."""
+    text is a strict prefix, never a rewritten prompt. The clause
+    itself is injected from the governed declarative resource."""
     from app.application.capability_provision.orchestration import (
         CAPABILITY_AND_GOAL_INSTRUCTION,
-        CAPABILITY_AND_GOAL_INSTRUCTION_CRI,
         GOAL_INSTRUCTION,
-        GOAL_INSTRUCTION_CRI,
     )
 
-    assert GOAL_INSTRUCTION_CRI.startswith(GOAL_INSTRUCTION)
-    assert CAPABILITY_AND_GOAL_INSTRUCTION_CRI.startswith(
-        CAPABILITY_AND_GOAL_INSTRUCTION
+    clause = _cri_clause()
+    orch = _orchestrator(
+        _outcome("ok", structured={"items": [{"name": "E1"}]}),
+        _select("mcp:alpha", "read_items"),
+        enabled=True,
     )
-    assert "answer_requirements" in GOAL_INSTRUCTION_CRI
-    assert "answer_requirements" in CAPABILITY_AND_GOAL_INSTRUCTION_CRI
+    assert orch._goal_instruction == (
+        GOAL_INSTRUCTION + clause.text.strip()
+    )
+    assert orch._capability_goal_instruction == (
+        CAPABILITY_AND_GOAL_INSTRUCTION + clause.text.strip()
+    )
+    assert "answer_requirements" in orch._goal_instruction
+    assert "answer_requirements" in orch._capability_goal_instruction
     assert "answer_requirements" not in GOAL_INSTRUCTION
     assert (
         "answer_requirements" not in CAPABILITY_AND_GOAL_INSTRUCTION
@@ -741,3 +772,421 @@ def test_on_uses_cri_instruction_off_uses_baseline():
         req_off.instruction_content or ""
     )
     assert "answer_requirements" in (req_on.instruction_content or "")
+
+
+# ---------------------------------------------------------------------------
+# Rework R1 — temporal ordering must be proven over ALL returned records
+# ---------------------------------------------------------------------------
+
+
+def test_r1_ordering_unproven_when_one_record_lacks_temporal_field():
+    """Three records, one without the candidate date field — two
+    ordered values inside a larger collection never prove ordering."""
+    req = parse_answer_requirements({"ordering": "newest_first"})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(
+                {"updated": "2026-03-01T00:00:00Z", "name": "A"},
+                {"updated": "2026-01-01T00:00:00Z", "name": "B"},
+                {"name": "C"},
+            ),
+            has_business_evidence=True,
+            coverage_complete=True,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+    assert "ordering_unproven" in verdict.reasons
+
+
+def test_r1_ordering_unproven_on_incompatible_temporal_formats():
+    """Values that do not all parse as comparable temporals cannot
+    prove an ordering."""
+    req = parse_answer_requirements({"ordering": "newest_first"})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(
+                {"updated": "2026-03-01T00:00:00Z"},
+                {"updated": "yesterday"},
+                {"updated": "2026-01-01T00:00:00Z"},
+            ),
+            has_business_evidence=True,
+            coverage_complete=True,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+    assert "ordering_unproven" in verdict.reasons
+
+
+def test_r1_partially_ordered_sequence_is_unproven():
+    """A non-monotonic sequence is never an ordering proof."""
+    req = parse_answer_requirements({"ordering": "newest_first"})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(
+                {"updated": "2026-01-01T00:00:00Z"},
+                {"updated": "2026-03-01T00:00:00Z"},
+                {"updated": "2026-02-01T00:00:00Z"},
+            ),
+            has_business_evidence=True,
+            coverage_complete=True,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+    assert "ordering_unproven" in verdict.reasons
+
+
+def test_r1_temporal_ties_remain_conservative():
+    """Equal timestamps are compatible with monotonic ordering — a tie
+    never breaks the proof, but never upgrades coverage either."""
+    req_new = parse_answer_requirements({"ordering": "newest_first"})
+    req_old = parse_answer_requirements({"ordering": "oldest_first"})
+
+    newest_tied = EvidenceFacts(
+        records=(
+            {"updated": "2026-03-01T00:00:00Z"},
+            {"updated": "2026-03-01T00:00:00Z"},
+            {"updated": "2026-01-01T00:00:00Z"},
+        ),
+        has_business_evidence=True,
+        coverage_complete=True,
+    )
+    # [Mar, Mar, Jan] — non-increasing: newest_first proven.
+    assert (
+        assess_outcome(newest_tied, req_new).decision
+        == OUTCOME_ANSWERED
+    )
+    # The same sequence is NOT non-decreasing: oldest_first unproven.
+    assert (
+        assess_outcome(newest_tied, req_old).decision
+        == OUTCOME_INSUFFICIENT
+    )
+
+    # All-equal timestamps satisfy BOTH monotonic directions.
+    all_tied = EvidenceFacts(
+        records=(
+            {"updated": "2026-03-01T00:00:00Z"},
+            {"updated": "2026-03-01T00:00:00Z"},
+            {"updated": "2026-03-01T00:00:00Z"},
+        ),
+        has_business_evidence=True,
+        coverage_complete=True,
+    )
+    assert assess_outcome(all_tied, req_new).decision == OUTCOME_ANSWERED
+    assert assess_outcome(all_tied, req_old).decision == OUTCOME_ANSWERED
+
+    # Proven local ordering WITHOUT coverage stays unproven.
+    unproven = EvidenceFacts(
+        records=newest_tied.records,
+        has_business_evidence=True,
+        coverage_complete=None,
+    )
+    assert (
+        assess_outcome(unproven, req_new).decision
+        == OUTCOME_INSUFFICIENT
+    )
+
+
+def test_r1_uniform_field_on_all_records_proves_ordering():
+    req = parse_answer_requirements({"ordering": "oldest_first"})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(
+                {"updated": "2026-01-01T00:00:00Z"},
+                {"updated": "2026-02-01T00:00:00Z"},
+                {"updated": "2026-03-01T00:00:00Z"},
+            ),
+            has_business_evidence=True,
+            coverage_complete=True,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_ANSWERED
+
+
+# ---------------------------------------------------------------------------
+# Rework R2 — delivered count is not the owner's available total
+# ---------------------------------------------------------------------------
+
+
+def test_r2_available_total_never_proves_delivered_examples():
+    """total_count=100 with only 2 delivered rows for a 3-example ask —
+    availability is not delivery."""
+    req = parse_answer_requirements({"min_items": 3})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=({"a": 1}, {"b": 2}),
+            has_business_evidence=True,
+            total_count=100,
+            coverage_complete=False,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+
+
+def test_r2_delivered_quantity_met():
+    req = parse_answer_requirements({"min_items": 3})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=({"a": 1}, {"b": 2}, {"c": 3}),
+            has_business_evidence=True,
+            total_count=100,
+            coverage_complete=False,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_ANSWERED
+
+
+def test_r2_zero_delivered_with_positive_total_is_insufficient():
+    req = parse_answer_requirements({"min_items": 3})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(),
+            has_business_evidence=False,
+            total_count=3,
+        ),
+        req,
+    )
+    # No business evidence at all — envelope_only wins before
+    # requirement evaluation.
+    assert verdict.decision == OUTCOME_ENVELOPE_ONLY
+
+
+def test_r2_duplicate_records_are_not_distinct_examples():
+    """Three identical payloads for a three-example ask — structural
+    equality is the only legitimate identity bound; duplicates never
+    inflate delivered count."""
+    req = parse_answer_requirements({"min_items": 3})
+    record = {"name": "Terminal A", "code": "1008"}
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=(record, dict(record), dict(record)),
+            has_business_evidence=True,
+            coverage_complete=False,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+
+
+def test_r2_distinct_delivered_below_request_with_enough_total():
+    """Owner has 100 but delivered 2 distinct for a 3-ask —
+    insufficiency, never 'only two exist' nor 'three delivered'."""
+    req = parse_answer_requirements({"min_items": 3})
+    verdict = assess_outcome(
+        EvidenceFacts(
+            records=({"name": "A"}, {"name": "B"}),
+            has_business_evidence=True,
+            total_count=100,
+            coverage_complete=False,
+        ),
+        req,
+    )
+    assert verdict.decision == OUTCOME_INSUFFICIENT
+    assert "quantity_unproven" in verdict.reasons
+
+
+# ---------------------------------------------------------------------------
+# Rework R3 — governed declarative CRI instruction resource
+# ---------------------------------------------------------------------------
+
+
+def _write_resource(tmp_path: Path, data) -> Path:
+    import json
+
+    path = tmp_path / "cri_instructions.test.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+def test_r3_valid_resource_loads_with_version_and_hash():
+    clause = _cri_clause()
+    assert clause.resource_id == (
+        "delia.cri.answer_requirements_instruction"
+    )
+    assert clause.version == "1"
+    assert len(clause.content_hash) == 64
+    assert "answer_requirements" in clause.text
+
+
+def test_r3_missing_file_fails_closed(tmp_path):
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(tmp_path / "absent.json")
+
+
+def test_r3_malformed_json_fails_closed(tmp_path):
+    path = tmp_path / "bad.json"
+    path.write_text("{not json", encoding="utf-8")
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_unknown_version_rejected(tmp_path):
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "99",
+            "kind": "instruction_clause",
+            "owner": "DELPI",
+            "instruction_text": "x",
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_unsupported_keys_rejected(tmp_path):
+    """An extra key — including an authority-shaped one — never rides
+    through the governed contract."""
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "1",
+            "kind": "instruction_clause",
+            "owner": "DELPI",
+            "instruction_text": "x",
+            "authorization_scope": "all",
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_missing_required_field_rejected(tmp_path):
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "1",
+            "kind": "instruction_clause",
+            "instruction_text": "x",
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_unknown_kind_rejected(tmp_path):
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "1",
+            "kind": "domain_rule",
+            "owner": "DELPI",
+            "instruction_text": "x",
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_empty_text_rejected(tmp_path):
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "1",
+            "kind": "instruction_clause",
+            "owner": "DELPI",
+            "instruction_text": "   ",
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_oversized_text_rejected(tmp_path):
+    path = _write_resource(
+        tmp_path,
+        {
+            "resource_id": "delia.cri.answer_requirements_instruction",
+            "version": "1",
+            "kind": "instruction_clause",
+            "owner": "DELPI",
+            "instruction_text": "x" * 5000,
+        },
+    )
+    with pytest.raises(CriInstructionResourceError):
+        load_cri_instruction_clause(path)
+
+
+def test_r3_enabled_without_clause_degrades_to_baseline():
+    """Flag ON + absent resource → the WHOLE CRI enhancement stays at
+    baseline: baseline instructions, no assessment marker."""
+    goal = {"goal_class": "read"}
+    provider = FakeProvider(
+        "mcp",
+        [_group("mcp", "alpha", [_cap("alpha", "mcp", "read_items")])],
+        outcomes={
+            ("alpha", "read_items"): _outcome(
+                "ok", structured={"message": "ok", "request_id": "x"}
+            )
+        },
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(
+            FakeProposalModel(
+                _select("mcp:alpha", "read_items", goal=goal)
+            )
+        ),
+        model_ref=TEST_MODEL_REF,
+        response_intelligence_enabled=True,
+        cri_instruction_clause=None,
+    )
+    result = orch.attempt("traga os exemplos")
+    req = next(
+        r
+        for r in orch._invoke_model._port.requests
+        if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
+    )
+    assert "answer_requirements" not in (req.instruction_content or "")
+    assert LIMITATION_INSUFFICIENT_EVIDENCE not in (
+        result.limitations or ()
+    )
+
+
+def test_r3_on_lineage_carries_resource_version():
+    goal = {"goal_class": "read"}
+    orch, _ = _attempt(
+        _outcome("ok", structured={"items": [{"name": "E1"}]}),
+        goal=goal,
+        enabled=True,
+    )
+    req = next(
+        r
+        for r in orch._invoke_model._port.requests
+        if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
+    )
+    lineage = req.instruction_lineage
+    assert "+cri.1" in lineage.version
+    import hashlib
+
+    assert lineage.content_hash == hashlib.sha256(
+        (req.instruction_content or "").encode("utf-8")
+    ).hexdigest()
+
+
+def test_r3_off_never_consumes_resource():
+    """OFF sends the byte-identical baseline and the lineage carries no
+    CRI version marker."""
+    goal = {"goal_class": "read"}
+    orch, _ = _attempt(
+        _outcome("ok", structured={"items": [{"name": "E1"}]}),
+        goal=goal,
+        enabled=False,
+    )
+    req = next(
+        r
+        for r in orch._invoke_model._port.requests
+        if r.task_purpose_id == CAPABILITY_SELECTION_INSTRUCTION_ID
+    )
+    assert "+cri." not in req.instruction_lineage.version
+    assert "answer_requirements" not in (req.instruction_content or "")

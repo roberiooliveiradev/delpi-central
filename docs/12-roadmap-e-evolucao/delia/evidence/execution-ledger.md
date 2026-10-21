@@ -16756,3 +16756,26 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW_THEN_E3
 ```
+
+
+## §6.354 — CRI E2 bounded rework R1–R3 (2026-10-21)
+
+**TASK:** DELIA-CRI-E2-BOUNDED-REWORK-R1-R3-01. Single permitted bounded correction cycle over the independent-review findings in doc 77 §9. R1: `_temporal_orders` now proves a direction only when one field carries a parseable temporal value in EVERY returned record (missing/unparseable unified; ties conservative — both-direction set, never name-matched; local ordering still requires proven coverage). R2: `min_items` verified against `_distinct_delivered` (structural-equality dedup — the only legitimate identity bound); `total_count` proves only `fewer_than_requested`, never delivery. R3: clause externalized to `config/cri_instructions.delpi.json` (resource_id/version/kind/owner/instruction_text) + validated loader `app/infrastructure/config/cri_instruction_resource.py` (strict keys, kind+version allowlist, bounded text, fail-closed `CriInstructionResourceError`); composition loads fixed repo path only when flag ON, logs `cri_instruction_resource id=… version=… sha256=…`, injects typed clause+version; `_cri_active = flag AND clause` — invalid/absent resource degrades whole CRI mode to baseline; `InstructionLineage` version `12+cri.1`, hash over effective text. Files: outcome_assessment.py, orchestration.py, root_composer.py, cri_instruction_resource.py (new), cri_instructions.delpi.json (new), tests +22 (65 in E2 file). Suite: 1781 collected, 1778 passed, 3 skipped, 0 failures.
+
+```text
+CRI_E2_REWORK=EXECUTED
+R1_ORDERING_PROOF=ALL_RECORDS_COMPARABLE
+R2_DELIVERED_VS_AVAILABLE=SEPARATED
+R3_DECLARATIVE_RESOURCE=VERSIONED_VALIDATED_FAIL_CLOSED
+OFF_PARITY=BYTE_IDENTICAL
+ADDITIONAL_MODEL_CALLS=0
+TESTS=1778_PASSED_3_SKIPPED
+PUBLIC_CONTRACT_CHANGE=NO
+SELECTION_ONLY=PRESERVED
+MATERIAL_ACT=0
+PRODUCTION_DEPLOY=NO
+E2_ACCEPTED=PENDING_INDEPENDENT_REVIEW
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW_THEN_E3
+```

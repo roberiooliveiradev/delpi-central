@@ -714,25 +714,10 @@ other than the listed ones.
 # CRI E2 (doc 73 §3-§6 / spec 75): when the response-intelligence
 # switch is ON, the SAME goal stage also proposes typed sufficiency
 # requirements — a hypothesis the runtime verifies against typed
-# evidence at the outcome edge. Baseline instructions are untouched:
-# OFF sends the byte-identical original prompt.
-_ANSWER_REQUIREMENTS_CLAUSE = """The proposal may also include "answer_requirements": an object
-declaring typed evidence the answer requires to be considered
-sufficient — only requirements the user message itself states or
-clearly implies: {"min_items": <integer|null>, "ordering":
-"newest_first"|"oldest_first"|null, "complete_coverage":
-<boolean>}. "min_items" is the exact quantity the user asked for
-(e.g. "tres exemplos" -> 3); "ordering" applies when the user demands
-a superlative position (e.g. "o ultimo", "mais recente" ->
-"newest_first"); "complete_coverage" is true only when the user asks
-for ALL items or an authoritative total. Use nulls or omit the object
-when the request is a plain read with no stated quantity, ordering or
-coverage demand.
-"""
-GOAL_INSTRUCTION_CRI = GOAL_INSTRUCTION + _ANSWER_REQUIREMENTS_CLAUSE
-CAPABILITY_AND_GOAL_INSTRUCTION_CRI = (
-    CAPABILITY_AND_GOAL_INSTRUCTION + _ANSWER_REQUIREMENTS_CLAUSE
-)
+# evidence at the outcome edge. The clause itself is a governed
+# declarative resource (config/cri_instructions.delpi.json, E2-R3)
+# injected by composition; baseline instructions stay byte-identical
+# and the mode deactivates when the resource is absent.
 
 COMPARISON_INSTRUCTION_ID = (
     "delia.capability_orchestration.comparison"
@@ -791,10 +776,14 @@ _SELECTION_INCONCLUSIVE_CONTENT = (
 )
 
 
-def _lineage(instruction_id: str, content: str) -> InstructionLineage:
+def _lineage(
+    instruction_id: str,
+    content: str,
+    version: str = SELECTION_INSTRUCTION_VERSION,
+) -> InstructionLineage:
     return InstructionLineage(
         instruction_id=instruction_id,
-        version=SELECTION_INSTRUCTION_VERSION,
+        version=version,
         content_hash=hashlib.sha256(content.encode("utf-8")).hexdigest(),
     )
 
@@ -4585,6 +4574,8 @@ class OperationalCapabilityOrchestrator:
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
         response_intelligence_enabled: bool = False,
+        cri_instruction_clause: str | None = None,
+        cri_instruction_version: str | None = None,
     ) -> None:
         self._providers = {p.provider_id: p for p in providers}
         self._invoke_model = invoke_model
@@ -4601,6 +4592,33 @@ class OperationalCapabilityOrchestrator:
         # byte-identical.
         self._response_intelligence_enabled = bool(
             response_intelligence_enabled
+        )
+        # CRI E2-R3: the answer-requirements clause is a governed
+        # declarative resource injected by composition — never embedded
+        # in this module. The CRI enhancement activates only when BOTH
+        # the flag and a validated clause are present; a missing or
+        # invalid resource degrades the whole mode to baseline.
+        clause = (
+            cri_instruction_clause.strip()
+            if isinstance(cri_instruction_clause, str)
+            else ""
+        )
+        self._cri_active = (
+            self._response_intelligence_enabled and bool(clause)
+        )
+        self._goal_instruction = (
+            GOAL_INSTRUCTION + clause if self._cri_active
+            else GOAL_INSTRUCTION
+        )
+        self._capability_goal_instruction = (
+            CAPABILITY_AND_GOAL_INSTRUCTION + clause
+            if self._cri_active
+            else CAPABILITY_AND_GOAL_INSTRUCTION
+        )
+        self._cri_instruction_version = (
+            f"{SELECTION_INSTRUCTION_VERSION}+cri.{cri_instruction_version}"
+            if self._cri_active and cri_instruction_version
+            else SELECTION_INSTRUCTION_VERSION
         )
 
     def attempt(
@@ -6481,11 +6499,8 @@ class OperationalCapabilityOrchestrator:
             block_tag="turn_context",
             block_payload="{}",
             instruction_id=GOAL_INSTRUCTION_ID,
-            instruction=(
-                GOAL_INSTRUCTION_CRI
-                if self._response_intelligence_enabled
-                else GOAL_INSTRUCTION
-            ),
+            instruction=self._goal_instruction,
+            instruction_version=self._cri_instruction_version,
             expected_fields=("goal_class",),
             input_kind="turn_goal",
             allowed_keys=self._GOAL_ALLOWED_KEYS,
@@ -7954,7 +7969,7 @@ class OperationalCapabilityOrchestrator:
         confident answer is fabricated. OFF returns the outcome
         untouched (byte-identical baseline).
         """
-        if not self._response_intelligence_enabled:
+        if not self._cri_active:
             return outcome
         verdict = assess_outcome(
             self._outcome_facts(outcome), goal.answer_requirements
@@ -8561,6 +8576,7 @@ class OperationalCapabilityOrchestrator:
         expected_fields: tuple[str, ...],
         input_kind: str,
         allowed_keys: frozenset[str],
+        instruction_version: str | None = None,
         workspace_context: WorkspaceContext | None = None,
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         correlation: str | None = None,
@@ -8573,7 +8589,11 @@ class OperationalCapabilityOrchestrator:
             block_payload=block_payload,
             instruction_id=instruction_id,
             instruction=instruction,
-            instruction_lineage=_lineage(instruction_id, instruction),
+            instruction_lineage=_lineage(
+                instruction_id,
+                instruction,
+                instruction_version or SELECTION_INSTRUCTION_VERSION,
+            ),
             expected_fields=expected_fields,
             input_kind=input_kind,
             workspace_context=workspace_context,
@@ -9436,11 +9456,8 @@ class OperationalCapabilityOrchestrator:
                 group, prior_observation=observation
             ),
             instruction_id=CAPABILITY_SELECTION_INSTRUCTION_ID,
-            instruction=(
-                CAPABILITY_AND_GOAL_INSTRUCTION_CRI
-                if self._response_intelligence_enabled
-                else CAPABILITY_AND_GOAL_INSTRUCTION
-            ),
+            instruction=self._capability_goal_instruction,
+            instruction_version=self._cri_instruction_version,
             expected_fields=("applicable", "remote_name"),
             input_kind="capability_selection_with_goal",
             allowed_keys=allowed,

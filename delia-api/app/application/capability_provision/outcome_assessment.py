@@ -17,6 +17,7 @@ intent rules, no model calls.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Mapping, Sequence
@@ -136,17 +137,20 @@ def _parse_temporal(value: object) -> datetime | None:
     return parsed
 
 
-def _temporal_order(records: Sequence[Mapping[str, Any]]) -> str | None:
-    """Proven uniform temporal ordering across records, if any.
+def _temporal_orders(
+    records: Sequence[Mapping[str, Any]],
+) -> frozenset[str]:
+    """Proven uniform temporal orderings across ALL returned records.
 
-    A direction is proven only when one field carries temporally
-    parseable values in every record that declares it (at least two)
-    and the sequence is monotonic. Field *names* are never matched —
-    the values themselves carry the type evidence.
+    A direction is proven only when one field carries a temporally
+    parseable value in EVERY record — a subset of ordered values inside
+    a larger collection never proves ordering (E2-R1). Field *names*
+    are never matched — the values themselves carry the type evidence.
+    Ties remain monotonic in both directions.
     """
 
     if len(records) < 2:
-        return None
+        return frozenset()
     keys = sorted(
         {
             key
@@ -155,24 +159,41 @@ def _temporal_order(records: Sequence[Mapping[str, Any]]) -> str | None:
             if isinstance(key, str)
         }
     )[:_MAX_ORDERING_FIELD_SCAN]
+    proven: set[str] = set()
     for key in keys:
         values: list[datetime] = []
         for record in records:
-            value = record.get(key)
-            if value is None:
-                continue
-            parsed = _parse_temporal(value)
+            parsed = _parse_temporal(record.get(key))
             if parsed is None:
+                # Missing or non-comparable value in ANY record —
+                # this field cannot carry the ordering proof.
                 values = []
                 break
             values.append(parsed)
-        if len(values) < 2:
+        if len(values) != len(records):
             continue
         if all(a >= b for a, b in zip(values, values[1:])):
-            return "newest_first"
+            proven.add("newest_first")
         if all(a <= b for a, b in zip(values, values[1:])):
-            return "oldest_first"
-    return None
+            proven.add("oldest_first")
+    return frozenset(proven)
+
+
+def _distinct_delivered(records: Sequence[Mapping[str, Any]]) -> int:
+    """Count of effectively delivered distinct examples (E2-R2).
+
+    Exact-content equality is the only legitimate identity bound —
+    never invented identifiers or entity-matching rules. Duplicate
+    payloads never inflate the delivered count.
+    """
+
+    seen: set[str] = set()
+    for record in records:
+        try:
+            seen.add(json.dumps(record, sort_keys=True, default=str))
+        except (TypeError, ValueError):
+            seen.add(repr(record))
+    return len(seen)
 
 
 def _unproven_requirements(
@@ -190,29 +211,30 @@ def _unproven_requirements(
     reasons: list[str] = []
     if requirements.min_items is not None:
         requested = requirements.min_items
-        count = len(facts.records)
-        if count >= requested or (
-            facts.total_count is not None
-            and facts.total_count >= requested
-        ):
+        # E2-R2: the owner's AVAILABLE total never proves the requested
+        # examples were DELIVERED — only the distinct records present in
+        # this result count as delivery.
+        delivered = _distinct_delivered(facts.records)
+        if delivered >= requested:
             pass
         elif (
             facts.total_count is not None
             and facts.total_count < requested
-        ) or (facts.coverage_complete is True and count < requested):
+        ) or facts.coverage_complete is True:
             reasons.append("fewer_than_requested")
         else:
             reasons.append("quantity_unproven")
     if requirements.ordering is not None:
-        order = _temporal_order(facts.records)
+        orders = _temporal_orders(facts.records)
         single_complete = (
             len(facts.records) == 1 and facts.coverage_complete is True
         )
-        if (
-            order == requirements.ordering or single_complete
-        ) and facts.coverage_complete is True:
+        order_proven = (
+            requirements.ordering in orders or single_complete
+        )
+        if order_proven and facts.coverage_complete is True:
             pass
-        elif order == requirements.ordering or single_complete:
+        elif order_proven:
             reasons.append("coverage_unproven")
         else:
             reasons.append("ordering_unproven")

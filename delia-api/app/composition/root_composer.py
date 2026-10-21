@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from flask import Flask
 
@@ -29,6 +30,9 @@ from app.infrastructure.http.deadline_transport import (
 )
 from app.infrastructure.auth.core_platform_access import CorePlatformAccessAdapter
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.config.cri_instruction_resource import (
+    load_cri_instruction_clause,
+)
 from app.infrastructure.auth.subject_bearer import current_subject_bearer
 from app.infrastructure.interoperability.config import (
     specialist_connections_from_settings,
@@ -55,6 +59,14 @@ from app.interfaces.http.interaction_routes import register_interaction_routes
 from app.interfaces.http.request_logging import register_request_logging
 
 _logger = logging.getLogger(__name__)
+
+# CRI E2-R3: governed declarative instruction resource — a fixed
+# repo artifact, never a request/env-supplied path.
+_CRI_INSTRUCTIONS_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "config"
+    / "cri_instructions.delpi.json"
+)
 
 
 def _bounded_http_get(url: str, **kwargs):
@@ -282,6 +294,29 @@ def _compose_turn_handler(
     openapi_provider = _wire_openapi_provider(settings)
     if openapi_provider is not None:
         providers.append(openapi_provider)
+    # CRI E2-R3: the answer-requirements clause is a governed
+    # declarative resource — loaded and validated only when the mode
+    # is ON. Absent/invalid fails closed: the orchestrator receives no
+    # clause and the whole CRI enhancement stays at baseline.
+    cri_clause = None
+    cri_version = None
+    if settings.response_intelligence_enabled:
+        try:
+            clause = load_cri_instruction_clause(_CRI_INSTRUCTIONS_PATH)
+        except Exception:
+            _logger.warning(
+                "delia_response_intelligence decision=fail_closed "
+                "reason=cri_instruction_resource_invalid"
+            )
+        else:
+            cri_clause = clause.text
+            cri_version = clause.version
+            _logger.info(
+                "cri_instruction_resource id=%s version=%s sha256=%s",
+                clause.resource_id,
+                clause.version,
+                clause.content_hash,
+            )
     orchestration = (
         OperationalCapabilityOrchestrator(
             providers,
@@ -292,6 +327,8 @@ def _compose_turn_handler(
             response_intelligence_enabled=(
                 settings.response_intelligence_enabled
             ),
+            cri_instruction_clause=cri_clause,
+            cri_instruction_version=cri_version,
         )
         if providers
         else None
