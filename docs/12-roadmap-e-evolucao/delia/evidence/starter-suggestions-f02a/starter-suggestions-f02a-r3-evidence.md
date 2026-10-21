@@ -66,9 +66,13 @@ Assimetria residual ~14–18px (`below−above`): gap de 12px da coluna (só exi
   - Full-page: 4 cards / 2 colunas, sem h-overflow.
   - Zoom 200% (sintético via `body.style.zoom`): 4 cards legíveis, sem h-overflow, sem overlap — o zoom sintético infla `100dvh` e empurra o composer além da dobra (artifact do método); a âncora do composer sob altura real crítica é coberta pelo caso 360×450.
 
-## 6. Deployment em produção
+## 6. Deployment em produção (fato)
 
-- Pendente no momento da escrita desta evidência; preencher após `up-prod-sequential.sh` (apenas `plugin-ui` — Portal e demais serviços inalterados nesta task).
+- Host `192.168.1.237` pós-pull: `6b201d91acb6d16bf2985ffb63f5a616a57e6721` (= commit R3).
+- `up-prod-sequential.sh --cpu --build plugin-ui` — somente o remote alterado; Portal, delia, APIs e gateway não rebuildados.
+- `delpi-plugin-ui` recriado e saudável; remoteEntry referencia `assets/style-C-km_XH0.css`.
+- CSS servido (HTTP 200, 829122B) contém a regra R3: `.global-delia-dock .delpi-ui-starter-suggestions{padding:12px;flex:1 1 auto;min-height:0;justify-content:center}`.
+- QA autenticado de produção: **PENDING_USER_VERIFICATION** — sem usuário de teste no Keycloak de prod (mesmo precedente F02-A-R1/R2).
 
 ## 7. Não-objetos preservados
 
