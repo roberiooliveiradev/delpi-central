@@ -196,6 +196,7 @@ export function StockInventoryPage() {
       {
         key: "productCode",
         header: "Produto",
+        className: "cf-table__col--compact",
         render: (row) =>
           row.productCode ? (
             <span className="cf-cell-primary">{row.productCode}</span>
@@ -207,7 +208,12 @@ export function StockInventoryPage() {
         key: "description",
         header: "Descrição",
         className: "cf-table__col--wrap",
-        render: (row) => row.description ?? "—",
+        render: (row) =>
+          row.description ? (
+            <span title={row.description}>{row.description}</span>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "productType",
