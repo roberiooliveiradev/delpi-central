@@ -6,14 +6,7 @@
  * MATR460. `source_missing`/`incomplete` são estados próprios — nunca
  * confundidos com total zero nem com erro.
  */
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
 import {
@@ -26,6 +19,7 @@ import {
 import {
   CfActionButton,
   CfEmptyState,
+  CfLoadingCard,
   CfSectionCard,
   CfSegmentToggle,
   CfStateBanner,
@@ -38,8 +32,15 @@ import {
   FiltersRow,
 } from "../../app/cfFiltersUi";
 import { CF_HELP } from "../../content/helpTooltips";
+import {
+  formatCivilDate,
+  formatQuantity,
+  formatAmount,
+} from "../../utils/formatters";
+import { useDebouncedValue } from "../../utils/useDebouncedValue";
 
 const PAGE_SIZE = 50;
+const DEBOUNCE_MS = 400;
 
 const BRANCH_OPTIONS = [
   { value: "all", label: "Todas as filiais" },
@@ -58,33 +59,6 @@ const STATUS_LABELS: Record<string, string> = {
   source_missing: "Não encontrado",
   no_matching_items: "Sem itens para o filtro",
 };
-
-const QTY_FMT = new Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-});
-const VALUE_FMT = new Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const DATE_FMT = new Intl.DateTimeFormat("pt-BR");
-
-function formatQuantity(raw: string): string {
-  const value = Number(raw);
-  return Number.isFinite(value) ? QTY_FMT.format(value) : raw;
-}
-
-function formatValue(raw: string): string {
-  const value = Number(raw);
-  return Number.isFinite(value) ? VALUE_FMT.format(value) : raw;
-}
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return DATE_FMT.format(new Date(Date.UTC(y, m - 1, d)));
-}
 
 function currentCompetence(): string {
   const now = new Date();
@@ -111,39 +85,49 @@ export function StockInventoryPage() {
     useState<StockInventoryScope>("all_products");
   const [warehouse, setWarehouse] = useState("");
 
-  const [applied, setApplied] = useState<AppliedFilters | null>(null);
+  const debouncedWarehouse = useDebouncedValue(warehouse.trim(), DEBOUNCE_MS);
+
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<FetchResult | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
 
   const filtersValid = /^\d{4}-(0[1-9]|1[0-2])$/.test(period);
 
-  const applyFilters = useCallback(
-    (event?: FormEvent) => {
-      event?.preventDefault();
-      if (!filtersValid) return;
-      setPage(1);
-      setApplied({
-        period,
-        branch,
-        reportScope,
-        warehouse: warehouse.trim(),
-      });
-    },
-    [filtersValid, period, branch, reportScope, warehouse],
+  // Filtros vigentes: derivados diretamente dos campos (sem botão Consultar).
+  // Armazém (digitável) entra com debounce; competência/filial/visão são
+  // imediatos. Competência inválida => null => nenhuma consulta é disparada.
+  const applied: AppliedFilters | null = useMemo(
+    () =>
+      filtersValid
+        ? { period, branch, reportScope, warehouse: debouncedWarehouse }
+        : null,
+    [filtersValid, period, branch, reportScope, debouncedWarehouse],
   );
+
+  // Volta para a página 1 quando o universo de filtros muda — ajuste em
+  // render-time para que o efeito de fetch veja (applied, page=1) juntos,
+  // sem gerar consulta duplicada.
+  const appliedFingerprint = JSON.stringify(applied);
+  const [appliedFingerprintSeen, setAppliedFingerprintSeen] =
+    useState(appliedFingerprint);
+  if (appliedFingerprint !== appliedFingerprintSeen) {
+    setAppliedFingerprintSeen(appliedFingerprint);
+    if (page !== 1) setPage(1);
+  }
 
   const clearFilters = useCallback(() => {
     setPeriod(currentCompetence());
     setBranch("all");
     setReportScope("all_products");
     setWarehouse("");
-    setPage(1);
-    setApplied(null);
-    setResult(null);
   }, []);
 
-  const queryKey = applied ? JSON.stringify({ ...applied, page }) : null;
+  const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  const queryKey = applied
+    ? JSON.stringify({ ...applied, page, retryNonce })
+    : null;
   const current: FetchResult | null =
     result && result.key === queryKey ? result : null;
   const loading = applied !== null && current === null;
@@ -236,7 +220,7 @@ export function StockInventoryPage() {
         key: "historicalStockValue",
         header: "Valor histórico",
         align: "right",
-        render: (row) => formatValue(row.historicalStockValue),
+        render: (row) => formatAmount(row.historicalStockValue),
       },
     ],
     [],
@@ -339,7 +323,7 @@ export function StockInventoryPage() {
           <p className="cf-banner-text">
             A fonte de dados de estoque está temporariamente indisponível.
           </p>
-          <CfActionButton variant="ghost" onClick={() => applyFilters()}>
+          <CfActionButton variant="ghost" onClick={retry}>
             Tentar novamente
           </CfActionButton>
         </CfStateBanner>
@@ -349,7 +333,7 @@ export function StockInventoryPage() {
       <CfStateBanner variant="error">
         <p className="cf-banner-title">Falha de comunicação</p>
         <p className="cf-banner-text">{current.message}</p>
-        <CfActionButton variant="ghost" onClick={() => applyFilters()}>
+        <CfActionButton variant="ghost" onClick={retry}>
           Tentar novamente
         </CfActionButton>
       </CfStateBanner>
@@ -372,17 +356,14 @@ export function StockInventoryPage() {
           Consulta operacional — os resultados ainda não equivalem ao
           relatório oficial MATR460.
         </p>
-        <form className="cf-settlements-filters" onSubmit={applyFilters}>
+        <form
+          className="cf-settlements-filters"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <CfSegmentToggle<StockInventoryScope>
             options={SCOPE_OPTIONS}
             value={reportScope}
-            onChange={(value) => {
-              setReportScope(value);
-              if (applied) {
-                setPage(1);
-                setApplied({ ...applied, reportScope: value });
-              }
-            }}
+            onChange={setReportScope}
             ariaLabel="Visão do estoque"
             size="sm"
           />
@@ -418,26 +399,24 @@ export function StockInventoryPage() {
           ) : null}
           <div className="cf-settlements-actions">
             <CfActionButton
-              variant="primary"
-              type="submit"
-              disabled={!filtersValid || loading}
+              variant="ghost"
+              type="button"
+              onClick={clearFilters}
             >
-              Consultar
-            </CfActionButton>
-            <CfActionButton variant="ghost" onClick={clearFilters}>
               Limpar
             </CfActionButton>
           </div>
         </form>
       </CfSectionCard>
 
+      <div aria-busy={loading}>
       {renderError()}
       {renderStatusBanner()}
 
       {!applied ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
-          defaultMessage="Informe a competência e consulte para ver o estoque histórico."
+          defaultMessage="Informe uma competência válida para ver o estoque histórico."
         />
       ) : null}
 
@@ -459,7 +438,7 @@ export function StockInventoryPage() {
               </li>
               <li>
                 <span className="cf-settlements-summary-label">Data-base</span>
-                <strong>{formatDate(payload.dataAsOf)}</strong>
+                <strong>{formatCivilDate(payload.dataAsOf)}</strong>
               </li>
               <li>
                 <span className="cf-settlements-summary-label">Itens</span>
@@ -478,12 +457,16 @@ export function StockInventoryPage() {
                   <span className="cf-settlements-summary-label">
                     Valor histórico total
                   </span>
-                  <strong>{formatValue(payload.historicalTotal)}</strong>
+                  <strong>{formatAmount(payload.historicalTotal)}</strong>
                 </li>
               ) : null}
             </ul>
           ) : (
-            <p className="cf-banner-text">Carregando indicadores…</p>
+            <CfLoadingCard
+              title="Carregando indicadores"
+              description="Obtendo saldos do snapshot histórico."
+              variant="compact"
+            />
           )}
           {payload ? (
             <p className="cf-settlements-quality" role="note">
@@ -508,7 +491,7 @@ export function StockInventoryPage() {
                 <span className="cf-settlements-summary-label">
                   {group.productType ?? "Sem tipo"} — {group.itemCount} itens
                 </span>
-                <strong>{formatValue(group.totalStockValue)}</strong>
+                <strong>{formatAmount(group.totalStockValue)}</strong>
               </li>
             ))}
           </ul>
@@ -532,7 +515,7 @@ export function StockInventoryPage() {
                   Armazém {group.warehouse ?? "—"} · Filial{" "}
                   {group.branchCode ?? "—"} — {group.itemCount} itens
                 </span>
-                <strong>{formatValue(group.totalStockValue)}</strong>
+                <strong>{formatAmount(group.totalStockValue)}</strong>
               </li>
             ))}
           </ul>
@@ -564,6 +547,7 @@ export function StockInventoryPage() {
           columnPreferencesKey={`cf:closing:stock-inventory:${applied?.reportScope ?? "all_products"}:v1`}
         />
       ) : null}
+      </div>
     </section>
   );
 }

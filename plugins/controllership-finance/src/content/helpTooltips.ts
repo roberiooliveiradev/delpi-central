@@ -32,7 +32,7 @@ export const CF_HELP = {
     side:
       "Alterne entre baixas a pagar (fornecedores) e baixas a receber (clientes). Os mesmos filtros se aplicam às duas visões.",
     filters:
-      "Período é obrigatório. Natureza e tipo de movimento usam os códigos de origem do ERP — ainda sem classificação contábil nesta versão.",
+      "Período é obrigatório. A consulta é automática: ao alterar qualquer filtro válido os resultados se atualizam sem botão — campos digitáveis aguardam uma breve pausa na digitação. Natureza e tipo de movimento usam os códigos de origem do ERP — ainda sem classificação contábil nesta versão.",
     summary:
       "Resumo exploratório do período: quantidade de eventos, valores por moeda e qualidade dos vínculos. Não é total oficial de fechamento.",
     table:
@@ -54,7 +54,7 @@ export const CF_HELP = {
     page:
       "Estoque histórico — P7: consulta operacional dos saldos de estoque registrados no fechamento de cada mês no ERP. Os resultados ainda não equivalem ao relatório oficial MATR460 — use-os como consulta de apoio ao fechamento, não como documento oficial.",
     filters:
-      "Competência é obrigatória e sempre aponta para o último dia do mês. Filial é apenas filtro de dados — Matriz (01), Filial 02 ou Todas — sem alterar permissões. Visão restringe os tipos de produto; Armazém usa o código de origem do ERP.",
+      "Competência é obrigatória e sempre aponta para o último dia do mês. A consulta é automática: ao alterar qualquer filtro válido os resultados se atualizam sem botão — Armazém aguarda uma breve pausa na digitação. Filial é apenas filtro de dados — Matriz (01), Filial 02 ou Todas — sem alterar permissões. Visão restringe os tipos de produto; Armazém usa o código de origem do ERP.",
     indicators:
       "Valor histórico total e quantidade de itens calculados sobre todo o universo do filtro, não apenas a página exibida. Quando o snapshot do mês não existe na origem, o total não é exibido — ausência nunca aparece como zero.",
     status:

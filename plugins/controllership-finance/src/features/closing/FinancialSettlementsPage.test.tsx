@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
@@ -101,68 +108,79 @@ function summaryPayload() {
   };
 }
 
-async function applyDefaultFilters() {
-  fireEvent.change(screen.getByLabelText("Data inicial"), {
-    target: { value: "2026-10-01" },
-  });
-  fireEvent.change(screen.getByLabelText("Data final"), {
-    target: { value: "2026-10-20" },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
-  await waitFor(() => expect(listMock).toHaveBeenCalled());
+function mockOk() {
+  listMock.mockResolvedValue(listPayload());
+  summaryMock.mockResolvedValue(summaryPayload());
+}
+
+async function waitInitialFetch() {
+  await waitFor(() => expect(listMock).toHaveBeenCalledTimes(1));
 }
 
 afterEach(() => {
   cleanup();
   listMock.mockReset();
   summaryMock.mockReset();
+  vi.useRealTimers();
 });
 
-describe("FinancialSettlementsPage", () => {
-  it("estado inicial pede filtros — não dispara fetch", () => {
+describe("FinancialSettlementsPage — consulta automática", () => {
+  it("consulta inicial automática com os filtros padrão válidos", async () => {
+    mockOk();
     render(<FinancialSettlementsPage />);
-    expect(
-      screen.getByText(/Informe o período e aplique os filtros/),
-    ).toBeTruthy();
-    expect(listMock).not.toHaveBeenCalled();
-  });
 
-  it("aplica filtros e renderiza linhas + resumo por moeda", async () => {
-    listMock.mockResolvedValue(listPayload());
-    summaryMock.mockResolvedValue(summaryPayload());
-    render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
-
+    await waitInitialFetch();
     expect(listMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        side: "payable",
-        startDate: "2026-10-01",
-        endDate: "2026-10-20",
-        page: 1,
-        pageSize: 50,
-      }),
+      expect.objectContaining({ side: "payable", page: 1, pageSize: 50 }),
       expect.anything(),
     );
+    expect(
+      screen.queryByRole("button", { name: "Aplicar filtros" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Consultar" })).toBeNull();
+  });
+
+  it("alterar período atualiza a consulta sem clicar em botão", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Data inicial"), {
+      target: { value: "2026-08-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Data final"), {
+      target: { value: "2026-08-31" },
+    });
+
+    await waitFor(() =>
+      expect(listMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          startDate: "2026-08-01",
+          endDate: "2026-08-31",
+          page: 1,
+        }),
+        expect.anything(),
+      ),
+    );
+
     expect(await screen.findByText("Fornecedor Exemplo")).toBeTruthy();
-    // Valor não repete o código da moeda — moeda tem coluna própria.
     expect(screen.getByText("1.250,75")).toBeTruthy();
     expect(screen.queryByText("BRL 1.250,75")).toBeNull();
-    // Filial ausente → «Não identificada» (nunca fallback 01/02).
     expect(screen.getByText("Não identificada")).toBeTruthy();
-    // Tipo de movimento exibe código + descrição canônica FKB.
     expect(screen.getByText("BA — Baixa de titulo")).toBeTruthy();
-    // Resumo por moeda somente do lado selecionado (BRL, não USD).
     expect(
       await screen.findByText("Movimentações registradas — moeda BRL"),
     ).toBeTruthy();
-    expect(screen.queryByText("Movimentações registradas — moeda USD")).toBeNull();
+    expect(
+      screen.queryByText("Movimentações registradas — moeda USD"),
+    ).toBeNull();
   });
 
-  it("alterna visão para receber e refaz a consulta", async () => {
+  it("alternar pagar/receber atualiza imediatamente", async () => {
     listMock.mockResolvedValue(listPayload({ side: "receivable" }));
     summaryMock.mockResolvedValue(summaryPayload());
     render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
+    await waitInitialFetch();
 
     fireEvent.click(screen.getByRole("button", { name: "Baixas a receber" }));
     await waitFor(() =>
@@ -171,9 +189,61 @@ describe("FinancialSettlementsPage", () => {
         expect.anything(),
       ),
     );
+    expect(listMock).toHaveBeenCalledTimes(2);
   });
 
-  it("paginação servidor — Próxima pede page 2", async () => {
+  it("campo digitável (natureza) usa debounce — uma consulta por pausa", async () => {
+    vi.useFakeTimers();
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(listMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByLabelText("Natureza financeira"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("Natureza financeira"), {
+      target: { value: "12" },
+    });
+    fireEvent.change(screen.getByLabelText("Natureza financeira"), {
+      target: { value: "123" },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(399);
+    });
+    expect(listMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(listMock).toHaveBeenCalledTimes(2);
+    expect(listMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ natureCode: "123" }),
+      expect.anything(),
+    );
+  });
+
+  it("período inválido não dispara consulta", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await waitInitialFetch();
+
+    // data inicial posterior à data final default (hoje) → inválido
+    fireEvent.change(screen.getByLabelText("Data inicial"), {
+      target: { value: "2099-12-31" },
+    });
+
+    expect(
+      screen.getByText(/a data inicial deve ser anterior ou igual à data final/),
+    ).toBeTruthy();
+    await act(async () => {});
+    expect(listMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("mudança de filtro volta para página 1 — sem consulta duplicada", async () => {
     listMock.mockResolvedValue(
       listPayload({
         pagination: {
@@ -188,7 +258,7 @@ describe("FinancialSettlementsPage", () => {
     );
     summaryMock.mockResolvedValue(summaryPayload());
     render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
+    await waitInitialFetch();
     await screen.findByText("Fornecedor Exemplo");
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
@@ -198,15 +268,73 @@ describe("FinancialSettlementsPage", () => {
         expect.anything(),
       ),
     );
+
+    fireEvent.change(screen.getByLabelText("Direção da ordenação"), {
+      target: { value: "asc" },
+    });
+    await waitFor(() =>
+      expect(listMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, sortDir: "asc" }),
+        expect.anything(),
+      ),
+    );
+    // inicial + page 2 + filtro = exatamente 3 chamadas (reset não duplica)
+    expect(listMock).toHaveBeenCalledTimes(3);
   });
 
+  it("resposta antiga não sobrescreve o resultado da consulta mais recente", async () => {
+    let resolveFirst: ((v: unknown) => void) | null = null;
+    listMock
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
+      .mockResolvedValue(
+        listPayload({
+          items: [{ ...ITEM, settlementId: "S2", partyName: "Fornecedor Novo" }],
+        }),
+      );
+    summaryMock.mockResolvedValue(summaryPayload());
+    render(<FinancialSettlementsPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Data inicial"), {
+      target: { value: "2026-10-02" },
+    });
+    expect(await screen.findByText("Fornecedor Novo")).toBeTruthy();
+
+    // resposta tardia da consulta antiga é descartada
+    resolveFirst?.(listPayload());
+    await act(async () => {});
+    expect(screen.queryByText("Fornecedor Exemplo")).toBeNull();
+    expect(screen.getByText("Fornecedor Novo")).toBeTruthy();
+  });
+
+  it("limpar repõe filtros padrão e consulta automaticamente", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Data inicial"), {
+      target: { value: "2026-08-01" },
+    });
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(3));
+    expect(listMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, sortDir: "desc" }),
+      expect.anything(),
+    );
+  });
+});
+
+describe("FinancialSettlementsPage — estados", () => {
   it("scope_unavailable rende estado próprio — não confunde com vazio nem 403 genérico", async () => {
     listMock.mockRejectedValue(
       new ApiError(403, "Escopo de dados financeiros não autorizado.", "scope_unavailable"),
     );
     summaryMock.mockRejectedValue(new ApiError(403, "x", "scope_unavailable"));
     render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
 
     expect(await screen.findByText("Escopo de dados indisponível")).toBeTruthy();
     expect(screen.queryByText("Acesso restrito")).toBeNull();
@@ -217,33 +345,61 @@ describe("FinancialSettlementsPage", () => {
     listMock.mockRejectedValue(new ApiError(403, "Forbidden"));
     summaryMock.mockRejectedValue(new ApiError(403, "Forbidden"));
     render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
 
     expect(await screen.findByText("Acesso restrito")).toBeTruthy();
   });
 
-  it("período inválido mostra validação e não chama a API", () => {
+  it("falha de comunicação oferece Tentar novamente e recupera", async () => {
+    listMock
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue(listPayload());
+    summaryMock.mockResolvedValue(summaryPayload());
     render(<FinancialSettlementsPage />);
-    fireEvent.change(screen.getByLabelText("Data inicial"), {
-      target: { value: "2026-10-20" },
-    });
-    fireEvent.change(screen.getByLabelText("Data final"), {
-      target: { value: "2026-10-01" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
 
-    expect(screen.getByText(/Informe um período válido/)).toBeTruthy();
-    expect(listMock).not.toHaveBeenCalled();
+    expect(await screen.findByText("Falha de comunicação")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    expect(await screen.findByText("Fornecedor Exemplo")).toBeTruthy();
+    expect(listMock).toHaveBeenCalledTimes(2);
   });
 
   it("resultado vazio mostra mensagem de vazio da tabela", async () => {
     listMock.mockResolvedValue(listPayload({ items: [] }));
     summaryMock.mockResolvedValue(summaryPayload());
     render(<FinancialSettlementsPage />);
-    await applyDefaultFilters();
 
     expect(
       await screen.findByText(/Nenhuma baixa encontrada/),
     ).toBeTruthy();
+  });
+
+  it("carregamento usa o componente centralizado com role=status", async () => {
+    let resolveList: ((v: unknown) => void) | null = null;
+    listMock.mockImplementation(
+      () => new Promise((resolve) => (resolveList = resolve)),
+    );
+    summaryMock.mockResolvedValue(summaryPayload());
+    render(<FinancialSettlementsPage />);
+
+    // indicadores de loading centralizados (role=status) presentes
+    expect(await screen.findByText("Carregando resumo")).toBeTruthy();
+    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+
+    resolveList?.(listPayload());
+    expect(await screen.findByText("Fornecedor Exemplo")).toBeTruthy();
+  });
+
+  it("desmontagem durante a requisição não produz atualizações tardias", async () => {
+    let resolveList: ((v: unknown) => void) | null = null;
+    listMock.mockImplementation(
+      () => new Promise((resolve) => (resolveList = resolve)),
+    );
+    summaryMock.mockResolvedValue(summaryPayload());
+    const { unmount } = render(<FinancialSettlementsPage />);
+    await waitInitialFetch();
+
+    unmount();
+    resolveList?.(listPayload());
+    await act(async () => {});
   });
 });

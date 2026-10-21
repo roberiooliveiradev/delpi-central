@@ -5,14 +5,7 @@
  * Falha tipada `scope_unavailable` (D3/D3.1) é estado próprio — nunca
  * confundida com ausência de registros nem com falta de autorização.
  */
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError } from "../../api/httpClient";
 import {
@@ -26,6 +19,7 @@ import {
 import {
   CfActionButton,
   CfEmptyState,
+  CfLoadingCard,
   CfSectionCard,
   CfSegmentToggle,
   CfStateBanner,
@@ -34,8 +28,11 @@ import {
 import { DataTableSection, type DataTableColumn } from "../../app/cfDataTableUi";
 import { FilterInputField, FilterSelectField, FiltersRow } from "../../app/cfFiltersUi";
 import { CF_HELP } from "../../content/helpTooltips";
+import { formatAmount, formatCivilDate } from "../../utils/formatters";
+import { useDebouncedValue } from "../../utils/useDebouncedValue";
 
 const PAGE_SIZE = 50;
+const DEBOUNCE_MS = 400;
 
 const SIDE_OPTIONS = [
   { value: "payable", label: "Baixas a pagar" },
@@ -58,24 +55,6 @@ const LINK_STATUS_LABELS: Record<string, string> = {
   missing_nature: "Natureza ausente",
   missing_document_and_nature: "Documento e natureza ausentes",
 };
-
-const DATE_FMT = new Intl.DateTimeFormat("pt-BR");
-const AMOUNT_FMT = new Intl.NumberFormat("pt-BR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return DATE_FMT.format(new Date(Date.UTC(y, m - 1, d)));
-}
-
-function formatAmount(raw: string): string {
-  const value = Number(raw);
-  return Number.isFinite(value) ? AMOUNT_FMT.format(value) : raw;
-}
 
 function isoToday(): string {
   return new Date().toISOString().slice(0, 10);
@@ -111,9 +90,15 @@ export function FinancialSettlementsPage() {
   const [sortBy, setSortBy] = useState("settlement_date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const [applied, setApplied] = useState<AppliedFilters | null>(null);
+  const debouncedNatureCode = useDebouncedValue(natureCode.trim(), DEBOUNCE_MS);
+  const debouncedMovementType = useDebouncedValue(
+    movementType.trim(),
+    DEBOUNCE_MS,
+  );
+
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<FetchResult | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
 
   const filtersValid = useMemo(() => {
@@ -121,23 +106,44 @@ export function FinancialSettlementsPage() {
     return startDate <= endDate;
   }, [startDate, endDate]);
 
-  const applyFilters = useCallback(
-    (event?: FormEvent) => {
-      event?.preventDefault();
-      if (!filtersValid) return;
-      setPage(1);
-      setApplied({
-        side,
-        startDate,
-        endDate,
-        natureCode: natureCode.trim(),
-        movementType: movementType.trim(),
-        sortBy,
-        sortDir,
-      });
-    },
-    [filtersValid, side, startDate, endDate, natureCode, movementType, sortBy, sortDir],
+  // Filtros vigentes: derivados diretamente dos campos (sem botão Consultar).
+  // Campos digitáveis entram já com debounce; seletores/toggles/datas são
+  // imediatos. Inválido => null => nenhuma consulta é disparada.
+  const applied: AppliedFilters | null = useMemo(
+    () =>
+      filtersValid
+        ? {
+            side,
+            startDate,
+            endDate,
+            natureCode: debouncedNatureCode,
+            movementType: debouncedMovementType,
+            sortBy,
+            sortDir,
+          }
+        : null,
+    [
+      filtersValid,
+      side,
+      startDate,
+      endDate,
+      debouncedNatureCode,
+      debouncedMovementType,
+      sortBy,
+      sortDir,
+    ],
   );
+
+  // Volta para a página 1 quando o universo de filtros muda — ajuste em
+  // render-time para que o efeito de fetch veja (applied, page=1) juntos,
+  // sem gerar consulta duplicada.
+  const appliedFingerprint = JSON.stringify(applied);
+  const [appliedFingerprintSeen, setAppliedFingerprintSeen] =
+    useState(appliedFingerprint);
+  if (appliedFingerprint !== appliedFingerprintSeen) {
+    setAppliedFingerprintSeen(appliedFingerprint);
+    if (page !== 1) setPage(1);
+  }
 
   const clearFilters = useCallback(() => {
     setStartDate(isoMonthStart());
@@ -146,12 +152,13 @@ export function FinancialSettlementsPage() {
     setMovementType("");
     setSortBy("settlement_date");
     setSortDir("desc");
-    setPage(1);
-    setApplied(null);
-    setResult(null);
   }, []);
 
-  const queryKey = applied ? JSON.stringify({ ...applied, page }) : null;
+  const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  const queryKey = applied
+    ? JSON.stringify({ ...applied, page, retryNonce })
+    : null;
   const current: FetchResult | null =
     result && result.key === queryKey ? result : null;
   const loading = applied !== null && current === null;
@@ -231,7 +238,7 @@ export function FinancialSettlementsPage() {
       {
         key: "settlementDate",
         header: "Data da baixa",
-        render: (row) => formatDate(row.settlementDate),
+        render: (row) => formatCivilDate(row.settlementDate),
       },
       {
         key: "document",
@@ -288,7 +295,7 @@ export function FinancialSettlementsPage() {
       {
         key: "dueDate",
         header: "Vencimento",
-        render: (row) => formatDate(row.dueDate),
+        render: (row) => formatCivilDate(row.dueDate),
       },
       {
         key: "linkStatus",
@@ -339,7 +346,7 @@ export function FinancialSettlementsPage() {
       <CfStateBanner variant="error">
         <p className="cf-banner-title">Falha de comunicação</p>
         <p className="cf-banner-text">{current.message}</p>
-        <CfActionButton variant="ghost" onClick={() => applyFilters()}>
+        <CfActionButton variant="ghost" onClick={retry}>
           Tentar novamente
         </CfActionButton>
       </CfStateBanner>
@@ -356,17 +363,14 @@ export function FinancialSettlementsPage() {
         subtitle="Central de Fechamento — eventos de baixa a pagar e a receber."
         hint={CF_HELP.closing.page}
       >
-        <form className="cf-settlements-filters" onSubmit={applyFilters}>
+        <form
+          className="cf-settlements-filters"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <CfSegmentToggle<SettlementSide>
             options={SIDE_OPTIONS}
             value={side}
-            onChange={(value) => {
-              setSide(value);
-              if (applied) {
-                setPage(1);
-                setApplied({ ...applied, side: value });
-              }
-            }}
+            onChange={setSide}
             ariaLabel="Visão das baixas financeiras"
             size="sm"
           />
@@ -424,25 +428,23 @@ export function FinancialSettlementsPage() {
           ) : null}
           <div className="cf-settlements-actions">
             <CfActionButton
-              variant="primary"
-              type="submit"
-              disabled={!filtersValid || loading}
+              variant="ghost"
+              type="button"
+              onClick={clearFilters}
             >
-              Aplicar filtros
-            </CfActionButton>
-            <CfActionButton variant="ghost" onClick={clearFilters}>
               Limpar
             </CfActionButton>
           </div>
         </form>
       </CfSectionCard>
 
+      <div aria-busy={loading}>
       {renderError()}
 
       {!applied ? (
         <CfEmptyState
           classNames={cfEmptyStateClassNames}
-          defaultMessage="Informe o período e aplique os filtros para consultar as baixas."
+          defaultMessage="Informe um período válido para consultar as baixas."
         />
       ) : null}
 
@@ -483,10 +485,14 @@ export function FinancialSettlementsPage() {
                 </strong>
               </li>
             </ul>
+          ) : loading ? (
+            <CfLoadingCard
+              title="Carregando resumo"
+              description="Obtendo totais do período."
+              variant="compact"
+            />
           ) : (
-            <p className="cf-banner-text">
-              {loading ? "Carregando resumo…" : "Sem dados de resumo no período."}
-            </p>
+            <p className="cf-banner-text">Sem dados de resumo no período.</p>
           )}
           {list ? (
             <p className="cf-settlements-quality" role="note">
@@ -525,6 +531,7 @@ export function FinancialSettlementsPage() {
           columnPreferencesKey={`cf:closing:financial-settlements:${applied?.side ?? "payable"}:v1`}
         />
       ) : null}
+      </div>
     </section>
   );
 }

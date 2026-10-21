@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@delpi/plugin-ui/index", async () => await import("../../test/pluginUiMock"));
@@ -69,57 +76,211 @@ function payload(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function fillPeriodAndSubmit() {
-  const periodInput = screen.getByLabelText("Competência");
-  fireEvent.change(periodInput, { target: { value: "2026-09" } });
-  fireEvent.click(screen.getByRole("button", { name: "Consultar" }));
+async function waitInitialFetch() {
+  await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 }
 
 afterEach(() => {
   cleanup();
   getMock.mockReset();
+  vi.useRealTimers();
 });
 
-describe("StockInventoryPage", () => {
-  it("renderiza cabeçalho, disclaimer não-oficial e filtros", () => {
-    render(<StockInventoryPage />);
-    expect(screen.getByText("Estoque histórico — P7")).toBeTruthy();
-    expect(
-      screen.getByText(/não equivalem ao relatório oficial MATR460/i),
-    ).toBeTruthy();
-    expect(screen.getByLabelText("Competência")).toBeTruthy();
-    expect(getMock).not.toHaveBeenCalled();
-  });
-
-  it("consulta envia period, branch, scope e paginação", async () => {
+describe("StockInventoryPage — consulta automática", () => {
+  it("consulta inicial automática com a competência atual", async () => {
     getMock.mockResolvedValue(payload());
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
-    await waitFor(() => expect(getMock).toHaveBeenCalled());
+
+    await waitInitialFetch();
     const query = getMock.mock.calls[0][0];
-    expect(query.period).toBe("2026-09");
+    expect(query.period).toMatch(/^\d{4}-\d{2}$/);
     expect(query.branch).toBe("all");
     expect(query.reportScope).toBe("all_products");
     expect(query.page).toBe(1);
     expect(query.pageSize).toBe(50);
-    await waitFor(() => screen.getByText("Produto Exemplo"));
+    expect(
+      screen.queryByRole("button", { name: "Consultar" }),
+    ).toBeNull();
+    expect(
+      screen.getByText("Estoque histórico — P7"),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/não equivalem ao relatório oficial MATR460/i),
+    ).toBeTruthy();
   });
 
-  it("filial é filtro de dados — encaminha o código selecionado", async () => {
+  it("mudança de competência atualiza a consulta sem botão", async () => {
     getMock.mockResolvedValue(payload());
     render(<StockInventoryPage />);
-    const branchSelect = screen.getByLabelText("Filial");
-    fireEvent.change(branchSelect, { target: { value: "02" } });
-    fillPeriodAndSubmit();
-    await waitFor(() => expect(getMock).toHaveBeenCalled());
-    expect(getMock.mock.calls[0][0].branch).toBe("02");
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Competência"), {
+      target: { value: "2026-09" },
+    });
+    await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
+    expect(getMock.mock.calls[1][0].period).toBe("2026-09");
+    expect(await screen.findByText("Produto Exemplo")).toBeTruthy();
+    // data-base civil exibida sem deslocamento: último dia do mês
+    expect(screen.getByText("30/09/2026")).toBeTruthy();
   });
 
+  it("filial é filtro de dados — encaminha o código ao confirmar seleção", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Filial"), {
+      target: { value: "02" },
+    });
+    await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
+    expect(getMock.mock.calls[1][0].branch).toBe("02");
+  });
+
+  it("alternar visão MP/PI/PA atualiza imediatamente", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+
+    fireEvent.click(screen.getByRole("button", { name: "MP / PI / PA" }));
+    await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
+    expect(getMock.mock.calls[1][0].reportScope).toBe("mp_pi_pa");
+  });
+
+  it("armazém (digitável) usa debounce — uma consulta por pausa", async () => {
+    vi.useFakeTimers();
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(getMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByLabelText("Armazém"), {
+      target: { value: "0" },
+    });
+    fireEvent.change(screen.getByLabelText("Armazém"), {
+      target: { value: "01" },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(399);
+    });
+    expect(getMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(getMock).toHaveBeenCalledTimes(2);
+    expect(getMock.mock.calls[1][0].warehouse).toBe("01");
+  });
+
+  it("competência incompleta/inválida não dispara consulta", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Competência"), {
+      target: { value: "" },
+    });
+    expect(
+      screen.getByText(/no formato AAAA-MM/),
+    ).toBeTruthy();
+    await act(async () => {});
+    expect(getMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("mudança de filtro volta para página 1 — sem consulta duplicada", async () => {
+    getMock.mockResolvedValue(
+      payload({
+        pagination: {
+          page: 1,
+          page_size: 50,
+          total_items: 120,
+          total_pages: 3,
+          has_next: true,
+          has_previous: false,
+        },
+      }),
+    );
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+    await screen.findByText("Produto Exemplo");
+
+    fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
+    await waitFor(() =>
+      expect(getMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+        expect.anything(),
+      ),
+    );
+
+    fireEvent.change(screen.getByLabelText("Filial"), {
+      target: { value: "01" },
+    });
+    await waitFor(() =>
+      expect(getMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, branch: "01" }),
+        expect.anything(),
+      ),
+    );
+    // inicial + page 2 + filtro = exatamente 3 chamadas
+    expect(getMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("resposta antiga não sobrescreve o resultado mais recente", async () => {
+    let resolveFirst: ((v: unknown) => void) | null = null;
+    getMock
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
+      .mockResolvedValue(
+        payload({
+          items: [
+            { ...ITEM, productCode: "P9999", description: "Produto Novo" },
+          ],
+        }),
+      );
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Filial"), {
+      target: { value: "02" },
+    });
+    expect(await screen.findByText("Produto Novo")).toBeTruthy();
+
+    resolveFirst?.(payload());
+    await act(async () => {});
+    expect(screen.queryByText("Produto Exemplo")).toBeNull();
+    expect(screen.getByText("Produto Novo")).toBeTruthy();
+  });
+
+  it("limpar repõe os filtros padrão e consulta automaticamente", async () => {
+    getMock.mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await waitInitialFetch();
+
+    fireEvent.change(screen.getByLabelText("Filial"), {
+      target: { value: "01" },
+    });
+    await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    await waitFor(() =>
+      expect(getMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ branch: "all", page: 1 }),
+        expect.anything(),
+      ),
+    );
+    expect(getMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("StockInventoryPage — estados", () => {
   it("mostra indicadores, resumos e tabela quando disponível", async () => {
     getMock.mockResolvedValue(payload());
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
-    await waitFor(() => screen.getByText("Produto Exemplo"));
+
+    await screen.findByText("Produto Exemplo");
     expect(screen.getByText("Resumo por tipo de produto")).toBeTruthy();
     expect(screen.getByText("Resumo por armazém")).toBeTruthy();
     expect(screen.getByText("10.576.487,84")).toBeTruthy();
@@ -147,7 +308,6 @@ describe("StockInventoryPage", () => {
       }),
     );
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
     await waitFor(() => screen.getByText("Snapshot não encontrado"));
     expect(screen.queryByText("Valor histórico total")).toBeNull();
   });
@@ -157,7 +317,6 @@ describe("StockInventoryPage", () => {
       payload({ status: "incomplete", branchesMissing: ["01"] }),
     );
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
     await waitFor(() =>
       screen.getByText("Dados parcialmente disponíveis"),
     );
@@ -166,7 +325,6 @@ describe("StockInventoryPage", () => {
   it("erro 403 mostra estado de acesso restrito", async () => {
     getMock.mockRejectedValue(new ApiError(403, "Acesso negado."));
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
     await waitFor(() => screen.getByText("Acesso restrito"));
   });
 
@@ -175,7 +333,6 @@ describe("StockInventoryPage", () => {
       new ApiError(403, "Escopo.", "scope_unavailable"),
     );
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
     await waitFor(() => screen.getByText("Consulta ainda não habilitada"));
   });
 
@@ -184,16 +341,34 @@ describe("StockInventoryPage", () => {
       new ApiError(403, "Acesso negado.", "S2S_SCOPE_DENIED"),
     );
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
     await waitFor(() => screen.getByText("Integração de dados pendente"));
   });
 
-  it("503 mostra dependência indisponível", async () => {
-    getMock.mockRejectedValue(
-      new ApiError(503, "Origem de dados financeiros indisponível."),
+  it("503 oferece Tentar novamente e recupera", async () => {
+    getMock
+      .mockRejectedValueOnce(
+        new ApiError(503, "Origem de dados financeiros indisponível."),
+      )
+      .mockResolvedValue(payload());
+    render(<StockInventoryPage />);
+    await waitFor(() => screen.getByText("Origem indisponível"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    expect(await screen.findByText("Produto Exemplo")).toBeTruthy();
+    expect(getMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("carregamento usa o componente centralizado com role=status", async () => {
+    let resolveGet: ((v: unknown) => void) | null = null;
+    getMock.mockImplementation(
+      () => new Promise((resolve) => (resolveGet = resolve)),
     );
     render(<StockInventoryPage />);
-    fillPeriodAndSubmit();
-    await waitFor(() => screen.getByText("Origem indisponível"));
+
+    expect(await screen.findByText("Carregando indicadores")).toBeTruthy();
+    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+
+    resolveGet?.(payload());
+    expect(await screen.findByText("Produto Exemplo")).toBeTruthy();
   });
 });

@@ -575,6 +575,35 @@ import {
 } from "@delpi/plugin-ui/index";
 ```
 
+### Loading centralizado do Portal (padrão vigente)
+
+O adaptador canônico de carregamento do Portal é `CfLoadingCard`
+(`src/app/controllershipFinanceUi.ts`), bound de
+`createDashboardLoadingActivityCard` com prefixo `cf` — `role="status"`,
+`aria-live="polite"`, `role="progressbar"` e spinner/token de tema do kit
+(claro/escuro, movimento reduzido vêm do CSS `delpi-ui-loading-activity*`).
+
+Regras de uso:
+
+- **Carga de seção/conteúdo**: `<CfLoadingCard title="…" variant="compact" />`
+  dentro do `CfSectionCard`; `variant="panel"` para bloco de página inteira
+  (ex.: `HomePage`).
+- **Tabela**: o `DataTableSection` já renderiza `CfLoadingCard` internamente
+  nos estados inicial/refresh — passar apenas `loading` e nunca criar
+  indicador paralelo.
+- **Região de resultados**: envolver em `aria-busy={loading}`.
+- **Erro**: `CfStateBanner` + ação `Tentar novamente`; loading/erro/vazio/
+  parcial continuam estados distintos.
+
+Consulta automática de filtros (Central de Fechamento): as páginas derivam
+os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,
+campos digitáveis passam por `useDebouncedValue` (400ms, `src/utils/`).
+Mudança de filtro volta para a página 1 via ajuste de estado em render-time
+(fingerprint), e o efeito de fetch usa `AbortController` + sequência de
+requisição — resposta antiga nunca sobrescreve a mais recente. Páginas novas
+de consulta devem seguir o mesmo padrão em vez de reintroduzir botão
+"Consultar".
+
 ## Regra de criação de componente novo
 
 ```text
