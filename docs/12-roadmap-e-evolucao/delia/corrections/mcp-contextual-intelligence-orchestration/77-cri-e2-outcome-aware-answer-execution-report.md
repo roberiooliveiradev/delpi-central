@@ -122,3 +122,18 @@ only; no payloads, no user text, no provider values.
   resolved in the confident direction elsewhere.
 - Instruction-family JSON migration remains out of roadmap scope;
   CRI clause versioning rides `InstructionLineage` content hashes.
+
+
+## 9. Independent coordination review — 2026-10-21
+
+**Verdict: `REWORK` (one bounded correction cycle), not accepted yet.** Static review of published SHA `ef590f31ed90d699116599fdf837f594a38a5eec` and report 77. Executor claims `1756 passed / 3 skipped`; independent suite re-execution `TEST_NOT_RUN`. Reviewed `outcome_assessment.py`, `_outcome_facts`/`_apply_outcome_assessment` and `_ANSWER_REQUIREMENTS_CLAUSE` in `orchestration.py`.
+
+**E2-R1 / temporal ordering:** `_temporal_order` ignores records whose candidate field is absent (`value is None: continue`) and considers two or more parseable values sufficient, potentially returning a direction while some rows lack comparable timestamps. Require all relevant returned records to carry a comparable typed temporal value; provide negative tests for missing fields and ambiguous/nonuniform temporal evidence. Also ensure sorting direction is not mistaken for an owner-proven global latest without legitimate coverage.
+
+**E2-R2 / requested examples:** `_unproven_requirements` accepts `total_count >= min_items` as sufficient even when `len(records) < min_items`. An authoritative total may prove the owner has enough records, but does not prove the requested examples were delivered in the current result. Separate available total from delivered/selected item count; tests with `total_count=100` and only 1–2 returned rows for a three-example request must not classify `answered` merely from total count.
+
+**E2-R3 / declarative instructions:** `_ANSWER_REQUIREMENTS_CLAUSE` is a new multiline natural-language prompt embedded in Python, conflicting with product front 73 §9, roadmap 74 and E0 75 resource-separation requirement. The exception for not migrating **legacy** orchestration strings does not cover adding new long CRI instructions. Move only the new CRI-specific clause into an approved, versioned declarative resource and a minimal validated loading boundary that reuses existing `load_declarations` conventions, without bulk migration, new registry, separate planner or changed OFF prompt bytes. Preserve `InstructionLineage` hash/version and missing/invalid resource fail-safe; demonstrate OFF and ON tests. If an existing mechanism prevents this safely, STOP with precise `ARCHITECTURE_DECISION_REQUIRED`, not a silent exemption.
+
+**Limited rework acceptance:** fix exactly R1–R3, run focused adversarial regressions plus complete backend suite, prove OFF parity/ON behavior, residual search, commit/push and report. No broad E2 rearchitecture, new capability engine, real-model deployment or E3 work. As per roadmap 74, this is the **single permitted bounded rework** for E2. 
+
+`E2_VERDICT=REWORK`; `E2_ACCEPTED=NO`; `E2_REWORK_ALLOWED=ONE_BOUNDED_CYCLE`; `E3_AUTHORIZED=NO`; `REAL_MODEL_EVAL=TEST_NOT_RUN`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`.
