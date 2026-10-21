@@ -144,12 +144,11 @@ export default function App({
   const audioAdmission =
     audioQaAdmission ?? resolveAudioCaptureLimits(dictationStt);
   const [input, setInput] = useState("");
-  // F02-A — starter suggestions (doc 93 §14): QA fixtures only in
-  // demo/QA-admitted bundles; production resolves to [] and the
-  // section stays hidden. Selecting one fills the controlled draft —
-  // never submits.
+  // F02-A-R1 — starter suggestions (doc 93 §16): the four default
+  // questions are visible to every admitted user in production;
+  // selecting one fills the controlled draft — never submits.
   const [starterItems] = useState<readonly ConversationStarterSuggestion[]>(
-    () => resolveStarterSuggestions(demoScenario),
+    () => resolveStarterSuggestions(),
   );
   const [suggestionNote, setSuggestionNote] = useState<string | null>(null);
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);

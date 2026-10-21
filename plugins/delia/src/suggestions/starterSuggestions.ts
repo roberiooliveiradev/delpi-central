@@ -1,7 +1,5 @@
 import type { ConversationStarterSuggestion } from "@delpi/plugin-ui/index";
 
-import type { DeliaDemoScenario } from "../demo/demoMode";
-
 /**
  * F02-A — starter suggestion fixtures for governed QA (doc 93 §14).
  *
@@ -11,12 +9,12 @@ import type { DeliaDemoScenario } from "../demo/demoMode";
  * source or action is authorized for the session — the backend remains
  * the authority on what actually executes.
  *
- * Production gate (spec §14): without a legitimate per-session
- * eligibility projection, the list ships EMPTY. The fixtures appear
- * only when the governed QA harness is active end-to-end — a bundle
- * admitted via `isDemoAllowed()` AND an explicit `?delia-demo=`
- * scenario in the URL (the same admission demo mode uses). No new
- * permission, no new flag.
+ * Visibility (spec §16, F02-A-R1): the four questions are shown by
+ * default in production to every user already admitted to the app —
+ * upstream `delia.access` admission is the only gate, no demo flag,
+ * no query param, no invented permission. They remain presentation
+ * questions, never capability claims: the backend still decides what
+ * actually executes when the user sends the edited draft.
  */
 export const DELIA_STARTER_SUGGESTIONS: readonly ConversationStarterSuggestion[] =
   [
@@ -52,12 +50,10 @@ export const DELIA_STARTER_SUGGESTIONS: readonly ConversationStarterSuggestion[]
   ];
 
 /**
- * Resolve the suggestions to render for this session. Returns `[]`
- * whenever the governed QA mode is not explicitly active — the
- * reception and composer stay untouched (fail-closed).
+ * Resolve the suggestions to render for this session. Single seam for
+ * the future per-session eligibility projection (spec §16): today the
+ * authorized default list is returned to every admitted user.
  */
-export function resolveStarterSuggestions(
-  demoScenario: DeliaDemoScenario | null,
-): readonly ConversationStarterSuggestion[] {
-  return demoScenario != null ? DELIA_STARTER_SUGGESTIONS : [];
+export function resolveStarterSuggestions(): readonly ConversationStarterSuggestion[] {
+  return DELIA_STARTER_SUGGESTIONS;
 }

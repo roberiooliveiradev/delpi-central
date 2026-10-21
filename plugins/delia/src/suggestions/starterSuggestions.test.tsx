@@ -17,26 +17,11 @@ function suggestionButtons() {
   );
 }
 
-/** Governed QA mode needs the explicit `?delia-demo=` URL — same
- *  admission as demo turns. */
-function renderDemoApp(url = "/apps/delia?delia-demo=simple") {
-  const previousUrl = window.location.href;
-  window.history.replaceState(null, "", url);
-  const rendered = render(<App />);
-  return {
-    ...rendered,
-    restore: () => window.history.replaceState(null, "", previousUrl),
-  };
-}
-
-describe("resolveStarterSuggestions — governed QA gate (doc 93 §14)", () => {
-  it("exposes the four fixtures only while a demo scenario is active", () => {
-    expect(resolveStarterSuggestions("simple")).toHaveLength(4);
-    expect(resolveStarterSuggestions("activity")).toHaveLength(4);
-  });
-
-  it("resolves to [] without an explicit demo scenario — fail-closed", () => {
-    expect(resolveStarterSuggestions(null)).toHaveLength(0);
+describe("resolveStarterSuggestions — default list (doc 93 §16, F02-A-R1)", () => {
+  it("returns the frozen four default questions to every admitted user", () => {
+    const items = resolveStarterSuggestions();
+    expect(items).toBe(DELIA_STARTER_SUGGESTIONS);
+    expect(items).toHaveLength(4);
   });
 
   it("fixtures are honest questions with editable draft text, no capability ids", () => {
@@ -48,25 +33,25 @@ describe("resolveStarterSuggestions — governed QA gate (doc 93 §14)", () => {
   });
 });
 
-describe("App — starter suggestions integration (F02-A)", () => {
-  it("renders no suggestion section outside governed QA mode", () => {
+describe("App — starter suggestions integration (F02-A-R1)", () => {
+  it("renders the four cards on the empty reception with no demo param", () => {
     const { container } = render(<App />);
-    expect(container.querySelector(SUGGESTIONS_SECTION)).toBeNull();
-    expect(
-      container.querySelector(".delpi-ui-conversation-reception"),
-    ).toBeTruthy();
+    expect(container.querySelector(SUGGESTIONS_SECTION)).toBeTruthy();
+    expect(suggestionButtons()).toHaveLength(4);
+    expect(document.body.textContent).toContain(
+      "Explore algumas possibilidades para começar",
+    );
+    // Production path — no ?delia-demo banner, no QA admission needed.
+    expect(document.body.textContent).not.toContain(
+      "Modo demonstração",
+    );
   });
 
-  it("shows the four cards only with an empty conversation", async () => {
-    const { container, restore } = renderDemoApp();
+  it("hides the suggestions once a turn exists", async () => {
+    const previousUrl = window.location.href;
+    window.history.replaceState(null, "", "/apps/delia?delia-demo=simple");
     try {
-      expect(container.querySelector(SUGGESTIONS_SECTION)).toBeTruthy();
-      expect(suggestionButtons()).toHaveLength(4);
-      expect(document.body.textContent).toContain(
-        "Explore algumas possibilidades para começar",
-      );
-
-      // Once a turn exists the reception — and the suggestions — go away.
+      const { container } = render(<App />);
       const input = screen.getByRole("textbox", {
         name: "Pergunte à DÉLIA",
       });
@@ -79,102 +64,86 @@ describe("App — starter suggestions integration (F02-A)", () => {
       );
       expect(container.querySelector(".delia-timeline")).toBeTruthy();
     } finally {
-      restore();
+      window.history.replaceState(null, "", previousUrl);
     }
   });
 
   it("selecting a card fills the draft, focuses the composer, never submits", async () => {
-    const { restore } = renderDemoApp();
-    try {
-      const input = screen.getByRole("textbox", {
-        name: "Pergunte à DÉLIA",
-      }) as HTMLTextAreaElement;
+    render(<App />);
+    const input = screen.getByRole("textbox", {
+      name: "Pergunte à DÉLIA",
+    }) as HTMLTextAreaElement;
 
-      fireEvent.click(suggestionButtons()[1]);
-      await waitFor(() => expect(input.value).toBe("O que é SIPOC?"));
-      await waitFor(() => expect(document.activeElement).toBe(input));
-      expect(input.selectionStart).toBe("O que é SIPOC?".length);
+    fireEvent.click(suggestionButtons()[1]);
+    await waitFor(() => expect(input.value).toBe("O que é SIPOC?"));
+    await waitFor(() => expect(document.activeElement).toBe(input));
+    expect(input.selectionStart).toBe("O que é SIPOC?".length);
 
-      // No user turn, no send — the draft stays editable.
-      expect(document.querySelector(".delia-timeline")).toBeNull();
-      expect(
-        document.querySelector(".delpi-ui-conversation-reception"),
-      ).toBeTruthy();
-      expect(suggestionButtons().length).toBe(4);
-    } finally {
-      restore();
-    }
+    // No user turn, no send — the draft stays editable.
+    expect(document.querySelector(".delia-timeline")).toBeNull();
+    expect(
+      document.querySelector(".delpi-ui-conversation-reception"),
+    ).toBeTruthy();
+    expect(suggestionButtons().length).toBe(4);
   });
 
   it("never overwrites a non-empty draft — light note instead (SS-F04)", async () => {
-    const { restore } = renderDemoApp();
-    try {
-      const input = screen.getByRole("textbox", {
-        name: "Pergunte à DÉLIA",
-      }) as HTMLTextAreaElement;
-      fireEvent.change(input, { target: { value: "rascunho existente" } });
+    render(<App />);
+    const input = screen.getByRole("textbox", {
+      name: "Pergunte à DÉLIA",
+    }) as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "rascunho existente" } });
 
-      fireEvent.click(suggestionButtons()[0]);
-      expect(input.value).toBe("rascunho existente");
-      const note = document.querySelector(
-        ".delpi-ui-starter-suggestions__note",
-      );
-      expect(note?.getAttribute("role")).toBe("status");
-      expect(note?.textContent).toContain("apague o texto atual");
+    fireEvent.click(suggestionButtons()[0]);
+    expect(input.value).toBe("rascunho existente");
+    const note = document.querySelector(
+      ".delpi-ui-starter-suggestions__note",
+    );
+    expect(note?.getAttribute("role")).toBe("status");
+    expect(note?.textContent).toContain("apague o texto atual");
 
-      // The note clears as soon as the user edits the draft.
-      fireEvent.change(input, { target: { value: "" } });
-      expect(
-        document.querySelector(".delpi-ui-starter-suggestions__note"),
-      ).toBeNull();
-    } finally {
-      restore();
-    }
+    // The note clears as soon as the user edits the draft.
+    fireEvent.change(input, { target: { value: "" } });
+    expect(
+      document.querySelector(".delpi-ui-starter-suggestions__note"),
+    ).toBeNull();
   });
 
   it("a repeated click after a successful selection cannot duplicate text", async () => {
-    const { restore } = renderDemoApp();
-    try {
-      const input = screen.getByRole("textbox", {
-        name: "Pergunte à DÉLIA",
-      }) as HTMLTextAreaElement;
+    render(<App />);
+    const input = screen.getByRole("textbox", {
+      name: "Pergunte à DÉLIA",
+    }) as HTMLTextAreaElement;
 
-      fireEvent.click(suggestionButtons()[0]);
-      await waitFor(() =>
-        expect(input.value).toBe(DELIA_STARTER_SUGGESTIONS[0].draftText),
-      );
-      fireEvent.click(suggestionButtons()[0]);
-      // Draft unchanged — the second click hit the fail-safe note path.
-      expect(input.value).toBe(DELIA_STARTER_SUGGESTIONS[0].draftText);
-      expect(
-        document.querySelector(".delpi-ui-starter-suggestions__note"),
-      ).toBeTruthy();
-    } finally {
-      restore();
-    }
+    fireEvent.click(suggestionButtons()[0]);
+    await waitFor(() =>
+      expect(input.value).toBe(DELIA_STARTER_SUGGESTIONS[0].draftText),
+    );
+    fireEvent.click(suggestionButtons()[0]);
+    // Draft unchanged — the second click hit the fail-safe note path.
+    expect(input.value).toBe(DELIA_STARTER_SUGGESTIONS[0].draftText);
+    expect(
+      document.querySelector(".delpi-ui-starter-suggestions__note"),
+    ).toBeTruthy();
   });
 
   it("suggestions are part of the reception flow — before the composer", () => {
-    const { container, restore } = renderDemoApp();
-    try {
-      const reception = container.querySelector(
-        ".delpi-ui-conversation-reception",
-      );
-      const suggestions = container.querySelector(SUGGESTIONS_SECTION);
-      const composer = container.querySelector(".delia-composer-stack");
-      expect(reception).toBeTruthy();
-      expect(suggestions).toBeTruthy();
-      expect(composer).toBeTruthy();
-      expect(
-        reception!.compareDocumentPosition(suggestions!) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-      expect(
-        suggestions!.compareDocumentPosition(composer!) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
-    } finally {
-      restore();
-    }
+    const { container } = render(<App />);
+    const reception = container.querySelector(
+      ".delpi-ui-conversation-reception",
+    );
+    const suggestions = container.querySelector(SUGGESTIONS_SECTION);
+    const composer = container.querySelector(".delia-composer-stack");
+    expect(reception).toBeTruthy();
+    expect(suggestions).toBeTruthy();
+    expect(composer).toBeTruthy();
+    expect(
+      reception!.compareDocumentPosition(suggestions!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      suggestions!.compareDocumentPosition(composer!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
