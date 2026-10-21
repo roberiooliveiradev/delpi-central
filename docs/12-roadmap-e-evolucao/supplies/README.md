@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Proposta de enriquecimento cadastral assistido por CNPJ (2026-10-21):** [fluxo completo, decisões individuais e em lote](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). Consulta externa estruturada, comparação com SA2, aceitar/recusar sugestão por campo ou todos os divergentes elegíveis, controle de proveniência, auditoria, LGPD e posterior revisão de PUT autorizado. **TARGET / DOCUMENTED — sem implementação, sem endpoint novo, sem job, sem escrita no ERP.** Fontes governamentais e campos elegíveis exigem inventário/contrato antes do GO. Escopo provisório: fornecedores SA2 (confirmar terminologia "clientes").
