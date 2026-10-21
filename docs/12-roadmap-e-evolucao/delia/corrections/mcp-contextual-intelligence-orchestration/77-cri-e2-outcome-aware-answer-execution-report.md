@@ -238,3 +238,12 @@ executable/secret/permission content in JSON.
 `REAL_MODEL_EVAL=NOT_RUN`; `MATERIAL_ACT=0`; `PRODUCTION_DEPLOY=NO`;
 `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`;
 `NEXT=COORDINATION_REVIEW_THEN_E3`.
+
+
+## 11. Independent coordination review of bounded R1–R3 rework (2026-10-21)
+
+**Verdict: `ACCEPT_WITH_RESIDUAL` for E2 bounded scope.** Published `main` SHA `a71f847162b6b94a113d297c172e507f8f85b1a5` verified and source statically inspected. Original R1 repaired: `_temporal_orders` requires comparable values from every returned row; R2 repaired: `total_count` cannot replace the delivered-record count and duplicate payloads do not inflate examples; R3 repaired: new CRI clause is in versioned `config/cri_instructions.delpi.json`, consumed through a bounded typed loader, with model lineage retained and OFF independent. Executor full suite `1778 passed / 3 skipped` is reported, **not independently rerun**; real-model evaluation `TEST_NOT_RUN`.
+
+**Residual / mandatory E3 integration gate:** When the instruction resource is invalid/unavailable, the orchestrator internally falls back to baseline (`_cri_active`), **but** `root_composer` still injects `settings.response_intelligence_enabled=True` into `HandleInteractiveConversationTurn`, which logs per-turn `response_mode=cri`. Requested versus effective mode is conflated, violating diagnostics expected for ON/OFF interference isolation. Do not represent that scenario as effective CRI activation. During E3's existing response-composition integration, resolve and propagate the *single effective mode* (after resource validation) to the handler/observability, or produce separately named requested/effective fields, while preserving fail-closed outcome, OFF parity and no parallel flag. Include an invalid-resource test proving effective-baseline logs and behavior. **This is an E3 prerequisite, not an automatic second E2 rework or a new primary package.** Also, returned records counted by R2 are not necessarily records shown in the final synthesized reply; E3 should verify selected/presented count before user-facing sufficiency claims; until then, do not advertise end-to-end task-completion proof.
+
+E2 remains a governed outcome-assessment foundation, **not validated rich conversational behavior**. `E2_VERDICT=ACCEPT_WITH_RESIDUAL`; `E2_CLOSED=YES`; `E3_AUTHORIZABLE=YES_WITH_INTEGRATION_GATES`; `E3_IMPLEMENTED=NO`; `REAL_MODEL_EVAL=TEST_NOT_RUN`; `I04_ACCEPTED=NO`; `C3_EXECUTED=NO`. No deployment or phase change authorized.
