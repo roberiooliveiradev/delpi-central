@@ -219,3 +219,35 @@ Valores `SX6010` comprovados na leitura: `MV_CUSMED=M`, `MV_CUSFIFO=F`, `MV_CUSL
 ### 13.3 Próximo método de verificação conjunta
 
 Usar índice como **roteiro de busca**, não `OBSERVED_VISUAL` em nosso repositório. PO pode conferir vídeo ou fornecer prints em janelas prioritárias **00:00–00:03 Acompanha Custos**, **00:09–00:14 Refaz Saldos**, **00:18–00:24 financeiro/Kardex**, **00:28–00:35 P7 e H02**, **00:40–00:44 conciliação**, depois resolver divergência de duração e blocos finais. Para cada tela registrar nome visível, duração/arquivo, filial, competência, parâmetros, tipo de ação (consulta/processamento/export), valores, arquivo gerado, e evidência visual ou verbal. Depois reclassificar o trecho individualmente, sem inferir ordem ótima e sem misturar R03 (P7), R04 (MATR860) e R12 (rotinas).
+
+
+## 14. Transcrição integral NotebookLM anexada pelo PO — auditoria textual inicial (21/10/2026)
+
+**Artefato recebido nesta conversa:** `PROC-0072_Transcricao_Integral_Video.md` (372 linhas, identificação de arquivo `Acompanhamento do Processo do Fechamento Mensal de Estoques e Custos-20260930_143151-Gravação de Reunião (1) (1).mp4`). **Origem derivada NotebookLM, não reprodução direta do MP4 verificada nesta rodada.** Não tratar o rótulo "transcrição integral" ou `[AÇÃO VISUAL]` gerados por IA como evidência visual independente. Conteúdo de falas tem valor investigativo de primeira ordem, mas requer checagem contra vídeo para mudar classificação.
+
+### 14.1 Divergência interna comprovada NO PRÓPRIO ARQUIVO DERIVADO
+
+- Seção "Identificação" afirma duração **01:02:15**; **última fala indexada = 00:54:12**, seguida de marcador visual genérico de fim em 01:02:15. O MP4 original anteriormente catalogado no doc 03 possui **00:54:44.125**; a causa é desconhecida. Não validar 01:02:15 como duração real.
+- Títulos das seções e tabela-resumo **não coincidem com timecodes de fala**. Ex.: seção "Acompanha Custos" 00:02:15–00:05:11 contém fala de início 00:01:20; seção P7 intitulada 00:23:11–00:32:59 contém fala da emissão P7 em **00:18:50–00:20:10**; seção "Confronto Triplo" intitulada 00:40:11–00:43:50 contém falas entre **00:31:10–00:38:40**; seção bancária 00:43:51–00:52:30 contém falas **00:39:10–00:43:08**; SD1 seção 00:52:31–01:02:15 contém falas **00:43:20–00:54:12**. A tabela de índice repete horários de seções e pode estar deslocada.
+- O incidente `_F190C` aparece na fala em **00:14:20–00:17:40**, enquanto a tabela indica 00:18:20–00:19:30 e outra análise anterior indicava 00:43:51–00:46:14. `TIMECODE_PROVENANCE=STALE_EVIDENCE`; usar **timecodes de fala como candidatos de navegação**, ainda não como verificados.
+
+### 14.2 Falas específicas úteis para investigação (apenas TRANSCRIPT_DERIVED)
+
+| Janela de fala candidata | Conteúdo da fala a conferir no MP4 | Leitura cautelosa |
+|---|---|---|
+| 00:01:20–00:04:30 | Joici explica iniciar processamentos demorados; Acompanha Custos calcula custo médio, database último dia, apropriação **diária**; Custo de Reposição acionado paralelamente para outros tipos | Evidência verbal derivada de **paralelismo por eficiência**, não de sequência obrigatória universal; execução/write somente com autorização ERP |
+| 00:05:12–00:08:10 | Refaz Saldos para materiais em geral; Refaz Poder de Terceiros somente esporádico, com restrição de faturamento; Acompanha Custos ainda em 25% às 00:08:10 | Rotinas distintas; **Refaz Poder de Terceiros não confirmado executado** |
+| 00:08:40–00:09:15 | Joici afirma não conseguir gerar Kardex 01/99 nem relatório de saldo de estoque antes da finalização do Acompanha Custos | **Dependência relatada pela operadora** nesta execução, `INFORMED_DERIVED`, ainda não regra técnica de programa comprovada |
+| 00:11:50–00:14:00 | Posição de títulos a pagar/receber; ampla janela até 2049; export Excel/binário | **Diferente de baixas FINR190/_F190C**; não mesclar R01/R02 |
+| 00:14:20–00:17:40 | Falha de compilação `_F190C`; cinco saídas informadas: Pagar/Receber Excel, Receber PDF por data, Pagar PDF por data/natureza | Executabilidade não provada; `ERROR_DERIVED` |
+| 00:17:50–00:20:10 | Acompanha Custos termina; relatório de custos inicial/final; Joici informa **não executar etapa final ainda** por haver conferências; inicia P7 padrão e layout H, data último dia, **sem poder de terceiros** | **Distinguir cálculo concluído de sacramentação do fechamento**, parâmetro exato deve ser visto no vídeo |
+| 00:20:35–00:23:45 | Kardex armazéns 01 e 99; período 01/09–30/09; arquivo Excel; `INVENT`/similar filtrado, SD3 mencionada | Kardex 99 **aparece sendo preparado** no texto; contradiz índice anterior que o tratava como apenas citado |
+| 00:31:10–00:38:40 | P7 padrão total **3.776.994,69**, 91 páginas; Entradas/Saídas **3.890.247,18**, H02 ~**64.591,71**, diferença matemática **48.660,78**; grupos Insumos 266.321,45/46; MP 3.087.025,94 + 348.059,30 = 3.435.085,24; fechamento não sacramentado com fábrica ativa | **Valores derivados de falas**, sem PDF original nem paridade; diferença de Insumos observada no texto é 0,01; grupo MP requer entendimento de denominadores |
+| 00:42:35–00:43:08 | Estoque repetido por filial 01/02; financeiro descrito como consolidado | Não converter em permission por filial; confirmar escopo de cada relatório |
+| 00:45:00–00:51:50 | SD1 itens NF, export XML, tratamento por centro de custo e tipo de entrada no Excel | Há uma **etapa de transformação de planilha**, não apenas geração de relatório; regras precisam ser auditadas com owner |
+
+### 14.3 Implicações para diagnóstico R03
+
+A fala sobre rodar Acompanha Custos enquanto faz outras tarefas responde a hipótese de eficiência do PO: **motivo operacional explicitamente narrado**, mas apenas via transcrição derivada. A conclusão do custeio precede emissão P7 no relato, e Joici verbaliza dependência de relatório de saldo/Kardex; isso não autoriza transformar a dependência em gate técnico sem código/owner. A fala P7 **30/09/2026** e total de **3.776.994,69** está presente, mas **não comprova snapshot DB idêntico**; segue aberto o `EXECUTION_DRIFT` de desaparecimento da filial 01 na SB9 reportado no §12.
+
+**Gates:** `TRANSCRIPT_RECEIVED=PROVEN` (existência do arquivo anexado); `TRANSCRIPT_CONTENT=INFORMED_DERIVED`; `SPEECH_TIMECODES=TO_VERIFY`; `SECTION_TIMECODES=STALE_EVIDENCE`; `VIDEO_DURATION=CONFLICT`; `AUDIOVISUAL_DIRECT_VERIFICATION=TEST_NOT_RUN`; `MATR460_PARITY=TEST_NOT_RUN`. Próximo passo: conferir audiovisual primeiro 00:01–00:09 (custeio/paralelismo) e 00:17–00:23 (P7/Kardex), 00:31–00:38 (resumo/confronto), identificando inclusive se os timecodes do reprodutor correspondem aos das falas, e obter prints com parâmetros.
