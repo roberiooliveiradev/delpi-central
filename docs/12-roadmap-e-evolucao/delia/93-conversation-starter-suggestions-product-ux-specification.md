@@ -357,3 +357,11 @@ Essas variantes são um **contrato de apresentação conceitual**, não nomes ob
 **Critérios do slice:** `SS-F01` render-only em `plugin-ui`; `SS-F02` quatro fixtures de perguntas definidos somente no consumer DÉLIA/QA com elegibilidade honesta; `SS-F03` clique/Enter/Space preenche draft com foco sem submit; `SS-F04` preserva draft existente; `SS-F05` zero sugestões se não houver fonte/gate legítimos; `SS-F06` layout 0–4 em fullpage/Dock/mobile; `SS-F07` tooltips, keyboard/a11y/theme/reduced-motion; `SS-F08` Vitest/TypeScript/build/federation/browser/evidence no SHA; `SS-F09` rollout não modifica STT, Keycloak, Core, API nem MCP; `SS-F10` registro de implantação distingue fixtures QA de capabilities admitidas. Todos `PLANNED` até execução.
 
 `BACKEND_SUGGESTIONS_CONTRACT=DEFERRED`; `FRONTEND_SLICE=AUTHORIZED`; `PRODUCTION_FOUR_CAPABILITIES=NOT_AUTHORIZED_WITHOUT_RUNTIME_EVIDENCE`; `PHASE_PROGRESSION=NONE`.
+
+## 15. Registro de execução F02-A (2026-10-21)
+
+**TASK:** `DELIA-UX-F02A-STARTER-SUGGESTIONS-FRONTEND-01`. `ConversationStarterSuggestions` implementado em `plugins/plugin-ui` (render-only, `NEW` — sem equivalente no inventário), integrado como sibling de `DeliaReception` no estado vazio (`turns.length === 0`) do `plugins/delia/src/App.tsx`. Quatro fixtures de QA do §14 em `plugins/delia/src/suggestions/starterSuggestions.ts`, admitidos **somente** pelo modo QA governado existente (`isDemoAllowed()` + `?delia-demo=<scenario>` explícito); em produção `items=[]` e a seção não renderiza. Dockerfile da DÉLIA ganhou `ARG VITE_DELIA_DEMO` (QA-only, default off) no padrão do `VITE_DELIA_AUDIO_QA`. Seleção = `setInput` + foco no composer, nunca submit; draft preenchido preservado com nota leve (`role=status`).
+
+**Resultado:** `SS-V01…SS-V16=PASS`; `SS-F01…SS-F10=PASS`. Vitest plugin-ui 2269/2269, delia 276/276; typecheck/build/federation OK; browser QA 42/42 (página 1440px, 420/360/320px, viewport curto, zoom 200%, Dock, dark, reduced-motion, zero `POST /interaction/turns` em seleções). Evidência: `evidence/starter-suggestions-f02a/starter-suggestions-f02a-evidence.md`. Ledger §6.351.
+
+`BACKEND_SUGGESTIONS_CONTRACT=DEFERRED` (inalterado); `PRODUCTION_FOUR_CAPABILITIES=NOT_AUTHORIZED_WITHOUT_RUNTIME_EVIDENCE` (inalterado — fixtures seguem invisíveis em produção); `PHASE_PROGRESSION=NONE`.

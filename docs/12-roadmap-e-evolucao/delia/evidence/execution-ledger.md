@@ -16689,3 +16689,24 @@ C3_EXECUTED=NO
 NEXT=COORDINATION_REVIEW_THEN_E2
 ```
 
+## §6.351 — F02-A Conversation Starter Suggestions (frontend render-only + QA fixtures)
+
+**DATE:** 2026-10-21. **TASK:** `DELIA-UX-F02A-STARTER-SUGGESTIONS-FRONTEND-01`. **SPEC:** 93 §§12–14. Shared render-only component `ConversationStarterSuggestions` created in `plugins/plugin-ui` (NEW — no existing equivalent; EXISTING_EQUIVALENT_SUGGESTIONS=NO; REUSE for `ConversationReception`/`DeliaReception`/`MessageComposer`/`HelpTooltip`, reception untouched — component renders as sibling on the empty branch). Four QA question fixtures (spec §14) owned by `plugins/delia/src/suggestions/starterSuggestions.ts` and admitted ONLY through the existing governed QA path (`isDemoAllowed()` bundle admission + explicit `?delia-demo=<scenario>`); production resolves `items=[]` and renders nothing — no new permission, no backend/feature invented. Selection = draft-only (`setInput` + composer focus, caret at end), never `handleSubmit`, zero `/interaction/turns`; non-empty draft is preserved with a light `role=status` note; repeated clicks cannot duplicate. Responsive: container queries — 4 cards/2 cols wide, ≤2 cards single column ≤480px, description hidden ≤400px, 1→0 cards by viewport height, Dock caps at 2; light/dark tokens and reduced-motion respected.
+
+```text
+SS_V01_V16=PASS
+SS_F01_F10=PASS
+VITEST_PLUGIN_UI=2269_PASSED
+VITEST_DELIA=276_PASSED
+TYPECHECK=PASS
+BUILD=PASS
+FEDERATION=PASS
+BROWSER_QA=42_42 (page 1440/420/360/320, short viewport, zoom 200%, Dock, dark, reduced-motion, zero turn posts)
+PRODUCTION_FIXTURES=HIDDEN_FAIL_CLOSED
+BACKEND_SUGGESTIONS_CONTRACT=DEFERRED
+PHASE_ADVANCE=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW
+```
+
