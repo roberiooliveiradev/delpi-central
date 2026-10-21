@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Decisão arquitetural do PO — 2026-10-21:** A trilha persistente das escritas via REST Protheus pertence à **`api-delpi`** (integração transversal), não à `supplies-api`. Deve registrar operação, payload outbound sanitizado, identidade validada, eventos, resultado/reconciliação e erro, permitindo reuso por outros portais. [Contrato inicial de tracking](../../../api-delpi/docs/integrations/protheus-write-execution-tracking-contract.md). Local físico/migrations ainda `TO_INVENTORY`, sem ativação produtiva de CREATE/UPDATE. F4/Gabriel e F5 continuam frentes separadas.
