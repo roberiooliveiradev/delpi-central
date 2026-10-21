@@ -16669,3 +16669,23 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_ACCEPTANCE_THEN_E1
 ```
+
+## §6.350 — CRI E1 central ON/OFF implementation (2026-10-21)
+
+**TASK:** DELIA-CRI-E1-CENTRAL-ONOFF-01. Bounded implementation of the E0-contracted activation control (spec 75, doc 73 section 7, roadmap 74). Reused the existing Settings._env_flag + root_composer single-injection precedent: DELIA_RESPONSE_INTELLIGENCE_ENABLED parsed in Settings (absent/invalid to baseline + safe diagnostic, no raw-value logging), resolved once in _compose_turn_handler, injected as typed bool into HandleInteractiveConversationTurn (_response_mode baseline|cri). ON proves boundary selection only - serialized governed results identical OFF vs ON, zero additional model calls, no E2/E3 stages, no declarative resources, no new flag platform/registry/planner. Observability: composition log (mode/config_source/runtime_sha, unknown-safe) + per-turn stage=response_mode marker (identity fields only). Rollback = env + restart, proven off-on-off. Files: settings.py, root_composer.py, handle_interactive_turn.py, tests/test_cri_e1_response_intelligence_toggle.py (23 tests). Suite 1713 passed / 3 skipped; py_compile clean; orchestration.py, contracts, presentation, authority untouched.
+
+```text
+CRI_E1=EXECUTED
+FLAG=DELIA_RESPONSE_INTELLIGENCE_ENABLED
+DEFAULT_STATE=OFF
+FAIL_CLOSED=INVALID_ABSENT_TO_BASELINE
+TESTS=1713_PASSED_3_SKIPPED
+PUBLIC_CONTRACT_CHANGE=NO
+REAL_MODEL_TEST=NOT_RUN
+MATERIAL_ACT=0
+PRODUCTION_DEPLOY=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=NO
+NEXT=COORDINATION_REVIEW_THEN_E2
+```
+

@@ -16,6 +16,7 @@ or evidence.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
@@ -115,6 +116,8 @@ OUTPUT_SCHEMA_ID = "delia.interaction.turn"
 OUTPUT_SCHEMA_VERSION = "1"
 EXPECTED_FIELDS = ("answer",)
 INTERACTION_TIMEOUT_SECONDS = 30.0
+
+_logger = logging.getLogger(__name__)
 # After governed NOT_APPLICABLE, the free-form conversational fallback
 # must not consume the entire remaining turn budget into a gateway
 # 504 (G0-02 C02 class: admission→conversational→model_timeout).
@@ -220,6 +223,7 @@ class HandleInteractiveConversationTurn:
         timeout_seconds: float = INTERACTION_TIMEOUT_SECONDS,
         capability_orchestration: SupportsGovernedCapabilityAttempt | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
+        response_intelligence_enabled: bool = False,
     ) -> None:
         self._invoke_model = invoke_model
         self._model_ref = model_ref
@@ -240,6 +244,13 @@ class HandleInteractiveConversationTurn:
         # at most the remaining budget, so a turn can never outlive
         # the edge request deadline.
         self._turn_budget_seconds = float(turn_budget_seconds)
+        # CRI E1 (doc 73 §7 / spec 75 §4.1): composition-resolved
+        # response mode at the governed-outcome → response boundary.
+        # It marks observability only in this gate — selection,
+        # authorization, evidence and presentation are unchanged.
+        self._response_mode = (
+            "cri" if response_intelligence_enabled else "baseline"
+        )
 
     def execute(
         self,
@@ -328,6 +339,16 @@ class HandleInteractiveConversationTurn:
         turn_deadline: TurnDeadline,
         sink: ActivityEventSink | None,
     ) -> InteractiveTurnResult:
+        # CRI E1 (doc 73 §7): one response-mode marker per processed
+        # turn at the governed-outcome → response boundary — identity
+        # fields only, never payload. E2/E3 attach at this point.
+        _logger.info(
+            "interaction stage=response_mode decision=%s "
+            "session_id=%s turn_id=%s",
+            self._response_mode,
+            session.session_id,
+            user_turn.turn_id,
+        )
         # ARCH-DRIFT-MCP-FULL-CAPABILITY-ORCHESTRATION-03: the bounded
         # governed capability orchestration is tried first. Model
         # selection/answers never authorize anything — the fresh live

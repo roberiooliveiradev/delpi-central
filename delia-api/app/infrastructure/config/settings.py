@@ -3,11 +3,15 @@ from __future__ import annotations
 import os
 
 
+_ENV_FLAG_TRUE = frozenset({"1", "true", "yes", "on"})
+_ENV_FLAG_FALSE = frozenset({"0", "false", "no", "off"})
+
+
 def _env_flag(name: str, default: bool = False) -> bool:
     raw = os.getenv(name)
     if raw is None:
         return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return raw.strip().lower() in _ENV_FLAG_TRUE
 
 
 class Settings:
@@ -123,6 +127,29 @@ class Settings:
         self.openapi_delpi_enabled = _env_flag(
             "DELIA_OPENAPI_DELPI_ENABLED"
         )
+        # CRI E1 (doc 73 §7 / spec 75 §4.1): single central switch for
+        # the conversational response-intelligence front. Absent and
+        # invalid values fail closed to baseline; this is a behavior
+        # switch resolved once at composition — never an authorization,
+        # never read from request/model/provider/frontend state.
+        _cri_raw = os.getenv("DELIA_RESPONSE_INTELLIGENCE_ENABLED")
+        self.response_intelligence_enabled = _env_flag(
+            "DELIA_RESPONSE_INTELLIGENCE_ENABLED"
+        )
+        self.response_intelligence_config_source = (
+            "environment" if _cri_raw is not None else "default"
+        )
+        _cri_norm = _cri_raw.strip().lower() if _cri_raw is not None else None
+        self.response_intelligence_config_invalid = (
+            _cri_norm is not None
+            and _cri_norm not in _ENV_FLAG_TRUE
+            and _cri_norm not in _ENV_FLAG_FALSE
+        )
+        # Runtime build identity for incident correlation — `unknown`
+        # when not reliably provided; never an error source.
+        self.runtime_sha = (
+            os.getenv("DELIA_RUNTIME_SHA") or ""
+        ).strip() or "unknown"
         self.openapi_delpi_base_url = (
             os.getenv("DELIA_OPENAPI_DELPI_BASE_URL") or ""
         ).strip()

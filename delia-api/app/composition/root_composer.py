@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from flask import Flask
 
 from app.application.capability_provision.mcp_provider import (
@@ -51,6 +53,8 @@ from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.health_routes import health_bp
 from app.interfaces.http.interaction_routes import register_interaction_routes
 from app.interfaces.http.request_logging import register_request_logging
+
+_logger = logging.getLogger(__name__)
 
 
 def _bounded_http_get(url: str, **kwargs):
@@ -289,11 +293,31 @@ def _compose_turn_handler(
         if providers
         else None
     )
+    # CRI E1 (doc 73 §7 / spec 75 §4.1): the single response-intelligence
+    # decision is resolved here from trusted runtime config — never from
+    # request, model, provider or frontend state. Invalid env values
+    # fail closed to baseline; the switch selects only the governed
+    # outcome → response boundary mode, it authorizes nothing.
+    response_intelligence_enabled = settings.response_intelligence_enabled
+    _logger.info(
+        "delia_response_intelligence mode=%s enabled=%s "
+        "config_source=%s runtime_sha=%s",
+        "cri" if response_intelligence_enabled else "baseline",
+        response_intelligence_enabled,
+        settings.response_intelligence_config_source,
+        settings.runtime_sha,
+    )
+    if settings.response_intelligence_config_invalid:
+        _logger.warning(
+            "delia_response_intelligence decision=fail_closed "
+            "reason=invalid_env_value"
+        )
     return HandleInteractiveConversationTurn(
         invoke_model,
         model_ref=model_ref,
         capability_orchestration=orchestration,
         turn_budget_seconds=settings.turn_budget_seconds,
+        response_intelligence_enabled=response_intelligence_enabled,
     )
 
 
