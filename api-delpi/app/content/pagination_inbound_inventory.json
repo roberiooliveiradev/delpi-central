@@ -1,6 +1,6 @@
 {
   "version": "2026.09.04",
-  "count": 120,
+  "count": 122,
   "entries": [
     {
       "file": "app/interface/http/propostas_comerciais_controller.py",
@@ -1561,6 +1561,32 @@
       "geResolved": 1,
       "leResolved": 100,
       "tierId": "page_25_100"
+    },
+    {
+      "file": "app/interface/http/routes/supplies/supplier_catalogs_router.py",
+      "line": 64,
+      "module": "supplier_catalogs_router",
+      "param": "limit",
+      "default": "100",
+      "ge": "1",
+      "le": "500",
+      "defaultResolved": 100,
+      "geResolved": 1,
+      "leResolved": 500,
+      "tierId": "limit_100_500"
+    },
+    {
+      "file": "app/interface/http/routes/integrations/integration_operations_router.py",
+      "line": 180,
+      "module": "integration_operations_router",
+      "param": "limit",
+      "default": "100",
+      "ge": "1",
+      "le": "200",
+      "defaultResolved": 100,
+      "geResolved": 1,
+      "leResolved": 200,
+      "tierId": "limit_100_200"
     }
   ]
 }

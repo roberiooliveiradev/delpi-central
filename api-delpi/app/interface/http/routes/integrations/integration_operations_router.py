@@ -26,6 +26,7 @@ from app.domain.integrations.integration_operation import (
     IntegrationTrackingError,
 )
 from app.domain.integrations.protheus_rest import ProtheusRestError
+from app.interface.http.pagination_query import LIMIT_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.s2s_service_access import require_s2s_or_any_permission
 from app.utils.logger import log_error
@@ -177,7 +178,7 @@ def get_integration_operation_route(
 def list_integration_operation_events_route(
     request: Request,
     operation_id: str = Path(..., description="Tracked operation UUID"),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = LIMIT_QUERY("limit_100_200"),
     offset: int = Query(0, ge=0),
 ):
     try:

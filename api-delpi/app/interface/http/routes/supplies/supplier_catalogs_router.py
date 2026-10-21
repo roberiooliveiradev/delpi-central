@@ -23,6 +23,7 @@ from app.infrastructure.persistence.totvs.supplier_repositories.totvs_supplier_c
 from app.interface.http.openapi_agent_metadata_builder import (
     OpenApiAgentMetadataBuilder,
 )
+from app.interface.http.pagination_query import LIMIT_QUERY
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.s2s_service_access import require_s2s_or_any_permission
 from app.utils.logger import log_error
@@ -61,7 +62,10 @@ def list_supplier_catalog_items(
         max_length=2,
         description="Two-letter UF — required for the 'municipalities' catalog.",
     ),
-    limit: int = Query(default=100, ge=1, le=500),
+    limit: int = LIMIT_QUERY(
+        "limit_100_500",
+        description="Max items per page (1-500).",
+    ),
 ):
     """operationId: list_supplies_supplier_catalog_items — opções validadas do Protheus."""
     try:
