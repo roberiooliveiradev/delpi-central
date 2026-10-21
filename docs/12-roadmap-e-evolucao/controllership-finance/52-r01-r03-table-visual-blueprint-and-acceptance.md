@@ -129,6 +129,19 @@ AC-T01/T02/T03/T05/T06/T07 parcialmente comprovados (dark desktop).
 Pendentes: tema claro, tablet, mobile, teclado, zoom, comparacao
 lado a lado com mockup (AC-T04/T09 nao fecham sem isso).
 
+**V4 - auditoria de estabilidade (22/10/2026)**: RCA dos seletores flex
+da `cf-table-section` sobre todos os filhos possiveis do
+`DataTableSection` (header, toolbar, toolbarFilters, loading/refresh
+sticky, table-wrap, cards, paginacao, footer): o catch-all `> *` e a
+propriedade defensiva correta - qualquer filho novo do kit ocupa linha
+propria (SAFE default). Defeito real reproduzido: <=768px o kit pede
+`pageSize{width:100%}` mas a toolbar V3 era `flex:0 0 auto` (largura
+indefinida) comprimindo os controles - corrigido com media query
+`toolbar{flex:1 1 100%; justify-content:space-between}`. Contrato da
+composicao protegido por `closingTablePanel.structural.test.mjs`
+(estruturais 25/25). Demais verificacoes (temas claro, viewports,
+teclado, zoom) seguem TEST_NOT_RUN.
+
 ## 8. Relatorio inicial exigido do Devin
 
 ```text

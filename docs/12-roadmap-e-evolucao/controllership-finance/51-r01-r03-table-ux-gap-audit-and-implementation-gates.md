@@ -85,6 +85,17 @@ Implementado em frontend-only, somente slots publicos do `DataTableSection` e CS
 
 Testes: Vitest 91/91 com novas assercoes (contagem `120 registros` junto ao titulo; `source_missing` sem `<table>` nem emptyMessage). Visual autenticado: `TEST_NOT_RUN`.
 
+**V4 (22/10/2026) — auditoria de estabilidade da composicao flex**: RCA dos
+seletores `cf-table-section` sobre todos os filhos do `DataTableSection`
+(header, toolbar, toolbarFilters, loading/refresh, table-wrap, cards,
+paginacao, footer): catch-all `> *` = cada filho ocupa linha propria
+(SAFE). Defeito corrigido: <=768px a toolbar `flex:0 0 auto` deixava o
+`pageSize{width:100%}` do kit sem referencia e comprimia os controles;
+agora `flex:1 1 100%` + `justify-content:space-between` em media query.
+Contrato protegido por `closingTablePanel.structural.test.mjs`
+(estruturais 25/25). T19 permanece PARTIAL: apenas dark desktop
+comprovado em producao.
+
 ## 8. Entrega inicial exigida do Devin
 
 ```text

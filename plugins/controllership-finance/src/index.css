@@ -235,6 +235,17 @@
   justify-content: flex-end;
 }
 
+/* Em telas estreitas a toolbar ocupa a linha inteira sob o título —
+   o kit já pede width:100% no pageSize, mas um item flex de largura
+   auto a deixava sem referência e comprimia os controles. */
+@media (max-width: 768px) {
+  .dashboard-controllership-finance .cf-table-toolbar {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 /* Contagem de registros como pill discreto ao lado do título (T02).
    `__meta` só carrega a contagem — o slot `hint` não é usado aqui. */
 .dashboard-controllership-finance .cf-table-section__meta {
