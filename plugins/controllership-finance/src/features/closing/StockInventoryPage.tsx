@@ -337,7 +337,7 @@ export function StockInventoryPage() {
         </form>
       </CfSectionCard>
 
-      <div aria-busy={loading}>
+      <div className="cf-page-stack" aria-busy={loading}>
       {current?.kind === "error" ? (
         <CfQueryErrorBanner
           error={current}

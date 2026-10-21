@@ -329,6 +329,21 @@ describe("StockInventoryPage — estados", () => {
     expect(screen.getAllByText(/itens$/).length).toBeGreaterThan(0);
   });
 
+  it("seções de resultado ficam dentro do stack com gap (regressão)", async () => {
+    getMock.mockResolvedValue(payload());
+    const { container } = render(<StockInventoryPage />);
+    await screen.findByText("Produto Exemplo");
+
+    const resultsRegion = container.querySelector(
+      "[aria-busy]",
+    ) as HTMLElement | null;
+    expect(resultsRegion).not.toBeNull();
+    // a região de resultados deve ser um cf-page-stack para que as
+    // CfSectionCard internas herdem o gap do token --cf-section-gap
+    expect(resultsRegion?.classList.contains("cf-page-stack")).toBe(true);
+    expect(resultsRegion?.children.length ?? 0).toBeGreaterThan(0);
+  });
+
   it("source_missing não exibe total nem zero", async () => {
     getMock.mockResolvedValue(
       payload({

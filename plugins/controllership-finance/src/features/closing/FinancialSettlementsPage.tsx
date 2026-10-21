@@ -409,7 +409,7 @@ export function FinancialSettlementsPage() {
         </form>
       </CfSectionCard>
 
-      <div aria-busy={loading}>
+      <div className="cf-page-stack" aria-busy={loading}>
       {renderError()}
 
       {!applied ? (

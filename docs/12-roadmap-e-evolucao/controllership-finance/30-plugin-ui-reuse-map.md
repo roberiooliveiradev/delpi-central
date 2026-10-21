@@ -591,7 +591,11 @@ Regras de uso:
 - **Tabela**: o `DataTableSection` já renderiza `CfLoadingCard` internamente
   nos estados inicial/refresh — passar apenas `loading` e nunca criar
   indicador paralelo.
-- **Região de resultados**: envolver em `aria-busy={loading}`.
+- **Região de resultados**: envolver em `aria-busy={loading}` —
+  **o wrapper deve carregar `cf-page-stack`** (`<div className="cf-page-stack"
+  aria-busy={loading}>`). Um `<div>` intermediário sem a classe vira um único
+  filho do stack e as `CfSectionCard` internas empilham coladas (o `gap` do
+  pai não desce); verificado em produção em 21/10/2026.
 - **Erro**: `CfStateBanner` + ação `Tentar novamente`; loading/erro/vazio/
   parcial continuam estados distintos.
 
