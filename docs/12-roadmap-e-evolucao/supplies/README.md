@@ -253,3 +253,6 @@ Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqu
 
 
 > **P0 do enriquecimento por CNPJ (2026-10-21):** [inventário técnico, limites de fonte oficial e contrato de evidência](./SUPPLIES-ENRICHMENT-01-INVENTORY-AND-EVIDENCE-GATE.md). Estado INVENTORY PARTIAL: contrato api-delpi de provenance v1 comprovado no main; Serpro depende de contratação; payload/licença/LGPD e inventory de código supplies-api ainda bloqueiam freeze. Não há implementação de fluxo de enriquecimento autorizada.
+
+
+> **P0.1 code inventory (2026-10-21):** [inventário de rotas BFF, DTO, S2S, AuthZ e gaps de enriquecimento](./SUPPLIES-ENRICHMENT-01-P01-CODE-INVENTORY.md). Inspeção de código real via GitHub. Resultado PARTIAL: sem tree completa, testes/runtime; não autoriza writes/provedor.
