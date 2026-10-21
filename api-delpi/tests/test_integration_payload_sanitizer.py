@@ -106,8 +106,37 @@ def test_error_details_never_store_raw() -> None:
 def test_canonical_hash_stable_and_sensitive_to_content() -> None:
     a = {"b": 1, "a": 2}
     b = {"a": 2, "b": 1}
-    assert canonical_hash(a) == canonical_hash(b)
-    assert canonical_hash(a) != canonical_hash({"a": 3, "b": 1})
+    assert canonical_hash(a, key="k") == canonical_hash(b, key="k")
+    assert canonical_hash(a, key="k") != canonical_hash({"a": 3, "b": 1}, key="k")
+
+
+def test_canonical_hash_is_keyed_not_plain_sha256() -> None:
+    payload = {"tax_id": "98887766000134"}
+    import hashlib
+    import json
+
+    plain = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    digest = canonical_hash(payload, key="server-secret")
+    assert digest is not None
+    assert digest != plain  # keyed HMAC — dictionary lookup does not apply
+    assert canonical_hash(payload, key="other") != digest
+
+
+def test_canonical_hash_without_key_returns_none() -> None:
+    # With no key configured at all the result must be None, never plain hash.
+    import os
+
+    saved_secret = os.environ.pop("INTEGRATION_TRACKING_HMAC_SECRET", None)
+    saved_jwt = os.environ.pop("JWT_SECRET", None)
+    try:
+        assert canonical_hash({"a": 1}) is None
+    finally:
+        if saved_secret:
+            os.environ["INTEGRATION_TRACKING_HMAC_SECRET"] = saved_secret
+        if saved_jwt:
+            os.environ["JWT_SECRET"] = saved_jwt
 
 
 def test_enforce_size_limit_keeps_small_payload() -> None:

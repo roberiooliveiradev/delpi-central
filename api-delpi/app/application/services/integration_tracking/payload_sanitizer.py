@@ -13,7 +13,9 @@ Policy (documented in docs/integrations/protheus-write-execution-tracking.md):
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import os
 from typing import Any
 
 PAYLOAD_SCHEMA_VERSION = 1
@@ -163,8 +165,26 @@ def build_confirmation_evidence(
     }
 
 
-def canonical_hash(payload: Any) -> str:
-    """SHA-256 over canonical JSON (sorted keys) — stable dedup/audit anchor."""
+def _hash_key() -> str | None:
+    """Server-side HMAC key — dedicated env first, JWT_SECRET as compat."""
+    key = (
+        os.getenv("INTEGRATION_TRACKING_HMAC_SECRET")
+        or os.getenv("JWT_SECRET")
+        or ""
+    ).strip()
+    return key or None
+
+
+def canonical_hash(payload: Any, *, key: str | None = None) -> str | None:
+    """Keyed HMAC-SHA256 over canonical JSON — audit/dedup anchor.
+
+    Plain SHA-256 is NOT used: payloads contain predictable values
+    (tax ids, emails) that a bare digest could leak via dictionary search.
+    Without a configured key the hash is omitted (NULL), never weakened.
+    """
+    secret = (key or "").strip() or _hash_key()
+    if not secret:
+        return None
     canonical = json.dumps(
         sanitize_value(payload),
         sort_keys=True,
@@ -172,7 +192,9 @@ def canonical_hash(payload: Any) -> str:
         separators=(",", ":"),
         default=str,
     )
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return hmac.new(
+        secret.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
 
 
 def enforce_size_limit(payload: dict | None) -> dict | None:

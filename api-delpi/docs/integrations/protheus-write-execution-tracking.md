@@ -114,6 +114,10 @@ aplicável, `tracking_warning` / `mismatched_fields`.
   `municipal_registration`, `codusr`, senhas/tokens/headers de auth.
 - Strings limitadas a 300 chars; JSON limitado a 16 KB (excedente vira stub
   `oversized`). Payloads persistem como JSONB — dados inertes.
+- `request_hash`/`outbound_hash` usam **HMAC-SHA256** com chave de servidor
+  (`INTEGRATION_TRACKING_HMAC_SECRET`, fallback `JWT_SECRET`); SHA-256 puro
+  seria reversível por dicionário sobre CPF/CNPJ/e-mails previsíveis. Sem
+  chave configurada o hash é omitido (NULL), nunca enfraquecido.
 - Sem senhas/tokens no banco; erros upstream guardam apenas
   `code`/`message` sanitizados (`raw_error_stored=false`).
 - Consulta (`GET operations`): S2S `supplies-api` + `suppliers.read` **ou**

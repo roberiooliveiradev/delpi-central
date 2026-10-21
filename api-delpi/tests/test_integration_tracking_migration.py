@@ -87,3 +87,16 @@ def test_v001_useful_indexes() -> None:
     assert "(caller_app, actor_subject)" in sql
     assert "(integration, resource, action)" in sql
     assert "(correlation_id)" in sql
+
+
+V002 = _MIGRATIONS / "V002__idempotency_key_null_caller.sql"
+
+
+def test_v002_normalizes_null_caller_in_idempotency_index() -> None:
+    sql = V002.read_text(encoding="utf-8")
+    assert "DROP INDEX IF EXISTS" in sql
+    assert "COALESCE(caller_app, '')" in sql
+    assert "idempotency_key" in sql
+    assert "UNIQUE INDEX" in sql
+    assert "DROP TABLE" not in sql.upper()
+    assert "DROP SCHEMA" not in sql.upper()
