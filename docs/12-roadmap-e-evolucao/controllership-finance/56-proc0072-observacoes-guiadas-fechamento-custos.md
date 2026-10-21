@@ -101,3 +101,36 @@ Data de registro: 2026-10-21. Fonte: relato direto do PO enquanto acompanha a gr
 `REPLACEMENT_COST_PARAMETERS=PROVEN_SCREENSHOT`; `REPLACEMENT_COST_USE=OWNER_REPORTED_VIA_PO`; `NET_COST_RULE=TO_INVENTORY`; `REBUILD_BALANCES_PARAMS=PROVEN_SCREENSHOT_PARTIAL`; `REBUILD_BALANCES_PURPOSE=OWNER_REPORTED_VIA_PO`; `THIRD_PARTY_ROUTINE=CITED_ONLY`; `THIRD_PARTY_LOCK_EFFECT=OWNER_REPORTED_VIA_PO/TO_VERIFY`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 **Proximo passo de observacao:** usuario continua narrando cronologicamente; nao interpretar capturas isoladas como ordem de execucao ou conclusao de jobs.
+
+
+## Registro 04 - Faturamento x MOD e conclusao observada do Refaz Saldos (06:04-06:46)
+
+**Fonte:** narracao direta do PO ao assistir o video e quatro screenshots do TOTVS. `OWNER_REPORTED_VIA_PO` para finalidade/regras explicadas; `PROVEN_SCREENSHOT` para parametros e mensagens visiveis. Horarios aproximados do video original indicados pelo PO.
+
+### Faturamento x MOD (aprox. 06:04-06:40)
+1. Joici navega no modulo `Estoque/Custos > Relatorios > Analises > Faturamento x MOD`; a aba `Faturamento X Mod [02.9.0004]` aparece aberta na captura.
+2. **Finalidade explicada pelo PO:** comparar custo esperado de mao de obra direta com o efetivamente realizado; verificar se a mao de obra cobrada corresponde ao que efetivamente foi pago/incorrido. Esta formulacao e `OWNER_REPORTED_VIA_PO`, **nao formula operacional validada**, pois a imagem nao demonstra os campos de custo calculado/pago, nem a metodologia do confronto.
+3. Na janela `Parametros`, intervalo visivel `Data de? = 01/09/2026`, `Data ate? = 30/09/2026`. Filtros adicionais: `Produto Acabado de?` e `Produto Acabado Ate?` (limite superior preenchido), `Grupo De?` em branco e `Grupo Ate?` com valor `0040` aparente na captura. Nao inferir semantica dos grupos.
+4. Na etapa seguinte `Selecao de Filiais` aparecem duas linhas, `01 - MATRIZ` e `02 - DELPI - UES`; contador inferior `Elem. Selecionado(s) = 2`. PO relata selecao de ambas e continuacao do processamento.
+5. **Nao ha planilha gerada ou comparacao de valores provada nestas capturas**. O processo descrito aqui e parametrizacao e solicitacao do relatorio, nao calculo homologado nem exportacao.
+6. O modulo `Faturamento x MOD` tambem foi mencionado no trecho posterior da gravacao (docs 54/55), em que se relatou tratamento de planilha no Excel. Correlacionar os dois pontos do processo sem inventar igualdade de bases, criterios de agrupamento ou valores.
+
+### Refaz Saldos - retorno do processamento (aprox. 06:46)
+1. Joici retorna a rotina aberta `Refaz Saldos`, janela `Recalculo dos Saldos`, e abre/visualiza o `Log de processamento das STORED PROCEDURES`.
+2. A lista visivel contem varias linhas com estado textual `Processamento Thread: ... - Ok`; o PO relata que **todas terminaram OK** e ela confirma fechando a janela em `Ok`.
+3. `PROVEN_SCREENSHOT` = existem linhas de threads com `Ok` naquele log. `OWNER_REPORTED_VIA_PO` = processamento concluido e usuario confirmou. **Nao equivale a** paridade financeira/estoque, verificacao pos-processamento do banco, duracao, idempotencia, transacao atomica ou ausencia de alerta em linhas nao visiveis.
+4. O Refaz Saldos **nao produz exportacao neste trecho** (relato do PO); a evidencia operacional demonstrada e o log de processamento, nao um relatorio de saldos.
+5. Se o Portal no futuro precisar acompanhar job, distinguir `processing`, `completed`, `failed` e o resultado de validacao de saldos: `Ok` de thread nao prova conferencia de negocio `PASS`. Proposta apenas `TARGET / DECISION_REQUIRED`.
+
+### Campos e conciliacoes ainda a validar
+| Topico | Comprovado ou relatado | Pendente |
+|---|---|---|
+| Escopo temporal Faturamento x MOD | Setembro/2026 inteiro, 01 a 30 (captura) | data de referencia da efetiva apuracao, competencia e timezone |
+| Filiais Faturamento x MOD | 01 MATRIZ + 02 DELPI-UES selecionadas (captura) | se a consolidacao soma filiais ou mostra resultados por filial |
+| Escopo MOD | mao de obra direta, custo esperado vs realizado (relato PO) | campos, formula, unidade e origem de custo pago/previsto |
+| Criterio de conclusao Refaz Saldos | linhas de thread `Ok` visiveis, confirmacao manual (captura/relato) | log integral, total de threads, efeitos nas fontes e verificacao de outcome |
+| Integraçao Portal | nenhuma funcionalidade de executar job/cobrar MOD existente provada neste registro | owners api-delpi/ERP e strategic-indicators-api quando aplicavel |
+
+**Status:** `MOD_REPORT_PARAMETERS=PROVEN_SCREENSHOT_PARTIAL`; `MOD_BUSINESS_PURPOSE=OWNER_REPORTED_VIA_PO`; `MOD_FORMULA=TO_INVENTORY`; `MOD_OUTPUT=TEST_NOT_RUN`; `REBUILD_BALANCES_THREAD_LOG=PROVEN_SCREENSHOT_PARTIAL`; `REBUILD_BALANCES_SUCCESS=OWNER_REPORTED_VIA_PO`; `POST_JOB_BUSINESS_OUTCOME=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**Proximo registro:** continuar cronologicamente a partir da fala do PO; nao reavaliar como comprovadas as formulas/conciliacoes so por existirem parametros ou logs.
