@@ -1,6 +1,24 @@
 # 50 — TARGET UX: Hero, filtros e tabelas da Central de Fechamento (R01/R02 e R03)
 
-> 21/10/2026. **DESIGN/TARGET, nao implementado nem homologado.** Proposta visual do GPT a partir de capturas do PO das paginas de Controladoria e de referencias do Portal Comercial (Pedidos em aberto / Minha carteira). Esta especificacao e a handoff de implementacao para Devin. Os MOCKUPS GERADOS sao **ILUSTRATIVOS**, nao contratos, dados de producao ou autorizacao para novos recursos. Revalidar HEAD e contratos antes de editar.
+> 21/10/2026 — **IMPLEMENTADO.** Gate G2 liberado pelo PO (rearranjo UI puro,
+> contratos vigentes). Adaptador `src/app/ClosingHero.tsx` sobre `CfPageHero`
+> (`createDashboardPageHero` do kit, density compact): eyebrow "Central de
+> Fechamento", titulo com `CfTitleWithHelp`, subtitulo, `actions` =
+> "Atualizado às HH:mm" (timestamp real do fetch) + "Atualizar" (repete a
+> consulta vigente — nao submete filtros), `highlights` com KPIs reais e
+> `loading` "…", `children` = nota `CfFeedbackMessage` + area de filtros
+> delimitada (`cf-hero-filters`, border-top token) + linha de acoes com
+> **Limpar filtros** a direita. R01/R02: KPIs Eventos/Movimentacoes por moeda
+> (codigo real)/Naturezas/Tipos; "Qualidade dos vinculos" permanece no stack
+> de resultados. R03: KPIs Disponibilidade (tone warning quando
+> nao-disponivel)/Data-base/Itens/Filiais/Valor total; resumos por tipo e
+> armazem permanecem como secoes empilhadas (default do spec). Toolbar: os
+> dois `DataTableSection` ganharam `fontSizePreferencesKey` (controle nativo
+> de fonte); Colunas ja ativo; **Excel e view Cards = TO_INVENTORY, nao
+> implementados**. Auto-query, debounce, concorrencia, stack/gap 24px e
+> datas civis preservados. 91/91 vitest + 17/17 estruturais.
+>
+> 21/10/2026. **DESIGN/TARGET** (original abaixo). Proposta visual do GPT a partir de capturas do PO das paginas de Controladoria e de referencias do Portal Comercial (Pedidos em aberto / Minha carteira). Esta especificacao e a handoff de implementacao para Devin. Os MOCKUPS GERADOS sao **ILUSTRATIVOS**, nao contratos, dados de producao ou autorizacao para novos recursos. Revalidar HEAD e contratos antes de editar.
 
 ## 0. Autoridade, contexto e fronteiras
 

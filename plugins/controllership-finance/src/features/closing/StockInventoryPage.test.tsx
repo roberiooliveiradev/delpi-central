@@ -264,7 +264,9 @@ describe("StockInventoryPage — consulta automática", () => {
     });
     await waitFor(() => expect(getMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Limpar filtros" }),
+    );
     await waitFor(() =>
       expect(getMock).toHaveBeenLastCalledWith(
         expect.objectContaining({ branch: "all", page: 1 }),
@@ -311,10 +313,17 @@ describe("StockInventoryPage — estados", () => {
     render(<StockInventoryPage />);
 
     await screen.findByText("Produto Exemplo");
-    // grupos acessíveis do grid centralizado
+    // hero integra identidade e KPIs reais (doc 50)
+    expect(screen.getByText("Central de Fechamento")).toBeTruthy();
     expect(
-      screen.getByRole("group", { name: "Indicadores do estoque" }),
+      screen.getByRole("heading", { name: "Estoque histórico — P7" }),
     ).toBeTruthy();
+    expect(screen.getByText("Disponibilidade")).toBeTruthy();
+    expect(screen.getByText("Data-base")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Atualizar" }),
+    ).toBeTruthy();
+    // grupos acessíveis do grid centralizado
     expect(
       screen.getByRole("group", { name: "Resumo por tipo de produto" }),
     ).toBeTruthy();
@@ -423,7 +432,10 @@ describe("StockInventoryPage — estados", () => {
     );
     render(<StockInventoryPage />);
 
-    expect(await screen.findByText("Carregando indicadores")).toBeTruthy();
+    // hero mostra highlights em "…" e a tabela mantém role=status
+    await waitFor(() =>
+      expect(screen.getAllByText("…").length).toBeGreaterThan(0),
+    );
     expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
 
     resolveGet?.(payload());

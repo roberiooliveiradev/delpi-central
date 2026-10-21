@@ -213,6 +213,15 @@ Continuacao da melhoria de UX na Central de Fechamento, agora de composicao visu
 - **Mensagens centralizadas**: novo adaptador fino `src/app/cfFeedbackUi.ts` — `CfFeedbackMessage` (intencao semantica `info|warning|error|success` mapeada as variantes reais do `CfStateBanner`) e `CfQueryErrorBanner` (catalogo unico de falhas de consulta: `scope_unavailable`, `S2S_*`, 401, 403, 503, generico — com `Tentar novamente`). Substitui os textos brutos soltos das duas paginas e cobre o gap das baixas (agora distingue S2S/503/401 como a R03); "Qualidade dos vinculos" e nota operacional P7 viram mensagens `info`, snapshot ausente continua estado informativo proprio — nunca saldo zero.
 - Sem regressao: auto-query, debounce 400ms, AbortController/requestId, paginacao, loading centralizado e datas civis preservados; sem mudanca de SQL/DTO/contrato/infra. Padroes documentados no [mapa de reuso](./30-plugin-ui-reuse-map.md).
 
+### PROC-0072 — Hero integrado + toolbar de tabela (doc 50, 21/10/2026)
+
+Redesenho de composicao das duas paginas da Central de Fechamento conforme o TARGET do [doc 50](./50-closing-pages-hero-filters-table-ux-target.md):
+
+- **`ClosingHero`** (`src/app/ClosingHero.tsx`) — adaptador fino de composicao sobre `CfPageHero` (`createDashboardPageHero` do kit, ja bound): eyebrow "Central de Fechamento", titulo com `CfTitleWithHelp`, subtitulo, "Atualizado as HH:mm" (timestamp real da consulta) + "Atualizar" (repete a consulta vigente, nao submete), `highlights` com KPIs reais e loading "…", nota `CfFeedbackMessage` e area de filtros delimitada com "Limpar filtros" a direita.
+- R01/R02: KPIs Eventos/Movimentacoes por moeda (codigo real da origem)/Naturezas/Tipos de movimento migrados do card "Resumo do periodo" para o hero; nota de leitura dos totais no hero; "Qualidade dos vinculos" segue no stack de resultados. R03: KPIs Disponibilidade/Data-base/Itens/Filiais/Valor historico total no hero (tone warning para nao-disponivel); resumos por tipo e armazem permanecem secoes empilhadas com `CfMetricStrip`; nota P7 operacional permanente no hero.
+- Toolbar: `fontSizePreferencesKey` ativado nas duas tabelas (controle nativo de fonte); "Colunas" ja ativo; Excel e view Cards `TO_INVENTORY` — nao implementados (sem backend/mapeamento homologado).
+- Regressao do gap corrigida anteriormente mantida; teste de stack preservado. 91/91 vitest, 17/17 estruturais, lint/tsc/build verdes.
+
 
 ### Proposta UX hero/filtros/tabelas R01-R03 — DESIGN TARGET (21/10/2026)
 

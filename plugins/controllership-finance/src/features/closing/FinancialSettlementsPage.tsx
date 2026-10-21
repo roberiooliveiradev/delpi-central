@@ -17,14 +17,13 @@ import {
   type SettlementsSummaryPayload,
 } from "../../api/financialSettlementsApi";
 import {
-  CfActionButton,
   CfEmptyState,
-  CfLoadingCard,
-  CfMetricStrip,
-  CfSectionCard,
   CfSegmentToggle,
+  CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
+import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
@@ -102,6 +101,7 @@ export function FinancialSettlementsPage() {
 
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<FetchResult | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
 
@@ -199,6 +199,7 @@ export function FinancialSettlementsPage() {
       .then(([list, summary]) => {
         if (controller.signal.aborted || requestId.current !== id) return;
         setResult({ key: queryKey, kind: "ready", list, summary });
+        setLastUpdated(new Date());
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || requestId.current !== id) return;
@@ -236,6 +237,55 @@ export function FinancialSettlementsPage() {
       total,
     }));
   }, [summaryForSide]);
+
+  // KPIs do hero — somente métricas presentes no resumo vigente (doc 50 §3).
+  const heroHighlights = useMemo<PageHeroHighlight[] | undefined>(() => {
+    if (!list) {
+      return loading
+        ? [
+            { id: "events", label: "Eventos", value: "", loading: true },
+            {
+              id: "natures",
+              label: "Naturezas",
+              value: "",
+              loading: true,
+            },
+            {
+              id: "movementTypes",
+              label: "Tipos de movimento",
+              value: "",
+              loading: true,
+            },
+          ]
+        : undefined;
+    }
+    const groups = summaryForSide ?? [];
+    if (groups.length === 0) return undefined;
+    return [
+      {
+        id: "events",
+        label: "Eventos",
+        value: String(groups.reduce((acc, g) => acc + g.eventCount, 0)),
+      },
+      ...currencyTotals.map(({ code, total }) => ({
+        id: `currency-${code}`,
+        label: `Movimentações registradas — moeda ${code}`,
+        value: formatAmount(String(total)),
+      })),
+      {
+        id: "natures",
+        label: "Naturezas",
+        value: String(new Set(groups.map((g) => g.natureCode ?? "—")).size),
+      },
+      {
+        id: "movementTypes",
+        label: "Tipos de movimento",
+        value: String(
+          new Set(groups.map((g) => g.movementType ?? "—")).size,
+        ),
+      },
+    ];
+  }, [list, loading, summaryForSide, currencyTotals]);
 
   const columns = useMemo<DataTableColumn<SettlementItem>[]>(
     () => [
@@ -331,83 +381,91 @@ export function FinancialSettlementsPage() {
       className="cf-page-stack cf-closing-layout"
       aria-label="Baixas financeiras"
     >
-      <CfSectionCard
-        title="Baixas financeiras"
-        subtitle="Central de Fechamento — eventos de baixa a pagar e a receber."
-        hint={CF_HELP.closing.page}
-      >
-        <form
-          className="cf-settlements-filters"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <CfSegmentToggle<SettlementSide>
-            options={SIDE_OPTIONS}
-            value={side}
-            onChange={setSide}
-            ariaLabel="Visão das baixas financeiras"
-            size="sm"
+      <ClosingHero
+        title={
+          <CfTitleWithHelp
+            title="Baixas financeiras"
+            hint={CF_HELP.closing.page}
           />
-          <FiltersRow>
-            <FilterInputField
-              id="cf-settle-start"
-              label="Data inicial"
-              type="date"
-              value={startDate}
-              onChange={setStartDate}
+        }
+        subtitle="Eventos de baixa a pagar e a receber para conferência do fechamento."
+        updatedAt={lastUpdated}
+        onRefresh={retry}
+        refreshing={loading}
+        highlights={heroHighlights}
+        notice={
+          <CfFeedbackMessage intent="info" title="Resumo do período">
+            Soma bruta dos eventos financeiros por lado e moeda — inclui
+            baixas, estornos e compensações; não representa total líquido
+            pago/recebido nem conciliação bancária.
+          </CfFeedbackMessage>
+        }
+        filters={
+          <form
+            className="cf-settlements-filters"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <CfSegmentToggle<SettlementSide>
+              options={SIDE_OPTIONS}
+              value={side}
+              onChange={setSide}
+              ariaLabel="Visão das baixas financeiras"
+              size="sm"
             />
-            <FilterInputField
-              id="cf-settle-end"
-              label="Data final"
-              type="date"
-              value={endDate}
-              onChange={setEndDate}
-            />
-            <FilterInputField
-              id="cf-settle-nature"
-              label="Natureza financeira"
-              type="text"
-              value={natureCode}
-              onChange={setNatureCode}
-              placeholder="Código da natureza"
-            />
-            <FilterInputField
-              id="cf-settle-mov"
-              label="Tipo de movimento"
-              type="text"
-              value={movementType}
-              onChange={setMovementType}
-              placeholder="Código do movimento"
-            />
-            <FilterSelectField
-              label="Ordenar por"
-              value={sortBy}
-              onChange={setSortBy}
-              options={SORT_BY_OPTIONS}
-            />
-            <FilterSelectField
-              label="Direção da ordenação"
-              value={sortDir}
-              onChange={(value) => setSortDir(value as "asc" | "desc")}
-              options={SORT_DIR_OPTIONS}
-            />
-          </FiltersRow>
-          {!filtersValid ? (
-            <CfFeedbackMessage intent="error" title="Período inválido">
-              Informe um período válido: a data inicial deve ser anterior ou
-              igual à data final.
-            </CfFeedbackMessage>
-          ) : null}
-          <div className="cf-settlements-actions">
-            <CfActionButton
-              variant="ghost"
-              type="button"
-              onClick={clearFilters}
-            >
-              Limpar
-            </CfActionButton>
-          </div>
-        </form>
-      </CfSectionCard>
+            <FiltersRow>
+              <FilterInputField
+                id="cf-settle-start"
+                label="Data inicial"
+                type="date"
+                value={startDate}
+                onChange={setStartDate}
+              />
+              <FilterInputField
+                id="cf-settle-end"
+                label="Data final"
+                type="date"
+                value={endDate}
+                onChange={setEndDate}
+              />
+              <FilterInputField
+                id="cf-settle-nature"
+                label="Natureza financeira"
+                type="text"
+                value={natureCode}
+                onChange={setNatureCode}
+                placeholder="Código da natureza"
+              />
+              <FilterInputField
+                id="cf-settle-mov"
+                label="Tipo de movimento"
+                type="text"
+                value={movementType}
+                onChange={setMovementType}
+                placeholder="Código do movimento"
+              />
+              <FilterSelectField
+                label="Ordenar por"
+                value={sortBy}
+                onChange={setSortBy}
+                options={SORT_BY_OPTIONS}
+              />
+              <FilterSelectField
+                label="Direção da ordenação"
+                value={sortDir}
+                onChange={(value) => setSortDir(value as "asc" | "desc")}
+                options={SORT_DIR_OPTIONS}
+              />
+            </FiltersRow>
+            {!filtersValid ? (
+              <CfFeedbackMessage intent="error" title="Período inválido">
+                Informe um período válido: a data inicial deve ser anterior ou
+                igual à data final.
+              </CfFeedbackMessage>
+            ) : null}
+          </form>
+        }
+        onClearFilters={clearFilters}
+      />
 
       <div className="cf-page-stack" aria-busy={loading}>
       {renderError()}
@@ -419,65 +477,18 @@ export function FinancialSettlementsPage() {
         />
       ) : null}
 
-      {list || loading ? (
-        <CfSectionCard
-          title="Resumo do período"
-          subtitle="Soma bruta dos eventos financeiros por lado e moeda. Inclui baixas, estornos e compensações; não representa total líquido pago/recebido nem conciliação bancária."
-          hint={CF_HELP.closing.summary}
-        >
-          {summaryForSide && summaryForSide.length > 0 ? (
-            <CfMetricStrip
-              aria-label="Resumo por moeda"
-              items={[
-                {
-                  id: "events",
-                  label: "Eventos",
-                  value: String(
-                    summaryForSide.reduce((acc, g) => acc + g.eventCount, 0),
-                  ),
-                },
-                ...currencyTotals.map(({ code, total }) => ({
-                  id: `currency-${code}`,
-                  label: `Movimentações registradas — moeda ${code}`,
-                  value: formatAmount(String(total)),
-                })),
-                {
-                  id: "natures",
-                  label: "Naturezas",
-                  value: String(
-                    new Set(summaryForSide.map((g) => g.natureCode ?? "—"))
-                      .size,
-                  ),
-                },
-                {
-                  id: "movementTypes",
-                  label: "Tipos de movimento",
-                  value: String(
-                    new Set(summaryForSide.map((g) => g.movementType ?? "—"))
-                      .size,
-                  ),
-                },
-              ]}
-            />
-          ) : loading ? (
-            <CfLoadingCard
-              title="Carregando resumo"
-              description="Obtendo totais do período."
-              variant="compact"
-            />
-          ) : (
-            <CfFeedbackMessage intent="info" title="Resumo do período">
-              Sem dados de resumo no período.
-            </CfFeedbackMessage>
-          )}
-          {list ? (
-            <CfFeedbackMessage intent="info" title="Qualidade dos vínculos">
-              {list.quality.missingDocumentCount} sem documento ·{" "}
-              {list.quality.missingNatureCount} sem natureza ·{" "}
-              {list.quality.unresolvedBranchCount} sem filial identificada.
-            </CfFeedbackMessage>
-          ) : null}
-        </CfSectionCard>
+      {list && (summaryForSide ?? []).length === 0 ? (
+        <CfFeedbackMessage intent="info" title="Resumo do período">
+          Sem dados de resumo no período.
+        </CfFeedbackMessage>
+      ) : null}
+
+      {list ? (
+        <CfFeedbackMessage intent="info" title="Qualidade dos vínculos">
+          {list.quality.missingDocumentCount} sem documento ·{" "}
+          {list.quality.missingNatureCount} sem natureza ·{" "}
+          {list.quality.unresolvedBranchCount} sem filial identificada.
+        </CfFeedbackMessage>
       ) : null}
 
       {list || loading ? (
@@ -505,6 +516,7 @@ export function FinancialSettlementsPage() {
           }
           emptyMessage="Nenhuma baixa encontrada no período para os filtros aplicados."
           columnPreferencesKey={`cf:closing:financial-settlements:${applied?.side ?? "payable"}:v1`}
+          fontSizePreferencesKey="cf:closing:financial-settlements:font:v1"
         />
       ) : null}
       </div>

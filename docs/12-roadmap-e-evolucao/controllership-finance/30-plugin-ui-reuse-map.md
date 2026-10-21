@@ -644,6 +644,21 @@ Regras de uso:
 - Snapshot ausente é estado informativo específico ("Snapshot não
   encontrado"), nunca saldo zero.
 
+### Hero das páginas da Central de Fechamento (padrão vigente)
+
+`ClosingHero` (`src/app/ClosingHero.tsx`, doc 50) é a composição canônica
+de hero — adaptador fino sobre `CfPageHero` (`createDashboardPageHero`,
+density compact): eyebrow "Central de Fechamento", título (com
+`CfTitleWithHelp`), subtítulo, ações = "Atualizado às HH:mm" (timestamp
+real do fetch) + "Atualizar" (re-fetch dos filtros vigentes), `highlights`
+com KPIs reais (`loading` "…" durante a consulta), corpo = nota
+`CfFeedbackMessage` + área de filtros (`cf-hero-filters`) + ações com
+"Limpar filtros". Páginas novas de consulta da Central devem usar
+`ClosingHero` em vez de `CfSectionCard` para filtros; KPIs ficam em
+`highlights` (não em `CfMetricStrip` dentro do hero — o strip é para
+seções de resumo fora do hero). Timestamp só com data real de conclusão
+da consulta; "Atualizar" nunca submete/valida filtros.
+
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,
 campos digitáveis passam por `useDebouncedValue` (400ms, `src/utils/`).

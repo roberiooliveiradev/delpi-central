@@ -58,19 +58,35 @@ export function createDashboardPageHero() {
     title?: ReactNode;
     description?: ReactNode;
     badge?: ReactNode;
-    highlights?: Array<{ id: string; label: ReactNode; value: ReactNode }>;
+    actions?: ReactNode;
+    highlights?: Array<{
+      id: string;
+      label: ReactNode;
+      value: ReactNode;
+      description?: ReactNode;
+      loading?: boolean;
+    }>;
+    children?: ReactNode;
     "aria-label"?: string;
   }) {
     return el(
       "header",
       { "aria-label": props["aria-label"] },
-      props.eyebrow,
+      props.eyebrow ? el("p", null, props.eyebrow) : null,
       el("h1", null, props.title),
-      props.description,
+      props.description ? el("p", null, props.description) : null,
       props.badge,
+      props.actions,
       ...(props.highlights ?? []).map((h) =>
-        el("div", { key: h.id }, h.label, h.value),
+        el(
+          "div",
+          { key: h.id },
+          h.label,
+          el("span", null, h.loading ? "…" : h.value),
+          h.description ?? null,
+        ),
       ),
+      props.children,
     );
   };
 }

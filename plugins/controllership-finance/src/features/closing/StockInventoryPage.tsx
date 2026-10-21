@@ -17,14 +17,15 @@ import {
   type StockInventoryScope,
 } from "../../api/stockInventoryApi";
 import {
-  CfActionButton,
   CfEmptyState,
-  CfLoadingCard,
   CfMetricStrip,
   CfSectionCard,
   CfSegmentToggle,
+  CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
+import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
+import { ClosingHero } from "../../app/ClosingHero";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
@@ -93,6 +94,7 @@ export function StockInventoryPage() {
 
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<FetchResult | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestId = useRef(0);
 
@@ -156,6 +158,7 @@ export function StockInventoryPage() {
       .then((data) => {
         if (controller.signal.aborted || requestId.current !== id) return;
         setResult({ key: queryKey, kind: "ready", payload: data });
+        setLastUpdated(new Date());
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted || requestId.current !== id) return;
@@ -230,6 +233,55 @@ export function StockInventoryPage() {
     [],
   );
 
+  // KPIs do hero — somente métricas presentes no payload (doc 50 §4).
+  const heroHighlights = useMemo<PageHeroHighlight[] | undefined>(() => {
+    if (!payload) {
+      return loading
+        ? [
+            { id: "status", label: "Disponibilidade", value: "", loading: true },
+            { id: "dataAsOf", label: "Data-base", value: "", loading: true },
+            { id: "items", label: "Itens", value: "", loading: true },
+          ]
+        : undefined;
+    }
+    return [
+      {
+        id: "status",
+        label: "Disponibilidade",
+        value: STATUS_LABELS[payload.status] ?? payload.status,
+        tone: payload.status === "available" ? "neutral" : "warning",
+      },
+      {
+        id: "dataAsOf",
+        label: "Data-base",
+        value: formatCivilDate(payload.dataAsOf),
+      },
+      {
+        id: "items",
+        label: "Itens",
+        value: String(payload.pagination.total_items),
+      },
+      ...(payload.branchCode === "all"
+        ? [
+            {
+              id: "branches",
+              label: "Filiais com dados",
+              value: String(payload.branchesAvailable.length),
+            },
+          ]
+        : []),
+      ...(payload.historicalTotal !== null
+        ? [
+            {
+              id: "total",
+              label: "Valor histórico total",
+              value: formatAmount(payload.historicalTotal),
+            },
+          ]
+        : []),
+    ];
+  }, [payload, loading]);
+
   const renderStatusBanner = () => {
     if (!payload || payload.status === "available") return null;
     if (payload.status === "source_missing") {
@@ -278,64 +330,67 @@ export function StockInventoryPage() {
       className="cf-page-stack cf-closing-layout"
       aria-label="Estoque histórico — P7"
     >
-      <CfSectionCard
-        title="Estoque histórico — P7"
-        subtitle="Consulta operacional dos saldos históricos de estoque por competência, filial e classificação de produto."
-        hint={CF_HELP.stockInventory.page}
-      >
-        <CfFeedbackMessage intent="info" title="Consulta operacional">
-          Os resultados ainda não equivalem ao relatório oficial MATR460.
-        </CfFeedbackMessage>
-        <form
-          className="cf-settlements-filters"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <CfSegmentToggle<StockInventoryScope>
-            options={SCOPE_OPTIONS}
-            value={reportScope}
-            onChange={setReportScope}
-            ariaLabel="Visão do estoque"
-            size="sm"
+      <ClosingHero
+        title={
+          <CfTitleWithHelp
+            title="Estoque histórico — P7"
+            hint={CF_HELP.stockInventory.page}
           />
-          <FiltersRow>
-            <FilterInputField
-              id="cf-stock-period"
-              label="Competência"
-              type="month"
-              value={period}
-              onChange={setPeriod}
+        }
+        subtitle="Consulta operacional dos saldos históricos por competência, filial e classificação de produto."
+        updatedAt={lastUpdated}
+        onRefresh={retry}
+        refreshing={loading}
+        highlights={heroHighlights}
+        notice={
+          <CfFeedbackMessage intent="info" title="Consulta operacional">
+            Os resultados ainda não equivalem ao relatório oficial MATR460.
+          </CfFeedbackMessage>
+        }
+        filters={
+          <form
+            className="cf-settlements-filters"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <CfSegmentToggle<StockInventoryScope>
+              options={SCOPE_OPTIONS}
+              value={reportScope}
+              onChange={setReportScope}
+              ariaLabel="Visão do estoque"
+              size="sm"
             />
-            <FilterSelectField
-              label="Filial"
-              value={branch}
-              onChange={(value) => setBranch(value as StockInventoryBranch)}
-              options={BRANCH_OPTIONS}
-            />
-            <FilterInputField
-              id="cf-stock-warehouse"
-              label="Armazém"
-              type="text"
-              value={warehouse}
-              onChange={setWarehouse}
-              placeholder="Código do armazém"
-            />
-          </FiltersRow>
-          {!filtersValid ? (
-            <CfFeedbackMessage intent="error" title="Competência inválida">
-              Informe uma competência válida no formato AAAA-MM.
-            </CfFeedbackMessage>
-          ) : null}
-          <div className="cf-settlements-actions">
-            <CfActionButton
-              variant="ghost"
-              type="button"
-              onClick={clearFilters}
-            >
-              Limpar
-            </CfActionButton>
-          </div>
-        </form>
-      </CfSectionCard>
+            <FiltersRow>
+              <FilterInputField
+                id="cf-stock-period"
+                label="Competência"
+                type="month"
+                value={period}
+                onChange={setPeriod}
+              />
+              <FilterSelectField
+                label="Filial"
+                value={branch}
+                onChange={(value) => setBranch(value as StockInventoryBranch)}
+                options={BRANCH_OPTIONS}
+              />
+              <FilterInputField
+                id="cf-stock-warehouse"
+                label="Armazém"
+                type="text"
+                value={warehouse}
+                onChange={setWarehouse}
+                placeholder="Código do armazém"
+              />
+            </FiltersRow>
+            {!filtersValid ? (
+              <CfFeedbackMessage intent="error" title="Competência inválida">
+                Informe uma competência válida no formato AAAA-MM.
+              </CfFeedbackMessage>
+            ) : null}
+          </form>
+        }
+        onClearFilters={clearFilters}
+      />
 
       <div className="cf-page-stack" aria-busy={loading}>
       {current?.kind === "error" ? (
@@ -352,61 +407,6 @@ export function StockInventoryPage() {
           classNames={cfEmptyStateClassNames}
           defaultMessage="Informe uma competência válida para ver o estoque histórico."
         />
-      ) : null}
-
-      {showData ? (
-        <CfSectionCard
-          title="Indicadores"
-          subtitle="Totais calculados sobre todo o universo do filtro — não apenas a página exibida."
-          hint={CF_HELP.stockInventory.indicators}
-        >
-          {payload ? (
-            <CfMetricStrip
-              aria-label="Indicadores do estoque"
-              items={[
-                {
-                  id: "status",
-                  label: "Disponibilidade",
-                  value: STATUS_LABELS[payload.status] ?? payload.status,
-                },
-                {
-                  id: "dataAsOf",
-                  label: "Data-base",
-                  value: formatCivilDate(payload.dataAsOf),
-                },
-                {
-                  id: "items",
-                  label: "Itens",
-                  value: String(payload.pagination.total_items),
-                },
-                ...(payload.branchCode === "all"
-                  ? [
-                      {
-                        id: "branches",
-                        label: "Filiais com dados",
-                        value: String(payload.branchesAvailable.length),
-                      },
-                    ]
-                  : []),
-                ...(payload.historicalTotal !== null
-                  ? [
-                      {
-                        id: "total",
-                        label: "Valor histórico total",
-                        value: formatAmount(payload.historicalTotal),
-                      },
-                    ]
-                  : []),
-              ]}
-            />
-          ) : (
-            <CfLoadingCard
-              title="Carregando indicadores"
-              description="Obtendo saldos do snapshot histórico."
-              variant="compact"
-            />
-          )}
-        </CfSectionCard>
       ) : null}
 
       {showData && payload && payload.summariesByType.length > 0 ? (
@@ -466,6 +466,7 @@ export function StockInventoryPage() {
           }
           emptyMessage="Nenhum item de estoque encontrado para os filtros aplicados."
           columnPreferencesKey={`cf:closing:stock-inventory:${applied?.reportScope ?? "all_products"}:v1`}
+          fontSizePreferencesKey="cf:closing:stock-inventory:font:v1"
         />
       ) : null}
       </div>

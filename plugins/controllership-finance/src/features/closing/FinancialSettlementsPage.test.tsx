@@ -319,7 +319,9 @@ describe("FinancialSettlementsPage — consulta automática", () => {
     });
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Limpar filtros" }),
+    );
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(3));
     expect(listMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ page: 1, sortDir: "desc" }),
@@ -363,19 +365,44 @@ describe("FinancialSettlementsPage — estados", () => {
     expect(listMock).toHaveBeenCalledTimes(2);
   });
 
-  it("resumo usa o card-strip centralizado e qualidade é mensagem informativa", async () => {
+  it("hero integra KPIs reais e qualidade é mensagem informativa", async () => {
     mockOk();
     render(<FinancialSettlementsPage />);
     await screen.findByText("Fornecedor Exemplo");
 
+    // hero: identidade + KPIs do resumo vigente (doc 50)
+    expect(screen.getByText("Central de Fechamento")).toBeTruthy();
     expect(
-      screen.getByRole("group", { name: "Resumo por moeda" }),
+      screen.getByRole("heading", { name: "Baixas financeiras" }),
     ).toBeTruthy();
     expect(screen.getByText("Eventos")).toBeTruthy();
+    expect(screen.getByText("Naturezas")).toBeTruthy();
+    expect(screen.getByText("Tipos de movimento")).toBeTruthy();
+    expect(
+      screen.getByText(/Movimentações registradas — moeda/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Atualizado às/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Atualizar" }),
+    ).toBeTruthy();
     expect(screen.getByText("Qualidade dos vínculos")).toBeTruthy();
     expect(
       screen.getByText(/1 sem filial identificada/),
     ).toBeTruthy();
+  });
+
+  it("Atualizar repete a consulta vigente sem alterar filtros", async () => {
+    mockOk();
+    render(<FinancialSettlementsPage />);
+    await screen.findByText("Fornecedor Exemplo");
+    expect(listMock).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+    await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
+    expect(listMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, sortDir: "desc" }),
+      expect.anything(),
+    );
   });
 
   it("resultado vazio mostra mensagem de vazio da tabela", async () => {
@@ -396,8 +423,10 @@ describe("FinancialSettlementsPage — estados", () => {
     summaryMock.mockResolvedValue(summaryPayload());
     render(<FinancialSettlementsPage />);
 
-    // indicadores de loading centralizados (role=status) presentes
-    expect(await screen.findByText("Carregando resumo")).toBeTruthy();
+    // hero mostra highlights em "…" e a tabela mantém role=status
+    await waitFor(() =>
+      expect(screen.getAllByText("…").length).toBeGreaterThan(0),
+    );
     expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
 
     resolveList?.(listPayload());
