@@ -649,15 +649,28 @@ Regras de uso:
 `ClosingHero` (`src/app/ClosingHero.tsx`, doc 50) é a composição canônica
 de hero — adaptador fino sobre `CfPageHero` (`createDashboardPageHero`,
 density compact): eyebrow "Central de Fechamento", título (com
-`CfTitleWithHelp`), subtítulo, ações = "Atualizado às HH:mm" (timestamp
-real do fetch) + "Atualizar" (re-fetch dos filtros vigentes), `highlights`
-com KPIs reais (`loading` "…" durante a consulta), corpo = nota
-`CfFeedbackMessage` + área de filtros (`cf-hero-filters`) + ações com
-"Limpar filtros". Páginas novas de consulta da Central devem usar
-`ClosingHero` em vez de `CfSectionCard` para filtros; KPIs ficam em
-`highlights` (não em `CfMetricStrip` dentro do hero — o strip é para
-seções de resumo fora do hero). Timestamp só com data real de conclusão
-da consulta; "Atualizar" nunca submete/valida filtros.
+`CfTitleWithHelp`), subtítulo, ações = "Atualizado em DD/MM/AAAA, HH:mm"
+(timestamp real do fetch, sem botão — refresh é único), corpo = grid de
+KPIs `CfMetricKpiCard` + nota `CfFeedbackMessage` + painel de filtros
+(`cf-hero-filters`) + linha de ações com "Limpar filtros" (ghost) +
+"Atualizar consulta" (primary, `disabled` durante a consulta). Páginas
+novas de consulta da Central devem usar `ClosingHero` em vez de
+`CfSectionCard` para filtros. Timestamp só com data real de conclusão
+da consulta; "Atualizar consulta" repete a consulta vigente e nunca
+submete/valida filtros.
+
+KPIs do hero usam `CfMetricKpiCard` (`createMetricKpiCard` bound em
+`controllershipFinanceUi.ts`) — tile oficial com `icon` (ReactNode,
+lucide-react), `label`, `value` em `<strong>`, `hint` e `tone`
+(`warning` para indisponibilidade/parcialidade). O grid `cf-hero-kpis`
+(auto-fit minmax 190px) quebra por largura. `CfMetricStrip` permanece o
+padrão das seções de resumo fora do hero; em R03 os dois painéis
+(tipo/armazém) são agrupados por `cf-summary-panels` (grid auto-fit
+minmax 420px — lado a lado só quando a largura comporta).
+
+`CfFeedbackMessage` carrega `cf-feedback--<intent>`; `warning` recebe
+borda/fundo amber via tokens `--delpi-warning*` (avisos persistentes
+como "Dados parcialmente disponíveis"), `info` permanece discreto.
 
 Consulta automática de filtros (Central de Fechamento): as páginas derivam
 os filtros vigentes dos campos — seletores/toggles/datas aplicam na hora,

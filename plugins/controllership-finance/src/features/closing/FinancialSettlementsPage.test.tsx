@@ -169,11 +169,10 @@ describe("FinancialSettlementsPage — consulta automática", () => {
     expect(screen.getByText("Não identificada")).toBeTruthy();
     expect(screen.getByText("BA — Baixa de titulo")).toBeTruthy();
     expect(
-      await screen.findByText("Movimentações registradas — moeda BRL"),
+      await screen.findByText("Movimentações registradas"),
     ).toBeTruthy();
-    expect(
-      screen.queryByText("Movimentações registradas — moeda USD"),
-    ).toBeNull();
+    expect(screen.getByText("moeda BRL")).toBeTruthy();
+    expect(screen.queryByText("moeda USD")).toBeNull();
   });
 
   it("alternar pagar/receber atualiza imediatamente", async () => {
@@ -379,11 +378,11 @@ describe("FinancialSettlementsPage — estados", () => {
     expect(screen.getByText("Naturezas")).toBeTruthy();
     expect(screen.getByText("Tipos de movimento")).toBeTruthy();
     expect(
-      screen.getByText(/Movimentações registradas — moeda/),
+      screen.getByText(/Movimentações registradas/),
     ).toBeTruthy();
-    expect(screen.getByText(/Atualizado às/)).toBeTruthy();
+    expect(screen.getByText(/Atualizado em/)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Atualizar" }),
+      screen.getByRole("button", { name: "Atualizar consulta" }),
     ).toBeTruthy();
     expect(screen.getByText("Qualidade dos vínculos")).toBeTruthy();
     expect(
@@ -397,7 +396,9 @@ describe("FinancialSettlementsPage — estados", () => {
     await screen.findByText("Fornecedor Exemplo");
     expect(listMock).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Atualizar" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Atualizar consulta" }),
+    );
     await waitFor(() => expect(listMock).toHaveBeenCalledTimes(2));
     expect(listMock).toHaveBeenLastCalledWith(
       expect.objectContaining({ page: 1, sortDir: "desc" }),

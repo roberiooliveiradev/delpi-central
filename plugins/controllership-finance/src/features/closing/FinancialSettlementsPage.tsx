@@ -22,8 +22,16 @@ import {
   CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
-import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
-import { ClosingHero } from "../../app/ClosingHero";
+import {
+  ArrowLeftRight,
+  CircleDollarSign,
+  ClipboardList,
+  Tags,
+} from "lucide-react";
+import {
+  ClosingHero,
+  type ClosingHeroMetric,
+} from "../../app/ClosingHero";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
@@ -239,53 +247,65 @@ export function FinancialSettlementsPage() {
   }, [summaryForSide]);
 
   // KPIs do hero — somente métricas presentes no resumo vigente (doc 50 §3).
-  const heroHighlights = useMemo<PageHeroHighlight[] | undefined>(() => {
+  const heroMetrics = useMemo<ClosingHeroMetric[] | undefined>(() => {
     if (!list) {
       return loading
         ? [
-            { id: "events", label: "Eventos", value: "", loading: true },
+            {
+              id: "events",
+              label: "Eventos",
+              value: "",
+              icon: <ClipboardList size={20} aria-hidden />,
+            },
             {
               id: "natures",
               label: "Naturezas",
               value: "",
-              loading: true,
+              icon: <Tags size={20} aria-hidden />,
             },
             {
               id: "movementTypes",
               label: "Tipos de movimento",
               value: "",
-              loading: true,
+              icon: <ArrowLeftRight size={20} aria-hidden />,
             },
           ]
         : undefined;
     }
     const groups = summaryForSide ?? [];
     if (groups.length === 0) return undefined;
+    const sideHint = applied?.side === "receivable" ? "a receber" : "a pagar";
     return [
       {
         id: "events",
         label: "Eventos",
         value: String(groups.reduce((acc, g) => acc + g.eventCount, 0)),
+        hint: `baixas ${sideHint} no período`,
+        icon: <ClipboardList size={20} aria-hidden />,
       },
       ...currencyTotals.map(({ code, total }) => ({
         id: `currency-${code}`,
-        label: `Movimentações registradas — moeda ${code}`,
+        label: "Movimentações registradas",
         value: formatAmount(String(total)),
+        hint: `moeda ${code}`,
+        icon: <CircleDollarSign size={20} aria-hidden />,
       })),
       {
         id: "natures",
         label: "Naturezas",
         value: String(new Set(groups.map((g) => g.natureCode ?? "—")).size),
+        hint: `ativas ${sideHint}`,
+        icon: <Tags size={20} aria-hidden />,
       },
       {
         id: "movementTypes",
         label: "Tipos de movimento",
-        value: String(
-          new Set(groups.map((g) => g.movementType ?? "—")).size,
-        ),
+        value: String(new Set(groups.map((g) => g.movementType ?? "—")).size),
+        hint: `baixas ${sideHint}`,
+        icon: <ArrowLeftRight size={20} aria-hidden />,
       },
     ];
-  }, [list, loading, summaryForSide, currencyTotals]);
+  }, [list, loading, summaryForSide, currencyTotals, applied?.side]);
 
   const columns = useMemo<DataTableColumn<SettlementItem>[]>(
     () => [
@@ -392,7 +412,7 @@ export function FinancialSettlementsPage() {
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={loading}
-        highlights={heroHighlights}
+        metrics={heroMetrics}
         notice={
           <CfFeedbackMessage intent="info" title="Resumo do período">
             Soma bruta dos eventos financeiros por lado e moeda — inclui

@@ -5,14 +5,30 @@
  */
 import type { ReactNode } from "react";
 
-import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
+import {
+  CfActionButton,
+  CfMetricKpiCard,
+  CfPageHero,
+} from "./controllershipFinanceUi";
 
-import { CfActionButton, CfPageHero } from "./controllershipFinanceUi";
-
-const timeFormatter = new Intl.DateTimeFormat("pt-BR", {
+const updatedFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
   hour: "2-digit",
   minute: "2-digit",
 });
+
+export type ClosingHeroMetric = {
+  id: string;
+  label: string;
+  value: string;
+  /** Linha secundária sob o valor (ex.: "2 moedas" ou "de 4 filiais"). */
+  hint?: ReactNode;
+  /** Ícone discreto do tile (componente oficial aceita ReactNode). */
+  icon?: ReactNode;
+  tone?: "default" | "positive" | "negative" | "warning";
+};
 
 export type ClosingHeroProps = {
   title: ReactNode;
@@ -23,8 +39,8 @@ export type ClosingHeroProps = {
   /** Repete a consulta vigente (mesmos filtros) — nunca valida/submete. */
   onRefresh: () => void;
   refreshing?: boolean;
-  /** KPIs reais do payload (PageHero highlights); `loading` por item. */
-  highlights?: PageHeroHighlight[];
+  /** KPIs reais do payload — tiles `CfMetricKpiCard` com ícone e hint. */
+  metrics?: ClosingHeroMetric[];
   /** Mensagem contextual persistente do hero (CfFeedbackMessage). */
   notice?: ReactNode;
   /** Área de filtros (form completo, já montado pela página). */
@@ -33,6 +49,10 @@ export type ClosingHeroProps = {
   onClearFilters: () => void;
 };
 
+/**
+ * "Atualizar" vive uma única vez por página, na linha de ações do painel
+ * de filtros — o canto superior direito exibe apenas o timestamp real.
+ */
 export function ClosingHero({
   title,
   subtitle,
@@ -40,7 +60,7 @@ export function ClosingHero({
   updatedAt,
   onRefresh,
   refreshing = false,
-  highlights,
+  metrics,
   notice,
   filters,
   onClearFilters,
@@ -51,25 +71,28 @@ export function ClosingHero({
       title={title}
       description={subtitle}
       aria-label={ariaLabel}
-      highlights={highlights}
       actions={
-        <>
-          {updatedAt ? (
-            <span className="cf-hero-updated">
-              Atualizado às {timeFormatter.format(updatedAt)}
-            </span>
-          ) : null}
-          <CfActionButton
-            variant="ghost"
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-          >
-            Atualizar
-          </CfActionButton>
-        </>
+        updatedAt ? (
+          <span className="cf-hero-updated">
+            Atualizado em {updatedFormatter.format(updatedAt)}
+          </span>
+        ) : null
       }
     >
+      {metrics?.length ? (
+        <div className="cf-hero-kpis" role="group" aria-label="Indicadores">
+          {metrics.map((metric) => (
+            <CfMetricKpiCard
+              key={metric.id}
+              label={metric.label}
+              value={refreshing ? "…" : metric.value}
+              hint={metric.hint}
+              icon={metric.icon}
+              tone={metric.tone}
+            />
+          ))}
+        </div>
+      ) : null}
       {notice}
       <div className="cf-hero-filters">{filters}</div>
       <div className="cf-settlements-actions">
@@ -79,6 +102,14 @@ export function ClosingHero({
           onClick={onClearFilters}
         >
           Limpar filtros
+        </CfActionButton>
+        <CfActionButton
+          variant="primary"
+          type="button"
+          onClick={onRefresh}
+          disabled={refreshing}
+        >
+          Atualizar consulta
         </CfActionButton>
       </div>
     </CfPageHero>

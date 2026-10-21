@@ -1,5 +1,22 @@
 # 50 — TARGET UX: Hero, filtros e tabelas da Central de Fechamento (R01/R02 e R03)
 
+> 21/10/2026 — **REWORK de fidelidade visual IMPLEMENTADO** (commit seguinte a
+> 7254eef580). KPIs migraram de `PageHero.highlights` para tiles
+> `CfMetricKpiCard` (`createMetricKpiCard` do kit — icone, label, valor
+> `<strong>`, hint, `tone`), em grid `cf-hero-kpis` auto-fit dentro do body do
+> hero; hints sao dados reais (moeda, competencia, escopo, filiais com/sem
+> snapshot). "Atualizar consulta" e unico, `variant="primary"`, na linha de
+> acoes do painel de filtros ao lado de "Limpar filtros" (ghost) — o canto
+> superior direito passa a exibir somente "Atualizado em DD/MM/AAAA, HH:mm".
+> `cf-hero-filters` virou painel delimitado (borda/radius/fundo de tokens).
+> `CfFeedbackMessage` ganhou `cf-feedback--<intent>` + icone; `warning`
+> recebe borda/fundo amber (--delpi-warning) para `incomplete`/
+> `source_missing`. Resumos P7 agrupados em `cf-summary-panels` (grid
+> auto-fit minmax 420px — lado a lado so quando comporta, caso contrario
+> empilha). Excel/Cards/links de vinculo/percentuais = permanecem
+> TARGET_FUTURE. Verificacao visual interativa autenticada: pendente
+> (TEST_NOT_RUN).
+>
 > 21/10/2026 — **IMPLEMENTADO.** Gate G2 liberado pelo PO (rearranjo UI puro,
 > contratos vigentes). Adaptador `src/app/ClosingHero.tsx` sobre `CfPageHero`
 > (`createDashboardPageHero` do kit, density compact): eyebrow "Central de

@@ -9,6 +9,7 @@ import {
   createDashboardEventsSection,
   createDashboardLoadingActivityCard,
   createDashboardMetricStrip,
+  createMetricKpiCard,
   createDashboardPageHero,
   createDashboardRecentAccessStrip,
   createDashboardSectionCard,
@@ -111,6 +112,7 @@ export const CfStateBanner = createDashboardStateBanner({
 export const CfMetricStrip = createDashboardMetricStrip({
   prefix: UI_PREFIX,
 });
+export const CfMetricKpiCard = createMetricKpiCard(UI_PREFIX);
 export const CfTitleWithHelp = createDashboardTitleWithHelp({
   classNames: titleWithHelpBemClasses(UI_PREFIX),
   labels: {

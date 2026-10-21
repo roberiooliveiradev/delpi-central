@@ -34,8 +34,22 @@ export function CfFeedbackMessage({
   action,
 }: CfFeedbackMessageProps) {
   return (
-    <CfStateBanner variant={INTENT_VARIANT[intent]}>
-      <p className="cf-banner-title">{title}</p>
+    <CfStateBanner
+      variant={INTENT_VARIANT[intent]}
+      className={`cf-feedback cf-feedback--${intent}`}
+    >
+      <p className="cf-banner-title">
+        <span className="cf-feedback-icon" aria-hidden="true">
+          {intent === "error"
+            ? "✕"
+            : intent === "warning"
+              ? "⚠"
+              : intent === "success"
+                ? "✓"
+                : "ℹ"}
+        </span>
+        {title}
+      </p>
       {children ? <p className="cf-banner-text">{children}</p> : null}
       {action}
     </CfStateBanner>

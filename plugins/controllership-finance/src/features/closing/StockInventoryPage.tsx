@@ -24,8 +24,17 @@ import {
   CfTitleWithHelp,
   cfEmptyStateClassNames,
 } from "../../app/controllershipFinanceUi";
-import type { PageHeroHighlight } from "@delpi/plugin-ui/index";
-import { ClosingHero } from "../../app/ClosingHero";
+import {
+  Boxes,
+  Building2,
+  CalendarDays,
+  CircleDollarSign,
+  Package,
+} from "lucide-react";
+import {
+  ClosingHero,
+  type ClosingHeroMetric,
+} from "../../app/ClosingHero";
 import {
   CfFeedbackMessage,
   CfQueryErrorBanner,
@@ -234,13 +243,28 @@ export function StockInventoryPage() {
   );
 
   // KPIs do hero — somente métricas presentes no payload (doc 50 §4).
-  const heroHighlights = useMemo<PageHeroHighlight[] | undefined>(() => {
+  const heroMetrics = useMemo<ClosingHeroMetric[] | undefined>(() => {
     if (!payload) {
       return loading
         ? [
-            { id: "status", label: "Disponibilidade", value: "", loading: true },
-            { id: "dataAsOf", label: "Data-base", value: "", loading: true },
-            { id: "items", label: "Itens", value: "", loading: true },
+            {
+              id: "status",
+              label: "Disponibilidade",
+              value: "",
+              icon: <Package size={20} aria-hidden />,
+            },
+            {
+              id: "dataAsOf",
+              label: "Data-base",
+              value: "",
+              icon: <CalendarDays size={20} aria-hidden />,
+            },
+            {
+              id: "items",
+              label: "Itens",
+              value: "",
+              icon: <Boxes size={20} aria-hidden />,
+            },
           ]
         : undefined;
     }
@@ -249,17 +273,29 @@ export function StockInventoryPage() {
         id: "status",
         label: "Disponibilidade",
         value: STATUS_LABELS[payload.status] ?? payload.status,
-        tone: payload.status === "available" ? "neutral" : "warning",
+        hint:
+          payload.branchesMissing.length > 0
+            ? `sem snapshot: filial ${payload.branchesMissing.join(", ")}`
+            : `competência ${payload.period}`,
+        tone: payload.status === "available" ? "default" : "warning",
+        icon: <Package size={20} aria-hidden />,
       },
       {
         id: "dataAsOf",
         label: "Data-base",
         value: formatCivilDate(payload.dataAsOf),
+        hint: `competência ${payload.period}`,
+        icon: <CalendarDays size={20} aria-hidden />,
       },
       {
         id: "items",
         label: "Itens",
         value: String(payload.pagination.total_items),
+        hint:
+          payload.reportScope === "mp_pi_pa"
+            ? "MP / PI / PA"
+            : "todos os produtos",
+        icon: <Boxes size={20} aria-hidden />,
       },
       ...(payload.branchCode === "all"
         ? [
@@ -267,6 +303,11 @@ export function StockInventoryPage() {
               id: "branches",
               label: "Filiais com dados",
               value: String(payload.branchesAvailable.length),
+              hint: `de ${
+                payload.branchesAvailable.length +
+                payload.branchesMissing.length
+              } filiais`,
+              icon: <Building2 size={20} aria-hidden />,
             },
           ]
         : []),
@@ -276,6 +317,8 @@ export function StockInventoryPage() {
               id: "total",
               label: "Valor histórico total",
               value: formatAmount(payload.historicalTotal),
+              hint: `competência ${payload.period}`,
+              icon: <CircleDollarSign size={20} aria-hidden />,
             },
           ]
         : []),
@@ -341,7 +384,7 @@ export function StockInventoryPage() {
         updatedAt={lastUpdated}
         onRefresh={retry}
         refreshing={loading}
-        highlights={heroHighlights}
+        metrics={heroMetrics}
         notice={
           <CfFeedbackMessage intent="info" title="Consulta operacional">
             Os resultados ainda não equivalem ao relatório oficial MATR460.
@@ -409,38 +452,44 @@ export function StockInventoryPage() {
         />
       ) : null}
 
-      {showData && payload && payload.summariesByType.length > 0 ? (
-        <CfSectionCard
-          title="Resumo por tipo de produto"
-          hint={CF_HELP.stockInventory.summaryType}
-        >
-          <CfMetricStrip
-            aria-label="Resumo por tipo de produto"
-            items={payload.summariesByType.map((group) => ({
-              id: group.productType ?? "sem-tipo",
-              label: group.productType ?? "Sem tipo",
-              value: formatAmount(group.totalStockValue),
-              description: `${group.itemCount} itens`,
-            }))}
-          />
-        </CfSectionCard>
-      ) : null}
-
-      {showData && payload && payload.summariesByWarehouse.length > 0 ? (
-        <CfSectionCard
-          title="Resumo por armazém"
-          hint={CF_HELP.stockInventory.summaryWarehouse}
-        >
-          <CfMetricStrip
-            aria-label="Resumo por armazém"
-            items={payload.summariesByWarehouse.map((group) => ({
-              id: `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`,
-              label: `Armazém ${group.warehouse ?? "—"} · Filial ${group.branchCode ?? "—"}`,
-              value: formatAmount(group.totalStockValue),
-              description: `${group.itemCount} itens`,
-            }))}
-          />
-        </CfSectionCard>
+      {showData &&
+      payload &&
+      (payload.summariesByType.length > 0 ||
+        payload.summariesByWarehouse.length > 0) ? (
+        <div className="cf-summary-panels">
+          {payload.summariesByType.length > 0 ? (
+            <CfSectionCard
+              title="Resumo por tipo de produto"
+              hint={CF_HELP.stockInventory.summaryType}
+            >
+              <CfMetricStrip
+                aria-label="Resumo por tipo de produto"
+                items={payload.summariesByType.map((group) => ({
+                  id: group.productType ?? "sem-tipo",
+                  label: group.productType ?? "Sem tipo",
+                  value: formatAmount(group.totalStockValue),
+                  description: `${group.itemCount} itens`,
+                }))}
+              />
+            </CfSectionCard>
+          ) : null}
+          {payload.summariesByWarehouse.length > 0 ? (
+            <CfSectionCard
+              title="Resumo por armazém"
+              hint={CF_HELP.stockInventory.summaryWarehouse}
+            >
+              <CfMetricStrip
+                aria-label="Resumo por armazém"
+                items={payload.summariesByWarehouse.map((group) => ({
+                  id: `${group.branchCode ?? ""}-${group.warehouse ?? "sem-armazem"}`,
+                  label: `Armazém ${group.warehouse ?? "—"} · Filial ${group.branchCode ?? "—"}`,
+                  value: formatAmount(group.totalStockValue),
+                  description: `${group.itemCount} itens`,
+                }))}
+              />
+            </CfSectionCard>
+          ) : null}
+        </div>
       ) : null}
 
       {showData ? (

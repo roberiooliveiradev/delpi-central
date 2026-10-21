@@ -321,7 +321,7 @@ describe("StockInventoryPage — estados", () => {
     expect(screen.getByText("Disponibilidade")).toBeTruthy();
     expect(screen.getByText("Data-base")).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Atualizar" }),
+      screen.getByRole("button", { name: "Atualizar consulta" }),
     ).toBeTruthy();
     // grupos acessíveis do grid centralizado
     expect(
