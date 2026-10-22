@@ -17376,3 +17376,25 @@ LOCAL_MODEL_PROVIDER=OLLAMA EXTERNAL_LLM_LOCAL_CALLS=0
 EXECUTOR_VERDICT=CRI effective in prod runtime; literal-question
     smoke awaits real user turn
 ```
+
+
+## §6.378 — Continuidade contextual e seleção semântica: canal de contexto na seleção de grupo (2026-10-22)
+
+**2026-10-22 — `DELIA-C3-CONTEXTUAL-INTELLIGENCE-DAVI-MULTITURN-REMEDIATION-01`:** incidente de 3 turnos (`terminal bala` → `use o davi` → `o mcp davi`) investigado end-to-end. **Inventário:** `prior_turns` chegam ao backend (MFE pares bounded → `handle_interactive_turn` → `attempt`) e alimentam admission, turn_goal, continuação e seleção de capability/foreign — mas `_select_group` era o único estágio semântico sem canal de contexto (payload = só `_group_summaries`); instruções de admission/group não cobriam diretiva de fonte nomeada nem exemplos de item de catálogo. `api-delpi` confirmado `owner_ref` honesto do DAVI. **Fix no owner canônico:** `prior_observation` (mecanismo bounded existente) passa a alimentar `_group_summaries` + seleção estrangeira; instruções versionadas 12→13 ganham regras semânticas generalizadas — zero aliases/keywords/branches. **Live Ollama `qwen2.5:3b` + MCPs autenticados:** `use o davi`→`mcp:davi`, `o mcp davi`→`mcp:davi`, `agora use outro especialista`→`mcp:davi` (anáfora → owner distinto), `2 exemplos de terminal bala`→`openapi:delpi`. RED→GREEN + suite completa verde. Resíduos: latência ≤3B CPU (doc 93); classe da falha de invoke T3 não reproduzível pós-recreate; reuso de credencial intra-turno (doc 94) em aberto. Relatório: `96-contextual-intelligence-davi-multiturn-remediation.md`.
+
+```text
+TASK_ID=DELIA-C3-CONTEXTUAL-INTELLIGENCE-DAVI-MULTITURN-REMEDIATION-01
+PRIOR_TURNS_TRANSPORT=VERIFIED PRIOR_TURNS_GROUP_STAGE=FIXED
+SEMANTIC_SELECTION_ROOT_CAUSE=group stage zero context channel +
+    instructions lacked named-source semantics
+API_DELPI_LABEL=HONEST_PROVENANCE(owner_ref)
+GENERALIZATION=live: terminal_bala→openapi:delpi; use/o mcp davi→
+    mcp:davi; outro_especialista→mcp:davi
+MODEL_PROVIDER=OLLAMA EXTERNAL_LLM_CALLS=0
+REGRESSION=full delia-api suite green
+PRODUCTION_CHANGED=NO PRODUCTION_RETRY=STILL_OFF
+RESIDUALS=≤3B latency(doc93); T3 invoke class unproven;
+    credential-reuse gate open(doc94)
+EXECUTOR_VERDICT=context channel closed at group selection;
+    semantic named-source routing without aliases
+```

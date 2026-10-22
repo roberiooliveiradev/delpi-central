@@ -150,3 +150,14 @@ Novas capturas de testes **em conversas limpas** fornecidas pelo Product Master.
 6. timeout de seleção do owner antes da consulta, limitadores reais, eventual retry 2/60/30 somente após gate de revogação e autorização produtiva.
 
 **Status:** `INC06=OPEN_DEFERRED`; `REPEATED_ORI=PROVEN_VISUAL`; `INTERMITTENT_PROCESSING_TIMEOUT=PROVEN_VISUAL`; `PROD_RETRY_ACTIVATION=NO_LAST_VERIFIED_CONFIG`; `SEMANTIC_ROOT_CAUSE=TO_INVENTORY`; `ITEMS_4_5_6=NEXT_BOUNDED_SEQUENCE`. Nenhum código ou deploy alterado neste registro.
+
+
+## Fechamento INC-02/INC-03 — continuidade contextual e seleção semântica (doc 96)
+
+A cadeia foi inventariada de ponta a ponta no HEAD vigente e as duas lacunas reais foram corrigidas no owner canônico (`orchestration.py`, instruções versão 12→13):
+
+- **INC-02 (`terminal bala` sem consulta DELPI):** `openapi:delpi` expõe `delpi.search_products`/`get_product_summary` e `mcp:davi` expõe `discover_delpi_information` + READ candidate-bound. A instrução de admission não distinguia "exemplos de item de catálogo" de exemplo conceitual — agora prefere `ambiguous` (owner-bound) quando o item pode ser entidade registrada; verificação live resolveu o caso para `openapi:delpi`.
+- **INC-03 (`use o davi` / `o mcp davi`):** a seleção de grupo era o único estágio semântico sem canal de contexto — `prior_observation` (projeção bounded, untrusted, já existente um nível abaixo) passa a alimentar `_group_summaries` e a seleção estrangeira; a instrução passa a declarar que resolver referência/nome de fonte contra `display_name`/`owner`/`source_system` é trabalho do estágio. Live: `use o davi`→`mcp:davi`, `o mcp davi`→`mcp:davi`, `agora use outro especialista`→`mcp:davi` (anáfora resolvida para owner distinto do anterior).
+- **`api-delpi` na UI:** é o `owner_ref` canônico do DAVI (`_SPECIALIST_IDENTITY`) — proveniência honesta, não defeito. A classe da falha de invoke do T3 não pôde ser reproduzida (logs do turno anterior ao recreate); a cadeia contract→schema→owner está verificada e recusa argumentos inventados fail-closed.
+- Latência do modelo ≤3B CPU-only segue limite documentado (doc 93): estágios esgotam o cap de 30s → `PROCESSING_TIMEOUT` honesto; nenhum deadline ou compensação lexical foi alterado.
+- Status: `INC02=ROOT_CAUSE_FIXED`, `INC03=ROOT_CAUSE_FIXED`, `API_DELPI_LABEL=HONEST_PROVENANCE`, `EXTERNAL_LLM_CALLS=0`. Relatório: `96-contextual-intelligence-davi-multiturn-remediation.md`.
