@@ -1339,6 +1339,21 @@ class PresentationPatchService:
         }
     )
 
+    @staticmethod
+    def mutation_ops_require_data_fingerprint(ops: list[Any] | None) -> bool:
+        """True when the editor ack must resolve operational data.
+
+        Geometry, z-order and style ops do not change data sources. Resolving
+        every source on those commits blocks the visual ack on an unrelated
+        fetch. Data ops keep the fingerprint so the authoritative response can
+        still describe the affected execution.
+        """
+        return any(
+            isinstance(op, dict)
+            and str(op.get("op") or "").strip() in PresentationPatchService._DATA_EXECUTION_OPS
+            for op in ops or []
+        )
+
     def _assert_candidate_data_execution(
         self,
         result: dict[str, Any],
