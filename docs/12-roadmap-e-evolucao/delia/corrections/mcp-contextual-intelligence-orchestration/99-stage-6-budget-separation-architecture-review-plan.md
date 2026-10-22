@@ -104,3 +104,14 @@ Recomendação da investigação: **B+D** — reserva operacional mínima após 
 - Seleção semântica imperfeita observada (list_playlists para consulta de processo) — NON_GROUNDED honesto, sem fabricação.
 - Browser QA do painel: TEST_NOT_RUN até portal servir build atual do MFE.
 - WSL dropa intermitentemente sob saturação (self-healing).
+
+
+## Parecer de coordenação independente — 2026-10-22
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL para a instrumentação e investigação bounded, não para a homologação produtiva integral.** Relatório do executor e documento 99 no HEAD foram inspecionados; os testes não foram independentemente reexecutados nesta revisão (`INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`). Novos campos por estágio e `timeout_source` têm evidência de regressão e wire reportada. São aditivos; não foi aprovado novo scheduler, política de tempo, alteração 2/60/30 nem retry produtivo.
+
+**Correção de escopo da inferência de latência:** o traço de `qual o último processo cadastrado?` computou 7124ms de modelo e 198ms de operação **`list_playlists`**, que não é a consulta semântica apropriada para provar o último processo cadastrado. Este traço **prova a atribuição de latência e dominância de LLM nesse caso**, mas não mede o custo da consulta de processo correta nem autoriza concluir que a API empresarial é em geral rápida. `MODEL_SHARE_OBSERVED=PROVEN_FOR_THIS_TURN`; `CORRECT_PROCESS_CAPABILITY_LATENCY=TO_INVENTORY`; `BUSINESS_OUTCOME=NON_GROUNDED/NOT_PROVEN_FOR_TARGET`. A amostra de CPU anterior demonstra que um estágio lento pode exaurir a tentativa antes do invoke, mas não prova que uma reserva fixa de B ms seja universalmente ótima.
+
+**B+D continua PROPOSTA, NÃO DECISÃO FINAL:** reserva operacional + degradação honesta é candidata preferida para estudo, porém exige contrato, configuração e testes em casos com API lenta, seleção lenta, erros de provider, desempenho de modelos diferentes, cancelamento e streaming. Requer definição de como orçamento global e tentativas interagem. `BUDGET_POLICY_DECISION=ARCHITECTURE_DECISION_REQUIRED`; não fixar milissegundos nem mudar código do deadline neste parecer. Avaliar alternativas com fontes distintas e métricas de invocação da capability **certa**.
+
+**Pendências antes do aceite integrado:** browser QA no Portal com a versão correta de frontend/backend e testes de seleção de mensagem; qualidade de labels e estado da atividade; saída CRI `Ori`; smoke real multiturno DAVI; semântica correta de criação/ordenação; policy de revogação intra-turno (doc 94) e testes negativos antes de ativação de retry produtivo. A Etapa 6 entregou observabilidade adicional e classificação, mas `INTEGRATED_HOMOLOGATION=ACCEPT_WITH_RESIDUAL`, `PRODUCTION_RECOVERY=BLOCKED`, `I04_ACCEPTED=NO` até decisão canônica.
