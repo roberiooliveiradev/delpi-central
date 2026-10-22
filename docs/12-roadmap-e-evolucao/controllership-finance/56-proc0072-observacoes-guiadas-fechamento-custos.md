@@ -448,3 +448,26 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Candidato de fluxo TARGET, pendente de decisao:** trilha de diagnostico read-only com categorias `report_parameters_mismatch`, `movement_or_consumption_anomaly`, `prior_period_effect` e `undetermined`, cada uma vinculada a evidencia, competencia de origem, movimento/documento e impacto estimado. Se houver hipotese de periodo anterior, exibir dependencias e necessidade de analise/autorizacao humana; nao oferecer botao de reabrir/recalcular sem contrato e gate especificos.
 
 **Pendencias:** criterios objetivos de identificacao de movimentos antigos, historico de recalculos, parametro que altera o escopo e responsabilidade por autorizar reabertura. `ROOT_CAUSE=INCONCLUSIVE`; `HISTORICAL_REOPEN=OWNER_REPORTED_VIA_PO`; `PORTAL_WRITE_ACTIONS=NOT_AUTHORIZED`.
+
+
+## Registro 13 - Conferencia analitica por tipo de material (34:25 em diante)
+
+**Fonte AS-IS:** explicacao guiada do PO sobre Joici e capturas da gravacao por volta de 34:25-35:35. O timestamp indica a etapa da investigacao, nao uma validacao de todos os valores em ERP.
+
+**Metodo praticado:** diante da divergencia da conciliacao geral, Joici abre o **Resumo das Entradas e Saidas (MATR320)** e o **P7 completo, sem filtro Bloco H**, compara seus totais por **tipo de material** e aprofunda a analise na classificacao discrepante, ate chegar a grupos, produtos, movimentos ou parametros potencialmente responsaveis. Essa conferencia **nao se restringe ao P7 de MP/PI/PA enviado a contabilidade**.
+
+**Achado relatado pelo PO:** a categoria **materia-prima (MP)** apresenta uma diferenca percebida ao comparar os dois relatorios. Joici relata que problemas recorrentes podem estar ligados a **material em processo** e materia-prima. Trata-se de heuristica da especialista, **nao** prova de que o material em processo causou a divergencia deste fechamento.
+
+**Evidencia visual:** no MATR320 (matriz, 01/09-30/09/2026), a linha `MP` traz `Saldo Atual` **3.370.493,537** (unidade monetaria descrita no cabecalho como R$). O P7 em preview exibe totais por classes dentro de blocos `EM ESTOQUE` e `EM PROCESSO`; ha item `MATERIA PRIMA` em ambos. **Nao comparar diretamente MP do MATR320 com apenas uma linha de MP do P7 sem confirmar composicao, recorte e parametros**. Nos prints, a leitura precisa de cada sublinha do P7 nao esta homologada; registrar a existencia do detalhamento, mas nao fabricar um delta MP.
+
+**Sequencia de diagnostico candidata (somente leitura):** (1) estabelecer competencia e escopo comum, (2) total geral MATR320 x P7 completo, (3) quebrar por tipo/classificacao e situacao em estoque/em processo, (4) localizar categorias com maiores deltas, (5) detalhar por filial/armazem/produto e rastrear transacoes/apontamentos, (6) considerar historico e parametros, (7) anexar evidencia e concluir `reconciled`, `discrepancy_unexplained` ou `needs_erp_review`. **Nao aprovar esta arvore como formula oficial sem owner e comprovacao de paridade.**
+
+### Conhecimento para eventual assistente de IA (TARGET, sem autorizacao de implementacao)
+- Preservar como **hipotese priorizada por especialista**, com atribuicao `Joici / via PO / timestamp ~34:25`: investigar primeiro materia-prima e saldo em processo quando esses segmentos apresentarem delta.
+- Agente nao deve afirmar causa-raiz, necessidade de reabrir periodo, nem recomendar lancamento corretivo como fato apenas por correspondencia de categoria.
+- Explicar cada sugestao com valores/filtros/linhagem demonstraveis e separar observacao, calculo, heuristica e conclusao homologada. Exigir revisao humana de achados e autorizacao separada para escrita no ERP.
+- Evitar conceito de "treinar IA" diretamente com dados de tela sem governanca: o artefato atual e base de conhecimento rastreavel para recuperacao contextual e regras verificaveis, nao dataset de treinamento aprovado.
+
+**Pendente:** extracoes originais comparaveis, valores de MP em ambos os relatorios, composicao de `EM PROCESSO` e mapeamento de aliases do relatorio para fontes TOTVS via `api-delpi`.
+
+**Classificacao:** `DRILLDOWN_BY_MATERIAL_TYPE=OWNER_REPORTED_VIA_PO`; `MP_DIVERGENCE=OWNER_REPORTED_VIA_PO`; `MP_MATR320_VALUE=PROVEN_SCREENSHOT`; `MP_CAUSAL_LINK_TO_WIP=INCONCLUSIVE`; `AI_ASSISTED_DIAGNOSTICS=TARGET_DECISION_REQUIRED`; `RUNTIME_VALIDATION=TEST_NOT_RUN`.
