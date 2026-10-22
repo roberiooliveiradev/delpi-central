@@ -27,6 +27,20 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 
 Novo relatório e cópia gravam a data civil de `America/Sao_Paulo` na criação. Edição, reabertura e salvamento não substituem a data persistida. Relatório antigo com data vazia não é preenchido em lote.
 
+## Homologação final
+
+Registro de 22/10/2026 sobre o commit `151b7f5e32`, que é o SHA publicado do MFE. Não houve correção de produto nesta passagem.
+
+| Verificação | Resultado |
+|---|---|
+| Tema claro e escuro, troca imediata e impressão branca | Passou no Chrome com os tokens do Portal. A primeira execução do Chrome falhou por erro transitório de WSL e a repetição passou |
+| Data automática, cópia, exclusão, saída sem salvar, filtros, recorte e permissões do MFE | 41 testes do plugin |
+| Contrato, idempotência, versão, imagem e PDF da API | 20 testes em memória da api-delpi |
+| Produção sem sessão | `/apps/metalography/` responde 200. Lista e PDF sem JWT respondem 401. O bundle público contém `America/Sao_Paulo` e os três valores de `--mg-paper` |
+| Sessão autenticada no Portal | Não executada. Nenhum relatório real foi criado ou alterado |
+
+O HTML de referência permanece com SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`.
+
 ## Tema da tela
 
 A interface do MFE acompanha `data-theme` do Portal em todas as superfícies de tela. As cores ficam nos tokens `--mg-*` de `plugins/metalography/src/styles/screen-theme.css`, mapeados para os tokens do Portal. A folha na tela muda só a cor. A impressão isolada e o PDF permanecem na paleta do HTML (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O HTML de referência não entra nessa alteração.
