@@ -64,7 +64,10 @@ def test_list_auditoria_apontamentos_normalizes_rows() -> None:
         offset=0,
         fetch_next=51,
         status="all",
+        shifts=None,
     )
+    assert result.items[0].turno == "1"
+    assert result.items[0].turno_label == "1º Turno"
 
 
 def test_list_auditoria_apontamentos_passes_status_filter() -> None:
@@ -86,6 +89,30 @@ def test_list_auditoria_apontamentos_passes_status_filter() -> None:
         offset=0,
         fetch_next=51,
         status="nao_inspecionou",
+        shifts=None,
+    )
+
+
+def test_list_auditoria_apontamentos_passes_shift_filter() -> None:
+    repository = MagicMock()
+    repository.list_auditoria_apontamentos_page.return_value = ({}, [])
+
+    use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(repository)
+    use_case.execute(
+        branch="01",
+        data="2026-07-13",
+        page=1,
+        page_size=50,
+        shift="2",
+    )
+
+    repository.list_auditoria_apontamentos_page.assert_called_once_with(
+        "01",
+        data="2026-07-13",
+        offset=0,
+        fetch_next=51,
+        status="all",
+        shifts=("2",),
     )
 
 
@@ -93,6 +120,12 @@ def test_list_auditoria_apontamentos_rejects_invalid_status() -> None:
     use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(MagicMock())
     with pytest.raises(ValueError, match="status inválido"):
         use_case.execute(branch="01", status="pendente")
+
+
+def test_list_auditoria_apontamentos_rejects_invalid_shift() -> None:
+    use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(MagicMock())
+    with pytest.raises(ValueError, match="shift inválido"):
+        use_case.execute(branch="01", shift="4")
 
 
 def test_list_auditoria_apontamentos_defaults_data_to_today() -> None:

@@ -37,6 +37,7 @@ from app.interface.http.period_query_params import (
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
+    FACTORY_SHIFT_QUERY,
     INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY,
     INSPECTION_RESULT_QUERY,
 )
@@ -527,6 +528,7 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
         description="Data de produção (YYYY-MM-DD). Default: hoje.",
     ),
     inspecao_status: str = INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY(),
+    shift: str | None = FACTORY_SHIFT_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
@@ -542,6 +544,7 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
             page=page,
             page_size=page_size,
             status=inspecao_status,
+            shift=shift,
         )
 
         return api_delpi_success(

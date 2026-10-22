@@ -34,6 +34,7 @@ export function AuditoriaTable({ items }: AuditoriaTableProps) {
             <th scope="col">Descrição</th>
             <th scope="col">Operação</th>
             <th scope="col">CT</th>
+            <th scope="col">Turno</th>
             <th scope="col">Data</th>
           </tr>
         </thead>
@@ -55,6 +56,7 @@ export function AuditoriaTable({ items }: AuditoriaTableProps) {
               </td>
               <td>{item.operacao?.trim() || "—"}</td>
               <td>{item.centro_trabalho?.trim() || "—"}</td>
+              <td>{item.turno_label?.trim() || "—"}</td>
               <td>{formatIsoDatePt(item.data_producao)}</td>
             </tr>
           ))}

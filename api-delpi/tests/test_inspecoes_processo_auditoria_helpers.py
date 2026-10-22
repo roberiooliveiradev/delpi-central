@@ -6,6 +6,7 @@ from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_
     _aggregate_auditoria_apontamentos,
     _auditoria_sort_bucket,
     _auditoria_status_key,
+    _filter_auditoria_by_shift,
     _filter_auditoria_by_status,
     _index_ensaiador_map,
     _index_inspecao_cadastrada_rows,
@@ -196,6 +197,24 @@ def test_tem_inspecao_cadastrada_aceita_operacao_vazia_na_revisao() -> None:
         )
         is False
     )
+
+
+def test_filter_auditoria_by_shift_positive_sibling_negative() -> None:
+    rows = [
+        {"Hora_Inicio": "080000"},  # 1º turno
+        {"Hora_Inicio": "15:00"},  # 2º turno
+        {"Hora_Inicio": "00:30"},  # 3º turno
+        {"Hora_Inicio": None},
+    ]
+    assert len(_filter_auditoria_by_shift(rows, ("1",))) == 1
+    assert _filter_auditoria_by_shift(rows, ("1",))[0] is rows[0]
+    assert len(_filter_auditoria_by_shift(rows, ("2",))) == 1
+    assert _filter_auditoria_by_shift(rows, ("2",))[0] is rows[1]
+    assert len(_filter_auditoria_by_shift(rows, ("3",))) == 1
+    assert _filter_auditoria_by_shift(rows, None) == rows
+    assert _filter_auditoria_by_shift(rows, ()) == rows
+    # Sem hora não entra em nenhum turno filtrado
+    assert rows[3] not in _filter_auditoria_by_shift(rows, ("1", "2", "3"))
 
 
 def test_filter_auditoria_by_status_keeps_only_matching_rows() -> None:

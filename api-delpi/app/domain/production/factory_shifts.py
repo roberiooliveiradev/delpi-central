@@ -67,10 +67,19 @@ def parse_start_time_to_minutes(hora_inicio: str | None) -> int | None:
 
     # Aceita "04:34", "04:34:00", "2026-01-01T04:34:00"
     match = re.search(r"(?:T|^|\s)(\d{1,2}):(\d{2})(?::(\d{2}))?", text)
-    if not match:
+    if match:
+        hours = int(match.group(1))
+        minutes = int(match.group(2))
+        if hours < 0 or hours > 23 or minutes < 0 or minutes > 59:
+            return None
+        return hours * 60 + minutes
+
+    # TOTVS / views: "0434", "080000", "141800"
+    digits = re.fullmatch(r"(\d{4}|\d{6})", text)
+    if not digits:
         return None
-    hours = int(match.group(1))
-    minutes = int(match.group(2))
+    hours = int(text[:2])
+    minutes = int(text[2:4])
     if hours < 0 or hours > 23 or minutes < 0 or minutes > 59:
         return None
     return hours * 60 + minutes

@@ -60,6 +60,7 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
         branch="01",
         data="2026-07-13",
         inspecao_status="nao_inspecionou",
+        shift=None,
         page=1,
         page_size=50,
     )
@@ -77,6 +78,7 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
         page=1,
         page_size=50,
         status="nao_inspecionou",
+        shift=None,
     )
 
 
@@ -152,5 +154,14 @@ def test_inspecoes_processo_auditoria_apontamentos_rejects_invalid_inspecao_stat
 ) -> None:
     response = inspecoes_processo_client.get(
         "/inspecoes-processo/auditoria-apontamentos?branch=01&inspecao_status=pendente"
+    )
+    assert response.status_code == 422
+
+
+def test_inspecoes_processo_auditoria_apontamentos_rejects_invalid_shift(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    response = inspecoes_processo_client.get(
+        "/inspecoes-processo/auditoria-apontamentos?branch=01&shift=4"
     )
     assert response.status_code == 422

@@ -36,7 +36,7 @@ QPR_ENSR
 | Há inspeção exigível (QPK+QP7/QP8 na revisão da OP, ou QPR de outra pessoa) e o operador não lançou | Não inspecionou | vermelho | sim |
 | Sem inspeção amarrada na OP+operação (sem QPK/revisão com essa operação e sem QPR) | Não possui inspeção cadastrada | cinza | não |
 
-A tabela pode filtrar por status via query `inspecao_status` (`all` | `nao_inspecionou` | `inspecionou` | `sem_cadastro`). Na UI o padrão inicial é **Não inspecionou**. Os KPIs do summary continuam do dia inteiro; só a lista/página é filtrada. Sem filtro (`all`), a ordenação é: pendências reais primeiro; depois sem cadastro; depois ok.
+A tabela pode filtrar por status via query `inspecao_status` (`all` | `nao_inspecionou` | `inspecionou` | `sem_cadastro`). Na UI o padrão inicial é **Não inspecionou**. Também aceita `shift` (`1` | `2` | `3`) — mesmos turnos canônicos do Eficiência Fabril (`factory_shifts.py`), classificados pelo `hora_inicio` mínimo do grupo operador+OP+operação. Os KPIs do summary continuam do dia inteiro; só a lista/página é filtrada. Sem filtro de status (`all`), a ordenação é: pendências reais primeiro; depois sem cadastro; depois ok.
 
 Campo de contrato: `tem_inspecao_amarrada` = a OP tem cabeçalho QPK **e** a revisão amarrada (`QPK_REVI`) possui ensaio QP7/QP8 para aquela operação (não usar `MAX(QP6_REVI)` do produto — a OP pode estar em revisão antiga sem a operação apontada).
 

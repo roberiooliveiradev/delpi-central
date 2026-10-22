@@ -93,4 +93,5 @@ class InspecoesProcessoRepositoryPort(Protocol):
         offset: int,
         fetch_next: int,
         status: str | None = None,
+        shifts: tuple[str, ...] | None = None,
     ) -> tuple[dict, list[dict]]: ...

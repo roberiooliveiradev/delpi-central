@@ -13,9 +13,15 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_auditoria_apontam
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.production.factory_shifts import (
+    factory_shift_id,
+    factory_shift_label,
+    parse_factory_shift_filter,
+)
 from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
     normalize_optional_branch,
 )
+
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_100", None)
 MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_100") or 0)
@@ -103,6 +109,9 @@ def _normalize_item(
     row: dict,
     branch: str,
 ) -> InspecoesProcessoAuditoriaApontamentoItemResponse:
+    hora_inicio = _format_time(row.get("Hora_Inicio"))
+    # Classifica com o valor bruto (aceita HH:MM e HHmmss TOTVS) e expõe hora formatada.
+    raw_hora = _as_str(row.get("Hora_Inicio")) or hora_inicio
     return InspecoesProcessoAuditoriaApontamentoItemResponse(
         filial=_as_str(row.get("Filial")) or branch,
         cod_operador=_as_str(row.get("Cod_Operador")),
@@ -115,8 +124,10 @@ def _normalize_item(
         operacao=_as_str(row.get("Operacao")),
         centro_trabalho=_as_str(row.get("Centro_Trabalho")),
         data_producao=_format_date(row.get("Data_Producao")),
-        hora_inicio=_format_time(row.get("Hora_Inicio")),
+        hora_inicio=hora_inicio,
         hora_final=_format_time(row.get("Hora_Final")),
+        turno=factory_shift_id(raw_hora),
+        turno_label=factory_shift_label(raw_hora),
         qtd_apontamentos=_as_int(row.get("Qtde_Apontamentos")),
         operador_inspecionou=_as_bool(row.get("Operador_Inspecionou")),
         tem_inspecao_na_op_operacao=_as_bool(row.get("Tem_Inspecao_Na_Op_Operacao")),
@@ -153,11 +164,13 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
         page: int = DEFAULT_PAGE,
         page_size: int = DEFAULT_PAGE_SIZE,
         status: str | None = None,
+        shift: str | None = None,
     ) -> InspecoesProcessoAuditoriaApontamentosResponse:
         normalized_branch = normalize_optional_branch(branch)
 
         resolved_data = _parse_data(data)
         resolved_status = _parse_status(status)
+        resolved_shifts = parse_factory_shift_filter(shift)
         resolved_page = max(int(page), 1)
         resolved_page_size = min(max(int(page_size), 1), MAX_PAGE_SIZE)
         offset = (resolved_page - 1) * resolved_page_size
@@ -169,6 +182,7 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
             offset=offset,
             fetch_next=fetch_next,
             status=resolved_status,
+            shifts=resolved_shifts or None,
         )
 
         has_next = len(rows) > resolved_page_size

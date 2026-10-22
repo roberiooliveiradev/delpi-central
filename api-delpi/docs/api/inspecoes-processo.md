@@ -78,6 +78,7 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 | `branch` | não | `all` \| `01` \| `02` |
 | `data` | não | Data de produção `YYYY-MM-DD` (default: hoje) |
 | `inspecao_status` | não | `all` \| `nao_inspecionou` \| `inspecionou` \| `sem_cadastro` (default API: `all`; UI inicia em `nao_inspecionou`) |
+| `shift` | não | Turno de fábrica `1` \| `2` \| `3` (mesmas faixas do Eficiência Fabril; classifica pelo `hora_inicio`) |
 | `page` | não | Página (≥ 1, default 1) |
 | `page_size` | não | 1–100 (default 50) |
 
@@ -95,11 +96,11 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 | `summary.apontamentos_pendentes` | Linhas em que o mesmo operador não inspecionou **e** havia cadastro/QPR |
 | `summary.ops_operacoes_pendentes` | Pares OP+operação com pelo menos uma pendência |
 | `summary.apontamentos_com_inspecao` | Linhas em que o mesmo operador inspecionou |
-| `items[]` | Apontamentos do dia (filtrados por `inspecao_status`; pendências primeiro quando `all`) |
+| `items[]` | Apontamentos do dia (filtrados por `inspecao_status` e opcionalmente `shift`; pendências primeiro quando `all`) |
 | `data` | Data efetiva da consulta |
 | `page` / `page_size` / `has_next` | Paginação |
 
-Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada).
+Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `turno`, `turno_label`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada). Os KPIs do `summary` continuam do dia inteiro.
 
 ### Exemplo
 

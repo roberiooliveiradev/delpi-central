@@ -22,6 +22,8 @@ class InspecoesProcessoAuditoriaApontamentoItemResponse:
     data_producao: str | None = None
     hora_inicio: str | None = None
     hora_final: str | None = None
+    turno: str | None = None
+    turno_label: str | None = None
     qtd_apontamentos: int = 0
     operador_inspecionou: bool = False
     tem_inspecao_na_op_operacao: bool = False
@@ -43,6 +45,8 @@ class InspecoesProcessoAuditoriaApontamentoItemResponse:
             "data_producao": self.data_producao,
             "hora_inicio": self.hora_inicio,
             "hora_final": self.hora_final,
+            "turno": self.turno,
+            "turno_label": self.turno_label,
             "qtd_apontamentos": self.qtd_apontamentos,
             "operador_inspecionou": self.operador_inspecionou,
             "tem_inspecao_na_op_operacao": self.tem_inspecao_na_op_operacao,

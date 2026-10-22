@@ -12,6 +12,12 @@ import {
   type AuditoriaInspecaoStatus,
 } from "../constants/auditoriaStatus";
 import { branchLabel } from "../constants/branch";
+import {
+  AUDITORIA_SHIFT_ALL,
+  AUDITORIA_SHIFT_OPTIONS,
+  type AuditoriaShiftFilter,
+} from "../constants/factoryShifts";
+import { IP_HELP } from "../content/helpTooltips";
 import { useInspecoesProcessoAuditoria } from "../hooks/useInspecoesProcessoAuditoria";
 import { formatNumber } from "../utils/format";
 
@@ -33,6 +39,8 @@ export function AuditoriaPage({
     setData,
     status,
     setStatus,
+    shift,
+    setShift,
     page,
     pageSize,
     setPage,
@@ -49,11 +57,14 @@ export function AuditoriaPage({
   const statusLabel =
     AUDITORIA_STATUS_OPTIONS.find((option) => option.value === status)?.label ??
     status;
+  const shiftLabel =
+    AUDITORIA_SHIFT_OPTIONS.find((option) => option.value === shift)?.label ??
+    "Todos";
   const emptyFiltered =
     !loading &&
     !error &&
     items.length === 0 &&
-    status !== AUDITORIA_STATUS_ALL &&
+    (status !== AUDITORIA_STATUS_ALL || shift !== AUDITORIA_SHIFT_ALL) &&
     summary.apontamentos_total > 0;
 
   useEffect(() => {
@@ -97,6 +108,29 @@ export function AuditoriaPage({
             >
               {AUDITORIA_STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="ip-field">
+            <span
+              className="ip-field__label"
+              title={IP_HELP.auditoria.shift}
+            >
+              Turno
+            </span>
+            <select
+              className="ip-input"
+              value={shift}
+              onChange={(event) =>
+                setShift(event.target.value as AuditoriaShiftFilter)
+              }
+              aria-label="Filtrar por turno de fábrica"
+              title={IP_HELP.auditoria.shift}
+            >
+              {AUDITORIA_SHIFT_OPTIONS.map((option) => (
+                <option key={option.value || "all"} value={option.value}>
                   {option.label}
                 </option>
               ))}
@@ -171,12 +205,16 @@ export function AuditoriaPage({
         <EmptyState
           title={
             emptyFiltered
-              ? `Nenhum apontamento com status «${statusLabel}»`
+              ? status !== AUDITORIA_STATUS_ALL && shift !== AUDITORIA_SHIFT_ALL
+                ? `Nenhum apontamento com status «${statusLabel}» no ${shiftLabel}`
+                : shift !== AUDITORIA_SHIFT_ALL
+                  ? `Nenhum apontamento no ${shiftLabel}`
+                  : `Nenhum apontamento com status «${statusLabel}»`
               : "Nenhum apontamento nesta data"
           }
           description={
             emptyFiltered
-              ? "Os KPIs acima consideram o dia inteiro. Altere o filtro de status ou escolha «Todos» para ver a lista completa."
+              ? "Os KPIs acima consideram o dia inteiro. Altere o filtro de status/turno ou escolha «Todos» para ver a lista completa."
               : "Não há apontamentos produtivos (STATUS OK) para a filial e data selecionadas."
           }
         />
