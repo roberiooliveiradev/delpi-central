@@ -25,7 +25,7 @@ Não criar segunda mutation boundary, segundo renderer, GPT-local RBAC, executor
 | Invalidação de cache no notifier | PROVEN | `reset_comunicado_data_block_cache()` é invocado; efeito/custo de invalidar por geometria ainda TO_INVENTORY |
 | Atualização local para mover/tamanho/grupo | REPORTED | Relatório `VISTA-TV-EDITOR-MUTATION-LATENCY-020`; revalidar os handlers efetivos no HEAD |
 | UI consistente com dois editores simultâneos | TO_INVENTORY | Presença + WS + CAS não provam ausência de perdas visuais/pending overwrite |
-| Latência total clique → pintura → ack | TEST_NOT_RUN | Medições anteriores cobrem preview in-process, não browser/rede/fila/read-back |
+| Latência total clique → pintura → ack | TEST_NOT_RUN | Preview in-process revalidado em 2026-10-22 (seção 11). Browser, fila, rede e read-back continuam sem amostra |
 
 ### Incidente de referência
 
@@ -154,3 +154,83 @@ Todo patch relevante deve entregar **VISTA/TV EXECUTION REPORT**: HEAD/base, arq
 - Performance e segurança comprovadas por teste de ponta a ponta, não apenas por benchmark in-process.
 
 **Princípio:** HEAD before memory · owner before patch · contract before coupling · root cause before fix · reuse before invention · parity before workaround · evidence before assertion.
+
+## 11. Fase 0 — evidência `VISTA-TV-EDITOR-E2E-LATENCY-CONCURRENCY-022`
+
+**HEAD:** `2ed5b53022` (`main`, limpo). Reancorado em 2026-10-22. Não marca Fase 1, 2 ou 3 como concluídas. Não houve deploy nesta tarefa.
+
+### Pipeline comprovado no código
+
+```text
+comando
+→ updateBlocks (move, tamanho, grupo, estilo, prefixo/sufixo) ou espera do ack (alinhar, distribuir, z-order)
+→ enqueuePlaylistWrite (FIFO por playlist + Web Lock same-origin)
+→ POST presentation-mutations com If-Match
+→ require_playlist_access(edit) → preview → update_slide (CAS FOR UPDATE)
+→ nativeConfig carimbado no ack
+→ notify_presentation_changed (sem clientId) → reset_comunicado_data_block_cache + WS presentation_updated
+→ o editor recarrega a playlist; draft/pending local cobre o slide aberto
+→ 409 REVISION_CONFLICT → server-wins, draft marcado conflitado, aviso
+```
+
+Autosave de slide (debounce 400 ms) e `slide_draft` (120 ms) são um segundo caminho de escrita, também sob a revisão da playlist. O Web Lock não coordena dois usuários.
+
+### Baseline desta sessão
+
+Ambiente: processo da API em execução, preview sem persistir, playlist `028b0aa6-6619-46ba-96ea-c60f54eef3f8`, slide `323a2e78-1423-46c9-b940-6450ba39724b`, n=3. Não é tempo de browser.
+
+| Operação | Preview (ms) | `resolve_blocks` | `enrich_data_models` |
+|---|---|---|---|
+| `align_blocks` | 60,8 / 42,9 / 40,5 (mediana 42,9) | 0 | 0 |
+| `upsert_block` só de prefixo | 41,0 / 41,3 / 42,4 (mediana 41,3) | 0 | 0 |
+
+`CLICK_TO_FIRST_VISUAL_MS`, fila, rede, persistência, read-back e `CLICK_TO_CONFIRMED_VISUAL_MS` continuam `TEST_NOT_RUN`. Os 18 568 ms e 15 139 ms citados nas tarefas 020/021 são amostras históricas in-process, não baseline de navegador.
+
+Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tamanho, grupo, cor, fonte e prefixo pintam antes do HTTP. A confirmação visual desses comandos ainda espera o ack e, em seguida, o reload disparado pelo próprio `presentation_updated`.
+
+### Concorrência — comportamento do código, sem sessão dupla
+
+| Cenário | Comportamento atual | E2E |
+|---|---|---|
+| Componentes diferentes | CAS é da playlist inteira. A segunda escrita com a mesma revisão recebe 409. Não há merge. | TEST_NOT_RUN |
+| Mesmo componente | O commit vencedor grava o `nativeConfig` inteiro. O perdedor é rejeitado e avisado. | TEST_NOT_RUN |
+| Exclusão concorrente | Mesmo CAS. Quem tem a revisão corrente confirma. | TEST_NOT_RUN |
+| Commit pendente | `slide_draft` remoto não cobre slide com edição local. O reload preserva pending. O save seguinte com revisão velha cai em 409 e o server-wins descarta o pending. | TEST_NOT_RUN |
+| Reconexão | Ao conectar, o editor chama o mesmo reload. Presença expira em 90 s. | TEST_NOT_RUN |
+| Undo após mudança remota | Undo do slide é local. Mudança remota aceita entra na pilha. Um undo seguinte pode desfazer o remoto na tela e o autosave pode gravá-lo. | TEST_NOT_RUN |
+
+`presentation_updated` não traz `clientId`. Receber o evento não prova que o palco do outro editor ficou correto. Presença e seleção remota existem; não autorizam escrita.
+
+### Cache
+
+`notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.
+
+### Reuso
+
+| Capacidade | Existente | Decisão |
+|---|---|---|
+| Projeção local de move/estilo/grupo | YES | REUSE |
+| Projeção de alinhar/z-order com rollback | NO | EXTEND só na Fase 2, com contrato |
+| Fila FIFO + Web Lock | YES | REUSE |
+| Revisão / 409 / server-wins | YES | REUSE |
+| Read-back `nativeConfig` | YES | REUSE |
+| Presença e `slide_draft` | YES | REUSE |
+| Reconciliação de dois editores no mesmo bloco | NO | Fase 3, sem auto-merge |
+| Telemetria clique→frame | NO | EXTEND quando for medir de verdade |
+| Render seletivo | TO_INVENTORY | não propor ainda |
+
+### Próximo diff recomendado
+
+Não é projeção otimista nem sala nova.
+
+1. **Fase 1 residual:** medir, no editor autenticado, fila, rede, persistência, read-back e o reload do próprio `presentation_updated`. Só então decidir se o eco sem `clientId` ou o clear de cache entram num patch. Owner: `PlaylistEditorPage` + `notify_presentation_changed`. Teste: uma sessão, comandos de alinhar e prefixo, sem gravar cenário irreversível.
+2. **Fase 2:** estender a pintura já usada por `updateBlocks` para alinhar/distribuir/z-order, com rollback no 409/falha. Não criar outro reducer. Gate: o ack continua a autoridade.
+3. **Fase 3:** duas sessões reais nos cenários A–F. Conflito continua 409 + aviso. Undo não pode persistir por cima da revisão do outro usuário. Sem CRDT, OT ou merge por campo até existir ADR.
+
+### Testes nesta reancoragem
+
+| Suíte | Resultado |
+|---|---|
+| `test_presentation_realtime.py`, `test_playlist_revision_http.py`, `test_editor_mutation_fingerprint_scope.py` | PASS — 36. Prova hub, revisão HTTP e gate de fingerprint. Não prova dois browsers. |
+| Vitest da fila, sync e undo | TEST_NOT_RUN — o worktree não tem `node_modules` do MFE. |
+| Sessões A–F e clique no palco | TEST_NOT_RUN |
