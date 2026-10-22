@@ -98,3 +98,5 @@ Ativação: `docker compose -p infra -f infra/docker-compose.dev.yml -f infra/do
 
 - `infra/docker-compose.ollama-gpu.yml` (novo overlay WSL2 GPU — único diff de infraestrutura)
 - este documento (status + resultado), README da trilha, execution ledger.
+
+`EVALUATED_SHA=974b15c940fabf33d850a14483a51483c3d88590` — configuração avaliada = overlay acima sobre o serviço ollama de `infra/docker-compose.dev.yml`; ambientes: dev WSL2, Docker 29.7.2 nativo, driver 610.60, Ollama 0.40.8, `qwen2.5:3b` Q4_K_M.
