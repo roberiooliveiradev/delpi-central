@@ -81,41 +81,5 @@ Revalidação sob autorização PO condicional (`X3-FINAL-PO-AUTHORIZATION-20261
 `INCONCLUSIVE` — bloqueio institucional (F1) e de identidade de teste (F2), não técnico.
 Próximas ações objetivas: (1) DPO endossa/incorpora proposta ROPA ou emite parecer de dispensa; (2) PO indica usuário e fornecedor de teste autorizados; (3) então reexecutar X3.FINAL a partir da ativação controlada.
 
----
-
-## Adendo X3.FINAL (2026-10-22)
-
-Revalidação sob autorização PO condicional (, commit ).
-
-### Re-inventário produtivo
-
-- Production HEAD:  (após fix do healthcheck; base do inventário: ).
-- : healthy; env efetivo , .
-- : healthy; .
-- , , : íntegros.
-- Migrations : V001, V002, V003 — íntegras.
-
-### Defeito corrigido: healthcheck 
-
-- Sintoma: container  com  no healthcheck, embora o Redis respondesse PONG com credencial correta.
-- Causa raiz:  usada na interpolação compose do , mas **ausente do env do processo** — o  do healthcheck autenticava com senha vazia.
-- Correção:  explícito no serviço (), commit .
-- Pós-condição verificada:  ,  autenticado, downstream / healthy.
-
-### Resultado dos gates X3.FINAL
-
-| Gate | Estado | Evidência |
-|---|---|---|
-| GATE-F1 Privacy | **INCONCLUSIVE** | ROPA canônico () existe e identifica o DPO (Michael Marotto), mas **não registra operação de consulta cadastral externa de fornecedores**; nenhum documento dispensa formalmente endosso. Proposta de registro elaborada para revisão do DPO em . Provider permanece . |
-| GATE-F2 Test identity | **INCONCLUSIVE** | Nenhum usuário/fornecedor de teste autorizado documentado no repositório. |
-| GATE-F3 Infra | **PASS** | Revalidado: Redis healthy (após fix), S2S/mapper preservados, config efetiva distributed, migrations íntegras. |
-| GATE-F4 Tests | **STALE_EVIDENCE aceita** | Sem diff de código de aplicação no X3.FINAL; suítes verdes de X1/X2 mantidas (fix foi compose/healthcheck). |
-| GATE-F5 Rollback | **PASS** | Feature flag  permanece a contenção; nenhuma migration nova; imagens anteriores no host. |
-| Provider BrasilAPI | **NÃO ATIVADO** | STOP obrigatório — F1 não comprovado. |
-| E2E | **TEST_NOT_RUN** | Bloqueado por F1+F2. |
-| No-write | **PASS** | Zero escrita Protheus;  draft-only intacto. |
-
-### Conclusão X3.FINAL
-
- — bloqueio institucional (F1) e de identidade de teste (F2), não técnico.
-Próximas ações objetivas: (1) DPO endossa/incorpora proposta ROPA ou emite parecer de dispensa; (2) PO indica usuário e fornecedor de teste autorizados; (3) então reexecutar X3.FINAL a partir do §10 (ativação controlada).
+<!-- Adendo X3.FINAL duplicado e corrompido (expansão de backticks) removido nesta
+posição durante a reexecução X3.FINAL — primeira seção acima é a versão íntegra. -->
