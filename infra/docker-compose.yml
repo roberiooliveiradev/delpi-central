@@ -2143,7 +2143,10 @@ services:
       # COMPANY_REGISTRY_PROVIDER=external-data-api; default unavailable).
       EXTERNAL_DATA_API_BASE_URL: ${EXTERNAL_DATA_API_BASE_URL:-http://external-data-api:8000}
       EXTERNAL_DATA_API_TIMEOUT_SECONDS: ${EXTERNAL_DATA_API_TIMEOUT_SECONDS:-10}
-      REDIS_URL: ${REDIS_URL:-}
+      # X3 — dedicated DELPI redis URL (not the shared REDIS_URL var used by
+      # core-api/api-delpi stores): keeps rate-limit ownership explicit and
+      # avoids changing other services' runtime config.
+      REDIS_URL: ${DELPI_REDIS_URL:-}
 
     depends_on:
       keycloak:
@@ -2207,11 +2210,13 @@ services:
       EXTERNAL_DATA_GLOBAL_MAX_QUERIES_PER_MINUTE: ${EXTERNAL_DATA_GLOBAL_MAX_QUERIES_PER_MINUTE:-30}
       BRASILAPI_BASE_URL: ${BRASILAPI_BASE_URL:-https://brasilapi.com.br/api}
       BRASILAPI_TIMEOUT_SECONDS: ${BRASILAPI_TIMEOUT_SECONDS:-6}
-      REDIS_URL: ${REDIS_URL:-}
+      REDIS_URL: ${DELPI_REDIS_URL:-}
 
     depends_on:
       keycloak:
         condition: service_started
+      delpi-redis:
+        condition: service_healthy
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
