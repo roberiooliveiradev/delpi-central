@@ -230,3 +230,62 @@ A [70](./70-tool-activity-and-source-transparency-ux-specification.md) apresenta
 **TEST_NOT_RUN:** tarefa documental não realizou implementação, testes ou deploy.
 
 **Progresso/fase:** somente `16` + ledger + evidência de runtime podem definir próximos passos. Documentação não avança fase. Próximo handoff: `4. DÉLIA — Frontend/MFE/UX` → `3. DÉLIA — Backend/Domain/Application` (contratos, se necessário) → `10. Integration/Acceptance Review` → `1. Architecture/Coordination`, para implementação autorizada pelo Devin.
+
+## 13. F03-A — Detalhamento visual da Fila Conversacional Compacta (2026-10-22)
+
+**Natureza:** fechamento das lacunas visuais de §§3–5 e WF-Q01–Q05, limitado à mini fila acima do composer. Este adendo não autoriza implementação ou execução e não altera a decisão de produto para Meus Trabalhos, que permanece uma superfície diferente e condicionada a Work real.
+
+### 13.1 Composição e geometria
+
+A mini fila é uma superfície compacta posicionada imediatamente acima do composer único. Quando não há pendências **confirmadas e autorizadas**, não renderizar e não reservar altura. Recolhida por padrão: cabeçalho com ícone discreto de lista, contagem honesta (“N solicitações aguardando”), prévia opcional do próximo item truncada e chevron. Expandida: o mesmo cabeçalho e lista ordenada abaixo, sem card dentro de card nem segunda sidebar.
+
+Cada linha contém ordinal acessível, título de apresentação fornecido pelo consumer, indicação de bloqueio quando o estado real justificar e ações contextuais permitidas. Não exibir como fila pendente atividade RUNNING, tool/MCP progress ou trabalho durável. Texto pode usar ellipsis, mas título completo deve ser acessível por foco/tooltip ou apresentação acessível. Não inferir texto de um modelo.
+
+### 13.2 Visual e medidas candidatas
+
+| Elemento | Desktop | Dock/mobile | Condição |
+| --- | --- | --- | --- |
+| Cabeçalho | 40–44px de altura alvo | 40–44px | toque e foco acessíveis |
+| Linha pendente | 44–52px alvo | 44–56px | permite crescer com fonte ampliada |
+| Padding lateral | 12–16px | 8–12px | alinhamento ao composer |
+| Intervalos entre ações | 4–8px | 4–8px | não reduzir área interativa |
+| Limite expandido | até 180px | Dock até 100px; mobile até 110px | limite real sujeito à altura útil |
+
+São **alvos de prototipação**, não limites imutáveis. Confirmar tokens de superfície, borda, radius, texto, acento e foco no kit compartilhado; sem hex fixo, bordas duplas ou sombras decorativas. A lista expandida pode ter rolagem somente em seu corpo, nunca no cabeçalho ou composer. A altura é reduzida ou a fila recolhida caso comprometa composer, teclado virtual ou confirmação governada.
+
+### 13.3 Ações, estados e microinterações
+
+- Expandir/recolher com botão aria-expanded e aria-controls, Enter/Space, foco visível e animação discreta; prefers-reduced-motion suprime movimento.
+- Ações de subir/descer/remover são icon-only com rótulos contextuais por item; disponíveis exclusivamente quando o contrato admitir callbacks e elegibilidade. Reordenação por teclado é baseline, nunca exigir drag-and-drop; não mostrar grip decorativo de drag se inoperante.
+- Hover/pressed por tokens existentes. Estado disabled indica razão **recebida**, não inferida. Bloqueio não depende exclusivamente de cor. Ao reordenar com sucesso real, manter foco no item e comunicar posição validada; rollback visual quando owner rejeitar/conflitar.
+- Estados previstos: ausente/vazio; recolhido; expandido; carregando (somente após leitura real); indisponível; erro; blocked; atualização de ordem; conflito. RUNNING/COMPLETED ficam **fora** da mini fila e pertencem à timeline/Work. Nunca anunciar “enfileirado” ou atualizar contagem como sucesso por simples mutação local.
+- Evitar aria-live duplicado e mudanças que roubem foco do textarea. Se remover último item, direcionar foco de modo previsível a elemento ainda presente.
+
+### 13.4 Responsividade detalhada
+
+- Full-page: cabeçalho em linha única se couber, colapso natural em espaço curto, expansão limitada para não deslocar timeline abruptamente.
+- Dock: recolhida por default; expandida exibe 1–2 linhas conforme altura útil do **container real**; controles acessíveis e composer sempre visível. Não criar nova sidebar nem ocupar área de confirmação.
+- Mobile 320/360/375/420px: títulos truncáveis, controles sem colisão ou overflow. Caso necessário, menu contextual apenas mediante reuso de equivalente efetivo no kit, não novo menu paralelo.
+- Zoom 200%, tema claro/escuro, reduced-motion, fontes ampliadas, resize e teclado virtual: preservar foco e alvos de toque; se espaço insuficiente, recolher antes de ocultar composer.
+- Drawer de gestão completa não faz parte desta primeira implementação visual salvo contrato e autorização próprios.
+
+### 13.5 Contrato de apresentação e limites
+
+Componente compartilhado **render-only**: receber por props IDs opacos, labels, status tipados, ordem resolvida pelo owner, disponibilidade, estados de leitura/erro e callbacks de intenção; o consumer DÉLIA faz a composição legítima. UI nunca importa diretamente backend, Core, MCP, Automation Hub, scheduler, storage ou política de autorização. Controles visuais não representam grants.
+
+Sem backend de fila admitido, a implementação futura pode usar fixtures **exclusivamente em QA isolado** para validar estados, mas não exibir itens fictícios em produção, não conectar Enviar a uma fila local e não criar scheduler React. A superfície de produção deve permanecer ausente ou indicar indisponibilidade honestamente, conforme o contrato de apresentação aceito.
+
+### 13.6 Critérios verificáveis do próximo slice
+
+- CQ-V01: sem pendências reais, sem fila e sem reserva de espaço.
+- CQ-V02: header compacto recolhido e contagem coerente com props admitidas.
+- CQ-V03: expansão, título acessível/truncamento e controles por item.
+- CQ-V04: keyboard/focus e reorder apenas pendente elegível, sem drag obrigatório.
+- CQ-V05: estados loading/unavailable/error/blocked honestos, sem ações falsas.
+- CQ-V06: altura adaptativa/scroll no corpo, composer/confirmation nunca encobertos.
+- CQ-V07: browser QA full-page, Dock, 320/360/375/420, zoom 200%, light/dark e reduced-motion.
+- CQ-V08: nenhuma regressão no DraftRecovery, Starter Suggestions, ditado, envio e timeline.
+- CQ-V09: nenhuma fila, Work, persistência, scheduler ou autorização de backend fabricada.
+- CQ-V10: Vitest, typecheck, build/federation e evidência visual no SHA/config realmente testado.
+
+**Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=TO_INVENTORY; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=NOT_AUTHORIZED_BY_THIS_ADDENDUM; TESTS=TEST_NOT_RUN; DEPLOYMENT=NOT_EXECUTED; PHASE_PROGRESSION=NONE.
