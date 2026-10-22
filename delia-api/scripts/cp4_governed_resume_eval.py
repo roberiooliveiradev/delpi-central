@@ -143,12 +143,12 @@ def main() -> int:
     handler, counting = _compose(stage_timeout="30", max_attempts="2")
     report["A_resume_on_normal"] = _run(handler, counting, question)
 
-    handler, counting = _compose(stage_timeout="3.0", max_attempts="2")
+    handler, counting = _compose(stage_timeout="2.0", max_attempts="2")
     report["B_resume_on_forced_timeout"] = _run(
         handler, counting, question
     )
 
-    handler, counting = _compose(stage_timeout="3.0", max_attempts="1")
+    handler, counting = _compose(stage_timeout="2.0", max_attempts="1")
     report["C_legacy_off_forced_timeout"] = _run(
         handler, counting, question
     )

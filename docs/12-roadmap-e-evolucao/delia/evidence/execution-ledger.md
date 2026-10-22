@@ -17253,3 +17253,22 @@ I04_ACCEPTED=NO
 PHASE_PROGRESSION=NONE
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.372 — CP5: verificação independente do governed stage resume e remediação (2026-10-22)
+
+**2026-10-22 — CP5 independent verification & targeted remediation:** `DELIA-C3-GOVERNED-STAGE-RESUME-INDEPENDENT-VERIFICATION-01` (doc 91 §6 gates R1–R4). Reancorado em `origin/main=7a043525b4`; CP4 `a2d6576e37` + revisão `5f09a7156a` como referência histórica. **R1 (parcial→remediado):** replay de outcome já revalidava capability/schema/argumentos na superfície viva e a surface-list carrega o bearer delegado (revogação → terminal sem replay); defeito real — outcome parcial/incompleto era checkpointável → registro exige `is_complete`+`COMPLETED`, degradado provoca releitura legítima. **R2 (reproduzido→remediado):** `interaction_end` ancorava na entrada de `attempt()` → `TurnDeadline.started_at` fixa a âncora no início real da interação; fake clock prova 2ª tentativa com 29s (não 30) após 5s pré-orquestrador. **R3 (reproduzido→remediado):** `cancel_check` só na fronteira → `_CANCEL_CHECK`/`_TurnCancelled` nos seams de modelo/surface-list/relist/invoke; nenhuma operação nova após disconnect, in-flight descartado honestamente. Stream NDJSON real ~60s medido: `elapsed=60.4s`, grants `30.0`/`29.6`, `CONTINUING=1`, `turn_result` único. **R4:** `REAL_MCP_EVALUATION=TEST_NOT_RUN` (sem `DEV_PORTAL_*`); P1/P2 com modelo real → insuficiência honesta `NON_GROUNDED`. Regressão: backend completo PASS sem exclusões; `tsc`+vitest 322 PASS (fix de narrowing `let first!:` pré-existente upstream `cff65bb63b` em `conversationQueue.test.ts`). Sem persistência/engine nova; limites 2/60/30 preservados. Report: [92](../corrections/mcp-contextual-intelligence-orchestration/92-cp5-governed-stage-resume-verification.md).
+
+```text
+CP5_VERIFICATION=EXECUTED
+R1_CACHED_OUTCOME=REMEDIATED(complete-only checkpoint; relist=authenticated wire)
+R2_TOTAL_BUDGET=REMEDIATED(started_at anchor; 60s end-to-end proven)
+R3_STREAM_DISCONNECT=REMEDIATED(mid-attempt cancel seams; 60.4s real stream PASS)
+R4_REAL_MCP=TEST_NOT_RUN(DEV_PORTAL creds absent)
+BACKEND_REGRESSION=PASS(full suite, no hidden exclusions)
+FRONTEND_REGRESSION=PASS(tsc + 322 vitest)
+REAL_MODEL_EVALUATION=PASS(2s cap: CONTINUING=1, bounded retries, honest terminal)
+PRODUCTION_ENABLED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```

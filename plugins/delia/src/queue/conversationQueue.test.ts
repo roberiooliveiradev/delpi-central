@@ -34,8 +34,8 @@ describe("useConversationQueue (F03-B ephemeral queue)", () => {
       result.current.enqueue("A");
       result.current.enqueue("B");
     });
-    let first: ReturnType<typeof result.current.takeNext> = null;
-    let second: ReturnType<typeof result.current.takeNext> = null;
+    let first!: ReturnType<typeof result.current.takeNext>;
+    let second!: ReturnType<typeof result.current.takeNext>;
     act(() => {
       // Synchronous double-take simulates a replayed dispatch effect.
       first = result.current.takeNext();

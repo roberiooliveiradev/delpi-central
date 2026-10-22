@@ -253,6 +253,36 @@ def test_exhausted_interaction_budget_blocks_second_attempt():
 def test_cancellation_blocks_second_attempt():
     """Disconnect/cancel observed at the boundary: no second attempt
     ever starts — cancel_check is authoritative."""
+    flag = {"v": False}
+
+    class _CancelAfterFailure(_FlakyStageModel):
+        def invoke(self, request):
+            try:
+                return super().invoke(request)
+            except ModelInvocationError:
+                # The client disconnected while attempt 1's stage was
+                # failing — observed before any new attempt may start.
+                flag["v"] = True
+                raise
+
+    model = _CancelAfterFailure(
+        proposals=_select("teo", "analyze", {"view": "summary"}),
+        failures={ARGUMENTS_INSTRUCTION_ID: 1},
+    )
+    read = _resuming_orchestrator({"teo": TEO_TOOLS}, ("teo",), model)
+    attempt = read.attempt(
+        "resumo dos indicadores",
+        turn_deadline=TurnDeadline.start(30.0),
+        cancel_check=lambda: flag["v"],
+    )
+    assert flag["v"] is True
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+
+
+def test_cancellation_from_the_start_runs_no_model_call():
+    """Cancel already observed when the turn begins: not even the
+    first model stage may start a new invocation."""
     model = _FlakyStageModel(
         proposals=_select("teo", "analyze", {"view": "summary"}),
         failures={ARGUMENTS_INSTRUCTION_ID: 1},
@@ -264,7 +294,8 @@ def test_cancellation_blocks_second_attempt():
         cancel_check=lambda: True,
     )
     assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
-    assert _purposes(model).count(ARGUMENTS_INSTRUCTION_ID) == 1
+    assert attempt.error_code == "cancelled"
+    assert _purposes(model) == []
 
 
 def test_completed_read_outcome_is_replayed_not_duplicated():

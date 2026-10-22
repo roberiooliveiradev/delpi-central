@@ -251,3 +251,17 @@ permanece a causa-raiz subjacente (CP4 mitiga, não elimina).
 **R4 — cobertura operacional real (PENDING):** `REAL_MCP_EVALUATION=TEST_NOT_RUN` por ausência de bearer delegado. Testes com FakePort e surface-list real não comprovam autorização/efeito da invocação MCP real após resume. Exigir execução autenticada e avaliação de task outcome no SHA/config de destino antes de produção. `MODEL_REAL=EXECUTOR_REPORTED_PASS`; `MCP_REAL=TEST_NOT_RUN`; `PRODUCTION_ROLLOUT=NOT_AUTHORIZED`.
 
 **Próximo bounded step:** CP5 deve ser um **verification/targeted remediation gate** para R1–R4, sem redesenho da orquestração e sem ampliar budgets. Somente defeitos reproduzidos justificam fix. Manter `DELIA_MAX_GOVERNED_ATTEMPTS=1` em produção até evidências completas, com CRI de produção avaliado separadamente. `CP4_CODE=ACCEPT_WITH_RESIDUAL`; `CP5_REQUIRED=YES`; `I04_ACCEPTED=NO`.
+
+## 7. CP5 — verificação independente e remediação dirigida — 2026-10-22
+
+`DELIA-C3-GOVERNED-STAGE-RESUME-INDEPENDENT-VERIFICATION-01` — relatório completo em [92](./92-cp5-governed-stage-resume-verification.md). Verificação reancorada em `origin/main=7a043525b4`; os resíduos R1–R4 desta revisão foram reproduzidos independentemente antes de qualquer correção.
+
+**R1 — outcome em cache (parcialmente reproduzido → remediado):** o caminho de replay revalida capability/schema/argumentos contra a superfície viva e a surface-list já é wire autenticada com o bearer delegado (revogação falha o relist → terminal, sem replay) — o checkpoint não é autoridade paralela. **Defeito real:** outcome parcial/incompleto era checkpointável; correção mínima exige `is_complete`+`COMPLETED` para gravar — resultado degradado provoca releitura legítima. Dependência honesta registrada: não existe probe AuthZ separado do invoke; revogação invisível ao relist permanece residual bounded (≤60s, mesmo sujeito/argumentos).
+
+**R2 — âncora do orçamento (reproduzido → remediado):** `interaction_end` era ancorado na entrada de `attempt()`, permitindo exceder o teto de 60s da interação. `TurnDeadline` ganhou `started_at` no owner; o teste de relógio prova a 2ª tentativa recebendo 29s (não 30) com 5s pré-orquestrador + 26s consumidos; stream-eval real mediu grant `29.6s` na 2ª tentativa.
+
+**R3 — cancelamento mid-attempt (reproduzido → remediado):** `cancel_check` só valia na fronteira de tentativas. `_CANCEL_CHECK`/`_TurnCancelled` agora sondam os seams de modelo, surface-list, relist e invoke — nenhuma operação nova após disconnect; chamadas em curso não são interrompidas (caracterizado honestamente). **Stream NDJSON real de ~60s:** `elapsed=60.4s`, `CONTINUING=1` no stream vivo, `turn_result` único, grants `30.0`/`29.6` por tentativa.
+
+**R4 — MCP autenticado (TEST_NOT_RUN):** sem `DEV_PORTAL_*` provisionado; blocker registrado honestamente. Incidentes P1/P2 exercitados com modelo real no container (insuficiência honesta `NON_GROUNDED` nas duas perguntas; a perna de invoke segue bloqueada pela mesma credencial).
+
+**Regressão:** suíte backend completa PASS sem exclusões; frontend `tsc` PASS + 322 testes (fix mínimo de narrowing pré-existente do upstream `cff65bb63b` em `conversationQueue.test.ts`, fora do escopo CP5 mas bloqueante do gate). `CP4_CODE=ACCEPT_WITH_REMEDIATION`; `CP5_EXECUTED=YES`; `PRODUCTION_ENABLED=NO`; `I04_ACCEPTED=NO`.

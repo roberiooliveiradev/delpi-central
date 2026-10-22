@@ -4667,6 +4667,28 @@ _RESUME_STATE: contextvars.ContextVar[_AttemptCheckpoint | None] = (
 )
 
 
+class _TurnCancelled(Exception):
+    """CP5/R3: request cancellation was observed inside an attempt —
+    the NEXT real operation (model stage or provider invoke) must not
+    start. Distinct from a deadline: the cause is the client, not the
+    clock."""
+
+
+# Request-scoped cancellation probe — same ContextVar pattern. The
+# transport sets it (NDJSON disconnect event); in-process callers may
+# pass any predicate. Never consulted when absent.
+_CANCEL_CHECK: contextvars.ContextVar[Callable[[], bool] | None] = (
+    contextvars.ContextVar("delia_turn_cancel_check", default=None)
+)
+
+
+def _cancel_observed() -> bool:
+    """True only when the request's cancellation probe is bound AND
+    reports a disconnect — checked once per real-operation seam."""
+    check = _CANCEL_CHECK.get()
+    return check is not None and bool(check())
+
+
 def _resume_stage_key(
     instruction_id: str,
     input_text: str,
@@ -4921,18 +4943,26 @@ class OperationalCapabilityOrchestrator:
             if self._max_governed_attempts > 1 and confirmation is None
             else None
         )
-        # Bind the request-scoped activity sink and resume checkpoint
-        # for this call's context only — the instance is shared across
-        # concurrent turns.
+        # Bind the request-scoped activity sink, resume checkpoint and
+        # cancellation probe for this call's context only — the
+        # instance is shared across concurrent turns.
         sink_token = _ACTIVITY_SINK.set(activity_sink)
         resume_token = _RESUME_STATE.set(checkpoint)
+        cancel_token = _CANCEL_CHECK.set(cancel_check)
         try:
-            # Monotonic interaction end: computed once from the same
-            # clock, never extended. Each further attempt receives at
-            # most min(GOVERNED_ATTEMPT_MAX_SECONDS, remaining).
+            # Monotonic interaction end: anchored at the REAL start of
+            # the interaction's clock (TurnDeadline.start), never at
+            # this boundary — time already consumed before the
+            # orchestrator counts against the approved total. Each
+            # further attempt receives at most
+            # min(GOVERNED_ATTEMPT_MAX_SECONDS, remaining).
+            interaction_start = (
+                first_deadline.started_at
+                if first_deadline.started_at is not None
+                else first_deadline.clock()
+            )
             interaction_end = (
-                first_deadline.clock()
-                + self._interaction_total_budget_seconds
+                interaction_start + self._interaction_total_budget_seconds
             )
             deadline = first_deadline
             attempts = 0
@@ -4953,6 +4983,8 @@ class OperationalCapabilityOrchestrator:
                     reason = exc.reason
                 except TurnBudgetExhausted:
                     reason = "turn_budget_exhausted"
+                except _TurnCancelled:
+                    reason = "cancelled"
                 attempts += 1
                 _logger.info(
                     "orchestration stage=turn_budget decision=%s "
@@ -4999,6 +5031,7 @@ class OperationalCapabilityOrchestrator:
         finally:
             _ACTIVITY_SINK.reset(sink_token)
             _RESUME_STATE.reset(resume_token)
+            _CANCEL_CHECK.reset(cancel_token)
 
     def _attempt(
         self,
@@ -8754,6 +8787,8 @@ class OperationalCapabilityOrchestrator:
             # never widens the provider's own stage max.
             if deadline is not None:
                 deadline.check("surface_list")
+            if _cancel_observed():
+                raise _TurnCancelled()
             try:
                 surface = provider.list_groups(
                     correlation_id=correlation,
@@ -8788,6 +8823,8 @@ class OperationalCapabilityOrchestrator:
             return None
         if deadline is not None:
             deadline.check("surface_relist")
+        if _cancel_observed():
+            raise _TurnCancelled()
         surface = provider.list_groups(
             correlation_id=correlation,
             timeout_seconds=(
@@ -9035,6 +9072,11 @@ class OperationalCapabilityOrchestrator:
                 raise _StageDeadlineExceeded(
                     "turn_budget_exhausted"
                 ) from exc
+        # CP5/R3: cancellation observed mid-attempt stops the next real
+        # operation — no new model call (and no replay) after a
+        # disconnect; the attempt unwinds to the honest terminal.
+        if _cancel_observed():
+            raise _TurnCancelled()
         # CP4 governed resume: a recorded proposal replays only for a
         # byte-identical stage input — completed typed work survives a
         # downstream timeout without re-spending the model, and every
@@ -10941,6 +10983,10 @@ class OperationalCapabilityOrchestrator:
             )
         if deadline is not None:
             deadline.check("provider_invoke")
+        # CP5/R3: cancellation observed mid-attempt stops the provider
+        # call too — no new operation after a disconnect.
+        if _cancel_observed():
+            raise _TurnCancelled()
         # CP4 governed resume frontier — the capability is resolved
         # from the FRESH live group above, never from the checkpoint.
         # A recorded outcome replays only for an identical
@@ -11064,7 +11110,16 @@ class OperationalCapabilityOrchestrator:
         # is recorded BEFORE the post-invoke deadline check: the call
         # provably completed; a late deadline must not turn a finished
         # READ into a duplicated one on resume.
-        if resume_state is not None and resumable:
+        # CP5/R1: only a COMPLETE, fully-postconditioned outcome is a
+        # verifiable checkpoint — a partial/incomplete result is
+        # degraded evidence, so the resumed attempt re-issues the same
+        # non-mutating read instead of freezing it.
+        if (
+            resume_state is not None
+            and resumable
+            and outcome.is_complete
+            and outcome.status is SpecialistResultStatus.COMPLETED
+        ):
             resume_state.invoke_outcomes[invoke_key] = outcome
         # An outcome that arrives after the turn deadline may not be
         # processed — fail truthfully at the boundary.
