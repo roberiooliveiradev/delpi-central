@@ -189,6 +189,8 @@ def _decision_view(decision) -> dict[str, Any]:
     return {
         "decision_id": decision.decision_id,
         "proposal_id": decision.proposal_id,
+        "operation_id": decision.operation_id,
+        "field_key": decision.field_key,
         "actor_subject": decision.actor_subject,
         "decision": decision.decision,
         "reason_code": decision.reason_code,

@@ -83,16 +83,20 @@ actionables: `IN_REVIEW` e `DECIDED` permanece legível; decisões em review
 | ACCEPT em não elegível / CPF | 422 | `ENRICHMENT_PROPOSAL_NOT_ELIGIBLE` / `ENRICHMENT_UNSUPPORTED_DOCUMENT` |
 | body inválido / campos server-owned | 422 | `invalid_request` |
 
-## Persistência (V002)
+## Persistência (V002 + V003)
 
-`supplies.supplier_enrichment_{reviews,proposals,decisions,events}` — UUIDs
-server-side, FK RESTRICT, `UNIQUE(review_id, field_key)`,
-`UNIQUE(review_id, idempotency_key)`, revision otimista, eventos append-only,
+`supplies.supplier_enrichment_{reviews,proposals,decisions,events}` +
+`supplier_enrichment_decision_operations` — UUIDs server-side, FK RESTRICT,
+`UNIQUE(review_id, field_key)`, revision otimista, eventos append-only,
 timestamps UTC. `tax_id` nunca é persistido em proposta (valores `NULL`).
-Migration aditiva, checksum-verify (runner existente). Rollback manual
-documentado: `DROP TABLE` das quatro tabelas em ordem reversa (events →
-decisions → proposals → reviews) — não implementado como migration (apenas
-`up`, sem reset destrutivo).
+
+**V003 (rework):** a identidade da requisição idempotente vive em
+`decision_operations` — `UNIQUE(review_id, idempotency_key)`,
+`request_hash`, `review_revision`, `decision`, `reason_code`. Cada
+`decision` por campo referencia `operation_id NOT NULL`. Isso corrige o
+defeito de V002 (unique por decisão inviabilizava bulk >1 campo).
+Rollback manual documentado: `DROP TABLE` em ordem reversa — não
+implementado como migration (apenas `up`, sem reset destrutivo).
 
 ## LGPD / Retenção (GATE-B)
 

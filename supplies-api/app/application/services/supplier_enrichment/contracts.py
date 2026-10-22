@@ -59,17 +59,34 @@ class ProposalRecord:
 
 
 @dataclass(frozen=True)
+class OperationRecord:
+    """One idempotent decision *request* — single or bulk."""
+
+    operation_id: str
+    review_id: str
+    actor_subject: str
+    decision: str
+    reason_code: str | None
+    idempotency_key: str
+    request_hash: str
+    review_revision: int
+    decided_at: datetime
+
+
+@dataclass(frozen=True)
 class DecisionRecord:
+    """One per-field decision, linked to its request operation."""
+
     decision_id: str
     review_id: str
     proposal_id: str
+    operation_id: str
+    field_key: str
     actor_subject: str
     decision: str
     reason_code: str | None
     decided_at: datetime
     review_revision: int
-    idempotency_key: str
-    request_hash: str
 
 
 @dataclass(frozen=True)
@@ -144,15 +161,17 @@ class SupplierEnrichmentReviewRepository(Protocol):
 
     def get_decisions(self, review_id: str) -> list[DecisionRecord]: ...
 
-    def find_decision_by_idempotency_key(
+    def find_operation_by_idempotency_key(
         self, *, review_id: str, idempotency_key: str
-    ) -> DecisionRecord | None: ...
+    ) -> OperationRecord | None: ...
 
     def apply_decisions(
         self,
         *,
         review_id: str,
         actor_subject: str,
+        decision: Decision,
+        reason_code: str | None,
         decisions: Sequence[DecisionItem],
         expected_revision: int,
         idempotency_key: str,

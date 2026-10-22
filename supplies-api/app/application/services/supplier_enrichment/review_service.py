@@ -353,6 +353,8 @@ class SupplierEnrichmentReviewService:
         updated_review, updated_proposals = self._repository.apply_decisions(
             review_id=review.review_id,
             actor_subject=user.id,
+            decision=decisions[0].decision,
+            reason_code=decisions[0].reason_code,
             decisions=decisions,
             expected_revision=expected_revision,
             idempotency_key=idempotency_key,
@@ -480,7 +482,7 @@ class SupplierEnrichmentReviewService:
         """
         review = self._load_owned_review(user=user, review_id=review_id)
         proposals = self._repository.get_proposals(review.review_id)
-        prior = self._repository.find_decision_by_idempotency_key(
+        prior = self._repository.find_operation_by_idempotency_key(
             review_id=review.review_id, idempotency_key=idempotency_key
         )
         if prior is not None:
