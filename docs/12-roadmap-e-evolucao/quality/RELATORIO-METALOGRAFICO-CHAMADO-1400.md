@@ -25,4 +25,4 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 
 ## Tema da tela
 
-A interface do MFE acompanha `data-theme` do Portal. A folha na tela muda só a cor. A impressão isolada e o PDF permanecem na paleta do HTML (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O CSS de tema é `plugins/metalography/src/styles/screen-theme.css`; o HTML de referência não entra nessa alteração.
+A interface do MFE acompanha `data-theme` do Portal em todas as superfícies de tela. As cores ficam nos tokens `--mg-*` de `plugins/metalography/src/styles/screen-theme.css`, mapeados para os tokens do Portal. A folha na tela muda só a cor. A impressão isolada e o PDF permanecem na paleta do HTML (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O HTML de referência não entra nessa alteração.

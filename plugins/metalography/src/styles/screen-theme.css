@@ -1,69 +1,104 @@
-/* Tema de tela do Metalografia. A paleta impressa permanece em reference-document.css. */
+/* Tema de tela. A geometria e a impressão ficam em reference-document.css. */
 
 .dashboard-metalography {
-  background: var(--app-canvas, var(--bg, #edf3f6));
-  color: var(--text, var(--ink));
+  --mg-bg: var(--surface-2, #edf3f6);
+  --mg-surface: var(--surface, #fff);
+  --mg-surface-raised: var(--surface, #fff);
+  --mg-surface-muted: color-mix(in srgb, var(--primary, #00a4ce) 7%, var(--surface, #f3f7f9));
+  --mg-text: var(--text, #25465f);
+  --mg-text-muted: var(--text-muted, #71899d);
+  --mg-heading: var(--secundary, #0b3a5d);
+  --mg-border: var(--border, #d5e2ea);
+  --mg-border-strong: var(--border-2, #c6d7e1);
+  --mg-primary: var(--primary, #00a4ce);
+  --mg-primary-text: #fff;
+  --mg-navy: var(--secundary, #0b3a5d);
+  --mg-on-navy: #fff;
+  --mg-danger: var(--danger, #b42318);
+  --mg-danger-bg: var(--alert-danger-bg, #fff0ee);
+  --mg-danger-border: var(--alert-danger-border, #f0cbc7);
+  --mg-success: var(--success, #067647);
+  --mg-success-bg: var(--alert-success-bg, #e9f6ef);
+  --mg-control-bg: var(--control-bg, #fff);
+  --mg-control-text: var(--control-text, #173e59);
+  --mg-control-border: var(--control-border, #cddce4);
+  --mg-placeholder: var(--control-placeholder, #9aabba);
+  --mg-hover: color-mix(in srgb, var(--primary, #00a4ce) 10%, var(--surface, #fff));
+  --mg-focus-ring: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--primary, #089bdb) 25%, transparent));
+  --mg-overlay: rgba(5, 25, 39, 0.62);
+  --mg-paper: var(--surface, #fff);
+  --mg-paper-muted: #f1f6f9;
+  --mg-line: #cbdbe5;
+  --mg-rule: #d6e2e9;
+  --mg-artboard: #fff;
+  --mg-stage: #12212b;
+  --mg-hero-text: #fff;
+  --mg-hero-muted: #d8e8f0;
   color-scheme: light;
+  background: var(--mg-bg);
+  color: var(--mg-text);
 }
 
+:root[data-theme="dark"] .dashboard-metalography {
+  --mg-bg: var(--app-canvas, #0f1115);
+  --mg-surface: var(--surface-2, #1b2030);
+  --mg-surface-raised: color-mix(in srgb, var(--surface-2, #1b2030) 86%, #000);
+  --mg-surface-muted: var(--surface-3, #111521);
+  --mg-text: var(--text, rgba(255, 255, 255, 0.85));
+  --mg-text-muted: var(--text-muted, rgba(255, 255, 255, 0.7));
+  --mg-heading: color-mix(in srgb, var(--primary, #089bdb) 78%, #fff);
+  --mg-border: var(--border, rgba(255, 255, 255, 0.12));
+  --mg-border-strong: var(--border-2, rgba(255, 255, 255, 0.16));
+  --mg-primary: var(--primary, #089bdb);
+  --mg-navy: color-mix(in srgb, var(--primary, #089bdb) 28%, #041018);
+  --mg-danger: var(--danger, #ff6b6b);
+  --mg-danger-bg: var(--alert-danger-bg, rgba(255, 107, 107, 0.18));
+  --mg-danger-border: var(--alert-danger-border, rgba(255, 107, 107, 0.5));
+  --mg-success: var(--success, #2ecc71);
+  --mg-success-bg: var(--alert-success-bg, rgba(46, 204, 113, 0.15));
+  --mg-control-bg: var(--control-bg, #1b2030);
+  --mg-control-text: var(--control-text, rgba(255, 255, 255, 0.85));
+  --mg-control-border: var(--control-border, rgba(255, 255, 255, 0.22));
+  --mg-placeholder: var(--control-placeholder, rgba(255, 255, 255, 0.55));
+  --mg-hover: color-mix(in srgb, var(--primary, #089bdb) 16%, var(--surface-2, #1b2030));
+  --mg-paper: var(--surface-2, #1b2030);
+  --mg-paper-muted: color-mix(in srgb, var(--surface-3, #111521) 72%, var(--surface-2, #1b2030));
+  --mg-line: var(--border, rgba(255, 255, 255, 0.16));
+  --mg-rule: var(--border, rgba(255, 255, 255, 0.16));
+  --mg-hero-muted: var(--text-muted, rgba(255, 255, 255, 0.7));
+  --mg-overlay: rgba(0, 0, 0, 0.72);
+  color-scheme: dark;
+}
+
+.dashboard-metalography .home-screen,
 .dashboard-metalography .toolbar {
-  color: var(--text-muted, #496579);
+  background: var(--mg-bg);
+  color: var(--mg-text-muted);
 }
 
-.dashboard-metalography button.primary,
-.dashboard-metalography .home-new {
-  background: var(--secundary, var(--navy));
-  color: var(--white, #fff);
+.dashboard-metalography .toolbar-note,
+.dashboard-metalography .toolbar-note strong {
+  color: var(--mg-text);
 }
 
-.dashboard-metalography button.secondary,
-.dashboard-metalography .filter-clear,
-.dashboard-metalography .report-open {
-  background: var(--surface, var(--white));
-  color: var(--secundary, var(--navy));
-  border-color: var(--border-2, #c6d7e1);
-}
-
-.dashboard-metalography .save-button {
-  background: var(--primary, var(--cyan));
-  color: var(--white, #fff);
-}
-
-.dashboard-metalography button:hover:not(:disabled),
-.dashboard-metalography .home-new:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.dashboard-metalography button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.dashboard-metalography .home-screen {
-  background: transparent;
-  color: var(--text, var(--ink));
-}
-
-.dashboard-metalography .home-header {
-  border-bottom-color: var(--border, #d8e4ea);
-}
-
+.dashboard-metalography .home-header,
 .dashboard-metalography .home-logo-wrap {
-  border-right-color: var(--border, #d3e0e7);
+  border-color: var(--mg-border);
 }
 
-.dashboard-metalography .home-kicker,
-.dashboard-metalography .home-eyebrow {
-  color: var(--primary, #0089ad);
+.dashboard-metalography .home-kicker {
+  color: var(--mg-primary);
 }
 
 .dashboard-metalography .home-brand-copy h1,
 .dashboard-metalography .reports-panel-head h2,
 .dashboard-metalography .report-filter-title strong,
 .dashboard-metalography .saved-heading strong,
+.dashboard-metalography .saved-details strong,
+.dashboard-metalography .empty-state strong,
 .dashboard-metalography .return-home-dialog h2,
 .dashboard-metalography .crop-head h3 {
-  color: var(--secundary, var(--navy));
+  color: var(--mg-heading);
 }
 
 .dashboard-metalography .home-brand-copy p,
@@ -78,251 +113,297 @@
 .dashboard-metalography .return-home-dialog p,
 .dashboard-metalography .crop-head p,
 .dashboard-metalography .crop-tools span,
-.dashboard-metalography .crop-tools label {
-  color: var(--text-muted, #698195);
+.dashboard-metalography .crop-tools label,
+.dashboard-metalography .empty-state span {
+  color: var(--mg-text-muted);
 }
 
 .dashboard-metalography .home-hero {
-  background: linear-gradient(112deg, var(--secundary, var(--navy)) 0%, color-mix(in srgb, var(--primary, var(--cyan)) 42%, var(--secundary, var(--navy))) 100%);
-  color: var(--white, #fff);
+  background-color: var(--mg-navy);
+  background-image: linear-gradient(112deg, var(--mg-navy) 0%, color-mix(in srgb, var(--mg-primary) 42%, var(--mg-navy)) 100%);
+  color: var(--mg-hero-text);
+}
+
+.dashboard-metalography .home-eyebrow,
+.dashboard-metalography .home-stat strong {
+  color: var(--mg-hero-text);
 }
 
 .dashboard-metalography .home-hero p,
 .dashboard-metalography .home-stat span {
-  color: color-mix(in srgb, var(--white, #fff) 86%, transparent);
+  color: var(--mg-hero-muted);
 }
 
-.dashboard-metalography .home-stat strong,
-.dashboard-metalography .home-eyebrow {
-  color: var(--white, #fff);
+.dashboard-metalography .home-stat {
+  border-color: color-mix(in srgb, var(--mg-hero-text) 28%, transparent);
+  background: color-mix(in srgb, var(--mg-hero-text) 10%, transparent);
+}
+
+.dashboard-metalography button.primary,
+.dashboard-metalography .home-new,
+.dashboard-metalography .app-toast,
+.dashboard-metalography .sec-number,
+.dashboard-metalography .th,
+.dashboard-metalography .footer {
+  background: var(--mg-navy);
+  color: var(--mg-on-navy);
+}
+
+.dashboard-metalography .save-button {
+  background: var(--mg-primary);
+  color: var(--mg-primary-text);
+}
+
+.dashboard-metalography button.secondary,
+.dashboard-metalography .filter-clear,
+.dashboard-metalography .report-open,
+.dashboard-metalography .crop-close {
+  background: var(--mg-surface);
+  color: var(--mg-heading);
+  border-color: var(--mg-border-strong);
+}
+
+.dashboard-metalography .report-copy,
+.dashboard-metalography .upload-row label,
+.dashboard-metalography .adjust-btn {
+  background: var(--mg-hover);
+  color: var(--mg-heading);
+  border-color: var(--mg-border-strong);
+}
+
+.dashboard-metalography .report-delete,
+.dashboard-metalography .delete-report-error,
+.dashboard-metalography .storage-hint.error {
+  background: var(--mg-danger-bg);
+  color: var(--mg-danger);
+  border-color: var(--mg-danger-border);
+}
+
+.dashboard-metalography .delete-confirm-button {
+  background: var(--mg-danger);
+  color: var(--mg-primary-text);
 }
 
 .dashboard-metalography .reports-panel,
 .dashboard-metalography .saved-report,
 .dashboard-metalography .return-home-dialog,
 .dashboard-metalography .crop-panel {
-  background: var(--surface, var(--white));
-  border-color: var(--border, #d9e4e9);
-  color: var(--text, var(--ink));
+  background: var(--mg-surface);
+  border-color: var(--mg-border);
+  color: var(--mg-text);
+}
+
+.dashboard-metalography .report-filter-box,
+.dashboard-metalography .empty-state,
+.dashboard-metalography .field-card,
+.dashboard-metalography .image-card,
+.dashboard-metalography .verdict-card,
+.dashboard-metalography .analyst-card,
+.dashboard-metalography .meta-card,
+.dashboard-metalography .image-frame {
+  background: var(--mg-surface-raised);
+  border-color: var(--mg-border);
+  color: var(--mg-text);
+}
+
+.dashboard-metalography .meta-card,
+.dashboard-metalography .image-frame,
+.dashboard-metalography .cell:nth-child(6n+4),
+.dashboard-metalography .cell:nth-child(6n+5),
+.dashboard-metalography .cell:nth-child(6n+6) {
+  background: var(--mg-paper-muted);
 }
 
 .dashboard-metalography .report-count,
 .dashboard-metalography .saved-icon,
 .dashboard-metalography .empty-icon {
-  background: color-mix(in srgb, var(--primary, var(--cyan)) 12%, var(--surface, var(--white)));
-  color: var(--primary, #087e9e);
-}
-
-.dashboard-metalography .saved-report:hover {
-  border-color: color-mix(in srgb, var(--primary, var(--cyan)) 45%, var(--border, #aacbd9));
-}
-
-.dashboard-metalography .saved-details strong,
-.dashboard-metalography .empty-state strong,
-.dashboard-metalography .filter-field {
-  color: var(--text, #36566c);
+  background: color-mix(in srgb, var(--mg-primary) 14%, var(--mg-surface));
+  color: var(--mg-primary);
 }
 
 .dashboard-metalography .result-badge.is-conforme {
-  background: var(--alert-success-bg, #e9f6ef);
-  color: var(--success, #26724b);
+  background: var(--mg-success-bg);
+  color: var(--mg-success);
 }
 
-.dashboard-metalography .result-badge.is-nao-conforme,
-.dashboard-metalography .delete-report-error,
-.dashboard-metalography .storage-hint.error,
-.dashboard-metalography .report-delete {
-  background: var(--alert-danger-bg, #fff0ee);
-  color: var(--danger, #a54337);
-  border-color: var(--alert-danger-border, #f0cbc7);
+.dashboard-metalography .result-badge.is-nao-conforme {
+  background: var(--mg-danger-bg);
+  color: var(--mg-danger);
 }
 
 .dashboard-metalography .result-badge.is-pending {
-  background: var(--surface-2, #f1f4f6);
-  color: var(--text-muted, #748795);
+  background: var(--mg-surface-muted);
+  color: var(--mg-text-muted);
 }
 
-.dashboard-metalography .report-copy {
-  background: color-mix(in srgb, var(--primary, var(--cyan)) 8%, var(--surface, var(--white)));
-  color: var(--primary, #0b6f8d);
-  border-color: color-mix(in srgb, var(--primary, var(--cyan)) 35%, var(--border, #b9dbe5));
+.dashboard-metalography .filter-field {
+  color: var(--mg-text);
 }
 
-.dashboard-metalography .delete-confirm-button {
-  background: var(--danger, #b64139);
-  color: var(--white, #fff);
+.dashboard-metalography .filter-field input,
+.dashboard-metalography .entry,
+.dashboard-metalography textarea {
+  background-color: var(--mg-control-bg);
+  color: var(--mg-control-text);
+  border-color: var(--mg-control-border);
 }
 
-.dashboard-metalography .empty-state,
-.dashboard-metalography .report-filter-box {
-  background: var(--surface-2, #fbfdfe);
-  border-color: var(--border, #cbdbe3);
-  color: var(--text, var(--ink));
+.dashboard-metalography .choice {
+  color: var(--mg-text);
+  background: transparent;
 }
 
-.dashboard-metalography .filter-field input {
-  background: var(--control-bg, var(--white));
-  color: var(--control-text, var(--text));
-  border-color: var(--control-border, #cddce4);
+.dashboard-metalography .sheet .entry,
+.dashboard-metalography .sheet textarea {
+  background-color: transparent;
 }
 
-.dashboard-metalography .filter-field input:focus {
-  border-color: var(--primary, var(--cyan));
-  box-shadow: var(--focus-ring, 0 0 0 3px color-mix(in srgb, var(--primary, var(--cyan)) 25%, transparent));
+.dashboard-metalography .filter-field input::placeholder,
+.dashboard-metalography .entry::placeholder,
+.dashboard-metalography textarea::placeholder {
+  color: var(--mg-placeholder);
 }
 
-.dashboard-metalography .filter-field input::placeholder {
-  color: var(--control-placeholder, #a2b1ba);
+.dashboard-metalography .filter-field input:focus,
+.dashboard-metalography .entry:focus,
+.dashboard-metalography textarea:focus,
+.dashboard-metalography button:focus-visible {
+  border-color: var(--mg-primary);
+  box-shadow: var(--mg-focus-ring);
+  outline: 2px solid var(--mg-primary);
+  outline-offset: 2px;
 }
 
-.dashboard-metalography .crop-close {
-  background: var(--surface-2, #f2f6f8);
-  color: var(--secundary, var(--navy));
+.dashboard-metalography button:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.dashboard-metalography button.secondary:hover:not(:disabled),
+.dashboard-metalography .filter-clear:hover:not(:disabled),
+.dashboard-metalography .report-open:hover:not(:disabled),
+.dashboard-metalography .report-copy:hover:not(:disabled),
+.dashboard-metalography .saved-report:hover,
+.dashboard-metalography .adjust-btn:hover:not(:disabled) {
+  background: var(--mg-hover);
+  border-color: var(--mg-primary);
+}
+
+.dashboard-metalography .report-delete:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mg-danger) 22%, var(--mg-surface));
+}
+
+.dashboard-metalography button:disabled,
+.dashboard-metalography .adjust-btn:disabled,
+.dashboard-metalography .filter-clear:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-metalography .return-home-modal,
+.dashboard-metalography .crop-modal {
+  background: var(--mg-overlay);
+}
+
+.dashboard-metalography .crop-stage {
+  background: var(--mg-stage);
+  border-color: var(--mg-border);
 }
 
 .dashboard-metalography .crop-tools input {
-  accent-color: var(--primary, var(--cyan));
+  accent-color: var(--mg-primary);
 }
 
-.dashboard-metalography .app-toast {
-  background: var(--secundary, var(--navy));
-  color: var(--white, #fff);
+.dashboard-metalography .sheet {
+  background: var(--mg-paper);
+  color: var(--mg-text);
 }
 
-/* A folha acompanha o tema só na tela. Impressão não entra neste bloco. */
-@media screen {
-  :root[data-theme="dark"] .dashboard-metalography {
-    color-scheme: dark;
-  }
+.dashboard-metalography .report-head {
+  border-bottom-color: var(--mg-line);
+  border-top-color: var(--mg-primary);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .sheet {
-    background: var(--surface-2, #1b2030);
-    color: var(--text, rgba(255, 255, 255, 0.85));
-    box-shadow: 0 5px 26px rgba(0, 0, 0, 0.45);
-  }
+.dashboard-metalography .title-block h1,
+.dashboard-metalography .sec-heading h2,
+.dashboard-metalography .image-title {
+  color: var(--mg-heading);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .report-head {
-    border-bottom-color: var(--border, rgba(255, 255, 255, 0.12));
-  }
+.dashboard-metalography .title-block p,
+.dashboard-metalography .sec-heading .sub,
+.dashboard-metalography .label,
+.dashboard-metalography .image-caption,
+.dashboard-metalography .upload-row .hint,
+.dashboard-metalography .verdict-title,
+.dashboard-metalography .obs-label,
+.dashboard-metalography .image-placeholder {
+  color: var(--mg-text-muted);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .title-block h1,
-  :root[data-theme="dark"] .dashboard-metalography .sec-heading h2,
-  :root[data-theme="dark"] .dashboard-metalography .image-title {
-    color: color-mix(in srgb, var(--primary, #089bdb) 78%, white);
-  }
+.dashboard-metalography .image-placeholder strong {
+  color: var(--mg-primary);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .title-block p,
-  :root[data-theme="dark"] .dashboard-metalography .sec-heading .sub,
-  :root[data-theme="dark"] .dashboard-metalography .label,
-  :root[data-theme="dark"] .dashboard-metalography .image-caption,
-  :root[data-theme="dark"] .dashboard-metalography .upload-row .hint,
-  :root[data-theme="dark"] .dashboard-metalography .verdict-title,
-  :root[data-theme="dark"] .dashboard-metalography .obs-label,
-  :root[data-theme="dark"] .dashboard-metalography .image-placeholder {
-    color: var(--text-muted, rgba(255, 255, 255, 0.7));
-  }
+.dashboard-metalography .measure-table,
+.dashboard-metalography .cell {
+  border-color: var(--mg-line);
+  color: var(--mg-text);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .image-placeholder strong {
-    color: var(--primary, #089bdb);
-  }
+.dashboard-metalography .choice input {
+  border-color: var(--mg-control-border);
+  background: var(--mg-control-bg);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .meta-card,
-  :root[data-theme="dark"] .dashboard-metalography .field-card,
-  :root[data-theme="dark"] .dashboard-metalography .image-card,
-  :root[data-theme="dark"] .dashboard-metalography .verdict-card,
-  :root[data-theme="dark"] .dashboard-metalography .analyst-card,
-  :root[data-theme="dark"] .dashboard-metalography .image-frame {
-    background: color-mix(in srgb, var(--surface-2, #1b2030) 78%, black);
-    border-color: var(--border, rgba(255, 255, 255, 0.12));
-    box-shadow: none;
-  }
+.dashboard-metalography .choice input:checked:after {
+  background: var(--mg-primary);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .entry,
-  :root[data-theme="dark"] .dashboard-metalography textarea,
-  :root[data-theme="dark"] .dashboard-metalography .choice {
-    color: var(--control-text, var(--text));
-    border-color: var(--control-border, rgba(255, 255, 255, 0.22));
-  }
+.dashboard-metalography textarea {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 4.7mm,
+    var(--mg-rule) 4.7mm,
+    var(--mg-rule) 4.9mm
+  );
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .entry::placeholder {
-    color: var(--control-placeholder, rgba(255, 255, 255, 0.55));
-  }
+.dashboard-metalography .footer small {
+  color: color-mix(in srgb, var(--mg-on-navy) 78%, transparent);
+}
 
-  :root[data-theme="dark"] .dashboard-metalography .entry:focus,
-  :root[data-theme="dark"] .dashboard-metalography textarea:focus {
-    border-color: var(--primary, #089bdb);
-    box-shadow: 0 1px 0 var(--primary, #089bdb);
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .sec-number,
-  :root[data-theme="dark"] .dashboard-metalography .th,
-  :root[data-theme="dark"] .dashboard-metalography .footer {
-    background: color-mix(in srgb, var(--primary, #089bdb) 32%, #041018);
-    color: var(--text, #fff);
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .footer small {
-    color: var(--text-muted, rgba(255, 255, 255, 0.7));
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .measure-table {
-    border-color: var(--border, rgba(255, 255, 255, 0.12));
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .cell {
-    border-top-color: var(--border, rgba(255, 255, 255, 0.12));
-    background: transparent;
-    color: var(--text, rgba(255, 255, 255, 0.85));
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .cell:nth-child(6n+4),
-  :root[data-theme="dark"] .dashboard-metalography .cell:nth-child(6n+5),
-  :root[data-theme="dark"] .dashboard-metalography .cell:nth-child(6n+6) {
-    background: color-mix(in srgb, var(--surface-3, #111521) 65%, var(--surface-2, #1b2030));
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .upload-row label,
-  :root[data-theme="dark"] .dashboard-metalography .adjust-btn {
-    background: var(--control-bg, #1b2030);
-    color: var(--text, rgba(255, 255, 255, 0.85));
-    border-color: var(--control-border, rgba(255, 255, 255, 0.22));
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography .choice input {
-    border-color: var(--control-border, rgba(255, 255, 255, 0.22));
-    background: var(--control-bg, transparent);
-  }
-
-  :root[data-theme="dark"] .dashboard-metalography textarea {
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 4.7mm,
-      var(--border, rgba(255, 255, 255, 0.16)) 4.7mm,
-      var(--border, rgba(255, 255, 255, 0.16)) 4.9mm
-    );
-  }
-
-  /* Logotipo e esquema técnico conservam o fundo claro do arquivo original. */
-  :root[data-theme="dark"] .dashboard-metalography .logo-wrap,
-  :root[data-theme="dark"] .dashboard-metalography .diagram-card {
-    background: var(--white, #fff);
-  }
+.dashboard-metalography .logo-wrap,
+.dashboard-metalography .diagram-card,
+.dashboard-metalography .image-frame img.preview {
+  background: var(--mg-artboard);
 }
 
 /* print-palette:start */
 @media print {
   .dashboard-metalography,
   :root[data-theme="dark"] .dashboard-metalography {
-    --navy: #0b3a5d;
-    --blue: #00527e;
-    --cyan: #00a4ce;
-    --ink: #25465f;
-    --muted: #71899d;
-    --line: #cbdbe5;
-    --pale: #f3f7f9;
-    --white: #fff;
-    --red: #d83232;
+    --mg-bg: #fff;
+    --mg-surface: #fff;
+    --mg-surface-raised: #fff;
+    --mg-surface-muted: #f5f8fa;
+    --mg-text: #25465f;
+    --mg-text-muted: #71899d;
+    --mg-heading: #0b3a5d;
+    --mg-border: #d5e2ea;
+    --mg-border-strong: #c6d7e1;
+    --mg-primary: #00a4ce;
+    --mg-primary-text: #fff;
+    --mg-navy: #0b3a5d;
+    --mg-on-navy: #fff;
+    --mg-paper: #fff;
+    --mg-paper-muted: #f5f8fa;
+    --mg-line: #cbdbe5;
+    --mg-rule: #d6e2e9;
+    --mg-artboard: #fff;
+    --mg-control-text: #25465f;
+    --mg-control-border: #cbdbe5;
+    --mg-placeholder: #9aabba;
     background: #fff !important;
     color: #25465f !important;
     color-scheme: light;

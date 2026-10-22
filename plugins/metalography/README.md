@@ -47,9 +47,9 @@ Os diálogos de exclusão, cópia, saída sem salvar e recorte usam a caixa vis�
 
 ## Tema
 
-A tela acompanha o `data-theme` do Portal (`light` ou `dark`). Não há seletor próprio. Listagem, filtros, cartões, botões, barra, mensagens, diálogos e a folha usam os tokens `--surface`, `--text`, `--primary`, `--secundary`, `--danger` e `--success`.
+A tela acompanha o `data-theme` que o Portal grava em `<html>`. Não há seletor próprio. As cores de tela passam pelos tokens `--mg-*` em `screen-theme.css`, mapeados para `--surface`, `--surface-2`, `--app-canvas`, `--text`, `--primary`, `--secundary`, `--control-bg`, `--danger` e `--success`. No escuro, título e faixa não usam `--secundary` cru, porque o Portal não clareia esse token.
 
-A impressão isolada e o PDF não mudam. O iframe de `printDelpiDocumentHtml` restaura a paleta documental (`#0b3a5d`, `#00a4ce`, `#25465f`, fundo `#fff`) em `@media print`, mesmo quando a tela está escura. O logotipo e o esquema técnico não são recoloridos.
+A impressão isolada e o PDF não mudam. Em `@media print` os tokens `--mg-*` voltam à paleta documental (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O logotipo e o esquema técnico não são recoloridos.
 
 ## Desenvolvimento
 
