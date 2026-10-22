@@ -49,7 +49,7 @@ Os diálogos de exclusão, cópia, saída sem salvar e recorte usam a caixa vis�
 
 A tela acompanha o `data-theme` que o Portal grava em `<html>`. Não há seletor próprio. As cores de tela passam pelos tokens `--mg-*` em `screen-theme.css`, mapeados para `--surface`, `--surface-2`, `--app-canvas`, `--text`, `--primary`, `--secundary`, `--control-bg`, `--danger` e `--success`. No escuro, título e faixa não usam `--secundary` cru, porque o Portal não clareia esse token.
 
-A impressão isolada e o PDF não mudam. Em `@media print` os tokens `--mg-*` voltam à paleta documental (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O logotipo e o esquema técnico não são recoloridos.
+A impressão isolada e o PDF não mudam. Em `@media print` os tokens `--mg-*` voltam à paleta documental (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O esquema técnico não é recolorido. No tema escuro, a marca Delpi da tela usa a logo cadastrada para fundo escuro (`logoDelpiOnDark`). A impressão volta à logo documental de fundo claro.
 
 ## Desenvolvimento
 

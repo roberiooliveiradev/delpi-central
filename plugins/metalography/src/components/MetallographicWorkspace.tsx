@@ -4,7 +4,7 @@ import { lockContainedModalScroll, printDelpiDocumentHtml, useContainedModalView
 import font400Url from "../assets/delpi-sans-400.otf";
 import font700Url from "../assets/delpi-sans-700.otf";
 import diagramUrl from "../assets/measurement-scheme.png";
-import logoUrl from "../assets/delpi-logo.png";
+import { DelpiReportLogo } from "./DelpiReportLogo";
 import {
   createReport,
   deleteReport,
@@ -416,7 +416,7 @@ export function MetallographicWorkspace({
         <div className="home-shell">
           <header className="home-header">
             <div className="home-brand">
-              <div className="home-logo-wrap"><img id="home-logo" src={logoUrl} alt="DELPI" /></div>
+              <div className="home-logo-wrap"><DelpiReportLogo id="home-logo" alt="DELPI" /></div>
               <div className="home-brand-copy"><div className="home-kicker">ENGENHARIA · QUALIDADE</div><h1>Análises metalográficas</h1><p>Relatórios de crimpagem de terminais</p></div>
             </div>
             <button className="home-new" type="button" disabled={!canCreate || busy || forbidden} onClick={() => { void createBlank(); }}><span className="home-plus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></span><span>Novo Relatório</span></button>
@@ -481,7 +481,7 @@ export function MetallographicWorkspace({
       </div>
       <main className="sheet" aria-label="Relatório de análise metalográfica de crimpagem">
         <header className="report-head">
-          <div className="logo-wrap"><img src={logoUrl} alt="Delpi — conexões elétricas" /></div>
+          <div className="logo-wrap"><DelpiReportLogo alt="Delpi — conexões elétricas" /></div>
           <div className="title-block"><h1>ANÁLISE METALOGRÁFICA<br />DE CRIMPAGEM</h1><p>Avaliação da seção transversal do terminal</p></div>
           <div className="meta-card">
             <div className="meta-field report-no"><label className="label" htmlFor="report-number">Relatório nº</label><input id="report-number" className="entry" type="text" placeholder="000001" value={number} readOnly aria-readonly="true" title="Número sequencial gerado automaticamente" /></div>

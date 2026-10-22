@@ -235,7 +235,8 @@ describe("tema computado no Chrome", () => {
     expect(luminance(dark.headerCell.backgroundColor)).toBeLessThan(0.25);
     expect(luminance(dark.headerCell.color)).toBeGreaterThan(0.7);
     expect(luminance(dark.diagram.backgroundColor)).toBeGreaterThan(0.9);
-    expect(luminance(dark.logo.backgroundColor)).toBeGreaterThan(0.9);
+    expect(luminance(light.logo.backgroundColor)).toBeGreaterThan(0.9);
+    expect(luminance(dark.logo.backgroundColor)).toBeLessThan(0.2);
     expect(luminance(dark.stage.backgroundColor)).toBeLessThan(0.15);
     expect(light.outside.backgroundColor).toBe(dark.outside.backgroundColor);
 

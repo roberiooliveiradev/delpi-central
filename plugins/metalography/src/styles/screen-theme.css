@@ -379,6 +379,11 @@
   background: var(--mg-artboard);
 }
 
+:root[data-theme="dark"] .dashboard-metalography .logo-wrap,
+:root[data-theme="dark"] .dashboard-metalography .home-logo-wrap {
+  background: transparent;
+}
+
 /* print-palette:start */
 @media print {
   .dashboard-metalography,
@@ -410,7 +415,9 @@
   }
 
   .dashboard-metalography .sheet,
-  :root[data-theme="dark"] .dashboard-metalography .sheet {
+  :root[data-theme="dark"] .dashboard-metalography .sheet,
+  .dashboard-metalography .logo-wrap,
+  :root[data-theme="dark"] .dashboard-metalography .logo-wrap {
     background: #fff !important;
     color: #25465f !important;
     box-shadow: none !important;

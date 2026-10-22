@@ -87,7 +87,10 @@ function copyImageState(source: ParentNode, clone: ParentNode): void {
   sources.forEach((image, index) => {
     const target = targets[index];
     if (!(target instanceof HTMLImageElement)) return;
-    const src = image.getAttribute("src") || image.currentSrc;
+    const printSrc = image.dataset.printSrc;
+    const src = image.dataset.brandLogo === "delpi" && printSrc
+      ? printSrc
+      : image.getAttribute("src") || image.currentSrc;
     if (src) target.setAttribute("src", src);
     const style = image.getAttribute("style");
     if (style) target.setAttribute("style", style);

@@ -28,6 +28,7 @@ function hostWithSheet(): { host: HTMLElement; sheet: HTMLElement } {
       <img class="preview" alt="Micrografia original" />
       <div class="upload-row"><button type="button">Selecionar imagem</button></div>
       <img alt="Esquema" src="/apps/metalography/assets/measurement-scheme.png" />
+      <img data-brand-logo="delpi" data-print-src="/apps/metalography/assets/delpi-logo.png" src="/apps/metalography/assets/delpi-logo-on-dark.png" alt="Delpi — conexões elétricas" />
     </main>
   `;
   document.body.appendChild(host);
@@ -62,6 +63,8 @@ describe("metallographic print isolation", () => {
     expect(html).toContain("checked");
     expect(html).toContain("blob:https://minhadelpi.com.br/micrografia");
     expect(html).toContain("measurement-scheme.png");
+    expect(html).toContain('src="/apps/metalography/assets/delpi-logo.png"');
+    expect(html).not.toContain("delpi-logo-on-dark.png");
     expect(html).not.toContain("PORTAL-SIDEBAR");
     expect(html).not.toContain("Exportar PDF");
     expect(html).not.toContain("Selecionar imagem");
