@@ -486,3 +486,20 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Pendencias:** confirmar horario/criterio oficial de corte, eventual processamento noturno e atrasos de integracao, autoridade para validar completude e regra de negocios de liberacao da conciliacao.
 
 **Classificacao:** `DEMONSTRATION_NOT_FINAL_CLOSE=OWNER_REPORTED_VIA_PO`; `NEXT_DAY_PREFERENCE=OWNER_REPORTED_VIA_PO`; `EXACT_CUTOFF_TIME=TO_INVENTORY`; `SEPTEMBER_VARIANCE_ROOT_CAUSE=INCONCLUSIVE`; `TARGET_READINESS_GATE=PLANNED_DECISION_REQUIRED`.
+
+
+## Registro 15 - Gate de conclusao de custos, P7 contabilidade e reposicao (aprox. 36:10)
+
+**Fonte:** narracao guiada do PO e print TOTVS `Acompanha Custo > Novo fechamento de custo > Analise e revisao`, com botao `Proximo passo` visivel. O print prova a existencia da etapa e do controle, nao que a Joici efetivamente executou o fechamento final nesta demonstracao.
+
+**Sequencia AS-IS relatada:** depois de encerrar a competencia e validar a conciliacao de saldos, parametros, movimentos e custos, Joici retorna a `Acompanha Custos` e pode avancar de `Analise e revisao` para `Fechamento` por `Proximo passo`. **Condicional:** so avancaria no fechamento real se os valores e conferencias estivessem corretos. Como a gravacao representa demonstracao antes do fechamento definitivo, **nao registrar fechamento concluido**.
+
+**P7 entregue a contabilidade:** Joici afirma que utiliza a **ultima pagina / resumo do P7 na configuracao Bloco H**, com escopo de **materia-prima (MP), produto intermediario (PI) e produto acabado (PA)**. Esse documento e diferente do P7 completo usado para verificacoes internas. A interpretacao exata da configuracao fiscal Bloco H, das classificacoes e da competencia depende do contrato e exemplar oficial; nao inferir que um P7 operacional SB9 e equivalente.
+
+**Pecas de reposicao e DRE:** segundo o PO, Joici comenta que pecas de reposicao compradas e nao consumidas podem ser consideradas no resultado contabil da **competencia de compra**, diferentemente da apropriacao pelo consumo aplicada a materia-prima. **Esta e uma afirmacao de pratica/entendimento relatado, NAO regra contabil homologada**: e necessario validar com Contabilidade/Controladoria o conceito de reconhecimento (compra, despesa, estoque, consumo, apropriacao), natureza do item e eventual excecao. Nao implementar contabilizacao nem classificar todas as pecas como despesa automaticamente.
+
+**Dependencia temporal adicional:** ela **aguarda a conclusao da rotina de Custo de Reposicao** para produtos acabados (PA) e intermediarios (PI). Relacao exata entre resultado do recalculo, validacoes e liberacao do gate final permanece por especificar. O fato de ter iniciado a rotina nao equivale a resultado disponivel.
+
+**Candidato TARGET, sem implementacao autorizada:** checklist read-only de fechamento com evidencias de conciliacao, completude de competencia, revisao de variacoes do custo medio, processamento de custo de reposicao PA/PI e envio do P7 Bloco H. Acoes de fechar/reabrir/recalcular TOTVS requerem owner, contrato, permissao e decisao explicitos; nao disparar via Portal neste mapeamento.
+
+**Classificacao:** `FINALIZATION_SEQUENCE=OWNER_REPORTED_VIA_PO`; `NEXT_STEP_CONTROL=PROVEN_SCREENSHOT`; `FINAL_CLOSE_EXECUTED=NOT_PROVEN`; `P7_ACCOUNTING_SCOPE=OWNER_REPORTED_VIA_PO`; `REPLACEMENT_PARTS_ACCOUNTING_TREATMENT=TO_VALIDATE_WITH_ACCOUNTING`; `PA_PI_REPLACEMENT_COST_WAIT=OWNER_REPORTED_VIA_PO`; `PORTAL_FINALIZATION=TARGET_DECISION_REQUIRED`.
