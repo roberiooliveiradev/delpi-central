@@ -231,3 +231,43 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 
 ### Status
 `DELPI_DLP_REPORT=OWNER_REPORTED_VIA_PO`; `DLP_RUNTIME_FAILURE=PROVEN_SCREENSHOT`; `CUSTOM_ROUTINE_ID=PROVEN_SCREENSHOT_PARTIAL`; `DLP_FIVE_OUTPUTS=OWNER_REPORTED_VIA_PO`; `DLP_SQL_PARITY=TEST_NOT_RUN`; `COST_CALC_STAGE_100=PROVEN_SCREENSHOT`; `COST_REVIEW_SCREEN=PROVEN_SCREENSHOT`; `COST_CLOSING_COMPLETED=NOT_PROVEN`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Registro 08 - Retorno ao Estoque/Custos, P7, Kardex e movimento/processo (17:10-22:24)
+
+**Fonte:** narracao orientada pelo PO e capturas TOTVS associadas aos marcadores de tempo ~17:39, 17:57, 18:43, 19:00, 19:04, 19:08, 19:19, 19:49, 20:28, 20:41, 21:05 e 21:42. Classificacoes `OWNER_REPORTED_VIA_PO` (finalidade/explicacao) e `PROVEN_SCREENSHOT` (campos e interfaces). Este trecho continua o Registro 07: calculo de custo 100%, porem revisao/fechamento definitivo ainda nao demonstrado. Joici alterna rotinas visando otimizar tempo; uma aba aberta nao comprova output concluido.
+
+### Sequencia com procedencia e limites de prova
+| Tempo aproximado | Rotina/acao | Fato visivel ou relato | Estado |
+|---|---|---|---|
+| 17:10 | Retorna de Financeiro a Estoque/Custos | PO relata alternancia para aproveitar o tempo de extracao | OWNER_REPORTED_VIA_PO |
+| 17:47-17:57 | Registro de Inventario - Modelo P7, impressao `MATR460` | Primeiro P7 padrao, para propria analise: saldo de estoque na data-base 30/09/2026. PO relata exclusao de materiais em poder de terceiros. Captura mostra parametros de armazem/produto, `Produtos Sem Movim.? Nao`, `Prods. c/ Saldo Neg.? Sim` | MIXED; parametrizacao completa TO_VERIFY |
+| ~18:00-18:43 | Segundo P7, layout Bloco H para contabilidade | PO relata recorte MP/PI/PA e exclusao de material de consumo, a partir do mesmo processo de inventario P7; duas abas P7 visiveis | OWNER_REPORTED_VIA_PO; layout/filtros exatos pendentes |
+| 18:53-19:49 | Movimentacoes Kardex Diario - Padrao, janela `Kardex Fisico-Financeiro (DIA)`, impressao `MATR910` | Duas emissoes destinadas aos armazens 01 e 99. Capturas mostram periodo 01/09/2026 a 30/09/2026 em quadro final; `Lista Prods S/Movim.? Nao`, `Qual Armazem? 01` em quadro, `Saldo a considerar? Atual`, export `Planilha / MS Excel` | PROVEN_SCREENSHOT_PARTIAL + OWNER_REPORTED_VIA_PO |
+| ~20:00 | Uso dos Kardex | 01 = conferencia CPV; 99 = inventario/perdas de contagem; inventarios em outros armazens sao raros, segundo PO/Joici | OWNER_REPORTED_VIA_PO; formulas ainda nao validadas |
+| 20:28-21:05 | Consulta `Saldo Em Processo`, separada da aba `Em Processo` | Pesquisa TOTVS e Smart View com opcao de visao/tabela dinamica. Janela de `Saldo em Processo (Analitico)` mostra `MATR989`, data de fechamento 30/09/2026, `Lista MOD em Processo? Nao`, `Verif Sld Processo? Data de Emissao`, `Lista Custo? Medio`, `Considera armazem processo? Sim` | PROVEN_SCREENSHOT_PARTIAL |
+| 21:20-21:42 | `Resumo das Entradas e Saidas` / MATR320 | Emitido com periodo 01/09/2026 a 30/09/2026, `Moeda=1a Moeda`, `Saldo a considerar=Movimento`, `Considera Saldo MOD=Nao`; parametros visiveis em captura | PROVEN_SCREENSHOT; valores originais ja no doc 46 |
+| 21:53 em diante | Saidas comecam a ficar prontas; Joici passa a explicar seu uso | PO relata mudanca de etapa: de preparacao/exportacao para conferencia e analise dos arquivos | OWNER_REPORTED_VIA_PO; regras especificas nos proximos registros |
+
+**Cronologia:** o PO citou o relatorio de materiais em processo como 22:24, mas a captura traz configuracao da rotina `Saldo em Processo` as ~21:05 e a aba ja esta presente no trecho ~20:41. O documento preserva os dois marcadores e nao declara que sao a mesma acao. `Em Processo` e `Saldo Em Processo` aparecem em abas diferentes, portanto nao devem ser unificados sem contrato.
+
+### Distincoes funcionais
+- **P7 padrao**: fotografia do estoque historico para conferencias internas; **P7 Bloco H**: recorte e layout usado para contabilidade. Nao presumir que os conjuntos sao exatamente iguais aos filtros operacionais `all_products` / `mp_pi_pa` ja presentes no R03. As duas saidas nao sao dois calculos identicos por padrao.
+- **Kardex MATR910 01/99**: movimentacoes detalhadas por armazem, com referencia de periodo; nao e MATR320, que agrega entradas/saidas. CPV e perdas por inventario sao usos de conferencia, nao somatorios homologados ainda.
+- **Saldo em Processo MATR989 / Smart View**: exibicao/corte proprio (data, MOD, custo medio e armazem de processo); `Em Processo` existe separadamente. A paridade entre as visoes nao foi demonstrada.
+- **MATR320**: impresso R05 original no doc 46; o proprio nome `Entradas e Saidas` nao autoriza chamar a saida de Kardex.
+- **Dependencia**: relatada anteriormente: Joici aguarda termino de `Acompanha Custos` para emitir Kardex e alguns saldos. Aqui o inicio das emissoes depois da tela de calculo 100% e **consistente** com o relato, mas nao prova mecanismo de bloqueio.
+- **Portal hoje**: R03 exibe extracao operacional SB9/SB1 historica, nao a rotina MATR460 nem exportacao Bloco H; R01/R02 baixas financeiras nao executam conciliacao dos relatorios de estoque. Nada foi implementado neste registro.
+
+### Parametros para confrontar com originais
+| Fonte | Parametros visiveis | Incerteza remanescente |
+|---|---|---|
+| MATR460 P7 | data-base ultimo dia do mes relatada; recorte armazem/produto e flags parcialmente visiveis | terceiros, MP/PI/PA, Bloco H, periodo, filial, layout impresso e soma |
+| MATR910 Kardex | periodo 01-30/09, armazem 01 em quadro, formato Excel, `Saldo Atual`, sem produtos sem movimento | confirmar parametros de armazem 99, filtro fiscal/ITENS, sinal dos valores, ordenacao e output |
+| MATR989 Saldo em Processo | 30/09, MOD Nao, custo Medio, considera armazem processo Sim | indicadores, escopo OP, produtos e consistencia com `Em Processo` |
+| MATR320 | 01-30/09, primeira moeda, saldo Movimento, MOD Nao | regras de sinal, origem e divergencias com P7 |
+
+### Gate para a proxima parte da narracao
+A partir de 21:53, capturar **regra demonstrada** no Excel ou tela com operacao, filtros, sinais, colunas e totais; separar relato oral da formula reproduzivel. Nao criar nova pagina para cada relatorio. Confrontar inventario dos docs 46/54/55 e preservar divergencias explicitas. Sem decisao de arquitetura, contrato, owner ou runtime novo.
+
+**Resultado:** `AS_IS_EXTRACTION_SEQUENCE=DOCUMENTED_PARTIAL`; `P7_DUAL_LAYOUTS=OWNER_REPORTED_VIA_PO`; `KARDEX_PROGRAM=MATR910_PROVEN_SCREENSHOT`; `MATR989=PROVEN_SCREENSHOT`; `MATR320=PROVEN_ORIGINAL`; `FORMULAS_RECONCILIATION=INCONCLUSIVE`; `TARGET_CONSOLIDATED_PAGE=DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
