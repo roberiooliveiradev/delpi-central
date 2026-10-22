@@ -98,3 +98,19 @@ Stop: `EXECUTION_DRIFT` para premissa de owner invalidada; sem autorização de 
 > Redis 7 real multi-processo; `contact` mantido `null` por política LGPD.
 > Runtime produtivo **não** verificado; `GATE-INFRA` (Redis DELPI) continua
 > INCONCLUSIVE. Próxima task: `X2 — Supplies Consumer Integration & Parity`.
+>
+> **X2 executado:** `ExternalDataApiCompanyRegistryProvider` na `supplies-api`
+> (port estável, S2S canônico, zero forward de JWT de usuário, sem fallback
+> BrasilAPI), factory 3-modos, minimização `contact.*` enforced no consumidor,
+> paridade provada fora de contatos. Commits `07b2f7909`/`36ada077c7`.
+>
+> **X3 executado (2026-10-22, parcial):** `delpi-redis` provisionado e saudável
+> (auth, Lua, TTL; namespaces isolados por serviço); mapper
+> `audience-external-data-api` criado no client `supplies-api` — `aud` real
+> agora carrega `external-data-api` + `api-delpi`; `external-data-api` e
+> `supplies-api` implantados (SHA `74289c8495`); migrations V002/V003
+> aplicadas sob backup; S2S real end-to-end provado (401/401/503/400).
+> `EXTERNAL_DATA_CNPJ_PROVIDER` permanece `unavailable` — consulta BrasilAPI
+> bloqueada por `GATE-I3` (endosso DPO/ROPA ausente). Evidências:
+> `X3-RUNTIME-EVIDENCE-20261022.md`. X3 = `ACCEPT_WITH_RESIDUAL`; ativação do
+> provider exige autorização institucional explícita.
