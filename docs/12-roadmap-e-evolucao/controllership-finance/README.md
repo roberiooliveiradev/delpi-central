@@ -276,3 +276,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - Resumo de entradas e saidas MATR320 (22/10/2026)
 
 [Doc 62 - Inventario conceitual MATR320](./62-ciclo1-matr320-resumo-entradas-saidas.md): PDF de uma pagina com resumo financeiro de entradas/saidas por tipo de material, incluindo saldo inicial/final, compras, movimentos internos, producao, vendas, devolucoes e poder de terceiros; competencia de movimento distinta da data de emissao/referencia. Cruzamento conceitual com Kardex/MATR910 (doc 61), P7/MATR460 e material em processo, sem inferir igualdade de escopo ou CPV de DRE. Paridade e fontes fisicas pendentes; dados e PDF original nao versionados.
+
+
+### Ciclo 1 - Registro de Inventario, estoque e em processo (22/10/2026)
+
+[Doc 63 - Resumo do registro de inventario](./63-ciclo1-p7-resumo-estoque-em-processo.md): PDF privado de uma pagina, com posicao da matriz em 30/09/2026, secao EM ESTOQUE e secao EM PROCESSO por categoria de material, mais TOTAL GERAL. Relacionado conceitualmente ao P7 narrado no video, mas identificador MATR460 e variante Bloco H nao aparecem no PDF e seguem `TO_INVENTORY`. Confronto pendente com MATR320/doc 62 e Kardex/doc 61; valores/documento original nao versionados.
