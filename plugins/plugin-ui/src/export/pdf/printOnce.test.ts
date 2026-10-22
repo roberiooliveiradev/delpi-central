@@ -114,4 +114,42 @@ describe("scheduleTargetWindowPrint", () => {
     fakeWindow.dispatchEvent(new Event("afterprint"));
     expect(onPrinted).toHaveBeenCalledTimes(1);
   });
+
+  it("espera a fonte do documento antes de imprimir e não espera de novo no fallback", () => {
+    const print = vi.fn();
+    let resolveFonts: () => void = () => {};
+    const fontsReady = new Promise<void>((resolve) => {
+      resolveFonts = resolve;
+    });
+    const listeners = new Map<string, Set<EventListener>>();
+    const fakeWindow = {
+      closed: false,
+      focus: vi.fn(),
+      scrollTo: vi.fn(),
+      print,
+      setTimeout: window.setTimeout.bind(window),
+      clearTimeout: window.clearTimeout.bind(window),
+      document: {
+        images: [] as HTMLImageElement[],
+        fonts: { status: "loading", ready: fontsReady },
+      },
+      addEventListener: vi.fn((type: string, listener: EventListener) => {
+        const set = listeners.get(type) ?? new Set();
+        set.add(listener);
+        listeners.set(type, set);
+      }),
+      removeEventListener: vi.fn(),
+    } as unknown as Window;
+
+    scheduleTargetWindowPrint(fakeWindow);
+    vi.advanceTimersByTime(1_100);
+    expect(print).not.toHaveBeenCalled();
+
+    resolveFonts();
+    return fontsReady.then(() => {
+      expect(print).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(2_000);
+      expect(print).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -148,25 +148,34 @@ function waitForImagesThenPrintOnce(
     options.onPrinted?.();
   };
 
+  let started = false;
+
   const runPrint = () => {
-    if (printed || targetWindow.closed) {
-      finish();
+    if (started || targetWindow.closed) {
+      if (!started && targetWindow.closed) finish();
       return;
     }
-    printed = true;
+    started = true;
     clearTimers();
+    whenDocumentFontsReady(targetWindow, () => {
+      if (printed || targetWindow.closed) {
+        finish();
+        return;
+      }
+      printed = true;
 
-    const emergencyMs = options.emergencyTimeoutMs ?? 60_000;
-    targetWindow.addEventListener("afterprint", finish);
-    afterPrintTimer = window.setTimeout(finish, emergencyMs) as unknown as number;
+      const emergencyMs = options.emergencyTimeoutMs ?? 60_000;
+      targetWindow.addEventListener("afterprint", finish);
+      afterPrintTimer = window.setTimeout(finish, emergencyMs) as unknown as number;
 
-    try {
-      targetWindow.focus();
-      targetWindow.scrollTo(0, 0);
-      targetWindow.print();
-    } catch {
-      finish();
-    }
+      try {
+        targetWindow.focus();
+        targetWindow.scrollTo(0, 0);
+        targetWindow.print();
+      } catch {
+        finish();
+      }
+    });
   };
 
   if (images.length === 0) {
@@ -191,6 +200,31 @@ function waitForImagesThenPrintOnce(
   }
 
   fallbackTimer = window.setTimeout(runPrint, 1_500) as unknown as number;
+}
+
+function whenDocumentFontsReady(targetWindow: Window, done: () => void): void {
+  const fonts = targetWindow.document.fonts;
+  if (!fonts || fonts.status === "loaded" || typeof fonts.ready?.then !== "function") {
+    done();
+    return;
+  }
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    done();
+  };
+  const timer = targetWindow.setTimeout(finish, 2_000) as unknown as number;
+  void fonts.ready.then(
+    () => {
+      targetWindow.clearTimeout(timer);
+      finish();
+    },
+    () => {
+      targetWindow.clearTimeout(timer);
+      finish();
+    },
+  );
 }
 
 /** Exposto só para testes — reseta o mutex de impressão da janela atual. */

@@ -1,5 +1,8 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { printDelpiDocumentHtml } from "@delpi/plugin-ui/index";
 
+import font400Url from "../assets/delpi-sans-400.otf";
+import font700Url from "../assets/delpi-sans-700.otf";
 import diagramUrl from "../assets/measurement-scheme.png";
 import logoUrl from "../assets/delpi-logo.png";
 import {
@@ -24,6 +27,11 @@ import {
   type ReportFormState,
   type ReportSnapshot,
 } from "../domain/reportForm";
+import {
+  metallographicPrintStylesheet,
+  printIsolatedMetallographicSheet,
+  readMetallographicStylesheet,
+} from "../domain/metallographicPrint";
 import { EMPTY_REPORT_FILTERS, reportMatches, type ReportListFilters } from "../domain/reportListFilter";
 import { CropDialog } from "./CropDialog";
 import { editorPath, listPath, navigateMetalography } from "../utils/route";
@@ -383,6 +391,26 @@ export function MetallographicWorkspace({
 
   const countLabel = filtersActive ? `${visible.length} de ${total} ${total === 1 ? "relatório" : "relatórios"}` : `${total} ${total === 1 ? "relatório" : "relatórios"}`;
 
+  function printSheet() {
+    const sheet = hostRef.current?.querySelector("main.sheet");
+    if (!(sheet instanceof HTMLElement)) return;
+    const stylesheet = metallographicPrintStylesheet(
+      readMetallographicStylesheet(),
+      font400Url,
+      font700Url,
+    );
+    if (!stylesheet.includes(".dashboard-metalography")) {
+      setToast("Não foi possível preparar a folha para impressão.");
+      return;
+    }
+    const opened = printIsolatedMetallographicSheet(
+      sheet,
+      stylesheet,
+      (html, title) => printDelpiDocumentHtml(html, { iframeTitle: title }),
+    );
+    if (!opened) setToast("Não foi possível abrir a impressão.");
+  }
+
   return (
     <div ref={hostRef} className={editing ? "dashboard-metalography dashboard-page editor-active" : "dashboard-metalography dashboard-page"}>
       <section className="home-screen" aria-label="Tela inicial de relatórios">
@@ -449,7 +477,7 @@ export function MetallographicWorkspace({
           <button className="secondary toolbar-back" type="button" title="Voltar à página inicial" onClick={() => { if (dirty) setConfirm("leave"); else navigateMetalography(listPath()); }}>← Página inicial</button>
           <button id="save-report" className="save-button" type="button" disabled={!writable || busy} onClick={() => { void save(); }}>{busy ? "Salvando…" : "Salvar relatório"}</button>
           <button id="export-pdf" className="primary" type="button" disabled={!canExport || !reportId} onClick={() => { void downloadPdf(); }}>Exportar PDF</button>
-          <button className="secondary" type="button" onClick={() => window.print()}>Imprimir</button>
+          <button className="secondary" type="button" onClick={printSheet}>Imprimir</button>
         </div>
       </div>
       <main className="sheet" aria-label="Relatório de análise metalográfica de crimpagem">

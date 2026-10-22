@@ -37,6 +37,12 @@ O manifesto registra os códigos no Core. Isso não atribui a permissão aos usu
 
 A referência visual é `docs/12-roadmap-e-evolucao/quality/reference/Modelo_Relatorio_Metalografico_Delpi_Editavel.html` (SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`). A folha do editor reutiliza o CSS, a fonte, o logotipo e o esquema desse arquivo. A comparação no Chrome, folha vazia e folha preenchida, não teve pixel diferente na região da folha. O PDF continua sendo o da API DELPI, na mesma composição em milímetros, com a marca RASCUNHO apenas em rascunho.
 
+## Imprimir e exportar
+
+**Imprimir** abre o diálogo do navegador com somente a folha A4 que está na tela, inclusive alteração ainda não salva. O documento vai para um iframe oculto do `@delpi/plugin-ui` (`printDelpiDocumentHtml`), com o CSS, a fonte, o logotipo e o esquema da folha. A navegação do Portal não entra nessa impressão.
+
+**Exportar PDF** continua baixando o snapshot já gravado na API DELPI. Não substitui a impressão e não lê o rascunho local.
+
 ## Desenvolvimento
 
 ```bash
