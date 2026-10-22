@@ -17159,3 +17159,17 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+**2026-10-22 — production singular/plural incident + CRI gate (report 87):** `DELIA-C3-PRODUCTION-SINGULAR-PLURAL-INCIDENT-AND-CRI-ACTIVATION-01`. P1 exact question reproduced NON_GROUNDED twice on dev with the capture's signature; proven root cause = serialized model-stage latency vs the frozen 30s turn budget (a single `select_capability` ran 21.3s under `DELIA_MODEL_STAGE_TIMEOUT_SECONDS=30`; the same P1 grounded `teo.record_read` when stages fit — no lexical/semantic singular-plural divergence, no `date_field` rejection). Bounded fix: CRI composition now runs before synthesis and `_synthesize_content(allow_model_stage=cri is None)` skips the model draft stage when CRI owns the response (~3-7s reclaimed; `skip_cri_composed` logged; deterministic projections + OFF fallback preserved). P2 live GROUNDED in 18.4s. Count-difference explained (distinct frames); raw-ISO dates in captures = baseline pipeline → indirect evidence of prod CRI OFF. `PRODUCTION_CRI_ACTIVATION=BLOCKED_BY_GATE` — missing prod host access + effective image SHA; `.env.prod.example` now documents the flag (desired default ON + rollback) without mutating any runtime. Material residual: pre-invoke starvation under model latency needs an architecture decision (stage consolidation / model performance). Report: [87](../corrections/mcp-contextual-intelligence-orchestration/87-c3-production-singular-plural-incident-and-cri-gate.md).
+
+```text
+P1_REPRODUCED=YES
+ROOT_CAUSE=model_latency_vs_frozen_30s_budget(not lexical, not owner)
+FIX=synthesis-skip when CRI composes
+REAL_EVAL=PASS(P2 GROUNDED 18.4s; P1 flaky-by-latency)
+PRODUCTION_CRI_ACTIVATION=BLOCKED_BY_GATE
+BACKEND_REGRESSION=PASS(1 pre-existing stale-504 test documented)
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```

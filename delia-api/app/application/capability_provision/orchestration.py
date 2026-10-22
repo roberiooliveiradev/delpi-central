@@ -6054,15 +6054,6 @@ class OperationalCapabilityOrchestrator:
             prior_turns,
             deadline,
         )
-        _synth_content, _synth_extra = self._synthesize_content(
-            input_text,
-            outcome,
-            correlation,
-            deadline,
-            prior_turns=prior_turns,
-            business_subject=goal.business_subject,
-            invocation_arguments=arguments,
-        )
         # CRI E2/E3: one verdict feeds both the insufficiency marker
         # and the grounded conversational composition — same edge,
         # same facts, never a second assessment.
@@ -6078,9 +6069,6 @@ class OperationalCapabilityOrchestrator:
             if cri_facts is not None
             else None
         )
-        outcome = self._apply_outcome_assessment(
-            outcome, cri_verdict, correlation
-        )
         cri = (
             self._compose_cri_response(
                 cri_facts,
@@ -6091,6 +6079,19 @@ class OperationalCapabilityOrchestrator:
             )
             if cri_verdict is not None
             else None
+        )
+        _synth_content, _synth_extra = self._synthesize_content(
+            input_text,
+            outcome,
+            correlation,
+            deadline,
+            prior_turns=prior_turns,
+            business_subject=goal.business_subject,
+            invocation_arguments=arguments,
+            allow_model_stage=cri is None,
+        )
+        outcome = self._apply_outcome_assessment(
+            outcome, cri_verdict, correlation
         )
         _extra = _synth_extra + (
             cri.limitations if cri is not None else ()
@@ -9287,6 +9288,7 @@ class OperationalCapabilityOrchestrator:
         prior_turns: tuple[ConversationContextTurn, ...] = (),
         business_subject: str | None = None,
         invocation_arguments: Mapping[str, Any] | None = None,
+        allow_model_stage: bool = True,
     ) -> tuple[str | None, tuple[str, ...]]:
         """Bounded evidence-bound synthesis for a non-mutating outcome.
 
@@ -9397,6 +9399,17 @@ class OperationalCapabilityOrchestrator:
                 "decision=skip_budget remaining_ms=%d "
                 "correlation_id=%s",
                 int(deadline.remaining_seconds() * 1000),
+                correlation,
+            )
+            return None, ()
+        if not allow_model_stage:
+            # CRI composition already owns this response — the
+            # deterministic projections above still contributed their
+            # limitations, but no model stage may burn the frozen 30s
+            # budget on a draft that would be discarded.
+            _logger.info(
+                "orchestration stage=synthesis "
+                "decision=skip_cri_composed correlation_id=%s",
                 correlation,
             )
             return None, ()

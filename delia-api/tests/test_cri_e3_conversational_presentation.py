@@ -1272,8 +1272,64 @@ def test_on_adds_zero_model_calls_e3():
         goal=_goal(min_items=1),
         enabled=True,
     )
-    assert len(orch_on._invoke_model._port.requests) == len(
+    # CRI adds no model stage; once it owns the composition it may
+    # legitimately spend FEWER (the discarded synthesis draft is not
+    # proposed — see the skip tests below).
+    assert len(orch_on._invoke_model._port.requests) <= len(
         orch_off._invoke_model._port.requests
+    )
+
+
+def test_on_skips_synthesis_model_stage_when_cri_composes():
+    """The grounded_synthesis model stage must not burn turn budget on
+    a draft the CRI composition discards — its deterministic
+    projections remain, the model proposal does not run."""
+    outcome = _outcome(
+        "processes",
+        structured={
+            "items": [
+                {"codigo": "P-1", "nome": "Um", "status": "ativo"},
+                {"codigo": "P-2", "nome": "Dois", "status": "ativo"},
+                {"codigo": "P-3", "nome": "Três", "status": "ativo"},
+            ],
+            "has_more": False,
+        },
+    )
+    orch, attempt = _attempt(outcome, goal=_goal(), enabled=True)
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    purposes = [
+        request.task_purpose_id
+        for request in orch._invoke_model._port.requests
+    ]
+    assert "delia.capability_orchestration.grounded_synthesis" not in (
+        purposes
+    )
+
+
+def test_on_synthesis_fallback_runs_when_cri_cannot_compose():
+    """CRI requested but the governed vocabulary is absent — effective
+    mode degrades to baseline and the synthesis stage still runs so
+    the owner evidence gets a response."""
+    outcome = _outcome(
+        "processes",
+        structured={
+            "items": [
+                {"codigo": "P-1", "nome": "Um", "status": "ativo"},
+                {"codigo": "P-2", "nome": "Dois", "status": "ativo"},
+            ],
+            "has_more": False,
+        },
+    )
+    orch, attempt = _attempt(
+        outcome, goal=_goal(), enabled=True, vocabulary=False
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    purposes = [
+        request.task_purpose_id
+        for request in orch._invoke_model._port.requests
+    ]
+    assert "delia.capability_orchestration.grounded_synthesis" in (
+        purposes
     )
 
 
