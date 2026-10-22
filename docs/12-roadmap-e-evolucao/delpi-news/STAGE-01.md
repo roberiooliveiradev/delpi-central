@@ -1,7 +1,8 @@
 # DELPI News — Etapa 1 (fechamento)
 
 **Commit original E1:** `e26d8ade783661c503fe84872b78e92dc4055e81`  
-**HEAD de início desta correção:** `a34fbdf62e3998604e65e2f6ed7ebd592526bdee`  
+**HEAD de início desta correção (local):** `a34fbdf62e3998604e65e2f6ed7ebd592526bdee`  
+**HEAD final (commit de fechamento):** `6ae6ea799e847ed66d75ed4dffa37e703907821c`  
 **Branch:** `main`
 
 ## Ledger de requisitos
