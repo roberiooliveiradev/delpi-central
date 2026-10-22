@@ -148,3 +148,19 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+## 10. Independent coordination review — 2026-10-22
+
+**Verdict: ACCEPT_WITH_RESIDUAL for the bounded code correction; production incident remains OPEN.** Confirmed GitHub HEAD 812499e41aa95201bfa38c45a04983945f7019d4, report 87, infra/.env.prod.example and the gated synthesis-model skip in orchestration.py. Reported dev tests and live MCP/model probes were not independently rerun by this reviewer: INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN.
+
+**Accepted:** When CRI composition already supplies the governed response, omitting discarded grounded_synthesis model output is a legitimate reuse of the current composition boundary; fallback must still run when CRI does not compose and deterministic projections/limitations must remain intact. This removes a post-invoke model-stage cost and terminal-timeout risk, but does not repair the demonstrated P1 pre-invoke stage starvation. P1 success on one of four attempts indicates no deterministic singular-specific failure was demonstrated; it does not prove all lexical branches are absent throughout the repository.
+
+**Material blocker remains:** 30-second frozen global budget with serial model stages and a configured per-stage cap reaching the global cap. Do not propose raising the global budget or injecting provider-specific shortcuts. A bounded architectural decision is required on existing stage scheduling, reuse, optionality, possible consolidation and latency measurements, with model-driven selection preserved. The claim 'purely model-side variance' should be treated as executor inference supported by stage timings, pending more complete per-stage traces and model/transport attribution. No production-root-cause assertion is justified from dev reproduction alone.
+
+**Production distinction:** No access to srv-api, no effective backend/frontend SHA, no prod runtime flag or live authenticated replay. Production ON is NOT_VERIFIED and deployment NOT_DONE. Raw ISO dates are compatible with baseline/OFF but **do not prove OFF**: stale runtime, fallback, or other presentation branches must be excluded through runtime logs/config. The tracked .env.prod.example is documentation/preparation only; setting true there does not change the host's .env. Activate only after canonical release gates, prod SHA, audit and rollback are verified; product desire for default ON is not self-authorization to mutate an unknown production environment.
+
+**Counts and correctness:** '10 localized' (activity) vs '2 found' (response) could indicate source vs delivered/presented frames, but cannot be declared conclusively correct without the authoritative owner envelope and actual presentation inputs for that turn. Distinguish creation from modification, page/coverage from global extremum, and verify whether the selected record was truly the newest created. A grounded record list alone does not satisfy the user's superlative intent.
+
+**Next coordination action:** (1) production access/observability and actual deployment/CRI-mode verification, separate from code publication; (2) a finite, evidence-first pre-invoke latency-path decision and task-outcome evaluation; (3) no more symptom-oriented lexical fixes. The user-facing incident stays OPEN until the original two exact Portal questions are replayed on the verified production SHA with correct evidence, latency and CRI state.
+
+COUNT_CORRECTNESS=INCONCLUSIVE_FOR_ORIGINAL_PROD_TURN; P1_PRODUCTION_ROOT_CAUSE=INCONCLUSIVE; P1_DEV_PREINVOKE_BUDGET_STARVATION=EXECUTOR_VERIFIED; SYNTHESIS_SKIP=STATIC_VERIFIED; CRI_PRODUCTION_ON=NOT_VERIFIED; PRODUCTION_DEPLOYMENT=NOT_VERIFIED; INCIDENT_CLOSED=NO; I04_ACCEPTED=NO; C3_EXECUTED=YES_EXECUTOR_REPORTED.
