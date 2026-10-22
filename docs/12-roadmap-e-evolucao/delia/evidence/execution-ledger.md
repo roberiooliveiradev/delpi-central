@@ -17272,3 +17272,21 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+## §6.373 — F02-B: ConversationCodeBlock spec review + Markdown B2 gate audit (2026-10-22)
+
+**2026-10-22 — code block visual spec closure + Markdown B2 factual state (documental, sem runtime):** `DELIA-UX-F02B-CODE-BLOCK-VISUAL-SPEC-AND-MARKDOWN-B2-GATE-01`. HEAD auditado `4a6d85286c`. **Inventário de reuso:** renderer `ConversationMarkdown` já emite token `code` como `<pre><code>` inerte e `codespan` inline (`ConversationMarkdown.tsx:55,132`); lexer `marked.lexer` parse-only com bounds 16_384/256/8/16; `token.lang` existe no marked mas **não é tipado** em `MarkdownToken` (extensão aditiva mínima identificada); prior art visual `MarkdownCodeBlock` interno de `MarkdownDocument.tsx` (bar `FileCode2`+lang, `Copy`→`Check` pós-resolve, CSS `delpi-ui-md-doc__code*`) — document-grade, não exportado, erro de clipboard silencioso (spec agora exige estado de erro); padrão clipboard honesto em `ConversationAssistantActions.tsx:110-126`; `IconButton`/`HelpTooltip`/`HintAction` existem; **syntax highlighter AUSENTE** (zero prism/hljs/shiki em package.json — v1 sem highlight). **Markdown B2 estado real:** adaptador `presentation.v2` (`V2_FORMATS`, `markdownSource`, `authorizedLinks`) IMPLEMENTED+TESTED; renderer IMPLEMENTED+TESTED; wiring `DeliaAssistantMessage` (`contentFormat==="markdown_safe"`) IMPLEMENTED; **emissor `markdown_safe` no `delia-api` = zero ocorrências — NOT_IMPLEMENTED** → `markdownEnabled` nunca ativa em fluxo real; `RUNTIME_MARKDOWN_ACTIVATION=OFF`, browser QA B2 `TEST_NOT_RUN`, CP-333 não aceito (doc 91). **Spec fechada:** anatomia bar 30px + pre 12/14px/0.86em/1.55/tab-size 2 + max-height 320/240px, scroll horizontal interno com `white-space:pre`, namespace próprio `delpi-ui-conversation-code-block`, allowlist de labels de linguagem, cópia pós-resolve com erro visível + `aria-live`, sem `execCommand` fallback, matriz CB-V01..V15 com métodos. Decisão registrada no doc 96 §9.12: `CODE_BLOCK_VISUAL_SPEC=READY`, `REUSE_DECISION=EXTEND`, `MARKDOWN_B2=GATED`, `STANDALONE_RENDER_COMPONENT=AUTHORIZED_CANDIDATE`, `DELIA_RUNTIME_ACTIVATION=BLOCKED`. Menor próximo slice delimitado: `ConversationCodeBlock` + `lang?: string` + delegação no case `code` + CSS + testes — inerte atrás de `enabled`, sem emissor backend.
+
+```text
+F02B_SPEC_REVIEW=EXECUTED
+CODE_BLOCK_VISUAL_SPEC=READY
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+MARKDOWN_B2=GATED(emitter_v2_absent)
+DELIA_RUNTIME_ACTIVATION=BLOCKED
+RUNTIME_CHANGED=NO
+TESTS=TEST_NOT_RUN
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=BOUNDED_IMPLEMENTATION_TASK(ConversationCodeBlock, inerte, gated)
+```
