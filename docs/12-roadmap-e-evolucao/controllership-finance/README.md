@@ -251,3 +251,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ## Observacoes guiadas do PO - fluxo de fechamento de custos (21/10/2026)
 
 [Doc 56 - Registro incremental do Acompanha Custos](./56-proc0072-observacoes-guiadas-fechamento-custos.md): primeiro trecho narrado pelo PO (aprox. 01:25-02:08): processamento demorado e paralelo a outras tarefas, ajuste operacional de data ao fim do mes, wizard TOTVS, metodo Diario, filial corrente e proximo passo. Campos do screenshot PROVEN; fala OWNER_REPORTED_VIA_PO; algoritmo e job TO_INVENTORY; nenhum GO de automacao.
+
+
+## PROC-0072 - Matriz-mestra do video e roadmap de levantamento (22/10/2026)
+
+[Doc 57 - Rastreabilidade integral V01-V23, reconciliacoes RC-01 a RC-09, riscos X01-X12 e tres ciclos de inventario](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md). Consolidacao documental de todos os registros 01-18 do doc 56, em conjunto com docs 46 e 55, atraves das explicacoes guiadas do PO e prints. **Authority AS-IS = TEO/Joici; authority TARGET = GitHub.** O doc 55 permanece como recorte tecnico especifico 19-33 minutos; o doc 57 e a matriz geral vigente para controlar lacunas e evidencias. A validacao do MP4 original, as verificacoes de dados e a custodia de prints ainda estao pendentes; nao declarar paridade TOTVS/SQL nem audio/timecodes como PASS. Matriz = DOCUMENTED_WITH_RESIDUAL; dados = TO_INVENTORY / TEST_NOT_RUN; novas capacidades = DECISION_REQUIRED.
