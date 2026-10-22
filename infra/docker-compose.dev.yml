@@ -1832,8 +1832,12 @@ services:
 
       # C3-MCP-INTEROP-01R1A: user-delegated credential exchange — single
       # confidential DÉLIA requester client. Secret materialized only in
-      # gitignored infra/.env by keycloak-dev-bootstrap.sh.
-      DELIA_TOKEN_EXCHANGE_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token
+      # gitignored infra/.env by keycloak-dev-bootstrap.sh. The exchange
+      # MUST go through the gateway's public path: requests that reach
+      # Keycloak directly on keycloak:8080 get iss stamped with the
+      # internal port, which every MCP resource server rejects (issuer
+      # mismatch vs KEYCLOAK_ISSUER=http://localhost/auth/...).
+      DELIA_TOKEN_EXCHANGE_URL: ${DELIA_TOKEN_EXCHANGE_URL:-http://delpi-gateway/auth/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token}
       DELIA_EXCHANGE_CLIENT_ID: ${DELIA_EXCHANGE_CLIENT_ID:-delia-api}
       DELIA_EXCHANGE_CLIENT_SECRET: ${DELIA_EXCHANGE_CLIENT_SECRET:-}
       DELIA_EXCHANGE_TIMEOUT_SECONDS: ${DELIA_EXCHANGE_TIMEOUT_SECONDS:-10}

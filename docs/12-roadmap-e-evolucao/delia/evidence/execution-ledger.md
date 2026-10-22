@@ -17330,3 +17330,27 @@ I04_ACCEPTED=NO
 PHASE_PROGRESSION=NONE
 NEXT=MARKDOWN_B2_PRODUCER_TASK(independente: emissor v2 + contrato + QA + CP-333)
 ```
+
+## §6.376 — R4: verificação pós-resume com MCP autenticado real (2026-10-22)
+
+**2026-10-22 — resíduo `REAL_MCP_EVALUATION` do CP5 fechado com identidade delegada legítima:** `DELIA-C3-GOVERNED-RESUME-R4-AUTHENTICATED-MCP-VERIFICATION-01`. **Credential gate:** `DEV_PORTAL_*` do bootstrap canônico → password grant `delpi-central` (HTTP 200, 300s) → troca RFC 8693 via client confidencial `delia-api` (`sub` preservado, `azp=delia-api`, `mcp:tools`, `aud` com `delpi-central`+resource URL+`mcp-api-delpi`) — presence-only, nenhum token impresso. **RED→GREEN ambiental:** `tools/list` autenticado falhava `mcp_authentication_failed` apesar do token válido; causa-raiz = issuer mismatch (`DELIA_TOKEN_EXCHANGE_URL` ia ao backchannel `keycloak:8080`, que estampa `iss` com porta interna; resource servers validam `iss=http://localhost/auth/...`). Fix candidato `KC_HOSTNAME_STRICT/BACKCHANNEL_DYNAMIC` descartado (verificado: `iss` interno persistia `:8080`); fix real = `docker-compose.dev.yml` passa `DELIA_TOKEN_EXCHANGE_URL` default pela rota pública `delpi-gateway` (env-overridable, mesmo padrão prod). GREEN: `tools/list` PASS nos 3 MCPs (DAVI=2, TÉO=23, VISTA=12). **Cadeia real com Ollama `qwen2.5:3b`:** S1 READ real GROUNDED (`vista.list_playlists`, playlist real no conteúdo, 60,03s, `CONTINUING=1`); S2 timeout injetado em `select_capability` → `CONTINUING` → 2ª tentativa → READ real `GROUNDED` (15,03s); S3 timeout injetado após outcome → `mcp_invoke_calls` ficou 1 (READ nunca reexecutado); S4 usuário desabilitado entre tentativas → retomada reusou credencial já trocada (ver finding); S5 bearer forjado → 3 trocas recusadas → `BLOCKED`; S6 `unknown_capability`; S7 `mcp_unavailable` (endpoint morto real); S8 PREPARE/ACT live nunca invocados, forjado → `unknown_capability`; S9 cancelamento → `BLOCKED` 0,96s; S10 `davi.discover_delpi_information` real com args inválidos → `mcp_protocol_error` (owner autoritativo). **Finding documentado (sem patch):** `InMemoryDelegatedTokenCache` reutiliza a credencial do turno na retomada — probe prova troca nova com usuário desabilitado → `invalid_request` (fail-closed) e grant → `invalid_grant`; desabilitar mid-turn não propaga. Decisão de arquitetura pendente. **Regressão:** 127 testes focados PASS. Relatório: `94-r4-authenticated-mcp-post-resume-verification.md`; doc 92 §12 aponta o fechamento.
+
+```text
+TASK_ID=DELIA-C3-GOVERNED-RESUME-R4-AUTHENTICATED-MCP-VERIFICATION-01
+DELEGATED_CREDENTIAL_GATE=PASS(sub-preservado,azp=delia-api,mcp:tools)
+AUTHZ_VERIFIED=YES(live exchange + issuer fix dev-only)
+MODEL_PROVIDER=OLLAMA(qwen2.5:3b, external_calls=0, cost=0)
+REAL_MCP_INVOCATION=YES(vista.list_playlists; davi.discover_* refuse-invalid-args)
+POST_RESUME_READ=YES(GROUNDED na 2ª tentativa governada)
+READ_OUTCOME=AUTHORITATIVE(dados reais; invoke_count=1, sem replay)
+REVOCATION_TEST=EXECUTED_OBSERVED_BEHAVIOR(troca nova fail-closed;
+    credencial do turno reusada — finding de arquitetura)
+PREPARE_ACT_SAFETY=PASS(0 invokes PREPARE/ACT; forged→unknown_capability)
+MAX_ATTEMPTS=2 / TOTAL_BUDGET=60s / PER_ATTEMPT=30s — preservados
+SECURITY_NEGATIVES=PASS(forged bearer, unadvertised capability, dead MCP,
+    invalid args, cancellation — todos honest-terminal)
+REGRESSION=127 focused PASS
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+NEXT=ARCHITECTURE_COORDINATION(delegated-credential intra-turn reuse decision)
+```
