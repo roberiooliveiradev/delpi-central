@@ -133,6 +133,26 @@ class TestHappyPath:
         assert "Authorization" not in call["headers"]
         assert call["url"].endswith(f"/v1/cnpj/{TAX_ID}")
 
+    def test_contacts_dropped_even_when_upstream_sends_them(self):
+        # Upstream contract violation / future un-authorized payload must
+        # still yield null contact fields — minimization is enforced
+        # consumer-side, never trusted to the response content.
+        dto = _dto()
+        dto["contact"] = {
+            "area_code": "11",
+            "phone": "32223344",
+            "email": "contato@acme.example",
+        }
+        snapshot = _provider(response=_Resp(payload=dto)).fetch(TAX_ID)
+        assert snapshot.fields["contact.area_code"] is None
+        assert snapshot.fields["contact.phone"] is None
+        assert snapshot.fields["contact.email"] is None
+        # Every other field is preserved.
+        assert snapshot.fields["company.legal_name"] == "OPEN KNOWLEDGE BRASIL"
+        assert snapshot.fields["address.street"] == (
+            "ALAMEDA FRANCA, 243 APT 34"
+        )
+
     def test_rejects_divergent_tax_id(self):
         response = _Resp(payload=_dto(tax_id="12.345.678/0001-90"))
         with pytest.raises(RegistryResponseInvalidError):

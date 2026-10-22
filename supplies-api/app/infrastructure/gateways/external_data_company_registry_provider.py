@@ -206,13 +206,10 @@ class ExternalDataApiCompanyRegistryProvider(CompanyRegistryProvider):
 
         address = payload.get("address") or {}
         registration = payload.get("registration") or {}
-        contact = payload.get("contact") or {}
         if not isinstance(address, Mapping):
             address = {}
         if not isinstance(registration, Mapping):
             registration = {}
-        if not isinstance(contact, Mapping):
-            contact = {}
 
         fields: dict[str, str | None] = {
             "company.tax_id": tax_id,
@@ -227,10 +224,14 @@ class ExternalDataApiCompanyRegistryProvider(CompanyRegistryProvider):
             "address.ibge_city_code": _digits_or_none(
                 address.get("ibge_city_code")
             ),
-            # X1 LGPD restriction: contact attributes are deliberately null.
-            "contact.area_code": _text(contact.get("area_code")),
-            "contact.phone": _text(contact.get("phone")),
-            "contact.email": _text(contact.get("email")),
+            # X1 LGPD restriction: contact attributes are NEVER consumed.
+            # The payload block is deliberately not read — business contact
+            # data may identify natural persons and stays null until
+            # institutional treatment authorization, regardless of what the
+            # upstream service returns.
+            "contact.area_code": None,
+            "contact.phone": None,
+            "contact.email": None,
             "company.registration_status": _text(
                 registration.get("status")
             ),
