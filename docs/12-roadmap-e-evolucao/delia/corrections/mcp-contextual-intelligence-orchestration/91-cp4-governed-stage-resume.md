@@ -234,3 +234,20 @@ decisão separada de coordenação.
 (`DELIA_MAX_GOVERNED_ATTEMPTS=2`) somente após observar dev; aprovar ou
 manter OFF. Residual material: nenhum bloqueante; latência de modelo
 permanece a causa-raiz subjacente (CP4 mitiga, não elimina).
+
+
+## 6. Revisão independente de coordenação — 2026-10-22
+
+**Veredito: ACCEPT_WITH_RESIDUAL — implementação CP4 recebida, dev experimental; produção NÃO homologada.** Revisados o commit publicado `a2d6576e37ddb28d6415229c29350a7aa04f46a7`, o relatório 91 e os trechos relevantes do checkpoint/boundary em `orchestration.py`. A `main` já avançou de forma concorrente no início da revisão (`566b5ced00834546be84820fadc0648266ce0c74`). A suíte e avaliação com modelo real foram **reportadas pelo executor**, não reexecutadas por este reviewer: `INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN`.
+
+**Aceito no escopo:** checkpoint tipado restrito à execução com `ContextVar`, replay de propostas com fingerprint de input, revalidação determinística pela superfície viva, recuperação bounded por `MAX_ATTEMPTS=2`, orçamento `TOTAL<=60s` / `ATTEMPT<=30s`, comportamento legado default OFF na base, evento real `CONTINUING`, não repetição automática de operação com classe material/unknown. Casos de testes determinísticos + modelo real são evidência relevante de viabilidade, não autorização de deploy produtivo.
+
+**R1 — autorização de outcomes reaproveitados (VERIFY):** o ramo `elif invoke_key in resume_state.invoke_outcomes` em `_invoke` retorna `SpecialistOutcome` armazenado **antes** de resolver/chamar o provider. Não afirmar que todo outcome de READ em replay recebe nova autorização live do Core/Domain por esse ramo. A continuidade na mesma request/sujeito reduz riscos, mas exige distinguir reutilização de evidência já obtida legitimamente de uma nova leitura autoritativa; classificar TTL/expiry, revogação, schema/capability ou política de reuso. Investigar se os contratos exigem revalidação; se sim, corrigir somente a boundary legítima, sem re-invocar PREPARE/ACT. `LIVE_AUTHZ_REVALIDATION_ON_CACHED_OUTCOME=NOT_PROVEN`.
+
+**R2 — orçamento end-to-end (VERIFY):** `interaction_end = first_deadline.clock() + total_budget` é calculado dentro de `attempt()` e não necessariamente no início do turno/handler; o `first_deadline` foi iniciado antes. Comprovar via relógio fake se o teto aprovado é realmente 60s **da interação inteira**, incluindo o tempo anterior ao invoke `attempt()`, e se `per_attempt` nunca excede 30s. Se houver diferença, corrigir origem do deadline no owner existente (sem novo orçamento paralelo). Não declarar 60s end-to-end provado apenas por testes do loop.
+
+**R3 — cancelamento real e transporte (VERIFY):** `GeneratorExit`/Event bloqueia próxima tentativa, mas não interrompe automaticamente chamadas modelo/MCP em curso. Validar desconexão de browser/NDJSON efetiva, sinalização, terminal único e nenhum novo estágio após o disconnect; o `CONTINUING` precisa ser recebido enquanto o stream ainda vive. O risco de HTTP/edge precisa ser caracterizado com teste de aproximadamente 60s, não somente inspeção de config. `REAL_TRANSPORT_60S=TEST_NOT_RUN_INDEPENDENTLY`.
+
+**R4 — cobertura operacional real (PENDING):** `REAL_MCP_EVALUATION=TEST_NOT_RUN` por ausência de bearer delegado. Testes com FakePort e surface-list real não comprovam autorização/efeito da invocação MCP real após resume. Exigir execução autenticada e avaliação de task outcome no SHA/config de destino antes de produção. `MODEL_REAL=EXECUTOR_REPORTED_PASS`; `MCP_REAL=TEST_NOT_RUN`; `PRODUCTION_ROLLOUT=NOT_AUTHORIZED`.
+
+**Próximo bounded step:** CP5 deve ser um **verification/targeted remediation gate** para R1–R4, sem redesenho da orquestração e sem ampliar budgets. Somente defeitos reproduzidos justificam fix. Manter `DELIA_MAX_GOVERNED_ATTEMPTS=1` em produção até evidências completas, com CRI de produção avaliado separadamente. `CP4_CODE=ACCEPT_WITH_RESIDUAL`; `CP5_REQUIRED=YES`; `I04_ACCEPTED=NO`.
