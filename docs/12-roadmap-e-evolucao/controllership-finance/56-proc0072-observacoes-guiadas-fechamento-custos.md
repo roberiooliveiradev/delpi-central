@@ -348,3 +348,35 @@ PO informa que existe calculo de CPV em dashboard de **Suprimentos**. Isso e uma
 **Estado:** `KARDEX01_CPV_METHOD=DOCUMENTED_PARTIAL`; `THIRD_PARTY_COST_CHECK=OWNER_REPORTED_VIA_PO`; `FISCAL_FILTER=TO_VERIFY`; `CPV_SQL_PARITY=TEST_NOT_RUN`; `SUPPLY_DASHBOARD_REUSE=TO_INVENTORY`; `PORTAL_AUDIT_PERSISTENCE=TARGET_DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 **Proximo marcador da gravacao: apos ~25:46.**
+
+
+## Registro 11 - Conferencia de mao de obra direta (MOD), 26:25-29:54
+
+**Fonte e precedencia:** narrativa do PO acompanhando a gravacao e quatro capturas de Excel. Os valores visiveis e operacoes de selecao sao `PROVEN_SCREENSHOT`; finalidade, circulacao entre areas e eventual uso em indicadores sao `OWNER_REPORTED_VIA_PO`. O tema e continuidade da rotina `Faturamento x MOD` registrada em ~06:04; nao foi homologada identidade de todas as saidas no mesmo layout.
+
+### Evidencia operacional
+- Joici abre a planilha de estrutura/custos, com abas `1-FI01` e `2-FI02` para filiais. Colunas visiveis: `PA`, `Seq Comp`, `Cod Produto`, `Desc Produto`, `Qtd Fat.`, `Quantidade`, `Custo Unitario`, `Custo Total`, `Custo Produto` e `Horas`.
+- As linhas incluem produtos acabados e componentes com codigos `MOD...`, descritos como `MAO DE OBRA DIRETA...`, indicando que a planilha associa componentes de mao de obra a produtos/estruturas.
+- Segundo PO, Joici seleciona/filtra itens de mao de obra direta e soma `Custo Total`; uma captura do Excel mostra `Soma: 172.001,37` na barra de status da selecao. **Classificacao: valor observado na selecao, nao total conciliado nem formula DRE homologada.** Confirmar quais abas, filtros e linhas estavam incluidas no intervalo da soma; nao multiplicar ou somar novamente pelo numero de pecas sem regra canonica.
+- Joici relaciona a conferencia a custo esperado vs custo realizado/pago na operacao fisica, conforme relato do PO. As capturas nao mostram sistema de folha/pagamento, apontamentos realizados ou reconciliacao entre previsto, executado e pago; **a correspondencia de cada conceito ainda `TO_INVENTORY`**.
+- PO relata conversao manual de valores numericos importados como texto e travamento do Excel antes de prosseguir no salvamento. Isso e friccao de formato de exportacao, nao regra de negocio a reproduzir no Portal. Nao declarar arquivo final como salvo a partir das capturas deste trecho.
+- Por volta de 29:30, Joici comenta que deveria ter verificado tambem os valores do fechamento de custos ao arquivar os Kardex. Isso reforca um **check de conferencia de valores anterior ao aceite final**, mas sem criterios ou tolerancias comprovados.
+- Este registro termina em ~29:54. Eventuais retomadas posteriores da conferencia de MOD deverao ser vinculadas a este registro, sem presumir fechamento conclusivo.
+
+### Circulacao de informacao e oportunidade transversal fora do escopo atual
+PO descreve o fluxo atual **Joici -> DRE/Controladoria -> Fabiano -> preenchimento manual de indicadores no Google Sheets de Producao -> dashboards**. A identidade do indicador, dono da planilha, formula, fontes, periodicidade e correspondencia com a soma `172.001,37` **nao foram verificadas em codigo ou contrato**.
+- Hipotese `TARGET / CROSS_CONTEXT_DISCOVERY`: substituir, quando comprovada a mesma metrica, a digitacao manual por um producer canonico de dados e integracao via contrato, respeitando boundaries. **Nao escrever direto no dashboard, nao usar Google Sheets como banco de integracao e nao transferir formula para este Portal por copia.**
+- `strategic-indicators-api` preserva ownership das metas/indicadores estrategicos quando aplicavel; `api-delpi` preserva regras SQL/Protheus; identificar owner real do dashboard de Producao. Backends se integram por HTTP/evento/contrato, sem imports de domain/application entre contextos.
+- Pesquisa textual no GitHub nesta rodada, por `mao de obra direta`, `custo MOD`, `MOD producao`, `indicadores producao`, `MOD` e `laborCost`, **nao retornou resultado indexado**. `SEARCH_MISS != ABSENCE`: nao declarar que nao ha indicador, API ou integracao. **Verificacao documental e de codigo do owner continua PENDING.**
+- Descoberta registrada para revisao em padroes de desenvolvimento: sempre mapear indicador manual -> fonte canonica -> contrato -> consumer -> parity/evidencia antes de sugerir duplicacao de dados ou eliminacao de entrada manual. Esta observacao nao altera o padrao oficial congelado nem concede autorizacao de implementacao.
+
+### Afericao pendente para eventual implementacao
+1. Obter arquivo Faturamento x MOD original e comprovante da filtragem de `MOD` por filial, produto, sequencia e periodo; reconciliar soma de 172.001,37 com definicao contábil.
+2. Especificar se o valor corresponde a MOD planejada, custo da estrutura, custo apontado, valor faturado ou efetivamente pago; separar claramente metrica e bases.
+3. Identificar dashboard(s) Producao, origem Google Sheets e contrato de leitura (owner, metrica, competencias, formula).
+4. Confirmar se consulta existente na `api-delpi` entrega esses campos, sem replicar semantica entre contextos.
+5. Definir criterios do check de fechamento referido pela Joici em 29:30 e qual evidencia valida seu aceite.
+
+**Estado:** `MOD_STRUCTURE_EXCEL=PROVEN_SCREENSHOT`; `MOD_SELECTED_SUM_172001_37=PROVEN_SCREENSHOT_PARTIAL`; `MOD_BUSINESS_INTERPRETATION=OWNER_REPORTED_VIA_PO`; `MOD_DRE_PRODUCTION_SHEETS_FLOW=OWNER_REPORTED_VIA_PO`; `PRODUCTION_DASHBOARD_MAPPING=TO_INVENTORY`; `TECHNICAL_PARITY=TEST_NOT_RUN`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**Proximo marcador da gravacao: 29:54.**
