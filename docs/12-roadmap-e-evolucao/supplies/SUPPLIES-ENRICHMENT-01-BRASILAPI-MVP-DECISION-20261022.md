@@ -43,3 +43,13 @@
 `SUPPLIES-ENRICHMENT-01 / S3.1 — BrasilAPI CNPJ Adapter & Assisted Review`: read HEAD, freeze real BrasilAPI v1 schema and permissible use, implement minimal HTTP adapter behind configurable fail-closed flag, map only S1 fields, tests offline positive/sibling/negative, S2 review creation integration, error/quotas, bounded isolated smoke if authorized, report outcomes. No MFE yet unless separate page authorization/gate; no changes to api-delpi, migrations or ERP writes.
 
 **Decision: GO S3.1 (bounded); NO GO for Serpro, external-source provenance writes, Protheus PUT, automatic rollout/deploy or page promotion.**
+
+## Addendum (X0 — 2026-10-22)
+O transporte de consulta externa migra conceitualmente para o novo owner
+compartilhado **`external-data-api`** — ver
+`docs/12-roadmap-e-evolucao/shared-integrations/EXTERNAL-DATA-API-MVP-ARCHITECTURE.md`
+(ADR de direção) e `EXTERNAL-DATA-API-CONTRACT-FREEZE-X0.md` (contrato
+congelado). Esta decisão BrasilAPI **permanece vigente** para o provider;
+só o transporte muda de owner (cutover em X2, após paridade e runtime
+saudável). O adapter local `brasilapi` da supplies-api não é removido
+antes da paridade comprovada.

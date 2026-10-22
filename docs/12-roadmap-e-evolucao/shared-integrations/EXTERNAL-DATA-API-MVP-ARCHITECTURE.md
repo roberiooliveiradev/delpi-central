@@ -85,3 +85,8 @@ Stop: `EXECUTION_DRIFT` para premissa de owner invalidada; sem autorização de 
 
 ## 9. Próxima task sugerida
 `SHARED-INTEGRATIONS-01 / X0 — Ownership & Contract Freeze`: inventariar authorities e produtores/consumidores em HEAD, definir serviço mínimo, contrato S2S e plano X1/X2 com evidências; terminar com relatório. PO decidiu **direção C e MVP**, mas implementação do serviço fica condicionada ao contrato X0 e revisão; não iniciar UX, PUT Protheus ou novo Redis produtivo nesta etapa.
+
+> **X0 executado:** contrato congelado em `EXTERNAL-DATA-API-CONTRACT-FREEZE-X0.md`
+> (owner proposto `external-data-api` novo bounded context, rota `GET /v1/cnpj/{cnpj}`
+> S2S-only, DTO v1, erros `EXTERNAL_DATA_*`, plano X1–X4, GATE-INFRA INCONCLUSIVE
+> por Redis DELPI inexistente). Próxima task: `X1 — Foundation + BrasilAPI CNPJ`.
