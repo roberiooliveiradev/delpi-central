@@ -518,3 +518,24 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Pendencias para as proximas falas:** identificar a finalidade concreta dos extratos (ex. confronto com saldos, pagamentos/recebimentos ou evidencias), documentos adicionais fora do TOTVS, etapas de conferencia, quem valida, criterios de discrepancia e tratamento de excecoes. Essas possibilidades NAO estao comprovadas pela fala de 38:28.
 
 **Classificacao:** `EXTERNAL_BANK_STATEMENTS_AS_IS=OWNER_REPORTED_VIA_PO`; `IMPORT_AND_VALIDATE_IN_PORTAL=TARGET`; `BANK_DOCUMENT_CONTRACT=TO_INVENTORY`; `VALIDATION_RULES=TO_INVENTORY`; `IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+## Registro 17 - Custos por centro de custo: SD1 e filtros de exclusao (44:28 a 47:48)
+
+**Fonte:** narracao guiada do PO e capturas TOTVS/Excel. No minuto 44:28, Joici recorda um relatorio adicional para entrega por filial a Controladoria/DRE: custos por centro de custo. O PO informa que os relatorios de estoque e custos sao entregues para todas as filiais pertinentes, nao apenas a matriz. A lista real de filiais e seus contratos de entrega ainda precisam ser inventariados.
+
+**AS-IS:** no TOTVS, Joici entra em Genericos, abre a base `SD1 - Itens das NFs de Entrada`, aplica filtro de **data de digitacao no mes de referencia**, exporta para Excel e faz as analises. Os prints mostram base SD1, filtro e planilha com filial, produto, tipo de produto, tipo de entrada, centro de custo e outros campos. Os alias da interface/exportacao nao identificam por si so os campos fisicos.
+
+**REGRA DE EXCLUSAO (nao inclusao):** retirar registros cujos codigos de **tipo de entrada** pertençam a: `01`, `02`, `03`, `04`, `030`, `040`, `083`, `080`, `085`, `120`, `204`, `318`. Estes codigos vieram do relato do PO e nao tiveram semantica individual validada no cadastro TOTVS. Tratar como strings e preservar zeros a esquerda. Nao converter esta lista em `IN`; a condicao relatada e de **exclusao**, `NOT IN`.
+
+Depois, Joici **ordena por produto** e **exclui materia-prima (MP)** ainda presente na lista, pois MP nao compoe esta analise especifica de custo por centro de custo. Isto nao revoga o uso de MP em outros relatorios, como P7 e CPV. O objetivo declarado e conhecer **despesas diretas, indiretas e administrativas**.
+
+**Sequencia evidenciada/relatada:** SD1 -> filiais e periodo por digitacao -> excluir os 12 tipos de entrada -> ordenar por produto -> excluir MP -> analisar despesa por centro de custo -> entregar por filial. Os prints fundamentam as telas e manipulacao; os significados dos codigos, formula final e resultado nao foram homologados.
+
+**Pendencias de inventario:** campos fisicos e aliases SD1, data de digitacao, cancelados/excluidos, classificacao MP, tipos de entrada, centro de custo e contas; significado e vigencia dos 12 codigos; medidas e sinais para agregar, impostos, devolucoes e reconciliacao; criterios de despesas diretas/indiretas/administrativas; responsabilidade pelo DRE; filial e competencia. Consultar producers/consumers e contratos em `api-delpi` antes de qualquer TARGET. Search miss nao equivale a ausencia.
+
+**Fronteira com o Portal:** R01/R02 baixas financeiras e R03 estoque historico nao comprovam esta regra SD1 implementada. Nao criar pagina, endpoint, permission, rotina ERP nem persistencia neste registro. Eventual dado TOTVS pertence ao owner canonico `api-delpi`; MFE acessa apenas sua BFF, apos decisao de produto e gate transversal. Nao afirmar que Excel exportado corresponde a conciliacao aprovada.
+
+**Proximo marco:** aos 47:48 Joici inicia explicacao adicional das regras de negocio. Registrar a explicacao posterior em novo trecho, sem antecipa-la.
+
+**Classificacao:** `SD1_SOURCE=PROVEN_SCREENSHOT`; `BY_FILIAL=OWNER_REPORTED_VIA_PO`; `DATE_DIGITATION=OWNER_REPORTED_VIA_PO`; `ENTRY_TYPE_EXCLUSION_SET=OWNER_REPORTED_VIA_PO`; `EXCLUDE_MP=OWNER_REPORTED_VIA_PO`; `EXPENSE_GOAL=OWNER_REPORTED_VIA_PO`; `FIELDS_FORMULAS_OWNER=TO_INVENTORY`; `RUNTIME_PARITY=TEST_NOT_RUN`; `TARGET_IMPLEMENTATION=NOT_AUTHORIZED`.
