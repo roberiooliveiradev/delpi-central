@@ -128,3 +128,18 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## 7. Coordination independent code/document review — 2026-10-22
+
+**Verdict: ACCEPT_WITH_RESIDUAL (bounded C3 independent verification task).** Reviewed published SHA `b40e7b3476` against the committed report and `_contract_fact_rows` implementation. Current main already advanced independently when review began (`950383a192619f36d956cc172c48700825f354a8`); implementation commit is an ancestor. No runtime/test tools were independently invoked from this review; real MCP/model outcomes, OFF-harness tests, and test counts are **executor evidence** (`INDEPENDENT_REEXECUTION=TEST_NOT_RUN`).
+
+**Accepted:** R2.F correction is supported by static code: canonical capability_surface is examined first, and both mapping and list-form entity collections can be projected; duplicate entity keys prefer read surface. Reuses existing contracts, no new registry/stage/provider branch. R1 is a deliberate OFF/ON operational change, not OFF identical behavior: single bounded owner rejection recovery is preserved with appropriate reported gates. R3 reactive recovery may remain until proactive benefit is proved. No production activation.
+
+**New actionable concern — presentation count inconsistency:** T5 reported `Encontrei 40 registros` alongside `Exibindo 5 de 32`. This is a user-visible contradiction and should not be treated as cosmetic only. Trace provenance of raw returned, owner total, deduplicated and delivered counts and ensure a single typed source per statement (E2/E3 existing presentation contract). Mark `COUNT_CONSISTENCY=FAIL_EXECUTOR_REPORTED`; scope a minimal separate E3 task with RED test + real outcome verification if reproduced. Do not alter count semantics based only on text templates.
+
+**Evaluation classification:** T4/T6 are encouraging; V4 (intent about VISTA operations routed to DAVI discovery) must not automatically count as correct **owner selection** merely because a grounded metadata envelope was returned. Audit expected owner/capability match and actual question answered. D4 is an honest miss, not task completion. G6 PREPARE-only supports governance, but any live write-scenario tests must ensure no ACT and avoid unapproved material actions. `REAL_MODEL_GENERALIZATION=EXECUTOR_REPORTED_PARTIAL`, not independent blanket PASS.
+
+**Residual safety and assurance:** metadata containing agent_directives is rendered as descriptive data, not executed, but actual user-facing selection/quoting and injection-neutralized end-to-end behavior remain `TEST_NOT_RUN_INDEPENDENTLY`. OFF live toggle `TEST_NOT_RUN`, although OFF construction tests are reported. Model timeouts (~30s) prevent proving invariant latency from qualitative `≈0` estimates.
+
+**Next bounded decision:** accept this residual-remediation task with explicit count-consistency triage and semantic owner-selection verification, without a broad orchestration redesign; owner field-to-event and authoritative global ordering remain separate contract dependencies. Keep CRI ON in dev and production OFF. `I04_ACCEPTED=NO`; `C3_EXECUTED=YES_EXECUTOR_REPORTED`.
