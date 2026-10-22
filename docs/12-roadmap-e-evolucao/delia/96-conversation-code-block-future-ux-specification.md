@@ -7,6 +7,8 @@
 **Reanchor na execução futura:** HEAD/git status → Project Instructions/.cursor → 16 → 50 → 17 → 49 → 51 → 52 → 21 → 20 → 25 → arquitetura técnica → product spec → specs 82/83/84/91 e documentos temáticos pertinentes → ledger. Em conflito, prevalece a autoridade superior e sinalize `EXECUTION_DRIFT`.  
 **Base factual de consulta:** `main` observado em `826897b498e3b955f4775cb8b73be785221debe3`. Nunca assumir esse SHA como HEAD de implementação.
 
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
+
 ## 1. Objetivo de produto
 
 Oferecer blocos de código legíveis, copiáveis e acessíveis **dentro de respostas Markdown expressamente admitidas**, preservando texto exato, indentação, linhas em branco, caracteres e semântica do código. O recurso é de **leitura e cópia**, jamais de execução.
