@@ -296,3 +296,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - movimentos de inventario (22/10/2026)
 
 [Doc 66 - Invent / ajustes de inventario](./66-ciclo1-invent-movimentos-inventario.md): planilha privada com 45 movimentos de documento `INVENT`, combinacoes tecnicas `TES 999 / RE0` (saida) e `TES 499 / DE0` (entrada), e duas linhas finais de agregacao sem a mesma estrutura. Analise do efeito liquido, produtor, cobertura de armazens 01/99 e reconciliacao com Kardex, MATR320 e P7 seguem `TO_INVENTORY/TEST_NOT_RUN`. Somente regras e metadados conceituais foram versionados.
+
+
+### Ciclo 1 - notas fiscais a desconsiderar (22/10/2026)
+
+[Doc 67 - Inventario conceitual SD2](./67-ciclo1-nf-a-desconsiderar-sd2.md): uma aba de itens de nota fiscal de saida, exportacao SD2, 184 colunas e 11 itens na amostra. Identificada uniformidade de tipo de saida e codigo fiscal sem provar que essa combinacao seja criterio oficial de exclusao. Motivo, apuracao afetada, joins, filtros e paridade continuam pendentes; nenhum documento fiscal individual ou valor foi versionado.
