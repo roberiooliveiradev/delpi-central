@@ -139,3 +139,16 @@ Para cada nova observacao, acrescentar ID `Vxx` ou `RC-xx` sem substituir nota a
 **Seguranca dos documentos:** originais e dados operacionais/fiscais/financeiros ficam restritos ao contexto privado; este GitHub armazena **somente conceito, dependencia e gaps**, sem prints, arquivos, nomes de instituicoes, contas, identificadores ou valores.
 
 **Status:** `CHECKLIST_PURPOSE=PO_CONFIRMED`; `P2_P5_BOUNDARY=PROVEN_GITHUB_DOC`; `CATALOG_ITEM_MAPPING=TO_INVENTORY`; `ACTUAL_REVIEW_ASSIGNMENTS=TO_INVENTORY`; `RUNTIME=TEST_NOT_RUN`; `NEW_IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+### Correcao de evidencia do checklist - legenda verde `Enviar` (PO, 22/10/2026)
+
+**Correcao sobre a leitura anterior:** a planilha apresenta legenda verde **`Enviar`**. Portanto, nas matrizes de entrega, **celula verde = entregavel indicado para envio naquele recorte de unidade/filial**. Este significado nao deve permanecer genericamente como "cor sem semantica" ou apenas "aplicabilidade provavel". O PO confirmou expressamente esse criterio e as capturas mostram a legenda.
+
+- **Verde (`Enviar`) = REQUIREMENT_TO_SEND** no escopo da coluna correspondente, conforme checklist operacional. Nao equivale a `SENT`, `SUBMITTED_FOR_REVIEW`, `VALIDATED` ou `ACCEPTED`.
+- **`x`** e outras anotacoes aparecem em celulas na planilha, mas sua interacao com a cor, em todos os quadros/abas, ainda requer conferencia da owner para evitar precedencia presumida. Branco/sem verde nao significa automaticamente "dispensado", "N/A" ou "nao requerido" sem regra confirmada.
+- **Destino** e **obrigatoriedade da revisao** permanecem campos separados da marcacao verde: o documento informa o que deve ser enviado, enquanto P2/P5 e os contratos canonicos definem estados, pacotes e aceite humano.
+- No inventario do template P6/snapshot P2, mapear `deliverable + business_unit/branch -> requirement_to_send` com contexto/competencia e versao do template, **sem** criar permission por filial. Confirmar aplicacao em todas as abas, excecoes e variacoes por competencia com Joici antes de migrar para contrato fisico.
+- Atualizar o status da interpretacao: `GREEN_LEGEND=PROVEN_SCREENSHOT_AND_PO_CONFIRMED`; `GREEN_MEANS_SEND_REQUIRED_IN_COLUMN_SCOPE=PO_CONFIRMED`; `ACTUAL_DELIVERY=TEST_NOT_RUN`; `REVIEW_ACCEPTANCE=TEST_NOT_RUN`.
+
+Este adendo prevalece sobre textos anteriores desta matriz que descrevem genericamente as marcacoes verdes como nao interpretadas. Dados originais e operacionais continuam restritos fora do GitHub.
