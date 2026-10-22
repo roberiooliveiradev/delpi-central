@@ -127,3 +127,16 @@ Classificação honesta: a cadeia orquestrada real executou e a resposta respeit
 **Produção:** `DELIA_MAX_GOVERNED_ATTEMPTS` permanece `:-1` (OFF) — ativação não autorizada nesta tarefa.
 
 `CP5_VERIFICATION=EXECUTED` · `R1=REMEDIATED(partial-outcome checkpoint)` · `R2=REMEDIATED(interaction-start anchor)` · `R3=REMEDIATED(mid-attempt cancel seams)` · `R4=TEST_NOT_RUN(credential blocker)` · `PRODUCTION_ENABLED=NO` · `I04_ACCEPTED=NO` · `C3_EXECUTED=YES`
+
+
+## 11. Parecer de coordenação — 2026-10-22
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL para implementação e testes de desenvolvimento CP1–CP5.** O relatório do executor e o material publicado foram revisados documentalmente; as suítes e a avaliação NDJSON de 60,4s não foram reexecutadas independentemente neste parecer (`INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`). Correções R1, R2 e R3 têm evidência RED→GREEN reportada. O orçamento lógico de 60s não deve ser confundido com duração absoluta do transporte observada (~60,4s incluindo encerramento).
+
+**Fechamento de escopo:** o ciclo de correção de classificação de timeout, checkpoint efêmero e recuperação governada está implementado e aceito **para desenvolvimento**; persistência e resume após refresh continuam fora de escopo por decisão de produto. Não abrir refatoração adicional sem falha reproduzida. `CP1_TO_CP5_DEV_IMPLEMENTATION=ACCEPT_WITH_RESIDUAL`; `I04_ACCEPTED=NO` (não alterar fase no relatório).
+
+**Gate ainda material:** `REAL_MCP_AUTHENTICATED_POST_RESUME=TEST_NOT_RUN`. Exigir credencial delegada legítima de usuário dev e execução da invocação real na retomada, com authorization/evidence/outcome, antes de homologação produtiva; não utilizar credenciais administrativas como usuário nem inserir secrets em código/docs/logs. Preservar resíduo contratual de revogação não observável em tools/list e política de reuso de evidence durante a janela de 60s. Até lá `PRODUCTION_RECOVERY_ENABLED=NO`; ativação requer release separado com SHA/config, rollout, rollback e smoke autenticado.
+
+**Outras frentes não cobertas por CP5:** (a) instalar/verificar Ollama local e migrar todas as avaliações locais que precisam de modelo real para o Ollama, proibindo LLM externo em testes locais (decisão registrada em `local-llm-testing-policy-ollama-2026-10-22.md`); (b) comprovar CRI real em produção e corrigir prosa operacional de campos; (c) reproduzir contexto entre turnos `2 exemplos de terminal bala → use o davi → o mcp davi`, catalog/owner selection e falha exibida como api-delpi; (d) fechar integração de mensagem selecionada com Detalhes/Evidências/Atividades do painel Contexto. Incidentes observados constam em `production-observations-2026-10-22-cri-contextual-owner-routing.md`. Não confundir resolução de timeout com estes quatro problemas de experiência/qualidade.
+
+**Sequenciamento recomendado:** concluir R4 como gate bounded de homologação do mecanismo, separar imediatamente a preparação do Ollama local como política para próximos testes, e priorizar investigação produtiva CRI/contexto/front-end com traces e contracts reais. Nenhum deploy, flag de produção ou mudança de fase é autorizado por este parecer.
