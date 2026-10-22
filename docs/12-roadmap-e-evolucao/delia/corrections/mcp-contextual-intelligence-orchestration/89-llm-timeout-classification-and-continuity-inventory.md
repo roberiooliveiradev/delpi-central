@@ -158,10 +158,10 @@ i01_contextual_knowledge_continuity (set).
 ## 7. Report fields
 
 ```text
-BASE_HEAD=<origin/main at worktree>
-FINAL_HEAD=<commit sha>
-ORIGIN_MAIN=<verified>
-PUSH_VERIFIED=<ff>
+BASE_HEAD=cff65bb63b165b (origin/main at worktree creation)
+FINAL_HEAD=980e3dbeb75f4fdc3ac0afaac543b2de51c29ce7
+ORIGIN_MAIN=980e3dbeb75f4fdc3ac0afaac543b2de51c29ce7
+PUSH_VERIFIED=YES (ff cff65bb63b..980e3dbeb7)
 
 ERROR_MAPPING_BEFORE=model/budget deadline → SOURCE_UNAVAILABLE
 ERROR_MAPPING_AFTER=deadline → PROCESSING_TIMEOUT (+error_code preserved);
