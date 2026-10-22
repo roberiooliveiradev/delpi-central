@@ -187,6 +187,12 @@ class GetHelpdeskDashboardSummaryUseCase:
             )
             items = _extract_items(payload)
             tickets.extend(items)
+            # A filtered page can be shorter than the GLPI page and still have
+            # more raw rows. Stop only when the source says the scan is done.
+            if isinstance(payload.get("has_more"), bool):
+                if not payload["has_more"]:
+                    return tickets, False
+                continue
             if len(items) < _PAGE_SIZE or not _has_more(payload):
                 return tickets, False
         return tickets, True

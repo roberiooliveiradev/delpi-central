@@ -257,6 +257,14 @@ class TestTotalCreatedInPeriod:
 
 
 class TestPaginationAndPartial:
+    def test_short_page_continues_when_source_has_more(self) -> None:
+        page1 = {"items": [_ticket(1)], "has_more": True}
+        page2 = {"items": [_ticket(2)], "has_more": False}
+        result = _execute(FakeGateway([page1, page2]))
+        assert result["data"]["open"] == 1
+        assert result["data"]["in_progress"] == 1
+        assert result["meta"]["tickets_evaluated"] == 2
+
     def test_aggregates_across_multiple_pages(self) -> None:
         page1 = _page([_ticket(1)] * 50, page=1, page_size=50, total=75)
         page2 = _page([_ticket(2)] * 25, page=2, page_size=50, total=75)
