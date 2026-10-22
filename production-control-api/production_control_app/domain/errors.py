@@ -83,6 +83,8 @@ class ProductionRunHandoffConflict(ProductionRunConflict):
     code identifica a razão do bloqueio no contrato:
     no_next_operation, current_not_in_queue, queue_changed,
     balance_unknown, run_not_active, device_mismatch,
+    count_boundary_stale (amostra Pulse mais velha que a contagem
+    persistida — fail closed, reconfirme com leitura fresca),
     request_conflict (requestId reutilizado com payload diferente).
     """
 
