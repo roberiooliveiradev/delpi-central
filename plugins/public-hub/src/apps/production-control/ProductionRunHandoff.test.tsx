@@ -660,6 +660,11 @@ describe("troca guiada de OP (E2)", () => {
     fireEvent.click(nextButton);
 
     expect(await screen.findByText(/Produção já atualizada/i)).toBeInTheDocument();
+    // Decisão morta: durante a reconciliação nem Stop nem troca podem
+    // sair por esta tela — o run vinculado já foi declarado inativo.
+    expect(
+      screen.getByRole("button", { name: /Encerrar produção/i }),
+    ).toBeDisabled();
     await waitFor(() =>
       expect(
         calls.filter((call) => call.url.includes("/runs/active")).length,
