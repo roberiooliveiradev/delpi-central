@@ -11,13 +11,15 @@ Semântica dos indicadores (mapeamento efetivo dos status GLPI via helpdesk-api)
   recai no período solicitado (sem período, todos). Tickets ``closed`` (6) NÃO
   contam — fechamento é um ciclo posterior à resolução e mantemos a distinção
   exigida pelo indicador.
-- ``overdue``: tickets que o GLPI classifica com ``sla_ttr_exceeded`` verdadeiro
-  (campo de busca nativo ``sla_ttr_is_late``, "Time to resolve exceeded"). Este
-  use case não compara prazos. Se algum ticket autorizado não trouxer o booleano,
-  ``overdue`` fica ``null`` — ausência não vira zero.
-- ``pending_overdue``: união de ``pending`` e ``overdue`` já classificado pelo
-  GLPI (sem dupla contagem). Fica ``null`` junto com ``overdue`` quando o GLPI
-  não classificou a página.
+- ``overdue``: tickets ainda não finalizados (status 1, 2, 3, 4 ou 10) que o
+  GLPI classifica com ``sla_ttr_exceeded`` verdadeiro (campo de busca nativo
+  ``sla_ttr_is_late``). Resolvidos (5) e fechados (6) não entram, mesmo quando o
+  GLPI marca o TTR como excedido. Este use case não compara prazos. Se um ticket
+  não finalizado não trouxer o booleano, ``overdue`` fica ``null``. A ausência
+  do booleano em resolvido ou fechado não invalida o indicador.
+- ``pending_overdue``: união de ``pending`` e desse ``overdue`` em aberto (sem
+  dupla contagem). Fica ``null`` junto com ``overdue`` quando faltar a
+  classificação GLPI de algum chamado não finalizado.
 - ``total_created_in_period``: tickets distintos cuja ``created_at`` recai no
   período solicitado (datas inclusivas, mesma semântica de ``resolved``; sem
   período, todos os tickets autorizados). Cada chamado conta uma única vez
@@ -45,13 +47,14 @@ _STATUS_WAITING_APPROVAL = 10
 
 _IN_PROGRESS_IDS = frozenset({_STATUS_PROCESSING_ASSIGNED, _STATUS_PROCESSING_PLANNED})
 _PENDING_IDS = frozenset({_STATUS_WAITING, _STATUS_WAITING_APPROVAL})
+_UNFINISHED_IDS = frozenset({_STATUS_NEW}) | _IN_PROGRESS_IDS | _PENDING_IDS
 _STATUS_MAPPING_DOC = {
     "open": "GLPI status_id 1 (new)",
     "in_progress": "GLPI status_id 2, 3 (processing assigned/planned)",
     "pending": "GLPI status_id 4, 10 (waiting, waiting approval)",
     "resolved": "GLPI status_id 5 (solved) filtered by solved_at in the requested period; closed (status_id 6) is not counted as resolved",
-    "overdue": "GLPI search field sla_ttr_is_late (Time to resolve exceeded), transported as sla_ttr_exceeded; null when the source did not classify every authorized ticket",
-    "pending_overdue": "union of pending and GLPI-classified overdue tickets (each ticket counted once); null when overdue is unavailable",
+    "overdue": "unfinished status (1, 2, 3, 4, 10) with GLPI sla_ttr_is_late transported as sla_ttr_exceeded; solved (5) and closed (6) are excluded; null only when an unfinished ticket lacks that classification",
+    "pending_overdue": "union of pending and that unfinished GLPI-classified overdue set (each ticket counted once); null when overdue is unavailable",
 }
 
 _PAGE_SIZE = 50
@@ -127,11 +130,9 @@ class GetHelpdeskDashboardSummaryUseCase:
             if _created_in_range(ticket, start_date, end_date):
                 created_seen.add(_dedup_key(ticket))
         counts["total_created_in_period"] = len(created_seen)
-        sla_known = _sla_classification_complete(tickets)
+        sla_known = _open_sla_classification_complete(tickets)
         if sla_known:
-            counts["overdue"] = sum(
-                1 for ticket in tickets if isinstance(ticket, dict) and ticket.get("sla_ttr_exceeded") is True
-            )
+            counts["overdue"] = _count_open_overdue(tickets)
             counts["pending_overdue"] = _count_pending_overdue(tickets)
         else:
             counts["overdue"] = None
@@ -293,13 +294,25 @@ def _dedup_key(ticket: dict[str, Any]) -> Any:
     return ("_obj", id(ticket))
 
 
-def _sla_classification_complete(tickets: list[Any]) -> bool:
+def _open_sla_classification_complete(tickets: list[Any]) -> bool:
     for ticket in tickets:
         if not isinstance(ticket, dict):
             return False
+        if _status_id(ticket) not in _UNFINISHED_IDS:
+            continue
         if not isinstance(ticket.get("sla_ttr_exceeded"), bool):
             return False
     return True
+
+
+def _count_open_overdue(tickets: list[Any]) -> int:
+    total = 0
+    for ticket in tickets:
+        if not isinstance(ticket, dict):
+            continue
+        if _status_id(ticket) in _UNFINISHED_IDS and ticket.get("sla_ttr_exceeded") is True:
+            total += 1
+    return total
 
 
 def _count_pending_overdue(tickets: list[Any]) -> int:
@@ -307,7 +320,10 @@ def _count_pending_overdue(tickets: list[Any]) -> int:
     for ticket in tickets:
         if not isinstance(ticket, dict):
             continue
-        if _status_id(ticket) in _PENDING_IDS or ticket.get("sla_ttr_exceeded") is True:
+        status_id = _status_id(ticket)
+        if status_id in _PENDING_IDS or (
+            status_id in _UNFINISHED_IDS and ticket.get("sla_ttr_exceeded") is True
+        ):
             total += 1
     return total
 
