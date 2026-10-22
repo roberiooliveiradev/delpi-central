@@ -196,6 +196,9 @@ MODEL_PROVIDER_FOR_TESTS=OLLAMA EXTERNAL_LLM_TEST_CALLS=0
 BACKEND_REGRESSION=full suite green FRONTEND_REGRESSION=334/334
 TYPECHECK=clean BUILD=ok FEDERATION=patch-verified
 BROWSER_QA=TEST_NOT_RUN(portal serves pre-change build)
+EVALUATED_SHA=b0d967614d17afd64f13a4f1ce08f535f6a99853
+EVALUATED_CONFIG=dev; Ollama qwen2.5:3b; TEST_ONLY adapters in unit
+    suites; budgets/recovery unchanged; PRODUCTION untouched
 EXECUTOR_VERDICT=implementation+evidence returned for independent
     review; no acceptance claimed
 ```
