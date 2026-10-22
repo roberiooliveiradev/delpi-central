@@ -16,7 +16,7 @@ Não criar segunda mutation boundary, segundo renderer, GPT-local RBAC, executor
 | Item | Estado | Evidência / limite |
 | --- | --- | --- |
 | PresentationMutation compartilhada | PROVEN | `PresentationMutationCommitService.commit` prepara patch e persiste por `TvPresentationWriteService.update_slide` |
-| Gate de fingerprint por classe de operação | PROVEN | `mutation_ops_require_data_fingerprint(ops)` é consultado no commit; evita resolver fonte em alteração puramente geométrica |
+| Gate de fingerprint por classe de operação | PROVEN | Geometria não resolve fonte. `upsert_block` continua no conjunto de dados e só dispensa a consulta quando o diff persistido é exclusivamente visual; vínculo, parâmetro, transformação e chave não classificada continuam resolvendo |
 | Read-back autoritativo | PROVEN | ack contém `nativeConfig` persistido e `appliedOps`, carimbo de formatação |
 | Revisão esperada e erro de concorrência | PROVEN | `expected_revision`, `RevisionConflictError` 409 |
 | CAS de revisão no repositório | PROVEN | `TvPresentationWriteService._persist` traduz conflito de repositório; comentário documenta `FOR UPDATE` transacional; revalidar teste do CAS real |
