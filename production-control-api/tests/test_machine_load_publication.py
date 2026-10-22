@@ -459,6 +459,36 @@ def test_draft_only_operation_cannot_start_a_run() -> None:
     )
 
 
+def test_run_context_scopes_same_operation_to_the_requested_work_center() -> None:
+    """Mesma OP+operação em dois CTs: o contexto do Play deve ser o do CT do posto."""
+    snapshots = FakeSnapshotRepo()
+    _upsert_working(
+        snapshots,
+        [
+            _op("24640401002", "01", work_center="CT-01A",
+                pending_qty=5.0, pieces_conversion_factor=10.0),
+            _op("24640401002", "01", work_center="CT-02",
+                pending_qty=9.0, pieces_conversion_factor=99.0),
+        ],
+    )
+    snapshots.publish("01")
+    service = _service(FakeGateway(), snapshots)
+
+    scoped = service.public_operation_run_context(
+        branch="01", work_center="CT-02",
+        production_order="24640401002", operation_code="01",
+    )
+    assert scoped is not None
+    assert scoped["pending_qty"] == 9.0
+    assert scoped["pieces_conversion_factor"] == 99.0
+
+    missing = service.public_operation_run_context(
+        branch="01", work_center="CT-99",
+        production_order="24640401002", operation_code="01",
+    )
+    assert missing is None
+
+
 def test_publications_are_isolated_between_branches() -> None:
     snapshots = FakeSnapshotRepo()
     _upsert_working(snapshots, [_op("24640401002", "01")], branch="01")

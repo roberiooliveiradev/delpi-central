@@ -131,13 +131,13 @@ class FakeRepo:
         out["open_segment"] = seg
         return out
 
-    def get_open_segment(self, run_id: str):
+    def get_open_segment(self, run_id: str, conn=None):
         for seg in self.segments.get(run_id, []):
             if seg.get("ended_at") is None:
                 return dict(seg)
         return None
 
-    def list_segments(self, run_id: str):
+    def list_segments(self, run_id: str, conn=None):
         return [dict(s) for s in self.segments.get(run_id, [])]
 
     def update_run_pieces(self, run_id, *, pieces_total, open_segment_pieces,

@@ -52,6 +52,7 @@ from production_control_app.domain.errors import (
     OperatorNotFound,
     Product3DModelNotFound,
     ProductionRunConflict,
+    ProductionRunHandoffConflict,
     ProductionRunNotFound,
     PublicAccessDenied,
     PulseDeviceUnavailable,
@@ -119,6 +120,33 @@ class StartRunBody(BaseModel):
     website: str | None = None  # honeypot
 
 
+class HandoffExpectedNextBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    production_order: str = Field(
+        ..., alias="productionOrder", min_length=1, max_length=40
+    )
+    operation_code: str = Field(
+        ..., alias="operationCode", min_length=1, max_length=20
+    )
+
+
+class RunHandoffBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    request_id: str = Field(
+        ...,
+        alias="requestId",
+        min_length=1,
+        max_length=64,
+        description="UUID gerado uma vez por confirmação (idempotência).",
+    )
+    branch: str = Field(..., min_length=2, max_length=2)
+    work_center: str = Field(..., alias="workCenter", min_length=1, max_length=40)
+    expected_next: HandoffExpectedNextBody = Field(..., alias="expectedNext")
+    website: str | None = None  # honeypot
+
+
 def _handle_public_errors(exc: Exception):
     if isinstance(exc, PublicAccessDenied):
         return fail(str(exc), 404)
@@ -134,6 +162,8 @@ def _handle_public_errors(exc: Exception):
         return fail(str(exc), 404)
     if isinstance(exc, BenchSessionRequired):
         return fail(str(exc), 401)
+    if isinstance(exc, ProductionRunHandoffConflict):
+        return fail(str(exc), 409, data={"code": exc.code})
     if isinstance(exc, ProductionRunConflict):
         return fail(str(exc), 409)
     if isinstance(exc, ProductionRunNotFound):
@@ -535,6 +565,77 @@ def stop_production_run(
 
 
 @router.get(
+    "/{token}/runs/{run_id}/handoff-preview",
+    operation_id="get_public_run_handoff_preview",
+)
+def get_run_handoff_preview(
+    token: str,
+    run_id: str,
+    branch: str = Query(...),
+    work_center: str = Query(..., alias="workCenter"),
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Prévia da troca guiada: run atual + próxima elegível da PUBLISHED.
+
+    Leitura pura — não muda run, contagem nem fila. A decisão de qual
+    operação sucede é do backend (filial + CT + ordem publicada); o cockpit
+    apenas apresenta.
+    """
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_production_run_service().handoff_preview(
+            run_id,
+            session_token=session_token,
+            branch=branch,
+            work_center=work_center,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.post(
+    "/{token}/runs/{run_id}/handoff",
+    operation_id="confirm_public_run_handoff",
+)
+def confirm_run_handoff(
+    token: str,
+    run_id: str,
+    body: RunHandoffBody,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Confirmação atômica da troca: encerra o run e inicia o sucessor.
+
+    O backend recalcula o destino sobre a PUBLISHED travada e confere com
+    expectedNext — a prévia nunca é autorização. requestId torna a
+    operação idempotente: replay devolve o resultado original gravado.
+    """
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    if not _honeypot_ok(body.website):
+        return ok({"accepted": True, "id": None})
+    try:
+        build_branch_access_service().assert_valid_branch(body.branch)
+        data = build_production_run_service().confirm_handoff(
+            run_id,
+            request_id=body.request_id,
+            branch=body.branch,
+            work_center=body.work_center,
+            expected_next={
+                "productionOrder": body.expected_next.production_order,
+                "operationCode": body.expected_next.operation_code,
+            },
+            session_token=session_token,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get(
     "/{token}/downtime-source",
     operation_id="get_public_work_center_downtime_source",
 )
@@ -745,6 +846,7 @@ def get_active_production_run(
             try:
                 qty = build_machine_load_service().public_operation_run_quantity(
                     branch=branch,
+                    work_center=work_center,
                     production_order=str(data.get("productionOrder") or ""),
                     operation_code=str(data.get("operationCode") or ""),
                 )
