@@ -266,3 +266,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - rotinas fiscais e contabeis TOTVS
 
 [Doc 60 - Inventario sanitizado de rotinas e privilegios](./60-ciclo1-rotinas-contabeis-fiscais-totvs.md): duas abas, 14 rotinas fiscais e 7 contabeis. Codigos candidatos MATR460, MATR989, MATR910, DLP204, FINR150/FINR130/FINR190, EDAPP, cadastros e configuracoes fiscais. Lista de privilegios da planilha NAO e grant efetivo nem autorizacao para writes. Paridade ERP e contratos de API `TO_INVENTORY/TEST_NOT_RUN`; nenhum dado transacional ou documento privado versionado.
+
+
+### Ciclo 1 - CPV da matriz: Kardex fisico-financeiro (22/10/2026)
+
+[Doc 61 - Inventario conceitual do arquivo de CPV](./61-ciclo1-cpv-kardex-matriz-inventario.md): uma aba de Kardex com blocos por produto, movimentos, TES/codigo fiscal, entradas/saidas, custo medio, saldos e resumo por tipo. O nome da amostra indica setembro e cabecalho de referencia/emissao e de outubro; cutoff `TO_INVENTORY`. Vínculo candidato MATR910/doc 60, contraponto video/doc 57, roteiro CPV-01..08 de dados, elegibilidade e paridade. **Nao publicar valores, registros fiscais, produtos, documentos ou planilha original; runtime nao autorizado.**
