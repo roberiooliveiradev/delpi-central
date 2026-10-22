@@ -134,6 +134,7 @@ class SpecialistOutcome:
     is_complete: bool = True
     structured: Mapping[str, object] | None = None
     limitations: tuple[str, ...] = field(default_factory=tuple)
+    contract_facts: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def epistemic_class(self) -> EpistemicClass:

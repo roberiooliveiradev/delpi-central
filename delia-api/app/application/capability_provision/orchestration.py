@@ -117,6 +117,7 @@ from app.application.capability_provision.conversational_response import (
 )
 from app.application.capability_provision.outcome_assessment import (
     OUTCOME_ANSWERED,
+    OUTCOME_CONTRACT_FACTS,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
     AnswerRequirements,
@@ -146,6 +147,9 @@ from app.application.capability_provision.paginated_result_semantics import (
 )
 from app.application.capability_provision.ports import (
     CapabilityProviderPort,
+)
+from app.application.specialist_interop.errors import (
+    MCP_PROTOCOL_ERROR,
 )
 from app.domain.capability_catalog.model import OperationCharacter
 from app.domain.decision_path.model import DecisionPathInput
@@ -1666,6 +1670,92 @@ def _bound_owner_evidence(outcome: SpecialistOutcome) -> str:
 
 _EVIDENCE_DROPPED_KEYS = frozenset({"example", "examples"})
 MAX_EVIDENCE_SCALAR_LIST = 48
+# Bounded owner-published contract rows for DISCOVERY-class outcomes —
+# capability-surface metadata, never domain facts.
+MAX_CONTRACT_FACT_ROWS = 8
+MAX_CONTRACT_FACT_ENTITY_ROWS = 4
+
+
+def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
+    """Bounded owner-contract digest from a DISCOVERY-class outcome.
+
+    Per-entity contract rows first (the canonical ``entities``
+    collection the owner publishes — field/filter vocabulary), then
+    one bounded row per remaining top-level section. Breadth-first,
+    so a single deep JSON truncation never silently drops the
+    vocabulary the owner actually publishes. Same sanitize/redact/
+    compact pipeline the argument stage consumes; capability-surface
+    metadata only, never domain facts.
+    """
+    payload = (
+        outcome.structured
+        if isinstance(outcome.structured, Mapping)
+        else outcome.content_text
+    )
+    if isinstance(payload, str):
+        text = _redact_text(payload)
+        return tuple(
+            line.strip() for line in text.splitlines() if line.strip()
+        )[:MAX_CONTRACT_FACT_ROWS]
+    sanitized = _sanitize_renderable(_unwrap_owner_payload(payload))
+    rows: list[str] = []
+    # All entity-contract collections the owner publishes (canonical
+    # keys, depth ≤1) — read and write surfaces can coexist in one
+    # catalog; first occurrence per entity name wins.
+    entity_schemas: dict[str, Mapping[str, Any]] = {}
+    if isinstance(sanitized, Mapping):
+        sections = [sanitized] + [
+            value
+            for value in list(sanitized.values())[:MAX_SURFACE_ENTRIES]
+            if isinstance(value, Mapping)
+        ]
+        for section in sections:
+            for key, collection in list(section.items())[
+                :MAX_SURFACE_ENTRIES
+            ]:
+                if (
+                    _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS
+                    and isinstance(collection, Mapping)
+                ):
+                    for name, schema in list(collection.items())[
+                        :MAX_SURFACE_ENTRIES
+                    ]:
+                        if (
+                            isinstance(name, str)
+                            and isinstance(schema, Mapping)
+                            and name not in entity_schemas
+                        ):
+                            entity_schemas[name] = schema
+    for name, schema in list(entity_schemas.items())[
+        :MAX_CONTRACT_FACT_ENTITY_ROWS
+    ]:
+        text = json.dumps(
+            _compact_evidence(schema), ensure_ascii=False, default=str
+        )
+        rows.append(
+            f"entities.{str(name)[:80]}: "
+            f"{text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
+        )
+    compacted = _compact_evidence(sanitized)
+    if not isinstance(compacted, Mapping):
+        rows.append(
+            json.dumps(compacted, ensure_ascii=False, default=str)[
+                :MAX_OWNER_EVIDENCE_ENTRY_CHARS
+            ]
+        )
+        return tuple(rows[:MAX_CONTRACT_FACT_ROWS])
+    # Nested sections carry the owner's capability surface; leaf
+    # enumerations remain visible after them within the same bound.
+    items = list(compacted.items())[:MAX_SURFACE_ENTRIES]
+    items.sort(key=lambda kv: not isinstance(kv[1], Mapping))
+    for key, value in items:
+        if len(rows) >= MAX_CONTRACT_FACT_ROWS:
+            break
+        text = json.dumps(value, ensure_ascii=False, default=str)
+        rows.append(
+            f"{str(key)[:80]}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
+        )
+    return tuple(rows)
 
 
 def _compact_evidence(value: Any, depth: int = 0) -> Any:
@@ -2032,6 +2122,13 @@ _REPAIRABLE_SURFACE_CODES = frozenset(
         "unknown_capability",
     }
 )
+
+# Owner-side contract/admissibility rejections (a remote capability
+# error reported by the specialist itself — never transport, auth or
+# timeout): eligible for ONE bounded contextual-recovery round that
+# consults the group's DISCOVERY vocabulary and re-proposes
+# arguments under the real owner contract (C3 contextual discovery).
+_OWNER_REMOTE_ERROR_CODES = frozenset({MCP_PROTOCOL_ERROR})
 
 
 def _wording_leaks_technical(text: str) -> bool:
@@ -5823,6 +5920,30 @@ class OperationalCapabilityOrchestrator:
                     invoked = repaired
                 else:
                     return _error_attempt(correlation, exc)
+            elif (
+                exc.code in _OWNER_REMOTE_ERROR_CODES
+                and not discovery_ran
+                and not self_index_ran
+            ):
+                # C3 contextual recovery: the owner rejected the
+                # arguments under a constraint the flat schema cannot
+                # express — one bounded round: same-group DISCOVERY
+                # vocabulary -> same argument stage -> one retry.
+                recovered = self._recover_owner_contract(
+                    input_text,
+                    descriptor,
+                    group_key,
+                    remote_name,
+                    group,
+                    correlation,
+                    workspace_context,
+                    prior_turns,
+                    deadline,
+                )
+                if recovered is not None:
+                    invoked = recovered
+                else:
+                    return _error_attempt(correlation, exc)
             else:
                 _logger.info(
                     "orchestration stage=execute decision=error "
@@ -5914,7 +6035,11 @@ class OperationalCapabilityOrchestrator:
         # and the grounded conversational composition — same edge,
         # same facts, never a second assessment.
         cri_facts = (
-            self._outcome_facts(outcome) if self._cri_active else None
+            self._outcome_facts(
+                outcome, operation_class=descriptor.operation_class
+            )
+            if self._cri_active
+            else None
         )
         cri_verdict = (
             assess_outcome(cri_facts, goal.answer_requirements)
@@ -8031,8 +8156,14 @@ class OperationalCapabilityOrchestrator:
             correlation,
         )
         if (
-            verdict.decision
-            in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
+            (
+                verdict.decision
+                in (OUTCOME_ENVELOPE_ONLY, OUTCOME_INSUFFICIENT)
+                or (
+                    verdict.decision == OUTCOME_CONTRACT_FACTS
+                    and verdict.reasons
+                )
+            )
             and LIMITATION_INSUFFICIENT_EVIDENCE not in outcome.limitations
         ):
             return dataclasses.replace(
@@ -8045,12 +8176,18 @@ class OperationalCapabilityOrchestrator:
         return outcome
 
     @staticmethod
-    def _outcome_facts(outcome: SpecialistOutcome) -> EvidenceFacts:
+    def _outcome_facts(
+        outcome: SpecialistOutcome,
+        operation_class: SpecialistOperationClass | None = None,
+    ) -> EvidenceFacts:
         """Bounded typed projection of a governed outcome.
 
         Records, proven emptiness, coverage and authoritative totals
         only — extracted through the existing structural helpers; never
-        raw payloads, never model-inferred fields.
+        raw payloads, never model-inferred fields. A DISCOVERY-class
+        outcome without business records additionally projects bounded
+        owner-published contract rows — capability-surface metadata,
+        never domain facts (C3 contextual discovery).
         """
         envelope = extract_pagination_envelope(outcome.structured)
         if envelope is not None:
@@ -8075,6 +8212,18 @@ class OperationalCapabilityOrchestrator:
                 total_count=envelope.total_count,
             )
         records = _synthesis_records(outcome.structured)
+        contract_facts: tuple[str, ...] = ()
+        if not records:
+            # Terminal DISCOVERY outcomes carry bounded contract rows
+            # on the outcome itself (structured is dropped before the
+            # binding edge); non-terminal DISCOVERY payloads still
+            # project from structured directly.
+            contract_facts = outcome.contract_facts or (
+                _contract_fact_rows(outcome)
+                if operation_class is SpecialistOperationClass.DISCOVERY
+                and outcome.structured
+                else ()
+            )
         return EvidenceFacts(
             records=records,
             has_business_evidence=bool(records),
@@ -8082,6 +8231,7 @@ class OperationalCapabilityOrchestrator:
                 outcome.structured
             ),
             is_complete=outcome.is_complete,
+            contract_facts=contract_facts,
         )
 
     # ---- CRI E3 — grounded conversational composition ------------
@@ -8264,6 +8414,7 @@ class OperationalCapabilityOrchestrator:
             ordering_date=ordering_date,
             ordering_event=ordering_event,
             vocabulary=self._cri_vocabulary,
+            contract_facts=facts.contract_facts,
         )
         _logger.info(
             "orchestration stage=cri_response decision=%s "
@@ -9375,6 +9526,120 @@ class OperationalCapabilityOrchestrator:
         except CapabilityProviderError:
             return None
 
+    def _recover_owner_contract(
+        self,
+        input_text: str,
+        descriptor: ProviderCapability,
+        group_key: str,
+        remote_name: str,
+        group: CapabilityGroup,
+        correlation: str,
+        workspace_context: WorkspaceContext | None,
+        prior_turns: tuple[ConversationContextTurn, ...],
+        deadline: TurnDeadline | None = None,
+    ) -> tuple[SpecialistOutcome, str, str] | None:
+        """One bounded contextual-recovery round (C3).
+
+        The owner rejected the proposed arguments as a remote
+        contract/admissibility error — the flat ``inputSchema`` cannot
+        express entity-conditional constraints, but the group's
+        DISCOVERY capability already publishes the real owner
+        vocabulary. Consult it once, re-propose arguments through the
+        SAME argument stage under the bounded owner evidence, apply
+        the SAME deterministic gates, and retry the invocation once.
+        Non-mutating targets only by construction — PREPARE/ACT never
+        reach this path. Any failure returns ``None`` and the original
+        owner error stands: no loops, no second planner, no invented
+        contract.
+        """
+        discovery_cap = _discovery_capability(group)
+        if discovery_cap is None or (
+            discovery_cap.remote_name == remote_name
+        ):
+            # No owner-vocabulary peer, or the rejected capability is
+            # the discovery source itself — never self-recover.
+            return None
+        if deadline is not None and not self._budget_allows_resolver(
+            deadline
+        ):
+            _logger.info(
+                "orchestration stage=recovery "
+                "decision=skipped_budget correlation_id=%s",
+                correlation,
+            )
+            return None
+        try:
+            discovery_arguments, _ = self._build_arguments(
+                input_text,
+                discovery_cap,
+                workspace_context,
+                prior_turns=prior_turns,
+                deadline=deadline,
+            )
+            if discovery_arguments is None:
+                return None
+            discovery_outcome = self._invoke(
+                group,
+                discovery_cap.remote_name,
+                discovery_arguments,
+                correlation,
+                deadline,
+            )
+        except CapabilityProviderError:
+            return None
+        owner_evidence = _bound_owner_evidence(discovery_outcome)
+        discovery_structured = (
+            discovery_outcome.structured
+            if isinstance(discovery_outcome.structured, Mapping)
+            else None
+        )
+        new_args, missing = self._build_arguments(
+            input_text,
+            descriptor,
+            workspace_context,
+            owner_evidence=owner_evidence,
+            prior_turns=prior_turns,
+            deadline=deadline,
+        )
+        if new_args is None or missing:
+            return None
+        if _unproven_identifier_inputs(
+            new_args,
+            descriptor,
+            input_text,
+            workspace_context,
+            owner_evidence,
+        ):
+            # The informed proposal still invents an identifier —
+            # fail closed on the original owner error.
+            return None
+        new_args = _apply_entity_defaults_to_arguments(
+            dict(new_args), discovery_structured
+        )
+        if _argument_completeness_gaps(
+            new_args, descriptor, discovery_structured
+        ):
+            return None
+        _logger.info(
+            "orchestration stage=recovery decision=owner_contract "
+            "capability=%s correlation_id=%s",
+            remote_name,
+            correlation,
+        )
+        try:
+            return self._invoke_selected(
+                group_key,
+                remote_name,
+                new_args,
+                group,
+                input_text,
+                correlation,
+                prior_turns,
+                deadline,
+            )
+        except CapabilityProviderError:
+            return None
+
     def _admit_conversational_turn(
         self,
         input_text: str,
@@ -10182,6 +10447,7 @@ class OperationalCapabilityOrchestrator:
                 outcome,
                 content_text=content,
                 structured=None,
+                contract_facts=_contract_fact_rows(outcome),
             )
             return truthful, remote_name, remote_name
         return outcome, remote_name, remote_name

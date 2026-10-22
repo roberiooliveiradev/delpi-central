@@ -30,6 +30,11 @@ OUTCOME_ANSWERED = "answered"
 OUTCOME_EMPTY_RESULT = "empty_result"
 OUTCOME_ENVELOPE_ONLY = "envelope_only"
 OUTCOME_INSUFFICIENT = "insufficient"
+# C3 contextual discovery: a DISCOVERY-class outcome that carries
+# owner-published contract data but no business records is a real
+# answer about the capability surface — distinct from both business
+# evidence and the empty-envelope miss.
+OUTCOME_CONTRACT_FACTS = "contract_facts"
 
 _REQUIREMENT_KEYS = frozenset(
     {"min_items", "ordering", "complete_coverage", "ordering_semantic"}
@@ -212,6 +217,10 @@ class EvidenceFacts:
     is_complete: bool = True
     coverage_complete: bool | None = None
     total_count: int | None = None
+    # Bounded owner-published contract rows ("path: value"), present
+    # only for DISCOVERY-class outcomes without business records —
+    # capability-surface metadata, never domain facts.
+    contract_facts: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -414,6 +423,19 @@ def assess_outcome(
         # such as "no results" does not hide the empty verdict.
         return OutcomeVerdict(OUTCOME_EMPTY_RESULT)
     if not facts.has_business_evidence:
+        if facts.contract_facts:
+            # A DISCOVERY-class outcome carrying owner-published
+            # contract data is a real answer about the capability
+            # surface — but never silently substitutes for declared
+            # business requirements: unproven demands ride as reasons
+            # so the binding edge marks honest insufficiency while
+            # still presenting the published surface.
+            reasons: tuple[str, ...] = ()
+            if requirements is not None and requirements.declared:
+                reasons = _unproven_requirements(
+                    facts, requirements
+                ) or ("requirements_unproven",)
+            return OutcomeVerdict(OUTCOME_CONTRACT_FACTS, reasons)
         return OutcomeVerdict(
             OUTCOME_ENVELOPE_ONLY, ("no_business_data",)
         )
