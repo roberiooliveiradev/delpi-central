@@ -503,3 +503,18 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Candidato TARGET, sem implementacao autorizada:** checklist read-only de fechamento com evidencias de conciliacao, completude de competencia, revisao de variacoes do custo medio, processamento de custo de reposicao PA/PI e envio do P7 Bloco H. Acoes de fechar/reabrir/recalcular TOTVS requerem owner, contrato, permissao e decisao explicitos; nao disparar via Portal neste mapeamento.
 
 **Classificacao:** `FINALIZATION_SEQUENCE=OWNER_REPORTED_VIA_PO`; `NEXT_STEP_CONTROL=PROVEN_SCREENSHOT`; `FINAL_CLOSE_EXECUTED=NOT_PROVEN`; `P7_ACCOUNTING_SCOPE=OWNER_REPORTED_VIA_PO`; `REPLACEMENT_PARTS_ACCOUNTING_TREATMENT=TO_VALIDATE_WITH_ACCOUNTING`; `PA_PI_REPLACEMENT_COST_WAIT=OWNER_REPORTED_VIA_PO`; `PORTAL_FINALIZATION=TARGET_DECISION_REQUIRED`.
+
+
+## Registro 16 - Documentos externos ao TOTVS: extratos bancarios (38:28)
+
+**Fonte:** relato guiado do PO da explicacao de Joici iniciada em 38:28. Nesta marca temporal, o processo passa a abordar documentos originados **fora do TOTVS**, especificamente **extratos bancarios**. A finalidade declarada no TARGET e integrar esses documentos ao fluxo de fechamento para **importacao e validacao** na aplicacao.
+
+**AS-IS relatado:** a fonte documental bancaria e externa ao ERP. Ainda nao foram descritos bancos, contas, canais de obtencao, formatos, responsaveis, frequencia, conciliacoes ou criterios de aceite. Nao assumir que um arquivo importado equivale a extrato validado ou conciliado.
+
+**TARGET proposto pelo PO:** uma area de documentos do fechamento capaz de receber extratos bancarios e registrar sua validacao. A modelagem detalhada (document_type, competencia, banco/conta, filial quando aplicavel, periodo coberto, origem, upload, integridade, versao, status, validacoes, evidencias e aprovacao) e **PLANNED**, nao contrato aprovado nem funcionalidade implementada.
+
+**Gates de seguranca e compliance:** antes de desenvolver upload, retencao, leitura de dados bancarios ou armazenamento, decidir com owner a politica de confidencialidade, classificacao, armazenamento, escopo de acesso, auditoria, tipos de arquivo e regras de tratamento de dados. Reutilizar plataforma e contracts autorizados, sem novas permissoes alem de `controllership-finance.access`/`controllership-finance.manage`, com autorizacao backend por escopo do recurso.
+
+**Pendencias para as proximas falas:** identificar a finalidade concreta dos extratos (ex. confronto com saldos, pagamentos/recebimentos ou evidencias), documentos adicionais fora do TOTVS, etapas de conferencia, quem valida, criterios de discrepancia e tratamento de excecoes. Essas possibilidades NAO estao comprovadas pela fala de 38:28.
+
+**Classificacao:** `EXTERNAL_BANK_STATEMENTS_AS_IS=OWNER_REPORTED_VIA_PO`; `IMPORT_AND_VALIDATE_IN_PORTAL=TARGET`; `BANK_DOCUMENT_CONTRACT=TO_INVENTORY`; `VALIDATION_RULES=TO_INVENTORY`; `IMPLEMENTATION=NOT_AUTHORIZED`.
