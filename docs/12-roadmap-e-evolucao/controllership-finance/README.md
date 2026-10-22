@@ -281,3 +281,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - Registro de Inventario, estoque e em processo (22/10/2026)
 
 [Doc 63 - Resumo do registro de inventario](./63-ciclo1-p7-resumo-estoque-em-processo.md): PDF privado de uma pagina, com posicao da matriz em 30/09/2026, secao EM ESTOQUE e secao EM PROCESSO por categoria de material, mais TOTAL GERAL. Relacionado conceitualmente ao P7 narrado no video, mas identificador MATR460 e variante Bloco H nao aparecem no PDF e seguem `TO_INVENTORY`. Confronto pendente com MATR320/doc 62 e Kardex/doc 61; valores/documento original nao versionados.
+
+
+### Ciclo 1 - Material em processo (22/10/2026)
+
+[Doc 64 - Inventario conceitual do saldo analitico em processo](./64-ciclo1-material-em-processo-inventario.md): uma aba XLSB, campos produto/local/OP/tipo RE-DE/quantidade/valor, muitos registros zerados, cabeçalhos repetidos e duas dimensoes de local observadas. Produtor MATR989 candidato, nao comprovado; semantica RE0/RE1/RE2/RE9, elegibilidade e confronto com secao EM PROCESSO do Registro de Inventario (doc 63) permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados.
