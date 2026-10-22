@@ -52,6 +52,10 @@ class DelpiCanonicalSupplierReader:
                 source = candidate
             elif isinstance(candidate, list) and candidate:
                 source = candidate[0] if isinstance(candidate[0], dict) else {}
+            elif data.get("supplier_code") or data.get("tax_id"):
+                # api-delpi get_protheus_rest_supplier unwraps the Protheus
+                # REST envelope into a flat supplier dict — read it directly.
+                source = data
         if not source:
             return None
         fields = {
