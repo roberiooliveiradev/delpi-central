@@ -306,3 +306,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - Resumo Estoque, comparacao de variantes (22/10/2026)
 
 [Doc 68 - Resumo reduzido e divergencia de abrangencia](./68-ciclo1-resumo-estoque-variante-reduzida.md): PDF privado de Registro de Inventario com secao EM ESTOQUE (MP, PA, PI) e EM PROCESSO (MP, PI), mesma data/contexto do PDF anterior doc 63. Os valores de PA e PI coincidem entre os arquivos, mas os de **MP em estoque e em processo divergem**: nao se trata comprovadamente apenas de ocultar outras categorias. Hipotese de variante de entrega contábil/Bloco H depende de parametros e rotina de origem; `TO_INVENTORY/TEST_NOT_RUN`. Sem valores ou PDF original no repositorio.
+
+
+### Ciclo 1 - posicao de contas a pagar (2026-10-22)
+
+[Doc 69 - Inventario estrutural da posicao financeira](./69-ciclo1-contas-a-pagar-posicao-titulos.md): 1 aba com campos de situacao de titulos, datas, vencimentos e naturezas. FINR150 candidato de origem; FINR190 representa baixas e nao equivale a saldos abertos. Paridade pendente. Sem dados de origem versionados.
