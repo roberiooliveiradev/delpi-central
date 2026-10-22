@@ -80,8 +80,11 @@ export function FinishProductionSheet({
     next == null ||
     nextBlocked;
   // Resultado incerto: nenhuma escrita contraditória (Stop, nova troca)
-  // pode sair antes da reconciliação segura.
-  const stopDisabled = busy || submitting || uncertain;
+  // pode sair antes da reconciliação segura. Conflito de reconcile
+  // (run_not_active/current_not_in_queue): o backend já declarou o run
+  // vinculado inativo — a decisão está morta e nenhum Stop sai por ela.
+  const stopDisabled =
+    busy || submitting || uncertain || conflict?.action === "reconcile";
   /**
    * Identidade imutável: se uma reconciliação substituiu o run ativo
    * (run_not_active, current_not_in_queue ou atualização externa), a
