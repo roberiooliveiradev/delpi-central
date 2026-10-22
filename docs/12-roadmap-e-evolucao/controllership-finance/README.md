@@ -286,3 +286,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - Material em processo (22/10/2026)
 
 [Doc 64 - Inventario conceitual do saldo analitico em processo](./64-ciclo1-material-em-processo-inventario.md): uma aba XLSB, campos produto/local/OP/tipo RE-DE/quantidade/valor, muitos registros zerados, cabeçalhos repetidos e duas dimensoes de local observadas. Produtor MATR989 candidato, nao comprovado; semantica RE0/RE1/RE2/RE9, elegibilidade e confronto com secao EM PROCESSO do Registro de Inventario (doc 63) permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados.
+
+
+### Ciclo 1 - Faturamento x MOD (22/10/2026)
+
+[Doc 65 - Inventario conceitual das duas filiais](./65-ciclo1-faturamento-mod-inventario.md): duas abas de desdobramento PA/componentes MOD; campos de faturamento, quantidade, horas, custo unitario e custo total. Formulas observadas na amostra `Horas ~= Qtd Fat. * Quantidade` e `Custo Total ~= Horas * Custo Unitario`, sem confirmacao de horas efetivas nem homologacao da rotina candidata `DLP204`. Paridade e fontes ERP pendentes; nenhum registro financeiro/produto privado versionado.
