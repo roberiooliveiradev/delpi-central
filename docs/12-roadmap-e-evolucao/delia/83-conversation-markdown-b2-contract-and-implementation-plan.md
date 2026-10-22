@@ -531,3 +531,20 @@ Este documento é planejamento completo para decisão e execução futura, mas *
 - Backend: `delia-api/app/application/interaction/presentation.py`.
 - Frontend: `plugins/delia/src/api/presentation.ts`; `interactionClient.ts`; `ui/DeliaAssistantMessage.tsx`; `ui/ConversationTimeline.tsx`; `index.css`.
 - Shared: `plugins/plugin-ui/src/components/markdown/MarkdownDocument.tsx`, `markdownDocumentModel.ts`, seus testes; `rich-text/richTextHtmlFormat.ts`; `collaboration/messageThreadMarkdown.ts`; `data/DataTable.tsx` e `charts/` somente para exclusão de escopo.
+
+
+## Product Master — decisão explícita de desacoplamento de links e escopo B2 (2026-10-22)
+
+**Decisão de produto mais recente — requer reconciliação formal com CP-333 e D1/D6/D7 anteriores; não alterar retroativamente as decisões congeladas.** O Product Master decidiu que a emissão de **links internos governados pela DÉLIA não é pré-requisito para implementar o núcleo do Markdown B2**. O módulo deve avançar com formatação textual segura, sem que DÉLIA se torne owner do controle de acesso ou mantenha allowlist privada de rotas/permissões da plataforma.
+
+**Fronteiras obrigatórias:**
+- **DÉLIA** = composição/representação de conteúdo, evidência e referência; nunca outorga, confirma nem armazena permissão Core/Domain para abrir telas.
+- **Core API** = autoridade de aplicações/rotas/RBAC e decisão de acesso à área interna; **Domain API** preserva regras e autorização final do recurso de negócio. **Portal** = host/navegação/contexto, sujeito às verificações efetivas das APIs. A mera exibição do link não é autorização nem garante que o destino será acessível.
+- **Links internos Minha DELPI:** podem ser exibidos como referências, quando fornecidos por contrato legítimo; clique e navegação dependem da capacidade do Portal e da autorização live Core/Domain no destino. **Não** criar um catálogo de links privados, mecanismo de permissão, bypass, pré-autorização ou validação de acesso paralela na DÉLIA. Não inventar rota a partir de IDs ou nomes de ferramentas. Binding L1 de destinos tipados pode evoluir futuramente, sem bloquear núcleo B2.
+- **Links públicos de internet:** podem continuar como links no conteúdo Markdown quando a URL vier de fonte admissível, o destino for validado e a política de segurança permitir (HTTPS, prevenção de schemes perigosos, navegação externa segura, no fabricated model link, sem confiar automaticamente em URLs de MCP/web). Link da internet **não** ganha automaticamente confiança, endosso, autorização nem classificação de evidência. Precisão de procedência e política de admissão ainda exigem contrato.
+- **Primeira entrega B2:** headings, ênfases, listas, citações, inline/fenced code inerte e demais tokens *já admitidos* pelo contrato textual; não incluir automaticamente tabelas/graphs de outra fase nem novos nós fora de allowlist. Não bloquear implementação somente por ausência do binding L1 interno. Links sem admissão segura permanecem texto inerte.
+- **Futuro:** evoluir integração de navegação com contratos oficiais do Portal/Core/Domain, sem criar acoplamento ou RBAC próprio na DÉLIA. Uma tela pode ser inacessível para o usuário; isso é resultado válido e controlado pela autoridade do destino.
+
+**Impacto sobre decisões anteriores:** este direcionamento revisa a dependência histórica que condicionava **todo** Markdown B2 à emissão de links governados internos. Não equivale à aprovação implícita de L3 ou à remoção definitiva de links; é uma nova decisão explícita do Product Master a ser reconciliada por Architecture/Coordination com CP-333, D1/D6/D7, docs 82/84 e gates G1/G2/G3. Em caso de incompatibilidade com autoridade superior, **STOP → ARCHITECTURE_DECISION_REQUIRED**, não alterar silenciosamente o status. `CP-333=PLANNED_NOT_PASS`; `B2_RUNTIME=OFF`; `G3_TASK_BRIEF_APPROVAL=PENDING`; `NO_RUNTIME_CHANGE`.
+
+**Próximo bounded:** revisão de contrato para diferenciar external-public link admission de internal-navigation reference, ajustar os AC/RQ afetados sem apagar requisitos históricos, comprovar reuso Portal/Core, registrar evidência e somente então solicitar liberação do brief de implementação B2 no HEAD.
