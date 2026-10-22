@@ -202,3 +202,12 @@ EVALUATED_CONFIG=dev; Ollama qwen2.5:3b; TEST_ONLY adapters in unit
 EXECUTOR_VERDICT=implementation+evidence returned for independent
     review; no acceptance claimed
 ```
+
+
+## Revisão de coordenação — 2026-10-22
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (IMPLEMENTAÇÃO)**. O relatório 98 e os contratos/documentação publicados foram inspecionados; os testes de runtime são relatados pelo executor, não reexecutados independentemente neste parecer (`INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`). Está demonstrada a implementação da ligação entre seleção da mensagem, ActivityEvent/provenance/outcome, ledger bounded de chamadas e observability no contrato aditivo de `turn_result`. Reuso de componentes do plugin-ui e do mecanismo de Model Invocation; nenhuma segunda infraestrutura de telemetry criada. Custos não inferidos e tokens apenas quando reportados; a superfície pública não inclui identidade de provider por gate canônico de vazamento.
+
+**GATE AINDA ABERTO:** `BROWSER_QA=TEST_NOT_RUN` — sem deploy do frontend/backend integrado no host do Portal, a experiência real de seleção, troca de mensagens, streaming, acessibilidade visual e visualização dos estados de Contexto não foi provada. `PANEL_IMPLEMENTATION=ACCEPT_WITH_RESIDUAL`; `PANEL_USER_EXPERIENCE_END_TO_END=PENDING`. Registrar o QA como requisito explícito da etapa 6, com SHA/config de frontend/backend, usuário autorizado e evidência sanitizada. Não declarar integração produtiva só porque o payload passou nos testes.
+
+**Próxima subetapa:** 5.1 aceleração GPU do Ollama local (`97-ollama-gpu-acceleration-substep-5-1-plan.md`) pode seguir agora, independentemente do browser QA, por possuir owner e escopo de infraestrutura dev separados. Não alterar produção ou budgets; medir CPU/GPU no hardware real. Posteriormente, etapa 6 homologação integrada: browser QA, CRI por turno, sequência DAVI, timeout, `Ori` como residual, e gate de revogação do token delegado antes de habilitar retry em produção. `I04_ACCEPTED=NO` sem decisão canônica posterior.
