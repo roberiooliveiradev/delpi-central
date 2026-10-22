@@ -45,6 +45,12 @@ A referência visual é `docs/12-roadmap-e-evolucao/quality/reference/Modelo_Rel
 
 Os diálogos de exclusão, cópia, saída sem salvar e recorte usam a caixa visível do `@delpi/plugin-ui` (`useContainedModalViewportStyle`). Eles permanecem abertos até Cancelar ou Confirmar. O atalho CSS `inset` não é aplicado, porque ele solta o modal da posição fixa.
 
+## Tema
+
+A tela acompanha o `data-theme` do Portal (`light` ou `dark`). Não há seletor próprio. Listagem, filtros, cartões, botões, barra, mensagens, diálogos e a folha usam os tokens `--surface`, `--text`, `--primary`, `--secundary`, `--danger` e `--success`.
+
+A impressão isolada e o PDF não mudam. O iframe de `printDelpiDocumentHtml` restaura a paleta documental (`#0b3a5d`, `#00a4ce`, `#25465f`, fundo `#fff`) em `@media print`, mesmo quando a tela está escura. O logotipo e o esquema técnico não são recoloridos.
+
 ## Desenvolvimento
 
 ```bash

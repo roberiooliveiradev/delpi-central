@@ -10,6 +10,6 @@ O HTML incorpora a fonte Delpi Sans (OpenType CFF, pesos 400 e 700), o logotipo 
 
 A folha vazia e a folha preenchida com o mesmo conjunto de dados foram capturadas no Chrome, janela 1100×1750. Na região da barra e da folha (y 0–1214) a diferença de pixel entre o HTML e o CSS publicado do MFE foi zero. A área abaixo da folha não entra na comparação: no HTML ela é o fundo da página; no Portal ela pertence ao host.
 
-A impressão do MFE não usa `window.print()` da janela do Portal. O botão Imprimir monta a folha corrente num iframe oculto, com `@page` A4 e margem zero, para a navegação do host não entrar na prévia.
+A impressão do MFE não usa `window.print()` da janela do Portal. O botão Imprimir monta a folha corrente num iframe oculto, com `@page` A4 e margem zero, para a navegação do host não entrar na prévia. O tema claro ou escuro da tela não entra nesse documento: `@media print` devolve a paleta do HTML original. O arquivo HTML de referência não é alterado.
 
 O PDF continua na API DELPI, desenhado nas coordenadas em milímetros do exportador do próprio HTML. A marca RASCUNHO permanece só em rascunho. Diferenças residuais em relação à tela: o PDF usa o traço de confirmação do exportador HTML, e a fonte foi convertida de CFF para TrueType para o ReportLab. As observações usam as três linhas já desenhadas na folha; o que não cabe termina com `...`, para o corte não ficar invisível.

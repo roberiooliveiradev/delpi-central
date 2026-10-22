@@ -22,3 +22,7 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 - Sem JWT a operação é 401; sem a permissão específica, 403, inclusive em imagem e PDF.
 - Exclusão lógica some da lista e da consulta; a cópia não altera o original.
 - PDF A4 sai do snapshot salvo, sem mudar versão nem revisão, com as seções documentadas. A fidelidade ao HTML permanece pendente do arquivo original.
+
+## Tema da tela
+
+A interface do MFE acompanha `data-theme` do Portal. A folha na tela muda só a cor. A impressão isolada e o PDF permanecem na paleta do HTML (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O CSS de tema é `plugins/metalography/src/styles/screen-theme.css`; o HTML de referência não entra nessa alteração.
