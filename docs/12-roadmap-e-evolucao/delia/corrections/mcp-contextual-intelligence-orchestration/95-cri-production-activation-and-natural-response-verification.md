@@ -227,3 +227,14 @@ EXECUTOR_VERDICT=CRI IMPLEMENTED+ENABLED+EFFECTIVE in production
     mechanical-render root cause fixed at owner, rollback ready);
     outcome smoke on the literal question awaits one real user turn
 ```
+
+
+## Revisão independente de coordenação — 2026-10-22
+
+**VERDICT=ACCEPT_WITH_RESIDUAL.** O relatório 95 e o índice da trilha foram inspecionados em `origin/main=3957576c6f3b22dc2eb16f0f50d88d39711b4706`. As evidências de runtime produtivo (SSH, container saudável, flag, SHA, logs e smoke de startup) foram **reportadas pelo executor**, não reproduzidas de maneira independente neste review: `INDEPENDENT_PROD_RUNTIME_CHECK=TEST_NOT_RUN`. Há prova de ativação/configuração e carregamento `requested=cri effective=cri`, **não** ainda de participação do compositor CRI numa resposta de usuário pós-deploy. Separar `CRI_RUNTIME_ACTIVATED=EXECUTOR_VERIFIED` de `CRI_REAL_USER_OUTCOME=PENDING`.
+
+**Defeitos tratados:** ausência da flag no .env produtivo (baseline fail-closed), prioridade de código de negócio vs UUID na âncora E3, humanização dos rótulos e supressão de UUID técnico. Testes determinísticos de prosa e limites de cobertura preservados; não inferir `último cadastrado global` de página ou ordenação local. Verificação adicional necessária do payload real, momento da consulta, `created_at` como campo semanticamente declarado e coverage/paginação da fonte para responder corretamente à pergunta superlativa.
+
+**Smoke bounded obrigatório:** solicitar ao Product Master uma pergunta real no Portal pós-deploy, preferencialmente literalmente `qual o ultimo processo cadastrado?`. Capturar correlation ID/horário da sessão, `stage=response_mode decision=cri`, provenance do owner, E2 verdict, E3 composer efetivo, conteúdo renderizado (sem snake_case/UUID/ISO cru), limitações e outcome. Se a resposta voltar ao baseline ou mecanicamente inadequada, marcar FAIL e investigar a boundary em vez de concluir de startup logs. Não realizar bateria automatizada de chamadas pagas ao LLM externo. Rollback definido e runtime SHA são pré-condições da verificação.
+
+**Escopo separado:** retry governado em produção continua OFF por gate de revogação de credencial, independentemente do CRI ON. Incidentes `terminal bala → use o davi → o mcp davi` e painel `Contexto` continuam OPEN no registro `production-observations-2026-10-22-cri-contextual-owner-routing.md`. Não atribuir resolução deles à ativação do CRI. `CRI_PROD_TECHNICAL_ACTIVATION=ACCEPT_WITH_RESIDUAL`; `CRI_PROD_USER_SMOKE=PENDING`; `MID_TURN_REVOCATION=ARCHITECTURE_DECISION_REQUIRED`; `I04_ACCEPTED=NO`.
