@@ -15,6 +15,10 @@ import {
   type RequestListFiltersState,
 } from "../content/requestListFilters";
 import {
+  requestListRequesterName,
+  requestListTitle,
+} from "../domain/requestListPresentation";
+import {
   myRequestsPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
@@ -124,6 +128,16 @@ export function WorkQueuePage() {
         header: "Tipo",
         render: (row) =>
           requestTypeLabel(row.type_code, typeNameByCode.get(row.type_code)),
+      },
+      {
+        key: "title",
+        header: "Assunto",
+        render: (row) => requestListTitle(row) || "—",
+      },
+      {
+        key: "requester",
+        header: "Solicitante",
+        render: (row) => requestListRequesterName(row),
       },
       {
         key: "status",

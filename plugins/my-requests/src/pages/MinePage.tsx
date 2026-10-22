@@ -14,6 +14,7 @@ import {
   REQUEST_LIST_PAGE_SIZE,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
+import { requestListTitle } from "../domain/requestListPresentation";
 import {
   myRequestsPath,
   navigateMyRequestsPath,
@@ -123,6 +124,11 @@ export function MinePage() {
         header: "Tipo",
         render: (row) =>
           requestTypeLabel(row.type_code, typeNameByCode.get(row.type_code)),
+      },
+      {
+        key: "title",
+        header: "Assunto",
+        render: (row) => requestListTitle(row) || "—",
       },
       {
         key: "status",
