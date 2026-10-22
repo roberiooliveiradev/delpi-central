@@ -271,3 +271,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - CPV da matriz: Kardex fisico-financeiro (22/10/2026)
 
 [Doc 61 - Inventario conceitual do arquivo de CPV](./61-ciclo1-cpv-kardex-matriz-inventario.md): uma aba de Kardex com blocos por produto, movimentos, TES/codigo fiscal, entradas/saidas, custo medio, saldos e resumo por tipo. O nome da amostra indica setembro e cabecalho de referencia/emissao e de outubro; cutoff `TO_INVENTORY`. Vínculo candidato MATR910/doc 60, contraponto video/doc 57, roteiro CPV-01..08 de dados, elegibilidade e paridade. **Nao publicar valores, registros fiscais, produtos, documentos ou planilha original; runtime nao autorizado.**
+
+
+### Ciclo 1 - Resumo de entradas e saidas MATR320 (22/10/2026)
+
+[Doc 62 - Inventario conceitual MATR320](./62-ciclo1-matr320-resumo-entradas-saidas.md): PDF de uma pagina com resumo financeiro de entradas/saidas por tipo de material, incluindo saldo inicial/final, compras, movimentos internos, producao, vendas, devolucoes e poder de terceiros; competencia de movimento distinta da data de emissao/referencia. Cruzamento conceitual com Kardex/MATR910 (doc 61), P7/MATR460 e material em processo, sem inferir igualdade de escopo ou CPV de DRE. Paridade e fontes fisicas pendentes; dados e PDF original nao versionados.
