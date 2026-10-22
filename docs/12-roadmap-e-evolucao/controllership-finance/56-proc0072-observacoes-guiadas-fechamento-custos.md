@@ -435,3 +435,16 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Classificacao:** `THREE_REPORTS_CONFERENCE=OWNER_REPORTED_VIA_PO`; `SCREEN_VALUES=PROVEN_SCREENSHOT`; `DIFFERENCE_113252_49=DERIVED`; `RESIDUAL_48284_07=DERIVED_NOT_RECONCILED`; `EXCEL_RESIDUAL_48284_06=PROVEN_SCREENSHOT_FORMULA_UNVERIFIED`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_CONSOLIDATION=TARGET_DECISION_REQUIRED`.
 
 **Proximo marcador da gravacao: apos ~32:21, a confirmar pelo PO.**
+
+
+### Complemento ao Registro 12 - Triagem de divergencias e possivel reabertura de periodo
+
+**Fonte:** explicacao do PO durante continuidade da gravacao, imediatamente apos a conciliacao com residual exibido de 48.284,06. Tempo exato desta fala ainda nao informado; nao atribuir timestamp inventado.
+
+**Procedimento AS-IS relatado:** quando os tres relatorios nao conciliam, Joici revisa (1) **parametros de emissao dos relatorios**, inclusive filtros e recortes; (2) **movimentacoes e consumos** possivelmente incorretos; e (3) eventual presenca ou efeito de **dados de periodos anteriores** no fechamento atual. Esses sao ramos de investigacao, nao causas ja diagnosticadas do delta atual.
+
+**Condicao operacional relatada:** se a apuracao encontrar problema originado em periodo anterior, pode ser necessario **reabrir o estoque e recalcular o fechamento**, investigando o evento historico responsavel. Nao inferir que qualquer diferenca exige reabertura, nem que Joici efetivamente reabriu o periodo nesta passagem. Reabertura e recálculo sao operacoes potencialmente impactantes no ERP, sujeitas a autorizacao, controles e owners proprios; **nao automatizar no Portal**.
+
+**Candidato de fluxo TARGET, pendente de decisao:** trilha de diagnostico read-only com categorias `report_parameters_mismatch`, `movement_or_consumption_anomaly`, `prior_period_effect` e `undetermined`, cada uma vinculada a evidencia, competencia de origem, movimento/documento e impacto estimado. Se houver hipotese de periodo anterior, exibir dependencias e necessidade de analise/autorizacao humana; nao oferecer botao de reabrir/recalcular sem contrato e gate especificos.
+
+**Pendencias:** criterios objetivos de identificacao de movimentos antigos, historico de recalculos, parametro que altera o escopo e responsabilidade por autorizar reabertura. `ROOT_CAUSE=INCONCLUSIVE`; `HISTORICAL_REOPEN=OWNER_REPORTED_VIA_PO`; `PORTAL_WRITE_ACTIONS=NOT_AUTHORIZED`.
