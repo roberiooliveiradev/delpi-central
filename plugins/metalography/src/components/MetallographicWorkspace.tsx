@@ -22,6 +22,7 @@ import { allows, METALOGRAPHY_PERMISSIONS } from "../domain/permissions";
 import {
   copyReportForm,
   emptyReportForm,
+  newReportForm,
   formFromReport,
   formsEqual,
   toWritePayload,
@@ -220,7 +221,7 @@ export function MetallographicWorkspace({
     setBusy(true);
     try {
       const key = idempotencyKey(sessionStorage, "metalography:create-key", () => crypto.randomUUID());
-      const created = await createReport(toWritePayload(emptyReportForm()), key);
+      const created = await createReport(toWritePayload(newReportForm()), key);
       clearKey(sessionStorage, "metalography:create-key");
       navigateMetalography(editorPath(created.data.id));
     } catch (cause) {
@@ -585,7 +586,7 @@ export function MetallographicWorkspace({
       <div className={confirm === "copy" ? "return-home-modal open" : "return-home-modal"} style={confirm === "copy" ? overlay : undefined} aria-hidden={confirm === "copy" ? "false" : "true"} onKeyDown={stopEscape}>
         <div className="return-home-dialog" role="dialog" aria-modal="true" aria-labelledby="copy-report-title">
           <h2 id="copy-report-title">Criar cópia do relatório?</h2>
-          <p id="copy-report-message">{pendingReport ? `Criar uma cópia do relatório nº ${pendingReport.report_number}? Os dados do terminal, processo e critérios serão copiados. O número original será substituído por uma numeração automática; data, lote, amostra, medições, conclusão, observações, responsável e imagens serão limpos para a nova análise. O original permanecerá inalterado.` : "Será aberto um novo rascunho com os dados reutilizáveis deste relatório. O original permanecerá inalterado."}</p>
+          <p id="copy-report-message">{pendingReport ? `Criar uma cópia do relatório nº ${pendingReport.report_number}? Os dados do terminal, processo e critérios serão copiados. O número original será substituído por uma numeração automática e a data será a do dia da cópia. Lote, amostra, medições, conclusão, observações, responsável e imagens serão limpos para a nova análise. O original permanecerá inalterado.` : "Será aberto um novo rascunho com os dados reutilizáveis deste relatório. O original permanecerá inalterado."}</p>
           <div className="return-home-actions">
             <button id="copy-report-cancel" className="secondary" type="button" onClick={() => setConfirm(null)}>Cancelar</button>
             <button id="copy-report-confirm" className="primary" type="button" disabled={busy} onClick={() => { void confirmCopy(); }}>{busy ? "Criando cópia…" : "Criar cópia"}</button>

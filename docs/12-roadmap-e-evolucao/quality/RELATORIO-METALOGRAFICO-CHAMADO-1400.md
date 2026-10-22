@@ -23,6 +23,10 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 - Exclusão lógica some da lista e da consulta; a cópia não altera o original.
 - PDF A4 sai do snapshot salvo, sem mudar versão nem revisão, com as seções documentadas. A fidelidade ao HTML permanece pendente do arquivo original.
 
+## Data automática
+
+Novo relatório e cópia gravam a data civil de `America/Sao_Paulo` na criação. Edição, reabertura e salvamento não substituem a data persistida. Relatório antigo com data vazia não é preenchido em lote.
+
 ## Tema da tela
 
 A interface do MFE acompanha `data-theme` do Portal em todas as superfícies de tela. As cores ficam nos tokens `--mg-*` de `plugins/metalography/src/styles/screen-theme.css`, mapeados para os tokens do Portal. A folha na tela muda só a cor. A impressão isolada e o PDF permanecem na paleta do HTML (`#fff`, `#0b3a5d`, `#00a4ce`, `#25465f`). O HTML de referência não entra nessa alteração.

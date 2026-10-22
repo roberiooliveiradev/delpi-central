@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { copyReportForm, emptyReportForm, formFromReport, formsEqual, toWritePayload, type ReportSnapshot } from "./reportForm";
+import {
+  copyReportForm,
+  displayDateToIso,
+  emptyReportForm,
+  formatBusinessDate,
+  formFromReport,
+  formsEqual,
+  isoToDisplayDate,
+  newReportForm,
+  toWritePayload,
+  type ReportSnapshot,
+} from "./reportForm";
 
 const report = {
   id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
@@ -68,7 +79,7 @@ describe("report form", () => {
     const source = formFromReport(report);
     source.sample.batch_production_order = "OP-1";
     source.measurements.crimp_width_cb = { criterion: "2.0", measured: "2.1" };
-    const copy = copyReportForm(source);
+    const copy = copyReportForm(source, new Date("2026-10-22T15:00:00.000Z"));
     const payload = toWritePayload(copy);
     expect(payload.revision).toBe("01");
     expect(payload.sample.terminal_code).toBe("T1");
@@ -76,9 +87,46 @@ describe("report form", () => {
     expect(payload.sample.sample_identification).toBeNull();
     expect(payload.measurements.crimp_height_ch).toEqual({ criterion: "1.0", measured: null });
     expect(payload.measurements.crimp_width_cb).toEqual({ criterion: "2.0", measured: null });
-    expect(payload.report_date).toBeNull();
+    expect(copy.reportDate).toBe("22/10/2026");
+    expect(payload.report_date).toBe("2026-10-22");
+    expect(payload.report_date).not.toBe(report.report_date);
     expect(payload.conclusion).toEqual({ result: null, notes: null });
     expect(payload.analyst).toEqual({ name: null });
     expect(payload).not.toHaveProperty("images");
+  });
+
+  it("stamps the São Paulo calendar date on a new report and keeps it on later writes", () => {
+    const beforeMidnight = new Date("2026-10-22T02:30:00.000Z");
+    const afterMidnight = new Date("2026-10-22T03:30:00.000Z");
+    const created = newReportForm(beforeMidnight);
+    const payload = toWritePayload(created);
+    expect(created.reportDate).toBe("21/10/2026");
+    expect(payload.report_date).toBe("2026-10-21");
+    expect(formatBusinessDate(beforeMidnight)).not.toBe(beforeMidnight.toISOString().slice(0, 10).split("-").reverse().join("/"));
+    expect(toWritePayload(newReportForm(afterMidnight)).report_date).toBe("2026-10-22");
+
+    const reopened = formFromReport({ ...report, report_date: payload.report_date });
+    expect(reopened.reportDate).toBe("21/10/2026");
+    expect(toWritePayload(reopened).report_date).toBe("2026-10-21");
+    const manual = { ...reopened, reportDate: "01/11/2026" };
+    expect(toWritePayload(manual).report_date).toBe("2026-11-01");
+    expect(toWritePayload(reopened).report_date).toBe("2026-10-21");
+  });
+
+  it("keeps a legacy report without a date empty until the field is edited", () => {
+    const legacy = formFromReport({ ...report, report_date: null });
+    expect(legacy.reportDate).toBe("");
+    expect(toWritePayload(legacy).report_date).toBeNull();
+    expect(emptyReportForm().reportDate).toBe("");
+    const edited = { ...legacy, reportDate: "15/01/2020" };
+    expect(toWritePayload(edited).report_date).toBe("2020-01-15");
+  });
+
+  it("converts display and ISO dates without shifting the calendar day", () => {
+    expect(isoToDisplayDate("2026-10-21")).toBe("21/10/2026");
+    expect(displayDateToIso("21/10/2026")).toBe("2026-10-21");
+    expect(displayDateToIso("")).toBeNull();
+    expect(isoToDisplayDate(null)).toBe("");
+    expect(isoToDisplayDate("não é data")).toBe("não é data");
   });
 });

@@ -45,6 +45,10 @@ A referência visual é `docs/12-roadmap-e-evolucao/quality/reference/Modelo_Rel
 
 Os diálogos de exclusão, cópia, saída sem salvar e recorte usam a caixa visível do `@delpi/plugin-ui` (`useContainedModalViewportStyle`). Eles permanecem abertos até Cancelar ou Confirmar. O atalho CSS `inset` não é aplicado, porque ele solta o modal da posição fixa.
 
+## Data do relatório
+
+**Novo Relatório** grava a data civil de `America/Sao_Paulo` no formato `DD/MM/AAAA` da folha e `YYYY-MM-DD` na API. Reabrir ou salvar de novo não troca essa data. Uma alteração manual continua valendo. Relatório antigo sem data permanece vazio até alguém editar o campo. A cópia recebe a data do dia da cópia e não a data do original.
+
 ## Tema
 
 A tela acompanha o `data-theme` que o Portal grava em `<html>`. Não há seletor próprio. As cores de tela passam pelos tokens `--mg-*` em `screen-theme.css`, mapeados para `--surface`, `--surface-2`, `--app-canvas`, `--text`, `--primary`, `--secundary`, `--control-bg`, `--danger` e `--success`. No escuro, título e faixa não usam `--secundary` cru, porque o Portal não clareia esse token.

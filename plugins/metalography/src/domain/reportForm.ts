@@ -86,6 +86,28 @@ function blankMeasurements(): Record<MeasurementKey, MeasurementPair> {
   };
 }
 
+/** Calendário civil usado pela API metalográfica quando a data do relatório está vazia. */
+export const BUSINESS_TIME_ZONE = "America/Sao_Paulo";
+
+export function formatBusinessDate(now: Date, timeZone = BUSINESS_TIME_ZONE): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  const year = value("year");
+  const month = value("month");
+  const day = value("day");
+  if (!/^\d{4}$/.test(year) || !/^\d{2}$/.test(month) || !/^\d{2}$/.test(day)) return "";
+  return `${day}/${month}/${year}`;
+}
+
+export function newReportForm(now: Date = new Date()): ReportFormState {
+  return { ...emptyReportForm(), reportDate: formatBusinessDate(now) };
+}
+
 export function emptyReportForm(): ReportFormState {
   return {
     reportDate: "",
@@ -181,8 +203,9 @@ export function toWritePayload(form: ReportFormState): ReportWritePayload {
   };
 }
 
-export function copyReportForm(source: ReportFormState): ReportFormState {
+export function copyReportForm(source: ReportFormState, now: Date = new Date()): ReportFormState {
   const copy = emptyReportForm();
+  copy.reportDate = formatBusinessDate(now);
   copy.revision = source.revision;
   copy.sample = {
     ...source.sample,

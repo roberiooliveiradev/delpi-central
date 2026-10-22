@@ -4,7 +4,8 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HttpRequestError } from "../api/httpClient";
-import { createReport, deleteReport, getReport, listReports } from "../api/metallographicReportsApi";
+import { createReport, deleteReport, getReport, listReports, updateReport } from "../api/metallographicReportsApi";
+import { displayDateToIso, formatBusinessDate } from "../domain/reportForm";
 import type { ReportSnapshot } from "../domain/reportForm";
 import { CropDialog } from "./CropDialog";
 import { MetallographicWorkspace } from "./MetallographicWorkspace";
@@ -267,6 +268,42 @@ describe("diálogos do metalografia", () => {
     });
     expect(document.querySelector(".return-home-modal.open")).toBeNull();
     expect((document.getElementById("analyst") as HTMLInputElement).value).toBe("Ana ainda não salva");
+    expect(updateReport).not.toHaveBeenCalled();
+  });
+
+  it("envia a data de negócio ao criar e não herda a data antiga na cópia", async () => {
+    const legacy = report();
+    legacy.report_date = "2020-01-15";
+    vi.mocked(listReports).mockResolvedValue({
+      data: { items: [legacy], page: 1, page_size: 100, total: 1, has_next: false },
+      etag: null,
+      operationId: null,
+    });
+    const today = displayDateToIso(formatBusinessDate(new Date()));
+    const view = mount();
+    root = view.root;
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      document.querySelector<HTMLButtonElement>(".home-new")?.click();
+      await Promise.resolve();
+    });
+    expect(createReport).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(createReport).mock.calls[0]?.[0].report_date).toBe(today);
+
+    vi.mocked(createReport).mockClear();
+    await act(async () => {
+      document.querySelector<HTMLButtonElement>(".report-copy")?.click();
+    });
+    await act(async () => {
+      document.querySelector<HTMLButtonElement>("#copy-report-confirm")?.click();
+      await Promise.resolve();
+    });
+    expect(createReport).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(createReport).mock.calls[0]?.[0].report_date).toBe(today);
+    expect(vi.mocked(createReport).mock.calls[0]?.[0].report_date).not.toBe("2020-01-15");
+    expect(vi.mocked(createReport).mock.calls[0]?.[0].sample.terminal_code).toBe("T-7");
   });
 
   it("o recorte permanece aberto no miolo e fecha no Escape ou no fundo", () => {
