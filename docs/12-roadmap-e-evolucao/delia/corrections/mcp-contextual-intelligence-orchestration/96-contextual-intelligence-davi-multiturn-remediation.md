@@ -220,3 +220,14 @@ RESIDUALS=≤3B CPU latency (doc 93); prod T3 invoke class
     observed-honest not proven; intra-turn credential reuse
     (doc 94) open
 ```
+
+
+## Revisão de coordenação — 2026-10-22
+
+**VERDICT=ACCEPT_WITH_RESIDUAL (escopo de correção contratual em desenvolvimento).** Foram inspecionados o relatório 96, seu registro na trilha e o HEAD publicado `d962dd305fe1f80262979b411c76b41bdca93e85`. O executor reporta regressão backend verde, 3 testes novos, seleção real de estágio com Ollama e superfície autenticada; estes testes **não foram reexecutados independentemente nesta revisão** (`INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`).
+
+**Aceito:** reaproveitamento de `_prior_observation_context` no grupo e atualização das instruções versionadas, sem branches por provider, aliases ou tabelas de palavras-chave; live selection demonstrou `use o davi` / `o mcp davi` → `mcp:davi`, `terminal bala` → `openapi:delpi` e referência contextual `outro especialista` → outro owner. `api-delpi` é owner_ref legítimo do DAVI, não uma prova de erro de roteamento.
+
+**Limite das evidências:** as execuções multiturno completas com `qwen2.5:3b` local não alcançaram o invoke — esgotaram orçamento. Os probes de estágio comprovam seleção contextual, mas **não** o outcome empresarial completo, o reparo da falha produtiva de invoke T3 ou uso de `prior_turns` na sessão real do Portal. `CONTEXT_SELECTION_CONTRACT=ACCEPT`; `MULTITURN_LIVE_END_TO_END=INCONCLUSIVE`; `DAVI_PROD_INVOKE_ROOT_CAUSE=TO_INVENTORY`; `PRODUCTION_DEPLOYED=NO_REPORTED`.
+
+**Sequenciamento autorizado:** prosseguir para a etapa 5, integração do painel Contexto com Activity/Evidence/Outcome e metadados reais de compositor por turno; reancorar HEAD e reutilizar plugin-ui/contratos existentes. Preservar etapa 6 como homologação integrada, incluindo smoke real da sequência multiturno, DAVI, CRI, fragmento Ori, variação de timeout e gate de revogação antes de habilitar retry produtivo. Não ativar recovery em produção por decorrência deste aceite; não ajustar deadlines por causa das limitações CPU do Ollama. `I04_ACCEPTED=NO` até autoridade canônica declarar mudança.
