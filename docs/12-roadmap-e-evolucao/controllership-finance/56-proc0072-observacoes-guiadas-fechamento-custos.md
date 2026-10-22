@@ -393,3 +393,45 @@ PO descreve o fluxo atual **Joici -> DRE/Controladoria -> Fabiano -> preenchimen
 **Verificacao ainda aberta:** confrontar intervalo exato filtrado e medida somada com a captura anterior de `172.001,37`. A captura deste complemento mostra outra selecao/contagem no Excel; seus totais nao substituem automaticamente o valor observado antes.
 
 Estado: `MOD_MONTH_RANGE=OWNER_REPORTED_VIA_PO`; `MOD_PRODUCT_COLUMN=PROVEN_SCREENSHOT`; `MOD_PREFIX_FILTER=OWNER_REPORTED_VIA_PO`; `MOD_TOTAL_RECONCILIATION=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Registro 12 - Conciliacao cruzada MATR320 x P7 completo x Saldo em Processo (30:00-32:21)
+
+**Fonte:** narracao guiada do PO e capturas da gravacao: Excel `matr989` (Saldo em Processo, aba `01-01 - Saldo em Processo (Ana...)`), preview `SIGA/MATR320` e preview do Registro de Inventario P7. Este registro **nao** certifica paridade de tres fontes no banco.
+
+### Finalidade e sequencia AS-IS
+- Joici usa **Saldo em Processo** para identificar valores de materiais/operacoes que ficaram pendentes de apontamento no fechamento.
+- A conferencia de estoque envolve **tres relatorios distintos**: **Resumo das Entradas e Saidas (MATR320)**, **P7 completo (sem o recorte Bloco H)** e **Saldo em Processo Analitico (MATR989)**. Nao trocar o P7 completo pelo P7 de MP/PI/PA destinado a contabilidade.
+- Ela compara o total de Entradas e Saidas com o P7, procura explicar parte do delta com o saldo em processo e, quando nao fecha, investiga parametrizacao, classificacoes, movimentos e apontamentos. Atribuir todo delta a falta de apontamento **nao esta comprovado**.
+- Segundo PO, essa investigacao consome parte substancial do tempo e pode exigir nova execucao das rotinas e novas exportacoes. Materiais de consumo e parametros diferentes sao **hipoteses explicitamente relatadas**, nao causa-raiz confirmada.
+
+### Numeros observados na tela (competencia 09/2026)
+| Origem | Medida/valor visto | Estado |
+|---|---:|---|
+| MATR320 - Resumo Entradas e Saidas, filial MATRIZ, 01/09-30/09 | Saldo Atual / Total Geral **3.890.247,177** (exibicao do relatorio; ~3.890.247,18 com 2 casas) | `PROVEN_SCREENSHOT` |
+| P7 Registro de Inventario, estoque existente em 30/09/2026 | Total Geral **3.776.994,69** | `PROVEN_SCREENSHOT` |
+| Diferenca MATR320 - P7 | **113.252,49** arredondada a 2 casas | `DERIVED_FROM_SCREENSHOTS` |
+| MATR989 Saldo em Processo, Excel selecionado na coluna de valor | Barra de status **Soma: 64.968,42** sobre selecao filtrada; screenshot indica `1577 de 57409 registros localizados` | `PROVEN_SCREENSHOT_PARTIAL` |
+| Diferenca menos valor selecionado MATR989 | **48.284,07** (113.252,49 - 64.968,42), apenas subtracao exploratoria | `DERIVED_NOT_RECONCILED` |
+| Outro valor na planilha de trabalho, proximo da linha 57420 | **40.204,06** aparece em captura posterior, sem formula visivel que permita explicar sua composicao | `PROVEN_SCREENSHOT_UNEXPLAINED` |
+
+**ALERTA DE CONSISTENCIA:** o relato menciona diferenca residual de ~48 mil, compativel com a subtracao exploratoria acima, mas a mesma sequencia de imagens mostra **40.204,06** em outra celula. Nao equiparar os dois valores, nao presumir que a soma de **64.968,42** represente todo o universo do MATR989 nem declarar formula de conciliacao aprovada. Precisamos inspecionar formulas, filtros, filial, local/armazem, competencia, classes de itens, unidades, estados de apontamento e custos efetivamente comparaveis. Saldos de diferentes relatorios nao sao automaticamente somaveis apenas por estarem expressos em valor.
+
+### Campos visiveis do MATR989
+Planilha com colunas `CODIGO`, `DESCRICAO`, `LC` ou `LO` (cabecalho abreviado; confirmar), `ORDEM PRODUCAO`, `TI` ou `TIP` (confirmar), `QTDE EM` e `VALOR EM PROCESSO` (rotulos truncados). Nao transpor aliases diretamente para nome de coluna de Protheus.
+
+### Proposta de desenho futuro, sem implementacao autorizada
+Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tres valores por competencia/filial, parametros equivalentes, divergencia, parcela explicada, residual e detalhes rastreaveis de movimentos/apontamentos. **Nao** afirmar `MATR320 = P7 + MATR989` como invariante canonica sem evidencia e aceite do owner. O recurso deve diferenciar `divergencia detectada`, `causa em investigacao`, `conciliada` e `indisponibilidade da fonte` e preservar origem/extracao, timestamp e versao.
+
+**Limites com o produto atual:** R03 hoje usa SB9/SB1 como snapshot operacional e nao prova equivalencia ao MATR460/P7 oficial. Portanto nao calcular essa conciliacao somando diretamente os KPIs atuais de R03. `api-delpi` e owner das regras SQL/TOTVS; TEO e owner da evidencia AS-IS; decisao de persistencia, escopo e contratos requer gate explicito.
+
+### Pendencias de verificacao
+1. Obter as exportacoes originais de MATR320, P7 completo e MATR989 da **mesma competencia e escopo** e preservar filtros e parametros de emissao.
+2. Ler a formula exata da celula **40.204,06** e reconciliar com o residual aparente **48.284,07**, incluindo qualquer outro filtro/ajuste.
+3. Identificar o subconjunto de 1.577 registros no MATR989, o significado de `Saldo em Processo` e seus componentes que podem ou nao explicar saldo de estoque.
+4. Comparar por filial, tipo de produto (incluindo ou excluindo material de consumo), armazem e data-base. Diferenciar saldos/fluxos/custos e tratamentos de terceiros.
+5. Mapear chaves de origem e regras de apontamento; aprovar tolerancia, tratamento de diferencas e criterio de aceite com owner de Controladoria e owner de custeio.
+
+**Classificacao:** `THREE_REPORTS_CONFERENCE=OWNER_REPORTED_VIA_PO`; `SCREEN_VALUES=PROVEN_SCREENSHOT`; `DIFFERENCE_113252_49=DERIVED`; `RESIDUAL_48284_07=DERIVED_NOT_RECONCILED`; `OTHER_EXCEL_40204_06=UNEXPLAINED`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_CONSOLIDATION=TARGET_DECISION_REQUIRED`.
+
+**Proximo marcador da gravacao: apos ~32:21, a confirmar pelo PO.**
