@@ -63,3 +63,10 @@ Preservação dos campos omitidos e a aceitação upstream dos campos liberados 
 - Idempotência nativa do upstream: **TO_INVENTORY**.
 - Obrigatoriedade efetiva MATA020: **TO_INVENTORY** (não inferida do SX3).
 - Equivalência formal `codusr` ≡ `SYS_USR.USR_ID`: **TO_INVENTORY** (bloqueia live write até homologação).
+
+
+## F4.4 — Homologação CREATE 18/18 em DELPI_TST01 (2026-10-21)
+
+**PROVEN por relatório de execução + SQL**: POST de fornecedor `003875/01` retornou `supplier_code=003875` e `supplier_store=01`; todos os **18 mapeamentos da planilha de Gabriel** obtiveram `MATCH` no SQL `DELPI_TST01.SA2010`, inclusive `tax_id→A2_CGC`. Tracking `CONFIRMED`, operação `2e3f7f3e-9fe6-4a10-a15b-1de6bb9a58dd`, `attempt_count=1`. Evidência: [F4.4 18/18 SQL](../../../docs/12-roadmap-e-evolucao/supplies/evidence/suppliers-f44-create-18-field-sql-confirmation-2026-10-21.md).
+
+**Retificação de lacuna histórica:** retorno POST de código+loja está **PROVEN no cenário F4.4**, não `TO_INVENTORY` para esse cenário; manter testes de regressão e não inferir contrato universal entre versões/ambientes. A divergência do F4 anterior (`003874/01`, CGC vazio) **não voltou a ocorrer com CNPJ de DV válido**, mas a hipótese de descarte upstream por DV inválido continua sem confirmação de mecanismo interno. **Proposta pendente:** validar DV antes de POST na `api-delpi` (422, teste sem write). Não alterar GET, PUT, flags ou REST produtivo por esta atualização. **A planilha de 18 campos já foi recebida**; obrigatoriedade incondicional por campo ainda requer prova.

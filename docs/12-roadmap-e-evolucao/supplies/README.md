@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **F4.4 — CREATE homologado na DELPI_TST01 (2026-10-21):** fornecedor `003875/01`, retorno código+loja, **18/18 campos da planilha Gabriel MATCH por SQL**, incluindo `tax_id→A2_CGC`; tracking `CONFIRMED`, `attempt_count=1`, gates OFF ao final. [Evidência F4.4](./evidence/suppliers-f44-create-18-field-sql-confirmation-2026-10-21.md). **ACCEPT_WITH_RESIDUAL:** CNPJ anterior com DV inválido foi descartado (mecanismo upstream não comprovado); validação DV antes do POST é melhoria pendente; GET Protheus incompleto e registros de teste bloqueados remanescentes. Não alterar REST `:8701` para PROD nem habilitar escrita em `DELPI`.
