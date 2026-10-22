@@ -17124,3 +17124,18 @@ I04_ACCEPTED=NO
 C3_EXECUTED=UNRELATED
 NEXT=COORDINATION_REVIEW
 ```
+
+**2026-10-22 — CRI activation + count consistency + owner selection (report 86):** `DELIA-C3-CRI-ACTIVATION-COUNT-CONSISTENCY-AND-OWNER-SELECTION-01`. **A:** CRI dev persistent via `infra/.env` flag → compose → root_composer typed boolean; `requested=cri effective=cri` after restarts, resources v2/v3 loaded, no new flag, `PRODUCTION_ACTIVATION=NOT_AUTHORIZED`. **B:** count inconsistency "Encontrei 40 … de 32" fixed at the canonical presentation edge — truncation notice now binds `delivered_count` (distinct-delivered, same figure as the lead) instead of the scan-capped `len(records)`; trigger `presented < delivered_count`; live TÉO response now "Exibindo 5 de 40". **C:** owner-selection drift not reproduced — flagged V4 was a generic owner-less question; 8/8 unseen probes select the correct group (VISTA/TÉO/DAVI); generic catalog questions legitimately reach DAVI's published DELPI-wide discovery; no code change. Tests: 64 E3 + related suites PASS, pagination suites PASS. Report: [86](../corrections/mcp-contextual-intelligence-orchestration/86-cri-activation-count-consistency-and-owner-selection.md).
+
+```text
+CRI_PERSISTENCE=VERIFIED
+COUNT_CONSISTENCY=FIXED(single typed source: delivered_count)
+OWNER_SELECTION=VERIFIED(8/8 probes correct)
+UNIT_TESTS=PASS
+REAL_EVAL=PASS
+OFF_PARITY=PASS
+PRODUCTION_ACTIVATION=NOT_AUTHORIZED
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```

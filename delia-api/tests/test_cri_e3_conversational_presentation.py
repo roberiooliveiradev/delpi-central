@@ -1432,3 +1432,68 @@ def test_g1_requested_off_is_baseline_regardless_of_resources(
         "requested=baseline effective=baseline"
         in capture_mode_logs.text
     )
+
+
+# ---------------------------------------------------------------------------
+# C — count consistency: one canonical frame per statement (E3-G2)
+# ---------------------------------------------------------------------------
+
+
+def test_count_scan_cap_never_leaks_into_returned_claim():
+    """T5 residual: 40 distinct records delivered but the projection
+    scan cap only prepares 32 — the response claimed ``Encontrei 40``
+    and ``Exibindo 5 de 32`` in the same answer. The returned/notice
+    count must be the canonical delivered figure, not the
+    presentation scan bound."""
+    records = _records(
+        *({"fields": (("Nome", f"R{i}"),)} for i in range(32))
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        delivered_count=40,
+    )
+    assert cri is not None
+    assert cri.presented_records == 5
+    assert "40" in cri.content
+    assert "de 32" not in cri.content
+
+
+def test_count_duplicate_tail_never_claims_extra_returned():
+    """Identical records collapse into one delivered unit — when every
+    delivered record is presented, no truncation notice may appear and
+    a phantom raw count must not surface."""
+    records = _records(
+        {"fields": (("Nome", "Duplicado"),), "identifier": "D-1"},
+        {"fields": (("Nome", "Duplicado"),), "identifier": "D-1"},
+    )
+    cri = _compose(
+        OutcomeVerdict(OUTCOME_ANSWERED),
+        records,
+        delivered_count=1,
+    )
+    assert cri is not None
+    assert cri.presented_records == 1
+    assert "Exibindo" not in cri.content
+    assert "de 2" not in cri.content
+
+
+def test_on_scan_capped_projection_keeps_single_count_frame():
+    """End-to-end T5: the owner returns 40 distinct records and the
+    presentation scan projects at most 32 — the composed response must
+    keep one consistent delivered-count frame end to end."""
+    outcome = _outcome(
+        "processes",
+        structured={
+            "items": [
+                {"codigo": f"PROC-{i:04d}", "nome": f"Processo {i}"}
+                for i in range(40)
+            ],
+            "has_more": False,
+        },
+    )
+    _, attempt = _attempt(outcome, goal=_goal(), enabled=True)
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.content is not None
+    assert "40" in attempt.content
+    assert "de 32" not in attempt.content

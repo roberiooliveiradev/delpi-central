@@ -188,7 +188,7 @@ def compose_cri_response(
         "date": ordering_date or "",
         "count": "",
         "presented": "",
-        "returned": len(records),
+        "returned": delivered_count,
         "available": total_count if total_count is not None else "",
         "requested": req.min_items if req.min_items is not None else "",
         "delivered": delivered_count,
@@ -348,7 +348,10 @@ def compose_cri_response(
         paragraphs.append("\n".join(record_lines))
 
     # ---- presentation-faithfulness notices (E3-G2) -----------------
-    if presented < len(records):
+    # ``delivered_count`` is the canonical distinct-delivered figure
+    # (same source as the lead) — ``records`` is the scan-capped
+    # projection and must never surface as a user-facing count.
+    if presented < delivered_count:
         notice = _format(
             labels.get("truncation_notice"),
             **{**params, "presented": presented},

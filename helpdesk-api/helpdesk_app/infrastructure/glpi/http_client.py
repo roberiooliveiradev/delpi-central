@@ -1652,7 +1652,7 @@ class HttpxGlpiClient:
                     "App-Token": app_token,
                     "Session-Token": session_token,
                 },
-                params={"range": f"{start}-{end}", "expand_dropdowns": "true"},
+                params={"range": f"{start}-{end}"},
             )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
