@@ -233,7 +233,7 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 `DELPI_DLP_REPORT=OWNER_REPORTED_VIA_PO`; `DLP_RUNTIME_FAILURE=PROVEN_SCREENSHOT`; `CUSTOM_ROUTINE_ID=PROVEN_SCREENSHOT_PARTIAL`; `DLP_FIVE_OUTPUTS=OWNER_REPORTED_VIA_PO`; `DLP_SQL_PARITY=TEST_NOT_RUN`; `COST_CALC_STAGE_100=PROVEN_SCREENSHOT`; `COST_REVIEW_SCREEN=PROVEN_SCREENSHOT`; `COST_CLOSING_COMPLETED=NOT_PROVEN`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 
-## Registro 08 - Retorno ao Estoque/Custos, P7, Kardex e movimento/processo (17:10-22:24)
+## Registro 08 - Retorno ao Estoque/Custos, P7, Kardex e movimento/processo (17:10-21:53)
 
 **Fonte:** narracao orientada pelo PO e capturas TOTVS associadas aos marcadores de tempo ~17:39, 17:57, 18:43, 19:00, 19:04, 19:08, 19:19, 19:49, 20:28, 20:41, 21:05 e 21:42. Classificacoes `OWNER_REPORTED_VIA_PO` (finalidade/explicacao) e `PROVEN_SCREENSHOT` (campos e interfaces). Este trecho continua o Registro 07: calculo de custo 100%, porem revisao/fechamento definitivo ainda nao demonstrado. Joici alterna rotinas visando otimizar tempo; uma aba aberta nao comprova output concluido.
 
@@ -249,7 +249,7 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 | 21:20-21:42 | `Resumo das Entradas e Saidas` / MATR320 | Emitido com periodo 01/09/2026 a 30/09/2026, `Moeda=1a Moeda`, `Saldo a considerar=Movimento`, `Considera Saldo MOD=Nao`; parametros visiveis em captura | PROVEN_SCREENSHOT; valores originais ja no doc 46 |
 | 21:53 em diante | Saidas comecam a ficar prontas; Joici passa a explicar seu uso | PO relata mudanca de etapa: de preparacao/exportacao para conferencia e analise dos arquivos | OWNER_REPORTED_VIA_PO; regras especificas nos proximos registros |
 
-**Cronologia:** o PO citou o relatorio de materiais em processo como 22:24, mas a captura traz configuracao da rotina `Saldo em Processo` as ~21:05 e a aba ja esta presente no trecho ~20:41. O documento preserva os dois marcadores e nao declara que sao a mesma acao. `Em Processo` e `Saldo Em Processo` aparecem em abas diferentes, portanto nao devem ser unificados sem contrato.
+**Cronologia corrigida pelo PO:** a referencia anterior a 22:24 foi erro de digitacao; a extracao de materiais em processo deve ser situada em torno de **21 minutos**, coerente com as capturas de `Saldo em Processo` (~20:41-21:05). Esta correcao substitui a divergencia temporal antes apontada; `Em Processo` e `Saldo Em Processo` continuam rotinas/abas distintas. `Em Processo` e `Saldo Em Processo` aparecem em abas diferentes, portanto nao devem ser unificados sem contrato.
 
 ### Distincoes funcionais
 - **P7 padrao**: fotografia do estoque historico para conferencias internas; **P7 Bloco H**: recorte e layout usado para contabilidade. Nao presumir que os conjuntos sao exatamente iguais aos filtros operacionais `all_products` / `mp_pi_pa` ja presentes no R03. As duas saidas nao sao dois calculos identicos por padrao.
