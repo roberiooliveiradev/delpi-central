@@ -1,0 +1,22 @@
+# Etapa 5.1 — NVIDIA GPU overlay for the existing Ollama dev service (WSL2 only).
+#
+# WSL2 exposes the paravirtualized GPU through /dev/dxg and the NVIDIA
+# user-space driver libraries under /usr/lib/wsl/lib. Mounting both makes
+# NVML/CUDA reachable inside the container without nvidia-container-toolkit,
+# privileged mode, or daemon changes.
+#
+# Usage (from the repository root):
+#   docker compose -f infra/docker-compose.dev.yml \
+#       -f infra/docker-compose.ollama-gpu.yml \
+#       --profile optional-heavy up -d ollama
+#
+# CPU-only rollback: omit this file from the -f list and recreate.
+# Do NOT apply on hosts without WSL2 + NVIDIA (missing /dev/dxg fails fast).
+services:
+  ollama:
+    devices:
+      - /dev/dxg
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+    environment:
+      LD_LIBRARY_PATH: /usr/lib/wsl/lib

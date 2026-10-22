@@ -17418,3 +17418,19 @@ PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
 ```
 
 
+
+
+## §6.380 — Etapa 5.1: aceleracao GPU do Ollama local (2026-10-22)
+
+**2026-10-22 — DELIA-C3-OLLAMA-GPU-LOCAL-ACCELERATION-05A-01:** GPU NVIDIA do host habilitada no container delpi-ollama existente via overlay opt-in infra/docker-compose.ollama-gpu.yml (devices /dev/dxg, mount /usr/lib/wsl:ro, LD_LIBRARY_PATH=/usr/lib/wsl/lib). Sem nvidia-container-toolkit, sem --privileged, sem mudanca de daemon.json; volume infra_ollama_data e rede delpi-network preservados. Prova real: log CUDA0 compute=8.6, ollama ps 100% GPU, VRAM 2.64 GiB, restart estavel. CPU baseline x GPU medidos nos mesmos cenarios: cold 41.0→20.5s; warm 16.6→47.4 tok/s; turnos wire −49% a −95%; timeouts de estagio 11→0 (classe timeout eliminada); invalid_structured_output persiste em 4 chamadas — qualidade nao presumida. qwen2.5:7b-instruct-q4_K_M medido e rejeitado (18/82% CPU/GPU, 88s load, 19.9 tok/s). Regressao backend 1972 passed/3 skipped. Documento 97 atualizado com resultado. LOCAL_LLM_PROVIDER=OLLAMA_ONLY; EXTERNAL_LLM_LOCAL_CALLS=0; PRODUCTION_RECOVERY=OFF; budgets 2/60/30 intactos.
+
+TASK_ID=DELIA-C3-OLLAMA-GPU-LOCAL-ACCELERATION-05A-01
+REUSE_DECISION=EXTEND (overlay sobre servico ollama existente; volume/rede/limits preservados)
+GPU_MECHANISM=/dev/dxg + /usr/lib/wsl:ro + LD_LIBRARY_PATH (WSL2 paravirt, sem toolkit)
+INFERENCE_GPU_PROVEN=YES (ollama ps 100% GPU; CUDA0 log; VRAM 2.64 GiB)
+CPU_BASELINE=cold 41.0s; warm 16.6 tok/s; 3/8 turnos PROCESSING_TIMEOUT
+GPU_RESULTS=cold 20.5s; warm 47.4 tok/s; 0/8 timeouts; turnos −49%..−95%
+LARGER_MODEL=qwen2.5:7b parcial 18/82 CPU/GPU — rejeitado; 3b mantido
+REGRESSION=backend 1972 passed / 3 skipped / 0 failed
+EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
+ROLLBACK=omitir overlay do -f e recriar ollama
