@@ -11,18 +11,24 @@ import {
   reactResolveAliases,
 } from "../vite/federation.shared";
 
+const federationPlugins = process.env.VITEST
+  ? []
+  : [
+      federation({
+        name: "metalography",
+        filename: "remoteEntry.js",
+        remotes: pluginUiRemote(),
+        exposes: {
+          "./App": "./src/bootstrap.tsx",
+        },
+        shared: { ...FEDERATION_SHARED_REACT },
+      }),
+      federationReactProxyFixPlugin(),
+    ];
+
 export default defineConfig({
   plugins: [
-    federation({
-      name: "metalography",
-      filename: "remoteEntry.js",
-      remotes: pluginUiRemote(),
-      exposes: {
-        "./App": "./src/bootstrap.tsx",
-      },
-      shared: { ...FEDERATION_SHARED_REACT },
-    }),
-    federationReactProxyFixPlugin(),
+    ...federationPlugins,
     react(),
   ],
   resolve: {
@@ -39,7 +45,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     alias: pluginUiTestAliases(__dirname),
   },
 });

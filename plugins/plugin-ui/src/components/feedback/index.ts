@@ -180,10 +180,13 @@ export {
 } from "./ModalShell";
 export {
   containedHostUsesViewportBox,
+  containedModalBoxToStyle,
+  lockContainedModalScroll,
   measureContainedModalBox,
   resolveContainedModalScrollPort,
   type ContainedModalBox,
 } from "./containedModalViewport";
+export { useContainedModalViewportStyle } from "./useContainedModalViewportStyle";
 export {
   DrawerShell,
   createDrawerShell,

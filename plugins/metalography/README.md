@@ -43,6 +43,8 @@ A referência visual é `docs/12-roadmap-e-evolucao/quality/reference/Modelo_Rel
 
 **Exportar PDF** continua baixando o snapshot já gravado na API DELPI. Não substitui a impressão e não lê o rascunho local.
 
+Os diálogos de exclusão, cópia, saída sem salvar e recorte usam a caixa visível do `@delpi/plugin-ui` (`useContainedModalViewportStyle`). Eles permanecem abertos até Cancelar ou Confirmar. O atalho CSS `inset` não é aplicado, porque ele solta o modal da posição fixa.
+
 ## Desenvolvimento
 
 ```bash

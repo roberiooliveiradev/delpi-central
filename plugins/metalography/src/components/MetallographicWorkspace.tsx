@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
-import { printDelpiDocumentHtml } from "@delpi/plugin-ui/index";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { lockContainedModalScroll, printDelpiDocumentHtml, useContainedModalViewportStyle } from "@delpi/plugin-ui/index";
 
 import font400Url from "../assets/delpi-sans-400.otf";
 import font700Url from "../assets/delpi-sans-700.otf";
@@ -17,6 +17,7 @@ import {
 } from "../api/metallographicReportsApi";
 import { HttpRequestError } from "../api/httpClient";
 import { clearKey, idempotencyKey } from "../domain/draftSession";
+import { retainModalFocus } from "../domain/modalFocus";
 import { allows, METALOGRAPHY_PERMISSIONS } from "../domain/permissions";
 import {
   copyReportForm,
@@ -62,21 +63,8 @@ function formatStamp(value: string | null): string {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-function hostBox(host: HTMLElement | null): CSSProperties | undefined {
-  if (!host) return undefined;
-  const rect = host.getBoundingClientRect();
-  const top = Math.max(rect.top, 0);
-  const left = Math.max(rect.left, 0);
-  const right = Math.min(rect.right, window.innerWidth);
-  const bottom = Math.min(rect.bottom, window.innerHeight);
-  return {
-    position: "fixed",
-    top,
-    left,
-    width: Math.max(0, right - left),
-    height: Math.max(0, bottom - top),
-    inset: "auto",
-  };
+function stopEscape(event: { key: string; stopPropagation: () => void }) {
+  if (event.key === "Escape") event.stopPropagation();
 }
 
 async function loadImage(file: File): Promise<HTMLImageElement> {
@@ -108,6 +96,8 @@ export function MetallographicWorkspace({
   isSuperadmin?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
+  const actionLock = useRef(false);
+  const [hostNode, setHostNode] = useState<HTMLDivElement | null>(null);
   const [reports, setReports] = useState<ReportSnapshot[]>([]);
   const [filters, setFilters] = useState<ReportListFilters>(EMPTY_REPORT_FILTERS);
   const [hint, setHint] = useState("Carregando os relatórios salvos no servidor.");
@@ -120,11 +110,12 @@ export function MetallographicWorkspace({
   const [slots, setSlots] = useState(emptySlots);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
-  const [overlay, setOverlay] = useState<CSSProperties>();
   const [crop, setCrop] = useState<{ slot: SlotKey; image: HTMLImageElement; fileName: string } | null>(null);
   const [confirm, setConfirm] = useState<"leave" | "delete" | "copy" | null>(null);
   const [pendingReport, setPendingReport] = useState<ReportSnapshot | null>(null);
   const [dialogError, setDialogError] = useState("");
+  const modalActive = Boolean(confirm) || Boolean(crop);
+  const overlay = useContainedModalViewportStyle(modalActive, hostNode);
   const canCreate = allows(permissions, isSuperadmin, METALOGRAPHY_PERMISSIONS.create);
   const canEdit = allows(permissions, isSuperadmin, METALOGRAPHY_PERMISSIONS.edit);
   const canDelete = allows(permissions, isSuperadmin, METALOGRAPHY_PERMISSIONS.delete);
@@ -137,18 +128,22 @@ export function MetallographicWorkspace({
     window.setTimeout(() => setToast(""), 4800);
   }, []);
 
-  const refreshHost = useCallback(() => setOverlay(hostBox(hostRef.current)), []);
+  const bindHost = useCallback((node: HTMLDivElement | null) => {
+    hostRef.current = node;
+    setHostNode(node);
+  }, []);
 
   useEffect(() => {
-    if (!crop && !confirm) return undefined;
-    refreshHost();
-    window.addEventListener("resize", refreshHost);
-    window.addEventListener("scroll", refreshHost, true);
-    return () => {
-      window.removeEventListener("resize", refreshHost);
-      window.removeEventListener("scroll", refreshHost, true);
-    };
-  }, [crop, confirm, refreshHost]);
+    if (!modalActive || !hostNode) return undefined;
+    return lockContainedModalScroll(hostNode);
+  }, [modalActive, hostNode]);
+
+  useEffect(() => {
+    if (!modalActive || !hostNode) return undefined;
+    const dialog = hostNode.querySelector<HTMLElement>(".return-home-modal.open [role='dialog'], .crop-modal.open [role='dialog']");
+    if (!dialog) return undefined;
+    return retainModalFocus(dialog);
+  }, [modalActive, confirm, crop, hostNode]);
 
   const loadList = useCallback(async () => {
     if (!allows(permissions, isSuperadmin, METALOGRAPHY_PERMISSIONS.view)) {
@@ -319,7 +314,8 @@ export function MetallographicWorkspace({
   }
 
   async function confirmDelete() {
-    if (!pendingReport?.version) return;
+    if (!pendingReport?.version || actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     setDialogError("");
     try {
@@ -332,12 +328,14 @@ export function MetallographicWorkspace({
     } catch (cause) {
       setDialogError(cause instanceof HttpRequestError ? cause.message : "Não foi possível excluir.");
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
 
   async function confirmCopy() {
-    if (!pendingReport || !canCreate) return;
+    if (!pendingReport || !canCreate || actionLock.current) return;
+    actionLock.current = true;
     setBusy(true);
     try {
       const copy = copyReportForm(formFromReport(pendingReport));
@@ -349,6 +347,7 @@ export function MetallographicWorkspace({
     } catch (cause) {
       showToast(cause instanceof HttpRequestError ? cause.message : "Não foi possível criar a cópia.");
     } finally {
+      actionLock.current = false;
       setBusy(false);
     }
   }
@@ -412,7 +411,7 @@ export function MetallographicWorkspace({
   }
 
   return (
-    <div ref={hostRef} className={editing ? "dashboard-metalography dashboard-page editor-active" : "dashboard-metalography dashboard-page"}>
+    <div ref={bindHost} className={editing ? "dashboard-metalography dashboard-page editor-active" : "dashboard-metalography dashboard-page"}>
       <section className="home-screen" aria-label="Tela inicial de relatórios">
         <div className="home-shell">
           <header className="home-header">
@@ -562,7 +561,7 @@ export function MetallographicWorkspace({
         }}
       />
       <div id="app-toast" className={toast ? "app-toast show" : "app-toast"} role="status" aria-live="polite">{toast}</div>
-      <div className={confirm === "leave" ? "return-home-modal open" : "return-home-modal"} style={confirm === "leave" ? overlay : undefined} aria-hidden={confirm === "leave" ? "false" : "true"}>
+      <div className={confirm === "leave" ? "return-home-modal open" : "return-home-modal"} style={confirm === "leave" ? overlay : undefined} aria-hidden={confirm === "leave" ? "false" : "true"} onKeyDown={stopEscape}>
         <div className="return-home-dialog" role="dialog" aria-modal="true" aria-labelledby="return-home-title">
           <h2 id="return-home-title">Voltar à página inicial?</h2>
           <p id="return-home-message">As alterações que ainda não foram salvas neste relatório serão perdidas. Os relatórios já salvos continuarão disponíveis na página inicial.</p>
@@ -572,7 +571,7 @@ export function MetallographicWorkspace({
           </div>
         </div>
       </div>
-      <div className={confirm === "delete" ? "return-home-modal open" : "return-home-modal"} style={confirm === "delete" ? overlay : undefined} aria-hidden={confirm === "delete" ? "false" : "true"}>
+      <div className={confirm === "delete" ? "return-home-modal open" : "return-home-modal"} style={confirm === "delete" ? overlay : undefined} aria-hidden={confirm === "delete" ? "false" : "true"} onKeyDown={stopEscape}>
         <div className="return-home-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-report-title">
           <h2 id="delete-report-title">Excluir relatório?</h2>
           <p id="delete-report-message">{pendingReport ? `Tem certeza de que deseja excluir permanentemente o relatório nº ${pendingReport.report_number}? Os dados e as imagens serão removidos. Esta ação não pode ser desfeita.` : "Esta ação não pode ser desfeita."}</p>
@@ -583,7 +582,7 @@ export function MetallographicWorkspace({
           </div>
         </div>
       </div>
-      <div className={confirm === "copy" ? "return-home-modal open" : "return-home-modal"} style={confirm === "copy" ? overlay : undefined} aria-hidden={confirm === "copy" ? "false" : "true"}>
+      <div className={confirm === "copy" ? "return-home-modal open" : "return-home-modal"} style={confirm === "copy" ? overlay : undefined} aria-hidden={confirm === "copy" ? "false" : "true"} onKeyDown={stopEscape}>
         <div className="return-home-dialog" role="dialog" aria-modal="true" aria-labelledby="copy-report-title">
           <h2 id="copy-report-title">Criar cópia do relatório?</h2>
           <p id="copy-report-message">{pendingReport ? `Criar uma cópia do relatório nº ${pendingReport.report_number}? Os dados do terminal, processo e critérios serão copiados. O número original será substituído por uma numeração automática; data, lote, amostra, medições, conclusão, observações, responsável e imagens serão limpos para a nova análise. O original permanecerá inalterado.` : "Será aberto um novo rascunho com os dados reutilizáveis deste relatório. O original permanecerá inalterado."}</p>

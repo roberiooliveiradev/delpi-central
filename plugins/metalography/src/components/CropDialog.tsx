@@ -158,7 +158,7 @@ export function CropDialog({ open, title, image, box, onCancel, onApply }: CropD
   }
 
   return (
-    <div className={open ? "crop-modal open" : "crop-modal"} aria-hidden={open ? "false" : "true"} style={open ? box : undefined} onClick={(event) => { if (event.target === event.currentTarget) onCancel(); }}>
+    <div className={open ? "crop-modal open" : "crop-modal"} aria-hidden={open ? "false" : "true"} style={open ? box : undefined} onClick={(event) => { if (event.target === event.currentTarget) onCancel(); }} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); onCancel(); } }}>
       <div className="crop-panel" role="dialog" aria-modal="true" aria-labelledby="crop-title">
         <div className="crop-head">
           <div>
