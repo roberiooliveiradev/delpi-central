@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import hashlib
 import secrets
 from contextlib import contextmanager
@@ -371,39 +373,48 @@ class PostgresProductionRunRepository:
         run["open_segment"] = segment
         return run
 
-    def get_open_segment(self, run_id: str) -> dict[str, Any] | None:
+    def get_open_segment(
+        self, run_id: str, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        query = f"""
+            SELECT id::text AS id, run_id::text AS run_id,
+                   device_id::text AS device_id,
+                   anchor_counter, anchor_epoch, started_at,
+                   ended_at, pieces, end_reason
+            FROM {_SEGMENTS}
+            WHERE run_id = %s::uuid AND ended_at IS NULL
+            LIMIT 1
+        """
+        if conn is not None:
+            with conn.cursor() as cur:
+                cur.execute(query, (run_id,))
+                row = cur.fetchone()
+                return dict(row) if row else None
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                    SELECT id::text AS id, run_id::text AS run_id,
-                           device_id::text AS device_id,
-                           anchor_counter, anchor_epoch, started_at,
-                           ended_at, pieces, end_reason
-                    FROM {_SEGMENTS}
-                    WHERE run_id = %s::uuid AND ended_at IS NULL
-                    LIMIT 1
-                    """,
-                    (run_id,),
-                )
+                cur.execute(query, (run_id,))
                 row = cur.fetchone()
                 return dict(row) if row else None
 
-    def list_segments(self, run_id: str) -> list[dict[str, Any]]:
+    def list_segments(
+        self, run_id: str, conn: Any | None = None
+    ) -> list[dict[str, Any]]:
+        query = f"""
+            SELECT id::text AS id, run_id::text AS run_id,
+                   device_id::text AS device_id,
+                   anchor_counter, anchor_epoch, started_at,
+                   ended_at, pieces, end_reason
+            FROM {_SEGMENTS}
+            WHERE run_id = %s::uuid
+            ORDER BY started_at
+        """
+        if conn is not None:
+            with conn.cursor() as cur:
+                cur.execute(query, (run_id,))
+                return [dict(row) for row in cur.fetchall()]
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                    SELECT id::text AS id, run_id::text AS run_id,
-                           device_id::text AS device_id,
-                           anchor_counter, anchor_epoch, started_at,
-                           ended_at, pieces, end_reason
-                    FROM {_SEGMENTS}
-                    WHERE run_id = %s::uuid
-                    ORDER BY started_at
-                    """,
-                    (run_id,),
-                )
+                cur.execute(query, (run_id,))
                 return [dict(row) for row in cur.fetchall()]
 
     def close_segment_open_new(
@@ -751,3 +762,68 @@ class PostgresProductionRunRepository:
                     (run_id,),
                 )
                 return [dict(row) for row in cur.fetchall()]
+
+class PostgresRunHandoffRequestRepository:
+    """Idempotência durável da troca guiada de OP (V020).
+
+    Gravada na MESMA transação que encerra o run anterior e cria o novo —
+    replay devolve a resposta persistida; requestId reutilizado com payload
+    diferente é conflito de negócio, resolvido no service.
+    """
+
+    def get(
+        self, request_id: str, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        query = """
+            SELECT request_id::text AS request_id, branch, work_center,
+                   previous_run_id::text AS previous_run_id,
+                   new_run_id::text AS new_run_id,
+                   request_hash, status, response, created_at
+            FROM production_control.production_run_handoff_requests
+            WHERE request_id = %s::uuid
+            LIMIT 1
+        """
+        if conn is not None:
+            with conn.cursor() as cur:
+                cur.execute(query, (request_id,))
+                row = cur.fetchone()
+                return dict(row) if row else None
+        with get_connection() as own:
+            with own.cursor() as cur:
+                cur.execute(query, (request_id,))
+                row = cur.fetchone()
+                return dict(row) if row else None
+
+    def insert(
+        self,
+        *,
+        request_id: str,
+        branch: str,
+        work_center: str,
+        previous_run_id: str,
+        new_run_id: str,
+        request_hash: str,
+        response: dict[str, Any],
+        conn: Any,
+    ) -> dict[str, Any]:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO production_control.production_run_handoff_requests
+                    (request_id, branch, work_center, previous_run_id,
+                     new_run_id, request_hash, response)
+                VALUES (%s::uuid, %s, %s, %s::uuid, %s::uuid, %s, %s::jsonb)
+                RETURNING request_id::text AS request_id, created_at
+                """,
+                (
+                    request_id,
+                    branch,
+                    work_center,
+                    previous_run_id,
+                    new_run_id,
+                    request_hash,
+                    json.dumps(response, default=str),
+                ),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None
