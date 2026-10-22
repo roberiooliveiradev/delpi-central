@@ -253,3 +253,33 @@ rejection, log redaction of consumer secrets. `LIVE TESTS = TEST_NOT_RUN`.
 technically frozen against the official public documentation, but
 `PROVIDER_ACCESS = TO_INVENTORY` blocks GO. Nothing may be billed or queried
 until DELPI contracting (e-CNPJ flow) or trial keys are provisioned.
+
+---
+
+## 9. S3.1 UPDATE — BrasilAPI CNPJ selected for the MVP
+
+Product Owner decision (record
+`docs/12-roadmap-e-evolucao/supplies/SUPPLIES-ENRICHMENT-01-BRASILAPI-MVP-DECISION-20261022.md`,
+SHA `eb495df6`): **BrasilAPI CNPJ v1 is the MVP provider**; Serpro becomes
+FUTURE/OPTIONAL and its missing contract no longer blocks the slice.
+
+- `GET https://brasilapi.com.br/api/cnpj/v1/{cnpj}` — public, unauthenticated,
+  community run; upstream is Minha Receita (RFB-derived, not official).
+- Classification: `provider_id=brasilapi-cnpj-v1`, conceptual
+  `source_type=THIRD_PARTY_API` — **never** `GOVERNMENT_API`.
+- Documented errors: 200 / 400 bad_request / 404 not_found / 503
+  service_unavailable; 429 possible under community anti-bot — honoured with
+  `Retry-After`, never retried aggressively.
+- Documented schema verified against a live bounded smoke (single GET with
+  the documentation's own example CNPJ): all mapped fields present, `qsa`
+  delivered but excluded by the adapter allowlist.
+- Alphanumeric CNPJ: BrasilAPI accepts `[0-9A-Z]{12}[0-9]{2}` but S1 is
+  digits-only — non-numeric tax ids fail closed before any network call
+  (explicit incompatibility, no silent contract change).
+- Config: `COMPANY_REGISTRY_PROVIDER=unavailable|brasilapi` (default
+  `unavailable`, instant rollback), `BRASILAPI_BASE_URL`,
+  `BRASILAPI_TIMEOUT_SECONDS`, `COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE`
+  (per-actor + per-CNPJ in-memory caps; not shared across workers —
+  documented limitation).
+- Serpro matrix row remains valid for the future contracted integration —
+  unchanged except priority: Serpro = `PLANNED`, BrasilAPI = `IMPLEMENTED`.

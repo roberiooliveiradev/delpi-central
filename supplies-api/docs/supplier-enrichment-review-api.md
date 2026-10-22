@@ -9,7 +9,7 @@
 
 - Dono: `supplies-api` (review domain + estado + AuthZ server-side + persistência própria).
 - Canonical read: `api-delpi` `GET /integrations/protheus/suppliers/{id}` (read-only, S2S existente).
-- **Sem consulta externa real**: o port `CompanyRegistryProvider` não tem adapter produtivo — `UnavailableCompanyRegistryProvider` é fail-closed e `POST /enrichment-reviews` responde `503 ENRICHMENT_SOURCE_UNAVAILABLE` em produção. Fixtures/adapters de teste apenas.
+- **Fonte externa configurável (S3.1)**: `COMPANY_REGISTRY_PROVIDER=unavailable` (default) mantém `UnavailableCompanyRegistryProvider` fail-closed → `503 ENRICHMENT_SOURCE_UNAVAILABLE`. `=brasilapi` habilita `BrasilApiCompanyRegistryProvider` (`provider_id=brasilapi-cnpj-v1`, conceitual `THIRD_PARTY_API`, nunca `GOVERNMENT_API`) — consulta sob demanda server-side, allowlist de campos, sem QSA/CPF, rate limit por ator e por CNPJ.
 - **Zero escrita ERP**: nenhum endpoint emite POST/PUT Protheus; `prepare-update` produz somente draft.
 - Navegador **não** declara: `actor_subject`, `unit_context`, `source_id`, `source_reference`, `review_id`, `created_at`, `status`, `revision`, snapshots externos → 422 `invalid_request`.
 
@@ -74,6 +74,10 @@ actionables: `IN_REVIEW` e `DECIDED` permanece legível; decisões em review
 | sem capability / outro ator | 403 | `forbidden` |
 | supplier/review/proposal inexistente | 404 | `not_found` |
 | provider externo ausente | 503 | `ENRICHMENT_SOURCE_UNAVAILABLE` |
+| CNPJ inexistente no provider | 404 | `ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND` |
+| CNPJ não numérico / rejeitado | 422 | `ENRICHMENT_REGISTRY_INVALID_TAX_ID` |
+| cap de consultas (ator/CNPJ/429 provider) | 429 | `ENRICHMENT_RATE_LIMITED` (+`Retry-After`) |
+| resposta inválida/divergente do provider | 502 | `ENRICHMENT_REGISTRY_INVALID_RESPONSE` |
 | revisão expirada | 410 | `ENRICHMENT_REVIEW_EXPIRED` |
 | baseline divergente | 409 | `ENRICHMENT_STALE_BASELINE` |
 | revisão cancelada | 409 | `ENRICHMENT_REVIEW_CANCELLED` |

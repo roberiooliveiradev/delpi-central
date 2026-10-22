@@ -84,3 +84,21 @@ class UnavailableCompanyRegistryProvider:
         raise EnrichmentSourceUnavailableError(
             "no trusted company-registry source is configured"
         )
+
+
+def company_registry_provider() -> Any:
+    """Resolve the configured company-registry adapter.
+
+    ``COMPANY_REGISTRY_PROVIDER=unavailable`` (default) keeps the fail-closed
+    behaviour; ``brasilapi`` wires the S3.1 community provider. Unknown values
+    fall back to the fail-closed adapter.
+    """
+    from app.infrastructure.config.settings import Settings
+
+    if Settings.COMPANY_REGISTRY_PROVIDER == "brasilapi":
+        from app.infrastructure.gateways.brasilapi_registry_provider import (
+            BrasilApiCompanyRegistryProvider,
+        )
+
+        return BrasilApiCompanyRegistryProvider()
+    return UnavailableCompanyRegistryProvider()
