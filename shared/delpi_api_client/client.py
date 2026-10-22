@@ -44,6 +44,7 @@ class DelpiApiClient:
         *,
         params: Mapping[str, str | None | list[str]] | None = None,
         authorization: str | None = None,
+        extra_headers: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         clean_params = {k: v for k, v in (params or {}).items() if v is not None}
         headers: dict[str, str] = {}
@@ -52,6 +53,10 @@ class DelpiApiClient:
             headers["X-Delpi-Caller-App"] = self._caller_app
         if authorization:
             headers["Authorization"] = authorization
+        for key, value in (extra_headers or {}).items():
+            if key.lower() == "authorization" or not value:
+                continue
+            headers[key] = value
 
         resp = None
         last_connect_error: httpx.ConnectError | None = None
@@ -149,9 +154,15 @@ class DelpiApiClient:
         *,
         params: Mapping[str, str | None] | None = None,
         authorization: str | None = None,
+        extra_headers: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
         """GET genérico por path (consumido por tv-dashboard-api / gateways operacionais)."""
-        return self._get(path, params=params, authorization=authorization)
+        return self._get(
+            path,
+            params=params,
+            authorization=authorization,
+            extra_headers=extra_headers,
+        )
 
     @staticmethod
     def parse_envelope(body: Any) -> tuple[Any, dict[str, Any] | None, dict[str, Any] | None]:

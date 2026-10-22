@@ -9,7 +9,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from helpdesk_app.application.services.message_html_sanitizer import (
     extract_bff_attachment_refs,
 )
-from helpdesk_app.domain.errors import HelpdeskError, GlpiValidation
+from helpdesk_app.application import dashboard_reader_gate
+from helpdesk_app.domain.errors import (
+    HelpdeskError,
+    GlpiValidation,
+    InstitutionalReadDenied,
+    InstitutionalReaderUnavailable,
+)
 from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
 from helpdesk_app.interface.http.actor import require_actor
 
@@ -317,7 +323,15 @@ def list_tickets(
             page=page,
             page_size=page_size,
         )
-        listed = _tickets(request).tickets(actor.subject, query)
+        decision = dashboard_reader_gate.classify_ticket_list(request)
+        if decision == "denied":
+            raise InstitutionalReadDenied("Leitura institucional do Helpdesk não autorizada.")
+        if decision == "unavailable":
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        if decision == "ready":
+            listed = _tickets(request).tickets_as_dashboard_reader(query)
+        else:
+            listed = _tickets(request).tickets(actor.subject, query)
     except HelpdeskError as exc:
         return _error(exc, request)
     return {

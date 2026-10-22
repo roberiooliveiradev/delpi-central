@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import re
 from datetime import date, timedelta
 from typing import Any, Mapping
 
 from delpi_api_client import DelpiApiClient
+from delpi_auth.service_contract import build_service_authorization
+from delpi_auth.service_errors import ServiceAuthError
 from delpi_auth.service_token import internal_service_authorization
 
 from tv_app.application.services.comunicado_data_params_service import (
@@ -43,6 +46,9 @@ from tv_app.application.services.tv_date_range_preset_service import (
 
 # dateRangePreset / excludeWeekends nunca vão na query; periodDays só se estiver no schema.
 _VISUAL_ONLY_QUERY_KEYS = frozenset({DATE_RANGE_PRESET_KEY, EXCLUDE_WEEKENDS_KEY})
+_HELPDESK_SUMMARY_OPERATION = "get_helpdesk_dashboard_summary"
+_SERVICE_AUTHORIZATION_HEADER = "X-Delpi-Service-Authorization"
+logger = logging.getLogger("tv.delpi_operational_gateway")
 
 _PATH_PARAM_RE = re.compile(r"\{([^{}]+)\}")
 
@@ -98,6 +104,41 @@ def resolve_route_path(
             )
         )
     return resolved
+
+
+def helpdesk_summary_service_headers(
+    operation_id: str,
+    *,
+    token_provider_factory=None,
+) -> dict[str, str]:
+    """Attach the TV service JWT only to the Helpdesk summary.
+
+    Missing S2S config omits the header. The shared internal token is not a
+    substitute, and other TV routes stay unchanged.
+    """
+    if operation_id != _HELPDESK_SUMMARY_OPERATION:
+        return {}
+    factory = token_provider_factory or _helpdesk_token_provider
+    try:
+        token = str(factory().get_token() or "").strip()
+    except ServiceAuthError:
+        logger.info("tv_helpdesk_summary_s2s_unavailable")
+        return {}
+    if not token:
+        return {}
+    return {_SERVICE_AUTHORIZATION_HEADER: build_service_authorization(token)}
+
+
+_helpdesk_token_provider_cache = None
+
+
+def _helpdesk_token_provider():
+    global _helpdesk_token_provider_cache
+    if _helpdesk_token_provider_cache is None:
+        from delpi_auth.service_token_provider import ClientCredentialsTokenProvider
+
+        _helpdesk_token_provider_cache = ClientCredentialsTokenProvider.from_env()
+    return _helpdesk_token_provider_cache
 
 
 def _build_query_params(
@@ -274,9 +315,11 @@ class DelpiOperationalGateway:
         self,
         client: DelpiApiClient | None = None,
         catalog: TvDataRouteCatalogService | None = None,
+        helpdesk_token_provider_factory=None,
     ) -> None:
         self._client = client or DelpiApiClient(caller_app="tv-dashboard-api")
         self._catalog = catalog or TvDataRouteCatalogService()
+        self._helpdesk_token_provider_factory = helpdesk_token_provider_factory
 
     def _auth(self, authorization: str | None) -> str | None:
         return authorization or internal_service_authorization()
@@ -313,6 +356,10 @@ class DelpiOperationalGateway:
             resolved_path,
             params=query,
             authorization=self._auth(authorization),
+            extra_headers=helpdesk_summary_service_headers(
+                canonical_operation_id,
+                token_provider_factory=self._helpdesk_token_provider_factory,
+            ),
         )
         api_meta = envelope_meta(envelope)
         business_data = unwrap_operational_data(envelope)

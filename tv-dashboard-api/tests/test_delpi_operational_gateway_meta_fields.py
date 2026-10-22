@@ -49,3 +49,32 @@ def test_gateway_preserves_meta_fields_dict_from_api_delpi():
         "value": "Valor",
     }
     assert "branch" not in result["meta"]["fields"]
+    client.get_path.assert_called_once()
+    assert client.get_path.call_args.kwargs["extra_headers"] == {}
+
+
+class _Token:
+    def get_token(self) -> str:
+        return "svc-token"
+
+
+def test_helpdesk_summary_attaches_service_authorization_only_for_that_operation():
+    catalog = MagicMock()
+    catalog.get_route.return_value = {
+        "operationId": "get_helpdesk_dashboard_summary",
+        "path": "/helpdesk/dashboard-summary",
+        "httpMethod": "GET",
+        "metaShape": "scalar",
+        "paramSchema": {},
+    }
+    client = MagicMock()
+    client.get_path.return_value = {"data": {"open": 0}, "meta": {}}
+    gateway = DelpiOperationalGateway(
+        client=client,
+        catalog=catalog,
+        helpdesk_token_provider_factory=lambda: _Token(),
+    )
+    gateway.fetch_by_operation_id("get_helpdesk_dashboard_summary", params={})
+    headers = client.get_path.call_args.kwargs["extra_headers"]
+    assert headers["X-Delpi-Service-Authorization"] == "Bearer svc-token"
+    assert "Authorization" not in headers

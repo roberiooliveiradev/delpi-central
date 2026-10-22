@@ -2256,6 +2256,16 @@ services:
       GLPI_PROFILE_SYNC_ENABLED: ${GLPI_PROFILE_SYNC_ENABLED:-false}
       GLPI_PROFILE_SYNC_APP_TOKEN: ${GLPI_PROFILE_SYNC_APP_TOKEN:-}
       GLPI_PROFILE_SYNC_USER_TOKEN: ${GLPI_PROFILE_SYNC_USER_TOKEN:-}
+      # Institutional Helpdesk summary reader. Off until ops sets the dedicated
+      # GLPI user token. Empty tokens keep the reader fail-closed.
+      GLPI_DASHBOARD_READER_ENABLED: ${GLPI_DASHBOARD_READER_ENABLED:-false}
+      GLPI_DASHBOARD_READER_APP_TOKEN: ${GLPI_DASHBOARD_READER_APP_TOKEN:-}
+      GLPI_DASHBOARD_READER_USER_TOKEN: ${GLPI_DASHBOARD_READER_USER_TOKEN:-}
+      GLPI_DASHBOARD_READER_ENTITY_IDS: ${GLPI_DASHBOARD_READER_ENTITY_IDS:-}
+      GLPI_DASHBOARD_READER_GROUP_IDS: ${GLPI_DASHBOARD_READER_GROUP_IDS:-}
+      GLPI_DASHBOARD_READER_ALLOW_ROOT: ${GLPI_DASHBOARD_READER_ALLOW_ROOT:-false}
+      S2S_AUDIENCE: ${S2S_AUDIENCE:-api-delpi}
+      S2S_ALLOWED_CLIENTS: ${HELPDESK_S2S_ALLOWED_CLIENTS:-tv-dashboard-api}
 
     depends_on:
       keycloak:
@@ -3166,6 +3176,12 @@ services:
       # LMP charts/dashboard ~25–40s; default do client (30s) corta e a Cloudflare mostra 502.
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-90}
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+      # Client-credentials JWT attached only to get_helpdesk_dashboard_summary.
+      # Empty secret omits the header; the shared internal token is not a grant.
+      S2S_TOKEN_URL: ${TV_DASHBOARD_S2S_TOKEN_URL:-${S2S_TOKEN_URL:-}}
+      S2S_CLIENT_ID: ${TV_DASHBOARD_S2S_CLIENT_ID:-tv-dashboard-api}
+      S2S_CLIENT_SECRET: ${TV_DASHBOARD_S2S_CLIENT_SECRET:-}
+      S2S_SCOPE: ${TV_DASHBOARD_S2S_SCOPE:-helpdesk.dashboard.read}
       STRATEGIC_INDICATORS_API_BASE_URL: ${STRATEGIC_INDICATORS_API_BASE_URL:-http://strategic-indicators-api:8000}
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}

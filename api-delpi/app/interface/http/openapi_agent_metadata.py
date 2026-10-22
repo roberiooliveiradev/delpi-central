@@ -1261,7 +1261,10 @@ HELPDESK_DASHBOARD_SUMMARY = agent_route(
         "ticket counted once) and total_created_in_period (distinct tickets whose "
         "created_at falls within the requested window, each counted once). "
         "Without filters, all authorized tickets are counted "
-        "and resolved counts every solved ticket. Use for KPI cards of ticket volume "
+        "and resolved counts every solved ticket. A caller without a personal GLPI "
+        "link receives 409 glpi_link_required. A service caller without the scope "
+        "helpdesk.dashboard.read receives 403 institutional_read_denied. Neither "
+        "failure is returned as zero counts. Use for KPI cards of ticket volume "
         "by status; do not use for ticket detail or lists — those live in the "
         "helpdesk BFF."
     ),

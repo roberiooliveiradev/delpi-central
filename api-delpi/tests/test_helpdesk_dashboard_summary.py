@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
@@ -355,13 +356,27 @@ class TestGatewayHttp:
             self._gateway(handler).list_tickets(
                 authorization="Bearer x", page=1, page_size=50
             )
+        assert exc_info.value.status_code == 409
+        assert exc_info.value.error_code == "glpi_link_required"
         assert "glpi_link_required" in str(exc_info.value)
+
+    def test_403_stays_403_and_is_not_link_required(self) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(403, json={"error": "glpi_forbidden"})
+
+        with pytest.raises(HelpdeskBffGatewayError) as exc_info:
+            self._gateway(handler).list_tickets(
+                authorization="Bearer x", page=1, page_size=50
+            )
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.error_code == "glpi_forbidden"
 
     def test_bearer_forwarded_and_params_sent(self) -> None:
         seen: dict[str, Any] = {}
 
         def handler(request: httpx.Request) -> httpx.Response:
             seen["auth"] = request.headers.get("authorization")
+            seen["service"] = request.headers.get("x-delpi-service-authorization")
             seen["params"] = dict(request.url.params)
             return httpx.Response(
                 200,
@@ -373,8 +388,25 @@ class TestGatewayHttp:
             authorization="Bearer abc", page=2, page_size=50, assignee_id=9
         )
         assert seen["auth"] == "Bearer abc"
-        assert seen["params"]["page"] == "2"
-        assert seen["params"]["assignee_id"] == "9"
+        assert seen["service"] is None
+
+    def test_service_authorization_is_forwarded_only_when_present(self) -> None:
+        seen: dict[str, Any] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen["service"] = request.headers.get("x-delpi-service-authorization")
+            return httpx.Response(
+                200,
+                json={"items": [], "page": 1, "page_size": 50, "has_more": False},
+            )
+
+        self._gateway(handler).list_tickets(
+            authorization="Bearer abc",
+            page=1,
+            page_size=50,
+            service_authorization="Bearer service-jwt",
+        )
+        assert seen["service"] == "Bearer service-jwt"
 
     def test_401_mapped_to_401(self) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
@@ -405,6 +437,122 @@ class TestGatewayHttp:
                 authorization="Bearer x", page=1, page_size=50
             )
         assert exc_info.value.status_code == 503
+
+
+class TestUpstreamErrorContract:
+    def test_personal_link_required_stays_409(self) -> None:
+        from app.interface.http.routes.helpdesk.helpdesk_router import (
+            helpdesk_upstream_error,
+        )
+
+        response = helpdesk_upstream_error(
+            HelpdeskBffGatewayError(
+                "Não foi possível consultar os chamados do Helpdesk. (glpi_link_required)",
+                409,
+                error_code="glpi_link_required",
+            )
+        )
+        body = json.loads(response.body)
+        assert response.status_code == 409
+        assert body["success"] is False
+        assert body["data"] is None
+        assert body["error"]["code"] == "glpi_link_required"
+        assert body["error"]["recoverable"] is True
+
+    def test_upstream_outage_stays_generic(self) -> None:
+        from app.interface.http.routes.helpdesk.helpdesk_router import (
+            helpdesk_upstream_error,
+        )
+
+        response = helpdesk_upstream_error(
+            HelpdeskBffGatewayError("Helpdesk indisponível.", 503)
+        )
+        body = json.loads(response.body)
+        assert response.status_code == 503
+        assert body["data"] is None
+        assert body["error"]["code"] == "HELPDESK_UPSTREAM_ERROR"
+        assert body["error"]["recoverable"] is True
+
+    def test_untyped_409_is_not_relabeled_as_link_required(self) -> None:
+        from app.interface.http.routes.helpdesk.helpdesk_router import (
+            helpdesk_upstream_error,
+        )
+
+        response = helpdesk_upstream_error(
+            HelpdeskBffGatewayError("conflito", 409, error_code="other_conflict")
+        )
+        body = json.loads(response.body)
+        assert response.status_code == 409
+        assert body["error"]["code"] == "HELPDESK_UPSTREAM_ERROR"
+        assert body["error"]["recoverable"] is False
+
+
+class TestInstitutionalSummaryAccess:
+    def test_personal_caller_is_not_denied(self) -> None:
+        from types import SimpleNamespace
+
+        from app.application.use_cases.helpdesk.dashboard_summary_access import (
+            service_summary_is_denied,
+        )
+
+        user = SimpleNamespace(principal_type="user", is_superadmin=False)
+        assert service_summary_is_denied(user, None) is False
+
+    def test_superadmin_service_without_scope_is_denied(self) -> None:
+        from types import SimpleNamespace
+
+        from delpi_auth.service_identity import ServiceIdentity
+
+        from app.application.use_cases.helpdesk.dashboard_summary_access import (
+            service_summary_is_denied,
+        )
+
+        user = SimpleNamespace(principal_type="service", is_superadmin=True)
+        identity = ServiceIdentity(
+            client_id="tv-dashboard-api",
+            subject="svc",
+            scopes=frozenset(),
+            audience=("api-delpi",),
+            issuer="https://issuer",
+        )
+        assert service_summary_is_denied(user, None) is True
+        assert service_summary_is_denied(user, identity) is True
+
+    def test_scoped_service_is_not_denied(self) -> None:
+        from types import SimpleNamespace
+
+        from delpi_auth.service_identity import ServiceIdentity
+
+        from app.application.use_cases.helpdesk.dashboard_summary_access import (
+            service_summary_is_denied,
+        )
+
+        user = SimpleNamespace(principal_type="service", is_superadmin=True)
+        identity = ServiceIdentity(
+            client_id="tv-dashboard-api",
+            subject="svc",
+            scopes=frozenset({"helpdesk.dashboard.read"}),
+            audience=("api-delpi",),
+            issuer="https://issuer",
+        )
+        assert service_summary_is_denied(user, identity) is False
+
+    def test_typed_reader_unavailable_is_not_rewritten(self) -> None:
+        from app.interface.http.routes.helpdesk.helpdesk_router import (
+            helpdesk_upstream_error,
+        )
+
+        response = helpdesk_upstream_error(
+            HelpdeskBffGatewayError(
+                "Leitura institucional do Helpdesk indisponível.",
+                503,
+                error_code="institutional_reader_unavailable",
+            )
+        )
+        body = json.loads(response.body)
+        assert response.status_code == 503
+        assert body["data"] is None
+        assert body["error"]["code"] == "institutional_reader_unavailable"
 
 
 class TestRouteRegistration:

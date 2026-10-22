@@ -111,6 +111,7 @@ class FakeGlpi:
         # simulates an upstream that lies about deletion (read-back trap).
         self.delete_actually_removes = True
         self.calls = 0
+        self.reader_calls = 0
         # When False, upload does not appear on ticket.attachments (Timeline lag).
         self.attach_uploads_to_timeline = True
         self.refresh_error: Exception | None = None
@@ -219,6 +220,16 @@ class FakeGlpi:
             )
         return TicketListPage(
             items=tuple(items),
+            page=query.page,
+            page_size=query.page_size,
+            has_more=False,
+        )
+
+    def list_tickets_as_dashboard_reader(self, query, **kwargs):
+        self.reader_calls += 1
+        self.last_reader_kwargs = kwargs
+        return TicketListPage(
+            items=tuple(self.tickets),
             page=query.page,
             page_size=query.page_size,
             has_more=False,
@@ -746,7 +757,8 @@ def build_client(
             family_name=request.headers.get("x-family-name", ""),
             session_id=request.headers.get("x-sid", ""),
             permissions=permissions,
-            is_superadmin=False,
+            is_superadmin=request.headers.get("x-superadmin", "") == "1",
+            principal_type=request.headers.get("x-principal-type", "user"),
         )
         return await call_next(request)
 

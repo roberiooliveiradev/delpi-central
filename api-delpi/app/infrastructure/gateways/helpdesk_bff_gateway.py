@@ -18,9 +18,15 @@ _TRANSIENT_STATUS = {408, 429, 502, 503, 504}
 
 
 class HelpdeskBffGatewayError(Exception):
-    def __init__(self, message: str, status_code: int) -> None:
+    def __init__(
+        self,
+        message: str,
+        status_code: int,
+        error_code: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.status_code = status_code
+        self.error_code = error_code
 
 
 class HelpdeskBffGateway:
@@ -50,6 +56,7 @@ class HelpdeskBffGateway:
         assignee_id: int | None = None,
         category_id: int | None = None,
         urgency_id: int | None = None,
+        service_authorization: str | None = None,
     ) -> dict[str, Any]:
         params: dict[str, str] = {
             "page": str(page),
@@ -61,12 +68,18 @@ class HelpdeskBffGateway:
             params["category_id"] = str(category_id)
         if urgency_id is not None:
             params["urgency_id"] = str(urgency_id)
-        response = self._get("/tickets", authorization=authorization, params=params)
+        response = self._get(
+            "/tickets",
+            authorization=authorization,
+            params=params,
+            service_authorization=service_authorization,
+        )
         payload = _json_payload(response)
         if response.status_code >= 400 or payload.get("success") is False:
             raise HelpdeskBffGatewayError(
                 _safe_message(payload, "Não foi possível consultar os chamados do Helpdesk."),
                 _mapped_status(response.status_code),
+                error_code=_payload_error_code(payload),
             )
         # Contrato do BFF (helpdesk-api): página crua {items, page, page_size,
         # has_more} — sem o envelope {success,data,meta} da api-delpi.
@@ -84,9 +97,12 @@ class HelpdeskBffGateway:
         *,
         authorization: str,
         params: dict[str, str],
+        service_authorization: str | None = None,
     ) -> httpx.Response:
         url = f"{self._base_url}{path}"
         headers = {"Authorization": authorization, "Accept": "application/json"}
+        if service_authorization:
+            headers["X-Delpi-Service-Authorization"] = service_authorization
         last_exc: Exception | None = None
         for attempt in range(1, _MAX_ATTEMPTS + 1):
             try:
@@ -126,18 +142,24 @@ def _json_payload(response: httpx.Response) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _payload_error_code(payload: dict[str, Any]) -> str | None:
+    error = payload.get("error")
+    if isinstance(error, str) and error.strip():
+        return error.strip()
+    if isinstance(error, dict):
+        code = error.get("code")
+        if isinstance(code, str) and code.strip():
+            return code.strip()
+    return None
+
+
 def _safe_message(payload: dict[str, Any], fallback: str) -> str:
     message = payload.get("message")
     if isinstance(message, str) and message.strip():
         return message.strip()
-    error = payload.get("error")
-    # helpdesk-api retorna {"error": "<code>"} — código como string.
-    if isinstance(error, str) and error.strip():
-        return f"{fallback} ({error.strip()})"
-    if isinstance(error, dict):
-        code = error.get("code")
-        if isinstance(code, str) and code.strip():
-            return f"{fallback} ({code.strip()})"
+    error_code = _payload_error_code(payload)
+    if error_code:
+        return f"{fallback} ({error_code})"
     detail = payload.get("detail")
     if isinstance(detail, str) and detail.strip():
         return detail.strip()
@@ -145,7 +167,9 @@ def _safe_message(payload: dict[str, Any], fallback: str) -> str:
 
 
 def _mapped_status(status_code: int) -> int:
-    if status_code in (400, 401, 403, 404, 422):
+    # 409 stays 409 so a personal GLPI link failure is not rewritten as a
+    # generic upstream outage. It is not a transient status and is not retried.
+    if status_code in (400, 401, 403, 404, 409, 422):
         return status_code
     if status_code in _TRANSIENT_STATUS:
         return status_code

@@ -76,6 +76,7 @@ class HelpdeskTicketsPageReader(Protocol):
         assignee_id: int | None = None,
         category_id: int | None = None,
         urgency_id: int | None = None,
+        service_authorization: str | None = None,
     ) -> dict[str, Any]: ...
 
 
@@ -99,12 +100,14 @@ class GetHelpdeskDashboardSummaryUseCase:
         category_id: int | None,
         urgency_id: int | None,
         scope: str | None,
+        service_authorization: str | None = None,
     ) -> dict[str, Any]:
         tickets, partial = self._collect_all_pages(
             authorization=authorization,
             assignee_id=assignee_id,
             category_id=category_id,
             urgency_id=urgency_id,
+            service_authorization=service_authorization,
         )
 
         now = self._now_provider()
@@ -169,6 +172,7 @@ class GetHelpdeskDashboardSummaryUseCase:
         assignee_id: int | None,
         category_id: int | None,
         urgency_id: int | None,
+        service_authorization: str | None = None,
     ) -> tuple[list[dict[str, Any]], bool]:
         tickets: list[dict[str, Any]] = []
         for page in range(1, _MAX_PAGES + 1):
@@ -179,6 +183,7 @@ class GetHelpdeskDashboardSummaryUseCase:
                 assignee_id=assignee_id,
                 category_id=category_id,
                 urgency_id=urgency_id,
+                service_authorization=service_authorization,
             )
             items = _extract_items(payload)
             tickets.extend(items)
