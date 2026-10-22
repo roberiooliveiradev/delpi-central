@@ -60,6 +60,14 @@ class PostgresProductionRunRepository:
         finally:
             conn.close()
 
+    def now(self, conn: Any) -> datetime:
+        """NOW() do PostgreSQL na transação corrente — referência temporal
+        canônica idêntica a todo NOW() persistido pelos writes da mesma tx."""
+        with conn.cursor() as cur:
+            cur.execute("SELECT NOW() AS now")
+            row = cur.fetchone()
+        return row["now"] if isinstance(row, dict) else row[0]
+
     def lock_run(self, run_id: str, *, conn: Any) -> dict[str, Any] | None:
         """SELECT FOR UPDATE: serializa transições concorrentes do mesmo run."""
         with conn.cursor() as cur:

@@ -89,6 +89,13 @@ golpe, sem contagem dupla. Divergência de counterEpoch com o segmento
 aberto (epoch_conflict) ou device trocado (device_mismatch) **bloqueia**
 a troca sem fabricar peças — não há caminho degradado como no Stop manual.
 
+Amostra **stale** (count_boundary_stale): se sob o lock do run o total
+persistido ou o pieces do segmento aberto já superarem o que a amostra
+deriva (ex.: tick do poller mais novo entre a leitura e o lock), a troca
+é bloqueada — reconfirmar re-ancora na fronteira corrente. Sem essa
+guarda a âncora do novo run ficaria atrás do progresso já atribuído ao
+run anterior e recontaria peças.
+
 ## 5. Atomicidade (RQ-04)
 
 HTTP externo (Pulse + tempo padrão) acontece antes da transação. Dentro de
@@ -103,8 +110,14 @@ uma única transaction():
     → record_run_started (mesmo instante at) → auditoria run_handoff +
       run_started → insert do registro idempotente → COMMIT
 
-Qualquer exceção faz rollback integral de todos os fatos. O mesmo instante
-at fecha e abre os estados MES na fronteira temporal única.
+Qualquer exceção faz rollback integral de todos os fatos. A referência
+temporal única e o NOW() do PostgreSQL da transação (repo.now(conn)) —
+idêntico a todo NOW() persistido em run, segmentos e estado; estados MES,
+count event e auditoria compartilham exatamente esse instante.
+
+Metas, fator de conversao e workstation_type do novo run sao congelados a
+partir do alvo revalidado sob o lock da fila (locked_target) — uma
+republicacao entre previa e confirmacao nao congela dados desatualizados.
 
 ## 6. Idempotência e concorrência (RQ-05)
 

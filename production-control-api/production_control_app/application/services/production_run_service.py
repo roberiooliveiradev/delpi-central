@@ -687,6 +687,10 @@ class ProductionRunService:
         "run_not_active": (
             "A produção já foi encerrada. A troca não se aplica."
         ),
+        "count_boundary_stale": (
+            "O contador já registrou produção mais recente que a "
+            "amostra da troca. Confirme novamente para reancorar."
+        ),
         "request_conflict": (
             "O identificador desta confirmação já foi utilizado com "
             "outro pedido de troca."
@@ -959,26 +963,12 @@ class ProductionRunService:
         boundary_counter = int(device.get("counter") or 0)
         boundary_epoch = int(device.get("counterEpoch") or 0)
 
-        planned = None
-        target_pieces = None
-        raw_pending = target.get("operation_pending_qty")
-        if raw_pending is None:
-            raw_pending = target.get("pending_qty")
-        try:
-            planned = float(raw_pending) if raw_pending is not None else None
-        except (TypeError, ValueError):
-            planned = None
-        target_pieces = target_pieces_from_quantity(
-            planned, target.get("pieces_conversion_factor")
-        )
         standard = self._resolve_standard_time(
             branch=branch,
             work_center=work_center,
             production_order=str(target.get("production_order") or "").strip(),
             operation_code=str(target.get("operation_code") or "").strip(),
         )
-        workstation_type = resolve_workstation_type_snapshot(target)
-
         response: dict[str, Any] | None = None
         try:
             with self._repo.transaction() as conn:
@@ -1035,8 +1025,32 @@ class ProductionRunService:
                         "queue_changed",
                         self._HANDOFF_BLOCK_MESSAGES["queue_changed"],
                     )
+                # Metas/conversão congeladas a partir do alvo revalidado
+                # sob o lock — republicação entre prévia e confirmação não
+                # congela saldo/fator desatualizado no novo run.
+                locked_pending = locked_target.get("operation_pending_qty")
+                if locked_pending is None:
+                    locked_pending = locked_target.get("pending_qty")
+                try:
+                    planned = (
+                        float(locked_pending)
+                        if locked_pending is not None
+                        else None
+                    )
+                except (TypeError, ValueError):
+                    planned = None
+                target_pieces = target_pieces_from_quantity(
+                    planned, locked_target.get("pieces_conversion_factor")
+                )
+                workstation_type = resolve_workstation_type_snapshot(
+                    locked_target
+                )
 
-                at = self._clock()
+                # Referência temporal única: NOW() do PostgreSQL é
+                # constante dentro da transação — run/segmentos encerrados,
+                # novo run, estados MES, count event e auditoria compartilham
+                # exatamente este instante canônico.
+                at = self._repo.now(conn)
 
                 # Fronteira de contagem única: a mesma amostra Pulse
                 # (boundary_counter/boundary_epoch) consolida o run anterior
@@ -1070,6 +1084,13 @@ class ProductionRunService:
                                 self._HANDOFF_BLOCK_MESSAGES["epoch_conflict"],
                             )
                         open_pieces = counted.pieces
+                        if open_pieces < int(segment.get("pieces") or 0):
+                            raise ProductionRunHandoffConflict(
+                                "count_boundary_stale",
+                                self._HANDOFF_BLOCK_MESSAGES[
+                                    "count_boundary_stale"
+                                ],
+                            )
                         closed_pieces = [
                             int(seg.get("pieces") or 0)
                             for seg in self._repo.list_segments(
@@ -1080,14 +1101,24 @@ class ProductionRunService:
                         observed_total = sum_segment_pieces(
                             closed_pieces, open_pieces
                         )
+                        if observed_total < pieces_total:
+                            raise ProductionRunHandoffConflict(
+                                "count_boundary_stale",
+                                self._HANDOFF_BLOCK_MESSAGES[
+                                    "count_boundary_stale"
+                                ],
+                            )
+                        # Amostra da troca é sempre a fronteira do novo
+                        # run: consolidar para o observado é obrigatório —
+                        # preservar um total persistido mais antigo sob uma
+                        # âncora mais velha recontaria peças no run novo.
+                        effective = observed_total
+                        change = build_count_change(
+                            previous_total=pieces_total,
+                            observed_total=observed_total,
+                        )
                     else:
-                        observed_total = pieces_total
-                    effective, change = self._resolve_count_observation(
-                        run=locked,
-                        baseline_total=int(run.get("pieces_total") or 0),
-                        locked_total=pieces_total,
-                        observed_total=observed_total,
-                    )
+                        effective, change = pieces_total, None
                 else:
                     effective, change = pieces_total, None
 
