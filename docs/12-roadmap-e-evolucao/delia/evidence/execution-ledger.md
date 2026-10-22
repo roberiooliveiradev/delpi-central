@@ -17310,3 +17310,23 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.375 — F02-C: ConversationCodeBlock implementado e verificado (2026-10-22)
+
+**2026-10-22 — componente compartilhado inerte + integração ao renderer governado:** `DELIA-UX-F02C-CONVERSATION-CODE-BLOCK-SHARED-IMPLEMENTATION-01`. Base reancorada `5ba8c24275`. **Implementação:** `ConversationCodeBlock` novo em `plugins/plugin-ui/src/components/conversation/` — `role="group"` + bar ~30px (`FileCode2`+label lang) + `pre` rolável (`role="region"`, `tabIndex=0`, `white-space:pre`, `tab-size:2`, max-height 320/240px); cópia honesta pós-resolve com estado de erro + `aria-live` único e descarte de respostas fora de ordem (`opRef`), sem `execCommand`; allowlist de linguagens + sanitização ≤20 chars; `labels` override sem subsistema i18n. `MarkdownToken` ganhou `lang?: string` (aditivo); `ConversationMarkdown` case `"code"` delega ao componente — mesmo gate `enabled`, sem parser/renderer paralelo. CSS próprio `delpi-ui-conversation-code-block` importado por `styles.css` com guarda de especificidade sobre `code{white-space}` do renderer. Export público + `REQUIRED_HOST_EXPORTS`. Fixture QA `markdown_code` adicionado em `demoMode.ts` (mesmo gate demo — produção nunca admite). **Verificação:** vitest plugin-ui 2315/2315 (+29), delia 322/322; tsc ambos 0; build + `verify-host-exports` OK (componente no chunk federado); Playwright 46/46 sobre fixture isolada (6 blocos, linguagens, HTML inerte, scroll interno com linha 300 chars sem overflow de página, cópia real com permissão + rejeição + indisponível, teclado, mobile 320–420, tema escuro, reduced-motion, dock-width, zero POST backend). **Gates:** `MARKDOWN_B2_RUNTIME=OFF` inalterado — emissor `markdown_safe` inexistente no delia-api; CP-333 não aceito; `BACKEND_CHANGED=NO`. Ajuste de teste necessário: seletor `svg` do teste de inércia refinado para `svg:not(.lucide)` (ícones do chrome do componente).
+
+```text
+F02C_IMPLEMENTATION=EXECUTED
+COMPONENT=ConversationCodeBlock (plugin-ui, público)
+MARKDOWN_DELEGATION=YES
+VITEST=PASS(2315+322)
+BROWSER_QA=PASS(46/46 fixture)
+CB_V01_V15=PASS
+MARKDOWN_B2_RUNTIME=OFF
+CP_333=NOT_ACCEPTED
+BACKEND_CHANGED=NO
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=MARKDOWN_B2_PRODUCER_TASK(independente: emissor v2 + contrato + QA + CP-333)
+```

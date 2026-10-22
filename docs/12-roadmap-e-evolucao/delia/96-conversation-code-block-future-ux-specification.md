@@ -278,3 +278,28 @@ PHASE_PROGRESSION=NONE
 ```
 
 Menor próximo slice: `ConversationCodeBlock` + extensão `lang?: string` em `MarkdownToken` + delegação no case `code` do `ConversationMarkdown` + CSS `delpi-ui-conversation-code-block` + suite unit/integration — tudo inerte atrás de `enabled`, sem ativação e sem emissor backend.
+
+
+## 10. Implementação F02-C — estado factual (2026-10-22)
+
+Componente implementado e verificado conforme §9. Arquivos: `ConversationCodeBlock.tsx` + `.test.tsx` (`components/conversation/`), `conversation-code-block.css` (`styles/`), `MarkdownToken.lang?: string` aditivo, delegação `case "code"` no `ConversationMarkdown`, export público + `REQUIRED_HOST_EXPORTS`, fixture `markdown_code` em `demoMode.ts` (QA-gated).
+
+```text
+COMPONENT=ConversationCodeBlock (plugins/plugin-ui, export público via index)
+CONTRACT={code, language?, copyEnabled?, className?, labels?} — render-only, inerte
+MARKDOWN_TOKEN_LANG=ADDITIVE (lang?: string)
+MARKDOWN_DELEGATION=YES (case "code" → ConversationCodeBlock)
+COPY=navigator.clipboard.writeText(code) — sucesso pós-resolve, erro visível+aria-live, sem execCommand
+VITEST=plugin-ui 2315/2315, delia 322/322
+TYPECHECK=PASS (ambos)
+BUILD+FEDERATION=PASS (verify-host-exports OK)
+BROWSER_QA=46/46 (fixture ?delia-demo=markdown_code, dev server; ver evidência §3)
+CB_V01_V15=ALL PASS (métodos §9.11 executados — evidência code-block-f02c)
+MARKDOWN_B2_RUNTIME=OFF (emissor v2 continua inexistente — gate preservado)
+CP_333=NOT_ACCEPTED
+BACKEND_CHANGED=NO
+SYNTAX_HIGHLIGHTER=NONE (spec §9.6 mantida)
+EVIDENCE=docs/12-roadmap-e-evolucao/delia/evidence/code-block-f02c/
+```
+
+O componente está pronto para apresentar código assim que um emissor `presentation.v2` legítimo ativar Markdown B2 — task independente (produtor + contrato + QA + CP-333).

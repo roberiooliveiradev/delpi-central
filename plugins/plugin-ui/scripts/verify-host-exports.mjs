@@ -92,6 +92,7 @@ const REQUIRED_HOST_EXPORTS = [
   "useFloatingNotices",
   "ConversationMarkdown",
   "conversationMarkdownToPlainText",
+  "ConversationCodeBlock",
   "ConversationAssistantActions",
   "ConversationScrollNavigator",
   "ConversationQueue",
