@@ -152,3 +152,10 @@ Para cada nova observacao, acrescentar ID `Vxx` ou `RC-xx` sem substituir nota a
 - Atualizar o status da interpretacao: `GREEN_LEGEND=PROVEN_SCREENSHOT_AND_PO_CONFIRMED`; `GREEN_MEANS_SEND_REQUIRED_IN_COLUMN_SCOPE=PO_CONFIRMED`; `ACTUAL_DELIVERY=TEST_NOT_RUN`; `REVIEW_ACCEPTANCE=TEST_NOT_RUN`.
 
 Este adendo prevalece sobre textos anteriores desta matriz que descrevem genericamente as marcacoes verdes como nao interpretadas. Dados originais e operacionais continuam restritos fora do GitHub.
+
+
+### Correcao organizacional vigente (confirmacao do PO, 22/10/2026)
+
+A coluna do checklist que referencia antiga empresa/segmento industrial **nao representa uma entidade operacional vigente**. Para este levantamento e para o futuro catalogo de entregaveis ativos, considerar **somente matriz e filial da empresa de componentes**, conforme escopo confirmado pelo PO. A marcacao verde "Enviar" em coluna legada nao gera obrigacao ativa P2, pacote P5 ou configuracao P6. Preservar o documento privado como evidencia historica, sem publicar identificadores e sem apagar historico de competencias anteriores. Antes da implementacao, validar os identificadores organizacionais atuais em cadastros autorizados do Core/TOTVS.
+
+`ACTIVE_ORG_SCOPE=PO_CONFIRMED`; `LEGACY_INDUSTRIAL_COLUMN=EXCLUDED_FROM_CURRENT_REQUIREMENTS`; `ORG_REGISTRY_PARITY=TO_INVENTORY`. Este esclarecimento prevalece sobre citacoes anteriores a unidades industriais no checklist.
