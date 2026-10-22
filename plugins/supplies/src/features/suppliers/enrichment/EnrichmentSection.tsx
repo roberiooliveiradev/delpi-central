@@ -12,12 +12,18 @@ import {
 import { SP_HELP } from "../../../content/helpTooltips";
 import {
   createEnrichmentReview,
-  decideEnrichmentBulk,
-  decideEnrichmentField,
   getEnrichmentReview,
   listEnrichmentReviews,
-  prepareEnrichmentUpdate,
 } from "./api";
+import {
+  captureBulkDecision,
+  capturePrepareOperation,
+  captureSingleDecision,
+  executeDecisionOperation,
+  executePrepareOperation,
+  isRecoverableForRetry,
+  type RetryableOperation,
+} from "./decisionOperations";
 import { EnrichmentComparisonTable } from "./EnrichmentComparisonTable";
 import { EnrichmentHistoryTable } from "./EnrichmentHistoryTable";
 import {
@@ -43,11 +49,6 @@ type Notice = { variant: "default" | "error" | "success"; text: string };
 
 type ActiveReview = { review: EnrichmentReview; proposals: EnrichmentProposal[] };
 
-type FailedAction = {
-  key: string;
-  run: (idempotencyKey: string) => Promise<void>;
-};
-
 type EnrichmentSectionProps = {
   code: string;
   store: string;
@@ -71,7 +72,7 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
     null,
   );
   const [draft, setDraft] = useState<EnrichmentPrepareUpdateResult | null>(null);
-  const [failedAction, setFailedAction] = useState<FailedAction | null>(null);
+  const [failedOp, setFailedOp] = useState<RetryableOperation | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -113,6 +114,9 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
           setActive(payload);
           setDraft(null);
           setSelected(new Set());
+          // Operação pendente pertence a outra revisão: descarte explícito —
+          // nunca aplicar silenciosamente uma operação antiga fora de contexto.
+          setFailedOp(null);
         })
         .catch((err: unknown) => {
           setNotice({
@@ -130,6 +134,9 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
 
   useEffect(() => {
     const controller = new AbortController();
+    // Troca de fornecedor: a operação pendente pertence a outro contexto —
+    // descarte explícito, nunca retry silencioso de operação antiga.
+    setFailedOp(null);
     loadHistory(1, controller.signal).then((items) => {
       const candidate = pickActiveReview(items);
       if (candidate) openReview(candidate.review_id, controller.signal);
@@ -137,8 +144,8 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
     return () => controller.abort();
   }, [loadHistory, openReview]);
 
-  /** Falha recuperável: guarda ação + chave idempotente para retry igual. */
-  const fail = (err: unknown, action?: FailedAction) => {
+  /** Falha recuperável: guarda a operação capturada para retry idêntico. */
+  const fail = (err: unknown, op?: RetryableOperation) => {
     if (err instanceof ApiRequestError) {
       setNotice({
         variant: "error",
@@ -154,27 +161,40 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
     } else {
       setNotice({ variant: "error", text: C.errorGeneric });
     }
-    if (
-      action &&
-      (!(err instanceof ApiRequestError) ||
-        err.status >= 500 ||
-        err.status === 429)
-    ) {
-      setFailedAction(action);
-    } else {
-      setFailedAction(null);
-    }
+    setFailedOp(op && isRecoverableForRetry(err) ? op : null);
   };
 
   const applyPayload = (payload: ActiveReview & { idempotent_replay?: boolean }) => {
     setActive({ review: payload.review, proposals: payload.proposals });
     setSelected(new Set());
-    setFailedAction(null);
+    setFailedOp(null);
     if (payload.idempotent_replay) {
       setNotice({ variant: "default", text: C.replayNotice });
     } else {
       setNotice(null);
     }
+  };
+
+  /** Executa a operação capturada — retry é literalmente a mesma requisição. */
+  const runOperation = (op: RetryableOperation): Promise<void> => {
+    setBusy(true);
+    if (op.kind === "prepare") {
+      return executePrepareOperation(op)
+        .then((result) => {
+          setDraft(result);
+          setFailedOp(null);
+          setNotice({
+            variant: "success",
+            text: result.draft_fields.length ? C.draftReady : C.draftEmpty,
+          });
+        })
+        .catch((err: unknown) => fail(err, op))
+        .finally(() => setBusy(false));
+    }
+    return executeDecisionOperation(op)
+      .then(applyPayload)
+      .catch((err: unknown) => fail(err, op))
+      .finally(() => setBusy(false));
   };
 
   const runConsult = () => {
@@ -184,76 +204,54 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
       .then((payload) => {
         setActive(payload);
         setDraft(null);
+        setFailedOp(null);
         void loadHistory(1);
       })
       .catch((err: unknown) => fail(err))
       .finally(() => setCreating(false));
   };
 
-  const runDecision = (
-    fieldKey: string,
-    decision: "ACCEPT" | "REJECT",
-    key: string,
-  ) => {
-    const review = active?.review;
-    if (!review) return Promise.resolve();
-    const action: FailedAction = {
-      key,
-      run: (k) => runDecision(fieldKey, decision, k),
-    };
-    setBusy(true);
-    return decideEnrichmentField(code, store, review.review_id, {
-      field_key: fieldKey,
-      decision,
-      expected_revision: review.revision,
-      idempotency_key: key,
-    })
-      .then(applyPayload)
-      .catch((err: unknown) => fail(err, action))
-      .finally(() => setBusy(false));
-  };
-
+  /** Nova intenção: captura estado atual e gera chave idempotente nova. */
   const onDecide = (fieldKey: string, decision: "ACCEPT" | "REJECT") => {
-    void runDecision(fieldKey, decision, newIdempotencyKey());
+    const review = active?.review;
+    if (!review) return;
+    void runOperation(
+      captureSingleDecision(
+        code,
+        store,
+        review.review_id,
+        fieldKey,
+        decision,
+        review.revision,
+        newIdempotencyKey(),
+      ),
+    );
   };
 
-  const runBulk = (decision: "ACCEPT" | "REJECT", key: string) => {
+  const onConfirmBulk = (decision: "ACCEPT" | "REJECT") => {
     const review = active?.review;
     const fieldKeys = [...selected];
-    if (!review || !fieldKeys.length) return Promise.resolve();
-    const action: FailedAction = {
-      key,
-      run: (k) => runBulk(decision, k),
-    };
-    setBusy(true);
+    if (!review || !fieldKeys.length) return;
     setBulkConfirm(null);
-    return decideEnrichmentBulk(code, store, review.review_id, {
-      field_keys: fieldKeys,
-      decision,
-      expected_revision: review.revision,
-      idempotency_key: key,
-    })
-      .then(applyPayload)
-      .catch((err: unknown) => fail(err, action))
-      .finally(() => setBusy(false));
+    void runOperation(
+      captureBulkDecision(
+        code,
+        store,
+        review.review_id,
+        fieldKeys,
+        decision,
+        review.revision,
+        newIdempotencyKey(),
+      ),
+    );
   };
 
-  const runPrepare = (key: string) => {
+  const onPrepare = () => {
     const review = active?.review;
-    if (!review) return Promise.resolve();
-    const action: FailedAction = { key, run: runPrepare };
-    setBusy(true);
-    return prepareEnrichmentUpdate(code, store, review.review_id, review.revision)
-      .then((result) => {
-        setDraft(result);
-        setFailedAction(null);
-        setNotice({
-          variant: "success",
-          text: result.draft_fields.length ? C.draftReady : C.draftEmpty,
-        });
-      })
-      .catch((err: unknown) => fail(err, action))
-      .finally(() => setBusy(false));
+    if (!review) return;
+    void runOperation(
+      capturePrepareOperation(code, store, review.review_id, review.revision),
+    );
   };
 
   const toggleSelected = (fieldKey: string) => {
@@ -282,12 +280,12 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
         {notice ? (
           <SuppliesStateBanner variant={notice.variant}>
             {notice.text}{" "}
-            {failedAction ? (
+            {failedOp ? (
               <SuppliesActionButton
                 type="button"
                 variant="ghost"
                 disabled={busy || creating}
-                onClick={() => void failedAction.run(failedAction.key)}
+                onClick={() => void runOperation(failedOp)}
               >
                 {C.retryAction}
               </SuppliesActionButton>
@@ -372,7 +370,7 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
                   variant="ghost"
                   disabled={busy}
                   title={C.prepareHint}
-                  onClick={() => void runPrepare(newIdempotencyKey())}
+                  onClick={onPrepare}
                 >
                   {C.prepareAction}
                 </SuppliesActionButton>
@@ -445,7 +443,7 @@ export function EnrichmentSection({ code, store }: EnrichmentSectionProps) {
               variant="primary"
               disabled={busy}
               onClick={() => {
-                if (bulkConfirm) void runBulk(bulkConfirm, newIdempotencyKey());
+                if (bulkConfirm) onConfirmBulk(bulkConfirm);
               }}
             >
               {C.bulkConfirmAction}

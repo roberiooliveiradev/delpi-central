@@ -67,6 +67,7 @@ export type EnrichmentDecisionRequest = {
   decision: "ACCEPT" | "REJECT";
   expected_revision: number;
   idempotency_key: string;
+  reason_code?: string;
 };
 
 export function decideEnrichmentField(
@@ -90,6 +91,7 @@ export type EnrichmentBulkDecisionRequest = {
   decision: "ACCEPT" | "REJECT";
   expected_revision: number;
   idempotency_key: string;
+  reason_code?: string;
 };
 
 export function decideEnrichmentBulk(

@@ -90,4 +90,39 @@ describe("Enrichment feature (X4.S1) — boundaries", () => {
     );
     expect(detail).toMatch(/\{!editing \?\s*\(\s*<EnrichmentSection/);
   });
+
+  it("RETRY = SAME OPERATION — retry executa a operação capturada", () => {
+    const section = read("EnrichmentSection.tsx");
+    // retry chama runOperation(failedOp) — nunca reconstrói de estado mutável
+    expect(section).toContain("runOperation(failedOp)");
+    // captura ocorre na intenção, com chave nova por operação
+    expect(section).toMatch(/captureSingleDecision\(/);
+    expect(section).toMatch(/captureBulkDecision\(/);
+    // newIdempotencyKey só pode aparecer nos pontos de captura (nova intenção)
+    const keySites = section.match(/newIdempotencyKey\(\)/g) ?? [];
+    expect(keySites).toHaveLength(2); // single + bulk; retry nunca gera chave
+  });
+
+  it("operação pendente é descartada fora do contexto original", () => {
+    const section = read("EnrichmentSection.tsx");
+    // abrir outra revisão, criar consulta nova ou trocar fornecedor limpa failedOp
+    expect(section.match(/setFailedOp\(null\)/g)?.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("conflitos 409 não disparam retry automático", () => {
+    const ops = read("decisionOperations.ts");
+    expect(ops).toContain("isRecoverableForRetry");
+    expect(ops).toMatch(/status >= 500 \|\| err\.status === 429/);
+  });
+
+  it("prepare-update não carrega idempotência fictícia", () => {
+    const ops = read("decisionOperations.ts");
+    // variante "prepare" da operação carrega apenas expectedRevision
+    expect(ops).toMatch(
+      /kind: "prepare";\s*\n\s*code: string;\s*\n\s*store: string;\s*\n\s*reviewId: string;\s*\n\s*expectedRevision: number;/,
+    );
+    const api = read("api.ts");
+    // corpo real do prepare é apenas expected_revision
+    expect(api).toMatch(/prepare-update[\s\S]*expected_revision: expectedRevision/);
+  });
 });
