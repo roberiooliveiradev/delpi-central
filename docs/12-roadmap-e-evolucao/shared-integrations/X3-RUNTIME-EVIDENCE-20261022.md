@@ -41,3 +41,81 @@ checkout `/home/operador/projetos/delpi-central`, HEAD implantado `74289c8495`.
 - `GATE-I3` — DPO/ROPA pendente: ativar `EXTERNAL_DATA_CNPJ_PROVIDER=brasilapi` exige autorização institucional explícita.
 - Smoke usuário real E2E pendente de credencial autorizada (X4 ou execução assistida).
 - `DELPI_REDIS_PASSWORD`/`S2S_CLIENT_SECRET` presentes em `infra/.env` (server-side, não versionado).
+
+---
+
+## Adendo X3.FINAL (2026-10-22)
+
+Revalidação sob autorização PO condicional (`X3-FINAL-PO-AUTHORIZATION-20261022.md`, commit `2672e54d74`).
+
+### Re-inventário produtivo
+
+- Production HEAD: `a6574eb3b1` (após fix do healthcheck; base do inventário: `a34fbdf62e`).
+- `delpi-external-data-api`: healthy; env efetivo `EXTERNAL_DATA_CNPJ_PROVIDER=unavailable`, `EXTERNAL_DATA_RATE_LIMIT_STRATEGY=distributed`.
+- `delpi-supplies-api`: healthy; `COMPANY_REGISTRY_RATE_LIMIT_STRATEGY=distributed`.
+- `delpi-core-api`, `infra-keycloak-1`, `delpi-keycloak-db`: íntegros.
+- Migrations `supplies.schema_migrations`: V001, V002, V003 — íntegras.
+
+### Defeito corrigido: healthcheck `delpi-redis`
+
+- Sintoma: container `unhealthy` com `AUTH failed: WRONGPASS` no healthcheck, embora o Redis respondesse PONG com credencial correta.
+- Causa raiz: `DELPI_REDIS_PASSWORD` usada na interpolação compose do `command`, mas ausente do env do processo — o `CMD-SHELL` do healthcheck autenticava com senha vazia.
+- Correção: `environment: DELPI_REDIS_PASSWORD` explícito no serviço (`infra/docker-compose.yml`), commit `a6574eb3b1`.
+- Pós-condição verificada: `delpi-redis` `Up (healthy)`, `PONG` autenticado, downstream `supplies-api`/`external-data-api` healthy.
+
+### Resultado dos gates X3.FINAL
+
+| Gate | Estado | Evidência |
+|---|---|---|
+| GATE-F1 Privacy | **INCONCLUSIVE** | ROPA canônico (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`) existe e identifica o DPO (Michael Marotto), mas não registra operação de consulta cadastral externa de fornecedores; nenhum documento dispensa formalmente endosso. Proposta de registro elaborada para revisão do DPO em `X3-FINAL-ROPA-PROPOSAL-EXTERNAL-REGISTRY-20261022.md`. Provider permanece `unavailable`. |
+| GATE-F2 Test identity | **INCONCLUSIVE** | Nenhum usuário/fornecedor de teste autorizado documentado no repositório. |
+| GATE-F3 Infra | **PASS** | Revalidado: Redis healthy (após fix), S2S/mapper preservados, config efetiva distributed, migrations íntegras. |
+| GATE-F4 Tests | **STALE_EVIDENCE** | Sem diff de código de aplicação no X3.FINAL; suítes verdes de X1/X2 mantidas (fix foi compose/healthcheck). |
+| GATE-F5 Rollback | **PASS** | Feature flag `EXTERNAL_DATA_CNPJ_PROVIDER=unavailable` permanece a contenção; nenhuma migration nova; imagens anteriores no host. |
+| Provider BrasilAPI | **NÃO ATIVADO** | STOP obrigatório — F1 não comprovado. |
+| E2E | **TEST_NOT_RUN** | Bloqueado por F1+F2. |
+| No-write | **PASS** | Zero escrita Protheus; `prepare-update` draft-only intacto. |
+
+### Conclusão X3.FINAL
+
+`INCONCLUSIVE` — bloqueio institucional (F1) e de identidade de teste (F2), não técnico.
+Próximas ações objetivas: (1) DPO endossa/incorpora proposta ROPA ou emite parecer de dispensa; (2) PO indica usuário e fornecedor de teste autorizados; (3) então reexecutar X3.FINAL a partir da ativação controlada.
+
+---
+
+## Adendo X3.FINAL (2026-10-22)
+
+Revalidação sob autorização PO condicional (, commit ).
+
+### Re-inventário produtivo
+
+- Production HEAD:  (após fix do healthcheck; base do inventário: ).
+- : healthy; env efetivo , .
+- : healthy; .
+- , , : íntegros.
+- Migrations : V001, V002, V003 — íntegras.
+
+### Defeito corrigido: healthcheck 
+
+- Sintoma: container  com  no healthcheck, embora o Redis respondesse PONG com credencial correta.
+- Causa raiz:  usada na interpolação compose do , mas **ausente do env do processo** — o  do healthcheck autenticava com senha vazia.
+- Correção:  explícito no serviço (), commit .
+- Pós-condição verificada:  ,  autenticado, downstream / healthy.
+
+### Resultado dos gates X3.FINAL
+
+| Gate | Estado | Evidência |
+|---|---|---|
+| GATE-F1 Privacy | **INCONCLUSIVE** | ROPA canônico () existe e identifica o DPO (Michael Marotto), mas **não registra operação de consulta cadastral externa de fornecedores**; nenhum documento dispensa formalmente endosso. Proposta de registro elaborada para revisão do DPO em . Provider permanece . |
+| GATE-F2 Test identity | **INCONCLUSIVE** | Nenhum usuário/fornecedor de teste autorizado documentado no repositório. |
+| GATE-F3 Infra | **PASS** | Revalidado: Redis healthy (após fix), S2S/mapper preservados, config efetiva distributed, migrations íntegras. |
+| GATE-F4 Tests | **STALE_EVIDENCE aceita** | Sem diff de código de aplicação no X3.FINAL; suítes verdes de X1/X2 mantidas (fix foi compose/healthcheck). |
+| GATE-F5 Rollback | **PASS** | Feature flag  permanece a contenção; nenhuma migration nova; imagens anteriores no host. |
+| Provider BrasilAPI | **NÃO ATIVADO** | STOP obrigatório — F1 não comprovado. |
+| E2E | **TEST_NOT_RUN** | Bloqueado por F1+F2. |
+| No-write | **PASS** | Zero escrita Protheus;  draft-only intacto. |
+
+### Conclusão X3.FINAL
+
+ — bloqueio institucional (F1) e de identidade de teste (F2), não técnico.
+Próximas ações objetivas: (1) DPO endossa/incorpora proposta ROPA ou emite parecer de dispensa; (2) PO indica usuário e fornecedor de teste autorizados; (3) então reexecutar X3.FINAL a partir do §10 (ativação controlada).
