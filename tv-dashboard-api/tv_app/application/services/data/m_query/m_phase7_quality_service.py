@@ -119,6 +119,7 @@ def preview_cache_key(
     preview_options: Mapping[str, Any] | None,
     user: Any | None,
     authorization: str | None,
+    institutional_operation_ids: frozenset[str] = frozenset(),
 ) -> tuple[str, str]:
     transform = block.get("dataTransform")
     script = transform.get("script") if isinstance(transform, Mapping) else ""
@@ -172,6 +173,7 @@ def preview_cache_key(
             "targetStepName": target_step_name,
             "culture": m_query_setting("defaultCulture", "pt-BR"),
             "principalFingerprint": principal,
+            "institutionalOperations": sorted(institutional_operation_ids),
             "evaluationDate": calendar_today().isoformat() if expression_relative else "",
             "branchAndParams": {
                 "playlistDefaults": playlist_defaults or {},

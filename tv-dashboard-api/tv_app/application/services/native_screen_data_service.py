@@ -60,6 +60,7 @@ class NativeScreenDataService:
         playlist_defaults: dict[str, Any] | None = None,
         filter_overrides: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         cfg = config or {}
         # custom_message + overrides: sem cache (sessão do kiosk).
@@ -90,6 +91,7 @@ class NativeScreenDataService:
                 playlist_defaults=playlist_defaults,
                 filter_overrides=filter_overrides,
                 max_age_seconds=max_age_seconds,
+                institutional_operation_ids=institutional_operation_ids,
             )
             return apply_native_screen_display(result, screen_key)
 
@@ -112,6 +114,7 @@ class NativeScreenDataService:
         playlist_defaults: dict[str, Any] | None = None,
         filter_overrides: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         try:
             if screen_key == "production_oee_overview":
@@ -163,6 +166,7 @@ class NativeScreenDataService:
                         user=user,
                         filter_overrides=filter_overrides,
                         max_age_seconds=max_age_seconds,
+                        institutional_operation_ids=institutional_operation_ids,
                     )
                 return {
                     "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),

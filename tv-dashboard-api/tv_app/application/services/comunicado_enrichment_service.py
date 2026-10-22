@@ -67,6 +67,7 @@ class ComunicadoEnrichmentService:
         user: Any | None = None,
         filter_overrides: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         custom_fonts = self._enrich_custom_fonts(
             cfg.get("customFonts"),
@@ -133,6 +134,7 @@ class ComunicadoEnrichmentService:
             user=user,
             filter_overrides=filter_overrides,
             max_age_seconds=max_age_seconds,
+            institutional_operation_ids=institutional_operation_ids,
         )
         payload: dict[str, Any] = {
             "version": version,

@@ -7,6 +7,9 @@ from tv_app.application.security.authorization_fingerprint import (
     build_authorization_fingerprint,
 )
 from tv_app.application.services.branch_policy_service import validate_data_route_branch
+from tv_app.application.services.data.institutional_presentation_sources import (
+    INSTITUTIONAL_PRESENTATION_OPERATIONS,
+)
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.data.value_expression_service import (
     InputVariableScope,
@@ -1212,6 +1215,7 @@ class ComunicadoDataEnrichmentService:
         target_source_id: str | None = None,
         preview_options: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
@@ -1296,6 +1300,7 @@ class ComunicadoDataEnrichmentService:
             "request_memo": request_memo,
             "max_age_seconds": max_age_seconds,
             "input_scope": ctx["input_scope"],
+            "institutional_operation_ids": institutional_operation_ids,
         }
         enriched: list[dict[str, Any]] = []
         source_blocks = {
@@ -1462,6 +1467,7 @@ class ComunicadoDataEnrichmentService:
             preview_options=preview_options,
             request_memo=request_memo,
             max_age_seconds=max_age_seconds,
+            institutional_operation_ids=institutional_operation_ids,
             _slide_ctx=ctx,
         )
         # Always stamp text presentation (static textCase → display*) even without
@@ -1482,6 +1488,7 @@ class ComunicadoDataEnrichmentService:
         request_memo: dict[str, dict[str, Any]] | None = None,
         preview_options: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
         _slide_ctx: dict[str, Any] | None = None,
     ) -> dict[str, dict[str, Any]]:
         """Executa DataModels de ``nativeConfig.dataModels[]`` → resolved por modelId.
@@ -1521,6 +1528,7 @@ class ComunicadoDataEnrichmentService:
             "request_memo": memo,
             "max_age_seconds": max_age_seconds,
             "input_scope": ctx["input_scope"],
+            "institutional_operation_ids": institutional_operation_ids,
         }
 
         resolved_by_model: dict[str, dict[str, Any]] = {}
@@ -2309,6 +2317,7 @@ class ComunicadoDataEnrichmentService:
         preview_options: dict[str, Any] | None = None,
         max_age_seconds: float | None = None,
         input_scope: InputVariableScope | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -2373,13 +2382,25 @@ class ComunicadoDataEnrichmentService:
             result["resolved"] = {"error": str(exc)}
             return result
 
+        fetch_authorization = authorization
+        fetch_user = user
+        service_context = "user-preview" if user is not None else "presentation-service"
+        if (
+            authorization
+            and operation_id in institutional_operation_ids
+            and operation_id in INSTITUTIONAL_PRESENTATION_OPERATIONS
+        ):
+            # Mesma identidade da apresentação. O JWT pessoal não segue ao GLPI.
+            fetch_authorization = None
+            fetch_user = None
+            service_context = "presentation-service"
         try:
             payload = self._fetch_cached(
                 operation_id,
                 merged_params,
-                authorization,
-                user=user,
-                service_context="user-preview" if user is not None else "presentation-service",
+                fetch_authorization,
+                user=fetch_user,
+                service_context=service_context,
                 force_refresh=force_refresh,
                 request_memo=request_memo,
                 max_age_seconds=max_age_seconds,

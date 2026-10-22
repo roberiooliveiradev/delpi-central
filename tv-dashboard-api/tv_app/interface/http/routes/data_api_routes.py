@@ -20,6 +20,9 @@ from tv_app.application.services.data.m_query.m_mutation_service import (
 )
 from tv_app.application.services.tv_dashboard_content_service import m_query_setting
 from tv_app.application.services.data.tv_data_openapi_catalog_service import TvDataOpenApiCatalogService
+from tv_app.application.services.data.institutional_presentation_sources import (
+    persisted_institutional_operations,
+)
 from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.core.responses import fail, ok
@@ -570,6 +573,16 @@ def _resolve_preview_playlist_defaults(
     return playlist_defaults, None
 
 
+def _persisted_institutional_operations(playlist_id: str | None) -> frozenset[str]:
+    if not playlist_id:
+        return frozenset()
+    try:
+        playlist_uuid = UUID(str(playlist_id))
+    except ValueError:
+        return frozenset()
+    return persisted_institutional_operations(playlist_uuid)
+
+
 @router.post("/preview-block")
 def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
     user = resolve_user(request)
@@ -598,6 +611,7 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
             force_refresh=bool(body.forceRefresh),
             target_step_name=body.targetStepName,
             preview_options=_model_dict(body.previewOptions),
+            institutional_operation_ids=_persisted_institutional_operations(body.playlistId),
         )
     except ValueError as exc:
         return fail(str(exc), 422)
@@ -657,6 +671,7 @@ def preview_data_model_v2(request: Request, body: PreviewDataModelBody):
             user=user,
             playlist_defaults=playlist_defaults,
             force_refresh=bool(body.forceRefresh),
+            institutional_operation_ids=_persisted_institutional_operations(body.playlistId),
         )
     except ValueError as exc:
         return fail(str(exc), 422)
