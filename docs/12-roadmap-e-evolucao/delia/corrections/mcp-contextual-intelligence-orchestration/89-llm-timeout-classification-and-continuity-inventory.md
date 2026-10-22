@@ -205,3 +205,18 @@ EXECUTOR_VERDICT=ACCEPT_WITH_RESIDUAL
 NEXT_TASK=CP3 — architecture decision required before any checkpoint
     substrate (no legitimate persistence exists today); see §3
 ```
+
+
+## 8. Coordination independent static review — 2026-10-22
+
+**Verdict: ACCEPT_WITH_RESIDUAL (CP1+CP2 only).** Confirmed published HEAD `7ac1e1bef8e74493820877996e2f2a3976de488a`, report 89, changed-file inventory and static `PROCESSING_TIMEOUT` consumer references via GitHub. The executor's full regression/real-container outcomes are reported evidence; `INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`. CP3/CP4 continuity remains NOT_IMPLEMENTED.
+
+**CP2 accepted:** typed timeout/budget causes no longer need to masquerade as data-source failure; `GovernedCapabilityStatus.PROCESSING_TIMEOUT` is propagated to the interaction `message_kind` and MFE semantic-state contract. Real owner errors and denial remain separate. The new user copy truthfully states that the attempt was interrupted, without falsely promising ongoing work. A forced zero-budget path verifies classification, not real asynchronous recovery or a natural pre-MCP timeout through the full browser/prod path.
+
+**CP1 scope caveat:** evidence supports `NO` checkpoint persistence, durable stream replay and resume **in the inspected request-scoped DÉLIA interaction path**. It does **not** yet prove absence of a legitimate reusable mechanism across Automation Hub, platform Work, Portal or existing shared contracts. The report explicitly says Automation Hub is external and not inspected. For the architecture decision use `EXISTING_EQUIVALENT=TO_INVENTORY` across ownership boundaries; do not generalize local absence into ecosystem-wide NEW authorization. `REUSE_DECISION=TO_DECIDE` for durable continuity.
+
+**Requirements carried into CP3:** one user turn ID; typed, non-sensitive stage checkpoints (no chain-of-thought); revalidate live Core AuthZ and Domain authority; bounded retries; idempotency/dedup/cancellation/expiry; no automatic ACT replay; lifecycle beyond the 30s synchronous transport only through a real authorized substrate; UI says CONTINUING only if backend actually owns persistent work. C3 model selection remains LLM-driven, not regex/provider heuristics. Separate the upstream processing error from the authoritative owner/business outcome.
+
+**Bounded next step:** architecture/ownership/reuse decision for `Interaction logical execution continuity`, including exact source contracts, consumers, persistence and job lifecycle; do not implement queue/worker/engine before proving the reuse gate. Test a timeout at `arguments` after selection and demonstrate whether the valid prior selection can be resumed without repeating that LLM stage. Any write replay requires gate review. Production incident stays open until deployed SHA, CRI state and original Portal questions are verified.
+
+`CP1=ACCEPT_WITH_RESIDUAL`; `CP2=ACCEPT`; `CONTINUITY_EXISTING_EQUIVALENT_ECOSYSTEM=TO_INVENTORY`; `CP3=ARCHITECTURE_DECISION_REQUIRED`; `PRODUCTION_DEPLOY=NOT_VERIFIED`; `I04_ACCEPTED=NO`.
