@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "./api.ts";
+
 import {
   clearPendingHandoffIntent,
   HANDOFF_ERROR_CODES,
@@ -9,6 +10,7 @@ import {
   isUncertainHandoffError,
   newHandoffRequestId,
   pendingHandoffIntentFor,
+  pendingHandoffIntents,
   registerPendingHandoffIntent,
 } from "./runHandoff.ts";
 
@@ -49,14 +51,25 @@ describe("newHandoffRequestId", () => {
 });
 
 describe("pendingHandoffIntents", () => {
+  const intent = {
+    requestId: "req-1",
+    expectedNext: { productionOrder: "OP1", operationCode: "05" },
+    branch: "02",
+    workCenter: "CT-63",
+  };
+
   it("intenção pendente sobrevive a fechar/remontar até resolução", () => {
-    const intent = {
-      requestId: "req-1",
-      expectedNext: { productionOrder: "OP1", operationCode: "05" },
-    };
     registerPendingHandoffIntent("run-1", intent);
     expect(pendingHandoffIntentFor("run-1")).toEqual(intent);
     expect(pendingHandoffIntentFor("run-2")).toBeNull();
+    clearPendingHandoffIntent("run-1");
+    expect(pendingHandoffIntentFor("run-1")).toBeNull();
+  });
+
+  it("F5: sessionStorage reidrata a intenção com o contexto original", () => {
+    registerPendingHandoffIntent("run-1", intent);
+    pendingHandoffIntents.clear(); // simula o processo zerado pelo F5
+    expect(pendingHandoffIntentFor("run-1")).toEqual(intent);
     clearPendingHandoffIntent("run-1");
     expect(pendingHandoffIntentFor("run-1")).toBeNull();
   });
@@ -90,9 +103,10 @@ describe("isUncertainHandoffError", () => {
     expect(isUncertainHandoffError(new Error("timeout"))).toBe(true);
   });
 
-  it("502/503 são incertos — a transação pode ter commitado", () => {
-    expect(isUncertainHandoffError(new ApiError("x", 502))).toBe(true);
-    expect(isUncertainHandoffError(new ApiError("x", 503))).toBe(true);
+  it("5xx é incerto — 502/503/504 e demais: o commit não pode ser descartado", () => {
+    for (const status of [500, 502, 503, 504, 507]) {
+      expect(isUncertainHandoffError(new ApiError("x", status))).toBe(true);
+    }
   });
 
   it("400/401/404/409/422 são respostas definitivas", () => {

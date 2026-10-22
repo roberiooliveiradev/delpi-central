@@ -1,10 +1,11 @@
 # MES — Troca guiada de OP no cockpit (E2: finalização inteligente)
 
-> Estado: **implementado — rework da revisão aplicado (PR #109)**.
+> Estado: **implementado — rework final da revisão aplicado (PR #109)**.
 > TASK_ID: PC-MES-GUIDED-HANDOFF-E2. Escopo: somente `plugins/public-hub`
 > (cockpit do operador). Nenhuma linha de backend foi alterada — os
 > contratos da E1 são consumidos como publicados.
-> BASE_HEAD: `74289c849` (main já contém a E1 + rework, merge `46771ac4`).
+> BASE_HEAD: `11514c4fa` (merge da main atual na branch; a main já contém
+> a E1 + rework, merge `46771ac4`).
 
 ## 1. Resumo executivo
 
@@ -58,21 +59,50 @@ Encerrar (único botão)
   confirmação é bloqueada e a UI mostra mensagem recuperável — nenhum POST
   sai com chave previsível.
 - A intenção pendente é registrada em `pendingHandoffIntents`
-  (**module-level**, `runHandoff.ts`) **antes** do POST. Ela sobrevive a
-  fechar a tela e a remount ao navegar card ↔ detalhe: reabrir a
+  (**module-level**, `runHandoff.ts`) **antes** do POST e espelhada em
+  `sessionStorage` (`pcp-pub:handoff-intent:<runId>`) — apenas metadados
+  da intenção (requestId, run original, destino esperado, branch/CT),
+  **sem credenciais**; o registro local nunca autoriza escrita, a
+  autorização continua do backend via `X-Delpi-Bench-Session`. Ela
+  sobrevive a fechar a tela, remount card ↔ detalhe e **F5**: reabrir a
   finalização restaura a tela de retry com o mesmo requestId. Só é
   removida em resposta definitiva (sucesso ou erro estruturado).
+- Resultado incerto = transporte indisponível **ou** 5xx (incl. 502,
+  503 e o timeout de gateway **504**): `isUncertainHandoffError` não
+  comprova commit, então requestId, run original e destino ficam
+  preservados até resolução segura.
+- Enquanto houver intenção incerta para o run ativo, **Pause, Resume e
+  Stop ficam desabilitados nos controles** (não só dentro do modal) —
+  a única escrita possível é o retry idempotente da intenção original.
 - Enquanto o resultado é desconhecido (`uncertain`), **Stop, nova troca e
   qualquer escrita contraditória ficam bloqueados** — a única escrita
   permitida é reenviar a mesma intenção (mesmo requestId, mesmo payload).
   `confirmNext` valida isso internamente, não só pelo `disabled`.
-- Assinatura da intenção = `expectedNext`. Resultado incerto
-  (rede/timeout/502/503) preserva a MESMA chave — «Tentar novamente»
-  repete o mesmo POST e o replay idempotente devolve o resultado gravado.
-  Prévia nova + escolha explícita = nova intenção (nova chave).
+- Assinatura da intenção = `expectedNext`. Resultado incerto preserva a
+  MESMA chave — «Tentar novamente» repete o mesmo POST e o replay
+  idempotente devolve o resultado gravado. Prévia nova + escolha
+  explícita = nova intenção (nova chave).
 - Duplo clique é bloqueado por `submitInFlightRef` — um POST por intenção.
 - Fechar em estado incerto reconcilia o estado autoritativo e **preserva**
   a intenção para o próximo open; nunca assume sucesso ou falha.
+
+### Identidade imutável do run no modal
+
+A decisão fica vinculada ao `runId` que a abriu (`boundRunId`). Se uma
+reconciliação (`run_not_active`, `current_not_in_queue`, poll/WS)
+substituir o run enquanto o modal está aberto, a decisão antiga é
+**invalidada sem escrita**: o Stop verifica `run.id === boundRunId` antes
+de enviar e o sheet apresenta a situação atual — zero POST de Stop pode
+atingir o run novo por uma decisão velha.
+
+### Identidade imutável do run no modal
+
+A decisão fica vinculada ao  que a abriu (). Se uma
+reconciliação (, , poll/WS)
+substituir o run enquanto o modal está aberto, a decisão antiga é
+**invalidada sem escrita**: o Stop verifica  antes
+de enviar e o sheet apresenta a situação atual — zero POST de Stop pode
+atingir o run novo por uma decisão velha.
 
 ### Falha do Stop tradicional
 
@@ -81,12 +111,25 @@ ignoram o retorno continuam iguais). O sheet só fecha após Stop
 confirmado; em falha permanece aberto, exibe a falha e a ação continua
 recuperável.
 
-### Reconciliação pós-sucesso
+### Cancelamento da classificação
 
-POST confirmado = mutação concluída. Se a releitura posterior falhar
-(`onReconcile`/`reload`), o resultado é preservado, o aviso vira
+Cancelar o `DowntimeReasonModal` é cancelamento puro: volta ao estado
+anterior **sem reabrir a finalização**. A finalização só reabre depois de
+classificação efetivamente confirmada (`onClassify` com sucesso) seguida
+de prévia nova válida.
+
+### Reconciliação pós-sucesso (readback)
+
+POST confirmado = mutação concluída. `reload` discrimina `ok`, `failed`
+e `superseded`; a reconciliação só é considerada concluída quando a
+leitura é válida **e coerente** com o `newRun` confirmado. Falha de
+leitura, run ativo incoerente ou ausência legítima → o aviso vira
 «atualização pendente» com botão **Atualizar** (read-only) — nunca vira
-estado incerto e nunca repete a escrita.
+estado incerto e nunca repete a escrita. Qualquer leitura vencedora
+coerente (reload explícito, poll ou evento WebSocket) resolve a
+pendência e a navegação para a nova OP acontece exatamente uma vez,
+mesmo que o reload explícito tenha sido superado por uma geração mais
+recente.
 
 ## 5. Códigos 409 (E2.RQ-07)
 
@@ -116,7 +159,9 @@ de sessão vigente.
 | `ProductionRunControls.tsx` | Encerrar abre a sheet; Stop e classificação preservados |
 | `CockpitPage.tsx`, `OperationDetailPage.tsx` | `onHandoffCompleted` — reconcilia fila/card/detalhe e navega |
 | `cockpit.css` | `pcp-pub-finish*` sobre o sistema de modal vigente |
-| `runHandoff.test.tsx`, `ProductionRunHandoff.test.tsx` | política pura + 19 testes de interação (incl. regressões do rework) |
+| `runHandoff.test.tsx` | 22 testes de política pura (UUID seguro, intents, incerteza, conflitos) |
+| `ProductionRunHandoff.test.tsx` | 24 testes de interação (ACs + regressões RW-01…RW-09) |
+| `CockpitHandoff.test.tsx` | 4 testes de readback/corrida reload×WebSocket no cockpit real |
 
 ## 7. Acessibilidade e responsividade
 
@@ -127,16 +172,20 @@ estreitas via media query existente; temas via variáveis `pcp-pub`.
 
 ## 8. Verificação
 
-- `vitest` (`npx vitest run` no pacote): **94/94** — 19 de interação
-  (`ProductionRunHandoff.test.tsx`, incl. 6 regressões do rework) + 21 de
-  política pura (`runHandoff.test.tsx`), zero regressão nos demais.
-- `npx vite build` (mesmo comando do Dockerfile de produção): OK.
-  `tsc -b` local não roda sem `npm install` nos plugins irmãos —
-  limitação de ambiente; o gate oficial de imagem é o vite build.
-- `npm run lint` (`eslint .`): 44 erros + 2 warnings **100% baseline**
-  (regras react-hooks do compiler em código preexistente — os erros de
-  `CockpitPage`/`OperationDetailPage` incidem sobre linhas que existem
-  identicamente no HEAD). Zero erros nos arquivos E2.
+- `vitest` (`npx vitest run src/apps/production-control`): **104/104** —
+  24 de interação (`ProductionRunHandoff.test.tsx`, incl. regressões
+  RW-01…RW-09 do rework final), 4 de cockpit
+  (`CockpitHandoff.test.tsx`: readback falho/incoerente/corrida
+  reload×WebSocket), 22 de política pura (`runHandoff.test.tsx`) e os
+  demais arquivos sem regressão.
+- `npx vite build` (mesmo comando do Dockerfile de produção): **OK** —
+  2141 módulos.
+- `tsc -p tsconfig.app.json`: **0 erros em `src/`**; o projeto referencia
+  fontes dos plugins irmãos, que não têm `node_modules` no ambiente de
+  teste — os erros restantes são desse ruído de ambiente, nenhum no
+  escopo E2.
+- `eslint` nos arquivos tocados: **0 erros novos** — os 3 reportados são
+  linhas baseline idênticas no `origin/main` (comprovado por `git show`).
 - `git diff --check`: limpo.
 - `TEST_NOT_RUN`: smoke real com Pulse/hardware e tablet — depende da
   homologação E1 no ambiente-alvo (gate declarado no plano).

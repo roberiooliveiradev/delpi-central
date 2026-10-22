@@ -74,6 +74,12 @@ export function useRunHandoff({
   /** Aviso informativo após revalidação automática (stale/queue_changed). */
   const [notice, setNotice] = useState<string | null>(null);
   const [uncertainMessage, setUncertainMessage] = useState<string | null>(null);
+  /**
+   * Identidade imutável: o modal fica vinculado ao run que o abriu.
+   * Se uma reconciliação substituir o run ativo, a decisão antiga é
+   * invalidada — o Stop do sheet nunca pode atingir o novo run.
+   */
+  const [boundRunId, setBoundRunId] = useState<string | null>(null);
   const runIdRef = useRef<string | null>(null);
   const intentRef = useRef<RunHandoffIntent | null>(null);
   const submitInFlightRef = useRef(false);
@@ -82,6 +88,16 @@ export function useRunHandoff({
   useEffect(() => {
     requestRef.current = { token, branch, workCenter };
   }, [token, branch, workCenter]);
+
+  /**
+   * Há intenção com resultado desconhecido para ESTE run — bloqueia
+   * escritas contraditórias (Pause/Resume/Stop) mesmo com o modal
+   * fechado. Derivado do registro do módulo: sobrevive a remount e a F5
+   * (o registro reidrata do sessionStorage), e toda mutação do registro
+   * neste hook vem acompanhada de setState — a derivação é consistente.
+   */
+  const unresolvedIntent =
+    run != null && pendingHandoffIntentFor(run.id) != null;
 
   const dropStaleSession = useCallback(
     (err: unknown) => {
@@ -121,13 +137,15 @@ export function useRunHandoff({
   const open = useCallback(() => {
     if (!run) return;
     runIdRef.current = run.id;
+    // Identidade vinculada: a decisão vale apenas para este run.
+    setBoundRunId(run.id);
     setPreview(null);
     setPreviewError(null);
     setConflict(null);
     setNotice(null);
     // Intenção pendente (resultado desconhecido) sobrevive a fechar a
-    // tela e a remounts: reabrir a finalização restaura a tela de retry
-    // com o MESMO requestId — nunca inicia intenção nova por cima.
+    // tela, a remounts e a F5: reabrir a finalização restaura a tela de
+    // retry com o MESMO requestId — nunca inicia intenção nova por cima.
     const pending = pendingHandoffIntentFor(run.id);
     if (pending) {
       intentRef.current = pending;
@@ -162,6 +180,7 @@ export function useRunHandoff({
     }
     runIdRef.current = null;
     intentRef.current = null;
+    setBoundRunId(null);
     setPhase("closed");
     setPreview(null);
     setPreviewError(null);
@@ -214,12 +233,15 @@ export function useRunHandoff({
           );
           return;
         }
+        const request = requestRef.current;
         intent = {
           requestId,
           expectedNext: {
             productionOrder: next.productionOrder,
             operationCode: next.operationCode,
           },
+          branch: request.branch,
+          workCenter: request.workCenter,
         };
         intentRef.current = intent;
       }
@@ -233,17 +255,24 @@ export function useRunHandoff({
     setPhase("submitting");
     setUncertainMessage(null);
     setConflict(null);
-    const request = requestRef.current;
     try {
-      const result = await confirmRunHandoff(request.token, sessionToken, runId, {
-        requestId: intent.requestId,
-        branch: request.branch,
-        workCenter: request.workCenter,
-        expectedNext: intent.expectedNext,
-      });
+      // O POST usa o contexto CONGELADO da intenção — uma troca de CT
+      // durante o retry não muda o payload original.
+      const result = await confirmRunHandoff(
+        requestRef.current.token,
+        sessionToken,
+        runId,
+        {
+          requestId: intent.requestId,
+          branch: intent.branch,
+          workCenter: intent.workCenter,
+          expectedNext: intent.expectedNext,
+        },
+      );
       clearPendingHandoffIntent(runId);
       intentRef.current = null;
       runIdRef.current = null;
+      setBoundRunId(null);
       setPhase("closed");
       setPreview(null);
       // O run novo já nasceu running — reconcilia contagem/fila e navega.
@@ -319,6 +348,10 @@ export function useRunHandoff({
     conflict,
     notice,
     uncertainMessage,
+    /** Run ao qual a decisão do modal está vinculada — imutável. */
+    boundRunId,
+    /** Intenção com resultado desconhecido — bloqueia escritas fora do modal. */
+    unresolvedIntent,
     open,
     refreshPreview,
     close,

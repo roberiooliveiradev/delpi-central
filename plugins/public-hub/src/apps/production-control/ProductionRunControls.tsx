@@ -419,7 +419,7 @@ export function ProductionRunControls({
                       type="button"
                       className="pcp-pub__btn pcp-pub__btn--ghost"
                       onClick={() => void pause()}
-                      disabled={busy}
+                      disabled={busy || handoff.unresolvedIntent}
                     >
                       <Pause size={16} aria-hidden="true" />
                       Pausar
@@ -444,7 +444,7 @@ export function ProductionRunControls({
                         if (downtimeUnclassified) setReasonModalRequested(true);
                         else void resume();
                       }}
-                      disabled={busy}
+                      disabled={busy || handoff.unresolvedIntent}
                     >
                       <Play size={16} aria-hidden="true" />
                       Retomar
@@ -562,6 +562,9 @@ export function ProductionRunControls({
           }
         }}
         onClose={() => {
+          // Fechar/cancelar o motivo NÃO retoma a finalização — a troca
+          // só reabre após classificação efetivamente confirmada.
+          resumeFinishAfterClassifyRef.current = false;
           setManualTarget(null);
           setReasonModalRequested(false);
           if (autoPromptId) setDismissedPromptId(autoPromptId);
@@ -569,10 +572,6 @@ export function ProductionRunControls({
             setReturnToPending(false);
             void refreshPending();
             setPendingModalOpen(true);
-          }
-          if (resumeFinishAfterClassifyRef.current) {
-            resumeFinishAfterClassifyRef.current = false;
-            handoff.open();
           }
         }}
       />
@@ -585,6 +584,13 @@ export function ProductionRunControls({
         busy={busy}
         stopError={stopError}
         onStop={async () => {
+          // Identidade imutável: o Stop só sai para o run que abriu a
+          // decisão. Se a reconciliação substituiu o run ativo, a decisão
+          // antiga é invalidada — nenhuma escrita toca o run novo.
+          if (!run || run.id !== handoff.boundRunId) {
+            setStopError(null);
+            return;
+          }
           // Só fecha a decisão com o Stop CONFIRMADO pelo backend; em
           // falha o modal permanece aberto e a ação continua recuperável.
           setStopError(null);

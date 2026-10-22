@@ -9,10 +9,13 @@
 
 import { ApiError } from "./api.ts";
 
-/** Intenção confirmada da troca — chave idempotente + alvo esperado. */
+/** Intenção confirmada da troca — chave idempotente + alvo + contexto. */
 export type RunHandoffIntent = {
   requestId: string;
   expectedNext: { productionOrder: string; operationCode: string };
+  /** Contexto original da escolha — o retry usa ESTES valores, nunca os atuais. */
+  branch: string;
+  workCenter: string;
 };
 
 /** Assinatura estável da intenção — define quando a chave pode ser reusada. */
@@ -62,36 +65,78 @@ export function newHandoffRequestId(): string | null {
  * do controlador ao navegar entre o card "Agora nesta bancada" e o
  * detalhe da operação, e impede que fechar/remontar a interface descarte
  * a intenção antes da reconciliação segura (E2.RQ-06).
+ *
+ * Também é espelhada em `sessionStorage` para sobreviver a F5: o que é
+ * persistido é apenas a intenção (requestId + alvo + contexto) — NÃO é
+ * autorização nem credencial; o backend continua sendo a autoridade que
+ * revalida o retry idempotente.
  */
-const pendingHandoffIntents = new Map<string, RunHandoffIntent>();
+const HANDOFF_INTENT_STORAGE_PREFIX = "pcp-pub:handoff-intent:";
+
+/** Exportado para os testes simularem F5 (limpa só a memória). */
+export const pendingHandoffIntents = new Map<string, RunHandoffIntent>();
+
+function intentStorage(): Storage | null {
+  try {
+    return globalThis.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function registerPendingHandoffIntent(
   runId: string,
   intent: RunHandoffIntent,
 ): void {
   pendingHandoffIntents.set(runId, intent);
+  try {
+    intentStorage()?.setItem(
+      HANDOFF_INTENT_STORAGE_PREFIX + runId,
+      JSON.stringify(intent),
+    );
+  } catch {
+    /* storage indisponível: a intenção ainda vive na memória do módulo */
+  }
 }
 
 export function pendingHandoffIntentFor(
   runId: string,
 ): RunHandoffIntent | null {
-  return pendingHandoffIntents.get(runId) ?? null;
+  const inMemory = pendingHandoffIntents.get(runId);
+  if (inMemory) return inMemory;
+  try {
+    const raw = intentStorage()?.getItem(HANDOFF_INTENT_STORAGE_PREFIX + runId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as RunHandoffIntent;
+    if (typeof parsed?.requestId !== "string") return null;
+    pendingHandoffIntents.set(runId, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 /** Só chamar quando a intenção foi resolvida de forma definitiva. */
 export function clearPendingHandoffIntent(runId: string): void {
   pendingHandoffIntents.delete(runId);
+  try {
+    intentStorage()?.removeItem(HANDOFF_INTENT_STORAGE_PREFIX + runId);
+  } catch {
+    /* storage indisponível */
+  }
 }
 
 /**
  * Resultado incerto: a resposta HTTP não chegou (rede/timeout) ou o
- * gateway respondeu 502/503 — a transação pode ter commitado. A única
- * resolução segura é repetir o MESMO requestId (replay idempotente)
- * ou reconciliar pelo estado autoritativo; nunca gerar nova chave.
+ * servidor/gateway respondeu 5xx (502/503/504 e demais) — o commit no
+ * backend não pode ser descartado. A única resolução segura é repetir o
+ * MESMO requestId (replay idempotente) ou reconciliar pelo estado
+ * autoritativo; nunca gerar nova chave. Apenas respostas < 500 com
+ * envelope/erro estruturado são definitivas.
  */
 export function isUncertainHandoffError(err: unknown): boolean {
   if (err instanceof ApiError) {
-    return err.status === 502 || err.status === 503;
+    return err.status >= 500;
   }
   return true;
 }

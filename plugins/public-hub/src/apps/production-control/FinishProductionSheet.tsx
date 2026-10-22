@@ -48,6 +48,7 @@ export function FinishProductionSheet({
     previewing,
     submitting,
     uncertain,
+    boundRunId,
     conflict,
     notice,
     uncertainMessage,
@@ -81,6 +82,14 @@ export function FinishProductionSheet({
   // Resultado incerto: nenhuma escrita contraditória (Stop, nova troca)
   // pode sair antes da reconciliação segura.
   const stopDisabled = busy || submitting || uncertain;
+  /**
+   * Identidade imutável: se uma reconciliação substituiu o run ativo
+   * (run_not_active, current_not_in_queue ou atualização externa), a
+   * decisão aberta para o run ANTIGO é invalidada — nenhuma das duas
+   * escritas pode sair contra o run novo.
+   */
+  const staleRun =
+    boundRunId != null && (run == null || run.id !== boundRunId);
   const closingSafe = !submitting;
   const operationLabel = run
     ? `${run.productionOrder} · ${run.operationCode}`
@@ -126,6 +135,18 @@ export function FinishProductionSheet({
           </span>
         </div>
 
+        {staleRun ? (
+          <div className="pcp-pub-finish__conflict" role="alert">
+            <p className="pcp-pub-finish__conflict-title">
+              Produção atualizada
+            </p>
+            <p className="pcp-pub__run-note">
+              A produção ativa deste posto mudou desde que esta tela foi
+              aberta. Nenhuma ação foi executada — confira a situação atual
+              no painel.
+            </p>
+          </div>
+        ) : (
         <div className="pcp-pub-finish__options">
           <button
             ref={stopRef}
@@ -183,6 +204,7 @@ export function FinishProductionSheet({
             </span>
           </button>
         </div>
+        )}
 
         {stopError ? (
           <p className="pcp-pub__run-error" role="alert">

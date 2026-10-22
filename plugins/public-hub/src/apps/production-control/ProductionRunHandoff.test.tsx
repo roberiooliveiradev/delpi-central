@@ -11,7 +11,10 @@ import type { BenchSessionSnapshot, MachineLoadOperation } from "./api.ts";
 import { OperatorSessionContext } from "./OperatorSessionContext.ts";
 import type { OperatorSessionContextValue } from "./OperatorSessionContext.ts";
 import { ProductionRunControls } from "./ProductionRunControls.tsx";
-import { clearPendingHandoffIntent } from "./runHandoff.ts";
+import {
+  clearPendingHandoffIntent,
+  pendingHandoffIntents,
+} from "./runHandoff.ts";
 
 const OPERATION = {
   work_center: "CT-63",
@@ -23,7 +26,7 @@ const OPERATION = {
   production_order: "24640401002",
   operation_code: "03",
   operation_description: "MONTAGEM",
-  tool: null,
+  tool: "",
   resource: null,
   product_code: "10045678",
   product_description: "Componente X",
@@ -195,9 +198,11 @@ function stubCockpitFetch(handlers: Handlers = {}) {
         return okEnvelope({ ...RUN, status: "completed", endedAt: "2026-10-09T10:06:00Z" });
       }
       if (target.includes("downtime-reasons")) {
-        return okEnvelope([
-          { code: "setup", label: "Setup", category: "preparacao", requiresNote: false },
-        ]);
+        return okEnvelope({
+          items: [
+            { code: "setup", label: "Setup", category: "preparacao", requiresNote: false },
+          ],
+        });
       }
       return okEnvelope({});
     },
@@ -210,7 +215,12 @@ const posts = (calls: FetchCall[]) =>
 const handoffPosts = (calls: FetchCall[]) =>
   posts(calls).filter((call) => call.url.includes("/handoff"));
 
-function renderControls(overrides: { onHandoffCompleted?: () => void } = {}) {
+function renderControls(
+  overrides: {
+    onHandoffCompleted?: () => void;
+    runUpdatedSignal?: number;
+  } = {},
+) {
   return render(
     <OperatorSessionContext.Provider value={sessionCtx()}>
       <ProductionRunControls
@@ -218,11 +228,14 @@ function renderControls(overrides: { onHandoffCompleted?: () => void } = {}) {
         branch="02"
         workCenter="CT-63"
         operation={OPERATION}
+        runUpdatedSignal={overrides.runUpdatedSignal ?? 0}
         onHandoffCompleted={overrides.onHandoffCompleted}
       />
     </OperatorSessionContext.Provider>,
   );
 }
+
+
 
 async function openFinishSheet() {
   const finish = await screen.findByRole("button", { name: /Encerrar/i });
@@ -853,5 +866,228 @@ describe("troca guiada de OP (E2)", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
+  });
+
+  it("run substituído invalida a decisão — Stop antigo não toca o novo run (RW-06)", async () => {
+    let activeRun: unknown = RUN;
+    const calls = stubCockpitFetch({
+      activeRun: () => activeRun,
+      // run_not_active → a reconciliação substitui o run sob o modal aberto.
+      handoff: () =>
+        failEnvelope("Run encerrado.", 409, { code: "run_not_active" }),
+    });
+    renderControls();
+    await openFinishSheet();
+
+    // Modal aberto para o run A; o conflito dispara a reconciliação que
+    // traz o run B (outra OP) como ativo neste posto.
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    activeRun = { ...RUN, id: "run-b-1", productionOrder: "24640401003", operationCode: "05" };
+    fireEvent.click(nextButton);
+
+    // A decisão antiga é invalidada e apresenta a situação atual.
+    expect(
+      await screen.findByText(/A produção ativa deste posto mudou/i),
+    ).toBeInTheDocument();
+
+    // Nenhuma das duas escritas fica disponível para o run B.
+    expect(
+      screen.queryByRole("button", { name: /Encerrar produção/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Ir para a próxima OP/i }),
+    ).not.toBeInTheDocument();
+    const stopPosts = calls.filter(
+      (call) =>
+        (call.init?.method ?? "GET") === "POST" && call.url.endsWith("/stop"),
+    );
+    expect(stopPosts).toHaveLength(0);
+    expect(handoffPosts(calls)).toHaveLength(1);
+  });
+
+  it("timeout 504 é incerto — retry repete body e requestId idênticos (RW-07)", async () => {
+    const bodies: unknown[] = [];
+    let handoffCalls = 0;
+    const onHandoffCompleted = vi.fn();
+    const calls = stubCockpitFetch({
+      handoff: (call) => {
+        handoffCalls += 1;
+        bodies.push(JSON.parse(String(call.init?.body)));
+        return handoffCalls === 1
+          ? new Response("Gateway Timeout", { status: 504 })
+          : okEnvelope(HANDOFF_RESULT);
+      },
+    });
+    renderControls({ onHandoffCompleted });
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    // 504: commit não comprovável — tela incerta, nenhuma escrita paralela.
+    expect(
+      await screen.findByText(/A resposta não chegou/i),
+    ).toBeInTheDocument();
+    expect(handoffPosts(calls)).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/i }));
+    await waitFor(() => expect(onHandoffCompleted).toHaveBeenCalledTimes(1));
+
+    // Retry idempotente: exatamente o mesmo payload, mesma chave.
+    expect(handoffPosts(calls)).toHaveLength(2);
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]).toEqual(bodies[0]);
+  });
+
+  it("intenção incerta bloqueia Pause/Resume/Stop fora do modal e sobrevive a remount e F5 (RW-08)", async () => {
+    const bodies: unknown[] = [];
+    let failOnce = true;
+    stubCockpitFetch({
+      handoff: (call) => {
+        bodies.push(JSON.parse(String(call.init?.body)));
+        if (failOnce) {
+          failOnce = false;
+          return Promise.reject(new TypeError("network down"));
+        }
+        return okEnvelope(HANDOFF_RESULT);
+      },
+    });
+    const view = renderControls();
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+    expect(
+      await screen.findByText(/A resposta não chegou/i),
+    ).toBeInTheDocument();
+
+    // Fechar o modal NÃO libera escritas: a intenção segue sem resolução.
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    await waitFor(() =>
+      expect(screen.queryByText(/A resposta não chegou/i)).not.toBeInTheDocument(),
+    );
+    const pauseBtn = await screen.findByRole("button", { name: /Pausar/i });
+    expect(pauseBtn).toBeDisabled();
+
+    // Remount (navegação card↔detalhe): o bloqueio vem do registro do
+    // módulo — continua sem reabrir o modal.
+    view.unmount();
+    const remounted = renderControls();
+    expect(
+      await screen.findByRole("button", { name: /Pausar/i }),
+    ).toBeDisabled();
+
+    // F5: a memória do módulo zera; o sessionStorage reidrata a intenção.
+    pendingHandoffIntents.clear();
+    remounted.unmount();
+    const afterReload = renderControls();
+    expect(
+      await screen.findByRole("button", { name: /Pausar/i }),
+    ).toBeDisabled();
+
+    // A recuperação: reabrir a finalização cai direto na tela de retry
+    // com o MESMO requestId — Stop continua bloqueado em estado incerto.
+    fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
+    expect(
+      await screen.findByText(/A resposta não chegou/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Encerrar produção/i }),
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/i }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]).toEqual(bodies[0]);
+    afterReload.unmount();
+  });
+
+  it("cancelar o motivo não reabre a finalização (RW-09)", async () => {
+    const calls = stubCockpitFetch({
+      activeRun: () => ({
+        ...RUN,
+        downtime: {
+          id: "dt-open-1",
+          runId: RUN.id,
+          reasonCode: null,
+          reasonLabel: null,
+          category: null,
+          note: null,
+          confirmed: false,
+          source: "operator_pause",
+          startedAt: "2026-10-09T09:50:00Z",
+          endedAt: null,
+        },
+      }),
+    });
+    renderControls();
+    // A parada sem motivo abre o modal de motivo automaticamente.
+    await screen.findByText(/Por que a produção parou/i);
+
+    // Encerrar marca a retomada e mantém o modal de motivo.
+    fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
+
+    // Cancelar o motivo: volta ao estado anterior — a finalização NÃO
+    // reabre e nenhuma prévia é consultada.
+    const previewCallsBefore = calls.filter((call) =>
+      call.url.includes("handoff-preview"),
+    ).length;
+    fireEvent.click(screen.getAllByRole("button", { name: /^Fechar$/i }).at(-1)!);
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Por que a produção parou/i),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Finalizar operação")).not.toBeInTheDocument();
+    expect(
+      calls.filter((call) => call.url.includes("handoff-preview")),
+    ).toHaveLength(previewCallsBefore);
+  });
+
+  it("classificar o motivo reabre a finalização com prévia nova (RW-09)", async () => {
+    stubCockpitFetch({
+      activeRun: () => ({
+        ...RUN,
+        downtime: {
+          id: "dt-open-1",
+          runId: RUN.id,
+          reasonCode: null,
+          reasonLabel: null,
+          category: null,
+          note: null,
+          confirmed: false,
+          source: "operator_pause",
+          startedAt: "2026-10-09T09:50:00Z",
+          endedAt: null,
+        },
+      }),
+      preview: () =>
+        okEnvelope({ currentRun: RUN, nextOperation: NEXT_OP, available: true, block: null }),
+    });
+    renderControls();
+    await screen.findByText(/Por que a produção parou/i);
+
+    fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
+
+    // Classificação confirmada → finalização reabre com prévia nova.
+    fireEvent.click(await screen.findByRole("option", { name: /^Setup$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Confirmar motivo/i }));
+
+    expect(await screen.findByText("Finalizar operação")).toBeInTheDocument();
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
   });
 });
