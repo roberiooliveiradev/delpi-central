@@ -201,6 +201,24 @@ Alinhar/distribuir/z-order só chamam `updateBlocks` se o ack falhar. Mover, tam
 
 `presentation_updated` não traz `clientId`. Receber o evento não prova que o palco do outro editor ficou correto. Presença e seleção remota existem; não autorizam escrita.
 
+### Execução — VISTA-TV-EDITOR-MULTIUSER-UNDO-SAFETY-023 (P0, integridade)
+
+**Comportamento anterior (reproduzido, não só inspecionado).** `shouldStackRemoteComunicadoUndo` empilhava o config pré-remoto na pilha local de undo quando uma baseline externa era aceita. O undo do slide reaplica snapshot do `nativeConfig` **inteiro** e dispara persistência com `If-Match` da revisão corrente — o CAS passa porque a revisão é a corrente, então o lost update é silencioso. Prova end-to-end na API local (playlist isolada, dois usuários reais): rev2 base → A edita `blk_x` (rev3) → B edita `blk_y` (rev4) → "undo" de A envia o snapshot pré-remoto com `If-Match:4` → **HTTP 200 → rev5 com `blk_y` revertido**. RESULT=FAIL SILENT_LOST_UPDATE.
+
+**Causa raiz / owner.** O defect não está no CAS (a revisão confere) nem no backend — está na costura de histórico do editor: snapshots de slide inteiro de baseline anterior eram reaplicáveis sobre baseline nova. Owner: MFE `plugins/tv-dashboard` — `comunicadoEditorValueSync.ts` (predicado de decisão) + `comunicadoEditorContext.tsx` (efeito de sync) + `PlaylistEditorPage.tsx` (sinal de baseline externa).
+
+**Contrato do histórico definido.** Ações locais empilham normalmente. Baseline externa aceita (outro editor, copiloto, `slide_draft` de peer, restore do deck) **invalida** past+future locais: undo/redo fica indisponível em vez de reaplicar snapshot incompatível. Desfazer mudança remota pertence ao restore governado do deck (`restorePlaylistHistorySnapshot`, `expectedRevision` + 409 + server-wins), que continua intacto.
+
+**Discriminador próprio × estrangeiro.** `presentation_updated` não carrega `clientId` — a distinção usa a revisão: baseline externa = `remoteRevision > knownPlaylistRevision` **e** `> readSharedPlaylistRevision` (write-head compartilhado publica commits próprios/de abas irmãs no ack). Acks da própria escrita sobem `remoteConfigRevision` (aceita projeções do servidor) mas **não** `foreignConfigRevision` — assim a pilha local não é zerada pelo eco do próprio save nem por normalização de read-back.
+
+**Correção mínima.** `shouldStackRemoteComunicadoUndo` → `shouldInvalidateLocalComunicadoHistory` (mesmo predicado, semântica invertida: `resetLocalHistory()` no lugar de `pushPast`). Novo prop `foreignRemoteRevision` no provider; contador `foreignConfigRevision` na página, bumpeado em reload com baseline externa e em `slide_draft` de peer (já filtrado por clientId próprio). Proteções existentes preservadas: gate `dirty`/`hasLocalComunicadoEdits` não aplica remoto sobre pending; 409 → `applyServerWinsConflict` (explícito + aviso); Web Lock/fila FIFO/CAS intactos.
+
+**Cenários A–F — veredito pós-fix.** A (componentes distintos): remoto aceito → pilha zerada → undo no-op → `blk_y` preservado. B (mesmo componente): idem. C (commit pendente): gate `dirty` bloqueia aceite remoto; save seguinte com revisão velha → 409 explícito → server-wins + aviso. D (redo): future também zerado. E (exclusão remota): sem recriação — pilha vazia. F (reconexão): reload detecta baseline externa e invalida.
+
+**Testes.** `comunicadoEditorValueSync.test.ts` reescrito para o predicado novo (5 casos: invalida remoto estrangeiro, invalida restore de deck, não invalida bump sem mudança, não invalida troca de slide, não invalida sem baseline externa). Novo `comunicadoEditorContext.remoteHistory.test.tsx` no nível do provider (4 casos: undo vira no-op após remoto; ack próprio preserva pilha; redo invalidado; edição pós-remota reempilha). Suítes relacionadas: 15 + 90 + 3 tests PASS. Vitest total do MFE: 3 falhas PRÉ-EXISTENTES em arquivos não relacionados (verificado em HEAD via stash).
+
+**Riscos residuais.** (1) Race estreita ack↔WS: reload pode resolver antes do `recordWriteRevision` publicar o head — a própria escrita seria vista como externa e a pilha zera (direção conservadora segura). (2) Desfazer mudança remota exige o painel de histórico do deck (restore governado), não mais Ctrl+Z — trade-off do contrato. (3) E2E visual em dois browsers reais continua `TEST_NOT_RUN` — a prova foi API + provider tests; validação visual multiusuário fica para a fase de smoke E2E.
+
 ### Cache
 
 `notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.
