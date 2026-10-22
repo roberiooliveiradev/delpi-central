@@ -8,6 +8,8 @@
 **Snapshot de descoberta:** branch `main`, HEAD reancorado em `b0b4f8c028f706d2a4bd47e70690ea07badea089`, com rechecagem do HEAD antes da publicação. O HEAD de implementação deve ser revalidado.  
 **Natureza:** planejamento contratual, de segurança, UX, implementação e testes; as decisões D7–D12 vinculam o escopo de produto e D12 autoriza somente a trilha bounded **condicionada** a gates técnicos. `CP-333` passa a constar da matriz 25; nenhum código, schema de runtime, deploy ou fase é alterado por este documento.
 
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
+
 ## 0. Resumo executivo e decisão proposta
 
 Entregar B2 como **renderização opcional e explicitamente contratada de Markdown seguro no corpo das respostas da DÉLIA**, sem reinterpretar as mensagens literais existentes. O B2 é independente de gráficos, tabelas estruturadas, métricas e HTML arbitrário. Reutilizar, quando aprovado por inventário e Security Review, os primitives e mecanismos existentes em `@delpi/plugin-ui`. A DÉLIA mantém a composição local de `DeliaAssistantMessage`; não inaugurar um segundo framework de rich UI.
@@ -135,7 +137,7 @@ RUNTIME_B2_DIFF = NONE
 NAVIGABLE_LINK_EMISSION = BLOCKED
 ```
 
-**Bloqueio preciso (único material para Architecture/Coordination):**
+**Bloqueio histórico em 2026-10-16, SUPERADO QUANTO À DEPENDÊNCIA L1 INTERNA pela decisão de 2026-10-22:**
 
 1. `L1_CAPABILITY_BINDING_ABSENT` — owner competente `api-delpi`; menor EXTEND legítimo = declaration OpenAPI + disclosure do owner no campo `url` + schema de saída tipado; **não** inventar capability local DÉLIA.
 2. `G3_TASK_BRIEF_APPROVED` ausente — I1/I2/I3 bloqueados mesmo para Markdown sem links; slice sem links exigiria decisão explícita do Product Master (L3 foi rejeitada).
