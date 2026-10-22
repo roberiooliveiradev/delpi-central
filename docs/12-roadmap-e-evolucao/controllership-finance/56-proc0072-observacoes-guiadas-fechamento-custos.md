@@ -471,3 +471,18 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 **Pendente:** extracoes originais comparaveis, valores de MP em ambos os relatorios, composicao de `EM PROCESSO` e mapeamento de aliases do relatorio para fontes TOTVS via `api-delpi`.
 
 **Classificacao:** `DRILLDOWN_BY_MATERIAL_TYPE=OWNER_REPORTED_VIA_PO`; `MP_DIVERGENCE=OWNER_REPORTED_VIA_PO`; `MP_MATR320_VALUE=PROVEN_SCREENSHOT`; `MP_CAUSAL_LINK_TO_WIP=INCONCLUSIVE`; `AI_ASSISTED_DIAGNOSTICS=TARGET_DECISION_REQUIRED`; `RUNTIME_VALIDATION=TEST_NOT_RUN`.
+
+
+## Registro 14 - Natureza da demonstracao e janela temporal do fechamento (35:48)
+
+**Fonte:** esclarecimento do PO sobre fala da Joici por volta de 35:48. A gravacao retrata uma **demonstracao executada com o mes de referencia ainda em andamento**, nao o fechamento mensal definitivo. O processo mostrado usa dados reais do ERP na demonstracao, mas **nao deve ser tratado como resultado final homologado da competencia**.
+
+**Implicacao AS-IS:** no ultimo dia do mes ainda podem existir baixas, movimentacoes, consumos ou apontamentos a registrar. Joici indica que a conferencia efetiva deve ocorrer **apos a virada para o dia seguinte ao encerramento da competencia**, quando o mes estiver concluido do ponto de vista operacional. A referencia a `00:01` ou `01:00` e exemplificativa na explicacao do PO: **nao ha horario minimo nem janela tecnica de corte oficialmente comprovados**.
+
+**Correcao de interpretacao retroativa:** o delta global de 113.252,49 e o residual em planilha de 48.284,06 vistos nessa sessao **nao provam falha no fechamento de setembro/2026**. Sao diferencas observadas em uma demonstracao antes de a competencia estar definitivamente pronta para fechamento. As hipoteses de parametros, consumo, movimentos tardios e efeitos historicos seguem hipoteses; nao houve RCA conclusivo.
+
+**Candidato TARGET, sujeito a contrato/owner:** distinguir `demonstration_or_preclosing`, `period_ended`, `source_updates_pending` e `ready_for_reconciliation` a partir de evidencias reais (data de referencia, ultimo processamento, completude das fontes e status de rotinas). Nao inferir `ready` apenas porque o calendario passou de meia-noite; nem executar fechamento, recalculo ou reabertura pelo Portal.
+
+**Pendencias:** confirmar horario/criterio oficial de corte, eventual processamento noturno e atrasos de integracao, autoridade para validar completude e regra de negocios de liberacao da conciliacao.
+
+**Classificacao:** `DEMONSTRATION_NOT_FINAL_CLOSE=OWNER_REPORTED_VIA_PO`; `NEXT_DAY_PREFERENCE=OWNER_REPORTED_VIA_PO`; `EXACT_CUTOFF_TIME=TO_INVENTORY`; `SEPTEMBER_VARIANCE_ROOT_CAUSE=INCONCLUSIVE`; `TARGET_READINESS_GATE=PLANNED_DECISION_REQUIRED`.
