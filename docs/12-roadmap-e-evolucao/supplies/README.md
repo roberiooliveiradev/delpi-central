@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Evolução aprovada em 2026-10-20 — F5, enriquecimento estruturado por CNPJ:** [SUPPLIERS-F5-CNPJ-ENRICHMENT-CONTRACT.md](./SUPPLIERS-F5-CNPJ-ENRICHMENT-CONTRACT.md). Comparação determinística de fonte externa aprovada × Protheus, seleção humana por campo e aplicação apenas ao rascunho. **IA/LLM não requerida no P0; nenhuma gravação automática.** Implementação F5 ainda planejada; pesquisa de provider e governança LGPD precedem integração. Não altera fila E10–E14 nem libera POST/PUT produtivos.
