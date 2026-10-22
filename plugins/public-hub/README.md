@@ -292,6 +292,26 @@ O PCP copia o link pelo botão **Link do operador** na página Carga máquina do
 
 Ver `src/apps/production-control/` · doc: [plugins/production-control/README.md](../production-control/README.md).
 
+### DELPI News (`delpi-news`)
+
+Prova visual (Etapa 1) do board de notícias para TVs / Adeus Pendrive. **Não é canal editorial real.**
+
+| Página | Rota | `load` |
+|---|---|---|
+| Board kiosk (demo) | `/p/delpi-news/board/demo` | fixture `mockFeed`, só se a demo estiver habilitada |
+
+**Gate de demonstração** (padrão DéLIA):
+
+- habilitada em `vite` DEV; ou
+- build com `VITE_DELPI_NEWS_DEMO=1` (homologação autorizada).
+
+Builds de produção do Docker (`vite build` sem a flag) **bloqueiam** o mock → 404 do shell. O token legado `aberto` **não** carrega conteúdo. Contrato futuro: token opaco via API.
+
+Arquitetura e contratos: [docs/12-roadmap-e-evolucao/delpi-news/](../../docs/12-roadmap-e-evolucao/delpi-news/README.md).  
+Homologação Adeus: [HOMOLOGACAO-ADEUS-PENDRIVE.md](../../docs/12-roadmap-e-evolucao/delpi-news/HOMOLOGACAO-ADEUS-PENDRIVE.md).
+
+Ver `src/apps/delpi-news/`.
+
 ### Painéis TV (`tv-dashboard`)
 
 Apresentação rotativa em modo **kiosk** (sem logo DELPI):

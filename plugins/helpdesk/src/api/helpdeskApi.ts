@@ -136,8 +136,45 @@ export type TicketDetail = TicketSummary & {
   validations?: TicketValidation[];
   assigned_user_id?: number | null;
   observers_display_name?: string;
+  // Classification projection (ids + labels). Priority is derived by the
+  // GLPI urgency×impact matrix — surfaced as read-only state.
+  category_id?: number | null;
+  urgency_id?: number | null;
+  impact_id?: number | null;
+  priority_id?: number | null;
+  type_id?: number | null;
+  request_type_id?: number | null;
+  impact?: string;
+  priority?: string;
+  type_name?: string;
+  can_update_classification?: boolean;
   timeline: TimelineEntry[];
   attachments: TicketAttachment[];
+};
+
+export type ClassificationPatch = {
+  urgency_id?: number;
+  impact_id?: number;
+  category_id?: number;
+  type_id?: number;
+  priority_id?: number;
+  request_type_id?: number;
+};
+
+export type ClassificationUpdateResult = {
+  id: number;
+  urgency_id?: number | null;
+  urgency?: string;
+  impact_id?: number | null;
+  impact?: string;
+  category_id?: number | null;
+  category?: string;
+  type_id?: number | null;
+  type_name?: string;
+  priority_id?: number | null;
+  priority?: string;
+  request_type_id?: number | null;
+  updated_fields?: string[];
 };
 
 export type CatalogUser = {
@@ -189,6 +226,18 @@ export function listCategories(signal?: AbortSignal) {
 
 export function listUrgencies(signal?: AbortSignal) {
   return request<{ items: { id: number; name: string }[] }>("/urgencies", { signal });
+}
+
+export function listImpacts(signal?: AbortSignal) {
+  return request<{ items: { id: number; name: string }[] }>("/impacts", { signal });
+}
+
+export function listPriorities(signal?: AbortSignal) {
+  return request<{ items: { id: number; name: string }[] }>("/priorities", { signal });
+}
+
+export function listTicketTypes(signal?: AbortSignal) {
+  return request<{ items: { id: number; name: string }[] }>("/ticket-types", { signal });
 }
 
 export function listUsers(
@@ -279,6 +328,24 @@ export function updateFollowup(
     `/tickets/${ticketId}/followups/${followupId}`,
     {
       method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(body),
+    },
+  );
+}
+
+export function updateTicketClassification(
+  ticketId: string,
+  body: ClassificationPatch,
+  idempotencyKey: string,
+) {
+  return request<ClassificationUpdateResult>(
+    `/tickets/${ticketId}/classification`,
+    {
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "Idempotency-Key": idempotencyKey,

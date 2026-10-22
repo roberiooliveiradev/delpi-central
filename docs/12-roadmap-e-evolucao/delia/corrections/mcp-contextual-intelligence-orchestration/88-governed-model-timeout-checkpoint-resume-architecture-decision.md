@@ -119,6 +119,130 @@ Aplicar Clean Architecture + Ports/Adapters e boundary real se alguma nova exten
 
 `PRODUCT_DIRECTION=APPROVED` (uma pergunta, continuidade automática quando tecnicamente suportada); `CAUSE_MAPPING_DEFECT=PROVEN_STATIC`; `EXECUTOR_DEV_BUDGET_STARVATION=REPORTED`; `PROD_ROOT_CAUSE=INCONCLUSIVE`; `CHECKPOINT_RUNTIME=TO_INVENTORY`; `ASYNC_DELIVERY_RUNTIME=TO_INVENTORY`; `RETRY_STAGE_CONTRACT=TO_INVENTORY`; `CONTINUATION_IMPLEMENTED=NO`; `END_TO_END_TEST=TEST_NOT_RUN`; `PRODUCTION_CRI_ON=NOT_VERIFIED`; `I04_ACCEPTED=NO`; `C3_EXECUTED=YES_EXECUTOR_REPORTED`.
 
+### 10.1 CP1+CP2 executados (2026-10-22, relatório 89)
+
+`CP1_INVENTORY=DONE` — mapeamento completo model→attempt→interaction→
+HTTP/NDJSON→MFE registrado no relatório 89; o defeito localizado em 4
+sites (catch de `_StageDeadlineExceeded`/`TurnBudgetExhausted` em
+`attempt()`, budget-skip de identificador, prior-continuation).
+
+`CP2_CLASSIFICATION=FIXED` — novo membro `PROCESSING_TIMEOUT` em
+`GovernedCapabilityStatus`; deadlines/budget nunca mais saem como
+`SOURCE_UNAVAILABLE`; `error_code` preserva `model_timeout`/
+`turn_budget_exhausted`; falha real de MCP permanece
+`SOURCE_UNAVAILABLE`; AUTHZ fail-closed inalterado; insuficiência de
+evidência inalterada. Mensagem terminal honesta ("processamento
+interrompido… não identifiquei falha na fonte"), `message_kind`
+`PROCESSING_TIMEOUT` aditivo ao contrato v1, badge MFE
+"Processamento interrompido" (warning/TimerOff), atividade
+`BLOCKED`/`FAILED`.
+
+`CONTINUITY_INVENTORY=NONE_EXISTING` — sem persistência de
+sessão/turno/atividade (request-scoped by design), sem reconnect, sem
+engine de checkpoint/retry. Reusáveis para CP3: `correlation_id`,
+`prior_turns` (contexto client-supplied), vocabulário ActivityEvent,
+`TurnDeadline`/`stage_timeout`, `InteractiveTurnResult`. CP3 continua
+`ARCHITECTURE_DECISION_REQUIRED` — não existe substrate legítimo de
+persistência hoje.
+
+`END_TO_END_TEST=PARTIAL` — boundary forçado em container real
+(`turn_budget_seconds=0`, wiring real davi/teo/vista) comprova
+`PROCESSING_TIMEOUT` end-to-end; caso natural depende de amostragem de
+latência do modelo. `CHECKPOINT_IMPLEMENTED=NO`,
+`RESUME_IMPLEMENTED=NO`, `PRODUCTION_ACTIVATION=NO`.
+
+### 10.2 CP3 executado (2026-10-22, relatório 90)
+
+`CP3_INVENTORY=DONE` — fluxo completo, matriz de estágios, estado em
+memória, orçamento/transporte, recuperação existente, frontend e reuse
+gate inventariados com evidências do código vigente; caracterização
+executável em `tests/test_c3_ephemeral_continuity_characterization.py`
+(7 testes PASS, sem alterar comportamento).
+
+Fatores determinantes: resultados de estágio vivem como locais de
+`_attempt` e morrem no raise — nunca exportados; o worker NDJSON é a
+vida técnica da interação e o terminal único já é garantido pela fila;
+nginx prod permite 86400s mas Cloudflare ~100s é o teto real (dev
+default 60s); `_repair_once`/`_recover_owner_contract` são precedentes
+de recovery bounded READ-only; `MAX_TIMEOUT_SECONDS=30` é teto duro por
+invocação; sem idempotência no fio MCP; admission/synthesis/
+index_select já degradam honestamente.
+
+`EPHEMERAL_RECOVERY=TARGET` — decisão de produto: perda em refresh/
+restart/disconnect aceita; persistência fora de escopo.
+
+`ARCHITECTURE_DECISION=OPTION_B` — continuação efêmera vinculada ao
+streaming: re-tentativa governada dentro do worker, checkpoint tipado
+interno `_TurnExecutionState` (frontier + ids/refs/argumentos — nunca
+CoT/credenciais), terminal único, cancelamento natural por disconnect,
+zero contrato de fio/frontend novo. Opção A insuficiente (sem janela
+restante quando o estágio esgota 30s); Opção C rejeitada (mesmo
+resultado com store+contrato+dedupe adicionais — registrada como
+fallback). Gate pendente para CP4: constantes explícitas de orçamento
+total por interação (`DELIA_MAX_GOVERNED_ATTEMPTS`,
+`DELIA_INTERACTION_TOTAL_BUDGET_SECONDS`) — o teto de 30s por tentativa
+permanece; PREPARE/ACT nunca resumidos através do invoke.
+
+`CHECKPOINT_RUNTIME=DESIGNED_EPHEMERAL`; `RETRY_STAGE_CONTRACT=DESIGNED`;
+`CONTINUATION_IMPLEMENTED=NO`; `NEXT=CP4_GOVERNED_STAGE_RESUME` —
+ver relatório [90](./90-cp3-ephemeral-continuity-and-llm-recovery-inventory.md).
+
+### 10.3 CP4 executado (2026-10-22, relatório 91)
+
+`CP4_IMPLEMENTED=YES` — continuidade efêmera e governada dentro do
+worker NDJSON existente, sem persistência, fila, scheduler ou nova
+engine. Orçamento aprovado materializado como constantes:
+`MAX_GOVERNED_ATTEMPTS=2` (hard cap), `GOVERNED_ATTEMPT_MAX_SECONDS=30`
+(teto por tentativa não configurável),
+`DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS=60` — um único relógio
+monotônico por interação; a segunda tentativa recebe `min(30s,
+restante)` e nunca reinicia o orçamento.
+
+Mecanismo implementado — **replay de propostas tipadas** (Option B
+refinada): `_AttemptCheckpoint` interno (ContextVar, request-scoped)
+registra propostas de modelo concluídas por fingerprint
+`sha256(instruction_id, input, block)` e outcomes de invoke não-mutantes
+por `sha256(group, remote, args)`. `_model_stage_proposal` repete
+propostas (`decision=resumed`) como dados — nunca autoridade — através
+de todas as portas determinísticas frescas; `_invoke` resolve da
+superfície viva fresca, trava frontier material
+(`mutating_invoke_started` → nunca nova tentativa; PREPARE/ACT/unknown
+executam no máximo uma vez; DISCOVERY/READ/ANALYSIS podem replay de
+outcome provado). Cancelamento: `GeneratorExit` → `disconnect` Event →
+`cancel_check` na fronteira. `ActivityPhase.CONTINUING` emitido somente
+quando a 2ª tentativa inicia (fronteira observada, sem promessa).
+
+`G1_TRANSPORT=PASS` (gthread + eventos contínuos; prod 86400s
+inalterado; dev nginx 120s defensivo; Cloudflare ~100s teto externo);
+`G2_CANCELLATION=PASS` (nenhuma tentativa nova pós-disconnect; terminal
+único); `G3_AUTHORITY=PASS` (revalidação fresca de superfície, schema,
+AuthZ — revogação e capability-change provadas por testes; falha MCP
+real permanece `SOURCE_UNAVAILABLE`; PREPARE/ACT fail-closed);
+`G4_CHECKPOINT=PASS` (tipado, efêmero, request-scoped; sem CoT/credencial/
+permissão presumida).
+
+Testes: `test_governed_stage_resume.py` 14 PASS (cenário obrigatório com
+contadores provando que admission/group/capability selection não se
+repetem e arguments reexecuta 1× extra; negativos cobrindo 2º timeout,
+orçamento esgotado, cancel, frontier mutante, capability removida,
+AuthZ revogada, falha MCP real, legacy OFF, CRI ON/OFF, confirmação);
+regressão backend completa PASS; frontend tsc + 303 PASS.
+
+Avaliação real em dev container (LLM real): `governed_resume
+decision=continue attempt=2` + `model_propose decision=resumed` —
+`select_group=2×`, `interaction_admission=1×`, `CONTINUING=1`, terminal
+único. `REAL_MODEL_EVALUATION=PASS`;
+`REAL_MCP_EVALUATION=TEST_NOT_RUN` (invoke autenticado exige bearer
+delegado dev não provisionado; surface-list real exercitado nas
+tentativas; frontier provider coberta deterministicamente).
+
+`FEATURE_DEFAULT=DELIA_MAX_GOVERNED_ATTEMPTS:-1` (legacy, OFF);
+`DEV_ENABLED=:-2` em `docker-compose.dev.yml`;
+`PRODUCTION_ENABLED=NO` — ativação de prod é decisão separada.
+`CONTINUATION_IMPLEMENTED=YES_EPHEMERAL`;
+`I04_ACCEPTED=NO`; `C3_EXECUTED=YES`;
+ver relatório [91](./91-cp4-governed-stage-resume.md).
+
 ## 11. Execution / review contract
 
 Future execution report must carry: BASE_HEAD/FINAL_HEAD/origin; authorities+CP/RQ; EXISTING_EQUIVALENT/REUSE_DECISION per responsibility; error-code mapping before/after; checkpoint owner/schema/lifetime/storage; state transitions; transport/reconnect; effective authorization and TTL; resume stage; dedup/idempotency; cancellation and budget policy; RED/GREEN; negative safety; independent real-model+real-MCP eval; prod verification; files/commit/ledger; `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`. A failed gate stops only the dependent continuation step; do not silently redesign.

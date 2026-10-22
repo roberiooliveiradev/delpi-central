@@ -144,14 +144,49 @@ class TestOverdue:
         assert result["data"]["overdue"] == 0
         assert result["data"]["pending_overdue"] == 1
 
-    def test_solved_counts_when_glpi_marks_ttr_exceeded(self) -> None:
+    def test_unfinished_statuses_count_and_solved_or_closed_do_not(self) -> None:
+        items = [
+            _ticket(1, sla_ttr_exceeded=True),
+            _ticket(2, sla_ttr_exceeded=True),
+            _ticket(3, sla_ttr_exceeded=True),
+            _ticket(4, sla_ttr_exceeded=True),
+            _ticket(10, sla_ttr_exceeded=True),
+            _ticket(1, sla_ttr_exceeded=False),
+            _ticket(5, sla_ttr_exceeded=True, solved_at="2026-03-01T00:00:00Z"),
+            _ticket(6, sla_ttr_exceeded=True),
+        ]
+        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=8)]))
+        data = result["data"]
+        assert data["overdue"] == 5
+        assert data["open"] == 2
+        assert data["in_progress"] == 2
+        assert data["pending"] == 2
+        assert data["resolved"] == 1
+        assert data["pending_overdue"] == 5
+
+    def test_finished_tickets_without_classification_do_not_null_open_overdue(self) -> None:
+        items = [
+            _ticket(2, sla_ttr_exceeded=True),
+            _ticket(5, solved_at="2026-03-01T00:00:00Z"),
+            _ticket(6),
+        ]
+        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=3)]))
+        data = result["data"]
+        assert data["overdue"] == 1
+        assert data["pending_overdue"] == 1
+        assert data["resolved"] == 1
+        assert result["meta"]["unavailable_indicators"] == []
+
+    def test_only_finished_tickets_are_zero_even_without_classification(self) -> None:
         items = [
             _ticket(5, sla_ttr_exceeded=True, solved_at="2026-03-01T00:00:00Z"),
-            _ticket(6, sla_ttr_exceeded=False),
+            _ticket(6),
         ]
         result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=2)]))
-        assert result["data"]["overdue"] == 1
-        assert result["data"]["resolved"] == 1
+        data = result["data"]
+        assert data["overdue"] == 0
+        assert data["pending_overdue"] == 0
+        assert data["resolved"] == 1
 
     def test_partial_classification_does_not_count_the_known_subset(self) -> None:
         items = [
@@ -174,11 +209,13 @@ class TestOverdue:
             _ticket(4, sla_ttr_exceeded=False),
             _ticket(1, sla_ttr_exceeded=True),
             _ticket(2, sla_ttr_exceeded=False),
+            _ticket(5, sla_ttr_exceeded=True, solved_at="2026-03-01T00:00:00Z"),
         ]
-        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=4)]))
+        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=5)]))
         data = result["data"]
         assert data["pending"] == 2
         assert data["overdue"] == 2
+        assert data["resolved"] == 1
         assert data["pending_overdue"] == 3
 
 

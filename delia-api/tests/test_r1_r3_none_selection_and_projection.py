@@ -191,7 +191,7 @@ def test_t05_model_timeout_is_technical_failure():
         model_ref=TEST_MODEL_REF,
     )
     attempt = orch.attempt("liste")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code in {"model_timeout", "turn_budget_exhausted"}
 
 

@@ -673,9 +673,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                     "READ-only Helpdesk/GLPI demand via BFF. "
                     "action=session|capabilities|tickets (filters+paging)|"
                     "ticket|attachment (metadata only; binary via MCP)|"
-                    "catalog (catalog_kind: categories|urgencies|"
-                    "request_types|users|groups|templates|types|"
-                    "statuses|approval_steps). Knowledge, never AuthZ."
+                    "catalog — see catalog_kind enum for all kinds "
+                    "incl. impacts|priorities|ticket_types. Knowledge, "
+                    "never AuthZ."
                 ),
                 "tags": ["Transformômetro GPT"],
                 "security": [{"BearerAuth": []}],
@@ -721,6 +721,9 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "categories",
                                 "urgencies",
                                 "request_types",
+                                "impacts",
+                                "priorities",
+                                "ticket_types",
                                 "users",
                                 "groups",
                                 "followup_templates",
@@ -2023,6 +2026,7 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                                 "set_assignee",
                                 "add_followup",
                                 "update_followup",
+                                "update_ticket_classification",
                                 "create_task",
                                 "add_solution",
                                 "request_validation",
@@ -2056,8 +2060,43 @@ def build_gpt_actions_openapi(*, server_url: str | None = None) -> dict[str, Any
                             "type": "string",
                             "description": "Required for create_ticket (HTML allowed)",
                         },
-                        "category_id": {"type": "integer"},
-                        "urgency_id": {"type": "integer"},
+                        "category_id": {
+                            "type": "integer",
+                            "description": (
+                                "update_ticket_classification: ITIL category "
+                                "id from gpt_helpdesk_read catalog=categories."
+                            ),
+                        },
+                        "urgency_id": {
+                            "type": "integer",
+                            "description": (
+                                "create_ticket/update_ticket_classification: "
+                                "id from catalog=urgencies."
+                            ),
+                        },
+                        "impact_id": {
+                            "type": "integer",
+                            "description": (
+                                "update_ticket_classification: id from "
+                                "catalog=impacts."
+                            ),
+                        },
+                        "priority_id": {
+                            "type": "integer",
+                            "description": (
+                                "update_ticket_classification: id from "
+                                "catalog=priorities — GLPI may recompute "
+                                "priority from the urgency*impact matrix."
+                            ),
+                        },
+                        "type_id": {
+                            "type": "integer",
+                            "description": (
+                                "update_ticket_classification: ticket type "
+                                "(Incident/Request) id from "
+                                "catalog=ticket_types."
+                            ),
+                        },
                         "observer_ids": {
                             "type": "array",
                             "items": {"type": "integer"},

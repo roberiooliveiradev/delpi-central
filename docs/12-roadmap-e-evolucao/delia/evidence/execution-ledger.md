@@ -17173,3 +17173,206 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+**2026-10-22 — LLM timeout classification + continuity inventory (report 89):** `DELIA-C3-LLM-TIMEOUT-CLASSIFICATION-AND-CONTINUITY-FOUNDATION-01` (doc 88 CP1+CP2). Proven defect: `_StageDeadlineExceeded`/`TurnBudgetExhausted` terminated as `SOURCE_UNAVAILABLE` → "Fonte indisponível" with zero MCP calls. Fix: new `GovernedCapabilityStatus.PROCESSING_TIMEOUT` at the 4 deadline sites; `error_code` preserves the observed cause; honest terminal message never blames the source; additive `PROCESSING_TIMEOUT` message kind (contract v1) + MFE badge "Processamento interrompido"; activity `BLOCKED/FAILED`. Real MCP failure stays `SOURCE_UNAVAILABLE`; authz fail-closed; insufficient evidence distinct. Continuity inventory: no session/turn/activity persistence exists (request-scoped), no reconnect, no checkpoint engine — CP3 remains ARCHITECTURE_DECISION_REQUIRED. Report: [89](../corrections/mcp-contextual-intelligence-orchestration/89-llm-timeout-classification-and-continuity-inventory.md).
+
+```text
+ERROR_CLASSIFICATION=FIXED(deadline→PROCESSING_TIMEOUT, source-blame removed)
+CHECKPOINT_EXISTING_EQUIVALENT=NO
+RESUME_EXISTING_EQUIVALENT=NO
+BACKEND_REGRESSION=PASS(2 pre-existing exclusions documented)
+FRONTEND_REGRESSION=PASS(64)
+REAL_EVAL=PASS(forced-boundary container, real wiring)
+CHECKPOINT_IMPLEMENTED=NO
+RESUME_IMPLEMENTED=NO
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=CP3_ARCHITECTURE_DECISION_REQUIRED
+```
+
+**2026-10-22 — CP3 ephemeral continuity inventory + architecture decision (report 90):** `DELIA-C3-EPHEMERAL-CONTINUITY-AND-LLM-RECOVERY-INVENTORY-01` (doc 88 CP3). Directed inventory only — no runtime change: stage matrix mapped (locals in `_attempt` die at the raise; PROCESSING_TIMEOUT exports only status/correlation/error_code), NDJSON worker = interaction lifetime, prod nginx 86400s vs Cloudflare ~100s edge vs dev default 60s, existing bounded recoveries inventoried (`_repair_once`, `_recover_owner_contract`, admission/synthesis/index_select degradations), `MAX_TIMEOUT_SECONDS=30` hard cap, no idempotency key on MCP wire. Characterization suite `test_c3_ephemeral_continuity_characterization.py` (7 PASS) proves state loss boundary, in-budget retry window and soft degradation of non-timeout provider errors. Decision: Option B — governed re-attempt on the live stream with internal `_TurnExecutionState` checkpoint (typed frontier ids/args, never CoT/credentials), single terminal, natural disconnect cancellation, PREPARE/ACT frontier fail-closed. Option A insufficient (no window when the stage eats the whole 30s); Option C rejected (same outcome with extra store/contract/dedupe). Pending gate for CP4: explicit `DELIA_MAX_GOVERNED_ATTEMPTS` + `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS` constants. Report: [90](../corrections/mcp-contextual-intelligence-orchestration/90-cp3-ephemeral-continuity-and-llm-recovery-inventory.md).
+
+```text
+CP3_INVENTORY=DONE
+ARCHITECTURE_DECISION=OPTION_B(stream-bound governed re-attempt)
+CHECKPOINT=DESIGNED(_TurnExecutionState, ephemeral, internal)
+RUNTIME_CODE_CHANGED=NO
+CHARACTERIZATION=PASS(7)
+PERSISTENT_CONVERSATIONS=OUT_OF_SCOPE
+EPHEMERAL_RECOVERY=TARGET
+CHECKPOINT_IMPLEMENTED=NO
+RESUME_IMPLEMENTED=NO
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=CP4_GOVERNED_STAGE_RESUME(pending budget-constants signoff)
+```
+
+## §6.370 — CP4 governed stage resume implementation (2026-10-22)
+
+**TASK:** DELIA-C3-GOVERNED-STAGE-RESUME-01 (doc 88 CP4, approved budget 22/10/2026). Ephemeral governed stage resume inside the existing NDJSON worker: typed-proposal replay via `_AttemptCheckpoint` (ContextVar request-scoped; model proposals fingerprinted `sha256(instruction,input,block)`; proven non-mutating invoke outcomes `sha256(group,remote,args)`; `mutating_invoke_started` frontier). `attempt()` bounded loop: 1 monotonic `TurnDeadline` per interaction, max `MAX_GOVERNED_ATTEMPTS=2`, per-attempt ceiling `GOVERNED_ATTEMPT_MAX_SECONDS=30` over remaining budget — never resets. Retries only deadline-class failures when `cancel_check` clear and ≥2s remain. G1 gthread+continuous events (prod nginx 86400 unchanged, dev 120s defensive); G2 GeneratorExit→disconnect Event→cancel_check; G3 fresh surface/schema/AuthZ revalidation, PREPARE/ACT/unknown fail-closed once; G4 typed ephemeral checkpoint, no CoT/credentials. New `ActivityPhase.CONTINUING` (observed-boundary signal) + MFE labels. Config: `DELIA_MAX_GOVERNED_ATTEMPTS` (prod `:-1` OFF, dev `:-2`), `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS` (`:-60`). Suite `test_governed_stage_resume.py` 14 PASS (mandatory scenario with call counters + full negative matrix); backend + frontend regression PASS; real dev-container eval: real-LLM timeout at `select_group` → `governed_resume decision=continue attempt=2` + `model_propose decision=resumed`, admission replayed 1×, CONTINUING=1, single terminal. Report: [91](../corrections/mcp-contextual-intelligence-orchestration/91-cp4-governed-stage-resume.md).
+
+```text
+CP4_IMPLEMENTED=YES(ephemeral, stream-bound)
+G1_TRANSPORT=PASS
+G2_CANCELLATION=PASS
+G3_AUTHORITY=PASS(fresh revalidation; PREPARE/ACT fail-closed)
+G4_CHECKPOINT=PASS(_AttemptCheckpoint, ContextVar, no authority)
+MAX_ATTEMPTS=2(hard cap)
+TOTAL_BUDGET=60s(monotonic)
+PER_ATTEMPT_BUDGET=30s(frozen ceiling)
+FEATURE_DEFAULT=OFF(DELIA_MAX_GOVERNED_ATTEMPTS:-1)
+DEV_ENABLED=2
+PRODUCTION_ACTIVATION=NO
+BACKEND_TESTS=PASS(14 new + full regression)
+FRONTEND_TESTS=PASS(303 + tsc)
+REAL_MODEL_EVALUATION=PASS(resume observed; failed stage only re-ran)
+REAL_MCP_EVALUATION=TEST_NOT_RUN(no dev delegated bearer; boundary covered deterministically)
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW(prod activation decision)
+```
+
+## §6.371 — F03-B: fila conversacional efêmera funcional (2026-10-22)
+
+**2026-10-22 — ephemeral conversation queue implementation (F03-B):** `DELIA-UX-F03B-EPHEMERAL-CONVERSATION-QUEUE-IMPLEMENTATION-01`. Autoridade primária: doc 122 §11 (Product Master) — fila temporária em memória, isolada pela conversa ativa; ADRs de identidade/persistência do doc 121/122 explicitamente não reativadas. **Nota de merge:** esta entrada foi commitada em `cff65bb63b` como §6.370 e sobrescrita sem conflito por commits paralelos baseados em ledger anterior; restaurada aqui como §6.371 com o mesmo conteúdo + evidência de produção. **Implementação:** `plugins/delia/src/queue/conversationQueue.ts` (`useConversationQueue`; `PendingConversationRequest{id local, text congelado, createdAt}`; `enqueue/moveItem/removeItem/takeNext/clear`; `takeNext` consome o head atomicamente contra ref antes de qualquer POST — item consumido nunca despachado duas vezes). `App.tsx`: `handleSubmit` envia direto só quando idle+fila vazia; durante in-flight ou com pendências o texto vai ao tail (FIFO); efeito de dispatch dispara o próximo somente em `idle && !queuePaused && !hasPendingConfirmation`, reutilizando `sendTurn`/`submitInteractionTurn` inalterados; `turnsRef` garante contexto fresco com a resposta recém-concluída. `plugin-ui`: `ComposerEnqueueButton` (`ListPlus`, intenção apenas) + `MessageComposer` props aditivas `onEnqueue`/`enqueueLabel` — textarea editável e Enter enfileira durante in-flight somente quando o host admite; Stop preservado como primário cancelável; ditado VD-F05 liberado (`busy=dictating || (inFlight && !onEnqueue)`). **Pausa honesta:** erro HTTP/timeout, Stop do usuário e confirmação governada pendente (`hasPendingConfirmation` derivado de `turns`) bloqueiam avanço; pendências preservadas; zero retry; aviso + ação explícita "Retomar fila" (`PAUSED_AFTER_ERROR`). **Draft:** admissão limpa o draft na hora; falha restaura somente se o draft continuou vazio — conclusão tardia nunca sobrescreve texto novo (bug real encontrado no QA e corrigido). DraftRecovery R1 intacto; enfileirar não cria snapshot. **Isolamento:** estado morre com o mount — full-page↔Dock são mounts separados (`GlobalDeliaDock.tsx` `hostRef`, evidência em código); reload descarta; fixture `?delia-demo-queue=` inerte em produção (paridade provada). `BACKEND_CHANGED=NO`; `PERSISTENCE=NONE`; `QUEUE_SCOPE=ACTIVE_CONVERSATION_MOUNT`; zero storage/endpoint/scheduler/worker. **Testes:** 19 novos (6 unitários hook + 13 integração com contagem de POSTs reais); suítes completas 320/320 delia + 2286/2286 plugin-ui; typecheck/build/federation PASS; Playwright backend real 31/31 local (full-page 19 — ordem A,C,B após reorder, remoção nunca despachada, stop→resume; Dock real 8 — corpo capado 89px≤100px; mobile 360px 4/4). **Deploy:** `cff65bb63b` via `up-prod-sequential.sh --cpu --build` (plugin-ui+delia); bundle verificado no gateway (`local-queue`/`Retomar fila` no chunk `App-Bzh-kyGF.js`); containers saudáveis. **QA autenticado de produção:** sessão real 20/20 (drain A→C→B com reordenação efetiva, stop→pausa→retomada manual, zero chaves de fila em local/session storage) + pausa-por-erro observada ao vivo sob resposta inválida real do backend (pendências preservadas, zero auto-avanço — comportamento especificado). Evidência: [conversation-queue-f03b](conversation-queue-f03b/conversation-queue-f03b-evidence.md). Specs atualizadas: doc 71 §13.8, doc 122 §11 evidência.
+
+```text
+F03B_IMPLEMENTATION=EXECUTED
+QUEUE_STORAGE=MEMORY_ONLY
+QUEUE_SCOPE=ACTIVE_CONVERSATION_MOUNT
+BACKEND_CHANGED=NO
+PERSISTENCE=NONE
+TESTS=PASS
+PLAYWRIGHT=PASS(31/31 local + 20/20 prod autenticado)
+PRODUCTION_DEPLOYMENT=EXECUTED(cff65bb63b; plugin-ui+delia)
+PRODUCTION_BROWSER_QA=PASS(drain A→C→B, stop→resume, zero queue storage; pausa-por-erro ao vivo sob resposta inválida real)
+LEDGER_NOTE=§6.370 sobrescrito por commit paralelo; restaurado como §6.371
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=COORDINATION_REVIEW
+```
+
+## §6.372 — CP5: verificação independente do governed stage resume e remediação (2026-10-22)
+
+**2026-10-22 — CP5 independent verification & targeted remediation:** `DELIA-C3-GOVERNED-STAGE-RESUME-INDEPENDENT-VERIFICATION-01` (doc 91 §6 gates R1–R4). Reancorado em `origin/main=7a043525b4`; CP4 `a2d6576e37` + revisão `5f09a7156a` como referência histórica. **R1 (parcial→remediado):** replay de outcome já revalidava capability/schema/argumentos na superfície viva e a surface-list carrega o bearer delegado (revogação → terminal sem replay); defeito real — outcome parcial/incompleto era checkpointável → registro exige `is_complete`+`COMPLETED`, degradado provoca releitura legítima. **R2 (reproduzido→remediado):** `interaction_end` ancorava na entrada de `attempt()` → `TurnDeadline.started_at` fixa a âncora no início real da interação; fake clock prova 2ª tentativa com 29s (não 30) após 5s pré-orquestrador. **R3 (reproduzido→remediado):** `cancel_check` só na fronteira → `_CANCEL_CHECK`/`_TurnCancelled` nos seams de modelo/surface-list/relist/invoke; nenhuma operação nova após disconnect, in-flight descartado honestamente. Stream NDJSON real ~60s medido: `elapsed=60.4s`, grants `30.0`/`29.6`, `CONTINUING=1`, `turn_result` único. **R4:** `REAL_MCP_EVALUATION=TEST_NOT_RUN` (sem `DEV_PORTAL_*`); P1/P2 com modelo real → insuficiência honesta `NON_GROUNDED`. Regressão: backend completo PASS sem exclusões; `tsc`+vitest 322 PASS (fix de narrowing `let first!:` pré-existente upstream `cff65bb63b` em `conversationQueue.test.ts`). Sem persistência/engine nova; limites 2/60/30 preservados. Report: [92](../corrections/mcp-contextual-intelligence-orchestration/92-cp5-governed-stage-resume-verification.md).
+
+```text
+CP5_VERIFICATION=EXECUTED
+R1_CACHED_OUTCOME=REMEDIATED(complete-only checkpoint; relist=authenticated wire)
+R2_TOTAL_BUDGET=REMEDIATED(started_at anchor; 60s end-to-end proven)
+R3_STREAM_DISCONNECT=REMEDIATED(mid-attempt cancel seams; 60.4s real stream PASS)
+R4_REAL_MCP=TEST_NOT_RUN(DEV_PORTAL creds absent)
+BACKEND_REGRESSION=PASS(full suite, no hidden exclusions)
+FRONTEND_REGRESSION=PASS(tsc + 322 vitest)
+REAL_MODEL_EVALUATION=PASS(2s cap: CONTINUING=1, bounded retries, honest terminal)
+PRODUCTION_ENABLED=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```
+
+## §6.373 — F02-B: ConversationCodeBlock spec review + Markdown B2 gate audit (2026-10-22)
+
+**2026-10-22 — code block visual spec closure + Markdown B2 factual state (documental, sem runtime):** `DELIA-UX-F02B-CODE-BLOCK-VISUAL-SPEC-AND-MARKDOWN-B2-GATE-01`. HEAD auditado `4a6d85286c`. **Inventário de reuso:** renderer `ConversationMarkdown` já emite token `code` como `<pre><code>` inerte e `codespan` inline (`ConversationMarkdown.tsx:55,132`); lexer `marked.lexer` parse-only com bounds 16_384/256/8/16; `token.lang` existe no marked mas **não é tipado** em `MarkdownToken` (extensão aditiva mínima identificada); prior art visual `MarkdownCodeBlock` interno de `MarkdownDocument.tsx` (bar `FileCode2`+lang, `Copy`→`Check` pós-resolve, CSS `delpi-ui-md-doc__code*`) — document-grade, não exportado, erro de clipboard silencioso (spec agora exige estado de erro); padrão clipboard honesto em `ConversationAssistantActions.tsx:110-126`; `IconButton`/`HelpTooltip`/`HintAction` existem; **syntax highlighter AUSENTE** (zero prism/hljs/shiki em package.json — v1 sem highlight). **Markdown B2 estado real:** adaptador `presentation.v2` (`V2_FORMATS`, `markdownSource`, `authorizedLinks`) IMPLEMENTED+TESTED; renderer IMPLEMENTED+TESTED; wiring `DeliaAssistantMessage` (`contentFormat==="markdown_safe"`) IMPLEMENTED; **emissor `markdown_safe` no `delia-api` = zero ocorrências — NOT_IMPLEMENTED** → `markdownEnabled` nunca ativa em fluxo real; `RUNTIME_MARKDOWN_ACTIVATION=OFF`, browser QA B2 `TEST_NOT_RUN`, CP-333 não aceito (doc 91). **Spec fechada:** anatomia bar 30px + pre 12/14px/0.86em/1.55/tab-size 2 + max-height 320/240px, scroll horizontal interno com `white-space:pre`, namespace próprio `delpi-ui-conversation-code-block`, allowlist de labels de linguagem, cópia pós-resolve com erro visível + `aria-live`, sem `execCommand` fallback, matriz CB-V01..V15 com métodos. Decisão registrada no doc 96 §9.12: `CODE_BLOCK_VISUAL_SPEC=READY`, `REUSE_DECISION=EXTEND`, `MARKDOWN_B2=GATED`, `STANDALONE_RENDER_COMPONENT=AUTHORIZED_CANDIDATE`, `DELIA_RUNTIME_ACTIVATION=BLOCKED`. Menor próximo slice delimitado: `ConversationCodeBlock` + `lang?: string` + delegação no case `code` + CSS + testes — inerte atrás de `enabled`, sem emissor backend.
+
+```text
+F02B_SPEC_REVIEW=EXECUTED
+CODE_BLOCK_VISUAL_SPEC=READY
+EXISTING_EQUIVALENT=YES
+REUSE_DECISION=EXTEND
+MARKDOWN_B2=GATED(emitter_v2_absent)
+DELIA_RUNTIME_ACTIVATION=BLOCKED
+RUNTIME_CHANGED=NO
+TESTS=TEST_NOT_RUN
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=BOUNDED_IMPLEMENTATION_TASK(ConversationCodeBlock, inerte, gated)
+```
+
+## §6.374 — Ollama-only local LLM testing foundation (2026-10-22)
+
+**2026-10-22 — política Ollama-only implementada e validada no ambiente dev autorizado:** `DELIA-C3-OLLAMA-ONLY-LOCAL-LLM-TESTING-01`. Autoridade primária: `local-llm-testing-policy-ollama-2026-10-22.md` (decisão de produto aprovada). **Implementação:** `settings.py` passa a validar política local (em `DELIA_ENV` não-produtivo, provider real só admite endpoint Ollama local `ollama|localhost|127.0.0.1:11434` + `DELIA_LLM_MODEL` presente); `root_composer.py` ganha gate environment-aware fail-closed (config externa/incompleta em dev → handler ausente, sem fallback; produção inalterada); `tests/conftest.py` adiciona guard de socket bloqueando egress a hosts externos de LLM mesmo com adapter construído diretamente; nova suíte `test_local_llm_egress_guard.py` cobre os 7 cenários RED/GREEN exigidos (provider externo em perfil local, Ollama indisponível, modelo ausente, endpoint inválido, schema incompatível, fallback externo, config ausente); `test_real_provider_adapter.py` declara `DELIA_ENV=production` onde wiring externo é legal; `test_i04_provider_neutral_generalization.py` remove asserts hardcoded de Kimi; evals `real_model_eval`, `real_model_continuity_eval`, `cp4_governed_resume_eval`, `cp5_incident_repro_eval` deixam de resolver `KIMI_*` e exigem `DELIA_LLM_*` explícito; novo `scripts/ollama_local_llm_eval.py` mede purpose/latência/tokens/decisão por chamada via orquestrador real; `infra/.env.dev.example` documenta o bloco `DELIA_LLM_*` Ollama sem segredos. **Inventário medido:** `delpi-ollama` 0.40.8, volume `infra_ollama_data`, 16 threads, WSL ~7GiB, cap container ~4.4GiB, RTX 3050 presente mas não passada (inferência CPU-only, `llamacpp`, ctx efetivo 4096). **Seleção por medição:** `qwen2.5:1.5b` REJEITADO (fabricou número de processo em "qual o ultimo processo cadastrado?" → NON_GROUNDED correto mas modelo inseguro; ~50% non-JSON no answer stage); `qwen2.5:3b` (Q4_K_M, 3.1B) SELECIONADO com limitações classificadas — classificação operacional correta (`o mcp davi`, controle CRI → `requires_owner_surface=True/operational`), zero fabricação observada, resposta honesta em `use o davi`; admission ocasional >6s sob CPU-only → `PROCESSING_TIMEOUT`/`BLOCKED` honestos; continuity 1/5 PASS (caso de segurança completo: injection/secret/fact/authority boundaries), restante `invalid_model_output`/`model_timeout`. **Custo:** `EXTERNAL_LLM_LOCAL_EGRESS=BLOCKED`, `EXTERNAL_FALLBACK=NONE`, `EXTERNAL_MODEL_CALLS=0`, `COST_EXTERNAL=0`, `LOCAL_MODEL_CALLS=16`. **Verificação:** 72 focados PASS + ~1190 backend completos PASS; CRI ON/OFF preservado; resume governado inalterado. `PRODUCTION_LLM_CONFIGURATION=UNCHANGED`. Relatório: `93-ollama-only-local-llm-testing-foundation.md`.
+
+```text
+TASK_ID=DELIA-C3-OLLAMA-ONLY-LOCAL-LLM-TESTING-01
+LOCAL_MODEL=qwen2.5:3b (Q4_K_M, CPU-only)
+EXTERNAL_LLM_LOCAL_EGRESS=BLOCKED
+EXTERNAL_FALLBACK=NONE
+COST_EXTERNAL=0
+STRUCTURED_OUTPUT=PARTIAL(admission ok; answer-stage ~40% non-JSON)
+SEMANTIC_EVAL=PASS_WITH_LIMITS
+MULTITURN_EVAL=1/5
+REGRESSION=PASS(~1190)
+PRODUCTION_LLM_CONFIGURATION=UNCHANGED
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```
+
+
+## §6.375 — F02-C: ConversationCodeBlock implementado e verificado (2026-10-22)
+
+**2026-10-22 — componente compartilhado inerte + integração ao renderer governado:** `DELIA-UX-F02C-CONVERSATION-CODE-BLOCK-SHARED-IMPLEMENTATION-01`. Base reancorada `5ba8c24275`. **Implementação:** `ConversationCodeBlock` novo em `plugins/plugin-ui/src/components/conversation/` — `role="group"` + bar ~30px (`FileCode2`+label lang) + `pre` rolável (`role="region"`, `tabIndex=0`, `white-space:pre`, `tab-size:2`, max-height 320/240px); cópia honesta pós-resolve com estado de erro + `aria-live` único e descarte de respostas fora de ordem (`opRef`), sem `execCommand`; allowlist de linguagens + sanitização ≤20 chars; `labels` override sem subsistema i18n. `MarkdownToken` ganhou `lang?: string` (aditivo); `ConversationMarkdown` case `"code"` delega ao componente — mesmo gate `enabled`, sem parser/renderer paralelo. CSS próprio `delpi-ui-conversation-code-block` importado por `styles.css` com guarda de especificidade sobre `code{white-space}` do renderer. Export público + `REQUIRED_HOST_EXPORTS`. Fixture QA `markdown_code` adicionado em `demoMode.ts` (mesmo gate demo — produção nunca admite). **Verificação:** vitest plugin-ui 2315/2315 (+29), delia 322/322; tsc ambos 0; build + `verify-host-exports` OK (componente no chunk federado); Playwright 46/46 sobre fixture isolada (6 blocos, linguagens, HTML inerte, scroll interno com linha 300 chars sem overflow de página, cópia real com permissão + rejeição + indisponível, teclado, mobile 320–420, tema escuro, reduced-motion, dock-width, zero POST backend). **Gates:** `MARKDOWN_B2_RUNTIME=OFF` inalterado — emissor `markdown_safe` inexistente no delia-api; CP-333 não aceito; `BACKEND_CHANGED=NO`. Ajuste de teste necessário: seletor `svg` do teste de inércia refinado para `svg:not(.lucide)` (ícones do chrome do componente).
+
+```text
+F02C_IMPLEMENTATION=EXECUTED
+COMPONENT=ConversationCodeBlock (plugin-ui, público)
+MARKDOWN_DELEGATION=YES
+VITEST=PASS(2315+322)
+BROWSER_QA=PASS(46/46 fixture)
+CB_V01_V15=PASS
+MARKDOWN_B2_RUNTIME=OFF
+CP_333=NOT_ACCEPTED
+BACKEND_CHANGED=NO
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=MARKDOWN_B2_PRODUCER_TASK(independente: emissor v2 + contrato + QA + CP-333)
+```
+
+## §6.376 — R4: verificação pós-resume com MCP autenticado real (2026-10-22)
+
+**2026-10-22 — resíduo `REAL_MCP_EVALUATION` do CP5 fechado com identidade delegada legítima:** `DELIA-C3-GOVERNED-RESUME-R4-AUTHENTICATED-MCP-VERIFICATION-01`. **Credential gate:** `DEV_PORTAL_*` do bootstrap canônico → password grant `delpi-central` (HTTP 200, 300s) → troca RFC 8693 via client confidencial `delia-api` (`sub` preservado, `azp=delia-api`, `mcp:tools`, `aud` com `delpi-central`+resource URL+`mcp-api-delpi`) — presence-only, nenhum token impresso. **RED→GREEN ambiental:** `tools/list` autenticado falhava `mcp_authentication_failed` apesar do token válido; causa-raiz = issuer mismatch (`DELIA_TOKEN_EXCHANGE_URL` ia ao backchannel `keycloak:8080`, que estampa `iss` com porta interna; resource servers validam `iss=http://localhost/auth/...`). Fix candidato `KC_HOSTNAME_STRICT/BACKCHANNEL_DYNAMIC` descartado (verificado: `iss` interno persistia `:8080`); fix real = `docker-compose.dev.yml` passa `DELIA_TOKEN_EXCHANGE_URL` default pela rota pública `delpi-gateway` (env-overridable, mesmo padrão prod). GREEN: `tools/list` PASS nos 3 MCPs (DAVI=2, TÉO=23, VISTA=12). **Cadeia real com Ollama `qwen2.5:3b`:** S1 READ real GROUNDED (`vista.list_playlists`, playlist real no conteúdo, 60,03s, `CONTINUING=1`); S2 timeout injetado em `select_capability` → `CONTINUING` → 2ª tentativa → READ real `GROUNDED` (15,03s); S3 timeout injetado após outcome → `mcp_invoke_calls` ficou 1 (READ nunca reexecutado); S4 usuário desabilitado entre tentativas → retomada reusou credencial já trocada (ver finding); S5 bearer forjado → 3 trocas recusadas → `BLOCKED`; S6 `unknown_capability`; S7 `mcp_unavailable` (endpoint morto real); S8 PREPARE/ACT live nunca invocados, forjado → `unknown_capability`; S9 cancelamento → `BLOCKED` 0,96s; S10 `davi.discover_delpi_information` real com args inválidos → `mcp_protocol_error` (owner autoritativo). **Finding documentado (sem patch):** `InMemoryDelegatedTokenCache` reutiliza a credencial do turno na retomada — probe prova troca nova com usuário desabilitado → `invalid_request` (fail-closed) e grant → `invalid_grant`; desabilitar mid-turn não propaga. Decisão de arquitetura pendente. **Regressão:** 127 testes focados PASS. Relatório: `94-r4-authenticated-mcp-post-resume-verification.md`; doc 92 §12 aponta o fechamento.
+
+```text
+TASK_ID=DELIA-C3-GOVERNED-RESUME-R4-AUTHENTICATED-MCP-VERIFICATION-01
+DELEGATED_CREDENTIAL_GATE=PASS(sub-preservado,azp=delia-api,mcp:tools)
+AUTHZ_VERIFIED=YES(live exchange + issuer fix dev-only)
+MODEL_PROVIDER=OLLAMA(qwen2.5:3b, external_calls=0, cost=0)
+REAL_MCP_INVOCATION=YES(vista.list_playlists; davi.discover_* refuse-invalid-args)
+POST_RESUME_READ=YES(GROUNDED na 2ª tentativa governada)
+READ_OUTCOME=AUTHORITATIVE(dados reais; invoke_count=1, sem replay)
+REVOCATION_TEST=EXECUTED_OBSERVED_BEHAVIOR(troca nova fail-closed;
+    credencial do turno reusada — finding de arquitetura)
+PREPARE_ACT_SAFETY=PASS(0 invokes PREPARE/ACT; forged→unknown_capability)
+MAX_ATTEMPTS=2 / TOTAL_BUDGET=60s / PER_ATTEMPT=30s — preservados
+SECURITY_NEGATIVES=PASS(forged bearer, unadvertised capability, dead MCP,
+    invalid args, cancellation — todos honest-terminal)
+REGRESSION=127 focused PASS
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+NEXT=ARCHITECTURE_COORDINATION(delegated-credential intra-turn reuse decision)
+```
+
+## §6.377 — CRI ativado em produção; resposta natural verificada (2026-10-22)
+
+**2026-10-22 — `DELIA-C3-CRI-PRODUCTION-ACTIVATION-AND-NATURAL-RESPONSE-VERIFICATION-01`:** inventário no host real (`srv-api`) provou CRI **desligado** em prod: flag ausente → injeção vazia → `fail_closed reason=invalid_env_value` → `decision=baseline` em todos os turns. A prosa mecanizada do incidente era o render baseline (`_render_synthesis`), não o CRI. **Fix no owner canônico** (`orchestration.py`): UUID `id` perde a âncora para código de negócio; rótulos não mapeados humanizam a chave raw (mojibake `Codigoprocesso` eliminado); folhas UUID suprimidas do single-record; mesma humanização aplicada ao baseline fallback (`_detail_lines`/`_clause_prefix`). RED→GREEN: +2 testes E3, suite completa verde. **Release governado:** `d3de1b9c8` → `origin/main` → pull ff no host → `.env` backup + `DELIA_RESPONSE_INTELLIGENCE_ENABLED=true` → `up-prod-sequential.sh --build delia-api` → imagem `d543c6a7b358` → startup `requested=cri effective=cri`, instruction v2 (`d5d0f75d`), vocabulary v3 (`24d6c126`), healthy. **Saída natural determinística:** `O registro mais recente entre os retornados foi PROC-0080 — Monitoramento e Análise dos Indicadores de Estoque.` + limitação explícita (fonte não prova alteração; cobertura não provada → sem claim de "último global"). Rollback: backup `.env` + imagem anterior no host + recreate `--no-deps`. **Residual:** smoke real aguarda sessão de usuário legítimo (sem credencial de teste em prod). Relatório: `95-cri-production-activation-and-natural-response-verification.md`.
+
+```text
+TASK_ID=DELIA-C3-CRI-PRODUCTION-ACTIVATION-AND-NATURAL-RESPONSE-VERIFICATION-01
+FINAL_HEAD=d3de1b9c832b31b439125b7f87ee60040ee6af2e (+docs)
+PRODUCTION_BACKEND_SHA=d3de1b9c8 PRODUCTION_IMAGE=d543c6a7b358
+CRI_REQUESTED=cri CRI_EFFECTIVE=cri (v2/v3, sha256 logged)
+MECHANICAL_RESPONSE_ROOT_CAUSE=flag vazia→fail_closed→baseline
+    _render_synthesis + 2 defeitos E3 reais corrigidos
+NATURAL_RESPONSE_EVAL=PASS(business-code anchor, pt-BR date,
+    limitation sentence, no snake_case/UUID/ISO)
+SUPERLATIVE_ORDERING=NEVER_CLAIMED_GLOBAL(coverage unproven→
+    insufficiency message)
+PRODUCTION_DEPLOYED=YES PRODUCTION_SMOKE=PENDING_PRODUCT_MASTER
+ROLLBACK_READY=YES
+LOCAL_MODEL_PROVIDER=OLLAMA EXTERNAL_LLM_LOCAL_CALLS=0
+EXECUTOR_VERDICT=CRI effective in prod runtime; literal-question
+    smoke awaits real user turn
+```

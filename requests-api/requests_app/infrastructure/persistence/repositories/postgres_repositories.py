@@ -324,10 +324,11 @@ class PostgresRequestRepository(RequestRepositoryPort):
                 "r.request_number ILIKE %s ESCAPE '\\' "
                 "OR COALESCE(r.payload->>'party_name', '') ILIKE %s ESCAPE '\\' "
                 "OR COALESCE(r.payload->>'party_code', '') ILIKE %s ESCAPE '\\' "
-                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\'"
+                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'title', '') ILIKE %s ESCAPE '\\'"
                 ")"
             )
-            params.extend([pattern, pattern, pattern, pattern])
+            params.extend([pattern, pattern, pattern, pattern, pattern])
         where_sql = " AND ".join(where)
         count_sql = f"""
         SELECT COUNT(*) AS total
@@ -420,10 +421,11 @@ class PostgresRequestRepository(RequestRepositoryPort):
                 "r.request_number ILIKE %s ESCAPE '\\' "
                 "OR COALESCE(r.payload->>'party_name', '') ILIKE %s ESCAPE '\\' "
                 "OR COALESCE(r.payload->>'party_code', '') ILIKE %s ESCAPE '\\' "
-                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\'"
+                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'title', '') ILIKE %s ESCAPE '\\'"
                 ")"
             )
-            params.extend([pattern, pattern, pattern, pattern])
+            params.extend([pattern, pattern, pattern, pattern, pattern])
         where_sql = " AND ".join(where)
         count_sql = f"""
         SELECT COUNT(*) AS total

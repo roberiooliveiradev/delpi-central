@@ -1549,3 +1549,179 @@ def test_update_followup_idempotent_replay():
     assert second.status_code == 200
     # Replay hits the idempotency store — GLPI sees a single write.
     assert len(glpi.updated_followups) == 1
+
+
+def test_update_classification_urgency_only():
+    client, glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 5},
+        headers={**auth_headers(), "Idempotency-Key": "cls-1"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["urgency_id"] == 5
+    assert body["urgency"] == "Muito alta"
+    assert body["priority_id"] == 3  # untouched field keeps current value
+    assert body["updated_fields"] == ["urgency_id"]
+    assert glpi.classification_writes == [(7, 5, None, None, None, None, None)]
+
+
+def test_update_classification_multiple_fields():
+    client, glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 4, "category_id": 3, "type_id": 2, "impact_id": 5},
+        headers={**auth_headers(), "Idempotency-Key": "cls-2"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["category_id"] == 3
+    assert body["type_id"] == 2
+    assert body["type_name"] == "Requisição"
+    assert body["impact_id"] == 5
+
+
+def test_update_classification_requires_at_least_one_field():
+    client, glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/7/classification",
+        json={},
+        headers={**auth_headers(), "Idempotency-Key": "cls-3"},
+    )
+    assert response.status_code == 422
+    assert glpi.classification_writes == []
+
+
+def test_update_classification_rejects_invalid_ids():
+    client, glpi = build_client()
+    link(client)
+    for body in (
+        {"urgency_id": 9},
+        {"urgency_id": 0},
+        {"impact_id": 6},
+        {"type_id": 7},
+        {"priority_id": 9},
+        {"category_id": 999},  # not in the GLPI catalog
+    ):
+        response = client.patch(
+            "/tickets/7/classification",
+            json=body,
+            headers={**auth_headers(), "Idempotency-Key": "cls-4"},
+        )
+        assert response.status_code in {422}, (body, response.status_code)
+    assert glpi.classification_writes == []
+
+
+def test_update_classification_rejects_unknown_field():
+    client, glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 5, "hack": 1},
+        headers={**auth_headers(), "Idempotency-Key": "cls-5"},
+    )
+    assert response.status_code == 422
+    assert glpi.classification_writes == []
+
+
+def test_update_classification_requires_idempotency_key():
+    client, _glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 5},
+        headers=auth_headers(),
+    )
+    assert response.status_code == 400
+    assert response.json()["error"] == "idempotency_key_required"
+
+
+def test_update_classification_missing_ticket():
+    client, glpi = build_client()
+    link(client)
+    response = client.patch(
+        "/tickets/99/classification",
+        json={"urgency_id": 5},
+        headers={**auth_headers(), "Idempotency-Key": "cls-6"},
+    )
+    assert response.status_code == 404
+
+
+def test_update_classification_readback_divergence_fails():
+    client, glpi = build_client()
+    link(client)
+    glpi.classification_applies = False
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 5},
+        headers={**auth_headers(), "Idempotency-Key": "cls-7"},
+    )
+    assert response.status_code == 422
+
+
+def test_update_classification_glpi_forbidden_propagates():
+    from helpdesk_app.domain.errors import GlpiForbidden
+
+    client, glpi = build_client()
+    link(client)
+
+    def _deny(access_token, ticket_id, **kwargs):
+        raise GlpiForbidden("sem permissão")
+
+    glpi.update_ticket_classification = _deny  # type: ignore[method-assign]
+    response = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 5},
+        headers={**auth_headers(), "Idempotency-Key": "cls-8"},
+    )
+    assert response.status_code == 403
+
+
+def test_update_classification_idempotent_replay():
+    client, glpi = build_client()
+    link(client)
+    first = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 4},
+        headers={**auth_headers(), "Idempotency-Key": "cls-9"},
+    )
+    second = client.patch(
+        "/tickets/7/classification",
+        json={"urgency_id": 4},
+        headers={**auth_headers(), "Idempotency-Key": "cls-9"},
+    )
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert len(glpi.classification_writes) == 1
+
+
+def test_classification_catalogs():
+    client, _glpi = build_client()
+    link(client)
+    for path, expected_len in (
+        ("/impacts", 5),
+        ("/priorities", 6),
+        ("/ticket-types", 2),
+    ):
+        response = client.get(path, headers=auth_headers())
+        assert response.status_code == 200
+        assert len(response.json()["items"]) == expected_len
+
+
+def test_ticket_detail_exposes_classification_projection():
+    client, _glpi = build_client()
+    link(client)
+    detail = client.get("/tickets/7", headers=auth_headers())
+    assert detail.status_code == 200
+    body = detail.json()
+    assert body["urgency_id"] == 3
+    assert body["impact_id"] == 3
+    assert body["priority_id"] == 3
+    assert body["type_id"] == 1
+    assert body["type_name"] == "Incidente"
+    assert body["category_id"] == 10
+    assert "can_update_classification" in body

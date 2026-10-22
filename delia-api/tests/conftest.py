@@ -1,6 +1,9 @@
+import socket
+
 import pytest
 
 from app.create_app import create_app
+from app.infrastructure.config.settings import is_local_llm_host
 
 
 @pytest.fixture(autouse=True)
@@ -25,6 +28,33 @@ def _neutralize_ambient_runtime_env(monkeypatch):
     for name in list(os.environ):
         if name in exact or name.startswith(prefixes):
             monkeypatch.delenv(name, raising=False)
+
+
+class ExternalEgressBlockedError(RuntimeError):
+    """Raised when a local test tries to open a non-local TCP connection."""
+
+
+@pytest.fixture(autouse=True)
+def _block_external_network_egress(monkeypatch):
+    """C3-OLLAMA-LOCAL-LLM-TESTING-01: local tests fail closed on any
+    external egress — especially LLM endpoints. No test may consume
+    external model tokens, even when it fails. Loopback/non-global IPs
+    and internal service hostnames (ollama, docker names) stay allowed.
+    """
+    real_connect = socket.socket.connect
+
+    def _guarded_connect(self, address):
+        if isinstance(address, tuple) and address:
+            host = address[0]
+            if isinstance(host, str) and not is_local_llm_host(host):
+                raise ExternalEgressBlockedError(
+                    "local test attempted external network egress to "
+                    f"{host!r}; external LLM providers are prohibited "
+                    "outside production"
+                )
+        return real_connect(self, address)
+
+    monkeypatch.setattr(socket.socket, "connect", _guarded_connect)
 
 
 @pytest.fixture()

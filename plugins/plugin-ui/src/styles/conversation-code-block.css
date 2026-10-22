@@ -1,0 +1,136 @@
+/* @delpi/plugin-ui — inert conversational code block (spec 96 §9).
+   Namespace: delpi-ui-conversation-code-block — tokens do design system,
+   sem realce de sintaxe, sem execução. */
+
+.delpi-ui-conversation-code-block {
+  margin: 0.45em 0;
+  border: 1px solid var(--delpi-ui-border, #d1d5db);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 100%;
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 4%, transparent);
+}
+
+.delpi-ui-conversation-code-block__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--delpi-ui-border, #d1d5db);
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 3%, transparent);
+}
+
+.delpi-ui-conversation-code-block__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--delpi-ui-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--delpi-ui-muted, #6b7280);
+}
+
+.delpi-ui-conversation-code-block__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delpi-ui-muted, #6b7280);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-conversation-code-block__copy:hover {
+  color: var(--delpi-ui-text, #111);
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 7%, transparent);
+}
+
+.delpi-ui-conversation-code-block__copy:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #2563eb);
+  outline-offset: 1px;
+}
+
+.delpi-ui-conversation-code-block__copy--copied {
+  color: var(--delpi-ui-success, #15803d);
+}
+
+.delpi-ui-conversation-code-block__copy--error {
+  color: var(--delpi-ui-danger, #b91c1c);
+}
+
+.delpi-ui-conversation-code-block__pre {
+  margin: 0;
+  padding: 12px 14px;
+  max-width: 100%;
+  max-height: 320px;
+  overflow-x: auto;
+  overflow-y: auto;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--delpi-ui-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+  font-size: 0.86em;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.delpi-ui-conversation-code-block__pre:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #2563eb);
+  outline-offset: -2px;
+}
+
+.delpi-ui-conversation-code-block__pre code {
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  white-space: pre;
+}
+
+/* O renderer conversacional força `code { white-space: break-spaces }` —
+   dentro do bloco fenced a preservação literal (`pre`) vence, com
+   especificidade maior para independência da ordem de imports. */
+.delpi-ui-conversation-markdown .delpi-ui-conversation-code-block__pre,
+.delpi-ui-conversation-markdown .delpi-ui-conversation-code-block__pre code {
+  white-space: pre;
+}
+
+@media (max-width: 480px) {
+  .delpi-ui-conversation-code-block__pre {
+    max-height: 240px;
+  }
+
+  /* Ícone mantém nome acessível (`aria-label`) quando o texto colapsa. */
+  .delpi-ui-conversation-code-block__copy-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-conversation-code-block,
+  .delpi-ui-conversation-code-block__copy {
+    transition: none;
+  }
+}

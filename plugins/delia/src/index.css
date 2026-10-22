@@ -233,6 +233,43 @@
   --delpi-ui-conversation-queue-max-height: 100px;
 }
 
+/* Doc 71/122 (F03-B) — paused-queue notice + explicit resume. Sits
+   between the queue surface and the composer; honest, compact, no
+   claim of backend state. */
+.dashboard-delia .delia-queue-resume {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-end: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--border, #d0d7de);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted, var(--text, #57606a));
+}
+.dashboard-delia .delia-queue-resume__text {
+  flex: 1;
+  min-width: 0;
+}
+.dashboard-delia .delia-queue-resume__action {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--border, #d0d7de);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--primary, #089bdb);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dashboard-delia .delia-queue-resume__action:hover {
+  background: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
+}
+.dashboard-delia .delia-queue-resume__action:focus-visible {
+  outline: 2px solid var(--primary, #089bdb);
+  outline-offset: 2px;
+}
+
 /* Doc 102 R1 — the transient draft-recovery undo affordance is a ghost
    icon in the existing composer toolbar: transparent at rest, subtle
    tonal hover, focus ring inherited from `.delpi-ui-icon-btn`. */

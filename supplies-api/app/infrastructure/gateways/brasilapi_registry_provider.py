@@ -16,10 +16,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import threading
-import time
-from collections import deque
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
 
@@ -39,6 +38,10 @@ from app.domain.supplier_enrichment.models import (
     digits_only,
 )
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.gateways.registry_rate_limits import (
+    InMemoryRegistryRateLimiter,
+    build_registry_rate_limiter,
+)
 
 logger = logging.getLogger("supplies-api.brasilapi_registry")
 
@@ -58,34 +61,31 @@ def _requests_transport(url: str, *, timeout: float) -> Any:
     )
 
 
-class InMemoryRegistryRateLimiter:
-    """Per-key fixed-window query cap (process-local).
+_shared_limiter: Any = None
+_shared_limiter_lock = threading.Lock()
 
-    Limitation: state lives in this process — protection is not shared
-    across workers/replicas. Per-user caps are therefore enforced
-    additionally by the caller where the actor key is known.
+
+def registry_rate_limiter() -> Any:
+    """Process-wide shared query limiter for every provider instance.
+
+    S3.1 rework fixed the per-request limiter lifecycle; S3.2 delegates the
+    backend to ``build_registry_rate_limiter`` — ``process_local`` (default,
+    single-worker only) or ``distributed`` (Redis shared across workers,
+    fail-closed when unavailable).
     """
+    global _shared_limiter
+    if _shared_limiter is None:
+        with _shared_limiter_lock:
+            if _shared_limiter is None:
+                _shared_limiter = build_registry_rate_limiter()
+    return _shared_limiter
 
-    def __init__(self, *, limit_per_minute: int, clock: Callable[[], float] | None = None):
-        self._limit = max(1, int(limit_per_minute))
-        self._window = 60.0
-        self._clock = clock or time.monotonic
-        self._hits: dict[str, deque[float]] = {}
-        self._lock = threading.Lock()
 
-    def check(self, key: str) -> None:
-        now = self._clock()
-        with self._lock:
-            hits = self._hits.setdefault(key, deque())
-            while hits and now - hits[0] >= self._window:
-                hits.popleft()
-            if len(hits) >= self._limit:
-                retry_after = int(self._window - (now - hits[0])) + 1
-                raise RegistryRateLimitedError(
-                    "company registry query limit reached",
-                    retry_after=retry_after,
-                )
-            hits.append(now)
+def reset_registry_rate_limiter() -> None:
+    """Test hook — drop the cached limiter so config changes take effect."""
+    global _shared_limiter
+    with _shared_limiter_lock:
+        _shared_limiter = None
 
 
 class BrasilApiCompanyRegistryProvider(CompanyRegistryProvider):
@@ -109,11 +109,7 @@ class BrasilApiCompanyRegistryProvider(CompanyRegistryProvider):
             else float(getattr(Settings, "BRASILAPI_TIMEOUT_SECONDS", 6) or 6)
         )
         self._transport = transport or _requests_transport
-        self._limiter = rate_limiter or InMemoryRegistryRateLimiter(
-            limit_per_minute=getattr(
-                Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 10
-            )
-        )
+        self._limiter = rate_limiter or registry_rate_limiter()
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
     def fetch(self, tax_id: str) -> ExternalRegistrySnapshot:
@@ -124,7 +120,10 @@ class BrasilApiCompanyRegistryProvider(CompanyRegistryProvider):
             raise RegistryTaxIdInvalidError(
                 "tax id is not a numeric 14-digit CNPJ"
             )
-        self._limiter.check(f"cnpj:{tax_id}")
+        # cnpj key is hashed — full tax ids never appear as observable
+        # storage keys. global aggregates all workers' provider usage.
+        cnpj_key = hashlib.sha256(tax_id.encode()).hexdigest()[:20]
+        self._limiter.acquire_many([("cnpj", cnpj_key), ("global", "all")])
 
         url = f"{self._base_url}/cnpj/v1/{tax_id}"
         try:

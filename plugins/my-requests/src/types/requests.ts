@@ -22,6 +22,8 @@ export type RequestSummary = {
   completed_at?: string | null;
   completed_by_user_id?: string | null;
   completed_by_name?: string | null;
+  /** Presente nas listas mine/work-queue (serializer da API). */
+  payload?: Record<string, unknown> | null;
   allowed_actions: AllowedAction[];
 };
 

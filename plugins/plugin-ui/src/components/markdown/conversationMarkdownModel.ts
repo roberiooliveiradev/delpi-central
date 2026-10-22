@@ -20,6 +20,8 @@ export type MarkdownToken = {
   ordered?: boolean;
   start?: number;
   depth?: number;
+  /** Info-string of fenced code — presentation metadata, never an instruction. */
+  lang?: string;
 };
 
 export const CONVERSATION_MARKDOWN_MAX_SOURCE_LENGTH = 16_384;

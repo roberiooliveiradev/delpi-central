@@ -30,7 +30,10 @@ import {
   HelpTooltip,
   IconButton,
 } from "@delpi/plugin-ui/index";
-import type { ConversationStarterSuggestion } from "@delpi/plugin-ui/index";
+import type {
+  ConversationQueueItem,
+  ConversationStarterSuggestion,
+} from "@delpi/plugin-ui/index";
 import { Undo2 } from "lucide-react";
 import {
   DELIA_ACTIVITY_PENDING_VIEW,
@@ -52,6 +55,7 @@ import {
   demoRemoveItem,
   resolveQueueDemo,
 } from "./demo/queueDemo";
+import { useConversationQueue } from "./queue/conversationQueue";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -170,7 +174,25 @@ export default function App({
   );
   const [suggestionNote, setSuggestionNote] = useState<string | null>(null);
   const [turns, setTurns] = useState<ConversationDisplayTurn[]>([]);
+  // Latest-turns mirror: queued dispatch must build prior-turn context
+  // from the state that already committed — never a stale closure
+  // missing the just-finished response (doc 122 §11 dispatch gate).
+  const turnsRef = useRef<ConversationDisplayTurn[]>([]);
+  turnsRef.current = turns;
   const [loading, setLoading] = useState(false);
+  // Doc 71/122 §11 (F03-B): ephemeral, memory-only conversation queue.
+  // The fixture (`?delia-demo-queue=`) stays a pure VISUAL override —
+  // while it is admitted the real queue affordance is not offered, so
+  // QA states never mix with real pendings.
+  const conversationQueue = useConversationQueue();
+  const pendingQueueItems = conversationQueue.items;
+  /**
+   * PAUSED_AFTER_ERROR: any non-clean end of the in-flight turn
+   * (error, timeout, abort, user stop) freezes automatic dispatch
+   * until the user explicitly resumes — pendings are preserved,
+   * never silently retried or dropped.
+   */
+  const [queuePaused, setQueuePaused] = useState(false);
   // Progressive activity (doc 70 §16): observed events for the
   // in-flight turn only — transient, request-scoped, never persisted.
   const [liveEvents, setLiveEvents] = useState<DeliaActivityEvent[]>([]);
@@ -256,6 +278,37 @@ export default function App({
     if (loading || requestMode !== "idle") invalidateDraftRecovery();
   }, [loading, requestMode, invalidateDraftRecovery]);
 
+  // A governed confirmation awaiting a human decision blocks queue
+  // progression: admission never implies execution authority and the
+  // queue must not auto-advance past an unresolved PREPARE/ACT gate.
+  const hasPendingConfirmation = turns.some(
+    (turn) =>
+      turn.confirmationRequest != null && !turn.confirmationAnswered,
+  );
+
+  // READY_TO_DISPATCH → DISPATCHING: only a clean turn completion
+  // (idle + not paused + no pending governed decision) releases the
+  // head item through the existing sendTurn flow. takeNext consumes
+  // the item atomically BEFORE the POST starts, so an effect re-run,
+  // batched render or Strict Mode replay can never dispatch the same
+  // pending twice. One turn in flight per conversation — always.
+  const takeNextPending = conversationQueue.takeNext;
+  useEffect(() => {
+    if (loading || requestMode !== "idle") return;
+    if (queuePaused) return;
+    if (hasPendingConfirmation) return;
+    const next = takeNextPending();
+    if (!next) return;
+    void sendTurn(next.text, undefined, { type: "MESSAGE" });
+  }, [
+    loading,
+    requestMode,
+    queuePaused,
+    hasPendingConfirmation,
+    pendingQueueItems,
+    takeNextPending,
+  ]);
+
   function handleTimelineScroll(event: ReactUIEvent<HTMLDivElement>) {
     const el = event.currentTarget;
     nearBottomRef.current =
@@ -283,6 +336,7 @@ export default function App({
     command?: DeliaTurnCommand,
   ) {
     if (demoScenario) {
+      setInput((current) => (current === value ? "" : current));
       void sendDemoTurn(value);
       return;
     }
@@ -290,6 +344,11 @@ export default function App({
       setError(TOKEN_UNAVAILABLE_MESSAGE);
       return;
     }
+    // The sent text leaves the draft at admission — while the turn is
+    // in flight the composer is free for the next question (F03-B).
+    // Text the user typed afterwards is never touched; on failure the
+    // message is restored only if the draft is still empty.
+    setInput((current) => (current === value ? "" : current));
 
     const requestEpoch = ++requestEpochRef.current;
     const stopEligible = !confirmation && (!command || command.type === "MESSAGE");
@@ -311,7 +370,7 @@ export default function App({
       const result = await submitInteractionTurn(value, {
         getAccessToken,
         signal: controller.signal,
-        context: buildInteractionContext(turns),
+        context: buildInteractionContext(turnsRef.current),
         workspace: getWorkspaceContext?.() ?? undefined,
         confirmation,
         command,
@@ -365,7 +424,8 @@ export default function App({
           ? null
           : result.result_turn_id,
       );
-      setInput("");
+      // Draft was already cleared at send admission; nothing to do here
+      // — a queued completion never wipes text typed while in flight.
     } catch (submitError) {
       if (requestEpoch !== requestEpochRef.current || controller.signal.aborted) return;
       if (
@@ -374,8 +434,13 @@ export default function App({
       ) {
         return;
       }
-      // The draft stays in the composer — a failed send never loses
-      // what the user typed.
+      // A failed send never loses what the user typed: the message is
+      // restored to the draft only when it is still empty — text typed
+      // after the send is never overwritten (doc 122 §11). A failed
+      // turn also pauses the queue: pendings are preserved, never
+      // auto-retried.
+      setInput((current) => (current.trim() === "" ? value : current));
+      setQueuePaused(true);
       setError(
         submitError instanceof DeliaInteractionError
           ? submitError.message
@@ -410,7 +475,8 @@ export default function App({
     await new Promise((resolve) => setTimeout(resolve, outcome.delayMs));
     setLoading(false);
     if (outcome.error) {
-      // Draft stays in the composer — mirrors the real error path.
+      // Same restore-if-still-empty rule as the real error path.
+      setInput((current) => (current.trim() === "" ? value : current));
       setError(outcome.error);
       return;
     }
@@ -424,7 +490,6 @@ export default function App({
         ? null
         : `demo-delia-${seq}`,
     );
-    setInput("");
   }
 
   function handleStopResponse() {
@@ -440,12 +505,34 @@ export default function App({
     setRespondingTurnId(null);
     setLoading(false);
     setRequestMode("idle");
-    // This is only a local transport stop; backend completion is unknown.
+    // User-stopped turns never auto-continue the queue — pendings wait
+    // for explicit resume. This is only a local transport stop;
+    // backend completion is unknown.
+    setQueuePaused(true);
+  }
+
+  /**
+   * F03-B: admit the current draft into the ephemeral queue. Only a
+   * successful local admission clears the draft — queued text is
+   * frozen at enqueue time and never becomes backend authority.
+   */
+  function handleEnqueue() {
+    const value = input.trim();
+    if (!value) return;
+    conversationQueue.enqueue(value);
+    setInput("");
+    setSuggestionNote(null);
   }
 
   function handleSubmit() {
     const value = input.trim();
-    if (!value || loading) return;
+    if (!value || loading || requestMode !== "idle") return;
+    // A fresh question never jumps ahead of admitted pendings: with a
+    // non-empty queue it joins the tail and the dispatcher keeps FIFO.
+    if (pendingQueueItems.length > 0) {
+      handleEnqueue();
+      return;
+    }
     void sendTurn(value, undefined, { type: "MESSAGE" });
   }
 
@@ -540,6 +627,22 @@ export default function App({
     );
   }
 
+  // Real pendings → ConversationQueueItem view model. Every item in
+  // the list is pending (the in-flight turn was already consumed), so
+  // reorder/remove is always eligible; labels are the user's own text
+  // — never model-derived titles.
+  const queueViewItems: ConversationQueueItem[] = pendingQueueItems.map(
+    (item, index) => ({
+      id: item.id,
+      label: item.text,
+      ordinal: index + 1,
+      status: "queued",
+      canMoveUp: index > 0,
+      canMoveDown: index < pendingQueueItems.length - 1,
+      canRemove: true,
+    }),
+  );
+
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
@@ -581,7 +684,7 @@ export default function App({
 
               <ConversationQueue
                 className="delia-conversation-queue"
-                items={queueDemo?.items ?? []}
+                items={queueDemo?.items ?? queueViewItems}
                 expanded={queueExpanded}
                 loading={queueDemo?.loading}
                 unavailable={queueDemo?.unavailable}
@@ -598,7 +701,7 @@ export default function App({
                               }
                             : d,
                         )
-                    : undefined
+                    : (itemId) => conversationQueue.moveItem(itemId, "up")
                 }
                 onMoveDown={
                   queueDemo
@@ -611,7 +714,7 @@ export default function App({
                               }
                             : d,
                         )
-                    : undefined
+                    : (itemId) => conversationQueue.moveItem(itemId, "down")
                 }
                 onRemove={
                   queueDemo
@@ -621,15 +724,35 @@ export default function App({
                             ? { ...d, items: demoRemoveItem(d.items, itemId) }
                             : d,
                         )
-                    : undefined
+                    : (itemId) => conversationQueue.removeItem(itemId)
                 }
               />
+
+              {queuePaused &&
+              pendingQueueItems.length > 0 &&
+              !loading &&
+              requestMode === "idle" &&
+              !queueDemo ? (
+                <div className="delia-queue-resume" role="status">
+                  <span className="delia-queue-resume__text">
+                    O envio das perguntas pendentes está pausado.
+                  </span>
+                  <button
+                    type="button"
+                    className="delia-queue-resume__action"
+                    onClick={() => setQueuePaused(false)}
+                  >
+                    Retomar fila
+                  </button>
+                </div>
+              ) : null}
 
               <DeliaComposer
                 inputId="delia-interaction-input"
                 value={input}
                 onChange={handleComposerChange}
                 onSubmit={handleSubmit}
+                onEnqueue={queueDemo ? undefined : handleEnqueue}
                 loading={loading}
                 requestMode={requestMode}
                 onStop={handleStopResponse}

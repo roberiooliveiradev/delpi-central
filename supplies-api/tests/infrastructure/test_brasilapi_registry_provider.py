@@ -82,6 +82,7 @@ def _provider(body=None, status=200, headers=None, json_error=False, exc=None):
         base_url="https://brasilapi.test/api",
         timeout_seconds=3,
         transport=transport,
+        rate_limiter=InMemoryRegistryRateLimiter(limit_per_minute=1000),
         clock=lambda: NOW,
     )
     return provider, calls
@@ -290,6 +291,94 @@ def test_provider_limits_repeated_cnpj_queries():
         provider.fetch(TAX_ID)
 
 
+# --- shared limiter lifecycle (S3.1 rework) ------------------------------------
+
+
+def test_default_providers_share_per_cnpj_limiter(monkeypatch):
+    """Rework defect: a fresh limiter per provider instance reset the cap."""
+    from app.infrastructure.config.settings import Settings
+    from app.infrastructure.gateways.brasilapi_registry_provider import (
+        registry_rate_limiter,
+        reset_registry_rate_limiter,
+    )
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 1)
+    reset_registry_rate_limiter()
+    try:
+        p1, _ = _provider(body=_payload())
+        p1._limiter = registry_rate_limiter()  # default resolution
+        p2, _ = _provider(body=_payload())
+        p2._limiter = registry_rate_limiter()
+
+        p1.fetch(TAX_ID)
+        # Second provider instance, same CNPJ — the count must persist.
+        with pytest.raises(RegistryRateLimitedError):
+            p2.fetch(TAX_ID)
+    finally:
+        reset_registry_rate_limiter()
+
+
+def test_factory_resolved_providers_share_limiter(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+    from app.infrastructure.gateways.supplier_enrichment_adapters import (
+        company_registry_provider,
+    )
+    from app.infrastructure.gateways.brasilapi_registry_provider import (
+        reset_registry_rate_limiter,
+    )
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", True)
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 5)
+    reset_registry_rate_limiter()
+    try:
+        p1 = company_registry_provider()
+        p2 = company_registry_provider()
+        assert p1._limiter is p2._limiter
+    finally:
+        reset_registry_rate_limiter()
+
+
+def test_limiter_recovers_after_window():
+    t = [0.0]
+    limiter = InMemoryRegistryRateLimiter(limit_per_minute=1, clock=lambda: t[0])
+    provider, _ = _provider(body=_payload())
+    provider._limiter = limiter
+    provider.fetch(TAX_ID)
+    with pytest.raises(RegistryRateLimitedError):
+        provider.fetch(TAX_ID)
+    t[0] += 61
+    provider.fetch(TAX_ID)  # recovered — no raise
+
+
+def test_limiter_thread_safe_under_concurrency():
+    import threading
+
+    provider, calls = _provider(body=_payload())
+    provider._limiter = InMemoryRegistryRateLimiter(limit_per_minute=3)
+    errors: list[Exception] = []
+    blocked: list[Exception] = []
+
+    def work():
+        try:
+            provider.fetch(TAX_ID)
+        except RegistryRateLimitedError as exc:
+            blocked.append(exc)
+        except Exception as exc:  # noqa: BLE001 - collect for assertion
+            errors.append(exc)
+
+    threads = [threading.Thread(target=work) for _ in range(10)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert not errors
+    assert len(calls) == 3  # exactly 3 transports hit
+    assert len(blocked) == 7
+    assert all(b.retry_after is not None for b in blocked)
+
+
 # --- provider selection ------------------------------------------------------
 
 
@@ -309,11 +398,18 @@ def test_factory_selects_brasilapi(monkeypatch):
     from app.infrastructure.gateways.supplier_enrichment_adapters import (
         company_registry_provider,
     )
+    from app.infrastructure.gateways.brasilapi_registry_provider import (
+        reset_registry_rate_limiter,
+    )
 
     monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
-    assert isinstance(
-        company_registry_provider(), BrasilApiCompanyRegistryProvider
-    )
+    reset_registry_rate_limiter()
+    try:
+        assert isinstance(
+            company_registry_provider(), BrasilApiCompanyRegistryProvider
+        )
+    finally:
+        reset_registry_rate_limiter()
 
 
 def test_factory_unknown_value_fails_closed(monkeypatch):

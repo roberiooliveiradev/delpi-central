@@ -68,6 +68,17 @@ class HelpdeskWritePort(Protocol):
         """PUT /tickets/{id}/followups/{fid} → read-back ``{"id", "content"}``."""
         ...
 
+    def update_ticket_classification(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        body: dict[str, Any],
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """PATCH /tickets/{id}/classification → full read-back detail."""
+        ...
+
     def create_task(
         self,
         authorization: str,

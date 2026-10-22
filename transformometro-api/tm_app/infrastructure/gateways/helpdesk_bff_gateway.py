@@ -43,6 +43,9 @@ CATALOG_PATHS: dict[str, str] = {
     "categories": "/ticket-categories",
     "urgencies": "/urgencies",
     "request_types": "/request-types",
+    "impacts": "/impacts",
+    "priorities": "/priorities",
+    "ticket_types": "/ticket-types",
     "users": "/users",
     "groups": "/groups",
     "followup_templates": "/followup-templates",
@@ -402,6 +405,24 @@ class HelpdeskBffGateway(HelpdeskReadPort, HelpdeskWritePort, TicketVisibilityPo
             f"/tickets/{int(ticket_id)}/followups/{int(followup_id)}",
             authorization,
             json_body={"content": content},
+            idempotency_key=idempotency_key,
+        )
+
+    def update_ticket_classification(
+        self,
+        authorization: str,
+        ticket_id: int,
+        *,
+        body: dict[str, Any],
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """PATCH /tickets/{id}/classification — partial; only the sealed
+        ids are sent so omitted fields keep their GLPI value."""
+        return self._write(
+            "PATCH",
+            f"/tickets/{int(ticket_id)}/classification",
+            authorization,
+            json_body=body,
             idempotency_key=idempotency_key,
         )
 

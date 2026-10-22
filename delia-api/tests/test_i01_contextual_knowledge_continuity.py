@@ -764,9 +764,13 @@ def test_budget_near_limit_terminates_without_timeout_increase():
     )
     assert attempt.status in {
         GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
         GovernedCapabilityStatus.SUCCESS,
     }
-    if attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE:
+    if attempt.status in {
+        GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
+    }:
         assert attempt.error_code in {
             "turn_budget_exhausted",
             "model_timeout",

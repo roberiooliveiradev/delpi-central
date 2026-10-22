@@ -88,6 +88,7 @@ FASE_CORE=(
   postgres-core
   keycloak-db
   postgres-plugins
+  delpi-redis
   keycloak
   core-api
   api-delpi
@@ -181,6 +182,7 @@ FASE_API=(
   production-pulse-api
   tv-dashboard-api
   bpmn-modeler-api
+  external-data-api
 )
 
 FASE_HEAVY=(

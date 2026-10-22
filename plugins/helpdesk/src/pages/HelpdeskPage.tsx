@@ -22,6 +22,9 @@ import {
   getSessionCapabilities,
   getTicket,
   listCategories,
+  listImpacts,
+  listRequestTypes,
+  listTicketTypes,
   listTickets,
   listUrgencies,
   listUsers,
@@ -31,7 +34,9 @@ import {
   setTicketAssignee,
   submitTicketSatisfaction,
   updateFollowup,
+  updateTicketClassification,
   uploadTicketAttachment,
+  type ClassificationPatch,
   type TicketAttachment,
   type TicketDetail,
   type TicketSummary,
@@ -132,7 +137,7 @@ import {
 import { TicketApprovalActionFields } from "./TicketApprovalActionFields";
 import { TicketApprovalsSurface } from "./TicketApprovalsSurface";
 import { TicketContextPanel } from "./TicketContextPanel";
-import { TicketDetailsSurface } from "./TicketDetailsSurface";
+import { TicketDetailsSurface, type ClassificationCatalogs } from "./TicketDetailsSurface";
 import { TicketListCards } from "./TicketListCards";
 import { ticketActionPresentation } from "../presentation/ticketActionPresentation";
 import {
@@ -1181,6 +1186,13 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
   const [followupEditSaving, setFollowupEditSaving] = useState(false);
   const [followupEditError, setFollowupEditError] = useState<string | null>(null);
   const [followupEditKey, setFollowupEditKey] = useState(newIdempotencyKey);
+  /** Governed classification edit — catalogs load lazily on first edit. */
+  const [classificationEditing, setClassificationEditing] = useState(false);
+  const [classificationSaving, setClassificationSaving] = useState(false);
+  const [classificationCatalogs, setClassificationCatalogs] =
+    useState<ClassificationCatalogs | null>(null);
+  const [classificationCatalogsLoading, setClassificationCatalogsLoading] = useState(false);
+  const [classificationKey, setClassificationKey] = useState(newIdempotencyKey);
 
   const conversationHtml = useMemo(() => {
     if (!ticket) return "";
@@ -1324,6 +1336,66 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
       })
       .catch((error) => setErrorText(messageFor(error).text))
       .finally(() => setAssignSaving(false));
+  }
+
+  function beginClassificationEdit() {
+    if (!ticket?.can_update_classification) return;
+    setClassificationEditing(true);
+    setErrorText(null);
+    setClassificationKey(newIdempotencyKey());
+    if (classificationCatalogs || classificationCatalogsLoading) return;
+    setClassificationCatalogsLoading(true);
+    void Promise.allSettled([
+      listCategories(),
+      listUrgencies(),
+      listImpacts(),
+      listTicketTypes(),
+      listRequestTypes(),
+    ])
+      .then(([categories, urgencies, impacts, ticketTypes, requestTypes]) => {
+        const items = (
+          result: PromiseSettledResult<
+            { items: { id: number; name: string }[] } | { id: number; name: string }[]
+          >,
+        ) => {
+          if (result.status !== "fulfilled") return [];
+          const value = result.value;
+          return Array.isArray(value) ? value : value.items;
+        };
+        setClassificationCatalogs({
+          categories: items(categories),
+          urgencies: items(urgencies),
+          impacts: items(impacts),
+          ticketTypes: items(ticketTypes),
+          requestTypes: items(requestTypes),
+        });
+      })
+      .finally(() => setClassificationCatalogsLoading(false));
+  }
+
+  function cancelClassificationEdit() {
+    setClassificationEditing(false);
+  }
+
+  function saveClassification(patch: ClassificationPatch) {
+    if (!ticket?.can_update_classification || classificationSaving) return;
+    if (!patch || Object.keys(patch).length === 0) {
+      setClassificationEditing(false);
+      return;
+    }
+    setClassificationSaving(true);
+    setErrorText(null);
+    void updateTicketClassification(ticketId, patch, classificationKey)
+      .then(async () => {
+        // Authoritative read-back — the UI never trusts the write
+        // response alone; GLPI owns the final classification state
+        // (priority may be recomputed by the urgency×impact matrix).
+        setClassificationEditing(false);
+        setClassificationKey(newIdempotencyKey());
+        await load();
+      })
+      .catch((error) => setErrorText(messageFor(error).text))
+      .finally(() => setClassificationSaving(false));
   }
 
   function beginFollowupEdit(message: { id: string; bodyText: string; bodyHtml?: string | null }) {
@@ -1729,6 +1801,14 @@ function TicketDetailPage({ ticketId }: { ticketId: string }) {
                     onAssignConfirm={assignTechnician}
                     assignSaving={assignSaving}
                     onOpenApprovals={() => setWorkspaceSurface("approvals")}
+                    classificationCatalogs={classificationCatalogs}
+                    classificationEditing={classificationEditing}
+                    classificationSaving={
+                      classificationSaving || classificationCatalogsLoading
+                    }
+                    onClassificationEditStart={beginClassificationEdit}
+                    onClassificationEditCancel={cancelClassificationEdit}
+                    onClassificationSave={saveClassification}
                   />
                 ) : workspaceSurface === "approvals" ? (
                   <TicketApprovalsSurface

@@ -739,7 +739,13 @@ def test_confirm_wrong_session_scope_rejected():
 # --- concorrencia -------------------------------------------------------------
 
 
-def test_confirm_poller_wrote_between_read_and_lock():
+def test_confirm_poller_wrote_newer_count_between_read_and_lock():
+    """Poller persistiu contagem mais nova que a amostra — fail closed.
+
+    Tick a 155 gravou total=55; a amostra da troca diz 140. Ancorar o novo
+    run em 140 recontaria 141-155 atribuidas ao A — a troca e bloqueada e
+    o operador reconfirma com amostra fresca.
+    """
     repo, pulse = FakeRepo(), FakePulse(devices=[dict(DEV)])
     service = make_handoff_service(repo, pulse, _ok_resolution(_op("002", "10")))
     token, run = _start_run(repo, pulse, service)
@@ -750,27 +756,74 @@ def test_confirm_poller_wrote_between_read_and_lock():
     def _lock_then_poller(run_id, *, conn=None):
         locked = original_lock(run_id, conn=conn)
         if locked is not None:
-            # tick do poller persistiu +55 entre a pre-leitura e o lock
+            # tick do poller persistiu counter=155 entre a leitura e o lock
             repo.runs[run_id]["pieces_total"] = 55
             locked["pieces_total"] = 55
+            for seg in repo.segments[run_id]:
+                if seg.get("ended_at") is None:
+                    seg["pieces"] = 55
         return locked
 
     repo.lock_run = _lock_then_poller
     try:
-        response = service.confirm_handoff(
-            run["id"], request_id=str(uuid.uuid4()), branch="01",
-            work_center="CT01",
-            expected_next={"productionOrder": "002", "operationCode": "10"},
-            session_token=token,
-        )
+        with pytest.raises(ProductionRunHandoffConflict) as err:
+            service.confirm_handoff(
+                run["id"], request_id=str(uuid.uuid4()), branch="01",
+                work_center="CT01",
+                expected_next={"productionOrder": "002", "operationCode": "10"},
+                session_token=token,
+            )
     finally:
         repo.lock_run = original_lock
 
-    # observacao pre-lock e stale -> total persistido pelo poller prevalece,
-    # sem correction falsa e sem peca perdida
+    assert err.value.code == "count_boundary_stale"
+    assert repo.runs[run["id"]]["status"] == "running"
+    assert len(repo.runs) == 1
+    assert repo.segments[run["id"]][-1]["ended_at"] is None
+    # amostra fresca no retry: a troca passa com a nova fronteira
+    pulse.devices[0]["counter"] = 160
+    response = service.confirm_handoff(
+        run["id"], request_id=str(uuid.uuid4()), branch="01",
+        work_center="CT01",
+        expected_next={"productionOrder": "002", "operationCode": "10"},
+        session_token=token,
+    )
+    assert response["boundary"]["counter"] == 160
     assert repo.runs[run["id"]]["status"] == "completed"
+
+
+def test_confirm_consolidates_to_sample_newer_than_persisted():
+    """Amostra mais nova que o persistido — consolida e ancora sem gap.
+
+    Integridade: soma dos segmentos do run encerrado == pieces_total
+    persistido, e a ancora do novo run e exatamente a fronteira.
+    """
+    repo, pulse = FakeRepo(), FakePulse(devices=[dict(DEV)])
+    service = make_handoff_service(repo, pulse, _ok_resolution(_op("002", "10")))
+    token, run = _start_run(repo, pulse, service)
+    # tick anterior persistiu counter=140 (40 pecas)
+    repo.update_run_pieces(run["id"], pieces_total=40, open_segment_pieces=40)
+    pulse.devices[0]["counter"] = 155
+
+    response = service.confirm_handoff(
+        run["id"], request_id=str(uuid.uuid4()), branch="01",
+        work_center="CT01",
+        expected_next={"productionOrder": "002", "operationCode": "10"},
+        session_token=token,
+    )
+
     assert repo.runs[run["id"]]["pieces_total"] == 55
-    assert response["completedRun"]["piecesTotal"] == 55
+    segs_a = repo.segments[run["id"]]
+    assert sum(s["pieces"] for s in segs_a) == 55
+    assert segs_a[-1]["end_reason"] == "handoff"
+    new_run = repo.runs[response["newRun"]["id"]]
+    seg_b = repo.segments[new_run["id"]][0]
+    assert seg_b["anchor_counter"] == 155
+    assert response["boundary"] == {"counter": 155, "counterEpoch": 1}
+    delta_events = [
+        e for e in repo.count_events[run["id"]] if e["delta_pieces"] == 15
+    ]
+    assert len(delta_events) == 1
 
 
 def test_confirm_second_distinct_request_after_first_fails():

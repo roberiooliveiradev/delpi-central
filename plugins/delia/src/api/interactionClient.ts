@@ -45,10 +45,11 @@ export type DeliaActivityEvent = {
   outcome_ref?: { status: string; record_count?: number };
 };
 
-/** Closed wire vocabulary (doc 70 §16). */
+/** Closed wire vocabulary (doc 70 §16, doc 90 CP4). */
 const ACTIVITY_PHASES = new Set([
   "REQUEST_RECEIVED",
   "CONTEXTUALIZING",
+  "CONTINUING",
   "CAPABILITY_SELECTED",
   "SOURCE_QUERY_STARTED",
   "SOURCE_QUERY_COMPLETED",

@@ -23,6 +23,9 @@ from tv_app.application.services.tv_dashboard_content_service import (
     heartbeat_interval_sec,
     presentation_setting_int,
 )
+from tv_app.application.services.data.institutional_presentation_sources import (
+    institutional_operations_from_configs,
+)
 from tv_app.application.services.viewport_profile_service import (
     resolve_effective_viewport_px,
 )
@@ -225,12 +228,13 @@ class PresentationPayloadService:
             if transition:
                 item["transitionStyle"] = transition
             if slide["slideType"] == "native":
+                native_config = slide.get("nativeConfig") or {}
                 item["native"] = {
                     "screenKey": slide["nativeScreenKey"],
-                    "config": slide.get("nativeConfig") or {},
+                    "config": native_config,
                     "data": self._native_data.resolve(
                         screen_key=str(slide["nativeScreenKey"]),
-                        config=slide.get("nativeConfig") or {},
+                        config=native_config,
                         authorization=authorization,
                         playlist_id=playlist_id,
                         public_token=public_token,
@@ -240,6 +244,9 @@ class PresentationPayloadService:
                             safe_overrides, filter_overrides, slide
                         ),
                         max_age_seconds=float(global_refresh_sec),
+                        institutional_operation_ids=institutional_operations_from_configs(
+                            [native_config] if isinstance(native_config, dict) else []
+                        ),
                     ),
                 }
             else:

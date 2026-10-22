@@ -222,6 +222,9 @@ class FakeRepo:
             self.count_events = events_backup
             raise
 
+    def now(self, conn=None):
+        return datetime.now(timezone.utc)
+
     def append_count_event(self, *, run_id, pieces_total, delta_pieces,
                            event_type, occurred_at, conn=None):
         if self.fail_next_count_event:

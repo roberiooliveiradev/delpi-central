@@ -99,6 +99,7 @@ FASE_CORE=(
   postgres-core
   keycloak-db
   postgres-plugins
+  delpi-redis
   keycloak
   core-api
   api-delpi
@@ -188,6 +189,7 @@ FASE_API=(
   travel-expenses-api
   production-pulse-api
   bpmn-modeler-api
+  external-data-api
 )
 
 FASE_CHAT=(

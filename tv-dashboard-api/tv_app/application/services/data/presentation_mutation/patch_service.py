@@ -423,6 +423,330 @@ def _collect_side_effect_hints(applied: list[str]) -> list[str]:
     return ordered
 
 
+_RUNTIME_BLOCK_KEYS = frozenset({
+    "resolved",
+    "serverTextProjectionApplied",
+    "url",
+})
+
+# Subárvores que não escolhem fonte, campo, parâmetro ou transformação.
+_PRESENTATION_BLOCK_KEYS = frozenset({
+    "style",
+    "frame",
+    "content",
+    "name",
+    "locked",
+    "hidden",
+    "groupId",
+    "kpiOptions",
+    "kpiParts",
+    "chartParts",
+    "tableParts",
+    "tableOptions",
+    "tablePreset",
+    "inputParts",
+    "shape",
+    "adjustments",
+    "iconName",
+    "assetId",
+})
+
+_TEXT_PROJECTION_DATA_KEYS = frozenset({"field", "aggregation"})
+_TEXT_PROJECTION_PRESENTATION_KEYS = frozenset({
+    "prefix",
+    "suffix",
+    "fallback",
+    "format",
+    "decimalPlaces",
+    "displayFormat",
+    "colorRules",
+    "label",
+})
+
+_KPI_METRIC_DATA_KEYS = frozenset({"field", "aggregation"})
+_KPI_METRIC_PRESENTATION_KEYS = frozenset({
+    "label",
+    "format",
+    "displayFormat",
+    "decimalPlaces",
+    "colorRules",
+    "visible",
+    "target",
+    "comparisonMode",
+    "higherIsBetter",
+})
+
+_CHART_OPTIONS_PRESENTATION_KEYS = frozenset({
+    "displayValueFormat",
+    "displayCategoryFormat",
+    "valueFormat",
+    "decimalPlaces",
+    "categoryLabelFormat",
+    "title",
+    "subtitle",
+    "showTitle",
+    "seriesName",
+    "legend",
+    "showLegend",
+    "colors",
+    "color",
+    "backgroundColor",
+    "xAxisTitle",
+    "yAxisTitle",
+    "showXAxisTitle",
+    "showYAxisTitle",
+})
+
+_TABLE_COLUMN_PRESENTATION_KEYS = frozenset({
+    "label",
+    "visible",
+    "widthPct",
+    "displayFormat",
+    "valueFormat",
+})
+
+_SERIES_DATA_KEYS = frozenset({"field", "aggregation"})
+_SERIES_PRESENTATION_KEYS = frozenset({"label", "color", "plotOn"})
+
+
+def _without_runtime(block: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in block.items() if key not in _RUNTIME_BLOCK_KEYS}
+
+
+def _mapping_requires_resolution(
+    before: Any,
+    after: Any,
+    *,
+    data_keys: frozenset[str],
+    presentation_keys: frozenset[str],
+) -> bool:
+    """True quando o objeto muda dependência de dados ou uma chave não classificada."""
+    if before == after:
+        return False
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return True
+    for key in set(before) | set(after):
+        if before.get(key) == after.get(key):
+            continue
+        if key in presentation_keys:
+            continue
+        if key in data_keys or key not in presentation_keys:
+            return True
+    return False
+
+
+def _content_runs_require_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, list) or not isinstance(after, list) or len(before) != len(after):
+        return True
+    for left, right in zip(before, after):
+        if not isinstance(left, dict) or not isinstance(right, dict):
+            return True
+        for key in set(left) | set(right):
+            if left.get(key) == right.get(key):
+                continue
+            if key in {"text", "style"}:
+                continue
+            if key == "dataRef" and not _mapping_requires_resolution(
+                left.get(key),
+                right.get(key),
+                data_keys=_TEXT_PROJECTION_DATA_KEYS,
+                presentation_keys=_TEXT_PROJECTION_PRESENTATION_KEYS,
+            ):
+                continue
+            return True
+    return False
+
+
+def _metric_list_requires_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, list) or not isinstance(after, list) or len(before) != len(after):
+        return True
+    for left, right in zip(before, after):
+        if _mapping_requires_resolution(
+            left,
+            right,
+            data_keys=_KPI_METRIC_DATA_KEYS,
+            presentation_keys=_KPI_METRIC_PRESENTATION_KEYS,
+        ):
+            return True
+    return False
+
+
+def _kpi_projection_requires_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return True
+    for key in set(before) | set(after):
+        if before.get(key) == after.get(key):
+            continue
+        if key == "metrics" and not _metric_list_requires_resolution(
+            before.get(key), after.get(key)
+        ):
+            continue
+        return True
+    return False
+
+
+def _series_list_requires_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, list) or not isinstance(after, list) or len(before) != len(after):
+        return True
+    for left, right in zip(before, after):
+        if _mapping_requires_resolution(
+            left,
+            right,
+            data_keys=_SERIES_DATA_KEYS,
+            presentation_keys=_SERIES_PRESENTATION_KEYS,
+        ):
+            return True
+    return False
+
+
+def _chart_projection_requires_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return True
+    presentation = frozenset()
+    data = frozenset({"categoryField", "goalField", "goalAggregation", "maxCategories"})
+    for key in set(before) | set(after):
+        if before.get(key) == after.get(key):
+            continue
+        if key == "series" and not _series_list_requires_resolution(
+            before.get(key), after.get(key)
+        ):
+            continue
+        if key in presentation:
+            continue
+        if key in data or key not in presentation:
+            return True
+    return False
+
+
+def _table_projection_requires_resolution(before: Any, after: Any) -> bool:
+    if before == after:
+        return False
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return True
+    for key in set(before) | set(after):
+        if before.get(key) == after.get(key):
+            continue
+        if key != "columns":
+            return True
+        left = before.get(key)
+        right = after.get(key)
+        if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right):
+            return True
+        for column_before, column_after in zip(left, right):
+            if _mapping_requires_resolution(
+                column_before,
+                column_after,
+                data_keys=frozenset({"key"}),
+                presentation_keys=_TABLE_COLUMN_PRESENTATION_KEYS,
+            ):
+                return True
+    return False
+
+
+def _block_change_requires_operational_resolution(
+    before: dict[str, Any] | None,
+    after: dict[str, Any] | None,
+) -> bool:
+    """Fail-closed: só dispensa a consulta quando o diff é exclusivamente visual."""
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return True
+    before_view = _without_runtime(before)
+    after_view = _without_runtime(after)
+    if before_view == after_view:
+        return False
+    if str(before_view.get("type") or "") != str(after_view.get("type") or ""):
+        return True
+    if str(before_view.get("id") or "") != str(after_view.get("id") or ""):
+        return True
+    for key in set(before_view) | set(after_view):
+        if before_view.get(key) == after_view.get(key):
+            continue
+        if key in _PRESENTATION_BLOCK_KEYS:
+            continue
+        if key == "textProjection" and not _mapping_requires_resolution(
+            before_view.get(key),
+            after_view.get(key),
+            data_keys=_TEXT_PROJECTION_DATA_KEYS,
+            presentation_keys=_TEXT_PROJECTION_PRESENTATION_KEYS,
+        ):
+            continue
+        if key == "contentRuns" and not _content_runs_require_resolution(
+            before_view.get(key), after_view.get(key)
+        ):
+            continue
+        if key == "kpiProjection" and not _kpi_projection_requires_resolution(
+            before_view.get(key), after_view.get(key)
+        ):
+            continue
+        if key == "chartOptions" and not _mapping_requires_resolution(
+            before_view.get(key),
+            after_view.get(key),
+            data_keys=frozenset(),
+            presentation_keys=_CHART_OPTIONS_PRESENTATION_KEYS,
+        ):
+            continue
+        if key == "chartProjection" and not _chart_projection_requires_resolution(
+            before_view.get(key), after_view.get(key)
+        ):
+            continue
+        if key == "tableProjection" and not _table_projection_requires_resolution(
+            before_view.get(key), after_view.get(key)
+        ):
+            continue
+        return True
+    return False
+
+
+def _upsert_block_id(op: dict[str, Any]) -> str:
+    block = op.get("block") if isinstance(op.get("block"), dict) else {}
+    return str(op.get("blockId") or block.get("id") or "").strip()
+
+
+def _ops_requiring_operational_resolution(
+    ops: list[Any] | None,
+    before_blocks: list[dict[str, Any]] | None,
+    after_blocks: list[dict[str, Any]] | None,
+    data_ops: frozenset[str],
+) -> list[dict[str, Any]]:
+    before_by_id = {
+        str(block.get("id") or ""): block
+        for block in before_blocks or []
+        if isinstance(block, dict) and str(block.get("id") or "")
+    }
+    after_by_id = {
+        str(block.get("id") or ""): block
+        for block in after_blocks or []
+        if isinstance(block, dict) and str(block.get("id") or "")
+    }
+    required: list[dict[str, Any]] = []
+    for op in ops or []:
+        if not isinstance(op, dict):
+            continue
+        name = str(op.get("op") or "").strip()
+        if name not in data_ops:
+            continue
+        if name != "upsert_block":
+            required.append(op)
+            continue
+        block_id = _upsert_block_id(op)
+        if _block_change_requires_operational_resolution(
+            before_by_id.get(block_id),
+            after_by_id.get(block_id),
+        ):
+            required.append(op)
+    return required
+
+
 class PresentationPatchService:
     """Aplica envelope TvPresentationPatchV1 sobre native_config / playlist."""
 
@@ -449,16 +773,27 @@ class PresentationPatchService:
         try:
             # Sempre dry-run: o redutor não persiste; httpCommands são a saída.
             result = self._run(envelope, user=user, persist=False, authorization=authorization)
-            # Gate executável: mudanças que tocam fontes de dados precisam
-            # resolver o closure afetado no candidate state antes de virar
-            # proposal elegível (commit_now incluso).
-            self._assert_candidate_data_execution(
-                result,
-                envelope.get("ops"),
-                user=user,
-                authorization=authorization,
-            )
-            if include_fingerprint and result.get("nativeConfig"):
+            gated_ops = result.pop("operationalResolutionOps", None)
+            requires_resolution = result.pop("requiresOperationalResolution", None)
+            if requires_resolution is None:
+                requires_resolution = self.mutation_ops_require_data_fingerprint(
+                    envelope.get("ops")
+                )
+                gated_ops = envelope.get("ops")
+            if requires_resolution:
+                # Só o subset que altera dependência de dados. Um upsert visual
+                # no mesmo lote não reabre a validação de todas as fontes.
+                self._assert_candidate_data_execution(
+                    result,
+                    gated_ops,
+                    user=user,
+                    authorization=authorization,
+                )
+            if (
+                include_fingerprint
+                and requires_resolution
+                and result.get("nativeConfig")
+            ):
                 result["fingerprint"] = self._resolve_fingerprint(
                     result["nativeConfig"],
                     user=user,
@@ -520,6 +855,8 @@ class PresentationPatchService:
             )
             result["persisted"] = False
             result["executionMode"] = "crud_http"
+            result.pop("operationalResolutionOps", None)
+            result.pop("requiresOperationalResolution", None)
             return result
         except PresentationPatchError as exc:
             record_presentation_mutation_event(
@@ -1137,6 +1474,14 @@ class PresentationPatchService:
         except ValueError as exc:
             raise PresentationPatchError(str(exc)) from exc
 
+        after_blocks = (
+            _blocks_of(native_config) if isinstance(native_config, dict) else []
+        )
+        operational_ops = self.ops_requiring_operational_resolution(
+            ops, before_blocks, after_blocks
+        )
+        result["operationalResolutionOps"] = operational_ops
+        result["requiresOperationalResolution"] = bool(operational_ops)
         return result
 
     def _apply_safe_layout_corrections(
@@ -1338,6 +1683,41 @@ class PresentationPatchService:
             "upsert_block",
         }
     )
+
+    @staticmethod
+    def mutation_ops_require_data_fingerprint(ops: list[Any] | None) -> bool:
+        """True when the editor ack must resolve operational data.
+
+        Geometry, z-order and style ops do not change data sources. Resolving
+        every source on those commits blocks the visual ack on an unrelated
+        fetch. Data ops keep the fingerprint so the authoritative response can
+        still describe the affected execution.
+        """
+        return any(
+            isinstance(op, dict)
+            and str(op.get("op") or "").strip() in PresentationPatchService._DATA_EXECUTION_OPS
+            for op in ops or []
+        )
+
+    @staticmethod
+    def ops_requiring_operational_resolution(
+        ops: list[Any] | None,
+        before_blocks: list[dict[str, Any]] | None,
+        after_blocks: list[dict[str, Any]] | None,
+    ) -> list[dict[str, Any]]:
+        """Ops do lote que ainda precisam consultar fonte ou modelo.
+
+        ``upsert_block`` permanece no conjunto de ops de dados. A dispensa vale
+        só quando o bloco persistido e o bloco resultante diferem apenas em
+        apresentação. Bloco novo, campo desconhecido ou vínculo alterado
+        continuam no lote.
+        """
+        return _ops_requiring_operational_resolution(
+            ops,
+            before_blocks,
+            after_blocks,
+            PresentationPatchService._DATA_EXECUTION_OPS,
+        )
 
     def _assert_candidate_data_execution(
         self,

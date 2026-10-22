@@ -133,6 +133,11 @@ class RegistryRateLimitedError(Exception):
         self.retry_after = retry_after
 
 
+class RegistryLimiterUnavailableError(Exception):
+    """The configured rate-limit backend is unavailable — fail closed, no
+    external query may be issued."""
+
+
 class RegistryAccessDeniedError(Exception):
     """Provider denied access (403 / anti-bot block)."""
 

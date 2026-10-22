@@ -310,3 +310,274 @@ Esses numeros e a formula sao `PROVEN_SCREENSHOT` **na planilha editada**. Nao p
 **Resultado:** `INVENTORY_WORKFLOW=DOCUMENTED_PARTIAL`; `INVENT_FILTER=PROVEN_SCREENSHOT`; `EXCEL_FORMULA=PROVEN_SCREENSHOT`; `EXCEL_NET_LOSS=-57181.80_OBSERVED`; `SD3010_ORIGIN=SOURCE_REPORTED_TO_VERIFY`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_IMPLEMENTATION=TARGET_DECISION_REQUIRED`.
 
 **Proximo marcador da gravacao: 23:33**, aguardando a continuidade da narracao do PO.
+
+
+## Registro 10 - CPV do Kardex 01, materiais de terceiros e arquivamento (aprox. 23:46-25:46)
+
+**Proveniencia:** relato do PO durante reproducao e capturas de tela Excel e `Salvar como`. `PROVEN_SCREENSHOT` para filtros, campo destacado e arquivos visiveis; `OWNER_REPORTED_VIA_PO` para regra operacional e interpretacao; `TO_INVENTORY` para classificacao tecnica de terceiros e formula canonica. Este registro continua o Registro 09; nao presume que os mesmos filtros/arquivos sejam usados em toda competencia.
+
+### Conferencia de materias-primas de terceiros
+1. Depois de salvar a conciliacao de inventarios, Joici retorna a planilha `cpv 09 26 matriz`, proveniente do Kardex do armazem 01.
+2. PO relata que verifica produtos e materias-primas **em poder de terceiros / fornecidos pelo cliente** usados na estrutura de um produto acabado; nesses casos, ela espera **ausencia de custo proprio** na parcela de material do cliente, para nao inflar o CPV. A formulacao deve ser validada quanto a propriedade, tipo de movimento e custeio; **nao afirmar que todo custo de um PA contendo insumo de terceiro deva ser zero**.
+3. A conferencia ocorre hoje parcialmente por experiencia da executora (relato `feeling`). Capturas mostram uso de `Localizar e substituir` por um codigo de produto e linhas correspondentes no Kardex; ha exemplo de registro que, segundo PO, aparece indevidamente, atribuido a falha/parametrizacao TOTVS. **Bug de ERP nao comprovado por RCA**: registrar como ocorrencia a investigar, sem alterar base ou descartar movimentos automaticamente.
+4. Candidato de verificacao READ no futuro: produto -> estrutura/BOM -> componentes -> indicador canonico de material do cliente/terceiros -> custo do movimento, exibindo excecoes, sinais, competencia, armazem, identificadores e justificativa. **Nao confundir identificacao em cadastro SB1 com prova de propriedade juridica, nem assumir estrutura historica atual = estrutura vigente em 09/2026.** Producer/contract/owner `TO_INVENTORY`.
+
+### Filtro fiscal do CPV e coluna de calculo
+1. PO cita os codigos `5101`, `5124`, `6101` e `6124`. A captura da planilha, ao filtrar a coluna `C.F`, mostra entradas como `5101`, `6101` e codigos de TES como `501`/`614` em coluna adjacente; **nao confundir TES com CFOP** e nao promover conjunto como canonico antes de confirmar os quatro codigos no relatorio/ERP.
+2. Joici seleciona e soma **`SAIDAS CUSTO`** do Kardex 01 para movimentos correspondentes ao filtro fiscal. A captura com coluna selecionada e barra de status do Excel confirma a operacao de soma, mas **nao constitui apuracao definitiva do CPV**; tratamento de devolucoes, estornos, terceiros, periodizacao, custos zerados e arredondamento continua nao verificado.
+3. A planilha `cpv 09 26 matriz` e arquivada na pasta da competencia. A captura mostra arquivo previamente salvo e procedimentos posteriores de salvamento/exportacao; nao declarar que esse proprio arquivo seja a fonte oficial contabil final.
+
+### Relação com indicador CPV ja existente na Minha DELPI
+PO informa que existe calculo de CPV em dashboard de **Suprimentos**. Isso e uma **pista de reutilizacao**, nao prova de que o mesmo escopo, periodo, filtros, sinal, custo medio e tratamento de terceiros reproduzam a soma usada por Joici. Verificar no GitHub o producer/contract e testes do dashboard e confrontar com a conferencia manual. Nao importar domain/application de outro bounded context e nao copiar SQL sem authority `api-delpi`.
+
+### Arquivamento de evidencias
+- Captura mostra estrutura de diretorios `Fechamentos > Componentes > Matriz > 2026 > 09 Set`, com subpasta `Financeiro`; arquivos `99 inventarios` e `cpv 09 26 matriz` aparecem salvos. Esse caminho e apenas evidencia de pratica humana, **nao contrato de armazenamento no Portal**.
+- Em ~25:46, Joici salva tambem o arquivo `TITULOS A RECEBER` na subpasta Financeiro; capturas mostram o dialogo de salvar com nome de arquivo, nao comprovante de envio a terceiros.
+- Para eventual trilha de auditoria digital: competencia, unidade/filial, fonte, versao de extracao, filtros, resultado, operador, data de geracao e identificador do artefato, conforme decisao de owner e retention policy. Nao automatizar persistencia neste gate documental.
+
+### Matriz de verificacao dirigida
+| Questao | Evidencia | Resultado atual |
+|---|---|---|
+| CFOPs 5101, 5124, 6101, 6124 | Relato do PO, `C.F` na captura com 5101/6101 | `DOCUMENTED_PARTIAL`; conjunto completo `TO_VERIFY` |
+| Valor usado para CPV | Coluna `SAIDAS CUSTO` selecionada para soma | `PROVEN_SCREENSHOT` operacao; formula e total reconciliado `INCONCLUSIVE` |
+| Materiais de clientes/terceiros | Explicacao PO, busca por produto no Kardex | `OWNER_REPORTED_VIA_PO`; estrutura historica e propriedade `TO_INVENTORY` |
+| Registro anomalo | Exemplo localizado em planilha, interpretado pela Joici | `INCONCLUSIVE` causa e impacto |
+| Indicador CPV Suprimentos | Informacao PO | `TO_INVENTORY` comparacao de contrato e formula |
+| Salvamentos | Arquivos de inventario/CPV e nome `TITULOS A RECEBER` visiveis | `PROVEN_SCREENSHOT_PARTIAL`; envio `NOT_PROVEN` |
+
+**Estado:** `KARDEX01_CPV_METHOD=DOCUMENTED_PARTIAL`; `THIRD_PARTY_COST_CHECK=OWNER_REPORTED_VIA_PO`; `FISCAL_FILTER=TO_VERIFY`; `CPV_SQL_PARITY=TEST_NOT_RUN`; `SUPPLY_DASHBOARD_REUSE=TO_INVENTORY`; `PORTAL_AUDIT_PERSISTENCE=TARGET_DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**Proximo marcador da gravacao: apos ~25:46.**
+
+
+## Registro 11 - Conferencia de mao de obra direta (MOD), 26:25-29:54
+
+**Fonte e precedencia:** narrativa do PO acompanhando a gravacao e quatro capturas de Excel. Os valores visiveis e operacoes de selecao sao `PROVEN_SCREENSHOT`; finalidade, circulacao entre areas e eventual uso em indicadores sao `OWNER_REPORTED_VIA_PO`. O tema e continuidade da rotina `Faturamento x MOD` registrada em ~06:04; nao foi homologada identidade de todas as saidas no mesmo layout.
+
+### Evidencia operacional
+- Joici abre a planilha de estrutura/custos, com abas `1-FI01` e `2-FI02` para filiais. Colunas visiveis: `PA`, `Seq Comp`, `Cod Produto`, `Desc Produto`, `Qtd Fat.`, `Quantidade`, `Custo Unitario`, `Custo Total`, `Custo Produto` e `Horas`.
+- As linhas incluem produtos acabados e componentes com codigos `MOD...`, descritos como `MAO DE OBRA DIRETA...`, indicando que a planilha associa componentes de mao de obra a produtos/estruturas.
+- Segundo PO, Joici seleciona/filtra itens de mao de obra direta e soma `Custo Total`; uma captura do Excel mostra `Soma: 172.001,37` na barra de status da selecao. **Classificacao: valor observado na selecao, nao total conciliado nem formula DRE homologada.** Confirmar quais abas, filtros e linhas estavam incluidas no intervalo da soma; nao multiplicar ou somar novamente pelo numero de pecas sem regra canonica.
+- Joici relaciona a conferencia a custo esperado vs custo realizado/pago na operacao fisica, conforme relato do PO. As capturas nao mostram sistema de folha/pagamento, apontamentos realizados ou reconciliacao entre previsto, executado e pago; **a correspondencia de cada conceito ainda `TO_INVENTORY`**.
+- PO relata conversao manual de valores numericos importados como texto e travamento do Excel antes de prosseguir no salvamento. Isso e friccao de formato de exportacao, nao regra de negocio a reproduzir no Portal. Nao declarar arquivo final como salvo a partir das capturas deste trecho.
+- Por volta de 29:30, Joici comenta que deveria ter verificado tambem os valores do fechamento de custos ao arquivar os Kardex. Isso reforca um **check de conferencia de valores anterior ao aceite final**, mas sem criterios ou tolerancias comprovados.
+- Este registro termina em ~29:54. Eventuais retomadas posteriores da conferencia de MOD deverao ser vinculadas a este registro, sem presumir fechamento conclusivo.
+
+### Circulacao de informacao e oportunidade transversal fora do escopo atual
+PO descreve o fluxo atual **Joici -> DRE/Controladoria -> Fabiano -> preenchimento manual de indicadores no Google Sheets de Producao -> dashboards**. A identidade do indicador, dono da planilha, formula, fontes, periodicidade e correspondencia com a soma `172.001,37` **nao foram verificadas em codigo ou contrato**.
+- Hipotese `TARGET / CROSS_CONTEXT_DISCOVERY`: substituir, quando comprovada a mesma metrica, a digitacao manual por um producer canonico de dados e integracao via contrato, respeitando boundaries. **Nao escrever direto no dashboard, nao usar Google Sheets como banco de integracao e nao transferir formula para este Portal por copia.**
+- `strategic-indicators-api` preserva ownership das metas/indicadores estrategicos quando aplicavel; `api-delpi` preserva regras SQL/Protheus; identificar owner real do dashboard de Producao. Backends se integram por HTTP/evento/contrato, sem imports de domain/application entre contextos.
+- Pesquisa textual no GitHub nesta rodada, por `mao de obra direta`, `custo MOD`, `MOD producao`, `indicadores producao`, `MOD` e `laborCost`, **nao retornou resultado indexado**. `SEARCH_MISS != ABSENCE`: nao declarar que nao ha indicador, API ou integracao. **Verificacao documental e de codigo do owner continua PENDING.**
+- Descoberta registrada para revisao em padroes de desenvolvimento: sempre mapear indicador manual -> fonte canonica -> contrato -> consumer -> parity/evidencia antes de sugerir duplicacao de dados ou eliminacao de entrada manual. Esta observacao nao altera o padrao oficial congelado nem concede autorizacao de implementacao.
+
+### Afericao pendente para eventual implementacao
+1. Obter arquivo Faturamento x MOD original e comprovante da filtragem de `MOD` por filial, produto, sequencia e periodo; reconciliar soma de 172.001,37 com definicao contábil.
+2. Especificar se o valor corresponde a MOD planejada, custo da estrutura, custo apontado, valor faturado ou efetivamente pago; separar claramente metrica e bases.
+3. Identificar dashboard(s) Producao, origem Google Sheets e contrato de leitura (owner, metrica, competencias, formula).
+4. Confirmar se consulta existente na `api-delpi` entrega esses campos, sem replicar semantica entre contextos.
+5. Definir criterios do check de fechamento referido pela Joici em 29:30 e qual evidencia valida seu aceite.
+
+**Estado:** `MOD_STRUCTURE_EXCEL=PROVEN_SCREENSHOT`; `MOD_SELECTED_SUM_172001_37=PROVEN_SCREENSHOT_PARTIAL`; `MOD_BUSINESS_INTERPRETATION=OWNER_REPORTED_VIA_PO`; `MOD_DRE_PRODUCTION_SHEETS_FLOW=OWNER_REPORTED_VIA_PO`; `PRODUCTION_DASHBOARD_MAPPING=TO_INVENTORY`; `TECHNICAL_PARITY=TEST_NOT_RUN`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**Proximo marcador da gravacao: 29:54.**
+
+
+### Complemento ao Registro 11 - Filtro MOD e recorte mensal (captura ~27:54)
+
+**Esclarecimento do PO:** a emissao do relatorio considera o periodo **do primeiro ao ultimo dia do mes de referencia**. Para analisar **Mao de Obra Direta (MOD)**, Joici usa o filtro da coluna **`Cod Produto`** e seleciona os componentes/codigos `MOD` (familia de codigos que incluem `MOD393` na captura).
+
+**Evidencia de tela:** planilha com abas `1-FI01` e `2-FI02`, colunas `PA`, `Seq Comp`, `Cod Produto`, `Desc Produto`, `Qtd Fat`, `Quantidade`, `Custo Unitario`, `Custo Total`, `Custo Produto` e `Horas`. Na captura, `Cod Produto=MOD393` aparece com descricao `MAQUINA DE CORTE WL603`; selecao de colunas numéricas do Excel aparece destacada. **O destaque numérico nao prova por si so que toda a selecao e exclusivamente MOD, nem a soma do subconjunto.** A coluna `Quantidade` apresenta valores mistos/textuais como `HR 14,22`; nao converter essa friccao de Excel em regra de negocio.
+
+**Regra de conferencia a reproduzir, sujeita a owner:** competencia mensal + filial + componentes classificados como MOD pela autoridade do cadastro/estrutura + agregacao da medida de custo homologada. O filtro textual por prefixo `MOD` e `OWNER_REPORTED_VIA_PO` como procedimento humano; **nao homologar prefixo como criterio tecnico exclusivo** sem verificar classificacao canonica e historico de estrutura. Nao confundir `Custo Total`, `Custo Produto` e `Horas`.
+
+**Verificacao ainda aberta:** confrontar intervalo exato filtrado e medida somada com a captura anterior de `172.001,37`. A captura deste complemento mostra outra selecao/contagem no Excel; seus totais nao substituem automaticamente o valor observado antes.
+
+Estado: `MOD_MONTH_RANGE=OWNER_REPORTED_VIA_PO`; `MOD_PRODUCT_COLUMN=PROVEN_SCREENSHOT`; `MOD_PREFIX_FILTER=OWNER_REPORTED_VIA_PO`; `MOD_TOTAL_RECONCILIATION=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Registro 12 - Conciliacao cruzada MATR320 x P7 completo x Saldo em Processo (30:00-32:21)
+
+**Fonte:** narracao guiada do PO e capturas da gravacao: Excel `matr989` (Saldo em Processo, aba `01-01 - Saldo em Processo (Ana...)`), preview `SIGA/MATR320` e preview do Registro de Inventario P7. Este registro **nao** certifica paridade de tres fontes no banco.
+
+### Finalidade e sequencia AS-IS
+- Joici usa **Saldo em Processo** para identificar valores de materiais/operacoes que ficaram pendentes de apontamento no fechamento.
+- A conferencia de estoque envolve **tres relatorios distintos**: **Resumo das Entradas e Saidas (MATR320)**, **P7 completo (sem o recorte Bloco H)** e **Saldo em Processo Analitico (MATR989)**. Nao trocar o P7 completo pelo P7 de MP/PI/PA destinado a contabilidade.
+- Ela compara o total de Entradas e Saidas com o P7, procura explicar parte do delta com o saldo em processo e, quando nao fecha, investiga parametrizacao, classificacoes, movimentos e apontamentos. Atribuir todo delta a falta de apontamento **nao esta comprovado**.
+- Segundo PO, essa investigacao consome parte substancial do tempo e pode exigir nova execucao das rotinas e novas exportacoes. Materiais de consumo e parametros diferentes sao **hipoteses explicitamente relatadas**, nao causa-raiz confirmada.
+
+### Numeros observados na tela (competencia 09/2026)
+| Origem | Medida/valor visto | Estado |
+|---|---:|---|
+| MATR320 - Resumo Entradas e Saidas, filial MATRIZ, 01/09-30/09 | Saldo Atual / Total Geral **3.890.247,177** (exibicao do relatorio; ~3.890.247,18 com 2 casas) | `PROVEN_SCREENSHOT` |
+| P7 Registro de Inventario, estoque existente em 30/09/2026 | Total Geral **3.776.994,69** | `PROVEN_SCREENSHOT` |
+| Diferenca MATR320 - P7 | **113.252,49** arredondada a 2 casas | `DERIVED_FROM_SCREENSHOTS` |
+| MATR989 Saldo em Processo, Excel selecionado na coluna de valor | Barra de status **Soma: 64.968,42** sobre selecao filtrada; screenshot indica `1577 de 57409 registros localizados` | `PROVEN_SCREENSHOT_PARTIAL` |
+| Diferenca menos valor selecionado MATR989 | **48.284,07** (113.252,49 - 64.968,42), apenas subtracao exploratoria | `DERIVED_NOT_RECONCILED` |
+| Outro valor na planilha de trabalho, proximo da linha 57420 | **48.284,06** aparece nitidamente no recorte ampliado fornecido pelo PO; a formula nao esta visivel | `PROVEN_SCREENSHOT_UNEXPLAINED` |
+
+**ALERTA DE CONSISTENCIA:** o relato menciona diferenca residual de ~48 mil, compativel com a subtracao exploratoria acima, mas a mesma sequencia de imagens mostra **48.284,06** em outra celula, corrigindo erro anterior de leitura de imagem (nao era 40.204,06). A subtracao dos valores arredondados exibidos (113.252,49 - 64.968,42) da **48.284,07**, diferenca de **R$ 0,01** em relacao a celula observada. Pode ser precisao interna/criterio de arredondamento, mas a formula nao esta visivel e a causa nao esta comprovada. Nao presumir que a soma de **64.968,42** represente todo o universo do MATR989 nem declarar formula de conciliacao aprovada. Precisamos inspecionar formulas, filtros, filial, local/armazem, competencia, classes de itens, unidades, estados de apontamento e custos efetivamente comparaveis. Saldos de diferentes relatorios nao sao automaticamente somaveis apenas por estarem expressos em valor.
+
+### Campos visiveis do MATR989
+Planilha com colunas `CODIGO`, `DESCRICAO`, `LC` ou `LO` (cabecalho abreviado; confirmar), `ORDEM PRODUCAO`, `TI` ou `TIP` (confirmar), `QTDE EM` e `VALOR EM PROCESSO` (rotulos truncados). Nao transpor aliases diretamente para nome de coluna de Protheus.
+
+### Proposta de desenho futuro, sem implementacao autorizada
+Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tres valores por competencia/filial, parametros equivalentes, divergencia, parcela explicada, residual e detalhes rastreaveis de movimentos/apontamentos. **Nao** afirmar `MATR320 = P7 + MATR989` como invariante canonica sem evidencia e aceite do owner. O recurso deve diferenciar `divergencia detectada`, `causa em investigacao`, `conciliada` e `indisponibilidade da fonte` e preservar origem/extracao, timestamp e versao.
+
+**Limites com o produto atual:** R03 hoje usa SB9/SB1 como snapshot operacional e nao prova equivalencia ao MATR460/P7 oficial. Portanto nao calcular essa conciliacao somando diretamente os KPIs atuais de R03. `api-delpi` e owner das regras SQL/TOTVS; TEO e owner da evidencia AS-IS; decisao de persistencia, escopo e contratos requer gate explicito.
+
+### Pendencias de verificacao
+1. Obter as exportacoes originais de MATR320, P7 completo e MATR989 da **mesma competencia e escopo** e preservar filtros e parametros de emissao.
+2. Ler a formula exata da celula **48.284,06** e explicar a diferenca de **0,01** ante a subtracao dos valores arredondados, incluindo precisao, filtros ou ajustes.
+3. Identificar o subconjunto de 1.577 registros no MATR989, o significado de `Saldo em Processo` e seus componentes que podem ou nao explicar saldo de estoque.
+4. Comparar por filial, tipo de produto (incluindo ou excluindo material de consumo), armazem e data-base. Diferenciar saldos/fluxos/custos e tratamentos de terceiros.
+5. Mapear chaves de origem e regras de apontamento; aprovar tolerancia, tratamento de diferencas e criterio de aceite com owner de Controladoria e owner de custeio.
+
+**Classificacao:** `THREE_REPORTS_CONFERENCE=OWNER_REPORTED_VIA_PO`; `SCREEN_VALUES=PROVEN_SCREENSHOT`; `DIFFERENCE_113252_49=DERIVED`; `RESIDUAL_48284_07=DERIVED_NOT_RECONCILED`; `EXCEL_RESIDUAL_48284_06=PROVEN_SCREENSHOT_FORMULA_UNVERIFIED`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_CONSOLIDATION=TARGET_DECISION_REQUIRED`.
+
+**Proximo marcador da gravacao: apos ~32:21, a confirmar pelo PO.**
+
+
+### Complemento ao Registro 12 - Triagem de divergencias e possivel reabertura de periodo
+
+**Fonte:** explicacao do PO durante continuidade da gravacao, imediatamente apos a conciliacao com residual exibido de 48.284,06. Tempo exato desta fala ainda nao informado; nao atribuir timestamp inventado.
+
+**Procedimento AS-IS relatado:** quando os tres relatorios nao conciliam, Joici revisa (1) **parametros de emissao dos relatorios**, inclusive filtros e recortes; (2) **movimentacoes e consumos** possivelmente incorretos; e (3) eventual presenca ou efeito de **dados de periodos anteriores** no fechamento atual. Esses sao ramos de investigacao, nao causas ja diagnosticadas do delta atual.
+
+**Condicao operacional relatada:** se a apuracao encontrar problema originado em periodo anterior, pode ser necessario **reabrir o estoque e recalcular o fechamento**, investigando o evento historico responsavel. Nao inferir que qualquer diferenca exige reabertura, nem que Joici efetivamente reabriu o periodo nesta passagem. Reabertura e recálculo sao operacoes potencialmente impactantes no ERP, sujeitas a autorizacao, controles e owners proprios; **nao automatizar no Portal**.
+
+**Candidato de fluxo TARGET, pendente de decisao:** trilha de diagnostico read-only com categorias `report_parameters_mismatch`, `movement_or_consumption_anomaly`, `prior_period_effect` e `undetermined`, cada uma vinculada a evidencia, competencia de origem, movimento/documento e impacto estimado. Se houver hipotese de periodo anterior, exibir dependencias e necessidade de analise/autorizacao humana; nao oferecer botao de reabrir/recalcular sem contrato e gate especificos.
+
+**Pendencias:** criterios objetivos de identificacao de movimentos antigos, historico de recalculos, parametro que altera o escopo e responsabilidade por autorizar reabertura. `ROOT_CAUSE=INCONCLUSIVE`; `HISTORICAL_REOPEN=OWNER_REPORTED_VIA_PO`; `PORTAL_WRITE_ACTIONS=NOT_AUTHORIZED`.
+
+
+## Registro 13 - Conferencia analitica por tipo de material (34:25 em diante)
+
+**Fonte AS-IS:** explicacao guiada do PO sobre Joici e capturas da gravacao por volta de 34:25-35:35. O timestamp indica a etapa da investigacao, nao uma validacao de todos os valores em ERP.
+
+**Metodo praticado:** diante da divergencia da conciliacao geral, Joici abre o **Resumo das Entradas e Saidas (MATR320)** e o **P7 completo, sem filtro Bloco H**, compara seus totais por **tipo de material** e aprofunda a analise na classificacao discrepante, ate chegar a grupos, produtos, movimentos ou parametros potencialmente responsaveis. Essa conferencia **nao se restringe ao P7 de MP/PI/PA enviado a contabilidade**.
+
+**Achado relatado pelo PO:** a categoria **materia-prima (MP)** apresenta uma diferenca percebida ao comparar os dois relatorios. Joici relata que problemas recorrentes podem estar ligados a **material em processo** e materia-prima. Trata-se de heuristica da especialista, **nao** prova de que o material em processo causou a divergencia deste fechamento.
+
+**Evidencia visual:** no MATR320 (matriz, 01/09-30/09/2026), a linha `MP` traz `Saldo Atual` **3.370.493,537** (unidade monetaria descrita no cabecalho como R$). O P7 em preview exibe totais por classes dentro de blocos `EM ESTOQUE` e `EM PROCESSO`; ha item `MATERIA PRIMA` em ambos. **Nao comparar diretamente MP do MATR320 com apenas uma linha de MP do P7 sem confirmar composicao, recorte e parametros**. Nos prints, a leitura precisa de cada sublinha do P7 nao esta homologada; registrar a existencia do detalhamento, mas nao fabricar um delta MP.
+
+**Sequencia de diagnostico candidata (somente leitura):** (1) estabelecer competencia e escopo comum, (2) total geral MATR320 x P7 completo, (3) quebrar por tipo/classificacao e situacao em estoque/em processo, (4) localizar categorias com maiores deltas, (5) detalhar por filial/armazem/produto e rastrear transacoes/apontamentos, (6) considerar historico e parametros, (7) anexar evidencia e concluir `reconciled`, `discrepancy_unexplained` ou `needs_erp_review`. **Nao aprovar esta arvore como formula oficial sem owner e comprovacao de paridade.**
+
+### Conhecimento para eventual assistente de IA (TARGET, sem autorizacao de implementacao)
+- Preservar como **hipotese priorizada por especialista**, com atribuicao `Joici / via PO / timestamp ~34:25`: investigar primeiro materia-prima e saldo em processo quando esses segmentos apresentarem delta.
+- Agente nao deve afirmar causa-raiz, necessidade de reabrir periodo, nem recomendar lancamento corretivo como fato apenas por correspondencia de categoria.
+- Explicar cada sugestao com valores/filtros/linhagem demonstraveis e separar observacao, calculo, heuristica e conclusao homologada. Exigir revisao humana de achados e autorizacao separada para escrita no ERP.
+- Evitar conceito de "treinar IA" diretamente com dados de tela sem governanca: o artefato atual e base de conhecimento rastreavel para recuperacao contextual e regras verificaveis, nao dataset de treinamento aprovado.
+
+**Pendente:** extracoes originais comparaveis, valores de MP em ambos os relatorios, composicao de `EM PROCESSO` e mapeamento de aliases do relatorio para fontes TOTVS via `api-delpi`.
+
+**Classificacao:** `DRILLDOWN_BY_MATERIAL_TYPE=OWNER_REPORTED_VIA_PO`; `MP_DIVERGENCE=OWNER_REPORTED_VIA_PO`; `MP_MATR320_VALUE=PROVEN_SCREENSHOT`; `MP_CAUSAL_LINK_TO_WIP=INCONCLUSIVE`; `AI_ASSISTED_DIAGNOSTICS=TARGET_DECISION_REQUIRED`; `RUNTIME_VALIDATION=TEST_NOT_RUN`.
+
+
+## Registro 14 - Natureza da demonstracao e janela temporal do fechamento (35:48)
+
+**Fonte:** esclarecimento do PO sobre fala da Joici por volta de 35:48. A gravacao retrata uma **demonstracao executada com o mes de referencia ainda em andamento**, nao o fechamento mensal definitivo. O processo mostrado usa dados reais do ERP na demonstracao, mas **nao deve ser tratado como resultado final homologado da competencia**.
+
+**Implicacao AS-IS:** no ultimo dia do mes ainda podem existir baixas, movimentacoes, consumos ou apontamentos a registrar. Joici indica que a conferencia efetiva deve ocorrer **apos a virada para o dia seguinte ao encerramento da competencia**, quando o mes estiver concluido do ponto de vista operacional. A referencia a `00:01` ou `01:00` e exemplificativa na explicacao do PO: **nao ha horario minimo nem janela tecnica de corte oficialmente comprovados**.
+
+**Correcao de interpretacao retroativa:** o delta global de 113.252,49 e o residual em planilha de 48.284,06 vistos nessa sessao **nao provam falha no fechamento de setembro/2026**. Sao diferencas observadas em uma demonstracao antes de a competencia estar definitivamente pronta para fechamento. As hipoteses de parametros, consumo, movimentos tardios e efeitos historicos seguem hipoteses; nao houve RCA conclusivo.
+
+**Candidato TARGET, sujeito a contrato/owner:** distinguir `demonstration_or_preclosing`, `period_ended`, `source_updates_pending` e `ready_for_reconciliation` a partir de evidencias reais (data de referencia, ultimo processamento, completude das fontes e status de rotinas). Nao inferir `ready` apenas porque o calendario passou de meia-noite; nem executar fechamento, recalculo ou reabertura pelo Portal.
+
+**Pendencias:** confirmar horario/criterio oficial de corte, eventual processamento noturno e atrasos de integracao, autoridade para validar completude e regra de negocios de liberacao da conciliacao.
+
+**Classificacao:** `DEMONSTRATION_NOT_FINAL_CLOSE=OWNER_REPORTED_VIA_PO`; `NEXT_DAY_PREFERENCE=OWNER_REPORTED_VIA_PO`; `EXACT_CUTOFF_TIME=TO_INVENTORY`; `SEPTEMBER_VARIANCE_ROOT_CAUSE=INCONCLUSIVE`; `TARGET_READINESS_GATE=PLANNED_DECISION_REQUIRED`.
+
+
+## Registro 15 - Gate de conclusao de custos, P7 contabilidade e reposicao (aprox. 36:10)
+
+**Fonte:** narracao guiada do PO e print TOTVS `Acompanha Custo > Novo fechamento de custo > Analise e revisao`, com botao `Proximo passo` visivel. O print prova a existencia da etapa e do controle, nao que a Joici efetivamente executou o fechamento final nesta demonstracao.
+
+**Sequencia AS-IS relatada:** depois de encerrar a competencia e validar a conciliacao de saldos, parametros, movimentos e custos, Joici retorna a `Acompanha Custos` e pode avancar de `Analise e revisao` para `Fechamento` por `Proximo passo`. **Condicional:** so avancaria no fechamento real se os valores e conferencias estivessem corretos. Como a gravacao representa demonstracao antes do fechamento definitivo, **nao registrar fechamento concluido**.
+
+**P7 entregue a contabilidade:** Joici afirma que utiliza a **ultima pagina / resumo do P7 na configuracao Bloco H**, com escopo de **materia-prima (MP), produto intermediario (PI) e produto acabado (PA)**. Esse documento e diferente do P7 completo usado para verificacoes internas. A interpretacao exata da configuracao fiscal Bloco H, das classificacoes e da competencia depende do contrato e exemplar oficial; nao inferir que um P7 operacional SB9 e equivalente.
+
+**Pecas de reposicao e DRE:** segundo o PO, Joici comenta que pecas de reposicao compradas e nao consumidas podem ser consideradas no resultado contabil da **competencia de compra**, diferentemente da apropriacao pelo consumo aplicada a materia-prima. **Esta e uma afirmacao de pratica/entendimento relatado, NAO regra contabil homologada**: e necessario validar com Contabilidade/Controladoria o conceito de reconhecimento (compra, despesa, estoque, consumo, apropriacao), natureza do item e eventual excecao. Nao implementar contabilizacao nem classificar todas as pecas como despesa automaticamente.
+
+**Dependencia temporal adicional:** ela **aguarda a conclusao da rotina de Custo de Reposicao** para produtos acabados (PA) e intermediarios (PI). Relacao exata entre resultado do recalculo, validacoes e liberacao do gate final permanece por especificar. O fato de ter iniciado a rotina nao equivale a resultado disponivel.
+
+**Candidato TARGET, sem implementacao autorizada:** checklist read-only de fechamento com evidencias de conciliacao, completude de competencia, revisao de variacoes do custo medio, processamento de custo de reposicao PA/PI e envio do P7 Bloco H. Acoes de fechar/reabrir/recalcular TOTVS requerem owner, contrato, permissao e decisao explicitos; nao disparar via Portal neste mapeamento.
+
+**Classificacao:** `FINALIZATION_SEQUENCE=OWNER_REPORTED_VIA_PO`; `NEXT_STEP_CONTROL=PROVEN_SCREENSHOT`; `FINAL_CLOSE_EXECUTED=NOT_PROVEN`; `P7_ACCOUNTING_SCOPE=OWNER_REPORTED_VIA_PO`; `REPLACEMENT_PARTS_ACCOUNTING_TREATMENT=TO_VALIDATE_WITH_ACCOUNTING`; `PA_PI_REPLACEMENT_COST_WAIT=OWNER_REPORTED_VIA_PO`; `PORTAL_FINALIZATION=TARGET_DECISION_REQUIRED`.
+
+
+## Registro 16 - Documentos externos ao TOTVS: extratos bancarios (38:28)
+
+**Fonte:** relato guiado do PO da explicacao de Joici iniciada em 38:28. Nesta marca temporal, o processo passa a abordar documentos originados **fora do TOTVS**, especificamente **extratos bancarios**. A finalidade declarada no TARGET e integrar esses documentos ao fluxo de fechamento para **importacao e validacao** na aplicacao.
+
+**AS-IS relatado:** a fonte documental bancaria e externa ao ERP. Ainda nao foram descritos bancos, contas, canais de obtencao, formatos, responsaveis, frequencia, conciliacoes ou criterios de aceite. Nao assumir que um arquivo importado equivale a extrato validado ou conciliado.
+
+**TARGET proposto pelo PO:** uma area de documentos do fechamento capaz de receber extratos bancarios e registrar sua validacao. A modelagem detalhada (document_type, competencia, banco/conta, filial quando aplicavel, periodo coberto, origem, upload, integridade, versao, status, validacoes, evidencias e aprovacao) e **PLANNED**, nao contrato aprovado nem funcionalidade implementada.
+
+**Gates de seguranca e compliance:** antes de desenvolver upload, retencao, leitura de dados bancarios ou armazenamento, decidir com owner a politica de confidencialidade, classificacao, armazenamento, escopo de acesso, auditoria, tipos de arquivo e regras de tratamento de dados. Reutilizar plataforma e contracts autorizados, sem novas permissoes alem de `controllership-finance.access`/`controllership-finance.manage`, com autorizacao backend por escopo do recurso.
+
+**Pendencias para as proximas falas:** identificar a finalidade concreta dos extratos (ex. confronto com saldos, pagamentos/recebimentos ou evidencias), documentos adicionais fora do TOTVS, etapas de conferencia, quem valida, criterios de discrepancia e tratamento de excecoes. Essas possibilidades NAO estao comprovadas pela fala de 38:28.
+
+**Classificacao:** `EXTERNAL_BANK_STATEMENTS_AS_IS=OWNER_REPORTED_VIA_PO`; `IMPORT_AND_VALIDATE_IN_PORTAL=TARGET`; `BANK_DOCUMENT_CONTRACT=TO_INVENTORY`; `VALIDATION_RULES=TO_INVENTORY`; `IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+## Registro 17 - Custos por centro de custo: SD1 e filtros de exclusao (44:28 a 47:48)
+
+**Fonte:** narracao guiada do PO e capturas TOTVS/Excel. No minuto 44:28, Joici recorda um relatorio adicional para entrega por filial a Controladoria/DRE: custos por centro de custo. O PO informa que os relatorios de estoque e custos sao entregues para todas as filiais pertinentes, nao apenas a matriz. A lista real de filiais e seus contratos de entrega ainda precisam ser inventariados.
+
+**AS-IS:** no TOTVS, Joici entra em Genericos, abre a base `SD1 - Itens das NFs de Entrada`, aplica filtro de **data de digitacao no mes de referencia**, exporta para Excel e faz as analises. Os prints mostram base SD1, filtro e planilha com filial, produto, tipo de produto, tipo de entrada, centro de custo e outros campos. Os alias da interface/exportacao nao identificam por si so os campos fisicos.
+
+**REGRA DE EXCLUSAO (nao inclusao):** retirar registros cujos codigos de **tipo de entrada** pertençam a: `01`, `02`, `03`, `04`, `030`, `040`, `083`, `080`, `085`, `120`, `204`, `318`. Estes codigos vieram do relato do PO e nao tiveram semantica individual validada no cadastro TOTVS. Tratar como strings e preservar zeros a esquerda. Nao converter esta lista em `IN`; a condicao relatada e de **exclusao**, `NOT IN`.
+
+Depois, Joici **ordena por produto** e **exclui materia-prima (MP)** ainda presente na lista, pois MP nao compoe esta analise especifica de custo por centro de custo. Isto nao revoga o uso de MP em outros relatorios, como P7 e CPV. O objetivo declarado e conhecer **despesas diretas, indiretas e administrativas**.
+
+**Sequencia evidenciada/relatada:** SD1 -> filiais e periodo por digitacao -> excluir os 12 tipos de entrada -> ordenar por produto -> excluir MP -> analisar despesa por centro de custo -> entregar por filial. Os prints fundamentam as telas e manipulacao; os significados dos codigos, formula final e resultado nao foram homologados.
+
+**Pendencias de inventario:** campos fisicos e aliases SD1, data de digitacao, cancelados/excluidos, classificacao MP, tipos de entrada, centro de custo e contas; significado e vigencia dos 12 codigos; medidas e sinais para agregar, impostos, devolucoes e reconciliacao; criterios de despesas diretas/indiretas/administrativas; responsabilidade pelo DRE; filial e competencia. Consultar producers/consumers e contratos em `api-delpi` antes de qualquer TARGET. Search miss nao equivale a ausencia.
+
+**Fronteira com o Portal:** R01/R02 baixas financeiras e R03 estoque historico nao comprovam esta regra SD1 implementada. Nao criar pagina, endpoint, permission, rotina ERP nem persistencia neste registro. Eventual dado TOTVS pertence ao owner canonico `api-delpi`; MFE acessa apenas sua BFF, apos decisao de produto e gate transversal. Nao afirmar que Excel exportado corresponde a conciliacao aprovada.
+
+**Proximo marco:** aos 47:48 Joici inicia explicacao adicional das regras de negocio. Registrar a explicacao posterior em novo trecho, sem antecipa-la.
+
+**Classificacao:** `SD1_SOURCE=PROVEN_SCREENSHOT`; `BY_FILIAL=OWNER_REPORTED_VIA_PO`; `DATE_DIGITATION=OWNER_REPORTED_VIA_PO`; `ENTRY_TYPE_EXCLUSION_SET=OWNER_REPORTED_VIA_PO`; `EXCLUDE_MP=OWNER_REPORTED_VIA_PO`; `EXPENSE_GOAL=OWNER_REPORTED_VIA_PO`; `FIELDS_FORMULAS_OWNER=TO_INVENTORY`; `RUNTIME_PARITY=TEST_NOT_RUN`; `TARGET_IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+## Registro 18 - Classificacao assistida de custos e excecoes SD1 (47:48 ate o fim da gravacao)
+
+**Fonte:** narracao guiada do PO das falas de Joici, com prints da planilha `SCAGPOU0.XML` derivada de SD1, principalmente 48:11, 48:25, 48:48, 50:10 e 50:35. Este registro continua o Registro 17. Prints evidenciam linhas, codigos e edicao manual da planilha; a semantica e as correcoes pretendidas sao relatos de especialista mediados pelo PO, ainda nao homologados nos cadastros do ERP.
+
+### Metodo AS-IS e classificacoes relatadas
+
+Joici percorre entradas remanescentes depois dos filtros de exclusao dos tipos de entrada e de materia-prima, consulta os produtos no TOTVS quando nao reconhece um item e tenta classificar cada gasto em **direto**, **indireto** ou **administrativo**. Ela pode escrever a classificacao manualmente na coluna da planilha e utilizar centro de custo como indicio. Essa conferencia por produto/centro de custo demanda tempo consideravel.
+
+- **Exemplo de item material direto:** o PO cita codigo `30190042`. A leitura de codigo diretamente no print e limitada, por isso confirmar codigo exato e natureza no cadastro antes de usa-lo como amostra de teste.
+- **Coparticipacao do plano de saude:** segundo Joici, a parcela que constitui despesa do colaborador deve ser **excluida desta apuracao** e ela nao exige associacao a centro de custo para essa parcela. O PO tambem menciona participacao paga pela empresa. Portanto, **nao extrapolar que toda despesa de plano de saude ou toda coparticipacao e excluida**: discriminar parcela do colaborador versus empresa e tratamento contatabil com owner.
+- **Administrativos:** Joici associa centros de custo com prefixo `02` a administrativos e menciona centros vinculados a vendas/compras que comecariam por `05`, tambem classificados como administrativos no exemplo. A relacao entre prefixos e natureza exige inventario: `05` nao pode ser tratado como administrativo universal sem confirmacao do cadastro e excecoes.
+- **Indiretos:** centros com prefixo `03`, associados a processos; exemplos adicionais mencionados: `0405` (PCP) e `0504` (almoxarifado). Esses exemplos nao fecham uma tabela universal de classificacao, e podem exigir revalidacao, especialmente frente a regra narrativa do prefixo `05`.
+- **Diretos:** materiais/custos diretamente associados a producao; classificacao deve ser fundamentada em cadastro de produto, centro de custo e finalidade, nao apenas em prefixos. Os exemplos em planilha mostram insercao manual de `Direto` e `Indireto`.
+
+### Erros de cadastro, revisao e casos concretos
+
+- **50:10:** Joici alerta que ha lancamentos atribuidos ao centro `0404` que nao correspondem de fato a ele. Um centro valido nao garante enquadramento correto do item.
+- **50:35:** Joici relata uso de centro `0401` inexistente/invalido e indica um produto do tipo cabo singelo que deveria estar associado ao `CT`. Interpretar `CT` como abreviacao usada no relato, sem inventar seu codigo canonico.
+- **Produto `30194558`:** Joici diz nao reconhecer o item e precisar consultar cadastro TOTVS. A classificacao permanece **pendente**, nao deduzida pelo assistente.
+- **Separacao de despesas:** Joici informa que a contabilidade recebe a relacao para separar totais administrativos, diretos e indiretos. Conforme pratica descrita, administrativos compoem custo fixo e diretos/indiretos entram na analise de custo de producao. **Tratamento gerencial/contabil relatado**, sujeito a homologacao pela Contabilidade; nao alterar DRE ou contabilizacao com base somente na narracao.
+
+### Candidato TARGET: pre-classificacao explicavel com revisao humana
+
+O PO propoe substituir a triagem exclusivamente manual por uma lista de **candidatos de classificacao**: categoria sugerida, centro de custo sugerido quando respaldado por cadastro, justificativa/rastreabilidade, pesquisa por produto e acesso ao contexto de cada registro (produto, tipo, nota, filial, centro, conta, documentos/estrutura quando disponivel). A pessoa revisora deve poder confirmar, alterar ou **retirar da listagem de apuracao** itens fora do escopo, indicando motivo. Retirar da apuracao do Portal **nao e excluir a linha SD1 nem alterar lancamento no ERP**.
+
+Estados conceituais para estudo, NAO contrato aprovado: `unreviewed`, `suggested`, `confirmed`, `excluded_from_analysis`, `needs_erp_correction`. O sistema deve separar divergencia de classificacao gerencial de erro cadastral que so owner do TOTVS pode corrigir; nao marcar automaticamente `approved` nem escrever na SD1. A experiencia deve suportar pesquisa, filtros por categoria, centro, produto, filial e motivo de excecao, e preservar versao de regras, justificativa e responsavel pela revisao, sujeito a decisao de persistencia/auditoria.
+
+### Gaps, verificacoes e gates
+
+1. Inventariar tabela de centros de custo e seu owner no TOTVS/`api-delpi`: codigo, descricao, hierarquia, vigencia, filial, classificacao existente ou possivel atributo direto/indireto/administrativo, relacao com conta contabil e SD1. Conferir tambem consumidores em dashboards e regras de DRE. DAVI pode ajudar a localizar informacao autorizada, mas nao substituir a authority tecnica do codigo/contrato.
+2. Validar com Joici/Controladoria **cada prefixo e excecao**, sobretudo `02`, `03`, `05`, `0405`, `0504`, `0404`, `0401`, o item `30194558` e o exemplo de cabo singelo. Nao promover heuristica por prefixo a regra canonica sem catalogo homologado.
+3. Resolver tratamento de coparticipacao: origem do valor, parcela colaborador versus empresa, tipo de entrada, centro e contabilizacao. Reconciliar o conjunto de exclusoes anteriores (Registro 17) com as exclusoes por natureza/colaborador deste registro.
+4. Obter o Excel efetivamente entregue, com competencia/filial e colunas de classificacao, e confrontar **linha a linha** com extracao SD1 por chaves do documento/item. Reconciliar totais por direto/indireto/administrativo/excluido e diferencas, antes de prometer equivalencia.
+5. Definir owner, RQ/AC, estrategia de auditoria e seguranca, modelo de dados, versao de regras, acoes de revisao e entrega a Contabilidade. Sem decisao explicita, nao implementar classificacao, nova pagina, persistencia ou endpoint.
+
+**Gates de arquitetura:** `api-delpi` e fonte canonica de regra/dados TOTVS, MFE fala apenas com BFF `controllership-finance-api`, backend verifica `controllership-finance.access` ou `manage` combinada com escopo do recurso e regra de negocio; filial e dimensao de dados, nao permission code.
+
+**Classificacao:** `MANUAL_EXPENSE_CLASSIFICATION=OWNER_REPORTED_VIA_PO`; `SPREADSHEET_EDITS=PROVEN_SCREENSHOT`; `CENTER_PREFIX_RULES=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `COPAYMENT_EMPLOYEE_SHARE_EXCLUSION=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `MISPOSTED_CENTERS=OWNER_REPORTED_VIA_PO`; `PROPOSED_SEARCH_AND_CANDIDATE_REVIEW=TARGET_DECISION_REQUIRED`; `ERP_CENTER_MASTER_DATA=TO_INVENTORY`; `OFFICIAL_COST_CENTER_ACCOUNTING=TO_INVENTORY`; `DELIVERED_EXCEL_PARITY=TEST_NOT_RUN`.
+
+**Situacao da evidencia ao final do video:** houve mapeamento qualitativo das etapas, mas nao conciliacao tecnica dos totais SD1 por centro de custo nem homologacao de classificacoes/aliases. O proximo trabalho e INVENTORY + VALIDATE, nao EXECUTE.

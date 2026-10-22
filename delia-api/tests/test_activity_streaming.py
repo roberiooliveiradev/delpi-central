@@ -687,7 +687,7 @@ def test_stream_queue_saturation_keeps_authoritative_terminal(fail):
     The test client waits before consuming, exercising a slow reader.
     """
     class _Burst:
-        def execute(self, command, *, activity_channel=None):
+        def execute(self, command, *, activity_channel=None, cancel_check=None):
             sink = ActivityEventSink(
                 activity_channel, session_id="s", turn_id="t"
             )
@@ -840,7 +840,7 @@ def test_post_stream_failure_terminates_with_turn_error():
 
 def test_turn_error_never_carries_result_shape():
     class _FailEarly:
-        def execute(self, command, *, activity_channel=None):
+        def execute(self, command, *, activity_channel=None, cancel_check=None):
             from app.application.interaction.activity import (
                 ActivityEventSink,
             )
@@ -885,7 +885,7 @@ class _BearerProbe:
     def __init__(self):
         self.seen: list = []
 
-    def execute(self, command, *, activity_channel=None):
+    def execute(self, command, *, activity_channel=None, cancel_check=None):
         from app.infrastructure.auth.subject_bearer import (
             current_subject_bearer,
         )

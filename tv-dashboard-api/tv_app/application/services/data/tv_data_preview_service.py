@@ -52,6 +52,7 @@ class TvDataPreviewService:
         force_refresh: bool = False,
         target_step_name: str | None = None,
         preview_options: dict[str, Any] | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "")
         binding = normalize_data_binding_operation_id(
@@ -72,6 +73,7 @@ class TvDataPreviewService:
             preview_options=preview_options,
             user=user,
             authorization=authorization,
+            institutional_operation_ids=institutional_operation_ids,
         )
         if not force_refresh and user is not None:
             cached = get_cached_preview(cache_key)
@@ -107,6 +109,7 @@ class TvDataPreviewService:
             target_step_name=target_step_name,
             target_source_id=target_id,
             preview_options=preview_options,
+            institutional_operation_ids=institutional_operation_ids,
         )
         if not enriched:
             return block
@@ -142,6 +145,7 @@ class TvDataPreviewService:
         force_refresh: bool = False,
         target_step_name: str | None = None,
         preview_options: dict[str, Any] | None = None,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> list[dict[str, Any]]:
         """Bounded enrich of an explicit block set — same canonical resolver as
         `preview_block` (params merge, expression resolution, fetch, transform
@@ -156,6 +160,7 @@ class TvDataPreviewService:
             force_refresh=force_refresh,
             target_step_name=target_step_name,
             preview_options=preview_options,
+            institutional_operation_ids=institutional_operation_ids,
         )
 
     def preview_data_model(
@@ -167,6 +172,7 @@ class TvDataPreviewService:
         user: Any | None = None,
         playlist_defaults: dict[str, Any] | None = None,
         force_refresh: bool = False,
+        institutional_operation_ids: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         """Preview de DataModel — mesmo resolver do enrichment (sem persistir)."""
         resolved_map = self._resolution.enrich_data_models(
@@ -176,6 +182,7 @@ class TvDataPreviewService:
             playlist_defaults=playlist_defaults,
             user=user,
             force_refresh=force_refresh,
+            institutional_operation_ids=institutional_operation_ids,
         )
         model_id = str(model.get("id") or "")
         resolved = resolved_map.get(model_id)

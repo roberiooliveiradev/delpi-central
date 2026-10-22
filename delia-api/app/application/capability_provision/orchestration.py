@@ -51,7 +51,7 @@ import logging
 import re
 import time
 import uuid
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from app.application.interaction.activity import (
     ActivityEventSink,
@@ -2548,13 +2548,33 @@ _IDENTIFIER_KEYS = frozenset(
     }
 )
 
+# Loose identifier candidates are business codes first — a field whose
+# canonical name *starts* with a code/number family is as anchorable
+# as a suffixed one (``codigo_processo``, ``numero_serie``,
+# ``code_product``).
+_IDENTIFIER_PREFIXES = ("codigo", "code", "numero", "number")
+
+# A UUID-valued identifier is a surrogate key — acceptable verbatim
+# evidence, but a poor conversational subject when a human-readable
+# business code exists in the same record.
+_UUID_VALUE_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
 
 def _record_identifier(
     record: Mapping[str, Any],
 ) -> tuple[str, str] | None:
     """The record's own identifier field — verbatim evidence used only
     to anchor the subject of a focused answer, never rendered as a
-    clause of its own unless it is the selected field itself."""
+    clause of its own unless it is the selected field itself.
+
+    Selection ranks a human-readable business code above a surrogate
+    UUID: exact identifier keys first, then prefixed/suffixed code
+    candidates — and inside each tier a non-UUID value wins; a UUID
+    still anchors when nothing better exists.
+    """
     scalars = [
         (key, str(value).strip())
         for key, value in record.items()
@@ -2562,15 +2582,22 @@ def _record_identifier(
         and not isinstance(value, bool)
         and str(value).strip()
     ]
-    for key, text in scalars:
-        if _canonical_key(key) in _IDENTIFIER_KEYS:
-            return str(key), _redact_text(text)
-    for key, text in scalars:
-        canon = _canonical_key(key)
-        if canon not in _IDENTIFIER_KEYS and (
-            canon.endswith("id") or canon.endswith("code")
-        ):
-            return str(key), _redact_text(text)
+    for prefer_readable in (True, False):
+        for key, text in scalars:
+            if _canonical_key(key) in _IDENTIFIER_KEYS and (
+                not prefer_readable or not _UUID_VALUE_RE.match(text)
+            ):
+                return str(key), _redact_text(text)
+        for key, text in scalars:
+            canon = _canonical_key(key)
+            if canon not in _IDENTIFIER_KEYS and (
+                canon.endswith("id")
+                or canon.endswith("code")
+                or canon.startswith(_IDENTIFIER_PREFIXES)
+            ) and (
+                not prefer_readable or not _UUID_VALUE_RE.match(text)
+            ):
+                return str(key), _redact_text(text)
     return None
 
 
@@ -2582,7 +2609,7 @@ def _clause_prefix(field_name: str) -> str:
     if labeled is not None:
         article, label, participle = labeled
         return f"{article} {label} {participle}"
-    return f'o campo "{field_name}"'
+    return f'o campo "{field_name.replace("_", " ").strip()}"'
 
 
 def _compose_answer(
@@ -2657,7 +2684,11 @@ def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
                 lines.append(f"- {text}")
             continue
         labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
-        label = labeled[1].capitalize() if labeled else field_name
+        label = (
+            labeled[1].capitalize()
+            if labeled
+            else field_name.replace("_", " ").strip().capitalize()
+        )
         lines.append(f"- {label}: {value}")
     return lines
 
@@ -4544,6 +4575,16 @@ CONVERSATIONAL_FALLBACK_RESERVE_SECONDS = 8.0
 # Early semantic admission (no catalog payload) — bounded stage cap.
 INTERACTION_ADMISSION_STAGE_CAP_SECONDS = 6.0
 
+# CP4 governed stage resume (docs 88 §10.2 / 90 Option B; budget
+# approved 22/10/2026): ephemeral, in-request recovery from a
+# recoverable model-stage timeout. At most two governed attempts run
+# under ONE monotonic interaction budget — never reset — and each
+# attempt receives at most min(30s, remaining). The per-attempt
+# ceiling is a hard cap, never raised.
+DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS = 60.0
+MAX_GOVERNED_ATTEMPTS = 2
+GOVERNED_ATTEMPT_MAX_SECONDS = 30.0
+
 INTERACTION_ADMISSION_INSTRUCTION_ID = (
     "delia.capability_orchestration.interaction_admission"
 )
@@ -4610,6 +4651,103 @@ def _emit_activity(
     if sink is None:
         return
     sink.emit(phase=phase, correlation_id=correlation, **kwargs)
+
+
+# CP4 ephemeral resume: only provably non-mutating invocation
+# outcomes may be replayed — DISCOVERY/READ/ANALYSIS. PREPARE/ACT
+# (and UNKNOWN or any class not explicitly allowlisted) fail closed
+# to the material frontier: once a mutating invocation has STARTED,
+# no further attempt may run, so it is never silently re-executed.
+_RESUMABLE_OPERATION_CLASSES = frozenset(
+    {
+        SpecialistOperationClass.DISCOVERY,
+        SpecialistOperationClass.READ,
+        SpecialistOperationClass.ANALYSIS,
+    }
+)
+
+
+@dataclasses.dataclass(slots=True)
+class _AttemptCheckpoint:
+    """CP4 ephemeral typed checkpoint — one per interaction,
+    request-scoped, never persisted, never on the wire.
+
+    Records ONLY what provably completed: model-stage proposals keyed
+    by the fingerprint of their exact stage input, and non-mutating
+    invocation outcomes keyed by (group, capability, canonical
+    arguments). A replayed proposal re-enters the same deterministic
+    gates against the fresh live surface — it is data, never
+    authority. No chain-of-thought, no tokens, no secrets, no presumed
+    permissions, no unsanitized payloads.
+    """
+
+    proposals: dict[str, Mapping[str, Any]] = dataclasses.field(
+        default_factory=dict
+    )
+    invoke_outcomes: dict[str, SpecialistOutcome] = dataclasses.field(
+        default_factory=dict
+    )
+    mutating_invoke_started: bool = False
+
+
+# Request-scoped checkpoint binding — same ContextVar pattern as the
+# activity sink: the orchestrator instance is shared across threads,
+# so per-interaction state can NEVER live on `self`.
+_RESUME_STATE: contextvars.ContextVar[_AttemptCheckpoint | None] = (
+    contextvars.ContextVar("delia_resume_checkpoint", default=None)
+)
+
+
+class _TurnCancelled(Exception):
+    """CP5/R3: request cancellation was observed inside an attempt —
+    the NEXT real operation (model stage or provider invoke) must not
+    start. Distinct from a deadline: the cause is the client, not the
+    clock."""
+
+
+# Request-scoped cancellation probe — same ContextVar pattern. The
+# transport sets it (NDJSON disconnect event); in-process callers may
+# pass any predicate. Never consulted when absent.
+_CANCEL_CHECK: contextvars.ContextVar[Callable[[], bool] | None] = (
+    contextvars.ContextVar("delia_turn_cancel_check", default=None)
+)
+
+
+def _cancel_observed() -> bool:
+    """True only when the request's cancellation probe is bound AND
+    reports a disconnect — checked once per real-operation seam."""
+    check = _CANCEL_CHECK.get()
+    return check is not None and bool(check())
+
+
+def _resume_stage_key(
+    instruction_id: str,
+    input_text: str,
+    block_tag: str,
+    block_payload: str,
+) -> str:
+    """Fingerprint one model-stage request. A recorded proposal
+    replays only for the byte-identical stage input — a changed live
+    context yields a different key and a fresh bounded call."""
+    return hashlib.sha256(
+        "\x00".join(
+            (instruction_id, input_text, block_tag, block_payload)
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _resume_invoke_key(
+    group_id: str, remote_name: str, arguments: Mapping[str, Any]
+) -> str:
+    """Fingerprint one provider invocation. A recorded outcome
+    replays only for the identical capability on the identical group
+    with canonically identical validated arguments."""
+    canonical = json.dumps(
+        arguments, sort_keys=True, ensure_ascii=False, default=str
+    )
+    return hashlib.sha256(
+        "\x00".join((group_id, remote_name, canonical)).encode("utf-8")
+    ).hexdigest()
 
 
 def _group_activity_refs(group: CapabilityGroup) -> dict[str, Any]:
@@ -4713,6 +4851,10 @@ class OperationalCapabilityOrchestrator:
         pending_writes: PendingWriteStore | None = None,
         turn_budget_seconds: float = DEFAULT_TURN_BUDGET_SECONDS,
         model_stage_timeout_seconds: float = MODEL_STAGE_TIMEOUT_SECONDS,
+        interaction_total_budget_seconds: float = (
+            DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS
+        ),
+        max_governed_attempts: int = 1,
         response_intelligence_enabled: bool = False,
         cri_instruction_clause: str | None = None,
         cri_instruction_version: str | None = None,
@@ -4727,6 +4869,17 @@ class OperationalCapabilityOrchestrator:
         self._turn_budget_seconds = float(turn_budget_seconds)
         self._model_stage_timeout_seconds = float(
             model_stage_timeout_seconds
+        )
+        # CP4 (docs 88 §10.2 / 90): ephemeral governed resume — OFF by
+        # default (single attempt, legacy behavior). The approved
+        # ceiling is two attempts under one monotonic interaction
+        # budget; a configured value above the ceiling is clamped,
+        # never honored.
+        self._interaction_total_budget_seconds = max(
+            0.0, float(interaction_total_budget_seconds)
+        )
+        self._max_governed_attempts = max(
+            1, min(int(max_governed_attempts), MAX_GOVERNED_ATTEMPTS)
         )
         # CRI E1/E2: composition-resolved response mode — when ON, the
         # goal stage may propose typed answer requirements and the
@@ -4788,59 +4941,128 @@ class OperationalCapabilityOrchestrator:
         max_execution_stage: str | None = None,
         turn_deadline: TurnDeadline | None = None,
         activity_sink: ActivityEventSink | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> GovernedCapabilityAttempt:
-        """Attempt boundary: one turn deadline governs every stage.
+        """Attempt boundary: one monotonic interaction budget governs
+        every stage of every governed attempt.
 
         A model-stage timeout or an exhausted turn budget is a governed
-        orchestration failure — it terminates as SOURCE_UNAVAILABLE
-        (deterministic, HYPOTHESIS-class at the interaction layer) and
-        can NEVER degrade into a general-model answer (LOOP-03R2A).
+        orchestration failure — it terminates as PROCESSING_TIMEOUT
+        (deterministic, HYPOTHESIS-class at the interaction layer),
+        never as SOURCE_UNAVAILABLE when no authoritative source was
+        consulted (doc 88 CP2), and can NEVER degrade into a
+        general-model answer (LOOP-03R2A).
+
+        CP4 (docs 88 §10.2 / 90): when enabled, a recoverable timeout
+        triggers ONE further bounded attempt on the same interaction.
+        The typed checkpoint replays only what provably completed;
+        every deterministic gate re-runs against the fresh live
+        surface. Resume is refused when the budget is gone, the
+        attempt ceiling is reached, the request was cancelled, a
+        mutating invoke already started, or the turn is a typed
+        confirmation — material work is never re-executed.
         """
         correlation = correlation_id or str(uuid.uuid4())
-        deadline = turn_deadline or TurnDeadline.start(
+        first_deadline = turn_deadline or TurnDeadline.start(
             self._turn_budget_seconds
         )
-        # Bind the request-scoped activity sink for this call's context
-        # only — the instance is shared across concurrent turns.
+        # The checkpoint exists only when recovery is enabled for this
+        # interaction — confirmation turns and legacy single-attempt
+        # mode never checkpoint, never resume.
+        checkpoint = (
+            _AttemptCheckpoint()
+            if self._max_governed_attempts > 1 and confirmation is None
+            else None
+        )
+        # Bind the request-scoped activity sink, resume checkpoint and
+        # cancellation probe for this call's context only — the
+        # instance is shared across concurrent turns.
         sink_token = _ACTIVITY_SINK.set(activity_sink)
+        resume_token = _RESUME_STATE.set(checkpoint)
+        cancel_token = _CANCEL_CHECK.set(cancel_check)
         try:
-            try:
-                return self._attempt(
-                    input_text,
-                    correlation=correlation,
-                    actor_user_id=actor_user_id,
-                    session_id=session_id,
-                    confirmation=confirmation,
-                    workspace_context=workspace_context,
-                    prior_turns=prior_turns,
-                    max_execution_stage=max_execution_stage,
-                    deadline=deadline,
-                )
-            except _StageDeadlineExceeded as exc:
+            # Monotonic interaction end: anchored at the REAL start of
+            # the interaction's clock (TurnDeadline.start), never at
+            # this boundary — time already consumed before the
+            # orchestrator counts against the approved total. Each
+            # further attempt receives at most
+            # min(GOVERNED_ATTEMPT_MAX_SECONDS, remaining).
+            interaction_start = (
+                first_deadline.started_at
+                if first_deadline.started_at is not None
+                else first_deadline.clock()
+            )
+            interaction_end = (
+                interaction_start + self._interaction_total_budget_seconds
+            )
+            deadline = first_deadline
+            attempts = 0
+            while True:
+                try:
+                    return self._attempt(
+                        input_text,
+                        correlation=correlation,
+                        actor_user_id=actor_user_id,
+                        session_id=session_id,
+                        confirmation=confirmation,
+                        workspace_context=workspace_context,
+                        prior_turns=prior_turns,
+                        max_execution_stage=max_execution_stage,
+                        deadline=deadline,
+                    )
+                except _StageDeadlineExceeded as exc:
+                    reason = exc.reason
+                except TurnBudgetExhausted:
+                    reason = "turn_budget_exhausted"
+                except _TurnCancelled:
+                    reason = "cancelled"
+                attempts += 1
                 _logger.info(
                     "orchestration stage=turn_budget decision=%s "
-                    "correlation_id=%s",
-                    exc.reason,
+                    "attempt=%d correlation_id=%s",
+                    reason,
+                    attempts,
                     correlation,
                 )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-                    correlation_id=correlation,
-                    error_code=exc.reason,
+                remaining = interaction_end - deadline.clock()
+                per_attempt = min(
+                    GOVERNED_ATTEMPT_MAX_SECONDS, max(0.0, remaining)
                 )
-            except TurnBudgetExhausted:
+                if (
+                    checkpoint is None
+                    or attempts >= self._max_governed_attempts
+                    or checkpoint.mutating_invoke_started
+                    or (cancel_check is not None and cancel_check())
+                    or per_attempt < MIN_VIABLE_MODEL_STAGE_SECONDS
+                ):
+                    return GovernedCapabilityAttempt(
+                        status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
+                        correlation_id=correlation,
+                        error_code=reason,
+                    )
+                # A new bounded attempt on the SAME interaction: fresh
+                # deadline inside the monotonic budget; the checkpoint
+                # replays only what provably completed.
+                deadline = TurnDeadline(
+                    ends_at=deadline.clock() + per_attempt,
+                    clock=deadline.clock,
+                )
+                _emit_activity(
+                    phase=ActivityPhase.CONTINUING,
+                    correlation=correlation,
+                )
                 _logger.info(
-                    "orchestration stage=turn_budget "
-                    "decision=turn_budget_exhausted correlation_id=%s",
+                    "orchestration stage=governed_resume "
+                    "decision=continue attempt=%d remaining_ms=%d "
+                    "correlation_id=%s",
+                    attempts + 1,
+                    int(remaining * 1000),
                     correlation,
-                )
-                return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
-                    correlation_id=correlation,
-                    error_code="turn_budget_exhausted",
                 )
         finally:
             _ACTIVITY_SINK.reset(sink_token)
+            _RESUME_STATE.reset(resume_token)
+            _CANCEL_CHECK.reset(cancel_token)
 
     def _attempt(
         self,
@@ -5742,7 +5964,7 @@ class OperationalCapabilityOrchestrator:
                     )
                     return GovernedCapabilityAttempt(
                         status=(
-                            GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                            GovernedCapabilityStatus.PROCESSING_TIMEOUT
                         ),
                         correlation_id=correlation,
                         error_code="turn_budget_exhausted",
@@ -6871,7 +7093,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                 correlation_id=correlation,
                 error_code="turn_budget_exhausted",
             )
@@ -8318,11 +8540,17 @@ class OperationalCapabilityOrchestrator:
             if rendered is None:
                 continue
             canon = _canonical_key(key)
+            # UUID leaves are surrogate references, never
+            # user-meaningful content — a record's identity is
+            # anchored by the business identifier/title; an opaque
+            # UUID under any field name adds nothing.
+            if _UUID_VALUE_RE.match(rendered):
+                continue
             labeled = _FIELD_CLAUSE_LABELS.get(canon)
             label = (
                 labeled[1].capitalize()
                 if labeled
-                else canon.replace("_", " ").capitalize()
+                else str(key).replace("_", " ").strip().capitalize()
             )
             triples.append(
                 (canon, label, rendered[: self._CRI_MAX_VALUE_CHARS])
@@ -8339,12 +8567,18 @@ class OperationalCapabilityOrchestrator:
             "descricao",
             "description",
         }
+
+        def _is_name(canon: str) -> bool:
+            return canon in name_keys or canon.startswith(
+                tuple(name_keys)
+            )
+
         triples.sort(
             key=lambda item: (
                 0
                 if item[0] == id_canon
                 else 1
-                if item[0] in name_keys
+                if _is_name(item[0])
                 else 2
             )
         )
@@ -8353,7 +8587,7 @@ class OperationalCapabilityOrchestrator:
             (
                 rendered
                 for canon, _, rendered in triples
-                if canon in name_keys and canon != id_canon
+                if _is_name(canon) and canon != id_canon
             ),
             None,
         )
@@ -8596,6 +8830,8 @@ class OperationalCapabilityOrchestrator:
             # never widens the provider's own stage max.
             if deadline is not None:
                 deadline.check("surface_list")
+            if _cancel_observed():
+                raise _TurnCancelled()
             try:
                 surface = provider.list_groups(
                     correlation_id=correlation,
@@ -8630,6 +8866,8 @@ class OperationalCapabilityOrchestrator:
             return None
         if deadline is not None:
             deadline.check("surface_relist")
+        if _cancel_observed():
+            raise _TurnCancelled()
         surface = provider.list_groups(
             correlation_id=correlation,
             timeout_seconds=(
@@ -8877,6 +9115,28 @@ class OperationalCapabilityOrchestrator:
                 raise _StageDeadlineExceeded(
                     "turn_budget_exhausted"
                 ) from exc
+        # CP5/R3: cancellation observed mid-attempt stops the next real
+        # operation — no new model call (and no replay) after a
+        # disconnect; the attempt unwinds to the honest terminal.
+        if _cancel_observed():
+            raise _TurnCancelled()
+        # CP4 governed resume: a recorded proposal replays only for a
+        # byte-identical stage input — completed typed work survives a
+        # downstream timeout without re-spending the model, and every
+        # deterministic gate downstream still re-validates it against
+        # the fresh live surface.
+        resume_state = _RESUME_STATE.get()
+        stage_key = _resume_stage_key(
+            instruction_id, input_text, block_tag, block_payload
+        )
+        if resume_state is not None and stage_key in resume_state.proposals:
+            _logger.info(
+                "orchestration stage=model_propose decision=resumed "
+                "purpose=%s correlation_id=%s",
+                instruction_id,
+                correlation or "",
+            )
+            return resume_state.proposals[stage_key]
         stage_timeout = (
             deadline.stage_timeout(self._model_stage_timeout_seconds)
             if deadline is not None
@@ -8992,6 +9252,8 @@ class OperationalCapabilityOrchestrator:
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None
+        if resume_state is not None:
+            resume_state.proposals[stage_key] = proposal
         return proposal
 
     def _propose(
@@ -9109,7 +9371,7 @@ class OperationalCapabilityOrchestrator:
             )
         except _StageDeadlineExceeded:
             # Prefer a deterministic ask-back over a timed-out wording
-            # stage that would collapse the turn to SOURCE_UNAVAILABLE.
+            # stage that would collapse the turn to PROCESSING_TIMEOUT.
             _logger.info(
                 "orchestration stage=clarification "
                 "decision=budget_fallback correlation_id=%s",
@@ -10192,7 +10454,7 @@ class OperationalCapabilityOrchestrator:
         except _StageDeadlineExceeded:
             # INDEX already ran: a late select timeout must degrade to
             # no_match → clarification (deterministic ask-back exists),
-            # not collapse the whole turn into SOURCE_UNAVAILABLE.
+            # not collapse the whole turn into PROCESSING_TIMEOUT.
             _logger.info(
                 "orchestration stage=index_select "
                 "decision=budget_skip remaining_ms=%d "
@@ -10764,6 +11026,36 @@ class OperationalCapabilityOrchestrator:
             )
         if deadline is not None:
             deadline.check("provider_invoke")
+        # CP5/R3: cancellation observed mid-attempt stops the provider
+        # call too — no new operation after a disconnect.
+        if _cancel_observed():
+            raise _TurnCancelled()
+        # CP4 governed resume frontier — the capability is resolved
+        # from the FRESH live group above, never from the checkpoint.
+        # A recorded outcome replays only for an identical
+        # non-mutating invocation; a PREPARE/ACT (or any class not
+        # allowlisted) marks the frontier — once a material
+        # invocation has started, no further attempt may run.
+        resume_state = _RESUME_STATE.get()
+        resumable = (
+            capability.operation_class in _RESUMABLE_OPERATION_CLASSES
+        )
+        invoke_key = _resume_invoke_key(
+            group.group_id, remote_name, arguments
+        )
+        if resume_state is not None:
+            if not resumable:
+                resume_state.mutating_invoke_started = True
+            elif invoke_key in resume_state.invoke_outcomes:
+                _logger.info(
+                    "orchestration stage=provider_invoke "
+                    "decision=resumed capability=%s.%s "
+                    "correlation_id=%s",
+                    group.group_id,
+                    remote_name,
+                    correlation,
+                )
+                return resume_state.invoke_outcomes[invoke_key]
         provider = self._providers.get(group.provider_id)
         if provider is None:
             raise CapabilityProviderError(
@@ -10856,6 +11148,22 @@ class OperationalCapabilityOrchestrator:
             outcome_ref=_activity_outcome_summary(outcome),
             **_group_activity_refs(group),
         )
+        # Only a verified non-mutating outcome is recorded — replay
+        # applies to the identical invocation of a later attempt. It
+        # is recorded BEFORE the post-invoke deadline check: the call
+        # provably completed; a late deadline must not turn a finished
+        # READ into a duplicated one on resume.
+        # CP5/R1: only a COMPLETE, fully-postconditioned outcome is a
+        # verifiable checkpoint — a partial/incomplete result is
+        # degraded evidence, so the resumed attempt re-issues the same
+        # non-mutating read instead of freezing it.
+        if (
+            resume_state is not None
+            and resumable
+            and outcome.is_complete
+            and outcome.status is SpecialistResultStatus.COMPLETED
+        ):
+            resume_state.invoke_outcomes[invoke_key] = outcome
         # An outcome that arrives after the turn deadline may not be
         # processed — fail truthfully at the boundary.
         if deadline is not None:

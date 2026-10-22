@@ -76,6 +76,37 @@ class Settings:
     COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE = int(
         os.getenv("COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", "10") or "10"
     )
+    # S3.2 — shared rate-limit backend for the registry provider.
+    # "process_local" (default): in-memory per-worker counter — only safe for
+    # single-worker/test deployments. "distributed": Redis backend shared by
+    # all workers; when BrasilAPI is enabled, Redis failure → fail-closed 503.
+    COMPANY_REGISTRY_RATE_LIMIT_STRATEGY = os.getenv(
+        "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local"
+    ).strip().lower()
+    # Safety gate (S3.3): BrasilAPI + process_local is only accepted when the
+    # deployment is provably single-worker/test — explicit opt-in required.
+    COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED = os.getenv(
+        "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", "false"
+    ).strip().lower() in ("1", "true", "yes")
+    COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE = int(
+        os.getenv("COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE", "30") or "30"
+    )
+    COMPANY_REGISTRY_RATE_LIMIT_PREFIX = os.getenv(
+        "COMPANY_REGISTRY_RATE_LIMIT_PREFIX", "supplies:registry-rate-limit:"
+    )
+    REDIS_URL = os.getenv("REDIS_URL", "").strip()
+    COMPANY_REGISTRY_REDIS_TIMEOUT_SECONDS = float(
+        os.getenv("COMPANY_REGISTRY_REDIS_TIMEOUT_SECONDS", "1.5") or "1.5"
+    )
+
+    # X2 — shared external-data-api consumer (CompanyRegistryProvider
+    # value "external-data-api"). Internal S2S service, never browser-facing.
+    EXTERNAL_DATA_API_BASE_URL = os.getenv(
+        "EXTERNAL_DATA_API_BASE_URL", "http://external-data-api:8000"
+    )
+    EXTERNAL_DATA_API_TIMEOUT_SECONDS = float(
+        os.getenv("EXTERNAL_DATA_API_TIMEOUT_SECONDS", "10") or "10"
+    )
 
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "")
     PLUGINS_DB_PORT = os.getenv("PLUGINS_DB_PORT", "5432")

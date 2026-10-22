@@ -36,6 +36,7 @@ from app.application.interaction.presentation import (
     MESSAGE_KIND_CLARIFICATION_REQUIRED,
     MESSAGE_KIND_CONFIRMATION_REQUIRED,
     MESSAGE_KIND_PRECONDITION_REQUIRED,
+    MESSAGE_KIND_PROCESSING_TIMEOUT,
     MESSAGE_KIND_RESULT,
     MESSAGE_KIND_SOURCE_UNAVAILABLE,
     MESSAGE_KIND_WRITE_REJECTED,
@@ -230,6 +231,22 @@ def test_source_unavailable_maps_kind():
 def test_authz_denied_maps_kind():
     result = _execute(_attempt(GovernedCapabilityStatus.AUTHZ_DENIED))
     assert result.message_kind == MESSAGE_KIND_AUTHZ_DENIED
+
+
+def test_processing_timeout_maps_kind():
+    """Doc 88 CP2: an internal deadline/budget interruption projects
+    PROCESSING_TIMEOUT — distinct from SOURCE_UNAVAILABLE — through the
+    serialized presentation contract."""
+    result = _execute(
+        _attempt(
+            GovernedCapabilityStatus.PROCESSING_TIMEOUT,
+            error_code="model_timeout",
+        )
+    )
+    assert result.message_kind == MESSAGE_KIND_PROCESSING_TIMEOUT
+    assert serialize_result(result)["presentation"]["message_kind"] == (
+        MESSAGE_KIND_PROCESSING_TIMEOUT
+    )
 
 
 def test_owner_record_not_found_is_not_source_outage():

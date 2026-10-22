@@ -123,7 +123,7 @@ current state → catalogs → `prepare_helpdesk_change` → policy gate →
 | R2 Read Intelligence V1 | `helpdesk_read` + orchestration | ACCEPT / CLOSED — see §19 |
 | R3 Demand Intelligence V1 | recurrence/discovery composition — zero new tools | ACCEPT / CLOSED — see §19 |
 | R4 Governed Writes V1 | `prepare_helpdesk_change` + `commit_proposal`, idempotency bound to proposal, BFF revalidation, read-back | ACCEPT / CLOSED — see §20 |
-| R4.1 Full Capability Coverage | 100% route ledger (37 routes, 0 unclassified) + governed ticket delete (GLPI trash) + governed session unlink | ACCEPT / CLOSED — see §21 |
+| R4.1 Full Capability Coverage | 100% route ledger (42 routes, 0 unclassified) + governed ticket delete (GLPI trash) + governed session unlink | ACCEPT / CLOSED — see §21 |
 | R4.2 Full Ticket Context & Binary Attachments | `action=attachment` (ImageContent/EmbeddedResource) + governed `upload_attachment` via `openai/fileParams` + `attachment_refs` dedup | ACCEPT / CLOSED — see §22–23 (live upload/vision proven; C1+C2 host corrective closed) |
 | R5 Helpdesk ↔ TM Link | relationship metadata only (source_system=glpi), never ticket copy — Abstraction Gate first | TO_INVENTORY |
 | R6 Backlog Intelligence | only if paginated reads prove inadequate; projection lives in the BFF, never a TÉO cache | TARGET |
@@ -377,6 +377,7 @@ authorization` · `2xx != business outcome`.
 | set_assignee | `PUT /tickets/{id}/assignee` | can_assign | yes | `assigned_user_id` | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | add_followup | `POST /tickets/{id}/followups` | can_followup | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
 | update_followup | `PUT /tickets/{id}/followups/{fid}` | entry.mine + GLPI canUpdate | `Idempotency-Key` | timeline content match | CONFIRM_BEFORE_ACT | IMPLEMENT |
+| update_ticket_classification | `PATCH /tickets/{id}/classification` | can_update_classification + GLPI canUpdate | `Idempotency-Key` | every requested id in detail read-back | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | create_task | `POST /tickets/{id}/tasks` | can_create_task | yes | timeline id+kind | AUTO_ACT | IMPLEMENT |
 | add_solution | `POST /tickets/{id}/solutions` | can_create_solution | yes | timeline id+kind | CONFIRM_BEFORE_ACT | IMPLEMENT |
 | request_validation | `POST /tickets/{id}/validations` | can_request_approval | yes | validations[].id | CONFIRM_BEFORE_ACT | IMPLEMENT |
@@ -391,7 +392,8 @@ All ticket-scoped operations require `ticket_id`; PREPARE reads the
 current ticket through the BFF first (`current_state_read`) and seals a
 relevant-field fingerprint (`ticket_id`, `status_id`,
 `assigned_user_id`, `updated_at`, + target validation state when
-deciding, + target followup content when updating). `can_*` flags are early UX/validation guidance only — the BFF
+deciding, + target followup content when updating, + all six
+classification ids when updating classification). `can_*` flags are early UX/validation guidance only — the BFF
 revalidates on commit; `can_*` false makes the proposal `ready=false`,
 never widens authority.
 
@@ -414,6 +416,13 @@ conflict detection — recorded as owner-side behavior, not widened here.
 - `update_followup`: `timeline[]` entry (same id, kind=followup) whose
   plain-text content equals the prepared change — identity bound to the
   ticket timeline, so a foreign-ticket followup is never a target.
+- `update_ticket_classification`: every requested id
+  (`urgency_id`/`impact_id`/`category_id`/`type_id`/`priority_id`/
+  `request_type_id`) equals the authoritative detail read-back — a
+  2xx where GLPI declined a field (e.g. matrix-derived `priority`)
+  is `OUTCOME_VERIFICATION_FAILED`, never success. Omitted fields
+  keep their current value (partial-update semantics); `type_id` is
+  the Incident/Request enum, `request_type_id` the origin channel.
 - `request_validation`: returned id present in `validations[]`.
 - `accept/reject_solution`: `ticket.status_id` equals the BFF-returned
   post-decision status.
@@ -508,7 +517,7 @@ decorators vs the ledger; drift fails CI).
   else `OUTCOME_VERIFICATION_FAILED`. Relink remains `BROWSER_FLOW`
   (OAuth start/callback never agent-facing).
 
-### 21.3 Route coverage ledger (37 routes)
+### 21.3 Route coverage ledger (42 routes)
 
 | HTTP | Route | Classification | TÉO mapping |
 |---|---|---|---|
@@ -528,6 +537,9 @@ decorators vs the ledger; drift fails CI).
 | GET | `/validation-templates` | EXPOSED_READ | `catalog=validation_templates` |
 | GET | `/approval-steps` | EXPOSED_READ | `catalog=approval_steps` |
 | GET | `/urgencies` | EXPOSED_READ | `catalog=urgencies` |
+| GET | `/impacts` | EXPOSED_READ | `catalog=impacts` |
+| GET | `/priorities` | EXPOSED_READ | `catalog=priorities` |
+| GET | `/ticket-types` | EXPOSED_READ | `catalog=ticket_types` |
 | GET | `/users` | EXPOSED_READ | `catalog=users` |
 | GET | `/session/capabilities` | EXPOSED_READ | `helpdesk_read(action=capabilities)` |
 | GET | `/tickets` | EXPOSED_READ | `helpdesk_read(action=tickets)` |
@@ -538,6 +550,7 @@ decorators vs the ledger; drift fails CI).
 | PUT | `/tickets/{id}/assignee` | EXPOSED_WRITE | `set_assignee` |
 | POST | `/tickets/{id}/followups` | EXPOSED_WRITE | `add_followup` |
 | PUT | `/tickets/{id}/followups/{fid}` | EXPOSED_WRITE | `update_followup` via `prepare_helpdesk_change` → `commit_proposal` |
+| PATCH | `/tickets/{id}/classification` | EXPOSED_WRITE | `update_ticket_classification` via `prepare_helpdesk_change` → `commit_proposal` |
 | POST | `/tickets/{id}/solutions` | EXPOSED_WRITE | `add_solution` |
 | POST | `/tickets/{id}/tasks` | EXPOSED_WRITE | `create_task` |
 | POST | `/tickets/{id}/validations` | EXPOSED_WRITE | `request_validation` |
@@ -581,7 +594,7 @@ INFRA_ONLY 1 · EXPOSED_READ_BINARY 1 · **UNCLASSIFIED 0**. (R4.1 classified th
   stale state, already-gone-at-commit, 2xx/still-active →
   `OUTCOME_VERIFICATION_FAILED`, typed `glpi_link_required`, unlink
   prepare/commit/verify/retry.
-- `tests/test_helpdesk_route_coverage.py` — inventory parity (37),
+- `tests/test_helpdesk_route_coverage.py` — inventory parity (42),
   0 unclassified, no stale entries, no orphan business read/write.
 
 ### 21.6 Live acceptance gate — SUPERSEDED by §22.2
@@ -683,7 +696,7 @@ delete route; not invented at GLPI (ledger stays accurate).
 - File gateway (`tests/test_openai_file_gateway.py`): non-HTTPS denied,
   non-allowlisted host denied (SSRF), redirect denied, oversized stream
   denied, filename sanitization, `file_id` echoed back.
-- Route ledger (`tests/test_helpdesk_route_coverage.py`): 37 routes,
+- Route ledger (`tests/test_helpdesk_route_coverage.py`): 42 routes,
   0 unclassified, attachment rows reclassified.
 
 ### Live acceptance gate — SUPERSEDED by §22.2

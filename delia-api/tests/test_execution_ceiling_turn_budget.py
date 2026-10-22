@@ -9,7 +9,7 @@ STOP-THE-LINE coverage for the production regression:
 - model invocation enforces a TOTAL wall-clock deadline — a trickling
   server cannot keep the call alive
 - one shared turn budget clamps every governed stage; a model-stage
-  timeout terminates as SOURCE_UNAVAILABLE and never degrades into a
+  timeout terminates as PROCESSING_TIMEOUT and never degrades into a
   general-model answer
 - candidate disambiguation/argument model calls carry the same safe
   timing + correlation telemetry; synthesis fallback logs a bounded
@@ -39,8 +39,12 @@ from app.application.interaction.errors import (
     InteractionError,
 )
 from app.application.interaction.handle_interactive_turn import (
+    DELPI_PROCESSING_TIMEOUT_MESSAGE,
     DELPI_SOURCE_UNAVAILABLE_MESSAGE,
     HandleInteractiveConversationTurn,
+)
+from app.application.interaction.presentation import (
+    MESSAGE_KIND_PROCESSING_TIMEOUT,
 )
 from app.application.interaction.turn_budget import (
     TurnBudgetExhausted,
@@ -364,9 +368,10 @@ def test_application_none_and_prepare_ceiling_accepted():
 # --- Turn deadline + terminal model timeouts --------------------------------
 
 
-def test_turn_budget_exhausted_is_terminal_source_unavailable():
+def test_turn_budget_exhausted_is_terminal_processing_timeout():
     """An exhausted turn budget terminates deterministically — the
-    governed attempt never reaches a general answer."""
+    governed attempt never reaches a general answer and is NEVER
+    mislabeled as an authoritative-source failure (doc 88 CP2)."""
     orchestrator = _orchestrator(
         {"vista": VISTA_TOOLS},
         ("vista",),
@@ -374,16 +379,17 @@ def test_turn_budget_exhausted_is_terminal_source_unavailable():
         turn_budget_seconds=0.0,
     )
     attempt = orchestrator.attempt("Liste meus painéis")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
 
 
 def test_select_group_timeout_is_terminal_not_general_fallback():
-    """select_group model TIMEOUT -> SOURCE_UNAVAILABLE(model_timeout).
+    """select_group model TIMEOUT -> PROCESSING_TIMEOUT(model_timeout).
 
     Two groups force the group-selection model call; the timeout is a
     governed orchestration failure — never a NOT_APPLICABLE that would
-    degrade into a general-model answer.
+    degrade into a general-model answer, and never a SOURCE_UNAVAILABLE
+    when no owner was consulted.
     """
     orchestrator = _orchestrator(
         {"vista": VISTA_TOOLS, "teo": TEO_ARG_TOOLS},
@@ -391,7 +397,7 @@ def test_select_group_timeout_is_terminal_not_general_fallback():
         _StageModel(timeout_purposes=frozenset({GROUP_SELECTION_INSTRUCTION_ID})),
     )
     attempt = orchestrator.attempt("Liste meus painéis")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
 
 
@@ -404,7 +410,7 @@ def test_select_capability_timeout_is_terminal():
         ),
     )
     attempt = orchestrator.attempt("Liste meus painéis")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
 
 
@@ -424,7 +430,7 @@ def test_argument_timeout_is_terminal():
         ),
     )
     attempt = orchestrator.attempt("Analise o painel")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
 
 
@@ -450,10 +456,104 @@ def test_operational_timeout_never_calls_general_model():
         )
     )
     assert general_port.requests == []
-    assert result.content == DELPI_SOURCE_UNAVAILABLE_MESSAGE
+    assert result.content == DELPI_PROCESSING_TIMEOUT_MESSAGE
+    assert result.message_kind == MESSAGE_KIND_PROCESSING_TIMEOUT
     assert result.epistemic_class is EpistemicClass.HYPOTHESIS
     assert result.grounding_status is GroundingStatus.NON_GROUNDED
     assert "delpi_source_unverified" in result.limitations
+
+
+def test_pre_mcp_timeout_never_blames_source():
+    """CP2-A: a model timeout before any MCP invocation must not claim
+    a DELPI source failure — the message states the processing was
+    interrupted, never that TÉO/VISTA/DAVI failed."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+    )
+    orchestrator = _orchestrator(
+        {"vista": VISTA_TOOLS},
+        ("vista",),
+        _StageModel(
+            timeout_purposes=frozenset({CAPABILITY_SELECTION_INSTRUCTION_ID})
+        ),
+        port=port,
+    )
+    handler = HandleInteractiveConversationTurn(
+        InvokeModel(_StageModel(proposals={})),
+        capability_orchestration=orchestrator,
+    )
+    result = handler.execute(
+        InteractiveTurnRequest(
+            access_context=_context(), input_text="Liste meus painéis"
+        )
+    )
+    assert port.calls == []
+    assert result.message_kind == MESSAGE_KIND_PROCESSING_TIMEOUT
+    assert result.content == DELPI_PROCESSING_TIMEOUT_MESSAGE
+    assert result.content != DELPI_SOURCE_UNAVAILABLE_MESSAGE
+    assert "fonte autoritativa" not in result.content
+
+
+def test_real_mcp_failure_stays_source_unavailable():
+    """CP2-C sibling: a real owner transport failure is still the
+    truthful SOURCE_UNAVAILABLE classification — never reclassified as
+    a processing timeout."""
+    port = FakePort(
+        tools_by_specialist={"vista": VISTA_TOOLS},
+        errors={
+            ("vista", "list_playlists"): SpecialistInteropError(
+                MCP_TIMEOUT, "mcp timed out"
+            )
+        },
+    )
+    orchestrator = _orchestrator(
+        {"vista": VISTA_TOOLS},
+        ("vista",),
+        _StageModel(
+            proposals={
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "list_playlists",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+            },
+        ),
+        port=port,
+    )
+    attempt = orchestrator.attempt("Liste meus painéis")
+    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.error_code == MCP_TIMEOUT
+
+
+def test_insufficient_evidence_is_not_technical_failure():
+    """CP2-E: a consulted owner whose evidence cannot answer is an
+    epistemic limitation — never a source-unavailable or processing
+    failure."""
+    orchestrator = _orchestrator(
+        {"vista": VISTA_TOOLS},
+        ("vista",),
+        _StageModel(
+            proposals={
+                CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                    "applicable": True,
+                    "remote_name": "list_playlists",
+                },
+                ARGUMENTS_INSTRUCTION_ID: {"arguments": {}},
+                SYNTHESIS_INSTRUCTION_ID: {"items": []},
+            },
+        ),
+        outcomes={
+            "list_playlists": RemoteToolOutcome(
+                content_text="ok",
+                structured={
+                    "items": [{"id": "pl-1", "name": "Painel A"}]
+                },
+            ),
+        },
+    )
+    attempt = orchestrator.attempt("Liste meus painéis")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert "insufficient_evidence" in attempt.limitations
 
 
 def test_general_path_receives_clamped_budget():
@@ -891,7 +991,7 @@ def test_synthesis_fallback_logs_bounded_reason(
 # provider operations but the remaining budget was never PASSED into
 # them. These tests prove the bounded timeout reaches the transport
 # seam and that an overrun — whether the provider reports it or
-# returns stale success — terminates truthfully as SOURCE_UNAVAILABLE
+# returns stale success — terminates truthfully as PROCESSING_TIMEOUT
 # with zero general-model fallback.
 
 
@@ -973,9 +1073,9 @@ def _vista_listing(interop):
 
 
 # A. initial list_groups bounded by the remaining turn budget
-def test_r1_initial_surface_list_overrun_is_source_unavailable():
+def test_r1_initial_surface_list_overrun_is_processing_timeout():
     """A surface consultation that consumes past the turn deadline
-    ends SOURCE_UNAVAILABLE — its late result is never projected."""
+    ends PROCESSING_TIMEOUT — its late result is never projected."""
     clock = [1000.0]
     port = _DeadlinePort(
         tools_by_specialist={"vista": VISTA_TOOLS},
@@ -986,9 +1086,9 @@ def test_r1_initial_surface_list_overrun_is_source_unavailable():
     attempt = read.attempt(
         "liste", turn_deadline=_deadline(clock, 80.0)
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
-    # The stage max (15s) bounded the granted timeout — never the
+    # The stage max (15s) bounded the granted timeout — never the — never the
     # full turn budget — and no invocation was reached.
     assert port.list_timeouts == [
         DEFAULT_INVOCATION_TIMEOUT_SECONDS
@@ -1010,13 +1110,13 @@ def test_r1_initial_surface_list_real_overrun_bounded_elapsed():
         "liste", turn_deadline=TurnDeadline.start(0.10)
     )
     elapsed = time.monotonic() - started
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert elapsed < 1.0
     assert port.calls == []
 
 
 # B. fresh live re-list (write-path revalidation) bounded
-def test_r1_fresh_relist_overrun_is_source_unavailable():
+def test_r1_fresh_relist_overrun_is_processing_timeout():
     """The ACT-path fresh re-list shares the same deadline — an
     overrun there fails closed before the commit invocation. Under the
     B2 closure (§6.184) the MESSAGE stops at the pending scope choice;
@@ -1050,7 +1150,7 @@ def test_r1_fresh_relist_overrun_is_source_unavailable():
         confirmation=_confirmation(pending),
         turn_deadline=_deadline(clock, 80.0),
     )
-    assert applied.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert applied.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert applied.error_code == "turn_budget_exhausted"
     # Discovery + PREPARE ran inside the budget; the exhausted
     # re-list stops the chain before any commit.
@@ -1082,7 +1182,7 @@ def test_r1_invoke_overrun_is_source_unavailable():
         actor_user_id="u1",
         turn_deadline=_deadline(clock, 80.0),
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
     assert [c[1] for c in port.calls] == ["get_catalog"]
     assert all(
@@ -1111,7 +1211,7 @@ def test_r1_next_stage_receives_only_remaining_budget():
     attempt = read.attempt(
         "liste", turn_deadline=_deadline(clock, 80.0)
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     # list#1 got the stage max; list#2 (invoke revalidation) got only
     # the ~10s remainder — not the full provider timeout again.
     assert port.list_timeouts[0] == DEFAULT_INVOCATION_TIMEOUT_SECONDS
@@ -1131,7 +1231,7 @@ def test_r1_exhausted_budget_at_turn_start_fails_closed():
     deadline = _deadline(clock, 80.0)
     clock[0] += 200.0
     attempt = read.attempt("liste", turn_deadline=deadline)
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
     # No provider stage may start once the deadline passed.
     assert port.list_calls == []
@@ -1156,7 +1256,7 @@ def test_r1_budget_exhausted_before_prepare_no_write():
         actor_user_id="u1",
         turn_deadline=_deadline(clock, 80.0),
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert [c[1] for c in port.calls] == ["get_catalog"]
     assert "commit_proposal" not in [c[1] for c in port.calls]
 

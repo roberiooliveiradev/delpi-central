@@ -679,7 +679,7 @@ def test_r2_t15_model_timeout_technical():
         model_ref=TEST_MODEL_REF,
     )
     attempt = orch.attempt(BROAD_ASK)
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
 
 
 def test_r2_t16_global_30s_budget_constant():

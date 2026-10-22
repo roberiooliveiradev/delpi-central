@@ -101,4 +101,10 @@ def company_registry_provider() -> Any:
         )
 
         return BrasilApiCompanyRegistryProvider()
+    if Settings.COMPANY_REGISTRY_PROVIDER == "external-data-api":
+        from app.infrastructure.gateways.external_data_company_registry_provider import (
+            ExternalDataApiCompanyRegistryProvider,
+        )
+
+        return ExternalDataApiCompanyRegistryProvider()
     return UnavailableCompanyRegistryProvider()

@@ -27,7 +27,8 @@ export type DeliaDemoScenario =
   | "confirmation"
   | "error"
   | "loading"
-  | "activity";
+  | "activity"
+  | "markdown_code";
 
 export const DELIA_DEMO_BANNER = "Modo demonstração — dados simulados";
 
@@ -153,6 +154,48 @@ const DEMO_ACTIVITY_VIEW: ActivityViewerProps = {
   },
 };
 
+const DEMO_MARKDOWN_CODE_SOURCE = [
+  "Segue um bloco SQL de exemplo:",
+  "",
+  "```sql",
+  "SELECT produto, SUM(quantidade)",
+  "FROM producao",
+  "WHERE quantidade > 100",
+  "GROUP BY produto;",
+  "```",
+  "",
+  "Dois blocos independentes, um sem linguagem declarada:",
+  "",
+  "```json",
+  '{"produto": "A", "quantidade": 42}',
+  "```",
+  "",
+  "```",
+  "linha sem linguagem declarada",
+  "```",
+  "",
+  "Linguagem fora da allowlist:",
+  "",
+  "```cobol",
+  "DISPLAY TOTAL.",
+  "```",
+  "",
+  "Linha longa para scroll horizontal interno:",
+  "",
+  "```text",
+  "X".padEnd(300, "X"),
+  "```",
+  "",
+  "Conteúdo HTML literal dentro da fence:",
+  "",
+  "```html",
+  '<script>alert("demo")</script><img src=x onerror=alert(1)>',
+  "```",
+].join("\n");
+
+const DEMO_MARKDOWN_CODE_FALLBACK =
+  "Resposta simulada com exemplos de código (demonstração — veja os blocos).";
+
 const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
   simple: {
     delayMs: DEMO_LATENCY_MS,
@@ -226,6 +269,22 @@ const SCENARIO_OUTCOMES: Record<DeliaDemoScenario, DemoTurnOutcome> = {
           proposal_digest: "demo_digest_not_authoritative",
           preview_fingerprint: "demo_fingerprint_not_authoritative",
         },
+      },
+    ),
+  },
+  // QA-only fixture for the shared ConversationCodeBlock (spec 96 §17):
+  // exercises admitted presentation.v2 wiring — never real backend output.
+  markdown_code: {
+    delayMs: DEMO_LATENCY_MS,
+    deliaTurn: deliaTurn(
+      DEMO_MARKDOWN_CODE_FALLBACK,
+      demoPresentation("RESULT", [
+        { kind: "text", text: DEMO_MARKDOWN_CODE_FALLBACK },
+      ]),
+      {
+        contentFormat: "markdown_safe",
+        markdownSource: DEMO_MARKDOWN_CODE_SOURCE,
+        authorizedLinks: [],
       },
     ),
   },

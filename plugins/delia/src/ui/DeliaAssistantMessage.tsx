@@ -5,6 +5,7 @@ import {
   ListChecks,
   Lock,
   ShieldCheck,
+  TimerOff,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -69,6 +70,11 @@ const SEMANTIC_STATE: Record<
     label: "Pré-condição pendente",
     variant: "warning",
     icon: ListChecks,
+  },
+  PROCESSING_TIMEOUT: {
+    label: "Processamento interrompido",
+    variant: "warning",
+    icon: TimerOff,
   },
 };
 

@@ -270,7 +270,7 @@ def test_index_probe_model_timeout_never_reaches_owner_read():
         "Que critérios de legibilidade devo considerar para um painel?",
         turn_deadline=deadline,
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code in {
         "model_timeout",
         "turn_budget_exhausted",

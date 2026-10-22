@@ -16,7 +16,14 @@ from helpdesk_app.domain.errors import (
     InstitutionalReadDenied,
     InstitutionalReaderUnavailable,
 )
-from helpdesk_app.infrastructure.glpi.mapping import URGENCIES, attachment_filename, build_ticket_list_query
+from helpdesk_app.infrastructure.glpi.mapping import (
+    IMPACTS,
+    PRIORITIES,
+    TICKET_TYPES,
+    URGENCIES,
+    attachment_filename,
+    build_ticket_list_query,
+)
 from helpdesk_app.interface.http.actor import require_actor
 
 router = APIRouter(tags=["Helpdesk Tickets"])
@@ -61,6 +68,19 @@ class FollowupUpdateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     content: str = Field(min_length=1)
+
+
+class ClassificationUpdateBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Partial update — every field optional; the service requires >=1 and
+    # validates each id against the canonical enum maps / GLPI catalog.
+    urgency_id: int | None = Field(default=None, gt=0)
+    impact_id: int | None = Field(default=None, gt=0)
+    category_id: int | None = Field(default=None, gt=0)
+    type_id: int | None = Field(default=None, gt=0)
+    priority_id: int | None = Field(default=None, gt=0)
+    request_type_id: int | None = Field(default=None, gt=0)
 
 
 class SolutionCreateBody(BaseModel):
@@ -261,6 +281,24 @@ def urgencies(request: Request):
     return {"items": [{"id": row.id, "name": row.name} for row in URGENCIES]}
 
 
+@router.get("/impacts")
+def impacts(request: Request):
+    require_actor(request)
+    return {"items": [{"id": row.id, "name": row.name} for row in IMPACTS]}
+
+
+@router.get("/priorities")
+def priorities(request: Request):
+    require_actor(request)
+    return {"items": [{"id": row.id, "name": row.name} for row in PRIORITIES]}
+
+
+@router.get("/ticket-types")
+def ticket_types(request: Request):
+    require_actor(request)
+    return {"items": [{"id": row.id, "name": row.name} for row in TICKET_TYPES]}
+
+
 @router.get("/users")
 def list_users(request: Request, q: str = "", limit: int = 20, purpose: str = "mention"):
     actor = require_actor(request)
@@ -379,6 +417,16 @@ def get_ticket(request: Request, ticket_id: int):
         "status_id": ticket.status_id,
         "category": ticket.category,
         "urgency": ticket.urgency,
+        "category_id": ticket.category_id,
+        "urgency_id": ticket.urgency_id,
+        "impact_id": ticket.impact_id,
+        "priority_id": ticket.priority_id,
+        "type_id": ticket.type_id,
+        "impact": ticket.impact,
+        "priority": ticket.priority,
+        "type_name": ticket.type_name,
+        "request_type_id": ticket.request_type_id,
+        "can_update_classification": ticket.can_update_classification,
         "updated_at": ticket.updated_at,
         "created_at": ticket.created_at,
         "solved_at": ticket.solved_at,
@@ -594,6 +642,32 @@ def update_followup(
             ticket_id,
             followup_id,
             content=body.content,
+            viewer_email=actor.email,
+            idempotency_key=idempotency_key,
+        )
+    except HelpdeskError as exc:
+        return _error(exc, request)
+    return JSONResponse(status_code=stored.status_code, content=stored.body)
+
+
+@router.patch("/tickets/{ticket_id}/classification")
+def update_ticket_classification(
+    request: Request,
+    ticket_id: int,
+    body: ClassificationUpdateBody,
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    actor = require_actor(request)
+    try:
+        stored = _tickets(request).update_classification(
+            actor.subject,
+            ticket_id,
+            urgency_id=body.urgency_id,
+            impact_id=body.impact_id,
+            category_id=body.category_id,
+            type_id=body.type_id,
+            priority_id=body.priority_id,
+            request_type_id=body.request_type_id,
             viewer_email=actor.email,
             idempotency_key=idempotency_key,
         )

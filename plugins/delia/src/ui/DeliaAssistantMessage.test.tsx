@@ -89,6 +89,7 @@ describe("DeliaAssistantMessage — semantic states", () => {
     ["AUTHZ_DENIED", "Acesso não autorizado"],
     ["SOURCE_UNAVAILABLE", "Fonte indisponível"],
     ["PRECONDITION_REQUIRED", "Pré-condição pendente"],
+    ["PROCESSING_TIMEOUT", "Processamento interrompido"],
   ];
 
   for (const [kind, label] of cases) {

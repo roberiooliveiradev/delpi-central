@@ -32,6 +32,14 @@ export type DeliaComposerProps = {
   onChange: (value: string) => void;
   /** Explicit user intent only — never invoked programmatically. */
   onSubmit: () => void;
+  /**
+   * Doc 71 (F03-B) — enqueue intent while a turn is in flight. When
+   * provided, the draft stays editable during in-flight and Enter/the
+   * queue control admit text into the ephemeral conversation queue
+   * instead of submitting. When omitted, in-flight locking is
+   * unchanged.
+   */
+  onEnqueue?: () => void;
   loading?: boolean;
   requestMode?: "idle" | "responding_cancelable" | "responding_not_cancelable" | "stopping";
   onStop?: () => void;
@@ -154,6 +162,7 @@ export function DeliaComposer({
   value,
   onChange,
   onSubmit,
+  onEnqueue,
   loading = false,
   requestMode,
   onStop,
@@ -288,7 +297,7 @@ export function DeliaComposer({
   return (
     <AudioRecorderControl
       enabled={audioCaptureEnabled}
-      busy={inFlight || dictating}
+      busy={dictating || (inFlight && !onEnqueue)}
       maxDurationMs={audioCaptureMaxDurationMs}
       maxBytes={audioCaptureMaxBytes}
       canSendAudio={false}
@@ -363,6 +372,7 @@ export function DeliaComposer({
             value={value}
             onChange={onChange}
             onSubmit={onSubmit}
+            onEnqueue={onEnqueue}
             loading={loading}
             requestMode={requestMode}
             onStop={onStop}
@@ -389,6 +399,7 @@ type DeliaComposerBodyProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  onEnqueue?: () => void;
   loading: boolean;
   requestMode?: DeliaComposerProps["requestMode"];
   onStop?: () => void;
@@ -411,6 +422,7 @@ function DeliaComposerBody({
   value,
   onChange,
   onSubmit,
+  onEnqueue,
   loading,
   requestMode,
   onStop,
@@ -461,6 +473,7 @@ function DeliaComposerBody({
           handleUserChange("");
         }}
         onSubmit={onSubmit}
+        onEnqueue={onEnqueue}
         loading={loading}
         requestMode={requestMode}
         onStop={onStop}

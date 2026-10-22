@@ -438,6 +438,7 @@ def test_sel_t04_group_ok_capability_timeout_structural_reaches_owner():
         GovernedCapabilityStatus.SUCCESS,
         GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
         GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
     }
 
 

@@ -68,7 +68,9 @@ class PresentationMutationCommitService:
                 envelope,
                 user=user,
                 authorization=authorization,
-                include_fingerprint=True,
+                include_fingerprint=PresentationPatchService.mutation_ops_require_data_fingerprint(
+                    ops
+                ),
             )
         except PresentationPatchError:
             raise

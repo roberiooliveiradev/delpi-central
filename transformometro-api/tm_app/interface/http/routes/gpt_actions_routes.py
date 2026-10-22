@@ -168,6 +168,7 @@ class GptHelpdeskChangeBody(BaseModel):
         ...,
         description=(
             "create_ticket | set_assignee | add_followup | update_followup | "
+            "update_ticket_classification | "
             "create_task | "
             "add_solution | request_validation | accept_solution | "
             "reject_solution | submit_satisfaction | accept_validation | "
@@ -190,6 +191,9 @@ class GptHelpdeskChangeBody(BaseModel):
     description: str | None = None
     category_id: int | None = None
     urgency_id: int | None = None
+    impact_id: int | None = None
+    priority_id: int | None = None
+    type_id: int | None = None
     observer_ids: list[int] | None = None
     assignee_id: int | None = None
     user_id: int | None = None

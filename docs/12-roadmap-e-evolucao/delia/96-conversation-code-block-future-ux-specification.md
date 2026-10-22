@@ -139,3 +139,167 @@ DEPLOY = NOT_AUTHORIZED
 PHASE_PROGRESSION = NONE
 NEXT = DEFERRED_UNTIL_MARKDOWN_B2_CONTRACT_AND_COORDINATION_GATE
 ```
+
+## 9. Fechamento da especificação — revisão de implementação (2026-10-22, F02-B)
+
+`TASK_ID=DELIA-UX-F02B-CODE-BLOCK-VISUAL-SPEC-AND-MARKDOWN-B2-GATE-01`. Escopo: documental — nenhum runtime alterado. HEAD auditado: `4a6d85286c6670c1e2c7e54d5b3b2e86a5a7bed6`.
+
+### 9.1 Inventário de reuso verificado no HEAD
+
+| Responsabilidade | Equivalente real no HEAD | EXISTING_EQUIVALENT | REUSE_DECISION |
+|---|---|---|---|
+| Renderização de código (conversa) | `ConversationMarkdown` token `code` → `<pre><code>{token.text}</code>` inerte (`ConversationMarkdown.tsx:132`); `codespan` → `<code>` inline (`:55`) | YES | EXTEND |
+| Tokenização/parse seguro | `conversationMarkdownModel.ts` — `marked.lexer` parse-only, bounds `16_384` chars / `256` nodes / depth `8` / `16` links; `token.lang` do marked ainda **não é tipado** em `MarkdownToken` (extensão aditiva mínima necessária) | YES | EXTEND |
+| Prior art visual code block | `MarkdownCodeBlock` interno de `MarkdownDocument.tsx` — strip `FileCode2`+lang, botão `Copy`→`Check` pós-resolve, `<pre><code>`; CSS `delpi-ui-md-doc__code*` (`markdown-document.css:120-186`) | YES (document-grade, não exportado, sem feedback de erro, sem tooltip) | EXTEND pattern |
+| Botão copiar | Padrão honesto em `ConversationAssistantActions.tsx:110-126` — sucesso só após `writeText` resolver, `onCopyError` em falha/indisponível | YES | REUSE pattern |
+| Tooltip | `HelpTooltip`/`HintAction` (`components/help/`) | YES | REUSE |
+| Feedback de cópia | `copied` + reset 1500–1600ms (ConversationAssistantActions / MarkdownCodeBlock); erro ainda silencioso no prior art — spec exige estado de erro explícito | YES_PARTIAL | EXTEND |
+| Renderização Markdown | `ConversationMarkdown` (conversation-grade, `enabled=false` default, `authorizedLinks` allowlist) | YES | REUSE |
+| Segurança/sanitização | Parse-only sem HTML string, zero `dangerouslySetInnerHTML`, tokens desconhecidos → raw text, links só via allowlist | YES | REUSE |
+| Syntax highlighting | **Ausente** — sem prism/highlight.js/shiki em `plugins/plugin-ui/package.json` ou `plugins/delia/package.json` | NO | NÃO_ADICIONAR (v1 sem highlight) |
+
+### 9.2 Estado factual de Markdown B2
+
+| Item | Estado | Evidência |
+|---|---|---|
+| Contrato `presentation.v2` (`text/format=markdown_safe` + `authorized_links`) | CONTRACT_APPROVED | `plugins/delia/src/api/presentation.ts:177` (`V2_FORMATS`), `:315-327` |
+| Adaptador frontend (extract `markdownSource`, `contentFormat`, `authorizedLinks`) | IMPLEMENTED + TESTED | `interactionClient.ts:409-462`, `presentation.test.ts` |
+| Renderer `ConversationMarkdown` | IMPLEMENTED + TESTED | `ConversationMarkdown.tsx` + 244-linhas de teste |
+| Integração `DeliaAssistantMessage` | IMPLEMENTED | `markdownEnabled = presentationFault===null && contentFormat==="markdown_safe" && markdownSource` (`DeliaAssistantMessage.tsx:128-133`) |
+| Emissor backend `markdown_safe` | **NOT_IMPLEMENTED** | zero ocorrências de `markdown_safe`/`markdown_source`/`authorized_links` em `delia-api/app` |
+| Ativação runtime | **OFF** | doc 91: `RUNTIME_MARKDOWN_ACTIVATION = OFF (sem emitter v2 real)` |
+| Browser QA B2 | TEST_NOT_RUN | doc 91 |
+| CP-333 | NOT_ACCEPTED | doc 91 §status |
+
+**Blockers efetivos para code blocks em mensagens reais:** (1) emissor `presentation.v2`/`markdown_safe` inexistente no `delia-api`; (2) `authorized_links` nunca produzido; (3) QA browser B2 e aceite independente CP-333 pendentes. Import/export **não** é evidência de ativação — `markdownEnabled` é derivado de dados admitidos, nunca da forma do texto.
+
+### 9.3 Anatomia e dimensões (fechadas)
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ </> SQL                              [⧉ Copiar código]│  bar 30px
+├──────────────────────────────────────────────────────┤
+│ SELECT produto, SUM(quantidade)                       │
+│ FROM producao;                                        │  pre 12/14px
+└──────────────────────────────────────────────────────┘
+```
+
+| Elemento | Valor candidato (tokens) |
+|---|---|
+| Contêiner | `border: 1px solid var(--delpi-ui-border)`, `radius 10px`, `overflow:hidden`, fundo `color-mix(text 4%)`, `margin: 0.45em 0` (alinhado ao ritmo `conversation-markdown.css`), `max-width:100%` |
+| Barra de cabeçalho | altura ~30px, `padding: 5px 10px`, `border-bottom: 1px`, fundo `color-mix(text 3%)`, justify-content space-between |
+| Label linguagem | `FileCode2` 13px + texto mono 11px/600/lowercase/letter-spacing 0.02em; uppercase visual para label, valor bruto preservado internamente |
+| Botão copiar | ícone 13px + label 11px/600, área de clique ≥28px (`min-height`/`padding`), `type=button` |
+| Corpo `pre` | `padding: 12px 14px`, `font-size: 0.86em`, `line-height: 1.55`, `tab-size: 2`, `overflow-x: auto`, `white-space: pre` (não `break-spaces` — §9.4) |
+| Altura máxima | `max-height: 320px` desktop / `240px` ≤480px e Dock, com `overflow-y: auto` no `pre` |
+| Ícones | `FileCode2` (linguagem), `Copy`, `Check`, `AlertCircle`/`ClipboardX` (erro) — Lucide, 13px |
+
+Diferença deliberada do prior art `md-doc`: margem menor (`0.45em`, ritmo da conversa), `white-space: pre` com scroll horizontal honesto (não `break-spaces`), feedback de erro visível, tooltip, e namespace `delpi-ui-conversation-code-block` (não reutilizar `delpi-ui-md-doc__*` — contexto distinto, mas mesmas medidas/tokens).
+
+### 9.4 Cópia
+
+- `navigator.clipboard.writeText(code)` somente sobre `token.text` (nunca `token.raw` — exclui fences e info-string).
+- Sucesso `Check`+`Copiado` **somente após resolve**; reset 1600ms; sem anúncio antecipado.
+- Falha/indisponível → estado de erro visível (ícone + `Não foi possível copiar`), `aria-live="polite"` pontual no botão; seleção manual permanece. Fallback `execCommand` **não** reutilizado (padrão do prior art legado, deprecated).
+- Múltiplos blocos: estado de cópia local por bloco.
+- Whitespace preservado byte-a-byte; scroll horizontal em vez de wrap para não quebrar linhas lógicas na visualização. Word-wrap, se oferecido no futuro, é toggle de apresentação e nunca altera o texto copiado.
+
+### 9.5 Linguagens
+
+`token.lang` vem do info-string da fence via `marked.lexer` (prova: `markdownDocumentModel.ts:157-161` extrai `code.lang`). Regras: allowlist de display `{sql, python, json, typescript, javascript, bash, yaml, text}` → label mapeado (SQL, Python, JSON, TypeScript, JavaScript, Bash, YAML, Texto); lang válida fora da lista → label com o valor sanitizado (≤20 chars, `[a-z0-9+#.-]`, fallback `Código`); ausente/desconhecida → `Código`; nunca inferir por conteúdo ou LLM. Bloco vazio → corpo `pre` vazio, cópia permanece disponível (string vazia copiável). Markdown/HTML literal dentro do código permanece texto inerte.
+
+### 9.6 Syntax highlighting
+
+**v1 sem highlight.** Nenhum mecanismo reutilizável aprovado existe no HEAD. Não adicionar dependência (prism/hljs/shiki) para efeito visual. Se futuro, gate separada: bundle size, tokenização local, zero execução, fallback para `pre` simples.
+
+### 9.7 Responsividade
+
+Full-page, Dock e mobile 320/360/375/420px: largura = coluna da mensagem, `max-width:100%`, scroll horizontal **interno ao `pre`** — nunca overflow na conversa/página (critério mensurável: `scrollWidth` do contêiner da mensagem == `clientWidth` com linha de 300 chars). Zoom 200% mantém barra e corpo operáveis. Temas via tokens (zero cor arbitrária). `prefers-reduced-motion`: feedback de cópia sem animação/transição. ≤480px: label do botão copiar pode colapsar para ícone mantendo `aria-label` (padrão `ComposerEnqueueButton`).
+
+### 9.8 Acessibilidade
+
+- `role="group"`/`aria-label="Bloco de código"` (ou `aria-label="Bloco de código {lang}"`) no contêiner.
+- Botão `type=button`, `aria-label="Copiar código"`, foco visível `outline 2px`, Enter/Space nativos.
+- Corpo selecionável e navegável; `pre` com `tabindex="0"` e `role="region"` + `aria-label` quando rolável (scroll keyboard).
+- Erro de clipboard via `aria-live="polite"` no status do botão, sem região duplicada.
+- Contraste AA dos tokens; inline `codespan` permanece `<code>` sem cabeçalho/cópia — distinção fenced vs inline garantida.
+- Zero captura de atalhos globais do composer.
+
+### 9.9 Contrato de apresentação
+
+```ts
+type ConversationCodeBlockProps = {
+  code: string;              // token.text — corpo exato
+  language?: string;         // token.lang admitido; label via allowlist
+  copyEnabled?: boolean;     // default true; host pode desligar
+  className?: string;
+  labels?: Partial<ConversationCodeBlockLabels>; // PT defaults no componente
+};
+```
+
+Wiring: `ConversationMarkdown` case `"code"` delega para `ConversationCodeBlock` (mesmo renderer, mesmo gate `enabled`) — **não** criar parser/renderer paralelo nem expor o componente fora do fluxo admitido. `MarkdownToken` ganha `lang?: string` (extensão aditiva tipada). Sem dependência de backend/MCP/AuthZ/persistência/execução.
+
+### 9.10 Segurança
+
+Herda os bounds do lexer (16_384/256/8/16). Todo conteúdo é texto inerte renderizado como filho React (nunca `dangerouslySetInnerHTML`); linguagem usada só como label sanitizado (nunca `className` dinâmico de highlighter); fences malformadas degradam para parágrafo de raw (comportamento atual); Unicode/controle exibido literalmente; conteúdo nunca executa, linka ou vira FACT/instrução por formatação; cópia preserva whitespace exato sem sanitização silenciosa.
+
+### 9.11 Matriz de aceite (métodos de verificação previstos)
+
+| ID | Critério | Método |
+|---|---|---|
+| CB-V01 | Anatomia compacta (bar 30px, sem card-dentro-de-card) | screenshot/DOM probe + medidas CSS |
+| CB-V02 | `code` literal preservado (whitespace, tabs, CR/LF) | unit test com payload adversarial |
+| CB-V03 | Copiar → feedback só pós-resolve | unit test com `writeText` mock resolve/reject |
+| CB-V04 | Clipboard indisponível/falha → erro honesto, seleção mantida | unit test sem `navigator.clipboard` |
+| CB-V05 | Lang conhecida/desconhecida/ausente → labels corretos | unit test por matriz |
+| CB-V06 | Múltiplos blocos independentes | integração: 2+ blocos, cópias isoladas |
+| CB-V07 | Linha longa → scroll interno, zero overflow da conversa | DOM probe `scrollWidth==clientWidth` + browser 320px |
+| CB-V08 | fenced vs inline codespan distintos | unit + visual |
+| CB-V09 | HTML/script/Unicode no código = texto inerte | unit adversarial + inspection DOM |
+| CB-V10 | full-page/Dock/mobile 320-420 | Playwright real |
+| CB-V11 | zoom 200%, temas, reduced motion | Playwright + CSS contract test |
+| CB-V12 | teclado (foco, Enter/Space, scroll) + SR name/live | a11y test + probe teclado |
+| CB-V13 | nenhum execution path (sem eval/HTML/links dentro) | residual search + unit |
+| CB-V14 | `enabled=false` → nenhum bloco rico; gates B2 intactos | unit + integração DeliaAssistantMessage |
+| CB-V15 | regressão `ConversationMarkdown`/`ConversationAssistantActions`/document renderer | suites completas plugin-ui+delia |
+
+### 9.12 Delimitação e decisão
+
+```text
+CODE_BLOCK_VISUAL_SPEC=READY
+EXISTING_EQUIVALENT=YES (renderer+tokens+clipboard pattern+visual prior art)
+REUSE_DECISION=EXTEND (ConversationMarkdown case "code" → ConversationCodeBlock; lang?: string aditivo)
+MARKDOWN_B2=GATED (adapter+renderer implementados/testados; emissor v2 markdown_safe INEXISTENTE; QA+CP-333 pendentes)
+STANDALONE_RENDER_COMPONENT=AUTHORIZED_CANDIDATE (componente compartilhado isolado pode ser implementado sob gate próprio, sem ativação)
+DELIA_RUNTIME_ACTIVATION=BLOCKED (aguarda emissor v2 + CP-333 + QA B2)
+SYNTAX_HIGHLIGHTER=OUT_OF_SCOPE_V1
+NEXT_BOUNDED_IMPLEMENTATION=componente+unit tests no plugin-ui atrás do mesmo enabled-gate; NENHUM caminho de produção até emissor v2 existir
+PHASE_PROGRESSION=NONE
+```
+
+Menor próximo slice: `ConversationCodeBlock` + extensão `lang?: string` em `MarkdownToken` + delegação no case `code` do `ConversationMarkdown` + CSS `delpi-ui-conversation-code-block` + suite unit/integration — tudo inerte atrás de `enabled`, sem ativação e sem emissor backend.
+
+
+## 10. Implementação F02-C — estado factual (2026-10-22)
+
+Componente implementado e verificado conforme §9. Arquivos: `ConversationCodeBlock.tsx` + `.test.tsx` (`components/conversation/`), `conversation-code-block.css` (`styles/`), `MarkdownToken.lang?: string` aditivo, delegação `case "code"` no `ConversationMarkdown`, export público + `REQUIRED_HOST_EXPORTS`, fixture `markdown_code` em `demoMode.ts` (QA-gated).
+
+```text
+COMPONENT=ConversationCodeBlock (plugins/plugin-ui, export público via index)
+CONTRACT={code, language?, copyEnabled?, className?, labels?} — render-only, inerte
+MARKDOWN_TOKEN_LANG=ADDITIVE (lang?: string)
+MARKDOWN_DELEGATION=YES (case "code" → ConversationCodeBlock)
+COPY=navigator.clipboard.writeText(code) — sucesso pós-resolve, erro visível+aria-live, sem execCommand
+VITEST=plugin-ui 2315/2315, delia 322/322
+TYPECHECK=PASS (ambos)
+BUILD+FEDERATION=PASS (verify-host-exports OK)
+BROWSER_QA=46/46 (fixture ?delia-demo=markdown_code, dev server; ver evidência §3)
+CB_V01_V15=ALL PASS (métodos §9.11 executados — evidência code-block-f02c)
+MARKDOWN_B2_RUNTIME=OFF (emissor v2 continua inexistente — gate preservado)
+CP_333=NOT_ACCEPTED
+BACKEND_CHANGED=NO
+SYNTAX_HIGHLIGHTER=NONE (spec §9.6 mantida)
+EVIDENCE=docs/12-roadmap-e-evolucao/delia/evidence/code-block-f02c/
+```
+
+O componente está pronto para apresentar código assim que um emissor `presentation.v2` legítimo ativar Markdown B2 — task independente (produtor + contrato + QA + CP-333).

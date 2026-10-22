@@ -43,6 +43,18 @@ export const helpTooltips = {
     rejectValidation: "Recusa a etapa de aprovação deste chamado.",
     observersRead:
       "Pessoas que acompanham o chamado. Nesta tela a lista é somente leitura.",
+    classificationEdit:
+      "Edita categoria, tipo, urgência, impacto e origem deste chamado. Só aparece se o helpdesk permitir no seu perfil.",
+    classificationCategory: "Categoria ITIL do chamado no helpdesk.",
+    classificationType: "Tipo do chamado: incidente ou requisição.",
+    classificationUrgency: "Urgência do chamado conforme percebida pelo solicitante.",
+    classificationImpact: "Impacto do chamado no negócio. Junto com a urgência, ajuda a compor a prioridade.",
+    classificationRequestType: "Origem ou canal da solicitação registrada no helpdesk.",
+    classificationPriorityDerived:
+      "Prioridade calculada pelo helpdesk a partir de urgência e impacto. Somente leitura.",
+    classificationSave:
+      "Grava só os campos alterados desta classificação no helpdesk.",
+    classificationCancel: "Fecha a edição sem alterar o chamado.",
     slaLevelName:
       "Nome do nível de serviço associado ao chamado. Não é o prazo absoluto de atendimento ou solução.",
     approvalsSurface:

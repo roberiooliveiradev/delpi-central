@@ -36,3 +36,8 @@ export {
   isLocalAudioCaptureSupported,
   pickSupportedAudioRecorderMime,
 } from "./audioRecorderMime";
+
+export {
+  ComposerEnqueueButton,
+  type ComposerEnqueueButtonProps,
+} from "./ComposerEnqueueButton";

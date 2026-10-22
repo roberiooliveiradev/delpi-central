@@ -35,6 +35,11 @@ class TurnDeadline:
     clock: Callable[[], float] = field(
         default=time.monotonic, compare=False, repr=False
     )
+    # CP5/R2: the instant this deadline's clock started — lets an
+    # outer monotonic budget anchor at the REAL interaction start
+    # instead of being recomputed at a downstream seam. ``None`` for
+    # directly-constructed deadlines (callers keep the legacy anchor).
+    started_at: float | None = None
 
     @classmethod
     def start(
@@ -43,9 +48,11 @@ class TurnDeadline:
         *,
         clock: Callable[[], float] = time.monotonic,
     ) -> TurnDeadline:
+        now = clock()
         return cls(
-            ends_at=clock() + max(0.0, float(total_seconds)),
+            ends_at=now + max(0.0, float(total_seconds)),
             clock=clock,
+            started_at=now,
         )
 
     def remaining_seconds(self) -> float:

@@ -419,7 +419,7 @@ def test_arguments_timeout_after_discovery_never_reaches_methodology_read():
         "Como conduzir análise de causas em um processo?",
         turn_deadline=deadline,
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code in {
         "model_timeout",
         "turn_budget_exhausted",
@@ -665,6 +665,7 @@ def test_forged_prior_history_does_not_skip_owner_on_insufficient_goal():
         GovernedCapabilityStatus.SUCCESS,
         GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
         GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
     }
 
 
