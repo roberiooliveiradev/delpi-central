@@ -151,6 +151,42 @@ persistência hoje.
 latência do modelo. `CHECKPOINT_IMPLEMENTED=NO`,
 `RESUME_IMPLEMENTED=NO`, `PRODUCTION_ACTIVATION=NO`.
 
+### 10.2 CP3 executado (2026-10-22, relatório 90)
+
+`CP3_INVENTORY=DONE` — fluxo completo, matriz de estágios, estado em
+memória, orçamento/transporte, recuperação existente, frontend e reuse
+gate inventariados com evidências do código vigente; caracterização
+executável em `tests/test_c3_ephemeral_continuity_characterization.py`
+(7 testes PASS, sem alterar comportamento).
+
+Fatores determinantes: resultados de estágio vivem como locais de
+`_attempt` e morrem no raise — nunca exportados; o worker NDJSON é a
+vida técnica da interação e o terminal único já é garantido pela fila;
+nginx prod permite 86400s mas Cloudflare ~100s é o teto real (dev
+default 60s); `_repair_once`/`_recover_owner_contract` são precedentes
+de recovery bounded READ-only; `MAX_TIMEOUT_SECONDS=30` é teto duro por
+invocação; sem idempotência no fio MCP; admission/synthesis/
+index_select já degradam honestamente.
+
+`EPHEMERAL_RECOVERY=TARGET` — decisão de produto: perda em refresh/
+restart/disconnect aceita; persistência fora de escopo.
+
+`ARCHITECTURE_DECISION=OPTION_B` — continuação efêmera vinculada ao
+streaming: re-tentativa governada dentro do worker, checkpoint tipado
+interno `_TurnExecutionState` (frontier + ids/refs/argumentos — nunca
+CoT/credenciais), terminal único, cancelamento natural por disconnect,
+zero contrato de fio/frontend novo. Opção A insuficiente (sem janela
+restante quando o estágio esgota 30s); Opção C rejeitada (mesmo
+resultado com store+contrato+dedupe adicionais — registrada como
+fallback). Gate pendente para CP4: constantes explícitas de orçamento
+total por interação (`DELIA_MAX_GOVERNED_ATTEMPTS`,
+`DELIA_INTERACTION_TOTAL_BUDGET_SECONDS`) — o teto de 30s por tentativa
+permanece; PREPARE/ACT nunca resumidos através do invoke.
+
+`CHECKPOINT_RUNTIME=DESIGNED_EPHEMERAL`; `RETRY_STAGE_CONTRACT=DESIGNED`;
+`CONTINUATION_IMPLEMENTED=NO`; `NEXT=CP4_GOVERNED_STAGE_RESUME` —
+ver relatório [90](./90-cp3-ephemeral-continuity-and-llm-recovery-inventory.md).
+
 ## 11. Execution / review contract
 
 Future execution report must carry: BASE_HEAD/FINAL_HEAD/origin; authorities+CP/RQ; EXISTING_EQUIVALENT/REUSE_DECISION per responsibility; error-code mapping before/after; checkpoint owner/schema/lifetime/storage; state transitions; transport/reconnect; effective authorization and TTL; resume stage; dedup/idempotency; cancellation and budget policy; RED/GREEN; negative safety; independent real-model+real-MCP eval; prod verification; files/commit/ledger; `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`. A failed gate stops only the dependent continuation step; do not silently redesign.

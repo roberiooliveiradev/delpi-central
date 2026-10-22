@@ -17190,3 +17190,21 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=CP3_ARCHITECTURE_DECISION_REQUIRED
 ```
+
+**2026-10-22 — CP3 ephemeral continuity inventory + architecture decision (report 90):** `DELIA-C3-EPHEMERAL-CONTINUITY-AND-LLM-RECOVERY-INVENTORY-01` (doc 88 CP3). Directed inventory only — no runtime change: stage matrix mapped (locals in `_attempt` die at the raise; PROCESSING_TIMEOUT exports only status/correlation/error_code), NDJSON worker = interaction lifetime, prod nginx 86400s vs Cloudflare ~100s edge vs dev default 60s, existing bounded recoveries inventoried (`_repair_once`, `_recover_owner_contract`, admission/synthesis/index_select degradations), `MAX_TIMEOUT_SECONDS=30` hard cap, no idempotency key on MCP wire. Characterization suite `test_c3_ephemeral_continuity_characterization.py` (7 PASS) proves state loss boundary, in-budget retry window and soft degradation of non-timeout provider errors. Decision: Option B — governed re-attempt on the live stream with internal `_TurnExecutionState` checkpoint (typed frontier ids/args, never CoT/credentials), single terminal, natural disconnect cancellation, PREPARE/ACT frontier fail-closed. Option A insufficient (no window when the stage eats the whole 30s); Option C rejected (same outcome with extra store/contract/dedupe). Pending gate for CP4: explicit `DELIA_MAX_GOVERNED_ATTEMPTS` + `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS` constants. Report: [90](../corrections/mcp-contextual-intelligence-orchestration/90-cp3-ephemeral-continuity-and-llm-recovery-inventory.md).
+
+```text
+CP3_INVENTORY=DONE
+ARCHITECTURE_DECISION=OPTION_B(stream-bound governed re-attempt)
+CHECKPOINT=DESIGNED(_TurnExecutionState, ephemeral, internal)
+RUNTIME_CODE_CHANGED=NO
+CHARACTERIZATION=PASS(7)
+PERSISTENT_CONVERSATIONS=OUT_OF_SCOPE
+EPHEMERAL_RECOVERY=TARGET
+CHECKPOINT_IMPLEMENTED=NO
+RESUME_IMPLEMENTED=NO
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=CP4_GOVERNED_STAGE_RESUME(pending budget-constants signoff)
+```
