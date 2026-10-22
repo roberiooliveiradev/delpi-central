@@ -1616,6 +1616,56 @@ class HttpxGlpiClient:
             return
         _raise_for_status(response, "DELETE", path)
 
+    def _legacy_sla_ttr_exceeded(
+        self,
+        session_token: str,
+        *,
+        app_token: str,
+        ticket_ids: tuple[int, ...],
+    ) -> dict[int, bool]:
+        """Read GLPI search field 82. Missing or failed classification stays absent."""
+        from helpdesk_app.infrastructure.glpi.dashboard_reader_mapping import (
+            parse_sla_ttr_exceeded,
+        )
+
+        if not ticket_ids:
+            return {}
+        params: list[tuple[str, str]] = [
+            ("forcedisplay[0]", "2"),
+            ("forcedisplay[1]", "82"),
+            ("range", f"0-{len(ticket_ids) - 1}"),
+        ]
+        for index, ticket_id in enumerate(ticket_ids):
+            prefix = f"criteria[{index}]"
+            params.append((f"{prefix}[link]", "OR" if index else "AND"))
+            params.append((f"{prefix}[field]", "2"))
+            params.append((f"{prefix}[searchtype]", "equals"))
+            params.append((f"{prefix}[value]", str(ticket_id)))
+        try:
+            response = self._http.request(
+                "GET",
+                f"{self._base}/apirest.php/search/Ticket",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": app_token,
+                    "Session-Token": session_token,
+                },
+                params=params,
+            )
+        except httpx.TimeoutException:
+            logger.warning(
+                "helpdesk_dashboard_reader sla_ttr_exceeded_unavailable reason=timeout"
+            )
+            return {}
+        if response.status_code not in {200, 206}:
+            logger.warning(
+                "helpdesk_dashboard_reader sla_ttr_exceeded_unavailable status=%s",
+                response.status_code,
+            )
+            return {}
+        payload = response.json() if response.content else {}
+        return parse_sla_ttr_exceeded(payload, ticket_ids)
+
     def list_tickets_as_dashboard_reader(
         self,
         query,
@@ -1638,6 +1688,9 @@ class HttpxGlpiClient:
         start = max(0, (int(query.page) - 1) * int(query.page_size))
         end = start + int(query.page_size) - 1
         response = None
+        items: list[dict] = []
+        has_more = False
+        exceeded: dict[int, bool] = {}
         try:
             self._legacy_use_exact_entities(
                 session_token,
@@ -1654,6 +1707,20 @@ class HttpxGlpiClient:
                 },
                 params={"range": f"{start}-{end}"},
             )
+            if response.status_code in {200, 206}:
+                payload = response.json() if response.content else []
+                items, has_more = map_dashboard_reader_page(
+                    payload,
+                    content_range=response.headers.get("Content-Range", ""),
+                    entity_ids=entity_ids,
+                    group_ids=group_ids,
+                    page_size=int(query.page_size),
+                )
+                exceeded = self._legacy_sla_ttr_exceeded(
+                    session_token,
+                    app_token=app_token,
+                    ticket_ids=tuple(item["id"] for item in items),
+                )
         except httpx.TimeoutException as exc:
             raise GlpiUnavailable("GLPI indisponível.") from exc
         finally:
@@ -1666,14 +1733,6 @@ class HttpxGlpiClient:
         )
         if response.status_code not in {200, 206}:
             _raise_for_status(response, "GET", "/apirest.php/Ticket")
-        payload = response.json() if response.content else []
-        items, has_more = map_dashboard_reader_page(
-            payload,
-            content_range=response.headers.get("Content-Range", ""),
-            entity_ids=entity_ids,
-            group_ids=group_ids,
-            page_size=int(query.page_size),
-        )
         summaries = tuple(
             TicketSummary(
                 id=item["id"],
@@ -1688,6 +1747,7 @@ class HttpxGlpiClient:
                 closed_at=item["closed_at"],
                 sla_ttr=item["sla_ttr"],
                 sla_tto=item["sla_tto"],
+                sla_ttr_exceeded=exceeded.get(item["id"]),
                 entity=item["entity"],
             )
             for item in items

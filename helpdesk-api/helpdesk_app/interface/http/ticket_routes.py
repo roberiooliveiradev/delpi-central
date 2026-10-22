@@ -349,6 +349,7 @@ def list_tickets(
                 "closed_at": row.closed_at,
                 "sla_ttr": row.sla_ttr,
                 "sla_tto": row.sla_tto,
+                "sla_ttr_exceeded": row.sla_ttr_exceeded,
                 "assigned_display_name": row.assigned_display_name,
                 "assigned_user_id": row.assigned_user_id,
                 "requester_display_name": row.requester_display_name,
