@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 import pytest
 from PIL import Image
@@ -27,8 +28,11 @@ from app.domain.engineering.metallographic_report import (
     PayloadValidationError,
     PreconditionRequiredError,
     ReportNotFoundError,
+    ReportNumberCapacityError,
     ReportVersionConflictError,
     UnsupportedImageError,
+    business_calendar_date,
+    format_report_number,
     normalize_create_payload,
 )
 from app.infrastructure.pdf.metallographic.metallographic_report_pdf_renderer import (
@@ -59,6 +63,8 @@ class MemoryMetallographicRepository:
         self.images: dict[str, dict[str, dict]] = {}
         self.keys: dict[tuple[str, str, str], tuple[str, str]] = {}
         self.counter = 0
+        self.day_counters: dict[date, int] = {}
+        self.now = lambda: datetime.now(ZoneInfo("America/Sao_Paulo"))
         self.audits: list[dict] = []
         self.fail_put = False
 
@@ -99,12 +105,15 @@ class MemoryMetallographicRepository:
                     "A Idempotency-Key já foi usada e o relatório não está mais disponível."
                 )
             return stored
+        business_day = business_calendar_date(self.now())
+        sequence = self.day_counters.get(business_day, 0) + 1
+        number = format_report_number(business_day, sequence)
+        self.day_counters[business_day] = sequence
         self.counter += 1
         now = datetime.now(timezone.utc).isoformat()
-        year = datetime.now().year
         row = {
             "id": report_id,
-            "report_number": f"MET-{year}-{self.counter:06d}",
+            "report_number": number,
             "report_date": payload.get("report_date"),
             "revision": payload.get("revision") or "00",
             "sample": deepcopy(payload.get("sample") or {}),
@@ -354,8 +363,9 @@ def test_create_assigns_unique_numbers_and_preserves_fields(tmp_path: Path) -> N
         payload=_payload(sample={**_payload()["sample"], "terminal_code": "TERM-2"}),
     )
     assert first["id"] != second["id"]
-    assert first["report_number"] != second["report_number"]
-    assert first["report_number"].startswith("MET-")
+    today = business_calendar_date(datetime.now(ZoneInfo("America/Sao_Paulo")))
+    assert first["report_number"] == format_report_number(today, 1)
+    assert second["report_number"] == format_report_number(today, 2)
     assert first["sample"]["terminal_code"] == "TERM-1"
     assert first["measurements"]["crimp_height_ch"]["measured"] == "1.20"
     assert first["conclusion"]["result"] == "conforming"
@@ -364,6 +374,50 @@ def test_create_assigns_unique_numbers_and_preserves_fields(tmp_path: Path) -> N
     again = service.get(first["id"])
     assert again["report_number"] == first["report_number"]
     assert again["measurements"]["right_burr_gh_d"]["criterion"] == "<=0.10"
+
+
+def test_daily_number_restarts_keeps_deleted_slots_and_stops_at_999(tmp_path: Path) -> None:
+    service, repository = _service(tmp_path)
+    repository.now = lambda: datetime(2026, 10, 22, 15, 0, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    first = service.create(actor="user-1", idempotency_key="create-key-01", payload=_payload())
+    second = service.create(actor="user-1", idempotency_key="create-key-02", payload=_payload())
+    third = service.create(actor="user-1", idempotency_key="create-key-03", payload=_payload())
+    assert first["report_number"] == "MET-20261022-001"
+    assert second["report_number"] == "MET-20261022-002"
+    assert third["report_number"] == "MET-20261022-003"
+    service.delete(actor="user-1", report_id=second["id"], if_match='"1"')
+    assert repository.reports[second["id"]]["report_number"] == "MET-20261022-002"
+    fourth = service.create(actor="user-1", idempotency_key="create-key-04", payload=_payload())
+    assert fourth["report_number"] == "MET-20261022-004"
+    repository.now = lambda: datetime(2026, 10, 23, 0, 30, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    next_day = service.create(actor="user-1", idempotency_key="create-key-05", payload=_payload())
+    assert next_day["report_number"] == "MET-20261023-001"
+    repository.now = lambda: datetime(2026, 10, 22, 2, 30, tzinfo=timezone.utc)
+    boundary = service.create(actor="user-1", idempotency_key="create-key-06", payload=_payload())
+    assert boundary["report_number"] == "MET-20261021-001"
+    repository.now = lambda: datetime(2026, 10, 22, 3, 30, tzinfo=timezone.utc)
+    after_midnight = service.create(actor="user-1", idempotency_key="create-key-07", payload=_payload())
+    assert after_midnight["report_number"] == "MET-20261022-005"
+    listed = service.list_reports(
+        page=1,
+        page_size=20,
+        sort="report_number_asc",
+        filters={"report_number": "MET-20261022"},
+    )
+    assert [item["report_number"] for item in listed["items"]] == [
+        "MET-20261022-001",
+        "MET-20261022-003",
+        "MET-20261022-004",
+        "MET-20261022-005",
+    ]
+    repository.day_counters[date(2026, 10, 22)] = 999
+    before = len(repository.reports)
+    with pytest.raises(ReportNumberCapacityError):
+        service.create(actor="user-1", idempotency_key="create-key-08", payload=_payload())
+    assert len(repository.reports) == before
+    assert format_report_number(date(2026, 10, 22), 999) == "MET-20261022-999"
+    with pytest.raises(ReportNumberCapacityError):
+        format_report_number(date(2026, 10, 22), 1000)
 
 
 def test_idempotent_create_does_not_allocate_a_second_number(tmp_path: Path) -> None:
@@ -435,6 +489,15 @@ def test_patch_requires_version_and_keeps_omitted_fields(tmp_path: Path) -> None
     assert updated["sample"]["terminal_code"] == "TERM-1"
     assert updated["updated_by"] == "user-2"
     assert updated["measurements"]["void_area_av"]["measured"] == "4.5"
+    assert updated["report_number"] == created["report_number"]
+    dated = service.update(
+        actor="user-2",
+        report_id=created["id"],
+        if_match='"2"',
+        payload={"report_date": "2020-01-15"},
+    )
+    assert dated["report_date"] == "2020-01-15"
+    assert dated["report_number"] == created["report_number"]
 
 
 def test_soft_delete_hides_report_and_copy_is_independent(tmp_path: Path) -> None:
@@ -451,7 +514,10 @@ def test_soft_delete_hides_report_and_copy_is_independent(tmp_path: Path) -> Non
     current = service.get(created["id"])
     copied = service.copy(actor="user-2", report_id=created["id"], idempotency_key="copy-key-0001")
     assert copied["id"] != created["id"]
-    assert copied["report_number"] != created["report_number"]
+    assert copied["report_number"] == format_report_number(
+        business_calendar_date(datetime.now(ZoneInfo("America/Sao_Paulo"))),
+        2,
+    )
     assert copied["revision"] == "00"
     assert copied["created_by"] == "user-2"
     assert copied["images"]["original"]["present"] is True
@@ -578,6 +644,10 @@ def test_pdf_export_keeps_snapshot_and_sections(tmp_path: Path) -> None:
     assert exported["filename"] == f"metalografia-{created['report_number']}.pdf"
     text = exported["content"].decode("latin1", errors="ignore")
     assert created["report_number"] in text
+    assert created["report_number"] == format_report_number(
+        business_calendar_date(datetime.now(ZoneInfo("America/Sao_Paulo"))),
+        1,
+    )
     assert "IDENTIFICA" in text
     assert "CH" in text
     assert "RASCUNHO" not in text

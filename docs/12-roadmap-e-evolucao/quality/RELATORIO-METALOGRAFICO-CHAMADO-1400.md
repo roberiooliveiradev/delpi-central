@@ -23,6 +23,10 @@ Origem: Helpdesk **#1400**, aberto em 21/10/2026. HTML de referência não versi
 - Exclusão lógica some da lista e da consulta; a cópia não altera o original.
 - PDF A4 sai do snapshot salvo, sem mudar versão nem revisão, com as seções documentadas. A fidelidade ao HTML permanece pendente do arquivo original.
 
+## Numeração diária
+
+O número público passa a ser `MET-AAAAMMDD-NNN`, reservado na API no dia civil de `America/Sao_Paulo` da criação. Ele não muda com edição, data do documento, PDF ou exclusão lógica. A cópia recebe outro número. Acima de 999 relatórios no mesmo dia a criação falha, sem reaproveitar código. A migration `V011` renumerou os registros de teste pelo `created_at`, preservando UUID, imagens e o contador dos excluídos. O contador anual ficou só como histórico.
+
 ## Data automática
 
 Novo relatório e cópia gravam a data civil de `America/Sao_Paulo` na criação. Edição, reabertura e salvamento não substituem a data persistida. Relatório antigo com data vazia não é preenchido em lote.

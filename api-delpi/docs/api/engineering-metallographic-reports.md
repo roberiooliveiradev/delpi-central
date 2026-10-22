@@ -22,7 +22,7 @@ O MFE Metalografia DELPI consome este contrato em `/apps/metalography`. Não há
 | DELETE | `/engineering/metallographic-reports/{report_id}/images/{slot}` | `engineering_delete_metallographic_image` | `metalography.edit` |
 | GET | `/engineering/metallographic-reports/{report_id}/pdf` | `engineering_export_metallographic_report_pdf` | `metalography.export` |
 
-`report_id` é UUID. `slot` é `original` ou `measured`. O número `MET-{ano}-{sequência}` é gerado no servidor.
+`report_id` é UUID. `slot` é `original` ou `measured`. O número público é `MET-AAAAMMDD-NNN`, gerado no servidor no dia civil `America/Sao_Paulo` da criação. `report_date` continua editável e não redefine o número. A sequência reinicia em `001` a cada dia, inclui relatórios excluídos logicamente e para em `999` com erro, sem reutilizar nem truncar.
 
 JSON de sucesso usa o envelope `api_delpi_success` (**HTTP 200**), com `meta.operationId` igual ao `operationId` do OpenAPI e `ETag` da versão nas respostas de um relatório. Imagem e PDF são binários (`image/jpeg` ou `image/png`, `application/pdf`) com `Cache-Control: private, no-store`.
 
@@ -43,10 +43,12 @@ JSON de sucesso usa o envelope `api_delpi_success` (**HTTP 200**), com `meta.ope
 
 ## Persistência
 
-Migration `api-delpi/migrations/plugins/engineering/V010__metallographic_reports.sql`.
+Migrations `V010__metallographic_reports.sql` e `V011__metallographic_report_daily_numbers.sql`.
 
-- `engineering.metallographic_reports` — dados, versão otimista, exclusão lógica
-- `engineering.metallographic_report_counters` — numeração transacional por ano
+- `engineering.metallographic_reports` — dados, versão otimista, exclusão lógica, número imutável
+- `engineering.metallographic_report_day_counters` — último número reservado em cada dia civil, inclusive excluídos
+- `engineering.metallographic_report_number_renames` — correspondência do número anual de teste para o formato diário
+- `engineering.metallographic_report_counters` — histórico da numeração anual; não é mais a fonte do número
 - `engineering.metallographic_report_images` — metadado das micrografias
 - `engineering.metallographic_report_idempotency` — `Idempotency-Key` por ator e operação (`create`, `copy`)
 - `engineering.metallographic_report_audit` — operação, ator e nomes de campos; sem texto de observações e sem binário

@@ -34,3 +34,18 @@ def test_v010_defines_identity_concurrency_and_images() -> None:
     assert "'original'" in sql and "'measured'" in sql
     assert "'conforming'" in sql and "'nonconforming'" in sql
     assert "REFERENCES engineering.metallographic_reports" in sql
+
+
+def test_v011_daily_numbers_keep_history_and_refuse_overflow() -> None:
+    path = MIGRATION.parent / "V011__metallographic_report_daily_numbers.sql"
+    sql = path.read_text(encoding="utf-8")
+    assert "engineering.metallographic_business_date" in sql
+    assert "engineering.metallographic_report_day_counters" in sql
+    assert "engineering.metallographic_report_number_renames" in sql
+    assert "America/Sao_Paulo" in sql
+    assert "ORDER BY created_at, id" in sql
+    assert "deleted_at IS NULL" not in sql
+    assert "last_value <= 999" in sql
+    assert "renumber aborted" in sql
+    assert "DROP TABLE" not in sql.upper()
+    assert "DROP SCHEMA" not in sql.upper()

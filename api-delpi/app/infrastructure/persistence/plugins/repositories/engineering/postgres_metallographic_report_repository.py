@@ -4,20 +4,21 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from psycopg.errors import UniqueViolation
 from psycopg.types.json import Json
 
 from app.domain.engineering.metallographic_report import (
-    BUSINESS_TIMEZONE,
     MEASUREMENT_KEYS,
+    REPORT_NUMBER_SEQUENCE_MAX,
     SAMPLE_FIELDS,
     SORT_VALUES,
     IdempotencyConflictError,
     ReportNotFoundError,
+    ReportNumberCapacityError,
     ReportVersionConflictError,
     empty_measurements,
+    format_report_number,
 )
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
@@ -506,20 +507,8 @@ class PostgresMetallographicReportRepository(PluginBaseRepository):
         *,
         report_id: str | None,
     ) -> tuple[str, str]:
-        year = datetime.now(ZoneInfo(BUSINESS_TIMEZONE)).year
         with self.connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO engineering.metallographic_report_counters (year, last_value)
-                VALUES (%s, 1)
-                ON CONFLICT (year) DO UPDATE
-                SET last_value = engineering.metallographic_report_counters.last_value + 1
-                RETURNING last_value
-                """,
-                (year,),
-            )
-            seq = int(dict(cursor.fetchone())["last_value"])
-            number = f"MET-{year}-{seq:06d}"
+            number = self._allocate_number(cursor)
             sample = payload["sample"]
             if report_id:
                 cursor.execute(
@@ -592,6 +581,28 @@ class PostgresMetallographicReportRepository(PluginBaseRepository):
             )
             report_id = str(dict(cursor.fetchone())["id"])
         return report_id, number
+
+    def _allocate_number(self, cursor: Any) -> str:
+        cursor.execute(
+            """
+            INSERT INTO engineering.metallographic_report_day_counters AS counters (
+                business_date, last_value
+            )
+            SELECT engineering.metallographic_business_date(NOW()), 1
+            ON CONFLICT (business_date) DO UPDATE
+               SET last_value = counters.last_value + 1
+             WHERE counters.last_value < %s
+            RETURNING last_value, business_date
+            """,
+            (REPORT_NUMBER_SEQUENCE_MAX,),
+        )
+        allocated = cursor.fetchone()
+        if allocated is None:
+            raise ReportNumberCapacityError(
+                "A numeração deste dia civil atingiu 999 relatórios. Nenhum identificador foi reutilizado ou truncado."
+            )
+        row = dict(allocated)
+        return format_report_number(row["business_date"], int(row["last_value"]))
 
     def _insert_image(self, report_id: str, image: dict[str, Any]) -> None:
         with self.connection.cursor() as cursor:

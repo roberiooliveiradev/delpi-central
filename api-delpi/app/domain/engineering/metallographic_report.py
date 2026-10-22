@@ -10,6 +10,7 @@ import json
 import re
 from datetime import date, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 IMAGE_SLOTS = ("original", "measured")
 CONCLUSION_RESULTS = ("conforming", "nonconforming")
@@ -48,6 +49,8 @@ REVISION_MAX = 16
 ANALYST_NAME_MAX = 160
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{8,200}$")
 BUSINESS_TIMEZONE = "America/Sao_Paulo"
+REPORT_NUMBER_SEQUENCE_MAX = 999
+REPORT_NUMBER_PATTERN = re.compile(r"^MET-\d{8}-\d{3}$")
 
 
 class MetallographicReportError(Exception):
@@ -114,9 +117,39 @@ class InvalidImageError(MetallographicReportError):
     code = "INVALID_IMAGE"
 
 
+class ReportNumberCapacityError(MetallographicReportError):
+    status_code = 409
+    code = "REPORT_NUMBER_CAPACITY"
+
+
 class ImageStorageError(MetallographicReportError):
     status_code = 503
     code = "IMAGE_STORAGE_UNAVAILABLE"
+
+
+def business_calendar_date(moment: datetime) -> date:
+    """Civil date in America/Sao_Paulo. Naive instants are rejected."""
+    if moment.tzinfo is None or moment.tzinfo.utcoffset(moment) is None:
+        raise PayloadValidationError("O instante da numeração precisa ter fuso horário.")
+    return moment.astimezone(ZoneInfo(BUSINESS_TIMEZONE)).date()
+
+
+def format_report_number(business_date: date, sequence: int) -> str:
+    """MET-YYYYMMDD-NNN. Sequences above 999 fail instead of wrapping or truncating."""
+    if isinstance(business_date, datetime):
+        business_date = business_date.date()
+    if not isinstance(business_date, date) or isinstance(sequence, bool) or not isinstance(sequence, int):
+        raise PayloadValidationError("Data ou sequência da numeração é inválida.")
+    if sequence < 1 or sequence > REPORT_NUMBER_SEQUENCE_MAX:
+        raise ReportNumberCapacityError(
+            "A numeração deste dia civil atingiu 999 relatórios. Nenhum identificador foi reutilizado ou truncado."
+        )
+    number = f"MET-{business_date:%Y%m%d}-{sequence:03d}"
+    if REPORT_NUMBER_PATTERN.fullmatch(number) is None or len(number) > 32:
+        raise ReportNumberCapacityError(
+            "A numeração deste dia civil atingiu 999 relatórios. Nenhum identificador foi reutilizado ou truncado."
+        )
+    return number
 
 
 def etag_for(version: int) -> str:
