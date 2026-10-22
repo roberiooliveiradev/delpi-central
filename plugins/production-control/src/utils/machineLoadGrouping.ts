@@ -97,3 +97,70 @@ export function groupSelectedMachineLoadOperations(
 
   return { status: "ok", nextRows, groupedCount: selectedInOrder.length };
 }
+
+
+export type MachineLoadGroupMoveOutcome =
+  | {
+      status: "ok";
+      /** Nova ordem da fila do CT — permutação exata de `rows`. */
+      nextRows: MachineLoadOperation[];
+      /** Quantidade de operações movidas em bloco. */
+      movedCount: number;
+    }
+  | { status: "noop" }
+  | { status: "invalid" }
+  | { status: "protected"; blocked: MachineLoadOperation };
+
+/**
+ * Move as linhas de `movedIndices` como bloco contíguo até a posição de
+ * `targetIndex` — a mesma semântica do arraste individual (o bloco ocupa
+ * o lugar da linha-alvo). Função pura, permissão é do backend.
+ *
+ * Regras:
+ * - ordem relativa preservada dentro e fora do bloco;
+ * - alvo dentro do bloco → `noop` (o grupo já está ali);
+ * - qualquer operação com run aberto cuja posição mude → `protected` —
+ *   o arraste em grupo nunca desloca uma execução em andamento;
+ * - sequência resultante idêntica → `noop` (grupo já contíguo no alvo).
+ */
+export function moveMachineLoadRowsByIndices(
+  rows: MachineLoadOperation[],
+  movedIndices: readonly number[],
+  targetIndex: number,
+): MachineLoadGroupMoveOutcome {
+  const moved = new Set(movedIndices);
+  if (!moved.size) return { status: "noop" };
+  for (const index of moved) {
+    if (index < 0 || index >= rows.length) return { status: "invalid" };
+  }
+  if (targetIndex < 0 || targetIndex >= rows.length) {
+    return { status: "invalid" };
+  }
+  if (moved.has(targetIndex)) return { status: "noop" };
+
+  const block: MachineLoadOperation[] = [];
+  const remaining: MachineLoadOperation[] = [];
+  rows.forEach((row, index) => {
+    if (moved.has(index)) block.push(row);
+    else remaining.push(row);
+  });
+  const insertAt = Math.min(remaining.length, targetIndex);
+  const nextRows = [...remaining];
+  nextRows.splice(insertAt, 0, ...block);
+
+  // Posição absoluta de operações com run aberto é protegida — regra espelho
+  // da proteção canônica do backend; o drop é vetado antes de persistir.
+  for (let index = 0; index < rows.length; index += 1) {
+    if (
+      machineLoadOperationHasOpenRun(rows[index]) &&
+      nextRows[index] !== rows[index]
+    ) {
+      return { status: "protected", blocked: rows[index] };
+    }
+  }
+
+  if (nextRows.every((row, index) => row === rows[index])) {
+    return { status: "noop" };
+  }
+  return { status: "ok", nextRows, movedCount: block.length };
+}

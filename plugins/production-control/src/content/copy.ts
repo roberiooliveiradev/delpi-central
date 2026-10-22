@@ -263,7 +263,11 @@ export const copy = {
         count === 1 ? "1 operação selecionada" : `${count} operações selecionadas`,
       pendingHint:
         "Ações coletivas pelo botão direito numa linha selecionada: agrupar, transferir ou retirar.",
-      dragDisabledHint: "Arraste indisponível com várias operações selecionadas.",
+      dragDisabledHint:
+        "Somente linhas selecionadas podem ser arrastadas — o grupo inteiro se move.",
+      dragGroupHint:
+        "Arrastar o grupo: todas as operações selecionadas se movem juntas.",
+      dragGroupAria: "Arrastar operações selecionadas",
       clear: "Limpar seleção",
       clearAria: "Limpar seleção de operações",
       ambiguous:

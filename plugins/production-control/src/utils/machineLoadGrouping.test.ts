@@ -4,6 +4,7 @@ import { makeMachineLoadOperation } from "./machineLoadTestPayload";
 import {
   groupSelectedMachineLoadOperations,
   machineLoadOperationHasOpenRun,
+  moveMachineLoadRowsByIndices,
 } from "./machineLoadGrouping";
 import { machineLoadOperationKey } from "./machineLoadOperationSelection";
 
@@ -164,5 +165,84 @@ describe("groupSelectedMachineLoadOperations", () => {
     const snapshot = [...rows];
     groupSelectedMachineLoadOperations(rows, select(rows[1], rows[4]));
     expect(rows).toEqual(snapshot);
+  });
+});
+
+
+describe("moveMachineLoadRowsByIndices", () => {
+  it("move bloco de selecionadas — cabeça do grupo na posição do alvo", () => {
+    const outcome = moveMachineLoadRowsByIndices(QUEUE, [1, 3], 5);
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+    expect(keysOf(outcome.nextRows)).toEqual([
+      "OP-A",
+      "OP-C",
+      "OP-E",
+      "OP-F",
+      "OP-G",
+      "OP-B",
+      "OP-D",
+    ]);
+    expect(outcome.movedCount).toBe(2);
+  });
+
+  it("move bloco para cima — mesmo resultado", () => {
+    const outcome = moveMachineLoadRowsByIndices(QUEUE, [3, 5], 1);
+    expect(outcome.status).toBe("ok");
+    if (outcome.status !== "ok") return;
+    expect(keysOf(outcome.nextRows)).toEqual([
+      "OP-A",
+      "OP-D",
+      "OP-F",
+      "OP-B",
+      "OP-C",
+      "OP-E",
+      "OP-G",
+    ]);
+  });
+
+  it("alvo dentro do bloco é noop — grupo já está na posição", () => {
+    expect(moveMachineLoadRowsByIndices(QUEUE, [1, 3], 3).status).toBe("noop");
+    expect(moveMachineLoadRowsByIndices(QUEUE, [1, 3], 1).status).toBe("noop");
+  });
+
+  it("selecionar a fila inteira e soltar em qualquer linha é noop", () => {
+    expect(
+      moveMachineLoadRowsByIndices(QUEUE, [0, 1, 2, 3, 4, 5, 6], 3).status,
+    ).toBe("noop");
+  });
+
+  it("índice de alvo ou do bloco fora da fila é invalid", () => {
+    expect(moveMachineLoadRowsByIndices(QUEUE, [1], 99).status).toBe("invalid");
+    expect(moveMachineLoadRowsByIndices(QUEUE, [9], 1).status).toBe("invalid");
+    expect(moveMachineLoadRowsByIndices(QUEUE, [], 1).status).toBe("noop");
+  });
+
+  it("run aberto deslocado pelo bloco bloqueia o movimento", () => {
+    const rows = [...QUEUE];
+    rows[4] = op("E", { operation_code: "05", execution_status: "producing" });
+    const outcome = moveMachineLoadRowsByIndices(rows, [1, 3], 5);
+    expect(outcome.status).toBe("protected");
+    if (outcome.status !== "protected") return;
+    expect(outcome.blocked.production_order).toBe("OP-E");
+  });
+
+  it("run aberto dentro do bloco (posição muda) também bloqueia", () => {
+    const rows = [...QUEUE];
+    rows[2] = op("C", { operation_code: "03", execution_status: "paused" });
+    const outcome = moveMachineLoadRowsByIndices(rows, [2, 4], 0);
+    expect(outcome.status).toBe("protected");
+    if (outcome.status !== "protected") return;
+    expect(outcome.blocked.production_order).toBe("OP-C");
+  });
+
+  it("run aberto que permanece na mesma posição absoluta não bloqueia", () => {
+    const rows = [...QUEUE];
+    // Run em 0 (início da fila): bloco [2,4] → alvo 3. Removendo 2,4 o run
+    // continua em 0. nextRows: [A(run),B,D,C,E,F,G] — run na posição 0 nos
+    // dois arrays → permitido? A posição absoluta do run é 0 em ambos.
+    rows[0] = op("A", { operation_code: "01", execution_status: "producing" });
+    const outcome = moveMachineLoadRowsByIndices(rows, [2, 4], 3);
+    expect(outcome.status).toBe("ok");
   });
 });
