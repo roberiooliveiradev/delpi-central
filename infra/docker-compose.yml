@@ -2150,6 +2150,64 @@ services:
     networks:
       - delpi-network
 
+  external-data-api:
+    build:
+      context: ..
+      dockerfile: external-data-api/Dockerfile
+
+    container_name: delpi-external-data-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      SERVICE_NAME: external-data-api
+
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      # Individual S2S (callee side) — allowlist inicial: supplies-api.
+      S2S_AUDIENCE: ${EXTERNAL_DATA_S2S_AUDIENCE:-external-data-api}
+      S2S_ALLOWED_CLIENTS: ${EXTERNAL_DATA_S2S_ALLOWED_CLIENTS:-supplies-api}
+
+      # External CNPJ provider (X1) — default fail-closed.
+      EXTERNAL_DATA_CNPJ_PROVIDER: ${EXTERNAL_DATA_CNPJ_PROVIDER:-unavailable}
+      EXTERNAL_DATA_RATE_LIMIT_STRATEGY: ${EXTERNAL_DATA_RATE_LIMIT_STRATEGY:-process_local}
+      # Opt-in obrigatório p/ brasilapi+process_local (single-worker/test);
+      # multiworker exige strategy=distributed + REDIS_URL saudável.
+      EXTERNAL_DATA_PROCESS_LOCAL_ALLOWED: ${EXTERNAL_DATA_PROCESS_LOCAL_ALLOWED:-false}
+      EXTERNAL_DATA_MAX_QUERIES_PER_MINUTE: ${EXTERNAL_DATA_MAX_QUERIES_PER_MINUTE:-10}
+      EXTERNAL_DATA_GLOBAL_MAX_QUERIES_PER_MINUTE: ${EXTERNAL_DATA_GLOBAL_MAX_QUERIES_PER_MINUTE:-30}
+      BRASILAPI_BASE_URL: ${BRASILAPI_BASE_URL:-https://brasilapi.com.br/api}
+      BRASILAPI_TIMEOUT_SECONDS: ${BRASILAPI_TIMEOUT_SECONDS:-6}
+      REDIS_URL: ${REDIS_URL:-}
+
+    depends_on:
+      keycloak:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   requests-api:
     build:
       context: ..

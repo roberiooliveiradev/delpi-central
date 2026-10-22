@@ -90,3 +90,11 @@ Stop: `EXECUTION_DRIFT` para premissa de owner invalidada; sem autorização de 
 > (owner proposto `external-data-api` novo bounded context, rota `GET /v1/cnpj/{cnpj}`
 > S2S-only, DTO v1, erros `EXTERNAL_DATA_*`, plano X1–X4, GATE-INFRA INCONCLUSIVE
 > por Redis DELPI inexistente). Próxima task: `X1 — Foundation + BrasilAPI CNPJ`.
+>
+> **X1 executado:** serviço `external-data-api/` implementado (Flask+gunicorn,
+> `delpi_auth`, `GET /v1/cnpj/{cnpj}` com allowlist `supplies-api`, adapter
+> BrasilAPI reimplementado, normalizador allowlist, limiter consumer/cnpj/global
+> com Lua atômico, compose aditivo sem porta pública). 67 testes PASS incluindo
+> Redis 7 real multi-processo; `contact` mantido `null` por política LGPD.
+> Runtime produtivo **não** verificado; `GATE-INFRA` (Redis DELPI) continua
+> INCONCLUSIVE. Próxima task: `X2 — Supplies Consumer Integration & Parity`.
