@@ -79,7 +79,7 @@
  @page{size:A4 portrait;margin:0}
  .dashboard-metalography, .dashboard-metalography{width:210mm;height:297mm;margin:0;padding:0;background:#fff}
  .dashboard-metalography, .dashboard-metalography *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .dashboard-metalography .toolbar, .dashboard-metalography .upload-row, .dashboard-metalography .screen-only, .dashboard-metalography .crop-modal, .dashboard-metalography .app-toast{display:none!important}
+ .dashboard-metalography .toolbar, .dashboard-metalography .upload-row, .dashboard-metalography .screen-only, .dashboard-metalography .crop-modal, .dashboard-metalography .app-toast, .dashboard-metalography .sec-heading .sub{display:none!important}
  .dashboard-metalography .sheet{width:210mm;height:297mm;margin:0;box-shadow:none;padding:0 9mm 6mm;overflow:hidden;break-after:avoid;page-break-after:avoid}
  .dashboard-metalography input, .dashboard-metalography textarea{color:#25465f!important}
  .dashboard-metalography .entry::placeholder{color:#9aabba!important}

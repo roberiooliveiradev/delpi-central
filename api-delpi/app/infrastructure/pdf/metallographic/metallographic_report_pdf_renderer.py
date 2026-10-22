@@ -70,10 +70,10 @@ _ROWS = (
 )
 
 _SECTIONS = (
-    (1, "Identificação da amostra", "Preencha os dados do terminal, cabo e processo avaliados.", 33.5),
-    (2, "Análise da seção transversal", "Registre a micrografia original e a seção com análise visual.", 78.7),
-    (3, "Resultados da medição", "Registre o critério aplicável e o valor obtido para cada característica.", 151.3),
-    (4, "Conclusão técnica", "Selecione o resultado final e registre observações ou desvios.", 216.9),
+    (1, "Identificação da amostra", "", 33.5),
+    (2, "Análise da seção transversal", "", 78.7),
+    (3, "Resultados da medição", "", 151.3),
+    (4, "Conclusão técnica", "", 216.9),
     (5, "Responsável pela análise", "", 264.5),
 )
 
