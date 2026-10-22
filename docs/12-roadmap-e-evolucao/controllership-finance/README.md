@@ -316,3 +316,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - contas a receber em aberto (22/10/2026)
 
 [Doc 70 - Posicao de titulos a receber](./70-ciclo1-contas-a-receber-posicao-titulos.md): estrutura do snapshot financeiro, vencimentos, natureza e tipos de titulo, com 17 colunas, 560 registros na amostra e cabecalhos repetidos. FINR130 e candidato funcional; fontes, parametros e paridade com relatorios de recebimento/FINR190 permanecem pendentes. Sem dados transacionais originais no repositorio.
+
+
+### Ciclo 1 - Pagamentos por natureza (22/10/2026)
+
+[Doc 72 - Pagos por natureza](./72-ciclo1-pagos-por-natureza.md): inventario conceitual do relatorio privado `nat.prt`, agrupado por natureza financeira, com subtotais por classificacao e eventos de baixa de tipos distintos. Comparacao com `DLP06R01` por data, log de inconsistencias, rotina de menu e paridade com R01/R02 ainda nao homologados. Documento de origem e valores nao versionados.
