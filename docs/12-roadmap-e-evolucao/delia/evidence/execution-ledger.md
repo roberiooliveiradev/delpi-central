@@ -17290,3 +17290,23 @@ I04_ACCEPTED=NO
 PHASE_PROGRESSION=NONE
 NEXT=BOUNDED_IMPLEMENTATION_TASK(ConversationCodeBlock, inerte, gated)
 ```
+
+## §6.374 — Ollama-only local LLM testing foundation (2026-10-22)
+
+**2026-10-22 — política Ollama-only implementada e validada no ambiente dev autorizado:** `DELIA-C3-OLLAMA-ONLY-LOCAL-LLM-TESTING-01`. Autoridade primária: `local-llm-testing-policy-ollama-2026-10-22.md` (decisão de produto aprovada). **Implementação:** `settings.py` passa a validar política local (em `DELIA_ENV` não-produtivo, provider real só admite endpoint Ollama local `ollama|localhost|127.0.0.1:11434` + `DELIA_LLM_MODEL` presente); `root_composer.py` ganha gate environment-aware fail-closed (config externa/incompleta em dev → handler ausente, sem fallback; produção inalterada); `tests/conftest.py` adiciona guard de socket bloqueando egress a hosts externos de LLM mesmo com adapter construído diretamente; nova suíte `test_local_llm_egress_guard.py` cobre os 7 cenários RED/GREEN exigidos (provider externo em perfil local, Ollama indisponível, modelo ausente, endpoint inválido, schema incompatível, fallback externo, config ausente); `test_real_provider_adapter.py` declara `DELIA_ENV=production` onde wiring externo é legal; `test_i04_provider_neutral_generalization.py` remove asserts hardcoded de Kimi; evals `real_model_eval`, `real_model_continuity_eval`, `cp4_governed_resume_eval`, `cp5_incident_repro_eval` deixam de resolver `KIMI_*` e exigem `DELIA_LLM_*` explícito; novo `scripts/ollama_local_llm_eval.py` mede purpose/latência/tokens/decisão por chamada via orquestrador real; `infra/.env.dev.example` documenta o bloco `DELIA_LLM_*` Ollama sem segredos. **Inventário medido:** `delpi-ollama` 0.40.8, volume `infra_ollama_data`, 16 threads, WSL ~7GiB, cap container ~4.4GiB, RTX 3050 presente mas não passada (inferência CPU-only, `llamacpp`, ctx efetivo 4096). **Seleção por medição:** `qwen2.5:1.5b` REJEITADO (fabricou número de processo em "qual o ultimo processo cadastrado?" → NON_GROUNDED correto mas modelo inseguro; ~50% non-JSON no answer stage); `qwen2.5:3b` (Q4_K_M, 3.1B) SELECIONADO com limitações classificadas — classificação operacional correta (`o mcp davi`, controle CRI → `requires_owner_surface=True/operational`), zero fabricação observada, resposta honesta em `use o davi`; admission ocasional >6s sob CPU-only → `PROCESSING_TIMEOUT`/`BLOCKED` honestos; continuity 1/5 PASS (caso de segurança completo: injection/secret/fact/authority boundaries), restante `invalid_model_output`/`model_timeout`. **Custo:** `EXTERNAL_LLM_LOCAL_EGRESS=BLOCKED`, `EXTERNAL_FALLBACK=NONE`, `EXTERNAL_MODEL_CALLS=0`, `COST_EXTERNAL=0`, `LOCAL_MODEL_CALLS=16`. **Verificação:** 72 focados PASS + ~1190 backend completos PASS; CRI ON/OFF preservado; resume governado inalterado. `PRODUCTION_LLM_CONFIGURATION=UNCHANGED`. Relatório: `93-ollama-only-local-llm-testing-foundation.md`.
+
+```text
+TASK_ID=DELIA-C3-OLLAMA-ONLY-LOCAL-LLM-TESTING-01
+LOCAL_MODEL=qwen2.5:3b (Q4_K_M, CPU-only)
+EXTERNAL_LLM_LOCAL_EGRESS=BLOCKED
+EXTERNAL_FALLBACK=NONE
+COST_EXTERNAL=0
+STRUCTURED_OUTPUT=PARTIAL(admission ok; answer-stage ~40% non-JSON)
+SEMANTIC_EVAL=PASS_WITH_LIMITS
+MULTITURN_EVAL=1/5
+REGRESSION=PASS(~1190)
+PRODUCTION_LLM_CONFIGURATION=UNCHANGED
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```

@@ -9,10 +9,12 @@ OpenAI-compatible provider:
     -> OpenAICompatibleModelInvocationAdapter
     -> {DELIA_LLM_BASE_URL}/chat/completions
 
-Config resolution mirrors compose: DELIA_LLM_* first, then the KIMI_*
-secret source (DELIA_LLM_BASE_URL:=KIMI_BASE_URL, etc.). The API key is
-never printed, logged, or embedded in output. Results are heuristic —
-INCONCLUSIVE is a valid dimension outcome.
+Config resolution uses DELIA_LLM_* only. C3-OLLAMA-LOCAL-LLM-TESTING-01:
+outside production the endpoint must resolve to a local runtime
+(Ollama); an external base URL is refused before any socket is opened —
+there is no external or paid fallback. The API key is never printed,
+logged, or embedded in output. Results are heuristic — INCONCLUSIVE is
+a valid dimension outcome.
 
 Usage:
     cd delia-api && .venv/bin/python scripts/real_model_eval.py
@@ -41,6 +43,7 @@ from app.application.interaction.instruction import (
 from app.application.model_invocation.invoke_model import InvokeModel
 from app.application.platform_access import PlatformAccessContext
 from app.domain.evidence.model import ModelRef
+from app.infrastructure.config.settings import llm_egress_blocked_reason
 from app.infrastructure.model_invocation.openai_compatible_adapter import (
     OpenAICompatibleModelInvocationAdapter,
 )
@@ -49,12 +52,12 @@ from app.application.interaction.contracts import InteractiveTurnRequest
 
 def _resolve_config() -> dict:
     return {
-        "provider": (os.getenv("DELIA_LLM_PROVIDER") or "").strip()
-        or ("openai_compatible" if os.getenv("KIMI_API_KEY") else ""),
-        "base_url": (os.getenv("DELIA_LLM_BASE_URL") or os.getenv("KIMI_BASE_URL") or "").strip(),
-        "model": (os.getenv("DELIA_LLM_MODEL") or os.getenv("KIMI_MODEL") or "").strip(),
-        "api_key": (os.getenv("DELIA_LLM_API_KEY") or os.getenv("KIMI_API_KEY") or "").strip(),
+        "provider": (os.getenv("DELIA_LLM_PROVIDER") or "").strip(),
+        "base_url": (os.getenv("DELIA_LLM_BASE_URL") or "").strip(),
+        "model": (os.getenv("DELIA_LLM_MODEL") or "").strip(),
+        "api_key": (os.getenv("DELIA_LLM_API_KEY") or "").strip(),
         "timeout": float(os.getenv("DELIA_LLM_TIMEOUT_SECONDS") or "30.0"),
+        "environment": os.getenv("DELIA_ENV", os.getenv("ENV", "development")),
     }
 
 
@@ -188,6 +191,11 @@ def main() -> int:
 
     if not (cfg["provider"] == "openai_compatible" and cfg["base_url"] and cfg["model"] and cfg["api_key"]):
         print("REAL_MODEL_EVAL = TEST_NOT_RUN (incomplete provider config)")
+        return 2
+
+    blocked = llm_egress_blocked_reason(cfg["environment"], cfg["base_url"])
+    if blocked:
+        print(f"REAL_MODEL_EVAL = TEST_NOT_RUN ({blocked})")
         return 2
 
     adapter = OpenAICompatibleModelInvocationAdapter(

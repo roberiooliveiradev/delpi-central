@@ -418,6 +418,10 @@ def test_secret_never_leaks_into_errors():
 
 
 _LLM_ENV = {
+    # External endpoints are allowed only when DELIA_ENV=production;
+    # non-production wiring is refused by the local-LLM egress guard
+    # (C3-OLLAMA-LOCAL-LLM-TESTING-01).
+    "DELIA_ENV": "production",
     "DELIA_LLM_PROVIDER": "openai_compatible",
     "DELIA_LLM_BASE_URL": BASE_URL,
     "DELIA_LLM_MODEL": MODEL,
@@ -427,6 +431,7 @@ _LLM_ENV = {
 
 def _clean_llm_env(monkeypatch):
     for name in (
+        "DELIA_ENV",
         "DELIA_LLM_PROVIDER",
         "DELIA_LLM_BASE_URL",
         "DELIA_LLM_MODEL",

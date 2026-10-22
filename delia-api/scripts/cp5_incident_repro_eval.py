@@ -80,6 +80,10 @@ def _context() -> PlatformAccessContext:
 def _compose():
     os.environ.setdefault("DELIA_MAX_GOVERNED_ATTEMPTS", "2")
     settings = Settings()
+    if settings.llm_egress_blocked_reason:
+        raise SystemExit(
+            f"refused: {settings.llm_egress_blocked_reason}"
+        )
     connections = specialist_connections_from_settings(settings)
     interop = SpecialistInterop(
         McpSpecialistAdapter(

@@ -82,6 +82,10 @@ def _compose(*, stage_timeout: str, max_attempts: str):
     os.environ["DELIA_MODEL_STAGE_TIMEOUT_SECONDS"] = stage_timeout
     os.environ["DELIA_MAX_GOVERNED_ATTEMPTS"] = max_attempts
     settings = Settings()
+    if settings.llm_egress_blocked_reason:
+        raise SystemExit(
+            f"refused: {settings.llm_egress_blocked_reason}"
+        )
     connections = specialist_connections_from_settings(settings)
     interop = SpecialistInterop(
         McpSpecialistAdapter(
