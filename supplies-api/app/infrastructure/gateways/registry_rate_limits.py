@@ -257,12 +257,13 @@ def build_registry_rate_limiter() -> Any:
     if strategy == "process_local":
         if (
             getattr(Settings, "COMPANY_REGISTRY_PROVIDER", "unavailable")
-            == "brasilapi"
+            != "unavailable"
             and not getattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", False)
         ):
             return UnavailableRegistryRateLimiter(
-                "brasilapi with process_local rate limiting requires an explicit "
-                "single-worker opt-in (COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED)"
+                "an enabled company-registry provider with process_local rate "
+                "limiting requires an explicit single-worker opt-in "
+                "(COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED)"
             )
         return InMemoryRegistryRateLimiter(limits=_default_limits())
     return UnavailableRegistryRateLimiter(

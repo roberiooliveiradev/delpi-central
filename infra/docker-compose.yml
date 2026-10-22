@@ -1396,7 +1396,24 @@ services:
       - ./docker/postgres/plugins-init.sql:/docker-entrypoint-initdb.d/plugins-init.sql
     networks:
       - delpi-network
-      
+
+  # X3 — Redis DELPI compartilhado (rate limiting distribuído). Interno-only:
+  # sem porta publicada, acesso restrito à delpi-network, autenticação por
+  # requirepass. Não é o evolution-redis (outro produto).
+  delpi-redis:
+    image: redis:7-alpine
+    container_name: delpi-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${DELPI_REDIS_PASSWORD}", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${DELPI_REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks:
+      - delpi-network
+
   api-delpi:
     build:
       context: ..

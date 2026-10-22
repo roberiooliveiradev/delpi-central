@@ -73,6 +73,20 @@ def test_factory_brasilapi_process_local_blocked_without_optin(monkeypatch):
         limiter.acquire("cnpj", "h")
 
 
+def test_factory_external_data_process_local_blocked_without_optin(monkeypatch):
+    # X3 — same multiworker protection for the shared-service mode: the
+    # actor limit must not silently degrade to per-worker memory in prod.
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "external-data-api")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", False)
+    limiter = build_registry_rate_limiter()
+    assert isinstance(limiter, UnavailableRegistryRateLimiter)
+    with pytest.raises(RegistryLimiterUnavailableError):
+        limiter.acquire("actor", "u1")
+
+
 def test_factory_brasilapi_process_local_with_explicit_optin(monkeypatch):
     from app.infrastructure.config.settings import Settings
 
