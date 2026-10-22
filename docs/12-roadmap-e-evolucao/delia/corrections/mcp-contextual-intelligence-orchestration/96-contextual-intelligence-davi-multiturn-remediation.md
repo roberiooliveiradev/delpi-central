@@ -212,7 +212,7 @@ REGRESSION=full suite green incl. admission guards, latency,
 REAL_TASK_OUTCOME=context channel closed at group selection;
     semantic named-source routing enabled without aliases or
     provider branches
-EVALUATED_SHA=<final commit>
+EVALUATED_SHA=590e8e28d8bc1c4ff58e828e96d2ec3a55b81458
 EVALUATED_CONFIG=dev, Ollama qwen2.5:3b, MAX_ATTEMPTS=2, 60s/30s
     budgets preserved
 
