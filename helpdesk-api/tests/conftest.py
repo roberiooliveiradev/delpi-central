@@ -61,6 +61,15 @@ class FakeGlpi:
             "2026-09-21T11:00:00Z",
             "Robério Teixeira",
             status_id=1,
+            category_id=10,
+            urgency_id=3,
+            impact_id=3,
+            priority_id=3,
+            type_id=1,
+            request_type_id=1,
+            impact="Médio",
+            priority="Média",
+            type_name="Incidente",
         )
         self.files = {
             2: (b"png-bytes", "image/png"),
@@ -73,6 +82,8 @@ class FakeGlpi:
         # When False, the PATCH returns ok but the read-back content stays
         # stale — simulates an upstream that lies about persistence.
         self.update_followup_applies = True
+        self.classification_writes: list[tuple] = []
+        self.classification_applies = True
         self.solutions: list[tuple[int, str]] = []
         self.tasks: list[tuple[int, str]] = []
         self.created_validations: list[tuple[int, str, int, str]] = []
@@ -448,6 +459,61 @@ class FakeGlpi:
             for entry in self.detail.timeline
         )
         self.detail = _replace(self.detail, timeline=timeline)
+
+    def update_ticket_classification(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        urgency_id: int | None = None,
+        impact_id: int | None = None,
+        category_id: int | None = None,
+        type_id: int | None = None,
+        priority_id: int | None = None,
+        request_type_id: int | None = None,
+    ):
+        self.calls += 1
+        if ticket_id == 99:
+            raise GlpiNotFound("ausente")
+        self.classification_writes.append(
+            (
+                ticket_id,
+                urgency_id,
+                impact_id,
+                category_id,
+                type_id,
+                priority_id,
+                request_type_id,
+            )
+        )
+        if not self.classification_applies:
+            return
+        from dataclasses import replace as _replace
+
+        names = {
+            "urgency_id": {1: "Muito baixa", 2: "Baixa", 3: "Média", 4: "Alta", 5: "Muito alta"},
+            "impact_id": {1: "Muito baixo", 2: "Baixo", 3: "Médio", 4: "Alto", 5: "Muito alto"},
+            "priority_id": {1: "Muito baixa", 2: "Baixa", 3: "Média", 4: "Alta", 5: "Muito alta", 6: "Maior"},
+            "type_id": {1: "Incidente", 2: "Requisição"},
+        }
+        patch = {}
+        for field, value in (
+            ("urgency_id", urgency_id),
+            ("impact_id", impact_id),
+            ("priority_id", priority_id),
+            ("type_id", type_id),
+            ("category_id", category_id),
+            ("request_type_id", request_type_id),
+        ):
+            if value is None:
+                continue
+            patch[field] = int(value)
+            if field in names:
+                label_field = {"urgency_id": "urgency", "impact_id": "impact", "priority_id": "priority", "type_id": "type_name"}[field]
+                patch[label_field] = names[field][int(value)]
+            if field == "category_id":
+                patch["category"] = f"cat-{int(value)}"
+        self.detail = _replace(self.detail, **patch)
 
     def add_ticket_solution(
         self,

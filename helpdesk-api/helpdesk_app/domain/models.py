@@ -231,6 +231,18 @@ class TicketDetail:
     closed_at: str = ""
     sla_ttr: str = ""
     sla_tto: str = ""
+    # Classification ids + labels (HLAPI Ticket enums) — additive so older
+    # projections keep working; priority is derived by the GLPI matrix.
+    category_id: int | None = None
+    urgency_id: int | None = None
+    impact_id: int | None = None
+    priority_id: int | None = None
+    type_id: int | None = None
+    request_type_id: int | None = None
+    impact: str = ""
+    priority: str = ""
+    type_name: str = ""
+    can_update_classification: bool = False
 
 
 @dataclass(frozen=True)

@@ -1207,6 +1207,20 @@
   color: var(--helpdesk-text);
 }
 
+.dashboard-helpdesk .helpdesk-classification-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-self: stretch;
+}
+
+.dashboard-helpdesk .helpdesk-classification-form__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
 .dashboard-helpdesk .helpdesk-ticket-approvals__header {
   display: flex;
   flex-direction: column;

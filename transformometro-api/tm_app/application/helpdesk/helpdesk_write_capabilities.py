@@ -37,6 +37,7 @@ HELPDESK_ACTION_TO_CAPABILITY: dict[str, str] = {
     "set_assignee": "helpdesk_set_assignee",
     "add_followup": "helpdesk_add_followup",
     "update_followup": "helpdesk_update_followup",
+    "update_ticket_classification": "helpdesk_update_ticket_classification",
     "create_task": "helpdesk_create_task",
     "add_solution": "helpdesk_add_solution",
     "request_validation": "helpdesk_request_validation",
@@ -64,6 +65,9 @@ _REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
     "helpdesk_set_assignee": ("user_id",),
     "helpdesk_add_followup": ("content",),
     "helpdesk_update_followup": ("followup_id", "content"),
+    # ≥1 classification field required — enforced in PREPARE (no single
+    # field is mandatory; the partial update may touch any subset).
+    "helpdesk_update_ticket_classification": (),
     "helpdesk_create_task": ("content",),
     "helpdesk_add_solution": ("content",),
     "helpdesk_request_validation": ("approver_id",),
@@ -83,6 +87,7 @@ _REQUIRED_FIELDS: dict[str, tuple[str, ...]] = {
 _CAN_FLAG: dict[str, str] = {
     "helpdesk_set_assignee": "can_assign",
     "helpdesk_add_followup": "can_followup",
+    "helpdesk_update_ticket_classification": "can_update_classification",
     "helpdesk_create_task": "can_create_task",
     "helpdesk_add_solution": "can_create_solution",
     "helpdesk_request_validation": "can_request_approval",
@@ -92,6 +97,17 @@ _CAN_FLAG: dict[str, str] = {
     "helpdesk_accept_validation": "can_decide_validation",
     "helpdesk_reject_validation": "can_decide_validation",
 }
+
+# BFF PATCH /tickets/{id}/classification body keys — ids only; the BFF
+# validates each against the enum maps / GLPI catalogs.
+_CLASSIFICATION_FIELDS = (
+    "urgency_id",
+    "impact_id",
+    "category_id",
+    "type_id",
+    "priority_id",
+    "request_type_id",
+)
 
 _CREATE_TICKET_BODY_KEYS = (
     "title",
@@ -171,11 +187,22 @@ def _plain_text(value: Any) -> str:
     return " ".join(_html.unescape(text).split())
 
 
+_CLASSIFICATION_LABEL_FIELD = {
+    "urgency_id": "urgency",
+    "impact_id": "impact",
+    "priority_id": "priority",
+    "type_id": "type_name",
+    "category_id": "category",
+    "request_type_id": "request_type_id",
+}
+
+
 def _ticket_fingerprint(
     ticket: dict[str, Any],
     *,
     validation_id: int | None = None,
     followup_id: int | None = None,
+    classification: bool = False,
 ) -> str:
     """Relevant-field fingerprint — enough to catch drift that could
     invalidate the prepared change (§17), nothing more."""
@@ -198,6 +225,12 @@ def _ticket_fingerprint(
             # Seals the current body — a concurrent edit between PREPARE and
             # ACT marks the proposal stale instead of silently overwriting.
             "content": _plain_text((entry or {}).get("content") or (entry or {}).get("content_html")),
+        }
+    if classification:
+        # Seals the current ids — a classification drift between PREPARE
+        # and ACT marks the proposal stale.
+        base["classification"] = {
+            field: ticket.get(field) for field in _CLASSIFICATION_FIELDS
         }
     return fingerprint(base)
 
@@ -224,6 +257,12 @@ def _normalize_change(capability: str, args: dict[str, Any]) -> dict[str, Any]:
         fid = args.get("followup_id")
         change["followup_id"] = int(fid) if fid is not None else None
         change["content"] = args.get("content")
+    elif capability == "helpdesk_update_ticket_classification":
+        change["fields"] = {
+            key: int(args[key])
+            for key in _CLASSIFICATION_FIELDS
+            if args.get(key) is not None
+        }
     elif capability == "helpdesk_create_task":
         body = {
             key: args.get(key)
@@ -301,6 +340,13 @@ def _expected_postcondition(capability: str, change: dict[str, Any]) -> dict[str
                 "followup_id": change.get("followup_id"),
                 "content_plain": _plain_text(change.get("content")),
             },
+        }
+    if capability == "helpdesk_update_ticket_classification":
+        return {
+            "type": "helpdesk_classification_update",
+            "capability": capability,
+            "ticket_id": change.get("ticket_id"),
+            "expected": dict(change.get("fields") or {}),
         }
     if capability == "helpdesk_upload_attachment":
         file_arg = change.get("file") if isinstance(change.get("file"), dict) else {}
@@ -431,10 +477,63 @@ def prepare(
                         )[:500],
                         "new_content": str(change.get("content") or "")[:500],
                     }
+            if capability == "helpdesk_update_ticket_classification":
+                checks.append("classification_fields_validated")
+                provided = dict(change.get("fields") or {})
+                if not provided:
+                    missing.append("classification_field")
+                # Catalog validation at PREPARE is UX guidance — the BFF
+                # re-validates every id at COMMIT (fail-closed).
+                catalog_kind_by_field = {
+                    "urgency_id": "urgencies",
+                    "impact_id": "impacts",
+                    "priority_id": "priorities",
+                    "type_id": "ticket_types",
+                    "category_id": "categories",
+                    "request_type_id": "request_types",
+                }
+                diff: dict[str, Any] = {}
+                for field, new_id in provided.items():
+                    kind = catalog_kind_by_field[field]
+                    items = (
+                        stack.read.catalog(authorization, kind).get("items")
+                        or []
+                    )
+                    names = {int(i.get("id")): i.get("name") for i in items}
+                    if int(new_id) not in names:
+                        blocked.append(f"invalid_{field}")
+                        continue
+                    current_id = ticket.get(field)
+                    diff[field] = {
+                        "from_id": current_id,
+                        # Prefer the catalog-resolved current name; fall
+                        # back to the label projected on the ticket detail
+                        # (works even when the catalog lacks the old id).
+                        "from_name": names.get(int(current_id or -1))
+                        or ticket.get(_CLASSIFICATION_LABEL_FIELD.get(field, "")),
+                        "to_id": int(new_id),
+                        "to_name": names.get(int(new_id)),
+                    }
+                if diff:
+                    confirmation_req["display"] = {
+                        "operation": "update_ticket_classification",
+                        "ticket_id": int(ticket_id),
+                        "title": ticket.get("title"),
+                        "changes": diff,
+                        # GLPI derives priority from urgency×impact — the
+                        # projected value may differ if the matrix wins.
+                        "priority_note": (
+                            "GLPI may recompute priority from "
+                            "urgency×impact matrix."
+                        ),
+                    }
             current_fp = _ticket_fingerprint(
                 ticket,
                 validation_id=change.get("validation_id"),
                 followup_id=change.get("followup_id"),
+                classification=(
+                    capability == "helpdesk_update_ticket_classification"
+                ),
             )
             resource_id = str(ticket_id)
             if capability == "helpdesk_upload_attachment":
@@ -510,6 +609,9 @@ def recompute_fingerprint(
         ticket,
         validation_id=change.get("validation_id"),
         followup_id=change.get("followup_id"),
+        classification=(
+            capability == "helpdesk_update_ticket_classification"
+        ),
     )
 
 
@@ -552,6 +654,13 @@ def execute(
             int(ticket_id),
             int(change["followup_id"]),
             content=str(change["content"]),
+            idempotency_key=key,
+        )
+    if capability == "helpdesk_update_ticket_classification":
+        return w.update_ticket_classification(
+            authorization,
+            int(ticket_id),
+            body=dict(change.get("fields") or {}),
             idempotency_key=key,
         )
     if capability == "helpdesk_create_task":
@@ -779,6 +888,24 @@ def verify(
                 "Edited follow-up content not confirmed by authoritative "
                 "read-back.",
                 expected_id=fid,
+            )
+        return {"ticket": ticket, "write_result": result}
+
+    if capability == "helpdesk_update_ticket_classification":
+        expected = dict(change.get("fields") or {})
+        diverged = {
+            field: {
+                "expected": int(value),
+                "actual": ticket.get(field),
+            }
+            for field, value in expected.items()
+            if ticket.get(field) != int(value)
+        }
+        if diverged:
+            raise _verification_failed(
+                "Classification change not confirmed by authoritative "
+                "read-back.",
+                **diverged,
             )
         return {"ticket": ticket, "write_result": result}
 

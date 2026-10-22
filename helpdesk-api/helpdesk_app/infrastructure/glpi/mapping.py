@@ -40,6 +40,36 @@ URGENCIES: tuple[Urgency, ...] = (
     Urgency(5, "Muito alta"),
 )
 _URGENCY_NAMES = {item.id: item.name for item in URGENCIES}
+
+# GLPI Impact usa a mesma escala 1-5 da urgência com rótulos masculinos.
+IMPACTS: tuple[Urgency, ...] = (
+    Urgency(1, "Muito baixo"),
+    Urgency(2, "Baixo"),
+    Urgency(3, "Médio"),
+    Urgency(4, "Alto"),
+    Urgency(5, "Muito alto"),
+)
+_IMPACT_NAMES = {item.id: item.name for item in IMPACTS}
+
+# GLPI Priority 1-6 — recalculada pela matriz urgência×impacto; escrita
+# direta só persiste se a regra do GLPI aceitar (read-back confirma).
+PRIORITIES: tuple[Urgency, ...] = (
+    Urgency(1, "Muito baixa"),
+    Urgency(2, "Baixa"),
+    Urgency(3, "Média"),
+    Urgency(4, "Alta"),
+    Urgency(5, "Muito alta"),
+    Urgency(6, "Maior"),
+)
+_PRIORITY_NAMES = {item.id: item.name for item in PRIORITIES}
+
+# GLPI Ticket.type é enum fixo (INCIDENT_TYPE=1, DEMAND_TYPE=2) — não é
+# RequestType (canal/origem), que é dropdown separado.
+TICKET_TYPES: tuple[Urgency, ...] = (
+    Urgency(1, "Incidente"),
+    Urgency(2, "Requisição"),
+)
+_TICKET_TYPE_NAMES = {item.id: item.name for item in TICKET_TYPES}
 # Chamados antigos gravaram UTF-8 lido como CP850. O sinal estável é o traço ├.
 _CP850_MOJIBAKE = "\u251c"
 _HTML_TAG = re.compile(r"<[^>]+>")
@@ -377,12 +407,34 @@ def parse_ticket_detail(payload: dict, timeline_payload: dict | list) -> TicketD
         requester_identity=_requester_identity(payload),
         status_id=summary.status_id,
         can_followup=ticket_allows_followup(summary.status_id),
+        category_id=_ref_id(payload.get("category")),
+        urgency_id=_int_field(payload.get("urgency")),
+        impact_id=_int_field(payload.get("impact")),
+        priority_id=_int_field(payload.get("priority")),
+        type_id=_int_field(payload.get("type")),
+        request_type_id=_ref_id(
+            payload.get("requesttypes") or payload.get("requesttypes_id")
+        ),
+        impact=_IMPACT_NAMES.get(_int_field(payload.get("impact")) or -1, ""),
+        priority=_PRIORITY_NAMES.get(_int_field(payload.get("priority")) or -1, ""),
+        type_name=_TICKET_TYPE_NAMES.get(_int_field(payload.get("type")) or -1, ""),
         observers_display_name=_observer_names(payload),
         solved_at=summary.solved_at,
         closed_at=summary.closed_at,
         sla_ttr=summary.sla_ttr,
         sla_tto=summary.sla_tto,
     )
+
+
+def classification_field_names() -> dict[str, dict[int, str]]:
+    """Canonical {field: {id: label}} maps — single source for BFF route
+    catalogs, service validation and response naming."""
+    return {
+        "urgency_id": dict(_URGENCY_NAMES),
+        "impact_id": dict(_IMPACT_NAMES),
+        "priority_id": dict(_PRIORITY_NAMES),
+        "type_id": dict(_TICKET_TYPE_NAMES),
+    }
 
 
 def parse_created_id(payload: dict) -> int:
@@ -1235,6 +1287,12 @@ def _is_deleted(row: dict) -> bool:
 def _is_private(row: dict) -> bool:
     value = row.get("is_private")
     return value is True or value == 1 or value == "1"
+
+
+def _int_field(value) -> int | None:
+    """Ticket row numeric enum (urgency/impact/priority/type) — accepts the
+    raw int or a ``{id}`` dict form."""
+    return _ref_id(value)
 
 
 def _named(value) -> str:

@@ -65,6 +65,18 @@ def _ticket(**over) -> dict[str, Any]:
         "can_reject_solution": False,
         "can_submit_satisfaction": False,
         "can_decide_validation": False,
+        "can_update_classification": True,
+        "urgency_id": 3,
+        "urgency": "Média",
+        "impact_id": 3,
+        "impact": "Médio",
+        "priority_id": 3,
+        "priority": "Média",
+        "type_id": 1,
+        "type_name": "Incidente",
+        "category_id": 7,
+        "category": "Hardware",
+        "request_type_id": 1,
         "satisfaction": None,
         "validations": [],
         "timeline": [],
@@ -114,6 +126,7 @@ class _FakeHelpdeskPorts:
         # When False, the update write returns 2xx but the timeline entry
         # keeps the old body — simulates a 2xx that never persisted.
         self.update_followup_applies = True
+        self.classification_applies = True
         self.file_source = _FakeFileSource()
 
     # read port
@@ -181,6 +194,51 @@ class _FakeHelpdeskPorts:
             for entry in state["timeline"]
         ]
         return {"id": followup_id, "content": kw["content"]}
+
+    def catalog(self, authorization, catalog_kind, **kw):
+        catalogs = {
+            "urgencies": {1: "Muito baixa", 2: "Baixa", 3: "Média",
+                          4: "Alta", 5: "Muito alta"},
+            "impacts": {1: "Muito baixo", 2: "Baixo", 3: "Médio",
+                        4: "Alto", 5: "Muito alto"},
+            "priorities": {1: "Muito baixa", 2: "Baixa", 3: "Média",
+                           4: "Alta", 5: "Muito alta", 6: "Maior"},
+            "ticket_types": {1: "Incidente", 2: "Requisição"},
+            "categories": {7: "Hardware", 9: "Compras"},
+            "request_types": {1: "Direct", 2: "E-mail"},
+        }
+        items = [
+            {"id": key, "name": name}
+            for key, name in catalogs.get(catalog_kind, {}).items()
+        ]
+        return {"items": items}
+
+    def update_ticket_classification(
+        self, authorization, ticket_id, **kw
+    ):
+        body = dict(kw.get("body") or {})
+        self.write_calls.append(
+            ("update_ticket_classification", ticket_id, body)
+        )
+        self._key(kw)
+        if not self.classification_applies:
+            return {"id": ticket_id}
+        state = self._state(ticket_id)
+        label = {
+            "urgency_id": ("urgency", self.catalog(authorization, "urgencies")),
+            "impact_id": ("impact", self.catalog(authorization, "impacts")),
+            "priority_id": ("priority", self.catalog(authorization, "priorities")),
+            "type_id": ("type_name", self.catalog(authorization, "ticket_types")),
+            "category_id": ("category", self.catalog(authorization, "categories")),
+        }
+        for field, value in body.items():
+            state[field] = int(value)
+            if field in label:
+                name_field, catalog = label[field]
+                state[name_field] = {
+                    i["id"]: i["name"] for i in catalog["items"]
+                }[int(value)]
+        return {"id": ticket_id, "updated_fields": sorted(body)}
 
     def create_task(self, authorization, ticket_id, body, **kw):
         self.write_calls.append(("create_task", ticket_id, dict(body)))
@@ -461,6 +519,7 @@ def test_policy_auto_act(cap):
     [
         "helpdesk_set_assignee",
         "helpdesk_update_followup",
+        "helpdesk_update_ticket_classification",
         "helpdesk_add_solution",
         "helpdesk_request_validation",
         "helpdesk_accept_solution",
@@ -1160,4 +1219,138 @@ def test_update_followup_wrong_ticket_followup_prepare_blocks():
 def test_action_enum_covers_update_followup():
     assert HELPDESK_ACTION_TO_CAPABILITY["update_followup"] == (
         "helpdesk_update_followup"
+    )
+
+
+
+# ----------------------------------------------------------------------
+# update_ticket_classification — partial fields, confirm gate, read-back
+# ----------------------------------------------------------------------
+
+
+def test_prepare_classification_ready_with_field_diff():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=5,
+    )
+    prop = out["proposal"]
+    assert prop["ready"] is True
+    assert prop["exact_change"]["fields"] == {"urgency_id": 5}
+    display = prop["confirmation_requirement"]["display"]
+    assert display["operation"] == "update_ticket_classification"
+    assert display["changes"]["urgency_id"] == {
+        "from_id": 3,
+        "from_name": "Média",
+        "to_id": 5,
+        "to_name": "Muito alta",
+    }
+    assert ports.write_calls == []
+
+
+def test_prepare_classification_no_fields_not_ready():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500,
+    )
+    assert out["proposal"]["ready"] is False
+    assert ports.write_calls == []
+
+
+def test_prepare_classification_invalid_id_blocked():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=42,
+    )
+    assert out["proposal"]["ready"] is False
+    assert "invalid_urgency_id" in out["validation_result"]["blocked"]
+    assert ports.write_calls == []
+
+
+def test_classification_commit_requires_confirmation_then_persists():
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=5, category_id=9,
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=False)
+    assert exc.value.data.get("error_code") == "CONFIRMATION_REQUIRED"
+    assert ports.write_calls == []
+
+    data = _commit(facade, out, confirmation=True)
+    assert data["persisted"] is True
+    assert ports.write_calls == [
+        (
+            "update_ticket_classification",
+            500,
+            {"urgency_id": 5, "category_id": 9},
+        )
+    ]
+    # Authoritative state reflects the sealed ids; untouched fields keep
+    # their value (partial-update semantics).
+    assert ports.ticket_state["urgency_id"] == 5
+    assert ports.ticket_state["category_id"] == 9
+    assert ports.ticket_state["impact_id"] == 3
+    assert ports.ticket_state["type_id"] == 1
+
+
+def test_classification_omitted_fields_preserved_on_write():
+    """Only the requested ids reach the write port — the BFF owns the
+    partial PATCH; TÉO never sends unspecified fields."""
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, type_id=2,
+    )
+    _commit(facade, out, confirmation=True)
+    (_name, _tid, body), = ports.write_calls
+    assert body == {"type_id": 2}
+    assert "impact_id" not in body
+
+
+def test_classification_readback_mismatch_fails():
+    """2xx + read-back keeps old ids → OUTCOME_VERIFICATION_FAILED."""
+    facade, ports = _facade()
+    ports.classification_applies = False
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=5,
+    )
+    with pytest.raises(GovernedWriteError) as exc:
+        _commit(facade, out, confirmation=True)
+    assert exc.value.code == OUTCOME_VERIFICATION_FAILED
+
+
+def test_classification_stale_fingerprint_rejected():
+    """A classification drift between PREPARE and ACT marks the proposal
+    stale — the commit refuses to write on a changed state."""
+    facade, ports = _facade()
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=5,
+    )
+    # someone else bumps urgency to 4 between PREPARE and ACT
+    ports.ticket_state["urgency_id"] = 4
+    with pytest.raises(GovernedWriteError):
+        _commit(facade, out, confirmation=True)
+    assert ports.write_calls == []
+
+
+def test_classification_flag_false_blocks_prepare():
+    facade, ports = _facade()
+    ports.ticket_state["can_update_classification"] = False
+    out = _prepare(
+        facade, "update_ticket_classification",
+        ticket_id=500, urgency_id=5,
+    )
+    assert out["proposal"]["ready"] is False
+    assert ports.write_calls == []
+
+
+def test_action_enum_covers_update_ticket_classification():
+    assert HELPDESK_ACTION_TO_CAPABILITY["update_ticket_classification"] == (
+        "helpdesk_update_ticket_classification"
     )

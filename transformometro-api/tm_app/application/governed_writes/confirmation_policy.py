@@ -281,6 +281,14 @@ _WRITE_POLICIES: tuple[WritePolicyRecord, ...] = (
     WritePolicyRecord(
         "helpdesk.ticket.assign", CONFIRM_BEFORE_ACT, "helpdesk_set_assignee"
     ),
+    # Rewrites ticket classification (urgency/impact/type/category/
+    # priority/request-type) — can alter routing and SLA priority; the
+    # user must see the exact field diff first.
+    WritePolicyRecord(
+        "helpdesk.ticket.classification.update",
+        CONFIRM_BEFORE_ACT,
+        "helpdesk_update_ticket_classification",
+    ),
     # Proposes the ticket solution — lifecycle-relevant content.
     WritePolicyRecord(
         "helpdesk.solution.add", CONFIRM_BEFORE_ACT, "helpdesk_add_solution"

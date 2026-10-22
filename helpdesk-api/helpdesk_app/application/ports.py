@@ -106,6 +106,19 @@ class GlpiGateway(Protocol):
         content: str,
     ) -> None: ...
 
+    def update_ticket_classification(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        urgency_id: int | None = None,
+        impact_id: int | None = None,
+        category_id: int | None = None,
+        type_id: int | None = None,
+        priority_id: int | None = None,
+        request_type_id: int | None = None,
+    ) -> None: ...
+
     def add_ticket_solution(
         self,
         access_token: str,

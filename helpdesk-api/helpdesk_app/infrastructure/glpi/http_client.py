@@ -1060,6 +1060,52 @@ class HttpxGlpiClient:
             json_body={"content": content},
         )
 
+    def update_ticket_classification(
+        self,
+        access_token: str,
+        ticket_id: int,
+        *,
+        urgency_id: int | None = None,
+        impact_id: int | None = None,
+        category_id: int | None = None,
+        type_id: int | None = None,
+        priority_id: int | None = None,
+        request_type_id: int | None = None,
+    ) -> None:
+        """Partial classification update via HLAPI PATCH on the ticket itself.
+
+        Only provided fields go in the body — an omitted key keeps the
+        current GLPI value (partial update semantics). Runs under the
+        actor's own OAuth token: ``Ticket::canUpdate`` on that profile is
+        the authorization of record and 403s fail closed. GLPI may
+        recompute ``priority`` from the urgency×impact matrix — the
+        service verifies every requested field by read-back.
+        """
+        ticket_id = int(ticket_id)
+        if ticket_id <= 0:
+            raise GlpiValidation("ticket_id inválido.")
+        body: dict = {}
+        if urgency_id is not None:
+            body["urgency"] = int(urgency_id)
+        if impact_id is not None:
+            body["impact"] = int(impact_id)
+        if priority_id is not None:
+            body["priority"] = int(priority_id)
+        if type_id is not None:
+            body["type"] = int(type_id)
+        if category_id is not None:
+            body["category"] = {"id": int(category_id)}
+        if request_type_id is not None:
+            body["requesttypes_id"] = int(request_type_id)
+        if not body:
+            raise GlpiValidation("Nenhum campo de classificação informado.")
+        self._json(
+            "PATCH",
+            f"/api.php/v2.2/Assistance/Ticket/{ticket_id}",
+            token=access_token,
+            json_body=body,
+        )
+
     def add_ticket_solution(
         self,
         access_token: str,

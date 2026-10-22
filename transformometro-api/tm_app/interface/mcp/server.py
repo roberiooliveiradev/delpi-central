@@ -294,7 +294,8 @@ def create_mcp_server() -> MCPServer:
             "file content is returned as an image/resource content "
             "block, with document metadata in structuredContent. "
             "action=catalog: catalog_kind = categories|urgencies|"
-            "request_types|users|groups|followup_templates|"
+            "request_types|impacts|priorities|ticket_types|users|"
+            "groups|followup_templates|"
             "solution_types|solution_templates|task_categories|"
             "task_templates|task_statuses|validation_templates|"
             "approval_steps (q/purpose/limit only for users). "
@@ -973,6 +974,12 @@ def create_mcp_server() -> MCPServer:
             "request_type_id) | update_followup (ticket_id + followup_id + "
             "content — edits the body of an existing followup; read the "
             "ticket first to resolve the real followup_id, never infer it) | "
+            "update_ticket_classification (ticket_id + at least one of "
+            "urgency_id/impact_id/category_id/type_id/priority_id/"
+            "request_type_id — partial update; omitted fields keep their "
+            "value; resolve ids via helpdesk_read catalogs urgencies/"
+            "impacts/priorities/ticket_types/categories/request_types; "
+            "GLPI may recompute priority from urgency*impact) | "
             "create_task (ticket_id + content; optional "
             "state/duration_seconds/task_category_id/user_tech_id/"
             "group_tech_id/planned_begin/planned_end) | add_solution "
@@ -1009,6 +1016,9 @@ def create_mcp_server() -> MCPServer:
         description: str | None = None,
         category_id: int | None = None,
         urgency_id: int | None = None,
+        impact_id: int | None = None,
+        priority_id: int | None = None,
+        type_id: int | None = None,
         observer_ids: list[int] | None = None,
         assignee_id: int | None = None,
         user_id: int | None = None,
@@ -1036,6 +1046,9 @@ def create_mcp_server() -> MCPServer:
             description=description,
             category_id=category_id,
             urgency_id=urgency_id,
+            impact_id=impact_id,
+            priority_id=priority_id,
+            type_id=type_id,
             observer_ids=observer_ids,
             assignee_id=assignee_id,
             user_id=user_id,

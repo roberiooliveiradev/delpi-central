@@ -29,6 +29,7 @@ from helpdesk_app.domain.models import (
     TicketListQuery,
 )
 from helpdesk_app.infrastructure.glpi.mapping import (
+    classification_field_names,
     filter_assignable_catalog_users,
     normalize_assignee_id,
     normalize_observer_ids,
@@ -330,6 +331,7 @@ class TicketService:
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
         detail = replace(detail, can_assign=self._assignee_catalog_ready(token))
         detail = self._with_technician_ops_flags(token, detail, viewer_email=viewer_email)
+        detail = self._with_classification_flag(token, detail, viewer_email=viewer_email)
         return self._with_cycle_flags(token, detail)
 
     def attachment(self, subject: str, ticket_id: int, document_id: int) -> tuple[bytes, str, str]:
@@ -618,6 +620,137 @@ class TicketService:
             "helpdesk_update_followup ticket_id=%s followup_id=%s",
             ticket_id,
             followup_id,
+        )
+        return stored
+
+
+    def update_classification(
+        self,
+        subject: str,
+        ticket_id: int,
+        *,
+        urgency_id: int | None = None,
+        impact_id: int | None = None,
+        category_id: int | None = None,
+        type_id: int | None = None,
+        priority_id: int | None = None,
+        request_type_id: int | None = None,
+        viewer_email: str = "",
+        idempotency_key: str | None = None,
+    ) -> StoredResponse:
+        """Partial classification update on an existing ticket.
+
+        Omitted fields keep the current value — the PATCH body carries
+        only provided keys. ids are validated against the canonical
+        enum maps (urgency/impact/priority/type) and the GLPI category
+        catalog. The write runs under the actor's own OAuth token —
+        ``Ticket::canUpdate`` stays the authority of record (403 fails
+        closed). Every requested field is verified by authoritative
+        read-back; a field GLPI declined to persist (e.g. a manual
+        ``priority`` overridden by the urgency×impact matrix) surfaces
+        as ``validation_error`` naming the divergence, never a false 200.
+        ``priority`` is exposed as derived state in the response.
+        """
+        key = _require_key(idempotency_key)
+        operation = f"update_classification:{ticket_id}"
+        existing = self._idempotency.get(subject, operation, key)
+        if existing is not None:
+            return existing
+        provided = {
+            field: value
+            for field, value in {
+                "urgency_id": urgency_id,
+                "impact_id": impact_id,
+                "category_id": category_id,
+                "type_id": type_id,
+                "priority_id": priority_id,
+                "request_type_id": request_type_id,
+            }.items()
+            if value is not None
+        }
+        if not provided:
+            raise GlpiValidation(
+                "Informe ao menos um campo de classificação."
+            )
+        field_names = classification_field_names()
+        for field, value in provided.items():
+            if int(value) <= 0:
+                raise GlpiValidation(f"{field} inválido.")
+            names = field_names.get(field)
+            if names is not None and int(value) not in names:
+                raise GlpiValidation(f"{field} inválido.")
+        token = self._token(subject)
+        if "category_id" in provided:
+            valid_categories = {
+                int(item.id) for item in self._glpi.list_categories(token)
+            }
+            if int(provided["category_id"]) not in valid_categories:
+                raise GlpiValidation("category_id inválido.")
+        if "request_type_id" in provided:
+            valid_request_types = {
+                int(item.id) for item in self._glpi.list_request_types(token)
+            }
+            if int(provided["request_type_id"]) not in valid_request_types:
+                raise GlpiValidation("request_type_id inválido.")
+        # Read first — enforces the same OAuth ACL/entity scope as the UI.
+        self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)
+        self._glpi.update_ticket_classification(
+            token,
+            ticket_id,
+            urgency_id=provided.get("urgency_id"),
+            impact_id=provided.get("impact_id"),
+            category_id=provided.get("category_id"),
+            type_id=provided.get("type_id"),
+            priority_id=provided.get("priority_id"),
+            request_type_id=provided.get("request_type_id"),
+        )
+        refreshed = self._glpi.get_ticket(
+            token, ticket_id, viewer_email=viewer_email
+        )
+        actual = {
+            "urgency_id": refreshed.urgency_id,
+            "impact_id": refreshed.impact_id,
+            "category_id": refreshed.category_id,
+            "type_id": refreshed.type_id,
+            "priority_id": refreshed.priority_id,
+            "request_type_id": refreshed.request_type_id,
+        }
+        diverged = [
+            field
+            for field, value in provided.items()
+            if actual.get(field) != int(value)
+        ]
+        if diverged:
+            detail = ", ".join(
+                f"{field} ficou {actual.get(field)!r} (esperado {int(provided[field])!r})"
+                for field in diverged
+            )
+            raise GlpiValidation(
+                "O GLPI não persistiu a alteração solicitada: " + detail + "."
+            )
+        stored = StoredResponse(
+            status_code=200,
+            body={
+                "id": int(ticket_id),
+                "urgency_id": refreshed.urgency_id,
+                "urgency": refreshed.urgency,
+                "impact_id": refreshed.impact_id,
+                "impact": refreshed.impact,
+                "category_id": refreshed.category_id,
+                "category": refreshed.category,
+                "type_id": refreshed.type_id,
+                "type_name": refreshed.type_name,
+                "request_type_id": refreshed.request_type_id,
+                "priority_id": refreshed.priority_id,
+                "priority": refreshed.priority,
+                "updated_fields": sorted(provided),
+            },
+        )
+        self._idempotency.save(subject, operation, key, stored)
+        logger.info(
+            "helpdesk_update_classification ticket_id=%s fields=%s",
+            ticket_id,
+            ",".join(sorted(provided)),
         )
         return stored
 
@@ -1072,6 +1205,23 @@ class TicketService:
             can_create_task=allowed,
             can_request_approval=allowed,
         )
+
+    def _with_classification_flag(
+        self,
+        token: str,
+        detail: TicketDetail,
+        *,
+        viewer_email: str,
+    ) -> TicketDetail:
+        """UX disclosure only — GLPI canUpdate on PATCH stays the
+        authority of record. Requester of own ticket or technician can
+        attempt classification edits on an open ticket; the BFF still
+        revalidates the PATCH and fails closed on 403."""
+        allowed = ticket_allows_technician_ops(detail.status_id) and (
+            detail.requester_mine
+            or self._viewer_is_technician(token, viewer_email)
+        )
+        return replace(detail, can_update_classification=allowed)
 
     def _with_cycle_flags(self, token: str, detail: TicketDetail) -> TicketDetail:
         legacy_on = True

@@ -120,6 +120,18 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
         "EXPOSED_READ",
         "helpdesk_read(action=catalog, catalog_kind=urgencies)",
     ),
+    ("GET", "/impacts"): (
+        "EXPOSED_READ",
+        "helpdesk_read(action=catalog, catalog_kind=impacts)",
+    ),
+    ("GET", "/priorities"): (
+        "EXPOSED_READ",
+        "helpdesk_read(action=catalog, catalog_kind=priorities)",
+    ),
+    ("GET", "/ticket-types"): (
+        "EXPOSED_READ",
+        "helpdesk_read(action=catalog, catalog_kind=ticket_types)",
+    ),
     ("GET", "/users"): (
         "EXPOSED_READ",
         "helpdesk_read(action=catalog, catalog_kind=users)",
@@ -164,6 +176,10 @@ ROUTE_LEDGER: dict[tuple[str, str], tuple[str, str]] = {
     ("PUT", "/tickets/{ticket_id}/followups/{followup_id}"): (
         "EXPOSED_WRITE",
         "prepare_helpdesk_change(action=update_followup)",
+    ),
+    ("PATCH", "/tickets/{ticket_id}/classification"): (
+        "EXPOSED_WRITE",
+        "prepare_helpdesk_change(action=update_ticket_classification)",
     ),
     ("POST", "/tickets/{ticket_id}/solutions"): (
         "EXPOSED_WRITE",
@@ -244,7 +260,7 @@ def _bff_routes() -> set[tuple[str, str]]:
 def test_bff_route_source_inventory_matches_runtime():
     """Sanity: the source scan finds the expected route surface."""
     routes = _bff_routes()
-    assert len(routes) == 38  # 37 baseline + PUT /tickets/{id}/followups/{fid}
+    assert len(routes) == 42  # +3 classification catalogs + PATCH classification
     assert ("DELETE", "/tickets/{ticket_id}") in routes
 
 
