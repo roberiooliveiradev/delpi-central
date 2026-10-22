@@ -166,6 +166,18 @@ class Settings:
         self.turn_budget_seconds = float(
             os.getenv("DELIA_TURN_BUDGET_SECONDS") or "30.0"
         )
+        # CP4 governed stage resume (docs 88 §10.2 / 90): OFF by
+        # default — a single attempt is the legacy behavior; setting
+        # 2 enables one bounded governed re-attempt. The approved
+        # interaction budget is 60s total; the per-attempt ceiling
+        # (30s) is a code constant, never configured upward.
+        self.max_governed_attempts = int(
+            os.getenv("DELIA_MAX_GOVERNED_ATTEMPTS") or "1"
+        )
+        self.interaction_total_budget_seconds = float(
+            os.getenv("DELIA_INTERACTION_TOTAL_BUDGET_SECONDS")
+            or "60.0"
+        )
         # VD-F03 dictation.transcription.v1 — dedicated audio-capable
         # model behind the same approved OpenAI-compatible provider
         # family. Independent DELIA_STT_* set: incomplete config fails

@@ -677,7 +677,7 @@ class _RecordingHandler:
     def __init__(self):
         self.requests = []
 
-    def execute(self, request, *, activity_channel=None):
+    def execute(self, request, *, activity_channel=None, cancel_check=None):
         self.requests.append(request)
         return InteractiveTurnResult(
             session_id="s",

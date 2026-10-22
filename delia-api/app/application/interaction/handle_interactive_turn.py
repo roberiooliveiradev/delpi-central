@@ -268,6 +268,7 @@ class HandleInteractiveConversationTurn:
         request: InteractiveTurnRequest,
         *,
         activity_channel: Callable[[ActivityEvent], None] | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> InteractiveTurnResult:
         self._require_access(request.access_context)
         # Contract defense-in-depth: in-process callers must not bypass
@@ -330,6 +331,7 @@ class HandleInteractiveConversationTurn:
                 prior_turns,
                 turn_deadline,
                 sink,
+                cancel_check,
             )
         except InteractionError:
             if sink is not None:
@@ -349,6 +351,7 @@ class HandleInteractiveConversationTurn:
         prior_turns: tuple[ConversationContextTurn, ...],
         turn_deadline: TurnDeadline,
         sink: ActivityEventSink | None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> InteractiveTurnResult:
         # CRI E1 (doc 73 §7): one response-mode marker per processed
         # turn at the governed-outcome → response boundary — identity
@@ -376,6 +379,7 @@ class HandleInteractiveConversationTurn:
                 max_execution_stage=request.max_execution_stage,
                 turn_deadline=turn_deadline,
                 activity_sink=sink,
+                cancel_check=cancel_check,
             )
             if self._capability_orchestration is not None
             else None

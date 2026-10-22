@@ -114,6 +114,7 @@ const LIVE_STATE: Record<string, ActivityState> = {
 const LIVE_STEP_LABEL: Record<string, string> = {
   REQUEST_RECEIVED: "Solicitação recebida",
   CONTEXTUALIZING: "Entendendo a solicitação",
+  CONTINUING: "Continuando a consulta",
   CAPABILITY_SELECTED: "Capacidade selecionada",
   SOURCE_QUERY_STARTED: "Consultando especialista",
   SOURCE_QUERY_COMPLETED: "Consulta finalizada",
@@ -129,6 +130,7 @@ const LIVE_STEP_LABEL: Record<string, string> = {
 const LIVE_TITLE: Record<string, string> = {
   REQUEST_RECEIVED: "Solicitação recebida",
   CONTEXTUALIZING: "Entendendo sua solicitação…",
+  CONTINUING: "Continuando sua consulta…",
   CAPABILITY_SELECTED: "Capacidade selecionada",
   SOURCE_QUERY_STARTED: "Consultando fonte autorizada…",
   SOURCE_QUERY_COMPLETED: "Consulta finalizada",
@@ -191,6 +193,7 @@ export function buildLiveActivityView(
         steps.push({ id: `ev-${event.sequence}`, label, state });
         break;
       case "CONTEXTUALIZING":
+      case "CONTINUING":
       case "OUTCOME_PREPARING": {
         closeRunningSteps();
         steps.push({ id: `ev-${event.sequence}`, label, state });

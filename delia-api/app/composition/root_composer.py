@@ -345,6 +345,10 @@ def _compose_turn_handler(
             model_ref=model_ref,
             turn_budget_seconds=settings.turn_budget_seconds,
             model_stage_timeout_seconds=settings.model_stage_timeout_seconds,
+            interaction_total_budget_seconds=(
+                settings.interaction_total_budget_seconds
+            ),
+            max_governed_attempts=settings.max_governed_attempts,
             response_intelligence_enabled=cri_effective,
             cri_instruction_clause=cri_clause,
             cri_instruction_version=cri_version,

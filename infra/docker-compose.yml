@@ -2023,6 +2023,12 @@ services:
       # application always answers before the edge terminates the
       # request (524).
       DELIA_TURN_BUDGET_SECONDS: ${DELIA_TURN_BUDGET_SECONDS:-30}
+      # CP4 governed stage resume (docs 88 §10.2 / 90): default OFF —
+      # legacy single-attempt. Dev may set 2 for one bounded re-attempt
+      # under the approved 60s monotonic interaction budget; the 30s
+      # per-attempt ceiling is a code constant.
+      DELIA_MAX_GOVERNED_ATTEMPTS: ${DELIA_MAX_GOVERNED_ATTEMPTS:-1}
+      DELIA_INTERACTION_TOTAL_BUDGET_SECONDS: ${DELIA_INTERACTION_TOTAL_BUDGET_SECONDS:-60}
       # CRI E1: central ON/OFF for conversational response intelligence —
       # default OFF; fail-closed to baseline on invalid/absent resources.
       # Stays unset in prod .env unless rollout is separately authorized.

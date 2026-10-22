@@ -17208,3 +17208,28 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=CP4_GOVERNED_STAGE_RESUME(pending budget-constants signoff)
 ```
+
+## §6.370 — CP4 governed stage resume implementation (2026-10-22)
+
+**TASK:** DELIA-C3-GOVERNED-STAGE-RESUME-01 (doc 88 CP4, approved budget 22/10/2026). Ephemeral governed stage resume inside the existing NDJSON worker: typed-proposal replay via `_AttemptCheckpoint` (ContextVar request-scoped; model proposals fingerprinted `sha256(instruction,input,block)`; proven non-mutating invoke outcomes `sha256(group,remote,args)`; `mutating_invoke_started` frontier). `attempt()` bounded loop: 1 monotonic `TurnDeadline` per interaction, max `MAX_GOVERNED_ATTEMPTS=2`, per-attempt ceiling `GOVERNED_ATTEMPT_MAX_SECONDS=30` over remaining budget — never resets. Retries only deadline-class failures when `cancel_check` clear and ≥2s remain. G1 gthread+continuous events (prod nginx 86400 unchanged, dev 120s defensive); G2 GeneratorExit→disconnect Event→cancel_check; G3 fresh surface/schema/AuthZ revalidation, PREPARE/ACT/unknown fail-closed once; G4 typed ephemeral checkpoint, no CoT/credentials. New `ActivityPhase.CONTINUING` (observed-boundary signal) + MFE labels. Config: `DELIA_MAX_GOVERNED_ATTEMPTS` (prod `:-1` OFF, dev `:-2`), `DELIA_INTERACTION_TOTAL_BUDGET_SECONDS` (`:-60`). Suite `test_governed_stage_resume.py` 14 PASS (mandatory scenario with call counters + full negative matrix); backend + frontend regression PASS; real dev-container eval: real-LLM timeout at `select_group` → `governed_resume decision=continue attempt=2` + `model_propose decision=resumed`, admission replayed 1×, CONTINUING=1, single terminal. Report: [91](../corrections/mcp-contextual-intelligence-orchestration/91-cp4-governed-stage-resume.md).
+
+```text
+CP4_IMPLEMENTED=YES(ephemeral, stream-bound)
+G1_TRANSPORT=PASS
+G2_CANCELLATION=PASS
+G3_AUTHORITY=PASS(fresh revalidation; PREPARE/ACT fail-closed)
+G4_CHECKPOINT=PASS(_AttemptCheckpoint, ContextVar, no authority)
+MAX_ATTEMPTS=2(hard cap)
+TOTAL_BUDGET=60s(monotonic)
+PER_ATTEMPT_BUDGET=30s(frozen ceiling)
+FEATURE_DEFAULT=OFF(DELIA_MAX_GOVERNED_ATTEMPTS:-1)
+DEV_ENABLED=2
+PRODUCTION_ACTIVATION=NO
+BACKEND_TESTS=PASS(14 new + full regression)
+FRONTEND_TESTS=PASS(303 + tsc)
+REAL_MODEL_EVALUATION=PASS(resume observed; failed stage only re-ran)
+REAL_MCP_EVALUATION=TEST_NOT_RUN(no dev delegated bearer; boundary covered deterministically)
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW(prod activation decision)
+```

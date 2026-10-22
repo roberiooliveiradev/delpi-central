@@ -187,6 +187,62 @@ permanece; PREPARE/ACT nunca resumidos através do invoke.
 `CONTINUATION_IMPLEMENTED=NO`; `NEXT=CP4_GOVERNED_STAGE_RESUME` —
 ver relatório [90](./90-cp3-ephemeral-continuity-and-llm-recovery-inventory.md).
 
+### 10.3 CP4 executado (2026-10-22, relatório 91)
+
+`CP4_IMPLEMENTED=YES` — continuidade efêmera e governada dentro do
+worker NDJSON existente, sem persistência, fila, scheduler ou nova
+engine. Orçamento aprovado materializado como constantes:
+`MAX_GOVERNED_ATTEMPTS=2` (hard cap), `GOVERNED_ATTEMPT_MAX_SECONDS=30`
+(teto por tentativa não configurável),
+`DEFAULT_INTERACTION_TOTAL_BUDGET_SECONDS=60` — um único relógio
+monotônico por interação; a segunda tentativa recebe `min(30s,
+restante)` e nunca reinicia o orçamento.
+
+Mecanismo implementado — **replay de propostas tipadas** (Option B
+refinada): `_AttemptCheckpoint` interno (ContextVar, request-scoped)
+registra propostas de modelo concluídas por fingerprint
+`sha256(instruction_id, input, block)` e outcomes de invoke não-mutantes
+por `sha256(group, remote, args)`. `_model_stage_proposal` repete
+propostas (`decision=resumed`) como dados — nunca autoridade — através
+de todas as portas determinísticas frescas; `_invoke` resolve da
+superfície viva fresca, trava frontier material
+(`mutating_invoke_started` → nunca nova tentativa; PREPARE/ACT/unknown
+executam no máximo uma vez; DISCOVERY/READ/ANALYSIS podem replay de
+outcome provado). Cancelamento: `GeneratorExit` → `disconnect` Event →
+`cancel_check` na fronteira. `ActivityPhase.CONTINUING` emitido somente
+quando a 2ª tentativa inicia (fronteira observada, sem promessa).
+
+`G1_TRANSPORT=PASS` (gthread + eventos contínuos; prod 86400s
+inalterado; dev nginx 120s defensivo; Cloudflare ~100s teto externo);
+`G2_CANCELLATION=PASS` (nenhuma tentativa nova pós-disconnect; terminal
+único); `G3_AUTHORITY=PASS` (revalidação fresca de superfície, schema,
+AuthZ — revogação e capability-change provadas por testes; falha MCP
+real permanece `SOURCE_UNAVAILABLE`; PREPARE/ACT fail-closed);
+`G4_CHECKPOINT=PASS` (tipado, efêmero, request-scoped; sem CoT/credencial/
+permissão presumida).
+
+Testes: `test_governed_stage_resume.py` 14 PASS (cenário obrigatório com
+contadores provando que admission/group/capability selection não se
+repetem e arguments reexecuta 1× extra; negativos cobrindo 2º timeout,
+orçamento esgotado, cancel, frontier mutante, capability removida,
+AuthZ revogada, falha MCP real, legacy OFF, CRI ON/OFF, confirmação);
+regressão backend completa PASS; frontend tsc + 303 PASS.
+
+Avaliação real em dev container (LLM real): `governed_resume
+decision=continue attempt=2` + `model_propose decision=resumed` —
+`select_group=2×`, `interaction_admission=1×`, `CONTINUING=1`, terminal
+único. `REAL_MODEL_EVALUATION=PASS`;
+`REAL_MCP_EVALUATION=TEST_NOT_RUN` (invoke autenticado exige bearer
+delegado dev não provisionado; surface-list real exercitado nas
+tentativas; frontier provider coberta deterministicamente).
+
+`FEATURE_DEFAULT=DELIA_MAX_GOVERNED_ATTEMPTS:-1` (legacy, OFF);
+`DEV_ENABLED=:-2` em `docker-compose.dev.yml`;
+`PRODUCTION_ENABLED=NO` — ativação de prod é decisão separada.
+`CONTINUATION_IMPLEMENTED=YES_EPHEMERAL`;
+`I04_ACCEPTED=NO`; `C3_EXECUTED=YES`;
+ver relatório [91](./91-cp4-governed-stage-resume.md).
+
 ## 11. Execution / review contract
 
 Future execution report must carry: BASE_HEAD/FINAL_HEAD/origin; authorities+CP/RQ; EXISTING_EQUIVALENT/REUSE_DECISION per responsibility; error-code mapping before/after; checkpoint owner/schema/lifetime/storage; state transitions; transport/reconnect; effective authorization and TTL; resume stage; dedup/idempotency; cancellation and budget policy; RED/GREEN; negative safety; independent real-model+real-MCP eval; prod verification; files/commit/ledger; `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`. A failed gate stops only the dependent continuation step; do not silently redesign.

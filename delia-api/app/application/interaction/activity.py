@@ -39,6 +39,9 @@ class ActivityPhase(str, Enum):
 
     REQUEST_RECEIVED = "REQUEST_RECEIVED"
     CONTEXTUALIZING = "CONTEXTUALIZING"
+    # CP4: a new governed attempt has actually started — an observed
+    # frontier, never a speculative progress claim.
+    CONTINUING = "CONTINUING"
     CAPABILITY_SELECTED = "CAPABILITY_SELECTED"
     SOURCE_QUERY_STARTED = "SOURCE_QUERY_STARTED"
     SOURCE_QUERY_COMPLETED = "SOURCE_QUERY_COMPLETED"
@@ -72,6 +75,7 @@ class ActivityState(str, Enum):
 _PHASE_DEFAULT_STATE = {
     ActivityPhase.REQUEST_RECEIVED: ActivityState.COMPLETED,
     ActivityPhase.CONTEXTUALIZING: ActivityState.RUNNING,
+    ActivityPhase.CONTINUING: ActivityState.RUNNING,
     ActivityPhase.CAPABILITY_SELECTED: ActivityState.COMPLETED,
     ActivityPhase.SOURCE_QUERY_STARTED: ActivityState.RUNNING,
     ActivityPhase.SOURCE_QUERY_COMPLETED: ActivityState.COMPLETED,

@@ -289,6 +289,15 @@ def _stream_interaction_turn(handler, command, logger):
     # command, events, logs, or the response.
     subject_bearer = current_subject_bearer()
 
+    # G2 (CP4): request lifetime is the interaction lifetime. Closing
+    # the stream does NOT kill the worker — this flag is the honest
+    # cancellation signal the resume boundary consults so no new
+    # governed attempt starts after a disconnect. It only gates
+    # attempts; an in-flight attempt still finishes bounded by the
+    # turn deadline and the single terminal is dropped, never
+    # delivered twice.
+    disconnect = threading.Event()
+
     def run() -> None:
         intermediate_events = 0
         terminal_events = 0
@@ -318,6 +327,7 @@ def _stream_interaction_turn(handler, command, logger):
             result = handler.execute(
                 command,
                 activity_channel=publish_activity,
+                cancel_check=disconnect.is_set,
             )
         except InteractionError as exc:
             items.put_nowait(("error", exc))
@@ -384,10 +394,16 @@ def _stream_interaction_turn(handler, command, logger):
                 else:  # "done" — stream ended without a terminal record
                     break
         except GeneratorExit:
-            # Client disconnected: stop consuming; the worker finishes
-            # bounded by the turn deadline — never re-executed.
+            # Client disconnected: signal the worker so no new
+            # governed attempt starts (G2/CP4); the in-flight attempt
+            # finishes bounded by the turn deadline — never
+            # re-executed.
+            disconnect.set()
             raise
         finally:
+            # Also covers an early close without GeneratorExit: once
+            # the consumer is gone, the interaction lifetime is over.
+            disconnect.set()
             worker.join(timeout=1.0)
 
     response = Response(
