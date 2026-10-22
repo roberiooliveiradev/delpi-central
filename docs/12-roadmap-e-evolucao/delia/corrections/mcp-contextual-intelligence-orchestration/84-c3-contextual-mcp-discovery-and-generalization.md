@@ -164,3 +164,21 @@ PRODUCTION_ACTIVATION=NO
 I04_ACCEPTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+## 8. Independent architecture/coordination review — 2026-10-22
+
+**Verdict: ACCEPT_WITH_RESIDUAL (bounded C3 execution), not I04/product acceptance.** Independently checked GitHub HEAD a4711d6fa03f0ffd99076dbf3a3c01d55ab0c8c9, report 84, changed file inventory, and the relevant orchestration, outcome and presentation code. Executor-reported real MCP/model evaluation and ~395 tests were not independently re-executed here: INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN.
+
+Accepted scope: one bounded same-group discovery/reproposal/retry on owner rejection; reuse of existing projection/sanitization, arguments channel and outcome pipeline; contract-facts carrier across intentionally stripped DISCOVERY structured data; no new planner, model stage, registry or provider-specific branch. Real outcomes reported for TEO/VISTA/DAVI and unseen G1-G6 constitute executor evidence, not an independent generalization proof. T1 remains a truthful insufficient-evidence response, NOT a completed global-most-recent business answer.
+
+**Residual R1 — OFF behavior is not identical:** _recover_owner_contract can run with CRI OFF, adds a tool discovery plus an arguments-model proposal/retry after owner rejection. This is a deliberate C3 cross-mode runtime change, not strict OFF-parity. Require targeted OFF/ON live evaluation and regression of rejection/error/latency gates before declaring full behavioral parity; docs/report should not call it unchanged OFF behavior.
+
+**Residual R2 — control-plane rendering:** contract_facts carries sanitized/bounded DISCOVERY metadata as user-facing data. Redaction and length limits are necessary but do not prove safe semantic selection or that agent_directives/instructions buried in catalogs cannot be amplified as guidance. Treat all owner/provider metadata as untrusted descriptive input, not instructions or authority. Targeted negative tests must cover injection in nested contract rows, false claims of authorization, unsupported data availability, and catalog-section priority when multiple entity collections collide. This does not imply a confirmed exploit; review of the actual end-to-end presentation effect is PENDING.
+
+**Residual R3 — still reactive, not complete proactive consumption:** date_field rejection recovery is an improvement, but filterable_fields remains absent from the normal READ argument proposal/validation; the entity digest can favor write schemas over read filters. Owner field-to-event semantics and server-ordering contract remain unproven/absent in the consumed surfaces. Do not classify last-modified global answer as solved, or create per-provider rules in response.
+
+**Residual R4 — performance and reproducibility:** model-stage timeouts against a 30s turn budget were observed; 'LATENCY_DELTA≈0' is a qualitative executor report, not statistical proof of unchanged latency. Live-mounted worktree+diff was evaluated; published SHA equivalence needs explicit independent replay if release acceptance is requested. The suite that depends on /docs was excluded: do not claim the whole backend suite PASS.
+
+Coordination decision: retain the bounded implementation with these residuals; next task should be **finite independent verification and targeted remediation**, using present contracts and real model/MCP tests, not a new architecture. In particular, test OFF rejection-retry outcome and injection-neutralized contract-facts rendering, then separately decide proactive filterable_fields inputSchema/consumer channel at the owner boundary. No production activation authorized.
+
+REVIEW=ACCEPT_WITH_RESIDUAL; C3_BOUNDED_IMPLEMENTATION=EXECUTOR_VERIFIED; INDEPENDENT_TESTS=TEST_NOT_RUN; OFF_STRICT_PARITY=NOT_PROVEN; CONTRACT_FACTS_METADATA_SAFETY=PENDING_END_TO_END; PROACTIVE_ENTITY_FILTERS=OPEN; FIELD_EVENT_ORDER_AUTHORITY=OPEN; I04_ACCEPTED=NO; C3_EXECUTED=YES_EXECUTOR_REPORTED; PRODUCTION_ACTIVATION=NOT_AUTHORIZED.
