@@ -76,7 +76,10 @@ import { formatIsoDate, formatIsoDayMonth } from "../utils/formatIsoDate";
 import { formatOpQuantity } from "../utils/formatOpQuantity";
 import { formatRefreshedAt } from "../utils/formatRefreshedAt";
 import { machineLoadLocateRowKey } from "../utils/machineLoadLocate";
-import { groupSelectedMachineLoadOperations } from "../utils/machineLoadGrouping";
+import {
+  groupSelectedMachineLoadOperations,
+  moveMachineLoadRowsByIndices,
+} from "../utils/machineLoadGrouping";
 import { machineLoadSelectionScopeKey } from "../utils/machineLoadOperationSelection";
 import {
   feedbackForOperation,
@@ -917,10 +920,48 @@ export function MachineLoadPage({
     [hideFinished, persistOrder, rows, sequenceBusy],
   );
 
-  // Com ≥2 operações selecionadas o arraste individual suspende — evita que o
-  // analista leia um arraste como movimentação de toda a seleção.
+  // Veto do drop de grupo: mesma política do «Agrupar» — estado do cockpit
+  // indisponível, filtro de impedimento ou run aberto deslocado bloqueiam
+  // antes de persistir (o backend continua autoridade final).
+  const handleBeforeGroupDrop = useCallback(
+    (draggedIndices: number[], targetIndex: number): boolean => {
+      if (onlyFeedback) {
+        setSequenceNotice(copy.machineLoad.selection.groupFiltered);
+        return false;
+      }
+      if (executionUnavailable || !executionLoaded) {
+        setSequenceNotice(copy.machineLoad.selection.groupUnavailable);
+        return false;
+      }
+      const outcome = moveMachineLoadRowsByIndices(
+        displayRows,
+        draggedIndices,
+        targetIndex,
+      );
+      if (outcome.status === "protected") {
+        setSequenceNotice(
+          copy.machineLoad.selection.groupProtected(
+            outcome.blocked.production_order,
+            outcome.blocked.operation_code,
+          ),
+        );
+        return false;
+      }
+      return outcome.status === "ok";
+    },
+    [displayRows, executionLoaded, executionUnavailable, onlyFeedback],
+  );
+
+  // Com ≥2 operações selecionadas, arrastar uma linha selecionada move o
+  // grupo inteiro como bloco; linhas fora da seleção não iniciam arraste.
+  const selectedDragIndices = useMemo(
+    () =>
+      selection.hasMultiple ? new Set(selection.visibleIndices) : undefined,
+    [selection.hasMultiple, selection.visibleIndices],
+  );
   const reorder = useMachineLoadRowReorder(displayRows, onReorder, {
-    enabled: !selection.hasMultiple,
+    selectedIndices: selectedDragIndices,
+    onBeforeGroupDrop: handleBeforeGroupDrop,
   });
 
   // «Agrupar» (Etapa 3): elegibilidade avaliada sobre a fila ativa do CT.
@@ -1115,18 +1156,27 @@ export function MachineLoadPage({
               item.production_order === row.production_order &&
               item.operation_code === row.operation_code,
           );
+          const rowSelected = selection.isSelected(row);
+          const dragDisabled =
+            sequenceBusy || (selection.hasMultiple && !rowSelected);
           return (
             <button
               type="button"
               className="ppc-load__drag-handle"
-              aria-label={copy.machineLoad.dragHandle}
-              title={
-                selection.hasMultiple
-                  ? copy.machineLoad.selection.dragDisabledHint
+              aria-label={
+                selection.hasMultiple && rowSelected
+                  ? copy.machineLoad.selection.dragGroupAria
                   : copy.machineLoad.dragHandle
               }
-              disabled={sequenceBusy || selection.hasMultiple}
-              {...(sequenceBusy || selection.hasMultiple
+              title={
+                selection.hasMultiple
+                  ? rowSelected
+                    ? copy.machineLoad.selection.dragGroupHint
+                    : copy.machineLoad.selection.dragDisabledHint
+                  : copy.machineLoad.dragHandle
+              }
+              disabled={dragDisabled}
+              {...(dragDisabled
                 ? {}
                 : reorder.handleProps(Math.max(0, rowIndex)))}
             >
