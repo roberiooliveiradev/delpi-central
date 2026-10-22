@@ -57,3 +57,8 @@ Se as evidências não existirem, a entrega permanece com código e interface pr
 - `protheus-rest-read.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 - playbook SA2 §44.3
+
+
+## Decisão PO 2026-10-21 — owner da trilha de execução
+
+**api-delpi** é proprietária da persistência de trilha das operações de escrita que encaminha ao REST Protheus, para reuso por diversos portais; **não** `supplies-api`. Não criar tabela na SA2 nem persistir espelho de cadastro no Postgres supplies. Contrato inicial: [protheus-write-execution-tracking-contract.md](./protheus-write-execution-tracking-contract.md). Registrar payload efetivamente encaminhado **com redaction/classificação**, autor Core, consumidor S2S, correlação, ACK/resultado, erros e reconciliação. Não assumir que 2xx = persistência nem que 5xx = ausência de gravação; estado `UNKNOWN` evita retry de escrita. Local físico e migrations permanecem `TO_INVENTORY` até inspeção de adapters, DB e authorities em HEAD. Proposta de Gabriel sobre tabela intermediária está reconhecida, mas o desenho final dos estados e contrato exige validação. Nenhuma flag produtiva foi habilitada por esta decisão.
