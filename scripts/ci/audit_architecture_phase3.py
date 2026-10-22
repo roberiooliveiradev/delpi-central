@@ -155,7 +155,7 @@ def normalize(value: str) -> str:
 
 def git(*args: str, check: bool = True) -> str:
     result = subprocess.run(
-        ["git", *args], cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        ["git", *args], cwd=ROOT, text=True, errors="replace", stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
     if check and result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or f"git {' '.join(args)} falhou")

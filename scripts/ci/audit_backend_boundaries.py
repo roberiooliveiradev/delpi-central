@@ -64,7 +64,7 @@ def git(*args: str, check: bool = True) -> str:
     result = subprocess.run(
         ["git", *args],
         cwd=ROOT,
-        text=True,
+        text=True, errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

@@ -75,7 +75,7 @@ def git(*args: str, check: bool = True) -> str:
     result = subprocess.run(
         ["git", *args],
         cwd=ROOT,
-        text=True,
+        text=True, errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
@@ -148,7 +148,7 @@ def read_at(ref: str, path: str) -> str | None:
     result = subprocess.run(
         ["git", "show", f"{ref}:{path}"],
         cwd=ROOT,
-        text=True,
+        text=True, errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
     )
