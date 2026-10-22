@@ -288,4 +288,14 @@ Sem backend de fila admitido, a implementação futura pode usar fixtures **excl
 - CQ-V09: nenhuma fila, Work, persistência, scheduler ou autorização de backend fabricada.
 - CQ-V10: Vitest, typecheck, build/federation e evidência visual no SHA/config realmente testado.
 
-**Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=TO_INVENTORY; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=NOT_AUTHORIZED_BY_THIS_ADDENDUM; TESTS=TEST_NOT_RUN; DEPLOYMENT=NOT_EXECUTED; PHASE_PROGRESSION=NONE.
+### 13.7 Resultado factual da implementação F03-A (2026-10-22)
+
+`TASK_ID=DELIA-UX-F03A-CONVERSATION-QUEUE-FRONTEND-IMPLEMENTATION-01`. Componente visual compartilhado `ConversationQueue` implementado em `plugins/plugin-ui` (render-only, CQ-V01 a CQ-V10 verificados), exportado via Module Federation e composto na DÉLIA imediatamente acima do `DeliaComposer`.
+
+**Contrato de apresentação adotado** (`ConversationQueueProps`/`ConversationQueueItem` em `plugins/plugin-ui/src/components/conversation/ConversationQueue.tsx`): `items` com `id` opaco, `label` fornecida pelo consumer, `ordinal`, `status` `"queued"|"blocked"`, `reason` opcional e elegibilidades `canMoveUp`/`canMoveDown`/`canRemove`; props `expanded`, `loading`, `unavailable`, `error`; callbacks de intenção `onExpandedChange`, `onMoveUp`, `onMoveDown`, `onRemove`. Controles nunca representam grants; sem estado de fila, scheduler, persistência ou autorização no UI.
+
+**Comportamento:** recolhido por default; header compacto com ícone, contagem honesta (`N solicitaç(ão|ões) aguardando`), preview truncado da próxima pendente e chevron; corpo expandido com ordinal acessível, label truncável (title completo), indicação de bloqueio não dependente de cor e controles ↑/↓/✕ desabilitados quando a ação não é admitida; altura do corpo limitada via `--delpi-ui-conversation-queue-max-height` (180px desktop, 110px estreito, 100px Dock) com scroll interno; `aria-expanded`/`aria-controls`, Enter/Space, foco visível, zero POST e zero roubo de foco. Sem itens e sem estado honesto → `null` (CQ-V01, sem reserva de espaço).
+
+**Integração:** sem contrato backend de fila admitido até o momento (TO_INVENTORY) — a DÉLIA passa `items=[]` em produção e a superfície permanece invisível. Fixture de QA isolada `?delia-demo-queue=<variant>` atrás do gate canônico `isDemoAllowed()` (`DEV` ou `VITE_DELIA_DEMO=1`) cobre `pending|one|blocked|loading|error|unavailable`; inerte no bundle de produção (provado por paridade). Evidência: [conversation-queue-f03a](evidence/conversation-queue-f03a/conversation-queue-f03a-evidence.md).
+
+**Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=IMPLEMENTED_VISUAL; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=EXECUTED_VISUAL; TESTS=PASS; DEPLOYMENT=PENDING; PHASE_PROGRESSION=NONE.

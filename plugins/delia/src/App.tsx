@@ -26,6 +26,7 @@ import {
   ConversationStarterSuggestions,
   ConversationWorkspace,
   ConversationScrollNavigator,
+  ConversationQueue,
   HelpTooltip,
   IconButton,
 } from "@delpi/plugin-ui/index";
@@ -46,6 +47,11 @@ import { resolveAudioQaAdmission } from "./audio/audioCaptureQaAdmission";
 import { resolveAudioCaptureLimits } from "./audio/audioCaptureTestAdmission";
 import { resolveStarterSuggestions } from "./suggestions/starterSuggestions";
 import { useDraftRecovery } from "./draft/draftRecovery";
+import {
+  demoMoveItem,
+  demoRemoveItem,
+  resolveQueueDemo,
+} from "./demo/queueDemo";
 import {
   fetchDictationStatus,
   transcribeDictationAudio,
@@ -112,6 +118,14 @@ export default function App({
   const [audioQaAdmission] = useState(() =>
     resolveAudioQaAdmission(window.location.search),
   );
+  // Doc 71 (F03-A): conversation queue surface. No backend queue
+  // contract exists today, so production items stay EMPTY and the
+  // component renders nothing. The `?delia-demo-queue=` QA fixture
+  // (demo-gated bundle) is the only source of visible items.
+  const [queueDemo, setQueueDemo] = useState(() =>
+    resolveQueueDemo(window.location.search),
+  );
+  const [queueExpanded, setQueueExpanded] = useState(false);
   const userIdentity = useCurrentUserIdentity(getAccessToken);
   // VD-F03 dictation.transcription.v1 admission — read once per mount
   // from the backend status boundary. Unavailable (or transport-failed)
@@ -550,7 +564,7 @@ export default function App({
             />
           }
           banner={
-            demoScenario ? (
+            demoScenario || queueDemo ? (
               <div className="delia-demo-banner" role="note">
                 {DELIA_DEMO_BANNER}
               </div>
@@ -564,6 +578,52 @@ export default function App({
                   description="Sua mensagem foi preservada."
                 />
               ) : null}
+
+              <ConversationQueue
+                className="delia-conversation-queue"
+                items={queueDemo?.items ?? []}
+                expanded={queueExpanded}
+                loading={queueDemo?.loading}
+                unavailable={queueDemo?.unavailable}
+                error={queueDemo?.error ?? null}
+                onExpandedChange={setQueueExpanded}
+                onMoveUp={
+                  queueDemo
+                    ? (itemId) =>
+                        setQueueDemo((d) =>
+                          d
+                            ? {
+                                ...d,
+                                items: demoMoveItem(d.items, itemId, "up"),
+                              }
+                            : d,
+                        )
+                    : undefined
+                }
+                onMoveDown={
+                  queueDemo
+                    ? (itemId) =>
+                        setQueueDemo((d) =>
+                          d
+                            ? {
+                                ...d,
+                                items: demoMoveItem(d.items, itemId, "down"),
+                              }
+                            : d,
+                        )
+                    : undefined
+                }
+                onRemove={
+                  queueDemo
+                    ? (itemId) =>
+                        setQueueDemo((d) =>
+                          d
+                            ? { ...d, items: demoRemoveItem(d.items, itemId) }
+                            : d,
+                        )
+                    : undefined
+                }
+              />
 
               <DeliaComposer
                 inputId="delia-interaction-input"

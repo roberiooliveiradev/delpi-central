@@ -94,6 +94,7 @@ const REQUIRED_HOST_EXPORTS = [
   "conversationMarkdownToPlainText",
   "ConversationAssistantActions",
   "ConversationScrollNavigator",
+  "ConversationQueue",
   "ConversationThreeRegionLayout",
   "ComposerClearDraftButton",
   "EditorChromeNotice",

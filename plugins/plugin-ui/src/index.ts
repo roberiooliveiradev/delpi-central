@@ -31,6 +31,12 @@ export { ConversationSidebarSearch } from "./components/conversation/Conversatio
 export { ConversationContextPanel } from "./components/conversation/ConversationContextPanel";
 /** Host-consumed scroll control — retain in federated Index exports. */
 export { ConversationScrollNavigator } from "./components/conversation/ConversationScrollNavigator";
+export { ConversationQueue } from "./components/conversation/ConversationQueue";
+export type {
+  ConversationQueueItem,
+  ConversationQueueItemStatus,
+  ConversationQueueProps,
+} from "./components/conversation/ConversationQueue";
 export * from "./components/composer";
 /** Explicit export for host-only composer action in Module Federation. */
 export { ComposerClearDraftButton } from "./components/composer/ComposerClearDraftButton";
