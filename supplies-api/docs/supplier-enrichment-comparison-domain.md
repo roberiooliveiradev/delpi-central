@@ -65,9 +65,8 @@ Determinismo: sem relógio, rede ou aleatoriedade; mesmas entradas → mesmo out
 
 ## Fronteiras não implementadas (etapas futuras)
 
-- Ports `CanonicalSupplierReader`, `CompanyRegistryProvider`, `SupplierEnrichmentReviewRepository` — **não materializadas**: nenhum use case as consome em S1; serão criadas com a primeira aplicação real (S2), evitando abstração especulativa.
-- Nenhuma rota HTTP, blueprint, migration, provider adapter ou alteração em POST/PUT.
-- `change_context`/proveniência governamental: permanece fail-closed na api-delpi até contrato de evidência v2.
+- Ports `CanonicalSupplierReader`, `CompanyRegistryProvider`, `SupplierEnrichmentReviewRepository` — materializadas em **S2** (`supplier-enrichment-review-api.md`, `contracts.py`, adapters Postgres/api-delpi; provider externo permanece fail-closed).
+- Nenhuma alteração em POST/PUT fornecedor nem em `change_context`/proveniência governamental — permanece fail-closed na api-delpi até contrato de evidência v2.
 
 ## Testes
 
@@ -75,6 +74,6 @@ Determinismo: sem relógio, rede ou aleatoriedade; mesmas entradas → mesmo out
 
 ## Resíduos conhecidos
 
-- `resource_scope`/unidade do recurso fornecedor: `TO_INVENTORY` — capability `supplies.access` comprovada, mas a relação fornecedor↔filial/empresa precisa de contrato Core antes das rotas (S2).
-- AuthZ efetiva continuará na application/BFF; o domínio não decide autorização.
-- Política de retenção LGPD para reviews/decisões: pendente — nenhuma persistência criada.
+- `resource_scope` de fornecedor: resolvido em S2 por **actor ownership** da revisão — `supplier-enrichment-resource-scope-contract.md`. Escopo fornecedor↔unidade segue inexistente na plataforma (residual declarado).
+- AuthZ efetiva na application/BFF; o domínio não decide autorização.
+- Retenção LGPD para reviews/decisões: classificada em `supplier-enrichment-retention-classification.md` (GATE-B, endosso DPO pendente).

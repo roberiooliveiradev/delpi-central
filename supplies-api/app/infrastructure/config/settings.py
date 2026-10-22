@@ -58,6 +58,10 @@ class Settings:
         in {"1", "true", "yes", "on"}
     )
 
+    ENRICHMENT_REVIEW_TTL_SECONDS = int(
+        os.getenv("ENRICHMENT_REVIEW_TTL_HOURS", "24")
+    ) * 3600
+
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "")
     PLUGINS_DB_PORT = os.getenv("PLUGINS_DB_PORT", "5432")
     PLUGINS_DB_NAME = os.getenv("PLUGINS_DB_NAME", "")
