@@ -43,3 +43,43 @@ Esta e uma matriz **descritiva de rotinas e privilegios**; nao e comprovante de 
 
 ## Status
 `TWO_SHEETS=PROVEN_DOCUMENT`; `ROUTINE_CODES=PROVEN_DOCUMENT` (existencia no arquivo, nao no runtime); `PRIVILEGE_LIST=DOCUMENTED_NOT_GRANTED`; `ERP_RUNTIME_ACCESS=TEST_NOT_RUN`; `SOURCE_PARITY=TEST_NOT_RUN`; `NEW_API_DESIGN=TO_INVENTORY`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Correcao de proveniencia e catalogo por rotina - 22/10/2026
+
+**Informacao adicional do PO, atribuida a Joici:** esta planilha representa **as rotinas que o pessoal da Contabilidade consegue acessar no TOTVS**. Isso e evidencia de conhecimento operacional relatado pela responsavel, mais forte do que uma lista generica de possibilidades, mas ainda nao e auditoria tecnica de grants por usuario/perfil/ambiente. **Nao inferir que a sigla DRE nomeie usuario ou processo tecnico**: aqui DRE e um potencial consumidor gerencial a estudar, sem acesso demonstrado para ele.
+
+### Rotinas da aba Contabil - finalidade e saida informada, sem payload
+
+| Programa | Funcao informada | O que se espera consultar/obter segundo o documento | O que permanece nao demonstrado |
+|---|---|---|---|
+| `EDAPP` | Consulta generica | Consultas configuradas a bases/relatorios; escopo exato varia por configuracao | Tabelas liberadas, filtros, export, colunas e permissao efetiva |
+| `MATR460` | Registro de Inventario Modelo P7 | Posicao/inventario de estoque para conferencia e prestacao contabil | Parametros completos, variantes, status/cutoff, formula e paridade |
+| `MATR989` | Material em processo | Relatorio de materiais/saldos em processo | Tabelas, calculo, unidade e composicao |
+| `DLP204` | Faturamento x MOD | Comparativo de faturamento e mao de obra direta | Numeradores, denominadores, campos e calculo oficial |
+| `FINR150` | Titulos a pagar em aberto | Posicao de obrigacoes em aberto | Parametros, eventos de compensacao, fontes e layout |
+| `FINR130` | Titulos a receber em aberto | Posicao de direitos em aberto | Parametros, status, fonte e layout |
+| `FINR190` | Relacao de baixas | Relatorio de baixas financeiras | Variantes/customizacao, cinco saidas, paridade com R01/R02 |
+
+### Rotinas da aba Fiscal - escopo de leitura/operacao informado, sem pressupor retorno de API
+
+| Programa | Funcao descrita na planilha | Resultado funcional descrito (nao DTO comprovado) |
+|---|---|---|
+| `MATA080` | Cadastro TES | Parametros fiscais, geracao de impostos/duplicatas e movimento de estoque |
+| `MATA540` | Excecao fiscal | Regras tributarias fora do padrao |
+| `DEL002` | Cadastro de texto legal | Textos legais de notas fiscais de saida |
+| `COMXCOL` | Importador XML | Entrada automatizada de documento fiscal eletronico |
+| `MATA103` | Documento de entrada | Consulta/registro manual de documentos de entrada |
+| `EDAPP` | Consulta generica | Extracoes de entrada e documentos a desconsiderar de faturamento |
+| `MATA010` | Cadastro de produto | Classificacao, tipo, origem e atributos fiscais do material |
+| `MATA019` | Indicador de produto | Aliquotas fiscais associadas ao cadastro |
+| `MATR910` | Kardex diario | Movimentacoes para CPV e inventario |
+| `SPEDNFE` | Faturamento NFe | Exportacao XML de nota fiscal |
+| `SPEDFISCAL` | Geracao SPED | Arquivo fiscal digital e blocos relatados |
+| `MATA900` | Acertos fiscais | Correcoes fiscais em documentos de entrada |
+| `FISA140` | Cadastro de codigo fiscal auxiliar | Cadastro de codigo para registro fiscal |
+| `FISA170` | Configurador de tributos | Configuracao tributaria relatada para novo regime |
+
+**Separar quatro evidencias:** (1) codigo e finalidade **PROVEN_DOCUMENT**; (2) acesso pela equipe de Contabilidade **OWNER_REPORTED_VIA_PO**, sujeito a auditoria atual; (3) relatorio/export especifico **TO_INVENTORY**; (4) tabela, coluna, formula, API e permissao efetiva **TO_INVENTORY/TEST_NOT_RUN**. Nao assumir leitura de dados em toda rotina: varias sao cadastros ou geracoes, e a planilha lista privilegios de escrita em parte do escopo Fiscal. Nenhuma permissao TOTVS implica permissao do Portal.
+
+**Proximo estudo Ciclo II:** inventariar cada codigo com owner TI/Protheus, versao, perguntas, caminho de menu, objetivo, formato de saida, tabela/campo, filtros, granularidade, efeitos colaterais e consumidores contabeis; consultar efetivamente apenas por ferramentas read-only autorizadas e comparar com relatorio original protegido. Ligar os artefatos homologados aos deliverables de P2/P5, sem criar endpoint por rotina automaticamente.
