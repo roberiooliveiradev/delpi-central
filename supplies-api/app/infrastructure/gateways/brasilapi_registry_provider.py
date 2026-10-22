@@ -88,6 +88,36 @@ class InMemoryRegistryRateLimiter:
             hits.append(now)
 
 
+_shared_limiter: InMemoryRegistryRateLimiter | None = None
+_shared_limiter_lock = threading.Lock()
+
+
+def registry_rate_limiter() -> InMemoryRegistryRateLimiter:
+    """Process-wide query limiter shared by every provider instance.
+
+    Fixes the S3.1 lifecycle defect: a fresh limiter per request reset the
+    per-CNPJ counter. The shared instance keeps counts for the lifetime of
+    the worker process.
+    """
+    global _shared_limiter
+    if _shared_limiter is None:
+        with _shared_limiter_lock:
+            if _shared_limiter is None:
+                _shared_limiter = InMemoryRegistryRateLimiter(
+                    limit_per_minute=getattr(
+                        Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 10
+                    )
+                )
+    return _shared_limiter
+
+
+def reset_registry_rate_limiter() -> None:
+    """Test hook — drop the cached limiter so config changes take effect."""
+    global _shared_limiter
+    with _shared_limiter_lock:
+        _shared_limiter = None
+
+
 class BrasilApiCompanyRegistryProvider(CompanyRegistryProvider):
     """Company-registry adapter for the public BrasilAPI CNPJ v1 endpoint."""
 
@@ -109,11 +139,7 @@ class BrasilApiCompanyRegistryProvider(CompanyRegistryProvider):
             else float(getattr(Settings, "BRASILAPI_TIMEOUT_SECONDS", 6) or 6)
         )
         self._transport = transport or _requests_transport
-        self._limiter = rate_limiter or InMemoryRegistryRateLimiter(
-            limit_per_minute=getattr(
-                Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 10
-            )
-        )
+        self._limiter = rate_limiter or registry_rate_limiter()
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
     def fetch(self, tax_id: str) -> ExternalRegistrySnapshot:

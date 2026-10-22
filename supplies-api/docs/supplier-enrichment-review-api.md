@@ -9,7 +9,8 @@
 
 - Dono: `supplies-api` (review domain + estado + AuthZ server-side + persistência própria).
 - Canonical read: `api-delpi` `GET /integrations/protheus/suppliers/{id}` (read-only, S2S existente).
-- **Fonte externa configurável (S3.1)**: `COMPANY_REGISTRY_PROVIDER=unavailable` (default) mantém `UnavailableCompanyRegistryProvider` fail-closed → `503 ENRICHMENT_SOURCE_UNAVAILABLE`. `=brasilapi` habilita `BrasilApiCompanyRegistryProvider` (`provider_id=brasilapi-cnpj-v1`, conceitual `THIRD_PARTY_API`, nunca `GOVERNMENT_API`) — consulta sob demanda server-side, allowlist de campos, sem QSA/CPF, rate limit por ator e por CNPJ.
+- **Fonte externa configurável (S3.1)**: `COMPANY_REGISTRY_PROVIDER=unavailable` (default) mantém `UnavailableCompanyRegistryProvider` fail-closed → `503 ENRICHMENT_SOURCE_UNAVAILABLE`. `=brasilapi` habilita `BrasilApiCompanyRegistryProvider` (`provider_id=brasilapi-cnpj-v1`, conceitual `THIRD_PARTY_API`, nunca `GOVERNMENT_API`) — consulta sob demanda server-side, allowlist de campos, sem QSA/CPF.
+- **Rate limit**: cap compartilhado por processo (`registry_rate_limiter()`) — `actor:<uuid>` na rota e `cnpj:<tax_id>` no adapter, ambos `COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE` (default 10). **Residual operacional**: estado é por worker gunicorn (Dockerfile usa `--workers 2`) — em deployment multiworker o cap efetivo é N×workers e `supplies-api` não possui Redis; **não ativar `brasilapi` em produção multiworker até mitigação** (limitador distribuído ou fixar 1 worker).
 - **Zero escrita ERP**: nenhum endpoint emite POST/PUT Protheus; `prepare-update` produz somente draft.
 - Navegador **não** declara: `actor_subject`, `unit_context`, `source_id`, `source_reference`, `review_id`, `created_at`, `status`, `revision`, snapshots externos → 422 `invalid_request`.
 

@@ -56,7 +56,7 @@ from app.domain.supplier_enrichment.review_lifecycle import (
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
 from app.infrastructure.gateways.brasilapi_registry_provider import (
-    InMemoryRegistryRateLimiter,
+    registry_rate_limiter,
 )
 from app.infrastructure.gateways.supplier_enrichment_adapters import (
     DelpiCanonicalSupplierReader,
@@ -94,11 +94,10 @@ _SERVER_OWNED_FIELDS = {
 _MAX_PAGE_SIZE = 50
 
 
-# Server-side per-actor cap for external registry queries (create_review).
-# Process-local state — protection is not shared across workers/replicas.
-_registry_query_limiter = InMemoryRegistryRateLimiter(
-    limit_per_minute=Settings.COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE
-)
+# Server-side cap for external registry queries (create_review): shared
+# process-wide limiter (`actor:*` keys here, `cnpj:*` keys in the provider).
+# Residual: state is per gunicorn worker — multi-worker deployments split
+# the effective cap (see docs/supplier-enrichment-review-api.md).
 
 
 def _service() -> SupplierEnrichmentReviewService:
@@ -293,7 +292,7 @@ def create_enrichment_review(code: str, store: str):
     try:
         supplier_id = normalize_supplier_id(code, store)
         _reject_server_fields(request.get_json(silent=True) or {})
-        _registry_query_limiter.check(f"actor:{_user().id}")
+        registry_rate_limiter().check(f"actor:{_user().id}")
         review, proposals = _service().create_review(
             user=_user(),
             supplier_code=supplier_id[:6],
