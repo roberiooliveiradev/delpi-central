@@ -51,6 +51,19 @@ def test_resolve_factory_shift_invalid_returns_none() -> None:
     assert parse_start_time_to_minutes("25:00") is None
 
 
+@pytest.mark.parametrize(
+    ("hora", "expected_id"),
+    [
+        ("080000", "1"),
+        ("141800", "2"),
+        ("235000", "3"),
+        ("0434", "1"),
+    ],
+)
+def test_resolve_factory_shift_totvs_hhmmss(hora: str, expected_id: str) -> None:
+    assert factory_shift_id(hora) == expected_id
+
+
 def test_parse_factory_shift_filter_csv_and_dedupe() -> None:
     assert parse_factory_shift_filter(None) == ()
     assert parse_factory_shift_filter("1,2,1") == ("1", "2")

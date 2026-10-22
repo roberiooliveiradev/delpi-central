@@ -119,3 +119,43 @@ Workshop Joici + Contabilidade + owners: homologar catalogo versionado de classi
 ## 7. Manutencao viva da matriz
 
 Para cada nova observacao, acrescentar ID `Vxx` ou `RC-xx` sem substituir nota antiga silenciosamente; registrar arquivo/timecode/screenshot, origem, grau de evidencia, owner, alteracao de entendimento, resultado de teste e SHA. Se uma premissa anterior for refutada pelo runtime, marcar `EXECUTION_DRIFT` e abrir rework. **Nao ha autorizacao de implementacao nem PASS runtime neste documento.**
+
+
+## 8. Ciclo I - reinterpretacao do checklist como catalogo operacional P2/P5 (22/10/2026)
+
+**Correcao explicita do PO:** o checklist de envio apresentado no documento privado e a referencia que Joici consulta para saber **quais itens preparar e encaminhar no fechamento mensal**. Ele NAO e apenas um inventario externo nem evidencia de que os itens ja foram enviados. Enriquecer o fluxo de negocio do Portal ja decidido, sem criar paginas, permissions ou mecanismos de review paralelos.
+
+**Crosswalk canônico, sem conteudo privado:**
+- **P2 (doc 09):** template e snapshot do checklist por competencia, contextos/filiais, entregaveis aplicaveis, requisito, evidencias, pendencias, validacao/rejeicao/historico. Distinguir previsto, produzido, anexado, validado e N/A; marcacao visual da planilha nao comprova sucesso.
+- **P6 (doc 13):** governanca do template mestre e catalogos, nao editar retroativamente snapshots do fechamento.
+- **P5 (docs 12 e 37, authority de decisao):** compor recipient packages e PackageVersion, finalizar sem enviar automaticamente, submeter **dentro da Minha DELPI** para review humano. Notificacao in-app/e-mail aponta ao Portal; nao enviar attachment por e-mail no V1. Aceite real por areas obrigatorias da versao vigente conforme C2/D-FINAL-02; sem force completion.
+- **P1 (doc 08):** projetar progresso e blockers por competencia, sem assumir conclusao a partir de check verde.
+- **Owners:** Joici/Controladoria define entregavel e operacao AS-IS; Contabilidade/Financeiro/Fiscal confirmam destinatarios e criterios por area; Core e authority das pessoas/permissoes; P2/P5 e authority do estado do pacote. Nao atribuir uma area obrigatoria a um item apenas por observacao do arquivo.
+
+**Matriz conceitual de familias, sem dados da empresa:** (a) extratos e comprovantes de fontes externas; (b) baixas financeiras; (c) operacoes de importacao/cambio; (d) estoque/P7; (e) CPV, Kardex e ajustes; (f) MOD, material em processo e faturamento; (g) despesas por centro de custo; (h) excecoes fiscais e custo zero; (i) documentos fiscais; (j) documentos contabeis; (k) taxonomia auxiliar de consumo. Cada familia e candidata a itens distintos no template, mas NAO autoriza automaticamente inclusao como required/conditional/optional.
+
+**Ciclo I pendente:** inventariar para cada item `familia -> deliverable -> company/branch applicability -> competency -> source -> preparation owner -> recipient package -> required area -> evidence format -> validation rule -> exception/N-A -> version and status`; confrontar com P2/P5/P6 e o ledger RQ/AC, sem duplicar contratos. Revisar catalogo com Joici e owners das areas. Ciclo II definira fontes/DTOs/consultas read-only quando esse mapeamento estiver claro.
+
+**Seguranca dos documentos:** originais e dados operacionais/fiscais/financeiros ficam restritos ao contexto privado; este GitHub armazena **somente conceito, dependencia e gaps**, sem prints, arquivos, nomes de instituicoes, contas, identificadores ou valores.
+
+**Status:** `CHECKLIST_PURPOSE=PO_CONFIRMED`; `P2_P5_BOUNDARY=PROVEN_GITHUB_DOC`; `CATALOG_ITEM_MAPPING=TO_INVENTORY`; `ACTUAL_REVIEW_ASSIGNMENTS=TO_INVENTORY`; `RUNTIME=TEST_NOT_RUN`; `NEW_IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+### Correcao de evidencia do checklist - legenda verde `Enviar` (PO, 22/10/2026)
+
+**Correcao sobre a leitura anterior:** a planilha apresenta legenda verde **`Enviar`**. Portanto, nas matrizes de entrega, **celula verde = entregavel indicado para envio naquele recorte de unidade/filial**. Este significado nao deve permanecer genericamente como "cor sem semantica" ou apenas "aplicabilidade provavel". O PO confirmou expressamente esse criterio e as capturas mostram a legenda.
+
+- **Verde (`Enviar`) = REQUIREMENT_TO_SEND** no escopo da coluna correspondente, conforme checklist operacional. Nao equivale a `SENT`, `SUBMITTED_FOR_REVIEW`, `VALIDATED` ou `ACCEPTED`.
+- **`x`** e outras anotacoes aparecem em celulas na planilha, mas sua interacao com a cor, em todos os quadros/abas, ainda requer conferencia da owner para evitar precedencia presumida. Branco/sem verde nao significa automaticamente "dispensado", "N/A" ou "nao requerido" sem regra confirmada.
+- **Destino** e **obrigatoriedade da revisao** permanecem campos separados da marcacao verde: o documento informa o que deve ser enviado, enquanto P2/P5 e os contratos canonicos definem estados, pacotes e aceite humano.
+- No inventario do template P6/snapshot P2, mapear `deliverable + business_unit/branch -> requirement_to_send` com contexto/competencia e versao do template, **sem** criar permission por filial. Confirmar aplicacao em todas as abas, excecoes e variacoes por competencia com Joici antes de migrar para contrato fisico.
+- Atualizar o status da interpretacao: `GREEN_LEGEND=PROVEN_SCREENSHOT_AND_PO_CONFIRMED`; `GREEN_MEANS_SEND_REQUIRED_IN_COLUMN_SCOPE=PO_CONFIRMED`; `ACTUAL_DELIVERY=TEST_NOT_RUN`; `REVIEW_ACCEPTANCE=TEST_NOT_RUN`.
+
+Este adendo prevalece sobre textos anteriores desta matriz que descrevem genericamente as marcacoes verdes como nao interpretadas. Dados originais e operacionais continuam restritos fora do GitHub.
+
+
+### Correcao organizacional vigente (confirmacao do PO, 22/10/2026)
+
+A coluna do checklist que referencia antiga empresa/segmento industrial **nao representa uma entidade operacional vigente**. Para este levantamento e para o futuro catalogo de entregaveis ativos, considerar **somente matriz e filial da empresa de componentes**, conforme escopo confirmado pelo PO. A marcacao verde "Enviar" em coluna legada nao gera obrigacao ativa P2, pacote P5 ou configuracao P6. Preservar o documento privado como evidencia historica, sem publicar identificadores e sem apagar historico de competencias anteriores. Antes da implementacao, validar os identificadores organizacionais atuais em cadastros autorizados do Core/TOTVS.
+
+`ACTIVE_ORG_SCOPE=PO_CONFIRMED`; `LEGACY_INDUSTRIAL_COLUMN=EXCLUDED_FROM_CURRENT_REQUIREMENTS`; `ORG_REGISTRY_PARITY=TO_INVENTORY`. Este esclarecimento prevalece sobre citacoes anteriores a unidades industriais no checklist.

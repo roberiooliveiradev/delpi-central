@@ -6,6 +6,8 @@ owner-specific branches. MESSAGE ≠ ACT.
 
 from __future__ import annotations
 
+import json
+
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     ProviderCapability,
@@ -19,6 +21,7 @@ from app.application.capability_provision.orchestration import (
     RESOLVER_SELECTION_INSTRUCTION_ID,
     SYNTHESIS_INSTRUCTION_ID,
     OperationalCapabilityOrchestrator,
+    _group_summaries,
     _prior_observation_context,
 )
 from app.application.interaction.capability_attempt import (
@@ -732,3 +735,97 @@ def test_renamed_detail_capability_still_resolves():
         "fetch_item_bundle",
     ]
     assert provider.calls[1][1].get("item_id") == "item-1"
+
+
+def test_group_selection_payload_embeds_prior_observation():
+    """Group stage resolves anaphoric owner refs via untrusted prior text."""
+    provider = FakeProvider(
+        "holdout", [_group("holdout", "ops", _surface_caps())]
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": False,
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    orch.attempt(
+        "Agora use outra fonte para confirmar isso.",
+        prior_turns=_prior(),
+    )
+    group_req = next(
+        r
+        for r in model.requests
+        if r.task_purpose_id == GROUP_SELECTION_INSTRUCTION_ID
+    )
+    assert "prior_observation" in group_req.input_text
+    assert "untrusted_excerpt" in group_req.input_text
+
+
+def test_group_selection_payload_omits_non_observation_prior():
+    """A non-OBSERVATION prior result is never presented as observation."""
+    provider = FakeProvider(
+        "holdout", [_group("holdout", "ops", _surface_caps())]
+    )
+    model = FakeProposalModel(
+        {
+            GOAL_INSTRUCTION_ID: {
+                "goal_class": "read",
+                "prior_evidence_sufficient": False,
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+    )
+    orch.attempt(
+        "Agora use outra fonte para confirmar isso.",
+        prior_turns=(
+            ConversationContextTurn(
+                kind=TurnKind.USER_INPUT,
+                content="Me explique o que é um board.",
+            ),
+            ConversationContextTurn(
+                kind=TurnKind.DELIA_RESULT,
+                content="Um board é um agrupador lógico de itens.",
+                epistemic_class=EpistemicClass.HYPOTHESIS,
+            ),
+        ),
+    )
+    group_req = next(
+        r
+        for r in model.requests
+        if r.task_purpose_id == GROUP_SELECTION_INSTRUCTION_ID
+    )
+    assert "prior_observation" not in group_req.input_text
+
+
+def test_group_summaries_shape_with_and_without_prior_observation():
+    groups = {"holdout:ops": _group("holdout", "ops", _surface_caps())}
+    wrapped = json.loads(
+        _group_summaries(
+            groups,
+            prior_observation={
+                "prior_result_available": True,
+                "authoritative": False,
+                "untrusted_excerpt": "id: item-1",
+            },
+        )
+    )
+    assert isinstance(wrapped, dict)
+    assert (
+        wrapped["capability_groups"][0]["capability_group_id"]
+        == "holdout:ops"
+    )
+    assert wrapped["prior_observation"]["authoritative"] is False
+    bare = json.loads(_group_summaries(groups))
+    assert isinstance(bare, list)
+    assert bare[0]["capability_group_id"] == "holdout:ops"

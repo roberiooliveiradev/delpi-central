@@ -100,6 +100,10 @@ export type DeliaAssistantMessageProps = {
     request: DeliaConfirmationRequest,
     decision: "CONFIRM" | "REJECT",
   ) => void;
+  /** Context-panel selection state/affordance (Prompt 5) — transient,
+   *  presentation only. */
+  selected?: boolean;
+  onSelect?: () => void;
 };
 
 /**
@@ -121,6 +125,8 @@ export function DeliaAssistantMessage({
   responding = false,
   onResponseMotionComplete,
   onConfirmation,
+  selected = false,
+  onSelect,
 }: DeliaAssistantMessageProps) {
   const ownerHint = presentationOwnerHint(turn.presentation ?? null);
   const displayContent = dedupeOwnerHintContent(turn.content, ownerHint);
@@ -220,7 +226,9 @@ export function DeliaAssistantMessage({
           onMotionComplete={onResponseMotionComplete}
         />
       </span>
-      <div className="delia-turn__bubble">
+      <div
+        className={`delia-turn__bubble${selected ? " delia-turn__bubble--selected" : ""}`}
+      >
         <div className="delia-turn__head">
           <span className="delia-turn__label">DÉLIA</span>
         </div>
@@ -316,6 +324,17 @@ export function DeliaAssistantMessage({
           // Feedback/regenerate prepared visually; no backend contract yet.
           feedbackEnabled={false}
           regenerateEnabled={false}
+          moreActions={
+            onSelect
+              ? [
+                  {
+                    id: "view-context",
+                    label: selected ? "Ocultar contexto" : "Ver contexto",
+                    onSelect,
+                  },
+                ]
+              : []
+          }
         />
       </div>
     </>

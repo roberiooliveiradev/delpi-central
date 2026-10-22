@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.production.factory_shifts import matches_factory_shift_filter
 from app.domain.totvs.protheus_branches import (
     branch_filter_sql,
     is_all_branches,
@@ -192,6 +193,24 @@ def _filter_auditoria_by_status(
     if not normalized or normalized == "all":
         return rows
     return [row for row in rows if _auditoria_status_key(row) == normalized]
+
+
+def _filter_auditoria_by_shift(
+    rows: list[dict],
+    shifts: tuple[str, ...] | None,
+) -> list[dict]:
+    """Filtra pelo turno do Hora_Inicio mínimo do grupo (mesma regra do eficiência-fabril)."""
+    selected = tuple(shifts or ())
+    if not selected:
+        return rows
+    return [
+        row
+        for row in rows
+        if matches_factory_shift_filter(
+            str(row.get("Hora_Inicio") or "") or None,
+            shifts=selected,
+        )
+    ]
 
 
 def _auditoria_sort_bucket(row: dict) -> int:
@@ -1054,6 +1073,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         offset: int,
         fetch_next: int,
         status: str | None = None,
+        shifts: tuple[str, ...] | None = None,
     ) -> tuple[dict, list[dict]]:
         safe_offset = max(int(offset), 0)
         safe_fetch = max(int(fetch_next), 1)
@@ -1142,6 +1162,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         )
         summary = _summarize_auditoria_rows(marked)
         filtered = _filter_auditoria_by_status(marked, status)
+        filtered = _filter_auditoria_by_shift(filtered, shifts)
         filtered.sort(
             key=lambda row: (
                 _auditoria_sort_bucket(row),

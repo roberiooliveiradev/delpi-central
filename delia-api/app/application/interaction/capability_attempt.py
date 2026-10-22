@@ -97,6 +97,15 @@ class GovernedCapabilityAttempt:
     # Typed admission outcome. Only early conversational admission
     # sets this. Later NOT_APPLICABLE leaves it empty.
     admission_outcome: str | None = None
+    # Prompt 5 observability projection inputs — presentation-only
+    # signals, never authority:
+    #   composition_mode: effective answer composition observed at
+    #     the canonical result seam ("cri" when the CRI composer
+    #     produced the content, absent → deterministic/baseline);
+    #   governed_attempts: total governed attempts the turn needed
+    #     (1 unless bounded resume re-entered).
+    composition_mode: str | None = None
+    governed_attempts: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

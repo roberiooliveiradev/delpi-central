@@ -5,6 +5,10 @@ import {
   AUDITORIA_DEFAULT_STATUS,
   type AuditoriaInspecaoStatus,
 } from "../constants/auditoriaStatus";
+import {
+  AUDITORIA_SHIFT_ALL,
+  type AuditoriaShiftFilter,
+} from "../constants/factoryShifts";
 import type {
   InspecoesProcessoAuditoriaApontamentoItem,
   InspecoesProcessoAuditoriaApontamentosSummary,
@@ -41,6 +45,8 @@ type UseInspecoesProcessoAuditoriaResult = {
   setData: (value: string) => void;
   status: AuditoriaInspecaoStatus;
   setStatus: (value: AuditoriaInspecaoStatus) => void;
+  shift: AuditoriaShiftFilter;
+  setShift: (value: AuditoriaShiftFilter) => void;
   page: number;
   pageSize: number;
   setPage: (page: number) => void;
@@ -62,6 +68,8 @@ export function useInspecoesProcessoAuditoria(
   const [status, setStatusState] = useState<AuditoriaInspecaoStatus>(
     AUDITORIA_DEFAULT_STATUS,
   );
+  const [shift, setShiftState] =
+    useState<AuditoriaShiftFilter>(AUDITORIA_SHIFT_ALL);
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(AUDITORIA_DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
@@ -84,6 +92,11 @@ export function useInspecoesProcessoAuditoria(
     setPageState(1);
   }, []);
 
+  const setShift = useCallback((value: AuditoriaShiftFilter) => {
+    setShiftState(value);
+    setPageState(1);
+  }, []);
+
   const setPage = useCallback((nextPage: number) => {
     setPageState(Math.max(1, Math.floor(nextPage) || 1));
   }, []);
@@ -102,6 +115,7 @@ export function useInspecoesProcessoAuditoria(
     setTrackedBranch(branch);
     setDataState(todayIso());
     setStatusState(AUDITORIA_DEFAULT_STATUS);
+    setShiftState(AUDITORIA_SHIFT_ALL);
     setPageState(1);
     setItems([]);
     setSummary(EMPTY_SUMMARY);
@@ -121,6 +135,7 @@ export function useInspecoesProcessoAuditoria(
           branch,
           data,
           inspecao_status: status,
+          ...(shift ? { shift } : {}),
           page,
           page_size: clampPageSize(pageSize),
           signal: controller.signal,
@@ -156,13 +171,15 @@ export function useInspecoesProcessoAuditoria(
       cancelled = true;
       controller.abort();
     };
-  }, [branch, data, status, page, pageSize, reloadKey, refreshToken]);
+  }, [branch, data, status, shift, page, pageSize, reloadKey, refreshToken]);
 
   return {
     data,
     setData,
     status,
     setStatus,
+    shift,
+    setShift,
     page,
     pageSize,
     setPage,

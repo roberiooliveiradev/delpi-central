@@ -223,6 +223,9 @@ export type InspecoesProcessoAuditoriaApontamentoItem = {
   data_producao: string | null;
   hora_inicio: string | null;
   hora_final: string | null;
+  /** Classificação canônica pelo horário de início (1|2|3). */
+  turno?: string | null;
+  turno_label?: string | null;
   qtd_apontamentos: number;
   operador_inspecionou: boolean;
   tem_inspecao_na_op_operacao: boolean;
@@ -253,6 +256,8 @@ export type FetchAuditoriaApontamentosParams = {
   data?: string;
   /** Query OpenAPI: inspecao_status */
   inspecao_status?: string;
+  /** Query OpenAPI: shift — turno de fábrica 1|2|3 */
+  shift?: string;
   page?: number;
   page_size?: number;
   signal?: AbortSignal;

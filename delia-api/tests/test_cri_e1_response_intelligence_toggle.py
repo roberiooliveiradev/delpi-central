@@ -249,12 +249,13 @@ def test_composer_invalid_env_fails_closed_with_warning(
 
 def _result_projection(result):
     wire = serialize_result(result)
-    # Turn/session identities are per-run — compare semantic fields only.
+    # Turn/session identities and per-run observability diagnostics are
+    # excluded — compare governed semantic fields only.
     return {
         k: v
         for k, v in wire.items()
         if k not in {"session_id", "user_turn_id", "result_turn_id",
-                     "generated_at"}
+                     "generated_at", "observability"}
     }
 
 

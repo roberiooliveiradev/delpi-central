@@ -18,6 +18,7 @@ import {
 import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { getSupplier, updateSupplier } from "./api";
+import { EnrichmentSection } from "./enrichment/EnrichmentSection";
 import {
   SUPPLIERS_CONTENT as C,
   supplierPendingChangesLabel,
@@ -531,6 +532,10 @@ export function SupplierDetailPage({
                 {C.reviewAction}
               </SuppliesActionButton>
             </SupplierFormActions>
+          ) : null}
+
+          {!editing ? (
+            <EnrichmentSection code={code} store={store} />
           ) : null}
         </>
       ) : null}

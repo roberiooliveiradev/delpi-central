@@ -142,3 +142,122 @@ Token S2S real mintado pelo client `supplies-api`, chamada `GET /v1/cnpj/{cnpj}`
 (S2S real → BrasilAPI real → DTO v1 minimizado). Residual: (a) registro formal
 da operação no ROPA canônico aguardando endosso DPO; (b) E2E de negócio S1/S2/
 decisões aguardando identidade de teste autorizada.
+
+---
+
+## Adendo X3.E2E — Aceite real em produção (2026-10-22)
+
+Usuário autorizado pelo PO: `rober` (sub `3bfdd634…`, ROPC via client
+`delpi-central`, realm `delpi`). Senha transportada apenas por arquivo
+temporário e removida; nenhum token impresso.
+
+### Defeito real encontrado e corrigido — `EXECUTION_DRIFT` resolvido
+
+- `DelpiCanonicalSupplierReader` exigia o wrapper `fornecedor` (contrato de
+  **escrita**) sobre o `data` do `get_protheus_rest_supplier`; a resposta real
+  é **flat**. Todo fornecedor retornava `None` → `404 supplier not found`.
+- Correção: aceitar o dict flat quando `supplier_code`/`tax_id` presentes,
+  preservando o wrapper legado — commit `2dbebb0ad1` (+5 testes de regressão,
+  suíte supplies-api 432 verde).
+- Observação: `docker exec` direto na `api-delpi` com o S2S no header errado
+  retornava `Invalid token claims` — o contrato correto é
+  `Authorization: Bearer <user>` + `X-Delpi-Service-Authorization: Bearer <s2s>`,
+  exatamente o que a supplies-api envia (verificado: REST responde 200 para
+  `00387801` e `00246901`).
+
+### Rota "REST do Gabriel" — inventariada
+
+`GET|POST|PUT /integrations/protheus/suppliers/{8d}` na api-delpi
+(`protheus_router.py`): leitura canônica SA2 via Protheus REST; POST/PUT
+são as rotas de escrita ERP existentes — **inventariadas e NÃO invocadas**
+(`PROTHEUS_SUPPLIER_CREATE_ENABLED=false`, `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false`).
+
+### Fluxo real executado (produção)
+
+| Etapa | Resultado |
+|---|---|
+| Auth usuário `rober` | **200** — token Keycloak válido, identidade resolvida |
+| Lista SA2 via supplies-api | **200** — 10 fornecedores PJ |
+| Canonical read (flat) | **200** — fornecedor `002469/01`, CNPJ `5261…0139` |
+| `POST enrichment-reviews` | **201** — review `d3b65302-ddb2-4747-a5ab-6ce2d54cf085`, `IN_REVIEW`, `source_id=brasilapi-cnpj-v1`, `source_reference` sanitizado, expiração 24h |
+| S1 comparação (16 campos) | DIFFERENT: `supplier_name`, `postal_code`, `city_code`; MATCH: `district`, `state`, `city`; SOURCE_MISSING: `supplier_short_name`, `address`, `area_code`, `phone`, `email`; PROTECTED: `tax_id`; informativos: CURRENT_MISSING |
+| Fornecedor homologação `003878/01` | `404 ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND` — CNPJ fake rejeitado corretamente pela BrasilAPI |
+| Decisão individual (REJECT `tax_id`) | **200** |
+| Replay idempotência (mesma key, nova revisão) | **409** — fail-closed correto (payload difere) |
+| Probe revisão obsoleta | **422** (field_key inválida rejeitada antes do conflito) |
+| Bulk REJECT (15 restantes) | **200**; replay → **409** fail-closed |
+| `GET decisions` | **200** — 16 decisões |
+| `POST prepare-update` | **200** — `write_gate_enabled=false`, `baseline_status=CURRENT`, draft vazio (todas rejeitadas — correto) |
+
+### Persistência verificada (read-only, `plugins_hub.supplies`)
+
+| Entidade | Resultado |
+|---|---|
+| `supplier_enrichment_reviews` | 1 — status `DECIDED`, revision 3, `source_id` correto, actor + expiração presentes |
+| `supplier_enrichment_proposals` | 16 — todas decididas |
+| `supplier_enrichment_decisions` | 16 |
+| `supplier_enrichment_decision_operations` | 2 (single + bulk; replays não criaram ops) |
+| `supplier_enrichment_events` | 18 (trilha de auditoria) |
+
+### Segurança e limites
+
+- AuthZ negativa: sem token → 401; S2S sem usuário → 401 (revalidado).
+- Actor rate limiter real: **429 `ENRICHMENT_RATE_LIMITED`** observado na 10ª
+  tentativa de criação de review — controle efetivo em produção.
+- Zero escrita Protheus; flags de escrita desligadas; nenhum PUT/POST ERP invocado.
+- Contatos: campos existem na matriz mas `SOURCE_MISSING`/`NOT_APPLICABLE` —
+  minimização preservada (nenhum dado de contato retornado da fonte).
+
+### Conclusão X3.E2E
+
+`PASS` na camada de negócio completa: usuário real → lista SA2 → canonical read
+→ BrasilAPI real → comparação S1 (16 campos) → revisão S2 persistida → decisões
+individual/bulk com idempotência fail-closed → prepare-update draft-only.
+Residuais: registro ROPA formal (DPO) e revisão da semântica de replay 409 vs
+`idempotent_replay` quando a revisão muda — comportamento atual é fail-closed
+correto, mas o contrato de replay pode ser refinado no X4.
+
+---
+
+## Adendo X3.E2E/REWORK — Correções de evidência e cobertura (2026-10-22)
+
+Investigação das duas inconsistências residuais apontadas na revisão
+arquitetural. Conclusão: **nenhum defeito de implementação** — divergência
+documental e lacuna de cobertura de testes, ambas corrigidas.
+
+### A — `person_type` (era: afirmação incorreta na evidência)
+
+- **Fato real (verificado em produção, read-only):** `GET /integrations/
+  protheus/suppliers/{id}` retorna `person_type: "J"` no envelope flat para
+  `00246901` e `00387801`. A afirmação anterior de "campo ausente" estava
+  **incorreta** — a chave constava inclusive na listagem de keys capturada.
+- **Gate PJ comprovado fail-closed:** `create_review` rejeita
+  `person_type != "J"` (`EnrichmentUnsupportedDocumentError`). O reader
+  normaliza ausente → `""` → também rejeitado. Cobertura ampliada:
+  `person_type ∈ {"F", "", " ", None}` → todos rejeitados, nada persistido.
+- Causa raiz da divergência: relatório X3.E2E interpretou errado a matriz
+  S1 — nenhuma alteração de contrato ou producer necessária.
+
+### B — Idempotência (semântica confirmada, cobertura ampliada)
+
+- `request_hash` inclui `expected_revision`: **replay idêntico** (mesma
+  chave + mesmo payload completo) → `idempotent_replay=true`, sem novos
+  registros; **payload divergente** (inclusive revisão diferente com a
+  mesma chave — cenário do E2E) → `409 ENRICHMENT_IDEMPOTENCY_CONFLICT`.
+  Os 409 observados no X3.E2E eram, portanto, a semântica correta do
+  contrato — não replay idêntico.
+- Cobertura preexistente confirmada: replay individual idêntico
+  (`replayed=True`, zero decisões novas) e conflito por payload divergente.
+- Cobertura adicionada: replay **bulk** idêntico (ordenamento de
+  `field_keys` insensível — payload canônico ordenado), conflito bulk por
+  payload divergente, e conflito de revisão obsoleta (`r-2` com
+  `expected_revision` stale → `ReviewRevisionConflictError`).
+- Produção confirma o contrato: `decision_operations` = 2 (single + bulk);
+  os replays 409 não geraram operações/decisões/eventos duplicados.
+
+### Resultado do rework
+
+- **Código de aplicação: zero alterações** — implementação correta.
+- **Testes:** +6 casos (suíte supplies-api 438 verde, 21 skip PG).
+- **Impacto sobre a revisão produtiva:** nenhum — dados íntegros e
+  consistentes com o contrato.

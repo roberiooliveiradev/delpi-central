@@ -16,7 +16,9 @@ or evidence.
 
 from __future__ import annotations
 
+import dataclasses
 import logging
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
@@ -87,6 +89,16 @@ from app.application.model_invocation.errors import (
 from app.application.interaction.turn_budget import (
     DEFAULT_TURN_BUDGET_SECONDS,
     TurnDeadline,
+)
+from app.application.interaction.turn_observability import (
+    COMPOSITION_CRI,
+    COMPOSITION_DETERMINISTIC,
+    COMPOSITION_MODEL,
+    ModelCallLedger,
+    bind_turn_call_ledger,
+    build_turn_observability,
+    current_call_ledger,
+    reset_turn_call_ledger,
 )
 from app.application.model_invocation.invoke_model import (
     MAX_INPUT_CHARS,
@@ -322,6 +334,11 @@ class HandleInteractiveConversationTurn:
         if sink is not None:
             sink.emit(phase=ActivityPhase.REQUEST_RECEIVED)
 
+        # Prompt 5: request-scoped model-call ledger — every real
+        # InvokeModel.execute call inside this turn records provider
+        # usage/duration verbatim; replayed governed-resume proposals
+        # and deterministic revalidation never enter it.
+        ledger_token = bind_turn_call_ledger(ModelCallLedger())
         try:
             return self._execute_observed(
                 request,
@@ -341,6 +358,8 @@ class HandleInteractiveConversationTurn:
             if sink is not None:
                 sink.emit(phase=ActivityPhase.FAILED)
             raise
+        finally:
+            reset_turn_call_ledger(ledger_token)
 
     def _execute_observed(
         self,
@@ -397,7 +416,16 @@ class HandleInteractiveConversationTurn:
             else:
                 result = self._grounded_result(session, user_turn, attempt)
             _emit_terminal(sink, ActivityPhase.COMPLETED)
-            return result
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=(
+                    COMPOSITION_CRI
+                    if attempt.composition_mode == COMPOSITION_CRI
+                    else COMPOSITION_DETERMINISTIC
+                ),
+                governed_attempts=attempt.governed_attempts,
+            )
 
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
@@ -426,7 +454,12 @@ class HandleInteractiveConversationTurn:
                     )
                 ),
             )
-            return result
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
 
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
@@ -449,7 +482,12 @@ class HandleInteractiveConversationTurn:
                 _emit_terminal(
                     sink, ActivityPhase.BLOCKED, state=ActivityState.WAITING
                 )
-            return result
+            return self._with_observability(
+                result,
+                turn_deadline,
+                composition_mode=COMPOSITION_DETERMINISTIC,
+                governed_attempts=attempt.governed_attempts,
+            )
 
         # R1 (doc 35): model-backed inconclusive selection returns
         # CLARIFICATION_REQUIRED above — never a second free-form model
@@ -505,7 +543,16 @@ class HandleInteractiveConversationTurn:
                     ActivityPhase.COMPLETED,
                     state=ActivityState.BLOCKED,
                 )
-                return result
+                return self._with_observability(
+                    result,
+                    turn_deadline,
+                    composition_mode=COMPOSITION_DETERMINISTIC,
+                    governed_attempts=(
+                        attempt.governed_attempts
+                        if attempt is not None
+                        else None
+                    ),
+                )
             raise
         content, limitations = self._validate_result(model_result)
 
@@ -537,7 +584,52 @@ class HandleInteractiveConversationTurn:
             grounding_status=GroundingStatus.NON_GROUNDED,
         )
         _emit_terminal(sink, ActivityPhase.COMPLETED)
-        return result
+        return self._with_observability(
+            result,
+            turn_deadline,
+            composition_mode=COMPOSITION_MODEL,
+            governed_attempts=(
+                attempt.governed_attempts
+                if attempt is not None
+                else None
+            ),
+        )
+
+    def _with_observability(
+        self,
+        result: InteractiveTurnResult,
+        turn_deadline: TurnDeadline,
+        *,
+        composition_mode: str,
+        governed_attempts: int | None = None,
+    ) -> InteractiveTurnResult:
+        """Attach the bounded presentation-only observability
+        projection (Prompt 5).
+
+        Real model calls recorded in the request-scoped ledger carry
+        provider usage/duration verbatim — replayed checkpoint
+        proposals and deterministic revalidation never enter it.
+        ``composition_mode`` is what actually produced this answer
+        (CRI / deterministic / model), never the configured flag.
+        """
+        ledger = current_call_ledger()
+        calls = ledger.calls if ledger is not None else ()
+        duration_ms = None
+        if turn_deadline.started_at is not None:
+            duration_ms = int(
+                (turn_deadline.clock() - turn_deadline.started_at) * 1000
+            )
+        return dataclasses.replace(
+            result,
+            observability=build_turn_observability(
+                model_ref=self._model_ref,
+                response_mode=self._response_mode,
+                composition_mode=composition_mode,
+                calls=calls,
+                duration_ms=duration_ms,
+                governed_attempts=governed_attempts or 1,
+            ),
+        )
 
     def _require_access(self, context: PlatformAccessContext | None) -> None:
         if context is None:
@@ -1074,10 +1166,26 @@ class HandleInteractiveConversationTurn:
                 "context_turn_count": len(prior_turns),
             },
         )
+        started = time.monotonic()
         try:
-            return self._invoke_model.execute(invocation_request)
+            result = self._invoke_model.execute(invocation_request)
         except ModelInvocationError as exc:
+            ledger = current_call_ledger()
+            if ledger is not None:
+                ledger.record_error(
+                    stage=TASK_PURPOSE_ID,
+                    finish_status=(
+                        "timeout" if exc.code == TIMEOUT else "error"
+                    ),
+                    duration_ms=int(
+                        (time.monotonic() - started) * 1000
+                    ),
+                )
             raise _map_invocation_error(exc) from exc
+        ledger = current_call_ledger()
+        if ledger is not None:
+            ledger.record_result(stage=TASK_PURPOSE_ID, result=result)
+        return result
 
     def _validate_result(
         self,
@@ -1174,4 +1282,12 @@ def serialize_result(result: InteractiveTurnResult) -> Mapping[str, Any]:
         # neutral contract a future MFE consumes. Legacy top-level
         # fields remain unchanged for backward compatibility.
         "presentation": compose_presentation(result),
+        # Prompt 5: additive bounded observability projection —
+        # presentation-only, already sanitized at build. ``None`` for
+        # in-process results produced before the ledger was bound.
+        "observability": (
+            dict(result.observability)
+            if result.observability is not None
+            else None
+        ),
     }

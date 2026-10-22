@@ -144,6 +144,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Busca por código, loja, razão social, fantasia ou documento; clique na linha para abrir a ficha cadastral",
         },
         {
+          want: "Comparar cadastro com fonte externa",
+          where: "Fornecedores → ficha → Enriquecimento cadastral",
+          how: "«Consultar dados externos» compara a ficha com dados públicos do CNPJ (BrasilAPI — só sugestão). Aceite ou rejeite por campo, use seleção em lote e «Preparar atualização» gera apenas um rascunho — nada é gravado no Protheus",
+        },
+        {
           want: "Acompanhar pedidos em aberto",
           where: "Pedidos de compra",
           how: "Saldo pendente de recebimento; para pontualidade de recebimentos já digitados use Entregas / Atrasos",

@@ -288,6 +288,16 @@ class TestCreateReview:
         with pytest.raises(EnrichmentUnsupportedDocumentError):
             _created(svc)
 
+    @pytest.mark.parametrize("person_type", ["", " ", None])
+    def test_missing_or_blank_person_type_rejected(self, person_type):
+        # Gate PJ é fail-closed: campo ausente/vazio nunca é presumido "J".
+        svc, repo = _service(
+            canonical=FakeCanonicalReader(_canonical(person_type=person_type))
+        )
+        with pytest.raises(EnrichmentUnsupportedDocumentError):
+            _created(svc)
+        assert not repo.reviews
+
     def test_provider_unavailable_blocks_creation(self):
         svc, repo = _service(provider=UnavailableProvider())
         with pytest.raises(EnrichmentSourceUnavailableError):
@@ -576,6 +586,57 @@ class TestBulkDecisions:
             expected_revision=1, idempotency_key="b-7",
         )
         assert updated.status == "IN_REVIEW"
+
+    def test_bulk_idempotent_replay_same_payload(self):
+        svc, repo = _service()
+        review, _ = _created(svc)
+        svc.decide_bulk(
+            user=_user(), review_id=review.review_id,
+            decision=Decision.REJECT,
+            field_keys=["supplier_name", "address"],
+            expected_revision=1, idempotency_key="b-8",
+        )
+        _, _, replayed = svc.decide_bulk(
+            user=_user(), review_id=review.review_id,
+            decision=Decision.REJECT,
+            field_keys=["address", "supplier_name"],  # order-insensitive payload
+            expected_revision=1, idempotency_key="b-8",
+        )
+        assert replayed is True
+        assert len(repo.decisions) == 2
+        assert len(repo.operations) == 1
+
+    def test_bulk_idempotency_key_reuse_different_payload_conflicts(self):
+        svc, _ = _service()
+        review, _ = _created(svc)
+        svc.decide_bulk(
+            user=_user(), review_id=review.review_id,
+            decision=Decision.REJECT, field_keys=["supplier_name"],
+            expected_revision=1, idempotency_key="b-9",
+        )
+        with pytest.raises(IdempotencyConflictError):
+            svc.decide_bulk(
+                user=_user(), review_id=review.review_id,
+                decision=Decision.ACCEPT, field_keys=["supplier_name"],
+                expected_revision=1, idempotency_key="b-9",
+            )
+
+    def test_stale_expected_revision_conflicts(self):
+        # B3 — a concurrent apply bumps the revision; a subsequent decide
+        # carrying the stale expectation must conflict, not silently apply.
+        svc, _ = _service()
+        review, _ = _created(svc)
+        svc.decide(
+            user=_user(), review_id=review.review_id,
+            field_key="supplier_name", decision=Decision.ACCEPT,
+            expected_revision=1, idempotency_key="r-1",
+        )
+        with pytest.raises(ReviewRevisionConflictError):
+            svc.decide(
+                user=_user(), review_id=review.review_id,
+                field_key="address", decision=Decision.REJECT,
+                expected_revision=1, idempotency_key="r-2",
+            )
 
 
 class TestPrepareUpdate:

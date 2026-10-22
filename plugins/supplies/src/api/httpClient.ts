@@ -35,16 +35,23 @@ export class ApiRequestError extends Error {
   readonly status: number;
   readonly code?: string;
   readonly outcome?: string;
+  readonly retryAfter?: number;
 
   constructor(
     message: string,
-    options: { status: number; code?: string; outcome?: string },
+    options: {
+      status: number;
+      code?: string;
+      outcome?: string;
+      retryAfter?: number;
+    },
   ) {
     super(message);
     this.name = "ApiRequestError";
     this.status = options.status;
     this.code = options.code;
     this.outcome = options.outcome;
+    this.retryAfter = options.retryAfter;
   }
 }
 
@@ -71,10 +78,16 @@ async function parseError(response: Response): Promise<ApiRequestError> {
   } catch {
     rawFromBody = null;
   }
+  const retryAfterHeader = response.headers.get("Retry-After");
+  const retryAfter =
+    retryAfterHeader !== null && /^\d+$/.test(retryAfterHeader.trim())
+      ? Number(retryAfterHeader.trim())
+      : undefined;
   return new ApiRequestError(resolveHttpErrorMessage(status, rawFromBody), {
     status,
     code,
     outcome,
+    retryAfter,
   });
 }
 

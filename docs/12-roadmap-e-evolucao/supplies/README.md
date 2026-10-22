@@ -235,3 +235,11 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+---
+
+## Atualização bounded — enriquecimento cadastral e fase de interface (2026-10-22)
+
+A frente **SHARED-INTEGRATIONS-01 X0–X3.E2E** atingiu **ACCEPT para backend/runtime de enriquecimento**, conforme [fechamento X3.E2E e readiness X4](../shared-integrations/X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md) e [evidência de runtime](../shared-integrations/X3-RUNTIME-EVIDENCE-20261022.md). Consulta real BrasilAPI via `external-data-api`, BFF `supplies-api`, comparação S1, persistência/revisões S2, decisões e `prepare-update` draft-only foram exercitados em produção de forma controlada; **nenhum PUT/POST ERP foi habilitado**. Contrato `person_type` PJ e replay idempotente foram esclarecidos no rework de `72427d5017` (evidência reportada).
+
+**X4.P0 — inventário e contract freeze da interface de fornecedores está autorizado pelo PO**, sem autorização de implementação/deploy MFE. A fila geral mantém E10/WF-15 em foco com gate federado `INCONCLUSIVE` segundo a última evidência desta pasta; o novo P0 precisa revalidar esse gate e reconciliar E13/WF-09 e E14/WF-10 antes de promover página. Não usar o aceite backend como `GATE-FEATURE` visual. Registro LGPD/ROPA específico permanece pendente no [backlog documentado](../shared-integrations/X3-LGPD-STATUS-AND-DEFERRED-REMEDIATION-20261022.md).

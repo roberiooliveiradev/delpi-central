@@ -256,3 +256,43 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ## PROC-0072 - Matriz-mestra do video e roadmap de levantamento (22/10/2026)
 
 [Doc 57 - Rastreabilidade integral V01-V23, reconciliacoes RC-01 a RC-09, riscos X01-X12 e tres ciclos de inventario](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md). Consolidacao documental de todos os registros 01-18 do doc 56, em conjunto com docs 46 e 55, atraves das explicacoes guiadas do PO e prints. **Authority AS-IS = TEO/Joici; authority TARGET = GitHub.** O doc 55 permanece como recorte tecnico especifico 19-33 minutos; o doc 57 e a matriz geral vigente para controlar lacunas e evidencias. A validacao do MP4 original, as verificacoes de dados e a custodia de prints ainda estao pendentes; nao declarar paridade TOTVS/SQL nem audio/timecodes como PASS. Matriz = DOCUMENTED_WITH_RESIDUAL; dados = TO_INVENTORY / TEST_NOT_RUN; novas capacidades = DECISION_REQUIRED.
+
+
+### Ciclo 1 - checklist de entregaveis por aba (22/10/2026)
+
+[Doc 59 - Tres abas e crosswalk P2/P5/P6](./59-ciclo1-checklist-abas-e-entregaveis-sanitizado.md): resumo sanitizado da referencia operacional de envio; abas Eletronico (arquivos/relatorios digitais), Fisico (documentacao comprobatória) e Planilha1 (taxonomia auxiliar de consumo/despesas). Legenda verde `Enviar` significa exigencia de envio no escopo da coluna, **nao** prova de submissao/aceite. Somente matriz e filial da empresa de componentes no escopo vigente; antiga empresa industrial e contexto legado. O [doc 57 §8](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md) registra as correcoes e o vinculo com os fluxos existentes. `CHECKLIST_PURPOSE=PO_CONFIRMED`; `CATALOG_MAPPING=TO_INVENTORY`; `RUNTIME=NOT_AUTHORIZED`. Nenhuma informacao fiscal, financeira, identificador individual ou documento original foi versionado.
+
+
+### Ciclo 1 - rotinas fiscais e contabeis TOTVS
+
+[Doc 60 - Inventario sanitizado de rotinas e privilegios](./60-ciclo1-rotinas-contabeis-fiscais-totvs.md): duas abas, 14 rotinas fiscais e 7 contabeis. Codigos candidatos MATR460, MATR989, MATR910, DLP204, FINR150/FINR130/FINR190, EDAPP, cadastros e configuracoes fiscais. Lista de privilegios da planilha NAO e grant efetivo nem autorizacao para writes. Paridade ERP e contratos de API `TO_INVENTORY/TEST_NOT_RUN`; nenhum dado transacional ou documento privado versionado.
+
+
+### Ciclo 1 - CPV da matriz: Kardex fisico-financeiro (22/10/2026)
+
+[Doc 61 - Inventario conceitual do arquivo de CPV](./61-ciclo1-cpv-kardex-matriz-inventario.md): uma aba de Kardex com blocos por produto, movimentos, TES/codigo fiscal, entradas/saidas, custo medio, saldos e resumo por tipo. O nome da amostra indica setembro e cabecalho de referencia/emissao e de outubro; cutoff `TO_INVENTORY`. Vínculo candidato MATR910/doc 60, contraponto video/doc 57, roteiro CPV-01..08 de dados, elegibilidade e paridade. **Nao publicar valores, registros fiscais, produtos, documentos ou planilha original; runtime nao autorizado.**
+
+
+### Ciclo 1 - Resumo de entradas e saidas MATR320 (22/10/2026)
+
+[Doc 62 - Inventario conceitual MATR320](./62-ciclo1-matr320-resumo-entradas-saidas.md): PDF de uma pagina com resumo financeiro de entradas/saidas por tipo de material, incluindo saldo inicial/final, compras, movimentos internos, producao, vendas, devolucoes e poder de terceiros; competencia de movimento distinta da data de emissao/referencia. Cruzamento conceitual com Kardex/MATR910 (doc 61), P7/MATR460 e material em processo, sem inferir igualdade de escopo ou CPV de DRE. Paridade e fontes fisicas pendentes; dados e PDF original nao versionados.
+
+
+### Ciclo 1 - Registro de Inventario, estoque e em processo (22/10/2026)
+
+[Doc 63 - Resumo do registro de inventario](./63-ciclo1-p7-resumo-estoque-em-processo.md): PDF privado de uma pagina, com posicao da matriz em 30/09/2026, secao EM ESTOQUE e secao EM PROCESSO por categoria de material, mais TOTAL GERAL. Relacionado conceitualmente ao P7 narrado no video, mas identificador MATR460 e variante Bloco H nao aparecem no PDF e seguem `TO_INVENTORY`. Confronto pendente com MATR320/doc 62 e Kardex/doc 61; valores/documento original nao versionados.
+
+
+### Ciclo 1 - Material em processo (22/10/2026)
+
+[Doc 64 - Inventario conceitual do saldo analitico em processo](./64-ciclo1-material-em-processo-inventario.md): uma aba XLSB, campos produto/local/OP/tipo RE-DE/quantidade/valor, muitos registros zerados, cabeçalhos repetidos e duas dimensoes de local observadas. Produtor MATR989 candidato, nao comprovado; semantica RE0/RE1/RE2/RE9, elegibilidade e confronto com secao EM PROCESSO do Registro de Inventario (doc 63) permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados.
+
+
+### Ciclo 1 - Faturamento x MOD (22/10/2026)
+
+[Doc 65 - Inventario conceitual das duas filiais](./65-ciclo1-faturamento-mod-inventario.md): duas abas de desdobramento PA/componentes MOD; campos de faturamento, quantidade, horas, custo unitario e custo total. Formulas observadas na amostra `Horas ~= Qtd Fat. * Quantidade` e `Custo Total ~= Horas * Custo Unitario`, sem confirmacao de horas efetivas nem homologacao da rotina candidata `DLP204`. Paridade e fontes ERP pendentes; nenhum registro financeiro/produto privado versionado.
+
+
+### Ciclo 1 - movimentos de inventario (22/10/2026)
+
+[Doc 66 - Invent / ajustes de inventario](./66-ciclo1-invent-movimentos-inventario.md): planilha privada com 45 movimentos de documento `INVENT`, combinacoes tecnicas `TES 999 / RE0` (saida) e `TES 499 / DE0` (entrada), e duas linhas finais de agregacao sem a mesma estrutura. Analise do efeito liquido, produtor, cobertura de armazens 01/99 e reconciliacao com Kardex, MATR320 e P7 seguem `TO_INVENTORY/TEST_NOT_RUN`. Somente regras e metadados conceituais foram versionados.

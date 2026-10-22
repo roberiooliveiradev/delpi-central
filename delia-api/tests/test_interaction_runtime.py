@@ -418,6 +418,10 @@ def test_full_vertical_http_path_returns_bounded_result():
         # versioned presentation projection — the provider-neutral
         # contract a future MFE consumes.
         "presentation",
+        # DELIA-UX-CONTEXT-PANEL-EVIDENCE-ACTIVITY-AND-LLM-USAGE-
+        # INTEGRATION-01: additive bounded per-turn diagnostics
+        # (composition mode, model calls, provider-reported usage).
+        "observability",
     }
     assert body["epistemic_class"] == "HYPOTHESIS"
     assert body["grounding_status"] == "NON_GROUNDED"

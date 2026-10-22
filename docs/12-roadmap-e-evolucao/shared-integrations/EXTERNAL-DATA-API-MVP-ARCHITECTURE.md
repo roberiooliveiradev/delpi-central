@@ -114,3 +114,11 @@ Stop: `EXECUTION_DRIFT` para premissa de owner invalidada; sem autorização de 
 > bloqueada por `GATE-I3` (endosso DPO/ROPA ausente). Evidências:
 > `X3-RUNTIME-EVIDENCE-20261022.md`. X3 = `ACCEPT_WITH_RESIDUAL`; ativação do
 > provider exige autorização institucional explícita.
+
+---
+
+## Atualização de execução (2026-10-22) — contratos X0, X1, X2, X3
+
+**O conteúdo original acima é a proposta histórica de arquitetura**, inclusive nomes de endpoint `TARGET` e ausência de runtime. Não utilizá-lo como retrato do HEAD atual. O contrato congelado está em [X0](./EXTERNAL-DATA-API-CONTRACT-FREEZE-X0.md), que fixa a API interna `GET /v1/cnpj/{cnpj}`; o estado implantado e seus adendos cronológicos estão em [X3 runtime evidence](./X3-RUNTIME-EVIDENCE-20261022.md).
+
+A frente X3.E2E foi aceita para **backend e runtime**, com BrasilAPI real, integração S2S, comparação S1, persistência de revisões/decisões S2 e `prepare-update` sem escrita ERP. O rework de tipo PJ/replay confirmou contratos sem diff de aplicação. Veja [fechamento X3.E2E / readiness X4.P0](./X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md). X4.P0 (inventário/contract freeze visual) autorizado; implementação visual condicionada à fila/gate de página do Portal. [Pendências LGPD/ROPA](./X3-LGPD-STATUS-AND-DEFERRED-REMEDIATION-20261022.md) não foram declaradas resolvidas.

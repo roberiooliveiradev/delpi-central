@@ -45,6 +45,10 @@ def singleton_group_proposal_from_request(
         payload = json.loads(raw)
     except json.JSONDecodeError:
         return None
+    # The block may be a bare group list or the wrapped form
+    # {"capability_groups": [...], "prior_observation": {...}}.
+    if isinstance(payload, dict):
+        payload = payload.get("capability_groups")
     if not isinstance(payload, list) or len(payload) != 1:
         return None
     entry = payload[0]

@@ -208,6 +208,12 @@ def test_interaction_application_layer_stays_bounded():
     # the request-scoped sink bound to real session/turn identity (a
     # channel callable is the only transport seam — no port, no
     # framework dependency, no second orchestration path).
+    # DELIA-UX-CONTEXT-PANEL-EVIDENCE-ACTIVITY-AND-LLM-USAGE-
+    # INTEGRATION-01 added turn_observability.py — the bounded
+    # request-scoped ledger that projects the already-existing
+    # ModelInvocationResult usage/duration data and the effective
+    # composition mode into an additive, privacy-safe serialization
+    # field (no telemetry engine, no port, no transport, no storage).
     # No engine, router, registry, repository, or new port is
     # introduced.
     assert module_files == [
@@ -221,6 +227,7 @@ def test_interaction_application_layer_stays_bounded():
         "pending_proposals.py",
         "presentation.py",
         "turn_budget.py",
+        "turn_observability.py",
         "workspace_context.py",
     ]
     for package in ("conversation", "session", "chat"):

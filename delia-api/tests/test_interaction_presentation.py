@@ -195,6 +195,9 @@ def test_block_text_is_bounded():
 
 def test_top_level_contract_is_backward_compatible():
     body = serialize_result(_result(owner_hint="h"))
+    # `observability` is an additive bounded diagnostics field
+    # (DELIA-UX-CONTEXT-PANEL-EVIDENCE-ACTIVITY-AND-LLM-USAGE-
+    # INTEGRATION-01); all previously emitted keys are preserved.
     assert set(body) == {
         "session_id",
         "user_turn_id",
@@ -208,6 +211,7 @@ def test_top_level_contract_is_backward_compatible():
         "provenance",
         "confirmation_request",
         "presentation",
+        "observability",
     }
 
 
