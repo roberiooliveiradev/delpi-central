@@ -26,24 +26,23 @@ export function handoffIntentSignature(
 }
 
 /**
- * Geração do requestId: `crypto.randomUUID()` quando disponível;
- * em contexto inseguro (tablet HTTP na intranet) cai para
- * `getRandomValues` (presente mesmo sem origem segura) e, por último,
- * para um v4 de `Math.random` — ainda UUID válido para o contrato.
+ * Geração do requestId: somente Web Crypto — `crypto.randomUUID()`
+ * quando disponível; em contexto inseguro (tablet HTTP na intranet)
+ * cai para `getRandomValues` (presente mesmo sem origem segura).
+ *
+ * SEM fallback de `Math.random`: chave idempotente fraca corromperia a
+ * deduplicação do backend. Sem fonte criptográfica retorna `null` e o
+ * controlador bloqueia a confirmação com mensagem recuperável — a troca
+ * nunca sai com requestId previsível.
  */
-export function newHandoffRequestId(): string {
+export function newHandoffRequestId(): string | null {
   const cryptoApi = globalThis.crypto;
   if (typeof cryptoApi?.randomUUID === "function") {
     return cryptoApi.randomUUID();
   }
+  if (typeof cryptoApi?.getRandomValues !== "function") return null;
   const bytes = new Uint8Array(16);
-  if (typeof cryptoApi?.getRandomValues === "function") {
-    cryptoApi.getRandomValues(bytes);
-  } else {
-    for (let index = 0; index < bytes.length; index += 1) {
-      bytes[index] = Math.floor(Math.random() * 256);
-    }
-  }
+  cryptoApi.getRandomValues(bytes);
   bytes[6] = (bytes[6]! & 0x0f) | 0x40;
   bytes[8] = (bytes[8]! & 0x3f) | 0x80;
   const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"));
@@ -54,6 +53,34 @@ export function newHandoffRequestId(): string {
     hex.slice(8, 10).join(""),
     hex.slice(10, 16).join(""),
   ].join("-");
+}
+
+/**
+ * Intenção com resultado desconhecido — registrada antes do POST e só
+ * removida quando o backend responde de forma definitiva (sucesso ou
+ * erro estruturado). Vive no módulo (não no React): sobrevive a remount
+ * do controlador ao navegar entre o card "Agora nesta bancada" e o
+ * detalhe da operação, e impede que fechar/remontar a interface descarte
+ * a intenção antes da reconciliação segura (E2.RQ-06).
+ */
+const pendingHandoffIntents = new Map<string, RunHandoffIntent>();
+
+export function registerPendingHandoffIntent(
+  runId: string,
+  intent: RunHandoffIntent,
+): void {
+  pendingHandoffIntents.set(runId, intent);
+}
+
+export function pendingHandoffIntentFor(
+  runId: string,
+): RunHandoffIntent | null {
+  return pendingHandoffIntents.get(runId) ?? null;
+}
+
+/** Só chamar quando a intenção foi resolvida de forma definitiva. */
+export function clearPendingHandoffIntent(runId: string): void {
+  pendingHandoffIntents.delete(runId);
 }
 
 /**

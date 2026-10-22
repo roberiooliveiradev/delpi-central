@@ -11,6 +11,7 @@ import type { BenchSessionSnapshot, MachineLoadOperation } from "./api.ts";
 import { OperatorSessionContext } from "./OperatorSessionContext.ts";
 import type { OperatorSessionContextValue } from "./OperatorSessionContext.ts";
 import { ProductionRunControls } from "./ProductionRunControls.tsx";
+import { clearPendingHandoffIntent } from "./runHandoff.ts";
 
 const OPERATION = {
   work_center: "CT-63",
@@ -232,6 +233,7 @@ async function openFinishSheet() {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  clearPendingHandoffIntent("run-a-1");
 });
 
 describe("troca guiada de OP (E2)", () => {
@@ -649,6 +651,207 @@ describe("troca guiada de OP (E2)", () => {
       expect(
         calls.filter((call) => call.url.includes("/runs/active")).length,
       ).toBeGreaterThan(activeBefore),
+    );
+  });
+
+  it("resultado incerto bloqueia Stop/troca; fechar preserva a intenção (RW-01)", async () => {
+    let handoffCalls = 0;
+    const calls = stubCockpitFetch({
+      handoff: () => {
+        handoffCalls += 1;
+        if (handoffCalls === 1) {
+          return Promise.reject(new TypeError("network down"));
+        }
+        return okEnvelope({ ...HANDOFF_RESULT, replayed: true });
+      },
+    });
+    renderControls();
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    // Resultado desconhecido: Stop e nova troca ficam bloqueados até a
+    // reconciliação segura — nenhuma escrita contraditória sai.
+    await screen.findByText(/A resposta não chegou/i);
+    expect(
+      screen.getByRole("button", { name: /Encerrar produção/i }),
+    ).toBeDisabled();
+    expect(nextButton).toBeDisabled();
+
+    // Cancelar reconcilia e fecha, mas a intenção NÃO morre.
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+
+    // Reabrir a finalização restaura o retry da MESMA intenção.
+    await openFinishSheet();
+    await screen.findByText(/A resposta não chegou/i);
+    fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/i }));
+
+    await waitFor(() => expect(handoffPosts(calls)).toHaveLength(2));
+    const bodies = handoffPosts(calls).map((call) =>
+      JSON.parse(String(call.init?.body)),
+    );
+    expect(bodies[0].requestId).toBe(bodies[1].requestId);
+    expect(bodies[0].expectedNext).toEqual(bodies[1].expectedNext);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("remount card↔detalhe preserva a intenção incerta (RW-01)", async () => {
+    let handoffCalls = 0;
+    const calls = stubCockpitFetch({
+      handoff: () => {
+        handoffCalls += 1;
+        if (handoffCalls === 1) {
+          return Promise.reject(new TypeError("network down"));
+        }
+        return okEnvelope({ ...HANDOFF_RESULT, replayed: true });
+      },
+    });
+    const first = renderControls();
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+    await screen.findByText(/A resposta não chegou/i);
+
+    // Navegação card→detalhe desmonta o controlador — a intenção fica
+    // no registro do módulo e sobrevive.
+    first.unmount();
+    renderControls();
+    await openFinishSheet();
+
+    await screen.findByText(/A resposta não chegou/i);
+    fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/i }));
+
+    await waitFor(() => expect(handoffPosts(calls)).toHaveLength(2));
+    const bodies = handoffPosts(calls).map((call) =>
+      JSON.parse(String(call.init?.body)),
+    );
+    expect(bodies[0].requestId).toBe(bodies[1].requestId);
+  });
+
+  it("conflito impeditivo trava nova escrita até a recuperação (RW-02)", async () => {
+    const calls = stubCockpitFetch({
+      handoff: () =>
+        failEnvelope("Há uma parada sem motivo informado.", 409, {
+          code: "pending_classification",
+        }),
+    });
+    renderControls();
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    await screen.findByText("Parada sem motivo");
+    // Conflito impeditivo: a opção fica desabilitada e um clique (mesmo
+    // forçado) não gera uma segunda escrita — a recuperação prevista é
+    // classificar a parada primeiro.
+    await waitFor(() => expect(nextButton).toBeDisabled());
+    fireEvent.click(nextButton);
+    expect(handoffPosts(calls)).toHaveLength(1);
+  });
+
+  it("Stop com falha mantém o modal aberto e a ação recuperável (RW-03)", async () => {
+    let stopCalls = 0;
+    const calls = stubCockpitFetch();
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal("fetch", async (url: string | URL | Request, init?: RequestInit) => {
+      const target = String(url);
+      if (target.endsWith("/stop") && (init?.method ?? "GET") === "POST") {
+        stopCalls += 1;
+        if (stopCalls === 1) {
+          return failEnvelope("Falha ao encerrar.", 500);
+        }
+      }
+      return originalFetch(url, init);
+    });
+    renderControls();
+    await openFinishSheet();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Encerrar produção/i }),
+    );
+
+    // Falha do Stop: modal permanece aberto, erro visível, sem handoff.
+    expect(
+      await screen.findByText(/Não foi possível encerrar a produção/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(handoffPosts(calls)).toHaveLength(0);
+
+    // Ação recuperável: nova tentativa encerra e fecha a decisão.
+    fireEvent.click(
+      screen.getByRole("button", { name: /Encerrar produção/i }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(stopCalls).toBe(2);
+  });
+
+  it("sem fonte criptográfica nenhum POST sai — falha recuperável (RW-04)", async () => {
+    const calls = stubCockpitFetch();
+    vi.stubGlobal("crypto", {});
+    renderControls();
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    expect(
+      await screen.findByText(/identificador seguro/i),
+    ).toBeInTheDocument();
+    expect(handoffPosts(calls)).toHaveLength(0);
+  });
+
+  it("readback falho após POST confirmado não vira mutação incerta (RW-05)", async () => {
+    let handoffDone = false;
+    const calls = stubCockpitFetch({
+      handoff: () => {
+        handoffDone = true;
+        return okEnvelope(HANDOFF_RESULT);
+      },
+      activeRun: () => {
+        // Após a confirmação, a releitura do run falha — o resultado
+        // confirmado continua válido e nenhum POST adicional sai.
+        if (handoffDone) throw new Error("readback down");
+        return RUN;
+      },
+    });
+    const onHandoffCompleted = vi.fn();
+    renderControls({ onHandoffCompleted });
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    await waitFor(() => expect(onHandoffCompleted).toHaveBeenCalledTimes(1));
+    // Sem tela de "resposta não chegou" e sem retry de escrita.
+    expect(screen.queryByText(/A resposta não chegou/i)).not.toBeInTheDocument();
+    expect(handoffPosts(calls)).toHaveLength(1);
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
   });
 });

@@ -1,10 +1,10 @@
 # MES — Troca guiada de OP no cockpit (E2: finalização inteligente)
 
-> Estado: **implementado — evidência pronta para revisão**.
+> Estado: **implementado — rework da revisão aplicado (PR #109)**.
 > TASK_ID: PC-MES-GUIDED-HANDOFF-E2. Escopo: somente `plugins/public-hub`
 > (cockpit do operador). Nenhuma linha de backend foi alterada — os
 > contratos da E1 são consumidos como publicados.
-> BASE_HEAD: `0da1467b3` (main já contém a E1 + rework, merge `46771ac4`).
+> BASE_HEAD: `74289c849` (main já contém a E1 + rework, merge `46771ac4`).
 
 ## 1. Resumo executivo
 
@@ -52,15 +52,41 @@ Encerrar (único botão)
 ## 4. Idempotência e resultado incerto (E2.RQ-05/06)
 
 - `runHandoff.ts` concentra a política: um `requestId` UUID por intenção
-  confirmada (`crypto.randomUUID()` → `getRandomValues` → v4 com
-  `Math.random` para tablets HTTP — sempre UUID válido para o contrato).
+  confirmada, gerado **somente por Web Crypto** (`crypto.randomUUID()` →
+  `getRandomValues` em contexto inseguro/tablet HTTP). **Não há fallback
+  `Math.random`**: sem fonte criptográfica o requestId é `null`, a
+  confirmação é bloqueada e a UI mostra mensagem recuperável — nenhum POST
+  sai com chave previsível.
+- A intenção pendente é registrada em `pendingHandoffIntents`
+  (**module-level**, `runHandoff.ts`) **antes** do POST. Ela sobrevive a
+  fechar a tela e a remount ao navegar card ↔ detalhe: reabrir a
+  finalização restaura a tela de retry com o mesmo requestId. Só é
+  removida em resposta definitiva (sucesso ou erro estruturado).
+- Enquanto o resultado é desconhecido (`uncertain`), **Stop, nova troca e
+  qualquer escrita contraditória ficam bloqueados** — a única escrita
+  permitida é reenviar a mesma intenção (mesmo requestId, mesmo payload).
+  `confirmNext` valida isso internamente, não só pelo `disabled`.
 - Assinatura da intenção = `expectedNext`. Resultado incerto
   (rede/timeout/502/503) preserva a MESMA chave — «Tentar novamente»
   repete o mesmo POST e o replay idempotente devolve o resultado gravado.
   Prévia nova + escolha explícita = nova intenção (nova chave).
 - Duplo clique é bloqueado por `submitInFlightRef` — um POST por intenção.
-- Fechar em estado incerto reconcilia o estado autoritativo em vez de
-  assumir sucesso ou falha.
+- Fechar em estado incerto reconcilia o estado autoritativo e **preserva**
+  a intenção para o próximo open; nunca assume sucesso ou falha.
+
+### Falha do Stop tradicional
+
+`useProductionRun.stop()` retorna `Promise<boolean>` (consumidores que
+ignoram o retorno continuam iguais). O sheet só fecha após Stop
+confirmado; em falha permanece aberto, exibe a falha e a ação continua
+recuperável.
+
+### Reconciliação pós-sucesso
+
+POST confirmado = mutação concluída. Se a releitura posterior falhar
+(`onReconcile`/`reload`), o resultado é preservado, o aviso vira
+«atualização pendente» com botão **Atualizar** (read-only) — nunca vira
+estado incerto e nunca repete a escrita.
 
 ## 5. Códigos 409 (E2.RQ-07)
 
@@ -90,7 +116,7 @@ de sessão vigente.
 | `ProductionRunControls.tsx` | Encerrar abre a sheet; Stop e classificação preservados |
 | `CockpitPage.tsx`, `OperationDetailPage.tsx` | `onHandoffCompleted` — reconcilia fila/card/detalhe e navega |
 | `cockpit.css` | `pcp-pub-finish*` sobre o sistema de modal vigente |
-| `runHandoff.test.tsx`, `ProductionRunHandoff.test.tsx` | política pura + 13 testes de interação |
+| `runHandoff.test.tsx`, `ProductionRunHandoff.test.tsx` | política pura + 19 testes de interação (incl. regressões do rework) |
 
 ## 7. Acessibilidade e responsividade
 
@@ -101,9 +127,9 @@ estreitas via media query existente; temas via variáveis `pcp-pub`.
 
 ## 8. Verificação
 
-- `vitest` (`npx vitest run` no pacote): 85/85 — 13 novos de interação
-  (`ProductionRunHandoff.test.tsx`) + 18 de política pura
-  (`runHandoff.test.tsx`), zero regressão nos 54 existentes.
+- `vitest` (`npx vitest run` no pacote): **94/94** — 19 de interação
+  (`ProductionRunHandoff.test.tsx`, incl. 6 regressões do rework) + 21 de
+  política pura (`runHandoff.test.tsx`), zero regressão nos demais.
 - `npx vite build` (mesmo comando do Dockerfile de produção): OK.
   `tsc -b` local não roda sem `npm install` nos plugins irmãos —
   limitação de ambiente; o gate oficial de imagem é o vite build.

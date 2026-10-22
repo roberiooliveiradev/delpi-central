@@ -113,6 +113,7 @@ export function ProductionRunControls({
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
+  const [stopError, setStopError] = useState<string | null>(null);
   const [reasonModalRequested, setReasonModalRequested] = useState(false);
   const [dismissedPromptId, setDismissedPromptId] = useState<string | null>(null);
   const [downtimeClockForId, setDowntimeClockForId] = useState<string | null>(null);
@@ -582,9 +583,19 @@ export function ProductionRunControls({
         run={runForHandoff}
         countedLabel={formatQty(toOperatorUnit(counted))}
         busy={busy}
+        stopError={stopError}
         onStop={async () => {
-          await stop();
-          handoff.close();
+          // Só fecha a decisão com o Stop CONFIRMADO pelo backend; em
+          // falha o modal permanece aberto e a ação continua recuperável.
+          setStopError(null);
+          const stopped = await stop();
+          if (stopped) {
+            handoff.close();
+          } else {
+            setStopError(
+              "Não foi possível encerrar a produção. Tente novamente.",
+            );
+          }
         }}
         onRequestClassify={() => {
           // E1 bloqueou com pending_classification: sai da finalização,

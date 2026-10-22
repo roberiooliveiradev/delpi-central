@@ -16,6 +16,8 @@ type Props = {
   countedLabel: string;
   /** busy do useProductionRun — Stop em voo desabilita as opções. */
   busy: boolean;
+  /** Falha do último Stop tradicional — ação continua recuperável. */
+  stopError?: string | null;
   /** Opção A: encerramento tradicional — executa o stop() vigente. */
   onStop: () => Promise<void>;
   /** Código pending_classification: abre o fluxo de classificação existente. */
@@ -33,6 +35,7 @@ export function FinishProductionSheet({
   run,
   countedLabel,
   busy,
+  stopError = null,
   onStop,
   onRequestClassify,
 }: Props) {
@@ -44,6 +47,7 @@ export function FinishProductionSheet({
     previewError,
     previewing,
     submitting,
+    uncertain,
     conflict,
     notice,
     uncertainMessage,
@@ -62,13 +66,21 @@ export function FinishProductionSheet({
   const next = preview?.nextOperation ?? null;
   const nextBlocked = preview != null && !preview.available;
   const blockMessage = nextBlocked ? preview.block?.message ?? null : null;
+  // Troca travada também por conflito impeditivo do último POST e por
+  // resultado incerto — a única escrita válida nesse estado é o retry
+  // do mesmo requestId (confirmNext valida internamente além do atributo).
   const nextDisabled =
     busy ||
     submitting ||
+    uncertain ||
     previewing ||
     Boolean(previewError) ||
+    Boolean(conflict?.blocksNext) ||
     next == null ||
     nextBlocked;
+  // Resultado incerto: nenhuma escrita contraditória (Stop, nova troca)
+  // pode sair antes da reconciliação segura.
+  const stopDisabled = busy || submitting || uncertain;
   const closingSafe = !submitting;
   const operationLabel = run
     ? `${run.productionOrder} · ${run.operationCode}`
@@ -120,7 +132,7 @@ export function FinishProductionSheet({
             type="button"
             className="pcp-pub-finish__option"
             onClick={() => void onStop()}
-            disabled={busy || submitting}
+            disabled={stopDisabled}
           >
             <span className="pcp-pub-finish__option-icon" aria-hidden="true">
               {busy ? <Loader2 size={20} className="pcp-pub-finish__spin" /> : <Square size={20} />}
@@ -171,6 +183,12 @@ export function FinishProductionSheet({
             </span>
           </button>
         </div>
+
+        {stopError ? (
+          <p className="pcp-pub__run-error" role="alert">
+            {stopError}
+          </p>
+        ) : null}
 
         {previewing ? null : previewError ? (
           <p className="pcp-pub__run-error" role="alert">

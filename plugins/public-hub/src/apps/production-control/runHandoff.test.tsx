@@ -1,16 +1,23 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "./api.ts";
 import {
+  clearPendingHandoffIntent,
   HANDOFF_ERROR_CODES,
   handoffConflictView,
   handoffIntentSignature,
   isUncertainHandoffError,
   newHandoffRequestId,
+  pendingHandoffIntentFor,
+  registerPendingHandoffIntent,
 } from "./runHandoff.ts";
 
 const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("newHandoffRequestId", () => {
   it("gera UUID v4 válido para o contrato da E1", () => {
@@ -20,9 +27,38 @@ describe("newHandoffRequestId", () => {
   it("gera chaves distintas por intenção", () => {
     const seen = new Set<string>();
     for (let index = 0; index < 50; index += 1) {
-      seen.add(newHandoffRequestId());
+      const id = newHandoffRequestId();
+      expect(id).not.toBeNull();
+      seen.add(id!);
     }
     expect(seen.size).toBe(50);
+  });
+
+  it("usa getRandomValues quando randomUUID não existe (tablet HTTP)", () => {
+    const source = { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) };
+    vi.stubGlobal("crypto", source);
+    expect(newHandoffRequestId()).toMatch(UUID_V4);
+  });
+
+  it("sem fonte criptográfica retorna null — nunca Math.random", () => {
+    vi.stubGlobal("crypto", {});
+    expect(newHandoffRequestId()).toBeNull();
+    vi.stubGlobal("crypto", undefined);
+    expect(newHandoffRequestId()).toBeNull();
+  });
+});
+
+describe("pendingHandoffIntents", () => {
+  it("intenção pendente sobrevive a fechar/remontar até resolução", () => {
+    const intent = {
+      requestId: "req-1",
+      expectedNext: { productionOrder: "OP1", operationCode: "05" },
+    };
+    registerPendingHandoffIntent("run-1", intent);
+    expect(pendingHandoffIntentFor("run-1")).toEqual(intent);
+    expect(pendingHandoffIntentFor("run-2")).toBeNull();
+    clearPendingHandoffIntent("run-1");
+    expect(pendingHandoffIntentFor("run-1")).toBeNull();
   });
 });
 

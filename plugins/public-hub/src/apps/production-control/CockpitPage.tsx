@@ -127,7 +127,13 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
   // E2: confirmação visual da troca guiada — fora do modal, sobrevive à
   // navegação para a nova OP.
-  const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
+  const [handoffNotice, setHandoffNotice] = useState<{
+    text: string;
+    productionOrder: string;
+    operationCode: string;
+    /** POST confirmado, mas a releitura falhou — oferece Atualizar. */
+    refreshPending: boolean;
+  } | null>(null);
   // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
@@ -345,28 +351,52 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   // E2: pós-troca guiada — fila e run são relidos do backend (autoridade
   // mesmo sem WebSocket, AC-10), o aviso sobrevive fora do modal e a
   // navegação segue a nova OP quando ela aparece na publicação vigente.
-  const handleHandoffCompleted = useCallback(
-    (result: RunHandoffResult) => {
-      const nextOrder = result.newRun.productionOrder;
-      const nextCode = result.newRun.operationCode;
-      setHandoffNotice(
-        "OP anterior encerrada. Nova OP " + nextOrder + " · " + nextCode + " iniciada.",
-      );
-      void (async () => {
-        const fresh = await reload(workCenterRef.current, { quiet: true });
-        const stillThere = (fresh?.selected.items ?? []).some(
-          (item) =>
-            item.production_order === nextOrder &&
-            item.operation_code === nextCode,
+  // Readback pós-troca: falha aqui NÃO significa falha da mutação (o
+  // POST já foi confirmado) — marca refreshPending e oferece uma
+  // atualização read-only, nunca repete a escrita.
+  const refreshAfterHandoff = useCallback(
+    async (order: string, code: string) => {
+      const fresh = await reload(workCenterRef.current, { quiet: true });
+      if (!fresh) {
+        setHandoffNotice((current) =>
+          current && current.productionOrder === order
+            ? { ...current, refreshPending: true }
+            : current,
         );
-        if (stillThere) openOperation(nextOrder, nextCode);
-      })();
+        return;
+      }
+      setHandoffNotice((current) =>
+        current && current.productionOrder === order
+          ? { ...current, refreshPending: false }
+          : current,
+      );
+      const stillThere = (fresh.selected.items ?? []).some(
+        (item) =>
+          item.production_order === order && item.operation_code === code,
+      );
+      if (stillThere) openOperation(order, code);
     },
     [reload, openOperation],
   );
 
+  const handleHandoffCompleted = useCallback(
+    (result: RunHandoffResult) => {
+      const nextOrder = result.newRun.productionOrder;
+      const nextCode = result.newRun.operationCode;
+      setHandoffNotice({
+        text:
+          "OP anterior encerrada. Nova OP " + nextOrder + " · " + nextCode + " iniciada.",
+        productionOrder: nextOrder,
+        operationCode: nextCode,
+        refreshPending: false,
+      });
+      void refreshAfterHandoff(nextOrder, nextCode);
+    },
+    [refreshAfterHandoff],
+  );
+
   useEffect(() => {
-    if (!handoffNotice) return;
+    if (!handoffNotice || handoffNotice.refreshPending) return;
     const timer = window.setTimeout(() => setHandoffNotice(null), 9000);
     return () => window.clearTimeout(timer);
   }, [handoffNotice]);
@@ -512,7 +542,21 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         />
         {handoffNotice ? (
           <p className="pcp-pub__handoff-notice" role="status">
-            {handoffNotice}
+            {handoffNotice.text}
+            {handoffNotice.refreshPending ? (
+              <button
+                type="button"
+                className="pcp-pub__handoff-notice-refresh"
+                onClick={() =>
+                  void refreshAfterHandoff(
+                    handoffNotice.productionOrder,
+                    handoffNotice.operationCode,
+                  )
+                }
+              >
+                Atualizar
+              </button>
+            ) : null}
           </p>
         ) : null}
         {downtimeModal}
@@ -575,7 +619,21 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         {error ? <p className="pcp-pub__error">{error}</p> : null}
         {handoffNotice ? (
           <p className="pcp-pub__handoff-notice" role="status">
-            {handoffNotice}
+            {handoffNotice.text}
+            {handoffNotice.refreshPending ? (
+              <button
+                type="button"
+                className="pcp-pub__handoff-notice-refresh"
+                onClick={() =>
+                  void refreshAfterHandoff(
+                    handoffNotice.productionOrder,
+                    handoffNotice.operationCode,
+                  )
+                }
+              >
+                Atualizar
+              </button>
+            ) : null}
           </p>
         ) : null}
 
