@@ -17125,6 +17125,26 @@ C3_EXECUTED=UNRELATED
 NEXT=COORDINATION_REVIEW
 ```
 
+
+## §6.369 — Conversation Queue: runtime inventory + contract v1 proposal (2026-10-22)
+
+**TASK:** DELIA-C3-CONVERSATION-QUEUE-RUNTIME-INVENTORY-AND-CONTRACT-01 (DOCUMENTATION_FIRST, zero runtime change). Full interaction flow traced at `151b7f5e32`: `POST /interaction/turns` (`interfaces/http/interaction_routes.py`) → syntactic validation → live `delia.access` AuthZ → `HandleInteractiveConversationTurn` → ephemeral `InteractionSession`/`InteractionTurn` (uuid4 per POST) → InvokeModel → `InteractiveTurnResult` (+ ActivityEvent.v1 NDJSON opt-in). **Proven gaps:** NO persistent `conversation_id` (session created per request); NO queue mechanism (NDJSON `queue.Queue` explicitly "NOT an execution queue"; Core schedulers are housekeeping, wrong domain); NO persistence in delia-api; NO turn idempotency; concurrency = client-serialized only (epoch+AbortController). **Reusable:** `PendingWriteStore` pattern (process-local bounded store, RLock, TTL, digest single-use) as precedent for pending-orchestration state; ActivityEvent.v1 as status channel; existing turns route for admission/execution binding. **Contract `conversation.queue.v1` proposed:** admission-authority + client-driven drain (backend enforces HEAD-eligible item only — serializes N tabs server-side without any worker/scheduler); 4 ops + additive `queue_item_ref` on the existing turns contract; canonical prop mapping to F03-A `ConversationQueue`. **3 ADRs:** conversation identity issuer, queue state durability (process-local vs shared store), backend drain explicitly out of scope (C5 gate). Doc: [121](../121-conversation-queue-runtime-inventory-and-contract-v1.md).
+
+```text
+RUNTIME_INVENTORY=EXECUTED
+QUEUE_MECHANISM=NONE_PROVEN
+CONVERSATION_IDENTITY=ABSENT_PROVEN
+CONTRACT_V1=PROPOSED
+REUSE_DECISION=EXTEND(interaction context + pending-write pattern)
+ADR_REQUIRED=ADR-1(conv-identity)+ADR-2(state-durability)
+RUNTIME_CHANGED=NO
+DEPLOYMENT=NOT_APPLICABLE
+EXECUTION_DRIFT=NONE
+I04_ACCEPTED=NO
+C3_EXECUTED=UNCHANGED
+NEXT=ARCHITECTURE_DECISION
+```
+
 **2026-10-22 — CRI activation + count consistency + owner selection (report 86):** `DELIA-C3-CRI-ACTIVATION-COUNT-CONSISTENCY-AND-OWNER-SELECTION-01`. **A:** CRI dev persistent via `infra/.env` flag → compose → root_composer typed boolean; `requested=cri effective=cri` after restarts, resources v2/v3 loaded, no new flag, `PRODUCTION_ACTIVATION=NOT_AUTHORIZED`. **B:** count inconsistency "Encontrei 40 … de 32" fixed at the canonical presentation edge — truncation notice now binds `delivered_count` (distinct-delivered, same figure as the lead) instead of the scan-capped `len(records)`; trigger `presented < delivered_count`; live TÉO response now "Exibindo 5 de 40". **C:** owner-selection drift not reproduced — flagged V4 was a generic owner-less question; 8/8 unseen probes select the correct group (VISTA/TÉO/DAVI); generic catalog questions legitimately reach DAVI's published DELPI-wide discovery; no code change. Tests: 64 E3 + related suites PASS, pagination suites PASS. Report: [86](../corrections/mcp-contextual-intelligence-orchestration/86-cri-activation-count-consistency-and-owner-selection.md).
 
 ```text
