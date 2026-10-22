@@ -524,3 +524,11 @@ todos:
 - O próximo agente conseguiria executar sem redescobrir decisão material?
 
 Se qualquer resposta material for negativa, a etapa ainda não está READY_TO_EXECUTE.
+
+---
+
+## Nota de coordenação (2026-10-22) — SHARED-INTEGRATIONS-01 / X4.P0
+
+X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundary backend/runtime**, com BrasilAPI ativa, S1/S2, decisões e draft-only exercitados em produção. Evidência e decisão: [X3-E2E-CLOSURE-AND-X4-UI-READINESS](../shared-integrations/X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md). Residuais LGPD/ROPA e skips de teste permanecem visíveis. Escrita Protheus continua OFF.
+
+**X4.P0 AUTORIZADO SOMENTE PARA INVENTÁRIO, CONTRATO DE UI E RECONCILIAÇÃO DA FILA.** O status histórico E10/WF-15 `INCONCLUSIVE` acima não foi revalidado por esta atualização; E13/WF-09 e E14/WF-10 não são promovidas automaticamente. A implementação da interface exige P0 aceito + evidência atual do gate da página em foco + autorização explícita da etapa. Não modificar manifest, RBAC, MFE ou deploy no P0.
