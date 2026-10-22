@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 import { BarChart3, Eye, MoreVertical, RefreshCw, Search, User } from "lucide-react";
 import {
+  confirmRunHandoff,
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
+  isAuthError,
   stopProductionRun,
   type MachineLoadOperation,
   type MachineLoadWorkCenter,
@@ -11,7 +13,12 @@ import {
   type PublicMachineLoadPayload,
   type RunHandoffResult,
 } from "./api.ts";
-import { pendingHandoffIntentFor } from "./runHandoff.ts";
+import {
+  clearPendingHandoffIntent,
+  handoffConflictView,
+  isUncertainHandoffError,
+  pendingHandoffIntentFor,
+} from "./runHandoff.ts";
 import {
   BrandBar,
   CopyValueButton,
@@ -187,7 +194,12 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           return { status: "superseded" as const };
         }
         setPayload(next);
-        setCounterRun(activeRunResult.run);
+        // Falha HTTP na leitura do run não apaga o último estado
+        // conhecido — só uma leitura válida (incl. ausência legítima)
+        // substitui o que estava na tela.
+        setCounterRun((prev) =>
+          activeRunResult.failed ? prev : activeRunResult.run,
+        );
         setUpdatedAt(new Date());
         setError(null);
         return {
@@ -407,7 +419,10 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
         productionOrder: nextOrder,
         operationCode: nextCode,
         newRunId: result.newRun.id,
-        refreshPending: false,
+        // A mutação já commitou, mas a tela só sai de "aguardando
+        // atualização" quando uma leitura autoritativa coerente com
+        // newRun for observada (reload explícito, poll ou WebSocket).
+        refreshPending: true,
       });
       void refreshAfterHandoff(nextOrder, result.newRun.id);
     },
@@ -1327,12 +1342,60 @@ function OrphanRunCard({
   token: string;
   onStopped: () => void;
 }) {
-  const { session } = useOperatorSession();
+  const { session, invalidate } = useOperatorSession();
   const [busy, setBusy] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resolveNote, setResolveNote] = useState<string | null>(null);
   // Intenção de troca com resultado desconhecido para ESTE run bloqueia
   // o Stop órfão — nenhuma escrita contraditória antes da resolução.
-  const handoffPending = pendingHandoffIntentFor(run.id) != null;
+  // A intenção persistida (mesmo requestId/contexto) é o caminho de
+  // recuperação: o POST é idempotente e o replay devolve o resultado
+  // gravado — nunca um Stop novo como fallback.
+  const handoffIntent = pendingHandoffIntentFor(run.id);
+  const handoffPending = handoffIntent != null;
+
+  const resolvePendingHandoff = async () => {
+    if (!handoffIntent || resolving) return;
+    if (!session?.sessionToken) {
+      setError("Identifique-se no posto para resolver a troca pendente.");
+      return;
+    }
+    setResolving(true);
+    setError(null);
+    setResolveNote(null);
+    try {
+      await confirmRunHandoff(token, session.sessionToken, run.id, {
+        requestId: handoffIntent.requestId,
+        branch: handoffIntent.branch,
+        workCenter: handoffIntent.workCenter,
+        expectedNext: handoffIntent.expectedNext,
+      });
+      clearPendingHandoffIntent(run.id);
+      setResolveNote("Troca resolvida. Atualizando a situação atual…");
+      onStopped();
+    } catch (err) {
+      if (isAuthError(err)) invalidate();
+      if (isUncertainHandoffError(err)) {
+        setResolveNote(
+          "A resposta ainda não chegou — a tentativa segue preservada; tente novamente.",
+        );
+      } else {
+        const view = handoffConflictView(
+          (err as { code?: string }).code,
+          (err as { message?: string }).message,
+        );
+        clearPendingHandoffIntent(run.id);
+        setError(view.message);
+        setResolveNote(
+          "A tentativa anterior foi descartada pelo servidor. Atualizando a situação atual…",
+        );
+        onStopped();
+      }
+    } finally {
+      setResolving(false);
+    }
+  };
 
   const stop = async () => {
     if (handoffPending) return;
@@ -1380,9 +1443,10 @@ function OrphanRunCard({
         {handoffPending ? (
           <p className="pcp-pub__run-note">
             Há uma troca de OP com confirmação pendente para esta produção.
-            Aguarde a resolução antes de encerrar.
+            Resolva a tentativa original antes de encerrar.
           </p>
         ) : null}
+        {resolveNote ? <p className="pcp-pub__run-note">{resolveNote}</p> : null}
         {error ? <p className="pcp-pub__run-error">{error}</p> : null}
         <div className="pcp-pub__run-actions">
           <button
@@ -1393,6 +1457,16 @@ function OrphanRunCard({
           >
             {busy ? "Encerrando…" : "Encerrar produção"}
           </button>
+          {handoffPending ? (
+            <button
+              type="button"
+              className="pcp-pub__btn"
+              onClick={() => void resolvePendingHandoff()}
+              disabled={resolving || busy}
+            >
+              {resolving ? "Verificando…" : "Verificar troca pendente"}
+            </button>
+          ) : null}
         </div>
       </article>
     </section>

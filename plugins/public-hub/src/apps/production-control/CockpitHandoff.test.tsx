@@ -9,7 +9,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MachineLoadOperation } from "./api.ts";
 import { OperatorCockpit } from "./CockpitPage.tsx";
-import { clearPendingHandoffIntent } from "./runHandoff.ts";
+import {
+  clearPendingHandoffIntent,
+  registerPendingHandoffIntent,
+} from "./runHandoff.ts";
 
 const OPERATION = {
   work_center: "CT-63",
@@ -425,5 +428,134 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
         screen.queryByRole("button", { name: /Atualizar/i }),
       ).not.toBeInTheDocument(),
     );
+  });
+
+  it("reload vencedor do WebSocket com GET do run falho mantém pendência e o run conhecido", async () => {
+    // POST confirmado → readback automático preso → reload do WebSocket
+    // vence a geração mas FALHA o GET do run ativo → nenhuma leitura
+    // coerente com newRun foi observada. O aviso deve permanecer
+    // pendente (Atualizar read-only) e o último run conhecido NÃO pode
+    // ser apagado pela falha HTTP. Nenhum POST extra de handoff sai.
+    const activeRun: unknown = RUN;
+    let failRunRead = false;
+    let holdMachineLoad = false;
+    const stuckMachineLoad = deferred<Response>();
+    const handoffGate = deferred<Response>();
+    const calls = stubCockpitFetch({
+      activeRun: () => (failRunRead ? failEnvelope("falha", 500) : activeRun),
+      machineLoad: () =>
+        holdMachineLoad
+          ? stuckMachineLoad.promise
+          : okEnvelope(machineLoadPayload([OPERATION, NEXT_ITEM])),
+      handoff: () => handoffGate.promise,
+    });
+    await mountCockpit();
+    await runHandoffToCompletion();
+
+    // Confirma o POST com o readback automático já preso na fila.
+    holdMachineLoad = true;
+    failRunRead = true;
+    handoffGate.resolve(okEnvelope(HANDOFF_RESULT));
+    await waitFor(() => expect(handoffPosts(calls)).toHaveLength(1));
+
+    // WebSocket dispara o reload vencedor — GET do run falha nele.
+    holdMachineLoad = false;
+    const socket = FakeWebSocket.instances[0];
+    expect(socket).toBeDefined();
+    socket!.emit({ type: "machine_load_updated", reason: "sequence" });
+    // A resposta superada do readback automático chega depois — neutra.
+    stuckMachineLoad.resolve(okEnvelope(machineLoadPayload([OPERATION, NEXT_ITEM])));
+
+    // Pendência permanece até leitura autoritativa coerente; o run A
+    // continua na tela (Encerrar ainda existe — não foi apagado).
+    await screen.findByRole("button", { name: /Atualizar/i });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /^Encerrar$/i }),
+      ).toBeInTheDocument(),
+    );
+    expect(detailVisible()).toBe(false);
+    expect(handoffPosts(calls)).toHaveLength(1);
+  });
+
+  it("run órfão com troca incerta resolve pela intenção persistida (mesmo requestId)", async () => {
+    // Handoff de A ficou sem resposta e o PCP removeu A da fila. O card
+    // órfão oferece recuperação pela intenção persistida: mesmo
+    // requestId/contexto no POST idempotente — nunca um Stop fallback.
+    registerPendingHandoffIntent("run-a-1", {
+      requestId: "req-fixed-1",
+      branch: "02",
+      workCenter: "CT-63",
+      expectedNext: { productionOrder: "24640401003", operationCode: "05" },
+    });
+    let activeRun: unknown = RUN;
+    const calls = stubCockpitFetch({
+      activeRun: () => activeRun,
+      machineLoad: () => okEnvelope(machineLoadPayload([NEXT_ITEM])),
+    });
+    window.localStorage.setItem("delpi.pcp.cockpit.work-center.02", "CT-63");
+    window.sessionStorage.setItem(
+      "delpi.pcp.cockpit.bench-session.02.CT-63",
+      JSON.stringify(SESSION),
+    );
+    // Fila sem a OP do run → OrphanRunCard (o counterRun chega via
+    // reload disparado pelo evento WebSocket).
+    render(
+      <OperatorCockpit
+        token="tok-1"
+        branch="02"
+        initial={machineLoadPayload([NEXT_ITEM])}
+      />,
+    );
+    const socket = FakeWebSocket.instances[0];
+    expect(socket).toBeDefined();
+    await waitFor(() => expect(socket!.onmessage).toBeTruthy());
+    socket!.emit({ type: "machine_load_updated", reason: "sequence" });
+
+    // Stop bloqueado enquanto a intenção não resolve; recuperação existe.
+    const stopButton = await screen.findByRole("button", {
+      name: /Encerrar produção/i,
+    });
+    expect(stopButton).toBeDisabled();
+    const verify = await screen.findByRole("button", {
+      name: /Verificar troca pendente/i,
+    });
+
+    // Estado autoritativo pós-handoff: o servidor já trocou para B.
+    activeRun = RUN_B;
+    fireEvent.click(verify);
+
+    await waitFor(() => expect(handoffPosts(calls)).toHaveLength(1));
+    const body = JSON.parse(
+      String(handoffPosts(calls)[0].init?.body ?? "{}"),
+    ) as Record<string, unknown>;
+    expect(body.requestId).toBe("req-fixed-1");
+    expect(body.expectedNext).toEqual({
+      productionOrder: "24640401003",
+      operationCode: "05",
+    });
+    expect(body.branch).toBe("02");
+    expect(body.workCenter).toBe("CT-63");
+
+    // Resolvido: o aviso de troca pendente some e a situação autoritativa
+    // (run B na fila) volta a oferecer as ações válidas.
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /Verificar troca pendente/i }),
+      ).not.toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /^Encerrar$/i }),
+      ).toBeEnabled(),
+    );
+    // Nenhum Stop foi enviado como fallback.
+    expect(
+      calls.filter(
+        (call) =>
+          (call.init?.method ?? "GET") === "POST" &&
+          call.url.endsWith("/stop"),
+      ),
+    ).toHaveLength(0);
   });
 });
