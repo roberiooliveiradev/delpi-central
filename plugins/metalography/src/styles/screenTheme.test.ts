@@ -23,6 +23,9 @@ describe("tokens de tema do metalografia", () => {
     expect(referenceCss).toContain("--navy:#0b3a5d");
     expect(referenceCss).toContain(".sheet{width:210mm;height:297mm");
     expect(referenceCss).toContain("@page{size:A4 portrait;margin:0}");
+    expect(referenceCss).toContain(".sec-heading .sub{font-size:7.2pt");
+    const print = referenceCss.slice(referenceCss.indexOf("@media print{"));
+    expect(print).toContain(".sec-heading .sub{display:none!important}");
     expect(referenceCss).not.toContain("data-theme");
     expect(referenceCss).not.toContain("--mg-");
   });

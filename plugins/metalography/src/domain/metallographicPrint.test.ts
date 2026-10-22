@@ -71,6 +71,21 @@ describe("metallographic print isolation", () => {
     expect(html).not.toContain("upload-row");
   });
 
+  it("mantém as orientações no HTML da folha e a impressão as oculta por CSS", () => {
+    const { sheet } = hostWithSheet();
+    sheet.insertAdjacentHTML(
+      "beforeend",
+      `<div class="sec-heading"><span class="sec-number">01</span><h2>Identificação da amostra</h2><p class="sub">Preencha os dados do terminal, cabo e processo avaliados.</p></div>`,
+    );
+    const html = buildMetallographicPrintHtml(
+      serializeMetallographicSheet(sheet),
+      `.dashboard-metalography .sec-heading .sub{font-size:7.2pt}@media print{.dashboard-metalography .sec-heading .sub{display:none!important}}`,
+    );
+    expect(html).toContain("Preencha os dados do terminal, cabo e processo avaliados.");
+    expect(html).toContain("Identificação da amostra");
+    expect(html).toContain(".sec-heading .sub{display:none!important}");
+  });
+
   it("não copia um controle que está fora da folha", () => {
     const { host, sheet } = hostWithSheet();
     const outside = document.createElement("input");

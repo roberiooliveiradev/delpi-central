@@ -649,6 +649,19 @@ def test_pdf_export_keeps_snapshot_and_sections(tmp_path: Path) -> None:
         1,
     )
     assert "IDENTIFICA" in text
+    assert "TRANSVERSAL" in text
+    assert "RESULTADOS" in text
+    assert "CONCLUS" in text
+    assert "RESPONS" in text
+    for phrase in (
+        "Preencha os dados do terminal",
+        "Registre a micrografia original",
+        "Registre o critério aplicável",
+        "Selecione o resultado final",
+    ):
+        assert phrase not in text
+        assert phrase.encode("utf-8") not in exported["content"]
+        assert phrase.encode("latin1", errors="ignore") not in exported["content"]
     assert "CH" in text
     assert "RASCUNHO" not in text
     assert b"RASCUNHO" not in exported["content"]
