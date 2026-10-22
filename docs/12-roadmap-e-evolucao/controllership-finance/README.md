@@ -261,3 +261,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - checklist de entregaveis por aba (22/10/2026)
 
 [Doc 59 - Tres abas e crosswalk P2/P5/P6](./59-ciclo1-checklist-abas-e-entregaveis-sanitizado.md): resumo sanitizado da referencia operacional de envio; abas Eletronico (arquivos/relatorios digitais), Fisico (documentacao comprobatória) e Planilha1 (taxonomia auxiliar de consumo/despesas). Legenda verde `Enviar` significa exigencia de envio no escopo da coluna, **nao** prova de submissao/aceite. Somente matriz e filial da empresa de componentes no escopo vigente; antiga empresa industrial e contexto legado. O [doc 57 §8](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md) registra as correcoes e o vinculo com os fluxos existentes. `CHECKLIST_PURPOSE=PO_CONFIRMED`; `CATALOG_MAPPING=TO_INVENTORY`; `RUNTIME=NOT_AUTHORIZED`. Nenhuma informacao fiscal, financeira, identificador individual ou documento original foi versionado.
+
+
+### Ciclo 1 - rotinas fiscais e contabeis TOTVS
+
+[Doc 60 - Inventario sanitizado de rotinas e privilegios](./60-ciclo1-rotinas-contabeis-fiscais-totvs.md): duas abas, 14 rotinas fiscais e 7 contabeis. Codigos candidatos MATR460, MATR989, MATR910, DLP204, FINR150/FINR130/FINR190, EDAPP, cadastros e configuracoes fiscais. Lista de privilegios da planilha NAO e grant efetivo nem autorizacao para writes. Paridade ERP e contratos de API `TO_INVENTORY/TEST_NOT_RUN`; nenhum dado transacional ou documento privado versionado.
