@@ -100,3 +100,12 @@ Ativação: `docker compose -p infra -f infra/docker-compose.dev.yml -f infra/do
 - este documento (status + resultado), README da trilha, execution ledger.
 
 `EVALUATED_SHA=974b15c940fabf33d850a14483a51483c3d88590` — configuração avaliada = overlay acima sobre o serviço ollama de `infra/docker-compose.dev.yml`; ambientes: dev WSL2, Docker 29.7.2 nativo, driver 610.60, Ollama 0.40.8, `qwen2.5:3b` Q4_K_M.
+
+
+## Parecer de coordenação — 2026-10-22
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (DEV LOCAL).** Documento 97 no HEAD e relatório do executor revisados. Evidência reportada: o overlay opt-in expõe GPU NVIDIA WSL2 ao Ollama existente, sem runtime paralelo; `ollama ps` indicou 100% GPU durante inferência, VRAM ~2.64 GiB e redescoberta após restart. Medições CPU/GPU mantiveram modelo e orçamento: geração 16.6→47.4 tokens/s (mediana), cold load 41.0→20.5s, PROCESSING_TIMEOUT em 3/8→0/8 turnos na amostra; backend 1972 passed/3 skipped. Estas medições foram executadas pelo Cursor e não reexecutadas independentemente nesta revisão (`INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`). Egress externo de LLM reportado zero; produção intocada.
+
+**Resíduos:** quatro `invalid_structured_output` na avaliação wire GPU; amostra insuficiente para inferência estatística de performance geral; WSL instável sob saturação; modelo 7b testado com offload parcial e rejeitado neste hardware. GPU melhora latência, mas não prova generalização semântica. `GPU_LOCAL_ACCELERATION=ACCEPT_WITH_RESIDUAL`; `PRODUCTION_LLM_CONFIG=UNCHANGED`.
+
+**Próximo passo aprovado:** iniciar Etapa 6 usando o Prompt 6 revisado e o [documento 99](./99-stage-6-budget-separation-architecture-review-plan.md), com segregação de métricas e revisão de budgets por responsabilidade. Não modificar limites 2/60/30 nem ativar retry produtivo sem decisão arquitetural e gate de revogação; preservar investigação de UX/contexto/timeout e resultados reais pós-deploy. `I04_ACCEPTED=NO` salvo decisão canônica posterior.
