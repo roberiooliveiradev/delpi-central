@@ -47,7 +47,7 @@ Gate de revogação de credencial delegada intra-turno permanece OPEN (doc 94). 
 **Roadmap:** 1 Ollama → 2 R4 → 3 CRI prod → 4 contexto DAVI → 5 painel Contexto → 5.1 GPU local → **6 homologação integrada + decisão de budgets separados**. `I04_ACCEPTED` e avanço de fase só pelo processo canônico.
 
 ---
-## Resultado da execução — Etapa 6 (SHA avaliado a registrar no commit)
+## Resultado da execução — Etapa 6 (SHA avaliado: f250d778e84943a9fc555548869324eb2b73113b)
 
 ### Matriz de homologação 1–5.1
 
