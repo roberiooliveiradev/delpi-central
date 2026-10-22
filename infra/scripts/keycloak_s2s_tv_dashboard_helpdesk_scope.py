@@ -187,7 +187,7 @@ def _bridge_if_unresolved(apply_mode: bool) -> int | None:
         "sys.argv.append('--apply' if os.environ.get('KC_APPLY')=='1' else '--check')\n"
         "src=sys.stdin.read()\n"
         "exec(compile(src,'keycloak_s2s_tv_dashboard_helpdesk_scope.py','exec'),"
-        "{'__name__':'__main__'})\n"
+        "{'__name__':'__main__','__file__':'/tmp/keycloak_s2s_tv_dashboard_helpdesk_scope.py'})\n"
     )
     source = Path(__file__).read_text(encoding="utf-8")
     proc = subprocess.run(
