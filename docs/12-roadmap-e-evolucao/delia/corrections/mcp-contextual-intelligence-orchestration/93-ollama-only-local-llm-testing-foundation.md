@@ -138,3 +138,16 @@ NEXT=COORDINATION_REVIEW
 - `REAL_MCP_EVALUATION` permanece dependente de credencial delegada dev (`DEV_PORTAL_*` ausente) — herdado do CP5, não agravado por esta task.
 - Aderência JSON do answer-stage em modelos ≤3B CPU-only é o principal limitador medido; mitigações futuras possíveis (GPU pass-through, `response_format` json_schema, modelo maior) exigem decisão separada.
 - `TEST_NOT_RUN` legítimo quando Ollama estiver indisponível — nunca migração paga.
+
+
+## Revisão de coordenação — 2026-10-22
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL**, escopo: infraestrutura e política Ollama-only **para testes locais**. Código/config/relatório 93 publicados no SHA `5dc10a44c2d40381694f682efeed26a591dd5bc1` foram inspecionados documentalmente; testes de runtime relatados pelo executor, **não** reexecutados independentemente nesta revisão. O reuso do `OpenAICompatibleModelInvocationAdapter` e do serviço Ollama do compose respeita o limite de não reutilizar runtime/serviços do Chat. Produção não alterada segundo diff/relatório.
+
+**Aceite:** política fail-closed local e remoção de fallbacks pagos nos scripts; Ollama `qwen2.5:3b` selecionado como modelo técnico de teste por evidência, não como prova de equivalência semântica ao LLM produtivo; `1.5b` rejeitado por resposta factual fabricada; testes determinísticos preservados. `EXTERNAL_MODEL_CALLS=0` e regressão ~1190 são **executor-reported**; `INDEPENDENT_RUNTIME_REEXECUTION=TEST_NOT_RUN`.
+
+**Resíduos importantes:** `qwen2.5:3b` CPU-only não satisfaz de modo confiável o contrato completo de output JSON e deadlines (multi-turn 1/5, ~40% answer non-JSON, admission timeout). Consequentemente, classificar `LOCAL_SEMANTIC_GENERALIZATION=INCONCLUSIVE` e `OLLAMA_INTEGRATION_TRANSPORT=PASS_EXECUTOR_REPORTED`, sem confundir falha do modelo pequeno com falha de arquitetura ou declarar homologação de seleção/CRI. Se testes futuros dependerem de avaliação semântica sólida, caracterizar hardware/GPU pass-through e selecionar modelo local compatível por medição **sem alterar os gates LLM nem usar API paga**. Não aumentar deadlines nem adicionar heurísticas/branches por causa do modelo pequeno.
+
+**Egress gate:** host allowlist/config + bloqueio de socket são defesas válidas no escopo de testes; não declarar política universal de firewall do host ou ausência absoluta de caminhos de rede não instrumentados. Manter verificação explícita de endpoint/config para cada harness novo. Nunca rodar testes marcados como `production` com credencial de usuário produtivo só para contornar o gate de desenvolvimento.
+
+**Próximo passo:** executar R4 MCP real autenticado em ambiente dev com identidade delegada legítima, **usando somente Ollama** para os estágios LLM. Falta de credencial → `TEST_NOT_RUN` e dependência formal, nunca PASS. Em paralelo, investigação separada de CRI prod, contexto DAVI e painel Contexto permanece aberta. `OLLAMA_LOCAL_POLICY=ACCEPT_WITH_RESIDUAL`; `R4_AUTHENTICATED_MCP=PENDING`; `PRODUCTION_LLM_CONFIG=UNCHANGED`; `I04_ACCEPTED=NO`.
