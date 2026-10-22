@@ -35,7 +35,12 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
   {
     term: "Fornecedor",
     meaning:
-      "Empresa do pedido de compra. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",
+      "Empresa do pedido de compra. Nas listas aparece com avatar de iniciais. A ficha cadastral abre pela lista Fornecedores (clique na linha).",
+  },
+  {
+    term: "Enriquecimento cadastral",
+    meaning:
+      "Comparação da ficha do fornecedor com dados públicos do CNPJ (BrasilAPI, fonte externa). O resultado é uma revisão com sugestões por campo: aceitar/rejeitar é decisão sua e «Preparar atualização» gera somente um rascunho — nada é gravado no Protheus.",
   },
   {
     term: "Solicitante",

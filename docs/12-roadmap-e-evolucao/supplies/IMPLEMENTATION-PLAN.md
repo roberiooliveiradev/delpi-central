@@ -5,6 +5,7 @@
 > **Entregue adicional:** E9 / WF-07 — **GATE-FEATURE WF-07 = PASS** após recovery redeploy ([evidência](./evidence/e9-wf07-federated-runtime-gate.md)).
 > **Em foco:** **E10 / WF-15 Controle de Estoques** — **IN PROGRESS** · S1–S3 PASS · **E10.S4 INCONCLUSIVE** (Help+BFF local PASS; federated deploy pending).
 > **Próxima receita:** deploy federado MFE supplies → re-smoke → GATE E10 — **não iniciar E11**.
+> **Reconciliação 2026-10-22:** **E13 / WF-09** e **E14 / WF-10** entregues fora de ordem sob a autorização de frente prioritária `FORNECEDORES-RETOMADA-IMPLEMENTACAO-2026-10-20.md` (lista, ficha, inclusão e edição com gates; E2E backend/runtime ACCEPT em `X3-RUNTIME-EVIDENCE-20261022.md`). E10 permanece inalterado e não foi promovido. X4 é incremento de E14 — não página nova.
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização automática.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -53,7 +54,7 @@ Invariantes:
 | RQ-10 | Estoque | BLOQUEADO pela fila — E10 |
 | RQ-11 | ESTSEG | BLOQUEADO pela fila — E11 |
 | RQ-12 | Análise de Consumo | BLOQUEADO pela fila — E12 |
-| RQ-13 | Fornecedores / Supplier 360 / OTD | BLOQUEADO pela fila; P-11 limita Qualidade |
+| RQ-13 | Fornecedores / Supplier 360 / OTD | PARCIAL — lista E13 + ficha E14 entregues (frente prioritária, reconciliado 2026-10-22); OTD fornecedor = E15 na fila; P-11 limita Qualidade |
 | RQ-14 | Produtos / Product 360 / where-used / preços | BLOQUEADO pela fila |
 | RQ-15 | Savings/Negociações | BLOQUEADO pela fila |
 | RQ-16 | Indicadores como página distinta | BLOQUEADO até revalidar necessidade/escopo ao promover |
@@ -283,13 +284,13 @@ Página própria, read-only neste roadmap.
 
 Página própria ou satélite somente se a promoção provar que é extensão inseparável do WF-16; não assumir herança sem evidência.
 
-## E13 — WF-09 Fornecedores
+## E13 — WF-09 Fornecedores — IMPLEMENTADA (frente prioritária)
 
-Busca/lista. Se busca SA2/contrato fornecedor não estiver comprovada, manter `BLOCKED_WITH_EVIDENCE`.
+`/apps/supplies/suppliers` real: lista paginada server-side, busca `query`, filtros `state`/`blocked`, URL/F5, estados loading/empty/error/403/404. Owner `features/suppliers/SuppliersPage.tsx`. AuthZ `supplies.access` efetiva via Core; BFF-only. Entregue sob `FORNECEDORES-RETOMADA-IMPLEMENTACAO-2026-10-20.md` — reconciliado 2026-10-22.
 
-## E14 — WF-10 Fornecedor 360
+## E14 — WF-10 Fornecedor 360 — IMPLEMENTADA (frente prioritária; incrementos X4)
 
-Composição TOTVS + PG. **Qualidade fica fora do P0 enquanto P-11 não estiver resolvido**; não usar “quando autorizada” como receita ambígua. Notas, quando existirem, seguem `supplies.access` + escopo de dados + ownership, sem permission CRUD preventiva. AuthZ de páginas futuras permanece `supplies.access`, sem permission própria.
+`/apps/supplies/suppliers/{code}/{store}` real: ficha por seções (`SUPPLIER_FIELD_REGISTRY`), inclusão POST e edição PUT restrita com diff/confirm, outcome ACK≠persistência, assistente de CEP. Composição TOTVS + PG. **Qualidade permanece fora enquanto P-11 não estiver resolvido.** AuthZ `supplies.access`, sem permission própria. X4 = seção `#enrichment` (comparação SA2×BrasilAPI → revisão S2 → decisões → prepare-update draft-only), contrato em `X4-P0-SUPPLIER-ENRICHMENT-UX-INVENTORY-CONTRACT-FREEZE-20261022.md`. **X4.S1 IMPLEMENTADO (2026-10-22):** módulo `features/suppliers/enrichment/` — consulta explícita, comparação 16 campos, decisões individual/bulk idempotentes, histórico paginado por ator e rascunho draft-only; sem rota nova, sem permission nova, sem escrita ERP. Evidência: `X4-S1-SUPPLIER-ENRICHMENT-UI-IMPLEMENTATION-20261022.md`.
 
 ## E15 — WF-11 OTD Fornecedores
 
@@ -532,3 +533,5 @@ Se qualquer resposta material for negativa, a etapa ainda não está READY_TO_EX
 X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundary backend/runtime**, com BrasilAPI ativa, S1/S2, decisões e draft-only exercitados em produção. Evidência e decisão: [X3-E2E-CLOSURE-AND-X4-UI-READINESS](../shared-integrations/X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md). Residuais LGPD/ROPA e skips de teste permanecem visíveis. Escrita Protheus continua OFF.
 
 **X4.P0 AUTORIZADO SOMENTE PARA INVENTÁRIO, CONTRATO DE UI E RECONCILIAÇÃO DA FILA.** O status histórico E10/WF-15 `INCONCLUSIVE` acima não foi revalidado por esta atualização; E13/WF-09 e E14/WF-10 não são promovidas automaticamente. A implementação da interface exige P0 aceito + evidência atual do gate da página em foco + autorização explícita da etapa. Não modificar manifest, RBAC, MFE ou deploy no P0.
+
+**X4.S1 EXECUTADO (2026-10-22, autorização «PORTAL SUPRIMENTOS — X4.S1»):** E14 comprovada implementada + contrato X4.P0 aceito → incremento de enriquecimento materializado como seção `#enrichment` dentro da ficha existente (`EnrichmentSection` + `enrichment/` module), sem rota/manifest/permission novos e com write gate OFF respeitado (prepare-update = draft-only). Smoke federado pendente — tratado como `INCONCLUSIVE` até evidência visual no Portal. Relatório completo: `X4-S1-SUPPLIER-ENRICHMENT-UI-IMPLEMENTATION-20261022.md`.

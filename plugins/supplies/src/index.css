@@ -1412,3 +1412,77 @@
   font-size: 0.76rem;
   color: var(--sp-text-muted);
 }
+
+/* Enriquecimento cadastral (X4) — layout local; chrome/tokens do kit */
+
+.dashboard-supplies-portal .sp-enrichment {
+  scroll-margin-top: 72px;
+}
+
+.dashboard-supplies-portal .sp-enrichment__source-note {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-enrichment__meta {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-enrichment__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.dashboard-supplies-portal .sp-enrichment__bulk {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--sp-border, #d0d5dd);
+  border-radius: 8px;
+  background: var(--sp-surface-elevated, transparent);
+}
+
+.dashboard-supplies-portal .sp-enrichment__status {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-supplies-portal .sp-enrichment__eligibility {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-enrichment__row-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.dashboard-supplies-portal .sp-enrichment__check {
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-enrichment__draft-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-enrichment__draft-table th,
+.dashboard-supplies-portal .sp-enrichment__draft-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--sp-border, #d0d5dd);
+}
+
+.dashboard-supplies-portal .sp-enrichment__history {
+  display: grid;
+  gap: 8px;
+}
