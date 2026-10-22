@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **F4.4 — correção de status documental (2026-10-21):** a planilha **Campos Obrigatorios.xlsx** de Gabriel, com **18 mapeamentos Minha DELPI ↔ SA2**, **já foi recebida**. Não classificar "receber relação" como pendência. O principal residual do CREATE é `tax_id → A2_CGC`: campo enviado no outbound, mas não gravado no teste `003874/01` da `DELPI_TST01`. Contrato de obrigatoriedade condicional ainda requer homologação. Ver [matriz REST→SA2](../../../api-delpi/docs/integrations/protheus-rest-supplier-post-field-matrix.md) e [handoff atualizado](../../../api-delpi/docs/integrations/protheus-rest-supplier-write-handoff.md). **Manter REST de testes `:8701`; não mudar para REST produtivo.**

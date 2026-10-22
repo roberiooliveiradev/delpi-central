@@ -57,3 +57,12 @@ Se as evidências não existirem, a entrega permanece com código e interface pr
 - `protheus-rest-read.md`
 - `docs/11-padroes-de-desenvolvimento/core-protheus-identity-ownership.md`
 - playbook SA2 §44.3
+
+
+## Retificação do handoff — lista de Gabriel recebida (2026-10-21)
+
+**A ação "solicitar/aguardar a matriz de campos POST" está concluída como entrega documental do owner.** Gabriel forneceu `Campos Obrigatorios.xlsx` com **18 pares Minha DELPI ↔ SA2**. Não pedir novamente a relação. Consultar [registro específico](./protheus-rest-supplier-gabriel-response-2026-10-21.md) ou PR #102 enquanto não integrado. Essa evidência não substitui testes de obrigatoriedade contextual do Execauto.
+
+O bloqueio restante do CREATE é **integridade persistida**: tracking comprovou envio de `fornecedor.tax_id`; SQL `DELPI_TST01.SA2010.A2_CGC` permaneceu vazio em `003874/01`. O mapeamento oficial recebido confirma `tax_id → A2_CGC`, mas não comprova execução upstream. Corrigir a interpretação do contrato e acionar Gabriel pelo tratamento no boundary REST/MATA020, sem PUT de CNPJ, SQL direto ou POST de tentativa e erro.
+
+Gabriel informou o endpoint PROD `http://192.168.1.231:8061/restall` (**não homologado, não trocar**); continuar em REST `:8701` para `DELPI_TST01`. A API já retornou código na homologação e owner declarou código+loja implementados; shape conjunto segue sob verificação. `UPDATE→CONFIRMED` foi comprovado na F4.3; não reabrir seu defeito encerrado.
