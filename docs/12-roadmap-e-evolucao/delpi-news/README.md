@@ -1,8 +1,8 @@
 # DELPI News — fundação arquitetural
 
-> **Status:** Etapa 1 em fechamento (fundação, contratos conceituais e prova visual segura).  
-> **Não** é produto completo: coleta RSS, curadoria admin e API pública real ficam para etapas seguintes.  
-> **Fora de escopo permanente nesta linha:** app Android TV / APK / gestão de dispositivos (projeto suspenso). Exibição alvo = navegador HTTPS no Adeus Pendrive.
+> **Status:** Etapa 1 fechada (prova visual segura). **Etapa 2.S1:** inventário + proposta ADR —  
+> estado `ARCHITECTURE_DECISION_REQUIRED` (sem scaffold de API).  
+> **Fora de escopo permanente nesta linha:** app Android TV / APK / gestão de dispositivos (projeto suspenso).
 
 **Identificadores técnicos:** inglês (`delpi-news`, `rss_source`, `news_item`). Textos ao usuário: pt-BR.
 
@@ -61,16 +61,13 @@ Fontes RSS
 
 ### Decisão pendente — criação de `delpi-news-api`
 
-Antes de scaffold do serviço, a autoridade arquitetural deve decidir e registrar:
+Proposta formal para a autoridade competente:
 
-- owner e bounded context;
-- consumidores (admin MFE, public-hub, opcional TV);
-- persistência e migrations;
-- segurança (RBAC, token público opaco, SSRF na coleta);
-- coleta RSS / scheduler / cache;
-- operacionalização (compose, health, observabilidade).
+- **[`adr/ADR-001-delpi-news-api-ownership.md`](./adr/ADR-001-delpi-news-api-ownership.md)** — status **PROPOSTO** (não é aprovação)
+- Acompanhamento: [`STAGE-02.md`](./STAGE-02.md)
 
-Até essa decisão, `delpi-news-api` permanece **hipótese de ownership**, não fato aprovado.
+Até constar `STATUS: APPROVED` no ADR (com authority/data), `delpi-news-api` permanece hipótese.  
+**E2.S2+ estão bloqueadas.**
 
 ### Decisão travada — `external-data-api`
 
@@ -124,6 +121,7 @@ Até essa decisão, `delpi-news-api` permanece **hipótese de ownership**, não 
 | Este índice + ownership | `README.md` |
 | Contratos conceituais | [`CONTRACTS.md`](./CONTRACTS.md) |
 | Aceite / fechamento E1 | [`STAGE-01.md`](./STAGE-01.md) |
+| E2.S1 — decisão / inventário | [`STAGE-02.md`](./STAGE-02.md) · [`adr/ADR-001…`](./adr/ADR-001-delpi-news-api-ownership.md) |
 | Homologação Adeus | [`HOMOLOGACAO-ADEUS-PENDRIVE.md`](./HOMOLOGACAO-ADEUS-PENDRIVE.md) |
 | Prova visual (demo gated) | `plugins/public-hub/src/apps/delpi-news/` → `/p/delpi-news/board/demo` |
 
