@@ -51,3 +51,18 @@ class GlpiValidation(HelpdeskError):
 class GlpiFeatureDisabled(HelpdeskError):
     code = "glpi_feature_disabled"
     status_code = 503
+
+
+class InstitutionalReadDenied(HelpdeskError):
+    code = "institutional_read_denied"
+    status_code = 403
+
+
+class InstitutionalCredentialInvalid(HelpdeskError):
+    code = "institutional_credential_invalid"
+    status_code = 401
+
+
+class InstitutionalReaderUnavailable(HelpdeskError):
+    code = "institutional_reader_unavailable"
+    status_code = 503

@@ -1616,6 +1616,135 @@ class HttpxGlpiClient:
             return
         _raise_for_status(response, "DELETE", path)
 
+    def list_tickets_as_dashboard_reader(
+        self,
+        query,
+        *,
+        app_token: str,
+        user_token: str,
+        entity_ids: tuple[int, ...],
+        group_ids: tuple[int, ...],
+    ):
+        """Read ticket pages as the dedicated dashboard reader. No upload fallback."""
+        from helpdesk_app.domain.errors import InstitutionalReaderUnavailable
+        from helpdesk_app.domain.models import TicketListPage, TicketSummary
+        from helpdesk_app.infrastructure.glpi.dashboard_reader_mapping import (
+            map_dashboard_reader_page,
+        )
+
+        if not app_token or not user_token or not entity_ids:
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        session_token = self._legacy_init_session(app_token=app_token, user_token=user_token)
+        start = max(0, (int(query.page) - 1) * int(query.page_size))
+        end = start + int(query.page_size) - 1
+        response = None
+        try:
+            self._legacy_use_exact_entities(
+                session_token,
+                app_token=app_token,
+                entity_ids=entity_ids,
+            )
+            response = self._http.request(
+                "GET",
+                f"{self._base}/apirest.php/Ticket",
+                headers={
+                    "Accept": "application/json",
+                    "App-Token": app_token,
+                    "Session-Token": session_token,
+                },
+                params={"range": f"{start}-{end}", "expand_dropdowns": "true"},
+            )
+        except httpx.TimeoutException as exc:
+            raise GlpiUnavailable("GLPI indisponível.") from exc
+        finally:
+            self._legacy_kill_session(session_token, app_token=app_token)
+        if response is None:
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        logger.info(
+            "helpdesk_dashboard_reader glpi_status=%s logical_identity=minha-delpi-dashboard-reader",
+            getattr(response, "status_code", None),
+        )
+        if response.status_code not in {200, 206}:
+            _raise_for_status(response, "GET", "/apirest.php/Ticket")
+        payload = response.json() if response.content else []
+        items, has_more = map_dashboard_reader_page(
+            payload,
+            content_range=response.headers.get("Content-Range", ""),
+            entity_ids=entity_ids,
+            group_ids=group_ids,
+            page_size=int(query.page_size),
+        )
+        summaries = tuple(
+            TicketSummary(
+                id=item["id"],
+                title=item["title"],
+                status=item["status"],
+                category=item["category"],
+                urgency=item["urgency"],
+                updated_at=item["updated_at"],
+                created_at=item["created_at"],
+                status_id=item["status_id"],
+                solved_at=item["solved_at"],
+                closed_at=item["closed_at"],
+                sla_ttr=item["sla_ttr"],
+                sla_tto=item["sla_tto"],
+                entity=item["entity"],
+            )
+            for item in items
+        )
+        return TicketListPage(
+            items=summaries,
+            page=int(query.page),
+            page_size=int(query.page_size),
+            has_more=has_more,
+        )
+
+    def _legacy_use_exact_entities(
+        self,
+        session_token: str,
+        *,
+        app_token: str,
+        entity_ids: tuple[int, ...],
+    ) -> None:
+        """Select every profile entity without adding children.
+
+        Omitting ``entities_id`` is required: the GLPI 11 API casts a present
+        value with ``intval``, so ``"all"`` would become entity ``0``.
+        Non-recursive profile links keep a future child out of the session.
+        """
+        from helpdesk_app.domain.errors import InstitutionalReaderUnavailable
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "App-Token": app_token,
+            "Session-Token": session_token,
+        }
+        changed = self._http.request(
+            "POST",
+            f"{self._base}/apirest.php/changeActiveEntities",
+            headers=headers,
+            json={"is_recursive": False},
+        )
+        if changed.status_code not in {200, 204}:
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        session = self._http.request(
+            "GET",
+            f"{self._base}/apirest.php/getFullSession",
+            headers=headers,
+        )
+        if session.status_code != 200:
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        active = _session_entity_ids(session.json() if session.content else {})
+        allowed = set(entity_ids)
+        if active != allowed:
+            logger.info(
+                "helpdesk_dashboard_reader decision=unavailable reason=entity_scope active=%s allowed=%s",
+                ",".join(str(item) for item in sorted(active)),
+                ",".join(str(item) for item in sorted(allowed)),
+            )
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+
     def _legacy_init_session(self, *, app_token: str = "", user_token: str = "") -> str:
         """Open apirest session with App-Token + dedicated user_token (H12/H10/002A).
 
@@ -1902,6 +2031,19 @@ class HttpxGlpiClient:
             return response
         logger.info("glpi_unavailable method=%s path=%s", method, path)
         raise GlpiUnavailable("GLPI indisponível.") from last_error
+
+
+def _session_entity_ids(payload) -> set[int]:
+    session = payload.get("session") if isinstance(payload, dict) else None
+    raw = session.get("glpiactiveentities") if isinstance(session, dict) else None
+    values = raw.values() if isinstance(raw, dict) else raw if isinstance(raw, list) else []
+    found: set[int] = set()
+    for item in values:
+        if isinstance(item, int):
+            found.add(item)
+        elif isinstance(item, str) and item.isdigit():
+            found.add(int(item))
+    return found
 
 
 def _raise_for_status(response: httpx.Response, method: str, path: str) -> None:

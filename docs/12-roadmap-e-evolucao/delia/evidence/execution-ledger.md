@@ -17088,3 +17088,39 @@ PRODUCTION_ACTIVATION=NO
 I04_ACCEPTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.367 — C3 independent verification & residual remediation (2026-10-22)
+
+**TASK:** DELIA-C3-CONTEXTUAL-MCP-INDEPENDENT-VERIFICATION-AND-RESIDUAL-REMEDIATION-01 over published `a4711d6fa0` (byte-equivalent runtime confirmed). **R1 (OFF recovery):** legitimate cross-mode improvement preserved — trigger restricted to `MCP_PROTOCOL_ERROR`, no auth-error conversion, budget-honoring, no DISCOVERY self-recovery, writes unreachable by construction; focused suite runs CRI-off proving OFF semantics; `OFF_LIVE=TEST_NOT_RUN` (container-env flag, persistent dev CRI-ON required). **R2.F (real defect → fixed):** TÉO `capability_surface.entities` is a *list* of entity dicts and lost to write-side `entity_schemas` — digest now prefers canonical `capability_surface` collections and supports list-form collections via generic id keys; live T4 presents real `filterable_fields`. Other R2 negatives (injection, false authority, invented facts, credentials, large/malformed catalogs, directives-as-data) already bounded — no new code. **R3:** reactive recovery preserved — first-attempt validity shown on unseen cases (T6 agrupador filter, V5 list_playlists); proactive channel remains owner/architecture dependency (doc 83). **New residual:** E3 presenter count inconsistency "Encontrei 40" vs "5 de 32" (pre-existing). Tests: 16/16 focused + related suites PASS. Report: [85](../corrections/mcp-contextual-intelligence-orchestration/85-c3-independent-verification-and-residual-remediation.md).
+
+```text
+R1=LEGITIMATE_DELTA_PRESERVED
+R2_F=REPRODUCED_AND_FIXED
+R3=PATH_A_PRESERVED
+UNIT_TESTS=PASS(16)
+REAL_EVAL=GROUNDED(T4-T6,V4,V5,D5)+HONEST_MISS(D4)+PREPARE_ONLY(G6)
+CRI_DEV_ENABLED=YES
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+
+
+## §6.368 — F03-A: ConversationQueue visual compartilhado + integração DÉLIA (2026-10-22)
+
+**TASK:** DELIA-UX-F03A-CONVERSATION-QUEUE-FRONTEND-IMPLEMENTATION-01. Doc 71 §13 executed as bounded frontend slice: new shared `ConversationQueue` in `plugins/plugin-ui` (render-only; `items/expanded/loading/unavailable/error` + intent callbacks `onMoveUp/Down/Remove`; disabled controls when not admitted; IDs opaque; labels consumer-owned). Reuse: `IconButton`+`HelpTooltip`+kit tokens (`AlertQueue`/`TaskItemsTable` rejected as wrong semantics). Collapsed-by-default header (icon + honest count + truncated next preview + chevron); expanded bounded body (180px desktop / 110px narrow / 100px real Dock via `.global-delia-dock` override) with internal scroll; aria-expanded/controls, Enter/Space, focus-visible, reduced-motion, zero POST, no focus theft. CQ-V01: no items + no honest state → `null`, zero reserved space. DÉLIA composes it above `DeliaComposer`; **no backend queue contract exists** → production passes `items=[]` (surface invisible by design). QA fixture `?delia-demo-queue=pending|one|blocked|loading|error|unavailable` gated by canonical `isDemoAllowed()` — inert in production bundle (parity round proven). Minor pre-existing fix: `DeliaComposer.test.tsx` `resolveFn` init `null`→`undefined` (upstream typecheck breakage, narrowing→`never`). **Tests:** plugin-ui 2281/2281, delia 301/301 (incl. 11+10 new), typecheck PASS both, build PASS, federation verify PASS (`ConversationQueue` in expose Index). **Browser QA 77/77:** 60 fixture (fullpage expand/move/remove/collapse, keyboard, states, dark/zoom/reduced-motion, 320–420px) + 7 real Dock (cap 100px, scroll, composer) + 10 parity (param inert, empty surface, draft-recovery/mic regressions). Evidence: [conversation-queue-f03a](conversation-queue-f03a/conversation-queue-f03a-evidence.md).
+
+```text
+CONVERSATION_QUEUE_VISUAL=EXECUTED
+QUEUE_BACKEND_CONTRACT=TO_INVENTORY
+QUEUE_EXECUTION_ENABLED=NO
+PRODUCTION_EMPTY_BEHAVIOR=INVISIBLE (CQ-V01)
+QA_FIXTURE=GATED_DEMO_BUNDLE_ONLY
+VITEST=PASS (2281+301) / TYPECHECK=PASS / BUILD=PASS / FEDERATION=PASS
+PLAYWRIGHT=PASS_77_77
+PRODUCTION_BROWSER_QA=PENDING_USER_VERIFICATION
+EXECUTION_DRIFT=NONE
+I04_ACCEPTED=NO
+C3_EXECUTED=UNRELATED
+NEXT=COORDINATION_REVIEW
+```

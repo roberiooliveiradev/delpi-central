@@ -223,6 +223,16 @@
   margin: 0;
 }
 
+/* Doc 71 (F03-A) — ConversationQueue surface above the composer.
+   Compact margin and tighter expanded-body cap in the dock/narrow
+   surfaces so the composer is never displaced. */
+.dashboard-delia .delia-conversation-queue {
+  margin-block-end: 4px;
+}
+.global-delia-dock .dashboard-delia .delia-conversation-queue {
+  --delpi-ui-conversation-queue-max-height: 100px;
+}
+
 /* Doc 102 R1 — the transient draft-recovery undo affordance is a ghost
    icon in the existing composer toolbar: transparent at rest, subtle
    tonal hover, focus ring inherited from `.delpi-ui-icon-btn`. */

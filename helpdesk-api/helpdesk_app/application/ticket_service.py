@@ -306,6 +306,25 @@ class TicketService:
     def tickets(self, subject: str, query: TicketListQuery) -> TicketListPage:
         return self._glpi.list_tickets(self._token(subject), query)
 
+    def tickets_as_dashboard_reader(self, query: TicketListQuery) -> TicketListPage:
+        """Institutional summary page. Never falls back to the personal or upload token."""
+        from helpdesk_app.application.dashboard_reader_gate import (
+            load_dashboard_reader_config,
+            reader_is_ready,
+        )
+        from helpdesk_app.domain.errors import InstitutionalReaderUnavailable
+
+        config = load_dashboard_reader_config()
+        if not reader_is_ready(config):
+            raise InstitutionalReaderUnavailable("Leitura institucional do Helpdesk indisponível.")
+        return self._glpi.list_tickets_as_dashboard_reader(
+            query,
+            app_token=config.app_token,
+            user_token=config.user_token,
+            entity_ids=config.entity_ids,
+            group_ids=config.group_ids,
+        )
+
     def ticket(self, subject: str, ticket_id: int, viewer_email: str = "") -> TicketDetail:
         token = self._token(subject)
         detail = self._glpi.get_ticket(token, ticket_id, viewer_email=viewer_email)

@@ -271,3 +271,42 @@ Estado: `PAYABLE_OPEN_TITLES=OWNER_REPORTED_VIA_PO`; `RECEIVABLE_OPEN_TITLES=OWN
 A partir de 21:53, capturar **regra demonstrada** no Excel ou tela com operacao, filtros, sinais, colunas e totais; separar relato oral da formula reproduzivel. Nao criar nova pagina para cada relatorio. Confrontar inventario dos docs 46/54/55 e preservar divergencias explicitas. Sem decisao de arquitetura, contrato, owner ou runtime novo.
 
 **Resultado:** `AS_IS_EXTRACTION_SEQUENCE=DOCUMENTED_PARTIAL`; `P7_DUAL_LAYOUTS=OWNER_REPORTED_VIA_PO`; `KARDEX_PROGRAM=MATR910_PROVEN_SCREENSHOT`; `MATR989=PROVEN_SCREENSHOT`; `MATR320=PROVEN_ORIGINAL`; `FORMULAS_RECONCILIATION=INCONCLUSIVE`; `TARGET_CONSOLIDATED_PAGE=DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+
+## Registro 09 - Conferencia de inventario, Kardex armazens 01 e 99 (21:56-23:33)
+
+**Proveniencia:** explicacao guiada do PO nesta conversa, capturas da extracao Excel e da manipulacao das planilhas pela Joici. `PROVEN_SCREENSHOT` somente para campos, numeros e formula visiveis; `OWNER_REPORTED_VIA_PO` para interpretacao de negocio e encaminhamento; SQL `TEST_NOT_RUN`. Nao inferir total conciliado no ERP.
+
+### Sequencia operacional documentada
+1. Por volta de 21:56, Joici abre os dois arquivos exportados de `Kardex Fisico-Financeiro (DIA)`: armazem 01 (associado tambem ao CPV) e armazem 99 (inventario). Capturas mostram planilhas Excel com movimentos, coluna `DOCUMENTO NUMERO`, `ENTRADAS CUSTO`, `SAIDAS CUSTO` e outros campos.
+2. No arquivo de inventario, filtra `DOCUMENTO NUMERO = INVENT`. Repete a selecao no outro armazem e consolida registros filtrados dos dois em uma planilha de trabalho. Os headers impressos no Excel podem ser aliases do relatorio; nao presumir nomes fisicos das tabelas TOTVS.
+3. Joici soma os valores de custo das **entradas** e das **saidas** para os registros selecionados, sem confundir as colunas de quantidade com valor.
+4. No minuto ~23:13, a formula de planilha observada e `=F251-I251` (entradas menos saidas no layout de trabalho). Resultado negativo, interpretado como perda/prejuizo de inventario pela Joici.
+5. Por volta de 23:33, salva a planilha `99 inventarios` em compartilhamento da Controladoria para envio/consulta posterior pelo Financeiro/Controladoria. A imagem comprova o dialogo de salvamento, nao comprova posterior envio nem retencao.
+6. PO indica `SD3010` como tabela de origem citada na gravacao. Tratar como **`SOURCE_REPORTED / TO_VERIFY`**: confirmar owner Protheus, joins, campos de filial/local, identificador INVENT, natureza da movimentacao e custo pela fonte canonica; nao confundir com `SD3` geral ou nomes de coluna do Excel.
+
+### Valores reproduziveis no Excel observado (setembro/2026)
+| Medida | Valor mostrado na planilha |
+|---|---:|
+| Soma de entradas (custo) | 1.650.614,61 |
+| Soma de saidas (custo) | 1.707.796,41 |
+| Diferenca entradas - saidas | **-57.181,80** |
+
+Esses numeros e a formula sao `PROVEN_SCREENSHOT` **na planilha editada**. Nao provam independentemente que todas as linhas de ambos armazens estavam selecionadas, que a classificacao de perdas e contabilmente homologada, nem paridade com relatorio mensal/SQL. A frase perda/prejuizo e `OWNER_REPORTED_VIA_PO`; sinal negativo e aritmetica sao verificaveis.
+
+### Correspondencia com o que ja existe no Portal
+- R03 P7/SB9+SB1 apresenta fotografia historica operacional; nao fornece o universo de movimentos `INVENT` do Kardex, portanto **nao calcula a perda identificada aqui**.
+- R05 MATR320 resume categorias de entradas e saidas; nao substitui movimentos detalhados Kardex 01/99. Nao supor igualdade direta com -57.181,80.
+- Consulta consolidada de inventario seria `TARGET`: competencia, filial, armazem, evento INVENT, valor de entradas/saidas, diferenca, identificadores de origem, filtros e versao de extracao; detalhes de auditoria devem permitir rastrear linhas e sinais. Persistencia no Portal, contratos, owners e criterios de aprovacao sao **`DECISION_REQUIRED`**; nao implementar automaticamente.
+- A pasta compartilhada do Financeiro/Controladoria e evidencia de atividade humana, nao API nem autorizacao para ingerir arquivos sem contrato.
+
+### Verificacoes pendentes antes de automatizar
+1. Confrontar dados originais dos dois Kardex com filtros exatos e total de movimentos de cada armazem, evitando duplicacoes na juncao.
+2. Confirmar tabela/alias fisico `SD3010` com DAVI/owner `api-delpi` e mapear entradas, saidas, custo, sinais, competencia, filial, local, documento e tipo de movimento.
+3. Recalcular separadamente 01 e 99 e depois o conjunto, explicando -57.181,80 com precisao e regra de arredondamento.
+4. Confirmar se todo `INVENT` faz parte da perda e se existem classificacoes, ajustes ou excecoes antes da contabilizacao.
+5. Confirmar owner do resultado, regra de aceite, armazenamento e retencao da evidencia.
+
+**Resultado:** `INVENTORY_WORKFLOW=DOCUMENTED_PARTIAL`; `INVENT_FILTER=PROVEN_SCREENSHOT`; `EXCEL_FORMULA=PROVEN_SCREENSHOT`; `EXCEL_NET_LOSS=-57181.80_OBSERVED`; `SD3010_ORIGIN=SOURCE_REPORTED_TO_VERIFY`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_IMPLEMENTATION=TARGET_DECISION_REQUIRED`.
+
+**Proximo marcador da gravacao: 23:33**, aguardando a continuidade da narracao do PO.

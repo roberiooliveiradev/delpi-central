@@ -423,7 +423,7 @@ describe("DeliaComposer — voice dictation STT (VD-F03)", () => {
 
   it("cancel during transcribing aborts and preserves the prior draft", async () => {
     const onSubmit = vi.fn();
-    let resolveFn: ((r: { transcriptionId: string; text: string; language: string }) => void) | null = null;
+    let resolveFn: ((r: { transcriptionId: string; text: string; language: string }) => void) | undefined;
     const transcriber: DeliaDictationTranscriber = (_d, _s) =>
       new Promise((resolve) => {
         resolveFn = resolve;
