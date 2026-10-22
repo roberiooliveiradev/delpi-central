@@ -39,7 +39,7 @@ JSON de sucesso usa o envelope `api_delpi_success` (**HTTP 200**), com `meta.ope
 | `analyst.user_id` institucional | Coluna existe; o cliente não envia identidade. A API grava `user_id` nulo |
 | Registro das permissões no Core | Códigos declarados e cobrados na api-delpi. O Core recebe permissão de plugin pelo manifesto do MFE, que ficou fora desta entrega |
 | 429 por rota | Não há limitador canônico por rota na api-delpi; não foi criado um limitador só desta coleção |
-| Fidelidade visual ao HTML | HTML de referência em `docs/12-roadmap-e-evolucao/quality/reference/` (SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`). A folha do MFE coincidiu pixel a pixel nessa captura. O PDF usa a mesma composição em milímetros; a marca RASCUNHO continua só no rascunho |
+| Fidelidade visual ao HTML | HTML de referência em `docs/12-roadmap-e-evolucao/quality/reference/` (SHA-256 `13ba5eb7033afa616bf542ac6f7a6df5c67a0d318d2ea898caa4fb368220b820`). A folha do MFE coincidiu pixel a pixel nessa captura. O PDF usa a mesma composição em milímetros e não desenha marca d'água. O status continua `draft` |
 
 ## Persistência
 
@@ -55,7 +55,7 @@ Binário: `METALLOGRAPHIC_IMAGE_UPLOAD_DIR` (default `/app/data/metallographic-i
 
 `If-Match` é obrigatório em PATCH, DELETE e mutações de imagem. Ausência responde 428. Versão divergente responde 412. Replay da mesma chave e do mesmo conteúdo devolve o mesmo relatório. Chave reutilizada com outro conteúdo responde 409.
 
-A exportação PDF não altera versão, revisão, status nem conclusão. Rascunho sai com a marca “RASCUNHO”. A API não calcula conformidade.
+A exportação PDF não altera versão, revisão, status nem conclusão. O PDF não recebe a marca “RASCUNHO”. O status funcional permanece `draft`. A API não calcula conformidade.
 
 ## Escopo de autorização
 

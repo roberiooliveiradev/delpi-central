@@ -36,6 +36,17 @@ from app.infrastructure.pdf.metallographic.metallographic_report_pdf_renderer im
 )
 
 
+def _assert_a4(content: bytes) -> None:
+    import re
+
+    match = re.search(rb"/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)\s*\]", content)
+    assert match, "PDF sem MediaBox A4"
+    width = float(match.group(1))
+    height = float(match.group(2))
+    assert abs(width - 595.27) < 1
+    assert abs(height - 841.89) < 1
+
+
 def _png(color: tuple[int, int, int] = (20, 40, 80)) -> bytes:
     buffer = BytesIO()
     Image.new("RGB", (32, 24), color).save(buffer, format="PNG")
@@ -569,12 +580,32 @@ def test_pdf_export_keeps_snapshot_and_sections(tmp_path: Path) -> None:
     assert created["report_number"] in text
     assert "IDENTIFICA" in text
     assert "CH" in text
-    assert "RASCUNHO" in text
+    assert "RASCUNHO" not in text
+    assert b"RASCUNHO" not in exported["content"]
+    _assert_a4(exported["content"])
     assert "Conforme" in text
     after = service.get(created["id"])
     assert after["version"] == current["version"]
     assert after["revision"] == current["revision"]
+    assert after["status"] == "draft" == current["status"]
     assert any(item["operation"] == "export_pdf" for item in repository.audits)
+
+
+def test_pdf_omits_the_draft_mark_for_every_status(tmp_path: Path) -> None:
+    service, _repository = _service(tmp_path)
+    created = service.create(actor="user-1", idempotency_key="create-key-01", payload=_payload())
+    public = service.get(created["id"])
+    renderer = MetallographicReportPdfRenderer()
+    for status in ("draft", "approved", "published", ""):
+        content = renderer.render({**public, "status": status}, {})
+        assert content.startswith(b"%PDF")
+        assert b"RASCUNHO" not in content
+        _assert_a4(content)
+        text = content.decode("latin1", errors="ignore")
+        assert "AN" in text and "LISE" in text
+        assert "IDENTIFICA" in text
+        assert created["report_number"] in text
+    assert service.get(created["id"])["status"] == "draft"
 
 
 def test_pdf_marks_notes_that_exceed_the_sheet(tmp_path: Path) -> None:

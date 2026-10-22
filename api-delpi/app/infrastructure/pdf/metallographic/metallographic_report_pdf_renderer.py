@@ -2,8 +2,8 @@
 
 A página é desenhada nas mesmas coordenadas em milímetros do exportador do
 HTML de referência (folha 210×297, origem no canto superior esquerdo).
-A marca d'água RASCUNHO permanece apenas para status draft, conforme a
-política já vigente da API.
+O PDF não desenha marca d'água. O status draft continua sendo o estado
+funcional do relatório e não altera a página.
 """
 
 from __future__ import annotations
@@ -122,8 +122,6 @@ class MetallographicReportPdfRenderer:
             author="DELPI",
         )
         self._draw_page(drawing, report, images)
-        if report.get("status") == "draft":
-            self._draw_draft_mark(drawing)
         drawing.showPage()
         drawing.save()
         return buffer.getvalue()
@@ -273,15 +271,6 @@ class MetallographicReportPdfRenderer:
             return
         self._line(drawing, x + 0.7, y + 1.8, x + 1.4, y + 2.5, _CYAN, 1.2)
         self._line(drawing, x + 1.4, y + 2.5, x + 2.9, y + 0.7, _CYAN, 1.2)
-
-    def _draw_draft_mark(self, drawing: canvas.Canvas) -> None:
-        drawing.saveState()
-        drawing.setFillColor(Color(0.6, 0.1, 0.1, alpha=0.12))
-        drawing.setFont("Helvetica-Bold", 46)
-        drawing.translate(A4[0] / 2, _PAGE_H / 2)
-        drawing.rotate(32)
-        drawing.drawCentredString(0, 0, "RASCUNHO")
-        drawing.restoreState()
 
     def _card(self, drawing: canvas.Canvas, x: float, y: float, w: float, h: float, **style: Any) -> None:
         drawing.saveState()
