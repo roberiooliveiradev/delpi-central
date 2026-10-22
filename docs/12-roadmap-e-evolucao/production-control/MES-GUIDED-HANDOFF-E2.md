@@ -172,11 +172,11 @@ estreitas via media query existente; temas via variáveis `pcp-pub`.
 
 ## 8. Verificação
 
-- `vitest` (`npx vitest run src/apps/production-control`): **104/104** —
+- `vitest` (`npx vitest run src/apps/production-control`): **106/106** —
   24 de interação (`ProductionRunHandoff.test.tsx`, incl. regressões
-  RW-01…RW-09 do rework final), 4 de cockpit
+  RW-01…RW-09 do rework final), 6 de cockpit
   (`CockpitHandoff.test.tsx`: readback falho/incoerente/corrida
-  reload×WebSocket), 22 de política pura (`runHandoff.test.tsx`) e os
+  reload×WebSocket, reload vencedor do WS com GET do run falho mantendo a pendência e o run conhecido, e run órfão resolvendo a troca incerta pela intenção persistida com o mesmo requestId — as duas regressões residuais foram verificadas falhando antes e passando depois), 22 de política pura (`runHandoff.test.tsx`) e os
   demais arquivos sem regressão.
 - `npx vite build` (mesmo comando do Dockerfile de produção): **OK** —
   2141 módulos.
