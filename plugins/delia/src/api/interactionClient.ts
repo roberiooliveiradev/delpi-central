@@ -209,6 +209,118 @@ export type DeliaTurnCommand =
   | { type: "APPLY_PREPARED" }
   | { type: "REJECT_PREPARED" };
 
+/**
+ * One real model invocation observed during the turn (Prompt 5).
+ * Provider usage verbatim — absent fields mean the provider did not
+ * report them, never zero.
+ */
+export type DeliaModelCallObservation = {
+  stage: string | null;
+  attempt: number | null;
+  finish_status: string | null;
+  duration_ms: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+};
+
+/**
+ * Bounded presentation-only observability projection (Prompt 5).
+ * Effective composition (cri/deterministic/model), real model calls,
+ * honest usage aggregate and turn latency — never authority, never a
+ * second telemetry pipeline.
+ */
+export type DeliaTurnObservability = {
+  model: {
+    id: string | null;
+    version: string | null;
+    owner: string | null;
+  } | null;
+  response_mode: string | null;
+  composition_mode: string | null;
+  duration_ms: number | null;
+  governed_attempts: number | null;
+  model_calls: number;
+  calls: DeliaModelCallObservation[];
+  tokens: {
+    status: string | null;
+    input: number | null;
+    output: number | null;
+    total: number | null;
+  };
+  cost: { status: string | null };
+};
+
+const OBS_MAX_TEXT = 200;
+const OBS_MAX_CALLS = 32;
+
+function _obsText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  return text ? text.slice(0, OBS_MAX_TEXT) : null;
+}
+
+function _obsInt(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const n = Math.floor(value);
+  return n >= 0 ? n : null;
+}
+
+/** Allowlisted, bounded parse — unknown provider fields never pass. */
+function parseObservability(
+  value: unknown,
+): DeliaTurnObservability | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const modelRaw =
+    raw.model && typeof raw.model === "object"
+      ? (raw.model as Record<string, unknown>)
+      : null;
+  const tokensRaw =
+    raw.tokens && typeof raw.tokens === "object"
+      ? (raw.tokens as Record<string, unknown>)
+      : null;
+  const costRaw =
+    raw.cost && typeof raw.cost === "object"
+      ? (raw.cost as Record<string, unknown>)
+      : null;
+  const callsRaw = Array.isArray(raw.calls) ? raw.calls : [];
+  return {
+    model: modelRaw
+      ? {
+          id: _obsText(modelRaw.id),
+          version: _obsText(modelRaw.version),
+          owner: _obsText(modelRaw.owner),
+        }
+      : null,
+    response_mode: _obsText(raw.response_mode),
+    composition_mode: _obsText(raw.composition_mode),
+    duration_ms: _obsInt(raw.duration_ms),
+    governed_attempts: _obsInt(raw.governed_attempts),
+    model_calls: _obsInt(raw.model_calls) ?? callsRaw.length,
+    calls: callsRaw.slice(0, OBS_MAX_CALLS).map((call) => {
+      const c =
+        call && typeof call === "object"
+          ? (call as Record<string, unknown>)
+          : {};
+      return {
+        stage: _obsText(c.stage),
+        attempt: _obsInt(c.attempt),
+        finish_status: _obsText(c.finish_status),
+        duration_ms: _obsInt(c.duration_ms),
+        input_tokens: _obsInt(c.input_tokens),
+        output_tokens: _obsInt(c.output_tokens),
+      };
+    }),
+    tokens: {
+      status: _obsText(tokensRaw?.status),
+      input: _obsInt(tokensRaw?.input),
+      output: _obsInt(tokensRaw?.output),
+      total: _obsInt(tokensRaw?.total),
+    },
+    cost: { status: _obsText(costRaw?.status) },
+  };
+}
+
 export type DeliaInteractionResult = {
   session_id: string;
   user_turn_id: string;
@@ -221,6 +333,8 @@ export type DeliaInteractionResult = {
   grounding_status: "GROUNDED" | "NON_GROUNDED" | null;
   provenance: DeliaInteractionProvenance | null;
   confirmation_request: DeliaConfirmationRequest | null;
+  /** Additive observability projection — null for legacy payloads. */
+  observability: DeliaTurnObservability | null;
   /** Additive presentation projection — null for legacy/malformed/
    *  unknown-version payloads; never authority. v2 admitted only via
    *  parsePresentationV2 (explicit version + format). */
@@ -404,6 +518,7 @@ function parseInteractionResultPayload(
       grounding_status: null,
       provenance: null,
       confirmation_request: null,
+      observability: null,
       presentation: null,
       presentationFault: "neutral_error",
       contentFormat: "plain",
@@ -455,6 +570,7 @@ function parseInteractionResultPayload(
     confirmation_request: parseConfirmationRequest(
       payload.confirmation_request,
     ),
+    observability: parseObservability(payload.observability),
     presentation,
     presentationFault: null,
     contentFormat:

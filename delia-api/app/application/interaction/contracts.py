@@ -198,6 +198,14 @@ class InteractiveTurnResult:
     # interop boundary — never a URL, credential, or raw payload.
     message_kind: str | None = None
     owner_hint: str | None = None
+    # DELIA-UX-CONTEXT-PANEL-...-01 (Prompt 5): additive bounded
+    # presentation-only observability projection built by
+    # turn_observability.build_turn_observability — model identity,
+    # effective composition mode, per-call stage/duration/usage,
+    # governed attempts and total turn latency. Contains no payload,
+    # prompt, credential, or raw provider field and authorizes
+    # nothing. Absent for in-process callers that bind no ledger.
+    observability: Mapping[str, Any] | None = None
 
     def is_fact(self) -> bool:
         return False

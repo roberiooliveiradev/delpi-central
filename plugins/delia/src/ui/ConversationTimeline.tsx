@@ -8,8 +8,10 @@ import type {
 } from "@delpi/plugin-ui/index";
 
 import type {
+  DeliaActivityEvent,
   DeliaConfirmationRequest,
   DeliaInteractionProvenance,
+  DeliaTurnObservability,
 } from "../api/interactionClient";
 import type {
   DeliaPresentation,
@@ -45,6 +47,12 @@ export type ConversationDisplayTurn = {
   /** Explicit activity projection override — demo fixtures only;
    *  real turns derive it via `buildDeliaActivityView`. */
   activityView?: ActivityViewerProps;
+  /** Observed ActivityEvent.v1 events retained for this turn —
+   *  transient, request-scoped; the Context panel uses them for
+   *  per-step timestamps. Never persisted (Prompt 5). */
+  activityEvents?: readonly DeliaActivityEvent[];
+  /** Bounded presentation-only observability projection (Prompt 5). */
+  observability?: DeliaTurnObservability | null;
 };
 
 export type ConversationTimelineProps = {
@@ -52,6 +60,10 @@ export type ConversationTimelineProps = {
   loading: boolean;
   respondingTurnId?: string | null;
   onResponseMotionComplete?: () => void;
+  /** Selected assistant turn for the Context panel — transient
+   *  conversation state only, never persisted (Prompt 5). */
+  selectedTurnId?: string | null;
+  onSelectTurn?: (turnId: string) => void;
   /** Real user identity published by the platform — presentation only;
    *  absent → neutral person fallback. */
   userIdentity?: DeliaCurrentUserIdentity;
@@ -74,6 +86,8 @@ export function ConversationTimeline({
   loading,
   respondingTurnId,
   onResponseMotionComplete,
+  selectedTurnId,
+  onSelectTurn,
   userIdentity,
   onConfirmation,
 }: ConversationTimelineProps) {
@@ -91,6 +105,10 @@ export function ConversationTimeline({
               responding={turn.id === respondingTurnId}
               onResponseMotionComplete={onResponseMotionComplete}
               onConfirmation={onConfirmation}
+              selected={turn.id === selectedTurnId}
+              onSelect={
+                onSelectTurn ? () => onSelectTurn(turn.id) : undefined
+              }
             />
           ) : (
             <ConversationUserMessage

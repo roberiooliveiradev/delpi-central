@@ -100,6 +100,9 @@ from app.application.interaction.turn_budget import (
     TurnBudgetExhausted,
     TurnDeadline,
 )
+from app.application.interaction.turn_observability import (
+    current_call_ledger,
+)
 from app.application.model_invocation.errors import (
     TIMEOUT,
     ModelInvocationError,
@@ -4751,6 +4754,14 @@ def _cancel_observed() -> bool:
     return check is not None and bool(check())
 
 
+# Prompt 5: request-scoped governed-attempt index (1-based) so a real
+# model call can be honestly attributed to the attempt that ran it —
+# replayed checkpoint proposals never produce a ledger entry at all.
+_ATTEMPT_INDEX: contextvars.ContextVar[int] = contextvars.ContextVar(
+    "delia_governed_attempt_index", default=1
+)
+
+
 def _resume_stage_key(
     instruction_id: str,
     input_text: str,
@@ -5030,7 +5041,8 @@ class OperationalCapabilityOrchestrator:
             attempts = 0
             while True:
                 try:
-                    return self._attempt(
+                    _ATTEMPT_INDEX.set(attempts + 1)
+                    completed = self._attempt(
                         input_text,
                         correlation=correlation,
                         actor_user_id=actor_user_id,
@@ -5040,6 +5052,12 @@ class OperationalCapabilityOrchestrator:
                         prior_turns=prior_turns,
                         max_execution_stage=max_execution_stage,
                         deadline=deadline,
+                    )
+                    # Presentation-only accounting: how many governed
+                    # attempts this turn actually needed. Never
+                    # authority — resume stays deterministic.
+                    return dataclasses.replace(
+                        completed, governed_attempts=attempts + 1
                     )
                 except _StageDeadlineExceeded as exc:
                     reason = exc.reason
@@ -5070,6 +5088,7 @@ class OperationalCapabilityOrchestrator:
                         status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                         correlation_id=correlation,
                         error_code=reason,
+                        governed_attempts=attempts,
                     )
                 # A new bounded attempt on the SAME interaction: fresh
                 # deadline inside the monotonic budget; the checkpoint
@@ -6366,6 +6385,10 @@ class OperationalCapabilityOrchestrator:
             ),
             limitations=_synth_limitations,
             input_text=input_text,
+            # Prompt 5: the ONLY seam where the runtime knows whether
+            # the CRI composer actually produced this response — a
+            # startup flag is never proof of participation.
+            composition_mode="cri" if cri is not None else None,
         )
 
     # ---------------- bounded multi-step helpers ----------------
@@ -8745,6 +8768,7 @@ class OperationalCapabilityOrchestrator:
         limitations: tuple[str, ...] | None = None,
         extra_source_refs: tuple[SourceRef, ...] = (),
         input_text: str | None = None,
+        composition_mode: str | None = None,
     ) -> GovernedCapabilityAttempt:
         """Assemble a SUCCESS attempt from an owner outcome.
 
@@ -8752,6 +8776,9 @@ class OperationalCapabilityOrchestrator:
         sources (multi-source corroboration) after the primary ref —
         deduplicated, deterministic order. ``input_text`` enables
         goal-aligned deterministic rendering when synthesis demotes.
+        ``composition_mode`` carries the effective answer composition
+        observed at this seam (e.g. ``"cri"``) — presentation-only,
+        never authority.
         """
         binding = GovernedCapabilityBinding(
             binding_id=f"{group_key}.{remote_used}",
@@ -8774,12 +8801,17 @@ class OperationalCapabilityOrchestrator:
             return render_specialist_outcome(out, input_text=input_text)
 
         if content is None and not extra_source_refs:
-            return _success_attempt(
+            attempt = _success_attempt(
                 correlation_id=correlation,
                 binding=binding,
                 outcome=outcome,
                 render=_render,
             )
+            if composition_mode is not None:
+                attempt = dataclasses.replace(
+                    attempt, composition_mode=composition_mode
+                )
+            return attempt
         provenance = self._provenance(
             group_key, remote_used, action_id, group, outcome
         )
@@ -8814,6 +8846,7 @@ class OperationalCapabilityOrchestrator:
                 if limitations is not None
                 else outcome.limitations
             ),
+            composition_mode=composition_mode,
         )
 
     def _audit(
@@ -9258,6 +9291,20 @@ class OperationalCapabilityOrchestrator:
                 )
             )
         except ModelInvocationError as exc:
+            # Prompt 5: a REAL model call that failed or timed out —
+            # counted as a call; usage stays absent (never fabricated).
+            ledger = current_call_ledger()
+            if ledger is not None:
+                ledger.record_error(
+                    stage=instruction_id,
+                    finish_status=(
+                        "timeout" if exc.code == TIMEOUT else "error"
+                    ),
+                    attempt=_ATTEMPT_INDEX.get(),
+                    duration_ms=int(
+                        (time.monotonic() - started) * 1000
+                    ),
+                )
             _logger.info(
                 "orchestration stage=model_propose decision=error "
                 "purpose=%s error_code=%s timing_ms=%d "
@@ -9283,6 +9330,17 @@ class OperationalCapabilityOrchestrator:
             int((time.monotonic() - started) * 1000),
             correlation or "",
         )
+        # Prompt 5: a REAL model call completed — provider usage and
+        # measured duration were already carried by
+        # ModelInvocationResult; record them verbatim for the
+        # presentation-only observability projection.
+        ledger = current_call_ledger()
+        if ledger is not None:
+            ledger.record_result(
+                stage=instruction_id,
+                result=result,
+                attempt=_ATTEMPT_INDEX.get(),
+            )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
             return None

@@ -5,6 +5,7 @@ import { DELIA_ROOT_CLASS } from "./ui/deliaUi";
 import { DeliaReception } from "./ui/DeliaReception";
 import { DeliaComposer } from "./ui/DeliaComposer";
 import { DeliaConversationPage } from "./ui/DeliaConversationPage";
+import { DeliaTurnContextPanel } from "./ui/contextPanel";
 import { ConversationTimeline } from "./ui/ConversationTimeline";
 import type { ConversationDisplayTurn } from "./ui/ConversationTimeline";
 import {
@@ -201,6 +202,13 @@ export default function App({
     [liveEvents],
   );
   const [respondingTurnId, setRespondingTurnId] = useState<string | null>(null);
+  // Prompt 5: transient Context-panel message selection — ephemeral
+  // conversation state only, never persisted.
+  const [selectedTurnId, setSelectedTurnId] = useState<string | null>(null);
+  const selectedTurn = useMemo(
+    () => turns.find((turn) => turn.id === selectedTurnId) ?? null,
+    [turns, selectedTurnId],
+  );
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   /** Guards late completions (including transports ignoring abort) after STOP. */
@@ -417,8 +425,14 @@ export default function App({
           // The authoritative result reconciles the observed steps —
           // the live view carries only events that actually arrived.
           activityView: buildLiveActivityView(observed) ?? undefined,
+          // Prompt 5: retain the real observed events and the bounded
+          // observability projection for the Context panel — request-
+          // scoped, transient, never persisted.
+          activityEvents: observed,
+          observability: result.observability,
         },
       ]);
+      setSelectedTurnId(result.result_turn_id);
       setRespondingTurnId(
         result.presentation?.messageKind && result.presentation.messageKind !== "RESULT"
           ? null
@@ -646,7 +660,9 @@ export default function App({
   return (
     <div className={`${DELIA_ROOT_CLASS} dashboard-page dashboard-page--fill`}>
       <main className="delia-page-stack" aria-label="DÉLIA">
-        <DeliaConversationPage conversation={(panelControls) => (
+        <DeliaConversationPage
+          context={<DeliaTurnContextPanel turn={selectedTurn} />}
+          conversation={(panelControls) => (
         <ConversationWorkspace
           className="delia-interaction"
           aria-label="Interação com a DÉLIA"
@@ -800,6 +816,12 @@ export default function App({
               loading={loading}
               respondingTurnId={respondingTurnId}
               onResponseMotionComplete={() => setRespondingTurnId(null)}
+              selectedTurnId={selectedTurnId}
+              onSelectTurn={(turnId) =>
+                setSelectedTurnId((current) =>
+                  current === turnId ? null : turnId,
+                )
+              }
               userIdentity={userIdentity}
               onConfirmation={handleConfirmation}
             />

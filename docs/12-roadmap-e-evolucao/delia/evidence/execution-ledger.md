@@ -17398,3 +17398,23 @@ RESIDUALS=≤3B latency(doc93); T3 invoke class unproven;
 EXECUTOR_VERDICT=context channel closed at group selection;
     semantic named-source routing without aliases
 ```
+
+
+## §6.379 — Painel Contexto com dados reais + observabilidade de uso do modelo (2026-10-22)
+
+**2026-10-22 — `DELIA-UX-CONTEXT-PANEL-EVIDENCE-ACTIVITY-AND-LLM-USAGE-INTEGRATION-01` (Prompt 5/6):** inventário provou que `UsageMetadata`/`duration_ms` já saíam dos adapters e eram descartados no boundary — lacuna de propagação, não de instrumentação. Implementado ledger request-scoped bounded (`turn_observability.py`, `ContextVar`, máx 24 chamadas) registrando chamadas reais em `_model_stage_proposal` e `_invoke`; `composition_mode` efetivo (`cri|deterministic|model`) escapa o boundary; `observability` projetado aditivamente em `serialize_result`. Frontend: `App.tsx` retém eventos reais por turno, `moreActions` abre o painel, `contextPanel.tsx` render-only reusa `ConversationContextPanel`/`ActivityViewer`/`EvidenceDetails`. Gate canônico anti-vazamento proíbe `provider` no contrato → owner no lugar, status `reported|partial|unavailable`, custo sempre `unavailable` (sem tabela de preços). Live wire Ollama `qwen2.5:3b`: 4 chamadas/2 tentativas com latência real por estágio, timeouts contados sem usage fabricado, scan de substrings proibidas limpo. Backend suite verde; frontend 334 testes + tsc + build + federation OK. `BROWSER_QA=TEST_NOT_RUN`, `EXTERNAL_LLM_CALLS=0`, `PRODUCTION_CHANGED=NO`, `I04_ACCEPTED=NO`. Relatório: `98-context-panel-evidence-activity-usage-integration.md`.
+
+```text
+TASK_ID=DELIA-UX-CONTEXT-PANEL-EVIDENCE-ACTIVITY-AND-LLM-USAGE-INTEGRATION-01
+REUSE_DECISION=REUSE+EXTEND (no second telemetry infra)
+USAGE_GAP=propagation (adapter emitted, orchestrator discarded)
+OBSERVABILITY=additive key; ledger request-scoped bounded
+COMPOSITION_MODE=cri|deterministic|model (effective vs flag)
+PROVIDER_ON_WIRE=NO (leak gate); COST=unavailable never estimated
+LIVE_WIRE=4 calls/2 attempts real Ollama; timeouts honest
+REGRESSION=backend suite green; frontend 334 PASS; tsc clean
+BROWSER_QA=TEST_NOT_RUN EXTERNAL_LLM_CALLS=0
+PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
+```
+
+

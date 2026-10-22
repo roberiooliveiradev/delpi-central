@@ -15,9 +15,12 @@ import {
 /** Unified DÉLIA page: persistent category rail and governed, render-only panels. */
 export type DeliaConversationPageProps = {
   conversation: ReactNode | ((controls: ConversationPanelControls) => ReactNode);
+  /** Prompt 5: context-region content bound to the selected message —
+   *  falls back to the empty render-only panel shell. */
+  context?: ReactNode;
 };
 
-export function DeliaConversationPage({ conversation }: DeliaConversationPageProps) {
+export function DeliaConversationPage({ conversation, context }: DeliaConversationPageProps) {
   const [category, setCategory] = useState<NavigationRailCategory>("conversations");
   const title = category === "projects" ? "Projetos" : category === "agents" ? "Agentes" : category === "plugins" ? "Plugins" : "Conversas";
   return (
@@ -34,7 +37,7 @@ export function DeliaConversationPage({ conversation }: DeliaConversationPagePro
           : category === "plugins" ? <PluginNavigation status="contract_unavailable" />
           : <ConversationNavigation />}
       </NavigationCategoryPanel>}
-      right={<ConversationContextPanel />}
+      right={context ?? <ConversationContextPanel />}
       center={conversation}
     />
   );
