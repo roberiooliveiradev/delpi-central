@@ -283,6 +283,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Código de Ética | [Plugin README](../../plugins/codigo-etica/README.md) · [público `/p/codigo-etica/codigo/aberto`](../../plugins/public-hub/README.md) |
 | Mural de Acessos | [Plugin README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) · [público `/p/mural-acessos/menu/{token}`](../../plugins/public-hub/README.md) |
 | Etiquetas da Qualidade | [Plugin README](../../plugins/quality-labels/README.md) · [API](../../api-delpi/docs/api/quality-labels.md) · [Roadmap](../12-roadmap-e-evolucao/quality-labels/README.md) · [público `/p/quality-labels/inspection/{token}`](../../plugins/public-hub/README.md) |
+| DELPI News | [Fundação / contratos](../12-roadmap-e-evolucao/delpi-news/README.md) · [público `/p/delpi-news/board/aberto`](../../plugins/public-hub/README.md) (prova visual E1; API admin PLANNED) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 | Portal Suprimentos | [Plugin README](../../plugins/supplies/README.md) · [Roadmap](../12-roadmap-e-evolucao/supplies/README.md) |

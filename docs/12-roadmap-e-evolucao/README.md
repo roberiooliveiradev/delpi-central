@@ -206,6 +206,14 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [tv-dashboard/README.md](./tv-dashboard/README.md) | **Documentação da aplicação** — arquitetura, rotas, deploy, troubleshooting |
 | [tv-dashboard/PLAYBOOK-EXCELENCIA.md](./tv-dashboard/PLAYBOOK-EXCELENCIA.md) | Playbook de implementação — north star, ondas, critérios |
 
+### DELPI News
+
+| Arquivo | Conteúdo |
+|---|---|
+| [delpi-news/README.md](./delpi-news/README.md) | Fundação, ownership, inventário de reuso |
+| [delpi-news/CONTRACTS.md](./delpi-news/CONTRACTS.md) | Contratos conceituais (fontes RSS, notícias, board público) |
+| [delpi-news/STAGE-01.md](./delpi-news/STAGE-01.md) | Aceite da Etapa 1 (prova visual no public-hub) |
+
 ### Delpi Reports
 
 | Arquivo | Conteúdo |

@@ -292,6 +292,18 @@ O PCP copia o link pelo botão **Link do operador** na página Carga máquina do
 
 Ver `src/apps/production-control/` · doc: [plugins/production-control/README.md](../production-control/README.md).
 
+### DELPI News (`delpi-news`)
+
+Prova visual (Etapa 1) do board de notícias para TVs corporativas / Adeus Pendrive. Token estático `aberto`; dados de **fixture** (sem API ainda).
+
+| Página | Rota | `load` |
+|---|---|---|
+| Board kiosk | `/p/delpi-news/board/aberto` | fixture `mockFeed` (futuro: `GET /apps/delpi-news-api/public/boards/{token}`) |
+
+Chrome `kiosk`, autoavanço das manchetes, navegação por botões/teclado. Arquitetura e contratos: [docs/12-roadmap-e-evolucao/delpi-news/](../../docs/12-roadmap-e-evolucao/delpi-news/README.md).
+
+Ver `src/apps/delpi-news/`.
+
 ### Painéis TV (`tv-dashboard`)
 
 Apresentação rotativa em modo **kiosk** (sem logo DELPI):
