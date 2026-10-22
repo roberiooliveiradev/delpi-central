@@ -207,6 +207,66 @@ def test_comunicado_enrichment_frame_soft_bounds_reject_pathological():
     assert frame["y"] == ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MAX
 
 
+def test_comunicado_enrichment_preserves_thin_shape_dimensions():
+    """Largura e altura autoradas abaixo de 2% sobrevivem no payload da apresentação."""
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "vertical-separator",
+                    "type": "shape",
+                    "shape": "rectangle",
+                    "frame": {
+                        "x": 54.000000000000014,
+                        "y": 23,
+                        "w": 0.3020833333333333,
+                        "h": 47.5,
+                    },
+                },
+                {
+                    "id": "horizontal-separator",
+                    "type": "shape",
+                    "shape": "rectangle",
+                    "frame": {"x": 10, "y": 40, "w": 47.5, "h": 0.3},
+                },
+                {
+                    "id": "conventional",
+                    "type": "shape",
+                    "shape": "rectangle",
+                    "frame": {"x": 12, "y": 18, "w": 28, "h": 22},
+                },
+                {
+                    "id": "overflow",
+                    "type": "shape",
+                    "shape": "rectangle",
+                    "frame": {"x": -4, "y": 8, "w": 120, "h": 130},
+                },
+                {
+                    "id": "point",
+                    "type": "shape",
+                    "shape": "point",
+                    "frame": {"x": 50, "y": 50, "w": 0, "h": 0},
+                },
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    by_id = {block["id"]: block["frame"] for block in data["blocks"]}
+    assert by_id["vertical-separator"]["w"] == pytest.approx(0.3020833333333333)
+    assert by_id["vertical-separator"]["h"] == pytest.approx(47.5)
+    assert by_id["vertical-separator"]["x"] == pytest.approx(54.000000000000014)
+    assert by_id["horizontal-separator"]["h"] == pytest.approx(0.3)
+    assert by_id["horizontal-separator"]["w"] == pytest.approx(47.5)
+    assert by_id["conventional"]["w"] == pytest.approx(28)
+    assert by_id["conventional"]["h"] == pytest.approx(22)
+    assert by_id["overflow"]["w"] == pytest.approx(120)
+    assert by_id["overflow"]["h"] == pytest.approx(130)
+    assert by_id["point"]["w"] == 0
+    assert by_id["point"]["h"] == 0
+
+
 def test_comunicado_enrichment_resolves_media_url():
     asset_id = str(uuid4())
     playlist_id = str(uuid4())

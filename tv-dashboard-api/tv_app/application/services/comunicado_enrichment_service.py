@@ -443,11 +443,21 @@ class ComunicadoEnrichmentService:
             public_token=public_token,
         )
 
-    # Soft bound alinhado ao MFE (`FRAME_POSITION_SOFT_*` em frameDesignPixels.ts).
-    # Posição fora de 0–100 é válida (pasteboard / overhang) — clamar a 0–100
-    # «reconstruía» o layout na apresentação e quebrava paridade com o editor.
+    # Soft bound alinhado ao MFE (`FRAME_POSITION_SOFT_*` e
+    # `COMUNICADO_FRAME_MIN_SIZE_PCT` em frameDesignPixels.ts).
+    # Posição fora de 0–100 é válida (pasteboard / overhang). Tamanho não tem
+    # teto: um piso de 2% / 1% ou um teto de 100% reescrevia separadores finos
+    # e blocos maiores que o slide só no payload da apresentação.
     _FRAME_POSITION_SOFT_MIN = -500.0
     _FRAME_POSITION_SOFT_MAX = 500.0
+    _FRAME_SIZE_MIN_PCT = 1e-4
+
+    @staticmethod
+    def _normalize_frame_size(value: float) -> float:
+        # w=h=0 é a sentinela de shape ponto. O MFE não promove esse zero.
+        if value == 0:
+            return 0.0
+        return max(ComunicadoEnrichmentService._FRAME_SIZE_MIN_PCT, value)
 
     @staticmethod
     def _normalize_frame(frame: Any) -> dict[str, float]:
@@ -462,9 +472,10 @@ class ComunicadoEnrichmentService:
 
         soft_min = ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MIN
         soft_max = ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MAX
+        size = ComunicadoEnrichmentService._normalize_frame_size
         return {
             "x": max(soft_min, min(soft_max, _num("x", 5))),
             "y": max(soft_min, min(soft_max, _num("y", 10))),
-            "w": max(2.0, min(100.0, _num("w", 90))),
-            "h": max(1.0, min(100.0, _num("h", 20))),
+            "w": size(_num("w", 90)),
+            "h": size(_num("h", 20)),
         }
