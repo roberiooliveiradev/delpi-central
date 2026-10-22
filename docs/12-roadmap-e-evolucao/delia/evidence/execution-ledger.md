@@ -17434,3 +17434,14 @@ LARGER_MODEL=qwen2.5:7b parcial 18/82 CPU/GPU — rejeitado; 3b mantido
 REGRESSION=backend 1972 passed / 3 skipped / 0 failed
 EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
 ROLLBACK=omitir overlay do -f e recriar ollama
+
+
+## §6.381 — Etapa 6: homologacao integrada + atribuicao de orcamento por responsabilidade (2026-10-22)
+
+**2026-10-22 — DELIA-C3-INTEGRATED-HOMOLOGATION-SEPARATED-BUDGETS-AND-GOVERNED-ACTIVATION-01:** inventario de owners/contratos (TurnDeadline, Model Invocation, orchestration, ActivityEvent, turn_observability, Governed Resume, MCP adapter, CRI, projection, NDJSON) concluido; lacuna real = atribuicao de tempo por responsabilidade. Extensao bounded e aditiva nos owners canonicos: calls[].budget_remaining_ms, operational_calls[]{capability,duration_ms,finish_status}, elapsed_ms{model,operational,composition,other}, timeout_source=model|provider|budget. Frontend parser allowlisted + painel com linhas de responsabilidade. Evidencia wire real (GPU, qwen2.5:3b): model 7124ms vs operational 198ms vs other 913ms numa consulta com invoke real — starvation por selecao CONFIRMED com trace; em CPU (5.1) a mesma forma estoura 30s/attempt antes do invoke. Alternativas de budget comparadas no doc 99; recomendacao reserva operacional + degradacao honesta = ARCHITECTURE_DECISION_REQUIRED — nenhum limite 2/60/30, retry ou contrato alterado. RECOVERY_PRODUCTION=OFF (gate R4 OPEN). Backend: testes novos verdes; suite completa re-executada. Frontend: 14/14 vitest + tsc limpo; browser QA TEST_NOT_RUN (MFE stale). EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO I04_ACCEPTED=NO.
+
+TASK_ID=DELIA-C3-INTEGRATED-HOMOLOGATION-SEPARATED-BUDGETS-AND-GOVERNED-ACTIVATION-01
+REUSE_DECISION=EXTEND (turn_observability + orchestration + handler; zero ledger novo)
+API_EXECUTION_STARVATION=CONFIRMED (model 7124ms vs operational 198ms, wire real)
+BUDGET_DECISION=ARCHITECTURE_DECISION_REQUIRED (reserva operacional + degradacao honesta)
+LIMITS_2_60_30=UNCHANGED RECOVERY_PRODUCTION=OFF EXTERNAL_LLM_CALLS=0

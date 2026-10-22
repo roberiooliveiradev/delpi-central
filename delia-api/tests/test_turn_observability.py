@@ -539,3 +539,106 @@ def test_timeout_call_counted_without_fabricated_usage():
     assert call["input_tokens"] is None
     assert obs["tokens"]["status"] == USAGE_STATUS_UNAVAILABLE
     assert obs["composition_mode"] == "deterministic"
+
+
+# --- stage-6 budget attribution ---------------------------------------------
+
+
+def test_budget_remaining_recorded_and_projected():
+    ledger = ModelCallLedger()
+    result = _result()
+    ledger.record_result(
+        stage="s", result=result, attempt=1, budget_remaining_ms=17200
+    )
+    (call,) = ledger.calls
+    assert call.budget_remaining_ms == 17200
+    obs = build_turn_observability(
+        model_ref=None,
+        response_mode="baseline",
+        composition_mode=COMPOSITION_DETERMINISTIC,
+        calls=ledger.calls,
+        duration_ms=None,
+        governed_attempts=1,
+    )
+    assert obs["calls"][0]["budget_remaining_ms"] == 17200
+
+
+def test_operational_calls_separated_from_model_elapsed():
+    ledger = ModelCallLedger()
+    ledger.record_operational(
+        capability="discover_delpi_information",
+        duration_ms=412,
+        finish_status="completed",
+    )
+    ledger.record_operational(
+        capability="evidence_read",
+        duration_ms=88,
+        finish_status="error",
+    )
+    calls = (
+        _obs(duration_ms=5000),
+        _obs(duration_ms=3000),
+    )
+    obs = build_turn_observability(
+        model_ref=None,
+        response_mode="baseline",
+        composition_mode=COMPOSITION_DETERMINISTIC,
+        calls=calls,
+        duration_ms=9500,
+        governed_attempts=1,
+        operational_calls=ledger.operational_calls,
+    )
+    assert obs["elapsed_ms"]["model"] == 8000
+    assert obs["elapsed_ms"]["operational"] == 500
+    assert obs["elapsed_ms"]["other"] == 1000
+    assert len(obs["operational_calls"]) == 2
+    assert obs["operational_calls"][1]["finish_status"] == "error"
+
+
+def test_timeout_source_coarse_and_once():
+    ledger = ModelCallLedger()
+    ledger.record_terminal_timeout("budget")
+    ledger.record_terminal_timeout("model")  # first wins
+    ledger.record_terminal_timeout("not-a-source")  # rejected
+    obs = build_turn_observability(
+        model_ref=None,
+        response_mode="baseline",
+        composition_mode=COMPOSITION_DETERMINISTIC,
+        calls=(),
+        duration_ms=30000,
+        governed_attempts=1,
+        timeout_source=ledger.timeout_source,
+    )
+    assert obs["timeout_source"] == "budget"
+
+
+def test_composition_elapsed_accumulates():
+    ledger = ModelCallLedger()
+    ledger.record_composition(4)
+    ledger.record_composition(2)
+    obs = build_turn_observability(
+        model_ref=None,
+        response_mode="cri",
+        composition_mode=COMPOSITION_CRI,
+        calls=(),
+        duration_ms=100,
+        governed_attempts=1,
+        composition_ms=ledger.composition_ms,
+    )
+    assert obs["elapsed_ms"]["composition"] == 6
+    assert obs["elapsed_ms"]["other"] == 94
+
+
+def test_elapsed_other_none_without_total():
+    obs = build_turn_observability(
+        model_ref=None,
+        response_mode="baseline",
+        composition_mode=COMPOSITION_DETERMINISTIC,
+        calls=(_obs(duration_ms=100),),
+        duration_ms=None,
+        governed_attempts=1,
+    )
+    assert obs["elapsed_ms"]["model"] == 100
+    assert obs["elapsed_ms"]["other"] is None
+    assert obs["timeout_source"] is None
+    assert obs["operational_calls"] == []

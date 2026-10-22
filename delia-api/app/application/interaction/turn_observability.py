@@ -96,6 +96,10 @@ class ModelCallObservation:
     duration_ms: int | None = None
     input_tokens: int | None = None
     output_tokens: int | None = None
+    # Stage-6 budget attribution: interaction budget still available
+    # when this stage was granted its timeout — starvation evidence,
+    # never a scheduling decision input.
+    budget_remaining_ms: int | None = None
 
     def to_projection(self) -> dict[str, Any]:
         return {
@@ -105,7 +109,34 @@ class ModelCallObservation:
             "duration_ms": _bounded_int(self.duration_ms),
             "input_tokens": _bounded_int(self.input_tokens),
             "output_tokens": _bounded_int(self.output_tokens),
+            "budget_remaining_ms": _bounded_int(
+                self.budget_remaining_ms
+            ),
         }
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalCallObservation:
+    """One owner-surface invocation observed during this turn —
+    capability execution time separated from model decision time."""
+
+    capability: str
+    duration_ms: int | None = None
+    finish_status: str = _FINISH_COMPLETED
+
+    def to_projection(self) -> dict[str, Any]:
+        return {
+            "capability": _bounded_text(self.capability),
+            "duration_ms": _bounded_int(self.duration_ms),
+            "finish_status": _bounded_text(self.finish_status),
+        }
+
+
+# Coarse terminal timeout attribution — the wire never distinguishes
+# transport internals, only which responsibility consumed the budget.
+_TIMEOUT_SOURCES = frozenset(
+    {"model", "budget", "capability", "cancelled"}
+)
 
 
 class ModelCallLedger:
@@ -116,14 +147,36 @@ class ModelCallLedger:
     state can never live on it.
     """
 
-    __slots__ = ("_calls",)
+    __slots__ = (
+        "_calls",
+        "_operational",
+        "_timeout_source",
+        "_composition_ms",
+    )
 
     def __init__(self) -> None:
         self._calls: list[ModelCallObservation] = []
+        self._operational: list[OperationalCallObservation] = []
+        self._timeout_source: str | None = None
+        self._composition_ms: int = 0
 
     @property
     def calls(self) -> tuple[ModelCallObservation, ...]:
         return tuple(self._calls)
+
+    @property
+    def operational_calls(
+        self,
+    ) -> tuple[OperationalCallObservation, ...]:
+        return tuple(self._operational)
+
+    @property
+    def timeout_source(self) -> str | None:
+        return self._timeout_source
+
+    @property
+    def composition_ms(self) -> int:
+        return self._composition_ms
 
     def _append(self, observation: ModelCallObservation) -> None:
         if len(self._calls) >= MAX_LEDGER_CALLS:
@@ -136,6 +189,7 @@ class ModelCallLedger:
         stage: str,
         result: ModelInvocationResult,
         attempt: int = 1,
+        budget_remaining_ms: int | None = None,
     ) -> None:
         """Record a real completed model call — provider usage verbatim,
         never inferred."""
@@ -152,6 +206,7 @@ class ModelCallLedger:
                 output_tokens=(
                     usage.output_units if usage is not None else None
                 ),
+                budget_remaining_ms=budget_remaining_ms,
             )
         )
 
@@ -162,6 +217,7 @@ class ModelCallLedger:
         finish_status: str,
         attempt: int = 1,
         duration_ms: int | None = None,
+        budget_remaining_ms: int | None = None,
     ) -> None:
         """Record a real model call that failed or timed out — counted
         as a call, token fields stay absent (never fabricated)."""
@@ -171,8 +227,40 @@ class ModelCallLedger:
                 attempt=attempt,
                 finish_status=_finish_label(finish_status),
                 duration_ms=duration_ms,
+                budget_remaining_ms=budget_remaining_ms,
             )
         )
+
+    def record_operational(
+        self,
+        *,
+        capability: str,
+        duration_ms: int | None,
+        finish_status: str,
+    ) -> None:
+        """Record a real owner-surface invocation — the operational
+        share of the interaction budget, separated from model time."""
+        if len(self._operational) >= MAX_LEDGER_CALLS:
+            return
+        self._operational.append(
+            OperationalCallObservation(
+                capability=capability,
+                duration_ms=duration_ms,
+                finish_status=_finish_label(finish_status),
+            )
+        )
+
+    def record_terminal_timeout(self, source: str) -> None:
+        """Attribute the terminal timeout once, at the attempt
+        boundary — coarse responsibility vocabulary only."""
+        if source in _TIMEOUT_SOURCES and self._timeout_source is None:
+            self._timeout_source = source
+
+    def record_composition(self, duration_ms: int) -> None:
+        """Accumulate deterministic composition time (CRI selection/
+        render) — never a model call."""
+        if isinstance(duration_ms, int) and duration_ms > 0:
+            self._composition_ms += duration_ms
 
 
 # Request-scoped binding — same ContextVar pattern as the activity sink
@@ -254,6 +342,9 @@ def build_turn_observability(
     calls: tuple[ModelCallObservation, ...],
     duration_ms: int | None,
     governed_attempts: int,
+    operational_calls: tuple[OperationalCallObservation, ...] = (),
+    timeout_source: str | None = None,
+    composition_ms: int = 0,
 ) -> dict[str, Any]:
     """Bounded presentation-only projection for ``turn_result``.
 
@@ -264,6 +355,15 @@ def build_turn_observability(
     no provider in the current chain reports billing data and no
     versioned price table exists, so the honest answer is stated
     rather than estimated.
+
+    Stage 6 budget attribution: ``elapsed_ms`` splits the measured
+    interaction time by responsibility — ``model`` (semantic decision
+    stages), ``operational`` (owner capability execution incl.
+    transport), ``composition`` (deterministic CRI/render) and
+    ``other`` (orchestration glue, validation, waits). ``None`` fields
+    mean "not measured", never zero. ``timeout_source`` attributes a
+    terminal timeout once, in coarse responsibility terms — a model
+    timeout is never relabelled as an owner-API failure.
     """
     model: dict[str, Any] | None = None
     if model_ref is not None:
@@ -272,6 +372,24 @@ def build_turn_observability(
             "version": _bounded_text(model_ref.version),
             "owner": _bounded_text(model_ref.owner_ref),
         }
+    model_ms = sum(
+        call.duration_ms for call in calls if call.duration_ms is not None
+    )
+    operational_ms = sum(
+        call.duration_ms
+        for call in operational_calls
+        if call.duration_ms is not None
+    )
+    elapsed: dict[str, Any] = {
+        "model": model_ms,
+        "operational": operational_ms,
+        "composition": composition_ms,
+        "other": (
+            max(0, duration_ms - model_ms - operational_ms - composition_ms)
+            if duration_ms is not None
+            else None
+        ),
+    }
     return {
         "model": model,
         "response_mode": _bounded_text(response_mode),
@@ -280,6 +398,15 @@ def build_turn_observability(
         "governed_attempts": _bounded_int(governed_attempts),
         "model_calls": len(calls),
         "calls": [call.to_projection() for call in calls],
+        "operational_calls": [
+            call.to_projection() for call in operational_calls
+        ],
+        "elapsed_ms": elapsed,
+        "timeout_source": (
+            _bounded_text(timeout_source)
+            if timeout_source in _TIMEOUT_SOURCES
+            else None
+        ),
         "tokens": aggregate_usage(calls),
         "cost": {"status": "unavailable"},
     }

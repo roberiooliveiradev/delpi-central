@@ -681,3 +681,56 @@ def test_global_budget_blocks_model_stage_when_remaining_too_small():
         r.task_purpose_id for r in model.requests
     ]
     assert provider.calls == []
+
+
+def test_budget_starvation_attributed_in_ledger():
+    """Stage 6: a slow semantic stage consuming the shared budget must
+    be attributed as budget exhaustion with ZERO operational time —
+    never misreported as an owner-API failure."""
+    from app.application.interaction.turn_observability import (
+        ModelCallLedger,
+        bind_turn_call_ledger,
+        reset_turn_call_ledger,
+    )
+
+    clock = FakeClock()
+    deadline = TurnDeadline.start(30.0, clock=clock)
+    clock.advance(30.0 - (MIN_VIABLE_MODEL_STAGE_SECONDS / 2))
+    provider = FakeProvider(
+        "teo",
+        [
+            _group(
+                "teo",
+                "teo",
+                [_cap("teo", "teo", "a", SpecialistOperationClass.READ)],
+            )
+        ],
+    )
+    model = FakeProposalModel(
+        {
+            CAPABILITY_SELECTION_INSTRUCTION_ID: {
+                "applicable": True,
+                "remote_name": "a",
+            },
+        }
+    )
+    orch = OperationalCapabilityOrchestrator(
+        [provider],
+        invoke_model=InvokeModel(model),
+        model_ref=TEST_MODEL_REF,
+        model_stage_timeout_seconds=10.0,
+    )
+    ledger = ModelCallLedger()
+    token = bind_turn_call_ledger(ledger)
+    try:
+        attempt = orch.attempt(
+            "consulta a", turn_deadline=deadline
+        )
+    finally:
+        reset_turn_call_ledger(token)
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+    assert attempt.error_code == "turn_budget_exhausted"
+    # Attribution: budget ran out; no owner call ever happened.
+    assert ledger.timeout_source == "budget"
+    assert ledger.operational_calls == ()
+    assert provider.calls == []
