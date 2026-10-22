@@ -16,6 +16,8 @@ Sistema de **programações rotativas** para TVs corporativas: gestão autentica
 
 Fontes canônicas: [vista-capability-matrix](../../../tv-dashboard-api/docs/integrations/vista-capability-matrix.md) · [presentation-ops-catalog](../../../tv-dashboard-api/docs/presentation-ops-catalog.md) · [ADR VISTA surfaces](../../../tv-dashboard-api/docs/architecture/adr-vista-specialist-capability-surfaces.md) · [Chat playbook handoff](../../../minha-delpi-ai-api/docs/architecture/chat-openapi-first-refactor-playbook.md).
 
+> **Roadmap de responsividade e concorrência do editor:** [EDITOR-RESPONSIVIDADE-CONCORRENCIA-ROADMAP.md](./EDITOR-RESPONSIVIDADE-CONCORRENCIA-ROADMAP.md) — diagnóstico, otimizações, projeção local, revisão/CAS, sincronização multiusuário e gates de aceite.
+
 ---
 
 ## Visão geral
