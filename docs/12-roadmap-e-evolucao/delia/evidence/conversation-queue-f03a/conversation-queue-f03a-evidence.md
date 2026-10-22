@@ -92,10 +92,20 @@ Screenshots: `C:/temp/delia-qa/shots-f03a/` (a1-collapsed, a2-expanded, b-*, c-*
 - Produção: fila invisível até um owner publicar pendências autorizadas — comportamento correto por CQ-V01.
 - Fase/CP/RQ inalterados; entrega é frontend bounded.
 
+## Deploy
+
+- Commit `6efcd12915` em `main`; deploy via `up-prod-sequential.sh --cpu --build plugin-ui delia` no host `192.168.1.237` (checkout `~/projetos/delpi-central`, pull --ff-only).
+- Containers `delpi-plugin-ui`/`delpi-delia` recriados saudáveis.
+- RemoteEntry plugin-ui: `__federation_expose_Index-C_iDYTdG.js` exporta `ConversationQueue`; CSS `style-CJxVwzqB.css` contém `.delpi-ui-conversation-queue`.
+- Bundle delia `App-F7-bkdoP.js` contém a wiring `delia-conversation-queue` + gate `delia-demo-queue`; servido via gateway `https://minhadelpi.com.br/apps/delia` (200, asset verificado).
+- Bundle de produção compilado **sem** `VITE_DELIA_DEMO` → fixture inerte; superfície ausente (CQ-V01) — comportamento correto, não falha.
+- QA funcional autenticado em produção: `PENDING_USER_VERIFICATION`.
+
 ```text
 F03A_VISUAL=EXECUTED
 PRODUCTION_QUEUE_SURFACE=ABSENT_BY_DESIGN
 QA_FIXTURE=GATED(VITE_DELIA_DEMO+param)
 QUEUE_EXECUTION=NOT_IMPLEMENTED
 TESTS=PASS / QA=PASS_77_77
+DEPLOYED_SHA=6efcd12915
 ```

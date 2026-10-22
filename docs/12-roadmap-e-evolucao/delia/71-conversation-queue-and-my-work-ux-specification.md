@@ -298,4 +298,4 @@ Sem backend de fila admitido, a implementação futura pode usar fixtures **excl
 
 **Integração:** sem contrato backend de fila admitido até o momento (TO_INVENTORY) — a DÉLIA passa `items=[]` em produção e a superfície permanece invisível. Fixture de QA isolada `?delia-demo-queue=<variant>` atrás do gate canônico `isDemoAllowed()` (`DEV` ou `VITE_DELIA_DEMO=1`) cobre `pending|one|blocked|loading|error|unavailable`; inerte no bundle de produção (provado por paridade). Evidência: [conversation-queue-f03a](evidence/conversation-queue-f03a/conversation-queue-f03a-evidence.md).
 
-**Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=IMPLEMENTED_VISUAL; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=EXECUTED_VISUAL; TESTS=PASS; DEPLOYMENT=PENDING; PHASE_PROGRESSION=NONE.
+**Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=IMPLEMENTED_VISUAL; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=EXECUTED_VISUAL; TESTS=PASS; DEPLOYMENT=EXECUTED (6efcd12915); PHASE_PROGRESSION=NONE.
