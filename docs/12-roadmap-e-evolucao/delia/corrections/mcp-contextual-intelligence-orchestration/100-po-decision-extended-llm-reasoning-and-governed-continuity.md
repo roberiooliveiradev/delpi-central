@@ -54,3 +54,14 @@
 - Gate de revogação, segurança, rede/proxy e release efetivamente satisfeitos antes de habilitar produção.
 
 **DECISION_LOG:** `PO_APPROVED=60s_semantic_per_attempt+up_to_3_attempts+B+D+user_visible_continuity`; `END_TO_END_DEADLINE=TO_DECIDE`; `OPERATIONAL_RESERVE=TO_DECIDE`; `REVOCATION_POLICY=OPEN`; `CODE_CHANGE=NONE`; `RELEASE=NONE`.
+
+
+## Adendo PO — priorização do residual de revogação (2026-10-22)
+
+**PO_PRIORITY_DECISION:** não dedicar o próximo ciclo à remediação integral da revogação intra-turno do cache de credencial delegada; priorizar a funcionalidade de orçamentos semânticos, continuidade e experiência do usuário. O PO aceita manter o finding documentado para tratamento posterior. **Esta decisão não transforma o finding em PASS nem revoga os controles de segurança congelados.**
+
+**RISK_ACCEPTANCE_SCOPE:** postergação de engenharia e priorização de roadmap; NÃO é autorização para ignorar autorização vigente, desabilitar Core/Domain AuthZ, aceitar token revogado, ou habilitar produção de múltiplas tentativas contra gate canônico ainda aberto. A hipótese de ocorrência rara não foi empiricamente quantificada; a janela de risco existe independentemente de sua frequência.
+
+**RECOMMENDED_EXECUTION:** desenvolver e homologar a política de até 60s de decisão semântica por tentativa, até 3 tentativas governadas, progressos e cancelamento no ambiente dev/flag OFF em produção, reutilizando owners existentes; entregar avaliação de prontidão e isolar activation gate. Se o novo fluxo exigir ativação produtiva e o gate R4 continuar obrigatório, sinalizar ARCHITECTURE_DECISION_REQUIRED para uma decisão de risco/controle pelo owner competente, sem reconciliação silenciosa. A autenticação e a autorização final continuam backend-first/fail-closed e operações materiais não podem ser repetidas.
+
+**STATUS:** `REVOCATION_REMEDIATION=DEFERRED_BY_PO`; `REVOCATION_RISK=OPEN`; `DEV_FUNCTIONAL_WORK=AUTHORIZED_WITH_EXISTING_GATES`; `PRODUCTION_RETRY_ACTIVATION=NOT_AUTHORIZED_BY_THIS_DECISION`.
