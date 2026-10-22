@@ -76,6 +76,23 @@ class Settings:
     COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE = int(
         os.getenv("COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", "10") or "10"
     )
+    # S3.2 — shared rate-limit backend for the registry provider.
+    # "process_local" (default): in-memory per-worker counter — only safe for
+    # single-worker/test deployments. "distributed": Redis backend shared by
+    # all workers; when BrasilAPI is enabled, Redis failure → fail-closed 503.
+    COMPANY_REGISTRY_RATE_LIMIT_STRATEGY = os.getenv(
+        "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local"
+    ).strip().lower()
+    COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE = int(
+        os.getenv("COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE", "30") or "30"
+    )
+    COMPANY_REGISTRY_RATE_LIMIT_PREFIX = os.getenv(
+        "COMPANY_REGISTRY_RATE_LIMIT_PREFIX", "supplies:registry-rate-limit:"
+    )
+    REDIS_URL = os.getenv("REDIS_URL", "").strip()
+    COMPANY_REGISTRY_REDIS_TIMEOUT_SECONDS = float(
+        os.getenv("COMPANY_REGISTRY_REDIS_TIMEOUT_SECONDS", "1.5") or "1.5"
+    )
 
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "")
     PLUGINS_DB_PORT = os.getenv("PLUGINS_DB_PORT", "5432")

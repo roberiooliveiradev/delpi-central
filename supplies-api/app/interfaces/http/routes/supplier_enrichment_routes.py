@@ -25,6 +25,7 @@ from flask import Blueprint, g, jsonify, request
 from app.application.security.supplies_permissions import can_use_operations
 from app.application.services.supplier_enrichment.contracts import (
     RegistryAccessDeniedError,
+    RegistryLimiterUnavailableError,
     RegistryRateLimitedError,
     RegistryResponseInvalidError,
     RegistryTaxIdInvalidError,
@@ -95,9 +96,10 @@ _MAX_PAGE_SIZE = 50
 
 
 # Server-side cap for external registry queries (create_review): shared
-# process-wide limiter (`actor:*` keys here, `cnpj:*` keys in the provider).
-# Residual: state is per gunicorn worker — multi-worker deployments split
-# the effective cap (see docs/supplier-enrichment-review-api.md).
+# limiter from registry_rate_limiter() — "actor" dimension here,
+# "cnpj"+"global" inside the provider. Backend per
+# COMPANY_REGISTRY_RATE_LIMIT_STRATEGY (process_local|distributed);
+# distributed failure fails closed (503), never queries upstream.
 
 
 def _service() -> SupplierEnrichmentReviewService:
@@ -231,6 +233,10 @@ def _error(exc: Exception):
         return jsonify(
             {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND"}
         ), 404
+    if isinstance(exc, RegistryLimiterUnavailableError):
+        return jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_RATE_LIMITER_UNAVAILABLE"}
+        ), 503
     if isinstance(exc, RegistryRateLimitedError):
         response = jsonify(
             {"detail": str(exc), "code": "ENRICHMENT_RATE_LIMITED"}
@@ -292,7 +298,7 @@ def create_enrichment_review(code: str, store: str):
     try:
         supplier_id = normalize_supplier_id(code, store)
         _reject_server_fields(request.get_json(silent=True) or {})
-        registry_rate_limiter().check(f"actor:{_user().id}")
+        registry_rate_limiter().acquire("actor", str(_user().id))
         review, proposals = _service().create_review(
             user=_user(),
             supplier_code=supplier_id[:6],
