@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED`
+**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_APPROVAL_PENDING / RUNTIME_B2_NOT_AUTHORIZED`
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
