@@ -539,3 +539,45 @@ Depois, Joici **ordena por produto** e **exclui materia-prima (MP)** ainda prese
 **Proximo marco:** aos 47:48 Joici inicia explicacao adicional das regras de negocio. Registrar a explicacao posterior em novo trecho, sem antecipa-la.
 
 **Classificacao:** `SD1_SOURCE=PROVEN_SCREENSHOT`; `BY_FILIAL=OWNER_REPORTED_VIA_PO`; `DATE_DIGITATION=OWNER_REPORTED_VIA_PO`; `ENTRY_TYPE_EXCLUSION_SET=OWNER_REPORTED_VIA_PO`; `EXCLUDE_MP=OWNER_REPORTED_VIA_PO`; `EXPENSE_GOAL=OWNER_REPORTED_VIA_PO`; `FIELDS_FORMULAS_OWNER=TO_INVENTORY`; `RUNTIME_PARITY=TEST_NOT_RUN`; `TARGET_IMPLEMENTATION=NOT_AUTHORIZED`.
+
+
+## Registro 18 - Classificacao assistida de custos e excecoes SD1 (47:48 ate o fim da gravacao)
+
+**Fonte:** narracao guiada do PO das falas de Joici, com prints da planilha `SCAGPOU0.XML` derivada de SD1, principalmente 48:11, 48:25, 48:48, 50:10 e 50:35. Este registro continua o Registro 17. Prints evidenciam linhas, codigos e edicao manual da planilha; a semantica e as correcoes pretendidas sao relatos de especialista mediados pelo PO, ainda nao homologados nos cadastros do ERP.
+
+### Metodo AS-IS e classificacoes relatadas
+
+Joici percorre entradas remanescentes depois dos filtros de exclusao dos tipos de entrada e de materia-prima, consulta os produtos no TOTVS quando nao reconhece um item e tenta classificar cada gasto em **direto**, **indireto** ou **administrativo**. Ela pode escrever a classificacao manualmente na coluna da planilha e utilizar centro de custo como indicio. Essa conferencia por produto/centro de custo demanda tempo consideravel.
+
+- **Exemplo de item material direto:** o PO cita codigo `30190042`. A leitura de codigo diretamente no print e limitada, por isso confirmar codigo exato e natureza no cadastro antes de usa-lo como amostra de teste.
+- **Coparticipacao do plano de saude:** segundo Joici, a parcela que constitui despesa do colaborador deve ser **excluida desta apuracao** e ela nao exige associacao a centro de custo para essa parcela. O PO tambem menciona participacao paga pela empresa. Portanto, **nao extrapolar que toda despesa de plano de saude ou toda coparticipacao e excluida**: discriminar parcela do colaborador versus empresa e tratamento contatabil com owner.
+- **Administrativos:** Joici associa centros de custo com prefixo `02` a administrativos e menciona centros vinculados a vendas/compras que comecariam por `05`, tambem classificados como administrativos no exemplo. A relacao entre prefixos e natureza exige inventario: `05` nao pode ser tratado como administrativo universal sem confirmacao do cadastro e excecoes.
+- **Indiretos:** centros com prefixo `03`, associados a processos; exemplos adicionais mencionados: `0405` (PCP) e `0504` (almoxarifado). Esses exemplos nao fecham uma tabela universal de classificacao, e podem exigir revalidacao, especialmente frente a regra narrativa do prefixo `05`.
+- **Diretos:** materiais/custos diretamente associados a producao; classificacao deve ser fundamentada em cadastro de produto, centro de custo e finalidade, nao apenas em prefixos. Os exemplos em planilha mostram insercao manual de `Direto` e `Indireto`.
+
+### Erros de cadastro, revisao e casos concretos
+
+- **50:10:** Joici alerta que ha lancamentos atribuidos ao centro `0404` que nao correspondem de fato a ele. Um centro valido nao garante enquadramento correto do item.
+- **50:35:** Joici relata uso de centro `0401` inexistente/invalido e indica um produto do tipo cabo singelo que deveria estar associado ao `CT`. Interpretar `CT` como abreviacao usada no relato, sem inventar seu codigo canonico.
+- **Produto `30194558`:** Joici diz nao reconhecer o item e precisar consultar cadastro TOTVS. A classificacao permanece **pendente**, nao deduzida pelo assistente.
+- **Separacao de despesas:** Joici informa que a contabilidade recebe a relacao para separar totais administrativos, diretos e indiretos. Conforme pratica descrita, administrativos compoem custo fixo e diretos/indiretos entram na analise de custo de producao. **Tratamento gerencial/contabil relatado**, sujeito a homologacao pela Contabilidade; nao alterar DRE ou contabilizacao com base somente na narracao.
+
+### Candidato TARGET: pre-classificacao explicavel com revisao humana
+
+O PO propoe substituir a triagem exclusivamente manual por uma lista de **candidatos de classificacao**: categoria sugerida, centro de custo sugerido quando respaldado por cadastro, justificativa/rastreabilidade, pesquisa por produto e acesso ao contexto de cada registro (produto, tipo, nota, filial, centro, conta, documentos/estrutura quando disponivel). A pessoa revisora deve poder confirmar, alterar ou **retirar da listagem de apuracao** itens fora do escopo, indicando motivo. Retirar da apuracao do Portal **nao e excluir a linha SD1 nem alterar lancamento no ERP**.
+
+Estados conceituais para estudo, NAO contrato aprovado: `unreviewed`, `suggested`, `confirmed`, `excluded_from_analysis`, `needs_erp_correction`. O sistema deve separar divergencia de classificacao gerencial de erro cadastral que so owner do TOTVS pode corrigir; nao marcar automaticamente `approved` nem escrever na SD1. A experiencia deve suportar pesquisa, filtros por categoria, centro, produto, filial e motivo de excecao, e preservar versao de regras, justificativa e responsavel pela revisao, sujeito a decisao de persistencia/auditoria.
+
+### Gaps, verificacoes e gates
+
+1. Inventariar tabela de centros de custo e seu owner no TOTVS/`api-delpi`: codigo, descricao, hierarquia, vigencia, filial, classificacao existente ou possivel atributo direto/indireto/administrativo, relacao com conta contabil e SD1. Conferir tambem consumidores em dashboards e regras de DRE. DAVI pode ajudar a localizar informacao autorizada, mas nao substituir a authority tecnica do codigo/contrato.
+2. Validar com Joici/Controladoria **cada prefixo e excecao**, sobretudo `02`, `03`, `05`, `0405`, `0504`, `0404`, `0401`, o item `30194558` e o exemplo de cabo singelo. Nao promover heuristica por prefixo a regra canonica sem catalogo homologado.
+3. Resolver tratamento de coparticipacao: origem do valor, parcela colaborador versus empresa, tipo de entrada, centro e contabilizacao. Reconciliar o conjunto de exclusoes anteriores (Registro 17) com as exclusoes por natureza/colaborador deste registro.
+4. Obter o Excel efetivamente entregue, com competencia/filial e colunas de classificacao, e confrontar **linha a linha** com extracao SD1 por chaves do documento/item. Reconciliar totais por direto/indireto/administrativo/excluido e diferencas, antes de prometer equivalencia.
+5. Definir owner, RQ/AC, estrategia de auditoria e seguranca, modelo de dados, versao de regras, acoes de revisao e entrega a Contabilidade. Sem decisao explicita, nao implementar classificacao, nova pagina, persistencia ou endpoint.
+
+**Gates de arquitetura:** `api-delpi` e fonte canonica de regra/dados TOTVS, MFE fala apenas com BFF `controllership-finance-api`, backend verifica `controllership-finance.access` ou `manage` combinada com escopo do recurso e regra de negocio; filial e dimensao de dados, nao permission code.
+
+**Classificacao:** `MANUAL_EXPENSE_CLASSIFICATION=OWNER_REPORTED_VIA_PO`; `SPREADSHEET_EDITS=PROVEN_SCREENSHOT`; `CENTER_PREFIX_RULES=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `COPAYMENT_EMPLOYEE_SHARE_EXCLUSION=OWNER_REPORTED_VIA_PO_TO_VALIDATE`; `MISPOSTED_CENTERS=OWNER_REPORTED_VIA_PO`; `PROPOSED_SEARCH_AND_CANDIDATE_REVIEW=TARGET_DECISION_REQUIRED`; `ERP_CENTER_MASTER_DATA=TO_INVENTORY`; `OFFICIAL_COST_CENTER_ACCOUNTING=TO_INVENTORY`; `DELIVERED_EXCEL_PARITY=TEST_NOT_RUN`.
+
+**Situacao da evidencia ao final do video:** houve mapeamento qualitativo das etapas, mas nao conciliacao tecnica dos totais SD1 por centro de custo nem homologacao de classificacoes/aliases. O proximo trabalho e INVENTORY + VALIDATE, nao EXECUTE.
