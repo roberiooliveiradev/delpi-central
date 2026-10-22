@@ -413,9 +413,9 @@ Estado: `MOD_MONTH_RANGE=OWNER_REPORTED_VIA_PO`; `MOD_PRODUCT_COLUMN=PROVEN_SCRE
 | Diferenca MATR320 - P7 | **113.252,49** arredondada a 2 casas | `DERIVED_FROM_SCREENSHOTS` |
 | MATR989 Saldo em Processo, Excel selecionado na coluna de valor | Barra de status **Soma: 64.968,42** sobre selecao filtrada; screenshot indica `1577 de 57409 registros localizados` | `PROVEN_SCREENSHOT_PARTIAL` |
 | Diferenca menos valor selecionado MATR989 | **48.284,07** (113.252,49 - 64.968,42), apenas subtracao exploratoria | `DERIVED_NOT_RECONCILED` |
-| Outro valor na planilha de trabalho, proximo da linha 57420 | **40.204,06** aparece em captura posterior, sem formula visivel que permita explicar sua composicao | `PROVEN_SCREENSHOT_UNEXPLAINED` |
+| Outro valor na planilha de trabalho, proximo da linha 57420 | **48.284,06** aparece nitidamente no recorte ampliado fornecido pelo PO; a formula nao esta visivel | `PROVEN_SCREENSHOT_UNEXPLAINED` |
 
-**ALERTA DE CONSISTENCIA:** o relato menciona diferenca residual de ~48 mil, compativel com a subtracao exploratoria acima, mas a mesma sequencia de imagens mostra **40.204,06** em outra celula. Nao equiparar os dois valores, nao presumir que a soma de **64.968,42** represente todo o universo do MATR989 nem declarar formula de conciliacao aprovada. Precisamos inspecionar formulas, filtros, filial, local/armazem, competencia, classes de itens, unidades, estados de apontamento e custos efetivamente comparaveis. Saldos de diferentes relatorios nao sao automaticamente somaveis apenas por estarem expressos em valor.
+**ALERTA DE CONSISTENCIA:** o relato menciona diferenca residual de ~48 mil, compativel com a subtracao exploratoria acima, mas a mesma sequencia de imagens mostra **48.284,06** em outra celula, corrigindo erro anterior de leitura de imagem (nao era 40.204,06). A subtracao dos valores arredondados exibidos (113.252,49 - 64.968,42) da **48.284,07**, diferenca de **R$ 0,01** em relacao a celula observada. Pode ser precisao interna/criterio de arredondamento, mas a formula nao esta visivel e a causa nao esta comprovada. Nao presumir que a soma de **64.968,42** represente todo o universo do MATR989 nem declarar formula de conciliacao aprovada. Precisamos inspecionar formulas, filtros, filial, local/armazem, competencia, classes de itens, unidades, estados de apontamento e custos efetivamente comparaveis. Saldos de diferentes relatorios nao sao automaticamente somaveis apenas por estarem expressos em valor.
 
 ### Campos visiveis do MATR989
 Planilha com colunas `CODIGO`, `DESCRICAO`, `LC` ou `LO` (cabecalho abreviado; confirmar), `ORDEM PRODUCAO`, `TI` ou `TIP` (confirmar), `QTDE EM` e `VALOR EM PROCESSO` (rotulos truncados). Nao transpor aliases diretamente para nome de coluna de Protheus.
@@ -427,11 +427,11 @@ Uma **Conferencia de Fechamento de Estoques** consolidada pode apresentar os tre
 
 ### Pendencias de verificacao
 1. Obter as exportacoes originais de MATR320, P7 completo e MATR989 da **mesma competencia e escopo** e preservar filtros e parametros de emissao.
-2. Ler a formula exata da celula **40.204,06** e reconciliar com o residual aparente **48.284,07**, incluindo qualquer outro filtro/ajuste.
+2. Ler a formula exata da celula **48.284,06** e explicar a diferenca de **0,01** ante a subtracao dos valores arredondados, incluindo precisao, filtros ou ajustes.
 3. Identificar o subconjunto de 1.577 registros no MATR989, o significado de `Saldo em Processo` e seus componentes que podem ou nao explicar saldo de estoque.
 4. Comparar por filial, tipo de produto (incluindo ou excluindo material de consumo), armazem e data-base. Diferenciar saldos/fluxos/custos e tratamentos de terceiros.
 5. Mapear chaves de origem e regras de apontamento; aprovar tolerancia, tratamento de diferencas e criterio de aceite com owner de Controladoria e owner de custeio.
 
-**Classificacao:** `THREE_REPORTS_CONFERENCE=OWNER_REPORTED_VIA_PO`; `SCREEN_VALUES=PROVEN_SCREENSHOT`; `DIFFERENCE_113252_49=DERIVED`; `RESIDUAL_48284_07=DERIVED_NOT_RECONCILED`; `OTHER_EXCEL_40204_06=UNEXPLAINED`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_CONSOLIDATION=TARGET_DECISION_REQUIRED`.
+**Classificacao:** `THREE_REPORTS_CONFERENCE=OWNER_REPORTED_VIA_PO`; `SCREEN_VALUES=PROVEN_SCREENSHOT`; `DIFFERENCE_113252_49=DERIVED`; `RESIDUAL_48284_07=DERIVED_NOT_RECONCILED`; `EXCEL_RESIDUAL_48284_06=PROVEN_SCREENSHOT_FORMULA_UNVERIFIED`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_CONSOLIDATION=TARGET_DECISION_REQUIRED`.
 
 **Proximo marcador da gravacao: apos ~32:21, a confirmar pelo PO.**
