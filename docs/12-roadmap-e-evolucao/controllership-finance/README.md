@@ -291,3 +291,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - Faturamento x MOD (22/10/2026)
 
 [Doc 65 - Inventario conceitual das duas filiais](./65-ciclo1-faturamento-mod-inventario.md): duas abas de desdobramento PA/componentes MOD; campos de faturamento, quantidade, horas, custo unitario e custo total. Formulas observadas na amostra `Horas ~= Qtd Fat. * Quantidade` e `Custo Total ~= Horas * Custo Unitario`, sem confirmacao de horas efetivas nem homologacao da rotina candidata `DLP204`. Paridade e fontes ERP pendentes; nenhum registro financeiro/produto privado versionado.
+
+
+### Ciclo 1 - movimentos de inventario (22/10/2026)
+
+[Doc 66 - Invent / ajustes de inventario](./66-ciclo1-invent-movimentos-inventario.md): planilha privada com 45 movimentos de documento `INVENT`, combinacoes tecnicas `TES 999 / RE0` (saida) e `TES 499 / DE0` (entrada), e duas linhas finais de agregacao sem a mesma estrutura. Analise do efeito liquido, produtor, cobertura de armazens 01/99 e reconciliacao com Kardex, MATR320 e P7 seguem `TO_INVENTORY/TEST_NOT_RUN`. Somente regras e metadados conceituais foram versionados.
