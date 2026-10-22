@@ -301,3 +301,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - notas fiscais a desconsiderar (22/10/2026)
 
 [Doc 67 - Inventario conceitual SD2](./67-ciclo1-nf-a-desconsiderar-sd2.md): uma aba de itens de nota fiscal de saida, exportacao SD2, 184 colunas e 11 itens na amostra. Identificada uniformidade de tipo de saida e codigo fiscal sem provar que essa combinacao seja criterio oficial de exclusao. Motivo, apuracao afetada, joins, filtros e paridade continuam pendentes; nenhum documento fiscal individual ou valor foi versionado.
+
+
+### Ciclo 1 - Resumo Estoque, comparacao de variantes (22/10/2026)
+
+[Doc 68 - Resumo reduzido e divergencia de abrangencia](./68-ciclo1-resumo-estoque-variante-reduzida.md): PDF privado de Registro de Inventario com secao EM ESTOQUE (MP, PA, PI) e EM PROCESSO (MP, PI), mesma data/contexto do PDF anterior doc 63. Os valores de PA e PI coincidem entre os arquivos, mas os de **MP em estoque e em processo divergem**: nao se trata comprovadamente apenas de ocultar outras categorias. Hipotese de variante de entrega contábil/Bloco H depende de parametros e rotina de origem; `TO_INVENTORY/TEST_NOT_RUN`. Sem valores ou PDF original no repositorio.
