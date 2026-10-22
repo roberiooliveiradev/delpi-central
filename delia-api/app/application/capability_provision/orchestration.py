@@ -4792,9 +4792,11 @@ class OperationalCapabilityOrchestrator:
         """Attempt boundary: one turn deadline governs every stage.
 
         A model-stage timeout or an exhausted turn budget is a governed
-        orchestration failure — it terminates as SOURCE_UNAVAILABLE
-        (deterministic, HYPOTHESIS-class at the interaction layer) and
-        can NEVER degrade into a general-model answer (LOOP-03R2A).
+        orchestration failure — it terminates as PROCESSING_TIMEOUT
+        (deterministic, HYPOTHESIS-class at the interaction layer),
+        never as SOURCE_UNAVAILABLE when no authoritative source was
+        consulted (doc 88 CP2), and can NEVER degrade into a
+        general-model answer (LOOP-03R2A).
         """
         correlation = correlation_id or str(uuid.uuid4())
         deadline = turn_deadline or TurnDeadline.start(
@@ -4824,7 +4826,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                 )
                 return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                    status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                     correlation_id=correlation,
                     error_code=exc.reason,
                 )
@@ -4835,7 +4837,7 @@ class OperationalCapabilityOrchestrator:
                     correlation,
                 )
                 return GovernedCapabilityAttempt(
-                    status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                    status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                     correlation_id=correlation,
                     error_code="turn_budget_exhausted",
                 )
@@ -5742,7 +5744,7 @@ class OperationalCapabilityOrchestrator:
                     )
                     return GovernedCapabilityAttempt(
                         status=(
-                            GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+                            GovernedCapabilityStatus.PROCESSING_TIMEOUT
                         ),
                         correlation_id=correlation,
                         error_code="turn_budget_exhausted",
@@ -6871,7 +6873,7 @@ class OperationalCapabilityOrchestrator:
                 correlation,
             )
             return GovernedCapabilityAttempt(
-                status=GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+                status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                 correlation_id=correlation,
                 error_code="turn_budget_exhausted",
             )
@@ -9109,7 +9111,7 @@ class OperationalCapabilityOrchestrator:
             )
         except _StageDeadlineExceeded:
             # Prefer a deterministic ask-back over a timed-out wording
-            # stage that would collapse the turn to SOURCE_UNAVAILABLE.
+            # stage that would collapse the turn to PROCESSING_TIMEOUT.
             _logger.info(
                 "orchestration stage=clarification "
                 "decision=budget_fallback correlation_id=%s",
@@ -10192,7 +10194,7 @@ class OperationalCapabilityOrchestrator:
         except _StageDeadlineExceeded:
             # INDEX already ran: a late select timeout must degrade to
             # no_match → clarification (deterministic ask-back exists),
-            # not collapse the whole turn into SOURCE_UNAVAILABLE.
+            # not collapse the whole turn into PROCESSING_TIMEOUT.
             _logger.info(
                 "orchestration stage=index_select "
                 "decision=budget_skip remaining_ms=%d "

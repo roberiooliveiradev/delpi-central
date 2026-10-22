@@ -68,6 +68,7 @@ from app.application.interaction.presentation import (
     MESSAGE_KIND_CLARIFICATION_REQUIRED,
     MESSAGE_KIND_CONFIRMATION_REQUIRED,
     MESSAGE_KIND_PRECONDITION_REQUIRED,
+    MESSAGE_KIND_PROCESSING_TIMEOUT,
     MESSAGE_KIND_RESULT,
     MESSAGE_KIND_SOURCE_UNAVAILABLE,
     MESSAGE_KIND_WRITE_REJECTED,
@@ -150,6 +151,16 @@ DELPI_SOURCE_DENIED_MESSAGE = (
 DELPI_OWNER_RECORD_NOT_FOUND_MESSAGE = (
     "A fonte consultada informou que não há registro para esta "
     "solicitação. Nenhum dado operacional foi inventado."
+)
+# Doc 88 CP2: a model-stage deadline or the turn budget interrupted
+# processing — the authoritative source is NOT blamed when it was
+# never consulted. Truthful interruption, no continuity promise: no
+# work remains active after this terminal answer.
+DELPI_PROCESSING_TIMEOUT_MESSAGE = (
+    "O processamento da sua solicitação demorou além do limite e a "
+    "tentativa foi interrompida. Não identifiquei uma falha na fonte "
+    "de dados — nenhum dado operacional foi verificado. Você pode "
+    "tentar novamente."
 )
 
 # C3-CENTRAL-INTERACTION-EXPERIENCE-BACKEND-01: producer-declared
@@ -387,11 +398,13 @@ class HandleInteractiveConversationTurn:
         if attempt is not None and attempt.status in (
             GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
             GovernedCapabilityStatus.AUTHZ_DENIED,
+            GovernedCapabilityStatus.PROCESSING_TIMEOUT,
         ):
-            # LOOP-03R1 (D07): a selected authoritative source that
-            # errored or denied is a deterministic terminal answer —
-            # the general model never narrates an operational failure
-            # as if it were a DELPI-verified answer.
+            # LOOP-03R1 (D07) + doc 88 CP2: a selected authoritative
+            # source that errored or denied — or a processing deadline
+            # that interrupted the turn — is a deterministic terminal
+            # answer; the general model never narrates an operational
+            # failure as if it were a DELPI-verified answer.
             result = self._source_terminal_result(
                 session, user_turn, attempt
             )
@@ -401,7 +414,12 @@ class HandleInteractiveConversationTurn:
                 state=(
                     ActivityState.DENIED
                     if attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
-                    else ActivityState.BLOCKED
+                    else (
+                        ActivityState.FAILED
+                        if attempt.status
+                        is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+                        else ActivityState.BLOCKED
+                    )
                 ),
             )
             return result
@@ -874,21 +892,31 @@ class HandleInteractiveConversationTurn:
     ) -> InteractiveTurnResult:
         """Deterministic terminal answer for a governed-path failure.
 
-        SOURCE_UNAVAILABLE and AUTHZ_DENIED are truthful terminal
-        states: the selected authoritative source errored or denied
-        access, so no operational data was verified. The result is
-        HYPOTHESIS-class (ungrounded) and carries the canonical
-        unverified-source limitation — never a general-model answer
-        masquerading as DELPI data.
+        SOURCE_UNAVAILABLE, AUTHZ_DENIED and PROCESSING_TIMEOUT are
+        truthful terminal states: the selected authoritative source
+        errored or denied access, or an internal processing deadline
+        interrupted the turn — in all cases no operational data was
+        verified. The result is HYPOTHESIS-class (ungrounded) and
+        carries the canonical unverified-source limitation — never a
+        general-model answer masquerading as DELPI data.
         """
         denied = attempt.status is GovernedCapabilityStatus.AUTHZ_DENIED
+        processing_timeout = (
+            attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
+        )
         not_found = attempt.error_code == OWNER_RECORD_NOT_FOUND
         # Owner-declared precondition (bounded, verbatim owner
         # vocabulary — never a URL): tells the user WHAT the source
         # reported missing, without granting or inventing anything.
         owner_hint = getattr(attempt, "owner_hint", None)
         has_hint = isinstance(owner_hint, str) and bool(owner_hint)
-        if denied:
+        if processing_timeout:
+            # Doc 88 CP2: internal deadline/budget exhaustion — the
+            # source is never blamed when it was never consulted.
+            content = DELPI_PROCESSING_TIMEOUT_MESSAGE
+            message_kind = MESSAGE_KIND_PROCESSING_TIMEOUT
+            limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)
+        elif denied:
             content = DELPI_SOURCE_DENIED_MESSAGE
             message_kind = MESSAGE_KIND_AUTHZ_DENIED
             limitations = (LIMITATION_DELPI_SOURCE_UNVERIFIED,)

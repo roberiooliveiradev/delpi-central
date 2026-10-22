@@ -855,7 +855,7 @@ def test_d3_13_discovery_respects_turn_budget_exhausted():
         turn_budget_seconds=0.0,
     )
     attempt = orch.attempt("Como criar um processo?")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
     assert provider.calls == []
 

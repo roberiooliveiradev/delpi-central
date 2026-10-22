@@ -342,10 +342,11 @@ def test_optional_index_probe_not_started_when_headroom_insufficient():
     }
     assert INDEX_PROBE_INSTRUCTION_ID not in probe_purposes
     # Empty INDEX-as-guidance must not run when probe was budget-skipped.
-    # SEMARG: budget skip is honest SOURCE_UNAVAILABLE — not a fabricated
-    # "provide código/filtro" clarification.
+    # SEMARG + doc 88 CP2: budget skip is honest PROCESSING_TIMEOUT —
+    # not a fabricated "provide código/filtro" clarification and never
+    # a fabricated source failure when no owner was consulted.
     assert provider.calls == []
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
 
 

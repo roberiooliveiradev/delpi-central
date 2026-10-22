@@ -316,7 +316,7 @@ def test_conv_t10_technical_failure_vs_no_match():
         model_ref=TEST_MODEL_REF,
     )
     attempt = orch.attempt("liste metodologias")
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code in {"model_timeout", "turn_budget_exhausted"}
 
 
@@ -378,6 +378,7 @@ def test_conv_t19_ambiguous_write_still_clarifies():
         GovernedCapabilityStatus.WRITE_REJECTED,
         GovernedCapabilityStatus.CONFIRMATION_REQUIRED,
         GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+        GovernedCapabilityStatus.PROCESSING_TIMEOUT,
     }
 
 

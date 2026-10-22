@@ -32,7 +32,8 @@ export type DeliaMessageKind =
   | "WRITE_REJECTED"
   | "AUTHZ_DENIED"
   | "SOURCE_UNAVAILABLE"
-  | "PRECONDITION_REQUIRED";
+  | "PRECONDITION_REQUIRED"
+  | "PROCESSING_TIMEOUT";
 
 const KNOWN_MESSAGE_KINDS: ReadonlySet<string> = new Set<string>([
   "RESULT",
@@ -42,6 +43,7 @@ const KNOWN_MESSAGE_KINDS: ReadonlySet<string> = new Set<string>([
   "AUTHZ_DENIED",
   "SOURCE_UNAVAILABLE",
   "PRECONDITION_REQUIRED",
+  "PROCESSING_TIMEOUT",
 ]);
 
 /** Closed block allowlist — mirrors the backend emit set. Any other

@@ -9,7 +9,8 @@ genuinely common semantic skeleton lives here:
   governed capability attempt
     -> GovernedCapabilityStatus (SUCCESS | NOT_APPLICABLE
        | SOURCE_UNAVAILABLE | AUTHZ_DENIED | CONFIRMATION_REQUIRED
-       | WRITE_REJECTED | CLARIFICATION_REQUIRED)
+       | WRITE_REJECTED | CLARIFICATION_REQUIRED
+       | PROCESSING_TIMEOUT)
     -> bounded provenance projection (source != capability group)
     -> deterministic bounded rendering carried on the attempt
 
@@ -63,6 +64,13 @@ class GovernedCapabilityStatus(str, Enum):
     # argument projection cannot fill mandatory owner inputs. Truthful
     # ask-back instead of a generic refusal or an invented value.
     CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
+    # Doc 88 CP2: a model-stage deadline or the shared turn budget was
+    # exhausted — an internal processing failure that never reached or
+    # finished the owner path. Distinct from SOURCE_UNAVAILABLE: the
+    # authoritative source must not be blamed when it was never
+    # consulted; ``error_code`` preserves the observed cause
+    # (model_timeout | turn_budget_exhausted).
+    PROCESSING_TIMEOUT = "PROCESSING_TIMEOUT"
 
 
 @dataclass(frozen=True, slots=True)

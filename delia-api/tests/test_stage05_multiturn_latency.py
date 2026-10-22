@@ -544,7 +544,7 @@ def test_dependency_timeout_is_terminal_not_success():
         "Quero o item B",
         prior_turns=_prior_pair(),
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "model_timeout"
     assert provider.calls == []
 
@@ -674,7 +674,7 @@ def test_global_budget_blocks_model_stage_when_remaining_too_small():
         prior_turns=_prior_pair(),
         turn_deadline=deadline,
     )
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
     # Goal may have run before budget shrank; capability select must not.
     assert CAPABILITY_SELECTION_INSTRUCTION_ID not in [

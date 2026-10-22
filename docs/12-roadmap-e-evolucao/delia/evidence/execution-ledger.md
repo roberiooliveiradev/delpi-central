@@ -17174,19 +17174,19 @@ C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
 
-## §6.370 — F03-B: fila conversacional efêmera funcional (2026-10-22)
-
-**2026-10-22 — ephemeral conversation queue implementation (F03-B):** `DELIA-UX-F03B-EPHEMERAL-CONVERSATION-QUEUE-IMPLEMENTATION-01`. Autoridade primária: doc 122 §11 (Product Master) — fila temporária em memória, isolada pela conversa ativa; ADRs de identidade/persistência do doc 121/122 explicitamente não reativadas. **Implementação:** `plugins/delia/src/queue/conversationQueue.ts` (`useConversationQueue`; `PendingConversationRequest{id local, text congelado, createdAt}`; `enqueue/moveItem/removeItem/takeNext/clear`; `takeNext` consome o head atomicamente contra ref antes de qualquer POST — item consumido nunca despachado duas vezes). `App.tsx`: `handleSubmit` envia direto só quando idle+fila vazia; durante in-flight ou com pendências o texto vai ao tail (FIFO); efeito de dispatch dispara o próximo somente em `idle && !queuePaused && !hasPendingConfirmation`, reutilizando `sendTurn`/`submitInteractionTurn` inalterados; `turnsRef` garante contexto fresco com a resposta recém-concluída. `plugin-ui`: `ComposerEnqueueButton` (`ListPlus`, intenção apenas) + `MessageComposer` props aditivas `onEnqueue`/`enqueueLabel` — textarea editável e Enter enfileira durante in-flight somente quando o host admite; Stop preservado como primário cancelável; ditado VD-F05 liberado (`busy=dictating || (inFlight && !onEnqueue)`). **Pausa honesta:** erro HTTP/timeout, Stop do usuário e confirmação governada pendente (`hasPendingConfirmation` derivado de `turns`) bloqueiam avanço; pendências preservadas; zero retry; aviso + ação explícita "Retomar fila" (`PAUSED_AFTER_ERROR`). **Draft:** admissão limpa o draft na hora; falha restaura somente se o draft continuou vazio — conclusão tardia nunca sobrescreve texto novo (bug real encontrado no QA e corrigido). DraftRecovery R1 intacto; enfileirar não cria snapshot. **Isolamento:** estado morre com o mount — full-page↔Dock são mounts separados (`GlobalDeliaDock.tsx` `hostRef`, evidência em código); reload descarta; fixture `?delia-demo-queue=` inerte em produção (paridade provada). `BACKEND_CHANGED=NO`; `PERSISTENCE=NONE`; `QUEUE_SCOPE=ACTIVE_CONVERSATION_MOUNT`; zero storage/endpoint/scheduler/worker. **Testes:** 19 novos (6 unitários hook + 13 integração com contagem de POSTs reais); suítes completas 320/320 delia + 2286/2286 plugin-ui; typecheck/build/federation PASS; Playwright backend real 31/31 (full-page 19 — ordem A,C,B após reorder, remoção nunca despachada, stop→resume; Dock real 8 — corpo capado 89px≤100px; mobile 360px 4/4). Evidência: [conversation-queue-f03b](conversation-queue-f03b/conversation-queue-f03b-evidence.md). Specs atualizadas: doc 71 §13.8, doc 122 §11 evidência.
+**2026-10-22 — LLM timeout classification + continuity inventory (report 89):** `DELIA-C3-LLM-TIMEOUT-CLASSIFICATION-AND-CONTINUITY-FOUNDATION-01` (doc 88 CP1+CP2). Proven defect: `_StageDeadlineExceeded`/`TurnBudgetExhausted` terminated as `SOURCE_UNAVAILABLE` → "Fonte indisponível" with zero MCP calls. Fix: new `GovernedCapabilityStatus.PROCESSING_TIMEOUT` at the 4 deadline sites; `error_code` preserves the observed cause; honest terminal message never blames the source; additive `PROCESSING_TIMEOUT` message kind (contract v1) + MFE badge "Processamento interrompido"; activity `BLOCKED/FAILED`. Real MCP failure stays `SOURCE_UNAVAILABLE`; authz fail-closed; insufficient evidence distinct. Continuity inventory: no session/turn/activity persistence exists (request-scoped), no reconnect, no checkpoint engine — CP3 remains ARCHITECTURE_DECISION_REQUIRED. Report: [89](../corrections/mcp-contextual-intelligence-orchestration/89-llm-timeout-classification-and-continuity-inventory.md).
 
 ```text
-F03B_IMPLEMENTATION=EXECUTED
-QUEUE_STORAGE=MEMORY_ONLY
-QUEUE_SCOPE=ACTIVE_CONVERSATION_MOUNT
-BACKEND_CHANGED=NO
-PERSISTENCE=NONE
-TESTS=PASS
-PLAYWRIGHT=PASS(31/31)
+ERROR_CLASSIFICATION=FIXED(deadline→PROCESSING_TIMEOUT, source-blame removed)
+CHECKPOINT_EXISTING_EQUIVALENT=NO
+RESUME_EXISTING_EQUIVALENT=NO
+BACKEND_REGRESSION=PASS(2 pre-existing exclusions documented)
+FRONTEND_REGRESSION=PASS(64)
+REAL_EVAL=PASS(forced-boundary container, real wiring)
+CHECKPOINT_IMPLEMENTED=NO
+RESUME_IMPLEMENTED=NO
+PRODUCTION_ACTIVATION=NO
 I04_ACCEPTED=NO
-PHASE_PROGRESSION=NONE
-NEXT=PRODUCTION_DEPLOYMENT
+C3_EXECUTED=YES
+NEXT=CP3_ARCHITECTURE_DECISION_REQUIRED
 ```

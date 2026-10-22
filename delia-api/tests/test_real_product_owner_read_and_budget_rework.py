@@ -7,7 +7,8 @@ built (description filled), optional index probe skipped for headroom,
 then skip_budget_identifier_unavailable discarded the READ.
 
 These tests lock: schema-valid search args proceed to owner invoke;
-empty {} under budget skip remains SOURCE_UNAVAILABLE; no product id
+empty {} under budget skip terminates as PROCESSING_TIMEOUT (doc 88
+CP2 — never blamed on the source); no product id
 invention; provider-neutral rename; cold greeting / hypothetical
 admission regressions; write/ACT still fail closed.
 """
@@ -514,6 +515,7 @@ def test_prod_t07_product_id_not_invented_in_arguments():
         assert attempt.status in {
             GovernedCapabilityStatus.CLARIFICATION_REQUIRED,
             GovernedCapabilityStatus.SOURCE_UNAVAILABLE,
+            GovernedCapabilityStatus.PROCESSING_TIMEOUT,
             GovernedCapabilityStatus.SUCCESS,
         }
 
@@ -649,7 +651,7 @@ def test_prod_t12_empty_args_under_budget_skip_still_unavailable():
         turn_deadline=deadline,
     )
     assert provider.calls == []
-    assert attempt.status is GovernedCapabilityStatus.SOURCE_UNAVAILABLE
+    assert attempt.status is GovernedCapabilityStatus.PROCESSING_TIMEOUT
     assert attempt.error_code == "turn_budget_exhausted"
 
 

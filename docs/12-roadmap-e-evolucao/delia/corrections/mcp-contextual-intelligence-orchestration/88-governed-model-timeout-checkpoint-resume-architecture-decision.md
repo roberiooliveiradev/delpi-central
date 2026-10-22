@@ -119,6 +119,38 @@ Aplicar Clean Architecture + Ports/Adapters e boundary real se alguma nova exten
 
 `PRODUCT_DIRECTION=APPROVED` (uma pergunta, continuidade automática quando tecnicamente suportada); `CAUSE_MAPPING_DEFECT=PROVEN_STATIC`; `EXECUTOR_DEV_BUDGET_STARVATION=REPORTED`; `PROD_ROOT_CAUSE=INCONCLUSIVE`; `CHECKPOINT_RUNTIME=TO_INVENTORY`; `ASYNC_DELIVERY_RUNTIME=TO_INVENTORY`; `RETRY_STAGE_CONTRACT=TO_INVENTORY`; `CONTINUATION_IMPLEMENTED=NO`; `END_TO_END_TEST=TEST_NOT_RUN`; `PRODUCTION_CRI_ON=NOT_VERIFIED`; `I04_ACCEPTED=NO`; `C3_EXECUTED=YES_EXECUTOR_REPORTED`.
 
+### 10.1 CP1+CP2 executados (2026-10-22, relatório 89)
+
+`CP1_INVENTORY=DONE` — mapeamento completo model→attempt→interaction→
+HTTP/NDJSON→MFE registrado no relatório 89; o defeito localizado em 4
+sites (catch de `_StageDeadlineExceeded`/`TurnBudgetExhausted` em
+`attempt()`, budget-skip de identificador, prior-continuation).
+
+`CP2_CLASSIFICATION=FIXED` — novo membro `PROCESSING_TIMEOUT` em
+`GovernedCapabilityStatus`; deadlines/budget nunca mais saem como
+`SOURCE_UNAVAILABLE`; `error_code` preserva `model_timeout`/
+`turn_budget_exhausted`; falha real de MCP permanece
+`SOURCE_UNAVAILABLE`; AUTHZ fail-closed inalterado; insuficiência de
+evidência inalterada. Mensagem terminal honesta ("processamento
+interrompido… não identifiquei falha na fonte"), `message_kind`
+`PROCESSING_TIMEOUT` aditivo ao contrato v1, badge MFE
+"Processamento interrompido" (warning/TimerOff), atividade
+`BLOCKED`/`FAILED`.
+
+`CONTINUITY_INVENTORY=NONE_EXISTING` — sem persistência de
+sessão/turno/atividade (request-scoped by design), sem reconnect, sem
+engine de checkpoint/retry. Reusáveis para CP3: `correlation_id`,
+`prior_turns` (contexto client-supplied), vocabulário ActivityEvent,
+`TurnDeadline`/`stage_timeout`, `InteractiveTurnResult`. CP3 continua
+`ARCHITECTURE_DECISION_REQUIRED` — não existe substrate legítimo de
+persistência hoje.
+
+`END_TO_END_TEST=PARTIAL` — boundary forçado em container real
+(`turn_budget_seconds=0`, wiring real davi/teo/vista) comprova
+`PROCESSING_TIMEOUT` end-to-end; caso natural depende de amostragem de
+latência do modelo. `CHECKPOINT_IMPLEMENTED=NO`,
+`RESUME_IMPLEMENTED=NO`, `PRODUCTION_ACTIVATION=NO`.
+
 ## 11. Execution / review contract
 
 Future execution report must carry: BASE_HEAD/FINAL_HEAD/origin; authorities+CP/RQ; EXISTING_EQUIVALENT/REUSE_DECISION per responsibility; error-code mapping before/after; checkpoint owner/schema/lifetime/storage; state transitions; transport/reconnect; effective authorization and TTL; resume stage; dedup/idempotency; cancellation and budget policy; RED/GREEN; negative safety; independent real-model+real-MCP eval; prod verification; files/commit/ledger; `ACCEPT|ACCEPT_WITH_RESIDUAL|REWORK|EXECUTION_DRIFT|INCONCLUSIVE`. A failed gate stops only the dependent continuation step; do not silently redesign.

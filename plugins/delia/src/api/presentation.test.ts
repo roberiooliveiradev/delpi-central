@@ -37,6 +37,7 @@ describe("parsePresentation", () => {
     "AUTHZ_DENIED",
     "SOURCE_UNAVAILABLE",
     "PRECONDITION_REQUIRED",
+    "PROCESSING_TIMEOUT",
   ])("preserves the canonical kind %s", (kind) => {
     const parsed = parsePresentation({
       ...BASE_PRESENTATION,
