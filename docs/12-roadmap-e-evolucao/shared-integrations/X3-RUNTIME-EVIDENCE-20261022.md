@@ -216,3 +216,48 @@ individual/bulk com idempotência fail-closed → prepare-update draft-only.
 Residuais: registro ROPA formal (DPO) e revisão da semântica de replay 409 vs
 `idempotent_replay` quando a revisão muda — comportamento atual é fail-closed
 correto, mas o contrato de replay pode ser refinado no X4.
+
+---
+
+## Adendo X3.E2E/REWORK — Correções de evidência e cobertura (2026-10-22)
+
+Investigação das duas inconsistências residuais apontadas na revisão
+arquitetural. Conclusão: **nenhum defeito de implementação** — divergência
+documental e lacuna de cobertura de testes, ambas corrigidas.
+
+### A — `person_type` (era: afirmação incorreta na evidência)
+
+- **Fato real (verificado em produção, read-only):** `GET /integrations/
+  protheus/suppliers/{id}` retorna `person_type: "J"` no envelope flat para
+  `00246901` e `00387801`. A afirmação anterior de "campo ausente" estava
+  **incorreta** — a chave constava inclusive na listagem de keys capturada.
+- **Gate PJ comprovado fail-closed:** `create_review` rejeita
+  `person_type != "J"` (`EnrichmentUnsupportedDocumentError`). O reader
+  normaliza ausente → `""` → também rejeitado. Cobertura ampliada:
+  `person_type ∈ {"F", "", " ", None}` → todos rejeitados, nada persistido.
+- Causa raiz da divergência: relatório X3.E2E interpretou errado a matriz
+  S1 — nenhuma alteração de contrato ou producer necessária.
+
+### B — Idempotência (semântica confirmada, cobertura ampliada)
+
+- `request_hash` inclui `expected_revision`: **replay idêntico** (mesma
+  chave + mesmo payload completo) → `idempotent_replay=true`, sem novos
+  registros; **payload divergente** (inclusive revisão diferente com a
+  mesma chave — cenário do E2E) → `409 ENRICHMENT_IDEMPOTENCY_CONFLICT`.
+  Os 409 observados no X3.E2E eram, portanto, a semântica correta do
+  contrato — não replay idêntico.
+- Cobertura preexistente confirmada: replay individual idêntico
+  (`replayed=True`, zero decisões novas) e conflito por payload divergente.
+- Cobertura adicionada: replay **bulk** idêntico (ordenamento de
+  `field_keys` insensível — payload canônico ordenado), conflito bulk por
+  payload divergente, e conflito de revisão obsoleta (`r-2` com
+  `expected_revision` stale → `ReviewRevisionConflictError`).
+- Produção confirma o contrato: `decision_operations` = 2 (single + bulk);
+  os replays 409 não geraram operações/decisões/eventos duplicados.
+
+### Resultado do rework
+
+- **Código de aplicação: zero alterações** — implementação correta.
+- **Testes:** +6 casos (suíte supplies-api 438 verde, 21 skip PG).
+- **Impacto sobre a revisão produtiva:** nenhum — dados íntegros e
+  consistentes com o contrato.
