@@ -248,7 +248,7 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
                 request,
                 playlist_id=playlist_id,
                 actor=actor,
-                client_id=body.clientId,
+                client_id=getattr(body, "clientId", None),
                 operation="slide_create",
             ),
         )
