@@ -235,3 +235,6 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Retorno do owner REST Protheus — 2026-10-21:** Gabriel confirmou REST `:8701` sobre `DELPI_TST01`, ainda verificará endpoint de produção `DELPI`, fará ajuste para POST devolver código/loja e enviará matrizes obrigatórias POST e mutáveis PUT. Propôs rastreabilidade de integrações com tabela intermediária, **ainda não aprovada nem implementada**. Ver [evidência da resposta Gabriel F4](./evidence/suppliers-f4-gabriel-owner-response-2026-10-21.md). **CREATE/UPDATE produtivos continuam bloqueados**.
