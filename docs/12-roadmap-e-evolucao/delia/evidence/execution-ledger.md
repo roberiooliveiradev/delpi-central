@@ -17088,3 +17088,21 @@ PRODUCTION_ACTIVATION=NO
 I04_ACCEPTED=NO
 NEXT=COORDINATION_REVIEW
 ```
+
+
+## §6.367 — C3 independent verification & residual remediation (2026-10-22)
+
+**TASK:** DELIA-C3-CONTEXTUAL-MCP-INDEPENDENT-VERIFICATION-AND-RESIDUAL-REMEDIATION-01 over published `a4711d6fa0` (byte-equivalent runtime confirmed). **R1 (OFF recovery):** legitimate cross-mode improvement preserved — trigger restricted to `MCP_PROTOCOL_ERROR`, no auth-error conversion, budget-honoring, no DISCOVERY self-recovery, writes unreachable by construction; focused suite runs CRI-off proving OFF semantics; `OFF_LIVE=TEST_NOT_RUN` (container-env flag, persistent dev CRI-ON required). **R2.F (real defect → fixed):** TÉO `capability_surface.entities` is a *list* of entity dicts and lost to write-side `entity_schemas` — digest now prefers canonical `capability_surface` collections and supports list-form collections via generic id keys; live T4 presents real `filterable_fields`. Other R2 negatives (injection, false authority, invented facts, credentials, large/malformed catalogs, directives-as-data) already bounded — no new code. **R3:** reactive recovery preserved — first-attempt validity shown on unseen cases (T6 agrupador filter, V5 list_playlists); proactive channel remains owner/architecture dependency (doc 83). **New residual:** E3 presenter count inconsistency "Encontrei 40" vs "5 de 32" (pre-existing). Tests: 16/16 focused + related suites PASS. Report: [85](../corrections/mcp-contextual-intelligence-orchestration/85-c3-independent-verification-and-residual-remediation.md).
+
+```text
+R1=LEGITIMATE_DELTA_PRESERVED
+R2_F=REPRODUCED_AND_FIXED
+R3=PATH_A_PRESERVED
+UNIT_TESTS=PASS(16)
+REAL_EVAL=GROUNDED(T4-T6,V4,V5,D5)+HONEST_MISS(D4)+PREPARE_ONLY(G6)
+CRI_DEV_ENABLED=YES
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+C3_EXECUTED=YES
+NEXT=COORDINATION_REVIEW
+```

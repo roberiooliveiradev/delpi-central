@@ -635,6 +635,47 @@ def test_contract_facts_malformed_payload_fails_closed():
     assert verdict.decision == OUTCOME_ENVELOPE_ONLY
 
 
+def test_contract_facts_read_surface_wins_over_write_schemas():
+    """Concurrent owner contracts: when the catalog publishes both a
+    write-side ``entity_schemas`` collection and the read-side
+    ``capability_surface.entities`` vocabulary, the digest must prefer
+    the read surface — never present write-schema fields as if they
+    were the READ filters (R2.F)."""
+    outcome = _outcome(
+        "docs",
+        "get_catalog",
+        "catalog",
+        structured={
+            "registration_guide": {
+                "entity_schemas": {
+                    "process": {
+                        "required": ["nome_processo"],
+                        "optional": ["descricao_processo"],
+                    }
+                }
+            },
+            "capability_surface": {
+                "entities": [
+                    {
+                        "id": "process",
+                        "kind": "entity",
+                        "read_operations": ["get", "search"],
+                        "filterable_fields": ["q", "status"],
+                    }
+                ]
+            },
+        },
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.DISCOVERY
+    )
+    process_rows = [
+        row for row in facts.contract_facts if "process" in row
+    ]
+    assert process_rows
+    assert any("filterable_fields" in row for row in process_rows)
+
+
 def test_terminal_discovery_outcome_carries_facts_without_structured():
     """Terminal DISCOVERY outcomes drop ``structured`` for user safety
     but still carry bounded contract rows on the outcome field."""

@@ -1701,31 +1701,63 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
     rows: list[str] = []
     # All entity-contract collections the owner publishes (canonical
     # keys, depth ≤1) — read and write surfaces can coexist in one
-    # catalog; first occurrence per entity name wins.
+    # catalog; the read surface (``capability_surface``) wins name
+    # collisions over auxiliary schemas so a write contract is never
+    # presented as the READ vocabulary.
     entity_schemas: dict[str, Mapping[str, Any]] = {}
     if isinstance(sanitized, Mapping):
-        sections = [sanitized] + [
-            value
-            for value in list(sanitized.values())[:MAX_SURFACE_ENTRIES]
+        nested = [
+            (key, value)
+            for key, value in list(sanitized.items())[
+                :MAX_SURFACE_ENTRIES
+            ]
             if isinstance(value, Mapping)
         ]
+        nested.sort(
+            key=lambda kv: _canonical_key(kv[0]) != "capabilitysurface"
+        )
+        sections = [value for _, value in nested] + [sanitized]
         for section in sections:
             for key, collection in list(section.items())[
                 :MAX_SURFACE_ENTRIES
             ]:
-                if (
-                    _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS
-                    and isinstance(collection, Mapping)
+                if _canonical_key(key) not in (
+                    _ENTITY_SCHEMA_COLLECTION_KEYS
                 ):
-                    for name, schema in list(collection.items())[
+                    continue
+                if isinstance(collection, Mapping):
+                    entries: Any = list(collection.items())[
                         :MAX_SURFACE_ENTRIES
-                    ]:
-                        if (
-                            isinstance(name, str)
-                            and isinstance(schema, Mapping)
-                            and name not in entity_schemas
-                        ):
-                            entity_schemas[name] = schema
+                    ]
+                elif isinstance(collection, (list, tuple)):
+                    # List-form entity contracts (owner publishes
+                    # {"id": name, ...schema} entries).
+                    entries = (
+                        (
+                            next(
+                                (
+                                    item[fk]
+                                    for fk in ("id", "name", "entity", "key")
+                                    if isinstance(item.get(fk), str)
+                                ),
+                                None,
+                            ),
+                            item,
+                        )
+                        for item in list(collection)[
+                            :MAX_SURFACE_ENTRIES
+                        ]
+                        if isinstance(item, Mapping)
+                    )
+                else:
+                    continue
+                for name, schema in entries:
+                    if (
+                        isinstance(name, str)
+                        and isinstance(schema, Mapping)
+                        and name not in entity_schemas
+                    ):
+                        entity_schemas[name] = schema
     for name, schema in list(entity_schemas.items())[
         :MAX_CONTRACT_FACT_ENTITY_ROWS
     ]:
