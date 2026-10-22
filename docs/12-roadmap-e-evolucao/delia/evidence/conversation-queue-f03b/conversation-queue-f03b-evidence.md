@@ -68,6 +68,18 @@ type PendingConversationRequest = { id: string; text: string; createdAt: number 
 
 **Mobile 360px (4/4):** fila visível, zero overflow horizontal, enqueue visível com label colapsado a ícone.
 
+## 5b. QA autenticado de produção (2026-10-22)
+
+Sessão real autenticada (`user`) em `https://minhadelpi.com.br/apps/delia`, headless Chrome, request-delay de 1.5–2.5s apenas como janela de observação (backend e payload reais):
+
+**Drain + reordenação (11/11):** affordance de enqueue durante resposta, "2 solicitações aguardando", exatamente 1 POST durante in-flight, draft limpo após enqueue, controle de reordenação, fila some quando vazia, 3 POSTs na ordem **A → C → B** após reordenação.
+
+**Stop → pausa → retomada (9/9):** enqueue visível, fila com pendente, Stop local → "Retomar fila" aparece, pendência preservada, zero auto-dispatch após stop, retomada despacha a pendência, fila esvazia e oculta, **zero chaves de fila em local/session storage**.
+
+**Pausa por erro observada ao vivo:** uma resposta inválida do backend de produção (latência de modelo — residual já documentado no relatório 87) pausou a fila com pendências preservadas e zero auto-avanço — comportamento especificado, não defeito da fila.
+
+`PRODUCTION_BROWSER_QA=PASS` (cenários determinísticos 20/20 + pausa-por-erro observada ao vivo em condição real de backend).
+
 ## 6. Limites documentados (intencionais do slice)
 
 - Fila morre no unmount/reload/troca full-page↔Dock (mounts separados — `GlobalDeliaDock.tsx` `hostRef`); sem promessa de recuperação, multiaba ou continuidade entre dispositivos.
@@ -84,7 +96,9 @@ QUEUE_SCOPE=ACTIVE_CONVERSATION_MOUNT
 BACKEND_CHANGED=NO
 PERSISTENCE_ADDED=NO
 TESTS=PASS
-PLAYWRIGHT=31/31 (19 fullpage + 8 dock + 4 mobile)
-PRODUCTION_DEPLOYMENT=PENDING (registrar após deploy)
+PLAYWRIGHT=31/31 local (19 fullpage + 8 dock + 4 mobile) + 20/20 prod autenticado
+PRODUCTION_DEPLOYMENT=EXECUTED (cff65bb63b; plugin-ui+delia via up-prod-sequential.sh --cpu)
+PRODUCTION_BUNDLE_VERIFIED=YES (remoteEntry novo; local-queue/Retomar fila no chunk App-Bzh-kyGF.js)
+PRODUCTION_BROWSER_QA=PASS (20/20 determinísticos + pausa-por-erro ao vivo)
 PHASE_PROGRESSION=NONE
 ```

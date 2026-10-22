@@ -316,4 +316,4 @@ Sem backend de fila admitido, a implementação futura pode usar fixtures **excl
 
 **Evidência:** [conversation-queue-f03b](evidence/conversation-queue-f03b/conversation-queue-f03b-evidence.md) — Vitest 19 novos (hook 6 + integração 13 com contagem de POSTs reais), suites completas 320/320 delia + 2286/2286 plugin-ui, typecheck+build+federation PASS, Playwright backend real 31/31 (full-page 19 com reordenação C-antes-de-B e contagem de POSTs, Dock real 8 com cap 100px, mobile 4).
 
-**Status:** F03B_IMPLEMENTATION=EXECUTED; QUEUE_STORAGE=MEMORY_ONLY; BACKEND_CHANGED=NO; PERSISTENCE=NONE; TESTS=PASS; PHASE_PROGRESSION=NONE.
+**Status:** F03B_IMPLEMENTATION=EXECUTED; QUEUE_STORAGE=MEMORY_ONLY; BACKEND_CHANGED=NO; PERSISTENCE=NONE; TESTS=PASS; DEPLOYMENT=EXECUTED (cff65bb63b); PROD_BROWSER_QA=PASS; PHASE_PROGRESSION=NONE.
