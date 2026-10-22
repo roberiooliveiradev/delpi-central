@@ -2122,6 +2122,10 @@ services:
       COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE: ${COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE:-30}
       BRASILAPI_BASE_URL: ${BRASILAPI_BASE_URL:-https://brasilapi.com.br/api}
       BRASILAPI_TIMEOUT_SECONDS: ${BRASILAPI_TIMEOUT_SECONDS:-6}
+      # X2 — consumer da external-data-api (selecionado por
+      # COMPANY_REGISTRY_PROVIDER=external-data-api; default unavailable).
+      EXTERNAL_DATA_API_BASE_URL: ${EXTERNAL_DATA_API_BASE_URL:-http://external-data-api:8000}
+      EXTERNAL_DATA_API_TIMEOUT_SECONDS: ${EXTERNAL_DATA_API_TIMEOUT_SECONDS:-10}
       REDIS_URL: ${REDIS_URL:-}
 
     depends_on:

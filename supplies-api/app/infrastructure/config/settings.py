@@ -99,6 +99,15 @@ class Settings:
         os.getenv("COMPANY_REGISTRY_REDIS_TIMEOUT_SECONDS", "1.5") or "1.5"
     )
 
+    # X2 — shared external-data-api consumer (CompanyRegistryProvider
+    # value "external-data-api"). Internal S2S service, never browser-facing.
+    EXTERNAL_DATA_API_BASE_URL = os.getenv(
+        "EXTERNAL_DATA_API_BASE_URL", "http://external-data-api:8000"
+    )
+    EXTERNAL_DATA_API_TIMEOUT_SECONDS = float(
+        os.getenv("EXTERNAL_DATA_API_TIMEOUT_SECONDS", "10") or "10"
+    )
+
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "")
     PLUGINS_DB_PORT = os.getenv("PLUGINS_DB_PORT", "5432")
     PLUGINS_DB_NAME = os.getenv("PLUGINS_DB_NAME", "")
