@@ -85,6 +85,20 @@ Encerrar (único botão)
 - Duplo clique é bloqueado por `submitInFlightRef` — um POST por intenção.
 - Fechar em estado incerto reconcilia o estado autoritativo e **preserva**
   a intenção para o próximo open; nunca assume sucesso ou falha.
+- Retry de intenção previamente incerta (fase uncertain, incl. o retorno
+  restaurado após remount/F5): a sessão é validada no backend ANTES da
+  consulta idempotente, então um **401 — ou qualquer resposta sem o
+  código estruturado do contrato — não comprova o resultado da
+  primeira tentativa**. A intenção permanece íntegra (mesmo requestId,
+  run, expectedNext, branch e workCenter), as escritas contraditórias
+  seguem bloqueadas e a sessão é invalidada pelo provider oficial; a
+  reidentificação reabilita o retry com a mesma chave — nunca gera
+  requestId novo nem Stop de fallback. A mesma política vale para o
+  OrphanRunCard («Verificar troca pendente»). Só é definitivo o que
+  prova avaliação pelo contrato: sucesso ou ApiError com código
+  estruturado de handoff (isStructuredHandoffRejection). Na PRIMEIRA
+  tentativa, um 401 prova que a requisição não foi processada —
+  rejeição definitiva, sem bloqueio residual.
 
 ### Identidade imutável do run no modal
 
@@ -172,9 +186,9 @@ estreitas via media query existente; temas via variáveis `pcp-pub`.
 
 ## 8. Verificação
 
-- `vitest` (`npx vitest run src/apps/production-control`): **106/106** —
-  24 de interação (`ProductionRunHandoff.test.tsx`, incl. regressões
-  RW-01…RW-09 do rework final), 6 de cockpit
+- `vitest` (`npx vitest run src/apps/production-control`): **109/109** —
+  26 de interação (`ProductionRunHandoff.test.tsx`, incl. regressões
+  RW-01…RW-09 do rework final), 7 de cockpit
   (`CockpitHandoff.test.tsx`: readback falho/incoerente/corrida
   reload×WebSocket, reload vencedor do WS com GET do run falho mantendo a pendência e o run conhecido, e run órfão resolvendo a troca incerta pela intenção persistida com o mesmo requestId — as duas regressões residuais foram verificadas falhando antes e passando depois), 22 de política pura (`runHandoff.test.tsx`) e os
   demais arquivos sem regressão.

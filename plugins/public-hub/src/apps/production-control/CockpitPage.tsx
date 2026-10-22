@@ -16,7 +16,7 @@ import {
 import {
   clearPendingHandoffIntent,
   handoffConflictView,
-  isUncertainHandoffError,
+  isStructuredHandoffRejection,
   pendingHandoffIntentFor,
 } from "./runHandoff.ts";
 import {
@@ -1375,8 +1375,17 @@ function OrphanRunCard({
       setResolveNote("Troca resolvida. Atualizando a situação atual…");
       onStopped();
     } catch (err) {
-      if (isAuthError(err)) invalidate();
-      if (isUncertainHandoffError(err)) {
+      // A sessão é validada ANTES da consulta idempotente: um 401 (ou
+      // qualquer resposta sem o código estruturado do contrato) não
+      // comprova o resultado da tentativa original — a intenção não
+      // pode ser descartada.
+      if (isAuthError(err)) {
+        invalidate();
+        setResolveNote(
+          "A sessão expirou — a tentativa segue preservada; " +
+            "identifique-se novamente e verifique a troca pendente.",
+        );
+      } else if (!isStructuredHandoffRejection(err)) {
         setResolveNote(
           "A resposta ainda não chegou — a tentativa segue preservada; tente novamente.",
         );

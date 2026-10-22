@@ -12,6 +12,7 @@ import {
   clearPendingHandoffIntent,
   handoffConflictView,
   handoffIntentSignature,
+  isStructuredHandoffRejection,
   isUncertainHandoffError,
   newHandoffRequestId,
   pendingHandoffIntentFor,
@@ -30,6 +31,11 @@ export type RunHandoffPhase =
 const UNCERTAIN_MESSAGE =
   "A resposta não chegou — a troca pode ter sido concluída. " +
   "Tente novamente com o mesmo pedido ou atualize o painel.";
+
+const REAUTH_MESSAGE =
+  "A sessão expirou antes de confirmar o resultado — a tentativa " +
+  "original segue preservada. Identifique-se novamente para concluir " +
+  "a verificação com o mesmo pedido.";
 
 type Options = {
   token: string;
@@ -194,6 +200,10 @@ export function useRunHandoff({
     const sessionToken = session?.sessionToken;
     if (!runId || !sessionToken || submitInFlightRef.current) return;
 
+    // Replay = reenvio de uma intenção cuja primeira tentativa já teve
+    // resultado desconhecido (inclui o retorno restaurado após
+    // remount/F5, que reabre sempre em fase "uncertain").
+    const replaying = phase === "uncertain";
     let intent: RunHandoffIntent | null;
     if (phase === "uncertain") {
       // Resultado desconhecido: a ÚNICA escrita permitida é reenviar a
@@ -297,6 +307,19 @@ export function useRunHandoff({
         return;
       }
       const apiErr = err as { code?: string; message?: string };
+      // Retry de intenção previamente incerta: o backend valida a
+      // sessão ANTES da consulta idempotente — um 401 (ou qualquer
+      // resposta sem o código estruturado do contrato) não comprova o
+      // resultado da primeira tentativa. A intenção permanece íntegra,
+      // as escritas contraditórias seguem bloqueadas e a
+      // reidentificação reabilita o retry com a mesma chave.
+      if (replaying && !isStructuredHandoffRejection(err)) {
+        setUncertainMessage(
+          isAuthError(err) ? REAUTH_MESSAGE : UNCERTAIN_MESSAGE,
+        );
+        setPhase("uncertain");
+        return;
+      }
       const view = handoffConflictView(apiErr.code, apiErr.message);
       // Resposta definitiva: a intenção morre e a próxima escolha
       // explícita gerará nova chave.

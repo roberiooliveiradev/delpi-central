@@ -11,6 +11,7 @@ import type { MachineLoadOperation } from "./api.ts";
 import { OperatorCockpit } from "./CockpitPage.tsx";
 import {
   clearPendingHandoffIntent,
+  pendingHandoffIntentFor,
   registerPendingHandoffIntent,
 } from "./runHandoff.ts";
 
@@ -251,6 +252,9 @@ function stubCockpitFetch(handlers: Handlers = {}) {
         return okEnvelope({ ...RUN, status: "completed", endedAt: "2026-10-09T10:06:00Z" });
       }
       if (target.includes("bench-sessions/current")) return okEnvelope(SESSION);
+      if (target.endsWith("/bench-sessions") && method === "POST") {
+        return okEnvelope(SESSION);
+      }
       if (target.includes("downtime-source")) {
         return okEnvelope({
           source: "mes",
@@ -550,6 +554,101 @@ describe("readback pós-handoff (E2 rework final)", { timeout: 30000 }, () => {
       ).toBeEnabled(),
     );
     // Nenhum Stop foi enviado como fallback.
+    expect(
+      calls.filter(
+        (call) =>
+          (call.init?.method ?? "GET") === "POST" &&
+          call.url.endsWith("/stop"),
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("run órfão: recuperação com 401 preserva a intenção; sessão válida resolve sem Stop (auth-retry-B)", async () => {
+    // Caso B: o retry do card órfão recebe 401 — a sessão é validada
+    // ANTES da consulta idempotente, logo o 401 não descarta a
+    // tentativa original. A intenção permanece e uma sessão válida
+    // resolve o pedido original, sem Stop adicional.
+    registerPendingHandoffIntent("run-a-1", {
+      requestId: "req-fixed-1",
+      branch: "02",
+      workCenter: "CT-63",
+      expectedNext: { productionOrder: "24640401003", operationCode: "05" },
+    });
+    let activeRun: unknown = RUN;
+    let handoffCalls = 0;
+    const calls = stubCockpitFetch({
+      activeRun: () => activeRun,
+      machineLoad: () => okEnvelope(machineLoadPayload([NEXT_ITEM])),
+      handoff: () => {
+        handoffCalls += 1;
+        return handoffCalls === 1
+          ? failEnvelope("sessão expirada", 401)
+          : okEnvelope(HANDOFF_RESULT);
+      },
+    });
+    window.localStorage.setItem("delpi.pcp.cockpit.work-center.02", "CT-63");
+    window.sessionStorage.setItem(
+      "delpi.pcp.cockpit.bench-session.02.CT-63",
+      JSON.stringify(SESSION),
+    );
+    render(
+      <OperatorCockpit
+        token="tok-1"
+        branch="02"
+        initial={machineLoadPayload([NEXT_ITEM])}
+      />,
+    );
+    const socket = FakeWebSocket.instances[0];
+    await waitFor(() => expect(socket!.onmessage).toBeTruthy());
+    socket!.emit({ type: "machine_load_updated", reason: "sequence" });
+
+    const verify = await screen.findByRole("button", {
+      name: /Verificar troca pendente/i,
+    });
+    fireEvent.click(verify);
+
+    // 401 no retry: intenção preservada, sessão invalidada pelo
+    // provider oficial e a ação de recuperação continua disponível.
+    await screen.findByText(/sessão expirou/i);
+    expect(pendingHandoffIntentFor("run-a-1")?.requestId).toBe("req-fixed-1");
+    expect(
+      await screen.findByRole("button", { name: /Verificar troca pendente/i }),
+    ).toBeInTheDocument();
+
+    // Reidentificação pela superfície oficial (chip Identificar).
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^Identificar$/i }),
+    );
+    const reg = await screen.findByRole("textbox");
+    fireEvent.change(reg, { target: { value: "001234" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Entrar no posto/i }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument(),
+    );
+
+    // Sessão válida: a recuperação resolve a intenção ORIGINAL — mesmo
+    // requestId/contexto, sem Stop adicional.
+    activeRun = RUN_B;
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Verificar troca pendente/i }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: /Verificar troca pendente/i }),
+      ).not.toBeInTheDocument(),
+    );
+    const posts = handoffPosts(calls);
+    expect(posts).toHaveLength(2);
+    const second = JSON.parse(
+      String(posts[1].init?.body ?? "{}"),
+    ) as Record<string, unknown>;
+    expect(second.requestId).toBe("req-fixed-1");
+    expect(second.expectedNext).toEqual({
+      productionOrder: "24640401003",
+      operationCode: "05",
+    });
     expect(
       calls.filter(
         (call) =>

@@ -158,6 +158,22 @@ export const HANDOFF_ERROR_CODES = [
 
 export type HandoffErrorCode = (typeof HANDOFF_ERROR_CODES)[number];
 
+/**
+ * Rejeição definitiva pelo contrato E1: apenas um erro que carrega um
+ * código estruturado de handoff prova que a requisição alcançou e foi
+ * avaliada pela consulta idempotente. Respostas anteriores a essa
+ * etapa — sessão inválida (401), autorização, ou qualquer envelope sem
+ * código de handoff — não comprovam o resultado de uma tentativa
+ * anterior: para retry de intenção incerta, não são definitivas.
+ */
+export function isStructuredHandoffRejection(err: unknown): boolean {
+  const code = (err as { code?: string }).code;
+  return (
+    code != null &&
+    (HANDOFF_ERROR_CODES as readonly string[]).includes(code)
+  );
+}
+
 export type HandoffConflictAction =
   | "refresh_preview" // prévia nova + escolha explícita do operador
   | "classify" // abrir o fluxo existente de classificação de parada

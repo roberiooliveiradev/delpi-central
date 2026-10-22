@@ -13,6 +13,7 @@ import type { OperatorSessionContextValue } from "./OperatorSessionContext.ts";
 import { ProductionRunControls } from "./ProductionRunControls.tsx";
 import {
   clearPendingHandoffIntent,
+  pendingHandoffIntentFor,
   pendingHandoffIntents,
 } from "./runHandoff.ts";
 
@@ -219,10 +220,11 @@ function renderControls(
   overrides: {
     onHandoffCompleted?: () => void;
     runUpdatedSignal?: number;
+    session?: Partial<OperatorSessionContextValue>;
   } = {},
 ) {
   return render(
-    <OperatorSessionContext.Provider value={sessionCtx()}>
+    <OperatorSessionContext.Provider value={sessionCtx(overrides.session)}>
       <ProductionRunControls
         token="tok-1"
         branch="02"
@@ -948,6 +950,99 @@ describe("troca guiada de OP (E2)", () => {
     expect(handoffPosts(calls)).toHaveLength(2);
     expect(bodies).toHaveLength(2);
     expect(bodies[1]).toEqual(bodies[0]);
+  });
+
+  it("retry de intenção incerta com 401 preserva requestId e segue bloqueando escritas (auth-retry-A)", async () => {
+    // Caso A: POST 1 → 504 (incerto); retry → 401 — a sessão é validada
+    // ANTES da consulta idempotente, então o 401 não comprova o
+    // resultado da primeira tentativa: a intenção NÃO pode morrer.
+    const bodies: unknown[] = [];
+    const invalidate = vi.fn();
+    let handoffCalls = 0;
+    const onHandoffCompleted = vi.fn();
+    const calls = stubCockpitFetch({
+      handoff: (call) => {
+        handoffCalls += 1;
+        bodies.push(JSON.parse(String(call.init?.body)));
+        if (handoffCalls === 1)
+          return new Response("Gateway Timeout", { status: 504 });
+        if (handoffCalls === 2)
+          return failEnvelope("sessão expirada", 401);
+        return okEnvelope(HANDOFF_RESULT);
+      },
+    });
+    renderControls({
+      onHandoffCompleted,
+      session: { invalidate },
+    });
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+    expect(
+      await screen.findByText(/A resposta não chegou/i),
+    ).toBeInTheDocument();
+
+    // Retry → 401: sessão invalidada pelo provider oficial, intenção
+    // preservada integralmente, tela segue no estado incerto.
+    fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/i }));
+    expect(
+      await screen.findByText(/sessão expirou antes de confirmar/i),
+    ).toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalled();
+    const preserved = pendingHandoffIntentFor("run-a-1");
+    expect(preserved?.requestId).toBe(bodies[0] && (bodies[0] as Record<string, unknown>).requestId);
+    expect(handoffPosts(calls)).toHaveLength(2);
+
+    // Escritas contraditórias seguem bloqueadas fora do modal.
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    expect(
+      await screen.findByRole("button", { name: /Pausar/i }),
+    ).toBeDisabled();
+
+    // Após reidentificação: o retry repete o MESMO requestId e payload
+    // e recebe o replay original — nenhuma chave nova é gerada.
+    fireEvent.click(await screen.findByRole("button", { name: /^Encerrar$/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Tentar novamente/i }),
+    );
+    await waitFor(() => expect(onHandoffCompleted).toHaveBeenCalledTimes(1));
+    expect(handoffPosts(calls)).toHaveLength(3);
+    expect(bodies).toHaveLength(3);
+    expect(bodies[2]).toEqual(bodies[0]);
+  });
+
+  it("401 na primeira tentativa é definitivo: sem bloqueio permanente indevido (auth-retry-C)", async () => {
+    // Caso C: a primeira confirmação recebe rejeição que prova que a
+    // requisição não foi processada — a intenção recém-registrada morre
+    // e a interface segue as regras normais (sem bloqueio residual).
+    const invalidate = vi.fn();
+    stubCockpitFetch({
+      handoff: () => failEnvelope("sessão expirada", 401),
+    });
+    renderControls({ session: { invalidate } });
+    await openFinishSheet();
+
+    const nextButton = await screen.findByRole("button", {
+      name: /Ir para a próxima OP/i,
+    });
+    await waitFor(() => expect(nextButton).toBeEnabled());
+    fireEvent.click(nextButton);
+
+    await waitFor(() =>
+      expect(pendingHandoffIntentFor("run-a-1")).toBeNull(),
+    );
+    expect(invalidate).toHaveBeenCalled();
+    // Sem tela de incerteza permanente.
+    expect(screen.queryByText(/A resposta não chegou/i)).not.toBeInTheDocument();
+    // Cancelar libera as escritas normais (Pausar habilita de novo).
+    fireEvent.click(screen.getByRole("button", { name: /Cancelar/i }));
+    expect(
+      await screen.findByRole("button", { name: /Pausar/i }),
+    ).toBeEnabled();
   });
 
   it("intenção incerta bloqueia Pause/Resume/Stop fora do modal e sobrevive a remount e F5 (RW-08)", async () => {
