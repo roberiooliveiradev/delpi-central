@@ -235,3 +235,24 @@ Invariantes:
 Revalidação 2026-09-21 (`4f3ed59483`): GATE-FEATURE WF-06 permanece **PASS**. Autorização do Product Owner e freeze P0 de E9 estão persistidos. P-03 continua bloqueando apenas paridade/depreciação do BI, não a construção da página nativa.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.
+
+
+> **Proposta de enriquecimento cadastral assistido por CNPJ (2026-10-21):** [fluxo completo, decisões individuais e em lote](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). Consulta externa estruturada, comparação com SA2, aceitar/recusar sugestão por campo ou todos os divergentes elegíveis, controle de proveniência, auditoria, LGPD e posterior revisão de PUT autorizado. **TARGET / DOCUMENTED — sem implementação, sem endpoint novo, sem job, sem escrita no ERP.** Fontes governamentais e campos elegíveis exigem inventário/contrato antes do GO. Escopo provisório: fornecedores SA2 (confirmar terminologia "clientes").
+
+
+> **UX detalhada do enriquecimento por CNPJ:** [páginas, wireframes, componentes, decisões e critérios](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md), complementar ao [fluxo/contratos candidatos](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **Somente documentação TARGET**; não implementa componente, rota ou escrita. Históricos e novos endpoints dependem de contract freeze e autorização específica.
+
+
+> **Backend técnico do enriquecimento por CNPJ (2026-10-21):** [contrato proposto](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-BACKEND-TECHNICAL-CONTRACT.md) cobre endpoints, schemas, estados, persistência própria, decisões individuais/em lote, Idempotency, AuthZ, auditoria, privacy gates e rollout. Complementa o [frontend](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FRONTEND-UX-CONTRACT.md) e o [fluxo](./FORNECEDORES-ENRIQUECIMENTO-CADASTRAL-FLUXO-CONTRATO.md). **TARGET, não congelado e sem autorização para código/endpoint/migration.**
+
+
+> **Inventário oficial de fontes CNPJ (2026-10-21):** [Serpro PJ × Conecta gov.br × REDESIM × dados abertos RFB, schema e matriz SA2](./FORNECEDORES-CNPJ-INVENTARIO-FONTES-OFICIAIS.md). Evidência documental e recomendação condicional, **não** comprova acesso/contratação nem autoriza consulta automática ou implementação. Fonte/compliance/mapping permanecem gates.
+
+
+> **Verificações de contrato e trilha da origem de alterações (2026-10-21):** [Serpro, mapeamento SA2, LGPD e retenção](./FORNECEDORES-CNPJ-VERIFICACOES-ACESSO-LGPD-PROVENIENCIA.md). Contrato transversal **proposto** da `api-delpi` para manter `source_type/source_id/change_mode` por campo em POST/PUT de **qualquer BFF consumidor**, com estados de confirmação e auditoria: `api-delpi/docs/integrations/supplier-write-provenance-contract-proposal.md`. Nenhuma gravação, endpoint ou migration implementado.
+
+
+> **P0 do enriquecimento por CNPJ (2026-10-21):** [inventário técnico, limites de fonte oficial e contrato de evidência](./SUPPLIES-ENRICHMENT-01-INVENTORY-AND-EVIDENCE-GATE.md). Estado INVENTORY PARTIAL: contrato api-delpi de provenance v1 comprovado no main; Serpro depende de contratação; payload/licença/LGPD e inventory de código supplies-api ainda bloqueiam freeze. Não há implementação de fluxo de enriquecimento autorizada.
+
+
+> **P0.1 code inventory (2026-10-21):** [inventário de rotas BFF, DTO, S2S, AuthZ e gaps de enriquecimento](./SUPPLIES-ENRICHMENT-01-P01-CODE-INVENTORY.md). Inspeção de código real via GitHub. Resultado PARTIAL: sem tree completa, testes/runtime; não autoriza writes/provedor.
