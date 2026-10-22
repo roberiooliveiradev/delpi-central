@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock, Pause, Play, Square } from "lucide-react";
-import type { MachineLoadOperation, PendingMesDowntime, RunDowntimeView } from "./api.ts";
+import type {
+  MachineLoadOperation,
+  PendingMesDowntime,
+  RunDowntimeView,
+  RunHandoffResult,
+} from "./api.ts";
 import { DowntimeElapsedTimer } from "./DowntimeElapsedTimer";
 import { DowntimeReasonModal } from "./DowntimeReasonModal";
+import { FinishProductionSheet } from "./FinishProductionSheet.tsx";
 import { PendingDowntimesModal } from "./PendingDowntimesModal";
 import { ProductionRunTimeline } from "./ProductionRunTimeline";
 import { usePendingMesDowntimes } from "./usePendingMesDowntimes.ts";
+import { useRunHandoff } from "./useRunHandoff.ts";
 import { useRunTimeline } from "./useRunTimeline.ts";
 import { formatQty } from "./cockpitShared";
 import { formatTimeHm } from "./runTimeline";
@@ -29,6 +36,11 @@ type Props = {
   runUpdatedSignal?: number;
   runRealtimeEvent?: MachineLoadRealtimeEvent | null;
   realtimeConnected?: boolean;
+  /**
+   * E2: troca guiada confirmada — o owner da página reconcilia fila,
+   * card ativo e navega para a nova OP da publicação vigente.
+   */
+  onHandoffCompleted?: (result: RunHandoffResult) => void;
 };
 
 export function ProductionRunControls({
@@ -39,6 +51,7 @@ export function ProductionRunControls({
   runUpdatedSignal = 0,
   runRealtimeEvent = null,
   realtimeConnected = false,
+  onHandoffCompleted,
 }: Props) {
   // C4: sessão do operador vem do provider do posto — este componente só
   // consome; identificação/troca acontecem no nível do cockpit.
@@ -53,6 +66,7 @@ export function ProductionRunControls({
     pause,
     resume,
     stop,
+    refreshRun,
     loadDowntimeReasons,
     classifyDowntime,
     classifyDowntimeById,
@@ -67,6 +81,35 @@ export function ProductionRunControls({
     runRealtimeEvent,
     realtimeConnected,
   });
+
+  // E2: controlador único da troca guiada — card e detalhe compartilham
+  // o mesmo fluxo de prévia E1 + confirmação atômica (E2.RQ-01).
+  const runForHandoff = runMatchesOperation ? run : null;
+  const handoff = useRunHandoff({
+    token,
+    branch,
+    workCenter,
+    run: runForHandoff,
+    session,
+    onAuthError: invalidateSession,
+    onReconcile: refreshRun,
+    onHandoffCompleted,
+  });
+  // Reabre a finalização quando o bloqueio pending_classification foi
+  // resolvido pelo fluxo de motivo existente (E2.RQ-07).
+  const resumeFinishAfterClassifyRef = useRef(false);
+  const finishButtonRef = useRef<HTMLButtonElement | null>(null);
+  const finishWasOpenRef = useRef(false);
+  useEffect(() => {
+    if (handoff.isOpen) {
+      finishWasOpenRef.current = true;
+      return;
+    }
+    if (finishWasOpenRef.current) {
+      finishWasOpenRef.current = false;
+      finishButtonRef.current?.focus();
+    }
+  }, [handoff.isOpen]);
 
   const counted = run?.countedPieces ?? run?.piecesTotal ?? 0;
   const progress = resolveProductionRunProgress(counted, run?.targetPieces);
@@ -408,11 +451,19 @@ export function ProductionRunControls({
                   </>
                 )}
                 <button
+                  ref={finishButtonRef}
                   type="button"
                   className="pcp-pub__btn pcp-pub__btn--ghost"
                   onClick={() => {
-                    if (downtimeUnclassified) setReasonModalRequested(true);
-                    else void stop();
+                    // Parada sem motivo mantém a regra vigente: classificar
+                    // antes de qualquer forma de encerramento; ao concluir,
+                    // a finalização reabre com prévia nova (E2.RQ-07).
+                    if (downtimeUnclassified) {
+                      resumeFinishAfterClassifyRef.current = true;
+                      setReasonModalRequested(true);
+                    } else {
+                      handoff.open();
+                    }
                   }}
                   disabled={busy}
                 >
@@ -497,9 +548,17 @@ export function ProductionRunControls({
               setReturnToPending(false);
               setPendingModalOpen(true);
             }
+            if (resumeFinishAfterClassifyRef.current) {
+              resumeFinishAfterClassifyRef.current = false;
+              handoff.open();
+            }
             return;
           }
           await classifyDowntime(reasonCode, note, modalDowntime?.id ?? null);
+          if (resumeFinishAfterClassifyRef.current) {
+            resumeFinishAfterClassifyRef.current = false;
+            handoff.open();
+          }
         }}
         onClose={() => {
           setManualTarget(null);
@@ -510,6 +569,34 @@ export function ProductionRunControls({
             void refreshPending();
             setPendingModalOpen(true);
           }
+          if (resumeFinishAfterClassifyRef.current) {
+            resumeFinishAfterClassifyRef.current = false;
+            handoff.open();
+          }
+        }}
+      />
+
+      <FinishProductionSheet
+        handoff={handoff}
+        operation={operation}
+        run={runForHandoff}
+        countedLabel={formatQty(toOperatorUnit(counted))}
+        busy={busy}
+        onStop={async () => {
+          await stop();
+          handoff.close();
+        }}
+        onRequestClassify={() => {
+          // E1 bloqueou com pending_classification: sai da finalização,
+          // reconcilia o snapshot (a pendência veio do backend) e abre o
+          // modal de motivo existente; a troca retoma com prévia nova.
+          resumeFinishAfterClassifyRef.current = true;
+          handoff.close();
+          void (async () => {
+            await refreshRun();
+            await refreshPending();
+            setReasonModalRequested(true);
+          })();
         }}
       />
     </div>

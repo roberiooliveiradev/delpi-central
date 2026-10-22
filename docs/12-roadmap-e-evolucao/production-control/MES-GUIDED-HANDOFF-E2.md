@@ -1,0 +1,122 @@
+# MES — Troca guiada de OP no cockpit (E2: finalização inteligente)
+
+> Estado: **implementado — evidência pronta para revisão**.
+> TASK_ID: PC-MES-GUIDED-HANDOFF-E2. Escopo: somente `plugins/public-hub`
+> (cockpit do operador). Nenhuma linha de backend foi alterada — os
+> contratos da E1 são consumidos como publicados.
+> BASE_HEAD: `0da1467b3` (main já contém a E1 + rework, merge `46771ac4`).
+
+## 1. Resumo executivo
+
+O botão **Encerrar** continua sendo a única entrada de finalização do
+cockpit — nenhum botão «Trocar OP» foi criado e a barra de controles não
+cresceu (AC-01). O clique agora abre um modal de decisão
+(`FinishProductionSheet`) com três saídas:
+
+| Opção | Efeito |
+|---|---|
+| **Encerrar produção** | Executa o `stop()` vigente — mesmo endpoint, mesmas regras de classificação, mesmo erro. |
+| **Ir para a próxima OP** | Um único `POST …/handoff` (E1) encerra o run atual e inicia o sucessor da fila **PUBLISHED** já em `running`, ancorado no Pulse. Sem segunda confirmação, sem Play. |
+| **Cancelar** | Fecha o modal sem nenhuma escrita. |
+
+## 2. Decisão de UX (requisito obrigatório)
+
+- `EXISTING_EQUIVALENT = YES` para controles, sessão, overlays e contrato
+  E1 → `REUSE_DECISION = EXTEND`. O modal reutiliza a infraestrutura
+  `.pcp-pub-modal` (backdrop + painel) e o `OperatorSessionProvider`.
+- O mesmo controlador (`useRunHandoff`) serve o card **Agora nesta
+  bancada** (`CockpitPage`) e o detalhe da operação
+  (`OperationDetailPage`) — uma única implementação do fluxo (E2.RQ-01).
+- O card de **run órfão** («esta OP saiu da fila») mantém o Stop direto:
+  o handoff seria bloqueado por `current_not_in_queue`; abrir a prévia
+  seria um passo inútil. Decisão registrada, não esquecimento.
+
+## 3. Fluxo
+
+```
+Encerrar (único botão)
+  → FinishProductionSheet abre (zero escrita)
+    → GET handoff-preview (branch + workCenter + X-Delpi-Bench-Session)
+      → nextOperation vem SEMPRE do backend — nunca da fila visível
+    → Opção B habilitada só com preview.available === true
+    → clique = confirmação: POST handoff {requestId UUID, branch,
+      workCenter, expectedNext, website:""}
+      → sucesso → reconcilia (refreshRun + fila) → aviso
+        "OP anterior encerrada. Nova OP iniciada." → navega para a nova
+        operação da publicação vigente
+    → Opção A → stop() tradicional → fecha
+    → Cancelar/backdrop/Escape → fecha (backdrop e Escape bloqueados
+      durante o POST)
+```
+
+## 4. Idempotência e resultado incerto (E2.RQ-05/06)
+
+- `runHandoff.ts` concentra a política: um `requestId` UUID por intenção
+  confirmada (`crypto.randomUUID()` → `getRandomValues` → v4 com
+  `Math.random` para tablets HTTP — sempre UUID válido para o contrato).
+- Assinatura da intenção = `expectedNext`. Resultado incerto
+  (rede/timeout/502/503) preserva a MESMA chave — «Tentar novamente»
+  repete o mesmo POST e o replay idempotente devolve o resultado gravado.
+  Prévia nova + escolha explícita = nova intenção (nova chave).
+- Duplo clique é bloqueado por `submitInFlightRef` — um POST por intenção.
+- Fechar em estado incerto reconcilia o estado autoritativo em vez de
+  assumir sucesso ou falha.
+
+## 5. Códigos 409 (E2.RQ-07)
+
+`ApiError` ganhou `code` (retrocompatível) lido de `data.code` do
+envelope `fail()`. `handoffConflictView` traduz:
+
+| code | Ação na UI |
+|---|---|
+| `count_boundary_stale`, `queue_changed`, `request_conflict`, `pulse_unavailable` | Nova prévia + escolha explícita — nunca troca automática. |
+| `pending_classification` | Botão «Informar motivo» abre o `DowntimeReasonModal` existente; ao classificar, a finalização reabre com prévia nova. |
+| `current_not_in_queue`, `run_not_active` | Reconcilia run/fila — a condição real já mudou. |
+| `no_next_operation`, `balance_unknown`, `device_mismatch`, `epoch_conflict` | Bloqueio final com orientação; Stop tradicional permanece. |
+
+O bloco `pending_classification` também é tratado quando chega na
+**prévia** (`available:false` + `block.code`) — mesmo botão, mesmo fluxo.
+Nenhuma falha do handoff autoriza Stop automático. 401 usa a invalidação
+de sessão vigente.
+
+## 6. Arquivos
+
+| Arquivo | Papel |
+|---|---|
+| `api.ts` | `ApiError.code`, tipos `RunHandoffPreview/Result`, `fetchRunHandoffPreview`, `confirmRunHandoff` |
+| `runHandoff.ts` | requestId, assinatura da intenção, classificação de conflitos (puro) |
+| `useRunHandoff.ts` | máquina de estados closed → previewing → ready → submitting → uncertain |
+| `FinishProductionSheet.tsx` | modal de decisão (bottom sheet mobile / modal desktop) |
+| `ProductionRunControls.tsx` | Encerrar abre a sheet; Stop e classificação preservados |
+| `CockpitPage.tsx`, `OperationDetailPage.tsx` | `onHandoffCompleted` — reconcilia fila/card/detalhe e navega |
+| `cockpit.css` | `pcp-pub-finish*` sobre o sistema de modal vigente |
+| `runHandoff.test.tsx`, `ProductionRunHandoff.test.tsx` | política pura + 13 testes de interação |
+
+## 7. Acessibilidade e responsividade
+
+`role="dialog"` + `aria-modal` + `aria-labelledby`; foco inicial na opção
+conservadora e retorno ao botão Encerrar; Escape/backdrop só fora de
+estado de escrita; alvos grandes para toque; bottom sheet em telas
+estreitas via media query existente; temas via variáveis `pcp-pub`.
+
+## 8. Verificação
+
+- `vitest` (`npx vitest run` no pacote): 85/85 — 13 novos de interação
+  (`ProductionRunHandoff.test.tsx`) + 18 de política pura
+  (`runHandoff.test.tsx`), zero regressão nos 54 existentes.
+- `npx vite build` (mesmo comando do Dockerfile de produção): OK.
+  `tsc -b` local não roda sem `npm install` nos plugins irmãos —
+  limitação de ambiente; o gate oficial de imagem é o vite build.
+- `npm run lint` (`eslint .`): 44 erros + 2 warnings **100% baseline**
+  (regras react-hooks do compiler em código preexistente — os erros de
+  `CockpitPage`/`OperationDetailPage` incidem sobre linhas que existem
+  identicamente no HEAD). Zero erros nos arquivos E2.
+- `git diff --check`: limpo.
+- `TEST_NOT_RUN`: smoke real com Pulse/hardware e tablet — depende da
+  homologação E1 no ambiente-alvo (gate declarado no plano).
+
+## 9. Pendências
+
+- Homologação operacional da E1 (Pulse real) precede liberação da E2.
+- Deploy de produção: aguarda autorização explícita — build local de
+  produção já reproduzido via `npx vite build`.

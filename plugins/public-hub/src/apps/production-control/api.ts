@@ -89,6 +89,23 @@ async function readError(response: Response, fallback: string): Promise<string> 
   return fallback;
 }
 
+/** Erro do envelope fail(): mensagem + code estruturado em data.code (409). */
+async function readApiError(response: Response, fallback: string): Promise<ApiError> {
+  try {
+    const body = (await response.json()) as {
+      message?: string;
+      data?: { code?: string } | null;
+    };
+    return new ApiError(
+      body.message || fallback,
+      response.status,
+      body.data?.code ?? undefined,
+    );
+  } catch {
+    return new ApiError(fallback, response.status);
+  }
+}
+
 export async function fetchPublicMachineLoad(
   token: string,
   branch: string,
@@ -672,10 +689,13 @@ const BENCH_SESSION_HEADER = "X-Delpi-Bench-Session";
 /** Erro de API com status HTTP preservado (ex.: 401 = sessão expirada). */
 export class ApiError extends Error {
   status: number;
+  /** Código estruturado do domínio em 409s (ex.: count_boundary_stale). */
+  code?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -685,11 +705,18 @@ export function isAuthError(err: unknown): boolean {
 
 async function readEnvelope<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
-    throw new ApiError(await readError(response, fallback), response.status);
+    throw await readApiError(response, fallback);
   }
   const envelope = (await response.json()) as ApiEnvelope<T>;
   if (envelope.success === false) {
-    throw new ApiError(envelope.message || fallback, response.status);
+    const code =
+      envelope.data != null &&
+      typeof envelope.data === "object" &&
+      "code" in envelope.data &&
+      typeof (envelope.data as { code?: unknown }).code === "string"
+        ? ((envelope.data as { code?: string }).code as string)
+        : undefined;
+    throw new ApiError(envelope.message || fallback, response.status, code);
   }
   return envelope.data;
 }
@@ -1159,6 +1186,108 @@ export async function stopProductionRun(
     },
   );
   return readEnvelope<ProductionRunSnapshot>(response, "Não foi possível encerrar.");
+}
+
+/* ---------- Guided run handoff (E2) — troca guiada de OP (contrato E1) ---------- */
+
+/** Bloqueio reportado pela prévia (available=false) ou por 409 na confirmação. */
+export type RunHandoffBlock = {
+  code: string;
+  message: string;
+};
+
+/** Próxima operação elegível — resolvida pelo backend sobre a fila PUBLISHED. */
+export type RunHandoffNextOperation = {
+  productionOrder: string;
+  operationCode: string;
+  operationDescription: string | null;
+  productCode: string | null;
+  productDescription: string | null;
+  pendingQty: number | null;
+  queuePosition: number | null;
+  queueSize: number | null;
+};
+
+export type RunHandoffPreview = {
+  currentRun: ProductionRunSnapshot | null;
+  nextOperation: RunHandoffNextOperation | null;
+  available: boolean;
+  block: RunHandoffBlock | null;
+};
+
+export type RunHandoffResult = {
+  requestId: string;
+  /** true = o POST repetiu um requestId já confirmado (sem efeito duplicado). */
+  replayed: boolean;
+  transitionAt: string;
+  boundary: { counter: number; counterEpoch: number };
+  auditId: string | null;
+  completedRun: ProductionRunSnapshot;
+  newRun: ProductionRunSnapshot;
+};
+
+/**
+ * Prévia da troca guiada: run atual + sucessora oficial da PUBLISHED.
+ * Leitura pura — nunca inicia nem encerra produção.
+ */
+export async function fetchRunHandoffPreview(
+  token: string,
+  sessionToken: string,
+  runId: string,
+  context: { branch: string; workCenter: string },
+): Promise<RunHandoffPreview> {
+  const params = new URLSearchParams({
+    branch: context.branch,
+    workCenter: context.workCenter,
+  });
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/handoff-preview?${params}`,
+    {
+      headers: {
+        Accept: "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+    },
+  );
+  return readEnvelope<RunHandoffPreview>(response, "Prévia da troca indisponível.");
+}
+
+/**
+ * Confirmação atômica da troca: encerra o run atual e inicia o sucessor
+ * da fila em uma única transação. `requestId` (UUID por intenção) torna a
+ * operação idempotente — retry seguro com a mesma chave e mesmo payload.
+ * 409 carrega data.code estruturado em ApiError.code.
+ */
+export async function confirmRunHandoff(
+  token: string,
+  sessionToken: string,
+  runId: string,
+  body: {
+    requestId: string;
+    branch: string;
+    workCenter: string;
+    expectedNext: { productionOrder: string; operationCode: string };
+  },
+): Promise<RunHandoffResult> {
+  const response = await fetch(
+    `${API_BASE}/public/machine-load/${encodeURIComponent(token)}/runs/${encodeURIComponent(runId)}/handoff`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [BENCH_SESSION_HEADER]: sessionToken,
+      },
+      body: JSON.stringify({
+        requestId: body.requestId,
+        branch: body.branch,
+        workCenter: body.workCenter,
+        expectedNext: body.expectedNext,
+        website: "",
+      }),
+    },
+  );
+  return readEnvelope<RunHandoffResult>(response, "Não foi possível trocar de OP.");
 }
 
 /* ---------- Operator Feedback (C3) — impedimentos do operador ao PCP ---------- */

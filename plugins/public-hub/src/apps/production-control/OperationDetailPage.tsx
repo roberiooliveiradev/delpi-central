@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { ArrowLeft, ClipboardCheck, ClipboardList, Maximize2, Package } from "lucide-react";
-import type { MachineLoadOperation } from "./api.ts";
+import type { MachineLoadOperation, RunHandoffResult } from "./api.ts";
 import { buildPublicProductModelGlbUrl } from "./api.ts";
 import {
   BrandBar,
@@ -49,6 +49,8 @@ type Props = {
   feedbackUpdatedSignal: number;
   feedbackRealtimeEvent: MachineLoadRealtimeEvent | null;
   hasActiveRun: boolean;
+  /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
+  onHandoffCompleted?: (result: RunHandoffResult) => void;
   onBack: () => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -73,6 +75,7 @@ export function OperationDetailPage({
   feedbackUpdatedSignal,
   feedbackRealtimeEvent,
   hasActiveRun,
+  onHandoffCompleted,
   onBack,
   onPrevious,
   onNext,
@@ -249,6 +252,7 @@ export function OperationDetailPage({
               runUpdatedSignal={runUpdatedSignal}
               runRealtimeEvent={runRealtimeEvent}
               realtimeConnected={realtimeConnected}
+              onHandoffCompleted={onHandoffCompleted}
             />
 
             <OperatorHelpLauncher

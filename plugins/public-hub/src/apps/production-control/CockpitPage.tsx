@@ -9,6 +9,7 @@ import {
   type MachineLoadWorkCenter,
   type ProductionRunSnapshot,
   type PublicMachineLoadPayload,
+  type RunHandoffResult,
 } from "./api.ts";
 import {
   BrandBar,
@@ -124,6 +125,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   const [downtimeOpen, setDowntimeOpen] = useState(false);
   const [queueQuery, setQueueQuery] = useState("");
   const [runUpdatedSignal, setRunUpdatedSignal] = useState(0);
+  // E2: confirmação visual da troca guiada — fora do modal, sobrevive à
+  // navegação para a nova OP.
+  const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
   // Run ativo no contador Pulse deste posto — decide o card "Agora nesta bancada".
   const [counterRun, setCounterRun] = useState<ProductionRunSnapshot | null>(null);
   const [runRealtimeEvent, setRunRealtimeEvent] = useState<MachineLoadRealtimeEvent | null>(null);
@@ -162,14 +166,16 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             ? fetchActiveProductionRun(token, branch, center).catch(() => null)
             : Promise.resolve(null),
         ]);
-        if (generation !== reloadGenerationRef.current) return;
+        if (generation !== reloadGenerationRef.current) return null;
         setPayload(next);
         setCounterRun(activeRun);
         setUpdatedAt(new Date());
         setError(null);
+        return next;
       } catch (err) {
-        if (generation !== reloadGenerationRef.current) return;
+        if (generation !== reloadGenerationRef.current) return null;
         setError(err instanceof Error ? err.message : "Não foi possível atualizar a fila.");
+        return null;
       } finally {
         if (!quiet && generation === reloadGenerationRef.current) setLoading(false);
       }
@@ -336,6 +342,35 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     if (!selectedOperation) openQueue();
   }, [view.kind, loading, items.length, selectedOperation, openQueue]);
 
+  // E2: pós-troca guiada — fila e run são relidos do backend (autoridade
+  // mesmo sem WebSocket, AC-10), o aviso sobrevive fora do modal e a
+  // navegação segue a nova OP quando ela aparece na publicação vigente.
+  const handleHandoffCompleted = useCallback(
+    (result: RunHandoffResult) => {
+      const nextOrder = result.newRun.productionOrder;
+      const nextCode = result.newRun.operationCode;
+      setHandoffNotice(
+        "OP anterior encerrada. Nova OP " + nextOrder + " · " + nextCode + " iniciada.",
+      );
+      void (async () => {
+        const fresh = await reload(workCenterRef.current, { quiet: true });
+        const stillThere = (fresh?.selected.items ?? []).some(
+          (item) =>
+            item.production_order === nextOrder &&
+            item.operation_code === nextCode,
+        );
+        if (stillThere) openOperation(nextOrder, nextCode);
+      })();
+    },
+    [reload, openOperation],
+  );
+
+  useEffect(() => {
+    if (!handoffNotice) return;
+    const timer = window.setTimeout(() => setHandoffNotice(null), 9000);
+    return () => window.clearTimeout(timer);
+  }, [handoffNotice]);
+
   if (!workCenter) {
     return (
       <WorkCenterPicker
@@ -464,6 +499,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
           feedbackUpdatedSignal={feedbackUpdatedSignal}
           feedbackRealtimeEvent={feedbackRealtimeEvent}
           hasActiveRun={Boolean(counterRun)}
+          onHandoffCompleted={handleHandoffCompleted}
           onBack={openQueue}
           onPrevious={
             previous
@@ -474,6 +510,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
             next ? () => openOperation(next.production_order, next.operation_code) : undefined
           }
         />
+        {handoffNotice ? (
+          <p className="pcp-pub__handoff-notice" role="status">
+            {handoffNotice}
+          </p>
+        ) : null}
         {downtimeModal}
       </>
     );
@@ -532,6 +573,11 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
 
       <div className="pcp-pub__wrap">
         {error ? <p className="pcp-pub__error">{error}</p> : null}
+        {handoffNotice ? (
+          <p className="pcp-pub__handoff-notice" role="status">
+            {handoffNotice}
+          </p>
+        ) : null}
 
         {orphanRun ? (
           <OrphanRunCard
@@ -566,6 +612,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
                 runRealtimeEvent={runRealtimeEvent}
                 realtimeConnected={connected}
                 onOpenVisual={setVisualTarget}
+                onHandoffCompleted={handleHandoffCompleted}
                 onOpenDetail={() =>
                   openOperation(
                     activeEntry.operation.production_order,
@@ -835,6 +882,7 @@ function ActiveNowCard({
   realtimeConnected,
   onOpenVisual,
   onOpenDetail,
+  onHandoffCompleted,
 }: {
   entry: QueueEntry;
   token: string;
@@ -846,6 +894,8 @@ function ActiveNowCard({
   realtimeConnected: boolean;
   onOpenVisual: (target: VisualTarget) => void;
   onOpenDetail: () => void;
+  /** E2: troca guiada confirmada — o cockpit reconcilia e navega. */
+  onHandoffCompleted?: (result: RunHandoffResult) => void;
 }) {
   const { operation } = entry;
   const baseStatus = resolveStatus(operation);
@@ -979,6 +1029,7 @@ function ActiveNowCard({
           runUpdatedSignal={runUpdatedSignal}
           runRealtimeEvent={runRealtimeEvent}
           realtimeConnected={realtimeConnected}
+          onHandoffCompleted={onHandoffCompleted}
         />
       </article>
     </section>
