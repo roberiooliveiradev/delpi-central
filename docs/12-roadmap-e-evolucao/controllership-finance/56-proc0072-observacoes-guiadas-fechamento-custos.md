@@ -380,3 +380,16 @@ PO descreve o fluxo atual **Joici -> DRE/Controladoria -> Fabiano -> preenchimen
 **Estado:** `MOD_STRUCTURE_EXCEL=PROVEN_SCREENSHOT`; `MOD_SELECTED_SUM_172001_37=PROVEN_SCREENSHOT_PARTIAL`; `MOD_BUSINESS_INTERPRETATION=OWNER_REPORTED_VIA_PO`; `MOD_DRE_PRODUCTION_SHEETS_FLOW=OWNER_REPORTED_VIA_PO`; `PRODUCTION_DASHBOARD_MAPPING=TO_INVENTORY`; `TECHNICAL_PARITY=TEST_NOT_RUN`; `IMPLEMENTATION_AUTHORIZED=NO`.
 
 **Proximo marcador da gravacao: 29:54.**
+
+
+### Complemento ao Registro 11 - Filtro MOD e recorte mensal (captura ~27:54)
+
+**Esclarecimento do PO:** a emissao do relatorio considera o periodo **do primeiro ao ultimo dia do mes de referencia**. Para analisar **Mao de Obra Direta (MOD)**, Joici usa o filtro da coluna **`Cod Produto`** e seleciona os componentes/codigos `MOD` (familia de codigos que incluem `MOD393` na captura).
+
+**Evidencia de tela:** planilha com abas `1-FI01` e `2-FI02`, colunas `PA`, `Seq Comp`, `Cod Produto`, `Desc Produto`, `Qtd Fat`, `Quantidade`, `Custo Unitario`, `Custo Total`, `Custo Produto` e `Horas`. Na captura, `Cod Produto=MOD393` aparece com descricao `MAQUINA DE CORTE WL603`; selecao de colunas numéricas do Excel aparece destacada. **O destaque numérico nao prova por si so que toda a selecao e exclusivamente MOD, nem a soma do subconjunto.** A coluna `Quantidade` apresenta valores mistos/textuais como `HR 14,22`; nao converter essa friccao de Excel em regra de negocio.
+
+**Regra de conferencia a reproduzir, sujeita a owner:** competencia mensal + filial + componentes classificados como MOD pela autoridade do cadastro/estrutura + agregacao da medida de custo homologada. O filtro textual por prefixo `MOD` e `OWNER_REPORTED_VIA_PO` como procedimento humano; **nao homologar prefixo como criterio tecnico exclusivo** sem verificar classificacao canonica e historico de estrutura. Nao confundir `Custo Total`, `Custo Produto` e `Horas`.
+
+**Verificacao ainda aberta:** confrontar intervalo exato filtrado e medida somada com a captura anterior de `172.001,37`. A captura deste complemento mostra outra selecao/contagem no Excel; seus totais nao substituem automaticamente o valor observado antes.
+
+Estado: `MOD_MONTH_RANGE=OWNER_REPORTED_VIA_PO`; `MOD_PRODUCT_COLUMN=PROVEN_SCREENSHOT`; `MOD_PREFIX_FILTER=OWNER_REPORTED_VIA_PO`; `MOD_TOTAL_RECONCILIATION=INCONCLUSIVE`; `IMPLEMENTATION_AUTHORIZED=NO`.
