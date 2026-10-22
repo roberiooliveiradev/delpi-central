@@ -63,3 +63,8 @@ Preservação dos campos omitidos e a aceitação upstream dos campos liberados 
 - Idempotência nativa do upstream: **TO_INVENTORY**.
 - Obrigatoriedade efetiva MATA020: **TO_INVENTORY** (não inferida do SX3).
 - Equivalência formal `codusr` ≡ `SYS_USR.USR_ID`: **TO_INVENTORY** (bloqueia live write até homologação).
+
+
+## Atualização owner Gabriel — 2026-10-21 (18 campos)
+
+Gabriel enviou a planilha **Campos Obrigatorios.xlsx**, com 18 relações `minha_delpi_field → totvs_field`, e informou que POST já retorna código e loja. **Fonte e transcrição integral:** [retorno Gabriel 2026-10-21](./protheus-rest-supplier-gabriel-response-2026-10-21.md). Esta evidência não comprova que todos os 18 campos sejam invariavelmente obrigatórios; verificar regras condicionais e resultado por SQL/REST na `DELPI_TST01`. O documento do owner mapeia `tax_id → A2_CGC`, mas F4.3 comprovou POST `003874/01` com `A2_CGC` vazio: não declarar bug resolvido. O endpoint produtivo informado é `http://192.168.1.231:8061/restall`, **não validado nem selecionado**; manter `:8701` e gates OFF fora de testes aprovados.
