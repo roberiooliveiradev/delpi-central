@@ -13,6 +13,8 @@
 
 Este documento é a **proposta** submetida à revisão independente (G1/G2). Não é contrato ativado nem aceite: `G1_CONTRACT_DECISION` e `G2_SECURITY_REUSE` permanecem `PENDING` até Architecture/Coordination emitir verdict.
 
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
+
 ## 1. Inventário factual no HEAD (revalidado em `c3e090ac70`, R1)
 
 | Superfície | Evidência real | Consequência |
@@ -113,7 +115,7 @@ O produtor só pode emitir os nós da política §5.1: parágrafos, `**`/`__`, `
 | Chat action catalog mural oids | OUT_OF_SCOPE DÉLIA | Índice paralelo Minha DELPI Chat — não authority standalone |
 | Specialists MCP structured tipado navigable | NOT_SUPPORTED | Nenhum campo `published_navigable_destination` no caminho do turno |
 
-**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = PARTIAL` / `NAVIGABLE_LINK_EMISSION = BLOCKED` — política fechada; emissão zero até binding capability→structured comprovado e allowlist tipada. G3 permanece bloqueado. Probes: `test_l1_governed_link_admission_policy.py`.
+**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = PARTIAL` / `NAVIGABLE_LINK_EMISSION = BLOCKED` — política fechada; emissão zero até binding capability→structured comprovado e allowlist tipada. G3 permanecia bloqueado no baseline histórico; pela decisão vigente, L1 interno não bloqueia o núcleo B2, mas G3 exige aprovação própria. Probes: `test_l1_governed_link_admission_policy.py`.
 
 ### 2.5 Erros de contrato e versões (R2-02 — decisão executável)
 
