@@ -35,6 +35,7 @@ from app.domain.interaction.model import TurnKind
 from app.infrastructure.model_invocation.openai_compatible_adapter import (
     OpenAICompatibleModelInvocationAdapter,
 )
+from app.infrastructure.config.settings import llm_egress_blocked_reason
 
 _DENIAL_MARKERS = re.compile(
     r"não (posso|consigo|tenho|é possível)|não tenho acesso|"
@@ -109,6 +110,9 @@ def _resolve_config() -> dict:
         "model": os.environ.get("DELIA_LLM_MODEL", ""),
         "api_key": os.environ.get("DELIA_LLM_API_KEY", ""),
         "timeout": float(os.environ.get("DELIA_LLM_TIMEOUT_SECONDS", "30")),
+        "environment": os.environ.get(
+            "DELIA_ENV", os.environ.get("ENV", "development")
+        ),
     }
 
 
@@ -248,6 +252,17 @@ def main() -> int:
         print(json.dumps({
             "eval": "TEST_NOT_RUN",
             "reason": "DELIA_LLM_* not fully configured",
+            "sha": sha,
+        }))
+        return 2
+
+    # C3-OLLAMA-LOCAL-LLM-TESTING-01: refuse external endpoints outside
+    # production before any socket is opened — no paid fallback exists.
+    blocked = llm_egress_blocked_reason(cfg["environment"], cfg["base_url"])
+    if blocked:
+        print(json.dumps({
+            "eval": "TEST_NOT_RUN",
+            "reason": blocked,
             "sha": sha,
         }))
         return 2

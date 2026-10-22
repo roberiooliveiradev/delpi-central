@@ -140,3 +140,16 @@ Classificação honesta: a cadeia orquestrada real executou e a resposta respeit
 **Outras frentes não cobertas por CP5:** (a) instalar/verificar Ollama local e migrar todas as avaliações locais que precisam de modelo real para o Ollama, proibindo LLM externo em testes locais (decisão registrada em `local-llm-testing-policy-ollama-2026-10-22.md`); (b) comprovar CRI real em produção e corrigir prosa operacional de campos; (c) reproduzir contexto entre turnos `2 exemplos de terminal bala → use o davi → o mcp davi`, catalog/owner selection e falha exibida como api-delpi; (d) fechar integração de mensagem selecionada com Detalhes/Evidências/Atividades do painel Contexto. Incidentes observados constam em `production-observations-2026-10-22-cri-contextual-owner-routing.md`. Não confundir resolução de timeout com estes quatro problemas de experiência/qualidade.
 
 **Sequenciamento recomendado:** concluir R4 como gate bounded de homologação do mecanismo, separar imediatamente a preparação do Ollama local como política para próximos testes, e priorizar investigação produtiva CRI/contexto/front-end com traces e contracts reais. Nenhum deploy, flag de produção ou mudança de fase é autorizado por este parecer.
+
+
+## 12. Fechamento R4 — 2026-10-22
+
+`REAL_MCP_AUTHENTICATED_POST_RESUME` resolvido pelo relatório
+[94](./94-r4-authenticated-mcp-post-resume-verification.md)
+(`DELIA-C3-GOVERNED-RESUME-R4-AUTHENTICATED-MCP-VERIFICATION-01`):
+credencial delegada legítima dev, issuer mismatch no backchannel
+corrigido (exchange via gateway), READ real pós-resume GROUNDED em
+`vista.list_playlists`, negativos live-wire PASS. Resíduo novo:
+credencial delegada emitida no turno é reutilizada pela 2ª tentativa
+(cache process-local) — revogação mid-turn documentada como decisão de
+arquitetura pendente. Limites CP4/CP5 preservados; produção segue OFF.

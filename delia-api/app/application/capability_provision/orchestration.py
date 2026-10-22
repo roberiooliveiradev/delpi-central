@@ -2548,13 +2548,33 @@ _IDENTIFIER_KEYS = frozenset(
     }
 )
 
+# Loose identifier candidates are business codes first — a field whose
+# canonical name *starts* with a code/number family is as anchorable
+# as a suffixed one (``codigo_processo``, ``numero_serie``,
+# ``code_product``).
+_IDENTIFIER_PREFIXES = ("codigo", "code", "numero", "number")
+
+# A UUID-valued identifier is a surrogate key — acceptable verbatim
+# evidence, but a poor conversational subject when a human-readable
+# business code exists in the same record.
+_UUID_VALUE_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
 
 def _record_identifier(
     record: Mapping[str, Any],
 ) -> tuple[str, str] | None:
     """The record's own identifier field — verbatim evidence used only
     to anchor the subject of a focused answer, never rendered as a
-    clause of its own unless it is the selected field itself."""
+    clause of its own unless it is the selected field itself.
+
+    Selection ranks a human-readable business code above a surrogate
+    UUID: exact identifier keys first, then prefixed/suffixed code
+    candidates — and inside each tier a non-UUID value wins; a UUID
+    still anchors when nothing better exists.
+    """
     scalars = [
         (key, str(value).strip())
         for key, value in record.items()
@@ -2562,15 +2582,22 @@ def _record_identifier(
         and not isinstance(value, bool)
         and str(value).strip()
     ]
-    for key, text in scalars:
-        if _canonical_key(key) in _IDENTIFIER_KEYS:
-            return str(key), _redact_text(text)
-    for key, text in scalars:
-        canon = _canonical_key(key)
-        if canon not in _IDENTIFIER_KEYS and (
-            canon.endswith("id") or canon.endswith("code")
-        ):
-            return str(key), _redact_text(text)
+    for prefer_readable in (True, False):
+        for key, text in scalars:
+            if _canonical_key(key) in _IDENTIFIER_KEYS and (
+                not prefer_readable or not _UUID_VALUE_RE.match(text)
+            ):
+                return str(key), _redact_text(text)
+        for key, text in scalars:
+            canon = _canonical_key(key)
+            if canon not in _IDENTIFIER_KEYS and (
+                canon.endswith("id")
+                or canon.endswith("code")
+                or canon.startswith(_IDENTIFIER_PREFIXES)
+            ) and (
+                not prefer_readable or not _UUID_VALUE_RE.match(text)
+            ):
+                return str(key), _redact_text(text)
     return None
 
 
@@ -2582,7 +2609,7 @@ def _clause_prefix(field_name: str) -> str:
     if labeled is not None:
         article, label, participle = labeled
         return f"{article} {label} {participle}"
-    return f'o campo "{field_name}"'
+    return f'o campo "{field_name.replace("_", " ").strip()}"'
 
 
 def _compose_answer(
@@ -2657,7 +2684,11 @@ def _detail_lines(values: list[tuple[str, str]]) -> list[str]:
                 lines.append(f"- {text}")
             continue
         labeled = _FIELD_CLAUSE_LABELS.get(_canonical_key(field_name))
-        label = labeled[1].capitalize() if labeled else field_name
+        label = (
+            labeled[1].capitalize()
+            if labeled
+            else field_name.replace("_", " ").strip().capitalize()
+        )
         lines.append(f"- {label}: {value}")
     return lines
 
@@ -8509,11 +8540,17 @@ class OperationalCapabilityOrchestrator:
             if rendered is None:
                 continue
             canon = _canonical_key(key)
+            # UUID leaves are surrogate references, never
+            # user-meaningful content — a record's identity is
+            # anchored by the business identifier/title; an opaque
+            # UUID under any field name adds nothing.
+            if _UUID_VALUE_RE.match(rendered):
+                continue
             labeled = _FIELD_CLAUSE_LABELS.get(canon)
             label = (
                 labeled[1].capitalize()
                 if labeled
-                else canon.replace("_", " ").capitalize()
+                else str(key).replace("_", " ").strip().capitalize()
             )
             triples.append(
                 (canon, label, rendered[: self._CRI_MAX_VALUE_CHARS])
@@ -8530,12 +8567,18 @@ class OperationalCapabilityOrchestrator:
             "descricao",
             "description",
         }
+
+        def _is_name(canon: str) -> bool:
+            return canon in name_keys or canon.startswith(
+                tuple(name_keys)
+            )
+
         triples.sort(
             key=lambda item: (
                 0
                 if item[0] == id_canon
                 else 1
-                if item[0] in name_keys
+                if _is_name(item[0])
                 else 2
             )
         )
@@ -8544,7 +8587,7 @@ class OperationalCapabilityOrchestrator:
             (
                 rendered
                 for canon, _, rendered in triples
-                if canon in name_keys and canon != id_canon
+                if _is_name(canon) and canon != id_canon
             ),
             None,
         )

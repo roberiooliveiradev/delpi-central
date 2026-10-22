@@ -6,11 +6,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   mine: {
     section:
-      "Aqui ficam as solicitações que você abriu. Filtre por tipo, status ou filial e clique no número para acompanhar o andamento e as ações disponíveis.",
+      "Aqui ficam as solicitações que você abriu. A coluna «Assunto» mostra o título do chamado (Abertura de Chamado) ou o identificador relevante do tipo. Filtre por tipo, status ou filial e clique no número para acompanhar o andamento e as ações disponíveis.",
   },
   workQueue: {
     section:
-      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação. A coluna «Concluída por» mostra quem fechou a solicitação; use o filtro Minhas para ver só as concluídas por você ou as atribuídas a você.",
+      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). As colunas «Assunto» e «Solicitante» ajudam a identificar o chamado sem abrir um a um (no tipo Abertura de Chamado, o assunto é o título informado na abertura). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação. A coluna «Concluída por» mostra quem fechou a solicitação; use o filtro Minhas para ver só as concluídas por você ou as atribuídas a você.",
   },
   new: {
     section:

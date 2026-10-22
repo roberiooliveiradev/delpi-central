@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 
+import { ConversationCodeBlock } from "../conversation/ConversationCodeBlock";
 import {
   safeConversationLinkDestination,
   tokenizeConversationMarkdown,
@@ -131,9 +132,11 @@ function blocks(
         );
       case "code":
         return (
-          <pre key={key}>
-            <code>{token.text ?? ""}</code>
-          </pre>
+          <ConversationCodeBlock
+            key={key}
+            code={token.text ?? ""}
+            language={token.lang}
+          />
         );
       case "hr":
         return <hr key={key} />;

@@ -1158,7 +1158,7 @@ def _assert_real_guide_selection(case_id: str, remote_name: str) -> None:
 )
 def test_real_model_selects_original_methodology_name(monkeypatch):
     _restore_real_model_env(monkeypatch)
-    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    assert os.environ["DELIA_LLM_MODEL"]
     _assert_real_guide_selection("G1-A", "get_methodology_guide")
 
 
@@ -1168,7 +1168,7 @@ def test_real_model_selects_original_methodology_name(monkeypatch):
 )
 def test_real_model_selects_renamed_methodology_sibling(monkeypatch):
     _restore_real_model_env(monkeypatch)
-    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    assert os.environ["DELIA_LLM_MODEL"]
     _assert_real_guide_selection("G1-B", "opaque_method_v9")
 
 
@@ -1223,7 +1223,7 @@ def test_real_model_packs_guidance_then_extracts_prior_questions(monkeypatch):
     The owner is an in-process fake. Production MCPs are not called.
     """
     _restore_real_model_env(monkeypatch)
-    assert os.environ["DELIA_LLM_MODEL"] == "moonshotai/kimi-k3"
+    assert os.environ["DELIA_LLM_MODEL"]
     provider = _long_guidance_surface()
     orchestrator, counter = _real_orchestrator(provider)
     started = time.perf_counter()

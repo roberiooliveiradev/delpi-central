@@ -56,6 +56,11 @@ export {
   type MessageActionBarVisibility,
 } from "./MessageActionBar";
 export {
+  ConversationCodeBlock,
+  type ConversationCodeBlockLabels,
+  type ConversationCodeBlockProps,
+} from "./ConversationCodeBlock";
+export {
   ConversationAssistantActions,
   type ConversationAssistantActionsLabels,
   type ConversationAssistantActionsProps,

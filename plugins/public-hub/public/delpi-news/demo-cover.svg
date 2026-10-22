@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Capa demonstrativa DELPI News">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#003866"/>
+      <stop offset="100%" stop-color="#089bdb"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <rect x="48" y="48" width="864" height="444" rx="28" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+  <text x="480" y="250" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">DELPI News</text>
+  <text x="480" y="310" text-anchor="middle" fill="#d9eef9" font-family="Segoe UI, Arial, sans-serif" font-size="28">Imagem local de demonstração</text>
+</svg>

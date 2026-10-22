@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-SEARCH_PAYLOAD_KEYS = ("party_name", "party_code", "description")
+SEARCH_PAYLOAD_KEYS = ("party_name", "party_code", "description", "title")
 MIN_SEARCH_LENGTH = 2
 
 

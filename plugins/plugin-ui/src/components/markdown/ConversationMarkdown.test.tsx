@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -95,7 +95,9 @@ describe("ConversationMarkdown — governed, disabled by default", () => {
         }
       />,
     );
-    expect(container.querySelector("script,img,iframe,svg,table")).toBeNull();
+    expect(
+      container.querySelector("script,img,iframe,svg:not(.lucide),table"),
+    ).toBeNull();
     expect(container.querySelector("pre code")?.textContent).toContain("graph TD");
     expect(container.textContent).toMatch(/a[\s\S]*b/);
   });
@@ -240,5 +242,84 @@ describe("ConversationMarkdown — governed, disabled by default", () => {
   it("copy projection returns null for oversized source", () => {
     const huge = "x".repeat(16_400);
     expect(conversationMarkdownToPlainText(huge)).toBeNull();
+  });
+});
+
+describe("ConversationMarkdown — fenced code delegates to ConversationCodeBlock", () => {
+  it("renders fenced code with the shared block, header and language", () => {
+    const { container } = render(
+      <ConversationMarkdown
+        enabled
+        text={"```sql\nSELECT 1;\n```"}
+      />,
+    );
+    const block = container.querySelector(
+      '.delpi-ui-conversation-code-block[role="group"]',
+    );
+    expect(block?.getAttribute("aria-label")).toBe("Bloco de código SQL");
+    expect(
+      container.querySelector(".delpi-ui-conversation-code-block__pre code")
+        ?.textContent,
+    ).toBe("SELECT 1;");
+    expect(
+      within(container).getByRole("button", { name: "Copiar código" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps inline codespan as plain code without block chrome (CB-V08)", () => {
+    const { container } = render(
+      <ConversationMarkdown enabled text={"Use `count(*)` aqui."} />,
+    );
+    const code = container.querySelector("p code");
+    expect(code?.textContent).toBe("count(*)");
+    expect(
+      container.querySelector(".delpi-ui-conversation-code-block"),
+    ).toBeNull();
+  });
+
+  it("renders independent blocks for multiple fences (CB-V06)", () => {
+    const { container } = render(
+      <ConversationMarkdown
+        enabled
+        text={"```sql\nA\n```\n\n```json\nB\n```"}
+      />,
+    );
+    const blocks = container.querySelectorAll(
+      ".delpi-ui-conversation-code-block",
+    );
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0].textContent).toContain("SQL");
+    expect(blocks[1].textContent).toContain("JSON");
+  });
+
+  it("keeps code content inert even with HTML inside the fence (CB-V09)", () => {
+    const { container } = render(
+      <ConversationMarkdown
+        enabled
+        text={"```html\n<script>alert(1)</script>\n```"}
+      />,
+    );
+    expect(container.querySelector("script")).toBeNull();
+    expect(
+      container.querySelector(".delpi-ui-conversation-code-block__pre code")
+        ?.textContent,
+    ).toContain("<script>alert(1)</script>");
+  });
+
+  it("disabled gate renders no rich block (CB-V14)", () => {
+    const { container } = render(
+      <ConversationMarkdown
+        text={"```sql\nSELECT 1;\n```"}
+      />,
+    );
+    expect(
+      container.querySelector(".delpi-ui-conversation-code-block"),
+    ).toBeNull();
+    expect(container.querySelector("p")?.textContent).toContain("SELECT 1;");
+  });
+
+  it("copy projection keeps fenced body without fences or lang (CB-V02)", () => {
+    const plain = conversationMarkdownToPlainText("```sql\nSELECT 1;\n```");
+    expect(plain).toBe("SELECT 1;");
   });
 });

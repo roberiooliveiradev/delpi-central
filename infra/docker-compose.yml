@@ -1404,6 +1404,10 @@ services:
     image: redis:7-alpine
     container_name: delpi-redis
     restart: unless-stopped
+    environment:
+      # Container env needed by the healthcheck auth (compose-level
+      # interpolation in `command` does not set process env).
+      DELPI_REDIS_PASSWORD: ${DELPI_REDIS_PASSWORD}
     command: ["redis-server", "--requirepass", "${DELPI_REDIS_PASSWORD}", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a $${DELPI_REDIS_PASSWORD} ping | grep -q PONG"]

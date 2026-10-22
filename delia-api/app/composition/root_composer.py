@@ -427,6 +427,11 @@ def _wire_real_provider_handler(settings: Settings, interop, connections):
     only path that activates a real adapter. Anything else stays absent
     and the route fails closed — no implicit TEST_ONLY fallback.
     """
+    if settings.llm_egress_blocked_reason:
+        _logger.warning(
+            "delia real provider not wired: %s", settings.llm_egress_blocked_reason
+        )
+        return None
     if not (
         settings.llm_provider == "openai_compatible"
         and settings.llm_base_url

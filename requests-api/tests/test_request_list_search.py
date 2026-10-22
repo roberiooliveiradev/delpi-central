@@ -94,6 +94,11 @@ def test_request_matches_search_number_and_payload_keys():
         payload={"description": "Pedido urgente"},
         q="urgente",
     )
+    assert request_matches_search(
+        request_number="REQ-1",
+        payload={"title": "Ajuste de roteiro OP 109645"},
+        q="roteiro",
+    )
     assert not request_matches_search(
         request_number="REQ-1",
         payload={"other": "não indexado"},

@@ -10,6 +10,7 @@ import { canalDenunciaPages } from "../apps/canal-denuncia/pages";
 import { codigoEticaPages } from "../apps/codigo-etica/pages";
 import { centralAgendamentoPages } from "../apps/central-agendamento/pages";
 import { productionControlPages } from "../apps/production-control/pages";
+import { delpiNewsPages } from "../apps/delpi-news/pages";
 
 /**
  * Registro de páginas públicas por app. Para adicionar um novo app público,
@@ -27,4 +28,5 @@ export const publicRegistry: PublicRegistry = {
   "codigo-etica": codigoEticaPages,
   "central-agendamento": centralAgendamentoPages,
   "production-control": productionControlPages,
+  "delpi-news": delpiNewsPages,
 };

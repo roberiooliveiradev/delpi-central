@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ipaddress
 import os
+import urllib.parse
 
 
 _ENV_FLAG_TRUE = frozenset({"1", "true", "yes", "on"})
@@ -12,6 +14,43 @@ def _env_flag(name: str, default: bool = False) -> bool:
     if raw is None:
         return default
     return raw.strip().lower() in _ENV_FLAG_TRUE
+
+
+# C3-OLLAMA-LOCAL-LLM-TESTING-01: outside production the configured LLM
+# endpoint must resolve to a local runtime (Ollama). ``production`` is the
+# only environment allowed to reach an external model provider.
+_LOCAL_LLM_HOSTNAMES = frozenset(
+    {"localhost", "ollama", "host.docker.internal", "host.containers.internal"}
+)
+
+
+def is_local_llm_host(host: str) -> bool:
+    """True for loopback/non-global IPs and internal service hostnames."""
+    normalized = (host or "").strip().strip("[]").lower()
+    if not normalized:
+        return False
+    if normalized in _LOCAL_LLM_HOSTNAMES:
+        return True
+    try:
+        return not ipaddress.ip_address(normalized).is_global
+    except ValueError:
+        # Bare compose-style service names resolve only inside the
+        # internal network; any dotted hostname may be a public DNS name.
+        return "." not in normalized
+
+
+def llm_egress_blocked_reason(environment: str, base_url: str) -> str | None:
+    """Return why ``base_url`` is refused, or ``None`` when it is allowed."""
+    if environment == "production" or not base_url:
+        return None
+    host = urllib.parse.urlsplit(base_url).hostname or ""
+    if is_local_llm_host(host):
+        return None
+    return (
+        "external LLM endpoint refused outside production "
+        f"(DELIA_ENV={environment}): host {host!r} is not a local "
+        "runtime address"
+    )
 
 
 class Settings:
@@ -54,6 +93,13 @@ class Settings:
         ).strip()
         self.llm_max_output_tokens = (
             int(llm_max_output_tokens) if llm_max_output_tokens else None
+        )
+        # C3-OLLAMA-LOCAL-LLM-TESTING-01: when set, no real provider may be
+        # wired — the configured endpoint is external and this environment
+        # is not production. Composition stays fail-closed and eval
+        # scripts must refuse before opening any socket.
+        self.llm_egress_blocked_reason = llm_egress_blocked_reason(
+            environment=self.environment, base_url=self.llm_base_url
         )
         # Per model-stage wall-clock cap inside a turn. Keep it aligned
         # with the configured provider latency: too small turns a slow

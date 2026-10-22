@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 
 import pytest
@@ -635,6 +636,73 @@ def test_compose_coverage_incomplete_notes_available_total():
     assert cri is not None
     assert "42" in cri.content
     assert "total" in cri.content.lower()
+
+
+def test_on_ordering_anchors_business_code_not_uuid_id():
+    """Incident shape (proc-0080 record): when the owner record carries
+    a surrogate UUID ``id`` AND a human-readable business code
+    (``codigo_processo``), the subject anchor must be the business
+    code — a UUID is verbatim evidence but a poor subject."""
+    outcome = _outcome(
+        "processes",
+        structured={
+            "items": [
+                {
+                    "id": "d6e4d8f2-1111-4a00-9a00-000000000080",
+                    "codigo_processo": "PROC-0080",
+                    "nome_processo": "Monitoramento de Estoque",
+                    "gestor_responsavel": "9a1b2c3d-4444-4e5f-8a9b-0c1d2e3f4a5b",
+                    "status_processo": "ativo",
+                    "created_at": "2026-10-15T15:43:45.344799-03:00",
+                },
+                {
+                    "id": "d6e4d8f2-1111-4a00-9a00-000000000079",
+                    "codigo_processo": "PROC-0079",
+                    "nome_processo": "Cadastro Anterior",
+                    "created_at": "2026-10-10T09:12:00.000000-03:00",
+                },
+            ],
+            "has_more": False,
+        },
+    )
+    _, attempt = _attempt(
+        outcome,
+        goal=_goal(ordering="newest_first"),
+        enabled=True,
+    )
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.content is not None
+    assert "PROC-0080" in attempt.content
+    assert "Monitoramento de Estoque" in attempt.content
+    assert "15/10/2026" in attempt.content
+    # A surrogate id is never the natural subject while a business
+    # code is available — and never leaks as presentation text.
+    assert not re.search(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}", attempt.content
+    )
+
+
+def test_presented_record_labels_humanize_snake_keys():
+    """Unmapped owner field keys reach the user as readable labels —
+    ``codigo_processo`` presents as ``Codigo processo``, never the
+    canonicalized ``Codigoprocesso`` (underscores are stripped by
+    canonicalization, so the label must humanize the raw key)."""
+    orch, _ = _attempt(
+        _outcome("processes", structured={"items": [], "has_more": False}),
+        enabled=True,
+    )
+    presented = orch._cri_presented_record(
+        {
+            "codigo_processo": "PROC-0080",
+            "nome_processo": "Monitoramento de Estoque",
+            "gestor_responsavel": "Ana",
+        }
+    )
+    labels = [label for label, _ in presented.fields]
+    assert "Codigo processo" in labels
+    assert "Codigoprocesso" not in labels
+    assert "Gestor responsavel" in labels
+    assert presented.identifier == "PROC-0080"
 
 
 def test_compose_insufficient_reason_maps_to_governed_message():

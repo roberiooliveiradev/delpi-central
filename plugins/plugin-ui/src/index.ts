@@ -77,6 +77,11 @@ export type {
   ConversationAuthorizedLink,
 } from "./components/markdown/ConversationMarkdown";
 /** Host-consumed assistant action strip — protect from MF tree-shake. */
+export { ConversationCodeBlock } from "./components/conversation/ConversationCodeBlock";
+export type {
+  ConversationCodeBlockLabels,
+  ConversationCodeBlockProps,
+} from "./components/conversation/ConversationCodeBlock";
 export { ConversationAssistantActions } from "./components/conversation/ConversationAssistantActions";
 export type {
   ConversationAssistantActionsLabels,
