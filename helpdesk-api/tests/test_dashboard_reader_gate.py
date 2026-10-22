@@ -11,7 +11,10 @@ from helpdesk_app.application.dashboard_reader_gate import (
     reader_is_ready,
 )
 from helpdesk_app.domain.models import TicketListQuery, TicketSummary
-from helpdesk_app.infrastructure.glpi.dashboard_reader_mapping import map_dashboard_reader_page
+from helpdesk_app.infrastructure.glpi.dashboard_reader_mapping import (
+    map_dashboard_reader_page,
+    parse_sla_ttr_exceeded,
+)
 from helpdesk_app.infrastructure.glpi.http_client import HttpxGlpiClient
 from tests.conftest import auth_headers, build_client, link
 
@@ -150,6 +153,11 @@ def test_ready_reader_filters_entities_and_does_not_use_upload_token():
             return httpx.Response(200, json={"session_token": "sess"})
         if request.url.path.endswith("/killSession"):
             return httpx.Response(200, json={})
+        if request.url.path.endswith("/search/Ticket"):
+            assert request.url.params["criteria[0][field]"] == "2"
+            assert request.url.params["criteria[0][value]"] == "10"
+            assert request.url.params["forcedisplay[1]"] == "82"
+            return httpx.Response(200, json={"data": [{"2": 10, "82": 1, "159": 0}]})
         seen["app"] = request.headers.get("App-Token") or ""
         seen["session"] = request.headers.get("Session-Token") or ""
         return httpx.Response(
@@ -201,6 +209,7 @@ def test_ready_reader_filters_entities_and_does_not_use_upload_token():
     assert page.items[0].status_id == 1
     assert page.items[0].created_at == "2026-10-02 10:00:00"
     assert page.items[0].sla_tto == "2026-10-04 10:00:00"
+    assert page.items[0].sla_ttr_exceeded is True
     assert page.has_more is False
 
 
@@ -272,3 +281,12 @@ def test_personal_unlink_stays_409():
     assert response.status_code == 409
     assert response.json()["error"] == "glpi_link_required"
     assert glpi.reader_calls == 0
+
+
+def test_parse_sla_ttr_exceeded_uses_only_field_82():
+    flags = parse_sla_ttr_exceeded(
+        {"data": [{"2": "10", "82": 1, "159": 0}, {"2": 11, "82": 0}, {"2": 12, "159": 1}]},
+        (10, 11, 12),
+    )
+    assert flags == {10: True, 11: False}
+    assert parse_sla_ttr_exceeded([], (10,)) == {}

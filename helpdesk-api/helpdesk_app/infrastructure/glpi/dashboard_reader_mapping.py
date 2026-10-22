@@ -97,6 +97,34 @@ def _text(value) -> str:
     return ""
 
 
+def parse_sla_ttr_exceeded(payload, ticket_ids: tuple[int, ...]) -> dict[int, bool]:
+    """Map GLPI search field 82 (sla_ttr_is_late) onto ticket ids. No deadline math."""
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, list):
+        return {}
+    found: dict[int, bool] = {}
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        raw_id = row.get("2", row.get(2))
+        try:
+            ticket_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        flag = _glpi_bool(row.get("82", row.get(82)))
+        if flag is not None and ticket_id in ticket_ids:
+            found[ticket_id] = flag
+    return found
+
+
+def _glpi_bool(value) -> bool | None:
+    if value is True or value in (1, "1"):
+        return True
+    if value is False or value in (0, "0"):
+        return False
+    return None
+
+
 def _has_more(content_range: str, *, raw_count: int, page_size: int) -> bool:
     match = _RANGE.search(content_range or "")
     if match:

@@ -120,47 +120,66 @@ class TestResolvedPeriodWindow:
 
 
 class TestOverdue:
-    def test_unfinished_ticket_with_elapsed_sla_counts_as_overdue(self) -> None:
-        past = (_NOW - timedelta(hours=2)).isoformat()
-        items = [_ticket(1, sla_tto=past)]
+    def test_counts_only_glpi_sla_ttr_exceeded(self) -> None:
+        future = (_NOW + timedelta(hours=8)).isoformat()
+        items = [_ticket(1, sla_tto=future, sla_ttr_exceeded=True)]
         result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=1)]))
         assert result["data"]["overdue"] == 1
+        assert result["meta"]["unavailable_indicators"] == []
 
-    def test_pending_without_deadline_is_never_overdue(self) -> None:
-        items = [_ticket(4)]
+    def test_elapsed_deadline_without_glpi_flag_is_not_zero(self) -> None:
+        past = (_NOW - timedelta(hours=2)).isoformat()
+        items = [_ticket(1, sla_tto=past, sla_ttr=past)]
+        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=1)]))
+        assert result["data"]["open"] == 1
+        assert result["data"]["overdue"] is None
+        assert result["data"]["pending_overdue"] is None
+        assert result["meta"]["unavailable_indicators"] == ["overdue", "pending_overdue"]
+
+    def test_glpi_false_is_not_overdue_even_when_deadline_passed(self) -> None:
+        past = (_NOW - timedelta(hours=2)).isoformat()
+        items = [_ticket(4, sla_tto=past, sla_ttr_exceeded=False)]
         result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=1)]))
         assert result["data"]["pending"] == 1
         assert result["data"]["overdue"] == 0
         assert result["data"]["pending_overdue"] == 1
 
-    def test_solved_and_closed_never_overdue(self) -> None:
-        past = (_NOW - timedelta(days=5)).isoformat()
+    def test_solved_counts_when_glpi_marks_ttr_exceeded(self) -> None:
         items = [
-            _ticket(5, sla_ttr=past, solved_at="2026-03-01T00:00:00Z"),
-            _ticket(6, sla_ttr=past),
+            _ticket(5, sla_ttr_exceeded=True, solved_at="2026-03-01T00:00:00Z"),
+            _ticket(6, sla_ttr_exceeded=False),
         ]
         result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=2)]))
-        assert result["data"]["overdue"] == 0
+        assert result["data"]["overdue"] == 1
+        assert result["data"]["resolved"] == 1
 
-    def test_future_deadline_not_overdue(self) -> None:
-        future = (_NOW + timedelta(hours=8)).isoformat()
-        items = [_ticket(2, sla_tto=future)]
-        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=1)]))
+    def test_partial_classification_does_not_count_the_known_subset(self) -> None:
+        items = [
+            _ticket(1, sla_ttr_exceeded=True),
+            _ticket(2),
+        ]
+        result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=2)]))
+        assert result["data"]["open"] == 1
+        assert result["data"]["in_progress"] == 1
+        assert result["data"]["overdue"] is None
+
+    def test_empty_authorized_list_is_zero(self) -> None:
+        result = _execute(FakeGateway([_page([], page=1, page_size=50, total=0)]))
         assert result["data"]["overdue"] == 0
+        assert result["data"]["pending_overdue"] == 0
 
     def test_pending_overdue_is_union_without_double_counting(self) -> None:
-        past = (_NOW - timedelta(hours=1)).isoformat()
         items = [
-            _ticket(4, sla_tto=past),   # pending AND overdue -> counts once
-            _ticket(4),                 # pending only
-            _ticket(1, sla_ttr=past),   # overdue only
-            _ticket(2),                 # neither
+            _ticket(4, sla_ttr_exceeded=True),
+            _ticket(4, sla_ttr_exceeded=False),
+            _ticket(1, sla_ttr_exceeded=True),
+            _ticket(2, sla_ttr_exceeded=False),
         ]
         result = _execute(FakeGateway([_page(items, page=1, page_size=50, total=4)]))
         data = result["data"]
         assert data["pending"] == 2
         assert data["overdue"] == 2
-        assert data["pending_overdue"] == 3  # 2+2-1 overlap
+        assert data["pending_overdue"] == 3
 
 
 class TestTotalCreatedInPeriod:
@@ -238,11 +257,10 @@ class TestTotalCreatedInPeriod:
         assert unranged["data"]["total_created_in_period"] == 2
 
     def test_existing_kpis_unchanged_by_new_field(self) -> None:
-        past = (_NOW - timedelta(hours=2)).isoformat()
         items = [
-            _ticket(1, id=1, created_at="2026-03-05T00:00:00Z", sla_tto=past),
+            _ticket(1, id=1, created_at="2026-03-05T00:00:00Z", sla_ttr_exceeded=True),
             _ticket(5, id=2, created_at="2025-12-01T00:00:00Z",
-                    solved_at="2026-03-05T00:00:00Z"),
+                    solved_at="2026-03-05T00:00:00Z", sla_ttr_exceeded=False),
         ]
         result = _execute(
             FakeGateway([_page(items, page=1, page_size=50, total=2)]),

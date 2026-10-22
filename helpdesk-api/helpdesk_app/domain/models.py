@@ -76,6 +76,7 @@ class TicketSummary:
     closed_at: str = ""
     sla_ttr: str = ""
     sla_tto: str = ""
+    sla_ttr_exceeded: bool | None = None
     assigned_user_id: int | None = None
     requester_id: int | None = None
     entity: str = ""
