@@ -135,3 +135,17 @@ I04_ACCEPTED=NO
 C3_EXECUTED=YES
 NEXT=COORDINATION_REVIEW
 ```
+
+## 9. Independent coordination review — 2026-10-22
+
+**Verdict: ACCEPT_WITH_RESIDUAL.** Inspected published implementation `a45b376327` and report 86 using connected GitHub; main was already at `ba8005d6032d0f8442fffec6813bd42907c3b29f` when review began, with other concurrent work. Independent runtime re-execution: `TEST_NOT_RUN`; the 2 restart checks, RED/GREEN tests, real TEO response and selection probes remain executor-reported evidence.
+
+**Count correction accepted:** composer `params[returned]` now binds to `delivered_count` and truncation is emitted only when `presented < delivered_count`. This removes the `_CRI_RECORD_SCAN=32` display-cap leakage identified in T5, without altering the owner-provided `total_count` or upstream pagination contracts. The reported RED tests and live `5 de 40` response support the intended business presentation outcome. Note that `delivered_count` means distinct delivered records, not necessarily raw API rows; maintain that distinction in future vocabulary/contract tests.
+
+**Owner selection:** no mandatory code correction is justified for the originally flagged generic `catalogo de operacoes` query. Its lack of specific owner permits a DELPI-wide DAVI discovery interpretation. The executor's 8 domain-specific probes indicate correct group selection; one DAVI probe did not complete within budget, so `OWNER_SELECTION=EXECUTOR_VERIFIED` but `BUSINESS_TASK_OUTCOME=PARTIAL`, not universal success. Preserve LLM-led selection and existing group context; no keyword routing or provider-specific branch.
+
+**CRI activation:** executor reports ON requested/effective after two dev restarts, config in existing env/compose and resources instructions v2/presentation v3. This review cannot independently verify local `.env` or the running container: `CRI_DEV_PERSISTENCE=EXECUTOR_VERIFIED`; `INDEPENDENT_RUNTIME_CHECK=TEST_NOT_RUN`. The log's historical runtime_sha value must not substitute for byte-equivalence verification of changed mounted files; executor reports this separately. Production activation remains unauthorized.
+
+**Remaining separate dependencies:** DAVI candidate-chain model-timeout under 30s budget (actual task completion residual); bounded agent_directives presentation as metadata; owner contract for field-to-event meaning and global sorting/coverage; proactive filter admissibility if evidence later warrants it. None justify reopening this count fix or implementing a new planner/registry.
+
+`REVIEW=ACCEPT_WITH_RESIDUAL`; `COUNT_FIX=STATIC_VERIFIED_PLUS_EXECUTOR_LIVE_PASS`; `OWNER_SELECTION_DRIFT=NOT_REPRODUCED_IN_REPORTED_CASES`; `CRI_DEV_ON=EXECUTOR_VERIFIED`; `INDEPENDENT_RUNTIME_TEST=TEST_NOT_RUN`; `I04_ACCEPTED=NO`; `C3_EXECUTED=YES_EXECUTOR_REPORTED`; `PRODUCTION_ACTIVATION=NOT_AUTHORIZED`.
