@@ -593,8 +593,12 @@ def build_production_run_service(
         PostgresMesAuditRepository,
         PostgresWorkCenterStateRepository,
     )
+    from production_control_app.infrastructure.persistence.postgres_machine_load_publication_repository import (  # noqa: E501
+        PostgresMachineLoadPublicationRepository,
+    )
     from production_control_app.infrastructure.persistence.postgres_production_run_repository import (  # noqa: E501
         PostgresProductionRunRepository,
+        PostgresRunHandoffRequestRepository,
     )
 
     resolved_gateway = gateway or DelpiProductionGateway()
@@ -610,6 +614,7 @@ def build_production_run_service(
         try:
             return machine_load.public_operation_run_context(
                 branch=branch,
+                work_center=work_center,
                 production_order=production_order,
                 operation_code=operation_code,
             )
@@ -628,6 +633,9 @@ def build_production_run_service(
             run_lookup=PostgresProductionRunRepository().get_run,
         ),
         audit=PostgresMesAuditRepository(),
+        handoff_resolver=machine_load.public_handoff_next_operation,
+        publications=PostgresMachineLoadPublicationRepository(),
+        handoff_requests=PostgresRunHandoffRequestRepository(),
     )
 
 

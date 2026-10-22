@@ -62,6 +62,21 @@ class Settings:
         os.getenv("ENRICHMENT_REVIEW_TTL_HOURS", "24")
     ) * 3600
 
+    # Company-registry provider (S3.1) — default fail-closed.
+    # Values: "unavailable" | "brasilapi"
+    COMPANY_REGISTRY_PROVIDER = os.getenv(
+        "COMPANY_REGISTRY_PROVIDER", "unavailable"
+    ).strip().lower()
+    BRASILAPI_BASE_URL = os.getenv(
+        "BRASILAPI_BASE_URL", "https://brasilapi.com.br/api"
+    )
+    BRASILAPI_TIMEOUT_SECONDS = float(
+        os.getenv("BRASILAPI_TIMEOUT_SECONDS", "6") or "6"
+    )
+    COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE = int(
+        os.getenv("COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", "10") or "10"
+    )
+
     PLUGINS_DB_HOST = os.getenv("PLUGINS_DB_HOST", "")
     PLUGINS_DB_PORT = os.getenv("PLUGINS_DB_PORT", "5432")
     PLUGINS_DB_NAME = os.getenv("PLUGINS_DB_NAME", "")

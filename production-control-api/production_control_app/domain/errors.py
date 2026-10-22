@@ -77,6 +77,20 @@ class ProductionRunNotFound(ProductionControlError):
     """Run inexistente ou fora do escopo do posto."""
 
 
+class ProductionRunHandoffConflict(ProductionRunConflict):
+    """Conflito de negócio na troca guiada de OP.
+
+    code identifica a razão do bloqueio no contrato:
+    no_next_operation, current_not_in_queue, queue_changed,
+    balance_unknown, run_not_active, device_mismatch,
+    request_conflict (requestId reutilizado com payload diferente).
+    """
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class PulseDeviceUnavailable(ProductionControlError):
     """Nenhum device Pulse elegível / snapshot indisponível para o posto."""
 

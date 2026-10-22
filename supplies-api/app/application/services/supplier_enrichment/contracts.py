@@ -117,6 +117,31 @@ class EnrichmentSourceUnavailableError(Exception):
     """No trusted external registry source is configured."""
 
 
+class RegistryTaxIdNotFoundError(Exception):
+    """Provider returned 404 — CNPJ not present in its data source."""
+
+
+class RegistryTaxIdInvalidError(Exception):
+    """Provider rejected the queried identifier as invalid (upstream 400)."""
+
+
+class RegistryRateLimitedError(Exception):
+    """Local query cap or provider throttling (429) was hit."""
+
+    def __init__(self, message: str, *, retry_after: int | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+class RegistryAccessDeniedError(Exception):
+    """Provider denied access (403 / anti-bot block)."""
+
+
+class RegistryResponseInvalidError(Exception):
+    """Provider response cannot be trusted: bad JSON, schema mismatch or
+    divergent CNPJ identity."""
+
+
 class ReviewRevisionConflictError(Exception):
     """expected_revision does not match the persisted revision."""
 

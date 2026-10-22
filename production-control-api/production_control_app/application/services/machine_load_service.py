@@ -62,6 +62,10 @@ from production_control_app.domain.services.machine_load_queue_slots import (
     protected_operation_key,
     protected_predicate,
 )
+from production_control_app.domain.services.machine_load_handoff import (
+    HandoffNextResolution,
+    resolve_handoff_next,
+)
 from production_control_app.domain.services.machine_load_transfer import (
     TRANSFERRED_OPERATIONS_KEY,
     apply_transfers,
@@ -590,6 +594,7 @@ class MachineLoadService:
         self,
         *,
         branch: str,
+        work_center: str | None = None,
         production_order: str,
         operation_code: str,
     ) -> dict[str, float | None] | None:
@@ -599,6 +604,7 @@ class MachineLoadService:
         """
         context = self.public_operation_run_context(
             branch=branch,
+            work_center=work_center,
             production_order=production_order,
             operation_code=operation_code,
         )
@@ -611,6 +617,7 @@ class MachineLoadService:
         self,
         *,
         branch: str,
+        work_center: str | None = None,
         production_order: str,
         operation_code: str,
     ) -> dict[str, Any] | None:
@@ -618,11 +625,14 @@ class MachineLoadService:
 
         Estende ``public_operation_run_quantity`` com ``is_manual_operation``
         (H8_FERRAM=MOD) — única classificação de posto confiável hoje.
+        work_center restringe a busca ao CT do posto — a mesma
+        OP+operação pode existir em outro centro da fila publicada.
         """
         item = self._public_operation_item(
             branch=branch,
             production_order=production_order,
             operation_code=operation_code,
+            work_center=work_center,
             enrich=True,
         )
         if item is None:
@@ -705,6 +715,47 @@ class MachineLoadService:
             "tool": str(item.get("tool") or "").strip(),
             "resource": str(item.get("resource") or "").strip() or None,
         }
+
+    def public_handoff_next_operation(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        production_order: str,
+        operation_code: str,
+        publication_row: dict[str, Any] | None = None,
+    ) -> HandoffNextResolution:
+        """Resolve a próxima operação elegível da fila PUBLISHED para handoff.
+
+        Fonte canônica: snapshot PUBLISHED (sem fallback WORKING/TOTVS) com
+        transferências e retiradas vigentes aplicadas, na ordem publicada
+        pelo PCP. publication_row permite revalidar dentro da transação
+        da confirmação com a linha travada (FOR UPDATE) — a prévia nunca é
+        autorização final.
+        """
+        code = self._branch_access.assert_valid_branch(branch)
+        if publication_row is not None:
+            payload = decode_snapshot_payload(publication_row)
+        else:
+            payload = decode_snapshot_payload(self._get_publication(branch=code))
+        work_center_names = {
+            str(item.get("work_center") or "").strip(): str(
+                item.get("work_center_name") or ""
+            ).strip()
+            for item in payload_work_centers(payload)
+        }
+        operations = apply_transfers(
+            payload_operations(payload),
+            transfer_entries(payload),
+            work_center_names=work_center_names,
+        )
+        operations = visible_operations(operations, withdrawn_marks(payload))
+        return resolve_handoff_next(
+            operations,
+            work_center=work_center,
+            production_order=production_order,
+            operation_code=operation_code,
+        )
 
     def pcp_operation_process_issue_context(
         self,
@@ -793,6 +844,7 @@ class MachineLoadService:
         branch: str,
         production_order: str,
         operation_code: str,
+        work_center: str | None = None,
         enrich: bool = False,
     ) -> dict[str, Any] | None:
         code = self._branch_access.assert_valid_branch(branch)
@@ -809,11 +861,19 @@ class MachineLoadService:
             operations = self._enrich_live_status(branch=code, operations=operations)
         order_key = order.upper()
         operation_key = operation.lstrip("0") or "0"
+        work_center_key = (str(work_center or "").strip() or None)
+        if work_center_key is not None:
+            work_center_key = work_center_key.upper()
         for item in operations:
             item_order = str(item.get("production_order") or "").strip().upper()
             item_op = str(item.get("operation_code") or "").strip().lstrip("0") or "0"
-            if item_order == order_key and item_op == operation_key:
-                return item
+            if item_order != order_key or item_op != operation_key:
+                continue
+            if work_center_key is not None:
+                item_wc = str(item.get("work_center") or "").strip().upper()
+                if item_wc != work_center_key:
+                    continue
+            return item
         return None
 
     def public_snapshot_contains_product(self, *, branch: str, product_code: str) -> bool:

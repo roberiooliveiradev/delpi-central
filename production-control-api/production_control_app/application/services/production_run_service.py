@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -16,9 +19,17 @@ from production_control_app.domain.errors import (
     OperatorInactive,
     OperatorNotFound,
     ProductionRunConflict,
+    ProductionRunHandoffConflict,
     ProductionRunNotFound,
+    SnapshotNotFound,
     PulseDeviceUnavailable,
     PulseGatewayError,
+)
+from production_control_app.domain.services.machine_load_transfer import (
+    operation_identity,
+)
+from production_control_app.domain.services.production_order_key import (
+    normalize_order_code,
 )
 from production_control_app.domain.services.pulse_snapshot import (
     classify_pulse_snapshot,
@@ -41,8 +52,12 @@ from production_control_app.domain.services.production_run_standard_time import 
 from production_control_app.infrastructure.gateways.production_pulse_gateway import (
     ProductionPulseGateway,
 )
+from production_control_app.infrastructure.persistence.postgres_machine_load_publication_repository import (
+    PostgresMachineLoadPublicationRepository,
+)
 from production_control_app.infrastructure.persistence.postgres_production_run_repository import (
     PostgresProductionRunRepository,
+    PostgresRunHandoffRequestRepository,
     generate_session_token,
 )
 
@@ -122,6 +137,9 @@ class ProductionRunService:
         dynamic_auto_downtime_enabled: bool | None = None,
         auto_downtime_min_seconds: int | None = None,
         auto_downtime_manual_cycle_multiplier: float | None = None,
+        handoff_resolver: Callable[..., Any] | None = None,
+        publications: Any | None = None,
+        handoff_requests: Any | None = None,
     ) -> None:
         self._repo = repository or PostgresProductionRunRepository()
         self._audit_repo = audit
@@ -177,6 +195,13 @@ class ProductionRunService:
                 run_lookup=self._repo.get_run,
             )
         self._mes = mes_lifecycle
+        self._handoff_resolver = handoff_resolver
+        self._publications = (
+            publications or PostgresMachineLoadPublicationRepository()
+        )
+        self._handoff_requests = (
+            handoff_requests or PostgresRunHandoffRequestRepository()
+        )
 
     def transaction(self) -> Any:
         """Transação compartilhada do run repo (uso por serviços compostos)."""
@@ -620,6 +645,588 @@ class ProductionRunService:
         self._notify(run["branch"], run["work_center"], reason="run_stopped")
         logger.info("mes_run_stopped run_id=%s", run["id"])
         return _run_to_api(updated, device=device)
+
+    # --- Troca guiada de OP (handoff E1) -----------------------------------
+    #
+    # Uma única amostra Pulse define a fronteira de contagem entre os runs:
+    # o segmento aberto do run anterior fecha em boundary (counter +
+    # counterEpoch da mesma observação) e o primeiro segmento do novo run
+    # ancora exatamente nela. Não existem timestamps por golpe — a peça de
+    # fronteira pertence sempre ao run anterior, nunca é contada duas vezes.
+    #
+    # HTTP externo (Pulse + tempo padrão) acontece ANTES da transação; dentro
+    # dela só SQL: lock do run → idempotência → PUBLISHED FOR UPDATE →
+    # re-resolução do alvo → consolidação → fatos MES → novo run/segmento →
+    # auditoria → registro idempotente. Qualquer exceção faz rollback total.
+
+    _HANDOFF_BLOCK_MESSAGES = {
+        "current_not_in_queue": (
+            "A operação em execução não está mais na fila publicada "
+            "deste posto. Encerre a produção pelo Stop."
+        ),
+        "no_next_operation": (
+            "Não há próxima operação elegível neste posto na fila "
+            "publicada pelo PCP."
+        ),
+        "balance_unknown": (
+            "O saldo da próxima operação não está confirmado na fila "
+            "publicada. Atualize a carga máquina pelo PCP."
+        ),
+        "queue_changed": (
+            "A fila publicada mudou desde a prévia. Revise a próxima "
+            "operação sugerida."
+        ),
+        "device_mismatch": (
+            "O contador elegível do posto não é o mesmo do run em "
+            "execução. Regularize o cadastro no Pulso."
+        ),
+        "epoch_conflict": (
+            "O contador foi reiniciado (epoch diferente do segmento "
+            "aberto). Encerre pelo Stop e recomece."
+        ),
+        "run_not_active": (
+            "A produção já foi encerrada. A troca não se aplica."
+        ),
+        "request_conflict": (
+            "O identificador desta confirmação já foi utilizado com "
+            "outro pedido de troca."
+        ),
+        "pending_classification": (
+            "Existe parada sem classificação obrigatória neste posto. "
+            "Classifique-a antes de trocar de OP."
+        ),
+        "pulse_unavailable": (
+            "Contador do posto indisponível. Aguarde a telemetria voltar "
+            "para trocar de OP."
+        ),
+    }
+
+    def _handoff_block_payload(
+        self, code: str, *, detail: str | None = None
+    ) -> dict[str, Any]:
+        return {
+            "code": code,
+            "message": detail
+            or self._HANDOFF_BLOCK_MESSAGES.get(
+                code, "Troca indisponível no momento."
+            ),
+        }
+
+    def _handoff_next_payload(self, resolution: Any) -> dict[str, Any] | None:
+        target = resolution.target if resolution is not None else None
+        if target is None:
+            return None
+        pending = target.get("operation_pending_qty")
+        if pending is None:
+            pending = target.get("pending_qty")
+        return {
+            "productionOrder": target.get("production_order"),
+            "operationCode": target.get("operation_code"),
+            "operationDescription": target.get("operation_description"),
+            "productCode": target.get("product_code"),
+            "productDescription": target.get("product_description"),
+            "pendingQty": float(pending) if pending is not None else None,
+            "queuePosition": resolution.target_position or None,
+            "queueSize": resolution.queue_size or None,
+        }
+
+    def _handoff_resolve(
+        self,
+        *,
+        branch: str,
+        work_center: str,
+        production_order: str,
+        operation_code: str,
+        publication_row: dict[str, Any] | None = None,
+    ) -> Any:
+        if self._handoff_resolver is None:
+            raise ProductionRunHandoffConflict(
+                "no_next_operation",
+                "Resolução da fila publicada indisponível.",
+            )
+        return self._handoff_resolver(
+            branch=branch,
+            work_center=work_center,
+            production_order=production_order,
+            operation_code=operation_code,
+            publication_row=publication_row,
+        )
+
+    def _handoff_expected_matches(
+        self, resolution: Any, expected_next: dict[str, Any] | None
+    ) -> bool:
+        if resolution.status != "ok" or resolution.target is None:
+            return False
+        target_identity = operation_identity(resolution.target)
+        expected = expected_next or {}
+        wanted = (
+            normalize_order_code(expected.get("productionOrder")),
+            normalize_order_code(expected.get("operationCode")),
+        )
+        return target_identity == wanted
+
+    def _handoff_request_hash(
+        self,
+        *,
+        run_id: str,
+        branch: str,
+        work_center: str,
+        expected_next: dict[str, Any] | None,
+    ) -> str:
+        canonical = json.dumps(
+            {
+                "runId": str(run_id),
+                "branch": str(branch),
+                "workCenter": str(work_center),
+                "expectedNext": {
+                    "productionOrder": normalize_order_code(
+                        (expected_next or {}).get("productionOrder")
+                    ),
+                    "operationCode": normalize_order_code(
+                        (expected_next or {}).get("operationCode")
+                    ),
+                },
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def _handoff_replay_response(
+        self,
+        existing: dict[str, Any],
+        *,
+        request_hash: str,
+    ) -> dict[str, Any]:
+        """requestId já confirmado: mesmo pedido → resposta original."""
+        if str(existing.get("request_hash")) != request_hash:
+            raise ProductionRunHandoffConflict(
+                "request_conflict",
+                self._HANDOFF_BLOCK_MESSAGES["request_conflict"],
+            )
+        response = existing.get("response")
+        if not isinstance(response, dict):
+            raise ProductionRunHandoffConflict(
+                "request_conflict",
+                self._HANDOFF_BLOCK_MESSAGES["request_conflict"],
+            )
+        return {**response, "replayed": True}
+
+    def handoff_preview(
+        self,
+        run_id: str,
+        *,
+        session_token: str | None,
+        branch: str,
+        work_center: str,
+    ) -> dict[str, Any]:
+        """Leitura da troca guiada — nunca muta run, contagem nem fila.
+
+        Devolve o run atual, a primeira próxima elegível da PUBLISHED do
+        mesmo CT (ou null) e os impedimentos vigentes para a cockpit
+        decidir se habilita a confirmação.
+        """
+        session = self.resolve_bench_session(session_token)
+        run = self._require_active_run(run_id, session=session)
+        if run.get("branch") != branch or run.get("work_center") != work_center:
+            raise ProductionRunNotFound("Produção não pertence a este posto.")
+
+        block: dict[str, Any] | None = None
+        resolution = None
+        if run.get("status") not in {"running", "paused"}:
+            block = self._handoff_block_payload("run_not_active")
+        else:
+            pending, pending_count = self._mes.pending_classification_view(run)
+            if pending_count > 0:
+                block = self._handoff_block_payload(
+                    "pending_classification",
+                    detail=(
+                        "Existe parada sem classificação obrigatória neste "
+                        "posto. Classifique-a antes de trocar de OP."
+                    ),
+                )
+            else:
+                resolution = self._handoff_resolve(
+                    branch=branch,
+                    work_center=work_center,
+                    production_order=str(run.get("production_order") or ""),
+                    operation_code=str(run.get("operation_code") or ""),
+                )
+                if resolution.status != "ok":
+                    block = self._handoff_block_payload(resolution.status)
+
+        device = None
+        if block is None:
+            try:
+                device = self._pick_device(branch=branch, work_center=work_center)
+            except PulseGatewayError:
+                block = self._handoff_block_payload("pulse_unavailable")
+            except PulseDeviceUnavailable:
+                block = self._handoff_block_payload("pulse_unavailable")
+            else:
+                if classify_pulse_snapshot(device) != "usable":
+                    block = self._handoff_block_payload("pulse_unavailable")
+                elif str(device.get("deviceId")) != str(run.get("device_id")):
+                    block = self._handoff_block_payload("device_mismatch")
+
+        return {
+            "currentRun": _run_to_api(run),
+            "nextOperation": self._handoff_next_payload(resolution),
+            "available": block is None,
+            "block": block,
+        }
+
+    def confirm_handoff(
+        self,
+        run_id: str,
+        *,
+        request_id: str,
+        branch: str,
+        work_center: str,
+        expected_next: dict[str, Any] | None,
+        session_token: str | None,
+    ) -> dict[str, Any]:
+        """Confirmação da troca guiada — atômica e idempotente.
+
+        Sequência transacional (qualquer falha = rollback integral):
+        lock do run → revalida status → idempotência → PUBLISHED FOR
+        UPDATE → re-resolve alvo e confere expectedNext → consolida
+        contagem na fronteira Pulse única → encerra fatos MES do run
+        anterior → completed + segmento handoff → novo run +
+        segmento-âncora → producing do novo run → auditoria →
+        registro idempotente → commit.
+        """
+        try:
+            request_uuid = str(uuid.UUID(str(request_id)))
+        except (ValueError, AttributeError, TypeError) as exc:
+            raise ValueError(
+                "requestId deve ser um UUID gerado uma vez por confirmação."
+            ) from exc
+
+        session = self.resolve_bench_session(session_token)
+        if session.get("branch") != branch or session.get("work_center") != work_center:
+            raise BenchSessionRequired("Sessão não corresponde ao posto selecionado.")
+        run = self._require_active_run(run_id, session=session)
+
+        request_hash = self._handoff_request_hash(
+            run_id=run_id,
+            branch=branch,
+            work_center=work_center,
+            expected_next=expected_next,
+        )
+        # Idempotência ANTES do status: replay de uma troca já confirmada
+        # devolve a resposta gravada mesmo com o run agora encerrado.
+        existing = self._handoff_requests.get(request_uuid)
+        if existing is not None:
+            return self._handoff_replay_response(existing, request_hash=request_hash)
+        if run.get("status") not in {"running", "paused"}:
+            raise ProductionRunHandoffConflict(
+                "run_not_active", self._HANDOFF_BLOCK_MESSAGES["run_not_active"]
+            )
+
+        # Pré-resolução fora da transação: define o alvo e alimenta o lookup
+        # HTTP de tempo padrão abaixo. A revalidação canônica acontece de novo
+        # dentro da transação, sobre a linha PUBLISHED travada.
+        resolution = self._handoff_resolve(
+            branch=branch,
+            work_center=work_center,
+            production_order=str(run.get("production_order") or ""),
+            operation_code=str(run.get("operation_code") or ""),
+        )
+        if resolution.status != "ok":
+            raise ProductionRunHandoffConflict(
+                resolution.status,
+                self._HANDOFF_BLOCK_MESSAGES.get(
+                    resolution.status, "Troca indisponível."
+                ),
+            )
+        if not self._handoff_expected_matches(resolution, expected_next):
+            raise ProductionRunHandoffConflict(
+                "queue_changed",
+                self._HANDOFF_BLOCK_MESSAGES["queue_changed"],
+            )
+        target = resolution.target
+
+        device = self._pick_device(branch=branch, work_center=work_center)
+        if classify_pulse_snapshot(device) != "usable":
+            raise PulseDeviceUnavailable(
+                "Contador do posto indisponível. Aguarde a telemetria voltar."
+            )
+        if str(device.get("deviceId")) != str(run.get("device_id")):
+            raise ProductionRunHandoffConflict(
+                "device_mismatch",
+                self._HANDOFF_BLOCK_MESSAGES["device_mismatch"],
+            )
+        boundary_counter = int(device.get("counter") or 0)
+        boundary_epoch = int(device.get("counterEpoch") or 0)
+
+        planned = None
+        target_pieces = None
+        raw_pending = target.get("operation_pending_qty")
+        if raw_pending is None:
+            raw_pending = target.get("pending_qty")
+        try:
+            planned = float(raw_pending) if raw_pending is not None else None
+        except (TypeError, ValueError):
+            planned = None
+        target_pieces = target_pieces_from_quantity(
+            planned, target.get("pieces_conversion_factor")
+        )
+        standard = self._resolve_standard_time(
+            branch=branch,
+            work_center=work_center,
+            production_order=str(target.get("production_order") or "").strip(),
+            operation_code=str(target.get("operation_code") or "").strip(),
+        )
+        workstation_type = resolve_workstation_type_snapshot(target)
+
+        response: dict[str, Any] | None = None
+        try:
+            with self._repo.transaction() as conn:
+                locked = self._repo.lock_run(run_id, conn=conn)
+                if locked is None:
+                    raise ProductionRunNotFound("Produção não encontrada.")
+
+                # Idempotência dentro da transação — serializa dois cliques
+                # com o mesmo requestId através do lock do run. Antes do
+                # status: o perdedor da corrida vê o run já completed e deve
+                # receber a resposta gravada, não um conflito.
+                existing = self._handoff_requests.get(request_uuid, conn=conn)
+                if existing is not None:
+                    return self._handoff_replay_response(
+                        existing, request_hash=request_hash
+                    )
+                if locked.get("status") not in {"running", "paused"}:
+                    raise ProductionRunHandoffConflict(
+                        "run_not_active",
+                        self._HANDOFF_BLOCK_MESSAGES["run_not_active"],
+                    )
+
+                locked_row = self._publications.get_locked(
+                    branch=branch, conn=conn
+                )
+                if locked_row is None:
+                    raise SnapshotNotFound(
+                        "A fila desta filial ainda não foi enviada pelo PCP."
+                    )
+                locked_resolution = self._handoff_resolve(
+                    branch=branch,
+                    work_center=work_center,
+                    production_order=str(locked.get("production_order") or ""),
+                    operation_code=str(locked.get("operation_code") or ""),
+                    publication_row=locked_row,
+                )
+                if locked_resolution.status != "ok":
+                    raise ProductionRunHandoffConflict(
+                        locked_resolution.status,
+                        self._HANDOFF_BLOCK_MESSAGES.get(
+                            locked_resolution.status, "Troca indisponível."
+                        ),
+                    )
+                if not self._handoff_expected_matches(
+                    locked_resolution, expected_next
+                ):
+                    raise ProductionRunHandoffConflict(
+                        "queue_changed",
+                        self._HANDOFF_BLOCK_MESSAGES["queue_changed"],
+                    )
+                locked_target = locked_resolution.target
+                if operation_identity(locked_target) != operation_identity(target):
+                    raise ProductionRunHandoffConflict(
+                        "queue_changed",
+                        self._HANDOFF_BLOCK_MESSAGES["queue_changed"],
+                    )
+
+                at = self._clock()
+
+                # Fronteira de contagem única: a mesma amostra Pulse
+                # (boundary_counter/boundary_epoch) consolida o run anterior
+                # e ancora o novo — nenhuma peça contada duas vezes.
+                pieces_total = int(locked.get("pieces_total") or 0)
+                open_pieces = 0
+                if locked.get("status") == "running":
+                    segment = self._repo.get_open_segment(run_id, conn=conn)
+                    if segment is not None:
+                        if str(segment.get("device_id")) != str(
+                            device.get("deviceId")
+                        ):
+                            raise ProductionRunHandoffConflict(
+                                "device_mismatch",
+                                self._HANDOFF_BLOCK_MESSAGES["device_mismatch"],
+                            )
+                        if int(segment.get("anchor_epoch") or 0) != boundary_epoch:
+                            raise ProductionRunHandoffConflict(
+                                "epoch_conflict",
+                                self._HANDOFF_BLOCK_MESSAGES["epoch_conflict"],
+                            )
+                        counted = pieces_from_anchor(
+                            current_counter=boundary_counter,
+                            current_epoch=boundary_epoch,
+                            anchor_counter=int(segment.get("anchor_counter") or 0),
+                            anchor_epoch=int(segment.get("anchor_epoch") or 0),
+                        )
+                        if counted.epoch_changed:
+                            raise ProductionRunHandoffConflict(
+                                "epoch_conflict",
+                                self._HANDOFF_BLOCK_MESSAGES["epoch_conflict"],
+                            )
+                        open_pieces = counted.pieces
+                        closed_pieces = [
+                            int(seg.get("pieces") or 0)
+                            for seg in self._repo.list_segments(
+                                run_id, conn=conn
+                            )
+                            if seg.get("ended_at") is not None
+                        ]
+                        observed_total = sum_segment_pieces(
+                            closed_pieces, open_pieces
+                        )
+                    else:
+                        observed_total = pieces_total
+                    effective, change = self._resolve_count_observation(
+                        run=locked,
+                        baseline_total=int(run.get("pieces_total") or 0),
+                        locked_total=pieces_total,
+                        observed_total=observed_total,
+                    )
+                else:
+                    effective, change = pieces_total, None
+
+                # Encerra fatos MES do run anterior — parada aberta sem
+                # classificação obrigatória falha aqui e desfaz tudo.
+                self._mes.record_run_finished(locked, conn=conn, at=at)
+                if change is not None:
+                    self._append_count_event(locked, change=change, at=at, conn=conn)
+                updated = self._repo.set_run_status(
+                    run_id,
+                    status="completed",
+                    pieces_total=effective,
+                    close_open_segment=locked.get("status") == "running",
+                    open_segment_pieces=open_pieces,
+                    end_reason="handoff",
+                    conn=conn,
+                )
+
+                new_run = self._repo.create_run_with_segment(
+                    branch=branch,
+                    work_center=work_center,
+                    production_order=str(
+                        locked_target.get("production_order") or ""
+                    ).strip(),
+                    operation_code=str(
+                        locked_target.get("operation_code") or ""
+                    ).strip(),
+                    device_id=str(device["deviceId"]),
+                    operator_code=session["operator_code"],
+                    operator_name=session.get("operator_name"),
+                    bench_session_id=session["id"],
+                    planned_qty_snapshot=planned,
+                    target_pieces_snapshot=target_pieces,
+                    anchor_counter=boundary_counter,
+                    anchor_epoch=boundary_epoch,
+                    ideal_cycle_seconds_snapshot=standard[
+                        "ideal_cycle_seconds_snapshot"
+                    ],
+                    setup_seconds_snapshot=standard["setup_seconds_snapshot"],
+                    standard_time_source=standard["standard_time_source"],
+                    standard_time_data_quality_snapshot=standard[
+                        "standard_time_data_quality_snapshot"
+                    ],
+                    workstation_type_snapshot=workstation_type,
+                    pieces_per_pulse_snapshot=1,
+                    conn=conn,
+                )
+                self._mes.record_run_started(new_run, conn=conn, at=at)
+
+                handoff_audit = None
+                if self._audit_repo is not None:
+                    handoff_audit = self._audit_repo.append(
+                        branch=locked["branch"],
+                        work_center=locked["work_center"],
+                        run_id=str(locked["id"]),
+                        action="run_handoff",
+                        actor_type="operator",
+                        actor_ref=session.get("operator_code"),
+                        occurred_at=at,
+                        details={
+                            "requestId": request_uuid,
+                            "previousRunId": str(locked["id"]),
+                            "newRunId": str(new_run["id"]),
+                            "boundaryCounter": boundary_counter,
+                            "boundaryEpoch": boundary_epoch,
+                            "previousProductionOrder": locked.get(
+                                "production_order"
+                            ),
+                            "previousOperationCode": locked.get(
+                                "operation_code"
+                            ),
+                            "nextProductionOrder": locked_target.get(
+                                "production_order"
+                            ),
+                            "nextOperationCode": locked_target.get(
+                                "operation_code"
+                            ),
+                            "boundaryNote": (
+                                "Uma única amostra Pulse define a peça de "
+                                "fronteira — sempre do run anterior."
+                            ),
+                        },
+                        conn=conn,
+                    )
+                self._audit(
+                    "run_started",
+                    run=new_run,
+                    session=session,
+                    conn=conn,
+                    occurred_at=at,
+                )
+
+                completed = _run_to_api(updated, device=device)
+                started = _run_to_api(new_run, device=device)
+                response = {
+                    "requestId": request_uuid,
+                    "replayed": False,
+                    "transitionAt": at.isoformat(),
+                    "boundary": {
+                        "counter": boundary_counter,
+                        "counterEpoch": boundary_epoch,
+                    },
+                    "auditId": (
+                        handoff_audit.get("id")
+                        if isinstance(handoff_audit, dict)
+                        else None
+                    ),
+                    "completedRun": completed,
+                    "newRun": started,
+                }
+                self._handoff_requests.insert(
+                    request_id=request_uuid,
+                    branch=branch,
+                    work_center=work_center,
+                    previous_run_id=str(locked["id"]),
+                    new_run_id=str(new_run["id"]),
+                    request_hash=request_hash,
+                    response=response,
+                    conn=conn,
+                )
+        except Exception:
+            # Concorrência no INSERT da idempotência (PK) aborta a transação;
+            # se a linha agora existe, este pedido é replay — senão propaga.
+            replay = self._handoff_requests.get(request_uuid)
+            if replay is not None:
+                return self._handoff_replay_response(
+                    replay, request_hash=request_hash
+                )
+            raise
+
+        self._notify(branch, work_center, reason="run_stopped")
+        self._notify(branch, work_center, reason="run_started")
+        logger.info(
+            "mes_run_handoff run_id=%s new_run_id=%s request_id=%s",
+            run_id,
+            response["newRun"]["id"],
+            request_uuid,
+        )
+        return response
 
     def get_active(
         self,

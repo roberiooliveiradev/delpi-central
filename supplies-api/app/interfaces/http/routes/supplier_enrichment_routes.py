@@ -24,6 +24,11 @@ from flask import Blueprint, g, jsonify, request
 
 from app.application.security.supplies_permissions import can_use_operations
 from app.application.services.supplier_enrichment.contracts import (
+    RegistryAccessDeniedError,
+    RegistryRateLimitedError,
+    RegistryResponseInvalidError,
+    RegistryTaxIdInvalidError,
+    RegistryTaxIdNotFoundError,
     EnrichmentSourceUnavailableError,
     IdempotencyConflictError,
     ProposalRecord,
@@ -50,9 +55,12 @@ from app.domain.supplier_enrichment.review_lifecycle import (
 )
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.gateways.delpi_api_gateway import DelpiApiGatewayError
+from app.infrastructure.gateways.brasilapi_registry_provider import (
+    InMemoryRegistryRateLimiter,
+)
 from app.infrastructure.gateways.supplier_enrichment_adapters import (
     DelpiCanonicalSupplierReader,
-    UnavailableCompanyRegistryProvider,
+    company_registry_provider,
 )
 from app.infrastructure.persistence.supplier_enrichment_repository import (
     PostgresSupplierEnrichmentRepository,
@@ -86,11 +94,18 @@ _SERVER_OWNED_FIELDS = {
 _MAX_PAGE_SIZE = 50
 
 
+# Server-side per-actor cap for external registry queries (create_review).
+# Process-local state — protection is not shared across workers/replicas.
+_registry_query_limiter = InMemoryRegistryRateLimiter(
+    limit_per_minute=Settings.COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE
+)
+
+
 def _service() -> SupplierEnrichmentReviewService:
     return SupplierEnrichmentReviewService(
         repository=PostgresSupplierEnrichmentRepository(),
         canonical_reader=DelpiCanonicalSupplierReader(),
-        registry_provider=UnavailableCompanyRegistryProvider(),
+        registry_provider=company_registry_provider(),
         review_ttl_seconds=Settings.ENRICHMENT_REVIEW_TTL_SECONDS,
     )
 
@@ -213,6 +228,29 @@ def _error(exc: Exception):
         return jsonify(
             {"detail": str(exc), "code": "ENRICHMENT_SOURCE_UNAVAILABLE"}
         ), 503
+    if isinstance(exc, RegistryTaxIdNotFoundError):
+        return jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_TAX_ID_NOT_FOUND"}
+        ), 404
+    if isinstance(exc, RegistryRateLimitedError):
+        response = jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_RATE_LIMITED"}
+        )
+        if exc.retry_after:
+            response.headers["Retry-After"] = str(exc.retry_after)
+        return response, 429
+    if isinstance(exc, RegistryAccessDeniedError):
+        return jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_SOURCE_UNAVAILABLE"}
+        ), 503
+    if isinstance(exc, RegistryTaxIdInvalidError):
+        return jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_INVALID_TAX_ID"}
+        ), 422
+    if isinstance(exc, RegistryResponseInvalidError):
+        return jsonify(
+            {"detail": str(exc), "code": "ENRICHMENT_REGISTRY_INVALID_RESPONSE"}
+        ), 502
     if isinstance(exc, EnrichmentReviewNotActionableError):
         code = {
             ReviewStatus.EXPIRED: "ENRICHMENT_REVIEW_EXPIRED",
@@ -249,11 +287,13 @@ def create_enrichment_review(code: str, store: str):
     """operationId: create_supplier_enrichment_review.
 
     Fetches the canonical snapshot, invokes the configured registry source
-    port (unavailable in production — 503) and persists the comparison.
+    port (fail-closed unless COMPANY_REGISTRY_PROVIDER is enabled) and
+    persists the comparison.
     """
     try:
         supplier_id = normalize_supplier_id(code, store)
         _reject_server_fields(request.get_json(silent=True) or {})
+        _registry_query_limiter.check(f"actor:{_user().id}")
         review, proposals = _service().create_review(
             user=_user(),
             supplier_code=supplier_id[:6],

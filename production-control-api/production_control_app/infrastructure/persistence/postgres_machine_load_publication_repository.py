@@ -47,6 +47,30 @@ _COLUMNS = """
 
 
 class PostgresMachineLoadPublicationRepository(MachineLoadPublicationRepositoryPort):
+    def get_locked(
+        self, *, branch: str, conn: Any
+    ) -> dict[str, Any] | None:
+        """Linha PUBLISHED travada (FOR UPDATE) dentro da transação chamadora.
+
+        Serializa a confirmação de handoff com uma republicação concorrente
+        do PCP: quem publicar primeiro ganha; o outro vê a fila vigente.
+        """
+        query = f"""
+            SELECT {_COLUMNS}
+            FROM {_TABLE}
+            WHERE branch = %s
+            FOR UPDATE
+        """
+        with conn.cursor() as cursor:
+            cursor.execute(query, (branch,))
+            row = cursor.fetchone()
+        if row is None:
+            clear_snapshot_row_cache(branch, namespace=PUBLISHED_NAMESPACE)
+            return None
+        result = dict(row)
+        self._remember(branch=branch, row=result)
+        return result
+
     def get(self, *, branch: str, conn: Any = None) -> dict[str, Any] | None:
         """Lê a fila publicada evitando rebuscar ~1,8 MB que não mudaram.
 
