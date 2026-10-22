@@ -1,6 +1,6 @@
 # 84 — Proposta `presentation.v2` e Reuse/Security Review de Markdown (G1/G2)
 
-**Status:** `G1=ACCEPT_WITH_RESIDUAL / G2=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED` (review independente doc 89)
+**Status vigente:** `G1=ACCEPT_WITH_RESIDUAL / G2=ACCEPT_WITH_RESIDUAL / INTERNAL_L1_DEFERRED / G3_APPROVAL_PENDING / RUNTIME_B2_NOT_AUTHORIZED` (review doc 89 + decisão de produto de 2026-10-22)
 
 **Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → R1 (doc 86) → R2 (doc 87) → R3 (doc 88) → independent closure (doc 89)
 **BASE_HEAD R1:** `c3e090ac70977e81fbf7bdd47a391683ab6199cd`
