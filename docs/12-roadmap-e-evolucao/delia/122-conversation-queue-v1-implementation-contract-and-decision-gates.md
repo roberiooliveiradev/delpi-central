@@ -131,3 +131,21 @@ Cada gate termina com artefato verificável e no máximo um bounded rework; nova
 `DOCUMENT=CONTRACT_DRAFT`; `RUNTIME_CHANGED=NO`; `OPENAPI_IMPLEMENTED=NO`; `ADR_1_2_3_4=PENDING`; `IMPLEMENTATION_AUTHORIZED=NO`; `TESTS=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`.
 
 **Critério de saída:** contrato suficientemente explícito para revisar, mas **não implementar produção** sem os gates de identidade e armazenamento. O documento 121 continua sendo a fonte do inventário factual, não substituída por esta proposta.
+
+## 11. CORRECAO DE DIRECAO DO PRODUCT MASTER — fila efemera por conversa ativa (2026-10-22)
+
+**Status:** PRODUCT_DIRECTION_CONFIRMED / ARCHITECTURE_PROPOSAL_REQUIRES_REWORK. Esta decisao **supera** as propostas de persistencia compartilhada, `conversation_id` autoritativo server-issued, criacao de tabela/Redis, store duravel e quatro rotas de fila descritas anteriormente neste documento e no documento 121, **apenas como direcao para esta fila de UX**. Os textos anteriores permanecem como historico de alternativas descartadas, nao como backlog aprovado. Nao altera Durable Work de C5/C6.
+
+**Decisao expressa:** a mini fila e **temporaria, em memoria, isolada por conversa do usuario enquanto a experiencia conversacional esta ativa**. Nao persistir em tabela, Redis, DB, durable workflow, storage local ou servidor por conveniencia. A apresentacao `ConversationQueue` continua no `plugin-ui`; a propriedade do estado transitorio pertence ao consumer DÉLIA (boundary de experiencia da conversa). Nenhum item da fila passa a ser Task/Work persistente.
+
+**Reuso/abstracao:** inventariar o lifecycle real do `App.tsx`, `sendTurn`, `handleSubmit`, `requestEpochRef`, `requestMode`, host Portal e Dock antes de decidir sobre hook/controller local. `EXISTING_EQUIVALENT=YES_PARTIAL` (envio/estado/componente), `REUSE_DECISION=EXTEND_EXISTING` proposta; nao criar um `interactionManager` generico, segundo planner, engine ou orquestrador. Backend `POST /interaction/turns` permanece owner de cada turno e gates, sem contratos de fila backend neste slice.
+
+**Invariantes de produto:** fila so dentro do contexto de uma conversa ativa, nunca entre conversas; nao herdar pendencias ao iniciar outra conversa; conservar a fila ao trocar a apresentacao full-page/Dock **somente quando a mesma instancia/contexto efetivamente permanece montado**; unmount/reload/perda de memoria podem descartar a fila e isso deve ser comunicado honestamente, sem prometer recuperacao. Remover e reordenar somente pendentes; nao reordenar turno em andamento. `AbortController` e stop local nao equivalem a cancelamento backend.
+
+**Dispatch:** UX de proxima pergunta pode ser sequencial via fluxo `sendTurn` existente, sem loop/scheduler backend. Antes de implementar, estabelecer gates claros para quando iniciar proximo item, evitar duplo envio, preservar contexto transitorio correto, respeitar confirmation/PREPARE/ACT, falhas e stop, e nunca limpar draft da nova pergunta indevidamente. Dispatch automatico exige teste/decisao explicita de UX; nenhuma mensagem enfileirada autoriza side effect ou altera Core/Domain AuthZ.
+
+**Nao implementar:** ADR-1 identity issuer backend; ADR-2 store compartilhado; nova tabela/Redis/migration; endpoints `/conversations/*/queue`; binding `queue_item_ref`; worker/cron/scheduler; persistencia no browser. Se surgir necessidade futura de recuperacao entre reload/abas/dispositivos, tratar como produto/contrato separado, nao expandir esta fila silenciosamente.
+
+**Gates e testes da futura task:** full-page ↔ Dock preservacao quando mesmo contexto; nova conversa/isolation; envio em andamento e varias pendentes FIFO; reordenar/remover; submit unico sem duplicacao; epoch/stale completion; stop; erro/timeouts; confirmacoes governadas; draft recovery e STT; unmount/reload sem promessa de recuperacao; browser a11y mobile/zoom; nenhum POST exceto turnos explicitamente submetidos pela intencao previamente admitida. Registrar evidencias SHA/config reais e manter fase inalterada.
+
+`QUEUE_BACKEND_CONTRACT=NOT_REQUIRED_FOR_EPHEMERAL_UX`; `PERSISTENCE=OUT_OF_SCOPE`; `ARCHITECTURE_DRIFT_IDENTIFIED=YES (superseded persisted-contract proposal)`; `IMPLEMENTATION=NOT_STARTED`; `TESTS=TEST_NOT_RUN`; `PHASE_PROGRESSION=NONE`.
