@@ -109,3 +109,14 @@ Duas novas capturas fornecidas pelo usuário mostram o follow-up **na mesma conv
 **Integração de experiência:** o painel deve fornecer caminho evidente para selecionar mensagem e inspecionar detalhes reais, com empty state honesto e acessível; evitar click que pareça não funcionar. Exibir ao usuário a trilha explicável, **não** logs internos completos. Este é um requisito de UX+contrato independente da ativação do CRI: resposta conversacional boa e observabilidade da execução são duas dimensões distintas.
 
 **Status:** `INC04=OPEN`; `CONTEXT_PANEL_PRESENT=PROVEN_VISUAL`; `MESSAGE_SELECTED=NO_VISUAL_EVIDENCE`; `FRONTEND_API_INTEGRATION_COMPLETENESS=TO_INVENTORY`; `USER_FACING_TRACEABILITY=INADEQUATE_IN_CAPTURE`; `CODE_CHANGE=NONE`; `CP5=IN_PROGRESS_USER_REPORTED`.
+
+## Fechamento INC-01 — ativação produtiva do CRI (22/10/2026, ~18:40)
+
+- Causa-raiz da prosa mecanizada confirmada no host real: `DELIA_RESPONSE_INTELLIGENCE_ENABLED` ausente do `infra/.env` produtivo → compose injetava `""` → `delia_response_intelligence requested=baseline effective=baseline`, `decision=fail_closed reason=invalid_env_value`; todos os turns logavam `stage=response_mode decision=baseline`.
+- A enumeração de campos era o **render determinístico baseline** (`_render_synthesis`), não o CRI: rótulos snake_case brutos, UUID e ISO `created_at` verbatim.
+- Fix mínimo no owner canônico (`orchestration.py`): âncora em código de negócio sobre UUID, humanização de rótulos não mapeados, supressão de folhas UUID, formatação pt-BR de datas — sem novo planner/composer (RED→GREEN, suite completa verde).
+- Deploy governado: pull ff para `d3de1b9c8`, backup `.env.bak-cri-activation-20261022-184008`, `DELIA_RESPONSE_INTELLIGENCE_ENABLED=true`, `up-prod-sequential.sh --build delia-api`, imagem `d543c6a7b358`.
+- Startup verificado: `requested=cri effective=cri`; instruction resource v2 (`d5d0f75d…`); presentation vocabulary v3 (`24d6c126…`); container healthy.
+- Resposta CRI para a pergunta do incidente (composição determinística verificada): `O registro mais recente entre os retornados foi PROC-0080 — Monitoramento e Análise dos Indicadores de Estoque.` + `A data mais recente encontrada foi 15/10/2026 às 15h43; a fonte não comprova que ela represente uma alteração.`
+- Smoke real do usuário (pergunta literal na UI): pendente de sessão real — não se cunhou credencial de teste em produção. Relatório completo: `95-cri-production-activation-and-natural-response-verification.md`.
+- INC-02/INC-03 (seleção DAVI e continuidade) e INC-04 (painel Contexto) seguem fora de escopo, como frentes próprias.

@@ -17354,3 +17354,25 @@ PRODUCTION_ACTIVATION=NO
 I04_ACCEPTED=NO
 NEXT=ARCHITECTURE_COORDINATION(delegated-credential intra-turn reuse decision)
 ```
+
+## §6.377 — CRI ativado em produção; resposta natural verificada (2026-10-22)
+
+**2026-10-22 — `DELIA-C3-CRI-PRODUCTION-ACTIVATION-AND-NATURAL-RESPONSE-VERIFICATION-01`:** inventário no host real (`srv-api`) provou CRI **desligado** em prod: flag ausente → injeção vazia → `fail_closed reason=invalid_env_value` → `decision=baseline` em todos os turns. A prosa mecanizada do incidente era o render baseline (`_render_synthesis`), não o CRI. **Fix no owner canônico** (`orchestration.py`): UUID `id` perde a âncora para código de negócio; rótulos não mapeados humanizam a chave raw (mojibake `Codigoprocesso` eliminado); folhas UUID suprimidas do single-record; mesma humanização aplicada ao baseline fallback (`_detail_lines`/`_clause_prefix`). RED→GREEN: +2 testes E3, suite completa verde. **Release governado:** `d3de1b9c8` → `origin/main` → pull ff no host → `.env` backup + `DELIA_RESPONSE_INTELLIGENCE_ENABLED=true` → `up-prod-sequential.sh --build delia-api` → imagem `d543c6a7b358` → startup `requested=cri effective=cri`, instruction v2 (`d5d0f75d`), vocabulary v3 (`24d6c126`), healthy. **Saída natural determinística:** `O registro mais recente entre os retornados foi PROC-0080 — Monitoramento e Análise dos Indicadores de Estoque.` + limitação explícita (fonte não prova alteração; cobertura não provada → sem claim de "último global"). Rollback: backup `.env` + imagem anterior no host + recreate `--no-deps`. **Residual:** smoke real aguarda sessão de usuário legítimo (sem credencial de teste em prod). Relatório: `95-cri-production-activation-and-natural-response-verification.md`.
+
+```text
+TASK_ID=DELIA-C3-CRI-PRODUCTION-ACTIVATION-AND-NATURAL-RESPONSE-VERIFICATION-01
+FINAL_HEAD=d3de1b9c832b31b439125b7f87ee60040ee6af2e (+docs)
+PRODUCTION_BACKEND_SHA=d3de1b9c8 PRODUCTION_IMAGE=d543c6a7b358
+CRI_REQUESTED=cri CRI_EFFECTIVE=cri (v2/v3, sha256 logged)
+MECHANICAL_RESPONSE_ROOT_CAUSE=flag vazia→fail_closed→baseline
+    _render_synthesis + 2 defeitos E3 reais corrigidos
+NATURAL_RESPONSE_EVAL=PASS(business-code anchor, pt-BR date,
+    limitation sentence, no snake_case/UUID/ISO)
+SUPERLATIVE_ORDERING=NEVER_CLAIMED_GLOBAL(coverage unproven→
+    insufficiency message)
+PRODUCTION_DEPLOYED=YES PRODUCTION_SMOKE=PENDING_PRODUCT_MASTER
+ROLLBACK_READY=YES
+LOCAL_MODEL_PROVIDER=OLLAMA EXTERNAL_LLM_LOCAL_CALLS=0
+EXECUTOR_VERDICT=CRI effective in prod runtime; literal-question
+    smoke awaits real user turn
+```
