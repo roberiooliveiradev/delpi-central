@@ -310,3 +310,41 @@ Esses numeros e a formula sao `PROVEN_SCREENSHOT` **na planilha editada**. Nao p
 **Resultado:** `INVENTORY_WORKFLOW=DOCUMENTED_PARTIAL`; `INVENT_FILTER=PROVEN_SCREENSHOT`; `EXCEL_FORMULA=PROVEN_SCREENSHOT`; `EXCEL_NET_LOSS=-57181.80_OBSERVED`; `SD3010_ORIGIN=SOURCE_REPORTED_TO_VERIFY`; `SQL_PARITY=TEST_NOT_RUN`; `PORTAL_IMPLEMENTATION=TARGET_DECISION_REQUIRED`.
 
 **Proximo marcador da gravacao: 23:33**, aguardando a continuidade da narracao do PO.
+
+
+## Registro 10 - CPV do Kardex 01, materiais de terceiros e arquivamento (aprox. 23:46-25:46)
+
+**Proveniencia:** relato do PO durante reproducao e capturas de tela Excel e `Salvar como`. `PROVEN_SCREENSHOT` para filtros, campo destacado e arquivos visiveis; `OWNER_REPORTED_VIA_PO` para regra operacional e interpretacao; `TO_INVENTORY` para classificacao tecnica de terceiros e formula canonica. Este registro continua o Registro 09; nao presume que os mesmos filtros/arquivos sejam usados em toda competencia.
+
+### Conferencia de materias-primas de terceiros
+1. Depois de salvar a conciliacao de inventarios, Joici retorna a planilha `cpv 09 26 matriz`, proveniente do Kardex do armazem 01.
+2. PO relata que verifica produtos e materias-primas **em poder de terceiros / fornecidos pelo cliente** usados na estrutura de um produto acabado; nesses casos, ela espera **ausencia de custo proprio** na parcela de material do cliente, para nao inflar o CPV. A formulacao deve ser validada quanto a propriedade, tipo de movimento e custeio; **nao afirmar que todo custo de um PA contendo insumo de terceiro deva ser zero**.
+3. A conferencia ocorre hoje parcialmente por experiencia da executora (relato `feeling`). Capturas mostram uso de `Localizar e substituir` por um codigo de produto e linhas correspondentes no Kardex; ha exemplo de registro que, segundo PO, aparece indevidamente, atribuido a falha/parametrizacao TOTVS. **Bug de ERP nao comprovado por RCA**: registrar como ocorrencia a investigar, sem alterar base ou descartar movimentos automaticamente.
+4. Candidato de verificacao READ no futuro: produto -> estrutura/BOM -> componentes -> indicador canonico de material do cliente/terceiros -> custo do movimento, exibindo excecoes, sinais, competencia, armazem, identificadores e justificativa. **Nao confundir identificacao em cadastro SB1 com prova de propriedade juridica, nem assumir estrutura historica atual = estrutura vigente em 09/2026.** Producer/contract/owner `TO_INVENTORY`.
+
+### Filtro fiscal do CPV e coluna de calculo
+1. PO cita os codigos `5101`, `5124`, `6101` e `6124`. A captura da planilha, ao filtrar a coluna `C.F`, mostra entradas como `5101`, `6101` e codigos de TES como `501`/`614` em coluna adjacente; **nao confundir TES com CFOP** e nao promover conjunto como canonico antes de confirmar os quatro codigos no relatorio/ERP.
+2. Joici seleciona e soma **`SAIDAS CUSTO`** do Kardex 01 para movimentos correspondentes ao filtro fiscal. A captura com coluna selecionada e barra de status do Excel confirma a operacao de soma, mas **nao constitui apuracao definitiva do CPV**; tratamento de devolucoes, estornos, terceiros, periodizacao, custos zerados e arredondamento continua nao verificado.
+3. A planilha `cpv 09 26 matriz` e arquivada na pasta da competencia. A captura mostra arquivo previamente salvo e procedimentos posteriores de salvamento/exportacao; nao declarar que esse proprio arquivo seja a fonte oficial contabil final.
+
+### Relação com indicador CPV ja existente na Minha DELPI
+PO informa que existe calculo de CPV em dashboard de **Suprimentos**. Isso e uma **pista de reutilizacao**, nao prova de que o mesmo escopo, periodo, filtros, sinal, custo medio e tratamento de terceiros reproduzam a soma usada por Joici. Verificar no GitHub o producer/contract e testes do dashboard e confrontar com a conferencia manual. Nao importar domain/application de outro bounded context e nao copiar SQL sem authority `api-delpi`.
+
+### Arquivamento de evidencias
+- Captura mostra estrutura de diretorios `Fechamentos > Componentes > Matriz > 2026 > 09 Set`, com subpasta `Financeiro`; arquivos `99 inventarios` e `cpv 09 26 matriz` aparecem salvos. Esse caminho e apenas evidencia de pratica humana, **nao contrato de armazenamento no Portal**.
+- Em ~25:46, Joici salva tambem o arquivo `TITULOS A RECEBER` na subpasta Financeiro; capturas mostram o dialogo de salvar com nome de arquivo, nao comprovante de envio a terceiros.
+- Para eventual trilha de auditoria digital: competencia, unidade/filial, fonte, versao de extracao, filtros, resultado, operador, data de geracao e identificador do artefato, conforme decisao de owner e retention policy. Nao automatizar persistencia neste gate documental.
+
+### Matriz de verificacao dirigida
+| Questao | Evidencia | Resultado atual |
+|---|---|---|
+| CFOPs 5101, 5124, 6101, 6124 | Relato do PO, `C.F` na captura com 5101/6101 | `DOCUMENTED_PARTIAL`; conjunto completo `TO_VERIFY` |
+| Valor usado para CPV | Coluna `SAIDAS CUSTO` selecionada para soma | `PROVEN_SCREENSHOT` operacao; formula e total reconciliado `INCONCLUSIVE` |
+| Materiais de clientes/terceiros | Explicacao PO, busca por produto no Kardex | `OWNER_REPORTED_VIA_PO`; estrutura historica e propriedade `TO_INVENTORY` |
+| Registro anomalo | Exemplo localizado em planilha, interpretado pela Joici | `INCONCLUSIVE` causa e impacto |
+| Indicador CPV Suprimentos | Informacao PO | `TO_INVENTORY` comparacao de contrato e formula |
+| Salvamentos | Arquivos de inventario/CPV e nome `TITULOS A RECEBER` visiveis | `PROVEN_SCREENSHOT_PARTIAL`; envio `NOT_PROVEN` |
+
+**Estado:** `KARDEX01_CPV_METHOD=DOCUMENTED_PARTIAL`; `THIRD_PARTY_COST_CHECK=OWNER_REPORTED_VIA_PO`; `FISCAL_FILTER=TO_VERIFY`; `CPV_SQL_PARITY=TEST_NOT_RUN`; `SUPPLY_DASHBOARD_REUSE=TO_INVENTORY`; `PORTAL_AUDIT_PERSISTENCE=TARGET_DECISION_REQUIRED`; `IMPLEMENTATION_AUTHORIZED=NO`.
+
+**Proximo marcador da gravacao: apos ~25:46.**
