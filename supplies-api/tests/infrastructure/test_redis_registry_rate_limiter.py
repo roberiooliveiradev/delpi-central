@@ -51,10 +51,42 @@ def test_factory_distributed_without_url_fails_closed(monkeypatch):
         limiter.acquire("actor", "u1")
 
 
-def test_factory_unknown_strategy_falls_back_local(monkeypatch):
+def test_factory_unknown_strategy_fails_closed(monkeypatch):
     from app.infrastructure.config.settings import Settings
 
     monkeypatch.setattr(Settings, "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "bogus")
+    limiter = build_registry_rate_limiter()
+    assert isinstance(limiter, UnavailableRegistryRateLimiter)
+    with pytest.raises(RegistryLimiterUnavailableError):
+        limiter.acquire("actor", "u1")
+
+
+def test_factory_brasilapi_process_local_blocked_without_optin(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", False)
+    limiter = build_registry_rate_limiter()
+    assert isinstance(limiter, UnavailableRegistryRateLimiter)
+    with pytest.raises(RegistryLimiterUnavailableError):
+        limiter.acquire("cnpj", "h")
+
+
+def test_factory_brasilapi_process_local_with_explicit_optin(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", True)
+    assert isinstance(build_registry_rate_limiter(), InMemoryRegistryRateLimiter)
+
+
+def test_factory_unavailable_provider_process_local_stays_local(monkeypatch):
+    from app.infrastructure.config.settings import Settings
+
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "unavailable")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local")
     assert isinstance(build_registry_rate_limiter(), InMemoryRegistryRateLimiter)
 
 

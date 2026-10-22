@@ -83,6 +83,11 @@ class Settings:
     COMPANY_REGISTRY_RATE_LIMIT_STRATEGY = os.getenv(
         "COMPANY_REGISTRY_RATE_LIMIT_STRATEGY", "process_local"
     ).strip().lower()
+    # Safety gate (S3.3): BrasilAPI + process_local is only accepted when the
+    # deployment is provably single-worker/test — explicit opt-in required.
+    COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED = os.getenv(
+        "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", "false"
+    ).strip().lower() in ("1", "true", "yes")
     COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE = int(
         os.getenv("COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE", "30") or "30"
     )

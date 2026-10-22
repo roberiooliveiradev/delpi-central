@@ -10,11 +10,17 @@ behind.
 Strategies (``COMPANY_REGISTRY_RATE_LIMIT_STRATEGY``):
 
 - ``process_local`` — in-memory per-worker counters; only safe for
-  single-worker/test deployments.
+  single-worker/test deployments. When ``COMPANY_REGISTRY_PROVIDER`` is
+  ``brasilapi`` this strategy is rejected unless
+  ``COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED=true`` explicitly marks the
+  deployment as single-worker/test.
 - ``distributed`` — Redis fixed-window counters shared by all workers and
   replicas. A single Lua script makes check-and-increment atomic; keys are
   namespaced and always carry a TTL. Redis failure or missing URL →
   ``RegistryLimiterUnavailableError`` (fail-closed, never queries upstream).
+
+Any other strategy value resolves to the unavailable limiter — an unknown
+value is never silently mapped to memory.
 """
 
 from __future__ import annotations
@@ -248,4 +254,17 @@ def build_registry_rate_limiter() -> Any:
             return UnavailableRegistryRateLimiter(
                 f"distributed rate limiter init failed: {exc}"
             )
-    return InMemoryRegistryRateLimiter(limits=_default_limits())
+    if strategy == "process_local":
+        if (
+            getattr(Settings, "COMPANY_REGISTRY_PROVIDER", "unavailable")
+            == "brasilapi"
+            and not getattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", False)
+        ):
+            return UnavailableRegistryRateLimiter(
+                "brasilapi with process_local rate limiting requires an explicit "
+                "single-worker opt-in (COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED)"
+            )
+        return InMemoryRegistryRateLimiter(limits=_default_limits())
+    return UnavailableRegistryRateLimiter(
+        f"unknown company-registry rate-limit strategy: {strategy}"
+    )

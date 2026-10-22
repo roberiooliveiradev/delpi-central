@@ -328,6 +328,7 @@ def test_factory_resolved_providers_share_limiter(monkeypatch):
     )
 
     monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
+    monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED", True)
     monkeypatch.setattr(Settings, "COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE", 5)
     reset_registry_rate_limiter()
     try:
@@ -397,11 +398,18 @@ def test_factory_selects_brasilapi(monkeypatch):
     from app.infrastructure.gateways.supplier_enrichment_adapters import (
         company_registry_provider,
     )
+    from app.infrastructure.gateways.brasilapi_registry_provider import (
+        reset_registry_rate_limiter,
+    )
 
     monkeypatch.setattr(Settings, "COMPANY_REGISTRY_PROVIDER", "brasilapi")
-    assert isinstance(
-        company_registry_provider(), BrasilApiCompanyRegistryProvider
-    )
+    reset_registry_rate_limiter()
+    try:
+        assert isinstance(
+            company_registry_provider(), BrasilApiCompanyRegistryProvider
+        )
+    finally:
+        reset_registry_rate_limiter()
 
 
 def test_factory_unknown_value_fails_closed(monkeypatch):

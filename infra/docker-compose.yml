@@ -2109,6 +2109,9 @@ services:
       # Default fail-closed; distributed limiter requires shared REDIS_URL.
       COMPANY_REGISTRY_PROVIDER: ${COMPANY_REGISTRY_PROVIDER:-unavailable}
       COMPANY_REGISTRY_RATE_LIMIT_STRATEGY: ${COMPANY_REGISTRY_RATE_LIMIT_STRATEGY:-process_local}
+      # S3.3 — opt-in obrigatório p/ BrasilAPI+process_local (single-worker/test);
+      # deployment multiworker exige strategy=distributed + REDIS_URL saudável.
+      COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED: ${COMPANY_REGISTRY_PROCESS_LOCAL_ALLOWED:-false}
       COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE: ${COMPANY_REGISTRY_MAX_QUERIES_PER_MINUTE:-10}
       COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE: ${COMPANY_REGISTRY_GLOBAL_MAX_QUERIES_PER_MINUTE:-30}
       BRASILAPI_BASE_URL: ${BRASILAPI_BASE_URL:-https://brasilapi.com.br/api}
