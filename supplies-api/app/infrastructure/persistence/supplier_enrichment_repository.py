@@ -12,13 +12,18 @@ import json
 from datetime import datetime
 from typing import Any, Sequence
 
+import psycopg
+
 from app.application.services.supplier_enrichment.contracts import (
     DecisionItem,
     DecisionRecord,
+    IdempotencyConflictError,
+    OperationRecord,
     ProposalRecord,
     ReviewRecord,
     ReviewRevisionConflictError,
 )
+from app.domain.supplier_enrichment.review_lifecycle import Decision
 from app.infrastructure.persistence.migrations_runner import get_connection
 
 
@@ -171,35 +176,40 @@ class PostgresSupplierEnrichmentRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT decision_id, review_id, proposal_id, actor_subject,
-                           decision, reason_code, decided_at, review_revision,
-                           idempotency_key, request_hash
-                    FROM supplies.supplier_enrichment_decisions
-                    WHERE review_id = %s
-                    ORDER BY decided_at, decision_id
+                    SELECT d.decision_id, d.review_id, d.proposal_id,
+                           d.operation_id, p.field_key, d.actor_subject,
+                           d.decision, o.reason_code, d.decided_at,
+                           o.review_revision
+                    FROM supplies.supplier_enrichment_decisions d
+                    JOIN supplies.supplier_enrichment_decision_operations o
+                        ON o.operation_id = d.operation_id
+                    JOIN supplies.supplier_enrichment_proposals p
+                        ON p.proposal_id = d.proposal_id
+                    WHERE d.review_id = %s
+                    ORDER BY d.decided_at, d.decision_id
                     """,
                     (review_id,),
                 )
                 rows = cur.fetchall()
         return [_decision(row) for row in rows]
 
-    def find_decision_by_idempotency_key(
+    def find_operation_by_idempotency_key(
         self, *, review_id: str, idempotency_key: str
-    ) -> DecisionRecord | None:
+    ) -> OperationRecord | None:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT decision_id, review_id, proposal_id, actor_subject,
-                           decision, reason_code, decided_at, review_revision,
-                           idempotency_key, request_hash
-                    FROM supplies.supplier_enrichment_decisions
+                    SELECT operation_id, review_id, actor_subject, decision,
+                           reason_code, idempotency_key, request_hash,
+                           review_revision, decided_at
+                    FROM supplies.supplier_enrichment_decision_operations
                     WHERE review_id = %s AND idempotency_key = %s
                     """,
                     (review_id, idempotency_key),
                 )
                 row = cur.fetchone()
-        return _decision(row) if row else None
+        return _operation(row) if row else None
 
     # -- mutations ----------------------------------------------------------
 
@@ -208,6 +218,8 @@ class PostgresSupplierEnrichmentRepository:
         *,
         review_id: str,
         actor_subject: str,
+        decision: Decision,
+        reason_code: str | None,
         decisions: Sequence[DecisionItem],
         expected_revision: int,
         idempotency_key: str,
@@ -216,7 +228,14 @@ class PostgresSupplierEnrichmentRepository:
         event_type: str,
         decided_at: datetime,
     ) -> tuple[ReviewRecord, list[ProposalRecord]]:
-        """Atomic decision batch guarded by the expected review revision."""
+        """Atomic decision batch guarded by the expected review revision.
+
+        One ``decision_operations`` row carries the request identity
+        (idempotency key + hash); N ``decisions`` rows link each field to
+        that operation. Revision bump, proposal updates, decision rows and
+        audit events all commit in the same transaction — any failure
+        rolls back everything.
+        """
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -232,7 +251,47 @@ class PostgresSupplierEnrichmentRepository:
                     raise ReviewRevisionConflictError(
                         f"expected revision {expected_revision}"
                     )
+                # Validate every proposal is still pending BEFORE the first
+                # decision row is written — the batch stays atomic.
+                pending_ids = {item.proposal_id for item in decisions}
                 for item in decisions:
+                    cur.execute(
+                        """
+                        SELECT proposal_id FROM supplies.supplier_enrichment_proposals
+                        WHERE proposal_id = %s AND review_id = %s
+                          AND decision_state = 'PENDING'
+                        """,
+                        (item.proposal_id, review_id),
+                    )
+                    if cur.fetchone() is None:
+                        conn.rollback()
+                        raise ReviewRevisionConflictError(
+                            "proposal no longer pending"
+                        )
+                try:
+                    cur.execute(
+                        """
+                        INSERT INTO supplies.supplier_enrichment_decision_operations (
+                            review_id, actor_subject, decision, reason_code,
+                            idempotency_key, request_hash, review_revision,
+                            decided_at
+                        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                        RETURNING operation_id
+                        """,
+                        (
+                            review_id, actor_subject, decision.value,
+                            reason_code, idempotency_key, request_hash,
+                            expected_revision, decided_at,
+                        ),
+                    )
+                except psycopg.errors.UniqueViolation:
+                    conn.rollback()
+                    raise IdempotencyConflictError(idempotency_key)
+                operation_id = str(cur.fetchone()["operation_id"])
+                for item in decisions:
+                    if item.proposal_id not in pending_ids:
+                        conn.rollback()
+                        raise ReviewRevisionConflictError("decision set changed")
                     cur.execute(
                         """
                         UPDATE supplies.supplier_enrichment_proposals
@@ -240,10 +299,7 @@ class PostgresSupplierEnrichmentRepository:
                         WHERE proposal_id = %s AND review_id = %s
                           AND decision_state = 'PENDING'
                         """,
-                        (
-                            _decision_state(item.decision),
-                            item.proposal_id, review_id,
-                        ),
+                        (_decision_state(item.decision), item.proposal_id, review_id),
                     )
                     if cur.rowcount != 1:
                         conn.rollback()
@@ -253,15 +309,13 @@ class PostgresSupplierEnrichmentRepository:
                     cur.execute(
                         """
                         INSERT INTO supplies.supplier_enrichment_decisions (
-                            review_id, proposal_id, actor_subject, decision,
-                            reason_code, decided_at, review_revision,
-                            idempotency_key, request_hash
-                        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            review_id, proposal_id, operation_id, actor_subject,
+                            decision, decided_at
+                        ) VALUES (%s,%s,%s,%s,%s,%s)
                         """,
                         (
-                            review_id, item.proposal_id, actor_subject,
-                            item.decision.value, item.reason_code, decided_at,
-                            expected_revision, idempotency_key, request_hash,
+                            review_id, item.proposal_id, operation_id,
+                            actor_subject, item.decision.value, decided_at,
                         ),
                     )
                     cur.execute(
@@ -274,6 +328,7 @@ class PostgresSupplierEnrichmentRepository:
                             review_id, actor_subject, event_type,
                             json.dumps(
                                 {
+                                    "operation_id": operation_id,
                                     "proposal_id": item.proposal_id,
                                     "decision": item.decision.value,
                                     "reason_code": item.reason_code,
@@ -386,11 +441,25 @@ def _decision(row: dict[str, Any]) -> DecisionRecord:
         decision_id=str(row["decision_id"]),
         review_id=str(row["review_id"]),
         proposal_id=str(row["proposal_id"]),
+        operation_id=str(row["operation_id"]),
+        field_key=row["field_key"],
         actor_subject=str(row["actor_subject"]),
         decision=row["decision"],
         reason_code=row["reason_code"],
         decided_at=row["decided_at"],
         review_revision=int(row["review_revision"]),
+    )
+
+
+def _operation(row: dict[str, Any]) -> OperationRecord:
+    return OperationRecord(
+        operation_id=str(row["operation_id"]),
+        review_id=str(row["review_id"]),
+        actor_subject=str(row["actor_subject"]),
+        decision=row["decision"],
+        reason_code=row["reason_code"],
         idempotency_key=row["idempotency_key"],
         request_hash=row["request_hash"],
+        review_revision=int(row["review_revision"]),
+        decided_at=row["decided_at"],
     )

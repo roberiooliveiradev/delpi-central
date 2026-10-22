@@ -125,6 +125,7 @@ class InMemoryReviewRepository:
         self.reviews: dict[str, ReviewRecord] = {}
         self.proposals: dict[str, list[ProposalRecord]] = {}
         self.decisions: list = []
+        self.operations: list = []
         self.events: list[dict] = []
 
     def create_review(self, *, review, proposals):
@@ -153,15 +154,15 @@ class InMemoryReviewRepository:
     def get_decisions(self, review_id):
         return [d for d in self.decisions if d.review_id == review_id]
 
-    def find_decision_by_idempotency_key(self, *, review_id, idempotency_key):
-        for d in self.decisions:
-            if d.review_id == review_id and d.idempotency_key == idempotency_key:
-                return d
+    def find_operation_by_idempotency_key(self, *, review_id, idempotency_key):
+        for op in self.operations:
+            if op.review_id == review_id and op.idempotency_key == idempotency_key:
+                return op
         return None
 
-    def apply_decisions(self, *, review_id, actor_subject, decisions,
-                        expected_revision, idempotency_key, request_hash,
-                        new_status, event_type, decided_at):
+    def apply_decisions(self, *, review_id, actor_subject, decision, reason_code,
+                        decisions, expected_revision, idempotency_key,
+                        request_hash, new_status, event_type, decided_at):
         review = self.reviews[review_id]
         if review.revision != expected_revision:
             raise ReviewRevisionConflictError("revision mismatch")
@@ -173,6 +174,16 @@ class InMemoryReviewRepository:
             )
             if prop.decision_state != "PENDING":
                 raise ReviewRevisionConflictError("proposal no longer pending")
+        operation_id = f"op-{len(self.operations)+1}"
+        self.operations.append(
+            type("O", (), dict(
+                operation_id=operation_id, review_id=review_id,
+                actor_subject=actor_subject, decision=decision.value,
+                reason_code=reason_code, decided_at=decided_at,
+                review_revision=expected_revision,
+                idempotency_key=idempotency_key, request_hash=request_hash,
+            ))()
+        )
         for item in decisions:
             prop = next(
                 p for p in self.proposals[review_id]
@@ -189,10 +200,10 @@ class InMemoryReviewRepository:
                 type("D", (), dict(
                     decision_id=f"dec-{len(self.decisions)+1}",
                     review_id=review_id, proposal_id=item.proposal_id,
+                    operation_id=operation_id, field_key=prop.field_key,
                     actor_subject=actor_subject, decision=item.decision.value,
-                    reason_code=item.reason_code, decided_at=decided_at,
+                    reason_code=reason_code, decided_at=decided_at,
                     review_revision=expected_revision,
-                    idempotency_key=idempotency_key, request_hash=request_hash,
                 ))()
             )
             self.events.append({"review_id": review_id, "type": event_type})

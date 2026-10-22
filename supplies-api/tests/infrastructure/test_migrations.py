@@ -54,3 +54,19 @@ def test_v002_defines_enrichment_tables_and_constraints():
     # Additive only — never drop/truncate existing structures.
     for forbidden in ("DROP TABLE", "TRUNCATE", "DELETE FROM"):
         assert forbidden not in sql
+
+
+def test_v003_separates_idempotent_operation_from_field_decisions():
+    sql = (
+        Path(MIGRATIONS_DIR) / "V003__supplier_enrichment_decision_operations.sql"
+    ).read_text(encoding="utf-8")
+    assert "CREATE TABLE supplies.supplier_enrichment_decision_operations" in sql
+    assert "UNIQUE (review_id, idempotency_key)" in sql
+    assert "operation_id UUID" in sql
+    assert "REFERENCES supplies.supplier_enrichment_decision_operations" in sql
+    # Request-level identity leaves the per-field decision row.
+    assert "DROP COLUMN idempotency_key" in sql
+    assert "DROP COLUMN request_hash" in sql
+    assert "ALTER COLUMN operation_id SET NOT NULL" in sql
+    for forbidden in ("DROP TABLE", "TRUNCATE", "DELETE FROM"):
+        assert forbidden not in sql
