@@ -311,3 +311,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - posicao de contas a pagar (2026-10-22)
 
 [Doc 69 - Inventario estrutural da posicao financeira](./69-ciclo1-contas-a-pagar-posicao-titulos.md): 1 aba com campos de situacao de titulos, datas, vencimentos e naturezas. FINR150 candidato de origem; FINR190 representa baixas e nao equivale a saldos abertos. Paridade pendente. Sem dados de origem versionados.
+
+
+### Ciclo 1 - contas a receber em aberto (22/10/2026)
+
+[Doc 70 - Posicao de titulos a receber](./70-ciclo1-contas-a-receber-posicao-titulos.md): estrutura do snapshot financeiro, vencimentos, natureza e tipos de titulo, com 17 colunas, 560 registros na amostra e cabecalhos repetidos. FINR130 e candidato funcional; fontes, parametros e paridade com relatorios de recebimento/FINR190 permanecem pendentes. Sem dados transacionais originais no repositorio.
