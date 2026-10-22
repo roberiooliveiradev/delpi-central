@@ -6,6 +6,7 @@ import type {
 
 import { NativeTextAreaControl } from "../forms/NativeTextAreaControl";
 import { ComposerCharacterCounter } from "./ComposerCharacterCounter";
+import { ComposerEnqueueButton } from "./ComposerEnqueueButton";
 import { ComposerSendButton } from "./ComposerSendButton";
 import { ComposerStopButton } from "./ComposerStopButton";
 import { ComposerClearDraftButton } from "./ComposerClearDraftButton";
@@ -17,6 +18,16 @@ export type MessageComposerProps = {
   onChange: (value: string) => void;
   /** Explicit user intent only — invoked by Enter or the send control. */
   onSubmit: () => void;
+  /**
+   * Doc 71 (F03-B) — enqueue intent while a request is in flight.
+   * When provided, the textarea stays editable during in-flight and
+   * Enter/the queue control emit this intent instead of submit. When
+   * omitted, in-flight behaviour is unchanged (textarea locked, no
+   * queue affordance). The host owns admission, order and dispatch.
+   */
+  onEnqueue?: () => void;
+  /** Accessible name of the enqueue action. */
+  enqueueLabel?: string;
   /** Explicit local draft-clear intent; supplied only by a capable host. */
   onClearDraft?: () => void;
   /** id applied to the textarea. */
@@ -87,6 +98,8 @@ export function MessageComposer({
   value,
   onChange,
   onSubmit,
+  onEnqueue,
+  enqueueLabel = "Adicionar à fila",
   onClearDraft,
   inputId,
   inputLabel,
@@ -117,6 +130,16 @@ export function MessageComposer({
     !inFlight &&
     bodyOverride == null &&
     value.trim().length > 0;
+  // Enqueue is offered only while in-flight AND the host admitted the
+  // affordance — idle behaviour is untouched. The capture override
+  // blocks it (no hidden submit path), same contract as canSubmit.
+  const canEnqueue =
+    !disabled &&
+    !submitDisabled &&
+    inFlight &&
+    onEnqueue != null &&
+    bodyOverride == null &&
+    value.trim().length > 0;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -133,10 +156,19 @@ export function MessageComposer({
     onSubmit();
   }
 
+  function enqueueIntent() {
+    if (!canEnqueue) return;
+    onEnqueue?.();
+  }
+
   function handleKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey) return;
     if (event.nativeEvent.isComposing) return;
     event.preventDefault();
+    if (inFlight) {
+      enqueueIntent();
+      return;
+    }
     submitIntent();
   }
 
@@ -147,6 +179,10 @@ export function MessageComposer({
         .join(" ")}
       onSubmit={(event) => {
         event.preventDefault();
+        if (inFlight) {
+          enqueueIntent();
+          return;
+        }
         submitIntent();
       }}
     >
@@ -163,7 +199,7 @@ export function MessageComposer({
             placeholder={placeholder}
             aria-label={inputLabel}
             rows={1}
-            disabled={disabled || inFlight}
+            disabled={disabled || (inFlight && onEnqueue == null)}
             onKeyDown={handleKeyDown}
           />
           {typeof characterLimit === "number" && characterLimit > 0 ? (
@@ -185,8 +221,17 @@ export function MessageComposer({
           ) : null}
           {keyboardHint ? (
             <span className="delpi-ui-message-composer__hint">
-              {keyboardHint}
+              {inFlight && onEnqueue
+                ? "Enter adiciona à fila · Shift+Enter quebra linha"
+                : keyboardHint}
             </span>
+          ) : null}
+          {inFlight && onEnqueue ? (
+            <ComposerEnqueueButton
+              disabled={!canEnqueue}
+              onEnqueue={enqueueIntent}
+              label={enqueueLabel}
+            />
           ) : null}
           {requestMode === "responding_cancelable" && onStop ? (
             <ComposerStopButton

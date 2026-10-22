@@ -299,3 +299,82 @@ describe("MessageComposer — bodyOverride (dictation surface swap)", () => {
     ).toBe("rascunho intacto");
   });
 });
+
+describe("MessageComposer — enqueue while in-flight (F03-B)", () => {
+  it("without onEnqueue, in-flight keeps textarea locked and no queue control", () => {
+    renderComposer({
+      value: "pergunta B",
+      loading: true,
+      requestMode: "responding_not_cancelable",
+    });
+    const input = screen.getByLabelText("Pergunte") as HTMLTextAreaElement;
+    expect(input.disabled).toBe(true);
+    expect(
+      screen.queryByRole("button", { name: "Adicionar à fila" }),
+    ).toBeNull();
+  });
+
+  it("with onEnqueue, textarea stays editable and the queue control appears", () => {
+    const onEnqueue = vi.fn();
+    renderComposer({
+      value: "pergunta B",
+      onEnqueue,
+      loading: true,
+      requestMode: "responding_cancelable",
+      onStop: vi.fn(),
+    });
+    const input = screen.getByLabelText("Pergunte") as HTMLTextAreaElement;
+    expect(input.disabled).toBe(false);
+    // Stop stays primary — enqueue never replaces it.
+    expect(
+      screen.getByRole("button", { name: "Interromper resposta" }),
+    ).toBeTruthy();
+    const enqueue = screen.getByRole("button", {
+      name: "Adicionar à fila",
+    }) as HTMLButtonElement;
+    expect(enqueue.disabled).toBe(false);
+  });
+
+  it("enqueue button emits the intent without submitting", () => {
+    const onEnqueue = vi.fn();
+    const { onSubmit } = renderComposer({
+      value: "pergunta B",
+      onEnqueue,
+      loading: true,
+      requestMode: "responding_not_cancelable",
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Adicionar à fila" }),
+    );
+    expect(onEnqueue).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("Enter enqueues instead of submitting while in-flight", () => {
+    const onEnqueue = vi.fn();
+    const { onSubmit } = renderComposer({
+      value: "pergunta B",
+      onEnqueue,
+      loading: true,
+      requestMode: "responding_not_cancelable",
+    });
+    fireEvent.keyDown(screen.getByLabelText("Pergunte"), {
+      key: "Enter",
+    });
+    expect(onEnqueue).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("empty draft disables the enqueue affordance", () => {
+    renderComposer({
+      value: "   ",
+      onEnqueue: vi.fn(),
+      loading: true,
+      requestMode: "responding_not_cancelable",
+    });
+    const enqueue = screen.getByRole("button", {
+      name: "Adicionar à fila",
+    }) as HTMLButtonElement;
+    expect(enqueue.disabled).toBe(true);
+  });
+});

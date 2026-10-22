@@ -295,3 +295,31 @@ textarea.delpi-ui-native-control.delpi-ui-message-composer__input::placeholder {
     transition: none !important;
   }
 }
+
+/* ---------- fila efêmera (doc 71 F03-B): ação secundária durante in-flight */
+.delpi-ui-message-composer__enqueue {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.delpi-ui-message-composer__enqueue:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .delpi-ui-message-composer__enqueue-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}

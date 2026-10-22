@@ -299,3 +299,21 @@ Sem backend de fila admitido, a implementação futura pode usar fixtures **excl
 **Integração:** sem contrato backend de fila admitido até o momento (TO_INVENTORY) — a DÉLIA passa `items=[]` em produção e a superfície permanece invisível. Fixture de QA isolada `?delia-demo-queue=<variant>` atrás do gate canônico `isDemoAllowed()` (`DEV` ou `VITE_DELIA_DEMO=1`) cobre `pending|one|blocked|loading|error|unavailable`; inerte no bundle de produção (provado por paridade). Evidência: [conversation-queue-f03a](evidence/conversation-queue-f03a/conversation-queue-f03a-evidence.md).
 
 **Status:** PRODUCT_UX_DETAIL=DOCUMENTED; COMPONENT_RUNTIME=IMPLEMENTED_VISUAL; BACKEND_QUEUE_CONTRACT=TO_INVENTORY; F03A_IMPLEMENTATION=EXECUTED_VISUAL; TESTS=PASS; DEPLOYMENT=EXECUTED (6efcd12915); PHASE_PROGRESSION=NONE.
+
+### 13.8 Resultado factual da implementação F03-B — fila efêmera funcional (2026-10-22)
+
+`TASK_ID=DELIA-UX-F03B-EPHEMERAL-CONVERSATION-QUEUE-IMPLEMENTATION-01`. Autoridade: doc 122 §11 (correção de direção do Product Master) — fila **temporária, em memória, isolada pela conversa ativa**, sem persistência, sem backend de fila, sem scheduler.
+
+**Implementação.** `plugins/delia/src/queue/conversationQueue.ts` (`useConversationQueue`): `PendingConversationRequest{id local, text congelado, createdAt}` com `enqueue/moveItem/removeItem/takeNext/clear`; `takeNext` consome o head **atomicamente contra ref** antes de qualquer POST — item consumido nunca é entregue duas vezes (efeito reexecutado, batching ou Strict Mode). `App.tsx`: `handleSubmit` envia direto quando idle+fila vazia; durante in-flight ou com pendências, o texto vai para o tail (FIFO preservado); efeito de dispatch dispara o próximo somente quando `idle && !queuePaused && !hasPendingConfirmation`, reutilizando `sendTurn`/`submitInteractionTurn` inalterados — um turno em voo por conversa, sempre. `turnsRef` garante que o contexto enviado ao backend inclui a resposta recém-concluída (sem closure obsoleto).
+
+**Affordance do composer** (`plugin-ui` `MessageComposer` + `ComposerEnqueueButton`, `ListPlus`): quando o host fornece `onEnqueue`, a textarea permanece editável durante in-flight, Enter enfileira, botão "Adicionar à fila" aparece antes do Stop/Enviar (Stop preservado como primário quando cancelável); sem `onEnqueue`, o lock in-flight antigo permanece. Ditado (VD-F05) permanece utilizável durante resposta — transcrição entra no draft e o usuário decide enviar/enfileirar.
+
+**Pausa honesta.** Erro HTTP/timeout/falha, Stop do usuário ou confirmação governada pendente **bloqueiam o avanço automático**: pendências preservadas, zero retry; `PAUSED_AFTER_ERROR` exibe aviso "O envio das perguntas pendentes está pausado." + ação explícita "Retomar fila" entre a fila e o composer. `hasPendingConfirmation` deriva de `turns` (card sem `confirmationAnswered`) e só libera após a decisão governada concluir.
+
+**Draft.** Texto sai do draft somente após admissão local bem-sucedida; o envio limpa o draft no momento da admissão e restaura em falha somente se o draft continuou vazio — conclusão tardia nunca sobrescreve texto novo (bug encontrado e corrigido no QA real). DraftRecovery R1 intacto: enfileirar não cria snapshot; Undo2 nunca restaura texto já admitido; remover da fila não altera o draft.
+
+**Isolamento e limites honestos.** Estado morre com o mount: full-page ↔ Companion Dock são mounts separados (`GlobalDeliaDock.tsx` `hostRef` — evidência de código), reload e fechamento descartam a fila — limitação intencional do slice, sem promessa de recuperação/multiaba/dispositivo. Fixture `?delia-demo-queue=` permanece override puramente visual (enqueue real não é oferecido sob fixture) e segue inerte em bundle de produção (provado por paridade).
+
+**Evidência:** [conversation-queue-f03b](evidence/conversation-queue-f03b/conversation-queue-f03b-evidence.md) — Vitest 19 novos (hook 6 + integração 13 com contagem de POSTs reais), suites completas 320/320 delia + 2286/2286 plugin-ui, typecheck+build+federation PASS, Playwright backend real 31/31 (full-page 19 com reordenação C-antes-de-B e contagem de POSTs, Dock real 8 com cap 100px, mobile 4).
+
+**Status:** F03B_IMPLEMENTATION=EXECUTED; QUEUE_STORAGE=MEMORY_ONLY; BACKEND_CHANGED=NO; PERSISTENCE=NONE; TESTS=PASS; PHASE_PROGRESSION=NONE.
