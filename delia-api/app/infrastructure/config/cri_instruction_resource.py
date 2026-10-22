@@ -36,7 +36,11 @@ _VOCABULARY_KIND = "presentation_vocabulary"
 # E3-R1–R3 rework: v2 corrects count-source claims, splits temporal
 # clauses by owner-declared field semantics and drops the
 # unserviceable continuity offer. v1 is intentionally rejected.
-_VOCABULARY_VERSIONS = frozenset({"2"})
+# C3 contextual discovery: v3 adds the optional ``contract_facts``
+# lead for owner-published capability-surface answers; v2 remains
+# valid — the composition degrades to fallback when the entry is
+# absent, never partially.
+_VOCABULARY_VERSIONS = frozenset({"2", "3"})
 _VOCABULARY_SECTIONS = (
     "leads",
     "temporal_clauses",

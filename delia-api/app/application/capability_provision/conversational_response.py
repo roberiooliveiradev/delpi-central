@@ -36,6 +36,7 @@ from typing import Mapping, Sequence
 
 from app.application.capability_provision.outcome_assessment import (
     OUTCOME_ANSWERED,
+    OUTCOME_CONTRACT_FACTS,
     OUTCOME_EMPTY_RESULT,
     OUTCOME_ENVELOPE_ONLY,
     OUTCOME_INSUFFICIENT,
@@ -50,6 +51,11 @@ from app.application.interaction.contracts import (
 MAX_PRESENTED_RECORDS = 5
 MAX_FIELDS_PER_RECORD = 4
 _MAX_FIELD_SCAN_RECORDS = 32
+# Owner-published contract rows are capability-surface metadata —
+# bounded in count and per-row size so a large catalog can never
+# flood the response.
+MAX_CONTRACT_FACT_ROWS = 8
+_MAX_CONTRACT_FACT_CHARS = 300
 
 # Reason -> insufficiency vocabulary key, in proximate-cause order:
 # the reason closest to what the user actually asked leads the
@@ -163,6 +169,7 @@ def compose_cri_response(
     ordering_date: str | None,
     ordering_event: str | None,
     vocabulary: Mapping[str, Mapping[str, str]],
+    contract_facts: Sequence[str] = (),
 ) -> CriComposition | None:
     """Compose the governed conversational response, or ``None``.
 
@@ -219,6 +226,19 @@ def compose_cri_response(
             CriComposition(text, 0)
             if text is not None
             else None
+        )
+
+    # ---- owner-published contract facts (capability surface) ------
+    if verdict.decision == OUTCOME_CONTRACT_FACTS:
+        lead = _format(leads.get("contract_facts"), **params)
+        if lead is None or not contract_facts:
+            return None
+        rows = [
+            f"- {row[:_MAX_CONTRACT_FACT_CHARS]}"
+            for row in contract_facts[:MAX_CONTRACT_FACT_ROWS]
+        ]
+        return CriComposition(
+            lead + "\n" + "\n".join(rows), len(rows)
         )
 
     if verdict.decision != OUTCOME_ANSWERED or not records:

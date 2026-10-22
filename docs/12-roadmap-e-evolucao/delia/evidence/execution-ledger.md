@@ -17068,3 +17068,23 @@ I04_ACCEPTED=NO
 C3_EXECUTED=NO
 NEXT=COORDINATION_DECISION (read-path filterable_fields channel + owner contract evolution)
 ```
+
+
+## §6.366 — C3 execution: contextual MCP discovery & generalization (2026-10-22)
+
+**TASK:** DELIA-C3-CONTEXTUAL-MCP-DISCOVERY-AND-GENERALIZATION-01. Bounded 5-stage implementation over live dev stack (CRI ON). **Baseline:** doc-83 projection gap reproduced live — TÉO rejected `date_field` for `process` (entity-conditional admissibility absent from flat inputSchema); DISCOVERY terminal outcomes dropped `structured` before the binding edge so contract answers degraded to `insufficient_evidence`. **Fix (EXTEND of existing mechanisms):** `_recover_owner_contract()` — one bounded round on owner remote-contract rejection (same-group DISCOVERY vocabulary → same arguments stage → one retry; fail-closed, budget-honoring, no self-recovery); `_contract_fact_rows()` — bounded sanitized owner-contract digest (entity rows + section rows, ≤8×800c, redaction applied) carried through new additive `SpecialistOutcome.contract_facts`; `OUTCOME_CONTRACT_FACTS` verdict + governed vocabulary v3 presentation. `NEW_MODEL_STAGES=0`, no provider branches, no registries. **Real before/after:** T1 (rejection→recovery→grounded honest ordering abstention), T3/T4/V2/V3/D2/D3 (`contract_facts` real surface), T2 maintained; generalization G1–G6 incl. filtered READ definitive-empty, coverage-honest partial, unseen DAVI domain miss≠absence, and write intent routed to PREPARE-only with no ACT. **Tests:** 15/15 focused + ~395 regression PASS. **OFF:** verdict path fully CRI-gated; recovery retry is a deliberate OFF-visible runtime improvement (bounded, rejection-only). **Residuals:** `filterable_fields` proactive channel pending owner/architecture decision (doc 83); digest picks first-published entity collection per name; field→event + server ordering remain owner gaps; transient model timeouts hit 30s budget (environmental). Report: [84](../corrections/mcp-contextual-intelligence-orchestration/84-c3-contextual-mcp-discovery-and-generalization.md).
+
+```text
+C3_EXECUTED=YES
+UNIT_TESTS=PASS(15)
+REGRESSION=PASS(~395)
+REAL_EVAL=GROUNDED(T1-T4,V2-V3,D2-D3)
+GENERALIZATION=PASS(G1-G6)
+SECURITY=PASS(redaction,bounded,fail-closed,no-ACT)
+OFF_PARITY=DELIBERATE_DELTA(recovery-retry-only)
+CONTRACT_CHANGES=SpecialistOutcome.contract_facts+OUTCOME_CONTRACT_FACTS+vocab-v3
+CRI_DEV_ENABLED=YES
+PRODUCTION_ACTIVATION=NO
+I04_ACCEPTED=NO
+NEXT=COORDINATION_REVIEW
+```

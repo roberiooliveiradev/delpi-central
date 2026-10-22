@@ -1,9 +1,10 @@
 {
   "resource_id": "delia.cri.presentation_vocabulary",
-  "version": "2",
+  "version": "3",
   "kind": "presentation_vocabulary",
   "owner": "DELPI",
   "leads": {
+    "contract_facts": "A fonte publica estas informações sobre o que ela oferece:",
     "ordering_newest_single_modified": "O registro mais recentemente alterado foi {identifier}.",
     "ordering_newest_single_neutral": "O registro mais recente entre os retornados foi {identifier}.",
     "ordering_oldest_single": "O registro mais antigo disponível foi {identifier}.",
