@@ -81,3 +81,16 @@ O usuário decidiu **aguardar o resultado do CP5 já em execução** antes de au
 - CP5 permanece separado: correção de timeout não se confunde com pipeline CRI, discovery ou continuidade conversacional.
 
 **Status final deste registro:** `OBSERVATIONS_REGISTERED=YES`; `PROD_CRI_EFFECTIVE=NOT_VERIFIED`; `INC01=OPEN`; `INC02=OPEN`; `INC03=OPEN`; `ROOT_CAUSES=TO_INVENTORY`; `IMPLEMENTATION=NOT_STARTED`; `CP5=IN_PROGRESS_USER_REPORTED`; `PRODUCTION_CHANGE=NONE`; `I04_ACCEPTED=NO`.
+
+
+## Evidência adicional — sequência “use o davi” → “o mcp davi” (22/10/2026, ~13:29)
+
+Duas novas capturas fornecidas pelo usuário mostram o follow-up **na mesma conversa**, após os exemplos genéricos de terminal bala. Primeiro, `use o davi` levou à resposta de desconhecimento do nome (INC-03). Em seguida, com a reformulação literal `o mcp davi`, a atividade registrou **Solicitação recebida** (completa), **Entendendo a solicitação** (completa), **Capacidade selecionada: DAVI** (completa), **Consulta finalizada: consulta falhou / api-delpi** (erro), **Atividade bloqueada** e mensagem **Fonte indisponível; não consegui consultar a fonte autoritativa**. Nenhum dado operacional foi verificado nessa tentativa.
+
+**PROVEN_VISUAL:** a expressão explícita `mcp davi` levou à seleção visível do especialista DAVI, diferentemente de `use o davi`; a atividade tentou um caminho de consulta e falhou; a projeção de falha cita `api-delpi`. A mudança de comportamento com o follow-up constitui cenário de generalização/continuidade de contexto a testar, sem prescrever heurística lexical.
+
+**NÃO PROVADO:** se `api-delpi` é um downstream do DAVI, um owner/provider diferente ou apenas uma projeção incorreta de provenance; a origem da falha (AuthZ, MCP transport, schema, domain, timeout, seleção incompatível); o request/response do owner; CRI efetivamente ON; eventual desvio de seleção; se o catálogo DAVI tem busca de material por descrição; se os `prior_turns` foram consumidos. `SOURCE_UNAVAILABLE` visível não comprova causa até inspeção de correlation IDs e logs.
+
+**Critério adicional de reprodução:** iniciar uma única conversa: `2 exemplos de terminal bala` → `use o davi` → `o mcp davi`. Capturar as três requisições correlacionadas (turn/session IDs), `prior_turns`, admission/selection, live catalog, selected owner/capability, invocations efetivas, Core/Domain authorization, downstream owner ref, provenance `api-delpi`, real error_code, request outcome, CRI composer e versão produtiva. Comparar com outras referências anafóricas/contextuais e especialistas; não resolver com regra especial `davi`/ `mcp davi`.
+
+**Coordenação:** observar o CP5 já em execução antes de implementar correção paralela; adicionar esta evidência à revisão posterior. `INC03_REPRO_EVIDENCE=EXPANDED`; `MCP_DAVI_SELECTION=PROVEN_VISUAL`; `OWNER_INVOKE_SUCCESS=NO_EVIDENCE`; `API_DELPI_FAILURE_CAUSE=TO_INVENTORY`; `INCIDENT_OPEN=YES`.
