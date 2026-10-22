@@ -148,7 +148,10 @@ if (!\$client) {
   echo \"APP_CLIENT=present\n\";
 }
 
-\$rights = iterator_to_array(\$DB->request(['FROM' => 'glpi_profilerights', 'WHERE' => ['profiles_id' => \$profileId]]));
+\$rights = [];
+foreach (\$DB->request(['FROM' => 'glpi_profilerights', 'WHERE' => ['profiles_id' => \$profileId]]) as \$rightRow) {
+  \$rights[] = \$rightRow;
+}
 if (count(\$rights) !== 1 || \$rights[0]['name'] !== 'ticket' || (int) \$rights[0]['rights'] !== \$readAll) {
   fwrite(STDERR, \"profile rights diverged\n\");
   exit(1);
