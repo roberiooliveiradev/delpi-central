@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { nextBoardIndex, previousBoardIndex, rotationIntervalMs } from "./boardNavigation";
+import { DELPI_NEWS_DEMO_BANNER } from "./demoMode";
 import type { PublicNewsBoard, PublicNewsBoardItem } from "./types";
 import "./news-board.css";
 
@@ -18,30 +20,60 @@ function formatPublishedAt(value: string | null): string {
 
 function FeaturedBadge({ featured }: { featured: boolean }) {
   if (!featured) return null;
-  return <span className="dn-pub__badge">Destaque</span>;
+  return <span className="dn-pub__badge">Destaque (demo)</span>;
 }
 
 function HeroCard({ item }: { item: PublicNewsBoardItem }) {
+  const hasImage = Boolean(item.image_url);
+
   return (
-    <article className="dn-pub__hero" aria-live="polite">
-      <div className="dn-pub__hero-meta">
-        {item.category_name ? <span className="dn-pub__category">{item.category_name}</span> : null}
-        <FeaturedBadge featured={item.is_featured} />
+    <article
+      className={`dn-pub__hero${hasImage ? " dn-pub__hero--with-image" : " dn-pub__hero--no-image"}`}
+      aria-live="polite"
+    >
+      {hasImage ? (
+        <div className="dn-pub__hero-media">
+          <img
+            className="dn-pub__hero-image"
+            src={item.image_url!}
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        </div>
+      ) : (
+        <div className="dn-pub__hero-media dn-pub__hero-media--placeholder" aria-hidden="true">
+          <span>Sem imagem</span>
+        </div>
+      )}
+      <div className="dn-pub__hero-body">
+        <div className="dn-pub__hero-meta">
+          {item.category_name ? (
+            <span className="dn-pub__category">{item.category_name}</span>
+          ) : (
+            <span className="dn-pub__category dn-pub__category--muted">Sem categoria</span>
+          )}
+          <FeaturedBadge featured={item.is_featured} />
+        </div>
+        <h2 className="dn-pub__headline">{item.title}</h2>
+        {item.summary ? (
+          <p className="dn-pub__summary">{item.summary}</p>
+        ) : (
+          <p className="dn-pub__summary dn-pub__summary--muted">Resumo não informado.</p>
+        )}
+        <footer className="dn-pub__hero-foot">
+          <span>{item.source_name || "Fonte não informada"}</span>
+          <span aria-hidden="true">·</span>
+          <time dateTime={item.published_at ?? undefined}>{formatPublishedAt(item.published_at)}</time>
+        </footer>
       </div>
-      <h2 className="dn-pub__headline">{item.title}</h2>
-      {item.summary ? <p className="dn-pub__summary">{item.summary}</p> : null}
-      <footer className="dn-pub__hero-foot">
-        <span>{item.source_name}</span>
-        <span aria-hidden="true">·</span>
-        <time dateTime={item.published_at ?? undefined}>{formatPublishedAt(item.published_at)}</time>
-      </footer>
     </article>
   );
 }
 
 export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
   const items = board.items;
-  const intervalMs = Math.max(4, board.rotation_interval_sec) * 1000;
+  const intervalMs = rotationIntervalMs(board.rotation_interval_sec);
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
 
@@ -64,7 +96,7 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
       const elapsed = now - started;
       setProgress(Math.min(1, elapsed / intervalMs));
       if (elapsed >= intervalMs) {
-        setIndex((current) => (current + 1) % items.length);
+        setIndex((current) => nextBoardIndex(current, items.length));
         return;
       }
       frame = window.requestAnimationFrame(tick);
@@ -78,11 +110,11 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
       if (items.length <= 1) return;
       if (event.key === "ArrowRight" || event.key === "PageDown") {
         event.preventDefault();
-        setIndex((current) => (current + 1) % items.length);
+        setIndex((current) => nextBoardIndex(current, items.length));
       }
       if (event.key === "ArrowLeft" || event.key === "PageUp") {
         event.preventDefault();
-        setIndex((current) => (current - 1 + items.length) % items.length);
+        setIndex((current) => previousBoardIndex(current, items.length));
       }
     };
     window.addEventListener("keydown", onKey);
@@ -91,17 +123,32 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
 
   if (!active) {
     return (
-      <div className="dn-pub dn-pub--empty">
-        <p>Nenhuma notícia publicada no momento.</p>
+      <div className="dn-pub dn-pub--empty" data-testid="delpi-news-board-empty">
+        {board.is_demo ? (
+          <p className="dn-pub__demo-banner" data-testid="delpi-news-demo-banner">
+            {DELPI_NEWS_DEMO_BANNER}
+          </p>
+        ) : null}
+        <p>Nenhuma notícia disponível para exibição.</p>
       </div>
     );
   }
 
   return (
-    <div className="dn-pub" data-testid="delpi-news-board">
+    <div
+      className={`dn-pub${board.is_demo ? " dn-pub--demo" : ""}`}
+      data-testid="delpi-news-board"
+      data-demo={board.is_demo ? "true" : "false"}
+    >
+      {board.is_demo ? (
+        <p className="dn-pub__demo-banner" role="status" data-testid="delpi-news-demo-banner">
+          {DELPI_NEWS_DEMO_BANNER}
+        </p>
+      ) : null}
+
       <header className="dn-pub__brand">
         <div>
-          <p className="dn-pub__eyebrow">Minha DELPI · TVs corporativas</p>
+          <p className="dn-pub__eyebrow">Minha DELPI · prova visual</p>
           <h1>{board.title}</h1>
           {board.subtitle ? <p className="dn-pub__subtitle">{board.subtitle}</p> : null}
         </div>
@@ -114,22 +161,28 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
 
       <div className="dn-pub__stage">
         <HeroCard item={active} />
-        <aside className="dn-pub__rail" aria-label="Próximas notícias">
+        <aside className="dn-pub__rail" aria-label="Próximas manchetes de demonstração">
           <p className="dn-pub__rail-title">A seguir</p>
-          <ul className="dn-pub__rail-list">
-            {upcoming.map((item, railIndex) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="dn-pub__rail-item"
-                  onClick={() => setIndex((index + railIndex + 1) % items.length)}
-                >
-                  <span className="dn-pub__rail-cat">{item.category_name ?? item.source_name}</span>
-                  <span className="dn-pub__rail-title-text">{item.title}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {upcoming.length === 0 ? (
+            <p className="dn-pub__rail-empty">Sem próximas manchetes.</p>
+          ) : (
+            <ul className="dn-pub__rail-list">
+              {upcoming.map((item, railIndex) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className="dn-pub__rail-item"
+                    onClick={() => setIndex((index + railIndex + 1) % items.length)}
+                  >
+                    <span className="dn-pub__rail-cat">
+                      {(item.category_name ?? item.source_name) || "Demo"}
+                    </span>
+                    <span className="dn-pub__rail-title-text">{item.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
       </div>
 
@@ -141,7 +194,7 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
         <button
           type="button"
           className="dn-pub__nav-btn"
-          onClick={() => setIndex((current) => (current - 1 + items.length) % items.length)}
+          onClick={() => setIndex((current) => previousBoardIndex(current, items.length))}
           disabled={items.length <= 1}
         >
           Anterior
@@ -149,7 +202,7 @@ export function NewsBoardView({ board }: { board: PublicNewsBoard }) {
         <button
           type="button"
           className="dn-pub__nav-btn"
-          onClick={() => setIndex((current) => (current + 1) % items.length)}
+          onClick={() => setIndex((current) => nextBoardIndex(current, items.length))}
           disabled={items.length <= 1}
         >
           Próxima

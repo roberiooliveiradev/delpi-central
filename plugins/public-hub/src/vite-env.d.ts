@@ -1,5 +1,9 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_DELPI_NEWS_DEMO?: string;
+}
+
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
 
 declare module "@delpi/plugin-ui/styles";

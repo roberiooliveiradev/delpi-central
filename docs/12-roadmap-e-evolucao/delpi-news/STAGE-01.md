@@ -1,43 +1,50 @@
-# DELPI News — Etapa 1 (execução)
+# DELPI News — Etapa 1 (fechamento)
 
-**Referência histórica de análise:** `5ba8c24275eda0458fdc21fa0c4191f6407c0964`  
-**HEAD de `main` ao concluir a Etapa 1 (antes do commit desta entrega):** `b1d089a558556d8563bcc9f5ba8047ab67301808`  
-**Branch de trabalho:** `main` (conforme `AGENTS.md`).
+**Commit original E1:** `e26d8ade783661c503fe84872b78e92dc4055e81`  
+**HEAD de início desta correção:** `a34fbdf62e3998604e65e2f6ed7ebd592526bdee`  
+**Branch:** `main`
 
 ## Ledger de requisitos
 
 | ID | Requisito | Estado |
 |---|---|---|
-| RQ-01 | Reancorar git/regras/docs antes de implementar | ATENDIDO |
-| RQ-02 | Inventariar capacidades existentes com decisão de reuso | ATENDIDO |
-| RQ-03 | Definir ownership admin × público × API × TV | ATENDIDO |
-| RQ-04 | Contratos conceituais fontes RSS + notícias normalizadas (sem ops prematuras) | ATENDIDO |
-| RQ-05 | Prova visual navegável da apresentação futura | ATENDIDO |
-| RQ-06 | Não implementar Android/APK/device mgmt | FORA_DO_ESCOPO_COM_JUSTIFICATIVA (suspenso) |
-| RQ-07 | Não ampliar `external-data-api` para RSS | ATENDIDO (decisão NEW BC) |
-| RQ-08 | Preservar alterações de outras tarefas | ATENDIDO (working tree limpa em `main`) |
+| RQ-01 | Reancorar git/regras/docs | ATENDIDO |
+| RQ-02 | Inventário de reuso | ATENDIDO |
+| RQ-03 | Ownership admin × público × API × TV (API como PLANNED) | ATENDIDO |
+| RQ-04 | Contratos conceituais sem ops prematuras | ATENDIDO |
+| RQ-05 | Prova visual navegável | ATENDIDO |
+| RQ-06 | Sem Android/APK | FORA_DO_ESCOPO_COM_JUSTIFICATIVA |
+| RQ-07 | Não ampliar `external-data-api` | ATENDIDO |
+| RQ-08 | Preservar trabalho alheio | ATENDIDO |
+| RQ-09 | Bloquear demo em produção por padrão | ATENDIDO |
+| RQ-10 | Textos neutros + identificação de demonstração | ATENDIDO |
+| RQ-11 | Imagem opcional / vazio / 16:9 / clamp / TV | ATENDIDO |
+| RQ-12 | Testes ampliados (timer, teclado, wrap, prod gate) | ATENDIDO |
+| RQ-13 | Homologação Adeus documentada | ATENDIDO (execução em aparelho PENDENTE) |
+| RQ-14 | `delpi-news-api` não apresentado como aprovado | ATENDIDO |
 
-## Aceite observável
+## Impacto da mudança de rota demo
 
-1. Documentação em `docs/12-roadmap-e-evolucao/delpi-news/` descreve arquitetura, inventário e contratos.
-2. Rota pública `/p/delpi-news/board/aberto` registra no `public-hub` e renderiza board kiosk com fixture.
-3. Testes do app `delpi-news` verdes (positive + sibling + negative).
-4. Sem API OpenAPI nova, sem Android, sem mudança de mandato do `external-data-api`.
+| Antes | Depois |
+|---|---|
+| `/p/delpi-news/board/aberto` servia fixture em qualquer build | Token `aberto` rejeitado; demo só em DEV ou `VITE_DELPI_NEWS_DEMO=1` via `/p/delpi-news/board/demo` |
+
+Não havia consumidor legítimo de canal real — apenas a prova visual E1. Produção padrão passa a 404 (comportamento desejado).
 
 ## Evidência de validação
 
 | Prova | Resultado |
 |---|---|
-| Vitest `src/apps/delpi-news` (Docker node:22, monorepo plugins montado) | **6/6 PASS** (`loadBoard` + `NewsBoardView`) |
-| `tsc` estrito só do app `delpi-news` (+ `shell/types`) | **PASS** (`DELPI_NEWS_TSC_OK`) |
-| `npm run build` completo do hub no mesmo sandbox Docker | **INCONCLUSIVE** — falhas em pacotes irmãos (`tv-dashboard-presentation`, `plugin-ui`, …) por resolução de deps via symlink; **zero** erro em `src/apps/delpi-news/*` |
-| Ambiente host WSL | `node_modules` do hub owned by root → Vitest local bloqueado (`EACCES` em `.vite-temp`); validação via Docker |
+| Vitest `src/apps/delpi-news` (Docker node:22) | **16/16 PASS** |
+| `npx vite build` do `public-hub` (produção, sem `VITE_DELPI_NEWS_DEMO`) | **PASS** (`VITE_BUILD_OK`) — demo gate embutido no bundle |
+| `npm run build` (`tsc -b && vite build`) no sandbox com symlinks de irmãos | **não reexecutado como fonte de verdade**; vite build isolado prova o app. Falhas históricas de `tsc -b` vinham de pacotes irmãos/ambiente, não de `delpi-news` |
+| Demo em produção sem flag | **bloqueada** (testes de `loadBoard` + build prod) |
+| Homologação Adeus | **HOMOLOGACAO_PENDENTE** (checklist em `HOMOLOGACAO-ADEUS-PENDRIVE.md`) |
 
-Rebuild do container `delpi-public-hub` em runtime: `infra/scripts/up-*-sequential.sh` (fase MFE/`public-hub`) quando for visualizar em `/p/delpi-news/board/aberto`.
+## Pendências para Etapa 2
 
-## Próximas etapas (não desta entrega)
-
-- E2: scaffold `delpi-news-api` + schema + scheduler de coleta
-- E3: admin MFE + RBAC
-- E4: trocar fixture do hub por `GET /public/boards/{token}`
-- E5: opcional slide external no TV Dashboard
+- Decisão arquitetural formal sobre criar `delpi-news-api`
+- Scaffold API + schema + coleta (somente após decisão)
+- Admin MFE + RBAC
+- Token opaco de board real
+- Homologação Adeus presencial

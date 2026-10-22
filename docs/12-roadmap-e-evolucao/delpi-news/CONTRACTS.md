@@ -123,6 +123,7 @@ Contrato de leitura por token opaco (futuro `GET …/public/boards/{token}`):
 | `board_id` | Identificador do board |
 | `title` | Título exibido (ex.: «DELPI News») |
 | `subtitle` | Opcional |
+| `is_demo` | Se true, UI marca conteúdo como demonstração (E1 fixture) |
 | `rotation_interval_sec` | Intervalo de autoavanço na TV |
 | `items[]` | Lista ordenada de itens **publicados** (subset seguro) |
 

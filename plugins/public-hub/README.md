@@ -294,13 +294,21 @@ Ver `src/apps/production-control/` · doc: [plugins/production-control/README.md
 
 ### DELPI News (`delpi-news`)
 
-Prova visual (Etapa 1) do board de notícias para TVs corporativas / Adeus Pendrive. Token estático `aberto`; dados de **fixture** (sem API ainda).
+Prova visual (Etapa 1) do board de notícias para TVs / Adeus Pendrive. **Não é canal editorial real.**
 
 | Página | Rota | `load` |
 |---|---|---|
-| Board kiosk | `/p/delpi-news/board/aberto` | fixture `mockFeed` (futuro: `GET /apps/delpi-news-api/public/boards/{token}`) |
+| Board kiosk (demo) | `/p/delpi-news/board/demo` | fixture `mockFeed`, só se a demo estiver habilitada |
 
-Chrome `kiosk`, autoavanço das manchetes, navegação por botões/teclado. Arquitetura e contratos: [docs/12-roadmap-e-evolucao/delpi-news/](../../docs/12-roadmap-e-evolucao/delpi-news/README.md).
+**Gate de demonstração** (padrão DéLIA):
+
+- habilitada em `vite` DEV; ou
+- build com `VITE_DELPI_NEWS_DEMO=1` (homologação autorizada).
+
+Builds de produção do Docker (`vite build` sem a flag) **bloqueiam** o mock → 404 do shell. O token legado `aberto` **não** carrega conteúdo. Contrato futuro: token opaco via API.
+
+Arquitetura e contratos: [docs/12-roadmap-e-evolucao/delpi-news/](../../docs/12-roadmap-e-evolucao/delpi-news/README.md).  
+Homologação Adeus: [HOMOLOGACAO-ADEUS-PENDRIVE.md](../../docs/12-roadmap-e-evolucao/delpi-news/HOMOLOGACAO-ADEUS-PENDRIVE.md).
 
 Ver `src/apps/delpi-news/`.
 
