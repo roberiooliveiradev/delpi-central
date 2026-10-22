@@ -83,3 +83,62 @@ Próximas ações objetivas: (1) DPO endossa/incorpora proposta ROPA ou emite pa
 
 <!-- Adendo X3.FINAL duplicado e corrompido (expansão de backticks) removido nesta
 posição durante a reexecução X3.FINAL — primeira seção acima é a versão íntegra. -->
+
+---
+
+## Adendo X3.FINAL — Ativação efetiva (2026-10-22, reexecução)
+
+Execução sob autorização produtiva expressa do PO (prompt X3.FINAL #2).
+Avaliação institucional objetiva: nenhuma authority vigente exige aprovação
+independente pré-ativação; a obrigação identificada é **registro** (ROPA/LGPD
+Art. 37), atendida pela proposta `X3-FINAL-ROPA-PROPOSAL-EXTERNAL-REGISTRY-20261022.md`
+encaminhada ao DPO. A autorização do PO não é apresentada como parecer DPO.
+
+### Ativação
+
+- Backup: `infra/.env.bak-x3final-*` criado antes da alteração.
+- Alteração mínima: `EXTERNAL_DATA_CNPJ_PROVIDER=unavailable` → `brasilapi`.
+- Restart restrito: `docker compose up -d external-data-api` (somente o serviço).
+- Pós-condição: `delpi-external-data-api Up (healthy)`, gunicorn 2 workers,
+  env efetivo `EXTERNAL_DATA_CNPJ_PROVIDER=brasilapi`, `distributed`, `PROCESS_LOCAL_ALLOWED=false`.
+- `delpi-supplies-api` e demais serviços não reiniciados; imagens inalteradas
+  (`external-data-api c249f43488f0`, `supplies-api 595d38393f9d`).
+
+### Smoke BrasilAPI (CNPJ público de teste: Petrobras `33.000.167/0001-01`)
+
+Token S2S real mintado pelo client `supplies-api`, chamada `GET /v1/cnpj/{cnpj}`:
+
+- HTTP 200; `provider_id=brasilapi-cnpj-v1`; `source_type=THIRD_PARTY_API`;
+  `retrieved_at=2026-10-22T18:29:16Z`; `tax_id` correspondente.
+- `contact.{area_code,phone,email}` = `null`; zero chaves QSA/CPF na resposta.
+- Correlation ID aceito; sem payload bruto em logs; zero escrita ERP.
+
+### AuthZ fail-closed (supplies-api)
+
+- `GET/POST /suppliers/003878/01/enrichment-reviews` sem token → 401.
+- Com token S2S de serviço (sem contexto de usuário) → 401.
+- AuthZ de negócio permanece user-first via Core (`can_use_operations`).
+
+### Rate limit distribuído
+
+- `delpi-supplies-api` → `RedisRegistryRateLimiter`; `delpi-external-data-api` →
+  `RedisRateLimiter`; `acquire_many` (consumer/CNPJ/global) funcional contra `delpi-redis`.
+
+### Gates finais da reexecução
+
+| Critério | Estado |
+|---|---|
+| Documentação X3 corrigida | **PASS** (adendo corrompido removido, `6797519a8e`) |
+| Infraestrutura / Keycloak S2S / Redis / Migrations | **PASS** |
+| Requisitos institucionais aplicáveis | **PASS documentado** — nenhuma exigência pré-ativação encontrada nas authorities; registro ROPA proposto e encaminhado ao DPO (residual administrativo) |
+| Provider BrasilAPI / Consulta CNPJ | **PASS** |
+| Comparação S1 / Revisão S2 / Decisões / Idempotência / Prepare-update | **TEST_NOT_RUN** — requer identidade de usuário e fornecedor de teste autorizados (não documentados; não criados em produção) |
+| Segurança/limites | **PASS** — fail-closed, S2S allowlist, sem repasse de JWT de usuário, sem porta pública |
+| Rollback | **PASS readiness** — flag `unavailable` + `.env.bak-x3final-*`; não executado (sem falha) |
+
+### Conclusão
+
+`ACCEPT_WITH_RESIDUAL` — integração **ativa e provada na camada técnica**
+(S2S real → BrasilAPI real → DTO v1 minimizado). Residual: (a) registro formal
+da operação no ROPA canônico aguardando endosso DPO; (b) E2E de negócio S1/S2/
+decisões aguardando identidade de teste autorizada.
