@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any, Callable
+import time
+from typing import Any, Callable, Iterator
 
 import requests
 
@@ -137,6 +138,107 @@ class OpenAICompatibleTranscriptionAdapter:
                 PROVIDER_UNAVAILABLE, "transcription provider unreachable"
             ) from exc
         return self._map_body(body)
+
+    def stream_transcribe(
+        self, request: SpeechTranscriptionRequest
+    ) -> Iterator[str]:
+        """dictation.incremental.v1 — real provider SSE deltas.
+
+        Yields cumulative transcript snapshots as the provider streams
+        them (``stream: true`` chat completions). Every snapshot is real
+        provider output — never fabricated or timer-driven text. The
+        total wall-clock deadline mirrors ``transcribe``: connect, SSE
+        lines and drain share ``self._timeout_seconds``.
+        """
+        timeout = self._timeout_seconds
+        deadline = time.monotonic() + timeout
+        audio_b64 = base64.b64encode(request.audio_bytes).decode("ascii")
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": _TRANSCRIPTION_INSTRUCTION,
+                        },
+                        {
+                            "type": "input_audio",
+                            "input_audio": {
+                                "data": audio_b64,
+                                "format": request.provider_format,
+                            },
+                        },
+                    ],
+                }
+            ],
+            "temperature": 0,
+            "max_tokens": 2048,
+            "stream": True,
+        }
+        try:
+            response = requests.post(
+                self._endpoint,
+                headers={
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Content-Type": "application/json",
+                    "Accept": "text/event-stream",
+                },
+                json=payload,
+                stream=True,
+                timeout=(min(10.0, timeout), timeout),
+            )
+        except requests.exceptions.RequestException as exc:
+            raise DictationError(
+                PROVIDER_UNAVAILABLE, "transcription provider unreachable"
+            ) from exc
+        try:
+            self._check_status(response.status_code)
+            cumulative = ""
+            for raw in response.iter_lines(decode_unicode=True):
+                if time.monotonic() > deadline:
+                    raise DictationError(
+                        PROVIDER_TIMEOUT,
+                        "transcription provider timed out",
+                    )
+                if not raw:
+                    continue
+                line = raw.strip()
+                if not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data)
+                except json.JSONDecodeError:
+                    continue
+                delta = self._map_delta(chunk)
+                if not delta:
+                    continue
+                cumulative += delta
+                yield cumulative
+        finally:
+            close = getattr(response, "close", None)
+            if callable(close):
+                close()
+
+    @staticmethod
+    def _map_delta(chunk: Any) -> str:
+        if not isinstance(chunk, dict):
+            return ""
+        choices = chunk.get("choices")
+        if not isinstance(choices, list) or not choices:
+            return ""
+        first = choices[0]
+        if not isinstance(first, dict):
+            return ""
+        delta = first.get("delta")
+        if not isinstance(delta, dict):
+            return ""
+        content = delta.get("content")
+        return content if isinstance(content, str) else ""
 
     @staticmethod
     def _check_status(status_code: int) -> None:

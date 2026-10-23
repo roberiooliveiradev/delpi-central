@@ -10,6 +10,7 @@ def create_app(
     model_invocation_port=None,
     interaction_turn_handler=None,
     dictation_transcription_handler=None,
+    dictation_incremental_service=None,
 ) -> Flask:
     return create_application(
         testing=testing,
@@ -17,4 +18,5 @@ def create_app(
         model_invocation_port=model_invocation_port,
         interaction_turn_handler=interaction_turn_handler,
         dictation_transcription_handler=dictation_transcription_handler,
+        dictation_incremental_service=dictation_incremental_service,
     )

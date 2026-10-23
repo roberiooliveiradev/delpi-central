@@ -39,9 +39,22 @@ capability surface is not disclosed (VD-F03 hardening).
   "available": true,
   "language": "pt-BR",
   "max_audio_bytes": 8388608,
-  "max_duration_ms": 300000
+  "max_duration_ms": 300000,
+  "incremental": {
+    "available": false,
+    "contract": "dictation.incremental.v1",
+    "contract_version": "1",
+    "max_session_ms": 300000,
+    "max_segments": 120,
+    "max_segment_duration_ms": 15000
+  }
 }
 ```
+
+O bloco `incremental` é **aditivo** (VD-F06): consumidores v1 o ignoram;
+quando `available=false` a capability incremental está ausente e o
+consumidor permanece no caminho v1 — ver
+[dictation-incremental-contract-v1.md](dictation-incremental-contract-v1.md).
 
 `available=false` (limits `null`) when `DELIA_STT_*` config is
 incomplete — fail closed; the frontend keeps the local-only capture

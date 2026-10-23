@@ -97,6 +97,7 @@ def create_application(
     model_invocation_port=None,
     interaction_turn_handler=None,
     dictation_transcription_handler=None,
+    dictation_incremental_service=None,
 ) -> Flask:
     settings = Settings.for_testing() if testing else Settings()
     logger = configure_logging(settings.service_name, settings.log_level)
@@ -181,6 +182,20 @@ def create_application(
     app.config["DICTATION_LIMITS"] = {
         "max_audio_bytes": settings.stt_max_audio_bytes,
         "max_duration_ms": settings.stt_max_duration_ms,
+    }
+    # VD-F06 dictation.incremental.v1 — same fail-closed wiring, plus the
+    # explicit admission flag: incremental stays absent until both the
+    # STT config is complete AND DELIA_STT_INCREMENTAL_ENABLED=1.
+    app.config["DICTATION_INCREMENTAL_SERVICE"] = (
+        dictation_incremental_service
+        if dictation_incremental_service is not None
+        else _wire_incremental_dictation_service(settings)
+    )
+    app.config["DICTATION_INCREMENTAL_LIMITS"] = {
+        "max_session_ms": settings.stt_incremental_max_session_ms,
+        "max_segments": settings.stt_incremental_max_segments,
+        "max_segment_duration_ms": settings.stt_incremental_max_segment_ms,
+        "max_segment_bytes": settings.stt_incremental_max_segment_bytes,
     }
 
     register_error_handlers(app)
@@ -450,6 +465,47 @@ def _wire_dictation_handler(settings: Settings):
         max_audio_bytes=settings.stt_max_audio_bytes,
         max_duration_ms=settings.stt_max_duration_ms,
         rate_limit_per_minute=settings.stt_rate_limit_per_minute,
+    )
+
+
+def _wire_incremental_dictation_service(settings: Settings):
+    """Wire dictation.incremental.v1 only from complete config + flag.
+
+    Two gates, both fail-closed: the same complete DELIA_STT_* config as
+    the batch path AND the explicit DELIA_STT_INCREMENTAL_ENABLED=1
+    admission flag (deploy ships the code with the flag OFF; activation
+    is the deliberate post-deploy gate, never implicit).
+    """
+    if not (
+        settings.stt_incremental_enabled
+        and settings.stt_provider == "openai_compatible_audio"
+        and settings.stt_base_url
+        and settings.stt_model
+        and settings.stt_api_key
+    ):
+        return None
+    from app.application.dictation.incremental_dictation_session import (
+        IncrementalDictationService,
+    )
+    from app.infrastructure.model_invocation.openai_compatible_transcription_adapter import (
+        OpenAICompatibleTranscriptionAdapter,
+    )
+
+    return IncrementalDictationService(
+        port=OpenAICompatibleTranscriptionAdapter(
+            base_url=settings.stt_base_url,
+            api_key=settings.stt_api_key,
+            model=settings.stt_model,
+            timeout_seconds=settings.stt_timeout_seconds,
+        ),
+        max_session_ms=settings.stt_incremental_max_session_ms,
+        max_segments=settings.stt_incremental_max_segments,
+        max_segment_duration_ms=settings.stt_incremental_max_segment_ms,
+        max_segment_bytes=settings.stt_incremental_max_segment_bytes,
+        max_total_bytes=settings.stt_max_audio_bytes,
+        session_ttl_ms=settings.stt_incremental_max_session_ms + 60_000,
+        rate_limit_per_minute=settings.stt_rate_limit_per_minute,
+        max_in_flight=settings.stt_incremental_max_in_flight,
     )
 
 

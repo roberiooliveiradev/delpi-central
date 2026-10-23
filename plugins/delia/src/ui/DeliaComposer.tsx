@@ -3,11 +3,12 @@ import type { MutableRefObject, ReactNode } from "react";
 import {
   AudioRecorderControl,
   audioRecorderErrorMessage,
+  formatAudioDurationMs,
   HelpTooltip,
   IconButton,
   MessageComposer,
 } from "@delpi/plugin-ui/index";
-import { X } from "lucide-react";
+import { Mic, Pause, Play, Square, Trash2, X } from "lucide-react";
 
 import { INTERACTION_INPUT_CHAR_LIMIT } from "../api/interactionClient";
 import {
@@ -18,6 +19,8 @@ import type {
   DeliaDictationError,
   DeliaDictationTranscription,
 } from "../api/dictationClient";
+import { useIncrementalDictation } from "../audio/useIncrementalDictation";
+import type { IncrementalTransport } from "../audio/incrementalDictationController";
 import type { LocalAudioDraft } from "@delpi/plugin-ui/index";
 
 /** One completed local capture → untrusted editable text (VD-F03). */
@@ -79,6 +82,18 @@ export type DeliaComposerProps = {
    * host (plugins/delia); this component never inspects it.
    */
   draftRecoveryAction?: ReactNode;
+  /**
+   * VD-F06 dictation.incremental.v1 transport — present only when the
+   * backend status reports `incremental.available` AND segmented PCM
+   * capture is supported. When admitted, the mic trigger starts a real
+   * progressive session (textarea stays editable); when absent the
+   * VD-F03 one-shot path remains the honest fallback.
+   */
+  incrementalTransport?: IncrementalTransport | null;
+  /** Admitted session bound from the contract (ms). */
+  incrementalMaxSessionMs?: number | null;
+  /** Admitted segment bound from the contract. */
+  incrementalMaxSegments?: number | null;
 };
 
 function dictationErrorMessage(error: unknown): string {
@@ -158,6 +173,68 @@ function mergeTranscriptIntoDraft(
  * user's action. Without it, finishing yields the honest local preview.
  */
 export function DeliaComposer({
+  inputId,
+  value,
+  onChange,
+  onSubmit,
+  onEnqueue,
+  loading = false,
+  requestMode,
+  onStop,
+  placeholder = "Pergunte à DÉLIA…",
+  audioCaptureEnabled = false,
+  audioCaptureMaxDurationMs,
+  audioCaptureMaxBytes,
+  dictationTranscriber = null,
+  onClearDraft,
+  draftRecoveryAction,
+  incrementalTransport = null,
+  incrementalMaxSessionMs = null,
+  incrementalMaxSegments = null,
+}: DeliaComposerProps) {
+  if (incrementalTransport) {
+    return (
+      <DeliaComposerIncremental
+        inputId={inputId}
+        value={value}
+        onChange={onChange}
+        onSubmit={onSubmit}
+        onEnqueue={onEnqueue}
+        loading={loading}
+        requestMode={requestMode}
+        onStop={onStop}
+        placeholder={placeholder}
+        transport={incrementalTransport}
+        maxSessionMs={incrementalMaxSessionMs}
+        maxSegments={incrementalMaxSegments}
+        onClearDraft={onClearDraft}
+        draftRecoveryAction={draftRecoveryAction}
+      />
+    );
+  }
+  return (
+    <DeliaComposerBatch
+      inputId={inputId}
+      value={value}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onEnqueue={onEnqueue}
+      loading={loading}
+      requestMode={requestMode}
+      onStop={onStop}
+      placeholder={placeholder}
+      audioCaptureEnabled={audioCaptureEnabled}
+      audioCaptureMaxDurationMs={audioCaptureMaxDurationMs}
+      audioCaptureMaxBytes={audioCaptureMaxBytes}
+      dictationTranscriber={dictationTranscriber}
+      onClearDraft={onClearDraft}
+      draftRecoveryAction={draftRecoveryAction}
+    />
+  );
+}
+
+/** VD-F03 one-shot dictation path (existing modal capture + merge). */
+function DeliaComposerBatch({
   inputId,
   value,
   onChange,
@@ -497,6 +574,221 @@ function DeliaComposerBody({
         }
       />
       {transcribed && !captureActive ? (
+        <p className="delia-composer__transcribed" role="status">
+          Texto transcrito. Revise antes de enviar.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+
+type DeliaComposerIncrementalProps = DeliaComposerProps & {
+  transport: IncrementalTransport;
+  maxSessionMs: number | null;
+  maxSegments: number | null;
+};
+
+/**
+ * VD-F06 progressive dictation composer — the SAME MessageComposer
+ * surface, never a second composer. The textarea stays rendered and
+ * editable through the whole capture: speech lands at the real caret/
+ * selection via the reconciler, human edits always win over late STT,
+ * and Send remains the only submit path (explicit, user-invoked).
+ */
+function DeliaComposerIncremental({
+  inputId,
+  value,
+  onChange,
+  onSubmit,
+  onEnqueue,
+  loading = false,
+  requestMode,
+  onStop,
+  placeholder = "Pergunte à DÉLIA…",
+  transport,
+  maxSessionMs,
+  maxSegments,
+  onClearDraft,
+  draftRecoveryAction,
+}: DeliaComposerIncrementalProps) {
+  const inFlight =
+    loading || (requestMode != null && requestMode !== "idle");
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const dictation = useIncrementalDictation({
+    transport,
+    inputId,
+    getDraft: () => valueRef.current,
+    setDraft: (text) => onChange(text),
+    maxSessionMs,
+    maxSegments,
+  });
+  const prevValueRef = useRef(value);
+
+  // Human edits register with the reconciler FIRST (controller-origin
+  // writes are flagged and skipped), then propagate to the host draft.
+  const handleUserChange = (next: string) => {
+    if (dictation.active && !dictation.isInternalWrite()) {
+      dictation.noteUserEdit(prevValueRef.current, next);
+    }
+    prevValueRef.current = next;
+    onChange(next);
+  };
+  // Keep the tracker honest when the controller writes the draft.
+  useEffect(() => {
+    prevValueRef.current = value;
+  }, [value]);
+
+  // Explicit submit while dictating: stop waiting on unfinished
+  // segments first — confirmed + human text stays, pending partials
+  // never sneak into a message the user already sent.
+  const handleSubmit = () => {
+    if (dictation.active) dictation.cancel();
+    onSubmit();
+  };
+  const handleClear = () => {
+    dictation.cancel();
+    onClearDraft?.(value);
+    onChange("");
+  };
+
+  const statusText =
+    dictation.state === "requesting_permission"
+      ? "Solicitando acesso ao microfone…"
+      : dictation.state === "listening"
+        ? dictation.provisionalText
+          ? `Ouvindo… ${dictation.provisionalText}`
+          : "Ouvindo…"
+        : dictation.state === "paused"
+          ? "Ditado em pausa."
+          : dictation.state === "finalizing"
+            ? "Finalizando a transcrição…"
+            : null;
+
+  return (
+    <div className="delia-composer-stack">
+      <MessageComposer
+        className="delia-composer"
+        inputId={inputId}
+        inputLabel="Pergunte à DÉLIA"
+        value={value}
+        onChange={handleUserChange}
+        onClearDraft={handleClear}
+        onSubmit={handleSubmit}
+        onEnqueue={onEnqueue}
+        loading={loading}
+        requestMode={requestMode}
+        onStop={onStop}
+        placeholder={placeholder}
+        characterLimit={INTERACTION_INPUT_CHAR_LIMIT}
+        helperText="A DÉLIA pode cometer erros. Confirme informações importantes."
+        secondaryActions={
+          dictation.active ? (
+            <span className="delia-dictation-live__controls">
+              {dictation.state === "listening" ? (
+                <HelpTooltip
+                  wrap
+                  content="Pausar a captura de áudio; o texto continua editável."
+                >
+                  <IconButton
+                    aria-label="Pausar ditado"
+                    onClick={dictation.pause}
+                  >
+                    <Pause size={18} aria-hidden="true" />
+                  </IconButton>
+                </HelpTooltip>
+              ) : dictation.state === "paused" ? (
+                <HelpTooltip
+                  wrap
+                  content="Retomar o ditado a partir da posição atual do cursor."
+                >
+                  <IconButton
+                    aria-label="Retomar ditado"
+                    onClick={dictation.resume}
+                  >
+                    <Play size={18} aria-hidden="true" />
+                  </IconButton>
+                </HelpTooltip>
+              ) : null}
+              <HelpTooltip
+                wrap
+                content="Encerrar a captura e concluir a transcrição dos trechos."
+              >
+                <IconButton
+                  aria-label="Finalizar ditado"
+                  onClick={dictation.finalize}
+                  disabled={dictation.state === "finalizing"}
+                >
+                  <Square size={18} aria-hidden="true" />
+                </IconButton>
+              </HelpTooltip>
+              <HelpTooltip
+                wrap
+                content="Descartar a captura: mantém o texto confirmado e suas edições; remove apenas o trecho ainda provisório."
+              >
+                <IconButton
+                  aria-label="Descartar captura"
+                  onClick={dictation.cancel}
+                >
+                  <Trash2 size={18} aria-hidden="true" />
+                </IconButton>
+              </HelpTooltip>
+            </span>
+          ) : (
+            <>
+              {draftRecoveryAction}
+              <HelpTooltip
+                wrap
+                content="Ditar mensagem: o texto aparece enquanto você fala e continua editável. O áudio é enviado à transcrição da DÉLIA."
+              >
+                <IconButton
+                  aria-label="Iniciar ditado"
+                  onClick={dictation.start}
+                  disabled={inFlight && !onEnqueue}
+                >
+                  <Mic size={18} aria-hidden="true" />
+                </IconButton>
+              </HelpTooltip>
+            </>
+          )
+        }
+        error={dictation.error ?? undefined}
+      />
+      {dictation.active ? (
+        <div
+          className="delia-dictation-live"
+          role="status"
+          aria-live="polite"
+        >
+          <span
+            className="delia-dictation-live__dot"
+            data-paused={dictation.state === "paused" ? "true" : "false"}
+            aria-hidden="true"
+          />
+          <span className="delia-dictation-live__status">{statusText}</span>
+          <span className="delia-dictation-live__duration">
+            {formatAudioDurationMs(dictation.elapsedMs)}
+          </span>
+          <span
+            className="delpi-ui-audio-recorder__wave"
+            aria-hidden="true"
+            data-live="true"
+          >
+            {dictation.levels.map((level, index) => (
+              <span
+                key={index}
+                className="delpi-ui-audio-recorder__bar"
+                style={{ transform: `scaleY(${Math.max(0.12, level)})` }}
+              />
+            ))}
+          </span>
+          <span className="delia-dictation-live__disclosure">
+            {DELIA_DICTATION_STT_DISCLOSURE}
+          </span>
+        </div>
+      ) : null}
+      {dictation.state === "review" ? (
         <p className="delia-composer__transcribed" role="status">
           Texto transcrito. Revise antes de enviar.
         </p>

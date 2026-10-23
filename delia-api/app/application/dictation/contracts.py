@@ -54,3 +54,46 @@ class DictationTranscriptionResult:
     transcription_id: str
     text: str
     language: str
+
+
+# ---------------------------------------------------------------------------
+# dictation.incremental.v1 (VD-F06) — segmented live dictation sessions.
+#
+# The incremental contract is strictly additive over v1: one session binds
+# ordered audio SEGMENTS captured while the user is still speaking. Each
+# segment is a complete audio blob transcribed for real by the provider —
+# partial events forward the provider's streamed response tokens (never
+# fabricated text), and `final` closes the segment exactly once.
+# ---------------------------------------------------------------------------
+
+INCREMENTAL_CONTRACT_VERSION = "1"
+INCREMENTAL_CONTRACT_NAME = "dictation.incremental.v1"
+
+EVENT_STARTED = "started"
+EVENT_PARTIAL = "partial"
+EVENT_FINAL = "final"
+EVENT_ERROR = "error"
+
+
+@dataclass(frozen=True, slots=True)
+class IncrementalDictationSession:
+    """Admitted incremental session handle (in-process, TTL-bound)."""
+
+    session_id: str
+    max_session_ms: int
+    max_segments: int
+    max_segment_duration_ms: int
+
+
+@dataclass(frozen=True, slots=True)
+class IncrementalSegmentRequest:
+    """One ordered audio segment inside an admitted session."""
+
+    access_context: PlatformAccessContext | None
+    session_id: str
+    segment_id: str
+    sequence: int
+    audio_bytes: bytes
+    mime_type: str
+    duration_ms: int
+    language_hint: str = SUPPORTED_LANGUAGE

@@ -285,6 +285,28 @@ class Settings:
         self.stt_rate_limit_per_minute = int(
             os.getenv("DELIA_STT_RATE_LIMIT_PER_MINUTE") or "10"
         )
+        # VD-F06 dictation.incremental.v1 — segmented live sessions.
+        # Disabled by default; activation happens only through the
+        # admission gate after deploy (flag OFF → smoke → flag ON).
+        self.stt_incremental_enabled = (
+            os.getenv("DELIA_STT_INCREMENTAL_ENABLED") or ""
+        ).strip() == "1"
+        self.stt_incremental_max_session_ms = int(
+            os.getenv("DELIA_STT_INCREMENTAL_MAX_SESSION_MS") or "300000"
+        )
+        self.stt_incremental_max_segment_ms = int(
+            os.getenv("DELIA_STT_INCREMENTAL_MAX_SEGMENT_MS") or "15000"
+        )
+        self.stt_incremental_max_segments = int(
+            os.getenv("DELIA_STT_INCREMENTAL_MAX_SEGMENTS") or "120"
+        )
+        self.stt_incremental_max_segment_bytes = int(
+            os.getenv("DELIA_STT_INCREMENTAL_MAX_SEGMENT_BYTES")
+            or "1500000"
+        )
+        self.stt_incremental_max_in_flight = int(
+            os.getenv("DELIA_STT_INCREMENTAL_MAX_IN_FLIGHT") or "4"
+        )
 
 
     @classmethod

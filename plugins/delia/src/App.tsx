@@ -30,6 +30,7 @@ import {
   ConversationQueue,
   HelpTooltip,
   IconButton,
+  isSegmentedPcmCaptureSupported,
 } from "@delpi/plugin-ui/index";
 import type {
   ConversationQueueItem,
@@ -58,7 +59,10 @@ import {
 } from "./demo/queueDemo";
 import { useConversationQueue } from "./queue/conversationQueue";
 import {
+  endDictationSession,
   fetchDictationStatus,
+  openDictationSession,
+  streamDictationSegment,
   transcribeDictationAudio,
 } from "./api/dictationClient";
 import type { DeliaDictationStatus } from "./api/dictationClient";
@@ -156,6 +160,14 @@ export default function App({
     return () => abort.abort();
   }, [getAccessToken]);
   const dictationSttAvailable = dictationStt?.available === true;
+  // VD-F06: progressive dictation is admitted only when the contract
+  // reports incremental.available AND this context can slice real PCM
+  // (capability check owned by plugin-ui). Anything less keeps the
+  // honest VD-F03 fallback — never a simulated live transcript.
+  const incrementalDictationAdmitted =
+    dictationStt?.incremental?.available === true &&
+    getAccessToken != null &&
+    isSegmentedPcmCaptureSupported();
   // Local audio capture — available to every legitimately admitted
   // DÉLIA user (delia.access enforced upstream by Portal/Core before
   // this MFE mounts). No dedicated audio permission, URL param or build
@@ -801,6 +813,33 @@ export default function App({
                           signal,
                         })
                     : null
+                }
+                incrementalTransport={
+                  incrementalDictationAdmitted
+                    ? {
+                        openSession: (signal) =>
+                          openDictationSession({
+                            getAccessToken: () => getAccessToken() ?? null,
+                            signal,
+                          }),
+                        streamSegment: (input, signal) =>
+                          streamDictationSegment(input, {
+                            getAccessToken: () => getAccessToken() ?? null,
+                            signal,
+                          }),
+                        endSession: (sessionId, signal) =>
+                          endDictationSession(sessionId, {
+                            getAccessToken: () => getAccessToken() ?? null,
+                            signal,
+                          }),
+                      }
+                    : null
+                }
+                incrementalMaxSessionMs={
+                  dictationStt?.incremental?.maxSessionMs ?? null
+                }
+                incrementalMaxSegments={
+                  dictationStt?.incremental?.maxSegments ?? null
                 }
                 onClearDraft={handleClearDraft}
                 draftRecoveryAction={

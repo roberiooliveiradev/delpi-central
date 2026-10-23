@@ -41,3 +41,11 @@ export {
   ComposerEnqueueButton,
   type ComposerEnqueueButtonProps,
 } from "./ComposerEnqueueButton";
+
+export {
+  createSegmentedPcmCapture,
+  type SegmentedPcmCapture,
+  type SegmentedPcmCaptureOptions,
+} from "./segmentedPcmCapture";
+export { isSegmentedPcmCaptureSupported } from "./segmentedPcmCapture";
+export { pcmToWavBlob, type PcmWavOptions } from "./pcmWav";

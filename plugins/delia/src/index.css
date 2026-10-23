@@ -323,6 +323,85 @@
   color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.65)));
 }
 
+/* ---------- VD-F06 — progressive dictation live strip */
+
+/* Slim status strip under the composer: the mic state is unmistakable
+   while the textarea above stays fully editable. The provisional STT
+   text surfaces here verbatim (native textarea cannot style ranges —
+   doc-123 §5.10 minimal legitimate solution, no rich-text editor). */
+.dashboard-delia .delia-dictation-live {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 2px 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.7)));
+  background: var(
+    --delpi-ui-surface-subtle,
+    var(--surface-subtle, rgba(17, 17, 17, 0.04))
+  );
+}
+
+.dashboard-delia .delia-dictation-live__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--delpi-ui-danger, #d92d20);
+}
+
+.dashboard-delia .delia-dictation-live__dot[data-paused="true"] {
+  background: var(--delpi-ui-text-muted, #667085);
+}
+
+.dashboard-delia .delia-dictation-live__status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  font-style: italic;
+}
+
+.dashboard-delia .delia-dictation-live__duration {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-delia .delia-dictation-live .delpi-ui-audio-recorder__wave {
+  flex: 0 1 auto;
+  max-width: 96px;
+}
+
+.dashboard-delia .delia-dictation-live__disclosure {
+  flex: 1 0 100%;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.6)));
+}
+
+.dashboard-delia .delia-dictation-live__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+@media (max-width: 420px) {
+  .dashboard-delia .delia-dictation-live .delpi-ui-audio-recorder__wave {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-delia .delia-dictation-live__dot {
+    animation: none;
+  }
+}
+
 /* ---------- Responsive (narrow dock / mobile) — workspace and
    ConversationUserMessage container queries own shared presentation. */
 
