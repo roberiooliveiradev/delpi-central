@@ -39,7 +39,7 @@
     "pa-shortage": {
       "id": "pa-shortage",
       "title": "Ruptura no conjunto",
-      "description": "Informe o PA e veja quais OPs mãe do conjunto vão faltar matéria-prima no extrato (saldo + pedidos − empenhos).",
+      "description": "Informe o PA e veja quais OPs mãe do conjunto vão faltar matéria-prima pelos empenhos atuais (SD4) no extrato (saldo + pedidos − empenhos).",
       "severity": "attention",
       "kind": "consult"
     }
@@ -53,13 +53,13 @@
       },
       {
         "step": 2,
-        "title": "Lemos a estrutura (só MP)",
-        "body": "A explosão vigente da SG1 entra só com matéria-prima. Intermediário não conta como falta de material."
+        "title": "Usamos os empenhos atuais da OP",
+        "body": "A ruptura considera as matérias-primas efetivamente empenhadas (SD4), inclusive substitutos. A estrutura (SG1) fica só como referência quando não há empenho."
       },
       {
         "step": 3,
         "title": "No extrato, o empenho do conjunto decide",
-        "body": "Saldo 01+98+99 + pedidos − empenhos. Se o saldo projetado fica negativo no empenho daquele conjunto, a OP falta material."
+        "body": "Saldo 01+98+99 + pedidos − empenhos abertos. Se o saldo projetado fica negativo no empenho daquele conjunto, a OP falta material. Após alterar empenho no Protheus, use atualizar (refresh) — o cache do BFF dura cerca de 2 minutos."
       }
     ]
   },

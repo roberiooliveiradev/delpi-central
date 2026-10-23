@@ -8,6 +8,7 @@ from app.domain.ports.product.product_raw_material_set_shortage_repository_port 
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.product_repositories.product_raw_material_set_shortage_sql import (
     DEFAULT_BOM_MAX_DEPTH,
+    committed_product_codes_for_mother_orders_sql,
     mp_stock_batch_sql,
     open_commitments_batch_sql,
     open_mother_orders_sql,
@@ -79,6 +80,21 @@ class ProductRawMaterialSetShortageRepository(
         with self as repo:
             rows = repo.execute_query(sql, (_as_text(code), *branch_params))
         return [self._map_mother_order(row) for row in rows or []]
+
+    def fetch_committed_product_codes_for_mother_orders(
+        self, *, branch: str, mother_orders: list[str]
+    ) -> list[str]:
+        orders = self._codes(mother_orders)
+        if not orders:
+            return []
+        sql, extra = committed_product_codes_for_mother_orders_sql(
+            branch=branch, placeholders=placeholders_for(orders)
+        )
+        with self as repo:
+            rows = repo.execute_query(sql, (*orders, *extra))
+        return self._codes(
+            [_as_text(row.get("product_code")) for row in rows or []]
+        )
 
     def fetch_mp_stock(
         self, *, branch: str, product_codes: list[str]

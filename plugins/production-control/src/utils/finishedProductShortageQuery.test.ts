@@ -71,6 +71,12 @@ describe("finishedProductShortageQuery", () => {
       no_commitment: 0,
       ok: 1,
     });
+    expect(countSetMaterialsByStatus(materials, 2)).toEqual({
+      all: 2,
+      shortage: 1,
+      no_commitment: 2,
+      ok: 1,
+    });
     expect(filterSetMaterials(materials, "ok").map((item) => item.product_code)).toEqual([
       "10500233",
     ]);

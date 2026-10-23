@@ -307,6 +307,19 @@ export type FinishedProductShortageMaterial = {
   available_stock?: number;
   safety_stock?: number;
   structure_quantity?: number;
+  in_bom?: boolean;
+};
+
+/** MP da SG1 sem empenho SD4 no conjunto — informativo, não entra na ruptura. */
+export type FinishedProductShortagePlannedRow = {
+  product_code: string;
+  product_description: string;
+  unit: string;
+  status: "planned_not_committed";
+  structure_quantity?: number;
+  planned_need_quantity?: number;
+  available_stock?: number;
+  safety_stock?: number;
 };
 
 export type FinishedProductShortageSet = {
@@ -320,6 +333,7 @@ export type FinishedProductShortageSet = {
   status: Exclude<MaterialsSetStatus, "all">;
   short_material_count?: number;
   materials: FinishedProductShortageMaterial[];
+  planned_without_commitment?: FinishedProductShortagePlannedRow[];
 };
 
 export type FinishedProductShortagePayload = {

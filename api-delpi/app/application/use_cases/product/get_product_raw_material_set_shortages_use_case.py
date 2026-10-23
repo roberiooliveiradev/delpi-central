@@ -32,14 +32,49 @@ class GetProductRawMaterialSetShortagesUseCase:
         mother_orders = self._repository.fetch_open_mother_orders(
             code=request.code, branch=request.branch
         )
-        codes = [str(item.get("product_code") or "").strip() for item in bom]
+        mother_keys = [
+            str(item.get("production_order") or "").strip()
+            for item in mother_orders
+            if str(item.get("production_order") or "").strip()
+        ]
+        committed_codes = (
+            self._repository.fetch_committed_product_codes_for_mother_orders(
+                branch=request.branch, mother_orders=mother_keys
+            )
+            if mother_keys
+            else []
+        )
+        bom_by_code = {
+            str(item.get("product_code") or "").strip(): item
+            for item in bom
+            if str(item.get("product_code") or "").strip()
+        }
+        codes = list(
+            dict.fromkeys(
+                [
+                    *bom_by_code.keys(),
+                    *[
+                        code
+                        for code in committed_codes
+                        if str(code or "").strip()
+                    ],
+                ]
+            )
+        )
         stock_rows = self._repository.fetch_mp_stock(
             branch=request.branch, product_codes=codes
         )
         stock_by_code = {
             str(row.get("product_code") or "").strip(): row for row in stock_rows
         }
-        materials = [self._merge_material(item, stock_by_code) for item in bom]
+        materials = [
+            self._merge_material(
+                code=code,
+                bom_row=bom_by_code.get(code),
+                stock_by_code=stock_by_code,
+            )
+            for code in codes
+        ]
         purchase_orders = self._repository.fetch_open_purchase_orders(
             branch=request.branch, product_codes=codes
         )
@@ -58,21 +93,35 @@ class GetProductRawMaterialSetShortagesUseCase:
 
     @staticmethod
     def _merge_material(
-        bom_row: dict[str, Any], stock_by_code: dict[str, dict[str, Any]]
+        *,
+        code: str,
+        bom_row: dict[str, Any] | None,
+        stock_by_code: dict[str, dict[str, Any]],
     ) -> dict[str, Any]:
-        code = str(bom_row.get("product_code") or "").strip()
         stock = stock_by_code.get(code) or {}
+        base = bom_row or {
+            "product_code": code,
+            "product_description": "",
+            "unit": "",
+            "secondary_unit": "",
+            "conversion_factor": None,
+            "conversion_type": "",
+            "bom_level": None,
+            "structure_quantity": 0.0,
+        }
         return {
-            **bom_row,
+            **base,
+            "product_code": code,
+            "in_bom": bom_row is not None,
             "available_stock": float(stock.get("available_stock") or 0),
             "safety_stock": float(stock.get("safety_stock") or 0),
-            "unit": stock.get("unit") or bom_row.get("unit"),
-            "secondary_unit": stock.get("secondary_unit") or bom_row.get("secondary_unit"),
+            "unit": stock.get("unit") or base.get("unit"),
+            "secondary_unit": stock.get("secondary_unit") or base.get("secondary_unit"),
             "conversion_factor": stock.get("conversion_factor")
             if stock.get("conversion_factor") is not None
-            else bom_row.get("conversion_factor"),
+            else base.get("conversion_factor"),
             "conversion_type": stock.get("conversion_type")
-            or bom_row.get("conversion_type"),
+            or base.get("conversion_type"),
             "product_description": stock.get("product_description")
-            or bom_row.get("product_description"),
+            or base.get("product_description"),
         }

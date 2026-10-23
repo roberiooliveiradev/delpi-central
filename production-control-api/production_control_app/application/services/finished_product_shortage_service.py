@@ -1,7 +1,8 @@
 """Consulta de ruptura de MP no conjunto do PA.
 
-A api-delpi entrega o pegging (BOM MP + extrato + OPs mãe). Este BFF
-autoriza, valida o código, classifica o estado de tela e cacheia.
+A api-delpi entrega o pegging (empenhos SD4 efetivos ∪ SG1 de referência +
+extrato + OPs mãe). Este BFF autoriza, valida o código, classifica o estado
+de tela e cacheia (TTL ~120 s; `refresh=true` ignora cache após mudança de empenho).
 """
 
 from __future__ import annotations

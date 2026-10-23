@@ -114,7 +114,7 @@ def test_marks_shortage_only_for_the_set_that_goes_negative() -> None:
 def test_does_not_mix_sets_when_item_is_not_01() -> None:
     payload = build_raw_material_set_shortages(
         product={"product_code": "90263114", "product_type": "PA"},
-        materials=[_material(available_stock=0.0)],
+        materials=[_material(available_stock=0.0, in_bom=True)],
         mother_orders=[
             _order(production_order="24608102001", order_item="02"),
         ],
@@ -129,7 +129,12 @@ def test_does_not_mix_sets_when_item_is_not_01() -> None:
     )
 
     assert payload["sets"][0]["status"] == STATUS_NO_COMMITMENT
-    assert payload["sets"][0]["materials"][0]["status"] == STATUS_NO_COMMITMENT
+    assert payload["sets"][0]["materials"] == []
+    assert len(payload["sets"][0]["planned_without_commitment"]) == 1
+    assert (
+        payload["sets"][0]["planned_without_commitment"][0]["product_code"]
+        == "10080001"
+    )
 
 
 def test_other_pa_on_same_extract_does_not_flag_this_set() -> None:
@@ -161,10 +166,113 @@ def test_other_pa_on_same_extract_does_not_flag_this_set() -> None:
 def test_set_without_commitment_stays_no_commitment() -> None:
     payload = build_raw_material_set_shortages(
         product={"product_code": "90263114", "product_type": "PA"},
-        materials=[_material()],
+        materials=[_material(in_bom=True)],
         mother_orders=[_order()],
         purchase_orders=[],
         commitments=[],
     )
     assert payload["sets"][0]["status"] == STATUS_NO_COMMITMENT
+    assert payload["sets"][0]["materials"] == []
     assert payload["summary"]["no_commitment_set_count"] == 1
+
+
+def test_bom_material_without_sd4_does_not_create_false_shortage() -> None:
+    """MP A na SG1 sem empenho; MP B só na SD4 com estoque suficiente → OK."""
+    payload = build_raw_material_set_shortages(
+        product={"product_code": "90263114", "product_type": "PA"},
+        materials=[
+            _material(
+                product_code="10080001",
+                available_stock=0.0,
+                in_bom=True,
+                structure_quantity=2.0,
+            ),
+            _material(
+                product_code="10080099",
+                product_description="CABO SUBSTITUTO",
+                available_stock=20.0,
+                in_bom=False,
+                structure_quantity=0.0,
+            ),
+        ],
+        mother_orders=[_order(open_quantity=10.0)],
+        purchase_orders=[],
+        commitments=[
+            _commitment(
+                product_code="10080099",
+                open_quantity=5.0,
+                commitment_date="2026-09-12",
+            )
+        ],
+    )
+    first = payload["sets"][0]
+    assert first["status"] == STATUS_OK
+    assert [m["product_code"] for m in first["materials"]] == ["10080099"]
+    assert first["materials"][0]["status"] == STATUS_OK
+    assert first["planned_without_commitment"][0]["product_code"] == "10080001"
+    assert first["planned_without_commitment"][0]["status"] == "planned_not_committed"
+
+
+def test_partial_substitution_uses_only_effective_quantities() -> None:
+    payload = build_raw_material_set_shortages(
+        product={"product_code": "90263114", "product_type": "PA"},
+        materials=[
+            _material(product_code="10080001", available_stock=100.0, in_bom=True),
+            _material(
+                product_code="10080099",
+                available_stock=100.0,
+                in_bom=False,
+                structure_quantity=0.0,
+            ),
+        ],
+        mother_orders=[_order()],
+        purchase_orders=[],
+        commitments=[
+            _commitment(
+                product_code="10080001",
+                open_quantity=2.0,
+                commitment_date="2026-09-12",
+            ),
+            _commitment(
+                product_code="10080099",
+                open_quantity=3.0,
+                commitment_date="2026-09-12",
+                production_order="24608101004",
+            ),
+        ],
+    )
+    first = payload["sets"][0]
+    assert first["status"] == STATUS_OK
+    by_code = {m["product_code"]: m for m in first["materials"]}
+    assert by_code["10080001"]["needed_quantity"] == 2.0
+    assert by_code["10080099"]["needed_quantity"] == 3.0
+    assert first["planned_without_commitment"] == []
+
+
+def test_substitute_mp_shortage_is_detected() -> None:
+    payload = build_raw_material_set_shortages(
+        product={"product_code": "90263114", "product_type": "PA"},
+        materials=[
+            _material(product_code="10080001", available_stock=100.0, in_bom=True),
+            _material(
+                product_code="10080099",
+                available_stock=1.0,
+                in_bom=False,
+                structure_quantity=0.0,
+            ),
+        ],
+        mother_orders=[_order()],
+        purchase_orders=[],
+        commitments=[
+            _commitment(
+                product_code="10080099",
+                open_quantity=5.0,
+                commitment_date="2026-09-12",
+            )
+        ],
+    )
+    first = payload["sets"][0]
+    assert first["status"] == STATUS_SHORTAGE
+    assert first["materials"][0]["product_code"] == "10080099"
+    assert first["materials"][0]["status"] == STATUS_SHORTAGE
+    assert "10080001" not in [m["product_code"] for m in first["materials"]]

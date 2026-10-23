@@ -14,6 +14,7 @@ import { useFinishedProductShortages } from "../hooks/useFinishedProductShortage
 import type {
   FinishedProductShortageMaterial,
   FinishedProductShortagePayload,
+  FinishedProductShortagePlannedRow,
   FinishedProductShortageSet,
   MaterialsSetStatus,
   PpcBranch,
@@ -291,11 +292,15 @@ function SetCard({
 }) {
   const texts = copy.materials.paShortage;
   const badge = setBadge(set.status);
-  const counts = countSetMaterialsByStatus(set.materials);
+  const planned = set.planned_without_commitment ?? [];
+  const counts = countSetMaterialsByStatus(set.materials, planned.length);
   const [tab, setTab] = useState<MaterialsSetStatus>(
     initialTab === "all" ? "all" : asMaterialsSetStatus(initialTab),
   );
   const rows = filterSetMaterials(set.materials, tab);
+  const showCommittedTable = tab !== "no_commitment";
+  const showPlanned =
+    planned.length > 0 && (tab === "all" || tab === "no_commitment");
   const firstExtract =
     filterSetMaterials(set.materials, "shortage")[0] ?? set.materials[0];
   const tabs: Array<{ id: MaterialsSetStatus; label: string; count: number }> = [
@@ -353,56 +358,74 @@ function SetCard({
         ))}
       </div>
 
-      {rows.length === 0 ? (
-        <p className="ppc-state">{texts.emptyTab}</p>
-      ) : (
-        <div className="ppc-pa-shortage-table-wrap">
-          <table className="ppc-pa-shortage-table">
-            <thead>
-              <tr>
-                <th>{texts.columns.code}</th>
-                <th>{texts.columns.material}</th>
-                <th>{texts.columns.needed}</th>
-                <th>{texts.columns.available}</th>
-                <th>{texts.columns.deficit}</th>
-                <th>{texts.columns.rupture}</th>
-                <th>{texts.columns.status}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((material) => (
-                <tr
-                  key={material.product_code}
-                  data-status={material.status}
-                  onClick={() => onOpenMaterial(material)}
-                >
-                  <td className="ppc-pa-shortage-table__code">{material.product_code}</td>
-                  <td>
-                    <span className="ppc-pa-shortage-table__name">
-                      {material.product_description || "—"}
-                    </span>
-                  </td>
-                  <td>{formatQty(material.needed_quantity, material.unit)}</td>
-                  <td>{formatQty(material.available_stock, material.unit)}</td>
-                  <td className="ppc-pa-shortage-table__deficit">
-                    {material.status === "shortage"
-                      ? formatQty(material.shortage_quantity, material.unit)
-                      : "—"}
-                  </td>
-                  <td>
-                    {material.status === "shortage" ? formatIsoDate(material.shortage_date) : "—"}
-                  </td>
-                  <td>
-                    <span className={`ppc-pill ppc-pill--${material.status === "shortage" ? "critical" : material.status === "ok" ? "ok" : "attention"}`}>
-                      {materialStatusLabel(material.status)}
-                    </span>
-                  </td>
+      {showCommittedTable ? (
+        rows.length === 0 ? (
+          <p className="ppc-state">{texts.emptyTab}</p>
+        ) : (
+          <div className="ppc-pa-shortage-table-wrap">
+            <table className="ppc-pa-shortage-table">
+              <thead>
+                <tr>
+                  <th>{texts.columns.code}</th>
+                  <th>{texts.columns.material}</th>
+                  <th>{texts.columns.needed}</th>
+                  <th>{texts.columns.available}</th>
+                  <th>{texts.columns.deficit}</th>
+                  <th>{texts.columns.rupture}</th>
+                  <th>{texts.columns.status}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {rows.map((material) => (
+                  <tr
+                    key={material.product_code}
+                    data-status={material.status}
+                    onClick={() => onOpenMaterial(material)}
+                  >
+                    <td className="ppc-pa-shortage-table__code">{material.product_code}</td>
+                    <td>
+                      <span className="ppc-pa-shortage-table__name">
+                        {material.product_description || "—"}
+                      </span>
+                    </td>
+                    <td>{formatQty(material.needed_quantity, material.unit)}</td>
+                    <td>{formatQty(material.available_stock, material.unit)}</td>
+                    <td className="ppc-pa-shortage-table__deficit">
+                      {material.status === "shortage"
+                        ? formatQty(material.shortage_quantity, material.unit)
+                        : "—"}
+                    </td>
+                    <td>
+                      {material.status === "shortage"
+                        ? formatIsoDate(material.shortage_date)
+                        : "—"}
+                    </td>
+                    <td>
+                      <span
+                        className={`ppc-pill ppc-pill--${
+                          material.status === "shortage"
+                            ? "critical"
+                            : material.status === "ok"
+                              ? "ok"
+                              : "attention"
+                        }`}
+                      >
+                        {materialStatusLabel(material.status)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : null}
+
+      {showPlanned ? (
+        <PlannedWithoutCommitmentBlock rows={planned} />
+      ) : tab === "no_commitment" && planned.length === 0 ? (
+        <p className="ppc-state">{texts.emptyTab}</p>
+      ) : null}
 
       <div className="ppc-pa-shortage-set__actions">
         <button
@@ -431,5 +454,48 @@ function SetCard({
         ) : null}
       </div>
     </li>
+  );
+}
+
+function PlannedWithoutCommitmentBlock({
+  rows,
+}: {
+  rows: FinishedProductShortagePlannedRow[];
+}) {
+  const texts = copy.materials.paShortage;
+  return (
+    <div className="ppc-pa-shortage-planned" aria-label={texts.plannedTitle}>
+      <SectionHintLabel label={texts.plannedTitle} hint={texts.plannedHint} />
+      <div className="ppc-pa-shortage-table-wrap">
+        <table className="ppc-pa-shortage-table ppc-pa-shortage-table--planned">
+          <thead>
+            <tr>
+              <th>{texts.columns.code}</th>
+              <th>{texts.columns.material}</th>
+              <th>{texts.plannedNeed}</th>
+              <th>{texts.columns.available}</th>
+              <th>{texts.columns.status}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.product_code} data-status="planned_not_committed">
+                <td className="ppc-pa-shortage-table__code">{row.product_code}</td>
+                <td>
+                  <span className="ppc-pa-shortage-table__name">
+                    {row.product_description || "—"}
+                  </span>
+                </td>
+                <td>{formatQty(row.planned_need_quantity, row.unit)}</td>
+                <td>{formatQty(row.available_stock, row.unit)}</td>
+                <td>
+                  <span className="ppc-pill ppc-pill--attention">{texts.materialPlanned}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

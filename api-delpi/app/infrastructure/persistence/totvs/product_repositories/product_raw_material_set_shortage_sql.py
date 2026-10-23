@@ -143,7 +143,7 @@ def _product_in_clause(column: str, placeholders: str) -> str:
 
 
 def mp_stock_batch_sql(*, branch: str, product_codes: list[str]) -> tuple[str, list]:
-    """Saldo 01+98+99 e ESTSEG das MPs da BOM."""
+    """Saldo 01+98+99 e ESTSEG das MPs (BOM ∪ códigos empenhados na SD4)."""
     placeholders = placeholders_for(product_codes)
     locals_sql = ", ".join(f"'{code}'" for code in AVAILABLE_BALANCE_WAREHOUSES)
     stock_and_sql, stock_params = branch_filter_and("SB2.B2_FILIAL", branch)
@@ -273,6 +273,24 @@ def open_commitments_batch_sql(*, branch: str, placeholders: str) -> tuple[str, 
         CASE WHEN RTRIM(COALESCE(EMP.C2_DATPRI, '')) = '' THEN 1 ELSE 0 END,
         EMP.C2_DATPRI ASC,
         SD4.D4_OP ASC
+    """
+    return sql, params
+
+
+def committed_product_codes_for_mother_orders_sql(
+    *, branch: str, placeholders: str
+) -> tuple[str, list]:
+    """Códigos com empenho SD4 aberto nas OPs mãe informadas (substitutos inclusos)."""
+    and_sql, params = branch_filter_and("SD4.D4_FILIAL", branch)
+    sql = f"""
+    SELECT DISTINCT
+        RTRIM(SD4.D4_COD) AS product_code
+    FROM SD4010 SD4 WITH (NOLOCK)
+    WHERE SD4.D_E_L_E_T_ = ''
+      AND SD4.D4_QUANT > 0
+      AND {_MOTHER_KEY_SQL} IN ({placeholders})
+      {and_sql}
+    ORDER BY product_code ASC
     """
     return sql, params
 

@@ -332,7 +332,7 @@ O BFF aplica, por produto:
 
 Os cards (`issues[]`) trazem título, descrição e `product_count` de `content/materials.json`. O terceiro card (`pa-shortage`) é consulta — sem `product_count` inventado. Busca, ordenação, página e cache por filial (120 s) ficam em `application/services/materials_service.py`. Sem preço. Sem escrita no TOTVS. Permissão: `production-control.materials.view` + filial. O grant no Keycloak é operação — código e manifesto já declaram a permissão.
 
-`GET /materials/finished-product-shortages?branch=&product=&status=&refresh=` consulta a api-delpi (`GET /products/{code}/raw-material-set-shortages`) e devolve o estado de tela (`ok`, `not_found`, `not_finished_product`, `no_open_sets`), summary, conjuntos com semáforo e o extrato (`materials[].ledger`) para o modal. Cache 120 s por `branch+product`. A projeção **não** é refeita neste BFF.
+`GET /materials/finished-product-shortages?branch=&product=&status=&refresh=` consulta a api-delpi (`GET /products/{code}/raw-material-set-shortages`) e devolve o estado de tela (`ok`, `not_found`, `not_finished_product`, `no_open_sets`), summary, conjuntos com semáforo (ruptura pelos empenhos SD4 atuais; `planned_without_commitment` é só divergência SG1) e o extrato (`materials[].ledger`) para o modal. Cache 120 s por `branch+product`; `refresh=true` após alteração de empenho no Protheus. A projeção **não** é refeita neste BFF.
 
 ### Mapa de entrega
 

@@ -22,6 +22,13 @@ class ProductRawMaterialSetShortageRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def fetch_committed_product_codes_for_mother_orders(
+        self, *, branch: str, mother_orders: list[str]
+    ) -> list[str]:
+        """Códigos com empenho SD4 aberto nas OPs mãe (inclui substitutos fora da SG1)."""
+        raise NotImplementedError
+
+    @abstractmethod
     def fetch_mp_stock(
         self, *, branch: str, product_codes: list[str]
     ) -> list[dict[str, Any]]:

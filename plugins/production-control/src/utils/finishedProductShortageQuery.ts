@@ -72,11 +72,14 @@ export function sortSetMaterials(
 
 export function countSetMaterialsByStatus(
   materials: readonly FinishedProductShortageMaterial[],
+  plannedWithoutCommitmentCount = 0,
 ): Record<MaterialsSetStatus, number> {
   return {
     all: materials.length,
     shortage: materials.filter((item) => item.status === "shortage").length,
-    no_commitment: materials.filter((item) => item.status === "no_commitment").length,
+    no_commitment:
+      materials.filter((item) => item.status === "no_commitment").length +
+      plannedWithoutCommitmentCount,
     ok: materials.filter((item) => item.status === "ok").length,
   };
 }

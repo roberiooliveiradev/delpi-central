@@ -17,6 +17,7 @@ from app.domain.services.supplies.safety_stock_stock_projection_service import (
 STATUS_SHORTAGE = "shortage"
 STATUS_OK = "ok"
 STATUS_NO_COMMITMENT = "no_commitment"
+STATUS_PLANNED_NOT_COMMITTED = "planned_not_committed"
 
 _SET_STATUS_RANK = {
     STATUS_SHORTAGE: 0,
@@ -53,14 +54,6 @@ def _first_shortage_for_set(
         if running + TOLERANCE < 0:
             return row
     return None
-
-
-def _has_commitment_for_set(timeline: list[dict[str, Any]], *, mother_order: str) -> bool:
-    return any(
-        _text(row.get("origin")) == ORIGIN_COMMITMENT
-        and _text(row.get("finished_production_order")) == mother_order
-        for row in timeline
-    )
 
 
 def _commitment_need_for_set(
@@ -159,20 +152,42 @@ def build_raw_material_set_shortages(
 
     for order in mother_orders:
         mother_order = _text(order.get("production_order"))
+        open_quantity = float(order.get("open_quantity") or 0)
         set_materials: list[dict[str, Any]] = []
+        planned_without_commitment: list[dict[str, Any]] = []
         for material in material_payload:
             code = _text(material.get("product_code"))
             timeline = material.get("ledger") or []
-            shortage_row = _first_shortage_for_set(
-                timeline, mother_order=mother_order
-            )
             needed_quantity, consuming_from_need = _commitment_need_for_set(
                 timeline, mother_order=mother_order
             )
+            in_bom = bool(material.get("in_bom", True))
+            structure_quantity = float(material.get("structure_quantity") or 0)
+
+            # Sem empenho efetivo na SD4: SG1 sozinha não gera ruptura/necessidade.
             if needed_quantity <= 0:
-                needed_quantity = float(material.get("structure_quantity") or 0) * float(
-                    order.get("open_quantity") or 0
-                )
+                if in_bom:
+                    planned_without_commitment.append(
+                        {
+                            "product_code": code,
+                            "product_description": _text(
+                                material.get("product_description")
+                            ),
+                            "unit": _text(material.get("unit")),
+                            "status": STATUS_PLANNED_NOT_COMMITTED,
+                            "structure_quantity": structure_quantity,
+                            "planned_need_quantity": structure_quantity * open_quantity,
+                            "available_stock": float(
+                                material.get("available_stock") or 0
+                            ),
+                            "safety_stock": float(material.get("safety_stock") or 0),
+                        }
+                    )
+                continue
+
+            shortage_row = _first_shortage_for_set(
+                timeline, mother_order=mother_order
+            )
             if shortage_row is not None:
                 status = STATUS_SHORTAGE
                 event_date = _text(shortage_row.get("event_date")) or None
@@ -185,16 +200,11 @@ def build_raw_material_set_shortages(
                     first_shortage_date is None or event_date < first_shortage_date
                 ):
                     first_shortage_date = event_date
-            elif _has_commitment_for_set(timeline, mother_order=mother_order):
+            else:
                 status = STATUS_OK
                 event_date = None
                 shortage_quantity = 0.0
                 consuming_op = consuming_from_need
-            else:
-                status = STATUS_NO_COMMITMENT
-                event_date = None
-                shortage_quantity = 0.0
-                consuming_op = ""
             set_materials.append(
                 {
                     "product_code": code,
@@ -207,17 +217,20 @@ def build_raw_material_set_shortages(
                     "consuming_production_order": consuming_op,
                     "available_stock": float(material.get("available_stock") or 0),
                     "safety_stock": float(material.get("safety_stock") or 0),
-                    "structure_quantity": float(
-                        material.get("structure_quantity") or 0
-                    ),
+                    "structure_quantity": structure_quantity,
+                    "in_bom": in_bom,
                 }
             )
-        status = _set_status([item["status"] for item in set_materials])
+        if not set_materials:
+            status = STATUS_NO_COMMITMENT
+        else:
+            status = _set_status([item["status"] for item in set_materials])
         sets.append(
             {
                 **order,
                 "status": status,
                 "materials": set_materials,
+                "planned_without_commitment": planned_without_commitment,
                 "short_material_count": sum(
                     1 for item in set_materials if item["status"] == STATUS_SHORTAGE
                 ),
