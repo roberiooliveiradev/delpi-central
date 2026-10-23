@@ -16,7 +16,7 @@ REQUIRED_PATHS = (
     ROOT / "docs" / "12-roadmap-e-evolucao",
     ROOT / "docs" / "12-roadmap-e-evolucao" / "customer-experience",
     ROOT / "docs" / "12-roadmap-e-evolucao" / "kaizometro",
-    ROOT / "docs" / "14-documentacao-geral" / "README.md",
+    ROOT / "docs" / "15-documentacao-geral" / "README.md",
 )
 
 

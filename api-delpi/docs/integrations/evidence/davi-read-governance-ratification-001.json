@@ -27,7 +27,7 @@
     "privacyLgpd": {
       "status": "PARTIAL",
       "evidence": [
-        "docs/13-auditoria-lgpd ROPA references on-prem Ollama; OpenAI/MCP/DAVI cloud NOT_FOUND"
+        "docs/14-auditoria-lgpd ROPA references on-prem Ollama; OpenAI/MCP/DAVI cloud NOT_FOUND"
       ]
     }
   },

@@ -2,7 +2,7 @@
 
 > **Estado: EVIDENCE-DRIVEN.** Classificação das categorias de dados das
 > revisões de enriquecimento contra a política LGPD institucional vigente
-> (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`,
+> (`docs/14-auditoria-lgpd/ropa-registro-tratamento.md`,
 > `relatorio-adequacao-lgpd.md`). Não cria política paralela.
 
 ## Categorias × enquadramento
