@@ -74,6 +74,20 @@ Alterados: `SupplierCreatePage.tsx` (integração), `index.css` (estilos escopad
 - Busca nominal permanece `BLOCKED` (R1.S3): a UI a apresenta como futura.
 - Preview não substitui validação autoritativa na criação — estado pode mudar entre consulta e confirmação.
 
-## 11. Próximo gate
+## 11. Addendum — X4.UX-R1.S2.R1: Identity & Stale Preview Safety
+
+**Veredito da revisão:** `REWORK` — dois defeitos de consistência de identidade.
+
+**Defect A (causa):** `consult()` aplicava `onApplyPatch({tax_id, person_type})` incondicionalmente após o preview — sobrescrevia silenciosamente identidade já digitada.
+**Correção:** `identityChangeCheck(draft, taxId, personType)` (pura) detecta divergências — `tax_id`/`person_type` preenchidos e diferentes exigem `window.confirm` explícito (mensagem distinta quando há outros campos preenchidos = risco de mistura). Cancelar preserva o draft integralmente e deixa o painel **bloqueado por incoerência** (`identityBlocked`) — sugestões visíveis, nenhuma ação de aplicação; botão «Usar CNPJ consultado no formulário» reabre a confirmação.
+
+**Defect B (causa):** `onChange` do CNPJ só atualizava o input — preview da empresa anterior permanecia aplicável.
+**Correção:** `activeTaxId` registra os 14 dígitos da consulta ativa; `searchTaxIdChanged` invalida preview/sugestões/erro e aborta requisição em andamento assim que os dígitos mudam (mudança só de máscara preserva). `isIdentityCoherent(draft, activeTaxId)` protege `applyOne`/`applyAll` no fluxo **e** esconde as ações no painel — sugestões de A nunca entram quando a identidade é B; valores já digitados/aplicados nunca são apagados pela invalidação.
+
+**Invariante:** `preview` ativo ⟺ `activeTaxId` == dígitos da requisição == `draft.tax_id` normalizado (após confirmação). Resposta assíncrona exige `seq` válida + aborto + coerência.
+
+**Regressões adicionadas:** 11 unitárias novas (`identityChangeCheck` A1–A4, `isIdentityCoherent`, `searchTaxIdChanged` incl. máscara, proveniência cross-identidade) + 2 estruturais (sem patch direto de `tax_id` fora de `confirmIdentity`; invalidação/coerência presentes). Suíte: **330/330**; typecheck e build limpos; lint sem erro novo.
+
+## 12. Próximo gate
 
 R1.S3 (provider nominal) permanece bloqueado; S4/S5/S6 não autorizados automaticamente. Aceite federado do S2 depende de R1.S7.

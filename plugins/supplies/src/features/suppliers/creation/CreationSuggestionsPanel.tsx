@@ -26,6 +26,13 @@ type SuggestionsPanelProps = {
   entries: SuggestionEntryMap;
   draft: SupplierCreateDraft;
   disabled: boolean;
+  /**
+   * Identidade do draft diverge do CNPJ consultado: sugestões ficam
+   * visíveis, mas nenhuma ação de aplicação é oferecida.
+   */
+  identityBlocked: boolean;
+  /** Confirma a substituição da identidade pelo CNPJ consultado. */
+  onConfirmIdentity: () => void;
   /** Aplica o valor sugerido no draft — a page resolve confirmação. */
   onApply: (fieldKey: string, value: string) => void;
   /** Aplica todas as elegíveis de uma vez (campos vazios apenas). */
@@ -38,6 +45,8 @@ export function CreationSuggestionsPanel({
   entries,
   draft,
   disabled,
+  identityBlocked,
+  onConfirmIdentity,
   onApply,
   onApplyAll,
   confirmOverwrite,
@@ -61,7 +70,7 @@ export function CreationSuggestionsPanel({
         <p className="sp-supplier-create__assist-desc">
           {C.suggestionsDescription}
         </p>
-        {pending.length > 1 ? (
+        {!identityBlocked && pending.length > 1 ? (
           <SuppliesActionButton
             type="button"
             variant="ghost"
@@ -72,6 +81,23 @@ export function CreationSuggestionsPanel({
           </SuppliesActionButton>
         ) : null}
       </div>
+      {identityBlocked ? (
+        <div
+          className="sp-supplier-create__assist-identity"
+          role="alert"
+        >
+          <strong>{C.identityBlockedTitle}</strong>{" "}
+          {C.identityBlockedMessage}{" "}
+          <SuppliesActionButton
+            type="button"
+            variant="ghost"
+            onClick={onConfirmIdentity}
+            disabled={disabled}
+          >
+            {C.identityConfirmAction}
+          </SuppliesActionButton>
+        </div>
+      ) : null}
       <ul className="sp-supplier-create__assist-list">
         {list.map((entry) => {
           const current = (
@@ -110,7 +136,7 @@ export function CreationSuggestionsPanel({
                 </div>
               ) : null}
               <div className="sp-supplier-create__assist-actions">
-                {!entry.applicable ? (
+                {identityBlocked ? null : !entry.applicable ? (
                   <span className="sp-supplier-create__assist-note">
                     {C.reviewManually}
                   </span>

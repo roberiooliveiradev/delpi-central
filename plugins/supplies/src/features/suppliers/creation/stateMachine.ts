@@ -81,6 +81,58 @@ export function applyDraftPatchToEntries(
   return changed ? next : entries;
 }
 
+export type IdentityCheck = {
+  /** Campos de identidade que mudariam (somente se já preenchidos com valor divergente). */
+  changedKeys: readonly ("tax_id" | "person_type")[];
+  /** Quantidade de demais campos preenchidos — risco de mistura de empresas. */
+  filledFieldCount: number;
+};
+
+/**
+ * Decide se incorporar a identidade consultada exige confirmação.
+ * Campo vazio nunca é "identidade existente" — pode ser preenchido livremente.
+ * Valor divergente em `tax_id` ou `person_type` exige confirmação explícita.
+ */
+export function identityChangeCheck(
+  draft: Record<string, string>,
+  consultedTaxId: string,
+  consultedPersonType: string,
+): IdentityCheck {
+  const changedKeys: ("tax_id" | "person_type")[] = [];
+  const currentTax = normalizeCnpjDigits(draft.tax_id ?? "");
+  if (currentTax && currentTax !== consultedTaxId) changedKeys.push("tax_id");
+  const currentPerson = (draft.person_type ?? "").trim();
+  if (currentPerson && currentPerson !== consultedPersonType) {
+    changedKeys.push("person_type");
+  }
+  const filledFieldCount = Object.entries(draft).filter(
+    ([key, value]) =>
+      key !== "tax_id" && key !== "person_type" && (value ?? "").trim() !== "",
+  ).length;
+  return { changedKeys, filledFieldCount };
+}
+
+/**
+ * Coerência de identidade: as sugestões do preview só podem ser aplicadas
+ * quando o documento do formulário é o mesmo da consulta bem-sucedida.
+ */
+export function isIdentityCoherent(
+  draft: Record<string, string>,
+  consultedTaxId: string | null,
+): boolean {
+  if (!consultedTaxId) return false;
+  return normalizeCnpjDigits(draft.tax_id ?? "") === consultedTaxId;
+}
+
+/** true quando a digitação mudou os 14 dígitos — máscara não invalida. */
+export function searchTaxIdChanged(
+  inputValue: string,
+  activeTaxId: string | null,
+): boolean {
+  if (!activeTaxId) return false;
+  return normalizeCnpjDigits(inputValue) !== activeTaxId;
+}
+
 export type ApplyDecision = "apply" | "confirm_overwrite" | "blocked";
 
 /**

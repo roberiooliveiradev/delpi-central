@@ -39,6 +39,15 @@ export const CREATION_CONTENT = {
   duplicateMatchBlocked: "Bloqueado",
   duplicateOpenMatch: "Abrir ficha",
 
+  identityReplaceConfirm:
+    "A identidade do fornecedor no formulário será alterada: o CNPJ será substituído pelo documento consultado e o tipo de pessoa ajustado para Pessoa Jurídica. Confirmar a substituição?",
+  identityReplaceConfirmWithFields:
+    "A identidade do fornecedor no formulário será alterada: o CNPJ será substituído pelo documento consultado e o tipo de pessoa ajustado para Pessoa Jurídica. Campos já preenchidos podem pertencer a outra empresa — revise-os antes de aplicar novas sugestões. Confirmar a substituição?",
+  identityBlockedTitle: "Sugestões de outro CNPJ",
+  identityBlockedMessage:
+    "As sugestões abaixo pertencem ao CNPJ consultado, diferente do documento atual no formulário. Elas não podem ser aplicadas até que a identidade seja confirmada.",
+  identityConfirmAction: "Usar CNPJ consultado no formulário",
+
   suggestionsTitle: "Sugestões de preenchimento",
   suggestionsDescription:
     "Dados de fonte externa pública. Nada é aplicado sozinho — confirme campo a campo ou aplique as elegíveis.",

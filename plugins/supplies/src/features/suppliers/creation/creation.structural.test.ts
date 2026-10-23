@@ -54,4 +54,29 @@ describe("Creation preview (X4.UX-R1.S2) — boundaries", () => {
     expect(flow).toContain("AbortController");
     expect(flow).toContain("requestSeq");
   });
+
+  it("identidade nunca é sobrescrita silenciosamente (S2.R1 Defect A)", () => {
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("identityChangeCheck");
+    expect(flow).toContain("confirmIdentity");
+    expect(flow).toContain("window.confirm");
+    // nenhum patch direto de tax_id fora da confirmação de identidade
+    expect(flow).not.toMatch(
+      /onApplyPatch\(\{\s*tax_id:\s*cnpjDigits/,
+    );
+  });
+
+  it("digitação de novo CNPJ invalida preview anterior (S2.R1 Defect B)", () => {
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("searchTaxIdChanged");
+    expect(flow).toContain("handleCnpjChange");
+    expect(flow).toContain("activeTaxId");
+    expect(flow).toContain("isIdentityCoherent");
+    const panel = read("CreationSuggestionsPanel.tsx");
+    expect(panel).toContain("identityBlocked");
+    const machine = read("stateMachine.ts");
+    expect(machine).toContain("identityChangeCheck");
+    expect(machine).toContain("isIdentityCoherent");
+    expect(machine).toContain("searchTaxIdChanged");
+  });
 });

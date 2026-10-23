@@ -15,8 +15,11 @@ import { CREATION_CONTENT as C, mapCreationPreviewError } from "./content";
 import { CreationSuggestionsPanel } from "./CreationSuggestionsPanel";
 import {
   buildSuggestionEntries,
+  identityChangeCheck,
   isCnpjFormatValid,
+  isIdentityCoherent,
   normalizeCnpjDigits,
+  searchTaxIdChanged,
 } from "./stateMachine";
 import type {
   CreationMode,
@@ -65,8 +68,15 @@ export function CreationAssistedFlow({
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<SupplierCreationPreview | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** CNPJ (14 dígitos) da consulta em andamento ou do último preview válido. */
+  const [activeTaxId, setActiveTaxId] = useState<string | null>(null);
   const requestSeq = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  // Ref do draft: o callback assíncrono sempre lê a versão mais recente.
+  const draftRef = useRef(draft);
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   // Resposta obsoleta nunca sobrescreve estado — abort + sequência.
   useEffect(
@@ -85,7 +95,37 @@ export function CreationAssistedFlow({
     abortRef.current?.abort();
     setPreview(null);
     setError(null);
+    setActiveTaxId(null);
     onEntriesChange({});
+  };
+
+  const handleCnpjChange = (value: string) => {
+    setCnpjInput(value);
+    // Os 14 dígitos definem a identidade pesquisada: mudou → o preview
+    // anterior (e qualquer requisição em andamento) é invalidado na hora.
+    // Mudança só de máscara mantém o resultado.
+    if (searchTaxIdChanged(value, activeTaxId)) {
+      resetPreview();
+    }
+  };
+
+  /**
+   * Incorpora a identidade consultada ao draft — nunca silenciosamente.
+   * Valor divergente em tax_id/person_type exige confirmação explícita;
+   * cancelar preserva o draft e mantém as sugestões bloqueadas pela
+   * incoerência de identidade (o painel reflete isso).
+   */
+  const confirmIdentity = (taxId: string, personType: string) => {
+    if (!taxId) return;
+    const check = identityChangeCheck(draftRef.current, taxId, personType);
+    if (check.changedKeys.length > 0) {
+      const message =
+        check.filledFieldCount > 0
+          ? C.identityReplaceConfirmWithFields
+          : C.identityReplaceConfirm;
+      if (!window.confirm(message)) return;
+    }
+    onApplyPatch({ tax_id: taxId, person_type: personType });
   };
 
   const selectMode = (next: CreationMode) => {
@@ -100,6 +140,7 @@ export function CreationAssistedFlow({
     setLoading(false);
     setPreview(null);
     setError(null);
+    setActiveTaxId(null);
     setCnpjInput("");
     onEntriesChange({});
     setMode(next);
@@ -113,20 +154,22 @@ export function CreationAssistedFlow({
     abortRef.current = controller;
     setLoading(true);
     setError(null);
+    // A resposta só é válida para este documento — a identidade ativa é
+    // registrada no início para que qualquer mudança de dígitos a invalide.
+    setActiveTaxId(cnpjDigits);
     createSupplierPreview(cnpjDigits, controller.signal)
       .then((result) => {
         if (seq !== requestSeq.current) return;
         setPreview(result);
         onEntriesChange(buildSuggestionEntries(result));
-        // tax_id/person_type vêm da entrada do usuário — não são dados externos.
-        onApplyPatch({
-          tax_id: cnpjDigits,
-          person_type: result.person_type || "J",
-        });
+        // Identidade: incorpora tax_id/person_type com confirmação quando
+        // o draft já possui valor divergente — nunca sobrescreve em silêncio.
+        confirmIdentity(cnpjDigits, result.person_type || "J");
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted || seq !== requestSeq.current) return;
         setPreview(null);
+        setActiveTaxId(null);
         onEntriesChange({});
         setError(mapCreationPreviewError(err));
       })
@@ -135,11 +178,14 @@ export function CreationAssistedFlow({
       });
   };
 
+  // Aplicação exige coerência: sugestões de outro CNPJ nunca entram no draft.
   const applyOne = (fieldKey: string, value: string) => {
+    if (!isIdentityCoherent(draftRef.current, activeTaxId)) return;
     onApplyPatch({ [fieldKey]: value });
   };
 
   const applyAll = (list: readonly { field_key: string; suggested_value: string | null }[]) => {
+    if (!isIdentityCoherent(draftRef.current, activeTaxId)) return;
     const patch: Partial<SupplierCreateDraft> = {};
     for (const e of list) {
       if (e.suggested_value) {
@@ -199,7 +245,7 @@ export function CreationAssistedFlow({
                 autoComplete="off"
                 value={cnpjInput}
                 placeholder={C.cnpjInputPlaceholder}
-                onChange={(event) => setCnpjInput(event.target.value)}
+                onChange={(event) => handleCnpjChange(event.target.value)}
                 disabled={disabled || loading}
                 aria-invalid={cnpjInput.length > 0 && !cnpjValid}
               />
@@ -291,6 +337,12 @@ export function CreationAssistedFlow({
             entries={entries}
             draft={draft}
             disabled={disabled}
+            identityBlocked={!isIdentityCoherent(draft, activeTaxId)}
+            onConfirmIdentity={() => {
+              if (activeTaxId) {
+                confirmIdentity(activeTaxId, preview.person_type || "J");
+              }
+            }}
             onApply={applyOne}
             onApplyAll={applyAll}
             confirmOverwrite={(label) =>

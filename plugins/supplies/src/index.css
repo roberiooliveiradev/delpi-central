@@ -1186,6 +1186,17 @@
   color: var(--sp-text-muted);
 }
 
+.dashboard-supplies-portal .sp-supplier-create__assist-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--sp-warning, #b8860b);
+  border-radius: var(--sp-radius, 0.5rem);
+  font-size: 0.8rem;
+}
+
 .dashboard-supplies-portal .sp-supplier-create__assist-list {
   list-style: none;
   margin: 0;
