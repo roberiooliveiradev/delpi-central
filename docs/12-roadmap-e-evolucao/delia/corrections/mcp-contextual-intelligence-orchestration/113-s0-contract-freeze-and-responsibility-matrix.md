@@ -171,3 +171,21 @@ NEXT=COORDINATION_VERDICT_S0
 ```
 
 STOP → RETURN_TO_ARCHITECTURE_COORDINATION
+
+## 7. Parecer independente de coordenação — 2026-10-23
+
+**REVIEWED_SHA:** `5dfdb095c234f3f1b108fec4c2448d9916115c66`. **VERDICT: ACCEPT_WITH_RESIDUAL.** S0 documental aceita: 10 grupos afetados, 3 gaps tipados, consumers mapeados, testes locais 30/30 reportados e zero diff de runtime. A verificação independente confirmou diff/documentação no GitHub; não repetiu os testes executados pelo Devin. S0 não avança C3, I04 ou Q03 e não reabre B1.
+
+**Resíduos não bloqueantes de S0:** (1) `ProviderSurface.groups` declara superfície viva/eligible, mas não concede nem comprova Core/Domain AuthZ individual; metaconsulta sobre acesso deve ser precisa; (2) classe tipada nova de admission/goal é apenas candidata, sujeita a contract gate/reuse antes de diff; (3) conteúdo real de `get_product_guide` continua TO_INVENTORY para S2, não deve ser inferido na S1; (4) novos field_labels são tema S3, não autorização atual. Seleção-only e MODEL_AUTHORED_FACTUAL_PROSE=NONE continuam FROZEN.
+
+**Próximo gate recomendado:** S1 bounded de autoconhecimento (RQ-SA01–03, RQ-SA06/08/09), com reuse de `ProviderSurface.groups`, `CapabilityGroup`, instrução de identidade e proposta LLM existentes, SEM novo engine/registry, SEM branches DAVI/TÉO/VISTA, SEM deploy. Antes do primeiro diff: compatibilidade da proposta tipada, consumers e AuthZ live; se exigir mudança congelada ou contrato owner inexistente, STOP → ARCHITECTURE_DECISION_REQUIRED. S2–S5 permanecem não autorizadas. Máximo 1 rework bounded após parecer independente.
+
+```text
+STEP=S0
+COORDINATION_VERDICT=ACCEPT_WITH_RESIDUAL
+S0_CLOSED=YES
+S0_REWORK_USED=0
+S1_ENTRY=ELIGIBLE_FOR_BOUNDED_AUTHORIZATION
+S2_S5=NOT_AUTHORIZED
+PRODUCTION_DEPLOY=NOT_AUTHORIZED
+```
