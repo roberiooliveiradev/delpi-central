@@ -167,6 +167,18 @@ BATCHES: dict[str, tuple[str, dict[str, str]]] = {
             "linked_employee_code": _LOOKUP,
         },
     ),
+    # Retestes focados — um supplier por lote, valores distintos do vigente.
+    "5a": ("00387901", {"simp_regime_code": "1"}),
+    "5b": ("00388001", {"risk_code": "002"}),
+    "5c": (
+        "00388201",
+        {
+            # SA1 TST01 só tem o cliente 000001 (lojas 01–05): a loja
+            # vinculada é a prova real de atualização do par composto.
+            "linked_customer_code": "000001",
+            "linked_customer_store": "03",
+        },
+    ),
 }
 
 # Reference lookups — same tables as the E2 assay.
