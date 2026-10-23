@@ -320,19 +320,25 @@ def test_requester_photo_streams_mapped_user_photo(mock_resolve, mock_validate):
     )
     identity = MagicMock()
     identity.get_requester_photo.return_value = (b"\x89PNG", "image/png", "e.png")
+    scope = MagicMock()
+    scope.is_allowed.return_value = True
     with patch(
         "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
         identity,
+    ), patch(
+        "app.interfaces.http.routes.purchase_requests_routes._PHOTO_SCOPE",
+        scope,
     ):
         client = create_app().test_client()
         response = client.get(
-            "/purchase-requests/requesters/000123/photo",
+            "/purchase-requests/requesters/000123/photo?branch=01",
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 200
     assert response.data == b"\x89PNG"
     assert response.mimetype == "image/png"
     identity.get_requester_photo.assert_called_once_with("000123")
+    scope.is_allowed.assert_called_once()
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
@@ -346,13 +352,18 @@ def test_requester_photo_404_when_unmapped_or_absent(mock_resolve, mock_validate
     )
     identity = MagicMock()
     identity.get_requester_photo.return_value = None
+    scope = MagicMock()
+    scope.is_allowed.return_value = True
     with patch(
         "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
         identity,
+    ), patch(
+        "app.interfaces.http.routes.purchase_requests_routes._PHOTO_SCOPE",
+        scope,
     ):
         client = create_app().test_client()
         response = client.get(
-            "/purchase-requests/requesters/999/photo",
+            "/purchase-requests/requesters/999/photo?branch=01",
             headers={"Authorization": "Bearer tok"},
         )
     assert response.status_code == 404
@@ -360,8 +371,70 @@ def test_requester_photo_404_when_unmapped_or_absent(mock_resolve, mock_validate
 
 def test_requester_photo_requires_auth():
     client = create_app().test_client()
-    response = client.get("/purchase-requests/requesters/000123/photo")
+    response = client.get("/purchase-requests/requesters/000123/photo?branch=01")
     assert response.status_code == 401
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requester_photo_404_outside_authorized_universe(
+    mock_resolve, mock_validate
+):
+    """Mapped but outside the caller's requester facet -> 404; Core untouched."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    identity = MagicMock()
+    scope = MagicMock()
+    scope.is_allowed.return_value = False
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+        identity,
+    ), patch(
+        "app.interfaces.http.routes.purchase_requests_routes._PHOTO_SCOPE",
+        scope,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/requesters/000999/photo?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 404
+    identity.get_requester_photo.assert_not_called()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requester_photo_403_without_branch(mock_resolve, mock_validate):
+    """Unit scope is mandatory — photo cannot be fetched outside unit context."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    client = create_app().test_client()
+    response = client.get(
+        "/purchase-requests/requesters/000123/photo",
+        headers={"Authorization": "Bearer tok"},
+    )
+    assert response.status_code == 403
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requester_photo_403_unknown_branch(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(permissions={"supplies.access"})
+    client = create_app().test_client()
+    response = client.get(
+        "/purchase-requests/requesters/000123/photo?branch=99",
+        headers={"Authorization": "Bearer tok"},
+    )
+    assert response.status_code == 403
 
 
 @patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")

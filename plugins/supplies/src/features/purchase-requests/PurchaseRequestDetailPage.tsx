@@ -114,7 +114,13 @@ export function PurchaseRequestDetailPage({
           <div>
             <dt>Solicitante</dt>
             <dd>
-              <SuppliesPersonIdentity person={header?.requester} />
+              <SuppliesPersonIdentity
+                person={header?.requester}
+                photoPeriod={{
+                  dateFrom: header?.issue_date,
+                  dateTo: header?.issue_date,
+                }}
+              />
             </dd>
           </div>
           <div>

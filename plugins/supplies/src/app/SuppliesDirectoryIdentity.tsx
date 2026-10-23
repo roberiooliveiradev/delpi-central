@@ -1,5 +1,6 @@
 import { SuppliesEntityAvatarLabel } from "./suppliesUi";
 import { personColorKey, supplierColorKey } from "./suppliesDirectory";
+import { useSuppliesSession } from "./SuppliesSessionContext";
 import { usePersonPhoto } from "./usePersonPhoto";
 import type { PersonRef } from "../features/purchase-requests/types";
 
@@ -19,10 +20,23 @@ export function SuppliesSupplierIdentity({ name, code, store }: SupplierIdentity
   );
 }
 
-export function SuppliesPersonIdentity({ person }: { person?: PersonRef | null }) {
+type PersonPhotoPeriod = { dateFrom?: string | null; dateTo?: string | null };
+
+export function SuppliesPersonIdentity({
+  person,
+  photoPeriod,
+}: {
+  person?: PersonRef | null;
+  photoPeriod?: PersonPhotoPeriod;
+}) {
+  const { allowedUnits } = useSuppliesSession();
   const name = person?.display_name || person?.name || person?.code || "";
   const code = person?.code || person?.protheus_user_id || "";
-  const photoSrc = usePersonPhoto(person?.photo_url);
+  const photoSrc = usePersonPhoto(person?.photo_url, {
+    branches: allowedUnits,
+    dateFrom: photoPeriod?.dateFrom,
+    dateTo: photoPeriod?.dateTo,
+  });
   // When the Core link resolved, the TOTVS source name becomes the
   // secondary line; otherwise keep the source code as before.
   const secondary = person?.display_name

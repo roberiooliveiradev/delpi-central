@@ -278,7 +278,9 @@ describe("PurchaseRequests feature", () => {
     // Secondary line = TOTVS source name when the Core link resolved.
     expect(identity).toContain("person.name && person.name !== person.display_name");
     expect(identity).toContain("src={photoSrc}");
-    expect(identity).toContain("usePersonPhoto(person?.photo_url)");
+    expect(identity).toContain("usePersonPhoto(person?.photo_url, {");
+    expect(identity).toContain("branches: allowedUnits");
+    expect(identity).toContain("photoPeriod");
     const types = readFileSync(join(dir, "types.ts"), "utf8");
     expect(types).toContain("photo_url");
     // Photo loads through the authenticated BFF client, never <img> to Core.
@@ -288,6 +290,9 @@ describe("PurchaseRequests feature", () => {
     );
     expect(hook).toContain("httpGetBlob");
     expect(hook).toContain("photoCache");
+    // Photo proxy is scope-guarded: the hook always sends branch+period.
+    expect(hook).toContain("params.append(\"branch\"");
+    expect(hook).toContain("date_from");
   });
 
   it("filtros de solicitante e centro de custo no contrato e na UI", () => {

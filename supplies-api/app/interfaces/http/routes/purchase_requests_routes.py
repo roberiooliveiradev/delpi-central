@@ -24,12 +24,16 @@ from app.application.security.supplies_permissions import (
 from app.application.services.requester_identity_service import (
     RequesterIdentityService,
 )
+from app.application.services.requester_photo_scope import (
+    RequesterPhotoScopeGuard,
+)
 from app.interfaces.http.auth_decorators import require_policy, require_unit, require_units
 
 purchase_requests_bp = Blueprint("purchase_requests", __name__)
 
 _GATEWAY = PurchaseRequestsGateway()
 _REQUESTER_IDENTITY = RequesterIdentityService()
+_PHOTO_SCOPE = RequesterPhotoScopeGuard()
 
 
 def _access_token() -> str:
@@ -127,12 +131,22 @@ def list_portal_purchase_request_requesters():
     "/purchase-requests/requesters/<protheus_user_id>/photo"
 )
 @require_policy(can_use_purchase_requests)
+@require_units("branch")
 def get_portal_purchase_request_requester_photo(protheus_user_id: str):
     """operationId: get_portal_purchase_request_requester_photo — BFF photo proxy.
 
     Resolves the Protheus id through the mapped Core identity server-side;
     the Core user id and the S2S token never reach the browser.
+    The id must belong to the caller's authorized SC universe — the same
+    branch+period scoped /requesters facet — so photos cannot be
+    enumerated outside it.
     """
+    if not _PHOTO_SCOPE.is_allowed(
+        protheus_user_id=protheus_user_id,
+        access_token=_access_token(),
+        facet_query=_query_string_without_keys(),
+    ):
+        return jsonify({"detail": "Not Found", "code": "not_found"}), 404
     photo = _REQUESTER_IDENTITY.get_requester_photo(protheus_user_id)
     if not photo:
         return jsonify({"detail": "Not Found", "code": "not_found"}), 404

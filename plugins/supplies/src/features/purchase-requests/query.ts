@@ -29,9 +29,7 @@ export function defaultPeriod(): { date_from: string; date_to: string } {
 }
 
 /** UI default: empty branches = «Todas» (API expands via authorizeQueryBranches). */
-export function createDefaultQuery(
-  _branches: readonly string[] = [],
-): PurchaseRequestsQuery {
+export function createDefaultQuery(): PurchaseRequestsQuery {
   const period = defaultPeriod();
   return {
     branches: [],

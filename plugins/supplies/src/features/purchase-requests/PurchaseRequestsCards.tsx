@@ -72,7 +72,13 @@ export function PurchaseRequestsCards({
               <div>
                 <dt>{C.cardRequester}</dt>
                 <dd>
-                  <SuppliesPersonIdentity person={row.requester} />
+                  <SuppliesPersonIdentity
+                    person={row.requester}
+                    photoPeriod={{
+                      dateFrom: row.request_issue_date,
+                      dateTo: row.request_issue_date,
+                    }}
+                  />
                 </dd>
               </div>
               <div>

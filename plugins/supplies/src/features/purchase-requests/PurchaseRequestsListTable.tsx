@@ -165,7 +165,15 @@ export function PurchaseRequestsListTable({
               case "product":
                 return formatProductLabel(row.product_code, row.product_description);
               case "requester":
-                return <SuppliesPersonIdentity person={row.requester} />;
+                return (
+                  <SuppliesPersonIdentity
+                    person={row.requester}
+                    photoPeriod={{
+                      dateFrom: row.request_issue_date,
+                      dateTo: row.request_issue_date,
+                    }}
+                  />
+                );
               case "cost_center":
                 return row.cost_center?.code || row.cost_center_code || "—";
               case "opened":

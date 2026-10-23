@@ -26,15 +26,18 @@ requester.protheus_user_id
   → POST /integrations/person-profiles/lookup        (S2S, batch ≤50, has_photo)
   → requester.photo_url = /purchase-requests/requesters/{pid}/photo   (BFF)
 
-GET /purchase-requests/requesters/{protheus_user_id}/photo   (BFF proxy)
+GET /purchase-requests/requesters/{pid}/photo?branch=..&date_from=..&date_to=..
+  → supplies.access + require_units("branch")
+  → guard: pid ∈ /requesters facet do MESMO branch+período (escopo CC do caller)
   → resolve pid → user_id (mapped only) server-side
   → GET /integrations/person-profiles/{user_id}/photo (S2S bytes)
   → stream com content-type; Cache-Control: private, max-age=300; 404 → iniciais
 ```
 
 - O UUID da Core e o token S2S **nunca** chegam ao browser — a URL da foto é chaveada por `protheus_user_id` (mesmo identificador já exposto).
-- `usePersonPhoto` deduplica fetches por `photo_url` em cache de sessão (várias linhas → um fetch por pessoa).
-- Não é possível pedir foto de um `protheus_user_id` não mapeado — resolução falha → 404.
+- **Scope guard (fail-closed):** o path é enumerável; por isso a rota exige `branch` (unidade efetiva) e o `RequesterPhotoScopeGuard` só serve bytes quando o pid pertence ao facet `/requesters` autorizado **para a mesma query** — o facet já aplica os escopos de centro de custo do caller no owner. Conjunto cacheado ~120 s por (caller, query) — uma página de avatares custa 1 chamada de facet.
+- `usePersonPhoto` anexa `branch` (unidades efetivas da sessão) e `date_from`/`date_to` (data de abertura da SC) ao path e deduplica fetches em cache de sessão (várias linhas → um fetch por pessoa).
+- Não é possível pedir foto de um `protheus_user_id` fora do universo autorizado ou não mapeado — guard ou resolução falham → 404 (iniciais).
 
 ### Comportamentos
 
@@ -82,7 +85,7 @@ O parâmetro `requester_user_id` aceita **`protheus_user_id`** (o PR-api encamin
 ## Contratos
 
 - `requester.photo_url` — `string | null` — caminho BFF da foto quando `has_photo` no perfil Core (adição backward-compatible).
-- `GET /purchase-requests/requesters/{protheus_user_id}/photo` — `200 image/*` | `404`; `supplies.access`.
+- `GET /purchase-requests/requesters/{protheus_user_id}/photo?branch=..&date_from=..&date_to=..` — `200 image/*` | `403` sem unidade/fora do escopo | `404` fora do universo autorizado/sem foto/não mapeado; `supplies.access` + units + facet guard.
 - `GET /purchase-requests/cost-centers` — `{items:[{branch,code,description}]}`; `supplies.access` + units.
 - `/purchase-requests/requesters` — items agora podem trazer `display_name` (adição).
 
@@ -90,7 +93,7 @@ O parâmetro `requester_user_id` aceita **`protheus_user_id`** (o PR-api encamin
 
 - api-delpi: SQL facet CC (DISTINCT, CTT010, scope tuple, sem OFFSET) + requesters SQL — `test_purchase_request_lines_sql.py`.
 - purchase-requests-api: `test_cost_centers_facet.py` — escopo single/multi-branch, sem auto-filtro, negado sem permissão, sem scope → vazio sem chamada.
-- supplies-api: photo_url/sem foto/não mapeado, `resolve_mapped_user_id`, `get_requester_photo`, rota proxy 200/404/401, facet requesters enriquecido, cost-centers pass-through.
+- supplies-api: photo_url/sem foto/não mapeado, `resolve_mapped_user_id`, `get_requester_photo`, rota proxy 200/404/401 + **scope guard** (`test_requester_photo_scope.py`: membership, sibling negado, facet down fail-closed, cache por caller+query; rota: 403 sem `branch`, 403 branch desconhecida, 404 fora do universo sem tocar a Core), facet requesters enriquecido, cost-centers pass-through.
 - MFE: round-trip URL dos novos filtros, guards estruturais (secondary TOTVS, `usePersonPhoto`, campos).
 
 ## Residual
