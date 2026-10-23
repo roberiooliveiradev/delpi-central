@@ -192,15 +192,23 @@ const batchOption = () =>
   screen.getByRole("radio", { name: BATCH_OPTION }) as HTMLInputElement;
 // selection keeps the menu open (spec 125 §10) — helpers dismiss it
 // explicitly so later steps see a deterministic surface
-const selectLive = () => {
+const waitClosed = () =>
+  waitFor(() =>
+    expect(
+      screen.queryByRole("dialog", { name: SETTINGS_TRIGGER }),
+    ).toBeNull(),
+  );
+const selectLive = async () => {
   if (!settingsOpen()) fireEvent.click(settingsTrigger());
   fireEvent.click(liveOption());
   fireEvent.click(settingsTrigger());
+  await waitClosed();
 };
-const selectBatch = () => {
+const selectBatch = async () => {
   if (!settingsOpen()) fireEvent.click(settingsTrigger());
   fireEvent.click(batchOption());
   fireEvent.click(settingsTrigger());
+  await waitClosed();
 };
 const textarea = () =>
   document.getElementById("delia-dual-input") as HTMLTextAreaElement;
@@ -281,7 +289,7 @@ describe("dual-mode dictation", () => {
     expect(
       screen.queryByRole("button", { name: "Iniciar ditado" }),
     ).toBeNull();
-    selectLive();
+    await selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
@@ -321,17 +329,17 @@ describe("dual-mode dictation", () => {
     expect(textarea().value).toBe("rascunho");
   });
 
-  it("DM-09/DM-12: idle switch preserves the draft", () => {
+  it("DM-09/DM-12: idle switch preserves the draft", async () => {
     render(<Harness transport={makeTransport()} initial="rascunho" />);
-    selectLive();
+    await selectLive();
     expect(textarea().value).toBe("rascunho");
-    selectBatch();
+    await selectBatch();
     expect(textarea().value).toBe("rascunho");
   });
 
   it("DM-10: switching is blocked during live capture", async () => {
     render(<Harness transport={makeTransport()} />);
-    selectLive();
+    await selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
@@ -361,7 +369,7 @@ describe("dual-mode dictation", () => {
   it("DM-12b: switching after a finished live session keeps confirmed text", async () => {
     const transport = makeTransport();
     render(<Harness transport={transport} initial="base " />);
-    selectLive();
+    await selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
@@ -387,14 +395,14 @@ describe("dual-mode dictation", () => {
     ).toBeTruthy();
   });
 
-  it("DM-13: caret/selection restored across the mode switch", () => {
+  it("DM-13: caret/selection restored across the mode switch", async () => {
     render(<Harness transport={makeTransport()} initial="abcdef" />);
     const el = textarea();
     el.focus();
     el.setSelectionRange(2, 4);
     fireEvent(el, new Event("selectionchange"));
     document.dispatchEvent(new Event("selectionchange"));
-    selectLive();
+    await selectLive();
     const el2 = document.getElementById(
       "delia-dual-input",
     ) as HTMLTextAreaElement;

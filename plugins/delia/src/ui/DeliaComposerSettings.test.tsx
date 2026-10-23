@@ -308,14 +308,14 @@ describe("composer settings menu (spec 125)", () => {
     expect(el2.selectionEnd).toBe(4);
   });
 
-  it("CS-10 + CM-05: aria-expanded, Escape closes and restores focus from inside the panel", () => {
+  it("CS-10 + CM-05: aria-expanded, Escape closes and restores focus from inside the panel", async () => {
     render(<Harness transport={makeTransport()} />);
     expect(trigger().getAttribute("aria-expanded")).toBe("false");
     openMenu();
     expect(trigger().getAttribute("aria-expanded")).toBe("true");
     batchRadio().focus();
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(menu()).toBeNull();
+    await waitFor(() => expect(menu()).toBeNull());
     expect(document.activeElement).toBe(trigger());
   });
 
@@ -349,15 +349,15 @@ describe("composer settings menu (spec 125)", () => {
     expect(liveRadio().checked).toBe(true);
   });
 
-  it("outside click closes the menu", () => {
+  it("outside click closes the menu", async () => {
     render(<Harness transport={makeTransport()} />);
     openMenu();
     expect(menu()).toBeTruthy();
     fireEvent.pointerDown(document.body);
-    expect(menu()).toBeNull();
+    await waitFor(() => expect(menu()).toBeNull());
   });
 
-  it("CM-03: outside click closes without stealing focus", () => {
+  it("CM-03: outside click closes without stealing focus", async () => {
     render(<Harness transport={makeTransport()} />);
     const outside = document.createElement("button");
     document.body.appendChild(outside);
@@ -365,27 +365,27 @@ describe("composer settings menu (spec 125)", () => {
       openMenu();
       outside.focus();
       fireEvent.pointerDown(outside);
-      expect(menu()).toBeNull();
+      await waitFor(() => expect(menu()).toBeNull());
       expect(document.activeElement).toBe(outside);
     } finally {
       outside.remove();
     }
   });
 
-  it("CM-04/CM-05: repeated open/close is stable; choice keeps the menu open", () => {
+  it("CM-04/CM-05: repeated open/close is stable; choice keeps the menu open", async () => {
     render(<Harness transport={makeTransport()} />);
     for (let i = 0; i < 3; i += 1) {
       openMenu();
       expect(menu()).toBeTruthy();
       fireEvent.click(trigger());
-      expect(menu()).toBeNull();
+      await waitFor(() => expect(menu()).toBeNull());
     }
     openMenu();
     fireEvent.click(liveRadio());
     expect(menu()).toBeTruthy();
     expect(liveRadio().checked).toBe(true);
     fireEvent.click(trigger());
-    expect(menu()).toBeNull();
+    await waitFor(() => expect(menu()).toBeNull());
   });
 
   it("CM-06: repeated selections do not remount the editor or lose draft/caret", () => {
@@ -406,7 +406,7 @@ describe("composer settings menu (spec 125)", () => {
     expect(el2.selectionEnd).toBe(3);
   });
 
-  it("two independent mounts keep separate mode state", () => {
+  it("two independent mounts keep separate mode state", async () => {
     render(
       <>
         <Harness transport={makeTransport()} initial="a" />
@@ -416,8 +416,13 @@ describe("composer settings menu (spec 125)", () => {
     const triggers = screen.getAllByRole("button", { name: TRIGGER });
     fireEvent.click(triggers[0]);
     fireEvent.click(liveRadio());
-    // the second mount still defaults to batch
+    // the second mount still defaults to batch; mount-1 panel exits
     fireEvent.click(triggers[1]);
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("dialog", { name: TRIGGER }).length,
+      ).toBe(1),
+    );
     expect(batchRadio().checked).toBe(true);
   });
 
@@ -442,6 +447,63 @@ describe("composer settings menu (spec 125)", () => {
     expect(
       screen.getByText(/Transcrição em tempo real: o texto aparece/),
     ).toBeTruthy();
+  });
+
+  it("MOT-01: panel mounts with the entrance animation class", () => {
+    render(<Harness transport={makeTransport()} />);
+    openMenu();
+    const panel = document.querySelector(
+      ".delia-composer-settings__panel",
+    );
+    expect(
+      panel?.classList.contains(
+        "delia-composer-settings__panel--entering",
+      ),
+    ).toBe(true);
+  });
+
+  it("MOT-02: close fades out — exiting phase then unmount", async () => {
+    render(<Harness transport={makeTransport()} />);
+    openMenu();
+    fireEvent.click(trigger());
+    const panel = document.querySelector(
+      ".delia-composer-settings__panel",
+    );
+    expect(
+      panel?.classList.contains(
+        "delia-composer-settings__panel--exiting",
+      ),
+    ).toBe(true);
+    expect(menu()).toBeTruthy();
+    await waitFor(() => expect(menu()).toBeNull());
+  });
+
+  it("MOT-03: reduced motion closes immediately, no exiting phase", () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes("reduce"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      onchange: null,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    try {
+      render(<Harness transport={makeTransport()} />);
+      openMenu();
+      expect(menu()).toBeTruthy();
+      fireEvent.click(trigger());
+      expect(menu()).toBeNull();
+      expect(
+        document.querySelector(
+          ".delia-composer-settings__panel--exiting",
+        ),
+      ).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it("CS-16: no auto-submit after batch transcription", async () => {

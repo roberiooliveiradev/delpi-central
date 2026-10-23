@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   AnchoredPanelPortal,
   HelpTooltip,
@@ -25,6 +31,13 @@ export type ComposerSettingsMenuProps = {
 };
 
 const TRIGGER_LABEL = "Configurações do campo de pergunta";
+/** Fade-out discreto (spec 125 §11) — 100–150ms, sem tocar a primitiva. */
+const EXIT_MS = 130;
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * Botão discreto na barra de ações do composer que abre o menu
@@ -50,13 +63,48 @@ export function ComposerSettingsMenu({
     [anchorEl],
   );
 
-  const dismiss = () => {
-    onOpenChange(false);
+  /*
+   * Entrada animada só na abertura real: num mount já-aberto (troca de
+   * modo remonta o menu) a animação de entrada não repete — senão cada
+   * seleção causaria flicker de fade-in (spec 125 §11, sem flicker).
+   */
+  const bornOpen = useRef(open).current;
+
+  /*
+   * Saída animada é lifecycle do produto, não da primitiva: o painel
+   * continua `open` durante o fade e só então avisa o host. Reduced
+   * motion e remount fecham imediatamente, sem timer pendente.
+   */
+  const [exiting, setExiting] = useState(false);
+  const exitTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (exitTimer.current != null) window.clearTimeout(exitTimer.current);
+    },
+    [],
+  );
+
+  const restoreFocus = () => {
     if (panelRef.current?.contains(document.activeElement)) {
-      anchorEl
-        ?.querySelector<HTMLButtonElement>("button")
-        ?.focus();
+      anchorEl?.querySelector<HTMLButtonElement>("button")?.focus();
     }
+  };
+
+  const finishClose = () => {
+    setExiting(false);
+    onOpenChange(false);
+    restoreFocus();
+  };
+
+  const requestClose = () => {
+    if (!open || exiting) return;
+    if (prefersReducedMotion()) {
+      onOpenChange(false);
+      restoreFocus();
+      return;
+    }
+    setExiting(true);
+    exitTimer.current = window.setTimeout(finishClose, EXIT_MS);
   };
 
   return (
@@ -65,14 +113,25 @@ export function ComposerSettingsMenu({
         <IconButton
           type="button"
           className={
-            open
+            open && !exiting
               ? "delia-composer-settings__trigger delia-composer-settings__trigger--open"
               : "delia-composer-settings__trigger"
           }
           aria-label={TRIGGER_LABEL}
           aria-haspopup="dialog"
-          aria-expanded={open}
-          onClick={() => onOpenChange(!open)}
+          aria-expanded={open && !exiting}
+          onClick={() => {
+            if (exiting) {
+              if (exitTimer.current != null) {
+                window.clearTimeout(exitTimer.current);
+              }
+              finishClose();
+            } else if (open) {
+              requestClose();
+            } else {
+              onOpenChange(true);
+            }
+          }}
         >
           <Settings2 size={16} strokeWidth={1.8} />
         </IconButton>
@@ -81,12 +140,23 @@ export function ComposerSettingsMenu({
         open={open}
         anchorRef={portalAnchorRef}
         panelRef={panelRef}
-        className="delia-composer-settings__panel"
+        className={
+          [
+            "delia-composer-settings__panel",
+            exiting
+              ? "delia-composer-settings__panel--exiting"
+              : bornOpen
+                ? null
+                : "delia-composer-settings__panel--entering",
+          ]
+            .filter(Boolean)
+            .join(" ")
+        }
         role="dialog"
         aria-label={TRIGGER_LABEL}
         preferredPlacement="top"
         horizontalAlign="start"
-        onDismiss={dismiss}
+        onDismiss={requestClose}
       >
         <div className="delia-composer-settings__header">
           <span className="delia-composer-settings__title">
