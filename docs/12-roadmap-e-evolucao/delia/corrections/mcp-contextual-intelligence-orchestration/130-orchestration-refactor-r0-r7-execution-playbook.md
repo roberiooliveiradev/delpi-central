@@ -106,3 +106,8 @@ Esta regra explicita a intenção do PO de **testar localmente e buscar deploy h
 6. **Matriz de estados separada:** `LOCAL_TEST_STATUS`, `INDEPENDENT_REVIEW`, `DEPLOY_AUTHORIZATION`, `DEPLOY_STATUS`, `PROD_AUTH_HOMOLOGATION`, `BUSINESS_OUTCOME_STATUS` e `NEXT_STAGE_AUTHORIZED` nunca se substituem. Onde recurso real ainda não está disponível, teste e deploy = `TEST_NOT_RUN`, com blocker e dono.
 
 **Ordem executiva desejada:** implementação bounded → testes locais completos → revisão independente → autorização operacional específica → deploy por procedimento aprovado → homologação produtiva → registro no ledger → decisão separada sobre etapa seguinte. Nenhum release de produção deve ser afirmado como concluído antes da evidência física.
+
+
+## Autorização PO de deploy R1+R2 (2026-10-23)
+
+O Product Owner autorizou expressamente o deploy produtivo governado da versão acumulada R1+R2, com gates obrigatórios de testes locais, readiness independente, release SHA/imagem/rollback, segurança e homologação real. Ver [doc 133](./133-r1-r2-production-deploy-owner-authorization.md). `DEPLOY_AUTHORIZATION=YES_CONDITIONAL_GATES`; `DEPLOY_STATUS=NOT_EXECUTED_BY_THIS_RECORD`. Isto **não** autoriza R3, outro escopo ou promoção sem evidência. O executor não precisa solicitar novamente a autorização genérica de deploy R1+R2, mas deve parar quando algum gate operacional/técnico não estiver satisfeito.
