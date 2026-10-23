@@ -490,3 +490,61 @@ Existem com dados: SB1010 (~55k), SB2010 (~77k), SB9010 (~2,28M), SD3010 (~4,69M
 3. **"RE0/DE0"**: confirmar com PO/estoque a que conceito se referem na narração (não são TM nem prefixo de doc no SD3; `RE0010` vazia).
 4. **DDL da view** de despesas: solicitar ao DBA (definição encriptada/restrita para o principal read-only).
 5. **Proveniência do job SB9**: não exposta via SQL; confirmar com ERP a rotina e o calendário por filial.
+
+---
+
+## 15. CICLO 2 — Execução Rodada 3 (CF-C2-EXEC-003) — produtores e paridade
+
+> Mesmo canal autorizado (SELECT-only via `docker exec` → pyodbc, principal `db_datareader`). Foco: origem técnica do FINR190/`DLP06R01`, fonte dos rótulos de motivo, confronto de universo/filtros pagar×receber, semântica `I_N_S_D_T_`.
+
+### 15.A — Origem dos rótulos DEB/CMP/FAT/NOR/DAC — PROVEN
+
+- Os códigos são **siglas do cadastro `F7G010` (motivos de baixa)**: `DEB`='DEBITO CC', `NOR`='NORMAL' (ambos `F7G_MOVBCO='S'` — movimento bancário), `CMP`='COMPENSA', `DAC`='DACAO', `FAT`='FATURAS'. F7G010 tem 20 siglas ativas, 1 linha cada.
+- A coluna do relatório **NÃO é `FK2_MOTBX`** (evento) nem `E2_MOTIVO` (título, vazio em 100%): é **`SE5010.E5_MOTBX`** — motivo de baixa do **movimento bancário**, referenciando F7G. Isso resolve a divergência `FK2_MOTBX` NOR=6 vs artefato NOR=65.
+- Coerência externa: o substituto oficial FINSV010 declara exatamente as tabelas `SE1, SE2, SED, F7G, FK1, FK2, FK5, FKA` (doc 46/TOTVS) — o elo SE5↔F7G encontrado na base é consistente com a família declarada.
+
+### 15.B — C2-04 pagar — universo do relatório 948: PROVEN (grão)
+
+- SE5 'P' em 09/2026: 1.126 linhas brutas. Restringindo a linhas **com título SE2 vinculado** (join `E5_PREFIXO+NUMERO+PARCELA+TIPO+CLIFOR+LOJA` → `E2_*`): **996 linhas / 877 títulos**.
+- `E5_FILIAL` é vazio em 100% — movimento bancário também centralizado; filial do relatório segue `FK2_FILORI` (evento) ou dimensão equivalente.
+- **`DISTINCT (título, E5_DATA, E5_MOTBX)` = 948 — total oficial reproduzido exatamente.** Grão do relatório = baixa por título × dia × motivo (o SE5 fragmenta baixas em múltiplas linhas por composição bancária; o relatório consolida).
+- Distribuição por `E5_MOTBX` no universo consolidado: **NOR=65 e FAT=83 batem o artefato exatamente**; DEB=618 (vs 600), CMP=163 (vs 186), DAC=19 (vs 14). Divergência residual ±48 em 3 motivos — a coluna "motivo" do artefato pode derivar de reclassificação adicional (ou a tabulação da amostra no doc 73 leu coluna correlata). `INCONCLUSIVE` no nível motivo; `PROVEN` no nível total+grão.
+- Eixos de data descartados: `FK2_DATA`, `FK2_DTDIGI`, `E2_BAIXA`, `E5_DATA` puro, `E5_DATA=E2_BAIXA` — nenhum reproduz 948 isoladamente.
+
+### 15.C — C2-04 receber — universo do relatório 657: PROVEN (row-level)
+
+- SE5 'R' em 09/2026 com título SE1 vinculado (mesmo join por `E1_*`): **657 linhas = total oficial exato**, sem dedup (dedup por (título,data,motivo) daria 649 — logo o relatório de receber é **row-level**, grão movimento).
+- Distribuição: NOR=641 (VL=633, JR=3, MT=3, RA=1, DC=1), CMP=14 (BA/CP), DAC=2 (BA). Tipos de título: NF=655, NCC=11, RA=9, BOL=1 — título `PA` ausente no universo (residual vs lista do artefato).
+- Produtores provavelmente **diferentes por lado**: pagar ≈ FINR190/derivado (grão consolidado título×dia×motivo), receber ≈ `DLP06R01` custom (grão movimento) — consistente com doc 46 (FINR190/`_F190C` para ambos no relato, DLP06R01 associado ao recebível pelo artefato). Nome/versão/fonte dos programas: `TO_INVENTORY` (código proprietário não acessível via SQL).
+
+### 15.D — Filial, competência e filtros — síntese validada
+
+| Dimensão | Pagar | Receber |
+|---|---|---|
+| Universo físico | SE5 'P' + SE2 | SE5 'R' + SE1 |
+| Grão relatório | DISTINCT (título, data, motivo) = 948 | linha de movimento = 657 |
+| Competência | `E5_DATA` no mês | `E5_DATA` no mês |
+| Filial | não está em SE5/SE2 (vazia) → `FK2_FILORI` | idem → `FK1_FILORI` |
+| Motivo | `E5_MOTBX` → F7G | `E5_MOTBX` → F7G |
+| Tipo título | via FK7→SE2 | via FK7→SE1 |
+
+### 15.E — `I_N_S_D_T_` e disponibilidade R03
+
+- `I_N_S_D_T_` = timestamp de **inserção física** da linha SB9 pelo job de fechamento (proven na §14.A). Relação com o R03: a fonte fica disponível no endpoint assim que inserida — o `source_missing` reflete exclusivamente o atraso do job por filial. **Proveniência do job (rotina/schedule) permanece `TO_INVENTORY`** — não exposta via SQL; owner ERP.
+- Cobertura view→SD1 (§14.E) preservada: 156.808/156.808 — sem revalidação necessária nesta rodada.
+
+### 15.Bloqueios — Bloqueios desta rodada
+
+- Código-fonte dos relatórios FINR190, `_F190C` e `DLP06R01` (proprietário/custom): não acessível via SQL — `BLOCKED`, owner TI/customização.
+- Parâmetros efetivos de execução (tela de parâmetros): não persistidos em tabela acessível — `TO_INVENTORY` com operador/artefato exportado.
+- DDL da view de despesas: segue `BLOCKED` (encriptada) — DBA.
+- Divergência residual de motivos pagar (DEB/CMP/DAC ±48): exige inspeção da lógica de exibição do relatório ou artefato completo com filtros — `DECISION_REQUIRED` para próxima rodada.
+
+### 15.G — Registro desta rodada (append-only)
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R15 | motivo | F7G010 + `E5_MOTBX` | PROVEN: rótulos são siglas F7G via motivo do movimento SE5 | resolve dúvida G4 de coluna |
+| C2-R16 | C2-04 pagar | universo SE5↔SE2 + dedup | PROVEN: `DISTINCT(título,data,motivo)`=948 exato; NOR/FAT exatos; DEB/CMP/DAC divergem → INCONCLUSIVE motivo | suporta G5 parcial |
+| C2-R17 | C2-04 receber | universo SE5↔SE1 | PROVEN: 657 row-level exato | suporta G5 parcial |
+| C2-R18 | — | doc 47 | `NO_GATE_CHANGE`: falta binding campo→coluna do relatório e artefato oficial de comparação | — |
