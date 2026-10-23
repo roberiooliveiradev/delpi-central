@@ -462,7 +462,7 @@ class ListPurchaseRequestsUseCase:
 
             # Bounded parallel fetch — pages are independent reads; pool.map
             # preserves page order so downstream grouping stays deterministic.
-            with ThreadPoolExecutor(max_workers=4) as pool:
+            with ThreadPoolExecutor(max_workers=8) as pool:
                 for payload in pool.map(_fetch, remaining):
                     items.extend(payload.get("items") or [])
 
