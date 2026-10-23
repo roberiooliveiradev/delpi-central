@@ -331,3 +331,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - recebimentos por data (23/10/2026)
 
 [Doc 74 - Relatorio de recebimentos por data](./74-ciclo1-recebidos-por-data.md): PDF privado do layout `DLP06R01`, com baixas agrupadas por data, compensacoes, subtotal e total geral. Nao equiparar baixa a entrada bancaria, nem posicao em aberto a fluxo liquidado. Correspondencia FINR190, verificacao do log de inconsistencias e paridade R01/R02 seguem pendentes; dados de origem nao versionados.
+
+
+### Ciclo 1 - relacao tabular de recebimentos (23/10/2026)
+
+[Doc 75 - Recebidos XLSB: inventario de eventos de baixa](./75-ciclo1-recebidos-relacao-baixas.md): inventario sanitizado de uma aba com 22 campos, codigos de motivo, diferencas entre valor original e total baixado, comparacao conceitual com PDF (doc 74), contas a receber (doc 70) e TARGET R01/R02 (doc 48). Produtor FINR190, regra de compensacao, identificador de evento, log de inconsistencias e paridade SQL/relatorio permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados. Documento 71 permanece pendente de verificacao.
