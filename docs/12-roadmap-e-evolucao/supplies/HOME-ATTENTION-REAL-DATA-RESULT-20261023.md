@@ -107,3 +107,12 @@ Ordem de exibição: SCs → pedidos em atraso → recebimentos → estoque de s
 - [HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md)
 - [API-ROUTES.md](./API-ROUTES.md)
 - [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)
+
+
+## 9. Revisão GPT — HOME ATTENTION (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para código e publicação técnica; `VISUAL_AUTHENTICATED=INCONCLUSIVE`.** Revisados em GitHub o resultado, `supplies-api/app/application/services/home_attention_service.py`, `plugins/supplies/src/api/homeAttention.ts` e `plugins/supplies/src/pages/HomePage.tsx` no commit source `1b80a8324c`. As cinco categorias são calculadas por produtores existentes; a Home omite zero confirmado, preserva `unavailable`, exibe preview limitada e usa target tipado. O código confirma que os sete cards genéricos não são mais a fonte das situações. Testes 450 BFF / 382 MFE, deploy, health, contagens produtivas 82/154/90/7/201 e smoke são **reportados pelo executor**, não reexecutados pelo GPT.
+
+**Observações para aceite:** (1) validar em navegador autenticado que cada deep link realmente abre recorte igual ao critério count (sobretudo período de SC e entregas) e preserva URL/F5; `target.query` existe em código, mas não é prova de aplicação final dos filtros; (2) o card `safety_stock_below` mostra `preview` com código/descrição/saldo/ESTSEG a usuários com `supplies.access`, enquanto restringe **somente o link** pelo permission `estoque-seguranca.access`. Confirmar com owner/Core que exposição dessa prévia detalhada é permitida para o mesmo público da contagem agregada; até a confirmação, classificar `STOCK_PREVIEW_AUTHZ=TO_INVENTORY` e considerar supressão da preview para perfis sem acesso ao app; (3) a composição captura exceptions e retorna `unavailable`; rever em teste de integração se 401/403 downstream não são absorvidos como falha parcial comum em desacordo com a política fail-closed; (4) confirmar no browser os estados visual, responsividade e teclado. O smoke 401 anônimo comprova somente bloqueio sem token, não todas as dimensões de AuthZ.
+
+**Estado formal:** `HOME_ATTENTION_CODE=ACCEPT_WITH_RESIDUAL`; `DEPLOY_TECHNICAL=PASS (executor-reported)`; `COUNTS_PRODUCTION=PASS (executor-reported)`; `VISUAL_AUTHENTICATED=INCONCLUSIVE`; `FOLLOW_UP=AUTHZ_DETAIL_AND_FILTERED_NAVIGATION_VALIDATION`. Essas ressalvas não autorizam alterar o cutover de fornecedores C1, que continua aguardando Gabriel/TOTVS.
