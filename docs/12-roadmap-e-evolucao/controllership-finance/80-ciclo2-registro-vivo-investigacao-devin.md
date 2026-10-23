@@ -1448,7 +1448,7 @@ Rodada de reconciliação monetária (SELECT-only, canal autorizado `docker exec
 - População: **649 chaves com título idênticas** + **8 movimentos `PA` sem título** (`E5_ORIGEM='FINA750'`, histórico "Valor pago s/ Titulo") = 657.
 - 8 linhas de **decomposição** (`MT`/`JR`/`DC` + 1 `VL` duplicado) excluídas pelo produtor — seus valores já estão dentro do `E5_VALOR` da baixa `VL` (juros 4,94+multa 11,42 = 16,36 = componente do 587,70).
 - Universo SE5'R' = 746 (657 com título + 89 sem título de vários tipos FOL/COF/NDF/vazio); artefato inclui só `PA`/`FINA750` — regra de inclusão do sem-título parcialmente identificada (3 `PA`/`DEB` excluídos).
-- `Total Baixado` = `E5_VALOR` exato; `Valor Original` = `E1_VALOR` **649/649**; Jur/Multa 44,16 exato; resumos idênticos à regra do pagar; ΣVO residual **R$1,00** (1 linha).
+- `Total Baixado` = `E5_VALOR` exato; `Valor Original` = `E1_VALOR` **649/649**; Jur/Multa 44,16 exato; resumos idênticos à regra do pagar; ΣVO residual **R$1,00** (1 linha) — **retificado em §30: erro de soma na consolidação, Δ real = R$0,00 e VO das 8 linhas `PA` provado = provisão `'P'` espelhada**.
 - Coluna `Orig` preenchida só nas linhas sem título (= `E5_FILORIG`); linhas com título exibem vazio (SE1 compartilhada) — semântica distinta do pagar, coerente com produtor distinto.
 - **G5 → PASS** (paridade do artefato × banco demonstrada); **G4 permanece PENDING** (fonte `DLP06R01` ausente — regra geral dos filtros não provada).
 
@@ -1467,3 +1467,49 @@ Rodada de reconciliação monetária (SELECT-only, canal autorizado `docker exec
 | C2-R82 | paridade R03/R05 | parcial — EM PROC + PA/PI exatos; MP residual | G5 PENDING |
 
 Métricas: `COLETA = 39/60 = 65,0%` (inalterado) · `AUDITORIA = 41/90 = 45,6%` · concluídos 0/15. Preservados: E6 opção C, `EXECUTION_DRIFT`/`STALE_EVIDENCE` DEL100 (724/672 → vigente 3.058/421/242), §17/§21/§27/§28 intactos, G6 não promovido (exige aceite humano).
+
+---
+
+## §30 — Errata e rework de paridade R02 (CF-C2-PARITY-001 — 2ª rodada, 2026-10-23)
+
+Revisão pontual solicitada após o commit `57a7587901`. Escopo: divergência de
+R$1,00 no ΣVO do receber + separação entre registros reproduzidos e hipóteses.
+
+### 30.A — Errata: o "residual de R$1,00" era erro de soma, não divergência
+
+Ao reprocessar a consolidação do §29.C, a soma dos VOs das 8 linhas `PA`
+sem título é **15.836,71** (o registro anterior digitou 15.837,71 na
+consolidação manual — erro de transcrição, não dos dados). Reconstrução:
+`ΣE1_VALOR(649) = 5.285.696,59` + `ΣVO sem título = 15.836,71` =
+**5.301.533,30 = ΣVO do artefato — Δ R$0,00, exato**. Nenhuma linha tem
+diferença de centavos.
+
+### 30.B — Regra de VO do sem-título provada: provisão `'P'` espelhada
+
+Cada movimento `PA`/`FINA750` do receber (`'R'`) possui na própria SE5 um
+espelho `'P'` de provisão (origem `MATA121`/`FINA050`, motivo NOR, mesmo
+numero/clifor). **VO impresso = valor da provisão `'P'`** — 8/8 exato:
+
+- numero 043549: provisão 1.571,60 = recebimentos 877,00+119,96 +
+  compensação 'P' 574,64 (fluxo fecha integralmente);
+- idem 061937 (286,08), 043527 (830,78), 043372 (749,20), 043651 (29,89),
+  043736 (56,06), 000005005 (10.741,50 — provisão `FINA050`).
+
+### 30.C — Os 3 sem-título excluídos, identificados por linha lógica
+
+`260721799` 118,27 `FINA090` f01 · `080926` 1.000,00 `FINA090` f01 ·
+`044052` 1.537,00 `FINA750` f02 — todos `PA`/`DEB` sem SE1, confirmados na
+SE5 e **ausentes do artefato**. A regra geral que inclui 8 e exclui estes 3
+(e a que suprime as 8 linhas de decomposição) segue **hipótese não
+demonstrada** — dependente do fonte `DLP06R01` (E1, TI/ERP).
+
+### 30.D — Estado após rework
+
+- **Reproduzidos integralmente (R02):** 657/657 linhas — população, chaves,
+  TB, VO (incl. provisão espelhada), componentes, resumos, PDF−xlsb.
+- **R01:** paridade do artefato integral (948/948 no XLSB); subconjunto do
+  log de inconsistências do PDF reconstruído **em agregado** (total impresso),
+  **não linha-a-linha** — residual mantido.
+- **R02 G5: PASS mantido** — Δ monetário = R$0,00; pendências remanescentes
+  são de identidade de regra (G4), não de paridade. G4 PENDING, G6 PENDING.
+- Métricas inalteradas: `COLETA 39/60` · `AUDITORIA 41/90` · concluídos 0/15.

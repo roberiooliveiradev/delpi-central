@@ -70,8 +70,10 @@ O WHERE reproduzido é o do próprio fonte (linhas ~1040–1180): filtros fixos
 - Δ TB = **387.629,64** = **total impresso no próprio PDF como "log de
   inconsistências"** — relação exata, documentada.
 - Δ VO = 213.914,66 (VO das linhas segregadas no log).
-- Residual: **identidade do subconjunto "inconsistência"** — não reproduzível
-  por agregação (hipóteses testadas: CMP lado BA, FK6-VA via `E5_IDORIG`
+- Residual: **identidade do subconjunto "inconsistência"** — o total do log
+  está reconstruído **em agregado** (ΔTB exata); as linhas individuais do
+  log **não foram reconstruídas linha-a-linha** — não reproduzível por
+  agregação (hipóteses testadas: CMP lado BA, FK6-VA via `E5_IDORIG`
   [=0 em todas as 948 linhas], linhas `E5≠E2`, grupos `ΣE5>E2`).
   Provável validação por linha do fonte (nVlMovFin/aglutinação) — exigiria o
   arquivo de log emitido junto ao relatório.
@@ -80,8 +82,11 @@ O WHERE reproduzido é o do próprio fonte (linhas ~1040–1180): filtros fixos
 
 Paridade **completa** em população, identidade de linha, Total Baixado,
 componentes, motivos, resumos e filial origem. Valor Original 100% explicado
-(3 regras físicas demonstradas). Residual: subconjunto do log de
-inconsistências (total do próprio relatório, não divergência de dado) e
+(3 regras físicas demonstradas). **O que está provado:** as 948 linhas do
+XLSB reconciliam 1:1 com a população física — a paridade é do **artefato**,
+não do PDF impresso (este segrega um log de inconsistências cujo
+**subconjunto de linhas não foi reconstruído linha-a-linha**; seu total é
+reconstruído em agregado). Residual: identidade do subconjunto do log +
 versão compilada no RPO (fora do escopo READ). **→ G5 PASS.**
 
 ---
@@ -109,8 +114,11 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
 - Universo `SE5'R'` set/2026 = **746 movimentos** (657 com título + 89 sem
   título). O artefato inclui apenas 8 dos 89 sem título: todos `PA`/`FINA750`
   com motivo NOR/DAC (7) + 1 `PA`/`DEB` origem 01. Excluídos: FOL/COF/NDF/
-  tipo-vazio/NF-DEB e **3 `PA`/`DEB` adicionais** (ex.: 044052, 1.537,00,
-  origem 02) — regra de inclusão do sem-título parcialmente identificada.
+  tipo-vazio/NF-DEB e **3 `PA`/`DEB` adicionais**, todos identificados por
+  linha lógica (sem expor partes): `260721799` 118,27 `FINA090` f01 ·
+  `080926` 1.000,00 `FINA090` f01 · `044052` 1.537,00 `FINA750` f02. A
+  regra geral que seleciona 8 e exclui 3 segue **hipótese não demonstrada**
+  (fonte ausente — G4); a população impressa, porém, é 100% reproduzida.
 - Coluna `Orig`: preenchida só nas 8 linhas sem título (2×`01` + 6×`02` =
   `E5_FILORIG`); nas linhas com título exibe vazio (filial compartilhada da
   SE1). Semântica distinta do pagar — produtores distintos.
@@ -121,9 +129,9 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
 |---|---|---|
 | **Total Baixado** | `SE5.E5_VALOR` | exato nas 649 linhas comuns + 8 PA = `E5_VALOR` |
 | **Valor Original** | `SE1.E1_VALOR` | **649/649** exato por registro |
-| — 8 linhas `PA` sem título | VO = valor de referência do recebimento avulso (não-SE1; `FINA750`) | valores identificados, fonte física não-SE1 |
+| — 8 linhas `PA` sem título | VO = **valor da provisão `'P'` espelhada** (mesmo numero/clifor, motivo NOR, origem `MATA121`/`FINA050`) | **8/8 exato** — ex.: numero 043549: provisão 1.571,60 = recebimentos 877,00+119,96 + compensação 'P' 574,64 |
 | **Jur/Multa** | `E5_VLJUROS + E5_VLMULTA` | total **44,16** exato |
-| Residual agregado ΣVO | reconstrução 5.301.534,30 vs artefato 5.301.533,30 | **Δ = R$ 1,00** (1 linha, regra de VO alternativa não identificada) |
+| ΣVO agregado | 649×`E1_VALOR` + 8×provisão 'P' | **5.301.533,30 = artefato — exato, Δ R$ 0,00** (rework: a divergência de R$ 1,00 reportada na rodada anterior era erro de soma na consolidação manual — 15.836,71 registrado como 15.837,71 — não divergência de dado) |
 
 ### §2.3 Subtotais e PDF × XLSB
 
@@ -140,12 +148,16 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
 ### §2.4 Veredito R02
 
 Artefato **100% reconciliado linha-a-linha** contra SE5/SE1 (cada linha
-impressa tem fonte física e valor exato). Residual: regra geral de
-inclusão/exclusão do sem-título (3 `PA`/`DEB`), fonte do VO das linhas
-`FINA750`, Δ R$1,00 e subconjunto do log — todos dependentes do fonte
-`DLP06R01` (E1, TI/ERP). A paridade do artefato × banco está **demonstrada e
-reproduzível** → **G5 PASS**; **G4 segue PENDING** (binding do relatório =
-fonte ausente).
+impressa tem fonte física e valor exato — incluindo os 8 VOs de provisão
+espelhada). **Reproduzidos integralmente:** população 657, chaves, TB, VO,
+componentes, resumos e PDF−xlsb. **Hipóteses ainda não demonstradas
+(escopo G4, não G5):** regra geral de inclusão/exclusão do sem-título (3
+linhas identificadas fora do artefato), regra de supressão das 8 linhas de
+decomposição e identidade do subconjunto do log impresso — todas
+dependentes do fonte `DLP06R01` (E1, TI/ERP). Paridade monetária do
+artefato × banco **demonstrada e reproduzível, Δ R$ 0,00** →
+**G5 PASS**; **G4 segue PENDING** (binding do relatório = fonte ausente);
+**G6 exige aceite humano do owner.**
 
 ---
 

@@ -125,7 +125,7 @@ Mais:
 | Reconstrução DEL100 vigente | 3.058/421/242 — query §24.E, validada (SF4 compartilhada ≡ `xFilial`, reproduzida 2×) |
 | 724/672 e derivadas (§19.C, §20.A, §21.C) | `STALE_EVIDENCE` — `EXECUTION_DRIFT` registrado em §23.A |
 | Pagar FINR190 | **paridade row-level PROVEN** (948/948 chaves, TB=`E5_VALOR`, VO=`E2_VALOR`+regras aglutinado, resumos/componentes exatos — doc 84); residual: subconjunto do log + versão RPO |
-| Receber DLP06R01 | **paridade row-level do artefato PROVEN** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` — doc 84); residual: fonte do produtor (G4) + regra do sem-título + Δ R$1,00 |
+| Receber DLP06R01 | **paridade row-level do artefato PROVEN, Δ R$0,00** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` 649 + VO=provisão `'P'` espelhada MATA121/FINA050 8/8 — doc 84, errata doc 80 §30); residual: fonte do produtor (G4) + regra geral do sem-título (3 excluídos identificados) — **pende de TI/ERP** |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |

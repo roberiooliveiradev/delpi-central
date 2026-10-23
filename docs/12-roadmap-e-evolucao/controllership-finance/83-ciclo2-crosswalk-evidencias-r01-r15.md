@@ -94,7 +94,7 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 
 ### R02 — Baixas a receber — **PARCIAL**
 
-`Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (657 linhas de dados); produtor = `DLP06R01` custom, **fonte ausente do acervo** (`BLOCKED`, owner TI/ERP — E1). **Paridade row-level completa (CF-C2-PARITY-001, doc 84):** 649 chaves SE5×SE1 idênticas + 8 movimentos `PA` sem título (`FINA750`) = 657; 8 linhas de decomposição `MT`/`JR`/`DC` excluídas pelo produtor (valores embutidos no `E5_VALOR` do `VL`); `TB`=`E5_VALOR` e `VO`=`E1_VALOR` exatos por registro; resumos = mesma regra do pagar; ΣVO residual R$1,00. Gates: **G1 PASS · G2 PASS · G3 PASS · G4 PENDING** (binding do relatório não provado — coluna→campo e filtros do `DLP06R01` desconhecidos) · **G5 PASS** · G6 PENDING.
+`Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (657 linhas de dados); produtor = `DLP06R01` custom, **fonte ausente do acervo** (`BLOCKED`, owner TI/ERP — E1). **Paridade row-level completa (CF-C2-PARITY-001, doc 84):** 649 chaves SE5×SE1 idênticas + 8 movimentos `PA` sem título (`FINA750`) = 657; 8 linhas de decomposição `MT`/`JR`/`DC` excluídas pelo produtor (valores embutidos no `E5_VALOR` do `VL`); `TB`=`E5_VALOR` exato; `VO`=`E1_VALOR` 649/649 + provisão `'P'` espelhada (MATA121/FINA050) 8/8 — **Δ R$0,00** (rework: "residual de R$1,00" era erro de soma, doc 80 §30); resumos = mesma regra do pagar. Gates: **G1 PASS · G2 PASS · G3 PASS · G4 PENDING** (binding do relatório não provado — coluna→campo e filtros do `DLP06R01` desconhecidos) · **G5 PASS** · G6 PENDING.
 
 ### R03 — P7 / Bloco H — **PARCIAL (forte)**
 
