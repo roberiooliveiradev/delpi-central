@@ -945,3 +945,109 @@ Teste em chaves `SB9@20260930` sem **nenhum** movimento posterior (SD3/SD1/SD2 a
 | C2-R45 | 724 decompostas | 224 cong/113 qtd×uc_prior/44 zero/343 outra; CM: 332=calc, 164=prior | — |
 | C2-R46 | MOD vias | esgotadas nesta base (D3_CC, CT5, CTH, CT3, CT2) → TO_INVENTORY | — |
 | C2-R47 | — | `NO_GATE_CHANGE` | — |
+
+---
+
+## §22 — RODADA 10 (CF-C2-EXEC-010) — VALIDAÇÃO SB9×SB2, PRODUTOR E PROVENIÊNCIA MOD — 2026-10-23
+
+### 22.A — Classificação das 68 exceções SB9×SB2
+
+População: 1.643 chaves `SB9@20260930` (filial 02) sem nenhum movimento posterior SD3/SD1/SD2; 68 divergem do SB2 atual (tolerância: `ABS(Δqtd)>0,0001` / `ABS(Δvalor)>0,01` — nenhum caso é mero arredondamento).
+
+| Classe | n |
+|---|---|
+| somente quantidade (`B9_QINI≠B2_QATU`, `VINI1=VATU1`) | 1 |
+| somente valor | 18 |
+| quantidade **e** valor | 49 |
+| **total** | **68** |
+
+- **Sem estorno/deleção pós-fechamento:** zero linhas SD3 com `D3_ESTORNO='S'` ou `R_E_C_D_E_L_` para as 68 chaves → a mudança do SB2 não é explicada por movimentação posterior capturável → ajuste direto/recálculo por pernas fora de SD3/SD1/SD2 (consistente com a ressalva de §21.A).
+- Padrão recorrente (§22.F): mesma assinatura no fechamento anterior.
+
+### 22.B — `B9_CM1 ≠ B2_CM1` — interpretação temporal
+
+Na população sem movimento posterior:
+
+| Perfil CM | n |
+|---|---|
+| `B9_CM1 == B2_CM1` | 1.164 |
+| diferença pequena | 140 |
+| diferença grande | 339 |
+
+- **303/339** casos de diferença grande têm quantidade e valor idênticos → `B2_CM1` foi **atualizado após o fechamento** sem alterar o saldo físico → evidência de recálculo de custo médio posterior ao snapshot (MATA330 em janela separada ou reexecução).
+- Conclusão delimitada: `B9_CM1` e `B2_CM1` **não** representam o mesmo instante nem obrigatoriamente o mesmo cálculo — `B9_CM1` fixa o CM no fechamento; `B2_CM1` é o CM corrente, mutável por recálculos. Não equiparar.
+
+### 22.C — Reconciliação DEL100 × SB2/SB9 — fórmula corrigida pelo fonte
+
+Releitura do `DEL100.PRW` corrigiu o mapeamento das pernas usado nas reconstruções anteriores (§18–§21):
+
+| Perna | Fonte (linha) | Correto | Mapeamento anterior |
+|---|---|---|---|
+| SD1 data | L110 | `D1_DTDIGIT` | `D1_EMISSAO` |
+| SD1 valor | L114 | `D1_CUSTO` | `D1_TOTAL` |
+| SD2 valor | L127 | `D2_TOTAL` | `D2_CUSTO1` |
+| SD3 | L94–101 | `D3_EMISSAO`, `D3_CUSTO1`, `D3_ESTORNO<>'S'`, TM<500 entra/≥500 sai | igual |
+
+Rerun com a fórmula fiel (filial 02, janela `20260831→20260930`, chaves com SB9 atual): **421 chaves divergentes** — contra 724 sob o mapeamento aproximado. As contagens de §19–§21 permanecem como evidência histórica **com a limitação registrada**: foram produzidas sob mapeamento de campos menos fiel ao fonte; as classificações derivadas (diferença ≠ defeito) não se alteram.
+
+Confronto das 421 com o SB2 **atual**:
+
+| Comparação | n |
+|---|---|
+| `B2_QATU ==` quantidade reconstruída | 110/421 |
+| `B2_VATU1 ==` valor reconstruído | 1/421 |
+| subconjunto congelado (`sb9_v == prior_v`) | 111 |
+| — dos quais `B2 ==` reconstrução | **0** |
+
+Leitura: existem **três estados com trajetórias distintas** — reconstrução por movimentos, snapshot SB9 e saldo corrente SB2. Em 111 chaves "congeladas", nem snapshot nem saldo corrente seguem a reconstrução → o roll-forward do SB2 incorpora pernas/austes que a fórmula movimento-a-movimento não mede. Divergência DEL100×SB9 **não é defeito**; igualdade SB9×SB2 no recorte (§21.A) **não valida** o algoritmo de formação do saldo.
+
+### 22.D — Produtor SB9: três planos separados
+
+1. **Correspondência de dados — `PROVEN` (recorte):** SB9 ≅ SB2 no fechamento (§21.A); recorrente (§22.F).
+2. **Rotina disponível no acervo — `PARCIAL`:** `MA330OK.PRW` (39 linhas) é o **ponto de entrada padrão chamado ao final do MATA330** (recálculo do custo médio). Corpo: `EXEC STP_DELPI_OP_TERCEIRO_<emp>` com `@DATADE` (L18–21) e `EXEC STP_PROTHEUS_DELPI_AJUSTA_OP` para filiais **01 e 02** com `@ANOMES` (L25–36) → hooks DELPI estão acoplados ao ciclo do MATA330. **Não** há escrita direta em SB9 neste fonte. O MATA330 padrão (que fecha custo médio e grava SB9) não consta do acervo → identidade do produtor segue `BLOCKED` (código/owner TI).
+3. **Execução observada — `INCONCLUSIVE`:** inserção em janela comum por filial (§20.E) é assinatura compatível com job de fechamento, não prova de job. As SPs referenciadas (`STP_DELPI_OP_TERCEIRO_01`, `STP_PROTHEUS_DELPI_AJUSTA_OP`) estão **ausentes** das bases acessíveis (`DELPI`, `DELPI_TST01`, `DELPI_TST_WS`, `IntranetDelpiDev`) → provavelmente em outra base/servidor ou removidas → execução `BLOCKED` (owner TI/ERP).
+
+### 22.E — MOD monetária: proveniência `PROVEN`
+
+Fluxo funcional localizado (Controladoria/PCP): `vw_Apontamentos_Eficiencia` expõe por apontamento OP, produto, `TEMPO_MAO_OBRA_OP`, `TEMPO_REAL_HORAS`, `CENTRO_CUSTO_RECURSO`, `PRODUTO_MOD`, `VALOR_MOD_HORA`, `RESULTADO_MOD`, `LUCRO_MOD`, `PREJUIZO_MOD`; `DLP34R01.PRW` consome `VW_PROTHEUS_CUSTO_ANALITIC_*`/`VW_PROTHEUS_CUSTO_SINT_*` (cadeia de custos); `vw_fin_despesas_centro_custo` mapeia despesas por CC.
+
+**Fonte do rate — `PROVEN` (população completa):**
+
+```sql
+-- VALOR_MOD_HORA == SBZ010.BZ_CUSTD por filial
+SELECT v.FILIAL, v.PRODUTO_MOD, v.VALOR_MOD_HORA, z.BZ_CUSTD
+FROM (SELECT FILIAL, PRODUTO_MOD, VALOR_MOD_HORA
+      FROM vw_Apontamentos_Eficiencia
+      WHERE DATA_PRODUCAO >= '2026-01-01' GROUP BY 1,2,3) v
+LEFT JOIN SBZ010 z ON z.BZ_COD=v.PRODUTO_MOD AND z.BZ_FILIAL=v.FILIAL AND z.D_E_L_E_T_=''
+-- f01: 30/30 MATCH | f02: MATCH exceto MOD312/314/316/317 (rate NULL na view E sem linha SBZ — consistente)
+```
+
+- `BZ_CUSTD` = **custo padrão por filial** (complemento SBZ). `B1_CUSTD` diverge (MOD320: `B1`=32,83 vs rate 84,02) → o rate é **por filial**, não o custo padrão global.
+- Rate **cadastral/estático**: MOD20101 = 88,34 desde 2006 — mantido manualmente, não derivado de rateio contábil → explica a ausência nas tabelas CT* (§21.D).
+- `PRODUTO_MOD ↔ CENTRO_CUSTO_RECURSO` espelhados (MOD352↔352) — consistente com §20.D.
+- Regra monetária (estrutural): `RESULTADO_MOD = horas_apontadas × BZ_CUSTD(MOD,filial)`; `LUCRO_MOD`/`PREJUIZO_MOD` decompõem o resultado (tempo padrão vs real valorizado). Set/2026: f01 2.661h → resultado R$5.919,08; f02 3.232h → R$56.000,57.
+- **Boundary:** definições das views são criptografadas (`definition=None`) → fórmula interna exata de lucro/prejuízo e joins internos `TO_INVENTORY` (exige owner com acesso à DDL). Tabelas CT* esgotadas em rodadas anteriores não são o veículo — a apropriação é **operacional via custo padrão SBZ**, não contábil.
+
+### 22.F — Recorrência do padrão snapshot
+
+Fechamento anterior (`20260831`, filial 02): 1.359 chaves sem movimento posterior; `B9_QINI == B2_QATU` em 1.307 (96,2%); quantidade e valor iguais em 1.302 (95,8%) → o padrão SB9=snapshot SB2 se repete entre fechamentos (`PROVEN` recorrente no recorte).
+
+### 22.G — Residuais
+
+- `DLP06R01` (receber): `BLOCKED` — fonte ausente do acervo.
+- P7/MATR460: produtor e parâmetros não comprovados; MP7/TRB não são proxy — `TO_INVENTORY`.
+- Produtor SB9: identidade `BLOCKED`; hook MA330OK comprovado em fonte, execução não observada.
+- Doc 47: **`NO_GATE_CHANGE`** — nenhum critério de promoção demonstrado nesta rodada.
+
+### 22.H — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R48 | 68 exceções | 1 qtd / 18 valor / 49 ambos; 0 estorno/deleção pós-fechamento | — |
+| C2-R49 | CM1 | 303/339 CM-diff com qtd+valor iguais → recálculo posterior; B9_CM1≠B2_CM1 temporalmente | — |
+| C2-R50 | DEL100 fiel | campos corrigidos (D1_DTDIGIT/D1_CUSTO/D2_TOTAL); 421 divergentes; B2 fecha só 110 qtd/1 valor; 111 congeladas sem B2=recon | — |
+| C2-R51 | produtor | MA330OK = PE pós-MATA330 → STPs f01/f02 (fonte); SPs ausentes nas bases acessíveis; execução BLOCKED | G4 fonte |
+| C2-R52 | MOD rate | PROVEN: `VALOR_MOD_HORA == BZ_CUSTD` 100% dos pares 2026; estático desde 2006; boundary view criptografada | G4 fonte |
+| C2-R53 | recorrência | 20260831: 95,8% qtd+valor == SB2 → snapshot recorrente | G4 fonte |
+| C2-R54 | — | `NO_GATE_CHANGE` | — |
