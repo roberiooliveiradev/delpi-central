@@ -24,7 +24,7 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 | ID | Relatório/atividade | Rotina candidata | Família | TÉO ref | G1 | G2 | G3 | G4 | G5 | G6 | Owner do próximo passo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | R01 | Baixas a pagar | `FINR190` + `DLP06R01.prt`/`nat.prt` (vídeo menu + artefatos; `_F190C` NotebookLM = drift a reconciliar) | Financeiro | `kp02_t01/kp02_st01` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
-| R02 | Baixas a receber | `FINR190` + `DLP06R01.prt` (idem) | Financeiro | `kp02_t01/kp02_st02` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R02 | Baixas a receber | `DLP06R01` custom (layout `.prt` compartilhado; FINR190 **descartado** pelo WHERE — doc 80 §17.D) | Financeiro | `kp02_t01/kp02_st02` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | TI/ERP (fonte `DLP06R01`) + Controladoria (paridade G5) |
 | R03 | P7 padrão / Bloco H | "Registro de Inventário Modelo P7" (vídeo) / MATR460 (roster) | Estoque | `kp04_t01_st01/st02` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R04 | Consumo por OP | MATR860 | Produção | `kp04_t02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R05 | Entradas e Saídas / valor estoque | `MATR320` (.prt no artefato) | Estoque | `kp04_t03` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
@@ -99,7 +99,7 @@ SCOPE_CHANGE / SUPERSEDES:
 |---|---|---|---|---|---|---|---|---|---|
 | 2026-10-20 | Setup | GPT (documental) | R01–R15 | 0 (sem ateste formal) | 15 | 0/60 = 0,0% | 0/90 = 0,0% | Coletar evidências artefato/vídeo/DAVI | `52dbbf45b671` |
 | 2026-10-20 | L1.1 FINR190 | GPT/TÉO/DAVI/VISTA/GitHub | R01,R02 | G1 R01+R02 (2) | 15 | **2/60 = 3,3%** | **2/90 = 2,2%** | Exportações e layouts FINR190 pendentes; owner Controladoria/ERP | commit desta rodada |
-| 2026-10-23 | CF-C2-FULL-EVIDENCE | Devin (pasta PO + vídeo + fontes + doc 80) | R01–R15 | 38 gates novos (detalhe §11) | 15 | **40/60 = 66,7%** | **40/90 = 44,4%** | G5 paridade + G4 bindings parciais + G6 aceite; owners conforme doc 82 | commit desta rodada |
+| 2026-10-23 | CF-C2-FULL-EVIDENCE | Devin (pasta PO + vídeo + fontes + doc 80) | R01–R15 | 37 gates novos (detalhe §11; rework §11.1 reverteu G4 de R02) | 15 | **39/60 = 65,0%** | **39/90 = 43,3%** | G5 paridade + G4 bindings parciais + G6 aceite; owners conforme doc 82 | commit desta rodada |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -346,24 +346,44 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 
 | Item | Gate | Evidência exata (artefato / timecode) | Data |
 |---|---|---|---|
-| R01 | G2,G3,G4 | `Pagos por dt.pdf` = `SIGA/DLP06R01.prt/v.12`; `Pagos por nat.pdf` = `nat.prt`; `pagos 09 26.xlsb` "Relacao de Baixas" 974 linhas; menu "Relação de Baixas DLP" (vídeo 13:00); roster FINR190; SQL inspecionado `FINR190_DLP.PRX` (doc 80 §17) | 2026-10-23 |
-| R02 | G2,G3,G4 | `Recebidos.pdf` = `DLP06R01.prt`; `Recebidos.xlsb` 686 linhas; idem FINR190; reconstrução 657/657 row-level (rodada 4) | 2026-10-23 |
+| R01 | G2,G3,G4 | `Pagos por dt.pdf` = `SIGA/DLP06R01.prt/v.12`; `Pagos por nat.pdf` = `nat.prt`; `pagos 09 26.xlsb` "Relacao de Baixas" 974 linhas; menu "Relação de Baixas DLP" (vídeo 13:00); roster FINR190; fonte `FINR190_DLP.PRX` (commit `0df96daafe`, blob `92bcae1c`) com `TRCell`→`E5_*` e WHERE que reproduz população oficial 948 + motivo 5/5 (doc 80 §17.B/C) — detalhe §11.1 | 2026-10-23 |
+| R02 | G2,G3 | `Recebidos.pdf` = `DLP06R01.prt` (layout compartilhado); `Recebidos.xlsb` 686 linhas; roster FINR190 + menu; **G4 revisto → PENDING**: WHERE do FINR190 (649/690) **não** reproduz o artefato 657 (doc 80 §17.D) — produtor = `DLP06R01` custom, fonte ausente do acervo (`BLOCKED`); binding SE5'R'×SE1 provado só em nível de população | 2026-10-23 |
 | R03 | G1,G2,G3 | vídeo 35:00/37:00 previews "Registro de Inventário Modelo P7" (MATRIZ, 30/09/2026, totais 3.776.994,69 / ~2.756.1xx); `Estoque.pdf` 3.946.431,87 e `Resumo Estoque.pdf` 2.976.967,56 (escopo MP/PA/PI); roster MATR460; SPEDFISCAL→Bloco H | 2026-10-23 |
 | R05 | G1,G2,G3 | `Entradas e saidas.pdf` = `SIGA/MATR320.prt/v.12` período 01–30/09/2026 MATRIZ, layout por tipo | 2026-10-23 |
 | R06 | G1,G2,G3 | `cpv 09 26 matriz.xlsb` "Kardex Fisico-Financeiro" 14.382 linhas; roster MATR910 | 2026-10-23 |
 | R07 | G1,G2,G3 | `Invent.xlsb` kardex docs "INVENT" TES 999/499; roster MATR910 | 2026-10-23 |
 | R08 | G1,G2,G3 | `Material em processo.xlsb` "Saldo em Processo" 57.359 linhas c/ ORDEM PRODUCAO; roster MATR989 | 2026-10-23 |
 | R09 | G1,G2,G3 | `Fat x MOD.xlsb` abas Fl01/Fl02 PA→MOD + Horas + Custo Unit; roster DLP204 | 2026-10-23 |
-| R10 | G1,G2,G3,G4 | `CC matriz.xlsb` = export **SD1** (sheet `SCAGQGA0.XML`); vídeo 47:00 mesma operação EDAPP (`SCAGPOU0.XML`); roster EDAPP "Faturamento e CC" | 2026-10-23 |
-| R11 | G1,G2,G3,G4 | `NF a desconsiderar.xlsb` = export **SD2** (Tipo Saida 594, CF 5101); roster EDAPP "NF à desconsiderar" | 2026-10-23 |
+| R10 | G1,G2,G3,G4 | `CC matriz.xlsb` = export **SD1** (sheet `SCAGQGA0.XML`; linha 0 = literal `SD1`, headers = títulos SX3 `D1_*` — binding 1:1 monotabela); vídeo 47:00 mesma operação EDAPP (`SCAGPOU0.XML`); roster EDAPP "Faturamento e CC" — detalhe §11.1 | 2026-10-23 |
+| R11 | G1,G2,G3,G4 | `NF a desconsiderar.xlsb` = export **SD2** (linha 0 = literal `SD2`, headers SX3 `D2_*`; Tipo Saida 594, CF 5101); roster EDAPP "NF à desconsiderar" — detalhe §11.1 | 2026-10-23 |
 | R12 | G1,G2,G3 | vídeo 04:00 "Recálculo do Custo de Reposição" (parâmetros íntegros) + 14:47 "Acompanha Custo → Novo fechamento de custo" (execução real); `DEL100.PRW` fonte | 2026-10-23 |
 | R13 | G1 | `Arquivos de envio` checklist: Extratos/XP/BB/Aplicações — externalidade confirmada | 2026-10-23 |
 | R15 | G1,G2 | vídeo 14:47 wizard "Novo fechamento de custo" executado (JOICI, Matriz); SB9 snapshot PROVEN (doc 80 §21) | 2026-10-23 |
 
-**Não promovidos:** G4 de R03/R05–R09/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos (paridade monetária integral pendente); G6 de todos (exige aceite humano).
+**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R05–R09/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos (paridade monetária integral pendente); G6 de todos (exige aceite humano).
 
-**Resoluções desta rodada:** `DLP06R01` = layout .prt do relatório de baixas FINR190 (E1 respondido); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
+**Resoluções desta rodada:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pagos **e** recebidos) — o mesmo `.prt` é usado por rotinas distintas; para pagar, produtor = FINR190 com fonte+WHERE provados; para receber, produtor = custom `DLP06R01` **sem fonte no acervo** (FINR190 descartado pelo WHERE, doc 80 §17.D); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
 
-**Métricas:** `COLETA = 40/60 = 66,7%`; `AUDITORIA = 40/90 = 44,4%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+**Métricas (após rework §11.1):** `COLETA = 39/60 = 65,0%`; `AUDITORIA = 39/90 = 43,3%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
 
-**Residuais por owner** (doc 83 §5, doc 82 §2): paridade monetária R01/R02 (G5); binding SB9↔P7 e parâmetros por emissão (R03); artefato de consumo por OP (R04, Controladoria); bindings físicos R05–R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14).
+**Residuais por owner** (doc 83 §5, doc 82 §2): fonte do relatório de receber `DLP06R01` custom (R02, TI/ERP); paridade monetária R01/R02 (G5); binding SB9↔P7 e parâmetros por emissão (R03); artefato de consumo por OP (R04, Controladoria); bindings físicos R05–R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14).
+
+### 11.1 — Rework de gates (revisão G4 R01/R02/R10/R11, 2026-10-23)
+
+Definição canônica: G4 exige **bindings físicos (tabelas, colunas, joins, filtros)** — não basta identificar rotina/layout/artefato. Resultado da revisão por item:
+
+**R01 — G4 mantido.** Vínculo explícito no fonte `FINR190_DLP.PRX` (`docs/13-fontes-totvs-protheus/06. Financeiro/FINR190/`, commit `0df96daafe`, blob `92bcae1c0487a390a91796365be361add9f011a8`):
+
+- Colunas exibidas (TRCell) → campos físicos: `Prf`→`SE5.E5_PREFIXO`; `Numero`→`E5_NUMERO`; `Prc`→`E5_PARCELA`; `TP`→`E5_TIPODOC`; `Cli/For`→`E5_CLIFOR`; `Natureza`→`E5_NATUREZ` (+descrição `SED.ED_DESCRIC` via `TRPosition SED ← E5_NATUREZ`); `Vencto`→`E5_VENCTO`; `Historico`→`E5_HISTOR`; `Dt Baixa`→`E5_DATA`; `Valor Original`→`E5_VALOR`; `Jur/Multa`→`E5_VLJUROS`; `Correcao`→`E5_VLCORRE`; `Descontos`→`E5_VLDESCO`; `Total Baixado`→`E5_VALORPG`; `Bco`→`E5_BANCO`; `Dt Dig`→`E5_DTDIGIT`; `Mot`→`E5_MOTBX`; `Orig`→`E5_FILORIG`.
+- Joins: SE5→SE2 via `MsSeek(FwXFilial("SE2")+prefixo+num+parcela+tipo+fornece+loja)`; FK1/FK2/FK6 para valor movido/estorno; SED por `E5_NATUREZ`.
+- Filtros: `E5_RECPAG='P'`, faixa `MV_PAR` (datas de baixa, SX1 params 01–02), exclusões fixas de `E5_TIPODOC` no código, `Da/Até Filial Origem` (SX1 33–34 → `E5_FILORIG`).
+- Escopo: competência 09/2026, filial Matriz (01).
+- Verificação: WHERE do fonte reproduz população oficial **948** e motivo 5/5 (doc 80 §17.B/C). Residual fora do G4: versão compilada no RPO não confirmada; paridade monetária/por registro = G5.
+
+**R02 — G4 revertido para PENDING.** Mesmo layout `DLP06R01.prt` no artefato, mas o WHERE do FINR190 ('R', exclusões fixas) gera **649/690 ≠ 657** oficial (doc 80 §17.D, PROVEN): o artefato inclui linhas JR/MT/VL/DC e 1 cancelada que o FINR190 removeria. Produtor = custom **`DLP06R01`** (nome da rotina e fonte ausentes do acervo; `DLP06P01/F01/F02/F03` verificados = utilitários não relacionados). Binding provado apenas em nível de fonte de dados (`SE5 'R'×SE1` = 657 row-level). Falta para G4: fonte do `DLP06R01` com mapeamento coluna→campo e filtros. Owner: TI/ERP (doc 82 E1).
+
+**R10 — G4 mantido.** `CC matriz.xlsb`, sheet `SCAGQGA0.XML`: linha 0 = literal **`SD1`**, headers = títulos SX3 das colunas `D1_*` (`Filial`, `Item NF`, `Produto`, `Tipo Entrada`, `Tp.Oper`, `Vlr.Unitario`, `Vlr.Total`, `C Custo`, `C Contabil`, …). Binding 1:1, **monotabela, sem join** — o item é uma consulta genérica EDAPP, não relatório com filtro fixo; o filtro é a consulta parametrizada pelo usuário (escopo observado nos dados: filial `01`). Vídeo 47:00 mostra a mesma operação EDAPP exportando SD1 (`SCAGPOU0.XML`). Fonte: rotina EDAPP padrão TOTVS (sem fonte custom exigido para o binding físico).
+
+**R11 — G4 mantido.** `NF a desconsiderar.xlsb`, sheet `Planilha2`: linha 0 = literal **`SD2`**, headers = títulos SX3 `D2_*` (`Tipo Saida`→`D2_TIPO`/`594`, `Cod. Fiscal`→`D2_CF`/`5101`, MD5/UUID = campos de auditoria). Mesmo raciocínio de R10: export direto da tabela via consulta genérica.
+
+**Recontagem:** 37 gates novos (R02 G4 revertido); `COLETA = 39/60 = 65,0%`; `AUDITORIA = 39/90 = 43,3%`. R05 reclassificado: rotina `MATR320` + artefato identificados (G1–G3), **G4–G6 abertos** — não é item "concluído".

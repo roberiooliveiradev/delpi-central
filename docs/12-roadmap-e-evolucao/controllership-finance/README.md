@@ -367,4 +367,4 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 
 ### Ciclo 2 — Crosswalk integral de evidências (23/10/2026)
 
-[Doc 83 - Crosswalk R01-R15](./83-ciclo2-crosswalk-evidencias-r01-r15.md): processamento da pasta de evidências do PO (20 arquivos) e do video de 54:44. Resolve DLP06R01 (layout .prt do FINR190), vincula rotinas oficiais a R01-R15 (MATR460/P7, MATR320, MATR910, MATR989, DLP204, EDAPP, FINR190), registra execucao observada do fechamento de custo e mapeia residuais por owner. Doc 47 promoveu 38 gates: coleta 40/60 = 66,7%, auditoria 40/90 = 44,4%.
+[Doc 83 - Crosswalk R01-R15](./83-ciclo2-crosswalk-evidencias-r01-r15.md): processamento da pasta de evidências do PO (20 arquivos) e do video de 54:44. Identifica DLP06R01.prt como layout compartilhado das baixas (pagar: produtor FINR190 provado pelo fonte; receber: custom `DLP06R01` sem fonte no acervo), vincula rotinas oficiais a R01-R15 (MATR460/P7, MATR320, MATR910, MATR989, DLP204, EDAPP, FINR190), registra execucao observada do fechamento de custo e mapeia residuais por owner. Doc 47 (apos rework §11.1): 37 gates — coleta 39/60 = 65,0%, auditoria 39/90 = 43,3%.

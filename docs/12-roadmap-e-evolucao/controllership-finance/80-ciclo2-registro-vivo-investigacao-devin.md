@@ -1391,3 +1391,34 @@ R05 VALIDADO (rotina+artefato); R01/R02/R03/R06–R12/R15 PARCIAL; R04/R13/R14 B
 | C2-R78 | doc 47 | +38 gates; 66,7% coleta / 44,4% auditoria | §11 |
 
 Preservados: `EXECUTION_DRIFT`/`STALE_EVIDENCE` (724/672); DEL100 vigente 3.058/421/242; MOD decisão C (doc 81) sem implementação.
+
+
+---
+
+## §28 — REWORK DE GATES (revisão §27) — 2026-10-23
+
+Revisão dos G4 promovidos na §27 contra a definição canônica do doc 47 (G4 = bindings físicos: tabelas, colunas, joins, filtros). **Errata da §27:**
+
+### 28.A — Correções
+
+| Item | §27 dizia | Correção |
+|---|---|---|
+| R02 G4 | PASS (FINR190 + DLP06R01.prt) | **PENDING** — §17.D deste próprio documento provou que o artefato (657) não segue o WHERE do FINR190 (649/690). Produtor = `DLP06R01` **custom, fonte ausente do acervo**. O `DLP06R01.prt` do PDF é o *layout* compartilhado, não o produtor. Binding provado só em nível de fonte de dados (`SE5 'R'×SE1`=657); coluna→campo e filtros do relatório são desconhecidos |
+| R01 G4 | PASS | **mantido** — binding explícito: `FINR190_DLP.PRX` (commit `0df96daafe`, blob `92bcae1c`) mapeia TRCell→`E5_*`/SED; WHERE reproduz população oficial 948 + motivo 5/5 (§17.B/C). Residual fora do G4: versão RPO + paridade monetária (G5) |
+| R10/R11 G4 | PASS | **mantido** — prova adicional: linha 0 dos exports = literal `SD1`/`SD2` e headers = títulos SX3 `D1_*`/`D2_*`; export EDAPP = dump monotabela, sem join; filtro = consulta do usuário |
+| R05 | "VALIDADO" | **PARCIAL** — rotina `MATR320` + artefato `.prt` identificados (G1–G3); G4–G6 abertos |
+| R15 | execução observada | **preservado sem identidade de produtor** — wizard executado 30/09 14:47, mas `B9_I_N_S_D_T_` (f02 02/10, f01 21/10) diverge; qual passo grava SB9 segue não provado |
+
+### 28.B — Métricas corrigidas (doc 47 §11.1)
+
+37 gates novos (não 38): `COLETA = 39/60 = 65,0%` · `AUDITORIA = 39/90 = 43,3%` · concluídos 0/15.
+
+### 28.C — Efeito no handoff (doc 82 E1)
+
+E1 dividido: **pagar** = FINR190 provado (residual: versão RPO + paridade monetária); **receber** = fonte do `DLP06R01` custom segue pendente com TI/ERP.
+
+Preservados: `EXECUTION_DRIFT`/`STALE_EVIDENCE` (724/672); DEL100 vigente 3.058/421/242; E6 opção C (doc 81) sem implementação; G5/G6 não promovidos.
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R79 | rework G4 | R02 G4→PENDING (§17.D); R01/R10/R11 mantidos com binding explícito; R05 reclassificado | §11.1 doc 47 |

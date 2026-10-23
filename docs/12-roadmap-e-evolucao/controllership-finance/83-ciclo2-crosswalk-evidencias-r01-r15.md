@@ -52,7 +52,7 @@
 | Contábil | FINR150 / FINR130 | 6 | pendência a pagar / a receber |
 | Contábil | **FINR190** | 6 | "Relação de baixas DLP — pagos e recebidos" |
 
-**Resoluções diretas do acervo:** `DLP06R01` = o **layout `.prt`** do relatório de baixas (pago e recebido por data) emitido pela rotina FINR190 (item de menu "Relação de Baixas DLP", visto no vídeo 13:00); fonte `FINR190_DLP.PRX` presente no acervo (rodada 5). `Pagos por nat` = mesmo produtor com layout `nat.prt`.
+**Resoluções diretas do acervo:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pago e recebido por data) — o mesmo `.prt` serve a rotinas distintas. Para **pagar**, produtor = **FINR190** ("Relação de Baixas DLP" no menu, vídeo 13:00 + roster), fonte `FINR190_DLP.PRX` no acervo cujo WHERE reproduz a população oficial (§17.B/C doc 80). Para **receber**, o WHERE do FINR190 **não** reproduz o artefato (§17.D): produtor = custom `DLP06R01`, fonte **ausente** do acervo (`BLOCKED`, E1).
 
 ## §3 — Timeline do vídeo (evidência observada diretamente)
 
@@ -75,7 +75,7 @@ Vídeo 54:44 · gravação 30/09/2026 14:31 · frames extraídos por detecção 
 
 ## §4 — Matriz R01–R15
 
-Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) · PARCIAL (parte dos vínculos) · BLOQUEADO (evidência esgotada).
+Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) · PARCIAL (parte dos vínculos) · BLOQUEADO (evidência esgotada). **Após o rework de gates (doc 47 §11.1):** nenhum item alcança VALIDADO — G4 de R02 revertido (produtor custom sem fonte) e R05 reclassificado (rotina+artefato identificados, G4–G6 abertos).
 
 ### R01 — Baixas a pagar — **PARCIAL (forte)**
 
@@ -92,9 +92,9 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 | Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PASS · G5 PENDING · G6 PENDING** |
 | Residual | paridade R$ integral (G5); aceite (G6) — owner Controladoria |
 
-### R02 — Baixas a receber — **PARCIAL (forte)**
+### R02 — Baixas a receber — **PARCIAL**
 
-Idêntico a R01 com: `Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (686 linhas); físico SE1/FK1; reconstrução **657/657 row-level exata** (rodada 4). Gates: **G1–G4 PASS · G5 PENDING** (paridade monetária total a confirmar contra totais oficiais) · **G6 PENDING**.
+`Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (686 linhas); fonte de dados `SE5 'R'×SE1` = **657/657 row-level exato** (rodada 4). **Porém o produtor não é o FINR190 do acervo**: WHERE do fonte gera 649/690 ≠ 657 (§17.D doc 80) — produtor = `DLP06R01` custom, **fonte ausente do acervo** (`BLOCKED`, owner TI/ERP — E1). Gates: **G1 PASS · G2 PASS · G3 PASS · G4 PENDING** (binding do relatório não provado — coluna→campo e filtros do `DLP06R01` desconhecidos) · G5/G6 PENDING.
 
 ### R03 — P7 / Bloco H — **PARCIAL (forte)**
 
@@ -114,7 +114,7 @@ Idêntico a R01 com: `Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (686
 
 Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz ORDEM PRODUCAO mas é R08; `matr860` permanece **candidato** (fonte presente, papel decodificado na rodada 7 — MOD via SD3 RE1/TM999 — mas não é o relatório de consumo por OP observado em uso). Gates: todos **PENDING**. Próxima ação: confirmar com Controladoria qual artefato/rosto o relatório tem (roster não lista).
 
-### R05 — Entradas e Saídas / valor estoque — **VALIDADO (rotina+artefato)**
+### R05 — Entradas e Saídas / valor estoque — **PARCIAL (rotina+artefato identificados)**
 
 `Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. Gates: **G1–G3 PASS · G4 PENDING** (binding SD1/SD2/SD3/TRB a confirmar) · G5/G6 PENDING.
 
@@ -162,7 +162,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 
 | Pedido | Estado após esta rodada |
 |---|---|
-| E1 (DLP06R01) | **Substancialmente respondido:** `DLP06R01.prt` = layout do relatório de baixas (pagos por data **e** recebidos), rotina **FINR190** (menu "Relação de Baixas DLP" + roster), fonte `FINR190_DLP.PRX` no acervo. Residual: confirmar versão implantada vs acervo + paridade monetária. Rebaixar a "verificação de versão". |
+| E1 (DLP06R01) | **Parcialmente respondido (rework 23/10):** `DLP06R01.prt`/`nat.prt` = layouts compartilhados. **Pagar:** produtor = FINR190, fonte+WHERE provados — residual = versão implantada (RPO) + paridade monetária. **Receber:** produtor = `DLP06R01` custom **sem fonte no acervo** — segue pendente o fonte (owner TI/ERP). |
 | E2 (P7/MATR460) | **Substancialmente respondido:** artefato oficial (REGISTRO DE INVENTÁRIO, 2 escopos) + rotina "Registro de Inventário Modelo P7" observada + roster MATR460. Residual: parâmetros efetivos por emissão (filtro tipos/armazém), confirmação MATR460×variante, binding SB9, export p/ paridade. |
 | E3 (DDL views) | mantido — DBA |
 | E4 (jobs/SPs) | mantido — DBA |
@@ -183,10 +183,10 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | Item | Status | Rotina vinculada | Gates novos |
 |---|---|---|---|
 | R01 Baixas a pagar | PARCIAL | FINR190 + DLP06R01.prt/nat.prt | G2,G3,G4 |
-| R02 Baixas a receber | PARCIAL | FINR190 + DLP06R01.prt | G2,G3,G4 |
+| R02 Baixas a receber | PARCIAL | `DLP06R01` custom (FINR190 descartado pelo WHERE §17.D) | G2,G3 |
 | R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 |
 | R04 Consumo por OP | BLOQUEADO | — | — |
-| R05 Entradas e Saídas | VALIDADO* | MATR320 | G1,G2,G3 |
+| R05 Entradas e Saídas | PARCIAL | MATR320 (rotina+artefato identificados; G4–G6 abertos) | G1,G2,G3 |
 | R06 CPV / Kardex 01 | PARCIAL | MATR910 | G1,G2,G3 |
 | R07 Inventários | PARCIAL | MATR910 | G1,G2,G3 |
 | R08 Material em Processo | PARCIAL | MATR989 | G1,G2,G3 |
@@ -198,6 +198,6 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R14 Importação | BLOQUEADO | — | — |
 | R15 Cutoff/SB9 | PARCIAL | fechamento wizard (execução observada) | G1,G2 |
 
-\* "VALIDADO" no sentido do §9 do briefing: evidência de rotina+artefato suficiente para G1–G3; G4/G5/G6 permanecem abertos para todos os itens.
+\* Revisão 23/10 (doc 47 §11.1): rótulo VALIDADO retirado — evidência de rotina+artefato cobre G1–G3; G4/G5/G6 permanecem abertos para todos os itens.
 
-**Coleta:** 40/60 = **66,7%** · **Auditoria:** 40/90 = **44,4%** · **Concluídos:** 0/15.
+**Coleta:** 39/60 = **65,0%** · **Auditoria:** 39/90 = **43,3%** · **Concluídos:** 0/15. (pós-rework doc 47 §11.1: G4 de R02 revertido — produtor receber = `DLP06R01` custom sem fonte no acervo)

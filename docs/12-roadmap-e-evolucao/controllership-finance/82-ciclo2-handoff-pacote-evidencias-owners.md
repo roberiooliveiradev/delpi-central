@@ -29,15 +29,15 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 
 ### 2.1 — Owner TI/ERP (fontes e execução Protheus)
 
-#### E1 — Produtor das baixas (FINR190 / `DLP06R01.prt`) — **respondido em 23/10 (restante: versão implantada)**
+#### E1 — Produtores das baixas — **parcialmente respondido em 23/10; receber segue pendente**
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | `Pagos por dt.pdf` e `Recebidos.pdf` trazem `SIGA/DLP06R01.prt/v.12` no cabeçalho — **`DLP06R01` é o layout do relatório de baixas (pagos E recebidos por data)**; `Pagos por nat.pdf` = `nat.prt`. Menu "Relação de Baixas DLP" visto no vídeo 13:00; roster `Contabilidade liberações.xlsx` vincula a rotina **FINR190**; fonte `FINR190_DLP.PRX` no acervo (doc 80 §17, reconstrução 657/657 receber row-level) |
-| Lacuna objetiva | confirmar que a versão do `FINR190_DLP.PRX` do acervo é a compilada no RPO + paridade monetária integral (G5) |
-| Fonte esperada | confirmação de versão/RPO (data de compilação ou SHA interno do fonte implantado) — acesso ao ambiente não necessário |
-| Impacto PROC-0072 | fecha identidade do produtor; G1–G4 já PASS (doc 47 §11) |
-| Critério de aceite | `CODE_DEPLOYED` (versão confirmada) + paridade monetária oficial |
+| Evidência atual | `Pagos por dt.pdf`/`Recebidos.pdf` trazem `SIGA/DLP06R01.prt/v.12` — **layout compartilhado, não produtor**. **Pagar:** produtor = FINR190 provado — fonte `FINR190_DLP.PRX` (commit `0df96daafe`) com TRCell→`E5_*` e WHERE que reproduz população oficial 948+motivo 5/5 (doc 80 §17.B/C; G4 PASS doc 47 §11.1). **Receber:** WHERE do FINR190 gera 649/690 ≠ 657 oficial (§17.D, PROVEN) — produtor = `DLP06R01` **custom, fonte ausente do acervo**; `DLP06P01/F01/F02/F03` verificados = utilitários não relacionados |
+| Lacuna objetiva | (a) **fonte do `DLP06R01` custom** (receber) — nome da rotina, mapeamento coluna→campo e filtros; (b) confirmar versão RPO do `FINR190_DLP.PRX`; (c) paridade monetária integral (G5) ambos |
+| Fonte esperada | fonte AdvPL/PRX do `DLP06R01` (ou nome da rotina efetiva do relatório de recebidos) + confirmação de compilação no RPO |
+| Impacto PROC-0072 | fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING e paridade é só de população |
+| Critério de aceite | `SOURCE_AVAILABLE` + `CODE_DEPLOYED`; idealmente `EXECUTION_OBSERVED` |
 
 #### E2 — Produtor e parâmetros do P7 / MATR460
 
@@ -127,8 +127,8 @@ Mais:
 | Pagar FINR190 | paridade estrutural PROVEN (948, 5/5 motivos, `FINR190_DLP`); sem paridade monetária/registro |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
-| DLP06R01, P7 | **resolvidos 23/10** — DLP06R01.prt=layout FINR190; P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
-| Doc 47 | crosswalk doc 83 + §11: **40/60 = 66,7% coleta · 40/90 = 44,4% auditoria** — 38 gates promovidos 23/10 com evidência por item |
+| DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
+| Doc 47 | crosswalk doc 83 + §11/§11.1: **39/60 = 65,0% coleta · 39/90 = 43,3% auditoria** — 37 gates promovidos 23/10 após rework (G4 de R02 revertido) |
 
 ---
 
