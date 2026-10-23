@@ -1,5 +1,5 @@
 # Portal Suprimentos — Plano de refatoração do componente Atenção (Home)
-**Data:** 2026-10-23 · **Estado:** `PLANNED` · **Implementação/deploy:** `NOT_AUTHORIZED`  
+**Data:** 2026-10-23 · **Estado:** `AUTHORIZED_FOR_END_TO_END_EXECUTION` · **Implementação/deploy:** `AUTHORIZED_BY_PO`, condicionada aos gates técnicos e de segurança  
 **Escopo estrito:** componente **Atenção** da página `/apps/supplies` (Home). **Não alterar** hero, caminhos/funcionalidades, favoritos, últimos acessos, barra de navegação, indicadores da Visão geral ou outras páginas.
 
 ## 1. Problema observado e decisão de produto
@@ -72,7 +72,7 @@ Portal shell → plugins/supplies (somente apresentação)
 - Datas/volumes devem ter corte e timezone definidos no contrato.
 - Quaisquer indicadores gerenciais continuam na Visão geral; Atenção é fila operacional, não dashboard novo.
 
-## 7. Sequência de trabalho e gates (nenhuma etapa de código autorizada ainda)
+## 7. Sequência de trabalho e gates (execução contínua autorizada pelo PO)
 ### A0 — Inventário `TO_INVENTORY`
 Reancorar HEAD, git status, authorities, `.cursor`, roadmap/plano/ADRs. Abrir produtor real BFF `/home/attention`, adapters, contratos, chamadas downstream, testes; classificar cada card presente: `REAL_ISSUE_COUNT | NAVIGATION_SHORTCUT | UNKNOWN | UNAVAILABLE`. Buscar contagens e recortes já existentes nas rotas correspondentes. Verificar AuthZ, unidade, resource/ownership, erros parciais, evidência SQL/HTTP sem escrita. **Entrega A0:** matriz campo/origem, exemplo sanitizado de payload, regra, count, preview, rota/filtro, status e lacunas; nenhum diff funcional.
 
@@ -101,8 +101,14 @@ AC-01 7 atalhos genéricos não aparecem como 'pendências' por configuração; 
 - Teste federado não executado não pode ser PASS.
 - Drift material nos planos/autoridades: registrar `EXECUTION_DRIFT`, não adaptar silenciosamente.
 
-## 10. Próxima ação autorizável / brief mínimo para Cursor
-**Próxima tarefa proposta, ainda não autorizada:** `HOME-ATTENTION.A0 — INVENTORY READ-ONLY`. Cursor deverá devolver:
+## 10. Execução pelo Devin — do inventário ao deploy, sem checkpoints de aprovação intermediários
+**Autorização explícita do PO (2026-10-23):** o Devin deve executar **A0 → A1 → A2 → A3 → A4 → commit/push → deploy canônico → smoke/testes e relatório**, de ponta a ponta, sem parar para solicitar autorização entre as etapas. Inventário e contract freeze são gates internos que o Devin fecha por evidência; não são entregáveis finais isolados. A execução não deve esperar nova autorização para o deploy **desta mudança estritamente delimitada** quando testes, preflight e critérios de segurança estiverem PASS. Essa autorização não inclui outras páginas, expansão irrestrita de serviços, troca de ambiente REST de fornecedores, write ERP ou novas permissões.
+
+**Priorização de decisões sem interromper o trabalho:** selecionar somente alertas cujas regras, contagens e owners estejam efetivamente comprovados; categorias não demonstradas devem ficar fora do componente como `TO_INVENTORY`, sem impedir que as fontes independentes prontas sejam entregues. Nunca forçar indicadores fictícios para preencher sete cards. Usar os contratos existentes; se uma nova integração legítima for necessária, limitar ao owner e escopo autorizados, com testes de consumidor/produtor.
+
+**STOP CONDITION real:** interromper a implantação quando ocorrer risco de vazamento/violação de AuthZ, fonte cuja autorização não possa ser comprovada, regressão material, ambiente/destino incorreto, segredo exposto, contratos incompatíveis, rollback inviável ou impossibilidade de comprovar saúde. Se uma fonte opcional não estiver pronta, remover apenas essa categoria do escopo e entregar as demais. Nunca contornar os gates com contadores presumidos. Com dependência crítica não resolvida, reportar `INCONCLUSIVE/EXECUTION_DRIFT`, não declarar deploy PASS.
+
+**Devin deverá devolver:**
 ```text
 BASE HEAD / ORIGIN MAIN / GIT STATUS
 AUTHORITIES AND OWNERS INSPECTED
@@ -118,7 +124,7 @@ PROPOSED CONTRACT FREEZE A1
 FILES INSPECTED
 RESIDUAL / STOP CONDITIONS / NEXT STEP
 ```
-A0 não autoriza automaticamente A1–A4 nem deploy.
+A0 **autoriza prosseguir automaticamente** para A1–A4 e deploy **exclusivamente nesta frente autorizada**, desde que os gates técnicos/segurança estejam fechados. Realizar testes unitários, integração BFF, positivos/sibling/negativos de AuthZ, typecheck/lint/build, smoke federado real, estado vazio/parcial/erro, mobile/tema/teclado quando executáveis. Sem sessão autenticada, declarar a verificação visual `INCONCLUSIVE`, sem falsear PASS.
 
 ## 11. Referências
 - `plugins/supplies/src/pages/HomePage.tsx`
@@ -128,4 +134,14 @@ A0 não autoriza automaticamente A1–A4 nem deploy.
 - [README](./README.md)
 - [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md)
 
-**Classificação final:** `HOME-ATTENTION-REFACTOR = PLANNED`; `NEXT = A0 INVENTORY (requires PO go)`; `CODE_DIFF=NONE`; `DEPLOY=NOT_AUTHORIZED`.
+**Classificação após autorização PO:** `HOME-ATTENTION-REFACTOR = AUTHORIZED_FOR_EXECUTION`; `NEXT = DEVIN A0→A4→DEPLOY/SMOKE`; `CODE_DIFF = PENDING`; `DEPLOY = AUTHORIZED_IF_GATES_PASS`. Após execução reclassificar somente mediante testes e runtime reais.
+
+
+## 12. Entrega final obrigatória / evidência de produção
+- Ancorar HEAD/origin/main/git status, sources/consumers, authorities e ownership antes do diff.
+- Implementar somente Atenção; nenhuma mudança de hero, caminhos, favoritos, recents ou outras páginas.
+- Testes backend e MFE; critério `count>0`, zero real, falha parcial, 403/401, limites/unidades, preview, filtro e regressão.
+- Commit/push escopado; seguir procedimento `AGENTS.md` e `infra/scripts/up-prod-sequential.sh` para **somente serviços afetados**; snapshot de SHA/imagens e rollback antes do deploy.
+- Smoke real em `minhadelpi.com.br`: remoteEntry/bundle, `GET /home/attention` autenticado se sessão disponível, contagem versus fonte, UI quando possível, nenhuma chamada a dados proibidos; registrar falhas sem inferir PASS.
+- Relatório: BASE HEAD, FINAL HEAD, arquivos, status, cards antes/depois, fórmulas/fontes, AuthZ/escopos, testes, build, commit, imagens, bundle, health, smoke, rollback, residuais, GATE-FEATURE e próximo passo. 
+- **Produção de fornecedor permanece pausada aguardando Gabriel/TOTVS**; nunca tocar `URL_REST@1`, flags CREATE/UPDATE ou integrações C1 nesta tarefa.
