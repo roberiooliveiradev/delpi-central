@@ -546,7 +546,7 @@ describe("DeliaComposer — voice dictation visual refinement (VD-F04)", () => {
     fireEvent.mouseEnter(mic);
     await waitFor(() =>
       expect(
-        screen.getByText(/transforme sua voz em texto editável/),
+        screen.getByText(/Gravar e transcrever: fale/),
       ).toBeTruthy(),
     );
     fireEvent.mouseLeave(mic);
@@ -554,7 +554,7 @@ describe("DeliaComposer — voice dictation visual refinement (VD-F04)", () => {
     fireEvent.focus(mic);
     await waitFor(() =>
       expect(
-        screen.getByText(/transforme sua voz em texto editável/),
+        screen.getByText(/Gravar e transcrever: fale/),
       ).toBeTruthy(),
     );
   });
@@ -808,6 +808,9 @@ describe("DeliaComposer — five-minute dictation continuity (VD-F05)", () => {
       "Parte um, editada.".length,
       "Parte um, editada.".length,
     );
+    // jsdom queues selectionchange asynchronously — flush it while the
+    // textarea is still focused so the caret tracker registers.
+    document.dispatchEvent(new Event("selectionchange"));
 
     await dictateOnce();
     expect(

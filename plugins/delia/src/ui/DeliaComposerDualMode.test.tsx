@@ -177,13 +177,26 @@ function Harness({
   );
 }
 
-const LIVE_OPTION = "Transcrição em tempo real";
-const BATCH_OPTION = "Gravar e transcrever";
+const SETTINGS_TRIGGER = "Configurações do campo de pergunta";
+const LIVE_OPTION = /Transcrição em tempo real/;
+const BATCH_OPTION = /Gravar e transcrever/;
 
+const openSettings = () =>
+  fireEvent.click(
+    screen.getByRole("button", { name: SETTINGS_TRIGGER }),
+  );
 const liveOption = () =>
-  screen.getByRole("button", { name: LIVE_OPTION }) as HTMLButtonElement;
+  screen.getByRole("radio", { name: LIVE_OPTION }) as HTMLInputElement;
 const batchOption = () =>
-  screen.getByRole("button", { name: BATCH_OPTION }) as HTMLButtonElement;
+  screen.getByRole("radio", { name: BATCH_OPTION }) as HTMLInputElement;
+const selectLive = () => {
+  openSettings();
+  fireEvent.click(liveOption());
+};
+const selectBatch = () => {
+  openSettings();
+  fireEvent.click(batchOption());
+};
 const textarea = () =>
   document.getElementById("delia-dual-input") as HTMLTextAreaElement;
 
@@ -232,8 +245,9 @@ describe("dual-mode dictation", () => {
 
   it("DM-01/DM-02/DM-17: default is batch even with incremental admitted", () => {
     render(<Harness transport={makeTransport()} />);
-    expect(batchOption().getAttribute("aria-pressed")).toBe("true");
-    expect(liveOption().getAttribute("aria-pressed")).toBe("false");
+    openSettings();
+    expect(batchOption().checked).toBe(true);
+    expect(liveOption().checked).toBe(false);
     // batch path rendered: VD-F03 mic, no live trigger
     expect(
       screen.getByRole("button", { name: "Ditar mensagem" }),
@@ -262,8 +276,7 @@ describe("dual-mode dictation", () => {
     expect(
       screen.queryByRole("button", { name: "Iniciar ditado" }),
     ).toBeNull();
-    fireEvent.click(liveOption());
-    expect(liveOption().getAttribute("aria-pressed")).toBe("true");
+    selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
@@ -277,7 +290,12 @@ describe("dual-mode dictation", () => {
 
   it("DM-07: live cannot be activated when incremental is not admitted", () => {
     render(<Harness transport={null} />);
-    expect(screen.queryByRole("button", { name: LIVE_OPTION })).toBeNull();
+    openSettings();
+    expect(liveOption().disabled).toBe(true);
+    fireEvent.click(liveOption());
+    expect(
+      screen.queryByRole("button", { name: "Iniciar ditado" }),
+    ).toBeNull();
     expect(
       screen.getByRole("button", { name: "Ditar mensagem" }),
     ).toBeTruthy();
@@ -292,31 +310,30 @@ describe("dual-mode dictation", () => {
         onSubmit={() => undefined}
       />,
     );
-    expect(screen.queryByRole("button", { name: LIVE_OPTION })).toBeNull();
     expect(
-      screen.queryByRole("button", { name: BATCH_OPTION }),
+      screen.queryByRole("button", { name: SETTINGS_TRIGGER }),
     ).toBeNull();
     expect(textarea().value).toBe("rascunho");
   });
 
   it("DM-09/DM-12: idle switch preserves the draft", () => {
     render(<Harness transport={makeTransport()} initial="rascunho" />);
-    fireEvent.click(liveOption());
+    selectLive();
     expect(textarea().value).toBe("rascunho");
-    fireEvent.click(batchOption());
+    selectBatch();
     expect(textarea().value).toBe("rascunho");
   });
 
   it("DM-10: switching is blocked during live capture", async () => {
     render(<Harness transport={makeTransport()} />);
-    fireEvent.click(liveOption());
+    selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
     await waitFor(() => expect(fakeCapture.started).toBe(true));
+    openSettings();
     expect(liveOption().disabled).toBe(true);
     expect(batchOption().disabled).toBe(true);
-    fireEvent.click(batchOption());
     // still live: capture controls remain
     expect(
       screen.getByRole("button", { name: "Finalizar ditado" }),
@@ -329,14 +346,17 @@ describe("dual-mode dictation", () => {
       screen.getByRole("button", { name: "Ditar mensagem" }),
     );
     await waitFor(() => screen.getByText("Gravando"));
-    expect(liveOption().disabled).toBe(true);
-    expect(batchOption().disabled).toBe(true);
+    // The capture panel owns the composer body while recording;
+    // the settings trigger is not reachable — switching impossible.
+    expect(
+      screen.queryByRole("button", { name: SETTINGS_TRIGGER }),
+    ).toBeNull();
   });
 
   it("DM-12b: switching after a finished live session keeps confirmed text", async () => {
     const transport = makeTransport();
     render(<Harness transport={transport} initial="base " />);
-    fireEvent.click(liveOption());
+    selectLive();
     fireEvent.click(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     );
@@ -352,8 +372,9 @@ describe("dual-mode dictation", () => {
       ).toBeTruthy(),
     );
     expect(textarea().value).toBe("base trecho");
-    // review concluded → the selector unlocks, then switching is allowed
-    await waitFor(() => expect(batchOption().disabled).toBe(false));
+    // review concluded → the menu options are enabled again
+    openSettings();
+    expect(batchOption().disabled).toBe(false);
     fireEvent.click(batchOption());
     expect(textarea().value).toBe("base trecho");
     expect(
@@ -368,7 +389,7 @@ describe("dual-mode dictation", () => {
     el.setSelectionRange(2, 4);
     fireEvent(el, new Event("selectionchange"));
     document.dispatchEvent(new Event("selectionchange"));
-    fireEvent.click(liveOption());
+    selectLive();
     const el2 = document.getElementById(
       "delia-dual-input",
     ) as HTMLTextAreaElement;
@@ -393,7 +414,8 @@ describe("dual-mode dictation", () => {
   it("batch selected while live unavailable shows batch path, not live", () => {
     // batch unavailable + live available edge: no auto-selection
     render(<Harness transport={makeTransport()} withTranscriber={false} />);
-    expect(batchOption().getAttribute("aria-pressed")).toBe("true");
+    openSettings();
+    expect(batchOption().checked).toBe(true);
     expect(
       screen.queryByRole("button", { name: "Iniciar ditado" }),
     ).toBeNull();

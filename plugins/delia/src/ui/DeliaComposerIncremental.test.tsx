@@ -175,10 +175,16 @@ const PARTIALS: Record<string, DeliaIncrementalEvent[]> = {
   ],
 };
 
-const selectLive = () =>
+const selectLive = () => {
   fireEvent.click(
-    screen.getByRole("button", { name: "Transcrição em tempo real" }),
+    screen.getByRole("button", {
+      name: "Configurações do campo de pergunta",
+    }),
   );
+  fireEvent.click(
+    screen.getByRole("radio", { name: /Transcrição em tempo real/ }),
+  );
+};
 
 describe("incremental dictation surface", () => {
   beforeEach(() => {

@@ -296,21 +296,102 @@
 
 /* ---------- VD-F04 — dictation surface details */
 
-/* Dual-mode selector (spec 123 §12): compact segmented control above
-   the composer — batch is the default, live is explicit opt-in. */
-.dashboard-delia .delia-dictation-mode {
+/* Composer settings menu (spec 125): discreet toolbar trigger opens an
+   anchored popover; "Ditado" is the first composable section — batch
+   stays the default, live remains explicit opt-in. The panel renders
+   via portal inside the `.dashboard-delia` MFE scope. */
+.dashboard-delia .delia-composer-settings {
+  display: inline-flex;
+}
+
+.dashboard-delia .delia-composer-settings__panel {
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+}
+
+.dashboard-delia .delia-composer-settings__title {
+  padding: 8px 12px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.65)));
+  border-bottom: 1px solid
+    var(--delpi-ui-border, var(--border, rgba(17, 17, 17, 0.12)));
+}
+
+.dashboard-delia .delia-dictation-settings {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: 4px;
+  margin: 0;
+  padding: 8px 12px 10px;
+  border: 0;
+  min-width: 0;
 }
 
-.dashboard-delia .delia-dictation-mode__note {
-  margin: 0;
-  padding: 0 2px;
+.dashboard-delia .delia-dictation-settings__legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, rgba(17, 17, 17, 0.87)));
+}
+
+.dashboard-delia .delia-dictation-settings__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 6px;
+  margin: 0 -6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.dashboard-delia .delia-dictation-settings__option:hover {
+  background: var(
+    --delpi-ui-surface-hover,
+    var(--surface-hover, rgba(17, 17, 17, 0.05))
+  );
+}
+
+.dashboard-delia .delia-dictation-settings__option[data-disabled="true"] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.dashboard-delia .delia-dictation-settings__option input[type="radio"] {
+  margin: 3px 0 0;
+  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.dashboard-delia .delia-dictation-settings__option:focus-within {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 1px;
+}
+
+.dashboard-delia .delia-dictation-settings__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.dashboard-delia .delia-dictation-settings__label {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text, var(--text, rgba(17, 17, 17, 0.87)));
+}
+
+.dashboard-delia .delia-dictation-settings__hint {
   font-size: 0.6875rem;
   line-height: 1.35;
   color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.6)));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-delia .delia-dictation-settings__option {
+    transition: background-color 120ms ease;
+  }
 }
 
 /* Capture panel + honest purpose disclosure inside the SAME composer

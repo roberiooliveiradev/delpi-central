@@ -7,7 +7,6 @@ import {
   HelpTooltip,
   IconButton,
   MessageComposer,
-  SegmentToggle,
 } from "@delpi/plugin-ui/index";
 import { Mic, Pause, Play, Square, Trash2, X } from "lucide-react";
 
@@ -26,6 +25,8 @@ import {
   DEFAULT_DICTATION_MODE,
   type DictationMode,
 } from "../audio/dictationMode";
+import { ComposerSettingsMenu } from "./ComposerSettingsMenu";
+import { DictationModeSettings } from "./DictationModeSettings";
 import type { LocalAudioDraft } from "@delpi/plugin-ui/index";
 
 /** One completed local capture → untrusted editable text (VD-F03). */
@@ -100,8 +101,13 @@ export type DeliaComposerProps = {
   /** Admitted segment bound from the contract. */
   incrementalMaxSegments?: number | null;
   /**
+   * Internal: composer settings menu node (dictation mode section) the
+   * parent wires into the secondary-actions row. Never set by hosts.
+   */
+  composerSettingsAction?: ReactNode;
+  /**
    * Internal: reports whether a capture/transcription is in progress so
-   * the dual-mode selector can lock mode switching. Never set by hosts.
+   * the dictation-mode options can lock switching. Never set by hosts.
    */
   onCaptureActivityChange?: (busy: boolean) => void;
 };
@@ -218,8 +224,7 @@ export function DeliaComposer({
   const liveAvailable = incrementalTransport != null;
   const batchAvailable = audioCaptureEnabled && dictationTranscriber != null;
   const useLive = mode === "live" && liveAvailable;
-  const liveUnavailable = mode === "live" && !liveAvailable;
-  const showSelector = liveAvailable || mode === "live";
+  const showSettings = liveAvailable || batchAvailable || mode === "live";
 
   // Caret/selection survive the subtree remount a mode switch implies.
   const selectionRef: MutableRefObject<{
@@ -255,47 +260,22 @@ export function DeliaComposer({
     }
   }, [mode, inputId]);
 
-  const selector = showSelector ? (
-    <div className="delia-dictation-mode">
-      <SegmentToggle<DictationMode>
-        options={[
-          {
-            value: "batch",
-            label: "Gravar e transcrever",
-            disabled: !batchAvailable,
-          },
-          {
-            value: "live",
-            label: "Transcrição em tempo real",
-            disabled: !liveAvailable,
-          },
-        ]}
+  // Spec 125: the permanent mode strip is gone — the batch/live choice
+  // lives inside the composer settings menu, a discreet toolbar control
+  // whose options stay visible (but disabled) during capture.
+  const settingsAction = showSettings ? (
+    <ComposerSettingsMenu>
+      <DictationModeSettings
         value={mode}
         onChange={setMode}
-        ariaLabel="Modo de ditado"
-        idPrefix={`${inputId}-dictation-mode`}
-        size="sm"
-        widthMode="content"
         disabled={captureBusy}
+        liveAvailable={liveAvailable}
       />
-      {useLive ? (
-        <p className="delia-dictation-mode__note">
-          O texto aparece enquanto você fala e pode ser revisado pelo
-          reconhecimento de voz.
-        </p>
-      ) : null}
-      {liveUnavailable ? (
-        <p className="delia-dictation-mode__note" role="status">
-          Transcrição em tempo real indisponível no momento. Seu texto
-          foi preservado.
-        </p>
-      ) : null}
-    </div>
+    </ComposerSettingsMenu>
   ) : null;
 
   return (
     <>
-      {selector}
       {useLive && incrementalTransport ? (
         <DeliaComposerIncremental
           inputId={inputId}
@@ -312,6 +292,7 @@ export function DeliaComposer({
           maxSegments={incrementalMaxSegments}
           onClearDraft={onClearDraft}
           draftRecoveryAction={draftRecoveryAction}
+          composerSettingsAction={settingsAction}
           onCaptureActivityChange={setCaptureBusy}
         />
       ) : (
@@ -331,6 +312,7 @@ export function DeliaComposer({
           dictationTranscriber={dictationTranscriber}
           onClearDraft={onClearDraft}
           draftRecoveryAction={draftRecoveryAction}
+          composerSettingsAction={settingsAction}
           onCaptureActivityChange={setCaptureBusy}
         />
       )}
@@ -355,6 +337,7 @@ function DeliaComposerBatch({
   dictationTranscriber = null,
   onClearDraft,
   draftRecoveryAction,
+  composerSettingsAction,
   onCaptureActivityChange,
 }: DeliaComposerProps) {
   const inFlight =
@@ -486,8 +469,8 @@ function DeliaComposerBatch({
       : null;
   const startHelp = sttAdmitted
     ? admittedMinutes != null
-      ? `Ditar mensagem: fale até ${admittedMinutes} minutos e transforme sua voz em texto editável.`
-      : "Ditar mensagem: fale e transforme sua voz em texto editável."
+      ? `Ditar mensagem — Gravar e transcrever: fale até ${admittedMinutes} minutos e receba o texto ao finalizar.`
+      : "Ditar mensagem — Gravar e transcrever: fale e receba o texto ao finalizar."
     : "Gravar áudio neste navegador: a transcrição está indisponível.";
 
   return (
@@ -580,6 +563,7 @@ function DeliaComposerBatch({
             onUserEdit={() => setTranscribed(false)}
             onClearDraft={onClearDraft}
             draftRecoveryAction={draftRecoveryAction}
+            composerSettingsAction={composerSettingsAction}
           />
         );
       }}
@@ -607,6 +591,7 @@ type DeliaComposerBodyProps = {
   onUserEdit: () => void;
   onClearDraft?: (clearedValue: string) => void;
   draftRecoveryAction?: ReactNode;
+  composerSettingsAction?: ReactNode;
 };
 
 /** Internal body — component so the focus-restore effect is legal. */
@@ -630,6 +615,7 @@ function DeliaComposerBody({
   onUserEdit,
   onClearDraft,
   draftRecoveryAction,
+  composerSettingsAction,
 }: DeliaComposerBodyProps) {
   const captureActive = captureView != null;
   const wasActiveRef: MutableRefObject<boolean> = useRef(captureActive);
@@ -684,6 +670,7 @@ function DeliaComposerBody({
             <>
               {draftRecoveryAction}
               {trigger}
+              {composerSettingsAction}
             </>
           )
         }
@@ -732,6 +719,7 @@ function DeliaComposerIncremental({
   maxSegments,
   onClearDraft,
   draftRecoveryAction,
+  composerSettingsAction,
   onCaptureActivityChange,
 }: DeliaComposerIncrementalProps) {
   const inFlight =
@@ -818,6 +806,7 @@ function DeliaComposerIncremental({
         secondaryActions={
           dictation.active ? (
             <span className="delia-dictation-live__controls">
+              {composerSettingsAction}
               {dictation.state === "listening" ? (
                 <HelpTooltip
                   wrap
@@ -872,7 +861,7 @@ function DeliaComposerIncremental({
               {draftRecoveryAction}
               <HelpTooltip
                 wrap
-                content="Ditar mensagem: o texto aparece enquanto você fala e continua editável. O áudio é enviado à transcrição da DÉLIA."
+                content="Ditar mensagem — Transcrição em tempo real: o texto aparece enquanto você fala e continua editável. O áudio é enviado à transcrição da DÉLIA."
               >
                 <IconButton
                   aria-label="Iniciar ditado"
@@ -882,6 +871,7 @@ function DeliaComposerIncremental({
                   <Mic size={18} aria-hidden="true" />
                 </IconButton>
               </HelpTooltip>
+              {composerSettingsAction}
             </>
           )
         }
