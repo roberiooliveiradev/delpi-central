@@ -17594,3 +17594,15 @@ TO_INVENTORY=RC4 meta-surface question contract gap | RC3 local-model JSON adher
 RED_TESTS=6 (test_c3_contextual_discovery Parte 4) — todos RED no codigo atual
 EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO DEPLOY=NO
 NEXT=P1 fix canonico na borda de projecao (RC1+RC2) aguardando decisao de coordenacao
+
+
+## §6.392 — P1 remediacao: projecao de evidencia control-plane — RC1+RC2 corrigidos (2026-10-23)
+
+**2026-10-23 — DELIA-C3-EVIDENCE-PROJECTION-CONTROL-PLANE-REMEDIATION-01:** fix unico na fronteira canonica de projecao (orchestration.py). Novos conjuntos canonicos _CAPABILITY_VOCABULARY_KEYS/_DISCOVERY_ENVELOPE_KEYS/descritores strong+weak + _is_capability_descriptor (forma, nao posicao — homonimos de negocio preservados) + _without_control_plane recursivo + content_text JSON para caminho estruturado. _contract_fact_rows exclui control-plane/transporte/vocabulario no nivel do envelope; _resolver_entities/_synthesis_records nao promovem descritores a records. Baseline RED 6_failed/16_passed → 30_passed (8 novos positivos; 1 legado alinhado ao contrato de seguranca); suite backend completa verde. Live Ollama GPU 20 turnos: zero leak (agent_directives/contadores/ops) — D5 insuficiencia honesta, D4v/D5v contract_facts limpos, D8 OK. RC3-RC7 fora de escopo. EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO.
+
+TASK_ID=DELIA-C3-EVIDENCE-PROJECTION-CONTROL-PLANE-REMEDIATION-01
+RED_TESTS_BEFORE=6_FAILED GREEN_AFTER=30_PASSED SUITE=ALL_GREEN
+RC1_REMEDIATED=YES RC2_REMEDIATED=YES
+UNTRUSTED_METADATA_LEAK=NONE (deterministic + live scan 20 turns)
+HONEST_INSUFFICIENCY=YES BUSINESS_RECORD_INTEGRITY=YES
+ROLLBACK=git revert (single module + tests, zero migrations/deploy)

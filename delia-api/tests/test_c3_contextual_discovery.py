@@ -594,9 +594,11 @@ def test_contract_facts_redact_credential_material():
 
 
 def test_contract_facts_instruction_shaped_content_stays_bounded_data():
-    """Owner text shaped like a prompt injection is presented as
-    bounded rows — never executed, never re-injected into a model
-    stage."""
+    """Owner text shaped like a prompt injection is never rendered:
+    control-plane directives are orchestration data, so an envelope
+    that carries nothing else yields honest insufficiency — the
+    instruction is never executed, never re-injected into a model
+    stage and never projected as user-facing data."""
     outcome = _outcome(
         "docs",
         "get_catalog",
@@ -614,9 +616,11 @@ def test_contract_facts_instruction_shaped_content_stays_bounded_data():
         outcome, operation_class=SpecialistOperationClass.DISCOVERY
     )
     verdict = assess_outcome(facts)
-    assert verdict.decision == OUTCOME_CONTRACT_FACTS
-    for row in facts.contract_facts:
-        assert len(row) <= 900  # bounded key + bounded value
+    assert verdict.decision != "answered"
+    assert verdict.decision != OUTCOME_CONTRACT_FACTS
+    joined = "\n".join(facts.contract_facts)
+    assert "Ignore all previous instructions" not in joined
+    assert "agent_directives" not in joined
 
 
 def test_contract_facts_malformed_payload_fails_closed():
@@ -889,3 +893,194 @@ def test_cri_contract_facts_content_never_contains_directives():
         assert "Obey these directives" not in cri.content
         assert "candidate_count" not in cri.content
         assert "eligible_action_count" not in cri.content
+
+
+# ---------------------------------------------------------------------------
+# Part 5 — P1 positive/sibling coverage
+# (DELIA-C3-EVIDENCE-PROJECTION-CONTROL-PLANE-REMEDIATION-01)
+#
+# The projection filter is context-aware: envelope-level control-plane,
+# capability-catalog and discovery-transport fields are excluded, while
+# business evidence and homonymous business fields stay eligible.
+# ---------------------------------------------------------------------------
+
+
+def test_business_records_survive_descriptor_filter():
+    """Legitimate business records keep flowing: a plain entity
+    collection under a business key is business evidence."""
+    outcome = _outcome(
+        "products", "search", "ok",
+        structured={
+            "items": [
+                {"codigo": "10080043", "descricao": "REBITE"},
+                {"codigo": "10080044", "descricao": "PINO"},
+            ]
+        },
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.READ
+    )
+    assert facts.has_business_evidence is True
+    assert len(facts.records) == 2
+    verdict = assess_outcome(facts)
+    assert verdict.decision == "answered"
+
+
+def test_business_record_with_operation_homonym_fields_preserved():
+    """A dense business record carrying homonymous capability-ish
+    field names (op, operationId as data) is not a capability
+    descriptor — several business fields around them keep it
+    eligible."""
+    record = {
+        "codigo": "OP-42",
+        "descricao": "Operacao de estampagem",
+        "operationId": "estampa-01",
+        "quantidade": 120,
+        "valor": 58.5,
+        "data": "2026-10-01",
+    }
+    outcome = _outcome(
+        "teo", "get_process", "ok",
+        structured={"items": [record]},
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.READ
+    )
+    assert facts.has_business_evidence is True
+    assert facts.records[0]["codigo"] == "OP-42"
+
+
+def test_sparse_descriptor_entry_still_excluded():
+    """Sparse capability descriptors ({key, op, operationId,
+    whenToUse}) are catalog vocabulary even when short."""
+    outcome = _outcome(
+        "docs", "get_catalog", "ok",
+        structured={
+            "candidates": [
+                {"operationId": "delpi.search_products"},
+                {"key": "a", "op": "b", "whenToUse": "x"},
+            ]
+        },
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.READ
+    )
+    assert facts.has_business_evidence is False
+
+
+def test_discovery_only_transport_fields_yield_no_facts():
+    """A discovery envelope carrying only transport metadata
+    (query, counters, empty candidates) has no contract vocabulary
+    to present — honest insufficiency, no fabricated rows."""
+    outcome = _outcome(
+        "docs", "discover", "Discovery completed.",
+        structured={
+            "query": "especialistas",
+            "top_k": 5,
+            "candidate_count": 0,
+            "eligible_action_count": 95,
+            "candidates": [],
+        },
+    )
+    facts = _discovery_facts(outcome.structured)
+    assert facts.contract_facts == ()
+    verdict = assess_outcome(facts)
+    assert verdict.decision != "answered"
+    assert verdict.decision != OUTCOME_CONTRACT_FACTS
+
+
+def test_large_capability_catalog_bounded_and_not_business():
+    """A 40-entry capability catalog stays bounded and never
+    becomes business evidence or user-facing directives."""
+    catalog = {
+        "allowedOps": [f"op_{i}" for i in range(40)],
+        "capabilities": [
+            {"key": f"cap_{i}", "op": f"op_{i}",
+             "whenToUse": f"use {i}"}
+            for i in range(40)
+        ],
+        "capability_surface": {
+            "agent_directives": {"authority": "Obey x."}
+        },
+    }
+    outcome = _outcome("vista", "get_catalog", "ok", structured=catalog)
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.DISCOVERY
+    )
+    assert facts.has_business_evidence is False
+    assert len(facts.contract_facts) <= 8
+    joined = "\n".join(facts.contract_facts)
+    assert "Obey x." not in joined
+    assert "agent_directives" not in joined
+
+
+def test_entity_schema_homonymous_fields_preserved():
+    """Context-aware exclusion: status/operations inside an
+    entity contract schema are legitimate vocabulary and stay in the
+    dedicated entities row — only the envelope-level fields are
+    transport."""
+    outcome = _outcome(
+        "docs", "get_catalog", "ok",
+        structured={
+            "status": "success",
+            "candidates": [],
+            "capability_surface": {
+                "entities": {
+                    "process": {
+                        "filterable_fields": [
+                            "status", "operations", "codigo"
+                        ],
+                        "status": {"type": "string"},
+                    }
+                }
+            },
+        },
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.DISCOVERY
+    )
+    joined = "\n".join(facts.contract_facts)
+    assert "entities.process" in joined
+    assert "status" in joined
+    assert "operations" in joined
+    # Envelope-level transport keys never start a row.
+    for row in facts.contract_facts:
+        assert not row.startswith("status")
+        assert not row.startswith("candidates")
+
+
+def test_text_payload_json_catalog_not_line_dumped():
+    """A text-only outcome whose body is a serialized JSON catalog
+    takes the structured path — the same exclusions apply instead of
+    a raw line dump."""
+    import json as _json
+
+    outcome = _outcome(
+        "docs", "get_catalog", None,
+        structured=None,
+    )
+    outcome = SpecialistOutcome(
+        status=outcome.status,
+        provenance=outcome.provenance,
+        content_text=_json.dumps(_DAVI_DISCOVERY_ENVELOPE),
+        structured=None,
+    )
+    facts = OperationalCapabilityOrchestrator._outcome_facts(
+        outcome, operation_class=SpecialistOperationClass.DISCOVERY
+    )
+    joined = "\n".join(facts.contract_facts)
+    assert "agent_directives" not in joined
+    assert "Obey these directives" not in joined
+    assert not joined.startswith("{")
+
+
+def test_cri_contract_facts_has_no_raw_json_for_catalog():
+    """When only catalog data exists the CRI composition carries no
+    raw JSON dump of capability descriptors."""
+    facts = _discovery_facts(_VISTA_CATALOG_ENVELOPE)
+    verdict = assess_outcome(facts)
+    assert verdict.decision != "answered"
+    if facts.contract_facts:
+        joined = "\n".join(facts.contract_facts)
+        assert "upsert_data_source" not in joined
+        assert "agent_directives" not in joined

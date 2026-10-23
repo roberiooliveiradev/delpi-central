@@ -1691,6 +1691,106 @@ MAX_EVIDENCE_SCALAR_LIST = 48
 MAX_CONTRACT_FACT_ROWS = 8
 MAX_CONTRACT_FACT_ENTITY_ROWS = 4
 
+# Capability-catalog descriptor collections — vocabulary about how the
+# owner is operated (ops, schemas, guides, hints), never business
+# evidence and never user-facing contract facts. Only unambiguous
+# canonical collection names live here; homonymous business field
+# names (``operations``, ``tools``) are handled by descriptor-shape
+# detection or by envelope-context exclusion, never by name alone.
+_CAPABILITY_VOCABULARY_KEYS = frozenset(
+    {
+        "capabilities",
+        "allowedops",
+        "operationschemas",
+        "operationcatalog",
+        "capabilitycatalog",
+        "productguide",
+        "sideeffecthintcatalog",
+        "targetshape",
+        "displayformatcatalog",
+        "catalogversion",
+    }
+)
+
+# Discovery-execution fields at the top level of a discovery payload —
+# transport/orchestration data (the echoed query, counters, the
+# candidate list, envelope status, the owner op-catalog sections).
+# Excluded only at the digest's envelope level: homonymous fields
+# inside entity contracts or business records are preserved.
+_DISCOVERY_ENVELOPE_KEYS = frozenset(
+    {
+        "query",
+        "topk",
+        "candidatecount",
+        "eligibleactioncount",
+        "candidates",
+        "status",
+        "success",
+        "message",
+        "operations",
+        "tools",
+    }
+)
+
+# Capability-descriptor field signatures — an entry carrying a strong
+# vocabulary field (an operation identifier, when-to-use guidance, an
+# IO schema, a side-effect hint, a tool reference) is a capability
+# descriptor, not a business record. Weak fields only count in pairs
+# or alongside a strong field, so sparse homonymous business records
+# stay eligible.
+_CAPABILITY_DESCRIPTOR_STRONG_KEYS = frozenset(
+    {
+        "operationid",
+        "whentouse",
+        "inputschema",
+        "requiresplaylist",
+        "sideeffect",
+        "sideeffecthint",
+        "toolname",
+        "toolid",
+    }
+)
+_CAPABILITY_DESCRIPTOR_WEAK_KEYS = frozenset(
+    {"op", "operation", "capability", "capabilitykey"}
+)
+
+
+def _is_capability_descriptor(item: object) -> bool:
+    """True when a mapping is a capability-catalog descriptor.
+
+    Strong vocabulary fields mark an entry outright when the mapping
+    is descriptor-sparse or also carries a weak field; a dense
+    business record whose only overlap is a field named ``op`` or
+    ``operationId`` stays a business record.
+    """
+    if not isinstance(item, Mapping):
+        return False
+    canon = {_canonical_key(key) for key in item}
+    strong = canon & _CAPABILITY_DESCRIPTOR_STRONG_KEYS
+    weak = canon & _CAPABILITY_DESCRIPTOR_WEAK_KEYS
+    if len(weak) >= 2:
+        return True
+    return bool(strong) and (bool(weak) or len(item) <= 4)
+
+
+def _without_control_plane(value: Any) -> Any:
+    """Drop owner control-plane entries from a projected structure.
+
+    ``agent_directives``/``capability_surface`` are orchestration data
+    at any depth — never renderable user content. Recursive on the
+    control-plane set only; business fields with homonymous names
+    are untouched.
+    """
+    if isinstance(value, Mapping):
+        return {
+            key: _without_control_plane(item)
+            for key, item in value.items()
+            if _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        }
+    if isinstance(value, (list, tuple)):
+        return [_without_control_plane(item) for item in value]
+    return value
+
 
 def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
     """Bounded owner-contract digest from a DISCOVERY-class outcome.
@@ -1700,8 +1800,9 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
     one bounded row per remaining top-level section. Breadth-first,
     so a single deep JSON truncation never silently drops the
     vocabulary the owner actually publishes. Same sanitize/redact/
-    compact pipeline the argument stage consumes; capability-surface
-    metadata only, never domain facts.
+    compact pipeline the argument stage consumes; owner contract
+    vocabulary only — control-plane subtrees, capability-catalog
+    descriptors and discovery-transport fields are never projected.
     """
     payload = (
         outcome.structured
@@ -1709,10 +1810,22 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
         else outcome.content_text
     )
     if isinstance(payload, str):
-        text = _redact_text(payload)
-        return tuple(
-            line.strip() for line in text.splitlines() if line.strip()
-        )[:MAX_CONTRACT_FACT_ROWS]
+        text = payload.strip()
+        # A text-only result may itself be a serialized owner payload;
+        # JSON object bodies take the structured path so the same
+        # exclusions apply instead of line-splitting a raw dump.
+        if text.startswith("{"):
+            try:
+                payload = json.loads(text)
+            except (TypeError, ValueError):
+                payload = text
+        if isinstance(payload, str):
+            redacted = _redact_text(payload)
+            return tuple(
+                line.strip()
+                for line in redacted.splitlines()
+                if line.strip()
+            )[:MAX_CONTRACT_FACT_ROWS]
     sanitized = _sanitize_renderable(_unwrap_owner_payload(payload))
     rows: list[str] = []
     # All entity-contract collections the owner publishes (canonical
@@ -1778,13 +1891,15 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
         :MAX_CONTRACT_FACT_ENTITY_ROWS
     ]:
         text = json.dumps(
-            _compact_evidence(schema), ensure_ascii=False, default=str
+            _compact_evidence(_without_control_plane(schema)),
+            ensure_ascii=False,
+            default=str,
         )
         rows.append(
             f"entities.{str(name)[:80]}: "
             f"{text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
         )
-    compacted = _compact_evidence(sanitized)
+    compacted = _without_control_plane(_compact_evidence(sanitized))
     if not isinstance(compacted, Mapping):
         rows.append(
             json.dumps(compacted, ensure_ascii=False, default=str)[
@@ -1796,9 +1911,20 @@ def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
     # enumerations remain visible after them within the same bound.
     items = list(compacted.items())[:MAX_SURFACE_ENTRIES]
     items.sort(key=lambda kv: not isinstance(kv[1], Mapping))
+    entity_collections = frozenset(
+        _canonical_key(k) for k in _ENTITY_SCHEMA_COLLECTION_KEYS
+    )
     for key, value in items:
         if len(rows) >= MAX_CONTRACT_FACT_ROWS:
             break
+        canon = _canonical_key(key)
+        if (
+            canon in _CONTROL_PLANE_KEYS
+            or canon in _CAPABILITY_VOCABULARY_KEYS
+            or canon in _DISCOVERY_ENVELOPE_KEYS
+            or canon in entity_collections
+        ):
+            continue
         text = json.dumps(value, ensure_ascii=False, default=str)
         rows.append(
             f"{str(key)[:80]}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
@@ -2862,17 +2988,23 @@ def _resolver_entities(structured: object) -> tuple[Mapping[str, Any], ...]:
     def _mappings(value: object) -> tuple[Mapping[str, Any], ...]:
         if not isinstance(value, (list, tuple)):
             return ()
+        # Capability-catalog descriptors are never owner entities —
+        # filtered by descriptor shape, not collection position, so
+        # homonymous business fields keep their records eligible.
         return tuple(
             item
             for item in list(value)[:MAX_CANDIDATE_ENTRIES]
             if isinstance(item, Mapping)
+            and not _is_capability_descriptor(item)
         )
 
     for key in _RESOLVER_ENTITY_KEYS:
         entities = _mappings(doc.get(key))
         if entities:
             return entities
-    for value in list(doc.values())[:MAX_SURFACE_ENTRIES]:
+    for key, value in list(doc.items())[:MAX_SURFACE_ENTRIES]:
+        if _canonical_key(key) in _CAPABILITY_VOCABULARY_KEYS:
+            continue
         if isinstance(value, (list, tuple)):
             entities = _mappings(value)
             if entities:
@@ -3377,6 +3509,7 @@ def _synthesis_records(
         for key, value in doc.items()
         if isinstance(value, Mapping)
         and _canonical_key(key) not in _CONTROL_PLANE_KEYS
+        and _canonical_key(key) not in _CAPABILITY_VOCABULARY_KEYS
     ]
     if len(containers) == 1:
         candidate = containers[0]
