@@ -127,3 +127,18 @@ AC-01 `PASS` · AC-02 `PASS` (lacuna explícita prod↔tst mapeada) · AC-03 `PA
 | Autorização de escrita para o ensaio | PO + owner Protheus |
 
 **`E1.H1_READY = NO`** — pré-condições 2–6 pendentes; nenhuma incógnita técnica de ambiente restante.
+
+
+## 9. Revisão GPT — aceite arquitetural P1 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` do diagnóstico read-only; `E1.H1_READY = NO` e `E1.H1 = NOT_AUTHORIZED`.** Revisão fundamentada no relatório P1 persistido no GitHub (execução Cursor, commit `c666e96af0`) e no escopo isolado E1 anteriormente inspecionado. O GPT não reexecutou conexões REST/SQL nem os testes; 80 e 437 PASS são resultados **reportados**.
+
+**PROVEN no alcance da evidência registrada:** GET REST dos identificadores analisados correlaciona-se com registros em `DELPI_TST01`, distintos dos registros homônimos de `DELPI`; os 35 candidatos foram reconciliados contra o dicionário e o contrato atual permanece sem promoção. A correlação GET é **forte evidência de destino de leitura do endpoint examinado**, mas não é, isoladamente, prova de configuração de escrita em todas as rotas/instâncias. Manter confirmação explícita com owner TOTVS antes de H1.
+
+**Correção de precisão:** `TAX_ID_DIVERGENCE = PARTIALLY_RESOLVED`. O payload de saída continha `tax_id`, enquanto GET/SQL posterior no dataset de homologação o mostra vazio. Isso delimita a investigação **após o boundary de saída da api-delpi**, mas **não prova** qual componente específico (gateway, endpoint Gabriel, Execauto MATA020 ou regra de transformação) descartou o documento, nem comprova deploy upstream entre as datas. Tratar `CAUSE_PROVEN` como 'não persistência pós-envio observada'; **root cause = TO_INVENTORY / owner Gabriel-TOTVS**.
+
+**Campos:** `READY_FOR_HOMOLOGATION=18` indica somente candidatos a ensaio técnico, jamais 18 campos com escrita homologada. `NEEDS_REVIEW` e `LOOKUP-dependent` permanecem condicionados à semântica e às chaves corretas por empresa/filial; nenhum dos 35 foi aprovado em REST. Verificar a contagem das classes bloqueadas e campos bancários contra a tabela-mestre antes de usar como status executivo, pois classificações podem se sobrepor.
+
+**Rollback:** bloqueio de fornecedor de teste por `A2_MSBLQL` é **mitigação proposta sujeita ao owner**, não remoção/reversão transacional equivalente a rollback. H1 exige plano explícito de resíduos, não reutilização ou exclusão silenciosa do registro.
+
+**Próximo gate:** resposta formal do owner sobre `tax_id`, pareamento homologação REST×SQL, conta técnica `codusr`, política de resíduos e autorização específica do PO/Protheus para ensaio controlado. Proibidos neste aceite: POST/PUT real, deploy, alteração de flags e promoção de contrato público.
