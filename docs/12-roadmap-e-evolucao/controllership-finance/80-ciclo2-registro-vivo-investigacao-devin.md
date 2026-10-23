@@ -200,9 +200,9 @@ Base: `cda28e6b9fddfa47ac03dac77d21bf80e23b0d0f`, worktree limpo, somente leitur
 | Camada | Mecanismo | Evidência |
 |---|---|---|
 | AuthN usuário | JWT Keycloak (JWKS, issuer+audience obrigatórios, fail-closed sem config) | `shared/delpi_auth/jwt_validator.py` |
-| AuthZ efetiva | Permissões efetivas resolvidas no **Core `/me` por request**, com fallback a claims stale (`rbac_unavailable`) | `shared/delpi_auth/middleware/fastapi_auth.py:103` |
-| Enforcement rota | `require_any_permission(...)` sobre `user.permissions`; `is_superadmin` bypass; `rbac_unavailable` → 503 (não 403 falso) | `shared/delpi_auth/authorization.py` |
-| S2S individual (ADR-010) | `X-Delpi-Service-Authorization` client-credentials: assinatura, issuer, audience dedicada, client allowlist e scope por rota; token interno compartilhado **nunca** autoriza; Bearer de usuário segue obrigatório (ator delegado) | `api-delpi/app/interface/http/s2s_service_access.py` |
+| AuthZ efetiva | Core `/me` é a fonte primária, mas `load_user_rbac` emprega cache normal (TTL padrão 60s) e pode reutilizar dado stale (TTL padrão 900s) em falhas de consulta; `force_refresh` ignora caches e não aceita stale. Caminho de fallback por claims e marcação `rbac_unavailable` devem ser avaliados distintamente. **Não** equivale a reconsulta obrigatória do Core a cada request. | `shared/delpi_auth/middleware/fastapi_auth.py:26-29,84-103,103-162,184-272` |
+| Enforcement rota | `require_any_permission(...)` usa permissões do contexto e trata `is_superadmin` antes do teste. Quando `rbac_unavailable` é verdadeiro **e falta permissão**, `_deny_missing_permission` eleva `Service Unavailable`; mapear resposta HTTP pelo middleware, sem afirmar fail-closed absoluto para todos os cenários de stale cache. Requer prova por teste para rota/principal. | `shared/delpi_auth/authorization.py`; `shared/delpi_auth/middleware/fastapi_auth.py` |
+| S2S individual (ADR-010) | Guardas S2S e token delegado aparecem implementados para rotas específicas; validade de assinatura, audience, client allowlist, scope e obrigatoriedade de Bearer devem ser atestadas por testes de contrato/negação e configuração efetiva. Não inferir cobertura global de todos os endpoints. | `api-delpi/app/interface/http/s2s_service_access.py`; rotas financeiras e testes aplicáveis a inventariar |
 | Superfícies públicas | Somente `/public/*`, `/.well-known/oauth-protected-resource`, `/gpt-actions/v1/openapi.json` | `api-delpi/app/middleware/auth_middleware.py:24-64` |
 | MCP | `/mcp` exige OAuth de usuário (modelo A); identidade de máquina proibida | `auth_middleware.py:77-93`, `main.py:375` |
 
@@ -226,7 +226,7 @@ Fonte: `api-delpi/app/interface/http/routes/system_routes.py:69-290`; mount `mai
 
 | Rota | Guardrails | AuthZ | Tipo | Disponibilidade |
 |---|---|---|---|---|
-| `POST /data/sql` (`execute_sql_raw`) | `SqlValidator` (sqlglot T-SQL AST): só DECLARE/SET/SELECT/WITH; deny DDL/DML/EXEC/transactions/`INTO`/APPLY/comma-join/qualificação/identificador delimitado; máx. 10 SELECTs; allowlist de 53 tabelas físicas **com bypass ligado por padrão** (`DATA_SQL_SKIP_TABLE_WHITELIST` default `"true"` — salvaguardas estruturais permanecem); `fetchall` sem teto de linhas observado; telemetria `timed_sql_query` | `api-delpi.data` (permissão efetiva Core) | READ-only por construção, mas superfície de dados arbitrária | IMPLEMENTED — **SECURITY_REVIEW_REQUIRED** antes de uso; exposta ao DAVI apenas via ação canônica `execute_readonly_sql` com `BOUNDED_DYNAMIC_RESULTSET` |
+| `POST /data/sql` (`execute_sql_raw`) | Validador SQL estrutural e configuração de bypass de allowlist reportados no D0; seu comportamento efetivo, indireções e negativas devem ser demonstrados por testes. O caminho de repositório reporta `fetchall` sem teto de linhas comprovado neste review; auditoria e timeout pendentes. **Não** presumir SELECT-only como garantia integral sem testes e hardening. | `api-delpi.data` (grant efetivo não verificado) | SELECT-like / SECURITY_REVIEW_REQUIRED, não autorizado neste ciclo | IMPLEMENTED (código) / runtime não verificado; DAVI tem superfície declarada `BOUNDED_DYNAMIC_RESULTSET`, que não prova limite da rota de backend |
 
 Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_repository.py:188-215`, `app/content/davi_external_read_allowlist.json` (95 ops; única com `canonicalSqlRoute` = `execute_readonly_sql`). Auditoria por usuário e timeout/statement cap: **TO_VERIFY**.
 
@@ -255,7 +255,7 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 
 | WS | Capacidade candidata | Cobre sem SQL bruta? | Lacuna / dependência |
 |---|---|---|---|
-| C2-01 MATR320×P7×H02 | `/system` (bindings SB9/SB2/SD3…) + `/supplies/stock-value` + `/financeiro/stock-inventory` | Metadados: sim. Dados/paridade: **não** — exige rotas tipadas novas ou `/data/sql` com GO | Job/parâmetros do fechamento não são expostos por API — owner Protheus |
+| C2-01 MATR320×P7×H02 | `/system` (bindings candidatos SB9/SB2/SD3…) + `/supplies/stock-value` + `/financeiro/stock-inventory` | Capacidade de consultar dicionário implementada; bindings necessários **não verificados**. Dados/paridade: não autorizados | Job/parâmetros do fechamento não são expostos por API — owner Protheus |
 | C2-02 P7 integral×reduzido | idem + contrato R03 (`officialP7:false` preservado) | Metadados: sim. Dois outputs oficiais: fora da API (artefatos/custódia PO) | comparação documental, não SQL |
 | C2-03 CPV/Kardex 01 | `/supplies/cpv` + `/system` (SD3/SB2 bindings) | Parcial — regra de coluna de custo exige binding físico via `/system` | confirmar grain da rota CPV |
 | C2-04 Baixas | `/financeiro/settlements/*` (S2S) + `/system` (FK1/FK2/FK7/SE1/SE2/FKB/SED) | Metadados: sim. Paridade FINR190/logs: depende de artefatos oficiais | owner Financeiro + proveniência FINR |
@@ -263,7 +263,7 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 | C2-06 Faturamento×MOD | rotas produção + `/system` (SH6/SH1/SD2/SD3) | Metadados: sim | semântica previsto/realizado: owner Custos/PCP |
 | C2-07 Custo médio/jobs | `/system` (B2_CM1 e correlatas) + código `stock_value_*` | Metadados: sim | **status de jobs Protheus não é API** — DECISION_REQUIRED (observação assistida) |
 | C2-08 CC/SD1 | `/financeiro/despesas-centro-custo/*` + `/system` (SD1/CTT) | Parcial — fonte real atrás de view customizada | mapear linhagem da `vw_fin_despesas_centro_custo` |
-| C2-09 Entregas/fontes externas | Core (aprov humano) + doc 47 checklist | n/a — investigação documental | sem dependência de SQL |
+| C2-09 Entregas/fontes externas | Core (aprovação humana) + doc 47/checklist | Fonte ERP por `/system` não aplicável como critério universal; documentação e contrato externo requerem owner | sem dependência obrigatória de SQL |
 
 ### 11.D — Gaps e decisões pendentes
 
@@ -273,7 +273,7 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 - Timeout/statement cap e auditoria por usuário em `/data/sql`: **TO_VERIFY**.
 - Linhagem SD1 da view `vw_fin_despesas_centro_custo`: **TO_VERIFY** (D1 via `/system` não resolve views customizadas; pode exigir `INFORMATION_SCHEMA`/fonte TOTVS — ponto de GO).
 - `strategic-indicators-api` e consumers de indicadores CPV/MOD: **TO_INVENTORY** se C2-03/C2-06 exigirem.
-- Nenhuma divergência material doc×código detectada neste lote; **NO_GATE_CHANGE** no doc 47.
+- **Revisão GPT D0** detectou imprecisão material da frase `Core /me por request` diante de cache normal/stale; correção documental registrada, sem alegar que o runtime esteja defeituoso. **NO_GATE_CHANGE** no doc 47.
 
 ### 11.E — Proposta delimitada do D1 (PENDING_GO)
 
@@ -284,3 +284,16 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 5. **Critérios de parada**: permissão ausente (`403`), tabela não catalogada, necessidade de dados (→ volta ao PO), qualquer ambiguidade de escopo.
 6. **Não coberto por capacidades atuais**: parâmetros de jobs/rotinas Protheus (MATR320, Refaz Saldos, Acompanha Custos), artefatos oficiais, linhagem de views customizadas — exigem owner humano ou GO específico.
 7. **Owners necessários**: PO (GO), owner api-delpi (confirmação de uso `/system`), admin Core/Keycloak (grant do principal).
+
+
+### 11.F — GPT rework documental D0 (23/10/2026)
+
+**Motivo:** revisão da precisão de authz/cache, cobertura `/system` e garantias SQL/S2S. Rework exclusivamente documental; nenhum teste ou chamada ao ERP.
+
+1. **Core RBAC:** `load_user_rbac` consulta `Core /me` quando necessário, usando cache normal de 60 segundos e fallback stale até 900 segundos pelos valores padrão (`fastapi_auth.py:26-29,103-162`). `force_refresh=True` ignora os caches e desativa fallback stale. `rbac_unavailable` não pode ser descrito como consequência de toda falha do Core: houve caminhos de cache e fallback distintos, cuja execução por rota depende de testes de negação. Não alegar reconsulta ao Core em toda request.
+2. **Cobertura:** todas as nove frentes receberam rotas *candidatas* no manifesto D0; não houve chamadas reais às rotas `/system`, conferência de dados físicos nem demonstração de que todos os bindings existem. `G4 = NO_GATE_CHANGE` até evidência direta e owner.
+3. **`/data/sql`:** manter `SECURITY_REVIEW_REQUIRED` e `NOT_AUTHORIZED`; bypass reportado de allowlist e ausência observada de row cap impedem considerá-la apta para D1. A proteção estrutural SELECT-like deve ser testada antes de constituir garantia de segurança; a bounded projection DAVI não prova teto no backend.
+4. **S2S:** guardas presentes no código para rotas financeiras, mas efetividade de configuração, negative paths, grants e token delegado dependem de testes específicos e owner; não se deve generalizar para toda a API.
+5. **Rastreabilidade:** Doc 47 preservado com `NO_GATE_CHANGE`. Os dados de autenticação vêm do código no HEAD observado; nenhum HTTP/ERP ou permission grant foi testado. D1 permanece `PENDING_GO`, com principal/owner e escopo por aprovar.
+
+**Revisão:** correções documentais efetuadas; nenhum sinal de implementação autorizada. `D0_EXECUTION=DOCUMENTARY_ONLY`; `G4_PARITY=TEST_NOT_RUN`; `D1=NO_GO`.
