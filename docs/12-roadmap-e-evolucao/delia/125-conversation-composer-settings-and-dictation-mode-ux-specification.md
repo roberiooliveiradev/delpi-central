@@ -147,3 +147,26 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 - No HEAD examinado, `ComposerSettingsMenu` possui listener `onChange` que chama `dismiss()` quando o alvo é descendente de `[data-close-on-change]`. O executor deve verificar o uso real dessa marcação e aplicar o menor diff para que a troca de rádio não feche o painel, preservando comportamento de Escape/outside/trigger e compatibilidade de outras seções existentes.
 
 **Critérios de aceite adicionais:** `CM-01` selecionar batch→live mantém painel aberto; `CM-02` live→batch idem; `CM-03` clique fora fecha sem roubar foco da interação externa; `CM-04` trigger fecha ao segundo clique; `CM-05` Escape fecha e restaura foco; `CM-06` múltiplas seleções sem remount/perda de draft/caret; `CM-07` opção bloqueada durante captura; `CM-08` full-page/Dock/mobile e regressões de dictation/queue sem auto-submit. Evidenciar SHA, testes e QA; docs-only não altera runtime.
+
+
+## 11. Decisão de motion UX — microinterações suaves (2026-10-23)
+
+**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING. O Product Owner solicitou que o menu Configurações do campo de pergunta e suas trocas entre opções transmitam a personalidade amigável e suave da DÉLIA. A aparência clean (§9), keep-open (§10), batch default, live opt-in, acessibilidade e regras de captura permanecem congeladas.
+
+### Comportamento alvo
+
+- **Entrada:** painel ancorado aparece com transição curta de opacidade e deslocamento vertical mínimo (aprox. 4–6px) após o posicionamento correto. Referência de timing **140–180ms** com easing de desaceleração; não animar a posição computada do portal, nem causar salto/clipping.
+- **Saída:** fade-out/transform discretos por **100–150ms**, somente se a primitiva/ownership atual suportar lifecycle de saída com segurança. Antes de adicionar fase de exiting, provar que não interfere com outside-click/Escape, foco, desmontagem, múltiplos mounts, Portal host, reduced-motion e testes. Se a saída animada exigir alterar primitiva compartilhada ou introduzir lifecycle/race não autorizado, **não duplicar portal**, implementar transições seguras de entrada/seleção e reportar gate específico para saída.
+- **Troca de opções:** realce selecionado transiciona entre os itens via cor de fundo e check (opacidade/escala sutil), por **140–200ms**; opção de destino é semanticamente selecionada **imediatamente**. Não atrasar state/aria-checked, não fabricar um slider animado ou mover conteúdo, não montar outro editor além do que a arquitetura atual já faz.
+- **Hover e foco:** transições de fundo/cor suaves; focus-visible sempre nítido e instantaneamente reconhecível. Trigger de engrenagem sinaliza aberto com mudança suave de cor/superfície; sem rotação dramática.
+- **Reduce motion:** `prefers-reduced-motion: reduce` elimina transforms e animações não essenciais, preservando semântica, foco e velocidade de interação. Não depender de animação para entender a seleção.
+- **Tema:** usar tokens `plugin-ui`, evitar cores novas hardcoded; preservar contraste e dark/light.
+- **Respeitar keep-open:** selecionar batch/live mantém menu aberto, independentemente da transição; fechar somente via trigger/Escape/clique externo. Nenhuma escolha inicia gravação/envio ou altera o draft/caret.
+
+### Evidence-driven implementation
+
+No HEAD da especificação, já havia transição de `background-color` e `opacity` de **120ms** para opção/check em `plugins/delia/src/index.css`; portanto o trabalho deve **refinar o motion existente**, não duplicar mecanismo por estética. 
+
+**Task proposta:** `DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01`. Reanchor autoridades/ledger, verificar `AnchoredPanelPortal`, `ComposerSettingsMenu`, `DictationModeSettings`, CSS e `prefers-reduced-motion`; `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` sujeitos a inventário; teste RED/green; QA real com capturas de vídeo/frames (não apenas screenshots estáticos), teclado/Escape/click-outside, Full-page/Dock/mobile, temas, reduced-motion, race de troca e desmontagem; regressão, commit/push main, deploy frontend gated, post-deploy QA e report.
+
+**Critérios MOT-01..MOT-09:** abertura perceptivelmente suave; fechamento seguro conforme gate da primitiva; transição entre selecionados sem flicker; check discreto; trigger suave; menu keep-open; reduced-motion; nenhum impacto em foco/caret/capture/auto-submit; QA multi-superfície. Status da alteração deste documento: `DOC_ONLY; RUNTIME_NOT_CHANGED`.
