@@ -96,3 +96,12 @@ Marcadores proibidos **ausentes** (0 ocorrências): `api-delpi`, `brasilapi.com.
 - Aceite visual/interativo (A–E + caret + mobile/temas) — pendente de sessão de navegador autenticada (PO ou execução com ferramenta de browser).
 - Imagem de rollback anterior não sobrevive no host — reversão exige rebuild por SHA; registrar se política de retenção de imagem for exigida.
 - `GATE-FEATURE S9 = INCONCLUSIVE` — deploy técnico saudável, promoção integral pendente de evidência visual.
+
+
+## 9. Revisão GPT — aceite arquitetural do runtime (2026-10-23)
+
+**Decisão: `ACCEPT_WITH_RESIDUAL` para a publicação técnica S9.D1**, baseada no relatório e nas evidências versionadas no GitHub (execução Cursor, commit `3fd88ec163`). O GPT não reexecutou SSH, Docker nem sessão autenticada no navegador. A imagem MFE já continha S9 antes desta tarefa, portanto **deploy/rebuild executado nesta tarefa = nenhum**. Bundle federado S9 publicado/HTTP 200, endpoints sem token 401, serviços saudáveis reportados e ERP write gate OFF são suficientes para aceite do gate técnico, **não** para aceitar o comportamento visual.
+
+**Residuais:** testes A1–A5 (máscara/colagem), B (caret e edição no meio), C (CPF/CNPJ por pessoa), D (hora baseada em `retrieved_at` e fuso de Brasília), E (fonte amigável), regressão visual S8 e mobile/temas/teclado = `TEST_NOT_RUN`. `GATE-FEATURE S9 = INCONCLUSIVE` até evidência interativa. A imagem anterior `6b3130be529f` foi pruned: rollback por rebuild a partir de SHA histórico **é procedimento possível declarado**, mas não equivale a rollback imediato por imagem retida; confirmar dependências, procedimento e política de retenção antes de próxima mudança produtiva.
+
+**Próxima ação:** validação manual pelo PO no navegador autenticado, sem gravação de fornecedores. Capturar resultados por cenário, URL/bundle, hora de verificação e evidências sanitizadas; não inferir `PASS` de marcadores do bundle. Nenhuma alteração de BFF/api-delpi, RBAC ou gates de escrita autorizada por esta revisão.
