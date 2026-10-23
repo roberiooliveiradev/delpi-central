@@ -170,17 +170,26 @@ artefato × banco **demonstrada e reproduzível, Δ R$ 0,00** →
 | EM ESTOQUE PA | 190.511,24 | MATR320 Saldo Atual PA | **exato** | 0 |
 | EM ESTOQUE PI | 24.528,60 | MATR320 Saldo Atual PI | **exato** | 0 |
 | EM ESTOQUE total | 3.591.191,36 | SA_emissão (3.884.464,444) − loc99_emissão (293.273,088, exato — doc 80 §34.D) = 3.591.191,356 → imprime 3.591.191,36 | **exato** | 0 (Δ 0,004 era arred. de impressão — §34.D) |
-| Resumo MP/PA/PI estoque | 2.699.026,36 (MP 2.483.986,52) | emissão com `as_of`/parâmetros diferentes — não reconciliável com snapshot | **pendente** | E2 parâmetros |
-| Resumo MP/PA/PI processo | 277.941,20 (MP 277.686,77) | idem — `as_of` distinto do xlsb MEP (354.938,50) | **pendente** | E2 parâmetros |
+| Resumo MP/PA/PI estoque | 2.699.026,36 (MP 2.483.986,52) | **mesma data-base/custo** do completo (PA/PI bit a bit); MP = ex-99 − produtos `QTNP@emissão>0` (587.621,85 vs 587.698,28 implícito) | **parcial** — Δ 76,43 | E2 parâmetros/população |
+| Resumo MP/PA/PI processo | 277.941,20 (MP 277.686,77) | exclusão poder3 por produto `QTNP@emissão` no MATR989 (79.194,35 vs 77.251,73 implícito) | **parcial** — Δ 1.942,62 | E2 parâmetros/população |
 
 **Rodada 15 (doc 80 §33.D):** a emissão completa (`Estoque.pdf`) tem EM
 ESTOQUE = saldo físico **excluindo o armazém de processo**
 (`MV_LOCPROC='99'`) no `as_of` da emissão — prova centesimal acima.
 `EM PROCESSO` = MATR989 (medida por OP, distinta do estoque físico de
-loc 99). A emissão resumida usa parâmetros/`as_of` diferentes — segue
-`PENDING` (E2, TI/ERP). **G4/G5 permanecem PENDING**: binding de
-totalização provado; binding de **parametrização por emissão** e
-produtor (`matr460.prx`/workfile) ainda não.
+loc 99).
+
+**Rodada 17 (doc 80 §35):** a emissão resumida (folha 74) usa a **mesma
+data-base 30/09 e o mesmo estado de custo** do completo — a divergência
+é de **escopo**: somente classificações MP/PA/PI + **exclusão de
+material poder-de-terceiros sobre MP**. `QTNP@emissão>0` explica
+99,987 % do estoque e ~97,5 % do processo; sem linhas de produto da
+folha 74 nem fonte `matr460.prx`, a população exata fica ambígua
+(subset-sum). `MTR460` (SX1, 25 perguntas) catalogado — existe
+`Saldo em Poder 3º?` (Sim/Não/De Terceiros/Em Terceiros), **sem**
+parâmetro de tipo de produto. **G4/G5 permanecem PENDING**: binding de
+totalização provado no completo; parametrização da emissão resumida e
+produtor ainda não.
 
 ## §4 — R05 · Entradas e Saídas (`MATR320.prt`)
 

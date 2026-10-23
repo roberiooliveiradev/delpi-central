@@ -2000,3 +2000,127 @@ parametrização/produtor (E2), não a aritmética.
 - Classificações: `PROVEN` (130/130 células, ponte MP ao centavo,
   origem do centavo); escopo = emissão MATR320 01–30/09/2026 filial
   01 apenas. SQL: SELECT-only, GO §12.
+
+## §35 — RODADA 17 (CF-C2-P7-PARAMETERS-PARITY-001) — DECOMPOSIÇÃO DA EMISSÃO RESUMIDA P7 — 2026-10-23
+
+Escopo: somente resíduos de R03 (P7/MATR460). SQL SELECT-only via
+`delpi-api-delpi` (GO §12). Nenhuma reabertura de R05/R01/R02; nenhuma
+mudança de gate nesta rodada.
+
+### A. Estrutura das emissões — fatos observados
+
+- `Estoque.pdf` = **FOLHA 000.101** de um "REGISTRO DE INVENTÁRIO"
+  (MATRIZ, `ESTOQUES EXISTENTES EM: 30/09/2026`) — resumo com **10
+  classificações fiscais** em EM ESTOQUE (3.591.191,36) + EM PROCESSO
+  (355.240,51) → TOTAL GERAL **3.946.431,87**.
+- `Resumo Estoque.pdf` = **FOLHA 000.074** de uma emissão **distinta**,
+  mesmo layout e mesma data-base — resumo com **apenas MP/PA/PI**
+  (EM ESTOQUE 2.699.026,36 + EM PROCESSO 277.941,20) →
+  **2.976.967,56**.
+- Fato decisivo: **PA e PI são idênticos nas duas folhas**
+  (EM ESTOQUE 190.511,24 / 24.528,60; EM PROCESSO PI 254,44) → ambas
+  usam a **mesma base temporal e o mesmo estado de custo**. A
+  divergência é exclusiva de MP: `EM ESTOQUE −587.698,28`;
+  `EM PROCESSO −77.251,73`.
+- Vídeo (frames 35:00–38:00): abas simultâneas
+  "Registro de Inventário Módulo P7" (≥3), preview intermediário
+  30/09 15:06 (TOTAL 3.776.994,69), MATR320 14:53 anterior, preview
+  15:08 já no escopo MP/PA/PI (MP EM ESTOQUE ≈2.483.070 — consistente
+  com estado parcial de gravação do fechamento).
+
+### B. Produtor — confirmado vs pendente
+
+- **Confirmado:** rotina de menu "Registro de Inventário Modelo P7" →
+  `MATR460`; grupo de parâmetros **SX1 `MTR460` (25 perguntas)**
+  extraído integralmente (doc 85 BR-R03-008). Não existe grupo
+  `MTR460A`; `MTA460` pertence a faturamento; `MTR470` é livro de
+  movimentações (outra rotina).
+- Cadeia de execução candidata confirmada estruturalmente:
+  `MATR460 → MP7_*(workfiles) → MP7GDA (agregação produto) → A460UNIT
+  (hook custom) → relatório`. `MP7_*` retêm competências só até
+  ~04/2024 — a da emissão não sobrevive (`MP7GDA` remanescente:
+  78 produtos ≠0, Σ 539.330,11).
+- **Pendente:** fonte `matr460.prx`/RPO compilado — não inferido
+  `CODE_DEPLOYED`. Semântica exata do parâmetro `02 Saldo em
+  Poder 3º ?` (Sim/Não/De Terceiros/Em Terceiros) não demonstrável
+  sem fonte.
+- SX6 vigente: `MV_LOCPROC='99'`, `MV_CQ='98'`, `MV_CQREJEI='50'`,
+  `MV_ALMTERC` vazio.
+
+### C. Hipóteses testadas e descartadas (com evidência)
+
+| Hipótese para Δ MP EM ESTOQUE (−587.698,28) | Resultado |
+|---|---|
+| Filtro de armazém | MP ex-99 = 3.071.684,80; nenhum subconjunto de armazéns = alvo (loc01 sozinho = 3.008.095,45) — **descartada** |
+| `as_of` temporal (qualquer cutoff 01/09–01/10) | varredura não atinge 2.483.986,52; PA/PI idênticos contradizem — **descartada** |
+| Faixa/prefixo de produto | nenhuma partição por prefixo = 587.698,28; PA(7xxx)/PI(alfanumérico) não formam range único — **descartada** |
+| Produtos sem movimento em setembro | 1.273.803 ≠ alvo — **descartada** |
+| Exclusão poder3 por **quantidade** (QTNP×custo, SB6×custo) | 731.759 / 681.078 / 670.628 — **descartada** |
+| Emissão intermediária (SB9 regravado progressivamente) | reconstrução por prefixo de código não fecha; PA/PI idênticos contradizem — **descartada** |
+
+### D. Melhor modelo — exclusão por conjunto de produtos poder3
+
+- **MP EM ESTOQUE:** excluir do universo ex-99 os produtos com
+  `QTNP@emissão>0` (B2_QTNP corrente revertido por movimentos
+  `F4_PODER3='R'/'D'` inseridos após 01/10 16:16:27) →
+  **587.621,85** vs alvo 587.698,28 — **residual 76,43** (0,013 %).
+  Nenhum produto fora do conjunto vale 76,43 (subset-sum ambíguo:
+  centenas de combinações; ex.: 10081855=71,21 SB6-R aberto sem QTNP).
+- **MP EM PROCESSO:** mesma família — soma MATR989 dos produtos
+  `QTNP@emissão>0` = **79.194,35** vs alvo 77.251,73 —
+  **residual +1.942,62**. Composição: tipo '' 64.388,66 + RE9
+  12.410,84 + RE2 2.394,85 + RE1/RE0 0. Nenhuma partição por
+  `TIPO RE/DE`, OP poder3 (SC2 `C2_OPTERCE`/`C2_STTERCE` só PI/PA) ou
+  produto-fronteira fecha o centavo.
+- Direção dos residuais: estoque precisa **+76,43** de exclusão
+  (resumo exclui mais), processo precisa **−1.942,62** (resumo
+  exclui menos) — incompatível com simples mudança de `as_of` do
+  conjunto QTNP; sugere diferença de **medida** (posição poder3 por
+  movimento, workfile `aDadosCF9`, ou estado QTNP de outro instante).
+- **Classificação:** `PROVEN` — o resumo aplica regra de exclusão de
+  material poder-de-terceiros sobre MP (direção e magnitude provadas;
+  MTR460 param 02 existe e é a regra candidata). `PENDING` —
+  população exata (QTNP vs SB6 vs workfile), instante do conjunto e
+  mecanismo de escopo de tipos (MTR460 não tem parâmetro de tipo;
+  possível multi-seleção de tipos na UI ou variante custom).
+
+### E. Matriz de parâmetros (observado × inferido × ausente)
+
+| Parâmetro | P7 completo (folha 101) | P7 resumo MP/PA/PI (folha 74) | Fonte |
+|---|---|---|---|
+| Rotina | Reg. Inventário Modelo P7 (MATR460) | idem (mesmo layout/data-base) | PDFs, vídeo |
+| Data de Fechamento | 30/09/2026 | 30/09/2026 | cabeçalho |
+| Filial | 01 MATRIZ | 01 MATRIZ | cabeçalho |
+| Tipos de produto | todos (10 classificações) | MP/PA/PI | resumos |
+| `Saldo em Poder 3º ?` | incluído (provado: total bate ex-99 integral) | excluído ≈QTNP@emissão (99,987 %; Δ76,43) | reconstrução |
+| `Saldo em Processo ?` | Sim | Sim | seções EM PROCESSO |
+| Lista Custo | Médio (PA/PI = B2_CM1 exato) | idem | valores idênticos |
+| Timestamp execução | ~01/10 16:16 (binding custo) | desconhecido (folha 74 < 101 ≠ ordem) | binding/vídeo |
+| Demais parâmetros MTR460 | ausentes nos artefatos | ausentes | — |
+| Estado de homologação | aceito como referência | não homologado — pendente E2 | — |
+
+### F. Timeline P7 (competência 09/2026)
+
+`30/09 ~14:47` início fechamento (wizard custo) → `14:53` MATR320
+(SA MP 3.370.493,537) → `15:06` P7 preview total (3.776.994,69) →
+`15:08` P7 escopo MP/PA/PI (estado parcial) → `01/10 16:15:58`
+MATR989 "Material em processo" → `01/10 ~16:16` P7 completo oficial
++ MATR320 oficial → `02/10` movimentos poder3 (rec +138.885 u /
+dev −152.921 u) → `21/10 19:13` regravação integral SB9@0930.
+
+### G. Decisão de gate
+
+- **R03 G4: PENDING (parcial PROVEN)** — bindings físicos e
+  totalização do completo demonstrados; parâmetros efetivos por
+  emissão só parcialmente demonstrados (escopo de tipos e regra
+  poder3 sem prova centavo nem fonte).
+- **R03 G5: PENDING** — resumo não reproduzido ao centavo
+  (Δ estoque 76,43 / Δ processo 1.942,62); sem linhas de produto da
+  emissão resumida nem fonte do produtor, a população exata é
+  ambígua por subset-sum.
+- R03 G6 PENDING (aceite Controladoria). R05 G4/G5 PASS preservados.
+- `NO_GATE_CHANGE`. Residual mínimo p/ owner: (1) parâmetros da
+  emissão resumida (print das perguntas ou log mv_par); (2) linhas
+  de produto da folha 74 (PDF completo da emissão resumida);
+  (3) fonte/RPO do MATR460 implantado (semântica poder3 + escopo
+  de tipos).
