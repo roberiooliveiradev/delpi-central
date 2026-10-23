@@ -614,3 +614,149 @@ Distribuição por `E5_MOTBX`×`E5_TIPODOC` no conjunto resultante vs artefato o
 | C2-R20 | pagar | pipeline SE5→SE2 + DTCANBX + tipodoc | PROVEN estrutura: 950 vs 948, 4/5 motivos exatos; residual CMP−2 sem flag discriminante | G5 parcial |
 | C2-R21 | receber | SE5→SE1 row-level | PROVEN: 657 exato; 8 surplus = linhas distintas por tipodoc | G5 parcial |
 | C2-R22 | — | doc 47 | `NO_GATE_CHANGE`: confronto monetário bloqueado (artefatos sem totais); G5 exige linha-a-linha com artefato | — |
+
+---
+
+## §17 — RODADA 5 (CF-C2-EXEC-005) — CRUZAMENTO FONTES TOTVS × SQL — 2026-10-23
+
+Base do cruzamento:  (acervo DELPI versionado em ) × produção via  (conta read-only). **Caveat permanente:** fonte disponibilizado ≠ versão compilada no RPO de produção.
+
+### 17.A — Fontes localizados no acervo — PROVEN
+
+| Alvo | Achado | Status |
+|---|---|---|
+| FINR190 |  (2.580 linhas, custom DELPI do padrão) | **PROVEN — lido** |
+| FINR130 |  +  — é relação de **títulos SE1** (emissão/vencimento), não baixas | Lido — não é o produtor do artefato |
+| MATR320 |  — relatório "Resumo de entradas e saídas" (não job SB9) | Lido |
+| MATA330 hook |  — ponto de entrada do Refaz Saldos; dispara  e  (filiais 01/02) | **PROVEN — evidência de job** |
+| DLP06R01 | **ausente do acervo** (grep em todo o pacote) |  → owner TI |
+| MATR460 (P7) | **ausente do acervo** |  |
+
+### 17.B — FINR190_DLP: regra oficial de seleção — PROVEN (código)
+
+ (linhas ~1040–1170) +  (564–628) definem o universo oficial:
+
+
+
+Células do relatório são  diretamente (E5_MOTBX, E5_DATA, E5_FILORIG etc.) — **grão row-level de movimento bancário**, sem dedup por título.
+
+### 17.C — Reprodução SQL do WHERE oficial — PARIDADE TOTAL pagar — **PROVEN**
+
+Aplicado o WHERE do código (+ vínculo a título SE2 ativo) sobre produção, 09/2026:
+
+| Motivo | Artefato oficial | WHERE oficial reproduzido | Δ |
+|---|---|---|---|
+| DEB | 600 | 600 | **0** |
+| CMP | 186 | **186** | **0** |
+| FAT | 83 | 83 | **0** |
+| NOR | 65 | 65 | **0** |
+| DAC | 14 | 14 | **0** |
+| **Total** | **948** | **948** | **0** |
+
+**5/5 motivos exatos + total exato + grão exato.** O residual CMP−2 da rodada 4 está **resolvido**: exatamente 2 linhas CMP possuem par de estorno  na mesma chave (probe =2; demais cláusulas isoladas=0). A exclusão  é a regra faltante.
+
+Sem vínculo de título o WHERE oficial produz 1.059 linhas (111 com motivo em branco = movimentos manuais/avulsos) — o artefato conta apenas baixas com título, ou o operador filtrou motivo≠blank.
+
+### 17.D — Receber — produtor confirmado como NÃO-FINR190 — PROVEN
+
+- WHERE oficial R (+  na lista de exclusão): **690** sem vínculo; **649** com vínculo SE1 — nenhum bate 657.
+- População do artefato (657) = SE5 R × SE1 **sem** as exclusões do FINR190 (inclui linhas JR×3, MT×3, VL×1, DC×1 que o relatório padrão removeria + 1 cancelada).
+- Distribuição  das 657: NF=648, NCC=6, RA=2, BOL=1 — coerente com artefato.
+- Conclusão: produtor de receber é custom simples (grão movimento, filtros mínimos) — consistente com , cujo fonte **não está no acervo** → identidade do produtor  (owner TI).
+
+### 17.E — Outros achados de código
+
+-  e  ausente no SX6 → filtro PAR24 de CMP-antecipação inerte nesta instalação (não era a regra do residual).
+-  das 39 canceladas: (33)/C(6) → cancelamento é efetivamente , não situação.
+- Tabelas custom  existem no banco (, , …) — candidatas a staging de P7;  para rodada dedicada.
+- SPs / não localizadas no DB DELPI (outra base ou removidas) — código-fonte das SPs .
+- / são customizações de relatórios operacionais (sem relação com SB9/P7).
+
+### 17.F — Registro desta rodada
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R23 | fontes | inventário acervo vs alvos | PROVEN: FINR190_DLP/FINR130/MATR320 lidos; DLP06R01 e MATR460 ausentes | G4 fonte |
+| C2-R24 | pagar | WHERE oficial reproduzido em SQL | **PROVEN: 948 exato, 5/5 motivos, grão row-level**; CMP−2 explicado por par estorno-ES | G5 estrutural |
+| C2-R25 | receber | mesma reprodução lado R | PROVEN: artefato não segue filtros FINR190 (649/690≠657); produtor custom não-arquivado | G5 parcial |
+| C2-R26 | SB9 job | MA330OK hook | PROVEN indireto: PE pós-MATA330 existe e chama SPs; causalidade do job segue hipótese | — |
+| C2-R27 | — | doc 47 |  parcial: paridade de **população+distribuição+regra** provada para pagar, mas artefato oficial continua sem totais monetários/linhas → confronto linha-a-linha pendente | — |
+
+---
+
+## §17 — RODADA 5 (CF-C2-EXEC-005) — CRUZAMENTO FONTES TOTVS × SQL — 2026-10-23
+
+Base do cruzamento: `docs/13-fontes-totvs-protheus/` (acervo DELPI versionado em `0df96daafe`) × produção via `delpi-api-delpi` (conta read-only). **Caveat permanente:** fonte disponibilizado ≠ versão compilada no RPO de produção.
+
+### 17.A — Fontes localizados no acervo — PROVEN
+
+| Alvo | Achado | Status |
+|---|---|---|
+| FINR190 | `06. Financeiro/FINR190/FINR190_DLP.PRX` (2.580 linhas, custom DELPI do padrão) | **PROVEN — lido** |
+| FINR130 | `finr130_dlp.prx` + `FINR130D.PRX` — é relação de **títulos SE1** (emissão/vencimento), não baixas | Lido — não é o produtor do artefato |
+| MATR320 | `04. Estoque/MATR320/Dmatr320.prx` — relatório "Resumo de entradas e saídas" (não job SB9) | Lido |
+| MATA330 hook | `04. Estoque/MA330OK.PRW` — ponto de entrada do Refaz Saldos; dispara `EXEC STP_DELPI_OP_TERCEIRO_01` e `STP_PROTHEUS_DELPI_AJUSTA_OP` (filiais 01/02) | **PROVEN — evidência de job** |
+| DLP06R01 | **ausente do acervo** (grep em todo o pacote) | `BLOCKED` → owner TI |
+| MATR460 (P7) | **ausente do acervo** | `BLOCKED` |
+
+### 17.B — FINR190_DLP: regra oficial de seleção — PROVEN (código)
+
+`INSERT INTO NEWSE5` (linhas ~1040–1170) + `Fr190TstCond` (564–628) definem o universo oficial:
+
+```
+SE5.D_E_L_E_T_=' '
+AND E5_RECPAG='P'                                   -- lado pagar (MV_PAR11=2)
+AND E5_DATA BETWEEN par01 AND par02                 -- competência
+AND E5_MOTBX<>'DSD' AND E5_MOVCX<>'S'
+AND E5_SITUACA NOT IN ('C','E','X')
+AND NOT EXISTS (par de estorno E5_TIPODOC='ES', E5_ORIGEM<>'FINA100', mesma chave)
+AND E5_HISTOR NOT LIKE '%Baixa Automatica / Lote%'  -- STR0077
+AND E5_TIPODOC NOT IN ('DC','D2','JR','J2','TL','MT','M2','CM','C2','ES','E2'[, 'CB' p/ R])
++ E5_DTCANBX vazio (cancelamento — via Fr190MovCan/TstCond quando PAR16=1)
++ ranges parâmetros: banco 03–04, natureza 05–06, clifor 07–08, dtdigit 09–10,
+  lote 20–21, loja 22–23, prefixo 26–27, filial origem 33–34 (E5_FILORIG)
+```
+
+Células do relatório são `SE5.E5_*` diretamente (E5_MOTBX, E5_DATA, E5_FILORIG etc.) — **grão row-level de movimento bancário**, sem dedup por título.
+
+### 17.C — Reprodução SQL do WHERE oficial — PARIDADE TOTAL pagar — PROVEN
+
+Aplicado o WHERE do código (+ vínculo a título SE2 ativo) sobre produção, 09/2026:
+
+| Motivo | Artefato oficial | WHERE oficial reproduzido | Δ |
+|---|---|---|---|
+| DEB | 600 | 600 | **0** |
+| CMP | 186 | **186** | **0** |
+| FAT | 83 | 83 | **0** |
+| NOR | 65 | 65 | **0** |
+| DAC | 14 | 14 | **0** |
+| **Total** | **948** | **948** | **0** |
+
+**5/5 motivos exatos + total exato + grão exato.** O residual CMP−2 da rodada 4 está **resolvido**: exatamente 2 linhas CMP possuem par de estorno `E5_TIPODOC='ES'` na mesma chave (probe `cmp_es_pair`=2; demais cláusulas isoladas=0). A exclusão `NOT EXISTS estorno-ES` era a regra faltante.
+
+Sem vínculo de título o WHERE oficial produz 1.059 linhas (111 com motivo em branco = movimentos manuais/avulsos) — o artefato conta apenas baixas com título, ou o operador filtrou motivo≠blank.
+
+### 17.D — Receber — produtor confirmado como NÃO-FINR190 — PROVEN
+
+- WHERE oficial 'R' (+ `CB` na lista de exclusão): **690** sem vínculo; **649** com vínculo SE1 — nenhum bate 657.
+- População do artefato (657) = SE5 'R' × SE1 **sem** as exclusões do FINR190 (inclui linhas JR×3, MT×3, VL×1, DC×1 que o relatório padrão removeria + 1 cancelada).
+- Distribuição `E5_TIPO` das 657: NF=648, NCC=6, RA=2, BOL=1 — coerente com artefato.
+- Conclusão: produtor de receber é custom simples (grão movimento, filtros mínimos) — consistente com `DLP06R01`, cujo fonte **não está no acervo** → identidade do produtor `BLOCKED` (owner TI).
+
+### 17.E — Outros achados de código
+
+- `MV_PAGANT='F'` e `MV_CPNEG` ausente no SX6 → filtro PAR24 de CMP-antecipação inerte nesta instalação (não era a regra do residual).
+- `E5_SITUACA` das 39 canceladas: ''(33)/'C'(6) → cancelamento é efetivamente `E5_DTCANBX`, não situação.
+- Tabelas custom `MP7*` existem no banco (`MP7_01_01`, `MP7_052019`, `MP7F01_202402`…) — candidatas a staging de P7; `TO_INVENTORY` para rodada dedicada.
+- SPs `STP_DELPI_OP_TERCEIRO_01`/`STP_PROTHEUS_DELPI_AJUSTA_OP` não localizadas no DB DELPI (outra base ou removidas) — código das SPs `BLOCKED`.
+- `Dmatr320`/`finr130_dlp` são customizações de relatórios operacionais (sem relação com SB9/P7).
+
+### 17.F — Registro desta rodada
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R23 | fontes | inventário acervo vs alvos | PROVEN: FINR190_DLP/FINR130/MATR320 lidos; DLP06R01 e MATR460 ausentes | G4 fonte |
+| C2-R24 | pagar | WHERE oficial reproduzido em SQL | **PROVEN: 948 exato, 5/5 motivos, grão row-level**; CMP−2 explicado por par estorno-ES | G5 estrutural |
+| C2-R25 | receber | mesma reprodução lado R | PROVEN: artefato não segue filtros FINR190 (649/690≠657); produtor custom não-arquivado | G5 parcial |
+| C2-R26 | SB9 job | MA330OK hook | PROVEN indireto: PE pós-MATA330 existe e chama SPs; causalidade do job segue hipótese | — |
+| C2-R27 | — | doc 47 | `NO_GATE_CHANGE` parcial: paridade de **população+distribuição+regra** provada para pagar, mas artefato oficial continua sem totais monetários/linhas → confronto linha-a-linha pendente | — |
