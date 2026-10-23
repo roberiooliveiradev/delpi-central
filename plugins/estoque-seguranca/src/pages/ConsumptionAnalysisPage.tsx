@@ -8,6 +8,7 @@ import { ConsumptionAnalysisTable } from "../components/ConsumptionAnalysisTable
 import { EssPageNav } from "../components/EssPageNav";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
+import { ProductQuickSearch } from "../components/ProductQuickSearch";
 import { SectionError } from "../components/SectionError";
 import { useConsumptionAnalysisItems } from "../hooks/useConsumptionAnalysisItems";
 import { useConsumptionAnalysisSummary } from "../hooks/useConsumptionAnalysisSummary";
@@ -138,6 +139,13 @@ export function ConsumptionAnalysisPage() {
 
         {showContent ? (
           <>
+            <ProductQuickSearch
+              mode="analysis"
+              branch={effectiveBranch}
+              disabled={filterOptions.loading}
+              onSelect={setSelectedItem}
+            />
+
             {summary.error && !summary.data ? (
               <SectionError
                 title={summary.error.title}

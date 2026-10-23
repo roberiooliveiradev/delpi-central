@@ -729,6 +729,38 @@ describe("SafetyStockPage", () => {
     });
   });
 
+  it("abre o detalhe pela consulta rápida do topo sem filtrar a tabela", async () => {
+    mockApiSuccess();
+    render(<SafetyStockPage />);
+    await waitFor(() => expect(screen.getByLabelText("Consultar produto")).toBeTruthy());
+
+    expect((screen.getByLabelText("Busca") as HTMLInputElement).value).toBe("");
+
+    fireEvent.change(screen.getByLabelText("Consultar produto"), {
+      target: { value: "paraf" },
+    });
+
+    await waitFor(() => {
+      expect(safetyStockApi.fetchSafetyStockItems).toHaveBeenCalledWith(
+        expect.objectContaining({
+          search: "paraf",
+          includeWithoutSafetyStock: true,
+          includeBlocked: true,
+        }),
+        1,
+        8,
+        expect.any(Object),
+      );
+      expect(screen.getByRole("listbox", { name: "Produtos encontrados" })).toBeTruthy();
+    });
+
+    expect((screen.getByLabelText("Busca") as HTMLInputElement).value).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: /PARAFUSO TESTE/ }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(safetyStockApi.fetchSafetyStockItemDetails).toHaveBeenCalled();
+  });
+
   it("reinicia página ao alterar busca", async () => {
     mockApiSuccess();
     render(<SafetyStockPage />);

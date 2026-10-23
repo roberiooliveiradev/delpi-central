@@ -13,12 +13,22 @@ const MAX_RESULTS = 8;
 type ConsumptionAnalysisDetailProductSearchProps = {
   branch: string;
   onNavigate: (item: ConsumptionAnalysisItem) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  inputId?: string;
+  variant?: "modal" | "page";
+  disabled?: boolean;
 };
 
-/** Busca no cabeçalho do modal para abrir a análise de outro produto. */
+/** Busca por código/descrição para abrir a análise sem percorrer a tabela. */
 export function ConsumptionAnalysisDetailProductSearch({
   branch,
   onNavigate,
+  placeholder = "Buscar outro produto…",
+  ariaLabel = "Buscar outro produto",
+  inputId,
+  variant = "modal",
+  disabled = false,
 }: ConsumptionAnalysisDetailProductSearchProps) {
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<ConsumptionAnalysisItem[]>([]);
@@ -29,7 +39,7 @@ export function ConsumptionAnalysisDetailProductSearch({
 
   useEffect(() => {
     const trimmed = debouncedTerm.trim();
-    if (!branch || trimmed.length < MIN_SEARCH_LENGTH) {
+    if (disabled || !branch || trimmed.length < MIN_SEARCH_LENGTH) {
       setResults([]);
       setOpen(false);
       setLoading(false);
@@ -72,7 +82,7 @@ export function ConsumptionAnalysisDetailProductSearch({
       cancelled = true;
       controller.abort();
     };
-  }, [debouncedTerm, branch]);
+  }, [debouncedTerm, branch, disabled]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,13 +102,18 @@ export function ConsumptionAnalysisDetailProductSearch({
     onNavigate(item);
   };
 
+  const rootClassName =
+    variant === "page" ? "ess-detail-search ess-detail-search--page" : "ess-detail-search";
+
   return (
-    <div className="ess-detail-search" ref={containerRef}>
+    <div className={rootClassName} ref={containerRef}>
       <input
+        id={inputId}
         type="search"
         value={term}
-        placeholder="Buscar outro produto…"
-        aria-label="Buscar outro produto"
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        disabled={disabled || !branch}
         onChange={(event) => setTerm(event.target.value)}
         onFocus={() => {
           if (results.length > 0) setOpen(true);

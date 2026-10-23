@@ -467,9 +467,45 @@
   padding: 0.35rem 0.75rem;
 }
 
+.dashboard-estoque-seguranca .ess-quick-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: var(--ess-card-padding, 20px);
+}
+
+.dashboard-estoque-seguranca .ess-quick-search__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dashboard-estoque-seguranca .ess-quick-search__label {
+  font-size: var(--ess-font-md);
+  font-weight: 600;
+  color: var(--ess-text);
+}
+
+.dashboard-estoque-seguranca .ess-quick-search__hint {
+  margin: 0;
+  font-size: var(--ess-font-sm);
+  color: var(--ess-text-muted);
+}
+
 .dashboard-estoque-seguranca .ess-detail-search {
   position: relative;
   min-width: 240px;
+}
+
+.dashboard-estoque-seguranca .ess-detail-search--page {
+  width: 100%;
+  max-width: 640px;
+}
+
+.dashboard-estoque-seguranca .ess-detail-search--page .ess-detail-search__results {
+  left: 0;
+  right: auto;
+  width: min(640px, 92vw);
 }
 
 .dashboard-estoque-seguranca .ess-detail-search input {
@@ -599,6 +635,10 @@
 
   .dashboard-estoque-seguranca .ess-page-header__refresh {
     width: 100%;
+  }
+
+  .dashboard-estoque-seguranca .ess-detail-search--page {
+    max-width: none;
   }
 
   .dashboard-estoque-seguranca .ess-filters__primary,

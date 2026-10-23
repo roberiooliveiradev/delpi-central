@@ -29,6 +29,7 @@ Gateway → /apps/api-delpi/supplies/safety-stock/*
 ### Monitoramento (`/apps/estoque-seguranca`)
 
 - Universo: matéria-prima (`B1_TIPO = MP`) ou código iniciado em `3019`
+- Consulta rápida no topo: código/descrição abre o detalhe sem filtrar a tabela
 - Filtros por filial, grupo, unidade, situação e busca
 - KPIs e déficit por unidade
 - Modal com projeção SC7/SD4, extrato, botão de solicitações de compra em aberto (SC1) e fornecedores
@@ -36,6 +37,7 @@ Gateway → /apps/api-delpi/supplies/safety-stock/*
 ### Análise de consumo (`/apps/estoque-seguranca/analise-consumo`)
 
 - Universo: matéria-prima (`B1_TIPO = MP`) ou código iniciado em `3019`
+- Consulta rápida no topo: código/descrição abre o detalhe da simulação
 - Produtos com `BZ_ESTSEG <> 0` e baixas elegíveis nos últimos 12 meses
 - Consumo médio diário útil (SD3 local 99, TM 999, OP preenchida)
 - ESTSEG sugerido = consumo médio × dias úteis do lead time (`BZ_PE`)

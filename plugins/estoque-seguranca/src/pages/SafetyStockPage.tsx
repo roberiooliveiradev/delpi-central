@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { EssPageNav } from "../components/EssPageNav";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
+import { ProductQuickSearch } from "../components/ProductQuickSearch";
 import { SafetyStockDetailModal } from "../components/SafetyStockDetailModal";
 import { SafetyStockFilters } from "../components/SafetyStockFilters";
 import { SafetyStockSummary } from "../components/SafetyStockSummary";
@@ -143,6 +144,13 @@ export function SafetyStockPage() {
 
         {showContent ? (
           <>
+            <ProductQuickSearch
+              mode="monitor"
+              branch={effectiveBranch}
+              disabled={filterOptions.loading}
+              onSelect={setSelectedItem}
+            />
+
             {summary.error ? (
               <SectionError
                 title={summary.error.title}

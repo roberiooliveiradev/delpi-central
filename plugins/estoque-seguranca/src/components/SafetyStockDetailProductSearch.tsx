@@ -10,12 +10,22 @@ const MAX_RESULTS = 8;
 type SafetyStockDetailProductSearchProps = {
   branch: string;
   onNavigate: (item: SafetyStockItem) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  inputId?: string;
+  variant?: "modal" | "page";
+  disabled?: boolean;
 };
 
-/** Busca no cabeçalho do modal para navegar direto ao detalhe de outro produto. */
+/** Busca por código/descrição para abrir o detalhe sem percorrer a tabela. */
 export function SafetyStockDetailProductSearch({
   branch,
   onNavigate,
+  placeholder = "Buscar outro produto…",
+  ariaLabel = "Buscar outro produto",
+  inputId,
+  variant = "modal",
+  disabled = false,
 }: SafetyStockDetailProductSearchProps) {
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<SafetyStockItem[]>([]);
@@ -26,7 +36,7 @@ export function SafetyStockDetailProductSearch({
 
   useEffect(() => {
     const trimmed = debouncedTerm.trim();
-    if (!branch || trimmed.length < MIN_SEARCH_LENGTH) {
+    if (disabled || !branch || trimmed.length < MIN_SEARCH_LENGTH) {
       setResults([]);
       setOpen(false);
       setLoading(false);
@@ -68,7 +78,7 @@ export function SafetyStockDetailProductSearch({
       cancelled = true;
       controller.abort();
     };
-  }, [debouncedTerm, branch]);
+  }, [debouncedTerm, branch, disabled]);
 
   useEffect(() => {
     if (!open) return;
@@ -88,13 +98,18 @@ export function SafetyStockDetailProductSearch({
     onNavigate(item);
   };
 
+  const rootClassName =
+    variant === "page" ? "ess-detail-search ess-detail-search--page" : "ess-detail-search";
+
   return (
-    <div className="ess-detail-search" ref={containerRef}>
+    <div className={rootClassName} ref={containerRef}>
       <input
+        id={inputId}
         type="search"
         value={term}
-        placeholder="Buscar outro produto…"
-        aria-label="Buscar outro produto"
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        disabled={disabled || !branch}
         onChange={(event) => setTerm(event.target.value)}
         onFocus={() => {
           if (results.length > 0) setOpen(true);
