@@ -161,3 +161,10 @@ Não recomendado: nenhuma branch por especialista, lista de palavras-chave, rege
 `EXECUTOR_VERDICT=ROOT_CAUSES_PROVEN` — RC1 e RC2 (projeção de evidência/controle-plane) provados live + deterministicamente; RC5/RC6/RC8 provados; RC3 provado no escopo do modelo local; RC4 inventariado como gap de contrato; RC7 mecanismo provado, manifestação prod-only. O leak de `agent_directives` NÃO é do CRI em si — é da projeção que alimenta o CRI; o CRI compõe fielmente o que recebe.
 
 **NEXT_COORDINATION_DECISION**: revisar RC1+RC2 (fix canônico na borda de projeção — P1) → autorizar pacote bounded de implementação com os 6 testes RED como critério de verde; decisões P3 separadas (RC4/RC5/RC7 produto; RC3 provider-contrato).
+
+
+## Parecer de coordenação — 2026-10-23
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (DIAGNOSIS).** A evidência documental de D4/D5, reprodução local, cadeia causal e seis testes RED justifica avançar com **P1 bounded + P2 content assertions**: corrigir RC1+RC2 na projeção canônica e exigir ausência de metadata/control-plane e presença de conteúdo útil ou insuficiência honesta. `EXISTING_EQUIVALENT=YES`; `REUSE_DECISION=EXTEND` na borda atual, não criar formatter DAVI/VISTA ou engine de CRI paralelo. Os seis testes RED foram reportados pelo executor; `INDEPENDENT_TEST_RERUN=TEST_NOT_RUN` nesta revisão.
+
+**IMPLEMENTATION_SCOPE_AUTHORIZED:** filtros estruturais recursivos de campos control-plane/transport no contexto correto, sem filtrar indiscriminadamente campos de negócio homônimos; promoção de records somente para evidência de negócio válida; preservar provenance, semantic owner, Domain authority, tenant safety, limites e honest insufficiency; os seis testes RED + positivos + regressão completa + local Ollama GPU sem LLM pago. Nenhuma alteração de produção nesta task. `RC3/RC4/RC5/RC6/RC7` permanecem separados; não expandir o escopo e não afirmar que P1 sozinho responderá corretamente D4/D5. `NEXT=BOUNDED_P1_IMPLEMENTATION`.
