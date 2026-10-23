@@ -78,7 +78,11 @@ class TestPreview:
         assert body["tax_id_masked"] == "00.***.***/0001-**"
         assert body["person_type"] == "J"
         assert body["write_enabled"] is False
-        assert body["duplicate_check"] == {"status": "CLEAR", "matches": []}
+        assert body["duplicate_check"] == {
+            "status": "CLEAR",
+            "matches": [],
+            "total": 0,
+        }
 
         by_key = {s["field_key"]: s for s in body["suggestions"]}
         assert by_key["supplier_name"]["suggested_value"] == "EMPRESA EXEMPLO LTDA"
@@ -139,7 +143,11 @@ class TestPreview:
             ),
         )
         dup = svc.preview(TAX_ID)["duplicate_check"]
-        assert dup == {"status": "INCONCLUSIVE", "matches": []}
+        assert dup == {
+            "status": "INCONCLUSIVE",
+            "matches": [],
+            "total": None,
+        }
 
     def test_registry_errors_propagate(self):
         svc = _service(

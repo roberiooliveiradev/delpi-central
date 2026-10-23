@@ -236,6 +236,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Na lista Fornecedores, «Novo fornecedor» oferece três inícios no mesmo formulário: consultar por CNPJ (busca dados públicos e mostra sugestões com fonte e data — você confirma campo a campo, nada é aplicado sozinho), buscar por razão social (em homologação — indisponível até o provedor ser aprovado) ou preencher manualmente. A consulta também avisa se já existe cadastro com aquele CNPJ. A gravação no ERP segue bloqueada até homologação — o Portal avisa e nada é enviado sem a revisão final.",
         },
         {
+          q: "O que significa «Este CNPJ já possui cadastro no Protheus»?",
+          a: "Existe um ou mais cadastros com esse documento — o que é informativo, não um erro. O Portal lista todos os registros encontrados, com código e loja, e pagina quando há muitos. «Conferir cadastro» abre a ficha do registro em uma nova aba: você confere dados e divergências sem perder o formulário, e pode continuar o novo cadastro normalmente se desejar.",
+        },
+        {
           q: "O que significa «verificação de duplicidade não concluída»?",
           a: "A consulta ao cadastro interno falhou ou não retornou resultado conclusivo — não é confirmação de que o fornecedor não existe. Você pode continuar o preenchimento e conferir a ficha existente depois.",
         },

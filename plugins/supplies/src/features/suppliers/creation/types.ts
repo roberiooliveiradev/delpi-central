@@ -28,6 +28,7 @@ export type CreationDuplicateMatch = {
 export type CreationDuplicateCheck = {
   status: DuplicateCheckStatus;
   matches: CreationDuplicateMatch[];
+  total?: number | null;
 };
 
 export type SupplierCreationPreview = {
@@ -58,3 +59,11 @@ export type SuggestionEntry = {
 };
 
 export type SuggestionEntryMap = Record<string, SuggestionEntry>;
+
+/** Resposta paginada — GET /suppliers/existing-suppliers (X4.UX-R1.S8). */
+export type ExistingSuppliersPage = {
+  items: CreationDuplicateMatch[];
+  page: number;
+  page_size: number;
+  total: number;
+};

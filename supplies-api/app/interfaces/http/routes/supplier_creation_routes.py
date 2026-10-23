@@ -103,6 +103,58 @@ def _error(exc: Exception):
     raise exc
 
 
+_EXISTING_PAGE_SIZE_MAX = 50
+
+
+def _existing_suppliers_minimal(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "supplier_code": item.get("supplier_code"),
+        "supplier_store": item.get("supplier_store"),
+        "supplier_name": item.get("supplier_name"),
+        "state": item.get("state"),
+        "blocked": item.get("blocked"),
+    }
+
+
+@creation_bp.get("/suppliers/existing-suppliers")
+@require_policy(can_use_operations)
+def list_existing_suppliers():
+    """operationId: list_existing_suppliers_by_tax_id — read-only paging.
+
+    Paginates the exact ``tax_id`` canonical lookup in api-delpi so the MFE
+    can list every existing record for a CNPJ without re-hitting the
+    external registry. Same capability as the preview — no new permission.
+    """
+    try:
+        digits = digits_only(request.args.get("tax_id"))
+        if not is_valid_cnpj(digits):
+            raise ValueError("tax_id must be a valid 14-digit CNPJ")
+        try:
+            page = max(1, int(request.args.get("page") or 1))
+            page_size = min(
+                _EXISTING_PAGE_SIZE_MAX,
+                max(1, int(request.args.get("page_size") or 10)),
+            )
+        except (TypeError, ValueError):
+            raise ValueError("page and page_size must be integers") from None
+        items, total = DelpiSupplierDuplicateSearch().search_by_tax_id(
+            digits,
+            access_token=_access_token(),
+            page=page,
+            page_size=page_size,
+        )
+        return jsonify(
+            {
+                "items": [_existing_suppliers_minimal(i) for i in items],
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+            }
+        ), 200
+    except Exception as exc:
+        return _error(exc)
+
+
 @creation_bp.post("/suppliers/creation-preview")
 @require_policy(can_use_operations)
 def create_supplier_creation_preview():

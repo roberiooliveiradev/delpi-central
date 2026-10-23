@@ -88,7 +88,7 @@ class SupplierCreationPreviewService:
             )
         except DelpiApiGatewayError:
             status = classify_duplicate(None)
-            return {"status": status.value, "matches": []}
+            return {"status": status.value, "matches": [], "total": None}
 
         status = classify_duplicate(total)
         if status is DuplicateStatus.POSSIBLE_MATCH:
@@ -104,4 +104,4 @@ class SupplierCreationPreviewService:
             ]
         else:
             minimal = []
-        return {"status": status.value, "matches": minimal}
+        return {"status": status.value, "matches": minimal, "total": total}

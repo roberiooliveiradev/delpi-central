@@ -95,3 +95,49 @@ describe("Creation preview (X4.UX-R1.S2) — boundaries", () => {
     );
   });
 });
+
+describe("Cadastros existentes por CNPJ (X4.UX-R1.S8)", () => {
+  it("paginação reutiliza o componente canônico e o endpoint BFF", () => {
+    const panel = read("CreationExistingSuppliersPanel.tsx");
+    expect(panel).toContain("SuppliesCompactPagination");
+    expect(panel).toContain("listExistingSuppliers");
+    const api = read("api.ts");
+    expect(api).toContain("/suppliers/existing-suppliers");
+    expect(api).toContain("httpGet");
+    expect(api).not.toMatch(/httpPut|httpPatch|httpDelete/);
+  });
+
+  it("conferência abre E14 em nova aba — rascunho preservado", () => {
+    const panel = read("CreationExistingSuppliersPanel.tsx");
+    expect(panel).toContain("buildSupplierDetailPath");
+    expect(panel).toContain('target="_blank"');
+    expect(panel).toContain('rel="noopener noreferrer"');
+    // nunca navega a própria aba para fora do rascunho
+    expect(panel).not.toContain("navigatePluginPath");
+    // nenhuma persistência improvisada no browser
+    for (const file of readdirSync(dir).filter(
+      (f) => /\.tsx?$/.test(f) && !f.endsWith(".test.ts"),
+    )) {
+      const text = read(file);
+      expect(text).not.toMatch(/localStorage|sessionStorage|indexedDB/);
+    }
+  });
+
+  it("aviso de duplicidade é informativo e não bloqueia o formulário", () => {
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("CreationExistingSuppliersPanel");
+    expect(flow).toContain("duplicatePossibleFooter");
+    const content = read("content.ts");
+    expect(content).toContain("Você pode continuar o preenchimento");
+    // o banner POSSIBLE_MATCH não é mais de erro
+    const match = flow.match(/POSSIBLE_MATCH[\s\S]*?<\/SuppliesStateBanner>/);
+    expect(match?.[0]).not.toContain('variant="error"');
+  });
+
+  it("total real vem do contrato — nunca inventado", () => {
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("duplicate_check.total");
+    const api = read("api.ts");
+    expect(api).toContain("page_size");
+  });
+});

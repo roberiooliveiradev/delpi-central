@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import {
-  navigatePluginPath,
-} from "../../../app/pluginNavigation";
-import { buildSupplierDetailPath } from "../../../app/pluginRoutes";
+import { CreationExistingSuppliersPanel } from "./CreationExistingSuppliersPanel";
 import {
   SuppliesActionButton,
   SuppliesSectionCard,
@@ -302,41 +299,23 @@ export function CreationAssistedFlow({
           </SuppliesStateBanner>
         ) : null}
         {preview?.duplicate_check.status === "POSSIBLE_MATCH" ? (
-          <SuppliesStateBanner variant="error">
+          <SuppliesStateBanner variant="default">
             <strong>{C.duplicatePossibleTitle}</strong>{" "}
             {C.duplicatePossibleMessage}
-            {preview.duplicate_check.matches.length ? (
-              <ul className="sp-supplier-create__assist-matches">
-                {preview.duplicate_check.matches.map((match) => (
-                  <li key={`${match.supplier_code}-${match.supplier_store}`}>
-                    <a
-                      href={buildSupplierDetailPath(
-                        match.supplier_code ?? "",
-                        match.supplier_store ?? "",
-                        basePath,
-                      )}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        navigatePluginPath(
-                          buildSupplierDetailPath(
-                            match.supplier_code ?? "",
-                            match.supplier_store ?? "",
-                            basePath,
-                          ),
-                        );
-                      }}
-                    >
-                      {match.supplier_name || match.supplier_code}
-                      {match.supplier_code
-                        ? ` · ${match.supplier_code}/${match.supplier_store}`
-                        : ""}
-                      {match.state ? ` · ${match.state}` : ""}
-                      {match.blocked ? ` · ${C.duplicateMatchBlocked}` : ""}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <CreationExistingSuppliersPanel
+              key={activeTaxId ?? ""}
+              basePath={basePath}
+              taxId={activeTaxId ?? ""}
+              initialMatches={preview.duplicate_check.matches}
+              total={
+                preview.duplicate_check.total ??
+                preview.duplicate_check.matches.length
+              }
+              disabled={disabled}
+            />
+            <p className="sp-supplier-create__existing-footer">
+              {C.duplicatePossibleFooter}
+            </p>
           </SuppliesStateBanner>
         ) : null}
         {preview?.duplicate_check.status === "INCONCLUSIVE" ? (

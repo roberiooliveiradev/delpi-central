@@ -223,6 +223,145 @@ class TestPreview:
         assert resp.headers["Retry-After"] == "30"
 
 
+class TestExistingSuppliers:
+    """GET /suppliers/existing-suppliers — S8 paginated read-only list."""
+
+    def _get(self, client, params=""):
+        return client.get(
+            f"/suppliers/existing-suppliers{params}",
+            headers={"Authorization": "Bearer t"},
+        )
+
+    def _items(self, n):
+        return [
+            {
+                "supplier_code": f"{i:06d}",
+                "supplier_store": "01" if i % 2 else "02",
+                "supplier_name": f"FORNECEDOR {i}",
+                "state": "SC",
+                "blocked": i % 5 == 0,
+            }
+            for i in range(1, n + 1)
+        ]
+
+    def test_missing_bearer_401(self, client):
+        resp = client.get("/suppliers/existing-suppliers?tax_id=" + TAX_ID)
+        assert resp.status_code == 401
+
+    def test_no_capability_403(self, client):
+        v, r = _auth(permissions=set())
+        with v, r:
+            resp = self._get(client, "?tax_id=" + TAX_ID)
+        assert resp.status_code == 403
+
+    def test_invalid_tax_id_422(self, client):
+        v, r = _auth()
+        with v, r:
+            resp = self._get(client, "?tax_id=123")
+        assert resp.status_code == 422
+
+    def test_missing_tax_id_422(self, client):
+        v, r = _auth()
+        with v, r:
+            resp = self._get(client, "")
+        assert resp.status_code == 422
+
+    def test_zero_results(self, client):
+        dup = MagicMock(search_by_tax_id=MagicMock(return_value=([], 0)))
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.supplier_creation_routes.DelpiSupplierDuplicateSearch",
+            return_value=dup,
+        ):
+            body = self._get(client, "?tax_id=" + TAX_ID).get_json()
+        assert body["total"] == 0
+        assert body["items"] == []
+
+    def test_paged_results_with_total(self, client):
+        items = self._items(10)
+        dup = MagicMock(
+            search_by_tax_id=MagicMock(return_value=(items, 25))
+        )
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.supplier_creation_routes.DelpiSupplierDuplicateSearch",
+            return_value=dup,
+        ):
+            body = self._get(
+                client, f"?tax_id={TAX_ID}&page=2&page_size=10"
+            ).get_json()
+        dup.search_by_tax_id.assert_called_once_with(
+            TAX_ID, access_token="user-jwt", page=2, page_size=10
+        )
+        assert body["total"] == 25
+        assert body["page"] == 2
+        assert len(body["items"]) == 10
+        assert set(body["items"][0]) == {
+            "supplier_code",
+            "supplier_store",
+            "supplier_name",
+            "state",
+            "blocked",
+        }
+
+    def test_page_size_clamped_to_50(self, client):
+        dup = MagicMock(search_by_tax_id=MagicMock(return_value=([], 0)))
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.supplier_creation_routes.DelpiSupplierDuplicateSearch",
+            return_value=dup,
+        ):
+            body = self._get(
+                client, f"?tax_id={TAX_ID}&page_size=500"
+            ).get_json()
+        assert body["page_size"] == 50
+
+    def test_non_integer_page_422(self, client):
+        v, r = _auth()
+        with v, r:
+            resp = self._get(client, f"?tax_id={TAX_ID}&page=abc")
+        assert resp.status_code == 422
+
+    def test_upstream_failure_502(self, client):
+        from app.infrastructure.gateways.delpi_api_gateway import (
+            DelpiApiGatewayError,
+        )
+
+        dup = MagicMock(
+            search_by_tax_id=MagicMock(
+                side_effect=DelpiApiGatewayError("boom", status_code=502)
+            )
+        )
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.supplier_creation_routes.DelpiSupplierDuplicateSearch",
+            return_value=dup,
+        ):
+            resp = self._get(client, "?tax_id=" + TAX_ID)
+        assert resp.status_code in (502, 503, 504)
+
+    def test_no_external_registry_call(self, client):
+        # Paginação nunca consulta a BrasilAPI — somente o owner canônico.
+        registry = MagicMock()
+        dup = MagicMock(search_by_tax_id=MagicMock(return_value=([], 0)))
+        v, r = _auth()
+        with (
+            v,
+            r,
+            patch(
+                "app.interfaces.http.routes.supplier_creation_routes.company_registry_provider",
+                return_value=registry,
+            ),
+            patch(
+                "app.interfaces.http.routes.supplier_creation_routes.DelpiSupplierDuplicateSearch",
+                return_value=dup,
+            ),
+        ):
+            resp = self._get(client, "?tax_id=" + TAX_ID)
+        assert resp.status_code == 200
+        registry.fetch.assert_not_called()
+
+
 class TestNoSideEffects:
     def test_route_performs_no_writes(self, client):
         # The preview must never touch POST/PUT on the api-delpi gateway nor

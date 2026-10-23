@@ -1162,6 +1162,29 @@
   gap: 0.2rem;
 }
 
+.dashboard-supplies-portal .sp-supplier-create__existing {
+  margin-top: 0.6rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__existing li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  justify-content: space-between;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__existing-review {
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__existing-footer {
+  margin: 0.5rem 0 0;
+  font-size: 0.9em;
+}
+
 .dashboard-supplies-portal .sp-supplier-create__assist-panel {
   display: grid;
   gap: 0.5rem;

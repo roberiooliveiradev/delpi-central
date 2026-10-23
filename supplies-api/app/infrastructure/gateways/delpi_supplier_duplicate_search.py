@@ -21,12 +21,21 @@ class DelpiSupplierDuplicateSearch:
         self._gateway = gateway or DelpiS2SApiGateway()
 
     def search_by_tax_id(
-        self, tax_id: str, *, access_token: str = ""
+        self,
+        tax_id: str,
+        *,
+        access_token: str = "",
+        page: int = 1,
+        page_size: int = 20,
     ) -> tuple[list[dict[str, Any]], int]:
         payload = self._gateway.get(
             "/supplies/suppliers",
             access_token=access_token,
-            params={"tax_id": tax_id, "page_size": 20, "page": 1},
+            params={
+                "tax_id": tax_id,
+                "page_size": page_size,
+                "page": page,
+            },
         )
         data = unwrap_delpi_envelope(payload)
         if not isinstance(data, dict):

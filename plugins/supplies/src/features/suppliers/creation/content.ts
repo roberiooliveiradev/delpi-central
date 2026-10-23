@@ -29,15 +29,21 @@ export const CREATION_CONTENT = {
   duplicateClearTitle: "Nenhuma correspondência exata encontrada",
   duplicateClearMessage:
     "A consulta por documento exato não localizou fornecedor com este CNPJ no cadastro. Isso não é garantia definitiva — a validação final ocorre no envio.",
-  duplicatePossibleTitle: "Possível fornecedor já cadastrado",
+  duplicatePossibleTitle: "Este CNPJ já possui cadastro no Protheus",
   duplicatePossibleMessage:
-    "Existe registro com este documento exato no cadastro. Verifique antes de continuar — CNPJ não é chave única e o cadastro pode mudar até a confirmação.",
+    "Encontramos registros vinculados a este CNPJ. Confira se algum deles atende à sua necessidade antes de continuar.",
+  duplicatePossibleFooter:
+    "Você pode continuar o preenchimento normalmente.",
   duplicateInconclusiveTitle: "Verificação de duplicidade não concluída",
   duplicateInconclusiveMessage:
     "Não foi possível consultar o cadastro interno agora. Isso não significa que o fornecedor não exista — você pode continuar o preenchimento e conferir depois.",
   duplicateMatchColumn: "Fornecedor",
   duplicateMatchBlocked: "Bloqueado",
-  duplicateOpenMatch: "Abrir ficha",
+  duplicateOpenMatch: "Conferir cadastro",
+  existingSuppliersPageLoadError:
+    "Não foi possível carregar esta página de cadastros. Tente novamente — seu formulário não foi alterado.",
+  existingSuppliersEmptyPage:
+    "Nenhum registro nesta página. Volte para a página anterior.",
 
   identityReplaceConfirm:
     "A identidade do fornecedor no formulário será alterada: o CNPJ será substituído pelo documento consultado e o tipo de pessoa ajustado para Pessoa Jurídica. Confirmar a substituição?",
