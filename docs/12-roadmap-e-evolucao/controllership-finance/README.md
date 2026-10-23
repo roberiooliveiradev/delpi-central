@@ -358,3 +358,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 — aceite formal do PO (23/10/2026)
 
 [Doc 79 — Aceite formal do Ciclo 1](./79-ciclo1-aceite-formal-po.md): após revisão e cruzamento narrativo-documental do doc 78, o PO declarou expressamente «eu aceito». `CICLO_1_DOCUMENTAL=PO_ACCEPTED_WITH_RESIDUAL`; o inventário conceitual fica formalmente aceito, com paridade TOTVS/SQL `TEST_NOT_RUN`, áudio/timecodes independentes `INCONCLUSIVE` e demais gaps rastreados. **Este aceite não autoriza o Ciclo 2:** investigação técnica aguarda GO específico; implementação e contratos novos não autorizados por esta decisão.
+
+
+### Ciclo 2 — Registro vivo para investigação Devin (23/10/2026)
+
+[Doc 80 — Registro vivo, fichas e roadmap de levantamento técnico](./80-ciclo2-registro-vivo-investigacao-devin.md): ponto de entrada preenchível por lotes D0–D5, matriz dos nove workstreams, campos obrigatórios de evidência, consultas read-only, owners, paridade e stop conditions. O [doc 47](./47-t01-report-column-audit-tracker-v1.md) permanece a authority de R01–R15, G1–G6 e percentuais; o doc 80 é registro de execução, não segundo tracker de gates. **CYCLE_2_GO=NO**, DAVI/SQL/system ainda não autorizados por este documento, paridade `TEST_NOT_RUN`, runtime sem autorização adicional. Após decisão expressa do PO sobre escopo/capabilities, Devin poderá preencher apenas o lote autorizado, com commits e revisão GPT.
