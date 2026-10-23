@@ -225,12 +225,15 @@ class HomeAttentionService:
         data = payload.get("data", payload) if isinstance(payload, dict) else {}
         items = data.get("items") if isinstance(data, dict) else None
         preview = []
+        seen_requests: set[str] = set()
         for item in items or []:
             if not isinstance(item, dict):
                 continue
             request_number = str(item.get("request_number") or "").strip()
-            if not request_number:
+            # Lines repeat the header — one preview entry per solicitação.
+            if not request_number or request_number in seen_requests:
                 continue
+            seen_requests.add(request_number)
             requester = item.get("requester") or {}
             requester_name = (
                 str(requester.get("name") or "").strip()

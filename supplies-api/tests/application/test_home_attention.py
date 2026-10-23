@@ -125,11 +125,11 @@ class FakePurchaseRequests:
             "data": {
                 "items": [
                     {
-                        "request_number": "000123",
+                        "request_number": f"00012{i}",
                         "branch": params.get("branch", ["01"])[0],
                         "requester": {"name": "Fulano"},
                     }
-                    for _ in range(5)  # producer must be capped at 3 by us
+                    for i in range(5)  # producer must be capped at 3 by us
                 ]
             }
         }
@@ -189,7 +189,7 @@ def test_compose_targets_and_previews():
         "query": "overall_stage=awaiting_order&overall_stage=partially_ordered",
     }
     assert len(ordering["preview"]) == 3  # capped, never the raw 5
-    assert ordering["preview"][0]["label"] == "SC 000123"
+    assert ordering["preview"][0]["label"] == "SC 000120"
 
     po = by_id["purchase_orders_late"]
     assert po["target"]["viewId"] == "purchase_orders"

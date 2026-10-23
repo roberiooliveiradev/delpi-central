@@ -47,7 +47,8 @@ Semântica congelada:
 - `count=0` confirmado → cartão **omitido** (zero não é atenção).
 - Falha de origem → cartão `status="unavailable"` + `partialFailures`; **nunca vira zero**.
 - `count>0` → cartão com título de ocorrência, quantidade, prévia ≤3 e alvo contextual.
-- Preview só é buscada quando `count>0`; falha de preview não derruba a contagem (preview=`[]`).
+- Preview só é buscada quando `count>0`; falha de preview não derruba a contagem (preview=`[]`). Preview de SC deduplica por `request_number` (o contrato lista **linhas**, mas o card conta solicitações).
+- As 4 fontes executam em **paralelo** (ThreadPoolExecutor, mesmo padrão do Overview) — uma fonte lenta limita a latência ao máximo da origem, não à soma.
 - Cartões por categoria — nenhum total agregado soma populações sobrepostas; o hero mostra **quantidade de situações ativas**, não itens somados.
 - Sem `estoque-seguranca.access`: o cartão de estoque exibe contagem (já autorizada via KPI da Visão geral) mas **sem ação** — o deep link só aparece com a permissão existente do app dono.
 
@@ -55,8 +56,8 @@ Semântica congelada:
 
 | Card | Fórmula | Unidade | Alvo |
 |---|---|---|---|
-| Solicitações aguardando pedido | `summary.buckets.ordering` | solicitações (headers) | `/purchase-requests?overall_stage=awaiting_order&overall_stage=partially_ordered` |
-| Solicitações aguardando recebimento | `summary.buckets.receiving` | solicitações (headers) | `/purchase-requests?overall_stage=ordered&overall_stage=awaiting_receipt&overall_stage=partially_received` |
+| Solicitações aguardando pedido | `summary.buckets.ordering` no período `date_from`/`date_to` = mês corrente (alinhado ao default da lista) | solicitações (headers) | `/purchase-requests?overall_stage=awaiting_order&overall_stage=partially_ordered` |
+| Solicitações aguardando recebimento | `summary.buckets.receiving` no mês corrente | solicitações (headers) | `/purchase-requests?overall_stage=ordered&overall_stage=awaiting_receipt&overall_stage=partially_received` |
 | Pedidos de compra em atraso | `summary.late_lines` (SC7 abertas, `late_only=true`) | linhas | `/purchase-orders?late_only=true` |
 | Recebimentos em atraso | Σ `summary.late_lines` por unidade, `status=late`, mês corrente | linhas | `/deliveries?status=late` |
 | Itens abaixo do estoque de segurança | Σ `below_safety_stock` por unidade | itens | `/apps/estoque-seguranca` (href, gated pela permissão do app) |
