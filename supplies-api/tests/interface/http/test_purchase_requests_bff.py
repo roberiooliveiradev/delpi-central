@@ -313,6 +313,62 @@ def test_list_enriches_requester_via_identity_service(mock_resolve, mock_validat
 @patch(
     "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
 )
+def test_detail_enriches_header_requester_via_identity_service(
+    mock_resolve, mock_validate
+):
+    """PR.IDENTITY.S4 — header.requester da ficha recebe display_name da Core."""
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    gateway = MagicMock()
+    gateway.get_purchase_request.return_value = {
+        "success": True,
+        "data": {
+            "header": {
+                "request_number": "178764",
+                "requester": {"protheus_user_id": "000123", "name": "ELAINE"},
+            },
+            "lines": [],
+        },
+    }
+    identity = MagicMock()
+    identity.enrich_payload.side_effect = lambda payload, *, access_token: {
+        **payload,
+        "header": {
+            **payload["header"],
+            "requester": {
+                **payload["header"]["requester"],
+                "display_name": "Elaine Souza",
+            },
+        },
+    }
+    with (
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+            gateway,
+        ),
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+            identity,
+        ),
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/01/178764",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    requester = response.get_json()["header"]["requester"]
+    assert requester["display_name"] == "Elaine Souza"
+    assert requester["name"] == "ELAINE"
+    identity.enrich_payload.assert_called_once()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
 def test_requester_photo_streams_mapped_user_photo(mock_resolve, mock_validate):
     mock_validate.return_value = _identity()
     mock_resolve.return_value = _user(
