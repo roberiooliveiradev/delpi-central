@@ -17718,3 +17718,18 @@ NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
 TASK_ID=DELIA-UX-MARKDOWN-B2-DOCK-AND-ACCESSIBILITY-QA-01
 MB2_UX=19_PASS/1_TEST_NOT_RUN DEFECTS=0 CODE_DIFF=NONE DEPLOY=NONE
 NEXT=coordenacao avalia outcome CP-333; screen reader real pendente de ambiente
+
+## §6.400 — S5 bounded outcome rework + deploy produtivo delia-api (2026-10-23)
+
+**2026-10-23 — DELIA-C3-S5-BOUNDED-OUTCOME-REWORK-PRODUCTION-RELEASE-01 (contrato doc 120, a287ccd613):** rework unico bounded executado sobre as causas aceitas pela revisao independente (doc 119). CAUSAS: (1) `surface_inquiry`+`requires_owner_surface=true` contraditorio caia em selecao operacional -> dump tecnico TEO (D4a/b; D5 quando classificada operacional); (2) `NOT_APPLICABLE` pos-admission em estagios profundos (foreign_selection invalida, intent_target_incompatible, inputs sem modelo, miss pos-consulta) sem marcador -> `turn` livre fabricava prosa de internals (D8a); (3) `DELIA_LLM_CALL_MAX_ATTEMPTS` ausente no dev -> zero retry em invalid_structured_output do `delia-json` (N3/N4). FIX (4 arquivos, +393/-27): classe tipada terminal independente do flag; admission retorna `(class, owner_required)`; marcador `OWNER_PATH_UNBOUND` em todos os fizzles pos-admission de caminho owner-declarado -> terminal deterministico do handler (miss pos-consulta = `owner_query_miss` -> mensagem de consulta-sem-registro); group-level applicable=false sem owner declarado segue conversacional; `invalid_model_output` fail-closed preservado.
+
+VALIDACAO: 370 testes focados + suite backend completa verde em `88e4598881`; eval local `delia-json` com identidade dev `e2e-delia` + credencial delegada resource-bound: D4 PROVEN (todas as phrasings + CRI-off), D5 listing PROVEN, D8 GROUNDED com rotulos governados (grupo VISTA = variancia do modelo local), N2 AuthZ deny propagado, N1 contido, N3 fail-closed, N4 recuperado.
+
+DEPLOY: srv-api `git pull --ff-only` + `up-prod-sequential.sh --build delia-api`; PRE `e8a86cb33`/imagem `2e8afa0e12c6`; RELEASE `88e4598881`/imagem `f9e2b4cb54c9`; container healthy; health 200; POST sem bearer 401; config prod 60/3/300 + `DELIA_LLM_CALL_MAX_ATTEMPTS=3` + `kimi-k3`; rollback documentado nao executado.
+
+PROD_HOMOLOGATION=TEST_NOT_RUN (sem identidade governada no realm; proibido criar). RESIDUAIS: variancia `delia-json` 3B, conversacao local invalida, eval Kimi nao executado, rotulos guidance parciais. EXECUTION_DRIFT=NONE. REWORK_S5_USED=1/1.
+
+TASK_ID=DELIA-C3-S5-BOUNDED-OUTCOME-REWORK-PRODUCTION-RELEASE-01
+RELEASE_SHA=88e4598881 IMAGE=f9e2b4cb54c9 RUNTIME=healthy
+FULL_BACKEND=PASS@88e4598881 FOCUSED=370 LOCAL_EVAL=delia-json
+COORDINATION_REVIEW_REQUIRED=YES NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
