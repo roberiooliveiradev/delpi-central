@@ -235,3 +235,79 @@ Sem limites arbitrários de LOC, mas **se um módulo candidato acumular mais de 
 ### 9.5 Gate de saída para R0 e controle de concorrência
 
 **R0 só começa quando** a estabilização pré-refatoração executada pelo Devin tiver report SHA, AC D5/D5-R/D8-R/PT-BR, deploy/outcomes quando autorizados e parecer independente. Até esse marco: PLAN 125 pode evoluir documentalmente; R0–R7 seguem NOT_AUTHORIZED. O executor de D5 não deve incluir este blueprint no diff de runtime. A revisão formal da arquitetura registra novamente KEEP/EXTEND/NEW/SKIP e NEXT_ALLOWED_STEP; se houver divergência com 59/117/125, STOP, não redesenho silencioso.
+
+## 10. Blueprint detalhado: contratos de entrada/saída, arquivos e migração por função (PLANNED)
+
+**Natureza:** desenho de migração sujeito ao R0 e a review de owner/contract; **não cria runtime, DTO, port, engine ou package por si**. Alinhamento: §8–9 deste plano, 49 Abstraction Gate, 52 subáreas previstas, 57 auditoria, 113 S0, 117 SKIP, 124/127 D5. Após estabilização funcional, revalidar código e alterar as linhas/candidatos com evidência, nunca assumir o SHA desta edição como SHA de implementação.
+
+### 10.1 Inventário físico e ordem de dependência
+
+**Existentes (reusar primeiro):**
+- `capability_provision/contracts.py` e `ports.py`: `CapabilityGroup`, `ProviderCapability`, protocolos atuais.
+- `capability_provision/outcome_assessment.py`: `EvidenceFacts`, `OutcomeVerdict`, `AnswerRequirements`, `assess_outcome`.
+- `capability_provision/conversational_response.py`: `CriComposition`, `PresentedRecord`, `compose_cri_response`, field-label resolution.
+- `interaction/argument_validation.py`: normalização e validação de argumentos.
+- `interaction/presentation.py`: contratos de apresentação existentes, comprovar equivalência antes de reusar.
+- `interaction/capability_attempt.py`, `pending_proposals.py`, `turn_budget.py`, `turn_observability.py`.
+- `model_invocation/invoke_model.py`, `model_invocation/contracts.py`, `governed_retries.py`.
+- `config/cri_presentation.delpi.json` e carregador governado `infrastructure/config/cri_instruction_resource.py`.
+
+**Arquivos apenas candidatos e finalidade exclusiva:**
+`capability_provision/evidence_projection.py` = classificação e projeção determinística de payload owner para dados/evidência legíveis por assessment, *sem* julgamento de intenção ou render.
+`capability_provision/guidance_projection.py` = seções comprovadas de guias/documentação com trechos bounded, *sem* decidir qual ferramenta chamar.
+`capability_provision/response_projection.py` = DTO de records prontos para apresentação, *somente se* compositor/interaction.presentation existentes não resolverem.
+`capability_provision/semantic_surface_projection.py` = descrição bounded de capabilities publicadas/eligíveis, *somente se* houver segundo consumer comprovado fora da função atual.
+Nenhum arquivo novo é obrigatório; candidatos guidance/response/surface permanecem SKIP até gate formal. Não criar `utils.py`, `common.py`, `helpers.py`, facades ou package genérico.
+
+### 10.2 Contratos candidatos em forma operacional (não são novos DTOs congelados)
+
+| Interface semântica | Entrada legítima | Saída e invariantes | Owner/destino preferencial | Consumidores a validar |
+|---|---|---|---|---|
+| `project_owner_evidence` (nome ilustrativo) | `SpecialistOutcome` ou payload typed + `source/provenance` + limites | `EvidenceFacts` existente ou projeção tipada equivalente; record de negócio ≠ schema ≠ guidance ≠ control-plane; valores fiéis, bounded, redacted, zero authority inferida | `outcome_assessment.py` ou candidato `evidence_projection.py` **após gate** | assessment, CRI, argumentos/resolver (não presumir todos equivalentes) |
+| `assess_outcome` existente | `EvidenceFacts`, `AnswerRequirements`, proposta de intenção tipada validada | `OutcomeVerdict` + reasons + limitations; HTTP 200 não basta; `contract_subject` só permite conteúdo contratual pertinente, jamais AuthZ | `outcome_assessment.py` | orquestrador e compositor, conforme imports reais |
+| `project_guidance_sections` (ilustrativo) | guia owner saneado, seleção semântica já validada, budget | seções/provenance/omissions; sem escolher provider, sem recompor fatos | existing evidence/compositor; candidate guidance leaf apenas por decisão | projection, assessment, presentation |
+| `compose_cri_response` existente | `OutcomeVerdict` + `PresentedRecord` + limitações/provenance + vocabulário validado | `CriComposition`/texto PT-BR fiel; nenhum fetch, AuthZ, planner ou validação de fatos de domínio | `conversational_response.py` | `orchestration.py`, handler, render paths |
+| `project_semantic_surface` (ilustrativo) | `CapabilityGroup`/surface viva publicada, contexto de visibilidade autorizado | snapshot bounded, factual apenas sobre **publicação**, sem afirmar permissão efetiva | capability contracts/projection existente; novo arquivo só se consumer real | admission surface inquiry / meta-context |
+| `validate_arguments` existente | proposal arguments + owner-declared schema | valido/erros/missing fields tipados, sem inventar valores ou coerção de negócio | `interaction/argument_validation.py` | orquestrador, candidate/resolver paths |
+| `InvokeModel` existente | prompt/instruction lineage + input contextual bounded + purpose | proposal tipada ou falha governada; output não é FACT nem AuthZ | `model_invocation` | model stages do orquestrador |
+
+**Contrato antes de código:** para cada interface efetivamente criada/modificada, registrar owner, consumers, request/response shape, null/empty/truncated, errors, trust classification, limites, segurança, observabilidade, compatibilidade e testes; proibir imports de provider adapter para inside application/domain. Para `NEW`, exigir `EXISTING_EQUIVALENT=NO` com provas no HEAD, e `REUSE_DECISION=NEW` aprovada; `TO_INVENTORY` não autoriza criar.
+
+### 10.3 Matriz por função: sequenciamento e destino
+
+| Lote | Funções no `orchestration.py` no baseline auditado | Owner-alvo preferencial | Antes de mover | Saída esperada |
+|---|---|---|---|---|
+| M01/R1 | `*_INSTRUCTION`, `_lineage`, stage content strings | loader/recursos versionados já existentes; keep `_lineage` no boundary semântico | inventário `instruction-id/version/hash/consumer`, snapshots e compatibilidade | texto declarativo separado; proposal schemas mantidos em Python |
+| M02/R2 | `_contract_fact_rows`, `_compact_evidence`, `_evidence_rows` | Evidence/Outcome legítimo ou `evidence_projection.py` aprovado | D5 funcional PASS, consumer map entre assessment, model-stage, render, controle de truncamento | projection reproduz evidence bytes/semântica, com testes de isolamento |
+| M03/R2 | `_without_control_plane`, `_is_capability_descriptor`, `_sanitize_renderable`, `_redact_text`, `_canonical_key` | **um único owner** de trust projection, após caller graph | cobertura de todos os ~103 usos mencionados em doc117; não copiar helper | proteção RC1/RC2 e redaction centralizada sem import reverso |
+| M04/R3 | `_outcome_facts`, `_apply_outcome_assessment` | `outcome_assessment.py` se dados de entrada não dependerem do stateful coordinator | provar types e call order; verdict/limitation snapshots | coordinator chama assessment puro, sem reimplementar stage |
+| M05/R3 | `_cri_presented_record`, `_compose_cri_response`, `_cri_scalar_text` | `conversational_response.py` / tipos existentes | paridade `PresentedRecord`, JSON v4, CRI on/off, token/limitation | DTO já saneado enviado ao compositor |
+| M06/R4 | `_compose_answer`, `_detail_header`, `_detail_lines`, `_render_synthesis`, `_md_format_structured`, `_md_business_lines` | compositor existente se import DAG permitir | resolver dependências de M02/M03 antes; preservar bytes quando linguagem governada | presentation sem acesso a orchestration e sem cópia de sanitizers |
+| M07/R4 | `_guidance_section_records`, `_select_guidance_records`, `_deterministic_guidance_content`, `_pack_guidance_sections`, `_guidance_family_for_key` | SKIP doc117 até boundary novo legitimamente provado | separar selection semântica do modelo de packing determinístico; testar D5/D5-R | módulo apenas se contrato+consumer real; caso contrário KEEP/SKIP |
+| M08/R5 | `_schema_required_gaps`, `_argument_completeness_gaps`, `_apply_owner_declared_defaults`, `_build_arguments` | validations puras para `argument_validation.py`; flow permanece no coordinator | equivalência `required/defaults/error`, deny negative, no fake values | validação compartilhada, sem duplicar schema engine |
+| M09/R5 | `_model_stage_proposal`, `_propose`, `_repair_once`, `_turn_goal_from_proposal` | KEEP em model/coordinator boundary salvo duplicação comprovada | lineage, retries e 60/3/300, proposta typed, model variability | mesma decisão/contrato com menor duplicated wiring se houver |
+| M10/R6 | `_attempt`, `_select_target`, `_invoke_selected`, `_attempt_prepare`, `_execute_prepared_act`, `_audit` | KEEP coordinator e existing interaction action contracts | nenhuma autoridade write/authorization reconfigurada; test end-to-end | coordinator explícito e sem lógica presentation não essencial |
+
+**A regra funcional é preservar contratos e outcomes, não perseguir percentuais de redução do arquivo.** Proibir mover funções de M03 em diversas cópias para resolver imports, e proibir converter M07 em `guidance_projection.py` sem superar por evidência a decisão 117.
+
+### 10.4 Contratos de dependência e testes de isolamento por lote
+
+- **R1/M01:** snapshots de instructions e hashes com lineage/version; recurso ausente/JSON inválido falha closed; nenhuma modificação de factual authorship.
+- **R2/M02–M03:** parametrizar payloads positivos e negativos `business_record`, `entities.*`, `productGuide`, `displayFormatCatalog`, `agent_directives`, lista truncada, nomes homônimos, source missing; no model call inside projection. Guardar `provenance` e bounding.
+- **R3/M04–M05:** table-driven equivalência `EvidenceFacts→OutcomeVerdict→CriComposition` para answered, insufficient, contract subject, envelope only e explicit empty. Mesma limitation e epistemic typing. Não promover JSON técnico.
+- **R4/M06–M07:** `PT-BR` labels, `title/summary`, registros, detalhes, comparações, Markdown literal e sanitation; guidance D5 concrete formats versus index, sem alteração da intenção.
+- **R5/M08–M09:** schema valid, malformed, defaults, required missing, candidate bound, open vocabulary, idempotency; proposal requires_auth never authorizes; retry/timeout semantics intact.
+- **R6/M10:** contrato externo `root_composer→OperationalCapabilityOrchestrator→SupportsGovernedCapabilityAttempt→HandleInteractiveConversationTurn`; no-tool, D4/D5/D8, MCP, OpenAPI, AuthZ negative, ACT prohibited without gates, audit/outcome.
+- **R7:** suíte completa, AST/import-DAG checker, provider-neutral rename/add/remove/reorder, sensitivity/secret redaction, direct-prod only on release authorization and legitimate identity.
+
+### 10.5 Evidência de modularidade e aceite de cada arquivo
+
+Para cada módulo alterado/criado publicar um pequeno registro no relatório: `MODULE_OWNER`, `EXISTING_EQUIVALENT`, `REUSE_DECISION`, `PUBLIC_CONTRACT`, `CALLERS`, `DEPENDENCIES_IN`, `DEPENDENCIES_OUT`, `FUNCTIONS_MOVED`, `TESTS`, `SAFETY`, `MIGRATION_ROLLBACK`.
+
+Refuse extração quando: (a) exige imports circulares; (b) copia sanitizador; (c) junta funções de trust/security com formatting user-facing sem contrato; (d) obriga consumer a importar o coordinator; (e) duplica DTO/port; (f) quebra frozen semantic authoring; (g) não reduz coupling; (h) qualquer safety gate ou source of truth mude implicitamente.
+
+**Gate verificável de conclusão:** funções movidas têm imports antigos retirados sem wrappers permanentes não justificados; único owner e consumidor real; delta e testes do SHA registrados; regressão funcional igual ou melhor, sem declaração de PASS baseada em HTTP 200. Se nenhum move legítimo for provado, marcar `SKIP_WITH_DECISION` e preservar a arquitetura atual, não forçar a criação de arquivos.
+
+### 10.6 Entregáveis do executor R0 antes de autorizar runtime
+
+(1) Matriz M01–M10 atualizada contra HEAD pós-estabilização; (2) DAG de imports atual/previsto e pontos de inversão; (3) escolha `REUSE|EXTEND|NEW|SKIP` com evidência por arquivo; (4) desenho de contratos request/response/errors de cada extração REAL; (5) ordem de commits e rollback por lote; (6) testes baseline SHA, modelos/config/CRI e outcomes D4/D5/D8; (7) gap/ADR list, com vínculo a 49/52/58/59/113/117 e ledger; (8) recomendação de autorização separada R1–R7. **R0 permanece NOT_AUTHORIZED até aceite da estabilização e decisão do PO.**
