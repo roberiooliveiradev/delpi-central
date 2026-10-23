@@ -57,3 +57,8 @@ Tabela obrigatória por função migrada: ORIGIN SYMBOL | NEW OWNER/FILE | CONTR
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
 `REVIEW_SHA=PENDING` · `REVIEW_VERDICT=PENDING` · `ACCEPTANCE_REASON=PENDING` · `NEXT_STAGE_AUTHORIZED=NO`.
+
+
+### Complemento de gates de teste local e deploy — diretriz PO de 2026-10-23
+
+**Norma executiva superior:** 16 + plano 125 + runbook 130. Para esta etapa, testes locais completos no SHA modificado passam a ser condição explícita de aceite técnico: focused, full backend, architecture/import DAG, security, provider-neutral generalization, CRI e outcomes aplicáveis; Ollama local quando comportamento de modelo/prompt for afetado. Registre `LOCAL_TEST_STATUS`, `TEST_SHA`, `MODEL_CONFIG` e evidências. O deploy em produção é **objetivo condicionado** a review independente e autorização operacional específica com rollback; não executá-lo apenas com o prompt de implementação. Após deploy autorizado, homologar caminhos reais e registrar `DEPLOY_AUTHORIZATION`, `DEPLOY_STATUS`, `IMAGE_DIGEST`, `PROD_SHA`, `PROD_AUTH_HOMOLOGATION`, `BUSINESS_OUTCOME_STATUS`. Se não houver acesso/autorização, `TEST_NOT_RUN` com motivo. Para R1/R2 históricos, isto é regra prospectiva: não transformar campos passados em PASS e criar release/homologação separados mediante autorização. A próxima etapa continua dependente de decisão explícita da coordenação/PO.
