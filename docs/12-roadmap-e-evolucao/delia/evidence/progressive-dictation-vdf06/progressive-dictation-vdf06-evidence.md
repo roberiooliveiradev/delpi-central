@@ -116,3 +116,62 @@ getUserMedia → AudioWorklet → segmentos WAV → NDJSON → provider → reco
 1. Screen reader real pendente de ambiente (mesmo residual do QA Markdown B2).
 2. Acurácia de transcrição é do provider (observado "producal"); fora de escopo de plataforma.
 3. Flags auxiliares (`MAX_*`) usam defaults canônicos; ajuste futuro via config.
+
+
+
+---
+
+# Rework pos-go-live — QUALITY-AND-SEGMENT-RECOVERY (commit `91a3913d02`, 2026-10-23)
+
+Incidentes reportados pelo PO em produção e causa-raiz comprovada:
+
+## Incidente B — mojibake `AlÃ´, alÃ´` — ROOT_CAUSE comprovada
+
+- Causa: `requests.iter_lines(decode_unicode=True)` decodifica `text/event-stream`
+  sem charset como **ISO-8859-1** (default histórico da lib para `text/*`).
+  UTF-8 do provider era corrompido antes do `json.loads`.
+- Fix: `iter_lines()` em **bytes** + decode UTF-8 por linha — seguro contra
+  multibyte quebrado em fronteira de chunk (UTF-8 nunca contém `0x0A`).
+- Prova prod pós-deploy: WAV pt-BR acentuado retornou
+  `Alô, alô, você pode mostrar os indicadores de produção e a situação do
+  coração, por favor?` — `UTF8_CLEAN`, texto correto no composer (A3b).
+
+## Incidente C — `empty_transcription` exposto e sessão morta
+
+- Causa: erro segment-scoped era tratado como `recoverable_error` terminal —
+  sessão parava e o código cru aparecia ao usuário.
+- Fix: classificação no controller — códigos terminais
+  (`session_not_found`, `session_expired`, `forbidden`, `unauthenticated`)
+  encerram a sessão; qualquer outra falha de segmento marca apenas o segmento
+  (`reconciler.failSegment`: provisional vira user-owned, pending cancelado,
+  eventos tardios descartados), exibe aviso contextual
+  ("Não consegui reconhecer esse trecho. Você pode continuar falando.") e a
+  captura continua ouvindo. Códigos técnicos nunca chegam ao usuário.
+- `recoverable_error` agora permite reiniciar o ditado (antes dead-end).
+- Avisos limpos ao finalizar/descartar; sem texto fabricado, sem auto-submit.
+
+## Incidente A — progressividade/latência
+
+- Medições reais em prod: primeiro partial do provider ~flat por segmento
+  (2s→2.0s, 3s→2.4s, 4s→2.6s). O termo dominante do tempo até o primeiro
+  texto visível era o próprio `segmentMs=4000` (TTFV ~6.5-7s).
+- Fix honesto dentro do contrato: `firstSegmentMs=2000` +
+  `segmentMs=3000` (100 segmentos < limite 120 em sessão de 5 min).
+- Medido pós-deploy em browser real: `TIME_TO_FIRST_VISIBLE_MS=4550`
+  (antes ~7s). Zero pseudo-streaming — todo texto é saída real do provider.
+
+## Regressão e QA pós-fix
+
+- Backend: 2150 passed (51 streaming-protocol, incl. 4 casos UTF-8 RED→GREEN);
+  1 flake de timing em activity_streaming passa isolado 3/3 (não-transcrição).
+- plugin-ui Vitest: 2322. DÉLIA Vitest: 387. Typecheck ambos: limpo.
+- Smoke NDJSON prod: session → started @0.32s → 3 partials progressivos →
+  final UTF-8 íntegro → end. SECURITY: 401 sem bearer (open e status).
+- QA browser prod (Chrome + WAV pt-BR acentuado real): **14/14 PASS**
+  incluindo novo A3b UNICODE_PTBR_INTEGRITY; TTFV=4550ms.
+
+## Residuais adicionais do rework
+
+- Provider alucina em silêncio puro (24 chars) — comportamento do provider,
+  documentado; aplicação trata vazio real como segmento recuperável.
+- `producal` por `produção` = erro de reconhecimento do provider, não encoding.

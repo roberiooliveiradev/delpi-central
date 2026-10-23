@@ -17786,3 +17786,23 @@ D5=PARTIAL D5-R=PASS D4=PASS D8=PASS D8-R=PARTIAL N1=PASS D5-schema=PASS
 MATERIAL_GAPS=d5_projection_breadth,d8r_discover_execute_chain,ptbr_labels_residual
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.404 — VD-F06 rework: live transcription quality e segment recovery (2026-10-23)
+
+**2026-10-23 — DELIA-VD-F06-LIVE-TRANSCRIPTION-QUALITY-AND-SEGMENT-RECOVERY-REWORK-01:** tres incidentes reais do PO, causa-raiz comprovada e fix generalizante no owner correto, sem contrato novo.
+
+INCIDENTE B (mojibake Alo->AlÃ´): `requests.iter_lines(decode_unicode=True)` decodifica `text/event-stream` sem charset como ISO-8859-1 — UTF-8 do provider corrompido antes do json.loads. Fix no adapter canônico: iter_lines em bytes + decode UTF-8 por linha (seguro contra multibyte em fronteira de chunk). RED 4 testes -> GREEN; prova prod: WAV pt-BR acentuado retornou texto Unicode íntegro (UTF8_CLEAN + A3b no composer).
+
+INCIDENTE C (empty_transcription exposto / sessao morta): erro segment-scoped era `recoverable_error` terminal com codigo cru ao usuario. Fix no controller+reconciler: codigos terminais (session_not_found/session_expired/forbidden/unauthenticated) encerram; demais falhas marcam so o segmento (failSegment: provisional->userOwned, pending->cancelled, late events drop), aviso contextual ("Nao consegui reconhecer esse trecho..."), captura continua; `recoverable_error` readmite start; notice limpo em finish/cancel. 14/14 controller + 14/14 reconciler GREEN.
+
+INCIDENTE A (latencia/progressividade): medido em prod — provider first-partial ~flat (2s->2.0, 3s->2.4, 4s->2.6); termo dominante era segmentMs=4000. Fix: firstSegmentMs=2000 + segmentMs=3000 (100 segs < 120/5min). TIME_TO_FIRST_VISIBLE medido pós-deploy: 4550ms (antes ~7s). Zero pseudo-streaming.
+
+REGRESSAO: backend 2150 passed (1 flake timing nao-transcricao, isola 3/3); plugin-ui 2322; delia 387; typecheck+builds limpos. DEPLOY: push ff `91a3913d02` -> up-prod-sequential --build plugin-ui delia delia-api; container healthy; health 200.
+
+QA PROD POS-FIX (identidade user): smoke NDJSON (started @0.32s, 3 partials, final UTF-8, end) + browser 14/14 PASS (full-page A1-A7+A3b unicode, mobile B1-B3, Dock C1-C3) + 401 sem bearer. REWORKS=2 (failSegment semantics, cancel notice clear). RESIDUAIS: provider alucina em silencio puro; acuracia lexical e do provider.
+
+TASK_ID=DELIA-VD-F06-LIVE-TRANSCRIPTION-QUALITY-AND-SEGMENT-RECOVERY-REWORK-01
+COMMIT=91a3913d02 DEPLOYED=YES PROD_QA=14/14 UTF8_CLEAN TTFV_MS=4550
+R01-R18=PASS (screen reader segue TEST_NOT_RUN por ambiente)
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
