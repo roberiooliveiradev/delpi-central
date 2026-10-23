@@ -545,6 +545,7 @@ export function ComunicadoEditorProvider({
   const {
     pushPast,
     commitWithHistory,
+    applyServerConfig,
     undo,
     redo,
     canUndo,
@@ -677,6 +678,7 @@ export function ComunicadoEditorProvider({
     slideId,
     configRef,
     commitWithHistory,
+    applyServerConfig,
     selectedIds: selection.selectedIds,
     getActionSelectedIds: selection.getActionSelectedIds,
     selectedId: selection.selectedId,

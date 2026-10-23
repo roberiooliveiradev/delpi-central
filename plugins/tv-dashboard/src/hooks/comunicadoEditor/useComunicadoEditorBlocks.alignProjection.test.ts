@@ -129,6 +129,7 @@ function renderEditor(args: {
       slideId: args.slideId,
       configRef,
       commitWithHistory: history.commitWithHistory,
+      applyServerConfig: history.applyServerConfig,
       selectedIds: selectedIdsRef.current,
       getActionSelectedIds: () => selectedIdsRef.current,
       selectedId: selectedIdsRef.current[0] ?? null,
@@ -218,7 +219,7 @@ describe("alignSelected — projeção visual local (025)", () => {
     expect(frameOf(result.current.configRef.current, "b1")?.x).toBe(10);
   });
 
-  it("undo após ack restaura o estado pré-alinhamento (mesmo contrato de sameSize/drag)", async () => {
+  it("025-R1: ack normalizado não cria segundo Undo — uma ação lógica", async () => {
     const server = makeFakeMutationServer(twoBlockConfig());
     mutationsMock.mockImplementation(server.immediate);
     const { result, selectedIdsRef } = renderEditor({
@@ -234,17 +235,49 @@ describe("alignSelected — projeção visual local (025)", () => {
     await flush();
     expect(frameOf(result.current.configRef.current, "b1")?.y).toBe(10);
 
-    // O ack parse-normaliza estilos (defaults materializados), então o
-    // fingerprint do canônico pode diferir da projeção esparsa e gerar uma
-    // entrada de histórico visualmente idêntica — contrato preexistente de
-    // todos os caminhos local-first (sameSize/drag/insert). Undo deve voltar.
-    for (let i = 0; i < 2; i += 1) {
-      if (frameOf(result.current.configRef.current, "b1")?.y === 40) break;
-      act(() => {
-        result.current.history.undo();
-      });
-    }
+    // O canônico materializa defaults de estilo (fingerprint difere da
+    // projeção esparsa) — applyServerConfig aplica sem nova entrada de Undo.
+    act(() => {
+      result.current.history.undo();
+    });
     expect(frameOf(result.current.configRef.current, "b1")?.y).toBe(40);
+    // Exatamente uma ação lógica: pilha esgotada após um único undo.
+    expect(result.current.history.canUndo).toBe(false);
+  });
+
+  it("025-R1: ack com ajuste semântico do backend aplica sem Undo extra", async () => {
+    const config = twoBlockConfig();
+    const server = makeFakeMutationServer(config);
+    mutationsMock.mockImplementation(
+      vi.fn((_p: string, _s: string, ops: MutationOps) => {
+        const out = server.applyOps(ops);
+        // Backend "clamp" autoritativo: normaliza x para 8.
+        for (const b of (out.nativeConfig as { blocks: Array<{ frame: { x: number } }> }).blocks) {
+          b.frame.x = 8;
+        }
+        return Promise.resolve(out);
+      }),
+    );
+    const { result, selectedIdsRef } = renderEditor({
+      playlistId: "pl1",
+      slideId: "sl1",
+      config,
+    });
+    selectedIdsRef.current = ["a1", "b1"];
+
+    act(() => {
+      result.current.blocks.alignSelected("align-left");
+    });
+    await flush();
+    // Ajuste semântico do backend é autoridade: aplica no palco (x=8).
+    expect(frameOf(result.current.configRef.current, "a1")?.x).toBe(8);
+
+    act(() => {
+      result.current.history.undo();
+    });
+    // Um Undo volta ao estado pré-comando (x=10) — a correção do backend
+    // pertence à mesma ação lógica.
+    expect(frameOf(result.current.configRef.current, "a1")?.x).toBe(10);
   });
 
   it("distribute-h com 3 blocos projeta espaçamento imediato", async () => {
@@ -384,12 +417,10 @@ describe("z-order — projeção visual local (025)", () => {
       result.current.blocks.bringToFront();
     });
     await flush();
-    for (let i = 0; i < 2; i += 1) {
-      if (zOf(result.current.configRef.current, "a1") === 1) break;
-      act(() => {
-        result.current.history.undo();
-      });
-    }
+    act(() => {
+      result.current.history.undo();
+    });
+    // 025-R1: uma ação lógica = um Undo, mesmo com zIndex reindexado no ack.
     expect(zOf(result.current.configRef.current, "a1")).toBe(1);
   });
 });

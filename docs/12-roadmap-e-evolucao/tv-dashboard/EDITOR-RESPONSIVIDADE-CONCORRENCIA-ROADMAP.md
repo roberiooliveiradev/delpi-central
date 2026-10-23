@@ -262,13 +262,29 @@ Com `upsert_block`, **persistido ≡ projetado por construção** → ack de mes
 
 **Contratos preservados.** CAS/`expected_revision` intactos (ops passam pela mesma `applyPresentationMutations`/`withWriteEpoch`); geração descarta ack stale entre comandos consecutivos (teste A→B fora de ordem); 409 segue server-wins da infraestrutura de escrita existente; falha não-CAS mantém a projeção no palco sem fingir confirmação (mesma semântica de sameSize/drag — a recuperação é do autosave full-config e da reconciliação WS/024-R1); histórico segue um passo lógico por comando (ver quirk abaixo); WS/reconciliação não tocadas — o suppression do 024/024-R1 não usa projeção otimista como prova de incorporação.
 
-**Quirk preexistente documentado.** `parseComunicadoConfig` → `normalizeBlock` materializa defaults de estilo no ack; o fingerprint do canônico difere da projeção esparsa e `commitWithHistory` pode empilhar uma segunda entrada de histórico visualmente idêntica. É o comportamento vigente de **todos** os caminhos local-first (sameSize/drag/insert) — não introduzido aqui; correção global seria normalizar a projeção antes do upsert, fora de escopo.
+**Quirk preexistente documentado — corrigido em 025-R1.** `parseComunicadoConfig` → `normalizeBlock` materializa defaults de estilo no ack; o fingerprint do canônico difere da projeção esparsa e `commitWithHistory` empilhava uma segunda entrada de histórico visualmente idêntica. Resolvido pelo `applyServerConfig` (ver seção 025-R1).
 
 **Métricas.** `CLICK_TO_FIRST_VISUAL_MS`: antes = RTT mutation (~112ms warm local, >500ms cold) → depois = commit síncrono `commitWithHistory` (um React commit, <16ms alvo). `CLICK_TO_CONFIRMED_VISUAL_MS`: inalterado (~RTT). `HTTP_REQUESTS_PER_COMMAND`: 1 mutation → 1 mutation (mesma contagem; o autosave full-config existia nos dois mundos). `VISUAL_CORRECTION_COUNT`: 0 sistemático — persistido ≡ projetado.
 
 **Testes.** `useComunicadoEditorBlocks.alignProjection.test.ts` (8): pinta antes do ACK + upsert projetado (sem op align), ack idêntico sem undo extra induzido, distribute-h imediato, no-op <3 sem commit, A→B com ack stale dropado pela geração, falha não-CAS sem falso sucesso/reversão cega, z-order bringToFront imediato via upsert (sem reorder_block_z), undo pós-ack. Regressão: 103 testes dos hooks/utils/align/layer/mutation PASS; suíte completa `src/` sem novos failures (5 arquivos já falhavam no baseline; `PlaylistPreviewPage.loading` flaky sob carga, PASS isolado).
 
-**Limitações.** E2E visual dois-browsers `TEST_NOT_RUN`. Cenários multiusuário A–F regidos pelo mesmo contrato de escrita do sameSize (upsert + autosave + CAS + WS) — sem nova superfície de conflito, mas sem sessão dupla executada nesta task. Undo de projeção pode precisar de 2 passos quando o canônico normaliza estilos (quirk acima).
+**Limitações.** E2E visual dois-browsers `TEST_NOT_RUN`. Cenários multiusuário A–F regidos pelo mesmo contrato de escrita do sameSize (upsert + autosave + CAS + WS) — sem nova superfície de conflito, mas sem sessão dupla executada nesta task.
+
+### Execução — VISTA-TV-EDITOR-LOCAL-VISUAL-PROJECTION-025-R1 (P0, reconciliação segura da projeção)
+
+Rework da 025 após review. Dois problemas comprovados e corrigidos no owner correto (MFE — reconciliação de ACK, histórico e tratamento de erro), sem deslocar nada para o backend.
+
+**Problema A — falha não-CAS silenciosa.** `handleMutationWriteError` delegava a `handlePlaylistWriteConflict`, que trata 409 (server-wins + aviso) mas retorna `false` para qualquer outro erro — rede, 5xx, 422, timeout/cancelamento. Resultado: a projeção ficava no palco **como se confirmada**, sem nenhuma recuperação. Correção em `PlaylistEditorPage`: quando o handler de conflito não trata o erro, arma-se `pendingMutationRecoveryRef` e, no settle da fila FIFO (`onPlaylistWriteSettled`, mecanismo do 024-R1), executa-se o reload autoritativo (`applyServerWinsConflict` com mensagem de restauração) **somente se `hasPendingPlaylistWrite` for falso** — a lane drenada garante que a recuperação não reverta escritas irmãs ainda em voo (cenário A4: falha de A não apaga B). Timeout/ACK perdido podem significar commit efetivado no servidor — por isso a recuperação é o read-back autoritativo, nunca um rollback cego de snapshot. 409 continua no caminho server-wins original (não passa pelo novo ramo).
+
+**Problema B — Undo duplicado por normalização do ACK.** `parseComunicadoConfig`/`normalizeBlock` materializa defaults de estilo no ack (evidência ao vivo: `upsert_block` retornou `fontSize:48` e chaves `x`/`y` top-level não enviados na projeção). O fingerprint do autorado canônico diferia da projeção esparsa → `commitWithHistory` empilhava uma segunda entrada visualmente idêntica; um comando virava dois Undos. Correção no owner comum `useComunicadoEditorHistory`: novo `applyServerConfig(next)` aplica a configuração canônica **sem empilhar snapshot de undo** (a projeção local já registrou a ação lógica) e aplica mudança runtime-only com `persist:false` da mesma forma que `commitWithHistory`. Em `useComunicadoEditorBlocks`, `applyCanonicalAck = applyServerConfig ?? commitWithHistory`: todos os caminhos que já projetam localmente (alinhar, distribuir, z-order, sameSize, temas de slide, KPI/texto projetado, fallback local de duplicar, drag-reorder) reconciliam o ACK sem histórico; os dois caminhos genuinamente ACK-first (`bump_font_size` e `commitDuplicateBlocks` — backend cunha identidade/resultado canônico) **permanecem** em `commitWithHistory` para que sua única entrada lógica exista. Ajuste semântico real do backend (ex.: clamp de geometria) continua aplicando no palco — a autoridade não é mascarada; apenas não vira uma ação extra de Undo.
+
+**Contrato de histórico resultante.** Um comando do usuário = uma entrada Undo. ACK normalizado da mesma operação reconcilia sem entrada nova; mudança semântica do backend aplica dentro da mesma ação lógica; mudança remota nunca vira ação local de Undo (023 intocado). O padrão já existia no drag (`applyConfig` direto no ack) — R1 generalizou-o no owner comum em vez de criar engine paralela.
+
+**Testes.** `alignProjection.test.ts` passou a 9 testes com asserções estritas: ack normalizado não cria segundo Undo (`canUndo===false` após um undo), ajuste semântico do backend (clamp x→8) aplica e desfaz num único passo. Regressão: 116 testes / 19 arquivos PASS nos hooks/utils afetados. TS/eslint: sem erros novos (somente baseline pré-existente).
+
+**Verificação ao vivo (playlist isolada).** `upsert_block` da forma projetada → `persisted:true`, `playlistRevision:23`, ack confirmando normalização (defaults materializados). Falha não-CAS (slide inexistente) → HTTP 422 "Slide não encontrado" — categoria que antes caía no `return false` silencioso e agora arma recuperação autoritativa. `DEPLOY = NOT_PERFORMED`.
+
+**Resíduos.** (1) Recuperação é um reload autoritativo com aviso — não há preservação de rascunho visual separado; se o servidor não persistiu, a projeção é revertida após dreno da lane (política deliberada: estado autoritativo vence). (2) A6 (navegação entre slides/desmontagem com escrita pendente) segue o comportamento preexistente da lane — sem regressão, sem nova cobertura E2E. (3) E2E dois-navegadores continua `TEST_NOT_RUN`.
 
 ### Cache
 
@@ -280,6 +296,8 @@ Com `upsert_block`, **persistido ≡ projetado por construção** → ack de mes
 |---|---|---|
 | Projeção local de move/estilo/grupo | YES | REUSE |
 | Projeção de alinhar/z-order com rollback | YES (025) | REUSED — `updateBlocks` + `ackBlocksMutation` |
+| Reconciliação de ACK sem Undo duplicado | YES (025-R1) | EXTEND — `applyServerConfig` no histórico existente |
+| Recuperação de falha não-CAS de mutation | YES (025-R1) | EXTEND — lane settle + reload autoritativo |
 | Fila FIFO + Web Lock | YES | REUSE |
 | Revisão / 409 / server-wins | YES | REUSE |
 | Read-back `nativeConfig` | YES | REUSE |
@@ -293,7 +311,7 @@ Com `upsert_block`, **persistido ≡ projetado por construção** → ack de mes
 Não é projeção otimista nem sala nova.
 
 1. **Fase 1 residual:** medir, no editor autenticado, fila, rede, persistência, read-back e o reload do próprio `presentation_updated`. Só então decidir se o eco sem `clientId` ou o clear de cache entram num patch. Owner: `PlaylistEditorPage` + `notify_presentation_changed`. Teste: uma sessão, comandos de alinhar e prefixo, sem gravar cenário irreversível.
-2. **Fase 2 (feita — 025):** alinhar/distribuir/z-order projetam via `updateBlocks` + `ackBlocksMutation` (sem reducer novo; ack continua autoridade). Residual: E2E visual dois-browsers e o quirk de histórico por normalização de estilo no ack.
+2. **Fase 2 (feita — 025 + 025-R1):** alinhar/distribuir/z-order projetam via `updateBlocks` + `ackBlocksMutation`; ACK canônico reconcilia via `applyServerConfig` sem Undo duplicado; falha não-CAS arma reload autoritativo no dreno da lane. Residual: E2E visual dois-browsers e cobertura multiusuário A–F ao vivo.
 3. **Fase 3:** duas sessões reais nos cenários A–F. Conflito continua 409 + aviso. Undo não pode persistir por cima da revisão do outro usuário. Sem CRDT, OT ou merge por campo até existir ADR.
 
 ### Testes nesta reancoragem

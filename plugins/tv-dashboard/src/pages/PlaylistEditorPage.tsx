@@ -932,11 +932,36 @@ export function PlaylistEditorPage({
     [recordWriteRevision],
   );
 
+  /**
+   * 025-R1 — falha não-CAS de mutation (rede/5xx/timeout/cancelamento): a
+   * projeção local não está confirmada. A recuperação é o reload
+   * autoritativo — timeout/ACK perdido podem significar commit efetivado,
+   * então o servidor decide. Só executa quando a lane drenar para não
+   * reverter escritas irmãs ainda em voo. Guarda o slide que falhou: se o
+   * usuário navegar antes do dreno, a marca de conflito segue o slide certo.
+   */
+  const pendingMutationRecoveryRef = useRef<string | null>(null);
+  const recoverMutationAfterFailure = useCallback(() => {
+    const failedSlideId = pendingMutationRecoveryRef.current;
+    if (!failedSlideId) return;
+    if (hasPendingPlaylistWrite(playlistId)) return;
+    pendingMutationRecoveryRef.current = null;
+    void applyServerWinsConflict(
+      failedSlideId,
+      "Não foi possível confirmar a alteração. O estado salvo foi restaurado.",
+    );
+  }, [playlistId, applyServerWinsConflict]);
+
   const handleMutationWriteError = useCallback(
     (error: unknown) => {
-      void handlePlaylistWriteConflict(error, selectedSlideIdRef.current);
+      const slideId = selectedSlideIdRef.current;
+      void handlePlaylistWriteConflict(error, slideId).then((handled) => {
+        if (handled) return;
+        pendingMutationRecoveryRef.current = slideId;
+        recoverMutationAfterFailure();
+      });
     },
-    [handlePlaylistWriteConflict],
+    [handlePlaylistWriteConflict, recoverMutationAfterFailure],
   );
 
   useEffect(() => {
@@ -1117,19 +1142,29 @@ export function PlaylistEditorPage({
           const ambiguousRevision = pendingAmbiguousSyncRevisionRef.current;
           pendingAmbiguousSyncRevisionRef.current = null;
           if (
-            !shouldRecoverAmbiguousSyncEvent({
+            shouldRecoverAmbiguousSyncEvent({
               ambiguousRevision,
               trackedRevision: slideBaseRevision(null),
             })
           ) {
+            // O reload autoritativo abaixo já reconcilia falhas pendentes.
+            pendingMutationRecoveryRef.current = null;
+            void reloadPlaylistFromServer().then(() =>
+              deckHistory.handleRemoteUpdate(),
+            );
             return;
           }
-          void reloadPlaylistFromServer().then(() =>
-            deckHistory.handleRemoteUpdate(),
-          );
+          // 025-R1 — drena recuperação de falha não-CAS quando a lane esvaziou.
+          recoverMutationAfterFailure();
         });
       }),
-    [playlistId, slideBaseRevision, reloadPlaylistFromServer, deckHistory],
+    [
+      playlistId,
+      slideBaseRevision,
+      reloadPlaylistFromServer,
+      deckHistory,
+      recoverMutationAfterFailure,
+    ],
   );
 
   /**

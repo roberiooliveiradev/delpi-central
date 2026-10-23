@@ -105,6 +105,34 @@ export function useComunicadoEditorHistory({
     [applyConfig, configRef, deckHistory, pushPast],
   );
 
+  /**
+   * Read-back de ACK (025-R1): quando a projeção local já criou a entrada de
+   * histórico da ação lógica, o canônico do backend é aplicado no palco sem
+   * empilhar uma segunda entrada de Undo e sem regravar (o estado já veio
+   * persistido). Vale tanto para normalização representacional (defaults
+   * materializados) quanto para ajuste semântico real — em ambos o backend
+   * é autoridade e a ação do usuário continua sendo um único Undo.
+   */
+  const applyServerConfig = useCallback(
+    (next: ComunicadoConfig) => {
+      const beforeAuthoring = fingerprintComunicadoValue(
+        serializeComunicadoConfig(snapshotConfig(configRef.current)),
+      );
+      const afterAuthoring = fingerprintComunicadoValue(
+        serializeComunicadoConfig(snapshotConfig(next)),
+      );
+      if (
+        beforeAuthoring === afterAuthoring &&
+        fingerprintComunicadoRuntime(configRef.current) ===
+          fingerprintComunicadoRuntime(next)
+      ) {
+        return;
+      }
+      applyConfig(next, { persist: false });
+    },
+    [applyConfig, configRef],
+  );
+
   const undo = useCallback(() => {
     const previous = pastRef.current.pop();
     if (!previous) return;
@@ -138,6 +166,7 @@ export function useComunicadoEditorHistory({
     setHistoryTick,
     pushPast,
     commitWithHistory,
+    applyServerConfig,
     undo,
     redo,
     canUndo,

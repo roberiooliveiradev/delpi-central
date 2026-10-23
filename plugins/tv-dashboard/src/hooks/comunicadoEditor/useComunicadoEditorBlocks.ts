@@ -215,6 +215,12 @@ type Options = {
   onWriteCommitted?: (meta: MutationCommitMeta) => void;
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
   onWriteError?: (error: unknown) => void;
+  /**
+   * Read-back de ACK de uma mutação que já projetou estado local: aplica o
+   * canônico sem nova entrada de Undo (a projeção já registrou a ação).
+   * Quando ausente, cai em `commitWithHistory` (comportamento legado).
+   */
+  applyServerConfig?: (next: ComunicadoConfig) => void;
 };
 
 /**
@@ -266,6 +272,7 @@ export function useComunicadoEditorBlocks({
   resolveWriteGuard,
   onWriteCommitted,
   onWriteError,
+  applyServerConfig,
 }: Options) {
   const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio ?? (() => 1));
@@ -276,6 +283,9 @@ export function useComunicadoEditorBlocks({
     onCommitted: onWriteCommitted,
     onError: onWriteError,
   });
+  // ACK de mutação que já projetou estado local: reconcilia sem criar uma
+  // segunda entrada de Undo por normalização do read-back (025-R1).
+  const applyCanonicalAck = applyServerConfig ?? commitWithHistory;
 
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
@@ -304,11 +314,11 @@ export function useComunicadoEditorBlocks({
         blocks: blocks as unknown as Record<string, unknown>[],
         gate: mutationGateRef.current,
         applyAck: (canonical) => {
-          commitWithHistory(canonical);
+          applyCanonicalAck(canonical);
         },
       });
     },
-    [commitWithHistory, playlistId, slideId],
+    [applyCanonicalAck, commitWithHistory, playlistId, slideId],
   );
 
   /**
@@ -392,7 +402,7 @@ export function useComunicadoEditorBlocks({
             blocks: [placed as unknown as Record<string, unknown>],
             gate: mutationGateRef.current,
             applyAck: (canonical) => {
-              commitWithHistory(canonical);
+              applyCanonicalAck(canonical);
             },
           });
           commitAndSelectInserted([...(configRef.current.blocks ?? []), placed], [placed.id]);
@@ -401,7 +411,7 @@ export function useComunicadoEditorBlocks({
           applyLocal();
         });
     },
-    [commitAndSelectInserted, commitWithHistory, configRef, placeInserted, playlistId, slideId],
+    [applyCanonicalAck, commitAndSelectInserted, commitWithHistory, configRef, placeInserted, playlistId, slideId],
   );
 
   const addDataBlock = useCallback(
@@ -610,6 +620,7 @@ export function useComunicadoEditorBlocks({
       selectedId,
       setDataPanelOpen,
       setLastDataDisplayMode,
+      applyCanonicalAck,
     ],
   );
 
@@ -949,7 +960,7 @@ export function useComunicadoEditorBlocks({
                 if (canonical) {
                   // Ack stale não pode reverter uma mutation mais nova.
                   if (mutationGateRef.current.isCurrent(token)) {
-                    commitWithHistory(canonical);
+                    applyCanonicalAck(canonical);
                   }
                 } else {
                   reportPersistFailure();
@@ -998,7 +1009,7 @@ export function useComunicadoEditorBlocks({
         kpiOptions: nextOptions,
       } as Partial<ComunicadoBlock>);
     },
-    [configRef, editingKpiPart, selectedIds, setEditingKpiPart, updateBlock],
+    [applyCanonicalAck, configRef, editingKpiPart, selectedIds, setEditingKpiPart, updateBlock],
   );
 
   const updateBlockTextFields = useCallback(
@@ -1130,6 +1141,7 @@ export function useComunicadoEditorBlocks({
       selectedTableParts,
       updateSelected,
       updateSelectedStyle,
+      applyCanonicalAck,
     ],
   );
 
@@ -1186,7 +1198,7 @@ export function useComunicadoEditorBlocks({
           ops,
           gate: mutationGateRef.current,
           applyAck: (canonical) => {
-            commitWithHistory(canonical);
+            applyCanonicalAck(canonical);
           },
           optimistic: () => {
             const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
@@ -1243,6 +1255,7 @@ export function useComunicadoEditorBlocks({
       selectedBlocks,
       slideId,
       updateBlocks,
+      applyCanonicalAck,
     ],
   );
 
@@ -1380,11 +1393,12 @@ export function useComunicadoEditorBlocks({
         blocks: pasted as unknown as Record<string, unknown>[],
         gate: mutationGateRef.current,
         applyAck: (canonical) => {
-          commitWithHistory(canonical);
+          applyCanonicalAck(canonical);
         },
       });
     }
   }, [
+    applyCanonicalAck,
     chooseDataSourceDuplicatePolicy,
     commitWithHistory,
     configRef,
@@ -1721,7 +1735,7 @@ export function useComunicadoEditorBlocks({
         ops,
         gate: mutationGateRef.current,
         applyAck: (canonical) => {
-          commitWithHistory(canonical);
+          applyCanonicalAck(canonical);
         },
         optimistic: () => {
           commitWithHistory(next);
@@ -1918,14 +1932,14 @@ export function useComunicadoEditorBlocks({
         ops: [{ op: "patch_native_config", patch: { background } }],
         gate: mutationGateRef.current,
         applyAck: (canonical) => {
-          commitWithHistory(canonical);
+          applyCanonicalAck(canonical);
         },
         optimistic: () => {
           commitWithHistory(next);
         },
       });
     },
-    [commitWithHistory, configRef, playlistId, slideId],
+    [applyCanonicalAck, commitWithHistory, configRef, playlistId, slideId],
   );
 
   const setBackgroundFill = useCallback(
