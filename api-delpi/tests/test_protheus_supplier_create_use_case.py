@@ -216,3 +216,46 @@ def test_token_invalid_does_not_retry_write(monkeypatch) -> None:
     assert exc.value.code == "PROTHEUS_TOKEN_INVALID"
     assert gateway.create_supplier.call_count == 1
     token.invalidate.assert_called_once()
+
+
+def test_injected_field_normalizer_widens_allowlist(monkeypatch) -> None:
+    """E2 — experimental normalizer only via explicit injection (assay path)."""
+    from app.application.services.integrations.protheus_supplier_extended_fields import (
+        normalize_experimental_supplier_fields,
+    )
+    from app.application.use_cases.integrations import (
+        create_protheus_rest_supplier_use_case as uc_mod,
+    )
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
+    identity = MagicMock()
+    identity.get_identity_for_user.return_value = _mapped()
+    gateway = MagicMock()
+    gateway.create_supplier.return_value = {}
+    token = MagicMock()
+    token.get_valid_token.return_value = "tok"
+    uc = _uc(
+        identity_gateway=identity,
+        gateway=gateway,
+        token_service=token,
+        field_normalizer=normalize_experimental_supplier_fields,
+    )
+    uc.execute(
+        actor_user_id=ACTOR,
+        fornecedor={"supplier_store": "01", "website": "www.example.test"},
+    )
+    sent = gateway.create_supplier.call_args.kwargs["body"]["fornecedor"]
+    assert sent["website"] == "www.example.test"
+
+
+def test_default_normalizer_still_rejects_extended_fields(monkeypatch) -> None:
+    """Public path keeps the published 24-field contract untouched."""
+    uc = _uc()
+    with pytest.raises(ProtheusRestError) as exc:
+        uc.execute(
+            actor_user_id=ACTOR,
+            fornecedor={"supplier_store": "01", "website": "www.example.test"},
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"

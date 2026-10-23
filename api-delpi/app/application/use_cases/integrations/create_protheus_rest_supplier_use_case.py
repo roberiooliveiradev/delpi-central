@@ -56,12 +56,16 @@ class CreateProtheusRestSupplierUseCase:
         gateway: ProtheusRestGateway,
         identity_gateway: CoreProtheusIdentityGateway,
         tracker: IntegrationTrackingService | None = None,
+        field_normalizer: Any = None,
     ) -> None:
         self._params_repository = params_repository
         self._token_service = token_service
         self._gateway = gateway
         self._identity_gateway = identity_gateway
         self._write_tracker = ProtheusWriteTracker(tracker)
+        # Canonical contract by default; authorized homologation assays may
+        # inject the experimental (widened) normalizer — public routes never do.
+        self._field_normalizer = field_normalizer or normalize_supplier_fields
 
     def execute(
         self,
@@ -73,7 +77,7 @@ class CreateProtheusRestSupplierUseCase:
         request_id: str | None = None,
         change_context: Any = None,
     ) -> dict[str, Any]:
-        normalized = normalize_supplier_fields(fornecedor)
+        normalized = self._field_normalizer(fornecedor)
 
         if not settings.PROTHEUS_SUPPLIER_CREATE_ENABLED:
             log_info(
