@@ -144,3 +144,8 @@ OWNER_UI=PLUGIN_UI
 CONSUMER=DELIA
 PHASE_PROGRESSION=NONE
 ```
+
+
+## 11. Plano executivo de implementação integral (2026-10-23)
+
+O plano de execução backend + frontend + QA, rework, GitHub e deploy por Devin está em [124 — VD-F06 End-to-End Implementation Execution Plan](./124-vd-f06-end-to-end-implementation-execution-plan.md), task `DELIA-VD-F06-PROGRESSIVE-DICTATION-END-TO-END-IMPLEMENT-TEST-REWORK-DEPLOY-01`. Seu checkpoint inicial comprova capacidade real de STT incremental e owner/contrato, e a entrega final exige evidência de parcial **antes** do fim da captura com edição humana preservada. Se a capacidade incremental não estiver disponível, bloquear ativação live e manter fallback v1, sem falsa transcrição em tempo real. Status: `PLANNED`, não `IMPLEMENTED`; a execução não se autoaceita e não avança fase.
