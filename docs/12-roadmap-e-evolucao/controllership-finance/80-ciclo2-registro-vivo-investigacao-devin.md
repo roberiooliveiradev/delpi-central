@@ -414,3 +414,79 @@ Existem com dados: SB1010 (~55k), SB2010 (~77k), SB9010 (~2,28M), SD3010 (~4,69M
 4. Linhagem completa da view despesas (definição restrita): pedir DDL ao owner DB ou validar cobertura SD1 por período.
 5. Paridade MATR460/H02/FINR190: depende de artefatos oficiais fora do banco.
 6. Sequência de snapshot SB9 por filial: confirmar calendário de fechamento por filial (por que 01 fechou depois de 02 em 09/2026 — relevante para o semântico `source_missing`/`incomplete` do R03).
+
+---
+
+## 14. CICLO 2 — Execução Rodada 2 (CF-C2-EXEC-002) — evidências
+
+> Autorização: continuação após `ACCEPT_WITH_RESIDUAL` da rodada 1. Mesmo canal (`docker exec` → pyodbc no container `delpi-api-delpi`, credenciais read-only já provisionadas), mesmo principal (`db_datareader` apenas). Somente SELECT/agregações `NOLOCK`. Nenhuma escrita, procedure, DDL ou alteração de runtime.
+
+### 14.A — C2-01/C2-02 — cronologia do snapshot SB9 (filial 01)
+
+- **PROVEN**: `SB9010.I_N_S_D_T_` (timestamp de inserção) mostra geração assíncrona por filial:
+  - `B9_DATA=20260831`: filial 01 inserida **18/09 19:03** vs filial 02 **01/10 20:44**.
+  - `B9_DATA=20260930`: filial 01 inserida **21/10 19:13** vs filial 02 **02/10 17:58** — defasagem de **19 dias**.
+- Interpretação: o `source_missing`/`incomplete` observado no smoke reflete o **calendário real de fechamento por filial** (job executado por filial em datas distintas), não defeito de leitura. O job/processo upstream que gera o SB9 **não é exposto via SQL** — owner ERP (`Refaz Saldos`/`Acompanha Custos` ou schedule equivalente) segue `TO_INVENTORY` para proveniência do job.
+- Consequência semântica para o R03: `source_missing` por filial é estado esperado durante a janela de fechamento; o timestamp de inserção do snapshot (`I_N_S_D_T_`) está disponível para exibição/telemetria futura se o contrato evoluir.
+
+### 14.B — C2-04 — baixas a pagar: delta 978 × 948 (reprodução de filtros)
+
+**Dimensão filial — PROVEN:**
+- `FK2_FILIAL` é vazio em 100% dos eventos; `SE2.E2_FILIAL` é vazio em 100% dos títulos baixados em 09/2026 (846/846) — **títulos são centralizados sem filial**.
+- A dimensão de filial efetiva é `FK2_FILORI` (filial de origem do evento): **filial 01 = 543 eventos, filial 02 = 435 eventos** (09/2026).
+- Join FK2→FK7→SE2 corrigido e validado: `FK7_CHAVE` é chave delimitada `FILTIT|PREFIX|NUM|PARCEL|TIPO|CLIFOR|LOJA`; join pelos campos individuais `FK7_PREFIX/NUM/PARCEL/TIPO/CLIFOR/LOJA` → `E2_PREFIXO/NUM/PARCELA/TIPO/FORNECE/LOJA` cobre **975/978** eventos (99,7%). `FK7_ALIAS`='SE2' (pagar) / 'SE1' (receber) em 100% — ponte canônica confirmada.
+- `E2_MOTIVO` é vazio em 100% dos títulos → o motivo só existe no grão do evento (`FK2_MOTBX`) ou em fonte ainda não identificada do relatório.
+
+**Eixo de competência — três datas testadas (população ago–out/2026):**
+
+| Eixo | Eventos em 09/2026 |
+|---|---|
+| `FK2_DATA` | 978 |
+| `FK2_DTDIGI` | 980 |
+| `E2_BAIXA` do título | 1.007 |
+
+- Nenhum eixo reproduz 948; **competência por data não explica o delta**.
+
+**Distribuição por tipo de documento (`FK2_TPDOC`, 09/2026):** VL=641, BA=198, CP=94, ES=45.
+**Subconjuntos disjuntos que somam exatamente o delta 30:** `ORIGEM='MATA103'` (24) ⊕ `MOTBX='NOR'` (6) = 30 → `978 − 30 = 948` (aritmeticamente exato, interseção verificada = 0). Porém **o motivo oficial do artefato (NOR=65) diverge de `FK2_MOTBX` (NOR=6)** — se a exclusão fosse por `MOTBX='NOR'`, o artefato não poderia conter 65 NOR. Conclusão: **a coluna "motivo" do relatório não é `FK2_MOTBX`** (ou é mapeada/derivada) e a coincidência de total pode ser espúria. Status: **INCONCLUSIVE** — exige fonte do FINR190/layout ou artefato com parâmetros.
+
+### 14.C — C2-04 — baixas a receber: delta 676 × 657 (`DLP06R01`)
+
+- Eixos de competência (pop ago–out): `FK1_DATA`=676, `FK1_DTDIGI`=678, `E1_BAIXA`=671 — nenhum reproduz 657.
+- Tipos de evento `FK1_TPDOC`: VL=633, ES=17, BA=14, CP=12.
+- Tipos de título vinculado (`E1_TIPO` via FK7, alias 'SE1', cobertura 676/676): **NF=655, NCC=11, RA=9, BOL=1**. O artefato oficial lista `PA` entre os tipos — **nenhum evento FK1 de 09/2026 vincula título `PA`** → divergência de universo a investigar (ou o artefato cobre período/filtro diferente).
+- **Subconjunto disjunto exato**: `TPDOC='ES'` (17) ⊕ `MOTBX='DAC'` (2) = 19 → `676 − 19 = 657` (interseção = 0). Candidato semanticamente plausível: `ES` = estorno excluído do relatório + `DAC` fora da relação de baixas. A distribuição por motivo do artefato não permite confirmar — **INCONCLUSIVE** até parâmetros do `DLP06R01`.
+- `FK1_FILORI` também é a dimensão de filial: 01 = 359, 02 = 317 eventos.
+
+### 14.D — C2-05 — "RE0/DE0": ausência comprovada no SD3
+
+- Varredura em **toda a história** do SD3 (não apenas 09/2026): **zero** `D3_TM` alfabéticos (alfabeto completo = 010, 011, 015, 020, 100–105, 200/201, 499, 501–504, 600/601, 999) e **zero** prefixos `RE*`/`DE*` em `D3_DOC` (dominância numérica + `INV*` 37.698 + outros 5.899).
+- `RE0010` existe como tabela física mas está **vazia**; `DE0010` não existe. Não é search-miss: o espaço de códigos foi enumerado exaustivamente.
+- Interpretação revisada: "RE0/DE0" provavelmente designa **tipos de documento/movimento em outro módulo ou convenção da narração** (ex.: requisição/devolução no módulo de estoque/custos), não registros SD3. `TO_INVENTORY` com o owner estoque/PO — registrar como premissa da narração a confirmar, não como ausência do conceito.
+
+### 14.E — C2-08 — linhagem view→SD1 ampliada (escala total)
+
+- **PROVEN em escala total**: 156.808 linhas da `vw_fin_despesas_centro_custo` → **100% com `recno_sd1` preenchido e casado em `SD1010.R_E_C_N_O_` (0 órfãs, 0 nulos)** em todos os agrupamentos temporais varridos.
+- `tipo_documento` da view: N=120.236, C=36.308, D=237, I=25, P=2 (semântica dos códigos = owner Contabilidade).
+- **Permanece inacessível**: texto DDL da view (`sys.sql_modules.definition` = NULL — `WITH ENCRYPTION` ou restrição de metadados) e `sys.dm_sql_referenced_entities` vazio → os filtros internos (joins adicionais, exclusões, origem CTT/SA1/SA2) só são inferíveis pelas colunas expostas. `BLOCKED` por privilégio de metadados — owner DBA para DDL oficial.
+- Implicação G4: binding view→SD1 demonstrado empiricamente; binding campo-a-campo interno da view permanece `PENDING`.
+
+### 14.F — Registro desta rodada (append-only)
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R08 | C2-01/02 | `I_N_S_D_T_` SB9 por data/filial | PROVEN: filial 01 gera ~19 dias após filial 02 (set/2026: 21/10 vs 02/10) | suporta semântico `source_missing` do R03 |
+| C2-R09 | C2-04 | join FK7→SE2 corrigido + `FK2_FILORI` | PROVEN: filial do evento = `FK2_FILORI` (01:543/02:435); títulos SE2 centralizados (filial vazia); ponte cobre 975/978 | bindings R01/R02 |
+| C2-R10 | C2-04 | eixos de competência + TPDOC + subconjuntos do delta | 948 reproduzível por `−MATA103 −NOR` (disjunto) mas motivo oficial diverge → INCONCLUSIVE | G5 segue TEST_NOT_RUN |
+| C2-R11 | C2-04 | recebíveis: eixos + TPDOC + `E1_TIPO` | 657 reproduzível por `−ES −DAC` (disjunto); títulos PA ausentes do universo FK1 → INCONCLUSIVE | G5 segue TEST_NOT_RUN |
+| C2-R12 | C2-05 | enumeração exaustiva `D3_TM`/`D3_DOC` | PROVEN: RE0/DE0 inexistem no SD3 em toda a história | premissa da narração → PO/owner estoque |
+| C2-R13 | C2-08 | view→SD1 por `recno_sd1` em escala | PROVEN: 156.808/156.808 linhas com linhagem (0 órfãs) | binding fonte G4 |
+| C2-R14 | — | doc 47 | `NO_GATE_CHANGE`: bindings de fonte/grão provados; bindings de relatório e paridade oficial seguem pendentes de artefatos/parâmetros | — |
+
+### 14.G — Pendências desta rodada
+
+1. **Fonte do motivo oficial** (FINR190/`DLP06R01`): `E2_MOTIVO` vazio e `FK2_MOTBX`≠rótulos do artefato → identificar campo/rotina que rotula DEB/CMP/FAT/NOR/DAC no relatório. Owner: responsável pela customização/financeiro.
+2. **Filtros efetivos dos relatórios**: testar com artefato exportado com parâmetros (competência, filial, tipos, exclusões); os deltas têm subconjuntos exatos mas divergem em motivo → não aceitar igualdade de total.
+3. **"RE0/DE0"**: confirmar com PO/estoque a que conceito se referem na narração (não são TM nem prefixo de doc no SD3; `RE0010` vazia).
+4. **DDL da view** de despesas: solicitar ao DBA (definição encriptada/restrita para o principal read-only).
+5. **Proveniência do job SB9**: não exposta via SQL; confirmar com ERP a rotina e o calendário por filial.
