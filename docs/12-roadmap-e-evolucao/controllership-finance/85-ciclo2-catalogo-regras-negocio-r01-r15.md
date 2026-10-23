@@ -608,6 +608,8 @@ testados do comportamento observado são compatíveis com o fonte.
   evidência `as_of` de fechamento exige decisão do owner sobre custo
   histórico (TTAT) ou snapshot — `DECISION_REQUIRED` se a medida de
   fechamento exigir imutabilidade temporal.
+  **ERRATA/DECISÃO PO 23/10/2026 (supersede a exigência de `as_of`/snapshot e o `DECISION_REQUIRED` acima apenas para CPV corrente):** CPV mensal é consulta **viva** por competência; correção retroativa na competência de origem seguida de recálculo autorizado Protheus altera o CPV apresentado em consultas futuras àquele mês. `D2_CUSTO1` corrente é compatível com essa regra, não uma lacuna temporal. Valores/evidências anteriormente homologados têm rastreabilidade separada, sem afirmar snapshot implementado. E6=C versa especificamente sobre MOD e não estabelece solução técnica para CPV. Permanecem possíveis lacunas independentes (granularidade, CFOPs, testes), sujeitas a requisitos comprovados.
+
 - `PENDING`: versão compilada no RPO (E7); parâmetros efetivos da emissão
   além dos inferidos (mv_par09=`D`, mv_par16=Digitação pela ordenação,
   mv_par10 `Saldo a considerar` — provável Fechamento dado o as_of);
