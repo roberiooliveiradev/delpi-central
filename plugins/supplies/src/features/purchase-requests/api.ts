@@ -1,5 +1,7 @@
 import { httpGet, httpGetBlob, suppliesApiUrl } from "../../api/httpClient";
+import { normalizeSuppliesUnitCode } from "../../app/suppliesUnits";
 import type {
+  PersonRef,
   PurchaseRequestDetail,
   PurchaseRequestListResponse,
   PurchaseRequestSummary,
@@ -31,6 +33,58 @@ export async function listPurchaseRequestSummary(
     { signal },
   );
 }
+export type PurchaseRequestRequesterFacet = PersonRef;
+
+export type PurchaseRequestCostCenterFacet = {
+  branch?: string | null;
+  code?: string | null;
+  description?: string | null;
+};
+
+export type PurchaseRequestFacetScope = {
+  branches: readonly string[];
+  date_from: string;
+  date_to: string;
+};
+
+/** Facet scope = authorized universe under branches + period (no self-filters). */
+function buildFacetSearchParams(
+  scope: PurchaseRequestFacetScope,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const branch of scope.branches) {
+    const code = normalizeSuppliesUnitCode(branch);
+    if (code) params.append("branch", code);
+  }
+  if (scope.date_from.trim()) params.set("date_from", scope.date_from.trim());
+  if (scope.date_to.trim()) params.set("date_to", scope.date_to.trim());
+  return params;
+}
+
+export async function listPurchaseRequestRequesters(
+  scope: PurchaseRequestFacetScope,
+  signal?: AbortSignal,
+): Promise<PurchaseRequestRequesterFacet[]> {
+  const qs = buildFacetSearchParams(scope).toString();
+  const payload = await httpGet<{ items?: PurchaseRequestRequesterFacet[] }>(
+    suppliesApiUrl(`/purchase-requests/requesters?${qs}`),
+    { signal },
+  );
+  return Array.isArray(payload?.items) ? payload.items : [];
+}
+
+export async function listPurchaseRequestCostCenters(
+  scope: PurchaseRequestFacetScope,
+  signal?: AbortSignal,
+): Promise<PurchaseRequestCostCenterFacet[]> {
+  const qs = buildFacetSearchParams(scope).toString();
+  const payload = await httpGet<{ items?: PurchaseRequestCostCenterFacet[] }>(
+    suppliesApiUrl(`/purchase-requests/cost-centers?${qs}`),
+    { signal },
+  );
+  return Array.isArray(payload?.items) ? payload.items : [];
+}
+
 export async function getPurchaseRequest(
   branch: string,
   requestNumber: string,

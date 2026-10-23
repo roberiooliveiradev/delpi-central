@@ -15,6 +15,8 @@ export function hasActivePurchaseRequestsFilters(query: PurchaseRequestsQuery): 
   return Boolean(
     query.request_number.trim() ||
       query.product_code.trim() ||
+      query.requester_ids.length > 0 ||
+      query.cost_centers.length > 0 ||
       query.overall_stages.length > 0 ||
       periodChanged,
   );

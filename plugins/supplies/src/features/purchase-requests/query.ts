@@ -39,6 +39,8 @@ export function createDefaultQuery(
     date_to: period.date_to,
     request_number: "",
     product_code: "",
+    requester_ids: [],
+    cost_centers: [],
     overall_stages: [],
     sort_by: "",
     sort_dir: "desc",
@@ -61,6 +63,14 @@ export function buildListSearchParams(
   if (query.date_to.trim()) params.set("date_to", query.date_to.trim());
   if (query.request_number.trim()) params.set("request_number", query.request_number.trim());
   if (query.product_code.trim()) params.set("product_code", query.product_code.trim());
+  for (const pid of query.requester_ids) {
+    const id = pid.trim();
+    if (id) params.append("requester_user_id", id);
+  }
+  for (const cc of query.cost_centers) {
+    const code = cc.trim();
+    if (code) params.append("cost_center", code);
+  }
   if (options?.includeStages !== false) {
     for (const stage of query.overall_stages) {
       params.append("overall_stage", stage);
@@ -129,6 +139,22 @@ export function parseQueryFromSearch(
     date_to: readParam(params, "date_to") || defaults.date_to,
     request_number: readParam(params, "request_number"),
     product_code: readParam(params, "product_code"),
+    requester_ids: [
+      ...new Set(
+        params
+          .getAll("requester_user_id")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    ],
+    cost_centers: [
+      ...new Set(
+        params
+          .getAll("cost_center")
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    ],
     overall_stages: stages,
     sort_by: readParam(params, "sort_by"),
     sort_dir: readSortDir(readParam(params, "sort_dir")),

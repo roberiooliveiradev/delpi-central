@@ -77,6 +77,9 @@ from app.application.use_cases.supplies.list_supplies_purchase_request_recent_li
 from app.application.use_cases.supplies.list_supplies_purchase_request_requesters_use_case import (
     ListSuppliesPurchaseRequestRequestersUseCase,
 )
+from app.application.use_cases.supplies.list_supplies_purchase_request_cost_centers_use_case import (
+    ListSuppliesPurchaseRequestCostCentersUseCase,
+)
 from app.application.use_cases.supplies.list_supplies_suppliers_use_case import (
     ListSuppliesSuppliersUseCase,
 )
@@ -320,6 +323,14 @@ def build_list_supplies_purchase_request_requesters_use_case() -> (
     ListSuppliesPurchaseRequestRequestersUseCase
 ):
     return ListSuppliesPurchaseRequestRequestersUseCase(
+        repository=PurchaseRequestLinesRepository(),
+    )
+
+
+def build_list_supplies_purchase_request_cost_centers_use_case() -> (
+    ListSuppliesPurchaseRequestCostCentersUseCase
+):
+    return ListSuppliesPurchaseRequestCostCentersUseCase(
         repository=PurchaseRequestLinesRepository(),
     )
 

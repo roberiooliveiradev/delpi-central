@@ -1,10 +1,12 @@
 from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request_lines_sql import (
     build_purchase_orders_for_lines_sql,
+    build_purchase_request_cost_centers_sql,
     build_purchase_request_headers_count_sql,
     build_purchase_request_headers_page_sql,
     build_purchase_request_lines_filters,
     build_purchase_request_lines_for_request_numbers_sql,
     build_purchase_request_lines_list_sql,
+    build_purchase_request_requesters_sql,
     build_receipts_for_orders_sql,
     default_date_range,
 )
@@ -173,3 +175,30 @@ def test_lines_for_request_numbers_scopes_in_clause() -> None:
     assert "C1_NUM)IN(?,?)" in normalized
     assert extra == ["164708", "100"]
     assert "OFFSET" not in sql
+
+
+def test_cost_centers_facet_sql_is_distinct_scoped_and_described() -> None:
+    where_clause, params = build_purchase_request_lines_filters(
+        branches=["01", "02"],
+        date_from="2026-01-01",
+        date_to="2026-01-31",
+        cost_center_scopes=["01:0413"],
+    )
+    sql = build_purchase_request_cost_centers_sql(where_clause=where_clause)
+    assert "DISTINCT" in sql
+    assert "C1_CC" in sql
+    assert "CTT_DESC01" in sql
+    assert "CTT010" in sql
+    assert "ORDER BY cost_center_code" in sql
+    assert "OFFSET" not in sql
+    # Scope tuple is enforced (branch 01 + CC 0413) — not a bare code list.
+    assert "C1_FILIAL" in where_clause and "C1_CC" in where_clause
+    assert "0413" in params and "01" in params
+
+
+def test_requesters_facet_sql_is_distinct_with_source_name() -> None:
+    sql = build_purchase_request_requesters_sql(where_clause="1=1")
+    assert "DISTINCT" in sql
+    assert "C1_USER" in sql
+    assert "USR_CODIGO" in sql
+    assert "ORDER BY requester_name" in sql

@@ -269,4 +269,38 @@ describe("PurchaseRequests feature", () => {
     const types = readFileSync(join(dir, "types.ts"), "utf8");
     expect(types).toContain("display_name");
   });
+
+  it("identidade do solicitante: nome TOTVS secundário e foto via BFF", () => {
+    const identity = readFileSync(
+      join(dir, "../../app/SuppliesDirectoryIdentity.tsx"),
+      "utf8",
+    );
+    // Secondary line = TOTVS source name when the Core link resolved.
+    expect(identity).toContain("person.name && person.name !== person.display_name");
+    expect(identity).toContain("src={photoSrc}");
+    expect(identity).toContain("usePersonPhoto(person?.photo_url)");
+    const types = readFileSync(join(dir, "types.ts"), "utf8");
+    expect(types).toContain("photo_url");
+    // Photo loads through the authenticated BFF client, never <img> to Core.
+    const hook = readFileSync(
+      join(dir, "../../app/usePersonPhoto.ts"),
+      "utf8",
+    );
+    expect(hook).toContain("httpGetBlob");
+    expect(hook).toContain("photoCache");
+  });
+
+  it("filtros de solicitante e centro de custo no contrato e na UI", () => {
+    const query = readFileSync(join(dir, "query.ts"), "utf8");
+    expect(query).toContain("requester_user_id");
+    expect(query).toContain("cost_center");
+    const filters = readFileSync(join(dir, "PurchaseRequestsFilters.tsx"), "utf8");
+    expect(filters).toContain("listPurchaseRequestRequesters");
+    expect(filters).toContain("listPurchaseRequestCostCenters");
+    expect(filters).toContain("requester_ids");
+    expect(filters).toContain("cost_centers");
+    const active = readFileSync(join(dir, "hasActiveFilters.ts"), "utf8");
+    expect(active).toContain("requester_ids");
+    expect(active).toContain("cost_centers");
+  });
 });

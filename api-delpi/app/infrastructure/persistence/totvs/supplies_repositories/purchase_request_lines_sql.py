@@ -460,6 +460,23 @@ def build_purchase_request_requesters_sql(*, where_clause: str) -> str:
     """
 
 
+def build_purchase_request_cost_centers_sql(*, where_clause: str) -> str:
+    return f"""
+    SELECT DISTINCT
+        RTRIM(SC1.C1_FILIAL) AS branch,
+        RTRIM(ISNULL(SC1.C1_CC, '')) AS cost_center_code,
+        RTRIM(ISNULL(CTT.CTT_DESC01, '')) AS cost_center_description
+    FROM SC1010 SC1 WITH (NOLOCK)
+    LEFT JOIN CTT010 CTT WITH (NOLOCK)
+        ON CTT.CTT_FILIAL = SC1.C1_FILIAL
+       AND CTT.CTT_CUSTO = SC1.C1_CC
+       AND CTT.D_E_L_E_T_ = ''
+    WHERE {where_clause}
+      AND RTRIM(ISNULL(SC1.C1_CC, '')) <> ''
+    ORDER BY cost_center_code ASC, branch ASC
+    """
+
+
 def _line_keys_or_clause(keys: list[tuple[str, str, str]]) -> tuple[str, list]:
     if not keys:
         return "1 = 0", []

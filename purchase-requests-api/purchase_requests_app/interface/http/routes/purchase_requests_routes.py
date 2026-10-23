@@ -19,6 +19,9 @@ from purchase_requests_app.application.use_cases.list_admin_protheus_users_use_c
 from purchase_requests_app.application.use_cases.list_purchase_request_requesters_use_case import (
     ListPurchaseRequestRequestersUseCase,
 )
+from purchase_requests_app.application.use_cases.list_purchase_request_cost_centers_use_case import (
+    ListPurchaseRequestCostCentersUseCase,
+)
 from purchase_requests_app.application.use_cases.list_purchase_requests_use_case import (
     ListPurchaseRequestsUseCase,
 )
@@ -238,6 +241,36 @@ def list_purchase_request_requesters(
         return fail(str(exc), 403)
     except Exception:
         return fail("Erro interno ao listar solicitantes.", 500)
+
+
+@router.get("/cost-centers")
+def list_purchase_request_cost_centers(
+    branch: list[str] = Query(...),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+    request_number: str | None = Query(None),
+    product_code: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    order_number: str | None = Query(None),
+    user=Depends(_current_user),
+):
+    """Facet de centros de custo — universo autorizado, sem auto-filtro."""
+    try:
+        result = ListPurchaseRequestCostCentersUseCase().execute(
+            user=user,
+            branches=branch,
+            date_from=date_from,
+            date_to=date_to,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+        )
+        return ok(result, message="Centros de custo listados com sucesso.")
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    except Exception:
+        return fail("Erro interno ao listar centros de custo.", 500)
 
 
 @router.get("/{branch}/{request_number}")

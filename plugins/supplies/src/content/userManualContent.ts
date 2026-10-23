@@ -233,7 +233,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "De onde vem o nome do solicitante?",
-          a: "Quando o usuário TOTVS da solicitação tem vínculo ativo com um cadastro da Minha DELPI, o Portal mostra o nome oficial da plataforma (a mesma identidade do login). Sem vínculo, mostra o nome ou código que veio do ERP — nunca uma correspondência inventada por semelhança de nome.",
+          a: "Quando o usuário TOTVS da solicitação tem vínculo ativo com um cadastro da Minha DELPI, o Portal mostra o nome oficial da plataforma em destaque — com a foto real do usuário quando ele tem foto cadastrada — e o nome que veio do ERP embaixo. Sem vínculo, mostra o nome ou código do ERP — nunca uma correspondência inventada por semelhança de nome.",
+        },
+        {
+          q: "Posso filtrar por solicitante ou centro de custo?",
+          a: "Sim. «Solicitante» lista as pessoas do recorte autorizado com o nome oficial da Minha DELPI quando há vínculo (o filtro é pelo usuário real do ERP, não por texto). «Centro de custo» lista código e descrição dentro do seu escopo. Ambos aceitam múltipla seleção e ficam na URL — dá para compartilhar o filtro.",
         },
         {
           q: "Como cadastro um novo fornecedor?",

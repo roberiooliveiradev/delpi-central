@@ -20,14 +20,19 @@ logger = logging.getLogger("supplies-api.requester_identity")
 
 
 def _requester_refs(payload: Any) -> Iterable[dict]:
-    """Yield every requester dict inside list/detail payloads, in place."""
+    """Yield every requester dict inside list/detail/facet payloads, in place."""
     if not isinstance(payload, dict):
         return
     items = payload.get("items")
     if isinstance(items, list):
         for item in items:
-            if isinstance(item, dict) and isinstance(item.get("requester"), dict):
+            if not isinstance(item, dict):
+                continue
+            if isinstance(item.get("requester"), dict):
                 yield item["requester"]
+            elif item.get("protheus_user_id"):
+                # Facet shape: the item itself is the requester ref.
+                yield item
     header = payload.get("requester")
     if isinstance(header, dict):
         yield header
@@ -80,16 +85,60 @@ class RequesterIdentityService:
             except Exception:
                 logger.exception("requester_directory_lookup_failed")
 
+        profiles: dict[str, dict] = {}
+        if user_ids:
+            try:
+                profiles = self._core.lookup_person_profiles(
+                    user_ids=sorted(user_ids)
+                )
+            except Exception:
+                logger.exception("requester_profiles_lookup_failed")
+
         for ref in refs:
             pid = str(ref.get("protheus_user_id") or "").strip()
             mapping = mappings.get(pid)
             if not mapping:
                 continue
+            uid = str(mapping.get("user_id") or "").strip()
             core_name = str(
-                (directory.get(str(mapping.get("user_id") or "")) or {}).get("name")
-                or ""
+                (directory.get(uid) or {}).get("name") or ""
             ).strip()
             if core_name:
                 ref["display_name"] = core_name
+            profile = profiles.get(uid) or {}
+            if profile.get("has_photo"):
+                # BFF proxy path — the Core user id never leaves the server.
+                ref["photo_url"] = (
+                    f"/purchase-requests/requesters/{pid}/photo"
+                )
 
         return payload
+
+    def resolve_mapped_user_id(self, protheus_user_id: str) -> str | None:
+        """Exact Protheus id → Core user id when `mapping_status == mapped`."""
+        pid = (protheus_user_id or "").strip()
+        if not pid:
+            return None
+        try:
+            mappings = self._core.lookup_protheus_identities(
+                protheus_user_ids=[pid]
+            )
+        except Exception:
+            logger.exception("requester_identity_resolve_failed")
+            return None
+        mapping = mappings.get(pid) or {}
+        uid = str(mapping.get("user_id") or "").strip()
+        return uid or None
+
+    def get_requester_photo(
+        self, protheus_user_id: str
+    ) -> tuple[bytes, str, str] | None:
+        """Photo bytes for a mapped requester; None when unmapped/absent."""
+        uid = self.resolve_mapped_user_id(protheus_user_id)
+        if not uid:
+            return None
+        try:
+            return self._core.get_person_profile_photo(uid)
+        except Exception:
+            logger.exception("requester_photo_fetch_failed")
+            return None

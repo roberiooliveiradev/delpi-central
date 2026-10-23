@@ -44,6 +44,17 @@ class DelpiPurchaseRequestsGateway:
             authorization=bearer_authorization_from_context(),
         )
 
+    def list_cost_centers(
+        self,
+        *,
+        params: Mapping[str, str | None | list[str]] | None = None,
+    ) -> dict[str, Any]:
+        return self._client.get_path(
+            "/supplies/purchase-requests/cost-centers",
+            params=params,
+            authorization=bearer_authorization_from_context(),
+        )
+
     def get_request_lines(
         self,
         *,

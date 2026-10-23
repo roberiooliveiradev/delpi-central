@@ -193,6 +193,124 @@ class CoreApiHttpGateway:
                     result[pid] = item
         return result
 
+    def lookup_person_profiles(
+        self,
+        *,
+        user_ids: list[str],
+    ) -> dict[str, dict]:
+        """S2S batch person-profiles — `has_photo` per Core user id.
+
+        Core contract: POST /integrations/person-profiles/lookup,
+        max 50 ids per call. Soft-fail ({}) on errors.
+        """
+        token = (Settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
+        if not token:
+            return {}
+
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for raw in user_ids:
+            uid = str(raw or "").strip()
+            if not uid or uid in seen:
+                continue
+            seen.add(uid)
+            ordered.append(uid)
+        if not ordered:
+            return {}
+
+        auth = token if token.lower().startswith("bearer ") else f"Bearer {token}"
+        service = token[7:].strip() if token.lower().startswith("bearer ") else token
+        headers = {
+            "Authorization": auth,
+            "X-Delpi-Service-Token": service,
+            "X-Delpi-Caller-App": "supplies-api",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        result: dict[str, dict] = {}
+        for start in range(0, len(ordered), 50):
+            chunk = ordered[start : start + 50]
+            url = urljoin(self.base_url, "integrations/person-profiles/lookup")
+            try:
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json={"ids": chunk},
+                    timeout=self.timeout,
+                )
+            except requests.RequestException:
+                logger.warning("core_api_person_profiles_lookup_failed")
+                continue
+            if response.status_code >= 400:
+                logger.warning(
+                    "core_api_person_profiles_rejected status=%s",
+                    response.status_code,
+                )
+                continue
+            try:
+                payload = response.json()
+            except ValueError:
+                continue
+            items = payload.get("items") if isinstance(payload, dict) else None
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                uid = str(item.get("user_id") or "").strip()
+                if uid:
+                    result[uid] = item
+        return result
+
+    def get_person_profile_photo(
+        self,
+        user_id: str,
+    ) -> tuple[bytes, str, str] | None:
+        """S2S Core person photo bytes → (content, content_type, file_name).
+
+        Soft-fail None on transport/auth/404 — callers must not break.
+        """
+        uid = (user_id or "").strip()
+        token = (Settings.CORE_API_INTEGRATIONS_SERVICE_TOKEN or "").strip()
+        if not uid or not token:
+            return None
+        url = urljoin(self.base_url, f"integrations/person-profiles/{uid}/photo")
+        auth = token if token.lower().startswith("bearer ") else f"Bearer {token}"
+        service = token[7:].strip() if token.lower().startswith("bearer ") else token
+        try:
+            response = requests.get(
+                url,
+                headers={
+                    "Authorization": auth,
+                    "X-Delpi-Service-Token": service,
+                    "X-Delpi-Caller-App": "supplies-api",
+                    "Accept": "*/*",
+                },
+                timeout=self.timeout,
+            )
+        except requests.RequestException:
+            logger.warning("core_api_person_photo_failed user_id=%s", uid)
+            return None
+        if response.status_code >= 400:
+            if response.status_code != 404:
+                logger.warning(
+                    "core_api_person_photo_rejected status=%s user_id=%s",
+                    response.status_code,
+                    uid,
+                )
+            return None
+        content_type = (
+            response.headers.get("content-type") or "application/octet-stream"
+        ).split(";")[0].strip()
+        file_name = "photo.bin"
+        disposition = response.headers.get("content-disposition") or ""
+        if "filename=" in disposition:
+            file_name = (
+                disposition.split("filename=", 1)[1].strip().strip('"') or file_name
+            )
+        return response.content, content_type, file_name
+
     def get_person_profile(self, user_id: str) -> dict | None:
         """S2S Core person-profile (cargo/contatos). Soft-fail None se indisponível."""
         uid = (user_id or "").strip()

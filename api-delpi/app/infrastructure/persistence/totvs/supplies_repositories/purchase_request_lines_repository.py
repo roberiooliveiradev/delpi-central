@@ -22,6 +22,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.purchase_request
     build_purchase_request_lines_for_request_keys_sql,
     build_purchase_request_lines_list_sql,
     build_purchase_request_requesters_sql,
+    build_purchase_request_cost_centers_sql,
     build_receipts_for_orders_sql,
 )
 
@@ -301,6 +302,52 @@ class PurchaseRequestLinesRepository(BaseRepository):
                     "protheus_user_id": user_id,
                     "code": (row.get("requester_code") or "").strip() or None,
                     "name": (row.get("requester_name") or "").strip() or None,
+                }
+            )
+        return items
+
+    def list_cost_centers(
+        self,
+        *,
+        branch: str | None = None,
+        branches: list[str] | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
+        cost_centers: list[str] | None = None,
+        cost_center_scopes: list[str] | None = None,
+        request_number: str | None = None,
+        product_code: str | None = None,
+        supplier_code: str | None = None,
+        order_number: str | None = None,
+    ) -> list[dict[str, Any]]:
+        where_clause, params = build_purchase_request_lines_filters(
+            branch=branch,
+            branches=branches,
+            date_from=date_from,
+            date_to=date_to,
+            cost_centers=cost_centers,
+            cost_center_scopes=cost_center_scopes,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+        )
+        sql = build_purchase_request_cost_centers_sql(where_clause=where_clause)
+        with self as repo:
+            rows = repo.execute_query(sql, tuple(params))
+        items: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+        for row in rows:
+            code = str(row.get("cost_center_code") or "").strip()
+            row_branch = str(row.get("branch") or "").strip()
+            if not code or (row_branch, code) in seen:
+                continue
+            seen.add((row_branch, code))
+            items.append(
+                {
+                    "branch": row_branch or None,
+                    "code": code,
+                    "description": (row.get("cost_center_description") or "").strip() or None,
                 }
             )
         return items

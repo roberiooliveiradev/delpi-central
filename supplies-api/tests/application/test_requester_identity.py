@@ -10,12 +10,23 @@ from app.application.services.requester_identity_service import (
 
 
 class FakeCoreGateway:
-    def __init__(self, mappings=None, directory=None, fail_identities=False):
+    def __init__(
+        self,
+        mappings=None,
+        directory=None,
+        profiles=None,
+        photo=None,
+        fail_identities=False,
+    ):
         self._mappings = mappings or {}
         self._directory = directory or {}
+        self._profiles = profiles or {}
+        self._photo = photo
         self.fail_identities = fail_identities
         self.identity_calls: list[list[str]] = []
         self.directory_calls: list[list[str]] = []
+        self.profile_calls: list[list[str]] = []
+        self.photo_calls: list[str] = []
 
     def lookup_protheus_identities(self, *, protheus_user_ids):
         self.identity_calls.append(list(protheus_user_ids))
@@ -26,6 +37,14 @@ class FakeCoreGateway:
     def lookup_directory_users(self, *, access_token, user_ids):
         self.directory_calls.append(list(user_ids))
         return {uid: self._directory[uid] for uid in user_ids if uid in self._directory}
+
+    def lookup_person_profiles(self, *, user_ids):
+        self.profile_calls.append(list(user_ids))
+        return {uid: self._profiles[uid] for uid in user_ids if uid in self._profiles}
+
+    def get_person_profile_photo(self, user_id):
+        self.photo_calls.append(user_id)
+        return self._photo
 
 
 def _item(pid, name="ELAINE"):
@@ -130,3 +149,56 @@ def test_empty_access_token_still_uses_mappings_only_without_names():
     RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="")
     assert gw.directory_calls == []
     assert "display_name" not in payload["items"][0]["requester"]
+
+
+def test_mapped_requester_with_photo_gets_bff_photo_url():
+    gw = FakeCoreGateway(
+        mappings={"000123": {"user_id": "u-1"}},
+        directory={"u-1": {"name": "Elaine Souza"}},
+        profiles={"u-1": {"user_id": "u-1", "has_photo": True}},
+    )
+    payload = {"items": [_item("000123")]}
+    RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
+    requester = payload["items"][0]["requester"]
+    assert requester["photo_url"] == "/purchase-requests/requesters/000123/photo"
+    assert "u-1" not in requester["photo_url"]  # Core id never leaves the server
+
+
+def test_mapped_requester_without_photo_has_no_photo_url():
+    gw = FakeCoreGateway(
+        mappings={"000123": {"user_id": "u-1"}},
+        profiles={"u-1": {"user_id": "u-1", "has_photo": False}},
+    )
+    payload = {"items": [_item("000123")]}
+    RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
+    assert "photo_url" not in payload["items"][0]["requester"]
+
+
+def test_unmapped_requester_never_gets_photo_url():
+    gw = FakeCoreGateway(
+        mappings={},
+        profiles={"u-x": {"user_id": "u-x", "has_photo": True}},
+    )
+    payload = {"items": [_item("999")]}
+    RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
+    assert "photo_url" not in payload["items"][0]["requester"]
+
+
+def test_resolve_mapped_user_id_returns_uid_only_when_mapped():
+    gw = FakeCoreGateway(mappings={"5": {"user_id": "u-5"}})
+    service = RequesterIdentityService(core_gateway=gw)
+    assert service.resolve_mapped_user_id("5") == "u-5"
+    assert service.resolve_mapped_user_id("6") is None
+    assert service.resolve_mapped_user_id("") is None
+
+
+def test_get_requester_photo_streams_bytes_for_mapped_user():
+    gw = FakeCoreGateway(
+        mappings={"5": {"user_id": "u-5"}},
+        photo=(b"\x89PNG", "image/png", "u5.png"),
+    )
+    service = RequesterIdentityService(core_gateway=gw)
+    assert service.get_requester_photo("5") == (b"\x89PNG", "image/png", "u5.png")
+    assert gw.photo_calls == ["u-5"]
+    assert service.get_requester_photo("404") is None
+    assert gw.photo_calls == ["u-5"]  # unmapped → no photo fetch

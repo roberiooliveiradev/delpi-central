@@ -118,6 +118,20 @@ class PurchaseRequestsGateway:
             query_string=query_string,
         )
 
+    def list_cost_centers(
+        self,
+        *,
+        access_token: str,
+        params: dict[str, Any] | list[tuple[str, Any]] | None = None,
+        query_string: str | None = None,
+    ) -> Any:
+        return self.get(
+            "purchase-requests/cost-centers",
+            access_token=access_token,
+            params=params,
+            query_string=query_string,
+        )
+
     def get_summary(
         self,
         *,

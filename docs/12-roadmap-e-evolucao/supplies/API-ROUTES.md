@@ -59,6 +59,8 @@ Não espelhar CRUD em permission codes. Qualquer `ANY_OF`/`ALL_OF` precisa ser d
 | GET | `/purchase-requests/summary` | `supplies.access`; downstream S2S | PR-api `/summary`. `total_requests` = SCs distintas; `total_items` = linhas; `stage_counts`/`buckets` = cabeçalho pelo estágio conservador. Ignora `overall_stage` para manter os demais atalhos. Cap do recorte derivado; acima disso 422 e a lista segue. | **IMPLEMENTADO** |
 | GET | `/purchase-requests/{branch}/{number}` | `supplies.access` + unit + resource scope | PR-api | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | `supplies.access`; downstream S2S; acompanhamento global | PR-api `/export` → CSV default ou `format=xlsx` | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/cost-centers` | `supplies.access` + units | PR-api facet — `C1_CC`+`CTT_DESC01` no universo autorizado; o filtro explícito não estreita a própria facet | **IMPLEMENTADO** |
+| GET | `/purchase-requests/requesters/{pid}/photo` | `supplies.access` | proxy BFF: pid → identidade `mapped` → foto S2S Core; UUID/token nunca saem do server; 404 sem vínculo/foto | **IMPLEMENTADO** |
 | GET | `/purchase-orders` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders` | **IMPLEMENTADO** |
 | GET | `/purchase-orders/{branch}/{number}` | `supplies.access` + filtro de dados `01`/`02` | api-delpi `GET /supplies/purchase-orders/{branch}/{order_number}` | **IMPLEMENTADO** |
 | GET | `/purchase-orders/export` | `supplies.access` + units | api-delpi `GET /supplies/purchase-orders/export` → XLSX no BFF | **IMPLEMENTADO** |

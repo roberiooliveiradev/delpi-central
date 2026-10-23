@@ -317,6 +317,7 @@ Grão canônico exposto no detalhe (e base da listagem quando expandida).
 | `requester.code` | `string` | sim | `SYS_USR.USR_CODIGO` |
 | `requester.name` | `string` | sim | `C1_SOLICIT` ou `USR_NOME` |
 | `requester.display_name` | `string` | sim | Core `user_protheus_identities` → `users.name` (PR.IDENTITY.S1) |
+| `requester.photo_url` | `string` | sim | BFF `/purchase-requests/requesters/{pid}/photo` quando perfil Core tem foto (PR.IDENTITY.S2) |
 | `cost_center.code` | `string` | sim | `C1_CC` |
 | `cost_center.description` | `string` | sim | `CTT010.CTT_DESC01` |
 | `account_code` | `string` | sim | `C1_CONTA` (contábil) |
@@ -707,10 +708,10 @@ Escopos e mappings (§19.1 admin).
 | `branch` | string | obrigatório MVP; gate filial |
 | `date_from` / `date_to` | ISO date | aplicados a **`C1_EMISSAO`** |
 | `request_number` | string | |
-| `requester_user_id` | UUID | Core API — via mapping |
+| `requester_user_id` | string (rep) | **`protheus_user_id`** (`C1_USER`) apesar do nome — PR-api encaminha como `requester_protheus_user_id` (PR.FILTERS.S1) |
 | `requester_code` | string | `USR_CODIGO` |
-| `cost_center` | string | interseção §7.4; explícito fora escopo → 403 |
-| `product_code` | string | |
+| `cost_center` | string (rep) | interseção §7.4; explícito fora escopo → 403 |
+| `product_code` | string | `C1_PRODUTO = ?` exato (sem busca por descrição) |
 | `supplier_code` | string | |
 | `order_number` | string | |
 | `approval_status` | enum | |

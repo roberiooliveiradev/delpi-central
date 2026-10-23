@@ -115,8 +115,12 @@ export const SP_HELP = {
     "Alterna crescente ou decrescente na mesma coluna. Vale para Cards e compartilha sort_by/sort_dir com a tabela.",
   purchaseRequestsPeriod:
     "Período de abertura da SC — mesmos atalhos da Visão geral (Hoje, Esta semana, Este mês…). Editar datas manualmente vira Personalizado. Compartilhável pela URL via date_from/date_to (F5 restaura o recorte; o atalho é derivado das datas). O padrão é Este mês.",
-  purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
-  purchaseRequestsProduct: "Filtra por código ou trecho de produto/MP da linha.",
+  purchaseRequestsNumber: "Filtra pelo número exato da solicitação de compras.",
+  purchaseRequestsProduct: "Filtra pelo código exato do produto/MP da linha.",
+  purchaseRequestsRequester:
+    "Filtra por solicitante do recorte autorizado. A lista mostra o nome oficial da Minha DELPI quando o usuário TOTVS tem vínculo; sem vínculo, mostra o nome do ERP. Múltipla seleção combina por ou.",
+  purchaseRequestsCostCenter:
+    "Filtra por centro de custo dentro do seu escopo autorizado — código e descrição. Múltipla seleção combina por ou.",
   purchaseRequestsExport:
     "Exporta para Excel o recorte filtrado inteiro, sem truncar na página. Faz parte do uso normal do Portal. CSV permanece disponível como formato legado.",
   purchaseRequestsFilters:

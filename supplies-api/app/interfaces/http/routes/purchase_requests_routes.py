@@ -117,6 +117,49 @@ def list_portal_purchase_request_requesters():
         )
     except PurchaseRequestsGatewayError as exc:
         return _gateway_error_response(exc)
+    data = _REQUESTER_IDENTITY.enrich_payload(
+        _unwrap_data(payload), access_token=_access_token()
+    )
+    return jsonify(data), 200
+
+
+@purchase_requests_bp.get(
+    "/purchase-requests/requesters/<protheus_user_id>/photo"
+)
+@require_policy(can_use_purchase_requests)
+def get_portal_purchase_request_requester_photo(protheus_user_id: str):
+    """operationId: get_portal_purchase_request_requester_photo — BFF photo proxy.
+
+    Resolves the Protheus id through the mapped Core identity server-side;
+    the Core user id and the S2S token never reach the browser.
+    """
+    photo = _REQUESTER_IDENTITY.get_requester_photo(protheus_user_id)
+    if not photo:
+        return jsonify({"detail": "Not Found", "code": "not_found"}), 404
+    content, content_type, file_name = photo
+    return Response(
+        content,
+        status=200,
+        mimetype=content_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{file_name}"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
+
+
+@purchase_requests_bp.get("/purchase-requests/cost-centers")
+@require_policy(can_use_purchase_requests)
+@require_units("branch")
+def list_portal_purchase_request_cost_centers():
+    """operationId: list_portal_purchase_request_cost_centers"""
+    try:
+        payload = _GATEWAY.list_cost_centers(
+            access_token=_access_token(),
+            query_string=request.query_string.decode("utf-8") or None,
+        )
+    except PurchaseRequestsGatewayError as exc:
+        return _gateway_error_response(exc)
     return jsonify(_unwrap_data(payload)), 200
 
 

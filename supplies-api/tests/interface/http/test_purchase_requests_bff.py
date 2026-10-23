@@ -307,3 +307,131 @@ def test_list_enriches_requester_via_identity_service(mock_resolve, mock_validat
     assert item["requester"]["display_name"] == "Elaine Souza"
     assert item["requester"]["name"] == "ELAINE"
     identity.enrich_payload.assert_called_once()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requester_photo_streams_mapped_user_photo(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    identity = MagicMock()
+    identity.get_requester_photo.return_value = (b"\x89PNG", "image/png", "e.png")
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+        identity,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/requesters/000123/photo",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.data == b"\x89PNG"
+    assert response.mimetype == "image/png"
+    identity.get_requester_photo.assert_called_once_with("000123")
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requester_photo_404_when_unmapped_or_absent(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    identity = MagicMock()
+    identity.get_requester_photo.return_value = None
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+        identity,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/requesters/999/photo",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 404
+
+
+def test_requester_photo_requires_auth():
+    client = create_app().test_client()
+    response = client.get("/purchase-requests/requesters/000123/photo")
+    assert response.status_code == 401
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_requesters_facet_enriched_with_display_name(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    gateway = MagicMock()
+    gateway.list_requesters.return_value = {
+        "success": True,
+        "data": {
+            "items": [{"protheus_user_id": "000123", "name": "ELAINE"}]
+        },
+    }
+    identity = MagicMock()
+    identity.enrich_payload.side_effect = lambda payload, *, access_token: {
+        **payload,
+        "items": [
+            {**item, "display_name": "Elaine Souza"}
+            for item in payload.get("items", [])
+        ],
+    }
+    with (
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+            gateway,
+        ),
+        patch(
+            "app.interfaces.http.routes.purchase_requests_routes._REQUESTER_IDENTITY",
+            identity,
+        ),
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/requesters?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.get_json()["items"][0]["display_name"] == "Elaine Souza"
+    identity.enrich_payload.assert_called_once()
+
+
+@patch("app.interfaces.http.auth_middleware.KeycloakJwtValidator.validate")
+@patch(
+    "app.interfaces.http.auth_middleware.AuthorizationService.resolve_effective_user"
+)
+def test_cost_centers_facet_passes_through(mock_resolve, mock_validate):
+    mock_validate.return_value = _identity()
+    mock_resolve.return_value = _user(
+        permissions={"supplies.access", "supplies.unit.filial-01"}
+    )
+    gateway = MagicMock()
+    gateway.list_cost_centers.return_value = {
+        "success": True,
+        "data": {
+            "items": [{"branch": "01", "code": "0413", "description": "Produção"}]
+        },
+    }
+    with patch(
+        "app.interfaces.http.routes.purchase_requests_routes._GATEWAY",
+        gateway,
+    ):
+        client = create_app().test_client()
+        response = client.get(
+            "/purchase-requests/cost-centers?branch=01",
+            headers={"Authorization": "Bearer tok"},
+        )
+    assert response.status_code == 200
+    assert response.get_json()["items"][0]["code"] == "0413"

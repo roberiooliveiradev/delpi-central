@@ -28,6 +28,7 @@ from app.composition.supplies_composer import (
     build_list_supplies_purchase_request_recent_linked_orders_use_case,
     build_list_supplies_purchase_request_recent_linked_receipts_use_case,
     build_list_supplies_purchase_request_requesters_use_case,
+    build_list_supplies_purchase_request_cost_centers_use_case,
 )
 from app.core.exceptions import DatabaseConnectionError
 from app.core.responses import error_response
@@ -344,6 +345,72 @@ def list_supplies_purchase_request_requesters_route(
         log_error(f"Erro ao listar solicitantes de SC: {exc}")
         return error_response(
             "Erro interno ao listar solicitantes de compra.",
+            status_code=500,
+        )
+
+
+@router.get("/cost-centers", operation_id="list_supplies_purchase_request_cost_centers")
+@require_any_permission_or_trusted_caller(
+    PURCHASE_REQUESTS_READ_PERMISSIONS,
+    caller=PURCHASE_REQUESTS_API_CALLER,
+)
+def list_supplies_purchase_request_cost_centers_route(
+    branch: list[str] = BRANCH_CODES_QUERY(),
+    date_from: str | None = Query(None, alias="date_from"),
+    date_to: str | None = Query(None, alias="date_to"),
+    cost_centers: Annotated[list[str] | None, Query()] = None,
+    cc_scope: Annotated[list[str] | None, Query()] = None,
+    request_number: str | None = Query(None),
+    product_code: str | None = Query(None),
+    supplier_code: str | None = Query(None),
+    order_number: str | None = Query(None),
+):
+    """Facet de centros de custo no universo autorizado.
+
+    `cost_centers`/`cc_scope` chegam apenas como carriers de escopo vindos
+    do owner (purchase-requests-api) — o filtro explícito do usuário não
+    deve estreitar a própria lista de opções.
+    """
+    try:
+        branches = normalize_purchase_request_branches(branches=branch)
+    except ValueError as exc:
+        return error_response(str(exc), status_code=422)
+
+    branch_error = purchase_requests_branches_access_error(branches)
+    if branch_error:
+        return branch_error
+
+    try:
+        use_case = build_list_supplies_purchase_request_cost_centers_use_case()
+        result = use_case.execute(
+            branches=branches,
+            date_from=date_from,
+            date_to=date_to,
+            cost_centers=cost_centers,
+            cost_center_scopes=cc_scope,
+            request_number=request_number,
+            product_code=product_code,
+            supplier_code=supplier_code,
+            order_number=order_number,
+        )
+        return api_delpi_success(
+            result,
+            operation_id="list_supplies_purchase_request_cost_centers",
+            message="Centros de custo carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao listar centros de custo de SC: {exc}")
+        return error_response(str(exc), status_code=422)
+    except DatabaseConnectionError as exc:
+        log_error(f"Banco indisponível ao listar centros de custo de SC: {exc}")
+        return error_response(
+            "Não foi possível consultar o TOTVS para os centros de custo.",
+            status_code=503,
+        )
+    except Exception as exc:
+        log_error(f"Erro ao listar centros de custo de SC: {exc}")
+        return error_response(
+            "Erro interno ao listar centros de custo de compra.",
             status_code=500,
         )
 

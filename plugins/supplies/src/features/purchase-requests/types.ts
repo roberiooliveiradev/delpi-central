@@ -23,6 +23,8 @@ export type PersonRef = {
   name?: string | null;
   /** Minha DELPI official name — present only when the Core↔Protheus link resolved. */
   display_name?: string | null;
+  /** BFF proxy path for the real user photo — only when the linked profile has one. */
+  photo_url?: string | null;
 };
 
 export type CostCenterRef = {
@@ -97,6 +99,10 @@ export type PurchaseRequestsQuery = {
   date_to: string;
   request_number: string;
   product_code: string;
+  /** Selected requesters by `protheus_user_id` (serialized as `requester_user_id`). */
+  requester_ids: string[];
+  /** Selected cost-center codes (serialized as `cost_center`). */
+  cost_centers: string[];
   overall_stages: OverallStage[];
   sort_by: string;
   sort_dir: PurchaseRequestsSortDir;
