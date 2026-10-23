@@ -17821,3 +17821,12 @@ TASK_ID=DELIA-VD-DUAL-MODE-BATCH-DEFAULT-IMPLEMENT-TEST-DEPLOY-01
 COMMIT=61ff9d02da(code)+docs DEPLOYED=YES PROD_QA=27/27
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.406 — Estabilizacao funcional pre-refatoracao D4/D5/D5-R/D8/D8-R/N1 (2026-10-23)
+
+**2026-10-23 — DELIA-C3-PRE-REFACTOR-FUNCTIONAL-STABILIZATION-01 (doc 130):** pacote bounded pre-R0..R7. Causas: secoes de guidance so inteiras no packer + indice productGuide esgotava budget -> displayFormatCatalog omitido (P1); query referencial sem referente -> owner semantic search miss (P3); field_labels governados ausentes das trilhas deterministicas (P4). Fixes: retry unico context-folded na descoberta candidate-bound + instrucoes de referentes; preview limitado marcado para secoes ponteiro/enumeraveis; field_labels propagados; vocabulario CRI +12 entradas. RED/GREEN 11 testes novos + regressao i04 preservada; suite ~2139 verde; eval local delia-json limpo. Deploy: `6a896a695d` -> imagem `1201882fdceb` healthy, health 200, 401 fail-closed, rollback `3a338850ea2a`. Homologacao prod Kimi (user autorizado): D4/D5/D5-R/D5-schema/D8/D8-R/N1 = PASS. Residuo: variancia de busca semantica owner em D8-R; previews parciais por design. Plano 125 nao autorizado/iniciado.
+
+TASK_ID=DELIA-C3-PRE-REFACTOR-FUNCTIONAL-STABILIZATION-01
+COMMIT=072629e67b+6a896a695d DEPLOYED=YES PROD_HOMOLOGATION=7/7
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
