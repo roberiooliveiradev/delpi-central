@@ -17681,3 +17681,12 @@ RQ_SA04=IMPLEMENTED RQ_SA05=IMPLEMENTED SA06_08_09=PRESERVED
 GUIDANCE_PROJECTION=deterministic_existing FIELD_LABELS=governed_json_v4 SINGLE_RESOLVER=conversational_response
 TESTS_NEW=18_green SUITE=all_green EXTERNAL_LLM_CALLS=0 DEPLOY=NONE
 INDEPENDENT_REVIEW_PENDING NEXT=S4
+
+
+## §6.397 — S4 self-awareness: redistribuicao da orquestracao — SKIP_WITH_DECISION (2026-10-23)
+
+**2026-10-23 — DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 / STEP=S4 (PO f7b6a601cb, diretriz doc112 SS9):** unica responsabilidade com destino legitimo comprovado (resolucao de rotulos) ja extraida em S3 para conversational_response.py. Familias G-SA5 (guidance) e G-SA6 remanescente (frases user-facing) dependem de _canonical_key/_sanitize_renderable/_redact_text (~103 refs compartilhadas, nao-apresentacao); mover ao leaf conversational_response criaria ciclo de import; paginated_result_semantics tem contrato de paginacao, nao de frases; novo leaf rejeitado (proibido criar abstracao por tamanho). SKIP_WITH_DECISION com evidencia de dependencia — zero codigo, zero regressao. Doc 117. INDEPENDENT_REVIEW_PENDING.
+
+TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S4
+DECISION=SKIP_WITH_DECISION EXTRACTION_DONE=S3_labels REMAINING_BOUNDED=shared_utils_dependency
+NEW_CODE=NONE SUITE=unchanged_green NEXT=S5
