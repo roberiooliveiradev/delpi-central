@@ -104,3 +104,10 @@
 ## 10. SHA final
 
 `71ffc32ce8997ae202051afa255309c09e9d86f3` (`origin/main`, fast-forward).
+
+
+## 11. Revisão GPT — aceite em código (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para implementação em código.** Revisado no GitHub HEAD `6df86f5a32`: `taxIdMask.ts`, `SupplierTaxIdField`, `CreationAssistedFlow`, `content.ts` e documentação. A máscara mantém o valor canônico numérico e o comportamento de invalidação por mudança real de dígitos; `formatRetrievedAt` utiliza explicitamente `America/Sao_Paulo`; a fonte `brasilapi-cnpj-v1` tem apresentação amigável sem alteração do `provider_id`. O commit documental posterior a `71ffc32ce8` não altera a implementação.
+
+**Evidências reportadas pelo Cursor, não reexecutadas pelo GPT:** 363 testes MFE, typecheck e build PASS, ESLint escopado PASS. **Residual obrigatório:** teste no navegador autenticado de digitação incremental, colagem, edição intermediária/Backspace e caret, CPF/CNPJ por tipo, hora comparada ao instante ISO com offset e texto/proveniência exibidos. `BROWSER = TEST_NOT_RUN`; `DEPLOY = NOT_AUTHORIZED / NOT_EXECUTED` nesta entrega. **Não promover GATE-FEATURE S9 a PASS sem runtime.** Nenhuma alteração backend, permissão ou escrita ERP autorizada. Próximo passo exige GO separado para `S9.D1` (deploy MFE e smoke federado read-only).
