@@ -112,3 +112,16 @@ Prompt real produziu bloco de código fenced → `ConversationCodeBlock` com bad
 ---
 
 **Veredito do executor:** Markdown B2 apresenta qualidade e segurança equivalentes no full-page e no Companion Dock em produção real. Zero defeitos frontend. Aceite de CP-333 permanece com a coordenação.
+
+
+## 12. Aceite posterior do Product Owner (2026-10-23)
+
+O Product Owner **aceitou explicitamente o componente e a homologação frontend Markdown B2** para prosseguir às demais evoluções. Registro de aceite de produto sobre evidências já publicadas; **não é execução de testes adicional** nem aceite de CP-333 pela coordenação.
+
+- `PRODUCT_OWNER_ACCEPTANCE=YES` (ConversationCodeBlock e UX Markdown B2 no escopo avaliado).
+- `FRONTEND_REVIEW=ACCEPT_WITH_RESIDUAL` — ausência de defeitos frontend reportados; trabalho funcional encerrado.
+- `SCREEN_READER_QA=TEST_NOT_RUN` — residual preservado, não converter em PASS.
+- `CP_333=AWAIT_COORDINATION_DECISION`; `PHASE_PROGRESSION=NONE`.
+- `CODE_CHANGED=NO`; `DEPLOYMENT=NOT_APPLICABLE`.
+
+Próximas evoluções de frontend serão tasks bounded próprias; não reabrir este componente sem evidência nova.
