@@ -70,3 +70,14 @@ Fluxo: `plugins/supplies → supplies-api → api-delpi | external-data-api | Co
 - [Roadmap fornecedores](./FORNECEDORES-GESTAO-CADASTRAL-ROADMAP.md)
 - [Implementation plan](./IMPLEMENTATION-PLAN.md)
 - [X3 E2E closure](../shared-integrations/X3-E2E-CLOSURE-AND-X4-UI-READINESS-20261022.md)
+
+## 7. Decisão complementar PO — duas entradas para novo fornecedor (2026-10-23)
+
+**REQUISITO FUNCIONAL APROVADO:** na experiência de **Novo fornecedor**, o usuário terá exatamente **duas opções de início de preenchimento assistido**, sem obrigatoriedade de utilizar integração:
+
+1. **Informar CNPJ:** validar formato e identidade, consultar os dados externos por CNPJ através do BFF/`external-data-api` e apresentar sugestões de preenchimento, fonte e data.
+2. **Buscar por razão social:** pesquisar candidatos empresariais em fonte externa legitimada, mostrar nome/CNPJ/localidade para escolha explícita; após a escolha, o sistema **faz automaticamente a consulta detalhada por CNPJ** (sem segundo preenchimento de documento) e apresenta as mesmas sugestões do caminho 1.
+
+**Ambos convergem para o mesmo fluxo:** verificar duplicidade e permissões → apresentar dados sugeridos com origem → permitir confirmação/edição e preenchimento dos campos internos → revisão final → criação explícita somente com write gate/contrato ERP autorizado. Não selecionar automaticamente o primeiro resultado da busca nominal. Busca por razão social é `TARGET/TO_INVENTORY` quanto ao provedor e API, **não** declarar disponível em produção; lookup CNPJ existente permanece `PROVEN`. A pesquisa não cria fornecedor nem executa POST/PUT Protheus. O cadastro manual continua possível quando o usuário optar por não utilizar sugestão externa, conforme jornada de criação vigente.
+
+**Critérios de aceite para X4.UX-R1.P0:** wireframe/estados de ambas entradas; search-empty/múltiplos homônimos/erro/429; seleção de estabelecimento; consulta CNPJ automática após seleção; proveniência por campo; ausência de duplicidade indevida; fallback para entrada manual; RBAC no BFF; LGPD e fonte externa autorizada. Implementação requer novo gate e autorização.
