@@ -1,9 +1,9 @@
 # Handoff Ciclo 2 — Pacote de Evidências para Owners
 
-**Documento:** `81-ciclo2-handoff-pacote-evidencias-owners.md`
+**Documento:** `82-ciclo2-handoff-pacote-evidencias-owners.md` (renumerado de `81-` em 2026-10-23 para resolver colisão com o documento de decisão)
 **Origem:** `80-ciclo2-registro-vivo-investigacao-devin.md` §25 (Rodada 13, `4577c8c5e4`)
 **Escopo:** PROC-0072 — estoque histórico, MOD, baixas financeiras, fechamento SB9
-**Estado:** `DECISION_REQUIRED` (MOD, ver §3) · `NO_GATE_CHANGE` (Doc 47)
+**Estado:** E6 `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C — `81-decisao-e6-historico-monetario-mod-opcao-c.md`, `e68ae2d63129`) · `IMPLEMENTATION_AUTHORIZED = NO` · `NO_GATE_CHANGE` (Doc 47)
 
 > Nenhum item deste pacote pede permissões amplas ou acesso privilegiado genérico.
 > Cada solicitação pede **a evidência específica** e, quando possível, **extrato/resultado sanitizado** no lugar do acesso.
@@ -87,23 +87,34 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 
 ### 2.3 — Owner Controladoria (decisão de negócio)
 
-#### E6 — Decisão sobre apresentação do resultado MOD — `DECISION_REQUIRED`
+#### E6 — Histórico monetário MOD — `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C)
 
-Contexto (doc 80 §23–§25): a view aplica o `BZ_CUSTD` **corrente retroativamente**; revalorização de out/2026 moveu ~8–9% do resultado de set/2026 (f01 +489,72; f02 −2.465,53). Não existe congelamento: indicadores são recalculados ao vivo.
+**Decisão registrada:** `E6_OPTION = C` (duas leituras: histórico homologado + recalculado corrente) em `81-decisao-e6-historico-monetario-mod-opcao-c.md` (`e68ae2d63129`, 2026-10-23). Classificação `APPROVED / PRODUCT_DIRECTION_ONLY` — **não é GO de implementação**: `IMPLEMENTATION_AUTHORIZED = NO`; não autoriza contratos, tabelas, migrations, APIs, UI, jobs, alteração na view ou runtime, e não promove gates do doc 47.
 
-| Opção | Significado | Exige | Limitação |
-|---|---|---|---|
-| **A — Histórico homologado** | resultado com o rate da competência | rate-por-data (TTAT ≥abr/26 ou tabela nova) + snapshot no fechamento | pré-abr/26 irreconstruível; diverge da view atual |
-| **B — Recalculado corrente** | resultado sempre ao custo atual | nada (status quo da view) | série histórica muda a cada revalorização |
-| **C — Ambos** | as duas leituras lado a lado | mesma fonte de A | maior complexidade de explicação |
+Contexto (doc 80 §23–§25): a view aplica o `BZ_CUSTD` **corrente retroativamente**; revalorização de out/2026 moveu ~8–9% do resultado de set/2026 no subconjunto alterado (f01 +489,72; f02 −2.465,53). Não existe congelamento: indicadores são recalculados ao vivo.
+
+**O que se solicita agora à Controladoria (e owners indicados no doc 81):** não uma escolha A/B/C — já decidida — e sim:
+
+| Item | Solicitação | Responsável candidato |
+|---|---|---|
+| E6-D1 | O que constitui o **valor homologado**: relatório oficial, pacote do fechamento ou outro artefato; grão e moeda | Controladoria |
+| E6-D2 | Definição do cutoff, versões, correções, reaberturas e momento de congelamento | Controladoria + TI/ERP |
+| E6-D3 | Fonte e confiabilidade de rate por competência, logs, DDL da view e artefatos históricos | TI/ERP + DBA |
+| E6-D4 | Owner da persistência de evidências, retenção, contratos, DTOs e integrações | Product owner + arquitetura |
+| E6-D5 | Tolerâncias monetárias, rótulos, comparação de variação e aceites por competência e filial | Controladoria |
+| E6-D6 | Escopo e propriedade da competência, acesso às evidências e auditabilidade | Segurança/owner |
+
+Mais:
+
+1. **Homologação dos valores-base set/2026** (ótica corrente): f01 `+R$5.918,90` / f02 `−R$32.694,32` — e da leitura por rate anterior no subconjunto alterado (f01 `+R$5.429,18` / f02 `−R$30.228,79`).
+2. **Validação dos critérios AC-E6-01..AC-E6-10** do doc 81 §4 (hoje `TARGET_DRAFT / PENDING_OWNER_VALIDATION`): duas leituras rotuladas, trilha humana de homologação, recálculo identificável com `as_of`, paridade por grão oficial, comparação justa, tratamento de rate ausente, histórico incompleto (<27/04/2026), cutoff/republicação, boundary de segurança e evidência de testes.
 
 | Campo | Conteúdo |
 |---|---|
-| Fonte esperada | escolha de opção (A/B/C) + homologação do valor-base set/2026 (f01 +5.918,90 / f02 −32.694,32, ótica corrente) + owner da manutenção de `BZ_CUSTD` MOD |
-| Impacto PROC-0072 | define semântica dos indicadores MOD em qualquer superfície (view, relatório, portal) |
-| Critério de aceite | `FUNCTIONAL_ACCEPTANCE` registrado com versão e data |
+| Impacto PROC-0072 | transforma a direção aprovada (duas leituras) em semântica homologada de indicadores MOD |
+| Critério de aceite | `FUNCTIONAL_ACCEPTANCE` registrado com versão e data + `DECISION_REQUIRED` de E6-D1..D6 respondidos pelos owners |
 
-> **Bloqueio deliberado:** nenhuma opção será implementada sem manifestação do owner.
+> **Bloqueio deliberado:** a direção está aprovada, mas `IMPLEMENTATION_AUTHORIZED = NO` — nada será implementado antes dos detalhamentos e das homologações acima.
 
 ---
 
@@ -114,7 +125,7 @@ Contexto (doc 80 §23–§25): a view aplica o `BZ_CUSTD` **corrente retroativam
 | Reconstrução DEL100 vigente | 3.058/421/242 — query §24.E, validada (SF4 compartilhada ≡ `xFilial`, reproduzida 2×) |
 | 724/672 e derivadas (§19.C, §20.A, §21.C) | `STALE_EVIDENCE` — `EXECUTION_DRIFT` registrado em §23.A |
 | Pagar FINR190 | paridade estrutural PROVEN (948, 5/5 motivos, `FINR190_DLP`); sem paridade monetária/registro |
-| MOD fórmula/rate | PROVEN; decisão de apresentação `DECISION_REQUIRED` |
+| MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
 | DLP06R01, P7 | `BLOCKED`/`TO_INVENTORY` (E1/E2) |
 | Doc 47 | `NO_GATE_CHANGE` — evidências mapeadas em §25.E |
@@ -123,7 +134,8 @@ Contexto (doc 80 §23–§25): a view aplica o `BZ_CUSTD` **corrente retroativam
 
 ## §4 — Referências
 
-- Registro vivo: `80-ciclo2-registro-vivo-investigacao-devin.md` §17–§25
+- Registro vivo: `80-ciclo2-registro-vivo-investigacao-devin.md` §17–§26
+- Decisão E6: `81-decisao-e6-historico-monetario-mod-opcao-c.md` (`e68ae2d63129`)
 - Tracker de gates: `47-t01-report-column-audit-tracker-v1.md` (G1–G6)
 - Acervo de fontes: `docs/13-fontes-totvs-protheus/` (`DEL100.PRW`, `MA330OK.PRW`, `FINR190_DLP.PRX`, `matr860`, `DLP34R01.PRW`)
 - Commits-âncora: `9281aa9f09` (R5), `a1f2e47f18` (R6), `4fea4c09b3` (R7), `dd2ea700ee`+`b7cc80c246` (R8), `c06826af9d` (R9), `287f94a2aa` (R10), `f7c899fffe` (R11), `f95c7213eb` (R12), `4577c8c5e4` (R13)

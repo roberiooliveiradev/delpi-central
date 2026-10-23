@@ -1317,7 +1317,7 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 | E3 | DBA | definição (DDL) de `vw_Apontamentos_Eficiencia`, `VW_PROTHEUS_CUSTO_*`, `vw_fin_despesas_centro_custo` | implementação MOD, bindings G4 |
 | E4 | DBA | lista de jobs SQL Agent (`msdb.dbo.sysjobs`) e código das SPs `STP_DELPI_OP_TERCEIRO_*`/`STP_PROTHEUS_DELPI_AJUSTA_OP` | execução do fechamento SB9 |
 | E5 | TI/ERP | confirmação da rotina/schedule que grava SB9 (MATA330+custom?) e log de execução out/2026 | produtor SB9 |
-| E6 | Controladoria | decisão 25.C (A/B/C) + homologação do valor-base MOD set/2026 | política de congelamento |
+| E6 | Controladoria | decisão 25.C (A/B/C) + homologação do valor-base MOD set/2026 → **atualizado 23/10: opção C aprovada** (`81-decisao-e6`, `e68ae2d63129`); restam E6-D1..D6 + homologação + AC-E6 | política de congelamento |
 
 ### 25.E — Cruzamento residuais × gates Doc 47
 
@@ -1345,7 +1345,9 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 
 ## §26 — HANDOFF (CF-C2-HANDOFF-001) — PACOTE DE EVIDÊNCIAS PARA OWNERS — 2026-10-23
 
-Pacote consolidado em `81-ciclo2-handoff-pacote-evidencias-owners.md`: E1–E6 organizados por responsável (TI/ERP, DBA, Controladoria) com evidência atual, lacuna, fonte esperada, impacto, critério de aceite e protocolo de classificação de respostas (`SOURCE_AVAILABLE`/`CODE_DEPLOYED`/`EXECUTION_OBSERVED`/`FUNCTIONAL_ACCEPTANCE`). Referência vigente 3.058/421/242; `EXECUTION_DRIFT`/`STALE_EVIDENCE` preservados; decisão MOD `DECISION_REQUIRED` (nada implementado). Doc 47: `NO_GATE_CHANGE`.
+Pacote consolidado em `82-ciclo2-handoff-pacote-evidencias-owners.md` (renumerado de `81-` em 2026-10-23, resolvendo colisão com o documento de decisão): E1–E6 organizados por responsável (TI/ERP, DBA, Controladoria) com evidência atual, lacuna, fonte esperada, impacto, critério de aceite e protocolo de classificação de respostas (`SOURCE_AVAILABLE`/`CODE_DEPLOYED`/`EXECUTION_OBSERVED`/`FUNCTIONAL_ACCEPTANCE`). Referência vigente 3.058/421/242; `EXECUTION_DRIFT`/`STALE_EVIDENCE` preservados.
+
+**E6 — atualização de estado (2026-10-23):** opção **C — Ambos** aprovada como direção de produto (`APPROVED / PRODUCT_DIRECTION_ONLY`), registrada em `81-decisao-e6-historico-monetario-mod-opcao-c.md` (`e68ae2d63129`). `IMPLEMENTATION_AUTHORIZED = NO` — não autoriza contratos, runtime, jobs, view ou UI. Pendências remanescentes: detalhamentos E6-D1..D6, homologação dos valores-base set/2026 e validação dos critérios AC-E6-01..10 (ver doc 82 §2.3). Doc 47: `NO_GATE_CHANGE`.
 
 | Run | Item | Resultado | Gate |
 |---|---|---|---|
