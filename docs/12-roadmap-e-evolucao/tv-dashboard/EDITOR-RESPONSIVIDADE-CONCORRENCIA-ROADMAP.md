@@ -439,3 +439,35 @@ Correção dos resíduos do ledger de projeção pendente (027, commit `8eb60880
 **Resíduos conhecidos / acompanhamento separado:** (1) seis falhas históricas do Vitest e erros TS de baseline; (2) drift do catálogo OpenAPI `tv_data_routes`, não tratado nem redeployado com a API; (3) observabilidade pós-deploy de falhas de persistência, conflitos 409, reload redundante, convergência e latência visual; (4) invariante de baseline autoritativo para novos caminhos de mutation-backed, sem presumir que o fallback elimina toda possibilidade futura de baseline ausente. Não reabrir a mutation boundary sem reprodução material.
 
 **Ownership preservado:** TV Dashboard API autoriza e persiste; MFE projeta/coordena a persistência; presentation package renderiza; public-hub hospeda. `EXISTING_EQUIVALENT = YES`; `REUSE_DECISION = EXTEND` conforme implementação 027/028. Próximas frentes de otimização ou correção devem reancorar no HEAD e partir de novo diagnóstico/owner, não de workaround no viewer.
+
+
+### Execução — VISTA-TV-EDITOR-DYNAMIC-PREFIX-STATE-029 (P1, prefixo dinâmico reaparece após exclusão)
+
+Correção do defeito reportado pelo usuário: remover o prefixo de um campo dinâmico na seção «Campo dinâmico» fazia o valor antigo reaparecer após ACK/reload.
+
+**Reprodução = PROVEN.** Spec API `97-prefix-repro.spec.ts` (stack local real): seed `textProjection:{field:"qty",prefix:"r"}`, write MFE-fiel com a chave `prefix` **ausente** → 200 → read-back `prefix:"r"` **ressuscitado** pelo merge profundo. `prefix:null` → **422** (`textProjection.prefix deve ser string` — `presentation_ops_content.json` declara `"type":"string"`, não-nullable). `prefix:""` → 200 → read-back `prefix:""` **persiste**. Red unit test (`TextDataBindingInspector.prefix.test.tsx`, 4 casos) falhava antes do fix.
+
+**Root cause / first reversion point.** `TextDataBindingInspector` — `onChange={(v) => patchProjection({prefix: v || undefined})}` (mesmo padrão em `suffix` e `fallback`): `""` colapsava para `undefined` → JSON omite a chave → `merge_block_patch`/`deep_merge_dicts` (ausente = preservar) mantinha o valor antigo → ACK canônico devolvia `prefix:"r"` → autosave via live==authoritative → reaparecimento permanente. Owner: borda UI→patch do inspetor; `consolidateTextBindingToProjection` (`textBindingOwner.ts`) já preserva `""` via spread — o valor só se perdia na borda.
+
+**Contrato de string vazia (canônico).** `textProjection.prefix|suffix|fallback` = `"type":"string"`: chave **ausente** = sem update/keep, `""` = limpar, `null` = rejeitado (422). Renderer (`textViewProjection.ts`) trata `""` e ausente igualmente (`?.trim() || "—"` para fallback) — sem semântica nova. `field` em `DataRibbonControls`/`FormSelectControl` mantém `v || undefined` deliberadamente: `""`/`undefined` ambos desvinculam via `!next.field?.trim()` no consolidate — semântica de unbind, não de valor.
+
+**Solução — menor escopo no owner.** `TextDataBindingInspector.tsx`: `patchProjection({prefix: v})`, `({suffix: v})`, `({fallback: v})` — a string vazia trafega intacta até o wire (`upsert_block` envia bloco inteiro → merge grava `""` → ACK confirma `""` → autosave e reload convergem). Nenhum helper novo, nenhum formatter paralelo, backend intacto. `EXISTING_EQUIVALENT = YES` (consolidate já generaliza), `REUSE_DECISION = REUSE`.
+
+**Arquivos.** Alterado: `src/components/TextDataBindingInspector.tsx` (3 linhas — borda do input). Novo: `src/components/TextDataBindingInspector.prefix.test.tsx` (4 casos: prefix/suffix/fallback `r→""` serializam `""` e nunca omitem a chave; `""→"R$ "` sem regressão). Harness local (não-commitado): `97-prefix-repro.spec.ts`, `98-fixture-dump.spec.ts`, `10-dynamic-prefix.spec.ts`.
+
+**Evidência.**
+
+| Gate | Resultado |
+|---|---|
+| Vitest focado (registry+ack+history+prefix) | **48/48 PASS** |
+| Vitest MFE completo | 1486 pass / 6 fail — idêntico ao baseline documentado (arquivos não tocados) |
+| Build Vite | PASS (~2.5min, `App-CBPtT70h.js`) |
+| API repro (`97-prefix-repro`) | ausente→ressuscita `"r"`; `null`→422; `""`→persiste `""` |
+| E2E `10-dynamic-prefix` (browser real, UI real) | **2/2 PASS** — wire carrega `"prefix":""`, read-back `""`, nav B↔A `""`, reload `""`; sufixo/fallback idem |
+| Regressão E2E completa (00–10,97,98,99) | **36/36 PASS** (3 flakes de login SSO na 1ª corrida — re-run isolado verde) |
+
+**Métricas.** `EMPTY_STRING_KEY_DROPPED = 0` (wire assert `Object.keys(projection)` contém `prefix`); `STALE_VALUE_RESURRECTED = 0` (read-back pós-ACK/nav/reload); mutações 200, 1 POST por clear.
+
+**Resíduos.** (1) As 6 falhas vitest + erros TS baseline permanecem inventariados. (2) Multi-cliente para prefix não teve spec dedicada — coberto pela convergência de slide_draft já validada em 028 (mesmo canal). (3) Drift `tv_data_routes` segue fora de escopo.
+
+**Decisão.** Causa comprovada e corrigida na borda correta, contrato `""` respeitado end-to-end, wire+read-back+E2E real verificados. `FINAL_VERDICT = ACCEPT`.

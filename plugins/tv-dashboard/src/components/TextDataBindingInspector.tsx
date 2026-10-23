@@ -284,14 +284,14 @@ export function TextDataBindingInspector({
               <NativeTextControl
                 className={compactNative}
                 value={projection.prefix ?? ""}
-                onChange={(value) => patchProjection({ prefix: value || undefined })}
+                onChange={(value) => patchProjection({ prefix: value })}
               />
             </DeckField>
             <DeckField label="Sufixo">
               <NativeTextControl
                 className={compactNative}
                 value={projection.suffix ?? ""}
-                onChange={(value) => patchProjection({ suffix: value || undefined })}
+                onChange={(value) => patchProjection({ suffix: value })}
               />
             </DeckField>
             <DeckField label="Se vazio">
@@ -299,7 +299,7 @@ export function TextDataBindingInspector({
                 className={compactNative}
                 value={projection.fallback ?? ""}
                 placeholder="—"
-                onChange={(value) => patchProjection({ fallback: value || undefined })}
+                onChange={(value) => patchProjection({ fallback: value })}
               />
             </DeckField>
           </DeckPropertySection>
