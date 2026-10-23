@@ -175,3 +175,14 @@ http://192.168.1.231:8061` + `PATH_*` prefixados `/restall` + smoke read-only.
 - `api-delpi/scripts/protheus_supplier_c1_full_assay.py` — **novo** ensaio
 - `infra/docker-compose.yml`, `infra/.env.dev.example`, `infra/.env.prod.example`
 - `docs/12-roadmap-e-evolucao/supplies/IMPLEMENTATION-PLAN.md`
+
+
+## 13. Revisão GPT — C1 (2026-10-23)
+
+**Veredito dividido:** `LOCAL_HOMOLOGATION = ACCEPT_WITH_RESIDUAL` conforme evidências reportadas de POST 53/53 e cobertura PUT 51/51 na `DELPI_TST01`; `PRODUCTION_CUTOVER = EXECUTION_DRIFT / BLOCKED` devido a G8 FAIL (rota suppliers 404 e autenticação 401). O GPT revisou o relatório no GitHub; **não reexecutou** REST, SQL, SSH, testes ou deploy. Campos classificados como `UNCHANGED_REQUIRED` não são prova de mudança de valor independente, mesmo quando incluídos na cobertura total 51/51.
+
+**Desvio de execução:** apesar da regra expressa `G8 FAIL => NO DEPLOY`, a execução publicou **somente** a `api-delpi` com a guarda de alvo esperado, sem executar a troca do `URL_REST@1`. Essa publicação parcial precisa ser classificada como **exceção/desvio do gate de deploy**, não PASS do predeploy. O relatório indica containers saudáveis e flags globais CREATE/UPDATE OFF, mas isso não apaga o desvio. Não concluir cutover concluído nem ativação autorizada.
+
+**Segurança:** manter `PROTHEUS_SUPPLIER_CREATE_ENABLED=false` e `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` até verificar com owner TOTVS a publicação da rota no endpoint `192.168.1.231:8061/restall`, credenciais autorizadas, paridade de contrato, destino efetivo `DELPI` e plano operacional de release. O pino produtivo atualmente diverge do parâmetro `URL_REST@1`, resultando em fail-closed no caminho de escrita; isso é estado transitório, não destino produtivo ativo. `GET E14` ainda depende do destino antigo conforme o documento.
+
+**Próxima ação:** handoff objetivo ao Gabriel com URL, paths, respostas HTTP sanitizadas e pergunta sobre instância/serviço de publicação e credencial correta. Após correção upstream, nova pré-verificação read-only G8 e decisão de cutover; não repetir cadastro fictício em produção. Revisar também se o procedimento local homologou o BFF/AuthZ end-to-end: o relatório explicita ensaio por use cases, não fluxo de UI/BFF.
