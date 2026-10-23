@@ -50,6 +50,7 @@ import {
 } from "../../utils/mutationAckGeneration";
 import type { WriteGuard } from "../../api/tvDashboardApi";
 import type { MutationCommitMeta } from "../../utils/presentationMutationClient";
+import type { PendingProjectionRegistry } from "../../utils/pendingMutationProjection";
 
 /** Janela para distinguir 2º toque (limpa) de clique duplo (isola / edita). */
 export const TAP_DESELECT_DELAY_MS = 320;
@@ -75,6 +76,13 @@ type Options = {
   onWriteCommitted?: (meta: MutationCommitMeta) => void;
   /** Persist failures (incl. 409 REVISION_CONFLICT) surfaced to the owner. */
   onWriteError?: MutationErrorHandler;
+  /** Canal de projeção pendente (027) — autosave serializa baseline confirmado. */
+  pendingProjection?: {
+    registry: PendingProjectionRegistry;
+    getStashBaseline: () => ComunicadoConfig | undefined;
+    getLive: () => ComunicadoConfig;
+    refresh: () => void;
+  };
 };
 
 function resolveDraggedExcludeIds(
@@ -158,6 +166,7 @@ export function useComunicadoEditorDrag({
   resolveWriteGuard,
   onWriteCommitted,
   onWriteError,
+  pendingProjection,
 }: Options) {
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio);
   getSlideAspectRatioRef.current = getSlideAspectRatio;
@@ -674,6 +683,16 @@ export function useComunicadoEditorDrag({
           applyAck: (canonical) => {
             applyConfig(canonical);
           },
+          /* Baseline = snapshot do pointerdown (stash do applyConfig traria o
+           * último live-frame do gesto, não o estado confirmado). */
+          pending: pendingProjection
+            ? {
+                registry: pendingProjection.registry,
+                getBaseline: () => before,
+                getLive: pendingProjection.getLive,
+                refresh: pendingProjection.refresh,
+              }
+            : undefined,
         });
       }
     },
@@ -681,6 +700,7 @@ export function useComunicadoEditorDrag({
       applyConfig,
       configRef,
       deckHistory,
+      pendingProjection,
       playlistId,
       pushPast,
       slideId,

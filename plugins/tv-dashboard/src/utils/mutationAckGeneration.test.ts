@@ -15,6 +15,10 @@ import {
   commitPresentationOps,
   commitUpsertBlocks,
 } from "./presentationMutationClient";
+import {
+  createPendingProjectionRegistry,
+  pendingBlockKey,
+} from "./pendingMutationProjection";
 
 describe("mutationAckGeneration", () => {
   it("descarta ack stale quando houve mutação mais nova", async () => {
@@ -126,5 +130,91 @@ describe("mutationAckGeneration", () => {
       slideId: "slide-A",
     });
     expect(applyAck).not.toHaveBeenCalled();
+  });
+
+  it("027: marca entidades cobertas no dispatch e libera no ack", async () => {
+    const gate = createMutationGenerationGate();
+    const registry = createPendingProjectionRegistry();
+    const refresh = vi.fn();
+    const baseline = { version: 4, blocks: [{ id: "a", frame: { x: 40 } }] };
+    const live = { version: 4, blocks: [{ id: "a", frame: { x: 8 } }] };
+    const canonical = { version: 4, blocks: [{ id: "a", frame: { x: 8 } }] };
+    vi.mocked(commitUpsertBlocks).mockResolvedValueOnce(canonical as never);
+
+    const result = await ackUpsertBlocksWithGeneration({
+      playlistId: "p",
+      slideId: "s",
+      blocks: [{ id: "a", frame: { x: 8 } }],
+      gate,
+      applyAck: vi.fn(),
+      pending: {
+        registry,
+        getBaseline: () => baseline as never,
+        getLive: () => live as never,
+        refresh,
+      },
+    });
+
+    expect(result).toEqual(canonical);
+    // Mark aconteceu no dispatch e foi liberado após o ack.
+    expect(registry.hasPending()).toBe(false);
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("027: mantém marks em falha — autosave segue no baseline até reconciliar", async () => {
+    const gate = createMutationGenerationGate();
+    const registry = createPendingProjectionRegistry();
+    const baseline = { version: 4, blocks: [{ id: "a", frame: { x: 40 } }] };
+    vi.mocked(commitUpsertBlocks).mockRejectedValueOnce(new Error("HTTP 500"));
+
+    const result = await ackUpsertBlocksWithGeneration({
+      playlistId: "p",
+      slideId: "s",
+      blocks: [{ id: "a", frame: { x: 8 } }],
+      gate,
+      applyAck: vi.fn(),
+      pending: {
+        registry,
+        getBaseline: () => baseline as never,
+        getLive: () => baseline as never,
+      },
+    });
+
+    expect(result).toBeNull();
+    // Marks permanecem: sem clear autoritativo a entidade não vaza pelo PATCH.
+    expect(registry.get(pendingBlockKey("a"))).toBeDefined();
+  });
+
+  it("027: ops derivam cobertura de patch_native_config e blockIds", async () => {
+    const gate = createMutationGenerationGate();
+    const registry = createPendingProjectionRegistry();
+    const baseline = { version: 4, background: { type: "color", value: "#111" } };
+    let resolveOps: ((v: unknown) => void) | undefined;
+    vi.mocked(commitPresentationOps).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveOps = resolve;
+      }) as never,
+    );
+
+    const pendingPromise = commitOpsAndApplyAck({
+      playlistId: "p",
+      slideId: "s",
+      ops: [
+        { op: "patch_native_config", patch: { background: { type: "color" } } },
+        { op: "align_blocks", blockIds: ["a", "b"], command: "left" },
+      ],
+      gate,
+      applyAck: vi.fn(),
+      pending: { registry, getBaseline: () => baseline as never },
+    });
+
+    // Durante a janela in-flight a cobertura está marcada.
+    expect(registry.get("field:background")).toBeDefined();
+    expect(registry.get(pendingBlockKey("a"))).toBeDefined();
+    expect(registry.get(pendingBlockKey("b"))).toBeDefined();
+
+    resolveOps?.({ blocks: [] });
+    await pendingPromise;
+    expect(registry.hasPending()).toBe(false);
   });
 });

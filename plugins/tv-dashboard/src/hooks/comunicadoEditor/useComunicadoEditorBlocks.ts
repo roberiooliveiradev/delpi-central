@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useMemo,
   useRef,
   useState,
   type Dispatch,
@@ -141,7 +142,10 @@ import {
   commitPatchDataModel,
   type MutationCommitMeta,
 } from "../../utils/presentationMutationClient";
-import type { WriteGuard } from "../../api/tvDashboardApi";
+import type {
+  PresentationMutationOp,
+  WriteGuard,
+} from "../../api/tvDashboardApi";
 import { buildFieldLabelsMergePatch } from "../../utils/dataModelPatchPlan";
 import { tvDashboardNotice } from "../../utils/tvDashboardNotice";
 import {
@@ -150,6 +154,12 @@ import {
   createMutationGenerationGate,
   type MutationErrorHandler,
 } from "../../utils/mutationAckGeneration";
+import {
+  driftedPendingKeys,
+  PENDING_BLOCK_KEY_PREFIX,
+  PENDING_FIELD_KEY_PREFIX,
+  type PendingProjectionRegistry,
+} from "../../utils/pendingMutationProjection";
 
 type Options = {
   playlistId?: string;
@@ -222,6 +232,18 @@ type Options = {
    * Quando ausente, cai em `commitWithHistory` (comportamento legado).
    */
   applyServerConfig?: (next: ComunicadoConfig) => void;
+  /**
+   * Canal de projeção pendente (027): mutation-backed commits marcam as
+   * entidades cobertas para que o autosave serialize o baseline confirmado.
+   */
+  pendingProjection?: {
+    registry: PendingProjectionRegistry;
+    /** Baseline do último applyConfig (projeção já aplicada no updateBlocks). */
+    getStashBaseline: () => ComunicadoConfig | undefined;
+    /** Config corrente — baseline para ops que projetam dentro de `optimistic`. */
+    getLive: () => ComunicadoConfig;
+    refresh: () => void;
+  };
 };
 
 /**
@@ -274,6 +296,7 @@ export function useComunicadoEditorBlocks({
   onWriteCommitted,
   onWriteError,
   applyServerConfig,
+  pendingProjection,
 }: Options) {
   const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
   const getSlideAspectRatioRef = useRef(getSlideAspectRatio ?? (() => 1));
@@ -287,6 +310,112 @@ export function useComunicadoEditorBlocks({
   // ACK de mutação que já projetou estado local: reconcilia sem criar uma
   // segunda entrada de Undo por normalização do read-back (025-R1).
   const applyCanonicalAck = applyServerConfig ?? commitWithHistory;
+
+  /* 027: projeções que já foram aplicadas via updateBlocks usam o stash do
+   * applyConfig como baseline; ops que projetam dentro de `optimistic` usam o
+   * config corrente capturado antes da projeção. */
+  const pendingBlocksProjection = useMemo(
+    () =>
+      pendingProjection
+        ? {
+            registry: pendingProjection.registry,
+            getBaseline: pendingProjection.getStashBaseline,
+            getLive: pendingProjection.getLive,
+            refresh: pendingProjection.refresh,
+          }
+        : undefined,
+    [pendingProjection],
+  );
+  const pendingOpsProjection = useMemo(
+    () =>
+      pendingProjection
+        ? {
+            registry: pendingProjection.registry,
+            getBaseline: pendingProjection.getLive,
+            getLive: pendingProjection.getLive,
+            refresh: pendingProjection.refresh,
+          }
+        : undefined,
+    [pendingProjection],
+  );
+
+  /* 027: undo/redo durante mutation pendente — quando o valor live diverge da
+   * projeção registrada, a intenção do usuário só persiste por write
+   * compensatório governado (a mutation in-flight confirmaria outro estado e
+   * o autosave serializa apenas o baseline confirmado). Coberturas não
+   * tocadas pelo undo/redo seguem intactas. */
+  const reconcilePendingProjection = useCallback(() => {
+    const registry = pendingProjection?.registry;
+    const live = configRef.current;
+    if (!registry?.hasPending() || !live || !playlistId || !slideId) return;
+    const drifted = driftedPendingKeys(registry, live);
+    if (drifted.length === 0) return;
+    const blockIds = new Set(
+      drifted
+        .filter((key) => key.startsWith(PENDING_BLOCK_KEY_PREFIX))
+        .map((key) => key.slice(PENDING_BLOCK_KEY_PREFIX.length)),
+    );
+    const fieldKeys = drifted
+      .filter((key) => key.startsWith(PENDING_FIELD_KEY_PREFIX))
+      .map((key) => key.slice(PENDING_FIELD_KEY_PREFIX.length));
+    const liveBlocks = live.blocks ?? [];
+    const restoredBlocks = liveBlocks.filter((block) => blockIds.has(block.id));
+    const removedIds = [...blockIds].filter(
+      (id) => !liveBlocks.some((block) => block.id === id),
+    );
+    if (restoredBlocks.length > 0) {
+      void ackUpsertBlocksWithGeneration({
+        ...commitWriteMeta(),
+        playlistId,
+        slideId,
+        blocks: restoredBlocks as unknown as Record<string, unknown>[],
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          applyCanonicalAck(canonical);
+        },
+        pending: pendingBlocksProjection,
+      });
+    }
+    const ops: PresentationMutationOp[] = [
+      ...removedIds.map(
+        (id) => ({ op: "delete_block", blockId: id }) as PresentationMutationOp,
+      ),
+      ...(fieldKeys.length > 0
+        ? ([
+            {
+              op: "patch_native_config",
+              patch: Object.fromEntries(
+                fieldKeys.map((field) => [
+                  field,
+                  (live as unknown as Record<string, unknown>)[field],
+                ]),
+              ),
+            },
+          ] as PresentationMutationOp[])
+        : []),
+    ];
+    if (ops.length > 0) {
+      void commitOpsAndApplyAck({
+        ...commitWriteMeta(),
+        playlistId,
+        slideId,
+        ops,
+        gate: mutationGateRef.current,
+        applyAck: (canonical) => {
+          applyCanonicalAck(canonical);
+        },
+        pending: pendingOpsProjection,
+      });
+    }
+  }, [
+    applyCanonicalAck,
+    configRef,
+    pendingBlocksProjection,
+    pendingOpsProjection,
+    pendingProjection,
+    playlistId,
+    slideId,
+  ]);
 
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
@@ -317,9 +446,10 @@ export function useComunicadoEditorBlocks({
         applyAck: (canonical) => {
           applyCanonicalAck(canonical);
         },
+        pending: pendingBlocksProjection,
       });
     },
-    [applyCanonicalAck, commitWithHistory, playlistId, slideId],
+    [applyCanonicalAck, commitWithHistory, pendingBlocksProjection, playlistId, slideId],
   );
 
   /**
@@ -405,6 +535,7 @@ export function useComunicadoEditorBlocks({
             applyAck: (canonical) => {
               applyCanonicalAck(canonical);
             },
+            pending: pendingBlocksProjection,
           });
           commitAndSelectInserted([...(configRef.current.blocks ?? []), placed], [placed.id]);
         })
@@ -1201,6 +1332,7 @@ export function useComunicadoEditorBlocks({
           applyAck: (canonical) => {
             applyCanonicalAck(canonical);
           },
+          pending: pendingOpsProjection,
           optimistic: () => {
             const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
               if (!targets.some((t) => t.id === block.id)) return block;
@@ -1292,6 +1424,7 @@ export function useComunicadoEditorBlocks({
         applyAck: (canonical) => {
           commitWithHistory(canonical);
         },
+        pending: pendingOpsProjection,
       }).then((canonical) => {
         if (canonical) return;
         updateSelectedTextFormatStyle(
@@ -1396,6 +1529,7 @@ export function useComunicadoEditorBlocks({
         applyAck: (canonical) => {
           applyCanonicalAck(canonical);
         },
+        pending: pendingBlocksProjection,
       });
     }
   }, [
@@ -1738,12 +1872,13 @@ export function useComunicadoEditorBlocks({
         applyAck: (canonical) => {
           applyCanonicalAck(canonical);
         },
+        pending: pendingOpsProjection,
         optimistic: () => {
           commitWithHistory(next);
         },
       });
     },
-    [commitWithHistory, configRef, playlistId, slideId],
+    [commitWithHistory, configRef, pendingOpsProjection, playlistId, slideId],
   );
 
   const alignSelected = useCallback(
@@ -1935,12 +2070,20 @@ export function useComunicadoEditorBlocks({
         applyAck: (canonical) => {
           applyCanonicalAck(canonical);
         },
+        pending: pendingOpsProjection,
         optimistic: () => {
           commitWithHistory(next);
         },
       });
     },
-    [applyCanonicalAck, commitWithHistory, configRef, playlistId, slideId],
+    [
+      applyCanonicalAck,
+      commitWithHistory,
+      configRef,
+      pendingOpsProjection,
+      playlistId,
+      slideId,
+    ],
   );
 
   const setBackgroundFill = useCallback(
@@ -2091,5 +2234,6 @@ export function useComunicadoEditorBlocks({
     setBackground,
     bindSelectedVisualBoxToData,
     insertTextDataFieldBlock,
+    reconcilePendingProjection,
   };
 }

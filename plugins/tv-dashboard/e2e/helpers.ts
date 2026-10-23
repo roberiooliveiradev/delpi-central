@@ -161,15 +161,38 @@ export async function resetSlideA(actor: Actor = "editor"): Promise<void> {
     e2e_txt2: { x: 40, y: 33 },
     e2e_txt3: { x: 70, y: 70 },
   };
+  /* z-order hermético: comandos de camada (Trazer para a frente, Avançar…)
+   * acumulam entre runs; sem baseline fixa, "bring-to-front" em e2e_txt3 vira
+   * no-op quando a fixture já está no topo e o cenário perde a projeção. */
+  const zIndexes: Record<string, number> = {
+    e2e_shape: 1,
+    e2e_txt1: 2,
+    e2e_txt2: 3,
+    e2e_txt3: 4,
+    e2e_line: 5,
+    e2e_icon: 6,
+    e2e_group: 7,
+  };
   const blocks = await slideBlocks(actor, FIXTURE.slideA);
   const ops = (blocks as Array<Record<string, unknown>>)
-    .filter((b) => typeof b.id === "string" && frames[b.id as string])
+    .filter(
+      (b) =>
+        typeof b.id === "string" &&
+        (frames[b.id as string] || zIndexes[b.id as string] != null),
+    )
     .map((b) => {
+      const id = b.id as string;
+      const pos = frames[id];
+      const z = zIndexes[id];
       const f = (b.frame ?? {}) as Record<string, number>;
-      const pos = frames[b.id as string]!;
+      const style = (b.style ?? {}) as Record<string, unknown>;
       return {
         op: "upsert_block",
-        block: { ...b, frame: { ...f, x: pos.x, y: pos.y } },
+        block: {
+          ...b,
+          frame: pos ? { ...f, x: pos.x, y: pos.y } : f,
+          style: z != null ? { ...style, zIndex: z } : style,
+        },
       };
     });
   const res = await ctx.post(

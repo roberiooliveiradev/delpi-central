@@ -363,3 +363,36 @@ Não é projeção otimista nem sala nova.
 | `test_presentation_realtime.py`, `test_playlist_revision_http.py`, `test_editor_mutation_fingerprint_scope.py` | PASS — 36. Prova hub, revisão HTTP e gate de fingerprint. Não prova dois browsers. |
 | Vitest da fila, sync e undo | TEST_NOT_RUN — o worktree não tem `node_modules` do MFE. |
 | Sessões A–F e clique no palco | TEST_NOT_RUN |
+
+
+### Execução — VISTA-TV-EDITOR-DUAL-WRITE-BOUNDARY-027 (P0, correção de 026-F1)
+
+Correção da causa raiz do defeito 026-F1: a projeção local mutation-backed era serializada por **dois** canais de escrita — a `PresentationMutation` governada **e** o PATCH full-config do autosave comunicado — sem ordenação de desfecho. Mutação rejeitada (500/422/rede) ainda persistia porque o autosave, disparado pelo `applyConfig` da projeção, capturava o `nativeConfig` com a projeção pendente.
+
+**Reprodução.** Antes: `06-cross-slide.spec.ts` (2 casos — navegação A→B durante mutation pendente e 500 tardio >400ms sem navegação) FAIL determinístico, `apiX=8` vs esperado `40` (projeção rejeitada persistida pelo PATCH). Depois: PASS — PATCH bodies carregam o baseline confirmado (`x:40`), `apiX=40`, 1 POST de mutation, write rejeitado nunca persistido.
+
+**Root cause / owner.** `updateBlocks` → `commitWithHistory` → `applyConfig(next)` emitia `onChange(serialized)` com a projeção já aplicada → `scheduleCustomSlideSave` → PATCH `updateSlide`. Em paralelo: `ackBlocksMutation`/`commitOpsAndApplyAck` → `presentation-mutations` → CAS → ACK/erro. Owner: pipeline de autoria do MFE (`comunicadoEditorContext` + hooks de mutation); backend intacto — a autoridade `presentation-mutations`/CAS/revisão não foi tocada.
+
+**Solução — pending projection ledger (não é flag nem timing).** Novo `utils/pendingMutationProjection.ts`: registro por slide que marca, **antes da chamada de rede**, as entidades cobertas pela mutation (`block:<id>`, `field:<name>`, `dataModel:<id>`; campos projetados fora dos ops tipados detectados por `diffedFieldKeys(baseline, live)`). Cada entrada guarda baseline confirmado, existência no baseline, valor projetado no dispatch e o conjunto de gerações cobrindo a entidade (first-baseline-wins entre gerações sobrepostas; settle por geração). `resolvePersistableConfig` serializa o baseline para entidades pendentes, omite inserts pendentes, restaura deletes pendentes e preserva edições autosave-only não relacionadas. Sem baseline disponível → fail-open, nunca inventa baseline.
+
+**Fronteira persistível.** `applyConfig` continua aplicando o estado local imediatamente (projeção visual preservada), mas a emissão ao `onChange` passa por `emitPersistableConfig` — resolve via registry + fingerprint dedupe. `PlaylistEditorPage` expõe `hasPendingPersistableSave`/`cancelPendingPersistableSave`: o `refresh` pós-mark/settle só **atualiza payload de save já agendado** — nunca cria PATCH novo; se o payload resolvido coincide com o estado autoritativo (`authoritativePersistableRef`, marcado por slide-load/reconcile/`applyServerConfig`), o save pendente é **cancelado** (no-op de escrita — evita bump de revisão que quebrava o CAS de peers e causava os 409s observados no multiusuário).
+
+**Undo/Redo durante mutation pendente.** O registry registra o valor projetado no dispatch; `driftedPendingKeys` detecta quando o live diverge (undo/redo/reconcile). `useComunicadoEditorBlocks.reconcilePendingProjection` emite **mutation compensatória governada** (`upsert_block`/`patch_native_config`, FIFO atrás da in-flight) — a reversão persiste pelo canal governado, não por PATCH silencioso nem é sobreposta pelo ACK. Coberturas não tocadas pelo undo seguem intactas.
+
+**Contrato de persistência resultante.**
+
+| Classe | Projeção local | Persistência | Recovery |
+|---|---|---|---|
+| MUTATION_BACKED (align/distribute/z-order/drag-end/theme/case/create/duplicate/delete) | imediata no palco | só `presentation-mutations` | ACK canônico / server-wins autoritativo |
+| AUTOSAVE_ONLY (dataFilters, patchInputBlock, campos sem op) | imediata | PATCH debounced inalterado | save pendente normal |
+| MIXED | imediata | mutation cobre entidades dela; autosave carrega baseline nelas e live no resto | reconciliação autoritativa limpa marks |
+
+**Arquivos.** Novo: `pendingMutationProjection.ts` + teste (14 casos: mark/settle, fail-open, overlapping generations, persistable resolution, field/dataModel coverage, diffed fields, drift). Alterados: `mutationAckGeneration.ts` (+7 testes), `comunicadoEditorContext.tsx` (registry, emitPersistable, clears em slide-switch/remote-apply, authoritative tracking, undo/redo wrap), `useComunicadoEditorBlocks.ts` (pending channel + reconcilePendingProjection), `useComunicadoEditorDrag.ts` (gesture baseline), `useComunicadoEditorHistory.ts` (`applyServerConfig` → `authoritative:true`), `PlaylistEditorPage.tsx` (predicado + cancel), `e2e/helpers.ts` (`resetSlideA` normaliza z-order — fixture hermético), `e2e/specs/03-multiuser.spec.ts` (gate CAS: escritor aguarda revisão corrente antes de mutar).
+
+**Evidência.** Vitest focado: 25/25 (registry 14 + ack-wiring 7 + history 4). Vitest MFE completo: 1463/1469 — as 6 falhas são pré-existentes em arquivos não tocados (mesmo perfil do baseline 026). E2E Playwright (Windows, stack local real): **27/27 PASS** — S1 projeção 9/9 (`CLICK_TO_FIRST_VISUAL_MS` 240–309, `CLICK_TO_ACK_MS` 363–1164, 0 correções, 1 mutation/comando), S2 undo/redo 4/4 (inclui undo-pré-ACK com write compensatório), S3 multiusuário 4/4 (convergência, 409 server-wins, undo pós-baseline remota, reconexão), S4 ACK/WS, S5 falhas 500/422/rede/ACK-perdido 4/4, S6 cross-slide 2/2 (**026-F1 corrigido** — `REJECTED_MUTATION_PERSISTED_COUNT = 0`), S7 viewer RBAC, S8 paridade editor/preview/TV.
+
+**Métricas.** `PENDING_PROJECTION_LEAK_COUNT = 0`; `DUPLICATE_WRITE_COUNT = 0` (PATCH redundante pós-ACK eliminado pelo cancel-on-authoritative); `REMOTE_LOST_UPDATE_COUNT = 0`; revisões monotônicas; read-back autoritativo igual ao confirmado.
+
+**Resíduos.** (1) WS propagation local ~15–20s (infra) — specs de convergência usam polling, não timing. (2) Cenário G estrito (mutation pendente + autosave-only no mesmo slide, com flush) coberto por composição unitária (`resolvePersistableConfig` preserva campos não-cobertos) mas não tem spec E2E dedicada. (3) Falha com marks residuais depende da reconciliação autoritativa existente para limpar o registro — comportamento deliberado (server-wins).
+
+**Decisão.** 026-F1 fechado na causa raiz: um único mutation boundary governado, sem segundo canal silencioso, sem workaround de timing/debounce. `PHASE_2_STATUS = COMPLETE` para o escopo 023–027 (projeção local + ACK + dual-write boundary); `FINAL_VERDICT = ACCEPT`.

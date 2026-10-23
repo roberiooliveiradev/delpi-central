@@ -61,12 +61,19 @@ test.describe("Scenario 3 — dois usuários editando", () => {
     await selectSlide(pageB, FIXTURE.slideA);
 
     // A: z-order em e2e_txt3; B: align em e2e_txt1+txt2 — blocos disjuntos.
+    const txt3Before = await blockStyle(pageB, "e2e_txt3");
     const ackA = pageA.waitForResponse(
       (r) => r.url().includes("presentation-mutations"),
       { timeout: 15_000 },
     );
     await contextCommand(pageA, "e2e_txt3", ["Organizar", "Trazer para a frente"]);
     await ackA;
+
+    // CAS exige revisão corrente: B precisa ingerir o commit de A antes de
+    // despachar, senão o align sai com expected_revision defasado (409).
+    await expect
+      .poll(() => blockStyle(pageB, "e2e_txt3"), { timeout: 25_000 })
+      .not.toBe(txt3Before);
 
     await blk(pageB, "e2e_txt1").click();
     await blk(pageB, "e2e_txt2").click({ modifiers: ["Shift"] });
@@ -155,12 +162,19 @@ test.describe("Scenario 3 — dois usuários editando", () => {
     await selectSlide(pageB, FIXTURE.slideA);
 
     // B cria histórico local (z-order em e2e_icon — isolado do alvo de A).
+    const iconBefore = await blockStyle(pageA, "e2e_icon");
     const ackB = pageB.waitForResponse(
       (r) => r.url().includes("presentation-mutations"),
       { timeout: 15_000 },
     );
     await contextCommand(pageB, "e2e_icon", ["Organizar", "Avançar"]);
     await ackB;
+
+    // CAS: o align de A só pode commitar após A ingerir a revisão do commit
+    // de B — caso contrário expected_revision sai defasado (409 server-wins).
+    await expect
+      .poll(() => blockStyle(pageA, "e2e_icon"), { timeout: 25_000 })
+      .not.toBe(iconBefore);
 
     // A confirma alteração em e2e_txt1+txt2 — baseline estrangeira para B.
     await blk(pageA, "e2e_txt1").click();

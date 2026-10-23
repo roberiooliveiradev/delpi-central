@@ -2574,6 +2574,25 @@ export function PlaylistEditorPage({
 
   flushPendingComunicadoSaveRef.current = () => flushPendingComunicadoSave();
 
+  /**
+   * Cancela o save agendado do slide quando o payload resolvido já é o estado
+   * autoritativo (027): a escrita seria no-op e geraria revisão/evento extra
+   * que invalida o CAS de outros editores.
+   */
+  const cancelPendingComunicadoSave = useCallback(
+    (slideId: string) => {
+      const pending = pendingComunicadoSaveRef.current;
+      if (!pending || pending.slide.id !== slideId) return;
+      if (saveComunicadoTimerRef.current) {
+        window.clearTimeout(saveComunicadoTimerRef.current);
+        saveComunicadoTimerRef.current = null;
+      }
+      pendingComunicadoSaveRef.current = null;
+      clearComunicadoSlideDraftIfCoveredBySave(playlistId, slideId, pending.version);
+    },
+    [playlistId],
+  );
+
   useEffect(() => {
     registerPreviewHandoff({
       flush: () => flushPendingComunicadoSave(),
@@ -3031,6 +3050,10 @@ export function PlaylistEditorPage({
           remoteSelections={currentRemoteSelections}
           onSelectionChange={sendSelectionUpdate}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
+          hasPendingPersistableSave={(id) =>
+            pendingComunicadoSaveRef.current?.slide.id === id
+          }
+          cancelPendingPersistableSave={cancelPendingComunicadoSave}
           resolveWriteGuard={resolveWriteGuard}
           onWriteCommitted={handleMutationCommitted}
           onWriteError={handleMutationWriteError}

@@ -39,7 +39,10 @@ export function fingerprintComunicadoRuntime(config: ComunicadoConfig): string {
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
-  applyConfig: (next: ComunicadoConfig, options?: { persist?: boolean }) => void;
+  applyConfig: (
+    next: ComunicadoConfig,
+    options?: { persist?: boolean; authoritative?: boolean },
+  ) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
 };
 
@@ -128,7 +131,7 @@ export function useComunicadoEditorHistory({
       ) {
         return;
       }
-      applyConfig(next, { persist: false });
+      applyConfig(next, { persist: false, authoritative: true });
     },
     [applyConfig, configRef],
   );

@@ -67,6 +67,10 @@ import {
   type MutationCommitMeta,
 } from "../utils/presentationMutationClient";
 import type { MutationErrorHandler } from "../utils/mutationAckGeneration";
+import {
+  createPendingProjectionRegistry,
+  resolvePersistableConfig,
+} from "../utils/pendingMutationProjection";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -117,6 +121,18 @@ type ProviderProps = {
   remoteSelections?: PresentationSelectionUpdateEvent[];
   onSelectionChange?: (slideId: string, selectedIds: string[]) => void;
   onChange: (config: Record<string, unknown>) => void;
+  /**
+   * Há save de autosave agendado/em captura para o slide? (027) Usado pelo
+   * refresh do canal de projeção pendente: reemissão só atualiza payload já
+   * agendado — nunca cria PATCH redundante do estado que a mutation persistiu.
+   */
+  hasPendingPersistableSave?: (slideId: string) => boolean;
+  /**
+   * Cancela o save de autosave agendado do slide (027) — usado quando o
+   * payload resolvido coincide com o estado autoritativo: a escrita seria
+   * no-op e só criaria churn de revisão/WS para os peers.
+   */
+  cancelPendingPersistableSave?: (slideId: string) => void;
   /** OCC guard resolved per persisted mutation — slide base revision + clientId. */
   resolveWriteGuard?: () => WriteGuard | null | undefined;
   /** Revision metadata emitted after each committed mutation. */
@@ -250,6 +266,8 @@ export function ComunicadoEditorProvider({
   remoteSelections = [],
   onSelectionChange,
   onChange,
+  hasPendingPersistableSave,
+  cancelPendingPersistableSave,
   resolveWriteGuard,
   onWriteCommitted,
   onWriteError,
@@ -293,6 +311,24 @@ export function ComunicadoEditorProvider({
   const configRef = useRef(config);
   configRef.current = config;
   const lastEmittedFingerprintRef = useRef<string | null>(null);
+  /**
+   * Ledger de projeções mutation-backed in-flight (027). Enquanto uma entidade
+   * está coberta por mutation pendente, a serialização emitida ao autosave
+   * resolve para o baseline confirmado — a projeção nunca entra no PATCH.
+   */
+  const pendingProjectionRegistryRef = useRef(createPendingProjectionRegistry());
+  /** Baseline do último applyConfig — dispatch de mutation usa como baseline. */
+  const projectionBaselineStashRef = useRef<{ prev: ComunicadoConfig } | null>(
+    null,
+  );
+  /** Último payload persistível emitido ao onChange (dedupe do autosave). */
+  const lastScheduledPersistableRef = useRef<string | null>(null);
+  /**
+   * Último estado persistível confirmado como persistido (slide load,
+   * aplicação remota, ACK canônico). Um save pendente cujo payload resolvido
+   * coincide com ele é no-op de escrita — é cancelado, não reagendado (027).
+   */
+  const authoritativePersistableRef = useRef<string | null>(null);
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
   const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
   const lastRemoteRevisionRef = useRef(remoteRevision);
@@ -474,6 +510,14 @@ export function ComunicadoEditorProvider({
     lastEmittedFingerprintRef.current = fingerprintComunicadoValue(
       serializeComunicadoConfig(enriched),
     );
+    // O ledger é por slide: o slide anterior mantém marks no provider antigo;
+    // o novo começa do estado autoritativo carregado.
+    pendingProjectionRegistryRef.current.clear();
+    projectionBaselineStashRef.current = null;
+    lastScheduledPersistableRef.current = JSON.stringify(
+      serializeComunicadoConfig(enriched),
+    );
+    authoritativePersistableRef.current = lastScheduledPersistableRef.current;
     syncIdentityRef.current = `${playlistId}:${slideId ?? ""}`;
     selection.resetSelectionForSlide();
   }
@@ -487,26 +531,101 @@ export function ComunicadoEditorProvider({
     height: viewportHeight,
   });
 
+  /**
+   * Emissão persistível (027): entidades cobertas por mutation in-flight
+   * serializam o baseline confirmado — a projeção local fica restrita ao palco.
+   * Emissões que não mudam o payload persistível são suprimidas (dedupe).
+   */
+  const emitPersistableConfig = useCallback(
+    (live: ComunicadoConfig) => {
+      const { resolved } = resolvePersistableConfig(
+        live,
+        pendingProjectionRegistryRef.current,
+      );
+      const serialized = serializeComunicadoConfig(resolved);
+      const key = JSON.stringify(serialized);
+      if (key === lastScheduledPersistableRef.current) return;
+      lastScheduledPersistableRef.current = key;
+      onChange(serialized);
+    },
+    [onChange],
+  );
+
   const applyConfig = useCallback(
-    (next: ComunicadoConfig, options?: { persist?: boolean }) => {
+    (
+      next: ComunicadoConfig,
+      options?: { persist?: boolean; authoritative?: boolean },
+    ) => {
       // Serialize omite url; re-injetar no estado local evita placeholder até troca de slide.
       const withMedia = ensureComunicadoEditorMediaUrls(
         next,
         playlistId,
         videoPosterAssetsRef.current,
       );
+      const serialized = serializeComunicadoConfig(withMedia);
+      if (options?.authoritative) {
+        // Aplicação de estado confirmado (ACK/read-back/reconcile): passa a
+        // ser a referência "o servidor já tem isto" do canal persistível (027).
+        authoritativePersistableRef.current = JSON.stringify(serialized);
+      }
+      // Baseline da projeção: o config anterior a ESTA aplicação é o último
+      // estado confirmável para o canal de persistência (027).
+      projectionBaselineStashRef.current = { prev: configRef.current };
       // Atualiza o ref no mesmo tick — consumidores encadeados (ex.: input + dataFilters)
       // não devem ler o config prévio e sobrescrever a primeira edição.
       configRef.current = withMedia;
       setConfig(withMedia);
-      const serialized = serializeComunicadoConfig(withMedia);
       lastEmittedFingerprintRef.current = fingerprintComunicadoValue(serialized);
       // Live (drag/resize) atualiza eco WS/preview sem disparar autosave a cada pointermove.
       deckHistory?.setLiveComunicadoConfig(serialized);
       if (options?.persist === false) return;
-      onChange(serialized);
+      emitPersistableConfig(withMedia);
     },
-    [deckHistory, onChange, playlistId, videoPosterAssetsRef],
+    [deckHistory, emitPersistableConfig, playlistId, videoPosterAssetsRef],
+  );
+
+  /**
+   * Canal único entregue aos hooks de mutation (027):
+   * - `getStashBaseline`: baseline do último applyConfig (projeção já aplicada).
+   * - `getLive`: config corrente — baseline de ops que projetam via `optimistic`.
+   * - `refresh`: reemite a visão persistível após mark/settle para que um save
+   *   JÁ agendado carregue baseline/canônico em vez da projeção capturada.
+   *   Sem save pendente → noop: o settle do ACK nunca cria PATCH redundante do
+   *   estado que a mutation acabou de persistir (churn de revisão quebraria o
+   *   CAS de peers e abriria janela de supressão de evento WS estrangeiro).
+   */
+  const pendingMutationProjection = useMemo(
+    () => ({
+      registry: pendingProjectionRegistryRef.current,
+      getStashBaseline: () => projectionBaselineStashRef.current?.prev,
+      getLive: () => configRef.current,
+      refresh: () => {
+        if (!slideId) return;
+        const { resolved } = resolvePersistableConfig(
+          configRef.current,
+          pendingProjectionRegistryRef.current,
+        );
+        const key = JSON.stringify(serializeComunicadoConfig(resolved));
+        if (key === lastScheduledPersistableRef.current) return;
+        lastScheduledPersistableRef.current = key;
+        const savePending = hasPendingPersistableSave?.(slideId) ?? false;
+        if (key === authoritativePersistableRef.current) {
+          /* Payload resolvido já é o estado persistido: o save pendente só
+           * existia pela projeção emitida antes do mark — cancelar em vez de
+           * escrever baseline redundante e bump de revisão (CAS dos peers). */
+          if (savePending) cancelPendingPersistableSave?.(slideId);
+          return;
+        }
+        if (!savePending) return;
+        onChange(serializeComunicadoConfig(resolved));
+      },
+    }),
+    [
+      cancelPendingPersistableSave,
+      hasPendingPersistableSave,
+      onChange,
+      slideId,
+    ],
   );
 
   // Metadado de poster chegou/mudou: re-hidrata só o estado local (posterUrl não é persistido).
@@ -547,8 +666,8 @@ export function ComunicadoEditorProvider({
     pushPast,
     commitWithHistory,
     applyServerConfig,
-    undo,
-    redo,
+    undo: historyUndo,
+    redo: historyRedo,
     canUndo,
     canRedo,
     resetLocalHistory,
@@ -586,6 +705,7 @@ export function ComunicadoEditorProvider({
     resolveWriteGuard,
     onWriteCommitted,
     onWriteError,
+    pendingProjection: pendingMutationProjection,
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -656,6 +776,14 @@ export function ComunicadoEditorProvider({
 
     setConfig(enriched);
     lastEmittedFingerprintRef.current = incomingFp;
+    // Estado autoritativo (reload/conflict/reconcile) substitui marks e
+    // baselines: entidades pendentes passam a ser as do servidor (027).
+    pendingProjectionRegistryRef.current.clear();
+    projectionBaselineStashRef.current = null;
+    lastScheduledPersistableRef.current = JSON.stringify(
+      serializeComunicadoConfig(enriched),
+    );
+    authoritativePersistableRef.current = lastScheduledPersistableRef.current;
     if (identityChanged) {
       clearDragSnapshot();
       resetLocalHistory();
@@ -722,9 +850,27 @@ export function ComunicadoEditorProvider({
     resolveWriteGuard,
     onWriteCommitted,
     onWriteError,
+    pendingProjection: pendingMutationProjection,
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
+
+  /* 027: undo/redo sobre entidade com mutation in-flight precisa de mutation
+   * compensatória governada — o autosave serializa só o baseline confirmado,
+   * então a reversão não vaza por PATCH nem é sobreposta pelo ACK. */
+  const reconcilePendingProjectionRef = useRef(
+    blockActions.reconcilePendingProjection,
+  );
+  reconcilePendingProjectionRef.current =
+    blockActions.reconcilePendingProjection;
+  const undo = useCallback(() => {
+    historyUndo();
+    reconcilePendingProjectionRef.current?.();
+  }, [historyUndo]);
+  const redo = useCallback(() => {
+    historyRedo();
+    reconcilePendingProjectionRef.current?.();
+  }, [historyRedo]);
 
   useSyncViewDataLinks({
     configRef,
