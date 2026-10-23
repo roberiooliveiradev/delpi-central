@@ -85,3 +85,14 @@ Adicionar ao gate R0 (quando liberado): matriz `ENTRYPOINT → APPLICATION CAPAB
 ## 9. Próxima decisão
 
 **PLANNED/NO_IMPLEMENTATION.** Antes de expandir o plano de refactor 125, coordenação revisa esta matriz com latest 16+ledger e aprova somente extensão documental da baseline R0. A estabilização funcional em execução permanece separada. RPA runtime, provider/connector, interfaces cross-app e scheduler não são criados por esta revisão. Quando houver consumer e contrato legítimos, solicitar task bounded própria por boundary.
+
+
+## 10. Contrato de implementação e riscos de reuso cross-app
+
+A aplicação das diretrizes de reuso e RPA desta revisão fica vinculada ao [protocolo 129](./129-refactor-implementation-conformance-and-antipattern-gates.md) e à [seção 13 do plano 125](./125-orchestration-complete-refactoring-finite-plan.md). São constraints de revisão, **não autorização para criar runtime/serviço RPA, API/evento, Work scheduler ou registrar uma capability TARGET como PROVEN**.
+
+Toda proposta futura de compartilhamento registra ENTRYPOINT → CAPABILITY → OWNER → CONTRACT → EXECUTION BOUNDARY → OUTCOME e prova consumidor real. Reuso interno usa application contracts sem dependência de ConversationTurn, Markdown ou MFE. Reuso entre aplicativos se faz por HTTP/event com AuthN/AuthZ/versioning aprovado, nunca por imports internos ou banco de outra aplicação. Shared/ corporativo exige 2+ consumidores reais e API estável, conforme platform-architecture-boundaries.mdc.
+
+Bloqueadores específicos: DÉLIA como gateway universal; DÉLIA executar bots/schedulers/workers; Automation Hub virar segundo planner; RPA DONE como outcome empresarial; write sem live Core+Domain authority; side-effect retry cego; metadata MCP/A2A autorizar ou instruir; LLM/Work/Watch executar ACT indevido, OT/Safety sem gate industrial. Em conflito com authorities/decision frozen, STOP → ARCHITECTURE_DECISION_REQUIRED. Testes sentinela e matriz AP-01…AP-20 são os do protocolo 129.
+
+**Estado preservado:** revisão arquitetural PLANNED, implementação cross-app/RPA TARGET/TO_INVENTORY conforme owners; R0–R7 não iniciados nem autorizados por esta referência.
