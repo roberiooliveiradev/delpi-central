@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from purchase_requests_app.application.security.purchase_requests_permissions import (
@@ -447,14 +448,23 @@ class ListPurchaseRequestsUseCase:
         if total_pages <= 0 and total > 0:
             total_pages = math.ceil(total / DERIVED_STAGE_PAGE_SIZE)
 
-        for page_num in range(2, total_pages + 1):
-            page_params = {
-                **params,
-                "page": str(page_num),
-                "page_size": str(DERIVED_STAGE_PAGE_SIZE),
-            }
-            payload = self._gateway.list_lines(params=page_params)
-            items.extend(payload.get("items") or [])
+        remaining = range(2, total_pages + 1)
+        if total_pages >= 2:
+
+            def _fetch(page_num: int) -> dict[str, Any]:
+                return self._gateway.list_lines(
+                    params={
+                        **params,
+                        "page": str(page_num),
+                        "page_size": str(DERIVED_STAGE_PAGE_SIZE),
+                    }
+                )
+
+            # Bounded parallel fetch — pages are independent reads; pool.map
+            # preserves page order so downstream grouping stays deterministic.
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                for payload in pool.map(_fetch, remaining):
+                    items.extend(payload.get("items") or [])
 
         return {"items": items, "total": total}
 
