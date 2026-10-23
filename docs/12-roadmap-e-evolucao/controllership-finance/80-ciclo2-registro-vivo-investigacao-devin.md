@@ -1340,3 +1340,13 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 | C2-R69 | quadro decisão | A/B/C com requisitos e limitações; valor-base set/26 | — |
 | C2-R70 | owner asks | E1–E6 objetivas para TI/DBA/Controladoria | — |
 | C2-R71 | cross-map | R03/R04/R09/R12/R15 mapeados; `NO_GATE_CHANGE` | — |
+
+---
+
+## §26 — HANDOFF (CF-C2-HANDOFF-001) — PACOTE DE EVIDÊNCIAS PARA OWNERS — 2026-10-23
+
+Pacote consolidado em : E1–E6 organizados por responsável (TI/ERP, DBA, Controladoria) com evidência atual, lacuna, fonte esperada, impacto, critério de aceite e protocolo de classificação de respostas (///). Referência vigente 3.058/421/242; / preservados; decisão MOD  (nada implementado). Doc 47: .
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R72 | handoff | doc 81 criado; E1–E6 por owner; protocolo de resposta | — |
