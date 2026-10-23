@@ -32,6 +32,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     open_purchase_requests_sql,
     product_detail_sql,
     resolve_order_by,
+    safety_stock_product_universe_clause,
     stock_agg_cte,
 )
 
@@ -55,6 +56,7 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           blocked_clause = f"AND {self._blocked_sql('SB1')}"
 
       and_sql, branch_params = branch_filter_and("RTRIM(SBZ.BZ_FILIAL)", branch)
+      universe_sql, universe_params = safety_stock_product_universe_clause()
       sql = f"""
       SELECT DISTINCT
           RTRIM(SB1.B1_GRUPO) AS product_group,
@@ -66,13 +68,13 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
          AND RTRIM(SBZ.BZ_FILIAL) <> ''
          {and_sql}
       WHERE SB1.D_E_L_E_T_ = ''
-        AND SB1.B1_TIPO = 'MP'
+        AND {universe_sql}
         {blocked_clause}
       ORDER BY product_group, unit
       """
 
       with self as repo:
-          rows = repo.execute_query(sql, branch_params)
+          rows = repo.execute_query(sql, branch_params + universe_params)
 
       groups = sorted({str(r.get("product_group") or "").strip() for r in rows if r.get("product_group")})
       units = sorted({str(r.get("unit") or "").strip() for r in rows if r.get("unit")})

@@ -20,7 +20,8 @@ export function SafetyStockSummary({
   return (
     <section className="ess-kpi-grid" aria-label="Indicadores de estoque de segurança">
       <KpiCard
-        title="Total de matérias-primas"
+        title="Total de produtos"
+        titleHint="Matérias-primas e produtos cujo código começa com 3019."
         value={formatIntegerPtBr(summary?.total_materials ?? 0)}
         icon={<Boxes size={22} />}
         loading={busy && !summary}

@@ -240,7 +240,7 @@ Consulta as OPs **mãe** abertas do PA e diz quais vão faltar matéria-prima. A
 
 A OP mãe do empenho usa a chave canônica `LEFT(D4_OP, 8) + '001'` ([ordem-producao-chave.md](padroes-totvs/ordem-producao-chave.md)). OP aberta = saldo `C2_QUANT > C2_QUJE` e `C2_DATRF` vazio. SC1 **não** entra na projeção. ESTSEG vem só como contexto.
 
-**Não confundir** com `/factory-status` (estoque para montar 1 PA hoje) nem com `/supplies/safety-stock/items/{code}/details` (eixo MP).
+**Não confundir** com `/factory-status` (estoque para montar 1 PA hoje) nem com `/supplies/safety-stock/items/{code}/details` (análise de estoque de segurança: MP ou código `3019`).
 
 Consumidor: BFF `production-control-api` (`GET /materials/finished-product-shortages`).
 
@@ -359,7 +359,7 @@ Resposta `data`: `product_code`, `description`, `product_type`, `unit`, `blocked
 
 Erros: `404 PRODUCT_NOT_FOUND` (produto inexistente), `404 PRODUCT_TYPE_MISMATCH` (tipo filtrado diverge — distinguível de ausência de autorização), `400` parâmetro inválido, `401`/`403` AuthZ (`api-delpi.access`).
 
-**Não confundir** com a família `/supplies/safety-stock/*` (análise MP-only de Suprimentos) nem com `/{code}/stock` (saldo).
+**Não confundir** com a família `/supplies/safety-stock/*` (análise de Suprimentos: MP ou código `3019`) nem com `/{code}/stock` (saldo).
 
 ---
 

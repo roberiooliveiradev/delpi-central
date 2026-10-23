@@ -91,7 +91,7 @@ export async function exportSafetyStockExcel(
 ): Promise<void> {
   const items = await fetchAllSafetyStockItemsForExport(params, options);
   if (!items.length) {
-    throw new Error("Não há matérias-primas para exportar com os filtros atuais.");
+    throw new Error("Não há produtos para exportar com os filtros atuais.");
   }
 
   const branch = params.branch || "filial";

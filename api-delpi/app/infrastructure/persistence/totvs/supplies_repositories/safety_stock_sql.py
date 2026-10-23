@@ -1,4 +1,4 @@
-"""SQL builders — análise de estoque de segurança (MP × SBZ × SB2)."""
+"""SQL builders — análise de estoque de segurança (MP ou código 3019 × SBZ × SB2)."""
 
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from app.domain.totvs.protheus_branches import branch_filter_sql
 from app.domain.totvs.protheus_product_types import (
     PRODUCT_TYPE_LABELS_PT,
     PRODUCT_TYPE_RAW_MATERIAL,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
 )
 
 
@@ -57,6 +59,7 @@ __all__ = [
     "last_inbound_party_names_sql",
     "product_detail_sql",
     "resolve_order_by",
+    "safety_stock_product_universe_clause",
     "stock_agg_cte",
 ]
 
@@ -124,8 +127,28 @@ def stock_agg_cte(*, branch: str) -> tuple[str, list]:
     return sql, params
 
 
+def safety_stock_product_universe_clause(
+    *,
+    type_column: str = "SB1.B1_TIPO",
+    code_column: str = "SB1.B1_COD",
+) -> tuple[str, list]:
+    """Matéria-prima ou código com prefixo 3019.
+
+    A união é OR: MP fora da família 3019 continua; produto de outro tipo
+    entra só quando o código começa com 3019. PA/PI sem esse prefixo fica de fora.
+    """
+    clause = (
+        f"("
+        f"RTRIM({type_column}) = ?"
+        f" OR LEFT(RTRIM(LTRIM({code_column})), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) = ?"
+        f")"
+    )
+    return clause, [PRODUCT_TYPE_RAW_MATERIAL, SUPPLIES_OTD_PRODUCT_CODE_PREFIX]
+
+
 def materials_base_cte(*, branch: str) -> tuple[str, list]:
     and_sql, params = branch_filter_and("RTRIM(S.BZ_FILIAL)", branch)
+    universe_sql, universe_params = safety_stock_product_universe_clause()
     sql = f"""
     materials_base AS (
         SELECT
@@ -198,10 +221,10 @@ def materials_base_cte(*, branch: str) -> tuple[str, list]:
         LEFT JOIN stock_agg st
             ON st.product_code = RTRIM(SB1.B1_COD)
         WHERE SB1.D_E_L_E_T_ = ''
-          AND SB1.B1_TIPO = 'MP'
+          AND {universe_sql}
     )
     """
-    return sql, params
+    return sql, params + universe_params
 
 
 def build_where_clauses(
@@ -684,7 +707,7 @@ def open_commitments_sql(
 
 
 def materials_for_projection_batch_sql(*, branch: str, where_sql: str = "") -> tuple[str, list]:
-    """Todas as MPs da filial com saldo + conversão UM (sem paginação)."""
+    """Produtos do universo (MP ou código 3019) com saldo + conversão UM."""
     where_prefix = f"WHERE {where_sql}" if where_sql else ""
     stock_sql, stock_params = stock_agg_cte(branch=branch)
     mat_sql, mat_params = materials_base_cte(branch=branch)
@@ -764,7 +787,7 @@ def last_inbound_party_names_sql(*, branch: str, placeholders: str) -> tuple[str
 
 
 def product_detail_sql(*, branch: str, product_param: str = "?") -> tuple[str, list]:
-    """Snapshot de uma MP com saldos e campos de conversão de unidade."""
+    """Snapshot de um produto do universo, com saldos e conversão de unidade."""
     stock_sql, stock_params = stock_agg_cte(branch=branch)
     mat_sql, mat_params = materials_base_cte(branch=branch)
     sql = f"""
@@ -1032,7 +1055,7 @@ def consumption_analysis_rows_sql(
     branch: str,
     start_date_param: str = "?",
 ) -> tuple[str, list]:
-    """Produtos com ESTSEG ≠ 0 e pelo menos uma baixa elegível no período."""
+    """Universo MP/3019 com ESTSEG ≠ 0 e pelo menos uma baixa elegível no período."""
     stock_sql, stock_params = stock_agg_cte(branch=branch)
     mat_sql, mat_params = materials_base_cte(branch=branch)
     cons_sql, cons_params = consumption_agg_cte(

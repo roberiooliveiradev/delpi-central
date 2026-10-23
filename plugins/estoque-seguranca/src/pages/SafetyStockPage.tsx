@@ -111,7 +111,7 @@ export function SafetyStockPage() {
   const emptyTableMessage =
     appliedParams?.status === "below_safety_stock"
       ? "Não existem materiais abaixo do estoque de segurança nesta filial."
-      : "Nenhuma matéria-prima encontrada para os filtros selecionados.";
+      : "Nenhum produto encontrado para os filtros selecionados.";
 
   return (
     <div className="dashboard-estoque-seguranca dashboard-page ess-page">

@@ -18,7 +18,8 @@ PRODUCT_TYPE_LABELS_PT: dict[str, str] = {
     PRODUCT_TYPE_INTERMEDIATE: "Produto intermediário",
 }
 
-# Família de código incluída no OTD de compras do dashboard (/supplies/otd),
-# além de B1_TIPO / TIPO_PRODUTO = MP (união OR).
+# Família de código incluída além de B1_TIPO / TIPO_PRODUTO = MP (união OR):
+# OTD de compras do dashboard (/supplies/otd) e análise de estoque de
+# segurança (monitoramento + análise de consumo).
 SUPPLIES_OTD_PRODUCT_CODE_PREFIX = "3019"
 SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN = len(SUPPLIES_OTD_PRODUCT_CODE_PREFIX)

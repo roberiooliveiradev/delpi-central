@@ -12,7 +12,7 @@ import {
 } from "./Pagination";
 
 const LABELS = {
-  emptyMessage: "Nenhuma matéria-prima encontrada para os filtros selecionados.",
+  emptyMessage: "Nenhum produto encontrado para os filtros selecionados.",
   loadingMessage: "Carregando…",
   sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
   headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
@@ -23,7 +23,7 @@ const LABELS = {
   refreshLoadingTitle: "Atualizando tabela",
   refreshLoadingDescription:
     "Mantendo os dados visíveis enquanto a nova consulta é aplicada.",
-  initialLoadingTitle: "Carregando matérias-primas",
+  initialLoadingTitle: "Carregando produtos",
   initialLoadingDescription: "Aguarde enquanto os dados da tabela são obtidos.",
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };

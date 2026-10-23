@@ -20,7 +20,7 @@ export function PageHeader({
   onRefresh,
   refreshing = false,
   title = "Estoque de Segurança",
-  subtitle = "Acompanhe matérias-primas abaixo do estoque de segurança e o saldo disponível.",
+  subtitle = "Acompanhe matérias-primas e produtos com código 3019 abaixo do estoque de segurança e o saldo disponível.",
   nav,
 }: PageHeaderProps) {
   return (

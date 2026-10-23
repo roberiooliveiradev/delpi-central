@@ -411,7 +411,7 @@ describe("SafetyStockPage", () => {
     render(<SafetyStockPage />);
     expect(screen.getByRole("heading", { name: "Estoque de Segurança" })).toBeTruthy();
     await waitFor(() => {
-      expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
+      expect(screen.getByText("Total de produtos")).toBeTruthy();
     });
   });
 
@@ -430,7 +430,7 @@ describe("SafetyStockPage", () => {
     mockApiSuccess();
     render(<SafetyStockPage />);
     await waitFor(() => {
-      expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
+      expect(screen.getByText("Total de produtos")).toBeTruthy();
     });
     expect(screen.queryByLabelText("Déficit por unidade de medida")).toBeNull();
     expect(screen.queryByText(/total.*déficit/i)).toBeNull();
@@ -765,7 +765,7 @@ describe("SafetyStockPage", () => {
     );
     render(<SafetyStockPage />);
     await waitFor(() => {
-      expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
+      expect(screen.getByText("Total de produtos")).toBeTruthy();
       expect(screen.getByText("Dados temporariamente indisponíveis")).toBeTruthy();
     });
   });
@@ -834,7 +834,7 @@ describe("SafetyStockPage", () => {
 
     await waitFor(() => {
       expect(bootstrap).toHaveBeenCalledTimes(2);
-      expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
+      expect(screen.getByText("Total de produtos")).toBeTruthy();
     });
   });
 
@@ -851,7 +851,7 @@ describe("SafetyStockPage", () => {
 
     await waitFor(() => {
       expect(summary.mock.calls.length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
+      expect(screen.getByText("Total de produtos")).toBeTruthy();
     });
   });
 

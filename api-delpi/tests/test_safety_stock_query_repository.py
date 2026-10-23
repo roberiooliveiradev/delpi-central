@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+from app.domain.totvs.protheus_product_types import (
+    PRODUCT_TYPE_RAW_MATERIAL,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_query_repository import (
     SafetyStockQueryRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
+    safety_stock_product_universe_clause,
 )
 
 
@@ -65,11 +72,30 @@ def test_fetch_items_uses_parametrized_query(mock_execute_query: MagicMock) -> N
         )
 
     sql, params = mock_execute_query.call_args.args
+    universe_sql, universe_params = safety_stock_product_universe_clause()
     assert "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY" in sql
-    assert "B1_TIPO = 'MP'" in sql
+    assert universe_sql in sql
     assert "%abc%" in params
     assert "below_safety_stock" in params
+    assert PRODUCT_TYPE_RAW_MATERIAL in params
+    assert SUPPLIES_OTD_PRODUCT_CODE_PREFIX in params
+    assert params[: len(universe_params) + 2] == ["01", "01", *universe_params]
     assert params[-2:] == [0, 10]
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_filter_options_uses_mp_or_3019_universe(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = []
+    repo = _opened_repo()
+    repo.fetch_filter_options(branch="01", include_blocked=False)
+
+    sql, params = mock_execute_query.call_args.args
+    universe_sql, universe_params = safety_stock_product_universe_clause()
+    assert universe_sql in sql
+    assert "B1_TIPO = 'MP'" not in sql
+    assert params == ["01", *universe_params]
 
 
 @patch.object(SafetyStockQueryRepository, "execute_one")
@@ -273,10 +299,17 @@ def test_fetch_consumption_analysis_rows_binds_period(
         )
 
     sql, params = mock_execute_query.call_args.args
+    _, universe_params = safety_stock_product_universe_clause()
     assert "SD3010" in sql
     assert "BZ_PE" in sql
     assert "safety_stock <> 0" in sql
-    assert params[:4] == ["01", "01", "01", "20250718"]
+    assert params[: 4 + len(universe_params)] == [
+        "01",
+        "01",
+        *universe_params,
+        "01",
+        "20250718",
+    ]
     assert "10020113" in params
 
 
@@ -390,9 +423,10 @@ def test_fetch_materials_for_projection_batch_binds_branch_twice(
         )
 
     sql, params = mock_execute_query.call_args.args
+    _, universe_params = safety_stock_product_universe_clause()
     assert "B1_SEGUM" in sql
     assert "OFFSET" not in sql.upper()
-    assert params == ["01", "01"]
+    assert params == ["01", "01", *universe_params]
     assert len(rows) == 1
     assert rows[0]["available_stock"] == 5.0
     assert rows[0]["secondary_unit"] == "CX"

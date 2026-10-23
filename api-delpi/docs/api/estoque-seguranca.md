@@ -1,6 +1,6 @@
 # Estoque de Segurança — API
 
-Rotas de análise de matérias-primas (MP) versus estoque de segurança cadastrado (SBZ), saldos SB2 e cobertura futura por pedidos (SC7), solicitações em aberto (SC1) e empenhos (SD4).
+Rotas de análise de matérias-primas (MP) e produtos com código iniciado em `3019` versus estoque de segurança cadastrado (SBZ), saldos SB2 e cobertura futura por pedidos (SC7), solicitações em aberto (SC1) e empenhos (SD4).
 
 Plugin MFE: [plugins/estoque-seguranca/README.md](../../../plugins/estoque-seguranca/README.md).
 
@@ -32,7 +32,7 @@ Envelope padrão `{ success, message, data, meta }`. Empresa padrão nesta entre
 
 Parâmetro comum: `branch` (`all` \| `01` SC \| `02` ES). `all` ou omitido = sem filtro SQL de filial.
 
-> **Escopo MP preservado.** Toda esta família é restrita a `SB1.B1_TIPO = 'MP'`. Para o **estoque de segurança cadastrado de qualquer tipo de produto** (leitura cadastral SBZ, sem os cálculos de Suprimentos), use `GET /products/{code}/safety-stock` — ver [02-produtos.md](./02-produtos.md#get-productscodesafety-stock). Produto fora de `MP` nesta família retorna `404`, o que **não** significa ausência de cadastro de segurança nem falta de autorização.
+> **Universo da análise.** Monitoramento, filtros, detalhe e análise de consumo incluem o produto quando `SB1.B1_TIPO = 'MP'` **ou** `B1_COD` começa com `3019` (`SUPPLIES_OTD_PRODUCT_CODE_PREFIX`). Fora desse universo a família responde `404`, o que **não** significa ausência de cadastro de segurança nem falta de autorização. Para o **estoque de segurança cadastrado de qualquer tipo** (leitura SBZ, sem os cálculos de Suprimentos), use `GET /products/{code}/safety-stock` — ver [02-produtos.md](./02-produtos.md#get-productscodesafety-stock). O dump PCP `GET /supplies/purchase-requests/open-coverage` permanece só MP.
 
 ## Solicitações em aberto com cobertura
 
@@ -61,7 +61,7 @@ Responde à pergunta gerencial: **qual estoque de segurança cobre o lead time c
 
 ### Escopo
 
-- Somente MPs com `BZ_ESTSEG <> 0`
+- Somente produtos do universo (MP ou código `3019`) com `BZ_ESTSEG <> 0`
 - Somente produtos com pelo menos uma baixa elegível nos últimos **365 dias corridos** (janela inclusiva única no SQL e no denominador)
 - Simulação **somente leitura** (não atualiza SBZ)
 

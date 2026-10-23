@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "estoque-seguranca",
   "name": "Estoque de Segurança",
-  "description": "Análise de matérias-primas, saldos disponíveis, estoques de segurança e simulação por consumo.",
+  "description": "Análise de matérias-primas e produtos 3019, saldos disponíveis, estoques de segurança e simulação por consumo.",
   "icon": "shield-icon",
   "version": "0.2.0",
   "type": "microfrontend",

@@ -1,8 +1,7 @@
 """Consulta geral de estoque de segurança (GET /products/{code}/safety-stock).
 
-Cobre DTO, use case, SQL, rota e regressão MP (a especialização de
-Suprimentos permanece ``B1_TIPO = 'MP'`` — este read geral não tem filtro
-de tipo fixo).
+Cobre DTO, use case, SQL, rota e regressão de escopo (a análise de
+Suprimentos é MP ou prefixo 3019 — este read geral não tem filtro de tipo).
 """
 
 from __future__ import annotations
@@ -268,11 +267,23 @@ def test_route_denies_unauthenticated() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_supplies_sql_keeps_mp_only_restriction() -> None:
-    from pathlib import Path
+def test_supplies_analysis_universe_is_not_the_unrestricted_product_read() -> None:
+    from app.domain.totvs.protheus_product_types import (
+        PRODUCT_TYPE_RAW_MATERIAL,
+        SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+    )
+    from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
+        materials_base_cte,
+        safety_stock_product_universe_clause,
+    )
 
-    sql_text = (
-        Path(__file__).parents[1]
-        / "app/infrastructure/persistence/totvs/supplies_repositories/safety_stock_sql.py"
-    ).read_text(encoding="utf-8")
-    assert "B1_TIPO = 'MP'" in sql_text
+    clause, params = safety_stock_product_universe_clause()
+    sql, cte_params = materials_base_cte(branch="all")
+    assert " OR " in clause
+    assert params == [PRODUCT_TYPE_RAW_MATERIAL, SUPPLIES_OTD_PRODUCT_CODE_PREFIX]
+    assert clause in sql
+    assert cte_params == params
+
+    general_sql, _ = product_safety_stock_sql("20060063", ("01", "02"))
+    assert "B1_TIPO = ?" not in general_sql
+    assert SUPPLIES_OTD_PRODUCT_CODE_PREFIX not in general_sql

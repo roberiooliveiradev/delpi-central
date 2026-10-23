@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from app.domain.totvs.protheus_product_types import (
+    PRODUCT_TYPE_RAW_MATERIAL,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX,
+    SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN,
+)
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
     PRIMARY_WAREHOUSE,
@@ -20,6 +25,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     open_purchase_orders_sql,
     product_detail_sql,
     resolve_order_by,
+    safety_stock_product_universe_clause,
     stock_agg_cte,
 )
 
@@ -33,17 +39,52 @@ def test_stock_agg_cte_contains_required_filters() -> None:
     assert "WITH (NOLOCK)" in sql
 
 
-def test_materials_base_cte_contains_mp_and_sbz_join() -> None:
-    sql, _ = materials_base_cte(branch="01")
+def test_product_universe_is_raw_material_or_3019_prefix() -> None:
+    clause, params = safety_stock_product_universe_clause()
+    assert f"RTRIM(SB1.B1_TIPO) = ?" in clause
+    assert (
+        f"LEFT(RTRIM(LTRIM(SB1.B1_COD)), {SUPPLIES_OTD_PRODUCT_CODE_PREFIX_LEN}) = ?"
+        in clause
+    )
+    assert " OR " in clause
+    assert " AND " not in clause
+    assert params == [PRODUCT_TYPE_RAW_MATERIAL, SUPPLIES_OTD_PRODUCT_CODE_PREFIX]
+
+
+def test_materials_base_cte_contains_mp_or_3019_and_sbz_join() -> None:
+    sql, params = materials_base_cte(branch="01")
+    universe_sql, universe_params = safety_stock_product_universe_clause()
     assert "SB1010" in sql
     assert "SBZ010" in sql
-    assert "B1_TIPO = 'MP'" in sql
+    assert universe_sql in sql
     assert "BZ_FILIAL" in sql
     assert "BZ_ESTSEG" in sql
     assert "BZ_PE" in sql
     assert "without_safety_stock" in sql
     assert "below_safety_stock" in sql
     assert "available_stock" in sql
+    assert params == ["01", *universe_params]
+
+
+def test_purchase_request_coverage_stays_raw_material_only() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
+        available_stock_for_open_purchase_request_products_sql,
+    )
+
+    sql, params = available_stock_for_open_purchase_request_products_sql(branch="01")
+    assert f"B1_TIPO) = '{PRODUCT_TYPE_RAW_MATERIAL}'" in sql
+    assert SUPPLIES_OTD_PRODUCT_CODE_PREFIX not in sql
+    assert SUPPLIES_OTD_PRODUCT_CODE_PREFIX not in params
+
+
+def test_consumption_analysis_and_detail_share_product_universe() -> None:
+    universe_sql, universe_params = safety_stock_product_universe_clause()
+    analysis_sql, analysis_params = consumption_analysis_rows_sql(branch="02")
+    detail_sql, detail_params = product_detail_sql(branch="02")
+    assert universe_sql in analysis_sql
+    assert universe_sql in detail_sql
+    assert analysis_params[: 2 + len(universe_params)] == ["02", "02", *universe_params]
+    assert detail_params == ["02", "02", *universe_params]
 
 
 def test_consumption_agg_cte_uses_sd3_filters() -> None:

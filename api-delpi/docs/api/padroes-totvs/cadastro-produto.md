@@ -21,11 +21,20 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 
 ## Tipo de produto (`B1_TIPO`)
 
-Filtros de estoque de segurança e **OTD de pedidos de compra MP** usam `B1_TIPO = 'MP'` (ou `TIPO_PRODUTO` nas views de pontualidade).
+`GET /supplies/purchase-order-otd` e o dump PCP `GET /supplies/purchase-requests/open-coverage` usam só `B1_TIPO = 'MP'`.
+
+A análise de estoque de segurança (`/supplies/safety-stock`, monitoramento e análise de consumo) e o OTD do dashboard (`GET /supplies/otd`) usam a união **OR**:
+
+| Regra | Campo | Valor |
+|-------|--------|--------|
+| Tipo MP | `B1_TIPO` / `TIPO_PRODUTO` | `MP` (`PRODUCT_TYPE_RAW_MATERIAL`) |
+| Família de código | `B1_COD` / `PRODUTO` | prefixo `3019` (`SUPPLIES_OTD_PRODUCT_CODE_PREFIX`) |
+
+Produto de outro tipo sem esse prefixo fica de fora. MP cujo código não começa com `3019` continua dentro.
 
 Constante: `PRODUCT_TYPE_RAW_MATERIAL = "MP"` em `app/domain/totvs/protheus_product_types.py`.
 
-Doc da rota: [supplies-purchase-order-otd.md](../supplies-purchase-order-otd.md).
+Doc da rota OTD de pedido: [supplies-purchase-order-otd.md](../supplies-purchase-order-otd.md). Doc da análise: [estoque-seguranca.md](../estoque-seguranca.md).
 
 ---
 
