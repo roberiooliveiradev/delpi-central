@@ -324,3 +324,93 @@ Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_
 5. Quando faltar autorização/capacidade, separar o bloqueio específico e continuar outros workstreams permitidos. Não bloquear todo o ciclo por uma lacuna isolada.
 
 **Paridade e homologação:** este GO autoriza *investigar*, não presumir equivalência, passar G5/G6 sem prova ou declarar fechamento final. Revisão GPT e aceite funcional humano continuam necessários para conclusão.
+
+## 13. Execução C2 — rodada 1 (23/10/2026, base `0a85ed4e95`)
+
+**Canal de execução:** SELECTs read-only executados no host de produção via `docker exec -i delpi-api-delpi python -`, usando `app.infrastructure.providers.totvs.connection_pool` (mesma config da api-delpi). Nenhuma credencial copiada/registrada; nenhum dado operacional sensível publicado — apenas contagens, distribuições e vereditos de paridade.
+
+**Gate 12.B.1 — PROVEN:** principal efetivo = conta de domínio nomeada (`SUSER_SNAME`), `db_datareader=1`, `db_datawriter=0`, `db_owner=0`, `HAS_PERMS_BY_NAME(...,'INSERT')=0`, `UPDATE` negado em SB1010, `SELECT` permitido. Premissa do PO ("conta somente leitura") **constatada por grants efetivos**, não só por afirmação.
+
+### 13.A — Cobertura física das tabelas candidatas (metadados)
+
+Existem com dados: SB1010 (~55k), SB2010 (~77k), SB9010 (~2,28M), SD3010 (~4,69M), SB5010 (~105k), SD7010 (~6,6k), SD9010 (~35k), FK1010 (~109k), FK2010 (~128k), FK7010 (~394k), SE1010 (~118k), SE2010 (~128k), SED010 (174), FKB010 (92), SE5010 (~310k), FK5010 (~239k), FK6010 (~3,2k), SB7010 (~46k), SD2010 (~499k), SF2010 (~235k), SH6010 (~474k), SH1010 (154), SC2010 (~923k), SG2010 (~128k), SG1010 (~197k), SD1010 (~282k), SF1010 (~105k), CTT010 (252; 182 ativos), CT1010 (~1,4k), SX2010/SX3010/SIX010/SX9010, SA1010/SA2010, SYS_USR, SBZ010. **Ausente:** DE0010. **Vazias:** RE0010, SB8010, SBJ010, SBK010, SDC010 (inventário por endereço/blocks/não-usados).
+
+### 13.B — C2-01/C2-02 — estoque P7 (SB9)
+
+- **Snapshots mensais completos**: `B9_DATA` tem snapshots fim-de-mês para as duas filiais, **2025-01 → 2026-09** (18 meses), com ~4,3–4,8k linhas/filial 01 e ~2,7–3,3k/filial 02 por data. Snapshot 2026-09-30 existe nas duas filiais.
+- **`EXECUTION_DRIFT` resolvido (timing)**: o smoke de produção de 21-22/10 reportou `source_missing` para filial 01 em 09/2026; hoje SB9 tem 4.812 linhas em filial 01 nessa data → o fechamento de setembro da filial 01 foi gerado após o smoke. O semântico `source_missing` estava correto no momento da execução.
+- **Paridade do contrato R03 — PROVEN (contra o próprio contrato)**: `SUM(B9_VINI1)` em 2026-09-30, filial 02, escopo `all_products` = **10.576.487,84** — idêntico ao `historicalTotal` do smoke registrado (10.576.487,839), centavo a centavo. Escopo `mp_pi_pa` = `B1_TIPO IN ('MP','PI','PA')` confirmado (`constantes.py:13`); contribuição mp_pi_pa = 94,6% do valor da filial 02.
+- **Join SB9→SB1**: cobertura 100% (nenhum grupo `<no-sb1>` na distribuição de tipos da filial 01).
+- Distribuição `B1_TIPO` filial 01 em 09/2026: MP 2.599, PA 802, II 704, PI 464, MC 83, MH 51, MS 37, EM 29, GG 21, MX 13, AI 7, SV 1, OI 1 — tipos não-MP/PI/PA somam 947 itens (escopo `all_products` os inclui legitimamente).
+- Colunas confirmadas: `B9_QINI`, `B9_VINI1`, `B9_VINI2`, `B9_CM1` (custo médio no snapshot — insumo para C2-07), `B9_DATA`, `B9_FILIAL`, `B9_LOCAL`.
+- **Paridade com MATR460 oficial: `TEST_NOT_RUN`** — exige artefato oficial (não disponível no canal DB).
+
+### 13.C — C2-04 — baixas financeiras (FK1/FK2)
+
+- **Grão do produtor confirmado = evento** (FKx), não título: SE2 títulos com `E2_BAIXA` em 09/2026 = 846; relatório oficial = 948 linhas; FK2 eventos = 978. Relatório oficial é event-level.
+- **FK2 é fonte completa**: **0 títulos SE2 baixados em 09/2026 sem evento FK2** (retro-check via ponte FK7 `FK7_PREFIX/FK7_NUM/FK7_PARCEL/FK7_FILTIT` — colunas reais confirmadas: `FK7_FILIAL, FK7_IDDOC, FK7_ALIAS, FK7_FILTIT, FK7_PREFIX, FK7_NUM, FK7_PARCEL, FK7_TIPO, FK7_CLIFOR, FK7_LOJA, FK7_IDPAI`).
+- **Ponte FK7→SE2**: 975/978 eventos (99,7%) têm alias `SE2`; apenas 3 eventos DEB sem ponte FK7 (prováveis baixas sem título vinculado).
+- **Distribuição por motivo (FK2_MOTBX, 09/2026)**: DEB=673, CMP=190, FAT=83, DAC=26, NOR=6 (total 978) vs oficial (doc 73): DEB=600, CMP=186, FAT=83, NOR=65, DAC=14 (total 948). **FAT exato (83=83)**; deltas DEB +73, CMP +4, DAC +12, NOR −59, total +30 — `INCONCLUSIVE` com classes candidatas: população (origens), definição de data (FK2_DATA vs data de digitação/disponibilização), exclusões por motivo/origem.
+- **`FK2_ORIGEM` (09/2026)**: FINA090=597, FINA750=274, FINA290=83, MATA103=24 — quatro rotinas produtoras; FINA750/MATA103 são candidatas a explicar parte do delta (rotinas não-baixa-manual).
+- **`FK2_LA`**: N=882, vazio=93, S=3 — eventos marcados (S) e sem marcação existem; possível filtro do relatório sobre esse campo.
+- `FK2_DTDIGI` fora do mês em 0 eventos → **data retroativa descartada** como causa do delta.
+- SE5 (bancário) descartado como produtor: 139.890 NOR + 92.861 DEB no mês — grão/escopo muito maiores que o relatório.
+- Recebimento (FK1, 09/2026): NOR=634, CMP=40, DAC=2 (676 eventos) — para confronto futuro com a aba de recebidos do artefato oficial.
+- **Matriz origem×motivo (09/2026)**: FINA090→DEB 597; FINA290→FAT 83; FINA750→CMP 180, DEB 76, DAC 12, NOR 6; MATA103→DAC 14, CMP 10.
+- **Hipótese de reconciliação H-948-A**: `978 − MATA103(24) − NOR(6) = 948` — **bate o total oficial exatamente**. Porém a distribuição por motivo não fecha (FK2 DEB=673 vs oficial 600) → os rótulos de motivo do relatório provavelmente derivam de outro campo (ou a amostra do doc 73 não cobre o universo). Status: **INCONCLUSIVE**, hipótese forte a validar com o artefato/owner FINR190.
+- **Recebimento (FK1, 09/2026)**: origem×motivo = FINA110→NOR 557, FINA715→NOR 46, FINA740→NOR 31/CMP 40/DAC 2 (total 676 vs oficial 657 — delta +19, mesma classe de divergência de população). Produtor oficial é o relatório custom `DLP06R01` (doc 74), não FINR190 — registrar para o mapeamento de producer em G3.
+- Status: bindings da **fonte de dados** = PROVEN; bindings do **relatório** (campos→colunas, filtros exatos do FINR190/`_F190C`) = PENDING (precisa do owner da customização ou do artefato com filtros).
+
+### 13.D — C2-05 — inventário/movimentos (SD3)
+
+- SD3 filial 01 em 09/2026: **TM 999 = 19.893** (dominante), 010=1.941, 502=1.037, **499=547**, 503=226, 102=3.
+- TES (SF4): 010=E "Devolução de cliente", 102=E "Rem ativo", 502=S "Venda de mercadorias", 503=S "Venda s/ ICMS". TES 999/499 não encontradas na filial consultada (custom ou por filial — TO_VERIFY).
+- Prefixos de documento em TM 999/499: `220`=~19,9k, `INV`=258, `SK2`/`SK3`=98, `246`=26 — **sem `RE0`/`DE0`**; a referência da narração "RE0/DE0" provavelmente designa outra identificação (TO_INVENTORY com o PO/owner estoque; RE0010 existe mas vazia).
+- TM 999+499 compartilham os mesmos documentos (ex.: `SK2`=65 em cada TM) → pares entrada/saída do mesmo movimento — confirmar regra de deduplicação antes de somar.
+- **Eixo armazém 01/99 confirmado** (C2-05 "inventário 01/99"): SD3 09/2026 filial 01 — TM 999: loc `01`=11.242, `99`=8.543, `98`=103; TM 499: `01`=432, `99`=111. Docs `INV*` (ajuste de inventário): 113+79 no loc 01, 45+21 no loc 99.
+- **Perfil de armazéns no SB9 2026-09-30**: filial 01 → locais 01 (3.945), 99 (753), 98 (101), 25, 50, ` 0`, 03; filial 02 → 01 (2.640), 99 (336), 98 (76), 50, 03, 00, 25. Base para os resumos por armazém do R03.
+
+### 13.E — C2-06 — faturamento × MOD
+
+- SD2 (itens NF saída) 09/2026: filial 01=1.791, filial 02=598 linhas.
+- SH6 apontamentos 2026 (H6_DATAINI): filial 01=44.670, filial 02=62.085. Colunas úteis confirmadas: `H6_OP`, `H6_PRODUTO`, `H6_OPERAC`, `H6_RECURSO`, `H6_DATAINI/H6_HORAINI/H6_DATAFIN/H6_HORAFIN`, `H6_QTDPROD`, `H6_TEMPO`, `H6_LOCAL`, `H6_TIPO`, `H6_STATUS`.
+- SH1 recursos (154 linhas): `H1_CODIGO`, `H1_MAOOBRA`, `H1_CCUSTO`, `H1_GCCUSTO`, `H1_MODFAT` — elos para custo de MOD por recurso.
+- Cadeia candidata MOD: SH6.H6_TEMPO × taxa do recurso (SH1) → MOD apontado; faturado via SD2. Fórmula oficial e denominação previsto/realizado = owner Custos/PCP (narração V05/V16).
+
+### 13.F — C2-07 — custo médio / jobs
+
+- `B2_CM1` populado: 21.130 produtos ≠0 na filial 01, 9.445 na filial 02 → custo médio corrente disponível em SB2; `B9_CM1` também presente no snapshot mensal (comparável histórico×corrente).
+- Parâmetro `MV_320SLD='1'` encontrado em SX6 (relacionado ao comportamento de saldo do MATR320 — registrar para C2-01).
+- **Status de jobs/rotinas Protheus (Refaz Saldos, Acompanha Custos, MATR320 schedule) não é consultável via SQL** — depende do owner ERP / observação assistida. `DECISION_REQUIRED`/owner Joici+ERP.
+
+### 13.G — C2-08 — centro de custo / SD1
+
+- View `vw_fin_despesas_centro_custo`: 26 colunas (`filial, data_emissao, centro_custo_*, documento, serie, pedido, produto_*, valor_total, conta_contabil, rateio, tes, cfop, tipo_documento, tipo_produto_lancamento, recno_sd1`).
+- **Linhagem SD1 = PROVEN**: amostra `recno_sd1` → `SD1010.R_E_C_N_O_` casou 3/3; `dm_sql_referenced_entities` vazio e `definition` NULL (metadados restritos/encriptados) — prova por join, não por texto.
+- CTT010: 182 centros de custo ativos.
+- Regras de classificação direto/indireto/administrativo e vigência = owner Contabilidade (doc §5 C2-08).
+
+### 13.H — C2-09 — entregas/fontes externas
+
+- Natureza documental (checklist P2, catálogo P6, pacote P5) — sem dependência de query nesta rodada. Pendente de trilha de aprovação via Core por item.
+
+### 13.I — Registro desta rodada (append-only)
+
+| Run | Item | Ação | Resultado | Gate |
+|---|---|---|---|---|
+| C2-R01 | Gate 12.B.1 | grants efetivos do principal | PROVEN read-only (datareader only) | — |
+| C2-R02 | 13.A | existência física 45 tabelas | 38 presentes c/ dados; DE0 ausente; RE0/SB8/SBJ/SBK/SDC vazias | — |
+| C2-R03 | C2-01/02 | cobertura SB9 + paridade contrato | 18 meses × 2 filiais; total all_products filial02 09/2026 bate smoke ao centavo | suporta G4 R03 (bindings); G5 oficial segue TEST_NOT_RUN |
+| C2-R04 | C2-04 | grão, ponte, motivos, origens | evento FK2 completo (0 órfãos SE2); delta 978 vs 948 = INCONCLUSIVE com causas candidatas | suporta G4 parcial R01/R02 |
+| C2-R05 | C2-05 | perfil SD3 + TES | TM 999/499 identificados; RE0/DE0 não são docs SD3 | TO_INVENTORY owner estoque |
+| C2-R06 | C2-06/07/08 | SH6/SH1/SD2/B2_CM1/view | fontes confirmadas; linhagem SD1 da view provada por join | G4 parcial C2-08 |
+| C2-R07 | — | doc 47 | `NO_GATE_CHANGE`: evidência prova fonte/grão, não binding no nível do relatório oficial (exige artefato/owner) | — |
+
+### 13.J — Pendências identificadas nesta rodada
+
+1. **Delta FK2 978↔948**: hipótese líder `978 − MATA103 − NOR = 948` (total exato); distribuição por motivo diverge → validar com artefato/owner FINR190 se exclusões são por origem/motivo/campo derivado.
+2. TES 999/499: confirmar descrição/filial da TES (owner estoque).
+3. "RE0/DE0" da narração: esclarecer com PO o que designam (não são tabelas nem prefixos SD3 observados).
+4. Linhagem completa da view despesas (definição restrita): pedir DDL ao owner DB ou validar cobertura SD1 por período.
+5. Paridade MATR460/H02/FINR190: depende de artefatos oficiais fora do banco.
+6. Sequência de snapshot SB9 por filial: confirmar calendário de fechamento por filial (por que 01 fechou depois de 02 em 09/2026 — relevante para o semântico `source_missing`/`incomplete` do R03).
