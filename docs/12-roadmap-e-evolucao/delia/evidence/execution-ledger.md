@@ -17642,3 +17642,12 @@ NEXT=PO manual QA D4/D5/D8 no Portal OU identidade de homologacao governada (dec
 ## §6.393 — Production conversational markdown incident — root cause PROVEN, contract proposal (2026-10-23)
 
 **2026-10-23 — DELIA-C3-PRODUCTION-CONVERSATIONAL-MARKDOWN-ROOT-CAUSE-REMEDIATION-01:** incidente SIPOC reproduzido autenticado em https://minhadelpi.com.br (turn real, sem fixture). Envelope: presentation.version=1, NON_GROUNDED, HYPOTHESIS, bloco text plain com sintaxe markdown literal. DOM: ConversationMarkdown ausente, 0 headings/lists/strong. ROOT_CAUSE=CONTRACT_ADMISSION — ramo conversacional (COMPOSITION_MODEL) constrói InteractiveTurnResult sem presentation_markdown; somente Category-A (attempt.markdown_content) admite v2 — regra G3 deliberada, não bug de transporte/frontend/config. Primeiro ponto de perda: construção do resultado em handle_interactive_turn ~L589. PROPOSTA: admitir prosa governada no v2 (presentation_markdown=content no ramo conversacional RESULT) — consumer já neutraliza links nao-autorizados (authorizedLinks), html (escaped), imagens, code inerte. ARCHITECTURE_DECISION_REQUIRED=YES — mudança material de admissão; implementação suspensa até revisão de coordenação. PRODUCTION_AUTHENTICATED_TEST=PASS (reprodução do defeito). Deploy: nenhum nesta etapa.
+
+
+## §6.394 - S0 self-awareness: freeze de contratos e matriz de responsabilidades (2026-10-23)
+
+**2026-10-23 - DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 / STEP=S0 (read-only, PO autorizado 417f44fcd3):** reanchor HEAD/origin, autoridades 16->50->17->49->51->52->21->20->25 + 24/03/60, auditorias 56-57, ADR 58, roadmap 59 (Q03 closed, B1 diferido - nao reaberto), docs 108-112. Matriz funcao-por-funcao dos 10 grupos afetados (orchestration.py 11.819 linhas/194 defs; consumidor unico root_composer). Gaps tipados: D4=PROJECTION_PATH_GAP (ProviderSurface viva elegivel = fonte legitima; falta classe tipada + projecao cross-grupo), D5=SELECTION_EVIDENCE_CLASSIFICATION (get_product_guide/inspect_data_model READs existem; conteudo=TO_INVENTORY), D8=LABEL_VOCABULARY_GAP (_FIELD_CLAUSE_LABELS ~16 campos + fallback cru em CRI e baseline; cri_presentation.delpi.json sem field_labels). Golden D4/D5/D8, baseline RED, gates S1-S4 e cobertura RQ-SA01-09 definidos. Baseline verde: test_c3_contextual_discovery 30/30. Doc 113. RUNTIME_DIFF=NONE. TESTS_WRITTEN=0.
+
+TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S0
+S0_GROUPS_MAPPED=10/10 GAPS_TYPED=3 RUNTIME_DIFF=NONE
+NEXT=COORDINATION_VERDICT_S0 (S1-S5 NOT_AUTHORIZED)
