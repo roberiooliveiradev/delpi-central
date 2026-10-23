@@ -9,6 +9,7 @@ the card as "unavailable" and registers a partial failure — never as zero.
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from typing import Any, Callable
 
@@ -86,13 +87,32 @@ class HomeAttentionService:
             return {"cards": [], "partialFailures": []}
 
         token = user.access_token or ""
+        # Thread-local buffers keep order deterministic and make one slow
+        # source bound total latency instead of summing it.
         failures: list[dict[str, Any]] = []
         cards: list[dict[str, Any]] = []
-
-        cards.extend(self._purchase_requests_cards(token, units, failures))
-        cards.append(self._purchase_orders_late_card(token, units, failures))
-        cards.append(self._late_deliveries_card(token, units, failures))
-        cards.append(self._safety_stock_card(token, units, failures, user))
+        stages = (
+            lambda fl: self._purchase_requests_cards(token, units, fl),
+            lambda fl: [self._purchase_orders_late_card(token, units, fl)],
+            lambda fl: [self._late_deliveries_card(token, units, fl)],
+            lambda fl: [self._safety_stock_card(token, units, fl, user)],
+        )
+        with ThreadPoolExecutor(max_workers=len(stages)) as pool:
+            futures = []
+            for index, fn in enumerate(stages):
+                buffer: list[dict[str, Any]] = []
+                futures.append((index, pool.submit(fn, buffer), buffer))
+            for index, future, buffer in sorted(futures, key=lambda f: f[0]):
+                try:
+                    produced = future.result()
+                except Exception:
+                    logger.warning("home_attention_source_failed source=compose")
+                    failures.append(
+                        {"source": "composition", "code": "source_unavailable"}
+                    )
+                    continue
+                failures.extend(buffer)
+                cards.extend(produced)
 
         # A confirmed zero is not attention; unavailable stays visible.
         visible = [
