@@ -133,7 +133,7 @@ class HomeAttentionService:
         ordering_card = {
             "id": "purchase_requests_ordering",
             "title": "Solicitações aguardando pedido",
-            "description": "Solicitações com itens ainda sem pedido de compra ou com pedido parcial.",
+            "description": "Solicitações do mês corrente com itens ainda sem pedido de compra ou com pedido parcial.",
             "countUnit": "solicitações",
             "stages": PR_ORDERING_STAGES,
             "bucket": "ordering",
@@ -141,15 +141,20 @@ class HomeAttentionService:
         receiving_card = {
             "id": "purchase_requests_receiving",
             "title": "Solicitações aguardando recebimento",
-            "description": "Solicitações com pedido emitido aguardando recebimento total ou parcial.",
+            "description": "Solicitações do mês corrente com pedido emitido aguardando recebimento total ou parcial.",
             "countUnit": "solicitações",
             "stages": PR_RECEIVING_STAGES,
             "bucket": "receiving",
         }
+        start, end = current_month_bounds(self._today())
         try:
             payload = self.purchase_requests.get_summary(
                 access_token=token,
-                params={"branch": units},
+                params={
+                    "branch": units,
+                    "date_from": start,
+                    "date_to": end,
+                },
             )
         except Exception:
             logger.warning("home_attention_source_failed source=purchase_requests")
@@ -176,7 +181,7 @@ class HomeAttentionService:
             if count > 0:
                 try:
                     preview = self._purchase_requests_preview(
-                        token, units, spec["stages"]
+                        token, units, spec["stages"], start, end
                     )
                 except Exception:
                     logger.warning(
@@ -203,11 +208,15 @@ class HomeAttentionService:
         token: str,
         units: list[str],
         stages: tuple[str, ...],
+        start: str,
+        end: str,
     ) -> list[dict[str, Any]]:
         payload = self.purchase_requests.list_purchase_requests(
             access_token=token,
             params={
                 "branch": units,
+                "date_from": start,
+                "date_to": end,
                 "overall_stage": list(stages),
                 "page": 1,
                 "page_size": _PREVIEW_LIMIT,
