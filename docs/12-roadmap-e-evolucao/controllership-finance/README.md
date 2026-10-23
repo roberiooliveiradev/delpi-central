@@ -296,3 +296,43 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 - movimentos de inventario (22/10/2026)
 
 [Doc 66 - Invent / ajustes de inventario](./66-ciclo1-invent-movimentos-inventario.md): planilha privada com 45 movimentos de documento `INVENT`, combinacoes tecnicas `TES 999 / RE0` (saida) e `TES 499 / DE0` (entrada), e duas linhas finais de agregacao sem a mesma estrutura. Analise do efeito liquido, produtor, cobertura de armazens 01/99 e reconciliacao com Kardex, MATR320 e P7 seguem `TO_INVENTORY/TEST_NOT_RUN`. Somente regras e metadados conceituais foram versionados.
+
+
+### Ciclo 1 - notas fiscais a desconsiderar (22/10/2026)
+
+[Doc 67 - Inventario conceitual SD2](./67-ciclo1-nf-a-desconsiderar-sd2.md): uma aba de itens de nota fiscal de saida, exportacao SD2, 184 colunas e 11 itens na amostra. Identificada uniformidade de tipo de saida e codigo fiscal sem provar que essa combinacao seja criterio oficial de exclusao. Motivo, apuracao afetada, joins, filtros e paridade continuam pendentes; nenhum documento fiscal individual ou valor foi versionado.
+
+
+### Ciclo 1 - Resumo Estoque, comparacao de variantes (22/10/2026)
+
+[Doc 68 - Resumo reduzido e divergencia de abrangencia](./68-ciclo1-resumo-estoque-variante-reduzida.md): PDF privado de Registro de Inventario com secao EM ESTOQUE (MP, PA, PI) e EM PROCESSO (MP, PI), mesma data/contexto do PDF anterior doc 63. Os valores de PA e PI coincidem entre os arquivos, mas os de **MP em estoque e em processo divergem**: nao se trata comprovadamente apenas de ocultar outras categorias. Hipotese de variante de entrega contábil/Bloco H depende de parametros e rotina de origem; `TO_INVENTORY/TEST_NOT_RUN`. Sem valores ou PDF original no repositorio.
+
+
+### Ciclo 1 - posicao de contas a pagar (2026-10-22)
+
+[Doc 69 - Inventario estrutural da posicao financeira](./69-ciclo1-contas-a-pagar-posicao-titulos.md): 1 aba com campos de situacao de titulos, datas, vencimentos e naturezas. FINR150 candidato de origem; FINR190 representa baixas e nao equivale a saldos abertos. Paridade pendente. Sem dados de origem versionados.
+
+
+### Ciclo 1 - contas a receber em aberto (22/10/2026)
+
+[Doc 70 - Posicao de titulos a receber](./70-ciclo1-contas-a-receber-posicao-titulos.md): estrutura do snapshot financeiro, vencimentos, natureza e tipos de titulo, com 17 colunas, 560 registros na amostra e cabecalhos repetidos. FINR130 e candidato funcional; fontes, parametros e paridade com relatorios de recebimento/FINR190 permanecem pendentes. Sem dados transacionais originais no repositorio.
+
+
+### Ciclo 1 - Pagamentos por natureza (22/10/2026)
+
+[Doc 72 - Pagos por natureza](./72-ciclo1-pagos-por-natureza.md): inventario conceitual do relatorio privado `nat.prt`, agrupado por natureza financeira, com subtotais por classificacao e eventos de baixa de tipos distintos. Comparacao com `DLP06R01` por data, log de inconsistencias, rotina de menu e paridade com R01/R02 ainda nao homologados. Documento de origem e valores nao versionados.
+
+
+### Ciclo 1 - relação tabular de baixas (23/10/2026)
+
+[Doc 73 - Pagamentos setembro/2026: inventário de baixas](./73-ciclo1-pagos-0926-relacao-baixas.md): estrutura de uma aba XLSB com eventos de baixas, motivos DEB/CMP/FAT/NOR/DAC, datas, natureza, componentes financeiros e diferenças entre valor original e total baixado. Confronto com os PDFs por data (`DLP06R01`) e natureza (`nat.prt`), rotina FINR190 e contratos R01/R02 ainda `TO_INVENTORY/TEST_NOT_RUN`. Dados operacionais originais não versionados.
+
+
+### Ciclo 1 - recebimentos por data (23/10/2026)
+
+[Doc 74 - Relatorio de recebimentos por data](./74-ciclo1-recebidos-por-data.md): PDF privado do layout `DLP06R01`, com baixas agrupadas por data, compensacoes, subtotal e total geral. Nao equiparar baixa a entrada bancaria, nem posicao em aberto a fluxo liquidado. Correspondencia FINR190, verificacao do log de inconsistencias e paridade R01/R02 seguem pendentes; dados de origem nao versionados.
+
+
+### Ciclo 1 - relacao tabular de recebimentos (23/10/2026)
+
+[Doc 75 - Recebidos XLSB: inventario de eventos de baixa](./75-ciclo1-recebidos-relacao-baixas.md): inventario sanitizado de uma aba com 22 campos, codigos de motivo, diferencas entre valor original e total baixado, comparacao conceitual com PDF (doc 74), contas a receber (doc 70) e TARGET R01/R02 (doc 48). Produtor FINR190, regra de compensacao, identificador de evento, log de inconsistencias e paridade SQL/relatorio permanecem `TO_INVENTORY/TEST_NOT_RUN`. Fonte e valores privados nao versionados. Documento 71 permanece pendente de verificacao.

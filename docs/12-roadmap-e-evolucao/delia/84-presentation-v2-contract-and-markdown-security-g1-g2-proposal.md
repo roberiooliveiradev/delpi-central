@@ -1,6 +1,6 @@
 # 84 — Proposta `presentation.v2` e Reuse/Security Review de Markdown (G1/G2)
 
-**Status:** `G1=ACCEPT_WITH_RESIDUAL / G2=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED` (review independente doc 89)
+**Status vigente:** `G1=ACCEPT_WITH_RESIDUAL / G2=ACCEPT_WITH_RESIDUAL / INTERNAL_L1_DEFERRED / G3_APPROVAL_PENDING / RUNTIME_B2_NOT_AUTHORIZED` (review doc 89 + decisão de produto de 2026-10-22)
 
 **Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-G1-G2-01` → R1 (doc 86) → R2 (doc 87) → R3 (doc 88) → independent closure (doc 89)
 **BASE_HEAD R1:** `c3e090ac70977e81fbf7bdd47a391683ab6199cd`
@@ -12,6 +12,8 @@
 > B2 aqui = Markdown conversacional da spec 82/83. **Não** confundir com `C3-STAGE-02-B2` (governança de execução PREPARE/ACT, ledger §6.183/§6.184). Nada se transfere entre as trilhas.
 
 Este documento é a **proposta** submetida à revisão independente (G1/G2). Não é contrato ativado nem aceite: `G1_CONTRACT_DECISION` e `G2_SECURITY_REUSE` permanecem `PENDING` até Architecture/Coordination emitir verdict.
+
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
 
 ## 1. Inventário factual no HEAD (revalidado em `c3e090ac70`, R1)
 
@@ -113,7 +115,7 @@ O produtor só pode emitir os nós da política §5.1: parágrafos, `**`/`__`, `
 | Chat action catalog mural oids | OUT_OF_SCOPE DÉLIA | Índice paralelo Minha DELPI Chat — não authority standalone |
 | Specialists MCP structured tipado navigable | NOT_SUPPORTED | Nenhum campo `published_navigable_destination` no caminho do turno |
 
-**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = PARTIAL` / `NAVIGABLE_LINK_EMISSION = BLOCKED` — política fechada; emissão zero até binding capability→structured comprovado e allowlist tipada. G3 permanece bloqueado. Probes: `test_l1_governed_link_admission_policy.py`.
+**Estado:** `LINK_L1_CONTRACT = SPECIFIED` / `LINK_L1_CAPABILITY_BINDINGS = PARTIAL` / `NAVIGABLE_LINK_EMISSION = BLOCKED` — política fechada; emissão zero até binding capability→structured comprovado e allowlist tipada. G3 permanecia bloqueado no baseline histórico; pela decisão vigente, L1 interno não bloqueia o núcleo B2, mas G3 exige aprovação própria. Probes: `test_l1_governed_link_admission_policy.py`.
 
 ### 2.5 Erros de contrato e versões (R2-02 — decisão executável)
 

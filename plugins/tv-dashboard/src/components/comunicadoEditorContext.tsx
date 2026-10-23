@@ -40,12 +40,12 @@ import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
 import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicadoEditorDrag";
-import { useComunicadoEditorHistory, snapshotConfig } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
   shouldForceAcceptRemoteComunicadoValue,
-  shouldStackRemoteComunicadoUndo,
+  shouldInvalidateLocalComunicadoHistory,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
 import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
@@ -105,6 +105,13 @@ type ProviderProps = {
   value: Record<string, unknown>;
   /** Bump a cada mudança remota (WS slide_draft / presentation_updated) — força aceitar `value`. */
   remoteRevision?: number;
+  /**
+   * Bump somente para baseline EXTERNA (outro editor/copiloto/draft de peer —
+   * revisão remota acima do write-head compartilhado). Acks da própria escrita
+   * sobem `remoteRevision` mas nunca este contador: o sinal dispara a
+   * invalidação do histórico local de undo/redo.
+   */
+  foreignRemoteRevision?: number;
   /** Seleções remotas já filtradas para este slide. */
   remoteSelections?: PresentationSelectionUpdateEvent[];
   onSelectionChange?: (slideId: string, selectedIds: string[]) => void;
@@ -238,6 +245,7 @@ export function ComunicadoEditorProvider({
   playlistDefaults = null,
   value,
   remoteRevision = 0,
+  foreignRemoteRevision = 0,
   remoteSelections = [],
   onSelectionChange,
   onChange,
@@ -287,6 +295,7 @@ export function ComunicadoEditorProvider({
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
   const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
   const lastRemoteRevisionRef = useRef(remoteRevision);
+  const lastForeignRemoteRevisionRef = useRef(foreignRemoteRevision);
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const editingTextIdRef = useRef<string | null>(null);
@@ -591,6 +600,9 @@ export function ComunicadoEditorProvider({
 
     const remoteRevisionChanged = remoteRevision !== lastRemoteRevisionRef.current;
     lastRemoteRevisionRef.current = remoteRevision;
+    const foreignRevisionChanged =
+      foreignRemoteRevision !== lastForeignRemoteRevisionRef.current;
+    lastForeignRemoteRevisionRef.current = foreignRemoteRevision;
 
     const enriched = enrichComunicadoConfigForEditor(
       value,
@@ -629,15 +641,15 @@ export function ComunicadoEditorProvider({
     }
 
     if (
-      shouldStackRemoteComunicadoUndo({
+      shouldInvalidateLocalComunicadoHistory({
         identityChanged,
-        remoteRevisionChanged,
+        foreignRevisionChanged,
         fromHistoryRestore: forceAcceptFromHistory,
         incomingFingerprint: incomingFp,
         currentFingerprint: currentFp,
       })
     ) {
-      pushPast(snapshotConfig(configRef.current));
+      resetLocalHistory();
     }
 
     setConfig(enriched);
@@ -651,7 +663,7 @@ export function ComunicadoEditorProvider({
     playlistId,
     slideId,
     remoteRevision,
-    pushPast,
+    foreignRemoteRevision,
     resetLocalHistory,
     clearDragSnapshot,
     deckHistory?.historyEpoch,

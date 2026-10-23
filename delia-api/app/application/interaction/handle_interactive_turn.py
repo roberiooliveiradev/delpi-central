@@ -628,6 +628,17 @@ class HandleInteractiveConversationTurn:
                 calls=calls,
                 duration_ms=duration_ms,
                 governed_attempts=governed_attempts or 1,
+                operational_calls=(
+                    ledger.operational_calls
+                    if ledger is not None
+                    else ()
+                ),
+                timeout_source=(
+                    ledger.timeout_source if ledger is not None else None
+                ),
+                composition_ms=(
+                    ledger.composition_ms if ledger is not None else 0
+                ),
             ),
         )
 
@@ -1166,6 +1177,13 @@ class HandleInteractiveConversationTurn:
                 "context_turn_count": len(prior_turns),
             },
         )
+        # Stage 6 budget attribution: budget still available when this
+        # conversational call was granted its timeout.
+        granted_remaining_ms = (
+            int(deadline.remaining_seconds() * 1000)
+            if deadline is not None
+            else None
+        )
         started = time.monotonic()
         try:
             result = self._invoke_model.execute(invocation_request)
@@ -1180,11 +1198,16 @@ class HandleInteractiveConversationTurn:
                     duration_ms=int(
                         (time.monotonic() - started) * 1000
                     ),
+                    budget_remaining_ms=granted_remaining_ms,
                 )
             raise _map_invocation_error(exc) from exc
         ledger = current_call_ledger()
         if ledger is not None:
-            ledger.record_result(stage=TASK_PURPOSE_ID, result=result)
+            ledger.record_result(
+                stage=TASK_PURPOSE_ID,
+                result=result,
+                budget_remaining_ms=granted_remaining_ms,
+            )
         return result
 
     def _validate_result(

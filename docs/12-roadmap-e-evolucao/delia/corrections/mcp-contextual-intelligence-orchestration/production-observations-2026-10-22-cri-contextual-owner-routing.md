@@ -161,3 +161,28 @@ A cadeia foi inventariada de ponta a ponta no HEAD vigente e as duas lacunas rea
 - **`api-delpi` na UI:** é o `owner_ref` canônico do DAVI (`_SPECIALIST_IDENTITY`) — proveniência honesta, não defeito. A classe da falha de invoke do T3 não pôde ser reproduzida (logs do turno anterior ao recreate); a cadeia contract→schema→owner está verificada e recusa argumentos inventados fail-closed.
 - Latência do modelo ≤3B CPU-only segue limite documentado (doc 93): estágios esgotam o cap de 30s → `PROCESSING_TIMEOUT` honesto; nenhum deadline ou compensação lexical foi alterado.
 - Status: `INC02=ROOT_CAUSE_FIXED`, `INC03=ROOT_CAUSE_FIXED`, `API_DELPI_LABEL=HONEST_PROVENANCE`, `EXTERNAL_LLM_CALLS=0`. Relatório: `96-contextual-intelligence-davi-multiturn-remediation.md`.
+
+
+## INC-07 — Browser smoke após deploy do Prompt 5: observabilidade real e inconsistências de UX (22/10/2026 ~18:03–18:07)
+
+Capturas de usuário no Portal produtivo, após deploy informado pelo Product Master enquanto a subetapa 5.1 de GPU Ollama continua executando:
+
+- Turno `ola`: resposta social sem fonte. Painel Contexto visivelmente preenchido, com composição `Apresentação determinística`, modelo configurado `moonshotai/kimi-k3`, owner `DELPI`, `27,5 s`, `4` chamadas, uso **parcial** 3749 tokens entrada/540 saída, custo indisponível. Linhas técnicas incluem `interaction_admission` timeout 6 s, `turn_goal` 3,2 s, `select_group` 5,9 s e `turn` timeout 12 s. A ausência de fonte para saudação não é um defeito em si.
+- Turno `qual o ultimo processo cadastrado?`: painel do turno correspondente mostra especialista `teo`, capability `record_read`, modo efetivo `Resposta organizada com CRI`, 23,4 s, 5 chamadas, 10071 tokens entrada + 1253 saída (total 11324 reportado), fonte `transformometro-api`, limitação `insufficient_evidence`. Resposta corretamente não afirma último global porque ordenação/cobertura não comprovadas. A atividade mostra consulta ao owner concluída e registros localizados.
+- Follow-up `tente novamente`: turno terminou com mensagem de orçamento/tempo esgotado, sem fonte vinculada, mas cabeçalho/área de atividade mostra `Atividade concluída` com iconografia de advertência em algumas telas. Não há prova visual de que a interação manteve/consumiu o contexto anterior. Painel do turno anterior permanece aberto em algumas capturas; testar se o estado de seleção é explícito e todos os campos isolados por `turn_id`.
+- UX do painel expõe nomes de estágios internos `delia.capability_orchestration.*`, abreviações `E`/`S` e limitações como `turn_budget_limited`/`insufficient_evidence` sem tradução user-facing; possibilitar nomenclatura amigável ancorada em códigos tipados e preservar diagnóstico técnico em área autorizada, sem string-rewrite de conteúdo livre.
+
+**Evidência:** `CONTEXT_PANEL_BROWSER_SMOKE=PASS_PARTIAL` para abertura/seleção e dados reais em produção; `PER_TURN_OBSERVABILITY=PROVEN_VISUAL`; `ACTIVITY_RESULT_STATUS_CONSISTENCY=TO_INVESTIGATE`; `CONTEXT_SELECTION_ISOLATION=TO_TEST`; `FRIENDLY_LABELS=OPEN_UX_RESIDUAL`; `FOLLOWUP_PRIOR_TURNS_CONSUMPTION=TO_INVENTORY`. Não atribuir origem dos timeouts ao deploy do painel. Correlacionar turn IDs, activity phases, outcome status, response mode, model-call timings e schema do frontend/backend para qualquer decisão de correção.
+
+**Sequenciamento:** manter 5.1 executando sem interferência; etapa 6 inclui QA de status, seleção de turnos, labels amigáveis, semântica de contexto e teste de follow-up. Não liberar retry produtivo enquanto revogação intra-turno permanecer sem decisão. Nenhuma alteração de código/deploy neste registro.
+
+
+## INC-08 — Contexto parece seguir último turno e barra azul de seleção sem affordance clara (22/10/2026 ~18:07)
+
+Product Master observa nas capturas após deploy da Etapa 5 que o painel Contexto **parece sempre mostrar dados da última resposta** e que a última resposta apresenta uma **barra vertical azul-clara à esquerda**, sem significado explicado ao usuário. Barra visual presente nas screenshots; origem exata em CSS/state não verificada. Hipóteses: estado `selectedTurnId` acompanha automaticamente a resposta mais recente, falha na troca de seleção, ou borda/indicador de foco/seleção intencional porém pouco compreensível. Imagem sozinha não prova cross-turn leakage.
+
+**Obrigatório no QA pós-etapa 5:** conversa com ≥3 respostas de características distintas (saudação sem fonte; TÉO com fonte/CRI; timeout), selecionar deliberadamente 1ª, 2ª e 3ª pelo affordance real `moreActions`/Ver contexto; para cada seleção conferir ID/correlation, modelo, usage, custo, fonte, specialist, capability, events, composer, limitations e timestamps. Selecionar última e depois anterior, enviar quarto turno com painel aberto e verificar se seleção permanece intencional ou muda conforme contrato; testar fechar/reabrir, estado vazio, foco/teclado. Distinguir `AUTO_SELECT_LAST`, `SELECTION_NOT_UPDATED`, `DATA_CROSS_TURN_MIX`, `SELECTION_VISUAL_CUE_UNCLEAR` e justificar qualquer comportamento automático.
+
+**UX esperada:** estado selecionado identificável e acessível, sem barra ornamental não explicada; pode manter indicador se seu significado for consistente (e.g. `Mensagem em foco no painel Contexto`) e visualmente discreto. Alternativa usar destaque do cartão/ação com semântica acessível, preferindo componente compartilhado. Não corrigir visual apenas removendo CSS antes de provar owner/seleção; não criar novo store ou duplicar ContextPanel.
+
+**Status:** `INC08=OPEN`; `BLUE_SELECTION_BAR=PROVEN_VISUAL`; `PANEL_ALWAYS_LATEST=USER_REPORTED_TO_VERIFY`; `CROSS_TURN_DATA_LEAK=NOT_PROVEN`; `GPU_5_1_IN_PROGRESS`; registrar como residual da Etapa 5 / QA da Etapa 6. Nenhum código nem deploy alterado.

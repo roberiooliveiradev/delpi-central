@@ -5084,6 +5084,19 @@ class OperationalCapabilityOrchestrator:
                     or (cancel_check is not None and cancel_check())
                     or per_attempt < MIN_VIABLE_MODEL_STAGE_SECONDS
                 ):
+                    # Stage 6 attribution: which responsibility ended
+                    # the turn — model stage timeout, shared budget
+                    # exhaustion or client cancellation — recorded in
+                    # coarse terms for the observability projection.
+                    term_ledger = current_call_ledger()
+                    if term_ledger is not None:
+                        term_ledger.record_terminal_timeout(
+                            {
+                                "model_timeout": "model",
+                                "turn_budget_exhausted": "budget",
+                                "cancelled": "cancelled",
+                            }.get(reason, "budget")
+                        )
                     return GovernedCapabilityAttempt(
                         status=GovernedCapabilityStatus.PROCESSING_TIMEOUT,
                         correlation_id=correlation,
@@ -8728,6 +8741,7 @@ class OperationalCapabilityOrchestrator:
                 )
             if parse_temporal_value(raw) is not None:
                 ordering_date = self._cri_scalar_text(raw)
+        comp_started = time.monotonic()
         cri = compose_cri_response(
             verdict=verdict,
             requirements=req,
@@ -8740,6 +8754,11 @@ class OperationalCapabilityOrchestrator:
             vocabulary=self._cri_vocabulary,
             contract_facts=facts.contract_facts,
         )
+        comp_ledger = current_call_ledger()
+        if comp_ledger is not None:
+            comp_ledger.record_composition(
+                int((time.monotonic() - comp_started) * 1000)
+            )
         _logger.info(
             "orchestration stage=cri_response decision=%s "
             "presented=%s delivered=%s semantic_proposed=%s "
@@ -9256,6 +9275,13 @@ class OperationalCapabilityOrchestrator:
             if workspace_context is not None
             else ""
         )
+        # Stage 6 budget attribution: budget still available when this
+        # stage was granted its timeout — starvation evidence.
+        granted_remaining_ms = (
+            int(deadline.remaining_seconds() * 1000)
+            if deadline is not None
+            else None
+        )
         started = time.monotonic()
         try:
             result = self._invoke_model.execute(
@@ -9304,6 +9330,7 @@ class OperationalCapabilityOrchestrator:
                     duration_ms=int(
                         (time.monotonic() - started) * 1000
                     ),
+                    budget_remaining_ms=granted_remaining_ms,
                 )
             _logger.info(
                 "orchestration stage=model_propose decision=error "
@@ -9340,6 +9367,7 @@ class OperationalCapabilityOrchestrator:
                 stage=instruction_id,
                 result=result,
                 attempt=_ATTEMPT_INDEX.get(),
+                budget_remaining_ms=granted_remaining_ms,
             )
         proposal = result.structured_output
         if not isinstance(proposal, Mapping):
@@ -11186,7 +11214,20 @@ class OperationalCapabilityOrchestrator:
                     else None
                 ),
             )
-        except CapabilityProviderError:
+        except CapabilityProviderError as exc:
+            # Stage 6 attribution: a real owner-surface call that
+            # failed — operational elapsed time, never model time.
+            op_ledger = current_call_ledger()
+            if op_ledger is not None:
+                op_ledger.record_operational(
+                    capability=remote_name,
+                    duration_ms=int((time.monotonic() - started) * 1000),
+                    finish_status=(
+                        "timeout"
+                        if "timeout" in str(exc.code).lower()
+                        else "error"
+                    ),
+                )
             # LOOP-03R1 (latency): bounded stage timing — declared keys
             # only, never values/tokens.
             _logger.info(
@@ -11225,6 +11266,15 @@ class OperationalCapabilityOrchestrator:
             int((time.monotonic() - started) * 1000),
             correlation,
         )
+        # Stage 6 attribution: measured owner-surface execution time —
+        # separated from semantic decision time in the turn ledger.
+        op_ledger = current_call_ledger()
+        if op_ledger is not None:
+            op_ledger.record_operational(
+                capability=remote_name,
+                duration_ms=int((time.monotonic() - started) * 1000),
+                finish_status="completed",
+            )
         # The outcome provenance is the only legitimate protocol
         # evidence — it was actually observed on this invocation.
         _emit_activity(

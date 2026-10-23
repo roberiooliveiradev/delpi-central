@@ -17418,3 +17418,61 @@ PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
 ```
 
 
+
+
+## §6.380 — Etapa 5.1: aceleracao GPU do Ollama local (2026-10-22)
+
+**2026-10-22 — DELIA-C3-OLLAMA-GPU-LOCAL-ACCELERATION-05A-01:** GPU NVIDIA do host habilitada no container delpi-ollama existente via overlay opt-in infra/docker-compose.ollama-gpu.yml (devices /dev/dxg, mount /usr/lib/wsl:ro, LD_LIBRARY_PATH=/usr/lib/wsl/lib). Sem nvidia-container-toolkit, sem --privileged, sem mudanca de daemon.json; volume infra_ollama_data e rede delpi-network preservados. Prova real: log CUDA0 compute=8.6, ollama ps 100% GPU, VRAM 2.64 GiB, restart estavel. CPU baseline x GPU medidos nos mesmos cenarios: cold 41.0→20.5s; warm 16.6→47.4 tok/s; turnos wire −49% a −95%; timeouts de estagio 11→0 (classe timeout eliminada); invalid_structured_output persiste em 4 chamadas — qualidade nao presumida. qwen2.5:7b-instruct-q4_K_M medido e rejeitado (18/82% CPU/GPU, 88s load, 19.9 tok/s). Regressao backend 1972 passed/3 skipped. Documento 97 atualizado com resultado. LOCAL_LLM_PROVIDER=OLLAMA_ONLY; EXTERNAL_LLM_LOCAL_CALLS=0; PRODUCTION_RECOVERY=OFF; budgets 2/60/30 intactos.
+
+TASK_ID=DELIA-C3-OLLAMA-GPU-LOCAL-ACCELERATION-05A-01
+REUSE_DECISION=EXTEND (overlay sobre servico ollama existente; volume/rede/limits preservados)
+GPU_MECHANISM=/dev/dxg + /usr/lib/wsl:ro + LD_LIBRARY_PATH (WSL2 paravirt, sem toolkit)
+INFERENCE_GPU_PROVEN=YES (ollama ps 100% GPU; CUDA0 log; VRAM 2.64 GiB)
+CPU_BASELINE=cold 41.0s; warm 16.6 tok/s; 3/8 turnos PROCESSING_TIMEOUT
+GPU_RESULTS=cold 20.5s; warm 47.4 tok/s; 0/8 timeouts; turnos −49%..−95%
+LARGER_MODEL=qwen2.5:7b parcial 18/82 CPU/GPU — rejeitado; 3b mantido
+REGRESSION=backend 1972 passed / 3 skipped / 0 failed
+EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO I04_ACCEPTED=NO
+ROLLBACK=omitir overlay do -f e recriar ollama
+
+
+## §6.381 — Etapa 6: homologacao integrada + atribuicao de orcamento por responsabilidade (2026-10-22)
+
+**2026-10-22 — DELIA-C3-INTEGRATED-HOMOLOGATION-SEPARATED-BUDGETS-AND-GOVERNED-ACTIVATION-01:** inventario de owners/contratos (TurnDeadline, Model Invocation, orchestration, ActivityEvent, turn_observability, Governed Resume, MCP adapter, CRI, projection, NDJSON) concluido; lacuna real = atribuicao de tempo por responsabilidade. Extensao bounded e aditiva nos owners canonicos: calls[].budget_remaining_ms, operational_calls[]{capability,duration_ms,finish_status}, elapsed_ms{model,operational,composition,other}, timeout_source=model|provider|budget. Frontend parser allowlisted + painel com linhas de responsabilidade. Evidencia wire real (GPU, qwen2.5:3b): model 7124ms vs operational 198ms vs other 913ms numa consulta com invoke real — starvation por selecao CONFIRMED com trace; em CPU (5.1) a mesma forma estoura 30s/attempt antes do invoke. Alternativas de budget comparadas no doc 99; recomendacao reserva operacional + degradacao honesta = ARCHITECTURE_DECISION_REQUIRED — nenhum limite 2/60/30, retry ou contrato alterado. RECOVERY_PRODUCTION=OFF (gate R4 OPEN). Backend: testes novos verdes; suite completa re-executada. Frontend: 14/14 vitest + tsc limpo; browser QA TEST_NOT_RUN (MFE stale). EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO I04_ACCEPTED=NO.
+
+TASK_ID=DELIA-C3-INTEGRATED-HOMOLOGATION-SEPARATED-BUDGETS-AND-GOVERNED-ACTIVATION-01
+REUSE_DECISION=EXTEND (turn_observability + orchestration + handler; zero ledger novo)
+API_EXECUTION_STARVATION=CONFIRMED (model 7124ms vs operational 198ms, wire real)
+BUDGET_DECISION=ARCHITECTURE_DECISION_REQUIRED (reserva operacional + degradacao honesta)
+LIMITS_2_60_30=UNCHANGED RECOVERY_PRODUCTION=OFF EXTERNAL_LLM_CALLS=0
+
+
+## §6.382 — Budget-continuity contract decision (Task 1, 2026-10-23)
+
+**2026-10-23 — DELIA-C3-BUDGET-CONTINUITY-CONTRACT-DECISION-01:** contrato/ADR produzido no doc 102 para a decisao PO dos docs 100/101 (ate 60s semanticos por tentativa, ate 3 tentativas, direcao B+D, comunicacao real de continuidade). Inventario: EXISTING_EQUIVALENT=YES em todas as responsabilidades; REUSE=EXTEND apenas nos owners canonicos — nenhum engine/scheduler/registry novo. Proposta concreta (TO_DECIDE): llm_quota_seconds=60 por tentativa (soma medida de chamadas; replay/checkpoint nao debita; falha nao fabrica tokens), attempt_wall=90s, max_governed_attempts<=3 dev/prod-OFF, operational_reserve=25s fundamentada em timeout de fonte 15s + AuthZ + pos-condicao + CRI, envelope global 150s streamed / 60s buffered legado (edge ~100s mitigado por keep-alive <=15s). Vocabulario aditivo de encerramento sem mascarar fonte como modelo. Invariantes: envelope monotonico unico; mutating_invoke_started bloqueia nova tentativa; PREPARE/ACT nunca reexecutados; zero regex/keyword/alias; terminal unico. CODE_CHANGE=NONE RUNTIME_CHANGE=NONE PRODUCTION_RETRY=BLOCKED REVOCATION_RISK=OPEN (DEFERRED_BY_PO).
+
+
+## §6.383 — G3 Markdown B2: gate de autorização auditado — PENDING (2026-10-23)
+
+**2026-10-23 — gate check read-only, zero diff de runtime:** `DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01`. HEAD auditado `4dd2e0c567` (origin/main; worktree reanciado de `6683124d17` — 46 overlaps, todos provados EOL-only). **Decisão canônica vigente:** doc 97 §9 declara `G3_APPROVED_BY_COORDINATION=PENDING`; `corrections/markdown-b2-producer-contract-cp333-evidence.md` registra `IMPLEMENTATION_AUTHORIZATION=NO`, `G3_TASK_BRIEF_APPROVED=NO`, `BACKEND_RUNTIME_DIFF=NOT_AUTHORIZED`; nenhuma entrada de ledger §6.376–§6.382 aprova G3. **Gate: STOP — nenhum runtime tocado.**
+
+**Inventário read-only verificado (fatos no HEAD, prontos para quando G3 for aprovado):**
+- `presentation.py`: `PRESENTATION_CONTRACT_VERSION="1"`; `compose_presentation(result)` lê `InteractiveTurnResult`; envelope `{version,message_kind,semantic_status,grounding_status,blocks,allowed_interactions}`; allowlist fechada `{text,notice}`; bounds 8 blocos/16_384 chars; `message_kind` canonical inclui `PROCESSING_TIMEOUT` (CP2).
+- `render_specialist_outcome` (`capability_provision/orchestration.py:4340`): projeção determinística `SpecialistOutcome → (content, limitations)`; `outcome.structured` (`specialist_interop/model.py:135`, `Mapping[str,object]`) sanitizado via `_sanitize_renderable` e **achatado em texto plain** — a estrutura tipada morre dentro da projeção; gap I1 = carregar projeção tipada através de `InteractiveTurnResult` até `compose_presentation`.
+- Schema `contracts/presentation-v2.proposal.schema.json`: `const version="2"`, `additionalProperties:false`, bloco text com `format` — **discrepância factual**: enum `message_kind` do schema NÃO contém `PROCESSING_TIMEOUT` (adicionado à v1 depois) — reconciliação contratual necessária no G3.
+- `parsePresentationV2` (frontend): reader parse-only, envelope fechado, `format=plain|markdown_safe`; `authorized_links` **não** é campo do envelope v2 — não adicionar sem decisão contratual.
+- Characterization existente: `test_presentation_v2_proposal.py` (schema+fallback policy probe), `test_render_specialist_outcome_fidelity.py`, `test_interaction_presentation.py`.
+- Categoria A real: `SpecialistOutcome.structured` sanitizado — fonte legítima de projeção; B/C permanecem plain por construção atual.
+
+```text
+G3_AUTHORIZATION=PENDING_APPROVAL
+RUNTIME_CHANGED=NO
+BACKEND_RUNTIME_DIFF=NOT_AUTHORIZED
+INVENTORY=READ_ONLY_VERIFIED
+REUSE_SEAMS=CONFIRMED(render_specialist_outcome@4340, compose_presentation, InteractiveTurnResult, schema-v2, parsePresentationV2, ConversationMarkdown, ConversationCodeBlock)
+CONTRACT_GAP_FOUND=v2_schema_missing_PROCESSING_TIMEOUT
+CP_333=PLANNED_NOT_PASS
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=COORDINATION_G3_APPROVAL → então RED tests → I1 projection → I2 emitter
+```

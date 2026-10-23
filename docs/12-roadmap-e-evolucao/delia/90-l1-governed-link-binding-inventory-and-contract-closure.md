@@ -1,6 +1,8 @@
 # 90 — L1 Governed Link Binding Inventory & Contract Closure
 
-**Status:** `INVENTORY_EXECUTED / LINK_L1_CAPABILITY_BINDINGS=PARTIAL / NAVIGABLE_LINK_EMISSION=BLOCKED / RUNTIME_NOT_AUTHORIZED`  
+**Status histórico (L1 opcional/futuro; não bloqueia B2 core em 2026-10-22):** `INVENTORY_EXECUTED / LINK_L1_CAPABILITY_BINDINGS=PARTIAL / NAVIGABLE_LINK_EMISSION=BLOCKED / RUNTIME_NOT_AUTHORIZED`  
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
+
 **Task:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-L1-BINDING-INVENTORY-01`  
 **BASE_HEAD:** `c98870a6caa8d76340b6c860d2488024b15691e7`  
 **CP:** `CP-333` — `PLANNED_NOT_PASS`  

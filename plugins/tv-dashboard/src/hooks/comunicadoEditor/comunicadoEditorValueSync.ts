@@ -50,20 +50,24 @@ export function shouldForceAcceptRemoteComunicadoValue(params: {
 }
 
 /**
- * Mudança aceita do servidor (copiloto, outro editor) entra na pilha local de undo.
- * Sem isso o Ctrl+Z pula a alteração remota e desfaz a edição manual anterior,
- * recriando o que a IA acabou de mudar.
- * Restore de revisão não empilha: o passo já pertence ao histórico do deck.
+ * Baseline externa aceita (outro editor, copiloto via `slide_draft` /
+ * `presentation_updated`, ou restore do deck) invalida a pilha local de
+ * undo/redo: cada entrada guarda o slide inteiro de uma baseline anterior
+ * e reaplicá-la sobrescreveria edições remotas já confirmadas — o CAS
+ * passa porque a revisão de escrita é a corrente, então o lost update é
+ * silencioso. Undo indisponível é preferível a sobrescrita silenciosa;
+ * desfazer mudança remota pertence ao restore governado do deck
+ * (`restorePlaylistHistorySnapshot`, com `expectedRevision` + 409).
  */
-export function shouldStackRemoteComunicadoUndo(params: {
+export function shouldInvalidateLocalComunicadoHistory(params: {
   identityChanged: boolean;
-  remoteRevisionChanged: boolean;
+  foreignRevisionChanged: boolean;
   fromHistoryRestore: boolean;
   incomingFingerprint: string;
   currentFingerprint: string;
 }): boolean {
-  if (params.identityChanged || params.fromHistoryRestore) return false;
-  if (!params.remoteRevisionChanged) return false;
+  if (params.identityChanged) return false;
+  if (!params.foreignRevisionChanged && !params.fromHistoryRestore) return false;
   return params.incomingFingerprint !== params.currentFingerprint;
 }
 

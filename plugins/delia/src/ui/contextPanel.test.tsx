@@ -54,8 +54,23 @@ const OBS = {
       duration_ms: 1700,
       input_tokens: 1200,
       output_tokens: 45,
+      budget_remaining_ms: 27000,
     },
   ],
+  operational_calls: [
+    {
+      capability: "discover_delpi_information",
+      duration_ms: 420,
+      finish_status: "completed",
+    },
+  ],
+  elapsed_ms: {
+    model: 3200,
+    operational: 420,
+    composition: 6,
+    other: 574,
+  },
+  timeout_source: null,
   tokens: {
     status: "reported",
     input: 2100,
@@ -364,5 +379,29 @@ describe("observability wire parse", () => {
     });
     expect(result.observability).toBeNull();
     vi.unstubAllGlobals();
+  });
+});
+
+describe("stage-6 responsibility attribution", () => {
+  it("shows model vs operational elapsed and timeout source", () => {
+    render(
+      <DeliaTurnContextPanel
+        turn={makeTurn({ observability: OBS as never })}
+      />,
+    );
+    expect(screen.getByText(/Tempo no modelo/i)).toBeTruthy();
+    expect(screen.getByText(/Tempo na fonte/i)).toBeTruthy();
+  });
+
+  it("labels a budget-exhausted terminal without blaming the source", () => {
+    const obs = { ...OBS, timeout_source: "budget" };
+    render(
+      <DeliaTurnContextPanel
+        turn={makeTurn({ observability: obs as never })}
+      />,
+    );
+    expect(
+      screen.getByText(/Orçamento do turno esgotado/i),
+    ).toBeTruthy();
   });
 });

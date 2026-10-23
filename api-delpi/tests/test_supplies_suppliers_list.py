@@ -95,6 +95,29 @@ class TestRepositorySql:
         assert "ISNULL(SA2.A2_MSBLQL, '') <> '1'" in select_sql
         assert "ORDER BY SA2.A2_NOME ASC" in select_sql
 
+    def test_tax_id_exact_digit_match_not_like(self):
+        repo = _FakeRepo()
+        repo.search_suppliers_paged(tax_id="12.345.678/0001-90")
+        count_sql, count_params = repo.queries[0]
+        select_sql, select_params = repo.queries[1]
+        for sql, params in ((count_sql, count_params), (select_sql, select_params)):
+            assert "SA2.A2_CGC LIKE ?" not in sql
+            assert "REPLACE" in sql and "SA2.A2_CGC" in sql
+        # formatted input is digit-normalized before reaching SQL
+        assert "12345678000190" in count_params
+
+    def test_tax_id_is_anded_with_query_not_ored(self):
+        repo = _FakeRepo()
+        repo.search_suppliers_paged(query="acme", tax_id="12345678000190")
+        select_sql, _ = repo.queries[1]
+        assert ") AND REPLACE" in select_sql
+
+    def test_no_tax_id_keeps_prior_shape(self):
+        repo = _FakeRepo()
+        repo.search_suppliers_paged(query="acme")
+        select_sql, _ = repo.queries[1]
+        assert "REPLACE" not in select_sql
+
 
 class TestDto:
     def test_rejects_short_query(self):
@@ -112,6 +135,16 @@ class TestDto:
         assert req.state == "SC"
         assert req.page == 1
         assert req.page_size == 100
+
+    def test_tax_id_digit_normalization(self):
+        req = SuppliersListRequest(tax_id="12.345.678/0001-90")
+        assert req.tax_id == "12345678000190"
+
+    def test_tax_id_rejects_bad_length(self):
+        with pytest.raises(ValueError):
+            SuppliersListRequest(tax_id="123")
+        with pytest.raises(ValueError):
+            SuppliersListRequest(tax_id="123456780001955")
 
 
 class TestUseCase:
@@ -175,7 +208,7 @@ class TestRouteAuthZ:
             p.start()
         try:
             return suppliers_router.list_supplies_suppliers(
-                query=None, state=None, blocked=None,
+                query=None, state=None, blocked=None, tax_id=None,
                 page=1, page_size=20,
                 sort_by="supplier_name", sort_dir="asc",
             )

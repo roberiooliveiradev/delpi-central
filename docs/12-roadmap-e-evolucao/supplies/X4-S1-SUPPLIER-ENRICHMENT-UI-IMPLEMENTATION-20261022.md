@@ -114,3 +114,47 @@ Draft vazio · Draft preparado. 16 códigos reais → mensagens PT-BR em `conten
 
 **Conclusão: `ACCEPT_WITH_RESIDUAL`** — menor diff, contrato íntegro, zero escrita
 ERP; residual = evidência visual federada.
+
+---
+
+## Addendum — X4.S1.R1 (2026-10-22): Immutable Retry Payload
+
+**Defeito confirmado em `60b09c2131`.** `FailedAction { key, run }` re-executava a
+decisão relendo estado React mutável no retry (`active?.review`, `[...selected]`).
+Como o `request_hash` do BFF inclui `expected_revision` e `field_keys`, um retry
+após mudança de revisão ou seleção reutilizaria a mesma `idempotency_key` com um
+payload diferente → `ENRICHMENT_IDEMPOTENCY_CONFLICT` (409) por contrato.
+
+**Causa raiz:** a ação de retry era um closure que relia estado na execução; a
+identidade da operação (endpoint + review_id + corpo + chave) não era capturada.
+
+**Diff aplicado:**
+- Novo `decisionOperations.ts`: `RetryableOperation` (single | bulk | prepare)
+  captura code/store/review_id/payload/chave na intenção; `field_keys` copiados na
+  captura (seleção posterior não vaza); `execute*Operation` envia literalmente a
+  requisição capturada; `isRecoverableForRetry` concentra a política (rede, 5xx,
+  429 recuperáveis; 4xx/conflitos nunca).
+- `EnrichmentSection`: `runOperation(op)` é o único caminho de execução; nova
+  intenção captura estado atual + nova `idempotency_key`; retry é
+  `runOperation(failedOp)` sem reler estado; operação pendente descartada
+  explicitamente ao abrir outra revisão, criar consulta nova ou trocar de
+  fornecedor.
+- `runPrepare(key)` corrigido: prepare-update não aceita `idempotency_key` —
+  parâmetro e geração de chave removidos; opera como `PrepareOperation`
+  (`expectedRevision` congelado).
+- `reason_code?` opcional adicionado aos request types (contrato S2).
+
+**Semântica final:** nova intenção → captura imutável + chave nova → execução;
+falha recuperável → `failedOp` + retry manual idêntico; conflito 409/410 →
+sem retry, recarga da revisão quando aplicável; resposta confirmada ou mudança de
+contexto → operação pendente eliminada.
+
+**Testes:** +19 (54/54 módulo; 298/298 suíte). `decisionOperations.test.ts` cobre
+retry idêntico, cópia de seleção bulk, nova chave por intenção, matriz de
+recuperabilidade (409/410/422/403 vs rede/5xx/429), prepare sem chave,
+reason_code. Structural: retry via `runOperation(failedOp)`, `newIdempotencyKey`
+apenas nas capturas, descarte de `failedOp` em troca de contexto.
+
+**Impacto contratual:** nenhum — request/response shapes inalterados.
+**Residuais:** smoke federado permanece `INCONCLUSIVE`.
+**Commit:** ver `COMMIT SHA` no relatório de execução desta revisão.

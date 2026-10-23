@@ -1,12 +1,14 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status:** `PRODUCT_DECISIONS_D1_D12_APPROVED / CP-333_MAPPED / BOUNDED_AUTHORIZATION_CONDITIONAL / G1_G2_INDEPENDENT_REVIEW=ACCEPT_WITH_RESIDUAL / RUNTIME_B2_NOT_AUTHORIZED`
+**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_BRIEF_APPROVED_FOR_BOUNDED_IMPLEMENTATION / RUNTIME_B2_NOT_YET_IMPLEMENTED`
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
 **Produto:** DÉLIA standalone; não é Minha DELPI Chat, nem compartilha seu runtime/tabelas/agents/services.  
 **Snapshot de descoberta:** branch `main`, HEAD reancorado em `b0b4f8c028f706d2a4bd47e70690ea07badea089`, com rechecagem do HEAD antes da publicação. O HEAD de implementação deve ser revalidado.  
 **Natureza:** planejamento contratual, de segurança, UX, implementação e testes; as decisões D7–D12 vinculam o escopo de produto e D12 autoriza somente a trilha bounded **condicionada** a gates técnicos. `CP-333` passa a constar da matriz 25; nenhum código, schema de runtime, deploy ou fase é alterado por este documento.
+
+> **DECISÃO VIGENTE DO PRODUCT MASTER — 2026-10-22 (substitui o bloqueio histórico por L1 interno):** Markdown B2 textual seguro pode avançar sem capability→URL interna ou sistema de links privados administrado pela DÉLIA. Links públicos HTTPS só se houver fonte admitida e validação de scheme/destino; URLs inventadas pelo modelo, advindas de metadados não confiáveis ou não verificadas são texto inerte. Referências internas são opcionais e apenas quando contratualmente publicadas; Portal navega, Core decide RBAC/rotas e Domain API decide acesso final ao recurso. A DÉLIA não pré-autoriza navegação, não cria RBAC/allowlist privada e não infere rotas por ID. O L1 interno permanece evolução futura independente, não gate do núcleo Markdown B2. **G3 ainda exige brief formal aprovado e os gates de contrato/segurança aplicáveis; CP-333 continua não PASS; runtime não foi alterado.** Histórico de 2026-10-16 mantido como evidência, não como direção vigente nesse ponto. Ver decisão de produto no doc 83 e reconciliação de 2026-10-22.
 
 ## 0. Resumo executivo e decisão proposta
 
@@ -135,7 +137,7 @@ RUNTIME_B2_DIFF = NONE
 NAVIGABLE_LINK_EMISSION = BLOCKED
 ```
 
-**Bloqueio preciso (único material para Architecture/Coordination):**
+**Bloqueio histórico em 2026-10-16, SUPERADO QUANTO À DEPENDÊNCIA L1 INTERNA pela decisão de 2026-10-22:**
 
 1. `L1_CAPABILITY_BINDING_ABSENT` — owner competente `api-delpi`; menor EXTEND legítimo = declaration OpenAPI + disclosure do owner no campo `url` + schema de saída tipado; **não** inventar capability local DÉLIA.
 2. `G3_TASK_BRIEF_APPROVED` ausente — I1/I2/I3 bloqueados mesmo para Markdown sem links; slice sem links exigiria decisão explícita do Product Master (L3 foi rejeitada).
@@ -548,3 +550,8 @@ Este documento é planejamento completo para decisão e execução futura, mas *
 **Impacto sobre decisões anteriores:** este direcionamento revisa a dependência histórica que condicionava **todo** Markdown B2 à emissão de links governados internos. Não equivale à aprovação implícita de L3 ou à remoção definitiva de links; é uma nova decisão explícita do Product Master a ser reconciliada por Architecture/Coordination com CP-333, D1/D6/D7, docs 82/84 e gates G1/G2/G3. Em caso de incompatibilidade com autoridade superior, **STOP → ARCHITECTURE_DECISION_REQUIRED**, não alterar silenciosamente o status. `CP-333=PLANNED_NOT_PASS`; `B2_RUNTIME=OFF`; `G3_TASK_BRIEF_APPROVAL=PENDING`; `NO_RUNTIME_CHANGE`.
 
 **Próximo bounded:** revisão de contrato para diferenciar external-public link admission de internal-navigation reference, ajustar os AC/RQ afetados sem apagar requisitos históricos, comprovar reuso Portal/Core, registrar evidência e somente então solicitar liberação do brief de implementação B2 no HEAD.
+
+
+## Coordination gate G3 — approved for bounded implementation (2026-10-23)
+
+At the direct review of Cursor's STOP report (runtime untouched, ledger §6.383), Architecture/Coordination **approved the bounded I0–I3 implementation brief** in [97 §10](./97-markdown-b2-g3-bounded-backend-implementation-brief.md), commit `8252f1ea5aaf7021a8fe5556719343c95410b995`. `G3_TASK_BRIEF_APPROVED=YES`, `G3_IMPLEMENTATION=AUTHORIZED_NOT_EXECUTED`, `CP-333=PLANNED_NOT_PASS`, `G4=TEST_NOT_RUN`, `PRODUCTION_DEPLOYMENT=NO`. Before runtime code, Cursor MUST RED-test and reconcile `PROCESSING_TIMEOUT` in v2 schema/consumer. Internal L1 remains deferred; unproven public link sources emit no clickable links without blocking safe textual Markdown. The historical G3=BLOCKED passages above document their older state and are superseded only as to this implementation approval. No phase progression or production activation.

@@ -17,6 +17,7 @@ class SuppliersListRepositoryPort(Protocol):
         query: str | None,
         state: str | None,
         blocked: bool | None,
+        tax_id: str | None = None,
         sort_by: str,
         sort_dir: str,
         page: int,
@@ -33,6 +34,7 @@ class ListSuppliesSuppliersUseCase:
             query=request.query,
             state=request.state,
             blocked=request.blocked,
+            tax_id=request.tax_id,
             sort_by=request.sort_by,
             sort_dir=request.sort_dir,
             page=request.page,
@@ -48,6 +50,7 @@ class ListSuppliesSuppliersUseCase:
                 "filters": {
                     "state": request.state,
                     "blocked": request.blocked,
+                    "tax_id": request.tax_id,
                 },
                 "sort": {"by": request.sort_by, "dir": request.sort_dir},
                 "scope": {"company": "01", "table": "SA2010"},

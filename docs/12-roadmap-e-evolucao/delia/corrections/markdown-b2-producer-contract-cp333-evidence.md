@@ -95,3 +95,8 @@ DEPLOYMENT=NOT_APPLICABLE.
 4. Independent review and explicit rollout gate. No deployment in this documentary task.
 
 STATUS=CANONICAL_FINDINGS_RECONCILED; IMPLEMENTATION_AUTHORIZATION=NO; CONTRACT_REVIEW=ACCEPT_WITH_RESIDUAL (historical G1/G2 independent decision, not self-accepted here).
+
+
+## Superseding Product Master decision — 2026-10-22
+
+The earlier statement that L1 internal binding must be completed before any G3 B2 core implementation is **SUPERSEDED**. Public HTTPS links may be clickable only when admitted under source/URL policy; internal links are optional and must not create DÉLIA-owned authorization. Core and Domain govern effective destination access; Portal handles navigation. No parallel permission system. G3 formal brief, allowed v2 producer contract, compatibility, negative tests and QA remain mandatory. Frontend/body and Markdown B2 runtime status are unchanged by this documentary update. Historical sections above remain trace evidence, not operative gates.

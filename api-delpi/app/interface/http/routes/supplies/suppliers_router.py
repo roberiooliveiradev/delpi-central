@@ -74,6 +74,13 @@ def list_supplies_suppliers(
         max_length=2,
         description="Two-letter state filter (A2_EST).",
     ),
+    tax_id: str | None = Query(
+        default=None,
+        description=(
+            "Exact document match (A2_CGC, digits normalized) for canonical "
+            "duplicate checks — unlike `query`, it is not a textual search."
+        ),
+    ),
     blocked: bool | None = Query(
         default=None,
         description="Registration block flag (A2_MSBLQL).",
@@ -99,6 +106,7 @@ def list_supplies_suppliers(
             query=query,
             state=state,
             blocked=blocked,
+            tax_id=tax_id,
             page=page,
             page_size=page_size,
             sort_by=sort_by,

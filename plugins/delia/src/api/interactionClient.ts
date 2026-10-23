@@ -221,6 +221,13 @@ export type DeliaModelCallObservation = {
   duration_ms: number | null;
   input_tokens: number | null;
   output_tokens: number | null;
+  budget_remaining_ms: number | null;
+};
+
+export type DeliaOperationalCallObservation = {
+  capability: string | null;
+  duration_ms: number | null;
+  finish_status: string | null;
 };
 
 /**
@@ -241,6 +248,14 @@ export type DeliaTurnObservability = {
   governed_attempts: number | null;
   model_calls: number;
   calls: DeliaModelCallObservation[];
+  operational_calls: DeliaOperationalCallObservation[];
+  elapsed_ms: {
+    model: number | null;
+    operational: number | null;
+    composition: number | null;
+    other: number | null;
+  } | null;
+  timeout_source: string | null;
   tokens: {
     status: string | null;
     input: number | null;
@@ -284,6 +299,13 @@ function parseObservability(
       ? (raw.cost as Record<string, unknown>)
       : null;
   const callsRaw = Array.isArray(raw.calls) ? raw.calls : [];
+  const opsRaw = Array.isArray(raw.operational_calls)
+    ? raw.operational_calls
+    : [];
+  const elapsedRaw =
+    raw.elapsed_ms && typeof raw.elapsed_ms === "object"
+      ? (raw.elapsed_ms as Record<string, unknown>)
+      : null;
   return {
     model: modelRaw
       ? {
@@ -309,8 +331,29 @@ function parseObservability(
         duration_ms: _obsInt(c.duration_ms),
         input_tokens: _obsInt(c.input_tokens),
         output_tokens: _obsInt(c.output_tokens),
+        budget_remaining_ms: _obsInt(c.budget_remaining_ms),
       };
     }),
+    operational_calls: opsRaw.slice(0, OBS_MAX_CALLS).map((call) => {
+      const c =
+        call && typeof call === "object"
+          ? (call as Record<string, unknown>)
+          : {};
+      return {
+        capability: _obsText(c.capability),
+        duration_ms: _obsInt(c.duration_ms),
+        finish_status: _obsText(c.finish_status),
+      };
+    }),
+    elapsed_ms: elapsedRaw
+      ? {
+          model: _obsInt(elapsedRaw.model),
+          operational: _obsInt(elapsedRaw.operational),
+          composition: _obsInt(elapsedRaw.composition),
+          other: _obsInt(elapsedRaw.other),
+        }
+      : null,
+    timeout_source: _obsText(raw.timeout_source),
     tokens: {
       status: _obsText(tokensRaw?.status),
       input: _obsInt(tokensRaw?.input),

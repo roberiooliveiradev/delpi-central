@@ -239,6 +239,12 @@ export function PlaylistEditorPage({
   >({});
   /** Bump a cada mudança vinda de outro editor (WS) — o editor aceita o novo value. */
   const [remoteConfigRevision, setRemoteConfigRevision] = useState(0);
+  /**
+   * Bump só quando a baseline externa é de OUTRO writer (revisão remota acima
+   * do write-head compartilhado, ou draft de peer) — invalida undo/redo local.
+   * Acks das próprias escritas sobem `remoteConfigRevision`, nunca este.
+   */
+  const [foreignConfigRevision, setForeignConfigRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const selectedSlideIdsRef = useRef<string[]>([]);
@@ -709,6 +715,15 @@ export function PlaylistEditorPage({
       const pl = await getPlaylist(playlistId);
       const remoteRevision =
         pl.revision ?? pl.currentRevision ?? knownPlaylistRevisionRef.current;
+      /*
+       * Baseline externa = revisão remota acima do write-head compartilhado
+       * (commits próprios e de contextos irmãos são publicados no ack).
+       * `presentation_updated` não carrega clientId — a revisão é o único
+       * discriminador confiável entre ack próprio e escrita estrangeira.
+       */
+      const foreignBaseline =
+        remoteRevision > knownPlaylistRevisionRef.current &&
+        remoteRevision > readSharedPlaylistRevision(playlistId);
       knownPlaylistRevisionRef.current = Math.max(
         knownPlaylistRevisionRef.current,
         remoteRevision,
@@ -746,6 +761,11 @@ export function PlaylistEditorPage({
       });
       if (!dirty) {
         setRemoteConfigRevision((revision) => revision + 1);
+        // Baseline estrangeira aceita no canvas — snapshots locais de undo
+        // ficam stale (undo reaplicaria o slide inteiro pré-remoto sob CAS).
+        if (foreignBaseline) {
+          setForeignConfigRevision((revision) => revision + 1);
+        }
         if (activeId && liveComunicadoConfigRef.current) {
           const remoteSlide = (merged.slides ?? []).find((s) => s.id === activeId);
           if (remoteSlide?.nativeScreenKey === "custom_message" && remoteSlide.nativeConfig) {
@@ -874,6 +894,9 @@ export function PlaylistEditorPage({
         Math.max(trackedBase, baseRevision ?? remoteKnown),
       );
       setRemoteConfigRevision((revision) => revision + 1);
+      // Draft de peer já passou pelo filtro de clientId próprio — baseline
+      // externa por definição; invalida undo/redo local como write remoto.
+      setForeignConfigRevision((revision) => revision + 1);
     },
     [editorPresence?.clientId, playlistId],
   );
@@ -2872,6 +2895,7 @@ export function PlaylistEditorPage({
           playlistDefaults={playlist.dataDefaults}
           value={editorComunicadoValue}
           remoteRevision={remoteConfigRevision}
+          foreignRemoteRevision={foreignConfigRevision}
           remoteSelections={currentRemoteSelections}
           onSelectionChange={sendSelectionUpdate}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}

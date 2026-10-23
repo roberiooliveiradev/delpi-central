@@ -4,7 +4,7 @@ import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
   shouldForceAcceptRemoteComunicadoValue,
-  shouldStackRemoteComunicadoUndo,
+  shouldInvalidateLocalComunicadoHistory,
 } from "./comunicadoEditorValueSync";
 
 describe("shouldAcceptExternalComunicadoValue", () => {
@@ -129,34 +129,61 @@ describe("shouldForceAcceptRemoteComunicadoValue", () => {
   });
 });
 
-describe("shouldStackRemoteComunicadoUndo", () => {
-  it("empilha config pré-IA quando a revisão remota muda o canvas", () => {
+describe("shouldInvalidateLocalComunicadoHistory", () => {
+  it("invalida quando a revisão remota muda o canvas (lost update via undo)", () => {
     expect(
-      shouldStackRemoteComunicadoUndo({
+      shouldInvalidateLocalComunicadoHistory({
         identityChanged: false,
-        remoteRevisionChanged: true,
+        foreignRevisionChanged: true,
         fromHistoryRestore: false,
-        incomingFingerprint: "pos-ia",
-        currentFingerprint: "pre-ia",
+        incomingFingerprint: "pos-remoto",
+        currentFingerprint: "pre-remoto",
       }),
     ).toBe(true);
   });
 
-  it("não empilha troca de slide nem restore do deck", () => {
+  it("invalida restore de deck — snapshots locais assumem baseline antiga", () => {
     expect(
-      shouldStackRemoteComunicadoUndo({
+      shouldInvalidateLocalComunicadoHistory({
+        identityChanged: false,
+        foreignRevisionChanged: false,
+        fromHistoryRestore: true,
+        incomingFingerprint: "restaurado",
+        currentFingerprint: "anterior",
+      }),
+    ).toBe(true);
+  });
+
+  it("não invalida bump sem mudança real (eco/outro slide — mesmo fingerprint)", () => {
+    expect(
+      shouldInvalidateLocalComunicadoHistory({
+        identityChanged: false,
+        foreignRevisionChanged: true,
+        fromHistoryRestore: false,
+        incomingFingerprint: "igual",
+        currentFingerprint: "igual",
+      }),
+    ).toBe(false);
+  });
+
+  it("não invalida troca de slide — identity já reseta a pilha", () => {
+    expect(
+      shouldInvalidateLocalComunicadoHistory({
         identityChanged: true,
-        remoteRevisionChanged: true,
+        foreignRevisionChanged: true,
         fromHistoryRestore: false,
         incomingFingerprint: "a",
         currentFingerprint: "b",
       }),
     ).toBe(false);
+  });
+
+  it("não invalida valor divergente sem baseline externa (caminho normal)", () => {
     expect(
-      shouldStackRemoteComunicadoUndo({
+      shouldInvalidateLocalComunicadoHistory({
         identityChanged: false,
-        remoteRevisionChanged: true,
-        fromHistoryRestore: true,
+        foreignRevisionChanged: false,
+        fromHistoryRestore: false,
         incomingFingerprint: "a",
         currentFingerprint: "b",
       }),

@@ -93,6 +93,21 @@ function row(label: string, value: ReactNode): ReactNode {
   );
 }
 
+function timeoutSourceLabel(source: string | null): string | null {
+  switch (source) {
+    case "model":
+      return "Tempo do modelo esgotado";
+    case "budget":
+      return "Orçamento do turno esgotado";
+    case "capability":
+      return "Tempo da consulta à fonte esgotado";
+    case "cancelled":
+      return "Cancelado";
+    default:
+      return null;
+  }
+}
+
 function DetailRows({ turn }: { turn: ConversationDisplayTurn }) {
   const obs = turn.observability;
   const provenance = turn.provenance;
@@ -129,6 +144,22 @@ function DetailRows({ turn }: { turn: ConversationDisplayTurn }) {
         obs?.governed_attempts != null && obs.governed_attempts > 1
           ? String(obs.governed_attempts)
           : undefined,
+      )}
+      {row(
+        "Tempo no modelo",
+        obs?.elapsed_ms?.model != null
+          ? formatDurationMs(obs.elapsed_ms.model)
+          : undefined,
+      )}
+      {row(
+        "Tempo na fonte",
+        obs?.elapsed_ms?.operational != null && obs.elapsed_ms.operational > 0
+          ? formatDurationMs(obs.elapsed_ms.operational)
+          : undefined,
+      )}
+      {row(
+        "Encerramento",
+        timeoutSourceLabel(obs?.timeout_source ?? null),
       )}
       {row("Tokens", obs ? tokensLabel(obs.tokens) : undefined)}
       {row(

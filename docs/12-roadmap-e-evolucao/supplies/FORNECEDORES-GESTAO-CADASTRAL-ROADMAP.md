@@ -112,3 +112,15 @@ O dado externo é **sugestão**, não autoridade. Não usar scraping, provider, 
 - [Playbook páginas MFE](../../05-plugin-system/playbook-mfe-page-excellence.md)
 
 **Resultado:** backlog detalhado, não implementação. Atualizar este arquivo e as authorities/ledger aplicáveis quando o estado mudar; não promover fase ou declarar deploy sem evidência.
+
+
+---
+
+## Decisões PO de evolução UX (2026-10-23) — X4.UX-R1
+
+**Direção de produto aprovada, não autorização de implementação:** [X4.UX-R1 — cadastro assistido e conferência orientada a divergências](./X4-UX-R1-CADASTRO-ASSISTIDO-CONFERENCIA-DECISOES-20261023.md). A listagem E13 deve destacar *diferenças acionáveis* (não todos os PENDING), status de conferência e entrada direta para E14. A ficha E14 mantém comparação/decisões detalhadas; `SOURCE_MISSING` com valor interno preservado é informativo e não vira pendência de usuário. Na criação, permitir consulta por CNPJ e pré-preenchimento assistido com fonte/data por campo; busca por razão social/fantasia deve oferecer candidatos (CNPJ + localidade), exigir seleção humana e, após seleção, executar o lookup CNPJ automaticamente pela `external-data-api`. **Busca externa por nome, list summary e prefill de criação permanecem TARGET/TO_INVENTORY**, dependentes de provider/termos LGPD e contratos BFF/owners. Não criar fornecedor, nem gravar Protheus, nem ativar busca massiva implicitamente. Executar X4.UX-R1.P0 (inventário/contract freeze) antes de código.
+
+
+### Plano operacional detalhado (2026-10-23)
+
+O plano [X4.UX-R1 — Implementação frontend/backend](./X4-UX-R1-IMPLEMENTATION-PLAN-FRONTEND-BACKEND-20261023.md) desdobra as decisões PO de três entradas para novo fornecedor (manual, CNPJ, razão social), sugestão/proveniência e resumo de divergências acionáveis na E13. Descreve owners, rotas existentes/propostas, RQ/AC, security gates, rollout, testes e sequenciamento R1.P0–R1.S7. **Planejamento, não GO de implementação nem de escrita no ERP.**
