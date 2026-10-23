@@ -1,0 +1,286 @@
+#INCLUDE 'TOTVS.CH'
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 01/08/2025
+@version version
+/*/
+User Function DLP10A03()
+	RpcSetEnv('01','02')
+
+	Local cAlias := GetNextAlias()
+	Local cAliasH6 := GetNextAlias()
+	Local aCabec := {}
+	Local nOpc := 0
+	Local dDataOp
+	Local lGerEmp := .T.
+	Local lContinua := .T.
+	Private lMsErroAuto :=.F.
+	Private lMsHelpAuto :=.T.
+
+	// cfilant := "02"
+
+	DBSELECTAREA("SDC")
+	DBSELECTAREA("SC2")
+	DBSELECTAREA("SH6")
+	DBSELECTAREA("SG2")
+
+	SDC->(DBSetOrder(1))
+	SC2->(DBSetOrder(1))
+	SH6->(DBSetOrder(1))
+	SG2->(DBSetOrder(3))
+
+	If Select(cAlias) <> 0
+		(cAlias)->(DbCloseArea())
+	EndIf
+
+	BeginSql alias cAlias
+      %noparser%
+    SELECT TOP 5 *
+    FROM dbo.SD4010 (NOLOCK) TBL1
+    WHERE TBL1.D_E_L_E_T_ = ''
+    AND TBL1.D4_FILIAL = '02'
+    AND D4_LOCAL ='01'
+    AND D4_DATA>='20250701'
+    AND D4_COD IN (SELECT B1_COD FROM SB1010 (NOLOCK) SB1 WHERE SB1.D_E_L_E_T_ ='' AND B1_FILIAL = '' AND B1_APROPRI ='I' )
+    AND D4_OP IN ('09444401005   ','09444401006   ','09444401007   ','09496001003   ','09496001003   ')
+	EndSql
+
+	(cAlias)->(dbgotop())
+	While (cAlias)->(!EOF())
+
+		If Select(cAliasH6) <> 0
+			(cAliasH6)->(DbCloseArea())
+		EndIf
+
+		BeginSql alias cAliasH6
+      %noparser%
+      SELECT * FROM SH6010 SH6 WHERE SH6.H6_OP = %Exp:(cAlias)->D4_OP% AND SH6.D_E_L_E_T_ = ' ' AND SH6.H6_FILIAL = '02' ORDER BY R_E_C_N_O_ DESC
+		EndSql
+
+		SC2->(DbSetOrder(1))
+		If SC2->(DbSeek(xFilial('SC2')+(cALias)->D4_OP))
+
+			IF !EMPTY(SC2->C2_DATRF)
+
+				dDataOp := SC2->C2_DATRF
+
+				// A250DesAtu(.T.,,Nil,Nil,Nil,Nil)
+				If RecLock('SC2',.F.)
+
+					SC2->C2_DATRF := STOD("")
+					// SC2->C2_QUJE := (SC2->C2_QUJE - (cAliasH6)->H6_QTDPROD)
+
+					SC2->(MsUnlock())
+				EndIf
+
+			ENDIF
+
+		EndIf
+
+		lContinua := .T.
+
+		Begin Transaction
+
+			(cAliasH6)->(dbgotop())
+			While (cAliasH6)->(!EOF())
+
+				If SG2->(DbSeek(xFilial('SG2')+(cAliasH6)->H6_PRODUTO+(cAliasH6)->H6_OPERAC))
+
+					aCabec := {}
+
+					aCabec :={{"H6_FILIAL", (cAliasH6)->H6_FILIAL , NIL},;
+						{"H6_OP"                                  , (cAliasH6)->H6_OP           , NIL},;
+						{"H6_PRODUTO"                             , (cAliasH6)->H6_PRODUTO      , NIL},;
+						{"H6_RECURSO"                             , (cAliasH6)->H6_RECURSO      , NIL},;
+						{"H6_DTAPONT"                             , STOD((cAliasH6)->H6_DTAPONT), NIL},;
+						{"H6_DATAINI"                             , STOD((cAliasH6)->H6_DATAINI), NIL},;
+						{"H6_HORAINI"                             , (cAliasH6)->H6_HORAINI      , NIL},;
+						{"H6_DATAFIN"                             , STOD((cAliasH6)->H6_DATAFIN), NIL},;
+						{"H6_HORAFIN"                             , (cAliasH6)->H6_HORAFIN      , NIL},;
+						{"H6_PT"                                  , /*"P"*/(cAliasH6)->H6_PT    , NIL},;
+						{"H6_LOCAL"                               , (cAliasH6)->H6_LOCAL        , NIL},;
+						{"H6_LOTECTL"                             , (cAliasH6)->H6_LOTECTL      , NIL},;
+						{"H6_QTDPROD"                             , (cAliasH6)->H6_QTDPROD      , NIL}}
+					// {"AUTRECNO"                               , (cAliasH6)->(Recno())       , Nil}}
+					//{"H6_OPERAC"                              , (cAliasH6)->H6_OPERAC       , NIL},;
+
+				EndIf
+
+				nOpc := 5
+				lMsErroAuto := .F.
+				lMsHelpAuto    := .T.
+
+				MSExecAuto({|x,y| mata681(x,y)},aCabec,5)
+
+				If lMsErroAuto
+					MostraErro()
+					DisarmTransaction()
+					lContinua := .F.
+					// Return
+				EndIf
+
+				IF lContinua
+
+					lGerEmp := AltEmp((cAliasH6)->H6_OP,(cAliasH6)->H6_PRODUTO,"99")
+
+					IF !lGerEmp
+						DisarmTransaction()
+						Return
+					ENDIF
+
+					aCabec := {}
+
+					aCabec :={{"H6_OP", (cAliasH6)->H6_OP , NIL},;
+						{"H6_PRODUTO"                     , (cAliasH6)->H6_PRODUTO, NIL},;
+						{"H6_OPERAC"                      , (cAliasH6)->H6_OPERAC , NIL},;
+						{"H6_RECURSO"                     , (cAliasH6)->H6_RECURSO, NIL},;
+						{"H6_DTAPONT"                     , STOD((cAliasH6)->H6_DTAPONT), NIL},;
+						{"H6_DATAINI"                     , STOD((cAliasH6)->H6_DATAINI), NIL},;
+						{"H6_HORAINI"                     , (cAliasH6)->H6_HORAINI, NIL},;
+						{"H6_DATAFIN"                     , STOD((cAliasH6)->H6_DATAFIN), NIL},;
+						{"H6_HORAFIN"                     , (cAliasH6)->H6_HORAFIN, NIL},;
+						{"H6_PT"                          , (cAliasH6)->H6_PT     , NIL},;
+						{"H6_LOCAL"                       , (cAliasH6)->H6_LOCAL  , NIL},;
+						{"H6_LOTECTL"                     , (cAliasH6)->H6_LOTECTL, NIL},;
+						{"H6_OPERADO"                     , (cAliasH6)->H6_OPERADO, NIL},;
+						{"H6_QTDPROD"                     , (cAliasH6)->H6_QTDPROD, NIL}}
+					// {"AUTRECNO"                       , (cAliasH6)->(Recno()) , Nil}}
+
+					nOpc := 3
+					lMsErroAuto := .F.
+					lMsHelpAuto    := .T.
+					MSExecAuto({|x| mata681(x)},aCabec,3)
+
+					If lMsErroAuto
+						MostraErro()
+						DisarmTransaction()
+						// Return
+					EndIf
+
+				ENDIF
+
+				(cAliasH6)->(DbSkip())
+
+			EndDo
+
+			(cAliasH6)->(DbCloseArea())
+			(cAlias)->(DbSkip())
+
+		End Transaction
+
+		SC2->(DbSetOrder(1))
+		If SC2->(DbSeek(xFilial('SC2')+(cALias)->D4_OP))
+
+			IF EMPTY(SC2->C2_DATRF)
+
+				// A250DesAtu(.T.,,Nil,Nil,Nil,Nil)
+				If RecLock('SC2',.F.)
+
+					SC2->C2_DATRF := dDataOp
+					// SC2->C2_QUJE := (SC2->C2_QUJE - (cAliasH6)->H6_QTDPROD)
+
+					SC2->(MsUnlock())
+				EndIf
+
+			ENDIF
+
+		EndIf
+
+	EndDo
+
+	(cAlias)->(DbCloseArea())
+
+	RpcClearEnv()
+
+Return
+
+Static function AltEmp(cOP, cProd, cLocal)
+
+	Local nX         := 0
+	Local aCab       := {}
+	Local aLine      := {}
+	Local aItens     := {}
+	Local lAlterou := .T.
+
+
+	PRIVATE lMsErroAuto := .F.
+
+	//Monta o cabeçalho com o número da OP que será alterada.
+	//Necessário utilizar o índice 2 para efetuar a alteração.
+	aCab := {{"D4_OP",cOP,NIL},;
+		{"INDEX",2,Nil}}
+
+	//Seta o índice da SDC
+	SDC->(dbSetOrder(2))
+
+	//Busca os empenhos da SD4 para alterar/excluir.
+	SD4->(dbSetOrder(2))
+	IF  SD4->(dbSeek(xFilial("SD4")+PadR(cOP,Len(SD4->D4_OP))))
+
+		While SD4->(!Eof()) .And. SD4->(D4_FILIAL+D4_OP) == xFilial("SD4")+PadR(cOP,Len(SD4->D4_OP))
+			//Adiciona as informações do empenho, conforme estão na tabela SD4.
+			aLine := {}
+			For nX := 1 To SD4->(FCount())
+				aAdd(aLine,{SD4->(Field(nX)),SD4->(FieldGet(nX)),Nil})
+			Next nX
+
+			//Adiciona o identificador LINPOS para identificar que o registro já existe na SD4
+			aAdd(aLine,{"LINPOS","D4_COD+D4_TRT+D4_LOTECTL+D4_NUMLOTE+D4_LOCAL+D4_OPORIG+D4_SEQ",;
+				SD4->D4_COD,;
+				SD4->D4_TRT,;
+				SD4->D4_LOTECTL,;
+				SD4->D4_NUMLOTE,;
+				SD4->D4_LOCAL,;
+				SD4->D4_OPORIG,;
+				SD4->D4_SEQ})
+			If SD4->D4_OP == cOP .AND. SD4->D4_COD==cProd  .AND. SD4->D4_LOCAL== cLocal
+
+				nX := aScan(aLine,{|x| x[1] == "D4_LOCAL"})
+				If nX > 0
+					//Encontrou o valor da quantidade. Faz a alteração do valor.
+					aLine[nX,2] := "99"
+				EndIf
+			EndIf
+			nX := aScan(aLine,{|x| x[1] == "D4_OPERAC"})
+			If nX > 0
+				IF   aLine[nX,2] != '01'
+					//Encontrou o valor da quantidade. Faz a alteração do valor.
+					aLine[nX,2] := "01"
+				EndIf
+			EndIf
+
+			//Adiciona as informações do empenho no array de itens.
+			aAdd(aItens,aLine)
+
+			//Próximo registro da SD4.
+			SD4->(dbSkip())
+		End
+
+		// //Adiciona um novo empenho
+		// aLine := {}
+		// aAdd(aLine,{"D4_OP"     ,"00130301001"     ,NIL})
+		// aAdd(aLine,{"D4_COD"    ,"MP04"            ,NIL})
+		// aAdd(aLine,{"D4_LOCAL"  ,"01"              ,NIL})
+		// aAdd(aLine,{"D4_DATA"   ,CtoD("17/09/2018"),NIL})
+		// aAdd(aLine,{"D4_QTDEORI",5                 ,NIL})
+		// aAdd(aLine,{"D4_QUANT"  ,5                 ,NIL})
+		// aAdd(aLine,{"D4_LOTECTL","L1"              ,NIL})
+		// aAdd(aLine,{"D4_TRT"    ,"004"             ,NIL})
+		// aAdd(aLine,{"D4_ROTEIRO","01"              ,NIL})
+		// aAdd(aItens,aLine)
+		lMsErroAuto := .F.
+		//Executa o MATA381, com a operação de Alteração.
+		MSExecAuto({|x,y,z| mata381(x,y,z)},aCab,aItens,4)
+		If lMsErroAuto
+			//Se ocorrer erro.
+			lAlterou := .F.
+			MostraErro()
+		Else
+			// Alert("Alterado com sucesso.")
+		EndIf
+	EndIf
+
+REturn lAlterou

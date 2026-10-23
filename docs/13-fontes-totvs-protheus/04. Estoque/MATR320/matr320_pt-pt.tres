@@ -1,0 +1,24 @@
+0001#STR0001#ALL#Resumo Das Entradas E Saídas
+0003#STR0003#ALL#Entradas e saídas. a coluna saldo inicial é o resultado da soma das
+0004#STR0004#ALL#Outras colunas do relatório e não o saldo inicial registado no stock.
+0005#STR0005#ALL#Código de barras
+0006#STR0006#ALL#Administração
+0007#STR0007#ALL# em 
+0008#STR0008#ALL#Tipo            Saldo          Compras    Movimentações      Requisições   Transferências         Produção           Vendas       Transf. P/     Devolução De     Devolução De  Entrada Poder  Saída Poder        Saldo
+0009#STR0009#ALL#              Inicial                          Internas    Para Produção                                                           Processo            Vendas          Compras    Terceiros      Terceiros
+0010#STR0010#ALL#        Actual
+0011#STR0011#ALL#Do Fecho
+0012#STR0012#ALL# Do Movimento
+0013#STR0013#ALL#Cancelado Pelo Operador
+0014#STR0014#ALL#Tot.:
+0015#STR0015#ALL#A Seleccionar Registos
+0019#STR0019#ALL#Movimentos
+0021#STR0021#ALL#Requisições
+0022#STR0022#ALL#Para Produção
+0023#STR0023#ALL#Transferências
+0024#STR0024#ALL#Produção
+0028#STR0028#ALL#Devolução de
+0029#STR0029#ALL#Entrada De Poder
+0031#STR0031#ALL#Saída De Poder
+0033#STR0033#ALL#Actual
+0034#STR0034#ALL#Movimentação Dos Artigos

@@ -1,0 +1,277 @@
+#Include 'TOTVS.CH'
+#include 'parmtype.ch'
+#INCLUDE "Rwmake.ch"
+#INCLUDE "Topconn.ch"
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 09/08/2024
+@version version
+/*/
+User Function RELOPSEXC()
+	//RpcSetEnv('01','02')
+
+	Local aArea     := GetArea()
+	Local lIsBlind  := IsBlind()
+	Local cLockName := ProcName()
+	Local cDirCsv   := SUPERGETMV("MV_ICSVDIR", .F., " ")
+	Local cMask :="Arquivos CSV (*.CSV)|*.csv|"
+	Private cArqOri := ""
+
+	// IF !lIsBlind
+	// 	IF !MSGYESNO("Deseja realizar a importacao?", "ATENCAO!")
+	// 		RETURN .F.
+	// 	ENDIF
+	// ENDIF
+
+	// cArqOri := "C:\Users\pedro\Downloads\ops_exc2.csv"//Alltrim(cGetFile(cMask,OemToAnsi("Selecione o Arquivo"),0,"",.T.,GETF_ONLYSERVER+GETF_LOCALHARD+GETF_NETWORKDRIVE))
+
+	//Diretorio do arquivo que será processado.
+	// cArqOri := cDirCsv
+
+	// If ! Empty(cArqOri)
+	// 	//Somente se existir o arquivo e for com a extensao CSV
+	// 	If File(cArqOri) .And. Upper(SubStr(cArqOri, RAt('.', cArqOri) + 1, 3)) == 'CSV'
+	Processa({|| fImporta() }, "Importando...")
+	// 	Else
+	// 		IF !lIsBlind
+	// 			MsgStop("Arquivo e/ou extensÃ£o invalida!", "Atencao")
+	// 		ENDIF
+	// 	EndIf
+	// EndIf
+
+	// RestArea(aArea)
+
+	//	RpcClearEnv()
+
+Return
+
+Static Function fImporta()
+	Local aArea     := GetArea()
+	Local lIsBlind  := IsBlind()
+	Local cArqLog   := "zImpCSV_" + dToS(Date()) + "_" + StrTran(Time(), ':', '-') + ".log"
+	Local nTotLinhas:= 0
+	Local cLinAtu   := " "
+	Local nLinhaAtu := 0
+	Local aLinha    := {}
+	Local aMata650 := {}
+	Local _aVetor := {}
+	Local lTemApont := .F.
+	Local oArquivo
+	Local aLinhas
+	Local lRet      := .T.
+	Local cNumOp  := " "
+	Local cNumProd := " "
+	Local cCurvAnt  := " "
+	Local cLastOp := ""
+	Local cAlias := GetNextAlias()
+	Local aSD3Area := SD3->(GetArea())
+	Local aSc2Area := SC2->(GetArea())
+	Local lMsErroAuto := .F.
+	Private cDirLog := GetTempPath() //+ "alt.CurvaProd\" + DTOC(DATE()) + TIME()
+	Private cLog    := ""
+
+	//Se a pasta de log nao existir, cria ela
+	If ! ExistDir(cDirLog)
+		MakeDir(cDirLog)
+	EndIf
+
+	if lRet
+		// oArquivo := FWFileReader():New(cArqOri)
+
+		If Select(cAlias) <> 0
+			(cAlias)->(DbCloseArea())
+		EndIf
+
+		BeginSql alias cAlias
+			%noparser%
+
+			SELECT *
+			FROM
+				dbo.SC2050 (NOLOCK) TBL1
+			WHERE
+				TBL1.D_E_L_E_T_ = ''
+				AND TBL1.C2_NUM + TBL1.C2_ITEM + TBL1.C2_SEQUEN IN (
+						'01559701001','01581401001','01567201001','01518401001','01545101001','01559501001','01560201001','01567001001',
+						'01580301001','01580501001','01567101001','01581201001','01567301001','01573801001','01580701001','01520001001',
+						'01551301001','01581301001','01581501001','01581901001','01519201001','01560501001','01551001001','01560301001',
+						'01559601001','01580601001','01580801001','01559901001','01539301001','01487601001','01547601001','01565801001',
+						'01542001001','01540901001','01541401001','01542101001','01542201001','01542401001','01558201001','01577701001',
+						'01592601001','01592701001','01592801001','01592901001','01593301001','01593601001','01594101001','01577501001',
+						'01593501001','01593801001','01541301001','01541801001','01541901001','01565601001','01593001001','01593101001',
+						'01593701001','01539401001','01539501001','01539601001','01539801001','01577301001','01592401001','01592501001',
+						'01521301001','01508401001','01524501001','01561401001','01551701001','01567801001','01529701001','01531501001',
+						'01553301001','01531601001','01532201001','01510801001','01533001001','01546001001','01534401001','01568901001',
+						'01476101001','01538301001','01563501001','01588001001','01573901001','01575401001','01585101001','01585201001',
+						'01585501001','01569701001','01574901001','01584101001','01585601001','01586101001','01552501001','01521001001',
+						'01522501001','01526301001','01531301001','01531401001','01535201001','01536001001','01540501001','01545501001',
+						'01545801001','01546401001','01546601001','01546701001','01546901001','01552201001','01553201001','01553701001',
+						'01554201001','01554901001','01561201001','01562401001','01568501001','01568801001','01569001001','01569101001',
+						'01569401001','01574601001','01582701001','01584701001','01584801001','01584901001','01586201001','01586301001',
+						'01586501001','01586701001','01586901001','01587701001','01587901001','01538601001','01533401001','01554801001',
+						'01583101001','01585701001','01587801001','01569501001','01587601001','01552901001','01562601001','01568301001',
+						'01568701001','01569601001','01574301001','01574501001','01574801001','01575001001','01575101001','01583001001',
+						'01584401001','01585301001','01585801001','01585901001','01586801001','01525901001','01526201001','01531201001',
+						'01535801001','01554301001','01582301001','01583301001','01583401001','01584601001','01585001001','01585401001',
+						'01586001001','01587101001','01539901001','01554501001','01554601001','01536401001','01552801001','01563301001',
+						'01568001001','01568201001','01586601001','01587201001','01524301001','01524901001','01528101001','01529201001',
+						'01529301001','01532701001','01536601001','01538001001','01561501001','01587501001','01563101001','01563201001',
+						'01563601001','01582901001','01583201001','01562301001','01583701001','01584301001','01587401001','01562701001',
+						'01563401001','01583501001','01584501001','01552601001','01583801001','01586401001','01563001001','01584201001',
+						'01562201001','01582601001','01582801001','01562101001','01561301001','01530901001','01531801001','01532801001',
+						'01590601001','01556801001','01575901001','01532401001','01570401001','01576101001','01590501001','01556901001',
+						'01576001001','01590301001','01564701001','01576201001','01531101001','01590401001','01556701001','01564801001',
+						'01590801001','01590201001','01564601001','01590101001','01564501001','01520401001','01545301001','01551501001',
+						'01520801001','01560801001','01582001001','01520701001','01582201001','01582101001','01551601001','01560701001',
+						'01520901001','01560901001','01533301001','01557201001','01455001001','01557301001','01534301001','01535401001',
+						'01571401001','01487201001','01538101001','01536501001','01536801001','01537401001','01547501001','01577201001',
+						'01533901001','01534501001','01534801001','01535101001','01536901001','01537501001','01538201001','01538401001',
+						'01538501001','01570601001','01570701001','01570801001','01571301001','01576501001','01576801001','01577101001',
+						'01591101001','01591401001','01591501001','01591901001','01592301001','01535501001','01537901001','01571701001',
+						'01591601001','01591801001','01534101001','01557501001','01576701001','01592101001','01592201001','01571101001',
+						'01576901001','01571001001','01592001001','01571201001','01591301001','01534701001','01536301001','01591201001',
+						'01570901001','01591701001','01576401001','01565301001','01591001001','01565101001','01522601001','01498101001',
+						'01523501001','01523101001','01498501001','01590001001','01588901001','01588601001','01569901001','01589001001',
+						'01522701001','01588801001','01522901001','01563901001','01589201001','01521801001','01521901001','01522001001',
+						'01527701001','01555101001','01555201001','01555901001','01556001001','01588101001','01588201001','01588301001',
+						'01588401001','01588501001','01589601001','01575801001','01589301001','01589801001','01564301001','01564001001',
+						'01589901001','01575601001','01485401001','01589501001','01563801001','01589401001'
+										)
+		EndSql
+
+		While (cAlias)->(!EOF())
+
+			cNumOp   :=  (cAlias)->C2_OP
+
+			SC2->(DbSetOrder(1))
+			If SC2->(DbSeek(xFilial('SC2')+(cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN))
+
+				SD3->(DbSetOrder(1))
+				If SD3->(MsSeek(xFilial("SD3")+(cAlias)->C2_OP))
+
+					While SD3->(!Eof()) .and. (SD3->D3_OP) == cNumOp .and. xFilial("SD3") == SD3->D3_FILIAL .and. cLastOp <> SD3->D3_OP
+
+						_aVetor := {}
+						lMsErroAuto := .F.
+
+						IF SD3->D3_CF = 'PR0'
+
+							_aVetor := {   {"D3_FILIAL"     , xFilial("SD3")          , Nil}, ;
+								{"D3_OP"     , SD3->D3_OP          , Nil}, ;
+								{"D3_TM"    	,SD3->D3_TM          , Nil}, ;
+								{"D3_COD"			,SD3->D3_COD	, niL},;
+								{"D3_EMISSAO", SD3->D3_EMISSAO, Nil}, ;
+								{"D3_DOC"    , SD3->D3_DOC, Nil}, ;
+								{"D3_CF"    , SD3->D3_CF, Nil}, ;
+								{"D3_NUMSEQ" , SD3->D3_NUMSEQ, Nil}   }
+							MSExecAuto({|x, y| mata250(x, y)}, _aVetor, 6) // Encerrar OP
+
+							If lMsErroAuto
+								MostraErro()
+							EndIf
+
+							cLastOp := SD3->D3_OP
+						ENDIF
+
+
+						SD3->(dbSkip())
+
+					EndDo
+
+					lTemApont := .T.
+				Else
+					lTemApont := .F.
+				EndIf
+				lMsErroAuto := .F.
+
+				aMata650  := {{'C2_FILIAL'   ,xFilial("SC2")             ,NIL},;
+					{'C2_PRODUTO',SC2->C2_PRODUTO      ,NIL},;
+					{'C2_LOCAL',SC2->C2_LOCAL       ,NIL},;
+					{'C2_QUANT' ,SC2->C2_QUANT                ,NIL},;
+					{'C2_ITEM',SC2->C2_ITEM                    ,NIL},;
+					{'C2_SEQUEN',SC2->C2_SEQUEN                   ,NIL},;
+					{'C2_DATPRI',SC2->C2_DATPRI  ,NIL},;
+					{'C2_DATPRF',SC2->C2_DATPRF  ,NIL},;
+					{'AUTEXPLODE' ,"S" ,NIL}}
+
+				// IF !lTemApont
+				// msExecAuto({|x,Y| Mata650(x,Y)},aMata650,6)
+				// ELSE
+				msExecAuto({|x,Y| Mata650(x,Y)},aMata650,5)
+				// ENDIF
+
+				if lMsErroAuto
+
+					MostraErro()
+
+				endif
+
+			EndIf
+
+			(cAlias)->(DbSkip())
+		EndDo
+		(cAlias)->(DbCloseArea())
+
+		// If (oArquivo:Open())
+
+		// If ! (oArquivo:EoF())
+
+		// aLinhas := oArquivo:GetAllLines()
+		// nTotLinhas := Len(aLinhas)
+		// ProcRegua(nTotLinhas)
+
+		// oArquivo:Close()
+		// oArquivo := FWFileReader():New(cArqOri)
+		// oArquivo:Open()
+
+		// While (oArquivo:HasLine())
+
+		// 	nLinhaAtu++
+		// 	IF !lIsBlind
+		// 		IncProc("Analisando linha " + cValToChar(nLinhaAtu) + " de " + cValToChar(nTotLinhas) + "...")
+		// 	ENDIF
+
+		// 	cLinAtu := oArquivo:GetLine()
+		// 	aLinha  := StrTokArr(cLinAtu, ",")
+
+		// 	// If !(nLinhaAtu == 1)
+
+		// 	cNumOp   :=  aLinha[1]
+		// cNumProd  :=  aLinha[2]
+
+		// IF len(aLInha) <> 2
+		// 	RETURN .F. .AND. IIF(!lIsBlind,MSGSTOP("Estrutura do arquivo fora dos padroes!","ERRO")," ")
+		// ENDIF
+
+		// EndIf
+
+		// 	EndDo
+
+		// Else
+		// 	// IF !lIsBlind
+		// 	// 	MsgStop("Arquivo nao tem conteudo.", "Atencao!")
+		// 	// ELSE
+		// 	// 	cLog := "Arquivo nao tem conteudo!"
+		// 	// 	MemoWrite(cDirLog + cArqLog, cLog)
+		// 	// ENDIF
+		// EndIf
+
+		// oArquivo:Close()
+		RestArea(aSc2Area)
+		RestArea(aSD3Area)
+		// Else
+		// IF !lIsBlind
+		// 	MsgStop("Arquivo nao pode ser aberto.", "Atencao!")
+		// ELSE
+		// 	cLog := "Arquivo nao pode ser Aberto!"
+		// 	MemoWrite(cDirLog + cArqLog, cLog)
+		// ENDIF
+		// EndIf
+		// ENDIF
+
+	endif
+
+	RestArea(aArea)
+Return

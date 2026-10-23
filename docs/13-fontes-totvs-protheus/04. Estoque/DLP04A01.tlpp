@@ -1,0 +1,804 @@
+#INCLUDE 'TOTVS.CH'
+
+Static lIsFirst := .T.
+
+/*/{Protheus.doc} DLP04A01
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 13/06/2025
+/*/
+User Function DLP04A01()
+
+	// RpcSetEnv('01')
+
+	// Local _oFont  := TFont():New( "Arial",0,-11,,.T.,0,,700,.F.,.F.,,,,,, )
+	Local   aMDlg               as array
+	Private oDlg                as object
+	Private oGrid               as object
+	Private aRotina				as array
+	Private aHeader             as array
+	Private aCols               as array
+	Private aLegenda            as array
+	Private aMapaApanhe         as array 		//Mapa de apanha da OS, preenchido durante o witchcraft
+	Private aRelHTML            as array 		//Array do relatório que será impresso onde contém os pallets como chaves junto de seus produtos
+	Private cNumOs				as character   	// número da Ordem de Serviço
+	Private cPedVen				as character	// número do Pedido de Venda
+	Private nTipoLanc			as numeric 		// 1 - Lançamento Manual / 2 - Integração de Arquivo PC / 3 - Integração Arquivo FTP
+	Private _oBmpEnv, _oBmpReq, _oPnlHeader, _oMsPanel
+
+	//Inicializa as variávis
+	aMDlg						:= MsAdvSize()
+	aHeader     				:= {}
+	aCols       				:= {}
+	aLegenda    				:= {}
+	aMapaApanhe 				:= {}
+	aRelHTML 					:= {}
+	nTipoLanc					:= 1
+	aRotina						:= {}
+
+	oDlg 						:= TDialog():New(aMDlg[1],aMDlg[1],aMDlg[3],aMDlg[5],"",,,,nOr(WS_VISIBLE ,WS_POPUP),,,,,.T.,,,,,,.F.)
+	oDlg:lMaximized				:= .T.
+
+	abreParamBox()
+
+	// _oBmpReq := TButton():New(006,004,"Requisição" ,oDlg,{|| fOpenReq() },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+	// _oBmpEnv := TButton():New(006,100,"Devolução" ,oDlg,{||  fOpenRet() },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+	oDlg:Activate()
+
+	// RpcClearEnv()
+
+Return Nil
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 04/07/2025
+/*/
+Static Function fOpenReq()
+// User Function DLP04A01()
+
+	Local _oFont  := TFont():New( "Arial",0,-11,,.T.,0,,700,.F.,.F.,,,,,, )
+	Local _cNumLote := CriaVar("B8_LOTECTL", .t.)
+	Local _aHeadNf := {}
+	// Local _aColsNf := {}
+	Private _nQtdRec := 0
+	Private _nQtdEnv := 0
+	Private _aColsNf := {}
+	Private mvCodProd := Space(15)//""
+	Private _cDescProd := Posicione( "SB1", 1, xFilial("SB1") + mvCodProd, "B1_DESC" )
+	Private _oDlgNf, _oPnlCabec, _oGet01Lote, _oBmpPesq, _oBmpAcao,_oGet01Prod, _oGet01Desc, _oBtn01Fechar, _oPnlLote, _oGetQtReq, _oGetQtEnv
+	private _oBrwDetNf
+	private _aSizeWnd := MsAdvSize()
+
+	lIsFirst := .F.
+
+	If( Len(_aHeadNf) == 0)
+		aadd(_aHeadNf, {"Lote", "B8_LOTECTL"   , PesqPict("SB8", "B8_LOTECTL")   , TamSx3("B8_LOTECTL")[1]   , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Dt.Entra.Lote", "B8_DATA"   , PesqPict("SB8", "B8_DATA")   , TamSx3("B8_DATA")[1]   , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Saldo Lote"       , "B8_SALDO"  , PesqPict("SB8", "B8_SALDO")  , TamSx3("B8_SALDO")[1]  , 0, Nil, Nil, "N", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Num.Nf"       , "F1_DOC"    , PesqPict("SF1", "F1_DOC")    , TamSx3("F1_DOC")[1]    , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Ser.Nf"       , "F1_SERIE"  , PesqPict("SF1", "F1_SERIE")  , TamSx3("F1_SERIE")[1]  , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Cod.Forn."    , "F1_FORNECE", PesqPict("SF1", "F1_FORNECE"), TamSx3("F1_FORNECE")[1], 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Nome.Forn."   , "F1_LOJA"   , PesqPict("SF1", "F1_LOJA")   , TamSx3("F1_LOJA")[1]   , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Armazem"           , "B8_LOCAL"     , PesqPict("SB8", "B8_LOCAL")     , TamSx3("B8_LOCAL")[1]     , 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		aadd(_aHeadNf, {"Num.Lote"    , "B8_NUMLOTE", PesqPict("SB8", "B8_NUMLOTE"), TamSx3("B8_NUMLOTE")[1], 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		// aadd(_aHeadNf, {"Operador"     , "D3_USUARIO", PesqPict("SD3", "D3_USUARIO"), TamSx3("D3_USUARIO")[1], 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+		// aadd(_aHeadNf, {"Num.Lote"     , "D3_NUMLOTE", PesqPict("SD3", "D3_NUMLOTE"), TamSx3("D3_NUMLOTE")[1], 0, Nil, Nil, "C", Nil, "R", , , ".F."})
+	EndIf
+
+	_oDlgNf := MSDialog():New(_aSizeWnd[7],000,_aSizeWnd[6]/2,_aSizeWnd[5]/2,"Retorno ao Armazém",,,.F.,,,,,,.T.,,,.T. )
+
+	_oPnlLote := TPanel():New(000,000,nil,_oDlgNf,,.F.,.F.,,,000,025,.T.,.F. )
+	_oPnlLote:Align:= CONTROL_ALIGN_TOP
+
+	_oPnlCabec:= TPanel():New(000,000,nil,_oDlgNf,,.F.,.F.,,,000,025,.T.,.F. )
+	_oPnlCabec:Align:= CONTROL_ALIGN_TOP
+
+	_oPnlBrw := TPanel():New(000,000,nil,_oDlgNf,,.F.,.F.,,,000,030,.T.,.F. )
+	_oPnlBrw:Align:= CONTROL_ALIGN_ALLCLIENT
+
+	_oGet01Prod := TGet():New(002,004,{|u| If(PCount()>0, mvCodProd := u, mvCodProd)},_oPnlLote,050,010,PesqPict("SB1","B1_COD"),{ || _oBmpPesq:Click(), .T. },,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"mvCodProd" ,,,,,, .T. ,"Produto:",1,,)
+	// _oGet01Prod:Disable()
+
+	_oGet01Desc := TGet():New(002,060,{|u| If(PCount()>0, _cDescProd := u, _cDescProd)},_oPnlLote,220,010,PesqPict("SB1","B1_DESC") ,,,,,,,.T.,"",,,.F.,.F.,,.T.,.F.,,"_cDescProd" ,,,,,, .T. ,"Descrição do Produto:",1,)
+	_oGet01Desc:Disable()
+
+	_oGetQtReq := TGet():New(002,004,{|u| If(PCount()>0, _nQtdRec := u, _nQtdRec)},_oPnlCabec,050,010,PesqPict("SD3","D3_QUANT"),{ || _oBmpPesq:Click(), .T. },,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"_nQtdRec" ,,,,,, .T. ,"Qtd Requisitada:",1,)
+	// _oGetQtReq:Disable()
+
+	// _oGet01Lote := TGet():New(002,004,{|u| If(PCount()>0, _cNumLote := u, _cNumLote)},_oPnlCabec,050,010,PesqPict("SB8","B8_LOTECTL"), { || _oBmpPesq:Click(), .T. },,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"_cNumLote" ,,,,,, .T. ,"Informe parte do lote para pesquisar:",1,)
+
+	_oGetQtEnv := TGet():New(002,060,{|u| If(PCount()>0, _nQtdEnv := u, _nQtdEnv)},_oPnlCabec,050,010,PesqPict("SD3","D3_QUANT"),,,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"_nQtdEnv" ,,,,,, .T. ,"Qtd. a Enviar:",1,)
+	_oGetQtEnv:Disable()
+
+	_oBmpPesq := TBtnBmp2():New(007,574,040,040,"PESQUISA",,,,{|| _aColsNf := fLoadData(mvCodProd,.f.), /* mvCodProd := fGetProd(_cNumLote)*/ , _cDescProd := fGerPrdDsc(mvCodProd) },_oPnlLote,"Pesquisar",,.T. )
+
+	_oBmpAcao := TButton():New(007,199,"Enviar a Fabrica" ,_oPnlCabec,{||  fRtrnFab(_cNumLote) },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+	_oBtn01Fechar := TBtnBmp2():New(001,001,040,040,"FINAL",,,,{|| _oDlgNf:End(),abreParamBox() },_oPnlLote,"Sair",,.T. )
+	_oBtn01Fechar:Align := CONTROL_ALIGN_RIGHT
+
+	_oBrwDetNf := MsNewGetDados():New(000,000,400,400,,'AllwaysTrue()','AllwaysTrue()','',,,99,'AllwaysTrue()','','AllwaysTrue()',_oPnlBrw,_aHeadNf,_aColsNf)
+	// _oBrwDetNf := MsNewGetDados():New(000,000,000,000,,"AllwaysTrue()","AllwaysTrue","AllwaysTrue",,1,99,"AllwaysTrue", "","AllwaysTrue", _oPnlBrw,_aHeadNf,_aColsNf)
+
+	// oGrid := MsNewGetDados():New(000,000,000,000,nStyle,"U_REN02LINOK","AllwaysTrue","AllwaysTrue",aCpoAlter,1,999, "AllwaysTrue", "","U_REN02DEL", oDlg,aHeader,aCols)
+	_oBrwDetNf:oBrowse:Align := CONTROL_ALIGN_ALLCLIENT
+
+	ACTIVATE MSDIALOG _oDlgNf CENTERED
+
+Return
+
+/*/{Protheus.doc} fLoadData
+  (long_description)
+  @type  Static Function
+  @author Pedro Lindenberg
+  @since 13/06/2025
+/*/
+Static Function fLoadData(cProduto,lInic)
+	Local _aRet := {}
+	Local _aRetTbl := {}
+	Local _cQuery := ""
+	Local _nQtdSald := 0
+	Local x1 := 0
+
+	IF EMPTY(cProduto) .OR. EMPTY(_oGetQtReq:cText)
+
+		Return {}
+
+	ENDIF
+
+	_cQuery += " 	SELECT "
+	_cQuery += "     B8_LOTECTL, B8_DATA, B8_SALDO, F1_DOC,"
+	_cQuery += "     F1_SERIE, F1_FORNECE, F1_LOJA, B8_LOCAL, B8_NUMLOTE"
+	_cQuery += " FROM "+RetSqlTab("SB8")+" "
+	_cQuery += " LEFT JOIN "+RetSqlTab("SD1")+" "
+	_cQuery += "     ON SD1.D1_FILIAL = SB8.B8_FILIAL "
+	_cQuery += " 		 AND SD1.D1_COD = SB8.B8_PRODUTO "
+	_cQuery += " 		 AND SD1.D1_LOTECTL = SB8.B8_LOTECTL "
+	_cQuery += "     AND SD1.D_E_L_E_T_ = ' ' "
+	_cQuery += " LEFT JOIN "+RetSqlTab("SF1")+" "
+	_cQuery += "     ON  SD1.D1_FILIAL = SF1.F1_FILIAL "
+	_cQuery += " 		 AND SD1.D1_DOC = SF1.F1_DOC "
+	_cQuery += "     AND SD1.D1_SERIE = SF1.F1_SERIE "
+	_cQuery += "     AND SD1.D1_FORNECE = SF1.F1_FORNECE "
+	_cQuery += "     AND SD1.D1_LOJA = SF1.F1_LOJA "
+	_cQuery += "     AND SF1.D_E_L_E_T_ = ' ' "
+	_cQuery += " LEFT JOIN "+RetSqlTab("SD3")+" "
+	_cQuery += "     ON  SB8.B8_FILIAL = SD3.D3_FILIAL "
+	_cQuery += " 		 AND SB8.B8_PRODUTO = SD3.D3_COD "
+	_cQuery += "     AND SB8.B8_LOTECTL = SD3.D3_LOTECTL "
+	_cQuery += "     AND SD3.D_E_L_E_T_ = ' ' "
+	_cQuery += " WHERE "
+	_cQuery += "    SB8.B8_PRODUTO = '"+mvCodProd+"' "
+	_cQuery += " 	  AND SB8.D_E_L_E_T_ = ' ' "
+	_cQuery += " ORDER BY SD3.R_E_C_N_O_ ASC "
+
+	If TCSqlToArr(_cQuery, @_aRet) < 0
+		FWAlertInfo("Nenhuma Informação foi encontrada para o lote e produto informados.", "Atenção")
+		Return _aRet
+	EndIf
+
+	DbSelectArea("SB8")
+	for x1 := 1 to Len(_aRet)
+
+		IF  _nQtdEnv < _nQtdRec
+
+			SB8->(DbSetOrder(2))
+			If SB8->(DbSeek(xFilial('SB8')+_aRet[x1][9]+_aRet[x1][1]+mvCodProd+_aRet[x1][8])) //B8_FILIAL + B8_NUMLOTE + B8_LOTECTL + B8_PRODUTO + B8_LOCAL
+
+				_nQtdSald := SB8Saldo(.F.,,,,,.F.)
+
+				_nQtdEnv += _nQtdSald
+
+				IF _nQtdEnv > _nQtdRec
+
+					_nQtdEnv := _nQtdRec
+
+				ENDIF
+				_oGetQtEnv:Refresh()
+
+				_aRet[x1][3] := _nQtdSald
+				aadd(_aRet[x1],Nil)
+
+				Aadd(_aRetTbl,_aRet[x1])
+
+			EndIf
+
+		ENDIF
+
+	next
+
+	If(!lInic)
+
+		_oBrwDetNf:Enable()
+		_oBrwDetNf:SetArray(_aRetTbl,.T.)
+		_oBrwDetNf:Refresh()
+
+	EndIf
+
+Return _aRetTbl
+
+/*/{Protheus.doc} fGetProd
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 13/06/2025
+/*/
+Static Function fGetProd(cNumLote)
+	Local cCodPrd := ""
+	Local cQry := ""
+
+	cQry := " SELECT B8_PRODUTO AS NUMPROD FROM "+RetSqlTab("SB8")+" WHERE SB8.D_E_L_E_T_ = ' ' AND SB8.B8_LOTECTL = '"+cNumLote+"'"
+	cCodPrd := MpSysExecScalar(cQry,'NUMPROD')
+
+Return cCodPrd
+
+/*/{Protheus.doc} fGerPrdDsc
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 13/06/2025
+/*/
+Static Function fGerPrdDsc(cNumProd)
+	Local cDescPrd := ""
+
+	cDescPrd := POSICIONE("SB1",1,xFilial("SB1")+cNumProd,"B1_DESC")
+
+Return cDescPrd
+
+/*/{Protheus.doc} fRtrnFab
+	(long_description)
+	@type  Static Function
+	@author Pedro lindenberg
+	@since 03/07/2025
+/*/
+Static Function fRtrnFab(cLote)
+	Local cCodSd3 := ""
+	Local cErro := ""
+	Local _aCab1 := {}
+	Local _aItem := {}
+	Local aAuto  := {}
+	Local x1 := 0
+	Local nY := 0
+	Local cLoteAtu := ""
+	Local nQtSaldo := _oGetQtEnv:cText
+	// Local nPosQtd  := aScan(_oBrwDetNf:aHeader, { |x| Alltrim( x[2] ) == "B8_SALDO" })
+	// Local nPosUser := aScan(_oBrwDetNf:aHeader, { |x| Alltrim( x[2] ) == "D3_USUARIO" })
+	Local nPosNumLt :=  aScan(_oBrwDetNf:aHeader, { |x| Alltrim( x[2] ) == "B8_NUMLOTE" })
+	Local nPosLote := aScan(_oBrwDetNf:aHeader, { |x| Alltrim( x[2] ) == "B8_LOTECTL" })
+	Private lMsErroAuto    := .f.
+	Private lMsHelpAuto    := .T.
+	Private lAutoErrNoFile := .T.
+
+	cCodSd3 := CriaVar("D3_DOC", .T.)//NextNumero("SD3",2,"D3_DOC",.T.) //CriaVar("D3_DOC", .T.)
+	_aCab1 := {{"D3_DOC" ,cCodSd3, NIL},;
+		{"D3_TM" ,'502' , NIL},;
+		{"D3_EMISSAO" ,Date(), NIL}}
+
+	FOR x1 := 1 to Len(_oBrwDetNf:aCols)
+
+		cLoteCtl := Padr(_oBrwDetNf:aCols[x1][nPosLote],TamSx3("B8_LOTECTL")[1])
+		cNLote	 := Padr(_oBrwDetNf:aCols[x1][nPosNumLt],TamSx3("B8_NUMLOTE")[1])
+		cProduto := Padr(_oGet01Prod:cText,TamSx3("B8_PRODUTO")[1])
+
+		DBSelectArea("SB8")
+		SB8->(DBSetOrder(2))
+		IF SB8->(DbSeek(xFilial()+cNLote+cLoteCtl+cProduto))
+
+			DbSelectArea("SB1")
+			SB1->(dbsetorder(1))
+			iF SB1->(DbSeek(xFilial("SB1")+_oGet01Prod:cText))
+
+				nQtSaldo := IIF((nQtSaldo - SB8->B8_SALDO) > 0,(nQtSaldo - SB8->B8_SALDO),nQtSaldo)
+
+				cLoteAtu := RetornaLote01(cProduto)
+
+				_aItem:={{"D3_COD" ,cProduto,NIL},;
+					{"D3_LOTECTL" ,cLoteAtu,NIL},;
+					{"D3_UM" ,SB1->B1_UM,NIL},;
+					{"D3_QUANT", nQtSaldo,NIL},;
+					{"D3_CONTA" ,SB1->B1_CONTA,NIL},;
+					{"D3_LOCAL" ,'01' ,NIL},;
+					{"D3_GRUPO" ,SB1->B1_GRUPO ,NIL},;
+					{"D3_CF" ,'RE' ,NIL},;
+					{"D3_USUARIO" , UsrRetName(RetCodUsr()),Nil},;
+					{"D3_OBSERVA " ,'Envio a Fabrica',NIL}}
+
+				aadd(aAuto,_aitem)
+
+			ENDIF
+
+		ENDIF
+
+	NEXT x1
+
+	lMsErroAuto    := .f.
+	lMsHelpAuto    := .T.
+	lAutoErrNoFile := .T.
+
+	MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,aAuto,3)
+
+	If lMsErroAuto
+
+		aLogAuto    := {}
+		aLogAuto    := GetAutoGrLog()
+		cErro       := ""
+
+		For nY := 1 To Len(aLogAuto)
+			cErro += aLogAuto[nY] + CRLF
+		Next nY
+
+		cMsgErro:=cErro
+
+		FWAlertInfo(cMsgErro,"Atenção")
+		// MostraErro()
+
+	Else
+
+		FWAlertSuccess("Movimento de numero:"+cCodSd3+" realizado com sucesso!", "Envio à Fábrica")
+		_oDlgNf:End()
+		abreParamBox()
+
+	Endif
+
+	for x1 := 1 to Len(_oBrwDetNf:aCols)
+
+		_oBrwDetNf:DelLine()
+		_oBrwDetNf:Refresh()
+
+	next
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 11/07/2025
+/*/
+Static Function fOpenRet()
+	Local _oFont  := TFont():New( "Arial",0,-11,,.T.,0,,700,.F.,.F.,,,,,, )
+	Private _cNumLote := CriaVar("B8_LOTECTL", .t.)
+	// Local _aHeadNf := {}
+	// Local _aColsNf := {}
+	Private _nQtdRec := 0
+	Private _nQtdEnv := 0
+	Private _aColsNf := {}
+	Private mvCodProd := Space(15)//""
+	Private _cDescProd := Posicione( "SB1", 1, xFilial("SB1") + mvCodProd, "B1_DESC" )
+	Private _oDlgNf, _oPnlCabec, _oGet01Lote, _oBmpPesq, _oBmpAcao,_oGet01Prod, _oGet01Desc, _oBtn01Fechar, _oPnlLote, _oGetQtReq, _oGetQtEnv
+	private _aSizeWnd := MsAdvSize()
+
+	lIsFirst := .F.
+
+	_oDlgNf := MSDialog():New(_aSizeWnd[7],000,(_aSizeWnd[6]/2)-120,_aSizeWnd[5]/2,"Retorno ao Armazém",,,.F.,,,,,,.T.,,,.T. )
+
+	_oPnlLote := TPanel():New(000,000,nil,_oDlgNf,,.F.,.F.,,,000,025,.T.,.F. )
+	_oPnlLote:Align:= CONTROL_ALIGN_TOP
+
+	_oPnlCabec:= TPanel():New(000,000,nil,_oDlgNf,,.F.,.F.,,,000,025,.T.,.F. )
+	_oPnlCabec:Align:= CONTROL_ALIGN_TOP
+
+	_oGet01Prod := TGet():New(002,004,{|u| If(PCount()>0, mvCodProd := u, mvCodProd)},_oPnlCabec,050,010,PesqPict("SB1","B1_COD"),{ || _oBmpPesq:Click(), .T. },,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"mvCodProd" ,,,,,, .T. ,"Produto:",1,,)
+	_oGet01Prod:Disable()
+
+	_oGet01Desc := TGet():New(002,060,{|u| If(PCount()>0, _cDescProd := u, _cDescProd)},_oPnlCabec,220,010,PesqPict("SB1","B1_DESC") ,,,,,,,.T.,"",,,.F.,.F.,,.T.,.F.,,"_cDescProd" ,,,,,, .T. ,"Descrição do Produto:",1,)
+	_oGet01Desc:Disable()
+
+	_oGet01Lote := TGet():New(002,004,{|u| If(PCount()>0, _cNumLote := u, _cNumLote)},_oPnlLote,050,010,PesqPict("SB8","B8_LOTECTL"), { || _oBmpPesq:Click(), .T. },,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"_cNumLote" ,,,,,, .T. ,"Lote:",1,)
+
+	_oGetQtEnv := TGet():New(002,060,{|u| If(PCount()>0, _nQtdEnv := u, _nQtdEnv)},_oPnlLote,050,010,PesqPict("SD3","D3_QUANT"),,,,,,,.T.,"",,,.F.,.F.,,.F.,.F.,,"_nQtdEnv" ,,,,,, .T. ,"Qtd.Retorno:",1,)
+	// _oGetQtEnv:Disable()
+
+	_oBmpPesq := TBtnBmp2():New(007,574,040,040,"PESQUISA",,,,{|| fRtnData(_cNumLote), /* mvCodProd := fGetProd(_cNumLote)*/ , _cDescProd := fGerPrdDsc(mvCodProd) },_oPnlLote,"Pesquisar",,.T. )
+
+	_oBmpAcao := TButton():New(007,199,"Retornar a Fabrica" ,_oPnlLote,{||  fDevFab(_cNumLote) },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+	_oBtn01Fechar := TBtnBmp2():New(001,001,040,040,"FINAL",,,,{|| _oDlgNf:End(),abreParamBox() },_oPnlLote,"Sair",,.T. )
+	_oBtn01Fechar:Align := CONTROL_ALIGN_RIGHT
+
+	ACTIVATE MSDIALOG _oDlgNf CENTERED
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 11/07/2025
+/*/
+Static Function fRtnData(cLote)
+	Local cQry := ""
+
+	cQry := " SELECT SB8.B8_PRODUTO AS PRODB8, SB8.B8_SALDO AS SALDOB8 FROM "+RetSqlName("SB8")+" SB8 WHERE SB8.B8_LOTECTL = '"+ALLTRIM(cLote)+"' AND SB8.B8_LOCAL = '99' AND SB8.D_E_L_E_T_ = ' ' "
+	mvCodProd := MpSysExecScalar(cQry,"PRODB8")
+	_nQtdEnv  := MpSysExecScalar(cQry,"SALDOB8")
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenebrg
+	@since 11/07/2025
+/*/
+Static Function fDevFab(cLote)
+	Local cQry := ""
+	Local nLote := 0
+	Local cCodSd3 := ""
+	Local cLoteRet := ""
+	Local nQtSaldo := 0
+	Local nY := 0
+	Local aAuto := {}
+	Local aAutoB7 := {}
+	Local cLoteCtl := ""
+	Local cNLote	 := ""
+	Local cProduto := ""
+	Local cNumDoc := ""
+	Local cLoteNum := ''
+	Private	lMsErroAuto    := .f.
+	Private lMsHelpAuto    := .T.
+	Private lAutoErrNoFile := .T.
+
+	cQry := " SELECT SB8.B8_SALDO AS SALDOB8, SB8.B8_NUMLOTE AS NUMLOTE FROM "+RetSqlName("SB8")+" SB8 WHERE SB8.B8_LOTECTL = '"+ALLTRIM(cLote)+"' AND SB8.B8_FILIAL = '"+xFilial("SB8")+"' AND SB8.B8_LOCAL = '99' AND SB8.D_E_L_E_T_ = ' ' "
+	nLote    := MpSysExecScalar(cQry,"SALDOB8")
+	cLoteNum := MpSysExecScalar(cQry,"NUMLOTE")
+	cNumDoc  := _cNumLote
+
+	IF EMPTY(_nQtdEnv) .AND. (nLote != 0)
+
+		FWAlertInfo("Prezado, Gentileza destinar o Material "+mvCodProd+"-"+_cDescProd+" Lote "+_cNumLote+" para a área de Quarentena","Atencao")
+
+		SB1->(DbSetOrder(1))
+		If SB1->(DbSeek(xFilial('SB1')+mvCodProd))
+
+			cLoteRet := RetornaLoteXX(mvCodProd)
+
+			Aadd(aAutoB7, {"B7_FILIAL" , xFilial("SB7") , NIL})
+			Aadd(aAutoB7, {"B7_LOCAL" , "XX" , NIL})
+			Aadd(aAutoB7, {"B7_TIPO" , 	SB1->B1_TIPO , NIL})
+			Aadd(aAutoB7, {"B7_DOC" , cNumDoc , NIL})
+			Aadd(aAutoB7, {"B7_QUANT" , 0 , NIL})
+			Aadd(aAutoB7, {"B7_DATA" , DATE() , NIL})
+			Aadd(aAutoB7, {"B7_DTVALID" , DATE() , NIL})
+			Aadd(aAutoB7, {"B7_COD" , SB1->B1_COD , NIL})
+			Aadd(aAutoB7, {"B7_LOTECTL" , Pad(cLoteRet , Len(_cNumLote)) , NIL})
+			Aadd(aAutoB7, {"B7_NUMLOTE" , cLoteNum , NIL})
+			Aadd(aAutoB7, {"B7_ORIGEM" , "MATA270" , NIL})
+			Aadd(aAutoB7, {"B7_STATUS" , "1" , NIL})
+			// Aadd(aAutoB7, {"INDEX" , 1 , NIL})
+
+			lMsErroAuto := .F.
+			lMsHelpAuto    := .T.
+			lAutoErrNoFile := .T.
+			MsExecAuto({|a,b,c| MATA270(a,b,c)}, aAutoB7, .T., 3)
+
+			If lMsErroAuto
+
+				aLogAuto    := {}
+				aLogAuto    := GetAutoGrLog()
+				cErro       := ""
+
+				For nY := 1 To Len(aLogAuto)
+					cErro += aLogAuto[nY] + CRLF
+				Next nY
+
+				cMsgErro:=cErro
+
+				FWAlertInfo(cMsgErro,"Atenção")
+				// MostraErro()
+
+			Else
+
+				FWAlertSuccess("Lançamento de inventario realizado	:"+cNumDoc+" realizado com sucesso!", "Retorno à Fábrica")
+				_oDlgNf:End()
+				abreParamBox()
+
+			Endif
+
+		EndIf
+
+	ELSEIF _nQtdEnv == nLote
+
+		cCodSd3 := CriaVar("D3_DOC", .T.)//NextNumero("SD3",2,"D3_DOC",.T.) /\/CriaVar("D3_DOC", .T.)
+		_aCab1 := {{"D3_DOC" ,cCodSd3, NIL},;
+			{"D3_TM" ,'502' , NIL},;
+			{"D3_EMISSAO" ,Date(), NIL}}
+
+		cLoteCtl := Padr(_cNumLote,TamSx3("B8_LOTECTL")[1])
+		cNLote	 := Padr(cNLote,TamSx3("B8_NUMLOTE")[1])
+		cProduto := Padr(mvCodProd,TamSx3("B8_PRODUTO")[1])
+
+		DBSelectArea("SB8")
+		SB8->(DBSetOrder(2))
+		IF SB8->(DbSeek(xFilial("SB8")+cNLote+cLoteCtl+cProduto))
+
+			DbSelectArea("SB1")
+			SB1->(dbsetorder(1))
+			iF SB1->(DbSeek(xFilial("SB1")+mvCodProd))
+
+				cLoteRet := RetornaLote01(mvCodProd)
+
+				_aItem:={{"D3_COD" ,cProduto,NIL},;
+					{"D3_LOTECTL" ,cLoteRet,NIL},;//SB8->B8_LOTECTL
+				{"D3_UM" ,SB1->B1_UM,NIL},;
+					{"D3_QUANT", nLote,NIL},;
+					{"D3_CONTA" ,SB1->B1_CONTA,NIL},;
+					{"D3_LOCAL" ,'01' ,NIL},;
+					{"D3_GRUPO" ,SB1->B1_GRUPO ,NIL},;
+					{"D3_CF" ,'RE' ,NIL},;
+					{"D3_USUARIO" , UsrRetName(RetCodUsr()),Nil},;
+					{"D3_OBSERVA " ,'Retorno a Fabrica',NIL}}
+
+				aadd(aAuto,_aitem)
+
+				lMsErroAuto := .F.
+				lMsHelpAuto    := .T.
+				lAutoErrNoFile := .T.
+				MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,aAuto,3)
+
+				If lMsErroAuto
+
+					aLogAuto    := {}
+					aLogAuto    := GetAutoGrLog()
+					cErro       := ""
+
+					For nY := 1 To Len(aLogAuto)
+						cErro += aLogAuto[nY] + CRLF
+					Next nY
+
+					cMsgErro:=cErro
+
+					FWAlertInfo(cMsgErro,"Atenção")
+					// MostraErro()
+
+				Else
+
+					/******************************\
+					| Gabriel: Imprimir Etiqueta   |
+					\*****************************/
+
+					FWAlertSuccess("Movimento de numero:"+cCodSd3+" realizado com sucesso!", "Retorno à Fábrica")
+					_oDlgNf:End()
+					abreParamBox()
+
+				Endif
+
+			Endif
+
+		Endif
+
+	ELSE //(_nQtdEnv > 0) .AND. (_nQtdEnv <> nLote)
+
+		FWAlertInfo("“Prezado, Gentileza destinar o Material "+mvCodProd+"-"+_cDescProd+" Lote "+_cNumLote+" para a área de Quarentena","Atencao")
+
+		cCodSd3 := CriaVar("D3_DOC", .T.)//NextNumero("SD3",2,"D3_DOC",.T.) /\/CriaVar("D3_DOC", .T.)
+		_aCab1 := {{"D3_DOC" ,cCodSd3, NIL},;
+			{"D3_TM" ,'502' , NIL},;
+			{"D3_EMISSAO" ,Date(), NIL}}
+
+		cLoteCtl := Padr(_cNumLote,TamSx3("B8_LOTECTL")[1])
+		cNLote	 := Padr(cNLote,TamSx3("B8_NUMLOTE")[1])
+		cProduto := Padr(mvCodProd,TamSx3("B8_PRODUTO")[1])
+
+		DBSelectArea("SB8")
+		SB8->(DBSetOrder(2))
+		IF SB8->(DbSeek(xFilial("SB8")+cNLote+cLoteCtl+cProduto))
+
+			DbSelectArea("SB1")
+			SB1->(dbsetorder(1))
+			iF SB1->(DbSeek(xFilial("SB1")+mvCodProd))
+
+				cLoteRet := RetornaLoteXX(mvCodProd)
+
+				Aadd(aAutoB7, {"B7_FILIAL" , xFilial("SB7") , NIL})
+				Aadd(aAutoB7, {"B7_LOCAL" , "XX" , NIL})
+				Aadd(aAutoB7, {"B7_TIPO" , SB1->B1_TIPO , NIL})
+				Aadd(aAutoB7, {"B7_DOC" , cNumDoc , NIL})
+				Aadd(aAutoB7, {"B7_QUANT" , 0.00 , NIL})
+				Aadd(aAutoB7, {"B7_DATA" , DATE() , NIL})
+				Aadd(aAutoB7, {"B7_DTVALID" , DATE() , NIL})
+				Aadd(aAutoB7, {"B7_COD" , SB1->B1_COD , NIL})
+				Aadd(aAutoB7, {"B7_LOTECTL" , Pad(cLoteRet , Len(_cNumLote)) , NIL})
+				Aadd(aAutoB7, {"B7_ORIGEM" , "MATA270" , NIL})
+				Aadd(aAutoB7, {"B7_STATUS" , "1" , NIL})
+				Aadd(aAutoB7, {"INDEX" , 1 , NIL})
+
+				lMsErroAuto := .F.
+				lMsHelpAuto    := .T.
+				lAutoErrNoFile := .T.
+				MsExecAuto({|a,b,c| MATA270(a,b,c)}, aAutoB7, .T., 3)
+
+				If lMsErroAuto
+
+					aLogAuto    := {}
+					aLogAuto    := GetAutoGrLog()
+					cErro       := ""
+
+					For nY := 1 To Len(aLogAuto)
+						cErro += aLogAuto[nY] + CRLF
+					Next nY
+
+					cMsgErro:=cErro
+
+					FWAlertInfo(cMsgErro,"Atenção")
+
+					// MostraErro()
+
+				Else
+
+					nQtSaldo := (nLote - _nQtdEnv)//IIF((nQtSaldo - SB8->B8_SALDO) > 0,(nQtSaldo - SB8->B8_SALDO),nQtSaldo)
+					cLoteRet := RetornaLoteXX(mvCodProd)
+
+					_aItem:={{"D3_COD" ,cProduto,NIL},;
+						{"D3_LOTECTL" ,cLoteRet,NIL},;
+						{"D3_UM" ,SB1->B1_UM,NIL},;
+						{"D3_QUANT", nQtSaldo,NIL},;
+						{"D3_CONTA" ,SB1->B1_CONTA,NIL},;
+						{"D3_LOCAL" ,'XX' ,NIL},;
+						{"D3_GRUPO" ,SB1->B1_GRUPO ,NIL},;
+						{"D3_CF" ,'RE' ,NIL},;
+						{"D3_USUARIO" , UsrRetName(RetCodUsr()),Nil},;
+						{"D3_OBSERVA " ,'Retorno a Fabrica',NIL}}
+
+					aadd(aAuto,_aitem)
+
+					lMsErroAuto := .F.
+					lMsHelpAuto    := .T.
+					lAutoErrNoFile := .T.
+					MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,aAuto,3)
+
+					If lMsErroAuto
+
+						aLogAuto    := {}
+						aLogAuto    := GetAutoGrLog()
+						cErro       := ""
+
+						For nY := 1 To Len(aLogAuto)
+							cErro += aLogAuto[nY] + CRLF
+						Next nY
+
+						cMsgErro:=cErro
+
+						FWAlertInfo(cMsgErro,"Atenção")
+						// MostraErro()
+
+					Else
+
+						_aItem := {}
+						aAuto := {}
+						cLoteRet := RetornaLote01(mvCodProd)
+
+						_aItem:={{"D3_COD" ,cProduto,NIL},;
+							{"D3_LOTECTL" ,cLoteRet,NIL},;
+							{"D3_UM" ,SB1->B1_UM,NIL},;
+							{"D3_QUANT", _nQtdEnv,NIL},;
+							{"D3_CONTA" ,SB1->B1_CONTA,NIL},;
+							{"D3_LOCAL" ,'01' ,NIL},;
+							{"D3_GRUPO" ,SB1->B1_GRUPO ,NIL},;
+							{"D3_CF" ,'RE' ,NIL},;
+							{"D3_USUARIO" , UsrRetName(RetCodUsr()),Nil},;
+							{"D3_OBSERVA " ,'Retorno a Fabrica',NIL}}
+
+						aadd(aAuto,_aitem)
+
+						lMsErroAuto := .F.
+						lMsHelpAuto    := .T.
+						lAutoErrNoFile := .T.
+						MSExecAuto({|x,y,z| MATA241(x,y,z)},_aCab1,aAuto,3)
+
+						If lMsErroAuto
+
+							aLogAuto    := {}
+							aLogAuto    := GetAutoGrLog()
+							cErro       := ""
+
+							For nY := 1 To Len(aLogAuto)
+								cErro += aLogAuto[nY] + CRLF
+							Next nY
+
+							cMsgErro:=cErro
+
+							FWAlertInfo(cMsgErro,"Atenção")
+							// MostraErro()
+
+						Else
+
+							/******************************\
+							| Gabriel: Imprimir Etiqueta   |
+							\*****************************/
+
+							FWAlertSuccess("Movimento de numero:"+cCodSd3+" realizado com sucesso!", "Retorno à Fábrica")
+							_oDlgNf:End()
+							abreParamBox()
+
+						Endif
+
+					Endif
+
+				Endif
+
+			ENDIF
+
+		ENDIF
+
+	ENDIF
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 24/07/2025
+/*/
+Static Function RetornaLote01(cCodProd)
+	Local cQry := ""
+	Local cLoteRtrn := ""
+
+	cQry := "SELECT SB8.B8_LOTECTL AS LOTERET FROM "+RetSqlName("SB8")+" SB8 WHERE SB8.D_E_L_E_T_ = ' ' AND SB8.B8_PRODUTO = '"+cCodProd+"' AND SB8.B8_LOCAL = '01'"
+	cLoteRtrn := MpSysExecScalar(cQry,"LOTERET")
+
+Return cLoteRtrn
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 24/07/2025
+/*/
+Static Function RetornaLoteXX(cCodProd)
+	Local cQry := ""
+	Local cLoteRtrn := ""
+
+	cQry := "SELECT SB8.B8_LOTECTL AS LOTERET FROM "+RetSqlName("SB8")+" SB8 WHERE SB8.D_E_L_E_T_ = ' ' AND SB8.B8_PRODUTO = '"+cCodProd+"' AND SB8.B8_LOCAL = 'XX'"
+	cLoteRtrn := MpSysExecScalar(cQry,"LOTERET")
+
+Return cLoteRtrn
+
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 24/07/2025
+/*/
+Static Function abreParamBox()
+	Local aParamBox     := {}
+	Local aRet          := {}
+
+	IF !lIsFirst
+		_oDlgNf:End()
+	ENDIF
+
+	aAdd(aParamBox,{2, "Operação", "1", { '1-Envio a Fábrica','2-Retorno a Fábrica' },100,"AllwaysTrue()",.T.})
+
+	lRet := ParamBox( aParamBox, "Manutenção de Lotes", aRet)
+
+	If lRet
+
+		IF MV_PAR01 == '1-Envio a Fábrica'
+
+		Processa( { || fOpenReq() }, "Processando. Aguarde!" )
+
+		ELSE
+
+		Processa( { || fOpenRet() }, "Processando. Aguarde!" )
+
+		ENDIF
+
+	Else
+
+		break
+
+	EndIf
+
+	// _oBmpReq := TButton():New(006,004,"Requisição" ,oDlg,{|| fOpenReq() },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+	// _oBmpEnv := TButton():New(006,100,"Devolução" ,oDlg,{||  fOpenRet() },080,012,,_oFont,,.T.,,"Marcar Todos"   ,,,,.F.)
+
+Return

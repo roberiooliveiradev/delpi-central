@@ -1,0 +1,16 @@
+0001#STR0001#ALL#Relatório Comparativo Real X Previsto
+0002#STR0002#ALL#Comparativo entre o apontamento real da produção e o planeado,
+0003#STR0003#ALL#Baseando-se no roteiro de operações.os valores referentes aos 
+0004#STR0004#ALL#Tempos Estoo Convertidos Conforme O Parâmetro   Mv_tphr.
+0005#STR0005#ALL#Por Op
+0009#STR0009#ALL#Código de barras
+0010#STR0010#ALL#Administração
+0011#STR0011#ALL#Registo(s)
+0012#STR0012#ALL#Da Op:
+0013#STR0013#ALL#Do Recurso:
+0014#STR0014#ALL#Da Data:
+0015#STR0015#ALL#Do Operador:
+0016#STR0016#ALL#A Seleccionar Registos...
+0017#STR0017#ALL#Ordem De      Artigo         Operação Descrição          Recurso                                Ferramenta                Operador     Quantidade     (*)quantidade        Quantidade        Tempo     Tempo   Data Do
+0018#STR0018#ALL#Produção                               Da Operação                                                                                      Total Da Op       Produzida         Perda             Estimado  Real    Apontamento
+0022#STR0022#ALL#Registo De Produção Pcp

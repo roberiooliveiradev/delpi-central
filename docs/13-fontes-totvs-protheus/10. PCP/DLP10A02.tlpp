@@ -1,0 +1,334 @@
+#INCLUDE 'TOTVS.CH'
+#Include "RWMAKE.CH"
+#include 'fileio.ch'
+#Include "TopConn.ch"
+
+#DEFINE POS_CENARIO        01
+#DEFINE POS_ITEM      02  // POSIÇÃO  DA COLUNA NA ABA CTE REFERENTE A NUMERO DA NOTA
+#DEFINE POS_REFERENCIA    03 // POSIÇÃO  DA COLUNA NA ABA CTE REFERENTE A SERIE  DA NOTA
+#DEFINE POS_TIPDEM      04  // POSIÇÃO  DA COLUNA NA ABA CTE REFERENTE A DATA DE DIGITAÇÃO
+#DEFINE POS_DTENT    05 // POSIÇÃO  DA COLUNA NA ABA CTE REFERENTE A DATA DE EMISSÃO
+#DEFINE POS_QUANT        06
+#DEFINE POS_PEDCLI     07
+#DEFINE POS_NOMEABV     08
+#DEFINE POS_SEQITM       09
+#DEFINE POS_PRIORI   10
+#DEFINE POS_GRPENT       11
+#DEFINE POS_NRENTRE          12
+#DEFINE POS_ESTABE    13
+
+#Define STR_PULA    Chr(13)+Chr(10)
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 13/01/2025
+/*/
+User Function DLP10A02()
+
+	rpcsetenv("01")
+
+	Private cArqImp 	:= Space(200)
+	Private cDiretorio := Space(200)
+	Private bSelArq		:= {|| cArqImp:= cGetFile('Arquivo CSV (.csv) | *.CSV',OemToAnsi('Arquivos CSV'),,'',.T.,,.F.)}
+	Private bSelDir		:= {|| cDiretorio:= fSelDir()}
+
+	//Declaração de Variaveis Private dos Objetos
+	SetPrvt("oDlg1","oSay1","oSay2","oSay3","oSay4","oSay5","oGet1","oGet2","oGet3","oGet4","oGet5","oBtn1","oBtn2","oBtn3","oBtn4")
+
+	//Definicao do Dialog e todos os seus componentes.
+	oDlg1      := MSDialog():New( 118,280,280,584,"Importação Pedidos APS",,,.F.,,,,,,.T.,,,.T. )
+
+	oSay4      := TSay():New( 010,018,{||"Arquivo:"},oDlg1,,,.F.,.F.,.F.,.T.,CLR_BLACK,CLR_WHITE,032,008)
+	oGet4      := TGet():New( 010,058,{|u| If(PCount()>0,cArqImp:=u,cArqImp)},oDlg1,050,008,'',{|| len(cArqImp) > 0 },CLR_BLACK,CLR_WHITE,,,,.T.,"",,,.F.,.F.,,.F.,.F.,"","",,)
+	oBtn3      := TButton():New( 010,108,"...",oDlg1,bSelArq,10,10,,,,.T.,,"",,,,.F. )
+
+	oSay5      := TSay():New( 030,018,{||"Diretório:"},oDlg1,,,.F.,.F.,.F.,.T.,CLR_BLACK,CLR_WHITE,032,008)
+	oGet5      := TGet():New( 030,058,{|u| If(PCount()>0,cDiretorio:=u,cDiretorio)},oDlg1,050,008,'',{|| len(cDiretorio) > 0 },CLR_BLACK,CLR_WHITE,,,,.T.,"",,,.F.,.F.,,.F.,.F.,"","",,)
+	oBtn4      := TButton():New( 030,108,"...",oDlg1,bSelDir,10,10,,,,.T.,,"",,,,.F. )
+
+	oBtn1      := TButton():New( 050,081,"Confirmar",oDlg1,{|| Processa({ || procCSV(),OemToAnsi('Lendo o Arquivo.')}, OemToAnsi('Aguarde...')),oDlg1:End()  },037,012,,,,.T.,,"",,,,.F. )
+	oBtn2      := TButton():New( 050,036,"Fechar",oDlg1,{|| oDlg1:End()},037,012,,,,.T.,,"",,,,.F. )
+
+	oDlg1:Activate(,,,.T.)
+
+	rpcclearenv()
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 16/01/2025
+/*/
+Static Function procCSV()
+	Local aData := {} as array
+	Local lRet := .F. as logical
+
+	FWMsgRun(, {|| aData := filterData(cArqImp) }, "", "Buscando os dados...")
+
+	IF Len(aData) > 0
+
+		FWMsgRun(, {||  lRet := lerCSV(aData,cDiretorio) }, "", "Gerando o relatório...")
+
+	ENDIF
+
+	IF lRet
+
+		FWAlertSuccess("Relatório gerado com sucesso no diretório " + cDiretorio,"Sucesso")
+
+	ENDIF
+
+Return
+
+/*/{Protheus.doc} generate
+Gera excel com os dados recebidos
+enviados por parâmetro
+@type  Static Function
+@author Pedro lindenberg
+@since 16/01/2025
+/*/
+Static Function lerCSV(aData,cPath)
+	Local cBuffer         as character
+	Local cPathAbrt       as character
+	Local lRet            as logical
+	Local lActivate       as logical
+	Local nX              as numeric
+	Local nY              as numeric
+	Local nLineStart := 2 as numeric
+	Local nLenSeparator   as numeric //número de colunas da linha separadora entre o nome das colunas e cabeçalho da logo
+	Local oExcel          as object
+	Local oExcelAbrt      as object
+	Local oCellHorAlign   as object
+	Local oCellVertAlign  as object
+	Local aHeader    := {}
+	Local cNameFile  := "Pedidos_APS_"+DTOS(DATE())+FWTimeStamp(1)+""
+	Local cSheet     := "TOTVS_APS"
+
+	Private cCLRWhite := "ffffff"  as character // branco
+	Private cCLRGray  := "C0C0C0"  as character // cinza
+	Private cCLRGray1 := "d1d1d1"  as character // cinza
+	Private cCLRDelpi := "0c106b"  as character // azul
+	Private cCLRBlk   := "0d0c0c"  as character //preto
+	Private cCLRRed   := "800404"  as character
+	Private cCLRCin2  := "6b6e66" as character
+
+
+	lRet 			:= .T.
+	lActivate		:= .F.
+	oExcel 			:= FwPrinterXlsx():New(.T.)
+	cBuffer			:= ""
+	nLenSeparator	:= IIf(Len(aHeader) < 12,12,Len(aHeader))
+
+	//Prepara o cabeçalho
+	aAdd(aHeader,"Cenário")
+	aAdd(aHeader,"Item")
+	aAdd(aHeader,"Referência")
+	aAdd(aHeader,"Tipo Demanda")
+	aAdd(aHeader,"Data Entrega")
+	aAdd(aHeader,"Quantidade")
+	aAdd(aHeader,"Pedido Cliente")
+	aAdd(aHeader,"Nome Abreviado")
+	aAdd(aHeader,"Seq Item Ped")
+	aAdd(aHeader,"Prioridade")
+	aAdd(aHeader,"Grupo Entrega")
+	aAdd(aHeader,"Nr Entrega")
+	aAdd(aHeader,"Estabelecimento")
+
+	Begin Sequence
+
+		// If Empty(cPath)
+		// 	cPath := "C:\Users\pedro\Desktop\"
+		// EndIf
+
+		If Empty(cNameFile)
+			cNameFile := "delpitst"+FWTimeStamp()
+		EndIf
+
+		cPathAbrt := cPath + cNameFile + ".xlsx"
+		cPath += "\"+ cNameFile + ".rel"
+
+		If ! oExcel:Activate(cPath)
+			cError := "Falha na ativação do objeto de gerar o arquivo XLSX."
+			Break
+		EndIf
+
+		lActivate := .T.
+
+		If ! oExcel:addSheet(cSheet)
+			cError := "Falha na criação da aba da planilha."
+			Break
+		EndIf
+
+		oExcel:setBorder(.T.,.T.,.T.,.T.,FwXlsxBorderStyle():Medium(),"000000")
+
+		//------------------------Título 1------------------------
+		oCellHorAlign := FwXlsxCellAlignment():Horizontal()
+		oCellVertAlign := FwXlsxCellAlignment():Vertical()
+		oExcel:setFont(FwPrinterFont():Calibri(),11,.F.,.T.,.F.)
+		oExcel:mergeCells(1,1,1,13)
+		oExcel:setCellsFormat(oCellHorAlign:Center(),oCellVertAlign:Center(),.T.,0,cCLRWhite,cCLRRed,"")
+		oExcel:setValue(1,1,"Layout planilha Excel de Importação pedidos e previsões APS")
+		oExcel:resetFont()
+		oExcel:resetCellsFormat()
+
+		//------------------------Título 2------------------------
+		// oCellHorAlign := FwXlsxCellAlignment():Horizontal()
+		// oCellVertAlign := FwXlsxCellAlignment():Vertical()
+		// oExcel:setFont(FwPrinterFont():Calibri(),11,.F.,.T.,.F.)
+		// oExcel:mergeCells(1,20,1,23)
+		// oExcel:setCellsFormat(oCellHorAlign:Center(),oCellVertAlign:Center(),.F.,0,cCLRBlk,cCLRCin2,"")
+		// oExcel:setValue(1,20,"Layout planilha Excel de Importação pedidos e previsões APS")
+		// oExcel:resetFont()
+		// oExcel:resetCellsFormat()
+
+		oExcel:setColumnsWidth(1,Len(aHeader)-1,20)
+		oExcel:setColumnsWidth(Len(aHeader),Len(aHeader),46)
+
+		oExcel:resetBorder()
+		// oExcel:setBorder(.T.,.T.,.T.,.T.,FwXlsxBorderStyle():Thin(),"000000")
+
+		oExcel:setFont(FwPrinterFont():Calibri(),11,.F.,.T.,.F.)
+		For nX := 1 To Len(aHeader)
+			oExcel:setCellsFormat(oCellHorAlign:Center(),oCellVertAlign:Center(),.F.,0,"FFFFFF",cCLRDelpi,"")
+			oExcel:setValue(2,nX,aHeader[nX])
+		Next nX
+		oExcel:resetFont()
+		oExcel:resetCellsFormat()
+
+		//------------------------Adiciona os dados do arquivo-----------------------------
+		oExcel:setFont(FwPrinterFont():Calibri(),11,.F.,.F.,.F.)
+		//Percorre as linhas
+		For nX := 1 To Len(aData)
+
+			oExcel:setCellsFormat(oCellHorAlign:Center(),oCellVertAlign:Center(),.F.,0,"000000","FFFFFF","")
+
+			//Percorre as colunas
+			For nY := 1 To Len(aData[nX])
+
+				//Remove espaçamentos
+				If ValType(aData[nX][nY]) == "C"
+					aData[nX][nY] := AllTrim(aData[nX][nY])
+				EndIf
+
+				If ! oExcel:setValue(nX+nLineStart,nY,aData[nX][nY])
+					cError := "Falha na adição de valor em linha " + cValToChar(nX) + " na coluna " + cValToChar(nY) + ". Verifique o conteúdo informado."
+					Break
+				EndIf
+			Next nY
+
+			oExcel:resetCellsFormat()
+
+		Next nX
+		oExcel:resetFont()
+
+		lRet := oExcel:ApplyAutoFilter(2/*nRowFrom*/,1 /*nColFrom*/,len(aData)-1/*nRowTo*/,13/*nColTo*/)
+
+		oExcel:toXlsx()
+
+		Recover
+
+		lRet := .F.
+
+	End Sequence
+
+	If lActivate
+		oExcel:DeActivate()
+	EndIf
+
+	//Ativando o arquivo e gerando o xlsx
+	oExcelAbrt := MsExcel():New()             //Abre uma nova conexão com Excel
+	oExcelAbrt:WorkBooks:Open(cPathAbrt)     //Abre uma planilha
+	oExcelAbrt:SetVisible(.T.)
+
+Return lRet
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 16/01/2025
+/*/
+Static Function fSelDir()
+	Local aArea   := GetArea()
+	Local cDirIni := GetTempPath()
+	Local cTipArq := ""
+	Local cTitulo := "Seleção de Pasta para Salvar arquivo"
+	Local lSalvar := .F.
+	Local cPasta  := ""
+
+	cPasta := tFileDialog(;
+		cTipArq,;                  // Filtragem de tipos de arquivos que serão selecionados
+	cTitulo,;                  // Título da Janela para seleção dos arquivos
+	,;                         // Compatibilidade
+	cDirIni,;                  // Diretório inicial da busca de arquivos
+	lSalvar,;                  // Se for .T., será uma Save Dialog, senão será Open Dialog
+	GETF_RETDIRECTORY;         // Se não passar parâmetro, irá pegar apenas 1 arquivo; Se for informado GETF_MULTISELECT será possível pegar mais de 1 arquivo; Se for informado GETF_RETDIRECTORY será possível selecionar o diretório
+	)
+
+	If Empty(cPasta)
+		MsgInfo("Selecione um diretório", "Atenção")
+	EndIf
+
+	RestArea(aArea)
+
+Return cPasta
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 16/01/2025
+/*/
+Static Function filterData(cArqImp)
+	local cLinha  	 as character
+	local lPrim   	:= .T. as logical
+	Local aCampos 	:= {} as array
+	Local aData  	:= {} as array
+	Local aDataForm:= {} as array
+	Local x1 as numeric
+	Local cCol1 as character
+
+	if empty(cArqImp)
+		msgStop("Arquivo não selecionado.")
+		return
+	endif
+
+	//Alimenta Array com os dados a importar
+	FT_FUSE(cArqImp)
+	ProcRegua(FT_FLASTREC())
+	FT_FGOTOP()
+	While !FT_FEOF()
+
+		cLinha := FT_FREADLN()
+
+		If lPrim
+			aCampos := Separa(cLinha,";",.T.)
+			lPrim := .F.
+		Else
+			AADD(aData,Separa(cLinha,";",.T.))
+		EndIf
+
+		FT_FSKIP()
+
+	EndDo
+
+	for x1 := 1 to Len(aData)
+
+		IF DateDiffDay(DATE(),cToD(aData[x1][6])) <= 7
+
+			cCol1 := "001"
+
+		ELSE
+
+			cCol1 := "002"
+
+		ENDIF
+
+		aadd(aDataForm,{cCol1,aData[x1][3],"","2",aData[x1][6],((GetDToVal(aData[x1][5])/1000))})
+
+	next
+
+Return aDataForm

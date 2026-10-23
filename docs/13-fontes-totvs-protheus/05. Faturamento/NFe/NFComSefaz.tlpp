@@ -1,0 +1,3688 @@
+#INCLUDE "tlpp-core.th"
+
+Static oQry := Nil
+Static cEspecie := "NFCOM"
+Static oQryFT   := Nil
+Static lIDTrib  := SD2->(FieldPos("D2_IDTRIB")) <> 0 .AND. SD1->(FieldPos("D1_IDTRIB")) <> 0
+
+User Function NFComSefaz(cTipo,cSerie,cNota,cClieFor,cLoja,cNotaOri,cSerieOri,cModalidade) as array
+    local cXML      := ""           as character
+    local oXML      := nil          as object
+    Local aNota     := {}           as array
+    local cNFe      := ""           as character
+
+    Default cTipo       := PARAMIXB[1,1] // PARAMIXB[1]
+	Default cSerie      := PARAMIXB[1,3] // PARAMIXB[3]
+	Default cNota       := PARAMIXB[1,4] // PARAMIXB[4]
+	Default cClieFor    := PARAMIXB[1,5] // PARAMIXB[5]
+	Default cLoja       := PARAMIXB[1,6] // PARAMIXB[6]
+    Default dDtEmis     := PARAMIXB[1,2] // PARAMIXB[6]
+    Default cTpAmb      := PARAMIXB[3]
+    Default cNotaOri    := PARAMIXB[4,1]
+    Default cSerieOri   := PARAMIXB[4,2]
+    Default cModalidade := PARAMIXB[5]
+
+    aNota := { cNota, cSerie, cClieFor, cLoja, dDtEmis, cTipo, cTpAmb, cNotaOri, cSerieOri, cModalidade }
+
+    oXML := NFComSefaz():New(aNota)
+    cXML := oXML:processXML()
+    cNFe := oXML:cChaveNFCom
+    oXML := oXML:destroy()
+
+return ({cNFe, cXML, cNotaOri, cSerieOri})
+
+/*/{Protheus.doc} NFComSefaz
+Classe responsável pela montagem do XML da NFCom
+@type class
+@version 12.1.2410
+@author fs.martinez
+@since 1/24/2025
+/*/
+class NFComSefaz
+
+    //Objetos de grupos do XML
+    private data oIde                   as json
+    private data oEmit                  as json
+    private data oDest                  as json
+    private data oAssinante             as json
+    private data oGSub                  as json
+    private data oGCofat                as json
+    private data oDet                   as json
+    private data oTotal                 as json
+    private data oGFidelidade           as json
+    private data oGFat                  as json
+    private data oGFatCentral           as json
+    private data oAutXML                as json
+    private data oInfAdic               as json
+    private data oGRespTec              as json
+    private data oInfNFComSupl          as json
+    private data oNfTciIntg
+    private data oXmlRefTri
+
+    //propriedades auxiliares
+    public  data cChaveNFCom            as character
+    private data nVProdItem             as Numeric
+    private data vItem                  as Numeric
+    private data nVProd                 as Numeric
+    private data cXML                   as character
+    private data cNota                  as character
+    private data cSerie                 as character
+    private data cCliFor                as character
+    private data cLoja                  as character
+    private data cTipoNF                as character
+    private data cTpAmb                 as character
+    private data cModalidade            as character
+    private data cMsgFormula            as character
+    private data dDtNF                  as date
+    private data aUF                    as array
+    private data lVldExc                as logical
+    private data cSD2pedido             as character
+    private data cNFOri                 as character
+    private data cSerOri                as character
+
+    //Metodos publicos
+    public method new() constructor
+    public method processXML()          as character
+    public method destroy()
+
+    //Metodo privados
+    //processamento
+    private method procIde()
+    private method procEmit()
+    private method procDest()
+    private method procAssinante()
+    private method procGSub()
+    private method procGCofat()
+    private method procDet()
+    private method procImpostoDet()
+    private method procTaxICMS()
+    private method procTaxPIS()
+    private method procTaxCOFINS()
+    private method procTaxFUST()
+    private method procTaxFUNTTEL()
+    private method procTaxRetTrib()
+    private method procTaxNew()
+    private method procGProcRef()
+    private method procGRessarc()
+    private method procTotal()
+    private method procGFidelidade()
+    private method procGFat()
+    private method procGFatCentral()
+    private method procAutXML()
+    private method procInfAdic()
+
+    //impressao
+    private method printXML()           as character
+    private method printIde()           as character
+    private method printEmit()          as character
+    private method printDest()          as character
+    private method printAssinante()     as character
+    private method printGSub()          as character
+    private method printGCofat()        as character
+    private method printDet()           as character
+    private method printImpostoDet()    as character
+    private method printTaxICMS()       as character
+    private method printTaxPIS()        as character
+    private method printTaxCOFINS()     as character
+    private method printTaxFUST()       as character
+    private method printTaxFUNTTEL()    as character
+    private method printTaxRetTrib()    as character
+    private method printGProcRef()      as character
+    private method printGRessarc()      as character
+    
+    private method printTotal()         as character
+    private method printGFidelidade()   as character
+    private method printGFat()          as character
+    private method printGFatCentral()   as character
+    private method printAutXML()        as character
+    private method printInfAdic()       as character
+    private method printGRespTec()      as character
+    private method printInfNFComSupl()  as character
+
+    //auxiliares
+    private method procChaveNFCom()     as character
+    private method getUFFil()           as character
+    private method procMsg()
+    private method formatValuePerType() as character
+    private method defUF()              as array
+    private method BuscaItensNota()     as character
+    private method BuscaNfAnt()         as array
+    private method GetCodPais()         as array
+    private method ValidCNPJ()          as logical
+
+endClass
+
+/*/{Protheus.doc} NFComSefaz::new
+Metodo construtor da classe responsável por montar o XML de NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/23/2025
+@return object, objeto da classe
+/*/
+method new(aNota) class NFComSefaz
+
+    self:oIde           := jsonObject():New()
+    self:oEmit          := jsonObject():New()
+    self:oDest          := jsonObject():New()
+    self:oAssinante     := jsonObject():New()
+    self:oGSub          := nil //opcional
+    self:oGCofat        := nil //opcional
+    self:oDet           := jsonObject():New()
+    self:oTotal         := jsonObject():New()
+    self:oGFidelidade   := nil //opcional
+    self:oGFat          := nil //opcional
+    self:oGFatCentral   := nil //opcional
+    self:oAutXML        := nil //opcional
+    self:oInfAdic       := nil //opcional
+    self:oGRespTec      := nil //opcional
+    self:oInfNFComSupl  := jsonObject():New()
+    self:oNfTciIntg		:= nil //opcional
+    self:oXmlRefTri		:= nil //opcional
+    self:defUF()
+
+    self:cChaveNFCom    := ""
+    //{ cNota, cSerie, cClieFor, cLoja, dDtEmis, cTipo, cTpAmb, cNotaOri, cSerieOri, cModalidade }
+    self:cNota          := aNota[1]
+    self:cSerie         := aNota[2]
+    self:cCliFor        := aNota[3]
+    self:cLoja          := aNota[4]
+    self:dDtNF          := aNota[5]
+    self:cTipoNF        := aNota[6]
+    self:cTpAmb         := aNota[7]
+    self:cModalidade	:= aNota[10]
+    self:nVProdItem     := 0
+    self:vItem          := 0
+    self:nVProd         := 0
+
+    if self:cTipoNF == "0"
+        self:cTipoNF := "E"
+    Else
+        self:cTipoNF := "S"
+    Endif
+
+return self
+
+/*/{Protheus.doc} NFComSefaz::destroy
+Metodo responsável por limpar variaveis da classe
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/24/2025
+/*/
+method destroy() class NFComSefaz
+    self:oIde           := fwFreeObj(self:oIde)
+    self:oEmit          := fwFreeObj(self:oEmit)
+    self:oDest          := fwFreeObj(self:oDest)
+    self:oAssinante     := fwFreeObj(self:oAssinante)
+    self:oGSub          := fwFreeObj(self:oGSub)
+    self:oGCofat        := fwFreeObj(self:oGCofat)
+    self:oDet           := fwFreeObj(self:oDet)
+    self:oTotal         := fwFreeObj(self:oTotal)
+    self:oGFidelidade   := fwFreeObj(self:oGFidelidade)
+    self:oGFat          := fwFreeObj(self:oGFat)
+    self:oGFatCentral   := fwFreeObj(self:oGFatCentral)
+    self:oAutXML        := fwFreeObj(self:oAutXML)
+    self:oInfAdic       := fwFreeObj(self:oInfAdic)
+    self:oGRespTec      := fwFreeObj(self:oGRespTec)
+    self:oInfNFComSupl  := fwFreeObj(self:oInfNFComSupl)
+    self:oNfTciIntg		:= fwFreeObj(self:oNfTciIntg)
+    self:oXmlRefTri		:= fwFreeObj(self:oXmlRefTri)
+    self:oIde           := Nil
+    self:oEmit          := Nil
+    self:oDest          := Nil
+    self:oAssinante     := Nil
+    self:oGSub          := Nil
+    self:oGCofat        := Nil
+    self:oDet           := Nil
+    self:oTotal         := Nil
+    self:oGFidelidade   := Nil
+    self:oGFat          := Nil
+    self:oGFatCentral   := Nil
+    self:oAutXML        := Nil
+    self:oInfAdic       := Nil
+    self:oGRespTec      := Nil
+    self:oInfNFComSupl  := Nil
+    self:oNfTciIntg		:= Nil
+    self:oXmlRefTri		:= Nil
+    self:aUF            := fwFreeArray(self:aUF)
+    self:cChaveNFCom    := ""
+    self:cNota          := ""
+    self:cSerie         := ""
+    self:cCliFor        := ""
+    self:cLoja          := ""
+    self:cTipoNF        := ""
+    self:cTpAmb         := ""
+    self:dDtNF          := ctod("")
+    self:nVProdItem     := 0
+    self:vItem          := 0
+    self:nVProd         := 0
+return nil
+
+/*/{Protheus.doc} NFComSefaz::processXML
+Metodo responsável por todo processamento necessário para montagem do XML do NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/28/2025
+@return character, XML de NFCom
+/*/
+method processXML() as character class NFComSefaz
+
+    self:procIde()
+    self:procEmit()
+    self:procDest()
+    self:procAssinante()
+    self:procGCofat()
+    self:procDet()
+    self:procGSub()
+    self:procTotal()
+    self:procGFidelidade()
+    self:procGFat()
+    self:procGFatCentral()
+    self:procAutXML()
+    self:procInfAdic()
+return self:printXML()
+
+/*/{Protheus.doc} NFComSefaz::printXML
+Metodo responsavel por montar o XML da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/23/2025
+@return character, XML de NFCom
+/*/
+method printXML() as character class NFComSefaz
+    self:cXML := '<?xml version="1.0" encoding="UTF-8"?>'
+    self:cXML += '<NFCom xmlns="http://www.portalfiscal.inf.br/nfcom">'
+    self:cXML += '<infNFCom Id="NFCom' + allTrim(self:cChaveNFCom) + '" versao="1.00">'
+    //grupo <infNFCom>:
+    self:cXML += self:printIde()
+    self:cXML += self:printEmit()
+    self:cXML += self:printDest()
+    self:cXML += self:printAssinante()
+    self:cXML += self:printGSub()
+    self:cXML += self:printGCofat()
+    self:cXML += self:printDet()
+    self:cXML += self:printTotal()
+    self:cXML += self:printGFidelidade()
+    self:cXML += self:printGFat()
+    self:cXML += self:printGFatCentral()
+    self:cXML += self:printAutXML()
+    self:cXML += self:printInfAdic()
+    self:cXML += self:printGRespTec()
+    self:cXML += '</infNFCom>'
+    //Grupo <infNFComSupl>:
+    self:cXML += self:printInfNFComSupl()
+    self:cXML += '</NFCom>'
+
+    self:cXML := SpecialChar(self:cXML)
+    self:cXML := EncodeUTF8(self:cXML)
+return self:cXML
+
+/*/{Protheus.doc} NFComSefaz::procChaveNFCom
+Define a chave da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/31/2025
+@return character, chave da NFCom
+/*/
+method procChaveNFCom(cCDV) class NFComSefaz
+    local cCgc := alltrim(SM0->M0_CGC) as character
+
+    default cCDV := ""
+
+	/*				UF	+ AAMM	+ CNPJ	        + Modelo + Série +  nNF	+       tpEmis + Site Aut.    + cNF	+   DV
+	Qtd caracteres:	02	+ 04	+ 14	        + 02	 + 03	 +  09	+       01	   + 01           + 07	+   01 */
+    //              35    2506    53113791000122  62       308      000000202   1        0              4354817 2
+    self:cChaveNFCom := self:oIde["cUF"]
+    self:cChaveNFCom += FsDateConv(self:dDtNF,"YYMM") 
+    self:cChaveNFCom += replic("0",14-len(cCgc)) + cCgc 
+    self:cChaveNFCom += self:oIde["mod"]
+    self:cChaveNFCom += StrZero(Val(self:oIde["serie"]),3)
+    self:cChaveNFCom += StrZero(Val(self:oIde["nNF"]),9)
+    self:cChaveNFCom += /*"0" + */self:oIde["tpEmis"]
+    self:cChaveNFCom += /*"0" + */self:oIde["nSiteAutoriz"]
+    self:cChaveNFCom += strZero(val(self:oIde["cNF"]),7)
+    cCDV := modulo11(self:cChaveNFCom)
+    self:cChaveNFCom += cCDV
+
+return self:cChaveNFCom
+
+/*/{Protheus.doc} NFComSefaz::procIde
+Processamento dos dados a serem informados no XML do grupo de TAG <ide> - Identificação da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/24/2025
+/*/
+method procIde() class NFComSefaz
+    
+    local cSiteAut  := "0" //Verificar consultoria tributaria
+    local cTpRec    := ""
+    local cGrpClas  := Nil
+    local cUF       := self:getUFFil()
+    Local aFinNFCom := {"0", .F.} // 0 - NFCom Normal; 3 - NFCom de Substituição; 4 - NFCom ajuste de débito;
+    Local cMeiosRede:= Nil
+    
+    self:oIde["cUF"]                := self:aUF[aScan(self:aUF,{|x| x[1] == cUF})][02]
+    self:oIde["tpAmb"]              := self:cTpAmb
+    self:oIde["nNF"]                := alltrim(Str(Val(self:cNota)))
+    self:oIde["mod"]                := "62"
+    self:oIde["serie"]              := AllTrim(self:cSerie)
+    self:oIde["cNF"]                := inverte(self:cNota)
+    self:oIde["dhEmi"]              := self:formatValuePerType(self:dDtNF) + "T" + time() + "-03:00" //TODO:
+    self:oIde["tpEmis"]             := self:cModalidade
+    self:oIde["nSiteAutoriz"]       := cSiteAut
+    self:oIde["cMunFG"]             := allTrim(SM0->M0_CODMUN)
+    self:oIde["verProc"]            := getVersaoTSS()
+    // 0 - NFCom Normal; 3 - NFCom de Substituição; 4 - NFCom ajuste de débito;
+    aFinNFCom := RetfinNFCom( ::cTipoNF, ::cSerie, ::cNota, ::cCliFor, ::cLoja)
+    //TODO: obrigatorios
+    self:oIde["finNFCom"]           := aFinNFCom[1] //Ajuste de debito
+
+    DbSelectArea("SFX")
+    SFX->(DbSetOrder(1)) //FX_FILIAL, FX_TIPOMOV, FX_SERIE, FX_DOC, FX_CLIFOR, FX_LOJA, FX_ITEM, FX_COD
+    cBusca := xFilial("SFX") + ::cTipoNF + ::cSerie + ::cNota + ::cCliFor + ::cLoja
+    If SFX->(MsSeek(cBusca))
+        // ERP SFX->FX_TIPOREC 0=Serv.Prestados; 1=Cob.Debito; 2=Venda Mercador.; 3=Pre-pago; 4=Outras proprias; 5=Co-faturamento; 6=Per. Futuro; 7=Faturamento Centralizado; 9=Outras terceiros  
+        // SEFAZ 0- Faturamento Normal; 1 - Faturamento centralizado; 2 - Cofaturamento 
+        If AllTrim(SFX->FX_TIPOREC) == "0"
+            cTpRec  := "0"
+        ElseIf AllTrim(SFX->FX_TIPOREC) == "7"
+            cTpRec  := "1"
+        ElseIf AllTrim(SFX->FX_TIPOREC) $ "5"
+            cTpRec  := "2"
+        EndIf
+        //0=Pre-Pago; 1=Pos-Pago
+        If  SFX->(ColumnPos("FX_INDPAG")) > 0 .AND. SFX->FX_INDPAG == "0"
+            cGrpClas := "1"
+        EndIf
+
+        If SFX->(ColumnPos("FX_INMRED")) > 0 .AND. SFX->FX_INMRED == "1"
+            cMeiosRede := "1"
+        EndIf
+        // Se a tabela estiver atualizada, prevalece o campo da tabela
+        If SFX->(FieldPos("FX_FINNFC")) <> 0
+            self:oIde["finNFCom"] := SFX->FX_FINNFC
+        EndIf
+    EndIf
+
+    self:oIde["tpFat"]              := cTpRec   //Tipo de Faturamento da NFCom: 0- Faturamento Normal; 1 - Faturamento centralizado; 2 - Cofaturamento
+    //opcionais
+    self:oIde["indPrePago"]         := cGrpClas     //Indicador de serviço pré-pago: 1 ? Serviço pré-pago (informar a tag somente se a nota for referente a um serviço exclusivamente pré-pago)
+    self:oIde["indCessaoMeiosRede"] := cMeiosRede   //Indicador de Sessão de Meios de Rede. Uma vez informado (valor = 1), essa tag dispensa geração do grupo Fatura. Apenas para notas dos tipos Normal e Substituição com tipo de faturamento normal// ANTONIO - NAO TEM
+
+    self:procChaveNFCom(@self:oIde["cDV"])
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printIde
+Processamento dos dados a serem informados no XML do grupo de TAG <ide> - Identificação da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/23/2025
+@return character, XML com o grupo de tag <ide>
+/*/
+method printIde() as character class NFComSefaz
+    local cXML as character
+
+    cXML += "<ide>"
+    cXML +=    "<cUF>" + self:oIde["cUF"] + "</cUF>"
+    cXML +=    "<tpAmb>" + self:oIde["tpAmb"] + "</tpAmb>"
+    cXML +=    "<mod>" + self:oIde["mod"] + "</mod>"
+    cXML +=    "<serie>" + self:oIde["serie"] + "</serie>"
+    cXML +=    "<nNF>" + self:formatValuePerType(val(self:oIde["nNF"]),9) + "</nNF>"
+    cXML +=    "<cNF>" + self:formatValuePerType(self:oIde["cNF"],7) + "</cNF>"
+    cXML +=    "<cDV>" + self:oIde["cDV"] + "</cDV>"
+    cXML +=    "<dhEmi>" + self:oIde["dhEmi"] + "</dhEmi>"
+    cXML +=    "<tpEmis>" + self:oIde["tpEmis"] + "</tpEmis>" //TODO: validar se o TSS ja pega?
+    cXML +=    "<nSiteAutoriz>" + self:oIde["nSiteAutoriz"] + "</nSiteAutoriz>"
+    cXML +=    "<cMunFG>" + self:formatValuePerType(self:oIde["cMunFG"]) + "</cMunFG>"
+    cXML +=    "<finNFCom>" + self:oIde["finNFCom"] + "</finNFCom>"
+    cXML +=    "<tpFat>" + self:oIde["tpFat"] + "</tpFat>"
+    cXML +=    "<verProc>" + self:oIde["verProc"] + "</verProc>"
+    if self:oIde["indPrePago"] <> nil
+        cXML +=    "<indPrePago>" + self:oIde["indPrePago"] + "</indPrePago>"
+    endIf
+    if self:oIde["indCessaoMeiosRede"] <> nil
+        cXML += "<indCessaoMeiosRede>" + self:oIde["indCessaoMeiosRede"] + "</indCessaoMeiosRede>"
+    endIf
+    cXML += "</ide>"
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procEmit
+Processamento dos dados a serem informados no XML do grupo de TAG <emit> - Identificação do Emitente do documento fiscal
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procEmit() class NFComSefaz
+
+    self:oEmit["CNPJ"]         := AllTrim(SM0->M0_CGC)
+    self:oEmit["IE"]           := AllTrim( StrTran( SM0->M0_INSC, "/", "" ) )
+    // Verificar a logica do MOC para o preenchimento da TAG IEUFDest
+    // Pede para acrescentar zero a esquerda da IE porem isso gera 
+    // erros de validação no TSS
+    // Formato pedido no MOC
+    //     1 3 0 0 0 0 0 1 9
+    // N N N N N N N N N N D
+
+    self:oEmit["CRT"]          := AllTrim(SuperGetMV("MV_CODREG", ," "))
+    self:oEmit["xNome"]        := ConvType(SM0->M0_NOMECOM)
+    
+    self:oEmit["xFant"]    := ConvType(SM0->M0_NOME)
+    If (FWSizeFilial() > 2 )
+	    self:oEmit["xFant"]    := ConvType(FWFilialName())
+    EndIf
+   
+    //opcionais
+    self:oEmit["enderEmit"]             := jsonObject():new()
+
+    self:oEmit["enderEmit"]["nro"]  := "SN"
+
+    If GetNewPar("MV_SPEDEND",.F.)
+
+        self:oEmit["enderEmit"]["xLgr"]     := NoAcento(ConvType(FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[1]))
+        
+        If FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[2] <> 0
+            self:oEmit["enderEmit"]["nro"]  := FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[3]
+        EndIf
+
+        self:oEmit["enderEmit"]["xCpl"]     := ConvType(FisGetEnd(SM0->M0_ENDENT,SM0->M0_ESTENT)[4])
+        If !Empty(SM0->M0_COMPENT)
+            self:oEmit["enderEmit"]["xCpl"] := AllTrim(SM0->M0_COMPENT)
+        EndIf
+
+        self:oEmit["enderEmit"]["xBairro"]  := ConvType(SM0->M0_BAIRENT)
+        self:oEmit["enderEmit"]["xMun"]     := ConvType(SM0->M0_CIDENT)
+        self:oEmit["enderEmit"]["CEP"]      := ConvType(SM0->M0_CEPENT)
+        self:oEmit["enderEmit"]["UF"]       := Upper(ConvType(SM0->M0_ESTENT))
+    Else
+        self:oEmit["enderEmit"]["xLgr"]    := NoAcento(ConvType(FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[1]))
+
+        If FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[2] <> 0
+            self:oEmit["enderEmit"]["nro"]     := FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[3]
+        EndIf
+
+        self:oEmit["enderEmit"]["xCpl"]        := ConvType(FisGetEnd(SM0->M0_ENDCOB,SM0->M0_ESTCOB)[4])
+        If !Empty(SM0->M0_COMPCOB)
+            self:oEmit["enderEmit"]["xCpl"]    := AllTrim(SM0->M0_COMPCOB)
+        EndIf
+
+        self:oEmit["enderEmit"]["xBairro"]  := ConvType(SM0->M0_BAIRCOB)
+        self:oEmit["enderEmit"]["xMun"]     := ConvType(SM0->M0_CIDCOB)
+        self:oEmit["enderEmit"]["CEP"]      := ConvType(SM0->M0_CEPCOB)
+        self:oEmit["enderEmit"]["UF"]       := Upper(ConvType(SM0->M0_ESTCOB))
+    EndIf
+
+    self:oEmit["enderEmit"]["fone"]         := ''
+    If !Empty(SM0->M0_TEL)
+        self:oEmit["enderEmit"]["fone"]     := FormatTel(SM0->M0_TEL)
+    EndIf
+    self:oEmit["enderEmit"]["cMun"]         := ConvType(SM0->M0_CODMUN)
+    self:oEmit["enderEmit"]["email"]        :=  ''//Nao tem na SM0
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printEmit
+Processamento dos dados a serem informados no XML do grupo de TAG <emit> - Identificação do Emitente do documento fiscal
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/24/2025
+@return character, XML com o grupo de tag <emit>
+/*/
+method printEmit() as character class NFComSefaz
+    local cXML as character
+
+    cXML := "<emit>"
+    cXML +=    "<CNPJ>" + self:oEmit["CNPJ"] + "</CNPJ>"
+    cXML +=    "<IE>" + self:oEmit["IE"] + "</IE>"
+    if self:oEmit["IEUFDest"] <> nil
+        cXML +=    "<IEUFDest>" + self:oEmit["IEUFDest"] + "</IEUFDest>"
+    endIf
+    cXML +=    "<CRT>" + self:oEmit["CRT"] + "</CRT>"
+    cXML +=    "<xNome>" + self:oEmit["xNome"] + "</xNome>"
+    if self:oEmit["xFant"] <> nil
+        cXML += "<xFant>" + self:oEmit["xFant"] + "</xFant>"
+    endIf
+    //Grupo enderEmit
+    if self:oEmit["enderEmit"] <> nil
+        cXML += "<enderEmit>"
+        cXML +=     "<xLgr>" + self:oEmit["enderEmit"]["xLgr"] + "</xLgr>"
+        cXML +=     "<nro>" + self:oEmit["enderEmit"]["nro"] + "</nro>"
+        if self:oEmit["enderEmit"]["xCpl"] <> nil .and. !empty(self:oEmit["enderEmit"]["xCpl"])
+            cXML += "<xCpl>" + self:oEmit["enderEmit"]["xCpl"] + "</xCpl>"
+        endIf
+        cXML +=     "<xBairro>" + self:oEmit["enderEmit"]["xBairro"] + "</xBairro>"
+        cXML +=     "<cMun>" + self:oEmit["enderEmit"]["cMun"] + "</cMun>"
+        cXML +=     "<xMun>" + self:oEmit["enderEmit"]["xMun"] + "</xMun>"
+        cXML +=     "<CEP>" + self:oEmit["enderEmit"]["CEP"] + "</CEP>"
+        cXML +=     "<UF>" + self:oEmit["enderEmit"]["UF"] + "</UF>"
+        if self:oEmit["enderEmit"]["fone"] <> nil .and. !empty(self:oEmit["enderEmit"]["fone"])
+            cXML += "<fone>" + self:oEmit["enderEmit"]["fone"] + "</fone>"
+        endIf
+        /*if self:oEmit["enderEmit"]["email"] <> nil .and. !empty(self:oEmit["enderEmit"]["email"])
+            cXML += "<email>" + self:oEmit["enderEmit"]["email"] + "</email>"
+        endIf*/
+        cXML += "</enderEmit>"
+    endIf
+    cXML += "</emit>"
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procDest
+Processamento dos dados a serem informados no XML do grupo de TAG <dest> - Identificação do destinatário / assinante
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procDest() class NFComSefaz
+    local cCGC := "" //TODO:
+    local aPais := {} as Array
+
+    If self:cTipoNF == "S"
+        dbSelectArea("SA1")
+        dbSetOrder(1)
+
+        If MsSeek(xFilial("SA1") + self:cCliFor + self:cLoja)	
+            //obrigatorios
+            cCGC := AllTrim(SA1->A1_CGC)
+            self:oDest["xNome"] := AllTrim(SA1->A1_NOME)
+            if len(cCGC) == 14 .And. !self:ValidCNPJ(cCGC)
+                self:oDest["CNPJ"] := cCGC
+            elseIf len(cCGC) == 11 .And. !self:ValidCNPJ(cCGC)
+                self:oDest["CPF"] := cCGC
+            else
+                self:oDest["idOutros"] := cCGC
+            endIf
+
+            self:oDest["indIEDest"] := "1"
+            //opcionais
+            self:oDest["IE"] := AllTrim( StrTran( SA1->A1_INSCR, "/", "" ) )
+            self:oDest["IM"] := AllTrim( SA1->A1_INSCRM )
+            If SA1->A1_CONTRIB == "2" .And. "ISENT" $ Upper(SA1->A1_INSCR) //Isento do ICMS
+                self:oDest["indIEDest"] := "2"
+                self:oDest["IE"] := "ISENTO"
+            ElseIf Empty(SA1->A1_INSCR) // Nao contribuinte do ICMS
+                self:oDest["indIEDest"] := "9"
+            EndIf
+
+            self:oDest["enderDest"]             := jsonObject():new()
+            self:oDest["enderDest"]["xLgr"]     := NoAcento(AllTrim(FisGetEnd(SA1->A1_END, A1_EST)[1]))
+
+            self:oDest["enderDest"]["nro"]      := "SN"
+            If FisGetEnd(SA1->A1_END, "SC")[2] <> 0
+                self:oDest["enderDest"]["nro"]  := AllTrim( NoAcento( FisGetEnd( RemoveC( SA1->A1_END ), A1_EST)[3] ) )
+            EndIf
+
+            self:oDest["enderDest"]["xCpl"]     := ConvType(FisGetEnd(SA1->A1_END,SA1->A1_EST)[4])
+            If !Empty(SA1->A1_COMPLEM)
+                self:oDest["enderDest"]["xCpl"] := AllTrim(SA1->A1_COMPLEM)
+            EndIf
+
+            self:oDest["enderDest"]["xBairro"]  := AllTrim(SA1->A1_BAIRRO)
+
+            self:oDest["enderDest"]["cMun"]     := self:aUF[aScan(self:aUF,{|x| x[1] == SA1->A1_EST})][02] + SA1->A1_COD_MUN
+            self:oDest["enderDest"]["xMun"]     := AllTrim(SA1->A1_MUN)
+            self:oDest["enderDest"]["UF"]       := Upper(SA1->A1_EST)
+
+            If Upper(SA1->A1_EST) == "EX"
+                self:oDest["enderDest"]["cMun"]     := "9999999"
+                self:oDest["enderDest"]["xMun"]     := "EXTERIOR"
+                self:oDest["enderDest"]["UF"]       := "EX"
+                If !Empty(SA1->A1_PAIS)
+                    aPais := self:GetCodPais(AllTrim(SA1->A1_PAIS))
+                    If Len(aPais) > 0
+                        self:oDest["enderDest"]["cPais"]    := aPais[1]
+                        self:oDest["enderDest"]["xPais"]    := aPais[2]
+                    EndIf
+                EndIf
+            EndIf
+
+            self:oDest["enderDest"]["CEP"]      := AllTrim(SA1->A1_CEP)
+            self:oDest["enderDest"]["fone"]     := AllTrim(SA1->A1_DDD) + AllTrim(SA1->A1_TEL)
+            self:oDest["enderDest"]["email"]    := AllTrim(SA1->A1_EMAIL)
+        EndIf
+    Else
+        dbSelectArea("SA2")
+        SA2->(dbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+        If SA2->( MsSeek( xFilial("SA2") + self:cCliFor + self:cLoja ) )
+            //obrigatorios
+            cCGC := AllTrim(SA2->A2_CGC)
+            self:oDest["xNome"] := AllTrim(SA2->A2_NOME)
+            if len(cCGC) == 14 .And. !self:ValidCNPJ(cCGC)
+                self:oDest["CNPJ"] := cCGC
+            elseIf len(cCGC) == 11 .And. !self:ValidCNPJ(cCGC)
+                self:oDest["CPF"] := cCGC
+            else
+                self:oDest["idOutros"] := cCGC
+            endIf
+
+            self:oDest["indIEDest"] := "1"
+            //opcionais
+            self:oDest["IE"] := AllTrim(StrTran( SA2->A2_INSCR, "/", "" ))
+            self:oDest["IM"] := AllTrim(SA2->A2_INSCRM)
+            If SA2->A2_CONTRIB == "2" .And. "ISENT" $ Upper(SA2->A2_INSCR) //Isento do ICMS
+                self:oDest["indIEDest"] := "2"
+                self:oDest["IE"] := "ISENTO"
+            ElseIf Empty(SA2->A2_INSCR) // Nao contribuinte do ICMS
+                self:oDest["indIEDest"] := "9"
+            EndIf
+
+            self:oDest["enderDest"]             := jsonObject():new()
+            self:oDest["enderDest"]["xLgr"]     := NoAcento(AllTrim(FisGetEnd(SA2->A2_END, SA2->A2_EST)[1]))
+
+            self:oDest["enderDest"]["nro"]      := "SN"
+            If FisGetEnd(SA2->A2_END, "SC")[2] <> 0
+                self:oDest["enderDest"]["nro"]  := AllTrim(NoAcento(FisGetEnd( RemoveC( SA2->A2_END ), SA2->A2_EST)[3]))
+            EndIf
+
+            self:oDest["enderDest"]["xCpl"]     := ConvType(FisGetEnd(SA2->A2_END, SA2->A2_EST)[4])
+            If !Empty(SA2->A2_COMPLEM)
+                self:oDest["enderDest"]["xCpl"] := AllTrim(SA2->A2_COMPLEM)
+            EndIf
+
+            self:oDest["enderDest"]["xBairro"]  := AllTrim(SA2->A2_BAIRRO)
+
+            self:oDest["enderDest"]["cMun"]     := self:aUF[aScan(self:aUF,{|x| x[1] == SA2->A2_EST})][02] + SA2->A2_COD_MUN
+            self:oDest["enderDest"]["xMun"]     := AllTrim(SA2->A2_MUN)
+            self:oDest["enderDest"]["UF"]       := Upper(SA2->A2_EST)
+
+            If Upper(SA2->A2_EST) == "EX"
+                self:oDest["enderDest"]["cMun"]     := "9999999"
+                self:oDest["enderDest"]["xMun"]     := "EXTERIOR"
+                self:oDest["enderDest"]["UF"]       := "EX"
+                If !Empty(SA2->A2_PAIS)
+                    aPais := self:GetCodPais(AllTrim(SA2->A2_PAIS))
+                    If Len(aPais) > 0
+                        self:oDest["enderDest"]["cPais"]    := aPais[1]
+                        self:oDest["enderDest"]["xPais"]    := aPais[2]
+                    EndIf
+                EndIf
+            EndIf
+
+            self:oDest["enderDest"]["CEP"]      := AllTrim(SA2->A2_CEP)
+            self:oDest["enderDest"]["fone"]     := AllTrim(SA2->A2_DDD) + AllTrim(SA2->A2_TEL)
+            self:oDest["enderDest"]["email"]    := AllTrim(SA2->A2_EMAIL)
+        EndIf
+    EndIf
+
+    fwFreeArray(aPais)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printDest
+Montagem do XML do grupo de TAG <dest> - Identificação do destinatário / assinante
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <dest>
+/*/
+method printDest() as character class NFComSefaz
+    local cXML as character
+
+    cXML := "<dest>"
+    cXML +=     "<xNome>" + self:oDest["xNome"] + "</xNome>"
+   
+    if self:oDest["idOutros"] <> nil
+        cXML += "<idOutros>" + self:oDest["idOutros"] + "</idOutros>"
+    elseif self:oDest["CPF"] <> nil
+        cXML += "<CPF>" + self:oDest["CPF"] + "</CPF>"
+    else
+        cXML += "<CNPJ>" + self:oDest["CNPJ"] + "</CNPJ>"
+    endIf
+    cXML +=     "<indIEDest>" + self:oDest["indIEDest"] + "</indIEDest>"
+    if self:oDest["IE"] <> nil
+        cXML += "<IE>" + self:oDest["IE"] + "</IE>"
+    endIf
+    if self:oDest["IM"] <> nil .and. !empty(self:oDest["IM"])
+        cXML += "<IM>" + self:oDest["IM"] + "</IM>"
+    endIf
+    //Grupo enderDest
+    cXML +=     "<enderDest>"
+    cXML +=         "<xLgr>" + self:oDest["enderDest"]["xLgr"] + "</xLgr>"
+    cXML +=         "<nro>" + self:oDest["enderDest"]["nro"] + "</nro>"
+    if self:oDest["enderDest"]["xCpl"] <> nil .and. !empty(self:oDest["enderDest"]["xCpl"])
+        cXML +=     "<xCpl>" + self:oDest["enderDest"]["xCpl"] + "</xCpl>"
+    endIf
+    cXML +=         "<xBairro>" + self:oDest["enderDest"]["xBairro"] + "</xBairro>"
+    cXML +=         "<cMun>" + self:oDest["enderDest"]["cMun"] + "</cMun>"
+    cXML +=         "<xMun>" + self:oDest["enderDest"]["xMun"] + "</xMun>"
+    cXML +=         "<CEP>" + self:oDest["enderDest"]["CEP"] + "</CEP>"
+    cXML +=         "<UF>" + self:oDest["enderDest"]["UF"] + "</UF>"
+    if self:oDest["enderDest"]["cPais"] <> nil .and. !empty(self:oDest["enderDest"]["cPais"])
+        cXML +=     "<cPais>" + self:oDest["enderDest"]["cPais"] + "</cPais>"
+    EndIf
+    if self:oDest["enderDest"]["xPais"] <> nil .and. !empty(self:oDest["enderDest"]["xPais"])
+        cXML +=     "<xPais>" + self:oDest["enderDest"]["xPais"] + "</xPais>"
+    EndIf
+    if self:oDest["enderDest"]["fone"] <> nil .and. !empty(self:oDest["enderDest"]["fone"])
+        cXML +=     "<fone>" + self:oDest["enderDest"]["fone"] + "</fone>"
+    endIf
+    if self:oDest["enderDest"]["email"] <> nil .and. !empty(self:oDest["enderDest"]["email"])
+        cXML +=     "<email>" + self:oDest["enderDest"]["email"] + "</email>"
+    endIf
+    cXML +=     "</enderDest>"
+    cXML += "</dest>"
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procAssinante
+Processamento dos dados a serem informados no XML do grupo de TAG <assinante> - Dados do assinante
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procAssinante() class NFComSefaz
+    //Local nI as integer
+    Local cBusca := "" as character
+    Local aAreaSFX  := SFX->(GetArea())
+    Local aContr    := { Nil, Nil, Nil }
+    Local lSFXAtu   := SFX->(ColumnPos("FX_NUMCONT")) > 0 .AND. SFX->(ColumnPos("FX_DINCONT")) .AND. SFX->(ColumnPos("FX_DFICONT"))
+
+    if self:cTipoNF <> "1"
+        cTpMov := "E"
+    Endif
+
+    dbSelectArea("SFX")
+    SFX->(dbSetOrder(1)) //FX_FILIAL, FX_TIPOMOV, FX_SERIE, FX_DOC, FX_CLIFOR, FX_LOJA, FX_ITEM, FX_COD
+    cBusca  := xFilial("SFX") + ::cTipoNF + ::cSerie + ::cNota + ::cCliFor + ::cLoja
+
+    //obrigatorios
+    self:oAssinante["iCodAssinante"]    := ""
+    self:oAssinante["tpAssinante"]      := ""
+    self:oAssinante["tpServUtil"]       := ""
+    //opcionais
+    self:oAssinante["nContrato"]        := NIL
+    self:oAssinante["dContratoIni"]     := NIL //dContratoIni - Necessário criar campo
+    self:oAssinante["dContratoFim"]     := NIL //dContratoFim - Necessário criar  campo
+    self:oAssinante["NroTermPrinc"]     := NIL
+    self:oAssinante["cUFPrinc"]         := NIL
+    //Repeticao
+    /*self:oAssinante["Rep_NroTermAdic"]  := array(2)
+    
+    for nI := 1 to len(self:oAssinante["Rep_NroTermAdic"])
+        self:oAssinante["Rep_NroTermAdic"][nI] := jsonObject():new()
+        self:oAssinante["Rep_NroTermAdic"][nI]["NroTermAdic"] := ""
+        self:oAssinante["Rep_NroTermAdic"][nI]["cUFAdic"] := ""
+    next nI*/
+
+    If SFX->(MsSeek(cBusca))
+        If lSFXAtu
+            aContr := RetNumCont( cBusca ) // SFX->FX_NUMCONT SFX->FX_DINCONT SFX->FX_DFICONT
+        EndIf
+        //obrigatorios
+        self:oAssinante["iCodAssinante"]    := AllTrim(SFX->FX_ESTCONT)
+        self:oAssinante["tpAssinante"]      := AllTrim(SFX->FX_TPASSIN)
+        self:oAssinante["tpServUtil"]       := RetTpServU( AllTrim(SFX->FX_TIPSERV) )
+
+        //opcionais
+        self:oAssinante["nContrato"]        := aContr[1] //CN9_NUMERO nContrato - Necessário criar campo
+        self:oAssinante["dContratoIni"]     := aContr[2] //CN9_DTINIC dContratoIni - Necessário criar campo
+        self:oAssinante["dContratoFim"]     := aContr[3] //CN9_DTFIM dContratoFim - Necessário criar  campo
+        self:oAssinante["NroTermPrinc"]     := SFX->FX_TERMINA
+        self:oAssinante["cUFPrinc"]         := SFX->FX_AREATER
+
+        //Repeticao
+        /*
+        For nI := 1 To len(self:oAssinante["Rep_NroTermAdic"])
+            self:oAssinante["Rep_NroTermAdic"][nI]["NroTermAdic"] := replic("5",12) //Criar tabela adicional para vincular os números adicionais.
+            self:oAssinante["Rep_NroTermAdic"][nI]["cUFAdic"] := SFX->FX_AREATER
+        Next nI
+        */
+
+    EndIf
+    restArea(aAreaSFX)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printAssinante
+Montagem do XML do grupo de TAG <assinante> - Dados do assinante
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <assinante>
+/*/
+method printAssinante() as character class NFComSefaz
+    local cXML as character
+    
+    cXML := "<assinante>"
+    cXML +=     "<iCodAssinante>" + self:oAssinante["iCodAssinante"] + "</iCodAssinante>"
+    cXML +=     "<tpAssinante>" + self:oAssinante["tpAssinante"] + "</tpAssinante>"
+    cXML +=     "<tpServUtil>" + self:oAssinante["tpServUtil"] + "</tpServUtil>"
+    if self:oAssinante["nContrato"] <> nil
+        cXML += "<nContrato>" + self:formatValuePerType(self:oAssinante["nContrato"]) + "</nContrato>"
+    endIf
+    if self:oAssinante["dContratoIni"] <> nil 
+        cXML += "<dContratoIni>" + self:formatValuePerType(self:oAssinante["dContratoIni"]) + "</dContratoIni>"
+    endIf
+    if self:oAssinante["dContratoFim"] <> nil
+        cXML += "<dContratoFim>" + self:formatValuePerType(self:oAssinante["dContratoFim"]) + "</dContratoFim>"
+    endIf
+    if self:oAssinante["NroTermPrinc"] <> nil .and. self:oAssinante["cUFPrinc"] <> nil
+        cXML += "<NroTermPrinc>" + self:formatValuePerType(self:oAssinante["NroTermPrinc"]) + "</NroTermPrinc>"
+        cXML += "<cUFPrinc>" + self:oAssinante["cUFPrinc"] + "</cUFPrinc>"
+    endIf
+/*    if self:oAssinante["Rep_NroTermAdic"] <> nil .and. len(self:oAssinante["Rep_NroTermAdic"]) > 0
+        for nI := 1 to len(self:oAssinante["Rep_NroTermAdic"])
+            cXML += "<NroTermAdic>" + self:formatValuePerType(self:oAssinante["Rep_NroTermAdic"][nI]["NroTermAdic"]) + "</NroTermAdic>"
+            cXML += "<cUFAdic>" + self:formatValuePerType(self:oAssinante["Rep_NroTermAdic"][nI]["cUFAdic"]) + "</cUFAdic>"
+        next nI
+    endif*/
+
+    cXML += "</assinante>"
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procGSub
+Processamento dos dados a serem informados no XML do grupo de TAG <autXML> - Autorizados para download do XML do DF-e
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procGSub() class NFComSefaz
+    Local aAreaSFT  := {}
+    Local aAreaSFX  := {}
+    Local cModGnf   := ""
+    Local lNFCOM    := .F.
+    Local cEspecie  := ""
+    Local lSFXAtu   := SFX->(FieldPos("FX_MOTSUB")) <> 0
+
+    if self:oIde["finNFCom"] == "3" .AND. lSFXAtu .AND. !Empty(::cNFOri) .AND. !Empty(::cSerOri)
+        //obrigatorios
+        self:oGSub  := jsonObject():new()
+        
+        aAreaSFT := SFT->(GetArea())
+        dbSelectArea("SFT")
+        SFT->( DbSetOrder(1) )//FT_FILIAL, FT_TIPOMOV, FT_SERIE, FT_NFISCAL, FT_CLIEFOR, FT_LOJA, FT_ITEM, FT_PRODUTO
+
+        If SFT->( MsSeek( xFilial("SFT") + ::cTipoNF + ::cSerOri + ::cNFOri + ::cCliFor + ::cLoja ) )
+        
+            cEspecie    := SFT->FT_ESPECIE
+            lNFCOM      := AllTrim(Upper(cEspecie)) == "NFCOM"
+            
+            // Verificar se a NF original é NFCOM ou Modelo 21/22 para informar o grupo gNF
+            If lNFCOM
+                self:oGSub["chNFCom"]			:= AllTrim( SFT->FT_CHVNFE )
+            Else
+                self:oGSub["gNF"]               := JsonObject():New()
+                self:oGSub["gNF"]["CNPJ"]       := AllTrim(SM0->M0_CGC)
+                
+                cModGnf := AModNot(cEspecie)
+                
+                self:oGSub["gNF"]["mod"]			:= cModGnf
+                self:oGSub["gNF"]["serie"]			:= ::cSerOri
+                self:oGSub["gNF"]["nNF"]			:= alltrim( Str( Val( ::cNFOri ) ) )
+                self:oGSub["gNF"]["CompetEmis"]		:= SFT->FT_EMISSAO
+
+                aAreaSFX := SFX->(GetArea())
+
+                DbSelectArea("SFX")
+                SFX->(DbSetOrder(1)) //FX_FILIAL, FX_TIPOMOV, FX_SERIE, FX_DOC, FX_CLIFOR, FX_LOJA, FX_ITEM, FX_COD
+                
+                If SFX->( MsSeek( xFilial("SFX") + ::cTipoNF + ::cSerOri + ::cNFOri + ::cCliFor + ::cLoja ) )
+                    //opcional
+                    self:oGSub["gNF"]["hash115"]		:= AllTrim( SFX->FX_CHV115 )
+                EndIf
+                
+                RestArea(aAreaSFX)
+            EndIf
+            
+            self:oGSub["motSub"]                := AllTrim(SFX->FX_MOTSUB)
+        EndIf
+        
+        RestArea(aAreaSFT)
+    endIf
+        
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printGSub
+Montagem do XML do grupo de TAG <gSub> - Grupo de informações da substituição
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gSub>
+/*/
+method printGSub() as character class NFComSefaz
+    local cXML as character
+
+    if self:oGSub <> nil
+        cXML += "<gSub>"
+        if self:oGSub["gNF"] <> nil
+            cXML += "<gNF>"
+            cXML +=     "<CNPJ>" + self:oGSub["gNF"]["CNPJ"] + "</CNPJ>"
+            If self:oGSub["gNF"]["mod"] <> NIL
+                cXML +=     "<mod>" + self:oGSub["gNF"]["mod"] + "</mod>" 
+            EndIf
+            cXML +=     "<serie>" + self:oGSub["gNF"]["serie"] + "</serie>"
+            cXML +=     "<nNF>" + self:formatValuePerType(val(self:oGSub["gNF"]["nNF"]),9) + "</nNF>"
+            cXML +=     "<CompetEmis>" + self:formatValuePerType(self:oGSub["gNF"]["CompetEmis"],6) + "</CompetEmis>"
+            if self:oGSub["gNF"]["hash115"] <> nil .and. !empty(self:oGSub["gNF"]["hash115"])
+                cXML +=     "<hash115>" + self:oGSub["gNF"]["hash115"] + "</hash115>"
+            endIf
+            cXML += "</gNF>"
+        else
+            cXML += "<chNFCom>" + self:oGSub["chNFCom"] + "</chNFCom>" 
+        endIf
+        cXML +=     "<motSub>" + self:oGSub["motSub"] + "</motSub>"
+        cXML += "</gSub>"
+    endIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procGCofat
+Processamento dos dados a serem informados no XML do grupo de TAG <gCofat> - Grupo de Informações do Cofaturamento
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procGCofat() class NFComSefaz
+
+    self:oGCofat := jsonObject():new()
+    self:oGCofat["chNFComLocal"]    := Replic("5",44) //Criar campo na SFX grupo de cofaturamento
+        
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printGCofat
+Montagem do XML do grupo de TAG <gCofat> - Grupo de Informações do Cofaturamento
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printGCofat() as character class NFComSefaz
+    local cXML as character
+
+    if self:oGCofat <> nil .AND. self:oIde["tpFat"] == "2"
+        cXML += "<gCofat>"
+        cXML += "<chNFComLocal>" + self:oGCofat["chNFComLocal"] + "</chNFComLocal>"
+        cXML += "</gCofat>"
+    endIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procDet
+Processamento dos dados a serem informados no XML do grupo de TAG <det> - Detalhamento de Produtos e Serviços
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procDet() class NFComSefaz
+    Local nX            as numeric
+    Local cAlias        as character
+    Local cInfAdProd    as character
+    Local cUMed         := "4" as character
+    Local lNFComAnt     as logical 
+    Local aInfProd      := {}
+    Local cIdTrib       := "" as character
+    Local lSFXAtu       := SFX->(FieldPos("FX_CCLAS62")) <> 0
+
+    DbSelectArea("SB5")
+    SB5->(dbSetOrder(1)) //B5_FILIAL, B5_COD
+
+    self:oDet["det"] := {}
+    ::lVldExc   := FindClass("totvs.protheus.backoffice.tss.engine.tributaveis.TSSTCIntegration")
+    cAlias      := self:BuscaItensNota()
+    If lIDTrib
+        TssTCInteg( self:cTipoNF, cAlias, ::lVldExc, @self:oNfTciIntg )
+    EndIf
+    
+    aInfProd    := Self:BuscaNfAnt((cAlias)->FT_NFORI, (cAlias)->FT_SERORI)
+
+    While !(cAlias)->(Eof())
+        lNFComAnt := .F.
+        nX++
+
+        aAdd(self:oDet["det"],jsonObject():new())
+
+        //atributos da tag <det>
+        aTail(self:oDet["det"])["att_nItem"]    := cValToChar(nX)
+
+        If !Empty((cAlias)->FT_NFORI) .And. !Empty((cAlias)->FT_SERORI)
+            If self:oIde["finNFCom"] == "3" .AND. Empty(::cNFOri) .And. Empty(::cSerOri)
+                ::cNFOri := (cAlias)->FT_NFORI
+                ::cSerOri:= (cAlias)->FT_SERORI
+            EndIf
+            If self:oIde["finNFCom"] == "4"
+                lNFComAnt := nX <= Len(aInfProd) .And. (aInfProd[nX][2] == (cAlias)->FT_PRODUTO .And. aInfProd[nX][3] == (cAlias)->FT_CLIEFOR .And. aInfProd[nX][4] == (cAlias)->FT_LOJA)
+
+                If lNFComAnt
+                    aTail(self:oDet["det"])["att_chNFComAnt"]   := aInfProd[nX][1]
+                    aTail(self:oDet["det"])["att_nItemAnt"]     := (cAlias)->ITEMORI
+                EndIf
+            EndIf
+        EndIf
+
+        If self:cTipoNF == 'S'
+            ::nVProdItem := (cAlias)->TOTALITEM + (cAlias)->FT_DESPESA
+            ::vItem      := (cAlias)->PRCVEN + ((cAlias)->DESCITEM / (cAlias)->FT_QUANT)
+        Else
+            ::nVProdItem := (cAlias)->TOTALITEM - (cAlias)->DESCITEM + (cAlias)->FT_DESPESA
+            ::vItem      := (cAlias)->PRCVEN
+        EndIf
+
+        ::nVProd += ::nVProdItem
+
+        //grupo <prod>
+        aTail(self:oDet["det"])["prod"] := jsonObject():new()
+        aTail(self:oDet["det"])["prod"]["cProd"]        := allTrim((cAlias)->FT_PRODUTO)
+        aTail(self:oDet["det"])["prod"]["xProd"]        := allTrim((cAlias)->B1_DESC)
+        aTail(self:oDet["det"])["prod"]["cClass"]       := RetCodNFCOM( (cAlias)->FX_GRPCLAS, (cAlias)->FX_CLASSIF )
+        If lSFXAtu
+            aTail(self:oDet["det"])["prod"]["cClass"]       := AllTrim((cAlias)->FX_CCLAS62)
+        EndIf
+
+        aTail(self:oDet["det"])["prod"]["qFaturada"]    := (cAlias)->FT_QUANT
+        aTail(self:oDet["det"])["prod"]["vItem"]        := ::vItem
+        aTail(self:oDet["det"])["prod"]["vProd"]        := ::nVProdItem
+
+        //opcional grupo <prod>
+        If !Empty((cAlias)->FT_CFOP)
+            aTail(self:oDet["det"])["prod"]["CFOP"]     := (cAlias)->FT_CFOP
+        EndIf
+
+        //Todo: Ainda vão criar os campos da SFX.
+        /*If !Empty()
+            aTail(self:oDet["det"])["prod"]["CNPJLD"]   := replic("1",14) //TODO: Verificar de qual campo da SFX buscar.
+        EndIf*/
+        If SFX->(ColumnPos("FX_UMED")) > 0
+            cUMed := RetUniMed( (cAlias)->FT_NFISCAL, (cAlias)->FT_SERIE, (cAlias)->FT_TIPOMOV, (cAlias)->FT_CLIEFOR, (cAlias)->FT_LOJA, (cAlias)->FT_PRODUTO, (cAlias)->FT_ITEM, (cAlias)->FT_TIPO ) //TODO: Verificar de qual campo da SFX buscar.
+        EndIf
+        aTail(self:oDet["det"])["prod"]["uMed"] := cUMed
+
+        If (cAlias)->FT_DESCONT <> 0
+            aTail(self:oDet["det"])["prod"]["vDesc"]    := (cAlias)->FT_DESCONT
+        EndIf
+
+        // TODO: Campo FT_VALDESP ainda não existe.
+        If (cAlias)->FT_DESPESA <> 0
+            aTail(self:oDet["det"])["prod"]["vOutro"]   := (cAlias)->FT_DESPESA
+        EndIf
+
+        aTail(self:oDet["det"])["prod"]["dExpiracao"]   := date() //TODO: Criar campo na SFX.
+
+        If (cAlias)->FT_TIPO == "D"
+            aTail(self:oDet["det"])["prod"]["indDevolucao"] := "1"
+        EndIf
+
+        If lIDTrib
+            cIdTrib := (cAlias)->IDTRIB
+        EndIf
+
+        //grupo <imposto>
+        self:procImpostoDet((cAlias)->FT_NFISCAL, (cAlias)->FT_SERIE, (cAlias)->FT_TIPOMOV, (cAlias)->FT_CLIEFOR, (cAlias)->FT_LOJA, (cAlias)->FT_PRODUTO, (cAlias)->FT_ITEM, (cAlias)->FT_TIPO, cIdTrib )
+
+        If SB5->(MsSeek(xFilial("SB5") + (cAlias)->FT_PRODUTO))
+            cInfAdProd := SB5->B5_DESCNFE
+            If !Empty(cInfAdProd)
+                aTail(self:oDet["det"])["prod"]["infAdProd"] := subString( cInfAdProd, 1, 500 )
+            EndIf
+        EndIf
+
+        (cAlias)->(DbSkip())
+    EndDo
+
+    (cAlias)->(DbCloseArea())
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::buscaItensNota
+Monta query que busca os itens na SFT.
+@type method
+@version P12 V1.2410
+@author Gabriel Jesus
+@since 07/02/2025
+/*/
+method buscaItensNota() class NFComSefaz
+    Local cQuery    := ""
+    Local lSFXAtu   := SFX->(FieldPos("FX_CCLAS62")) <> 0
+    
+    If oQry == Nil
+        cQuery := "SELECT SFT.FT_FILIAL, SFT.FT_NFISCAL, SFT.FT_SERIE, SFT.FT_CLIEFOR, SFT.FT_LOJA, SFT.FT_TIPOMOV, SFT.FT_ITEM, SFT.FT_CFOP, SFT.FT_QUANT, SFT.FT_PRCUNIT, SFT.FT_DESCONT, SFT.FT_VALCONT, SFT.FT_CRDPRES, "  //TODO: CAMPO VOUTRO
+        cQuery += "SFT.FT_TIPO, SFT.FT_PRODUTO, SFT.FT_CHVNFE, SFT.FT_ESPECIE, SFT.FT_NFORI, SFT.FT_SERORI, SFT.FT_DESPESA, SFT.FT_TOTAL, SFX.FX_CHV115, FX_GRPCLAS, SFX.FX_CLASSIF, SB1.B1_DESC "
+        If lSFXAtu
+            cQuery += ",SFX.FX_CCLAS62 "
+        EndIf
+        If self:cTipoNF == 'S'
+            cQuery += ",SD2.D2_PRCVEN PRCVEN "
+            cQuery += ",SD2.D2_TOTAL TOTALITEM "
+            cQuery += ",SD2.D2_DESCON DESCITEM "
+            cQuery += ",SD2.D2_ITEMORI ITEMORI "
+            If lIDTrib
+                cQuery += ",SD2.D2_IDTRIB IDTRIB "
+            EndIf
+        Else
+            cQuery += ",SD1.D1_VUNIT PRCVEN "
+            cQuery += ",SD1.D1_VALDESC DESCITEM "
+            cQuery += ",SD1.D1_TOTAL TOTALITEM "
+            cQuery += ",SD1.D1_ITEMORI ITEMORI "
+            If lIDTrib
+                cQuery += ",SD1.D1_IDTRIB IDTRIB "
+            EndIf
+        EndIf
+
+        cQuery += "FROM " + RetSqlName("SFT")  + " SFT "
+        cQuery += "INNER JOIN " + RetSqlName("SFX") + " SFX ON SFX.FX_FILIAL = SFT.FT_FILIAL " 
+        cQuery +=               "AND SFX.FX_DOC = SFT.FT_NFISCAL " 
+        cQuery +=               "AND SFX.FX_SERIE = SFT.FT_SERIE " 
+        cQuery +=               "AND SFX.FX_CLIFOR = SFT.FT_CLIEFOR " 
+		cQuery +=               "AND SFX.FX_LOJA = SFT.FT_LOJA " 
+        cQuery +=               "AND SFX.FX_ITEM = SFT.FT_ITEM "
+        cQuery +=               "AND SFX.FX_COD = SFT.FT_PRODUTO "
+        cQuery +=               "AND SFX.D_E_L_E_T_ = ' ' " 
+        If self:cTipoNF == 'S'
+            cQuery += "INNER JOIN " + RetSqlName("SD2") + " SD2 ON SD2.D2_FILIAL = SFT.FT_FILIAL " 
+            cQuery +=               "AND SD2.D2_DOC = SFT.FT_NFISCAL " 
+            cQuery +=               "AND SD2.D2_SERIE = SFT.FT_SERIE " 
+            cQuery +=               "AND SD2.D2_CLIENTE = SFT.FT_CLIEFOR " 
+            cQuery +=               "AND SD2.D2_LOJA = SFT.FT_LOJA " 
+            cQuery +=               "AND SD2.D2_ITEM = SFT.FT_ITEM "
+            cQuery +=               "AND SD2.D2_COD = SFT.FT_PRODUTO "
+            cQuery +=               "AND SD2.D_E_L_E_T_ = ' ' " 
+        Else
+            cQuery += "INNER JOIN " + RetSqlName("SD1") + " SD1 ON SD1.D1_FILIAL = SFT.FT_FILIAL " 
+            cQuery +=               "AND SD1.D1_DOC = SFT.FT_NFISCAL " 
+            cQuery +=               "AND SD1.D1_SERIE = SFT.FT_SERIE " 
+            cQuery +=               "AND SD1.D1_FORNECE = SFT.FT_CLIEFOR " 
+            cQuery +=               "AND SD1.D1_LOJA = SFT.FT_LOJA " 
+            cQuery +=               "AND SD1.D1_ITEM = SFT.FT_ITEM "
+            cQuery +=               "AND SD1.D1_COD = SFT.FT_PRODUTO "
+            cQuery +=               "AND SD1.D_E_L_E_T_ = ' ' " 
+        EndIf
+        cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON SB1.B1_FILIAL = ? " 
+        cQuery +=               "AND SB1.B1_COD = SFT.FT_PRODUTO " 
+        cQuery +=               "AND SB1.D_E_L_E_T_ = ' ' " 
+        cQuery += "WHERE SFT.FT_FILIAL  = ? " 
+        cQuery +=   "AND SFT.FT_NFISCAL   = ? " 
+        cQuery +=   "AND SFT.FT_SERIE     = ? " 
+        cQuery +=   "AND SFT.FT_TIPOMOV   = ? " 
+        cQuery +=   "AND SFT.FT_CLIEFOR   = ? " 
+        cQuery +=   "AND SFT.FT_LOJA      = ? " 
+        cQuery +=   "AND SFT.D_E_L_E_T_   = ? " 
+        cQuery += "ORDER BY FT_ITEM "
+
+        oQry := FWExecStatement():New(changeQuery(cQuery))
+    EndIf
+
+    oQry:SetString(1, xFilial("SB1"))
+    oQry:SetString(2, xFilial("SFT"))
+    oQry:SetString(3, Self:cNota)
+    oQry:SetString(4, Self:cSerie)
+    oQry:SetString(5, self:cTipoNF)
+    oQry:SetString(6, Self:cCliFor)
+    oQry:SetString(7, Self:cLoja)
+    oQry:SetString(8, ' ')
+
+    cQuery := oQry:GetFixQuery()
+
+    cAlias := oQry:OpenAlias()
+Return cAlias
+
+/*/{Protheus.doc} NFComSefaz::BuscaNfAnt
+Monta query que busca a nota fiscal anterior.
+@type method
+@version  P12 V1.2410
+@author Gabriel Jesus
+@since 10/02/2025
+@param cNota, character, Numero da nota.
+@param cSerie, character, Numero da serie.
+/*/
+Method BuscaNfAnt(cNota, cSerie) class NFComSefaz
+    Local cQuery    as character
+    Local cAliasFT  as character
+    Local aRetItens := {}
+
+    Default cNota       := ""
+    Default cSerie      := ""
+
+    If !Empty(cNota) .And. !Empty(cSerie)
+
+        If oQryFT == Nil
+            cQuery := "SELECT SFT.FT_CHVNFE, SFT.FT_ITEM, SFT.FT_ESPECIE, SFT.FT_CLIEFOR, SFT.FT_LOJA, SFT.FT_PRODUTO, SFT.FT_EMISSAO " 
+            cQuery += "FROM " + RetSqlName("SFT")  + " SFT " 
+            cQuery += "WHERE SFT.FT_FILIAL  = ? " 
+            cQuery += "AND SFT.FT_NFISCAL   = ? " 
+            cQuery += "AND SFT.FT_SERIE     = ? " 
+            cQuery += "AND SFT.FT_TIPOMOV   = ? " 
+            cQuery += "AND SFT.FT_CLIEFOR   = ? " 
+            cQuery += "AND SFT.FT_LOJA      = ? " 
+            cQuery += "AND SFT.D_E_L_E_T_   = ? " 
+            cQuery += "ORDER BY SFT.FT_ITEM "     
+
+            oQryFT := FWExecStatement():New(changeQuery(cQuery))
+        EndIf
+        
+        oQryFT:SetString(1, xFilial("SFT"))
+        oQryFT:SetString(2, cNota)
+        oQryFT:SetString(3, cSerie)
+        oQryFT:SetString(4, Self:cTipoNF)
+        oQryFT:SetString(5, Self:cCliFor)
+        oQryFT:SetString(6, Self:cLoja)
+        oQryFT:SetString(7, ' ')
+
+        cAliasFT := oQryFT:OpenAlias()
+
+        While !(cAliasFT)->(Eof())
+            aAdd(aRetItens, {(cAliasFT)->FT_CHVNFE, (cAliasFT)->FT_PRODUTO, (cAliasFT)->FT_CLIEFOR, (cAliasFT)->FT_LOJA, (cAliasFT)->FT_ESPECIE, (cAliasFT)->FT_ITEM, (cAliasFT)->FT_EMISSAO})
+            (cAliasFT)->(DbSkip())
+        EndDo
+
+        (cAliasFT)->(DbCloseArea())
+    EndIf
+Return aRetItens
+
+/*/{Protheus.doc} NFComSefaz::procImpostoDet
+Responsável pelo processamento do imposto do item <imposto> - Tributos incidentes no Produto ou Serviço
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procImpostoDet(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo, cIDTrib ) class NFComSefaz
+    local nI              as integer
+    local cBusca    := "" as character
+    Local cCodCST   := Alltrim(Upper(GetNewPar("MV_CODCST", "DF;PR=90;RJ;RS=10,90")))
+    Local cUFDest   := "" as character
+    Local cIEUfDest := "" as character
+    Local aAreaCD2  := {}
+    Local aAreaCDV  := {}
+	
+	Default cNota	:= ""
+	Default cSerie	:= ""
+	Default cTpMov	:= ""
+	Default cClieFor:= ""
+	Default cLoja	:= ""
+	Default cProd	:= ""
+	Default cItem	:= ""
+	Default cTipo	:= ""
+	Default cIDTrib	:= ""
+	
+    aTail(self:oDet["det"])["imposto"] := jsonObject():new()
+
+    self:procTaxICMS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) //adiciona tag de IMCSXX (ICMS00, ICMS20, ICMS40, ICMS51, ICMS90, ICMSSN)
+
+    cBusca  := xFilial("CD2") + cTpMov + cSerie + cNota + cClieFor + cLoja + cItem + cProd + SubStr("CMP", 1, TamSx3("CD2_IMP")[1])
+    aAreaCD2:= CD2->(GetArea())
+    //grupo opcional
+    If CD2->(MsSeek(cBusca))
+        aTail(self:oDet["det"])["imposto"]["ICMSUFDest"] := Array(1)
+        For nI := 1 to len(aTail(self:oDet["det"])["imposto"]["ICMSUFDest"])
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]                := jsonObject():new()
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["vBCUFDest"]   := CD2->CD2_BC
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["pFCPUFDest"]  := CD2->CD2_PFCP
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["pICMSUFDest"] := CD2->CD2_ALIQ
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["vFCPUFDest"]  := CD2->CD2_VFCP
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["vICMSUFDest"] := CD2->CD2_VDDES
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["vICMSUFEmi"]  := CD2->CD2_PDDES
+            //tag opcional
+            cUFDest := Upper(SM0->M0_ESTENT)
+            If Upper(SM0->M0_ESTENT) $ cCodCST //TAG cBenef buscar o conteúdo da tabela 5.2 no sistema quando for do PR.
+                
+                aAreaCDV  := CDV->(GetArea())
+                dbSelectArea("CDV")
+                CDV->(dbSetOrder(4)) //CDV_FILIAL+CDV_TPMOVI+CDV_ESPECI+CDV_FORMUL+CDV_DOC+CDV_SERIE+CDV_CLIFOR+CDV_LOJA+CDV_NUMITE+CDV_SEQ+CDV_CODAJU
+                cChvCdv := xFilial("CDV") + cTpMov + PadR( "NFCOM", TamSX3("CDV_ESPECI")[1] ) + 'S' + cNota + cSerie + cClieFor + cLoja + cItem
+                If CDV->( MsSeek(cChvCdv) )
+                    aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["cBenefUFDest"]:= CDV->CDV_CODAJU
+                    cUFDest := SubStr(CDV->CDV_CODAJU, 1, 2)
+                EndIf
+                RestArea(aAreaCDV)
+                
+            EndIf
+            //atributo da tag ICMSUFDest
+            aTail(self:oDet["det"])["imposto"]["ICMSUFDest"][nI]["cUFDest"] := self:aUF[ aScan( self:aUF, { |x| x[1] == cUFDest } ) ][02]
+            
+            If Len(self:oEmit["IE"]) < 11
+                cIEUfDest := StrZero( Val(self:oEmit["IE"]), 11 )
+            EndIf
+            self:oEmit["IEUFDest"]     := cIEUfDest
+            
+        Next nI
+    EndIf
+    RestArea(aAreaCD2)
+	
+    //opcionais
+    self:procMsg(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    self:procTaxPIS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    self:procTaxCOFINS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    self:procTaxRetTrib(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    
+    If lIDTrib .AND. !Empty(cIDTrib)
+        self:procTaxFUST( cIDTrib )
+        self:procTaxFUNTTEL( cIDTrib )
+        self:procTaxNew( cIDTrib )
+    EndIf
+
+    self:procGProcRef(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    self:procGRessarc(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxICMS
+Responsavel por processamento da tag de imposto dos itens <ICMSXX>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxICMS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    Local jImposto as json
+    Local aAreaCD2      := CD2->(GetArea())
+    Local cCST          := "" as character
+    Local cBenef        := "1234567890" as character
+    Local cindSN        := GETNEWPAR("MV_OPTSIMP", "2")
+    Local cBusca        := "" as character   
+    Local cTabCli       := "" As character
+
+    dbSelectArea("CD2")
+    CD2->(dbSetOrder(1)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODCLI, CD2_LOJCLI, CD2_ITEM, CD2_CODPRO, CD2_IMP
+
+    cTabCli := BuscaIndice(cTpMov, cSerie, cNota, cClieFor, cLoja, cTipo)
+
+    If cTabCli == "SA2"
+        CD2->(dbSetOrder(2)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODFOR, CD2_LOJFOR, CD2_ITEM, CD2_CODPRO, CD2_IMP
+    EndIf
+
+    cBusca  := xFilial("CD2") + cTpMov + cSerie + cNota + cClieFor + cLoja + cItem + cProd + SubStr("ICM", 1, TamSx3("CD2_IMP")[1])
+
+    If CD2->(MsSeek(cBusca))
+        cCST:= CD2->CD2_CST
+
+        jImposto := jsonObject():new()
+
+        jImposto["CST"] := cCST
+
+        if cCST == "00"
+            jImposto["CST"]      := CD2->CD2_CST
+            jImposto["vBC"]      := CD2->CD2_BC
+            jImposto["pICMS"]    := CD2->CD2_ALIQ
+            jImposto["vICMS"]    := CD2->CD2_VLTRIB
+            //sequencia opcional
+            jImposto["pFCP"]     := CD2->CD2_PFCP
+            jImposto["vFCP"]     := CD2->CD2_VFCP
+        endIf
+
+        if cCST == "20"
+            jImposto["CST"]      := CD2->CD2_CST
+            jImposto["pRedBC"]   := CD2->CD2_PREDBC
+            jImposto["vBC"]      := CD2->CD2_BC
+            jImposto["pICMS"]    := CD2->CD2_ALIQ
+            jImposto["vICMS"]    := CD2->CD2_VLTRIB
+            //sequencia opcional
+            jImposto["vICMSDeson"]   := CD2->CD2_DESONE
+            jImposto["cBenef"]       := cBenef //
+            //sequencia opcional
+            jImposto["pFCP"]         := CD2->CD2_PFCP
+            jImposto["vFCP"]         := CD2->CD2_VFCP
+        endIf
+    
+        if cCST $ "40,41"
+            jImposto["CST"]      := CD2->CD2_CST
+            //sequencia opcional
+            jImposto["vICMSDeson"]   := CD2->CD2_DESONE
+            jImposto["cBenef"]       := cBenef //
+        endif
+
+        if cCST == "50"
+            jImposto["CST"]      := CD2->CD2_CST
+            //sequencia opcional
+            jImposto["vICMSDeson"]   := CD2->CD2_DESONE
+            jImposto["cBenef"]       := cBenef //
+        endif
+
+         if cCST == "51"
+            jImposto["CST"]      := CD2->CD2_CST
+            //sequencia opcional
+            jImposto["vICMSDeson"]   := CD2->CD2_DESONE
+            jImposto["cBenef"]       := cBenef //
+        endif
+
+        if cCST == "90"
+            jImposto["CST"]      := CD2->CD2_CST
+            //sequencia opcional
+            jImposto["vBC"]      := CD2->CD2_BC
+            jImposto["pICMS"]    := CD2->CD2_ALIQ
+            jImposto["vICMS"]    := CD2->CD2_VLTRIB
+            //sequencia opcional
+            jImposto["vICMSDeson"]   := CD2->CD2_DESONE
+            jImposto["cBenef"]       := cBenef //
+            //sequencia opcional
+            jImposto["pFCP"]         := CD2->CD2_PFCP
+            jImposto["vFCP"]         := CD2->CD2_VFCP
+        endif
+
+        if cCST == "SN"
+            jImposto["CST"]      := CD2->CD2_CST
+            jImposto["indSN"]    := cindSN
+        endif
+
+        if jImposto <> nil
+            aTail(self:oDet["det"])["imposto"]["ICMS"+cCST] := jImposto
+            aTail(self:oDet["det"])["imposto"]["ICMS"] := cCST
+        endIf
+        
+    endIf
+    restArea(aAreaCD2)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxPIS
+Responsavel por processamento dos dados para a TAG <PIS> - Dados do PIS dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxPIS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    local jImposto      := jsonObject():new() as json
+    local aAreaCD2      := CD2->(GetArea())
+    Local cBusca        := "" as character
+    Local cTabCli       := "" as character
+
+    dbSelectArea("CD2")
+    CD2->(dbSetOrder(1)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODCLI, CD2_LOJCLI, CD2_ITEM, CD2_CODPRO, CD2_IMP
+
+    cTabCli := BuscaIndice(cTpMov, cSerie, cNota, cClieFor, cLoja, cTipo)
+
+    If cTabCli == "SA2"
+        CD2->(dbSetOrder(2)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODFOR, CD2_LOJFOR, CD2_ITEM, CD2_CODPRO, CD2_IMP
+    EndIf
+
+    cBusca  := xFilial("CD2") + cTpMov + cSerie + cNota + cClieFor + cLoja + cItem + cProd + SubStr("PS2", 1, TamSx3("CD2_IMP")[1])
+
+    If CD2->(MsSeek(cBusca))
+
+        jImposto["CST"]     :=  CD2->CD2_CST
+        jImposto["vBC"]     :=  CD2->CD2_BC
+        jImposto["pPIS"]    :=  CD2->CD2_ALIQ
+        jImposto["vPIS"]    :=  CD2->CD2_VLTRIB
+
+        if jImposto <> nil
+            aTail(self:oDet["det"])["imposto"]["PIS"] := jImposto
+        endIf
+    endIf
+    restArea(aAreaCD2)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxCOFINS
+Responsavel por processamento dos dados para a TAG <COFINS> - Dados do COFINS dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxCOFINS(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    local jImposto := jsonObject():new() as json
+    local aAreaCD2      := CD2->(GetArea())
+    Local cBusca    := "" as character
+    Local cTabCli    := "" as character
+
+    dbSelectArea("CD2")
+    CD2->(dbSetOrder(1)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODCLI, CD2_LOJCLI, CD2_ITEM, CD2_CODPRO, CD2_IMP
+
+    cTabCli := BuscaIndice(cTpMov, cSerie, cNota, cClieFor, cLoja, cTipo)
+
+    If cTabCli == "SA2"
+        CD2->(dbSetOrder(2)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODFOR, CD2_LOJFOR, CD2_ITEM, CD2_CODPRO, CD2_IMP
+    EndIf
+
+    cBusca  := xFilial("CD2") + cTpMov + cSerie + cNota + cClieFor + cLoja + cItem + cProd + SubStr("CF2", 1, TamSx3("CD2_IMP")[1])
+
+    If CD2->(MsSeek(cBusca))
+
+        jImposto["CST"]         :=  CD2->CD2_CST
+        jImposto["vBC"]         :=  CD2->CD2_BC
+        jImposto["pCOFINS"]     :=  CD2->CD2_ALIQ
+        jImposto["vCOFINS"]     :=  CD2->CD2_VLTRIB
+
+        if jImposto <> nil
+            aTail(self:oDet["det"])["imposto"]["COFINS"] := jImposto
+        endIf
+    endIf
+    restArea(aAreaCD2)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxFUST
+Responsavel por processamento dos dados para a TAG <FUST> - Dados do FUST dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxFUST( cIDTrib ) class NFComSefaz
+    Local jImposto      := jsonObject():new() as json
+    Local oFUSTCFG      as object
+    Local nvBC          := 0 as numeric
+    Local npFUST        := 0 as numeric
+    Local nvFUST        := 0 as numeric
+
+    Default cIDTrib   := ""
+
+    If !Empty(cIDTrib)
+
+        oFUSTCFG := Self:oNfTciIntg:GetTax( cIDTrib, "FUST")
+        If oFUSTCFG <> NIL
+            nvBC    := oFUSTCFG['base_tributo']
+            npFUST  := oFUSTCFG['aliquota_tributo']
+            nvFUST  := oFUSTCFG['valor_tributo']
+        EndIf
+        jImposto["vBC"]     :=  nvBC
+        jImposto["pFUST"]   :=  npFUST
+        jImposto["vFUST"]   :=  nvFUST
+
+    EndIf
+
+    If jImposto <> nil
+        aTail(self:oDet["det"])["imposto"]["FUST"] := jImposto
+    EndIf
+
+Return Nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxFUNTTEL
+Responsavel por processamento dos dados para a TAG <FUNTTEL> - Dados do FUNTTEL dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxFUNTTEL( cIDTrib ) class NFComSefaz
+    Local jImposto      := jsonObject():new() as json
+    Local oFUNTTCFG     as object
+    Local nvBC          := 0 as numeric
+    Local npFUNTTEL     := 0 as numeric
+    Local nvFUNTTEL     := 0 as numeric
+
+    Default cIDTrib   := ""
+
+    If !Empty(cIDTrib)
+
+        oFUNTTCFG := self:oNfTciIntg:GetTax( cIDTrib, "FUNTTE")
+        If oFUNTTCFG <> NIL
+            nvBC        := oFUNTTCFG['base_tributo']
+            npFUNTTEL   := oFUNTTCFG['aliquota_tributo']
+            nvFUNTTEL   := oFUNTTCFG['valor_tributo']
+        EndIf
+        jImposto["vBC"]        :=  nvBC
+        jImposto["pFUNTTEL"]   :=  npFUNTTEL
+        jImposto["vFUNTTEL"]   :=  nvFUNTTEL
+
+    EndIf
+
+    If jImposto <> nil
+        aTail(self:oDet["det"])["imposto"]["FUNTTEL"] := jImposto
+    EndIf
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxRetTrib
+Responsavel por processamento dos dados para a TAG <retTrib> - Grupo de informações de retenção de tributos federais dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxRetTrib( cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    local jImposto := NIL
+    local aAreaSD  := {}
+    Local cBusca   := "" as character
+
+    Default cNota   := ""
+    Default cSerie  := ""
+    Default cTpMov  := ""
+    Default cClieFor:= ""
+    Default cLoja   := ""
+
+    if cTpMov == "S"
+        aAreaSD:= SD2->(GetArea())
+        dbSelectArea("SD2")
+        SD2->(dbSetOrder(3)) //D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+        cBusca  := xFilial("SD2") + cNota + cSerie + cClieFor + cLoja + cProd + cItem
+
+        If SD2->(MsSeek(cBusca))
+            jImposto := RetJImp( SD2->D2_VALPIS, SD2->D2_VALCOF, SD2->D2_VALCSL, SD2->D2_BASEIRR, SD2->D2_VALIRRF)
+        endif
+        restArea(aAreaSD)
+    else
+        aAreaSD:= SD1->(GetArea())
+        dbSelectArea("SD1")
+        SD1->(dbSetOrder(1)) //D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+
+        cBusca  := xFilial("SD1") + cNota + cSerie + cClieFor + cLoja + cProd + cItem
+
+        If SD1->(MsSeek(cBusca))
+            jImposto := RetJImp(SD1->D1_VALPIS, SD1->D1_VALCOF, SD1->D1_VALCSL, SD1->D1_BASEIRR, SD1->D1_VALIRR  )
+        endif
+        restArea(aAreaSD)
+    endif
+
+    if jImposto <> nil
+        aTail(self:oDet["det"])["imposto"]["retTrib"] := jImposto
+    endIf
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procTaxNew
+Responsavel por processamento dos dados para a TAG <FUNTTEL> - Dados do FUNTTEL dentro de <imposto>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procTaxNew( cIDTRIB ) class NFComSefaz
+    Local jImposto      := jsonObject():new() as json
+    
+    if !Empty( cIDTRIB )
+
+        jImposto["IdTrib"]   := cIDTRIB
+        aTail(self:oDet["det"])["imposto"]["TaxNew"] := jImposto
+    
+    endif
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procGProcRef
+Responsavel por processamento dos dados para a TAG <gProcRef> - Grupo Processo referenciado 
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procGProcRef(cNota, cSerie, cTpMov, cCliFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    local jImposto  := NIL
+    local cBusca    := "" as character
+    local nI        := 0
+    local aAreaSFT  := SFT->(GetArea())
+    local aAreaCDG  := CDG->(GetArea())
+    local aAreaCD2  := CD2->(GetArea())
+    local nValor    := 0
+    local aProc     := {}
+
+    dbSelectArea("CDG")
+    CDG->(dbSetOrder(3)) //CDG_FILIAL, CDG_TPMOV, CDG_DOC, CDG_SERIE, CDG_CLIFOR, CDG_LOJA, CDG_ITEM
+
+    cBusca  := xFilial("CDG") + cTpMov + cNota + cSerie + cCliFor + cLoja + cItem
+
+    if CDG->(MsSeek(cBusca))
+        jImposto  := jsonObject():new()
+        while CDG->(!Eof()) .and. cBusca == CDG->(CDG_FILIAL + CDG_TPMOV + CDG_DOC + CDG_SERIE + CDG_CLIFOR + CDG_LOJA + CDG_ITEM)
+            aAdd(aProc, {CDG->CDG_TPPROC, CDG->CDG_PROCES, CDG->CDG_VALOR})
+
+            nValor += CDG->CDG_VALOR
+
+            CDG->(DbSkip())
+        EndDo
+
+        jImposto["gProcRef"] := jsonObject():new()
+        jImposto["gProcRef"]["gProc"] := jsonObject():new()
+        jImposto["gProcRef"]["gProc"] := array(len(aProc))
+
+        //grupo opcional
+        //tags obrigatorias
+        jImposto["vItem"]     :=  nValor
+
+        For nI := 1 to len(jImposto["gProcRef"]["gProc"])
+            jImposto["gProcRef"]["gProc"][nI] := jsonObject():new()
+            jImposto["gProcRef"]["gProc"][nI]["tpProc"]     :=  aProc[nI][1] //0 - SEFAZ; 1 - Justiça Federal; 2 - Justiça Estadual 
+            jImposto["gProcRef"]["gProc"][nI]["nProcesso"]  :=  aProc[nI][2]
+        Next
+
+        dbSelectArea("CD2")
+        CD2->(dbSetOrder(1)) //CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODCLI, CD2_LOJCLI, CD2_ITEM, CD2_CODPRO, CD2_IMP
+        cBusca  :=  xFilial("CD2") + cTpMov + cSerie + cNota + cCliFor + cLoja  
+
+        if CD2->(MsSeek(cBusca))
+            jImposto["pICMS"]       :=  CD2->CD2_ALIQ
+
+        endif
+
+        dbSelectArea("SFT")
+        SFT->( DbSetOrder(1) )//FT_FILIAL, FT_TIPOMOV, FT_SERIE, FT_NFISCAL, FT_CLIEFOR, FT_LOJA, FT_ITEM, FT_PRODUTO
+        cBusca  :=  xFilial("SFT") + cTpMov + cSerie + cNota + cCliFor + cLoja + cItem
+
+        if SFT->(MsSeek(cBusca))
+            jImposto["qFaturada"]:=  SFT->FT_QUANT
+            jImposto["vProd"]   :=  SFT->FT_VALCONT
+
+            //tags opicionais
+            jImposto["vDesc"]   :=  SFT->FT_DESCONT
+            jImposto["vOutro"]  :=  SFT->FT_DESPESA
+
+            If SFT->FT_TIPO == "D"
+                jImposto["indDevolucao"] := "1"
+            EndIf
+
+            jImposto["vBC"]     := SFT->FT_BASEICM
+            jImposto["vICMS"]   := SFT->FT_VALICM
+            jImposto["vPIS"]    := SFT->FT_VALPS3
+            jImposto["vCOFINS"] := SFT->FT_VALCOF
+        endif
+        
+    endif
+
+    restArea(aAreaCD2)
+    restArea(aAreaSFT)
+    restArea(aAreaCDG)
+    
+    if jImposto <> nil
+        aTail(self:oDet["det"])["imposto"]["gProcRef"] := jImposto
+    endIf
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::procGRessarc
+Responsavel por processamento dos dados para a TAG <gRessarc> - Grupo de Informações detalhadas de item de cClass de Ressarcimento
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procGRessarc(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    local jImposto  := jsonObject():new() as json
+
+    jImposto["tpRessarc"]       := 1234567890123.12 //NAO TEM - Tipo de ressarcimento
+    jImposto["dRef"]            := 1234567890123.12 //NAO TEM - Data de referencia
+    jImposto["nProcesso"]       := 1 //NAO TEM - Numero do processo
+    jImposto["nProtReclama"]    := 1234567890123.12 //NAO TEM - Numero do protocolo de reclamação
+    jImposto["xObs"]            := 123.12 //NAO TEM - Observações sobre o pocesso de ressarcimento
+    jImposto["infAdProd"]       := 1234567890123.12 //NAO TEM - Informações adicionais do produto
+    
+    if jImposto <> nil
+        aTail(self:oDet["det"])["imposto"]["gRessarc"] := jImposto
+    endIf
+
+    //restArea(aAreaCDG)
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printDet
+Montagem do XML do grupo de TAG <det> - Detalhamento de Produtos e Serviços
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printDet() as character class NFComSefaz
+    local cXML as character
+    local cNFComAnt as character
+    local nI as integer
+    Local lCFOP := .F. as logical
+
+    for nI := 1 to len(self:oDet["det"])
+        If self:oDet["det"][nI]["att_chNFComAnt"] <> nil .And. self:oDet["det"][nI]["att_nItemAnt"] <> nil
+            cNFComAnt := ' chNFComAnt="' + ;
+                    self:formatValuePerType(self:oDet["det"][nI]["att_chNFComAnt"]) + ;
+                    '" nItemAnt="' + ;
+                    AllTrim(Str(Val(self:oDet["det"][nI]["att_nItemAnt"]))) + '"'
+        EndIf
+
+        cXML += '<det nItem="' + self:oDet["det"][nI]["att_nItem"] + '"' + cNFComAnt + '>'
+        //grupo <prod>
+        cXML +=     "<prod>"
+        cXML +=         "<cProd>" + self:oDet["det"][nI]["prod"]["cProd"] + "</cProd>"
+        cXML +=         "<xProd>" + self:oDet["det"][nI]["prod"]["xProd"] + "</xProd>"
+        cXML +=         "<cClass>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["cClass"],7) + "</cClass>"
+        if self:oDet["det"][nI]["prod"]["CFOP"] <> nil
+            lCFOP:= .T.
+            cXML +=     "<CFOP>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["CFOP"],4) + "</CFOP>"
+        endIf
+        /*if self:oDet["det"][nI]["prod"]["CNPJLD"] <> nil
+            cXML +=     "<CNPJLD>" + self:oDet["det"][nI]["prod"]["CNPJLD"] + "</CNPJLD>"
+        endIf*/
+        cXML +=         "<uMed>" + self:oDet["det"][nI]["prod"]["uMed"] + "</uMed>"
+        cXML +=         "<qFaturada>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["qFaturada"],16,4) + "</qFaturada>"
+        cXML +=         "<vItem>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["vItem"],22,8) + "</vItem>"
+        if self:oDet["det"][nI]["prod"]["vDesc"] <> nil .and. self:oDet["det"][nI]["prod"]["vDesc"] > 0
+            cXML +=     "<vDesc>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["vDesc"],16,2) + "</vDesc>"
+        endIf
+        if self:oDet["det"][nI]["prod"]["vOutro"] <> nil .and. self:oDet["det"][nI]["prod"]["vOutro"] > 0
+            cXML +=     "<vOutro>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["vOutro"],16,2) + "</vOutro>"
+        endIf
+        cXML +=         "<vProd>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["vProd"],22,8) + "</vProd>"
+        if self:oDet["det"][nI]["prod"]["dExpiracao"] <> nil
+            cXML +=     "<dExpiracao>" + self:formatValuePerType(self:oDet["det"][nI]["prod"]["dExpiracao"]) + "</dExpiracao>"
+        endIf
+        if self:oDet["det"][nI]["prod"]["indDevolucao"] <> nil
+            cXML +=     "<indDevolucao>" + self:oDet["det"][nI]["prod"]["indDevolucao"] + "</indDevolucao>"
+        endIf
+        cXML +=     "</prod>"
+        cXML +=     self:printImpostoDet(nI, lCFOP) //grupo <imposto>
+        cXML +=     self:printGProcRef(nI) //grupo <gProcRef>
+        cXML +=     self:printGRessarc(nI) //grupo <gRessarc>
+        If self:oDet["det"][nI]["prod"]["infAdProd"] <> nil
+            cXML +=     "<infAdProd>" + self:oDet["det"][nI]["prod"]["infAdProd"] + "</infAdProd>"
+        EndIf
+        cXML += "</det>"
+    next nI
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printImpostoDet
+Responsável pela impressão da tag de imposto do item <imposto> - Tributos incidentes no Produto ou Serviço
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML com tag <imposto> do item
+/*/
+method printImpostoDet(nItem as integer, lCFOP as logical) as character class NFComSefaz
+    Local cXML              as character
+    Local nI                as integer
+    Local cIBSCBS   := ""   as character
+
+    Default nItem := 0
+    Default lCFOP := .T.
+
+    cXML += "<imposto>"
+    cXML +=     self:printTaxICMS(nItem)
+    //grupo opcional <ICMSUFDest>
+    if self:oDet["det"][nItem]["imposto"]["ICMSUFDest"] <> nil .and. len(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"]) > 0
+        for nI := 1 to len(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"])
+            cXML += '<ICMSUFDest cUFDest="' + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["cUFDest"],16,2) + '">'
+            cXML +=     "<vBCUFDest>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["vBCUFDest"],16,2) + "</vBCUFDest>"
+            cXML +=     "<pFCPUFDest>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["pFCPUFDest"],6,2) + "</pFCPUFDest>"
+            cXML +=     "<pICMSUFDest>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["pICMSUFDest"],6,2) + "</pICMSUFDest>"
+            cXML +=     "<vFCPUFDest>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["vFCPUFDest"],16,2) + "</vFCPUFDest>"
+            cXML +=     "<vICMSUFDest>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["vICMSUFDest"],16,2) + "</vICMSUFDest>"
+            cXML +=     "<vICMSUFEmi>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["vICMSUFEmi"],16,2) + "</vICMSUFEmi>"
+            if self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["cBenefUFDest"] <> nil
+                cXML +=     "<cBenefUFDest>" + self:oDet["det"][nItem]["imposto"]["ICMSUFDest"][nI]["cBenefUFDest"] + "</cBenefUFDest>"
+            endIf
+            cXML += "</ICMSUFDest>"
+        next nI
+    endIf
+    
+    if !lCFOP
+        cXML += "<indSemCST>1</indSemCST>"
+    endif
+
+    cXML += self:printTaxPIS(nItem)
+    cXML += self:printTaxCOFINS(nItem)
+    cXML += self:printTaxFUST(nItem)
+    cXML += self:printTaxFUNTTEL(nItem)
+    cXML += self:printTaxRetTrib(nItem)
+
+	//Instacia classe responsável por gerar o XML dos tributos da reforma tributária
+	if findClass('totvs.protheus.backoffice.tss.engine.xml.taxinformation') .AND. self:oXmlRefTri == NIL
+		self:oXmlRefTri := totvs.protheus.backoffice.tss.engine.xml.taxinformation():New("62")
+	endif
+
+    If self:oXmlRefTri != NIL .AND. self:oDet["det"][nItem]["imposto"]["TaxNew"] <> NIL
+        //Imposto sobre bens e serviço e/ou contributos sobre bens e serviços
+        cIBSCBS += self:oXmlRefTri:GetXmlIbsCbs( self:oDet["det"][nItem]["imposto"]["TaxNew"]["IdTrib"], self:oNfTciIntg )
+        cXml += cIBSCBS
+    EndIf
+
+    cXML += "</imposto>"
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxICMS
+impressão dos dados no XML referente a tag de imposto dos itens <ICMSXX>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@param nItem, numeric, numero do item
+@return character, XML com tag <ICMSXX>
+/*/
+method printTaxICMS(nItem) as character class NFComSefaz
+    local cXML as character
+    local cCST as character
+    
+    If self:oDet["det"][nItem]["imposto"]["ICMS"] <> NIL
+        cCST := self:oDet["det"][nItem]["imposto"]["ICMS"]
+
+        cXML += "<ICMS" + cCST + ">"
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["CST"] <> nil
+            cXML += "<CST>" + self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["CST"] + "</CST>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["indSN"] <> nil
+            cXML += "<indSN>" + self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["indSN"] + "</indSN>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pRedBC"] <> nil
+            cXML += "<pRedBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pRedBC"],6,2) + "</pRedBC>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vBC"] <> nil
+            cXML += "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vBC"],16,2) + "</vBC>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pICMS"] <> nil
+            cXML += "<pICMS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pICMS"],6,2) + "</pICMS>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vICMS"] <> nil
+            cXML += "<vICMS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vICMS"],16,2) + "</vICMS>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vICMSDeson"] <> nil
+            cXML += "<vICMSDeson>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vICMSDeson"],16,2) + "</vICMSDeson>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["cBenef"] <> nil
+            cXML += "<cBenef>" + self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["cBenef"]+ "</cBenef>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pFCP"] <> nil .and. !empty(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pFCP"])
+            cXML += "<pFCP>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["pFCP"],6,2) + "</pFCP>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vFCP"] <> nil .and. !empty(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vFCP"])
+            cXML += "<vFCP>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["ICMS"+cCST]["vFCP"],16,2) + "</vFCP>"
+        endIf
+        cXML += "</ICMS" + cCST + ">"
+    EndIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxPIS
+impressão dos dados no XML referente a tag de imposto dos itens <PIS> - Dados do PIS
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML referente a tag de imposto dos itens <PIS> - Dados do PIS
+/*/
+method printTaxPIS(nItem) as character class NFComSefaz
+    local cXML as character
+    //opcional
+    if self:oDet["det"][nItem]["imposto"]["PIS"] <> nil
+        cXML += "<PIS>"
+        cXML +=     "<CST>" + self:oDet["det"][nItem]["imposto"]["PIS"]["CST"] + "</CST>"
+        cXML +=     "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["PIS"]["vBC"],16,2) + "</vBC>"
+        cXML +=     "<pPIS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["PIS"]["pPIS"],8,4) + "</pPIS>"
+        cXML +=     "<vPIS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["PIS"]["vPIS"],16,2) + "</vPIS>"
+        cXML += "</PIS>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxCOFINS
+impressão dos dados no XML referente a tag de imposto dos itens <COFINS> - Dados do COFINS
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML referente a tag de imposto dos itens <COFINS> - Dados do COFINS
+/*/
+method printTaxCOFINS(nItem) as character class NFComSefaz
+    local cXML as character
+    //opcional
+    if self:oDet["det"][nItem]["imposto"]["COFINS"] <> nil
+        cXML += "<COFINS>"
+        cXML +=     "<CST>" + self:oDet["det"][nItem]["imposto"]["COFINS"]["CST"] + "</CST>"
+        cXML +=     "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["COFINS"]["vBC"],16,2) + "</vBC>"
+        cXML +=     "<pCOFINS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["COFINS"]["pCOFINS"],8,4) + "</pCOFINS>"
+        cXML +=     "<vCOFINS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["COFINS"]["vCOFINS"],16,2) + "</vCOFINS>"
+        cXML += "</COFINS>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxFUST
+impressão dos dados no XML referente a tag de imposto dos itens <FUST> - Dados do FUST
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML referente a tag de imposto dos itens <FUST> -Dados do FUST
+/*/
+method printTaxFUST(nItem) as character class NFComSefaz
+    local cXML as character
+    //opcional
+    if self:oDet["det"][nItem]["imposto"]["FUST"] <> nil .AND. self:oDet["det"][nItem]["imposto"]["FUST"]["vFUST"] > 0
+        cXML += "<FUST>"
+        cXML +=     "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUST"]["vBC"],16,2) + "</vBC>"
+        cXML +=     "<pFUST>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUST"]["pFUST"],8,4) + "</pFUST>"
+        cXML +=     "<vFUST>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUST"]["vFUST"],16,2) + "</vFUST>"
+        cXML += "</FUST>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxFUNTTEL
+impressão dos dados no XML referente a tag de imposto dos itens <FUNTTEL> - Dados do FUNTTEL
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML referente a tag de imposto dos itens <FUNTTEL> - Dados do FUNTTEL
+/*/
+method printTaxFUNTTEL(nItem) as character class NFComSefaz
+    local cXML as character
+    //opcional
+    if self:oDet["det"][nItem]["imposto"]["FUNTTEL"] <> nil .AND. self:oDet["det"][nItem]["imposto"]["FUNTTEL"]["vFUNTTEL"] > 0
+        cXML += "<FUNTTEL>"
+        cXML +=     "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUNTTEL"]["vBC"],16,2) + "</vBC>"
+        cXML +=     "<pFUNTTEL>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUNTTEL"]["pFUNTTEL"],8,4) + "</pFUNTTEL>"
+        cXML +=     "<vFUNTTEL>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["FUNTTEL"]["vFUNTTEL"],16,2) + "</vFUNTTEL>"
+        cXML += "</FUNTTEL>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printTaxRetTrib
+impressão dos dados no XML referente a tag de imposto dos itens <RetTrib> - Dados do PIS
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@return character, XML referente a tag de imposto dos itens <RetTrib> - Grupo de informações de retenção de tributos federais
+/*/
+method printTaxRetTrib(nItem) as character class NFComSefaz
+    local cXML as character
+    //opcional
+    if self:oDet["det"][nItem]["imposto"]["retTrib"] <> nil .AND. ;
+        (self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetPIS"] > 0 .OR. ;
+        self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetCofins"] > 0 .OR. ;
+        self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetCSLL"] > 0 .OR. ;
+        self:oDet["det"][nItem]["imposto"]["retTrib"]["vBCIRRF"] > 0 .OR. ;
+        self:oDet["det"][nItem]["imposto"]["retTrib"]["vIRRF"] > 0 )
+        cXML += "<retTrib>"
+        cXML +=     "<vRetPIS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetPIS"],16,2) + "</vRetPIS>"
+        cXML +=     "<vRetCofins>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetCofins"],16,2) + "</vRetCofins>"
+        cXML +=     "<vRetCSLL>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["retTrib"]["vRetCSLL"],16,2) + "</vRetCSLL>"
+        cXML +=     "<vBCIRRF>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["retTrib"]["vBCIRRF"],16,2) + "</vBCIRRF>"
+        cXML +=     "<vIRRF>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["retTrib"]["vIRRF"],16,2) + "</vIRRF>"
+        cXML += "</retTrib>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printGProcRef
+Responsável por montagem do XML com grupo de tag <gProcRef> - Grupo Processo referenciado
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@param nItem, numeric, numero do item
+@return character, XML com grupo de tag <gProcRef>
+/*/
+method printGProcRef(nItem) as character class NFComSefaz
+    local cXML as character
+    local nI as integer
+
+    if self:oDet["det"][nItem]["imposto"]["gProcRef"] <> nil
+        cXML += "<gProcRef>"
+        cXML +=     "<vItem>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vItem"],21,4) + "</vItem>"
+        cXML +=     "<qFaturada>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["qFaturada"],16,4) + "</qFaturada>"
+        cXML +=     "<vProd>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vProd"],21,4) + "</vProd>"
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vDesc"] <> nil
+            cXML +=     "<vDesc>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vDesc"],16,2) + "</vDesc>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vOutro"] <> nil
+            cXML +=     "<vOutro>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vOutro"],16,2) + "</vOutro>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["indDevolucao"] <> nil
+            cXML +=     "<indDevolucao>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["indDevolucao"],16,2) + "</indDevolucao>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vBC"] <> nil
+            cXML +=     "<vBC>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vBC"],16,2) + "</vBC>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["pICMS"] <> nil
+            cXML +=     "<pICMS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["pICMS"],16,2) + "</pICMS>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vICMS"] <> nil
+            cXML +=     "<vICMS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vICMS"],16,2) + "</vICMS>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vPIS"] <> nil
+            cXML +=     "<vPIS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vPIS"],16,2) + "</vPIS>"
+        endIf
+        if self:oDet["det"][nItem]["imposto"]["gProcRef"]["vCOFINS"] <> nil
+            cXML +=     "<vCOFINS>" + self:formatValuePerType(self:oDet["det"][nItem]["imposto"]["gProcRef"]["vCOFINS"],16,2) + "</vCOFINS>"
+        endIf
+        //repeticao <gProc>
+        If self:oDet["det"][nItem]["imposto"]["gProcRef"]["gProcRef"] <> NIL
+            for nI := 1 to len(self:oDet["det"][nItem]["imposto"]["gProcRef"]["gProcRef"]["gProc"])
+                cXML +=         "<tpProc>" + self:oDet["det"][nItem]["imposto"]["gProcRef"]["gProcRef"]["gProc"][nI]["tpProc"] + "</tpProc>"
+                cXML +=         "<nProcesso>" + self:oDet["det"][nItem]["imposto"]["gProcRef"]["gProcRef"]["gProc"][nI]["nProcesso"] + "</nProcesso>"
+            next
+        EndIf
+        cXML += "</gProcRef>"
+
+    endIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printGRessarc
+Responsável por montagem do XML com grupo de tag <gRessarc>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+@param nItem, numeric, numero do item
+@return character, XML com grupo de tag <gRessarc>
+/*/
+method printGRessarc(nItem) as character class NFComSefaz
+    local cXML as character
+
+    /*if self:oDet["det"][nItem]["gRessarc"] <> nil
+        cXML += "<gRessarc>" 
+        cXML +=     "<tpRessarc>" + self:oDet["det"][nItem]["gRessarc"]["tpRessarc"] + "<tpRessarc>"
+        cXML +=     "<dRef>" + self:formatValuePerType(self:oDet["det"][nItem]["gRessarc"]["dRef"]) + "<dRef>"
+        if self:oDet["det"][nItem]["gRessarc"]["nProcesso"] <> nil
+            cXML +=     "<nProcesso>" + self:oDet["det"][nItem]["gRessarc"]["nProcesso"] + "<nProcesso>"
+        endIf
+        if self:oDet["det"][nItem]["gRessarc"]["nProtReclama"] <> nil
+            cXML +=     "<nProtReclama>" + self:oDet["det"][nItem]["gRessarc"]["nProtReclama"] + "<nProtReclama>"
+        endIf
+        if self:oDet["det"][nItem]["gRessarc"]["xObs"] <> nil
+            cXML +=     "<xObs>" + self:oDet["det"][nItem]["gRessarc"]["xObs"] + "<xObs>"
+        endIf
+        cXML += "</gRessarc>" 
+    endIf*/
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procTotal
+Processamento dos dados a serem informados no XML do grupo de TAG <total> - Dados dos totais da NFCom
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procTotal() class NFComSefaz
+    
+    Local jImposto      := jsonObject():new() as json
+    Local oFUSTCFG      := NIL
+    Local oFUNTTCFG     := NIL
+    Local aAreaSFT      := {} as Array
+    Local aAreaCD2      := {} as Array
+    Local aAreaSD2      := {} as Array
+    Local aAreaSD1      := {} as Array
+    Local aAreaSF       := {} as Array
+    Local aIdTribs      := {} as Array
+    Local cBusca        := "" as character
+    Local nIndice       := 0 as numeric
+    Local nvBC          := 0 as numeric
+    Local nvICMS        := 0 as numeric
+    Local nvICMSDeson   := 0 as numeric
+    Local nvFCP         := 0 as numeric
+    Local nvCOFINS      := 0 as numeric
+    Local nvPIS         := 0 as numeric
+    Local nvOutro       := 0 as numeric
+    Local nvFUNTTEL     := 0 as numeric
+    Local nvFUST        := 0 as numeric
+    Local nvDesc        := 0 as numeric
+    Local nI            := 0 as numeric
+    Local lSeekSD1      := .F.
+
+    aAreaSFT:= SFT->(GetArea())
+    aAreaCD2:= CD2->(GetArea())
+    aAreaSD1:= SD1->(GetArea())
+    aAreasD2:= SD2->(GetArea())
+    
+    If ::cTipoNF == "E"
+        nIndice := 2
+        dbSelectArea("SD1")
+        SD1->( DbSetOrder(1) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_COD, D1_ITEM
+    Else
+        nIndice := 1
+        dbSelectArea("SD2")
+        SD2->( DbSetOrder(3) ) // D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+    EndIf
+
+    dbSelectArea("CD2")
+    CD2->( DbSetOrder(nIndice) )
+    //1		CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODCLI, CD2_LOJCLI, CD2_ITEM, CD2_CODPRO, CD2_IMP
+    //2		CD2_FILIAL, CD2_TPMOV, CD2_SERIE, CD2_DOC, CD2_CODFOR, CD2_LOJFOR, CD2_ITEM, CD2_CODPRO, CD2_IMP
+
+    dbSelectArea("SFT")
+    SFT->( DbSetOrder(1) )//FT_FILIAL, FT_TIPOMOV, FT_SERIE, FT_NFISCAL, FT_CLIEFOR, FT_LOJA, FT_ITEM, FT_PRODUTO
+    cBusca  := FwxFilial("SFT") + ::cTipoNF + ::cSerie + ::cNota + ::cCliFor + ::cLoja  
+    
+    If SFT->(MsSeek(cBusca))
+        While SFT->( !EOF() ) .AND. cBusca == SFT->( FT_FILIAL + FT_TIPOMOV + FT_SERIE + FT_NFISCAL + FT_CLIEFOR + FT_LOJA )
+
+            If ::cTipoNF == "S"
+                nvBC        += SFT->FT_BASEICM
+                nvICMS      += SFT->FT_VALICM
+            Else
+                lSeekSD1 := .F.
+                If SD1->( MSSeek( FwXFilial("SD1") + SFT->( FT_NFISCAL + FT_SERIE + FT_CLIEFOR + FT_LOJA + FT_PRODUTO + FT_ITEM ) ) )
+                    nvBC        += SD1->D1_BASEICM
+                    nvICMS      += SD1->D1_VALICM
+                    lSeekSD1    := .T.
+                EndIf
+            EndIf
+
+            nvCOFINS    += SFT->FT_VALCOF
+            nvPIS       += SFT->FT_VALPIS//SFT->FT_VALPS3
+            nvOutro     += SFT->FT_DESPESA
+            nvDesc      += SFT->FT_DESCONT
+            
+            If lIDTrib .AND. SFT->FT_TIPOMOV == "S"
+                If SD2->( MSSeek( FwXFilial("SD2") + SFT->( FT_NFISCAL + FT_SERIE + FT_CLIEFOR + FT_LOJA + FT_PRODUTO + FT_ITEM ) ) ) .AND. !Empty(SD2->D2_IDTRIB)
+                    aAdd( aIdTribs, SD2->D2_IDTRIB )
+                EndIf
+            ElseIf lSeekSD1 .AND. lIDTrib .AND. SFT->FT_TIPOMOV == "E" .AND. !Empty(SD1->D1_IDTRIB)
+                aAdd( aIdTribs, SD1->D1_IDTRIB )
+            EndIf
+
+            If CD2->( MSSeek( FwxFilial("CD2") + SFT->( FT_TIPOMOV + FT_SERIE + FT_NFISCAL + FT_CLIEFOR + FT_LOJA + FT_ITEM + FT_PRODUTO ) + SubStr("ICM", 1, TamSx3("CD2_IMP")[1] ) ) )
+                nvICMSDeson += CD2->CD2_DESONE
+            EndIf
+            
+            If CD2->( MSSeek( FwxFilial("CD2") + SFT->( FT_TIPOMOV + FT_SERIE + FT_NFISCAL + FT_CLIEFOR + FT_LOJA + FT_ITEM + FT_PRODUTO ) + SubStr("CMP", 1, TamSx3("CD2_IMP")[1] ) ) )
+                nvFCP       += CD2->CD2_VFCP
+            EndIf
+
+            SFT->( DbSkip() )
+        EndDo
+    EndIf
+
+    If Self:oNfTciIntg <> NIL
+        For nI := 1 To Len(aIdTribs)
+            oFUSTCFG    := Self:oNfTciIntg:GetTax( aIdTribs[nI], "FUST")
+            oFUNTTCFG   := Self:oNfTciIntg:GetTax( aIdTribs[nI], "FUNTTE")
+
+            If oFUSTCFG <> NIL
+                nvFUST += oFUSTCFG['valor_tributo']
+            EndIf
+            
+            If oFUNTTCFG <> NIL
+                nvFUNTTEL += oFUNTTCFG['valor_tributo']
+            EndIf
+        Next nI
+    EndIf
+
+    jImposto["vProd"]                   := ::nVProd
+    jImposto["ICMSTot"]                 := jsonObject():new()
+    jImposto["ICMSTot"]["vBC"]          := nvBC
+    jImposto["ICMSTot"]["vICMS"]        := nvICMS
+    jImposto["ICMSTot"]["vICMSDeson"]   := nvICMSDeson
+    jImposto["ICMSTot"]["vFCP"]         := nvFCP
+    jImposto["vCOFINS"]                 := nvCOFINS
+    jImposto["vPIS"]                    := nvPIS
+    jImposto["vFUNTTEL"]                := nvFUNTTEL
+    jImposto["vFUST"]                   := nvFUST
+    jImposto["vDesc"]                   := nvDesc       
+    jImposto["vOutro"]                  := nvOutro      
+    
+    If ::cTipoNF == "S"
+        aAreaSF:= SF2->(GetArea())
+        dbSelectArea("SF2")
+        SF2->(dbSetOrder(1)) //F2_FILIAL, F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA, F2_FORMUL, F2_TIPO
+
+        cBusca  := xFilial("SF2") + ::cNota + ::cSerie + ::cCliFor + ::cLoja
+
+        If SF2->(MsSeek(cBusca))   
+            jImposto["vNF"]                         := SF2->F2_VALBRUT
+
+            jImposto["vRetTribTot"]                 := jsonObject():new()
+            jImposto["vRetTribTot"]["vRetPIS"]      := SF2->F2_VALPIS
+            jImposto["vRetTribTot"]["vRetCofins"]   := SF2->F2_VALCOFI
+            jImposto["vRetTribTot"]["vRetCSLL"]     := SF2->F2_VALCSLL
+            jImposto["vRetTribTot"]["vIRRF"]        := SF2->F2_VALIRRF
+        EndIf
+        restArea(aAreaSF)
+    Else
+        aAreaSF:= SF1->(GetArea())
+        dbSelectArea("SF1")
+        SF1->(dbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+
+        cBusca  := xFilial("SF1") + ::cNota + ::cSerie + ::cCliFor + ::cLoja
+
+        If SF1->(MsSeek(cBusca))
+            jImposto["vNF"]                     := SF1->F1_VALBRUT
+            
+            jImposto["vRetTribTot"]              := jsonObject():new()
+            jImposto["vRetTribTot"]["vRetPIS"]   := SF1->F1_VALPIS
+            jImposto["vRetTribTot"]["vRetCofins"]:= SF1->F1_VALCOFI
+            jImposto["vRetTribTot"]["vRetCSLL"]  := SF1->F1_VALCSLL
+            jImposto["vRetTribTot"]["vIRRF"]     := SF1->F1_VALIRF
+        EndIf
+        RestArea(aAreaSF)
+    EndIf
+
+    self:oTotal := jImposto
+
+    RestArea(aAreaSD1)
+    RestArea(aAreaSD2)
+    RestArea(aAreaSFT)
+    RestArea(aAreaCD2)
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printTotal
+Montagem do XML do grupo de TAG <total> - Dados dos totais da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printTotal() as character class NFComSefaz
+    local cXML as character
+
+    cXML += "<total>"
+    cXML +=     "<vProd>" + self:formatValuePerType(self:oTotal["vProd"],16,2)  + "</vProd>"
+    //Grupo ICMSTot - Totais referentes ao ICMS
+    cXML +=     "<ICMSTot>"
+    cXML +=         "<vBC>" + self:formatValuePerType(self:oTotal["ICMSTot"]["vBC"],16,2)  + "</vBC>"
+    cXML +=         "<vICMS>" + self:formatValuePerType(self:oTotal["ICMSTot"]["vICMS"],16,2) + "</vICMS>"
+    cXML +=         "<vICMSDeson>" + self:formatValuePerType(self:oTotal["ICMSTot"]["vICMSDeson"],16,2) + "</vICMSDeson>"
+    cXML +=         "<vFCP>" + self:formatValuePerType(self:oTotal["ICMSTot"]["vFCP"],16,2) + "</vFCP>"
+    cXML +=     "</ICMSTot>"
+    cXML +=     "<vCOFINS>" + self:formatValuePerType(self:oTotal["vCOFINS"],16,2) + "</vCOFINS>"
+    cXML +=     "<vPIS>" + self:formatValuePerType(self:oTotal["vPIS"],16,2) + "</vPIS>"
+    cXML +=     "<vFUNTTEL>" + self:formatValuePerType(self:oTotal["vFUNTTEL"],16,2) + "</vFUNTTEL>"
+    cXML +=     "<vFUST>" + self:formatValuePerType(self:oTotal["vFUST"],16,2) + "</vFUST>"
+    //Grupo vRetTribTot - Total da retenção de tributos federais
+    if self:oTotal["vRetTribTot"] <> nil
+        cXML +=     "<vRetTribTot>"
+        cXML +=         "<vRetPIS>" + self:formatValuePerType(self:oTotal["vRetTribTot"]["vRetPIS"],16,2) + "</vRetPIS>"    
+        cXML +=         "<vRetCofins>" + self:formatValuePerType(self:oTotal["vRetTribTot"]["vRetCofins"],16,2) + "</vRetCofins>"    
+        cXML +=         "<vRetCSLL>" + self:formatValuePerType(self:oTotal["vRetTribTot"]["vRetCSLL"],16,2) + "</vRetCSLL>"    
+        cXML +=         "<vIRRF>" + self:formatValuePerType(self:oTotal["vRetTribTot"]["vIRRF"],16,2) + "</vIRRF>"    
+        cXML +=     "</vRetTribTot>"
+    endif
+    cXML +=     "<vDesc>" + self:formatValuePerType(self:oTotal["vDesc"],16,2) + "</vDesc>"
+    cXML +=     "<vOutro>" + self:formatValuePerType(self:oTotal["vOutro"],16,2) + "</vOutro>"
+    cXML +=     "<vNF>" + self:formatValuePerType(self:oTotal["vNF"],16,2) + "</vNF>"
+
+	If Self:oXmlRefTri != nil
+		cXML += self:oXmlRefTri:getXmlTotalIbsCbsIs()
+        //cXML += self:oXmlRefTri:getXmlTotalDFE( self:oTotal["vNF"] ) - Causando rejeição 365 ao enviar a tag com vTotDfe com a soma, se enviar sem autoriza.
+	EndIf
+	//Elimina da memória a instancia da classe.
+	If self:oXmlRefTri != nil
+		self:oXmlRefTri:destroy()
+		self:oXmlRefTri := nil
+	EndIf
+    
+    cXML += "</total>"
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procGFidelidade
+Processamento dos dados a serem informados no XML do grupo de TAG <gFidelidade> - Grupo de informações do programa de fidelidade do assinante
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procGFidelidade() class NFComSefaz
+
+    self:oGFidelidade := jsonObject():new()
+    self:oGFidelidade["qtdSaldoPts"]    := 12345678901234567890
+    self:oGFidelidade["dRefSaldoPts"]   := date()
+    self:oGFidelidade["qtdPtsResg"]     := 12345678901234567890
+    self:oGFidelidade["dRefResgPts"]    := date()
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printGFidelidade
+Montagem do XML do grupo de TAG <gFidelidade> - Grupo de informações do programa de fidelidade do assinante
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printGFidelidade() as character class NFComSefaz
+    local cXML as character
+    
+    if self:oGFidelidade <> nil
+        cXML += "<gFidelidade>"
+        cXML +=     "<qtdSaldoPts>" + self:formatValuePerType(self:oGFidelidade["qtdSaldoPts"])  + "</qtdSaldoPts>"
+        cXML +=     "<dRefSaldoPts>" + self:formatValuePerType(self:oGFidelidade["dRefSaldoPts"])  + "</dRefSaldoPts>"
+        cXML +=     "<qtdPtsResg>" + self:formatValuePerType(self:oGFidelidade["qtdPtsResg"])  + "</qtdPtsResg>"
+        cXML +=     "<dRefResgPts>" + self:formatValuePerType(self:oGFidelidade["dRefResgPts"])  + "</dRefResgPts>"
+        cXML += "</gFidelidade>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procGFat
+Processamento dos dados a serem informados no XML do grupo de TAG <gFat> - Grupo de informações de controle da Fatura
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procGFat() class NFComSefaz
+    Local lNFEDest  := SuperGetMV("MV_NFEDEST",,.F.)
+    Local cClieForn := ::cCliFor
+    Local cLojaCF   := ::cLoja
+    Local cSE1Serie := ::cSerie
+    Local aAreaSF   := {} as Array
+    Local aAreaSA   := {} as Array
+    Local aAreaSEA  := {} as Array
+    Local aAreaFK7  := {} as Array
+    Local aAreaFKF  := {} as Array
+    Local lTssPref  := SuperGetMV( "MV_TSSPREF", , .F. ) // Se definido com .T. faz a busca das Dupl. utilizando Prefixo da SF2 na SE1 SE1.E1_NUM = %Exp:SF2->F2_DUPL% AND 
+
+    //grupo opcional
+    if self:oIde["tpFat"] == "0" .AND. self:oIde["indPrePago"] == NIL .AND. self:oIde["indCessaoMeiosRede"] == NIL .AND. self:oIde["finNFCom"] <> "4"
+		self:oGFat := jsonObject():new()
+
+        self:oGFat["codBarras"]     := "999999999999999999999999999999999999999999999999"// E1_CODBAR / E2_CODBAR
+        //Opcional
+        self:oGFat["codDebAuto"]    := "99999999999999999999"
+        self:oGFat["codBanco"]      := "99999"// E1_PORTADO/E2_PORTADO
+        self:oGFat["codAgencia"]    := "9999999999"// EA_AGEDEP
+        //Grupo de informações do PIX
+        self:oGFat["gPIX"] := jsonObject():new()
+        self:oGFat["gPIX"]["urlQRCodePIX"]  := NIL
+
+        DbSelectArea("SFX")
+        SFX->(DbSetOrder(1)) //FX_FILIAL, FX_TIPOMOV, FX_SERIE, FX_DOC, FX_CLIFOR, FX_LOJA, FX_ITEM, FX_COD
+        If SFX->( MsSeek( xFilial("SFX") + ::cTipoNF + ::cSerie + ::cNota + ::cCliFor + ::cLoja ) )
+            self:oGFat["CompetFat"]     := SFX->FX_PERFIS
+            self:oGFat["dPerUsoIni"]    := SFX->FX_DTINI
+            self:oGFat["dPerUsoFim"]    := SFX->FX_DTFIM
+        EndIf
+        
+        If ::cTipoNF == "E"
+            aAreaSF     := SF1->(GetArea())
+            aAreaSEA    := SEA->(GetArea())
+            aAreaFK7    := FK7->(GetArea())
+            aAreaFKF    := FKF->(GetArea())
+            aAreaSA2    := SA2->(GetArea())
+            dbSelectArea("SF1")
+            SF1->(dbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+            If SF1->(MsSeek( xFilial("SF1") + ::cNota + ::cSerie + ::cCliFor + ::cLoja ) )
+                If lNFEDest
+                    cClieForn   := SF1->F1_FORRET
+                    cLojaCF     := SF1->F1_LOJARET
+                EndIf
+
+                dbSelectArea("SE2")
+                SE2->(dbSetOrder(6)) //E2_FILIAL, E2_FORNECE, E2_LOJA, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO
+                If SE2->( MsSeek( xFilial("SE2") + cClieForn + cLojaCF + ::cSerie + ::cNota ) )
+                    self:oGFat["dVencFat"]  := SE2->E2_VENCTO
+                    If !Empty(SE2->E2_CODBAR)
+                        self:oGFat["codBarras"] := AllTrim(SE2->E2_CODBAR)// E1_CODBAR / E2_CODBAR
+                    EndIf
+                    If  !Empty(SE2->E2_PORTADO)
+                        self:oGFat["codBanco"]  := AllTrim(SE2->E2_PORTADO)// E1_PORTADO/E2_PORTADO
+                    EndIf
+                    dbSelectArea("SEA")
+                    SEA->(dbSetOrder(1))
+                    If !Empty(SE2->E2_NUMBOR) .AND. SEA->( MSSeek( FwxFilial("SEA") + SE2->( E2_NUMBOR + E2_PREFIXO + E2_NUM + E2_PARCELA + E2_TIPO + E2_FORNECE + E2_LOJA ) ) ) //EA_FILIAL+EA_NUMBOR+EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA
+                        self:oGFat["codAgencia"]    := AllTrim(SEA->EA_AGEDEP)
+                    EndIf
+                    dbSelectArea("FK7")
+                    FK7->(DbSetOrder(4)) // 4 FK7_ALIAS+FK7_FILTIT+FK7_PREFIX+FK7_NUM+FK7_PARCEL+FK7_TIPO+FK7_CLIFOR+FK7_LOJA
+                    If FK7->( MsSeek( "SE2" + SE2->( E2_FILIAL + E2_PREFIXO + E2_NUM + E2_PARCELA + E2_TIPO + E2_FORNECE + E2_LOJA ) ) )
+                        FKF->(DbSetOrder(1)) // 1 FKF_FILIAL, FKF_IDDOC
+                        If FKF->( MsSeek( xFilial("FKF") + FK7->FK7_IDDOC ) ) .AND. FKF->FKF_RECPIX == "1"
+                            self:oGFat["gPIX"]["urlQRCodePIX"]  := AllTrim( FKF->FKF_PAGPIX )
+                        EndIf
+                    EndIf
+                EndIf
+
+                dbSelectArea("SA2")
+                SA2->(dbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+                If SA2->( MsSeek( xFilial("SA2") + cClieForn + cLojaCF ) )
+                    self:oGFat["enderCorresp"]             := jsonObject():new()
+                    self:oGFat["enderCorresp"]["xLgr"]     := NoAcento( AllTrim( FisGetEnd( RemoveC( SA2->A2_END ), SA2->A2_EST )[1] ) )
+                    self:oGFat["enderCorresp"]["nro"]      := AllTrim( NoAcento( FisGetEnd( RemoveC( SA2->A2_END ), SA2->A2_EST )[3] ) )
+                    self:oGFat["enderCorresp"]["xCpl"]     := AllTrim(SA2->A2_COMPLEM)
+                    self:oGFat["enderCorresp"]["xBairro"]  := SA2->A2_BAIRRO
+                    self:oGFat["enderCorresp"]["cMun"]     := self:aUF[ aScan( self:aUF, { |x| x[1] == SA2->A2_EST } )][02] + SA2->A2_COD_MUN
+                    self:oGFat["enderCorresp"]["xMun"]     := SA2->A2_MUN
+                    self:oGFat["enderCorresp"]["CEP"]      := SA2->A2_CEP
+                    self:oGFat["enderCorresp"]["UF"]       := SA2->A2_EST
+                    self:oGFat["enderCorresp"]["fone"]     := SA2->A2_TEL
+                    self:oGFat["enderCorresp"]["email"]    := SA2->A2_EMAIL
+                endif
+            EndIf
+
+            restArea(aAreaSF)
+            restArea(aAreaSA)
+            restArea(aAreaSEA)
+            restArea(aAreaFK7)
+            restArea(aAreaFKF)
+        Else
+            aAreaSF     := SF2->(GetArea())
+            aAreaSEA    := SEA->(GetArea())
+            aAreaFK7    := FK7->(GetArea())
+            aAreaFKF    := FKF->(GetArea())
+            aAreaSA1    := SA1->(GetArea())
+            dbSelectArea("SF2")
+            SF2->(dbSetOrder(1)) //F2_FILIAL, F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA, F2_FORMUL, F2_TIPO
+            If SF2->(MsSeek( xFilial("SF2") + ::cNota + ::cSerie + ::cCliFor + ::cLoja ) )
+                
+                If lNFEDest
+                    cClieForn   := SF2->F2_CLIENT
+                    cLojaCF     := SF2->F2_LOJENT
+                EndIf
+
+                If lTssPref
+                    cSE1Serie := SF2->F2_PREFIXO
+                EndIf
+
+                dbSelectArea("SE1")
+                SE1->(dbSetOrder(2)) //E1_FILIAL, E1_CLIENTE, E1_LOJA, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO
+                
+                If SE1->( MsSeek( xFilial("SE1") + cClieForn + cLojaCF + cSE1Serie + ::cNota ) )
+                    self:oGFat["dVencFat"]    := SE1->E1_VENCTO
+                    If !Empty(SE1->E1_CODBAR)
+                        self:oGFat["codBarras"] := AllTrim(SE1->E1_CODBAR)// E1_CODBAR / E2_CODBAR
+                    EndIf
+                    If  !Empty(SE1->E1_PORTADO)
+                        self:oGFat["codBanco"]  := AllTrim(SE1->E1_PORTADO)// E1_PORTADO/E2_PORTADO
+                    EndIf
+                    dbSelectArea("SEA")
+                    SEA->(dbSetOrder(1)) // EA_FILIAL, EA_NUMBOR, EA_PREFIXO, EA_NUM, EA_PARCELA, EA_TIPO, EA_FORNECE, EA_LOJA
+                    If !Empty(SE1->E1_NUMBOR) .AND. SEA->( MSSeek( FwxFilial("SEA") + SE1->( E1_NUMBOR + E1_PREFIXO + E1_NUM + E1_PARCELA + E1_TIPO ) ) )
+                        self:oGFat["codAgencia"]    := AllTrim(SEA->EA_AGEDEP)
+                    EndIf
+                    dbSelectArea("FK7")
+                    FK7->(DbSetOrder(4)) // 4 FK7_ALIAS+FK7_FILTIT+FK7_PREFIX+FK7_NUM+FK7_PARCEL+FK7_TIPO+FK7_CLIFOR+FK7_LOJA
+                    If FK7->( MsSeek( "SE1" + SE1->( E1_FILIAL + E1_PREFIXO + E1_NUM + E1_PARCELA + E1_TIPO + E1_CLIENTE + E1_LOJA ) ) )
+                        dbSelectArea("FKF")
+                        FKF->(DbSetOrder(1)) // 1 FKF_FILIAL, FKF_IDDOC
+                        If FKF->( MsSeek( xFilial("FKF") + FK7->FK7_IDDOC ) ) .AND. FKF->FKF_RECPIX == "1"
+                            self:oGFat["gPIX"]["urlQRCodePIX"]  := AllTrim( FKF->FKF_PAGPIX )
+                        EndIf
+                    EndIf
+                EndIf
+
+                dbSelectArea("SA1")
+                SA1->(dbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+                If SA1->( MsSeek( xFilial("SA1") +  cClieForn + cLojaCF ) )
+                    self:oGFat["enderCorresp"]              := jsonObject():new()
+                    self:oGFat["enderCorresp"]["xLgr"]      := NoAcento( AllTrim( FisGetEnd( RemoveC( SA1->A1_END ), SA1->A1_EST )[1] ) )
+                    self:oGFat["enderCorresp"]["nro"]       := AllTrim( NoAcento( FisGetEnd( RemoveC( SA1->A1_END ), SA1->A1_EST )[3] ) )
+                    self:oGFat["enderCorresp"]["xCpl"]      := AllTrim(SA1->A1_COMPLEM)
+                    self:oGFat["enderCorresp"]["xBairro"]   := SA1->A1_BAIRRO
+                    self:oGFat["enderCorresp"]["cMun"]      := self:aUF[ aScan( self:aUF, { |x| x[1] == SA1->A1_EST } )][02] + SA1->A1_COD_MUN
+                    self:oGFat["enderCorresp"]["xMun"]      := SA1->A1_MUN
+                    self:oGFat["enderCorresp"]["CEP"]       := SA1->A1_CEP
+                    self:oGFat["enderCorresp"]["UF"]        := SA1->A1_EST
+                    self:oGFat["enderCorresp"]["fone"]      := SA1->A1_TEL
+                    self:oGFat["enderCorresp"]["email"]     := SA1->A1_EMAIL
+                endif
+            endif
+
+            restArea(aAreaSF)
+            restArea(aAreaSA)
+            restArea(aAreaSEA)
+            restArea(aAreaFK7)
+            restArea(aAreaFKF)
+        EndIf
+
+    endIf
+
+return nil
+/*/{Protheus.doc} NFComSefaz::printGFat
+Montagem do XML do grupo de TAG <gFat> - Grupo de informações de controle da Fatura
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printGFat() as character class NFComSefaz
+    local cXML as character
+    
+    if self:oGFat <> nil
+        cXML += "<gFat>"
+        cXML +=     "<CompetFat>" + self:formatValuePerType(self:oGFat["CompetFat"], 6)  + "</CompetFat>" //AAAAMM
+        cXML +=     "<dVencFat>" + self:formatValuePerType(self:oGFat["dVencFat"], 10)  + "</dVencFat>"
+        if self:oGFat["dPerUsoIni"] <> nil .and. self:oGFat["dPerUsoFim"] <> nil
+            cXML += "<dPerUsoIni>" + self:formatValuePerType(self:oGFat["dPerUsoIni"], 10)  + "</dPerUsoIni>"
+            cXML += "<dPerUsoFim>" + self:formatValuePerType(self:oGFat["dPerUsoFim"], 10)  + "</dPerUsoFim>"
+        endIf
+        cXML +=     "<codBarras>" + self:formatValuePerType(self:oGFat["codBarras"])  + "</codBarras>"
+        if self:oGFat["codDebAuto"] <> nil
+            cXML += "<codDebAuto>" + self:formatValuePerType(self:oGFat["codDebAuto"])  + "</codDebAuto>"
+        endIf
+        if self:oGFat["codBanco"] <> nil .and. self:oGFat["codAgencia"] <> nil
+            cXML += "<codBanco>" + self:formatValuePerType(self:oGFat["codBanco"])  + "</codBanco>"
+            cXML += "<codAgencia>" + self:formatValuePerType(self:oGFat["codAgencia"])  + "</codAgencia>"
+        endIf
+        if self:oGFat["enderCorresp"] <> nil
+            cXML += "<enderCorresp>" 
+            cXML +=     "<xLgr>" + self:formatValuePerType(self:oGFat["enderCorresp"]["xLgr"])  + "</xLgr>"
+            cXML +=     "<nro>" + self:formatValuePerType(self:oGFat["enderCorresp"]["nro"])  + "</nro>"
+            if self:oGFat["enderCorresp"]["xCpl"] <> nil .and. !empty(self:oGFat["enderCorresp"]["xCpl"])
+                cXML += "<xCpl>" + self:formatValuePerType(self:oGFat["enderCorresp"]["xCpl"])  + "</xCpl>"
+            endif
+            cXML +=     "<xBairro>" + self:formatValuePerType(self:oGFat["enderCorresp"]["xBairro"])  + "</xBairro>"
+            cXML +=     "<cMun>" + self:formatValuePerType(self:oGFat["enderCorresp"]["cMun"])  + "</cMun>"
+            cXML +=     "<xMun>" + self:formatValuePerType(self:oGFat["enderCorresp"]["xMun"])  + "</xMun>"
+            cXML +=     "<CEP>" + self:formatValuePerType(self:oGFat["enderCorresp"]["CEP"])  + "</CEP>"
+            cXML +=     "<UF>" + self:formatValuePerType(self:oGFat["enderCorresp"]["UF"])  + "</UF>"
+            if self:oGFat["enderCorresp"]["fone"] <> nil .and. !empty(self:oGFat["enderCorresp"]["fone"])
+                cXML += "<fone>" + self:formatValuePerType(self:oGFat["enderCorresp"]["fone"])  + "</fone>"
+            endIf
+            if self:oGFat["enderCorresp"]["email"] <> nil .and. !empty(self:oGFat["enderCorresp"]["email"])
+                cXML += "<email>" + self:formatValuePerType(self:oGFat["enderCorresp"]["email"])  + "</email>"
+            endIf
+            cXML += "</enderCorresp>"
+        endIf
+        if self:oGFat["gPIX"] <> nil .and. self:oGFat["gPIX"]["urlQRCodePIX"] <> nil .AND. !Empty(self:oGFat["gPIX"]["urlQRCodePIX"])
+            cXML += "<gPIX>"
+            cXML +=     "<urlQRCodePIX>" + self:formatValuePerType(self:oGFat["gPIX"]["urlQRCodePIX"])  + "</urlQRCodePIX>"
+            cXML += "</gPIX>"
+        EndIf
+        cXML += "</gFat>"
+    EndIf
+
+return cXML
+
+
+/*/{Protheus.doc} NFComSefaz::procGFatCentral
+Processamento dos dados a serem informados no XML do grupo de TAG <gFatCentral> - Grupo de informações do Faturamento Centralizado
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procGFatCentral() class NFComSefaz
+
+    if self:oIde["tpFat"] == "1"
+        self:ogFatCentral           := jsonObject():new()
+        self:ogFatCentral["CNPJ"]   := self:oEmit["CNPJ"]
+        self:ogFatCentral["cUF"]    := self:aUF[ aScan( self:aUF, { |x| x[1] == self:oEmit["enderEmit"]["UF"] } ) ][02]
+    endIf
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printGFatCentral
+Montagem do XML do grupo de TAG <gFatCentral> - Grupo de informações do Faturamento Centralizado
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gCofat>
+/*/
+method printGFatCentral() as character class NFComSefaz
+    local cXML as character
+    
+    if self:oGFatCentral <> nil .and. self:oGFat == nil
+        cXML += "<gFatCentral>"
+        cXML +=     "<CNPJ>" + self:ogFatCentral["CNPJ"] + "</CNPJ>"
+        cXML +=     "<cUF>" + self:ogFatCentral["cUF"] + "</cUF>"
+        cXML += "</gFatCentral>"
+    endIf
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procAutXML
+Processamento dos dados a serem informados no XML do grupo de TAG <autXML> - Autorizados para download do XML do DF-e
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procAutXML() class NFComSefaz
+    Local nI            := 0            as integer
+    Local aCGC          := {}           as array
+
+    aCGC := NfeAutXml()
+
+    If Len(aCGC) > 0
+        //Grupo opcional
+        self:oAutXML := jsonObject():new()
+        self:oAutXML["autXML"] := array( Len( aCGC ) ) //TODO:
+        For nI := 1 to Len( aCGC )
+            self:oAutXML["autXML"][nI] := jsonObject():new()
+            If aCGC[nI][1]
+                self:oAutXML["autXML"][nI]["CNPJ"] := AllTrim(aCGC[nI][2])
+            Else
+                self:oAutXML["autXML"][nI]["CPF"] := AllTrim(aCGC[nI][2])
+            EndIf
+            
+        Next nI	
+    EndIf
+        
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printAutXML
+Montagem do XML do grupo de TAG <autXML> - Autorizados para download do XML do DF-e
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <autXML>
+/*/
+method printAutXML() as character class NFComSefaz
+    local cXML as character
+    local nI as integer
+
+    if self:oAutXML <> nil .and. self:oAutXML["autXML"] <> nil .and. len(self:oAutXML["autXML"]) > 0
+        for nI := 1 to len(self:oAutXML["autXML"])
+            cXML += "<autXML>"
+            if self:oAutXML["autXML"][nI]["CPF"] <> nil
+                cXML += "<CPF>" + self:oAutXML["autXML"][nI]["CPF"] + "</CPF>"
+            else
+                cXML += "<CNPJ>" + self:oAutXML["autXML"][nI]["CNPJ"] + "</CNPJ>"
+            endIf
+            cXML += "</autXML>"
+        next nI
+    endIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::procInfAdic
+Processamento dos dados a serem informados no XML do grupo de TAG <infAdic> - Informações Adicionais
+@type method
+@version 12.1.2410 
+@author fs.martinez
+@since 1/29/2025
+/*/
+method procInfAdic() class NFComSefaz
+    Local aAreaSF   := {}           as Array
+    Local aAreaSC   := {}           as Array
+    Local cInfAdFis := ""           as character
+    Local cInfCpl   := ""           as character
+   
+    self:oInfAdic   := jsonObject():new()
+    
+    If ::cTipoNF == "E"
+        aAreaSF:= SF1->(GetArea())
+        dbSelectArea("SF1")
+        SF1->( DbSetOrder(1)) //F1_FILIAL, F1_DOC, F1_SERIE, F1_FORNECE, F1_LOJA, F1_TIPO
+        If SF1->(MsSeek(xFilial("SF1") + ::cNota + ::cSerie + ::cCliFor + ::cLoja ) ) .AND. (!Empty(SF1->F1_MENNOTA) .Or. !Empty(SF1->F1_OBSFISC))
+            cInfCpl     := AllTrim(SF1->F1_MENNOTA)
+            cInfAdFis   := AllTrim(SF1->F1_OBSFISC)
+        EndIf
+
+        restArea(aAreaSF)
+    Else
+        aAreaSF:= SF2->(GetArea())
+        DbSelectArea("SF2")
+        SF2->( DbSetOrder(1)) //F2_FILIAL, F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA, F2_FORMUL, F2_TIPO
+        If SF2->(MsSeek(xFilial("SF2") + ::cNota + ::cSerie + ::cCliFor + ::cLoja ) ) .AND. !Empty(SF2->F2_MENNOTA)
+            cInfCpl := AllTrim(SF2->F2_MENNOTA)
+        endif
+
+        aAreaSC:= SC5->(GetArea())
+
+        DbSelectArea("SC5")
+        SC5->( DbSetOrder(1)) //F2_FILIAL, F2_DOC, F2_SERIE, F2_CLIENTE, F2_LOJA, F2_FORMUL, F2_TIPO
+
+        If SC5->(MsSeek(xFilial("SC5") + self:cSD2pedido ) ) .AND. !Empty(SC5->C5_OBSFISC)
+            cInfAdFis := Alltrim(SC5->C5_OBSFISC)
+        endif
+
+        RestArea(aAreaSC)
+        RestArea(aAreaSF)
+    EndIf
+
+    If !Empty(self:cMsgFormula)
+        cInfCpl += self:cMsgFormula
+    EndIf
+    
+    If !Empty(cInfCpl)
+        self:oInfAdic["infCpl"] := AllTrim(cInfCpl)
+    EndIf
+    If !Empty(cInfAdFis)
+        self:oInfAdic["infAdFisco"] := AllTrim(cInfAdFis)
+    EndIf
+
+return nil
+
+/*/{Protheus.doc} NFComSefaz::printInfAdic
+Montagem do XML do grupo de TAG <infAdic> - Informações Adicionais
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <infAdic>
+/*/
+method printInfAdic() as character class NFComSefaz
+    local cXML as character
+    
+    if self:oInfAdic <> nil
+        cXML += "<infAdic>"
+        if self:oInfAdic["infAdFisco"] <> nil
+            cXML += "<infAdFisco>" + self:oInfAdic["infAdFisco"] + "</infAdFisco>"
+        endIf
+        if self:oInfAdic["infCpl"] <> nil
+            cXML += "<infCpl>" + self:oInfAdic["infCpl"] + "</infCpl>"
+        endIf
+        cXML += "</infAdic>"
+    endIf
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::printGRespTec
+Montagem do XML do grupo de TAG <gRespTec> - Informações do Responsável Técnico pela emissão do DF-e
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/29/2025
+@return character, XML com o grupo <gRespTec>
+/*/
+method printGRespTec() as character class NFComSefaz
+    
+    local cXML := NfeRespTec(self:cChaveNFCom, 62, self:getUFFil(), self:cTpAmb) as character
+    cXML := strTran(cXML, "infRespTec", "gRespTec") //Substitui a tag <infRespTec> por <gRespTec>
+   
+return (cXml)
+
+/*/{Protheus.doc} NFComSefaz::printInfNFComSupl
+Método responsável por montar a tag <infNFComSupl> - Informações suplementares da NFCom
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/31/2025
+@return character, XML com a tag <infNFComSupl>
+/*/
+method printInfNFComSupl() as character class NFComSefaz
+    local cXML      as character
+    Local cUrlUF    as character
+    Local cUrlParam as character
+    Local cUF       as character
+
+    cUF     := self:getUFFil()
+    cUrlUF := RetURLNFCOM( cUF, self:cTpAmb )
+    
+    // Parametro para Produção
+    cUrlParam  := AllTrim( SuperGetMV( "MV_URLNFCO", , "" ) )
+    
+    If self:cTpAmb == "2" 
+        // Parametro para Homologação
+        cUrlParam := AllTrim( SuperGetMV( "MV_URLNFCH", , "" ) )
+    EndIf
+
+    // Somente sobrescreve a URL se o parametro estiver preenchido
+    If !Empty( cUrlParam )
+        cUrlUF := cUrlParam
+    EndIf
+
+    If !( "?chNFCom=" $ cUrlUF )
+        cUrlUF += "?chNFCom="
+    EndIf
+    
+    cXML += "<infNFComSupl>"
+    cXML +=     "<qrCodNFCom>" + cUrlUF + self:cChaveNFCom
+    cXML +=     "&amp;tpAmb=" + self:cTpAmb
+    //TODO: quando contingencia a 3ª parte deve ser informada a assinatura e issp será feito no TSS
+    cXML +=     "</qrCodNFCom>"
+    cXML += "</infNFComSupl>"
+
+return cXML
+
+/*/{Protheus.doc} NFComSefaz::formatValuePerType
+Metodo responsável por formatar o valor recebido em string
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/23/2025
+@param xValor, variant, valor a ser convertido para string
+@param nTamanho, numeric, tamanho maximo
+@param nDecimal, numeric, quantidade de casas decimais
+@return character, string contendo o valor convertido
+/*/
+method formatValuePerType(xValor, nTamanho as integer, nDecimal as integer) as character class NFComSefaz
+    local cNovo as character
+
+    default nTamanho    := 60
+    default nDecimal    := 0
+
+    Do Case
+        case ValType(xValor) == "N"
+            cNovo := "0"
+            If xValor <> 0
+                /*if nDecimal > 8
+                    cNovo := AllTrim(Transform(xValor,replic("9",(nTamanho-nDecimal-1))+"."+ replic("9",nDecimal)))	
+                else*/
+                    cNovo := AllTrim(Str(xValor,nTamanho,nDecimal))	
+                //endif
+            EndIf
+
+        case ValType(xValor) == "D"
+            cNovo := FsDateConv(xValor,"YYYYMMDD")
+            if nTamanho == 6
+                cNovo := substr(cNovo,1,6)
+            else
+                cNovo := SubStr(cNovo,1,4) + "-" + SubStr(cNovo,5,2) + "-" + SubStr(cNovo,7)
+            endIf
+
+        case ValType(xValor) == "C"
+            cNovo := AllTrim(NoAcento(SubStr(AllTrim(xValor),1,nTamanho)))
+    endCase
+
+return cNovo
+
+/*/{Protheus.doc} NFComSefaz::defUF
+Metodo com as UF, onde cada posição:
+    [1] - Sigla do estado
+    [2] - Codigo numerico do estado
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/24/2025
+@return array, UFs: [1] - Sigla do estado e [2] - Codigo numerico do estado
+/*/
+method defUF() class NFComSefaz
+    self:aUF := {{"RO","11"},;
+                {"AC","12"},;
+                {"AM","13"},;
+                {"RR","14"},;
+                {"PA","15"},;
+                {"AP","16"},;
+                {"TO","17"},;
+                {"MA","21"},;
+                {"PI","22"},;
+                {"CE","23"},;
+                {"RN","24"},;
+                {"PB","25"},;
+                {"PE","26"},;
+                {"AL","27"},;
+                {"MG","31"},;
+                {"ES","32"},;
+                {"RJ","33"},;
+                {"SP","35"},;
+                {"PR","41"},;
+                {"SC","42"},;
+                {"RS","43"},;
+                {"MS","50"},;
+                {"MT","51"},;
+                {"GO","52"},;
+                {"DF","53"},;
+                {"SE","28"},;
+                {"BA","29"},;
+                {"EX","99"}}
+return self:aUF
+
+/*/{Protheus.doc} NFComSefaz::getUFFil
+Retorna a UF do cadastro de empresa de acordo com o parametro MV_SPEDEND
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 1/31/2025
+@return character, sigla da UF
+/*/
+method getUFFil() as character class NFComSefaz
+    local cUF := allTrim(SM0->M0_ESTENT) as character
+	if !GetNewPar("MV_SPEDEND",.F.)
+		cUF := allTrim(SM0->M0_ESTCOB)
+	endIf
+return upper(cUF)
+
+
+/*/{Protheus.doc} NFComSefaz::procTaxICMS
+Responsavel por processamento da tag de imposto dos itens <ICMSXX>
+@type method
+@version 12.1.2410
+@author fs.martinez
+@since 2/3/2025
+/*/
+method procMsg(cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo) class NFComSefaz
+    
+    Local aAreaSD       := {} as Array
+    Local cBusca        := "" as Character
+
+    Default cNota       := ""
+    Default cSerie      := ""
+    Default cTpMov      := ""
+    Default cClieFor    := ""
+    Default cLoja       := ""
+    Default cProd       := ""
+    Default cItem       := ""
+    Default cTipo       := ""
+    
+    If cTpMov == "S"
+
+        aAreaSD:= SD2->(GetArea())
+        DbSelectArea("SD2")
+        SD2->(dbSetOrder(3)) //D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+        cBusca  := xFilial("SD2") + cNota + cSerie + cClieFor + cLoja + cProd + cItem
+
+        If SD2->(MsSeek(cBusca))
+            self:cMsgFormula := RetTxtFormula( SD2->D2_TES, self:cMsgFormula )
+            self:cSD2pedido := SD2->D2_PEDIDO
+        EndIf
+
+        restArea(aAreaSD)
+    Else
+        aAreaSD:= SD1->(GetArea())
+        DbSelectArea("SD1")
+        SD1->(dbSetOrder(1)) //D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+        cBusca  := xFilial("SD1") + cNota + cSerie + cClieFor + cLoja + cProd + cItem
+
+        If SD1->(MsSeek(cBusca))
+            self:cMsgFormula := RetTxtFormula( SD1->D1_TES, self:cMsgFormula )
+        endif
+
+        restArea(aAreaSD)
+    EndIf
+
+Return Nil
+
+/*/{Protheus.doc} inverte
+Funcao responsavel por retornar o numero randomico de cNF
+@type function
+@version 12.1.2410
+@author fs.martinez
+@since 1/28/2025
+@param cNota, character, numero da nota
+@return variant, numero randomico
+/*/
+static function inverte(cNota)
+    cNumNF := GCifra(Val(cNota))
+return substr(cNumNF,1,7)
+
+/*/{Protheus.doc} noAcento
+Funcao que remove caracteres especiais
+@type function
+@version 12.1.2410
+@author fs.martinez
+@since 1/30/2025
+@param cinfo, character, texto a ser convertido
+@return character, texto convertido
+/*/
+static function noAcento(cinfo as character) as character
+    local cNewInfo  as character
+    local nI        as integer
+    Local aTag      as array
+
+    cNewInfo := FwNoAccent(cinfo)
+
+    aTag := {"&lt;","&gt;",">","<"}
+    For nI := 1 To Len(aTag)
+	    cNewInfo := strTran( cNewInfo, aTag[nI], "" )
+    Next nI
+
+return cNewInfo
+
+/*/{Protheus.doc} SpecialChar
+Limpa os códigos ASCII faixa 127 a 255 que falham os EncodeUTF8
+@type function
+@version 12.1.2410
+@author fs.martinez
+@since 1/31/2025
+@param cString, character, texto a ser tratado
+@return variant, xml tratado
+/*/
+static Function SpecialChar( cString )
+local nX     := 0
+local aChar  := {}
+
+default cString := ""
+
+if !empty( cString )
+    aAdd( aChar, 129)
+    aAdd( aChar, 141)
+    aAdd( aChar, 143)
+    aAdd( aChar, 144)
+    aAdd( aChar, 157)
+    for nX := 1 to len(aChar)
+        cString := StrTran( cString, Chr( aChar[nX] ), "." )
+    next
+endif
+
+return cString
+
+Static Function BuscaIndice(cTpMov, cSerie, cNota, cClieFor, cLoja, cTipo)
+    Local cTabCli   := "SA1"
+    Local aArea     := GetArea()
+
+    If (cTpMov == "S" .And. cTipo $ "B,D") .Or. (cTpMov == "E" .And. !cTipo $ "B,D")
+        cTabCli := "SA2"
+    EndIf
+
+    RestArea(aArea)
+Return cTabCli
+
+Static Function RetJImp( nVALPIS, nVALCOFI, nVALCSLL, nBASEIRR, nVALIRRF)
+   
+    Local jImposto    := jsonObject():New()
+    Default nVALPIS := 0
+    Default nVALCOFI := 0
+    Default nVALCSLL := 0
+    Default nBASEIRR := 0
+    Default nVALIRRF := 0
+
+    jImposto["vRetPIS"]     :=  nVALPIS
+    jImposto["vRetCofins"]  :=  nVALCOFI
+    jImposto["vRetCSLL"]    :=  nVALCSLL
+    jImposto["vBCIRRF"]     :=  nBASEIRR
+    jImposto["vIRRF"]       :=  nVALIRRF
+
+Return jImposto
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} FormatTel
+    Função para retirada dos caracteres '(', ')' , '+', ' ' e '-'
+	@author Rodrigo Pirolo
+	@since 11.02.2025
+	@version 12.1.2410
+	@return void
+/*/
+//-----------------------------------------------------------------------
+
+Static Function FormatTel(cTel)
+	
+    Local cRet := ""
+	
+    Default cTel := SM0->M0_TEL
+	
+    cRet := strtran(strtran(strtran(strtran(strtran(cTel, "(", ""), ")", ""), "+", ""), "-", ""), " ", "")
+
+return cRet
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc}  Method TssTCInteg
+
+	Função responsável por integrar o TSS com o Configurador de Tributos, classificando
+	o tipo de tributação do item da nota fiscal, de acordo com a configuração.
+
+	@param cAliasSD2  Alias da tabela SD2.
+	@param lVldExc    Booleano que indica se a classe TSSTCIIntegration existe.
+	@param oNfTciIntg Objeto que irá receber a referencia da classe TSSTCIIntegration.
+	@return void
+	
+	@author Felipe Duarte Luna
+	@since 11.02.2025
+	@version 12.1.2410
+/*/
+//-----------------------------------------------------------------------
+
+Static Function TssTCInteg( cTipoNF, cAliasSD, lVldExc, oNfTciIntg )
+	
+	Local aAreaASD		:= (cAliasSD)->(GetArea())
+    Local aIdTribs		:= {}
+	Local cIdTrib		:= ""
+	
+	Default cTipoNF     := ""
+	Default cAliasSD	:= ""
+	Default lVldExc		:= .F.
+	Default oNfTciIntg	:= NIL
+
+    If lVldExc .AND. !Empty(cTipoNF)
+
+        While !(cAliasSD)->(Eof())
+            
+            cIdTrib := (cAliasSD)->IDTRIB
+
+			If !Empty(cIdTrib)
+                aAdd( aIdTribs, cIdTrib )
+            EndIf
+
+            (cAliasSD)->(dbSkip())
+        EndDo
+
+        (cAliasSD)->(DbGoTop())
+        
+    EndIf
+
+    If lVldExc .AND. Len(aIdTribs) > 0
+        If oNfTciIntg == NIL
+			oNfTciIntg := totvs.protheus.backoffice.tss.engine.tributaveis.TSSTCIntegration():New()
+		EndIf	
+		oNfTciIntg:SetInfoNfs(aIdTribs)
+    EndIf
+
+	RestArea(aAreaASD)
+Return
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} NfeAutXml
+Função que monta o grupo autXML da NFe
+
+@param		cAutXml	 String com os CPFs/CNPJs autorizados a visualizar 
+						 o xml
+@return	cString	 String contendo o grupo autXML  
+
+@author Rodrigo Pirolo
+@since 21/12/2015
+@version 1.0 
+/*/
+//-----------------------------------------------------------------------
+Static Function NfeAutXml()
+
+Local cSeparador    := ";"
+Local cConteudo     := ""
+Local nAt           := 0
+Local aAux          := {}
+Local cAutXml		:= SuperGetMV("MV_AUTXML",,"")
+
+If cSeparador $ cAutXml
+	nAt:= At( cSeparador, cAutXml )
+
+	While nAt > 0
+		cConteudo   := Substr( cAutXml, 1, nAt-1 )
+		
+        AAdd( aAux, { Len(cConteudo) == 14, cConteudo } )
+
+		cAutXml     := Substr(cAutXml,nAt+1)
+
+		nAT         := at(cSeparador,cAutXml)
+	EndDo
+
+EndIf
+
+If !Empty(cAutXml) .OR. ( !(cSeparador $ cAutXml) .AND. !Empty(cAutXml) )
+    AAdd( aAux, { Len(cAutXml) == 14, cAutXml } )
+EndIf
+
+Return aAux
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} RetCodNFCOM
+Função que monta o grupo autXML da NFe
+
+@param		cAutXml	 String com os CPFs/CNPJs autorizados a visualizar 
+						 o xml
+@return	cString	 String contendo o grupo autXML  
+
+@author Rodrigo Pirolo
+@since 21/12/2015
+@version 1.0 
+/*/
+//-----------------------------------------------------------------------
+
+Static Function RetCodNFCOM( cGRPCLAS, cCLASSIF )
+
+Local aCod      := {}
+Local cRet      := ""
+
+Default cGRPCLAS := ""
+Default cCLASSIF := ""
+/*  01=Assinatu;
+    02=Habilita;
+    03=Medido;
+    04=Pré Pago;
+    05=Outros;
+    06=Energia;
+    07=Equipame;
+    08=Cobranç;
+    09=Dedução;
+    10=Não medido;
+    11=Meios rede*/
+
+aCod := {   { "01", "01", "0100101", "Assinatura de serviços de telefonia"},;
+            { "01", "02", "0100201", "Assinatura de serviços de comunicação de dados"},;
+            { "01", "03", "0100301", "Assinatura de serviços de TV por Assinatura"},;
+            { "01", "05", "0100401", "Assinatura de serviços de comunicação multimídia"},;
+            { "02", "01", "0200101", "Habilitação de serviços de telefonia"},;
+            { "02", "02", "0200201", "Habilitação de serviços de comunicação de dados"},;
+            { "02", "03", "0200301", "Habilitação de TV por Assinatura"},;
+            { "03", "01", "0300101", "Serviço Medido - Chamadas locais"},;
+            { "03", "03", "0300102", "Serviço Medido - Chamadas longa distância nacional"},;
+            { "03", "04", "0300103", "Serviço Medido - Chamadas longa distância internacionais"},;
+            { "03", "07", "0300104", "Serviço Medido - Chamadas originadas em Roaming"},;
+            { "03", "08", "0300105", "Serviço Medido - Chamadas recebidas em Roaming"},;
+            { "03", "09", "0300106", "Serviço Medido - Adicional de chamada"},;
+            { "03", "05", "0300107", "Serviço Medido - Números Especiais (0300/0500/0600/0800/etc.)"},;
+            { "03", "12", "0300108", "Serviço Medido - Mensagem SMS"},;
+            { "03", "13", "0300109", "Serviço Medido - Mensagem MMS"},;
+            { "03", "06", "0300201", "Serviço Medido - Comunicação de dados"},;
+            { "03", "11", "0300301", "Serviço Medido - Pay-per-view (programação TV)"},;
+            { "03", "15", "0300401", "Serviço Medido - Comunicação multimidia"},;
+            { "10",	"01", "0400101", "Serviço Não Medido - Telefonia"},;
+            { "10",	"02", "0400201", "Serviço Não Medido - Comunicação de dados"},;
+            { "10",	"03", "0400301", "Serviço Não Medido - TV por Assinatura"},;
+            { "10",	"04", "0400401", "Serviço Não Medido - Provimento à internet"},;
+            { "10",	"05", "0400501", "Serviço Não Medido - Comunicação multimídia"},;
+            { "04", "01", "0500101", "Cartão Telefônico - Telefonia Fixa"},;
+            { "04", "05", "0500102", "Carga / Recarga de Créditos - Telefonia Fixa"},;
+            { "04", "06", "0500201", "Carga / Recarga de Créditos - Telefonia Móvel"},;
+            { "", "", "0500301", "Carga / Recarga de Créditos - Serviço de Comunicação Multimídia"},;
+            { "", "", "0500401", "Carga / Recarga de Créditos - TV por assinatura"},;
+            { "", "", "0500501", "Recarga de Créditos - Antecipação"},;
+            { "", "", "0500601", "Repasse de Pré-pago"},;
+            { "05", "02", "0600101", "Facilidades Adicionais (identificador, caixa postal, não-perturbe, etc)"},;
+            { "", "", "0600201", "Streaming de vídeo e audio"},;
+            { "", "", "0600301", "Serviço de Rastreamento"},;
+            { "", "", "0600401", "Veiculação de publicidade e propaganda em qualquer meio"},;
+            { "", "", "0600402", "Veiculação de publicidade por rádio e TV de recepção livre e gratuita"},;
+            { "", "", "0600501", "Outros Serviços (substituição de número, troca de aparelho, instalação, software, visita técnica, etc.)"},;
+            { "05",	"99", "0600601", "Outros serviços de valor adicionado" },;
+            { "11", "01", "0700101", "Interconexão"},;
+            { "11", "03", "0700201", "Roaming"},;
+            { "11", "04", "0700301", "Exploração Industrial de Linha Dedicada - EILD"},;
+            { "", "", "0700401", "Lançamento de ICMS proporcional às saídas isentas, não tributadas ou com redução de base de cálculo (§ 1º, Cláusula terceira, Convênio ICMS 17/2013)"},;
+            { "", "", "0700501", "Lançamento de ICMS proporcional às cessões de meio destinadas a consumo próprio (§ 1º Cláusula terceira, Convênio ICMS 17/2013)"},;
+            { "", "", "0700601", "Lançamento de ICMS complementar, na condição de responsável tributário"},;
+            { "07", "01", "0800101", "Aparelho telefônico"},;
+            { "07", "02", "0800201", "Aparelho Identificador de chamadas"},;
+            { "07", "03", "0800301", "Modem"},;
+            { "07", "04", "0800401", "Rack"},;
+            { "07", "05", "0800501", "Sala/Recinto"},;
+            { "07", "06", "0800601", "Roteador"},;
+            { "07", "07", "0800701", "Servidor"},;
+            { "07", "08", "0800801", "Multiplexador"},;
+            { "07", "09", "0800901", "Decodificador/Conversor"},;
+            { "07", "99", "0801001", "Outros equipamentos"},;
+            { "", "", "1000101", "Cobrança de seguros"},;
+            { "", "", "1000201", "Cobrança de parcelamento"},;
+            { "", "", "1000301", "Cobrança de juros de mora"},;
+            { "", "", "1000401", "Cobrança de multa de mora"},;
+            { "", "", "1000402", "Cobrança de multa por descumprimento de contrato (fidelização)"},;
+            { "", "", "1000501", "Cobrança de conta de meses anteriores"},;
+            { "", "", "1000601", "Correção monetária"},;
+            { "", "", "1000701", "Taxas"},;
+            { "08", "01", "1100101", "Cobrança de Serviços de Terceiros"},;
+            { "08", "02", "1100201", "Cobrança de Seguros"},;
+            { "08", "04", "1100301", "Cobrança de Juros de Mora"},;
+            { "08", "05", "1100401", "Cobrança de Multa de Mora"},;
+            { "08", "06", "1100501", "Cobrança de Conta de meses anteriores"},;
+            { "", "", "1100601", "Correção Monetária"},;
+            { "", "", "1100701", "Doações"},;
+            { "", "", "1200101", "Item lançado em outra NFCom - Cobrança centralizada"},;
+            { "", "", "1300101", "Item lançado em outra NFCom - Cobrança por cofaturamento"},;
+            { "09", "01", "5900101", "Dedução relativa a impugnação de serviços"},;
+            { "09", "02", "5900201", "Dedução referente ajuste de conta"},;
+            { "09", "04", "5900301", "Dedução relativa à multa pela interrupção de fornecimento"},;
+            { "", "", "5900401", "Dedução por pagamento em duplicidade"},;
+            { "09", "99", "5900501", "Outras deduções"} }
+
+nPos := aScan( aCod, { |x| x[1] + x[2] == cGRPCLAS + cCLASSIF } )
+
+If nPos > 0
+    cRet := aCod[nPos,3]
+EndIf
+
+Return cRet
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} RetTpServU
+Retorna o Tipo de serviço no padrão SEFAZ
+
+@param		cAutXml	 String com os CPFs/CNPJs autorizados a visualizar 
+						 o xml
+@return	cString	 String contendo o grupo autXML  
+
+@author Rodrigo Pirolo
+@since 21/12/2015
+@version 1.0 
+/*/
+//-----------------------------------------------------------------------
+
+Static Function RetTpServU( cTpServ )
+
+    Local cRet := ""
+    Local nPos := 0
+    Local aAux := { { "0", "1" },;
+                    { "1", "2" },;
+                    { "2", "3" },;
+                    { "3", "4" },;
+                    { "4", "5" },;
+                    { "9", "6" } }
+    //ERP   0=Telefonia;1=Comunicação dados;    2=TV assinatura;    3=Internet;                       4=Multimídia;9=Outros
+    //SEFAZ 1-Telefonia;2-Comunicação de dados; 3-TV por Assinatura;4-Provimento de acesso à Internet;5-Multimídia;6-Outros;7-Varios; 
+
+    nPos := AScan( aAux, { |x| x[1] == cTpServ } )
+	If nPos > 0
+    	cRet := aAux[ nPos, 2 ]
+    EndIf
+    
+Return cRet
+
+Static Function RetfinNFCom( cTipoNF, cSerie, cNota, cCliFor, cLoja )
+    Local aAreaSF   := {}
+    Local aAreaSF4  := SF4->(GetArea())
+    Local cBusca    := ""
+    Local aRet      := {"0", .F.}
+    
+    Default cTipoNF := ""
+    Default cSerie  := ""
+    Default cNota   := ""
+    Default cCliFor := ""
+    Default cLoja   := ""
+
+    dbSelectArea("SF4")
+    SF4->(DbSetOrder(1))
+
+    If cTipoNF == "E"
+        aAreaSF := SD1->(GetArea())
+        dbSelectArea("SD1")
+        SD1->( DbSetOrder(1) ) // D1_FILIAL, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_COD, D1_ITEM
+        cBusca := xFilial("SD1") + cNota + cSerie + cCliFor + cLoja
+        If SD1->( MSSeek( cBusca ) )
+            While SD1->( !EOF() ) .AND. SD1->(D1_FILIAL + D1_DOC + D1_SERIE + D1_FORNECE + D1_LOJA) == cBusca
+
+                If SF4->( MsSeek( xFilial("SF4") + SD1->D1_TES ) )
+                    If SF4->F4_AJUSTE == "S"
+                        aRet      := { "4", SubStr(SF4->F4_CF, 1, 1) $ ("1,2,3") }
+                        Exit
+                    EndIf
+                EndIf
+
+                SD1->( DbSkip() )
+            EndDo
+        EndIf
+        RestArea(aAreaSF)
+    Else
+        aAreaSF := SD2->(GetArea())
+        dbSelectArea("SD2")// D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM, R_E_C_N_O_, D_E_L_E_T_
+        SD2->( DbSetOrder(3) ) // D2_FILIAL, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, D2_COD, D2_ITEM
+        cBusca := xFilial("SD2") + cNota + cSerie + cCliFor + cLoja
+        If SD2->( MSSeek( cBusca ) )
+            While SD2->( !EOF() ) .AND. SD2->(D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) == cBusca
+
+                If SF4->( MsSeek( xFilial("SF4") + SD2->D2_TES ) )
+                    If SF4->F4_AJUSTE == "S"
+                        aRet      := { "4", SubStr(SF4->F4_CF, 1, 1) $ ("1,2,3") }
+                        Exit
+                    EndIf
+                EndIf
+
+                SD2->( DbSkip() )
+            EndDo
+        EndIf
+        RestArea(aAreaSF)
+    EndIf
+
+    RestArea(aAreaSF4)
+Return aRet
+
+/*/{Protheus.doc} RetTxtFormula
+Responsavel por posicionar na SF4 para obter o conteudo do campo FORMULA
+@type function
+@version 12.1.2410
+@author Rodrigo Pirolo
+@since 25/6/2025
+/*/
+
+Static Function RetTxtFormula( cTES, cMsgFormula )
+    
+    Local aAreaSF4  := SF4->(GetArea())
+    Local cRetForm  := ""
+
+    Default cTES    := ""
+    Default cMsgFormula := ""
+
+    If SF4->( MSSeek(FwxFilial("SF4") + cTES ) ) .AND. !Empty( SF4->F4_FORMULA )
+        cRetForm := AllTrim(Formula( SF4->F4_FORMULA ))
+
+        If cRetForm <> NIL .AND. !( AllTrim(cRetForm) $ cMsgFormula )
+
+            If Len( cMsgFormula) > 0 .And. SubStr( cMsgFormula, Len( cMsgFormula), 1) <> " "
+                cMsgFormula += " "
+            EndIf
+
+            cMsgFormula +=	cRetForm
+
+        EndIf
+    EndIf
+
+    RestArea(aAreaSF4)
+
+Return cMsgFormula
+
+/*/{Protheus.doc} RetNumCont
+Responsavel por varrer a SFX para obter o 
+@type function
+@version 12.1.2410
+@author Rodrigo Pirolo
+@since 25/6/2025
+/*/
+
+Static Function RetNumCont( cBusca )
+
+    Local aAreaSFX  := SFX->(GetArea())
+    Local aRet      := { Nil, Nil, Nil }
+
+    Default cBusca := ""
+
+    While SFX->( !EOF() ) .AND. SFX->(FX_FILIAL + FX_TIPOMOV + FX_SERIE + FX_DOC + FX_CLIFOR + FX_LOJA) == cBusca
+        If !Empty(SFX->FX_NUMCONT)
+            aRet := { SFX->FX_NUMCONT, SFX->FX_DINCONT, SFX->FX_DFICONT }// SFX->FX_NUMCONT SFX->FX_DINCONT SFX->FX_DFICONT
+            Exit
+        EndIf
+        SFX->(DbSkip())
+    EndDo
+
+    RestArea(aAreaSFX)
+
+Return aRet
+
+/*/{Protheus.doc} RetUniMed
+Responsavel retornar a unidade de medida
+@type function
+@version 12.1.2410
+@author Rodrigo Pirolo
+@since 25/6/2025
+/*/
+
+Static Function RetUniMed( cNota, cSerie, cTpMov, cClieFor, cLoja, cProd, cItem, cTipo)
+    
+    Local aAreaSFx      := {} as Array
+    Local cBusca        := "" as Character
+    Local cRet          := "4"
+
+    Default cNota       := ""
+    Default cSerie      := ""
+    Default cTpMov      := ""
+    Default cClieFor    := ""
+    Default cLoja       := ""
+    Default cProd       := ""
+    Default cItem       := ""
+    Default cTipo       := ""
+    
+    aAreaSFx:= SFX->(GetArea())
+    DbSelectArea("SFX")
+    SFX->(DbSetOrder(1)) //FX_FILIAL, FX_TIPOMOV, FX_SERIE, FX_DOC, FX_CLIFOR, FX_LOJA, FX_ITEM, FX_COD
+    cBusca := xFilial("SFX") + cTpMov + cSerie + cNota + cClieFor + cLoja + cItem + cProd
+    If SFX->(MsSeek(cBusca)) .AND. !Empty(SFX->FX_UMED)
+        cRet := SFX->FX_UMED
+    EndIf
+    
+    restArea(aAreaSFx)
+
+Return cRet
+
+/*/{Protheus.doc} RemoveC
+Remove caracteres não aceitos no tratamento do endereço pela função FisGetEnd
+@type function
+@version 12.1.2410
+@author Rodrigo Pirolo
+@since 25/6/2025
+/*/
+
+Static Function RemoveC( cEnd )
+
+    Local cRet  := ""
+    Default cEnd:= ""
+
+    cRet := StrTran( cEnd, ",", "")
+    cRet := StrTran( cRet, ".", "")
+
+Return AllTrim(cRet)
+
+/*/{Protheus.doc} NFComSefaz::GetCodPais
+Pega o código do pais para montar a tag cPais em operações com clientes EX.
+@type method
+@version P12 1.2510
+@author Gabriel Jesus
+@since 25/11/2025
+@param cPais, character, código do pais na SA1.
+/*/
+Method GetCodPais(cPais) class NFComSefaz
+    Local aPais := {} as Array
+    Local aArea := FWGetArea()
+
+    dbSelectArea("SYA")
+    dbSetOrder(1)
+
+    If MsSeek(xFilial("SYA")+cPais)
+        aAdd(aPais, AllTrim(SYA->YA_SISEXP))
+        aAdd(aPais, AllTrim(SYA->YA_DESCR))
+    EndIf
+
+    FWRestArea(aArea)
+
+Return aPais
+
+/*/{Protheus.doc} NFComSefaz::ValidCNPJ
+Método que valida o CNPJ pois para operações com cliente EX e CNPJ preenchido com 14 zeros acaba montando a tag CNPJ ao invés de IDOUTROS.
+@type method
+@version P12 1.2510
+@author Gabriel Jesus
+@since 22/11/2025
+@param cDoc, character, CNPJ.
+/*/
+Method ValidCNPJ(cDoc) class NFComSefaz
+    Local cCGC := SubStr(cDoc,1,1)
+Return Replicate(cCGC, Len(cDoc)) == cDoc
+
+/*/{Protheus.doc} RetURLNFCOM
+Função que retorna a URL do QRCODE de acordo com a UF e Ambiente escolhido
+@type method
+@version P12 1.2510
+@author Rodrigo Pirolo
+@since 22/11/2025
+@param cUF, cAmbiente
+/*/
+
+Static Function RetURLNFCOM( cUF, cAmbiente )
+    Local aURLUF    as Array
+    Local cRetURL   as Character
+    
+    Default cUF			:= ""
+    Default cAmbiente	:= ""
+
+    aURLUF := { { "MG", "1", "https://portalnfcom.fazenda.mg.gov.br/qrcode"             },;
+                { "SP", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RJ", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "ES", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "BA", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PE", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "CE", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PB", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RN", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "MA", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PI", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AL", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "SE", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "DF", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "GO", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "TO", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "MT", "1", "https://www.sefaz.mt.gov.br/nfcom-ext-fe/qrcode"          },;
+                { "MS", "1", "https://www.dfe.ms.gov.br/nfcom/qrcode"                   },;
+                { "RS", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "SC", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PR", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PA", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AP", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AM", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RR", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AC", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RO", "1", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "MG", "2", "https://portalnfcom.fazenda.mg.gov.br/qrcode"             },;
+                { "SP", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RJ", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "ES", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "BA", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PE", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "CE", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RN", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PB", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "MA", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PI", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AL", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "SE", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "DF", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "GO", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "TO", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "MT", "2", "https://homologacao.sefaz.mt.gov.br/nfcom-ext-fe/qrcode"  },;
+                { "MS", "2", "https://www.dfe.ms.gov.br/nfcom/qrcode"                   },;
+                { "RS", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "SC", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PR", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "PA", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AP", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AM", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RR", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "AC", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           },;
+                { "RO", "2", "https://dfe-portal.svrs.rs.gov.br/Nfcom/QrCode"           }  }
+
+    cRetURL := aURLUF[ AScan( aURLUF, { |x| x[1] == cUF .AND. x[2] == cAmbiente } ) ][3]
+
+Return cRetURL

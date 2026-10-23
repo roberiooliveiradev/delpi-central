@@ -94,7 +94,7 @@ Comportamentos (maio/2026):
 - **Exportação** (`GET /me/export`) inclui campo `callerAppId` nos eventos.
 - Política de privacidade do portal documenta `localStorage` `delpi.portal.recentApps.v1`.
 
-Ver também [ropa-registro-tratamento.md](../13-auditoria-lgpd/ropa-registro-tratamento.md) §4.
+Ver também [ropa-registro-tratamento.md](../14-auditoria-lgpd/ropa-registro-tratamento.md) §4.
 
 ---
 

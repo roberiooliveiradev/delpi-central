@@ -1,0 +1,37 @@
+0001#STR0001#ALL#Resumo das Entradas e Saidas
+0002#STR0002#ALL#Este programa mostra um resumo, por tipo de material, de todas as suas
+0003#STR0003#ALL#entradas e saidas. A coluna SALDO INICIAL e o resultado da soma das
+0004#STR0004#ALL#outras colunas do relatorio e nao o saldo inicial cadastrado no estoque.
+0005#STR0005#ALL#Zebrado
+0006#STR0006#ALL#Administracao
+0007#STR0007#ALL# EM 
+0008#STR0008#ALL#TIPO            SALDO          COMPRAS    MOVIMENTACOES      REQUISICOES   TRANSFERENCIAS         PRODUCAO           VENDAS       TRANSF. P/     DEVOLUCAO DE     DEVOLUCAO DE  ENTRADA PODER  SAIDA PODER        SALDO
+0009#STR0009#ALL#              INICIAL                          INTERNAS    PARA PRODUCAO                                                           PROCESSO            VENDAS          COMPRAS    TERCEIROS      TERCEIROS
+0010#STR0010#ALL#        ATUAL
+0011#STR0011#ALL#DO FECHAMENTO
+0012#STR0012#ALL# DO MOVIMENTO
+0013#STR0013#ALL#CANCELADO PELO OPERADOR
+0014#STR0014#ALL#TOT.:
+0015#STR0015#ALL#Selecionando Registros
+0016#STR0016#ALL#Saldo
+0017#STR0017#ALL#Inicial
+0018#STR0018#ALL#Compras
+0019#STR0019#ALL#Movimentacoes
+0020#STR0020#ALL#Internas
+0021#STR0021#ALL#Requisicoes
+0022#STR0022#ALL#para Producao
+0023#STR0023#ALL#Transferencias
+0024#STR0024#ALL#Producao
+0025#STR0025#ALL#Vendas
+0026#STR0026#ALL#Transf. p/
+0027#STR0027#ALL#Processo
+0028#STR0028#ALL#Devolucao de
+0029#STR0029#ALL#Entrada Poder
+0030#STR0030#ALL#Terceiros
+0031#STR0031#ALL#Saida Poder
+0032#STR0032#ALL#Saldo
+0033#STR0033#ALL#Atual
+0034#STR0034#ALL#Movimentação dos Produtos
+0035#STR0035#ALL#Período de 
+0036#STR0036#ALL# Até 
+0037#STR0037#ALL#Erro na chamada da stored procedure / Verifique a aba Mensagem no DBAccess.

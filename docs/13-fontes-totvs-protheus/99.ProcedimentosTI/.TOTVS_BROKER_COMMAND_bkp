@@ -1,0 +1,38 @@
+add server 192.168.1.231:2006
+add server 192.168.1.231:2007
+add server 192.168.1.231:2008
+add server 192.168.1.231:2009
+add server 192.168.1.231:2010
+enable server 192.168.1.231:2006
+enable server 192.168.1.231:2007
+enable server 192.168.1.231:2008
+enable server 192.168.1.231:2009
+enable server 192.168.1.231:2010
+
+-- Desabilita o Schedule
+unschedule  server 192.168.1.231:2001
+unschedule  server 192.168.1.231:2002
+unschedule  server 192.168.1.231:2003
+unschedule  server 192.168.1.231:2004
+unschedule  server 192.168.1.231:2005
+unschedule  server 192.168.1.231:2006
+unschedule  server 192.168.1.231:2007
+unschedule  server 192.168.1.231:2008
+unschedule  server 192.168.1.231:2009
+unschedule  server 192.168.1.231:2010
+unschedule  server 192.168.1.231:2011
+
+-- Reinicia o Schedule
+reschedule server
+-- Inicia o Schedule
+schedule  server 192.168.1.231:2001
+schedule  server 192.168.1.231:2002
+schedule  server 192.168.1.231:2003
+schedule  server 192.168.1.231:2004
+schedule  server 192.168.1.231:2005
+schedule  server 192.168.1.231:2006
+schedule  server 192.168.1.231:2007
+schedule  server 192.168.1.231:2008
+schedule  server 192.168.1.231:2009
+schedule  server 192.168.1.231:2010
+schedule  server 192.168.1.231:2011

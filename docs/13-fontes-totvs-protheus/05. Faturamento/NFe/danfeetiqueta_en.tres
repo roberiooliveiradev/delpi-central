@@ -1,0 +1,11 @@
+0001#STR0001#ALL#printing location not entered.
+0002#STR0002#ALL#Enter printing location registered.
+0003#STR0003#ALL#Access routine ‘Printing Location’.
+0004#STR0004#ALL#printing location not found
+0005#STR0005#ALL#Documents number values invalid.
+0006#STR0006#ALL#Enter a valid interval of invoices.
+0007#STR0007#ALL#Check interval of invoices information.
+0008#STR0008#ALL#Documents found for DANFE printing.
+0009#STR0009#ALL#Tag DANGE printing
+0010#STR0010#ALL#No XMLs found for the generation of the tag DANFE.
+0011#STR0011#ALL#Check if the document(s) are authorized through the Monitor routine.

@@ -1,0 +1,294 @@
+
+#INCLUDE "tlpp-core.th"
+Static cTipoTemp
+NAMESPACE delpi.custom.pcp.utils
+
+
+user function RetQueryMonitorEficiencia(oFiltros)
+	LOcal  cAliasTMP:= GetNextAlias() as character
+	Local cEol := CHR(10)
+
+	IF VALTYPE(oFiltros["FILIAL"]) =="A"
+		if len(oFiltros["FILIAL"]) >0
+			cCodFil := oFiltros["FILIAL"][1]
+		endif
+	ELSE
+		cCodFil := oFiltros["RECURSO"]
+	ENDIF
+	IF VALTYPE(oFiltros["RECURSO"]) =="A"
+		if len(oFiltros["RECURSO"]) >0
+			cCodRecur := oFiltros["RECURSO"][1]
+		endif
+	ELSE
+		cCodRecur := oFiltros["RECURSO"]
+	ENDIF
+	IF VALTYPE(oFiltros["FILTRODATA"]) =="A"
+		if len(oFiltros["FILTRODATA"]) >0
+			cSH6Data := oFiltros["FILTRODATA"][1]
+		endif
+	ELSE
+		cSH6Data := oFiltros["FILTRODATA"]
+	ENDIF
+	IF VALTYPE(oFiltros["DATADE"]) =="A"
+		if len(oFiltros["DATADE"]) >0
+			dDataDe := oFiltros["DATADE"][1]
+		endif
+	ELSE
+		dDataDe := oFiltros["DATADE"]
+	ENDIF
+	IF VALTYPE(oFiltros["DATAATE"]) =="A"
+		if len(oFiltros["DATAATE"]) >0
+			dDataAte := oFiltros["DATAATE"][1]
+		endif
+	ELSE
+		dDataAte := oFiltros["DATAATE"]
+	ENDIF
+	cTpPeriodo :=""
+	IF VALTYPE(oFiltros["TIPOPERIODO"]) =="A"
+		if len(oFiltros["TIPOPERIODO"]) >0
+			cTpPeriodo := oFiltros["TIPOPERIODO"][1]
+		endif
+	ELSE
+		cTpPeriodo := oFiltros["TIPOPERIODO"]
+	ENDIF
+
+	if cTpPeriodo =='P'
+
+		dDataFin   := SUBSTR(dDataAte,1,4)+SUBSTR(dDataAte,6,2)+SUBSTR(dDataAte,9,2)
+		dDataIni   := SUBSTR(dDataDe,1,4)+SUBSTR(dDataDe,6,2)+SUBSTR(dDataDe,9,2)
+
+	ELSEIF cTpPeriodo =='GR'
+
+		dDataFin   := DataValida(Date()-1,.F.)
+		dDataIni   := DataValida(Date()-1,.F.)
+
+	ELSE
+
+		dDataFin   := Date()//dDatabase
+		dDataIni   := PCPMonitorUtils():RetornaPeriodoInicial(AllTrim(cTpPeriodo),dDataFin)
+
+	ENDIF
+
+	IF VALTYPE(oFiltros["TURNO"]) =="A"
+		if len(oFiltros["TURNO"]) >0
+			cTurno := oFiltros["TURNO"][1]
+		endif
+	ELSE
+		cTurno := oFiltros["TURNO"]
+	ENDIF
+	/*Gabriel, os turnos sao diferentes entre matriz e filial vou chumar mas temos que deixar dinamico posteriormente
+if  (cAliasQry)->H6_HORAFIN >= "04:34" .and.  (cAliasQry)->H6_HORAFIN < "14:18"
+			cTurno := "T1"
+		elseif  (cAliasQry)->H6_HORAFIN >= "14:18" .and.  (cAliasQry)->H6_HORAFIN < "23:50"
+			cTurno := "T2"
+		elseif  (cAliasQry)->H6_HORAFIN >= "00:00" .and.  (cAliasQry)->H6_HORAFIN < "04:34"
+			cTurno := "T3"
+		endif
+
+	*/
+
+	//Empresa 01 - filial 01 e empresa 05 - APENAS UM TURNO - 00:00 - 23:59
+
+	IF cEmpAnt == '01' .AND. cCodFil == '02'
+
+		if cTurno =="AT"
+
+			IF SUBSTR(Time(),1,5) >= "04:34" .AND. SUBSTR(Time(),1,5) < "14:18"
+
+				cTurno :="T1"
+
+			ELSEIF SUBSTR(Time(),1,5)  >= "14:18" .AND. SUBSTR(Time(),1,5) < "23:50"
+
+				cTurno :="T2"
+
+			ELSEIF SUBSTR(Time(),1,5)  >= "00:00" .AND. SUBSTR(Time(),1,5) < "04:34"
+
+				cTurno :="T3"
+
+			ENDIF
+
+		ENDIF
+
+		if cTurno =="T1"
+
+			cHrIni :=  "04:34"
+			cHrFim :=  "14:18"
+
+		elseif cTurno =="T2"
+
+			cHrIni :=  "14:18"
+			cHrFim :=  "23:50"
+
+		elseif cTurno =="T3"
+
+			cHrIni :=  "00:00"
+			cHrFim :=  "04:34"
+
+		elseif cTurno =="TT"
+
+			cHrIni :=  "00:00"
+			cHrFim :=  "23:59"
+
+		ENDIF
+
+	ELSE
+
+		cTurno := "T1"
+
+		cHrIni :=  "00:00"
+		cHrFim :=  "23:59"
+
+	ENDIF
+
+	cQuery := " SELECT  R_E_C_N_O_ RECSH6,* " + cEol
+	cQuery += " FROM dbo."+ RetSqlName("SH6") + " (NOLOCK) SH6 " + cEol
+	cQuery += "     WHERE SH6.D_E_L_E_T_ = '' " + cEol
+	cQuery += "     and "+alltrim(cSH6Data)+" >= ? " + cEol
+	cQuery += "     and "+alltrim(cSH6Data)+" <= ? " + cEol
+	cQuery += "     and H6_FILIAL  = ? "+ cEol
+	cQuery += "     and H6_RECURSO = ? " + cEol
+	cQuery += "     and H6_HORAFIN >= ? " + cEol
+	cQuery += "     and H6_HORAFIN < ? " + cEol
+	//	cQuery += "     and H6_DATAINI BETWEEN ? AND ? " + cEol
+	cQuery += "Order by H6_HORAINI " + cEol
+
+	oQuery := FwExecStatement():New(cQuery)
+	oQuery:SetUnsafe(1, valtosql(dDataIni) )
+	oQuery:SetUnsafe(2, valtosql(dDataFin) )
+	oQuery:SetUnsafe(3, valtosql(cCodFil  ))
+	oQuery:SetUnsafe(4, valtosql(cCodRecur))
+	oQuery:SetUnsafe(5, valtosql(cHrIni))
+	oQuery:SetUnsafe(6, valtosql(cHrFim))
+	//IF !EMPTY(dDataDe) .AND. !EMPTY(dDataAte)
+	//	oQuery:SetUnsafe(4, valtosql(dDataDe))
+	//	oQuery:SetUnsafe(4, valtosql(dDataAte))
+	//ENDIF
+
+	oQuery:OpenAlias(cAliasTMP)
+
+Return cAliasTMP
+
+user Function R895Calc(cAliasSH6)
+	Local aTotal  := {}
+	Local cTime   := Nil
+	Local nLotPad := If(SG2->G2_LOTEPAD==0,1,SG2->G2_LOTEPAD)
+	Local nQuant  := 0
+	Local nTemPad := If(SG2->G2_TEMPAD ==0,1,SG2->G2_TEMPAD)
+	Local nTempo  := Nil
+
+	Default cAliasSH6 := "SH6"
+
+	nQuant  := SH6->(H6_QTDPROD+H6_QTDPERD)
+
+	If cTipoTemp == Nil
+		cTipoTemp:=GetMV("MV_TPHR")
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se MV_TPHR for N (Normal) devo converter G2_TEMPAD para            ³
+	//³ centesimal para permitir multiplicar pela quantidade produzida     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If cTipoTemp == "N"
+		nTemPad := Int(nTemPad) + (Mod(nTemPad, 1) / 0.6)
+	Endif
+
+	// Calcula Tempo de Dura‡„o baseado no Tipo de Operacao
+	If SG2->G2_TPOPER $ " 1"
+		nTempo := nQuant * nTemPad / nLotPad
+		dbSelectArea("SH1")
+		dbSeek(xFilial("SH1")+SH6->H6_RECURSO)
+		If Found() .And. SH1->H1_MAOOBRA # 0
+			nTempo :=Round( nTempo / H1_MAOOBRA,5)
+		EndIf
+		dbSelectAreaSH6
+	ElseIf SG2->G2_TPOPER == "4"
+		nQuantAloc:= nQuant % nLotPad
+		nQuantAloc:= Int(nQuant)+If(nQuantAloc>0,nLotPad-nQuantAloc,0)
+		nTempo := Round(nQuantAloc * ( nTemPad / nLotPad ),5)
+		dbSelectArea("SH1")
+		dbSeek(xFilial("SH1")+SH6->H6_RECURSO)
+		If Found() .And. SH1->H1_MAOOBRA # 0
+			nTempo :=Round( nTempo / H1_MAOOBRA,5)
+		EndIf
+		dbSelectArea("SH6")
+	ElseIf SG2->G2_TPOPER == "2"
+		aTotal :=  delpi.custom.pcp.utils.U_FH6Total(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN,SH6->H6_OPERAC)
+		If nQuant == 0
+			nTemPad := (nTemPad/(aTotal[3] + aTotal[2])) * aTotal[3]
+			nTempo := (nTemPad/aTotal[3])* 1
+		else
+			nTemPad := (nTemPad/(aTotal[2] + aTotal[3]))*aTotal[2]
+			nTempo := (nTemPad/aTotal[1])* nQuant
+		EndIf
+
+	ElseIf SG2->G2_TPOPER == "3"
+		nTempo := nTemPad
+	EndIf
+
+	If cTipoTemp == "N"
+		cTime  := StrZero(Int(nTempo), 3) + ":" + StrZero(Mod(nTempo, 1) * 100, 2)
+		cTime := A680ConvHora(cTime, "C", "N")
+	Endif
+
+Return IF(cTipoTemp=="N",cTime,nTempo)
+
+/*/{Protheus.doc} FH6Total
+Retonar as quantidades de apontamentos
+@type  Static Function
+@author guilherme.bertoldi
+@since 18/02/2022
+@version 12.1.33
+@param 01 cOp, character, numero da OP
+@param 02 cOperac, character, Operacao
+@return array, array, retorna a quantidade de producao, quantidade de apontamentos e a quantidade apontada sem producao.
+/*/
+user Function FH6Total(cOp,cOperac)
+	Local nQtdTotal := 0
+	Local nQtdApont := 0
+	Local nQtdCount := 0
+
+	cAliasSH6 := GetNextAlias()
+	//QUANTIDADE TOTAL DE APONTAMENTOS
+	BeginSQL alias cAliasSH6
+		SELECT
+			SUM(SH6.H6_QTDPROD + SH6.H6_QTDPERD) TOTAL,
+			COUNT(SH6.H6_QTDPROD + SH6.H6_QTDPERD) COUNTTOTAL
+		FROM
+			%table:SH6% SH6
+		WHERE
+			SH6.%notDel%
+			AND SH6.H6_FILIAL = %xfilial:SH6%
+			AND (
+				SH6.H6_QTDPROD != '0'
+				OR SH6.H6_QTDPERD != '0'
+			)
+			AND SH6.H6_OP = %exp:cOp%
+			AND SH6.H6_OPERAC = %exp:cOperac%
+			AND SH6.H6_TIPO = "P"
+	EndSQL
+
+	nQtdTotal := (cAliasSH6)->(TOTAL)
+	nQtdCount := (cAliasSH6)->(COUNTTOTAL)
+	(cAliasSH6)->(dbCloseArea())
+
+	cAliasSH6 := GetNextAlias()
+	//QUANTIDADE TOTAL DE APONTAMENTOS
+	BeginSQL alias cAliasSH6
+		SELECT
+			COUNT(SH6.H6_QTDPROD) TOTAL
+		FROM
+			%table:SH6% SH6
+		WHERE
+			SH6.%notDel%
+			AND SH6.H6_FILIAL = %xfilial:SH6%
+			AND SH6.H6_QTDPROD = '0'
+			AND SH6.H6_QTDPERD = '0'
+			AND SH6.H6_OP = %exp:cOp%
+			AND SH6.H6_OPERAC = %exp:cOperac%
+			AND SH6.H6_TIPO = "P"
+	EndSQL
+
+	nQtdApont := (cAliasSH6)->(TOTAL)
+	(cAliasSH6)->(dbCloseArea())
+
+Return {nQtdTotal, nQtdCount, nQtdApont}

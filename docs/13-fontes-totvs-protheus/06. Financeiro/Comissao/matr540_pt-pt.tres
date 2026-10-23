@@ -1,0 +1,41 @@
+0001#STR0001#ALL#Relatório de comissoes
+0002#STR0002#ALL#Emissão Do Relatório De Comissões.
+0003#STR0003#ALL#Código de barras
+0004#STR0004#ALL#Administração
+0005#STR0005#ALL#Relatório de comissões 
+0006#STR0006#ALL#(pgt Pela Emissão)
+0007#STR0007#ALL#(pgt Pela Baixa)
+0008#STR0008#ALL#Relatório De Comissoes
+0009#STR0009#ALL#Prf Número   Parc. Código  Do              Lj  Nome                                 Dt.base     Vencto      Data        Data       Número          Valor           Valor      %           Valor    Tipo
+0010#STR0010#ALL#    Título         Cliente                                                         Comissão    Origem      Liquidação       Pgt      Pedido         Título            Base               Comissão   Comissão
+0011#STR0011#ALL#Cancelado Pelo Operador
+0013#STR0013#ALL#Total do vendedor --> 
+0014#STR0014#ALL#Total  crial      --> 
+0015#STR0015#ALL#Total  de ir      --> 
+0016#STR0016#ALL#A Seleccionar Registos...
+0017#STR0017#ALL#Total (-) ir      --> 
+0018#STR0018#ALL#Ajuste
+0019#STR0019#ALL#Analítico
+0020#STR0020#ALL#Sintético
+0021#STR0021#ALL#Código Do Vendedor                                           Total            Total      %            Total           Total           Total
+0022#STR0022#ALL#                                                         Título             Base                Comissão              Ir          (-) Ir
+0023#STR0023#ALL#Detalhes : títulos de origem da liquidação 
+0025#STR0025#ALL#Relatório de comissoes
+0026#STR0026#ALL#Emissão Do Relatório De Comissões.
+0027#STR0027#ALL#Total De Título
+0028#STR0028#ALL#Total Ir
+0029#STR0029#ALL#Total (-) Ir
+0031#STR0031#ALL#Total Comissão
+0033#STR0033#ALL#Vencto De Origem
+0034#STR0034#ALL#Dt.levantamento
+0035#STR0035#ALL#Vlr De Título
+0037#STR0037#ALL#Ajuste
+0038#STR0038#ALL#Comissão
+0041#STR0041#ALL#Por Vendedor
+0042#STR0042#ALL#Títulos Origem Da Liquidação
+0045#STR0045#ALL#Vlr.base Liq.
+0046#STR0046#ALL#Por Vendedor+prefixo+título+parcela
+0047#STR0047#ALL#Por Vendedor+cliente+loja+prefixo+título+parcela
+0048#STR0048#ALL#Comissões (analítico)
+0049#STR0049#ALL#Comissões (sintético)
+0051#STR0051#ALL#Comissões s/ Liquidação

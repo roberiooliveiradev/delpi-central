@@ -1,0 +1,24 @@
+0001#STR0001#ALL#Informe Comparativo Real vs Previsto
+0002#STR0002#ALL#Comparativo entre el apunte real de la produccion y la planificado,
+0003#STR0003#ALL#basado en el proced.de operaciones. Los valores referentes a los 
+0004#STR0004#ALL#tiempos estan convertidos, segun el parametro MV_TPHR.
+0005#STR0005#ALL#Por OP
+0006#STR0006#ALL#Por recurso
+0007#STR0007#ALL#Por fecha
+0008#STR0008#ALL#Por operador
+0009#STR0009#ALL#A Rayas
+0010#STR0010#ALL#Administracion
+0011#STR0011#ALL#REGISTRO(S)
+0012#STR0012#ALL#de la OP:
+0013#STR0013#ALL#del recurso:
+0014#STR0014#ALL#de la fecha:
+0015#STR0015#ALL#del operador:
+0016#STR0016#ALL#Seleccionando registros...
+0017#STR0017#ALL#ORDEN DE      PRODUCTO        OPERAC.  DESCRIPC.          RECURSO                                HERRAMIENTA               OPERADOR      CANTIDAD      (*) CANTIDAD          CANTIDAD         TIEMPO    TEMPO   FECHA DE
+0018#STR0018#ALL#PRODUCCION                              DE OPERACION                                                                                    TAL DE LA OP      PRODUCIDA         PERDIDA           ESTIMADO  REAL    APUNTE  
+0019#STR0019#ALL#Totalizador 
+0020#STR0020#ALL#Tiempo Estim.
+0021#STR0021#ALL#Tiem. Real
+0022#STR0022#ALL#Apunte de produccion PCP
+0023#STR0023#ALL#Total CANTIDAD PRODUCIDA es igual a la suma de todos los apuntes
+0024#STR0024#ALL#de la última operación, según el salto definido para impresión

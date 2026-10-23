@@ -67,7 +67,7 @@ Revalidação sob autorização PO condicional (`X3-FINAL-PO-AUTHORIZATION-20261
 
 | Gate | Estado | Evidência |
 |---|---|---|
-| GATE-F1 Privacy | **INCONCLUSIVE** | ROPA canônico (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`) existe e identifica o DPO (Michael Marotto), mas não registra operação de consulta cadastral externa de fornecedores; nenhum documento dispensa formalmente endosso. Proposta de registro elaborada para revisão do DPO em `X3-FINAL-ROPA-PROPOSAL-EXTERNAL-REGISTRY-20261022.md`. Provider permanece `unavailable`. |
+| GATE-F1 Privacy | **INCONCLUSIVE** | ROPA canônico (`docs/14-auditoria-lgpd/ropa-registro-tratamento.md`) existe e identifica o DPO (Michael Marotto), mas não registra operação de consulta cadastral externa de fornecedores; nenhum documento dispensa formalmente endosso. Proposta de registro elaborada para revisão do DPO em `X3-FINAL-ROPA-PROPOSAL-EXTERNAL-REGISTRY-20261022.md`. Provider permanece `unavailable`. |
 | GATE-F2 Test identity | **INCONCLUSIVE** | Nenhum usuário/fornecedor de teste autorizado documentado no repositório. |
 | GATE-F3 Infra | **PASS** | Revalidado: Redis healthy (após fix), S2S/mapper preservados, config efetiva distributed, migrations íntegras. |
 | GATE-F4 Tests | **STALE_EVIDENCE** | Sem diff de código de aplicação no X3.FINAL; suítes verdes de X1/X2 mantidas (fix foi compose/healthcheck). |

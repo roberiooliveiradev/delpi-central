@@ -1,0 +1,1179 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE "rwmake.ch"
+/*
+¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+¦¦+---------------------------------------------------------------------------------------------+¦¦
+¦¦¦PROGRAMA  ¦ DEL200   ¦ Autor ¦ Marcio Da Silva                             ¦ Data ¦ 13/04/01 ¦¦¦
+¦¦+----------+----------------------------------------------------------------------------------¦¦¦
+¦¦¦Descriçào ¦ PROGRAMA COM USER´S FUNCTION DE PONTO DE ENTRADA                                 |¦¦
+¦¦¦PONTOS ENTRADA : 																            |¦¦
+¦¦¦ MT100LOK- PE Na Gravacao de linha a Linha da Nf De Entrada                                  |¦¦
+¦¦¦ SF1100I-  PE Na Apos Gravacao de NF Entrada                                                 |¦¦
+¦¦¦ MA650GRPV-PE, usando na geracao de ordens de producao para alaterar a data de entrega       |¦¦
+¦¦¦ SF2460I-PE , usado para incluir a natureza do pedido no contas a receber                    |¦¦
+¦¦¦ MT250TOK-PE, Verificação de Tipo de Movimentação 501 na Inclução de Produção                |¦¦
+¦¦¦ MT240TOK- PE,Verificação de Tipo de Movimentação 501 no Movimentos Internos                 |¦¦
+¦¦¦ MT170FIM- PE,Fim do processo de MRP                                                         |¦¦
+¦¦¦ MT170SLD- PE,Recalculo do Saldo P/ Cada Almox. no MRP                                       |¦¦
+¦¦¦ SD3250I - NA BAIXA DE PRODUCAO, GERAR SOLICITACAO DE PEDIDOS SE ESTOQUE ABAIXO DO SEGURO    |¦¦
+¦¦¦ SD3240I - NA MOVIMENTACAO INTERNA, AO GERAR SAIDA, VER ESTOQUE SEGURO!                      |¦¦
+¦¦¦ MT650C1 - Apos gerar solicitacao de compra atraves da OP                                    |¦¦
+¦¦¦ A260GRV -  APOS TRANSFERECIA DE PRODUTOS                                                    |¦¦
+¦¦¦                                                                                             |¦¦
+¦¦¦                                                                                             |¦¦
+¦¦¦                                                                                             |¦¦
+¦¦¦                                                                                             |¦¦
+¦¦¦                                                                                             |¦¦
+¦¦+---------------------------------------------------------------------------------------------+¦¦
+¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+*/
+USER FUNCTION DLP200()
+	CONOUT("GDA")
+RETURN NIL
+
+/*GABRIEL
+************************
+User Function MT650C1()        // incluido pelo assistente de conversao do AP5 IDE em 14/10/00
+	*************
+	dbSelectArea("SB1")
+	dbSetorder(1)
+	If (dbSeek(xFilial("SB1")+SC1->C1_PRODUTO)) .And. SB1->B1_PE > 0
+		RecLock("SC1",.F.)
+		SC1->C1_DATPRF   := Datavalida(SC1->C1_DATPRF + SB1->B1_PE)
+		MsUnlock("SC1")
+	EndIf
+Return
+
+	************************
+User Function SD3240I()        // incluido pelo assistente de conversao do AP5 IDE em 14/10/00
+	*************
+	U_DLP200A()
+Return
+
+	************************
+User Function MT241GRV()        // incluido pelo assistente de conversao do AP5 IDE em 14/10/00
+	*************
+	U_DLP200A()
+Return
+
+	************************
+User Function DLP200B(sProduto)
+	*************
+	aItem := {}
+	nItem := 0
+
+
+	dbSelectArea("SB1")
+	dbSetorder(1)
+	dbSeek(xFilial("SB1")+sProduto,.T.)
+	If sProduto == SB1->B1_COD  .And. SB1->B1_ESTSEG > 0 .And. SB1->B1_TIPO<>'PA'
+		dbSelectArea("SB2")
+		DbSetOrder(1)
+		DbSeek(xFilial("SB2")+SB1->B1_COD+SB1->B1_LOCPAD,.T.)
+		iF xFilial("SB2")+SB1->B1_COD+SB1->B1_LOCPAD==SB2->B2_FILIAL+SB2->B2_COD+SB2->B2_LOCAL .And. SB1->B1_ESTSEG > SB2->B2_QATU
+			nQatu := SB2->B2_QATU
+			dbSelectArea("SB2")
+			DbSetOrder(1)
+			iF (DbSeek(xFilial("SB2")+SB1->B1_COD+"99"))
+				nQatu += SB2->B2_QATU
+			EndIf
+			nEstSeg := SB1->B1_ESTSEG - nQatu
+			nQteSc1 := 0
+			dbSelectArea("SC1")
+			dbSetorder(5)
+			dbSeek(xFilial("SC1")+Space(6)+SB1->B1_COD,.T.)
+			While xFilial("SC1")+Space(6)+SB1->B1_COD == SC1->C1_FILIAL + SC1->C1_COTACAO + SC1->C1_PRODUTO .And. !Eof()
+				nQteSc1 := nQteSc1 + SC1->C1_QUANT
+				DbSkip()
+			EndDo
+			nQteSc8 := 0
+			dbSelectArea("SC8")
+			dbSetorder(6)
+			dbSeek(xFilial("SC8")+Space(6)+SB1->B1_COD,.T.)
+			While xFilial("SC8")+Space(6)+SB1->B1_COD == SC8->C8_FILIAL + SC8->C8_NUMPED + SC8->C8_PRODUTO .And. !Eof()
+				nQteSc8 := nQteSc8 + SC8->C8_QUANT
+				DbSkip()
+			EndDo
+			nQteSc7 := 0
+			dbSelectArea("SC7")
+			dbSetorder(15)
+			dbSeek(xFilial("SC7")+' '+SB1->B1_COD,.T.)
+			While xFilial("SC7")+' '+SB1->B1_COD == SC7->C7_FILIAL + SC7->C7_ENCER + SC7->C7_PRODUTO  .And. !Eof()
+				nQteSc7 := nQteSc7 + (SC7->C7_QUANT-SC7->C7_QUJE)
+				DbSkip()
+			EndDo
+			If nQteSc1+nQteSc7+nQteSc8<nEstSeg
+				nQteDif := nEstSeg - (nQteSc1+nQteSc7+nQteSc8)
+				nItem := nItem + 1
+				Aadd(aItem, { StrZero(nItem,2),SB1->B1_COD,SB1->B1_UM,nQteDif,dDataBase,SB1->B1_LOCPAD,"Solicitacao Gerada Automaticamente",;
+					SB1->B1_CC,SB1->B1_CONTA ,dDataBase+SB1->B1_PE,Left(SB1->B1_DESC,30),Subs(cUsuario,7,15),'N','001','1','000000'})
+			EndIf
+		EndIf
+	EndIf
+	If Len(aItem) > 0
+		tContinua := .T.
+		While tContinua
+			sNumSol := GetSxeNum("SC1", "C1_NUM")
+			ConfirmSX8()
+			dbSelectArea("SC1")
+			dbSetorder(1)
+			iF !(dbSeek(xFilial("SC1")+sNumSol))
+				tContinua := .F.
+			EndIf
+		EndDo
+		For X := 1 To Len(aItem)
+			dbSelectArea("SC1")
+			RecLock("SC1",.T.)
+			SC1->C1_FILIAL   := xFilial("SC1")
+			SC1->C1_NUM      := sNumSol
+			SC1->C1_ITEM     := aItem[X,1]
+			SC1->C1_PRODUTO  := aItem[X,2]
+			SC1->C1_UM       := aItem[X,3]
+			SC1->C1_QUANT    := aItem[X,4]
+			SC1->C1_DATPRF   := aItem[X,5]
+			SC1->C1_LOCAL    := '01' // aItem[X,6]
+			SC1->C1_OBS      := "Solicitacao Gerada Automaticamente"
+			SC1->C1_CC       := aItem[X,8]
+			SC1->C1_CONTA    := aItem[X,9]
+			SC1->C1_EMISSAO  := aItem[X,10]
+			SC1->C1_DESCRI   := aItem[X,11]
+			SC1->C1_SOLICIT  := AllTrim(aItem[X,12])
+			SC1->C1_IMPORT   := aItem[X,13]
+			SC1->C1_CODCOMP  := aItem[X,14]
+			SC1->C1_CLASS    := aItem[X,15]
+			SC1->C1_USER     := aItem[X,16]
+			MsUnlock("SC1")
+			dbSelectArea("SB2")
+			DbSetOrder(1)
+			iF (DbSeek(xFilial("SB2")+SC1->C1_PRODUTO+SC1->C1_LOCAL))
+				RecLock("SB2",.F.)
+				SB2->B2_SALPEDI += SC1->C1_QUANT
+				MsUnlock("SB2")
+			EndIf
+		Next
+	Endif
+Return
+
+
+	************************
+User Function DLP200A()
+	*************
+	sDoc := SD3->D3_DOC
+	sTm  := SD3->D3_TM
+	sCC  := SD3->D3_CC
+	aItem := {}
+	nItem := 0
+	If sTm > "499" //.And. sTm <> "502" .And. sTm <> "503"
+		dbSelectArea("SD3")
+		dbSetorder(2)
+		dbSeek(xFilial("SD3")+sDoc,.T.)
+		While xFilial("SD3")+sDoc == SD3->D3_FILIAL + SD3->D3_DOC
+			If SD3->D3_LOCAL=='01'
+				U_DLP200B(SD3->D3_COD)
+			EndIf
+			DbSelectArea("SD3")
+			DbSkip()
+		EndDo
+	EndIf
+Return Nil
+
+
+	************************
+User Function SF1100I()        // incluido pelo assistente de conversao do AP5 IDE em 25/08/01
+	*************
+*/
+/*
+	ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+	±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+	±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+	±±ºPrograma  ³SF1100I   ºAutor  ³Microsiga           º Data ³  11/12/15   º±±
+	±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+	±±ºDesc.     ³ Ponto de Entrada Executado na confirmacao da nota fiscal   º±±
+	±±º          ³ de entrada, quando for originada de importacao A2_EST = EX º±±
+	±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+	±±ºUso       ³ AP                                                        º±±
+	±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+	±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+	ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+/*
+	sTitulo := SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_FORNECE
+	While sTitulo == SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_FORNECE .And. !Eof()
+		If Alltrim(SE2->E2_NATUREZA) == 'IRF' .And. Alltrim(SE2->E2_TIPO) == 'TX'
+	dData := SF1->F1_EMISSAO
+			While Subs(dtos(dData),5,2) == Subs(dtos(SF1->F1_EMISSAO),5,2)
+	dData := dData + 1
+			EndDo
+	tVerData := .T.
+	nDia := 10
+			While tVerData
+	dDataEmi := stod(left(dtos(dData),6)+strZero(nDia,2))
+				If dDataEmi == Datavalida(dDataEmi)
+	tVerData := .F.
+				Else
+	nDia := nDia - 1
+				EndIF
+			EndDo
+	DbSelectarea('SE2')
+	RecLock('SE2',.F.)
+	SE2->E2_VENCREA := Datavalida(dDataEmi)
+	SE2->E2_VENCTO  := Datavalida(dDataEmi)
+	MsUnlock('SE2')
+		EndIf
+	DbSkip()
+	EndDo
+*/
+/*GABRIEL
+	If SF1->F1_EST == "EX" .And. FunName()=='MATA103' .And. SF1->F1_FORMUL = "S" .And. Upper(Alltrim(SF1->F1_ESPECIE)) = "SPED" .AND. !(SF1->F1_TIPO $ "D, B")
+		ExecBlock("DLP017",.F.,.F.)
+	EndIf
+
+
+Return
+
+	**********************
+User Function MA650GRPV()
+	************
+	If (SC6->C6_ENTREG - SC5->C5_EMISSAO) >=3
+		DbSelectArea("SB1")
+		DbSetOrder(1)
+		iF (DbSeek(xFilial("SB1")+SC2->C2_PRODUTO)) .And. SC2->C2_SEQUEN>'001'
+
+			nDias := 5
+			//		If SB1->B1_TIPO=='PI'
+			//			nDias := 4
+			//		EndIf
+			dData :=  SC6->C6_ENTREG - nDias
+			// Não pode ter entrega para data anterior a data base!
+			If dData < dDataBase
+				dData := dDataBase
+			EndIf
+			dbSelectArea("SC2")
+			RecLock("SC2",.F.)
+			SC2->C2_DATPRF :=  Datavalida(dData)
+			MsUnlock("SC2")
+
+		EndIF
+	EndIf
+	iF dTos(SC2->C2_DATPRI) < dTos(dDataBase)
+		RecLock("SC2",.F.)
+		SC2->C2_DATPRI :=  Datavalida(dDataBase)
+		MsUnlock("SC2")
+	EndIf
+Return NIL
+
+	**********************
+User Function MTA650A()
+	************
+	DbSelectArea("SD4")
+	DbSetOrder(2)
+	DbSeek(xFilial("SD4")+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN,.T.)
+	While !Eof() .And. Alltrim(xFilial("SD4")+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN) == Alltrim(SD4->D4_FILIAL+SD4->D4_OP)
+		RecLock("SD4",.F.)
+		SD4->D4_DATA :=  SC2->C2_DATPRI
+		MsUnlock("SD4")
+		DbSkip()
+	EndDo
+Return NIL
+
+
+
+
+	************************
+*/
+/*User Function MT100LOK()        // incluido pelo assistente de conversao do AP5 IDE em 25/08/01
+	*************
+	tVolta := .T.
+	sPedido := Space(6)
+	If cTipo=='N'
+		For nP:=1 to len(aHeader)
+			If trim(aHeader[nP][2])=='D1_PEDIDO'
+	sPedido    := aCols[n][nP]
+			EndIf
+		Next
+	dbSelectarea("SC7")
+	dbSetOrder(1)
+	dbSeek(xFilial("SC7")+sPedido,.T.)
+		If !xFilial("SC7")+sPedido == SC7->C7_FILIAL+SC7->C7_NUM .Or. (!Empty(SC7->C7_APROV)  .And. SC7->C7_CONAPRO<>'L')
+	Msgbox('Nota Sem Pedido Ou Pedido Nao Autorizado a Gerar Nf.!')
+	tVolta := .F.
+		EndIf
+	EndIf
+	RETURN(tVolta)
+	//denis.
+*///diomar.
+/*GABRIEL
+	************************
+User Function MT250TOK()        // Verificação de Tipo de Movimentação 501 na Inclução de Produção
+	************************
+	Local nD3Qnt := 0
+	Local nB2Qatu := 0
+	Local cEol := CHR(10)
+	Local cTipo := ""
+	tVolta := .T.
+	If M->D3_TM='501' .AND. Empty(M->D3_OP)
+		Msgbox("So poderá utilizar tipo de movimentação 501, quando tiver Ordem Produção Cadastrada.")
+		tVolta := .F.
+	EndIf
+
+	IF (ALTERA .OR. INCLUI) .and. cEmpAnt $"01"
+
+		IF M->D3_EMISSAO != dDatabase
+			tVolta := .F.
+
+			MSGALERT("Não é possivel apontar OP com Emissao Diferente da Database","Delpi")
+
+ENDIF*/
+/***************************************************
+	* Adicionado por Gabriel Araujo - Totvs SC 2019/08 *
+	* Validação para não permitir que o estoque fique  *
+	* negativo pois o MV_ESTNEG foi desabilitado       *
+***************************************************/
+/*GABRIEL	if tVolta .and. (ALTERA .OR. INCLUI) .and. cEmpAnt $"01"
+
+			cSql :="SELECT *                                         " + cEol
+			cSql +="	FROM dbo." + RETSQLNAME("SD4") + " A (NOLOCK)      " + cEol
+			cSql +="WHERE A.D_E_L_E_T_     = ''                      " + cEol
+			cSql +="      AND A.D4_FILIAL  = " +VALTOSQL(xFilial("SD4"))+ cEol
+			cSql +="      AND A.D4_OP      = " +VALTOSQL(M->D3_OP)  + cEol
+
+
+			conout(cSql)
+		If Select("TRB004") <> 0
+				dbSelectArea("TRB004")
+				dbCloseArea()
+		EndIf
+
+			TCQUERY cSql NEW ALIAS "TRB004"
+
+		While TRB004->(!EOF()) .and. tVolta
+
+				nB2Qatu := POSICIONE("SB2",1,XfILIAL("SD3")+TRB004->D4_COD+TRB004->D4_LOCAL,"B2_QATU")
+				cTipo := posicione("SB1",1,XfILIAL("SB1")+TRB004->D4_COD,"B1_TIPO")
+				//nD3Qnt := TRB004->D4_QUANT
+				nD3Qnt := M->D3_QUANT
+			IF nD3Qnt > nB2Qatu .AND. !(cTipo $ "PI")
+
+					MSGALERT("Quantidade da OP superior ao saldo em estoque."+cEol+"Produto: "+TRB004->D4_COD,"Delpi")
+					tVolta := .F.
+
+			endif
+				TRB004->(dbSkip())
+
+		enddo
+
+	ENDIF
+
+ENDIF
+Return(tVolta) */
+/***************************************************
+* Adicionado por Gabriel Araujo - Totvs SC 2019/08 *
+* Validação para não permitir que o estoque fique  *
+* negativo pois o MV_ESTNEG foi desabilitado       *
+* PE Movimento Interno                             *
+***************************************************/
+/*GABRIEL
+User Function MT241TOK()
+Local lRet := .t.
+Local cProd := ""
+Local cLocal := ""
+Local nD3Qnt := 0
+Local nB2Qatu := 0
+Local cEol := chr(10)
+dbselectarea("SF5")
+DBSETORDER(1)
+	IF SF5->(MsSeek(xFilial("SF5")+cTM))
+		if SF5->F5_TIPO $ "R"
+			For nY := 1 To Len( aCols)
+				IF !(GDDeleted(nY,aHeader,aCols))
+				cProd := GDFieldGet('D3_COD',nY,,,aCols)
+
+				nD3Qnt := GDFieldGet('D3_QUANT',nY,,,aCols)
+				//B2_FILIAL, B2_COD, B2_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+				nB2Qatu := POSICIONE("SB2",1,XfILIAL("SD3")+cProd+cLocal,"B2_QATU")
+					IF nD3Qnt > nB2Qatu
+
+						MSGALERT("Quantidade do Movimento superior ao saldo em estoque"+cEol+"Produto: " + cProd ,"Delpi")
+						lRet := .F.
+
+					endif
+				endif
+			next nY
+		endif
+	endif
+Return lRet */
+/***************************************************
+* Adicionado por Gabriel Araujo - Totvs SC 2019/08 *
+* Validação para não permitir que o estoque fique  *
+* negativo pois o MV_ESTNEG foi desabilitado       *
+* PE Transferencia entre armazens                  *
+***************************************************/
+/*GABRIEL
+User Function  MT260TOK()
+Local lRet := .t.
+Local nD3Qnt , nB2Qatu := 0
+
+	if  cEmpAnt $"01"
+	nD3Qnt := NQUANT260
+	//B2_FILIAL, B2_COD, B2_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+	nB2Qatu := POSICIONE("SB2",1,XfILIAL("SD3")+CCODORIG+CLOCORIG,"B2_QATU")
+
+		IF nD3Qnt > nB2Qatu
+
+		MSGALERT("Quantidade da Transferencia superior ao saldo em estoque","Delpi")
+		lRet := .F.
+
+		endif
+	endif
+
+Return lRet*/
+
+/***************************************************
+* Adicionado por Gabriel Araujo - Totvs SC 2019/08 *
+* Validação para não permitir que o estoque fique  *
+* negativo pois o MV_ESTNEG foi desabilitado       *
+* PE Transferencia entre armazens                  *
+***************************************************/
+/*GABRIEL
+User Function  A261TOK()
+Local lRet := .t.
+Local cProd := ""
+Local cLocal := ""
+Local nD3Qnt := 0
+Local nB2Qatu := 0
+Local cEol := chr(10)
+
+	if  cEmpAnt $"01"
+		For nY := 1 To Len( aCols)
+			IF !(GDDeleted(nY,aHeader,aCols))
+
+				cProd := GDFieldGet('D3_COD',nY,,,aCols)
+				cLocal  := GDFieldGet('D3_LOCAL',nY,,,aCols)
+				nD3Qnt := GDFieldGet('D3_QUANT',nY,,,aCols)
+				//B2_FILIAL, B2_COD, B2_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+				nB2Qatu := POSICIONE("SB2",1,XfILIAL("SD3")+cProd+cLocal,"B2_QATU")
+
+				IF nD3Qnt > nB2Qatu
+
+						MSGALERT("Quantidade da Transferencia superior ao saldo em estoque"+cEol+"Produto: " + cProd ,"Delpi")
+						lRet := .F.
+
+				endif
+			endif
+		next nY
+	endif
+
+Return lRet
+
+	************************
+	//Comentado por Gabriel MT240TOK
+User Function MT24_0TOK()        // Verificação de Tipo de Movimentação 501 no Movimentos Internos
+	************************
+	Local nD3Qnt := 0
+	Local nB2Qatu := 0
+	tVolta := .T.
+	If M->D3_TM='501' .AND. Empty(M->D3_OP)
+		Msgbox("So poderá utilizar tipo de movimentação 501, quando tiver Ordem Produção Cadastrada.")
+		tVolta := .F.
+EndIf*/
+/***************************************************
+	* Adicionado por Gabriel Araujo - Totvs SC 2019/08 *
+	* Validação para não permitir que o estoque fique  *
+	* negativo pois o MV_ESTNEG foi desabilitado       *
+***************************************************/
+/*GABRIEL
+	if tVolta .and. cEmpAnt $ "01"
+		nD3Qnt := M->D3_QUANT
+		//B2_FILIAL, B2_COD, B2_LOCAL, R_E_C_N_O_, D_E_L_E_T_
+		nB2Qatu := POSICIONE("SB2",1,XfILIAL("SD3")+M->D3_COD+M->D3_LOCAL,"B2_QATU")
+
+		IF nD3Qnt > nB2Qatu
+
+			MSGALERT("Quantidade da OP superior ao saldo em estoque","Delpi")
+			tVolta := .F.
+
+		endif
+	endif
+
+	Return(tVolta)
+
+
+	************************
+User Function DESAT001() // MT170FIM()   // Fim do processo de compras automaticas
+	************************
+	aScs := PARAMIXB[1]
+	nX   := 0
+	cOldAlias:=Alias()
+	For nX := 1 To Len(aScs)
+		DbSelectArea("SC1")
+		If DbSeek(xFilial("SC1") + aScs[nX, 2]) .AND. SC1->C1_LOCAL == "99"
+			dbSelectArea("SB2")
+			DbSetOrder(1)
+			iF (DbSeek(xFilial("SB2")+SC1->C1_PRODUTO+SC1->C1_LOCAL))
+				RecLock("SB2",.F.)
+				SB2->B2_SALPEDI -= SC1->C1_QUANT
+				MsUnlock("SB2")
+			EndIf
+			RecLock("SC1", .F.)
+			DbDelete()
+			MsUnlock("SC1")
+		Endif
+	Next
+	dbSelectArea(cOldAlias)
+	Return Nil
+
+
+	************************
+User Function DESAT002() // MT170SLD() // para cada almox. ele vem aqui a diz o saldo que encontrou, posso alterar e recalculoar
+	************************
+	nQuant  := PARAMIXB[1]
+	cProd   := PARAMIXB[2]
+	cLocal  := PARAMIXB[3]
+	cOldAlias:=Alias()
+	If cLocal == "01"
+		DbSelectArea("SB2")
+		DbSetOrder(1)
+		If DbSeek(xFilial("SB2") + cProd + "99")
+			nQuant += SB2->B2_QATU - SB2->B2_QEMP
+		EndIf
+	EndIf
+	dbSelectArea(cOldAlias)
+	Return (nQuant)
+
+
+
+
+	***************************************************
+User Function MTA130C8()  // apos importacao de itens do pedidos de compra
+	***************************************************
+	sFornece :=  SC8->C8_FORNECE
+	sLoja    :=  SC8->C8_LOJA
+	sProduto :=  SC8->C8_PRODUTO
+	stipconv := ''
+	nConv    := 0
+	dbSelectArea("SB1")
+	dbSetorder(1)
+	If (dbSeek(xFilial("SB1")+SC8->C8_PRODUTO))
+		stipconv := SB1->B1_TIPCONV
+		nConv    := SB1->B1_CONV
+	EndIf
+
+	dbSelectArea("SA5")
+	dbSetorder(1)
+	dbSeek(xFilial("SA5")+sFornece+sLoja+sProduto,.T.)
+	If Alltrim(xFilial("SA5")+sFornece+sLoja+sProduto) == Alltrim(SA5->A5_FILIAL + SA5->A5_FORNECE + SA5->A5_LOJA + SA5->A5_PRODUTO)
+		nQtde := SC8->C8_QUANT
+		nQtdeSegun := 0
+		nQtdeEmb := SA5->A5_EMBAL
+		If  SA5->A5_QTDMN > nQtde
+			nQtde := SA5->A5_QTDMN
+		EndIf
+		If  nQtdeEmb <> nQtde
+			If  nQtdeEmb >= nQtde
+				nQtde := nQtdeEmb
+			ElseIF nQtdeEmb>0
+				nQtde1 := nQtdeEmb
+				While nQtde1 < nQtde
+					nQtde1 := nQtde1 + nQtdeEmb
+				EndDo
+				nQtde := nQtde1
+			EndIf
+		EndIf
+		If stipconv == 'M'
+			nQtdeSegun := nQtde * nConv
+		ElseIf stipconv == 'D'
+			nQtdeSegun := nQtde / nConv
+		EndIf
+		If nQtde <> SC8->C8_QUANT
+			RecLock("SC8",.F.)
+			SC8->C8_QUANT    := nQtde
+			SC8->C8_QTSEGUM  := nQtdeSegun
+			SC8->C8_TOTAL    := nQtde * SC8->C8_PRECO
+			MsUnlock("SC8")
+		EndIf
+	EndIf
+	Return()
+
+	***********************
+User Function MA261D3()
+	*************
+	dbSelectArea("SB1")
+	DbSetOrder(1)
+	DbSeek(xFilial("SB1") + aCols[n,1] ,.t.)
+	If Left(SB1->B1_COD,1) == '9'
+		Msgbox('Favor verificar saldo de materias primas ou dos empenhos.')
+	EndIf
+	Return()
+
+	***********************
+User Function MA260D3()
+	*************
+	dbSelectArea("SB1")
+	If Left(SB1->B1_COD,1) == '9'
+		Msgbox('Favor verificar saldo de materias primas ou dos empenhos.')
+	EndIf
+	nOrder:=IndexOrd()
+	nRecno:=Recno()
+	iF 	Alltrim(CLOCDEST) == '50'
+		u_DLP200B(cCodOrig)
+	EndIf
+	dbSelectArea("SB1")
+	dbSetOrder(nOrder)
+	dbGoTo(nRecno)
+	Return()
+
+	***********************
+User Function DLP200C(cProduto)
+	*************
+	nQtdComp := 0
+	DbSelectArea("SB1")
+	DbSetOrder(1)
+	If DbSeek(xFilial("SB1")+cProduto)
+		nQtd := SB2->B2_QATU
+		DbSelectArea("SB2")
+		If DbSeek(xFilial("SB2")+SB1->B1_COD+'99')
+			nQtdComp := SB2->B2_QEMP + SB1->B1_ESTSEG - (SB2->B2_QATU + nQtd)
+		EndIf
+		// Excluir com o que está em aberto a comprar...
+		DbSelectArea("SC1")
+		DbSetorder(5)
+		DbSeek(xFilial("SC1")+Space(6)+SB1->B1_COD, .T.)
+		While !Eof() .AND. xFilial("SC1")+Space(6)+SB1->B1_COD == SC1->C1_FILIAL+SC1->C1_COTACAO+SC1->C1_PRODUTO
+			nQtdComp -= SC1->C1_QUANT
+			DbSkip()
+		EndDo
+		// Excluir com o aberto do SC7
+		DbSelectArea("SC7")
+		DbSetOrder(15)
+		DbSeek(xFilial("SC7")+" "+SB1->B1_COD, .T.)
+		While !Eof() .AND. xFilial("SC7")+" "+SB1->B1_COD == SC7->C7_FILIAL+SC7->C7_ENCER+SC7->C7_PRODUTO
+			nQtdComp -= (SC7->C7_QUANT - SC7->C7_QUJE)
+			DbSkip()
+		EndDo
+		// Excluir com o aberto do SC8
+		DbSelectArea("SC8")
+		DbSetOrder(6)
+		DbSeek(xFilial("SC8")+Space(6)+SB1->B1_COD, .T.)
+		While !Eof() .AND. xFilial("SC8")+Space(6)+SB1->B1_COD == SC8->C8_FILIAL+SC8->C8_NUMPED+SC8->C8_PRODUTO
+			nQtdComp -= nQteSc8
+			DbSkip()
+		EndDo
+		lGerar := (nQtdComp > 0)
+		If lGerar
+			If (SB1->B1_LE > 0) .AND. (nQtdComp % SB1->B1_LE > 0)
+				nQtdComp := (Int(nQtdComp / SB1->B1_LE) + 1) * SB1->B1_LE
+			EndIf
+			If (SB1->B1_LM > 0) .AND. (nQtdComp < SB1->B1_LM)
+				nQtdComp := SB1->B1_LM
+			EndIf
+		EndIf
+	EndIf
+	Return(nQtdComp)
+
+
+	***************************************************
+User Function SD3250I()
+	***************************************************
+	Local nQtd, nQtdComprar, lGerar
+
+
+	DbSelectArea("SD4")
+	DbSetOrder(2)
+	DbSeek(xFilial("SD4") + SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN, .T.)
+	While !Eof() .AND. RTrim(SD4->D4_FILIAL+SD4->D4_OP) == xFilial("SD4")+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN
+		If SD4->D4_LOCAL != '01'
+			DbSkip()
+			Loop
+		EndIf
+		DbSelectArea("SB2")
+		DbSetOrder(1)
+		If DbSeek(xFilial("SB2")+SD4->D4_COD+SD4->D4_LOCAL)
+			// Se o estoque, junto com tudo que tem a comprar, está abaixo do estoque seguro...
+			nQtdComprar := u_DLP200C(SD4->D4_COD)
+			If nQtdComprar > 0
+				RecLock("SC1", .T.)
+				SC1->C1_FILIAL   := xFilial("SC1")
+				SC1->C1_NUM      := GetSXENum("SC1", "C1_NUM")
+				SC1->C1_ITEM     := "01"
+				SC1->C1_PRODUTO  := SD4->D4_COD
+				SC1->C1_UM       := SB1->B1_UM
+				SC1->C1_QUANT    := nQtdComprar
+				SC1->C1_DATPRF   := Datavalida(dDataBase + SB1->B1_PE)
+				SC1->C1_LOCAL    := "01" // SD4->D4_LOCAL
+				SC1->C1_OBS      := "Solicitacao Gerada Automaticamente"
+				SC1->C1_CC       := SB1->B1_CC
+				SC1->C1_CONTA    := SB1->B1_CONTA
+				SC1->C1_EMISSAO  := dDataBase
+				SC1->C1_DESCRI   := Left(SB1->B1_DESC, 30)
+				SC1->C1_SOLICIT  := SubStr(cUsuario, 7, 15)
+				SC1->C1_IMPORT   := "N"
+				SC1->C1_CODCOMP  := "001"
+				SC1->C1_CLASS    := "1"
+				SC1->C1_USER     := "000000"
+				MsUnlock("SC1")
+				ConfirmSX8()
+				dbSelectArea("SB2")
+				DbSetOrder(1)
+				iF (DbSeek(xFilial("SB2")+SC1->C1_PRODUTO+SC1->C1_LOCAL))
+					RecLock("SB2",.F.)
+					SB2->B2_SALPEDI += SC1->C1_QUANT
+					MsUnlock("SB2")
+				EndIf
+			EndIf
+		EndIf
+		DbSelectArea("SD4")
+		DbSkip()
+	EndDo
+
+	// TSC - Diego Kerstner: 18/10/2018: Adicionado condição para só chamar a DLP033 quando for a sequencia 001
+	// TSC - Gabriel Araujo: 24/01/2019: Retirado conforme solicitação da Joici
+	//	If SC2->C2_SEQUEN = "001"
+	//		U_DLP033()
+	//	EndIF
+
+
+	Return Nil
+
+
+	**********************************************************
+User Function fDifTempo(dFDtIni,sFTeIni,dFDtFin,sFTeFin)
+	***************
+	If dFDtIni>=dFDtFin .And. Left(sFTeIni,2)+Right(sFTeIni,2)>Left(sFTeFin,2)+Right(sFTeFin,2)
+		Msgbox("Tempo Inicial Menor Que Final")
+		Return("000:00")
+	EndIf
+	nDias := IIf(Stod(dFDtFin) > sTod(dFDtIni),Stod(dFDtFin) - sTod(dFDtIni),0)
+	nNroHoras := nDias * 24
+	If Left(sFTeIni,2)+Right(sFTeIni,2)>Left(sFTeFin,2)+Right(sFTeFin,2)
+		nNroHoras := nNroHoras - 24
+	EndIf
+	nDifHr := 0
+	If Left(sFTeIni,2)<>Left(sFTeFin,2)
+		nDifHr := 24-Val(Left(sFTeIni,2))+Val(Left(sFTeFin,2))
+		nDifHr := IIf(nDifHr>24,nDifHr-24,nDifHr)
+	EndIf
+	nNroHoras := nNroHoras + nDifHr
+	nMinutos := 0
+	If Right(sFTeIni,2)>Right(sFTeFin,2)
+		nMinutos := (Val(Right(sFTeFin,2)) + 60) - Val(Right(sFTeIni,2))
+		nNroHoras := nNroHoras - 1
+	Else
+		nMinutos := Val(Right(sFTeFin,2))  - Val(Right(sFTeIni,2))
+	EndIf
+	sTemRet := StrZero(nNroHoras,3)+":"+StrZero(nMinutos,2)
+	Return(sTemRet)
+
+
+
+
+	************************
+User Function DLP200D()
+
+	Local aArea		:= GetArea()
+	Local aAreaSB1	:= SB1->(GetArea())
+	Local tVolta   	:= .T.
+	Local sProduto	:= GdFieldGet('C6_PRODUTO',n)
+	Local nQtdVen	:= GdFieldGet('C6_QTDVEN',n)
+
+	If M->C5_TIPO =='N'
+
+		dbSelectArea("SB1")
+		dbSetorder(1)
+		If (dbSeek(xFilial("SB1")+sProduto))
+			If SB1->B1_QE > 0
+				nCalc := Round(nQtdVen/SB1->B1_QE,0)
+				If	(nCalc*SB1->B1_QE)<>nQtdVen
+					tVolta := .F.
+					Msgbox('Quantidade tem que ser múltiplo da embalagem = '+transf(SB1->B1_QE,"@E 999999"))
+				EndIf
+			EndIf
+		EndIf
+	EndIf
+
+	RestArea(aAreaSB1)
+	RestArea(aArea)
+
+	Return(tVolta)
+
+
+******************************/
+//m160cotv,m160venc -  na cotacao.
+//avalcot() na avaliacao da cotacao.
+//ma160cus() na gravacao do SC7.
+/*
+	*****
+	******************
+User Function avalcot()
+	*************
+	msgbox('avalcot')
+	Return(.t.)
+
+	***********************
+User Function m160cotv()
+	*************
+	msgbox('avalcot111')
+	Return(.t.)
+	************************
+User Function m160venc()
+	*************
+	msgbox('avalcot222')
+	Return(.t.)
+
+
+User Function AVALCOT()
+	Local nEvento := PARAMIXB[1]
+	Local aArea := GetArea()
+	If nEvento == 4
+	dbSelectArea('SC7')
+	RecLock('SC7',.F.)
+	SC7->C7_CUSTOM := TableUsr->FieldCustom
+	MsUnlock()
+	EndIf
+	RestArea(aArea)
+	Return
+
+*/
+
+/*
+	************************
+User Function M160VENC()// na selecao do melhor fornecedor
+	*************
+	aSCE      := aClone(PARAMIXB[1])
+	aPlanilha := aClone(PARAMIXB[2])
+	aCotacao  := aClone(PARAMIXB[3])
+
+	nValVen := 999999999999
+	nX      := 0
+	For X := 1 To Len(PARAMIXB[2][1])
+	aPlanilha[1][X][1]   := ''
+		If PARAMIXB[2][1][X][14] > 0
+			If  PARAMIXB[2][1][X][14] < nValVen
+	nX      := X
+	nValVen := PARAMIXB[2][1][nX][14]
+			EndIf
+		EndIf
+	Next X
+	If nX > 0
+	aPlanilha[1][nX][1]   := 'XX' // 'XX' opcional
+	EndIf
+	Return ({aSCE,aPlanilha})
+
+*/
+
+
+
+/*GABRIEL
+	***********************
+User Function AVALCOT() // na gravacao do pedido de compra
+	*************
+	Local nEvento := PARAMIXB[1]
+	Local aArea   := GetArea()
+	a:=1
+	If nEvento == 4
+		nA5_LEADT := 0
+		dbSelectArea("SA5")
+		dbSetorder(1)
+		dbSeek(xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO,.T.)
+		If xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO == SA5->A5_FILIAL + SA5->A5_FORNECE + SA5->A5_LOJA + SA5->A5_PRODUTO
+			nA5_LEADT := SA5->A5_LEADT
+		EndIf
+		nC8_QUANT := 0
+		dbSelectArea("SC8")
+		dbSetorder(6)
+		dbSeek(xFilial("SC8")+SC7->C7_NUM+SC7->C7_PRODUTO,.T.)
+		iF xFilial("SC8")+SC7->C7_NUM+SC7->C7_PRODUTO == SC8->C8_FILIAL+SC8->C8_NUMPED+SC8->C8_PRODUTO
+			If SC8->C8_QUANT <> SC7->C7_QUANT
+				dbSelectArea("SB2")
+				dbSetOrder(1)
+				iF (dbSeek(xFilial("SB2")+SC7->C7_PRODUTO+SC7->C7_LOCAL))
+					RecLock("SB2",.F.)
+					SB2->B2_SALPEDI := 	SB2->B2_SALPEDI - SC7->C7_QUANT
+					SB2->B2_SALPEDI := 	SB2->B2_SALPEDI + SC8->C8_QUANT
+					MsUnlock("SB2")
+				EndIf
+				RecLock("SC7",.F.)
+				SC7->C7_QUANT    := SC8->C8_QUANT
+				SC7->C7_QTSEGUM  := SC8->C8_QTSEGUM
+				SC7->C7_TOTAL    := SC8->C8_QUANT * SC7->C7_PRECO
+				MsUnlock("SC7")
+			EndIf
+		EndIf
+
+		dc1_datprf := dDataBase
+		DbSelectArea("SC1")
+		DbSetOrder(1)
+		If (dbseek(xfilial('SC1')+sc7->c7_numsc+sc7->c7_itemsc))
+			dc1_datprf := SC1->C1_DATPRF
+		EndIF
+		dbSelectArea("SA5")
+		dbSetorder(1)
+		dbSeek(xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO,.T.)
+		If xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO == SA5->A5_FILIAL + SA5->A5_FORNECE + SA5->A5_LOJA + SA5->A5_PRODUTO
+			nA5_LEADT := SA5->A5_LEADT
+		EndIf
+		sA2_TRANSP := ''
+		sA4_NOME   := ''
+		dbSelectArea("SA2")
+		dbSetOrder(1)
+		iF (dbSeek(xFilial("SA2")+SC7->C7_FORNECE+SC7->C7_LOJA))
+			sA2_TRANSP := SA2->A2_TRANSP
+			DbSelectArea("SA4")
+			DbSetOrder(1)
+			DbGotop()
+			If (DbSeek(xFilial("SA4")+sA2_TRANSP))
+				sA4_NOME   := SA4->A4_NOME
+			EndIF
+		EndIf
+		dbSelectArea('SC7')
+		dDataLea := dDataBase + nA5_LEADT
+		iF  dc1_datprf < dDataLea
+			dc1_datprf := dDataLea
+		EndIf
+		RecLock('SC7',.F.)
+		SC7->C7_FILENT := '01'
+		SC7->C7_TRANSP := sA2_TRANSP
+		SC7->C7_OBS    := sA4_NOME
+		SC7->C7_DATPRF := Datavalida(dc1_datprf)
+		MsUnlock('SC7')
+	EndIf
+	RestArea(aArea)
+Return
+
+
+	************************
+User Function MT160OK() // Apos confirmacao da cotacao
+	************************
+	A:=1
+RETURN(.T.) */
+
+/*
+	************************
+User Function M160VENC() // marcar melhor cotacao
+	************************
+	Local aSCE      := aClone(PARAMIXB[1])
+	Local aPlanilha := aClone(PARAMIXB[2])
+	Local aCotacao  := aClone(PARAMIXB[3])
+	Local aHeadSCE  := {}
+	Local nPQtdSC8  := aScan(aCotacao[1][1],{|x| Trim(x[1])=='C8_QUANT'})
+	Local nPQtdAUDI := aScan(aCotacao[1][1],{|x| Trim(x[1])=='C8_QTDAUDI'})
+	Local nPosRecno := aScan(aCotacao[1][1],{|x| Trim(x[1])=='SC8RECNO'})
+	Local nPQtdSCE  := 0
+	Local nPMotSCE  := 0
+	Local nX        := 0
+	Local nY        := 0
+	Local nUsadoSCE := 0
+	// Efetua a montagem do aHeader da planilha de auditoria
+	dbSelectArea('SX3')
+	dbSetOrder(1)
+	MsSeek('SCE')
+	While ( !Eof() .And. SX3->X3_ARQUIVO == 'SCE' )
+		If ( X3Uso(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL ) .Or. AllTrim(SX3->X3_CAMPO) == 'CE_NUMPRO'
+	nUsadoSCE++
+	AADD(aHeadSCE,{ TRIM(X3Titulo()),;
+	Trim(SX3->X3_CAMPO),;
+	SX3->X3_PICTURE,;
+	SX3->X3_TAMANHO,;
+	SX3->X3_DECIMAL,;
+	SX3->X3_VALID,;
+	SX3->X3_USADO,;
+	SX3->X3_TIPO,;
+	SX3->X3_ARQUIVO,;
+	SX3->X3_CONTEXT } )
+		EndIf
+	dbSelectArea('SX3')
+	dbSkip()
+	EndDo
+
+
+	nPQtdSCE  := aScan(aHeadSCE,{|x| Trim(x[2])=='CE_QUANT'})
+	nPMotSCE  := aScan(aHeadSCE,{|x| Trim(x[2])=='CE_MOTIVO'})
+	//Restaura os ganhadores escolhidos apos a analise
+	For nX := 1 To Len(aPlanilha)
+	nValVen := 999999999999
+	nCotFor      := 0
+		For X1 := 1 To Len(PARAMIXB[2][nX])
+			If PARAMIXB[2][nX][X1][14] > 0
+				If  PARAMIXB[2][nX][X1][14] < nValVen
+	nCotFor := X1
+	nValVen := PARAMIXB[2][nX][X1][14]
+				EndIf
+			EndIf
+		Next X1
+
+		For nY := 1 To Len(aPlanilha[nX])
+	dbSelectArea('SC8')
+	MsGoto(aCotacao[nX][nY][nPosRecno][2])
+			iF nY == nCotFor
+	aPlanilha[nX][nY][1]   := 'XX' // 'XX' opcional
+	aSCE[nX][nY][nPQtdSCE] := aCotacao[nX][nY][nPQtdAUDI][2]
+	//aSCE[nX][nY][nPQtdSCE] := SC8->C8_QUANT
+			Else
+	aPlanilha[nX][nY][1]   := ''
+	aSCE[nX][nY][nPQtdSCE] := 0
+			EndIf
+		Next nY
+	Next nX
+	Return ({aSCE,aPlanilha})
+*/
+
+/*GABRIEL ************************
+User Function DLP200E(sTES,sDebCre,stpImp)
+	*************
+	//1 - ipi, 2-ICMS , 3 - confis, 4 - PIS
+	sConRet := ' '
+	dbSelectArea("SZ4")
+	dbSetorder(1)
+	If (dbSeek(xFilial("SZ4")+sTes+stpImp))
+		If sDebCre == 'D'
+			sConRet := SZ4->Z4_DEBITO
+		Else
+			sConRet := SZ4->Z4_CREDITO
+		EndIf
+	EndIf
+Return(sConRet)
+
+
+	************************
+User Function DLP200F()
+	*************
+	Local cSql := ""
+Local cEol := chr(10)*/
+/*	sCodFor := space(6)
+	dbSelectArea("SA2")
+	dbSetorder(1)
+	dbSeek(xFilial("SA2")+'0ZZZZZ',.T.)
+	DbSkip(-1)
+	nCodFor := val(SA2->A2_COD)+1
+sCodFor := StrZero(nCodFor,6) */
+/*GABRIEL
+	cSql :="SELECT MAX(A.A2_COD) A2_COD " + cEol
+	cSql +="FROM dbo." + RETSQLNAME("SA2") + " A (NOLOCK)  " + cEol
+	cSql +="WHERE LEN(A2_COD) = 6       " + cEol
+	cSql +="      AND A.A2_COD NOT IN ( 'UNIAO ', 'MUNIC ', 'INPS  ', 'ESTADO', 'DPRF  ' );"
+
+	conout(cSql)
+
+	If Select("TRB004") <> 0
+		dbSelectArea("TRB004")
+		dbCloseArea()
+	EndIf
+
+	TCQUERY cSql NEW ALIAS "TRB004"
+
+	IF  TRB004->(!EOF())
+	sCodFor :=  SOMA1(TRB004->A2_COD)
+	ENDIF
+Return(sCodFor)
+
+User Function DLP200H()
+	Local cNumped := ""
+Local lCont := .f.
+	Local cSql := ""
+	Local cEol := chr(10)
+
+	cSql :="SELECT MAX(A.C7_NUM) C7_NUM                   " + cEol
+	cSql +="FROM dbo." + RETSQLNAME("SC7") + " A (NOLOCK) " + cEol
+	cSql +="WHERE LEN(C7_NUM) = 6                        " + cEol
+	cSql +="      AND A.C7_FILIAL = " + ValTosql(xFilial("SC7"))
+
+	If Select("TRB004") <> 0
+		dbSelectArea("TRB004")
+		dbCloseArea()
+	EndIf
+
+	TCQUERY cSql NEW ALIAS "TRB004"
+
+	IF  TRB004->(!EOF())
+		cNPedT1 :=  TRB004->C7_NUM
+	ENDIF
+cNumped :=  SOMA1(cNPedT1)*/
+/*while !lCont
+	cNPedT2 := GetSx8Num("SC7", "C7_NUM")
+			ConfirmSX8()admi
+	if VALcNPedT2 >cNPedT1
+				lCont := .t.
+	endif
+end
+
+cNumped:= STRZERO(cNPedT2,TamSx3('C7_NUM')[1])*/
+
+/*GABRIEL Return cNumped
+	************************
+	//User Function DLP200G()
+************GABRIEL*/
+/*dbSelectArea("SD3")
+dbSetorder(2)
+dbSeek(xFilial("SD3")+'UZZZZZZ',.T.)
+DbSkip(-1)
+wLaco := .T.
+nCont := Val(Subs(SD3->D3_DOC,2,6))
+While wLaco
+nCont := nCont + 1
+sNovDoc := 'U'+Alltrim(str(nCont))
+dbSelectArea("SD3")
+dbSetorder(2)
+dbSeek(xFilial("SD3")+sNovDoc,.T.)
+	If !Alltrim(SD3->D3_DOC) == Alltrim(sNovDoc)
+wLaco := .F.
+	EndIf
+EndDo
+Return(sNovDoc)*/
+
+
+
+User Function DLP200x()
+	Local cNumped := ""
+	Local cSql := ""
+	Local cEol := chr(10)
+
+	cSql :="SELECT MAX(A.C7_NUM) C7_NUM                   " + cEol
+	cSql +="FROM dbo." + RETSQLNAME("SC7") + " A (NOLOCK) " + cEol
+	cSql +="WHERE LEN(C7_NUM) = 6                        " + cEol
+	cSql +="      AND A.C7_FILIAL = " + ValTosql(xFilial("SC7"))
+
+	If Select("TRB004") <> 0
+		dbSelectArea("TRB004")
+		dbCloseArea()
+	EndIf
+
+	TCQUERY cSql NEW ALIAS "TRB004"
+
+	IF  TRB004->(!EOF())
+		cNPedT1 :=  TRB004->C7_NUM
+	ENDIF
+	cNumped :=  SOMA1(cNPedT1)
+
+Return cNumped
+
+User Function DLP200F()
+
+	Local cSql := ""
+	Local cEol := chr(10)
+	/*	sCodFor := space(6)
+	dbSelectArea("SA2")
+	dbSetorder(1)
+	dbSeek(xFilial("SA2")+'0ZZZZZ',.T.)
+	DbSkip(-1)
+	nCodFor := val(SA2->A2_COD)+1
+	sCodFor := StrZero(nCodFor,6) */
+
+	cSql :="SELECT MAX(A.A2_COD) A2_COD " + cEol
+	cSql +="FROM dbo." + RETSQLNAME("SA2") + " A (NOLOCK)  " + cEol
+	cSql +="WHERE LEN(A2_COD) = 6   AND A2_YFGEN !='S' AND D_E_L_E_T_ = ' '   " + cEol
+	cSql +="      AND  A.A2_COD NOT IN ( 'UNIAO ', 'MUNIC ', 'INPS  ', 'ESTADO', 'DPRF  ' ,'VIAGEM')"
+
+	conout(cSql)
+
+	If Select("TRB004") <> 0
+		dbSelectArea("TRB004")
+		dbCloseArea()
+	EndIf
+
+	TCQUERY cSql NEW ALIAS "TRB004"
+
+	IF  TRB004->(!EOF())
+		sCodFor :=  SOMA1(TRB004->A2_COD)
+	ENDIF
+Return(sCodFor)

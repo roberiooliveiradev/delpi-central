@@ -1,0 +1,81 @@
+0001#STR0001#ALL#By Date
+0002#STR0002#ALL#By Bank
+0003#STR0003#ALL#By Nature
+0004#STR0004#ALL#Alphabetic
+0005#STR0005#ALL#Typing Date
+0006#STR0006#ALL#This program prints a list of the Posted Bills. 
+0007#STR0007#ALL#It can be issued per Date, Bank, Nature or alphabetic
+0008#STR0008#ALL#order of Customer or Supplier and typing date.
+0009#STR0009#ALL#List of Postings
+0010#STR0010#ALL#Z.Form
+0011#STR0011#ALL#List of Posted Bills in 
+0012#STR0012#ALL#Prf Number     Prc TP  Cusomer Name Customer     Class      Matur.     History               Posting Dt Original Value   Int/Fine    Correction   Discounts  Deductions   Taxes   Total Posted   Bco   Dt Dig.  Mot Orig 
+0013#STR0013#ALL#List of Paid Bills in        
+0014#STR0014#ALL#Prf Number     Prc TP  Suppl. Supplier Name      Class      Due Dt     History               Wrtoff Dt Original Amount  Int/Fine     Indexat.   Discounts     Deduct.    Taxes      Total Writen Off Bnk   Typ. Dt  Orig.Reas 
+0015#STR0015#ALL# by payment date   
+0016#STR0016#ALL# by Bank
+0017#STR0017#ALL# by Nature
+0018#STR0018#ALL#Selecting Records...
+0019#STR0019#ALL# Per Typing Date        
+0020#STR0020#ALL# Alphabetic.
+0021#STR0021#ALL#CANCELLED BY THE OPERATOR
+0022#STR0022#ALL#REGULAR
+0023#STR0023#ALL#DEVOLUTION
+0024#STR0024#ALL#EXCH.
+0025#STR0025#ALL#SALES REP.
+0026#STR0026#ALL#COMPENSAT
+0027#STR0027#ALL#COMP PORT
+0028#STR0028#ALL#Posted
+0029#STR0029#ALL#Grand Total : 
+0030#STR0030#ALL#Management
+0031#STR0031#ALL#Fin Act.
+0032#STR0032#ALL#Bill Number
+0033#STR0033#ALL#LIQUIDAT.
+0034#STR0034#ALL#DEBIT CC
+0035#STR0035#ALL# No. of Bills 
+0036#STR0036#ALL# By Lot
+0037#STR0037#ALL#Automatic
+0038#STR0038#ALL#Manual Financial Transactions 
+0039#STR0039#ALL#Customer             Customer`s Name 
+0040#STR0040#ALL#                       Prf Number     Prc TP     Class      Due Dt     History             Wrtoff Dt     Original Amount  Int/Fine     Indexat.   Discounts     Deduct.   Taxes      Total Writen Off Bnk   Typ. Dt  Orig.Reas 
+0041#STR0041#ALL#Prx Number     Prc TY Suppl. Name Supplier      Nature      Mat.Dt. Historial       Post      Original Value    Delinquency Fee     Fee        Interest     Discounts     Rebate         Total Paid Bnk Typing Dt. Post. Rea
+0042#STR0042#ALL#INVOICED
+0043#STR0043#ALL#Prefix From
+0044#STR0044#ALL#Prefix  To 
+0045#STR0045#ALL#Print Types
+0046#STR0046#ALL#Don´t Print Types
+0047#STR0047#ALL#Print Name
+0048#STR0048#ALL#By Credit Date
+0049#STR0049#ALL#Prf
+0050#STR0050#ALL#Number
+0051#STR0051#ALL#Prc
+0052#STR0052#ALL#TP
+0053#STR0053#ALL#Cus/Sup
+0054#STR0054#ALL#Cus/SuppName
+0055#STR0055#ALL#Class   
+0056#STR0056#ALL#Due Dt
+0057#STR0057#ALL#History  
+0058#STR0058#ALL#Pstng Dt
+0059#STR0059#ALL#Original Amnt.
+0060#STR0060#ALL#Int/Penal
+0061#STR0061#ALL#Indexat.
+0062#STR0062#ALL#Discounts
+0063#STR0063#ALL#Deduct.
+0064#STR0064#ALL#Taxes   
+0065#STR0065#ALL#Total Posted
+0066#STR0066#ALL#Bnk
+0067#STR0067#ALL#Typ.Dt.
+0068#STR0068#ALL#Rea
+0069#STR0069#ALL#Orig
+0070#STR0070#ALL#BRANCH
+0071#STR0071#ALL#Sub-total
+0072#STR0072#ALL#Pstngs
+0073#STR0073#ALL#Divide the types to print (question 28) by one ; (semicolon) every 3 characters 
+0074#STR0074#ALL#Divide the types you do not want to print (question 29) by one ; (semicolon) every 3 characters     
+0075#STR0075#ALL#General
+0076#STR0076#ALL#Invoice Write-off
+0077#STR0077#ALL#Automatic Write-off / Lot
+0078#STR0078#ALL#Table printing format not supported in this report.
+0079#STR0079#ALL#Accessory Value
+0080#STR0080#ALL#Transference Reversal
+0081#STR0081#ALL#Grand Total without Transaction:

@@ -1,0 +1,11 @@
+0001#STR0001#ALL#local de impressão não informado.
+0002#STR0002#ALL#Informe um local de impressão cadastrado.
+0003#STR0003#ALL#Acesse a rotina 'Locais de Impressão'.
+0004#STR0004#ALL#local de impressão não encontrado
+0005#STR0005#ALL#Valores de numeração de documentos inválidos.
+0006#STR0006#ALL#Informe um intervalo válido de notas.
+0007#STR0007#ALL#Verifique as informações do intervalo de notas.
+0008#STR0008#ALL#Documentos não encontrados para impressão do DANFE.
+0009#STR0009#ALL#Impressão DANFE etiqueta
+0010#STR0010#ALL#Não foram localizados os XMLs para geração do DANFE etiqueta.
+0011#STR0011#ALL#Verifique se o(s) documento(s) consta(m) como autorizado(s) através da rotina Monitor.

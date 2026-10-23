@@ -1,0 +1,37 @@
+0001#STR0001#ALL#Summary of Inflows/Outflows
+0002#STR0002#ALL#This program shows the summary, by type of material, of all the inflows
+0003#STR0003#ALL#and outflows. The column OPENING BALANCE is the sum of the others columns
+0004#STR0004#ALL#in the report, not the registered initial balance of the inventory
+0005#STR0005#ALL#Z.Form
+0006#STR0006#ALL#Management   
+0007#STR0007#ALL# IN 
+0008#STR0008#ALL#TYPE           INITIAL         PURCHASES       INTERNAL     REQUISITIONS   TRANSFERS              PRODUCTION         SALES        TRANSF. TO        RETURN TO         PURCHASE  3RD.PARTY C.   3RD.PARTY C.     BALANCE
+0009#STR0009#ALL#               BALANCE                        MOVEMENTS   FOR PRODUCTION                                                           PROCESS             VENDOR           RETURN    INFLOW         OUTFLOW  
+0010#STR0010#ALL#        CURR.
+0011#STR0011#ALL#OF CLOSING   
+0012#STR0012#ALL# OF TRANSACT.
+0013#STR0013#ALL#CANCELLED BY THE OPERATOR  
+0014#STR0014#ALL#TOT.:
+0015#STR0015#ALL#Selecting records     
+0016#STR0016#ALL#Balan.
+0017#STR0017#ALL#Initial
+0018#STR0018#ALL#Purchase
+0019#STR0019#ALL#Movements
+0020#STR0020#ALL#Internal
+0021#STR0021#ALL#Requisitions
+0022#STR0022#ALL#for Production
+0023#STR0023#ALL#Transfers
+0024#STR0024#ALL#Product.
+0025#STR0025#ALL#Sales 
+0026#STR0026#ALL#Transf. to
+0027#STR0027#ALL#Process 
+0028#STR0028#ALL#Return of   
+0029#STR0029#ALL#Inflow Control
+0030#STR0030#ALL#3rd party
+0031#STR0031#ALL#Outflow   
+0032#STR0032#ALL#Balan
+0033#STR0033#ALL#Curr.
+0034#STR0034#ALL#Products Transaction
+0035#STR0035#ALL#Period from 
+0036#STR0036#ALL#To 
+0037#STR0037#ALL#Error in the stored/procedure call. Check the Message tab in the DBAccess.

@@ -1,0 +1,33 @@
+0001#STR0001#ALL#Relação Simplificada Das Estruturas
+0002#STR0002#ALL#Este programa emite a relação de estrutura de um determinado artigo
+0003#STR0003#ALL#seleccionado pelo utilizador. Esta relação näo demonstra custos. Caso o
+0004#STR0004#ALL#produto use opcionais, será listada a estrutura com os opcionais padrão.
+0005#STR0005#ALL#Código de barras
+0006#STR0006#ALL#Administração
+0007#STR0007#ALL#Estrutura(s)
+0008#STR0008#ALL#Nível                Código          Trt Tp Grup Descrição                          Observação                                   Quantidade Um    Perda      Quantidade  Qtd. Base  Tipo De   Início   Fim      Grupo  Item
+0009#STR0009#ALL#                                                                                                                                 Necessária         %                     Estrutura Quantidade Validade Validade Opcio Opcio
+0010#STR0010#ALL#Cancelado Pelo Operador
+0011#STR0011#ALL#Variável
+0012#STR0012#ALL#Fixa
+0013#STR0013#ALL#Código: 
+0016#STR0016#ALL#Um: 
+0017#STR0017#ALL#Quant. base : 
+0019#STR0019#ALL#Nível
+0020#STR0020#ALL#Código
+0021#STR0021#ALL#Trt
+0022#STR0022#ALL#Tp.
+0023#STR0023#ALL#Grup
+0024#STR0024#ALL#Descrição
+0025#STR0025#ALL#Observação
+0026#STR0026#ALL#Qtde.necessária
+0027#STR0027#ALL#Um
+0028#STR0028#ALL#Perda %
+0029#STR0029#ALL#Quantidade
+0030#STR0030#ALL#Qtd. Base
+0031#STR0031#ALL#Tipo De Quantidade
+0032#STR0032#ALL#Ini. da validade
+0033#STR0033#ALL#Fim Da Validade
+0034#STR0034#ALL#Grp. Opc.
+0035#STR0035#ALL#Elemento Opc.
+0036#STR0036#ALL#Detalhes Do Artigo Pai

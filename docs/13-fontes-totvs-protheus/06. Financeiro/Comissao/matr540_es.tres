@@ -1,0 +1,55 @@
+0001#STR0001#ALL#Informe de comisiones 
+0002#STR0002#ALL#Emision del informe de comisiones.
+0003#STR0003#ALL#A Rayas
+0004#STR0004#ALL#Administracion
+0005#STR0005#ALL#INFORME DE COMISIONES  
+0006#STR0006#ALL#(PAGO EN LA EMISION)
+0007#STR0007#ALL#(PAGO EN LA CANCELACION)
+0008#STR0008#ALL#INFORME DE COMISIONES 
+0009#STR0009#ALL#PRF NUMERO   CUOTA CODIGO                 SC  NOMBRE                               FCH.DE HOY  FECHA       FECHA       FECHA      NUMERO          VALOR           VALOR      %           VALOR    TIPO
+0010#STR0010#ALL#    TITULO         CLIENTE                                                         COMISION    ORIGEN      BAJA        PGTO       PEDIDO         TITULO            BASE               COMISION   COMISION
+0011#STR0011#ALL#ANULADO POR EL OPERADOR
+0012#STR0012#ALL#Vendedor : 
+0013#STR0013#ALL#TOTAL DEL VENDEDOR --> 
+0014#STR0014#ALL#TOTAL  GENERAL    --> 
+0015#STR0015#ALL#TOTAL  DE IR      --> 
+0016#STR0016#ALL#Seleccionando registros...
+0017#STR0017#ALL#TOTAL (-) IR      --> 
+0018#STR0018#ALL#AJUSTE
+0019#STR0019#ALL#ANALITICO
+0020#STR0020#ALL#SINTETICO
+0021#STR0021#ALL#CODIGO VENDEDOR                                           TOTAL            TOTAL      %            TOTAL           TOTAL           TOTAL
+0022#STR0022#ALL#                                                         TITULO             BASE                COMISION              IR          (-) IR
+0023#STR0023#ALL#Detalhes : Titulos de origem da liquidação 
+0024#STR0024#ALL#Prefijo    Numero          Cuota   Tipo    Cliente   Tienda  Nombre                                     Valor Titulo      Fecha Liq.        Valor Liquidacion     Valor Base Liq.
+0025#STR0025#ALL#Informe de comisiones
+0026#STR0026#ALL#Emision del informe de comisiones.
+0027#STR0027#ALL#Total Titulo
+0028#STR0028#ALL#Total IR
+0029#STR0029#ALL#Total (-) IR
+0030#STR0030#ALL#Total Base
+0031#STR0031#ALL#Total Comision
+0032#STR0032#ALL#%
+0033#STR0033#ALL#Vencto Origen
+0034#STR0034#ALL#Fch.Baja
+0035#STR0035#ALL#Vlr Titulo
+0036#STR0036#ALL#Vlr Base
+0037#STR0037#ALL#AJUSTE
+0038#STR0038#ALL#Comision
+0039#STR0039#ALL#Pedido
+0040#STR0040#ALL#Tipo
+0041#STR0041#ALL#por Vendedor
+0042#STR0042#ALL#Titulos Origen de Liquidacion
+0043#STR0043#ALL#Fecha Neta
+0044#STR0044#ALL#Vlr.Neto
+0045#STR0045#ALL#Vlr.Base Neta
+0046#STR0046#ALL#Por Vendedor+Prefijo+Titulo+Cuota
+0047#STR0047#ALL#Por Vendedor+Cliente+Tienda+Prefijo+Titulo+Cuota
+0048#STR0048#ALL#Comisiones(Analitico)
+0049#STR0049#ALL#Comisiones(Sintetico)
+0050#STR0050#ALL#Vendedores
+0051#STR0051#ALL#Comisiones s/ Liquidacion
+0052#STR0052#ALL#Total general
+0053#STR0053#ALL#Titulo
+0054#STR0054#ALL#Porc.
+0055#STR0055#ALL#Comision

@@ -1,0 +1,3566 @@
+#INCLUDE "FINR130.CH"
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "FWCOMMAND.CH"
+#INCLUDE "FWLIBVERSION.CH"
+
+#DEFINE QUEBR				1
+#DEFINE CLIENT				2
+#DEFINE TITUL				3
+#DEFINE TIPO				4
+#DEFINE NATUREZA			5
+#DEFINE EMISSAO				6
+#DEFINE VENCTO				7
+#DEFINE VENCREA				8
+#DEFINE BANC				9
+#DEFINE VL_ORIG				10
+#DEFINE VL_NOMINAL			11
+#DEFINE VL_CORRIG			12
+#DEFINE VL_VENCIDO			13
+#DEFINE NUMBC				14
+#DEFINE VL_JUROS			15
+#DEFINE ATRASO				16
+#DEFINE HISTORICO			17
+#DEFINE VL_SOMA				18
+
+Static __lFWCodFil		:= .T.
+Static __lTempLOT
+Static __cDBType
+Static __nTamSEQ
+Static __lBQ10925
+Static __cCliHashNatu	:= ''
+Static __lProcSaldoTit
+Static __lFound			:= .F.
+Static __nTamPort
+Static __aTtImp
+Static __oHash
+Static __oTBxCanc
+Static __oProcSE5
+Static __oF130Dbx
+Static __oTipoBa
+Static __aDtTit
+Static __cDateFormat	:= ""
+Static __cMVFinFix   	:= NIL
+Static __lMetric        := .F.
+Static __oTCli          := Nil
+Static __oUltBxMl       := Nil
+Static __oExisFKD       := Nil
+Static __lCachedQry     As Logical
+Static __lNiveisC       As Logical
+Static __oBusCmp        := Nil
+Static __nValCM         
+
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ FINR130  ≥ Autor ≥ Daniel Tadashi Batori ≥ Data ≥ 01.08.06 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ PosiáÑo dos Titulos a Receber					          ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zFINR130(void)                                              ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥                                                            ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso      ≥ Generico                                                   ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+User Function zFINR130()
+    Local   oReport     As Object
+    Private oFINR130    As Object
+    Private cMVBR10925	As Character
+    Private dDtVenc		As Character
+    Private lAbortPrint	As Logical
+    Private aSelFil		As Array
+
+    __cDateFormat   := UPPER(GetSrvProfString( 'DATEFORMAT', 'DEFAULT' ))
+    cMVBR10925      := SuperGetMv("MV_BR10925", ,"2")
+    dDtVenc         := dDataBase
+    lAbortPrint     := .F.
+    aSelFil         := {}
+    
+    oReport := zReportDef()
+    oReport:PrintDialog()
+
+    __oTBxCanc:Destroy()
+    __oProcSE5:Destroy()
+    __oF130Dbx:Destroy()
+    If !Empty( __oTipoBa )
+        __oTipoBa:Destroy()
+    EndIf
+
+    __oTBxCanc	:= Nil
+    __oProcSE5	:= Nil
+    __oF130Dbx	:= Nil
+    __oTipoBa	:= Nil
+
+    FDelQuery( .T. )
+
+    If oFINR130 <> Nil
+        oFINR130:Delete()
+        oFINR130 := Nil
+    Endif
+
+Return
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ ReportDef≥ Autor ≥ Daniel Batori         ≥ Data ≥ 01.08.06 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ Definicao do layout do Relatorio							  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe   ≥ zReportDef(void)                                            ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso      ≥ Generico                                                   ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zReportDef()
+
+    Local oReport	:= NIL
+    Local oSection1	:= NIL
+    Local oSection2	:= NIL
+    Local cPictTit	:= ""
+    Local cPictToTit:= ""
+    Local nTamVal 	:= 0
+    Local nTamCli	:= 0
+    Local nTamQueb	:= 0
+    Local nTamJur	:= 0
+    Local nTamNBco	:= 0
+
+    __lMetric       := FwLibVersion() >= "20210517"
+
+    If !Empty( __oTBxCanc )
+        __oTBxCanc:Destroy()
+        __oTBxCanc := Nil
+    EndIf
+
+    If !Empty( __oProcSE5 )
+        __oProcSE5:Destroy()
+        __oProcSE5 := Nil
+    EndIf
+
+    If !Empty( __oF130Dbx )
+        __oF130Dbx:Destroy()
+        __oF130Dbx := Nil
+    EndIf
+
+    If !Empty( __oTipoBa )
+        __oTipoBa:Destroy()
+        __oTipoBa := Nil
+    EndIf
+	
+    If __lCachedQry == Nil
+        __lCachedQry := FwLibVersion() >= "20211116"
+    EndIf
+
+    __oTBxCanc  := IIf(__lCachedQry, FwExecStatement():New( '' ), FWPreparedStatement():New( '' ))
+    __oProcSE5	:= IIf(__lCachedQry, FwExecStatement():New( '' ), FWPreparedStatement():New( '' ))
+    __oF130Dbx	:= IIf(__lCachedQry, FwExecStatement():New( '' ), FWPreparedStatement():New( '' ))
+    __oTipoBa	:= IIf(__lCachedQry, FwExecStatement():New( '' ), FWPreparedStatement():New( '' ))
+
+    __cDBType		:= Alltrim(Upper(TCGetDB()))
+    __lBQ10925		:= SuperGetMV("MV_BQ10925",,"2") == "1"
+    __lProcSaldoTit	:= ExistProc( IIf( FindFunction( "GetSPName" ), GetSPName( "FIN002", "10" ), "FIN002" ), &("STATICCALL(FINXFIN,VERIDPROC)") )
+
+    oReport := TReport():New("FINR130",STR0005,"FIN130",{|oReport| zReportPrint(oReport)},STR0001+STR0002)
+
+    //oReport:DisableOrientation(.T.)// OpÁ„o de impress„o no formato Retrato desabilitada devido a n„o comportar mais informaÁıes.
+    oReport:SetLandScape(.T.)
+    oReport:SetTotalInLine(.F.) // Imprime o total em linhas
+    /*
+    
+    GESTAO - inicio */
+    oReport:SetUseGC(.F.)
+    /* GESTAO - fim
+    */
+    
+    Pergunte("FIN130",.F.)
+
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥ Variaveis utilizadas para parametros	  								≥
+    //≥ mv_par01		 // Do Cliente 	 										≥
+    //≥ mv_par02		 // Ate o Cliente										≥
+    //≥ mv_par03		 // Do Prefixo											≥
+    //≥ mv_par04		 // Ate o prefixo 										≥
+    //≥ mv_par05		 // Do Titulo											≥
+    //≥ mv_par06		 // Ate o Titulo										≥
+    //≥ mv_par07		 // Do Banco											≥
+    //≥ mv_par08		 // Ate o Banco											≥
+    //≥ mv_par09		 // Do Vencimento 										≥
+    //≥ mv_par10		 // Ate o Vencimento									≥
+    //≥ mv_par11		 // Da Natureza											≥
+    //≥ mv_par12		 // Ate a Natureza										≥
+    //≥ mv_par13		 // Da Emissao											≥
+    //≥ mv_par14		 // Ate a Emissao										≥
+    //≥ mv_par15		 // Qual Moeda											≥
+    //≥ mv_par16		 // Imprime provisorios									≥
+    //≥ mv_par17		 // Reajuste pelo vecto									≥
+    //≥ mv_par18		 // Impr Tit em Descont									≥
+    //≥ mv_par19		 // Relatorio Anal/Sint									≥
+    //≥ mv_par20		 // Compıe Saldo Retroativo?							≥
+    //≥ mv_par21		 // Consid Filiais  ?  									≥
+    //≥ mv_par22		 // da filial											≥
+    //≥ mv_par23		 // a flial 											≥
+    //≥ mv_par24		 // Da loja  											≥
+    //≥ mv_par25		 // Ate a loja											≥
+    //≥ mv_par26		 // Consid Adiantam.?									≥
+    //≥ mv_par27		 // Da data contab. ?									≥
+    //≥ mv_par28		 // Ate data contab.?									≥
+    //≥ mv_par29		 // Imprime Nome    ?									≥
+    //≥ mv_par30		 // Outras Moedas   ?									≥
+    //≥ mv_par31       // Imprimir os Tipos										≥
+    //≥ mv_par32       // Nao Imprimir Tipos									≥
+    //≥ mv_par33       // Abatimentos  - Lista/Nao Lista/Despreza				≥
+    //≥ mv_par34       // Consid. Fluxo Caixa									≥
+    //≥ mv_par35       // Salta pagina Cliente									≥
+    //≥ mv_par36       // Data Base												≥
+    //≥ mv_par37       // Compoe Saldo por: Data da Baixa, Credito ou DtDigit	≥
+    //≥ mv_par38       // Tit. Emissao Futura								  	≥
+    //≥ mv_par40       // Considera data: 1 - Venc. Real 2 - Vencimento		  	≥
+    //≥ mv_par41       // Compensacao entre filiais?						  	≥
+    //≥ mv_par42       // Seleciona filiais (GESTAO)
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+
+    //Excluida da Vers„o 12
+    //≥ mv_par43      // Considera Titulos Excluidos?					  	≥
+    cPictTit := PesqPict("SE1","E1_VALOR")
+    cPictToTit := "@E 999,999,999,999,999,999.99"
+
+    nTamDte	 := TamSx3("E1_EMISSAO")[1]
+
+    If(cPaisLoc != "BRA")
+
+        nTamCli := TamSX3("E1_CLIENTE")[1] + TamSX3("E1_LOJA")[1]+ 8
+        nTamTit	 := TamSX3("E1_PREFIXO")[1] + TamSX3("E1_NUM")[1] + TamSX3("E1_PARCELA")[1] + 37
+        nTamVal	 := TamSx3("E1_VALOR")[1] + 9
+
+    Else
+
+        nTamCli	 := TamSX3("E1_CLIENTE")[1] + TamSX3("E1_LOJA")[1] + 22
+        nTamVal	 := TamSx3("E1_VALOR")[1]
+        nTamTit	 := TamSX3("E1_PREFIXO")[1] + TamSX3("E1_NUM")[1] + TamSX3("E1_PARCELA")[1] + 29
+
+
+    EndIf
+
+    nTamBan	 := TamSX3("E1_PORTADO")[1] + TamSX3("E1_SITUACA")[1] + 1
+    nTamQueb := nTamCli + nTamTit + nTamBan + TamSX3("E1_TIPO")[1] + TamSX3("E1_NATUREZ")[1] + TamSX3("E1_EMISSAO")[1] +;
+                TamSX3("E1_VENCTO")[1] + TamSX3("E1_VENCREA")[1] + nTamBan + 2
+    nTamJur  := TamSX3("E1_JUROS")[1]
+
+    nTamNBco := TamSX3("E1_NUMBCO")[1]+20
+
+    //Secao 1 --> Analitico
+    oSection1 := TRSection():New(oReport,STR0079,{"SE1","SA1"},;
+                    {STR0008,STR0009,STR0010,STR0011,STR0012,STR0013,STR0014,STR0015,STR0016,STR0047})
+    //Secao 2 --> Sintetico
+    oSection2 := TRSection():New(oReport,STR0081)
+    TRCell():New(oSection1,"CLIENTE",,STR0056,,nTamCli,.F.,,,,,,,.F.)  //"Codigo-Lj-Nome do Cliente"
+    TRCell():New(oSection1,"TITULO",,STR0057+CRLF+STR0058,,nTamTit,.F.,,,,,,,.T.)  //"Prf-Numero" + "Parcela"
+    TRCell():New(oSection1,"E1_TIPO","SE1",STR0059,,,.F.,,,,,,,.F.)  //"TP"
+    TRCell():New(oSection1,"E1_NATUREZ","SE1",STR0060,,+12,.F.,,,,,,,.F.)  //"Natureza"
+    TRCell():New(oSection1,"E1_EMISSAO","SE1",STR0061+CRLF+STR0062,,nTamDte,.F.,,,,,,,.F.)  //"Data de" + "Emissao"
+    If(cPaisLoc == "BRA")
+
+        TRCell():New(oSection1,"E1_VENCTO"	,"SE1",STR0063+CRLF+STR0064,,nTamDte,.F.,,,,,,,.F.)  //"Vencto" + "Titulo"
+
+    EndIf
+    TRCell():New(oSection1,"E1_VENCREA","SE1",STR0063+CRLF+STR0065,,nTamDte,.F.,,,,,,,.F.)  //"Vencto" + "Real"
+    TRCell():New(oSection1,"BANCO",,STR0083,,nTamBan,.F.,,,,,,,.F.)  //"Bco St"
+    TRCell():New(oSection1,"VAL_ORIG",,STR0067,cPictTit,nTamVal+22,.F.,,,,,,,.T.)  //"Valor Original"
+    TRCell():New(oSection1,"VAL_NOMI",,STR0068+CRLF+STR0069,cPictTit,nTamVal+16,.F.,,,,,,,.T.)  //"Tit Vencidos" + "Valor Nominal"
+    TRCell():New(oSection1,"VAL_CORR",,STR0068+CRLF+STR0070,cPictTit,nTamVal+16,.F.,,,,,,,.T.)  //"Tit Vencidos" + "Valor Corrigido"
+    TRCell():New(oSection1,"VAL_VENC",,STR0071+CRLF+STR0069,cPictTit,nTamVal+22,.F.,,,,,,,.T.)  //"Titulos a Vencer" + "Valor Nominal"
+    TRCell():New(oSection1,"E1_NUMBCO","SE1",STR0072+CRLF+STR0066,,nTamNBco,.F.,,,,,,,.T.)  //"Num" + "Banco"
+    TRCell():New(oSection1,"JUROS",,STR0073+CRLF+STR0074,cPictTit,nTamJur+6,.F.,,,,,,,.T.)  //"Vlr.juros ou" + "permanencia"
+    TRCell():New(oSection1,"DIA_ATR",,STR0075+CRLF+STR0076,,10,.F.,,,,,,,.T.)  //"Dias" + "Atraso"
+    TRCell():New(oSection1,"E1_HIST" ,"SE1",STR0077,,20,.F.,,,,,,,.T.)  //"Historico" 19
+    TRCell():New(oSection1,"VAL_SOMA",,STR0078,cPictToTit,38,.F.,,,,,,,.T.)  //"(Vencidos+Vencer)"
+
+    TRCell():New(oSection2,"QUEBRA",,STR0008,,nTamQueb-nTamVal,.F.,,,,,,,.T.)
+    TRCell():New(oSection2,"TOT_NOMI",,STR0068+CRLF+STR0069,cPictToTit,nTamVal+16,.F.,,,,,,,.T.)
+    TRCell():New(oSection2,"TOT_CORR",,STR0068+CRLF+STR0070,cPictToTit,nTamVal+16,.F.,,,,,,,.T.)
+    TRCell():New(oSection2,"TOT_VENC",,STR0071+CRLF+STR0069,cPictToTit,nTamVal+22,.F.,,,,,,,.T.)
+    TRCell():New(oSection2,"TOT_JUROS",,STR0073+CRLF+STR0074,cPictToTit,nTamVal+6,.F.,,,,,,,.T.)
+    TRCell():New(oSection2,"TOT_SOMA",,STR0078,cPictToTit,38,.F.,,,,,,,.T.)
+
+    oSection1:Cell("BANCO")    :SetHeaderAlign("CENTER")
+    oSection1:Cell("VAL_ORIG") :SetHeaderAlign("CENTER")
+    oSection1:Cell("VAL_NOMI") :SetHeaderAlign("CENTER")
+    oSection1:Cell("VAL_CORR") :SetHeaderAlign("CENTER")
+    oSection1:Cell("VAL_VENC") :SetHeaderAlign("CENTER")
+    oSection1:Cell("E1_NUMBCO"):SetHeaderAlign("CENTER")
+    oSection1:Cell("JUROS")    :SetHeaderAlign("CENTER")
+    oSection1:Cell("DIA_ATR")  :SetHeaderAlign("LEFT")
+    oSection1:Cell("E1_HIST")  :SetHeaderAlign("CENTER")
+    oSection1:Cell("VAL_SOMA") :SetHeaderAlign("LEFT")
+
+    oSection2:Cell("TOT_NOMI")   :SetHeaderAlign("RIGHT")
+    oSection2:Cell("TOT_CORR")   :SetHeaderAlign("RIGHT")
+    oSection2:Cell("TOT_VENC")   :SetHeaderAlign("RIGHT")
+    oSection2:Cell("TOT_JUROS")  :SetHeaderAlign("RIGHT")
+    oSection2:Cell("TOT_SOMA")   :SetHeaderAlign("RIGHT")
+
+Return oReport
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥Programa  ≥ReportPrint≥ Autor ≥Daniel Batori          ≥ Data ≥10.07.06  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥A funcao estatica ReportDef devera ser criada para todos os  ≥±±
+±±≥          ≥relatorios que poderao ser agendados pelo usuario.           ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Retorno   ≥Nenhum                                                       ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥ExpO1: Objeto Report do RelatÛrio                            ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥   DATA   ≥ Programador   ≥Manutencao efetuada                          ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥          ≥               ≥                                             ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zReportPrint(oReport)
+
+    Local oSection1  	:= oReport:Section(1)
+    Local oSection2  	:= oReport:Section(2)
+    Local nOrdem 		:= oSection1:GetOrder()
+    Local oBreak
+    Local oBreak2
+    Local oTotVenc
+    Local oTotCorr
+
+    Local cPictToTit := "@E 999,999,999,999,999,999.99"
+    Local aDados[18]
+    Local nRegEmp 		:= SM0->(RecNo())
+    Local nRegSM0 		:= SM0->(Recno())
+    Local dOldDtBase 	:= dDataBase
+    Local dOldData		:= dDatabase
+
+    Local lSelectFil    := MV_PAR42 == 1
+    Local lConFilAbx    := MV_PAR21 == 1
+    Local cCond1		:= ""
+    Local cCond2
+    Local nTit0			:= 0
+    Local nTit1			:= 0
+    Local nTit2			:= 0
+    Local nTit3			:= 0
+    Local nTit4			:= 0
+    Local nTit5			:= 0
+    Local nTotJ			:= 0
+    Local nTot0			:= 0
+    Local nTot1			:= 0
+    Local nTot2			:= 0
+    Local nTot3			:= 0
+    Local nTot4			:= 0
+    Local nTotTit		:= 0
+    Local nTotJur		:= 0
+    Local nTotFil0		:= 0
+    Local nTotFil1		:= 0
+    Local nTotFil2		:= 0
+    Local nTotFil3		:= 0
+    Local nTotFil4		:= 0
+    Local nTotFilTit	:= 0
+    Local nTotFilJ		:= 0
+    Local nAtraso		:= 0
+    Local nTotAbat		:= 0
+    Local nSaldo		:= 0
+    Local dDataReaj
+    Local dDataAnt 		:= dDataBase
+    Local lQuebra
+    Local nMesTit0 		:= 0
+    Local nMesTit1 		:= 0
+    Local nMesTit2		:= 0
+    Local nMesTit3 		:= 0
+    Local nMesTit4 		:= 0
+    Local nMesTTit 		:= 0
+    Local nMesTitJ	 	:= 0
+    Local dDtCtb		:= CTOD("//")
+    Local cTipos  		:= ""
+    Local nTotVenc		:= 0
+    Local nTotMes		:= 0
+    Local nTotGeral 	:= 0
+    Local nTotTitMes	:= 0
+    Local nTotFil		:= 0
+    Local cNomFor		:= ""
+    Local cNumBco		:= ""
+    Local cNomNat		:= ""
+    Local cNomFil		:= ""
+    Local cCarAnt 		:= ""
+    Local cCarAnt2		:= ""
+    Local lClcMultLj	:= ( SuperGetMv("MV_JURTIPO",,"") == "L" ) .Or. ( SuperGetMv("MV_LJINTFS", ,.F.) )
+    Local nMulta		:= 0
+    // Utilizada para guardar os abatimentos baixados que devem subtrair o saldo do titulo principal. 
+    Local nBx			:= 0
+    Local aAbatBaixa	:= {}
+    Local aStru			:= SE1->(dbStruct())
+    Local lF130Qry 		:= ExistBlock("F130QRY")
+    // variavel  abaixo criada p/pegar o nr de casas decimais da moeda
+    Local ndecs			:= 0
+    Local nDescont		:= 0
+    Local cFilDe		:= ""
+    Local cFilAte		:= ""
+    Local cMoeda		:= ""
+    Local dUltBaixa		:= STOD("")
+    Local dVencRea		:= STOD("")
+    Local cFilUserSA1 	:= oSection1:GetSQLExp("SA1")
+    Local nGem 			:= 0
+    Local aFiliais 		:= {}
+    Local lTotFil		:= (lConFilAbx .And. SM0->(Reccount()) > 1)	// Totaliza e quebra por filial
+    Local lFR130Tel   	:= ExistBlock("FR130TELC")
+    Local cCampoCli   	:= ""
+    Local nX			:= 0
+    Local nValPcc	  	:= 0
+    Local cFilSE1		:= ""
+    Local cFilSE5		:= ""
+    Local cFilSA6       := ""
+    Local cFilOri       := ""
+    Local lTemGem		:= ExistTemplate("GEMDESCTO") .And. HasTemplate("LOT")
+    Local lAS400		:= (Upper(TcSrvType()) != "AS/400" .And. Upper(TcSrvType()) != "ISERIES")
+    Local cMvDesFin		:= SuperGetMV("MV_DESCFIN",,"I")
+    Local lFJurCst		:= Existblock("FJURCST")	// Ponto de entrada para calculo de juros
+    Local cCorpBak		:= ""
+    Local cFilNat 		:= SE1->E1_NATUREZ
+    Local lAbatIMPBx  	:= .F.
+    //GESTAO - inicio
+    Local nFilAtu		:= 0
+    Local nLenSelFil	:= 0
+    Local nTamUnNeg		:= 0
+    Local nTamEmp		:= 0
+    Local nTotEmp		:= 0
+    Local nTotEmpJ		:= 0
+    Local nTotEmp0		:= 0
+    Local nTotEmp1		:= 0
+    Local nTotEmp2		:= 0
+    Local nTotEmp3		:= 0
+    Local nTotEmp4		:= 0
+    Local nTotTitEmp	:= 0
+    Local cNomEmp		:= ""
+    Local cTmpFil		:= ""
+    Local cQryFilSE1	:= ""
+    Local cQryFilSE5	:= ""
+    Local lContinua		:= .F.
+    Local lTotEmp		:= .F.
+    Local aTmpFil		:= {}
+    Local aSM0			:= {}
+    Local oBrkFil		:= Nil
+    Local oBrkEmp		:= Nil
+    Local oBrkNat		:= Nil
+    Local nRecnoSE1		:= 0
+    Local aAux			:= {}
+    Local nI			:= 0
+    Local cSeq			:= ""
+    Local nTamSeq		:= TamSX3("E5_SEQ")[1]
+    Local nRecSA1		:= 0
+    Local nTotReg		:= 0
+    Local nPageHeight	:= 0
+    Local nRowHeight	:= 0
+    Local nVa			:= 0
+    //GESTAO - fim
+    Local cCampos		:= ""
+    Local cSGBD         := Upper(TCGetDB())
+    Local lMSSQL		:= "MSSQL" $ cSGBD
+    Local lPostgre      := "POSTGRES" $ cSGBD
+    Local lConSQL		:= cSGBD $ "MYSQL.POSTGRES"
+    Local lBancoA		:= cSGBD $'ORACLE.DB2.INFORMIX'
+    Local lExistAba		:= .F. // Verifica se existem tÌtulos de abatimento
+    Local lVl_Corr		:= .T.
+    Local cListDesc		:= FN022LSTCB(2)	//Obtem a lista de situacos de cobrancas Descontadas
+    Local cTipoIn		:= ""
+    Local lMvJurTin		:= SuperGetMv("MV_JURTIN",,.F.)
+    Local lFValAcess	:= ExistFunc('FValAcess')
+    Local lDvc			:= oReport:nDevice == 4
+    Local cMvMoeda		:= ""
+    Local cTemp			:= GetNextAlias()
+    Local aStruTmp		:= {}
+    Local lCheckVA		:= .F.
+    /* Variaves para montagem do TRB */
+    Local aStruSE1		:= {}
+    Local cInsert		:= ""
+    Local cWhrIns       := ""
+    Local cInsFase1     := ""
+    Local cInsFJU       := ""
+    Local cWhrFJU       := ""
+    Local cInsFase3     := ""
+    Local cUpdate       := ""
+    Local cInsFase2     := ""
+    Local cWhrFase2     := ""
+    Local cTable		:= ""
+    Local cDelete       := ""
+    Local cDelFilPE     := ""
+    Local nPref			:= TamSx3("E1_PREFIXO")[1]
+    Local nTmTit		:= TamSx3("E1_NUM")[1]
+    Local nParc			:= TamSx3("E1_PARCELA")[1]
+    Local nTmTipo		:= TamSx3("E1_TIPO")[1]
+    Local nCliente		:= TamSx3("E1_CLIENTE")[1]
+    Local nLoja			:= TamSx3("E1_LOJA")[1]
+
+    Local cMAEmpSE1     := FWModeAccess("SE1",1)
+    Local cMAUniSE1     := FWModeAccess("SE1",2)
+    Local cMAFilSE1     := FWModeAccess("SE1",3)
+    Local cMAEmpSA1     := FWModeAccess("SA1",1)
+    Local cMAUniSA1     := FWModeAccess("SA1",2)
+    Local cMAFilSA1     := FWModeAccess("SA1",3)
+    Local cMAEmpFK7     := FWModeAccess("FK7",1)
+    Local cMAUniFK7     := FWModeAccess("FK7",2)
+    Local cMAFilFK7     := FWModeAccess("FK7",3)
+    Local cMAEmpFKD     := FWModeAccess("FKD",1)
+    Local cMAUniFKD     := FWModeAccess("FKD",2)
+    Local cMAFilFKD     := FWModeAccess("FKD",3)
+
+    Local lMstErro      := .F.
+
+    Local aDtTit		:= {}
+    Local nTxZero       := 0
+    Local lIsTxContr    := .F.      // Define se È taxa contratada
+    Local nTotAtVenc    := 0
+    Local nTotVlOri     := 0
+    Local nTotEmDia     := 0
+    Local nVlrTotJur    := 0
+    Local nY            := 0
+
+    Local lSemTela      := IsBlind()
+	Local aAuxGem       := {}
+    Local nTimer        := 0
+    Local nMedTimer     := 0
+    Local oTimer        := Nil
+    Local cFilsFK7      := ""
+    Local cFilsFKD      := ""
+    Local nFiliais      := 0
+    Local lFK7TemFil    := .T.
+    Local lFKDTemFil    := .T.
+    Local aSM0Bkp       := {}
+    Local nPosFil       := 1
+    Local nFilial       := 0
+    Local lBuscaFil     := .T.
+    Local nBaseJuros    := 0
+    Local lSldRetro     := .F.
+    Local nBxMulta      := 0
+    Local dDtBxMulta    := CTOD("//")    
+    Local lBxMulta      := .F.
+    Local lAchouDt      := .F.
+    Local dMVDtBase     as Date
+    Local nTxMoedSld    as Numeric
+    Local lChaveJson    As Logical    
+    Local cChaveJson    As Character
+    Local oJSonTitul    As Json
+    Local nCampos       As Numeric
+    Local lExistFKD     As Logical
+    Local aCompTable    As Array
+    Local lMAFKD        As Logical
+    Local lFirst        As Logical
+    Local lSPFin005     As Logical
+    Local nTxMoeda      As Numeric
+    Local nTxSM2        As Numeric
+    Local nValComp      As Numeric
+    
+    Private cTitulo		:= ""
+    Private dBaixa		:= dDataBase
+    Private nAbatim		:= 0
+    Private nJuros		:= 0
+    Private lImpSintTbl	:= oReport:lXlsTable .And. mv_par19 == 1
+    Private nTotal		:= 0
+    Private cMVBR10925 	:= SuperGetMv("MV_BR10925", ,"2")
+    Private ltxZero     := .F.
+    Private cFilterUser	:= ""
+
+    Default __lTempLOT	:= HasTemplate("LOT")
+
+    lSPFin005  := ExistProc( IIf( FindFunction( "GetSPName" ), GetSPName( "FIN002", "10" ), "FIN002" ), EngSPS10Signature())
+
+    If !Empty(MV_PAR36)
+        dMVDtBase := MV_PAR36
+    Else
+        dMVDtBase := dDataBase
+    EndIf
+
+    // Ponto de entrada para Filtrar os tipos sem entrar na tela do FINRTIPOS(), localizacao Argentina.
+    IF EXISTBLOCK("F130FILT")
+        cTipos	:=	EXECBLOCK("F130FILT",.f.,.f.)
+    ENDIF
+
+    If lSemTela .and. Empty( __oTipoBa )
+        __oTipoBa	:= FWPreparedStatement():New( '' )
+    Endif
+
+    If mv_par15 = 0
+        mv_par15 := 1
+    EndIf
+
+    nDecs  		:= Msdecimais(mv_par15)
+    cMoeda 		:= Alltrim(Str(mv_par15,2))
+    cMvMoeda	:= Alltrim(GetMv("MV_MOEDA"+cMoeda))
+    __nTamPort  := TamSx3("E1_PORTADO")[1]
+    lMAFKD      := .F.
+    lFirst      := .T.
+
+    If __cMVFinFix   == NIL
+        __cMVFinFix := SuperGetMv("MV_FINFIX",.F.,"")
+    Endif
+
+    If __lNiveisC  == NIL 
+        If __lNiveisC := FindFunction("NiveisComp")
+            lMAFKD :=  Len(aCompTable := NiveisComp({"FKD"})) == 1 .And. aCompTable[1,5] == "CCC"
+        EndIf
+    EndIf
+
+    lSldRetro   := MV_PAR20 == 1
+    aSM0Bkp     := FwLoadSM0()
+    lChaveJson  := .F.
+    cChaveJson  := ""
+    oJSonTitul  := JsonObject():New()    
+    nCampos     := 0
+    lExistFKD   := .F.
+    aCompTable  := {}
+    nTxMoeda    := 0  
+    nTxSM2      := 0  
+    nValComp    := 0   
+    
+    //Efetua a separaÁ„o das filiais do grupo de empresa atual e ordena por cÛdigo de filial
+    AEval(aSM0Bkp, {|filial| IIf(filial[SM0_GRPEMP] == cEmpAnt, AAdd(aSM0, AClone(filial)), Nil)})
+    FwFreeArray(aSM0Bkp)
+    ASort(aSM0,,, {|filial_x, filial_y| filial_x[SM0_CODFIL] < filial_y[SM0_CODFIL]})
+
+    //GESTAO - inicio
+    If lSelectFil
+        If Empty(aSelFil) .And. !lSemTela
+            AdmSelecFil("FIN130", 42, .F., @aSelFil, "SE1", .F.)
+        EndIf
+    ElseIf Empty(aSelFil)
+        If lConFilAbx
+            //Se filial diferente de branco e filial existente busca posiÁ„o inicial
+            If !(Empty(MV_PAR22))
+                If FwFilExist(cEmpAnt, MV_PAR22)
+                    If MV_PAR22 == MV_PAR23
+                        lBuscaFil := .F.
+                        AAdd(aSelFil, MV_PAR22)
+                    Else
+                        nPosFil := AScan(aSM0, {|filial| filial[SM0_CODFIL] == MV_PAR22})
+                    EndIf
+                Else
+                    // caso informado uma cÛdigo de filial inexistente, seta onde deve iniciar a iteraÁ„o, caso n„o, seta como 1
+                    If (nPosFil := AScan(aSM0, {|filial| filial[SM0_CODFIL] > MV_PAR22})) == 0
+                        nPosFil := 1
+                    EndIf
+                EndIf
+            EndIf
+
+            If lBuscaFil
+                For nFilial := nPosFil To Len(aSM0)
+                    If aSM0[nFilial][SM0_CODFIL] > MV_PAR23
+                        Exit
+                    EndIf
+                    AAdd(aSelFil, aSM0[nFilial][SM0_CODFIL])
+                Next nFilial
+            EndIf
+        Else
+            AAdd(aSelFil, cFilAnt)
+        EndIf
+    EndIf
+
+    nLenSelFil := Len(aSelFil)
+    lTotFil := (nLenSelFil > 1)
+
+    //Compartilhamento
+    //N„o usa controle por empresa
+    If (nTamEmp := Len(FwSM0Layout(, 1))) == 0
+        cMAEmpSA1   := cMAFilSA1
+        cMAEmpSE1   := cMAFilSE1
+    EndIf
+
+    //N„o usa controle por unidade de negÛcio
+    If (nTamUnNeg := Len(FwSM0Layout(, 2))) == 0
+        cMAUniSA1   := cMAFilSA1
+        cMAUniSE1   := cMAFilSE1
+    EndIf
+
+    If nLenSelFil > 1 .And. cMAEmpSE1 == "E"
+        nX := 1
+        While nX < nLenSelFil .And. !lTotEmp
+            nX++
+            lTotEmp := !(Substr(aSelFil[nX-1], 1, nTamEmp) == Substr(aSelFil[nX], 1, nTamEmp))
+        Enddo
+    EndIf
+
+    oTimer:= FwMarkTimer():New()
+    oTimer:StartTimer()
+
+    cQryFilSE1 := GetRngFil( aSelFil, "SE1", .T., @cTmpFil)
+    Aadd(aTmpFil,cTmpFil)
+    cQryFilSE5 := GetRngFil( aSelFil, "SE5", .T., @cTmpFil)
+    Aadd(aTmpFil,cTmpFil)
+    //GESTAO - fim
+
+    oSection1:Cell("CLIENTE"   ):SetBlock( { || aDados[CLIENT]    			})
+    oSection1:Cell("TITULO"    ):SetBlock( { || aDados[TITUL]     			})
+    oSection1:Cell("E1_TIPO"   ):SetBlock( { || aDados[TIPO]      			})
+    oSection1:Cell("E1_NATUREZ"):SetBlock( { || MascNat(aDados[NATUREZA]) 	})
+    oSection1:Cell("E1_EMISSAO"):SetBlock( { || aDados[EMISSAO]   			})
+    If(cPaisLoc == "BRA")
+
+        oSection1:Cell("E1_VENCTO" ):SetBlock( { || aDados[VENCTO]    		})
+
+    EndIf
+    oSection1:Cell("E1_VENCREA"):SetBlock( { || aDados[VENCREA]   			})
+    oSection1:Cell("BANCO"     ):SetBlock( { || aDados[BANC]      			})
+    oSection1:Cell("VAL_ORIG"  ):SetBlock( { || aDados[VL_ORIG]				})
+    oSection1:Cell("VAL_NOMI"  ):SetBlock( { || aDados[VL_NOMINAL]			})
+    oSection1:Cell("VAL_CORR"  ):SetBlock( { || aDados[VL_CORRIG]			})
+    oSection1:Cell("VAL_VENC"  ):SetBlock( { || aDados[VL_VENCIDO]			})
+    oSection1:Cell("E1_NUMBCO" ):SetBlock( { || aDados[NUMBC]     			})
+    oSection1:Cell("JUROS"     ):SetBlock( { || aDados[VL_JUROS]  			})
+    oSection1:Cell("DIA_ATR"   ):SetBlock( { || aDados[ATRASO]    			})
+    oSection1:Cell("E1_HIST"   ):SetBlock( { || aDados[HISTORICO] 			})
+    oSection1:Cell("VAL_SOMA"  ):SetBlock( { || aDados[VL_SOMA]   			})
+
+    oSection1:Cell("VAL_SOMA"):Enable()
+
+    //Cabecalho do Relatorio sintetico
+    If mv_par19 == 2 //1 = Analitico - 2 = Sintetico
+        oSection2:SetHeaderPage()
+    Endif
+
+    // Para impress„o direta em PDF
+    If oReport:nDevice == 6
+        nPageHeight := oReport:PageHeight() * 0.90 // 90% o total para n„o cortar na impress„o em papel
+        nRowHeight 	:= oReport:nRow
+    EndIf
+
+    //Relatorio Analitico
+    TRPosition():New(oSection1,"SA1",1,{|| FwxFilial("SA1")+SE1->E1_CLIENTE+SE1->E1_LOJA})
+
+    //Define as quebras da sessao, conforme a ordem escolhida
+    If nOrdem == 5 //natureza
+        oBreak := TRBreak():New(oSection1, {|| Iif(!MV_MULNATR,SE1->E1_FILIAL + SE1->E1_NATUREZ,aDados[NATUREZA])} , {|| STR0037 + " " + cNomNat })
+        oBrkNat := oBreak
+        If MV_MULNATR
+            oBreak:OnBreak( { |x,y| cNomNat := zFR130RetNat(x), zFR130TotSoma( oTotCorr, oTotVenc, @nTotVenc, @nTotGeral, nOrdem ) } )
+        EndIf
+    Elseif nOrdem == 4 .Or. nOrdem == 6 //Data do vencimento e emissao
+        oBreak  := TRBreak():New(oSection1, {|| SE1->E1_FILIAL + Iif(nOrdem == 4, Iif(mv_par40 = 2, Dtos(SE1->E1_VENCTO), Dtos(SE1->E1_VENCREA)), Dtos(SE1->E1_EMISSAO))} , {|| STR0037 + DtoC(dDtVenc) }) //"S U B - T O T A L ---->"
+        oBreak2 := TRBreak():New(oSection1, {|| SE1->E1_FILIAL + Iif(nOrdem == 4, SubStr(Iif(mv_par40 = 2, Dtos(SE1->E1_VENCTO), Dtos(SE1->E1_VENCREA)),1,6), Substr(Dtos(SE1->E1_EMISSAO),1,6))} , {|| STR0041 + "("+AllTrim(Str(nTotTitMes))+" "+Iif(nTotTitMes > 1, OemToAnsi(STR0039), OemToAnsi(STR0040))+")"} ) //"T O T A L  D O  M E S --->"
+        If mv_par19 == 1 //1 = Analitico   2 = Sintetico
+            TRFunction():New(oSection1:Cell("VAL_ORIG"),"","SUM",oBreak2,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_NOMI"),"","SUM",oBreak2,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_CORR"),"","SUM",oBreak2,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_VENC"),"","SUM",oBreak2,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("JUROS"),"","SUM",oBreak2,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_SOMA"),"","ONPRINT",oBreak2,,cPictToTit,{|lSection, lReport| If(lReport, nTotGeral, nTotMes)},.F.,.F.)
+        Endif
+    Elseif nOrdem == 3 //Banco
+        oBreak := TRBreak():New(oSection1, {|| SE1->E1_FILIAL + SE1->E1_PORTADO} , {|| STR0037 + cNumBco}) //"S U B - T O T A L --->"
+    Elseif nOrdem == 1 .Or. nOrdem == 8 //Cliente ou Codigo do Cliente
+        oBreak := TRBreak():New(oSection1, {|| SE1->(E1_FILIAL+E1_CLIENTE+E1_LOJA)} , {|| STR0037 + cNomFor}) //"S U B - T O T A L --->"
+        oBreak:OnBreak( { |x,y| cNomFor, zFR130TotSoma( oTotCorr, oTotVenc, @nTotVenc, @nTotGeral ) } )
+    ElseIf nOrdem == 9 // Banco/Situacao
+        oBreak := TRBreak():New(oSection1, {|| SE1->E1_FILIAL + SE1->E1_PORTADO+SE1->E1_SITUACA} , {|| STR0037 + cNumBco + " " + cCarAnt2  } ) //"S U B - T O T A L --->"
+    ElseIf nOrdem == 7 //vencto e banco
+        oBreak := TRBreak():New(oSection1, {||SE1->E1_FILIAL + IIf(MV_PAR40=2,DtoC(SE1->E1_VENCTO)+SE1->E1_PORTADO+SE1->E1_AGEDEP+SE1->E1_CONTA,DtoC(SE1->E1_VENCREA)+SE1->E1_PORTADO+SE1->E1_AGEDEP+SE1->E1_CONTA)},;
+        {||STR0037 + DtoC(dDtVenc) + IIf(!Empty(cNumBco), " - " + STR0066 + " " + cNumBco + " " + ;
+        GetAdvfVal("SA6","A6_NOME",FwxFilial("SA6") + AllTrim(cNumBco),1),"")},.F.,"",.F.)
+    Endif
+
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥ Imprimir TOTAL por filial somente quando ≥
+    //≥ houver mais do que uma filial.	         ≥
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    If lTotFil .Or. !(mv_par22 == mv_par23)
+        oBrkFil := TRBreak():New(oSection1,{|| SE1->E1_FILIAL },{|| STR0043+" "+ cNomFil })	//"T O T A L   F I L I A L ----> "
+        // "Salta pagina por cliente?" igual a "Sim" e a ordem eh por cliente ou codigo do cliente
+        If mv_par35 == 1 .And. (nOrdem == 1 .Or. nOrdem == 8)
+            oBrkFil:OnPrintTotal( { || oReport:EndPage() } )	// Finaliza pagina atual
+        Else
+            oBrkFil:OnPrintTotal( { || oReport:SkipLine()} )
+        EndIf
+        If mv_par19 == 1	//1- Analitico  2-Sintetico
+            TRFunction():New(oSection1:Cell("VAL_ORIG"),"","SUM",oBrkFil,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_NOMI"),"","SUM",oBrkFil,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_CORR"),"","SUM",oBrkFil,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_VENC"),"","SUM",oBrkFil,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("JUROS"	  ),"","SUM",oBrkFil,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_SOMA"),"","ONPRINT",oBrkFil,,cPictToTit,{|lSection,lReport| If(lReport, nTotGeral, nTotFil)},.F.,.F.)
+        EndIf
+    EndIf
+    
+    /*
+    GESTAO - inicio */
+    /* quebra por empresa */
+    If lTotEmp
+        oBrkEmp := TRBreak():New(oSection1,{|| Substr(SE1->E1_FILIAL, 1, nTamEmp)},{|| STR0082 + " " + cNomEmp })		//"T O T A L  E M P R E S A -->"
+        // "Salta pagina por cliente?" igual a "Sim" e a ordem eh por cliente ou codigo do cliente
+        If mv_par35 == 1 .And. (nOrdem == 1 .Or. nOrdem == 8)
+            oBrkEmp:OnPrintTotal( { || oReport:EndPage() } )	// Finaliza pagina atual
+        Else
+            oBrkEmp:OnPrintTotal( { || oReport:SkipLine()} )
+        EndIf
+        If mv_par19 == 1	//1- Analitico  2-Sintetico
+            TRFunction():New(oSection1:Cell("VAL_ORIG"),"","SUM",oBrkEmp,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_NOMI"),"","SUM",oBrkEmp,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_CORR"),"","SUM",oBrkEmp,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_VENC"),"","SUM",oBrkEmp,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("JUROS"	  ),"","SUM",oBrkEmp,,,,.F.,.F.)
+            TRFunction():New(oSection1:Cell("VAL_SOMA"),"","ONPRINT",oBrkEmp,,cPictToTit,{|lSection,lReport| If(lReport, nTotGeral, nTotEmp)},.F.,.F.)
+        EndIf
+    Endif
+    /* GESTAO - fim
+    */
+    If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+        //Altera o texto do Total Geral
+        oReport:SetTotalText({|| STR0038 + "(" + AllTrim(Str(nTotTit))+" "+If(nTotTit > 1, STR0039, STR0040)+")" + If(nTxZero > 0,STR0087, " ")}) //"  ****** SALDO INCORRETO, POIS EXISTEM TÕTULOS EM MOEDAS ESTRANGEIRAS CONVERTIDAS COM TAXA DE MOEDA ZERO. VERIFIQUE QUAIS OS TÕTULOS COM A DESCRI«√O 'SEM TAXA' NA COLUNA HIST”RICO"
+        TRFunction():New(oSection1:Cell("VAL_ORIG"),"","SUM",oBreak,,,,.F.,.T.)
+        TRFunction():New(oSection1:Cell("VAL_NOMI"),"","SUM",oBreak,,,,.F.,.T.)
+        oTotCorr := TRFunction():New(oSection1:Cell("VAL_CORR"),"","SUM",oBreak,,,,.F.,.T.)
+        oTotVenc := TRFunction():New(oSection1:Cell("VAL_VENC"),"","SUM",oBreak,,,,.F.,.T.)
+        TRFunction():New(oSection1:Cell("JUROS"),"","SUM",oBreak,,,,.F.,.T.)
+        TRFunction():New(oSection1:Cell("VAL_SOMA"),"","ONPRINT",oBreak,,cPictToTit,{|lSection, lReport| If (lReport, nTotGeral, nTotVenc)},.F.,.T.)
+    Endif
+
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥ POR MAIS ESTRANHO QUE PAREÄA, ESTA FUNCAO DEVE SER CHAMADA AQUI! ≥
+    //≥                                                                  ≥
+    //≥ A funáÑo SomaAbat reabre o SE1 com outro nome pela ChkFile para  ≥
+    //≥ efeito de performance. Se o alias auxiliar para a SumAbat() nÑo  ≥
+    //≥ estiver aberto antes da IndRegua, ocorre Erro de & na ChkFile,   ≥
+    //≥ pois o Filtro do SE1 uptrapassa 255 Caracteres.                  ≥
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+    If Select("__SE1") == 0
+        ChkFile("SE1",.F.,"__SE1")
+    Else
+        DbSelectArea("__SE1")
+    EndIf
+    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+    //≥ Atribui valores as variaveis ref a filiais                ≥
+    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+
+    If !lConFilAbx
+        cFilDe  := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+        cFilAte := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+    ELSE
+        cFilDe := mv_par22	// Todas as filiais
+        cFilAte:= mv_par23
+    EndIf
+
+
+    //Acerta a database de acordo com o parametro
+    If lSldRetro    // Considera Saldo Retroativo = Sim
+        dBaixa := dDataBase := mv_par36
+    Else
+        If dDataBase < MV_PAR36
+            dBaixa := dDataBase := mv_par36
+        EndIf
+    Endif
+
+    nRegSM0 := SM0->(Recno())
+
+    oSection1:Init()
+    oSection2:Init()
+
+    aFill(aDados,nil)
+    /* GESTAO - inicio */
+    If nLenSelFil == 0
+        // Cria vetor com os codigos das filiais da empresa corrente
+        aFiliais := FinRetFil()
+    Else
+        aFiliais := Aclone(aSelFil)
+        cFilDe   := aSelFil[1]
+        cFilAte  := aSelFil[nLenSelFil]
+    Endif
+
+    __oHash    := tHashMap():New() //Cria o Objeto do Hash Map
+
+
+    cTitulo := oReport:Title() + STR0080 + " " + cMvMoeda  //"Posicao dos Titulos a Receber"+" - Analitico"
+
+    If mv_par19 == 1   //1 = Analitico - 2 = Sintetico
+        cTitulo += STR0026 //" - Analitico"
+    Else
+        cTitulo += STR0027 //" - Sintetico"
+    EndIf
+
+    /* Cria tempor·rio inicial para processamento.
+    Insert Inicio */
+
+    // Adiciona colunas ao SE1.
+    // Divide o TITPAI em campos individuais para melhorar a performance.
+    aStruSE1 := SE1->(dbStruct())
+    nE1TITPAI := nPref + nTmTit + nParc + nTmTipo + nCliente + nLoja
+    aAdd( aStruSE1, {'A1_NOME'   ,'C',TamSx3("A1_NOME")[1],0} )
+    aAdd( aStruSE1, {'E1TITPAI'  ,'C',nE1TITPAI,0})
+    aAdd( aStruSE1, {'E1FJU'     ,'C',1,0})
+    aAdd( aStruSE1, {'E1TEMCMP'  ,'C',1,0})
+    aAdd( aStruSE1, {'E1RECNO'   ,'N',8,0})
+    aAdd( aStruSE1, {'E5DTDISPO' ,'C',8,0})
+    aAdd( aStruSE1, {'E5DTDIGIT' ,'C',8,0})
+
+    DbSelectArea("SE1")
+    DbCloseArea()
+    cTMPSE1 := IIf( MV_MULNATR .And. nOrdem == 5, "SE1NAT","SE1")
+    // Processsamento dos dados.
+    oFINR130 := FWTemporaryTable():New(cTMPSE1)
+    oFINR130:SetFields(aStruSE1)
+    oFINR130:AddIndex("1", {"E1_FILIAL","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG","E1RECNO"})
+
+    If nOrdem = 1
+        If mv_par29 == 2
+            oFINR130:AddIndex("2", {"E1_FILIAL","A1_NOME","E1_CLIENTE","E1_LOJA","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        Else
+            oFINR130:AddIndex("2", {"E1_FILIAL","E1_NOMCLI","E1_CLIENTE","E1_LOJA","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+
+        EndIf
+
+        cCond1	:= "SE1->E1_CLIENTE <= mv_par02"
+        cCond2	:= "SE1->E1_CLIENTE + SE1->E1_LOJA"
+        cTitulo	+= STR0017  //" - Por Cliente"
+
+    Elseif nOrdem = 2
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        cCond1	:= "SE1->E1_NUM <= mv_par06"
+        cCond2	:= "SE1->E1_NUM"
+        cTitulo	+= STR0018  //" - Por Numero"
+    Elseif nOrdem = 3
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_PORTADO","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_TIPO","E1_FILORIG"})
+        cCond1	:= "SE1->E1_PORTADO <= mv_par08"
+        cCond2	:= "SE1->E1_PORTADO"
+        cTitulo	+= STR0019  //" - Por Banco"
+    Elseif nOrdem = 4
+        If MV_PAR40 == 2 // Considera Data -> 1 - Vencimento Real 2- Vencimento
+            oFINR130:AddIndex("2", {"E1_FILIAL","E1_VENCTO","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_FILORIG"})
+        Else
+            oFINR130:AddIndex("2", {"E1_FILIAL","E1_VENCREA","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_FILORIG"})
+        EndIf
+        cCond1	:= Iif(mv_par40 == 2, "SE1->E1_VENCTO", "SE1->E1_VENCREA")+" <= mv_par10"
+        cCond2	:= Iif(mv_par40 == 2, "SE1->E1_VENCTO", "SE1->E1_VENCREA")
+        cTitulo	+= STR0020  //" - Por Data de Vencimento"
+    Elseif nOrdem = 5
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_NATUREZ","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_TIPO","E1_FILORIG"})
+        cOrder := SqlOrder("E1_FILIAL+E1_NATUREZ+E1_NOMCLI+E1_PREFIXO+E1_NUM+E1_TIPO+E1_FILORIG") // Ser· usado para FINR135
+        cCond1	:= "SE1->E1_NATUREZ <= mv_par12"
+        cCond2	:= "SE1->E1_NATUREZ"
+        //cTitulo	+= STR0021  //" - Por Natureza"
+    Elseif nOrdem = 6
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_EMISSAO","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_FILORIG"})
+        cCond1	:= "SE1->E1_EMISSAO <= mv_par14"
+        cCond2	:= "SE1->E1_EMISSAO"
+        cTitulo	+= STR0042  //" - Por Emissao"
+    Elseif nOrdem == 7
+        If mv_par40 = 2
+            oFINR130:AddIndex("2", {"E1_FILIAL","E1_VENCTO","E1_PORTADO","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        Else
+            oFINR130:AddIndex("2", {"E1_FILIAL","E1_VENCREA","E1_PORTADO","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        EndIf
+        cCond1	:= Iif(mv_par40 = 2, "SE1->E1_VENCTO", "SE1->E1_VENCREA")+" <= mv_par10"
+        cCond2	:= "DtoS("+Iif(mv_par40 = 2, "SE1->E1_VENCTO", "SE1->E1_VENCREA")+")+SE1->E1_PORTADO+SE1->E1_AGEDEP+SE1->E1_CONTA"
+        cTitulo	+= STR0023  //" - Por Vencto/Banco"
+    Elseif nOrdem = 8
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_CLIENTE","E1_LOJA","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        cCond1	:= "SE1->E1_CLIENTE <= mv_par02"
+        cCond2	:= "SE1->E1_CLIENTE"
+        cTitulo	+= STR0024  //" - Por Cod.Cliente"
+    Elseif nOrdem = 9
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_PORTADO","E1_SITUACA","E1_NOMCLI","E1_PREFIXO","E1_NUM","E1_PARCELA","E1_TIPO","E1_FILORIG"})
+        cCond1	:= "SE1->E1_PORTADO <= mv_par08"
+        cCond2	:= "SE1->E1_PORTADO+SE1->E1_SITUACA"
+        cTitulo	+= STR0025 //" - Por Banco e Situacao"
+    ElseIf nOrdem == 10
+        oFINR130:AddIndex("2", {"E1_FILIAL","E1_NUM","E1_TIPO","E1_PREFIXO","E1_PARCELA","E1_FILORIG"})
+        cCond1	:= "SE1->E1_NUM <= mv_par06"
+        cCond2	:= "SE1->E1_NUM"
+        cTitulo	+= STR0048 //" - Numero/Prefixo"
+    EndIf
+
+    oFINR130:AddIndex("3", {"E1RECNO", "E5DTDISPO", "E5DTDIGIT"})
+
+    oFINR130:Create()
+
+    cTable := oFINR130:GetRealName()
+    // Preenche todos os campos do arquivo temporario.
+    aEval(aStru,{|Estrutura| If( Estrutura[2] <> "M", cCampos += "," + AllTrim(Estrutura[1]) ,Nil)})
+
+    cValues := Substr(cCampos,2)
+
+    cInsert := " INSERT INTO " + cTable  + " ( " + cValues  + " , E1RECNO , E1TITPAI  ) "
+    cInsert += " SELECT " + cValues + " , R_E_C_N_O_ AS E1RECNO, "
+
+    // Ajusta sintaxe de acordo com o banco.
+    If lMSSQL
+        cInsert += " E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA AS E1TITPAI "
+    Elseif lConSQL
+        cInsert += " CONCAT(E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO,E1_CLIENTE,E1_LOJA) AS E1TITPAI "
+    Else
+        cInsert += " E1_PREFIXO || E1_NUM || E1_PARCELA || E1_TIPO || E1_CLIENTE || E1_LOJA AS E1TITPAI "
+    EndIf
+
+    cInsert += " FROM " + RetSqlName("SE1") + " SE1 "
+
+    // Salvo dados do Where para posterior utilizaÁ„o
+    If cMAFilSE1 == "E"
+        cWhrIns := " WHERE SE1.E1_FILIAL " + cQryFilSE1
+    Else
+        If lSelectFil // Multiplas Filiais
+            cWhrIns := " WHERE SE1.E1_FILORIG " + zFR130InFilial()
+        Else
+            cWhrIns := " WHERE SE1.E1_FILIAL = '" + FwxFilial("SE1") + "' "
+        EndIf
+    EndIf
+
+    cWhrIns += " AND SE1.E1_PREFIXO BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "'"
+    cWhrIns += " AND SE1.E1_NUM BETWEEN '" + mv_par05 + "' AND '" + mv_par06 + "'"
+    cWhrIns += " AND SE1.E1_CLIENTE BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"
+    cWhrIns += " AND SE1.E1_LOJA BETWEEN '" + mv_par24 + "' AND '" + mv_par25 + "'"
+    cWhrIns += " AND SE1.E1_PORTADO BETWEEN '" + mv_par07 + "' AND '" + mv_par08 + "'"
+    cWhrIns += " AND SE1.E1_NATUREZ BETWEEN '" + MV_PAR11 + "' AND '" + MV_PAR12 + "'"
+    cWhrIns += " AND SE1.E1_EMISSAO BETWEEN '" + DTOS(mv_par13)  + "' "
+
+    If ( MV_PAR38 == 2 ) .and. mv_par14 >= mv_par36
+        cWhrIns += " AND '" + DtoS(mv_par36) + "'"
+    Else
+        cWhrIns += " AND '" + DTOS(mv_par14) + "'"
+    EndIf
+
+    cWhrIns += " AND SE1.E1_EMIS1 BETWEEN '"+ DTOS(mv_par27) + "' AND '" + DTOS(mv_par28) + "'"
+
+    If mv_par40 == 2
+        cWhrIns += " AND SE1.E1_VENCTO BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "'"
+    Else
+        cWhrIns += " AND SE1.E1_VENCREA BETWEEN '" + DTOS(mv_par09)  + "' AND '" + DTOS(mv_par10) + "'"
+    EndIf
+    // Retira os provisÛrios.
+    If MV_PAR16 == 2
+        cWhrIns += " AND SE1.E1_TIPO NOT IN " + FormatIn( MVPROVIS, "|" )
+    EndIf
+    // Retira os adiantamentos.
+    If mv_par26 == 2
+        cWhrIns += " AND SE1.E1_TIPO NOT IN " + FormatIn( MVRECANT+"|"+MV_CRNEG, "|" )
+    EndIf
+
+    // Filtro do potnto de entrada F130Filt
+    If !Empty(cTipos)
+        cWhrIns += " AND SE1.E1_TIPO NOT IN " + FormatIn( cTipos, "|" )
+    Endif
+
+    // Deseja imprimir apenas os tipos do parametro 31
+    If !Empty(mv_par31)
+        cWhrIns += " AND SE1.E1_TIPO IN " + FormatIn( mv_par31, ";" )
+    EndIf
+
+    // Deseja excluir os tipos do parametro 32
+    If !Empty(MV_PAR32)
+        cWhrIns += " AND SE1.E1_TIPO NOT IN " + FormatIn( MV_PAR32, ";" )
+    EndIf
+
+    If mv_par18 == 2
+        cWhrIns += " AND SE1.E1_SITUACA NOT IN " + FormatIn(cListDesc,"|")//sitcob
+    EndIf
+
+    If !lSldRetro
+        cWhrIns += " AND SE1.E1_SALDO > 0 "
+    EndIf
+
+    /* Verifica se deve imprimir outras moedas */
+    If mv_par30 == 2 // nao imprime
+        cWhrIns += " AND SE1.E1_MOEDA = " + cMoeda
+    EndIf
+
+    /* Retira os titulos que n„o compoem o fluxo de caixa */
+    If mv_par34 == 1  // Consid. Fluxo Caixa
+        cWhrIns += " AND E1_FLUXO <> 'N' "
+    EndIf
+
+    cWhrIns := zChangeWhere(cWhrIns)
+
+    // CabeÁalho principal + Where Principal
+    cInsFase1 := cInsert + cWhrIns
+    cInsFase1 += zChangeWhere(" AND SE1.E1_TIPO NOT IN " + FormatIn(MVABATIM,"|") + " AND SE1.D_E_L_E_T_ = ' ' " )
+
+    // Executa a primeira consulta
+    If TCSqlExec(cInsFase1) < 0
+        zFR130Log(STR0089 + TCSqlError() , "cInsFase1")
+        lMstErro := .T.
+    EndIf
+    /* Insert Fim  */
+
+    If MV_PAR43 == 1  // Considera titulos excluidos.
+
+        cInsFJU := " INSERT INTO " + cTable  + " ( " + cValues  + " , E1RECNO, E1FJU ) "
+        cInsFJU += " SELECT " + cValues + " , SE1.R_E_C_N_O_ AS E1RECNO, 'S' AS E1FJU "
+        cInsFJU += " FROM " + RetSqlName("SE1") + " SE1," + RetSqlName("FJU") + " FJU "
+
+        cWhrFJU := cWhrIns
+        cWhrFJU += " AND SE1.E1_FILORIG = FJU.FJU_FILIAL "
+        cWhrFJU += " AND SE1.E1_PREFIXO = FJU.FJU_PREFIX "
+        cWhrFJU += " AND SE1.E1_NUM = FJU.FJU_NUM "
+        cWhrFJU += " AND SE1.E1_PARCELA = FJU.FJU_PARCEL "
+        cWhrFJU += " AND SE1.E1_TIPO = FJU.FJU_TIPO "
+        cWhrFJU += " AND SE1.E1_CLIENTE	= FJU.FJU_CLIFOR "
+        cWhrFJU += " AND SE1.E1_LOJA = FJU.FJU_LOJA "
+        cWhrFJU += " AND FJU.FJU_EMIS <= '" + DTOS(dDataBase) +"'"
+        cWhrFJU += " AND FJU.FJU_DTEXCL >= '" + DTOS(dDataBase) +"'"
+        cWhrFJU += " AND FJU.FJU_CART = 'R' "
+        cWhrFJU += " AND SE1.R_E_C_N_O_ = FJU.FJU_RECORI "
+
+        cWhrFJU += " AND FJU.FJU_RECORI IN ( SELECT MAX(FJU_RECORI) "
+        cWhrFJU += "FROM "+ RetSqlName("FJU") + " LASTFJU "
+        cWhrFJU += "WHERE LASTFJU.FJU_FILIAL = FJU.FJU_FILIAL "
+        cWhrFJU += "AND LASTFJU.FJU_PREFIX = FJU.FJU_PREFIX "
+        cWhrFJU += "AND LASTFJU.FJU_NUM = FJU.FJU_NUM "
+        cWhrFJU += "AND LASTFJU.FJU_PARCEL = FJU.FJU_PARCEL "
+        cWhrFJU += "AND LASTFJU.FJU_TIPO = FJU.FJU_TIPO "
+        cWhrFJU += "AND LASTFJU.FJU_CLIFOR = FJU.FJU_CLIFOR "
+        cWhrFJU += "AND LASTFJU.FJU_LOJA = FJU.FJU_LOJA "
+        cWhrFJU += "AND FJU.FJU_DTEXCL = LASTFJU.FJU_DTEXCL "
+        cWhrFJU += "GROUP BY FJU_FILIAL "
+        cWhrFJU += " ,FJU_PREFIX "
+        cWhrFJU += " ,FJU_NUM "
+        cWhrFJU += " ,FJU_PARCEL "
+        cWhrFJU += " ,FJU_CLIFOR "
+        cWhrFJU += " ,FJU_LOJA ) "
+
+        cWhrFJU += " AND SE1.D_E_L_E_T_ = '*' "
+        cWhrFJU += " AND FJU.D_E_L_E_T_ = ' ' "
+
+        cWhrFJU += " AND "
+        cWhrFJU += " (SELECT COUNT(*) "
+        cWhrFJU += " FROM " + RetSqlName("SE1") + " NOTDEL "
+        cWhrFJU += " WHERE NOTDEL.E1_FILIAL = FJU.FJU_FILIAL "
+        cWhrFJU += " AND NOTDEL.E1_PREFIXO = FJU.FJU_PREFIX "
+        cWhrFJU += " AND NOTDEL.E1_NUM = FJU.FJU_NUM "
+        cWhrFJU += " AND NOTDEL.E1_PARCELA = FJU.FJU_PARCEL "
+        cWhrFJU += " AND NOTDEL.E1_TIPO = FJU.FJU_TIPO "
+        cWhrFJU += " AND NOTDEL.E1_CLIENTE = FJU.FJU_CLIFOR "
+        cWhrFJU += " AND NOTDEL.E1_LOJA = FJU.FJU_LOJA "
+        cWhrFJU += " AND FJU.FJU_CART = 'R' "
+        cWhrFJU += " AND FJU.FJU_RECPAI = 0 "
+        cWhrFJU += " AND NOTDEL.E1_EMISSAO <= '" + DTOS(dDataBase) + "' "
+        cWhrFJU += " AND NOTDEL.D_E_L_E_T_ = ' ') = 0 "
+
+        cWhrFJU += " AND FJU.FJU_RECORI NOT IN (SELECT PAI.FJU_RECPAI FROM "+ RetSqlName("FJU")+" PAI "
+        cWhrFJU += " WHERE PAI.D_E_L_E_T_ = ' ' AND "
+        cWhrFJU += " PAI.FJU_CART = 'R' AND "
+        cWhrFJU += " PAI.FJU_DTEXCL >= '" + DTOS(dDataBase) + "' "
+        cWhrFJU += " AND PAI.FJU_EMIS1 <= '" + DTOS(dDataBase) + "') "
+
+        cWhrFJU += " AND FJU.FJU_TITPAI NOT IN ( SELECT "
+
+        If lMSSQL
+            cWhrFJU += " PAI.FJU_PREPAI +  PAI.FJU_NUMPAI + PAI.FJU_PARPAI + PAI.FJU_TIPPAI + PAI.FJU_FORPAI  + PAI.FJU_LOJPAI "
+        Elseif lConSQL
+            cWhrFJU += " CONCAT(PAI.FJU_PREPAI,PAI.FJU_NUMPAI, PAI.FJU_PARPAI, PAI.FJU_TIPPAI, PAI.FJU_FORPAI, PAI.FJU_LOJPAI) "
+        Else
+            cWhrFJU += " PAI.FJU_PREPAI || PAI.FJU_NUMPAI || PAI.FJU_PARPAI || PAI.FJU_TIPPAI || PAI.FJU_FORPAI || PAI.FJU_LOJPAI "
+        EndIf
+
+        cWhrFJU += " FROM " + RetSqlName("FJU") + " PAI "
+        cWhrFJU += " WHERE  PAI.D_E_L_E_T_ = ' ' "
+        cWhrFJU += " AND PAI.FJU_CART = 'R' "
+        cWhrFJU += " AND PAI.FJU_DTEXCL >= '" + DTOS(dDataBase) + "'"
+        cWhrFJU += " AND PAI.FJU_EMIS1 <= '" + DTOS(dDataBase) + "'"
+        cWhrFJU += " AND PAI.FJU_RECPAI>0)"
+
+        cWhrFJU := zChangeWhere(cWhrFJU)
+        cInsFase3 := cInsFJU + cWhrFJU
+        cInsFase3 += zChangeWhere(" AND SE1.E1_TIPO NOT IN " + FormatIn(MVABATIM,"|"))
+
+        If TCSqlExec(cInsFase3) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cInsFase3")
+            lMstErro := .T.
+        EndIf
+    EndIf
+
+    // Caso despreze os valores n„o adiciona os itens e mante os valores normais.
+    If MV_PAR33 != 3
+
+        /* Insere os registros referentes aos abatimentos*/
+        /* Faz o mesmo filtro da query principal */
+
+        If cMAFilSE1 == "E"
+            cWhrFase2 := " WHERE E1_FILIAL " + cQryFilSE1
+        Else
+            If lSelectFil // Multiplas Filiais
+                cWhrFase2 := " WHERE SE1.E1_FILORIG " + zFR130InFilial()
+            Else
+                cWhrFase2 := " WHERE SE1.E1_FILIAL = '" + FwxFilial("SE1") + "' "
+            EndIf
+        EndIf
+
+        cWhrFase2 += " AND SE1.E1_PREFIXO BETWEEN '" + mv_par03 + "' AND '" + mv_par04 + "'"
+        cWhrFase2 += " AND SE1.E1_NUM BETWEEN '" + mv_par05 + "' AND '" + mv_par06 + "'"
+        cWhrFase2 += " AND SE1.E1_CLIENTE BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"
+        cWhrFase2 += " AND SE1.E1_LOJA BETWEEN '" + mv_par24 + "' AND '" + mv_par25 + "'"
+        /* Vincula apenas aos registros que est„o na query principal */
+        cWhrFase2 += " AND EXISTS (SELECT 'TITPA1' FROM " + cTable + " WHERE  E1TITPAI = SE1.E1_TITPAI ) "
+        cWhrFase2 += " AND SE1.D_E_L_E_T_ = ' ' AND SE1.E1_TIPO IN " + FormatIn(MVABATIM,"|")
+        cWhrFase2 += Iif(Empty(MV_PAR32), "", " AND SE1.E1_TIPO NOT IN " + FormatIn(MV_PAR32,";"))
+        cWhrFase2 := zChangeWhere(cWhrFase2)
+        cInsFase2 := cInsert + cWhrFase2
+
+        If TCSqlExec(cInsFase2) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cInsFase2")
+            lMstErro := .T.
+        EndIf
+    EndIf
+
+    // Avalia a data do movimento.
+    If MV_PAR37 == 1
+        cDelete := "DELETE FROM " + cTable + " WHERE E1_BAIXA <> ' ' AND E1_BAIXA <= '" + DToS(dDataBase)+ "' AND E1_SALDO = 0"
+        If TCSqlExec(cDelete) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cDelete")
+            lMstErro := .T.
+        EndIf
+    Else
+    // Atualia os campos de data do movimento para posterior deleÁ„o
+        If lPostgre
+            cUpdate := " UPDATE " + cTable + " SET E5DTDISPO = UPD.E5DTDISPO, E5DTDIGIT = UPD.E5DTDIGIT "
+            cUpdate += " FROM ( SELECT E1RECNO UPDRECNO, MAX(E5_DTDISPO) E5DTDISPO, MAX(E5_DTDIGIT) E5DTDIGIT FROM " + cTable
+            cUpdate += " INNER JOIN " + RetSqlName('SE5') + " SE5 ON "
+            cUpdate += " SE5.E5_PREFIXO = E1_PREFIXO "
+            If cMAEmpSE1 == "E"
+                cUpdate += " AND SE5.E5_FILORIG = E1_FILORIG "
+            Else
+                cUpdate += " AND SE5.E5_FILIAL = E1_FILIAL "
+            EndIf
+            cUpdate += " AND SE5.E5_NUMERO = E1_NUM "
+            cUpdate += " AND SE5.E5_PARCELA = E1_PARCELA "
+            cUpdate += " AND SE5.E5_TIPO = E1_TIPO "
+            cUpdate += " AND SE5.E5_CLIFOR = E1_CLIENTE "
+            cUpdate += " AND SE5.E5_LOJA = E1_LOJA "
+            cUpdate += " AND SE5.D_E_L_E_T_ = ' ' "
+            cUpdate += " AND E1_SALDO = 0 "
+            cUpdate += " GROUP BY E1RECNO, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_TIPO, E5_CLIFOR, E5_LOJA "
+            cUpdate += " ) UPD "
+            cUpdate += " WHERE UPD.UPDRECNO = " + cTable + ".E1RECNO "
+            cUpdate += " AND " + cTable + ".E1_SALDO = 0 "
+            cUpdate += " AND " + cTable + ".E1_TIPO NOT IN " + FormatIn(MVABATIM,"|")
+        Else
+            cUpdate := " MERGE INTO " + cTable
+            cUpdate += " USING (SELECT E1RECNO UPDRECNO, MAX(E5_DTDISPO) NDTDISPO, MAX(E5_DTDIGIT) NDTDIGIT "
+            cUpdate += " FROM " + cTable + "  SE1 INNER JOIN " + RetSqlName('SE5') + " SE5 "
+            cUpdate += " ON  SE5.E5_PREFIXO = E1_PREFIXO  "
+            If cMAEmpSE1 == "E"
+                cUpdate += " AND SE5.E5_FILORIG = E1_FILORIG "
+            Else
+                cUpdate += " AND SE5.E5_FILIAL = E1_FILIAL "
+            EndIf
+            cUpdate += " AND SE5.E5_NUMERO = SE1.E1_NUM "
+            cUpdate += " AND SE5.E5_PARCELA = SE1.E1_PARCELA "
+            cUpdate += " AND SE5.E5_TIPO = SE1.E1_TIPO "
+            cUpdate += " AND SE5.E5_CLIFOR = SE1.E1_CLIENTE "
+            cUpdate += " AND SE5.E5_LOJA = SE1.E1_LOJA "
+            cUpdate += " AND SE5.D_E_L_E_T_ = ' ' "
+            cUpdate += " GROUP BY E1RECNO, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_TIPO, E5_CLIFOR, E5_LOJA ) UPD "
+            cUpdate += " ON ( E1RECNO = UPDRECNO ) "
+            cUpdate += " WHEN MATCHED THEN "
+            cUpdate += " UPDATE SET E5DTDISPO = NDTDISPO, E5DTDIGIT = NDTDIGIT "
+            If lMSSQL
+                cUpdate += " ;"
+            EndIf
+        EndIf
+
+        If TCSqlExec(cUpdate) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cUpdate")
+            lMstErro := .T.
+        EndIf
+        
+        cDelete := ""
+
+        If MV_PAR37 == 2
+            cDelete := "DELETE FROM " + cTable + " WHERE E1_BAIXA <> '        ' AND E5DTDISPO <> '        ' AND E5DTDISPO <= '" + DToS(dDataBase)+ "' AND E1_SALDO = 0"
+        Else
+            cDelete := "DELETE FROM " + cTable + " WHERE E1_BAIXA <> '        ' AND E5DTDIGIT <> '        ' AND E5DTDIGIT <= '" + DToS(dDataBase)+ "' AND E1_SALDO = 0"
+        EndIf
+
+        If TCSqlExec(cDelete) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cDelete")
+            lMstErro := .T.
+        EndIf
+    EndIf
+
+    If ( mv_par41 == 1 ) .and. cMAEmpSE1 == "E"
+
+        cUpdate := " UPDATE " + cTable + " SET E1TEMCMP = 'S' "
+        cUpdate += " WHERE EXISTS (SELECT 'TEMCMP' FROM " + RetSqlName("SE5") + " SE5 "
+        cUpdate += " WHERE SE5.E5_FILIAL <> E1_FILIAL "
+        cUpdate += " AND SE5.E5_PREFIXO = E1_PREFIXO "
+        cUpdate += " AND SE5.E5_NUMERO = E1_NUM "
+        cUpdate += " AND SE5.E5_PARCELA = E1_PARCELA "
+        cUpdate += " AND SE5.E5_TIPO = E1_TIPO "
+        cUpdate += " AND SE5.E5_CLIFOR = E1_CLIENTE "
+        cUpdate += " AND SE5.E5_LOJA = E1_LOJA "
+        cUpdate += " AND SE5.E5_MOTBX IN ('CMP','CEC')"
+        cUpdate += " AND SE5.D_E_L_E_T_ = ' ' )"
+
+        If TCSqlExec(cUpdate) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cUpdate")
+            lMstErro := .T.
+        EndIf
+    EndIf
+
+    If mv_par29 == 2
+        /* Recupera o nome do  cliente para utilizar como indice */
+        cUpdate := " UPDATE " + cTable + " SET A1_NOME = ( SELECT SA1.A1_NOME
+        cUpdate += " FROM " + RetSqlName("SA1") +" SA1 WHERE SA1.D_E_L_E_T_ = ' ' AND A1_COD = E1_CLIENTE AND A1_LOJA = E1_LOJA
+        If cMAFilSA1 == "E" // E E E
+            cUpdate += " AND A1_FILIAL = E1_FILORIG ) "
+        Elseif cMAUniSA1 == "E" .and. cMAFilSA1 == "C" // E E C
+            cUpdate += " AND RTRIM(SUBSTRING(A1_FILIAL, 1, " + Str(nTamEmp + nTamUnNeg) + ") ) = RTRIM(SUBSTRING(E1_FILORIG, 1, " + Str(nTamEmp + nTamUnNeg) + ") ) ) "
+        ElseIf cMAEmpSA1 == "E" .and. cMAUniSA1 == "C" // E C C
+            cUpdate += " AND RTRIM(SUBSTRING(A1_FILIAL, 1, " + Str(nTamEmp) + ") ) = RTRIM(SUBSTRING(E1_FILORIG, 1, " + Str(nTamEmp) + ") ) )"
+        Else // C C C
+            cUpdate += " )"
+        EndIf
+
+        If lBancoA
+            cUpdate := StrTran(cUpdate,"SUBSTRING","SUBSTR")
+        EndiF
+
+        If TCSqlExec(cUpdate) < 0
+            zFR130Log(STR0089 + TCSqlError() , "cUpdate")
+            lMstErro := .T.
+        EndIf
+    EndIf
+
+    /* Tratar filtros de usu·rio  */
+    cFilterUser := oSection1:GetSQLExp("SE1")
+
+    If (!Empty(cFilterUser) .Or. !Empty(cFilUserSA1)) .Or. lF130Qry
+
+        cDelFilPE := " DELETE FROM " + cTable + " "
+        cDelFilPE += " WHERE E1RECNO NOT IN ( SELECT E1RECNO FROM " + cTable + " FILTRADO "
+        cDelFilPE += "    INNER JOIN " + RetSqlName("SA1") + " SA1 ON A1_COD = E1_CLIENTE "
+        cDelFilPE += "    AND A1_LOJA = E1_LOJA AND SA1.D_E_L_E_T_ = ' ' "
+        
+        If cMAFilSA1 == "E"
+            cDelFilPE += " AND A1_FILIAL = E1_FILORIG "
+        Elseif cMAUniSA1 == "E" .and. cMAFilSA1 == "C"
+            cDelFilPE += " AND RTRIM(SUBSTRING(A1_FILIAL, 1, " + Str(nTamEmp + nTamUnNeg) + "))  = RTRIM(SUBSTRING(E1_FILORIG, 1, " + Str(nTamEmp + nTamUnNeg) + "))"
+        ElseIf cMAEmpSA1 == "E" .and. cMAUniSA1 == "C"
+            cDelFilPE += " AND RTRIM(SUBSTRING(A1_FILIAL, 1, " + Str(nTamEmp) + "))  = RTRIM(SUBSTRING(E1_FILORIG, 1, " + Str(nTamEmp) + "))"
+        EndIf
+
+        If !Empty(cFilterUser) .Or. !Empty(cFilUserSA1)
+            If !Empty(cFilterUser)
+                cFiltroCon := cFilterUser
+                If !Empty(cFilUserSA1)
+                    cFiltroCon += " AND " + cFilUserSA1
+                EndIf
+            Else
+                cFiltroCon := cFilUserSA1
+            EndIf
+
+            cDelete := cDelFilPE + " WHERE (" + cFiltroCon + " ) ) "
+
+            If lBancoA
+                cDelete := StrTran(cDelete,"SUBSTRING","SUBSTR")
+            EndiF
+
+            If TCSqlExec(cDelete) < 0
+                zFR130Log(STR0089 + TCSqlError() , "cUpdate")
+                lMstErro := .T.
+            EndIf
+        EndIf
+
+        //Ponto de entrada para inclusao de parametros no filtro a ser executado
+        If lF130Qry
+            cF130Qry := ExecBlock("F130QRY",.f.,.f.)
+            If Valtype(cF130Qry) == "C"
+
+                cDelete :=  cDelFilPE + " WHERE ( 0=0 " + cF130Qry + " ) ) "
+
+                If lBancoA
+                    cDelete := StrTran(cDelete,"SUBSTRING","SUBSTR")
+                EndiF
+
+                If TCSqlExec(cDelete) < 0
+                    zFR130Log(STR0089 + TCSqlError() , "cDelete")
+                    lMstErro := .T.
+                EndIf
+            EndIf
+        EndIf
+    EndIf
+
+    If lMstErro .And. !cSGBD $ "ORACLE#DB2#INFORMIX#MSSQL#POSTGRES#OPENEDGE#CTREESQL" // Alerta o usu·rio que o
+        //"Ocorreram inconsistÍncias na utilizaÁ„o de comandos no banco de dados! Banco de dados n„o homologado"
+        HELP(" ",1,"SGDBInfo",,STR0091 ,2,0,,,,,, { STR0092 })
+        //"Avalie o log de incosistÍncias gerado na pasta system."
+    EndIf
+
+    oReport:SetTitle(cTitulo)
+
+    // Precisa do temporario para repassar ao FINR135
+    If MV_MULNATR .And. nOrdem == 5 
+        If nLenSelFil == 0
+            // Cria vetor com os codigos das filiais da empresa corrente
+            aFiliais := FinRetFil()
+            lContinua := SM0->(!Eof()) .And. SM0->M0_CODIGO == cEmpAnt .and. IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL ) <= cFilAte
+        Else
+            aFiliais    := Aclone(aSelFil)
+            cFilDe      := aSelFil[1]
+            cFilAte     := aSelFil[nLenSelFil]
+            nFilAtu     := 1
+            lContinua := nFilAtu <= nLenSelFil
+        Endif
+
+        While lContinua
+            If lAbortPrint
+                EXIT
+            Endif
+            If nLenSelFil > 0
+                aAux := getArea()
+                nPosFil := Ascan(aSM0,{|sm0| sm0[SM0_CODFIL] == aSelFil[nFilAtu]})
+                SM0->(DbGoTo(aSM0[nPosFil,SM0_RECNO]))
+            Endif
+            cFilAnt := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+
+            If nLenSelFil > 0 .and. len(aAux) > 0
+                dbSelectArea("SM0")
+                MSSeek(cEmpAnt+cFilAnt,.T.)
+                RestArea(aAux)
+            EndIf
+            
+            //Bloco utilizado para nao duplicar registros quando Filial compartilhada na gest„o corporativa. Exempo SE1:
+            //Filial  = Compartilhado, Unidade = Exclusivo, Empresa = Exclusivo
+            If cCorpBak <> FwxFilial("SE1")
+                cCorpBak := FwxFilial("SE1")
+            Else
+                If nLenSelFil == 0
+                    dbSelectArea("SM0")
+                    SM0->(DbSkip())
+                    lContinua := SM0->(!Eof()) .And. SM0->M0_CODIGO == cEmpAnt .and. IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL ) <= cFilAte
+                Else
+                    nFilAtu++
+                    lContinua := (nFilAtu <= nLenSelFil)
+                Endif
+                Loop
+            EndIf
+
+            // Fazer query no tempor·rio para repassar ao FINR135
+            cQryNat := "SELECT " + cValues + " FROM " + cTable + " SE1 WHERE "
+            
+            If ((cMAFilSE1 == "E") .Or. (!lSelectFil))
+                cQryNat += " SE1.E1_FILIAL = '" + FwxFilial("SE1") + "' "
+            Else
+                cQryNat += " SE1.E1_FILORIG " + zFR130InFilial()
+            EndIf
+            
+            cQryNat += " ORDER BY " + cOrder
+            
+            dbSelectArea("SE1")
+            SE1->(dbCloseArea())
+            dbUseArea(.T., "TOPCONN", TCGenQry(,,cQryNat), 'SE1', .F., .T.)
+            
+            For nI := 1 to Len(aStru)
+                If aStru[nI,2] != 'C'
+                    TCSetField('SE1', aStru[nI,1], aStru[nI,2],aStru[nI,3],aStru[nI,4])
+                Endif
+            Next nI
+            
+            //No relatorio analitico desabilita secao de totais quando MV_MULNATR e ordenacao por natureza,
+            //para forcar a utilizacao da totalizacao com oBreak e TRFunction da oSection1.
+            If mv_par19 == 1
+                oSection2:Disable()
+            EndIf
+            
+            If nLenSelFil == 0
+                Finr135(cTipos, .F., @nTot0, @nTot1, @nTot2, @nTot3, @nTotTit, @nTotJ, oReport, aDados, @oSection2, aStru)
+            Else
+                cTitBkp := cTitulo
+                Finr135(cTipos, .F., @nTotFil0, @nTotFil1, @nTotFil2, @nTotFil3, @nTotFilTit, @nTotFilJ, oReport, aDados, @oSection2, aStru)
+                nTot0 += nTotFil0
+                nTot1 += nTotFil1
+                nTot2 += nTotFil2
+                nTot3 += nTotFil3
+                nTot4 += nTotFil4
+                nTotJ += nTotFilJ
+                nTotTit += nTotFilTit
+                cNomFil := cFilAnt + " - " + AllTrim(FwFilialName(cEmpAnt, cFilAnt))
+                cNomEmp := Substr(cFilAnt, 1, nTamEmp) + " - " + AllTrim(FwFilRazSocial(cEmpAnt, cFilAnt))
+                cTitulo := cTitBkp
+            Endif
+            
+            dbSelectArea("SE1")
+            SE1->(dbCloseArea())
+            ChKFile("SE1")
+            dbSelectArea("SE1")
+            SE1->(dbSetOrder(1))
+            
+            If nLenSelFil == 0
+                dbSelectArea("SM0")
+                dbSkip()
+                lContinua := SM0->(!Eof()) .And. SM0->M0_CODIGO == cEmpAnt .and. IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL ) <= cFilAte
+            Else
+                nFilAtu++
+                If (lContinua := (nFilAtu <= nLenSelFil))
+                    If oBrkNat:Execute()
+                        oBrkNat:PrintTotal()
+                    Endif
+                    If nTotFil0 <> 0
+                        oBrkFil:PrintTotal()
+                    Endif
+                    Store 0 To nTotFil0,nTotFil1,nTotFil2,nTotFil3,nTotFil4,nTotFilTit,nTotFilJ
+                    If !(Substr(aSelFil[nFilAtu-1], 1, nTamEmp) == Substr(aSelFil[nFilAtu], 1, nTamEmp))
+                        If nTotEmp0 <> 0
+                            oBrkEmp:PrintTotal()
+                        Endif
+                        nTotEmp0 := 0
+                        nTotEmp1 := 0
+                        nTotEmp2 := 0
+                        nTotEmp3 := 0
+                        nTotEmp4 := 0
+                        nTotEmpJ := 0
+                        nTotTitEmp := 0
+                    Endif
+                Endif
+            Endif
+            
+            If Empty(FwxFilial("SE1"))
+                Exit
+            Endif            
+            Loop
+        EndDo
+    Else
+        // Trecho de impress„o normal
+        DbSelectArea("SE1")
+        DbSetOrder(2)
+        DbGotop()
+
+        cFilSE1 := FwxFilial("SE1")
+        cFilSE5 := FwxFilial("SE5")
+        lVerCmpFil	:= !Empty(cFilSE1) .And. !Empty(cFilSE5)        
+
+        While !(SE1->(Eof()))
+            If lAbortPrint
+                EXIT
+            Endif            
+
+            /* GESTAO - inicio */
+            If cMAFilSE1 == "E"
+                If cFilSE1 <> SE1->E1_FILIAL .and. nLenSelFil > 0
+                    aAux := getArea()
+                    nPosFil := Ascan(aSM0,{|sm0| sm0[SM0_CODFIL] == SE1->E1_FILIAL})
+                    SM0->(DbGoTo(aSM0[nPosFil,SM0_RECNO]))
+                EndIf
+                cFilAnt := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+                If nLenSelFil > 0 .and. len(aAux) > 0
+                    dbSelectArea("SM0")
+                    MSSeek(cEmpAnt+cFilAnt,.T.)
+                    RestArea(aAux)
+                EndIf
+            ElseIf cFilOri <> SE1->E1_FILORIG .and. ( cMAUniSE1 == "E" .or. cMAEmpSE1 == "E")
+                If nLenSelFil > 0  .and. !Empty(SE1->E1_FILORIG)
+                    aAux := getArea()
+                    nPosFil := Ascan(aSM0,{|sm0| sm0[SM0_CODFIL] == SE1->E1_FILORIG})
+                    SM0->(DbGoTo(aSM0[nPosFil,SM0_RECNO]))
+                Endif
+
+                cFilAnt := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+                If nLenSelFil > 0 .and. len(aAux) > 0
+                    dbSelectArea("SM0")
+                    MSSeek(cEmpAnt+cFilAnt,.T.)
+                    RestArea(aAux)
+                EndIf
+            EndIf
+            /* GESTAO - Fim */
+
+            cFilSE1		:= FwxFilial("SE1")
+            cFilOri     := SE1->E1_FILORIG
+            cFilSE5     := FwxFilial("SE5")
+            cFilSA6     := FwxFilial("SA6")
+            
+            If SE1->E1_FILIAL == cFilSE1 .And. &cCond1          
+
+                If !lMAFKD .Or. lFirst     
+                    lExistFKD := zExisteFKD(cSGBD, SE1->E1_FILORIG)                            
+                    lFirst    := .F.  
+                EndIf
+                
+                While !Eof() .And. SE1->E1_FILIAL == cFilSE1 .And. &cCond1
+                    
+                    Store 0 To nTit1,nTit2,nTit3,nTit4,nTit5
+                    If mv_par19 == 1
+                        Store 0 To nTot0,nTot1,nTot2,nTot3,nTot4,nTotJ
+                    EndIf
+
+                    //Carrega data do registro para permitir posterior analise de quebra por mes.
+                    dDataAnt := Iif(nOrdem == 6 , SE1->E1_EMISSAO,  Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA))
+                    cCarAnt  := &cCond2
+                    
+                    If SE1->E1_FILIAL == cFilSE1 .And. &cCond2 == cCarAnt                        
+                        While !Eof() .And. SE1->E1_FILIAL == cFilSE1 .And. &cCond2 == cCarAnt                            
+
+                            // dDtContab para casos em que o campo E1_EMIS1 esteja vazio
+                            dDtCtb	:= Iif(Empty(SE1->E1_EMIS1), SE1->E1_EMISSAO, SE1->E1_EMIS1)
+
+
+                            /*
+                            Modificado tratamento para o par‚metro MV_PAR36(CONSIDERA DATABASE) para quando se imprime um relatÛrio com o par‚metro MV_PAR20(SALDO
+                            RETROATIVO) = SIM verificando corretamente na SE5 a data de baixa, crÈdito ou digitaÁ„o para impress„o.
+                            */
+
+                            If dDtCtb < mv_par27 .Or. dDtCtb > mv_par28
+                                SE1->( dbSkip() )
+                                Loop
+                            Endif
+
+                            If !SA1->(MsSeek(FwxFilial("SA1", SE1->E1_FILORIG)+SE1->(E1_CLIENTE+E1_LOJA)))
+                                SE1->(dbSkip())
+                                Loop
+                            EndIf
+
+                            // Verifica se trata-se de abatimento ou somente titulos atÈ a data base.
+                            If (SE1->E1_TIPO $ MVABATIM	+"/"+MVFUABT .And. mv_par33 != 1) .Or. (SE1->E1_EMISSAO > mv_par36 .and. MV_PAR38 == 2)
+                                cMTitPai := Iif(!Empty(SE1->E1_TITPAI), SE1->E1_TITPAI, zFTITPAI())
+                                aAdd(aAbatBaixa, {SE1->(E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA), cMTitPai})
+                                SE1->(dbSkip())
+                                Loop
+                            Endif
+
+                            //Quando Retroagir saldo, data menor que o solicitado e o titulo estiver baixado nao mostrar no relatorio
+                            If (lSldRetro .and. cMVBR10925 == "1" .and. SE1->E1_EMISSAO <= MV_PAR36 .and. SE1->E1_TIPO $ "PIS/COF/CSL")
+                                SE1->(dbSkip())
+                                Loop
+                            EndIf
+
+                            // Tratamento da correcao monetaria para a Argentina
+                            If  cPaisLoc=="ARG" .And. mv_par15 <> 1  .And.  SE1->E1_CONVERT=='N'
+                                SE1->(dbSkip())
+                                Loop
+                            Endif
+
+                            // Verifica se existe a taxa na data do vencimento do titulo, se nao existir, utiliza a taxa da database
+                            dDataReaj := dDataBase
+                            
+                            If SE1->E1_VENCREA < dDataBase .And. mv_par17 == 2 .And. RecMoeda(SE1->E1_VENCREA,cMoeda) > 0
+                                dDataReaj := SE1->E1_VENCREA
+                            EndIf
+                            
+                            SE5->(DbSetorder(7)) //E5_FILIAL+E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA+E5_SEQ
+                            SE5->(MSSeek(cFilSE5+SE1->E1_PREFIXO+SE1->E1_NUM+ SE1->E1_PARCELA + SE1->E1_TIPO +SE1->E1_CLIENTE ))
+
+                            lBxMulta := .F.
+                            lAchouDt := .F.
+                            If !Empty(SE1->E1_BAIXA) .And. lClcMultLj
+                                If !Empty(dDtBxMulta := zF130ULBX(cFilSE5, SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE ))
+                                    lBxMulta   := .T.
+                                    If lAchouDt  := (lSldRetro .And. dDataBase < dDtBxMulta)
+                                        dDtBxMulta := zFR130DBX()
+                                    EndIf
+                                    dUltBaixa := Iif(lAchouDt, dDtBxMulta,zFR130DBX())
+                                EndIf
+                            EndIf
+
+                            If lSldRetro	// Saldo Retroativo = Sim
+
+                                If lBxMulta .And. (Empty(dDtBxMulta) .Or. dDtBxMulta > dDataBase)
+                                    lBxMulta := .F.
+                                Endif
+
+                                nTxSM2 := RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)
+
+                                nTxMoedSld := Iif(mv_par39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,nTxSM2),0)
+
+                                lIsTxContr := mv_par39 == 2 .AND. !Empty(SE1->E1_TXMOEDA)
+
+                                nSaldo := SaldoTit( SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_NATUREZ, "R", SE1->E1_CLIENTE, mv_par15, dDataReaj,;
+                                                MV_PAR36, SE1->E1_LOJA,	cFilSE5 , nTxMoedSld, mv_par37, .F., __oTBxCanc , lIsTxContr)
+
+                                If lSPFin005 .And. SE1->E1_MOEDA > 1 .And. SE1->E1_DECRESC > 0 .And. SE1->E1_SDDECRE == 0
+                                    nTxMoeda := Iif(MV_PAR39 == 2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,nTxSM2),nTxSM2)
+
+                                    If MV_PAR15 == SE1->E1_MOEDA
+                                        If SE5->E5_MOTBX == "CMP" .And. SE5->E5_TIPODOC == "CP"
+                                            If zBuscaCmp(cFilSE5 , SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO,SE1->E1_CLIENTE, SE1->E1_LOJA, MV_PAR36) > 0
+                                                nSaldo := Round(NoRound(xMoeda(nSaldo+SE1->E1_DECRESC,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,nTxMoeda),nDecs+1),nDecs)
+                                                nSaldo := nSaldo + SE1->E1_DECRESC * nTxMoeda
+                                                
+                                                If __nValCM == 0 
+                                                    nSaldo := nSaldo - SE1->E1_DECRESC 
+                                                EndIf
+                                            EndIf
+                                        Else
+                                            nSaldo += Round(NoRound(xMoeda(SE1->E1_DECRESC,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,nTxMoeda),nDecs+1),nDecs)
+                                        EndIf
+                                    Else 
+                                        If SE5->E5_MOTBX == "CMP" .And. SE5->E5_TIPODOC == "CP"
+                                            nValComp := zBuscaCmp(cFilSE5 , SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO,SE1->E1_CLIENTE, SE1->E1_LOJA, MV_PAR36)
+                                            nValComp := nValComp / nTxMoeda
+                                            nSaldo := SE1->E1_VALOR - nValComp - SE1->E1_DECRESC
+                                            nSaldo := Round(nSaldo, nDecs) * nTxMoeda
+
+                                            If __nValCM > 0
+                                                nSaldo := (SE1->E1_VALOR - SE1->E1_DECRESC - __nValCm) * nTxMoeda
+                                            EndIf
+                                        Else 
+                                            nSaldo := nSaldo + SE1->E1_DECRESC * nTxMoeda
+                                        EndIf
+                                    EndIf
+                                EndIf                
+
+                                //Verifica se existem compensaÁıes em outras filiais para descontar do saldo, pois a SaldoTit() somente verifica as movimentaÁıes da filial corrente.
+                                If __lProcSaldoTit  .or. (!(AllTrim(SE1->E1_TIPO) $ MVRECANT + "|" + MV_CRNEG) .and. !__lProcSaldoTit .and. __cMVFinFix < "20" )
+                                    If lVerCmpFil .and. SE1->E1TEMCMP = 'S'
+                                        proclogatu("INICIO",STR0085) //"PESQUISA DE COMPENSA«√O DE MULTI-FILIIAS"
+
+                                        nSaldo -= Round(NoRound( xMoeda( FRVlCompFil("R",SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE, SE1->E1_LOJA, mv_par37, aFiliais, /*cFilQry*/, lAS400, ;
+                                            mv_par15, SE1->E1_MOEDA, nTxMoedSld, dDataReaj, .T.), ;
+                                            SE1->E1_MOEDA, mv_par15, dDataReaj, ndecs+1, nTxMoedSld ), nDecs+1), nDecs)
+
+                                        proclogatu("FIM",STR0085)//Log pesquisa de compensaÁ„o
+                                    EndIf
+                                EndIf
+                                
+                                If !Empty(dUltBaixa := SE1->E1_BAIXA) .And. dDataBase < dUltBaixa                                    
+                                    dUltBaixa := zFR130DBX() // Ultima baixa atÈ DataBase
+                                EndIf
+                                
+                                //Subtrai decrescimo para recompor o saldo na data escolhida e converte o decrescimo e acrescimo para a moeda do nSaldo
+                                If SE1->E1_DECRESC > 0
+                                    If  mv_par15 == SE1->E1_MOEDA .and. Str(SE1->E1_VALOR,17,2) == Str(nSaldo,17,2)
+                                        nSaldo -= SE1->E1_DECRESC
+                                    ElseIf Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,Iif(mv_par39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),nDecs+1),nDecs) == nSaldo
+                                        nSaldo := Round(NoRound(xMoeda(SE1->E1_VALOR-SE1->E1_DECRESC,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,Iif(mv_par39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),nDecs+1),nDecs)
+                                    Endif
+                                EndIf                                
+                                // Soma Acrescimo para recompor o saldo na data escolhida.
+                                If SE1->E1_ACRESC > 0 .And. IIf(Empty(dUltBaixa), .T., dDataBase < dUltBaixa)
+                                    If  mv_par15 == SE1->E1_MOEDA .and. Str(SE1->E1_VALOR,17,2) == Str(nSaldo,17,2)
+                                        nSaldo += SE1->E1_ACRESC
+                                    ElseIf Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,Iif(mv_par39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),nDecs+1),nDecs) == nSaldo
+                                        nSaldo := Round(NoRound(xMoeda(SE1->E1_VALOR+SE1->E1_ACRESC,SE1->E1_MOEDA,mv_par15,dDataReaj,nDecs+1,Iif(mv_par39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),nDecs+1),nDecs)
+                                    EndIf
+                                EndIf
+
+                                //Se abatimento verifico a data da baixa.
+                                //Por nao possuirem movimento de baixa no SE5, a saldotit retorna sempre saldo em aberto quando mv_par33 = 1 (Abatimentos = Lista)
+                                If SE1->E1_TIPO $ MVABATIM +"/"+MVFUABT .And. ((SE1->E1_BAIXA <= dDataBase .And. !Empty(SE1->E1_BAIXA)) .Or. (SE1->E1_MOVIMEN <= dDataBase .And. !Empty(SE1->E1_MOVIMEN))) .And. SE1->E1_SALDO == 0
+                                    cMTitPai := Iif(!Empty(SE1->E1_TITPAI), SE1->E1_TITPAI, zFTITPAI())
+                                    
+                                    If mv_par33 == 1 .And. MV_PAR37 > 1 .And. !Empty(cMTitPai)
+                                        cChaveJson := AllTrim(SE1->E1_FILIAL+cMTitPai)
+                                        
+                                        If !oJsonTitul:HasProperty(cChaveJson)
+                                            oJsonTitul[cChaveJson] := SE1->E1_BAIXA
+                                            
+                                            For nCampos := 1 To 6
+                                                Do Case
+                                                    Case nCampos == 1 
+                                                        cChaveTit := SE1->E1_FILIAL + "|" + SubStr(cMTitPai, 1, nPref)
+                                                    Case nCampos == 2 
+                                                        cChaveTit += "|" + SubStr(cMTitPai, (nPref+1), nTmTit)
+                                                    Case nCampos == 3 
+                                                        cChaveTit += "|" + SubStr(cMTitPai, (nPref + nTmTit + 1), nParc)
+                                                    Case nCampos == 4 
+                                                        cChaveTit += "|" + SubStr(cMTitPai, (nPref + nTmTit + nParc + 1), nTmTipo)
+                                                    Case nCampos == 5 
+                                                        cChaveTit += "|" + SubStr(cMTitPai, (nPref + nTmTit + nParc + nTmTipo + 1), nCliente)
+                                                    Otherwise 
+                                                        cChaveTit += "|" + SubStr(cMTitPai, (nPref + nTmTit + nParc + nTmTipo + nCliente + 1), nLoja)
+                                                EndCase
+                                            Next nCampos
+                                            
+                                            oJsonTitul[cChaveJson] := zFR130DBX(cChaveTit, IIf(MV_PAR37 == 2, "FK1_DTDISP", "FK1_DTDIGI")) 
+                                        EndIf
+                                    EndIf
+                                    
+                                    lChaveJson := oJsonTitul:HasProperty(cChaveJson)
+                                    
+                                    If (!lChaveJson .Or. (lChaveJson .And. oJsonTitul[cChaveJson] <= dDataBase))
+                                        nSaldo   := 0
+                                        aAdd(aAbatBaixa, {SE1->(E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA), cMTitPai})                                     
+                                        aAdd(aAbatBaixa, {SE1->(E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA), SE1->E1_TITPAI})
+                                    EndIf
+                                EndIf
+                                
+                                //certifica-se de que est· posicionado no cliente correto, para que seja deduzido corretamente o IR baixado do saldo do tÌtulo.
+                                If AllTrim(SA1->A1_COD)+AllTrim(SA1->A1_LOJA) <> AllTrim(SE1->E1_CLIENTE)+AllTrim(SE1->E1_LOJA) .and. cMVBR10925 == "1" .And. __lBQ10925
+                                    nRecSA1 := SA1->(Recno())
+                                    If !SA1->(DbSeek(FwxFilial("SA1", SE1->E1_FILORIG)+SE1->(E1_CLIENTE+E1_LOJA)))
+                                        SA1->(DbGoto(nRecSA1))
+                                        nRecSA1 := 0
+                                    EndIf
+                                ElseIf cMVBR10925 == "1" .And. __lBQ10925
+                                    nRecSA1 := SA1->(Recno())
+                                EndIf                 
+
+                                If cPaisLoc == "BRA"
+                                    If (( cMVBR10925 == "1" .and. SE1->E1_EMISSAO <= MV_PAR36 .and. !(SE1->E1_TIPO $ "PIS/COF/CSL").and. !(SE1->E1_TIPO $ MVABATIM) ) ;
+                                            .AND. ( "S" $ (SA1->(A1_RECPIS+A1_RECCOFI+A1_RECCSLL) ) ) ) .Or. (SA1->A1_IRBAX == '1' .And. SE1->E1_EMISSAO <= MV_PAR36 .and. ;
+                                        !(SE1->E1_TIPO $ MVIRF).and. !(SE1->E1_TIPO $ MVABATIM) .AND. ( (SA1->(A1_RECIRRF) $ "1 " ) .And. SA1->A1_TPESSOA == 'EP' ) )
+
+                                                If !Empty(SE1->E1_NUMBOR)
+                                                    SEA->(DbSetOrder(4))
+                                                    SEA->(dbSeek(SE1->E1_FILORIG+SE1->E1_NUMBOR+"R"+SE1->E1_PREFIXO+SE1->E1_NUM+SE1->E1_PARCELA+SE1->E1_TIPO))
+                                                Endif
+                                             
+                                                If (IIF(!Empty(SE1->E1_NUMBOR),!Alltrim(SEA->EA_ORIGEM) $ "FINA061|FINA590I",.T.) .and. SE1->E1_DATABOR <= MV_PAR36)                     
+                                                    nValPcc := zSumBxPCC(SE1->E1_PREFIXO,SE1->E1_NUM,dBaixa,SE1->E1_CLIENTE,SE1->E1_LOJA,mv_par15,SE1->E1_PARCELA,SE1->E1_TIPO)
+                                                    nSaldo -= nValPcc                                        
+                                                Endif
+
+                                        //tratamento para emiss„o correta do saldo do tÌtulo, quando o PCC+IR estiver na baixa e for realizado baixa parcial.
+                                        If nRecSA1 > 0
+                                            SE5->(DbSetOrder(7))
+                                            while  SE5->(!EOF()) .And. SE5->(MsSeek(cFilSE5+SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA)+cSeq));
+                                                .And. nSaldo <> SE1->E1_SALDO .And. AllTrim(SA1->A1_IRBAX) = "1" .And. SE5->E5_VRETIRF > 0
+                                                nSaldo	:= Iif(SE5->E5_DATA <= mv_par36,  (nSaldo - SE5->E5_VRETIRF), nSaldo)
+                                                cSeq	:= ALLTRIM(STR(VAL(SE5->E5_SEQ)+1))
+                                                cSeq	:= Replicate("0", nTamSeq - Len(Alltrim(Str(Val(cSeq))))) + cSeq
+                                            EndDo
+                                        Endif
+                                    EndIf
+                                EndIf
+                                nRecSA1 := 0
+                                If SE1->E1_TIPO == "RA "   //somente para titulos ref adiantamento verifica se nao houve cancelamento da baixa posterior data base (mv_par36)
+                                    nSaldo -= zF130TipoBA()
+                                EndIf
+                            Else
+                                nSaldo := xMoeda((SE1->E1_SALDO+SE1->E1_SDACRES-SE1->E1_SDDECRE),SE1->E1_MOEDA,mv_par15,dDataReaj,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0))
+                            Endif
+
+                            // Se titulo do Template GEM
+                            If __lTempLOT .And.  !Empty(SE1->E1_NCONTR)
+                                aAuxGem := ExecTemplate("CMDtPrc",.F.,.F.,{SE1->E1_PREFIXO,SE1->E1_NUM,SE1->E1_PARCELA,SE1->E1_VENCREA,SE1->E1_VENCREA}) 
+                                nGem    := aAuxGem[2]
+                                FwFreeArray(aAuxGem)
+                                If SE1->E1_VALOR==SE1->E1_SALDO
+                                    nSaldo += nGem
+                                EndIf
+                            EndIf
+
+                            //Caso exista desconto financeiro (cadastrado na inclusao do titulo) subtrai do valor principal.
+                            If !(!Empty( SE1->E1_BAIXA ) .AND. SE1->E1_BAIXA < dDatabase) .Or. cMvDesFin == "P"
+                                nDescont := FaDescFin("SE1",dBaixa,SE1->E1_SALDO,1,.T.,lTemGem)
+                                If Mv_par15 > 1
+                                    If SE1->E1_MOEDA == Mv_par15
+                                        nDescont := xMoeda((nDescont),1,Mv_par15,dDataReaj,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0))
+                                    Else
+                                        nDescont := xMoeda((nDescont),SE1->E1_MOEDA,mv_par15,dDataReaj,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0))
+                                    EndIf
+                                EndIf
+                                If nDescont > 0
+                                    nSaldo := nSaldo - nDescont
+                                Endif
+                            EndIf
+
+                            If ! SE1->E1_TIPO $ MVABATIM	+"/"+MVFUABT
+                                If ! (SE1->E1_TIPO $ MVRECANT+"/"+MV_CRNEG) .And. ;
+                                        !( !lSldRetro .And. nSaldo == 0 )  	// deve olhar abatimento pois e zerado o saldo na liquidacao final do titulo
+
+                                    cFilNat		:= SE1->E1_NATUREZ
+                                    lExistAba	:= zHashNatur(@cTipoIn)
+
+                                    //Busca as informaÁıes para alimentar a array aTitImp utilizando a funÁ„o F130RETIMP
+                                    If lExistAba
+                                        If __aTtImp == Nil
+                                            __aTtImp := {}
+                                        EndIf
+                                        If ( nPos := (aScan(__aTtImp, {|x| x[1] == cFilNat}))) == 0
+                                            aTitImp		:= zF130RETIMP(cFilNat)
+                                            aAdd(__aTtImp, {cFilNat, aTitImp} )
+                                        Else
+                                            aTitImp := aClone(__aTtImp[nPos,2])
+                                        EndIf
+                                    Else
+                                        aTitImp:= {}
+                                    EndIf
+
+                                    If ((nPos := (aScan(aTitImp, {|x| x[1] <> SE1->E1_TIPO }))) > 0 .and. aTitImp[nPos][2]) .OR.;
+                                        aScan(aAbatBaixa, {|x| ALLTRIM(x[2])==ALLTRIM(SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA)) }) > 0
+
+                                        //Quando considerar Titulos com emissao futura, eh necessario colocar-se a database para o futuro de forma que a Somaabat()
+                                        //considere os titulos de abatimento
+                                        If mv_par38 == 1
+                                            dOldData := dDataBase
+                                            dDataBase := CTOD("31/12/40")
+                                        Endif
+
+                                        // Somente verifica abatimentos se existirem titulos deste tipo para o cliente
+                                        If lExistAba
+                                            nAbatim := SomaAbat(SE1->E1_PREFIXO,SE1->E1_NUM,SE1->E1_PARCELA,"R",mv_par15,dDataReaj,SE1->E1_CLIENTE,SE1->E1_LOJA)
+                                        Else
+                                            nAbatim := 0
+                                        EndIf
+
+                                        If mv_par38 == 1
+                                            dDataBase := dOldData
+                                        Endif
+
+                                        If mv_par33 != 1  //somente deve considerar abatimento no saldo se nao listar
+
+                                            If STR(nSaldo,17,2) == STR(nAbatim,17,2)
+                                                nSaldo := 0
+                                            ElseIf mv_par33 == 2  //Se nao listar ele diminui do saldo
+                                                nSaldo-= nAbatim
+                                            Endif
+                                        Else
+                                            // Subtrai o Abatimento caso o mesmo j· tenho sido baixado ou n„o esteja listado no relatorios
+                                            nBx := aScan( aAbatBaixa, {|x| x[2]= SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA) } )
+                                            If (SE1->E1_BAIXA <= dDataBase .and. !Empty(SE1->E1_BAIXA) .and. nBx>0)
+                                                aDel( aAbatBaixa , nBx)
+                                                aSize(aAbatBaixa, Len(aAbatBaixa)-1)
+                                                nSaldo -= nAbatim
+                                            EndIf
+                                        EndIf
+                                    Endif
+                                Endif
+                            Endif
+                            nSaldo:=Round(NoRound(nSaldo,3),2)
+
+                            //Desconsidera caso saldo seja menor ou igual a zero
+                            If nSaldo <= 0 .and. !ltxZero
+                                SE1->(dbSkip())
+                                Loop
+                            Endif
+
+                            SA1->(MsSeek(FwxFilial("SA1", SE1->E1_FILORIG)+SE1->(E1_CLIENTE+E1_LOJA)))
+                            nRecSA1 := SA1->(RECNO())
+                            SA6->( MSSeek(cFilSA6+SE1->E1_PORTADO) )
+                            dbSelectArea("SE1")
+
+                            aDados[CLIENT] 	:= RTrim(SE1->E1_CLIENTE) + "-" + SE1->E1_LOJA + "-" + IIF(mv_par29 == 1, SubStr(GetLGPDValue('SA1', 'A1_NREDUZ'),1,20), SubStr(GetLGPDValue('SA1','A1_NOME'),1,20))
+                            aDados[TITUL] 	:= SE1->E1_PREFIXO+"-"+SE1->E1_NUM+"-"+SE1->E1_PARCELA
+                            aDados[TIPO] 	:= SE1->E1_TIPO
+                            aDados[NATUREZA] := SE1->E1_NATUREZ
+                            If lDvc
+                                aDados[EMISSAO] := SE1->E1_EMISSAO
+                                aDados[VENCTO] 	:= SE1->E1_VENCTO
+                                aDados[VENCREA] := SE1->E1_VENCREA
+                            Else
+                                aDtTit := zF130Dtano2()
+                                aDados[EMISSAO] := aDtTit[1]
+                                aDados[VENCTO] 	:= aDtTit[2]
+                                aDados[VENCREA] := aDtTit[3]
+                            EndIf
+                            lVl_Corr := .T.
+
+                            If lSldRetro  //Recompoe Saldo Retroativo
+                                //Titulo foi Baixado e Data da Baixa e menor ou igual a Data Base do RelatÛrio
+                                IF !Empty(SE1->E1_BAIXA)
+                                    If SE1->E1_BAIXA <= mv_par36 .Or. !Empty( SE1->E1_PORTADO )
+                                        aDados[BANC] := SE1->E1_PORTADO+" "+SE1->E1_SITUACA
+                                    EndIf
+                                Else
+                                    //Titulo n„o foi Baixado e foi transferido para Carteira e Data Movimento e menor ou igual a Data Base do RelatÛrio
+                                    If Empty(SE1->E1_BAIXA) .and. SE1->E1_MOVIMEN <= mv_par36
+                                        aDados[BANC] := SE1->E1_PORTADO+" "+SE1->E1_SITUACA
+                                    EndIf
+                                EndIf
+                            Else   // Nao Recompoe Saldo Retroativo
+                                aDados[BANC] := SE1->E1_PORTADO+" "+SE1->E1_SITUACA
+                            EndIf
+
+                            //Se parametro Tit. Emissao Futura = Sim , e se for titulos de impostos gerados na baixa com data posterior a database, e parametro Recompoe Saldo = Sim => Exibier como Abatimento
+                            lAbatIMPBx := MV_PAR38 == 1 .AND. SE1->E1_EMISSAO >= MV_PAR36 .AND. lSldRetro .AND. SE1->E1_TIPO $ "PIS/COF/CSL/IRF"
+                            If !ltxZero
+                                aDados[VL_ORIG] := Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,Nil)) * If((SE1->E1_TIPO$MVABATIM +"/"+MVFUABT+"/"+MV_CRNEG+"/"+MVRECANT+"/"+MVABATIM) .OR. lAbatIMPBx, -1,1),nDecs+1),nDecs)
+                            Else
+                                aDados[VL_ORIG] := 0
+                            Endif
+                            aDados[VL_NOMINAL] := 0
+                            aDados[VL_CORRIG] := 0
+                            aDados[VL_VENCIDO] := 0
+
+                            If SE1->E1_TIPO $ MVABATIM +"/"+MVFUABT // Caso for tÌtulo de abatimento, busca o vencimento do tÌtulo pai
+                                dVencRea := Posicione("__SE1",28,cFilSE1+SE1->E1_TITPAI,"E1_VENCREA")
+                            Else
+                                dVencRea	:= SE1->E1_VENCREA
+                            EndIf
+
+                            If lExistFKD .And. !(SE1->E1_TIPO $ MVABATIM + "/" + MVPROVIS +  "/" + MVRECANT+  "/" + MV_CRNEG + "/" + MVFUABT)
+                                FK7->(DbSetOrder(2))
+                                If FK7->(MsSeek(FWXFilial("FK7",SE1->E1_FILORIG) + "SE1" + SE1->(E1_FILIAL+'|'+E1_PREFIXO+'|'+E1_NUM+'|'+E1_PARCELA+'|'+E1_TIPO+'|'+E1_CLIENTE+'|'+E1_LOJA))) 
+                                    FKD->(DbSetOrder(2))
+                                    lCheckVA := FKD->(MsSeek(FWXFilial("FKD",SE1->E1_FILORIG) + FK7->FK7_IDDOC))
+                                EndIf    
+                            EndIf
+
+                            nVa := 0
+                            
+                            If dDataBase > dVencRea	//vencidos
+                                If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                    If !ltxZero
+                                        aDados[VL_NOMINAL] := nSaldo * If(SE1->E1_TIPO$MVRECANT+"/"+MV_CRNEG+"/"+MVABATIM +"/"+MVFUABT, -1,1)
+                                    Else
+                                        aDados[VL_NOMINAL] := 0
+                                    Endif
+                                EndIf
+                                // Somente chamad fa070juros se realmente houver necessidade de calculo de juros ou o c·lculo da multa È feito pelo SIGALOJA
+                                If !( SE1->E1_TIPO $ MVRECANT + "|" + MV_CRNEG ) .And. ( lFJurCst .Or. !Empty(SE1->E1_VALJUR) .Or. !Empty(SE1->E1_PORCJUR) .Or. lClcMultLj )
+                                    nBaseJuros := 0
+
+                                    //Caso n„o possua nenhuma baixa - utiliza SE1->E1_SALDO
+                                    If Empty(SE1->E1_BAIXA)
+                                        nBaseJuros := SE1->E1_SALDO
+                                    //Caso possua baixa, porÈm nenhuma baixa tenha sido encontrada atÈ a database informada - utiliza SE1->E1_VALOR
+                                    //Baixa Parcial = se nSaldo maior que E1_VALOR = E1_VALOR
+                                    ElseIf Empty(dUltBaixa) .Or. nSaldo > SE1->E1_VALOR
+                                        nBaseJuros := SE1->E1_VALOR
+                                    Else
+                                        nBaseJuros := nSaldo
+                                    EndIf
+
+                                    nJuros := FA070Juros(MV_PAR15, nBaseJuros + IIf(MV_PAR33 == 2, nAbatim, 0), "SE1", dUltBaixa,,, lSldRetro, dMVDtBase)
+
+                                    If lClcMultLj .And. !lBxMulta 
+                                        //Calcula o valor da Multa  :funcao LojxRMul :fonte Lojxrec 
+                                        nMulta := LojxRMul(,,,nSaldo + IIF(MV_PAR33 == 2,nAbatim,0),SE1->E1_ACRESC,SE1->E1_VENCREA,dDataBase,lAchouDt,SE1->E1_MULTA,,SE1->E1_PREFIXO,SE1->E1_NUM,SE1->E1_PARCELA,SE1->E1_TIPO,SE1->E1_CLIENTE,SE1->E1_LOJA,"SE1",.T.)
+                                    ElseIf AllTrim(SE1->E1_ORIGEM) == "FINI055" //IntegraÁ„o TIN x PROTHEUS
+                                        If lMvJurTin
+                                            nMulta := ( SE1->E1_PORCJUR / 100 ) * ( SE1->E1_SALDO + SE1->E1_SDACRES - SE1->E1_SDDECRE )
+                                        Else
+                                            nMulta := ( SE1->E1_PORCJUR / 100 ) * SE1->E1_SALDO
+                                        EndIf
+                                    Endif
+                                EndIf
+                                // Se titulo do Template GEM
+                                If __lTempLOT .And.  !Empty(SE1->E1_NCONTR) .And. SE1->E1_VALOR==SE1->E1_SALDO
+                                    nJuros -= nGem
+                                EndIf
+                                
+                                dbSelectArea("SE1")
+                                
+                                If lFValAcess .And. lCheckVA
+                                    nVa := FValAcess(SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE, SE1->E1_LOJA, SE1->E1_NATUREZ,;
+                                        IIf(Empty(SE1->E1_BAIXA), .F., .T.), "", "R", Nil, Nil, SE1->E1_MOEDA, MV_PAR15, SE1->E1_TXMOEDA, Nil, lSldRetro)
+                                EndIf
+
+                                If nVa != 0
+                                    nJuros += nVa
+                                EndIf
+
+                                If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                    If !ltxZero
+                                        aDados[VL_CORRIG] := (nSaldo+nJuros+nMulta)* If(SE1->E1_TIPO$MVRECANT+"/"+MV_CRNEG+"/"+MVABATIM +"/"+MVFUABT, -1,1)
+                                        lVl_Corr := .F.
+                                    Else
+                                        aDados[VL_CORRIG] := 0
+                                    Endif
+                                EndIf
+
+                                If SE1->E1_TIPO $ MVRECANT+"/"+MV_CRNEG .or. (mv_par33 == 1 .and. SE1->E1_TIPO $ MVABATIM +"/"+MVFUABT)
+                                    nTit0 -= Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nTit1 -= (nSaldo)
+                                    nTit2 -= (nSaldo+nJuros+nMulta)
+                                    nMesTit0 -= Round(NoRound( xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nMesTit1 -= (nSaldo)
+                                    nMesTit2 -= (nSaldo+nJuros+nMulta)
+                                    nTotJur  -= nJuros
+                                    nMesTitJ -= nJuros
+                                    nTotFilJ -= nJuros
+                                Else
+                                    If !SE1->E1_TIPO $ MVABATIM	+"/"+MVFUABT
+                                        nTit0 += Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                        nTit1 += (nSaldo)
+                                        nTit2 += (nSaldo+nJuros+nMulta)
+                                        nMesTit0 += Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                        nMesTit1 += (nSaldo)
+                                        nMesTit2 += (nSaldo+nJuros+nMulta)
+                                        nTotJur  += nJuros
+                                        nMesTitJ += nJuros
+                                        nTotFilJ += nJuros
+                                    Endif
+                                Endif
+                            Else //a vencer
+                                If lFValAcess .And. lCheckVA
+                                    nVa := FValAcess(SE1->E1_PREFIXO, SE1->E1_NUM, SE1->E1_PARCELA, SE1->E1_TIPO, SE1->E1_CLIENTE, SE1->E1_LOJA, SE1->E1_NATUREZ,;
+                                        IIf(Empty(SE1->E1_BAIXA), .F., .T.), "", "R", Nil, Nil, SE1->E1_MOEDA, MV_PAR15, SE1->E1_TXMOEDA, Nil, lSldRetro)
+                                EndIf
+                                
+                                If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                    If !ltxZero
+                                        aDados[VL_VENCIDO] := nSaldo * If((SE1->E1_TIPO$MV_CRNEG+"/"+MVRECANT+"/"+MVABATIM +"/"+MVFUABT) .OR. lAbatIMPBx, -1,1)
+                                        aDados[VL_VENCIDO] += nVa
+                                    Else
+                                        aDados[VL_VENCIDO] := 0
+                                    Endif
+                                EndIf
+
+                                If ! ( SE1->E1_TIPO $ MVRECANT+"/"+MV_CRNEG+"/"+MVABATIM +"/"+MVFUABT) .and. !lAbatIMPBx
+                                    nTit0 += Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nTit3 += (nSaldo-nTotAbat) + nVa
+                                    nTit4 += (nSaldo-nTotAbat)  + nVa
+                                    nMesTit0 += Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nMesTit3 += (nSaldo-nTotAbat)  + nVa
+                                    nMesTit4 += (nSaldo-nTotAbat) + nVa
+                                Else
+                                    nTit0 -= Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nTit3 -= (nSaldo-nTotAbat)
+                                    nTit4 -= (nSaldo-nTotAbat)
+                                    nMesTit0 -= Round(NoRound(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,SE1->E1_EMISSAO,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),ndecs+1),ndecs)
+                                    nMesTit3 -= (nSaldo-nTotAbat) + nVa
+                                    nMesTit4 -= (nSaldo-nTotAbat) + nVa
+                                Endif
+                            Endif
+
+                            lCheckVA := .F. // "Limpo" a vari·vel
+
+                            If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                aDados[NUMBC] := SE1->E1_NUMBCO
+                            EndIf
+
+                            If nJuros > 0
+                                If mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                    aDados[VL_JUROS] := nJuros + nMulta
+                                EndIf
+                                nJuros := 0
+                            EndIf
+
+                            nMulta  := 0
+                            nAtraso := 0
+                            aDados[ATRASO] := nAtraso
+                            
+                            If dDataBase > SE1->E1_VENCREA .And. !(SE1->E1_TIPO $ MVRECANT+"/"+MV_CRNEG)
+                                nAtraso := (dDataBase - SE1->E1_VENCTO)
+                                
+                                If (Dow(SE1->E1_VENCTO) == 1 .Or. Dow(SE1->E1_VENCTO) == 7) .And. Dow(dBaixa) == 2 .and. nAtraso <= 2 
+                                    nAtraso := 0
+                                EndIf
+                                
+                                nAtraso := If(nAtraso < 0, 0, nAtraso)
+                                
+                                If nAtraso > 0 .And. mv_par19 == 1 //1 = Analitico - 2 = Sintetico
+                                    aDados[ATRASO] := nAtraso
+                                EndIf
+                            EndIf
+                            
+                            If mv_par19 == 1 //1 = Analitico - 2 = Sintetico 18
+                                If !ltxZero
+                                    aDados[HISTORICO] := IIf(lDvc,SE1->E1_HIST,SubStr(SE1->E1_HIST,1,25)) + IIF(E1_TIPO $ MVPROVIS,"*"," ") + ;
+                                    Iif(Str(xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,mv_par15,dDataReaj,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),17,2) ==Str(xMoeda(SE1->E1_VALOR,SE1->E1_MOEDA,mv_par15,dDataReaj,ndecs+1,Iif(MV_PAR39==2,Iif(!Empty(SE1->E1_TXMOEDA),SE1->E1_TXMOEDA,RecMoeda(SE1->E1_EMISSAO,SE1->E1_MOEDA)),0)),17,2)," ","P")
+                                Else
+                                    aDados[HISTORICO] := STR0088 //"SEM TAXA"
+                                Endif
+                                //realiza a troca de alias da query que est· como SE1 para a tabela SE1 original
+                                // pois se cliente customizar relatorio com campo memo, o conteudo n„o È exibido
+
+                                nRecnoSE1 := SE1->(E1RECNO)
+                                DbChangeAlias("SE1","SE1QRY")
+                                DbChangeAlias("__SE1","SE1")
+                                SE1->(DbGoto(nRecnoSE1))
+                                //exibe a linha no relatorio
+                                oSection1:PrintLine()
+                                DbChangeAlias("SE1","__SE1")
+                                DbChangeAlias("SE1QRY","SE1")
+                                
+                                If (SE1->E1_TIPO $ MVRECANT+"/"+MV_CRNEG .OR. nAtraso > 0)
+                                    nTotAtVenc += aDados[VL_NOMINAL]
+                                    nTotVlOri += aDados[VL_CORRIG]
+                                    If nAtraso == 0
+                                        nTotEmDia += aDados[VL_VENCIDO]
+                                    ElseIf aDados[VL_JUROS] != NIL
+                                        nVlrTotJur += aDados[VL_JUROS]
+                                    EndIf
+                                Else
+                                    nTotEmDia += aDados[VL_VENCIDO]
+                                EndIf
+                                
+                                aFill(aDados,nil)
+                            EndIf
+
+                            //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+                            //≥ Carrega data do registro para permitir ≥
+                            //≥ posterior an†lise de quebra por mes.   ≥
+                            //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+                            dDataAnt := If(nOrdem == 6, SE1->E1_EMISSAO, Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA))
+
+                            If lFR130Tel
+                                cCampoCli := ExecBlock("FR130TELC",.F.,.F.)
+                                If !SA1->(FieldPos(cCampoCli)) > 0
+                                    cCampoCli := ""
+                                EndIf
+                            EndIf
+
+                            If nOrdem == 1 //Cliente
+                                cNomFor := If(mv_par29 == 1, AllTrim(SA1->A1_NREDUZ),AllTrim(SA1->A1_NOME)) +" "+Substr(Iif(!Empty(cCampoCli),SA1->(&cCampocli),SA1->A1_DDD+"-"+SA1->A1_TEL),1,18)
+                            Elseif nOrdem == 8 //codigo do cliente
+                                cNomFor := SA1->A1_COD+" "+SA1->A1_LOJA+" "+AllTrim(SA1->A1_NOME)+" "+Substr(Iif(!Empty(cCampoCli),SA1->(&cCampocli),SA1->A1_DDD+"-"+SA1->A1_TEL),1,18)
+                            Endif
+
+                            If nOrdem == 5 //Natureza
+                                dbSelectArea("SED")
+                                dbSetOrder(1)
+                                MSSeek(FwxFilial("SED")+SE1->E1_NATUREZ)
+                                cNomNat := SED->ED_CODIGO+" "+SED->ED_DESCRIC
+                            Endif
+
+                            If nOrdem == 7
+                                cNumBco := SE1->E1_PORTADO+SE1->E1_AGEDEP+SE1->E1_CONTA
+                            Else
+                                cNumBco := SE1->E1_PORTADO
+                            Endif
+
+                            dDtVenc := Iif(nOrdem == 4 .OR. nOrdem == 7, Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA), SE1->E1_EMISSAO)
+                            nTotVenc:= nTit2+nTit3
+                            nTotMes := nMesTit2+nMesTit3
+                            If ltxZero
+                                nTxZero++
+                            Endif
+                            ltxZero  := .F.
+                            SE1->(dbSkip())
+
+                            nTotTit ++
+                            nMesTTit ++
+                            nTotFiltit++
+                            nTit5 ++
+                            nTotTitEmp++		/* GESTAO */
+
+                            If oReport:nDevice == 6 .And. ( nTotReg == 60 .Or. (oReport:nRow + nRowHeight) >= nPageHeight )
+                                oReport:Pagebreak(.T.)
+                                oReport:EndPage()
+                                nTotReg := 0
+                            EndIf
+                           
+                        Enddo
+                    Else
+                        // ProteÁ„o para n„o entrar em loop
+                        SE1->(DbSkip())
+                        Loop
+                    EndIf
+                    __oHash:Clean()
+
+                    If nOrdem == 3
+                        SA6->(dbSeek(FwxFilial()+cCarAnt))
+                    ElseIf nOrdem == 7
+                        SA6->(dbSeek(FwxFilial()+SUBSTR(cCarAnt,9) ))
+                    ElseIf nOrdem == 9 .And. mv_par19 == 1
+                        cCarAnt2 := zSituCob(SubStr(cCarAnt,__nTamPort+1,1))
+                    EndIf
+
+                    IF nTit5 > 0 .And. nOrdem != 2 .And. nOrdem != 10 .And. mv_par19 == 2 //1 = Analitico - 2 = Sintetico
+                        zSubTot130R(nTit0,nTit1,nTit2,nTit3,nTit4,nOrdem,cCarAnt,nTotJur,nDecs,oReport,,oSection2)
+                        nTotReg++
+                    ElseIf lImpSintTbl
+                        oReport:SkipLine()
+                        oReport:ThinLine()
+                        zSubTot130R(nTit0,nTit1,nTit2,nTit3,nTit4,nOrdem,cCarAnt,nTotJur,nDecs,oReport,,oSection2)
+                    Endif
+
+                    nTotTitMes	:= nMesTTit
+                    nTotGeral	+= (nTit2+nTit3)
+
+                    //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+                    //≥ Verifica quebra por màs	  			    ≥
+                    //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+                    lQuebra := .F.
+                    If nOrdem == 4  .and. (Month(Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA)) # Month(dDataAnt) .or. Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA) > mv_par10)
+                        If(mv_par19 == 2) //1 = Analitico - 2 = Sintetico
+                            lQuebra := .T.
+                        Else
+                            nMesTit0 := nMesTit1 := nMesTit2 := nMesTit3 := nMesTit4 := nMesTTit := nMesTitJ := 0
+                        EndIf
+                    Elseif nOrdem == 6 .and. (Month(SE1->E1_EMISSAO) # Month(dDataAnt) .or. SE1->E1_EMISSAO > mv_par14)
+                        If(mv_par19 == 2) //1 = Analitico - 2 = Sintetico
+                            lQuebra := .T.
+                        Endif
+                        nMesTit0 := nMesTit1 := nMesTit2 := nMesTit3 := nMesTit4 := nMesTTit := nMesTitJ := 0
+                    Endif
+
+                    If lQuebra .and. nMesTTit # 0
+                        //QUEBRA POR MES
+                        oReport:SkipLine()
+                        oReport:ThinLine()
+                        zIMes130R(nMesTit0,nMesTit1,nMesTit2,nMesTit3,nMesTit4,nMesTTit,nMesTitJ,nDecs,oReport,,oSection2)
+
+                        If nOrdem == 4  .and. (Month(Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA)) # Month(dDataAnt) .or.;
+                        Iif(mv_par40 = 2, SE1->E1_VENCTO, SE1->E1_VENCREA) > mv_par10) .And. (mv_par19 == 2)
+                            nMesTit0 := nMesTit1 := nMesTit2 := nMesTit3 := nMesTit4 := nMesTTit := nMesTitJ := 0
+                        EndIf
+                    Endif
+
+                    // Quebra por Cliente.
+                    // "Salta pagina por cliente?" igual a "Sim" e a ordem eh por cliente ou codigo do cliente
+                    If mv_par35 == 1 .And. (nOrdem == 1 .Or. nOrdem == 8)
+                        oBreak:OnPrintTotal( { || oReport:EndPage() } )	// Finaliza pagina atual
+                    EndIf
+
+                    dbSelectArea("SE1")
+
+                    //MV_PAR33 = 2 (N„o Listar) os tÌtulos de abatimento n„o ser„o impressos,porÈm do valor a receber ser„o diminuidos os abatimentos.
+
+                    If mv_par33 == 2 .AND. MV_PAR19 == 1
+                        nTit0 -= nAbatim
+                        nTit1 -= nAbatim
+                        nTit2 -= nAbatim
+                        nAbatim := 0
+                    Endif
+
+                    nTot0+=nTit0
+                    nTot1+=nTit1
+                    nTot2+=nTit2
+                    nTot3+=nTit3
+                    nTot4+=nTit4
+                    nTotJ+=nTotJur
+                    /*
+                    GESTAO - inicio */
+                    nTotEmp0 += nTit0
+                    nTotEmp1 += nTit1
+                    nTotEmp2 += nTit2
+                    nTotEmp3 += nTit3
+                    nTotEmp4 += nTit4
+                    nTotEmpJ += nTotJur
+                    /* GESTAO - fim
+                    */
+                    nTotFil0+=nTit0
+                    nTotFil1+=nTit1
+                    nTotFil2+=nTit2
+                    nTotFil3+=nTit3
+                    nTotFil4+=nTit4
+                    Store 0 To nTit0,nTit1,nTit2,nTit3,nTit4,nTit5,nTotJur,nTotAbat
+                Enddo
+            Else
+                // ProteÁ„o para n„o entrar em loop
+                SE1->(DbSkip())
+                Loop
+            EndIf
+
+            If nTotFil0 <> 0
+                nTotFil := Iif(nTotFil2>0,nTotFil2+nTotFil3,nTotFil3)  //Iif(mv_par33 == 23, nTotFil0, nTotFil2+nTotFil3)
+                nTotEmp += nTotFil
+                cNomFil := cFilAnt + " - " + AllTrim(FwFilialName(cEmpAnt, cFilAnt))
+                cNomEmp := Substr(cFilAnt, 1, nTamEmp) + " - " + AllTrim(FwFilRazSocial(cEmpAnt, cFilAnt))
+            EndIf
+
+            If mv_par19 == 2 //1= Analitico   2 = Sintetico
+                If (nLenSelFil > 1) .Or. (lConFilAbx .And. SM0->(Reccount()) > 1) 		/* GESTAO */
+                    //Imprimir TOTAL por filial somente quando houver mais do que 1 filial.
+                    If nTotFil0 <> 0
+                        oReport:ThinLine()
+                        zIFil130R(nTotFil0,nTotFil1,nTotFil2,nTotFil3,nTotFil4,nTotFiltit,nTotFilJ,nDecs,oReport,,oSection2)
+                        oReport:SkipLine()
+                    Endif
+                Endif
+            Endif
+            dbSelectArea("SE1")		// voltar para alias existente, se nao, nao funciona
+
+            Store 0 To nTotFil0,nTotFil1,nTotFil2,nTotFil3,nTotFil4,nTotFilTit,nTotFilJ
+            If Empty(FwxFilial("SE1"))
+                Exit
+            Endif
+
+            // Quebra por Cliente.
+            // Evitar salto de pagina antes da impressao do total geral
+            If mv_par35 == 1 .And. (nOrdem == 1 .Or. nOrdem == 8)	// Cliente ou Codigo do Cliente
+                oBreak:OnPrintTotal( { || } )
+            EndIf
+
+            /* GESTAO - inicio */
+            If MV_PAR19 == 2
+                If !(Substr(cFilSE1, 1, nTamEmp) == Substr(SE1->E1_FILIAL, 1, nTamEmp))
+                    If nTotEmp0 <> 0
+                        oReport:ThinLine()
+                        zTotGer130R(nTotEmp0,nTotEmp1,nTotEmp2,nTotEmp3,nTotEmp4,nTotTitEmp,nTotEmpJ,nDecs,oReport,,oSection2,STR0082 + " " + cNomEmp)		//"T O T A L  E M P R E S A -->"
+                        oReport:SkipLine()
+                    Endif
+                    nTotEmp0 := 0
+                    nTotEmp1 := 0
+                    nTotEmp2 := 0
+                    nTotEmp3 := 0
+                    nTotEmp4 := 0
+                    nTotEmpJ := 0
+                    nTotTitEmp := 0
+                Endif
+            Endif
+            lExistFKD   := .F. 
+            /* GESTAO - fim */
+        Enddo
+    EndIf
+
+    DelSldTit()
+    __oHash:Clean()
+    __aTtImp	:= {}
+
+    // Quebra por Filial.
+    // Evitar salto de pagina antes da impressao do total geral
+    If mv_par35 == 1 .And. lTotFil .And. (nOrdem == 1 .Or. nOrdem == 8)
+        oBrkFil:OnPrintTotal( { || } )
+    EndIf
+
+    SM0->(dbGoTo(nRegSM0))
+    cFilAnt := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+
+    //Total geral para o Relatorio Sintetico
+    If mv_par19 == 2 .And. nOrdem != 2 .And. nOrdem != 10 //1 = Analitico - 2 = Sintetico
+        oReport:SkipLine()
+        oReport:ThinLine()
+        zTotGer130R(nTot0,nTot1,nTot2,nTot3,nTot4,nTotTit,nTotJ,nDecs,oReport,,oSection2)
+    Endif
+
+    oSection1:Finish()
+    //totalizador para formato tabela.
+    If lImpSintTbl
+        oReport:SkipLine()
+        oReport:ThinLine()
+        zTotGer130R(nTot0,nTotAtVenc,nTotVlOri,nTotEmDia,nTot4,nTotTit,nTotJ,nDecs,oReport,Nil,oSection2,Nil,nVlrTotJur)
+    EndIf
+    oSection2:Finish()
+
+    dbSelectArea("SE1")
+    dbCloseArea()
+    ChKFile("SE1")
+    dbSelectArea("SE1")
+    dbSetOrder(1)
+
+    SM0->(dbGoTo(nRegEmp))
+    cFilAnt := IIf( __lFWCodFil, FWGETCODFILIAL, SM0->M0_CODFIL )
+
+    //Acerta a database de acordo com a database real do sistema
+    dDataBase := dOldDtBase
+
+    If lSemTela .and. !Empty( __oTipoBa )
+        __oTipoBa:Destroy()
+        __oTipoBa	:= Nil
+    Endif
+
+    If __lMetric .and. nTotTit > 0
+        nTimer := oTimer:ElapseTime(.T.)//o true vai fazer reiniciar, caso vc queira usar de novo o oTimer...aÌ ele comeÁa a contar de 
+        nMedTimer := nTimer/nTotTit
+        If lSldRetro
+            FwCustomMetrics():setAverageMetric("SldRetroSIM", "financeiro-protheus_tempo-conclus„o-processo_seconds", nMedTimer)
+        Else
+            FwCustomMetrics():setAverageMetric("SldRetroNAO", "financeiro-protheus_tempo-conclus„o-processo_seconds", nMedTimer)
+        EndIf
+    EndIf
+
+    If oTimer != NIL
+        oTimer:Destroy()
+        oTimer := nil
+    Endif
+
+    If __oUltBxMl  != Nil
+        __oUltBxMl:Destroy()
+        __oUltBxMl := Nil
+    EndIf
+
+    If __oExisFKD != NIL
+        __oExisFKD:Destroy()
+        __oExisFKD := nil
+    Endif
+
+    If __oBusCmp != Nil 
+        __oBusCmp:Destroy()
+        __oBusCmp := Nil 
+    EndIf 
+
+Return
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒ-ƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥SubTot130R ≥ Autor ≥ Daniel Tadashi Batori ≥ Data ≥ 03.08.06 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒ-ƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥Imprimir SubTotal do Relatorio										  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zSubTot130R()															  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥																				  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso 	    ≥ Generico																	  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zSubTot130R(nTit0,nTit1,nTit2,nTit3,nTit4,nOrdem,cCarAnt,nTotJur,nDecs,oReport,aDados,oSection)
+
+Local cQuebra       := ""
+Local cCarteira     := ""
+Local cCodCart      := ""
+Local cFilName      := AllTrim(FwFilialName(cEmpAnt, cFilAnt))
+Local lConFilAbx    := MV_PAR21 == 1
+
+If nOrdem = 1
+    //mv_par29 - Imprime Nome?
+    cQuebra := If(mv_par29 == 1,Substr(GetLGPDValue('SA1', 'A1_NREDUZ'),1,30),Substr(GetLGPDValue('SA1', 'A1_NOME'),1,30)) + " " + STR0054 + Right(cCarAnt,2)+Iif(lConFilAbx,STR0055+cFilAnt + " - " + cFilName,"")//"Loja - "###" Filial - "
+Elseif nOrdem == 4 .or. nOrdem == 6
+    cQuebra := PadR(STR0037,28) + DtoC(cCarAnt) + "  " + If(lConFilAbx,cFilAnt+ " - " + cFilName,"  ")
+Elseif nOrdem = 3
+    cQuebra := PadR(STR0037,28) + If(Empty(SA6->A6_NREDUZ),STR0029,SA6->A6_NREDUZ) + " " + If(lConFilAbx,cFilAnt+ " - " + cFilName,"")
+ElseIf nOrdem == 5 //por Natureza
+    SED->( dbSetOrder( 1 ) )
+    SED->( MSSeek(cFilial+cCarAnt) )
+    cQuebra := PadR(STR0037,28) + cCarAnt + " "+Substr(SED->ED_DESCRIC,1,40) + " " + If(lConFilAbx,cFilAnt+ " - " + cFilName,"")
+Elseif nOrdem == 7
+    cQuebra := PadR(STR0037,28) + SubStr(cCarAnt,7,2)+"/"+SubStr(cCarAnt,5,2)+"/"+SubStr(cCarAnt,3,2)+" - "+SubStr(cCarAnt,9,3) + " " +Iif(lConFilAbx,cFilAnt+ " - " + cFilName,"")
+ElseIf nOrdem = 8
+       cQuebra := SA1->A1_COD+" "+Substr(GetLGPDValue('SA1', 'A1_NOME'),1,30) + " " + Iif(lConFilAbx,cFilAnt+ " - " + cFilName,"")
+ElseIf nOrdem = 9
+    cCodCart := SubStr(cCarAnt,__nTamPort+1,1)
+    cCarteira := zSituCob(cCodCart)
+    cQuebra := SA6->A6_COD + " " + SA6->A6_NREDUZ + " " + SubStr(cCarteira,1,20) + " " + Iif(lConFilAbx,cFilAnt + " - " + cFilName,"")
+Endif
+
+if !lImpSintTbl
+    zHabiCel(oReport, ( nOrdem == 5 .And. MV_MULNATR ) )
+EndIf
+
+oSection:Cell("QUEBRA"   ):SetBlock({|| cQuebra})
+oSection:Cell("TOT_NOMI" ):SetBlock({|| nTit1  })
+oSection:Cell("TOT_CORR" ):SetBlock({|| nTit2  })
+oSection:Cell("TOT_VENC" ):SetBlock({|| nTit3  })
+oSection:Cell("TOT_SOMA" ):SetBlock({|| nTit2+nTit3})
+oSection:Cell("TOT_JUROS"):SetBlock({|| nTotJur})
+
+oSection:PrintLine()
+
+Return .T.
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ-¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥ TotGer130R≥ Autor ≥ Paulo Boschetti       ≥ Data ≥ 01.06.92 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒ-ƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥ Imprimir total do relatorio										   ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ-ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zTotGer130R()															   ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒ-ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥																				   ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒ-ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso      ≥ Generico																	   ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒ-ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zTotGer130R(nTot0,nTot1,nTot2,nTot3,nTot4,nTotTit,nTotJ,nDecs,oReport,aDados,oSection,cTexto,nVlrTotJur)
+
+DEFAULT nDecs := Msdecimais(mv_par15)
+DEFAULT cTexto	:= ""		/* GESTAO */
+DEFAULT nVlrTotJur := 0
+
+zHabiCel(oReport)
+/*
+GESTAO - inicio */
+If Empty(cTexto)
+    oSection:Cell("QUEBRA"   ):SetBlock({|| STR0038 +"("+ AllTrim(Str(nTotTit)) +" "+ If(nTotTit > 1, STR0039, STR0040) +")"}) //"TOTAL"
+Else
+    oSection:Cell("QUEBRA"   ):SetBlock({|| cTexto}) //"TOTAL"
+Endif
+/* GESTAO - fim
+*/
+oSection:Cell("QUEBRA"   ):SetBlock({|| STR0038 +"("+ AllTrim(Str(nTotTit)) +" "+ If(nTotTit > 1, STR0039, STR0040) +")"}) //"TOTAL"
+oSection:Cell("TOT_NOMI" ):SetBlock({|| nTot1  }) //Tit Vencidos Valor Atual
+oSection:Cell("TOT_CORR" ):SetBlock({|| nTot2  }) //Tit Vencidos Valor Corrigido
+oSection:Cell("TOT_VENC" ):SetBlock({|| nTot3  }) //Titulos a Vencer Valor Atual
+If lImpSintTbl 
+    oSection:Cell("TOT_JUROS"):SetBlock({|| nVlrTotJur  }) //Vlr.juros ou permanencia
+    oSection:Cell("TOT_SOMA" ):SetBlock({|| nTotal })
+Else
+    oSection:Cell("TOT_SOMA" ):SetBlock({|| (nTot2+nTot3) })
+EndIf
+oSection:PrintLine()
+
+Return .T.
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥IMes130R	≥ Autor ≥ Vinicius Barreira	  ≥ Data ≥ 12.12.94 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥IMPRIMIR TOTAL DO RELATORIO - QUEBRA POR MES					  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zIMes130R()	 															  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥ 																			  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso		 ≥ Generico 																  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zIMes130R(nMesTot0,nMesTot1,nMesTot2,nMesTot3,nMesTot4,nMesTTit,nMesTotJ,nDecs,oReport,aDados,oSection)
+
+zHabiCel(oReport)
+
+oSection:Cell("QUEBRA"   ):SetBlock({|| PadR(STR0041,28) + "("+ALLTRIM(STR(nMesTTit))+" "+IIF(nMesTTit > 1,OemToAnsi(STR0039),OemToAnsi(STR0040))+")"})
+oSection:Cell("TOT_NOMI" ):SetBlock({|| nMesTot1})
+oSection:Cell("TOT_CORR" ):SetBlock({|| nMesTot2})
+oSection:Cell("TOT_VENC" ):SetBlock({|| nMesTot3})
+oSection:Cell("TOT_SOMA" ):SetBlock({|| nMesTot2+nMesTot3})
+
+oSection:PrintLine()
+
+Return(.T.)
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥ IFil130R ≥ Autor ≥ Paulo Boschetti  	  ≥ Data ≥ 01.06.92 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥ Imprimir total do relatorio por filial							  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zIFil130R()																  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥																				  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso 	    ≥ Generico																	  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zIFil130R(nTotFil0,nTotFil1,nTotFil2,nTotFil3,nTotFil4,nTotFilTit,nTotFilJ,nDecs,oReport,aDados,oSection)
+
+zHabiCel(oReport)
+
+oSection:Cell("QUEBRA"   ):SetBlock({|| STR0043 + " " + If(MV_PAR21 == 1,cFilAnt+" - " + AllTrim(FwFilialName(cEmpAnt, cFilAnt)),"")})  //"T O T A L   F I L I A L ----> "
+oSection:Cell("TOT_NOMI" ):SetBlock({|| nTotFil1})
+oSection:Cell("TOT_CORR" ):SetBlock({|| nTotFil2})
+oSection:Cell("TOT_VENC" ):SetBlock({|| nTotFil3})
+oSection:Cell("TOT_JUROS"  ):SetBlock({|| nTotFilJ})
+oSection:Cell("TOT_SOMA" ):SetBlock({||nTotFil2+nTotFil3})
+
+If mv_par19 == 1 // 1 = Analitico - 2 = Sintetico
+    aDados[VL_ORIG] := nTotFil0
+Endif
+
+oSection:PrintLine()
+
+Return .T.
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥HabiCel	≥ Autor ≥ Daniel Tadashi Batori ≥ Data ≥ 04/08/06 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥habilita ou desabilita celulas para imprimir totais			  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Sintaxe e ≥ zHabiCel()	 															  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Parametros≥ lHabilit->.T. para habilitar e .F. para desabilitar		  ≥±±
+±±≥			 ≥ oReport ->objeto TReport que possui as celulas 				  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso		 ≥ Generico 																  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zHabiCel(oReport, lMultNat)
+
+Local oSection1 := oReport:Section(1)
+Local oSection2 := oReport:Section(2)
+
+Default lMultNat := .F.
+
+If mv_par19 == 1 //1 =  Analitico - 2 = Sintetico
+    If !lMultNat .And. !lImpSintTbl
+        oSection1:Cell("CLIENTE"   ):SetSize(50)
+        oSection1:Cell("TITULO"    ):Disable()
+        oSection1:Cell("E1_TIPO"   ):Hide()
+        oSection1:Cell("E1_NATUREZ"):Hide()
+        oSection1:Cell("E1_EMISSAO"):Hide()
+        oSection1:Cell("E1_VENCTO" ):Hide()
+        oSection1:Cell("E1_VENCREA"):Hide()
+        oSection1:Cell("VAL_ORIG"  ):Hide()
+        oSection1:Cell("BANCO"     ):Hide()
+        oSection1:Cell("DIA_ATR"   ):Hide()
+        oSection1:Cell("E1_HIST"   ):Disable()
+        oSection1:Cell("VAL_SOMA"  ):Enable()
+
+        oSection1:Cell("CLIENTE"   ):HideHeader()
+        oSection1:Cell("E1_TIPO"   ):HideHeader()
+        oSection1:Cell("E1_NATUREZ"):HideHeader()
+        oSection1:Cell("E1_EMISSAO"):HideHeader()
+        oSection1:Cell("E1_VENCTO" ):HideHeader()
+        oSection1:Cell("E1_VENCREA"):HideHeader()
+        oSection1:Cell("VAL_ORIG"  ):HideHeader()
+        oSection1:Cell("BANCO"     ):HideHeader()
+        oSection1:Cell("DIA_ATR"   ):HideHeader()
+    EndIf
+Else
+    oSection2:Cell("QUEBRA"   ):SetSize(100)
+Endif
+
+Return(.T.)
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÑo	 ≥fr130Indr ≥ Autor ≥ Wagner           	  ≥ Data ≥ 12.12.94 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÑo ≥Monta Indregua para impressao do relat¢rio						  ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso		 ≥ Generico 																  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+
+Static Function zfr130IndR()
+Local cString
+
+cString := 'SE1->E1_FILIAL=="'+FwxFilial("SE1")+'".And.'
+cString += 'SE1->E1_CLIENTE>="'+mv_par01+'".and.SE1->E1_CLIENTE<="'+mv_par02+'".And.'
+cString += 'SE1->E1_PREFIXO>="'+mv_par03+'".and.SE1->E1_PREFIXO<="'+mv_par04+'".And.'
+cString += 'SE1->E1_NUM>="'+mv_par05+'".and.SE1->E1_NUM<="'+mv_par06+'".And.'
+cString += 'DTOS('+Iif(mv_par40 = 2, 'SE1->E1_VENCTO', 'SE1->E1_VENCREA')+')>="'+DTOS(mv_par09)+'".And.'
+cString += 'DTOS('+Iif(mv_par40 = 2, 'SE1->E1_VENCTO', 'SE1->E1_VENCREA')+')<="'+DTOS(mv_par10)+'".And.'
+cString += '(SE1->E1_MULTNAT == "1" .OR. (SE1->E1_NATUREZ>="'+MV_PAR11+'".and.SE1->E1_NATUREZ<="'+MV_PAR12+'")).And.'
+cString += 'DTOS(SE1->E1_EMISSAO)>="'+DTOS(mv_par13)+'".and.DTOS(SE1->E1_EMISSAO)<="'+DTOS(mv_par14)+'"'
+If !Empty(mv_par31) // Deseja imprimir apenas os tipos do parametro 31
+    cString += '.And.SE1->E1_TIPO$"'+mv_par31+'"'
+ElseIf !Empty(MV_PAR32) // Deseja excluir os tipos do parametro 32
+    cString += '.And. !(Alltrim(SE1->E1_TIPO) $ "'+ ALLTRIM(MV_PAR32)+'")'
+EndIf
+IF mv_par34 == 1  // Apenas titulos que estarao no fluxo de caixa
+    cString += '.And.(SE1->E1_FLUXO!="N")'
+Endif
+Return cString
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥Situcob   ∫Autor  ≥Mauricio Pequim Jr. ∫ Data ≥13.04.2005   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥Retorna situacao de cobranca do titulo                      ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ FINR130                                                    ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zSituCob(cCarAnt)
+Local aArea		:= GetArea()
+Local cCart		:= " "
+
+If !Empty(cCarAnt)
+    cCart := AllTrim(cCarAnt) + " " + Substr(FN022SITCB( cCarAnt )[9],1,20)
+Else
+    cCart := "0 "+STR0029
+Endif
+RestArea(aArea)
+Return cCart
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ SumBxPCC≥ Autor ≥ Igor Franzoi			 ≥ Data≥19/12/2011 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ Soma os abatimentos do PCC em caso de saldo retroativo	   ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Uso       ≥ Finr130.prx                                                 ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+Static Function zSumBxPCC(cPrefixo,cNumero,dDataRef,cCodCli,cLoja,nMoeda,cParcela,cTipo)
+    Local aArea     := GetArea()
+    Local cQuery	:= ""
+    Local nTotPcc	:= 0
+
+    DEFAULT nMoeda	:= 1
+
+    cQryAlias := GetNextAlias()
+
+    cQuery	:= " SELECT E1_FILIAL, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_TIPO, E1_EMISSAO, E1_VALOR, E1_TXMOEDA, E1_MOEDA, E1_TITPAI, R_E_C_N_O_ RECNO "
+    cQuery	+= " FROM "+RetSqlName("SE1")
+    cQuery	+= " WHERE E1_FILIAL = '" + FwxFilial("SE1") + "' AND "
+    cQuery	+= " E1_PREFIXO = '" + cPrefixo + "' AND "
+    cQuery	+= " E1_NUM     = '" + cNumero  + "' AND "
+    cQuery	+= " E1_CLIENTE = '" + cCodCli  + "' AND "
+    cQuery	+= " E1_LOJA    = '" + cLoja    + "' AND "
+    cQuery	+= " E1_TIPO IN ('" + MVPIS + "','" + MVCOFINS + "','CSL' "
+
+    If SA1->A1_TPESSOA == 'EP'
+        cQuery	+= ",'" + MVIRF + "', '" + MVINSS + "') AND "
+    Else
+        cQuery	+= ") AND "
+    EndIf
+
+    cQuery	+= " E1_EMISSAO <= '"+Dtos(dDataRef)+"' AND "
+    cQuery	+= " D_E_L_E_T_ = ' ' "
+
+    dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cQryAlias , .F., .T.)
+
+    While (cQryAlias)->( !Eof() )
+        If zFTITRAPAI((cQryAlias)->E1_TITPAI) //Verifica se o Titulo PAI e um RA e nao abate o PCC
+            If AllTrim(cPrefixo + cNumero + cParcela + cTipo + cCodCli + cLoja) == AllTrim((cQryAlias)->E1_TITPAI)
+                nTotPcc += xMoeda((cQryAlias)->E1_VALOR,(cQryAlias)->E1_MOEDA,nMoeda,dDataRef,,If(cPaisLoc=="BRA",(cQryAlias)->E1_TXMOEDA,0))
+            EndIf
+        EndIf
+        (cQryAlias)->(dbSkip())
+    EndDo
+
+    (cQryAlias)->(dbCloseArea())
+
+    RestArea(aArea)
+
+Return(nTotPcc)
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥ FR130RetNat ∫Autor ≥ Gustavo Henrique  ∫ Data ≥ 25/05/10   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Descricao ≥ Retorna codigo e descricao da natureza para quebra do      ∫±±
+±±∫          ≥ relatorio analitico por ordem de natureza.                 ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Parametros≥ EXPC1 - Codigo da natureza para pesquisa                   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ Financeiro                                                 ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zFR130RetNat( cCodNat )
+
+SED->( dbSetOrder( 1 ) )
+SED->( MsSeek( FwxFilial("SED") + cCodNat ) )
+
+Return( MascNat(SED->ED_CODIGO) + " - " + SED->ED_DESCRIC + If(MV_PAR21 == 1, cFilAnt + " - " + AllTrim(FwFilialName(cEmpAnt, cFilAnt)), "" ) )
+
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥ FR130TotSoma ∫Autor ≥ Gustavo Henrique ∫ Data ≥ 05/26/10   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Descricao ≥ Totaliza somatoria da coluna (Vencidos+A Vencer) quando    ∫±±
+±±∫          ≥ selecionado relatorio por ordem de natureza e parametro    ∫±±
+±±∫          ≥ MV_MULNATR ativado.                                        ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ Financeiro                                                 ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zFR130TotSoma( oTotCorr, oTotVenc, nTotVenc, nTotGeral, nOrdem )
+
+nTotal += nTotVenc	:= IIf(oTotCorr:GetValue() == NIL .OR. oTotVenc:GetValue() == NIL, nTotVenc, oTotCorr:GetValue() + oTotVenc:GetValue())
+
+If nOrdem == 5
+    nTotGeral	+= nTotVenc
+EndIf
+
+Return .T.
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥F040RETIMP∫Autor  ≥ Totvs              ∫ Data ≥  30/07/12   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥ Efetua a validacao na exclusao do titulo                   ∫±±
+±±∫          ≥                                                            ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ AP                                                         ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zF130RETIMP(cFiltro)
+    Local aTitulos := {}
+    Local aAreaSE1	:= SE1->(GetArea())
+
+    dbSelectArea("SED")
+    SED->(DbSetOrder(1))
+    
+    If MSSeek (FwxFilial("SED")+cFiltro)
+        If SED->ED_CALCIRF=="S"
+            AADD(aTitulos,{MVIRABT, .T.})
+        EndIf
+        
+        If SED->ED_CALCINS=="S"
+            AADD(aTitulos,{MVINABT,.T.})
+        EndIf
+        
+        If SED->ED_CALCPIS=="S"
+            AADD(aTitulos,{MVPIABT,.T.})
+        EndIf
+        
+        If SED->ED_CALCCOF=="S"
+            AADD(aTitulos,{MVCFABT,.T.})
+        EndIf
+        
+        If SED->ED_CALCCSL=="S"
+            AADD(aTitulos,{MVCSABT,.T.})
+        EndIf
+        
+        If SED->ED_CALCISS=="S"
+            AADD(aTitulos,{MVISABT,.T.})
+        EndIf
+        
+        //ISS Bitributado
+        If SED->ED_CALCISS=="S"
+            AADD(aTitulos,{MVI2ABT,.T.})
+        EndIf
+        
+        If cPaisLoc == "BRA" .And. SED->ED_RECFUN == "1"
+            Aadd(aTitulos, {MVFUABT, .T.})
+        EndIf
+    EndIf
+    
+    RestArea(aAreaSE1)
+    FwFreeArray(aAreaSE1)
+Return aTitulos
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥FTITPAI   ∫Autor Leandro Sousa         ∫ Data ≥  12/23/11   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥ Caso algum titulo de abatimento tenho o campo E1_TITPAI em ∫±±
+±±∫          ≥ branco a funÁao ira preencher para o relatorio ficar correto±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ FINR130                                                   ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+
+Static Function zFTITPAI()
+Local cAlias := Alias()
+Local cTitP
+Local cQuery
+
+cQuery := "SELECT E1_FILIAL,E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO,E1_CLIENTE,E1_LOJA FROM "
+cQuery += RetSqlName("SE1")
+cQuery += " WHERE E1_FILIAL = '"+FwxFilial("SE1")+"'"
+cQuery += " AND E1_CLIENTE  = '"+SE1->E1_CLIENTE+"'"
+cQuery += " AND E1_LOJA     = '"+SE1->E1_LOJA+"'"
+cQuery += " AND E1_PREFIXO  = '"+SE1->E1_PREFIXO+"'"
+cQuery += " AND E1_NUM      = '"+SE1->E1_NUM+"'"
+cQuery += " AND E1_PARCELA  = '"+SE1->E1_PARCELA+"'"
+cQuery += " AND E1_TIPO NOT IN " + zF130MontaIn()
+cQuery += " AND D_E_L_E_T_  = ' ' "
+cQuery += " ORDER BY "+SqlOrder(__SE1->(IndexKey(2)))
+
+cQuery := ChangeQuery(cQuery)
+
+dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),'FTITPAI',.T.,.T.)
+
+If FTITPAI->(!Eof())
+    cTitP := PADR(FTITPAI->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO+E1_CLIENTE+E1_LOJA),TAMSX3('E1_TITPAI')[1])
+EndIf
+
+FTITPAI->(dbCloseArea())
+dbSelectArea(cAlias)
+
+Return cTitP
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥F130TipoBA∫Autor  ≥Microsiga           ∫ Data ≥  13/08/12   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥ Rotina para buscar na SE5 quando titulo eh tipo RA para    ∫±±
+±±∫          ≥ verificar a data de cancelamento que sera gravado no       ∫±±
+±±∫          ≥ campo E5_HIST entre ###[AAAAMMDD]### a fim de compor o     ∫±±
+±±∫          ≥ saldo adequadamente                                        ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ AP                                                         ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zF130TipoBA()
+    Local aSavArea		:= GetArea()
+    Local nPosDtCanc	:= 0
+    Local nValor		:= 0
+    Local cQuery		:= ''
+    Local cTipoBA		:= ''
+
+    If !Empty( __oTipoBa )
+        If Empty( __oTipoBa:cBaseQuery )
+
+            cQuery += "SELECT E5_DATA, E5_HISTOR, E5_VALOR "
+            cQuery += " FROM " + RetSqlName("SE5") + " SE5 "
+            cQuery += " WHERE SE5.E5_FILIAL = ? "
+            cQuery += " AND SE5.E5_PREFIXO = ? "
+            cQuery += " AND SE5.E5_NUMERO = ? "
+            cQuery += " AND SE5.E5_PARCELA = ? "
+            cQuery += " AND SE5.E5_TIPO = ? "
+            cQuery += " AND SE5.E5_CLIFOR = ? "
+            cQuery += " AND SE5.E5_LOJA = ? "
+            cQuery += " AND SE5.E5_DATA <= ? "
+            cQuery += " AND SE5.E5_TIPODOC = 'BA' "
+            cQuery += " AND SE5.E5_SITUACA = 'C' "
+            cQuery += " AND SE5.E5_HISTOR LIKE '%###%' "
+            cQuery += " AND SE5.D_E_L_E_T_ = ' ' "
+
+            cQuery := ChangeQuery(cQuery)
+            __oTipoBa:SetQuery( cQuery )
+        EndIf
+
+        __oTipoBa:SetString( 1, FwxFilial("SE5")	)
+        __oTipoBa:SetString( 2, SE1->E1_PREFIXO	)
+        __oTipoBa:SetString( 3, SE1->E1_NUM		)
+        __oTipoBa:SetString( 4, SE1->E1_PARCELA	)
+        __oTipoBa:SetString( 5, SE1->E1_TIPO	)
+        __oTipoBa:SetString( 6, SE1->E1_CLIENTE	)
+        __oTipoBa:SetString( 7, SE1->E1_LOJA	)
+        __oTipoBa:SetDate(	8, mv_par36			)
+
+        cQuery := __oTipoBa:GetFixQuery()
+        cTipoBA := MpSysOpenQuery( cQuery )
+
+        While ( cTipoBA )->(!EOF())
+            nPosDtCanc := At( "###[", ( cTipoBA )->E5_HISTOR )
+            If StoD( Subs( ( cTipoBA )->E5_HISTOR, nPosDtCanc + 4, 8 ) ) > MV_PAR36
+                nValor := ( cTipoBA )->E5_VALOR
+                Exit
+            EndIf
+            ( cTipoBA )->(dbSkip())
+        EndDo
+
+        ( cTipoBA )->( dbCloseArea() )
+    EndIf
+
+    RestArea(aSavArea)
+
+Return nValor
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥FTITRAPAI ∫Autor  ≥Telso Carneiro      ∫ Data ≥  15/08/12   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥ Verifica se o titulo de abatimento no campo E1_TITPAI e    ∫±±
+±±∫          ≥ RA                                                         ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ FINR130                                                    ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+
+Static Function zFTITRAPAI(cTITPAI)
+Local aArea    := GetArea()
+Local lRet     := .T.
+Local nTamPref := 0
+Local nTamNum  := 0
+Local nTamParc := 0
+Local nTamTipo := 0
+Local cTipo    := ""
+//Controla o Pis Cofins e Csll na RA (1 = Controla retenÁ„o de impostos no RA; ou 2 = N„o controla retenÁ„o de impostos no RA(default))
+Local lRaRtImp := FRaRtImp()
+
+If !Empty(cTITPAI) .And. lRaRtImp
+    nTamPref := TAMSX3('E1_PREFIXO')[1]
+    nTamNum  := TAMSX3('E1_NUM')[1]
+    nTamParc := TAMSX3('E1_PARCELA')[1]
+    nTamTipo := TAMSX3('E1_TIPO')[1]
+    cTipo    := Subs(cTITPAI,(1+nTamPref+nTamNum+nTamParc),nTamTipo)
+
+    If cTipo $ MVRECANT // Titulo pai e um RA
+        lRet := .F.
+    EndIf
+EndIf
+RestArea(aArea)
+
+Return lRet
+
+/*/{Protheus.doc} FR130DBX
+    Busca a data da ultima baixa realizada do titulo a receber atÈ a DataBase do sistema.
+
+    @author leonardo.casilva
+
+    @since      11/04/2014
+    @version    P1180
+    @param cChaveTit, Char, Chave do tÌtulo com os campos separados por |
+    @Param cCampo, Char, Campo de data que ser· retornado
+    @return     dDataRet
+/*/
+Static Function zFR130DBX(cChaveTit As Character, cCampo As Character) As Date
+    Local cFilFK1    As Character
+    Local cIdDoc     As Character
+    Local cQuery     As Character
+    Local dDataRet   As Date
+	Local aAreaAtual As Array
+    
+    //Par‚metros de entrada.
+    Default cChaveTit := (FwXFilial("SE1")+"|"+SE1->E1_PREFIXO+"|"+SE1->E1_NUM+"|"+SE1->E1_PARCELA+"|"+SE1->E1_TIPO+"|"+SE1->E1_CLIENTE+"|"+SE1->E1_LOJA)
+    Default cCampo    := "FK1_DATA"
+    
+    //Inicializa vari·veis
+    aAreaAtual := GetArea()
+    cQuery     := ""
+    cFilFK1    := FwXFilial("FK1")
+    cIdDoc     := FinBuscaFK7(cChaveTit, "SE1")
+    dDataRet   := CToD("//")
+    
+    If !(Empty(__oF130Dbx))
+        
+        If Empty(__oF130Dbx:cBaseQuery)
+	
+            cQuery := "SELECT MAX( ? ) ULTBAIXA "       //(#01)
+            cQuery += "FROM " + RetSQLName("FK1") + " FK1 "
+            cQuery += "WHERE FK1.FK1_FILIAL = ? "       //(#02)
+            cQuery += "AND FK1.FK1_IDDOC = ? "          //(#03)
+            cQuery += "AND FK1.FK1_MOTBX NOT IN ('PCC', 'IRF', 'ISS', 'IMR',  'CMP') "
+            cQuery += " AND ((FK1.FK1_DATA <= ? ) "	    //(#04)
+            cQuery += " OR (FK1.FK1_DTDISP <= ? ) "	    //(#05)
+            cQuery += " OR (FK1.FK1_DTDIGI <= ? )) "	//(#06)
+            cQuery += "AND FK1.D_E_L_E_T_ = ? "	        //(#07)
+            cQuery += "AND NOT EXISTS( SELECT FK1EST.FK1_IDDOC "
+            cQuery += "FROM " + RetSQLName("FK1") + " FK1EST "
+            cQuery += "WHERE FK1EST.FK1_FILIAL = ? "    //(#08)
+            cQuery += "AND FK1EST.FK1_IDDOC = ? "       //(#09)
+            cQuery += "AND FK1EST.FK1_SEQ = FK1.FK1_SEQ "
+            cQuery += "AND FK1EST.FK1_TPDOC = 'ES' "
+            cQuery += " AND ((FK1EST.FK1_DATA <= ? ) "  //(#10)
+            cQuery += " OR (FK1EST.FK1_DTDISP <= ? ) "  //(#11)
+            cQuery += " OR (FK1EST.FK1_DTDIGI <= ? )) " //(#12)
+            cQuery += "AND FK1EST.D_E_L_E_T_ = ? ) "    //(#13)
+            cQuery := ChangeQuery(cQuery)
+            __oF130Dbx:SetQuery(cQuery)
+        EndIf
+
+        __oF130Dbx:setUnsafe( 01,   cCampo)     //#01
+        __oF130Dbx:SetString( 02,   cFilFK1)    //#02
+        __oF130Dbx:SetString( 03,   cIdDoc)     //#03
+        __oF130Dbx:SetDate(   04,   dDataBase)  //#04
+        __oF130Dbx:SetDate(   05,   dDataBase)  //#05
+        __oF130Dbx:SetDate(   06,   dDataBase)  //#06
+        __oF130Dbx:SetString( 07,   Space(1))   //#07
+        __oF130Dbx:SetString( 08,   cFilFK1)    //#08
+        __oF130Dbx:SetString( 09,   cIdDoc)     //#09
+        __oF130Dbx:SetDate(   10,   dDataBase)  //#10
+        __oF130Dbx:SetDate(   11,   dDataBase)  //#11
+        __oF130Dbx:SetDate(   12,   dDataBase)  //#12
+        __oF130Dbx:SetString( 13,   Space(1))   //#13
+
+        cQuery := __oF130Dbx:GetFixQuery()
+        dDataRet := SToD(MPSysExecScalar(cQuery, "ULTBAIXA"))
+    EndIf
+    
+    RestArea(aAreaAtual)
+    FwFreeArray(aAreaAtual)
+Return dDataRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} FR130InFilial
+
+Formata uma string com todas as filiais selecionadas pelo usuario,
+para que seja usada no parametro "IN" da query
+
+@author daniel.mendes
+
+@since 19/05/2014
+@version P12
+
+@return Retorna uma string com as filiais selecionadas
+/*/
+//-------------------------------------------------------------------
+Static Function zFR130InFilial()
+Local cRetornoIn := ""
+Local nFor := 0
+
+    For nFor := 1 To Len(aSelFil)
+        cRetornoIn += aSelFil[nFor] + '|'
+    Next nFor
+
+Return " IN " + FormatIn( SubStr( cRetornoIn , 1 , Len( cRetornoIn ) -1 ) , '|' )
+
+/*
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±…ÕÕÕÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÀÕÕÕÕÕÕ—ÕÕÕÕÕÕÕÕÕÕÕÕÕª±±
+±±∫Programa  ≥HashNatur  ≥ Ronaldo Tapia             ∫ Data ≥  05/04/16   ∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕ ÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Desc.     ≥ Faz querypara verificar se existe abatimento para determi- ∫±±
+±±∫          ≥ cliente                                                   .∫±±
+±±ÃÕÕÕÕÕÕÕÕÕÕÿÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕπ±±
+±±∫Uso       ≥ AP                                                         ∫±±
+±±»ÕÕÕÕÕÕÕÕÕÕœÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕÕº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+Static Function zHashNatur(cTipoIn as Character) as Logical
+
+Local cQuery as Character
+Local cAreaAtu as Character // := Alias()//- salvo o alias aberto
+Local lTemCli as Logical
+Local lFlag as Logical
+Local cHashNatur as Character
+
+Default cTipoIn := ""
+
+cQuery := ""
+cAreaAtu := ""
+lTemCli := .F.
+lFlag := .F.
+cHashNatur := ""
+
+lTemCli := __oHash:Get( SE1->(E1_CLIENTE+E1_LOJA) , lFlag )
+
+If !lTemCli
+    cAreaAtu := Alias()//- salvo o alias aberto
+    If __oTCli == Nil
+        cQuery := " SELECT Max(R_E_C_N_O_) AS RECNO"
+        cQuery += "   FROM ? SE1 " 
+        cQuery += "  WHERE SE1.E1_FILIAL = ?"
+        cQuery += "    AND SE1.E1_CLIENTE = ?"
+        cQuery += "    AND SE1.E1_LOJA = ?"
+        cQuery += "    AND SE1.E1_TIPO IN "  + zF130MontaIn(@cTipoIn)
+        cQuery += "    AND SE1.D_E_L_E_T_ = ' ' "
+
+        cQuery := ChangeQuery(cQuery)
+        __oTCli := IIf(__lCachedQry, FwExecStatement():New(cQuery), FWPreparedStatement():New(cQuery))
+        
+    Endif
+
+    __oTCli:SetNumeric(1, RetSqlName("SE1"))
+    __oTCli:SetString(2,  FwxFilial("SE1"))
+    __oTCli:SetString(3,  SE1->E1_CLIENTE)
+    __oTCli:SetString(4,  SE1->E1_LOJA)
+    
+    cQuery := __oTCli:GetFixQuery()
+	cHashNatur := MpSysOpenQuery(cQuery)
+
+    If !Eof()
+        lTemCli := __oHash:Set( SE1->(E1_CLIENTE+E1_LOJA) , .T. )
+    Endif
+
+    (cHashNatur)->(dbCloseArea())
+    //- restauro o alias anterior
+    dbSelectArea(cAreaAtu)
+EndIf
+
+Return (lTemCli)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} F130MontaIn
+Formata a express„o para IN ou NOT IN
+
+@author Mauricio Pequim Jr
+@since 02/05/2016
+@version 12.1.7
+/*/
+//-------------------------------------------------------------------
+Static Function zF130MontaIn(cTipoIn)
+Local cTiposAbt	:= MVABATIM +"|"+MVFUABT
+Default cTipoIn   := ""
+
+If cTipoIn == ""
+    cTipoIn	:=	StrTran(cTiposAbt,',','/')
+    cTipoIn	:=	StrTran(cTipoIn,';','/')
+    cTipoIn	:=	StrTran(cTipoIn,'|','/')
+    cTipoIn	:=	StrTran(cTipoIn,'\','/')
+
+    cTipoIn := Formatin(cTipoIn,"/")
+Endif
+
+Return cTipoIn
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} F130Dtano2
+FunÁ„o para transformar o ano em 2 caracteres.
+
+@author Douglas GonÁalves de Souza
+@since 16/05/17
+@version 12.1.14
+
+@return Retorna um array com as datas do tÌtulo transformadas
+    aDtsTit	:= {E1_EMISSAO, E1_VENCTO, E1_VENCREA}
+/*/
+//-------------------------------------------------------------------
+Static Function zF130Dtano2(cAliasSE1 As Character) As Array
+
+    Local cData1  As Character
+    Local nI      As Numeric
+    Local aDtsTit As Array
+
+    cData1  := ""
+    nI      := 0
+    aDtsTit := {}
+
+    Default cAliasSE1	:= 'SE1'
+
+    __aDtTit := {(cAliasSE1)->E1_EMISSAO, (cAliasSE1)->E1_VENCTO, (cAliasSE1)->E1_VENCREA}
+
+    For nI := 1 To 3
+        cData1 := right(Dtos(__aDtTit[nI]),6)
+        If __cDateFormat == 'AMERICAN'
+            aAdd(aDtsTit, substr(cData1,3,2) +"/"+ substr(cData1,5,2) +"/"+ substr(cData1,1,2) )
+        Else	// DEFAULT
+            aAdd(aDtsTit, substr(cData1,5,2) +"/"+ substr(cData1,3,2) +"/"+ substr(cData1,1,2) )
+        EndIf
+    Next
+
+Return aDtsTit
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} ChangeWhere
+FunÁ„o para Executar o ChangeQuery no where dos updates
+
+@author Fernando Navarro
+@since 23/04/20
+
+@return Retorna o novo where j· ajustado conforme o banco de dados.
+/*/
+//-------------------------------------------------------------------
+
+Static Function zChangeWhere(cQryChg) As Character
+Local cNewWhr As Character
+Local cSelect As Character
+
+cNewWhr := " "
+cSelect := "SELECT '1' FROM AAA "
+
+cNewWhr := StrTran(ChangeQuery(cSelect + cQryChg ),cSelect," ")
+cNewWhr := StrTran(cNewWhr,"FOR READ ONLY", "")
+
+Return(cNewWhr)
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} FR130Log
+FunÁ„o para logar os erros de execuÁ„o do TcSQLExec.
+
+@author Fernando Navarro
+@since 27/04/20
+/*/
+//-------------------------------------------------------------------
+Static Function zFR130Log(cLogText As Character, cSQLControl As Character)
+
+Local cFunction As Character
+Local cLogFile  As Character
+Local cLogHead  As Character
+Local cPath     As Character
+Local cProcLine As Character
+Local cThreadID As Character
+Local lContinua As Logical
+Local nHandle   As Numeric
+
+lContinua := .T.
+cPath := "\SYSTEM\"
+cLogFile := cPath + "FR130Log"+Alltrim(cEmpAnt+cFilant)+"_"+Dtos(Date())+".log"
+
+If !File(cLogFile)
+    nHandle := FCreate( cLogFile )
+    If nHandle == -1
+        lContinua := .F.
+    Else
+        cLogHead:= STR0090 + DToC(date()) + CRLF
+        FSeek ( nHandle, 0, 2 )	// Posiciona no final do arquivo.
+        FWrite( nHandle, cLogHead, Len(cLogHead) )
+        FClose(nHandle)
+
+    EndIf
+EndIf
+
+If lContinua
+
+    cThreadID 	:= AllTrim(Str(ThreadID())) 	//Retorna o ID (n˙mero de identificaÁ„o) da thread em que a chamada da funÁ„o foi realizada
+    cProcLine 	:= AllTrim(Str(ProcLine(1))) 	//Retorna o n˙mero da linha do cÛdigo fonte executado que fez a chamada da geraÁ„o do LOG
+    cFunction 	:= ProcName(1) 					//Retorna o nome da funcao em execuÁ„o que fez a chamada da geraÁ„o do LOG
+
+    cFunction := " Function " + cFunction
+
+    cLogText := Time() + " " + "["+cThreadID+"]" + cFunction + " Line " + cProcLine + CRLF +;
+                Space(5) +  "[" + cSQLControl + "] " + cLogText + CRLF
+
+    // Grava o texto no Arquivo de LOG
+    nHandle := FOpen(cLogFile, 2 )
+    FSeek ( nHandle, 0, 2 )	// Posiciona no final do arquivo.
+    FWrite( nHandle, cLogText, Len(cLogText) )
+    FClose( nHandle )
+EndIf
+
+Return
+
+/*/{Protheus.doc} F130ULBX
+Realiza a pesquisa do movimento MT/M2 na tabela SE5.
+
+@author     Victor Azevedo
+@since      05/04/2024
+@param      cFilSE5, character, filial do tÌtulo na tabela SE5
+@param      cPrefSE5, character, prefixo do tÌtulo na tabela SE5
+@param      cNumSE5, character, numero do tÌtulo na tabela SE5
+@param      cParcSE5, character, parcela do tÌtulo na tabela SE5
+@param      cTpSE5, character, Tipo do tÌtulo na tabela SE5
+@param      cCliSE5, character, Cliente do tÌtulo na tabela SE5
+@return     Date, Data da ultima baixa do registro de multa
+/*/
+Static Function zF130ULBX(cFilSE5 as Char, cPrefSE5 as Char, cNumSE5 as Char, cParcSE5 as Char, cTpSE5 as Char, cCliSE5 as Char) As Date
+
+    Local cQuery     As Character
+    Local dUltBxMult As Date
+
+    Default cFilSE5   := ""
+    Default cPrefSE5  := ""
+    Default cNumSE5   := ""
+    Default cParcSE5  := ""
+    Default cTpSE5    := ""
+    Default cCliSE5   := ""
+
+    dUltBxMult  := CTOD("//") 
+
+    If __oUltBxMl == Nil
+        cQuery := "SELECT MAX(?) ULTBAIXA "
+        cQuery += "FROM " + RetSqlName("SE5") + " SE5 "
+        cQuery += "WHERE "
+        cQuery += "E5_FILIAL =  ? "
+        cQuery += "AND E5_PREFIXO = ? "
+        cQuery += "AND E5_NUMERO = ? "
+        cQuery += "AND E5_PARCELA = ? "
+        cQuery += "AND E5_TIPO = ? "
+        cQuery += "AND E5_CLIFOR = ? "
+        cQuery += "AND E5_TIPODOC IN (?) "
+        cQuery += "AND E5_SITUACA <> ? "
+        cQuery += "AND E5_RECPAG = ? "
+        cQuery += "AND SE5.D_E_L_E_T_ = ? "
+
+        cQuery := ChangeQuery(cQuery)
+
+        __oUltBxMl := IIf(__lCachedQry, FwExecStatement():New(cQuery), FWPreparedStatement():New(cQuery))
+    EndIf
+
+    __oUltBxMl:setUnsafe(1, IIf(MV_PAR37==2,"E5_DTDISPO","E5_DATA"))
+    __oUltBxMl:SetString(2, cFilSE5)
+    __oUltBxMl:SetString(3, cPrefSE5)
+    __oUltBxMl:SetString(4, cNumSE5)
+    __oUltBxMl:SetString(5, cParcSE5)
+    __oUltBxMl:SetString(6, cTpSE5)
+    __oUltBxMl:SetString(7, cCliSE5)
+    __oUltBxMl:SetIn(8,{'MT','M2'})
+    __oUltBxMl:SetString(9,'C')
+    __oUltBxMl:SetString(10,'R')
+    __oUltBxMl:SetString(11,Space(1))
+
+    cQuery := __oUltBxMl:GetFixQuery()
+    dUltBxMult := MPSysExecScalar(cQuery, "ULTBAIXA")
+
+Return STOD(dUltBxMult)
+
+/*/{Protheus.doc} ExisteFKD
+Verificar existÍncia da FKD para a filial solicitada.
+
+@author     matheus.monteiro@totvs.com.br
+@since      04/10/2024
+@return     
+/*/
+Static Function zExisteFKD(cSGBD As Character, cFilOrig as Character) As Logical 
+    Local cQuery   As Character
+    Local lExistFKD As Logical   
+
+    //Parametros de entrada
+    DEFAULT cSGBD        := Upper(TcGetDb())
+    DEFAULT cFilOrig     := cFilAnt
+    DEFAULT __lCachedQry := FwLibVersion() >= "20211116" 
+
+    //INICIALIZA«√O DAS VARI¡VEIS
+    cQuery   := ""
+    lExistFKD := .F.
+
+    If __oExisFKD == Nil
+        cQuery := "SELECT "            
+
+        If cSGBD == 'MSSQL'
+            cQuery += " TOP 1 "
+        EndIf       
+
+        cQuery += "COUNT(FKD_FILIAL) FKD_FILIAL "      
+        cQuery += "FROM " + RetSqlName("FKD") 
+        cQuery += " WHERE FKD_FILIAL = ? "
+        cQuery += " AND D_E_L_E_T_ =  ? "
+
+        If cSGBD == 'ORACLE'
+            cQuery += "AND ROWNUM = 1 "
+        ElseIf cSGBD == 'POSTGRES'
+            cQuery += "ORDER BY FKD_FILIAL LIMIT 1 "
+        EndIf
+
+        cQuery     := ChangeQuery(cQuery)
+        __oExisFKD := IIf(__lCachedQry, FwExecStatement():New(cQuery), FWPreparedStatement():New(cQuery))
+    EndIf
+    
+    __oExisFKD:SetString(1,FWXFilial("FKD",cFilOrig))
+    __oExisFKD:SetString(2,Space(1))
+
+    lExistFKD := Iif(__lCachedQry,__oExisFKD:ExecScalar("FKD_FILIAL", "600", "15"), MpSysExecScalar(__oExisFKD:GetFixQuery(), "FKD_FILIAL")) > 0
+
+Return lExistFKD
+
+/*/{Protheus.doc} BuscCmp
+Realiza busca por tÌtulos que foram compensados na tabela SE5 e retorna seu valor.
+
+@author     matheus.monteiro@totvs.com.br
+@since      10/07/2025
+@return     
+/*/
+Static Function zBuscaCmp(cFilE5 as Character, cPrefixo as Character, cNumTit as Character, cParcela as Character, cTipo as Character,;
+                         cCliente as Character, cLoja as Character, dDataComp as Date) As Numeric 
+
+    Local cQuery    as Character
+    Local nValComp  as Numeric 
+    Local cAliasSE5 as Character
+    Local lCachQry  as Logical
+    Local nParam    as Numeric
+
+    Default cFilE5      := ""
+    Default cPrefixo    := ""
+    Default cNumTit     := ""
+    Default cParcela    := ""
+    Default cTipo       := ""
+    Default cCliente    := ""
+    Default cLoja       := ""
+    Default dDataComp   := cToD("  /  /    ")
+
+    cQuery      := ""
+    nValComp    := 0
+    cAliasSE5   := ""
+    lCachQry    := FwLibVersion() >= "20211116" 
+    nParam      := 1
+    __nValCM    := 0
+
+    If __oBusCmp == Nil 
+        cQuery := " SELECT E5_VALOR, E5_VLMOED2, E5_TIPODOC  "
+		cQuery += " FROM " + RetSqlName( "SE5" ) + " SE5 "
+        cQuery += " WHERE E5_FILIAL = ? "
+        cQuery += " AND E5_PREFIXO =  ? "
+        cQuery += " AND E5_NUMERO =  ? "
+        cQuery += " AND E5_PARCELA =  ? "
+        cQuery += " AND E5_TIPO =  ? "
+        cQuery += " AND E5_CLIFOR =  ? "
+        cQuery += " AND E5_LOJA =  ? "
+        cQuery += " AND E5_TIPODOC IN (?) "
+        cQuery += " AND E5_MOTBX =  ? "
+        cQuery += " AND E5_DATA <= ? "
+        cQuery += " AND SE5.D_E_L_E_T_ =  ? "
+    
+        cQuery     := ChangeQuery(cQuery)
+        __oBusCmp := IIf(lCachQry, FwExecStatement():New(cQuery), FWPreparedStatement():New(cQuery))
+    EndIF
+
+    __oBusCmp:SetString(nParam++, cFilE5)
+    __oBusCmp:SetString(nParam++, cPrefixo)
+    __oBusCmp:SetString(nParam++, cNumTit)
+    __oBusCmp:SetString(nParam++, cParcela)
+    __oBusCmp:SetString(nParam++, cTipo)
+    __oBusCmp:SetString(nParam++, cCliente)
+    __oBusCmp:SetString(nParam++, cLoja)
+    __oBusCmp:SetIn(nParam++, {"CP", "CM", "VM"})
+    __oBusCmp:SetString(nParam++, "CMP")
+    __oBusCmp:SetDate(nParam++, dDataComp)
+    __oBusCmp:SetString(nParam++, "")
+
+    cAliasSE5 := Iif(lCachQry,__oBusCmp:OpenAlias(), MpSysOpenQuery(__oBusCmp:GetFixQuery()))
+
+    While !((cAliasSE5)->(Eof()))
+        If (cAliasSE5)->E5_TIPODOC == "CP"
+            nValComp += (cAliasSE5)->E5_VLMOED2
+        Else 
+            __nValCM += (cAliasSE5)->E5_VALOR
+        EndIf 
+        (cAliasSE5)->(DbSkip())
+    EndDo 
+
+    (cAliasSE5)->(DbCloseArea())
+
+Return nValComp

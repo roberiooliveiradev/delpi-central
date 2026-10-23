@@ -1,0 +1,36 @@
+0002#STR0002#ALL#Este programa exibirá o consumo dos últimos 12 meses de cada material
+0003#STR0003#ALL#ou produto acabado. No caso dos produtos ele estará listando o  total
+0004#STR0004#ALL#Das vendas.
+0005#STR0005#ALL# por código         
+0006#STR0006#ALL# por tipo           
+0007#STR0007#ALL# por descrição     
+0008#STR0008#ALL# por grupo        
+0009#STR0009#ALL#Código de barras
+0010#STR0010#ALL#Administração
+0011#STR0011#ALL#Jan
+0012#STR0012#ALL#Fev
+0013#STR0013#ALL#Mar
+0014#STR0014#ALL#Abr
+0015#STR0015#ALL#Mai
+0016#STR0016#ALL#Jun
+0017#STR0017#ALL#Jul
+0018#STR0018#ALL#Ago
+0019#STR0019#ALL#Set
+0020#STR0020#ALL#Nov
+0021#STR0021#ALL#Nov
+0022#STR0022#ALL#Dez
+0023#STR0023#ALL#Código          Tp Grup Descrição                      Um
+0024#STR0024#ALL#      Média          Valor Cl
+0027#STR0027#ALL#Cancelado Pelo Operador
+0028#STR0028#ALL#Total crial
+0029#STR0029#ALL#Subtotal Por Tipo:
+0030#STR0030#ALL#Subtotal Por Grupo:
+0031#STR0031#ALL#Código
+0032#STR0032#ALL#Tp.
+0033#STR0033#ALL#Grupo
+0034#STR0034#ALL#Descrição
+0035#STR0035#ALL#Um
+0036#STR0036#ALL#Média
+0037#STR0037#ALL#Total
+0038#STR0038#ALL#Classe
+0039#STR0039#ALL#Procuras

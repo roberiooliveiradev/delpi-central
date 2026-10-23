@@ -1,0 +1,7 @@
+*.json
+.vscode/*
+/tmpold
+/99.ScriptsLocal
+/tmp
+!/Postman/*
+*.md

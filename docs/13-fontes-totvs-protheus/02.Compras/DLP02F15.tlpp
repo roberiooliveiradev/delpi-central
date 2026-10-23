@@ -1,0 +1,471 @@
+#Include 'fileio.ch'
+#INCLUDE "totvs.ch"
+#INCLUDE "topconn.ch"
+
+#DEFINE  POS_NUMOP       01
+#DEFINE  POS_QUANT      02
+#DEFINE  POS_ITEMPI  03
+#DEFINE  POS_DESCITEM  04
+#DEFINE  POS_ITEMPA       05
+#DEFINE  POS_DESCOPERA    06
+#DEFINE  POS_FERRAMEN    07
+#DEFINE  POS_DATAINI 08
+#DEFINE  POS_HORAINI      09
+#DEFINE  POS_DATAFIM      10
+#DEFINE  POS_HORAFIM      11
+#DEFINE  POS_DURACAOH      12
+#DEFINE  POS_DURACAOM      13
+#DEFINE  POS_ENTEOP      14
+#DEFINE POS_DSC_PP 07
+#DEFINE POS_PP 08
+#DEFINE POS_DSC_SEG 05
+#DEFINE POS_SEG 06
+
+#DEFINE POS_DSC_PE 07
+#DEFINE POS_PE 08
+
+#DEFINE POS_DSC_LM 05
+#DEFINE POS_LM 06
+
+#DEFINE POS_DSC_QE 07
+#DEFINE POS_QE 08
+
+
+#DEFINE POS_DSC_LE 05
+#DEFINE POS_LE 06
+#DEFINE POS_DSC_SLD1 10
+#DEFINE POS_SLD1 11
+
+#DEFINE POS_H1_DSC_APS   02
+//#DEFINE POS_H1_DSC_MOQ  05
+#DEFINE POS_H1_DSC_EMB   06
+#DEFINE POS_H1_DSC_LT    08
+//#DEFINE POS_H1_DSC2_LT    10
+#DEFINE POS_H1_DSC_ESEG    10
+#DEFINE POS_H1_VLR_MOQ  05
+#DEFINE POS_H1_VLR_EMB   07
+#DEFINE POS_H1_VLR_LT    09
+#DEFINE POS_H1_VLR_ESEG    11
+#DEFINE POS_H2_DSC_FOR  01
+#DEFINE POS_H2_DSC_PN   03
+#DEFINE POS_H2_DSC_DT   04
+#DEFINE POS_H2_DSC_VL   05
+#DEFINE POS_H2_DSC_LT   06
+#DEFINE POS_H2_DSC_MOQ  07
+#DEFINE POS_H2_DSC_EMB  08
+#DEFINE POS_H2_DSC_QTD_COMP   09
+#DEFINE POS_H2_DSC_DT_REC     10
+#DEFINE POS_H2_DSC_VLRTOT     11
+
+#DEFINE POS_H2_VLR_FOR        01
+#DEFINE POS_H2_VLR_DSC_FOR    02
+#DEFINE POS_H2_VLR_PN         03
+#DEFINE POS_H2_VLR_DT         04
+#DEFINE POS_H2_VLR_VL          05
+#DEFINE POS_H2_VLR_LT        06
+#DEFINE POS_H2_VLR_MOQ       07
+#DEFINE POS_H2_VLR_EMB       08
+#DEFINE POS_H2_VLR_QTD_COMP  09
+#DEFINE POS_H2_VLR_DT_REC    10
+#DEFINE POS_H2_VLR_VLRTOT   11
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 01/08/2025
+/*/
+User Function DLP02F15()
+	RpcSetEnv('01')
+
+	Default cFilAtu := ""
+	// local n1:=0
+	// local n2:=0
+	// local   aButtons    := {}
+	Local   dDataGer    := Date()
+	Local   cHoraGer    := Time()
+	Local   cTit        :=  "EXTRATO_RECURSO"+dToS(dDataGer) + "_" + StrTran(cHoraGer, ':', '-')
+	Local   cArquivo    := GetTempPath()+cTit+".rel"
+	// Local cPerg := "DLP02F11"
+	Local   cArq2       := GetTempPath()+cTit+".xlsx"
+	Private aSelFil     :={}
+	Private cEol        := CHR(10)
+	Private aOPCCTD     := {}
+	Private aOPCBanco   := {}
+	Private aSCANBCO    := {}
+	Private aSCANCTD    := {}
+	Private aRetBCO     := {}
+	Private aRetCTD     := {}
+	Private cStrRetBCO := ""
+	Private cStrRetCTD := ""
+	Private nSldBUIni := 0.00
+	Private aParBox := {}
+	Private oFileW := FwFileWriter():New(cArquivo)
+	Private oPrtXlsx := FwPrinterXlsx():New()
+	Private aBUPos :={}
+	Private cCustomFormat := "[White]R$ #,##0.00;[Red]-R$ #,##0.00"
+	Private cFormatQtd := "[Color10]#,##0.0000;[Red]-#,##0.0000"
+	Private cForQtd2 := "[White]#,##0.0000;[Red]-#,##0.0000"
+	static oCellHorAlign := FwXlsxCellAlignment():Horizontal()
+	static oCellVertAlign := FwXlsxCellAlignment():Vertical()
+	Static cCLRWhite := "ffffff"
+	Static cCLRGray := "C0C0C0"
+	Static cCLRDlp1 := "023667" // Escuro
+	Static cCLRDlp2 := "2c92d5" // Claro
+	Static cCrlBlack:= "000000"
+	Static cHorAlignment := oCellHorAlign:Center()
+	Static cHorAlignLeft := oCellHorAlign:Left()
+	Static cVertAlignment := oCellVertAlign:Center()
+
+	abreParamBox()
+
+	lRet := oPrtXlsx:Activate(cArquivo, oFileW)
+	cFilAtu :=ALLTRIM(MV_PAR01)//"10080407;10380098"
+
+	FWMsgRun(, {|| fProcImpressao() }, "Delpi","1-Aguarde Gerando Relatorio | Extrato Recursos " )
+
+	oPrtXlsx:toXlsx()
+	//Abrindo o excel e abrindo o arquivo xml
+	oExcel := MsExcel():New()             //Abre uma nova conexão com Excel
+	oExcel:WorkBooks:Open(cArq2)     //Abre uma planilha
+	// oExcel:SetVisible(.T.)                 //Visualiza a planilha
+	// oExcel:Destroy()
+
+	RpcClearEnv()
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+  (long_description)
+  @type  Static Function
+  @author Pedro Lindenberg
+  @since 01/08/2025
+/*/
+Static Function fProcImpressao()
+	// lOCAL aForVlr := {}
+	// Local n2 := 0.00
+	Local cRecDesc := ""
+	Local cAlias := GetNextAlias()
+	Local cRecAnt := ""
+	Local cNomeFIl := ""
+	Local nRecord := 0
+
+	Dbselectarea("SH1")
+
+	// nRow++
+	cSql := fGetQuery()
+	MPSysOpenQuery(cSql,cAlias)
+
+	if (cALias)->(eof())
+
+		FWAlertInfo("Nenhum dado encontrado para a Filial selecionada","Atenção")
+		Return
+
+	else
+
+		while !(cAlias)->(eof())
+
+			nRecord++
+
+			IF nRecord == 1
+
+				cNomeFIl := fRetNomeFil()
+				cLogoD	:= GetSrvProfString("Startpath","") + "LGDLPMID"+ cEmpAnt + ".png"
+    /*header da planilha*/
+				lRet := oPrtXlsx:AddSheet((cAlias)->CT) //ADICIONAR RECURSO AQUI
+				cFont := FwPrinterFont():Calibri()
+				nSize := 12
+				lItalic := .t.
+				lBold := .T.
+				lUnderlined := .f.
+				// Comando 'Fonte' com Calibri 14, itálico, negrito e sublinhado
+				lRet := oPrtXlsx:SetFont(cFont, nSize, lItalic, lBold, lUnderlined)
+				lItalic := .f.
+
+				lWrapText := .t.
+				nRotation := 0
+
+				lRet := oPrtXlsx:SetCellsFormat(cHorAlignment, cVertAlignment, lWrapText, nRotation, cCLRWhite,cCLRDlp1, "" )
+
+				nColMax := 16
+				lTop := .T.
+				lBottom := .T.
+				lLeft:= .T.
+				lRight := .T.
+				cStyle := FwXlsxBorderStyle():Thin()
+				cColor := "0d0c0c"
+				// Borda
+				lRet := oPrtXlsx:SetBorder(lLeft, lTop, lRight, lBottom, cStyle, cColor)
+
+				nColFrom := 1
+				nColTo   := nColMax
+				nWidth   := 15
+				lRet     := oPrtXlsx:SetColumnsWidth(nColFrom, nColTo, nWidth)
+				nColFrom := 2
+				nColTo   := 2
+				nWidth   := 25
+				lRet     := oPrtXlsx:SetColumnsWidth(nColFrom, nColTo, nWidth)
+				nColFrom := 3
+				nColTo   := 3
+				nWidth   := 45
+				lRet     := oPrtXlsx:SetColumnsWidth(nColFrom, nColTo, nWidth)
+
+				lRet := oPrtXlsx:MergeCells( 1 /*nRowFrom*/, 1/*nColFrom*/,1 /*nRowTo*/, nColMax-2/*nColTo*/)
+				oPrtXlsx:MergeCells( 1 /*nRowFrom*/, 1/*nColFrom*/,1 /*nRowTo*/, nColMax-2/*nColTo*/)
+				nRow := 1
+				nCol := 1
+				// Texto em A1
+				lRet := oPrtXlsx:SetFont(cFont, 22, .t./*lItalic*/, .t./*lBold*/, lUnderlined)
+				lRet := oPrtXlsx:SetRowsHeight(1, 1, 45)
+
+				lRet := oPrtXlsx:SetText(nRow, nCol, "EXTRATO RECURSO "+ IIF(cFilAnt == "01","MATRIZ","FILIAL"))
+				lRet := oPrtXlsx:SetText(nRow, 10, "DATA  "+ DTOC(DATE()) )
+
+				lRet := oPrtXlsx:SetFont(cFont, nSize, lItalic, .f./*lBold*/, lUnderlined)
+				// lRet := oPrtXlsx:SetRowsHeight(1, 8, 15)
+				oFileRead := FwFileReader():New(cLogoD)
+				If oFileRead:Open()
+					cConteudo  := oFileRead:FullRead()
+				EndIf
+				oFileRead:Close()
+				nWidthR := 100
+				nHeightR := 50
+				lRet := oPrtXlsx:AddImageFromBuffer(nRow, 1, "lgrl"+ cEmpAnt, cConteudo,nWidthR,nHeightR)
+				lRet := oPrtXlsx:SetCellsFormat(cHorAlignLeft, cVertAlignment, lWrapText, nRotation,  cCLRWhite,cCLRDlp2, "" )
+				nRow++
+
+			ENDIF
+
+      /*01 INFORMACOES DO RECURSO*/
+      /*Cabeçalho 01 Recurso*/
+			cRecDesc := POSICIONE("SH1",1,xFilial("SH1")+(cAlias)->CT,"H1_DESCRI")
+
+			IF (cAlias)->CT != cRecAnt
+
+				cRecAnt := (cAlias)->CT
+				lImpCab := .T.
+				nRow := 1
+
+			ELSE
+
+				lImpCab := .F.
+
+			ENDIF
+
+			IF lImpCab
+
+				IF nRecord > 1
+
+					lRet := oPrtXlsx:AddSheet((cAlias)->CT) //ADICIONAR RECURSO AQUI
+
+				ENDIF
+
+				nRow++
+				// lRet := oPrtXlsx:MergeCells( nRow /*nRowFrom*/, /*nColFrom*/,nRow /*nRowTo*/, nColMax-2/*nColTo*/)
+				lRet := oPrtXlsx:SetCellsFormat(cHorAlignLeft, cVertAlignment, lWrapText, nRotation,  cCLRWhite,cCLRDlp2, cForQtd2 )
+				cProdDesc := alltrim((cAlias)->CT) + "-" + Alltrim(cRecDesc)
+				lRet := oPrtXlsx:SetFont(cFont, nSize, lItalic, .t./*lBold*/, lUnderlined)
+				lRet := oPrtXlsx:SetText(nRow, 1, "Recurso")
+				lRet := oPrtXlsx:SetText(nRow, 2, ALLTRIM(cProdDesc))
+				lRet := oPrtXlsx:SetText(nRow, 3, "Filial")
+				lRet := oPrtXlsx:SetText(nRow, 4, Alltrim(MV_PAR01+" - "+cNomeFIl))
+				// lRet := oPrtXlsx:SetText(nRow, POS_H1_DSC_EMB   , "Descricao")
+				// lRet := oPrtXlsx:SetText(nRow, POS_H1_DSC_ESEG    , "Filial")
+				// nRow++
+
+				lRet := oPrtXlsx:MergeCells( nRow /*nRowFrom*/, 5/*nColFrom*/,nRow /*nRowTo*/, nColMax-2/*nColTo*/)
+				lRet := oPrtXlsx:SetFont(cFont, nSize, lItalic, .T./*lBold*/, lUnderlined)
+				lRet := oPrtXlsx:SetCellsFormat(cHorAlignLeft, cVertAlignment, lWrapText, nRotation,  cCLRWhite,cCLRDlp2, cForQtd2 )
+				nRow++
+
+				lRet := oPrtXlsx:SetCellsFormat(cHorAlignment, cVertAlignment, lWrapText, nRotation,   cCLRWhite,cCLRDlp2, "" )
+				lRet := oPrtXlsx:SetText(nRow, POS_NUMOP, "Numero OP.")
+				lRet := oPrtXlsx:SetText(nRow, POS_QUANT, "Quantidade")
+				lRet := oPrtXlsx:SetText(nRow, POS_ITEMPI, "Item PI")
+				lRet := oPrtXlsx:SetText(nRow, POS_DESCITEM, "Desc. Item")
+				lRet := oPrtXlsx:SetText(nRow, POS_ITEMPA, "Item PA")
+				lRet := oPrtXlsx:SetText(nRow, POS_DESCOPERA, "Desc. Operação")
+				lRet := oPrtXlsx:SetText(nRow, POS_FERRAMEN, "Ferramenta")
+				lRet := oPrtXlsx:SetText(nRow, POS_DATAINI, "Data Inicio")
+				lRet := oPrtXlsx:SetText(nRow, POS_HORAINI, "Hora Inicio")
+				lRet := oPrtXlsx:SetText(nRow, POS_DATAFIM, "Data Fim")
+				lRet := oPrtXlsx:SetText(nRow, POS_HORAFIM, "Hora Fim")
+				lRet := oPrtXlsx:SetText(nRow, POS_DURACAOH, "Duração (Horas)")
+				lRet := oPrtXlsx:SetText(nRow, POS_DURACAOM, "Duração (Minutos)")
+				lRet := oPrtXlsx:SetText(nRow, POS_ENTEOP, "Data entrega OP")
+				nRow++
+
+			ENDIF
+
+			nColFrom := 1
+			nColTo   := nColMax
+			nWidth   := 25
+			lRet     := oPrtXlsx:SetColumnsWidth(nColFrom, nColTo, nWidth)
+
+			lRet := oPrtXlsx:SetFont(cFont, nSize, lItalic, .F./*lBold*/, lUnderlined)
+			lRet := oPrtXlsx:SetCellsFormat(cHorAlignment, cVertAlignment, lWrapText, nRotation, cCrlBlack,cCLRWhite, "" )
+			lRet := oPrtXlsx:SetText(nRow, POS_NUMOP, (cAlias)->NUMEROOP)
+			lRet := oPrtXlsx:SetText(nRow, POS_QUANT, (cAlias)->QUANTIDADE)
+			lRet := oPrtXlsx:SetText(nRow, POS_ITEMPI, (cAlias)->ITEMPI)
+			lRet := oPrtXlsx:SetText(nRow, POS_DESCITEM, (cAlias)->DESCRICAOITEM)
+			lRet := oPrtXlsx:SetText(nRow, POS_ITEMPA, (cAlias)->ITEMPA)
+			lRet := oPrtXlsx:SetText(nRow, POS_DESCOPERA, (cAlias)->DESCRICAOOPERA)
+			lRet := oPrtXlsx:SetText(nRow, POS_FERRAMEN, (cAlias)->Ferramenta)
+			lRet := oPrtXlsx:SetText(nRow, POS_DATAINI, (cAlias)->DATAINICIO)
+			lRet := oPrtXlsx:SetText(nRow, POS_HORAINI, (cAlias)->HORAINICIO)
+			lRet := oPrtXlsx:SetText(nRow, POS_DATAFIM, (cAlias)->DATAFIM)
+			lRet := oPrtXlsx:SetText(nRow, POS_HORAFIM, (cAlias)->HORAFIM)
+			lRet := oPrtXlsx:SetText(nRow, POS_DURACAOH, ALLTRIM(STR((cAlias)->DURACAOHORAS)))
+			lRet := oPrtXlsx:SetText(nRow, POS_DURACAOM, ALLTRIM(STR((cAlias)->DURACAOMINUTOS)))
+			lRet := oPrtXlsx:SetText(nRow, POS_ENTEOP, (cAlias)->DATAENTREGAOP)
+			nRow++
+
+			(cAlias)->(dbskip())
+
+		end
+
+		lRet := oPrtXlsx:SetRowsHeight(2,nRow , 15)
+		(cAlias)->(dbclosearea())
+
+	endif
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+  (long_description)
+  @type  Static Function
+  @author Pedro Lindenberg
+  @since 01/08/2025
+/*/
+Static Function abreParamBox()
+
+	Local aParamBox     := {}
+	Local aRet          := {}
+
+	aAdd(aParamBox,{1,"Filial",Space(2),"","","","",0,.F.})
+
+	lRet := ParamBox( aParamBox, "Qualquer coisa", aRet)
+
+	If !lRet
+
+		FWAlertError("Digite um valor para o parâmetro apresentado","ERRO")
+
+	EndIf
+
+Return
+
+/*/{Protheus.doc} nomeStaticFunction
+  (long_description)
+  @type  Static Function
+  @author Pedro Lindenberg
+  @since 01/08/2025
+/*/
+Static Function fGetQuery()
+	Local cQry := ""
+
+	cQry := "  SELECT "+CRLF
+	cQry += "     TBL1.HY_FILIAL AS [FILIAL], "+CRLF
+	cQry += "     TBL1.HY_RECURSO AS [CT], "+CRLF
+	cQry += "     TBL1.HY_OP AS [NUMEROOP], "+CRLF
+	cQry += "     FORMAT(SC2.C2_QUANT - ROUND(SUM(ISNULL(H6.H6_QTDPROD, 0.00)), 3), '0.000', 'pt-BR') AS [QUANTIDADE], "+CRLF
+	cQry += "     SC2.C2_PRODUTO AS [ITEMPI], "+CRLF
+	cQry += "     SB1.B1_DESC AS [DESCRICAOITEM], "+CRLF
+	cQry += "     LTRIM(RTRIM(SC2PA.C2_PRODUTO)) AS [ITEMPA], "+CRLF
+	cQry += "     LTRIM(RTRIM(TBL1.HY_OPERAC)) + '-' + LTRIM(RTRIM(TBL1.HY_DESCRI)) AS [DESCRICAOOPERA], "+CRLF
+	cQry += "     TBL1.HY_FERRAM AS [Ferramenta], "+CRLF
+	cQry += "     CONVERT(VARCHAR(10), CONVERT(DATE, TBL1.HY_DATAINI), 103) AS [DATAINICIO], "+CRLF
+	cQry += "     TBL1.HY_HORAINI AS [HORAINICIO], "+CRLF
+	cQry += "     CONVERT(VARCHAR(10), CONVERT(DATE, TBL1.HY_DATAFIM), 103) AS [DATAFIM], "+CRLF
+	cQry += "     TBL1.HY_HORAFIM AS [HORAFIM], "+CRLF
+	cQry += "     CAST(TBL1.HY_TEMPOM AS DECIMAL(18, 2)) AS [DURACAOHORAS], "+CRLF
+	cQry += "     CAST( "+CRLF
+	cQry += "         CASE "+CRLF
+	cQry += "             WHEN TBL1.HY_TEMPOM = 0 THEN "+CRLF
+	cQry += "                 DATEDIFF( "+CRLF
+	cQry += "                     MINUTE, "+CRLF
+	cQry += "                     CAST(CONVERT(VARCHAR(10), CONVERT(DATE, TBL1.HY_DATAINI), 120) + ' ' + TBL1.HY_HORAINI AS DATETIME), "+CRLF
+	cQry += "                     CAST(CONVERT(VARCHAR(10), CONVERT(DATE, TBL1.HY_DATAFIM), 120) + ' ' + TBL1.HY_HORAFIM AS DATETIME) "+CRLF
+	cQry += "                 ) "+CRLF
+	cQry += "             ELSE "+CRLF
+	cQry += "                 TBL1.HY_TEMPOM * 60.0 "+CRLF
+	cQry += "         END AS DECIMAL(18, 2) "+CRLF
+	cQry += "     ) AS [DURACAOMINUTOS], "+CRLF
+	cQry += "     CONVERT(VARCHAR(10), CONVERT(DATE, SC2PA.C2_DATPRF), 103) AS [DATAENTREGAOP] "+CRLF
+	cQry += " FROM "+CRLF
+	cQry += "     "+RetSqlName("SHY")+" AS TBL1 WITH (NOLOCK) "+CRLF
+	cQry += " JOIN "+CRLF
+	cQry += "     "+RetSqlName("SC2")+" AS SC2 WITH (NOLOCK) "+CRLF
+	cQry += "     ON SC2.D_E_L_E_T_ = '' "+CRLF
+	cQry += "     AND SC2.C2_FILIAL = TBL1.HY_FILIAL "+CRLF
+	cQry += "     AND SC2.C2_NUM + SC2.C2_ITEM + SC2.C2_SEQUEN = TBL1.HY_OP "+CRLF
+	cQry += "     AND SC2.C2_QUJE < SC2.C2_QUANT "+CRLF
+	cQry += " JOIN "+CRLF
+	cQry += "     "+RetSqlName("SB1")+" AS SB1 WITH (NOLOCK) "+CRLF
+	cQry += "     ON SB1.D_E_L_E_T_ = '' "+CRLF
+	cQry += "     AND SB1.B1_FILIAL = '' -- ajuste conforme necessário "+CRLF
+	cQry += "     AND SB1.B1_COD = SC2.C2_PRODUTO "+CRLF
+	cQry += " LEFT JOIN "+CRLF
+	cQry += "     "+RetSqlName("SH6")+" AS H6 WITH (NOLOCK) "+CRLF
+	cQry += "     ON H6.D_E_L_E_T_ <> '*' "+CRLF
+	cQry += "     AND H6.H6_FILIAL = SC2.C2_FILIAL "+CRLF
+	cQry += "     AND H6.H6_OP = TBL1.HY_OP "+CRLF
+	cQry += "     AND H6.H6_OPERAC = TBL1.HY_OPERAC "+CRLF
+	cQry += " JOIN "+CRLF
+	cQry += "     "+RetSqlName("SC2")+" AS SC2PA WITH (NOLOCK) "+CRLF
+	cQry += "     ON SC2PA.D_E_L_E_T_ = '' "+CRLF
+	cQry += "     AND SC2PA.C2_FILIAL = TBL1.HY_FILIAL "+CRLF
+	cQry += "     AND SC2PA.C2_NUM + SC2PA.C2_ITEM + SC2PA.C2_SEQUEN = SUBSTRING(TBL1.HY_OP, 1, 6) + '01001' "+CRLF
+	cQry += " JOIN "+CRLF
+	cQry += "     "+RetSqlName("SB1")+" AS SB1PA WITH (NOLOCK) "+CRLF
+	cQry += "     ON SB1PA.D_E_L_E_T_ = '' "+CRLF
+	cQry += "     AND SB1PA.B1_FILIAL = '' -- ajuste conforme necessário "+CRLF
+	cQry += "     AND SB1PA.B1_COD = SC2PA.C2_PRODUTO "+CRLF
+	cQry += " WHERE "+CRLF
+	cQry += "     TBL1.D_E_L_E_T_ = '' "+CRLF
+	cQry += "     AND TBL1.HY_FILIAL = '"+MV_PAR01+"' "+CRLF
+	cQry += "     AND TBL1.HY_DATAINI <> '' "+CRLF
+	cQry += "     AND TBL1.HY_QUANT > 0 "+CRLF
+	cQry += " GROUP BY "+CRLF
+	cQry += "     TBL1.HY_FILIAL, "+CRLF
+	cQry += "     TBL1.HY_RECURSO, "+CRLF
+	cQry += "     TBL1.HY_OP, "+CRLF
+	cQry += "     TBL1.HY_QUANT, "+CRLF
+	cQry += "     SC2.C2_PRODUTO, "+CRLF
+	cQry += "     SB1.B1_DESC, "+CRLF
+	cQry += "     SC2PA.C2_PRODUTO, "+CRLF
+	cQry += "     TBL1.HY_OPERAC, "+CRLF
+	cQry += "     TBL1.HY_DESCRI, "+CRLF
+	cQry += "     TBL1.HY_FERRAM, "+CRLF
+	cQry += "     TBL1.HY_DATAINI, "+CRLF
+	cQry += "     TBL1.HY_HORAINI, "+CRLF
+	cQry += "     TBL1.HY_DATAFIM, "+CRLF
+	cQry += "     TBL1.HY_HORAFIM, "+CRLF
+	cQry += "     TBL1.HY_TEMPOM, "+CRLF
+	cQry += "     SC2PA.C2_DATPRF, "+CRLF
+	cQry += "     SC2.C2_PERDA, "+CRLF
+	cQry += "     H6.H6_PERDANT, "+CRLF
+	cQry += "     SC2.C2_QUANT, "+CRLF
+	cQry += "     SC2.C2_QUJE "+CRLF
+	cQry += " HAVING "+CRLF
+	cQry += "     SC2.C2_QUANT - ROUND(SUM(ISNULL(H6.H6_QTDPROD, 0.00)), 3) > 0.00 "+CRLF
+	cQry += " ORDER BY "+CRLF
+	cQry += "     TBL1.HY_RECURSO, "+CRLF
+	cQry += "     CONVERT(DATE, TBL1.HY_DATAINI), "+CRLF
+	cQry += "     CAST(TBL1.HY_HORAINI AS TIME); "+CRLF
+
+Return cQry
+
+/*/{Protheus.doc} nomeStaticFunction
+	(long_description)
+	@type  Static Function
+	@author Pedro Lindenberg
+	@since 04/08/2025
+/*/
+Static Function fRetNomeFil()
+	Local cNomeFil := ""
+	Local cQry := ""
+
+	cQry := "SELECT M0_FILIAL AS FILIAL FROM SYS_COMPANY SYS WHERE SYS.D_E_L_E_T_ = ' ' AND SYS.M0_CODFIL = '"+MV_PAR01+"'"
+	cNomeFil := ALLTRIM(MpSysExecScalar(cQry,"FILIAL"))
+
+Return cNomeFil

@@ -14,7 +14,7 @@ Antes de decisões arquiteturais ou alterações relevantes, aplicar:
 4. `.cursor/rules/development-standards-index.mdc` — roteamento executável das regras;
 5. contratos, schemas, OpenAPI, ADRs e implementação vigente do domínio afetado.
 
-A pasta `docs/14-documentacao-geral/` contém material de referência e não substitui estas fontes normativas nem contratos vigentes.
+A pasta `docs/15-documentacao-geral/` contém material de referência e não substitui estas fontes normativas nem contratos vigentes.
 
 ---
 

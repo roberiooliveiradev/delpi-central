@@ -1,0 +1,81 @@
+0001#STR0001#ALL#Por Fch
+0002#STR0002#ALL#Por Banco
+0003#STR0003#ALL#Por Modalid.
+0004#STR0004#ALL#Alfabetico
+0005#STR0005#ALL#Fch Registro
+0006#STR0006#ALL#Este prog. emitira la lista de los tit. dados de baja.
+0007#STR0007#ALL#Se puede emitir por fecha, banco, modalidad o alfabetico,
+0008#STR0008#ALL#de cliente o proveedor y fecha de digitacion.
+0009#STR0009#ALL#Lista de bajas
+0010#STR0010#ALL#A Rayas
+0011#STR0011#ALL#Lista de los titulos cobrados en 
+0012#STR0012#ALL#Prf Numero     Prc TP  Client Nome Cliente       Natureza   Vencto     Historico             Dt Baixa  Valor Original   Jur/Multa    Correcao   Descontos     Abatim.    Impostos   Total Baixado   Bco   Dt Dig.  Mot Orig 
+0013#STR0013#ALL#Lista de Titulos Pagados en 
+0014#STR0014#ALL#Prf Numero     Prc TP  Provee Nomb Proveedor     Modalidad  Vencto     Historial             Fch Baja  Valor Original   Int/Multa    Correccion Descuentos    Deduc.     Impuestos  Total d/ Baja   Bco   Fc Dig.  Mot Orig 
+0015#STR0015#ALL# por fecha de pago
+0016#STR0016#ALL# por Banco
+0017#STR0017#ALL# por Modalid.
+0018#STR0018#ALL#Seleccionando registros..
+0019#STR0019#ALL# Por Fecha de Digit.
+0020#STR0020#ALL# Alfabetico
+0021#STR0021#ALL#ANULADO POR EL OPERADOR
+0022#STR0022#ALL#NORMAL
+0023#STR0023#ALL#DEVOLUC.
+0024#STR0024#ALL#PERM.
+0025#STR0025#ALL#VENDED
+0026#STR0026#ALL#COMPENSAC
+0027#STR0027#ALL#COMP CART
+0028#STR0028#ALL#De baja
+0029#STR0029#ALL#Total Gral: 
+0030#STR0030#ALL#Administrac.
+0031#STR0031#ALL#Mov Fin
+0032#STR0032#ALL#Nº Titulo
+0033#STR0033#ALL#LIQUIDAC.
+0034#STR0034#ALL#DEBITO CC
+0035#STR0035#ALL#Nº de titulos
+0036#STR0036#ALL# Por Lote
+0037#STR0037#ALL#Compens.
+0038#STR0038#ALL#Movimient. Financ. Manuales 
+0039#STR0039#ALL#Cliente              Nomb Cliente 
+0040#STR0040#ALL#                       Prf Numero     Prc TP     Modalidad  Vencto     Historial          Fch Baja     Valor Original   Int/Multa    Correccion Descuentos    Deduc.     Impuestos  Total d/ Baja   Bco   Fc Dig.  Mot Orig 
+0041#STR0041#ALL#Proveedor            Nomb de proveedor
+0042#STR0042#ALL#FATURADO
+0043#STR0043#ALL#De Prefijo
+0044#STR0044#ALL#A  Prefijo
+0045#STR0045#ALL#Imprimir Tipos
+0046#STR0046#ALL#No Imprimir Tipos
+0047#STR0047#ALL#Imprime Nomb
+0048#STR0048#ALL#Por Fch.de Credito
+0049#STR0049#ALL#Prf
+0050#STR0050#ALL#Numero
+0051#STR0051#ALL#Prc
+0052#STR0052#ALL#TP
+0053#STR0053#ALL#Cli/Pro
+0054#STR0054#ALL#Nomb Cli/Pro
+0055#STR0055#ALL#Modalid.
+0056#STR0056#ALL#Vencto
+0057#STR0057#ALL#Historial
+0058#STR0058#ALL#Fch Baja
+0059#STR0059#ALL#Valor Original
+0060#STR0060#ALL#Int/Multa
+0061#STR0061#ALL#Correcc.
+0062#STR0062#ALL#Descuent.
+0063#STR0063#ALL#Deducc.
+0064#STR0064#ALL#Impuest.
+0065#STR0065#ALL#Total dado de baja
+0066#STR0066#ALL#Bco
+0067#STR0067#ALL#Fch Dig
+0068#STR0068#ALL#Mot
+0069#STR0069#ALL#Orig
+0070#STR0070#ALL#SUCUR.
+0071#STR0071#ALL#Subtotal
+0072#STR0072#ALL#Bajas
+0073#STR0073#ALL#Separe los tipos p. imprimir (pregunta 28) por un punto y coma (;) cada 3 caracteres
+0074#STR0074#ALL#Separe los tipos que no desea imprimir (pregunta 29) por un punto y coma (;) cada 3 caracteres
+0075#STR0075#ALL#Gral.
+0076#STR0076#ALL#Bj.Factura
+0077#STR0077#ALL#Baja Automatica / Lote
+0078#STR0078#ALL#Formato de impresion Tabla no compatible en este informe.
+0079#STR0079#ALL#Valor adicional
+0080#STR0080#ALL#Reversión de transferencia
+0081#STR0081#ALL#Total general S/Movimiento:

@@ -1,0 +1,46 @@
+0001#STR0001#ALL#Relação Por Ordem De Produção
+0002#STR0002#ALL#O objetivo deste relatório e exibir detalhadamente todas as movimenta-
+0003#STR0003#ALL#ções feitas para cada Ordem de Produção , a mostrar inclusive os custos.
+0004#STR0004#ALL#Código de barras
+0005#STR0005#ALL#Administração
+0008#STR0008#ALL#A Seleccionar Registos...
+0009#STR0009#ALL#Cancelado Pelo Operador
+0010#STR0010#ALL#Total  
+0011#STR0011#ALL#Custo std : 
+0012#STR0012#ALL#       Mão De Obra:
+0013#STR0013#ALL#Total requisições ---->
+0014#STR0014#ALL#Total produção    ---->
+0015#STR0015#ALL#Total devoluções  ---->
+0016#STR0016#ALL#Total requisições mão de obra ---->
+0017#STR0017#ALL#Total devoluções  mão de obra ---->
+0018#STR0018#ALL# - valor final no último fechamento (
+0019#STR0019#ALL#Produto
+0020#STR0020#ALL#Total req poder 3 ---->
+0021#STR0021#ALL#Total dev poder 3 ---->
+0022#STR0022#ALL#Custo Unitário
+0024#STR0024#ALL#Custo unit std -----
+0025#STR0025#ALL#Custo total std ----
+0026#STR0026#ALL#Qtd. mão de obra ---
+0027#STR0027#ALL#Custo mão de obra --
+0028#STR0028#ALL#Qtde. total de requisições ------->
+0029#STR0029#ALL#Custo total de requisições ------->
+0030#STR0030#ALL#Qtde. total de produção ---------->
+0031#STR0031#ALL#Custo total de produção ---------->
+0032#STR0032#ALL#Qtde. total de devoluções  ------->
+0033#STR0033#ALL#Custo total de devoluções  ------->
+0034#STR0034#ALL#Qtde. total req poder 3 ------->
+0035#STR0035#ALL#Custo total req poder 3 ------->
+0036#STR0036#ALL#Qtde. total dev poder 3 ------->
+0037#STR0037#ALL#Custo total dev poder 3 ------->
+0038#STR0038#ALL#Qtde. total req. mão de obra -->
+0039#STR0039#ALL#Custo total req. mão de obra -->
+0040#STR0040#ALL#Qtde. total dev. mão de obra -->
+0041#STR0041#ALL#Custo total dev. mão de obra -->
+0043#STR0043#ALL#Ordens de produção
+0047#STR0047#ALL#Actualizar SIGACUS.PRW !
+0048#STR0048#ALL#Actualizar SIGACUSA.PRX !
+0049#STR0049#ALL#Actualizar SIGACUSB.PRX !
+0050#STR0050#ALL#Actualizar MATXFUNB.PRX !
+0052#STR0052#ALL#( CUSTO MÉDIO )
+0053#STR0053#ALL#Actualizar MATA330.PRX!
+0055#STR0055#ALL#Total OP

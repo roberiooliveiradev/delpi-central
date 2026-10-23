@@ -1,0 +1,24 @@
+0001#STR0001#ALL#Relatorio Comparativo Real X Previsto
+0002#STR0002#ALL#Comparativo entre o apontamento real da producao e o planejado,
+0003#STR0003#ALL#baseando-se no Roteiro de Operaçöes.Os valores referentes aos 
+0004#STR0004#ALL#tempos estäo convertidos conforme o parametro MV_TPHR.
+0005#STR0005#ALL#Por OP
+0006#STR0006#ALL#Por Recurso
+0007#STR0007#ALL#Por Data
+0008#STR0008#ALL#Por Operador
+0009#STR0009#ALL#Zebrado
+0010#STR0010#ALL#Administracao
+0011#STR0011#ALL#REGISTRO(S)
+0012#STR0012#ALL#da OP:
+0013#STR0013#ALL#do Recurso:
+0014#STR0014#ALL#da Data:
+0015#STR0015#ALL#do Operador:
+0016#STR0016#ALL#Selecionando Registros...
+0017#STR0017#ALL#ORDEM DE      PRODUTO         OPERACAO DESCRICAO          RECURSO                                FERRAMENTA                OPERADOR     QUANTIDADE     (*)QUANTIDADE        QUANTIDADE        TEMPO     TEMPO   DATA DO
+0018#STR0018#ALL#PRODUCAO                               DA OPERACAO                                                                                      TOTAL DA OP       PRODUZIDA         PERDA             ESTIMADO  REAL    APONTAMENTO
+0019#STR0019#ALL#Totalizador 
+0020#STR0020#ALL#Tempo Estimado
+0021#STR0021#ALL#Tempo Real
+0022#STR0022#ALL#Apontamento de produção PCP
+0023#STR0023#ALL#Total QUANTIDADE PRODUZIDA é igual a somatória de todos os apontamentos
+0024#STR0024#ALL#da última operação, conforme a quebra definida para impressão

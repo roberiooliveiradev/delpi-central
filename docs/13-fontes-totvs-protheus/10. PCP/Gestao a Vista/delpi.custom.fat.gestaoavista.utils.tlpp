@@ -1,0 +1,59 @@
+#INCLUDE "tlpp-core.th"
+Static cTipoTemp
+NAMESPACE delpi.custom.fat.utils
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 07/11/2024
+/*/
+User Function RetQueryMonitorFatDiario(oFiltros)
+	Local cCodFil as character
+	Local cTpPeriodo as character
+	Local nMeta as numeric
+	Local aDados := {} as array
+
+	IF VALTYPE(oFiltros["FILIAL"]) =="A"
+		if len(oFiltros["FILIAL"]) >0
+			cCodFil := oFiltros["FILIAL"][1]
+		endif
+	ELSE
+		cCodFil := oFiltros["FILIAL"]
+	ENDIF
+
+	cTpPeriodo :=""
+	IF VALTYPE(oFiltros["TIPOPERIODO"]) =="A"
+		if len(oFiltros["TIPOPERIODO"]) >0
+			cTpPeriodo := oFiltros["TIPOPERIODO"][1]
+		endif
+	ELSE
+		cTpPeriodo := oFiltros["TIPOPERIODO"]
+	ENDIF
+
+	IF VALTYPE(oFiltros["METADIA"]) =="A"
+		if len(oFiltros["METADIA"]) >0
+			nMeta := oFiltros["METADIA"][1]
+		endif
+	ELSE
+		nMeta := oFiltros["METADIA"]
+	ENDIF
+
+	if cTpPeriodo =='D'
+		dDataFin   := dDataAte
+		dDataIni   := dDataDe
+	ELSEIF cTpPeriodo =='M'
+		dDataFin   :=  Date() -1
+		dDataIni   :=  Date() -1
+	ELSE
+		dDataFin   := Date()//dDatabase
+		dDataIni   := PCPMonitorUtils():RetornaPeriodoInicial(AllTrim(cTpPeriodo),dDataFin)
+	ENDIF
+
+	IF TCSPExist
+
+		aDados := TCSPExec("EXEC STP_DELPI_FATURAMENTO_01_GESTAO")
+
+	ENDIF
+
+Return aDados

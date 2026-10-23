@@ -1,0 +1,312 @@
+//#INCLUDE "MATA060.CH"
+//#INCLUDE "MATA061.CH"
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "FWMVCDEF.CH"
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} MATA061
+Cadastro de Produto X Fornecedores (Modelo 2)
+
+@since 03/04/2013
+@version P11.80
+@author Andre Anjos
+*/
+//-------------------------------------------------------------------
+user Function DMATA061()
+	//Local oBrowse := BrowseDef()
+	//oBrowse:Activate()
+	Local oBrowse := FWMBrowse():New()
+	Private lBrowse := .T.
+	Private aRotina		:= MenuDef()
+	SA5->(dbSetOrder(2))
+
+	oBrowse:SetAttach(.T.)
+	oBrowse:SetCacheView(.F.)
+
+	oBrowse:SetAlias("SA5")
+	oBrowse:SetDescription("Produto X Fornecedor") //Roteiro de Operações
+	oBrowse:SetCanSaveArea(.T.)
+	oBrowse:SetChgAll(.F.)
+	oBrowse:SetSeeAll(.F.)
+	oBrowse:DisableDetails(.F.)
+	//   oBrowse:SetMenuDef("MATA632")
+
+	oBrowse:Activate()
+
+Return NIL
+Return
+
+Static Function BrowseDef()
+	Local oBrowse
+
+	SA5->(dbSetOrder(2))
+
+	oBrowse := FWmBrowse():New()
+	oBrowse:SetAlias('SA5')
+	oBrowse:SetDescription("Produto X Fornecedor")
+
+Return oBrowse
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±º Funcao   ³ IntegDef    º Autor ³ Danilo Dias       º Data ³ 03/05/2012  º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±º Desc.    ³ Funcao para processamento de mensagem unica.                 º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±º Param    ³ cXML - Variavel com conteudo xml para envio/recebimento.     º±±
+±±º          ³ nTypeTrans - Tipo de transacao. (Envio/Recebimento)          º±±
+±±º          ³ cTypeMessage - Tipo de mensagem. (Business Type, WhoIs, etc) º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±º Uso      ³                                                              º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function IntegDef(cXML,nTypeTrans,cTypeMessage,cVersion)
+Return MATI060(cXML,nTypeTrans,cTypeMessage,cVersion)
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} MenuDef
+Monta opcoes de rotina do programa
+
+@since 03/04/2013
+@version P11.80
+@author Andre Anjos
+*/
+//-------------------------------------------------------------------
+Static Function MenuDef()
+
+	Private aRotina := {}
+
+	ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.MATA061"  OPERATION 1	ACCESS 0 //"Visualizar"
+	ADD OPTION aRotina TITLE "Incluir"    ACTION "VIEWDEF.MATA061"   OPERATION 3 ACCESS 0  //"Incluir"
+	ADD OPTION aRotina TITLE "Alterar"    ACTION "VIEWDEF.MATA061"  OPERATION 4	ACCESS 0 //"Alterar"
+	ADD OPTION aRotina TITLE "Excluir"    ACTION "VIEWDEF.MATA061"  OPERATION 5 ACCESS 3 //"Excluir"
+	//Ponto de Entrada para adição de botões ao aRotina
+	If ExistBlock ("MT061MN")
+		ExecBlock ("MT061MN",.F.,.F.)
+	EndIf
+Return aRotina
+
+
+/*/{Protheus.doc} A061CPOCQ
+Busca campos obrigatorio da aba CQ
+
+@since 20/10/2015
+@version P11.8
+/*/
+
+Static Function A061CPOCQ(cAliasFXP,cFolder)
+
+	Local aArea	 := GetArea()
+	Local aRet	 := {}
+	Local cCampo := "A5_SKIPLOT"
+
+
+	DbSelectArea("SX3")
+	SX3->(DbSetOrder(1))
+	If SX3->(DbSeek(cAliasFXP))
+		While SX3->(!EOF()) .And. AllTrim(SX3->X3_ARQUIVO) == cAliasFXP
+			If (AllTrim(SX3->X3_CAMPO) $ cCampo .Or. SX3->X3_FOLDER == cFolder) .And. X3Obrigat(SX3->X3_CAMPO)
+				aAdd(aRet,AllTrim(SX3->X3_CAMPO))
+			Endif
+			SX3->(DbSkip())
+		Enddo
+	Endif
+
+	RestArea(aArea)
+
+Return aRet
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} ModelDef
+Modelo de dados de Produtos x Fornecedores
+
+@since 27/04/2012
+@version P11.6
+/*/
+//-------------------------------------------------------------------
+Static Function ModelDef()
+
+	Local oModel 	:= NIL
+	Local oStruSA5	:= FWFormStruct(1,'SA5', {|cCampo| AllTRim(cCampo) $ "A5_PRODUTO|A5_NOMPROD|A5_REFGRD|A5_DESREF"})
+	Local oStruGrid := MA061MldStruct()
+	Local nI		:= 0
+	Local aCpos		:= {}
+
+	oModel := MPFormModel():New('DMATA061', /*bPreValidacao*/, {|oModel|a060VldGrv(oModel)}/*bPosValidacao*/, /*bCommit*/, /*bCancel*/ )
+
+
+	oModel:AddFields('DMdFieldSA5',NIL,oStruSA5)
+	oModel:AddGrid('DMdGridSA5','DMdFieldSA5',oStruGrid, , {|oModel|a060LinOk(oModel)})
+
+	oModel:SetRelation('DMdGridSA5',{{'A5_FILIAL','xFilial("SA5")'},{"A5_PRODUTO","A5_PRODUTO"},{"A5_REFGRD","A5_REFGRD"}},SA5->(IndexKey(2)))
+	oModel:GetModel("DMdGridSA5"):SetDelAllLine(.T.)
+	oModel:GetModel("DMdGridSA5"):SetMaxLine(9999)
+	oModel:SetDescription("Atualizacao Produto x Fornecedor")	//"Atualiza‡„o Produto x Fornecedor"
+	oModel:SetPrimaryKey({"A5_FILIAL","A5_FORNECE","A5_LOJA","A5_PRODUTO","A5_FABR","A5_FALOJA","A5_REFGRD"})
+	oModel:GetModel('DMdGridSA5'):SetUniqueLine({'A5_FORNECE','A5_LOJA',"A5_PRODUTO",'A5_FABR','A5_FALOJA', "A5_REFGRD"})
+
+	//oModel:InstallEvent("EV.PAD",,MATA061EVDEF():New("MdGridSA5"))
+
+Return oModel
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} ViewDef
+Interface do modelo de dados de Produtos x Fornecedores
+
+@since 27/04/2012
+@version P11.6
+*/
+//-------------------------------------------------------------------
+Static Function ViewDef()
+
+	Local oView		:= NIL
+	Local oModel	:= FWLoadModel('DMATA061')
+	Local oStruSA5  := FWFormStruct(2,"SA5", {|cCampo| AllTRim(cCampo) $ "A5_PRODUTO|A5_NOMPROD|A5_REFGRD|A5_DESREF"})
+	Local oStruGRID := MA061ViewStruct()
+
+	oStruSA5:SetNoFolder()
+
+	oView:= FWFormView():New()
+	oView:SetModel(oModel)
+
+	oView:AddField('VIEW_SA5', oStruSA5, 'DMdFieldSA5')
+	oView:AddGrid ('GRID_SA5', oStruGRID, 'DMdGridSA5' )
+
+	oView:CreateHorizontalBox("MAIN",25)
+	oView:CreateHorizontalBox("GRID",75)
+
+	oView:SetOwnerView('VIEW_SA5','MAIN')
+	oView:SetOwnerView('GRID_SA5','GRID')
+	oView:EnableControlBar(.T.)
+
+Return oView
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} MA060GrWhn
+Função para habilitar campo de Ref. de Grade
+
+@since 24/09/2014
+@version P12
+*/
+//-------------------------------------------------------------------
+
+STATIC Function MA060GrWhn()
+Return MaGrade() .AND. QIEVLDREF() .AND. IIF(Empty(M->A5_PRODUTO),.T.,.F.)
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} MA061MldStruct
+Cria objeto de estrutura para o grid de dados no MODEL da tabela SA5.
+Função criada pois o modelo SA5 é usado também em outros modelos
+
+@param lNomeProd Indica se o nome do produto deve ser carregado para a estrutura
+
+@since 13/03/2017
+@version P12
+*/
+//-------------------------------------------------------------------
+Static Function MA061MldStruct(lNomeProd)
+
+	Local nI
+	Local aCpos
+	Local oStruct
+
+	Default lNomeProd := .F.
+
+	oStruct := FWFormStruct(1,'SA5')
+
+	//Campos da aba CQ obrigatorio que não devem ser validados
+	//a obrigatoriedade quando estiver no modulo diferente
+	//de Inspeção de Entradas
+	If nModulo <> 21
+		aCpos := A061CPOCQ("SA5","2")
+
+		For nI := 1 To Len(aCpos)
+			oStruct:SetProperty(aCpos[nI],MODEL_FIELD_OBRIGAT,.F.)
+		Next nI
+	Endif
+
+Return oStruct
+
+//-------------------------------------------------------------------
+/*{Protheus.doc} MA061ViewStruct
+Cria objeto de estrutura para o grid de dados na VIEW da tabela SA5.
+Função criada pois o modelo SA5 é usado também em outros modelos
+
+@param lNomeProd Indica se o nome do produto deve ser carregado para a estrutura
+
+@since 13/03/2017
+@version P12
+*/
+//-------------------------------------------------------------------
+Static Function MA061ViewStruct()
+
+	Local cCampoCom := "A5_PRODUTO|A5_NOMPROD|A5_SITU|A5_SKPLOT|A5_REFGRD|A5_DESREF|"
+	Local cCampoQIE := "A5_PRODUTO|A5_NOMPROD|A5_REFGRD|A5_DESREF"
+	Local oStruct
+
+	oStruct := FWFormStruct(2,"SA5",{|cCampo| !(AllTRim(cCampo) $ IIF(nModulo == 21, cCampoQIE, cCampoCom))})
+
+Return oStruct
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} a060LinOk
+Validacao de linha de fornecedores
+
+@since 08/12/2017
+@version P12.1.17
+/*/
+//-------------------------------------------------------------------
+Static Function a060LinOk(oModel)
+
+	Local lRet := .T.
+
+
+	If oModel:isInserted()
+		If lRet
+			If SuperGetMv("MV_GRADE", .F., .F.) .And. !Empty(M->A5_REFGRD)
+				lRet := ExistChav("SA5", oModel:GetValue("A5_FORNECE") + oModel:GetValue("A5_LOJA") + M->A5_REFGRD + oModel:GetValue("A5_FABR") + oModel:GetValue("A5_FALOJA"), 9)
+			Else
+				lRet := ExistChav("SA5", oModel:GetValue("A5_FORNECE") + oModel:GetValue("A5_LOJA") + M->A5_PRODUTO + oModel:GetValue("A5_FABR") + oModel:GetValue("A5_FALOJA"))
+			EndIf
+		EndIf
+	EndIf
+
+Return lRet
+
+
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} a060LinOk
+Validacao de linhas ativas no grid
+
+@since 08/01/2019;
+@version P12.1.17
+/*/
+//-------------------------------------------------------------------
+Static Function A060VldGrv(oModel)
+
+	Local lRet	 := .T.
+	Local nCount := 0
+	Local nI:=0
+	Local oModelGRID := oModel:GetModel('DMdGridSA5')
+
+	For nI := 1 To oModelGRID:Length()
+		oModelGRID:GoLine(nI)
+		If oModelGRID:IsDeleted()
+			nCount := (nCount+1)
+		EndIf
+	Next nI
+
+	If oModelGRID:length()==nCount
+		lRet :=.F.
+		Help(" ",1,"A060VldGrv",,"STR0001",1,4, NIL, NIL, NIL, NIL, NIL, {"STR0002"})
+	EndIf
+
+Return lRet
+
+
+

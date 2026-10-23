@@ -40,8 +40,9 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [10-guias-operacionais/](./10-guias-operacionais/) | — | Runbooks |
 | [11-padroes-de-desenvolvimento/](./11-padroes-de-desenvolvimento/) | [README](./11-padroes-de-desenvolvimento/README.md) | Constituição, padrões e code review |
 | [12-roadmap-e-evolucao/](./12-roadmap-e-evolucao/) | [README](./12-roadmap-e-evolucao/README.md) | **Única pasta canônica de roadmap/evolução** · inclui [Minha DELPI Copilot](./12-roadmap-e-evolucao/minha-delpi-copilot/README.md) |
-| [13-auditoria-lgpd/](./13-auditoria-lgpd/) | — | ROPA, relatórios LGPD, rastreamento de uso |
-| [14-documentacao-geral/](./14-documentacao-geral/) | [README](./14-documentacao-geral/README.md) | Acervo de referência migrado; não normativo |
+| [13-fontes-totvs-protheus/](./13-fontes-totvs-protheus/) | [README](./13-fontes-totvs-protheus/README.md) | Fontes TOTVS Protheus Delpi (customizações `.prw` por módulo) — referência técnica |
+| [14-auditoria-lgpd/](./14-auditoria-lgpd/) | — | ROPA, relatórios LGPD, rastreamento de uso |
+| [15-documentacao-geral/](./15-documentacao-geral/) | [README](./15-documentacao-geral/README.md) | Acervo de referência migrado; não normativo |
 
 Não criar uma segunda pasta para roadmap/evolução. Todo novo roadmap deve ser colocado em `docs/12-roadmap-e-evolucao/`.
 
@@ -57,7 +58,7 @@ A precedência arquitetural do repositório é definida por:
 4. documentação técnica atual;
 5. roadmap ativo.
 
-`14-documentacao-geral` é material de referência. Quando divergir de fonte canônica atual, a fonte canônica prevalece e o documento de referência deve ser corrigido ou removido.
+`15-documentacao-geral` é material de referência. Quando divergir de fonte canônica atual, a fonte canônica prevalece e o documento de referência deve ser corrigido ou removido.
 
 ---
 

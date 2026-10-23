@@ -1,0 +1,24 @@
+0001#STR0001#ALL#Comparative Report - Executed X Estimated
+0002#STR0002#ALL#Comparative between the real registered production and the forecast,
+0003#STR0003#ALL#based on the Operation Route. The values referring to  
+0004#STR0004#ALL#timing are converted according to parameter MV_TPHR.
+0005#STR0005#ALL#By PO
+0006#STR0006#ALL#By Resource
+0007#STR0007#ALL#By Date
+0008#STR0008#ALL#By Operator
+0009#STR0009#ALL#Z.Form
+0010#STR0010#ALL#Management
+0011#STR0011#ALL#RECORD(S)
+0012#STR0012#ALL#of PO:
+0013#STR0013#ALL#of Resource:
+0014#STR0014#ALL#of Date:
+0015#STR0015#ALL#of Operator:
+0016#STR0016#ALL#Selecting Records...
+0017#STR0017#ALL#PRODUCT ORDER                 OPERATION DESCRIPTION       RESOURCE                               TOOL                      OPERATOR     QUANTITY      (*)QUANTITY           QUANTITY          TIME      TIME    DATE OF
+0018#STR0018#ALL#ORDER                                    DESCRIPTION                                                                                    OF THE PO         PRODUCED          QUANTITY          TIME      TIME    TIME      
+0019#STR0019#ALL#Totalizer   
+0020#STR0020#ALL#Estimated time
+0021#STR0021#ALL#ActualTime
+0022#STR0022#ALL#PCP production annotation  
+0023#STR0023#ALL#Total PRODUCED QUANTITY is equal to the sum of all annotations
+0024#STR0024#ALL#of the last operation, according to break defined for printing

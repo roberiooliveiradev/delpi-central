@@ -1,0 +1,31 @@
+#include 'tlpp-core.th'
+#include 'tlpp-rest.th'
+
+namespace delpi.pcp.app
+user function fGetDesenho(aPar)
+    Local cFile     := ""                       as Character
+    Local cFileName := ""                       as Character
+    Local cBarra    := Iif(IsSrvUnix(),"\","/") as Character
+    Local aArq      := {}                       as Array
+    Local jResponse := jsonObject():new()       as Json
+    Local oFile                                 as Object
+    Local cPathPDF := "\AppMinhaProducao\"+aPar[1]+"\"
+
+    conout("gda entrou fGetDesenho")
+    aPar[2] :="90261137"
+    cFile :=cPathPDF+aPar[2]+".pdf"
+    conout("gda entrou fGetDesenho+ " +cFile )
+
+    If !Empty(cFile)
+        aArq	:= StrTokArr2(cFile, cBarra)
+        cFileName := aArq[Len(aArq)]
+    EndIf
+
+    oFile := FwFileReader():New(cFile)
+    If (oFile:Open())
+        conout("gda entrou fGetDesenho - abriu")
+        jResponse["file"]     := Encode64(oFile:FullRead())
+        jResponse["fileName"] := cFileName
+    EndIf
+
+Return jResponse

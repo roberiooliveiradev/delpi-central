@@ -1,0 +1,102 @@
+/*#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE "rwmake.ch"*/
+
+#include "tlpp-core.th"
+NAMESPACE custom.delpi.estoque
+USER FUNCTION DLP04F06()
+
+    Local cEol := chr(10)
+    Local cSQL := ""
+    Local oQuery       := FwExecStatement():New()
+    local cAlias:= GetNextAlias() as character
+
+
+
+    cSql := "FROM dbo."+ RetSqlName("SBZ") + " (NOLOCK) SBZ "+cEol
+    cSql += "WHERE   SBZ.D_E_L_E_T_ = ''" + cEol
+    cSql += "AND    SBZ.BZ_FILIAL = ?"    + cEol
+    cSql += "AND    SBZ.BZ_DTINV != '' "  + cEol
+    cSql += "AND    SBZ.BZ_DTPTPD = '' "  + cEol
+    cSql +=" ORDER BY 1  "
+
+
+
+    //oQuery:setUnsafe(1,  )
+    oQuery:SetQuery(" SELECT BZ_COD , R_E_C_N_O_ [RECSBZ] "+cSql)
+    oQuery:setString(1, xFilial('SBZ') )
+
+
+    CONOUT(oQuery:getFixQuery())
+    oQuery:OpenAlias(cAlias)
+    Do While !(cAlias)->(Eof())
+        dbSelectArea("SB1")
+        SB1->(dbSetOrder(1))
+        SB1->(dbSeek(xFilial("SB1")+  (cAlias)->BZ_COD))
+        cGrupo := SB1->B1_GRUPO
+        cTipo  := SB1->B1_TIPO
+        cCodPro := (cAlias)->BZ_COD
+
+        lRet :=   custom.delpi.estoque.fProcPontoPedido(cCodPro,cTipo,cGrupo)
+        if lRet
+            dbSelectArea("SBZ")
+            SBZ->(dbSetOrder(1))
+            SBZ->(dbSeek(xFilial("SBZ")+cCodPro))
+            RecLock('SBZ',.F.)
+
+            SBZ->BZ_DTPTPD :=   DATE()
+            SBZ->(MsUnLock())
+        endif
+        (cAlias)->(dbSkip())
+    EndDo
+    (cAlias)->( DBCloseArea() )
+
+
+rETURN
+
+
+
+Static Function fProcPontoPedido(cCodPro,cTipo,cGrupo)
+    Local lRet := .t.
+    Local lOpcAuto      := .T.
+    Local nY      := 0
+    PRIVATE lMsErroAuto := .F.
+    Private lMsHelpAuto	:= .T.
+    Private lAutoErrNoFile  := .T.
+    aParametros :={}
+    nTMLocal := getsx3cache("B2_LOCAL","X3_TAMANHO")
+    AADD(aParametros, cCodPro)                 //  | mv_par01  || Produto de
+    AADD(aParametros, cCodPro)     //  | mv_par02  || Produto ate
+    AADD(aParametros, cGrupo )    //  | mv_par03  || Grupo de
+    AADD(aParametros, cGrupo)     //  | mv_par04  || Grupo ate
+    AADD(aParametros, cTipo)   //  | mv_par05  || Tipo de
+    AADD(aParametros, cTipo)   //  | mv_par06  || Tipo ate
+    AADD(aParametros, '01') /*SPACE(nTMLocal))          */  //  | mv_par07  || Local de
+    AADD(aParametros, '01') /*REPLICATE("Z",nTMLocal))  */  //  | mv_par08  || Local ate
+    AADD(aParametros, 2)                           //  | mv_par09  || Considera Necess Bruta 1 sim Pto Pedido
+    AADD(aParametros, 1)                           //  | mv_par10  || Saldo Neg Considera    1 sim Lot.Economico
+    AADD(aParametros, STOD("20491231"))            //  | mv_par11  || Data limite p/ empenhos
+    AADD(aParametros, 1)                           //  | mv_par12  || Cons.Qtd. De 3os.? Sim / Nao
+    AADD(aParametros, 2)                           //  | mv_par13  || Cons.Qtd. Em 3os.? Sim / Nao
+    AADD(aParametros, 1)                           //  | mv_par14  || Ao atingir Estoque Maximo ?  1=Qtde. Original; 2=Ajusta Est. Max
+    AADD(aParametros, 2)                           //  | mv_par15  || Quebra SC por Lote Econmico?
+    AADD(aParametros, 1)                           //  | mv_par16  || Qtd.PV nao Liberado?" Subtr/Ignora
+    AADD(aParametros,'01')/*SPACE(nTMLocal))  */           //  | mv_par17  || Considera Saldo Armazem de
+    AADD(aParametros,'01')/*REPLICATE("Z",nTMLocal))   */  //  | mv_par18  || Considera Saldo Armazem ate
+    AADD(aParametros, 2)                           //  | mv_par19  || Seleciona Filiais? (Sim/Nao)
+    AADD(aParametros, 1)                           //  | mv_par20  || Gera SC por produto(Sim/Nao)
+    AADD(aParametros, 1)                           //  | mv_par21  || Considera Est. Seguranca ?  (Sim / Nao)
+    AADD(aParametros, 1)                           //  | mv_par22  || Prioriza geração de         (1-Sol.Compra/2-Ped.Compra)
+    lMsErroAuto     := .F.
+    MSExecAuto({|x, y| mata170(x, y)},lOpcAuto, aParametros)
+    If lMsErroAuto
+        cErro  := ""
+        aLogAuto    := GetAutoGrLog()
+        For nY := 1 To Len(aLogAuto)
+            cErro += aLogAuto[nY] + CRLF
+        Next nY
+        conout(cErro)
+        lRet := .f.
+    Endif
+
+Return lRet

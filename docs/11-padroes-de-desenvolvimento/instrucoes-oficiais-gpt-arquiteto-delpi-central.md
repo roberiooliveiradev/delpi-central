@@ -81,7 +81,7 @@ Todo plugin deve fornecer um manifesto JSON (`delpi.manifest.json` ou `{id}.mani
 **Versão aceita pelo Core (runtime):** `schemaVersion: "1.0.0"` — única suportada por `ManifestVersionResolver` (`core-api/app/application/validators/manifest_version_resolver.py`).
 
 - **PLANNED / NOT_RUNTIME:** `schemaVersion: "1.1.0"` — especificação em `docs/05-plugin-system/manifest-schema-1.1.0.md`, ainda não implementada na Core API.
-- **SUPERSEDED:** "Manifesto v2" / `schemaVersion: "2.0.0"` (`docs/14-documentacao-geral/delpi_plugin_manifest_spec_v_2.md`) — rejeitado pelo Core atual; não usar em implementação nova.
+- **SUPERSEDED:** "Manifesto v2" / `schemaVersion: "2.0.0"` (`docs/15-documentacao-geral/delpi_plugin_manifest_spec_v_2.md`) — rejeitado pelo Core atual; não usar em implementação nova.
 
 Tipos suportados:
 - `microfrontend`

@@ -1,0 +1,38 @@
+#include 'tlpp-core.th'
+#include 'tlpp-rest.th'
+namespace delpi.pcp.app.utils
+/*/{Protheus.doc} apiPostReports
+    Endpoint para efetivar a extração do relatório selecionado pelo cliente
+
+    @type  Function
+    @author Victor Azevedo
+    @since 23/08/2023
+    @version Protheus 12
+/*/
+@POST('/api/delpi/v1/download/')
+user Function apiPostDesenho()
+    Local oBody   as Object
+    Local jResponse as Json
+    Local cPostParms := '{"username": "admin", "password": "#Delpi2024"}' as Character
+    oBody        := JsonObject():new()
+    cBodyContent := oBody:fromJson(oRest:GetBodyRequest())
+    aPar := array(2)
+    aPar[1] := cEmpAnt+cFilAnt
+    //aPar[2] :=  oBody:GetjSontext("idProdCode")
+    aPar[2] :="90261137"  //oBody["idProdCode"]
+    conout("gda entrou apiPostReports")
+    conout( "apiPostReports "+ aPar[2] )
+    jResponse := delpi.pcp.app.U_fGetDesenho(aPar)
+    //oService:setBody(oRest:GetBodyRequest())
+    //jResponse := oService:getReport()
+
+    If jResponse:hasProperty("file") .And. jResponse:hasProperty("fileName")
+        oRest:SetKeyHeaderResponse("Content-Disposition", "attachment; filename=" + jResponse["fileName"] + "")
+        oRest:SetKeyHeaderResponse("Content-Type", "application/pdf" )
+        oRest:SetResponse(jResponse)
+    Else
+        oRest:setFault('{"response":"Não foi possível realizar o download do arquivo"}') // "response" #
+        oRest:setStatusCode(403)
+    EndIf
+
+Return

@@ -13,7 +13,7 @@
 | Fonte externa BrasilAPI em produção | **DESABILITADA** no último inventário | `EXTERNAL_DATA_CNPJ_PROVIDER=unavailable`; não assumir atualização sem nova evidência |
 | Smoke CNPJ real e reviews/decisions E2E | **TEST_NOT_RUN / INCONCLUSIVE** | Ausência de autorização institucional comprovada e identidade/fornecedor de teste documentados |
 | Autorização do Product Owner | **PROVEN** como decisão de produto | `X3-FINAL-PO-AUTHORIZATION-20261022.md` e decisão desta etapa |
-| ROPA geral DELPI | **EXISTE** | `docs/13-auditoria-lgpd/ropa-registro-tratamento.md` (atualização indicada 2026-05-26) |
+| ROPA geral DELPI | **EXISTE** | `docs/14-auditoria-lgpd/ropa-registro-tratamento.md` (atualização indicada 2026-05-26) |
 | Operação específica CNPJ externa no ROPA vigente | **PENDING** | Proposta separada, ainda sem incorporação/parecer comprovado |
 | Base legal, análise de necessidade/proporcionalidade e possível LIA | **PENDING** | Legítimo interesse é hipótese proposta, não parecer concluído |
 | Retenção de revisões/snapshots e expurgo | **PENDING** | Prazo e operacionalização a confirmar; TTL de revisão não equivale automaticamente a retenção/expurgo |
@@ -49,7 +49,7 @@ Essa sequência reflete prioridade de execução, não dispensa de salvaguardas 
 ## 5. Authorities/referências
 
 - `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`
-- `docs/13-auditoria-lgpd/ropa-registro-tratamento.md`
+- `docs/14-auditoria-lgpd/ropa-registro-tratamento.md`
 - `docs/12-roadmap-e-evolucao/shared-integrations/X3-FINAL-ROPA-PROPOSAL-EXTERNAL-REGISTRY-20261022.md`
 - `docs/12-roadmap-e-evolucao/shared-integrations/X3-FINAL-PO-AUTHORIZATION-20261022.md`
 - `docs/12-roadmap-e-evolucao/shared-integrations/X3-RUNTIME-EVIDENCE-20261022.md`

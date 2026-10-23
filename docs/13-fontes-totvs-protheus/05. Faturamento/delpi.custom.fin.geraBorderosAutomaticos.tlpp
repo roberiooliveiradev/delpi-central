@@ -1,0 +1,153 @@
+#Include "Protheus.ch"
+#include 'tlpp-core.th'
+#INCLUDE "TOPCONN.CH"
+#include "tbiconn.ch"
+
+NAMESPACE delpi.custom.fin
+
+/*/{Protheus.doc} geraBorderosAutomaticos
+Geração de borderôs de cobrança de forma automática, utilizando o MSExecAuto para processar os títulos em lote.
+@type user function
+@author Bruno Vilanova
+@since 12/03/2026
+/*/
+
+User Function geraBorderosAutomaticos()
+
+	Local aTit := {} as array
+	Local aBor := {} as array
+	Local cQrySE1 as character
+	Local cAlias := GetNextAlias() as character
+	Local lret := .T. as logical
+
+	Local cBanco := "001" as character
+	Local cAgencia := "31631" as character
+	Local cConta := "5156X" as character
+	Local cSituaca := "1" as character
+	Local cEspecie := '2' as character
+	Local cSubconta := '001' as character
+
+	//-- Variáveis utilizadas para o controle de erro da rotina automática
+	Local aErroAuto :={} as array
+	Local cEol := chr(10) as character
+	Local nCntErr :=0 as numeric
+	Private lMsErroAuto := .F. as logical
+	Private lMsHelpAuto := .T. as logical
+	Private lAutoErrNoFile := .T. as logical
+
+	//If GetRemoteType() == -1 .OR. (!Type("cFilAnt") == "C" .AND. !TCIsConnected())
+	//	lJob := .T.
+	//	RpcClearEnv()
+	//	FWLogMsg("INFO", "", "FINA060", "", "", "", "Iniciando ambiente via RpcSetEnv")
+//
+	//	RpcSetEnv(aDadosSistema[1], aDadosSistema[2],,,,'FIN')
+	//EndIf
+
+	// Filtro SQL para para adicionar os titulos no borderô
+	cQrySE1 := "SELECT * FROM " + RetSqlName("SE1") + " SE1 (NOLOCK) " + cEol
+	cQrySE1 += "INNER JOIN " + RetSqlName("SF2") + " SF2 (NOLOCK) " + cEol
+	cQrySE1 += "ON SF2.D_E_L_E_T_ = '' " + cEol
+	cQrySE1 += "AND SF2.F2_FILIAL = SE1.E1_FILORIG " + cEol
+	cQrySE1 += "AND SF2.F2_LOJA = SE1.E1_LOJA " + cEol
+	cQrySE1 += "AND SF2.F2_CLIENTE = SE1.E1_CLIENTE " + cEol
+	cQrySE1 += "AND SF2.F2_SERIE = SE1.E1_PREFIXO " + cEol
+	cQrySE1 += "AND SF2.F2_DOC = SE1.E1_NUM " + cEol
+
+	cQrySE1 += "INNER JOIN " + RetSqlName("SA1") + " SA1 (NOLOCK) " + cEol
+	cQrySE1 += "ON SA1.D_E_L_E_T_ = '' " + cEol
+	cQrySE1 += "AND SA1.A1_COD = SE1.E1_CLIENTE " + cEol
+	cQrySE1 += "AND SA1.A1_LOJA = SE1.E1_LOJA " + cEol
+
+	cQrySE1 += "WHERE SE1.D_E_L_E_T_ = '' " + cEol
+	cQrySE1 += "AND SE1.E1_FILORIG = " + ValToSQL(cFilAnt) + cEol
+	cQrySE1 += "AND SE1.E1_NUMBOR = '' " + cEol
+	cQrySE1 += "AND SE1.E1_BAIXA = '' " + cEol
+	cQrySE1 += "AND SE1.E1_SALDO > 0 " + cEol
+	cQrySE1 += "AND SE1.E1_VALOR > 0 " + cEol
+	cQrySE1 += "AND SA1.A1_CGC <> '' " + cEol
+	cQrySE1 += "AND SA1.A1_BLEMAIL = '1' " + cEol
+
+	cQrySE1 := ChangeQuery(cQrySE1)
+
+	MPSysOpenQuery(cQrySE1, cAlias)
+
+	//Adiciona os títulos no array
+	While (cAlias)->(!eof())
+
+		aAdd(aTit,	{{"E1_FILIAL" , (cAlias)->E1_FILIAL },;
+			{"E1_PREFIXO" , (cAlias)->E1_PREFIXO },;
+			{"E1_NUM" , (cAlias)->E1_NUM },;
+			{"E1_PARCELA" , (cAlias)->E1_PARCELA },;
+			{"E1_TIPO" , (cAlias)->E1_TIPO };
+			})
+		(cAlias)->(dbSkip())
+
+	EndDo
+
+	(cAlias)->(DbCloseArea()) //Fecho a tabela temporária
+
+	Begin Sequence
+
+		If Empty(aTit) //Caso não encontre títulos deve sair da rotina.
+			lRet := .F.   
+
+			Break
+
+		EndIf
+
+		//Informações bacárias para o borderô
+		aAdd(aBor, {"AUTBANCO" , PadR(cBanco ,TamSX3("A6_COD")[1]) })
+		aAdd(aBor, {"AUTAGENCIA" , PadR(cAgencia ,TamSX3("A6_AGENCIA")[1]) })
+		aAdd(aBor, {"AUTCONTA" , PadR(cConta ,TamSX3("A6_NUMCON")[1]) })
+		aAdd(aBor, {"AUTSITUACA" , PadR(cSituaca ,TamSX3("E1_SITUACA")[1]) })
+		aAdd(aBor, {"AUTSUBCONTA" , PadR(cSubconta,TamSX3("EA_SUBCTA")[1]) })
+		aAdd(aBor, {"AUTESPECIE" , PadR(cEspecie,TamSX3("EA_ESPECIE")[1]) })
+		aAdd(aBor, {"AUTBOLAPI" , .T. })
+		FWLogMsg("INFO", "", "FINA060", "", "", "", ;
+		"Executando MSExecAuto para geração de Borderô")
+		MSExecAuto({|a, b| FINA060(a, b)}, 3,{aBor,aTit})
+
+		If lMsErroAuto
+
+			aErroAuto := GetAutoGRLog()
+			For nCntErr := 1 To Len(aErroAuto)
+
+				cErroRet += aErroAuto[nCntErr]
+
+			Next
+
+			FWLogMsg("ERROR", "", "FINA060", "", "", "", ;
+			cErroRet)
+
+		EndIf
+
+	End Sequence
+
+	//If lJob
+	//	RpcClearEnv()
+	//	FWLogMsg("INFO", "", "FINA060", "", "", "", "Finalizando ambiente RpcSetEnv")
+	//EndIf
+
+Return(lRet)
+
+User Function SchedDef()
+	Local aOrd :={} as array
+	Local aParam:={} as array
+
+	aParam := { "P",;   //Tipo R para relatorio P para processo
+	"ParamDef",  ;      // Nome do pergunte do relatorio, caso nao use passar ParamDef
+	"",         ;       // Alias
+	aOrd,       ;
+	"geraBorderosAutomaticos";         //Array de ordens
+	}
+Return aParam
+
+User Function tststartjob ()
+	Local lret := .F. as logical
+	lret := startjob("delpi.custom.fin.geraBorderosAutomaticos.u_geraBorderosAutomaticos",;
+	getenvserver(),.T., cEmpAnt, cFilAnt)
+	if !lret
+		return -1
+	endif
+
+Return

@@ -3,14 +3,14 @@
 **Status:** `PROPOSTA — PENDENTE DE ENDOSSO DPO`  
 **Data:** 2026-10-22  
 **Elaborado por:** GPT Arquiteto (X3.FINAL)  
-**Autoridade competente para aprovação:** Michael Marotto — DPO (ti@delpi.com.br), conforme `docs/13-auditoria-lgpd/ropa-registro-tratamento.md`
+**Autoridade competente para aprovação:** Michael Marotto — DPO (ti@delpi.com.br), conforme `docs/14-auditoria-lgpd/ropa-registro-tratamento.md`
 
 > **Aviso:** este documento é uma **proposta** de registro para a operação descrita
 > abaixo. Ele **não constitui autorização institucional** nem registro efetivo no
 > ROPA. A integração `Portal Suprimentos → supplies-api → external-data-api →
 > BrasilAPI` permanece **desabilitada** (`EXTERNAL_DATA_CNPJ_PROVIDER=unavailable`)
 > até endosso formal do DPO e/ou incorporação ao ROPA canônico
-> (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`).
+> (`docs/14-auditoria-lgpd/ropa-registro-tratamento.md`).
 
 ---
 
@@ -33,7 +33,7 @@
 ## O que falta para `GATE-F1 = PASS`
 
 1. **Endosso formal do DPO** desta operação — por uma das vias:
-   - a) incorporação da seção acima ao ROPA canônico (`docs/13-auditoria-lgpd/ropa-registro-tratamento.md`) assinada/aprovada pelo DPO; **ou**
+   - a) incorporação da seção acima ao ROPA canônico (`docs/14-auditoria-lgpd/ropa-registro-tratamento.md`) assinada/aprovada pelo DPO; **ou**
    - b) parecer por escrito do DPO dispensando registro adicional com fundamentação (ex.: nenhum dado pessoal tratado após minimização); **ou**
    - c) LIA (avaliação de legítimo interesse) se o DPO entender exigível dado o risco residual de MEI/EI.
 2. **Definição de retenção** das revisões S2 com snapshot cadastral.

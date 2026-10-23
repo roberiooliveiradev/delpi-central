@@ -1,0 +1,259 @@
+#Include 'TOTVS.CH'
+#include 'parmtype.ch'
+#INCLUDE "Rwmake.ch"
+#INCLUDE "Topconn.ch"
+
+/*/{Protheus.doc} nomeFunction
+(long_description)
+@type user function
+@author Pedro Lindenberg
+@since 09/08/2024
+@version version
+/*/
+User Function RELOPSEXC()
+
+
+	Local aArea     := GetArea()
+	Local lIsBlind  := IsBlind()
+	Local cLockName := ProcName()
+	Local cDirCsv   := SUPERGETMV("MV_ICSVDIR", .F., " ")
+	Local cMask :="Arquivos CSV (*.CSV)|*.csv|"
+	Private cArqOri := ""
+
+	//If !FWIsAdmin()
+	//	rETURN
+	//ENDIF
+
+	// IF !lIsBlind
+	// 	IF !MSGYESNO("Deseja realizar a importacao?", "ATENCAO!")
+	// 		RETURN .F.
+	// 	ENDIF
+	// ENDIF
+
+	// cArqOri := "C:\Users\pedro\Downloads\ops_exc2.csv"//Alltrim(cGetFile(cMask,OemToAnsi("Selecione o Arquivo"),0,"",.T.,GETF_ONLYSERVER+GETF_LOCALHARD+GETF_NETWORKDRIVE))
+
+	//Diretorio do arquivo que será processado.
+	// cArqOri := cDirCsv
+
+	// If ! Empty(cArqOri)
+	// 	//Somente se existir o arquivo e for com a extensao CSV
+	// 	If File(cArqOri) .And. Upper(SubStr(cArqOri, RAt('.', cArqOri) + 1, 3)) == 'CSV'
+	Processa({|| fImporta() }, "Importando...")
+	// 	Else
+	// 		IF !lIsBlind
+	// 			MsgStop("Arquivo e/ou extensÃ£o invalida!", "Atencao")
+	// 		ENDIF
+	// 	EndIf
+	// EndIf
+
+	// RestArea(aArea)
+
+	//RpcClearEnv()
+
+Return
+
+Static Function fImporta()
+	Local cEol := chr(10)
+	Local aArea     := GetArea()
+	Local lIsBlind  := IsBlind()
+	Local cArqLog   := "zImpCSV_" + dToS(Date()) + "_" + StrTran(Time(), ':', '-') + ".log"
+	Local nTotLinhas:= 0
+	Local cLinAtu   := " "
+	Local nLinhaAtu := 0
+	Local aLinha    := {}
+	Local aMata650 := {}
+	Local _aVetor := {}
+	Local lTemApont := .F.
+	Local oArquivo
+	Local aLinhas
+	Local lRet      := .T.
+	Local cNumOp  := " "
+	Local cNumProd := " "
+	Local cCurvAnt  := " "
+	Local cLastOp := ""
+	//	Local cAlias := GetNextAlias()
+	Local aSD3Area := SD3->(GetArea())
+	Local aSc2Area := SC2->(GetArea())
+	Local lMsErroAuto := .F.
+	Private cDirLog := GetTempPath() //+ "alt.CurvaProd\" + DTOC(DATE()) + TIME()
+	Private cLog    := ""
+
+
+	aPergs := {}
+	cProdDe  := padr("",getsx3cache("B1_COD" ,"X3_TAMANHO" ))
+	cPDtEmiDe      :=  FirstDate(DaySub(DATE(),DAY(Date()+1)))
+	//Box de Perguntas
+	aAdd(aPergs, {1, "Produto De"          ,  cProdDe  ,  getsx3cache("B1_COD","X3_PICTURE" ),     'Vazio() .or. ExistCpo("SB1")', "SB1", ".T.", 80,  .F.})
+	aAdd(aPergs, {1, "Data Inicio"   ,   cPDtEmiDe   , "", ".T.", "", ".T.", 80,  .F.})
+
+	aRetBox := ARRAY(LEN(aPergs))
+
+	If ParamBox(aPergs, "Informe os parâmetros",@aRetBox)
+
+		//GUARDA AS OPCOES ESCOLHIDAS
+		cProdDe    := MV_PAR01
+		cPDtEmiDe  := MV_PAR02
+	else
+		FWAlertWarning("Cancelado pelo Usuario","Delpi")
+		return
+
+	EndIf
+
+	if lRet
+		// oArquivo := FWFileReader():New(cArqOri)
+		cSql :="SELECT * " + cEol
+		cSql +="FROM   dbo.SC2010 (NOLOCK) TBL1" + cEol
+		cSql +="WHERE TBL1.D_E_L_E_T_ = ''" + cEol
+		cSql +=" AND TBL1.C2_FILIAL = '02'" + cEol
+		cSql +=" AND C2_DATPRI >= "+valtosql(cPDtEmiDe) + cEol
+		cSql +="AND C2_PRODUTO ="+valtosql(cProdDe)
+		//IN ( '90262910', '90262793', '90261614', '90260553', '90263439', '90263747', '90261791', '90263553', '90263632', '90262547', '90262678', '90262602', '90260598'," + cEol
+		//cSql +="'90263912', '90263504', '90263295', '90263125', '90263425', '90262089', '90263503', '90263885', '90263875', '90261883', '90263466', '90261561', '90263746', " + cEol
+		//cSql +="'90262205', '90263097', '90263197', '90263381', '90263520', '90263515', '90261797', '90262126', '90262516', '90260413', '90263578', '90261796', '90262005',  " + cEol
+		//cSql +="'90260937', '90261373', '90263853', '90262063', '90263196', '90263860')" + cEol
+		cSql +="AND NOT EXISTS    (   SELECT NULL" + cEol
+		cSql +=" FROM   SH6010 SH6 (NOLOCK)" + cEol
+		cSql +=" WHERE  SH6.D_E_L_E_T_ = ''" + cEol
+		cSql +=" AND H6_FILIAL = C2_FILIAL" + cEol
+		cSql +=" AND SUBSTRING(H6_OP, 1, 6) = C2_NUM)" + cEol
+
+		If Select("QRYSC2") > 1
+			QRYSC2->(DbCloseArea())
+		EndIf
+
+		TcQuery cSQL New Alias "QRYSC2"
+
+		While QRYSC2->(!EOF())
+
+			cNumOp   :=  QRYSC2->C2_OP
+
+			SC2->(DbSetOrder(1))
+			If SC2->(DbSeek(xFilial('SC2')+QRYSC2->C2_NUM+QRYSC2->C2_ITEM+QRYSC2->C2_SEQUEN))
+
+				SD3->(DbSetOrder(1))
+				If SD3->(MsSeek(xFilial("SD3")+QRYSC2->C2_OP))
+
+					While SD3->(!Eof()) .and. (SD3->D3_OP) == cNumOp .and. xFilial("SD3") == SD3->D3_FILIAL .and. cLastOp <> SD3->D3_OP
+
+						_aVetor := {}
+						lMsErroAuto := .F.
+
+						IF SD3->D3_CF = 'PR0'
+
+							_aVetor := {   {"D3_FILIAL"     , xFilial("SD3")          , Nil}, ;
+								{"D3_OP"     , SD3->D3_OP          , Nil}, ;
+								{"D3_TM"    	,SD3->D3_TM          , Nil}, ;
+								{"D3_COD"			,SD3->D3_COD	, niL},;
+								{"D3_EMISSAO", SD3->D3_EMISSAO, Nil}, ;
+								{"D3_DOC"    , SD3->D3_DOC, Nil}, ;
+								{"D3_CF"    , SD3->D3_CF, Nil}, ;
+								{"D3_NUMSEQ" , SD3->D3_NUMSEQ, Nil}   }
+							MSExecAuto({|x, y| mata250(x, y)}, _aVetor, 6) // Encerrar OP
+
+							If lMsErroAuto
+								MostraErro()
+							EndIf
+
+							cLastOp := SD3->D3_OP
+						ENDIF
+
+
+						SD3->(dbSkip())
+
+					EndDo
+
+					lTemApont := .T.
+				Else
+					lTemApont := .F.
+				EndIf
+				lMsErroAuto := .F.
+
+				aMata650  := {{'C2_FILIAL'   ,xFilial("SC2")             ,NIL},;
+					{'C2_PRODUTO',SC2->C2_PRODUTO      ,NIL},;
+					{'C2_LOCAL',SC2->C2_LOCAL       ,NIL},;
+					{'C2_QUANT' ,SC2->C2_QUANT                ,NIL},;
+					{'C2_ITEM',SC2->C2_ITEM                    ,NIL},;
+					{'C2_SEQUEN',SC2->C2_SEQUEN                   ,NIL},;
+					{'C2_DATPRI',SC2->C2_DATPRI  ,NIL},;
+					{'C2_DATPRF',SC2->C2_DATPRF  ,NIL},;
+					{'AUTEXPLODE' ,"S" ,NIL}}
+
+				// IF !lTemApont
+				// msExecAuto({|x,Y| Mata650(x,Y)},aMata650,6)
+				// ELSE
+				msExecAuto({|x,Y| Mata650(x,Y)},aMata650,5)
+				// ENDIF
+
+				if lMsErroAuto
+
+					MostraErro()
+
+				endif
+
+			EndIf
+
+			QRYSC2->(DbSkip())
+		EndDo
+		QRYSC2->(DbCloseArea())
+
+		// If (oArquivo:Open())
+
+		// If ! (oArquivo:EoF())
+
+		// aLinhas := oArquivo:GetAllLines()
+		// nTotLinhas := Len(aLinhas)
+		// ProcRegua(nTotLinhas)
+
+		// oArquivo:Close()
+		// oArquivo := FWFileReader():New(cArqOri)
+		// oArquivo:Open()
+
+		// While (oArquivo:HasLine())
+
+		// 	nLinhaAtu++
+		// 	IF !lIsBlind
+		// 		IncProc("Analisando linha " + cValToChar(nLinhaAtu) + " de " + cValToChar(nTotLinhas) + "...")
+		// 	ENDIF
+
+		// 	cLinAtu := oArquivo:GetLine()
+		// 	aLinha  := StrTokArr(cLinAtu, ",")
+
+		// 	// If !(nLinhaAtu == 1)
+
+		// 	cNumOp   :=  aLinha[1]
+		// cNumProd  :=  aLinha[2]
+
+		// IF len(aLInha) <> 2
+		// 	RETURN .F. .AND. IIF(!lIsBlind,MSGSTOP("Estrutura do arquivo fora dos padroes!","ERRO")," ")
+		// ENDIF
+
+		// EndIf
+
+		// 	EndDo
+
+		// Else
+		// 	// IF !lIsBlind
+		// 	// 	MsgStop("Arquivo nao tem conteudo.", "Atencao!")
+		// 	// ELSE
+		// 	// 	cLog := "Arquivo nao tem conteudo!"
+		// 	// 	MemoWrite(cDirLog + cArqLog, cLog)
+		// 	// ENDIF
+		// EndIf
+
+		// oArquivo:Close()
+		RestArea(aSc2Area)
+		RestArea(aSD3Area)
+		// Else
+		// IF !lIsBlind
+		// 	MsgStop("Arquivo nao pode ser aberto.", "Atencao!")
+		// ELSE
+		// 	cLog := "Arquivo nao pode ser Aberto!"
+		// 	MemoWrite(cDirLog + cArqLog, cLog)
+		// ENDIF
+		// EndIf
+		// ENDIF
+
+	endif
+	FWAlertInfo("Processamento Concluido", "Delpi PCP")
+	RestArea(aArea)
+Return
