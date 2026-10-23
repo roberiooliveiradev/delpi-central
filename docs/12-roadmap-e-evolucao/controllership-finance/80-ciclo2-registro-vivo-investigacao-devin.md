@@ -835,16 +835,21 @@ Recontagem com as três pernas completas (join `F4_ESTOQUE='S'` em SD1/SD2 e `B9
 
 ## §20 — RODADA 8 (CF-C2-EXEC-008) — CAUSA DAS DIVERGÊNCIAS E APROPRIAÇÃO MOD — 2026-10-23
 
-### 20.A — Decomposição das divergências: origem isolada na perna SD3 — `PROVEN` (recorte)
+### 20.A — Decomposição das divergências: origem isolada na perna SD3 — `PROVEN` (recorte) — *revisado pós-rework*
 
-Crosstab divergentes×armazém×perna (filial 02, 0831→0930): **100% das 724 divergências de valor têm movimentos apenas em SD3** (`com_sd1=0`, `com_sd2=0`) — as pernas SD1/SD2 da fórmula DEL100 estão corretamente refletidas no SB9; a divergência é exclusivamente SD3×SB9.
+Crosstab divergentes×armazém×perna (filial 02, 0831→0930): **todas as 724 chaves divergentes de valor possuem movimentos somente em SD3** (`com_sd1=0`, `com_sd2=0` no universo divergente). **Delimitação:** isso prova apenas que a diferença reconstrução×SB9 se concentra em chaves cujos movimentos são SD3; **não** prova que SD1/SD2 estejam integralmente corretas (podem coincidir por não haver movimento) nem que o produtor SB9 omita SD1/SD2.
 
-Distribuição por padrão×armazém (valor):
-| Armazém | congelado (sb9=prior) | sb9=0 | misto |
-|---|---|---|---|
-| 01 | 135 | 20 | 219 |
-| 98 (QUALIDADE) | 47 | — | 18 |
-| 99 | 42 | 17 | 219 |
+Distribuição por padrão×armazém (valor, categorias disjuntas — `congelado` = |sb9−prior|<0,001 com precedência; `sb9_zero` = sb9=0 e não-congelado; `misto` = demais; **total = 724**):
+
+| Armazém | congelado | sb9_zero | misto | n |
+|---|---|---|---|---|
+| 01 | 135 | 27 | 219 | 381 |
+| 98 (QUALIDADE) | 47 | — | 18 | 65 |
+| 99 | 42 | 17 | 219 | 278 |
+| **total** | **224** | **44** | **456** | **724** |
+
+- Correção de transcrição: a versão inicial da tabela copiou `com_sd3`(20) como `n` em 01/sb9_zero (n real=27) — somava 717; reconciliado acima.
+- Nota de sobreposição: `sb9_v=0` ocorre em 266 chaves divergentes no total — 222 dos "congelados" têm prior=0 (logo sb9=0), por isso a contagem por condição (266) supera a categoria disjunta (44).
 
 **Atribuição por TM (`PROVEN` recorte):** para cada chave divergente, o delta calcula-se exatamente por uma perna ausente:
 - **135 chaves: delta = contribuição TM010/`PR0`** (entrada de produção) — o SB9 não incorporou o valor de produção nessas chaves;
@@ -855,8 +860,8 @@ Interpretação hipotética (`INCONCLUSIVE`): o produtor real pode aplicar regra
 
 ### 20.B — Elegibilidade: 26 e 33 resolvidas
 
-- **As 26 chaves "somente movimento" são TODAS produtos `MOD*` (tipo `MO`, armazém 01)** — horas de mão de obra movimentam SD3 mas nunca geram saldo físico: ausência de SB9 é comportamento **correto de elegibilidade**, não defeito. `PROVEN`.
-- **As 33 exceções prior-zero→fim-sem-SD3:** têm pernas em SD1 (compras) — movimento por outra perna confirma a regra "movimento→snapshot" (`PROVEN` recorte); residual de 2 chaves com `v_fim>0` e nenhuma perna localizada (`TO_INVENTORY` menor).
+- **As 26 chaves "somente movimento" são TODAS produtos `MOD*` (tipo `MO`, armazém 01)** — evidência empírica **consistente com** não-estocabilidade de MOD (horas movimentam SD3 sem gerar saldo). Não é declaração de regra formal do produtor SB9, ainda não identificado. `PROVEN` (observação), não `PROVEN` (regra).
+- **As 33 chaves prior-zero→snapshot-sem-SD3:** 32 têm perna em SD1/SD2 (consistente com "movimento→snapshot"); **1 residual** (`10081720`@99, `v_fim=15,75`) sem nenhuma perna localizada na janela (`TO_INVENTORY` menor — possível perna não medida ou ajuste direto).
 
 ### 20.C — Armazéns especiais
 
@@ -866,12 +871,12 @@ Interpretação hipotética (`INCONCLUSIVE`): o produtor real pode aplicar regra
 
 - `D3_CUSTO1` dos produtos `MOD*` = **zero em 2022–2026 inteiro** — MOD nunca é valorizado no estoque, em nenhum período. `PROVEN`.
 - Recursos SH1 (`H1_CCUSTO`) mapeiam CCs cujos códigos **espelham os códigos MOD** (`MOD325`↔CC `325`, `MOD310`↔`310`, `MOD030101`↔`030101`…) — produto MOD é a ponte hora→centro de custo. `PROVEN` (correspondência estrutural).
-- **Via descartada:** zero lançamentos `CT2010` em set/2026 com `CT2_CCD`/`CT2_CCC` nos CCs de MOD — apropriação **não** via lançamento contábil direto nesses CCs.
+- **CT2 nos CCs de MOD — ausência delimitada:** zero lançamentos `CT2010` encontrados para os **filtros, período (set/2026) e centros de custo examinados** (`CT2_CCD`/`CT2_CCC` ∈ amostra de CCs MOD). Não descarta outras vias contábeis não investigadas (rateio CCT/CT5, rateio por item/empresa, apuração fora do período ou por outras dimensões). `TO_INVENTORY`.
 - Fórmula monetária (rate×horas, veículo de apropriação) permanece `TO_INVENTORY` → possíveis vias não esgotadas: CT5/CCT rateio, apuração externa, ou custo absorvido no produto acabado via estrutura.
 
-### 20.E — Produtor SB9: assinatura de batch único
+### 20.E — Produtor SB9: assinatura de inserção em janela comum
 
-`I_N_S_D_T_` @20260930: **todas** as 3.117 linhas da filial 02 inseridas em `2026-10-02 17h`; todas as 4.812 da filial 01 em `2026-10-21 19h` — **um único job por filial por fechamento** (cadência: ~2 dias pós-fechamento f02, ~21 dias f01). Identidade do job segue `BLOCKED` (MATA330/SPs custom hipótese não provada).
+`I_N_S_D_T_` @20260930: as 3.117 linhas da filial 02 inseridas na janela `2026-10-02 17h`; as 4.812 da filial 01 em `2026-10-21 19h` — **assinatura de inserção em janela comum por filial**, consistente com processamento em lote; **não prova um único job** (podem coexistir múltiplos executores na mesma janela) nem identidade. Identidade do(s) produtor(es) segue `BLOCKED` (MATA330/SPs custom hipótese não provada).
 
 ### 20.F — P7 / residuais
 
@@ -883,8 +888,8 @@ Interpretação hipotética (`INCONCLUSIVE`): o produtor real pode aplicar regra
 
 | Run | Item | Resultado | Gate |
 |---|---|---|---|
-| C2-R38 | divergências | PROVEN: 100% perna SD3; 135Δ=TM010, 93Δ=TM999; padrões×armazém mapeados | G4 fonte |
-| C2-R39 | 26/33 | PROVEN: 26=MOD (não-estocável); 33=perna SD1 | G4 fonte |
+| C2-R38 | divergências | PROVEN: divergentes só com perna SD3; 135Δ=TM010, 93Δ=TM999; tabela reconciliada (724) | G4 fonte |
+| C2-R39 | 26/33 | PROVEN (observação): 26=MOD consistente com não-estocável; 32/33=perna SD1/SD2; 1 residual | G4 fonte |
 | C2-R40 | armazéns | NNR decodificado; SB9 cobre CQ/REJEIT | — |
-| C2-R41 | MOD | custo SD3 zero histórico; MOD↔CC espelhado; CT2 descartado | G4 fonte |
-| C2-R42 | produtor | batch único por filial (ts cluster) — assinatura PROVEN | — |
+| C2-R41 | MOD | custo SD3 zero histórico; MOD↔CC espelhado; CT2 ausente nos CCs/filtros examinados | G4 fonte |
+| C2-R42 | produtor | inserção em janela comum por filial — assinatura observada, job único não provado | — |
