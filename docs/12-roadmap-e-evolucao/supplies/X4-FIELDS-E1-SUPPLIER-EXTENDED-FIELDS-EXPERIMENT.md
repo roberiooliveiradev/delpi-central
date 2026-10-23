@@ -197,3 +197,17 @@ Regressão do caminho real: 37 testes (create/update payload, use cases, routes)
 **Para criação/edição:** nenhum campo entra no contrato público antes de (1) contract evolution aprovada (DTO/OpenAPI), (2) ensaio de homologação autorizado com fornecedor fictício + read-after-write + reconciliação, (3) owner Protheus confirmando resolução da divergência de ambiente REST×SQL.
 
 **Próximos gates:** E1.H1 (ensaio homologação, **NOT_AUTHORIZED**) → contract design público → expansão do Portal.
+
+
+## 8. Revisão GPT — parecer arquitetural E1 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para o experimento LOCAL**, verificado no commit `b77d1be3a6`. Os 35 candidatos constam em módulo isolado, não conectado a rota/use case; o normalizador público mantém a allowlist original por default e os testes de regressão demonstram rejeição de campos experimentais no contrato publicado. Revisão baseada em código e testes no GitHub; números de execução (55 novos + 37 regressão) são **reportados pelo Cursor, não reexecutados pelo GPT**.
+
+**Limites materiais:** 
+- `PASS` local significa formato/normalização/shape, **não** aceite REST, execução MATA020, validade de referências SX3/lookup nem persistência SQL.
+- A `EXPERIMENTAL_PUT_ALLOWLIST` é **hipótese de contrato**, não autorização para editar os 35 campos; nenhuma promoção automática a PUT.
+- As classificações `NEEDS_REVIEW` (ex.: `generic_supplier`, `legal_entity_type`, `person_category`, `simp_regime_code`, `pb_regime_code`) permanecem abertas, mesmo com testes de normalização aprovados.
+- A regra condicional CNAE em teste cobre a combinação explícita `person_type=F`, não prova exaustivamente todas as condições upstream.
+- A divergência `REST_SQL_BASE_DIVERGENCE=BLOCKED` e a anomalia de persistência do `tax_id` exigem reconciliação independente antes de ensaio de escrita em homologação.
+
+**Próximo gate recomendado:** E1.P1 **somente inventário/contrato e diagnóstico de ambiente REST×SQL (read-only)**, seguido de proposta de ensaio E1.H1 com ambiente e autorização de escrita específicos. Sem POST/PUT real, sem nova rota, sem deploy e sem expansão automática do BFF/MFE. A ampliação read-only da E14 pode ser analisada em plano próprio, condicionada ao GET real, minimização e AuthZ do owner.
