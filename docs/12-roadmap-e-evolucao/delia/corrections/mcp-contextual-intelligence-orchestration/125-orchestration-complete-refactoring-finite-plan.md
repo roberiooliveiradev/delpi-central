@@ -435,3 +435,12 @@ Após o diff: (6) import DAG e zero cópia de sanitizer/registry; (7) contract c
 **Critérios eliminatórios:** qualquer violação de authority/owner/AuthZ/Policy/Domain/Postcondition, dependência reversa/circular, duplicação de componentes com owner único, planner provider-/selector-specific, parser lexical alternativo ao LLM ou contrato quebrado impede aceite. Falta de owner/consumer/contrato para NEW → SKIP_WITH_DECISION, não “implementação parcial”. R0–R7 permanecem NOT_AUTHORIZED enquanto a estabilização funcional não tiver aceite e o Product Owner não liberar a etapa correspondente.
 
 **Entregável formal:** o DÉLIA EXECUTION REPORT deve conter a matriz AP-01…AP-20, registros de PROVEN/TO_INVENTORY/TARGET, e veredito factual do executor distinto do aceite da coordenação. Refactor por redução de LOC, fake consumers, wrappers permanentes ou import dinâmico para esconder ciclo será recusado.
+
+
+## 14. Contrato executivo fechado por etapa — playbook 130 e relatórios R0–R7
+
+A partir desta revisão, o plano será executável via [130 — Runbook R0–R7, comprovação de regressões, auto-rework e limpeza de legado](./130-orchestration-refactor-r0-r7-execution-playbook.md). Cada etapa tem prompt dedicado e documento precriado de evidências em `refactor-r0-r7/r0...r7-execution-and-evidence.md`. **Não iniciar R0–R7 até estabilização aceita e autorização correspondente do PO.**
+
+Regra mandatória: nenhuma entrega é aceita apenas por funcionar ou diminuir LOC. Exigir gates arquiteturais AP01–AP20 (doc129), contratos owners/consumers, import DAG, regression matrix no mesmo SHA/config, outcome + security, remoção do legado comprovadamente obsoleto no escopo, rollback e revisão independente. Quando houver regressão reparável no escopo autorizado, Devin inicia automaticamente UM rework bounded, reproduz RED, corrige, reexecuta a matriz integral e documenta; segunda falha, alteração de authority ou risco material: STOP. Não fazer push/deploy com regressão conhecida; não inventar PASS.
+
+O alvo final é um orquestrador coeso e inteligência de application compartilhável por contratos; reuso cross-app é boundary HTTP/event somente quando aprovado, RPA executado pelo owner Automation Hub e business postcondition validada por Domain API. *Todo código legado* significa todo código **comprovadamente obsoleto** dentro do escopo DÉLIA, não apagamento de código Chat ativo ou de compatibilidade exigida por consumers legítimos. R6 prova zero obsolete; R7 independe de LOC e requer aceite formal.

@@ -413,3 +413,5 @@ Product Master registered [73 — product front](./73-conversational-response-in
 - [129 — Protocolo de conformidade e antipadrões AP-01…AP-20](./129-refactor-implementation-conformance-and-antipattern-gates.md): instruções de execução do Devin, matriz de arquivos por etapa, gates de import/CI, STOP e evidência obrigatória. Vinculado também a .cursor/rules/delia-execution-protocol.mdc e doc 22. **Documentação não autoriza R0–R7 nem promove fase**.
 
 A sequência canônica é: estabilização funcional aceita independentemente → autorização explícita do Product Owner para R0 → R0 read-only e revisão → autorizações bounded R1–R7. A implementação de D5 em andamento não se mistura ao refactor.
+
+- [130 — Playbook executável R0–R7: prompts, relatórios, rework bounded e limpeza de legado](./130-orchestration-refactor-r0-r7-execution-playbook.md): oito arquivos precriados [R0](./refactor-r0-r7/r0-execution-and-evidence.md) a [R7](./refactor-r0-r7/r7-execution-and-evidence.md), cada qual com prompt e matriz de evidências para preenchimento factual. **PLANNED / NOT_AUTHORIZED**, não altera a estabilização ou a fase.

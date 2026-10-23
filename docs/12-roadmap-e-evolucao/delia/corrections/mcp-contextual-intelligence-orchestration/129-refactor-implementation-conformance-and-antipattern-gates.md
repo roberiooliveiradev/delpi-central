@@ -153,3 +153,12 @@ Executor conclui apenas IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW / IMPLEMENTATIO
 6. **FAIL/DRIFT:** primeira violação crítica STOP → evidence → Product Master/architecture. Sem segundo engine, sem patch de frase, sem rework infinito.
 
 **Sentença de execução vinculante:** se a arquitetura modular correta não puder ser implementada com owner/contrato/consumidor evidenciado, **não implementar** a extração. Registrar SKIP_WITH_DECISION ou ARCHITECTURE_DECISION_REQUIRED. A ausência de extração é preferível a um novo antipadrão.
+
+
+## 11. Protocolo de execução do Devin e limpeza efetiva de legado
+
+O [playbook 130](./130-orchestration-refactor-r0-r7-execution-playbook.md) e seus oito arquivos `refactor-r0-r7/r0…r7-execution-and-evidence.md` são de leitura/preenchimento **obrigatórios** para execução do plano 125. Cada etapa precisa de autorização de entrada, whitelist, relatório de paridade e AP01–20 e parecer independente; templates `NOT_STARTED` não são evidência.
+
+**Se houver regressão dentro do contrato aprovado:** NÃO avançar, fazer automaticamente o primeiro e único rework bounded nessa mesma execução (RED causal → correção mínima → rerun focused+full+security+architecture+generalization+outcome), registrar `AUTO_REWORK_USED=1`. Segunda falha ou segurança/ownership/contrato sem autoridade → STOP, não degradar teste, não fazer push/deploy, não falsificar `PASS`. `INCONCLUSIVE` e `TEST_NOT_RUN` bloqueiam gate material; CI green sozinho nunca prova ausência universal de regressão.
+
+**Legado:** classificar símbolo/pipeline/import/flag/prompt/teste no escopo como `CURRENT|DEPRECATED_ACTIVE|OBSOLETE_PROVEN|TO_INVENTORY` usando consumidores estáticos/dinâmicos e evidence runtime. Remover `OBSOLETE_PROVEN` e duplicações ao migrar (e limpar callers, imports, testes e doc), sem wrappers permanentes não aprovados. Não apagar Chat/Portal/Core/Domain/Automation Hub, migrations históricas ou contrato ativo; remoção incompatível requer decisão/versão/deprecação. R6 entrega prova `ZERO_OBSOLETE_PROVEN`, R7 confirma. Não fazer do fim (LOC baixo) justificativa para antipadrões de meios.
