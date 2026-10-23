@@ -8,7 +8,7 @@
 - O Ciclo 1 é `PO_ACCEPTED_WITH_RESIDUAL` conforme [doc 79](./79-ciclo1-aceite-formal-po.md). O [doc 78](./78-ciclo1-crosswalk-narracao-artefatos.md) cruza V01–V23 com os artefatos. [Docs 56](./56-proc0072-observacoes-guiadas-fechamento-custos.md) e [57](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md) preservam a narração completa fornecida pelo PO; não solicitar nova narração.
 - **Estado inicial:** `CYCLE_2_GO=NO`; `INVESTIGATION_NOT_STARTED`; `ERP_PARITY=TEST_NOT_RUN`. Inventários/probes prévios dos docs 47–49 não equivalem à execução deste ciclo.
 - Identidade congelada: plugin `controllership-finance`, MFE `plugins/controllership-finance`, `/apps/controllership-finance`; BFF `controllership-finance-api`, `/apps/controllership-finance-api`; somente `controllership-finance.access` e `controllership-finance.manage`.
-- TÉO/Joici = AS-IS/proveniência; GitHub HEAD = TARGET/contratos/código; Core = identidade/RBAC/effective permissions; api-delpi = owner de SQL e semântica TOTVS; strategic-indicators-api = indicadores. MFE comunica-se somente com BFF. Não compartilhar banco ou importar domain/application de outro contexto.
+- TÉO/<GESTORA-PROC> = AS-IS/proveniência; GitHub HEAD = TARGET/contratos/código; Core = identidade/RBAC/effective permissions; api-delpi = owner de SQL e semântica TOTVS; strategic-indicators-api = indicadores. MFE comunica-se somente com BFF. Não compartilhar banco ou importar domain/application de outro contexto.
 - **Regra de confidencialidade:** jamais versionar planilhas, PDFs, MP4, prints, linhas, valores, CPF/CNPJ, clientes, fornecedores, produtos, títulos, pedidos, credenciais, hashes de fontes privadas ou queries contendo identificadores reais. Apenas metadados genéricos, relações, lógica sanitizada, estados e referências técnicas aprovadas. Evidência operacional sensível fica sob custódia autorizada FORA do GitHub; registrar referência abstrata e acessos aprovados, sem endereço secreto ou token.
 - **Edição concorrente:** revalidar HEAD e blob SHA do arquivo imediatamente antes de cada alteração. Preferir um commit pequeno por lote, sem sobrescrever resultados de outros agentes. Se divergência concorrente, parar, reconciliar e repetir o fetch; nunca force-push. Histórico é *append-only* nos registros de execução; correção cita registro anterior e motivo.
 - Não marcar `PASS` por HTTP 200, schema encontrado, screenshot, nome de rotina ou teste isolado. `search miss != ausência`.
@@ -50,15 +50,15 @@ D1–D4 podem ser desdobrados sem apagar o histórico; o doc 47 controla R01–R
 
 | ID | Ordem | Tracker doc 47 | Narração / reconciliação doc 57 | Inventário Ciclo 1 | Questão principal | Owner validador candidato | Lote |
 |---|---|---|---|---|---|---|---|
-| C2-01 | P0 | R03/R05/R08 | V11/V13/V17; RC-01/02 | 63/62/64/68 | MATR320 x P7 x H02 | Joici + ERP/api-delpi | D2 |
+| C2-01 | P0 | R03/R05/R08 | V11/V13/V17; RC-01/02 | 63/62/64/68 | MATR320 x P7 x H02 | <GESTORA-PROC> + ERP/api-delpi | D2 |
 | C2-02 | P0 | R03 | V11; X03 | 63/68 | P7 integral x reduzido | Contabilidade + ERP/api-delpi | D2 |
 | C2-03 | P0 | R06 | V12/V15; RC-04 | 61/67 | CPV Kardex 01 | Custos + ERP/api-delpi | D2 |
 | C2-04 | P0 | R01/R02 | V07-V09; RC-09 | 69-75 | Baixas/compensações | Financeiro + ERP/api-delpi | D3 |
 | C2-05 | P1 | R07 | V12/V14; RC-03 | 61/66 | Inventário 01/99 | Estoque + ERP/api-delpi | D2 |
 | C2-06 | P1 | R09 | V05/V16; RC-05 | 65 | Faturamento x MOD | Custos + PCP + ERP/api-delpi | D4 |
-| C2-07 | P1 | R12 | V01/V10 | 77 (Análise) | Custo médio e jobs | Joici + ERP/api-delpi | D4 |
+| C2-07 | P1 | R12 | V01/V10 | 77 (Análise) | Custo médio e jobs | <GESTORA-PROC> + ERP/api-delpi | D4 |
 | C2-08 | P1 | R10 | V20-V22; RC-06 | 77 (CC matriz) | Despesas e CC/SD1 | Controladoria + Contabilidade + ERP/api-delpi | D4 |
-| C2-09 | P1 | R13/R14 + checklist | V18/V19 | 59/60 | Entregas e fontes externas | Joici + Contabilidade + PO | D4 |
+| C2-09 | P1 | R13/R14 + checklist | V18/V19 | 59/60 | Entregas e fontes externas | <GESTORA-PROC> + Contabilidade + PO | D4 |
 
 **Importante:** owner indicado é candidato para confirmação com a autoridade da área. O grupo `R13/R14` não significa equivalência entre fontes externas e checklist. Não remover R04, R11, R15 ou qualquer dos quinze itens do doc 47 por não estarem destacados nos nove workstreams: continuam no controle, exigem triagem/owner e, se necessário, desdobramento explícito de denominator/scope_change.
 
@@ -381,7 +381,7 @@ Existem com dados: SB1010 (~55k), SB2010 (~77k), SB9010 (~2,28M), SD3010 (~4,69M
 
 - `B2_CM1` populado: 21.130 produtos ≠0 na filial 01, 9.445 na filial 02 → custo médio corrente disponível em SB2; `B9_CM1` também presente no snapshot mensal (comparável histórico×corrente).
 - Parâmetro `MV_320SLD='1'` encontrado em SX6 (relacionado ao comportamento de saldo do MATR320 — registrar para C2-01).
-- **Status de jobs/rotinas Protheus (Refaz Saldos, Acompanha Custos, MATR320 schedule) não é consultável via SQL** — depende do owner ERP / observação assistida. `DECISION_REQUIRED`/owner Joici+ERP.
+- **Status de jobs/rotinas Protheus (Refaz Saldos, Acompanha Custos, MATR320 schedule) não é consultável via SQL** — depende do owner ERP / observação assistida. `DECISION_REQUIRED`/owner <GESTORA-PROC>+ERP.
 
 ### 13.G — C2-08 — centro de custo / SD1
 
@@ -861,7 +861,7 @@ Interpretação hipotética (`INCONCLUSIVE`): o produtor real pode aplicar regra
 ### 20.B — Elegibilidade: 26 e 33 resolvidas
 
 - **As 26 chaves "somente movimento" são TODAS produtos `MOD*` (tipo `MO`, armazém 01)** — evidência empírica **consistente com** não-estocabilidade de MOD (horas movimentam SD3 sem gerar saldo). Não é declaração de regra formal do produtor SB9, ainda não identificado. `PROVEN` (observação), não `PROVEN` (regra).
-- **As 33 chaves prior-zero→snapshot-sem-SD3:** 32 têm perna em SD1/SD2 (consistente com "movimento→snapshot"); **1 residual** (`10081720`@99, `v_fim=15,75`) sem nenhuma perna localizada na janela (`TO_INVENTORY` menor — possível perna não medida ou ajuste direto).
+- **As 33 chaves prior-zero→snapshot-sem-SD3:** 32 têm perna em SD1/SD2 (consistente com "movimento→snapshot"); **1 residual** (`<PRODUTO-RESIDUAL-A>`@99, `v_fim=15,75`) sem nenhuma perna localizada na janela (`TO_INVENTORY` menor — possível perna não medida ou ajuste direto).
 
 ### 20.C — Armazéns especiais
 
@@ -1490,15 +1490,15 @@ Cada movimento `PA`/`FINA750` do receber (`'R'`) possui na própria SE5 um
 espelho `'P'` de provisão (origem `MATA121`/`FINA050`, motivo NOR, mesmo
 numero/clifor). **VO impresso = valor da provisão `'P'`** — 8/8 exato:
 
-- numero 043549: provisão 1.571,60 = recebimentos 877,00+119,96 +
+- numero <MOV-PROV-A>: provisão 1.571,60 = recebimentos 877,00+119,96 +
   compensação 'P' 574,64 (fluxo fecha integralmente);
-- idem 061937 (286,08), 043527 (830,78), 043372 (749,20), 043651 (29,89),
-  043736 (56,06), 000005005 (10.741,50 — provisão `FINA050`).
+- idem <MOV-PROV-B> (286,08), <MOV-PROV-C> (830,78), <MOV-PROV-D> (749,20), <MOV-PROV-E> (29,89),
+  <MOV-PROV-F> (56,06), <MOV-PROV-G> (10.741,50 — provisão `FINA050`).
 
 ### 30.C — Os 3 sem-título excluídos, identificados por linha lógica
 
-`260721799` 118,27 `FINA090` f01 · `080926` 1.000,00 `FINA090` f01 ·
-`044052` 1.537,00 `FINA750` f02 — todos `PA`/`DEB` sem SE1, confirmados na
+`<RECEBIMENTO-SEM-TITULO-A>` 118,27 `FINA090` f01 · `<RECEBIMENTO-SEM-TITULO-B>` 1.000,00 `FINA090` f01 ·
+`<RECEBIMENTO-SEM-TITULO-C>` 1.537,00 `FINA750` f02 — todos `PA`/`DEB` sem SE1, confirmados na
 SE5 e **ausentes do artefato**. A regra geral que inclui 8 e exclui estes 3
 (e a que suprime as 8 linhas de decomposição) segue **hipótese não
 demonstrada** — dependente do fonte `DLP06R01` (E1, TI/ERP).
@@ -1612,8 +1612,8 @@ Os RECNOs 288137–288140 estão num bloco cujos vizinhos têm
 - Compras impresso 642.670,88 = 548.652,07 + 94.018,81 (Δ 0,00);
 - EntPT impresso 319.258,14 = 422.860,14 − 103.602,00 (Δ 0,00).
 
-Demais linhas SD1 deletadas na janela (duplicatas `<dup-A>`,
-`<dup-B>`, `<dup-C>` etc., sanitizadas) são housekeeping anterior à emissão —
+Demais linhas SD1 deletadas na janela (duplicatas `<DOC-DUPLICADO-A>`,
+`<DOC-DUPLICADO-B>`, `<DOC-DUPLICADO-C>` etc., sanitizadas) são housekeeping anterior à emissão —
 caso contrário os matches centesimais não fechariam.
 
 ### 31.E — Decomposição da divergência MP (SA impresso × SB9 atual)
@@ -1623,7 +1623,7 @@ caso contrário os matches centesimais não fechariam.
 
 1. **Repricing da retificação** — os 4 itens do doc `<NF-RETIF-A>`
    trocaram custo 94.018,81 → 103.602,00 (**Δ +9.583,19**); dois dos
-   produtos (`<prod-A>`, `<prod-B>`, sanitizados) constam no topo do relatório de
+   produtos (`<PRODUTO-CUSTO-A>`, `<PRODUTO-CUSTO-B>`, sanitizados) constam no topo do relatório de
    variação de CM (`Analise.xlsx`) — o repricing integrou a
    revalorização do estoque.
 2. **Recálculo de custo médio pós-emissão** — `MATA330` e rotinas
@@ -1697,3 +1697,51 @@ SP MAT056). Evidências indiretas encontradas:
   continua **não aplicável ao recorte atual** — pendência legítima, não
   falha de reconciliação. Requisito TARGET derivado: o portal deve
   expor cada medida com seu `as_of` e escopo, sem forçar igualdade.
+
+---
+
+## §32 — ERRATA DE SANITIZAÇÃO (CF-C2-HISTORICAL-SANITIZATION-001, 2026-11-05)
+
+Auditoria de confidencialidade retroativa sobre os docs do processo
+PROC-0072 (Ciclo 1 e Ciclo 2 nesta pasta). Substituição de identificadores
+operacionais por **aliases estáveis**; nenhuma regra, total, fórmula,
+conclusão ou classificação foi alterada. O mapeamento original↔alias fica
+sob custódia do owner, **fora do repositório**.
+
+### Categorias sanitizadas
+
+| Categoria | Aliases | Abrangência |
+|---|---|---|
+| Movimentos sem título excluídos do receber | `<RECEBIMENTO-SEM-TITULO-A..C>` | docs 47/80/84/85 |
+| Movimentos sem título com provisão espelhada | `<MOV-PROV-A..G>` | docs 80/84/85 |
+| NF de grupo (exemplo VO por soma de grupo) | `<NF-GRUPO-A>` | doc 84 |
+| Título exemplo da baixa VL composta | `<TITULO-VL-A>` | doc 84 |
+| Produto residual snapshot sem SD3 | `<PRODUTO-RESIDUAL-A>` | doc 80 |
+| Produto da linha final H_ histórica | `<PRODUTO-H-A>` | doc 46 |
+| Produtos citados como amostra no vídeo | `<PRODUTO-EXEMPLO-A/B>` | docs 56/57 |
+| Produtos do repricing da retificação | `<PRODUTO-CUSTO-A/B>` | doc 80 (renomeado de `<prod-A/B>`) |
+| Docs SD1 duplicados (housekeeping) | `<DOC-DUPLICADO-A..C>` | doc 80 (renomeado de `<dup-A..C>`) |
+| Pessoa física (gestora do processo) | `<GESTORA-PROC>` | 23 docs — 132 ocorrências |
+
+Os aliases `<NF-RETIF-A>`/`<NF-RETIF-B>` da rodada anterior foram
+mantidos — mesmo objeto real = mesmo alias em todos os documentos.
+
+### Preservado por decisão classificada (risco baixo, necessidade técnica)
+
+- `R_E_C_N_O_`/RECNOs: posições físicas de linha — necessárias à prova de
+  timing da onda retificadora; sem utilidade fora de acesso direto ao DB.
+- Códigos de centro de custo (`02/03/05/0401/0404/0405/0504/030101`),
+  prefixos `MOD*`, TES/CFOP: códigos técnicos necessários às regras.
+- Nomes de tabelas/colunas/rotinas/fontes, `MP7_*`, `H_*`, `SCGN*`,
+  nome do arquivo de vídeo, SHAs/commits/blobs/UUIDs/job-ids, datas,
+  totais e resíduos de paridade.
+
+### Histórico Git
+
+Os valores originais permanecem em commits anteriores (a sanitização
+altera somente o HEAD). Classificação: identificadores operacionais de
+documentos fiscais/títulos/produtos + 1 nome de pessoa — exposição de
+baixa severidade em repositório privado; **nenhuma credencial, segredo
+ou dado financeiro de contraparte identificado**. Contenção adicional
+(reescrita de histórico) fica registrada como `DECISION_REQUIRED` para o
+owner de segurança — não executada nesta rodada.

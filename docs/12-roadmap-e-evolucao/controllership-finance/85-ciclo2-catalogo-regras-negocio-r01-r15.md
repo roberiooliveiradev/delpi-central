@@ -189,8 +189,8 @@ paridade com o artefato, não de leitura de código.**
   seus valores já estão embutidos no `E5_VALOR` da baixa `VL` principal
   (ex.: VL 587,70 contém juros 4,94 + multa 11,42 = 16,36).
 - **3 `PA`/`DEB` sem título excluídos, identificados por linha lógica**
-  (docs sanitizados): `<doc-A>` (118,27, `FINA090`, f01) · `<doc-B>`
-  (1.000,00, `FINA090`, f01) · `<doc-C>` (1.537,00, `FINA750`, f02).
+  (docs sanitizados): `<RECEBIMENTO-SEM-TITULO-A>` (118,27, `FINA090`, f01) · `<RECEBIMENTO-SEM-TITULO-B>`
+  (1.000,00, `FINA090`, f01) · `<RECEBIMENTO-SEM-TITULO-C>` (1.537,00, `FINA750`, f02).
 - **Regra geral que inclui 8 e exclui 3: `PENDING`** — dependente do fonte.
 - Demais sem-título (FOL/COF/NDF/vazio/NF-DEB) corretamente fora.
 
@@ -205,7 +205,7 @@ paridade com o artefato, não de leitura de código.**
 | Linha com título | `SE1.E1_VALOR` | 649/649 exato |
 | Linha `PA` sem título | **provisão `'P'` espelhada** na própria SE5 — mesmo numero/clifor, motivo NOR, origem `MATA121`/`FINA050` | 8/8 exato |
 
-- Fluxo conferido integralmente (ex.: numero 043549: provisão 1.571,60 =
+- Fluxo conferido integralmente (ex.: numero <MOV-PROV-A>: provisão 1.571,60 =
   recebimentos 877,00+119,96 + compensação 'P' 574,64).
 - **Errata:** o "residual de R$1,00" da rodada anterior era erro de soma na
   consolidação manual (15.836,71 transcrito como 15.837,71) — Δ real =

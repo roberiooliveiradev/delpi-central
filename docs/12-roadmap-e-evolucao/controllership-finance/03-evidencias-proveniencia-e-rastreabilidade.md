@@ -33,7 +33,7 @@ Registra FINR190, primeiro/último dia, Pagar por DATA/NATUREZA, Receber com "Da
 
 `MATR860 != P7`.
 
-## Entrevista Joici
+## Entrevista <GESTORA-PROC>
 
 - início no primeiro dia;
 - XML/SPED obtido pela Contabilidade;
@@ -78,7 +78,7 @@ Exemplo de reunião não vira regra universal. Preservar origem e classificaçã
 
 ### Relato derivado do NotebookLM — não observado diretamente nesta rodada
 
-O texto recebido relata que Joici emite o relatório funcional **P7 — Registro de Inventário** em 30/09/2026, filial 01 (procedimento também na 02), saída padrão e layout H, opção terceiros não, 91 páginas, seis colunas (produto, descrição, UM, quantidade, custo unitário e total), resumo por grupos, emissão PDF e conciliação com Entradas/Saídas/H02. Referências do relato: P7 padrão **3.776.994,69**, Insumos **266.321,45**, Entradas/Saídas **3.890.247,18**, H02 **64.591,71**, resíduo **48.660,78**. Esses números **não são outcome Protheus verificado**. Relato sobre regra de tipos MP/PA/PI do Bloco H carece de confirmação de parâmetros/regras; não implementá-la por suposição.
+O texto recebido relata que <GESTORA-PROC> emite o relatório funcional **P7 — Registro de Inventário** em 30/09/2026, filial 01 (procedimento também na 02), saída padrão e layout H, opção terceiros não, 91 páginas, seis colunas (produto, descrição, UM, quantidade, custo unitário e total), resumo por grupos, emissão PDF e conciliação com Entradas/Saídas/H02. Referências do relato: P7 padrão **3.776.994,69**, Insumos **266.321,45**, Entradas/Saídas **3.890.247,18**, H02 **64.591,71**, resíduo **48.660,78**. Esses números **não são outcome Protheus verificado**. Relato sobre regra de tipos MP/PA/PI do Bloco H carece de confirmação de parâmetros/regras; não implementá-la por suposição.
 
 **Inconsistências da derivação:** menciona marcações >01:00:00 quando MP4 original catalogado dura 00:54:44.125; fornece diferença de Insumos como R$0,25 embora 266.321,46 − 266.321,45 = **R$0,01**. Re-extração após 18h é relato contextual de corte fabril, não regra universal nem autorização para automatizar bloqueio por relógio. Critério AS-IS de conciliação final: **R$0,00 até centavos**, sem aceitar diferença por arredondamento não homologado.
 

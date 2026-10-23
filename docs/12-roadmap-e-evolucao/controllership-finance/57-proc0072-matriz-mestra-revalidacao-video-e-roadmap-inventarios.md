@@ -4,16 +4,16 @@
 
 ## 1. Hierarquia, fontes e limites da revalidacao
 
-1. AS-IS: TEO/Transformometro para processo, responsaveis, evidencias e proveniencia; relato guiado do PO e screenshots como fontes observacionais, NAO substitutos de homologacao de Joici.
+1. AS-IS: TEO/Transformometro para processo, responsaveis, evidencias e proveniencia; relato guiado do PO e screenshots como fontes observacionais, NAO substitutos de homologacao de <GESTORA-PROC>.
 2. TARGET: instrucoes oficiais GPT Arquiteto, regras .cursor aplicaveis, ADR/contratos no GitHub e respectivos owners. Este documento nao altera padroes congelados.
 3. Documentos confrontados nesta rodada: [46 inventario de reports](./46-t01-report-source-inventory-v1.md), [55 matriz de conciliacoes](./55-proc0072-matriz-conferencias-estoques-custos-asis.md), [56 registros guiados 01-18](./56-proc0072-observacoes-guiadas-fechamento-custos.md) e [README da frente](./README.md).
 4. Os screenshots fornecidos na conversa exibem interfaces TOTVS/Excel, parametros e alguns valores em setembro de 2026. **Nao existem neste commit como imagens anexadas**: portanto nao afirmar auditoria binaria do acervo no GitHub. Capturar os originais autorizados, identificar SHA-256 e armazenar em repositorio de evidencias apropriado sem dados pessoais, segredos, host/IP interno ou planilhas financeiras sensiveis indevidamente expostas. Criar referencia persistente imutavel para cada evidência no indice abaixo.
 5. Marcacoes de tempo vem do acompanhamento manual do PO e podem ter deslocamento. Houve correcao expressa de 22:24 para ~21 minutos; tambem houve atribuicao indevida de conferencia aos ~30:45 anteriormente retirada. **Nao declarar audio/lip sync ou minuto exato PROVEN se nao conferido no MP4**. Existem referencias conflitantes de duracao (~54:44 versus outro indice derivado >60 min); reconciliar origem do arquivo, versao e timebase antes de auditar minutos.
-6. `PROVEN` = visivel em fonte de tela/documento, dentro de seus limites; `OWNER_REPORTED_VIA_PO` = Joici descrita pelo PO, sujeita a revalidacao; `TO_INVENTORY` = dados/contrato a inventariar; `TARGET` = hipotese de produto. `PASS` exige reproducao verificavel; `TEST_NOT_RUN` nao e PASS.
+6. `PROVEN` = visivel em fonte de tela/documento, dentro de seus limites; `OWNER_REPORTED_VIA_PO` = <GESTORA-PROC> descrita pelo PO, sujeita a revalidacao; `TO_INVENTORY` = dados/contrato a inventariar; `TARGET` = hipotese de produto. `PASS` exige reproducao verificavel; `TEST_NOT_RUN` nao e PASS.
 
 ## 2. Matriz de rastreabilidade - observacao -> regra -> fonte -> proximo passo
 
-Legenda owners: **J** = Joici/Controladoria valida AS-IS; **T** = TEO prova decomposicao; **E** = owner ERP/api-delpi valida campo, consulta e algoritmo; **C** = Contabilidade/Financas valida destino e classificacao; **P** = PO decide produto; **D** = owner de dashboards/indicadores e consumers. `Evidence` indica doc 56 Registro e tempo relatado; nao prova temporal do MP4.
+Legenda owners: **J** = <GESTORA-PROC>/Controladoria valida AS-IS; **T** = TEO prova decomposicao; **E** = owner ERP/api-delpi valida campo, consulta e algoritmo; **C** = Contabilidade/Financas valida destino e classificacao; **P** = PO decide produto; **D** = owner de dashboards/indicadores e consumers. `Evidence` indica doc 56 Registro e tempo relatado; nao prova temporal do MP4.
 
 | ID | Trecho / referencias | Artefato, fato operacional ou regra candidata | Fonte fisica ou sistema a inventariar | Validadores | Evidencia / status | Gate verificavel |
 |---|---|---|---|---|---|---|
@@ -37,8 +37,8 @@ Legenda owners: **J** = Joici/Controladoria valida AS-IS; **T** = TEO prova deco
 | V18 | 35:48-38:28; R14-R16 | Competencia ainda em aberto na demonstracao; somente sacramenta custos depois dos checks; P7 ultima pagina Bloco H; pecas de reposicao relato DRE | cutoff/status ERP, aprovacao, Contabilidade | J,E,C | OWNER_REPORTED_VIA_PO | matriz de precondicoes e aprovacao; confirmar regime contabil |
 | V19 | 38:28; R16 | Extratos bancarios e outros externos a TOTVS sao documentos a importar e validar | instituicoes/arquivos, TEO kp02 | J,T,C,P | relato; TARGET documento | especificar tipos, acesso e validacoes depois de decisao |
 | V20 | 44:28-47:48; R17 | Custos por CC por filial via SD1/data digitacao; excluir 12 tipos entrada, depois MP, classificar custos | SD1 + SB1 + centro custo/conta | J,E,C | prints+relato; SQL TEST_NOT_RUN | provar aliases, NOT IN preservando zeros, flags e total |
-| V21 | 47:48-50:35; R18 | Joici classifica direto/indireto/admin, consulta produto desconhecido, rejeita coparticipacao colaborador | centro custo, produtos, despesas, cadastro RH quando autorizado | J,E,C | screenshot manual + relato | validar casos e regras, sem classificacao por prefixo automatica |
-| V22 | ~48:48-50:35; R18 | Prefixos 02/03/05 e exemplos 0405, 0504; erros 0404/0401; produto 30194558 | tabela oficial CC e relacionamento produto/conta | J,E,C | OWNER_REPORTED_VIA_PO | tratar conflito 05/0504, codigo desconhecido e vigencia |
+| V21 | 47:48-50:35; R18 | <GESTORA-PROC> classifica direto/indireto/admin, consulta produto desconhecido, rejeita coparticipacao colaborador | centro custo, produtos, despesas, cadastro RH quando autorizado | J,E,C | screenshot manual + relato | validar casos e regras, sem classificacao por prefixo automatica |
+| V22 | ~48:48-50:35; R18 | Prefixos 02/03/05 e exemplos 0405, 0504; erros 0404/0401; produto <PRODUTO-EXEMPLO-B> | tabela oficial CC e relacionamento produto/conta | J,E,C | OWNER_REPORTED_VIA_PO | tratar conflito 05/0504, codigo desconhecido e vigencia |
 | V23 | proposta PO apos 50:35; R18 | Lista pre-classificada explicavel, pesquisa, excluir da apuracao, revisar humano, auditoria | BFF/ports/versionamento ainda nao decidido | P,E,C,J | TARGET / DECISION_REQUIRED | fechar UX, ownership, RQ/AC, dados e autorizacao |
 
 **Nao confundir:** `R01/R02` implementados = baixas financeiras; `Posicao de Titulos` em aberto (V08) nao equivale a baixas. `R03` operacional = SB9/SB1, nao replica oficial do P7. `MATR320` nao e Kardex. `SD1` entrada NF nao e `SD3` movimentos de estoque. `CFOP` do Excel precisa mapeamento ao campo fisico, nao supor alias.
@@ -53,7 +53,7 @@ Legenda owners: **J** = Joici/Controladoria valida AS-IS; **T** = TEO prova deco
 | RC-04 | CPV = soma coluna de custo de saida apos CFOP/terceiros | Relato indica recorte CFOP 5101/5124/6101/6124 | reconciliar api-delpi `get_supplies_cpv`/dashboard e fonte real, sem nova formula arbitraria |
 | RC-05 | MOD = valor total dos produtos de mao de obra direta no periodo/filiais | Exemplo em Excel ~172 mil | BOM, unidade, rateio, custo total versus custo unitario, notas negativas, consumer |
 | RC-06 | Despesa por CC = SD1 elegivel (NOT IN tipos + NOT MP + exclusoes justificadas), depois classificação | Sem total oficial recebido nesta rodada | semantica `C Custo`/`C Cont`, base valor bruto/liquido/credito, filial, impostos, dupla contagem |
-| RC-07 | Terceiros nao entram em CPV/P7 quando fora do escopo especifico | Joici aponta residuos/itens do cliente | custodiante, propriedade, estrutura, estoque, tratamento fiscal e scope |
+| RC-07 | Terceiros nao entram em CPV/P7 quando fora do escopo especifico | <GESTORA-PROC> aponta residuos/itens do cliente | custodiante, propriedade, estrutura, estoque, tratamento fiscal e scope |
 | RC-08 | Gate fim do mes e salvamento definitivo | Demo dia 30/09/2026 nao representa fechamento real | ausencia de movimentos tardios, datas de corte, locks e aprovacao owner |
 | RC-09 | Compensacoes financeiras com pares provaveis | PA, NF, devolucoes e marketplaces | chaves, saldos e nao comprometer ERP; apenas triagem ate gate |
 
@@ -85,19 +85,19 @@ Cada ciclo encerra **somente apos** evidencias, revisao do GPT, testes de dados 
 
 Entregas: (a) manifesto de fontes (video original/recortes, hash, nome, timestamp, prints autorizados, arquivos reais e PDFs) com seguranca; (b) index timecode corrigido, link registro 56, screens e TEO; (c) owners por artefato; (d) lista de relatorios disponiveis, outputs reais e respectivos parametros por filial/mes; (e) quadro `PROVEN` vs `OWNER_REPORTED_VIA_PO` vs `TO_INVENTORY`. Verificar as divergencias X01-X04 e a falta do original das cinco saidas do R01/R02.
 
-**AC-I:** 23/23 entradas da matriz com referencia, responsavel e status; 100% dos prints fornecidos classificados como arquivo verificavel ou `NOT_AVAILABLE_IN_REPO`; nenhum minuto em `PROVEN` sem prova de timebase; todos os conflitos com owner. Evidencia negativa documentada, nao ocultada. Validacao humana requerida de Joici para regras faladas.
+**AC-I:** 23/23 entradas da matriz com referencia, responsavel e status; 100% dos prints fornecidos classificados como arquivo verificavel ou `NOT_AVAILABLE_IN_REPO`; nenhum minuto em `PROVEN` sem prova de timebase; todos os conflitos com owner. Evidencia negativa documentada, nao ocultada. Validacao humana requerida de <GESTORA-PROC> para regras faladas.
 
 ### Ciclo II - Inventario fisico TOTVS e demonstracao de calculos (prioridade P0)
 **Objetivo:** provar os datasets reais e transformar heuristicas em regras testaveis.
 
 Ordenar: (1) centros de custo/SD1/SB1 e hierarquia classificatoria V20-V22; (2) SD3 Kardex/INVENT/CFOP V12/V14/V15; (3) P7 oficial e MATR320/MATR989/V17; (4) MOD estrutural V05/V16; (5) titulos e compensacoes V07-V09; (6) jobs custo/reposicao V01-V06/V10; (7) origens externas V19. Para cada: tabela e owner, dicionario fisico e alias, chaves e cardinalidade, politica de deletado, filial, historico, timezone/datas, custos/moedas e rounding, joins, exemplos anonimizados, consumers ja existentes (inclusive CPV e MOD dashboards).
 
-**AC-II:** RC-01..RC-09 com query/protocolo `READ-only` reproduzivel OU `BLOCKED` motivado; casos CC `02/03/05/0404/0401/0504/0405`, `30194558` e coparticipacao explicitamente testados ou pendentes nomeados; relatorio de divergencias por linha/chave e valor para RC-01/RC-02/RC-03/RC-06. Nenhum `PASS` inferido de HTTP 200. Se bloqueado, `INCONCLUSIVE`.
+**AC-II:** RC-01..RC-09 com query/protocolo `READ-only` reproduzivel OU `BLOCKED` motivado; casos CC `02/03/05/0404/0401/0504/0405`, `<PRODUTO-EXEMPLO-B>` e coparticipacao explicitamente testados ou pendentes nomeados; relatorio de divergencias por linha/chave e valor para RC-01/RC-02/RC-03/RC-06. Nenhum `PASS` inferido de HTTP 200. Se bloqueado, `INCONCLUSIVE`.
 
 ### Ciclo III - Homologacao de regras, matriz de requisitos e desenho de experimento (prioridade P1)
 **Objetivo:** concluir backlog de melhoria consolidada sem multiplicar telas TOTVS.
 
-Workshop Joici + Contabilidade + owners: homologar catalogo versionado de classificacao e exclusoes, tolerancia e origem de variacoes, workflow de investigacao; decidir escopo apenas diagnostico ou tambem conciliacao historica, guardrails de IA, persistencia de evidencias por fechamento e responsabilidades de correcoes ERP. Derivar RQ/AC e contratos apenas apos decisions.
+Workshop <GESTORA-PROC> + Contabilidade + owners: homologar catalogo versionado de classificacao e exclusoes, tolerancia e origem de variacoes, workflow de investigacao; decidir escopo apenas diagnostico ou tambem conciliacao historica, guardrails de IA, persistencia de evidencias por fechamento e responsabilidades de correcoes ERP. Derivar RQ/AC e contratos apenas apos decisions.
 
 **AC-III:** matriz `business_rule -> inputs -> formula -> fixture -> expected -> owner approval`, decisoes `DECISION_REQUIRED` resolvidas ou mantidas explicitamente bloqueadas; prioridades com impacto/esforco/risco; backlog page-by-page se gate transversal explicitamente aprovado; documentacao de ajuda a evoluir no mesmo gate. Nenhuma API, migration, nova permission nem deploy nesta fase.
 
@@ -123,18 +123,18 @@ Para cada nova observacao, acrescentar ID `Vxx` ou `RC-xx` sem substituir nota a
 
 ## 8. Ciclo I - reinterpretacao do checklist como catalogo operacional P2/P5 (22/10/2026)
 
-**Correcao explicita do PO:** o checklist de envio apresentado no documento privado e a referencia que Joici consulta para saber **quais itens preparar e encaminhar no fechamento mensal**. Ele NAO e apenas um inventario externo nem evidencia de que os itens ja foram enviados. Enriquecer o fluxo de negocio do Portal ja decidido, sem criar paginas, permissions ou mecanismos de review paralelos.
+**Correcao explicita do PO:** o checklist de envio apresentado no documento privado e a referencia que <GESTORA-PROC> consulta para saber **quais itens preparar e encaminhar no fechamento mensal**. Ele NAO e apenas um inventario externo nem evidencia de que os itens ja foram enviados. Enriquecer o fluxo de negocio do Portal ja decidido, sem criar paginas, permissions ou mecanismos de review paralelos.
 
 **Crosswalk canônico, sem conteudo privado:**
 - **P2 (doc 09):** template e snapshot do checklist por competencia, contextos/filiais, entregaveis aplicaveis, requisito, evidencias, pendencias, validacao/rejeicao/historico. Distinguir previsto, produzido, anexado, validado e N/A; marcacao visual da planilha nao comprova sucesso.
 - **P6 (doc 13):** governanca do template mestre e catalogos, nao editar retroativamente snapshots do fechamento.
 - **P5 (docs 12 e 37, authority de decisao):** compor recipient packages e PackageVersion, finalizar sem enviar automaticamente, submeter **dentro da Minha DELPI** para review humano. Notificacao in-app/e-mail aponta ao Portal; nao enviar attachment por e-mail no V1. Aceite real por areas obrigatorias da versao vigente conforme C2/D-FINAL-02; sem force completion.
 - **P1 (doc 08):** projetar progresso e blockers por competencia, sem assumir conclusao a partir de check verde.
-- **Owners:** Joici/Controladoria define entregavel e operacao AS-IS; Contabilidade/Financeiro/Fiscal confirmam destinatarios e criterios por area; Core e authority das pessoas/permissoes; P2/P5 e authority do estado do pacote. Nao atribuir uma area obrigatoria a um item apenas por observacao do arquivo.
+- **Owners:** <GESTORA-PROC>/Controladoria define entregavel e operacao AS-IS; Contabilidade/Financeiro/Fiscal confirmam destinatarios e criterios por area; Core e authority das pessoas/permissoes; P2/P5 e authority do estado do pacote. Nao atribuir uma area obrigatoria a um item apenas por observacao do arquivo.
 
 **Matriz conceitual de familias, sem dados da empresa:** (a) extratos e comprovantes de fontes externas; (b) baixas financeiras; (c) operacoes de importacao/cambio; (d) estoque/P7; (e) CPV, Kardex e ajustes; (f) MOD, material em processo e faturamento; (g) despesas por centro de custo; (h) excecoes fiscais e custo zero; (i) documentos fiscais; (j) documentos contabeis; (k) taxonomia auxiliar de consumo. Cada familia e candidata a itens distintos no template, mas NAO autoriza automaticamente inclusao como required/conditional/optional.
 
-**Ciclo I pendente:** inventariar para cada item `familia -> deliverable -> company/branch applicability -> competency -> source -> preparation owner -> recipient package -> required area -> evidence format -> validation rule -> exception/N-A -> version and status`; confrontar com P2/P5/P6 e o ledger RQ/AC, sem duplicar contratos. Revisar catalogo com Joici e owners das areas. Ciclo II definira fontes/DTOs/consultas read-only quando esse mapeamento estiver claro.
+**Ciclo I pendente:** inventariar para cada item `familia -> deliverable -> company/branch applicability -> competency -> source -> preparation owner -> recipient package -> required area -> evidence format -> validation rule -> exception/N-A -> version and status`; confrontar com P2/P5/P6 e o ledger RQ/AC, sem duplicar contratos. Revisar catalogo com <GESTORA-PROC> e owners das areas. Ciclo II definira fontes/DTOs/consultas read-only quando esse mapeamento estiver claro.
 
 **Seguranca dos documentos:** originais e dados operacionais/fiscais/financeiros ficam restritos ao contexto privado; este GitHub armazena **somente conceito, dependencia e gaps**, sem prints, arquivos, nomes de instituicoes, contas, identificadores ou valores.
 
@@ -148,7 +148,7 @@ Para cada nova observacao, acrescentar ID `Vxx` ou `RC-xx` sem substituir nota a
 - **Verde (`Enviar`) = REQUIREMENT_TO_SEND** no escopo da coluna correspondente, conforme checklist operacional. Nao equivale a `SENT`, `SUBMITTED_FOR_REVIEW`, `VALIDATED` ou `ACCEPTED`.
 - **`x`** e outras anotacoes aparecem em celulas na planilha, mas sua interacao com a cor, em todos os quadros/abas, ainda requer conferencia da owner para evitar precedencia presumida. Branco/sem verde nao significa automaticamente "dispensado", "N/A" ou "nao requerido" sem regra confirmada.
 - **Destino** e **obrigatoriedade da revisao** permanecem campos separados da marcacao verde: o documento informa o que deve ser enviado, enquanto P2/P5 e os contratos canonicos definem estados, pacotes e aceite humano.
-- No inventario do template P6/snapshot P2, mapear `deliverable + business_unit/branch -> requirement_to_send` com contexto/competencia e versao do template, **sem** criar permission por filial. Confirmar aplicacao em todas as abas, excecoes e variacoes por competencia com Joici antes de migrar para contrato fisico.
+- No inventario do template P6/snapshot P2, mapear `deliverable + business_unit/branch -> requirement_to_send` com contexto/competencia e versao do template, **sem** criar permission por filial. Confirmar aplicacao em todas as abas, excecoes e variacoes por competencia com <GESTORA-PROC> antes de migrar para contrato fisico.
 - Atualizar o status da interpretacao: `GREEN_LEGEND=PROVEN_SCREENSHOT_AND_PO_CONFIRMED`; `GREEN_MEANS_SEND_REQUIRED_IN_COLUMN_SCOPE=PO_CONFIRMED`; `ACTUAL_DELIVERY=TEST_NOT_RUN`; `REVIEW_ACCEPTANCE=TEST_NOT_RUN`.
 
 Este adendo prevalece sobre textos anteriores desta matriz que descrevem genericamente as marcacoes verdes como nao interpretadas. Dados originais e operacionais continuam restritos fora do GitHub.

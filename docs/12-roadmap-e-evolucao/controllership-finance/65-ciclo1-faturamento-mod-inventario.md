@@ -16,7 +16,7 @@ Nas 4.476 linhas de dados examinadas, dentro da tolerancia numerica da precisao 
 **Interpretacao restrita:** a planilha parece representar o desdobramento de produtos acabados faturados em componentes/tempos de MOD de sua estrutura e a consequente valorizacao estimada. Isso **nao comprova** horas efetivamente apontadas na producao, contabilizacao de MOD, CPV reconhecido, base de folha de pagamento ou regra oficial do DLP204.
 
 ## Cruzamento com fontes
-- O video de Joici apresenta conferencia de faturamento x MOD no fechamento; este arquivo oferece dimensoes de PA, sequencia, componente, quantidade faturada, horas e custo.
+- O video de <GESTORA-PROC> apresenta conferencia de faturamento x MOD no fechamento; este arquivo oferece dimensoes de PA, sequencia, componente, quantidade faturada, horas e custo.
 - A rotina `DLP204` listada no doc 60 e **candidata** a fonte; carece de confirmacao do produtor, parametros, periodo, formula, origem de custo unitario e componentes.
 - Relaciona-se conceitualmente a P3/custos, ao WIP (doc 64), CPV/Kardex (doc 61), MATR320 (doc 62) e Registro de Inventario (doc 63), mas nenhum total foi reconciliado.
 - As duas abas refletem contextos filial 01 e filial 02; nao introduzir escopo da antiga industria legada no checklist vigente.

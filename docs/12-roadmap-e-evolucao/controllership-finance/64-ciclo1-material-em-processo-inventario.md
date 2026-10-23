@@ -22,13 +22,13 @@ A observacao local identifica locais `01` e `99`, registros com tipos `RE0`, `RE
 
 | Ref | Descoberta/validacao | Owner e teste esperado |
 |---|---|---|
-| WIP-01 | Identificar producer exato, rotina, parametros e versao | ERP/Joici; output protegido equivalente |
+| WIP-01 | Identificar producer exato, rotina, parametros e versao | ERP/<GESTORA-PROC>; output protegido equivalente |
 | WIP-02 | Distinguir competencia, data de referencia, emissao e estado de fechamento do custeio | Controladoria/ERP |
 | WIP-03 | Obter dicionario de `RE0/RE1/RE2/RE9`, campos, joins, OP, local e item | api-delpi/ERP |
 | WIP-04 | Classificar linhas de movimento, saldos, agrupadores, registros sem OP e zeros | Controladoria/ERP; regra de elegibilidade homologada |
 | WIP-05 | Provar composicao por tipo de material e diferenca entre armazens 01/99 | Controladoria/Estoque |
 | WIP-06 | Reconciliar com seção EM PROCESSO do P7 e resumo MATR320 em mesma competencia/filial | testes de paridade por fonte/corte |
-| WIP-07 | Inventariar responsavel, destinatario e formato do entregavel P2/P5 | Joici + areas revisoras |
+| WIP-07 | Inventariar responsavel, destinatario e formato do entregavel P2/P5 | <GESTORA-PROC> + areas revisoras |
 
 **Atencao:** arquivo massivo com muitos registros zerados, cabeçalhos repetidos e tipos nao homologados. Ausencia de OP em parte das linhas exige analise da estrutura do relatorio, nao classificacao automatica como erro.
 

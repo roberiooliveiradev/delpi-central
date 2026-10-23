@@ -37,7 +37,7 @@ A planilha contem colunas para status por moeda, filial, produto, descricao, tip
 2. Verificar em READ-only calculo inicial/final, granularidade, referencia temporal, status por moeda, custo zero/negativo e regras de arredondamento; confrontar amostra protegida fora do GitHub.
 3. Inventariar producers e consumers reais de custo medio/custo de produto em api-delpi, dashboards de Suprimentos/Producao e strategic-indicators-api. GitHub search vazio = INCONCLUSIVE, nao ausencia.
 4. Criar matriz de testes sinteticos: inicial>0/final>0, inicial=0/final>0, inicial=0/final=0, valores negativos, moedas inativas, mesmo produto em depositos diferentes, recalc/historico e dado ausente.
-5. Submeter classificacao e limiares a Joici/owner. Separar falha ERP de variacao legitima. Registrar parecer funcional e metodo de comparacao.
+5. Submeter classificacao e limiares a <GESTORA-PROC>/owner. Separar falha ERP de variacao legitima. Registrar parecer funcional e metodo de comparacao.
 6. Somente apos contratos, owners e decisao de produto, propor gate transversal e eventual nova experiencia no Portal page-by-page; sem runtime neste ciclo.
 
 ## 5. Gates

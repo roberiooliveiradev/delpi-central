@@ -47,7 +47,7 @@ Esta e uma matriz **descritiva de rotinas e privilegios**; nao e comprovante de 
 
 ## Correcao de proveniencia e catalogo por rotina - 22/10/2026
 
-**Informacao adicional do PO, atribuida a Joici:** esta planilha representa **as rotinas que o pessoal da Contabilidade consegue acessar no TOTVS**. Isso e evidencia de conhecimento operacional relatado pela responsavel, mais forte do que uma lista generica de possibilidades, mas ainda nao e auditoria tecnica de grants por usuario/perfil/ambiente. **Nao inferir que a sigla DRE nomeie usuario ou processo tecnico**: aqui DRE e um potencial consumidor gerencial a estudar, sem acesso demonstrado para ele.
+**Informacao adicional do PO, atribuida a <GESTORA-PROC>:** esta planilha representa **as rotinas que o pessoal da Contabilidade consegue acessar no TOTVS**. Isso e evidencia de conhecimento operacional relatado pela responsavel, mais forte do que uma lista generica de possibilidades, mas ainda nao e auditoria tecnica de grants por usuario/perfil/ambiente. **Nao inferir que a sigla DRE nomeie usuario ou processo tecnico**: aqui DRE e um potencial consumidor gerencial a estudar, sem acesso demonstrado para ele.
 
 ### Rotinas da aba Contabil - finalidade e saida informada, sem payload
 

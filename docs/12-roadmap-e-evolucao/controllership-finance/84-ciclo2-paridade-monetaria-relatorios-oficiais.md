@@ -51,7 +51,7 @@ O WHERE reproduzido é o do próprio fonte (linhas ~1040–1180): filtros fixos
 | **Descontos** | `E5_VLDESCO + E5_VLDECRE` | total **0,01** exato |
 | **Valor Original** | `SE2.E2_VALOR` | **942/948** exato por registro |
 | — 5 linhas `INV` (aglutinadas) | `E5_VALOR` do movimento (aglutinação: o movimento carrega o total) | exato |
-| — 1 linha `NF` (004044596) | VO = soma do grupo (NF 923,53 + 4× `TX UNIAO` = **1.029,52**) | exato |
+| — 1 linha `NF` (`<NF-GRUPO-A>`) | VO = soma do grupo (NF 923,53 + 4× `TX UNIAO` = **1.029,52**) | exato |
 
 ### §1.3 Subtotais impressos (resumo do rodapé)
 
@@ -107,7 +107,7 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
 
 - As **8 linhas de decomposição** excluídas pelo produtor são movimentos
   `MT`/`JR`/`DC` (+1 `VL` duplicado) cujos valores já estão embutidos no
-  `E5_VALOR` da baixa `VL` principal (ex.: título 102184-002: VL 587,70 já
+  `E5_VALOR` da baixa `VL` principal (ex.: título <TITULO-VL-A>: VL 587,70 já
   contém juros 4,94 + multa 11,42 = 16,36 = `E5_VLJUROS`). Regra consistente
   com a lista de exclusão de tipodoc do FINR190 — **inferida, não provada
   como regra geral** (fonte ausente).
@@ -115,8 +115,8 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
   título). O artefato inclui apenas 8 dos 89 sem título: todos `PA`/`FINA750`
   com motivo NOR/DAC (7) + 1 `PA`/`DEB` origem 01. Excluídos: FOL/COF/NDF/
   tipo-vazio/NF-DEB e **3 `PA`/`DEB` adicionais**, todos identificados por
-  linha lógica (sem expor partes): `260721799` 118,27 `FINA090` f01 ·
-  `080926` 1.000,00 `FINA090` f01 · `044052` 1.537,00 `FINA750` f02. A
+  linha lógica (sem expor partes): `<RECEBIMENTO-SEM-TITULO-A>` 118,27 `FINA090` f01 ·
+  `<RECEBIMENTO-SEM-TITULO-B>` 1.000,00 `FINA090` f01 · `<RECEBIMENTO-SEM-TITULO-C>` 1.537,00 `FINA750` f02. A
   regra geral que seleciona 8 e exclui 3 segue **hipótese não demonstrada**
   (fonte ausente — G4); a população impressa, porém, é 100% reproduzida.
 - Coluna `Orig`: preenchida só nas 8 linhas sem título (2×`01` + 6×`02` =
@@ -129,7 +129,7 @@ layout `.prt` compartilhado não prova produtor). Competência 09/2026.
 |---|---|---|
 | **Total Baixado** | `SE5.E5_VALOR` | exato nas 649 linhas comuns + 8 PA = `E5_VALOR` |
 | **Valor Original** | `SE1.E1_VALOR` | **649/649** exato por registro |
-| — 8 linhas `PA` sem título | VO = **valor da provisão `'P'` espelhada** (mesmo numero/clifor, motivo NOR, origem `MATA121`/`FINA050`) | **8/8 exato** — ex.: numero 043549: provisão 1.571,60 = recebimentos 877,00+119,96 + compensação 'P' 574,64 |
+| — 8 linhas `PA` sem título | VO = **valor da provisão `'P'` espelhada** (mesmo numero/clifor, motivo NOR, origem `MATA121`/`FINA050`) | **8/8 exato** — ex.: numero <MOV-PROV-A>: provisão 1.571,60 = recebimentos 877,00+119,96 + compensação 'P' 574,64 |
 | **Jur/Multa** | `E5_VLJUROS + E5_VLMULTA` | total **44,16** exato |
 | ΣVO agregado | 649×`E1_VALOR` + 8×provisão 'P' | **5.301.533,30 = artefato — exato, Δ R$ 0,00** (rework: a divergência de R$ 1,00 reportada na rodada anterior era erro de soma na consolidação manual — 15.836,71 registrado como 15.837,71 — não divergência de dado) |
 

@@ -4,7 +4,7 @@
 
 - Código: PROC-0072
 - Processo: Gestão do Fechamento Mensal da Controladoria
-- Responsável mapeada: Joici Motta
+- Responsável mapeada: <GESTORA-PROC>
 - Setor: Controladoria
 - Escopo: filiais ativas conforme aplicabilidade
 - Prioridade: alta
@@ -60,7 +60,7 @@ Fim: após pacotes enviados e esclarecimentos/complementos resolvidos.
 
 ## Conhecimento concentrado
 
-Dependência relevante de Joici é PROVEN/INFORMED. Causa organizacional profunda não comprovada.
+Dependência relevante de <GESTORA-PROC> é PROVEN/INFORMED. Causa organizacional profunda não comprovada.
 
 ## Separação central
 

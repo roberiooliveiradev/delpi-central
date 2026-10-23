@@ -6,7 +6,7 @@
 
 O PDF intitula-se **REGISTRO DE INVENTARIO**, com posicao **30/09/2026**, contexto matriz, resumo **EM ESTOQUE**, resumo **EM PROCESSO** e **TOTAL GERAL**. Na secao EM ESTOQUE aparecem apenas materia-prima (MP), produto acabado (PA) e produto intermediario (PI). Na secao EM PROCESSO aparecem MP e PI.
 
-E compatível conceitualmente com a variante reduzida do P7 mencionada pela Joici como documento de entrega a Contabilidade, mas o PDF **nao traz codigo `MATR460`, parametro do programa nem nome do layout Bloco H**. Fonte/variante = `TO_INVENTORY`; nao atribuir origem comprovada.
+E compatível conceitualmente com a variante reduzida do P7 mencionada pela <GESTORA-PROC> como documento de entrega a Contabilidade, mas o PDF **nao traz codigo `MATR460`, parametro do programa nem nome do layout Bloco H**. Fonte/variante = `TO_INVENTORY`; nao atribuir origem comprovada.
 
 ## Comparacao controlada com PDF anterior de estoque (doc 63)
 
@@ -29,7 +29,7 @@ A coincidencia da data e de alguns subtotais nao prova paridade global nem que M
 
 ## Relacao com processo e produto
 
-- Doc 57/video: Joici diferencia P7 completo de variante para Contabilidade, mencionando categorias MP/PI/PA. O PDF atual oferece evidencia documental compativel, **nao a prova tecnica do layout H**.
+- Doc 57/video: <GESTORA-PROC> diferencia P7 completo de variante para Contabilidade, mencionando categorias MP/PI/PA. O PDF atual oferece evidencia documental compativel, **nao a prova tecnica do layout H**.
 - Docs 61/62/63/64: rastrear pontos de reconciliacao com Kardex, MATR320 e saldo analitico em processo, sobretudo MP que diverge entre os dois resumos.
 - Doc 59 e contratos P2/P5/P6: entregavel digital candidato de estoque para Contabilidade; vincular a forma exata exigida no checklist sem criar nova pagina ou fluxo de revisao.
 - A pagina refere-se a matriz da empresa de componentes; nao supor que represente a filial ou a empresa industrial legada.

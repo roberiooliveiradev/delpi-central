@@ -37,7 +37,7 @@ Objetivo: capturar as regras e dependencias demonstradas no recorte audiovisual 
 | 27:15–29:20 | Excel faturamento/MOD, desmesclar, converter valores em numero, filtrar MOD | apurar parcela MOD | SOURCE_REPORTED, total/linhas pendentes |
 | ~30:45 | Alegacao anterior de conferencia previa ao salvamento | PO nao encontrou a fala no trecho; evidencia positiva ausente | RETRACTED / STALE_EVIDENCE; retirar da lista de requisitos |
 
-Nao transformar a ordem de navegacao em workflow imutavel; Joici relata alternancia para economia de tempo.
+Nao transformar a ordem de navegacao em workflow imutavel; <GESTORA-PROC> relata alternancia para economia de tempo.
 
 ## 4. Regras candidatas de negocio e seu teste de evidencia
 
@@ -51,7 +51,7 @@ Nao transformar a ordem de navegacao em workflow imutavel; Joici relata alternan
 **Entrada:** eventos do Kardex 01 classificados por codigos fiscais.
 **Operacao relatada:** aplicar filtro por codigos transcritos como `501`, `514`, `61`, `6124`; somar resultante, estimativa falada ~R$388 mil.
 **Nao comprovado:** CFOPs completos com zeros, se codigos sao internos ou fiscais, sinal, devolucoes, transferencias, competencia, vinculo com faturamento e valor final do CPV.
-**Evidencia minima:** screenshot legivel dos codigos na planilha, export fonte com colunas e linhas, demonstracao da soma e confirmacao de Joici/TEO.
+**Evidencia minima:** screenshot legivel dos codigos na planilha, export fonte com colunas e linhas, demonstracao da soma e confirmacao de <GESTORA-PROC>/TEO.
 
 ### CF-TER-01 — Materiais de terceiros
 **Operacao relatada:** conferir saldos remanescentes, com julgamento humano de um residuo ~R$3,80.
@@ -115,8 +115,8 @@ Esta e hipotese TARGET; nao criar nova rota, nova permission, SQL em frontend ou
 **Gate V3 — conciliacao:** reproduzir totais por relatorio com mesmo universo e parametrizacao, explicar divergencias e obter aceite humano.
 **Gate V4 — DECISION_REQUIRED:** PO decide modelo consolidado, boundaries, contrato, rotas e quais comparacoes virarão controles. Gate transversal antes de implementar.
 
-## 9. Perguntas residuais objetivas para a Joici/TEO
-1. (Retirada) Nao ha evidencia confirmada de conferencia especifica aos 30:45; nao consultar a Joici sobre premissa nao comprovada.
+## 9. Perguntas residuais objetivas para a <GESTORA-PROC>/TEO
+1. (Retirada) Nao ha evidencia confirmada de conferencia especifica aos 30:45; nao consultar a <GESTORA-PROC> sobre premissa nao comprovada.
 2. O filtro `INVENT` soma os movimentos do 01 e do 99 em separado ou liquida um contra o outro?
 3. Quais codigos/CFOP completos compoem o CPV e como entradas, saidas e devolucoes afetam sinal?
 4. Em quais condicoes um saldo de terceiros exige justificativa ou bloqueia fechamento?

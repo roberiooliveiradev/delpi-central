@@ -16,7 +16,7 @@ Uma aba Planilha2. Primeira linha identifica `SD2`, com titulo/cabecalhos de ite
 ## Checklist do Ciclo 2
 | ID | Verificacao |
 |---|---|
-| NFEX-01 | Joici/Fiscal: finalidade de desconsiderar, apuracao impactada e justificativa documentavel |
+| NFEX-01 | <GESTORA-PROC>/Fiscal: finalidade de desconsiderar, apuracao impactada e justificativa documentavel |
 | NFEX-02 | ERP: confirmar origem SD2, produtor EDAPP, parametros, competencia e filtros de selecao |
 | NFEX-03 | Confirmar joins documentais, cabecalhos, filial, documento, serie, item, TES e codigo fiscal |
 | NFEX-04 | Identificar razoes de exclusao permitidas e tratamento de cancelamento, devolucao e operacao entre contextos |

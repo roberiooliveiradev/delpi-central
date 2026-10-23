@@ -1,6 +1,6 @@
 # 54 - Analise transversal do recorte de video: Kardex, inventarios, CPV e MOD
 
-Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo PO, aproximadamente trecho 19-33 minutos da gravacao do PROC-0072; imagens observadas em quadros a cada 30s e transcricao de trabalho `PROC-0072_Transcricao_Integral_Video.md` recebida no projeto. AS-IS a confirmar formalmente com TEO/Joici, pois transcricao pode conter erros; codigos e valores citados sao relacoes observadas/ditas, NAO formulas canônicas verificadas contra SQL. Sem implementacao de runtime nem alteracao de contratos. Status: DOCUMENTED_PARTIAL, produto TARGET_ONLY.
+Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo PO, aproximadamente trecho 19-33 minutos da gravacao do PROC-0072; imagens observadas em quadros a cada 30s e transcricao de trabalho `PROC-0072_Transcricao_Integral_Video.md` recebida no projeto. AS-IS a confirmar formalmente com TEO/<GESTORA-PROC>, pois transcricao pode conter erros; codigos e valores citados sao relacoes observadas/ditas, NAO formulas canônicas verificadas contra SQL. Sem implementacao de runtime nem alteracao de contratos. Status: DOCUMENTED_PARTIAL, produto TARGET_ONLY.
 
 ## Sequencia e distincao de relatorios
 - P7 padrao (estoque valorizado por data), layout Bloco H separado para contabilidade, com selecao de terceiros mencionada na transcricao. R03 nao e equivalente oficial ao MATR460 por deducao.
@@ -20,7 +20,7 @@ Data 2026-10-21. Escopo de evidencia: video recortado de 14 minutos enviado pelo
 | 27:15-29:20 | Relatorio faturamento x MOD em Excel | Desmesclar, converter texto para numero, filtrar MOD; soma ~172 mil | SOURCE_REPORTED; DRE/planilha Minha DELPI nao comprovados como owner |
 | ~30:45 | Suposta conferencia anterior ao salvamento dos Kardex | Referencia nao localizada pelo PO no trecho enviado; fala nao verificavel nas evidencias revisadas | STALE_EVIDENCE / RETRACTED; nao usar como regra ou dependencia |
 
-A Joici declara que nao segue sequencia rigida: alterna rotinas para otimizar tempo. Logo a central de conferencia deve expor dependencias verificadas e nao impor ordem arbitraria baseada na gravacao.
+A <GESTORA-PROC> declara que nao segue sequencia rigida: alterna rotinas para otimizar tempo. Logo a central de conferencia deve expor dependencias verificadas e nao impor ordem arbitraria baseada na gravacao.
 
 ## Hipotese de UX consolidada (TARGET, nao aprovada)
 Uma unica area de `Conferencia de Estoques e Custos` por competencia/filial com visoes:
@@ -32,7 +32,7 @@ Uma unica area de `Conferencia de Estoques e Custos` por competencia/filial com 
 Exibir origem, filtros, competencia, status, evidencias, divergencias e responsavel. Nao construir cinco paginas de replica dos relatórios sem decisao de produto.
 
 ## Gaps obrigatorios antes de qualquer implementacao
-1. Confirmar no TEO e com Joici as falas, codigos fiscais, sinais, formulas e excecoes; video/transcricao nao sao contrato de API.
+1. Confirmar no TEO e com <GESTORA-PROC> as falas, codigos fiscais, sinais, formulas e excecoes; video/transcricao nao sao contrato de API.
 2. Resolver diferenca entre valores da gravacao e os PDFs P7/MATR320, e entre filial, armazem e competencia.
 3. Identificar no api-delpi as fontes e contratos READ reais (SD3 apenas mencionada para inventario; nao presumir equivalencia de consulta existente).
 4. Identificar owner e eventual ingestao do Excel de MOD: nao ler planilha de terceiro diretamente por conveniencia.

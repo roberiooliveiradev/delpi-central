@@ -13,7 +13,7 @@
 ## Limites expressos da decisão
 
 - **CICLO_1_DOCUMENTAL = PO_ACCEPTED_WITH_RESIDUAL**; review técnico documental = `ACCEPT_WITH_RESIDUAL`.
-- Os relatos da Joici registrados pelo PO permanecem `OWNER_REPORTED_VIA_PO`, sem convertê-los em regra SQL/TOTVS homologada.
+- Os relatos da <GESTORA-PROC> registrados pelo PO permanecem `OWNER_REPORTED_VIA_PO`, sem convertê-los em regra SQL/TOTVS homologada.
 - A correspondência entre narração e fontes é conceitual; não implica paridade de linhas, cálculos, saldos ou relatórios oficiais.
 - As diferenças entre variantes P7, vínculos de MOD, CPV, inventários, compensações, classificações SD1 e logs de inconsistências seguem `TO_INVENTORY`; paridade ERP/SQL = `TEST_NOT_RUN`.
 - Reprodução audiovisual independente/timecodes = `INCONCLUSIVE`, sem exigir que o PO dite novamente o vídeo.

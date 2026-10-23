@@ -4,7 +4,7 @@
 
 ## 1. Objetivo e arquitetura
 
-Disponibilizar leitura de eventos efetivos de **baixas a pagar (R01)** e **baixas a receber (R02)**, com filtros, resumo e tabela de detalhe para conferência por competência. Os cinco arquivos relatados por Joici (Pagar XLS/PDF data/PDF natureza; Receber XLS/PDF data) são **saídas informadas verbalmente**, não exportações observadas. A primeira etapa proposta é JSON read-only; exportação fica em gate separado.
+Disponibilizar leitura de eventos efetivos de **baixas a pagar (R01)** e **baixas a receber (R02)**, com filtros, resumo e tabela de detalhe para conferência por competência. Os cinco arquivos relatados por <GESTORA-PROC> (Pagar XLS/PDF data/PDF natureza; Receber XLS/PDF data) são **saídas informadas verbalmente**, não exportações observadas. A primeira etapa proposta é JSON read-only; exportação fica em gate separado.
 
 - **api-delpi**: owner da consulta, joins e regras financeiras Protheus (Clean Architecture, ports/adapters). Contrato tipado dedicado; nunca usar `POST /data/sql` como API produtiva do Portal.
 - **controllership-finance-api**: BFF owner de composição do Portal, authorization por effective permissions Core **AND** resource_scope/ownership **AND** business rule; fail closed. `access` para leitura; não criar novas permissions.
@@ -438,7 +438,7 @@ Divergência entre candidatas (~3–13 mil em setembro) decorre do tratamento do
 
 API e fato reconciliam sem fan-out nem omissão. Divergências temporais por `NOLOCK`/ERP vivo seguem possíveis — classificar como inconclusivas só se observadas em leitura controlada.
 
-### 16.8 Matriz de decisão — owner financeiro (responsável mapeada: Joici Motta, Controladoria)
+### 16.8 Matriz de decisão — owner financeiro (responsável mapeada: <GESTORA-PROC>, Controladoria)
 
 | Tema | Evidência | Proposta | Impacto | Status |
 |---|---|---|---|---|

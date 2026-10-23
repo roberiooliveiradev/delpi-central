@@ -177,7 +177,7 @@ PO forneceu **`Resumo Estoque.pdf`**, página única de `REGISTRO DE INVENTÁRIO
 
 ### R03 - P7 Layout H e classificacao MP/PI/PA (21/10/2026)
 
-Joici confirmou ao PO que a segunda saida P7 utiliza layout H e atende ao acompanhamento restrito a materia-prima (MP), produto intermediario (PI) e acabado (PA). `SB1010.B1_TIPO` e campo real verificado no Protheus para essas categorias; nao assumir que esse filtro isolado reproduza MATR460. PDFs de 30/09/2026: `Estoque.pdf` amplo 3.946.431,87 e `Resumo Estoque.pdf` restrito 2.976.967,56, com diferencas inclusive em MP. Destinatario Financeiro/Contabilidade e regra completa de parametros ainda pendentes de verificacao; paridade `TEST_NOT_RUN`. Detalhes: [doc 46 secao 22](./46-t01-report-source-inventory-v1.md). Sem alteracoes de runtime.
+<GESTORA-PROC> confirmou ao PO que a segunda saida P7 utiliza layout H e atende ao acompanhamento restrito a materia-prima (MP), produto intermediario (PI) e acabado (PA). `SB1010.B1_TIPO` e campo real verificado no Protheus para essas categorias; nao assumir que esse filtro isolado reproduza MATR460. PDFs de 30/09/2026: `Estoque.pdf` amplo 3.946.431,87 e `Resumo Estoque.pdf` restrito 2.976.967,56, com diferencas inclusive em MP. Destinatario Financeiro/Contabilidade e regra completa de parametros ainda pendentes de verificacao; paridade `TEST_NOT_RUN`. Detalhes: [doc 46 secao 22](./46-t01-report-source-inventory-v1.md). Sem alteracoes de runtime.
 
 
 ### R03 — Consulta operacional P7: opcao A aprovada, contrato de design (21/10/2026)
@@ -255,7 +255,7 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 
 ## PROC-0072 - Matriz-mestra do video e roadmap de levantamento (22/10/2026)
 
-[Doc 57 - Rastreabilidade integral V01-V23, reconciliacoes RC-01 a RC-09, riscos X01-X12 e tres ciclos de inventario](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md). Consolidacao documental de todos os registros 01-18 do doc 56, em conjunto com docs 46 e 55, atraves das explicacoes guiadas do PO e prints. **Authority AS-IS = TEO/Joici; authority TARGET = GitHub.** O doc 55 permanece como recorte tecnico especifico 19-33 minutos; o doc 57 e a matriz geral vigente para controlar lacunas e evidencias. A validacao do MP4 original, as verificacoes de dados e a custodia de prints ainda estao pendentes; nao declarar paridade TOTVS/SQL nem audio/timecodes como PASS. Matriz = DOCUMENTED_WITH_RESIDUAL; dados = TO_INVENTORY / TEST_NOT_RUN; novas capacidades = DECISION_REQUIRED.
+[Doc 57 - Rastreabilidade integral V01-V23, reconciliacoes RC-01 a RC-09, riscos X01-X12 e tres ciclos de inventario](./57-proc0072-matriz-mestra-revalidacao-video-e-roadmap-inventarios.md). Consolidacao documental de todos os registros 01-18 do doc 56, em conjunto com docs 46 e 55, atraves das explicacoes guiadas do PO e prints. **Authority AS-IS = TEO/<GESTORA-PROC>; authority TARGET = GitHub.** O doc 55 permanece como recorte tecnico especifico 19-33 minutos; o doc 57 e a matriz geral vigente para controlar lacunas e evidencias. A validacao do MP4 original, as verificacoes de dados e a custodia de prints ainda estao pendentes; nao declarar paridade TOTVS/SQL nem audio/timecodes como PASS. Matriz = DOCUMENTED_WITH_RESIDUAL; dados = TO_INVENTORY / TEST_NOT_RUN; novas capacidades = DECISION_REQUIRED.
 
 
 ### Ciclo 1 - checklist de entregaveis por aba (22/10/2026)

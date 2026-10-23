@@ -1,6 +1,6 @@
 # 78 — PROC-0072 | Cruzamento da narração do PO com as fontes do Ciclo 1
 
-**Data:** 23/10/2026. **Escopo:** revisão documental sanitizada. **AS-IS:** relato guiado do PO sobre Joici registrado nos docs 56 e 57; doc 55 é recorte específico. **TARGET:** contratos e ADRs vigentes, sem alterações. Esta análise não reproduz vídeo, valores, pessoas, títulos, notas ou planilhas privadas. Narração documentada não equivale a homologação ERP.
+**Data:** 23/10/2026. **Escopo:** revisão documental sanitizada. **AS-IS:** relato guiado do PO sobre <GESTORA-PROC> registrado nos docs 56 e 57; doc 55 é recorte específico. **TARGET:** contratos e ADRs vigentes, sem alterações. Esta análise não reproduz vídeo, valores, pessoas, títulos, notas ou planilhas privadas. Narração documentada não equivale a homologação ERP.
 
 ## Crosswalk de evidência
 
@@ -25,15 +25,15 @@
 
 | Prioridade de investigação | Questão | Evidência mínima | Owner candidato |
 |---|---|---|---|
-| P0 | MATR320 x P7 x saldo em processo | recorte comum, equações e diferenças por grupo | Joici + api-delpi |
+| P0 | MATR320 x P7 x saldo em processo | recorte comum, equações e diferenças por grupo | <GESTORA-PROC> + api-delpi |
 | P0 | P7 completo x reduzido | parâmetros e explicação da divergência MP | Contabilidade + api-delpi |
 | P0 | CPV no Kardex | CFOP, terceiros, sinais, custo | Custos + api-delpi |
 | P0 | Baixas financeiras | paridade PDF/XLSB, compensação e logs | Financeiro + api-delpi |
 | P1 | Inventário 01/99 | população, movimentos, sinais por armazém | Estoques + api-delpi |
 | P1 | Faturamento x MOD | base de horas, teórico/realizado | Custos + PCP |
-| P1 | Variação de custo médio | fórmula e critérios de anomalia | Joici + api-delpi |
+| P1 | Variação de custo médio | fórmula e critérios de anomalia | <GESTORA-PROC> + api-delpi |
 | P1 | Despesas por CC | cadastro, exclusões e vigência | Controladoria + Contabilidade |
-| P1 | Entregas por competência | obrigatoriedade, destinatários e aceite humano | Joici + PO |
+| P1 | Entregas por competência | obrigatoriedade, destinatários e aceite humano | <GESTORA-PROC> + PO |
 
 Prioridades e owners são sugestões de planejamento, não aprovações. Conservar distinções STOCK_CLOSED, PACKAGE_SENT e MONTHLY_CLOSING_COMPLETED; ATTACHED não significa VALIDATED. Nenhuma hipótese vira fórmula oficial por este registro.
 

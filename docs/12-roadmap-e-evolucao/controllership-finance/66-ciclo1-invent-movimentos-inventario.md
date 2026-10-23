@@ -14,7 +14,7 @@ Os identificadores acima sao codigos de classificacao tecnicos/regras candidatas
 
 ## Relacao com processo e relatórios
 
-- A narracao da Joici (video, docs 55-57) descreve consulta do Kardex dos armazens 01/99 filtrada pelo documento `INVENT`, com confronto entre entradas e saidas do inventario. Esta planilha demonstra o recorte por documento e o par de direcoes, mas **nao comprova o filtro de armazens do relatorio que a originou**.
+- A narracao da <GESTORA-PROC> (video, docs 55-57) descreve consulta do Kardex dos armazens 01/99 filtrada pelo documento `INVENT`, com confronto entre entradas e saidas do inventario. Esta planilha demonstra o recorte por documento e o par de direcoes, mas **nao comprova o filtro de armazens do relatorio que a originou**.
 - A planilha CPV/Kardex (doc 61) tem estrutura de movimentos fisico-financeiros; `Invent` parece um extrato filtrado/selecionado, nao uma apuracao final de CPV.
 - MATR320 (doc 62) apresenta movimentos agregados por tipo, e P7 (doc 63) apresenta saldos posicionais; o elo entre os documentos exige granularidade, sinais e mesma competencia.
 - Linhas com custos de entrada zerados ou saldo residual proximo de zero nao sao, isoladamente, falhas; dependem de regra ERP, arredondamento e fechamento de custo.
@@ -29,7 +29,7 @@ Os identificadores acima sao codigos de classificacao tecnicos/regras candidatas
 | INV-03 | Recuperar chaves de produto, armazem, item e documento na origem sem deduzir pelas colunas ausentes |
 | INV-04 | Homologar formula de efeito liquido entre entradas e saidas, sinais, custos zerados e reversoes |
 | INV-05 | Provar cobertura e paridade contra Kardex/MATR910, MATR320 e P7 com mesmo cutoff |
-| INV-06 | Definir destino, layout e criterios de evidencia no pacote de fechamento, com Joici/Contabilidade/Fiscal |
+| INV-06 | Definir destino, layout e criterios de evidencia no pacote de fechamento, com <GESTORA-PROC>/Contabilidade/Fiscal |
 
 ## Evidencia e controles
 

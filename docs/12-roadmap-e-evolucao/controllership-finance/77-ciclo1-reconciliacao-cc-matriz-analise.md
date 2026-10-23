@@ -21,4 +21,4 @@ Fonte: `Analise.xlsx`, privada, fornecida pelo PO. Planilha `Relatorio` com dime
 
 ## Cruzamentos e gate
 
-Relacionar estes artefatos com o roteiro da Joici (docs 55–57), os relatórios de custos 61–68 e a matriz de encerramento 76. Nenhum dado original, valor, identificador de contraparte ou linha transacional foi versionado. `PROVEN/OBSERVED` apenas para estrutura informada no inventário; conclusões financeiras e SQL não homologadas. Resolução de referências documentais: `ACCEPT_WITH_RESIDUAL`, pois a origem do número histórico não é commit verificável. Fechamento formal do Ciclo 1 segue `PENDING`, Ciclo 2 `NO_GO`.
+Relacionar estes artefatos com o roteiro da <GESTORA-PROC> (docs 55–57), os relatórios de custos 61–68 e a matriz de encerramento 76. Nenhum dado original, valor, identificador de contraparte ou linha transacional foi versionado. `PROVEN/OBSERVED` apenas para estrutura informada no inventário; conclusões financeiras e SQL não homologadas. Resolução de referências documentais: `ACCEPT_WITH_RESIDUAL`, pois a origem do número histórico não é commit verificável. Fechamento formal do Ciclo 1 segue `PENDING`, Ciclo 2 `NO_GO`.

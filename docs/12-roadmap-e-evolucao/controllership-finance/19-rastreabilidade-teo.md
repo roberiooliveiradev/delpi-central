@@ -14,7 +14,7 @@ Os UUIDs ficam somente neste mapa e não são usados como nomes de arquivos.
 |---|---|---|
 | 01 | Discovery e AS-IS reconciliado | `aa909cc0-5d4e-45a4-be54-224bd884b4b2` |
 | 02 | Artefatos evolutivos / E2E | `4a1f39e9-062d-4262-99f4-d4d6c459f822` |
-| 03 | Entrevista Joici | `9414e09e-c6eb-4555-99ad-1c0dd1ce15cf` |
+| 03 | Entrevista <GESTORA-PROC> | `9414e09e-c6eb-4555-99ad-1c0dd1ce15cf` |
 | 04 | Catálogo de Evidências | `33819dcd-7dd4-4896-8c06-7b5181b6fc22` |
 | 04.1 | Addendum Evidências/Proveniência | `695c589d-c8cb-427b-913a-1858dfb0448c` |
 | 05 | Inventário de Sistemas/Rotinas | `ee4a13ab-f8df-4081-9bd2-1a2a3da13652` |
