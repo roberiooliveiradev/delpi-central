@@ -39,15 +39,59 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 | Impacto PROC-0072 | fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING (paridade do artefato já provada em G5) |
 | Critério de aceite | `SOURCE_AVAILABLE` + `CODE_DEPLOYED`; idealmente `EXECUTION_OBSERVED` |
 
-#### E2 — Produtor e parâmetros do P7 / MATR460
+#### E2 — Produtor e parâmetros do P7 / MATR460 — **solicitação conclusiva (rodada 18)**
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87, folha 101) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56, folha 74 — **emissão distinta, mesma data-base 30/09**); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H. **Rodada 15 (doc 80 §33.D):** binding de totalização **provado** — `EM ESTOQUE` = saldo físico ex-`MV_LOCPROC='99'` no `as_of` da emissão e `EM PROCESSO` = MATR989. **Rodada 17 (doc 80 §35):** grupo SX1 **`MTR460` (25 perguntas) catalogado**; resumo = mesmo estado de custo (PA/PI bit a bit) + **escopo MP/PA/PI + exclusão poder3-MP** — `QTNP@emissão>0` explica 99,987 % do estoque (Δ76,43) e ~97,5 % do processo (Δ+1.942,62); MTR460 **não** tem parâmetro de tipo |
-| Lacuna objetiva | (1) parâmetros efetivos da emissão resumida — print das perguntas/mv_par; (2) linhas de produto da emissão resumida (folha 74 completa) para fechar Δ76,43/Δ1.942,62; (3) fonte `matr460.prx`/RPO (semântica `Saldo em Poder 3º?` + mecanismo de escopo de tipos, ausente no SX1); (4) versão P7 homologada pela Controladoria |
-| Fonte esperada | print/tela de parâmetros da emissão resumida + PDF completo da folha 74 + identificação do fonte (MATR460 padrão ou custom) |
+| Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87, folha 101) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56, folha 74 — **emissão distinta, mesma data-base 30/09**); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H. **Rodada 15 (doc 80 §33.D):** binding de totalização **provado** — `EM ESTOQUE` = saldo físico ex-`MV_LOCPROC='99'` no `as_of` da emissão e `EM PROCESSO` = MATR989. **Rodada 17 (doc 80 §35):** grupo SX1 **`MTR460` (25 perguntas) catalogado**; resumo = mesmo estado de custo (PA/PI bit a bit) + **escopo MP/PA/PI + divergência exclusiva em MP**; hipótese `QTNP@emissão` explica 99,987 % do estoque (Δ76,43) e ~97,5 % do processo (Δ+1.942,62) — **não é regra oficial** (doc 80 §36, doc 85 BR-R03-007) |
+| Lacuna objetiva | exatamente três evidências abaixo (E2.1/E2.2/E2.3) |
 | Impacto PROC-0072 | é a base do gate R03 e da distinção "consulta operacional × relatório oficial" |
-| Critério de aceite | `CODE_DEPLOYED` (rotina identificada) + export oficial confrontável com SB9 |
+
+**E2.1 — Parâmetros da emissão resumida**
+
+Solicitar os parâmetros **efetivamente utilizados** para gerar
+`Resumo Estoque.pdf` (folha 74, data-base 30/09/2026, filial 01),
+especialmente:
+
+- `Saldo em Poder 3º ?` (Sim/Não/De Terceiros/Em Terceiros);
+- `Saldo em Processo ?`; armazém inicial/final; produto
+  inicial/final; data de fechamento; `Lista Custo ?`;
+- demais parâmetros ou filtros **externos ao SX1** que alterem o
+  escopo de tipos (o grupo `MTR460` não possui pergunta de tipo).
+
+Aceitar print da parametrização, registro de execução (`mv_par`,
+log de schedule) ou evidência equivalente, desde que haja **vínculo
+demonstrável com a emissão**.
+
+**E2.2 — Relatório completo correspondente à folha 74**
+
+Solicitar o arquivo **integral** da emissão de `Resumo Estoque.pdf`
+(todas as folhas, com linhas de produto, quantidades, custos,
+armazéns e totalizações). Objetivo: identificar a população excluída
+e reconciliar os resíduos monetários (R$ 76,43 em estoque e
+R$ 1.942,62 em processo — doc 80 §35.D/§36). A evidência original
+deve permanecer **sob custódia autorizada, fora do GitHub**.
+
+**E2.3 — Produtor efetivamente implantado**
+
+Solicitar a identificação da rotina MATR460 efetiva: variante ou
+customização, fonte disponível e **versão compilada no RPO** usada
+na emissão. A confirmação deve contemplar a semântica da pergunta
+`Saldo em Poder 3º ?` e o mecanismo de seleção de tipos de produto.
+Não confundir fonte existente no acervo com código implantado
+(`CODE_DEPLOYED` exige comprovação de versão/compilação).
+
+**Critérios de aceite por evidência**
+
+| Evidência | `SOURCE_AVAILABLE` | `CODE_DEPLOYED` | `EXECUTION_OBSERVED` | `FUNCTIONAL_ACCEPTANCE` |
+|---|---|---|---|---|
+| E2.1 parâmetros | n/a | n/a | registro/print vinculado à emissão | Controladoria confirma parâmetros usados |
+| E2.2 relatório integral | arquivo completo recebido | n/a | folhas/totais conferem com folha 74 | resíduos reconciliados ou explicados |
+| E2.3 produtor | fonte identificada | versão RPO comprovada | rotina executada observada | semântica poder3 + escopo de tipos confirmada |
+
+Uma evidência parcial **não encerra** E2. Encerramento de G4 exige
+bindings físicos demonstrados; G5 exige paridade centavo da
+população; G6 exige homologação funcional da Controladoria.
 
 #### E5 — Rotina que grava SB9 (fechamento)
 

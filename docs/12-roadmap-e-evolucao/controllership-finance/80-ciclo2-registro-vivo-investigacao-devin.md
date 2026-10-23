@@ -2124,3 +2124,28 @@ dev −152.921 u) → `21/10 19:13` regravação integral SB9@0930.
   de produto da folha 74 (PDF completo da emissão resumida);
   (3) fonte/RPO do MATR460 implantado (semântica poder3 + escopo
   de tipos).
+
+## §36 — ERRATA (CF-C2-P7-E2-HANDOFF-001) — CLASSIFICAÇÃO DE BR-R03-007 — 2026-10-23
+
+Correção de classificação sobre §35.D — **nenhum fato foi alterado**;
+apenas a fronteira entre fato e hipótese:
+
+- `PROVEN` (fatos observados, doc 85 BR-R03-007): a emissão resumida
+  apresenta somente MP/PA/PI; as diferenças entre as duas emissões
+  concentram-se exclusivamente em MP; existe o parâmetro SX1 `MTR460`
+  pergunta 02 `Saldo em Poder 3º ?` (Sim/Não/De Terceiros/Em
+  Terceiros).
+- `PENDING` (não demonstrado): qual opção foi selecionada em cada
+  emissão; se essa opção explica a exclusão observada; a população
+  exata de produtos/valores; a semântica interna do MATR460
+  compilado.
+- O modelo `QTNP@emissão` (estoque 587.621,85 → Δ **76,43**;
+  processo 79.194,35 → Δ **+1.942,62**) permanece como **hipótese
+  empiricamente sustentada** — melhor ajuste entre as candidatas,
+  mas **não é regra oficial** e não deve ser lido como prova de que
+  o parâmetro poder3 foi o mecanismo utilizado. O texto de §35.D que
+  sugeria "o resumo aplica regra de exclusão poder3" fica supersedido
+  por esta classificação.
+- Consequência: R03 G4/G5 permanecem `PENDING`; encerramento
+  condicionado ao pacote E2.1/E2.2/E2.3 do doc 82 §2.1 (parâmetros
+  efetivos, linhas de produto da folha 74 e produtor implantado).

@@ -312,26 +312,50 @@ Paridade parcial: doc 84 §3.
   (`MV_CQ='98'`, `MV_ALMTERC`) em outras parametrizações — depende de
   parâmetros de emissão (E2).
 
-### BR-R03-007 — Emissão resumida = escopo MP/PA/PI + exclusão poder3 — `PROVEN` (regra) / `PENDING` (população exata)
+### BR-R03-007 — Emissão resumida P7: escopo MP/PA/PI e divergência MP — fatos `PROVEN` / causa `PENDING`
+
+**Fatos observados — `PROVEN`:**
 
 - `Resumo Estoque.pdf` (folha 74) é emissão **distinta** do completo
-  (folha 101), mesma data-base 30/09/2026 e mesmo estado de custo —
-  prova: PA/PI idênticos bit a bit nas duas (doc 80 §35.A).
-- Divergência MP: EM ESTOQUE −587.698,28; EM PROCESSO −77.251,73.
-- Melhor modelo: excluir produtos com **`QTNP@emissão>0`**
-  (`B2_QTNP` revertido por `SD1`/`SD2` com `F4_PODER3='R'/'D'`
-  inseridos pós-01/10 16:16:27) → estoque **587.621,85** (Δ **76,43**;
-  99,987 %) e processo **79.194,35** (Δ **+1.942,62**; tipo ''
-  64.388,66 + RE9 12.410,84 + RE2 2.394,85).
-- Hipóteses descartadas com evidência: filtro de armazém; `as_of`
-  temporal; faixa/prefixo de produto; sem-movimento; poder3 por
-  quantidade/posição SB6; emissão intermediária (doc 80 §35.C).
-- Residual: população poder3 exata (QTNP × SB6 × workfile
-  `aDadosCF9`), instante do conjunto e mecanismo do escopo de tipos
-  (`MTR460` não tem parâmetro de tipo — doc 80 §35.B). Owner: TI/ERP
-  — requer `matr460.prx`/RPO ou linhas de produto da folha 74.
-- **Não generalizar:** a regra de exclusão permanece demonstrada só
-  para a emissão resumida de 09/2026 filial 01.
+  (folha 101), mesmo layout "REGISTRO DE INVENTÁRIO" e mesma
+  data-base 30/09/2026 — prova: PA/PI idênticos bit a bit nas duas
+  (EM ESTOQUE 190.511,24/24.528,60; EM PROCESSO PI 254,44) → mesmo
+  estado de custo (doc 80 §35.A).
+- A emissão resumida apresenta **somente** as classificações
+  MP/PA/PI; a divergência monetária entre as emissões concentra-se
+  **exclusivamente em MP**: EM ESTOQUE −587.698,28 (3.071.684,80 →
+  2.483.986,52); EM PROCESSO −77.251,73 (354.938,50 → 277.686,77).
+- Existe no SX1 o grupo `MTR460`, pergunta 02 **`Saldo em Poder
+  3º ?`** com opções Sim/Não/De Terceiros/Em Terceiros (BR-R03-008) —
+  mecanismo candidato oficial para exclusão de material de terceiros.
+
+**Hipótese empiricamente sustentada — `PENDING` (não é regra oficial):**
+
+- Modelo `QTNP@emissão`: excluir do universo ex-99 os produtos com
+  `B2_QTNP>0` no estado de emissão (QTNP corrente revertido por
+  `SD1`/`SD2` com `F4_PODER3='R'/'D'` inseridos pós-01/10 16:16:27)
+  → estoque **587.621,85** vs alvo 587.698,28 — **residual 76,43**
+  (99,987 %) — e processo **79.194,35** vs alvo 77.251,73 —
+  **residual +1.942,62** (tipo '' 64.388,66 + RE9 12.410,84 + RE2
+  2.394,85). Melhor ajuste entre ~10 hipóteses testadas; **não
+  classificável como regra oficial** — é aproximação empírica.
+- Hipóteses descartadas com evidência (doc 80 §35.C): filtro de
+  armazém; `as_of` temporal; faixa/prefixo de produto; sem-movimento;
+  poder3 por quantidade/posição SB6; emissão intermediária.
+
+**Não demonstrado — `PENDING` (pacote E2, doc 82 §2.1):**
+
+- Qual opção de `Saldo em Poder 3º ?` foi efetivamente selecionada em
+  cada emissão e se ela explica a exclusão observada.
+- População exata de produtos/valores excluídos (QTNP × SB6 ×
+  workfile `aDadosCF9` × outra medida) e o instante do conjunto —
+  direções opostas dos residuais (estoque +76,43 / processo
+  −1.942,62) indicam diferença de **medida**, não só de `as_of`.
+- Mecanismo do escopo de tipos MP/PA/PI: `MTR460` **não** possui
+  parâmetro de tipo — exige seleção externa ao SX1 ou variante
+  custom; semântica interna do MATR460 compilado indisponível.
+- **Não generalizar:** nada demonstrado fora da emissão resumida de
+  09/2026 filial 01.
 
 ### BR-R03-008 — Mapa de parâmetros MTR460 — `PROVEN` (catálogo SX1)
 
@@ -612,7 +636,7 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R01-009 log inconsistências | PDF impresso | — | total = ΣXLSB−ΣPDF | flag "reconciled_excl_log" | cf-api | T-R01-08 | doc 84 §1.4 |
 | BR-R02-001..007 receber | artefato+SE5/SE1 | `E5_*`,`E1_VALOR`, provisão 'P' | população 649+8, VO dual | `receivables-settlements` | api-delpi (**após fonte DLP06R01** — E1) | T-R02-01..06 | doc 84 §2 |
 | BR-R03-001..006 P7 | artefatos + saldo ex-99 (`PROVEN`) | `B9_*`, `D3_*`(loc99/RE3), MATR989, tipos, armazém | EM ESTOQUE ex-`MV_LOCPROC` + EM PROCESSO (MATR989) por `as_of` | `inventory-p7` (binding de totalização provado; parâmetros por emissão — E2) | api-delpi | T-R03-01..04 | doc 84 §3, doc 80 §33.D |
-| BR-R03-007 resumo P7 | `QTNP@emissão` (`B2_QTNP`±`F4_PODER3` pós-emissão) | `B2_QTNP`,`D1_QUANT`,`D2_QUANT`,`F4_PODER3` | emissão resumida = escopo MP/PA/PI + exclusão produtos `QTNP>0` (Δ76,43/+1.942,62 — população exata `PENDING`) | `inventory-p7` (parâmetro poder3 — E2) | api-delpi | T-R03-05 | doc 80 §35 |
+| BR-R03-007 resumo P7 | fatos: folha 74 = escopo MP/PA/PI, divergência só MP (`PROVEN`); hipótese `QTNP@emissão` (`PENDING`) | `B2_QTNP`,`D1_QUANT`,`D2_QUANT`,`F4_PODER3` | hipótese: exclusão produtos `QTNP>0` (Δ76,43/+1.942,62 — não é regra oficial; causa `PENDING` E2) | `inventory-p7` (parâmetro poder3 — E2) | api-delpi | T-R03-05 | doc 80 §35/§35.E |
 | BR-R03-008 parâmetros MTR460 | SX1010 grupo `MTR460` | `X1_*` | catálogo 25 perguntas; sem parâmetro de tipo → escopo resumo fora do SX1 | — (referência de parâmetros) | api-delpi | T-R03-06 | doc 80 §35.B/E |
 | BR-R05-001/002 MATR320 | artefato+SB9 | `B9_*` por tipo | Saldo Atual por tipo | `stock-movements-summary` | api-delpi | T-R05-01 | doc 84 §4 |
 | BR-R05-003/004 SD1/SD2 | `matr320.prx` + SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D*_CUSTO*`,`F4_PODER3`,`F4_ESTOQUE`,`D*_TIPO` | janela digitação/emissão + split poder3/TIPO='D' | `stock-movements-summary` (api-delpi TOTVS provider) | api-delpi | T-R05-02/03 | doc 80 §31.B-C |
@@ -659,7 +683,7 @@ copia para BFF/frontend.
 | T-R03-02 | BR-R03-003 | positive · reproduzido | EM PROCESSO = MATR989 (355.240,51) |
 | T-R03-03 | BR-R03-004/006 | positive · reproduzido | EM ESTOQUE = SA_emissão − estoque loc99_emissão (3.591.191,36 exato) |
 | T-R03-04 | BR-R03-006 | negative · candidato | armazéns especiais além de loc99 (`MV_CQ`, `MV_ALMTERC`) só entram na regra se parâmetros provarem exclusão |
-| T-R03-05 | BR-R03-007 | positive · parcial | resumo P7 = completo − produtos `QTNP@emissão>0`: estoque 587.621,85 (Δ76,43) / processo 79.194,35 (Δ+1.942,62) — reproduzido **sem** paridade centavo |
+| T-R03-05 | BR-R03-007 | positive · parcial | hipótese `QTNP@emissão>0`: estoque 587.621,85 (Δ76,43) / processo 79.194,35 (Δ+1.942,62) — reproduzido **sem** paridade centavo; classificação `PENDING`, não regra |
 | T-R03-06 | BR-R03-008 | negative · candidato | escopo de tipos da emissão resumida exige mecanismo fora do grupo `MTR460` (sem parâmetro de tipo no SX1) |
 | T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 8/10 tipos Δ=0,000; PI −0,001; MP +8.631,731 decomposto ao centavo por produto — revalorização CM |
 | T-R05-02 | BR-R05-003 | positive · reproduzido | SD1 usa `D1_DTDIGIT` (não emissão) — doc digitação-Set/emissão-Out entra na competência |
@@ -681,7 +705,7 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (regra poder3 — população exata `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
 | `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R06, R07, R08, R09 (layout), BR-R12-001/002, R15 (execução) |
 | `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07/R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
