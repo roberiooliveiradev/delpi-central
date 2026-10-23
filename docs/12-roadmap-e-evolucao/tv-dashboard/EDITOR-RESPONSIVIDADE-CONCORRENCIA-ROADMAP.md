@@ -424,3 +424,18 @@ Correção dos resíduos do ledger de projeção pendente (027, commit `8eb60880
 **Resíduos.** (1) 6 falhas vitest pré-existentes + erros TS baseline não relacionados (inventariados, fora do escopo). (2) Falhas backend `tv_data_routes` catalog/m-query baseline são drift upstream de OpenAPI regeneration — API não redeployada neste escopo.
 
 **Decisão.** Resíduos de 027 fechados na causa raiz: referência autoritativa completa em todos os caminhos de aceite canônico + ciclo de vida transacional do pending save + guarda de dispatch stale na lane. `PHASE_2_STATUS = COMPLETE` para o escopo 023–028; `FINAL_VERDICT = ACCEPT`.
+
+
+### Review de fechamento — Fase 2 (020–028) · 2026-10-23
+
+**Escopo:** fechamento documental após revisão arquitetural das tarefas 020–028. Não altera contratos nem código funcional. O HEAD foi reconsultado antes desta atualização.
+
+**Decisão de review:** `ACCEPT_WITH_RESIDUAL`. O ciclo de responsividade, concorrência, projeção otimista, recuperação e integridade de autosave foi concluído funcionalmente no ambiente local, com o P0 `026-F1` corrigido. `PHASE_2_STATUS = COMPLETE_WITH_RESIDUAL` para controle de acompanhamento; isto não substitui os resultados técnicos individuais registrados acima.
+
+**Evidência de validação reportada pelo executor da 028:** Playwright real `32/32 PASS`, testes focados `44/44 PASS`, build Vite `PASS`, suíte MFE `1482/1488` (seis falhas classificadas como preexistentes por comparação com baseline), read-back e convergência dos dois usuários, sem PATCH redundante no cenário 3C. Esses testes não foram reexecutados pelo reviewer nesta atualização documental.
+
+**Deploy reportado pelo executor:** commit `a33bd15ee1` publicado em `main`; execução de `up-prod-sequential.sh --build tv-dashboard` no host `srv-api`; imagem/container do MFE reconstruídos; smoke HTTP do gateway, `remoteEntry.js` e API; bundle `App-BgbXoCZb.js` declarado idêntico ao build local validado. **`DEPLOY_STATUS = REPORTED_PASS`**, não `INDEPENDENT_RUNTIME_VERIFICATION = PASS`: o reviewer conferiu o código versionado no GitHub, mas não acessou diretamente o host de produção nem revalidou os hashes/healthchecks do runtime. Não houve novo deploy nesta atualização.
+
+**Resíduos conhecidos / acompanhamento separado:** (1) seis falhas históricas do Vitest e erros TS de baseline; (2) drift do catálogo OpenAPI `tv_data_routes`, não tratado nem redeployado com a API; (3) observabilidade pós-deploy de falhas de persistência, conflitos 409, reload redundante, convergência e latência visual; (4) invariante de baseline autoritativo para novos caminhos de mutation-backed, sem presumir que o fallback elimina toda possibilidade futura de baseline ausente. Não reabrir a mutation boundary sem reprodução material.
+
+**Ownership preservado:** TV Dashboard API autoriza e persiste; MFE projeta/coordena a persistência; presentation package renderiza; public-hub hospeda. `EXISTING_EQUIVALENT = YES`; `REUSE_DECISION = EXTEND` conforme implementação 027/028. Próximas frentes de otimização ou correção devem reancorar no HEAD e partir de novo diagnóstico/owner, não de workaround no viewer.
