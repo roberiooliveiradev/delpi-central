@@ -317,6 +317,10 @@ describe("shared field registry (F3.1 create/edit parity)", () => {
         "segment_code",
         "administrator_code",
         "linked_employee_code",
+        // X4.FIELDS.E6 — reteste TST01 homologou regime SIMPA e par
+        // cliente vinculado (loja + companion code injetado no backend)
+        "simp_regime_code",
+        "linked_customer_store",
       ].sort(),
     );
     const editable = SUPPLIER_FIELD_REGISTRY.filter((f) => f.put === "editable");
@@ -709,6 +713,14 @@ describe('F5-UX-R3 — metadados de catálogo TOTVS', () => {
     financial_nature_code: 'financial-natures',
     accounting_account: 'accounting-accounts',
     city: 'municipalities',
+    // X4.FIELDS.E6 — referências cadastrais Protheus
+    carrier_code: 'carriers',
+    segment_code: 'segments',
+    administrator_code: 'administrators',
+    linked_employee_code: 'employees',
+    purchase_price_table_code: 'price-tables',
+    linked_customer_code: 'customers',
+    linked_customer_store: 'customers',
   };
 
   it('every cataloged field references a known BFF catalog kind', () => {
@@ -865,12 +877,9 @@ describe('F5-UX-R4 — consulta de CEP e conciliação CC2', () => {
 
 describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
   const E3_KEYS = Object.keys(EMPTY_E3_DRAFT) as SupplierExtendedFieldKey[];
-  /** E5: campos que permanecem sem evidência de PUT upstream. */
-  const E5_PENDING = [
-    'simp_regime_code',
-    'linked_customer_code',
-    'linked_customer_store',
-  ] as const;
+  /** E6: único campo sem PUT — upstream ignora A2_CLIENTE em update
+   *  (companion imutável; loja via par composto é editável). */
+  const E6_PENDING = ['linked_customer_code'] as const;
 
   it('registra os 29 campos criáveis — evidência por estado de PUT', () => {
     expect(E3_KEYS).toHaveLength(29);
@@ -879,18 +888,18 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
       expect(spec, key).toBeDefined();
       expect(spec!.post).toBe(true);
       expect(spec!.evidence, key).toBe(
-        (E5_PENDING as readonly string[]).includes(key)
+        (E6_PENDING as readonly string[]).includes(key)
           ? 'post-matrix'
           : 'put-homologated',
       );
     }
   });
 
-  it('E5: os 26 campos PUT-homologados viram editáveis na ficha E14', () => {
+  it('E6: os 28 campos PUT-homologados viram editáveis na ficha E14', () => {
     const proven = E3_KEYS.filter(
-      (key) => !(E5_PENDING as readonly string[]).includes(key),
+      (key) => !(E6_PENDING as readonly string[]).includes(key),
     );
-    expect(proven).toHaveLength(26);
+    expect(proven).toHaveLength(28);
     for (const key of proven) {
       const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
       expect(spec.put, key).toBe('editable');
@@ -898,12 +907,26 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
     }
   });
 
-  it('E5: os 3 campos sem evidência de PUT permanecem readonly', () => {
-    for (const key of E5_PENDING) {
+  it('E6: o código do cliente vinculado permanece readonly (imutável upstream)', () => {
+    for (const key of E6_PENDING) {
       const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
       expect(spec.put, key).toBe('readonly');
       expect(SUPPLIER_PUT_EDITABLE_KEYS).not.toContain(key);
     }
+  });
+
+  it('E6: a loja do cliente vinculado forma par composto com o código', () => {
+    const store = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === 'linked_customer_store',
+    )!;
+    expect(store.catalog).toBe('customers');
+    expect(store.catalogCodeParam).toBe('linked_customer_code');
+    expect(store.catalogValueField).toBe('store');
+    const code = SUPPLIER_FIELD_REGISTRY.find(
+      (f) => f.key === 'linked_customer_code',
+    )!;
+    expect(code.catalog).toBe('customers');
+    expect(code.catalogPairField).toBe('linked_customer_store');
   });
 
   it('distribui os campos pelas seções canônicas — nunca um bloco único', () => {
@@ -955,7 +978,7 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
     expect(body.fax).toBeUndefined();
   });
 
-  it('draft de edição carrega campos E5-homologados e ignora os 3 pendentes', () => {
+  it('draft de edição carrega campos homologados e ignora o código imutável', () => {
     const detail = {
       sections: {
         fiscal: { cnae_code: '6201501', simp_regime_code: '1' },
@@ -967,11 +990,14 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
       },
     } as unknown as SupplierDetail;
     const draft = draftFromDetail(detail);
-    // PUT comprovado em E5 → valor carregado no draft de edição.
+    // PUT comprovado → valores carregados no draft de edição.
     expect(draft.cnae_code).toBe('6201501');
     expect(draft.commercial_contact_name).toBe('MARIA');
-    // Sem evidência de PUT → fora do draft e do PUT parcial.
-    for (const key of E5_PENDING) {
+    // E6: simp_regime_code e linked_customer_store homologados.
+    expect(draft.simp_regime_code).toBe('1');
+    expect(draft.linked_customer_store).toBe('01');
+    // Código do cliente: imutável upstream → fora do draft e do PUT.
+    for (const key of E6_PENDING) {
       expect(
         (draft as Record<string, string>)[key],
         key,

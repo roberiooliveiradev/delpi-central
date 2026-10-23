@@ -30,10 +30,12 @@ _PUT_EXCLUDED = frozenset({"tax_id", "supplier_store"})
 
 # PUT allowlist — explicit, evidence-based. The F3.3 cadastral set plus the
 # 26 E3 fields that proved PUT persistence in the E5 controlled assay
-# (DELPI_TST01 read-after-write, doc X4-FIELDS-E5-*). NOT derived from the
-# POST allowlist: simp_regime_code, linked_customer_code and
-# linked_customer_store remain excluded — the upstream PUT did not prove a
-# controlled change for them (see E5 field matrix).
+# (DELPI_TST01 read-after-write, doc X4-FIELDS-E5-*), plus the E6 retest
+# results: simp_regime_code and linked_customer_store are
+# PUT_PERSISTENCE_PROVEN; linked_customer_code enters ONLY as the
+# mandatory companion of the composite pair — upstream ignores code
+# changes on PUT (6d verdict), so the use case pins it to the current
+# value. NOT derived from the POST allowlist.
 PUT_EDITABLE_FIELDS = frozenset(
     {
         "person_type",
@@ -85,6 +87,17 @@ PUT_EDITABLE_FIELDS = frozenset(
         "segment_code",
         "administrator_code",
         "linked_employee_code",
+        # --- X4.FIELDS.E6 — retestes 6a/6c/6d em DELPI_TST01 -----------------
+        # simp_regime_code: PUT_PERSISTENCE_PROVEN (1→2, REST+SQL).
+        # linked_customer_store: PUT_PERSISTENCE_PROVEN — mas somente quando o
+        #   par (código+loja) viaja junto; loja sozinha é ignorada upstream.
+        # linked_customer_code: NÃO é alterável via PUT (upstream ignora o
+        #   valor novo no par — veredito PUT_IGNORED em 6d). Entra na allowlist
+        #   apenas como COMPANION obrigatório do par composto; o use case
+        #   garante que o código enviado == código atual (rejeita divergência).
+        "simp_regime_code",
+        "linked_customer_code",
+        "linked_customer_store",
     }
 )
 
@@ -182,6 +195,17 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
                 recoverable=False,
             )
         out[field] = normalize_supplier_field_value(field, value)
+
+    # Composite pair (E6): upstream requires code+store together and the
+    # code alone is rejected (400) — reject it here with a clear error.
+    if "linked_customer_code" in out and "linked_customer_store" not in out:
+        raise ProtheusRestError(
+            "linked_customer_code não é alterável isoladamente — "
+            "o vínculo exige o par código+loja.",
+            code="PROTHEUS_SUPPLIER_LINKED_PAIR_REQUIRED",
+            status_code=422,
+            recoverable=False,
+        )
 
     # Conditional (SX3 WHEN): cnae_code only applies to person_type J/X —
     # enforceable here only when both keys arrive in the same partial PUT;

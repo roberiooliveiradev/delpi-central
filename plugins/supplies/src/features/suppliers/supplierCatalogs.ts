@@ -12,6 +12,8 @@ export type SupplierCatalogOption = {
   code: string;
   label: string;
   disabled: boolean;
+  /** Chave composta — presente apenas em catálogos de par (customers). */
+  store?: string;
 };
 
 type CatalogEnvelope = {
@@ -44,11 +46,12 @@ export function isPreloadCatalog(kind: SupplierCatalogKind): boolean {
 
 function catalogUrl(
   kind: SupplierCatalogKind,
-  opts: { query?: string; state?: string; limit?: number },
+  opts: { query?: string; state?: string; code?: string; limit?: number },
 ): string {
   const params = new URLSearchParams();
   if (opts.query?.trim()) params.set("query", opts.query.trim());
   if (opts.state?.trim()) params.set("state", opts.state.trim().toUpperCase());
+  if (opts.code?.trim()) params.set("code", opts.code.trim());
   params.set("limit", String(opts.limit ?? PRELOAD_CATALOG_LIMIT));
   return suppliesApiUrl(
     `/suppliers/catalogs/${kind}?${params.toString()}`,
@@ -95,7 +98,7 @@ function rememberLabels(
 
 export function fetchCatalogItems(
   kind: SupplierCatalogKind,
-  opts: { query?: string; state?: string; limit?: number },
+  opts: { query?: string; state?: string; code?: string; limit?: number },
   signal?: AbortSignal,
 ): Promise<CatalogEnvelope> {
   return httpGet<CatalogEnvelope>(catalogUrl(kind, opts), { signal }).then(
@@ -186,7 +189,7 @@ export function useCatalogOptions(
  */
 export function useCatalogSearch(
   kind: SupplierCatalogKind,
-  opts: { state?: string; enabled?: boolean } = {},
+  opts: { state?: string; code?: string; enabled?: boolean } = {},
 ): {
   options: SupplierCatalogOption[];
   hasMore: boolean;
@@ -196,7 +199,8 @@ export function useCatalogSearch(
 } {
   const enabled = opts.enabled !== false;
   const stateKey = (opts.state ?? "").trim().toUpperCase();
-  const key = preloadKey(kind, stateKey);
+  const codeKey = (opts.code ?? "").trim();
+  const key = `${preloadKey(kind, stateKey)}|${codeKey}`;
   const [result, setResult] = useState<{
     key: string;
     options: SupplierCatalogOption[];
@@ -221,6 +225,7 @@ export function useCatalogSearch(
       fetchCatalogItems(kind, {
         query,
         state: stateKey,
+        code: codeKey,
         limit: REMOTE_CATALOG_LIMIT,
       })
         .then((env) => {
@@ -244,7 +249,7 @@ export function useCatalogSearch(
           });
         });
     },
-    [kind, stateKey, enabled, key],
+    [kind, stateKey, codeKey, enabled, key],
   );
 
   const search = useCallback(

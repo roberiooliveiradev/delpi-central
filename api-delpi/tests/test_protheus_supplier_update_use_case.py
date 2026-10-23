@@ -163,3 +163,85 @@ def test_token_invalid_does_not_retry(monkeypatch) -> None:
         )
     assert gateway.update_supplier.call_count == 1
     token.invalidate.assert_called_once()
+
+
+# --- X4.FIELDS.E6 — par composto cliente vinculado ------------------------
+
+
+def _enabled_uc(monkeypatch, gateway) -> UpdateProtheusRestSupplierUseCase:
+    from app.application.use_cases.integrations import (
+        update_protheus_rest_supplier_use_case as uc_mod,
+    )
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
+    identity = MagicMock()
+    identity.get_identity_for_user.return_value = _mapped()
+    return _uc(identity_gateway=identity, gateway=gateway)
+
+
+def test_e6_store_only_injects_current_code(monkeypatch) -> None:
+    gateway = MagicMock()
+    gateway.get_supplier.return_value = {
+        "fornecedor": {"linked_customer_code": "000001"}
+    }
+    gateway.update_supplier.return_value = {"update_acknowledged": True}
+    _enabled_uc(monkeypatch, gateway).execute(
+        actor_user_id=ACTOR,
+        supplier_id="00388201",
+        fornecedor={"linked_customer_store": "06"},
+    )
+    body = gateway.update_supplier.call_args.kwargs["body"]
+    assert body["fornecedor"]["linked_customer_code"] == "000001"
+    assert body["fornecedor"]["linked_customer_store"] == "06"
+
+
+def test_e6_divergent_linked_code_rejected(monkeypatch) -> None:
+    gateway = MagicMock()
+    gateway.get_supplier.return_value = {
+        "fornecedor": {"linked_customer_code": "000001"}
+    }
+    with pytest.raises(ProtheusRestError) as exc:
+        _enabled_uc(monkeypatch, gateway).execute(
+            actor_user_id=ACTOR,
+            supplier_id="00388201",
+            fornecedor={
+                "linked_customer_code": "000002",
+                "linked_customer_store": "01",
+            },
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_LINKED_CUSTOMER_IMMUTABLE"
+    gateway.update_supplier.assert_not_called()
+
+
+def test_e6_store_rejected_without_linked_customer(monkeypatch) -> None:
+    gateway = MagicMock()
+    gateway.get_supplier.return_value = {"fornecedor": {}}
+    with pytest.raises(ProtheusRestError) as exc:
+        _enabled_uc(monkeypatch, gateway).execute(
+            actor_user_id=ACTOR,
+            supplier_id="00387701",
+            fornecedor={"linked_customer_store": "06"},
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_LINKED_CUSTOMER_REQUIRED"
+    gateway.update_supplier.assert_not_called()
+
+
+def test_e6_pair_with_same_code_passes(monkeypatch) -> None:
+    gateway = MagicMock()
+    gateway.get_supplier.return_value = {
+        "fornecedor": {"linked_customer_code": "000001"}
+    }
+    gateway.update_supplier.return_value = {"update_acknowledged": True}
+    _enabled_uc(monkeypatch, gateway).execute(
+        actor_user_id=ACTOR,
+        supplier_id="00388201",
+        fornecedor={
+            "linked_customer_code": "000001",
+            "linked_customer_store": "03",
+        },
+    )
+    body = gateway.update_supplier.call_args.kwargs["body"]
+    assert body["fornecedor"]["linked_customer_code"] == "000001"
+    assert body["fornecedor"]["linked_customer_store"] == "03"

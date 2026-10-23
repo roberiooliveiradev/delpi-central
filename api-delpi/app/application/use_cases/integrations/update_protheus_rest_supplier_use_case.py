@@ -93,12 +93,13 @@ class UpdateProtheusRestSupplierUseCase:
             )
 
         codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
-        body = build_upstream_update_body(codusr=codusr, fields=fields)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)
         environment_key = environment_key_from_config(
             config, settings.INTRANET_PARAMS_AMBIENTE or ""
         )
+        # Provenance validation precedes any token fetch/network write path —
+        # unverifiable claims are rejected before contacting upstream.
         provenance = build_supplier_field_provenance(
             change_context,
             sent_fields=fields,
@@ -109,6 +110,13 @@ class UpdateProtheusRestSupplierUseCase:
             actor_subject=str(actor_user_id),
         )
         token = self._token_service.get_valid_token(config)
+        fields = self._resolve_linked_customer_pair(
+            config=config,
+            supplier_id=normalized_id,
+            fields=dict(fields),
+            access_token=token,
+        )
+        body = build_upstream_update_body(codusr=codusr, fields=fields)
 
         # Tracking persists CREATED + SENDING before any upstream byte.
         operation_id = self._write_tracker.begin(
@@ -169,6 +177,56 @@ class UpdateProtheusRestSupplierUseCase:
             **upstream,
             **confirmation,
         }
+
+    def _resolve_linked_customer_pair(
+        self,
+        *,
+        config,
+        supplier_id: str,
+        fields: dict[str, Any],
+        access_token: str,
+    ) -> dict[str, Any]:
+        """X4.FIELDS.E6 — composite linked-customer pair.
+
+        Upstream evidence (6b/6c/6d em DELPI_TST01):
+        - ``linked_customer_store`` sozinha é ignorada — a loja só persiste
+          quando o par viaja junto;
+        - ``linked_customer_code`` sozinho é rejeitado (400) e, no par, o
+          código enviado é silenciosamente ignorado (nunca altera A2_CLIENTE).
+
+        Portanto: loja enviada sem código → injeta o código ATUAL do
+        cadastro (lido via REST); código divergente do atual → rejeição
+        explícita em vez de sucesso fictício.
+        """
+        if "linked_customer_store" not in fields:
+            return fields
+        current = extract_supplier_fields(
+            self._gateway.get_supplier(
+                config,
+                supplier_id=supplier_id,
+                access_token=access_token,
+            )
+        )
+        current_code = str(current.get("linked_customer_code") or "").strip()
+        sent_code = str(fields.get("linked_customer_code") or "").strip()
+        if sent_code and sent_code != current_code:
+            raise ProtheusRestError(
+                "O cliente vinculado não é alterável via PUT — somente a "
+                "loja do cliente atualmente vinculado pode ser editada.",
+                code="PROTHEUS_SUPPLIER_LINKED_CUSTOMER_IMMUTABLE",
+                status_code=422,
+                recoverable=False,
+            )
+        if not current_code:
+            raise ProtheusRestError(
+                "Fornecedor sem cliente vinculado — a loja só pode ser "
+                "alterada sobre um vínculo existente.",
+                code="PROTHEUS_SUPPLIER_LINKED_CUSTOMER_REQUIRED",
+                status_code=422,
+                recoverable=False,
+            )
+        fields["linked_customer_code"] = current_code
+        return fields
 
     def _confirm_persistence(
         self,

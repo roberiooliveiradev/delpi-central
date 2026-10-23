@@ -124,6 +124,14 @@ PUT_SUPPLIER_FIELDS = {
     "segment_code",
     "administrator_code",
     "linked_employee_code",
+    # X4.FIELDS.E6 — retestes DELPI_TST01
+    # simp_regime_code: PUT_PERSISTENCE_PROVEN.
+    # linked_customer_store: PUT_PERSISTENCE_PROVEN no par composto.
+    # linked_customer_code: entra como companion — upstream ignora mudança
+    # de código via PUT; a api-delpi fixa o valor atual (rejeita divergente).
+    "simp_regime_code",
+    "linked_customer_code",
+    "linked_customer_store",
 }
 
 # Identity/document fields — rejected explicitly, never silently dropped.

@@ -184,6 +184,25 @@ BATCHES: dict[str, tuple[str, dict[str, str]]] = {
     # before != after == sent.
     "5d": ("00388001", {"risk_code": "003"}),
     "5e": ("00387901", {"simp_regime_code": "0"}),
+    # --- X4.FIELDS.E6 — reteste dos 3 pendentes ------------------------------
+    # 6a: SX3 A2_REGESIM domínio CBOX = {1=Sim;2=Não} — valor "1" atual em
+    # 003879; envia "2" (válido e ≠ vigente).
+    "6a": ("00387901", {"simp_regime_code": "2"}),
+    # 6b: código sozinho — SA1 TST01 tem 257 clientes (E5 supôs apenas
+    # 000001; inventário corrigido). 000002/01 (EBERLE) é linha válida.
+    "6b": ("00388201", {"linked_customer_code": "000002"}),
+    # 6c: par composto atômico — SA1 000001 loja 06 existe (WEG AMAZONIA);
+    # se 6b persistir, estado vira 000002/01 e este PUT muda ambos.
+    "6c": (
+        "00388201",
+        {"linked_customer_code": "000001", "linked_customer_store": "06"},
+    ),
+    # 6d: par com código ALTERADO — prova o code depois que 6c mostrou que
+    # upstream exige o par atômico (EBERLE 000002/01 válida).
+    "6d": (
+        "00388201",
+        {"linked_customer_code": "000002", "linked_customer_store": "01"},
+    ),
 }
 
 # Reference lookups — same tables as the E2 assay.
@@ -350,7 +369,7 @@ def run_batch(
             fields[field] = resolved
         else:
             skipped[field] = "no valid lookup value in TST01"
-    if "linked_customer_code" in template:
+    if template.get("linked_customer_code") == _LOOKUP:
         c, s = _linked_customer_distinct(
             before_sql.get(SA2_COLUMN["linked_customer_code"], ""),
             before_sql.get(SA2_COLUMN["linked_customer_store"], ""),

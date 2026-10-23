@@ -153,14 +153,14 @@ E5_PUT_HOMOLOGATED_FIELDS = (
     "linked_employee_code",
 )
 
-# E5 assay outcomes that stay OUT of the PUT allowlist:
-# - simp_regime_code: upstream accepts 1/2 but no controlled change could be
-#   proven (field drifts between reads); "0" is rejected upstream.
-# - linked_customer_code: SA1 TST01 only has customer 000001 — no distinct
-#   value exists to prove an update; the composite pair PUT was rejected.
-# - linked_customer_store: PUT sent a valid SA1 store and A2_LOJCLI stayed
-#   unchanged — upstream ignores it on update.
-E5_NOT_HOMOLOGATED_FIELDS = (
+# E6 retest outcomes (DELPI_TST01, lotes 6a–6d):
+# - simp_regime_code: PUT_PERSISTENCE_PROVEN (1→2, REST+SQL read-back).
+# - linked_customer_store: PUT_PERSISTENCE_PROVEN — somente no par composto;
+#   loja sozinha é ignorada upstream, então o use case injeta o código atual.
+# - linked_customer_code: upstream NUNCA altera A2_CLIENTE via PUT (ignored
+#   no par; rejeitado sozinho). Na allowlist apenas como companion — o use
+#   case fixa o código no valor vigente e rejeita divergência.
+E6_HOMOLOGATED_FIELDS = (
     "simp_regime_code",
     "linked_customer_code",
     "linked_customer_store",
@@ -180,11 +180,32 @@ def test_e5_put_homologated_field_accepted(field: str) -> None:
     assert fields == {field: value}
 
 
-@pytest.mark.parametrize("field", E5_NOT_HOMOLOGATED_FIELDS)
-def test_e5_not_homologated_field_rejected_in_put(field: str) -> None:
+def test_e6_simp_regime_code_accepted() -> None:
+    fields = normalize_supplier_update_fields({"simp_regime_code": "2"})
+    assert fields == {"simp_regime_code": "2"}
+
+
+def test_e6_linked_customer_pair_accepted_together() -> None:
+    fields = normalize_supplier_update_fields(
+        {"linked_customer_code": "000001", "linked_customer_store": "06"}
+    )
+    assert fields == {
+        "linked_customer_code": "000001",
+        "linked_customer_store": "06",
+    }
+
+
+def test_e6_linked_customer_store_alone_accepted() -> None:
+    # Loja sozinha é aceita na normalização — o use case injeta o código
+    # vigente do cadastro para formar o par exigido pelo upstream.
+    fields = normalize_supplier_update_fields({"linked_customer_store": "06"})
+    assert fields == {"linked_customer_store": "06"}
+
+
+def test_e6_linked_customer_code_alone_rejected() -> None:
     with pytest.raises(ProtheusRestError) as exc:
-        normalize_supplier_update_fields({field: "1"})
-    assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE"
+        normalize_supplier_update_fields({"linked_customer_code": "000002"})
+    assert exc.value.code == "PROTHEUS_SUPPLIER_LINKED_PAIR_REQUIRED"
 
 
 def test_e5_put_normalization_preserves_spec_rules() -> None:
@@ -206,9 +227,9 @@ def test_e5_cnae_conditional_enforced_when_person_type_f() -> None:
     assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_CONDITIONAL"
 
 
-def test_put_allowlist_is_f3_3_plus_e5_proven() -> None:
-    assert len(PUT_EDITABLE_FIELDS) == 22 + 26
-    for field in E5_NOT_HOMOLOGATED_FIELDS:
-        assert field not in PUT_EDITABLE_FIELDS
+def test_put_allowlist_is_f3_3_plus_e5_proven_plus_e6_retest() -> None:
+    assert len(PUT_EDITABLE_FIELDS) == 22 + 26 + 3
+    for field in E6_HOMOLOGATED_FIELDS:
+        assert field in PUT_EDITABLE_FIELDS
     assert "tax_id" not in PUT_EDITABLE_FIELDS
     assert "supplier_store" not in PUT_EDITABLE_FIELDS

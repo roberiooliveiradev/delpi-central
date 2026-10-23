@@ -62,6 +62,11 @@ def list_supplier_catalog_items(
         max_length=2,
         description="Two-letter UF — required for the 'municipalities' catalog.",
     ),
+    code: str | None = Query(
+        default=None,
+        max_length=6,
+        description="Exact code filter — 'customers' only (lists the stores of the given customer).",
+    ),
     limit: int = LIMIT_QUERY(
         "limit_100_500",
         description="Max items per page (1-500).",
@@ -75,6 +80,7 @@ def list_supplier_catalog_items(
             catalog,
             query=query,
             state=state,
+            code=code,
             limit=limit,
         )
         return api_delpi_success(

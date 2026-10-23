@@ -33,6 +33,13 @@ SUPPLIER_CATALOG_KINDS: tuple[str, ...] = (
     "financial-natures",
     "accounting-accounts",
     "municipalities",
+    # X4.FIELDS.E6 — referências dos campos estendidos E3/E5
+    "carriers",
+    "segments",
+    "administrators",
+    "employees",
+    "price-tables",
+    "customers",
 )
 
 # Catálogo exige a UF corrente para filtrar (CC2_EST + CC2_CODMUN).
@@ -111,11 +118,80 @@ _SOURCES: dict[str, dict[str, str]] = {
         "order": "CC2_MUN",
         "state_col": "CC2_EST",
     },
+    # --- X4.FIELDS.E6 — referências cadastrais Protheus ---------------------
+    # Transportadoras (A2_TRANSP → X3_F3 'SA4')
+    "carriers": {
+        "select": "A4_COD AS code, RTRIM(A4_NOME) AS label, 0 AS disabled",
+        "from": "SA4010",
+        "where": "A4_FILIAL = ''",
+        "code_col": "A4_COD",
+        "label_col": "A4_NOME",
+        "order": "A4_NOME",
+    },
+    # Segmentos de atividade (A2_SATIV1 → X3_F3 'T3' = SX5 tabela T3)
+    "segments": {
+        "select": "X5_CHAVE AS code, RTRIM(X5_DESCRI) AS label, 0 AS disabled",
+        "from": "SX5010",
+        "where": "X5_TABELA = 'T3' AND X5_FILIAL = ''",
+        "code_col": "X5_CHAVE",
+        "label_col": "X5_DESCRI",
+        "order": "X5_CHAVE",
+    },
+    # Administradores (A2_CODADM → X3_F3 'SAE')
+    "administrators": {
+        "select": "AE_COD AS code, RTRIM(AE_DESC) AS label, 0 AS disabled",
+        "from": "SAE010",
+        "where": "AE_FILIAL = ''",
+        "code_col": "AE_COD",
+        "label_col": "AE_DESC",
+        "order": "AE_COD",
+    },
+    # Funcionários vinculados (A2_NUMRA → SRA; sem X3_F3 — evidência E2)
+    "employees": {
+        "select": "RA_MAT AS code, RTRIM(RA_NOME) AS label, 0 AS disabled",
+        "from": "SRA010",
+        "where": "RA_FILIAL IN ('', '01')",
+        "code_col": "RA_MAT",
+        "label_col": "RA_NOME",
+        "order": "RA_NOME",
+    },
+    # Tabelas de preço de compra (A2_ZTABPRC → X3_F3 'AIA')
+    "price-tables": {
+        "select": "AIA_CODTAB AS code, RTRIM(AIA_DESCRI) AS label, 0 AS disabled",
+        "from": "AIA010",
+        "where": "AIA_FILIAL IN ('', '01')",
+        "code_col": "AIA_CODTAB",
+        "label_col": "AIA_DESCRI",
+        "order": "AIA_CODTAB",
+    },
+    # Clientes vinculados (A2_CLIENTE+A2_LOJCLI → SA1; par composto —
+    # item carrega `store` e aceita filtro `code` para listar só as lojas
+    # do cliente informado)
+    "customers": {
+        "select": (
+            "A1_COD AS code, A1_LOJA AS store, RTRIM(A1_NOME) AS label, "
+            "0 AS disabled"
+        ),
+        "from": "SA1010",
+        "where": "A1_FILIAL = ''",
+        "code_col": "A1_COD",
+        "label_col": "A1_NOME",
+        "order": "A1_NOME, A1_LOJA",
+        "store_col": "A1_LOJA",
+        "code_filter_col": "A1_COD",
+    },
 }
 
 
 def catalog_requires_state(catalog: str) -> bool:
     return catalog in _STATE_DEPENDENT_CATALOGS
+
+
+def catalog_supports_code_filter(catalog: str) -> bool:
+    """Catálogos que aceitam o parâmetro ``code`` (filtro exato) —
+    hoje apenas ``customers`` (lista de lojas do cliente)."""
+    source = _SOURCES.get(catalog)
+    return bool(source and source.get("code_filter_col"))
 
 
 class TotvsSupplierCatalogsRepository(BaseRepository):
@@ -127,10 +203,13 @@ class TotvsSupplierCatalogsRepository(BaseRepository):
         *,
         query: str | None = None,
         state: str | None = None,
+        code: str | None = None,
         limit: int = _DEFAULT_LIMIT,
     ) -> tuple[list[dict[str, Any]], bool]:
         """Retorna ``(items, has_more)`` — busca por prefixo de código ou
-        trecho da descrição, sempre limitada e parametrizada."""
+        trecho da descrição, sempre limitada e parametrizada. ``code``
+        aplica filtro exato de código nos catálogos compostos (customers:
+        lista apenas as lojas do cliente informado)."""
         source = _SOURCES.get(catalog)
         if source is None:
             raise KeyError(catalog)
@@ -145,6 +224,11 @@ class TotvsSupplierCatalogsRepository(BaseRepository):
             uf = (state or "").strip().upper()
             where.append(f"{state_col} = ?")
             params.append(uf)
+
+        code_filter_col = source.get("code_filter_col")
+        if code_filter_col is not None and (code or "").strip():
+            where.append(f"{code_filter_col} = ?")
+            params.append(code.strip())
 
         q = (query or "").strip()
         if q:
@@ -169,13 +253,17 @@ class TotvsSupplierCatalogsRepository(BaseRepository):
         with self as repo:
             rows = repo.execute_query(sql, tuple(params))
 
-        items = [
-            {
+        items = []
+        has_store = "store_col" in source
+        for row in rows[:limit]:
+            if not (row.get("code") or "").strip():
+                continue
+            item: dict[str, Any] = {
                 "code": (row.get("code") or "").rstrip(),
                 "label": (row.get("label") or "").strip(),
                 "disabled": bool(row.get("disabled")),
             }
-            for row in rows[:limit]
-            if (row.get("code") or "").strip()
-        ]
+            if has_store:
+                item["store"] = (row.get("store") or "").strip()
+            items.append(item)
         return items, len(rows) > limit

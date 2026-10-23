@@ -62,18 +62,17 @@ export type SupplierWriteResponse = {
 };
 
 /**
- * Campos criáveis (POST homologado em E2) SEM evidência de PUT controlado
- * no ensaio E5 — permanecem fora de qualquer derivação de editável.
+ * Campos criáveis (POST homologado em E2) SEM evidência de alteração de
+ * valor via PUT — permanecem fora de qualquer derivação de editável.
  */
 export type SupplierPostOnlyFieldKey =
-  | "simp_regime_code" // E5: drift upstream — PUT inconclusivo
-  | "linked_customer_code" // E5: par composto sem prova de alteração
-  | "linked_customer_store"; // E5: PUT_IGNORED upstream
+  | "linked_customer_code"; // E6: upstream PUT ignora mudança de código —
+  // entra no payload apenas como companion imutável do par (guard no backend de integração)
 
 /**
- * Os 29 campos estendidos promovidos em E3 — 26 com PUT comprovado no
- * ensaio E5 (editáveis) + 3 que permanecem post-only por falta de
- * evidência upstream (`SupplierPostOnlyFieldKey`).
+ * Os 29 campos estendidos promovidos em E3 — 28 com PUT comprovado nos
+ * ensaios E5+E6 (editáveis) + `SupplierPostOnlyFieldKey`, cujo código é
+ * companion imutável do par composto upstream.
  */
 export type SupplierExtendedFieldKey =
   | "legal_entity_type" | "address_number" | "po_box"
@@ -208,6 +207,21 @@ export type SupplierFieldSpec = {
   catalogDependsOn?: SupplierFieldKey;
   /** Campo preenchido automaticamente pela seleção de outro catálogo. */
   catalogDerivedFrom?: SupplierFieldKey;
+  /**
+   * Catálogos compostos (ex.: `customers` → código+loja): qual chave do
+   * item vira o valor deste campo. Default `"code"`.
+   */
+  catalogValueField?: "code" | "store";
+  /**
+   * Campo cujo valor alimenta o parâmetro `code` do catálogo (filtro
+   * exato — ex.: lojas do cliente vinculado em `customers`).
+   */
+  catalogCodeParam?: SupplierFieldKey;
+  /**
+   * Campo-irmão que recebe `item.store` quando este campo usa um catálogo
+   * composto — ex.: `linked_customer_code` preenche `linked_customer_store`.
+   */
+  catalogPairField?: SupplierFieldKey;
 };
 
 /** Catálogos expostos pela BFF (`supplies-api` allowlist espelha o serviço de integração). */
@@ -219,7 +233,13 @@ export type SupplierCatalogKind =
   | "payment-methods"
   | "financial-natures"
   | "accounting-accounts"
-  | "municipalities";
+  | "municipalities"
+  | "carriers"
+  | "segments"
+  | "administrators"
+  | "employees"
+  | "price-tables"
+  | "customers";
 
 const F = (
   spec: Omit<SupplierFieldSpec, "get" | "put" | "evidence"> &
@@ -508,6 +528,13 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 1,
     post: true,
     span: 4,
+    options: [
+      { value: "1", label: "ME — Micro Empresa" },
+      { value: "2", label: "EPP — Empresa de Pequeno Porte" },
+      { value: "3", label: "MEI — Microempreendedor Individual" },
+      { value: "4", label: "Cooperativa" },
+      { value: "5", label: "Não optante" },
+    ],
     help: "Tipo de pessoa jurídica do fornecedor (A2_TPJ), conforme a tabela do Protheus.",
   }),
   // Endereço
@@ -625,11 +652,17 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "simp_regime_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Regime SIMP",
     section: "fiscal",
     maxLength: 1,
     post: true,
     span: 3,
+    options: [
+      { value: "1", label: "Sim" },
+      { value: "2", label: "Não" },
+    ],
     help: "Código de regime tributário SIMP do fornecedor (A2_REGESIM).",
   }),
   F({
@@ -775,6 +808,7 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     post: true,
     span: 3,
+    catalog: "price-tables",
     help: "Código da tabela de preços de compra do fornecedor (A2_ZTABPRC).",
   }),
   F({
@@ -809,7 +843,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 6,
     post: true,
     span: 3,
-    help: "Código da transportadora padrão do fornecedor (A2_TRANSP, referência SA4). Seleção assistida pendente de catálogo contratado.",
+    catalog: "carriers",
+    help: "Código da transportadora padrão do fornecedor (A2_TRANSP, referência SA4).",
   }),
   F({
     key: "segment_code",
@@ -820,7 +855,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 6,
     post: true,
     span: 3,
-    help: "Código do segmento de atuação do fornecedor (A2_SATIV1, tabela SX5-T3). Seleção assistida pendente de catálogo contratado.",
+    catalog: "segments",
+    help: "Código do segmento de atuação do fornecedor (A2_SATIV1, tabela SX5-T3).",
   }),
   F({
     key: "administrator_code",
@@ -831,7 +867,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 3,
     post: true,
     span: 3,
-    help: "Código do administrador do fornecedor (A2_CODADM, referência SAE). Seleção assistida pendente de catálogo contratado.",
+    catalog: "administrators",
+    help: "Código do administrador do fornecedor (A2_CODADM, referência SAE).",
   }),
   F({
     key: "linked_customer_code",
@@ -840,17 +877,24 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 6,
     post: true,
     span: 3,
-    help: "Código do cliente vinculado ao fornecedor (A2_CLIENTE, referência SA1). Seleção assistida pendente de catálogo contratado.",
+    catalog: "customers",
+    catalogPairField: "linked_customer_store",
+    help: "Cliente vinculado ao fornecedor (A2_CLIENTE+A2_LOJCLI, referência SA1) — a seleção define código e loja. O vínculo não é alterável na edição (contrato upstream); apenas a loja do cliente atual pode mudar.",
   }),
   F({
     key: "linked_customer_store",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Loja do cliente",
     section: "purchasing",
     maxLength: 2,
     digitsOnly: true,
     post: true,
     span: 3,
-    help: "Loja do cliente vinculado (A2_LOJCLI) — par composto com o código do cliente.",
+    catalog: "customers",
+    catalogValueField: "store",
+    catalogCodeParam: "linked_customer_code",
+    help: "Loja do cliente vinculado (A2_LOJCLI) — exige cliente vinculado; as opções são as lojas do cliente atual.",
   }),
   F({
     key: "linked_employee_code",
@@ -861,7 +905,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
     maxLength: 6,
     post: true,
     span: 4,
-    help: "Código do funcionário vinculado ao fornecedor (A2_NUMRA, referência SRA). Seleção assistida pendente de catálogo contratado.",
+    catalog: "employees",
+    help: "Código do funcionário vinculado ao fornecedor (A2_NUMRA, referência SRA).",
   }),
 ];
 

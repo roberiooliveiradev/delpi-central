@@ -11,6 +11,7 @@ from typing import Any, Protocol
 from app.infrastructure.persistence.totvs.supplier_repositories.totvs_supplier_catalogs_repository import (
     SUPPLIER_CATALOG_KINDS,
     catalog_requires_state,
+    catalog_supports_code_filter,
 )
 
 
@@ -21,6 +22,7 @@ class SupplierCatalogRepositoryPort(Protocol):
         *,
         query: str | None,
         state: str | None,
+        code: str | None,
         limit: int,
     ) -> tuple[list[dict[str, Any]], bool]: ...
 
@@ -35,6 +37,7 @@ class ListSupplierCatalogItemsUseCase:
         *,
         query: str | None = None,
         state: str | None = None,
+        code: str | None = None,
         limit: int = 100,
     ) -> dict[str, Any]:
         kind = (catalog or "").strip().lower()
@@ -47,11 +50,17 @@ class ListSupplierCatalogItemsUseCase:
             raise ValueError(
                 "O catálogo 'municipalities' exige o parâmetro 'state' (UF)."
             )
+        code_arg = (code or "").strip() or None
+        if code_arg and not catalog_supports_code_filter(kind):
+            raise ValueError(
+                f"O catálogo '{kind}' não aceita o parâmetro 'code'."
+            )
 
         items, has_more = self._repository.list_catalog_items(
             kind,
             query=(query or "").strip() or None,
             state=(state or "").strip().upper() or None,
+            code=code_arg,
             limit=limit,
         )
         return {

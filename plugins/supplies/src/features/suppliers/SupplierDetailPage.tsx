@@ -383,7 +383,23 @@ export function SupplierDetailPage({
                                   ] ?? "")
                                 : undefined
                             }
-                            onPick={(code, label) =>
+                            codeFilter={
+                              spec.catalogCodeParam
+                                ? (
+                                    getSupplierFieldValue(
+                                      detail,
+                                      SUPPLIER_FIELD_REGISTRY.find(
+                                        (f) =>
+                                          f.key === spec.catalogCodeParam,
+                                      )!,
+                                    ) ||
+                                    (draft[
+                                      spec.catalogCodeParam as SupplierEditableFieldKey
+                                    ] ?? "")
+                                  ).trim()
+                                : undefined
+                            }
+                            onPick={(code, label, option) =>
                               setDraft((d) => {
                                 const next = { ...d };
                                 if (spec.key === "city") {
@@ -391,6 +407,16 @@ export function SupplierDetailPage({
                                   next.city_code = code;
                                 } else {
                                   next[key] = code;
+                                }
+                                if (
+                                  spec.catalogPairField &&
+                                  option?.store &&
+                                  (spec.catalogPairField as SupplierEditableFieldKey) in
+                                    next
+                                ) {
+                                  next[
+                                    spec.catalogPairField as SupplierEditableFieldKey
+                                  ] = option.store;
                                 }
                                 return next;
                               })

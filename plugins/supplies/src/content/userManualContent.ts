@@ -237,7 +237,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que alguns campos do cadastro aparecem somente leitura na edição?",
-          a: "A edição libera apenas os campos cuja gravação foi homologada no ERP — hoje a maioria dos campos estendidos (endereço, contato, fiscal/tributário e compras) já pode ser alterada. Permanecem protegidos os campos de identidade (código, loja e CNPJ) e os que ainda não tiveram escrita comprovada no ERP, como Regime SIMP e cliente/loja vinculada — eles aparecem somente leitura até a homologação correspondente.",
+          a: "A edição libera apenas os campos cuja gravação foi homologada no ERP — endereço, contato, fiscal/tributário e compras/relacionamentos já podem ser alterados, incluindo Regime SIMP e a loja do cliente vinculado. Permanecem protegidos os campos de identidade (código, loja e CNPJ) e o código do cliente vinculado, que o ERP não permite alterar em uma edição — apenas a loja desse cliente pode ser trocada.",
         },
         {
           q: "O que significa «Este CNPJ já possui cadastro no Protheus»?",

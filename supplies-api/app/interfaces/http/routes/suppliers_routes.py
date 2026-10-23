@@ -69,9 +69,16 @@ _CATALOG_KINDS = frozenset(
         "financial-natures",
         "accounting-accounts",
         "municipalities",
+        # X4.FIELDS.E6 — referências cadastrais Protheus
+        "carriers",
+        "segments",
+        "administrators",
+        "employees",
+        "price-tables",
+        "customers",
     }
 )
-_CATALOG_QUERY_KEYS = ("query", "state", "limit")
+_CATALOG_QUERY_KEYS = ("query", "state", "code", "limit")
 
 
 def _access_token() -> str:

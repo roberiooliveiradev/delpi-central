@@ -45,6 +45,13 @@ class TestRepositorySql:
             ("financial-natures", "SED010"),
             ("accounting-accounts", "CT1010"),
             ("municipalities", "CC2010"),
+            # X4.FIELDS.E6 — referências cadastrais
+            ("carriers", "SA4010"),
+            ("segments", "SX5010"),
+            ("administrators", "SAE010"),
+            ("employees", "SRA010"),
+            ("price-tables", "AIA010"),
+            ("customers", "SA1010"),
         ],
     )
     def test_sources_point_to_proven_tables(self, catalog, table):
@@ -112,6 +119,28 @@ class TestRepositorySql:
         with pytest.raises(KeyError):
             _FakeRepo().list_catalog_items("orders")
 
+    # --- X4.FIELDS.E6 ------------------------------------------------------
+
+    def test_segments_pin_sx5_t3(self):
+        repo = _FakeRepo()
+        repo.list_catalog_items("segments")
+        assert "X5_TABELA = 'T3'" in repo.queries[0][0]
+
+    def test_customers_items_carry_composite_store(self):
+        repo = _FakeRepo(
+            rows=[{"code": "000001", "store": "06", "label": "WEG", "disabled": 0}]
+        )
+        items, _ = repo.list_catalog_items("customers")
+        assert items[0]["store"] == "06"
+        assert items[0]["code"] == "000001"
+
+    def test_customers_code_param_filters_exact_customer(self):
+        repo = _FakeRepo()
+        repo.list_catalog_items("customers", code="000001")
+        sql, params = repo.queries[0]
+        assert "A1_COD = ?" in sql
+        assert params[0] == "000001"
+
 
 class TestUseCaseGuards:
     def test_unknown_catalog_is_rejected(self):
@@ -140,4 +169,24 @@ class TestUseCaseGuards:
             "financial-natures",
             "accounting-accounts",
             "municipalities",
+            "carriers",
+            "segments",
+            "administrators",
+            "employees",
+            "price-tables",
+            "customers",
         }
+
+    def test_code_param_rejected_for_non_composite_catalog(self):
+        with pytest.raises(ValueError, match="code"):
+            ListSupplierCatalogItemsUseCase(_FakeRepo()).execute(
+                "states", code="SC"
+            )
+
+    def test_code_param_forwarded_for_customers(self):
+        repo = _FakeRepo()
+        result = ListSupplierCatalogItemsUseCase(repo).execute(
+            "customers", code="000001"
+        )
+        assert result["catalog"] == "customers"
+        assert repo.queries  # parametrized A1_COD filter applied

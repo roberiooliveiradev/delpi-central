@@ -464,21 +464,48 @@ class TestWrite:
             "swift_code": "BRASBRRJXXX",
         }
 
-    def test_put_rejects_e5_not_homologated_fields(self, client):
-        """E5 leftovers stay out — no proven controlled upstream change."""
+    def test_put_forwards_e6_homologated_fields(self, client):
+        """E6 retest: simp_regime proven; linked store travels with its code."""
         v, r = _auth()
-        for field in (
-            "simp_regime_code",
-            "linked_customer_code",
-            "linked_customer_store",
-        ):
-            with v, r:
-                resp = client.put(
-                    "/suppliers/000001/01",
-                    json={"fornecedor": {field: "1"}},
-                    headers={"Authorization": "Bearer t"},
-                )
-            assert resp.status_code == 422, field
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.put.return_value = {"success": True, "data": {}}
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={
+                    "fornecedor": {
+                        "simp_regime_code": "2",
+                        "linked_customer_code": "000001",
+                        "linked_customer_store": "06",
+                    }
+                },
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        sent = gw.put.call_args.kwargs["json_body"]["fornecedor"]
+        assert sent == {
+            "simp_regime_code": "2",
+            "linked_customer_code": "000001",
+            "linked_customer_store": "06",
+        }
+
+    def test_put_forwards_linked_customer_store_alone(self, client):
+        """Loja sozinha passa pelo BFF — api-delpi injeta o código vigente."""
+        v, r = _auth()
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.put.return_value = {"success": True, "data": {}}
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={"fornecedor": {"linked_customer_store": "06"}},
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        assert gw.put.call_args.kwargs["json_body"]["fornecedor"] == {
+            "linked_customer_store": "06"
+        }
 
 
 class TestOperationStatus:
@@ -703,6 +730,40 @@ class TestSupplierCatalogs:
             )
         assert resp.status_code == 422
         gw.get.assert_not_called()
+
+    def test_e6_catalogs_proxy_s2s(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = self._ENVELOPE
+            for kind in (
+                'carriers', 'segments', 'administrators',
+                'employees', 'price-tables', 'customers',
+            ):
+                resp = client.get(
+                    f'/suppliers/catalogs/{kind}',
+                    headers={'Authorization': 'Bearer t'},
+                )
+                assert resp.status_code == 200, kind
+        assert gw.get.call_count == 6
+
+    def test_customers_forward_code_filter(self, client):
+        v, r = _auth()
+        with v, r, patch(
+            'app.interfaces.http.routes.suppliers_routes._GATEWAY'
+        ) as gw:
+            gw.get.return_value = self._ENVELOPE
+            resp = client.get(
+                '/suppliers/catalogs/customers?code=000001',
+                headers={'Authorization': 'Bearer t'},
+            )
+        assert resp.status_code == 200
+        gw.get.assert_called_once_with(
+            '/supplies/supplier-catalogs/customers',
+            access_token='user-jwt',
+            params={'code': '000001'},
+        )
 
     def test_municipalities_forward_state_filter(self, client):
         v, r = _auth()

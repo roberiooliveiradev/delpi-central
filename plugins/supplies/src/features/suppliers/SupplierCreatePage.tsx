@@ -331,11 +331,26 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                             ] ?? "")
                           : undefined
                       }
-                      onPick={(code, label) => {
+                      codeFilter={
+                        field.catalogCodeParam
+                          ? (draft[
+                              field.catalogCodeParam as keyof SupplierCreateDraft
+                            ] ?? "")
+                          : undefined
+                      }
+                      onPick={(code, label, option) => {
                         if (field.key === "city") {
                           patchDraft({ city: label || code, city_code: code });
                         } else {
-                          patchDraft({ [field.key]: code });
+                          const patch: Partial<SupplierCreateDraft> = {
+                            [field.key]: code,
+                          };
+                          if (field.catalogPairField && option?.store) {
+                            patch[
+                              field.catalogPairField as keyof SupplierCreateDraft
+                            ] = option.store;
+                          }
+                          patchDraft(patch);
                         }
                       }}
                       disabled={submitting}

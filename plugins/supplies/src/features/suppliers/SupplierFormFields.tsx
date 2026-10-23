@@ -195,10 +195,19 @@ type SupplierCatalogFieldProps = {
   value: string;
   /** Rótulo do valor atual quando ainda não resolvido pelo catálogo. */
   currentLabel?: string;
-  /** Recebe (code, label) — necessário quando a seleção preenche outro campo. */
-  onPick: (code: string, label: string) => void;
+  /** Recebe (code, label, item) — o item permite preencher o par composto. */
+  onPick: (
+    code: string,
+    label: string,
+    option?: SupplierCatalogOption,
+  ) => void;
   /** Valor do campo do qual o catálogo depende (ex.: UF → municípios). */
   dependsOnValue?: string;
+  /**
+   * Valor do campo indicado por `spec.catalogCodeParam` — filtro exato
+   * `code=` do catálogo (ex.: lojas do cliente vinculado).
+   */
+  codeFilter?: string;
   disabled?: boolean;
   hint?: string;
 };
@@ -215,6 +224,7 @@ export function SupplierCatalogField({
   currentLabel,
   onPick,
   dependsOnValue,
+  codeFilter,
   disabled,
   hint,
 }: SupplierCatalogFieldProps) {
@@ -242,6 +252,7 @@ export function SupplierCatalogField({
       currentLabel={currentLabel}
       onPick={onPick}
       dependsOnValue={dependsOnValue}
+      codeFilter={codeFilter}
       disabled={disabled}
       hint={hint}
     />
@@ -289,6 +300,30 @@ function SupplierCatalogPreloadSelect({
   );
 }
 
+type ComboItem = {
+  /** Valor gravado no campo (code ou store conforme catalogValueField). */
+  value: string;
+  label: string;
+  option: SupplierCatalogOption;
+};
+
+function comboItems(
+  spec: SupplierFieldSpec,
+  options: SupplierCatalogOption[],
+): ComboItem[] {
+  const valueField = spec.catalogValueField ?? "code";
+  const out: ComboItem[] = [];
+  const seen = new Set<string>();
+  for (const option of options) {
+    const itemValue =
+      valueField === "store" ? (option.store ?? "").trim() : option.code.trim();
+    if (!itemValue || seen.has(itemValue)) continue;
+    seen.add(itemValue);
+    out.push({ value: itemValue, label: option.label, option });
+  }
+  return out;
+}
+
 function SupplierCatalogSearchCombo({
   spec,
   kind,
@@ -296,17 +331,21 @@ function SupplierCatalogSearchCombo({
   currentLabel,
   onPick,
   dependsOnValue,
+  codeFilter,
   disabled,
   hint,
 }: SupplierCatalogFieldProps & { kind: NonNullable<SupplierFieldSpec["catalog"]> }) {
   const requiresDependency = Boolean(spec.catalogDependsOn);
   const dependencyReady = !requiresDependency || Boolean(dependsOnValue?.trim());
+  const requiresCode = Boolean(spec.catalogCodeParam);
+  const codeReady = !requiresCode || Boolean(codeFilter?.trim());
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { options, hasMore, loading, error, search } = useCatalogSearch(kind, {
     state: dependsOnValue,
-    enabled: dependencyReady && open && !disabled,
+    code: spec.catalogCodeParam ? codeFilter : undefined,
+    enabled: dependencyReady && codeReady && open && !disabled,
   });
 
   useEffect(() => {
@@ -321,17 +360,17 @@ function SupplierCatalogSearchCombo({
   const trimmed = value.trim();
   const label =
     catalogLabelOf(kind, trimmed) ?? currentLabel?.trim() ?? "";
-  const merged = [...options];
-  if (trimmed && !merged.some((o) => o.code === trimmed)) {
+  const merged = comboItems(spec, options);
+  if (trimmed && !merged.some((o) => o.value === trimmed)) {
     merged.unshift({
-      code: trimmed,
+      value: trimmed,
       label: label || trimmed,
-      disabled: false,
+      option: { code: trimmed, label: label || trimmed, disabled: false },
     });
   }
 
-  const pick = (code: string, optionLabel: string) => {
-    onPick(code, optionLabel);
+  const pick = (item: ComboItem) => {
+    onPick(item.value, item.label, item.option);
     setOpen(false);
     setActiveIndex(-1);
   };
@@ -356,11 +395,11 @@ function SupplierCatalogSearchCombo({
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       const opt = merged[activeIndex];
-      pick(opt.code, opt.label);
+      pick(opt);
     }
   };
 
-  const comboDisabled = disabled || !dependencyReady;
+  const comboDisabled = disabled || !dependencyReady || !codeReady;
   return (
     <div
       ref={wrapperRef}
@@ -411,21 +450,21 @@ function SupplierCatalogSearchCombo({
                     : C.catalogEmpty}
               </li>
             ) : (
-              merged.map((option, index) => (
-                <li key={option.code}>
+              merged.map((item, index) => (
+                <li key={`${item.value}|${item.option.store ?? ""}`}>
                   <button
                     type="button"
                     role="option"
-                    aria-selected={option.code === trimmed}
+                    aria-selected={item.value === trimmed}
                     className={`sp-supplier-combo__option${
                       index === activeIndex
                         ? " sp-supplier-combo__option--active"
                         : ""
                     }`}
-                    disabled={option.disabled}
-                    onClick={() => pick(option.code, option.label)}
+                    disabled={item.option.disabled}
+                    onClick={() => pick(item)}
                   >
-                    {catalogDisplayText(option.code, option.label)}
+                    {catalogDisplayText(item.value, item.label)}
                   </button>
                 </li>
               ))
