@@ -17749,3 +17749,25 @@ AC_S5_B=PASS AC_S5_C=FAIL AC_S5_D=PASS AC_S5_H=EXECUTED
 CODE_CHANGED=NO DEPLOY_EXECUTED=NO PROD_AUTHENTICATED_TESTS=EXECUTED
 MATERIAL_GAP=d5_catalog_dump_awaiting_product_master_decision
 COORDINATION_REVIEW_REQUIRED=YES NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.402 — VD-F06 ditado progressivo end-to-end: implementacao + deploy + QA live (2026-10-23)
+
+**2026-10-23 — DELIA-VD-F06-PROGRESSIVE-DICTATION-END-TO-END-IMPLEMENT-TEST-REWORK-DEPLOY-01 (docs 123/124, checkpoints C0-C7):** C0 provou streaming real do provider aprovado (stream:true com input_audio, OpenRouter google/gemini-2.5-flash via familia openai_compatible_audio; PoC WAV pt-BR real: FIRST_DELTA=2.51s, 2 deltas, transcript real). Modelo honesto adotado: segmentacao incremental real — AudioWorklet captura PCM continuo, fatia em segmentos WAV completos (~4s), cada segmento transcrito de verdade via SSE; zero pseudo-streaming. EXISTING_EQUIVALENT=YES, REUSE_DECISION=EXTEND.
+
+BACKEND: contrato bounded dictation.incremental.v1 (sessao -> segmentos NDJSON -> end) adicionado preservando dictation.transcription.v1 intacto. IncrementalDictationService valida AuthN/AuthZ (delia.access), ownership por usuario, TTL, sequencia, limites bytes/duracao/segmentos/sessao/in-flight, rate limit, erros tipados, cleanup. stream_transcribe no adapter existente com deadline wall-clock compartilhado e erros tipados. Fail-closed: servico so existe com flag DELIA_STT_INCREMENTAL_ENABLED=1 + config completa. 45 testes focados + suite backend completa verdes.
+
+FRONTEND: reconciliador deterministico (dictationSegmentReconciler, 14/14) com ownership de ranges, prioridade de edicao humana, descarte de revisoes stale/duplicadas, caret correto em insercao, selecao exata, UTF-16/emoji; controller (10/10) com estados honestos e nunca-submit; composer incremental mantendo textarea editavel (6/6); segmentedPcmCapture+pcmWav estendem a familia do recorder em plugin-ui; dictationClient com open/stream/end tipado; admissao so quando status.incremental.available; fallback VD-F03 preferido quando off. Suites: delia 383, plugin-ui 2318, typecheck+build+federation verdes.
+
+DEPLOY: push ff 9a46c81e65+3acf70b5e2 -> up-prod-sequential.sh --build plugin-ui delia delia-api. Pos-deploy incremental.available=false (fail-closed provado). Ativacao: flag=1 no .env do host + restart so delia-api -> incremental.available=true com limites canonicos.
+
+SMOKE PROD AUTENTICADO (identidade user, WAV pt-BR real): session opened -> started @0.34s -> partial rev1 @3.42s -> partial rev2 @3.47s -> final rev2 is_final pt-BR @3.48s -> {ended:true}. SMOKE_RESULT=PASS.
+
+QA REAL DE PRODUCAO (Chrome + --use-file-for-fake-audio-capture com WAV pt-BR real — audio real percorre getUserMedia->AudioWorklet->WAV->NDJSON->provider->reconciler->textarea): 13/13 PASS — A1 admissao full-page, A2 controles, A3 REAL_PARTIAL_BEFORE_STOP (58 chars durante captura), A4 pausar/retomar, A5 digitacao durante captura, A6 finalize preserva ditado+edicao humana (107 chars), A7 NO_AUTO_SUBMIT, B1/B2 mobile 390px progressivo, B3 descartar remove provisorio, C1-C3 Companion Dock real com texto progressivo. DEFECTS_PROD=0.
+
+DOD: REAL_PARTIAL_BEFORE_STOP/FREE_CARET_EDITING/SELECTION_REPLACEMENT/HUMAN_EDIT_PRIORITY/LATE_EVENTS_SAFETY/NO_DRAFT_LOSS/NO_AUTO_SUBMIT=PASS; BACKEND_CONTRACT/STT_PROVIDER_INTEGRATION/FRONTEND_INTEGRATION=PASS; FULLPAGE/REAL_DOCK/MOBILE_QA=PASS; FALLBACK_V1=PASS; SECURITY_NEGATIVES=PASS (401 sem bearer, 403 cross-user, fail-closed flag off). SCREEN_READER_QA=TEST_NOT_RUN (sem leitor no ambiente). RESIDUAIS: acuracia de transcricao e do provider; screen reader pendente de ambiente. Evidencia: docs/.../evidence/progressive-dictation-vdf06/.
+
+TASK_ID=DELIA-VD-F06-PROGRESSIVE-DICTATION-END-TO-END-IMPLEMENT-TEST-REWORK-DEPLOY-01
+COMMITS=9a46c81e65+3acf70b5e2 DEPLOYED=YES FLAG_ACTIVATED=post_smoke_gate
+PROD_LIVE_SMOKE=PASS PROD_BROWSER_QA=13/13 EXECUTION_DRIFT=NONE
+EXECUTION_STATUS=COMPLETE_LIVE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
