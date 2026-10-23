@@ -4057,18 +4057,6 @@
   color: var(--ppc-text-muted);
 }
 
-.dashboard-production-control .ppc-pa-shortage-planned {
-  display: grid;
-  gap: 10px;
-  margin-top: 4px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--ppc-border);
-}
-
-.dashboard-production-control .ppc-pa-shortage-table--planned {
-  opacity: 0.92;
-}
-
 .dashboard-production-control .ppc-pa-shortage-set__actions {
   display: flex;
   flex-wrap: wrap;

@@ -130,11 +130,7 @@ def test_does_not_mix_sets_when_item_is_not_01() -> None:
 
     assert payload["sets"][0]["status"] == STATUS_NO_COMMITMENT
     assert payload["sets"][0]["materials"] == []
-    assert len(payload["sets"][0]["planned_without_commitment"]) == 1
-    assert (
-        payload["sets"][0]["planned_without_commitment"][0]["product_code"]
-        == "10080001"
-    )
+    assert payload["sets"][0]["planned_without_commitment"] == []
 
 
 def test_other_pa_on_same_extract_does_not_flag_this_set() -> None:
@@ -209,8 +205,35 @@ def test_bom_material_without_sd4_does_not_create_false_shortage() -> None:
     assert first["status"] == STATUS_OK
     assert [m["product_code"] for m in first["materials"]] == ["10080099"]
     assert first["materials"][0]["status"] == STATUS_OK
-    assert first["planned_without_commitment"][0]["product_code"] == "10080001"
-    assert first["planned_without_commitment"][0]["status"] == "planned_not_committed"
+    assert first["planned_without_commitment"] == []
+
+
+def test_zero_commitment_balance_is_omitted_from_set_list() -> None:
+    """MP com empenho zerado no conjunto não aparece (já usada/desconsiderada)."""
+    payload = build_raw_material_set_shortages(
+        product={"product_code": "90263114", "product_type": "PA"},
+        materials=[
+            _material(product_code="10080001", available_stock=0.0, in_bom=True),
+            _material(
+                product_code="10080099",
+                available_stock=10.0,
+                in_bom=False,
+                structure_quantity=0.0,
+            ),
+        ],
+        mother_orders=[_order()],
+        purchase_orders=[],
+        commitments=[
+            _commitment(
+                product_code="10080099",
+                open_quantity=2.0,
+                commitment_date="2026-09-12",
+            )
+        ],
+    )
+    first = payload["sets"][0]
+    assert [m["product_code"] for m in first["materials"]] == ["10080099"]
+    assert "10080001" not in [m["product_code"] for m in first["materials"]]
 
 
 def test_partial_substitution_uses_only_effective_quantities() -> None:

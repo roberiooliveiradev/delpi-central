@@ -54,7 +54,7 @@
       {
         "step": 2,
         "title": "Usamos os empenhos atuais da OP",
-        "body": "A ruptura considera as matérias-primas efetivamente empenhadas (SD4), inclusive substitutos. A estrutura (SG1) fica só como referência quando não há empenho."
+        "body": "A ruptura considera só matérias-primas com empenho aberto (SD4), inclusive substitutos. Empenho zerado ou material só da estrutura não entra na lista."
       },
       {
         "step": 3,

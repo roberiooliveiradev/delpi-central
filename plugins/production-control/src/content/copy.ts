@@ -922,7 +922,7 @@ export const copy = {
         {
           step: 2,
           title: "Usamos os empenhos atuais da OP",
-          body: "A ruptura considera as matérias-primas efetivamente empenhadas (SD4), inclusive substitutos. A estrutura (SG1) fica só como referência quando não há empenho.",
+          body: "A ruptura considera só matérias-primas com empenho aberto (SD4), inclusive substitutos. Empenho zerado ou material só da estrutura não entra na lista.",
         },
         {
           step: 3,
@@ -930,10 +930,6 @@ export const copy = {
           body: "Saldo 01+98+99 + pedidos − empenhos abertos. Se o saldo projetado fica negativo no empenho daquele conjunto, a OP falta material.",
         },
       ],
-      plannedTitle: "Na estrutura, sem empenho neste conjunto",
-      plannedHint:
-        "Itens da SG1 sem empenho SD4 nesta OP. Não entram no cálculo de ruptura (ex.: material substituído no Protheus).",
-      plannedNeed: "Necessidade planejada",
       kpiSets: "Conjuntos",
       kpiAtRisk: "Em risco",
       kpiShortMp: "MPs em falta",
@@ -943,9 +939,9 @@ export const copy = {
         `${ok} de ${total} ${total === 1 ? "material disponível" : "materiais disponíveis"}`,
       availabilityPercent: (percent: number) => `${percent}% de disponibilidade`,
       chipShortage: "Em risco",
-      chipNoCommitment: "SG1 sem empenho",
+      chipNoCommitment: "Sem empenho",
       chipOk: "Saldo OK",
-      chipAll: "Empenhadas",
+      chipAll: "Todos",
       chipsAria: "Filtrar matérias-primas do conjunto",
       statusShortage: "Crítico",
       statusNoCommitment: "Sem empenho",
@@ -954,7 +950,6 @@ export const copy = {
       materialOk: "Saldo OK",
       materialShortage: "Falta",
       materialNoCommitment: "Sem empenho",
-      materialPlanned: "Só na estrutura",
       materialsAria: "Matérias-primas do conjunto",
       opPrefix: "OP",
       columns: {

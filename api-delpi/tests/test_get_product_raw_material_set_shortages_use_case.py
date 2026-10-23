@@ -169,4 +169,5 @@ def test_use_case_includes_sd4_substitute_and_skips_uncommitted_bom() -> None:
     first = result["sets"][0]
     assert first["status"] == "ok"
     assert [m["product_code"] for m in first["materials"]] == ["10080099"]
-    assert first["planned_without_commitment"][0]["product_code"] == "10080001"
+    assert first["planned_without_commitment"] == []
+    assert "10080001" not in [m["product_code"] for m in first["materials"]]

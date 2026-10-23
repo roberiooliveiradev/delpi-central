@@ -228,7 +228,7 @@ Retorna blocos `structure`, `raw_material_stock`, `production`, `shipping`, `ind
 
 ## GET /products/{code}/raw-material-set-shortages
 
-Consulta as OPs **mãe** abertas do PA e diz quais vão faltar matéria-prima. O universo de MPs é a **união** da estrutura vigente (SG1, só `B1_TIPO = MP`) com os códigos **efetivamente empenhados** (SD4 aberto) nas OPs do conjunto — inclusive substitutos fora da SG1. A ruptura e a necessidade de produção usam só os empenhos SD4 do conjunto; item só na SG1 sem empenho vai em `sets[].planned_without_commitment` (informativo) e **não** gera semáforo de falta. Conjunto sem nenhum empenho SD4 permanece `no_commitment` (não vira «Saldo OK»).
+Consulta as OPs **mãe** abertas do PA e diz quais vão faltar matéria-prima. O universo de MPs é a **união** da estrutura vigente (SG1, só `B1_TIPO = MP`) com os códigos **efetivamente empenhados** (SD4 com `D4_QUANT > 0`) nas OPs do conjunto — inclusive substitutos fora da SG1. A ruptura e a necessidade usam só empenhos SD4 abertos do conjunto; item com empenho zerado/ausente **não entra** na lista do conjunto (`planned_without_commitment` fica vazio). Conjunto sem nenhum empenho SD4 permanece `no_commitment` (não vira «Saldo OK»).
 
 A conta é a do extrato de estoque de segurança: saldo `01+98+99` + SC7 − SD4; ruptura quando o saldo projetado fica negativo no empenho daquele conjunto.
 
