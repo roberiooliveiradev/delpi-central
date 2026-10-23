@@ -363,3 +363,40 @@ d zoom200):
 
 Residual: `SCREEN_READER_QA=TEST_NOT_RUN` (sem leitor no ambiente);
 contraste AA por tokens compartilhados, não medido com ferramenta.
+
+
+---
+
+## Keep-open on selection — spec 125 §10 (2026-10-23, commit 6504887b9f)
+
+O menu Configurações permanece aberto ao selecionar batch/live; fecha só
+por saída explícita (trigger, Escape, clique externo).
+
+### Causa-raiz e correção
+
+O fechamento não era só o `data-close-on-change`: trocar o modo troca a
+sub-árvore inteira do composer (`DeliaComposerBatch` ⇄
+`DeliaComposerIncremental`), remontando o menu e perdendo o `open` local.
+Correção bounded:
+
+- `open`/`onOpenChange` hoistados para `DeliaComposer` (menu controlado);
+- `data-close-on-change` removido do fieldset Ditado e o listener
+  `onChange` do contêiner removido — sem mecanismo genérico (§10);
+- âncora do portal virou callback-ref + estado: num mount já-aberto o ref
+  ainda não está anexado quando o layout effect de posição roda; o estado
+  força re-render e o efeito reposiciona (antes dependia de rAF, que o
+  jsdom não dispara);
+- `dismiss` só restaura foco ao trigger quando o foco estava dentro do
+  painel — clique externo não rouba foco do elemento acionado (CM-03).
+
+### Testes e QA
+
+- `DeliaComposerSettings.test.tsx`: CM-01..CM-07 (19/19); helpers
+  dual-mode/incremental agora dispensam o menu explicitamente.
+- Suite DÉLIA: **418/418**; typecheck e build verdes.
+- Produção `6504887b9f` (`vd-cs-keepopen-prod.mjs`): **13/13** — live e
+  batch aplicam sem fechar, seleções repetidas estáveis, draft/caret
+  preservados, trigger/Escape/fora fecham, dock real e 375px com painel
+  dentro do viewport. Screenshots `shots-keepopen/`.
+
+Residual: `SCREEN_READER_QA=TEST_NOT_RUN`.

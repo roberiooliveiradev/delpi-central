@@ -137,7 +137,7 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 
 ## 10. Ajuste de interação aprovado pelo Product Owner — manter menu aberto após seleção (2026-10-23)
 
-**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING. Substitui a regra anterior de fechar o popover depois de escolher modo, sem alterar a estética clean (§9), default batch, live opt-in, contratos ou admission.
+**Status:** IMPLEMENTED_AND_HOMOLOGATED (2026-10-23, commit 6504887b9f, deploy prod + smoke 13/13). Substitui a regra anterior de fechar o popover depois de escolher modo, sem alterar a estética clean (§9), default batch, live opt-in, contratos ou admission.
 
 - Escolher **Gravar e transcrever** ou **Transcrição em tempo real** atualiza a opção imediatamente **e mantém o menu aberto**, inclusive após múltiplas alterações. Não há botão Salvar/Aplicar.
 - O menu fecha por **clique fora**, **novo clique no botão de configurações** ou **Escape**. Também pode fechar quando o usuário inicia outra interação no composer, desde que isso decorra do dismiss externo governado pelo `AnchoredPanelPortal` e não dispare perda de foco/draft ou cancelamento de captura.

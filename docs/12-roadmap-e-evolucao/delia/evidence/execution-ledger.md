@@ -17887,3 +17887,17 @@ TASK_ID=DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01
 COMMIT=678f373ae0(code)+docs DEPLOYED=YES PROD_QA=21/21+transcription
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+
+## §6.412 — Composer Settings: menu permanece aberto após seleção (2026-10-23)
+
+**2026-10-23 — DELIA-UX-COMPOSER-SETTINGS-SELECTION-DISMISS-REFINEMENT-01 (spec 125 §10):** selecionar batch/live nao fecha mais o menu. Causa-raiz: alem do data-close-on-change removido, a troca de modo troca a sub-arvore batch<->live remontando o menu — open hoistado p/ DeliaComposer (controlado); ancora virou callback-ref+estado (layout effect de posicao rodava antes do ref anexar no mount-aberto); dismiss so restaura foco quando o foco estava dentro do painel (clique fora nao rouba foco — CM-03). Zero mudanca de comportamento de ditado/contrato/backend.
+
+TESTES: settings 19/19 (CM-01..CM-07), delia 418/418, typecheck+build verdes. DEPLOY: push ff `6504887b9f` -> up-prod-sequential --build delia.
+
+QA PROD 13/13: live/batch aplicam sem fechar, repetidas selecoes estaveis, draft/caret preservados, trigger/Escape/fora fecham, dock real + 375px dentro do viewport. DEFECTS_PROD=0.
+
+TASK_ID=DELIA-UX-COMPOSER-SETTINGS-SELECTION-DISMISS-REFINEMENT-01
+COMMIT=6504887b9f(code)+docs DEPLOYED=YES PROD_QA=13/13
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
