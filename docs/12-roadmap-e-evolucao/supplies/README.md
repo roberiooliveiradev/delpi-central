@@ -248,3 +248,8 @@ A frente **SHARED-INTEGRATIONS-01 X0–X3.E2E** atingiu **ACCEPT para backend/ru
 ## Handoff atual — X4.PROD-C1 (2026-10-23) — aguardando Gabriel/TOTVS
 
 **LEITURA PRIORITÁRIA AO RETOMAR A FRENTE DE CADASTRO REAL:** [X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md](./X4-PROD-C1-HANDOFF-AGUARDANDO-GABRIEL-20261023.md). Homologação local POST/PUT em `DELPI_TST01` reportada com sucesso; **produção NÃO liberada**: `G8 = FAIL` (rota suppliers 404, autenticação 401 em `192.168.1.231:8061/restall`). `URL_REST@1` ainda resolve TST para preservar GET E14; guarda produtiva fixa o endpoint 231:8061 e bloqueia escrita por mismatch; CREATE/UPDATE OFF. Deploy parcial da guarda registrado como `EXECUTION_DRIFT`. **Decisão do PO: aguardar resposta do Gabriel antes de nova intervenção de cutover.** Revalidar HEAD/authorities antes de agir. Esta atualização bounded não reclassifica gates de outras páginas históricas.
+
+
+## Planejamento bounded — Atenção da Home (2026-10-23)
+
+**`HOME-ATTENTION-REFACTOR=PLANNED`; implementação e deploy NÃO autorizados.** As capturas do PO mostram sete atalhos genéricos aparentando pendências, sem quantidade/situação comprovadas. Plano exclusivo para a seção Atenção da Home: [HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md). Próximo gate proposto: `A0` inventário read-only do produtor BFF `GET /home/attention`, contagens e contratos de origem, antes de congelar A1. **Não modificar hero, caminhos, favoritos, demais seções/páginas; não tocar o bloqueio de cutover produtivo C1**, que continua aguardando Gabriel.
