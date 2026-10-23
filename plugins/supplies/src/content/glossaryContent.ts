@@ -43,6 +43,11 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
       "Comparação da ficha do fornecedor com dados públicos do CNPJ (BrasilAPI, fonte externa). O resultado é uma revisão com sugestões por campo: aceitar/rejeitar é decisão sua e «Preparar atualização» gera somente um rascunho — nada é gravado no Protheus.",
   },
   {
+    term: "Cadastro assistido",
+    meaning:
+      "Início do cadastro de fornecedor por consulta pública ao CNPJ: o Portal sugere valores com fonte e data da consulta e você confirma campo a campo. Sugestão não é dado gravado — a criação real continua sujeita ao gate do ERP. A busca por razão social fica disponível quando o provedor for homologado.",
+  },
+  {
     term: "Solicitante",
     meaning:
       "Pessoa que abriu a SC. Nas listas aparece com avatar de iniciais. A ficha própria está reservada e ainda não navega.",

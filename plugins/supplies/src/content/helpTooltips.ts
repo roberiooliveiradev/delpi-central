@@ -67,7 +67,7 @@ export const SP_HELP = {
   suppliersRefresh:
     "Recarrega a lista mantendo busca e filtros atuais.",
   suppliersCreate:
-    "Cadastro de novo fornecedor. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
+    "Cadastro de novo fornecedor com três inícios: consultar por CNPJ (traz sugestões de dados públicos com fonte e data — nada é aplicado sem confirmação), buscar por razão social (em homologação) ou preencher manualmente. Todos convergem para o mesmo formulário. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
   suppliersCreateFields:
     "Todos os campos do contrato de cadastro, organizados por seção (identificação, endereço, contato, fiscal e compras), com o documento (CNPJ/CPF) em primeiro lugar. Cada label tem ajuda contextual — passe o mouse ou use o teclado sobre o nome do campo. UF, país, condição/forma de pagamento, natureza financeira, conta contábil e município trazem opções reais do Protheus — pesquise pela descrição e o código correto é enviado. O CEP permite buscar uma sugestão de endereço — nada é aplicado sem confirmação. Somente a loja é obrigatória no Portal — as demais obrigatoriedades são definidas pelo ERP, que rejeita o envio se faltar campo exigido. Nada é enviado sem a revisão final.",
   suppliersColSupplier:

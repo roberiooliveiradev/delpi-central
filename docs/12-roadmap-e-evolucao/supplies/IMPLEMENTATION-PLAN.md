@@ -540,6 +540,8 @@ X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundar
 
 **X4.UX-R1.S1 CONCLUÍDO (2026-10-23):** `POST /suppliers/creation-preview` implementado em supplies-api — sugestões com proveniência via `CompanyRegistryProvider` existente + duplicate-check exato (nova cláusula `tax_id` digito-normalizada em api-delpi `GET /supplies/suppliers`; `CLEAR` só com match exato e total=0, falha → `INCONCLUSIVE`). Draft-only, zero escrita, 425 testes supplies-api verdes. Doc: `X4-UX-R1-S1-CREATION-PREVIEW-BACKEND-20261023.md`.
 
+**X4.UX-R1.S2 CONCLUÍDO (2026-10-23):** MFE `SupplierCreatePage` ganhou seletor de três inícios no mesmo formulário — consulta por CNPJ (consome S1 via BFF, sugestões com proveniência por campo, aplicação somente explícita, `applicable=false` nunca aplicado, proteção contra resposta obsoleta via abort+sequência, 429 com `Retry-After` sem retry automático), busca por razão social exibida como **indisponível** (R1.S3 segue `BLOCKED` — sem pesquisa falsa) e preenchimento manual preservado. Draft compartilhado reconcilia estados SUGGESTED/CONFIRMED/MANUALLY_CHANGED/UNAVAILABLE (UX-only). Revisão final e `POST /suppliers` intactos; preview nunca grava. 319 testes verdes (21 novos), typecheck e build OK; lint sem erro novo. Smoke federado não executado. Doc: `X4-UX-R1-S2-CREATION-ASSISTED-FRONTEND-20261023.md`.
+
 
 ## Plano derivado X4.UX-R1 — cadastro assistido / conferência (2026-10-23)
 

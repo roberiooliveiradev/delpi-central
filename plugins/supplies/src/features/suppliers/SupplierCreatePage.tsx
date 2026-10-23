@@ -21,6 +21,9 @@ import { ApiRequestError } from "../../api/httpClient";
 import { SP_HELP } from "../../content/helpTooltips";
 import { createSupplier } from "./api";
 import { SUPPLIERS_CONTENT as C } from "./content";
+import { CreationAssistedFlow } from "./creation/CreationAssistedFlow";
+import { applyDraftPatchToEntries } from "./creation/stateMachine";
+import type { SuggestionEntryMap } from "./creation/types";
 import { classifyWriteOutcome } from "./query";
 import {
   SupplierCatalogField,
@@ -83,6 +86,9 @@ const CREATE_SECTION_TITLES = {
 
 export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
   const [draft, setDraft] = useState<SupplierCreateDraft>(EMPTY_DRAFT);
+  const [suggestionEntries, setSuggestionEntries] = useState<SuggestionEntryMap>(
+    {},
+  );
   const [reviewing, setReviewing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [writeOutcome, setWriteOutcome] = useState<SupplierWriteOutcome | null>(
@@ -140,8 +146,13 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
     navigatePluginView("suppliers", { basePath });
   };
 
-  const patchDraft = (patch: Partial<SupplierCreateDraft>) =>
+  const patchDraft = (patch: Partial<SupplierCreateDraft>) => {
     setDraft((current) => ({ ...current, ...patch }));
+    // Reconcilia edição manual com o estado de UX das sugestões externas.
+    setSuggestionEntries((current) =>
+      applyDraftPatchToEntries(current, patch as Record<string, string>),
+    );
+  };
 
   const confirmSubmit = () => {
     setReviewing(false);
@@ -247,6 +258,15 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
           {C.outcomeIndeterminateMessage}
         </SuppliesStateBanner>
       ) : null}
+
+      <CreationAssistedFlow
+        basePath={basePath}
+        draft={draft}
+        disabled={submitting}
+        entries={suggestionEntries}
+        onEntriesChange={setSuggestionEntries}
+        onApplyPatch={patchDraft}
+      />
 
       {SUPPLIER_CREATE_SECTIONS.map((section) => (
         <SuppliesSectionCard

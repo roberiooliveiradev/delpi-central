@@ -1073,6 +1073,182 @@
   color: var(--sp-text-muted);
 }
 
+/* Cadastro assistido — seletor de modo + prévia por CNPJ (X4.UX-R1.S2). */
+.dashboard-supplies-portal .sp-supplier-create__assist {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-modes {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius, 0.5rem);
+  cursor: pointer;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode.is-active {
+  border-color: var(--sp-accent);
+  border-left-width: 3px;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode input {
+  position: absolute;
+  opacity: 0;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode:has(input:focus-visible) {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode-label {
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-mode-hint {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-consult {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-cnpj {
+  display: grid;
+  gap: 0.2rem;
+  max-width: 20rem;
+  font-size: 0.8rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-cnpj input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius, 0.5rem);
+  background: var(--sp-surface, transparent);
+  color: var(--sp-text, inherit);
+  font-size: 0.9rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-cnpj input[aria-invalid="true"] {
+  border-color: var(--sp-danger, #c0392b);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-consult-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sp-danger, #c0392b);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-matches {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-panel {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-empty {
+  font-size: 0.85rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius, 0.5rem);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-item--manually_changed {
+  border-left: 2px solid var(--sp-accent);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-badge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--sp-border);
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-badge--confirmed {
+  color: var(--sp-success, #1e8449);
+  border-color: var(--sp-success, #1e8449);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-value {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-current,
+.dashboard-supplies-portal .sp-supplier-create__assist-source,
+.dashboard-supplies-portal .sp-supplier-create__assist-note {
+  font-size: 0.75rem;
+  color: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal .sp-supplier-create__assist-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+
 .dashboard-supplies-portal .sp-supplier-review {
   display: grid;
   gap: 1rem;

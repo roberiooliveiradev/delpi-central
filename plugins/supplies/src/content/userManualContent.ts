@@ -232,6 +232,14 @@ export const USER_MANUAL_CONTENT = {
           a: "A página de pessoa continua reservada — o avatar não navega. Para fornecedor, abra a ficha pela lista Fornecedores (clique na linha).",
         },
         {
+          q: "Como cadastro um novo fornecedor?",
+          a: "Na lista Fornecedores, «Novo fornecedor» oferece três inícios no mesmo formulário: consultar por CNPJ (busca dados públicos e mostra sugestões com fonte e data — você confirma campo a campo, nada é aplicado sozinho), buscar por razão social (em homologação — indisponível até o provedor ser aprovado) ou preencher manualmente. A consulta também avisa se já existe cadastro com aquele CNPJ. A gravação no ERP segue bloqueada até homologação — o Portal avisa e nada é enviado sem a revisão final.",
+        },
+        {
+          q: "O que significa «verificação de duplicidade não concluída»?",
+          a: "A consulta ao cadastro interno falhou ou não retornou resultado conclusivo — não é confirmação de que o fornecedor não existe. Você pode continuar o preenchimento e conferir a ficha existente depois.",
+        },
+        {
           q: "Como altero o cadastro de um fornecedor?",
           a: "Na ficha do fornecedor, Editar cadastro permite mudar razão social e nome fantasia — um ou ambos. Antes de gravar, revise o antes/depois; cancelar não persiste nada. O envio depende de homologação de escrita no ERP: se estiver bloqueado, o Portal avisa e nada é enviado; se a resposta demorar, recarregue a ficha antes de repetir para evitar duplicidade.",
         },
