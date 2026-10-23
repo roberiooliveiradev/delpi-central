@@ -1157,3 +1157,123 @@ Definições das views (`vw_Apontamentos_Eficiencia`, `VW_PROTHEUS_CUSTO_*`) sã
 | C2-R57 | MOD fórmula | PROVEN 100%: GANHO=PREV−REAL; RES=GANHO×rate; LUCRO/PREJUIZO=split sinal; rate=BZ_CUSTD | G4 fonte |
 | C2-R58 | BZ_CUSTD manutenção | PROVEN: MATA019/MATA010 atualizam; view usa rate corrente retroativo; corrige §22.E | G4 fonte |
 | C2-R59 | — | `NO_GATE_CHANGE` | — |
+
+---
+
+## §24 — RODADA 12 (CF-C2-EXEC-012) — HISTÓRICO MOD, QUERY VIGENTE E RESIDUAIS — 2026-10-23
+
+### 24.A — Completude temporal do `SBZ010_TTAT_LOG`
+
+| Âmbito | n | desde | até |
+|---|---|---|---|
+| todo o log | 558.069 | **2026-04-27** | 2026-10-23 |
+| `BZ_CUSTD` | 73.102 | 2026-04-27 | 2026-10-23 |
+
+**Limitação estrutural `PROVEN`:** a auditoria TTAT cobre apenas **~6 meses** (ativada em 27/04/2026). Não é fonte histórica completa — rates anteriores a abril/2026 são irreconstruíveis por esta via. Para histórico de rates MOD é utilizável **só a partir de 27/04/2026**.
+
+### 24.B — Trilha de rates MOD (cruzamento log × view)
+
+79 alterações `BZ_CUSTD` em produtos MOD no período coberto:
+
+| Evento | Programa | Data | Escopo |
+|---|---|---|---|
+| criação de rates | MATA010 | jul/2026 | MOD22401–22405 (I) |
+| **revalorização massiva f02** | MATA019 | 07/10/2026 15:31 | MOD213/214/215/220/230/310… (38,35→41,73; 75,09→84,00) |
+| **revalorização massiva f01** | MATA019 | 08/10/2026 11:39–11:49 | ~30 MODs (MOD20101 77,61→88,34; MOD352 44,17→45,81; MOD223 115,21→127,50) |
+| produtos sem log | — | — | ~80 linhas MOD com `BZ_CUSTD=0`/data inclusão antiga — rate nunca definido |
+
+A view **sempre aplica o `BZ_CUSTD` corrente**: apontamentos de set/2026 exibem o rate gravado em out/2026 (prova: MOD20101 exibe 88,34 em linhas de 2006, mas o log mostra 77,61→88,34 apenas em 08/10/2026).
+
+### 24.C — Demonstração quantitativa: rate da competência vs corrente
+
+Set/2026, MOD352 f01 (rate 44,17→45,81 em 08/10): `Σ RESULTADO` view = **−178,97**; recalculado com rate da competência = **−173,38** (Δ −5,59 em 1.697 apontamentos).
+
+Total set/2026, produtos com rate alterado em out/2026:
+
+| Filial | MODs | resultado view (rate atual) | resultado rate competência | Δ |
+|---|---|---|---|---|
+| 01 | 28 | +5.918,90 | +5.429,18 | **+489,72 (~9%)** |
+| 02 | 21 | −32.694,32 | −30.228,79 | **−2.465,53 (~8%)** |
+
+→ **Impacto material**: cada revalorização de `BZ_CUSTD` reescreve ~8–9% do resultado MOD do mês corrente e de **todo** o histórico exibido pela view.
+
+### 24.D — Separação dos três planos + opções para o owner
+
+| Plano | Estado |
+|---|---|
+| fórmula matemática | `PROVEN`: `RESULTADO = (TEMPO_PREVISTO − TEMPO_REAL) × rate`; LUCRO/PREJUÍZO = split por sinal (§23.D) |
+| implementação da view | `BLOCKED` DDL criptografada; contrato empírico = join com `BZ_CUSTD` **corrente** (não point-in-time) |
+| política de congelamento | **inexistente no observado**: indicadores são recalculados ao vivo; nenhuma snapshot de rate/resultado encontrada |
+
+Opções para decisão do owner (não implementado):
+
+1. **Histórico original (rate da competência):** exige rate vigente por data — reconstruível só desde 27/04/2026 via TTAT_LOG, ou nova tabela de histórico de rates. Corrige comparabilidade temporal; quebra paridade com a view oficial enquanto ela usar rate corrente.
+2. **Recalculado corrente (status quo da view):** resultados sempre revalorizados ao custo atual; consistente com a view existente; distorte série histórica.
+3. **Ambos lado a lado:** preserva as duas leituras; exige a mesma fonte de rate-por-data do item 1.
+
+### 24.E — Query vigente sanitizada (DEL100×SB9) — reproduzível
+
+```sql
+/* f02, janela 20260831->20260930, chaves prior|movimento com SB9 atual
+   resultado vigente: total=3058, qtd-div=242, valor-div=421 */
+WITH prior AS (
+  SELECT B9_COD, B9_LOCAL, B9_QINI q0, B9_VINI1 v0
+  FROM SB9010 WHERE B9_DATA='20260831' AND B9_FILIAL='02' AND D_E_L_E_T_=''
+), cur AS (
+  SELECT B9_COD, B9_LOCAL, B9_QINI q1, B9_VINI1 v1
+  FROM SB9010 WHERE B9_DATA='20260930' AND B9_FILIAL='02' AND D_E_L_E_T_=''
+), mv3 AS (
+  SELECT D3_COD cod, D3_LOCAL loc,
+    SUM(CASE WHEN D3_TM<'500' THEN D3_QUANT ELSE -D3_QUANT END) dq,
+    SUM(CASE WHEN D3_TM<'500' THEN D3_CUSTO1 ELSE -D3_CUSTO1 END) dv
+  FROM SD3010 WHERE D3_FILIAL='02' AND D3_EMISSAO>'20260831' AND D3_EMISSAO<='20260930'
+   AND D3_ESTORNO<>'S' AND D_E_L_E_T_='' GROUP BY D3_COD, D3_LOCAL
+), mv1 AS (
+  SELECT D1_COD cod, D1_LOCAL loc, SUM(D1_QUANT) dq, SUM(D1_CUSTO) dv
+  FROM SD1010 WHERE D1_FILIAL='02' AND D1_DTDIGIT>'20260831' AND D1_DTDIGIT<='20260930'
+   AND D_E_L_E_T_='' AND EXISTS (SELECT 1 FROM SF4010 WHERE F4_CODIGO=D1_TES AND F4_ESTOQUE='S' AND SF4010.D_E_L_E_T_='')
+  GROUP BY D1_COD, D1_LOCAL
+), mv2 AS (
+  SELECT D2_COD cod, D2_LOCAL loc, SUM(D2_QUANT) dq, SUM(D2_TOTAL) dv
+  FROM SD2010 WHERE D2_FILIAL='02' AND D2_EMISSAO>'20260831' AND D2_EMISSAO<='20260930'
+   AND D_E_L_E_T_='' AND EXISTS (SELECT 1 FROM SF4010 WHERE F4_CODIGO=D2_TES AND F4_ESTOQUE='S' AND SF4010.D_E_L_E_T_='')
+  GROUP BY D2_COD, D2_LOCAL
+), rec AS (
+  SELECT x.cod, x.loc,
+    MAX(x.q0)+COALESCE(SUM(x.dq3),0)+COALESCE(SUM(x.dq1),0)-COALESCE(SUM(x.dq2),0) rq,
+    MAX(x.v0)+COALESCE(SUM(x.dv3),0)+COALESCE(SUM(x.dv1),0)-COALESCE(SUM(x.dv2),0) rv
+  FROM (
+    SELECT B9_COD cod, B9_LOCAL loc, q0, v0, 0.0 dq3, 0.0 dv3, 0.0 dq1, 0.0 dv1, 0.0 dq2, 0.0 dv2 FROM prior
+    UNION ALL SELECT cod,loc,NULL,NULL,dq,dv,NULL,NULL,NULL,NULL FROM mv3
+    UNION ALL SELECT cod,loc,NULL,NULL,NULL,NULL,dq,dv,NULL,NULL FROM mv1
+    UNION ALL SELECT cod,loc,NULL,NULL,NULL,NULL,NULL,NULL,dq,dv FROM mv2
+  ) x GROUP BY x.cod, x.loc
+)
+SELECT COUNT(*),
+  SUM(CASE WHEN ABS(c.q1-r.rq)>0.0001 THEN 1 ELSE 0 END) dq_div,
+  SUM(CASE WHEN ABS(c.v1-r.rv)>0.01 THEN 1 ELSE 0 END) dv_div
+FROM rec r JOIN cur c ON c.B9_COD=r.cod AND c.B9_LOCAL=r.loc;
+```
+
+Marcação formal: **todas as conclusões derivadas de 724/672 estão `STALE_EVIDENCE`** (§19.C, §20.A atribuição TM, §21.C categorias); a referência vigente é 421/242 + reclassificação §23.C. Não repetidos: testes já descartados (TM999-excluída, retroatividade, 12 variantes).
+
+### 24.F — Residuais: separação SQL-investigável vs owner
+
+| Item | Estado | Caminho |
+|---|---|---|
+| `DLP06R01` (receber) | `BLOCKED` | fonte ausente do acervo → owner TI (pedido de fonte) |
+| P7/MATR460 | `TO_INVENTORY` | sem grupo SX1 MATR4%; MP7/TRB não-proxy; fonte oficial não consta do acervo → owner TI |
+| produtor SB9 | `BLOCKED` | **esgotado o investigável por SQL read-only**: triggers em SB2/SB9 = só `*_STAMP`/`SB2010_SCHEDULE_MRP` (MRP, definição criptografada); zero SPs `STP_*`/`DELPI*` na base; `msdb.dbo.sysjobs` **permissão negada** → jobs SQL Agent e DDL de views/triggers exigem owner DBA; MATA330/hook = evidência de fonte (§22.D) |
+| definição views custo/eficiência | `BLOCKED` | DDL criptografada → owner DBA |
+
+### 24.G — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R60 | log TTAT | cobre só ≥27/04/2026 — não é histórico completo | — |
+| C2-R61 | trilha MOD | 79 alterações: mass-updates MATA019 f02 07/10 + f01 08/10; MATA010 criações | — |
+| C2-R62 | impacto | set/2026: f01 +489,72 (~9%), f02 −2.465,53 (~8%) — revalorização material | G4 fonte |
+| C2-R63 | opções | 3 opções owner (original/recalculado/ambos); política de congelamento inexistente | — |
+| C2-R64 | query vigente | sanitizada no §24.E; 724/672 → STALE_EVIDENCE formal | — |
+| C2-R65 | residuais | SQL-investigável esgotado; msdb/DDL/proc = owner DBA/TI | — |
+| C2-R66 | — | `NO_GATE_CHANGE` | — |
