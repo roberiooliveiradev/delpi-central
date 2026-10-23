@@ -536,6 +536,8 @@ X0–X3.E2E da integração CNPJ/fornecedores estão aceitos **apenas no boundar
 
 **X4.S1 EXECUTADO (2026-10-22, autorização «PORTAL SUPRIMENTOS — X4.S1»):** E14 comprovada implementada + contrato X4.P0 aceito → incremento de enriquecimento materializado como seção `#enrichment` dentro da ficha existente (`EnrichmentSection` + `enrichment/` module), sem rota/manifest/permission novos e com write gate OFF respeitado (prepare-update = draft-only). Relatório completo: `X4-S1-SUPPLIER-ENRICHMENT-UI-IMPLEMENTATION-20261022.md`. **X4.S1.R1:** retry idempotente com payload imutável (mesma operação, mesma chave). **X4.S2:** verificação de produção — bundle já continha R1, deploy dispensado; smoke real com `rober`/fornecedor `002469/01` (review `1989ff2c`, decisões, bulk, replay, 409s, draft-only) — `X4-S2-FEDERATED-DEPLOY-RUNTIME-ACCEPTANCE-20261022.md`. Residual: smoke visual interativo INCONCLUSIVE.
 
+**X4.UX-R1.P0 CONCLUÍDO (2026-10-23):** inventário + contract freeze do cadastro assistido (3 entradas na `SupplierCreatePage`) e conferência E13. Contratos candidatos congelados: `POST /suppliers/creation-preview`, `GET /suppliers/external-search`, `POST /suppliers/enrichment-summaries` (batch, read-model PG — sem N+1). Lacuna registrada: duplicate-check exato por CNPJ não existe na api-delpi (só `LIKE` textual) — menor contrato proposto `GET /supplies/suppliers?tax_id=`. R1.S1 `READY_TO_AUTHORIZE`; R1.S3 `BLOCKED` até homologação de provider nominal (CNPGolden/ZenPJ/Nume/CNPJota catalogados, nenhum escolhido). Doc: `X4-UX-R1-P0-INVENTORY-CONTRACT-FREEZE-20261023.md`.
+
 
 ## Plano derivado X4.UX-R1 — cadastro assistido / conferência (2026-10-23)
 
