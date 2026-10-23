@@ -3433,14 +3433,23 @@ def _guidance_section_records(
         )
         if not rendered:
             continue
+        # Pointer/index sections and record enumerations (catalogs,
+        # topic lists) are previews — never the whole answer. They get
+        # a bounded excerpt marked partial so sibling concrete sections
+        # share the render budget. Prose/steps stay whole-or-omitted
+        # (the guidance presentation contract).
+        is_pointer = _canonical_key(key) in _GUIDANCE_INDEX_KEYS
+        is_enumeration = isinstance(value, (list, tuple)) and any(
+            isinstance(item, Mapping) for item in value
+        )
         if (
-            _canonical_key(key) in _GUIDANCE_INDEX_KEYS
+            (is_pointer or is_enumeration)
             and len(rendered) > _GUIDANCE_INDEX_PREVIEW_CHARS
         ):
             cut = rendered[:_GUIDANCE_INDEX_PREVIEW_CHARS]
             if "\n" in cut:
                 cut = cut.rsplit("\n", 1)[0]
-            rendered = cut.rstrip() + "\n…(índice parcial — truncado)"
+            rendered = cut.rstrip() + "\n\u2026(se\u00e7\u00e3o parcial \u2014 truncada)"
         records.append(
             {
                 "section": str(key),

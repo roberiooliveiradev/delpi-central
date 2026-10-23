@@ -206,6 +206,33 @@ def test_d5_catalog_index_is_bounded_and_disclosed():
     assert len(body) <= 2000
 
 
+def test_oversized_section_never_starves_the_next_one():
+    """A large concrete catalog contributes a marked partial excerpt;
+    the following small section still renders within the budget."""
+    big = {
+        "data": {
+            "displayFormatCatalog": [
+                {
+                    "formatId": f"format-{i}",
+                    "spec": {"category": "number", "index": i},
+                }
+                for i in range(40)
+            ],
+            "productGuide": {
+                "topics": [{"id": "t1", "title": "Guia curto"}]
+            },
+        }
+    }
+    content = _deterministic_guidance_content(
+        big, field_labels=_LABELS
+    )
+    assert content is not None
+    body, _ = content
+    assert "format-0" in body
+    assert "truncad" in body or "parcial" in body
+    assert len(body) <= 2000
+
+
 def test_sibling_owner_catalog_same_projection():
     sibling = {
         "data": {
