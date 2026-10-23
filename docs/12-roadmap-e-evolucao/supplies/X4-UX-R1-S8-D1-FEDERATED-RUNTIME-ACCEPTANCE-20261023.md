@@ -96,3 +96,32 @@ Produção serve o fluxo: consulta CNPJ → aviso informativo não bloqueante �
 **Limites:** paginação com dois ou mais registros/mais de dez e navegação nova aba/retorno do draft **não foram exercitados em produção via navegador**. Portanto AC-18/19 e V1–V8 `INCONCLUSIVE`, cenários multi-registro de runtime `TEST_NOT_RUN`. A pós-condição "lista completa paginada → E14 → rascunho preservado" é **capacidade comprovada por código/contrato e bundle**, e não fluxo visual já validado. `GATE-FEATURE S8 = INCONCLUSIVE` até evidência interativa ou aceite formal de residual pelo PO.
 
 **Auditoria de visualização:** `TO_INVENTORY`, sem contrato aprovado; não introduzir eventos ou armazenamento por inferência. Próxima fatia restrita a validação autenticada de UX (sem novo deploy nem escrita Protheus), com capturas e provas de multi-loja quando houver dados autorizados. R1.S3 permanece bloqueado; R1.S4–S6 não autorizados.
+
+
+## Evidência visual adicional do Product Owner — S8.V1 (2026-10-23)
+
+**Fonte:** três capturas de tela compartilhadas pelo Product Owner nesta conversa, obtidas no Portal autenticado em produção. **Limite da evidência:** imagens foram examinadas visualmente, mas seus arquivos não foram incorporados a este repositório; esta seção é um registro textual, não um anexo de screenshots. Não reproduzir credenciais ou dados adicionais dos prints.
+
+**Cenário real:** CNPJ consultado `00.428.307/0006-00`, fornecedor **EXPRESSO SÃO MIGUEL LTDA**, retornou **dois cadastros distintos** com o mesmo código `000905` e lojas `01` e `04`. A captura do fluxo de criação mostra aviso informativo **«Este CNPJ já possui cadastro no Protheus»**, ambos os registros na lista, situação de bloqueio indicada para a loja 04, ações **«Conferir cadastro»** para cada linha e continuidade do preenchimento sem bloqueio. Sugestões externas com fonte/data também estão visíveis.
+
+Capturas adicionais mostram a ficha E14 individual aberta para:
+- `/apps/supplies/suppliers/000905/04` — código/loja correspondentes, endereço `RODOVIA RSC 453 KM 74,2 Nº38500`, CEP `95058001`;
+- `/apps/supplies/suppliers/000905/01` — código/loja correspondentes, endereço `ROD RSC 453, 38500`, CEP `85032000`.
+
+Essas diferenças visíveis corroboram a utilidade da conferência **por código + loja**, sem deduzir irregularidade cadastral nem decidir qual registro deve ser utilizado. Os valores acima são transcrição pontual do que consta nas capturas, não uma nova consulta à api-delpi.
+
+| Verificação | Novo status | Limite |
+|---|---|---|
+| Consulta de CNPJ com dois cadastros distintos, mesmo código/lojas 01 e 04 | **PASS (visual)** | Cenário específico de dois registros; não comprova paginação >10 |
+| Aviso informativo e continuidade não bloqueada | **PASS (visual)** | Não prova comportamento de todas as regras futuras de POST |
+| Código/loja e ação de conferir para os dois registros | **PASS (visual)** | Teste com dois registros |
+| Abertura da ficha E14 de `000905/04` e `000905/01` | **PASS (visual)** | URLs e identificação de loja conferidas |
+| Dados distintos em fichas individuais | **PASS (visual)** | Endereço/CEP visivelmente diferentes |
+| Nova aba preserva rascunho **preenchido** ao retornar | **INCONCLUSIVE** | Capturas não demonstram retorno à aba original com draft preenchido |
+| Paginação >10, carga da página 2, erros e race conditions em navegador | **TEST_NOT_RUN** | Cobertura de código/testes prévia, não runtime visual |
+| Mobile, tema claro, teclado/foco, F5 | **INCONCLUSIVE / TEST_NOT_RUN** | Não comprovados pelas capturas |
+| Auditoria de visualização | **TO_INVENTORY** | Sem contrato canônico aprovado |
+
+**Reclassificação:** o cenário **multiloja com dois registros**, antes `TEST_NOT_RUN` em produção, passa a **`PASS (visual, neste caso)`**; **não** atualizar a classificação do cenário `>10` ou da paginação real entre páginas. O registro anterior de ausência de navegador refere-se à execução automatizada de D1; esta é **evidência posterior fornecida pelo PO**, sem reexecução de deploy ou smoke pelo GPT.
+
+**Parecer:** `ACCEPT_WITH_RESIDUAL` para deploy S8 + fluxo principal de conferência por loja; **GATE-FEATURE integral = INCONCLUSIVE** até fechamento explícito dos residuais ou aceite formal do PO conforme authority aplicável. ERP write gate permanece OFF; auditoria `TO_INVENTORY`; R1.S3 bloqueada e R1.S4–S6 não autorizadas.
