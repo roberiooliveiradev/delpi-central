@@ -45,7 +45,7 @@ export const GLOSSARY_CONTENT: readonly GlossaryEntry[] = [
   {
     term: "Cadastro assistido",
     meaning:
-      "Início do cadastro de fornecedor por consulta pública ao CNPJ: o Portal sugere valores com fonte e data da consulta e você confirma campo a campo. Sugestão não é dado gravado — a criação real continua sujeita ao gate do ERP. Se já houver cadastros com o CNPJ, eles são listados com código e loja para conferência individual — sem bloquear o preenchimento. A busca por razão social fica disponível quando o provedor for homologado.",
+      "Início do cadastro de fornecedor por consulta pública ao CNPJ: o Portal sugere valores com fonte e data da consulta (horário de Brasília) e você confirma campo a campo. Sugestão não é dado gravado — a criação real continua sujeita ao gate do ERP. Se já houver cadastros com o CNPJ, eles são listados com código e loja para conferência individual — sem bloquear o preenchimento. A busca por razão social fica disponível quando o provedor for homologado.",
   },
   {
     term: "Solicitante",

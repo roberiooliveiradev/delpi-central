@@ -7,6 +7,12 @@ import {
   SuppliesStateBanner,
 } from "../../../app/suppliesUi";
 import type { SupplierCreateDraft } from "../types";
+import {
+  caretPosAfterDigits,
+  digitsBeforePos,
+  digitsOnly,
+  formatCnpjDigits,
+} from "../taxIdMask";
 import { createSupplierPreview } from "./api";
 import { CREATION_CONTENT as C, mapCreationPreviewError } from "./content";
 import { CreationSuggestionsPanel } from "./CreationSuggestionsPanel";
@@ -73,11 +79,21 @@ export function CreationAssistedFlow({
   );
   const requestSeq = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const cnpjInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingCaretRef = useRef<number | null>(null);
   // Ref do draft: o callback assíncrono sempre lê a versão mais recente.
   const draftRef = useRef(draft);
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
+
+  // Caret da máscara: após o render, reposiciona na fronteira de dígitos.
+  useEffect(() => {
+    if (pendingCaretRef.current == null) return;
+    const pos = pendingCaretRef.current;
+    pendingCaretRef.current = null;
+    cnpjInputRef.current?.setSelectionRange(pos, pos);
+  });
 
   // Resposta obsoleta nunca sobrescreve estado — abort + sequência.
   useEffect(
@@ -101,8 +117,21 @@ export function CreationAssistedFlow({
     onEntriesChange({});
   };
 
-  const handleCnpjChange = (value: string) => {
-    setCnpjInput(value);
+  const handleCnpjChange = (
+    value: string,
+    selectionStart: number | null,
+  ) => {
+    // Apresentação mascarada; a identidade continua sendo os 14 dígitos.
+    const digits = digitsOnly(value, 14);
+    const formatted = formatCnpjDigits(digits);
+    if (selectionStart != null) {
+      const before = Math.min(
+        digitsBeforePos(value, selectionStart),
+        digits.length,
+      );
+      pendingCaretRef.current = caretPosAfterDigits(formatted, before);
+    }
+    setCnpjInput(formatted);
     // Os 14 dígitos definem a identidade pesquisada: mudou → o preview
     // anterior (e qualquer requisição em andamento) é invalidado na hora.
     // Mudança só de máscara mantém o resultado.
@@ -251,12 +280,18 @@ export function CreationAssistedFlow({
             <label className="sp-supplier-create__assist-cnpj">
               <span>{C.cnpjInputLabel}</span>
               <input
+                ref={cnpjInputRef}
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
                 value={cnpjInput}
                 placeholder={C.cnpjInputPlaceholder}
-                onChange={(event) => handleCnpjChange(event.target.value)}
+                onChange={(event) =>
+                  handleCnpjChange(
+                    event.target.value,
+                    event.target.selectionStart,
+                  )
+                }
                 disabled={disabled || loading}
                 aria-invalid={cnpjInput.length > 0 && !cnpjValid}
               />

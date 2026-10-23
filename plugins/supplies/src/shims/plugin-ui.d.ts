@@ -13,6 +13,14 @@ declare module "@delpi/plugin-ui/index" {
     placement?: "top" | "bottom";
   }): ReactNode;
 
+  export function FieldLabel(props: {
+    label: string;
+    hint?: string;
+    htmlFor?: string;
+    className?: string;
+    icon?: ReactNode;
+  }): ReactNode;
+
   export function AnchoredPanelPortal(props: {
     open: boolean;
     anchorRef: RefObject<HTMLElement | null>;

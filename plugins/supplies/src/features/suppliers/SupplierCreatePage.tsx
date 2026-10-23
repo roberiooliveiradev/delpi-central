@@ -342,6 +342,7 @@ export function SupplierCreatePage({ basePath }: SupplierCreatePageProps) {
                       onChange={(value) => patchDraft({ [field.key]: value })}
                       disabled={submitting}
                       showRequiredMark
+                      personType={draft.person_type}
                     />
                   )}
                 </div>

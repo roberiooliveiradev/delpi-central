@@ -233,7 +233,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como cadastro um novo fornecedor?",
-          a: "Na lista Fornecedores, «Novo fornecedor» oferece três inícios no mesmo formulário: consultar por CNPJ (busca dados públicos e mostra sugestões com fonte e data — você confirma campo a campo, nada é aplicado sozinho), buscar por razão social (em homologação — indisponível até o provedor ser aprovado) ou preencher manualmente. A consulta também avisa se já existe cadastro com aquele CNPJ. A gravação no ERP segue bloqueada até homologação — o Portal avisa e nada é enviado sem a revisão final.",
+          a: "Na lista Fornecedores, «Novo fornecedor» oferece três inícios no mesmo formulário: consultar por CNPJ (o campo pontua o documento automaticamente, busca dados públicos e mostra sugestões com fonte e horário de Brasília — você confirma campo a campo, nada é aplicado sozinho), buscar por razão social (em homologação — indisponível até o provedor ser aprovado) ou preencher manualmente. A consulta também avisa se já existe cadastro com aquele CNPJ. A gravação no ERP segue bloqueada até homologação — o Portal avisa e nada é enviado sem a revisão final.",
         },
         {
           q: "O que significa «Este CNPJ já possui cadastro no Protheus»?",

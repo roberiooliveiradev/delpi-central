@@ -141,3 +141,58 @@ describe("Cadastros existentes por CNPJ (X4.UX-R1.S8)", () => {
     expect(api).toContain("page_size");
   });
 });
+
+describe("UX polish (X4.UX-R1.S9)", () => {
+  it("campo CNPJ assistido: máscara progressiva + caret controlado + numérico", () => {
+    const flow = read("CreationAssistedFlow.tsx");
+    expect(flow).toContain("formatCnpjDigits");
+    expect(flow).toContain("digitsOnly");
+    expect(flow).toContain("cnpjInputRef");
+    expect(flow).toContain("setSelectionRange");
+    expect(flow).toContain('inputMode="numeric"');
+    // consulta permanece manual e exige CNPJ válido — sem auto-consulta
+    expect(flow).toContain("isCnpjFormatValid");
+    expect(flow).not.toMatch(/useEffect\([^)]*consult/);
+    // identidade continua sendo os dígitos: invalidação via searchTaxIdChanged
+    expect(flow).toContain("searchTaxIdChanged");
+  });
+
+  it("formulário principal: tax_id mascarado por tipo de pessoa, draft em dígitos", () => {
+    const fields = readFileSync(
+      join(dir, "../SupplierFormFields.tsx"),
+      "utf8",
+    );
+    expect(fields).toContain("SupplierTaxIdField");
+    expect(fields).toContain('spec.key === "tax_id"');
+    expect(fields).toContain("formatTaxIdForPerson");
+    expect(fields).toContain("personType");
+    // o onChange entrega apenas dígitos — payload canônico preservado
+    expect(fields).toContain("digitsOnly(event.target.value");
+    const page = readFileSync(
+      join(dir, "../SupplierCreatePage.tsx"),
+      "utf8",
+    );
+    expect(page).toContain("personType={draft.person_type}");
+  });
+
+  it("retrieved_at é exibido em America/Sao_Paulo sem mutar o contrato", () => {
+    const content = read("content.ts");
+    expect(content).toContain('"America/Sao_Paulo"');
+    expect(content).toContain("Intl.DateTimeFormat");
+    expect(content).toContain("timeZone: PORTAL_TIME_ZONE");
+    // fallback seguro para timestamp inválido
+    expect(content).toContain("return iso");
+    const panel = read("CreationSuggestionsPanel.tsx");
+    expect(panel).toContain("formatRetrievedAt(entry.source.retrieved_at)");
+  });
+
+  it("fonte humanizada com provider_id preservado como proveniência", () => {
+    const content = read("content.ts");
+    expect(content).toContain("providerDisplayName");
+    expect(content).toContain("brasilapi-cnpj-v1");
+    const panel = read("CreationSuggestionsPanel.tsx");
+    expect(panel).toContain("providerDisplayName(entry.source.provider_id)");
+    // identificador técnico continua acessível (title) — contrato intacto
+    expect(panel).toContain("entry.source.provider_id}");
+  });
+});

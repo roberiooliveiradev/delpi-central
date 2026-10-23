@@ -1,7 +1,11 @@
 import { SuppliesActionButton } from "../../../app/suppliesUi";
 import { SUPPLIER_FIELD_REGISTRY } from "../types";
 import type { SupplierCreateDraft } from "../types";
-import { CREATION_CONTENT as C, formatRetrievedAt } from "./content";
+import {
+  CREATION_CONTENT as C,
+  formatRetrievedAt,
+  providerDisplayName,
+} from "./content";
 import {
   pendingApplicableEntries,
   suggestionApplyDecision,
@@ -129,9 +133,12 @@ export function CreationSuggestionsPanel({
                 </div>
               ) : null}
               {entry.source ? (
-                <div className="sp-supplier-create__assist-source">
-                  {C.sourceLabel}: {entry.source.provider_id} ·{" "}
-                  {C.retrievedLabel}:{" "}
+                <div
+                  className="sp-supplier-create__assist-source"
+                  title={`${C.sourceLabel}: ${entry.source.provider_id}`}
+                >
+                  {C.sourceLabel}: {providerDisplayName(entry.source.provider_id)}{" "}
+                  · {C.retrievedLabel}:{" "}
                   {formatRetrievedAt(entry.source.retrieved_at)}
                 </div>
               ) : null}

@@ -67,13 +67,13 @@ export const SP_HELP = {
   suppliersRefresh:
     "Recarrega a lista mantendo busca e filtros atuais.",
   suppliersCreate:
-    "Cadastro de novo fornecedor com três inícios: consultar por CNPJ (traz sugestões de dados públicos com fonte e data — nada é aplicado sem confirmação), buscar por razão social (em homologação) ou preencher manualmente. Todos convergem para o mesmo formulário. Se o CNPJ já tiver cadastros no Protheus, o Portal lista todos com código e loja, e «Conferir cadastro» abre a ficha em nova aba — sem bloquear nem perder o formulário. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
+    "Cadastro de novo fornecedor com três inícios: consultar por CNPJ (o campo formata o documento automaticamente e traz sugestões de dados públicos com fonte e horário de Brasília — nada é aplicado sem confirmação), buscar por razão social (em homologação) ou preencher manualmente. Todos convergem para o mesmo formulário. Se o CNPJ já tiver cadastros no Protheus, o Portal lista todos com código e loja, e «Conferir cadastro» abre a ficha em nova aba — sem bloquear nem perder o formulário. O envio ao ERP só é liberado quando a escrita estiver homologada neste ambiente; fora isso, a operação fica bloqueada com aviso claro e nada é gravado.",
   suppliersCreateFields:
     "Todos os campos do contrato de cadastro, organizados por seção (identificação, endereço, contato, fiscal e compras), com o documento (CNPJ/CPF) em primeiro lugar. Cada label tem ajuda contextual — passe o mouse ou use o teclado sobre o nome do campo. UF, país, condição/forma de pagamento, natureza financeira, conta contábil e município trazem opções reais do Protheus — pesquise pela descrição e o código correto é enviado. O CEP permite buscar uma sugestão de endereço — nada é aplicado sem confirmação. Somente a loja é obrigatória no Portal — as demais obrigatoriedades são definidas pelo ERP, que rejeita o envio se faltar campo exigido. Nada é enviado sem a revisão final.",
   suppliersColSupplier:
     "Fornecedor com identificador completo (código + loja, 8 dígitos). Clique na linha para abrir a ficha.",
   suppliersColTaxId:
-    "CNPJ/CPF do fornecedor. Não é chave única — podem existir cadastros distintos com o mesmo documento. Dados de CPF chegam mascarados do backend (LGPD).",
+    "CNPJ/CPF do fornecedor. O campo mostra a pontuação conforme o tipo de pessoa, mas o valor é salvo e enviado só com dígitos. Não é chave única — podem existir cadastros distintos com o mesmo documento. Dados de CPF chegam mascarados do backend (LGPD).",
   suppliersColBlocked:
     "Ativo ou Bloqueado conforme o campo de bloqueio (MSBLQL) do cadastro SA2.",
   suppliersEdit:

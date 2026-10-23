@@ -1,7 +1,18 @@
 import { Lock } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
+  FieldLabel,
+  textFieldBemClasses,
+} from "@delpi/plugin-ui/index";
+import {
+  UI_PREFIX,
   SuppliesSectionHintLabel,
   SuppliesSelectField,
   SuppliesTextField,
@@ -27,6 +38,12 @@ import {
   useCatalogSearch,
   type SupplierCatalogOption,
 } from "./supplierCatalogs";
+import {
+  caretPosAfterDigits,
+  digitsBeforePos,
+  digitsOnly,
+  formatTaxIdForPerson,
+} from "./taxIdMask";
 import type {
   SupplierDetailSectionKey,
   SupplierFieldSpec,
@@ -41,7 +58,70 @@ type SupplierFieldInputProps = {
   showRequiredMark?: boolean;
   /** Hint customizado (ex.: ajuda de edição). */
   hint?: string;
+  /** Tipo de pessoa do draft — máscara CNPJ (J) / CPF (F) / dígitos. */
+  personType?: string;
 };
+
+const TAX_FIELD_CLASSES = textFieldBemClasses(UI_PREFIX);
+
+/**
+ * CNPJ/CPF mascarado na apresentação; o draft segue só dígitos (payload
+ * canônico intacto). Mesmas classes BEM do TextField do kit — o kit não
+ * tem variante mascarada, então replicamos o shell e controlamos o caret.
+ */
+function SupplierTaxIdField({
+  spec,
+  value,
+  onChange,
+  disabled,
+  showRequiredMark,
+  hint,
+  personType,
+}: SupplierFieldInputProps) {
+  const fieldId = useId();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const pendingCaret = useRef<number | null>(null);
+  const label =
+    showRequiredMark && spec.required ? `${spec.label} *` : spec.label;
+  const maxDigits = personType === "F" ? 11 : spec.maxLength;
+  const display = formatTaxIdForPerson(value, personType);
+
+  useEffect(() => {
+    if (pendingCaret.current == null) return;
+    const pos = pendingCaret.current;
+    pendingCaret.current = null;
+    inputRef.current?.setSelectionRange(pos, pos);
+  });
+
+  return (
+    <div className={TAX_FIELD_CLASSES.root}>
+      <label htmlFor={fieldId} className={TAX_FIELD_CLASSES.labelWrapper}>
+        <FieldLabel label={label} hint={hint ?? spec.help} />
+      </label>
+      <input
+        id={fieldId}
+        ref={inputRef}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        className={TAX_FIELD_CLASSES.control}
+        value={display}
+        disabled={disabled}
+        onChange={(event) => {
+          const digits = digitsOnly(event.target.value, maxDigits);
+          const sel = event.target.selectionStart;
+          if (sel != null) {
+            pendingCaret.current = caretPosAfterDigits(
+              formatTaxIdForPerson(digits, personType),
+              Math.min(digitsBeforePos(event.target.value, sel), digits.length),
+            );
+          }
+          onChange(digits);
+        }}
+      />
+    </div>
+  );
+}
 
 /**
  * Input de um campo do SUPPLIER_FIELD_REGISTRY — usado por criação e edição.
@@ -54,9 +134,24 @@ export function SupplierFieldInput({
   disabled,
   showRequiredMark,
   hint,
+  personType,
 }: SupplierFieldInputProps) {
   const label =
     showRequiredMark && spec.required ? `${spec.label} *` : spec.label;
+
+  if (spec.key === "tax_id") {
+    return (
+      <SupplierTaxIdField
+        spec={spec}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        showRequiredMark={showRequiredMark}
+        hint={hint}
+        personType={personType}
+      />
+    );
+  }
 
   if (spec.options) {
     return (
