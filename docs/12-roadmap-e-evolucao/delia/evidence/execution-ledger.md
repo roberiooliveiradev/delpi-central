@@ -17915,3 +17915,16 @@ TASK_ID=DELIA-ORCH-REFAC-R1R2-INTEGRATED-RELEASE-AND-HOMOLOGATION-01
 DEPLOYED=YES PROD_HOMOLOGATION=EXECUTED BUSINESS_OUTCOME=PASS_WITH_RESIDUALS
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.414 — Composer Settings: motion UX suave (2026-10-23)
+
+**2026-10-23 — DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01 (spec 125 §11):** microinteracoes suaves implementadas no wrapper de produto, zero mudanca no AnchoredPanelPortal. Entrada fade+translateY(5px) 160ms suprimida em mount-ja-aberto (remount batch<->live, sem flicker); saida --exiting 130ms com estado funcional imediato (aria-expanded/--open fecham na hora, so a apresentacao anima), pointer-events:none, timer com cleanup, Escape/fora idempotentes no exit; selecao 170ms, check opacidade+escala 160ms, trigger 150ms; tudo sob prefers-reduced-motion no-preference — em reduce fecha instantaneo. Zero mudanca de ditado/contrato/backend.
+
+TESTES: settings 22/22 (+MOT unitarios), delia 421/421, typecheck+build verdes. DEPLOY: push ff `924bbeba9c` -> up-prod-sequential --build delia.
+
+QA MOTION PROD 20/20 (vd-cs-motion-prod.mjs): duracoes medidas (160/170/160/150/130ms), rampa opacidade 0.44->1.00 em ~137ms frame a frame, reduced-motion 26ms, remount sem replay, Escape+clique-fora durante animacao fecham e restauram foco, dock real + mobile 375 + dark. Screenshots shots-motion/. DEFECTS_PROD=0.
+
+TASK_ID=DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01
+COMMIT=924bbeba9c(code)+docs DEPLOYED=YES PROD_QA=20/20
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION

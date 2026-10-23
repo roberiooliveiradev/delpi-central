@@ -400,3 +400,47 @@ Correção bounded:
   dentro do viewport. Screenshots `shots-keepopen/`.
 
 Residual: `SCREEN_READER_QA=TEST_NOT_RUN`.
+
+## Spec 125 §11 — Motion UX (microinterações suaves)
+
+**Task:** `DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01` ·
+SHA `924bbeba9c` · deploy `delpi-delia` rebuild · 2026-10-23.
+
+### Decisões de implementação
+
+- Entrada `--entering`: fade + translateY(5px), 160ms — suprimida em
+  mount já-aberto (remount batch⇄live) via `bornOpen`, sem replay/flicker.
+- Saída `--exiting`: 130ms, lifecycle do produto (não da primitiva);
+  `pointer-events:none`; estado funcional fecha imediatamente
+  (`aria-expanded`, `--open` do trigger); cleanup de timer no unmount;
+  guards tornam Escape/clique-fora durante o exit idempotentes.
+- Seleção 170ms de fundo; check opacidade+escala 160ms; trigger 150ms.
+- Tudo sob `prefers-reduced-motion: no-preference`; em `reduce`,
+  fechamento instantâneo medido (26ms).
+
+### MOT-01..MOT-09
+
+| Critério | Resultado |
+|---|---|
+| MOT-01 abertura suave | PASS — 160ms medido; rampa real 0.44→1.00 em ~137ms (samples rAF) |
+| MOT-02 fechamento seguro | PASS — exiting 130ms depois unmount (~221ms total clique→detach) |
+| MOT-03 seleção sem flicker | PASS — 170ms fundo; mount-aberto não repete entrada |
+| MOT-04 check discreto | PASS — opacidade+scale 160ms |
+| MOT-05 trigger suave | PASS — 150ms cor/superfície |
+| MOT-06 keep-open | PASS — 4 seleções rápidas alternadas, menu aberto |
+| MOT-07 reduced-motion | PASS — sem animação de entrada; fecha em 26ms |
+| MOT-08 foco/caret/capture/auto-submit | PASS — Escape/clique-fora durante a entrada fecham; foco→trigger; zero auto-submit |
+| MOT-09 multi-superfície | PASS — full-page light/dark, dock real, mobile 375 no viewport |
+
+### Testes e QA
+
+- `DeliaComposerSettings.test.tsx`: 22/22 (+MOT-01/02/03 unitários:
+  classe entering no mount, fase exiting, reduced-motion instantâneo).
+- Suite DÉLIA: **421/421**; typecheck e build verdes.
+- Produção (`vd-cs-motion-prod.mjs`, Chrome real autenticado):
+  **20/20** — durações computadas (160/170/160/150/130ms), rampa de
+  opacidade frame a frame, reduced-motion, remount sem replay, Escape e
+  outside-click durante animação, dock real, mobile, dark.
+  Screenshots `shots-motion/`.
+
+Residual: `SCREEN_READER_QA=TEST_NOT_RUN` (sem leitor no ambiente).

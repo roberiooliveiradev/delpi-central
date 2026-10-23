@@ -151,7 +151,7 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 
 ## 11. Decisão de motion UX — microinterações suaves (2026-10-23)
 
-**Status:** PRODUCT_UX_DECISION / IMPLEMENTATION_PENDING. O Product Owner solicitou que o menu Configurações do campo de pergunta e suas trocas entre opções transmitam a personalidade amigável e suave da DÉLIA. A aparência clean (§9), keep-open (§10), batch default, live opt-in, acessibilidade e regras de captura permanecem congeladas.
+**Status:** IMPLEMENTED (2026-10-23, SHA `924bbeba9c`). O Product Owner solicitou que o menu Configurações do campo de pergunta e suas trocas entre opções transmitam a personalidade amigável e suave da DÉLIA. A aparência clean (§9), keep-open (§10), batch default, live opt-in, acessibilidade e regras de captura permanecem congeladas.
 
 ### Comportamento alvo
 
@@ -169,4 +169,11 @@ No HEAD da especificação, já havia transição de `background-color` e `opaci
 
 **Task proposta:** `DELIA-UX-COMPOSER-SETTINGS-GENTLE-MOTION-REFINEMENT-01`. Reanchor autoridades/ledger, verificar `AnchoredPanelPortal`, `ComposerSettingsMenu`, `DictationModeSettings`, CSS e `prefers-reduced-motion`; `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` sujeitos a inventário; teste RED/green; QA real com capturas de vídeo/frames (não apenas screenshots estáticos), teclado/Escape/click-outside, Full-page/Dock/mobile, temas, reduced-motion, race de troca e desmontagem; regressão, commit/push main, deploy frontend gated, post-deploy QA e report.
 
-**Critérios MOT-01..MOT-09:** abertura perceptivelmente suave; fechamento seguro conforme gate da primitiva; transição entre selecionados sem flicker; check discreto; trigger suave; menu keep-open; reduced-motion; nenhum impacto em foco/caret/capture/auto-submit; QA multi-superfície. Status da alteração deste documento: `DOC_ONLY; RUNTIME_NOT_CHANGED`.
+**Critérios MOT-01..MOT-09:** abertura perceptivelmente suave; fechamento seguro conforme gate da primitiva; transição entre selecionados sem flicker; check discreto; trigger suave; menu keep-open; reduced-motion; nenhum impacto em foco/caret/capture/auto-submit; QA multi-superfície. Status da alteração deste documento: `RUNTIME_CHANGED`.
+
+**Implementação (factual, SHA `924bbeba9c`):**
+- Entrada: fade + `translateY(5px)` de **160ms** na classe `--entering`, aplicada pelo `ComposerSettingsMenu` — zero mudança no `AnchoredPanelPortal` (posição computada intocada). Suprimida quando o menu nasce aberto (mount com `open=true` no remount batch⇄live), evitando flicker a cada seleção.
+- Saída: fase `--exiting` de **130ms** (fade + translateY 3px, `pointer-events:none`) owned pelo produto — o painel permanece `open` durante o fade e só então `onOpenChange(false)`; o trigger reflete fechado imediatamente (`aria-expanded=false`, sem `--open`); timer com cleanup no unmount; Escape/clique externo durante o exit são idempotentes; clique no trigger durante o exit finaliza na hora. Nenhuma primitiva compartilhada alterada.
+- Seleção: fundo **170ms**; check opacidade + `scale(0.85→1)` **160ms**; trigger **150ms** cor/superfície.
+- Reduced motion: animações sob `no-preference`; em `reduce` o fechamento é imediato (sem fase exiting nem timer).
+- MOT-01..MOT-09 provados: 22 testes de settings, suite DÉLIA 421/421, probe prod `vd-cs-motion-prod.mjs` **20/20** com rampa de opacidade medida frame a frame.
