@@ -237,7 +237,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que alguns campos do cadastro aparecem somente leitura na edição?",
-          a: "Campos como CNAE, retenções fiscais, códigos de referência e vínculos podem ser preenchidos no cadastro novo e consultados na ficha, mas a alteração ainda não foi homologada no ERP — eles aparecem protegidos até a liberação. Razão social e nome fantasia seguem editáveis conforme a homologação vigente.",
+          a: "A edição libera apenas os campos cuja gravação foi homologada no ERP — hoje a maioria dos campos estendidos (endereço, contato, fiscal/tributário e compras) já pode ser alterada. Permanecem protegidos os campos de identidade (código, loja e CNPJ) e os que ainda não tiveram escrita comprovada no ERP, como Regime SIMP e cliente/loja vinculada — eles aparecem somente leitura até a homologação correspondente.",
         },
         {
           q: "O que significa «Este CNPJ já possui cadastro no Protheus»?",
@@ -249,7 +249,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como altero o cadastro de um fornecedor?",
-          a: "Na ficha do fornecedor, Editar cadastro permite mudar razão social e nome fantasia — um ou ambos. Antes de gravar, revise o antes/depois; cancelar não persiste nada. O envio depende de homologação de escrita no ERP: se estiver bloqueado, o Portal avisa e nada é enviado; se a resposta demorar, recarregue a ficha antes de repetir para evitar duplicidade.",
+          a: "Na ficha do fornecedor, Editar cadastro abre o formulário com os campos homologados organizados nas mesmas seções do cadastro — altere um ou vários. Antes de gravar, revise o antes/depois na revisão; cancelar não persiste nada e somente os campos modificados são enviados. O envio depende de homologação de escrita no ERP: se estiver bloqueado, o Portal avisa e nada é enviado; se a resposta demorar, recarregue a ficha antes de repetir para evitar duplicidade.",
         },
         {
           q: "Como abro e compartilho o detalhe de um pedido de compra?",

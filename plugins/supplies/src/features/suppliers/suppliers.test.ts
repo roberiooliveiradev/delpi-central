@@ -39,11 +39,11 @@ import {
   SUPPLIER_PUT_EDITABLE_KEYS,
   type SupplierCreateDraft,
   type SupplierDetail,
-  type SupplierPostOnlyFieldKey,
+  type SupplierExtendedFieldKey,
 } from "./types";
 
-/** Draft vazio dos 29 campos criáveis E3 — preenchido sob demanda. */
-const EMPTY_E3_DRAFT: Pick<SupplierCreateDraft, SupplierPostOnlyFieldKey> = {
+/** Draft vazio dos 29 campos estendidos E3 — preenchido sob demanda. */
+const EMPTY_E3_DRAFT: Pick<SupplierCreateDraft, SupplierExtendedFieldKey> = {
   address_number: "",
   po_box: "",
   icms_contributor: "",
@@ -290,12 +290,42 @@ describe("shared field registry (F3.1 create/edit parity)", () => {
         "payment_method_code",
         "accounting_account",
         "financial_nature_code",
+        // X4.FIELDS.E5 — 26 campos PUT-homologados em DELPI_TST01
+        "legal_entity_type",
+        "address_number",
+        "po_box",
+        "commercial_contact_name",
+        "responsible_name",
+        "fax",
+        "website",
+        "icms_contributor",
+        "simples_nacional",
+        "cnae_code",
+        "pb_regime_code",
+        "tax_group_code",
+        "inss_withholding",
+        "iss_withholding",
+        "csll_withholding",
+        "cofins_withholding",
+        "pis_withholding",
+        "irf_calculation",
+        "inp_calculation",
+        "purchase_price_table_code",
+        "risk_code",
+        "swift_code",
+        "carrier_code",
+        "segment_code",
+        "administrator_code",
+        "linked_employee_code",
       ].sort(),
     );
     const editable = SUPPLIER_FIELD_REGISTRY.filter((f) => f.put === "editable");
     expect(
       editable.every(
-        (f) => f.evidence === "put-contract" || f.evidence === "po-decision",
+        (f) =>
+          f.evidence === "put-contract" ||
+          f.evidence === "po-decision" ||
+          f.evidence === "put-homologated",
       ),
     ).toBe(true);
   });
@@ -834,20 +864,42 @@ describe('F5-UX-R4 — consulta de CEP e conciliação CC2', () => {
 });
 
 describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
-  const E3_KEYS = Object.keys(EMPTY_E3_DRAFT) as SupplierPostOnlyFieldKey[];
+  const E3_KEYS = Object.keys(EMPTY_E3_DRAFT) as SupplierExtendedFieldKey[];
+  /** E5: campos que permanecem sem evidência de PUT upstream. */
+  const E5_PENDING = [
+    'simp_regime_code',
+    'linked_customer_code',
+    'linked_customer_store',
+  ] as const;
 
-  it('registra os 29 campos criáveis com evidência post-matrix', () => {
+  it('registra os 29 campos criáveis — evidência por estado de PUT', () => {
     expect(E3_KEYS).toHaveLength(29);
     for (const key of E3_KEYS) {
       const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key);
       expect(spec, key).toBeDefined();
       expect(spec!.post).toBe(true);
-      expect(spec!.evidence).toBe('post-matrix');
+      expect(spec!.evidence, key).toBe(
+        (E5_PENDING as readonly string[]).includes(key)
+          ? 'post-matrix'
+          : 'put-homologated',
+      );
     }
   });
 
-  it('nenhum campo E3 é editável — PUT aguarda homologação E3.S4', () => {
-    for (const key of E3_KEYS) {
+  it('E5: os 26 campos PUT-homologados viram editáveis na ficha E14', () => {
+    const proven = E3_KEYS.filter(
+      (key) => !(E5_PENDING as readonly string[]).includes(key),
+    );
+    expect(proven).toHaveLength(26);
+    for (const key of proven) {
+      const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
+      expect(spec.put, key).toBe('editable');
+      expect(SUPPLIER_PUT_EDITABLE_KEYS).toContain(key);
+    }
+  });
+
+  it('E5: os 3 campos sem evidência de PUT permanecem readonly', () => {
+    for (const key of E5_PENDING) {
       const spec = SUPPLIER_FIELD_REGISTRY.find((f) => f.key === key)!;
       expect(spec.put, key).toBe('readonly');
       expect(SUPPLIER_PUT_EDITABLE_KEYS).not.toContain(key);
@@ -903,22 +955,27 @@ describe('X4.FIELDS.E3 — 29 campos homologados em E2', () => {
     expect(body.fax).toBeUndefined();
   });
 
-  it('draft de edição ignora campos post-only — não viram update candidato', () => {
-    const before = SUPPLIER_PUT_EDITABLE_KEYS.length;
+  it('draft de edição carrega campos E5-homologados e ignora os 3 pendentes', () => {
     const detail = {
       sections: {
-        fiscal: { cnae_code: '6201501' },
-        purchasing: { linked_customer_code: '000123' },
+        fiscal: { cnae_code: '6201501', simp_regime_code: '1' },
+        purchasing: {
+          linked_customer_code: '000123',
+          linked_customer_store: '01',
+        },
         contact: { commercial_contact_name: 'MARIA' },
       },
     } as unknown as SupplierDetail;
     const draft = draftFromDetail(detail);
-    for (const key of E3_KEYS) {
+    // PUT comprovado em E5 → valor carregado no draft de edição.
+    expect(draft.cnae_code).toBe('6201501');
+    expect(draft.commercial_contact_name).toBe('MARIA');
+    // Sem evidência de PUT → fora do draft e do PUT parcial.
+    for (const key of E5_PENDING) {
       expect(
         (draft as Record<string, string>)[key],
         key,
       ).toBeUndefined();
     }
-    expect(SUPPLIER_PUT_EDITABLE_KEYS.length).toBe(before);
   });
 });

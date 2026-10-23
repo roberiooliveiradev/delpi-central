@@ -436,10 +436,42 @@ class TestWrite:
             "linked_customer_code": "000123",
         }
 
-    def test_put_rejects_e3_post_only_fields(self, client):
-        """E2 proved POST only — PUT allowlist stays frozen (E3.S4)."""
+    def test_put_forwards_e5_homologated_fields(self, client):
+        """E5 proved PUT persistence — BFF forwards the homologated set."""
         v, r = _auth()
-        for field in ("address_number", "cnae_code", "carrier_code"):
+        with v, r, patch(
+            "app.interfaces.http.routes.suppliers_routes._GATEWAY"
+        ) as gw:
+            gw.put.return_value = {"success": True, "data": {}}
+            resp = client.put(
+                "/suppliers/000001/01",
+                json={
+                    "fornecedor": {
+                        "address_number": "1024",
+                        "cnae_code": "6202300",
+                        "carrier_code": "000123",
+                        "swift_code": "BRASBRRJXXX",
+                    }
+                },
+                headers={"Authorization": "Bearer t"},
+            )
+        assert resp.status_code == 200
+        sent = gw.put.call_args.kwargs["json_body"]["fornecedor"]
+        assert sent == {
+            "address_number": "1024",
+            "cnae_code": "6202300",
+            "carrier_code": "000123",
+            "swift_code": "BRASBRRJXXX",
+        }
+
+    def test_put_rejects_e5_not_homologated_fields(self, client):
+        """E5 leftovers stay out — no proven controlled upstream change."""
+        v, r = _auth()
+        for field in (
+            "simp_regime_code",
+            "linked_customer_code",
+            "linked_customer_store",
+        ):
             with v, r:
                 resp = client.put(
                     "/suppliers/000001/01",

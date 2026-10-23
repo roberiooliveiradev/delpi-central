@@ -62,42 +62,30 @@ export type SupplierWriteResponse = {
 };
 
 /**
- * Campos criáveis (POST homologado em E2) mas AINDA não editáveis —
- * upstream PUT não foi homologado (E3.S4). Mantidos fora de qualquer
- * derivação de editável até a homologação PUT dedicada.
+ * Campos criáveis (POST homologado em E2) SEM evidência de PUT controlado
+ * no ensaio E5 — permanecem fora de qualquer derivação de editável.
  */
 export type SupplierPostOnlyFieldKey =
-  | "address_number"
-  | "po_box"
-  | "icms_contributor"
-  | "simples_nacional"
-  | "cnae_code"
-  | "legal_entity_type"
-  | "simp_regime_code"
-  | "pb_regime_code"
-  | "inss_withholding"
-  | "iss_withholding"
-  | "csll_withholding"
-  | "cofins_withholding"
-  | "pis_withholding"
-  | "irf_calculation"
-  | "inp_calculation"
-  | "tax_group_code"
-  | "commercial_contact_name"
-  | "fax"
-  | "website"
-  | "responsible_name"
-  | "risk_code"
-  | "swift_code"
-  | "purchase_price_table_code"
-  | "carrier_code"
-  | "segment_code"
-  | "administrator_code"
-  | "linked_customer_code"
-  | "linked_customer_store"
+  | "simp_regime_code" // E5: drift upstream — PUT inconclusivo
+  | "linked_customer_code" // E5: par composto sem prova de alteração
+  | "linked_customer_store"; // E5: PUT_IGNORED upstream
+
+/**
+ * Os 29 campos estendidos promovidos em E3 — 26 com PUT comprovado no
+ * ensaio E5 (editáveis) + 3 que permanecem post-only por falta de
+ * evidência upstream (`SupplierPostOnlyFieldKey`).
+ */
+export type SupplierExtendedFieldKey =
+  | "legal_entity_type" | "address_number" | "po_box"
+  | "commercial_contact_name" | "responsible_name" | "fax" | "website"
+  | "icms_contributor" | "simples_nacional" | "cnae_code" | "simp_regime_code"
+  | "pb_regime_code" | "tax_group_code" | "inss_withholding" | "iss_withholding"
+  | "csll_withholding" | "cofins_withholding" | "pis_withholding"
+  | "irf_calculation" | "inp_calculation" | "purchase_price_table_code"
+  | "risk_code" | "swift_code" | "carrier_code" | "segment_code"
+  | "administrator_code" | "linked_customer_code" | "linked_customer_store"
   | "linked_employee_code";
 
-/** Campos editáveis via PUT: cadastrais F3.3 exceto documento e loja. */
 export type SupplierEditableFieldKey = Exclude<
   keyof SupplierCreateDraft,
   "tax_id" | "supplier_store" | SupplierPostOnlyFieldKey
@@ -177,6 +165,7 @@ export type SupplierFieldGetSource =
 export type SupplierFieldEvidence =
   | "post-matrix" // matriz REST→SA2 (POST documentado)
   | "put-contract" // exemplo PUT do contrato REST (editável comprovado)
+  | "put-homologated" // X4.FIELDS.E5 — PUT comprovado em DELPI_TST01
   | "po-decision" // decisão funcional PO (F3.3) — upstream pendente de homologação
   | "identity" // parte da chave supplier_id (A2_COD + A2_LOJA)
   | "system"; // gerado pelo ERP — nunca enviado pelo cliente
@@ -512,6 +501,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Identificação — classificação cadastral
   F({
     key: "legal_entity_type",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Natureza jurídica",
     section: "identification",
     maxLength: 1,
@@ -522,6 +513,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Endereço
   F({
     key: "address_number",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Número",
     section: "address",
     maxLength: 6,
@@ -532,6 +525,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "po_box",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Caixa postal",
     section: "address",
     maxLength: 5,
@@ -542,6 +537,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Contato
   F({
     key: "commercial_contact_name",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Contato comercial",
     section: "contact",
     maxLength: 15,
@@ -551,6 +548,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "responsible_name",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Responsável",
     section: "contact",
     maxLength: 45,
@@ -560,6 +559,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "fax",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Fax",
     section: "contact",
     maxLength: 15,
@@ -570,6 +571,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "website",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Site",
     section: "contact",
     maxLength: 30,
@@ -580,6 +583,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Fiscal e tributário
   F({
     key: "icms_contributor",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Contribuinte ICMS",
     section: "fiscal",
     maxLength: 1,
@@ -593,6 +598,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "simples_nacional",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Simples Nacional",
     section: "fiscal",
     maxLength: 1,
@@ -606,6 +613,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "cnae_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "CNAE",
     section: "fiscal",
     maxLength: 9,
@@ -625,6 +634,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "pb_regime_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Regime PB",
     section: "fiscal",
     maxLength: 1,
@@ -638,6 +649,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "tax_group_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Grupo tributário",
     section: "fiscal",
     maxLength: 3,
@@ -647,6 +660,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "inss_withholding",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Retenção INSS",
     section: "fiscal",
     maxLength: 1,
@@ -660,6 +675,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "iss_withholding",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Retenção ISS",
     section: "fiscal",
     maxLength: 1,
@@ -673,6 +690,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "csll_withholding",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Retenção CSLL",
     section: "fiscal",
     maxLength: 1,
@@ -686,6 +705,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "cofins_withholding",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Retenção COFINS",
     section: "fiscal",
     maxLength: 1,
@@ -699,6 +720,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "pis_withholding",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Retenção PIS",
     section: "fiscal",
     maxLength: 1,
@@ -712,6 +735,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "irf_calculation",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Cálculo IRRF",
     section: "fiscal",
     maxLength: 1,
@@ -727,6 +752,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "inp_calculation",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Cálculo INP",
     section: "fiscal",
     maxLength: 1,
@@ -741,6 +768,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   // Compras e relacionamentos
   F({
     key: "purchase_price_table_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Tabela de preços",
     section: "purchasing",
     maxLength: 3,
@@ -750,6 +779,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "risk_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Código de risco",
     section: "purchasing",
     maxLength: 3,
@@ -759,6 +790,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "swift_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Código SWIFT",
     section: "purchasing",
     maxLength: 30,
@@ -769,6 +802,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "carrier_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Transportadora",
     section: "purchasing",
     maxLength: 6,
@@ -778,6 +813,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "segment_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Segmento",
     section: "purchasing",
     maxLength: 6,
@@ -787,6 +824,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "administrator_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Administrador",
     section: "purchasing",
     maxLength: 3,
@@ -815,6 +854,8 @@ export const SUPPLIER_FIELD_REGISTRY: ReadonlyArray<SupplierFieldSpec> = [
   }),
   F({
     key: "linked_employee_code",
+    put: "editable",
+    evidence: "put-homologated",
     label: "Funcionário vinculado",
     section: "purchasing",
     maxLength: 6,

@@ -122,16 +122,15 @@ def test_length_not_truncated() -> None:
     assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
 
 
-# --- X4.FIELDS.E3 — PUT freeze: promoted-but-not-PUT-homologated ---------
+# --- X4.FIELDS.E5 — PUT homologated set (26) vs still-unproven (3) ------
 
-E3_POST_ONLY_FIELDS = (
+E5_PUT_HOMOLOGATED_FIELDS = (
     "address_number",
     "po_box",
     "icms_contributor",
     "simples_nacional",
     "cnae_code",
     "legal_entity_type",
-    "simp_regime_code",
     "pb_regime_code",
     "inss_withholding",
     "iss_withholding",
@@ -151,21 +150,65 @@ E3_POST_ONLY_FIELDS = (
     "carrier_code",
     "segment_code",
     "administrator_code",
-    "linked_customer_code",
-    "linked_customer_store",
     "linked_employee_code",
 )
 
+# E5 assay outcomes that stay OUT of the PUT allowlist:
+# - simp_regime_code: upstream accepts 1/2 but no controlled change could be
+#   proven (field drifts between reads); "0" is rejected upstream.
+# - linked_customer_code: SA1 TST01 only has customer 000001 — no distinct
+#   value exists to prove an update; the composite pair PUT was rejected.
+# - linked_customer_store: PUT sent a valid SA1 store and A2_LOJCLI stayed
+#   unchanged — upstream ignores it on update.
+E5_NOT_HOMOLOGATED_FIELDS = (
+    "simp_regime_code",
+    "linked_customer_code",
+    "linked_customer_store",
+)
 
-@pytest.mark.parametrize("field", E3_POST_ONLY_FIELDS)
-def test_e3_post_only_field_rejected_in_put(field: str) -> None:
-    """E2 proved POST persistence only — PUT stays NOT_HOMOLOGATED."""
+
+_E5_SAMPLE_VALUES = {
+    "inss_withholding": "S",
+    "iss_withholding": "S",
+}
+
+
+@pytest.mark.parametrize("field", E5_PUT_HOMOLOGATED_FIELDS)
+def test_e5_put_homologated_field_accepted(field: str) -> None:
+    value = _E5_SAMPLE_VALUES.get(field, "1")
+    fields = normalize_supplier_update_fields({field: value})
+    assert fields == {field: value}
+
+
+@pytest.mark.parametrize("field", E5_NOT_HOMOLOGATED_FIELDS)
+def test_e5_not_homologated_field_rejected_in_put(field: str) -> None:
     with pytest.raises(ProtheusRestError) as exc:
         normalize_supplier_update_fields({field: "1"})
     assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_NOT_EDITABLE"
 
 
-def test_put_allowlist_frozen_at_22() -> None:
-    assert len(PUT_EDITABLE_FIELDS) == 22
+def test_e5_put_normalization_preserves_spec_rules() -> None:
+    fields = normalize_supplier_update_fields({"swift_code": "b1"})
+    assert fields["swift_code"] == "B1"
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_update_fields({"icms_contributor": "9"})
+    assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_update_fields({"address_number": "12x"})
+    assert exc.value.code == "PROTHEUS_SUPPLIER_PAYLOAD_INVALID"
+
+
+def test_e5_cnae_conditional_enforced_when_person_type_f() -> None:
+    with pytest.raises(ProtheusRestError) as exc:
+        normalize_supplier_update_fields(
+            {"cnae_code": "6202300", "person_type": "F"}
+        )
+    assert exc.value.code == "PROTHEUS_SUPPLIER_FIELD_CONDITIONAL"
+
+
+def test_put_allowlist_is_f3_3_plus_e5_proven() -> None:
+    assert len(PUT_EDITABLE_FIELDS) == 22 + 26
+    for field in E5_NOT_HOMOLOGATED_FIELDS:
+        assert field not in PUT_EDITABLE_FIELDS
     assert "tax_id" not in PUT_EDITABLE_FIELDS
     assert "supplier_store" not in PUT_EDITABLE_FIELDS

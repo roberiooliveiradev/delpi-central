@@ -1,10 +1,12 @@
 """Normalize PUT supplier fields and build the upstream array body.
 
-PUT allowlist (PO decision, F3.3): every POST-cadastral field is editable
-EXCEPT the fiscal document (tax_id) and the identity fields
-(supplier_code/supplier_store). Upstream evidence for fields beyond
-supplier_name/supplier_short_name is still pending TOTVS homologation —
-the live-write gate PROTHEUS_SUPPLIER_UPDATE_ENABLED stays OFF until then.
+PUT allowlist (PO decision F3.3 + E5 homologation): the F3.3 cadastral
+set plus the 26 fields that proved PUT persistence in DELPI_TST01
+(X4.FIELDS.E5). EXCLUDED from PUT: fiscal document (tax_id), identity
+(supplier_code/supplier_store) and the 3 E3 fields without proven
+upstream PUT semantics (simp_regime_code, linked_customer_code,
+linked_customer_store). The live-write gate PROTHEUS_SUPPLIER_UPDATE_ENABLED
+stays OFF until productive activation is separately authorized.
 
 Omitted keys are not sent (partial PUT). Explicit null/empty is rejected —
 clear semantics remain TO_INVENTORY.
@@ -26,10 +28,12 @@ from app.domain.integrations.protheus_rest import SUPPLIER_ID_PATTERN, ProtheusR
 # the store, which is part of the supplier identity (code+store).
 _PUT_EXCLUDED = frozenset({"tax_id", "supplier_store"})
 
-# PUT allowlist FROZEN at the F3.3 cadastral set (POST original minus
-# document/identity). The 29 fields promoted to POST in X4.FIELDS.E3 are
-# EDIT_CANDIDATE_NOT_HOMOLOGATED — upstream PUT evidence is still pending
-# (E3.S4 matrix), so they must NOT enter this allowlist by derivation.
+# PUT allowlist — explicit, evidence-based. The F3.3 cadastral set plus the
+# 26 E3 fields that proved PUT persistence in the E5 controlled assay
+# (DELPI_TST01 read-after-write, doc X4-FIELDS-E5-*). NOT derived from the
+# POST allowlist: simp_regime_code, linked_customer_code and
+# linked_customer_store remain excluded — the upstream PUT did not prove a
+# controlled change for them (see E5 field matrix).
 PUT_EDITABLE_FIELDS = frozenset(
     {
         "person_type",
@@ -54,6 +58,33 @@ PUT_EDITABLE_FIELDS = frozenset(
         "financial_nature_code",
         "rohs_indicator",
         "payment_method_code",
+        # --- X4.FIELDS.E5 — PUT_PERSISTENCE_PROVEN em DELPI_TST01 ----------
+        "address_number",
+        "po_box",
+        "commercial_contact_name",
+        "fax",
+        "website",
+        "responsible_name",
+        "icms_contributor",
+        "simples_nacional",
+        "inss_withholding",
+        "iss_withholding",
+        "csll_withholding",
+        "cofins_withholding",
+        "pis_withholding",
+        "irf_calculation",
+        "inp_calculation",
+        "tax_group_code",
+        "legal_entity_type",
+        "pb_regime_code",
+        "cnae_code",
+        "risk_code",
+        "swift_code",
+        "purchase_price_table_code",
+        "carrier_code",
+        "segment_code",
+        "administrator_code",
+        "linked_employee_code",
     }
 )
 
@@ -151,6 +182,20 @@ def normalize_supplier_update_fields(raw: Mapping[str, Any] | None) -> dict[str,
                 recoverable=False,
             )
         out[field] = normalize_supplier_field_value(field, value)
+
+    # Conditional (SX3 WHEN): cnae_code only applies to person_type J/X —
+    # enforceable here only when both keys arrive in the same partial PUT;
+    # otherwise the upstream contract owns the check.
+    if (
+        out.get("cnae_code")
+        and out.get("person_type") == "F"
+    ):
+        raise ProtheusRestError(
+            "Campo cnae_code não se aplica a pessoa física (person_type=F).",
+            code="PROTHEUS_SUPPLIER_FIELD_CONDITIONAL",
+            status_code=422,
+            recoverable=False,
+        )
 
     if not out:
         raise ProtheusRestError(

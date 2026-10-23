@@ -69,10 +69,11 @@ POST_SUPPLIER_FIELDS = {
     "linked_employee_code",
 }
 
-# PO decision (F3.3): cadastral POST fields are editable via PUT except
-# the fiscal document and the identity fields (code/store). FROZEN at the
-# F3.3 set — the E3 fields proved POST persistence only; upstream PUT is
-# NOT homologated (E3.S4), so they must not enter this allowlist.
+# PO decision (F3.3) + E5 homologation: cadastral POST fields editable via
+# PUT except the fiscal document and the identity fields (code/store), plus
+# the 26 fields that proved PUT persistence in DELPI_TST01 (X4.FIELDS.E5).
+# simp_regime_code / linked_customer_code / linked_customer_store stay OUT —
+# upstream PUT did not prove a controlled change for them.
 PUT_SUPPLIER_FIELDS = {
     "person_type",
     "supplier_name",
@@ -96,6 +97,33 @@ PUT_SUPPLIER_FIELDS = {
     "financial_nature_code",
     "rohs_indicator",
     "payment_method_code",
+    # X4.FIELDS.E5 — PUT_PERSISTENCE_PROVEN em DELPI_TST01
+    "address_number",
+    "po_box",
+    "commercial_contact_name",
+    "fax",
+    "website",
+    "responsible_name",
+    "icms_contributor",
+    "simples_nacional",
+    "inss_withholding",
+    "iss_withholding",
+    "csll_withholding",
+    "cofins_withholding",
+    "pis_withholding",
+    "irf_calculation",
+    "inp_calculation",
+    "tax_group_code",
+    "legal_entity_type",
+    "pb_regime_code",
+    "cnae_code",
+    "risk_code",
+    "swift_code",
+    "purchase_price_table_code",
+    "carrier_code",
+    "segment_code",
+    "administrator_code",
+    "linked_employee_code",
 }
 
 # Identity/document fields — rejected explicitly, never silently dropped.
