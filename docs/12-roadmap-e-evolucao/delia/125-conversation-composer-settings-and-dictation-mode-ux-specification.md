@@ -177,3 +177,8 @@ No HEAD da especificação, já havia transição de `background-color` e `opaci
 - Seleção: fundo **170ms**; check opacidade + `scale(0.85→1)` **160ms**; trigger **150ms** cor/superfície.
 - Reduced motion: animações sob `no-preference`; em `reduce` o fechamento é imediato (sem fase exiting nem timer).
 - MOT-01..MOT-09 provados: 22 testes de settings, suite DÉLIA 421/421, probe prod `vd-cs-motion-prod.mjs` **20/20** com rampa de opacidade medida frame a frame.
+
+
+## 12. Referência cruzada — Controles de voz unificados (2026-10-23)
+
+A harmonização visual dos dois modos, com botões circulares, azul institucional, estados/motion/status, quadros visuais batch/live, subcomponentes e critérios VC-01..VC-24, está especificada em **[126 — Unified Voice Capture Visual System](./126-unified-voice-capture-visual-system-specification.md)**. Esta evolução é do **campo de voz/captura**, não do menu de configurações. O seletor clean e seu keep-open permanecem intactos. **STATUS=DOCUMENTED; IMPLEMENTATION=PLANNED; NO_DEPLOY_FROM_DOCS.**
