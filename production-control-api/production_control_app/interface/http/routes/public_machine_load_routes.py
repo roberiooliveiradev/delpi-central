@@ -842,7 +842,10 @@ def classify_run_downtime_by_id(
     return ok(data)
 
 
-@router.post("/{token}/mes/downtimes/{downtime_id}/classify")
+@router.post(
+    "/{token}/mes/downtimes/{downtime_id}/classify",
+    operation_id="classify_public_mes_work_center_downtime",
+)
 def classify_work_center_downtime(
     token: str,
     downtime_id: str,

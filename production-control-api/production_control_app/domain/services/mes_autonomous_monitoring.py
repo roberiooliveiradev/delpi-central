@@ -34,6 +34,10 @@ class AutonomousTickDecision:
     degraded_reason: str | None = None
     # started_at da parada autônoma — retroage ao último incremento.
     started_at: datetime | None = None
+    # OBSERVE com rebaseline=True: retorno de trecho degradado —
+    # reancora a referência de inatividade no instante do retorno, sem
+    # fato operacional e sem parada cobrindo o gap de telemetria.
+    rebaseline: bool = False
 
 
 def _aware(value: datetime | None) -> datetime | None:
@@ -119,6 +123,19 @@ def decide_autonomous_tick(
         # producing ou encerrar a parada autônoma aberta — aqui só o
         # sinal de atividade observada importa.
         return AutonomousTickDecision(AutonomousAction.ACTIVITY)
+
+    # Reconexão após observação degradada: o intervalo sem telemetria
+    # confiável nunca entra no cálculo de inatividade. Sem incremento
+    # novo, o cursor reancora no instante do retorno — fail-closed,
+    # nenhuma parada retroativa cobrindo o gap. Só vale quando já havia
+    # baseline real (posto que nunca produziu continua sem fato — AC-10).
+    was_degraded = bool(
+        observer.get("degraded_reason") or observer.get("device_online") is False
+    )
+    if was_degraded and observer.get("last_increment_at") is not None:
+        return AutonomousTickDecision(
+            AutonomousAction.OBSERVE, rebaseline=True
+        )
 
     if counter < last_counter:
         # Regressão/replay do contador no mesmo epoch: realinha o cursor,

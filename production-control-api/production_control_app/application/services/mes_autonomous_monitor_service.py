@@ -216,17 +216,28 @@ class MesAutonomousMonitorService:
                         or int(observer.get("counter_epoch") or 0) != epoch
                     )
                 )
+                if decision.rebaseline:
+                    # Retorno de trecho degradado sem incremento novo: a
+                    # referência de inatividade reancora no instante do
+                    # retorno — o gap de telemetria nunca vira parada.
+                    rebased_increment_at = at
+                elif identity_changed:
+                    # Mudança de identidade do contador reinicia o baseline
+                    # (nunca parada retroativa por troca/reset de sensor);
+                    # realinhamento de regressão preserva o baseline.
+                    rebased_increment_at = None
+                else:
+                    rebased_increment_at = last_increment_at
                 self._observers.upsert(
                     branch=branch,
                     work_center=work_center,
                     device_id=device_id,
                     counter_epoch=epoch,
                     last_counter=counter,
-                    # Mudança de identidade do contador reinicia o baseline
-                    # (nunca parada retroativa por troca/reset de sensor);
-                    # realinhamento de regressão preserva o baseline.
-                    last_increment_at=None if identity_changed else last_increment_at,
-                    baseline_established_at=None if identity_changed else baseline_at,
+                    last_increment_at=rebased_increment_at,
+                    baseline_established_at=(
+                        None if identity_changed else baseline_at
+                    ),
                     device_online=True,
                     degraded_reason=None,
                     last_seen_at=seen_at,
