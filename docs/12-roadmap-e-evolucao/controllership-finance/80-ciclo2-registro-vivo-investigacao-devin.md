@@ -2361,3 +2361,11 @@ restrito à questão material real: custo `as_of`/snapshot vs custo
 corrente para a medida de fechamento — owner a decidir. Nenhum código,
 endpoint ou contrato foi criado ou alterado nesta rodada.
 Gates/métricas inalterados (42/60 · 47/90).
+
+## §40 — DIREÇÃO PO: CPV MENSAL VIVO E CORREÇÕES RETROATIVAS — 2026-10-23
+
+- **Decisão expressa do PO (`PRODUCT_DIRECTION_APPROVED`, documentação apenas):** CPV é apurado por **competência mensal**. Quando um erro de janeiro é descoberto em outubro, a correção ocorre no registro de janeiro e, após recálculo Protheus autorizado, consultas posteriores a janeiro mostram o **valor corrente atualizado**. A data da descoberta não transfere a competência.
+- **AS-IS:** doc 56 Registro 08; doc 57 V15 (CFOPs 5101/5124/6101/6124, terceiros, Saídas Custo) e RC-04. **TARGET existente:** §39, doc 85 BR-R06-010: `GET /supplies/cpv`, `D2_EMISSAO` e `D2_CUSTO1` corrente.
+- **Errata §39:** mutabilidade após MATA330 **não é lacuna nem `DECISION_REQUIRED` para a leitura corrente de CPV**. Não exigir `as_of` ou snapshot para essa consulta. `REUSE_PARTIAL` pode persistir por motivos distintos (granularidade/filtros/testes).
+- **Rastreabilidade distinta:** identificar valores/evidências de homologação anteriormente realizados quando existirem, sem substituir o CPV vivo ou afirmar persistência/snapshot implementados. E6=C é decisão específica de histórico monetário MOD, não solução automaticamente aplicável ao CPV.
+- **Sem novo GO:** nenhuma operação SQL, job, contrato, código ou runtime autorizada; R06/R07 G4/G5 PASS e G6 PENDING; 42/60, 47/90. Próxima rodada: sequência vigente docs 47/80, com verificação transversal §0.
