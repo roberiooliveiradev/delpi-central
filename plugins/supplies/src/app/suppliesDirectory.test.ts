@@ -35,12 +35,42 @@ describe("suppliesDirectory reserved paths", () => {
     expect(personColorKey("JOSI")).toBe("JOSI");
   });
 
-  it("identity wrappers use kit label and never set href", () => {
+  it("supplier identity navigates only via canonical E14 link with code+store", () => {
     const identity = readFileSync(join(dir, "SuppliesDirectoryIdentity.tsx"), "utf8");
     expect(identity).toContain("SuppliesEntityAvatarLabel");
     expect(identity).toContain("supplierColorKey");
     expect(identity).toContain("personColorKey");
-    expect(identity).not.toMatch(/href=/);
+    // Navigation is allowed only through the canonical contract:
+    // buildSupplierDetailPath + SuppliesEntityLink + navigatePluginPath.
+    expect(identity).toContain("buildSupplierDetailPath");
+    expect(identity).toContain("SuppliesEntityLink");
+    expect(identity).toContain("navigatePluginPath");
+    // Store is mandatory for the link — no assumed "01" or name-only nav.
+    expect(identity).toContain("supplierStore");
+    expect(identity).toMatch(/if \(!basePath \|\| !supplierCode \|\| !supplierStore\)/);
+    // Forbidden shortcuts must never appear.
+    expect(identity).not.toMatch(/window\.location|document\.location|useNavigate/);
     expect(identity).not.toMatch(/reservedSupplierDetailPath|reservedPersonDetailPath/);
   });
+
+  it("operational consumers pass basePath to enable supplier navigation", () => {
+    const featuresDir = join(dir, "..", "features");
+    const consumers = [
+      join(featuresDir, "purchase-orders", "PurchaseOrdersListTable.tsx"),
+      join(featuresDir, "purchase-orders", "PurchaseOrdersCards.tsx"),
+      join(featuresDir, "purchase-orders", "PurchaseOrderDetailPage.tsx"),
+      join(featuresDir, "deliveries", "DeliveriesListTable.tsx"),
+    ];
+    for (const file of consumers) {
+      const src = readFileSync(file, "utf8");
+      const block = src.match(
+        /<SuppliesSupplierIdentity[\s\S]*?\/>/,
+      );
+      expect(block, file).not.toBeNull();
+      expect(block?.[0], file).toContain("basePath={basePath}");
+      expect(block?.[0], file).toContain("store={");
+      expect(block?.[0], file).toContain("code={");
+    }
+  });
+
 });

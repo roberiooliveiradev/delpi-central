@@ -160,6 +160,7 @@ export function PurchaseOrdersListTable({
                     name={row.supplier_name}
                     code={row.supplier_code}
                     store={row.supplier_store}
+                    basePath={basePath}
                   />
                 );
               case "open_quantity":

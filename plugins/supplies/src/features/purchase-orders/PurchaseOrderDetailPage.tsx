@@ -189,6 +189,7 @@ export function PurchaseOrderDetailPage({
                         name={item.supplier_name}
                         code={item.supplier_code}
                         store={item.supplier_store}
+                        basePath={basePath}
                       />
                     </dd>
                   </div>

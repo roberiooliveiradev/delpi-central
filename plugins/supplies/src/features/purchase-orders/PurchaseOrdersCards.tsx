@@ -66,6 +66,7 @@ export function PurchaseOrdersCards({
                 name={row.supplier_name}
                 code={row.supplier_code}
                 store={row.supplier_store}
+                basePath={basePath}
               />
             </p>
             <dl className="sp-purchase-orders__card-meta">

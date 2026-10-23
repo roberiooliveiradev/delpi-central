@@ -43,6 +43,7 @@ type DeliveriesListTableProps = {
   total: number;
   totalPages: number;
   loading: boolean;
+  basePath: string;
   onPatchQuery: (patch: Partial<DeliveriesQuery>) => void;
 };
 
@@ -60,6 +61,7 @@ export function DeliveriesListTable({
   total,
   totalPages,
   loading,
+  basePath,
   onPatchQuery,
 }: DeliveriesListTableProps) {
   const columnPrefs = useTableColumnVisibility({
@@ -111,6 +113,7 @@ export function DeliveriesListTable({
                     name={row.supplier_name || row.supplier_short_name}
                     code={row.supplier_code}
                     store={row.supplier_store}
+                    basePath={basePath}
                   />
                 );
               case "quantity":

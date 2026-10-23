@@ -301,6 +301,7 @@ export function DeliveriesPage({ basePath }: DeliveriesPageProps) {
               total={total}
               totalPages={totalPages}
               loading={loading}
+              basePath={basePath}
               onPatchQuery={patchQuery}
             />
           ) : null}
