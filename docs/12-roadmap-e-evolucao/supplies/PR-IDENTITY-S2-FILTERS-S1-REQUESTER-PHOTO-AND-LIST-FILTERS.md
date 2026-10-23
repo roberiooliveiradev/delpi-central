@@ -98,4 +98,16 @@ O parâmetro `requester_user_id` aceita **`protheus_user_id`** (o PR-api encamin
 - Filtro produto = código exato (contrato); busca por descrição exigiria catálogo — registrado, não simulado.
 - Facet CC deduplica por código entre filiais (mesma semântica do filtro `C1_CC IN` global por branch).
 - Usuário TOTVS sem vínculo aparece no seletor com nome do ERP — filtra corretamente.
+- Filtro por situação deriva estágio varrendo linhas paginadas (`page_size=200`) com pedidos/recebimentos — latência alta em recortes amplos (~16 s no mês corrente, ~25 s sem data). Antes do fix de params a consulta falhava com 503 em qualquer página densa; agregação dedicada no produtor é trabalho futuro.
 - `VISUAL_AUTHENTICATED` pendente de navegador.
+
+## Evidência de produção (2026-10-23)
+
+- Lista 20 itens: `display_name` + `name` (TOTVS) em todos os itens; `photo_url` presente só quando `has_photo` (Fabiano `000007`, Michael `000102`).
+- Foto proxy: `200 image/jpeg` (~104–159 KB), `Cache-Control: private, max-age=300`; anônimo → `401`; pid não mapeado/inexistente → `404`.
+- Facet `/requesters`: `display_name` oficial quando mapeado (Adriano/Carla/Daiane), nome TOTVS quando não (ADALBERTO).
+- Facet `/cost-centers`: 54 códigos com descrição CTT010 (`0101 DIRECAO`, `0202 DEPARTAMENTO FINANCEIRO`…) após fix do join global.
+- Filtros (usuário com filial 01, total base 869): `request_number` → 1 exato; `product_code` → 9; `requester_user_id=000304` → 226; `cost_center=0101` → 32 (`cost_center_description` preenchida); `overall_stage` → 111/620; `date_from/to` → 330; combos num+prod → 1, cc+req → 0 legit; `cost_center` inexistente → 0 (fail-closed); `page=2` total preservado; `sort_by=issue_date&sort_dir=desc` → 200.
+- Detalhe `/purchase-requests/{branch}/{num}`: `lines[].requester` com `display_name` + TOTVS + `photo_url` (228 ms).
+- Latência lista quente ~0.5–0.9 s (igual ao baseline pós-S1).
+- Sibling fixes produção: join `CTT010` com filial global em branco (descrições nulas); lote de params >2100 no attach pedidos/recebimentos (503 no filtro por situação e em páginas densas) — `padroes-totvs/centro-custo-ctt.md`.
