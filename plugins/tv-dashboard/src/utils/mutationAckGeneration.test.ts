@@ -82,8 +82,17 @@ describe("mutationAckGeneration", () => {
     });
 
     expect(commitPresentationOps).toHaveBeenCalledWith(
-      expect.objectContaining({ writeGuard, onCommitted }),
+      expect.objectContaining({
+        writeGuard,
+        onCommitted: expect.any(Function),
+      }),
     );
+    /* 028: o helper envolve onCommitted para registrar o commit no ledger no
+     * hop mais cedo pós-resolution — o callback do caller segue invocado. */
+    const forwarded =
+      vi.mocked(commitPresentationOps).mock.calls.at(-1)?.[0].onCommitted;
+    forwarded?.({ playlistRevision: 7 });
+    expect(onCommitted).toHaveBeenCalledWith({ playlistRevision: 7 });
 
     const conflict = new Error("409 REVISION_CONFLICT");
     vi.mocked(commitUpsertBlocks).mockRejectedValueOnce(conflict);

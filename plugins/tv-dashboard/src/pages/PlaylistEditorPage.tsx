@@ -283,6 +283,25 @@ export function PlaylistEditorPage({
    * geram 409 — este tick é o sinal local para tratá-los como conflito.
    */
   const slidePeerActivityRef = useRef(new Map<string, number>());
+  /**
+   * Payloads originados no canal de autosave do editor (028) — só eles podem
+   * carregar baseline coberto de mutation in-flight; a guarda de dispatch do
+   * provider decide no ifFresh se a captura ainda é persistível ou se ficou
+   * stale após o commit da mutation (reagendando canônico+delta autosave).
+   * Saves manuais (título/duração) não são marcados — seguem o fluxo legado.
+   */
+  const guardedPersistablePayloadsRef = useRef(new WeakSet<object>());
+  /**
+   * Resolver preenchido pelo ComunicadoEditorProvider (028) — consultado no
+   * ifFresh da write lane, ou seja, no instante real do dispatch.
+   */
+  const persistableDispatchResolverRef = useRef<
+    | ((
+        slideId: string,
+        captured: Record<string, unknown>,
+      ) => import("../utils/pendingMutationProjection").PersistableDispatchDecision)
+    | null
+  >(null);
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
@@ -889,7 +908,9 @@ export function PlaylistEditorPage({
       // antes desta atividade não podem sobrescrever silenciosamente o slide.
       bumpSlidePeerActivity(slidePeerActivityRef.current, slideId);
       const pending = pendingComunicadoSaveRef.current;
-      if (pending?.slide.id === slideId) return;
+      if (pending?.slide.id === slideId) {
+        return;
+      }
       if (
         hasLocalComunicadoEdits({
           playlistId,
@@ -2267,6 +2288,16 @@ export function PlaylistEditorPage({
             queueMicrotask(() => void applyServerWinsConflict(slide.id));
             return false;
           }
+          /* 028: só payloads do canal de autosave do editor podem carregar
+           * baseline coberto — a guarda avalia no dispatch se a captura ficou
+           * stale após o commit da mutation (drop/reEmit). */
+          if (
+            payload.nativeConfig &&
+            guardedPersistablePayloadsRef.current.has(payload.nativeConfig) &&
+            !checkPersistableDispatchSafe(slide.id, payload.nativeConfig)
+          ) {
+            return false;
+          }
           return true;
         },
       };
@@ -2340,6 +2371,8 @@ export function PlaylistEditorPage({
       await deckHistory.confirmChange();
     } catch (caught) {
       if (options?.recordHistory) deckHistory.cancelChange();
+      if (caught instanceof StaleWriteEpochError) {
+      }
       // 409: conflito já tratado (reload + notice) — não propagar como falha genérica.
       if (await handlePlaylistWriteConflict(caught, slide.id)) return;
       throw caught;
@@ -2425,6 +2458,55 @@ export function PlaylistEditorPage({
     }
   }
 
+  /**
+   * Reagendamento de payload reemitido pela guarda (canônico + delta
+   * autosave-only) — aponta para a closure mais recente do agendador.
+   */
+  const scheduleCustomSlideSaveRef = useRef<
+    ((slide: Slide, nativeConfig: Record<string, unknown>) => void) | null
+  >(null);
+
+  /**
+   * Guarda de dispatch do autosave (028): avalia no ifFresh da lane — após o
+   * settle da mutation — se a captura ainda é persistível. Payload stale
+   * pós-commit é descartado; quando resta delta autosave-only, o resolver
+   * devolve `reEmit` (canônico+delta) e o save correto é reagendado para o
+   * slide-alvo — o flush pós-navegação não perde a edição legítima.
+   */
+  const checkPersistableDispatchSafe = useCallback(
+    (slideId: string, captured: Record<string, unknown>) => {
+      const resolve = persistableDispatchResolverRef.current;
+      if (!resolve) return true;
+      const decision = resolve(slideId, captured);
+      if (decision.send) return true;
+      /* Drop permanente (stale/canonical-covered): o pending capturado morreu
+       * — liberar a entrada se ainda é esta versão, senão um pending zumbi
+       * bloqueia drafts remotos e polui todo merge futuro (server nunca
+       * converge: overlay + dirty suprimem o apply). O draft dessa captura é
+       * coberto pelo estado autoritativo — limpa se nenhum mais novo existe. */
+      const pending = pendingComunicadoSaveRef.current;
+      if (
+        pending?.slide.id === slideId &&
+        pending.nativeConfig === captured
+      ) {
+        pendingComunicadoSaveRef.current = null;
+        clearComunicadoSlideDraftIfCoveredBySave(
+          playlistId,
+          slideId,
+          pending.version,
+        );
+      }
+      if (decision.reEmit) {
+        const target = playlistRef.current?.slides?.find(
+          (item) => item.id === slideId,
+        );
+        if (target) scheduleCustomSlideSaveRef.current?.(target, decision.reEmit);
+      }
+      return false;
+    },
+    [playlistId],
+  );
+
   const persistComunicadoPending = useCallback(
     async (
       captured: {
@@ -2475,7 +2557,14 @@ export function PlaylistEditorPage({
                 );
                 return false;
               }
-              return true;
+              /* 028: a captura pode carregar baseline coberto que virou stale
+               * após o commit da mutation (lane FIFO despacha o PATCH só após
+               * o POST assentar) — a guarda decide drop/reEmit aqui, no
+               * instante real do dispatch. */
+              return checkPersistableDispatchSafe(
+                captured.slide.id,
+                captured.nativeConfig,
+              );
             },
             clientId: editorPresence?.clientId,
           },
@@ -2520,7 +2609,9 @@ export function PlaylistEditorPage({
       } catch (caught) {
         // Captura de época anterior ao último conflito — descarte silencioso,
         // o reload server-wins já aplicou o estado autoritativo.
-        if (caught instanceof StaleWriteEpochError) return;
+        if (caught instanceof StaleWriteEpochError) {
+          return;
+        }
         // Conflito de revisão: servidor vence — draft vira conflicted e o
         // estado remoto é recarregado; pending obsoleto não é reenfileirado.
         if (await handlePlaylistWriteConflict(caught, captured.slide.id)) return;
@@ -2545,6 +2636,7 @@ export function PlaylistEditorPage({
     },
     [
       applyServerWinsConflict,
+      checkPersistableDispatchSafe,
       deckHistory.cancelChange,
       deckHistory.confirmChange,
       editorPresence?.clientId,
@@ -2601,6 +2693,7 @@ export function PlaylistEditorPage({
   }, [flushPendingComunicadoSave]);
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
+    guardedPersistablePayloadsRef.current.add(nativeConfig);
     const previous = pendingComunicadoSaveRef.current;
     if (previous && previous.slide.id !== slide.id) {
       if (saveComunicadoTimerRef.current) {
@@ -2670,6 +2763,7 @@ export function PlaylistEditorPage({
         },
         { autosaveVersion: version, epoch: captureEpoch, peerTick },
       ).catch((caught) => {
+
         if (caught instanceof StaleWriteEpochError) return;
         tvDashboardNotice(
           caught instanceof Error
@@ -2693,6 +2787,7 @@ export function PlaylistEditorPage({
       });
     }, 120);
   }
+  scheduleCustomSlideSaveRef.current = scheduleCustomSlideSave;
 
   useEffect(() => {
     const onLeave = () => {
@@ -3054,6 +3149,7 @@ export function PlaylistEditorPage({
             pendingComunicadoSaveRef.current?.slide.id === id
           }
           cancelPendingPersistableSave={cancelPendingComunicadoSave}
+          persistableDispatchResolverRef={persistableDispatchResolverRef}
           resolveWriteGuard={resolveWriteGuard}
           onWriteCommitted={handleMutationCommitted}
           onWriteError={handleMutationWriteError}

@@ -17,6 +17,7 @@ import {
   coveredKeysForBlocks,
   coveredKeysForMutationOps,
   diffedFieldKeys,
+  mergeAutosaveOnlyOverlay,
   type PendingProjectionRegistry,
 } from "./pendingMutationProjection";
 
@@ -30,12 +31,23 @@ export type MutationAckApply = (canonical: ComunicadoConfig) => void;
  * `getLive` retorna o config corrente para derivar campos projetados fora dos
  * ops tipados; `refresh` reemite a visão persistível para que um autosave já
  * agendado carregue o baseline e não a projeção capturada.
+ * `applyOverlay` (028) reaplica edições autosave-only não-cobertas por cima
+ * do canônico — o ACK não pode apagar edições legítimas ainda não persistidas.
+ * `isCurrentSlide`/`recordCommitted` (028) impedem ACK de slide não hospedado
+ * de tocar o palco e alimentam a guarda de dispatch do autosave.
  */
 export type PendingMutationProjection = {
   registry: PendingProjectionRegistry;
   getBaseline?: () => ComunicadoConfig | undefined;
   getLive?: () => ComunicadoConfig;
   refresh?: () => void;
+  applyOverlay?: (merged: ComunicadoConfig) => void;
+  isCurrentSlide?: (slideId: string) => boolean;
+  recordCommitted?: (
+    slideId: string,
+    canonical: ComunicadoConfig,
+    coveredKeys: ReadonlySet<string>,
+  ) => void;
 };
 
 function markPendingCoverage(
@@ -122,14 +134,39 @@ export async function ackUpsertBlocksWithGeneration(args: {
       slideId,
       blocks,
       writeGuard: args.writeGuard,
-      onCommitted: args.onCommitted,
+      /* 028: registra o commit no hop mais cedo pós-resolution da lane — um
+       * PATCH de autosave enfileirado atrás do POST pode despachar antes das
+       * continuações seguintes (settle/applyAck), então o ledger de commit
+       * precisa existir já no primeiro continuation tick. */
+      onCommitted: (meta) => {
+        if (meta?.canonical) {
+          pending?.recordCommitted?.(slideId, meta.canonical, new Set(covered));
+        }
+        args.onCommitted?.(meta);
+      },
     });
+    /* 028: edições autosave-only não-cobertas ainda presentes no live são
+     * capturadas ANTES do apply canônico (que sobrescreve o live) — caso
+     * contrário um ACK dentro do debounce apagaria edição legítima. O ACK só
+     * toca o palco quando o provider ainda hospeda ESTE slide (navegação
+     * A→B antes do ACK deixaria o canônico de A corromper o editor de B). */
+    const slideCurrent = pending?.isCurrentSlide?.(slideId) !== false;
+    const overlay = canonical && slideCurrent
+      ? mergeAutosaveOnlyOverlay(
+          pending?.getLive?.(),
+          canonical,
+          new Set(covered),
+        )
+      : null;
     pending?.registry.settle(covered, token, canonical ?? undefined);
     if (!canonical || !gate.isCurrent(token)) {
       pending?.refresh?.();
       return null;
     }
-    applyAck(canonical);
+    if (slideCurrent) {
+      applyAck(canonical);
+      if (overlay) pending?.applyOverlay?.(overlay);
+    }
     pending?.refresh?.();
     return canonical;
   } catch (error) {
@@ -175,18 +212,30 @@ export async function commitOpsAndApplyAck(args: {
       slideId,
       ops,
       writeGuard: args.writeGuard,
-      onCommitted: args.onCommitted,
+      onCommitted: (meta) => {
+        if (meta?.canonical) {
+          pending?.recordCommitted?.(slideId, meta.canonical, new Set(covered));
+        }
+        args.onCommitted?.(meta);
+      },
     });
+    const slideCurrent = pending?.isCurrentSlide?.(slideId) !== false;
+    const overlay = canonical && slideCurrent
+      ? mergeAutosaveOnlyOverlay(
+          pending?.getLive?.(),
+          canonical,
+          new Set(covered),
+        )
+      : null;
     pending?.registry.settle(covered, token, canonical ?? undefined);
-    if (!canonical) {
+    if (!canonical || !gate.isCurrent(token)) {
       pending?.refresh?.();
       return null;
     }
-    if (!gate.isCurrent(token)) {
-      pending?.refresh?.();
-      return null;
+    if (slideCurrent) {
+      applyAck(canonical);
+      if (overlay) pending?.applyOverlay?.(overlay);
     }
-    applyAck(canonical);
     pending?.refresh?.();
     return canonical;
   } catch (error) {

@@ -82,6 +82,13 @@ type Options = {
     getStashBaseline: () => ComunicadoConfig | undefined;
     getLive: () => ComunicadoConfig;
     refresh: () => void;
+    applyOverlay?: (merged: ComunicadoConfig) => void;
+    isCurrentSlide?: (slideId: string) => boolean;
+    recordCommitted?: (
+      slideId: string,
+      canonical: ComunicadoConfig,
+      coveredKeys: ReadonlySet<string>,
+    ) => void;
   };
 };
 
@@ -691,6 +698,9 @@ export function useComunicadoEditorDrag({
                 getBaseline: () => before,
                 getLive: pendingProjection.getLive,
                 refresh: pendingProjection.refresh,
+                applyOverlay: pendingProjection.applyOverlay,
+                isCurrentSlide: pendingProjection.isCurrentSlide,
+                recordCommitted: pendingProjection.recordCommitted,
               }
             : undefined,
         });

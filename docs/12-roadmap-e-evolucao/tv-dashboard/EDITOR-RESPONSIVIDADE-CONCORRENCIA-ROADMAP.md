@@ -396,3 +396,31 @@ Correção da causa raiz do defeito 026-F1: a projeção local mutation-backed e
 **Resíduos.** (1) WS propagation local ~15–20s (infra) — specs de convergência usam polling, não timing. (2) Cenário G estrito (mutation pendente + autosave-only no mesmo slide, com flush) coberto por composição unitária (`resolvePersistableConfig` preserva campos não-cobertos) mas não tem spec E2E dedicada. (3) Falha com marks residuais depende da reconciliação autoritativa existente para limpar o registro — comportamento deliberado (server-wins).
 
 **Decisão.** 026-F1 fechado na causa raiz: um único mutation boundary governado, sem segundo canal silencioso, sem workaround de timing/debounce. `PHASE_2_STATUS = COMPLETE` para o escopo 023–027 (projeção local + ACK + dual-write boundary); `FINAL_VERDICT = ACCEPT`.
+
+### Execução — VISTA-TV-EDITOR-INTEGRITY-HARDENING-DEPLOY-028 (P0, resíduos de 027)
+
+Correção dos resíduos do ledger de projeção pendente (027, commit `8eb60880ff`): baseline ausente silenciosamente pulando cobertura, delta autosave-only perdido no ACK, dispatches stale que regravavam o canônico, e convergência multiusuário travada por pending zumbi.
+
+**Reprodução.** `99-diag.spec.ts` (instrumentação de writes/WS/drafts em 2 contextos reais) mostrou B travado em `txt2.x=40` enquanto a API tinha `x=8`: (1) `authoritativePersistableRef` nunca semeado em B (`applyServerConfig` no-op retornava sem `applyConfig`), então o refresh pós-ACK reemitia o canônico como autosave novo; (2) o dispatch rejeitava a captura stale (`send:false`) mas deixava `pendingComunicadoSaveRef` + draft vivos → `applyRemoteSlideDraft` bloqueado, merge sobrepunha o pending stale, `dirty=true` impedia o bump de revisão remota. Timeline B antes: `draft v1 → v2 → v3(conflicted)` persistindo para sempre; depois: `v1 → v2 → remove` + convergência.
+
+**Root cause / owner.** Dois furos na fronteira persistível do MFE (owner: `comunicadoEditorContext` + hooks de mutation + guarda de dispatch no `PlaylistEditorPage`): (a) estado canônico aceito por caminho no-op não registrava a referência "já persistido"; (b) um write descartado pelo resolver não liberava o pending/draft correspondente. Backend intacto — CAS/409/`presentation-mutations` inalterados.
+
+**Solução — ledger endurecido, sem novo canal.**
+- `resolveProjectionBaseline`: `getStashBaseline` cai no estado autoritativo confirmado (`authoritativeConfigRef`) quando o stash foi limpo por slide-switch/remote-apply — baseline ausente nunca inventa dados e nunca deixa projeção sem cobertura.
+- `markAuthoritativeConfig` (context) + `applyServerConfig` no-op chama-o via history hook: ACK canônico idêntico ao live marca a referência persistida sem re-render.
+- `mergeAutosaveOnlyOverlay`: diffs não-cobertos (live vs canônico) reaplicados sobre o canônico do ACK → edição autosave-only legítima sobrevive e reagenda save; `applyOverlay` exposto no canal.
+- `resolvePersistableDispatchDecision` (util puro): guarda de dispatch no `ifFresh` da lane — compara captura vs live resolvido vs canônico commitado; `send:false` descarta no-op/stale, `reEmit` reemite canônico+delta (slide não-corrente via `committedBySlide`); capturas tagged via `WeakSet` para não afetar saves manuais.
+- Dispatch drop transacional: `send:false`/`StaleWriteEpochError` libera `pendingComunicadoSaveRef` (version-safe, slide-safe) e limpa draft coberto — pending morto nunca bloqueia convergência remota.
+- `onCommitted` antecipado para dentro da lane task + `recordCommitted` com canonical parseado: `ifFresh` de PATCH enfileirado vê o commit antes de avaliar — supressão determinística do PATCH canônico no-op na janela settle↔applyAck.
+- `isCurrentSlide` no canal: ACK pós-navegação não corrompe o editor do slide errado.
+- Gate CAS do spec 03 corrigido: espera a **ingestão do commit** do peer (GET `/playlists` disparado pelo sync) em vez de propagação visual de `slide_draft` (não-commitado, rápido).
+
+**Arquivos.** Alterados: `pendingMutationProjection.ts` (+`resolveProjectionBaseline`, `mergeAutosaveOnlyOverlay`, `resolvePersistableDispatchDecision`, `committedBySlide`), `mutationAckGeneration.ts` (+`isCurrentSlide`/`recordCommitted`/`applyOverlay`, canonical antes de `onCommitted`), `presentationMutationClient.ts`, `comunicadoEditorContext.tsx` (`markAuthoritativeConfig`, emit no-op==auth, dispatch resolver, commit ledger, reseed), `useComunicadoEditorHistory.ts` (+`markAuthoritativeConfig`, no-op seed), `useComunicadoEditorBlocks.ts`/`useComunicadoEditorDrag.ts` (channel forward), `PlaylistEditorPage.tsx` (resolver wiring, tagged payloads, drop cleanup, `updateSlide` guard). Novo: `e2e/specs/09-mixed-writes.spec.ts` (B1/B2/B4/B5). Testes: `pendingMutationProjection.test.ts` (31), `mutationAckGeneration.test.ts` (7), `useComunicadoEditorHistory.test.ts` (6).
+
+**Evidência.** Vitest focado: **44/44**. Vitest MFE completo: 1482/1488 — 6 falhas pré-existentes idênticas ao baseline de HEAD stashed (ribbons/preview/panel — arquivos não tocados). Build Vite: PASS (19.9s). E2E Playwright real (stack local, 2 contextos): **32/32 PASS (6.4min)** — inclui 3C convergência determinística (`API txt2.x=8`, stage B converge, draft `v1→v2→remove`, zero PATCH redundante), B1 autosave-only persiste com baseline no PATCH, B2 flush-on-leave, B4 ACK+edição exatamente uma vez, B5 pós-navegação commit+reEmit, e toda a regressão S1–S8 intacta.
+
+**Métricas.** `REDUNDANT_POST_ACK_PATCH = 0`; `ZOMBIE_PENDING_COUNT = 0` (draft `remove` observado); `AUTOSAVE_ONLY_LOST_UPDATE = 0`; `CROSS_SLIDE_ACK_CORRUPTION = 0`; revisões monotônicas; 409 server-wins preservado.
+
+**Resíduos.** (1) 6 falhas vitest pré-existentes + erros TS baseline não relacionados (inventariados, fora do escopo). (2) Falhas backend `tv_data_routes` catalog/m-query baseline são drift upstream de OpenAPI regeneration — API não redeployada neste escopo.
+
+**Decisão.** Resíduos de 027 fechados na causa raiz: referência autoritativa completa em todos os caminhos de aceite canônico + ciclo de vida transacional do pending save + guarda de dispatch stale na lane. `PHASE_2_STATUS = COMPLETE` para o escopo 023–028; `FINAL_VERDICT = ACCEPT`.

@@ -70,6 +70,9 @@ import type { MutationErrorHandler } from "../utils/mutationAckGeneration";
 import {
   createPendingProjectionRegistry,
   resolvePersistableConfig,
+  resolvePersistableDispatchDecision,
+  resolveProjectionBaseline,
+  type PersistableDispatchDecision,
 } from "../utils/pendingMutationProjection";
 import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
@@ -133,6 +136,21 @@ type ProviderProps = {
    * no-op e só criaria churn de revisão/WS para os peers.
    */
   cancelPendingPersistableSave?: (slideId: string) => void;
+  /**
+   * Guarda de dispatch do autosave (028): o provider preenche este ref com a
+   * função que decide — já DENTRO da write lane, após o settle da mutation —
+   * se o payload capturado ainda é a visão persistível segura do slide.
+   * `send:false` descarta o write stale; `reEmit` carrega canônico+delta
+   * autosave-only para reagendamento (ex.: flush de navegação pós-commit).
+   */
+  persistableDispatchResolverRef?: {
+    current:
+      | ((
+          slideId: string,
+          captured: Record<string, unknown>,
+        ) => PersistableDispatchDecision)
+      | null;
+  };
   /** OCC guard resolved per persisted mutation — slide base revision + clientId. */
   resolveWriteGuard?: () => WriteGuard | null | undefined;
   /** Revision metadata emitted after each committed mutation. */
@@ -268,6 +286,7 @@ export function ComunicadoEditorProvider({
   onChange,
   hasPendingPersistableSave,
   cancelPendingPersistableSave,
+  persistableDispatchResolverRef,
   resolveWriteGuard,
   onWriteCommitted,
   onWriteError,
@@ -329,6 +348,27 @@ export function ComunicadoEditorProvider({
    * coincide com ele é no-op de escrita — é cancelado, não reagendado (027).
    */
   const authoritativePersistableRef = useRef<string | null>(null);
+  /**
+   * Mesmo estado confirmado de `authoritativePersistableRef` em forma de
+   * config — fallback do baseline da projeção quando o stash foi limpo
+   * (slide-switch/remote-apply) e a mutation dispara antes de novo
+   * applyConfig (028). Estado confirmado real; nunca um baseline inventado.
+   */
+  const authoritativeConfigRef = useRef<ComunicadoConfig | null>(null);
+  /**
+   * Último commit mutation-backed por slide (028). A write lane é FIFO: um
+   * PATCH de autosave capturado com baseline coberto só DESPACHA depois do
+   * settle da mutation — se ela commitou, o baseline capturado ficou stale e
+   * o PATCH reverteria a projeção já confirmada. A guarda de dispatch
+   * (`persistableDispatchResolverRef`) consulta este registro para descartar
+   * o save ou reemitir canônico+delta autosave-only (ex.: flush A→B).
+   */
+  const committedBySlideRef = useRef(
+    new Map<
+      string,
+      { canonical: ComunicadoConfig; coveredKeys: ReadonlySet<string> }
+    >(),
+  );
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
   const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
   const lastRemoteRevisionRef = useRef(remoteRevision);
@@ -514,10 +554,14 @@ export function ComunicadoEditorProvider({
     // o novo começa do estado autoritativo carregado.
     pendingProjectionRegistryRef.current.clear();
     projectionBaselineStashRef.current = null;
+    // Nova época para o slide entrante: commits anteriores dele não podem
+    // marcar saves capturados nesta visita como stale.
+    if (slideId) committedBySlideRef.current.delete(slideId);
     lastScheduledPersistableRef.current = JSON.stringify(
       serializeComunicadoConfig(enriched),
     );
     authoritativePersistableRef.current = lastScheduledPersistableRef.current;
+    authoritativeConfigRef.current = enriched;
     syncIdentityRef.current = `${playlistId}:${slideId ?? ""}`;
     selection.resetSelectionForSlide();
   }
@@ -546,9 +590,24 @@ export function ComunicadoEditorProvider({
       const key = JSON.stringify(serialized);
       if (key === lastScheduledPersistableRef.current) return;
       lastScheduledPersistableRef.current = key;
+      /* 028: payload resolvido igual ao estado autoritativo = write no-op —
+       * suprime a emissão e cancela um save agendado residual. Sem isso, um
+       * applyConfig pós-ACK reemite o estado canônico como autosave novo
+       * (PATCH redundante que bumpa revisão e quebra o CAS de peers). */
+      if (slideId && key === authoritativePersistableRef.current) {
+        if (hasPendingPersistableSave?.(slideId)) {
+          cancelPendingPersistableSave?.(slideId);
+        }
+        return;
+      }
       onChange(serialized);
     },
-    [onChange],
+    [
+      cancelPendingPersistableSave,
+      hasPendingPersistableSave,
+      onChange,
+      slideId,
+    ],
   );
 
   const applyConfig = useCallback(
@@ -567,6 +626,7 @@ export function ComunicadoEditorProvider({
         // Aplicação de estado confirmado (ACK/read-back/reconcile): passa a
         // ser a referência "o servidor já tem isto" do canal persistível (027).
         authoritativePersistableRef.current = JSON.stringify(serialized);
+        authoritativeConfigRef.current = withMedia;
       }
       // Baseline da projeção: o config anterior a ESTA aplicação é o último
       // estado confirmável para o canal de persistência (027).
@@ -585,6 +645,27 @@ export function ComunicadoEditorProvider({
   );
 
   /**
+   * Atualiza SOMENTE as referências autoritativas do canal persistível — usado
+   * quando o ACK canônico coincide com o live (applyServerConfig no-op): o
+   * stage não precisa de re-render, mas a referência "já persistido" precisa
+   * refletir o commit para que refresh/emissão reconheçam no-op (028).
+   */
+  const markAuthoritativeConfig = useCallback(
+    (next: ComunicadoConfig) => {
+      const withMedia = ensureComunicadoEditorMediaUrls(
+        next,
+        playlistId,
+        videoPosterAssetsRef.current,
+      );
+      authoritativePersistableRef.current = JSON.stringify(
+        serializeComunicadoConfig(withMedia),
+      );
+      authoritativeConfigRef.current = withMedia;
+    },
+    [playlistId, videoPosterAssetsRef],
+  );
+
+  /**
    * Canal único entregue aos hooks de mutation (027):
    * - `getStashBaseline`: baseline do último applyConfig (projeção já aplicada).
    * - `getLive`: config corrente — baseline de ops que projetam via `optimistic`.
@@ -597,7 +678,14 @@ export function ComunicadoEditorProvider({
   const pendingMutationProjection = useMemo(
     () => ({
       registry: pendingProjectionRegistryRef.current,
-      getStashBaseline: () => projectionBaselineStashRef.current?.prev,
+      // 028: stash vazio (pós slide-switch/remote-apply) cai no último estado
+      // confirmado autoritativo — baseline ausente não pode deixar a projeção
+      // sem cobertura no canal persistível.
+      getStashBaseline: () =>
+        resolveProjectionBaseline(
+          projectionBaselineStashRef.current?.prev,
+          authoritativeConfigRef.current,
+        ),
       getLive: () => configRef.current,
       refresh: () => {
         if (!slideId) return;
@@ -606,9 +694,9 @@ export function ComunicadoEditorProvider({
           pendingProjectionRegistryRef.current,
         );
         const key = JSON.stringify(serializeComunicadoConfig(resolved));
+        const savePending = hasPendingPersistableSave?.(slideId) ?? false;
         if (key === lastScheduledPersistableRef.current) return;
         lastScheduledPersistableRef.current = key;
-        const savePending = hasPendingPersistableSave?.(slideId) ?? false;
         if (key === authoritativePersistableRef.current) {
           /* Payload resolvido já é o estado persistido: o save pendente só
            * existia pela projeção emitida antes do mark — cancelar em vez de
@@ -619,14 +707,65 @@ export function ComunicadoEditorProvider({
         if (!savePending) return;
         onChange(serializeComunicadoConfig(resolved));
       },
+      // 028: edições autosave-only não-cobertas reaplicadas por cima do
+      // canônico do ACK — persist:true reemite o delta ao autosave.
+      applyOverlay: (merged: ComunicadoConfig) => applyConfig(merged),
+      // 028: ACK de slide que o provider já não hospeda (navegação A→B) não
+      // pode sobrescrever o palco/config do slide corrente.
+      isCurrentSlide: (targetSlideId: string) =>
+        targetSlideId === slideIdRef.current,
+      // 028: commit registrado por slide — a guarda de dispatch do autosave
+      // decide se um PATCH capturado pré-commit virou stale (post-commit).
+      recordCommitted: (
+        targetSlideId: string,
+        canonical: ComunicadoConfig,
+        coveredKeys: ReadonlySet<string>,
+      ) => {
+        committedBySlideRef.current.set(targetSlideId, {
+          canonical,
+          coveredKeys,
+        });
+      },
     }),
     [
+      applyConfig,
       cancelPendingPersistableSave,
       hasPendingPersistableSave,
       onChange,
       slideId,
     ],
   );
+
+  /**
+   * Guarda de dispatch consultada pela página no ifFresh da write lane (028).
+   * A decisão roda no instante do dispatch — depois que a mutation assentou —
+   * então um PATCH capturado com baseline coberto que virou stale pós-commit
+   * é descartado (ou reemitido como canônico+delta) em vez de reverter a
+   * projeção já confirmada.
+   */
+  const resolvePersistableDispatch = useCallback(
+    (targetSlideId: string, captured: Record<string, unknown>) => {
+      const decision = resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: targetSlideId === slideIdRef.current,
+        live: configRef.current,
+        registry: pendingProjectionRegistryRef.current,
+        committed: committedBySlideRef.current.get(targetSlideId) ?? null,
+        authoritativeKey: authoritativePersistableRef.current,
+        serialize: serializeComunicadoConfig,
+      });
+      return decision;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!persistableDispatchResolverRef) return;
+    persistableDispatchResolverRef.current = resolvePersistableDispatch;
+    return () => {
+      persistableDispatchResolverRef.current = null;
+    };
+  }, [persistableDispatchResolverRef, resolvePersistableDispatch]);
 
   // Metadado de poster chegou/mudou: re-hidrata só o estado local (posterUrl não é persistido).
   useEffect(() => {
@@ -674,6 +813,7 @@ export function ComunicadoEditorProvider({
   } = useComunicadoEditorHistory({
     configRef,
     applyConfig,
+    markAuthoritativeConfig,
     deckHistory,
   });
 
@@ -734,6 +874,19 @@ export function ComunicadoEditorProvider({
     const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
     const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
 
+    if (identityChanged) {
+      /* O value do slide recém-carregado/selecionado É o estado persistido
+       * conhecido — semeia a referência autoritativa mesmo quando o apply é
+       * descartado como eco (incoming == current). Sem isso a supressão de
+       * emissão canônica pós-ACK e o fallback de baseline ficavam inertes até
+       * o primeiro apply autoritativo bem-sucedido. */
+      authoritativePersistableRef.current = JSON.stringify(
+        serializeComunicadoConfig(enriched),
+      );
+      authoritativeConfigRef.current = enriched;
+      committedBySlideRef.current.delete(slideId ?? "");
+    }
+
     const forceAcceptFromRemote = shouldForceAcceptRemoteComunicadoValue({
       remoteRevisionChanged,
       incomingFingerprint: incomingFp,
@@ -784,6 +937,7 @@ export function ComunicadoEditorProvider({
       serializeComunicadoConfig(enriched),
     );
     authoritativePersistableRef.current = lastScheduledPersistableRef.current;
+    authoritativeConfigRef.current = enriched;
     if (identityChanged) {
       clearDragSnapshot();
       resetLocalHistory();
@@ -878,7 +1032,6 @@ export function ComunicadoEditorProvider({
     resolvedByBlockId,
     commitBlocks: blockActions.updateBlocks,
   });
-
 
   const setSpeakerNotes = useCallback(
     (speakerNotes: string) => {

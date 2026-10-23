@@ -191,4 +191,63 @@ describe("useComunicadoEditorHistory", () => {
     );
     expect(result.current.canUndo).toBe(false);
   });
+
+  it("applyServerConfig no-op (ACK == live) ainda marca autoritativo (028)", () => {
+    const applyConfig = vi.fn();
+    const markAuthoritativeConfig = vi.fn();
+    const current = emptyConfig([
+      { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v1" } as never,
+    ]);
+    const configRef = { current };
+
+    const { result } = renderHook(() =>
+      useComunicadoEditorHistory({
+        configRef,
+        applyConfig,
+        markAuthoritativeConfig,
+        deckHistory: null,
+      }),
+    );
+
+    const canonical = snapshotConfig(current);
+    act(() => {
+      result.current.applyServerConfig(canonical);
+    });
+
+    expect(applyConfig).not.toHaveBeenCalled();
+    expect(markAuthoritativeConfig).toHaveBeenCalledOnce();
+    expect(markAuthoritativeConfig).toHaveBeenCalledWith(canonical);
+  });
+
+  it("applyServerConfig divergente aplica autoritativo sem markAuthoritativeConfig", () => {
+    const applyConfig = vi.fn();
+    const markAuthoritativeConfig = vi.fn();
+    const configRef = {
+      current: emptyConfig([
+        { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v1" } as never,
+      ]),
+    };
+
+    const { result } = renderHook(() =>
+      useComunicadoEditorHistory({
+        configRef,
+        applyConfig,
+        markAuthoritativeConfig,
+        deckHistory: null,
+      }),
+    );
+
+    const canonical = emptyConfig([
+      { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v2" } as never,
+    ]);
+    act(() => {
+      result.current.applyServerConfig(canonical);
+    });
+
+    expect(applyConfig).toHaveBeenCalledWith(canonical, {
+      persist: false,
+      authoritative: true,
+    });
+    expect(markAuthoritativeConfig).not.toHaveBeenCalled();
+  });
 });

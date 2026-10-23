@@ -82,8 +82,10 @@ export function createPendingProjectionRegistry() {
 
   /**
    * Marca entidades cobertas por uma mutation in-flight. `baseline` deve ser o
-   * config confirmado ANTES da projeção local (sem baseline disponível o mark
-   * é ignorado — fail-open preserva o comportamento anterior, nunca inventa
+   * config confirmado ANTES da projeção local — o canal de persistência
+   * resolve-o via `resolveProjectionBaseline` (stash → estado autoritativo),
+   * então `undefined` é reserva última: sem baseline disponível o mark é
+   * ignorado (fail-open preserva o comportamento anterior, nunca inventa
    * uma baseline). O primeiro baseline vence: mutations subsequentes sobre a
    * mesma entidade apenas adicionam sua geração.
    */
@@ -156,6 +158,21 @@ export function createPendingProjectionRegistry() {
   }
 
   return { mark, settle, clear, hasPending, get, keys };
+}
+
+/**
+ * Baseline da projeção para mark() (028 — baseline ausente nunca pode deixar
+ * uma projeção mutation-backed sem cobertura). Preferência: stash do último
+ * applyConfig (estado imediatamente anterior à projeção); fallback: último
+ * estado confirmado autoritativo (slide-load / remote-apply / ACK canônico) —
+ * um baseline confirmado real, nunca inventado. `undefined` só quando nem o
+ * estado autoritativo existe — mark() então mantém o fail-open documentado.
+ */
+export function resolveProjectionBaseline(
+  stash: ComunicadoConfig | undefined,
+  authoritative: ComunicadoConfig | null | undefined,
+): ComunicadoConfig | undefined {
+  return stash ?? authoritative ?? undefined;
 }
 
 /**
@@ -259,6 +276,157 @@ export function driftedPendingKeys(
     if (!entityEquals(value, entry.projected)) drifted.push(key);
   }
   return drifted;
+}
+
+/**
+ * Overlay de edições autosave-only não confirmadas (028 — cenário misto).
+ * No ACK da mutation, o canônico sobrescreveria o live e apagaria edições
+ * autosave-only ainda não persistidas (debounce ~400ms). Para entidades NÃO
+ * cobertas pela mutation, o valor live é intenção legítima do usuário — o
+ * merge mantém o canônico nas entidades cobertas e reaplica o delta
+ * autosave-only por cima, para que ele seja re-emitido e persistido pelo
+ * canal de autosave. Blocos presentes só no live não são reintroduzidos
+ * (delete remoto confirmado vence).
+ */
+export function mergeAutosaveOnlyOverlay(
+  live: ComunicadoConfig | undefined,
+  canonical: ComunicadoConfig,
+  coveredKeys: ReadonlySet<string>,
+): ComunicadoConfig | null {
+  if (!live || live === canonical) return null;
+  let changed = false;
+  const next = { ...canonical } as Record<string, unknown>;
+
+  const canonicalBlocks = new Map(
+    (canonical.blocks ?? []).map((b) => [b.id, b]),
+  );
+  if (live.blocks) {
+    const merged = canonical.blocks ?? [];
+    const overlay = new Map(
+      live.blocks
+        .filter(
+          (b) =>
+            b?.id &&
+            canonicalBlocks.has(b.id) &&
+            !coveredKeys.has(pendingBlockKey(b.id)) &&
+            !entityEquals(b, canonicalBlocks.get(b.id)),
+        )
+        .map((b) => [b.id, b]),
+    );
+    if (overlay.size > 0) {
+      changed = true;
+      next.blocks = merged.map((b) => overlay.get(b.id) ?? b);
+    }
+  }
+
+  const canonicalModels = new Map(
+    (canonical.dataModels ?? []).map((m) => [m.id, m]),
+  );
+  if (live.dataModels) {
+    const overlay = new Map(
+      live.dataModels
+        .filter(
+          (m) =>
+            m?.id &&
+            canonicalModels.has(m.id) &&
+            !coveredKeys.has(pendingDataModelKey(m.id)) &&
+            !entityEquals(m, canonicalModels.get(m.id)),
+        )
+        .map((m) => [m.id, m]),
+    );
+    if (overlay.size > 0) {
+      changed = true;
+      next.dataModels = (canonical.dataModels ?? []).map(
+        (m) => overlay.get(m.id) ?? m,
+      );
+    }
+  }
+
+  const liveRecord = live as unknown as Record<string, unknown>;
+  const canonicalRecord = canonical as unknown as Record<string, unknown>;
+  for (const field of new Set([
+    ...Object.keys(liveRecord),
+    ...Object.keys(canonicalRecord),
+  ])) {
+    if (field === "blocks" || field === "dataModels" || field === "version") {
+      continue;
+    }
+    if (coveredKeys.has(pendingFieldKey(field))) continue;
+    if (!entityEquals(liveRecord[field], canonicalRecord[field])) {
+      changed = true;
+      next[field] = liveRecord[field];
+    }
+  }
+
+  return changed ? (next as ComunicadoConfig) : null;
+}
+
+export type PersistableDispatchDecision = {
+  /** true = enviar o payload capturado; false = descartar (stale/coberto). */
+  send: boolean;
+  /**
+   * Payload seguro a reemitir quando `send` é false — canônico nas entidades
+   * cobertas + delta autosave-only da captura (post-commit pós-navegação).
+   */
+  reEmit?: Record<string, unknown>;
+};
+
+/**
+ * Guarda de DISPATCH do autosave (028 — write lane é FIFO: um PATCH capturado
+ * com baseline coberto só pode ser ENVIADO depois que a mutation assentou; se
+ * a mutation commitou nesse intervalo, o baseline capturado virou stale e o
+ * PATCH reverteria a projeção já confirmada — lost update silencioso).
+ *
+ * Slide corrente: a captura só é segura se ainda é a visão persistível atual
+ * (resolve de live+registry). Slide não-corrente (navegação antes do ACK):
+ * - mutation não commitou → baseline coberto ainda é a última visão
+ *   confirmada → envio seguro (B2: autosave-only viaja com o baseline).
+ * - mutation commitou → baseline capturado é stale; quando resta delta
+ *   autosave-only não-coberto, reemite canônico+delta (sem reverter).
+ */
+export function resolvePersistableDispatchDecision(args: {
+  /** nativeConfig serializado capturado no save agendado. */
+  captured: Record<string, unknown>;
+  isCurrentSlide: boolean;
+  live: ComunicadoConfig | undefined;
+  registry: PendingProjectionRegistry;
+  /** Último commit mutation-backed do slide (se houve desde a captura). */
+  committed?: { canonical: ComunicadoConfig; coveredKeys: ReadonlySet<string> } | null;
+  /** Key serializada do estado já persistido conhecido (suprime no-op write). */
+  authoritativeKey?: string | null;
+  serialize: (config: ComunicadoConfig) => Record<string, unknown>;
+}): PersistableDispatchDecision {
+  const capturedKey = JSON.stringify(args.captured);
+  if (args.isCurrentSlide) {
+    if (!args.live) return { send: true };
+    const { resolved } = resolvePersistableConfig(args.live, args.registry);
+    const resolvedKey = JSON.stringify(args.serialize(resolved));
+    if (resolvedKey !== capturedKey) return { send: false };
+    /* A captura segue correta, mas já coincide com o estado persistido —
+     * reescrevê-la é no-op write que só bumpa revisão (alarga a janela CAS
+     * dos peers e gera eco WS redundante). O commit mutation-backed é
+     * registrado no hop mais cedo pós-resolution da lane — cobre a janela
+     * em que o PATCH despacha após o settle mas antes do applyAck atualizar
+     * a referência autoritativa. */
+    if (resolvedKey === args.authoritativeKey) return { send: false };
+    if (
+      args.committed &&
+      resolvedKey === JSON.stringify(args.serialize(args.committed.canonical))
+    ) {
+      return { send: false };
+    }
+    return { send: true };
+  }
+  if (!args.committed) return { send: true };
+  const merged = mergeAutosaveOnlyOverlay(
+    args.captured as unknown as ComunicadoConfig,
+    args.committed.canonical,
+    args.committed.coveredKeys,
+  );
+  if (!merged) return { send: false };
+  const mergedSerialized = args.serialize(merged);
+  if (JSON.stringify(mergedSerialized) === capturedKey) return { send: true };
+  return { send: false, reEmit: mergedSerialized };
 }
 
 /**

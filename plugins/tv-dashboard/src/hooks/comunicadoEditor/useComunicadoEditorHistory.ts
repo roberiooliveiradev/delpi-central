@@ -43,12 +43,21 @@ type Options = {
     next: ComunicadoConfig,
     options?: { persist?: boolean; authoritative?: boolean },
   ) => void;
+  /**
+   * Atualiza a referência "estado persistido" do canal de autosave sem tocar
+   * o stage — usado quando o ACK canônico é no-op para o palco (a projeção
+   * já era o resultado do servidor). Sem isso, a referência autoritativa
+   * ficaria stale/ausente e o refresh pós-ACK reemitiria o canônico como
+   * autosave novo (VISTA-TV-028).
+   */
+  markAuthoritativeConfig?: (next: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
 };
 
 export function useComunicadoEditorHistory({
   configRef,
   applyConfig,
+  markAuthoritativeConfig,
   deckHistory,
 }: Options) {
   const [historyTick, setHistoryTick] = useState(0);
@@ -129,11 +138,15 @@ export function useComunicadoEditorHistory({
         fingerprintComunicadoRuntime(configRef.current) ===
           fingerprintComunicadoRuntime(next)
       ) {
+        // ACK idempotente: o palco não muda, mas o estado é confirmado —
+        // a referência autoritativa do canal persistível precisa refleti-lo
+        // (senão o refresh pós-ACK reemite o canônico como autosave novo).
+        markAuthoritativeConfig?.(next);
         return;
       }
       applyConfig(next, { persist: false, authoritative: true });
     },
-    [applyConfig, configRef],
+    [applyConfig, configRef, markAuthoritativeConfig],
   );
 
   const undo = useCallback(() => {

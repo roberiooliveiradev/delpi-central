@@ -243,6 +243,13 @@ type Options = {
     /** Config corrente — baseline para ops que projetam dentro de `optimistic`. */
     getLive: () => ComunicadoConfig;
     refresh: () => void;
+    applyOverlay?: (merged: ComunicadoConfig) => void;
+    isCurrentSlide?: (slideId: string) => boolean;
+    recordCommitted?: (
+      slideId: string,
+      canonical: ComunicadoConfig,
+      coveredKeys: ReadonlySet<string>,
+    ) => void;
   };
 };
 
@@ -322,6 +329,9 @@ export function useComunicadoEditorBlocks({
             getBaseline: pendingProjection.getStashBaseline,
             getLive: pendingProjection.getLive,
             refresh: pendingProjection.refresh,
+            applyOverlay: pendingProjection.applyOverlay,
+            isCurrentSlide: pendingProjection.isCurrentSlide,
+            recordCommitted: pendingProjection.recordCommitted,
           }
         : undefined,
     [pendingProjection],
@@ -334,6 +344,9 @@ export function useComunicadoEditorBlocks({
             getBaseline: pendingProjection.getLive,
             getLive: pendingProjection.getLive,
             refresh: pendingProjection.refresh,
+            applyOverlay: pendingProjection.applyOverlay,
+            isCurrentSlide: pendingProjection.isCurrentSlide,
+            recordCommitted: pendingProjection.recordCommitted,
           }
         : undefined,
     [pendingProjection],

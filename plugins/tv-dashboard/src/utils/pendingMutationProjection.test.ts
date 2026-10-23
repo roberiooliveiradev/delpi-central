@@ -8,9 +8,12 @@ import {
   createPendingProjectionRegistry,
   diffedFieldKeys,
   driftedPendingKeys,
+  mergeAutosaveOnlyOverlay,
   pendingBlockKey,
   pendingFieldKey,
   resolvePersistableConfig,
+  resolvePersistableDispatchDecision,
+  resolveProjectionBaseline,
 } from "./pendingMutationProjection";
 
 function cfg(partial: Partial<ComunicadoConfig>): ComunicadoConfig {
@@ -34,6 +37,35 @@ describe("pendingMutationProjection registry", () => {
     const reg = createPendingProjectionRegistry();
     reg.mark([pendingBlockKey("a")], undefined, 1);
     expect(reg.hasPending()).toBe(false);
+  });
+
+  it("baseline autoritativo cobre a janela de stash vazio (028)", () => {
+    const reg = createPendingProjectionRegistry();
+    const authoritative = cfg({ blocks: [blockA as never] });
+    const baseline = resolveProjectionBaseline(undefined, authoritative);
+    reg.mark([pendingBlockKey("a")], baseline, 1);
+    expect(reg.hasPending()).toBe(true);
+    // A serialização persistível usa o estado confirmado, não a projeção.
+    const live = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    const { resolved } = resolvePersistableConfig(live, reg);
+    const resolvedA = (resolved.blocks ?? []).find((b) => b.id === "a") as
+      | typeof blockA
+      | undefined;
+    expect(resolvedA?.frame.x).toBe(40);
+  });
+
+  it("stash vence sobre o autoritativo quando presente (028)", () => {
+    const stash = cfg({ blocks: [{ ...blockA, content: "stash" } as never] });
+    const authoritative = cfg({ blocks: [{ ...blockA, content: "auth" } as never] });
+    const baseline = resolveProjectionBaseline(stash, authoritative);
+    expect((baseline?.blocks?.[0] as typeof blockA).content).toBe("stash");
+  });
+
+  it("sem stash e sem autoritativo permanece undefined (fail-open)", () => {
+    expect(resolveProjectionBaseline(undefined, null)).toBeUndefined();
+    expect(resolveProjectionBaseline(undefined, undefined)).toBeUndefined();
   });
 
   it("primeiro baseline vence e gerações coexistem até todas fazerem settle", () => {
@@ -161,6 +193,76 @@ describe("driftedPendingKeys (undo/redo sobre mutation pendente)", () => {
   });
 });
 
+describe("mergeAutosaveOnlyOverlay (028 — cenário misto)", () => {
+  const covered = new Set([pendingBlockKey("a")]);
+
+  it("retorna null quando live e canônico coincidem", () => {
+    const c = cfg({ blocks: [blockA as never] });
+    expect(mergeAutosaveOnlyOverlay(c, c, covered)).toBeNull();
+    expect(mergeAutosaveOnlyOverlay(undefined, c, covered)).toBeNull();
+  });
+
+  it("preserva edição autosave-only em bloco não-coberto por cima do canônico", () => {
+    const canonical = cfg({
+      blocks: [
+        { ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never,
+        blockB as never,
+      ],
+    });
+    const live = cfg({
+      blocks: [
+        { ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never,
+        { ...blockB, content: "texto digitado" } as never,
+      ],
+    });
+    const merged = mergeAutosaveOnlyOverlay(live, canonical, covered);
+    expect(merged).not.toBeNull();
+    const blocks = (merged as ComunicadoConfig).blocks ?? [];
+    expect((blocks.find((b) => b.id === "a") as typeof blockA).frame.x).toBe(8);
+    expect((blocks.find((b) => b.id === "b") as typeof blockB).content).toBe(
+      "texto digitado",
+    );
+  });
+
+  it("não reintroduz bloco presente só no live (delete confirmado vence)", () => {
+    const canonical = cfg({ blocks: [blockA as never] });
+    const live = cfg({ blocks: [blockA as never, blockB as never] });
+    const merged = mergeAutosaveOnlyOverlay(live, canonical, new Set());
+    expect(merged).toBeNull();
+  });
+
+  it("entidade coberta segue o canônico mesmo com live divergente", () => {
+    const canonical = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    const live = cfg({
+      blocks: [{ ...blockA, frame: { x: 99, y: 0, w: 1, h: 1 } } as never],
+    });
+    const merged = mergeAutosaveOnlyOverlay(live, canonical, covered);
+    expect(merged).toBeNull();
+  });
+
+  it("campo top-level não-coberto usa live; coberto usa canônico", () => {
+    const canonical = cfg({
+      headline: "h-srv",
+      speakerNotes: "nota-srv",
+    } as Partial<ComunicadoConfig>);
+    const live = cfg({
+      headline: "h-srv",
+      speakerNotes: "nota-digitada",
+    } as Partial<ComunicadoConfig>);
+    const merged = mergeAutosaveOnlyOverlay(
+      live,
+      canonical,
+      new Set([pendingFieldKey("headline")]),
+    );
+    expect(merged).not.toBeNull();
+    const rec = merged as unknown as Record<string, unknown>;
+    expect(rec.headline).toBe("h-srv");
+    expect(rec.speakerNotes).toBe("nota-digitada");
+  });
+});
+
 describe("diffedFieldKeys / coveredKeysForBlocks", () => {
   it("detecta campos projetados fora dos ops (ex.: groupTransforms)", () => {
     const sharedFilters = { f: "1" };
@@ -179,5 +281,199 @@ describe("diffedFieldKeys / coveredKeysForBlocks", () => {
       "block:a",
       "block:b",
     ]);
+  });
+});
+
+describe("resolvePersistableDispatchDecision (028 — guarda de dispatch)", () => {
+  const serialize = (c: ComunicadoConfig) =>
+    JSON.parse(JSON.stringify(c)) as Record<string, unknown>;
+
+  it("slide corrente: captura igual à visão persistível atual → send (mutation rejeitada, baseline segue válido)", () => {
+    const reg = createPendingProjectionRegistry();
+    const baseline = cfg({ blocks: [blockA as never] });
+    const live = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    reg.mark([pendingBlockKey("a")], baseline, 1); // mutation falhou → marks ficam
+    const { resolved } = resolvePersistableConfig(live, reg);
+    const captured = serialize(resolved);
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: true,
+        live,
+        registry: reg,
+        serialize,
+      }),
+    ).toEqual({ send: true });
+  });
+
+  it("slide corrente: captura com baseline coberto após commit → skip (não reverte projeção confirmada)", () => {
+    const reg = createPendingProjectionRegistry();
+    const baseline = cfg({ blocks: [blockA as never] });
+    reg.mark([pendingBlockKey("a")], baseline, 1);
+    const captured = serialize(baseline); // payload {a@40} capturado pré-commit
+    const canonical = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    reg.settle([pendingBlockKey("a")], 1, canonical); // commit + applyAck
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: true,
+        live: canonical,
+        registry: reg,
+        serialize,
+      }),
+    ).toEqual({ send: false });
+  });
+
+  it("slide corrente: captura igual ao resolvido mas já persistida → skip (no-op write que só bumpa revisão)", () => {
+    const reg = createPendingProjectionRegistry();
+    const canonical = cfg({ blocks: [blockA as never] });
+    const captured = serialize(canonical);
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: true,
+        live: canonical,
+        registry: reg,
+        authoritativeKey: JSON.stringify(captured),
+        serialize,
+      }),
+    ).toEqual({ send: false });
+  });
+
+  it("slide corrente: commit registrado antes do applyAck (janela settle→ACK) → skip no-op write", () => {
+    const reg = createPendingProjectionRegistry();
+    const canonical = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    /* PATCH despacha no hop entre settle e applyAck: registry vazio,
+     * live já é o canônico, mas authoritativePersistableRef ainda é o estado
+     * pré-commit — o registro de commit do hop mais cedo suprime o no-op. */
+    const captured = serialize(canonical);
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: true,
+        live: canonical,
+        registry: reg,
+        authoritativeKey: JSON.stringify(serialize(cfg({ blocks: [blockA as never] }))),
+        committed: { canonical, coveredKeys: new Set([pendingBlockKey("a")]) },
+        serialize,
+      }),
+    ).toEqual({ send: false });
+  });
+
+  it("slide corrente: captura correta com delta ainda não persistido → send", () => {
+    const reg = createPendingProjectionRegistry();
+    const live = cfg({ blocks: [blockA as never] });
+    const captured = serialize(live);
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: true,
+        live,
+        registry: reg,
+        authoritativeKey: JSON.stringify(serialize(cfg({ blocks: [blockB as never] }))),
+        serialize,
+      }),
+    ).toEqual({ send: true });
+  });
+
+  it("slide não-corrente sem commit registrado → send (flush de navegação com mutation rejeitada)", () => {
+    const reg = createPendingProjectionRegistry();
+    const captured = serialize(cfg({ blocks: [blockA as never] }));
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: false,
+        live: undefined,
+        registry: reg,
+        committed: null,
+        serialize,
+      }),
+    ).toEqual({ send: true });
+  });
+
+  it("slide não-corrente pós-commit sem delta autosave → skip", () => {
+    const reg = createPendingProjectionRegistry();
+    const canonical = cfg({
+      blocks: [{ ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never],
+    });
+    const captured = serialize(cfg({ blocks: [blockA as never] })); // baseline {a@40}
+    expect(
+      resolvePersistableDispatchDecision({
+        captured,
+        isCurrentSlide: false,
+        live: undefined,
+        registry: reg,
+        committed: {
+          canonical,
+          coveredKeys: new Set([pendingBlockKey("a")]),
+        },
+        serialize,
+      }),
+    ).toEqual({ send: false });
+  });
+
+  it("slide não-corrente pós-commit com delta autosave-only → reEmit canônico+delta", () => {
+    const reg = createPendingProjectionRegistry();
+    const canonical = cfg({
+      blocks: [
+        { ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never,
+        blockB as never,
+      ],
+    });
+    // Captura pré-commit: baseline no bloco coberto + edição digitada no não-coberto.
+    const captured = serialize(
+      cfg({
+        blocks: [
+          blockA as never,
+          { ...blockB, content: "texto digitado" } as never,
+        ],
+      }),
+    );
+    const decision = resolvePersistableDispatchDecision({
+      captured,
+      isCurrentSlide: false,
+      live: undefined,
+      registry: reg,
+      committed: { canonical, coveredKeys: new Set([pendingBlockKey("a")]) },
+      serialize,
+    });
+    expect(decision.send).toBe(false);
+    const blocks = (decision.reEmit?.blocks ?? []) as typeof blockA[];
+    expect(blocks.find((b) => b.id === "a")?.frame.x).toBe(8);
+    expect(blocks.find((b) => b.id === "b")?.content).toBe("texto digitado");
+  });
+
+  it("slide não-corrente: captura já igual ao merged → send (dispatch do save reemitido)", () => {
+    const reg = createPendingProjectionRegistry();
+    const canonical = cfg({
+      blocks: [
+        { ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never,
+        blockB as never,
+      ],
+    });
+    const merged = serialize(
+      cfg({
+        blocks: [
+          { ...blockA, frame: { x: 8, y: 0, w: 1, h: 1 } } as never,
+          { ...blockB, content: "texto digitado" } as never,
+        ],
+      }),
+    );
+    expect(
+      resolvePersistableDispatchDecision({
+        captured: merged,
+        isCurrentSlide: false,
+        live: undefined,
+        registry: reg,
+        committed: { canonical, coveredKeys: new Set([pendingBlockKey("a")]) },
+        serialize,
+      }),
+    ).toEqual({ send: true });
   });
 });

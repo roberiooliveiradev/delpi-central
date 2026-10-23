@@ -17,6 +17,11 @@ import { isParamExpressionValue } from "./paramExpressions";
 /** Result revision metadata surfaced after a committed mutation. */
 export type MutationCommitMeta = {
   playlistRevision?: number;
+  /* 028: canonical nativeConfig already parsed — surfaced on the earliest
+   * post-commit continuation (inside the write lane's resolution hop), so
+   * pending autosaves dispatched right after the mutation can compare the
+   * captured payload against the committed canonical state. */
+  canonical?: ComunicadoConfig | null;
 };
 
 export async function commitPresentationOps(args: {
@@ -29,10 +34,11 @@ export async function commitPresentationOps(args: {
   const { playlistId, slideId, ops } = args;
   if (!playlistId || !slideId || ops.length === 0) return null;
   const result = await applyPresentationMutations(playlistId, slideId, ops, args.writeGuard);
-  args.onCommitted?.({ playlistRevision: result.playlistRevision });
   const raw = result.nativeConfig;
-  if (!raw || typeof raw !== "object") return null;
-  return parseComunicadoConfig(raw);
+  const canonical =
+    raw && typeof raw === "object" ? parseComunicadoConfig(raw) : null;
+  args.onCommitted?.({ playlistRevision: result.playlistRevision, canonical });
+  return canonical;
 }
 
 /** Fire create_block and return canonical config (or null on skip/failure). */
