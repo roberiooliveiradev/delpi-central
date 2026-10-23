@@ -731,9 +731,9 @@ Compara com SB9 @dDataFim; com modo Alteração **corrige via `RecLock`** (`B9_V
 **Capacidade vs execução:** a capacidade de correção retroativa existe no código; execução efetiva **não é observável via SQL** (sem trilha de execução). `TO_INVENTORY` → owner ERP.
 
 **Validação SQL da fórmula (filial 02, 20260831→20260930) — `INCONCLUSIVE`/divergente:**
-- 3.545 chaves produto×armazém; **428 sem linha SB9 no fechamento** (saldo/movimento sem snapshot gravado — evidência estrutural de incompletude de cobertura);
-- 523 linhas divergem em valor (>R$1; Σ|Δ|=4,98M), 290 em quantidade (Σ|Δ|=9,08M);
-- Interpretação: a fórmula DEL100 **não reproduz** o SB9 armazenado — ou há correções/ajustes pendentes, ou o cálculo difere em nuances (TES, custo de retorno, filial SF4). Não é a regra do produtor SB9; é rotina corretiva aproximada.
+- 3.545 chaves produto×armazém no universo investigado; **428 sem linha SB9 no fechamento** — diferença de cobertura do universo investigado (elegibilidade dessas chaves para snapshot **não demonstrada**; podem não ser elegíveis — Rodada 7 investiga);
+- 523 linhas com diferença de valor (>R$1; Σ|Δ|=4,98M) e 290 com diferença de quantidade (Σ|Δ|=9,08M) **entre a reconstrução SQL e o SB9 observado** — diferença registrada sem conclusão causal: não demonstrado se decorre de nuance da fórmula (TES, custo de retorno, filial SF4), de correção posterior, ou da reconstrução SQL;
+- Não concluído que DEL100 seja aproximada/errada nem que seja a regra do produtor SB9 — ambas as hipóteses abertas (`INCONCLUSIVE`).
 
 ### 18.B — MATR320/MATA330/P7: produtores e consumidores
 
@@ -749,9 +749,9 @@ Compara com SB9 @dDataFim; com modo Alteração **corrige via `RecLock`** (`B9_V
 ### 18.D — Faturamento × MOD: consumidores SH6 e cadeia de custo
 
 - **`matr895`** (Real × Previsto, fonte TOTVS no acervo): seção sobre `SH6+SC2+SB1+SH1+SH4+SG2`; join OP via `SUBSTR(H6_OP)` em `C2_NUM/C2_ITEM/C2_SEQUEN`; divisor de tempo padrão `SH1.H1_MAOOBRA`; células `HoraPrev`/`HoraReal`, `H6_QTDPROD`/`H6_QTDPERD`.
-- **`DLP10G03` (custom)**: calcula eficiência `=(G2_TEMPAD×H6_QTDPROD + setup)/H6_TEMPO×100` e **grava `H6_ZEFICI`** (campo custom) — preenchido em 308.865/457.954 linhas SH6 (67%) → rotina **efetivamente executada em produção**.
+- **`DLP10G03` (custom)**: calcula eficiência `=(G2_TEMPAD×H6_QTDPROD + setup)/H6_TEMPO×100` e **grava `H6_ZEFICI`** (campo custom) — campo preenchido em 308.865/457.954 linhas SH6 (67%); o preenchimento prova que **algum** produtor grava o campo, **não** que esta versão específica do `DLP10G03` executou em produção (fonte ≠ RPO compilado).
 - **`PApPosAp`**: ponto de entrada que normaliza `H6_OP`/desdobramento de OP.
-- **Custo MOD — resolvido conceitualmente**: `SH1` não tem custo monetário (`H1_MAOOBRA`, `H1_CCUSTO`, `H1_GCCUSTO`, `H1_MODFAT`); `SH4.H4_CUSTOH` existe mas está **zerado** nas 529 ferramentas → custo/hora não é carregado. Cobertura SH6→SH1 em 09/2026: **100%** dos 13.886 apontamentos com recurso válido e `H1_CCUSTO` preenchido → **o rateio MOD é via centro de custo do recurso**, não custo/hora de recurso/ferramenta. Fórmula monetária (rate × horas) depende dos rates de CC → `TO_INVENTORY`.
+- **Custo MOD — associação comprovada no recorte consultado**: `SH1` não tem custo monetário (`H1_MAOOBRA`, `H1_CCUSTO`, `H1_GCCUSTO`, `H1_MODFAT`); `SH4.H4_CUSTOH` existe mas está **zerado** nas 529 ferramentas consultadas. Cobertura SH6→SH1 em 09/2026: **100%** dos 13.886 apontamentos com recurso válido e `H1_CCUSTO` preenchido → associação SH6→recurso→centro de custo **comprovada no recorte**; generalização para a regra monetária de rateio MOD permanece `TO_INVENTORY` (fórmula rate × horas não demonstrada).
 - Escala: SH6 = 457.954 apontamentos; set/2026 = 13.886 (55 recursos, 1.688 produtos).
 
 ### 18.E — Recebíveis: DLP06R01 — pendência mantida
@@ -763,8 +763,8 @@ Sem novas evidências no acervo; produtor permanece `BLOCKED` → owner TI. Nenh
 | Run | Item | Ação | Resultado | Gate |
 |---|---|---|---|---|
 | C2-R28 | DEL100 | leitura integral + SX1 | PROVEN: fórmula, granularidade, correção RecLock; capacidade≠execução | G4 fonte |
-| C2-R29 | SB9 fórmula | recompute SQL f02 0831→0930 | DIVERGENTE: 428 sem linha fim; 523 Δvalor / 290 Δqtd → DEL100 não é regra do produtor | — |
+| C2-R29 | SB9 fórmula | recompute SQL f02 0831→0930 | DIVERGENTE: 428 chaves sem linha fim (elegibilidade não demonstrada); 523 Δvalor / 290 Δqtd reconstrução×SB9 — causa aberta | — |
 | C2-R30 | MATR320 | leitura Dmatr320 | PROVEN: consome SD3+SB1 (mov. período); não produz SB9 | — |
 | C2-R31 | MP7* | perfil NOMEARQ/TIPOMOV | PROVEN: dumps de arrays de execução, não P7 oficial | — |
-| C2-R32 | MOD | matr895/DLP10G03/PApPosAp + links SH6 | PROVEN: rateio via CC (H1_CCUSTO 100%); H4_CUSTOH zerado; H6_ZEFICI em uso | G4 fonte |
+| C2-R32 | MOD | matr895/DLP10G03/PApPosAp + links SH6 | PROVEN (recorte): associação SH6→H1_CCUSTO 100%; H4_CUSTOH zerado; H6_ZEFICI preenchido (produtor não identificado) | G4 fonte |
 | C2-R33 | — | doc 47 | `NO_GATE_CHANGE` | — |
