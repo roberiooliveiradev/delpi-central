@@ -311,3 +311,57 @@ Refuse extração quando: (a) exige imports circulares; (b) copia sanitizador; (
 ### 10.6 Entregáveis do executor R0 antes de autorizar runtime
 
 (1) Matriz M01–M10 atualizada contra HEAD pós-estabilização; (2) DAG de imports atual/previsto e pontos de inversão; (3) escolha `REUSE|EXTEND|NEW|SKIP` com evidência por arquivo; (4) desenho de contratos request/response/errors de cada extração REAL; (5) ordem de commits e rollback por lote; (6) testes baseline SHA, modelos/config/CRI e outcomes D4/D5/D8; (7) gap/ADR list, com vínculo a 49/52/58/59/113/117 e ledger; (8) recomendação de autorização separada R1–R7. **R0 permanece NOT_AUTHORIZED até aceite da estabilização e decisão do PO.**
+
+## 11. Capability-first reuse: integração do doc 128 ao plano de refatoração (PLANNED, sem avanço de fase)
+
+**Fonte temática:** [128 — Inteligência reutilizável, RPA e capacidades transversais](./128-cross-application-intelligence-and-rpa-capability-review.md). Este adendo torna verificável a arquitetura de múltiplos entrypoints, sem criar novos serviços ou substituir authorities. O plano 125 continua subordinado às decisões 16/17/49/50/52, ADR58, roadmap59 e S4/117; a estabilização funcional paralela deve terminar antes de R0.
+
+### 11.1 Matriz entrypoint → capability → owner → contract → executor → outcome
+
+| Entrypoint potencial | Capability reutilizável/limite | Owner da inteligência | Contrato boundary (estado) | Executor legítimo | Outcome |
+|---|---|---|---|---|---|
+| Conversa DÉLIA | interpretação, descoberta, evidência, explicação, PREPARE/ACT quando permitido | DÉLIA Application | `HandleInteractiveConversationTurn`/existing contracts; PROVEN parcial conforme SHA | Domain API/MCP adapter/Automation Hub se aprovado | typed Evidence/Outcome; projeção conversacional só na borda |
+| Work recorrente | objetivo/constraints, instância, reavaliação de autoridade | DÉLIA Work (TARGET) | work occurrence + lifecycle (TO_INVENTORY) | scheduler legítimo para disparo; Automation Hub para execução técnica | verificação de postcondition por Domain API, não cron success |
+| Evento/Watch | observe/contextualize/advise/prepare; C6 sem ACT autônomo | DÉLIA intelligence (TARGET) | signal/event typed + correlation/TTL (TO_INVENTORY) | fonte de evento real + owners; sem Chat | observation/decision candidate, no invented FACT |
+| App DELPI consumidor | solicitar análise ou PREPARE por referência/contexto mínimo | DÉLIA somente se há inteligência necessária | HTTP/event boundary com AuthN/AuthZ/compat (PLANNED; NÃO endpoint existente) | owner correto; automação via Hub se permitida | resposta typed, provenance, status honesto |
+| Executor RPA | action preparada, authorized binding, idempotency | DÉLIA decisão/Work; Automation Hub execução | dispatch/reconciliation contract (TARGET; infra física TO_INVENTORY) | RPA worker/Human Task sob owner | technical status ≠ business outcome; autoritativa postcondition |
+| App consulta direta | leitura determinística sem inteligência | Domain API / Core | contrato existente da API (validar) | owner direto, sem DÉLIA obrigatória | domain result, nunca resultado LLM |
+
+**A regra de arquitetura:** `ENTRYPOINT` injeta contexto e intenção sem transportar autoridade; `CAPABILITY` é semântica; `OWNER` controla fonte e regra; `CONTRACT` limita interação; `EXECUTOR` é selecionado apenas em boundary autorizado; `OUTCOME` comprova condição de negócio. Nenhuma linha desta tabela prova que o consumidor ou endpoint TARGET já existe.
+
+### 11.2 Regra de design para código compartilhável
+
+A parte reutilizável não depende de `ConversationTurn`, Markdown, avatar, MFE, cookies de navegador, método HTTP, nomes de ferramentas, URL ou seletores RPA. Contexto genérico só contém **referências tipadas mínimas e trust classification**; autenticação/autorização efetiva continua ao vivo em Keycloak/Core/Domain conforme o gate. **Uma implementação por capability**, com adapters de entrada: conversa agora; Work/Watch/app apenas com consumidor real.
+
+Evitar abstração excessiva: a tipagem `SemanticIntent`, `EvidenceBundle`, `DecisionResult`, `ExecutionDispatch`, `OutcomeVerification` aqui é uma **descrição conceitual**, não cinco novos DTOs. R0 deve mapear cada ideia a `CapabilityGroup`, `EvidenceFacts`, `OutcomeVerdict`, `GovernedCapabilityAttempt`, `PendingWrite`, `TurnDeadline` e contratos de Work já previstos. `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY`, `REUSE_DECISION=REUSE|EXTEND|NEW` antes de criar qualquer arquivo.
+
+### 11.3 RPA sem acoplar inteligência ao executor
+
+A decisão do planner deve indicar capability e precondições, não API endpoint/selector/click. Preferir API oficial → integração nativa → função determinística → RPA → computer-use governado → Human Task. Para RPA:
+- Automation Hub mantém package, worker, queue/lease, credenciais, retry técnico, versionamento de bot, captura de execução;
+- DÉLIA mantém context, Evidence, Policy/Decision, Work intent, PREPARE/ACT, audit lógico e verificação de Outcome;
+- Core e Domain API revalidam autorização/regra no momento do write; token/scope não é permissão por si;
+- o despacho deve tratar `ACCEPTED/PENDING/TECHNICAL_FAILED/AMBIGUOUS`, idempotência, timeout, cancel/rollback e reconciliação com a fonte autoritativa;
+- side-effect ambíguo não autoriza retry cego; C6 Watch nunca ACT autônomo; L5 off por default e OT/Safety permanece autoridade separada.
+
+Esses mecanismos só entram na implantação após discovery do Automation Hub e contratos reais. **R0 do refactor não cria dispatcher, scheduler, workers ou runtime RPA.**
+
+### 11.4 Matriz adicional para R0/M01–M10
+
+Para cada função/grupo M01–M10 já documentado na seção 10, adicionar colunas `ENTRYPOINT_DEPENDENCY`, `POTENTIAL_NON_CHAT_CONSUMER`, `REAL_CONSUMER_PROVEN`, `INTELLIGENCE_CAPABILITY`, `TRUST_BOUNDARY`, `OUTCOME_CONTRACT`, `OWNER_OF_EXECUTION`. Distinguir claramente consumidor TARGET de consumidor real. Exigir um teste de isolamento **sem conversa**, quando existir consumer legítimo, e um teste que prove que chamadas sem contexto conversacional não inferem permissão; não fabricar consumidores para satisfazer teste. O extrator só move funções para módulo compartilhável quando o contrato resultar de demandas independentes reais ou uma responsabilidade legítima de application, e não de especulação.
+
+- **R1/M01:** lineage de instrução e propósito sem depender de UI; resources versionados são internos ao owner, não API cross-app.
+- **R2/M02–M03:** sanitização/evidence independente da UI, com source/provenance e proteção contra metadados de MCP/RPA, sem virar autoritativa.
+- **R3/M04–M05:** `OutcomeVerdict` é reutilizável; Markdown/voz/dashboards são apresentação dependente do canal e devem consumir o resultado, não defini-lo.
+- **R4/M06–M07:** conteúdo user-facing pertence ao presenter; guidance published pode ser reutilizado somente por contract, não por importar módulos privados.
+- **R5/M08–M09:** seleção semântica e validação de schema provider-neutral; não embedding de URLs, bot package, DOM selectors ou executor metadata como permission.
+- **R6/M10:** coordinator organiza inteligências; Work e RPA boundary são capacidades externas ao conversational handler e só se ligam quando contracts TARGET forem aceitos.
+- **R7:** além de D4/D5/D8, provar fluxo cross-entrypoint apenas se runtime/consumer existir; até lá registrar `TARGET/TEST_NOT_RUN`, não inventar PASS.
+
+### 11.5 Regras de publicação entre aplicações (gate próprio, não escopo automático R0–R7)
+
+Expor inteligência por API/eventos somente quando existe consumer concreto e contrato owner-approved: request/response/errors, AuthN, Core+Domain AuthZ live, tenant/context, consent, data minimization, cost/time/rate, idempotency for writes, provenance, compatibility/version, observability, correlation, retries/revoke. OpenAPI com `operationId` estável quando aplicável. MCP/A2A podem servir de interop sem ampliar autoridade. Nunca permitir imports internos/banco alheio e nunca transformar DÉLIA em obrigatório para consultas determinísticas.
+
+**Gates de saída adicionais:** R0 produz a matriz completa; R2/R3 isolam evidence/outcome da UI; R6 preserva o núcleo governado e marca adaptações cross-app sem consumers como TARGET; R7 certifica modularidade sem segunda authority. Revisões em desacordo com doc 128 ou autoridades superiores = STOP/ARCHITECTURE_DECISION_REQUIRED, sem reconciliar silenciosamente.
+
+**Status:** PLANNED, R0–R7 NOT_AUTHORIZED até estabilização independente. Nenhum arquivo de runtime, dispatcher RPA, worker ou endpoint criado por esta seção.
