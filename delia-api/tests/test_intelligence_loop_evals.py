@@ -18,6 +18,20 @@ vocabulary shares nothing with VISTA/TÉO/DAVI:
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from app.infrastructure.config.cri_instruction_resource import (
+    load_cri_presentation_vocabulary,
+)
+
+
+_VOCAB_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "config"
+    / "cri_presentation.delpi.json"
+)
+_LABELS = load_cri_presentation_vocabulary(_VOCAB_PATH).field_labels
+
 import pytest
 
 from app.application.capability_provision.contracts import (
@@ -248,6 +262,7 @@ def _orchestrator(providers, proposal):
         providers,
         invoke_model=InvokeModel(FakeProposalModel(proposal)),
         model_ref=TEST_MODEL_REF,
+        field_labels=_LABELS,
     )
 
 

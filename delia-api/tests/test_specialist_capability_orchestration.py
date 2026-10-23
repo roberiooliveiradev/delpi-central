@@ -9,6 +9,20 @@ semantics and bounded provenance — across DAVI/TÉO/VISTA siblings.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from app.infrastructure.config.cri_instruction_resource import (
+    load_cri_presentation_vocabulary,
+)
+
+
+_VOCAB_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "config"
+    / "cri_presentation.delpi.json"
+)
+_LABELS = load_cri_presentation_vocabulary(_VOCAB_PATH).field_labels
+
 import json
 
 import pytest
@@ -366,6 +380,7 @@ def _read(
         [McpCapabilityProvider(interop, specialist_ids)],
         invoke_model=invoke_model,
         model_ref=TEST_MODEL_REF if invoke_model else None,
+        field_labels=_LABELS,
     )
 
 

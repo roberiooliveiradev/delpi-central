@@ -6,6 +6,20 @@ A rendered heading is presentation. The decision reads
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from app.infrastructure.config.cri_instruction_resource import (
+    load_cri_presentation_vocabulary,
+)
+
+
+_VOCAB_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "config"
+    / "cri_presentation.delpi.json"
+)
+_LABELS = load_cri_presentation_vocabulary(_VOCAB_PATH).field_labels
+
 import app.application.capability_provision.orchestration as orch_mod
 from app.application.capability_provision.orchestration import (
     _prior_supports_typed_attribute_compare,
@@ -42,8 +56,10 @@ def test_b2_r2_typed_diff_is_independent_of_presentation_header():
         {"code": "2", "label": "alpha"},
         ["code", "label"],
     )
-    diffs = _selected_proven_differences(proposal, records)
-    assert diffs == ["- código: 1 → 2"]
+    diffs = _selected_proven_differences(
+        proposal, records, field_labels=_LABELS
+    )
+    assert diffs == ["- Código: 1 → 2"]
     assert all("Diferenças comprovadas:" not in line for line in diffs)
 
 
@@ -108,8 +124,10 @@ def test_b2_r7_equivalent_records_ignore_provider_order_of_fields():
             {"record_index": 1, "fields": ["sku", "state"]},
         ]
     }
-    diffs = _selected_proven_differences(proposal, (left, right))
-    assert diffs == ["- state: open → closed"]
+    diffs = _selected_proven_differences(
+        proposal, (left, right), field_labels=_LABELS
+    )
+    assert diffs == ["- State: open → closed"]
 
 
 def test_b2_r8_ticket_shortcut_imports_stay():

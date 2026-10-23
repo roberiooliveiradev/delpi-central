@@ -1,6 +1,6 @@
 {
   "resource_id": "delia.cri.presentation_vocabulary",
-  "version": "3",
+  "version": "4",
   "kind": "presentation_vocabulary",
   "owner": "DELPI",
   "leads": {
@@ -34,5 +34,922 @@
     "truncation_notice": "Exibindo {presented} de {returned} registros retornados.",
     "available_notice": "A fonte informa {available} registros no total.",
     "more_available": "Há mais registros na fonte além dos apresentados."
+  },
+  "field_labels": {
+    "description": {
+      "article": "a",
+      "label": "descrição",
+      "suffix": "cadastrada"
+    },
+    "descricao": {
+      "article": "a",
+      "label": "descrição",
+      "suffix": "cadastrada"
+    },
+    "name": {
+      "article": "o",
+      "label": "nome",
+      "suffix": "cadastrado"
+    },
+    "nome": {
+      "article": "o",
+      "label": "nome",
+      "suffix": "cadastrado"
+    },
+    "title": {
+      "article": "o",
+      "label": "título",
+      "suffix": "cadastrado"
+    },
+    "titulo": {
+      "article": "o",
+      "label": "título",
+      "suffix": "cadastrado"
+    },
+    "code": {
+      "article": "o",
+      "label": "código",
+      "suffix": "cadastrado"
+    },
+    "codigo": {
+      "article": "o",
+      "label": "código",
+      "suffix": "cadastrado"
+    },
+    "unit": {
+      "article": "a",
+      "label": "unidade",
+      "suffix": "cadastrada"
+    },
+    "unidade": {
+      "article": "a",
+      "label": "unidade",
+      "suffix": "cadastrada"
+    },
+    "price": {
+      "article": "o",
+      "label": "preço",
+      "suffix": "cadastrado"
+    },
+    "preco": {
+      "article": "o",
+      "label": "preço",
+      "suffix": "cadastrado"
+    },
+    "quantity": {
+      "article": "a",
+      "label": "quantidade",
+      "suffix": "informada"
+    },
+    "quantidade": {
+      "article": "a",
+      "label": "quantidade",
+      "suffix": "informada"
+    },
+    "total": {
+      "article": "o",
+      "label": "total",
+      "suffix": "informado"
+    },
+    "status": {
+      "article": "o",
+      "label": "status",
+      "suffix": "informado"
+    },
+    "type": {
+      "article": "o",
+      "label": "tipo",
+      "suffix": "cadastrado"
+    },
+    "tipo": {
+      "article": "o",
+      "label": "tipo",
+      "suffix": "cadastrado"
+    },
+    "value": {
+      "article": "o",
+      "label": "valor",
+      "suffix": "informado"
+    },
+    "valor": {
+      "article": "o",
+      "label": "valor",
+      "suffix": "informado"
+    },
+    "date": {
+      "article": "a",
+      "label": "data",
+      "suffix": "informada"
+    },
+    "createdat": {
+      "article": "a",
+      "label": "data de criação",
+      "suffix": "informada"
+    },
+    "createddate": {
+      "article": "a",
+      "label": "data de criação",
+      "suffix": "informada"
+    },
+    "datacriacao": {
+      "article": "a",
+      "label": "data de criação",
+      "suffix": "informada"
+    },
+    "updatedat": {
+      "article": "a",
+      "label": "data de atualização",
+      "suffix": "informada"
+    },
+    "updateddate": {
+      "article": "a",
+      "label": "data de atualização",
+      "suffix": "informada"
+    },
+    "dataatualizacao": {
+      "article": "a",
+      "label": "data de atualização",
+      "suffix": "informada"
+    },
+    "modifiedat": {
+      "article": "a",
+      "label": "data de modificação",
+      "suffix": "informada"
+    },
+    "changedat": {
+      "article": "a",
+      "label": "data de modificação",
+      "suffix": "informada"
+    },
+    "datamodificacao": {
+      "article": "a",
+      "label": "data de modificação",
+      "suffix": "informada"
+    },
+    "timestamp": {
+      "article": "a",
+      "label": "data e hora",
+      "suffix": "informada"
+    },
+    "datetime": {
+      "article": "a",
+      "label": "data e hora",
+      "suffix": "informada"
+    },
+    "datahora": {
+      "article": "a",
+      "label": "data e hora",
+      "suffix": "informada"
+    },
+    "startdate": {
+      "article": "a",
+      "label": "data de início",
+      "suffix": "informada"
+    },
+    "datainicio": {
+      "article": "a",
+      "label": "data de início",
+      "suffix": "informada"
+    },
+    "inicio": {
+      "article": "o",
+      "label": "início",
+      "suffix": "informado"
+    },
+    "enddate": {
+      "article": "a",
+      "label": "data de fim",
+      "suffix": "informada"
+    },
+    "datafim": {
+      "article": "a",
+      "label": "data de fim",
+      "suffix": "informada"
+    },
+    "duedate": {
+      "article": "o",
+      "label": "vencimento",
+      "suffix": "informado"
+    },
+    "vencimento": {
+      "article": "o",
+      "label": "vencimento",
+      "suffix": "informado"
+    },
+    "datavencimento": {
+      "article": "o",
+      "label": "vencimento",
+      "suffix": "informado"
+    },
+    "deadline": {
+      "article": "o",
+      "label": "prazo",
+      "suffix": "informado"
+    },
+    "prazo": {
+      "article": "o",
+      "label": "prazo",
+      "suffix": "informado"
+    },
+    "period": {
+      "article": "o",
+      "label": "período",
+      "suffix": "informado"
+    },
+    "periodo": {
+      "article": "o",
+      "label": "período",
+      "suffix": "informado"
+    },
+    "year": {
+      "article": "o",
+      "label": "ano",
+      "suffix": "informado"
+    },
+    "ano": {
+      "article": "o",
+      "label": "ano",
+      "suffix": "informado"
+    },
+    "month": {
+      "article": "o",
+      "label": "mês",
+      "suffix": "informado"
+    },
+    "mes": {
+      "article": "o",
+      "label": "mês",
+      "suffix": "informado"
+    },
+    "day": {
+      "article": "o",
+      "label": "dia",
+      "suffix": "informado"
+    },
+    "dia": {
+      "article": "o",
+      "label": "dia",
+      "suffix": "informado"
+    },
+    "email": {
+      "article": "o",
+      "label": "e-mail",
+      "suffix": "informado"
+    },
+    "phone": {
+      "article": "o",
+      "label": "telefone",
+      "suffix": "informado"
+    },
+    "telefone": {
+      "article": "o",
+      "label": "telefone",
+      "suffix": "informado"
+    },
+    "address": {
+      "article": "o",
+      "label": "endereço",
+      "suffix": "informado"
+    },
+    "endereco": {
+      "article": "o",
+      "label": "endereço",
+      "suffix": "informado"
+    },
+    "city": {
+      "article": "a",
+      "label": "cidade",
+      "suffix": "informada"
+    },
+    "cidade": {
+      "article": "a",
+      "label": "cidade",
+      "suffix": "informada"
+    },
+    "country": {
+      "article": "o",
+      "label": "país",
+      "suffix": "informado"
+    },
+    "pais": {
+      "article": "o",
+      "label": "país",
+      "suffix": "informado"
+    },
+    "uf": {
+      "article": "a",
+      "label": "UF",
+      "suffix": "informada"
+    },
+    "cep": {
+      "article": "o",
+      "label": "CEP",
+      "suffix": "informado"
+    },
+    "cnpj": {
+      "article": "o",
+      "label": "CNPJ",
+      "suffix": "informado"
+    },
+    "cpf": {
+      "article": "o",
+      "label": "CPF",
+      "suffix": "informado"
+    },
+    "rg": {
+      "article": "o",
+      "label": "RG",
+      "suffix": "informado"
+    },
+    "sku": {
+      "article": "o",
+      "label": "SKU",
+      "suffix": "informado"
+    },
+    "ean": {
+      "article": "o",
+      "label": "EAN",
+      "suffix": "informado"
+    },
+    "gtin": {
+      "article": "o",
+      "label": "GTIN",
+      "suffix": "informado"
+    },
+    "barcode": {
+      "article": "o",
+      "label": "código de barras",
+      "suffix": "informado"
+    },
+    "codigobarras": {
+      "article": "o",
+      "label": "código de barras",
+      "suffix": "informado"
+    },
+    "number": {
+      "article": "o",
+      "label": "número",
+      "suffix": "informado"
+    },
+    "numero": {
+      "article": "o",
+      "label": "número",
+      "suffix": "informado"
+    },
+    "filial": {
+      "article": "a",
+      "label": "filial",
+      "suffix": "informada"
+    },
+    "register": {
+      "article": "o",
+      "label": "registro",
+      "suffix": "informado"
+    },
+    "registro": {
+      "article": "o",
+      "label": "registro",
+      "suffix": "informado"
+    },
+    "category": {
+      "article": "a",
+      "label": "categoria",
+      "suffix": "informada"
+    },
+    "categoria": {
+      "article": "a",
+      "label": "categoria",
+      "suffix": "informada"
+    },
+    "group": {
+      "article": "o",
+      "label": "grupo",
+      "suffix": "informado"
+    },
+    "grupo": {
+      "article": "o",
+      "label": "grupo",
+      "suffix": "informado"
+    },
+    "amount": {
+      "article": "o",
+      "label": "montante",
+      "suffix": "informado"
+    },
+    "montante": {
+      "article": "o",
+      "label": "montante",
+      "suffix": "informado"
+    },
+    "cost": {
+      "article": "o",
+      "label": "custo",
+      "suffix": "informado"
+    },
+    "custo": {
+      "article": "o",
+      "label": "custo",
+      "suffix": "informado"
+    },
+    "stock": {
+      "article": "o",
+      "label": "estoque",
+      "suffix": "informado"
+    },
+    "estoque": {
+      "article": "o",
+      "label": "estoque",
+      "suffix": "informado"
+    },
+    "balance": {
+      "article": "o",
+      "label": "saldo",
+      "suffix": "informado"
+    },
+    "saldo": {
+      "article": "o",
+      "label": "saldo",
+      "suffix": "informado"
+    },
+    "percent": {
+      "article": "o",
+      "label": "percentual",
+      "suffix": "informado"
+    },
+    "percentage": {
+      "article": "o",
+      "label": "percentual",
+      "suffix": "informado"
+    },
+    "percentual": {
+      "article": "o",
+      "label": "percentual",
+      "suffix": "informado"
+    },
+    "rate": {
+      "article": "a",
+      "label": "taxa",
+      "suffix": "informada"
+    },
+    "taxa": {
+      "article": "a",
+      "label": "taxa",
+      "suffix": "informada"
+    },
+    "weight": {
+      "article": "o",
+      "label": "peso",
+      "suffix": "informado"
+    },
+    "peso": {
+      "article": "o",
+      "label": "peso",
+      "suffix": "informado"
+    },
+    "size": {
+      "article": "o",
+      "label": "tamanho",
+      "suffix": "informado"
+    },
+    "tamanho": {
+      "article": "o",
+      "label": "tamanho",
+      "suffix": "informado"
+    },
+    "currency": {
+      "article": "a",
+      "label": "moeda",
+      "suffix": "informada"
+    },
+    "moeda": {
+      "article": "a",
+      "label": "moeda",
+      "suffix": "informada"
+    },
+    "version": {
+      "article": "a",
+      "label": "versão",
+      "suffix": "informada"
+    },
+    "versao": {
+      "article": "a",
+      "label": "versão",
+      "suffix": "informada"
+    },
+    "owner": {
+      "article": "o",
+      "label": "proprietário",
+      "suffix": "informado"
+    },
+    "proprietario": {
+      "article": "o",
+      "label": "proprietário",
+      "suffix": "informado"
+    },
+    "user": {
+      "article": "o",
+      "label": "usuário",
+      "suffix": "informado"
+    },
+    "usuario": {
+      "article": "o",
+      "label": "usuário",
+      "suffix": "informado"
+    },
+    "responsible": {
+      "article": "o",
+      "label": "responsável",
+      "suffix": "informado"
+    },
+    "responsavel": {
+      "article": "o",
+      "label": "responsável",
+      "suffix": "informado"
+    },
+    "reason": {
+      "article": "o",
+      "label": "motivo",
+      "suffix": "informado"
+    },
+    "motivo": {
+      "article": "o",
+      "label": "motivo",
+      "suffix": "informado"
+    },
+    "note": {
+      "article": "a",
+      "label": "observação",
+      "suffix": "informada"
+    },
+    "notes": {
+      "article": "a",
+      "label": "observação",
+      "suffix": "informada"
+    },
+    "observacao": {
+      "article": "a",
+      "label": "observação",
+      "suffix": "informada"
+    },
+    "brand": {
+      "article": "a",
+      "label": "marca",
+      "suffix": "informada"
+    },
+    "marca": {
+      "article": "a",
+      "label": "marca",
+      "suffix": "informada"
+    },
+    "model": {
+      "article": "o",
+      "label": "modelo",
+      "suffix": "informado"
+    },
+    "modelo": {
+      "article": "o",
+      "label": "modelo",
+      "suffix": "informado"
+    },
+    "color": {
+      "article": "a",
+      "label": "cor",
+      "suffix": "informada"
+    },
+    "cor": {
+      "article": "a",
+      "label": "cor",
+      "suffix": "informada"
+    },
+    "source": {
+      "article": "a",
+      "label": "fonte",
+      "suffix": "informada"
+    },
+    "fonte": {
+      "article": "a",
+      "label": "fonte",
+      "suffix": "informada"
+    },
+    "origin": {
+      "article": "a",
+      "label": "origem",
+      "suffix": "informada"
+    },
+    "origem": {
+      "article": "a",
+      "label": "origem",
+      "suffix": "informada"
+    },
+    "destination": {
+      "article": "o",
+      "label": "destino",
+      "suffix": "informado"
+    },
+    "destino": {
+      "article": "o",
+      "label": "destino",
+      "suffix": "informado"
+    },
+    "priority": {
+      "article": "a",
+      "label": "prioridade",
+      "suffix": "informada"
+    },
+    "prioridade": {
+      "article": "a",
+      "label": "prioridade",
+      "suffix": "informada"
+    },
+    "link": {
+      "article": "o",
+      "label": "link",
+      "suffix": "informado"
+    },
+    "url": {
+      "article": "o",
+      "label": "link",
+      "suffix": "informado"
+    },
+    "customer": {
+      "article": "o",
+      "label": "cliente",
+      "suffix": "informado"
+    },
+    "cliente": {
+      "article": "o",
+      "label": "cliente",
+      "suffix": "informado"
+    },
+    "supplier": {
+      "article": "o",
+      "label": "fornecedor",
+      "suffix": "informado"
+    },
+    "fornecedor": {
+      "article": "o",
+      "label": "fornecedor",
+      "suffix": "informado"
+    },
+    "seller": {
+      "article": "o",
+      "label": "vendedor",
+      "suffix": "informado"
+    },
+    "vendedor": {
+      "article": "o",
+      "label": "vendedor",
+      "suffix": "informado"
+    },
+    "product": {
+      "article": "o",
+      "label": "produto",
+      "suffix": "informado"
+    },
+    "produto": {
+      "article": "o",
+      "label": "produto",
+      "suffix": "informado"
+    },
+    "service": {
+      "article": "o",
+      "label": "serviço",
+      "suffix": "informado"
+    },
+    "servico": {
+      "article": "o",
+      "label": "serviço",
+      "suffix": "informado"
+    },
+    "item": {
+      "article": "o",
+      "label": "item",
+      "suffix": "informado"
+    },
+    "pedido": {
+      "article": "o",
+      "label": "pedido",
+      "suffix": "informado"
+    },
+    "warehouse": {
+      "article": "o",
+      "label": "armazém",
+      "suffix": "informado"
+    },
+    "armazem": {
+      "article": "o",
+      "label": "armazém",
+      "suffix": "informado"
+    },
+    "location": {
+      "article": "a",
+      "label": "localização",
+      "suffix": "informada"
+    },
+    "local": {
+      "article": "a",
+      "label": "localização",
+      "suffix": "informada"
+    },
+    "localizacao": {
+      "article": "a",
+      "label": "localização",
+      "suffix": "informada"
+    },
+    "department": {
+      "article": "o",
+      "label": "departamento",
+      "suffix": "informado"
+    },
+    "departamento": {
+      "article": "o",
+      "label": "departamento",
+      "suffix": "informado"
+    },
+    "sector": {
+      "article": "o",
+      "label": "setor",
+      "suffix": "informado"
+    },
+    "setor": {
+      "article": "o",
+      "label": "setor",
+      "suffix": "informado"
+    },
+    "process": {
+      "article": "o",
+      "label": "processo",
+      "suffix": "informado"
+    },
+    "processo": {
+      "article": "o",
+      "label": "processo",
+      "suffix": "informado"
+    },
+    "operation": {
+      "article": "a",
+      "label": "operação",
+      "suffix": "informada"
+    },
+    "operacao": {
+      "article": "a",
+      "label": "operação",
+      "suffix": "informada"
+    },
+    "result": {
+      "article": "o",
+      "label": "resultado",
+      "suffix": "informado"
+    },
+    "resultado": {
+      "article": "o",
+      "label": "resultado",
+      "suffix": "informado"
+    },
+    "goal": {
+      "article": "a",
+      "label": "meta",
+      "suffix": "informada"
+    },
+    "meta": {
+      "article": "a",
+      "label": "meta",
+      "suffix": "informada"
+    },
+    "budget": {
+      "article": "o",
+      "label": "orçamento",
+      "suffix": "informado"
+    },
+    "orcamento": {
+      "article": "o",
+      "label": "orçamento",
+      "suffix": "informado"
+    },
+    "average": {
+      "article": "a",
+      "label": "média",
+      "suffix": "informada"
+    },
+    "media": {
+      "article": "a",
+      "label": "média",
+      "suffix": "informada"
+    },
+    "minimum": {
+      "article": "o",
+      "label": "mínimo",
+      "suffix": "informado"
+    },
+    "minimo": {
+      "article": "o",
+      "label": "mínimo",
+      "suffix": "informado"
+    },
+    "maximum": {
+      "article": "o",
+      "label": "máximo",
+      "suffix": "informado"
+    },
+    "maximo": {
+      "article": "o",
+      "label": "máximo",
+      "suffix": "informado"
+    },
+    "discount": {
+      "article": "o",
+      "label": "desconto",
+      "suffix": "informado"
+    },
+    "desconto": {
+      "article": "o",
+      "label": "desconto",
+      "suffix": "informado"
+    },
+    "freight": {
+      "article": "o",
+      "label": "frete",
+      "suffix": "informado"
+    },
+    "frete": {
+      "article": "o",
+      "label": "frete",
+      "suffix": "informado"
+    },
+    "payment": {
+      "article": "o",
+      "label": "pagamento",
+      "suffix": "informado"
+    },
+    "pagamento": {
+      "article": "o",
+      "label": "pagamento",
+      "suffix": "informado"
+    },
+    "delivery": {
+      "article": "a",
+      "label": "entrega",
+      "suffix": "informada"
+    },
+    "entrega": {
+      "article": "a",
+      "label": "entrega",
+      "suffix": "informada"
+    },
+    "invoice": {
+      "article": "a",
+      "label": "fatura",
+      "suffix": "informada"
+    },
+    "notafiscal": {
+      "article": "a",
+      "label": "nota fiscal",
+      "suffix": "informada"
+    },
+    "fatura": {
+      "article": "a",
+      "label": "fatura",
+      "suffix": "informada"
+    },
+    "cargo": {
+      "article": "o",
+      "label": "cargo",
+      "suffix": "informado"
+    },
+    "funcao": {
+      "article": "a",
+      "label": "função",
+      "suffix": "informada"
+    },
+    "valortotal": {
+      "article": "o",
+      "label": "valor total",
+      "suffix": "informado"
+    },
+    "totalvalue": {
+      "article": "o",
+      "label": "valor total",
+      "suffix": "informado"
+    },
+    "precounitario": {
+      "article": "o",
+      "label": "preço unitário",
+      "suffix": "informado"
+    },
+    "unitprice": {
+      "article": "o",
+      "label": "preço unitário",
+      "suffix": "informado"
+    },
+    "razaosocial": {
+      "article": "a",
+      "label": "razão social",
+      "suffix": "informada"
+    },
+    "nomefantasia": {
+      "article": "o",
+      "label": "nome fantasia",
+      "suffix": "informado"
+    }
   }
 }

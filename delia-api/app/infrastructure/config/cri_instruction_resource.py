@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import string
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
@@ -40,7 +41,11 @@ _VOCABULARY_KIND = "presentation_vocabulary"
 # lead for owner-published capability-surface answers; v2 remains
 # valid — the composition degrades to fallback when the entry is
 # absent, never partially.
-_VOCABULARY_VERSIONS = frozenset({"2", "3"})
+# C3-S3 (D8): v4 adds the optional ``field_labels`` section — a
+# governed map of canonical field key → (article, label, suffix)
+# shared by every presentation path; absent it stays an empty map,
+# never partially loaded.
+_VOCABULARY_VERSIONS = frozenset({"2", "3", "4"})
 _VOCABULARY_SECTIONS = (
     "leads",
     "temporal_clauses",
@@ -48,7 +53,14 @@ _VOCABULARY_SECTIONS = (
     "labels",
 )
 _VOCABULARY_KEYS = frozenset(
-    {"resource_id", "version", "kind", "owner", *_VOCABULARY_SECTIONS}
+    {
+        "resource_id",
+        "version",
+        "kind",
+        "owner",
+        "field_labels",
+        *_VOCABULARY_SECTIONS,
+    }
 )
 _VOCABULARY_REQUIRED_ENTRIES: Mapping[str, frozenset[str]] = {
     "leads": frozenset(
@@ -103,6 +115,16 @@ _VOCABULARY_PLACEHOLDERS = frozenset(
 _MAX_VOCABULARY_SECTION_ENTRIES = 32
 _MAX_VOCABULARY_ENTRY_BYTES = 512
 
+# ``field_labels`` is a closed presentation map, not prose: canonical
+# field keys (lowercase alnum) → declared (article, label, suffix)
+# parts. Validation is structural — no placeholders, no model text.
+_FIELD_LABEL_PARTS = frozenset({"article", "label", "suffix"})
+_FIELD_LABEL_ARTICLES = frozenset({"o", "a"})
+_FIELD_LABEL_KEY_RE = re.compile(r"^[a-z0-9]+$")
+_MAX_FIELD_LABEL_ENTRIES = 256
+_MAX_FIELD_LABEL_KEY_CHARS = 64
+_MAX_FIELD_LABEL_TEXT_CHARS = 96
+
 
 class CriInstructionResourceError(Exception):
     """The governed CRI instruction resource is absent or invalid."""
@@ -131,6 +153,9 @@ class CriPresentationVocabulary:
     version: str
     sections: Mapping[str, Mapping[str, str]]
     content_hash: str
+    field_labels: Mapping[str, tuple[str, str, str]] = field(
+        default_factory=dict
+    )
 
 
 def _load_resource_object(path: str | Path) -> Mapping:
@@ -268,6 +293,64 @@ def _vocabulary_entries(
     return out
 
 
+def _field_label_entries(
+    value: object,
+) -> dict[str, tuple[str, str, str]]:
+    """Validate the optional ``field_labels`` section — a closed map
+    of canonical field key → (article, label, suffix) parts.
+
+    Fail-closed like every other section: the section is optional
+    (absent → empty map), but when present every key and every part
+    is checked — unknown keys or shapes never load partially.
+    """
+
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "section 'field_labels' not an object",
+        )
+    if len(value) > _MAX_FIELD_LABEL_ENTRIES:
+        raise CriInstructionResourceError(
+            "cri_instruction_resource_invalid",
+            "section 'field_labels' oversized",
+        )
+    out: dict[str, tuple[str, str, str]] = {}
+    for key, entry in value.items():
+        if (
+            not isinstance(key, str)
+            or not _FIELD_LABEL_KEY_RE.match(key)
+            or len(key) > _MAX_FIELD_LABEL_KEY_CHARS
+            or not isinstance(entry, Mapping)
+            or set(entry) != _FIELD_LABEL_PARTS
+        ):
+            raise CriInstructionResourceError(
+                "cri_instruction_resource_invalid",
+                f"section 'field_labels' invalid entry {key!r}",
+            )
+        article, label, suffix = (
+            entry["article"], entry["label"], entry["suffix"]
+        )
+        if (
+            article not in _FIELD_LABEL_ARTICLES
+            or not isinstance(label, str)
+            or not label.strip()
+            or not isinstance(suffix, str)
+            or not suffix.strip()
+            or len(label) > _MAX_FIELD_LABEL_TEXT_CHARS
+            or len(suffix) > _MAX_FIELD_LABEL_TEXT_CHARS
+            or "{" in label
+            or "{" in suffix
+        ):
+            raise CriInstructionResourceError(
+                "cri_instruction_resource_invalid",
+                f"section 'field_labels' invalid parts {key!r}",
+            )
+        out[key] = (article, label, suffix)
+    return out
+
+
 def load_cri_presentation_vocabulary(
     path: str | Path,
 ) -> CriPresentationVocabulary:
@@ -295,11 +378,16 @@ def load_cri_presentation_vocabulary(
     version = _validate_identity(
         data, kind=_VOCABULARY_KIND, versions=_VOCABULARY_VERSIONS
     )
+    field_labels = _field_label_entries(data.get("field_labels"))
     sections = {
         section: _vocabulary_entries(data.get(section), section)
         for section in _VOCABULARY_SECTIONS
     }
-    canonical = json.dumps(sections, sort_keys=True, ensure_ascii=False)
+    canonical = json.dumps(
+        {**sections, "field_labels": field_labels},
+        sort_keys=True,
+        ensure_ascii=False,
+    )
     return CriPresentationVocabulary(
         resource_id=_VOCABULARY_RESOURCE_ID,
         version=version,
@@ -307,4 +395,5 @@ def load_cri_presentation_vocabulary(
         content_hash=hashlib.sha256(
             canonical.encode("utf-8")
         ).hexdigest(),
+        field_labels=field_labels,
     )

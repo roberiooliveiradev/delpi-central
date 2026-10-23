@@ -17667,3 +17667,17 @@ RQ_SA01_02_03=IMPLEMENTED SA06_08_09=PRESERVED
 SURFACE_INQUIRY=typed+deterministic AUTHZ_INFERENCE=NONE PREPARE_ACT_ADVERTISED=NEVER
 TESTS_NEW=11_green SUITE=all_green EXTERNAL_LLM_CALLS=0 DEPLOY=NONE
 NEXT=S2 (D5 relevancia semantica)
+
+
+## §6.396 — S2 + S3 self-awareness: projecao de guidance no terminal de descoberta + field_labels governados (2026-10-23)
+
+**2026-10-23 — DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 / STEPS S2+S3 (PO f7b6a601cb + diretriz doc112 SS9):**
+
+- **S2 (RQ-SA04/D5)**: terminal zero-candidate de DISCOVERY projeta secoes guidance do payload owner (displayFormatCatalog->criteria, productGuide/guideindex->objective) via _deterministic_guidance_content/_select_guidance_records existentes; miss honesta preservada quando nao ha guidance; instrucoes de selecao (x2) preferem capability documental nao-mutante para pedidos de guia/formatos. _GUIDANCE_RENDER_SKIP_KEYS exclui schema/registryVersion/readCapability/capabilityVersion/contentType/envelopeVersion de secoes guidance. RC1/RC2 preservados (nenhuma promocao a business record). 6 testes novos.
+- **S3 (RQ-SA05/D8)**: _FIELD_CLAUSE_LABELS removido de orchestration.py; nova secao field_labels em cri_presentation.delpi.json v4 (183 entradas, chaves canonicas a-z0-9 -> article/label/suffix); loader fail-closed (versao, forma, partes, limites 256/64/96, sem placeholders); CriPresentationVocabulary.field_labels tipado; conversational_response.py hospeda a unica resolucao (field_display_label/field_clause_label/unmapped_field_label); orchestration consome via self._field_labels (constructor param field_labels) em detail/clause/diff/CRI; root_composer carrega vocabulario incondicionalmente (labels nao dependem do toggle CRI). active/order/role excluidos por ambiguidade semantica. 12 testes novos; helpers de 4 arquivos de teste agora recebem o recurso real; suite backend completa verde (exit 0). Docs 115+116. RUNTIME_DIFF=YES (sem deploy).
+
+TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEPS=S2+S3
+RQ_SA04=IMPLEMENTED RQ_SA05=IMPLEMENTED SA06_08_09=PRESERVED
+GUIDANCE_PROJECTION=deterministic_existing FIELD_LABELS=governed_json_v4 SINGLE_RESOLVER=conversational_response
+TESTS_NEW=18_green SUITE=all_green EXTERNAL_LLM_CALLS=0 DEPLOY=NONE
+INDEPENDENT_REVIEW_PENDING NEXT=S4

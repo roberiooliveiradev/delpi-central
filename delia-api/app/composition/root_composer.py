@@ -309,34 +309,57 @@ def _compose_turn_handler(
     cri_clause = None
     cri_version = None
     cri_vocabulary = None
+    field_labels = None
     cri_requested = bool(settings.response_intelligence_enabled)
+    # The presentation vocabulary is loaded unconditionally: its
+    # ``field_labels`` govern baseline field-name presentation in
+    # every path, independent of the CRI activation flag. A missing
+    # or invalid resource degrades to neutral fallback labels; when
+    # CRI was requested it also disables the composed response —
+    # fail-closed, never partial.
+    vocabulary = None
+    try:
+        vocabulary = load_cri_presentation_vocabulary(
+            _CRI_PRESENTATION_PATH
+        )
+    except Exception:
+        _logger.warning(
+            "delia_presentation_vocabulary decision=fail_closed "
+            "reason=resource_invalid"
+        )
+    else:
+        field_labels = vocabulary.field_labels
+        _logger.info(
+            "cri_presentation_resource id=%s version=%s sha256=%s",
+            vocabulary.resource_id,
+            vocabulary.version,
+            vocabulary.content_hash,
+        )
     if cri_requested:
         try:
             clause = load_cri_instruction_clause(_CRI_INSTRUCTIONS_PATH)
-            vocabulary = load_cri_presentation_vocabulary(
-                _CRI_PRESENTATION_PATH
-            )
         except Exception:
             _logger.warning(
                 "delia_response_intelligence decision=fail_closed "
                 "reason=cri_resource_invalid"
             )
         else:
-            cri_clause = clause.text
-            cri_version = clause.version
-            cri_vocabulary = vocabulary.sections
-            _logger.info(
-                "cri_instruction_resource id=%s version=%s sha256=%s",
-                clause.resource_id,
-                clause.version,
-                clause.content_hash,
-            )
-            _logger.info(
-                "cri_presentation_resource id=%s version=%s sha256=%s",
-                vocabulary.resource_id,
-                vocabulary.version,
-                vocabulary.content_hash,
-            )
+            if vocabulary is None:
+                _logger.warning(
+                    "delia_response_intelligence decision=fail_closed "
+                    "reason=cri_resource_invalid"
+                )
+            else:
+                cri_clause = clause.text
+                cri_version = clause.version
+                cri_vocabulary = vocabulary.sections
+                _logger.info(
+                    "cri_instruction_resource id=%s version=%s "
+                    "sha256=%s",
+                    clause.resource_id,
+                    clause.version,
+                    clause.content_hash,
+                )
     cri_effective = cri_requested and cri_vocabulary is not None
     orchestration = (
         OperationalCapabilityOrchestrator(
@@ -354,6 +377,7 @@ def _compose_turn_handler(
             cri_instruction_clause=cri_clause,
             cri_instruction_version=cri_version,
             cri_presentation_vocabulary=cri_vocabulary,
+            field_labels=field_labels,
         )
         if providers
         else None

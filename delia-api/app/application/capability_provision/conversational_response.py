@@ -384,3 +384,78 @@ def compose_cri_response(
     return CriComposition(
         "\n\n".join(paragraphs), presented, tuple(limitations)
     )
+
+
+# ------------------------------------------------------------------
+# Field-label resolution (C3-S3 / RQ-SA05 / D8)
+#
+# Single governed projection for owner field names across every
+# presentation path — detail lines, focused-answer clauses, CRI
+# presented records and comparisons. The vocabulary itself lives in
+# the versioned ``cri_presentation`` resource (``field_labels``
+# section); this module is the only resolver, so CRI and baseline
+# paths can never diverge.
+#
+# A key absent from the governed map is *unknown*: the owner wording
+# is preserved verbatim — words humanize (underscores become
+# spaces), digit-bearing code-shaped keys stay byte-exact. A field
+# name is never translated nor merged (``codigo_processo`` must
+# never render as ``Codigoprocesso`` or an invented meaning).
+
+FieldLabels = Mapping[str, tuple[str, str, str]]
+"""Canonical field key → (article, label, suffix) parts."""
+
+
+def field_label_parts(
+    canon: str,
+    field_labels: FieldLabels | None,
+) -> tuple[str, str, str] | None:
+    """Governed label parts for a canonicalized key, or ``None``."""
+    if field_labels:
+        return field_labels.get(canon)
+    return None
+
+
+def unmapped_field_label(key: object, *, capitalized: bool = True) -> str:
+    """Presentation label for a field absent from the governed map.
+
+    Digit-bearing keys are code-shaped identifiers (``b2_cm1``) and
+    stay byte-exact — mangling corrupts a searchable business code.
+    Word keys humanize: the owner's words are preserved verbatim,
+    only underscores become spaces — a label is never translated.
+    """
+    raw = str(key).strip()
+    if not raw or any(ch.isdigit() for ch in raw):
+        return raw
+    spaced = raw.replace("_", " ").strip()
+    if not capitalized:
+        return spaced
+    return spaced[:1].upper() + spaced[1:]
+
+
+def field_display_label(
+    canon: str,
+    raw_key: object,
+    field_labels: FieldLabels | None = None,
+) -> str:
+    """Title-case label for detail/record rendering — governed label
+    or neutral fallback. First-char casing only, so acronym labels
+    (``CNPJ``, ``SKU``) keep their canonical form."""
+    parts = field_label_parts(canon, field_labels)
+    if parts is not None:
+        return parts[1][:1].upper() + parts[1][1:]
+    return unmapped_field_label(raw_key)
+
+
+def field_clause_label(
+    canon: str,
+    raw_key: object,
+    field_labels: FieldLabels | None = None,
+) -> str:
+    """Bounded pt-BR subject for one selected field — governed
+    ``article label suffix`` or the neutral ``o campo "…"`` clause."""
+    parts = field_label_parts(canon, field_labels)
+    if parts is not None:
+        article, label, participle = parts
+        return f"{article} {label} {participle}"
+    return f'o campo "{unmapped_field_label(raw_key, capitalized=False)}"'

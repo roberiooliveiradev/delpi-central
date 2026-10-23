@@ -6,6 +6,20 @@ MODEL_AUTHORED_FACTUAL_PROSE=NONE preserved.
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from app.infrastructure.config.cri_instruction_resource import (
+    load_cri_presentation_vocabulary,
+)
+
+
+_VOCAB_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "config"
+    / "cri_presentation.delpi.json"
+)
+_LABELS = load_cri_presentation_vocabulary(_VOCAB_PATH).field_labels
+
 from app.application.capability_provision.contracts import (
     CapabilityGroup,
     CapabilityProviderError,
@@ -211,6 +225,7 @@ def _orchestrator(providers, proposal):
             providers,
             invoke_model=InvokeModel(model),
             model_ref=TEST_MODEL_REF,
+            field_labels=_LABELS,
         ),
         model,
     )
@@ -283,7 +298,7 @@ def test_comparison_renders_proven_differences_only():
     left = [("status", "rascunho"), ("nome", "A")]
     right = [("status", "ativo"), ("nome", "A")]
     diff = _proven_field_differences(left, right)
-    assert diff == ["- status: rascunho → ativo"]
+    assert diff == ["- Status: rascunho → ativo"]
     rendered, reason = _render_synthesis(
         {
             "presentation": "answer",
