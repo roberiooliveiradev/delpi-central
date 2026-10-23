@@ -182,3 +182,56 @@ Composição conversacional → DTO/projeção saneada, vocabulário governado v
 **R7:** além dos outcomes, evidência estrutural (imports acíclicos, isolamento de leaves, ausência de duplicação, coverage de consumidores, tamanho/complexidade antes/depois e recursos validados). O aceite final verifica redução de coupling, não apenas LOC.
 
 **Regra final:** `NEW FILE = CONTRACT + OWNER + REAL CONSUMER + NO EXISTING EQUIVALENT + RED/GREEN PARITY`. Se qualquer componente faltar, não criar o arquivo e registrar o motivo. Esta seção é **PLANNED**, condicionada aos gates R0–R7 e à estabilização independente da correção D5/124.
+
+## 9. Blueprint de execução modular — contratos e ordem técnica (planejamento, 2026-10-23)
+
+**Status:** PLANNED_ONLY; a task de estabilização pré-refatoração está sendo executada em paralelo e não deve receber commits deste plano. Esta seção concretiza a seção 8, sem revisar a decisão S4/117 por mera preferência e sem autorizar R0. No primeiro gate R0, revalidar SHA, authorities e ledger; o arquivo-alvo pode ter mudado.
+
+### 9.1 Contratos candidatos (nenhuma classe nova aprovada)
+
+1. **Projeção segura de evidência:** entrada = outcome owner tipado + origem + limitação + contexto de contrato já validado; saída = representação read-only sanitizada, distinguindo `business_record`, `guidance`, `entity_schema`, `control_plane` **apenas se a taxonomia tiver equivalência canônica comprovada**. Proibições: execução, AuthZ, model invocation, apresentação, inferência de FACT. Candidatos: `outcome_assessment.py` / `evidence_projection.py`; decidir no R2 pelo acoplamento real.
+2. **Avaliação de suficiência:** entrada = evidência projetada + requerimentos tipados + hipótese de intenção, saída = `OutcomeVerdict` com razões/limitações. Reuso preferencial: `outcome_assessment.py`. Nunca converter existência de payload ou HTTP 200 em outcome.
+3. **Projeção de guidance:** entrada = documentação owner saneada e seleção semântica tipada existente, saída = seções bounded com provenance e estado de cobertura. Proibida heurística lexical de intenção e cópia de `_canonical_key`/sanitizers. Após R2, verificar se o leaf legítimo já existe; caso contrário SKIP conforme 117 até decisão nova.
+4. **Resposta conversacional:** entrada = `OutcomeVerdict` + records apresentados/limitações/provenance; saída = conteúdo fiel e seguro ao usuário. Reuso: `conversational_response.py` + JSON governado v4. Proibido acessar MCP/Domain/DB, selecionar capabilities ou autorizar ACT.
+5. **Proposta de LLM:** entrada = contexto permitido e superfície viva autorizada; saída = proposta tipada validada. Reuso: `InvokeModel`, contracts existentes e coordenação. Prompts declarativos podem migrar para recurso com lineage preservada; o modelo não valida suas próprias permissões.
+6. **Estado de tentativa e ações:** entrada = plano tipado e gates prévios, saída = `GovernedCapabilityAttempt` + audit/outcome. Reuso: interaction contracts, pending_proposals, TurnBudget; permanece governado e fail-closed. Nenhuma extração sem testes negativos materiais.
+
+### 9.2 Ordem obrigatória de desacoplamento
+
+```text
+R0 baseline + map de imports/callers
+  → estabilização D5 aceita e congelada
+  → R1 recursos declarativos (independente, se gate permitir)
+  → R2 fixar contrato de projeção/sanitização com testes (SEM mover consumers primeiro)
+  → R3 migrar um consumer Evidence→Outcome→Presentation por vez (paridade)
+  → R4 reavaliar guidance/formatting S4/117 somente após R2/R3
+  → R5 reduzir duplicações reais de validation/proposal
+  → R6 reduzir coordinator imports/branches comprovadamente redundantes
+  → R7 eval/independent review e possível release separado
+```
+
+Evitar ciclo de import: application contracts/domain model ficam a jusante; orchestration importa projeções/avaliação/apresentação, nunca o inverso. Adapter SDK/DB/HTTP não é importado por domain/application. Proibido helper genérico sem owner; utilitários compartilhados só após ≥2 consumidores concretos e contrato idêntico comprovado (um único consumidor pode justificar módulo somente quando a responsabilidade exigir isolamento real, não por LOC).
+
+### 9.3 Roteiro de migração por função (candidatos iniciais)
+
+| Função/grupo origem | Destino preferencial | Pré-condição objetiva | Decisão provisória |
+|---|---|---|---|
+| `_contract_fact_rows`, `_compact_evidence`, `_evidence_rows` | projeção existente; `evidence_projection.py` apenas se gate | D5 accepted + sanitization caller graph + type/provenance tests | TO_INVENTORY |
+| `_without_control_plane`, `_is_capability_descriptor` | mesma fronteira de projection, se legítima | RC1/RC2 negatives + homonymous business records | TO_INVENTORY |
+| `_guidance_section_records`, `_select_guidance_records`, `_deterministic_guidance_content` | guidance projection somente se contrato independente | evidência nova que supera 117, import DAG | SKIP até prova |
+| `_compose_answer`, `_detail_lines`, `_render_synthesis`, `_md_*format*` | `conversational_response.py` ou presenter existente | projeção saneada e API input sem imports de orchestration | TO_INVENTORY |
+| `_outcome_facts`, `_apply_outcome_assessment` | `outcome_assessment.py` se refactor preserva role | acoplamento e testes CRI on/off, verdict limitations | TO_INVENTORY |
+| `_schema_required_gaps`, `_argument_completeness_gaps` | `interaction/argument_validation.py` apenas por equivalência | parity de errors/defaults/open vocabulary | TO_INVENTORY |
+| `_surface_inquiry_content`, `_group_summaries` | capability projection existente | descobrir se outro consumer legítimo exige API; preserve published≠permission | KEEP salvo prova |
+| `_attempt`, `_invoke_selected`, `_select_target`, PREPARE/ACT chain | `orchestration.py` | preservar state/owner boundaries | KEEP |
+| `*_INSTRUCTION` + textos user-facing | recurso versionado/loader atual | lineage/hash, contract frozen, provenance | TO_INVENTORY |
+
+### 9.4 Gates mensuráveis e anti-monólito
+
+Por pacote apresentar: (a) **antes/depois** de funções por módulo, import DAG, dependências por direção e callers; (b) contratos de entrada/saída e exemplos em fixtures reais minimizados; (c) redução comprovada de acoplamento e ausência de cópias dos mesmos sanitizadores; (d) testes de isolamento das unidades extraídas; (e) suite full/safety/generalization nos SHAs; (f) impacto em tempo/tokens apenas se medido; (g) caminho de rollback por commit/serviço.
+
+Sem limites arbitrários de LOC, mas **se um módulo candidato acumular mais de uma responsabilidade independente**, rejeitar a extração e voltar ao contrato. Se surgir dependência circular, refatorar na direção de contrato existente ou SKIP; proibir imports reversos e service locator como workaround. Nenhuma movimentação extensa pode ser justificada só por "limpeza".
+
+### 9.5 Gate de saída para R0 e controle de concorrência
+
+**R0 só começa quando** a estabilização pré-refatoração executada pelo Devin tiver report SHA, AC D5/D5-R/D8-R/PT-BR, deploy/outcomes quando autorizados e parecer independente. Até esse marco: PLAN 125 pode evoluir documentalmente; R0–R7 seguem NOT_AUTHORIZED. O executor de D5 não deve incluir este blueprint no diff de runtime. A revisão formal da arquitetura registra novamente KEEP/EXTEND/NEW/SKIP e NEXT_ALLOWED_STEP; se houver divergência com 59/117/125, STOP, não redesenho silencioso.
