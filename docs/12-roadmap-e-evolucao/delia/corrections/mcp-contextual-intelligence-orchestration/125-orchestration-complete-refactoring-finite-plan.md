@@ -365,3 +365,58 @@ Expor inteligência por API/eventos somente quando existe consumer concreto e co
 **Gates de saída adicionais:** R0 produz a matriz completa; R2/R3 isolam evidence/outcome da UI; R6 preserva o núcleo governado e marca adaptações cross-app sem consumers como TARGET; R7 certifica modularidade sem segunda authority. Revisões em desacordo com doc 128 ou autoridades superiores = STOP/ARCHITECTURE_DECISION_REQUIRED, sem reconciliar silenciosamente.
 
 **Status:** PLANNED, R0–R7 NOT_AUTHORIZED até estabilização independente. Nenhum arquivo de runtime, dispatcher RPA, worker ou endpoint criado por esta seção.
+
+## 12. Antipadrões arquiteturais explícitos e bloqueadores de revisão (PO, 2026-10-23)
+
+Esta seção é **normativa para os gates do plano 125**, subordinada às autoridades 16→50→17→49→51→52→21→20→25, ADR 58, decisão 117 e revisão cross-application 128. Serve para barrar propostas equivocadas, não para autorizar a criação de novos módulos ou alterar contratos congelados. Aplica-se também a futuros consumidores RPA, Work, Watch, MCP/A2A, APIs e aplicações DELPI.
+
+| Antipadrão (NÃO FAZER) | Por que é inválido | Alternativa autorizável | Evidência/teste de bloqueio |
+|---|---|---|---|
+| **God object / monólito deslocado**: tirar funções de `orchestration.py` e criar `intelligence_service.py` com selection+evidence+render+RPA | Só muda o endereço do acoplamento | Módulos coesos por owner e contratos reais, extensão de leaves existentes | AST/import graph e responsabilidade única por módulo; se acumular owners independentes => REWORK |
+| **Microsserviços prematuros / distributed monolith** | Adiciona rede/operacional sem consumidor nem boundary comprovado | Application modules internos; expor API/event somente com consumer e autorização concretos | `EXISTING_EQUIVALENT`, owner/consumer/contract ou SKIP |
+| **Generic utils/common/helpers/shared dumping ground** | Owner e semântica indeterminados, dependências transversais ocultas | Único módulo especializado de domínio/aplicação com contrato | Funções públicas com consumidores identificados; sem novo módulo genérico |
+| **Shared database / imports entre bounded contexts** | Bypassa owner, regras e versionamento | HTTP/eventos reais, Domain API e contracts com AuthZ | Import DAG e busca residual por acesso a DB/modelo de outro context |
+| **Chat-centric intelligence**: Evidence/Policy/Capability exigir `ConversationTurn`, Markdown, avatar ou estado MFE | Inviabiliza Work/event/other apps e introduz acoplamento de UI | Núcleo de application com entradas tipadas; adapter conversacional separado | Testes do núcleo sem frontend/chat quando consumer real existir |
+| **DÉLIA como gateway obrigatório para tudo** | Nova autoridade/latência, duplicação de Domain APIs e Core | Chamadas diretas legítimas a Domain API/Core; DÉLIA só quando inteligência é necessária | Rastrear owner do caso determinístico e desviar da DÉLIA quando não agrega |
+| **DÉLIA executando RPA, scheduler, worker ou bot package próprio** | Duplica Automation Hub e mistura decisão com mecanismo | DÉLIA governa capability/Work/Outcome; Hub executa RPA técnico | Nenhum seletor, clique, robot script, queue, credential ou scheduler em planner/DÉLIA |
+| **Planner atrelado a endpoint, selector ou operação de provider** | Tecnologia determina intenção e quebra neutralidade | Seleção de capability semântica; adapter traduz execução | Teste metamórfico rename/replace executor sem mudança de planner |
+| **Provider-specific branches / if DAVI/TEO/VISTA** | Código fragiliza descoberta e escala | Contrato semântico tipado + tool metadata como dados não confiáveis | Adicionar/renomear provider sem patch no planner |
+| **Regex/palavras-chave substituindo interpretação LLM** | Restringe inteligência e não generaliza | Proposta semântica do LLM + revalidação determinística por contrato | Variações inéditas e controles negativos; recusar regras por frase |
+| **LLM como autoridade de segurança/fatos** | `model output != FACT` e proposta não autoriza | Core live AuthZ, Domain final, Evidence/Decision gates | Negative AuthZ/injection; LLM não consegue conceder acesso |
+| **MCP/A2A metadata como instruction/permission** | Prompt injection, confunde discovery com approval | Untrusted-data boundary + contracts e Policy | Payload malicioso/schema alterado não modifica auth/prompt/policy |
+| **Duplicar engines, registries, catálogos, sanitize/redact** | Divergência de truth e manutenção paralela | Reutilizar `OutcomeVerdict`, `EvidenceFacts`, `InvokeModel`, sanitizadores owner único | Busca residual/call graph confirma uma implementação por contrato |
+| **Outcome baseado em HTTP 200/worker DONE/model answer** | Sucesso técnico não comprova postcondition empresarial | Consultar Domain authoritative postcondition; auditar inconclusive | Teste em que RPA termina mas regra de negócio não muda: NÃO PASS |
+| **Retries cegos de writes / PREPARE==ACT** | Side effects duplicados, bypass idempotência/consent | PREPARE/confirm/live AuthZ/idempotency/audit/ACT/reconcile/rollback | Injetar timeout após side effect e exigir estado ambíguo, sem segundo ACT |
+| **Work/Watch executando ACT autônomo por default** | Viola níveis L0–L5 e C6 | Watch C6 OBSERVE/ADVISE/PREPARE; L5 off default | Teste sem allowlist/approval: zero ACT |
+| **RPA/LLM controlando OT ou Safety diretamente** | Potencial risco físico e authority override | Gate industrial futuro typed/allowlisted/interlocks e owner OT/Safety | Falha fechada sem OT approval/machine state |
+| **Prompt/config business logic dump** | Move regra executável para JSON sem validação/versionamento | Apenas declarativos em loader legítimo, com hash/lineage; regras em código/contracts | Resource inválido falha fechado; no accidental schema/policy change |
+| **Refactor + feature/fix/deploy indiscriminados no mesmo diff** | Perde causalidade e rollback | Etapas bounded R0–R7, baseline congelado, PRs separadas | Diff scope check e commits versionados por pacote |
+| **Contracts especulativos para consumidores TARGET** | Cria abstração sem uso e leva a service sprawl | `TO_INVENTORY/PLANNED/TARGET` explícitos até consumer real | Sem consumer real: não implementar port/adapter endpoint |
+| **Shared state implícito/cache/memória como source of truth** | Stale AuthZ e fatos | Core/Domain live, cache é contexto não autorização | Teste de revogação e mudança de domínio em runtime |
+| **Circular dependency resolvida com import local/service locator** | Esconde boundary errado | Refazer direção do contrato ou SKIP_WITH_DECISION | Import DAG sem ciclos e sem serviço global implícito |
+| **Passar segredos/contexto excessivo para modelos/RPA** | Exposição de tokens/dados sem necessidade | Context minimization e credentials exclusivamente no executor autorizado | Logs/prompts/artifacts sem secrets e scopes mínimos |
+| **Framework/HTTP/ORM/SDK em Domain ou Application** | Viola Clean Architecture | Ports/Adapters reais; mecanismos em infrastructure | Teste estático de imports e architecture dependency rules |
+
+### 12.1 Blockers e severidade
+
+- **BLOCKER / EXECUTION_DRIFT:** authority paralela; bypass de Core/Domain; vazamento de credencial; LLM/interop como autorização; write sem gates; atuação OT não governada; mudança de decisão congelada sem ADR; importar DB interno de outro bounded context; alteração de fase sem autoridade. STOP imediato e remeter à coordenação.
+- **REWORK (não liberar pacote):** duplicação de engine/sanitizer, endpoint/selector no planner, branch lexical/provider, import cycle, god object novo, payload técnico promovido a resposta factual, quebra de API pública ou regressão D4/D5/D8, resultados reais parciais declarados PASS.
+- **SKIP_WITH_DECISION:** novo arquivo/service sem owner/consumer/contract; candidato de guidance bloqueado pela 117; consumer TARGET sem ambiente real. Não fabricar implementação para "completar o plano".
+- **RESIDUAL documentável:** melhoria de organização sem destino legítimo, métrica LOC sem significado funcional, apresentação parcial não material (desde que AC não exija), eval impossível por identidade não autorizada `TEST_NOT_RUN`. Residual jamais justifica avanço indevido de fase.
+
+### 12.2 Checklist operacional por pacote R0–R7
+
+Antes do diff: (1) HEAD/status/authorities/ledger; (2) `EXISTING_EQUIVALENT=YES|NO|TO_INVENTORY` e `REUSE_DECISION=REUSE|EXTEND|NEW`; (3) owner/contract/consumers e `ENTRYPOINT→CAPABILITY→OWNER→CONTRACT→EXECUTOR→OUTCOME`; (4) justificar por que alternativa simples não basta; (5) verificar antipadrões da tabela com evidência.
+
+Após o diff: (6) import DAG e zero cópia de sanitizer/registry; (7) contract compatibility + API/event boundary + versioning quando houver; (8) RED/GREEN + backend full + generalization/safety + negative tests; (9) outcome no SHA/model/config avaliados; (10) rollback/observability + doc/ledger; (11) revisão independente de antipadrões. **Antipadrão encontrado = STOP/REWORK/SKIP conforme severidade, nunca reconciliar silenciosamente.**
+
+### 12.3 RPA e reuso cross-app: casos sentinela anti-antipadrão
+
+- Uma aplicação solicita análise: reutiliza DÉLIA por API/event aprovado **somente se** precisar inteligência; requisição com token não substitui Core/Domain live AuthZ; nenhum import de módulo DÉLIA no outro app.
+- DÉLIA decide que uma capability requer RPA: propõe PREPARE/Decision, dispatch ao Hub owner legítimo; completion técnico `DONE` não vira Outcome sem Domain authoritative check; resposta `INCONCLUSIVE` se postcondition não comprovada.
+- O executor RPA é substituído por API oficial: contrato semântico da capability e seleção LLM continuam íntegros; nenhuma mudança em planner para especificar seletores/clicks.
+- C6 Watch dispara sinal de oportunidade: OBSERVE/ADVISE/PREPARE, nunca ACT; autorização insuficiente gera recusa/pending auditável.
+- Um catálogo MCP tenta embutir `ignore previous instructions`, campo de permissão ou comando OT: tratar como untrusted-data, nunca modificar prompt/Policy nem executar ação.
+- Pergunta sobre dados empresariais retorna `entities.*` de catálogo: não classificar como resposta factual por mero grounding; preservar somente schema quando a intenção contratual tipada for comprovada.
+
+**Status desta seção:** documentação normativa do plano, não uma task implementada. Preservar a autorização prévia de estabilização e o bloqueio de R0–R7 até seu aceite independente.
