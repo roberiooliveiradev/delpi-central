@@ -61,6 +61,14 @@ plugins/supplies SuppliesPersonIdentity → display_name || name || code
 | `docs/12-roadmap-e-evolucao/solicitacoes-compras/01-contrato-api.md` | campo documentado |
 | Help/manual | tooltip da coluna + Q&A "De onde vem o nome do solicitante?" |
 
+## Evidência de produção (2026-10-23)
+
+- Lista `/purchase-requests?branch=01&branch=02&page_size=20`: **20/20 itens com `display_name`** — latência ~0,90 s (baseline pré-mudança ~0,90 s; custo da resolução ≈ 0 perceptível).
+- 3 solicitantes distintos resolvidos: `000304` "ELAINE"→"Elaine Gracielle Gracielle Romig", `000313` "ADRIANO C"→"Adriano de Placido de Carvalho", `000159` "YURI"→"Yuri Barbeito".
+- Detalhe `/purchase-requests/01/178729`: `lines[].requester.display_name` resolvido em 0,17 s.
+- Imagens: `infra-supplies-api@d32b749b4f3f` (healthy), `infra-supplies@148fe6253d02`; bundle `App-CF9eSRmv.js` com `display_name`.
+- Logs `delpi-supplies-api`: zero warnings de lookup no smoke.
+
 ## Residual
 
 - O diretório retorna `name` oficial; usuários desativados mapeados continuam exibindo o nome (o vínculo é histórico do registro — comportamento contratado, não filtrado).
