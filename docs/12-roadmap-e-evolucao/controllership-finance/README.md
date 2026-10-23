@@ -343,3 +343,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 [Doc 71 — Pagamentos por data](./71-ciclo1-pagos-por-data.md): inventario conceitual do PDF DLP06R01, distinguindo fluxo de baixas, compensacoes, posicao aberta e movimentacao bancaria. Fonte privada nao versionada; FINR190 candidato e paridade TEST_NOT_RUN.
 
 [Doc 76 — Revisao documental do Ciclo 1](./76-ciclo1-fechamento-documental.md): cobertura de 19 planilhas/PDFs e video, lacunas dos inventarios historicos CC matriz/Analise, parametros divergentes do inventario e paridade financeira pendente. ACCEPT_WITH_RESIDUAL para base documental, encerramento formal PENDING, Ciclo 2 NO_GO. Corrige a nota anterior de que doc 71 ainda nao havia sido publicado; paths de 53/58 historicos ainda TO_INVENTORY.
+
+
+### Ciclo 1 — Reconciliação de identificadores históricos (23/10/2026)
+
+[Doc 77 — CC matriz e Análise: reconciliação de aliases do handoff](./77-ciclo1-reconciliacao-cc-matriz-analise.md): os números históricos 53 (CC matriz) e 58 (Análise) não são caminhos canônicos comprovados. O doc 53 vigente é o roadmap de Table UX. O doc 77 registra separadamente finalidade, estrutura observada, owner e pendências das duas fontes, sem renomear ou sobrescrever documentos existentes. Paridade e regras TOTVS seguem TO_INVENTORY/TEST_NOT_RUN; Ciclo 1 PENDING, Ciclo 2 NO_GO.
