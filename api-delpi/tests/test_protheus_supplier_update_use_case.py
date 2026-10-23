@@ -94,6 +94,7 @@ def test_enabled_sends_object_body(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()
@@ -120,6 +121,7 @@ def test_unmapped_and_unverified(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped(status="unmapped")
     with pytest.raises(ProtheusRestError) as exc:
@@ -147,6 +149,7 @@ def test_token_invalid_does_not_retry(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()
@@ -168,6 +171,84 @@ def test_token_invalid_does_not_retry(monkeypatch) -> None:
 # --- X4.FIELDS.E6 — par composto cliente vinculado ------------------------
 
 
+def test_write_target_unverified_blocks_before_upstream(monkeypatch) -> None:
+    from app.application.use_cases.integrations import (
+        update_protheus_rest_supplier_use_case as uc_mod,
+    )
+    from app.config import settings
+
+    identity = MagicMock()
+    identity.get_identity_for_user.return_value = {
+        "mapping_status": "mapped",
+        "verified": True,
+        "protheus_user_id": "000161",
+    }
+    gateway = MagicMock()
+    params = MagicMock()
+    params.load_raw_params.return_value = {}
+    tracker = MagicMock()
+    uc = UpdateProtheusRestSupplierUseCase(
+        params_repository=params,
+        token_service=MagicMock(),
+        gateway=gateway,
+        identity_gateway=identity,
+        tracker=tracker,
+    )
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", None)
+    monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
+    with pytest.raises(ProtheusRestError) as exc:
+        uc.execute(
+            actor_user_id=ACTOR,
+            supplier_id="00387701",
+            fornecedor={"supplier_short_name": "X"},
+        )
+    assert exc.value.code == "PROTHEUS_REST_TARGET_UNVERIFIED"
+    gateway.update_supplier.assert_not_called()
+    tracker.begin.assert_not_called()
+
+
+def test_write_target_mismatch_blocks_before_upstream(monkeypatch) -> None:
+    from app.application.use_cases.integrations import (
+        update_protheus_rest_supplier_use_case as uc_mod,
+    )
+    from app.config import settings
+
+    identity = MagicMock()
+    identity.get_identity_for_user.return_value = {
+        "mapping_status": "mapped",
+        "verified": True,
+        "protheus_user_id": "000161",
+    }
+    gateway = MagicMock()
+    params = MagicMock()
+    params.load_raw_params.return_value = {}
+    tracker = MagicMock()
+    uc = UpdateProtheusRestSupplierUseCase(
+        params_repository=params,
+        token_service=MagicMock(),
+        gateway=gateway,
+        identity_gateway=identity,
+        tracker=tracker,
+    )
+    monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(
+        settings,
+        "PROTHEUS_REST_EXPECTED_BASE_URL",
+        "https://other.example/rest",
+    )
+    monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
+    with pytest.raises(ProtheusRestError) as exc:
+        uc.execute(
+            actor_user_id=ACTOR,
+            supplier_id="00387701",
+            fornecedor={"supplier_short_name": "X"},
+        )
+    assert exc.value.code == "PROTHEUS_REST_TARGET_MISMATCH"
+    gateway.update_supplier.assert_not_called()
+    tracker.begin.assert_not_called()
+
+
 def _enabled_uc(monkeypatch, gateway) -> UpdateProtheusRestSupplierUseCase:
     from app.application.use_cases.integrations import (
         update_protheus_rest_supplier_use_case as uc_mod,
@@ -175,6 +256,7 @@ def _enabled_uc(monkeypatch, gateway) -> UpdateProtheusRestSupplierUseCase:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_UPDATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()

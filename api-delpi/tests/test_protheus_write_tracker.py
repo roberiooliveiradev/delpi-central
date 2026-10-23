@@ -276,6 +276,7 @@ def _enable(monkeypatch):
         MagicMock(
             PROTHEUS_SUPPLIER_UPDATE_ENABLED=True,
             INTRANET_PARAMS_AMBIENTE="1",
+            PROTHEUS_REST_EXPECTED_BASE_URL=_CONFIG.base_url,
         ),
     )
     monkeypatch.setattr(

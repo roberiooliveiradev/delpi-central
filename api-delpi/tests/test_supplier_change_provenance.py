@@ -471,6 +471,9 @@ def _enabled_update_deps(monkeypatch):
     from app.domain.integrations.protheus_rest import ProtheusRestConfig
 
     monkeypatch.setattr(settings, 'PROTHEUS_SUPPLIER_UPDATE_ENABLED', True)
+    monkeypatch.setattr(
+        settings, 'PROTHEUS_REST_EXPECTED_BASE_URL', 'https://p.example/rest'
+    )
     config = ProtheusRestConfig(
         username='u', password='p', base_url='https://p.example/rest',
         auth_path='/t', suppliers_path='/s',

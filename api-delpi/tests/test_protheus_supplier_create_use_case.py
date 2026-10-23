@@ -93,6 +93,7 @@ def test_mapped_verified_calls_gateway_when_enabled(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()
@@ -121,6 +122,7 @@ def test_unmapped_blocked(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped(status="unmapped", usr=None)
     with pytest.raises(ProtheusRestError) as exc:
@@ -134,6 +136,7 @@ def test_ambiguous_blocked(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped(status="ambiguous")
     with pytest.raises(ProtheusRestError) as exc:
@@ -147,6 +150,7 @@ def test_not_verified_blocked(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped(verified=False)
     with pytest.raises(ProtheusRestError) as exc:
@@ -160,6 +164,7 @@ def test_invalid_usr_id_format_blocked(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped(usr="161")
     with pytest.raises(ProtheusRestError) as exc:
@@ -187,6 +192,7 @@ def test_core_unavailable_propagates_only_when_gate_open(monkeypatch) -> None:
     identity.get_identity_for_user.assert_not_called()
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     with pytest.raises(ProtheusRestError) as opened:
         _uc(identity_gateway=identity).execute(
             actor_user_id=ACTOR, fornecedor={"supplier_store": "01"}
@@ -201,6 +207,7 @@ def test_token_invalid_does_not_retry_write(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()
@@ -229,6 +236,7 @@ def test_injected_field_normalizer_widens_allowlist(monkeypatch) -> None:
     from app.config import settings
 
     monkeypatch.setattr(settings, "PROTHEUS_SUPPLIER_CREATE_ENABLED", True)
+    monkeypatch.setattr(settings, "PROTHEUS_REST_EXPECTED_BASE_URL", _CONFIG.base_url)
     monkeypatch.setattr(uc_mod, "resolve_protheus_rest_config", lambda _raw: _CONFIG)
     identity = MagicMock()
     identity.get_identity_for_user.return_value = _mapped()

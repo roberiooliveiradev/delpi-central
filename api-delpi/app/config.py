@@ -110,6 +110,12 @@ class Settings:
         _get_env("PROTHEUS_SUPPLIER_UPDATE_ENABLED", default="false").lower()
         in ("true", "1", "yes", "on")
     )
+    # Expected REST target for THIS runtime (fail-closed write guard — C1).
+    # Writes compare the resolved PARAMETROS URL_REST against this value;
+    # missing/mismatched expected target blocks the write deterministically.
+    PROTHEUS_REST_EXPECTED_BASE_URL: str | None = _get_env(
+        "PROTHEUS_REST_EXPECTED_BASE_URL"
+    )
 
     # Financial settlements (R01/R02) shared-dataset gate — doc 48 D3.
     # Stays disabled until the explicit production enablement gate; when off,

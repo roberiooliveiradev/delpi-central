@@ -17,6 +17,7 @@ from app.application.services.integrations.protheus_actor_codusr import (
     resolve_actor_codusr,
 )
 from app.application.services.integrations.protheus_path_resolver import (
+    assert_protheus_write_target,
     resolve_protheus_rest_config,
 )
 from app.application.services.integrations.protheus_supplier_update_payload import (
@@ -95,6 +96,9 @@ class UpdateProtheusRestSupplierUseCase:
         codusr = resolve_actor_codusr(self._identity_gateway, actor_user_id)
         raw = self._params_repository.load_raw_params()
         config = resolve_protheus_rest_config(raw)
+        assert_protheus_write_target(
+            config, settings.PROTHEUS_REST_EXPECTED_BASE_URL
+        )
         environment_key = environment_key_from_config(
             config, settings.INTRANET_PARAMS_AMBIENTE or ""
         )

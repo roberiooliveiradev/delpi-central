@@ -117,3 +117,31 @@ def resolve_protheus_rest_config(raw_params: dict[str, str]) -> ProtheusRestConf
         code="PROTHEUS_CONFIG_INVALID",
         status_code=503,
     )
+
+
+def assert_protheus_write_target(
+    config: ProtheusRestConfig, expected_base_url: str | None
+) -> None:
+    """Fail-closed guard: writes only reach the endpoint declared for this runtime.
+
+    Each environment pins PROTHEUS_REST_EXPECTED_BASE_URL to its intended
+    upstream (production → productive REST, local/homologation → TST REST).
+    If the resolved PARAMETROS URL_REST diverges — or no expected target is
+    declared — the write is blocked deterministically (STOP/NO WRITE).
+    """
+    expected = (expected_base_url or "").strip()
+    if not expected:
+        raise ProtheusRestError(
+            "Destino REST de escrita não comprovado neste ambiente "
+            "(PROTHEUS_REST_EXPECTED_BASE_URL ausente). "
+            "Nenhuma escrita foi enviada ao ERP.",
+            code="PROTHEUS_REST_TARGET_UNVERIFIED",
+            status_code=503,
+        )
+    if expected.rstrip("/") != config.base_url:
+        raise ProtheusRestError(
+            "Destino REST configurado diverge do esperado para este ambiente. "
+            "Escrita bloqueada por segurança (nenhuma escrita foi enviada ao ERP).",
+            code="PROTHEUS_REST_TARGET_MISMATCH",
+            status_code=503,
+        )
