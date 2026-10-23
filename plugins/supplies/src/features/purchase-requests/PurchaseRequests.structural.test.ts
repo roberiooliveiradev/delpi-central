@@ -62,6 +62,10 @@ describe("PurchaseRequests feature", () => {
     expect(detail).toContain("SP_HELP.purchaseRequestDetail");
     expect(detail).toContain("SuppliesPersonIdentity");
     expect(detail).toContain("classifyPurchaseRequestDetailError");
+    // Identity guard (PR.IDENTITY.S4): the hero requester must come from the
+    // enriched `header.requester` PersonRef — never a raw TOTVS name string.
+    expect(detail).toContain("person={header?.requester}");
+    expect(detail).not.toMatch(/header\?\.requester\?\.(name|display_name)/);
   });
 
   it("filtros Unidade alinhados à Visão geral", () => {

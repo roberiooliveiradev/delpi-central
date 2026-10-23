@@ -113,8 +113,9 @@ def test_detail_payload_enriches_header_and_lines():
         mappings={"7": {"user_id": "u-7"}, "8": {"user_id": "u-8"}},
         directory={"u-7": {"name": "Carla"}, "u-8": {"name": "Diego"}},
     )
+    # Real detail shape: {header: {requester: ...}, lines: [...], timeline: [...]}
     payload = {
-        "requester": {"protheus_user_id": "7", "code": "C7", "name": "CARLA"},
+        "header": {"requester": {"protheus_user_id": "7", "code": "C7", "name": "CARLA"}},
         "lines": [
             {"requester": {"protheus_user_id": "8", "name": "DIEGO"}},
             {"requester": {"protheus_user_id": "", "name": "SEM ID"}},
@@ -122,9 +123,32 @@ def test_detail_payload_enriches_header_and_lines():
         ],
     }
     RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
-    assert payload["requester"]["display_name"] == "Carla"
+    assert payload["header"]["requester"]["display_name"] == "Carla"
     assert payload["lines"][0]["requester"]["display_name"] == "Diego"
     assert "display_name" not in payload["lines"][1]["requester"]
+
+
+def test_detail_header_requester_gets_photo_url():
+    gw = FakeCoreGateway(
+        mappings={"7": {"user_id": "u-7"}},
+        directory={"u-7": {"name": "Carla"}},
+        profiles={"u-7": {"user_id": "u-7", "has_photo": True}},
+    )
+    payload = {"header": {"requester": {"protheus_user_id": "7", "name": "CARLA"}}}
+    RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
+    requester = payload["header"]["requester"]
+    assert requester["display_name"] == "Carla"
+    assert requester["photo_url"] == "/purchase-requests/requesters/7/photo"
+
+
+def test_legacy_top_level_requester_still_enriched():
+    gw = FakeCoreGateway(
+        mappings={"7": {"user_id": "u-7"}},
+        directory={"u-7": {"name": "Carla"}},
+    )
+    payload = {"requester": {"protheus_user_id": "7", "name": "CARLA"}}
+    RequesterIdentityService(core_gateway=gw).enrich_payload(payload, access_token="t")
+    assert payload["requester"]["display_name"] == "Carla"
 
 
 def test_no_requesters_no_core_calls():

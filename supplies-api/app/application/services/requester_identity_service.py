@@ -36,6 +36,11 @@ def _requester_refs(payload: Any) -> Iterable[dict]:
     header = payload.get("requester")
     if isinstance(header, dict):
         yield header
+    detail_header = payload.get("header")
+    if isinstance(detail_header, dict) and isinstance(
+        detail_header.get("requester"), dict
+    ):
+        yield detail_header["requester"]
     lines = payload.get("lines")
     if isinstance(lines, list):
         for line in lines:
