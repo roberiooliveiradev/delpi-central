@@ -420,3 +420,16 @@ Após o diff: (6) import DAG e zero cópia de sanitizer/registry; (7) contract c
 - Pergunta sobre dados empresariais retorna `entities.*` de catálogo: não classificar como resposta factual por mero grounding; preservar somente schema quando a intenção contratual tipada for comprovada.
 
 **Status desta seção:** documentação normativa do plano, não uma task implementada. Preservar a autorização prévia de estabilização e o bloqueio de R0–R7 até seu aceite independente.
+
+
+## 13. Vinculação executável do Protocolo 129 — gate mandatório de implementação
+
+**Fonte subordinada deste plano:** [129 — Protocolo de conformidade e bloqueadores de antipadrões](./129-refactor-implementation-conformance-and-antipattern-gates.md). Aplicar em todos os briefs, contratos R0–R7, reviews e relatórios; esta remissão não altera nem substitui as autoridades 16/50/17/49/51/52/21/20/25, ADR 58, roadmap 59 ou decisão S4/117.
+
+**Antes do diff:** publicar ALLOWED_FILES/FORBIDDEN_FILES, função→owner→contrato→consumidor real→destino, import DAG inicial, equivalent/reuse decision e matriz AP-01…AP-20 aplicável. Candidatos NEW só podem ser criados depois de prova de ausência de equivalente e autorização do contrato; consumidor TARGET não justifica criação. Um pacote de refactor não autoriza novo runtime RPA, scheduler, broker, endpoint cross-app ou segundo planner.
+
+**Depois do diff:** correlacionar actual files com ALLOWED_FILES, provas de compatibilidade, AST/import DAG, ciclos/duplicações, testes de segurança/negativos/generalização, outcomes e rollback no SHA exato; classificar AP gates com evidência e revisor independente. CI atual não é automaticamente prova de todos os AP gates; declarar check manual ou não implementado.
+
+**Critérios eliminatórios:** qualquer violação de authority/owner/AuthZ/Policy/Domain/Postcondition, dependência reversa/circular, duplicação de componentes com owner único, planner provider-/selector-specific, parser lexical alternativo ao LLM ou contrato quebrado impede aceite. Falta de owner/consumer/contrato para NEW → SKIP_WITH_DECISION, não “implementação parcial”. R0–R7 permanecem NOT_AUTHORIZED enquanto a estabilização funcional não tiver aceite e o Product Owner não liberar a etapa correspondente.
+
+**Entregável formal:** o DÉLIA EXECUTION REPORT deve conter a matriz AP-01…AP-20, registros de PROVEN/TO_INVENTORY/TARGET, e veredito factual do executor distinto do aceite da coordenação. Refactor por redução de LOC, fake consumers, wrappers permanentes ou import dinâmico para esconder ciclo será recusado.
