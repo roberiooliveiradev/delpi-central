@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { MutableRefObject, ReactNode } from "react";
 import {
   AudioRecorderControl,
@@ -7,6 +7,7 @@ import {
   HelpTooltip,
   IconButton,
   MessageComposer,
+  SegmentToggle,
 } from "@delpi/plugin-ui/index";
 import { Mic, Pause, Play, Square, Trash2, X } from "lucide-react";
 
@@ -21,6 +22,10 @@ import type {
 } from "../api/dictationClient";
 import { useIncrementalDictation } from "../audio/useIncrementalDictation";
 import type { IncrementalTransport } from "../audio/incrementalDictationController";
+import {
+  DEFAULT_DICTATION_MODE,
+  type DictationMode,
+} from "../audio/dictationMode";
 import type { LocalAudioDraft } from "@delpi/plugin-ui/index";
 
 /** One completed local capture → untrusted editable text (VD-F03). */
@@ -94,6 +99,11 @@ export type DeliaComposerProps = {
   incrementalMaxSessionMs?: number | null;
   /** Admitted segment bound from the contract. */
   incrementalMaxSegments?: number | null;
+  /**
+   * Internal: reports whether a capture/transcription is in progress so
+   * the dual-mode selector can lock mode switching. Never set by hosts.
+   */
+  onCaptureActivityChange?: (busy: boolean) => void;
 };
 
 function dictationErrorMessage(error: unknown): string {
@@ -172,6 +182,17 @@ function mergeTranscriptIntoDraft(
  * began (never a silent append), and submit remains exclusively the
  * user's action. Without it, finishing yields the honest local preview.
  */
+/**
+ * Dual-mode dictation (PO decision 2026-10-23, spec 123 §12).
+ *
+ * The composer owns a mount-scoped `DictationMode` that always starts
+ * at "batch" — incremental backend admission NEVER selects "live".
+ * The user picks a mode before capture; switching is blocked while a
+ * capture/transcription is active (each path reports its busy state
+ * through `onCaptureActivityChange`). Draft text survives the switch;
+ * the textarea caret/selection is snapshotted and restored across the
+ * subtree remount the mode change implies.
+ */
 export function DeliaComposer({
   inputId,
   value,
@@ -192,44 +213,128 @@ export function DeliaComposer({
   incrementalMaxSessionMs = null,
   incrementalMaxSegments = null,
 }: DeliaComposerProps) {
-  if (incrementalTransport) {
-    return (
-      <DeliaComposerIncremental
-        inputId={inputId}
-        value={value}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onEnqueue={onEnqueue}
-        loading={loading}
-        requestMode={requestMode}
-        onStop={onStop}
-        placeholder={placeholder}
-        transport={incrementalTransport}
-        maxSessionMs={incrementalMaxSessionMs}
-        maxSegments={incrementalMaxSegments}
-        onClearDraft={onClearDraft}
-        draftRecoveryAction={draftRecoveryAction}
+  const [mode, setMode] = useState<DictationMode>(DEFAULT_DICTATION_MODE);
+  const [captureBusy, setCaptureBusy] = useState(false);
+  const liveAvailable = incrementalTransport != null;
+  const batchAvailable = audioCaptureEnabled && dictationTranscriber != null;
+  const useLive = mode === "live" && liveAvailable;
+  const liveUnavailable = mode === "live" && !liveAvailable;
+  const showSelector = liveAvailable || mode === "live";
+
+  // Caret/selection survive the subtree remount a mode switch implies.
+  const selectionRef: MutableRefObject<{
+    start: number;
+    end: number;
+  } | null> = useRef(null);
+  useEffect(() => {
+    const track = () => {
+      const el = document.getElementById(inputId);
+      if (
+        el instanceof HTMLTextAreaElement &&
+        document.activeElement === el
+      ) {
+        selectionRef.current = {
+          start: el.selectionStart,
+          end: el.selectionEnd,
+        };
+      }
+    };
+    document.addEventListener("selectionchange", track);
+    return () => document.removeEventListener("selectionchange", track);
+  }, [inputId]);
+  useLayoutEffect(() => {
+    const sel = selectionRef.current;
+    if (!sel) return;
+    const el = document.getElementById(inputId);
+    if (el instanceof HTMLTextAreaElement) {
+      el.focus();
+      el.setSelectionRange(
+        Math.min(sel.start, el.value.length),
+        Math.min(sel.end, el.value.length),
+      );
+    }
+  }, [mode, inputId]);
+
+  const selector = showSelector ? (
+    <div className="delia-dictation-mode">
+      <SegmentToggle<DictationMode>
+        options={[
+          {
+            value: "batch",
+            label: "Gravar e transcrever",
+            disabled: !batchAvailable,
+          },
+          {
+            value: "live",
+            label: "Transcrição em tempo real",
+            disabled: !liveAvailable,
+          },
+        ]}
+        value={mode}
+        onChange={setMode}
+        ariaLabel="Modo de ditado"
+        idPrefix={`${inputId}-dictation-mode`}
+        size="sm"
+        widthMode="content"
+        disabled={captureBusy}
       />
-    );
-  }
+      {useLive ? (
+        <p className="delia-dictation-mode__note">
+          O texto aparece enquanto você fala e pode ser revisado pelo
+          reconhecimento de voz.
+        </p>
+      ) : null}
+      {liveUnavailable ? (
+        <p className="delia-dictation-mode__note" role="status">
+          Transcrição em tempo real indisponível no momento. Seu texto
+          foi preservado.
+        </p>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
-    <DeliaComposerBatch
-      inputId={inputId}
-      value={value}
-      onChange={onChange}
-      onSubmit={onSubmit}
-      onEnqueue={onEnqueue}
-      loading={loading}
-      requestMode={requestMode}
-      onStop={onStop}
-      placeholder={placeholder}
-      audioCaptureEnabled={audioCaptureEnabled}
-      audioCaptureMaxDurationMs={audioCaptureMaxDurationMs}
-      audioCaptureMaxBytes={audioCaptureMaxBytes}
-      dictationTranscriber={dictationTranscriber}
-      onClearDraft={onClearDraft}
-      draftRecoveryAction={draftRecoveryAction}
-    />
+    <>
+      {selector}
+      {useLive && incrementalTransport ? (
+        <DeliaComposerIncremental
+          inputId={inputId}
+          value={value}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          onEnqueue={onEnqueue}
+          loading={loading}
+          requestMode={requestMode}
+          onStop={onStop}
+          placeholder={placeholder}
+          transport={incrementalTransport}
+          maxSessionMs={incrementalMaxSessionMs}
+          maxSegments={incrementalMaxSegments}
+          onClearDraft={onClearDraft}
+          draftRecoveryAction={draftRecoveryAction}
+          onCaptureActivityChange={setCaptureBusy}
+        />
+      ) : (
+        <DeliaComposerBatch
+          inputId={inputId}
+          value={value}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          onEnqueue={onEnqueue}
+          loading={loading}
+          requestMode={requestMode}
+          onStop={onStop}
+          placeholder={placeholder}
+          audioCaptureEnabled={audioCaptureEnabled}
+          audioCaptureMaxDurationMs={audioCaptureMaxDurationMs}
+          audioCaptureMaxBytes={audioCaptureMaxBytes}
+          dictationTranscriber={dictationTranscriber}
+          onClearDraft={onClearDraft}
+          draftRecoveryAction={draftRecoveryAction}
+          onCaptureActivityChange={setCaptureBusy}
+        />
+      )}
+    </>
   );
 }
 
@@ -250,6 +355,7 @@ function DeliaComposerBatch({
   dictationTranscriber = null,
   onClearDraft,
   draftRecoveryAction,
+  onCaptureActivityChange,
 }: DeliaComposerProps) {
   const inFlight =
     loading || (requestMode != null && requestMode !== "idle");
@@ -264,6 +370,18 @@ function DeliaComposerBatch({
   const caretRef: MutableRefObject<number | null> = useRef(null);
   const sessionRef = useRef(0);
   const abortRef: MutableRefObject<AbortController | null> = useRef(null);
+  const [recorderBlocking, setRecorderBlocking] = useState(false);
+  const [previewPending, setPreviewPending] = useState(false);
+
+  // Mode-switch lock: recording/stopping/preview/transcribing all keep
+  // the dual-mode selector disabled until the flow settles.
+  useEffect(() => {
+    onCaptureActivityChange?.(recorderBlocking || dictating || previewPending);
+  }, [recorderBlocking, dictating, previewPending, onCaptureActivityChange]);
+  useEffect(
+    () => () => onCaptureActivityChange?.(false),
+    [onCaptureActivityChange],
+  );
 
   // Track the textarea caret/selection so a transcript lands exactly
   // where the user was editing when dictation began (VD-07 rule).
@@ -292,6 +410,7 @@ function DeliaComposerBatch({
   );
 
   const handleDraftReady = (draft: LocalAudioDraft) => {
+    setPreviewPending(true);
     if (!dictationTranscriber) return; // honest local preview
     discardRef.current?.();
     const session = (sessionRef.current += 1);
@@ -379,6 +498,8 @@ function DeliaComposerBatch({
       maxBytes={audioCaptureMaxBytes}
       canSendAudio={false}
       onDraftReady={handleDraftReady}
+      onDiscard={() => setPreviewPending(false)}
+      onBlockingChange={setRecorderBlocking}
       helpCopy={{
         startLabel: "Ditar mensagem",
         startHelp,
@@ -611,6 +732,7 @@ function DeliaComposerIncremental({
   maxSegments,
   onClearDraft,
   draftRecoveryAction,
+  onCaptureActivityChange,
 }: DeliaComposerIncrementalProps) {
   const inFlight =
     loading || (requestMode != null && requestMode !== "idle");
@@ -625,6 +747,16 @@ function DeliaComposerIncremental({
     maxSegments,
   });
   const prevValueRef = useRef(value);
+
+  // Mode-switch lock: any active/transitioning capture keeps the
+  // dual-mode selector disabled; review/idle releases it.
+  useEffect(() => {
+    onCaptureActivityChange?.(dictation.active);
+  }, [dictation.active, onCaptureActivityChange]);
+  useEffect(
+    () => () => onCaptureActivityChange?.(false),
+    [onCaptureActivityChange],
+  );
 
   // Human edits register with the reconciler FIRST (controller-origin
   // writes are flagged and skipped), then propagate to the host draft.

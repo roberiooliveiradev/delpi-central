@@ -175,6 +175,11 @@ const PARTIALS: Record<string, DeliaIncrementalEvent[]> = {
   ],
 };
 
+const selectLive = () =>
+  fireEvent.click(
+    screen.getByRole("button", { name: "Transcrição em tempo real" }),
+  );
+
 describe("incremental dictation surface", () => {
   beforeEach(() => {
     fakeCapture.emit = null;
@@ -186,6 +191,7 @@ describe("incremental dictation surface", () => {
 
   it("renders the dictation trigger; textarea present", () => {
     render(<Harness transport={makeTransport({})} />);
+    selectLive();
     expect(
       screen.getByRole("button", { name: "Iniciar ditado" }),
     ).toBeTruthy();
@@ -196,6 +202,7 @@ describe("incremental dictation surface", () => {
 
   it("start shows live controls and keeps the textarea editable", async () => {
     render(<Harness transport={makeTransport(PARTIALS)} />);
+    selectLive();
     fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
     await waitFor(() =>
       expect(
@@ -219,6 +226,7 @@ describe("incremental dictation surface", () => {
 
   it("real transport events write partial then final at the caret", async () => {
     render(<Harness transport={makeTransport(PARTIALS)} initial="base " />);
+    selectLive();
     fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
     await waitFor(() => expect(fakeCapture.emit).toBeTruthy());
     const textarea = document.getElementById(
@@ -245,6 +253,7 @@ describe("incremental dictation surface", () => {
       ],
     });
     render(<Harness transport={transport} initial="meu " />);
+    selectLive();
     fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
     await waitFor(() => expect(fakeCapture.emit).toBeTruthy());
     const textarea = document.getElementById(
@@ -262,6 +271,7 @@ describe("incremental dictation surface", () => {
 
   it("finalize ends the session and shows the review hint", async () => {
     render(<Harness transport={makeTransport(PARTIALS)} initial="" />);
+    selectLive();
     fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
     await waitFor(() => expect(fakeCapture.emit).toBeTruthy());
     act(() => fakeCapture.emit?.(new Blob(["w"]), 2000));
@@ -288,6 +298,7 @@ describe("incremental dictation surface", () => {
       );
     }
     render(<Sub />);
+    selectLive();
     fireEvent.click(screen.getByRole("button", { name: "Iniciar ditado" }));
     await waitFor(() => expect(fakeCapture.emit).toBeTruthy());
     act(() => fakeCapture.emit?.(new Blob(["w"]), 2000));

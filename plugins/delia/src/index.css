@@ -296,6 +296,23 @@
 
 /* ---------- VD-F04 — dictation surface details */
 
+/* Dual-mode selector (spec 123 §12): compact segmented control above
+   the composer — batch is the default, live is explicit opt-in. */
+.dashboard-delia .delia-dictation-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.dashboard-delia .delia-dictation-mode__note {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.6)));
+}
+
 /* Capture panel + honest purpose disclosure inside the SAME composer
    surface (replaces the removed global audio banner). */
 .dashboard-delia .delia-dictation {
