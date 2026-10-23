@@ -85,3 +85,14 @@ AC-01–17, AC-20 `PASS` · AC-18/19 `INCONCLUSIVE` (sem browser).
 ## Pós-condição
 
 Produção serve o fluxo: consulta CNPJ → aviso informativo não bloqueante → lista completa paginada (total real) → «Conferir cadastro» abre E14 em nova aba → rascunho preservado. Sem bloqueio por CNPJ repetido, sem permission nova, sem escrita ERP, sem alteração na api-delpi.
+
+
+## Revisão GPT — aceite arquitetural D1 (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para deploy e runtime HTTP** com base nas evidências registradas no GitHub e no relatório Cursor (`SOURCE S8 a172180890`, relatório de deploy `1c7a96ce33`). A revisão documental não equivale à repetição independente dos comandos SSH, testes ou validação em browser.
+
+**PROVEN por evidência reportada:** imagens BFF/MFE atualizadas, health, endpoint paginado respondendo `200 total=1`, preview aditivo com `total`, bundle federado S8, regressão E13/E14, flags ERP OFF e nenhuma escrita identificada na janela de smoke. Logs com zero POST/PUT não constituem prova exaustiva fora da janela observada.
+
+**Limites:** paginação com dois ou mais registros/mais de dez e navegação nova aba/retorno do draft **não foram exercitados em produção via navegador**. Portanto AC-18/19 e V1–V8 `INCONCLUSIVE`, cenários multi-registro de runtime `TEST_NOT_RUN`. A pós-condição "lista completa paginada → E14 → rascunho preservado" é **capacidade comprovada por código/contrato e bundle**, e não fluxo visual já validado. `GATE-FEATURE S8 = INCONCLUSIVE` até evidência interativa ou aceite formal de residual pelo PO.
+
+**Auditoria de visualização:** `TO_INVENTORY`, sem contrato aprovado; não introduzir eventos ou armazenamento por inferência. Próxima fatia restrita a validação autenticada de UX (sem novo deploy nem escrita Protheus), com capturas e provas de multi-loja quando houver dados autorizados. R1.S3 permanece bloqueado; R1.S4–S6 não autorizados.
