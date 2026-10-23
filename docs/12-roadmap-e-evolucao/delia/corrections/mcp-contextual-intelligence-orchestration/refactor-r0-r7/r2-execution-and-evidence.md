@@ -88,4 +88,14 @@ FINAL_HEAD=`3e7b063de68139a4960b4aff5417dad4d3ade70b` · ORIGIN_MAIN_FINAL=`3e7b
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
-`REVIEW_SHA=PENDING` · `REVIEW_VERDICT=PENDING` · `ACCEPTANCE_REASON=PENDING` · `NEXT_STAGE_AUTHORIZED=NO`.
+**REVIEWED_SHA:** `738cc50efab8bf9e1d68a01d331ecbc40561cb80`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL`  
+**NEXT_STAGE_AUTHORIZED:** `NO`
+
+**Independent GitHub review:** compared base `303104af38636305018dd4f7a118f009f30095cf` with delivery `738cc50efab8bf9e1d68a01d331ecbc40561cb80`; linear history, R2 runtime diff attributed to `3e7b063de68139a4960b4aff5417dad4d3ade70b`, with unrelated upstream Supplies/MFE changes excluded from scope. Inspected actual owner module, orchestration import surface, diff and R2 evidence. 25 functions and 32 constants are reported as AST-identical by executor; source and destination AST were not independently recalculated. An existing `outcome_assessment.py` was extended, no new `evidence_projection.py` or registry introduced, and the leaf→orchestrator dependency is absent in inspected code. R1 real-handler missing/corrupt/valid tests exist and are reported green.
+
+**Bounded architecture residual:** `outcome_assessment.py` grew from 459 to approximately 1420 lines and now combines trust/redaction, evidence projection, and sufficiency/outcome assessment. Size alone is not a blocker, but owner cohesion/AP-01 must be independently evaluated before adding further R3 responsibilities; do not treat the R2 destination as a universal evidence god module. Compatible re-exports via orchestration are legitimate for present consumers but require a caller/legacy disposition at R6, not indefinite compatibility by default. Frozen M07/S4/117, comparison F41/F42 and circular-import avoidance are preserved.
+
+**Evidence limits:** backend full suite, no duplicate definitions, AST parity and AP01–AP20 status were executor-reported; live-model and production outcome reevaluation on R2 SHA remain `TEST_NOT_RUN`. Runtime behavior equivalence cannot be declared universal from AST identity: moved globals/import context and caller binding can matter; targeted full integration checks must remain part of R3 entry and eventual R7. No material regression is demonstrated in the available delivery evidence, but this is not independently run test certification.
+
+**Decision:** `ACCEPT_WITH_RESIDUAL` limited to R2 extraction with existing owner and known follow-up constraints. R3 is `NOT_AUTHORIZED` pending explicit PO decision and HEAD/ledger reanchor. R3 must start with owner-cohesion and contract/consumer gate, respecting Abstraction Gate and never introducing a new leaf merely to reduce LOC. No deploy or phase progression authorized.
