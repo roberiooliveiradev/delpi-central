@@ -1,0 +1,177 @@
+# X4.PROD-C1 — Supplier Production REST Cutover
+
+**Status:** `ACCEPT_WITH_RESIDUAL` — separação de ambientes implementada e
+homologação completa (POST 53 + PUT 51) **aprovada em DELPI_TST01**; o cutover
+produtivo ficou **bloqueado no gate G8** porque a REST produtiva
+(`http://192.168.1.231:8061/restall`) **não expõe a rota de fornecedores**
+(404 em todas as variantes) e **rejeita as credenciais técnicas** (401).
+Escrita produtiva permanece OFF — fail-closed por pin de destino.
+
+## 1. Topologia
+
+```text
+LOCAL (dev)                          HOMOLOGAÇÃO               PRODUÇÃO
+api-delpi (AMBIENTE=2)   →  REST 192.168.1.233:8701/rest   →   DELPI_TST01
+api-delpi (AMBIENTE=1)   →  REST 192.168.1.231:8061/restall →   DELPI   [G8 BLOQUEADO]
+Listagem (E13)         →  api-delpi SQL Server              →   DELPI (inalterado)
+```
+
+`PARAMETROS_MINHADELPI` é multi-ambiente (`AMBIENTE` 1/2): **1 = conjunto
+produtivo** (convenção já documentada no compose), **2 = homologação**.
+Cada runtime fixa `INTRANET_PARAMS_AMBIENTE` — nenhuma seleção por request.
+
+## 2. Fonte de configuração (inventário P0)
+
+| Item | Achado |
+|---|---|
+| Resolver | `resolve_protheus_rest_config(raw)` — lê `USR_PROTHEUS`, `PSW_PROTHEUS`, `URL_REST`, `PATH_AUTH`, `PATH_SUPPLIERS`; trata inversão de labels por semântica de path; falha controlada em par ambíguo |
+| Conexão | `IntranetDelpiDev.dbo.PARAMETROS_MINHADELPI` via `INTRANET_DB_*` (fallback TOTVS_DB_*/DB_*); produção usa o **mesmo** servidor/tabela |
+| `environment_key` | `ambiente:{N}@{host:porta}` do `URL_REST` — registrado no tracking |
+| Cache de params | Sem cache aparente por request — a leitura ocorre por operação |
+| Gates | `PROTHEUS_SUPPLIER_CREATE_ENABLED`/`UPDATE_ENABLED` — OFF em produção; o ensaio ligou-os apenas no processo do script |
+| Limite físico | `CONTEUDO varchar(30)` — `http://192.168.1.231:8061/restall` (35c) não cabe; forma resolvida = **origem na URL_REST + `/restall` nos paths** |
+
+## 3. Matriz de destinos
+
+| Runtime | REST URL | Destino | Fonte |
+|---|---|---|---|
+| Local | `192.168.1.233:8701` (`ambiente:2`) | DELPI_TST01 | `PROVEN` — ensaio real |
+| Homologação | `192.168.1.233:8701` (`ambiente:2`) | DELPI_TST01 | `PROVEN` |
+| Produção | `192.168.1.231:8061` (`ambiente:1`) | DELPI | `TO_INVENTORY` — upstream sem rota/credencial |
+
+## 4. Implementação (S1) — guarda fail-closed
+
+`PROTHEUS_REST_EXPECTED_BASE_URL` (env por runtime) + `assert_protheus_write_target(config, expected)` chamado nos use cases de create/update **após** resolver o config e **antes** de token/tracking/upstream:
+
+- sem pino declarado → `PROTHEUS_REST_TARGET_UNVERIFIED` (503) — `INCONCLUSIVE → NO WRITE`;
+- URL resolvida ≠ pino → `PROTHEUS_REST_TARGET_MISMATCH` (503) — `STOP — WRITE_DISABLED`;
+- nenhum fallback silencioso entre ambientes; nada exposto ao frontend.
+
+Wiring: `docker-compose.yml` + `.env.dev.example` (ambiente=2, pino TST) +
+`.env.prod.example` (ambiente=1, pino `http://192.168.1.231:8061`).
+
+## 5. Ensaio local completo (T1–T3) — DELPI_TST01
+
+Script versionado `api-delpi/scripts/protheus_supplier_c1_full_assay.py`
+(mesmo protocolo E2/E5: guard de ambiente → use cases canônicos com
+gate+pin+codusr+tracking → REST GET → SQL read-back → safety DELPI).
+Ator `3bfdd634…` → `codusr=000311` (Core local semeado para o ensaio).
+
+### T2 — POST completo: `PASS`
+
+| Critério | Resultado |
+|---|---|
+| Fornecedor criado | `003884/01` (CNPJ teste `98887766030041`, mod-11 válido) |
+| POST_FIELDS | **53/53 enviados — 53 `PERSISTED`** (SQL field-by-field) |
+| REST read-after-write | `A2_NOME` conferido via `get_supplier` |
+| Código/loja | Retornados pelo upstream (SYSTEM_GENERATED) |
+| Tracking | `7fd9a896` → `CONFIRMED` (200) |
+| DELPI | `delpi_residue_count = 0` |
+
+### T3 — PUT completo: `PASS` (com fixups de valores válidos)
+
+51 campos editáveis — primeiro PUT com 50 campos (`risk_code` adiado por
+lookup exausto):
+
+| Classe | Campos | Resultado |
+|---|---|---|
+| PERSISTED direto | 42 | Mudança before≠sent=persisted provada REST+SQL |
+| Coerência fixada (`UNCHANGED_REQUIRED`) | `person_type` (J — documento CNPJ), `state`, `country_code`, `bacen_country_code` (Brasil — coerência com município SC), `linked_customer_code` (imutável upstream por design E6/E7) | Mantidos — não é fake PASS |
+| Divergentes na 1ª tentativa → **resolvidos** | `state_registration` (`987654321` inválido → IE real `251.854.221` **PERSISTED** — upstream valida DV estadual), `payment_method_code` (`90` inexistente → `01` **PERSISTED**), `linked_customer_store` (`02` ignorado, `03` 400 → par `000001/05` **PERSISTED**) | Valores inválidos corretamente rejeitados; campos editáveis com valores válidos |
+| Adiado → resolvido | `risk_code` (`003`→`001` **PERSISTED**) | PERSISTED |
+
+- `untouched_fields_preserved` = TRUE (amostra BAIRRO/CNAE/RISCO/TRANSP/RECPIS
+  estável após PUT parcial; parcial aplicou só `A2_NREDUZ`).
+- `identity_preserved` = TRUE (`A2_LOJA`/`A2_CGC` estáveis; `A2_COD` fora do
+  read-back — registro sempre localizado pela chave 003884/01).
+- Tracking: create CONFIRMED; updates CONFIRMED ×6; REJECTED ×2 (400 — os
+  valores inválidos); RECONCILIATION_REQUIRED ×2 (MATA020 400 sinalizados).
+
+## 6. Cutover produtivo (S1-destino) — **BLOQUEADO (G8)**
+
+Evidências read-only contra `http://192.168.1.231:8061/restall`:
+
+| Prova | Resultado |
+|---|---|
+| `GET /restall/` | 200 — serviço vivo |
+| `GET /rest/` | 404 — apenas `restall` existe na 8061 |
+| `POST /restall/api/oauth2/v1/token` | 400/401 — rota existe; **credenciais `api.delpi` rejeitadas (401)** |
+| `GET/POST /restall/delpi/api/v1/suppliers` | **404** — rota não publicada (TST devolve 401/501 no mesmo teste) |
+| Variantes (`/api/v1/…`, `/delpi/suppliers`, …) | 404 — API de fornecedores ausente da `restall` |
+
+**Decisão:** `URL_REST@AMBIENTE=1` **permanece** `192.168.1.233:8701` —
+virar agora quebraria o GET de detalhe E14 (que resolve REST via amb=1) e
+não habilitaria nada (auth 401). O cutover exige, do owner TOTVS (Gabriel):
+(a) publicação da API `delpi/api/v1/suppliers` na `restall` produtiva;
+(b) credencial técnica válida para o token produtivo. Depois: `URL_REST@1 =
+http://192.168.1.231:8061` + `PATH_*` prefixados `/restall` + smoke read-only.
+
+## 7. Deploy efetivo (D1 parcial — somente código)
+
+- `api-delpi` rebuildado em `srv-api` (`up-prod-sequential.sh --build api-delpi`),
+  container `Up (healthy)`, `/health` 200.
+- `PROTHEUS_REST_EXPECTED_BASE_URL=http://192.168.1.231:8061` no `.env` prod
+  → se os params resolverem URL divergente, qualquer write falha fechado.
+- Gates produtivos: `PROTHEUS_SUPPLIER_CREATE_ENABLED=false`,
+  `PROTHEUS_SUPPLIER_UPDATE_ENABLED=false` — confirmados no container.
+- Resolução produtiva atual: `env_key=ambiente:1@192.168.1.233:8701`
+  (inalterada — intencional).
+- Local: `.env` dev → `INTRANET_PARAMS_AMBIENTE=2` + pino TST;
+  container recriado; resolução `ambiente:2@192.168.1.233:8701` verificada.
+
+## 8. Gates
+
+| Gate | Estado |
+|---|---|
+| G1 local→TST01 | `PASS` (env_key amb=2@233:8701; ensaio real) |
+| G2 POST completo | `PASS` (53/53) |
+| G3 PUT completo | `PASS` (51/51 provados) |
+| G4 reconciliação campo-a-campo | `PASS` |
+| G5 identidade preservada | `PASS` |
+| G6 tracking | `PASS` (CONFIRMED; rejeições 400 registradas) |
+| G7 testes automatizados | `PASS` (492 escopo supplier; 1 falha DAVI pré-existente fora do escopo) |
+| G8 config produtiva validada | **`FAIL`** — upstream sem rota/credencial |
+| G9 AuthZ/segurança | `PASS` (nenhuma alteração) |
+| G10 rollback | `PASS` (params reversíveis; código revertível via git) |
+| G11 contratos | `PASS` (nenhum contrato alterado) |
+| G12 zero escrita em DELPI | `PASS` (safety check = 0) |
+
+**Predeploy gate global: `FAIL` → cutover produtivo não executado.**
+
+## 9. Flags efetivas
+
+| Flag | Local | Produção |
+|---|---|---|
+| `PROTHEUS_SUPPLIER_CREATE_ENABLED` | false no serviço (ensaio usou env de processo) | false |
+| `PROTHEUS_SUPPLIER_UPDATE_ENABLED` | false no serviço | false |
+| `PROTHEUS_REST_EXPECTED_BASE_URL` | `http://192.168.1.233:8701/rest` | `http://192.168.1.231:8061` |
+| `INTRANET_PARAMS_AMBIENTE` | 2 | 1 |
+
+## 10. Rollback
+
+- Params: `PATH_AUTH@2`/`URL_REST@1` reversíveis via UPDATE na tabela.
+- Código: `git revert` do commit C1 + rebuild `api-delpi`.
+- Registro de teste `003884/01` permanece em DELPI_TST01 (mesma política dos
+  resíduos `ZZ HOMOLOG E2*`) — cleanup fora do escopo.
+- Reversão não desfaz fornecedores já criados; jamais usar DELETE em SA2.
+
+## 11. Residuais
+
+- `linked_customer_code` permanece imutável upstream (handoff E7).
+- `linked_customer_store`: sensível à loja — `02` ignorada, `03` 400, `05`
+  persistiu (capacidade confirmada; seletividade upstream registrada).
+- `state_registration`: exige IE com DV válido do UF (rejeição correta).
+- Handoff TOTVS pendente: publicar `delpi/api/v1/suppliers` na `restall`
+  produtiva + credencial válida → só então `URL_REST@1` + smoke read-only.
+- `E10_VISUAL`/full-stack BFF: ensaio executado nos use cases canônicos (não
+  via BFF) — limitação registrada; rota/AuthZ inalteradas por E2–E7.
+
+## 12. Arquivos alterados
+
+- `api-delpi/app/config.py` — `PROTHEUS_REST_EXPECTED_BASE_URL`
+- `api-delpi/app/application/services/integrations/protheus_path_resolver.py` — `assert_protheus_write_target`
+- `api-delpi/app/application/use_cases/integrations/{create,update}_protheus_rest_supplier_use_case.py` — chamada do guard
+- `api-delpi/tests/test_protheus_supplier_{create,update}_use_case.py`, `test_protheus_write_tracker.py`, `test_supplier_change_provenance.py` — fixtures + 2 testes do guard
+- `api-delpi/scripts/protheus_supplier_c1_full_assay.py` — **novo** ensaio
+- `infra/docker-compose.yml`, `infra/.env.dev.example`, `infra/.env.prod.example`
+- `docs/12-roadmap-e-evolucao/supplies/IMPLEMENTATION-PLAN.md`
