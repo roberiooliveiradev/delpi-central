@@ -161,3 +161,14 @@ Compatibilidade: códigos existentes mantidos; novos são aditivos e mapeiam par
 - `REVOCATION_RISK=OPEN`, `REVOCATION_REMEDIATION=DEFERRED_BY_PO`, `PRODUCTION_RETRY=BLOCKED`.
 - `CODE_CHANGE=NONE`, `RUNTIME_CHANGE=NONE`, `RELEASE=NONE`.
 - Próximo passo (doc 101 Task 2): implementação dev-only do contrato aprovado nos owners existentes, com RED/GREEN determinísticos da matriz §9.
+
+
+## Revisão de coordenação — 2026-10-23: REWORK delimitado, sem Task 2 ainda
+
+**REVIEW_VERDICT=REWORK_CONTRACT_ONLY**. Reanchored on `origin/main=dec7812bc959a4759b05c9308639b5fde00f5ff7`; ADR e matriz T1–T14 analisados. O reuso do TurnDeadline/attempt/resume/ActivityEvent/NDJSON/observability é adequado, sem segundo engine; o escopo documental entregue é válido. Contudo há três ambiguidades que impedem autorizar a Task 2 sem contrato corrigido:
+
+1. **Cap por estágio e quota:** `MODEL_STAGE_TIMEOUT_SECONDS=10` ainda limita cada chamada individual. Especificar explicitamente a política por chamada no regime novo, seus limites de provider/transport e como o somatório medido de até 60s pode ser realmente utilizado sem loops de timeout/calls artificiais. Nunca tornar 60s uma autorização indiscriminada para toda chamada. Atualizar T1/T13.
+2. **Tentativas versus envelope:** com quota 60s, wall 90s e reserva 25s, envelope streamed 150s não garante 3 tentativas de 60s. Tornar explícito o significado exato de 'até 3' (tentativas oportunistas elegíveis), critérios de admissão da terceira, proteção da execução final e o que acontece em quota esgotada quando remaining <= reserve. Não afirmar que três ciclos integrais estão cobertos. Testar limite global, quota, reserva, não repetição de invoke e terminal honesto. `150s` e `25s` permanecem valores propostos, não parâmetros aprovados por esta revisão.
+3. **Progress streaming:** eventos de atividade tipados na fronteira são legítimos, mas a promessa de heartbeat a cada 15s durante chamada de inferência longa só é possível se existir mecanismo real de transporte concorrente não bloqueado. Inventariar worker/queue/NDJSON/edge, backpressure e cancel sem criar scheduler/thread extra ou fake progress; diferenciar atualização de atividade factual de keepalive de conexão. Registrar comportamento buffered=60s como variante de compatibilidade que não atende integralmente à nova expectativa PO.
+
+Solicitar **um único ajuste bounded no ADR 102** (sem implementar código): definição formal destas semânticas, matriz de testes T1–T14 ajustada, modelo de transporte, valores globais/reserva sustentados por evidências e alternativas claras para aprovação. Se a solução for alterar os valores do PO ou contratos superiores, STOP -> ARCHITECTURE_DECISION_REQUIRED. `TASK2_AUTHORIZED=NO`; `PRODUCTION_RETRY=OFF`; `R4_REMEDIATION=DEFERRED_BY_PO` mas riscos/gates OPEN. Não reabrir inventário geral nem expandir roadmap; após este rework, coordenação decide parâmetros e autoriza Task 2.
