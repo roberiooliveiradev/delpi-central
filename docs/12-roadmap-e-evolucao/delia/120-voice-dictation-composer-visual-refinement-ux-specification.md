@@ -221,3 +221,10 @@ Separação em subetapas serve para **entregar**, não para prolongar inventári
 Antes de alterar código: reanchor canônico e ledger; confirmar `EXISTING_EQUIVALENT=YES/NO/TO_INVENTORY` e `REUSE_DECISION=REUSE/EXTEND/NEW`; checar compatibilidade dos consumers de `plugin-ui`. Depois: testes e screenshot na versão de SHA/config, residual search, commit/push para `main` conforme protocolo do projeto e atualização factual do ledger.
 
 **Estados aceitos:** `PROVEN | TO_INVENTORY | PLANNED | TARGET`; testes `PASS | FAIL | PENDING | INCONCLUSIVE | TEST_NOT_RUN | STALE_EVIDENCE`; review `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCONCLUSIVE`. Não tratar documentação como runtime, nem screenshot de conceito como aprovação do código. VD-F04 não progride fase e não autoriza novas capacidades de áudio.
+
+
+## 12. Continuidade futura: VD-F06 — ditado progressivo editável (2026-10-23)
+
+O Product Owner definiu nova experiência de ditado: transcrição incremental enquanto fala, cursor reposicionável, inserção/substituição em qualquer ponto do draft, edição manual durante captura, parciais claramente identificados e prioridade absoluta da edição humana sobre revisões STT tardias. **Especificação completa de funcionalidade, aparência, transições, segurança e critérios VD-L01–L16:** [123 — Voice Dictation Progressive Live Editing UX](./123-voice-dictation-progressive-live-editing-ux-specification.md).
+
+**Boundary:** VD-F04 segue responsável por seu refinamento visual já especificado; VD-F06 é uma evolução distinta que exige comprovar suporte real a streaming STT e contrato incremental antes de ativar. `dictation.transcription.v1` continua fallback válido. Não substituir uma transcrição final por animação simulada de escrita em tempo real; não criar outro composer nem reabrir decisões de VD-F04. `STREAMING_IMPLEMENTED=NOT_PROVEN`; `PHASE_PROGRESSION=NONE`.
