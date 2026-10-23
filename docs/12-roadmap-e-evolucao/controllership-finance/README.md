@@ -348,3 +348,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 1 — Reconciliação de identificadores históricos (23/10/2026)
 
 [Doc 77 — CC matriz e Análise: reconciliação de aliases do handoff](./77-ciclo1-reconciliacao-cc-matriz-analise.md): os números históricos 53 (CC matriz) e 58 (Análise) não são caminhos canônicos comprovados. O doc 53 vigente é o roadmap de Table UX. O doc 77 registra separadamente finalidade, estrutura observada, owner e pendências das duas fontes, sem renomear ou sobrescrever documentos existentes. Paridade e regras TOTVS seguem TO_INVENTORY/TEST_NOT_RUN; Ciclo 1 PENDING, Ciclo 2 NO_GO.
+
+
+### Ciclo 1 — Cruzamento narração e relatórios (23/10/2026)
+
+[Doc 78 — Crosswalk V01–V23 entre relato guiado e artefatos](./78-ciclo1-crosswalk-narracao-artefatos.md): associa docs 56/57 aos inventários 59–77, explicita divergências, limitações e nove verificações propostas para o Ciclo 2 com owners candidatos. Narrativa do PO integralmente registrada, áudio/timecodes independentes INCONCLUSIVE; paridade TOTVS TEST_NOT_RUN. Revisão ACCEPT_WITH_RESIDUAL, fechamento formal do Ciclo 1 PENDING e Ciclo 2 NO_GO. Sem alteração de contratos ou runtime.
