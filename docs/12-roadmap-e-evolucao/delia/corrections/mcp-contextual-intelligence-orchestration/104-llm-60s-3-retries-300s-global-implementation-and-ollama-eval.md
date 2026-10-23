@@ -92,3 +92,16 @@ Ambas as execuções: **nenhuma chamada ≥60s, nenhum turno ≥300s, zero timeo
 ## DECISION_LOG
 
 `LLM_CALL_TIMEOUT_EFFECTIVE=60s`; `LEGACY_10S_AND_30S_CUTOFFS=REMOVED_NO_OWNER`; `LLM_CALL_MAX_ATTEMPTS=3`; `FOURTH_ATTEMPT_BLOCKED=BY_CONSTRUCTION`; `GLOBAL_INTERACTION_CAP=300s_MONOTONIC`; `OPERATIONAL_TIMEOUTS_PRESERVED=mcp15+sources`; `NEW_MODULE=governed_retries (policy only, no engine)`; `PRODUCTION_CHANGED=NO`; `RELEASE=NOT_AUTHORIZED`; `EXTERNAL_LLM_CALLS=0`; `I04_ACCEPTED=NO`.
+
+
+## Parecer de coordenação — 2026-10-23
+
+**REVIEW_VERDICT=ACCEPT_WITH_RESIDUAL (DEV), PRODUCTION_DEPLOY=BLOCKED_PENDING_GATES.** Conferidos HEAD `090a817e5623c42094cdefd3be0df4dcdd9d7c8c`, relatório 104, doc 103 e as chamadas diretas a `call_retry_eligible` nos owners `orchestration.py`/`handle_interactive_turn.py` e constante fixa `LLM_CALL_MAX_ATTEMPTS=3` em `governed_retries.py`. Testes GPU/CPU, suíte backend/frontend e métricas foram reportados pelo executor, não reexecutados independentemente nesta revisão (`INDEPENDENT_TEST_RERUN=TEST_NOT_RUN`). Evidências são adequadas para implementação dev, não para business outcome produtivo.
+
+**BLOCKER 1 — isolamento de política:** `DELIA_MAX_GOVERNED_ATTEMPTS=1` de produção governa *resume de turno*, mas o retry **por chamada lógica** tem máximo fixo 3 e é invocado diretamente pelos dois owners. Portanto a afirmação de que 'produção congelada com max attempts 1' prova que *nenhum retry novo* ocorrerá após deploy da nova imagem não está demonstrada. Exigir fix bounded/flag fail-closed para distinguir `MODEL_CALL_RETRIES` de `TURN_RESUME_ATTEMPTS`, com prova de OFF/ON na configuração produtiva/ambiente real, sem suprimir AuthZ. Alteração de código em `main` não implica deploy existente; nenhum deploy autorizado por esta revisão.
+
+**BLOCKER 2 — transporte 300s:** QA real do NDJSON, cancelamento do browser e comportamento edge/gateway por até 300s ainda TEST_NOT_RUN, mesmo com backend 300s configurado em dev. Não afirmar compatibilidade produtiva de cinco minutos. Planejar teste local de stream/cancel com fake clock e rede real sem LLM externo.
+
+**QUALIDADE/OUTCOME:** 239 invocações reais LLM locais reportadas, nenhuma excedeu 60s e nenhum turno atingiu 300s; limites extremos comprovados deterministicamente, não por wall-clock real; 4 EXCEPTIONs no GPU (invalid_structured_output), erros semânticos D8/D9/V4. Consultas MCP no harness ficaram autorizativamente negadas por ausência de bearer; NÃO provaram resposta grounded de negócio. Diferenciar `LOCAL_MECHANICAL_FLOW=PASS_WITH_RESIDUAL` de `BUSINESS_OUTCOME=INCONCLUSIVE`. `EXTERNAL_LLM_TEST_CALLS=0` reportado.
+
+**ENCAMINHAMENTO BOUNDED:** uma correção de isolamento de retries produtivos com teste negativo explícito em ambos call sites; uma rodada de validação do transporte/UX com build correto do Portal; avaliação de negócio só com identidade dev autorizada e Core/Domain reais, nunca forjar bearer. Preservar R4 revocation `OPEN/DEFERRED_BY_PO`, não reescrever planner, não criar outra infraestrutura, não consumir LLM externo pago. `PHASE_ADVANCE=NO`, `I04_ACCEPTED=NO` até autoridades e ledger.
