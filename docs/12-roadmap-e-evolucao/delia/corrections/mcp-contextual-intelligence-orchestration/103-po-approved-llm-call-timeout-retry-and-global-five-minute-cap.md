@@ -1,6 +1,6 @@
 # 103 — Decisão PO: 60s por chamada LLM, até 3 tentativas por chamada, 300s globais
 
-**Data:** 2026-10-23. **Fonte:** decisão explícita do Product Owner posterior ao ADR 102. **Status:** PRODUCT_DIRECTION=APPROVED; IMPLEMENTATION=DEV_VERIFIED (docs 104, 105); ACTIVE_RUNTIME=DEV-ONLY; PRODUCTION_RETRY=OFF até os gates pertinentes.
+**Data:** 2026-10-23. **Fonte:** decisão explícita do Product Owner posterior ao ADR 102. **Status:** PRODUCT_DIRECTION=APPROVED; IMPLEMENTATION=DEV_VERIFIED (docs 104, 105); ACTIVE_RUNTIME=PRODUCTION (doc 107 — decisão PO de ativação, R4 aceito OPEN/DEFERRED_BY_PO); PRODUCTION_RETRY=ON (3/chamada).
 
 ## Decisão atual (substitui os parâmetros anteriores conflitantes em 100–102)
 
