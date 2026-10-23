@@ -149,3 +149,27 @@ PHASE_PROGRESSION=NONE
 ## 11. Plano executivo de implementação integral (2026-10-23)
 
 O plano de execução backend + frontend + QA, rework, GitHub e deploy por Devin está em [124 — VD-F06 End-to-End Implementation Execution Plan](./124-vd-f06-end-to-end-implementation-execution-plan.md), task `DELIA-VD-F06-PROGRESSIVE-DICTATION-END-TO-END-IMPLEMENT-TEST-REWORK-DEPLOY-01`. Seu checkpoint inicial comprova capacidade real de STT incremental e owner/contrato, e a entrega final exige evidência de parcial **antes** do fim da captura com edição humana preservada. Se a capacidade incremental não estiver disponível, bloquear ativação live e manter fallback v1, sem falsa transcrição em tempo real. Status: `PLANNED`, não `IMPLEMENTED`; a execução não se autoaceita e não avança fase.
+
+
+## 12. Decisão posterior do Product Owner — dois modos; batch padrão (2026-10-23)
+
+**Direção de produto explícita, prevalecendo sobre a preferência UX anterior por modo progressivo como experiência inicial:** oferecer **dois modos de ditado**, com **Gravar e transcrever após finalizar (VD-F03 / `dictation.transcription.v1`) como padrão ativo**. O modo **Transcrição em tempo real (VD-F06 / `dictation.incremental.v1`)** permanece alternativa opt-in, para melhorias e homologação adicionais, sem ser selecionado automaticamente apenas porque o backend o anuncia disponível.
+
+**Evidência motivadora:** captura de uso real em produção mostrando texto incoerente/mesclado e aviso recuperável durante a gravação; o Product Owner rejeitou a experiência progressiva como padrão, mesmo após o rework anterior. Isso **não** equivale a comprovar nova causa-raiz ou reprovar o contrato STT v1.
+
+### Contrato UX alvo
+
+- Controle de escolha de modo na superfície de ditado/composer, com rótulos claros: **“Gravar e transcrever”** (padrão) e **“Transcrição em tempo real”** (alternativo). A escolha deve ser explícita e acessível (teclado/screen reader); não criar outro composer/gravador.
+- Padrão independente de `incremental.available`: mesmo que backend suporte incremental, o frontend **inicia em batch**. A flag/capability de backend continua gate de segurança para live, não preferência de produto. Se incremental indisponível, modo live aparece indisponível/explicado ou é omitido conforme padrão de UI existente; batch permanece acessível.
+- O usuário pode escolher o modo **antes de iniciar** uma captura. Evitar mudança automática no meio da sessão: exigir finalizar/cancelar captura atual antes de trocar; preservar draft, caret/seleção e texto confirmado. Não converter sessão ativa para outro protocolo.
+- **Batch:** gravar primeiro, apresentar timer/waveform real e controles de pausa/finalização, depois processar STT final uma vez e inserir no caret/seleção conforme contrato VD-F03/VD-F05; texto revisável, nunca envio automático.
+- **Live opt-in:** manter estados, edição livre e limites de VD-F06, com comunicação honesta de latência, falhas e qualidade; nenhuma simulação de palavras em tempo real.
+- A preferência pode ser mantida somente durante o mount/sessão de UI se mecanismo existente permitir; **não** introduzir storage, memory, configuração de usuário no Core ou backend só para persistir essa escolha. O default em nova montagem deve ser batch, salvo decisão canônica posterior.
+- UI compacta e coerente com doc 120, full-page, Companion Dock e mobile; controls, estados e informação sobre envio remoto devem ser acessíveis.
+- Ao selecionar live, exibir nota curta e não alarmista de que a transcrição pode sofrer revisões; não apresentar live como mais preciso que batch sem evidência.
+
+### Gates de implementação e aceite
+
+`PRODUCT_DEFAULT_MODE=BATCH`; `LIVE_MODE=OPTIONAL_EXPLICIT`; `BACKEND_INCREMENTAL_AVAILABILITY!=AUTO_SELECTION`; `NO_AUTO_SUBMIT=YES`; `BATCH_V1_PRESERVED=YES`.
+
+A alteração de runtime é uma task bounded separada: reanchor authorities/ledger; provar reuse; modificar a menor seleção de modo em `DeliaComposer`/composição `App` e compartilhados `plugin-ui` conforme ownership; testes (default batch mesmo com incremental disponível, opt-in live, indisponibilidade, troca apenas idle, draft não perdido, full-page/Dock, regressões, deploy e QA). **STATUS=PRODUCT_DECISION_DOCUMENTED; CODE_SWITCH=NOT_EXECUTED_BY_THIS_DOCUMENT; PHASE_PROGRESSION=NONE.**
