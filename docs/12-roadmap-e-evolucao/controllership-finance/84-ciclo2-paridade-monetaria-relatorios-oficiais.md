@@ -169,7 +169,7 @@ artefato × banco **demonstrada e reproduzível, Δ R$ 0,00** →
 | — por tipo | MP 354.938,50 · PI 254,44 | soma do xlsb por `B1_TIPO` | **exato** (MP+PI+EM 39,12+MH 8,46 = total) | 0 |
 | EM ESTOQUE PA | 190.511,24 | MATR320 Saldo Atual PA | **exato** | 0 |
 | EM ESTOQUE PI | 24.528,60 | MATR320 Saldo Atual PI | **exato** | 0 |
-| EM ESTOQUE total | 3.591.191,36 | SA_emissão (3.884.464,444) − loc99_emissão (293.273,084) — loc99 reconstruído `B9_VINI1@0831[99]+RE3+SD3[99]` = 293.273,088 (doc 80 §33.D) | **exato** | 0,004 (float) |
+| EM ESTOQUE total | 3.591.191,36 | SA_emissão (3.884.464,444) − loc99_emissão (293.273,088, exato — doc 80 §34.D) = 3.591.191,356 → imprime 3.591.191,36 | **exato** | 0 (Δ 0,004 era arred. de impressão — §34.D) |
 | Resumo MP/PA/PI estoque | 2.699.026,36 (MP 2.483.986,52) | emissão com `as_of`/parâmetros diferentes — não reconciliável com snapshot | **pendente** | E2 parâmetros |
 | Resumo MP/PA/PI processo | 277.941,20 (MP 277.686,77) | idem — `as_of` distinto do xlsb MEP (354.938,50) | **pendente** | E2 parâmetros |
 
@@ -227,8 +227,9 @@ memo).
 ### §4.3 — Divergência MP +8.631,73 — DECOMPOSIÇÃO COMPLETA (rodada 15, doc 80 §33.B)
 
 Ponte por produto `residual_p = VINI1@0930_p − V_emissão_p` fecha o delta
-integral: **Σ +8.631,741 vs +8.631,731 oficial** (Δ −0,010 arredondamento
-`B9_VINI1`):
+**ao centavo** (rodada 16, doc 80 §34): **Σ +8.631,731 = oficial**, Δ
+0,000. `B9_VINI1` é `float(53)` — somar com `CAST(... AS DECIMAL(30,9))`
+por linha antes do SUM; agregação em float mascara micro-ajustes reais.
 
 | Produto (alias) | Residual | Mecanismo |
 |---|---:|---|
@@ -237,24 +238,30 @@ integral: **Σ +8.631,741 vs +8.631,731 oficial** (Δ −0,010 arredondamento
 | `<PRODUTO-REVAL-A>` | +148,000 | revalorização CM pós-emissão |
 | `<PRODUTO-REVAL-B>` | +23,292 | idem |
 | `<PRODUTO-REVAL-C>` | +0,028 | `INVENT` repriced |
-| **Total** | **+8.631,741** | |
+| `<PRODUTO-REVAL-D>` | −0,010 | linha RE0 RECNO `4817031` repriced 60,760→60,770 (`MATA330` 21/10 08:01) |
+| `<PRODUTO-AJUSTE-A..D>` (4) | +0,002/−0,002/−0,001/+0,001 | micro-ajustes TTAT pós-emissão — líquido 0,000 |
+| **Total** | **+8.631,731** | = delta oficial, Δ 0,000 |
 
 A decomposição anterior por evento (reprice doc `<NF-RETIF-A>` +9.583,19;
 INVENT −24,95; residual ≈ −950, doc 80 §31.E) é substituída pela ponte
 por produto acima — **100% do delta atribuído a revalorização de custo
-médio pós-emissão**, sem resíduo não decomposto.
+médio pós-emissão, ao centavo**.
 
 **DIFERENÇA EXPLICADA**: SA impresso = estado de custo da emissão; SB9 =
 snapshot reconstruído 21/10 pós-retificação. Não é erro de fórmula nem
-de filtro — é diferença temporal de estado, agora fechada por produto.
+de filtro — é diferença temporal de estado, decomposta por produto ao
+centavo (doc 80 §34).
 
-### §4.4 — Escopo completo: 10 tipos × 13 colunas (rodada 15)
+### §4.4 — Escopo completo: 10 tipos × 13 colunas (rodada 15, verificada rodada 16)
 
 A reconciliação §4.2 foi expandida a **todos os tipos** (EM, GG, II, MC,
 MH, MP, MS, MX, PA, PI) no estado de emissão: **120/120 colunas de fluxo
-exatas**; Saldo Atual 9/10 exato, único Δ = MP +8.631,73 (§4.3). As
+exatas** e **130/130 células oficiais Δ = 0,000** com SA por equação de
+fluxo no `as_of` da emissão (doc 80 §34.B — verificação decimal exata da
+rodada 16). Contra o snapshot SB9@0930 posterior: 8/10 Δ = 0,000; PI
+Δ = −0,001; MP Δ = +8.631,731 decomposto por produto (§4.3). As
 regras de classificação SD1/SD2/SD3 são **gerais**, não específicas de
-MP — validação por tipo em doc 80 §33.C.
+MP — validação por tipo em doc 80 §33.C/§34.B.
 
 ## §5 — Demais itens (candidatos avaliados)
 

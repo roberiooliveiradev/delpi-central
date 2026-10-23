@@ -1792,8 +1792,12 @@ Nota de modelo: `TransfProc` (CF `RE3`, armazém de origem, sem DE par)
 é excluído porque o valor **permanece no estoque da filial**
 (armazém 99) — consistente com a coluna memo do relatório.
 
-**Σ residual = +8.631,741** vs Δ oficial +8.631,731 (Δ −0,010
-arredondamento `B9_VINI1`). Decomposição por produto — **apenas 5**:
+**Σ residual = +8.631,741** vs Δ oficial +8.631,731 — **superseded por
+§34:** a diferença de −0,010 não é arredondamento: é a revalorização
+pós-emissão da linha RE0 RECNO `4817031` (60,760→60,770, `MATA330`
+21/10 08:01) + ruído ±0,001–0,002 de outros 4 produtos com TTAT
+própria; com `CAST(... AS DECIMAL(30,9))` a ponte fecha **exato**
+(+8.631,731 = Δ oficial). Decomposição por produto — **apenas 5**:
 
 | Produto (alias) | Residual | Mecanismo evidenciado (TTAT) |
 |---|---:|---|
@@ -1926,3 +1930,73 @@ mesmo estado (SA − loc99 provado); EM PROCESSO = estado MATR989
   resumida, medida H02 — E2/E5); `TARGET` (exposição de `as_of`/
   escopo/base_de_custo por medida). Nenhum requisito material
   descartado; nenhum gate promovido além do demonstrado.
+
+---
+
+## §34 — RODADA 16 (CF-C2-STOCK-G5-REWORK-001) — VERIFICAÇÃO G5: PARIDADE AO CENTAVO — 2026-10-23
+
+Revisão do commit `df4d7caa5d`: promoção de G5 exigia demonstrar (i) a
+paridade efetiva do Saldo Atual oficial na emissão e (ii) a origem do
+centavo entre +8.631,741 (ponte) e +8.631,731 (delta oficial).
+
+### A. Precisão dos campos e ordem de agregação
+
+- `B9_VINI1`, `B9_QINI`, `D1_CUSTO`, `D2_CUSTO1`, `D3_CUSTO1` =
+  **float(53)** (INFORMATION_SCHEMA) — representação binária, não
+  decimal; o relatório imprime 3 casas.
+- Reprodução exata: `CAST(B9_VINI1 AS DECIMAL(30,9))` **por linha,
+  antes do SUM** (agregação em float acumulou erro binário e produziu
+  o falso −0,010 da rodada 15). Custos de movimento via
+  `Decimal(str(v))` + reversão `TTAT_COLD` por RECNO.
+
+### B. Reprodução das 130 células oficiais — Δ 0,000
+
+Recalculadas 10 tipos × 13 colunas em estado de emissão
+(`D1_DTDIGIT`/`D2_EMISSAO`/`D3_EMISSAO` set/2026, SF4 `F4_ESTOQUE=S`,
+`D3_ESTORNO<>S`, RE3 memo fora da equação, custos ao `as_of`
+01/10 16:16:27 via TTAT):
+
+| Medida | Resultado |
+|---|---|
+| 120 células de fluxo (12 × 10 tipos) | **Δ = 0,000 em todas** |
+| Saldo Atual por equação de fluxo (10 tipos) | **Δ = 0,000 em todos** — inclui MP: `V_emissão = 3.364.910,314` = SA impresso |
+| SA × snapshot SB9@0930 (referência, não célula oficial) | 8/10 Δ = 0,000; PI Δ = −0,001; MP Δ = +8.631,731 (decomposto em C) |
+
+### C. Origem exata do centavo — ponte fecha Δ = 0,000
+
+Com agregação decimal: `Σ residual_p = +8.631,731` = delta oficial
+(`VINI1@0930_MP − SA_impresso`) — **discrepância 0,000**.
+
+| Parcela | Valor | Evidência |
+|---|---:|---|
+| 5 produtos revalorização (ondas RPC/`MATA241`/`MATA330` 20-21/10) | +8.631,741 | TTAT por RECNO (§33.B) |
+| `<PRODUTO-REVAL-D>` — linha RE0 RECNO `4817031` `D3_CUSTO1` 60,760→**60,770** por `MATA330` 21/10 08:01:26 | **−0,010** | `SD3010_TTAT_LOG` (U) |
+| 4 produtos (`<PRODUTO-AJUSTE-A..D>`) micro-ajustes TTAT pós-emissão | +0,002 / −0,002 / −0,001 / +0,001 = **0,000** | TTAT próprias |
+| **Total** | **+8.631,731** | = Δ oficial, exato |
+
+Balancete do produto `<PRODUTO-REVAL-D>` (prova linha-a-linha):
+loc01 `962,449 − RE3 425,608 = 536,841` ✓ · loc99 `192,617 + RE3
+425,608 − req 192,620 = 425,605` ✓ — o −0,010 é o custo de
+requisição regravado em +0,010 após a emissão, absorvido no rebuild
+SB9 de 21/10.
+
+### D. Corolário — binding P7 loc99 também é exato
+
+O Δ 0,004 de §33.D era **arredondamento de impressão** do EM ESTOQUE
+(2 casas), não drift: `loc99_emissão = 293.273,088` exato →
+`EM ESTOQUE = 3.884.464,444 − 293.273,088 = 3.591.191,356`, que
+imprime `3.591.191,36`. O binding `EM ESTOQUE = saldo ex-loc99 no
+as_of` é **exato na precisão impressa** — resta `PENDING` apenas a
+parametrização/produtor (E2), não a aritmética.
+
+### E. Decisão e escopo
+
+- **130/130 células oficiais reproduzidas no `as_of` de emissão com
+  Δ = 0,000** → **R05 G5 PASS mantido** (G4 PASS inalterado; G6
+  PENDING — aceite funcional).
+- A divergência SA × snapshot posterior é drift temporal **fechado ao
+  centavo** (não residual): +8.631,741 revalorização − 0,010 linha
+  RE0 + 0,000 micro-ajustes.
+- Classificações: `PROVEN` (130/130 células, ponte MP ao centavo,
+  origem do centavo); escopo = emissão MATR320 01–30/09/2026 filial
+  01 apenas. SQL: SELECT-only, GO §12.

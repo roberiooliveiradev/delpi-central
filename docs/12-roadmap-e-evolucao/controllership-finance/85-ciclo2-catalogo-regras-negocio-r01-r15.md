@@ -341,8 +341,9 @@ doc 84 §4; evidência doc 80 §31.
 
 ### BR-R05-002 — Saldo Atual = SB9 no recorte — `PROVEN` (10/10 tipos explicados)
 
-- `SB9@30/09 f01` × `Saldo Atual` MATR320: **9/10 tipos exatos ao centavo**
-  (EM/GG/II/MC/MH/MS/MX/PA/PI); MP +8.631,73 **integralmente decomposto**
+- `SB9@30/09 f01` × `Saldo Atual` MATR320: **8/10 tipos exatos** (EM/GG/
+  II/MC/MH/MS/MX/PA); PI −0,001 e MP +8.631,73 — ambos drift pós-emissão,
+  MP **decomposto ao centavo** (doc 80 §34.C)
   (rodada 15, doc 80 §33.B): revalorização de custo médio pós-emissão em
   5 produtos (`<PRODUTO-CUSTO-A/B>` +98% do delta; 3 micro-revalorizações).
 - `SA` impresso = saldo no `as_of` da emissão (01/10 16:16:27), não o
@@ -389,8 +390,10 @@ doc 84 §4; evidência doc 80 §31.
   via `TTAT_COLD` com corte `TTAT_DTIME > timestamp_de_emissão`);
   residual MovInt ~R$0,48 de §31 **resolvido** (rodada 15, doc 80
   §33.A — era artefato de sobre-reversão).
-- Expandida a **todos os 10 tipos** (doc 80 §33.C): 120/120 colunas de
-  fluxo exatas; único Δ no relatório = MP Saldo Atual +8.631,73
+- Expandida a **todos os 10 tipos** (doc 80 §33.C, verificada §34.B):
+  120/120 colunas de fluxo exatas e **130/130 células oficiais Δ=0,000**
+  (SA via equação de fluxo no `as_of` da emissão); Δ MP +8.631,73 é
+  contra o snapshot posterior — decomposto ao centavo (§34.C)
   (decomposto, BR-R05-002). Matriz em doc 84 §4.2.
 
 ### BR-R05-011 — Reconstrução `as_of` de custos via TTAT — `PROVEN`
@@ -407,9 +410,14 @@ doc 84 §4; evidência doc 80 §31.
 
 - `Δ SA↔SB9` por produto: `residual_p = B9_VINI1@0930_p −
   (B9_VINI1@0831_p + SD1_p − SD2_p + SD3_exTransfProc_p)` no estado de
-  emissão. Para MP set/2026: Σ = +8.631,741 ≈ +8.631,731 oficial
-  (−0,010 arredondamento `B9_VINI1`), concentrado em 5 produtos —
-  mecanismo = revalorização de custo médio (doc 80 §33.B).
+  emissão. Para MP set/2026: Σ = **+8.631,731 = oficial, Δ 0,000**
+  (doc 80 §34.C) — 5 produtos de revalorização (+8.631,741) +
+  `<PRODUTO-REVAL-D>` −0,010 (linha RE0 RECNO `4817031` repriced
+  60,760→60,770 por `MATA330` 21/10) + 4 micro-ajustes TTAT líquido
+  0,000. Mecanismo = revalorização de custo médio pós-emissão.
+- **Precisão:** `B9_VINI1`/`D*_CUSTO*` são `float(53)` — agregar com
+  `CAST(... AS DECIMAL(30,9))` por linha antes do SUM; somar floats e
+  converter depois mascara micro-ajustes reais (erro ~1e-2 observado).
 - `TransfProc` (CF `RE3`) é excluído do fluxo de valor porque
   **permanece no estoque da filial** (armazém 99) — coerente com a
   coluna memo.
@@ -607,7 +615,7 @@ copia para BFF/frontend.
 | T-R03-02 | BR-R03-003 | positive · reproduzido | EM PROCESSO = MATR989 (355.240,51) |
 | T-R03-03 | BR-R03-004/006 | positive · reproduzido | EM ESTOQUE = SA_emissão − estoque loc99_emissão (3.591.191,36 exato) |
 | T-R03-04 | BR-R03-006 | negative · candidato | armazéns especiais além de loc99 (`MV_CQ`, `MV_ALMTERC`) só entram na regra se parâmetros provarem exclusão |
-| T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 9/10 tipos exatos; MP +8.631,73 decomposto por produto — residual oculto = revalorização CM |
+| T-R05-01 | BR-R05-002 | limit · reproduzido | SB9×MATR320 8/10 tipos Δ=0,000; PI −0,001; MP +8.631,731 decomposto ao centavo por produto — revalorização CM |
 | T-R05-02 | BR-R05-003 | positive · reproduzido | SD1 usa `D1_DTDIGIT` (não emissão) — doc digitação-Set/emissão-Out entra na competência |
 | T-R05-03 | BR-R05-004 | negative · reproduzido | `D*_TIPO='D'` vai para Devolução, não Compras/Vendas; poder3≠'N' vai para EntPT/SaiPT |
 | T-R05-04 | BR-R05-005 | positive · reproduzido | SD3 CF 'PR*'→Produção, RE4/DE4→Transferências, OP-vazio→MovInt, OP-preenchido→Requisições, resto→TransfProc |
@@ -615,7 +623,7 @@ copia para BFF/frontend.
 | T-R05-06 | BR-R05-006 | limit · reproduzido | SI impresso é derivado (SA − movimentos), não saldo cadastrado |
 | T-R05-07 | BR-R05-008 | negative · reproduzido | linha inserida/deletada após emissão não pode entrar/sair da reprodução `as_of` |
 | T-R05-08 | BR-R05-011 | negative · reproduzido | reversão TTAT_COLD limitada a `TTAT_DTIME > emissão` — sobre-reversão gera erro artificial |
-| T-R05-09 | BR-R05-012 | positive · reproduzido | ponte por produto: Σ residual = +8.631,741 ≈ oficial; TransfProc-RE3 fora do fluxo de valor |
+| T-R05-09 | BR-R05-012 | positive · reproduzido | ponte por produto: Σ residual = +8.631,731 = oficial **exato** (agregação `CAST DECIMAL(30,9)`); TransfProc-RE3 fora do fluxo de valor |
 | T-R09-01 | BR-R09 | positive · reproduzido | Custo Unitário MOD = `BZ_CUSTD` por produto/filial |
 | T-R10-01 | BR-R10/11 | positive · reproduzido | export = tabela literal; consulta parametrizada equivalente |
 | T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
