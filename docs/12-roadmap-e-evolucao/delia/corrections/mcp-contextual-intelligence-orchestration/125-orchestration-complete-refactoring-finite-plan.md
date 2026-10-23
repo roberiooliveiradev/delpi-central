@@ -199,8 +199,10 @@ Composição conversacional → DTO/projeção saneada, vocabulário governado v
 ### 9.2 Ordem obrigatória de desacoplamento
 
 ```text
-R0 baseline + map de imports/callers
-  → estabilização D5 aceita e congelada
+ESTABILIZAÇÃO FUNCIONAL (D5/D5-R/D8-R) com evidência e aceite independente
+  → AUTORIZAÇÃO EXPLÍCITA DO PRODUCT OWNER PARA R0
+  → R0 baseline + map de imports/callers (READ-ONLY, sem diff runtime)
+  → revisão/aceite do R0 pela coordenação e autorização do próximo pacote
   → R1 recursos declarativos (independente, se gate permitir)
   → R2 fixar contrato de projeção/sanitização com testes (SEM mover consumers primeiro)
   → R3 migrar um consumer Evidence→Outcome→Presentation por vez (paridade)
