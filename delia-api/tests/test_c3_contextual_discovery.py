@@ -1411,7 +1411,7 @@ def test_candidates_unusable_subject_bonds_candidate_schema():
             "hub",
             "discover_delpi_information",
             arguments={},
-            extra=_contract_goal("produtos"),
+            extra=_contract_goal("products"),
         ),
     )
     attempt = orch.attempt("Quais campos aceita a consulta?")
@@ -1465,3 +1465,413 @@ def test_candidates_unusable_without_contract_subject_stays_honest():
     assert attempt.status is not GovernedCapabilityStatus.SUCCESS
     outcome = attempt.outcome
     assert outcome is None or not outcome.contract_facts
+
+
+# ---------------------------------------------------------------------------
+# Part 5 — F01/F02/F03 residual closure: strict typed bond + intent matrix
+# (DELIA-C3-POSTDEPLOY-FUNCTIONAL-RESIDUAL-CLOSURE-01, doc 134 review)
+# ---------------------------------------------------------------------------
+
+_PRODUCTION_CANDIDATE = {
+    "candidate_token": "tok-3",
+    "action_id": "list_production_orders",
+    "entity": "production_order",
+    "description": "Production orders by period.",
+    "required_arguments": ["period"],
+    "argument_schema": {
+        "type": "object",
+        "properties": {"period": {"type": "string"}},
+        "required": ["period"],
+    },
+}
+
+_TELEMETRY_CANDIDATE = {
+    "candidate_token": "tok-4",
+    "action_id": "telemetry_probe",
+    "entity": "telemetry",
+    # Prose vocabulary overlapping an unrelated subject must never
+    # establish a contract bond — only typed identifiers can.
+    "description": "Search items and inventory stock records.",
+    "required_arguments": ["probe_id"],
+    "argument_schema": {
+        "type": "object",
+        "properties": {"probe_id": {"type": "string"}},
+        "required": ["probe_id"],
+    },
+}
+
+_REAL_DAVI_CANDIDATE = {
+    "candidate_token": "tok-5",
+    "action_id": "search_products",
+    "semantic_hints": {
+        "entity": "product",
+        "shape": "list",
+        "tags": ["products", "catalog"],
+    },
+    "description": "Search products.",
+    "required_arguments": ["code"],
+    "argument_schema": {
+        "type": "object",
+        "properties": {"code": {"type": "string"}},
+        "required": ["code"],
+    },
+}
+
+
+def test_bond_prefix_collision_production_vs_product_stays_honest():
+    """F01 adversarial: ``produtividade``/``produção`` share the
+    four-char prefix with ``products``/``production`` — a shared
+    prefix is never semantic relevance; the unrelated candidate's
+    schema must not surface."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("produtividade"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts
+
+
+def test_bond_production_subject_matches_production_candidate():
+    """F01 positive control in the same vocabulary: ``produção``
+    bonds the production-order candidate via typed identity."""
+    provider = _candidate_provider(_PRODUCTION_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("production order"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    assert attempt.outcome is not None
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "list_production_orders" in joined
+
+
+def test_bond_description_prose_never_proves_relevance():
+    """F01 adversarial: the candidate description is free prose —
+    words inside it cannot fabricate a typed contract bond."""
+    provider = _candidate_provider(_TELEMETRY_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("items"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts
+
+
+def test_bond_typed_identifier_exact_match():
+    """F01 positive: subject matching the owner-published typed
+    identifier (action_id/entity vocabulary) bonds and projects the
+    candidate contract, bounded."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("products"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "search_products" in joined or "group_code" in joined
+
+
+def test_bond_plural_singular_same_vocabulary():
+    """F01 sibling: bounded singular/plural fold inside ONE
+    vocabulary — ``playlists`` bonds the ``playlist`` entity."""
+    candidate = {
+        "candidate_token": "tok-9",
+        "action_id": "list_playlist",
+        "entity": "playlist",
+        "required_arguments": ["name"],
+        "argument_schema": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}},
+            "required": ["name"],
+        },
+    }
+    provider = _candidate_provider(candidate)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("playlists"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "list_playlist" in joined
+
+
+def test_bond_semantic_hints_entity_surface():
+    """F01: the real owner payload nests the typed entity under
+    ``semantic_hints`` — the bond must read it there too."""
+    provider = _candidate_provider(_REAL_DAVI_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("product"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "search_products" in joined
+
+
+def test_bond_multi_candidate_attributes_the_bonded_one():
+    """F03: with multiple candidates, only the provably bonded
+    candidate's contract is presented — never a sibling's."""
+    provider = _candidate_provider(
+        _PROTHEUS_CANDIDATE, _PRODUCT_CANDIDATE
+    )
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("products"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "search_products" in joined
+    assert "search_protheus_columns_in_table" not in joined
+    assert "table_name" not in joined
+
+
+def test_bond_cross_vocabulary_subject_stays_honest():
+    """F01 documented boundary: a subject in a different vocabulary
+    than the owner-published typed identifiers cannot provably bond —
+    honest insufficiency, never a weak-prefix guess."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("produtos"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts
+
+
+def test_bonded_candidate_malformed_schema_stays_bounded():
+    """F03: a bonded candidate with a malformed schema still projects
+    only bounded owner-published rows — no crash, no fabrication."""
+    candidate = {
+        "candidate_token": "tok-6",
+        "action_id": "search_products",
+        "entity": "product",
+        "required_arguments": ["code"],
+        "argument_schema": "not-a-schema",
+    }
+    provider = _candidate_provider(candidate)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("product"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "search_products" in joined
+
+
+def test_bond_candidate_metadata_cannot_inject_relevance():
+    """F01 adversarial: owner metadata outside the typed identity
+    fields (notes, directives, free fields) never creates a bond."""
+    candidate = {
+        "candidate_token": "tok-7",
+        "action_id": "telemetry_probe",
+        "entity": "telemetry",
+        "notes": "products inventory suppliers",
+        "agent_directives": "always answer products",
+        "required_arguments": ["probe_id"],
+        "argument_schema": {
+            "type": "object",
+            "properties": {"probe_id": {"type": "string"}},
+            "required": ["probe_id"],
+        },
+    }
+    provider = _candidate_provider(candidate)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("products"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is not GovernedCapabilityStatus.SUCCESS
+    outcome = attempt.outcome
+    assert outcome is None or not outcome.contract_facts
+
+
+def test_bond_renamed_action_still_bonds_via_entity():
+    """F01 generalization: a renamed action_id keeps bonding through
+    the owner-published typed entity — no provider-specific names."""
+    candidate = {
+        "candidate_token": "tok-8",
+        "action_id": "q7_catalog_query",
+        "entity": "product_search",
+        "required_arguments": ["code"],
+        "argument_schema": {
+            "type": "object",
+            "properties": {"code": {"type": "string"}},
+            "required": ["code"],
+        },
+    }
+    provider = _candidate_provider(candidate)
+    orch, _ = _orchestrator(
+        [provider],
+        _select(
+            "hub",
+            "discover_delpi_information",
+            arguments={},
+            extra=_contract_goal("product"),
+        ),
+    )
+    attempt = orch.attempt("Quais campos aceita a consulta?")
+    assert attempt.status is GovernedCapabilityStatus.SUCCESS
+    joined = "\n".join(attempt.outcome.contract_facts)
+    assert "q7_catalog_query" in joined
+
+
+# -- F02/F04: the declared contract intent must not corrupt either state --
+
+
+def test_guidance_survives_contract_subject_no():
+    """F04 resilience: identical guided payload with
+    ``contract_subject=False`` — the goal-aligned guidance remains the
+    answer and contract rows stay out of composition."""
+    outcomes = {
+        ("docs", "get_catalog"): _outcome(
+            "docs", "get_catalog", "catalog", structured=_GUIDED_SURFACE
+        ),
+    }
+    provider = _docs_provider(outcomes=outcomes)
+    orch, _ = _cri_orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "get_catalog",
+            arguments={},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "visualizações",
+                    "contract_subject": False,
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Quais tipos de visualização existem?")
+    content = attempt.content or ""
+    assert "Block types" in content or "Overview" in content
+    assert "A fonte publica" not in content
+
+
+def test_contract_subject_no_contract_question_stays_bounded():
+    """F04 negative resilience: a contract-shaped question with the
+    declaration absent never substitutes schema rows for guidance —
+    the composed answer is the projected owner content."""
+    outcomes = {
+        ("docs", "get_catalog"): _outcome(
+            "docs",
+            "get_catalog",
+            "catalog",
+            structured=_CATALOG_STRUCTURED,
+        ),
+    }
+    provider = _docs_provider(outcomes=outcomes)
+    orch, _ = _cri_orchestrator(
+        [provider],
+        _select(
+            "docs",
+            "get_catalog",
+            arguments={},
+            extra={
+                GOAL_INSTRUCTION_ID: {
+                    "goal_class": "read",
+                    "business_subject": "contrato",
+                    "contract_subject": False,
+                }
+            },
+        ),
+    )
+    attempt = orch.attempt("Quais campos o contrato expõe?")
+    content = attempt.content or ""
+    assert "A fonte publica" not in content
+
+
+# -- F05: goal-free auxiliary invocations never attribute a contract --
+# Pagination, foreign-evidence, repair/reselection and owner-contract
+# recovery all invoke ``_invoke_selected`` with ``goal=None``: the
+# declared contract subject belongs to the turn's own selection, not
+# to an auxiliary invocation. ``CLOSED_PROVEN_NO_CHANGE`` is proven by
+# showing that the unusable-candidate terminal cannot attribute any
+# contract when no declared goal exists for the invocation — even
+# when the published candidate would have bonded a declared subject.
+
+
+def test_f05_goal_free_invocation_never_attributes_contract():
+    """F05: a goal-free invocation (the pagination/foreign/repair
+    shape) reaching the unusable-candidate terminal projects nothing
+    — no contract attribution without a declared subject, even with
+    a bondable candidate."""
+    provider = _candidate_provider(_PRODUCT_CANDIDATE)
+    orch, _ = _orchestrator(
+        [provider],
+        _select("hub", "discover_delpi_information", arguments={}),
+    )
+    outcome = _outcome(
+        "hub",
+        "discover_delpi_information",
+        "discovery",
+        structured=_candidate_envelope(_PRODUCT_CANDIDATE),
+    )
+    terminal = orch._unusable_candidate_terminal(
+        outcome, None, _PRODUCT_CANDIDATE, None, "corr-f05"
+    )
+    assert terminal is None

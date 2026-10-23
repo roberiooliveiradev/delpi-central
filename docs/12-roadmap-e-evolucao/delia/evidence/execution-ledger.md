@@ -17962,3 +17962,19 @@ DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
 NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
 Evidência: [doc 135](../corrections/mcp-contextual-intelligence-orchestration/135-d5r-d5schema-bounded-remediation.md).
+
+## §6.417 — Fechamento finito F01–F06: bond tipado estrito, required enforcement, aliases material DAVI (2026-10-23)
+
+**2026-10-23 — DELIA-C3-POSTDEPLOY-FUNCTIONAL-RESIDUAL-CLOSURE-01 (doc 136):** pacote finito autorizado pelo PO para fechar os seis residuais da revisao `aa0a195c` (ACCEPT_WITH_RESIDUAL do hotfix 135). `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` — zero classifier/registry/sanitizer novo.
+
+F01: `_identity_tokens_bond` reescrito — match exato canonico (`_bond_token` NFKD->ASCII->alnum; `_bond_forms` literal + fold singular >=5) apenas sobre identidade tipada; `description` removido de `_capability_identity_text`/`_candidate_identity_text`; `semantic_hints.entity/tags` incorporados. FP de prefixo eliminado por construcao (RED 3/3 -> GREEN; live `produtividade` -> silencio). F03: `_candidate_arguments` agora aplica `required_arguments` declarados mesmo com `argument_schema` malformado — execucao sem required impossivel. F02/F04: caracterizacao PASS — guidance precede contract facts; `contract_subject=False` nunca substitui guidance por rows. F05: `goal=None` em pagination/foreign/repair/recovery = `CLOSED_PROVEN_NO_CHANGE` (subject declarado pertence a selecao do turno); teste prova terminal sem goal nao atribui contrato. F06: DAVI owner-side — `semanticAliases` de `search_products` +familia material; retrieval material->search_products provado live (0.9125, dados reais).
+
+TESTES: delia-api suite completa 2202 passed 3 skipped exit=0; api-delpi blast-radius DAVI = conjunto de falhas identico ao baseline (13 pre-existentes); import DAG aciclico; eval integrado HTTP PASS blocking_failures=[]; probe live 5 cenarios (guidance lidera; material executa; multi-candidato silencio; guarda False; prefixo silencio). `kimi-k3` TEST_NOT_RUN (prod-only, gate pendente). `AUTO_REWORK_USED=NO` `EXECUTION_DRIFT=NONE`.
+
+DEPLOY_AUTHORIZATION=NO DEPLOY_STATUS=NOT_EXECUTED — release-specific gate; rollback = git revert. BUSINESS_OUTCOME_STATUS=PARTIAL (homologacao produtiva pendente).
+
+TASK_ID=DELIA-C3-POSTDEPLOY-FUNCTIONAL-RESIDUAL-CLOSURE-01
+DEPLOYED=NO CORRECTIONS_IMPLEMENTED=YES LOCAL_GREEN=YES
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES R3_AUTHORIZED=NO
+NEXT=INDEPENDENT_REVIEW_THEN_GOVERNED_DEPLOY_GATE
+Evidência: [doc 136](../corrections/mcp-contextual-intelligence-orchestration/136-functional-residual-closure-f01-f06.md).

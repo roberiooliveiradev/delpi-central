@@ -50,6 +50,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 import uuid
 from typing import Any, Callable, Mapping, Sequence
 
@@ -968,17 +969,36 @@ _BOND_STOP_TOKENS = frozenset(
         "com", "que", "the", "of", "and", "in", "for", "to",
     }
 )
-_MIN_BOND_PREFIX = 4
+def _bond_token(part: object) -> str:
+    """Canonical comparable bond token — accent-folded, lowercase,
+    alphanumerics only. Deterministic canonicalization, never a
+    semantic inference."""
+    folded = unicodedata.normalize("NFKD", str(part))
+    return re.sub(
+        r"[^a-z0-9]", "", folded.encode("ascii", "ignore").decode()
+    )
+
+
+def _bond_forms(token: str) -> frozenset[str]:
+    """Comparison forms of one canonical token: the verbatim token
+    plus a bounded singular fold (trailing ``s`` on tokens of length
+    >= 5) so same-vocabulary plurals bond — never prefix or
+    substring matching."""
+    forms = {token}
+    if len(token) >= 5 and token.endswith("s"):
+        forms.add(token[:-1])
+    return frozenset(forms)
 
 
 def _subject_bond_tokens(subject: object) -> frozenset[str]:
-    """Comparable tokens of the model-declared business subject."""
+    """Comparable canonical tokens of the model-declared business
+    subject (subject phrases are copied from user words)."""
     if not isinstance(subject, str) or not subject.strip():
         return frozenset()
     return frozenset(
         token
         for token in (
-            _canonical_key(part)
+            _bond_token(part)
             for part in re.split(r"[^0-9A-Za-zÀ-ÿ]+", subject)
         )
         if len(token) >= 3 and token not in _BOND_STOP_TOKENS
@@ -989,55 +1009,60 @@ def _identity_tokens_bond(
     subject_tokens: frozenset[str], identity_text: str
 ) -> bool:
     """True when a declared-subject token provably bonds an owner-
-    published identity token — exact match or a bounded shared
-    prefix (sibling vocabulary tolerance, never substring match)."""
-    identity_tokens = frozenset(
-        token
-        for token in (
-            _canonical_key(part)
-            for part in re.split(r"[^0-9A-Za-zÀ-ÿ_]+|_", identity_text)
-        )
-        if len(token) >= 3 and token not in _BOND_STOP_TOKENS
+    published typed identity token — exact canonical match on the
+    expanded singular/plural forms. A shared prefix is never
+    sufficient proof of semantic relevance."""
+    identity_forms: set[str] = set()
+    for part in re.split(r"[^0-9A-Za-zÀ-ÿ_]+|_", identity_text):
+        token = _bond_token(part)
+        if len(token) >= 3 and token not in _BOND_STOP_TOKENS:
+            identity_forms.update(_bond_forms(token))
+    return any(
+        form in identity_forms
+        for token in subject_tokens
+        for form in _bond_forms(token)
     )
-    for subject_token in subject_tokens:
-        for token in identity_tokens:
-            if subject_token == token:
-                return True
-            if (
-                len(subject_token) >= _MIN_BOND_PREFIX
-                and len(token) >= _MIN_BOND_PREFIX
-                and subject_token[:_MIN_BOND_PREFIX]
-                == token[:_MIN_BOND_PREFIX]
-            ):
-                return True
-    return False
 
 
 def _capability_identity_text(capability: ProviderCapability) -> str:
-    """Owner-published identity surface of the selected capability."""
+    """Owner-published TYPED identity surface of the selected
+    capability — identifiers only; free-text descriptions never
+    establish a contract bond."""
     return " ".join(
         part
         for part in (
             capability.remote_name,
             capability.capability_id,
-            capability.description or "",
         )
         if isinstance(part, str)
     )
 
 
 def _candidate_identity_text(candidate: Mapping[str, Any]) -> str:
-    """Owner-published identity surface of a discovery candidate."""
-    return " ".join(
+    """Owner-published TYPED identity surface of a discovery
+    candidate — action/entity identifiers and owner-declared
+    semantic hints only; description prose never establishes a
+    contract bond."""
+    parts: list[str] = [
         str(part)
         for part in (
             candidate.get("action_id"),
             candidate.get("name"),
             candidate.get("entity"),
-            candidate.get("description"),
         )
         if isinstance(part, str)
-    )
+    ]
+    hints = candidate.get("semantic_hints")
+    if isinstance(hints, Mapping):
+        entity = hints.get("entity")
+        if isinstance(entity, str):
+            parts.append(entity)
+        tags = hints.get("tags")
+        if isinstance(tags, (list, tuple)):
+            parts.extend(
+                str(tag) for tag in tags if isinstance(tag, str)
+            )
+    return " ".join(parts)
 
 
 def _iter_bond_candidates(
@@ -10921,11 +10946,19 @@ class OperationalCapabilityOrchestrator:
         effective_schema: Mapping[str, Any] | None = None
         if isinstance(schema, Mapping):
             effective_schema = dict(schema)
-            required_args = candidate.get("required_arguments")
-            if isinstance(required_args, (list, tuple)):
-                effective_schema["required"] = [
-                    str(r) for r in required_args
-                ]
+        required_args = candidate.get("required_arguments")
+        if isinstance(required_args, (list, tuple)) and required_args:
+            # Owner-declared required arguments are typed contract —
+            # enforce them even when the published schema is absent
+            # or malformed; a candidate never executes without them.
+            effective_schema = (
+                dict(effective_schema)
+                if effective_schema is not None
+                else {}
+            )
+            effective_schema["required"] = [
+                str(r) for r in required_args
+            ]
         if effective_schema is not None:
             merged = _validate_instance(dict(proposed), effective_schema)
         else:

@@ -1398,6 +1398,53 @@ def test_ptbr_positive_retrieval(query, monkeypatch):
 @pytest.mark.parametrize(
     "query",
     [
+        "descrição do material 10080043",
+        "descricao do material 10080043",
+        "qual a descrição do material 10080043",
+        "código do material 10080043",
+        "consultar material 10080043",
+        "material description",
+    ],
+)
+def test_material_domain_positive_retrieval(query, monkeypatch):
+    """D8-R closure: in the DELPI domain ``material`` is canonical
+    vocabulary for the product master (SB1). Material-domain queries
+    must bond the governed product search action."""
+    action = _load_governed_search_products()
+    set_actions_for_tests([action])
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    discovered = discover_delpi_information(query=query, top_k=5, actor_id="u1")
+    assert discovered["candidate_count"] >= 1, (
+        f"query={query!r} candidate_count={discovered['candidate_count']}"
+    )
+    assert discovered["candidates"][0]["action_id"] == "search_products"
+
+
+def test_material_queries_do_not_bond_unrelated_actions(monkeypatch):
+    """D8-R guard: material vocabulary added to ``search_products``
+    must not promote it above specialized material-flow actions for
+    their own domain queries."""
+    actions = _load_baseline_actions()
+    set_actions_for_tests(actions)
+    monkeypatch.setattr(
+        "app.application.external_capabilities.dynamic_information.discover_service.candidate_token_secret",
+        lambda: "test-secret-davi",
+    )
+    discovered = discover_delpi_information(
+        query="consumo de materiais por ordem de produção",
+        top_k=5,
+        actor_id="u1",
+    )
+    assert discovered["candidate_count"] >= 1
+    assert discovered["candidates"][0]["action_id"] != "search_products"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
         "preco",
         "price",
         "pricing",

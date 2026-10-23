@@ -214,7 +214,22 @@
         "descricao do item",
         "descrição do item",
         "qual a descricao do item",
-        "qual a descrição do item"
+        "qual a descrição do item",
+        "material",
+        "materiais",
+        "buscar material",
+        "buscar materiais",
+        "consultar material",
+        "consultar materiais",
+        "codigo do material",
+        "código do material",
+        "descricao do material",
+        "descrição do material",
+        "qual a descricao do material",
+        "qual a descrição do material",
+        "material code",
+        "material description",
+        "material search"
       ],
       "entityDomainMarkers": [
         "terminal",
