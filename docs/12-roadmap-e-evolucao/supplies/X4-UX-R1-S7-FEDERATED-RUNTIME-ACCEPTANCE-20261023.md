@@ -96,3 +96,12 @@ Acessibilidade estrutural já revisada em S2 (radiogroup, `aria-invalid`,
 
 **Conclusão: `ACCEPT_WITH_RESIDUAL`** — integração completa comprovada em
 produção via API e artefato federado; residual = validação visual interativa.
+
+
+## 6. Revisão GPT / Architecture Acceptance — 2026-10-23
+
+**Decisão de revisão: `ACCEPT_WITH_RESIDUAL` para o DEPLOY e os runtime checks executados.** A documentação S7 e o relatório do Cursor registram publicação dos três componentes, health e smoke real read-only (`CLEAR`, `POSSIBLE_MATCH`, 401/422, gateway BFF, bundle S2/R1/R2, E13/E14). Esta revisão conferiu a evidência registrada no GitHub; **não executou independentemente SSH, browser, nem testes de produção**. A ausência de POST/PUT nos logs foi observada durante a janela do smoke, não é prova abrangente de zero escritas em qualquer período.
+
+**GATE-FEATURE integral = `INCONCLUSIVE`**, pois AC-15 e AC-16 e os cenários V1–V8 dependem de validação autenticada em navegador real (desktop/mobile, claro/escuro, teclado/foco, consentimento de substituição CNPJ/person_type, obsolescência de preview, URL/F5/deep link, fallback manual). Não converter verificação estática do bundle em PASS visual. Cenários 403, 429 e falha upstream `INCONCLUSIVE` seguem `TEST_NOT_RUN` no runtime, com testes isolados como evidência complementar.
+
+**Próxima tarefa delimitada:** aceite visual/browser-only em ambiente já publicado, sem rebuild, sem deploy, sem alterações de backend, sem executar criação real de fornecedor. Usar conta autorizada e dados de teste aprovados; não expor tokens/CNPJs em evidência. Registrar screenshots/resultado por cenário e artefato verificado; se impossível autenticar/navegar, manter `INCONCLUSIVE`. R1.S3 `BLOCKED`, S4/S5/S6 não autorizados. Gate ERP de escrita permanece OFF.
