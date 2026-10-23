@@ -68,3 +68,7 @@ EXECUTION_DRIFT= EXECUTOR_VERDICT=
 COORDINATION_REVIEW_REQUIRED=YES
 ```
 Após review registrar VERDICT, REWORK_USED 0|1, NEXT_ALLOWED_STEP e evidência no ledger. Devin NÃO salta gates por conta própria.
+
+## 7. Autorização Product Owner — S0 (2026-10-23)
+
+**PO_DECISION=S0_AUTHORIZED_READ_ONLY.** O Product Owner autorizou explicitamente a execução apenas da etapa S0 deste plano. O executor Devin pode reancorar, inspecionar sources, contratos, consumers e testes, produzir goldens e relatório/matriz S0, documentar evidências e fazer commit/push documental governado. Nenhuma mudança de runtime, deploy, novo engine, nova autoridade, alteração de contrato ou avanço automático S1–S5 está autorizada. **S1–S5=NOT_AUTHORIZED.** Ao concluir S0, retornar à coordenação com DÉLIA EXECUTION REPORT para veredito independente e decisão do próximo gate. Esta decisão de produto não implica aceite de S0 nem avanço de fase.
