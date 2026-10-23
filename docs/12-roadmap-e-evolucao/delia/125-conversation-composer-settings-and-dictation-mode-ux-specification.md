@@ -93,3 +93,43 @@ Menu é apenas configuração de apresentação/input; não permite a criação 
 `EXISTING_EQUIVALENT=TO_INVENTORY` para menu/popover reutilizável e `REUSE_DECISION=TO_DECIDE` até examinar HEAD; a preferência é `REUSE/EXTEND`. Prioridade: menor diff no `DeliaComposer`, primitive compartilhada somente se houver necessidade legítima e reutilização. Reancorar authorities 16→50→17→49→51→52→21→20→25, contratos e ledger; testes RED/GREEN, QA, docs/evidence, commit/push main, deploy frontend scoped e validação.
 
 **Status do documento:** implementado, deployado e homologado em produção (36/27 checks — ver evidência VD-F06, seção Composer Settings). Futuras configurações são `PLANNED_AS_EXTENSION_POINT`, não funcionalidades anunciadas. Futuras configurações são `PLANNED_AS_EXTENSION_POINT`, não funcionalidades anunciadas.
+
+
+## 9. Decisão visual posterior — Clean Select Menu (2026-10-23)
+
+**Status:** PRODUCT_UX_DECISION / VISUAL_REFINEMENT_PLANNED; substitui apenas o tratamento visual da seção Ditado na especificação anterior. **Não** reabre seleção batch default, opt-in live, portais, contratos STT ou runtime. **Referência aprovada pelo Product Owner:** imagem de interface clara com menus compactos, linhas leves, tipografia hierárquica, seleção de linha inteira e check discreto à direita. A referência é de linguagem visual, **não** de tema claro obrigatório e **não** autoriza implementar as opções ilustrativas “Tone of voice”/“Answer length”. A DÉLIA permanece compatível com dark/light e tokens compartilhados.
+
+### 9.1 Princípios visuais
+
+- **Clean/minimal:** abandonar aparência de formulário/radios expostos ou cards dentro de cards. O menu é um único painel flutuante, radius e sombra leves do design system; itens são **linhas/list-items selecionáveis** de altura confortável, com bordas sutis ou fundo hover. Sem outline azul permanente em cards, sem gradientes decorativos, blur extravagante, glassmorphism obrigatória ou excesso de ícones.
+- **Cabeçalho compacto:** título **“Configurações”**; descrição opcional breve **“Campo de pergunta”**, sem repetir longamente o título. A seção **“Ditado”** pode ter pequeno ícone de microfone. Hierarquia clara entre título do menu, nome de seção, label da opção e auxílio.
+- **Opções:** duas linhas com label semibold e descrição pequena: **“Gravar e transcrever”** — “Grave primeiro; o texto aparece ao finalizar.”; **“Transcrição em tempo real”** — “Veja o texto aparecer durante a fala.”. Seleção demonstrada por **check à direita**, mais destaque leve de fundo da linha; hover distinto, desabilitado distinguível por texto+semântica. Toda a linha é clicável, sem rádio circular visual obrigatório. Preservar **inputs radio nativos ou semântica equivalente real** para a11y e teclado, não construir pressables sem suporte a teclado.
+- **Espaçamento:** utilizar tokens de `plugin-ui`, padding uniforme, gaps consistentes e área de toque confortável. Largura intrínseca aproximada 300–340px apenas como referência, **clamped** ao viewport/Dock. Não fixar dimensões que causem clipping. Evitar truncar descrições.
+- **Estados:** hover/focus-visible/selected/disabled, menu aberto/fechado, toggle em gravação bloqueado, prefers-reduced-motion, dark/light, contraste AA, zoom 200% e teclado. Animações opcionais curtas apenas se já houver token/padrão.
+- **Toolbar:** preservar `[microfone] [configurações] ... [Enviar]` compacta. Ícone do trigger com estado aberto discreto, sem novo badge/label fixo e sem mexer no foco azul do composer.
+- **Extensível:** futuras seções podem ser adicionadas por `children`, sem mostrar placeholders nem adicionar settings engine. **Não** criar componente universal novo se uma estilização de `DictationModeSettings` e `ComposerSettingsMenu` resolver.
+
+### 9.2 Componentes e limites
+
+**PROVEN a partir do rework anterior (revalidar HEAD):** `ComposerSettingsMenu` e `DictationModeSettings` em `plugins/delia`, `AnchoredPanelPortal`, `IconButton`, `HelpTooltip` de `plugin-ui`; `DeliaComposer` coordena modo `batch|live` e `captureBusy`. **EXISTING_EQUIVALENT=YES; REUSE_DECISION=EXTEND** sujeito a reancoragem. Alteração alvo é somente apresentação/estilos/semântica acessível dos elementos atuais. Sem provider, backend, contrato, novo store ou nova capability.
+
+### 9.3 Critérios de aceite visual CL-01 a CL-14
+
+| ID | Critério |
+|---|---|
+| CL-01 | Um único painel flutuante clean, sem segundo card por opção |
+| CL-02 | Cabeçalho compacto “Configurações” e seção “Ditado” |
+| CL-03 | Duas linhas de seleção com título e descrição, sem aparência de formulário |
+| CL-04 | Estado selecionado por check discreto à direita + fundo sutil |
+| CL-05 | Toda a linha selecionável e radio/semântica acessível mantida |
+| CL-06 | Hover/focus-visible/disabled distintos, contraste AA |
+| CL-07 | Dark/light por tokens reais, sem hardcode de palette |
+| CL-08 | Viewport/Dock sem clipping, mobile 320/360/375/390/420 e zoom 200% |
+| CL-09 | Escape/click-outside/foco restaurados; menu abre/fecha sem mudar draft |
+| CL-10 | Batch default, live opt-in, indisponibilidade e bloqueio durante gravação intactos |
+| CL-11 | Nenhum auto-submit, caret/seleção preservados |
+| CL-12 | Full-page + Companion Dock nativo + áudio pt-BR batch/live sem regressão |
+| CL-13 | Sem nova primitiva ou settings engine se reuse existente suficiente |
+| CL-14 | Sem implementar opções fictícias da imagem de referência; extensibilidade via composição intacta |
+
+**Implementação:** task bounded `DELIA-UX-COMPOSER-SETTINGS-CLEAN-VISUAL-REFINEMENT-01`: reanchor HEAD/authorities/ledger → reuse/abstraction gate → alterar menor diff dos dois componentes e CSS → RED/GREEN + regressões → browser screenshot/QA light+dark/full-page/Dock/mobile/zoom → rework → docs/evidence/ledger → commit/push main → deploy frontend scoped → smoke/relatório. **VISUAL_RUNTIME_STATUS=NOT_IMPLEMENTED_BY_THIS_DOC_UPDATE**. Não considerar a task concluída por mockup ou apenas CSS sem QA.
