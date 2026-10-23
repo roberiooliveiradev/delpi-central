@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, Query, WebSocket, WebSocketException, status
+from fastapi import (
+    APIRouter,
+    Header,
+    Query,
+    WebSocket,
+    WebSocketException,
+    status,
+)
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -664,6 +671,33 @@ def get_public_work_center_downtime_source(
 
 
 @router.get(
+    "/{token}/mes/work-centers",
+    summary="Listar centros de trabalho sensorizados",
+    description=(
+        "CTs com vínculo pulse_counter ativo na filial — inclui postos "
+        "sem operação publicada (monitoramento autônomo). Token obrigatório; "
+        "detalhes operacionais exigem sessão de bancada do posto."
+    ),
+    operation_id="public_mes_work_centers_sensorized",
+    tags=["Public - Machine Load"],
+)
+def public_mes_work_centers_sensorized(
+    token: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    try:
+        data = build_public_work_center_downtime_source_service().list_sensorized(
+            token=token, branch=branch
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.get(
     "/{token}/mes/work-centers/today",
     operation_id="get_public_mes_work_center_today",
 )
@@ -802,6 +836,37 @@ def classify_run_downtime_by_id(
             note=body.note,
             session_token=session_token,
             downtime_id=downtime_id,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _handle_public_errors(exc)
+    return ok(data)
+
+
+@router.post("/{token}/mes/downtimes/{downtime_id}/classify")
+def classify_work_center_downtime(
+    token: str,
+    downtime_id: str,
+    body: ClassifyDowntimeBody,
+    session_token: str | None = Header(default=None, alias=_BENCH_SESSION_HEADER),
+):
+    """Classifica a parada pela identidade real + escopo do CT da sessão.
+
+    PC-MES-CT-AUTONOMOUS-DOWNTIME (RQ-07): cobre paradas sem run
+    (monitoramento autônomo) e qualquer parada do posto — aberta ou
+    encerrada. O endpoint legado por run permanece o contrato para quem
+    conhece o runId.
+    """
+    denied = _assert_cockpit_token(token)
+    if denied is not None:
+        return denied
+    if not _honeypot_ok(body.website):
+        return ok({"accepted": True, "id": None})
+    try:
+        data = build_mes_downtime_classification_service().classify_work_center_downtime(
+            downtime_id,
+            reason_code=body.reason_code,
+            note=body.note,
+            session_token=session_token,
         )
     except Exception as exc:  # noqa: BLE001
         return _handle_public_errors(exc)

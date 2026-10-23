@@ -53,6 +53,28 @@ async def get_devices_snapshot(
     return success(payload)
 
 
+@router.get("/devices/snapshots", operation_id="list_production_pulse_device_snapshots")
+async def list_devices_snapshots(
+    request: Request,
+    branch: str = Query(..., min_length=2, max_length=2),
+    roleKey: str | None = Query(default="pulse_counter"),
+):
+    """Todos os contadores amarrados a CTs da filial (monitoramento autonomo)."""
+    denied = _guard_integration_read(request)
+    if denied is not None:
+        return denied
+    try:
+        payload = _snapshot_service.list_counters_by_branch(
+            branch=branch,
+            role_key=roleKey,
+        )
+    except ValueError as exc:
+        body = error(str(exc), code="validation_error", status_code=422)
+        status = body.pop("_status_code", 422)
+        return JSONResponse(status_code=status, content=body)
+    return success(payload)
+
+
 @router.get("/devices/{device_id}/snapshot", operation_id="get_production_pulse_device_snapshot")
 async def get_device_snapshot(request: Request, device_id: UUID):
     denied = _guard_integration_read(request)

@@ -72,7 +72,7 @@ class FakeRepo:
             if row["id"] == session_id:
                 row["ended_at"] = datetime.now(timezone.utc)
 
-    def get_active_run(self, *, branch: str, work_center: str):
+    def get_active_run(self, *, branch: str, work_center: str, conn=None):
         for run in self.runs.values():
             if (
                 run["branch"] == branch
@@ -257,6 +257,9 @@ class FakeStateRepo:
     def __init__(self) -> None:
         self.events: list[dict] = []
         self._seq = 0
+
+    def lock_work_center(self, *, branch, work_center, conn=None):
+        """Trava serializadora — no-op em memória (testes single-thread)."""
 
     def get_open(self, *, branch, work_center, conn=None):
         for e in self.events:
@@ -543,6 +546,15 @@ class FakePulse:
         self.epoch = 1
 
     def fetch_work_center_snapshot(self, **kwargs):
+        return {"items": list(self.devices)}
+
+    def fetch_branch_counter_snapshots(self, *, branch, role_key="pulse_counter"):
+        if getattr(self, "branch_error", None) is not None:
+            raise self.branch_error
+        # Devices do fake pertencem à filial "01" por padrão — a enumeração
+        # de "02" devolve vazio (evita processar o mesmo CT duas vezes).
+        if branch != getattr(self, "snapshot_branch", "01"):
+            return {"items": []}
         return {"items": list(self.devices)}
 
     def fetch_device_snapshot(self, device_id: str):

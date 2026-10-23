@@ -50,6 +50,34 @@ class PublicWorkCenterDowntimeSourceService:
             lambda: datetime.now(ZoneInfo(FACTORY_TIMEZONE))
         )
 
+    def list_sensorized(self, *, token: str, branch: str) -> dict[str, Any]:
+        """CTs sensorizados (vínculo pulse_counter) da filial.
+
+        RQ-11: a «Atividade do posto» precisa alcançar CTs sem OP
+        publicada — a lista sensorizada é o contrato de descoberta
+        legítimo do seletor do cockpit. Falha do Pulse propaga como
+        indisponibilidade explícita, nunca lista vazia fingida.
+        """
+        if not self._access.is_valid_token(token):
+            raise PublicAccessDenied(
+                self._access.message(
+                    "invalidToken", "Link do cockpit inválido ou desativado."
+                )
+            )
+        code = self._branch_access.assert_valid_branch(branch)
+        payload = self._pulse.fetch_branch_counter_snapshots(
+            branch=code, role_key="pulse_counter"
+        )
+        centers = sorted(
+            {
+                str(item.get("workCenterCode")).strip()
+                for item in payload.get("items") or []
+                if isinstance(item, dict)
+                and str(item.get("workCenterCode") or "").strip()
+            }
+        )
+        return {"branch": code, "items": [{"workCenter": wc} for wc in centers]}
+
     def resolve(
         self,
         *,
@@ -68,15 +96,19 @@ class PublicWorkCenterDowntimeSourceService:
         if not center:
             raise ValueError("Informe o centro de trabalho.")
 
-        # Escopo: o CT precisa estar na fila publicada desta filial — nunca
-        # consultar vínculo/telemetria fora do escopo do operador.
-        resources = self._machine_load.public_snapshot_work_center_resources(
-            branch=code, work_center=center
-        )
-        if resources is None:
-            raise ValueError(
-                f"Centro de trabalho «{center}» não está na fila publicada desta filial."
+        # Escopo: fila publicada OU CT sensorizado com vínculo Pulse ativo
+        # (PC-MES-CT-AUTONOMOUS-DOWNTIME, RQ-11) — a autorização efetiva
+        # continua sendo token + sessão de bancada do posto; a fila deixa
+        # de ser pré-requisito porque um CT sem OP publicada precisa ser
+        # monitorável. O erro «fora da fila» só aparece quando o CT não é
+        # sensorizado (fonte TOTVS/indisponível) — não há telemetria para
+        # expor fora do escopo.
+        in_queue = (
+            self._machine_load.public_snapshot_work_center_resources(
+                branch=code, work_center=center
             )
+            is not None
+        )
 
         reference_at = self._clock()
 
@@ -131,6 +163,10 @@ class PublicWorkCenterDowntimeSourceService:
             bound_counters=bound_counters or 0,
             mes_activity_today=mes_activity_today,
         )
+        if not in_queue and source != "mes":
+            raise ValueError(
+                f"Centro de trabalho «{center}» não está na fila publicada desta filial."
+            )
         if source == "unavailable" and reason == "multiple_bound_counters":
             logger.warning(
                 "downtime_source_ambiguous branch=%s work_center=%s counters=%s",

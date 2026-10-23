@@ -97,3 +97,50 @@ def test_list_by_work_center_rejects_bad_branch():
         assert False, "expected ValueError"
     except ValueError as exc:
         assert "Filial" in str(exc)
+
+
+def _bound_row(work_center: str, role_key: str = "pulse_counter") -> dict:
+    return {
+        "id": uuid4(),
+        "branch": "01",
+        "name": f"Counter {work_center}",
+        "role_key": role_key,
+        "driver_key": "esp8266_counter_v1",
+        "work_center_code": work_center,
+        "placement_key": f"wc:01:{work_center}",
+        "enabled": True,
+        "poll_interval_ms": 500,
+        "last_seen_at": datetime.now(timezone.utc),
+        "last_poll_attempt_at": datetime.now(timezone.utc),
+        "last_error": None,
+        "last_metrics": {"counter": 7, COUNTER_EPOCH_KEY: 1},
+    }
+
+
+def test_list_counters_by_branch_enumerates_all_bound_centers():
+    class FakePlacement:
+        def list_bound_devices(self, **kwargs):
+            # Enumeracao por filial: sem placement_key — um GET cobre a filial.
+            assert kwargs["branch"] == "01"
+            assert kwargs["anchor_type"] == "work_center"
+            assert "placement_key" not in kwargs
+            return [
+                _bound_row("CT01"),
+                _bound_row("CT02"),
+                _bound_row("CT03", role_key="process_gauge"),
+            ]
+
+    service = IntegrationDeviceSnapshotService(placement_repository=FakePlacement())
+    payload = service.list_counters_by_branch(branch="01")
+    assert payload["branch"] == "01"
+    assert [item["workCenterCode"] for item in payload["items"]] == ["CT01", "CT02"]
+    assert all(item["roleKey"] == "pulse_counter" for item in payload["items"])
+
+
+def test_list_counters_by_branch_rejects_bad_branch():
+    service = IntegrationDeviceSnapshotService(placement_repository=object())
+    try:
+        service.list_counters_by_branch(branch="99")
+        assert False, "expected ValueError"
+    except ValueError as exc:
+        assert "Filial" in str(exc)

@@ -5,6 +5,7 @@ import {
   confirmRunHandoff,
   fetchActiveProductionRun,
   fetchPublicMachineLoad,
+  fetchSensorizedWorkCenters,
   isAuthError,
   stopProductionRun,
   type MachineLoadOperation,
@@ -128,6 +129,9 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // CTs sensorizados (pulse_counter) — inclui postos fora da fila
+  // publicada; o monitoramento autônomo os alcança sem OP (RQ-11).
+  const [sensorizedCenters, setSensorizedCenters] = useState<string[]>([]);
   const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
   const [visualTarget, setVisualTarget] = useState<VisualTarget | null>(null);
   const [downtimeOpen, setDowntimeOpen] = useState(false);
@@ -315,6 +319,44 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     openQueue();
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchSensorizedWorkCenters(token, branch)
+      .then((centers) => {
+        if (cancelled) return;
+        setSensorizedCenters(centers);
+        // Posto salvo que só existe como sensorizado (fora da fila) —
+        // restaura a escolha assim que a enumeração confirma o vínculo.
+        const stored = readStoredWorkCenter(branch);
+        if (stored && centers.includes(stored)) {
+          setWorkCenter((current) => current || stored);
+        }
+      })
+      .catch(() => {
+        // Falha da enumeração não bloqueia o cockpit — o picker fica só
+        // com a fila publicada (fallback seguro, sem lista fingida).
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, branch]);
+
+  const pickerCenters = useMemo<MachineLoadWorkCenter[]>(() => {
+    const known = new Set(
+      payload.work_centers.map((item) => item.work_center),
+    );
+    const extras = sensorizedCenters
+      .filter((code) => !known.has(code))
+      .map((code) => ({
+        work_center: code,
+        work_center_name: code,
+        operation_count: 0,
+        order_count: 0,
+        in_production_count: 0,
+      }));
+    return [...payload.work_centers, ...extras];
+  }, [payload.work_centers, sensorizedCenters]);
+
   const activeCenter = payload.work_centers.find((item) => item.work_center === workCenter);
   const items = useMemo(
     () =>
@@ -470,7 +512,7 @@ export function OperatorCockpit({ token, branch, initial }: Props) {
     return (
       <WorkCenterPicker
         branch={branch}
-        workCenters={payload.work_centers}
+        workCenters={pickerCenters}
         onSelect={selectWorkCenter}
       />
     );

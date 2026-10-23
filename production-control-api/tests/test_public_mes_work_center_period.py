@@ -65,6 +65,8 @@ class FakeDowntimeSource:
 
     def resolve(self, **kwargs: Any) -> dict[str, Any]:
         self.calls += 1
+        if isinstance(self.resolution, Exception):
+            raise self.resolution
         return self.resolution
 
 
@@ -396,8 +398,22 @@ def test_days_bounds_enforced() -> None:
 
 
 def test_unpublished_work_center_denied() -> None:
+    # CT fora da fila E sem vínculo Pulse → o resolver nega o acesso.
+    # (CT sensorizado sem OP publicada é permitido — RQ-11; ver
+    #  test_work_center_downtime_source.)
+    denied = FakeDowntimeSource()
+    denied.resolution = ValueError(
+        "Centro de trabalho «CT-01A» não está na fila publicada desta filial."
+    )
     with pytest.raises(ValueError):
-        _get(_service(machine_load=FakeMachineLoad(None)))
+        _get(_service(source=denied, machine_load=FakeMachineLoad(None)))
+
+
+def test_sensorized_work_center_without_publication_allowed() -> None:
+    """CT sensorizado fora da fila publicada: o resolver responde mes e
+    a leitura segue — autorização vem da sessão de bancada (RQ-11)."""
+    data = _get(_service(machine_load=FakeMachineLoad(None)))
+    assert data["workCenter"] == "CT-01A"
 
 
 def test_window_covers_last_civil_days_sp() -> None:

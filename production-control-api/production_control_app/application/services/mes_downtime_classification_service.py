@@ -190,6 +190,106 @@ class MesDowntimeClassificationService:
         self._notify(run, payload)
         return payload
 
+    def classify_work_center_downtime(
+        self,
+        downtime_id: str,
+        *,
+        reason_code: str,
+        note: str | None,
+        session_token: str | None,
+    ) -> dict[str, Any]:
+        """Classifica uma parada pela identidade real + escopo do CT da
+        sessão (PC-MES-CT-AUTONOMOUS-DOWNTIME, RQ-07).
+
+        Contrato explícito para paradas **sem run** (e qualquer parada do
+        posto): a sessão de bancada precisa pertencer ao mesmo
+        (branch, work_center) do downtime — o run nunca é exigido e o CT
+        nunca vem do cliente. Parada aberta ou encerrada; idempotente por
+        natureza (repetir o mesmo motivo reconfirma o mesmo registro).
+        """
+        session = self._run_service.resolve_bench_session(session_token)
+        dt = self._downtimes.get(str(downtime_id))
+        if dt is None:
+            raise DowntimeNotFound("Parada não encontrada.")
+        if (
+            session.get("branch") != dt.get("branch")
+            or session.get("work_center") != dt.get("work_center")
+        ):
+            raise BenchSessionRequired(
+                "A sessão não pertence ao posto desta parada."
+            )
+
+        reason = self._reasons.get(normalize_reason_code(reason_code))
+        if reason is None or not reason.get("active"):
+            raise InvalidMesEvent("Motivo de parada inválido ou inativo.")
+        clean_note = str(note or "").strip() or None
+        if reason.get("requires_note") and not clean_note:
+            raise InvalidMesEvent("Este motivo exige uma observação.")
+
+        previous_reason = dt.get("reason_code")
+        action = (
+            "downtime_reason_changed" if previous_reason else "downtime_classified"
+        )
+        details: dict[str, Any] = {}
+        if previous_reason:
+            details = {
+                "previousReasonCode": previous_reason,
+                "newReasonCode": reason["code"],
+            }
+
+        def _persist(conn: Any | None) -> dict[str, Any]:
+            row_ = self._downtimes.classify(
+                dt["id"],
+                reason_code=reason["code"],
+                planned=reason.get("default_planned"),
+                counts_as_availability_loss=reason.get(
+                    "default_counts_as_availability_loss"
+                ),
+                note=clean_note,
+                confirmed_by_type="operator",
+                confirmed_by_ref=str(session["operator_code"]),
+                conn=conn,
+            )
+            if self._audit is not None:
+                self._audit.append(
+                    branch=dt["branch"],
+                    work_center=dt["work_center"],
+                    run_id=dt.get("run_id"),
+                    action=action,
+                    actor_type="operator",
+                    actor_ref=str(session["operator_code"]),
+                    details=details,
+                    conn=conn,
+                )
+            return row_
+
+        transaction = getattr(self._run_service, "transaction", None)
+        row = _persist(None) if transaction is None else self._with_tx(transaction, _persist)
+        payload = {
+            "id": row["id"],
+            "runId": dt.get("run_id"),
+            "reasonCode": row["reason_code"],
+            "reasonLabel": reason["label"],
+            "category": reason["category"],
+            "note": row.get("note"),
+            "confirmed": bool(row.get("confirmed")),
+            "startedAt": row["started_at"].isoformat()
+            if hasattr(row.get("started_at"), "isoformat")
+            else row.get("started_at"),
+            "endedAt": row["ended_at"].isoformat()
+            if hasattr(row.get("ended_at"), "isoformat")
+            else row.get("ended_at"),
+        }
+        self._notify(
+            {
+                "branch": dt["branch"],
+                "work_center": dt["work_center"],
+                "id": dt.get("run_id"),
+            },
+            payload,
+        )
+        return payload
+
     @staticmethod
     def _with_tx(transaction: Any, persist: Any) -> dict[str, Any]:
         with transaction() as conn:

@@ -113,6 +113,20 @@ class Settings:
         or "3"
     )
 
+    # PC-MES-CT-AUTONOMOUS-DOWNTIME — monitoramento autônomo do CT sem run.
+    # Default OFF: o deploy não liga detecção em nenhum posto. A allowlist
+    # habilita a homologação CT a CT ("*" = todos os sensorizados).
+    PC_MES_CT_AUTONOMOUS_ENABLED: bool = (
+        str(
+            _get_env("PC_MES_CT_AUTONOMOUS_ENABLED", default="false")
+            or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
+    PC_MES_CT_AUTONOMOUS_WORK_CENTERS: str = (
+        _get_env("PC_MES_CT_AUTONOMOUS_WORK_CENTERS", default="") or ""
+    )
+
     PLUGINS_DB_HOST: str | None = _get_env("PLUGINS_DB_HOST")
     PLUGINS_DB_PORT: str = _get_env("PLUGINS_DB_PORT", default="5432")
     PLUGINS_DB_NAME: str | None = _get_env("PLUGINS_DB_NAME")

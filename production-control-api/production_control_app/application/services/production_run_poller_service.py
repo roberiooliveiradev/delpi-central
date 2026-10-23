@@ -45,6 +45,19 @@ class ProductionRunPollerService:
                 await asyncio.to_thread(service.tick_running_runs)
             except Exception:  # noqa: BLE001
                 logger.exception("production_run_poller_tick_failed")
+            # Monitoramento autônomo por CT (sem OP) — mesmo poller, sem
+            # segunda rotina de polling físico (RQ-01). No-op quando a
+            # flag está desligada.
+            if settings.PC_MES_CT_AUTONOMOUS_ENABLED:
+                try:
+                    from production_control_app.composition.pc_composer import (  # noqa: E501
+                        build_mes_autonomous_monitor_service,
+                    )
+
+                    monitor = build_mes_autonomous_monitor_service()
+                    await asyncio.to_thread(monitor.tick_all)
+                except Exception:  # noqa: BLE001
+                    logger.exception("mes_autonomous_tick_failed")
             delay = remaining_cycle_delay(interval_ms, loop.time() - cycle_started_at)
             if delay <= 0:
                 continue

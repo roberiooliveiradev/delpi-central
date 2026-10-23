@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import {
   classifyRunDowntime,
+  classifyWorkCenterDowntime,
   fetchMesDowntimeReasons,
   type MesWorkCenterTodayItem,
   type MesWorkCenterTodayMes,
@@ -34,7 +35,8 @@ type Props = {
 
 type ClassifyTarget = {
   item: MesWorkCenterTodayItem;
-  runId: string;
+  /** NULL em parada autônoma — classificação por identidade do downtime. */
+  runId: string | null;
   downtimeId: string;
 };
 
@@ -247,11 +249,22 @@ export function PostActivityPage({
       if (!classifying || !session) return;
       setBusy(true);
       try {
-        await classifyRunDowntime(token, session.sessionToken, classifying.runId, {
-          reasonCode,
-          note,
-          downtimeId: classifying.downtimeId,
-        });
+        if (classifying.runId) {
+          await classifyRunDowntime(token, session.sessionToken, classifying.runId, {
+            reasonCode,
+            note,
+            downtimeId: classifying.downtimeId,
+          });
+        } else {
+          // Parada autônoma (sem OP): endpoint por identidade — o backend
+          // confere que a sessão pertence ao posto da parada.
+          await classifyWorkCenterDowntime(
+            token,
+            session.sessionToken,
+            classifying.downtimeId,
+            { reasonCode, note },
+          );
+        }
         await refresh();
       } catch (err) {
         if (err instanceof Error && "status" in err) {

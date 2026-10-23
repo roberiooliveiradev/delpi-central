@@ -96,6 +96,30 @@ class ProductionPulseGateway:
             )
         return data
 
+    def fetch_branch_counter_snapshots(
+        self,
+        *,
+        branch: str,
+        role_key: str = "pulse_counter",
+    ) -> dict[str, Any]:
+        """Todos os contadores amarrados a CTs da filial — um GET por tick.
+
+        Contrato S2S do monitoramento autônomo (PC-MES-CT-AUTONOMOUS-
+        DOWNTIME): descoberta dos CTs monitoráveis sem N+1 e sem tocar o
+        banco do Pulse. Resposta malformada levanta erro — nunca finge
+        lista vazia (ausência de vínculo ≠ resposta inválida).
+        """
+        data = self._request(
+            "GET",
+            "/integrations/devices/snapshots",
+            params={"branch": branch, "roleKey": role_key},
+        )
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            raise PulseGatewayError(
+                "Resposta inválida do Pulso (enumeração de contadores sem 'items')."
+            )
+        return data
+
     def fetch_device_snapshot(self, device_id: str) -> dict[str, Any]:
         data = self._request(
             "GET",

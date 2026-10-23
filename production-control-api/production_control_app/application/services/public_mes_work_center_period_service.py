@@ -87,14 +87,6 @@ class PublicMesWorkCenterPeriodService:
             raise ValueError(
                 f"O período deve estar entre 1 e {MAX_PERIOD_DAYS} dias."
             )
-        resources = self._machine_load.public_snapshot_work_center_resources(
-            branch=code, work_center=center
-        )
-        if resources is None:
-            raise ValueError(
-                f"Centro de trabalho «{center}» não está na fila publicada desta filial."
-            )
-
         session = self._run_service.resolve_bench_session(session_token)
         if (
             session.get("branch") != code

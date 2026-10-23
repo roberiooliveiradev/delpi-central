@@ -50,12 +50,16 @@ def fake_connection(cursor):
     yield FakeConnection(cursor)
 
 
-def test_live_read_is_one_consolidated_query(monkeypatch):
-    cursor = FakeCursor([[{"run_id": "run-1"}]])
+def test_live_read_is_consolidated_without_n_plus_1(monkeypatch):
+    # 2 queries consolidadas: runs ativos + fatos autônomos (run_id NULL) —
+    # PC-MES-CT-AUTONOMOUS-DOWNTIME. Nenhum N+1 por linha.
+    cursor = FakeCursor([[{"run_id": "run-1"}], []])
     monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))
     rows = module.PostgresMesMonitoringReadRepository().list_live_work_centers(branch="01")
-    assert rows == [{"run_id": "run-1"}]
-    assert len(cursor.executions) == 1
+    assert len(rows) == 1
+    assert rows[0]["run_id"] == "run-1"
+    assert rows[0]["autonomous_monitoring"] is False
+    assert len(cursor.executions) == 2
     sql, params = cursor.executions[0]
     assert "production_runs" in sql
     assert "work_center_state_events" in sql
@@ -63,6 +67,23 @@ def test_live_read_is_one_consolidated_query(monkeypatch):
     assert "downtime_reason_catalog" in sql
     assert "status IN ('running', 'paused')" in sql
     assert params == ["01"]
+    sql2, params2 = cursor.executions[1]
+    assert "run_id IS NULL" in sql2
+    assert "work_center_state_events" in sql2
+    assert params2 == ["01"]
+
+
+def test_live_read_includes_autonomous_rows(monkeypatch):
+    cursor = FakeCursor([
+        [],
+        [{"run_id": None, "branch": "01", "work_center": "CT09",
+          "operational_state": "stopped", "autonomous_monitoring": True}],
+    ])
+    monkeypatch.setattr(module, "get_connection", lambda: fake_connection(cursor))
+    rows = module.PostgresMesMonitoringReadRepository().list_live_work_centers(branch="01")
+    assert len(rows) == 1
+    assert rows[0]["run_id"] is None
+    assert rows[0]["autonomous_monitoring"] is True
 
 
 def test_work_center_timeline_is_one_consolidated_overlap_query(monkeypatch):

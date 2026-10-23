@@ -9,6 +9,12 @@ from typing import Any
 
 class WorkCenterStateRepositoryPort(ABC):
     @abstractmethod
+    def lock_work_center(
+        self, *, branch: str, work_center: str, conn: Any
+    ) -> None:
+        """Trava serializadora do CT dentro da transação chamadora."""
+
+    @abstractmethod
     def get_open(
         self, *, branch: str, work_center: str, conn: Any | None = None
     ) -> dict[str, Any] | None:

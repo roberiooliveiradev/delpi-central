@@ -158,27 +158,38 @@ class PostgresProductionRunRepository:
                 )
             conn.commit()
 
-    def get_active_run(self, *, branch: str, work_center: str) -> dict[str, Any] | None:
-        with get_connection() as conn:
+    def get_active_run(
+        self, *, branch: str, work_center: str, conn: Any | None = None
+    ) -> dict[str, Any] | None:
+        """Run aberto (running/paused) do posto.
+
+        Com conn a leitura acontece dentro da transação chamadora —
+        usada sob a trava advisory do CT para arbitrar monitoramento
+        autônomo × run (nunca duas fontes de fatos no mesmo posto).
+        """
+        sql = f"""
+            SELECT id::text AS id, branch, work_center, production_order,
+                   operation_code, device_id::text AS device_id,
+                   operator_code, operator_name,
+                   bench_session_id::text AS bench_session_id,
+                   status, started_at, ended_at, pieces_total,
+                   planned_qty_snapshot, target_pieces_snapshot,
+                   {_RUN_SNAPSHOT_COLUMNS},
+                   last_count_activity_at, created_at, updated_at
+            FROM {_RUNS}
+            WHERE branch = %s
+              AND work_center = %s
+              AND status IN ('running', 'paused')
+            LIMIT 1
+            """
+        if conn is not None:
             with conn.cursor() as cur:
-                cur.execute(
-                    f"""
-                    SELECT id::text AS id, branch, work_center, production_order,
-                           operation_code, device_id::text AS device_id,
-                           operator_code, operator_name,
-                           bench_session_id::text AS bench_session_id,
-                           status, started_at, ended_at, pieces_total,
-                           planned_qty_snapshot, target_pieces_snapshot,
-                           {_RUN_SNAPSHOT_COLUMNS},
-                           last_count_activity_at, created_at, updated_at
-                    FROM {_RUNS}
-                    WHERE branch = %s
-                      AND work_center = %s
-                      AND status IN ('running', 'paused')
-                    LIMIT 1
-                    """,
-                    (branch, work_center),
-                )
+                cur.execute(sql, (branch, work_center))
+                row = cur.fetchone()
+                return dict(row) if row else None
+        with get_connection() as own:
+            with own.cursor() as cur:
+                cur.execute(sql, (branch, work_center))
                 row = cur.fetchone()
                 return dict(row) if row else None
 

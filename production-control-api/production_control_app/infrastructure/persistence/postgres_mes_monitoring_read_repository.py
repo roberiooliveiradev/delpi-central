@@ -42,7 +42,42 @@ class PostgresMesMonitoringReadRepository:
                 """,
                 (branch,),
             )
-            return [dict(row) for row in cur.fetchall()]
+            rows = [dict(row) for row in cur.fetchall()]
+
+            # PC-MES-CT-AUTONOMOUS-DOWNTIME: CTs com fato MES aberto e SEM
+            # run ativo (monitoramento autônomo) — linhas com run_id NULL
+            # mantêm o mesmo shape; consumidores distinguem por
+            # run_id/monitored.
+            cur.execute(
+                f"""
+                SELECT NULL::text AS run_id, s.branch, s.work_center,
+                       NULL AS run_status,
+                       NULL AS production_order, NULL AS operation_code,
+                       NULL AS operator_code, NULL AS operator_name,
+                       NULL AS pieces_total, NULL AS target_pieces,
+                       NULL AS last_count_activity_at,
+                       NULL AS run_started_at, NULL AS run_ended_at,
+                       NULL AS ideal_cycle_seconds_snapshot,
+                       NULL AS standard_time_source,
+                       NULL AS standard_time_data_quality_snapshot,
+                       s.id::text AS state_id, s.state AS operational_state,
+                       s.started_at AS state_started_at, s.source AS state_source,
+                       d.id::text AS downtime_id, d.started_at AS downtime_started_at,
+                       d.source AS downtime_source, d.reason_code, d.confirmed, d.note,
+                       reason.label AS reason_label, reason.category,
+                       TRUE AS autonomous_monitoring
+                  FROM {_STATES} s
+             LEFT JOIN {_DOWNTIMES} d ON d.state_event_id = s.id AND d.ended_at IS NULL
+             LEFT JOIN {_REASONS} reason ON reason.code = d.reason_code
+                 WHERE s.branch = %s AND s.ended_at IS NULL AND s.run_id IS NULL
+              ORDER BY s.work_center, s.started_at
+                """,
+                (branch,),
+            )
+            rows.extend(dict(row) for row in cur.fetchall())
+            for row in rows:
+                row.setdefault("autonomous_monitoring", False)
+            return rows
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         with get_connection() as conn, conn.cursor() as cur:

@@ -49,7 +49,7 @@ class MesIntegrationReadService:
         # Anti-N+1: uma query batch traz os state events de todos os runs;
         # o mesmo reference_at serve a timeline e Performance de todos.
         facts_by_run: dict[str, list[dict[str, Any]]] = {}
-        run_ids = [row["run_id"] for row in rows]
+        run_ids = [row["run_id"] for row in rows if row.get("run_id")]
         if run_ids:
             for fact in self._repository.list_timeline_facts_for_runs(run_ids):
                 facts_by_run.setdefault(str(fact["run_id"]), []).append(fact)
@@ -161,7 +161,17 @@ class MesIntegrationReadService:
         facts_by_run: dict[str, list[dict[str, Any]]],
         reference_at: datetime,
     ) -> dict[str, Any]:
-        """Performance derivada do run — mesma semântica do motor da 2.4."""
+        """Performance derivada do run — mesma semântica do motor da 2.4.
+
+        Linha autônoma (sem run): nenhuma métrica calculada — NULL nunca
+        vira 0% de performance (RQ-08)."""
+        if not row.get("run_id"):
+            performance = {
+                field: None for field in _LIVE_PERFORMANCE_FIELDS
+            }
+            performance["standardTimeSource"] = None
+            performance["standardTimeDataQuality"] = None
+            return performance
         run = {
             "id": row["run_id"],
             "branch": row["branch"],
@@ -219,11 +229,18 @@ class MesIntegrationReadService:
             "operationCode": row.get("operation_code"),
             "operatorCode": row.get("operator_code"),
             "operatorName": row.get("operator_name"),
-            "piecesTotal": int(row.get("pieces_total") or 0),
+            "piecesTotal": (
+                int(row["pieces_total"])
+                if row.get("pieces_total") is not None
+                else None
+            ),
             "targetPieces": row.get("target_pieces"),
             "lastCountActivityAt": _iso(row.get("last_count_activity_at")),
             "downtime": downtime,
             "performance": performance,
+            # PC-MES-CT-AUTONOMOUS-DOWNTIME: true = fato autônomo sem run
+            # (campo aditivo — consumidores antigos ignoram).
+            "autonomousMonitoring": bool(row.get("autonomous_monitoring")),
         }
 
     @staticmethod

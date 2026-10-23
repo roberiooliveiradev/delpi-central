@@ -74,10 +74,12 @@ export function timelineSegments(
 /** A parada tem identidade suficiente para classificar pelo contrato real. */
 export function classifiableDowntime(
   item: MesWorkCenterTodayItem,
-): { runId: string; downtimeId: string } | null {
+): { runId: string | null; downtimeId: string } | null {
+  // Parada autônoma (runId null) também é classificável — o endpoint
+  // por identidade do downtime resolve o escopo pela sessão do CT.
   const id = item.downtime?.id;
-  if (!id || !item.runId) return null;
-  return { runId: item.runId, downtimeId: id };
+  if (!id) return null;
+  return { runId: item.runId ?? null, downtimeId: id };
 }
 
 /** Motivo pendente: a regra oficial é pendingReason do backend. */
