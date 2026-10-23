@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => {
   test: {
     environment: "happy-dom",
     alias: pluginUiTestAliases(__dirname),
+    exclude: ["e2e/**", "**/node_modules/**"],
   },
   build: {
     target: "esnext",

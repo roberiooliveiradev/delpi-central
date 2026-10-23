@@ -300,6 +300,34 @@ Rework da 025-R1 após review: a recuperação de falha usava `selectedSlideIdRe
 
 **Resíduos.** Cenários C/E multi-slide validados por composição (lane + contexto + settle) — a camada de página não tem harness de navegação real; E2E segue `TEST_NOT_RUN`. Desmontagem durante escrita pendente: listeners da lane desinscrevem no unmount e o ref morre com o componente — reabertura sincroniza do servidor (comportamento preexistente, sem regressão).
 
+### Execução — VISTA-TV-EDITOR-E2E-VALIDATION-026 (P0, validação E2E real)
+
+Validação end-to-end em navegador real (Playwright + Chromium, host Windows; stack Docker local completo: gateway, portal, MFE reconstruído com 020–025-R2, tv-dashboard-api, Keycloak, Postgres). Duas+ sessões autenticadas independentes (`e2e-editor`, `e2e-manager`, `e2e-viewer`), playlist isolada `E2E-TV-026-LOCAL` (2 slides, textos, shape, ícone, linha/conector, grupo). Harness versionado em `plugins/tv-dashboard/e2e/` (helpers + 9 specs); `vite.config.ts` passa a excluir `e2e/**` do vitest.
+
+**Matriz de cenários.**
+
+| Cenário | Resultado | Evidência |
+|---|---|---|
+| S0 smoke (login→editor→read-back) | PASS | login real Keycloak + palco montado |
+| S1 projeção visual (10 comandos) | PASS 9/9 | first visual 269–533ms < ACK 341–1681ms; 0 correções pós-ACK; 1 mutation/comando efetivo |
+| S2 Undo/Redo | PASS 4/4 | 1 ação = 1 Undo c/ ACK normalizado; redo re-aplica; undo pré-ACK preservado; LIFO reverso |
+| S3 multiusuário (A–F subset) | PASS 4/4 | convergência sem lost update; 409 server-wins; undo pós-baseline remota protegido; reconexão autoritativa (latência WS local ~15–20s — infra, não produto) |
+| S4 ACK/WS | PASS | commit próprio: 0 reload full (só `/history` leve); evento externo: reload completo |
+| S5 falhas 500/422/rede/ACK perdido | PASS 4/4 | falhas imediatas (<400ms) recuperam para estado autoritativo |
+| S6 identidade cross-slide (025-R2) | **DEFEITO 026-F1** | ver abaixo — identidade B-correta, mas mutação rejeitada vaza pelo autosave |
+| S7 viewer RBAC | PASS | leitura ok; backend rejeita escrita do viewer |
+| S8 paridade editor/preview/TV | PASS | 7 frames % idênticos nas 3 superfícies (`/preview` + `/p/tv-dashboard/present/{token}`) |
+
+**DEFEITO 026-F1 (P0) — projeção rejeitada persiste via autosave comunicado.** Reproduzido deterministicamente (caso original com navegação A→B **e** caso irmão sem navegação): mutação gated → usuário navega para B (ou falha demora >400ms) → PATCH `updateSlide` do autosave comunicado (debounce ~400ms / flush-on-leave) serializa o `nativeConfig` **com a projeção otimista ainda não confirmada** e persiste — servidor rejeita a mutation (500), mas `e2e_txt2.x=8` ficou persistido (esperado `40`). Cadeia provada: `updateBlocks` → `commitWithHistory` → `applyConfig(next)` (persist default) → `onChange` → `scheduleCustomSlideSave` → PATCH full-config — em paralelo a `ackBlocksMutation` → POST `presentation-mutations`. Dois write channels, mesmo dado, sem ordenação de desfecho: se o PATCH cair antes do ACK/erro, a rejeição é contornada e a recuperação reloada um estado já poluído. Owner: pipeline de escrita do editor (`scheduleCustomSlideSave`/`persistComunicadoPending` em `PlaylistEditorPage` + `applyConfig`/`commitWithHistory`). Nota: o PATCH é canal canônico legítimo para edições **não-mutation** (`setDataFilters`, `patchInputBlock`, undo). STOP aplicado (§15/§23): suprimi-lo para commits mutation-backed decide a fronteira de mutação — recomendação de fix: commits que despacham mutação governada persistem com `persist:false` (histórico local + autosave só para edições sem op governada). Espec evidenciando: `e2e/specs/06-cross-slide.spec.ts` (2 testes que falham enquanto o vazamento existir).
+
+**Métricas medidas.** `CLICK_TO_FIRST_VISUAL_MS` 269–533 (9 amostras); `CLICK_TO_ACK_MS` 341–1681; `VISUAL_CORRECTION_COUNT` 0; `HTTP_REQUESTS_PER_COMMAND` 1 mutation; `REDUNDANT_RELOAD_COUNT` 0 próprio; `UNDO_ENTRIES_PER_ACTION` 1. Ambiente: Windows host, Chromium Playwright, RTT gateway ~14–17ms, WS propagation ~15–20s (infra local).
+
+**Regressões.** Vitest MFE: 1446/1452 — 6 falhas, 5 provadas pré-existentes em `251cbd16da` (pré-fase); `PlaylistPreviewPage.loading` flake (PASS isolado). Backend (container): 144/144 PASS — governed write concurrency, authorization, mutation merge, revision HTTP, typography, param expression, data-defaults boundary.
+
+**Lacunas declaradas.** S3 cobriu subconjunto A–F (E: exclusão concorrente não exercitada); S5 timeout/cancel/API-restart não exercitados individualmente; S6 casos B-confirmado/duas-falhas/navegação-para-outra-playlist não exercitados; `RENDER_FRAME_JANK`/`p95` não medidos; nenhuma amostragem estatística p95.
+
+**Decisão.** Fase 2 **NÃO fecha**: 026-F1 é defeito P0 real de integridade (mutação rejeitada persiste). Veredicto da task: `ACCEPT_WITH_RESIDUAL` para a validação executada; `PHASE_2_STATUS = NOT_COMPLETE` pendente correção de 026-F1.
+
 ### Cache
 
 `notify_presentation_changed` limpa `reset_comunicado_data_block_cache` também em mutação visual. O clear em si não foi cronometrado. A consulta seguinte da TV/prévia deixa de usar o cache. Não alterar esta política sem teste de dado obsoleto.
