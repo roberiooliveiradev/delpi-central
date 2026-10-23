@@ -17540,3 +17540,14 @@ EDGE_300S_VERIFICATION=TEST_NOT_RUN BROWSER_QA=TEST_NOT_RUN(MFE stale)
 REGRESSION=backend 2036 exit0 / frontend delia 337 + tsc + build + federation OK
 PROD_VALUES=intocados ROLLBACK=git revert (prod nada a reverter)
 RESIDUALS=edge/gateway live stream, browser QA, R4 revocation OPEN
+
+## §6.388 — Deploy governado producao: delia-api + MFE, retry OFF provado em runtime (2026-10-23)
+
+**2026-10-23 — DELIA-C3-DEPLOY-60-3-300-STREAMING-CONTEXT-AND-RUNTIME-VERIFICATION-01:** deploy canônico (local-first: pull + `up-prod-sequential.sh --build` por servico) em srv-api. Checkout `54ad4cfb9e`→`a77b6b763` ff-only; drift no escopo DELIA = zero (commits novos sao audit_5s/tv-dashboard de outros escopos, nao reconstruidos); zero migrations. Imagens: delia-api `b05a0f35b52c`→`eec7be0f913c` (healthy, env=production, markers de codigo novo verificados), delia MFE `d327a8bcba3c`→`820d01e5ab97` (remoteEntry md5 novo servido em /apps/delia/assets/remoteEntry.js — Portal recebe build atual). Runtime verificado no container: `DELIA_LLM_CALL_MAX_ATTEMPTS=1` e `DELIA_MAX_GOVERNED_ATTEMPTS=1` — retry OFF em ambos os mecanismos; budgets 30/30/30/60 congelados; regime 60/3/300 deployado mas NAO ativado. Smoke: health 200, interaction 401, NDJSON-accept 401; zero 502/504 no gateway; gateway prod read_timeout 86400 por gap. AUTHENTICATED_TURN/NDJSON_WIRE_PROD/EDGE_300S/BROWSER_QA=TEST_NOT_RUN (reservados ao PO — chamada real consumiria OpenRouter pago). Rollback: imagens antigas no host + rebuild do SHA anterior. PAID_LLM_CALLS=0 PRODUCTION_SECRETS_UNTOUCHED=YES R4=OPEN/DEFERRED_BY_PO.
+
+TASK_ID=DELIA-C3-DEPLOY-60-3-300-STREAMING-CONTEXT-AND-RUNTIME-VERIFICATION-01
+RELEASE_CANDIDATE_SHA=a77b6b7635b321669962129dcb1555664fc5fe93
+API_IMAGE=infra-delia-api:eec7be0f913c MFE_IMAGE=infra-delia:820d01e5ab97
+RUNTIME_FLAGS=LLM_CALL_MAX_ATTEMPTS=1 TURN_RESUME=1 BUDGETS=30/30/30/60
+DEPLOY_SUCCESS=YES POSTCONDITION_VERIFIED=YES ROLLBACK_AVAILABLE=YES ROLLBACK_EXECUTED=NO
+RESIDUALS=edge300s/browserQA/NDJSON-wire-prod TEST_NOT_RUN; regime 60/3/300 pendente de gate
