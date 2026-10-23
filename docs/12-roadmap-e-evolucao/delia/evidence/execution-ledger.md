@@ -17562,3 +17562,24 @@ RUNTIME_FLAGS=LLM_TIMEOUT=60 STAGE=60 TURN=300 INTERACTION=300 CALL_ATTEMPTS=3 R
 R4_RISK_STATUS=OPEN/DEFERRED_BY_PO R4_ACTIVATION_GATE=PO_RISK_ACCEPTANCE
 PRODUCTION_TIME_POLICY_ACTIVE=YES PRODUCTION_RETRY_POLICY_ACTIVE=YES
 RUNTIME_VERIFIED=YES ROLLBACK_AVAILABLE=YES ROLLBACK_EXECUTED=NO
+
+
+## §6.390 — G4 integrated homologation: producer→consumer on evaluated HEAD — ready with residual (2026-10-23)
+
+**2026-10-23 — DELIA-C3-MARKDOWN-B2-G4-INTEGRATED-ACCEPTANCE-01:** homologação integrada executada sobre origin/main=090a817e56 (RW01 aceito a1e8ff36a3 + doc-103 absorvido). Zero diff de produto — apenas harness de testes + docs. REUSE_GATE=YES em todas as responsabilidades.
+
+**Novos testes integrados (contrato real, não mocks):** test_g4_integrated_homologation.py (21: cadeia SpecialistOutcome→render→attempt→turn→compose→v2→JSON/NDJSON; admission exclusiva; hostile leaves literais; PROCESSING_TIMEOUT; fail-closed malformed/oversize/non-str; grounding/provenance/epistemic preservados; zero links; v1 parity) + g4-wire-envelopes.json (envelopes reais emitidos) + g4Homologation.test.tsx (14: fixture real → parsePresentationV2 → ConversationMarkdown DOM → clipboard projection; zero âncoras navegáveis/HTML/tokens estruturais de dados hostis).
+
+**Regressões no SHA avaliado:** focado 36/36; G4 backend 21/21; consumer 14/14; negatives 15/15; backend completo 2043 coletados, zero falhas; delia 350/350 (29 arquivos); plugin-ui 2315/2315 (380 arquivos); tsc limpo; vite build+federation OK. Token-level marked.lexer real: corpus hostil → STRUCTURAL=0 LINK=0.
+
+**Browser QA autenticado (stack real, Playwright):** SSO+/apps/delia PASS; turno conversacional real (NDJSON→v1→render) PASS; tentativa governada real → provider MCP → GROUNDED OBSERVATION 7 registros verbatim, corretamente v1 (shape records não admitido — fail-closed para plain provado live) PASS; AUTHZ denial → PRECONDITION_REQUIRED + owner_hint PASS; clarification flow PASS; invalid_model_output → erro honesto + draft preservado PASS; handler_not_configured 503 → degradação honesta PASS; clipboard real (navigator.clipboard) PASS; evidence 9–21 nodes PASS; teclado/420px/320px-sem-overflow/200%-zoom PASS; gate demo markdown_code corretamente fechado no asset deployado (controle negativo) PASS.
+
+**Harness note:** infra/.env upstream apontava DELIA_LLM_* para endpoint externo recusado pelo egress gate dev (handler_not_configured) — container dev reconfigurado para Ollama local (adapter real, sem mudança de código, zero chamadas pagas); grants e2e (delia.access + tv-dashboard.read/view + *.access) no DB dev.
+
+**MARKDOWN_LIVE_RENDER=TEST_NOT_RUN:** outcome admitido Category-A não alcançável neste ambiente (modelos locais 1.5b/3b só produzem conversational/records/clarification; records não é projeção admitida). Caminho v2 provado por 35 testes de contrato/integração com envelope real emitido → renderer real. Nenhum PASS visual para markdown live é reivindicado.
+
+**RQ/AC conservador:** 20/25 RQ IMPLEMENTED (RQ08/11/20/21/25 PARTIAL); 25 AC PASS / 5 PARTIAL (AC15/16/22/26/30). TASK_VERIFIED_COVERAGE_PCT=80%.
+
+**Pós-rebase:** push anterior a 5cd91fbd (doc-104 + ativação produtiva 60/3/300 upstream — seams `_md_*`/presentation intocados). Focado+G4 re-verificado em daa5c9e725: backend 57/57, consumer 14/14.
+
+**Estado:** G4=EXECUTED_READY_FOR_COORDINATION_REVIEW_WITH_RESIDUAL; MARKDOWN_LIVE=TEST_NOT_RUN; CP-333=PLANNED_NOT_PASS; PRODUCTION_DEPLOYMENT=NO. Retorna à coordenação.

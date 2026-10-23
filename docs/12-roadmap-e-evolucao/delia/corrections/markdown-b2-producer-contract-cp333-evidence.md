@@ -150,3 +150,47 @@ Reviewed implementation commit `082a8bda30382610a6b9f01c8e646e3efa4b91b0` direct
 **Residuals:** G4 actual Portal full-page/dock authenticated browser QA and accessibility TEST_NOT_RUN; AC22 user-requested style adaptation PARTIAL; AC26 public source-backed external link path DEFERRED (zero links emitted under current producer policy); CP-333 completeness and acceptance PENDING. Canonical coverage must count only fully IMPLEMENTED requirements, never `PASS_BACKEND`/PARTIAL/PENDING as completed globally. No production deployment or phase advancement is authorized by this review.
 
 **NEXT_BOUNDED=G4 integration and independent acceptance review**, with existing real producer→JSON/NDJSON→typed consumer→plugin-ui renderer tests, mixed-version/fallback, owner-hostile data, clipboard, a11y, responsive dock/full-page, source/evidence parity and negative security on actual evaluated SHA/config. If authenticated browser runtime unavailable, report TEST_NOT_RUN; do not invent a visual PASS or deploy without separate authorization. Do not reopen G3 architecture except on new evidence.
+
+
+## G4 integrated homologation — producer→consumer on evaluated HEAD (2026-10-23)
+
+TASK `DELIA-C3-MARKDOWN-B2-G4-INTEGRATED-ACCEPTANCE-01` executed on `origin/main=090a817e56` (post RW01 acceptance a1e8ff36a3 + unrelated doc-103 commits), working-tree SHA evaluated with the three G4 test assets added. Executor role: integration/QA/evidence — no product-code change, no CP-333 self-acceptance.
+
+**Reuse gate:** all responsibilities mapped to EXISTING_EQUIVALENT — `render_specialist_outcome_rich`, `RenderedSpecialistOutcome`, `compose_presentation`, `InteractiveTurnResult`, `presentation.v2` schema, `parsePresentationV2`, `ConversationMarkdown`, `ConversationCodeBlock`, `DeliaAssistantMessage`, existing sanitization. Zero new emitters/parsers/renderers; `ARCHITECTURE_DECISION_REQUIRED=NO`.
+
+**Contract integration tests added (harness only):**
+- `delia-api/tests/test_g4_integrated_homologation.py` — 21 tests over the REAL producer chain SpecialistOutcome → RenderedSpecialistOutcome → GovernedCapabilityAttempt → InteractiveTurnResult → compose_presentation → v2 envelope → JSON/NDJSON serialization: admitted structured/guidance outcomes emit `markdown_safe`; plain/conversational/records outcomes stay v1; hostile leaves stay literal; PROCESSING_TIMEOUT supported; malformed/oversized/non-string markdown fails closed to v1; grounding/provenance/epistemic/limitations preserved; zero links synthesized; v1/v1-client byte parity.
+- `plugins/delia/src/api/__fixtures__/g4-wire-envelopes.json` — real producer-emitted v1/v2 envelopes serialized to wire JSON.
+- `plugins/delia/src/api/g4Homologation.test.tsx` — 14 consumer-side tests: real fixture → `parsePresentationV2` → real `ConversationMarkdown` DOM + `conversationMarkdownToPlainText` clipboard projection; hostile values produce no navigable anchors/HTML/structural tokens; enabled=false literal `<p>` path preserved; clipboard text preserves IDs/order/units.
+
+**Regression on evaluated HEAD:** backend focused 36/36 (markdown emission), G4 backend 21/21, G4 consumer 14/14, security negatives 15/15 (g3-negative-checks), full backend suite 2043 collected — all dots, zero failures, delia vitest 29 files/350 tests PASS, plugin-ui vitest 380 files/2315 tests PASS, `tsc --noEmit` clean, `vite build` + federation expose bundle OK. Token-level re-proof with the real `marked.lexer` (plugin-ui resolution): hostile RW01 corpus → top-level tokens only projector list nodes; STRUCTURAL=0, LINK=0.
+
+**Authenticated browser QA (real stack, Keycloak SSO, user `e2e-delia`, `delia.access`+owner read grants):** environment initially had NO interaction handler wired (upstream `infra/.env` pointed DELIA_LLM_* at an external endpoint refused by the dev egress gate — `handler_not_configured` 503 observed end-to-end with honest frontend degradation + draft preservation, which is itself a PASS for the fail-closed error path). Harness-only fix: dev container env pointed at local Ollama (`DELIA_LLM_BASE_URL=http://ollama:11434/v1`), real `OpenAICompatibleModelInvocationAdapter` — no code change, local model only, zero paid calls.
+
+Live results (Playwright, deployed MFE+API at HEAD):
+- SSO login + deep route `/apps/delia`: PASS.
+- Real conversational turn (NDJSON frames → `turn_result` v1 → rendered text): PASS — "Meu nome é DÉLIA.", `presentation.version=1`, NON_GROUNDED/HYPOTHESIS preserved.
+- Real governed attempt → `mcp:vista`/`mcp:teo` provider_invoke → GROUNDED OBSERVATION records outcome (7 registros, IDs/excerpts verbatim): PASS — correctly emitted v1 plain (records shape is NOT an admitted markdown projection — fail-closed toward plain verified live).
+- Governed attempt → owner AUTHZ denial → `PRECONDITION_REQUIRED` + `owner_hint` notice, zero privileged content: PASS.
+- Clarification flow (missing capability inputs → typed question): PASS.
+- `invalid_model_output` typed turn_error → honest "Resposta da DÉLIA inválida" + draft preserved: PASS (observed with weak local models).
+- Clipboard real copy (navigator.clipboard.readText: 17/90/168/763 chars across turns): PASS.
+- Evidence/details surface present (9–21 nodes): PASS.
+- Keyboard Tab reaches interactive element; 420px dock same-turn identity; 320px zero horizontal overflow; 200% zoom no crash: PASS.
+- `?delia-demo=markdown_code` fixture gate: correctly CLOSED in the deployed production-mode asset (negative control — the QA hook is unreachable in deployed builds).
+
+**Markdown live-render = TEST_NOT_RUN.** No admitted structured/guidance outcome was reachable in this environment: the records-shaped owner result is intentionally not a markdown projection, and weaker local models (qwen2.5 1.5b/3b/delia-json system variant) repeatedly selected conversational/records/clarification paths. This is an environment/model-capability limitation, not a contract defect — the v2 path is proven by the 35 contract/integration tests above including the real emitted envelope through the real consumer renderer. No visual PASS is claimed for live markdown.
+
+**Link policy:** zero links emitted everywhere (no admitted public source-backed URL; internal L1 deferred); `authorizedLinks=[]` at every seam; token-level proof zero link tokens; no parallel authority/navigation system. `PUBLIC_LINK_EMISSION=DEFERRED` unchanged.
+
+**Residual search (current HEAD):** no `innerHTML`/`dangerouslySetInnerHTML`/`eval` in the DÉLIA ConversationMarkdown path (MarkdownDocument.tsx is a different legacy component not referenced by plugins/delia); every owner datum reaches markdown only via `_md_leaf`; no URL synthesis (http/https appear only in a technical-token redaction list); `authorized_links` absent in backend.
+
+**RQ/AC reconciliation (conservative — PARTIAL/TEST_NOT_RUN earn no credit):** 20/25 RQ IMPLEMENTED (RQ08, RQ11, RQ20, RQ21, RQ25 PARTIAL); AC: 25 PASS / 5 PARTIAL (AC15, AC16, AC22, AC26, AC30). TASK_VERIFIED_COVERAGE_PCT = 20/25 = 80%.
+
+**Post-push rebase note:** before push, origin/main advanced to 5cd91fbd (doc-104 retry isolation + production 60/3/300 activation commits — markdown seams `_md_*`/presentation untouched by the upstream diff). This commit was rebased onto it; focused suites re-verified on rebased SHA `daa5c9e725`: backend focused+G4 57/57, consumer G4 14/14. Full-suite counts above were recorded at 090a817e56.
+
+**STATUS=G4_EXECUTED_READY_FOR_COORDINATION_REVIEW_WITH_RESIDUAL** — contract+integration+security+live-v1/error/governed-degradation paths proven on the evaluated SHA; live markdown render TEST_NOT_RUN (environment); CP-333=PLANNED_NOT_PASS, executor does not self-accept; PRODUCTION_DEPLOYMENT=NO.
+
+**Material residuals:** (1) live full-page/dock markdown_safe render — TEST_NOT_RUN, requires environment with an admitted Category-A outcome (stronger local model or stubbed deterministic provider admission is NOT acceptable as evidence); (2) AC22 user style adaptation PARTIAL; (3) AC26 public link emission DEFERRED; (4) AC15/16/30 SR/dark-mode/reduced-motion not exercised; (5) `delia-json` Ollama variant + e2e user grants are dev-environment harness state, not product changes.
+
+**NEXT_BOUNDED_STEP:** coordination reviews this homologation; if live markdown browser evidence is required for CP-333, provision a staging environment whose model reliably emits admitted structured outcomes (or accept contract-level evidence per spec 83).
