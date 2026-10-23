@@ -2279,3 +2279,85 @@ apenas o denominador do vínculo de custo:
 - Decisão: **R06 G5 PASS mantido** (reinforcing evidence, não relaxamento);
   R07 G4/G5 inalterados; G6 PENDING. Métricas inalteradas
   (42/60 · 47/90).
+
+## §39 — CPV EXISTING RULE VERIFY (CF-C2-CPV-EXISTING-RULE-VERIFY-001) — 2026-10-23
+
+Rodada READ/VERIFY/DOCUMENTATION_ONLY (HEAD `e9bba94e54`) — gate
+transversal §0 aplicado a R06: o PO informou que o CPV já existe na
+plataforma; a verificação confirmou.
+
+**Cadeia rastreável (consumer → producer):**
+
+- `plugins/dashboard-supplies/src/pages/CpvPage.tsx` — tela "CPV —
+  Custo de produto vendido" (cards CPV total, CPV/ROL, movimentos;
+  gráficos por CFOP/TES/top produtos/documentos); fetch via
+  `suppliesApi.ts` → `GET /apps/api-delpi/supplies/cpv`.
+- `supplies-api` `SuppliesDelpiReads.get_cpv` (`supplies_delpi_reads.py`,
+  `top_limit=15`) → `/supplies/cpv`; consumido por
+  `OverviewCompositionService` como KPI-CPV (`cpv_percentage`) e por
+  `strategic_indicators_gateway` (`"KPI-CPV"→"supplies-cpv"`).
+- api-delpi `GET /supplies/cpv` (`supplies_router.py:89`, op
+  `get_supplies_cpv`, auth `require_any_permission_or_supplies_bff(
+  KPI_SUPPLIES_ACCESS)`) → `build_get_cpv_use_case`.
+- `GetCPVUseCase` (`use_cases/supplies/get_cpv_use_case.py`) — compõe
+  `CpvQueryRepositoryPort` (summary/by_cfop/by_tm/top_products/
+  top_documents) + `FinancialQueryRepositoryPort.get_rol`; deriva
+  `cpv_percentage = cpv_total/rol*100`, custo médio por movimento e por
+  unidade.
+- `CpvQueryRepository` (`totvs/supplies_repositories/
+  cpv_query_repository.py`) — docstring "CPV alinhado ao relatório
+  Kardex" (realinhamento deliberado no commit `4bd217a3ae`):
+  `FROM SD2010 D2 WHERE D2.D_E_L_E_T_='' [AND D2_FILIAL=?]
+  AND D2_EMISSAO BETWEEN ? AND ? AND D2_CF IN (cfops)`;
+  medida `SUM(D2_CUSTO1)` / `SUM(D2_QUANT)`; CFOPs default
+  `KARDEX_DEFAULT_CFOPS = (5101, 5124, 6101, 6124)` — campo `cfops`
+  existe no DTO `GetCPVRequest` mas **não é exposto** pela rota.
+- ROL (mesmo use case): `financial_repository.get_rol` — SD2 vendas
+  elegíveis (`D2_TIPO<>'D'`, `F4_DUPLIC='S'` + exceções MI/CF 5927/
+  5911-6911 filial 01) menos devoluções de venda SD1
+  (`CommercialRolReturnSql.sales_return_predicate`).
+- Chat/DAVI: `SUPPLIES_CPV` agent_route (`openapi_agent_metadata.py:668`,
+  "Indicador CPV agregado por filial e período (SD2010, SUM(D2_CUSTO1),
+  CFOPs Kardex)") — rota registrada no `route_contract_registry` e
+  coberta por testes de contrato/registro/meta (`test_route_contract_*
+  registry*`, `test_davi_*`, `test_envelope_consumer_compat`).
+
+**Confronto CPV implementado × R06/MATR910:**
+
+| Dimensão | Kardex MATR910 (R06) | CPV `GET /supplies/cpv` |
+|---|---|---|
+| Fonte | UNION SD1+SD2+SD3 | **somente SD2** |
+| População | todo movimento `F4_ESTOQUE='S'` | só `D2_CF ∈ (5101,5124,6101,6124)` |
+| Período | D1_DTDIGIT/D2_EMISSAO/D3_EMISSAO | `D2_EMISSAO` |
+| Custo | `D*_CUSTO*` as_of emissão | `D2_CUSTO1` **corrente** |
+| Filtros extra | `D3_ESTORNO<>'S'`, `ORIGLAN<>'LF'`, `D*_LOCAL`, `D1_REMITO=''` | nenhum |
+| Granularidade | linha a linha por produto | agregado + cortes CFOP/TES/top-N |
+
+- Devoluções de compra (SD2 `TIPONF='D'`, CF 5201/6201 — as 4 linhas
+  NEG-E de §38) **fora** do CPV (CFOPs não pertencem ao conjunto);
+  devoluções de venda são SD1 — fora de SD2, não entram no numerador;
+  no ROL as devoluções de venda SD1 são subtraídas do denominador.
+- Conclusão de semântica: o CPV implementado mede **custo das saídas de
+  venda por NF**, subset das saídas do kardex — a afirmação §37.C
+  ("saídas agregadas ≠ CPV") se mantém e agora tem a medida canônica
+  identificada.
+
+**Lacunas verificadas (`REUSE_PARTIAL` para evidência de fechamento):**
+
+1. `D2_CUSTO1` corrente ≠ `as_of` — revalorização MATA330 pós-fechamento
+   altera o valor reportado (mesma natureza do `STALE_EVIDENCE` do
+   saldo final §37.E); evidência mensal imutável exige custo `as_of`
+   (TTAT) ou snapshot persistido.
+2. Branch único opcional; sem consolidado multi-unidade explícito.
+3. CFOPs fixos no contrato HTTP (DTO tem `cfops`, rota não expõe).
+4. Sem recorte por produto/tipo/armazém na resposta (só agregados e
+   top-N) — insuficiente para drill-down de evidência por item.
+5. Cobertura de teste = contrato/registro de rota; sem teste unitário
+   dedicado do SQL do repositório (diferente de outros repos SD2).
+
+**Decisão:** BR-R06-010 reclassificado `PROVEN` (implementação e
+semântica identificadas) + **`REUSE_PARTIAL`**; `DECISION_REQUIRED`
+restrito à questão material real: custo `as_of`/snapshot vs custo
+corrente para a medida de fechamento — owner a decidir. Nenhum código,
+endpoint ou contrato foi criado ou alterado nesta rodada.
+Gates/métricas inalterados (42/60 · 47/90).

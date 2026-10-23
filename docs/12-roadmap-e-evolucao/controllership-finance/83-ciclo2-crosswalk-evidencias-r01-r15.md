@@ -120,7 +120,7 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 ### R06 — CPV / Kardex 01 — **RECONCILIADO**
 
-`cpv 09 26 matriz.xlsb` = "Kardex Fisico-Financeiro" por produto (14.382 linhas = 1.544 blocos + **9.357 movimentos** + layout). **Reconstrução física completa (rodada 19, doc 80 §37, doc 85 §6):** produtor MATR910 com fonte `matr910_dlp.prx` (`SOURCE_AVAILABLE`); UNION **SD1 (`D1_DTDIGIT`) + SD2 (`D2_EMISSAO`) + SD3 (`D3_EMISSAO`)**, `F4_ESTOQUE='S'`, `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`, loc 01; ordem data+`D3_NUMSEQ` (1.971/1.971); REF decodificado (F-/P-/OP/CC); custos `as_of` emissão (**100%** — 7.376 `CUR` + 1.981 `TTAT_OLD`; devoluções `TIPONF='D'` cruzam coluna com sinal −, `zMTR910Dev`/`MV_LISTDEV` — errata r20 doc 80 §38); cadeia de saldo `B9`@0831 → saldo impresso (1.544/1.544). População = produtos com movimento (MOD*/MO fora; SB9 sem movimento fora). Saídas agregadas **≠ CPV** (semântica composta — `AS-IS`). Residual: versão RPO + parâmetros efetivos (E7). Gates: **G1–G5 PASS · G6 PENDING** (aceite funcional).
+`cpv 09 26 matriz.xlsb` = "Kardex Fisico-Financeiro" por produto (14.382 linhas = 1.544 blocos + **9.357 movimentos** + layout). **Reconstrução física completa (rodada 19, doc 80 §37, doc 85 §6):** produtor MATR910 com fonte `matr910_dlp.prx` (`SOURCE_AVAILABLE`); UNION **SD1 (`D1_DTDIGIT`) + SD2 (`D2_EMISSAO`) + SD3 (`D3_EMISSAO`)**, `F4_ESTOQUE='S'`, `D3_ESTORNO<>'S'`, `D*_ORIGLAN<>'LF'`, loc 01; ordem data+`D3_NUMSEQ` (1.971/1.971); REF decodificado (F-/P-/OP/CC); custos `as_of` emissão (**100%** — 7.376 `CUR` + 1.981 `TTAT_OLD`; devoluções `TIPONF='D'` cruzam coluna com sinal −, `zMTR910Dev`/`MV_LISTDEV` — errata r20 doc 80 §38); cadeia de saldo `B9`@0831 → saldo impresso (1.544/1.544). População = produtos com movimento (MOD*/MO fora; SB9 sem movimento fora). Saídas agregadas **≠ CPV** — e a medida CPV já existe fora do relatório: `GET /supplies/cpv` (api-delpi, `SUM(SD2.D2_CUSTO1)`, `D2_CF∈(5101,5124,6101,6124)`, `D2_EMISSAO`, docstring "alinhado ao Kardex", commit `4bd217a3ae`) — rodada 21, doc 80 §39; reutilização `REUSE_PARTIAL` (custo corrente, sem `as_of`/snapshot — doc 85 BR-R06-010). Residual: versão RPO + parâmetros efetivos (E7). Gates: **G1–G5 PASS · G6 PENDING** (aceite funcional).
 
 ### R07 — Inventários / Kardex 99 — **RECONCILIADO**
 
@@ -187,7 +187,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 (binding de totalização provado rodada 15 — doc 80 §33.D; G4/G5 pendentes por parametrização) |
 | R04 Consumo por OP | BLOQUEADO | — | — |
 | R05 Entradas e Saídas | PARCIAL | MATR320 | G1,G2,G3,**G4**,**G5** (escopo completo reproduzido ao centavo + drift decomposto — doc 80 §33, doc 84 §4.4) |
-| R06 CPV / Kardex 01 | RECONCILIADO | MATR910 (`matr910_dlp.prx`) | G1,G2,G3,**G4**,**G5** (UNION SD1/SD2/SD3 linha-a-linha — doc 80 §37, doc 85 §6; RPO/params → E7) |
+| R06 CPV / Kardex 01 | RECONCILIADO | MATR910 (`matr910_dlp.prx`) + `GET /supplies/cpv` (CPV canônico existente — doc 80 §39, `REUSE_PARTIAL`) | G1,G2,G3,**G4**,**G5** (UNION SD1/SD2/SD3 linha-a-linha — doc 80 §37, doc 85 §6; RPO/params → E7) |
 | R07 Inventários | RECONCILIADO | MATR910 | G1,G2,G3,**G4**,**G5** (INVENT 45/45 — doc 80 §37.D, doc 85 §7) |
 | R08 Material em Processo | PARCIAL | MATR989 | G1,G2,G3 |
 | R09 Fat × MOD | PARCIAL | DLP204 | G1,G2,G3 |

@@ -572,11 +572,42 @@ testados do comportamento observado são compatíveis com o fonte.
   sem movimento); 26 produtos `MOD*` (tipo `MO`) fora — nenhum tem SB9;
   1.426 produtos com SB9 fora do kardex (1.023 com saldo ≠0 @30/09) —
   o relatório cobre **movimento**, não posição.
-- `BR-R06-010` (semântica CPV — `AS-IS`): saídas do kardex **não são**
-  CPV direto — misturam requisições p/ produção (RE1/RE3, classes
-  dominantes), vendas NF (CF 5101/6101/7101), devoluções, transferências
-  e ajustes INVENT. "CPV" no PROC-0072 é evidência composta; nenhum total
-  agregado do relatório equivale ao CPV sem escopo de medida definido.
+- `BR-R06-010` (semântica CPV — `PROVEN`, regra existente verificada —
+  rodada 21, doc 80 §39): **o CPV já existe implementado e canônico** —
+  `GET /supplies/cpv` na api-delpi (`supplies_router.py` op
+  `get_supplies_cpv`, auth `KPI_SUPPLIES_ACCESS`):
+  `CpvQueryRepository` → `SUM(SD2.D2_CUSTO1)` com `D2.D_E_L_E_T_=''`,
+  `D2_EMISSAO` no período, `D2_FILIAL` opcional e
+  `D2_CF IN (5101,5124,6101,6124)` (CFOPs fixos no contrato — o campo
+  `cfops` do DTO não é exposto na rota); o use case
+  `GetCPVUseCase` compõe ROL (`FinancialRepository.get_rol` — SD2 vendas
+  elegíveis `F4_DUPLIC='S'` + exceções MI/5927/5911-6911, menos devoluções
+  de venda SD1) e devolve `cpv_total`, `cpv_percentage`, cortes
+  `by_cfop`/`by_tm`/`top_products`/`top_documents`. Docstring do repo:
+  "CPV alinhado ao relatório Kardex" (commit `4bd217a3ae` — realinhamento
+  deliberado SD2010 + CFOPs padrão). Consumidores verificados:
+  `dashboard-supplies` `CpvPage.tsx` (via `/apps/api-delpi/supplies/cpv`),
+  `supplies-api` `OverviewCompositionService` KPI-CPV → `cpv_percentage`
+  (`SuppliesDelpiReads.get_cpv`), `strategic_indicators_gateway`
+  `"KPI-CPV"→"supplies-cpv"`, chat/DAVI `SUPPLIES_CPV` agent_route.
+  **Crosswalk R06:** CPV implementado = subconjunto das saídas SD2 do
+  kardex restrito aos CFOPs de venda — as saídas agregadas do MATR910
+  continuam **não** sendo CPV (incluem SD3 requisições/transferências/
+  INVENT e CFOPs fora do conjunto) — a observação física da versão
+  anterior se mantém; o que muda é que a "medida CPV" **existe** fora
+  do relatório, como regra de API própria. **Lacunas para evidência de
+  fechamento (`REUSE_PARTIAL`):** (a) `D2_CUSTO1` é custo **corrente**,
+  não `as_of` — revalorização MATA330 posterior altera o valor medido
+  (mesma natureza do saldo final `STALE_EVIDENCE`); (b) sem filtro
+  `D2_ORIGLAN<>'LF'` nem `F4_ESTOQUE='S'` no WHERE (o conjunto CFOP já
+  delimita vendas); (c) branch único opcional — sem consolidado multi-
+  unidade explícito nem recorte produto/tipo; (d) cobertura de testes
+  limitada a contrato/registro de rota (sem teste unitário do SQL, ao
+  contrário de outros repositórios SD2). Para PROC-0072 o contrato
+  existente atende a medida "CPV de vendas por emissão"; a cadeia de
+  evidência `as_of` de fechamento exige decisão do owner sobre custo
+  histórico (TTAT) ou snapshot — `DECISION_REQUIRED` se a medida de
+  fechamento exigir imutabilidade temporal.
 - `PENDING`: versão compilada no RPO (E7); parâmetros efetivos da emissão
   além dos inferidos (mv_par09=`D`, mv_par16=Digitação pela ordenação,
   mv_par10 `Saldo a considerar` — provável Fechamento dado o as_of);
@@ -724,7 +755,7 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R06-001/002/003 kardex UNION | `matr910_dlp.prx` + SD1/SD2/SD3/SF4 | `D1_DTDIGIT`,`D2_EMISSAO`,`D3_EMISSAO`,`F4_ESTOQUE`,`D3_ESTORNO`,`D*_ORIGLAN`,`D*_LOCAL` | UNION SD1+SD2+SD3 por produto/armazém com datas por tabela | `stock-kardex` (contrato futuro — `DECISION_REQUIRED`) | api-delpi | T-R06-01..04 | doc 80 §37.C |
 | BR-R06-004/005 ordem+REF | `matr910_dlp.prx` | `D*_NUMSEQ`,`D1_FORNECE`,`D2_PEDIDO`,`D3_OP`,`D3_CC` | data + NUMSEQ; REF por origem (F-/P-/OP/CC) | idem | api-delpi | T-R06-05/06 | doc 80 §37.C |
 | BR-R06-006/007 custo+saldo | `matr910_dlp.prx` + TTAT/SB9 | `D*_CUSTO*`,`TTAT_COLD`,`B9_QINI`,`B9_VINI1` | custo as_of emissão; cadeia saldo desde `CalcEst` | `as_of` obrigatório (mesma regra de BR-R05-008) | api-delpi | T-R06-07/08 | doc 80 §37.C/E |
-| BR-R06-009/010 população+CPV | artefato + SB1/SB9 | `B1_TIPO`,`B1_COD`,mv_par07 | só produtos com movimento; saídas ≠ CPV | escopo de medida CPV = `DECISION_REQUIRED` | cf-api | T-R06-09 | doc 80 §37.C |
+| BR-R06-009/010 população+CPV | artefato + SB1/SB9 + **`GET /supplies/cpv` existente** | `B1_TIPO`,`B1_COD`,mv_par07,`D2_CF`,`D2_CUSTO1` | só produtos com movimento; saídas kardex ≠ CPV — CPV = subconjunto SD2 CFOPs venda (rota api-delpi canônica) | `REUSE_PARTIAL` — endpoint cobre CPV por emissão com custo corrente; lacuna `as_of`/snapshot p/ fechamento → owner | api-delpi (regra) / cf-api (composição) | T-R06-09 | doc 80 §37.C/§39 |
 | BR-R07-001..003 INVENT | artefato + SD3/TTAT | `D3_DOC='INVENT'`,`D3_TM`,`D3_CF`,`D3_CUSTO1` | ajustes 999/RE0 saída + 499/DE0 entrada, loc 01+99 | `stock-kardex` filtro doc — mesmo contrato de R06 | api-delpi | T-R07-01/02 | doc 80 §37.D |
 | BR-R12-003 Refaz | `DEL100.PRW` | SD3/SB9 | reconstrução→comparação | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E |
 | BR-R15 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `month-end-stock` (**após E5**) | api-delpi | T-R15-01 | doc 80 §21 |
@@ -799,8 +830,8 @@ copia para BFF/frontend.
 
 | Classe | Regras |
 |---|---|
-| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..009** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população), **BR-R07-001..003** (INVENT 45/45), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
-| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), BR-R06-010 (semântica CPV composta), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
+| `PROVEN` | BR-R01-001..011 (exceto pendências internas declaradas), BR-R02-001/003/004/005/006/007 (paridade), BR-R03-002/003/004/006 (P7: EM ESTOQUE ex-99 + EM PROCESSO MATR989, totalização), BR-R03-007 (fatos do resumo `PROVEN`; causa poder3 = hipótese `PENDING`), BR-R03-008 (catálogo MTR460), BR-R05-001..008/011/012 (fonte + reconciliação **escopo completo** ao centavo + ponte de drift), **BR-R06-001..010** (kardex UNION SD1/SD2/SD3: fonte+filtros+datas+ordem+REF+custo as_of+cadeia de saldo+população; BR-R06-010 = CPV existente `GET /supplies/cpv` identificado — semântica verificada, `REUSE_PARTIAL` p/ fechamento), **BR-R07-001..003** (INVENT 45/45), BR-R09 (rate), BR-R10/11 (binding), BR-R12-003, SB9 snapshot (recorte) |
+| `AS-IS` | BR-R01-010, BR-R02-002 (exclusões observadas), BR-R03-001, BR-R05-009 (armazéns especiais), R08, R09 (layout), BR-R12-001/002, R15 (execução) |
 | `TO_INVENTORY` | R03 produtor/parâmetros por emissão (E2), BR-R05-010 (SP MAT056 binária), R04 (matr860?), R06/R07 versão RPO implantada (E7), R08 bindings físicos, R09 vínculo DLP204, R10/11 filtros, R13 contrato externo, R14 todo |
 | `TARGET` | E6 opção C (histórico homologado + recalculado corrente; histórico incompleto = tratamento explícito, não zero); divisão de camadas §15; `as_of` obrigatório (BR-R05-008 reforça) |
 | `PENDING` | subconjuntos dos logs (R01/R02), regra geral sem-título e decomposições (R02), `nVlMovFin`≠`E5_VALOR` (R01), parâmetros P7 (R03), paridade `as_of` do saldo R05 + generalização aos demais tipos, passo que grava SB9 (R15), fonte `DLP06R01` (E1) |

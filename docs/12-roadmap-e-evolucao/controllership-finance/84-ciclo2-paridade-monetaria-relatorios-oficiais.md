@@ -312,8 +312,13 @@ artefato do roteamento estrito entrada→SD1/saída→SD2 — todas são
 devoluções `TIPONF='D'` com sinal invertido provadas no fonte;
 paridade de custo efetiva = **100%**. **Residual aberto:** versão RPO +
 parâmetros efetivos das emissões (E7 — TI/ERP); classificação poder3
-`F4_PODER3` no escopo kardex; medida "CPV" agregada
-(`DECISION_REQUIRED`).
+`F4_PODER3` no escopo kardex. A medida "CPV" deixou de ser aberta:
+existe implementada e canônica — `GET /supplies/cpv` (api-delpi,
+`SUM(SD2.D2_CUSTO1)` nos CFOPs de venda 5101/5124/6101/6124 por
+`D2_EMISSAO` — doc 80 §39, rodada 21); reutilização para a evidência de
+fechamento classificada `REUSE_PARTIAL` — lacuna `as_of`/snapshot é
+`DECISION_REQUIRED` do owner (custo corrente sofre revalorização
+posterior).
 
 ## §6 — Gates e métricas resultantes
 
