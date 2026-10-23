@@ -120,3 +120,18 @@ Garantia estrutural: `_unusable_candidate_terminal` lê `getattr(goal, "contract
 - Documentação: este doc, README da trilha, ledger §6.417.
 
 `AUTO_REWORK_USED=NO` · `EXECUTION_DRIFT=NONE` · `COORDINATION_REVIEW_REQUIRED=YES` · `R3_AUTHORIZED=NO` · `PLAN_COMPLETE=NO`
+
+
+## 11. Revisão independente da coordenação — 2026-10-23
+
+**REVIEWED_SHA:** `1f3bc4a640b56610b1ac4ac8907b8d63e5adc5d0`  
+**REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL` para fechamento técnico em escopo local/dev, **não** para fechamento produtivo integral.  
+**NEXT_STAGE_AUTHORIZED:** `NO`; **DEPLOY_AUTHORIZED_BY_THIS_REVIEW:** `NO`.
+
+**Verificação GitHub:** commit da implementação contém quatro arquivos de código/teste (dois DÉLIA, dois DAVI) e documentação. O diff `e6a7f22c41...1f3bc4a640` inclui commits concorrentes: atribuição da task é somente seu commit. O patch endurece a comparação de identidade, descontinua description/prefixo como autoridade de bond, reforça required_arguments apesar de schema inválido e estende aliases governados no owner DAVI. `EXISTING_EQUIVALENT=YES`, `REUSE_DECISION=EXTEND` são coerentes com o escopo. R1/R2 e contrato de seleção semântica permanecem separados.
+
+**Limites de evidência:** `delia-api 2202 passed / 3 skipped`, provas RED→GREEN, A/B DAVI, live dev e eval são **reportados pelo executor**, não reproduzidos independentemente nesta revisão. A suíte `api-delpi` NÃO está verde (13 falhas no blast radius, 74 na execução ampla conforme relato do executor); igualdade com baseline é evidência de não regressão relativa, **não equivale a PASS da suíte**. Exigir matriz explícita de falhas conhecidas por arquivo/teste, comparação baseline vs candidate no mesmo ambiente e revisão de risco do owner antes de promover `api-delpi`. A referência `CLOSED_PROVEN` F01–F06 é **limitada a testes/caracterização/local dev**; outcomes com `kimi-k3`, runtime produtivo e D8-R pós-deploy ainda `TEST_NOT_RUN`.
+
+**F01/F03:** direção arquitetural correta: tokens publicados com match estrito diminuem falso positivo; required_arguments deixa de ser ignorado por schema malformed. Cuidado com renomeação/semântica do owner: ausência de bond deve continuar insuficiência honesta. **F02/F04/F05:** no-change sustentado por caracterização reportada, não por generalização universal. **F06:** alias em allowlist owner, e não no planner DÉLIA, é ownership correto; contudo este release combina `delia-api` e `api-delpi`, logo requer dois artefatos/SHAs e gates de deployment por serviço, sem deploy indireto de mudanças concorrentes no `api-delpi`.
+
+**Decisão de release:** pacote técnico aceito com resíduos controlados para preparar readiness. **Não autorizado deploy por esta revisão**. Antes de produção: (1) inventário e classificação do baseline de falhas `api-delpi` e risco efetivo; (2) evidência de build/image/rollback por serviço e diff de concorrentes; (3) testes de contrato e AuthZ de ambas superfícies; (4) aprovação operacional específica PO para os dois serviços e o SHA exato; (5) homologação produtiva com `kimi-k3` e DAL/DAVI real, medindo D5-R/D5-schema/D8-R e negativos. Não marcar `BUSINESS_OUTCOME=PASS` antes da comprovação; R3 continua bloqueado até decisão separada.
