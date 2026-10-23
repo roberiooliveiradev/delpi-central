@@ -163,3 +163,14 @@ Regressão externa pré-existente: `test_davi_product_master_extensions` (94→9
 
 - `E4` (deployment): deploy dos 3 owners via fluxo canônico local→push→pull, com smoke federado autenticado — **não executado nesta etapa**.
 - Homologação PUT dedicada (autorização PO) → promoção `EDIT_HOMOLOGATED` campo a campo.
+
+
+## 12. Revisão GPT — aceite arquitetural em código (2026-10-23)
+
+**Veredito: `ACCEPT_WITH_RESIDUAL` para E3 em código**, com base em leitura de arquivos no GitHub `8fb120f25a` e relatório do executor. A revisão não reexecutou as suítes nem verificou runtime federado; contagens `122 api-delpi / 438 supplies-api (21 skip) / 370 MFE`, typecheck e build são **PASS reportados pelo Cursor**.
+
+**PROVEN no código revisado:** 29 campos de POST promovidos na api-delpi e na BFF; PUT congelado explicitamente em `PUT_EDITABLE_FIELDS` (22) e `PUT_SUPPLIER_FIELDS` (22); sete remanescentes mantidos apenas no módulo experimental; campos da UI registrados como `put:readonly` e inclusão derivada do registry. Projeção GET na BFF é curada, sem ampliar dados bancários e mantendo a máscara de CPF. A matriz E2 foi reconciliada no P0 documental como 29+4+3.
+
+**Qualificações:** os 22 campos PUT F3.3 continuam contrato/decisão funcional vigente, **não** 22 homologações individuais do upstream (a própria documentação comprova PUT em runtime só para subconjunto). Os 29 campos novos **não podem ser gravados via edição** até homologação PUT específica. GET dos 29 foi constatado pelo executor em fornecedor de homologação, não por smoke de produção E14. Sete/oito referências sem catálogo de seleção (conforme classificação de contrato) ficam como lacuna de UX; não chamar edição plenamente operacional enquanto campos adicionais forem readonly. O valor semântico de alguns enums/labels fiscais deve ser validado pelo owner antes de apresentação como regra definitiva de negócio.
+
+**Decisão de release:** `E3_CODE = ACCEPT_WITH_RESIDUAL`; `E3_RUNTIME = TEST_NOT_RUN`; `E4_DEPLOY = NOT_AUTHORIZED` nesta revisão; `PUT_EXTENDED = NOT_AUTHORIZED`; `ERP_WRITE_GATES = OFF`. Próximo passo é deploy coordenado dos três owners **somente após GO operacional separado**, com verificação de compatibilidade source/consumer, smoke BFF/GET/POST bloqueado, bundle federado, loading/empty/partial/error e regressão E13/E14/S8/S9. A homologação PUT em `DELPI_TST01` deve ser tarefa separada.
