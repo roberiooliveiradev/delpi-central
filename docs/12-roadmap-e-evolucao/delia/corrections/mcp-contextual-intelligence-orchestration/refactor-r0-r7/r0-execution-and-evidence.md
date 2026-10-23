@@ -371,5 +371,13 @@ Colunas: BATCH (M01–M10) · STATUS (KEEP/EXTEND/EXTRACT?/SKIP_WITH_DECISION?/T
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 
-`REVIEW_SHA=PENDING` · `REVIEW_VERDICT=PENDING` · `ACCEPTANCE_REASON=PENDING` · `NEXT_STAGE_AUTHORIZED=NO`.
+**REVIEW_SHA:** `78504ba9906d0c5b3e7c61e3b5c3c9fb38608cf5` (reviewed R0 delivery); **REVIEW_VERDICT:** `ACCEPT_WITH_RESIDUAL`; **NEXT_STAGE_AUTHORIZED:** `NO`.
+
+**Independent GitHub checks:** compare `9a37d1991753c8a93f591dbe7924a336ab5952c4...78504ba9906d0c5b3e7c61e3b5c3c9fb38608cf5` = three commits, exclusively four Markdown paths (doc 132 concurrent + R0 document + README + ledger), zero runtime diff. R0 document provides a 186-symbol M01-M10 inventory, planned dependency DAG, legacy dispositions, R1-R6 conditional file boundaries and AP-01..AP-20 matrix. Doc 132 reports pre-refactor stabilization `ACCEPT_WITH_RESIDUAL` and `ELIGIBLE_FOR_PO_AUTHORIZATION`; R0 report records an explicit PO instruction. These checks support documentary R0 acceptance; they do not independently prove runtime behavior.
+
+**Acceptance reason:** R0 is strictly read-only, retains S4/117 SKIP, Q03/B1 constraints and reuse-before-design gates; no new owner/engine/adapter/module/consumer was introduced. Count of 186 AST definitions and 124 constants, test execution (2165/2165) and production homologation (7/7) are executor-reported; AST and tests were not independently rerun by this reviewer. `PASS_REPORTED` is not reclassified as independent PASS.
+
+**Residuals bounded for next gates:** (1) R1 must independently revalidate baseline SHA/current HEAD, prompt lineage, signatures of consumers and snapshot parity before any extraction; (2) candidate `evidence_projection.py` requires AP-02 and no equivalent before R2; (3) M07 remains SKIP_WITH_DECISION under doc117; (4) `render_specialist_outcome`, `_single_free_text_argument_from_input`, F26/F30/F41/F42 retain their recorded dispositions pending their owner/contract decision; (5) D8-R variance, catalog partial preview and nested PT-BR labels are baseline limitations, not R0 achievements; (6) physical git worktree, production, security/generalization tests and AST/call-DAG have not been independently rerun for this review.
+
+**Authorization:** ACCEPT_WITH_RESIDUAL of R0 does not authorize R1, deploy, cross-app endpoints, Automation Hub implementation, new abstractions or C-phase promotion. `NEXT=EXPLICIT_PO_R1_DECISION` after current HEAD and ledger confirmation.
 
