@@ -142,6 +142,39 @@ from app.application.capability_provision.outcome_assessment import (
     verified_ordering_event,
     parse_answer_requirements,
     parse_temporal_value,
+    MAX_CANDIDATE_ENTRIES,
+    MAX_DESCRIPTION_CHARS,
+    MAX_MISSING_INPUTS,
+    MAX_OWNER_EVIDENCE_CHARS,
+    MAX_OWNER_EVIDENCE_ENTRY_CHARS,
+    MAX_RENDER_LIST_ITEMS,
+    MAX_SURFACE_ENTRIES,
+    MAX_SYNTHESIS_FIELDS,
+    _CAPABILITY_VOCABULARY_KEYS,
+    _CONTROL_PLANE_KEYS,
+    _RESOLVER_ENTITY_KEYS,
+    _RESOLVER_ENVELOPE_KEYS,
+    _UUID_VALUE_RE,
+    _bound_owner_evidence,
+    _canonical_key,
+    _comparable_scalar,
+    _comparison_records,
+    _contract_fact_rows,
+    _entity_payload_slot,
+    _explicit_empty_business_collection,
+    _extract_owner_entity_schemas,
+    _is_generic_status,
+    _mapping_items_excluding_control,
+    _missing_inputs,
+    _prior_supports_typed_attribute_compare,
+    _record_identifier,
+    _redact_text,
+    _resolver_entities,
+    _sanitize_renderable,
+    _synthesis_selections,
+    _unwrap_owner_payload,
+    _value_present,
+    _wording_leaks_technical,
 )
 from app.application.capability_provision.paginated_result_semantics import (
     DEFAULT_MAX_PAGES,
@@ -205,7 +238,6 @@ from app.domain.specialist_interop.rules import (
 
 _logger = logging.getLogger(__name__)
 
-
 # Candidate-flow and proposal-flow detection are structural,
 # owner-defined: a capability whose input schema requires
 # ``candidate_token`` is the second step of an owner
@@ -223,9 +255,7 @@ PROPOSAL_HANDLE_FIELD = "proposal_handle"
 # generic orchestration-control semantics (collapses PREPARE+ACT,
 # bypassing the DÉLIA confirmation gate).
 
-MAX_SURFACE_ENTRIES = 60
 MAX_SURFACE_CHARS = 6000
-MAX_DESCRIPTION_CHARS = 240
 MAX_ARGUMENT_KEYS = 16
 MAX_DISCOVERY_QUERY_CHARS = 400
 MAX_RENDER_CONTENT_CHARS = 2000
@@ -240,10 +270,7 @@ MAX_STRUCTURED_RENDER_CHARS = 2000
 # instruction. ACT is never a semantic plan step: it remains the
 # governed continuation of a valid prepared proposal.
 MAX_OPERATIONAL_PLAN_STEPS = 3
-MAX_OWNER_EVIDENCE_CHARS = 12000
-MAX_OWNER_EVIDENCE_ENTRY_CHARS = 800
 MAX_ARGUMENTS_BLOCK_CHARS = 14000
-MAX_MISSING_INPUTS = 8
 MAX_RESOLVER_CANDIDATE_LABEL_CHARS = 120
 # Catalog INDEX options may exceed resolver ambiguity shortlists.
 # Keep bounded (budget/prompt), but large enough for owner registries.
@@ -351,7 +378,6 @@ _SELECTION_INCONCLUSIVE_CONTENT = (
     "é uma pergunta geral / exemplo hipotético?"
 )
 
-
 def _lineage(
     instruction_id: str,
     content: str,
@@ -371,20 +397,15 @@ CANDIDATE_SELECTION_INSTRUCTION_ID = (
     "delia.capability_orchestration.select_candidate"
 )
 
-MAX_CANDIDATE_ENTRIES = 10
-
-
 def _is_candidate_bound(descriptor: ProviderCapability) -> bool:
     """True when the owner schema declares a candidate_token input."""
     return _requires_field(descriptor, CANDIDATE_TOKEN_FIELD)
-
 
 def _is_proposal_bound(descriptor: ProviderCapability) -> bool:
     """True when the owner schema declares a proposal_handle input —
     the ACT leg of an owner PREPARE->commit chain can never serve as a
     non-mutating resolver step."""
     return _requires_field(descriptor, PROPOSAL_HANDLE_FIELD)
-
 
 def _requires_field(descriptor: ProviderCapability, field: str) -> bool:
     schema = descriptor.input_schema
@@ -396,7 +417,6 @@ def _requires_field(descriptor: ProviderCapability, field: str) -> bool:
     if isinstance(required, (list, tuple)):
         names.update(str(name) for name in required)
     return field in names
-
 
 def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
     """True when a schema node leaves its inner vocabulary owner-defined.
@@ -425,7 +445,6 @@ def _is_open_vocabulary(node: object, depth: int = 0) -> bool:
         ):
             return True
     return False
-
 
 def _is_unconstrained_string(node: object) -> bool:
     """True when a schema node is a free string with no closed enum/const.
@@ -462,7 +481,6 @@ def _is_unconstrained_string(node: object) -> bool:
         return True
     return False
 
-
 def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
     """Detect when argument values live only in the owner's vocabulary.
 
@@ -482,7 +500,6 @@ def _requires_owner_vocabulary(descriptor: ProviderCapability) -> bool:
     if not isinstance(properties, Mapping):
         return False
     return any(_is_open_vocabulary(node) for node in properties.values())
-
 
 def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> bool:
     """True when the untrusted capability description declares that
@@ -519,7 +536,6 @@ def _contract_declares_omit_returns_index(descriptor: ProviderCapability) -> boo
     )
     return omit_signal and index_signal
 
-
 def _optional_unconstrained_string_keys(
     descriptor: ProviderCapability,
 ) -> tuple[str, ...]:
@@ -542,7 +558,6 @@ def _optional_unconstrained_string_keys(
         if _is_unconstrained_string(node):
             keys.append(name)
     return tuple(keys[:MAX_ARGUMENT_KEYS])
-
 
 def _index_catalog_entities(
     structured: object,
@@ -581,7 +596,6 @@ def _index_catalog_entities(
                 if entities:
                     return entities
     return ()
-
 
 def _index_option_rows(
     structured: object,
@@ -660,7 +674,6 @@ def _index_option_rows(
         )
     return tuple(rows[:MAX_INDEX_OPTION_ENTRIES])
 
-
 def _index_declared_identifiers(
     structured: object,
     field_keys: tuple[str, ...],
@@ -671,7 +684,6 @@ def _index_declared_identifiers(
         for row in _index_option_rows(structured, field_keys)
         if row.get("identifier")
     )
-
 
 def _post_self_index_argument_gaps(
     arguments: Mapping[str, Any] | None,
@@ -712,7 +724,6 @@ def _post_self_index_argument_gaps(
         )[:MAX_MISSING_INPUTS]
     return tuple(dict.fromkeys(gaps))[:MAX_MISSING_INPUTS]
 
-
 def _project_selected_index_identifier(
     descriptor: ProviderCapability,
     selected_identifier: str,
@@ -729,7 +740,6 @@ def _project_selected_index_identifier(
         {argument_field: selected_identifier},
         descriptor.input_schema,
     )
-
 
 def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
     """True when a non-mutating capability may legally be invoked empty
@@ -759,7 +769,6 @@ def _eligible_self_index_probe(descriptor: ProviderCapability) -> bool:
         return False
     return bool(_optional_unconstrained_string_keys(descriptor))
 
-
 # SpecialistOperationClass -> canonical OperationCharacter for the
 # shared plan validator. OperationCharacter intentionally models
 # side-effect character only: DISCOVERY, READ and ANALYSIS are all
@@ -774,7 +783,6 @@ _PLAN_OPERATION_CHARACTER: Mapping[SpecialistOperationClass, OperationCharacter]
     SpecialistOperationClass.ACT: OperationCharacter.ACT,
 }
 
-
 @dataclasses.dataclass(frozen=True, slots=True)
 class _PlanCapabilityView:
     """Provider-neutral adapter so the shared plan validator governs
@@ -782,7 +790,6 @@ class _PlanCapabilityView:
 
     capability_id: str
     operation_character: OperationCharacter
-
 
 def _plan_views(group: CapabilityGroup) -> tuple[_PlanCapabilityView, ...]:
     views: list[_PlanCapabilityView] = []
@@ -798,7 +805,6 @@ def _plan_views(group: CapabilityGroup) -> tuple[_PlanCapabilityView, ...]:
         )
     return tuple(views)
 
-
 def _discovery_capability(group: CapabilityGroup) -> ProviderCapability | None:
     """The group's owner-vocabulary source — exactly one live DISCOVERY
     capability is required for it to be usable; ambiguity fails closed."""
@@ -809,9 +815,7 @@ def _discovery_capability(group: CapabilityGroup) -> ProviderCapability | None:
     ]
     return discovery[0] if len(discovery) == 1 else None
 
-
 _MAX_DISCOVERY_SURFACE_LINES = 6
-
 
 def _owner_eligible_action_count(
     structured: Mapping[str, Any] | None,
@@ -832,7 +836,6 @@ def _owner_eligible_action_count(
             return value if value >= 0 else None
     return None
 
-
 def _discovery_empty_result_class(
     structured: Mapping[str, Any] | None,
 ) -> str:
@@ -847,7 +850,6 @@ def _discovery_empty_result_class(
     if eligible == 0:
         return "CAPABILITY_UNAVAILABLE"
     return "CAPABILITY_NOT_ENUMERABLE"
-
 
 def _live_interop_surface_lines(
     group: CapabilityGroup,
@@ -878,7 +880,6 @@ def _live_interop_surface_lines(
         if len(lines) >= _MAX_DISCOVERY_SURFACE_LINES:
             break
     return tuple(lines)
-
 
 def _render_zero_candidate_discovery(
     structured: Mapping[str, Any] | None,
@@ -943,9 +944,7 @@ def _render_zero_candidate_discovery(
         "foi encontrada para este pedido."
     )[:MAX_RENDER_CONTENT_CHARS]
 
-
 _MAX_SURFACE_INQUIRY_GROUPS = 8
-
 
 def _surface_inquiry_content(
     groups: Mapping[str, CapabilityGroup],
@@ -1008,7 +1007,6 @@ def _surface_inquiry_content(
     )
     return "\n".join(parts)[:MAX_RENDER_CONTENT_CHARS]
 
-
 _PATH_FOREIGN_CLASSES = frozenset(
     {
         SpecialistOperationClass.DISCOVERY,
@@ -1016,7 +1014,6 @@ _PATH_FOREIGN_CLASSES = frozenset(
         SpecialistOperationClass.ANALYSIS,
     }
 )
-
 
 def _find_capability(
     groups: Mapping[str, CapabilityGroup],
@@ -1034,34 +1031,6 @@ def _find_capability(
         if cap.capability_id == capability_id
     ]
     return matches[0] if len(matches) == 1 else None
-
-
-def _comparison_records(
-    outcome: SpecialistOutcome,
-) -> tuple[Mapping[str, Any], ...]:
-    """Sanitized renderable records of an owner evidence set."""
-    return tuple(
-        record
-        for record in (
-            _sanitize_renderable(entity)
-            for entity in _resolver_entities(outcome.structured)
-        )
-        if isinstance(record, Mapping)
-    )
-
-
-def _comparable_scalar(value: object) -> str | None:
-    """Normalize a record leaf to a comparable scalar — numbers and
-    strings only; anything else is not comparable."""
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return repr(float(value))
-    if isinstance(value, str):
-        text = value.strip()
-        return text.casefold() if text else None
-    return None
-
 
 # Provenance/transport-only scalar keys — excluded from the shared
 # context gate: differing technical metadata never forces INCONCLUSIVE
@@ -1094,7 +1063,6 @@ _INCONCLUSIVE_INSUFFICIENT = (
 _INCONCLUSIVE_SCOPE = (
     "Comparação inconclusiva: escopo não equivalente entre as fontes."
 )
-
 
 def _compare_records(
     left_records: tuple[Mapping[str, Any], ...],
@@ -1225,45 +1193,8 @@ def _compare_records(
     verdict = "conflict" if conflict else "agreement"
     return verdict, "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
-
-def _bound_owner_evidence(outcome: SpecialistOutcome) -> str:
-    """Sanitized, size-bounded projection of an owner DISCOVERY result.
-
-    The catalog is untrusted owner data: sensitive keys are redacted,
-    it is rendered as data (never instruction), and bounded before
-    reaching the argument prompt. Bounding is breadth-first — every
-    top-level and second-level entry keeps a bounded row so the whole
-    owner vocabulary stays visible; a single deep JSON truncation
-    would silently drop the operations the owner actually declares.
-    """
-    payload = (
-        outcome.structured
-        if isinstance(outcome.structured, Mapping)
-        else outcome.content_text
-    )
-    if isinstance(payload, str):
-        return _redact_text(payload)[:MAX_OWNER_EVIDENCE_CHARS]
-    sanitized = _sanitize_renderable(payload)
-    compacted = _compact_evidence(sanitized)
-    if not isinstance(compacted, Mapping):
-        return json.dumps(
-            compacted, ensure_ascii=False, default=str
-        )[:MAX_OWNER_EVIDENCE_CHARS]
-
-    lines: list[str] = []
-    for key, value in list(compacted.items())[:MAX_SURFACE_ENTRIES]:
-        _evidence_rows(str(key), value, lines, depth=0)
-        if sum(len(line) for line in lines) > MAX_OWNER_EVIDENCE_CHARS:
-            break
-    return "\n".join(lines)[:MAX_OWNER_EVIDENCE_CHARS]
-
-
-_EVIDENCE_DROPPED_KEYS = frozenset({"example", "examples"})
-MAX_EVIDENCE_SCALAR_LIST = 48
 # Bounded owner-published contract rows for DISCOVERY-class outcomes —
 # capability-surface metadata, never domain facts.
-MAX_CONTRACT_FACT_ROWS = 8
-MAX_CONTRACT_FACT_ENTITY_ROWS = 4
 
 # Capability-catalog descriptor collections — vocabulary about how the
 # owner is operated (ops, schemas, guides, hints), never business
@@ -1271,40 +1202,12 @@ MAX_CONTRACT_FACT_ENTITY_ROWS = 4
 # canonical collection names live here; homonymous business field
 # names (``operations``, ``tools``) are handled by descriptor-shape
 # detection or by envelope-context exclusion, never by name alone.
-_CAPABILITY_VOCABULARY_KEYS = frozenset(
-    {
-        "capabilities",
-        "allowedops",
-        "operationschemas",
-        "operationcatalog",
-        "capabilitycatalog",
-        "productguide",
-        "sideeffecthintcatalog",
-        "targetshape",
-        "displayformatcatalog",
-        "catalogversion",
-    }
-)
 
 # Discovery-execution fields at the top level of a discovery payload —
 # transport/orchestration data (the echoed query, counters, the
 # candidate list, envelope status, the owner op-catalog sections).
 # Excluded only at the digest's envelope level: homonymous fields
 # inside entity contracts or business records are preserved.
-_DISCOVERY_ENVELOPE_KEYS = frozenset(
-    {
-        "query",
-        "topk",
-        "candidatecount",
-        "eligibleactioncount",
-        "candidates",
-        "status",
-        "success",
-        "message",
-        "operations",
-        "tools",
-    }
-)
 
 # Capability-descriptor field signatures — an entry carrying a strong
 # vocabulary field (an operation identifier, when-to-use guidance, an
@@ -1312,347 +1215,10 @@ _DISCOVERY_ENVELOPE_KEYS = frozenset(
 # descriptor, not a business record. Weak fields only count in pairs
 # or alongside a strong field, so sparse homonymous business records
 # stay eligible.
-_CAPABILITY_DESCRIPTOR_STRONG_KEYS = frozenset(
-    {
-        "operationid",
-        "whentouse",
-        "inputschema",
-        "requiresplaylist",
-        "sideeffect",
-        "sideeffecthint",
-        "toolname",
-        "toolid",
-    }
-)
-_CAPABILITY_DESCRIPTOR_WEAK_KEYS = frozenset(
-    {"op", "operation", "capability", "capabilitykey"}
-)
-
-
-def _is_capability_descriptor(item: object) -> bool:
-    """True when a mapping is a capability-catalog descriptor.
-
-    Strong vocabulary fields mark an entry outright when the mapping
-    is descriptor-sparse or also carries a weak field; a dense
-    business record whose only overlap is a field named ``op`` or
-    ``operationId`` stays a business record.
-    """
-    if not isinstance(item, Mapping):
-        return False
-    canon = {_canonical_key(key) for key in item}
-    strong = canon & _CAPABILITY_DESCRIPTOR_STRONG_KEYS
-    weak = canon & _CAPABILITY_DESCRIPTOR_WEAK_KEYS
-    if len(weak) >= 2:
-        return True
-    return bool(strong) and (bool(weak) or len(item) <= 4)
-
-
-def _without_control_plane(value: Any) -> Any:
-    """Drop owner control-plane entries from a projected structure.
-
-    ``agent_directives``/``capability_surface`` are orchestration data
-    at any depth — never renderable user content. Recursive on the
-    control-plane set only; business fields with homonymous names
-    are untouched.
-    """
-    if isinstance(value, Mapping):
-        return {
-            key: _without_control_plane(item)
-            for key, item in value.items()
-            if _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        }
-    if isinstance(value, (list, tuple)):
-        return [_without_control_plane(item) for item in value]
-    return value
-
-
-def _contract_fact_rows(outcome: SpecialistOutcome) -> tuple[str, ...]:
-    """Bounded owner-contract digest from a DISCOVERY-class outcome.
-
-    Per-entity contract rows first (the canonical ``entities``
-    collection the owner publishes — field/filter vocabulary), then
-    one bounded row per remaining top-level section. Breadth-first,
-    so a single deep JSON truncation never silently drops the
-    vocabulary the owner actually publishes. Same sanitize/redact/
-    compact pipeline the argument stage consumes; owner contract
-    vocabulary only — control-plane subtrees, capability-catalog
-    descriptors and discovery-transport fields are never projected.
-    """
-    payload = (
-        outcome.structured
-        if isinstance(outcome.structured, Mapping)
-        else outcome.content_text
-    )
-    if isinstance(payload, str):
-        text = payload.strip()
-        # A text-only result may itself be a serialized owner payload;
-        # JSON object bodies take the structured path so the same
-        # exclusions apply instead of line-splitting a raw dump.
-        if text.startswith("{"):
-            try:
-                payload = json.loads(text)
-            except (TypeError, ValueError):
-                payload = text
-        if isinstance(payload, str):
-            redacted = _redact_text(payload)
-            return tuple(
-                line.strip()
-                for line in redacted.splitlines()
-                if line.strip()
-            )[:MAX_CONTRACT_FACT_ROWS]
-    sanitized = _sanitize_renderable(_unwrap_owner_payload(payload))
-    rows: list[str] = []
-    # All entity-contract collections the owner publishes (canonical
-    # keys, depth ≤1) — read and write surfaces can coexist in one
-    # catalog; the read surface (``capability_surface``) wins name
-    # collisions over auxiliary schemas so a write contract is never
-    # presented as the READ vocabulary.
-    entity_schemas: dict[str, Mapping[str, Any]] = {}
-    if isinstance(sanitized, Mapping):
-        nested = [
-            (key, value)
-            for key, value in list(sanitized.items())[
-                :MAX_SURFACE_ENTRIES
-            ]
-            if isinstance(value, Mapping)
-        ]
-        nested.sort(
-            key=lambda kv: _canonical_key(kv[0]) != "capabilitysurface"
-        )
-        sections = [value for _, value in nested] + [sanitized]
-        for section in sections:
-            for key, collection in list(section.items())[
-                :MAX_SURFACE_ENTRIES
-            ]:
-                if _canonical_key(key) not in (
-                    _ENTITY_SCHEMA_COLLECTION_KEYS
-                ):
-                    continue
-                if isinstance(collection, Mapping):
-                    entries: Any = list(collection.items())[
-                        :MAX_SURFACE_ENTRIES
-                    ]
-                elif isinstance(collection, (list, tuple)):
-                    # List-form entity contracts (owner publishes
-                    # {"id": name, ...schema} entries).
-                    entries = (
-                        (
-                            next(
-                                (
-                                    item[fk]
-                                    for fk in ("id", "name", "entity", "key")
-                                    if isinstance(item.get(fk), str)
-                                ),
-                                None,
-                            ),
-                            item,
-                        )
-                        for item in list(collection)[
-                            :MAX_SURFACE_ENTRIES
-                        ]
-                        if isinstance(item, Mapping)
-                    )
-                else:
-                    continue
-                for name, schema in entries:
-                    if (
-                        isinstance(name, str)
-                        and isinstance(schema, Mapping)
-                        and name not in entity_schemas
-                    ):
-                        entity_schemas[name] = schema
-    for name, schema in list(entity_schemas.items())[
-        :MAX_CONTRACT_FACT_ENTITY_ROWS
-    ]:
-        text = json.dumps(
-            _compact_evidence(_without_control_plane(schema)),
-            ensure_ascii=False,
-            default=str,
-        )
-        rows.append(
-            f"entities.{str(name)[:80]}: "
-            f"{text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
-        )
-    compacted = _without_control_plane(_compact_evidence(sanitized))
-    if not isinstance(compacted, Mapping):
-        rows.append(
-            json.dumps(compacted, ensure_ascii=False, default=str)[
-                :MAX_OWNER_EVIDENCE_ENTRY_CHARS
-            ]
-        )
-        return tuple(rows[:MAX_CONTRACT_FACT_ROWS])
-    # Nested sections carry the owner's capability surface; leaf
-    # enumerations remain visible after them within the same bound.
-    items = list(compacted.items())[:MAX_SURFACE_ENTRIES]
-    items.sort(key=lambda kv: not isinstance(kv[1], Mapping))
-    entity_collections = frozenset(
-        _canonical_key(k) for k in _ENTITY_SCHEMA_COLLECTION_KEYS
-    )
-    for key, value in items:
-        if len(rows) >= MAX_CONTRACT_FACT_ROWS:
-            break
-        canon = _canonical_key(key)
-        if (
-            canon in _CONTROL_PLANE_KEYS
-            or canon in _CAPABILITY_VOCABULARY_KEYS
-            or canon in _DISCOVERY_ENVELOPE_KEYS
-            or canon in entity_collections
-        ):
-            continue
-        text = json.dumps(value, ensure_ascii=False, default=str)
-        rows.append(
-            f"{str(key)[:80]}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}"
-        )
-    return tuple(rows)
-
-
-def _compact_evidence(value: Any, depth: int = 0) -> Any:
-    """Deterministic shrink of owner vocabulary before bounding.
-
-    The full catalog must fit the model-input budget, so verbosity is
-    removed while every entry stays visible: mappings keep all keys,
-    strings are capped, deep lists collapse to a count, and ``example``
-    placeholders (owner data the instruction already forbids copying
-    verbatim) are dropped entirely.
-    """
-    if isinstance(value, Mapping):
-        return {
-            str(k)[:80]: _compact_evidence(v, depth + 1)
-            for k, v in list(value.items())[:MAX_SURFACE_ENTRIES]
-            if str(k) not in _EVIDENCE_DROPPED_KEYS
-        }
-    if isinstance(value, (list, tuple)):
-        items = list(value)
-        # Bounded scalar lists are semantic vocabulary (enums, field
-        # names, required flags) — collapsing them to a count would
-        # erase the owner-declared values the model needs to build a
-        # valid operation. Structured/deep collections still collapse.
-        if all(
-            not isinstance(item, (Mapping, list, tuple))
-            for item in items
-        ) and len(items) <= MAX_EVIDENCE_SCALAR_LIST:
-            return [
-                _compact_evidence(item, depth + 1) for item in items
-            ]
-        if depth >= 3:
-            return f"<{len(items)} items>"
-        return [
-            _compact_evidence(item, depth + 1)
-            for item in items[:MAX_SURFACE_ENTRIES]
-        ]
-    if isinstance(value, str):
-        return value[:MAX_DESCRIPTION_CHARS]
-    return value
-
-
-def _evidence_rows(
-    key: str, value: Any, lines: list[str], *, depth: int
-) -> None:
-    """Flatten mapping/list-of-entries into per-entry bounded rows.
-
-    Large collections fan out so every vocabulary entry keeps a row;
-    small or scalar values render inline bounded by the entry cap.
-    """
-    if isinstance(value, Mapping) and depth < 2 and len(value) > 4:
-        children = list(value.items())[:MAX_SURFACE_ENTRIES]
-        # The owner operation vocabulary is the primary semantic
-        # contract for argument construction — render it ahead of
-        # descriptive keys so a budget cut drops prose, never ops.
-        children.sort(key=lambda kv: str(kv[0]) != "operations")
-        for child_key, child in children:
-            _evidence_rows(
-                f"{key}.{child_key}", child, lines, depth=depth + 1
-            )
-        return
-    if isinstance(value, (list, tuple)) and depth < 2 and len(value) > 4:
-        for index, child in enumerate(list(value)[:MAX_SURFACE_ENTRIES]):
-            _evidence_rows(
-                f"{key}[{index}]", child, lines, depth=depth + 1
-            )
-        return
-    text = json.dumps(value, ensure_ascii=False, default=str)
-    lines.append(f"{key}: {text[:MAX_OWNER_EVIDENCE_ENTRY_CHARS]}")
-
-
-def _missing_inputs(raw: object) -> tuple[str, ...]:
-    """Bounded projection of model-declared missing owner inputs —
-    short names only, never values or instructions."""
-    if not isinstance(raw, (list, tuple)):
-        return ()
-    return tuple(
-        str(item).strip()[:80]
-        for item in list(raw)[:MAX_MISSING_INPUTS]
-        if str(item).strip()
-    )
-
 
 # Owner-published entity contracts (catalog DISCOVERY). Untrusted data
 # used only for structural completeness against nested payloads — never
 # Domain business rules, never AuthZ, never invented defaults.
-_ENTITY_SCHEMA_COLLECTION_KEYS = (
-    "entity_schemas",
-    "entityschemas",
-    "entities",
-)
-_ENTITY_PAYLOAD_KEYS = ("changes", "payload", "body", "record")
-
-
-def _extract_owner_entity_schemas(
-    structured: object,
-) -> Mapping[str, Mapping[str, Any]]:
-    """Bounded map of entity_id → owner-published schema fragment."""
-    doc = _unwrap_owner_payload(structured)
-    if not isinstance(doc, Mapping):
-        return {}
-    collection: object = None
-    for key, value in doc.items():
-        if _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS:
-            collection = value
-            break
-    if collection is None:
-        for value in list(doc.values())[:MAX_SURFACE_ENTRIES]:
-            if isinstance(value, Mapping):
-                for key, inner in value.items():
-                    if _canonical_key(key) in _ENTITY_SCHEMA_COLLECTION_KEYS:
-                        collection = inner
-                        break
-            if collection is not None:
-                break
-    if not isinstance(collection, Mapping):
-        return {}
-    out: dict[str, Mapping[str, Any]] = {}
-    for name, schema in list(collection.items())[:MAX_SURFACE_ENTRIES]:
-        if isinstance(name, str) and isinstance(schema, Mapping):
-            out[name] = schema
-    return out
-
-
-def _entity_payload_slot(
-    arguments: Mapping[str, Any],
-) -> tuple[str | None, str | None, Mapping[str, Any] | None]:
-    """Return (entity_id, payload_field, payload_mapping) when present."""
-    entity = arguments.get("entity")
-    entity_id = (
-        str(entity).strip()
-        if isinstance(entity, (str, int, float)) and str(entity).strip()
-        else None
-    )
-    for key in _ENTITY_PAYLOAD_KEYS:
-        raw = arguments.get(key)
-        if isinstance(raw, Mapping):
-            return entity_id, key, raw
-    return entity_id, None, None
-
-
-def _value_present(value: object) -> bool:
-    if value is None:
-        return False
-    if isinstance(value, str) and not value.strip():
-        return False
-    if isinstance(value, Mapping) and not value:
-        return False
-    return True
-
 
 def _schema_required_gaps(
     value: object,
@@ -1716,7 +1282,6 @@ def _schema_required_gaps(
             )
     return gaps[:MAX_MISSING_INPUTS]
 
-
 def _apply_owner_declared_defaults(
     payload: Mapping[str, Any],
     entity_schema: Mapping[str, Any],
@@ -1730,7 +1295,6 @@ def _apply_owner_declared_defaults(
         if isinstance(key, str) and key not in out:
             out[key] = value
     return out
-
 
 def _owner_entity_completeness_gaps(
     arguments: Mapping[str, Any],
@@ -1781,7 +1345,6 @@ def _owner_entity_completeness_gaps(
     ]
     return tuple(gaps[:MAX_MISSING_INPUTS])
 
-
 def _apply_entity_defaults_to_arguments(
     arguments: dict[str, Any],
     discovery_structured: Mapping[str, Any] | None,
@@ -1803,7 +1366,6 @@ def _apply_entity_defaults_to_arguments(
     out[payload_key] = filled
     return out
 
-
 def _argument_completeness_gaps(
     arguments: Mapping[str, Any] | None,
     descriptor: ProviderCapability,
@@ -1824,7 +1386,6 @@ def _argument_completeness_gaps(
         arguments, discovery_structured
     )
 
-
 # --- user-facing wording gates (C3-INTELLIGENCE-LOOP-01) ---------------
 #
 # Internal missing-input names are internal metadata, never user copy.
@@ -1832,29 +1393,10 @@ def _argument_completeness_gaps(
 # may reach the user surface: no snake_case internals, no provider
 # mechanics, no handles/tokens, no authority or execution claims.
 
-_TECHNICAL_LEAK_MARKERS = (
-    "proposal_handle",
-    "candidate_token",
-    "idempotency",
-    "owner_vocabulary",
-    "bearer ",
-    "tools/list",
-    "endpoint",
-    "http://",
-    "https://",
-    "json",
-    "schema",
-    "mcp",
-)
-
-_SNAKE_CASE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+")
-
 # Evidence-bound synthesis bounds (§6.144/§6.145): the model proposes
 # record selection only — there is no model-authored prose channel;
 # factual leaf values are always copied verbatim by the runtime from
 # sanitized owner evidence.
-MAX_SYNTHESIS_ITEMS = 24
-MAX_SYNTHESIS_FIELDS = 6
 # Prior-turn continuity: deterministic excerpts for synthesis reuse
 # (Stage 05 semantic continuity — never a literal full-result copy).
 MAX_PRIOR_EXCERPTS = 12
@@ -1877,18 +1419,6 @@ _REPAIRABLE_SURFACE_CODES = frozenset(
 # consults the group's DISCOVERY vocabulary and re-proposes
 # arguments under the real owner contract (C3 contextual discovery).
 _OWNER_REMOTE_ERROR_CODES = frozenset({MCP_PROTOCOL_ERROR})
-
-
-def _wording_leaks_technical(text: str) -> bool:
-    """True when a user-facing string exposes provider/internal
-    mechanics — deterministic gate, not a blacklist-only defense."""
-    lowered = text.lower()
-    if any(marker in lowered for marker in _TECHNICAL_LEAK_MARKERS):
-        return True
-    if _SNAKE_CASE_TOKEN_RE.search(text):
-        return True
-    return any(ch in text for ch in "{}[]<>`")
-
 
 def _clarification_content(
     missing_inputs: tuple[str, ...],
@@ -1915,69 +1445,6 @@ def _clarification_content(
         "Preciso de mais uma informação para continuar. "
         "Qual item ou informação você quer usar?"
     )[:MAX_RENDER_CONTENT_CHARS]
-
-
-def _synthesis_selections(
-    proposal: Mapping[str, Any],
-    records: tuple[Mapping[str, Any], ...],
-) -> tuple[
-    list[tuple[Mapping[str, Any], list[tuple[str, str]]]] | None,
-    str,
-]:
-    """Selection-only parse of a synthesis proposal.
-
-    Returns the selected scalar leaves copied from ``records``, or
-    ``(None, reason)``. This is the typed input of a comparison; the
-    rendered sentence is not.
-    """
-    items = proposal.get("items")
-    # Adapter historically told models "plain string" values; a JSON
-    # array encoded as a string is recovered once, never invented.
-    if isinstance(items, str):
-        try:
-            items = json.loads(items)
-        except ValueError:
-            return None, "schema_invalid"
-    if not isinstance(items, (list, tuple)):
-        return None, "schema_invalid"
-    if not items:
-        return None, "empty_selection"
-    selections: list[
-        tuple[Mapping[str, Any], list[tuple[str, str]]]
-    ] = []
-    for item in list(items)[:MAX_SYNTHESIS_ITEMS]:
-        if not isinstance(item, Mapping):
-            return None, "schema_invalid"
-        index = item.get("record_index")
-        fields = item.get("fields")
-        if (
-            not isinstance(index, int)
-            or isinstance(index, bool)
-            or not 0 <= index < len(records)
-        ):
-            return None, "invalid_record_index"
-        if not isinstance(fields, (list, tuple)) or not fields:
-            return None, "empty_selection"
-        record = records[index]
-        values: list[tuple[str, str]] = []
-        for field_name in list(fields)[:MAX_SYNTHESIS_FIELDS]:
-            if not isinstance(field_name, str) or field_name not in record:
-                return None, "invalid_field"
-            value = record[field_name]
-            # An unrenderable leaf (null, object, list or redacted
-            # empty) never fails the whole selection — it is skipped;
-            # only verbatim scalar owner values reach the user.
-            if isinstance(value, (Mapping, list, tuple)) or value is None:
-                continue
-            rendered_value = _redact_text(str(value).strip())
-            if rendered_value:
-                values.append((field_name, rendered_value))
-        if values:
-            selections.append((record, values))
-    if not selections:
-        return None, "empty_selection"
-    return selections, "ok"
-
 
 def _render_synthesis(
     proposal: Mapping[str, Any],
@@ -2068,7 +1535,6 @@ def _render_synthesis(
         "rendered",
     )
 
-
 def _proven_field_differences(
     left_values: list[tuple[str, str]],
     right_values: list[tuple[str, str]],
@@ -2095,7 +1561,6 @@ def _proven_field_differences(
         lines.append(f"- {label}: {left_value} → {right_value}")
     return lines[:MAX_SYNTHESIS_FIELDS]
 
-
 def _selected_proven_differences(
     proposal: Mapping[str, Any] | None,
     records: tuple[Mapping[str, Any], ...],
@@ -2117,7 +1582,6 @@ def _selected_proven_differences(
         selections[0][1], selections[1][1], field_labels=field_labels
     )
 
-
 _INSUFFICIENCY_CONTENT = (
     "Com as evidências disponíveis não consigo responder a esse "
     "pedido de forma fundamentada. O que a fonte retornou não "
@@ -2125,15 +1589,12 @@ _INSUFFICIENCY_CONTENT = (
     "a resposta."
 )
 
-
 def _insufficiency_content() -> str:
     """Bounded honest limitation when synthesis selects no evidence."""
     return _INSUFFICIENCY_CONTENT[:MAX_RENDER_CONTENT_CHARS]
 
-
 def _is_prior_list_item(line: str) -> bool:
     return bool(re.match(r"^\s*(?:[-*]|\d+[.)])\s+\S", line))
-
 
 def _prior_paragraph_units(paragraph: str) -> list[str]:
     """Split one prior paragraph into selectable units.
@@ -2179,7 +1640,6 @@ def _prior_paragraph_units(paragraph: str) -> list[str]:
                 units.append(cleaned[:MAX_DESCRIPTION_CHARS])
     return units
 
-
 def _prior_excerpt_records(
     content: str,
 ) -> tuple[Mapping[str, str], ...]:
@@ -2209,7 +1669,6 @@ def _prior_excerpt_records(
         {"excerpt": unit} for unit in units[:MAX_PRIOR_EXCERPTS]
     )
 
-
 def _prior_transform_probe_eligible(
     input_text: str,
     goal: "OperationalCapabilityOrchestrator._TurnGoal",
@@ -2231,82 +1690,19 @@ def _prior_transform_probe_eligible(
         or goal.goal_class in {"compare", "analyze"}
     )
 
-
 # Closed presentation vocabulary for the synthesis contract — a
 # bounded hint, never prose; anything outside it is derived
 # deterministically by the runtime.
 _PRESENTATION_INTENTS = frozenset({"answer", "list", "detail"})
 
-_IDENTIFIER_KEYS = frozenset(
-    {
-        "id",
-        "code",
-        "codigo",
-        "sku",
-        "ref",
-        "reference",
-        "referencia",
-        "numero",
-        "number",
-        "ean",
-        "gtin",
-    }
-)
-
 # Loose identifier candidates are business codes first — a field whose
 # canonical name *starts* with a code/number family is as anchorable
 # as a suffixed one (``codigo_processo``, ``numero_serie``,
 # ``code_product``).
-_IDENTIFIER_PREFIXES = ("codigo", "code", "numero", "number")
-
-
 
 # A UUID-valued identifier is a surrogate key — acceptable verbatim
 # evidence, but a poor conversational subject when a human-readable
 # business code exists in the same record.
-_UUID_VALUE_RE = re.compile(
-    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
-    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-)
-
-
-def _record_identifier(
-    record: Mapping[str, Any],
-) -> tuple[str, str] | None:
-    """The record's own identifier field — verbatim evidence used only
-    to anchor the subject of a focused answer, never rendered as a
-    clause of its own unless it is the selected field itself.
-
-    Selection ranks a human-readable business code above a surrogate
-    UUID: exact identifier keys first, then prefixed/suffixed code
-    candidates — and inside each tier a non-UUID value wins; a UUID
-    still anchors when nothing better exists.
-    """
-    scalars = [
-        (key, str(value).strip())
-        for key, value in record.items()
-        if isinstance(value, (str, int, float))
-        and not isinstance(value, bool)
-        and str(value).strip()
-    ]
-    for prefer_readable in (True, False):
-        for key, text in scalars:
-            if _canonical_key(key) in _IDENTIFIER_KEYS and (
-                not prefer_readable or not _UUID_VALUE_RE.match(text)
-            ):
-                return str(key), _redact_text(text)
-        for key, text in scalars:
-            canon = _canonical_key(key)
-            if canon not in _IDENTIFIER_KEYS and (
-                canon.endswith("id")
-                or canon.endswith("code")
-                or canon.startswith(_IDENTIFIER_PREFIXES)
-            ) and (
-                not prefer_readable or not _UUID_VALUE_RE.match(text)
-            ):
-                return str(key), _redact_text(text)
-    return None
-
 
 def _compose_answer(
     record: Mapping[str, Any],
@@ -2356,7 +1752,6 @@ def _compose_answer(
         sentence += "; " + "; ".join(rest)
     return sentence[:1].upper() + sentence[1:] + "."
 
-
 def _detail_header(record: Mapping[str, Any]) -> str:
     identifier = _record_identifier(record)
     if identifier:
@@ -2368,7 +1763,6 @@ def _detail_header(record: Mapping[str, Any]) -> str:
     ):
         return "Trechos anteriores:"
     return "Detalhes do registro:"
-
 
 def _detail_lines(
     values: list[tuple[str, str]],
@@ -2392,7 +1786,6 @@ def _detail_lines(
         lines.append(f"- {label}: {value}")
     return lines
 
-
 def _records_are_prior_excerpts(
     records: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
 ) -> bool:
@@ -2407,7 +1800,6 @@ def _records_are_prior_excerpts(
         )
         for record in records
     )
-
 
 def _list_header(
     count: int,
@@ -2430,7 +1822,6 @@ def _list_header(
         )
     noun = "registros" if count != 1 else "registro"
     return f"Encontrei {count} {noun}:"
-
 
 def _project_paginated_personal_or_count(
     input_text: str,
@@ -2487,23 +1878,12 @@ def _project_paginated_personal_or_count(
 
     return None
 
-
 # Generic resolver-step helpers (§6.140): a RESOLVER is a role, never
 # a tool class — any non-mutating same-owner capability whose result
 # may supply evidence for a missing target input. All owner data is
 # sanitized/bounded; resolved values must provably occur in the owner
 # result, and multiple plausible entities produce a bounded
 # clarification — never a silent selection.
-_RESOLVER_ENTITY_KEYS = (
-    "candidates",
-    "items",
-    "results",
-    "records",
-    "entries",
-    "matches",
-    "topics",
-)
-_RESOLVER_ENVELOPE_KEYS = ("data", "result", "payload", "response")
 _RESOLVER_LABEL_KEYS = (
     "name",
     "title",
@@ -2516,71 +1896,9 @@ _RESOLVER_LABEL_KEYS = (
     "code",
 )
 
-
-def _unwrap_owner_payload(node: object, depth: int = 0) -> object:
-    """Unwrap neutral transport envelopes one level at a time."""
-    if depth >= 2 or not isinstance(node, Mapping):
-        return node
-    inner = next(
-        (
-            node[key]
-            for key in _RESOLVER_ENVELOPE_KEYS
-            if isinstance(node.get(key), (Mapping, list, tuple))
-        ),
-        None,
-    )
-    return _unwrap_owner_payload(inner, depth + 1) if inner else node
-
-
-def _resolver_entities(structured: object) -> tuple[Mapping[str, Any], ...]:
-    """Bounded candidate entities inside an owner resolver result.
-
-    Shape-agnostic: preferred collection keys first, then the first
-    list-of-mappings at bounded depth. Entities carry owner evidence —
-    never instructions.
-    """
-    doc = _unwrap_owner_payload(structured)
-    if not isinstance(doc, Mapping):
-        return ()
-
-    def _mappings(value: object) -> tuple[Mapping[str, Any], ...]:
-        if not isinstance(value, (list, tuple)):
-            return ()
-        # Capability-catalog descriptors are never owner entities —
-        # filtered by descriptor shape, not collection position, so
-        # homonymous business fields keep their records eligible.
-        return tuple(
-            item
-            for item in list(value)[:MAX_CANDIDATE_ENTRIES]
-            if isinstance(item, Mapping)
-            and not _is_capability_descriptor(item)
-        )
-
-    for key in _RESOLVER_ENTITY_KEYS:
-        entities = _mappings(doc.get(key))
-        if entities:
-            return entities
-    for key, value in list(doc.items())[:MAX_SURFACE_ENTRIES]:
-        if _canonical_key(key) in _CAPABILITY_VOCABULARY_KEYS:
-            continue
-        if isinstance(value, (list, tuple)):
-            entities = _mappings(value)
-            if entities:
-                return entities
-        elif isinstance(value, Mapping):
-            for key in _RESOLVER_ENTITY_KEYS:
-                entities = _mappings(value.get(key))
-                if entities:
-                    return entities
-    return ()
-
-
 # Owner control-plane metadata — orchestration data, never business
 # evidence: structurally excluded from synthesis records and from the
 # deterministic user-facing projection.
-_CONTROL_PLANE_KEYS = frozenset(
-    {"agentdirectives", "capabilitysurface"}
-)
 
 # Provider-neutral guidance section families (I02). Canonical keys only
 # — never specialist/product names. Used to project selectable records
@@ -2737,7 +2055,6 @@ _GUIDANCE_FAMILY_ORDER: tuple[str, ...] = (
     "limitations",
 )
 
-
 def _guidance_family_for_key(key: object) -> str | None:
     canon = _canonical_key(key)
     if not canon or canon in _CONTROL_PLANE_KEYS:
@@ -2750,7 +2067,6 @@ def _guidance_family_for_key(key: object) -> str | None:
         ):
             return family
     return None
-
 
 # Technical structure keys inside an owner guidance section — schema
 # and registry revisions, capability pointers, content-type markers.
@@ -2781,7 +2097,6 @@ _GUIDANCE_INDEX_PREVIEW_CHARS = MAX_DESCRIPTION_CHARS * 2
 # retry, still a plain owner READ, never a fabricated identifier.
 MAX_DISCOVERY_CONTEXT_TURNS = 4
 MAX_DISCOVERY_CONTEXT_EXCERPT_CHARS = 120
-
 
 def _render_guidance_value(
     value: object,
@@ -2821,24 +2136,12 @@ def _render_guidance_value(
     text = _redact_text(str(value).strip())
     return text
 
-
-def _mapping_items_excluding_control(
-    node: Mapping[str, Any],
-) -> tuple[tuple[str, object], ...]:
-    return tuple(
-        (str(k), v)
-        for k, v in node.items()
-        if _canonical_key(k) not in _CONTROL_PLANE_KEYS
-    )
-
-
 def _guidance_hit_count(items: tuple[tuple[str, object], ...]) -> int:
     return sum(
         1
         for key, _ in items
         if (_guidance_family_for_key(key) or "meta") != "meta"
     )
-
 
 def _iter_guidance_doc_items(
     structured: object,
@@ -2878,7 +2181,6 @@ def _iter_guidance_doc_items(
         if _guidance_hit_count(nested) >= 2:
             return nested
     return items
-
 
 def _guidance_section_records(
     structured: object,
@@ -2936,7 +2238,6 @@ def _guidance_section_records(
         return ()
     return tuple(records)
 
-
 def _omitted_sections_line(names: list[str], max_chars: int) -> str:
     """Disclose omitted guidance section names without their bodies."""
     if not names or max_chars < 24:
@@ -2958,7 +2259,6 @@ def _omitted_sections_line(names: list[str], max_chars: int) -> str:
         if len(text) + len(suffix) <= max_chars:
             text += suffix
     return text
-
 
 def _pack_guidance_sections(
     blocks: list[tuple[str, str]],
@@ -3014,7 +2314,6 @@ def _pack_guidance_sections(
         body = body[:max_chars].rstrip()
     return body, tuple(item for item, _block in blocks)
 
-
 def _deterministic_guidance_content(
     structured: object,
     *,
@@ -3057,69 +2356,8 @@ def _deterministic_guidance_content(
         limitations.append(LIMITATION_RESULT_TRUNCATED)
     return body, tuple(limitations)
 
-
 # Pagination/control-plane scalar keys — presence of these never
 # disqualifies an explicitly empty business collection.
-_ENVELOPE_SCALAR_KEYS = frozenset(
-    {
-        "total",
-        "totalcount",
-        "count",
-        "page",
-        "pages",
-        "pagesize",
-        "hasmore",
-        "limit",
-        "offset",
-        "cursor",
-        "nextcursor",
-    }
-)
-
-
-def _explicit_empty_business_collection(structured: object) -> bool:
-    """Proven-empty business collection in a non-paginated payload.
-
-    A list-shaped business payload that is empty is a definitive empty
-    result — never inferred from scalars alone. Control-plane and
-    envelope keys are excluded from the judgment; a mapping of only
-    scalars is a record/envelope, not an empty collection.
-    """
-    doc = _unwrap_owner_payload(structured)
-    if isinstance(doc, (list, tuple)):
-        return not doc
-    if not isinstance(doc, Mapping):
-        return False
-    collections = [
-        value
-        for key, value in doc.items()
-        if isinstance(value, (list, tuple))
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
-    ]
-    scalars = [
-        value
-        for key, value in doc.items()
-        if not isinstance(value, (Mapping, list, tuple))
-        and value is not None
-        and str(value).strip()
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _ENVELOPE_SCALAR_KEYS
-    ]
-    mappings = [
-        key
-        for key, value in doc.items()
-        if isinstance(value, Mapping)
-        and _canonical_key(key) not in _CONTROL_PLANE_KEYS
-        and _canonical_key(key) not in _RESOLVER_ENVELOPE_KEYS
-    ]
-    return (
-        bool(collections)
-        and all(len(value) == 0 for value in collections)
-        and not scalars
-        and not mappings
-    )
-
 
 def _synthesis_records(
     structured: object,
@@ -3177,7 +2415,6 @@ def _synthesis_records(
         return (doc,)
     return ()
 
-
 def _entity_identifier(
     entity: Mapping[str, Any], missing_inputs: tuple[str, ...]
 ) -> str | None:
@@ -3204,7 +2441,6 @@ def _entity_identifier(
             return str(value).strip()
     return None
 
-
 def _resolver_ambiguous(
     entities: tuple[Mapping[str, Any], ...],
     missing_inputs: tuple[str, ...],
@@ -3222,7 +2458,6 @@ def _resolver_ambiguous(
     }
     identifiers.discard(None)
     return len(identifiers) != 1
-
 
 def _prior_observation_context(
     prior_turns: tuple[ConversationContextTurn, ...],
@@ -3248,7 +2483,6 @@ def _prior_observation_context(
         "authoritative": False,
         "untrusted_excerpt": content[:MAX_OWNER_EVIDENCE_ENTRY_CHARS],
     }
-
 
 def _context_folded_discovery_query(
     input_text: str,
@@ -3279,7 +2513,6 @@ def _context_folded_discovery_query(
         return None
     return folded[:MAX_DISCOVERY_QUERY_CHARS]
 
-
 def _fill_missing_from_entity(
     descriptor: ProviderCapability,
     missing_inputs: tuple[str, ...],
@@ -3309,7 +2542,6 @@ def _fill_missing_from_entity(
         return None
     validated = _validate_instance(filled, descriptor.input_schema)
     return validated
-
 
 def _candidate_clarification_content(
     entities: tuple[Mapping[str, Any], ...],
@@ -3357,7 +2589,6 @@ def _candidate_clarification_content(
     lines.append("Qual deles você quer usar?")
     return "\n".join(lines)[:MAX_RENDER_CONTENT_CHARS]
 
-
 def _resolved_values_proven(
     arguments: Mapping[str, Any],
     missing_inputs: tuple[str, ...],
@@ -3377,7 +2608,6 @@ def _resolved_values_proven(
             if str(value) not in serialized:
                 return False
     return True
-
 
 def _schema_declared_literals(descriptor: ProviderCapability) -> str:
     """Bounded serialization of owner-declared literal values
@@ -3409,7 +2639,6 @@ def _schema_declared_literals(descriptor: ProviderCapability) -> str:
     return json.dumps(literals, ensure_ascii=False, default=str)[
         :MAX_ARGUMENTS_BLOCK_CHARS
     ]
-
 
 def _unproven_identifier_inputs(
     arguments: Mapping[str, Any],
@@ -3461,11 +2690,9 @@ def _unproven_identifier_inputs(
             unproven.append(str(key))
     return tuple(unproven[:MAX_MISSING_INPUTS])
 
-
 CONFIRMATION_POLICY_DIRECT = "direct"
 CONFIRMATION_POLICY_CONFIRM = "explicit_confirmation_required"
 CONFIRMATION_POLICY_INVALID = "owner_policy_invalid"
-
 
 def _effective_confirmation_policy(
     preview: WriteProposalPreview,
@@ -3498,7 +2725,6 @@ def _effective_confirmation_policy(
         # contradictory owner contract — fail closed below.
     return CONFIRMATION_POLICY_INVALID
 
-
 def _schema_keys(
     descriptor: ProviderCapability,
 ) -> tuple[frozenset[str], frozenset[str]]:
@@ -3521,7 +2747,6 @@ def _schema_keys(
         else frozenset(),
     )
 
-
 def _property_node(
     schema: Mapping[str, Any] | None, key: str
 ) -> Mapping[str, Any] | None:
@@ -3532,7 +2757,6 @@ def _property_node(
         return None
     node = properties.get(key)
     return node if isinstance(node, Mapping) else None
-
 
 def _sole_unconstrained_string_field(
     descriptor: ProviderCapability,
@@ -3558,7 +2782,6 @@ def _sole_unconstrained_string_field(
         return None
     return field
 
-
 def _single_free_text_argument_from_input(
     input_text: str,
     descriptor: ProviderCapability,
@@ -3576,7 +2799,6 @@ def _single_free_text_argument_from_input(
         return None
     candidate = {field: text[:MAX_DESCRIPTION_CHARS]}
     return _validate_instance(candidate, descriptor.input_schema)
-
 
 def _deterministic_arguments_from_schema(
     descriptor: ProviderCapability,
@@ -3627,7 +2849,6 @@ def _deterministic_arguments_from_schema(
             return None
     return arguments
 
-
 def _index_selection_is_member(
     selected: str,
     options: tuple[Mapping[str, str], ...],
@@ -3641,40 +2862,6 @@ def _index_selection_is_member(
     return any(
         str(row.get("identifier") or "") == selected for row in options
     )
-
-
-def _prior_supports_typed_attribute_compare(
-    records: tuple[Mapping[str, Any], ...],
-) -> bool:
-    """True when ≥2 prior records share non-excerpt scalar fields.
-
-    Prior DELIA_RESULT text split by ``_prior_excerpt_records`` yields
-    only ``excerpt`` leaves — untrusted conversational data, never
-    typed owner attributes. Positional string splits are not
-    comparability. A compare task may succeed on this path only when
-    records already expose shared named scalars under the frozen
-    selection-only contract (same grain as ``_proven_field_differences``).
-    """
-    if len(records) < 2:
-        return False
-    field_sets: list[set[str]] = []
-    for record in records:
-        fields = {
-            _canonical_key(key)
-            for key, value in record.items()
-            if _canonical_key(key) != "excerpt"
-            and value is not None
-            and not isinstance(value, (Mapping, list, tuple))
-            and str(value).strip()
-        }
-        if not fields:
-            return False
-        field_sets.append(fields)
-    shared = set(field_sets[0])
-    for other in field_sets[1:]:
-        shared &= other
-    return bool(shared)
-
 
 def _compare_insufficiency_attempt(
     correlation: str,
@@ -3698,7 +2885,6 @@ def _compare_insufficiency_attempt(
         ),
     )
 
-
 def _project_surface(
     groups: Mapping[str, CapabilityGroup],
 ) -> list[tuple[str, ProviderCapability]]:
@@ -3718,7 +2904,6 @@ def _project_surface(
                 continue
             surface.append((group_key, capability))
     return surface[:MAX_SURFACE_ENTRIES]
-
 
 def _resolve_live_group_key(
     proposed: str,
@@ -3742,7 +2927,6 @@ def _resolve_live_group_key(
     if len(matches) == 1:
         return matches[0]
     return None
-
 
 def _group_summaries(
     groups: Mapping[str, CapabilityGroup],
@@ -3816,7 +3000,6 @@ def _group_summaries(
         default=str,
     )[:MAX_SURFACE_CHARS]
 
-
 def _capability_payload(
     group: CapabilityGroup,
     *,
@@ -3863,157 +3046,22 @@ def _capability_payload(
             break
     return payload[:MAX_SURFACE_CHARS]
 
-
-MAX_RENDER_LIST_ITEMS = 50
-REDACTION_MARKER = "[REDACTED]"
-
 # Canonical sensitive credential concepts. Keys are normalized
 # (lowercase, separators stripped) before comparison so snake_case,
 # kebab-case, camelCase, PascalCase and spaced variants all match.
 # Canonical exact names only — substring matching would produce false
 # positives on legitimate fields such as token_count or
 # authorization_status.
-_SENSITIVE_KEY_NAMES = frozenset(
-    {
-        "token",
-        "candidatetoken",
-        "handle",
-        "proposalhandle",
-        "proposalref",
-        "accesstoken",
-        "refreshtoken",
-        "idtoken",
-        "bearertoken",
-        "sessiontoken",
-        "clientsecret",
-        "authorization",
-        "password",
-        "passwd",
-        "apikey",
-        "privatekey",
-        "credential",
-        "credentials",
-        "cookie",
-        "setcookie",
-    }
-)
-
-
-def _canonical_key(name: object) -> str:
-    return re.sub(r"[^a-z0-9]", "", str(name).lower())
-
-
-def _is_sensitive_key(name: object) -> bool:
-    return _canonical_key(name) in _SENSITIVE_KEY_NAMES
-
 
 # Deterministic text redaction for untrusted owner content_text.
 # Ordered: PEM blocks first, then header lines, bearer material,
 # named credential assignments, JWT-shaped values last.
-_TEXT_REDACTIONS = (
-    (
-        re.compile(
-            r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?"
-            r"-----END [A-Z0-9 ]*PRIVATE KEY-----",
-            re.IGNORECASE | re.DOTALL,
-        ),
-        REDACTION_MARKER,
-    ),
-    (
-        re.compile(r"\bBearer\s+\S+", re.IGNORECASE),
-        "Bearer " + REDACTION_MARKER,
-    ),
-    (
-        re.compile(
-            r"(\b(?:authorization|cookie|set-cookie)\s*[:=])\s*"
-            r"[^\r\n]+",
-            re.IGNORECASE,
-        ),
-        lambda m: m.group(1) + " " + REDACTION_MARKER,
-    ),
-    (
-        re.compile(
-            r"(\b(?:access[-_ ]?token|refresh[-_ ]?token|id[-_ ]?token|"
-            r"client[-_ ]?secret|api[-_ ]?key|private[-_ ]?key|"
-            r"password|passwd|credential)\b[\"']?\s*[:=]\s*"
-            r"[\"']?)[^\s\"',;}]+",
-            re.IGNORECASE,
-        ),
-        lambda m: m.group(1) + REDACTION_MARKER,
-    ),
-    (
-        re.compile(
-            r"(\b(?:proposal[-_ ]?handle|handle|candidate[-_ ]?token)\b"
-            r"[\"']?\s*[:=]\s*[\"']?)[^\s\"',;}]+",
-            re.IGNORECASE,
-        ),
-        lambda m: m.group(1) + REDACTION_MARKER,
-    ),
-    (
-        re.compile(
-            r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"
-            r"\.[A-Za-z0-9_-]*\b"
-        ),
-        REDACTION_MARKER,
-    ),
-)
-
-
-def _redact_text(text: object) -> str:
-    """Deterministically redact credential material from untrusted
-    owner text. Surrounding business content is preserved."""
-    if not isinstance(text, str) or not text:
-        return ""
-    out = text
-    for pattern, replacement in _TEXT_REDACTIONS:
-        out = pattern.sub(replacement, out)
-    return out
-
-
-def _sanitize_renderable(node: object) -> object:
-    """Redact sensitive credential material from rendered structure.
-
-    Remote structured payloads are untrusted data: sensitive keys
-    (canonical normalized match) have their values replaced with the
-    redaction marker — the key stays so shape is preserved and no
-    secret value, length, prefix or hash is exposed. Recurses into
-    mappings and bounded lists; candidate_token is covered by the
-    canonical set.
-    """
-    if isinstance(node, Mapping):
-        return {
-            str(k): (
-                REDACTION_MARKER
-                if _is_sensitive_key(k)
-                else _sanitize_renderable(v)
-            )
-            for k, v in node.items()
-        }
-    if isinstance(node, (list, tuple)):
-        return [
-            _sanitize_renderable(v)
-            for v in list(node)[:MAX_RENDER_LIST_ITEMS]
-        ]
-    if isinstance(node, str):
-        # Ordinary key + credential-bearing string value: text
-        # redaction still applies — no secret-bearing leaf bypasses.
-        return _redact_text(node)
-    return node
-
 
 # Bounded set of known transport-level completion texts — suppressed
 # only when authoritative business data is rendered instead. Arbitrary
 # owner text is never suppressed.
-_GENERIC_COMPLETION_TEXTS = frozenset(
-    {"execution completed.", "discovery completed.", "ok", "success"}
-)
 EMPTY_RESULT_TEXT = "Nenhum resultado encontrado."
 _ITEMS_KEY = "items"
-
-
-def _is_generic_status(text: str) -> bool:
-    return text.strip().lower() in _GENERIC_COMPLETION_TEXTS
-
 
 def _format_structured(
     node: object,
@@ -4069,7 +3117,6 @@ def _format_structured(
         return lines
     return []
 
-
 def _format_list(
     items: list,
     depth: int,
@@ -4104,7 +3151,6 @@ def _format_list(
             lines.append(f"{indent}- {item}")
     return lines
 
-
 def _format_records(
     items: list,
     depth: int = 0,
@@ -4125,7 +3171,6 @@ def _format_records(
         else:
             lines.append(f"{indent}{idx}. {item}")
     return lines
-
 
 def _business_lines(
     node: Mapping,
@@ -4176,7 +3221,6 @@ def _business_lines(
             return _format_records(payload, field_labels=field_labels)
     return None
 
-
 # ---------------------------------------------------------------------------
 # presentation.v2 (G3): deterministic Markdown projection of the SAME
 # admitted structured payload. Format variant of the existing projection —
@@ -4212,14 +3256,12 @@ _MD_LINE_BREAKS = str.maketrans(
     }
 )
 
-
 def _md_leaf(value: object) -> str:
     """Owner leaf as literal inline Markdown text — every ASCII
     punctuation mark is escaped and embedded line separators collapse
     to spaces, so owner data can never introduce structural elements,
     links, autolinks or formatting instructions of its own."""
     return str(value).translate(_MD_ESCAPE).translate(_MD_LINE_BREAKS)
-
 
 def _md_format_structured(
     node: object,
@@ -4272,7 +3314,6 @@ def _md_format_structured(
         return lines
     return []
 
-
 def _md_format_list(
     items: list,
     depth: int,
@@ -4316,7 +3357,6 @@ def _md_format_list(
             lines.append(f"{indent}- {_md_leaf(item)}")
     return lines
 
-
 def _md_format_records(
     items: list,
     depth: int = 0,
@@ -4336,7 +3376,6 @@ def _md_format_records(
         else:
             lines.append(f"{indent}{idx}. {_md_leaf(item)}")
     return lines
-
 
 def _md_business_lines(
     node: Mapping,
@@ -4379,7 +3418,6 @@ def _md_business_lines(
             return _md_format_records(payload, field_labels=field_labels)
     return None
 
-
 def _select_guidance_records(
     structured: object,
     field_labels: FieldLabels | None = None,
@@ -4404,7 +3442,6 @@ def _select_guidance_records(
             r for r in records if r.get("family") != "meta"
         ][:6]
     return selected
-
 
 def _md_guidance_content(
     structured: object,
@@ -4451,7 +3488,6 @@ def _md_guidance_content(
         limitations.append(LIMITATION_RESULT_TRUNCATED)
     return body, tuple(limitations)
 
-
 @dataclasses.dataclass(frozen=True, slots=True)
 class RenderedSpecialistOutcome:
     """Bounded governed projection of one specialist outcome.
@@ -4467,7 +3503,6 @@ class RenderedSpecialistOutcome:
     limitations: tuple[str, ...]
     markdown: str | None = None
 
-
 def render_specialist_outcome(
     outcome: SpecialistOutcome,
     *,
@@ -4482,7 +3517,6 @@ def render_specialist_outcome(
         field_labels=field_labels,
     )
     return rendered.content, rendered.limitations
-
 
 def render_specialist_outcome_rich(
     outcome: SpecialistOutcome,
@@ -4690,7 +3724,6 @@ def render_specialist_outcome_rich(
         tuple(limitations),
     )
 
-
 # ---------------- governed-write orchestration helpers ----------------
 
 _READINESS_NOTE = {
@@ -4727,7 +3760,6 @@ _OUTCOME_NOTE = {
     ),
 }
 
-
 def _find_act_capability(
     group: CapabilityGroup, *, require_proposal_handle: bool
 ):
@@ -4746,7 +3778,6 @@ def _find_act_capability(
         ):
             return capability
     return None
-
 
 def _act_arguments(
     act_capability: ProviderCapability,
@@ -4773,7 +3804,6 @@ def _act_arguments(
     if "idempotency_key" in declared:
         arguments["idempotency_key"] = str(uuid.uuid4())
     return arguments
-
 
 def _preview_render(preview: WriteProposalPreview) -> str:
     """Bounded confirmation surface — deterministic preview only.
@@ -4803,7 +3833,6 @@ def _preview_render(preview: WriteProposalPreview) -> str:
             sections.append("Impacto:\n" + "\n".join(impact))
     body = "\n".join(sections)
     return body[:MAX_RENDER_CONTENT_CHARS]
-
 
 # Per-call model proposal bound (seconds); the turn deadline can only
 # shorten it (LOOP-03R2A).
@@ -4872,7 +3901,6 @@ ORCHESTRATION_INSTRUCTION_KEYS = frozenset(
     }
 )
 
-
 # ------------- progressive activity observation (doc 70 §16) -------------
 #
 # The request-scoped sink is propagated inside the calling context: the
@@ -4885,7 +3913,6 @@ _ACTIVITY_SINK: contextvars.ContextVar[ActivityEventSink | None] = (
     contextvars.ContextVar("delia_activity_sink", default=None)
 )
 
-
 def _emit_activity(
     *,
     phase: ActivityPhase,
@@ -4896,7 +3923,6 @@ def _emit_activity(
     if sink is None:
         return
     sink.emit(phase=phase, correlation_id=correlation, **kwargs)
-
 
 # CP4 ephemeral resume: only provably non-mutating invocation
 # outcomes may be replayed — DISCOVERY/READ/ANALYSIS. PREPARE/ACT
@@ -4910,7 +3936,6 @@ _RESUMABLE_OPERATION_CLASSES = frozenset(
         SpecialistOperationClass.ANALYSIS,
     }
 )
-
 
 @dataclasses.dataclass(slots=True)
 class _AttemptCheckpoint:
@@ -4934,7 +3959,6 @@ class _AttemptCheckpoint:
     )
     mutating_invoke_started: bool = False
 
-
 # Request-scoped checkpoint binding — same ContextVar pattern as the
 # activity sink: the orchestrator instance is shared across threads,
 # so per-interaction state can NEVER live on `self`.
@@ -4942,13 +3966,11 @@ _RESUME_STATE: contextvars.ContextVar[_AttemptCheckpoint | None] = (
     contextvars.ContextVar("delia_resume_checkpoint", default=None)
 )
 
-
 class _TurnCancelled(Exception):
     """CP5/R3: request cancellation was observed inside an attempt —
     the NEXT real operation (model stage or provider invoke) must not
     start. Distinct from a deadline: the cause is the client, not the
     clock."""
-
 
 # Request-scoped cancellation probe — same ContextVar pattern. The
 # transport sets it (NDJSON disconnect event); in-process callers may
@@ -4957,13 +3979,11 @@ _CANCEL_CHECK: contextvars.ContextVar[Callable[[], bool] | None] = (
     contextvars.ContextVar("delia_turn_cancel_check", default=None)
 )
 
-
 def _cancel_observed() -> bool:
     """True only when the request's cancellation probe is bound AND
     reports a disconnect — checked once per real-operation seam."""
     check = _CANCEL_CHECK.get()
     return check is not None and bool(check())
-
 
 # Prompt 5: request-scoped governed-attempt index (1-based) so a real
 # model call can be honestly attributed to the attempt that ran it —
@@ -4971,7 +3991,6 @@ def _cancel_observed() -> bool:
 _ATTEMPT_INDEX: contextvars.ContextVar[int] = contextvars.ContextVar(
     "delia_governed_attempt_index", default=1
 )
-
 
 def _resume_stage_key(
     instruction_id: str,
@@ -4988,7 +4007,6 @@ def _resume_stage_key(
         ).encode("utf-8")
     ).hexdigest()
 
-
 def _resume_invoke_key(
     group_id: str, remote_name: str, arguments: Mapping[str, Any]
 ) -> str:
@@ -5001,7 +4019,6 @@ def _resume_invoke_key(
     return hashlib.sha256(
         "\x00".join((group_id, remote_name, canonical)).encode("utf-8")
     ).hexdigest()
-
 
 def _group_activity_refs(group: CapabilityGroup) -> dict[str, Any]:
     """Disclosure-safe group projection — the approved specialist
@@ -5021,7 +4038,6 @@ def _group_activity_refs(group: CapabilityGroup) -> dict[str, Any]:
             else None
         ),
     }
-
 
 def _activity_outcome_summary(
     outcome: SpecialistOutcome,
@@ -5059,7 +4075,6 @@ def _activity_outcome_summary(
         )
     )
 
-
 class _StageDeadlineExceeded(Exception):
     """Internal: a governed stage exceeded its deadline or the turn
     budget ran out.
@@ -5074,7 +4089,6 @@ class _StageDeadlineExceeded(Exception):
         super().__init__(reason)
         # "model_timeout" | "turn_budget_exhausted"
         self.reason = reason
-
 
 class OperationalCapabilityOrchestrator:
     """Provider-neutral governed capability orchestration — no local

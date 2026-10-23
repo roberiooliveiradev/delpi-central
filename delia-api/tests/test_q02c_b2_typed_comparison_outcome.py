@@ -22,8 +22,10 @@ _LABELS = load_cri_presentation_vocabulary(_VOCAB_PATH).field_labels
 
 import app.application.capability_provision.orchestration as orch_mod
 from app.application.capability_provision.orchestration import (
-    _prior_supports_typed_attribute_compare,
     _selected_proven_differences,
+)
+from app.application.capability_provision.outcome_assessment import (
+    _prior_supports_typed_attribute_compare,
     _synthesis_selections,
 )
 

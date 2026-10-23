@@ -29,9 +29,12 @@ from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
     LIMITATION_INSUFFICIENT_EVIDENCE,
     _prior_excerpt_records,
-    _prior_supports_typed_attribute_compare,
     _prior_transform_probe_eligible,
 )
+from app.application.capability_provision.outcome_assessment import (
+    _prior_supports_typed_attribute_compare,
+)
+
 from app.application.interaction.contracts import (
     LIMITATION_PRIOR_TURN_CONTINUATION,
 )

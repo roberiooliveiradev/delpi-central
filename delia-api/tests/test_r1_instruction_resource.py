@@ -224,3 +224,77 @@ def test_instruction_resource_malformed_json_fails_closed(tmp_path):
         load_orchestration_instructions(
             target, required_names=ORCHESTRATION_INSTRUCTION_KEYS
         )
+
+
+# ---------------------------------------------------------------------------
+# R1 → R2 entry gate: production composition path, never the test
+# constructor seam. With at least one provider wired, a missing or
+# corrupt instruction resource must suppress governed orchestration on
+# the real handler — no partial activation.
+# ---------------------------------------------------------------------------
+
+
+def _composed_handler(monkeypatch, tmp_path, *, resource_content):
+    from app.application.model_invocation.invoke_model import InvokeModel
+    from app.composition import root_composer
+    from app.infrastructure.config.settings import Settings
+    from app.infrastructure.interoperability.config import (
+        SpecialistConnectionProfile,
+    )
+    from tests.test_specialist_capability_orchestration import (
+        TEST_MODEL_REF,
+        FakeProposalModel,
+    )
+
+    if resource_content is None:
+        target = tmp_path / "absent.delpi.json"  # never created
+    else:
+        target = tmp_path / "orch.delpi.json"
+        target.write_text(resource_content, encoding="utf-8")
+    monkeypatch.setattr(
+        root_composer, "_ORCHESTRATION_INSTRUCTIONS_PATH", target
+    )
+    connections = {
+        "davi": SpecialistConnectionProfile(
+            endpoint="http://davi.example/mcp",
+            enabled=True,
+            timeout_seconds=1.0,
+            exchange_audience="aud-x",
+            resource_audience="aud-r",
+        )
+    }
+    return root_composer._compose_turn_handler(
+        InvokeModel(FakeProposalModel({})),
+        TEST_MODEL_REF,
+        None,
+        Settings.for_testing(),
+        connections,
+    )
+
+
+def test_composer_valid_resource_enables_orchestration(
+    monkeypatch, tmp_path
+):
+    handler = _composed_handler(
+        monkeypatch, tmp_path,
+        resource_content=_RESOURCE_PATH.read_text(encoding="utf-8"),
+    )
+    assert handler._capability_orchestration is not None
+
+
+def test_composer_missing_resource_disables_orchestration(
+    monkeypatch, tmp_path, caplog
+):
+    handler = _composed_handler(
+        monkeypatch, tmp_path, resource_content=None
+    )
+    assert handler._capability_orchestration is None
+
+
+def test_composer_corrupt_resource_disables_orchestration(
+    monkeypatch, tmp_path, caplog
+):
+    handler = _composed_handler(
+        monkeypatch, tmp_path, resource_content="{not json"
+    )
+    assert handler._capability_orchestration is None

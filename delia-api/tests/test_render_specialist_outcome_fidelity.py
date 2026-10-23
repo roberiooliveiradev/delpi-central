@@ -18,10 +18,13 @@ from __future__ import annotations
 
 from app.application.capability_provision.orchestration import (
     MAX_RENDER_CONTENT_CHARS,
-    REDACTION_MARKER,
-    _sanitize_renderable,
     render_specialist_outcome,
 )
+from app.application.capability_provision.outcome_assessment import (
+    REDACTION_MARKER,
+    _sanitize_renderable,
+)
+
 from app.domain.specialist_interop.model import (
     InteropProtocol,
     SpecialistOutcome,

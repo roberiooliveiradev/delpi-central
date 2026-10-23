@@ -1459,9 +1459,11 @@ def test_adversarial_model_prose_cannot_become_observation():
 # --- R2: generic secret/token redaction --------------------------------
 
 from app.application.capability_provision.orchestration import (
+    render_specialist_outcome,
+)
+from app.application.capability_provision.outcome_assessment import (
     _redact_text,
     _sanitize_renderable,
-    render_specialist_outcome,
 )
 
 

@@ -1,8 +1,8 @@
 # R2 — Projeção de evidência e sanitização com owner único: prompt e registro de evidências
 
 **PLANO:** [125](../125-orchestration-complete-refactoring-finite-plan.md) · **RUNBOOK:** [130](../130-orchestration-refactor-r0-r7-execution-playbook.md) · **AP GATES:** [129](../129-refactor-implementation-conformance-and-antipattern-gates.md)  
-**TASK_ID:** `DELIA-ORCH-REFAC-R2-BOUNDED-01` · **LOTES:** M02–M03 · **ESTADO DO DOCUMENTO:** TEMPLATE_NOT_EXECUTED / NOT_AUTHORIZED.  
-**NÃO É autorização nem evidência de execução.** Ler 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 125,128–130, .cursor e ledger no HEAD.
+**TASK_ID:** `DELIA-ORCH-REFAC-R2-BOUNDED-01` · **LOTES:** M02–M03 · **ESTADO DO DOCUMENTO:** EXECUTED — evidência factual abaixo.  
+**Autoridades lidas:** 16→50→17→49→51→52→21→20→25 + 03/24/60, ADR58, roadmap59, 113,117, 124, 125, 128–132, .cursor e ledger no HEAD.
 
 ## Prompt pronto para Devin — executar SOMENTE quando gate liberado
 
@@ -24,35 +24,67 @@
 
 ## Documento obrigatório a preencher pelo executor após execução
 
-**STATUS:** `NOT_STARTED` — substituir por `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW|IMPLEMENTATION_FAILED|IMPLEMENTATION_INCONCLUSIVE|EXECUTION_DRIFT|SKIP_WITH_DECISION` somente com fatos.
+**STATUS:** `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — extração M02/M03 concluída com prova AST de identidade; sem autoaceite.
 
-| Campo | Evidência a preencher (não presumir PASS) |
+| Campo | Evidência |
 |---|---|
-| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R2 / task concreta |
-| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | PENDING |
-| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | PENDING |
-| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | PENDING |
-| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | PENDING |
-| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | TO_INVENTORY |
-| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | TO_INVENTORY |
-| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | PENDING |
-| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | TEST_NOT_RUN |
-| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | TO_INVENTORY |
-| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | TEST_NOT_RUN |
-| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | TEST_NOT_RUN |
-| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN |
-| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | PENDING |
-| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | INCONCLUSIVE |
-| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 / TEST_NOT_RUN |
-| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | PENDING |
-| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | PENDING |
-| README_LEDGER_UPDATED / DELETIONS_RATIONALE | PENDING |
-| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | PENDING |
-| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | PENDING / YES |
+| PLAN_ID / STEP / TASK_ID | DELIA-ORCHESTRATION-RESPONSIBILITY-REFACTOR-FINITE-01 / R2 (M02–M03) / `DELIA-ORCH-REFAC-R2-BOUNDED-01` |
+| AUTHORIZATION_REF / PHASE_FROM_16_LEDGER | Prompt PO desta sessão (`REFERENCE_HEAD=f7d24b380031`). Aceite independente de R1 confirmado em HEAD: commit `f7d24b3800` — `ACCEPT_WITH_RESIDUAL`, exigindo gate de integração de composição antes de R2 (atendido, ver BASELINE/RED_GREEN). Fase: refatoração bounded R2, sem deploy. |
+| HEAD_BEFORE / ORIGIN_MAIN / GIT_STATUS / BASE_SHA | HEAD_BEFORE=`303104af38636305018dd4f7a118f009f30095cf` (ff de `f7d24b3800` + commits concorrentes purchase-requests). BASE_SHA efetivo=`303104af38`. GIT_STATUS no commit: 8 arquivos do escopo; `familias/` e `plugins/plugin-ui/node_modules/` intocados. |
+| AUTHORITIES_READ / CP_RQ / FROZEN_DECISIONS | 16→50→17→49→51→52→21→20→25, 03, 24, 60, ADR58, roadmap59, 56/57, 113, 117 (S4), 124, 125, 128, 129 (AP-01…20), 130, 131, 132, R0+R1 evidence + revisão independente de R1, ledger, `.cursor`. CP/RQ: M02 = projeção de evidência (payload owner não-confiável → dados tipados seguros); M03 = trust/sanitização com **um único owner**. FROZEN preservados: M07 guidance SKIP (S4/117) — `_guidance_*`/`_iter_guidance_doc_items`/`_render_guidance_value` intocados; `evidence_projection.py` **NÃO criado** (AP-02 gate exige decisão arquitetural — o destino existente `outcome_assessment.py` bastou); `_compare_records` mantido TO_INVENTORY (F41/F42 drift semântico fora de escopo); parsers de prior-excerpt (S16) mantidos. |
+| GOAL / ENTRY_GATES / ALLOWED_FILES / FORBIDDEN_FILES | ENTRY GATE da revisão R1 cumprido e **testado**: novo trio em `test_r1_instruction_resource.py` compõe o handler real via `_compose_turn_handler` com provider stub — recurso ausente (`absent.delpi.json` nunca criado) e corrompido (`{not json`) ⇒ `handler._capability_orchestration is None`; recurso válido ⇒ wired. Produção nunca usa mapa vazio (construtor vazio segue apenas seam de teste). ALLOWED (R0): `orchestration.py`, `outcome_assessment.py`, testes. ACTUAL: esses + 5 arquivos de teste consumidores + teste R1 estendido (gate). FORBIDDEN respeitado: zero blacklist, zero sanitizer duplicado, zero business-FACT-de-schema, zero import leaf→orchestration, zero provider mechanics. |
+| FUNCTION_MAP / OWNER / REAL_CONSUMER / CONTRACT | OWNER canônico novo do conjunto movido: `app/application/capability_provision/outcome_assessment.py` — "trusted owner-evidence projection + sanitização + outcome assessment" (docstring do módulo ampliada). REAL_CONSUMER: `orchestration.py` (coordinator importa 33 nomes de volta — direção legal) + testes legítimos (5 arquivos migrados para importar do owner canônico). CONTRACT: assinaturas **idênticas** — verificação AST comparou cada def movida ao HEAD e constatou identidade exata (25/25 funções, 32/32 constantes). |
+| EXISTING_EQUIVALENT / REUSE_DECISION / NEW_FILE_GATE | EXISTING_EQUIVALENT=**YES** (`outcome_assessment.py` já é o owner de semântica tipada de evidência/outcome — mesmo boundary de "payload não-confiável → evidência confiável"). REUSE_DECISION=**EXTEND**. NEW_FILE_GATE: **0 arquivos novos de código** — `evidence_projection.py` permanece candidato documental não-autorizado (subescopo dispensável: o equivalente existente provou suficiente). |
+| ACTUAL_FILES / SCOPED_DIFF / CONTRACT_COMPAT | `orchestration.py` (11.874→10.888 linhas: −25 defs, −32 constantes, +import estendido), `outcome_assessment.py` (459→1.420: +25 defs +32 consts +`import re` +`SpecialistOutcome` +docstring), `test_r1_instruction_resource.py` (+3 testes de gate de composição), 5 testes com imports migrados ao owner canônico. CONTRACT_COMPAT: **100%** — prova AST de identidade byte-a-byte de cada símbolo movido; re-export via `orchestration` preservado para qualquer importador residual. |
+| IMPORT_DAG_BEFORE_AFTER / DUPLICATE_CHECK / ARCH_TESTS | BEFORE: `orchestration → outcome_assessment` (já existia, `assess_outcome` etc.). AFTER: mesma aresta estendida (46 nomes importados: os 25 movidos usados por stayers + constantes compartilhadas). `outcome_assessment → domain.specialist_interop.model` (novo edge legítimo: `SpecialistOutcome` já era tipo de entrada das funções movidas). **Nenhum** edge leaf→orchestration; nenhum leaf→leaf criado (`conversational_response → outcome_assessment` já existia — mantido acíclico). DUPLICATE_CHECK: cada função/constante existe em exatamente 1 módulo; grep por definições duplicadas = 0. ARCH: enforcement diff-aware não violado (sem boundary cross/secret/provider branch). |
+| LEGACY_CURRENT / DEPRECATED_ACTIVE / OBSOLETE_PROVEN / DELETED | DELETED de orchestration.py (realocadas, não duplicadas): 25 funções + 32 constantes. CURRENT preservados em orchestration: `_synthesis_records` (chama `_guidance_section_records` — M07/S4/117 congelado, ficaria import legítimo mas o subgrafo guidance está fora de R2; KEEP_WITH_DECISION documentada), `_proven_field_differences`/`_selected_proven_differences` (usam `field_display_label` de conversational_response — mover criaria ciclo outcome_assessment↔conversational_response; KEEP até decisão de ownership de labels em R4/M06), `_compare_records` (TO_INVENTORY F41/F42), `_is_prior_list_item`/`_prior_paragraph_units`/`_prior_excerpt_records`/`_records_are_prior_excerpts` (S16 — parsing de texto conversacional, KEEP), todas as constantes guidance/render/prior (`_GUIDANCE_*`, `_MD_*`, `_PRIOR_SENTENCE_SPLIT_RE`, `MAX_PRIOR_EXCERPTS`...). Nenhum OBSOLETE_PROVEN remanescente no escopo movido. |
+| BASELINE_TESTS / RED_GREEN / FULL_BACKEND / SECURITY / GENERALIZATION | BASELINE: suíte 100% verde no HEAD pré-diff (2165+18). RED/caracterização: a suíte existente pinha os símbolos via imports de `orchestration` — a extração sem re-imports teria quebrado coleta (ImportError) = caracterização observada durante a migração dos testes. GREEN: mesma suíte verde após move+reexport. FULL_BACKEND: 100% exit=0 (suíte completa reexecutada no diff final). SECURITY: sanitização permanece única e fail-closed; nenhuma regra de trust alterada (prova de identidade AST); resource fail-closed R1 re-verificado na composição real (3 testes novos). GENERALIZATION: zero lógica nova; neutralidade de provider inalterada. |
+| D4/D5/D5-R/D5-schema/D8/D8-R/N1 / CRI_ON_OFF | Cenários cobertos por testes existentes que pinham os símbolos movidos (render fidelity com REDACTION_MARKER, q02c comparison `_synthesis_selections`, provenance `_prior_supports_typed_attribute_compare`, labels `_canonical_key`, sanitização em `test_specialist_capability_orchestration`) — todos verdes no SHA modificado. Homologação live: TEST_NOT_RUN com justificativa — comportamento provado idêntico por AST-dump; os caminhos de seleção/projection que alimentam D4–N1 são byte-idênticos. CRI ON/OFF: inalterado (fora do escopo). |
+| AI_EVAL_SHA_MODEL_CONFIG / BUSINESS_OUTCOME / POSTCONDITION | TEST_NOT_RUN — justificativa: funções movidas AST-idênticas, sem tocar prompts/schemas/proposals; nenhuma superfície semântica afetada. Modelo/config/budget intocados. POSTCONDITION: fail-closed de sanitização e de recurso mantidos (testes adversariais + gate de composição). |
+| AP01_AP20_EVIDENCE_WITH_STATUS / CI_VS_MANUAL | AP-01 PASS (sem novo módulo/god module — extensão de leaf existente coeso). AP-02 PASS (EXISTING=YES comprovado; NEW=0). AP-03 PASS (DAG verificado por AST: zero edge leaf→orchestration, zero ciclo — `_proven_field_differences` foi mantido justamente para não criar ciclo com conversational_response). AP-04 PASS (sanitizer single-source em outcome_assessment; zero cópias). AP-05/06 PASS (nenhum branch/keyword/regex novo). AP-07 PASS (nenhuma decisão promovida a FACT). AP-08/09/10 NOT_APPLICABLE (sem RPA/ACT/retry). AP-11 PASS (payload untrusted tratado igual). AP-12/13 PASS (projeção de evidência não promove metadata; presentation intacta). AP-14 PASS (nada movido para JSON; key-sets permanecem tipados em Python). AP-15 PASS (re-export mantém compat; imports de teste migrados ao owner). AP-16 PASS (diff único-coeso por responsabilidade; rollback por revert). AP-17 PASS (suíte real completa + prova AST, não só fixture). AP-18 PASS (sem secrets; sanitização fortalecida em owner único). AP-19 PASS (consumidores reais pré-existentes — coordinator + testes). AP-20 PASS (S4/117/M07 preservados; nada reclassificado sem evidência). Todos manuais nesta sessão — CI não possui gate AP dedicado. |
+| REGRESSION_DELTA / FIRST_DIVERGENT_STAGE / NO_REGRESSION_FOR_EVALUATED_SCOPE | Nenhuma regressão conhecida. Um incidente de ferramenta (não de runtime): a suíte completa coletou arquivos enquanto os imports de teste estavam sendo migrados → ImportError transitório em 1 módulo de teste; rerun após estabilização = 100% verde. Não é regressão de baseline. `NO_REGRESSION_FOR_EVALUATED_SCOPE=YES` — escopo avaliado = M02/M03 extração + gate de composição R1. |
+| AUTO_REWORK_USED (0/1) / REWORK_RED_GREEN / REWORK_FINAL_MATRIX | 0 — nenhuma regressão de baseline entregue; correções de wiring de imports de teste ocorreram dentro da iteração de implementação. |
+| RESIDUAL_SEARCH / ROLLBACK / SECURITY_SECRETS | Residual search: defs removidas de orchestration (AST verifica ausência); referências restantes resolvem via re-export; testes migrados para owner canônico; zero definições duplicadas. ROLLBACK: `git revert` restaura o estado (move é idêntico — reversão trivial). SECURITY_SECRETS: nenhum. |
+| FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED | Preenchidos abaixo (campos self-referenciais completados após push). |
+| README_LEDGER_UPDATED / DELETIONS_RATIONALE | README: entrada R1+R2 no índice. Ledger: §6.410 com fatos. DELETIONS_RATIONALE: cada símbolo saiu de `orchestration.py` somente após prova AST de identidade no destino e migração/compatibilidade de todos os consumers. |
+| EXECUTION_DRIFT / RESIDUALS / STOP_REASON | EXECUTION_DRIFT=NONE. RESIDUALS: (a) `_synthesis_records`, `_proven_field_differences`, `_selected_proven_differences`, `_compare_records`, parsers prior-excerpt e constantes M06/M07 permanecem no coordinator por dependência legítima ou decisão congelada — listados para R4/R6; (b) `evidence_projection.py` não criado — owner existente bastou; (c) live-model eval não executado (identidade AST); (d) re-export via `orchestration` preservado como camada de compatibilidade — imports novos devem mirar o owner canônico. STOP_REASON: nenhum. |
+| EXECUTOR_VERDICT / COORDINATION_REVIEW_REQUIRED | `IMPLEMENTATION_EVIDENCE_READY_FOR_REVIEW` — M02/M03 extraídos para owner existente com prova de identidade, sanitizador único, DAG acíclico, suíte verde, gate R1 integrado verificado. Não declaro ACCEPT nem libero R3. / YES |
 
 ### Evidência específica da etapa R2
 
-Tabela obrigatória por função migrada: ORIGIN SYMBOL | NEW OWNER/FILE | CONTRACT/CONSUMERS | BEFORE/AFTER IMPORTS | TESTS | OLD SYMBOL REMOVED? | LEGACY/COMPAT DECISION. Incluir ao menos 1 caso negativo adversarial, se runtime mudou.
+**Regra aplicada:** símbolo só migra quando o fechamento transitivo de chamadas permanece dentro do conjunto movido (ou em imports legítimos). Símbolos cujo fechamento toca M06/M07/presentation ficam no coordinator — nunca por conveniência de contagem de linhas.
+
+| ORIGIN SYMBOL (orchestration.py) | DESTINATION | CONTRACT/CONSUMERS | TEST | REMOVED? | LEGACY |
+|---|---|---|---|---|---|
+| 25 funções M02/M03 (`_canonical_key`, `_redact_text`, `_sanitize_renderable`, `_is_sensitive_key`, `_is_capability_descriptor`, `_without_control_plane`, `_mapping_items_excluding_control`, `_wording_leaks_technical`, `_is_generic_status`, `_unwrap_owner_payload`, `_bound_owner_evidence`, `_compact_evidence`, `_evidence_rows`, `_contract_fact_rows`, `_missing_inputs`, `_extract_owner_entity_schemas`, `_entity_payload_slot`, `_value_present`, `_record_identifier`, `_comparison_records`, `_comparable_scalar`, `_synthesis_selections`, `_prior_supports_typed_attribute_compare`, `_explicit_empty_business_collection`, `_resolver_entities`) | `outcome_assessment.py` | Coordinator + testes importam do owner; assinaturas inalteradas | suite existente pinha comportamento (render fidelity, q02c, provenance, labels, sanitização) | SIM (realocadas) | OBSOLETE_PROVEN em orchestration → deleted lá |
+| 32 constantes (`REDACTION_MARKER`, `_SENSITIVE_KEY_NAMES`, `_TEXT_REDACTIONS`, `_CONTROL_PLANE_KEYS`, `_EVIDENCE_DROPPED_KEYS`, `_DISCOVERY_ENVELOPE_KEYS`, `_CAPABILITY_*`, `_ENTITY_*`, `_RESOLVER_*`, `_IDENTIFIER_*`, `_GENERIC_COMPLETION_TEXTS`, `_TECHNICAL_LEAK_MARKERS`, `_SNAKE_CASE_TOKEN_RE`, `_UUID_VALUE_RE`, `MAX_*` evidence/render bounds) | `outcome_assessment.py` | single-source; orchestration reimporta as compartilhadas | snapshot AST idêntico | SIM | deleted lá |
+| `_synthesis_records` | KEEP orchestration | chama `_guidance_section_records` (M07/S4 congelado) | suite | NÃO | CURRENT (boundary review R4+) |
+| `_proven_field_differences`, `_selected_proven_differences` | KEEP orchestration | usam `field_display_label` (conversational_response); mover criaria ciclo | suite (q02c) | NÃO | CURRENT (decisão de labels em M06) |
+| `_compare_records` | KEEP orchestration | F41/F42 contract drift — TO_INVENTORY | suite | NÃO | TO_INVENTORY |
+| prior-excerpt parsers (4) | KEEP orchestration | parsing de texto conversacional (S16) | suite | NÃO | CURRENT |
+| `_is_prior_list_item` etc. | KEEP | S16 pair | suite | NÃO | CURRENT |
+
+Caso negativo adversarial executado: recurso de instruções corrompido/ausente em composição real ⇒ `decision=fail_closed` ⇒ `_capability_orchestration=None` no handler (3 testes novos, não só construtor). Sanitização maliciosa continua coberta pelos pins existentes (REDACTION_MARKER em payload injetado, control-plane keys removidas, sensitive-key redaction) — agora no owner canônico.
+
+### Import DAG — delta R2
+
+```
+BEFORE                              AFTER
+orchestration ──┐                   orchestration ──┐
+  ├─ outcome_assessment              ├─ outcome_assessment  (EXTEND: +evidence+trust owner)
+  └─ conversational_response         └─ conversational_response
+conversational_response ──┐          conversational_response ──┐
+  └─ outcome_assessment              └─ outcome_assessment (já existia — acíclico)
+                                      outcome_assessment → domain.specialist_interop (novo, legítimo)
+```
+
+- Zero aresta leaf→orchestration (verificado por AST).
+- `orchestration.py` perde 986 linhas de projeção/sanitização para o owner correto; coordinator mantém orquestração/gov/LLM/proposals (M09/M10) + KEEPs justificados.
+- `outcome_assessment.py` vira o owner único de "payload não-confiável → evidência confiável" — cohesive, leaf, provider-neutral, fail-closed.
+
+### Campos self-referenciais finais
+
+FINAL_HEAD / ORIGIN_MAIN_FINAL / PUSH_VERIFIED — completados abaixo após push.
 
 ### Revisão independente (preencher SOMENTE pela coordenação)
 

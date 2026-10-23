@@ -23,11 +23,14 @@ from app.application.capability_provision.conversational_response import (
 )
 from app.application.capability_provision.orchestration import (
     OperationalCapabilityOrchestrator,
-    _canonical_key,
     _detail_lines,
     _proven_field_differences,
     _render_guidance_value,
 )
+from app.application.capability_provision.outcome_assessment import (
+    _canonical_key,
+)
+
 from app.infrastructure.config.cri_instruction_resource import (
     CriInstructionResourceError,
     load_cri_presentation_vocabulary,
