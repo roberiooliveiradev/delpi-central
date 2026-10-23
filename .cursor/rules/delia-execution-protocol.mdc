@@ -429,3 +429,18 @@ Antes de commit/conclusão:
 - atualizar docs/ledger somente com estado comprovado;
 - não transformar `TARGET` em `PROVEN` por implementação parcial;
 - não avançar dependentes sem provar a postcondition que os desbloqueia.
+
+
+## DÉLIA — guardrail especializado para refactor do orquestrador e reuso de inteligência
+
+**Ativação:** carregar esta especialização sempre que a task envolver orchestration.py, o plano 125, extração para módulos de inteligência reutilizáveis, DÉLIA Work/Watch cross-entrypoint ou boundary Automation Hub/RPA. Fontes do escopo: docs/12-roadmap-e-evolucao/delia/corrections/mcp-contextual-intelligence-orchestration/125-orchestration-complete-refactoring-finite-plan.md, 128-cross-application-intelligence-and-rpa-capability-review.md e **129-refactor-implementation-conformance-and-antipattern-gates.md**. Estas fontes subordinadas não revogam Project Instructions, .cursor transversais ou a precedência 16→50→17→49→51→52→21→20→25.
+
+**Proibido executar R0–R7 por mera existência do plano.** Requer estabilização funcional revisada, autorização do PO para a etapa e reanchor no HEAD. D5/correção funcional paralela não pode ser absorvida como refactor.
+
+Antes do primeiro diff do pacote, registrar ALLOWED_FILES e FORBIDDEN_FILES, matriz de funções/owners/consumers/contratos, EXISTING_EQUIVALENT/REUSE_DECISION, classificação de mudanças de contrato, gate de segurança e AP-01…AP-20 relevantes. Sem prova do consumidor/destino, SKIP_WITH_DECISION — não criar arquivo por estética ou LOC.
+
+Bloqueio de implementação: novo monólito, segunda Policy/Engine/Registry/Sanitizer, shared sem consumidores reais, Circular/Dynamic Imports para contornar cycle, planner por provider/endpoint/selector/keyword, prompts que promovem metadata a authority, interações cross-app por imports/DB, DÉLIA executando RPA/scheduler/worker, ACT sem Core/Domain/AuthZ/Policy, technical success como business outcome e alteração de decisão congelada. Em quebra: STOP, reportar EXECUTION_DRIFT ou ARCHITECTURE_DECISION_REQUIRED, sem workaround ou rework infinito.
+
+Depois do diff: prova de import DAG/acoplamento, classificação AP com PASS/FAIL/INCONCLUSIVE/TEST_NOT_RUN/N/A justificado, testes negativos/metamórficos/full no SHA, compatibilidade, revisão de segredos, rollback e outcome no modelo/config realmente avaliados. O CI existente não prova todos os gates; declarar quais são automatizados, quais foram revisados manualmente e quais não foram executados. Só coordenação emite aceite arquitetural.
+
+Preservar consumo de inteligência por conversação e futuros entrypoints sem novos consumidores fictícios; HTTP/event cross-app somente com contrato aprovado; Automation Hub tem a execução técnica, DÉLIA tem intelligence/Work/Decision/Evidence/Outcome, Domain API a regra/postcondition final. L5 OFF por default, C6 Watch não executa ACT autônomo. Não chamar TARGET de PROVEN.
