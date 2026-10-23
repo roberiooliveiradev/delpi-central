@@ -17901,3 +17901,17 @@ TASK_ID=DELIA-UX-COMPOSER-SETTINGS-SELECTION-DISMISS-REFINEMENT-01
 COMMIT=6504887b9f(code)+docs DEPLOYED=YES PROD_QA=13/13
 EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
 NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+## §6.413 — R1+R2 release integrado + deploy governado + homologação produtiva (2026-10-23)
+
+**2026-10-23 — DELIA-ORCH-REFAC-R1R2-INTEGRATED-RELEASE-AND-HOMOLOGATION-01:** pacote de release R1(M01)+R2(M02/M03) aceitos com residual, sob autorizacao operacional PO registrada (doc 133, `DEPLOY_AUTHORIZATION=YES_CONDITIONAL_GATES`). EVALUATED_SHA `0660f49af0` — `delia-api` byte-identico ao SHA revisado `738cc50efa` e ao checkout prod `4e2a2590d4` (diffs vazios). Suíte backend 100% exit=0 no SHA avaliado; R1 fail-closed provado por composicao real; eval local dev (`delia-json`/3B) executado com A/B vs baseline `6a896a695d` — variancia de selecao identica na baseline (pre-existente, nao regressao); R1+R2 igual-ou-melhor em todas as probes.
+
+DEPLOY: srv-api `git pull --ff-only` + `up-prod-sequential.sh --build delia-api`; PRE imagem `1201882fdceb` -> NOVA `ee155bf5a325`; concorrentes api-delpi/supplies fora de `delia-api/`; container healthy env=production; health 200; unauth 401 fail-closed; recurso `orchestration_instructions.delpi.json` presente no runtime e estagios `delia.capability_orchestration.*` executando (wiring R1 comprovado).
+
+HOMOLOGACAO PROD (identidade `user` — credencial fornecida pelo PO nesta task; password-grant delpi-central + openid; modelo `moonshotai/kimi-k3`, 3 attempts, CRI ativo): D4 PASS (listagem viva); D5 PASS (GROUNDED productGuide block_types via vista.get_catalog); D5-R PASS_WITH_RESIDUAL (uma execucao projetou descritor `entities.playlist` verbatim — residual de apresentacao pre-existente); D5-schema PASS (honesto/bounded, HYPOTHESIS, zero invencao); D8 PASS (`delpi.get_product_summary` GROUNDED, material 10080043 verbatim + labels PT-BR); D8-R PASS (davi.discover invocado a partir de contexto prior, honesto no_business_data); N1 PASS; neg_injection PASS (zero ACT); neg_auth PASS. Latencias 1,7-26s. Writes prod TEST_NOT_RUN (escopo READ).
+
+RESIDUAIS: coesao de `outcome_assessment.py` sob revisao (nao redistribuido — fora de escopo); variancia do modelo dev 3B; tokens/estagio NOT_AVAILABLE. ROLLBACK_READY=YES (imagem anterior retida). `EXECUTOR_VERDICT=EVIDENCE_READY_FOR_REVIEW`; `COORDINATION_REVIEW_REQUIRED=YES`; `R3_AUTHORIZED=NO`; `PLAN_COMPLETE=NO`. Evidencia: [r1-r2-integrated-release-homologation.md](../corrections/mcp-contextual-intelligence-orchestration/refactor-r0-r7/r1-r2-integrated-release-homologation.md).
+
+TASK_ID=DELIA-ORCH-REFAC-R1R2-INTEGRATED-RELEASE-AND-HOMOLOGATION-01
+DEPLOYED=YES PROD_HOMOLOGATION=EXECUTED BUSINESS_OUTCOME=PASS_WITH_RESIDUALS
+EXECUTION_DRIFT=NONE COORDINATION_REVIEW_REQUIRED=YES
+NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
