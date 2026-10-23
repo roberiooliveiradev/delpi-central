@@ -274,3 +274,24 @@ Live results (Playwright, deployed MFE+API at HEAD):
 **Independent outcome gate:** normal green tests or QA fixture are insufficient; must reproduce the SIPOC question in an authenticated **real production** session after approved release, inspect wire `presentation.version=2` + `blocks[].format=markdown_safe`, verify actual headings/lists/strong semantic DOM where markdown syntax was generated, and verify read-only business/evidence status. For a plain conversational response that contains no Markdown syntax, it is acceptable that no visual structure appears; do not invent headings based on keywords. If real production credentials unavailable, report `TEST_NOT_RUN`, not PASS. Deployment may use only previously authorized SSH operator procedure, after all safety/contract release gates pass and with tested rollback. No CP-333 final acceptance; report to coordination.
 
 **Current state:** `ARCHITECTURE_DECISION_REQUIRED=CLOSED_BY_EXPLICIT_APPROVAL`; `IMPLEMENTATION_AUTHORIZED=YES_BOUNDED`; `RUNTIME_CHANGE_NOT_YET_EXECUTED`; `CP-333=PLANNED_NOT_PASS`; `NEXT=RED→MINIMAL_FIX→GREEN→AUTHENTICATED_LIVE_PRODUCTION_VERIFY`.
+
+
+## Remediation executed — conversational Markdown admission live in production (2026-10-23)
+
+**Approved change (f09acc8544):** the conversational `COMPOSITION_MODEL` result constructor in `handle_interactive_turn._execute_observed` now sets `presentation_markdown=content` — the existing channel, same validated `answer` string. Provider/owner `content_text`, Category-B, errors, denials, confirmations and write lifecycle remain v1-plain. No formatter/classifier/LLM added.
+
+**Implementation:** `8162baf1a7` — 1 field in the result constructor + `delia-api/tests/test_conversational_markdown_admission.py` (11 tests: admitted RESULT, plain prose, byte-parity, NDJSON single-line, oversize fail-closed v1, v1-compat, owner content_text stays plain, AUTHZ_DENIED, CONFIRMATION_REQUIRED, hostile wire inertness, metadata preservation) + legacy expectation update (`test_legacy_json_response_unchanged`: v1 to v2 per approved contract) + frontend consumer case (real `parsePresentationV2` to `ConversationMarkdown` on a NON_GROUNDED conversational envelope — ul/ol, strong, zero anchor elements).
+
+**Gates:** backend 2079 pass/3 skip full suite; delia 353; plugin-ui 2315; typecheck PASS; build+federation PASS. Residual search: no innerHTML/eval/URL-synthesis.
+
+**Deploy:** SSH `operador@192.168.1.237` canonical — `git pull --ff-only` to `274bd790e2` (superset incl. `8162baf1a7`), `docker compose build delia-api` + `up -d --force-recreate --no-deps`. Health 200, clean boot, CRI v2/v3 resources loaded. Rollback: prior image + checkout `6a0b1b49e2`.
+
+**PRODUCTION VERIFICATION (authenticated, real turn — NOT fixture):** same SIPOC question at `https://minhadelpi.com.br/apps/delia`, session `8d6977bb`, result_turn `a4943c81`, model_invocation `216cc02e`:
+- wire `presentation.version="2"`, `blocks[0].format="markdown_safe"`, `message_kind="RESULT"`
+- `semantic_status="HYPOTHESIS"`, `grounding_status="NON_GROUNDED"` — rich display did not elevate epistemic status
+- `authorized_links` absent — zero link synthesis
+- DOM: `.delpi-ui-conversation-markdown` present, 2 semantic lists / 10 `li` / 13 `strong`, **zero anchor elements**, zero raw `**`/`-` syntax visible
+- headings=0 because the model emitted bold labels rather than `##` — no structure fabricated
+- screenshot: bullets + contextual bold rendered; "Sem fonte vinculada / Detalhes da evidência" preserved
+
+**Incident resolved:** `ORIGINAL_SYMPTOM_REPRODUCED=YES` then `FIXED_AND_VERIFIED_IN_PRODUCTION`. CP-333 remains `PLANNED_NOT_PASS` — this decision fixed the proven user-visible defect; final acceptance stays with coordination.

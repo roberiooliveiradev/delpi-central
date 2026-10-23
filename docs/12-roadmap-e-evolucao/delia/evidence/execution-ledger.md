@@ -17651,3 +17651,8 @@ NEXT=PO manual QA D4/D5/D8 no Portal OU identidade de homologacao governada (dec
 TASK_ID=DELIA-C3-SELF-AWARENESS-FINITE-DELIVERY-01 STEP=S0
 S0_GROUPS_MAPPED=10/10 GAPS_TYPED=3 RUNTIME_DIFF=NONE
 NEXT=COORDINATION_VERDICT_S0 (S1-S5 NOT_AUTHORIZED)
+
+
+## §6.394 — Conversational markdown admission REMEDIATED + verified in production (2026-10-23)
+
+**2026-10-23 — DELIA-C3-PRODUCTION-CONVERSATIONAL-MARKDOWN-ROOT-CAUSE-REMEDIATION-01 (execução):** aprovação f09acc8544 implementada em 8162baf1a7 (presentation_markdown=content no construtor conversacional RESULT — 1 campo, canal existente). Backend 2079/3skip, delia 353, plugin-ui 2315, typecheck+build+federation PASS. Deploy canônico SSH para 274bd790e2: delia-api rebuild+recreate, health 200. VERIFICAÇÃO REAL PRODUÇÃO autenticada (mesma pergunta SIPOC): presentation.version=2, format=markdown_safe, RESULT/HYPOTHESIS/NON_GROUNDED, DOM .delpi-ui-conversation-markdown com 2 listas/10 li/13 strong, zero anchors, zero sintaxe crua. Screenshot confirmando render rico. Owner content_text/denial/confirmation seguem v1 (negativos cobertos). CP-333 permanece PLANNED_NOT_PASS.
