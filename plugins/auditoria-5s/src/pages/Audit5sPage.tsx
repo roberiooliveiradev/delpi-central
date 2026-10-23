@@ -13,6 +13,7 @@ import {
   fetchAreas,
   fetchAudit,
   fetchAudits,
+  fetchPreviousCriterionNonconformities,
   reopenEvaluation,
   saveResponse,
   updateAudit,
@@ -22,6 +23,7 @@ import {
   type AuditArea,
   type AuditResponse,
   type Criterion,
+  type PreviousCriterionNonconformity,
 } from "../api/audit5sApi";
 import { getClientId } from "../utils/clientId";
 import { AuditHeaderForm } from "../components/AuditHeaderForm";
@@ -42,6 +44,8 @@ import {
   getScoreSummaryLabel,
   getScoreTone,
 } from "../components/CriterionScorePicker";
+import { PreviousCriterionNcBanner } from "../components/PreviousCriterionNcBanner";
+import { PreviousCriterionNcModal } from "../components/PreviousCriterionNcModal";
 import {
   auditListSubtitle,
   auditViewFromPathname,
@@ -80,6 +84,12 @@ export function Audit5sPage({ pathname, search }: Props) {
   const [newAreaName, setNewAreaName] = useState("");
   const [observationDrafts, setObservationDrafts] = useState<Record<string, string>>({});
   const [photoUploadingCriterionId, setPhotoUploadingCriterionId] = useState<string | null>(null);
+  const [previousNcByCode, setPreviousNcByCode] = useState<
+    Record<string, PreviousCriterionNonconformity>
+  >({});
+  const [previousNcLoadError, setPreviousNcLoadError] = useState<string | null>(null);
+  const [previousNcModalItem, setPreviousNcModalItem] =
+    useState<PreviousCriterionNonconformity | null>(null);
 
   const [form, setForm] = useState({
     audit_date: new Date().toISOString().slice(0, 10),
@@ -150,6 +160,9 @@ export function Audit5sPage({ pathname, search }: Props) {
       const detail = await fetchAudit(auditId);
       setSelectedAudit(detail);
       setObservationDrafts({});
+      setPreviousNcByCode({});
+      setPreviousNcLoadError(null);
+      setPreviousNcModalItem(null);
       setActiveSenso(1);
       setView("audit");
     } catch (err) {
@@ -158,6 +171,37 @@ export function Audit5sPage({ pathname, search }: Props) {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (view !== "audit" || !selectedAudit?.id) {
+      return;
+    }
+    const auditId = selectedAudit.id;
+    const controller = new AbortController();
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const payload = await fetchPreviousCriterionNonconformities(auditId);
+        if (cancelled || controller.signal.aborted) return;
+        setPreviousNcByCode(payload.by_criterion_code ?? {});
+        setPreviousNcLoadError(null);
+      } catch (err) {
+        if (cancelled || controller.signal.aborted) return;
+        setPreviousNcByCode({});
+        setPreviousNcLoadError(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível verificar NCs da auditoria anterior.",
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [view, selectedAudit?.id]);
 
   const handleReopenAudit = async (auditId: string) => {
     setError(null);
@@ -240,6 +284,9 @@ export function Audit5sPage({ pathname, search }: Props) {
   const handleBack = () => {
     setSelectedAudit(null);
     setEditingAuditId(null);
+    setPreviousNcByCode({});
+    setPreviousNcLoadError(null);
+    setPreviousNcModalItem(null);
     setError(null);
     setView(returnView);
     setReturnView("list");
@@ -775,6 +822,8 @@ export function Audit5sPage({ pathname, search }: Props) {
                 response?.score != null;
               const reusesPhotoForNcBefore =
                 response?.score === 1 || response?.score === 3;
+              const previousNc =
+                previousNcByCode[criterion.code.trim().toUpperCase()];
               return (
                 <article
                   key={criterion.id}
@@ -797,6 +846,12 @@ export function Audit5sPage({ pathname, search }: Props) {
                     isNotApplicable={Boolean(response?.is_not_applicable)}
                     onSelect={(payload) => void handleScore(criterion.id, payload)}
                   />
+                  {previousNc ? (
+                    <PreviousCriterionNcBanner
+                      nc={previousNc}
+                      onViewDetails={setPreviousNcModalItem}
+                    />
+                  ) : null}
                   <div className="a5s-criterion__observation">
                     <ObservationTypingHint
                       users={observationTyping[criterion.id] ?? []}
@@ -898,6 +953,13 @@ export function Audit5sPage({ pathname, search }: Props) {
             </div>
           )}
 
+          {previousNcLoadError ? (
+            <p className="a5s-hint" role="status">
+              Não foi possível verificar NCs da auditoria anterior ({previousNcLoadError}).
+              A avaliação atual continua disponível.
+            </p>
+          ) : null}
+
           <footer className="a5s-audit-footer">
             <button
               type="button"
@@ -914,6 +976,11 @@ export function Audit5sPage({ pathname, search }: Props) {
             </button>
           </footer>
           </section>
+          <PreviousCriterionNcModal
+            nc={previousNcModalItem}
+            open={Boolean(previousNcModalItem)}
+            onClose={() => setPreviousNcModalItem(null)}
+          />
         </>
       )}
 

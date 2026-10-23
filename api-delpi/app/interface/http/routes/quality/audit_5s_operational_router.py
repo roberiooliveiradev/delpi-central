@@ -1096,6 +1096,33 @@ def list_audit_nonconformities(audit_id: str):
         return error_response("Erro interno ao listar NCs.", status_code=500)
 
 
+@router.get(
+    "/audits/{audit_id}/previous-criterion-nonconformities",
+    operation_id="get_audit_5s_previous_criterion_nonconformities",
+)
+@require_any_permission(AUDIT_5S_READ_PERMISSIONS)
+def get_audit_previous_criterion_nonconformities(audit_id: str):
+    """NCs da auditoria imediatamente anterior (mesma área + turno + filial), por criterion_code."""
+    try:
+        repo = build_audit_5s_repository()
+        data = repo.get_previous_criterion_nonconformities(audit_id)
+        return api_delpi_success(
+            data,
+            operation_id="get_audit_5s_previous_criterion_nonconformities",
+            message="NCs da auditoria anterior carregadas com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except Exception as exc:
+        log_error(f"Erro ao carregar NCs da auditoria anterior 5S: {exc}")
+        return error_response(
+            "Erro interno ao carregar NCs da auditoria anterior.",
+            status_code=500,
+        )
+
+
 @router.post("/audits/{audit_id}/nonconformities", operation_id="create_audit_5s_nonconformity")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Body(...)):

@@ -51,6 +51,16 @@ Base: `/apps/api-delpi/quality/audit-5s`
 
 Documentação: [docs/12-roadmap-e-evolucao/auditoria-5s/ROADMAP.md](../../docs/12-roadmap-e-evolucao/auditoria-5s/ROADMAP.md)
 
+### NC da auditoria anterior (durante a avaliação)
+
+Na tela de preenchimento, se o **mesmo critério** (`criterion_code`) teve NC na auditoria imediatamente anterior do mesmo escopo (área + turno + filial), aparece um aviso com **Visualizar detalhes**.
+
+| Método | Path | Uso |
+|--------|------|-----|
+| `GET` | `/audits/{id}/previous-criterion-nonconformities` | Mapa `by_criterion_code` + metadados da auditoria anterior |
+
+Ausência de histórico ≠ erro: falha de consulta é sinalizada sem bloquear as notas.
+
 ### Foto por critério (avaliação)
 
 Em qualquer critério com nota **1, 3 ou 5**, a UI permite anexar foto opcional:

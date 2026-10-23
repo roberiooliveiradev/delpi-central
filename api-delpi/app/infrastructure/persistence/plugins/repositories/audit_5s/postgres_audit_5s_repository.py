@@ -1535,6 +1535,145 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             rows = self.fetch_all(self._NC_LIST_LEGACY_SQL, (audit_id,))
             return [self._augment_nc_legacy_row(row) for row in rows]
 
+    def get_previous_criterion_nonconformities(
+        self,
+        audit_id: str,
+    ) -> dict[str, Any]:
+        """NCs da auditoria imediatamente anterior do mesmo escopo (área + turno + filial).
+
+        Critérios são casados por ``criterion_code`` (não pelo UUID do catálogo).
+        NCs canceladas são ignoradas.
+        """
+        from app.domain.services.audit_5s.audit_5s_previous_criterion_nc import (
+            build_previous_criterion_ncs_payload,
+        )
+
+        current = self.fetch_one(
+            """
+            SELECT id, area_id, branch_code, shift, audit_date, created_at
+              FROM quality.audit_5s_audits
+             WHERE id = %s
+            """,
+            (audit_id,),
+        )
+        if not current:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+
+        previous = self.fetch_one(
+            """
+            SELECT a.id, a.audit_code, a.audit_date, a.shift
+              FROM quality.audit_5s_audits a
+             WHERE a.area_id = %s
+               AND a.branch_code = %s
+               AND a.shift = %s
+               AND a.id <> %s
+               AND (
+                    a.audit_date < %s
+                    OR (a.audit_date = %s AND a.created_at < %s)
+               )
+             ORDER BY a.audit_date DESC, a.created_at DESC
+             LIMIT 1
+            """,
+            (
+                current["area_id"],
+                current["branch_code"],
+                current["shift"],
+                current["id"],
+                current["audit_date"],
+                current["audit_date"],
+                current["created_at"],
+            ),
+        )
+        if not previous:
+            return build_previous_criterion_ncs_payload(
+                previous_audit=None,
+                nc_rows=[],
+            )
+
+        try:
+            rows = self.fetch_all(
+                """
+                SELECT nc.id,
+                       nc.audit_id,
+                       nc.response_id,
+                       nc.description,
+                       nc.root_cause,
+                       nc.corrective_action,
+                       nc.responsible_name,
+                       nc.responsible_user_id,
+                       nc.due_date,
+                       nc.priority,
+                       nc.status,
+                       nc.created_at,
+                       nc.updated_at,
+                       r.observation AS response_observation,
+                       c.code AS criterion_code,
+                       c.description AS criterion_description,
+                       s.sort_order AS senso_order,
+                       s.name AS senso_name
+                  FROM quality.audit_5s_nonconformities nc
+                  JOIN quality.audit_5s_responses r ON r.id = nc.response_id
+                  JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
+                  JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+                 WHERE nc.audit_id = %s
+                   AND LOWER(COALESCE(nc.status, '')) <> 'cancelled'
+                 ORDER BY s.sort_order, c.sort_order, nc.created_at DESC
+                """,
+                (previous["id"],),
+            )
+        except PluginsRepositoryError:
+            legacy = self.fetch_all(
+                """
+                SELECT nc.id,
+                       nc.audit_id,
+                       nc.response_id,
+                       nc.description,
+                       nc.responsible_name,
+                       nc.due_date,
+                       nc.status,
+                       nc.created_at,
+                       r.observation AS response_observation,
+                       c.code AS criterion_code,
+                       c.description AS criterion_description,
+                       s.sort_order AS senso_order,
+                       s.name AS senso_name
+                  FROM quality.audit_5s_nonconformities nc
+                  JOIN quality.audit_5s_responses r ON r.id = nc.response_id
+                  JOIN quality.audit_5s_criteria c ON c.id = r.criterion_id
+                  JOIN quality.audit_5s_sensos s ON s.id = c.senso_id
+                 WHERE nc.audit_id = %s
+                   AND LOWER(COALESCE(nc.status, '')) <> 'cancelled'
+                 ORDER BY s.sort_order, c.sort_order, nc.created_at DESC
+                """,
+                (previous["id"],),
+            )
+            rows = [self._augment_nc_legacy_row(row) for row in legacy]
+
+        audit_code = previous.get("audit_code")
+        audit_date = previous.get("audit_date")
+        audit_shift = previous.get("shift")
+        if audit_date is not None and hasattr(audit_date, "isoformat"):
+            audit_date = audit_date.isoformat()
+
+        normalized: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["audit_code"] = audit_code
+            item["audit_date"] = audit_date
+            item["shift"] = audit_shift
+            for key in ("due_date", "created_at", "updated_at"):
+                value = item.get(key)
+                if value is not None and hasattr(value, "isoformat"):
+                    item[key] = value.isoformat()
+            code = str(item.get("criterion_code") or "").strip().upper()
+            item["criterion_code"] = code
+            normalized.append(item)
+
+        return build_previous_criterion_ncs_payload(
+            previous_audit=previous,
+            nc_rows=normalized,
+        )
+
     def create_nonconformity(
         self,
         *,

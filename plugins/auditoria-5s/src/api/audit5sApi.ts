@@ -379,6 +379,50 @@ export async function fetchNonconformities(auditId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export type PreviousCriterionNonconformity = {
+  id: string;
+  audit_id: string;
+  response_id: string;
+  description: string | null;
+  root_cause?: string | null;
+  corrective_action?: string | null;
+  responsible_name?: string | null;
+  due_date?: string | null;
+  priority?: string | null;
+  status: string;
+  response_observation?: string | null;
+  criterion_code: string;
+  criterion_description?: string | null;
+  senso_order?: number;
+  senso_name?: string | null;
+  audit_code?: string | null;
+  audit_date?: string | null;
+  shift?: string | null;
+  created_at?: string | null;
+};
+
+export type PreviousCriterionNonconformitiesPayload = {
+  previous_audit: {
+    id: string;
+    audit_code: string | null;
+    audit_date: string | null;
+    shift: string | null;
+  } | null;
+  by_criterion_code: Record<string, PreviousCriterionNonconformity>;
+  items: PreviousCriterionNonconformity[];
+};
+
+/** NCs da auditoria imediatamente anterior (mesma área + turno + filial), indexadas por criterion_code. */
+export async function fetchPreviousCriterionNonconformities(auditId: string) {
+  const res = await httpGet<ApiEnvelope<PreviousCriterionNonconformitiesPayload>>(
+    `${API_BASE}/audits/${auditId.trim()}/previous-criterion-nonconformities`,
+  );
+  return unwrapApiDelpiEnvelope(
+    res,
+    "Erro ao carregar NCs da auditoria anterior",
+  );
+}
+
 export async function createNonconformity(
   auditId: string,
   payload: {

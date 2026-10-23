@@ -140,6 +140,17 @@ Senso Utilização (8 critérios), 7 com notas somando 28 e 1 NA:
 
 ---
 
+## 5.1 Aviso de NC da auditoria anterior (durante a avaliação)
+
+Durante o preenchimento (`draft` / reabertura), para cada critério:
+
+1. O sistema identifica a **auditoria imediatamente anterior** do mesmo escopo: mesma **filial**, mesma **área** e mesmo **turno**, com `(audit_date, created_at)` estritamente anterior.
+2. Compara critérios pelo **`criterion_code`** (nunca pela posição na tela nem pelo UUID do catálogo da versão).
+3. Se existir NC **não cancelada** naquela auditoria para o mesmo código, a UI exibe aviso discreto abaixo das notas com acesso à ficha (descrição, data, observações da avaliação, situação).
+4. Ausência de histórico ou de NC **não** gera aviso. Falha na consulta **não** bloqueia a avaliação atual.
+
+Endpoint: `GET /quality/audit-5s/audits/{id}/previous-criterion-nonconformities`.
+
 ## 6. Transição para fase NC
 
 Após `evaluation_complete`:

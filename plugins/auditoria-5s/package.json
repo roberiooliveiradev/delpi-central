@@ -18,6 +18,7 @@
     "check:nc-board-row-status": "node --experimental-strip-types scripts/check-nc-board-row-status.ts",
     "check:nc-board-progress": "node --experimental-strip-types scripts/check-nc-board-progress.ts",
     "check:nc-board-admin-force-close": "node --experimental-strip-types scripts/check-nc-board-admin-force-close.ts",
+    "check:previous-criterion-nc": "node --experimental-strip-types scripts/check-previous-criterion-nc.ts",
     "preview": "vite preview"
   },
   "dependencies": {
