@@ -17733,3 +17733,19 @@ TASK_ID=DELIA-C3-S5-BOUNDED-OUTCOME-REWORK-PRODUCTION-RELEASE-01
 RELEASE_SHA=88e4598881 IMAGE=f9e2b4cb54c9 RUNTIME=healthy
 FULL_BACKEND=PASS@88e4598881 FOCUSED=370 LOCAL_EVAL=delia-json
 COORDINATION_REVIEW_REQUIRED=YES NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
+
+## §6.401 — Homologacao produtiva autenticada D4/D5/D8 com Kimi (2026-10-23)
+
+**2026-10-23 — DELIA-C3-S5-PRODUCTION-AUTHENTICATED-OUTCOME-HOMOLOGATION-01:** execucao read-only sobre runtime prod `f9e2b4cb54c9` (release `88e4598881`, HEAD `bf3db64c8`), modelo `moonshotai/kimi-k3`, 60/3/300, CRI ativo. Identidade produtiva real `user` fornecida diretamente pelo PO (sub 401b25fa-...; grants efetivos verificados em delpi_core: delia.access, tv-dashboard.read/manage/write, transformometro.access/manage; consent ai_context via Portal). Token via password-grant publico delpi-central. Falso positivo do harness corrigido: grant inicial sem scope=openid -> MISSING_REQUIRED_SCOPE nos gates MCP; com openid, os 3 token-exchanges (mcp-api-delpi, mcp-transformometro, mcp-tv-dashboard) retornaram 200 e a superficie completa respondeu.
+
+RESULTADOS REAIS: D4/D4-R PASS — admission surface_inquiry -> listagem viva deterministica DAVI/TEO/VISTA verbatim + rodape publicacao!=permissao, OBSERVATION/capability_surface_listing. D5 FAIL — select_capability escolheu vista get_catalog e a resposta entregou dump JSON bruto de entities.playlist (violacao direta do criterio doc 120 D5); primeiro estagio divergente = select_capability, segundo = projecao de entities.* como conteudo. D5-R PARTIAL — get_product_guide correto, insufficient_evidence honesto. D8 PASS — GROUNDED via openapi:delpi get_product_summary, registro real 10080043 com rotulos PT-BR (residual: Group code sem rotulo). D8-R PASS — continuidade contextual via DAVI discover+execute_delpi_information, mesmo registro canonico (residual: Product code/Group category). N1 PASS — conversacional sem invocacao MCP, disclaimer honesto.
+
+TELEMETRIA: latencias 2.5-30.1s, todos os estagios attempt=1, tokens reais do provider via observability, correlation IDs seguros registrados no doc 123. Zero writes, zero 502/504, AuthZ 401 fail-closed.
+
+TASK_ID=DELIA-C3-S5-PRODUCTION-AUTHENTICATED-OUTCOME-HOMOLOGATION-01
+RUNTIME=f9e2b4cb54c9 MODEL=moonshotai/kimi-k3 IDENTITY=po_provided_prod_user
+D4=PASS D5=FAIL(entities_playlist_dump) D5R=PARTIAL D8=PASS D8R=PASS N1=PASS
+AC_S5_B=PASS AC_S5_C=FAIL AC_S5_D=PASS AC_S5_H=EXECUTED
+CODE_CHANGED=NO DEPLOY_EXECUTED=NO PROD_AUTHENTICATED_TESTS=EXECUTED
+MATERIAL_GAP=d5_catalog_dump_awaiting_product_master_decision
+COORDINATION_REVIEW_REQUIRED=YES NEXT=RETURN_TO_ARCHITECTURE_COORDINATION
