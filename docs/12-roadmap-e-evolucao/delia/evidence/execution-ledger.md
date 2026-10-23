@@ -17583,3 +17583,14 @@ RUNTIME_VERIFIED=YES ROLLBACK_AVAILABLE=YES ROLLBACK_EXECUTED=NO
 **Pós-rebase:** push anterior a 5cd91fbd (doc-104 + ativação produtiva 60/3/300 upstream — seams `_md_*`/presentation intocados). Focado+G4 re-verificado em daa5c9e725: backend 57/57, consumer 14/14.
 
 **Estado:** G4=EXECUTED_READY_FOR_COORDINATION_REVIEW_WITH_RESIDUAL; MARKDOWN_LIVE=TEST_NOT_RUN; CP-333=PLANNED_NOT_PASS; PRODUCTION_DEPLOYMENT=NO. Retorna à coordenação.
+
+## §6.391 — Investigacao causal local: semantica/CRI/evidencia — causas-raiz provadas (2026-10-23)
+
+**2026-10-23 — DELIA-C3-SEMANTIC-CRI-EVIDENCE-ROOT-CAUSE-LOCAL-INVESTIGATION-01:** bateria 12 casos + 8 variacoes + multiturno M9-M12 via cadeia real dev (Keycloak/Core /me/exchange/MCP autenticado/OpenAPI; Ollama delia-json GPU 100%; EXTERNAL_LLM_CALLS=0). Probes MCP capturaram envelopes reais: DAVI discovery com candidates vazio, candidate_count=0, eligible_action_count=95 e capability_surface.agent_directives; VISTA get_catalog com content_text em JSON bruto e capabilities[40] de mutacao. RC1 PROVEN: _contract_fact_rows/_compact_evidence nao aplicam _CONTROL_PLANE_KEYS nem exclusao de chaves de transporte do discovery, logo a composicao CRI contract_facts renderizou agent_directives e contadores verbatim (reproduzido live em D5, mesma forma do screenshot D4 do PO). RC2 PROVEN: capabilities[] do catalogo promovidas a business records, verdict answered, dump de descritores de operacao (forma do D5 do PO). RC3 nao-JSON local provado (G1/G3/M11 turn_error); RC5 gap ordinal TEO (clarification); RC6 desonestidade de modelo (M10 alegou DAVI indisponivel com invoke provado); RC7 mecanismo de markdown literal provado (texto plano por design); RC8 testes validavam envelope, nao conteudo. 6 testes RED adicionados (Parte 4 de test_c3_contextual_discovery) — 6 failed, 16 passed, mirando owner canonico. Doc 109 com matriz completa.
+
+TASK_ID=DELIA-C3-SEMANTIC-CRI-EVIDENCE-ROOT-CAUSE-LOCAL-INVESTIGATION-01
+PROVEN_ROOT_CAUSES=RC1 contract_facts leak control-plane (evidence projection) | RC2 capability-catalog promoted to business evidence | RC5 TEO entity-scoped gap | RC6 model dishonesty | RC7 literal-markdown mechanism | RC8 test coverage gap
+TO_INVENTORY=RC4 meta-surface question contract gap | RC3 local-model JSON adherence (nao transferivel p/ Kimi)
+RED_TESTS=6 (test_c3_contextual_discovery Parte 4) — todos RED no codigo atual
+EXTERNAL_LLM_CALLS=0 PRODUCTION_CHANGED=NO DEPLOY=NO
+NEXT=P1 fix canonico na borda de projecao (RC1+RC2) aguardando decisao de coordenacao
