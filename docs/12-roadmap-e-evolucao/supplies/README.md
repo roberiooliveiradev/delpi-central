@@ -253,3 +253,6 @@ A frente **SHARED-INTEGRATIONS-01 X0–X3.E2E** atingiu **ACCEPT para backend/ru
 ## Planejamento bounded — Atenção da Home (2026-10-23)
 
 **`HOME-ATTENTION-REFACTOR=PLANNED`; implementação e deploy NÃO autorizados.** As capturas do PO mostram sete atalhos genéricos aparentando pendências, sem quantidade/situação comprovadas. Plano exclusivo para a seção Atenção da Home: [HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md). Próximo gate proposto: `A0` inventário read-only do produtor BFF `GET /home/attention`, contagens e contratos de origem, antes de congelar A1. **Não modificar hero, caminhos, favoritos, demais seções/páginas; não tocar o bloqueio de cutover produtivo C1**, que continua aguardando Gabriel.
+
+
+**Autorização PO posterior (2026-10-23) — HOME-ATTENTION:** Devin autorizado a executar A0–A4, testes, commit/push e deploy canônico do componente Atenção **sem checkpoints de aprovação intermediários**, apenas com gates técnicos e de segurança PASS. O plano [HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md](./HOME-ATTENTION-REAL-DATA-REFACTOR-PLAN-20261023.md) é a referência atual para este escopo e substitui a classificação PLANNED acima. A autorização não afeta fornecedores C1/Gabriel.
