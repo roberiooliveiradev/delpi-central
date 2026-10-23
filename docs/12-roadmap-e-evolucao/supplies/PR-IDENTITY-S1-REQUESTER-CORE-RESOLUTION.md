@@ -73,3 +73,14 @@ plugins/supplies SuppliesPersonIdentity → display_name || name || code
 
 - O diretório retorna `name` oficial; usuários desativados mapeados continuam exibindo o nome (o vínculo é histórico do registro — comportamento contratado, não filtrado).
 - Facets/endpoint `/requesters` não são consumidos pelo MFE e não receberam enriquecimento nesta fatia.
+
+
+## Revisão GPT — PR.IDENTITY.S1 (2026-10-23)
+
+**Veredito:** `ACCEPT_WITH_RESIDUAL` em código e deploy técnico; `VISUAL_AUTHENTICATED=INCONCLUSIVE`. Inspecionados em GitHub o documento e o `RequesterIdentityService` na main após execução; 2 hops Core determinísticos por `protheus_user_id` (S2S de mapeamento e diretório com Bearer do usuário), `display_name` aditivo, origem preservada como fallback, sem matching por nome e sem Core IDs no contrato exibido. Fonte SC1 `C1_USER` documentada. Testes, smoke, latências e imagens são **reportados pelo executor**, não reexecutados pelo GPT.
+
+**Evidência reportada:** 20/20 linhas da listagem com `display_name`, três solicitantes distintos reconciliados, detalhe com `lines[].requester.display_name`, tempo de listagem ~0,9s antes/depois, MFE 384 PASS e BFF suíte verde; deploy `b22ebec23e`. `VISUAL_AUTHENTICATED=TEST_NOT_RUN`: confirmar no navegador coluna + avatar, Cards, detalhe, paginação/F5 e nomes oficiais de diferentes solicitantes.
+
+**Residuais de revisão:** (1) validar que falhas 401/403 do lookup de diretório não ampliam o universo de dados: o soft-fail de enriquecimento é aceitável **somente depois** de o BFF autorizar/listar as SCs com Core effective permissions, unidade/recurso e ownership; (2) o relatório diz '≤2 chamadas por página', válido quando até 50 usuários TOTVS distintos; para >50, o gateway faz chunks e o número de chamadas pode subir: ajustar alegações de performance à cardinalidade real; (3) verificar se name oficial retornado pelo diretório para usuário desativado é comportamento desejado do histórico; (4) conferir que documentação canônica da página permanece coerente com o HEAD e não promete enriquecimento do endpoint `/requesters` ainda não alterado.
+
+**Gate formal:** `PR.IDENTITY.S1_CODE=ACCEPT_WITH_RESIDUAL`; `RUNTIME_API_SMOKE=PASS (executor-reported)`; `VISUAL=INCONCLUSIVE`. Não reabrir alteração de origem TOTVS nem acesso direto MFE→Core. Esta entrega não altera o bloqueio `X4.PROD-C1` aguardando Gabriel.
