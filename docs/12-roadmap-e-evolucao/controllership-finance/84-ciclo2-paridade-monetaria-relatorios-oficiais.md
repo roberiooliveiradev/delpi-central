@@ -277,9 +277,7 @@ MP — validação por tipo em doc 80 §33.C/§34.B.
   `D1_DTDIGIT` 686 / 1.262.557,36 — **não reproduzível** (o artefato é
   subconjunto da consulta EDAPP do operador; filtro não documentado). G5 não
   promovido.
-- **R08** (Material em Processo): xlsb já é o próprio artefato oficial —
-  paridade documental com o P7 demonstrada (§3); população SIZ/SC2 não
-  testada. G5 não promovido.
+- **R08** (Material em Processo): reconciliado no §5.2 — G4/G5 PASS.
 - **R04, R09, R11–R15**: sem população oficial comparável
   disponível → G5 `TEST_NOT_RUN`/PENDING preservado.
 
@@ -307,6 +305,26 @@ doc 85 §6/§7:
 **Hipóteses descartadas:** filial 01 (população diverge), data única de
 emissão para SD1 (digitação provada), saldo por recálculo inverso
 (batimento exato com `B9`@0831), inclusão de estornos (pares ausentes).
+
+## §5.2 — R08 · Material em Processo MATR989 (rodada 22)
+
+Paridade **linha-a-linha** do artefato oficial (filial 01, `as_of` emissão
+01/10/2026 16:15) — doc 80 §41, doc 85 §8:
+
+| Dimensão | Oficial | Físico | Regra | Resultado | Δ | Status |
+|---|---|---|---|---|---|---|
+| Linhas com OP | 1.501 | 1.501 linhas SD3 `RE0/RE1/RE2/RE9` | grão = linha de movimento (1 doc com 2 linhas → 2 linhas) | 1.501/1.501 | 0 | `PASS` |
+| Quantidade/valor movimento | impresso | `D3_QUANT`/`D3_CUSTO1` | moeda 1, custo da emissão | 650/650 pares exatos | 0 | `PASS` |
+| Escopo OP | pares impressas | `PR0` (SD3 `D3_CF LIKE 'PR%'`)+`C2_DATRF` | OP aberta na emissão: 0 PR0 impresso; 33 PR0-em-01/10 excluídas; 3 encerradas-sem-produção excluídas; 15 f02 excluídos | discriminador completo | 0 | `PASS` |
+| Corte competência | impresso | `D3_EMISSAO`≤20260930 | `RE*` de 01/10 na mesma OP fora | provado | 0 | `PASS` |
+| Linhas sem OP | 573 produtos | `SB9010` `B9_DATA=0930` `B9_LOCAL=99` | `B9_QINI`/`B9_VINI1` | 569 exatos + 4 Δ temporais (revalorização pós-emissão / centavo) | máx 449,16 | `PASS` (drift explicado, classe `STALE_EVIDENCE`) |
+| Saldo por par | impresso | Σ`RE*`−Σ`DE*`≤corte | neteo `DE*` estrutural (não exercido nas 650 pares vivas) | 650/650 | 0 | `PASS` (regra) |
+| Total | 355.240,51 | SB9-loc99 293.273,09 + OP 61.967,42 | = EM PROCESSO P7 completo | exato | 0,00 | `PASS` |
+
+**Hipóteses descartadas:** net do mês (2.726 pares set net>0 ausentes),
+`C2_DATRF` como escopo (453 impressas com DATRF), grão documento,
+SDC/alocação, MOD com valor (141 linhas `MOD*` = 0), filial 02 (15 pares
+excluídos).
 **Errata rodada 20 (doc 80 §38):** as "11 linhas residuais" eram
 artefato do roteamento estrito entrada→SD1/saída→SD2 — todas são
 devoluções `TIPONF='D'` com sinal invertido provadas no fonte;

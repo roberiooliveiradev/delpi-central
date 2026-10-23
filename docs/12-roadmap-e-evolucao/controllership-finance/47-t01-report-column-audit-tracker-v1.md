@@ -30,7 +30,7 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 | R05 | Entradas e Saídas / valor estoque | `MATR320` (.prt no artefato) | Estoque | `kp04_t03` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria + owner da fonte |
 | R06 | CPV / Kardex 01 | `MATR910` (roster + artefato kardex + fonte `matr910_dlp.prx`) | Estoque | `kp04_t04` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria + owner da fonte |
 | R07 | Inventários / Kardex 99 | `MATR910` (roster + artefato INVENT + fonte) | Estoque | `kp04_t05` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria + owner da fonte |
-| R08 | Material em Processo / H02 | `MATR989` (roster + artefato 57k linhas) | Produção | `kp04_t07` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R08 | Material em Processo / H02 | `MATR989` analítico (roster + artefato 57k linhas; fonte `matr989.prx` ausente → E8) | Produção | `kp04_t07` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria + owner da fonte |
 | R09 | Faturamento × MOD | `DLP204` (roster + artefato PA→MOD) | Custos | `kp04_t06` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R10 | Notas por Centro de Custo | `EDAPP` → export SD1 (roster + vídeo + artefato) | Fiscal/Contábil | `kp04_t09` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
 | R11 | NF venda 9035 / CPV zero | `EDAPP` → export SD2 (roster + artefato) | Fiscal | `checklist doc03` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
@@ -76,7 +76,7 @@ SCOPE_CHANGE / SUPERSEDES:
 
 `R03 — P7`: processo `kp04_t01_st01/st02`; rotina documentada `MATR460`; layouts `padrão` e `Bloco H` distintos; saída de estoque para conferência e Contabilidade conforme doc 03. `OUTPUT_FIELDS`, `TABLE_BINDINGS`, `COLUMN_BINDINGS`, `JOINS_KEYS`, `PARITY_TEST` = `TO_INVENTORY / TEST_NOT_RUN`. `MATR860 != P7`.
 
-`R08 — H02`: processo `kp04_t07_st01`; material em processo; proxy SC2 citado no inventário anterior é **adjacente, não equivalente**. Não fechar G4 sem fonte correta.
+`R08 — H02`: processo `kp04_t07_st01`; material em processo; proxy SC2 citado no inventário anterior é **adjacente, não equivalente** — resolvido na rodada 22: artefato = MATR989 analítico com dois blocos (SD3 `RE*` de OP aberta na emissão + SB9@0930 loc99), reconciliado 100% — doc 80 §41, doc 85 §8; residual = fonte `matr989.prx`/RPO (E8).
 
 `R15 — SB9`: usar `get_supplies_stock_value` / SB9 apenas como **candidato à evidência T03**, nunca declarar `STOCK_CLOSED` por inferência.
 
@@ -85,8 +85,8 @@ SCOPE_CHANGE / SUPERSEDES:
 | Lote | IDs | Critério de saída | Stop |
 |---|---|---|---|
 | L1 — delimitar relatórios | R01–R15 | G1/G2/G3 verificados com artefatos e filtros; desdobrar famílias | original inacessível → bloqueio com owner |
-| L2 — estoque crítico | R03,R05,R08,R15 | bindings e paridade de P7/Entradas-Saídas/H02/SB9 | T03 sem owner → não inferir fechado |
-| L3 — custos e consumo | R04,R06,R07,R09,R10,R11,R12 | bindings e campos comprovados | proxy adjacente sem equivalência |
+| L2 — estoque crítico | R03,R15 (R05/R08 reconciliados) | bindings e paridade de P7/SB9 pendentes — Entradas-Saídas e H02 fechados r05/r22 | T03 sem owner → não inferir fechado |
+| L3 — custos e consumo | R04,R09,R10,R11,R12 (R06/R07 reconciliados) | bindings e campos comprovados; R10/R11 paridade G5 pendente (filtro EDAPP ad-hoc) | proxy adjacente sem equivalência |
 | L4 — financeiro | R01,R02 | FINR190, layouts e filtros por data/natureza/carteira | divergência entre layouts |
 | L5 — externos | R13,R14 | origem, ownership, exportação, verificações de integridade e regra por banco/importação | lista de bancos divergente |
 | L6 — reconciliação | IDs pai/filhos pertinentes | paridade R$0,00 por competência/empresa/filial com evidência | divergência de centavo = FAIL |
@@ -361,7 +361,7 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 | R05 | G1,G2,G3 | `Entradas e saidas.pdf` = `SIGA/MATR320.prt/v.12` período 01–30/09/2026 MATRIZ, layout por tipo (**promovido G4/G5 na rodada CF-C2-STOCK-RULES-CONSOLIDATION-002 — §11.2**) | 2026-10-23 |
 | R06 | G1,G2,G3,G4,G5 | `cpv 09 26 matriz.xlsb` "Kardex Fisico-Financeiro" 14.382 linhas = 1.544 blocos + 9.357 movimentos; roster MATR910 + fonte `matr910_dlp.prx`; UNION SD1/SD2/SD3 linha-a-linha + custos `as_of` + cadeia de saldo 1.544/1.544 — doc 80 §37, doc 85 §6, doc 84 §5.1 | 2026-10-23 |
 | R07 | G1,G2,G3,G4,G5 | `Invent.xlsb` kardex docs "INVENT" TES 999/499 — 45/45 linhas vinculadas ao SD3 (loc 01+99, 10 via `TTAT_OLD`) — doc 80 §37.D, doc 85 §7 | 2026-10-23 |
-| R08 | G1,G2,G3 | `Material em processo.xlsb` "Saldo em Processo" 57.359 linhas c/ ORDEM PRODUCAO; roster MATR989 | 2026-10-23 |
+| R08 | G1,G2,G3,G4,G5 | `Material em processo.xlsb` "Saldo em Processo (Ana" 57.359 linhas; roster MATR989; bloco OP = 1.501 linhas SD3 `RE*` de OP aberta na emissão (650/650 exato) + bloco sem-OP = SB9@0930 loc99 (569/573 exato, 4 Δ temporais); total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8, doc 84 §5.2 | 2026-10-23 |
 | R09 | G1,G2,G3 | `Fat x MOD.xlsb` abas Fl01/Fl02 PA→MOD + Horas + Custo Unit; roster DLP204 | 2026-10-23 |
 | R10 | G1,G2,G3,G4 | `CC matriz.xlsb` = export **SD1** (sheet `SCAGQGA0.XML`; linha 0 = literal `SD1`, headers = títulos SX3 `D1_*` — binding 1:1 monotabela); vídeo 47:00 mesma operação EDAPP (`SCAGPOU0.XML`); roster EDAPP "Faturamento e CC" — detalhe §11.1 | 2026-10-23 |
 | R11 | G1,G2,G3,G4 | `NF a desconsiderar.xlsb` = export **SD2** (linha 0 = literal `SD2`, headers SX3 `D2_*`; Tipo Saida 594, CF 5101); roster EDAPP "NF à desconsiderar" — detalhe §11.1 | 2026-10-23 |
@@ -369,13 +369,13 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 | R13 | G1 | `Arquivos de envio` checklist: Extratos/XP/BB/Aplicações — externalidade confirmada | 2026-10-23 |
 | R15 | G1,G2 | vídeo 14:47 wizard "Novo fechamento de custo" executado (JOICI, Matriz); SB9 snapshot PROVEN (doc 80 §21) | 2026-10-23 |
 
-**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R08/R09/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07 (paridade monetária integral pendente); G6 de todos (exige aceite humano).
+**Não promovidos:** G4 de R02 (produtor custom `DLP06R01` sem fonte no acervo — §11.1), R03/R09/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos exceto R01/R02/R05/R06/R07/R08 (paridade monetária integral pendente); G6 de todos (exige aceite humano).
 
 **Resoluções desta rodada:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pagos **e** recebidos) — o mesmo `.prt` é usado por rotinas distintas; para pagar, produtor = FINR190 com fonte+WHERE provados; para receber, produtor = custom `DLP06R01` **sem fonte no acervo** (FINR190 descartado pelo WHERE, doc 80 §17.D); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
 
-**Métricas (após rodada 19 — kardex R06/R07):** `COLETA = 42/60 = 70,0%`; `AUDITORIA = 47/90 = 52,2%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+**Métricas (após rodada 22 — MATR989 R08):** `COLETA = 42/60 = 70,0%`; `AUDITORIA = 47/90 = 52,2%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
 
-**Residuais por owner** (doc 83 §5, doc 82 §2, doc 84): fonte do relatório de receber `DLP06R01` custom (R02 G4, TI/ERP); subconjunto do log de inconsistências dos relatórios de baixas e versão RPO do FINR190 (TI/ERP); parâmetros da emissão resumida P7 + suas linhas de produto + fonte `matr460.prx`/RPO (R03 — totalização provada r15; hipótese poder3 ~99,99% estoque com Δ76,43 r17 — não é regra oficial, r18); artefato de consumo por OP (R04, Controladoria); **versão RPO MATR910 + parâmetros efetivos das emissões kardex (R06/R07 — E7; G4/G5 já PASS pela reconstrução)**; bindings físicos R08/R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14); aceite funcional G6 de todos os itens (Controladoria). ~~Residual MP ~R$950~~ **eliminado** — ponte por produto fecha 100% do Δ +8.631,73 (doc 80 §33.B).
+**Residuais por owner** (doc 83 §5, doc 82 §2, doc 84): fonte do relatório de receber `DLP06R01` custom (R02 G4, TI/ERP); subconjunto do log de inconsistências dos relatórios de baixas e versão RPO do FINR190 (TI/ERP); parâmetros da emissão resumida P7 + suas linhas de produto + fonte `matr460.prx`/RPO (R03 — totalização provada r15; hipótese poder3 ~99,99% estoque com Δ76,43 r17 — não é regra oficial, r18); artefato de consumo por OP (R04, Controladoria); **versão RPO MATR910 + parâmetros efetivos das emissões kardex (R06/R07 — E7; G4/G5 já PASS pela reconstrução)**; **fonte `matr989.prx`/RPO + parâmetros efetivos + semântica intra-dia do corte de OP + neteo `DE*` não exercido (R08 — E8; G4/G5 já PASS pela reconstrução)**; bindings físicos R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14); aceite funcional G6 de todos os itens (Controladoria). ~~Residual MP ~R$950~~ **eliminado** — ponte por produto fecha 100% do Δ +8.631,73 (doc 80 §33.B).
 
 ### 11.1 — Rework de gates (revisão G4 R01/R02/R10/R11, 2026-10-23)
 

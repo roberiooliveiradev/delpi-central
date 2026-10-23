@@ -640,13 +640,116 @@ testados do comportamento observado são compatíveis com o fonte.
 
 ---
 
-## §8 — R08 · Material em Processo (MATR989) — `AS-IS`
+## §8 — R08 · Material em Processo (MATR989) — `PROVEN` (paridade física rodada 22)
 
-- `Material em processo.xlsb` = "Saldo em Processo" (57.359 linhas):
-  produto, UM, LOCAL, **ORDEM PRODUCAO**, TIPO RE/DE (RE2…), QTDE e VALOR EM
-  PROCESSO — Dt.Ref 01/10/2026 16:15.
-- Soma fecha com EM PROCESSO do P7 (BR-R03-003). Binding físico (SC2/SD3
-  saldo por OP) `TO_INVENTORY`.
+`Material em processo.xlsb` = "Saldo em Processo (Ana)" (aba única `01-01`,
+57.359 linhas, 8 colunas, Dt.Ref 01/10/2026 · Hora 16:15:58 · Emissão
+01/10/2026): `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE,
+QTDE EM PROCESSO, VALOR EM PROCESSO`. Fonte `matr989.prx` ausente do
+acervo (`SOURCE_MISSING` — classe DLP06R01); produtor = rotina oficial
+MATR989 variante analítica (roster + título da aba), `CODE_DEPLOYED` via
+artefato. População e valores reproduzidos 100% no físico (doc 80 §41).
+
+### BR-R08-001 — Grão da linha = linha física SD3 `RE*` — `PROVEN`
+
+Cada linha com OP do relatório corresponde 1:1 a uma linha `SD3010` com
+`D3_CF LIKE 'RE%'`: **1.501 linhas impressas = 1.501 linhas SD3** (uma
+única ocorrência de 2 linhas SD3 no mesmo `D3_DOC` gera 2 linhas no
+relatório — grão é a linha de movimento, não o documento). Chaves
+exibidas: `CODIGO`=`D3_COD`, `ORDEM PRODUCAO`=`D3_OP`, `TIPO RE/DE`=`D3_CF`,
+`LOCAL`=`D3_LOCAL`. Não há coluna de documento; duplicatas aparentes de
+(produto, OP, tipo) são linhas de docs distintos (93 chaves).
+
+### BR-R08-002 — Quantidade/valor = `D3_QUANT`/`D3_CUSTO1` — `PROVEN`
+
+`QTDE EM PROCESSO` = `D3_QUANT`; `VALOR EM PROCESSO` = `D3_CUSTO1`
+(custo do movimento a moeda 1, gravado na emissão — custo médio da época:
+ex. 9,16/u ↔ `B2_CM1`=9,16).
+
+### BR-R08-003 — População do bloco com OP — `PROVEN`
+
+`SD3010` filial 01, `D3_OP<>''`, `D_E_L_E_T_<>'*'`, `D3_ESTORNO<>'S'`,
+`D3_EMISSAO<='20260930'` (corte de competência), `D3_CF` em `RE0/RE1/RE2/RE9`.
+Movimentos `RE*` datados de 01/10+ são excluídos (provado: 4 linhas RE9 de
+01/10 na mesma OP não impressas). Devoluções `DE*` subtraem o par — ver
+BR-R08-006.
+
+### BR-R08-004 — Escopo da OP avaliado no instante da emissão — `PROVEN`
+
+O par (produto, OP) é impresso somente se a OP estiver **aberta na data de
+referência/emissão**: sem apontamento de produção (`SD3 D3_CF LIKE 'PR%'`)
+e não encerrada. Evidência: **0 das 650** pares impressas tem `PR0` da OP;
+**33 OPs excluídas** têm primeiro `PR0` exatamente em 01/10 (dia da
+emissão); as OPs impressas com produção têm `PR0` só a partir de 02/10 ou
+nenhum. **3 OPs excluídas nunca produziram** (`C2_QUJE=0` mas `C2_DATRF`
+preenchido = encerradas/canceladas); zero OPs impressas têm esse perfil.
+Discriminação intra-dia (PR0 de 01/10 antes vs depois das 16:15) não é
+observável por data — fronteira registrada como `as_of` do dia Dt.Ref.
+
+### BR-R08-005 — Saldo por par = Σ`RE*` − Σ`DE*` ≤ corte — `PROVEN` (estrutura)
+
+Para os **650/650 pares** impressos: Σ qtde e valor `RE*−DE*` ≤30/09 =
+impresso, Δ 0,000 exato. Nenhum par impresso contém `DE*` — o mecanismo de
+neteo é estrutural (inferido da seleção), não exercido dentro das pares
+vivas desta competência. `DE*` observados (752 movs.) pertencem a pares de
+OPs já produzidas/excluídas.
+
+### BR-R08-006 — Bloco sem OP = saldo físico `SB9`@fechamento do armazém 99 — `PROVEN`
+
+Linhas sem `ORDEM PRODUCAO` = `SB9010` `B9_DATA='20260930'`, `B9_LOCAL='99'`,
+filial 01: `QTDE`=`B9_QINI`, `VALOR`=`B9_VINI1`. **569/573 exato**; 4
+diferenças temporais: `10211413` ΔR$449,16 e `10120198` Δ0,144 (revalorização
+`B9_VINI1` pós-emissão — mesma classe `STALE_EVIDENCE` do drift R05/R06),
+`10080198` Δ0,01 e `10090636` Δ−0,001 (resíduo de centavo). Zero produtos
+SB9-loc99 ≠ 0 ausentes do artefato.
+
+### BR-R08-007 — EM PROCESSO do P7 = total do MATR989 — `PROVEN`
+
+Total do artefato = **R$355.240,51**, exato com EM PROCESSO do P7 completo
+(BR-R03-003). Decomposição: loc-99 sem OP 293.273,09 + `RE0` 588,50 +
+`RE1`(loc 01) 254,44 + `RE2` 48.713,64 + `RE9` 12.410,85. O bloco `RE1`
+em `LOCAL='01'` corresponde à fatia **PI** do EM PROCESSO (254,44 — doc 80
+§33.D). EM PROCESSO **não é** o saldo físico do armazém 99: é estoque do
+armazém de processo (293.273,09) **+ material alocado a OPs abertas**
+(61.967,42).
+
+### BR-R08-008 — Linhas de apresentação / catálogo — `AS-IS`
+
+Das 57.355 linhas de dados, ~54.600 são produtos sem saldo (qtde=0,
+valor=0, sem OP) e 141 são códigos `MOD*` (mão de obra, qtde/valor 0) —
+linhas de catálogo sem efeito nos totais. Linhas efetivas: 1.501 com OP +
+573/555 produtos sem OP com saldo ≠ 0.
+
+### BR-R08-009 — Reuso transversal existente — `REUSE_PARTIAL`
+
+- `api-delpi` `stock_value_historical_sql.py` (`supplies_repositories`):
+  engine canônico SB9@data + ponte SD3 (mesma reconstrução usada aqui) —
+  **reutilizável** para o bloco sem-OP e para saldos `as_of`.
+- `stock_value_query_repository._fetch_wip_proxy_rows` expõe
+  `em_processo_proxy_value` = `SUM(SB2.B2_VATU1)` nos armazéns de processo
+  (`WORK_IN_PROCESS_WAREHOUSES=('50','98','99')`, método
+  `sb2_process_locations`): cobre **apenas** o bloco sem-OP corrente
+  (~293k), não o alocado a OP (61.967,42) nem `as_of` — **parcial**.
+- `pedidos_venda_abertos/ops_abertas_sql.py` codifica o predicado canônico
+  de OP aberta (`C2_QUANT>C2_QUJE AND C2_DATRF=''`) — semântica adjacente:
+  o MATR989 exige `C2_QUJE=0` (nenhuma produção), não só saldo pendente.
+- Não existe serviço que materialize o saldo `RE*−DE*` por OP — lacuna
+  real para a Central de Fechamento (`TARGET` futuro).
+
+### T-R08-01..05 — testes executados (rodada 22, SELECT-only, `as_of` 01/10 16:15)
+
+| Teste | Regra | Resultado |
+|---|---|---|
+| T-R08-01 | BR-R08-001/002/003 | positive · 1.501/1.501 linhas com OP = linhas SD3 `RE*`; 650/650 pares (produto,OP) qtde+valor exatos |
+| T-R08-02 | BR-R08-006 | positive · 569/573 exato vs `SB9010`@20260930 loc 99; 4 Δ temporais explicados (revalorização/centavo) |
+| T-R08-03 | BR-R08-004 | sibling/negative · 33 OPs com `PR0` em 01/10 excluídas; 3 OPs encerradas-sem-produção excluídas; 15 pares filial 02 excluídos; 118 OPs sem `PR0` impressas |
+| T-R08-04 | BR-R08-007 | positive · total artefato = EM PROCESSO P7 = 355.240,51 exato |
+| T-R08-05 | BR-R08-003 | negative · movimentos `RE*` de 01/10 na mesma OP não impressos (corte 30/09) |
+
+**Pendente:** fonte `matr989.prx`/versão RPO implantada (`TO_INVENTORY` —
+mesma classe E7 de R06/R07); semântica intra-dia do corte de OP
+(`as_of`-dia vs timestamp 16:15); neteo `DE*` dentro de par impresso
+(não exercido nesta competência).
 
 ---
 
@@ -759,6 +862,8 @@ transferências entre filiais, movimentações. Execução real 30/09 14:47
 | BR-R06-006/007 custo+saldo | `matr910_dlp.prx` + TTAT/SB9 | `D*_CUSTO*`,`TTAT_COLD`,`B9_QINI`,`B9_VINI1` | custo as_of emissão; cadeia saldo desde `CalcEst` | `as_of` obrigatório (mesma regra de BR-R05-008) | api-delpi | T-R06-07/08 | doc 80 §37.C/E |
 | BR-R06-009/010 população+CPV | artefato + SB1/SB9 + **`GET /supplies/cpv` existente** | `B1_TIPO`,`B1_COD`,mv_par07,`D2_CF`,`D2_CUSTO1` | só produtos com movimento; saídas kardex ≠ CPV — CPV = subconjunto SD2 CFOPs venda (rota api-delpi canônica) | `REUSE_PARTIAL` — endpoint cobre CPV por emissão com custo corrente; lacuna `as_of`/snapshot p/ fechamento → owner | api-delpi (regra) / cf-api (composição) | T-R06-09 | doc 80 §37.C/§39 |
 | BR-R07-001..003 INVENT | artefato + SD3/TTAT | `D3_DOC='INVENT'`,`D3_TM`,`D3_CF`,`D3_CUSTO1` | ajustes 999/RE0 saída + 499/DE0 entrada, loc 01+99 | `stock-kardex` filtro doc — mesmo contrato de R06 | api-delpi | T-R07-01/02 | doc 80 §37.D |
+| BR-R08-001..005 bloco OP | artefato + SD3/SC2 | `D3_COD`,`D3_OP`,`D3_CF`,`D3_LOCAL`,`D3_QUANT`,`D3_CUSTO1`,`C2_QUJE`,`C2_DATRF`,`PR0` | linha SD3 `RE*`≤corte de OP aberta na emissão; saldo = ΣRE−DE | `material-in-process` (`as_of` obrigatório — estado da OP muda no tempo) | api-delpi | T-R08-01/03/05 | doc 80 §41 |
+| BR-R08-006 bloco sem OP | artefato + SB9 | `B9_DATA`,`B9_LOCAL`,`B9_QINI`,`B9_VINI1` | saldo físico `SB9`@fechamento loc99 | idem — coberto por `stock_value_historical_sql` existente | api-delpi | T-R08-02 | doc 80 §41 |
 | BR-R12-003 Refaz | `DEL100.PRW` | SD3/SB9 | reconstrução→comparação | `rebuild-balances-audit` | api-delpi | T-R12-01 | doc 80 §24.E |
 | BR-R15 SB9 snapshot | SB9/SB2 | `B9_*` | snapshot mensal | `month-end-stock` (**após E5**) | api-delpi | T-R15-01 | doc 80 §21 |
 
@@ -824,6 +929,12 @@ copia para BFF/frontend.
 | T-R07-03 | BR-R07-002 | negative · candidato | estorno de INVENT (par `D3_ESTORNO`) deve ficar fora — mesma regra de T-R06-02 |
 | T-R07-04 | BR-R07-002 | positive · candidato | movimento retroativo INVENT digitado após emissão não entra na reprodução `as_of` |
 | T-R12-01 | BR-R12-003 | positive · reproduzido | query DEL100 vigente = 3.058/421/242 |
+| T-R08-01 | BR-R08-001/002/003 | positive · reproduzido | 1.501/1.501 linhas com OP = linhas SD3 `RE*` (grão linha física); 650/650 pares qtde+valor exatos |
+| T-R08-02 | BR-R08-006 | positive · reproduzido | 569/573 exato vs `SB9010`@0930 loc99; 4 Δ temporais explicados |
+| T-R08-03 | BR-R08-004 | sibling/negative · reproduzido | OP com `PR0` no Dt.Ref (33), encerrada-sem-produção (3) e filial 02 (15) excluídas; OP aberta impressa |
+| T-R08-04 | BR-R08-007 | positive · reproduzido | total = EM PROCESSO P7 = 355.240,51 exato |
+| T-R08-05 | BR-R08-003 | negative · reproduzido | `RE*` de 01/10 na mesma OP fora — corte de competência 30/09 |
+| T-R08-06 | BR-R08-005 | negative · candidato | par impresso com `DE*` deve ter saldo netado — não exercido nesta competência |
 | T-R15-01 | BR-R15 | negative · reproduzido | snapshot com timestamp ≠ execução → não declarar produtor |
 
 ---

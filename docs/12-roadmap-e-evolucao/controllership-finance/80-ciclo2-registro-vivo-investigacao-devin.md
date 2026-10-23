@@ -2369,3 +2369,122 @@ Gates/métricas inalterados (42/60 · 47/90).
 - **Errata §39:** mutabilidade após MATA330 **não é lacuna nem `DECISION_REQUIRED` para a leitura corrente de CPV**. Não exigir `as_of` ou snapshot para essa consulta. `REUSE_PARTIAL` pode persistir por motivos distintos (granularidade/filtros/testes).
 - **Rastreabilidade distinta:** identificar valores/evidências de homologação anteriormente realizados quando existirem, sem substituir o CPV vivo ou afirmar persistência/snapshot implementados. E6=C é decisão específica de histórico monetário MOD, não solução automaticamente aplicável ao CPV.
 - **Sem novo GO:** nenhuma operação SQL, job, contrato, código ou runtime autorizada; R06/R07 G4/G5 PASS e G6 PENDING; 42/60, 47/90. Próxima rodada: sequência vigente docs 47/80, com verificação transversal §0.
+
+
+## §41 — R08 MATR989 · Material em Processo — paridade física completa (rodada 22 — 2026-10-23)
+
+Artefato oficial `Material em processo.xlsb` (aba única `01-01 - Saldo em
+Processo (Ana` — variante **analítica** do MATR989, roster oficial;
+`matr989.prx` **ausente do acervo** → `SOURCE_MISSING`, mesma classe
+DLP06R01). Dt.Ref 01/10/2026 · Hora 16:15:58 · Emissão 01/10/2026 ·
+57.359 linhas × 8 colunas: `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO,
+TIPO RE/DE, QTDE EM PROCESSO, VALOR EM PROCESSO`. Consultas SELECT-only
+no `as_of` da emissão; zero DDL/DML; zero runtime.
+
+### A. Estrutura do artefato — dois blocos
+
+| Bloco | Linhas efetivas | Total | Fonte física provada |
+|---|---|---|---|
+| Com `ORDEM PRODUCAO` | **1.501** (650 pares produto×OP; 164 produtos; 444 OPs; 93 chaves prod×OP×tipo duplicadas por doc distinto) | **R$61.967,42** | linhas `SD3010` `D3_CF IN (RE0,RE1,RE2,RE9)` |
+| Sem OP | 573 produtos ≠ 0 (+ ~54.600 linhas catálogo qtde/valor=0 e 141 `MOD*`) | **R$293.273,09** | `SB9010` `B9_DATA=20260930` `B9_LOCAL=99` |
+| **Total** | | **R$355.240,51** | = EM PROCESSO do P7 completo (exato) |
+
+Linhas sem OP com qtde/valor zero = catálogo de apresentação (não entram
+no total nem na população).
+
+### B. Grão — linha física SD3, não documento
+
+1.501 linhas impressas = 1.501 linhas `SD3010` `RE*` elegíveis (join
+prod+op+cf+doc+local); **um único** `D3_DOC` tem 2 linhas SD3 e o artefato
+imprime 2 — grão = linha de movimento. Quantidade = `D3_QUANT`; valor =
+`D3_CUSTO1` (custo do movimento a moeda 1, do instante do movimento —
+ex. 9,16/u = `B2_CM1` da época).
+
+### C. Regra de seleção — OP aberta no instante da emissão
+
+Saldo por par = Σ`RE*` − Σ`DE*` com `D3_EMISSAO ≤ 20260930` (corte de
+competência — `RE*` de 01/10 na mesma OP **não** aparecem). O par é
+impresso **somente se a OP estiver aberta na data de referência**:
+
+| Grupo | Resultado | Discriminador |
+|---|---|---|
+| 650 pares impressas | 100% exato qtde+valor | 0 têm `PR0` (apontamento de produção, SD3 `D3_CF LIKE 'PR%'`) da OP; PR0 só a partir de 02/10 ou nenhum |
+| 36 OPs excluídas testadas | 33/33 | primeiro `PR0` em **01/10** (dia da emissão — produziram no Dt.Ref) |
+| 3 OPs excluídas | 3/3 | `C2_QUJE=0` e `C2_DATRF` preenchido — encerradas/canceladas sem nunca produzir |
+| 15 pares filial 02 | excluídos | artefato é filial 01 |
+
+Conclusão: `RE*` entra no relatório se a OP está viva (sem `PR0` e sem
+`C2_DATRF`) **no momento em que o relatório roda** — não basta "ter saldo
+de requisições". Estado corrente de SC2 (`QUJE>0`, `DATRF`) já reflete
+produções de outubro; a reprodução `as_of` usou `PR0` como proxy físico do
+fechamento da OP — 118 OPs impressas não têm nenhum `PR0`; 325 produziram
+só em outubro.
+
+Fronteira registrada: a seleção distingue `as_of`-dia (01/10) — dentro do
+dia, `PR0` antes/depois das 16:15 não é observável por data. `C2_QUJE=0`
+na emissão ≡ sem `PR0` até 01/10 (consistência SC2↔SD3 nos 444 OPs
+impressos: todos existem em SC2).
+
+### D. Bloco sem OP — SB9 loc 99 no fechamento
+
+| Checagem | Resultado |
+|---|---|
+| Produtos SB9 `B9_DATA=20260930` loc 99 com saldo ≠ 0 vs artefato sem-OP | **569 exatos** (q+valor) |
+| Divergentes | 4: `10211413` ΔR$449,16 e `10120198` Δ0,144 (revalorização `B9_VINI1` pós-emissão — drift `STALE_EVIDENCE`, mesma classe R05/R06); `10080198` Δ0,01; `10090636` Δ−0,001 (resíduo de centavo) |
+| SB9 ≠ 0 ausente do artefato | 0 |
+
+Exemplo: produto 180/u — SB9@0930 loc99 = 180 × 9,16 = 1.648,80 = linha
+impressa exata.
+
+### E. Confronto com P7 (BR-R03-003 → provado nos dois sentidos)
+
+Decomposição dos R$355.240,51:
+
+| Componente | Valor | Natureza |
+|---|---|---|
+| SB9 loc 99 (sem OP) | 293.273,09 | estoque físico do armazém de processo |
+| `RE0` | 588,50 | requisições de OP aberta (loc 99) |
+| `RE1` loc **01** | 254,44 | material de OP em almoxarifado — **= fatia PI do EM PROCESSO** (doc 80 §33.D previa 254,44) |
+| `RE2` | 48.713,64 | requisições de OP aberta (loc 99) |
+| `RE9` | 12.410,85 | requisições de OP aberta (loc 99) |
+| **Σ** | **355.240,51** | **= EM PROCESSO P7 exato, Δ 0,00** |
+
+`EM PROCESSO` **não é** o saldo do armazém 99: é estoque-em-processo
+físico (293.273,09) **+** material alocado a OPs abertas (61.967,42).
+Distinção material para a Central de Fechamento — o armazém 99 sozinho
+subestima EM PROCESSO em ~17%.
+
+R03 **não** é promovido por associação: EM PROCESSO do P7 = total MATR989
+agora `PROVEN` nos dois sentidos (o P7 completo soma exatamente o artefato
+R08); produtor/parâmetros do P7 seguem pendentes (E2).
+
+### F. Hipóteses descartadas
+
+- ~~net de movimentos do mês~~ — 2.726 pares com movimento em setembro e
+  saldo >0 ausentes do artefato (OPs já produzidas/encerradas).
+- ~~escopo por `C2_DATRF`~~ — 453 pares impressas têm `C2_DATRF` populado
+  (encerramento registrado em outubro, OP viva na emissão).
+- ~~grão documento~~ — provado linha SD3 (1.501 = 1.501).
+- ~~SDC/alocação~~ — SDC não governou a população; SC2+SD3 bastam.
+- ~~MOD com valor~~ — 141 linhas `MOD*` todas qtde/valor 0 (linhas de
+  catálogo); MOD não entra no bloco com OP — horas MOD são outro artefato
+  (R09).
+- ~~filial 02~~ — 15 pares (prod,OP) com movimento f02 e net>0 excluídos.
+
+### G. Reuso existente verificado (gate transversal §0)
+
+| Cadeia | Veredito |
+|---|---|
+| `stock_value_historical_sql.py` (api-delpi) — SB9@data + ponte SD3 | **canônico** p/ bloco sem-OP e saldos `as_of` |
+| `_fetch_wip_proxy_rows` → `em_processo_proxy_value` = `SUM(SB2.B2_VATU1)` loc `('50','98','99')` | **parcial** — cobre só o bloco físico corrente (~293k), não o alocado a OP (61.967,42) nem `as_of` |
+| `ops_abertas_sql.py` — `C2_QUANT>C2_QUJE AND C2_DATRF=''` | predicado adjacente; MATR989 exige `QUJE=0` (sem `PR0`) — semântica distinta |
+| Serviço de saldo RE−DE por OP | **inexistente** — lacuna real (`TARGET` doc 85 BR-R08-009) |
+
+### H. Gates
+
+`G4` producer+variante (MATR989 analítico, roster+título da aba), bindings
+(SD3/SB9/SC2), chaves, filtros e transformações demonstrados → **PASS**;
+`G5` reconciliação linha-a-linha 1.501/1.501 + 569/573 (4 explicados) +
+população 650/650 + total P7 exato → **PASS**; `G6` homologação humana →
+`PENDING`. Residual: fonte `matr989.prx`/RPO (classe E7) + semântica
+intra-dia do corte + neteo `DE*` não exercido nesta competência.

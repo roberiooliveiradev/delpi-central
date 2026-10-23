@@ -126,9 +126,9 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 `Invent.xlsb` = mesmo kardex filtrado a `D3_DOC='INVENT'` (TES **999/RE0** saída, **499/DE0** entrada), filial 02 loc 01+99. **45/45 linhas vinculadas ao SD3** (35 diretas + 10 via `TTAT_OLD` de custo); totais oficiais reconciliados (E 2.348,108/R$185.103 · S 30.808,206 · líquido −28.460,098). Gates: **G1–G5 PASS · G6 PENDING**.
 
-### R08 — Material em Processo / H02 — **PARCIAL**
+### R08 — Material em Processo / H02 — **RECONCILIADO**
 
-`Material em processo.xlsb` = "Saldo em Processo" (**57.359 linhas**, Dt.Ref 01/10/2026 16:15): produto, UM, LOCAL (armazém 99 etc.), **ORDEM PRODUCAO**, TIPO RE/DE (RE2...), QTDE e VALOR EM PROCESSO. Roster: **MATR989**. Resolve a nota do doc 47 §3 (proxy SC2 "adjacente não equivalente"): artefato correto agora em mãos — binding físico pendente. Gates: **G1–G3 PASS · G4 PENDING · G5/G6 PENDING**.
+`Material em processo.xlsb` = "Saldo em Processo (Ana" — variante **analítica** do **MATR989** (`matr989.prx` ausente do acervo — `SOURCE_MISSING`; roster oficial + título da aba). Dt.Ref 01/10/2026 16:15, 57.359 linhas × 8 colunas: `CODIGO, DESCRICAO, UM, LOCAL, ORDEM PRODUCAO, TIPO RE/DE, QTDE, VALOR EM PROCESSO`. **Dois blocos provados** (rodada 22, doc 80 §41, doc 85 §8): **(1)** 1.501 linhas com OP = 1.501 linhas `SD3010` `D3_CF IN (RE0,RE1,RE2,RE9)` de OPs **abertas na emissão** (sem `PR0` e sem `C2_DATRF` — 650/650 pares qtde+valor exatos, grão linha SD3); **(2)** 573 produtos sem OP = `SB9010`@20260930 loc99 (`B9_QINI`/`B9_VINI1` — 569 exatos + 4 Δ temporais de revalorização). Total R$355.240,51 = EM PROCESSO do P7 **exato** — EM PROCESSO = SB9-loc99 (293.273,09) + material alocado a OP aberta (61.967,42), **não** o armazém 99 sozinho. Gates: **G1–G5 PASS · G6 PENDING** (fonte/RPO + semântica intra-dia → E8).
 
 ### R09 — Faturamento × MOD — **PARCIAL**
 
@@ -189,7 +189,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 | R05 Entradas e Saídas | PARCIAL | MATR320 | G1,G2,G3,**G4**,**G5** (escopo completo reproduzido ao centavo + drift decomposto — doc 80 §33, doc 84 §4.4) |
 | R06 CPV / Kardex 01 | RECONCILIADO | MATR910 (`matr910_dlp.prx`) + `GET /supplies/cpv` (CPV canônico existente — doc 80 §39, `REUSE_PARTIAL`) | G1,G2,G3,**G4**,**G5** (UNION SD1/SD2/SD3 linha-a-linha — doc 80 §37, doc 85 §6; RPO/params → E7) |
 | R07 Inventários | RECONCILIADO | MATR910 | G1,G2,G3,**G4**,**G5** (INVENT 45/45 — doc 80 §37.D, doc 85 §7) |
-| R08 Material em Processo | PARCIAL | MATR989 | G1,G2,G3 |
+| R08 Material em Processo | RECONCILIADO | MATR989 analítico (`SOURCE_MISSING` — roster+aba) | G1,G2,G3,**G4**,**G5** (SD3 linha-a-linha 1.501/1.501 + SB9-loc99 569/573 com 4 Δ temporais explicados + total = EM PROCESSO P7 exato — doc 80 §41, doc 85 §8; fonte/RPO → E8) |
 | R09 Fat × MOD | PARCIAL | DLP204 | G1,G2,G3 |
 | R10 Notas por CC | PARCIAL | EDAPP (SD1) | G1,G2,G3,G4 |
 | R11 NF desconsiderar | PARCIAL | EDAPP (SD2) | G1,G2,G3,G4 |

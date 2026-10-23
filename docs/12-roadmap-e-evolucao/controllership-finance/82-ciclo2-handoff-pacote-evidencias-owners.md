@@ -113,6 +113,16 @@ população; G6 exige homologação funcional da Controladoria.
 | Impacto PROC-0072 | converte `SOURCE_AVAILABLE` em `CODE_DEPLOYED`; encerra o residual de parâmetros de R06/R07 (G4/G5 já PASS com base na reconstrução; E7 fecha a cadeia produtor→versão) |
 | Critério de aceite | `CODE_DEPLOYED` (versão RPO comprovada) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
 
+#### E8 — Fonte e versão implantada do MATR989 (Material em Processo)
+
+| Campo | Conteúdo |
+|---|---|
+| Evidência atual | **Rodada 22:** `Material em processo.xlsb` (aba `01-01 - Saldo em Processo (Ana`) reconciliado linha-a-linha — bloco com OP = 1.501 linhas `SD3010` `RE0/RE1/RE2/RE9` de OPs abertas na emissão (sem `PR0`, sem `C2_DATRF`); bloco sem OP = `SB9010`@20260930 loc99; total = EM PROCESSO P7 exato (doc 80 §41, doc 85 §8). `matr989.prx` **ausente do acervo** (`SOURCE_MISSING`, classe DLP06R01) |
+| Lacuna objetiva | (a) fonte ADVPL/PRX do MATR989 (standard ou custom) — confirma a semântica intra-dia do corte de OP (Dt.Ref vs timestamp 16:15) e o neteo `DE*` dentro de par impresso (não exercido nesta competência); (b) versão compilada no RPO de produção (`CODE_DEPLOYED`); (c) parâmetros efetivos da emissão de 01/10 16:15 (variante analítica, Dt.Ref, armazém de processo, tipos de CF) |
+| Fonte esperada | `matr989.prx`/customização + build/RPO da rotina + registro de parametrização vinculado à emissão (aceita evidência equivalente com vínculo demonstrável) |
+| Impacto PROC-0072 | fecha a cadeia produtor→versão de R08 (G4/G5 já PASS por reconstrução física; E8 remove o residual de fonte e prova os dois pontos não exercidos empiricamente) |
+| Critério de aceite | `SOURCE_AVAILABLE` (fonte) + `CODE_DEPLOYED` (RPO) + `EXECUTION_OBSERVED` (parâmetros vinculados) |
+
 ---
 
 ### 2.2 — Owner DBA (objetos de banco)
