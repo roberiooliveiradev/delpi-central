@@ -231,7 +231,8 @@ describe("composer settings menu (spec 125)", () => {
     expect(menu()).toBeNull();
     openMenu();
     expect(menu()).toBeTruthy();
-    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(screen.getByText("Configurações")).toBeTruthy();
+    expect(screen.getByText("Campo de pergunta")).toBeTruthy();
     expect(screen.getByText("Ditado")).toBeTruthy();
   });
 
@@ -304,6 +305,38 @@ describe("composer settings menu (spec 125)", () => {
     expect(document.activeElement).toBe(
       trigger().querySelector ? trigger() : trigger(),
     );
+  });
+
+  it("CL-04: only the selected row is marked; check is decorative", () => {
+    render(<Harness transport={makeTransport()} />);
+    openMenu();
+    const options = document.querySelectorAll(
+      ".delia-dictation-settings__option",
+    );
+    expect(options.length).toBe(2);
+    expect(options[0].getAttribute("data-checked")).toBe("true");
+    expect(options[1].getAttribute("data-checked")).toBe("false");
+    expect(
+      options[0].querySelector(".delia-dictation-settings__check"),
+    ).toBeTruthy();
+    fireEvent.click(liveRadio());
+    openMenu();
+    const after = document.querySelectorAll(
+      ".delia-dictation-settings__option",
+    );
+    expect(after[0].getAttribute("data-checked")).toBe("false");
+    expect(after[1].getAttribute("data-checked")).toBe("true");
+  });
+
+  it("CL-05: whole row is clickable and selects the option", () => {
+    render(<Harness transport={makeTransport()} />);
+    openMenu();
+    const liveRow = liveRadio().closest(
+      ".delia-dictation-settings__option",
+    ) as HTMLElement;
+    fireEvent.click(liveRow);
+    openMenu();
+    expect(liveRadio().checked).toBe(true);
   });
 
   it("outside click closes the menu", () => {

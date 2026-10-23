@@ -10,6 +10,8 @@ export type ComposerSettingsMenuProps = {
   /**
    * Seções do menu, por composição — hoje `DictationModeSettings`;
    * futuras seções entram como novos filhos sem alterar o menu (CS-18).
+   * Uma seção que pede fechamento após escolha marca o contêiner com
+   * `data-close-on-change` (contrato mínimo, opt-in por seção).
    */
   children: ReactNode;
 };
@@ -18,8 +20,9 @@ const TRIGGER_LABEL = "Configurações do campo de pergunta";
 
 /**
  * Botão discreto na barra de ações do composer que abre o menu
- * "Configurações do campo de pergunta" (popover ancorado, Escape/fora fecha,
- * foco devolvido ao trigger). Não conhece STT, draft nem backend.
+ * "Configurações do campo de pergunta" — painel flutuante clean
+ * (popover ancorado, Escape/fora fecha, foco devolvido ao trigger).
+ * Não conhece STT, draft nem backend.
  */
 export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
   const [open, setOpen] = useState(false);
@@ -38,7 +41,11 @@ export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
       <HelpTooltip wrap content={TRIGGER_LABEL}>
         <IconButton
           type="button"
-          className="delia-composer-settings__trigger"
+          className={
+            open
+              ? "delia-composer-settings__trigger delia-composer-settings__trigger--open"
+              : "delia-composer-settings__trigger"
+          }
           aria-label={TRIGGER_LABEL}
           aria-haspopup="dialog"
           aria-expanded={open}
@@ -58,9 +65,26 @@ export function ComposerSettingsMenu({ children }: ComposerSettingsMenuProps) {
         horizontalAlign="start"
         onDismiss={dismiss}
       >
-        <div className="delia-composer-settings__title">{TRIGGER_LABEL}</div>
-        {/* Escolher uma opção fecha o menu e devolve o foco ao trigger. */}
-        <div onChange={dismiss}>{children}</div>
+        <div className="delia-composer-settings__header">
+          <span className="delia-composer-settings__title">
+            Configurações
+          </span>
+          <span className="delia-composer-settings__subtitle">
+            Campo de pergunta
+          </span>
+        </div>
+        <div
+          onChange={(event) => {
+            if (
+              event.target instanceof HTMLElement &&
+              event.target.closest("[data-close-on-change]")
+            ) {
+              dismiss();
+            }
+          }}
+        >
+          {children}
+        </div>
       </AnchoredPanelPortal>
     </span>
   );
