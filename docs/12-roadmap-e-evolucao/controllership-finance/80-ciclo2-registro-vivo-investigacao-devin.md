@@ -1422,3 +1422,48 @@ Preservados: `EXECUTION_DRIFT`/`STALE_EVIDENCE` (724/672); DEL100 vigente 3.058/
 | Run | Item | Resultado | Gate |
 |---|---|---|---|
 | C2-R79 | rework G4 | R02 G4→PENDING (§17.D); R01/R10/R11 mantidos com binding explícito; R05 reclassificado | §11.1 doc 47 |
+
+---
+
+## §29 — Paridade monetária row-level dos relatórios de baixas (CF-C2-PARITY-001, 2026-10-23)
+
+Rodada de reconciliação monetária (SELECT-only, canal autorizado `docker exec -i delpi-api-delpi python -` → `connection_pool`; `db_datareader`). Comparação linha-a-linha entre artefatos oficiais e SE5/SE1/SE2, competência 09/2026, eixo `E5_DATA`. Detalhe integral sanitizado: **doc 84**.
+
+### 29.A — Descoberta: contagens reais dos artefatos
+
+`pagos 09 26.xlsb` = **948 linhas de dados** (não 974 — a contagem anterior incluía rodapés/resumos); `Recebidos.xlsb` = **657** (não 686). Ambos batem com as populações oficiais.
+
+### 29.B — R01 (pagar) — paridade row-level completa
+
+- WHERE do `FINR190_DLP.PRX` reproduzido **fielmente** pela primeira vez: chave do par de estorno = FILIAL+PREFIXO+NUMERO+PARCELA+TIPO+CLIFOR+LOJA+SEQ+BANCO+AGENCIA+CONTA+MOVCX (linhas ~1107–1120 do fonte), sem data/valor — gera **948 exatos** (a reprodução anterior com chave aproximada dava 937).
+- Multiset de chaves: **948/948 idêntico** ao artefato.
+- `Total Baixado` = `E5_VALOR`: **0 divergências** por registro; Jur/Multa = `E5_VLJUROS+E5_VLMULTA` 244,07; Correção = `E5_VLCORRE` −39.365,10; Descontos = `E5_VLDESCO+VLDECRE` 0,01 — todos exatos.
+- `Valor Original`: `E2_VALOR` em 942/948; 5 INV aglutinados → VO = `E5_VALOR`; 1 NF → VO = soma do grupo (NF + 4× `TX UNIAO` = 1.029,52). Regra 100% explicada.
+- Resumos impressos exatos: Baixados = Σ`E5_VALOR` não-CMP/FAT; Compens. = lado `CP` dos pares CMP; Bx.Fatura = FAT. `Orig` = `E5_FILORIG` (532×01 + 416×02).
+- PDF = xlsb − "log de inconsistências": ΔTB 387.629,64 e ΔTB 40.431,46 (receber) = **totais impressos no próprio PDF** — relação exata; identidade do subconjunto = residual (FK6-VA = 0 em todas as linhas; regra não reproduzida por agregação).
+- **G5 → PASS** (doc 47 §11.2). `EXECUTION_DRIFT` da rodada 4 (950≠948) agora explicado: era a chave do par de estorno.
+
+### 29.C — R02 (receber) — paridade row-level completa do artefato
+
+- População: **649 chaves com título idênticas** + **8 movimentos `PA` sem título** (`E5_ORIGEM='FINA750'`, histórico "Valor pago s/ Titulo") = 657.
+- 8 linhas de **decomposição** (`MT`/`JR`/`DC` + 1 `VL` duplicado) excluídas pelo produtor — seus valores já estão dentro do `E5_VALOR` da baixa `VL` (juros 4,94+multa 11,42 = 16,36 = componente do 587,70).
+- Universo SE5'R' = 746 (657 com título + 89 sem título de vários tipos FOL/COF/NDF/vazio); artefato inclui só `PA`/`FINA750` — regra de inclusão do sem-título parcialmente identificada (3 `PA`/`DEB` excluídos).
+- `Total Baixado` = `E5_VALOR` exato; `Valor Original` = `E1_VALOR` **649/649**; Jur/Multa 44,16 exato; resumos idênticos à regra do pagar; ΣVO residual **R$1,00** (1 linha).
+- Coluna `Orig` preenchida só nas linhas sem título (= `E5_FILORIG`); linhas com título exibem vazio (SE1 compartilhada) — semântica distinta do pagar, coerente com produtor distinto.
+- **G5 → PASS** (paridade do artefato × banco demonstrada); **G4 permanece PENDING** (fonte `DLP06R01` ausente — regra geral dos filtros não provada).
+
+### 29.D — R03/R05 — paridade parcial
+
+- R03: `Material em processo.xlsb` = EM PROCESSO do P7 completo **exato** (355.240,51; MP 354.938,50 · PI 254,44); PA/PI EM ESTOQUE = MATR320 exato; EM ESTOQUE total e escopo MP/PA/PI não reproduzidos por recorte SB9×armazém (Δ ≥ −8.182,43). G5 PENDING.
+- R05: SB9@30/09 f01 × Saldo Atual MATR320 por tipo — **9/10 exatos**; residual MP **+8.631,73** não explicado. G5 PENDING.
+- R10: SD1 set/2026 f01 (657 linhas/1.218.399,30 por `D1_EMISSAO`) ≠ artefato EDAPP (353 linhas/169.704,12) — filtro da consulta do operador não documentado.
+
+### 29.E — Efeito e preservações
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R80 | paridade R01 | 948/948 + TB/VO/componentes/resumos exatos | **G5 PASS** |
+| C2-R81 | paridade R02 | 649+8 reconciliados + TB/VO exatos | **G5 PASS** (G4 PENDING) |
+| C2-R82 | paridade R03/R05 | parcial — EM PROC + PA/PI exatos; MP residual | G5 PENDING |
+
+Métricas: `COLETA = 39/60 = 65,0%` (inalterado) · `AUDITORIA = 41/90 = 45,6%` · concluídos 0/15. Preservados: E6 opção C, `EXECUTION_DRIFT`/`STALE_EVIDENCE` DEL100 (724/672 → vigente 3.058/421/242), §17/§21/§27/§28 intactos, G6 não promovido (exige aceite humano).

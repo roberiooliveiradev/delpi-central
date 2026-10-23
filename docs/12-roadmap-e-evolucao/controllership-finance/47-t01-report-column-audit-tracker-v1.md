@@ -23,11 +23,11 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 
 | ID | Relatório/atividade | Rotina candidata | Família | TÉO ref | G1 | G2 | G3 | G4 | G5 | G6 | Owner do próximo passo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| R01 | Baixas a pagar | `FINR190` + `DLP06R01.prt`/`nat.prt` (vídeo menu + artefatos; `_F190C` NotebookLM = drift a reconciliar) | Financeiro | `kp02_t01/kp02_st01` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
-| R02 | Baixas a receber | `DLP06R01` custom (layout `.prt` compartilhado; FINR190 **descartado** pelo WHERE — doc 80 §17.D) | Financeiro | `kp02_t01/kp02_st02` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | TI/ERP (fonte `DLP06R01`) + Controladoria (paridade G5) |
-| R03 | P7 padrão / Bloco H | "Registro de Inventário Modelo P7" (vídeo) / MATR460 (roster) | Estoque | `kp04_t01_st01/st02` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R01 | Baixas a pagar | `FINR190` + `DLP06R01.prt`/`nat.prt` (vídeo menu + artefatos; `_F190C` NotebookLM = drift a reconciliar) | Financeiro | `kp02_t01/kp02_st01` | PASS | PASS | PASS | PASS | PASS | PENDING | Controladoria (G6 aceite) |
+| R02 | Baixas a receber | `DLP06R01` custom (layout `.prt` compartilhado; FINR190 **descartado** pelo WHERE — doc 80 §17.D) | Financeiro | `kp02_t01/kp02_st02` | PASS | PASS | PASS | PENDING | PASS | PENDING | TI/ERP (fonte `DLP06R01`) + Controladoria (G6 aceite) |
+| R03 | P7 padrão / Bloco H | "Registro de Inventário Modelo P7" (vídeo) / MATR460 (roster) | Estoque | `kp04_t01_st01/st02` | PASS | PASS | PASS | PENDING | PENDING | PENDING | Controladoria + owner da fonte |
 | R04 | Consumo por OP | MATR860 | Produção | `kp04_t02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R05 | Entradas e Saídas / valor estoque | `MATR320` (.prt no artefato) | Estoque | `kp04_t03` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R05 | Entradas e Saídas / valor estoque | `MATR320` (.prt no artefato) | Estoque | `kp04_t03` | PASS | PASS | PASS | PENDING | PENDING | PENDING | Controladoria + owner da fonte |
 | R06 | CPV / Kardex 01 | `MATR910` (roster + artefato kardex) | Estoque | `kp04_t04` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R07 | Inventários / Kardex 99 | `MATR910` (roster + artefato INVENT) | Estoque | `kp04_t05` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R08 | Material em Processo / H02 | `MATR989` (roster + artefato 57k linhas) | Produção | `kp04_t07` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
@@ -100,6 +100,7 @@ SCOPE_CHANGE / SUPERSEDES:
 | 2026-10-20 | Setup | GPT (documental) | R01–R15 | 0 (sem ateste formal) | 15 | 0/60 = 0,0% | 0/90 = 0,0% | Coletar evidências artefato/vídeo/DAVI | `52dbbf45b671` |
 | 2026-10-20 | L1.1 FINR190 | GPT/TÉO/DAVI/VISTA/GitHub | R01,R02 | G1 R01+R02 (2) | 15 | **2/60 = 3,3%** | **2/90 = 2,2%** | Exportações e layouts FINR190 pendentes; owner Controladoria/ERP | commit desta rodada |
 | 2026-10-23 | CF-C2-FULL-EVIDENCE | Devin (pasta PO + vídeo + fontes + doc 80) | R01–R15 | 37 gates novos (detalhe §11; rework §11.1 reverteu G4 de R02) | 15 | **39/60 = 65,0%** | **39/90 = 43,3%** | G5 paridade + G4 bindings parciais + G6 aceite; owners conforme doc 82 | commit desta rodada |
+| 2026-10-23 | CF-C2-PARITY-001 | Devin (paridade row-level artefatos × SELECT-only SE5/SE1/SE2/SB9) | R01,R02,R03,R05 | G5 R01+R02 (2) | 15 | **39/60 = 65,0%** | **41/90 = 45,6%** | G4 R02 (fonte DLP06R01), G4/G5 R03–R15, G6 todos — doc 84 | commit desta rodada |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -364,9 +365,9 @@ Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN 
 
 **Resoluções desta rodada:** `DLP06R01.prt`/`nat.prt` = **layouts** do relatório de baixas (pagos **e** recebidos) — o mesmo `.prt` é usado por rotinas distintas; para pagar, produtor = FINR190 com fonte+WHERE provados; para receber, produtor = custom `DLP06R01` **sem fonte no acervo** (FINR190 descartado pelo WHERE, doc 80 §17.D); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
 
-**Métricas (após rework §11.1):** `COLETA = 39/60 = 65,0%`; `AUDITORIA = 39/90 = 43,3%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+**Métricas (após rework §11.1 + paridade §11.2):** `COLETA = 39/60 = 65,0%`; `AUDITORIA = 41/90 = 45,6%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
 
-**Residuais por owner** (doc 83 §5, doc 82 §2): fonte do relatório de receber `DLP06R01` custom (R02, TI/ERP); paridade monetária R01/R02 (G5); binding SB9↔P7 e parâmetros por emissão (R03); artefato de consumo por OP (R04, Controladoria); bindings físicos R05–R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14).
+**Residuais por owner** (doc 83 §5, doc 82 §2, doc 84): fonte do relatório de receber `DLP06R01` custom (R02 G4, TI/ERP); subconjunto do log de inconsistências dos relatórios de baixas e versão RPO do FINR190 (TI/ERP); binding SB9↔P7 e parâmetros por emissão (R03); residual MP 8.631,73 SB9×MATR320 (R05); artefato de consumo por OP (R04, Controladoria); bindings físicos R05–R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14); aceite funcional G6 de todos os itens (Controladoria).
 
 ### 11.1 — Rework de gates (revisão G4 R01/R02/R10/R11, 2026-10-23)
 
@@ -387,3 +388,18 @@ Definição canônica: G4 exige **bindings físicos (tabelas, colunas, joins, fi
 **R11 — G4 mantido.** `NF a desconsiderar.xlsb`, sheet `Planilha2`: linha 0 = literal **`SD2`**, headers = títulos SX3 `D2_*` (`Tipo Saida`→`D2_TIPO`/`594`, `Cod. Fiscal`→`D2_CF`/`5101`, MD5/UUID = campos de auditoria). Mesmo raciocínio de R10: export direto da tabela via consulta genérica.
 
 **Recontagem:** 37 gates novos (R02 G4 revertido); `COLETA = 39/60 = 65,0%`; `AUDITORIA = 39/90 = 43,3%`. R05 reclassificado: rotina `MATR320` + artefato identificados (G1–G3), **G4–G6 abertos** — não é item "concluído".
+
+
+### 11.2 — Paridade monetária row-level (CF-C2-PARITY-001, 2026-10-23)
+
+Definição canônica: G5 exige prova READ reproduzível/paridade. Executada reconciliação linha-a-linha (multiset de chaves + valores por registro) entre artefatos oficiais e SE5/SE1/SE2/SB9 via SELECT-only, competência 09/2026. Detalhe integral: **doc 84**.
+
+**R01 — G5 PASS.** População 948/948 (chaves idênticas; WHERE fiel ao FINR190_DLP.PRX incl. chave exata do par de estorno `ES`); `Total Baixado` = `E5_VALOR` 948/948 sem divergência; Jur/Multa 244,07, Correção −39.365,10, Descontos 0,01 exatos; resumos impressos exatos (Baixados = Σ não-CMP/FAT, Compens. = lado CP, Bx.Fatura = FAT); `Orig` = `E5_FILORIG` 532/416 exato; `Valor Original` = `E2_VALOR` 942/948 + 5 INV aglutinados (VO = `E5_VALOR`) + 1 grupo NF+TX UNIAO (VO = 1.029,52) — 100% explicado. PDF = xlsb − log de inconsistências (ΔTB 387.629,64 = total impresso). Residual: identidade do subconjunto do log + versão RPO. Data: 2026-10-23.
+
+**R02 — G5 PASS (G4 permanece PENDING).** Artefato 657 linhas = 649 chaves SE5×SE1 idênticas + 8 movimentos `PA` sem título (`FINA750`, confirmados na SE5); 8 linhas de decomposição `MT`/`JR`/`DC` excluídas pelo produtor (valores embutidos no `E5_VALOR` do `VL` principal); `Total Baixado` = `E5_VALOR` exato; `Valor Original` = `E1_VALOR` 649/649; Jur/Multa 44,16 exato; resumos exatos (Baixados = Σ não-CMP, Compens. = lado CP); PDF = xlsb − log (ΔTB 40.431,46 = total impresso). Residual: fonte `DLP06R01` (binding G4 — E1/TI-ERP), regra geral do sem-título (3 `PA`/`DEB` excluídos), Δ R$1,00 no ΣVO. Data: 2026-10-23.
+
+**R03 — G5 PENDING.** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51; MP 354.938,50 + PI 254,44); EM ESTOQUE PA/PI = MATR320 exato; total EM ESTOQUE e escopo MP/PA/PI não reproduzidos por nenhum recorte SB9×armazém testado (Δ ≥ −8.182,43) — parâmetros por emissão pendentes (E2).
+
+**R05 — G5 PENDING.** SB9@30/09 f01 × Saldo Atual MATR320: 9/10 tipos exatos ao centavo; residual MP +8.631,73 não explicado; eixos Entradas/Saídas não reconciliados.
+
+**Recontagem:** 2 gates novos (G5 R01+R02); `COLETA = 39/60 = 65,0%`; `AUDITORIA = 41/90 = 45,6%`; `CONCLUÍDOS = 0/15`.

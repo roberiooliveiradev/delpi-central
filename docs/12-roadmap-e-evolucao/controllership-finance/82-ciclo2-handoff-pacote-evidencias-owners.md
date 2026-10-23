@@ -34,9 +34,9 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 | Campo | Conteúdo |
 |---|---|
 | Evidência atual | `Pagos por dt.pdf`/`Recebidos.pdf` trazem `SIGA/DLP06R01.prt/v.12` — **layout compartilhado, não produtor**. **Pagar:** produtor = FINR190 provado — fonte `FINR190_DLP.PRX` (commit `0df96daafe`) com TRCell→`E5_*` e WHERE que reproduz população oficial 948+motivo 5/5 (doc 80 §17.B/C; G4 PASS doc 47 §11.1). **Receber:** WHERE do FINR190 gera 649/690 ≠ 657 oficial (§17.D, PROVEN) — produtor = `DLP06R01` **custom, fonte ausente do acervo**; `DLP06P01/F01/F02/F03` verificados = utilitários não relacionados |
-| Lacuna objetiva | (a) **fonte do `DLP06R01` custom** (receber) — nome da rotina, mapeamento coluna→campo e filtros; (b) confirmar versão RPO do `FINR190_DLP.PRX`; (c) paridade monetária integral (G5) ambos |
-| Fonte esperada | fonte AdvPL/PRX do `DLP06R01` (ou nome da rotina efetiva do relatório de recebidos) + confirmação de compilação no RPO |
-| Impacto PROC-0072 | fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING e paridade é só de população |
+| Lacuna objetiva | (a) **fonte do `DLP06R01` custom** (receber) — nome da rotina, mapeamento coluna→campo e filtros (incl. regra de inclusão/exclusão dos movimentos sem título e do VO `FINA750`); (b) confirmar versão RPO do `FINR190_DLP.PRX`; (c) identidade do subconjunto do "log de inconsistências" de ambos os relatórios; ~~paridade monetária integral~~ **respondida 23/10 — G5 PASS ambos (doc 84)** |
+| Fonte esperada | fonte AdvPL/PRX do `DLP06R01` (ou nome da rotina efetiva do relatório de recebidos) + confirmação de compilação no RPO + o arquivo de log de inconsistências emitido junto ao relatório |
+| Impacto PROC-0072 | fecha G4 de R02 e a trilha receber; sem o fonte, G4 segue PENDING (paridade do artefato já provada em G5) |
 | Critério de aceite | `SOURCE_AVAILABLE` + `CODE_DEPLOYED`; idealmente `EXECUTION_OBSERVED` |
 
 #### E2 — Produtor e parâmetros do P7 / MATR460
@@ -124,11 +124,12 @@ Mais:
 |---|---|
 | Reconstrução DEL100 vigente | 3.058/421/242 — query §24.E, validada (SF4 compartilhada ≡ `xFilial`, reproduzida 2×) |
 | 724/672 e derivadas (§19.C, §20.A, §21.C) | `STALE_EVIDENCE` — `EXECUTION_DRIFT` registrado em §23.A |
-| Pagar FINR190 | paridade estrutural PROVEN (948, 5/5 motivos, `FINR190_DLP`); sem paridade monetária/registro |
+| Pagar FINR190 | **paridade row-level PROVEN** (948/948 chaves, TB=`E5_VALOR`, VO=`E2_VALOR`+regras aglutinado, resumos/componentes exatos — doc 84); residual: subconjunto do log + versão RPO |
+| Receber DLP06R01 | **paridade row-level do artefato PROVEN** (649 SE5×SE1 + 8 `PA`/`FINA750` sem título; TB=`E5_VALOR`, VO=`E1_VALOR` — doc 84); residual: fonte do produtor (G4) + regra do sem-título + Δ R$1,00 |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
 | DLP06R01, P7 | **parcialmente resolvidos 23/10** — DLP06R01.prt=layout compartilhado (pagar: produtor FINR190 provado; receber: custom `DLP06R01` sem fonte — E1 pendente); P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
-| Doc 47 | crosswalk doc 83 + §11/§11.1: **39/60 = 65,0% coleta · 39/90 = 43,3% auditoria** — 37 gates promovidos 23/10 após rework (G4 de R02 revertido) |
+| Doc 47 | crosswalk doc 83 + §11/§11.1/§11.2: **39/60 = 65,0% coleta · 41/90 = 45,6% auditoria** — 37 gates 23/10 (rework) + G5 de R01/R02 (paridade row-level, doc 84) |
 
 ---
 

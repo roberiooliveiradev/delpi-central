@@ -87,14 +87,14 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 | Entrada | período (Dt.Ref 30/09/2026), disposição por data ou natureza |
 | Saída | Prf, Numero, Prc, TP, Cli/For, Nome+CNPJ, Natureza, Vencto, Historico, Dt Baixa, Valor Original, Jur/Multa, Correcao, Descontos, Abatim., Impostos, Valor Ac, Total Baixado, Bco, Dt Dig., Mot, Ori + subtotais por data/natureza |
 | Origem física | SE2/FK2/FK5/SED/F7G (+SA2) conforme SQL inspecionado do FINR190_DLP (§17 doc 80) |
-| Comparação | reconstrução rodada 4/5: 950 vs oficial 948; residual CMP−2 explicado estruturalmente; paridade monetária integral pendente |
+| Comparação | **paridade row-level completa (CF-C2-PARITY-001, doc 84):** 948/948 chaves; `Total Baixado`=`E5_VALOR` 0 div.; VO=`E2_VALOR` 942 + INV=`E5_VALOR` 5 + grupo NF 1 (100% explicado); resumos/componentes/filorig exatos; PDF = xlsb − log 387.629,64 (subconjunto do log = residual) |
 | Temporalidade | evento = Dt Baixa; emissão 01/10/2026 15:22 |
-| Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PASS · G5 PENDING · G6 PENDING** |
-| Residual | paridade R$ integral (G5); aceite (G6) — owner Controladoria |
+| Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PASS · G5 PASS · G6 PENDING** |
+| Residual | identidade do subconjunto "log de inconsistências"; versão RPO; aceite (G6) — owner Controladoria |
 
 ### R02 — Baixas a receber — **PARCIAL**
 
-`Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (686 linhas); fonte de dados `SE5 'R'×SE1` = **657/657 row-level exato** (rodada 4). **Porém o produtor não é o FINR190 do acervo**: WHERE do fonte gera 649/690 ≠ 657 (§17.D doc 80) — produtor = `DLP06R01` custom, **fonte ausente do acervo** (`BLOCKED`, owner TI/ERP — E1). Gates: **G1 PASS · G2 PASS · G3 PASS · G4 PENDING** (binding do relatório não provado — coluna→campo e filtros do `DLP06R01` desconhecidos) · G5/G6 PENDING.
+`Recebidos.pdf` (DLP06R01.prt, 36p) + `Recebidos.xlsb` (657 linhas de dados); produtor = `DLP06R01` custom, **fonte ausente do acervo** (`BLOCKED`, owner TI/ERP — E1). **Paridade row-level completa (CF-C2-PARITY-001, doc 84):** 649 chaves SE5×SE1 idênticas + 8 movimentos `PA` sem título (`FINA750`) = 657; 8 linhas de decomposição `MT`/`JR`/`DC` excluídas pelo produtor (valores embutidos no `E5_VALOR` do `VL`); `TB`=`E5_VALOR` e `VO`=`E1_VALOR` exatos por registro; resumos = mesma regra do pagar; ΣVO residual R$1,00. Gates: **G1 PASS · G2 PASS · G3 PASS · G4 PENDING** (binding do relatório não provado — coluna→campo e filtros do `DLP06R01` desconhecidos) · **G5 PASS** · G6 PENDING.
 
 ### R03 — P7 / Bloco H — **PARCIAL (forte)**
 
@@ -106,7 +106,7 @@ Legenda de status da linha: VALIDADO (gates demonstráveis G1–G4 suficientes) 
 | Entrada | data estoque (30/09/2026), empresa/filial, escopo de tipos (observados: completo × MP/PA/PI), armazém |
 | Saída | CLASSIFICAÇÃO FISCAL, DISCRIMINAÇÃO, UNID, QUANTIDADE, UNITÁRIO, PARCIAL, TOTAL + RESUMO por tipo EM ESTOQUE/EM PROCESSO + TOTAL GERAL |
 | Origem física | **SB9 candidato** (snapshot de SB2 — §21 doc 80, PROVEN 96% no recorte) — vínculo P7↔SB9 **não provado** |
-| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo |
+| Comparação | totais divergentes entre emissões (3.776.994,69 → ~2.756.1xx → 3.946.431,87 / 2.976.967,56): fechamento iterativo. **Paridade parcial (doc 84 §3):** EM PROCESSO = `Material em processo.xlsb` exato (355.240,51); PA/PI EM ESTOQUE = MATR320 exato; total EM ESTOQUE e escopo MP/PA/PI não reproduzidos (Δ ≥ −8.182,43) |
 | Gates | **G1 PASS · G2 PASS · G3 PASS · G4 PENDING · G5 PENDING · G6 PENDING** |
 | Residual | parâmetros efetivos (filtro de tipos/armazém por versão); binding físico SB9×SB2×outras; amostra oficial p/ paridade |
 
@@ -116,7 +116,7 @@ Nenhum relatório de consumo por OP na pasta. `Material em processo.xlsb` traz O
 
 ### R05 — Entradas e Saídas / valor estoque — **PARCIAL (rotina+artefato identificados)**
 
-`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. Gates: **G1–G3 PASS · G4 PENDING** (binding SD1/SD2/SD3/TRB a confirmar) · G5/G6 PENDING.
+`Entradas e saidas.pdf` = **`MATR320.prt`** — "Resumo das Entradas e Saidas EM R$", período 01/09–30/09/2026, MATRIZ; colunas por tipo (Tip): Saldo Inicial, Compras, Movimentações Internas, Requisições p/ Produção, Transferências, Produção, Vendas, Transf. p/ Processo, Devoluções, Poder de Terceiros, Saldo Atual + Total Geral. **Paridade parcial (doc 84 §4):** SB9@30/09 f01 × Saldo Atual — 9/10 tipos exatos ao centavo; residual MP +8.631,73 não explicado; eixos Entradas/Saídas não reconciliados. Gates: **G1–G3 PASS · G4 PENDING** (binding SD1/SD2/SD3/TRB a confirmar) · G5 PENDING · G6 PENDING.
 
 ### R06 — CPV / Kardex 01 — **PARCIAL**
 
@@ -162,7 +162,7 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 
 | Pedido | Estado após esta rodada |
 |---|---|
-| E1 (DLP06R01) | **Parcialmente respondido (rework 23/10):** `DLP06R01.prt`/`nat.prt` = layouts compartilhados. **Pagar:** produtor = FINR190, fonte+WHERE provados — residual = versão implantada (RPO) + paridade monetária. **Receber:** produtor = `DLP06R01` custom **sem fonte no acervo** — segue pendente o fonte (owner TI/ERP). |
+| E1 (DLP06R01) | **Parcialmente respondido (rework 23/10 + paridade):** `DLP06R01.prt`/`nat.prt` = layouts compartilhados. **Pagar:** produtor = FINR190, fonte+WHERE+paridade row-level provados — residual = versão implantada (RPO) + identidade do subconjunto do log de inconsistências. **Receber:** paridade row-level do artefato provada (G5), mas produtor `DLP06R01` custom **segue sem fonte no acervo** — pendente o fonte para G4 (owner TI/ERP). |
 | E2 (P7/MATR460) | **Substancialmente respondido:** artefato oficial (REGISTRO DE INVENTÁRIO, 2 escopos) + rotina "Registro de Inventário Modelo P7" observada + roster MATR460. Residual: parâmetros efetivos por emissão (filtro tipos/armazém), confirmação MATR460×variante, binding SB9, export p/ paridade. |
 | E3 (DDL views) | mantido — DBA |
 | E4 (jobs/SPs) | mantido — DBA |
@@ -182,8 +182,8 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 
 | Item | Status | Rotina vinculada | Gates novos |
 |---|---|---|---|
-| R01 Baixas a pagar | PARCIAL | FINR190 + DLP06R01.prt/nat.prt | G2,G3,G4 |
-| R02 Baixas a receber | PARCIAL | `DLP06R01` custom (FINR190 descartado pelo WHERE §17.D) | G2,G3 |
+| R01 Baixas a pagar | PARCIAL | FINR190 + DLP06R01.prt/nat.prt | G2,G3,G4,**G5** (paridade row-level — doc 84) |
+| R02 Baixas a receber | PARCIAL | `DLP06R01` custom (FINR190 descartado pelo WHERE §17.D) | G2,G3,**G5** (paridade row-level do artefato — doc 84; G4 segue PENDING) |
 | R03 P7 / Bloco H | PARCIAL | "Registro de Inventário Modelo P7" (MATR460?) | G1,G2,G3 |
 | R04 Consumo por OP | BLOQUEADO | — | — |
 | R05 Entradas e Saídas | PARCIAL | MATR320 (rotina+artefato identificados; G4–G6 abertos) | G1,G2,G3 |
@@ -200,4 +200,4 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 
 \* Revisão 23/10 (doc 47 §11.1): rótulo VALIDADO retirado — evidência de rotina+artefato cobre G1–G3; G4/G5/G6 permanecem abertos para todos os itens.
 
-**Coleta:** 39/60 = **65,0%** · **Auditoria:** 39/90 = **43,3%** · **Concluídos:** 0/15. (pós-rework doc 47 §11.1: G4 de R02 revertido — produtor receber = `DLP06R01` custom sem fonte no acervo)
+**Coleta:** 39/60 = **65,0%** · **Auditoria:** 41/90 = **45,6%** · **Concluídos:** 0/15. (pós-rework doc 47 §11.1 + paridade §11.2: G4 de R02 revertido — produtor receber = `DLP06R01` custom sem fonte; **G5 de R01 e R02 promovidos** — paridade row-level, doc 84)
