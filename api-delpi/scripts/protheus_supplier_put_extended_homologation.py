@@ -179,6 +179,11 @@ BATCHES: dict[str, tuple[str, dict[str, str]]] = {
             "linked_customer_store": "03",
         },
     ),
+    # Terceiro valor distinto — 5a/5b observaram drift upstream (o valor
+    # vigente mudou sem write nosso entre leituras); a prova exige
+    # before != after == sent.
+    "5d": ("00388001", {"risk_code": "003"}),
+    "5e": ("00387901", {"simp_regime_code": "0"}),
 }
 
 # Reference lookups — same tables as the E2 assay.
