@@ -305,3 +305,23 @@ EVIDENCE=docs/12-roadmap-e-evolucao/delia/evidence/code-block-f02c/
 ```
 
 O componente está pronto para apresentar código assim que um emissor `presentation.v2` legítimo ativar Markdown B2 — task independente (produtor + contrato + QA + CP-333).
+
+
+## 11. Aceite do componente e homologação de frontend (Product Owner, 2026-10-23)
+
+**Decisão:** `ConversationCodeBlock` (F02-C) e a experiência frontend Markdown B2 testada em full-page/Companion Dock estão **ACEITOS PELO PRODUCT OWNER** no escopo visual e funcional avaliado. A homologação `DELIA-UX-MARKDOWN-B2-DOCK-AND-ACCESSIBILITY-QA-01` encerrou sem defeitos de frontend e sem mudanças runtime; evidência em [`markdown-b2-dock-accessibility-qa-01`](./evidence/markdown-b2-dock-accessibility-qa-01/markdown-b2-dock-accessibility-qa-01-evidence.md), commit `ea8633dd348d50c6bd4c515d1f7f8ccbb410d5e1`.
+
+**Atualização temporal:** o registro histórico do §10 (`MARKDOWN_B2_RUNTIME=OFF`, emissor inexistente) descrevia o estado da F02-C; foi superado pelas mudanças posteriores de backend relatadas no handoff de coordenação (emissor `presentation.v2` e admissão conversacional, commit `8162baf1a7`) e pelo QA produtivo de 2026-10-23. Não reverter o runtime por interpretação do estado histórico.
+
+**Aceite não implica:** `CP-333=PASS`, conclusão de fase ou ausência de residuais. `SCREEN_READER_QA=TEST_NOT_RUN`; headings reais não observados nesta rodada (cobertos por testes); envelope NDJSON full-page não capturado pelo harness (v2 observado no Dock real); emissão positiva de links autorizados não exercitada nesta rodada. A coordenação permanece owner do aceite CP-333. Não reabrir o componente aceito sem defeito reproduzido.
+
+```text
+F02C_COMPONENT=PRODUCT_OWNER_ACCEPTED
+MARKDOWN_B2_FRONTEND_UX=PRODUCT_OWNER_ACCEPTED_IN_TESTED_SCOPE
+DOCK_AND_FULLPAGE=PASS_REPORTED
+SCREEN_READER_QA=TEST_NOT_RUN
+CP_333=AWAIT_COORDINATION_DECISION
+PHASE_PROGRESSION=NONE
+RUNTIME_CHANGED_BY_THIS_ACCEPTANCE=NO
+NEXT=OTHER_BOUNDED_FRONTEND_EVOLUTIONS
+```
