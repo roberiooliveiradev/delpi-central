@@ -1345,7 +1345,7 @@ Requisitos para qualquer decisão: fonte de rate-por-data com owner (Controlador
 
 ## §26 — HANDOFF (CF-C2-HANDOFF-001) — PACOTE DE EVIDÊNCIAS PARA OWNERS — 2026-10-23
 
-Pacote consolidado em : E1–E6 organizados por responsável (TI/ERP, DBA, Controladoria) com evidência atual, lacuna, fonte esperada, impacto, critério de aceite e protocolo de classificação de respostas (///). Referência vigente 3.058/421/242; / preservados; decisão MOD  (nada implementado). Doc 47: .
+Pacote consolidado em `81-ciclo2-handoff-pacote-evidencias-owners.md`: E1–E6 organizados por responsável (TI/ERP, DBA, Controladoria) com evidência atual, lacuna, fonte esperada, impacto, critério de aceite e protocolo de classificação de respostas (`SOURCE_AVAILABLE`/`CODE_DEPLOYED`/`EXECUTION_OBSERVED`/`FUNCTIONAL_ACCEPTANCE`). Referência vigente 3.058/421/242; `EXECUTION_DRIFT`/`STALE_EVIDENCE` preservados; decisão MOD `DECISION_REQUIRED` (nada implementado). Doc 47: `NO_GATE_CHANGE`.
 
 | Run | Item | Resultado | Gate |
 |---|---|---|---|
