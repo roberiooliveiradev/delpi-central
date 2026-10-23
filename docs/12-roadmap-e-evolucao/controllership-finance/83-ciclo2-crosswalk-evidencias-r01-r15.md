@@ -201,3 +201,5 @@ Vídeo mostra a execução do **fechamento de custo** (wizard "Novo fechamento d
 \* Revisão 23/10 (doc 47 §11.1): rótulo VALIDADO retirado — evidência de rotina+artefato cobre G1–G3; G4/G5/G6 permanecem abertos para todos os itens.
 
 **Coleta:** 39/60 = **65,0%** · **Auditoria:** 41/90 = **45,6%** · **Concluídos:** 0/15. (pós-rework doc 47 §11.1 + paridade §11.2: G4 de R02 revertido — produtor receber = `DLP06R01` custom sem fonte; **G5 de R01 e R02 promovidos** — paridade row-level, doc 84)
+
+**Catálogo de regras de negócio (complemento, 23/10):** todas as regras necessárias para reproduzir os resultados oficiais estão consolidadas em **doc 85** (`BR-Rxx-NNN`, matriz de handoff e matriz de testes) — incluindo as regras de VO dual do receber (errata do residual R$1,00 em doc 80 §30) e a classificação PROVEN/AS-IS/TO_INVENTORY/TARGET/PENDING por regra.

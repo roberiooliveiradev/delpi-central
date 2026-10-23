@@ -392,7 +392,7 @@ Definição canônica: G4 exige **bindings físicos (tabelas, colunas, joins, fi
 
 ### 11.2 — Paridade monetária row-level (CF-C2-PARITY-001, 2026-10-23)
 
-Definição canônica: G5 exige prova READ reproduzível/paridade. Executada reconciliação linha-a-linha (multiset de chaves + valores por registro) entre artefatos oficiais e SE5/SE1/SE2/SB9 via SELECT-only, competência 09/2026. Detalhe integral: **doc 84**.
+Definição canônica: G5 exige prova READ reproduzível/paridade. Executada reconciliação linha-a-linha (multiset de chaves + valores por registro) entre artefatos oficiais e SE5/SE1/SE2/SB9 via SELECT-only, competência 09/2026. Detalhe integral: **doc 84**; catálogo de regras de negócio derivadas (BR-Rxx-NNN, handoff e matriz de testes): **doc 85**.
 
 **R01 — G5 PASS.** População 948/948 (chaves idênticas; WHERE fiel ao FINR190_DLP.PRX incl. chave exata do par de estorno `ES`); `Total Baixado` = `E5_VALOR` 948/948 sem divergência; Jur/Multa 244,07, Correção −39.365,10, Descontos 0,01 exatos; resumos impressos exatos (Baixados = Σ não-CMP/FAT, Compens. = lado CP, Bx.Fatura = FAT); `Orig` = `E5_FILORIG` 532/416 exato; `Valor Original` = `E2_VALOR` 942/948 + 5 INV aglutinados (VO = `E5_VALOR`) + 1 grupo NF+TX UNIAO (VO = 1.029,52) — 100% explicado. PDF = xlsb − log de inconsistências (ΔTB 387.629,64 = total impresso — **paridade do artefato integral: 948/948 no XLSB**; o subconjunto do log **não foi reconstruído linha-a-linha**: total do log reconstruído em agregado, identidade das linhas é residual). Residual: identidade do subconjunto do log + versão RPO. Data: 2026-10-23.
 
