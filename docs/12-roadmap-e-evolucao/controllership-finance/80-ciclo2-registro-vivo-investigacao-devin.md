@@ -1051,3 +1051,109 @@ Fechamento anterior (`20260831`, filial 02): 1.359 chaves sem movimento posterio
 | C2-R52 | MOD rate | PROVEN: `VALOR_MOD_HORA == BZ_CUSTD` 100% dos pares 2026; estático desde 2006; boundary view criptografada | G4 fonte |
 | C2-R53 | recorrência | 20260831: 95,8% qtd+valor == SB2 → snapshot recorrente | G4 fonte |
 | C2-R54 | — | `NO_GATE_CHANGE` | — |
+
+---
+
+## §23 — RODADA 11 (CF-C2-EXEC-011) — EXECUTION_DRIFT DEL100 + HOMOLOGAÇÃO FÓRMULA MOD — 2026-10-23
+
+### 23.A — `EXECUTION_DRIFT` declarado — reconstrução DEL100×SB9
+
+As contagens de divergência das Rodadas 7–9 (724 valor / 672 quantidade) e todas as classificações derivadas (categorias §21.C, atribuição por TM §20.A) foram produzidas por consultas **com mapeamento de campos diferente do `DEL100.PRW`**. Os scripts das rodadas eram temporários e foram removidos; a reprodução exata do binário da consulta R7 não é possível. Registrado como `EXECUTION_DRIFT` da trilha §18–§21 — **evidência histórica preservada, conclusões dependentes reclassificadas abaixo**.
+
+Divergências documentadas do mapeamento anterior vs fonte (`DEL100.PRW` L94–128):
+
+| Perna | Fonte (vigente) | Mapeamento aproximado (R7–R9) |
+|---|---|---|
+| SD1 data | `D1_DTDIGIT` (L110) | `D1_EMISSAO` |
+| SD1 valor | `D1_CUSTO` (L114) | `D1_TOTAL` |
+| SD2 valor | `D2_TOTAL` (L127) | `D2_CUSTO1` |
+| SD3 | `D3_EMISSAO`, `D3_CUSTO1`, `D3_ESTORNO<>'S'`, TM<500 entra | igual |
+
+### 23.B — Matriz de variantes: o que move a contagem (f02, 0831→0930, chaves com SB9 atual)
+
+| Variante | Cobertura | qtd-div | valor-div |
+|---|---|---|---|
+| **FIEL** (DTDIGIT+CUSTO/TOTAL) | prior∪mov, prior NULL excluído | 242 | **421** |
+| V1: EMISSAO+TOTAL/CUSTO1 | idem | 341 | 482 |
+| V2: EMISSAO+CUSTO/CUSTO1 | idem | 341 | 415 |
+| V4: EMISSAO+TOTAL/TOTAL | idem | 341 | 649 |
+| FIEL + prior NULL→0 | idem | 285 | 524 |
+| FIEL + cobertura inclui cur-only (recon=0) | ∪cur | 290 | 529 |
+| FIEL sem F4 nas duas pernas | ∪cur | 368 | 606 |
+| FIEL janela `>=0831` | prior∪mov | 449 | 611 |
+
+Leitura da decomposição 724→421:
+- **Campo SD1 data** (`D1_DTDIGIT` vs `D1_EMISSAO`): ±~100 chaves de quantidade e dezenas de valor.
+- **Campos de valor** (`D1_CUSTO`/`D1_TOTAL`, `D2_TOTAL`/`D2_CUSTO1`): efeito dominante no valor — `D1_TOTAL` sozinho adiciona ~130 divergentes.
+- **Cobertura** (incluir chaves cur-only com recon=0): +59 keys.
+- **F4/estorno/janela**: estorno nulo neste recorte; janela ampliada e ausência de F4 elevam contagens (não reproduzem 724 sozinhos).
+- Os números **R6 (523/290) são aproximadamente reproduzidos** por `FIEL + cobertura ∪cur` (529/290) — consistente com a R6 ter cobertura ampliada. O par **724/672 da R7 não foi byte-reproduzido** em nenhuma das 12 variantes — exige diferença estrutural não recuperável do script removido. Ambos os pares ficam `STALE_EVIDENCE`.
+
+**Reprodução vigente:** fórmula fiel ao fonte, `prior∪mov`, prior NULL excluído → **3.058 chaves, 421 divergentes de valor, 242 de quantidade** (com cobertura ∪cur: 530/529/290).
+
+### 23.C — Reclassificação das conclusões dependentes das 724
+
+| Item | R7–R9 (STALE) | R11 vigente (421) |
+|---|---|---|
+| congelado (`sb9_v==prior_v`) | 224 | 111 |
+| `sb9_v==0` | 44 | 152 |
+| `sb9_v==qtd×CM_prior` | 113 | 192 |
+| Δ==contribuição TM010 | **135** | **0** |
+| Δ==contribuição TM999 | 93 | 22 |
+| presença TM nas divergentes | — | TM999:249, TM010:158, TM499:52, TM502:8, TM503:1 |
+
+- A **atribuição TM010/TM999 de §20.A está SUPERADA** — era artefato do mapeamento aproximado (o delta "exato" casava com a fórmula errada). Com a fórmula fiel, nenhuma divergência fecha integralmente por TM010 e só 22 por TM999.
+- A observação "divergentes só com perna SD3" mantém-se como **padrão de presença** (não prova de omissão do produtor).
+- Reafirmam-se inalteradas: as 26 chaves MOD (não-estocáveis), elegibilidade saldo-zero+sem-movimento, SB9=snapshot SB2 (96%), retroatividade rejeitada, 68 exceções — nenhuma depende das 724.
+
+### 23.D — MOD monetária: homologação numérica `PROVEN`
+
+População: 85.904 apontamentos 2026 com `VALOR_MOD_HORA` não-nulo.
+
+| Fórmula | Match | Status |
+|---|---|---|
+| `TEMPO_GANHO_PERDIDO_HORAS = TEMPO_PREVISTO_HORAS − TEMPO_REAL_HORAS` | 85.904/85.904 | **PROVEN** |
+| `RESULTADO_MOD = TEMPO_GANHO_PERDIDO_HORAS × VALOR_MOD_HORA` | 85.904/85.904 | **PROVEN** |
+| `LUCRO_MOD = MAX(RESULTADO_MOD, 0)` | 85.904/85.904 | **PROVEN** |
+| `PREJUIZO_MOD = MAX(−RESULTADO_MOD, 0)` | 85.904/85.904 | **PROVEN** |
+| `VALOR_MOD_HORA == SBZ010.BZ_CUSTD` (filial×produto) | f01 33/33; f02 34/38 | **PROVEN** |
+| candidatas rejeitadas | `real×rate` 12.009; `padrão×rate` 11.680; `estimado−real` 12.819 | REJEITADAS |
+
+**Correção à fórmula registrada em §22.E:** `RESULTADO_MOD` **não é** "horas apontadas × rate" — é o **delta de eficiência valorizado**: `(TEMPO_PREVISTO − TEMPO_REAL) × BZ_CUSTD`, com lucro/prejuízo como decomposição por sinal. A redação de §22.E fica corrigida por esta seção (append-only, sem apagar).
+
+Cardinalidade: **1 rate por filial×produto** (zero produtos com >1 `VALOR_MOD_HORA`). Exceções: 4 produtos f02 (`MOD312/314/316/317`) com rate NULL na view **e** sem linha SBZ na filial — comportamento consistente do LEFT JOIN, não defeito. Semântica dos campos: `BZ_CUSTD` = valor-hora cadastral (custo padrão por filial); `TEMPO_PREVISTO_HORAS` = horas previstas (≈ estimado proporcional + ~0,08h); `TEMPO_REAL_HORAS` = horas apontadas; `RESULTADO_MOD` = resultado financeiro da eficiência; `LUCRO`/`PREJUÍZO` = decomposição por sinal.
+
+### 23.E — Manutenção de `BZ_CUSTD` — `PROVEN` (auditoria TTAT_LOG)
+
+`SBZ010_TTAT_LOG` registra **todas** as alterações de `BZ_CUSTD` com usuário/programa/data:
+
+| Programa | n alterações BZ_CUSTD | Natureza |
+|---|---|---|
+| MATA320 | 71.789 | atualização massiva de custo (recálculo) |
+| MATA010 | 945 | cadastro manual de produto |
+| CRMA110 | 272 | integração CRM |
+| **MATA019** | **71 (todas MOD, f01)** | **atualização de custo standard** |
+
+- **Para produtos MOD**: 79 alterações em 2026 — 71 via `MATA019` (ex.: 08/10/2026 11:42–11:49, usuária JOICI, regravou em massa: MOD20101 77,61→88,34; MOD352 44,17→45,81; MOD393 0→79,87) + 8 via `MATA010`.
+- **Correção à afirmação §22.E ("estático desde 2006"):** FALSA. A view retorna **o rate corrente do SBZ aplicado retroativamente** a todos os apontamentos históricos — MOD20101 mostra 88,34 em linhas de 2006 porque a view junta o `BZ_CUSTD` atual (gravado em 08/10/2026), não o rate vigente na data do apontamento. Implicação: `RESULTADO_MOD`/`LUCRO`/`PREJUÍZO` históricos são **revalorizados** a cada atualização de `BZ_CUSTD` — a view não é point-in-time.
+- Rates MOD são, portanto, **custo padrão mantido por rotina de atualização (MATA019) + ajustes manuais**, revisados periodicamente — não derivados de rateio contábil nem imutáveis.
+
+### 23.F — Boundary registrado
+
+Definições das views (`vw_Apontamentos_Eficiencia`, `VW_PROTHEUS_CUSTO_*`) são criptografadas (`definition=None`) → produtor SQL interno não inspecionável; o que está `PROVEN` é o **contrato empírico** (colunas, fórmulas e fonte do rate). Extração da DDL: owner SQL/DBA.
+
+### 23.G — Residuais
+
+- `DLP06R01` `BLOCKED`; P7 `TO_INVENTORY`; produtor SB9 `BLOCKED` — inalterados.
+- Doc 47: **`NO_GATE_CHANGE`**.
+- Fórmula interna `TEMPO_PREVISTO_HORAS` (origem do +0,08h sobre o estimado) `TO_INVENTORY` menor.
+
+### 23.H — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R55 | drift | EXECUTION_DRIFT declarado; 724 não byte-reproduzido (12 variantes); vigente=421/242 | — |
+| C2-R56 | reclassificação | TM010 135→0; TM999 93→22; congelado 224→111; STALE_EVIDENCE §20.A/§21.C | — |
+| C2-R57 | MOD fórmula | PROVEN 100%: GANHO=PREV−REAL; RES=GANHO×rate; LUCRO/PREJUIZO=split sinal; rate=BZ_CUSTD | G4 fonte |
+| C2-R58 | BZ_CUSTD manutenção | PROVEN: MATA019/MATA010 atualizam; view usa rate corrente retroativo; corrige §22.E | G4 fonte |
+| C2-R59 | — | `NO_GATE_CHANGE` | — |
