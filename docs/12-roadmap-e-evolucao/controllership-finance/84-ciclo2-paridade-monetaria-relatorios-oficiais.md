@@ -297,7 +297,8 @@ doc 85 §6/§7:
 | Ordem mesma-data | sequência impressa | `D3_NUMSEQ` | mv_par16=Digitação | 1.971/1.971 | 0 | `PASS` |
 | REF | F-/P-/OP/CC | `D1_FORNECE`/`D2_PEDIDO`/`D3_OP`/`D3_CC` | por tabela de origem | ~9.357 verificados | 0 | `PASS` |
 | Quantidade | qtd impressa | `D1_QUANT`/`D2_QUANT`/`D3_QUANT` | sinal na própria coluna | reproduzida | 0 | `PASS` |
-| Custo movimento | custo impresso | `D1_CUSTO`/`D2_CUSTO1`/`D3_CUSTO1` as_of | moeda 1 + `TTAT_OLD` pós-recálculo | 9.346/9.357 (99,88%) + R07 45/45 | 11 linhas residual | `PASS` (binding por blocos sem miss residual) |
+| Custo movimento | custo impresso | `D1_CUSTO`/`D2_CUSTO1`/`D3_CUSTO1` as_of | moeda 1 + `TTAT_OLD` pós-recálculo | **9.357/9.357 (100%)** = 7.376 `CUR` + 1.981 `TTAT_OLD`; R07 45/45 | 0 | `PASS` |
+| Sinal/coluna (devoluções) | 4 `entrada−` + 7 `saída−` | SD2 `TIPONF='D'` ×−1 entrada; SD1 `TIPONF='D'` ×−1 saída | `zMTR910Dev` + `MV_LISTDEV` (fonte) | 11/11 vinculadas, custo `CUR` exato | 0 | `PASS` |
 | Saldo inicial | cabeçalho produto | `CalcEst` ≡ `B9_QINI`/`B9_VINI1`@0831 | por produto | 1.544/1.544 | 0 | `PASS` |
 | Cadeia de saldo | saldo linha a linha | inicial + movimentos | acumulado contínuo | 1.544/1.544 blocos | 0 | `PASS` |
 | Saldo final (vs SB9 corrente) | saldo impresso | SB9@0930 regravação 21/10 | — | 354 produtos divergem **só em valor** | 227 <R$1 / 127 ≥R$1 | `STALE_EVIDENCE` (drift pós-emissão, não erro) |
@@ -306,9 +307,13 @@ doc 85 §6/§7:
 **Hipóteses descartadas:** filial 01 (população diverge), data única de
 emissão para SD1 (digitação provada), saldo por recálculo inverso
 (batimento exato com `B9`@0831), inclusão de estornos (pares ausentes).
-**Residual aberto:** versão RPO + parâmetros efetivos das emissões
-(E7 — TI/ERP); classificação poder3 `F4_PODER3` no escopo kardex;
-medida "CPV" agregada (`DECISION_REQUIRED`).
+**Errata rodada 20 (doc 80 §38):** as "11 linhas residuais" eram
+artefato do roteamento estrito entrada→SD1/saída→SD2 — todas são
+devoluções `TIPONF='D'` com sinal invertido provadas no fonte;
+paridade de custo efetiva = **100%**. **Residual aberto:** versão RPO +
+parâmetros efetivos das emissões (E7 — TI/ERP); classificação poder3
+`F4_PODER3` no escopo kardex; medida "CPV" agregada
+(`DECISION_REQUIRED`).
 
 ## §6 — Gates e métricas resultantes
 

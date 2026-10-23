@@ -2250,3 +2250,32 @@ apenas a fronteira entre fato e hipótese:
   TES/CF/saldo provada, totais reconciliados.
 - **G6: PENDING** (aceite funcional Controladoria). R01–R05 inalterados.
 - Métricas: `COLETA 42/60 = 70,0%` · `AUDITORIA 47/90 = 52,2%`.
+
+## §38 — ERRATA/REFINAMENTO (CF-C2-KARDEX-R06-G5-REWORK-001) — AS 11 LINHAS — 2026-10-23
+
+Correção de precisão sobre §37.C/§37.F — **nenhum fato econômico muda**;
+apenas o denominador do vínculo de custo:
+
+- A métrica "9.346/9.357 (99,88%)" provinha do **roteamento estrito** da
+  reconciliação inicial (entrada-NF→SD1, saída-NF→SD2). As 11 linhas
+  remanescentes eram `NO_KEY` de roteamento — não divergência de custo.
+- **4 linhas `entrada−` (NEG-E-01..04):** origem física **SD2**,
+  `TIPONF='D'` — devolução de compra (TES 561/530, CF 6201/5201). O
+  MATR910 imprime `QUANTIDADE×−1`/`CUSTO×−1` na coluna **entradas**
+  quando `MV_LISTDEV` ativo — função `zMTR910Dev` no fonte
+  (dbSeek `SF2` + `TIPONF='D'`). Efeito: `aSalAtu −= QUANTIDADE`
+  (devolução sai do estoque). Custo = `D2_CUSTO1` corrente **exato**.
+- **7 linhas `saída−` (NEG-S-01..07):** origem física **SD1**,
+  `TIPONF='D'` — devolução de venda (TES 120, CF 2201). Impressas como
+  negativos na coluna **saídas** (dbSeek `SF1` + `TIPONF='D'`). Efeito:
+  `aSalAtu += QUANTIDADE` (mercadoria retorna). Custo = `D1_CUSTO`
+  corrente **exato**.
+- As 11 linhas pertencem a 11 blocos distintos; efeito nos saldos coberto
+  pela cadeia já verificada (1.544/1.544) — a conferência do custo
+  individual não depende da consistência do saldo.
+- **Estado final da paridade de custo R06: 9.357/9.357 (100%)** =
+  7.376 `CUR` direto + 1.981 `TTAT_OLD` (revalorização pós-emissão).
+  Zero diferença sem explicação.
+- Decisão: **R06 G5 PASS mantido** (reinforcing evidence, não relaxamento);
+  R07 G4/G5 inalterados; G6 PENDING. Métricas inalteradas
+  (42/60 · 47/90).

@@ -548,17 +548,25 @@ testados do comportamento observado são compatíveis com o fonte.
   divergência).
 - `BR-R06-006` (custos — `PROVEN`): SD1 → `D1_CUSTO`, SD2 → `D2_CUSTO1`,
   SD3 → `D3_CUSTO1`, moeda mv_par11=1. Valores impressos são **as_of da
-  emissão** (01/10 16:58, pré-recálculo MATA330 ~17:5x): 9.346/9.357
-  (99,88%) com vínculo de custo — custo corrente ou `TTAT_OLD` de
-  revalorização posterior; binding de identidade linha-a-linha verificado
-  por blocos (9.357 movimentos / 1.544 blocos).
+  emissão** (01/10 16:58, pré-recálculo MATA330 ~17:5x): **9.357/9.357
+  (100%)** com vínculo — 7.376 `CUR` + 1.981 `TTAT_OLD` de revalorização
+  posterior; binding de identidade linha-a-linha verificado por blocos
+  (9.357 movimentos / 1.544 blocos). Errata r20 (doc 80 §38): o
+  "99,88%" anterior era artefato do roteamento estrito da reconciliação
+  inicial.
 - `BR-R06-007` (cadeia de saldo — `PROVEN`): saldo inicial do cabeçalho =
   `CalcEst(produto, local, mv_par05)` ≡ `B9_QINI`/`B9_VINI1` @2026-08-31
   (1.544/1.544 exato); saldo acumulado linha a linha = saldo impresso —
   1.544/1.544 blocos contínuos (qtd e valor).
-- `BR-R06-008` (sinais — `PROVEN`): quantidade/custo negativos permanecem
-  na coluna do próprio movimento com sinal − (devolução de venda SD2 →
-  entrada negativa; estorno de compra SD1 → saída negativa).
+- `BR-R06-008` (sinais/devoluções — `PROVEN` no fonte): com `MV_LISTDEV`
+  ativo, `zMTR910Dev` marca linhas `TIPONF='D'` (dbSeek `SF1`/`SF2`) e
+  o relatório imprime a devolução **na coluna oposta com sinal −**:
+  SD1 tipo `D` (devolução de venda, ex. TES 120/CF 2201) → coluna
+  **saídas** ×−1 e `aSalAtu += QUANTIDADE` (mercadoria retorna); SD2
+  tipo `D` (devolução de compra, ex. TES 561/530, CF 6201/5201) →
+  coluna **entradas** ×−1 e `aSalAtu −= QUANTIDADE` (devolução sai).
+  Observadas 11 linhas (4 entrada− SD2 + 7 saída− SD1), todas com custo
+  `CUR` exato — doc 80 §38.
 - `BR-R06-009` (população — `PROVEN` no escopo observado): produtos com
   ≥1 movimento elegível (mv_par07 "Lista Prods S/Movim" = Não — 0 blocos
   sem movimento); 26 produtos `MOD*` (tipo `MO`) fora — nenhum tem SB9;
@@ -777,7 +785,7 @@ copia para BFF/frontend.
 | T-R06-07 | BR-R06-006 | positive · reproduzido | custo impresso = `D*_CUSTO*` as_of emissão; divergente do corrente resolve via `TTAT_OLD` (1.981 linhas) |
 | T-R06-08 | BR-R06-007 | positive · reproduzido | saldo inicial `B9_*`@0831 + movimentos = saldo impresso — 1.544/1.544 blocos contínuos |
 | T-R06-09 | BR-R06-009 | negative · reproduzido | produto sem movimento elegível não vira bloco (0/1.544); tipo `MO`/MOD* fora |
-| T-R06-10 | BR-R06-008 | positive · reproduzido | devolução SD2 → entrada negativa na mesma coluna; estorno-compra SD1 → saída negativa |
+| T-R06-10 | BR-R06-008 | positive · reproduzido | devolução `TIPONF='D'` cruza coluna com sinal −: SD1 tipo D → saída− (retorna ao estoque), SD2 tipo D → entrada− (sai) — 11/11 custo `CUR` exato, `zMTR910Dev`/`MV_LISTDEV` no fonte |
 | T-R07-01 | BR-R07-001/002 | positive · reproduzido | 45/45 linhas INVENT vinculadas ao SD3 (999/RE0 saída, 499/DE0 entrada), loc 01+99 |
 | T-R07-02 | BR-R07-003 | positive · reproduzido | 10 divergências de custo = revalorização pós-emissão provada via `TTAT_OLD`; totais oficiais fecham |
 | T-R07-03 | BR-R07-002 | negative · candidato | estorno de INVENT (par `D3_ESTORNO`) deve ficar fora — mesma regra de T-R06-02 |
