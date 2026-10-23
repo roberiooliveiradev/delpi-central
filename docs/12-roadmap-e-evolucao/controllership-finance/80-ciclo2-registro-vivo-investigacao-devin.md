@@ -17,19 +17,19 @@
 
 | Campo | Estado / preenchimento exigido |
 |---|---|
-| PO GO específico para Ciclo 2 | **NO — PENDING**, documento/SHA da futura autorização: TO_INVENTORY |
-| Escopo autorizado | TO_BE_APPROVED: somente descoberta e consultas READ delimitadas; nenhuma implementação |
-| Executor / identidade técnica | Devin — acesso efetivo e responsável auditável: TO_VERIFY |
-| Repositório / branch / HEAD | `roberiooliveiradev/delpi-central` / branch e SHA: CAPTURE_AT_EXECUTION |
-| `git status` do checkout | CAPTURE_AT_EXECUTION; connector remoto não comprova worktree |
-| Authorities carregadas | Instruções oficiais; `.cursor` aplicáveis; README; docs 23/46–49/55–57/78/79 e contratos/código físicos |
-| Rotas tipadas autorizadas disponíveis | TO_INVENTORY: método, path, schema, owner, versão, principal, escopo e limites |
-| Rotas `/data/sql` e `/system` | **NOT_AUTHORIZED_BY_THIS_DOC**; inventariar existência e guardrails por fonte/código/OpenAPI; acesso read-only **somente** após permissão explícita do owner |
-| Metadados SQL e consulta de dados | capacidades distintas; aprovações distintas, com menor privilégio possível |
-| Grants e identidade efetiva | TO_VERIFY via autoridade adequada; não inferir pelo fato de endpoint responder |
-| Limites operacionais | teto de linhas, tempo, paginação, janela de datas, schema/table allowlist, auditoria, redaction e rate limit: TO_VERIFY |
-| Segurança da saída | descrever apenas contagens sintéticas/metadados permitidos, sem valores operacionais |
-| Gate D0 | `PENDING`; não avançar a D1–D4 sem autorização e evidência dos controles |
+| PO GO específico para Ciclo 2 | **D0-DOCUMENTARY_ONLY autorizado** pelo pedido `CF-C2-D0-001` (23/10/2026, texto do pedido em custódia do PO); GO de dados/consulta ao ERP continua **NO — PENDING** |
+| Escopo autorizado | D0: leitura e inspeção documental do repositório (código, contratos, OpenAPI, configs não sensíveis, testes). Consultas de dados ao ERP: **não autorizadas** |
+| Executor / identidade técnica | Devin (agente) — leitura de repositório. **Principal de API para D1 não provisionado**: TO_VERIFY (ver §11.D) |
+| Repositório / branch / HEAD | `roberiooliveiradev/delpi-central` / `main` worktree `cf-stock-wt` @ `cda28e6b9fddfa47ac03dac77d21bf80e23b0d0f` (capturado em 23/10/2026) |
+| `git status` do checkout | Limpo no início do lote D0; alterações preexistentes de outros worktrees não tocadas |
+| Authorities carregadas | Instruções oficiais; `.cursor` aplicáveis (index, evidence-driven, boundaries, security, contracts, data-persistence); README do produto; docs 21/23/42/46/47/48/49/56/57/78/79; código físico api-delpi/BFF/shared-delpi_auth |
+| Rotas tipadas autorizadas disponíveis | Inventariadas em §11.B: `/system/*` (metadados SX2/SX3/SIX/SX9), `/data/sql` (SQL read-only validada), rotas tipadas `financeiro/*`, `supplies/*`, produção, integrações. Nenhuma autorização de execução concedida por este documento |
+| Rotas `/data/sql` e `/system` | Existência e guardrails comprovadas por código (§11.B). Execução: **NOT_AUTHORIZED** até GO explícito por lote; `/system` é candidata preferencial para D1 (metadados apenas) |
+| Metadados SQL e consulta de dados | Capacidades distintas confirmadas: `/system` = dicionário físico; `/data/sql` = dados arbitrários SELECT-only. Aprovações separadas, menor privilégio primeiro |
+| Grants e identidade efetiva | Authz = permissões efetivas resolvidas no Core `/me` por request (`shared/delpi_auth/middleware/fastapi_auth.py:103`). Quais principals detêm `api-delpi.system`/`api-delpi.data`: **TO_VERIFY** (requer Keycloak/Core, não disponível nesta sessão) |
+| Limites operacionais | `/system`: paginação limitada via `LIMIT_QUERY` (tetos 20–200). `/data/sql`: sem teto de linhas observado no backend (`fetchall` em `base_repository.py:203`); projeção `BOUNDED_DYNAMIC_RESULTSET` existe na superfície DAVI; timeout: **TO_VERIFY** |
+| Segurança da saída | Este registro contém apenas metadados técnicos e referências de código; nenhum valor operacional |
+| Gate D0 | `EXECUTED_DOCUMENTARY` — ver registro D0-001 e §11. D1 permanece `PENDING_GO` |
 
 **D0 — DoD:** inventário verificável das capacidades acessíveis ao executor, inclusive status de authn/authz, política de query, owners e limitações. **Não testar SQL arbitrária como maneira de descobrir permissões.** Em caso de dúvida de acesso, `DECISION_REQUIRED`; falha de autorização = STOP.
 
@@ -109,7 +109,7 @@ COMMIT_SHA: <sha realmente confirmado ou NONE>
 
 | Run ID | Lote / item | Base HEAD | GO ref | Ação READ autorizada | Nova evidência sanitizada | G1–G6 impactados | Bloqueio/owner | Commit/SHAs | Veredito |
 |---|---|---|---|---|---|---|---|---|---|
-| D0-001 | D0 | TO_RUN | NO_GO | NOT_RUN | NONE | NONE | Autorização PO pendente | NONE | PENDING |
+| D0-001 | D0 | `cda28e6b9f` | CF-C2-D0-001 (documentary GO apenas) | EXECUTED_DOC_ONLY — inventário de rotas/authz/guardrails por código; nenhuma chamada ao ERP | Manifesto §11.B; cobertura §11.C; plano D1 §11.E | NONE — `NO_GATE_CHANGE` | Principal de execução D1 não provisionado (owner: Core/Keycloak + PO) | commit deste registro | EXECUTED_DOCUMENTARY |
 
 ## 5. Questões verificáveis e critérios por workstream
 
@@ -189,4 +189,98 @@ O GPT emite só `ACCEPT | ACCEPT_WITH_RESIDUAL | REWORK | EXECUTION_DRIFT | INCO
 
 ## 10. Próxima ação — limitada
 
-**Aguardar o PO aprovar o lote D0 de descoberta read-only (documentação/OpenAPI/código/metadados de capacidades) e o modelo de acesso permitido ao Devin.** Após GO, Devin inicia D0, preenche este documento com registros append-only, atualiza doc 47 apenas com evidência nova, entrega Execution Report e aguarda review antes de D1.
+**D0 documental executado (ver §11).** Aguardar revisão do GPT Arquiteto e GO expresso do PO para o **lote D1** (metadados físicos via rotas `/system`, sequência e restrições em §11.E). Nenhuma chamada ao ERP foi ou será feita sem esse GO.
+
+## 11. D0 — Inventário técnico de capacidades (CF-C2-D0-001, 23/10/2026)
+
+Base: `cda28e6b9fddfa47ac03dac77d21bf80e23b0d0f`, worktree limpo, somente leitura de código/contratos/config não sensível. Nenhuma chamada HTTP ao ERP executada.
+
+### 11.A — Modelo de autenticação/autorização (comprovado em código)
+
+| Camada | Mecanismo | Evidência |
+|---|---|---|
+| AuthN usuário | JWT Keycloak (JWKS, issuer+audience obrigatórios, fail-closed sem config) | `shared/delpi_auth/jwt_validator.py` |
+| AuthZ efetiva | Permissões efetivas resolvidas no **Core `/me` por request**, com fallback a claims stale (`rbac_unavailable`) | `shared/delpi_auth/middleware/fastapi_auth.py:103` |
+| Enforcement rota | `require_any_permission(...)` sobre `user.permissions`; `is_superadmin` bypass; `rbac_unavailable` → 503 (não 403 falso) | `shared/delpi_auth/authorization.py` |
+| S2S individual (ADR-010) | `X-Delpi-Service-Authorization` client-credentials: assinatura, issuer, audience dedicada, client allowlist e scope por rota; token interno compartilhado **nunca** autoriza; Bearer de usuário segue obrigatório (ator delegado) | `api-delpi/app/interface/http/s2s_service_access.py` |
+| Superfícies públicas | Somente `/public/*`, `/.well-known/oauth-protected-resource`, `/gpt-actions/v1/openapi.json` | `api-delpi/app/middleware/auth_middleware.py:24-64` |
+| MCP | `/mcp` exige OAuth de usuário (modelo A); identidade de máquina proibida | `auth_middleware.py:77-93`, `main.py:375` |
+
+### 11.B — Manifesto de capacidades (api-delpi @ HEAD acima)
+
+**Capacidades de metadados — `/system` (leitura de dicionário Protheus, tipadas):**
+
+| Rota | Fonte física | AuthZ | Tipo | Disponibilidade |
+|---|---|---|---|---|
+| `GET /system/tables/search` | SX2 | `api-delpi.system` | READ | IMPLEMENTED; allowlisted p/ DAVI (`search_tables_by_description`) |
+| `GET /system/tables/{t}` | SX2 | `api-delpi.system` | READ | IMPLEMENTED; allowlisted (`get_protheus_table`) |
+| `GET /system/tables/{t}/columns` | SX3 | `api-delpi.system` | READ | IMPLEMENTED; allowlisted (`list_protheus_table_columns`) |
+| `GET /system/tables/{t}/indexes` | SIX | `api-delpi.system` | READ | IMPLEMENTED |
+| `GET /system/tables/{t}/relations` | SX9 | `api-delpi.system` | READ | IMPLEMENTED |
+| `GET /system/tables/{t}/schema` | SX2+SX3+SIX+SX9 composto | `api-delpi.system` | READ | IMPLEMENTED |
+| `GET /system/tables/{t}/columns/search` e `GET /system/columns/search` | SX3 | `api-delpi.system` | READ | IMPLEMENTED; 2ª allowlisted |
+
+Fonte: `api-delpi/app/interface/http/routes/system_routes.py:69-290`; mount `main.py:379`. Paginação limitada (`LIMIT_QUERY`, tetos 20–200). Ideal para D1 — responde o essencial de G4 **sem tocar dados de negócio**.
+
+**Capacidade SQL bruta — `/data`:**
+
+| Rota | Guardrails | AuthZ | Tipo | Disponibilidade |
+|---|---|---|---|---|
+| `POST /data/sql` (`execute_sql_raw`) | `SqlValidator` (sqlglot T-SQL AST): só DECLARE/SET/SELECT/WITH; deny DDL/DML/EXEC/transactions/`INTO`/APPLY/comma-join/qualificação/identificador delimitado; máx. 10 SELECTs; allowlist de 53 tabelas físicas **com bypass ligado por padrão** (`DATA_SQL_SKIP_TABLE_WHITELIST` default `"true"` — salvaguardas estruturais permanecem); `fetchall` sem teto de linhas observado; telemetria `timed_sql_query` | `api-delpi.data` (permissão efetiva Core) | READ-only por construção, mas superfície de dados arbitrária | IMPLEMENTED — **SECURITY_REVIEW_REQUIRED** antes de uso; exposta ao DAVI apenas via ação canônica `execute_readonly_sql` com `BOUNDED_DYNAMIC_RESULTSET` |
+
+Fonte: `data_routes.py:23-93`, `sql_validator.py`, `run_sql_use_case.py`, `base_repository.py:188-215`, `app/content/davi_external_read_allowlist.json` (95 ops; única com `canonicalSqlRoute` = `execute_readonly_sql`). Auditoria por usuário e timeout/statement cap: **TO_VERIFY**.
+
+**Rotas tipadas de negócio relevantes aos workstreams (todas READ/GET salvo indicação):**
+
+| Rota(s) | Fonte TOTVS | AuthZ | Workstream |
+|---|---|---|---|
+| `GET /financeiro/settlements/payables` `/receivables` `/summary` | FK2/FK1 (eventos), FK7 (ponte), SE2/SE1 (títulos), SED (natureza) | S2S estrito: client `controllership-finance-api` + scope `settlements.read` + Bearer usuário delegado | C2-04 |
+| `GET /financeiro/stock-inventory` | SB9010 snapshot `B9_DATA`=fim do período (`B9_QINI`, `B9_VINI1`) | S2S estrito scope `stock-inventory.read` | C2-01, C2-02 |
+| `GET /supplies/stock-value` | SB9010 fechamento oficial + fallback estimado (resolução `officialClosure` vs `estimated`) | `KPI_SUPPLIES_ACCESS` ou S2S supplies-BFF | C2-01, C2-02, C2-05 |
+| `GET /supplies/cpv`, `/supplies/inventory-turnover` | TOTVS (ver repositórios supplies) | `KPI_SUPPLIES_ACCESS` ou S2S supplies-BFF | C2-03 |
+| `GET /financeiro/despesas-centro-custo/*` (6 rotas) | view `dbo.vw_fin_despesas_centro_custo` — **linhagem SD1 atrás da view: TO_VERIFY** | `financeiro-centro-custo.*` (Core /me) | C2-08 |
+| `GET /financeiro/inadimplencia/*` (5+ rotas) | títulos de recebimento (SE1 e correlatas — detalhe TO_VERIFY) | `financeiro-inadimplencia.*` | C2-04 (adjacente) |
+| `GET /stock-balances`, `non-moving-stock`, `inventory-accuracy`, `third-party-materials` | SB2 e correlatas | permissões por domínio (Core /me) | C2-05 |
+| Família produção: `unproductive-hours`, `machine-load`, `pcp-orders`, `production-order-sets`, `production-appointments`, `eficiencia-fabril` | SH*/SC*/SD2 conforme repositório | permissões por domínio | C2-06, C2-07 |
+| `GET /integrations/protheus/status` | Protheus REST (status) | `PROTHEUS_INTEGRATION_READ_PERMISSIONS` | auxiliar C2-04/08 (proveniência) |
+| `POST/PUT /integrations/protheus/supplier*` | Protheus REST **WRITE** | idem | **FORA DE ESCOPO D1** — mutante |
+| `GET /integrations/operations/{id}`, `.../events` | tracking de integração | conforme rota | auxiliar auditoria |
+| Observabilidade `/system/{sql-health,console-*,observability-snapshot,caller-stats,connection-pools,query-cache/stats,openapi-diff,envelope-contracts,smoke-definitions}` | telemetria interna | `api-delpi.system`/`api-delpi-console.view`/`api-delpi.access` | suporte D1/D5; POSTs de alerta podem disparar webhook → **efeito indireto, não usar em D1** |
+
+**BFF `controllership-finance-api`** (única fronteira do MFE): `GET /closing/financial-settlements`, `/closing/financial-settlements/summary`, `/closing/stock-inventory`, `/viewer-context`, `/health`. AuthZ `controllership-finance.access` via Core; upstream = S2S próprio (`X-Delpi-Service-Authorization`) + Bearer do usuário delegado (`infrastructure/api_delpi_gateway.py`). **Não expõe `/system` nem `/data/sql`** — D1 exige ou principal direto na api-delpi, ou novas rotas tipadas no BFF (DECISION_REQUIRED).
+
+**`strategic-indicators-api`**: rotas de indicadores/integrações existem (`si_app/interface/http/routes/*`); detalhamento **TO_INVENTORY** sob demanda (consumers de CPV/MOD — C2-03, C2-06).
+
+### 11.C — Cobertura dos workstreams (capacidade × necessidade)
+
+| WS | Capacidade candidata | Cobre sem SQL bruta? | Lacuna / dependência |
+|---|---|---|---|
+| C2-01 MATR320×P7×H02 | `/system` (bindings SB9/SB2/SD3…) + `/supplies/stock-value` + `/financeiro/stock-inventory` | Metadados: sim. Dados/paridade: **não** — exige rotas tipadas novas ou `/data/sql` com GO | Job/parâmetros do fechamento não são expostos por API — owner Protheus |
+| C2-02 P7 integral×reduzido | idem + contrato R03 (`officialP7:false` preservado) | Metadados: sim. Dois outputs oficiais: fora da API (artefatos/custódia PO) | comparação documental, não SQL |
+| C2-03 CPV/Kardex 01 | `/supplies/cpv` + `/system` (SD3/SB2 bindings) | Parcial — regra de coluna de custo exige binding físico via `/system` | confirmar grain da rota CPV |
+| C2-04 Baixas | `/financeiro/settlements/*` (S2S) + `/system` (FK1/FK2/FK7/SE1/SE2/FKB/SED) | Metadados: sim. Paridade FINR190/logs: depende de artefatos oficiais | owner Financeiro + proveniência FINR |
+| C2-05 Inventário 01/99 | `stock_balances`, `inventory_accuracy`, `/system` (SB2/SB8/SD3, TES 999/499, RE0/DE0) | Metadados: sim | TES/movimentos exigem verificação de dados — GO |
+| C2-06 Faturamento×MOD | rotas produção + `/system` (SH6/SH1/SD2/SD3) | Metadados: sim | semântica previsto/realizado: owner Custos/PCP |
+| C2-07 Custo médio/jobs | `/system` (B2_CM1 e correlatas) + código `stock_value_*` | Metadados: sim | **status de jobs Protheus não é API** — DECISION_REQUIRED (observação assistida) |
+| C2-08 CC/SD1 | `/financeiro/despesas-centro-custo/*` + `/system` (SD1/CTT) | Parcial — fonte real atrás de view customizada | mapear linhagem da `vw_fin_despesas_centro_custo` |
+| C2-09 Entregas/fontes externas | Core (aprov humano) + doc 47 checklist | n/a — investigação documental | sem dependência de SQL |
+
+### 11.D — Gaps e decisões pendentes
+
+- **Principal de execução para D1**: nenhuma identidade de auditoria provisionada. Opções: (a) usuário existente com grant `api-delpi.system` no Core; (b) client S2S novo com escopo dedicado `metadata.read` (exigiria contrato novo — não há rota S2S para `/system` hoje); (c) execução assistida pelo owner. **DECISION_REQUIRED** — recomendação: (a) menor privilégio, menor mudança de código.
+- `/data/sql`: **SECURITY_REVIEW_REQUIRED** — bypass de allowlist ligado por padrão e ausência de teto de linhas no backend; para D1 preferir `/system` (responde G4 sem dados). SQL bruta só com GO nominal + teto `TOP` explícito + auditoria confirmada.
+- Grants efetivos de `api-delpi.system`/`api-delpi.data`: **TO_VERIFY** (Keycloak/Core, fora da sessão).
+- Timeout/statement cap e auditoria por usuário em `/data/sql`: **TO_VERIFY**.
+- Linhagem SD1 da view `vw_fin_despesas_centro_custo`: **TO_VERIFY** (D1 via `/system` não resolve views customizadas; pode exigir `INFORMATION_SCHEMA`/fonte TOTVS — ponto de GO).
+- `strategic-indicators-api` e consumers de indicadores CPV/MOD: **TO_INVENTORY** se C2-03/C2-06 exigirem.
+- Nenhuma divergência material doc×código detectada neste lote; **NO_GATE_CHANGE** no doc 47.
+
+### 11.E — Proposta delimitada do D1 (PENDING_GO)
+
+1. **Escopo**: somente metadados físicos — nomes de tabela, colunas, tipos, chaves, índices, relações SX9 — para o conjunto de aliases por workstream (SB9, SB1, SB2, SD3, FK1/FK2/FK7, SE1/SE2, SED, FKB, SD1, CTT, SH1/SH6, RE0/DE0, SIX, SX* conforme ledger).
+2. **Sequência mínima**: `GET /system/tables/search` por alias → `GET /system/tables/{t}/schema` por tabela confirmada → `/relations` e `/indexes` quando o schema composto não bastar. Sem SELECT de dados.
+3. **Restrições**: sem datas/valores de negócio na resposta registrada; saída sanitizada (metadados apenas); volume ≤ ~60 chamadas; principal único auditável; horário acordado.
+4. **Evidência esperada**: mapa físico por workstream preenchendo `TABLES_AND_ALIASES`, `COLUMNS_AND_TYPES`, `KEYS_AND_CARDINALITY` das fichas §4; divergências doc×físico → `EXECUTION_DRIFT`.
+5. **Critérios de parada**: permissão ausente (`403`), tabela não catalogada, necessidade de dados (→ volta ao PO), qualquer ambiguidade de escopo.
+6. **Não coberto por capacidades atuais**: parâmetros de jobs/rotinas Protheus (MATR320, Refaz Saldos, Acompanha Custos), artefatos oficiais, linhagem de views customizadas — exigem owner humano ou GO específico.
+7. **Owners necessários**: PO (GO), owner api-delpi (confirmação de uso `/system`), admin Core/Keycloak (grant do principal).
