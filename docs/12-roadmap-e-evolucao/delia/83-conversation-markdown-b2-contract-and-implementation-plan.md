@@ -1,6 +1,6 @@
 # 83 — DÉLIA: Plano B2 de Markdown Seguro em Respostas Conversacionais
 
-**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_APPROVAL_PENDING / RUNTIME_B2_NOT_AUTHORIZED`
+**Status vigente:** `PRODUCT_MASTER_2026_10_22_INTERNAL_L1_DEFERRED / CP-333_MAPPED / B2_CORE_NOT_BLOCKED_BY_INTERNAL_LINKS / G1_G2_ACCEPT_WITH_RESIDUAL / G3_BRIEF_APPROVED_FOR_BOUNDED_IMPLEMENTATION / RUNTIME_B2_NOT_YET_IMPLEMENTED`
 **Data:** 2026-10-16  
 **Task documental:** `DELIA-UX-CONVERSATION-MARKDOWN-B2-PLANNING-01`  
 **Parent:** [82 — Conversation Rich Content & Structured Presentation](./82-conversation-rich-content-and-structured-presentation-specification.md)  
@@ -550,3 +550,8 @@ Este documento é planejamento completo para decisão e execução futura, mas *
 **Impacto sobre decisões anteriores:** este direcionamento revisa a dependência histórica que condicionava **todo** Markdown B2 à emissão de links governados internos. Não equivale à aprovação implícita de L3 ou à remoção definitiva de links; é uma nova decisão explícita do Product Master a ser reconciliada por Architecture/Coordination com CP-333, D1/D6/D7, docs 82/84 e gates G1/G2/G3. Em caso de incompatibilidade com autoridade superior, **STOP → ARCHITECTURE_DECISION_REQUIRED**, não alterar silenciosamente o status. `CP-333=PLANNED_NOT_PASS`; `B2_RUNTIME=OFF`; `G3_TASK_BRIEF_APPROVAL=PENDING`; `NO_RUNTIME_CHANGE`.
 
 **Próximo bounded:** revisão de contrato para diferenciar external-public link admission de internal-navigation reference, ajustar os AC/RQ afetados sem apagar requisitos históricos, comprovar reuso Portal/Core, registrar evidência e somente então solicitar liberação do brief de implementação B2 no HEAD.
+
+
+## Coordination gate G3 — approved for bounded implementation (2026-10-23)
+
+At the direct review of Cursor's STOP report (runtime untouched, ledger §6.383), Architecture/Coordination **approved the bounded I0–I3 implementation brief** in [97 §10](./97-markdown-b2-g3-bounded-backend-implementation-brief.md), commit `8252f1ea5aaf7021a8fe5556719343c95410b995`. `G3_TASK_BRIEF_APPROVED=YES`, `G3_IMPLEMENTATION=AUTHORIZED_NOT_EXECUTED`, `CP-333=PLANNED_NOT_PASS`, `G4=TEST_NOT_RUN`, `PRODUCTION_DEPLOYMENT=NO`. Before runtime code, Cursor MUST RED-test and reconcile `PROCESSING_TIMEOUT` in v2 schema/consumer. Internal L1 remains deferred; unproven public link sources emit no clickable links without blocking safe textual Markdown. The historical G3=BLOCKED passages above document their older state and are superseded only as to this implementation approval. No phase progression or production activation.
