@@ -112,3 +112,73 @@ EXECUTOR_VERDICT= COORDINATION_REVIEW_REQUIRED=YES
 ```
 
 **FIM:** publicar relatório de aceite independente, matriz antes/depois de responsabilidades, evidência de que o orquestrador delega operações não-orquestrativas legítimas, decisões de SKIP justificadas, resultados funcionais preservados e plano concluído ou bloqueado com causa formal. Nunca dizer COMPLETED por LOC menor/testes verdes apenas.
+
+## 8. Organização modular e prevenção de novos monólitos — diretriz PO (2026-10-23)
+
+**Decisão de objetivo:** a refatoração deverá produzir módulos pequenos, coesos e reutilizáveis por responsabilidade, não apenas um `orchestration.py` menor acompanhado de novos monólitos. Esta seção acrescenta **candidatos físicos e gates concretos**, sem autorizar sua criação antecipada. O documento 52 permite subáreas de application somente após necessidade real e Abstraction Gate; o documento 117 congelou o SKIP de guidance/presentation por inexistência de destino simples naquele SHA. Esta seção **não anula** 117: R0/R2 devem apresentar nova evidência de boundary/consumer para reavaliar eventual destino; caso contrário, SKIP_WITH_DECISION.
+
+### 8.1 Estrutura existente confirmada em main
+
+- `application/capability_provision/{orchestration.py,contracts.py,ports.py,conversational_response.py,outcome_assessment.py,paginated_result_semantics.py}`
+- `application/interaction/{argument_validation.py,capability_attempt.py,contracts.py,presentation.py,pending_proposals.py,turn_budget.py,turn_observability.py,workspace_context.py}`
+- `application/model_invocation/{invoke_model.py,contracts.py,governed_retries.py}`
+- `config/cri_presentation.delpi.json`, loader `infrastructure/config/cri_instruction_resource.py`.
+
+**Owner físico:** manter `capability_provision` como composição da integração enquanto a arquitetura vigente o prescrever. `interaction`, `model_invocation`, `domain/capability_catalog` e adapters retêm suas responsabilidades; não migrar para outros bounded contexts nem importar adapters em domain/application.
+
+### 8.2 Mapa de arquivos previstos — CRIAR SOMENTE MEDIANTE GATE
+
+| Arquivo candidato / extensão | Responsabilidade única | Reuso antes da criação | Entrada/gate |
+|---|---|---|---|
+| **EXTEND** `outcome_assessment.py` | suficiência, comparabilidade, aderência entre evidência e resposta requisitada | funções `assess_outcome`, `EvidenceFacts` atuais | R2/R3; sem importar orchestration |
+| **EXTEND** `conversational_response.py` | composição de apresentação a partir de projeção confiável | `CriComposition`, rótulos governados e `compose_cri_response` | R3/R4; separar render de seleção |
+| **EXTEND** `argument_validation.py` | validação pura de schema/argumentos, sem provider mechanics | `normalize_arguments`, `validate_arguments` | R5; equivalência de schema e erros comprovada |
+| **EXTEND** `contracts.py` e `ports.py` existentes | DTOs/protocols tipados e boundaries entre coordinator e módulos | tipos atuais; sem namespace redundante | R0/R2 antes de moving functions |
+| **CANDIDATE NEW** `capability_provision/evidence_projection.py` | projeção/sanitização provider-neutral de evidence, business records, contract/schema/guidance com invariantes de trust | `outcome_assessment.py`, `interaction/presentation.py`, sanitizadores existentes | R2, apenas se função e consumers provarem que nenhuma implementação existente comporta esse contrato |
+| **CANDIDATE NEW** `capability_provision/guidance_projection.py` | transformar guia/documentação de owner em seções tipadas, sem responder intenção ou selecionar provider | guidance atual, evidence_projection proposto, compositor existente | R4, **bloqueado** até resolver dependências e justificar revisão da decisão 117 |
+| **CANDIDATE NEW** `capability_provision/response_projection.py` | construir DTO renderizável a partir de evidência e decisão, sem texto de UI | `conversational_response.py` e `interaction/presentation.py` | R3/R4; escolher apenas se não duplicar compositor/DTO existente |
+| **CANDIDATE NEW** `capability_provision/semantic_surface_projection.py` | visão descritiva de capabilities elegíveis sem autorização implícita, para user/meta contexto | `ProviderSurface.groups`, `CapabilityGroup`, `_surface_inquiry_content` | R4/R5; apenas se consumer adicional e desacoplamento reais provados |
+| **CANDIDATE RESOURCE** JSON versionado para instruções de etapas | textos/instruções declarativas com lineage id/version/hash; nunca Policy/schema executável | loader de instruções atual e recursos existentes, `cri_instruction_resource.py` | R1 após compatibilidade byte/hash e owner |
+
+**Não criar todos os candidatos.** Um candidato sem owner, consumidores reais, redução comprovável de coupling ou contrato estável recebe `SKIP_WITH_DECISION`; não gerar package vazio, service, registry ou engine novo. Nenhum dos nomes candidatos representa autoridade congelada.
+
+### 8.3 Dependências direcionadas / transversalidade
+
+O desenho-alvo de imports deve ser acíclico:
+
+`orchestration.py` → contracts + `InvokeModel` + ports + `evidence_projection` (se aprovado) + `outcome_assessment` + `conversational_response`.
+
+Projeção de evidência (caso aprovada) → contratos domain/application e funções puras já existentes; **NUNCA** → orchestration, infrastructure SDK, HTTP, DB, auth token, provider branch ou componente de apresentação.
+
+Composição conversacional → DTO/projeção saneada, vocabulário governado validado; **NUNCA** → orchestration, MCP adapter ou Core/Domain client. Cada utilitário de canonicalization/redaction/sanitization tem **um único owner**; mover com todos os consumers ou manter no local vigente; nunca copiar para eliminar import circular. Transversalidade significa função pura/contrato reutilizado por consumidores legítimos da DÉLIA, não generic-utils sem owner.
+
+### 8.4 Guardas contra novo monólito
+
+- **Coesão comprovada:** cada arquivo define contrato, owner, consumers e responsabilidade em docstring/README de boundary; classes públicas e helpers não devem depender de detalhes de outros fluxos.
+- **Complexidade observável:** a execução apresenta linhas/funções/complexidade/dep graph antes e depois, porém **sem limite arbitrário de LOC como gate isolado**. Crescimento desproporcional de módulo leaf obriga demonstrar coesão; não esconder complexidade por fragmentação artificial.
+- **Imports/contratos:** testes de ausência de ciclos, dependência domain/application livre de adapters e testes de isolamento dos módulos leaf.
+- **Textos e prompts:** declarativo versionado em recursos existentes quando houver schema/loader legítimos; nenhum dicionário de idioma expansivo na orquestração; nenhum algoritmo, classificação de intenção ou Policy em JSON.
+- **Generalização:** nenhum branch por DAVI/TÉO/VISTA/operationId, keywords de pergunta, schema `entities.playlist` hardcoded; owners novos/removidos/reordenados precisam funcionar sem modificar planner.
+- **Parity primeiro:** RED/green, invariantes de schema/erro/payload, D4/D5/D8, CRI on/off, ACT gating e budget antes de retirar imports/funções antigas.
+- **Refactor-only:** em R1–R6, nenhuma alteração funcional oportunista; se um defeito for descoberto, registrar task separada e bloquear extração dependente, não absorver silenciosamente.
+- **Ativos compartilháveis:** publicar apenas interfaces semânticas reais de `EvidenceFacts`, `OutcomeVerdict`, `CriComposition`, `CapabilityGroup`, etc.; não expor utilitários internos como serviços ou bridges artificiais.
+
+### 8.5 Entregáveis adicionais por etapa
+
+**R0:** árvore atual/árvore-alvo condicional + matriz `ORIGIN FUNCTION → MODULE OWNER → SOURCE → CONSUMERS → CONTRACT → KEEP/EXTEND/NEW/SKIP` e precedência de extrações. Registrar número estimado e delta real de módulos após gate.
+
+**R1:** tabela `instruction-id → existing resource/loader → consumer → version/hash → migration decision`; não converter tudo indiscriminadamente.
+
+**R2:** definir e testar projeção/sanitização compartilhável antes de mover call-sites, ou justificar permanência; proteger negativa RC1/RC2/D5.
+
+**R3:** interfaces claras Evidence→Outcome→Presentation, sem circular imports, com paridade de composição.
+
+**R4:** justificar por evidência nova qualquer revisão da decisão S4/117; migrar textos ao loader legítimo se cabível, mas nenhuma nova engine de guidance.
+
+**R5:** centralizar validações idênticas em owner atual, sem deslocar interpretação semântica do LLM.
+
+**R6:** verificar que coordinator contém principalmente sequencing/budget/selection/revalidation/invoke/ACT governance; emitir lista explícita de KEEP legítimos e resíduos SKIP.
+
+**R7:** além dos outcomes, evidência estrutural (imports acíclicos, isolamento de leaves, ausência de duplicação, coverage de consumidores, tamanho/complexidade antes/depois e recursos validados). O aceite final verifica redução de coupling, não apenas LOC.
+
+**Regra final:** `NEW FILE = CONTRACT + OWNER + REAL CONSUMER + NO EXISTING EQUIVALENT + RED/GREEN PARITY`. Se qualquer componente faltar, não criar o arquivo e registrar o motivo. Esta seção é **PLANNED**, condicionada aos gates R0–R7 e à estabilização independente da correção D5/124.
