@@ -17450,3 +17450,29 @@ LIMITS_2_60_30=UNCHANGED RECOVERY_PRODUCTION=OFF EXTERNAL_LLM_CALLS=0
 ## §6.382 — Budget-continuity contract decision (Task 1, 2026-10-23)
 
 **2026-10-23 — DELIA-C3-BUDGET-CONTINUITY-CONTRACT-DECISION-01:** contrato/ADR produzido no doc 102 para a decisao PO dos docs 100/101 (ate 60s semanticos por tentativa, ate 3 tentativas, direcao B+D, comunicacao real de continuidade). Inventario: EXISTING_EQUIVALENT=YES em todas as responsabilidades; REUSE=EXTEND apenas nos owners canonicos — nenhum engine/scheduler/registry novo. Proposta concreta (TO_DECIDE): llm_quota_seconds=60 por tentativa (soma medida de chamadas; replay/checkpoint nao debita; falha nao fabrica tokens), attempt_wall=90s, max_governed_attempts<=3 dev/prod-OFF, operational_reserve=25s fundamentada em timeout de fonte 15s + AuthZ + pos-condicao + CRI, envelope global 150s streamed / 60s buffered legado (edge ~100s mitigado por keep-alive <=15s). Vocabulario aditivo de encerramento sem mascarar fonte como modelo. Invariantes: envelope monotonico unico; mutating_invoke_started bloqueia nova tentativa; PREPARE/ACT nunca reexecutados; zero regex/keyword/alias; terminal unico. CODE_CHANGE=NONE RUNTIME_CHANGE=NONE PRODUCTION_RETRY=BLOCKED REVOCATION_RISK=OPEN (DEFERRED_BY_PO).
+
+
+## §6.383 — G3 Markdown B2: gate de autorização auditado — PENDING (2026-10-23)
+
+**2026-10-23 — gate check read-only, zero diff de runtime:** `DELIA-C3-MARKDOWN-B2-G3-IMPLEMENTATION-01`. HEAD auditado `4dd2e0c567` (origin/main; worktree reanciado de `6683124d17` — 46 overlaps, todos provados EOL-only). **Decisão canônica vigente:** doc 97 §9 declara `G3_APPROVED_BY_COORDINATION=PENDING`; `corrections/markdown-b2-producer-contract-cp333-evidence.md` registra `IMPLEMENTATION_AUTHORIZATION=NO`, `G3_TASK_BRIEF_APPROVED=NO`, `BACKEND_RUNTIME_DIFF=NOT_AUTHORIZED`; nenhuma entrada de ledger §6.376–§6.382 aprova G3. **Gate: STOP — nenhum runtime tocado.**
+
+**Inventário read-only verificado (fatos no HEAD, prontos para quando G3 for aprovado):**
+- `presentation.py`: `PRESENTATION_CONTRACT_VERSION="1"`; `compose_presentation(result)` lê `InteractiveTurnResult`; envelope `{version,message_kind,semantic_status,grounding_status,blocks,allowed_interactions}`; allowlist fechada `{text,notice}`; bounds 8 blocos/16_384 chars; `message_kind` canonical inclui `PROCESSING_TIMEOUT` (CP2).
+- `render_specialist_outcome` (`capability_provision/orchestration.py:4340`): projeção determinística `SpecialistOutcome → (content, limitations)`; `outcome.structured` (`specialist_interop/model.py:135`, `Mapping[str,object]`) sanitizado via `_sanitize_renderable` e **achatado em texto plain** — a estrutura tipada morre dentro da projeção; gap I1 = carregar projeção tipada através de `InteractiveTurnResult` até `compose_presentation`.
+- Schema `contracts/presentation-v2.proposal.schema.json`: `const version="2"`, `additionalProperties:false`, bloco text com `format` — **discrepância factual**: enum `message_kind` do schema NÃO contém `PROCESSING_TIMEOUT` (adicionado à v1 depois) — reconciliação contratual necessária no G3.
+- `parsePresentationV2` (frontend): reader parse-only, envelope fechado, `format=plain|markdown_safe`; `authorized_links` **não** é campo do envelope v2 — não adicionar sem decisão contratual.
+- Characterization existente: `test_presentation_v2_proposal.py` (schema+fallback policy probe), `test_render_specialist_outcome_fidelity.py`, `test_interaction_presentation.py`.
+- Categoria A real: `SpecialistOutcome.structured` sanitizado — fonte legítima de projeção; B/C permanecem plain por construção atual.
+
+```text
+G3_AUTHORIZATION=PENDING_APPROVAL
+RUNTIME_CHANGED=NO
+BACKEND_RUNTIME_DIFF=NOT_AUTHORIZED
+INVENTORY=READ_ONLY_VERIFIED
+REUSE_SEAMS=CONFIRMED(render_specialist_outcome@4340, compose_presentation, InteractiveTurnResult, schema-v2, parsePresentationV2, ConversationMarkdown, ConversationCodeBlock)
+CONTRACT_GAP_FOUND=v2_schema_missing_PROCESSING_TIMEOUT
+CP_333=PLANNED_NOT_PASS
+I04_ACCEPTED=NO
+PHASE_PROGRESSION=NONE
+NEXT=COORDINATION_G3_APPROVAL → então RED tests → I1 projection → I2 emitter
+```
