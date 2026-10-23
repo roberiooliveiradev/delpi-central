@@ -23,21 +23,21 @@ Para **cada item**, usar seis gates verificáveis, `0/1` cada: **G1** evidência
 
 | ID | Relatório/atividade | Rotina candidata | Família | TÉO ref | G1 | G2 | G3 | G4 | G5 | G6 | Owner do próximo passo |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| R01 | Baixas a pagar | `_F190C` (NotebookLM derivado); `FINR190` (TÉO/doc) | Financeiro | `kp02_t01/kp02_st01` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R02 | Baixas a receber | `_F190C` (NotebookLM derivado); `FINR190` (TÉO/doc) | Financeiro | `kp02_t01/kp02_st02` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R03 | P7 padrão / Bloco H | MATR460 | Estoque | `kp04_t01_st01/st02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R01 | Baixas a pagar | `FINR190` + `DLP06R01.prt`/`nat.prt` (vídeo menu + artefatos; `_F190C` NotebookLM = drift a reconciliar) | Financeiro | `kp02_t01/kp02_st01` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R02 | Baixas a receber | `FINR190` + `DLP06R01.prt` (idem) | Financeiro | `kp02_t01/kp02_st02` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R03 | P7 padrão / Bloco H | "Registro de Inventário Modelo P7" (vídeo) / MATR460 (roster) | Estoque | `kp04_t01_st01/st02` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R04 | Consumo por OP | MATR860 | Produção | `kp04_t02` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R05 | Entradas e Saídas / valor estoque | a confirmar | Estoque | `kp04_t03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R06 | CPV / Kardex 01 | a confirmar | Estoque | `kp04_t04` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R07 | Inventários / Kardex 99 | a confirmar | Estoque | `kp04_t05` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R08 | Material em Processo / H02 | a confirmar | Produção | `kp04_t07` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R09 | Faturamento × MOD | a confirmar | Custos | `kp04_t06` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R10 | Notas por Centro de Custo | SD1 citado; a confirmar | Fiscal/Contábil | `kp04_t09` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R11 | NF venda 9035 / CPV zero | a confirmar | Fiscal | `checklist doc03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R12 | Acompanha Custos / Reposição / Refaz Saldos | rotinas a conferir | Estoque | `kp04_t10/t11/t12` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R13 | Extratos e aplicações bancárias | externa | Bancos | `kp02_t02/t03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R05 | Entradas e Saídas / valor estoque | `MATR320` (.prt no artefato) | Estoque | `kp04_t03` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R06 | CPV / Kardex 01 | `MATR910` (roster + artefato kardex) | Estoque | `kp04_t04` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R07 | Inventários / Kardex 99 | `MATR910` (roster + artefato INVENT) | Estoque | `kp04_t05` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R08 | Material em Processo / H02 | `MATR989` (roster + artefato 57k linhas) | Produção | `kp04_t07` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R09 | Faturamento × MOD | `DLP204` (roster + artefato PA→MOD) | Custos | `kp04_t06` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R10 | Notas por Centro de Custo | `EDAPP` → export SD1 (roster + vídeo + artefato) | Fiscal/Contábil | `kp04_t09` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R11 | NF venda 9035 / CPV zero | `EDAPP` → export SD2 (roster + artefato) | Fiscal | `checklist doc03` | PASS | PASS | PASS | PASS | TEST_NOT_RUN | PENDING | Controladoria (paridade G5) |
+| R12 | Acompanha Custos / Reposição / Refaz Saldos | Acompanha Custo wizard (vídeo), Recálculo Reposição (vídeo), `DEL100` (fonte) | Estoque | `kp04_t10/t11/t12` | PASS | PASS | PASS | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R13 | Extratos e aplicações bancárias | externa (checklist envio) | Bancos | `kp02_t02/t03` | PASS | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 | R14 | Importação / SWIFT / câmbio / ACSI | mista | Importações | `kp03` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
-| R15 | Cutoff / sacramentação / SB9 | SB9 candidato, sem aceite T03 | Estoque | `kp08_t03/t04` | PENDING | PENDING | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
+| R15 | Cutoff / sacramentação / SB9 | fechamento wizard (execução observada vídeo) + SB9 candidato | Estoque | `kp08_t03/t04` | PASS | PASS | PENDING | PENDING | TEST_NOT_RUN | PENDING | Controladoria + owner da fonte |
 
 **Cada alteração de gate exige referência a uma linha no detalhe (§3), link/ID de artefato, SHA ou versão e data de validação.** G4 SQL requer identificação da tabela e coluna a partir de metadados confirmados, não nome por convenção TOTVS.
 
@@ -99,6 +99,7 @@ SCOPE_CHANGE / SUPERSEDES:
 |---|---|---|---|---|---|---|---|---|---|
 | 2026-10-20 | Setup | GPT (documental) | R01–R15 | 0 (sem ateste formal) | 15 | 0/60 = 0,0% | 0/90 = 0,0% | Coletar evidências artefato/vídeo/DAVI | `52dbbf45b671` |
 | 2026-10-20 | L1.1 FINR190 | GPT/TÉO/DAVI/VISTA/GitHub | R01,R02 | G1 R01+R02 (2) | 15 | **2/60 = 3,3%** | **2/90 = 2,2%** | Exportações e layouts FINR190 pendentes; owner Controladoria/ERP | commit desta rodada |
+| 2026-10-23 | CF-C2-FULL-EVIDENCE | Devin (pasta PO + vídeo + fontes + doc 80) | R01–R15 | 38 gates novos (detalhe §11) | 15 | **40/60 = 66,7%** | **40/90 = 44,4%** | G5 paridade + G4 bindings parciais + G6 aceite; owners conforme doc 82 | commit desta rodada |
 
 ## 6. Rodada L1.1 — FINR190 (20/10/2026)
 
@@ -334,3 +335,35 @@ Achados novos sobre coluna/relacionamento, obtidos por SQL READ em produção (0
 - Única moeda observada: `01`.
 
 Sem mudança nas métricas do tracker; G4/G5/G6 permanecem PENDING/TEST_NOT_RUN por dependência de homologação do owner financeiro.
+
+
+
+## 11. Rodada CF-C2-FULL-EVIDENCE-RECONCILIATION-001 — Pasta de evidências do PO (23/10/2026)
+
+**Fontes desta rodada:** pasta `fechamento` do PO (1 vídeo 54:44 + 6 PDFs + 10 XLSB + 3 XLSX, competência 09/2026); roster `Contabilidade liberações.xlsx`; frames full-res do vídeo (timecodes no doc 83 §3); fontes `FINR190_DLP.PRX`, `DEL100.PRW` (acervo); rodadas 1–13 (doc 80). **Crosswalk completo em `83-ciclo2-crosswalk-evidencias-r01-r15.md`.** Artefatos privados não versionados; evidências sanitizadas.
+
+### Gates promovidos — evidência por item
+
+| Item | Gate | Evidência exata (artefato / timecode) | Data |
+|---|---|---|---|
+| R01 | G2,G3,G4 | `Pagos por dt.pdf` = `SIGA/DLP06R01.prt/v.12`; `Pagos por nat.pdf` = `nat.prt`; `pagos 09 26.xlsb` "Relacao de Baixas" 974 linhas; menu "Relação de Baixas DLP" (vídeo 13:00); roster FINR190; SQL inspecionado `FINR190_DLP.PRX` (doc 80 §17) | 2026-10-23 |
+| R02 | G2,G3,G4 | `Recebidos.pdf` = `DLP06R01.prt`; `Recebidos.xlsb` 686 linhas; idem FINR190; reconstrução 657/657 row-level (rodada 4) | 2026-10-23 |
+| R03 | G1,G2,G3 | vídeo 35:00/37:00 previews "Registro de Inventário Modelo P7" (MATRIZ, 30/09/2026, totais 3.776.994,69 / ~2.756.1xx); `Estoque.pdf` 3.946.431,87 e `Resumo Estoque.pdf` 2.976.967,56 (escopo MP/PA/PI); roster MATR460; SPEDFISCAL→Bloco H | 2026-10-23 |
+| R05 | G1,G2,G3 | `Entradas e saidas.pdf` = `SIGA/MATR320.prt/v.12` período 01–30/09/2026 MATRIZ, layout por tipo | 2026-10-23 |
+| R06 | G1,G2,G3 | `cpv 09 26 matriz.xlsb` "Kardex Fisico-Financeiro" 14.382 linhas; roster MATR910 | 2026-10-23 |
+| R07 | G1,G2,G3 | `Invent.xlsb` kardex docs "INVENT" TES 999/499; roster MATR910 | 2026-10-23 |
+| R08 | G1,G2,G3 | `Material em processo.xlsb` "Saldo em Processo" 57.359 linhas c/ ORDEM PRODUCAO; roster MATR989 | 2026-10-23 |
+| R09 | G1,G2,G3 | `Fat x MOD.xlsb` abas Fl01/Fl02 PA→MOD + Horas + Custo Unit; roster DLP204 | 2026-10-23 |
+| R10 | G1,G2,G3,G4 | `CC matriz.xlsb` = export **SD1** (sheet `SCAGQGA0.XML`); vídeo 47:00 mesma operação EDAPP (`SCAGPOU0.XML`); roster EDAPP "Faturamento e CC" | 2026-10-23 |
+| R11 | G1,G2,G3,G4 | `NF a desconsiderar.xlsb` = export **SD2** (Tipo Saida 594, CF 5101); roster EDAPP "NF à desconsiderar" | 2026-10-23 |
+| R12 | G1,G2,G3 | vídeo 04:00 "Recálculo do Custo de Reposição" (parâmetros íntegros) + 14:47 "Acompanha Custo → Novo fechamento de custo" (execução real); `DEL100.PRW` fonte | 2026-10-23 |
+| R13 | G1 | `Arquivos de envio` checklist: Extratos/XP/BB/Aplicações — externalidade confirmada | 2026-10-23 |
+| R15 | G1,G2 | vídeo 14:47 wizard "Novo fechamento de custo" executado (JOICI, Matriz); SB9 snapshot PROVEN (doc 80 §21) | 2026-10-23 |
+
+**Não promovidos:** G4 de R03/R05–R09/R12/R15 (bindings físicos não comprovados — candidatos SB9/SD3 documentados como tal); G5 de todos (paridade monetária integral pendente); G6 de todos (exige aceite humano).
+
+**Resoluções desta rodada:** `DLP06R01` = layout .prt do relatório de baixas FINR190 (E1 respondido); P7 = "Registro de Inventário Modelo P7"/MATR460 com artefatos e duas emissões/escopos (E2 estreitado); execução do fechamento observada (E5 estreitado); doc 71 candidato→confirmado; docs 76/77 paths resolvidos (CC matriz=SD1, Analise=variação CM).
+
+**Métricas:** `COLETA = 40/60 = 66,7%`; `AUDITORIA = 40/90 = 44,4%`; `RELATORIOS_CONCLUIDOS = 0/15 = 0,0%`.
+
+**Residuais por owner** (doc 83 §5, doc 82 §2): paridade monetária R01/R02 (G5); binding SB9↔P7 e parâmetros por emissão (R03); artefato de consumo por OP (R04, Controladoria); bindings físicos R05–R09/R12 (G4); prova de qual passo grava SB9 (R15); DDL views + jobs/SPs (DBA E3/E4); importação (R14).

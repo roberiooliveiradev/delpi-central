@@ -29,35 +29,35 @@ Referência vigente das reconstruções DEL100: **3.058 chaves / 421 valor / 242
 
 ### 2.1 — Owner TI/ERP (fontes e execução Protheus)
 
-#### E1 — Produtor das baixas a receber (`DLP06R01`)
+#### E1 — Produtor das baixas (FINR190 / `DLP06R01.prt`) — **respondido em 23/10 (restante: versão implantada)**
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | Artefato de 657 baixas (set/2026) reconciliado row-level; produtor não-FINR190 comprovado por comparação de WHERE (doc 80 §17). `DLP06R01` ausente do acervo `docs/13-fontes-totvs-protheus/` |
-| Lacuna objetiva | identidade do executável que gera a relação de baixas a receber |
-| Fonte esperada | fonte AdvPL/PRX de `DLP06R01` (ou nome da rotina real) + confirmação da versão compilada no RPO |
-| Impacto PROC-0072 | fecha a trilha do relatório de recebidos; sem ela, paridade é só estrutural |
-| Critério de aceite | `SOURCE_AVAILABLE` + `CODE_DEPLOYED`; idealmente `EXECUTION_OBSERVED` (log/schedule set/2026) |
+| Evidência atual | `Pagos por dt.pdf` e `Recebidos.pdf` trazem `SIGA/DLP06R01.prt/v.12` no cabeçalho — **`DLP06R01` é o layout do relatório de baixas (pagos E recebidos por data)**; `Pagos por nat.pdf` = `nat.prt`. Menu "Relação de Baixas DLP" visto no vídeo 13:00; roster `Contabilidade liberações.xlsx` vincula a rotina **FINR190**; fonte `FINR190_DLP.PRX` no acervo (doc 80 §17, reconstrução 657/657 receber row-level) |
+| Lacuna objetiva | confirmar que a versão do `FINR190_DLP.PRX` do acervo é a compilada no RPO + paridade monetária integral (G5) |
+| Fonte esperada | confirmação de versão/RPO (data de compilação ou SHA interno do fonte implantado) — acesso ao ambiente não necessário |
+| Impacto PROC-0072 | fecha identidade do produtor; G1–G4 já PASS (doc 47 §11) |
+| Critério de aceite | `CODE_DEPLOYED` (versão confirmada) + paridade monetária oficial |
 
 #### E2 — Produtor e parâmetros do P7 / MATR460
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | `SB9 = snapshot mensal de SB2` no recorte (96% identidade, doc 80 §21–§22); SX1 **sem** grupo `MATR4%`; MP7/TRB provados não-proxy (§17/§19); `Dmatr320` consumidor, não produtor |
-| Lacuna objetiva | rotina oficial que emite o P7 e seus parâmetros efetivos (empresa, filial, data, produto, armazém, tipo) |
-| Fonte esperada | nome/versão da rotina oficial (custom ou MATR460 padrão), prints/arquivo de parâmetros (SX1), e um export oficial sanitizado de uma competência |
+| Evidência atual | **Resolvido em 23/10:** rotina **"Registro de Inventário Modelo P7"** observada em preview no vídeo (35:00/37:00, MATRIZ, 30/09/2026); artefatos `Estoque.pdf` (completo, TOTAL 3.946.431,87) e `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56); roster vincula "Estoque P7"→**MATR460**; SPEDFISCAL gera Bloco H; `SB9 = snapshot de SB2` (doc 80 §21) segue candidato físico |
+| Lacuna objetiva | parâmetros efetivos por emissão (filtro de tipos/armazém que distingue os dois PDFs); confirmar "Modelo P7" = MATR460 padrão ou variante custom; binding físico P7↔SB9/SD3 |
+| Fonte esperada | print/tela de parâmetros da rotina no menu + grupo SX1 correspondente (se houver) + identificação do fonte (MATR460 padrão ou custom) |
 | Impacto PROC-0072 | é a base do gate R03 e da distinção "consulta operacional × relatório oficial" |
-| Critério de aceite | `SOURCE_AVAILABLE` + export oficial confrontável com SB9 |
+| Critério de aceite | `CODE_DEPLOYED` (rotina identificada) + export oficial confrontável com SB9 |
 
 #### E5 — Rotina que grava SB9 (fechamento)
 
 | Campo | Conteúdo |
 |---|---|
-| Evidência atual | inserção em janela comum por filial (`I_N_S_D_T_`: f02 02/10 17h, f01 21/10 19h); hook `MA330OK` chama `STP_DELPI_OP_TERCEIRO_01` e `STP_PROTHEUS_DELPI_AJUSTA_OP` (fonte, doc 80 §22.D); execução não observada |
-| Lacuna objetiva | qual rotina/schedule efetivamente grava as linhas SB9 (MATA330? custom? job externo?) |
-| Fonte esperada | confirmação da rotina + evidência de execução (log do schedule, appserver, ou extrato do job) da competência 09/2026 |
+| Evidência atual | **Execução observada em 23/10:** vídeo 14:47 mostra o wizard "Acompanha Custo → Novo fechamento de custo" (4 etapas) sendo executado em produção por JOICI/Matriz na competência 09/2026. Porém `B9_I_N_S_D_T_` marca inserções f02=02/10 17h e f01=21/10 19h — **divergentes da execução de 30/09 14:47** (reexecuções? etapa distinta?). Hooks `MA330OK`/`STP_DELPI_*` = capacidade de fonte (§22.D) |
+| Lacuna objetiva | qual passo/rotina efetivamente grava as linhas SB9 e por que os timestamps de inserção divergem da execução observada; papel das SPs pós-fechamento |
+| Fonte esperada | log de execução do fechamento (wizard/Event Viewer/appserver) da competência 09/2026 + identificação do passo que escreve SB9 |
 | Impacto PROC-0072 | transforma "snapshot observado" em "produtor identificado" — destrava R12/R15 |
-| Critério de aceite | `EXECUTION_OBSERVED` (log/schedule datado) + `CODE_DEPLOYED` |
+| Critério de aceite | `EXECUTION_OBSERVED` (log/schedule datado da escrita SB9) + `CODE_DEPLOYED` |
 
 ---
 
@@ -127,8 +127,8 @@ Mais:
 | Pagar FINR190 | paridade estrutural PROVEN (948, 5/5 motivos, `FINR190_DLP`); sem paridade monetária/registro |
 | MOD fórmula/rate | PROVEN; direção de apresentação `APPROVED / PRODUCT_DIRECTION_ONLY` (opção C, doc 81) · `IMPLEMENTATION_AUTHORIZED = NO` · detalhamentos E6-D1..D6 e AC-E6 pendentes |
 | SB9 | snapshot SB2 PROVEN no recorte; produtor `BLOCKED` (E4/E5) |
-| DLP06R01, P7 | `BLOCKED`/`TO_INVENTORY` (E1/E2) |
-| Doc 47 | `NO_GATE_CHANGE` — evidências mapeadas em §25.E |
+| DLP06R01, P7 | **resolvidos 23/10** — DLP06R01.prt=layout FINR190; P7="Registro de Inventário Modelo P7"/MATR460 + artefatos; residuais estreitados (E1/E2) |
+| Doc 47 | crosswalk doc 83 + §11: **40/60 = 66,7% coleta · 40/90 = 44,4% auditoria** — 38 gates promovidos 23/10 com evidência por item |
 
 ---
 
@@ -136,6 +136,7 @@ Mais:
 
 - Registro vivo: `80-ciclo2-registro-vivo-investigacao-devin.md` §17–§26
 - Decisão E6: `81-decisao-e6-historico-monetario-mod-opcao-c.md` (`e68ae2d63129`)
+- Crosswalk evidências: `83-ciclo2-crosswalk-evidencias-r01-r15.md` (23/10)
 - Tracker de gates: `47-t01-report-column-audit-tracker-v1.md` (G1–G6)
 - Acervo de fontes: `docs/13-fontes-totvs-protheus/` (`DEL100.PRW`, `MA330OK.PRW`, `FINR190_DLP.PRX`, `matr860`, `DLP34R01.PRW`)
 - Commits-âncora: `9281aa9f09` (R5), `a1f2e47f18` (R6), `4fea4c09b3` (R7), `dd2ea700ee`+`b7cc80c246` (R8), `c06826af9d` (R9), `287f94a2aa` (R10), `f7c899fffe` (R11), `f95c7213eb` (R12), `4577c8c5e4` (R13)

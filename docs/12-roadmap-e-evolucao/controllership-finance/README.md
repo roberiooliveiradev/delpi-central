@@ -363,3 +363,8 @@ Redesenho de composicao das duas paginas da Central de Fechamento conforme o TAR
 ### Ciclo 2 — Registro vivo para investigação Devin (23/10/2026)
 
 [Doc 80 — Registro vivo, fichas e roadmap de levantamento técnico](./80-ciclo2-registro-vivo-investigacao-devin.md): ponto de entrada preenchível por lotes D0–D5, matriz dos nove workstreams, campos obrigatórios de evidência, consultas read-only, owners, paridade e stop conditions. O [doc 47](./47-t01-report-column-audit-tracker-v1.md) permanece a authority de R01–R15, G1–G6 e percentuais; o doc 80 é registro de execução, não segundo tracker de gates. **CYCLE_2_GO=NO**, DAVI/SQL/system ainda não autorizados por este documento, paridade `TEST_NOT_RUN`, runtime sem autorização adicional. Após decisão expressa do PO sobre escopo/capabilities, Devin poderá preencher apenas o lote autorizado, com commits e revisão GPT.
+
+
+### Ciclo 2 — Crosswalk integral de evidências (23/10/2026)
+
+[Doc 83 - Crosswalk R01-R15](./83-ciclo2-crosswalk-evidencias-r01-r15.md): processamento da pasta de evidências do PO (20 arquivos) e do video de 54:44. Resolve DLP06R01 (layout .prt do FINR190), vincula rotinas oficiais a R01-R15 (MATR460/P7, MATR320, MATR910, MATR989, DLP204, EDAPP, FINR190), registra execucao observada do fechamento de custo e mapeia residuais por owner. Doc 47 promoveu 38 gates: coleta 40/60 = 66,7%, auditoria 40/90 = 44,4%.

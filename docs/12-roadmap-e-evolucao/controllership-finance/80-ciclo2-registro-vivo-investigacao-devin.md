@@ -1352,3 +1352,42 @@ Pacote consolidado em `82-ciclo2-handoff-pacote-evidencias-owners.md` (renumerad
 | Run | Item | Resultado | Gate |
 |---|---|---|---|
 | C2-R72 | handoff | doc 81 criado; E1–E6 por owner; protocolo de resposta | — |
+
+
+---
+
+## §27 — FULL EVIDENCE RECONCILIATION (CF-C2-FULL-EVIDENCE-RECONCILIATION-001) — 2026-10-23
+
+Processamento integral da pasta `fechamento` do PO (20 arquivos) + vídeo 54:44 (frames por detecção de cena + full-res). **Crosswalk completo: `83-ciclo2-crosswalk-evidencias-r01-r15.md`.** Sem SQL novo — reconciliação documental/audiovisual/técnica.
+
+### 27.A — Resoluções principais
+
+| Achado | Evidência | Efeito |
+|---|---|---|
+| `DLP06R01` = layout `.prt` do relatório de baixas | `Pagos por dt.pdf` e `Recebidos.pdf` header `SIGA/DLP06R01.prt/v.12`; `Pagos por nat.pdf` = `nat.prt` | E1 respondido: produtor = **FINR190** ("Relação de Baixas DLP" menu vídeo 13:00 + roster), `.PRX` no acervo |
+| P7 = "Registro de Inventário Modelo P7" | vídeo 35:00/37:00 duas emissões preview; `Estoque.pdf` (completo, 3.946.431,87) + `Resumo Estoque.pdf` (escopo MP/PA/PI, 2.976.967,56); roster MATR460; SPEDFISCAL→Bloco H | E2 estreitado: falta parâmetros por emissão, confirmação variante, binding SB9 |
+| Execução do fechamento | vídeo 14:47: wizard "Acompanha Custo → Novo fechamento de custo" 4 etapas, JOICI/Matriz | E5 estreitado: falta provar passo que grava SB9 (B9_I_N_S_D_T_ f02=02/10 f01=21/10 ≠ execução 30/09) |
+| Fechamento é iterativo | totais P7: 3.776.994,69 (15:06) → ~2.756.1xx (15:08) → 3.946.431,87/2.976.967,56 (PDFs 19:19) | `as_of`/versão obrigatórios (AC-E6) |
+| EDAPP gera exports SD1/SD2 | vídeo 47:00 (`SCAGPOU0.XML`); `CC matriz.xlsb` (`SCAGQGA0.XML`) = SD1 + CC; `NF a desconsiderar.xlsb` = SD2 | R10/R11 G4 |
+| Roster oficial de rotinas | `Contabilidade liberações.xlsx` | G3 de R05(MATR320), R06/R07(MATR910), R08(MATR989), R09(DLP204), R10/R11(EDAPP), R01/R02(FINR190), R03(MATR460) |
+
+### 27.B — Gates (doc 47 §11): 38 novos PASS
+
+`COLETA = 40/60 = 66,7%` · `AUDITORIA = 40/90 = 44,4%` · concluídos 0/15. G4 só R01/R02 (fonte+SQL inspecionado) e R10/R11 (export = própria tabela). G5/G6 não promovidos.
+
+### 27.C — Status por item
+
+R05 VALIDADO (rotina+artefato); R01/R02/R03/R06–R12/R15 PARCIAL; R04/R13/R14 BLOQUEADO (R04 sem artefato de consumo-OP; R13 externalidade confirmada por checklist; R14 sem evidência).
+
+### 27.D — Registro
+
+| Run | Item | Resultado | Gate |
+|---|---|---|---|
+| C2-R73 | pasta PO | 20 arquivos inventariados; vídeo mapeado (timeline §3 doc 83) | — |
+| C2-R74 | DLP06R01 | resolvido: .prt FINR190 | E1 |
+| C2-R75 | P7 | artefatos + rotina observada; escopo MP/PA/PI confirmado em uso real | E2 |
+| C2-R76 | fechamento | execução observada 14:47; wizard 4 etapas | R15/R12 |
+| C2-R77 | EDAPP | SD1/SD2 exports provados | R10/R11 |
+| C2-R78 | doc 47 | +38 gates; 66,7% coleta / 44,4% auditoria | §11 |
+
+Preservados: `EXECUTION_DRIFT`/`STALE_EVIDENCE` (724/672); DEL100 vigente 3.058/421/242; MOD decisão C (doc 81) sem implementação.
